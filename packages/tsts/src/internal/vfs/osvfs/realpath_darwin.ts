@@ -3,6 +3,7 @@ import type { GoArray, GoError, GoPtr } from "../../../go/compat.js";
 import { OnceValue } from "../../../go/sync.js";
 import * as nodeFs from "node:fs";
 
+import type { GoFunc } from "../../../go/compat.js";
 // On macOS, we use open + fcntl(F_GETPATH) to resolve the canonical path in
 // O(1) syscalls instead of Go's filepath.EvalSymlinks which does an lstat per
 // path component — O(depth).
@@ -34,7 +35,7 @@ import * as nodeFs from "node:fs";
  * 	return err == nil
  * })
  */
-export let hasFGetPath: () => bool = OnceValue<bool>((): bool => {
+export let hasFGetPath: GoFunc<() => bool> = OnceValue<bool>((): bool => {
   return (process.platform === "darwin") as bool;
 });
 

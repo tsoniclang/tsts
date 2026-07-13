@@ -87,6 +87,7 @@ import { Checker_permissiveMapperWorker, Checker_restrictiveMapperWorker } from 
 import { typeofNEFacts } from "../flow.js";
 import { Mutex, Once } from "../../../go/sync.js";
 
+import type { GoFunc, GoInterface, GoRef } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::CheckMode","kind":"type","status":"implemented","sigHash":"2d62e9eb34ed3aaeeef2b15a3fcc8e2c38feacbf9b95170eff1c8a8946192235"}
  *
@@ -248,7 +249,7 @@ export const WideningKindGeneratorYield: WideningKind = 3;
  */
 export interface EnumLiteralKey {
   enumSymbol: GoPtr<Symbol>;
-  value: unknown;
+  value: GoInterface<unknown>;
 }
 
 /**
@@ -1202,15 +1203,15 @@ export const IterationTypeKindNext: IterationTypeKind = 2;
  */
 export interface IterationTypesResolver {
   iteratorSymbolName: string;
-  getGlobalIteratorType: () => GoPtr<Type>;
-  getGlobalIterableType: () => GoPtr<Type>;
-  getGlobalIterableTypeChecked: () => GoPtr<Type>;
-  getGlobalIterableIteratorType: () => GoPtr<Type>;
-  getGlobalIterableIteratorTypeChecked: () => GoPtr<Type>;
-  getGlobalIteratorObjectType: () => GoPtr<Type>;
-  getGlobalGeneratorType: () => GoPtr<Type>;
-  getGlobalBuiltinIteratorTypes: () => GoSlice<GoPtr<Type>>;
-  resolveIterationType: (t: GoPtr<Type>, errorNode: GoPtr<Node>) => GoPtr<Type>;
+  getGlobalIteratorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalIterableType: GoFunc<() => GoPtr<Type>>;
+  getGlobalIterableTypeChecked: GoFunc<() => GoPtr<Type>>;
+  getGlobalIterableIteratorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalIterableIteratorTypeChecked: GoFunc<() => GoPtr<Type>>;
+  getGlobalIteratorObjectType: GoFunc<() => GoPtr<Type>>;
+  getGlobalGeneratorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalBuiltinIteratorTypes: GoFunc<() => GoSlice<GoPtr<Type>>>;
+  resolveIterationType: GoFunc<(t: GoPtr<Type>, errorNode: GoPtr<Node>) => GoPtr<Type>>;
   mustHaveANextMethodDiagnostic: GoPtr<Message>;
   mustBeAMethodDiagnostic: GoPtr<Message>;
   mustHaveAValueDiagnostic: GoPtr<Message>;
@@ -1273,10 +1274,10 @@ export interface Program extends Host {
   FileExists(fileName: string): bool;
   GetSourceFile(fileName: string): GoPtr<SourceFile>;
   GetSourceFileForResolvedModule(fileName: string): GoPtr<SourceFile>;
-  GetEmitModuleFormatOfFile(sourceFile: HasFileName): ModuleKind;
-  GetEmitSyntaxForUsageLocation(sourceFile: HasFileName, usageLocation: GoPtr<StringLiteralLike>): ResolutionMode;
-  GetImpliedNodeFormatForEmit(sourceFile: HasFileName): ModuleKind;
-  GetResolvedModule(currentSourceFile: HasFileName, moduleReference: string, mode: ResolutionMode): GoPtr<ResolvedModule>;
+  GetEmitModuleFormatOfFile(sourceFile: GoInterface<HasFileName>): ModuleKind;
+  GetEmitSyntaxForUsageLocation(sourceFile: GoInterface<HasFileName>, usageLocation: GoPtr<StringLiteralLike>): ResolutionMode;
+  GetImpliedNodeFormatForEmit(sourceFile: GoInterface<HasFileName>): ModuleKind;
+  GetResolvedModule(currentSourceFile: GoInterface<HasFileName>, moduleReference: string, mode: ResolutionMode): GoPtr<ResolvedModule>;
   GetResolvedModules(): GoMap<Path, ModeAwareCache<GoPtr<ResolvedModule>>>;
   GetPackagesMap(): GoMap<string, bool>;
   GetSourceFileMetaData(path: Path): SourceFileMetaData;
@@ -1285,7 +1286,7 @@ export interface Program extends Host {
   SourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): bool;
   IsSourceFileDefaultLibrary(path: Path): bool;
   GetProjectReferenceFromOutputDts(path: Path): GoPtr<SourceOutputAndProjectReference>;
-  GetRedirectForResolution(file: HasFileName): GoPtr<ParsedCommandLine>;
+  GetRedirectForResolution(file: GoInterface<HasFileName>): GoPtr<ParsedCommandLine>;
   CommonSourceDirectory(): string;
 }
 
@@ -1634,12 +1635,12 @@ export let nextCheckerID: Uint32 = new Uint32();
  */
 export interface Checker {
   id: uint;
-  program: Program;
+  program: GoInterface<Program>;
   compilerOptions: GoPtr<CompilerOptions>;
   files: GoSlice<GoPtr<SourceFile>>;
   fileIndexMap: GoMap<GoPtr<SourceFile>, int>;
-  compareSymbols: (arg0: GoPtr<Symbol>, arg1: GoPtr<Symbol>) => int;
-  compareSymbolChains: (arg0: GoSlice<GoPtr<Symbol>>, arg1: GoSlice<GoPtr<Symbol>>) => int;
+  compareSymbols: GoFunc<(arg0: GoPtr<Symbol>, arg1: GoPtr<Symbol>) => int>;
+  compareSymbolChains: GoFunc<(arg0: GoSlice<GoPtr<Symbol>>, arg1: GoSlice<GoPtr<Symbol>>) => int>;
   TypeCount: uint;
   SymbolCount: uint;
   TotalInstantiationCount: uint;
@@ -1839,7 +1840,7 @@ export interface Checker {
   typeResolutions: GoSlice<TypeResolution>;
   resolutionStart: int;
   inVarianceComputation: bool;
-  apparentArgumentCount: GoPtr<int>;
+  apparentArgumentCount: GoRef<int>;
   lastGetCombinedNodeFlagsNode: GoPtr<Node>;
   lastGetCombinedNodeFlagsResult: NodeFlags;
   lastGetCombinedModifierFlagsNode: GoPtr<Node>;
@@ -1871,71 +1872,71 @@ export interface Checker {
   comparableRelation: GoPtr<Relation>;
   identityRelation: GoPtr<Relation>;
   enumRelation: GoMap<EnumRelationKey, RelationComparisonResult>;
-  getGlobalESSymbolType: () => GoPtr<Type>;
-  getGlobalBigIntType: () => GoPtr<Type>;
-  getGlobalImportMetaType: () => GoPtr<Type>;
-  getGlobalImportAttributesType: () => GoPtr<Type>;
-  getGlobalImportAttributesTypeChecked: () => GoPtr<Type>;
-  getGlobalNonNullableTypeAliasOrNil: () => GoPtr<Symbol>;
-  getGlobalExtractSymbol: () => GoPtr<Symbol>;
-  getGlobalDisposableType: () => GoPtr<Type>;
-  getGlobalAsyncDisposableType: () => GoPtr<Type>;
-  getGlobalAwaitedSymbol: () => GoPtr<Symbol>;
-  getGlobalAwaitedSymbolOrNil: () => GoPtr<Symbol>;
-  getGlobalNaNSymbolOrNil: () => GoPtr<Symbol>;
-  getGlobalRecordSymbol: () => GoPtr<Symbol>;
-  getGlobalTemplateStringsArrayType: () => GoPtr<Type>;
-  getGlobalESSymbolConstructorSymbolOrNil: () => GoPtr<Symbol>;
-  getGlobalESSymbolConstructorTypeSymbolOrNil: () => GoPtr<Symbol>;
-  getGlobalImportCallOptionsType: () => GoPtr<Type>;
-  getGlobalImportCallOptionsTypeChecked: () => GoPtr<Type>;
-  getGlobalPromiseType: () => GoPtr<Type>;
-  getGlobalPromiseTypeChecked: () => GoPtr<Type>;
-  getGlobalPromiseLikeType: () => GoPtr<Type>;
-  getGlobalPromiseConstructorSymbol: () => GoPtr<Symbol>;
-  getGlobalPromiseConstructorSymbolOrNil: () => GoPtr<Symbol>;
-  getGlobalOmitSymbol: () => GoPtr<Symbol>;
-  getGlobalNoInferSymbolOrNil: () => GoPtr<Symbol>;
-  getGlobalIteratorType: () => GoPtr<Type>;
-  getGlobalIterableType: () => GoPtr<Type>;
-  getGlobalIterableTypeChecked: () => GoPtr<Type>;
-  getGlobalIterableIteratorType: () => GoPtr<Type>;
-  getGlobalIterableIteratorTypeChecked: () => GoPtr<Type>;
-  getGlobalIteratorObjectType: () => GoPtr<Type>;
-  getGlobalGeneratorType: () => GoPtr<Type>;
-  getGlobalAsyncIteratorType: () => GoPtr<Type>;
-  getGlobalAsyncIterableType: () => GoPtr<Type>;
-  getGlobalAsyncIterableTypeChecked: () => GoPtr<Type>;
-  getGlobalAsyncIterableIteratorType: () => GoPtr<Type>;
-  getGlobalAsyncIterableIteratorTypeChecked: () => GoPtr<Type>;
-  getGlobalAsyncIteratorObjectType: () => GoPtr<Type>;
-  getGlobalAsyncGeneratorType: () => GoPtr<Type>;
-  getGlobalIteratorYieldResultType: () => GoPtr<Type>;
-  getGlobalIteratorReturnResultType: () => GoPtr<Type>;
-  getGlobalTypedPropertyDescriptorType: () => GoPtr<Type>;
-  getGlobalClassDecoratorContextType: () => GoPtr<Type>;
-  getGlobalClassMethodDecoratorContextType: () => GoPtr<Type>;
-  getGlobalClassGetterDecoratorContextType: () => GoPtr<Type>;
-  getGlobalClassSetterDecoratorContextType: () => GoPtr<Type>;
-  getGlobalClassAccessorDecoratorContxtType: () => GoPtr<Type>;
-  getGlobalClassAccessorDecoratorContextType: () => GoPtr<Type>;
-  getGlobalClassAccessorDecoratorTargetType: () => GoPtr<Type>;
-  getGlobalClassAccessorDecoratorResultType: () => GoPtr<Type>;
-  getGlobalClassFieldDecoratorContextType: () => GoPtr<Type>;
+  getGlobalESSymbolType: GoFunc<() => GoPtr<Type>>;
+  getGlobalBigIntType: GoFunc<() => GoPtr<Type>>;
+  getGlobalImportMetaType: GoFunc<() => GoPtr<Type>>;
+  getGlobalImportAttributesType: GoFunc<() => GoPtr<Type>>;
+  getGlobalImportAttributesTypeChecked: GoFunc<() => GoPtr<Type>>;
+  getGlobalNonNullableTypeAliasOrNil: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalExtractSymbol: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalDisposableType: GoFunc<() => GoPtr<Type>>;
+  getGlobalAsyncDisposableType: GoFunc<() => GoPtr<Type>>;
+  getGlobalAwaitedSymbol: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalAwaitedSymbolOrNil: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalNaNSymbolOrNil: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalRecordSymbol: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalTemplateStringsArrayType: GoFunc<() => GoPtr<Type>>;
+  getGlobalESSymbolConstructorSymbolOrNil: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalESSymbolConstructorTypeSymbolOrNil: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalImportCallOptionsType: GoFunc<() => GoPtr<Type>>;
+  getGlobalImportCallOptionsTypeChecked: GoFunc<() => GoPtr<Type>>;
+  getGlobalPromiseType: GoFunc<() => GoPtr<Type>>;
+  getGlobalPromiseTypeChecked: GoFunc<() => GoPtr<Type>>;
+  getGlobalPromiseLikeType: GoFunc<() => GoPtr<Type>>;
+  getGlobalPromiseConstructorSymbol: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalPromiseConstructorSymbolOrNil: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalOmitSymbol: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalNoInferSymbolOrNil: GoFunc<() => GoPtr<Symbol>>;
+  getGlobalIteratorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalIterableType: GoFunc<() => GoPtr<Type>>;
+  getGlobalIterableTypeChecked: GoFunc<() => GoPtr<Type>>;
+  getGlobalIterableIteratorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalIterableIteratorTypeChecked: GoFunc<() => GoPtr<Type>>;
+  getGlobalIteratorObjectType: GoFunc<() => GoPtr<Type>>;
+  getGlobalGeneratorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalAsyncIteratorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalAsyncIterableType: GoFunc<() => GoPtr<Type>>;
+  getGlobalAsyncIterableTypeChecked: GoFunc<() => GoPtr<Type>>;
+  getGlobalAsyncIterableIteratorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalAsyncIterableIteratorTypeChecked: GoFunc<() => GoPtr<Type>>;
+  getGlobalAsyncIteratorObjectType: GoFunc<() => GoPtr<Type>>;
+  getGlobalAsyncGeneratorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalIteratorYieldResultType: GoFunc<() => GoPtr<Type>>;
+  getGlobalIteratorReturnResultType: GoFunc<() => GoPtr<Type>>;
+  getGlobalTypedPropertyDescriptorType: GoFunc<() => GoPtr<Type>>;
+  getGlobalClassDecoratorContextType: GoFunc<() => GoPtr<Type>>;
+  getGlobalClassMethodDecoratorContextType: GoFunc<() => GoPtr<Type>>;
+  getGlobalClassGetterDecoratorContextType: GoFunc<() => GoPtr<Type>>;
+  getGlobalClassSetterDecoratorContextType: GoFunc<() => GoPtr<Type>>;
+  getGlobalClassAccessorDecoratorContxtType: GoFunc<() => GoPtr<Type>>;
+  getGlobalClassAccessorDecoratorContextType: GoFunc<() => GoPtr<Type>>;
+  getGlobalClassAccessorDecoratorTargetType: GoFunc<() => GoPtr<Type>>;
+  getGlobalClassAccessorDecoratorResultType: GoFunc<() => GoPtr<Type>>;
+  getGlobalClassFieldDecoratorContextType: GoFunc<() => GoPtr<Type>>;
   syncIterationTypesResolver: GoPtr<IterationTypesResolver>;
   asyncIterationTypesResolver: GoPtr<IterationTypesResolver>;
-  isPrimitiveOrObjectOrEmptyType: (arg0: GoPtr<Type>) => bool;
-  containsMissingType: (arg0: GoPtr<Type>) => bool;
-  couldContainTypeVariables: (arg0: GoPtr<Type>) => bool;
-  isStringIndexSignatureOnlyType: (arg0: GoPtr<Type>) => bool;
-  markNodeAssignments: (arg0: GoPtr<Node>) => bool;
+  isPrimitiveOrObjectOrEmptyType: GoFunc<(arg0: GoPtr<Type>) => bool>;
+  containsMissingType: GoFunc<(arg0: GoPtr<Type>) => bool>;
+  couldContainTypeVariables: GoFunc<(arg0: GoPtr<Type>) => bool>;
+  isStringIndexSignatureOnlyType: GoFunc<(arg0: GoPtr<Type>) => bool>;
+  markNodeAssignments: GoFunc<(arg0: GoPtr<Node>) => bool>;
   compareTypesAssignable: TypeComparer;
   emitResolver: GoPtr<EmitResolver>;
   emitResolverOnce: Once;
   _jsxNamespace: string;
   _jsxFactoryEntity: GoPtr<Node>;
   skipDirectInferenceNodes: Set<GoPtr<Node>>;
-  ctx: Context;
+  ctx: GoInterface<Context>;
   packagesMap: GoMap<string, bool>;
   activeMappers: GoSlice<GoPtr<TypeMapper>>;
   activeTypeMappersCaches: GoSlice<GoMap<CacheHashKey, GoPtr<Type>>>;
@@ -1956,7 +1957,7 @@ function newArena<T>(): Arena<T> {
 
 function newLinkStore<K extends GoComparable, V>(): LinkStore<K, V> {
   return {
-    entries: new globalThis.Map<K, GoPtr<V>>(),
+    entries: new globalThis.Map<K, GoRef<V>>(),
     arena: newArena<V>(),
   };
 }
@@ -1967,11 +1968,11 @@ function newCheckerSet<T extends GoComparable>(): Set<T> {
 
 export function Checker_getSourceFileLinks(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoPtr<SourceFileLinks> {
   const links = LinkStore_Get(receiver!.sourceFileLinks as LinkStore<GoPtr<SourceFile>, SourceFileLinks>, sourceFile);
-  links!.deferredNodes ??= NewOrderedSetWithSizeHint<GoPtr<Node>>(0 as int)!;
-  links!.identifierCheckNodes ??= [];
-  links!.localJsxNamespace ??= "";
-  links!.localJsxFragmentNamespace ??= "";
-  return links;
+  links!.v.deferredNodes ??= NewOrderedSetWithSizeHint<GoPtr<Node>>(0 as int)!;
+  links!.v.identifierCheckNodes ??= [];
+  links!.v.localJsxNamespace ??= "";
+  links!.v.localJsxFragmentNamespace ??= "";
+  return links!.v;
 }
 
 function newDiagnosticsCollection(): DiagnosticsCollection {
@@ -2205,8 +2206,8 @@ function newDiagnosticsCollection(): DiagnosticsCollection {
  * 	return c, &c.mu
  * }
  */
-export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Checker>, GoPtr<Mutex>] {
-  program.BindSourceFiles();
+export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>): [GoPtr<Checker>, GoPtr<Mutex>] {
+  program!.BindSourceFiles();
 
   const checker = {} as Checker;
   checker.id = nextCheckerID.Add(1);
@@ -2243,8 +2244,8 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.lastFlowNodeReachable = false as bool;
   checker.tracer = tracer;
   checker.program = program;
-  checker.compilerOptions = program.Options();
-  checker.files = program.SourceFiles();
+  checker.compilerOptions = program!.Options();
+  checker.files = program!.SourceFiles();
   checker.fileIndexMap = createFileIndexMap(checker.files);
   checker.compareSymbols = (left, right): int => Checker_compareSymbolsWorker(checker, left, right);
   checker.compareSymbolChains = (left, right): int => Checker_compareSymbolChainsWorker(checker, left, right);
@@ -2616,7 +2617,7 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.getGlobalClassAccessorDecoratorResultType = Checker_getGlobalTypeResolver(checker, "ClassAccessorDecoratorResult", 2, true);
   checker.getGlobalClassFieldDecoratorContextType = Checker_getGlobalTypeResolver(checker, "ClassFieldDecoratorContext", 2, true);
   checker.skipDirectInferenceNodes = newCheckerSet<GoPtr<Node>>();
-  checker.packagesMap = program.GetPackagesMap();
+  checker.packagesMap = program!.GetPackagesMap();
   checker.activeMappers = [];
   checker.activeTypeMappersCaches = [];
   checker.emitResolverOnce = new Once();
@@ -2776,7 +2777,7 @@ function _getPrimitiveTypeAliasSuggestionsMap(): GoMap<string, GoPtr<Symbol>> {
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::varGroup::primitiveTypeAliasSuggestions","kind":"varGroup","status":"implemented","sigHash":"2fd770542aac8bc457823b7b60e78e79b839581a9a2fd80969eb4f4e50ef2376"}
  */
-export let primitiveTypeAliasSuggestions: () => GoMap<string, GoPtr<Symbol>> = _getPrimitiveTypeAliasSuggestionsMap;
+export let primitiveTypeAliasSuggestions: GoFunc<() => GoMap<string, GoPtr<Symbol>>> = _getPrimitiveTypeAliasSuggestionsMap;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getPrimitiveTypeAliasSuggestions","kind":"func","status":"implemented","sigHash":"31752245a24445d07b9fc08e958179dada3115b651b3f6d7e65ddad88786ec2e"}
@@ -2796,7 +2797,7 @@ export let primitiveTypeAliasSuggestions: () => GoMap<string, GoPtr<Symbol>> = _
  */
 export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable | undefined): GoSeq<GoPtr<Symbol>> {
   return (yield_: (s: GoPtr<Symbol>) => bool): void => {
-    for (const [builtinName, suggestion] of primitiveTypeAliasSuggestions()) {
+    for (const [builtinName, suggestion] of primitiveTypeAliasSuggestions!()) {
       if (symbols !== undefined && symbols.has(builtinName)) {
         if (!yield_(suggestion)) {
           return;
@@ -3261,9 +3262,9 @@ export function isSpreadIntoCallOrNew(node: GoPtr<Node>): bool {
  * 	return false
  * }
  */
-export function someSignature(signatures: GoSlice<GoPtr<Signature>>, f: (s: GoPtr<Signature>) => bool): bool {
+export function someSignature(signatures: GoSlice<GoPtr<Signature>>, f: GoFunc<(s: GoPtr<Signature>) => bool>): bool {
   for (const sig of signatures) {
-    if ((sig!.composite !== undefined && sig!.composite!.isUnion && Some(sig!.composite!.signatures, f)) || (sig!.composite === undefined && f(sig))) {
+    if ((sig!.composite !== undefined && sig!.composite!.isUnion && Some(sig!.composite!.signatures, f)) || (sig!.composite === undefined && f!(sig))) {
       return true;
     }
   }
@@ -4455,16 +4456,16 @@ export function getModifiedReadonlyState(state: bool, modifiers: MappedTypeModif
  * 	return values
  * }
  */
-export function instantiateList<T extends GoComparable>(c: GoPtr<Checker>, values: GoSlice<T>, m: GoPtr<TypeMapper>, instantiator: (c: GoPtr<Checker>, value: T, m: GoPtr<TypeMapper>) => T): GoSlice<T> {
+export function instantiateList<T extends GoComparable>(c: GoPtr<Checker>, values: GoSlice<T>, m: GoPtr<TypeMapper>, instantiator: GoFunc<(c: GoPtr<Checker>, value: T, m: GoPtr<TypeMapper>) => T>): GoSlice<T> {
   for (let i = 0; i < (values !== undefined ? values.length : 0); i++) {
     const value = values![i]!;
-    const mapped = instantiator(c, value, m);
+    const mapped = instantiator!(c, value, m);
     if (mapped !== value) {
       const result: T[] = new Array(values!.length) as T[];
       for (let k = 0; k < i; k++) result[k] = values![k]!;
       result[i] = mapped;
       for (let j = i + 1; j < values!.length; j++) {
-        result[j] = instantiator(c, values![j]!, m);
+        result[j] = instantiator!(c, values![j]!, m);
       }
       return result;
     }
@@ -4972,13 +4973,13 @@ export function getConstituentCountOfTypes(types: GoSlice<GoPtr<Type>>): int {
  * 	}
  * }
  */
-export function forEachType(t: GoPtr<Type>, f: (t: GoPtr<Type>) => void): void {
+export function forEachType(t: GoPtr<Type>, f: GoFunc<(t: GoPtr<Type>) => void>): void {
   if (t!.flags & TypeFlagsUnion) {
     for (const u of Type_Types(t)) {
-      f(u);
+      f!(u);
     }
   } else {
-    f(t);
+    f!(t);
   }
 }
 
@@ -4993,11 +4994,11 @@ export function forEachType(t: GoPtr<Type>, f: (t: GoPtr<Type>) => void): void {
  * 	return f(t)
  * }
  */
-export function someType(t: GoPtr<Type>, f: (arg0: GoPtr<Type>) => bool): bool {
+export function someType(t: GoPtr<Type>, f: GoFunc<(arg0: GoPtr<Type>) => bool>): bool {
   if (t!.flags & TypeFlagsUnion) {
     return Some(Type_Types(t), f);
   }
-  return f(t);
+  return f!(t);
 }
 
 /**
@@ -5011,11 +5012,11 @@ export function someType(t: GoPtr<Type>, f: (arg0: GoPtr<Type>) => bool): bool {
  * 	return f(t)
  * }
  */
-export function everyType(t: GoPtr<Type>, f: (arg0: GoPtr<Type>) => bool): bool {
+export function everyType(t: GoPtr<Type>, f: GoFunc<(arg0: GoPtr<Type>) => bool>): bool {
   if (t!.flags & TypeFlagsUnion) {
     return Every(Type_Types(t), f);
   }
-  return f(t);
+  return f!(t);
 }
 
 /**
@@ -5029,11 +5030,11 @@ export function everyType(t: GoPtr<Type>, f: (arg0: GoPtr<Type>) => bool): bool 
  * 	return f(t)
  * }
  */
-export function everyContainedType(t: GoPtr<Type>, f: (arg0: GoPtr<Type>) => bool): bool {
+export function everyContainedType(t: GoPtr<Type>, f: GoFunc<(arg0: GoPtr<Type>) => bool>): bool {
   if (t!.flags & TypeFlagsUnionOrIntersection) {
     return Every(Type_Types(t), f);
   }
-  return f(t);
+  return f!(t);
 }
 
 /**

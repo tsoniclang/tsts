@@ -11,6 +11,7 @@ import {
   UnmarshalRead as json_UnmarshalRead,
 } from "../../go/github.com/go-json-experiment/json.js";
 import type { MarshalerTo as MarshalerTo_fd081708, Options, UnmarshalerFrom as UnmarshalerFrom_68b23da1 } from "../../go/github.com/go-json-experiment/json.js";
+import type { GoInterface } from "../../go/compat.js";
 export { JsonFieldNames };
 export type { JsonFieldName, JsonFieldNameMap, JsonFieldSpec } from "../../go/github.com/go-json-experiment/json.js";
 import {
@@ -56,7 +57,7 @@ export let allowInvalid: GoSlice<Options> = Clip([jsontext_AllowInvalidUTF8(true
  * 	return json.Marshal(in, opts...)
  * }
  */
-export function Marshal(in_: unknown, ...opts: Array<Options>): [GoSlice<byte>, GoError] {
+export function Marshal(in_: GoInterface<unknown>, ...opts: Array<Options>): [GoSlice<byte>, GoError] {
   const resolvedOpts: Array<Options> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
   return json_Marshal(in_, ...resolvedOpts) as [GoSlice<byte>, GoError];
 }
@@ -74,7 +75,7 @@ export function Marshal(in_: unknown, ...opts: Array<Options>): [GoSlice<byte>, 
  * 	return json.MarshalEncode(out, in, opts...)
  * }
  */
-export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: unknown, ...opts: Array<Options>): GoError {
+export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: GoInterface<unknown>, ...opts: Array<Options>): GoError {
   const resolvedOpts: Array<Options> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
   return json_MarshalEncode(out, in_, ...resolvedOpts) as GoError;
 }
@@ -92,9 +93,9 @@ export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: unknown, ...opt
  * 	return json.MarshalWrite(out, in, opts...)
  * }
  */
-export function MarshalWrite(out: Writer, in_: unknown, ...opts: Array<Options>): GoError {
+export function MarshalWrite(out: GoInterface<Writer>, in_: GoInterface<unknown>, ...opts: Array<Options>): GoError {
   const resolvedOpts: Array<Options> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
-  return json_MarshalWrite(out, in_, ...resolvedOpts) as GoError;
+  return json_MarshalWrite(out!, in_, ...resolvedOpts) as GoError;
 }
 
 /**
@@ -109,7 +110,7 @@ export function MarshalWrite(out: Writer, in_: unknown, ...opts: Array<Options>)
  * 	return Marshal(in, jsontext.WithIndentPrefix(prefix), jsontext.WithIndent(indent))
  * }
  */
-export function MarshalIndent(in_: unknown, prefix: string, indent: string): [GoSlice<byte>, GoError] {
+export function MarshalIndent(in_: GoInterface<unknown>, prefix: string, indent: string): [GoSlice<byte>, GoError] {
   if (prefix === "" && indent === "") {
     return Marshal(in_);
   }
@@ -128,7 +129,7 @@ export function MarshalIndent(in_: unknown, prefix: string, indent: string): [Go
  * 	return MarshalWrite(out, in, jsontext.WithIndentPrefix(prefix), jsontext.WithIndent(indent))
  * }
  */
-export function MarshalIndentWrite(out: Writer, in_: unknown, prefix: string, indent: string): GoError {
+export function MarshalIndentWrite(out: GoInterface<Writer>, in_: GoInterface<unknown>, prefix: string, indent: string): GoError {
   if (prefix === "" && indent === "") {
     return MarshalWrite(out, in_);
   }
@@ -143,7 +144,7 @@ export function MarshalIndentWrite(out: Writer, in_: unknown, prefix: string, in
  * 	return json.Unmarshal(in, out, opts...)
  * }
  */
-export function Unmarshal(in_: GoSlice<byte>, out: unknown, ...opts: Array<Options>): GoError {
+export function Unmarshal(in_: GoSlice<byte>, out: GoInterface<unknown>, ...opts: Array<Options>): GoError {
   return json_Unmarshal(in_, out, ...opts) as GoError;
 }
 
@@ -155,7 +156,7 @@ export function Unmarshal(in_: GoSlice<byte>, out: unknown, ...opts: Array<Optio
  * 	return json.UnmarshalDecode(in, out, opts...)
  * }
  */
-export function UnmarshalDecode(in_: GoPtr<Decoder_d2f8186c>, out: unknown, ...opts: Array<Options>): GoError {
+export function UnmarshalDecode(in_: GoPtr<Decoder_d2f8186c>, out: GoInterface<unknown>, ...opts: Array<Options>): GoError {
   return json_UnmarshalDecode(in_, out, ...opts) as GoError;
 }
 
@@ -167,8 +168,8 @@ export function UnmarshalDecode(in_: GoPtr<Decoder_d2f8186c>, out: unknown, ...o
  * 	return json.UnmarshalRead(in, out, opts...)
  * }
  */
-export function UnmarshalRead(in_: Reader, out: unknown, ...opts: Array<Options>): GoError {
-  return json_UnmarshalRead(in_, out, ...opts) as GoError;
+export function UnmarshalRead(in_: GoInterface<Reader>, out: GoInterface<unknown>, ...opts: Array<Options>): GoError {
+  return json_UnmarshalRead(in_!, out, ...opts) as GoError;
 }
 
 /**
@@ -179,7 +180,7 @@ export function UnmarshalRead(in_: Reader, out: unknown, ...opts: Array<Options>
  * 	return jsontext.AllowDuplicateNames(allow)
  * }
  */
-export function AllowDuplicateNames(allow: bool): Options {
+export function AllowDuplicateNames(allow: bool): GoInterface<Options> {
   return jsontext_AllowDuplicateNames(allow) as Options;
 }
 
@@ -191,7 +192,7 @@ export function AllowDuplicateNames(allow: bool): Options {
  * 	return json.Deterministic(v)
  * }
  */
-export function Deterministic(v: bool): Options {
+export function Deterministic(v: bool): GoInterface<Options> {
   return json_Deterministic(v) as Options;
 }
 
@@ -203,7 +204,7 @@ export function Deterministic(v: bool): Options {
  * 	return jsontext.WithIndent(indent)
  * }
  */
-export function WithIndent(indent: string): Options {
+export function WithIndent(indent: string): GoInterface<Options> {
   return jsontext_WithIndent(indent) as Options;
 }
 
@@ -215,8 +216,8 @@ export function WithIndent(indent: string): Options {
  * 	return jsontext.NewDecoder(r)
  * }
  */
-export function NewDecoder(r: Reader): GoPtr<Decoder_d2f8186c> {
-  return jsontext_NewDecoder(r) as GoPtr<Decoder_d2f8186c>;
+export function NewDecoder(r: GoInterface<Reader>): GoPtr<Decoder_d2f8186c> {
+  return jsontext_NewDecoder(r!) as GoPtr<Decoder_d2f8186c>;
 }
 
 /**

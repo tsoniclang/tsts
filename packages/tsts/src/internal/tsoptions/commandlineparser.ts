@@ -62,6 +62,7 @@ import type { ParseConfigHost, CommandLineOptionNameMap } from "./tsconfigparsin
 import { CommandLineCompilerOptionsMap, convertMapToOptions, validateJsonOptionValue } from "./tsconfigparsing.js";
 import { commandLineParser_createUnknownOptionError, createDiagnosticForInvalidEnumType, getCompilerOptionValueTypeString } from "./errors.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.AlternateMode","kind":"method","status":"implemented","sigHash":"b7a4cccfda5482aa6b416c22abfac4443b53ac96e25e4fbf2233fc1d6c068ac3"}
  *
@@ -131,7 +132,7 @@ export function commandLineParser_UnknownDidYouMeanDiagnostic(receiver: GoPtr<co
 export interface commandLineParser {
   workerDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics>;
   optionsMap: GoPtr<NameMap>;
-  fs: FS;
+  fs: GoInterface<FS>;
   currentDirectory: string;
   options: GoPtr<OrderedMap<string, unknown>>;
   fileNames: GoSlice<string>;
@@ -163,12 +164,12 @@ export interface commandLineParser {
  * 	return result
  * }
  */
-export function ParseCommandLine(commandLine: GoSlice<string>, host: ParseConfigHost): GoPtr<ParsedCommandLine> {
+export function ParseCommandLine(commandLine: GoSlice<string>, host: GoInterface<ParseConfigHost>): GoPtr<ParsedCommandLine> {
   if (commandLine === undefined || commandLine === null) {
     commandLine = [];
   }
-  const parser = parseCommandLineWorker(CompilerOptionsDidYouMeanDiagnostics, commandLine, host.FS(), host.GetCurrentDirectory());
-  const optionsWithAbsolutePaths = convertToOptionsWithAbsolutePaths(OrderedMap_Clone(parser!.options as GoPtr<OrderedMap<string, unknown>>), CommandLineCompilerOptionsMap, host.GetCurrentDirectory());
+  const parser = parseCommandLineWorker(CompilerOptionsDidYouMeanDiagnostics, commandLine, host!.FS(), host!.GetCurrentDirectory());
+  const optionsWithAbsolutePaths = convertToOptionsWithAbsolutePaths(OrderedMap_Clone(parser!.options as GoPtr<OrderedMap<string, unknown>>), CommandLineCompilerOptionsMap, host!.GetCurrentDirectory());
   const compilerParser: compilerOptionsParser = { __tsgoEmbedded0: {} as CompilerOptions };
   convertMapToOptions(optionsWithAbsolutePaths as GoPtr<OrderedMap<string, unknown>>, compilerOptionsParser_as_optionParser(compilerParser));
   const compilerOptions = compilerParser.__tsgoEmbedded0;
@@ -176,8 +177,8 @@ export function ParseCommandLine(commandLine: GoSlice<string>, host: ParseConfig
   convertMapToOptions(optionsWithAbsolutePaths as GoPtr<OrderedMap<string, unknown>>, watchOptionsParser_as_optionParser(watchParser));
   const watchOptions = watchParser.__tsgoEmbedded0;
   const result = NewParsedCommandLine(compilerOptions, parser!.fileNames, {
-    UseCaseSensitiveFileNames: host.FS().UseCaseSensitiveFileNames(),
-    CurrentDirectory: host.GetCurrentDirectory(),
+    UseCaseSensitiveFileNames: host!.FS()!.UseCaseSensitiveFileNames(),
+    CurrentDirectory: host!.GetCurrentDirectory(),
   });
   result!.ParsedConfig!.WatchOptions = watchOptions;
   result!.Errors = parser!.errors;
@@ -240,11 +241,11 @@ export function ParseCommandLine(commandLine: GoSlice<string>, host: ParseConfig
  * 	return result
  * }
  */
-export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseConfigHost): GoPtr<ParsedBuildCommandLine> {
+export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: GoInterface<ParseConfigHost>): GoPtr<ParsedBuildCommandLine> {
   if (commandLine === undefined || commandLine === null) {
     commandLine = [];
   }
-  const parser = parseCommandLineWorker(buildOptionsDidYouMeanDiagnostics, commandLine, host.FS(), host.GetCurrentDirectory());
+  const parser = parseCommandLineWorker(buildOptionsDidYouMeanDiagnostics, commandLine, host!.FS(), host!.GetCurrentDirectory());
   const compilerOptions: CompilerOptions = {} as CompilerOptions;
   OrderedMap_Entries(parser!.options as GoPtr<OrderedMap<string, unknown>>)!((key: string, value: unknown): bool => {
     const buildOption = NameMap_Get(BuildNameMap, key);
@@ -265,8 +266,8 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseC
     Errors: parser!.errors,
     Raw: parser!.options,
     comparePathsOptions: {
-      UseCaseSensitiveFileNames: host.FS().UseCaseSensitiveFileNames(),
-      CurrentDirectory: host.GetCurrentDirectory(),
+      UseCaseSensitiveFileNames: host!.FS()!.UseCaseSensitiveFileNames(),
+      CurrentDirectory: host!.GetCurrentDirectory(),
     },
     resolvedProjectPaths: [],
     resolvedProjectPathsOnce: new Once(),
@@ -315,7 +316,7 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseC
  * 	return parser
  * }
  */
-export function parseCommandLineWorker(parseCommandLineWithDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics>, commandLine: GoSlice<string>, fs: FS, currentDirectory: string): GoPtr<commandLineParser> {
+export function parseCommandLineWorker(parseCommandLineWithDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics>, commandLine: GoSlice<string>, fs: GoInterface<FS>, currentDirectory: string): GoPtr<commandLineParser> {
   const parser: commandLineParser = {
     fs: fs,
     currentDirectory: currentDirectory,
@@ -527,9 +528,9 @@ export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineP
  * 	return text, errors
  * }
  */
-export function tryReadFile(fileName: string, readFile: (arg0: string) => [string, bool], errors: GoSlice<GoPtr<Diagnostic>>): [string, GoSlice<GoPtr<Diagnostic>>] {
+export function tryReadFile(fileName: string, readFile: GoFunc<(arg0: string) => [string, bool]>, errors: GoSlice<GoPtr<Diagnostic>>): [string, GoSlice<GoPtr<Diagnostic>>] {
   // this function adds a compiler diagnostic if the file cannot be read
-  let [text, e] = readFile(fileName);
+  let [text, e] = readFile!(fileName);
 
   if (!e) {
     // !!! Divergence: the returned error will not give a useful message

@@ -35,6 +35,7 @@ import type { OrderedSet } from "../../collections/ordered_set.js";
 import { NewOrderedSetWithSizeHint } from "../../collections/ordered_set.js";
 import { OrderedSet_Size } from "../../collections/ordered_set.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forAwaitHierarchyFacts","kind":"type","status":"implemented","sigHash":"89f2a13d454fc30fc2e581b3a64d8e6613f0c8304132aa4c7f38bf9964ca1d3a"}
  *
@@ -234,14 +235,14 @@ export function forawaitTransformer_visitModifiersNoAsync(receiver: GoPtr<forawa
  * 	return cb(tx, node)
  * }
  */
-export function forawaitTransformer_doWithHierarchyFacts(receiver: GoPtr<forawaitTransformer>, cb: (arg0: GoPtr<forawaitTransformer>, arg1: GoPtr<Node>) => GoPtr<Node>, node: GoPtr<Node>, excludeFacts: forAwaitHierarchyFacts, includeFacts: forAwaitHierarchyFacts): GoPtr<Node> {
+export function forawaitTransformer_doWithHierarchyFacts(receiver: GoPtr<forawaitTransformer>, cb: GoFunc<(arg0: GoPtr<forawaitTransformer>, arg1: GoPtr<Node>) => GoPtr<Node>>, node: GoPtr<Node>, excludeFacts: forAwaitHierarchyFacts, includeFacts: forAwaitHierarchyFacts): GoPtr<Node> {
   if (forawaitTransformer_affectsSubtree(receiver, excludeFacts, includeFacts)) {
     const ancestorFacts = forawaitTransformer_enterSubtree(receiver, excludeFacts, includeFacts);
-    const result = cb(receiver, node);
+    const result = cb!(receiver, node);
     forawaitTransformer_exitSubtree(receiver, ancestorFacts);
     return result;
   }
-  return cb(receiver, node);
+  return cb!(receiver, node);
 }
 
 /**

@@ -250,6 +250,7 @@ import { Number_Abs, Number_Remainder } from "../../jsnum/jsnum.js";
 import { NewPseudoBigInt, ParsePseudoBigInt } from "../../jsnum/pseudobigint.js";
 import { Checker_isSkipDirectInferenceNode } from "../inference.js";
 
+import type { GoInterface, GoRef } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceFile","kind":"method","status":"implemented","sigHash":"73742795303ebe59bb331756ff6743713f7b9c4fbd309e3a8507a615e2dbf18f"}
  *
@@ -292,7 +293,7 @@ import { Checker_isSkipDirectInferenceNode } from "../inference.js";
  * 	c.ctx = nil
  * }
  */
-export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>, checkUnused: bool): void {
+export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, checkUnused: bool): void {
   receiver!.ctx = ctx;
   const links = Checker_getSourceFileLinks(receiver, sourceFile);
   if (!links!.typeChecked) {
@@ -1918,7 +1919,7 @@ export function Checker_checkSuperExpression(receiver: GoPtr<Checker>, node: GoP
  * 	return c.resolveErrorCall(node)
  * }
  */
-export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
+export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoRef<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
   let expressionType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
   if (expressionType === receiver!.silentNeverType) {
     return receiver!.silentNeverSignature;
@@ -2002,7 +2003,7 @@ export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoP
  * 	return c.anySignature
  * }
  */
-export function Checker_resolveInstanceofExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
+export function Checker_resolveInstanceofExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoRef<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
   const right = AsBinaryExpression(node)!.Right;
   const rightType = Checker_checkExpression(receiver, right);
   if (!IsTypeAny(rightType)) {
@@ -2049,14 +2050,14 @@ export function Checker_resolveInstanceofExpression(receiver: GoPtr<Checker>, no
  * 	}
  * }
  */
-export function Checker_maybeAddMissingAwaitInfo(receiver: GoPtr<Checker>, errorNode: GoPtr<Node>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, reportErrors: bool, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): void {
-  if (errorNode !== undefined && reportErrors && diagnosticOutput !== undefined && diagnosticOutput.length !== 0) {
+export function Checker_maybeAddMissingAwaitInfo(receiver: GoPtr<Checker>, errorNode: GoPtr<Node>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, reportErrors: bool, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): void {
+  if (errorNode !== undefined && reportErrors && diagnosticOutput !== undefined && diagnosticOutput.v.length !== 0) {
     if (Checker_getAwaitedTypeOfPromise(receiver, target) !== undefined) {
       return;
     }
     const awaitedTypeOfSource = Checker_getAwaitedTypeOfPromise(receiver, source);
     if (awaitedTypeOfSource !== undefined && Checker_isTypeRelatedTo(receiver, awaitedTypeOfSource, target, relation)) {
-      Diagnostic_AddRelatedInfo(diagnosticOutput[0], NewDiagnosticForNode(errorNode, Did_you_forget_to_use_await));
+      Diagnostic_AddRelatedInfo(diagnosticOutput.v[0], NewDiagnosticForNode(errorNode, Did_you_forget_to_use_await));
     }
   }
 }
@@ -3153,7 +3154,7 @@ function Checker_checkBinaryLikeExpressionWithTypes(receiver: GoPtr<Checker>, le
           case KindGreaterThanGreaterThanEqualsToken:
           case KindGreaterThanGreaterThanGreaterThanToken:
           case KindGreaterThanGreaterThanGreaterThanEqualsToken: {
-            const rhsEval = receiver!.evaluate(right, right);
+            const rhsEval = receiver!.evaluate!(right, right);
             if (typeof rhsEval.Value === "number") {
               const numValue = rhsEval.Value as Number;
               if (Number_Abs(numValue) >= (32 as Number)) {

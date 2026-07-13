@@ -53,6 +53,7 @@ import type { anonymousFunctionDefinition } from "./namedevaluation.js";
 import { IsIdentifierText } from "../../scanner/utilities.js";
 import { Filter, Some } from "../../core/core.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classFacts","kind":"type","status":"implemented","sigHash":"13a741db1e6964ac18f53134eb775f7a34d4093e7915d3598bb8218637998b35"}
  *
@@ -245,7 +246,7 @@ export interface classLexicalEnv {
 export interface classFieldsTransformer {
   __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
-  resolver: ReferenceResolver;
+  resolver: GoInterface<ReferenceResolver>;
   shouldTransformInitializersUsingSet: bool;
   shouldTransformInitializersUsingDefine: bool;
   shouldTransformInitializers: bool;
@@ -275,7 +276,7 @@ export interface classFieldsTransformer {
   arrayAssignmentElementVisitor: GoPtr<NodeVisitor>;
   objectAssignmentElementVisitor: GoPtr<NodeVisitor>;
   substitutionVisitor: GoPtr<NodeVisitor>;
-  isAnonymousClassNeedingAssignedName: (arg0: GoPtr<anonymousFunctionDefinition>) => bool;
+  isAnonymousClassNeedingAssignedName: GoFunc<(arg0: GoPtr<anonymousFunctionDefinition>) => bool>;
 }
 
 /**
@@ -990,7 +991,7 @@ export function classFieldsTransformer_visitAccessorFieldResult(receiver: GoPtr<
  * }
  */
 export function classFieldsTransformer_visitIdentifier(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Identifier>): GoPtr<Node> {
-  const declaration = receiver!.resolver.GetReferencedValueDeclaration(EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node));
+  const declaration = receiver!.resolver!.GetReferencedValueDeclaration(EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node));
   if (declaration !== undefined) {
     const alias = receiver!.classAliases.get(declaration);
     if (alias !== undefined && Set_Has(receiver!.enclosingClassDeclarations, declaration)) {
@@ -1563,15 +1564,15 @@ export function classFieldsTransformer_extractNonStaticNonAccessorModifiers(rece
  * 	return visitor(tx, node)
  * }
  */
-export function classFieldsTransformer_setCurrentClassElementAnd(receiver: GoPtr<classFieldsTransformer>, classElement: GoPtr<ClassElement>, visitor: (tx: GoPtr<classFieldsTransformer>, node: GoPtr<Node>) => GoPtr<Node>, node: GoPtr<Node>): GoPtr<Node> {
+export function classFieldsTransformer_setCurrentClassElementAnd(receiver: GoPtr<classFieldsTransformer>, classElement: GoPtr<ClassElement>, visitor: GoFunc<(tx: GoPtr<classFieldsTransformer>, node: GoPtr<Node>) => GoPtr<Node>>, node: GoPtr<Node>): GoPtr<Node> {
   if (classElement !== receiver!.currentClassElement) {
     const saved = receiver!.currentClassElement;
     receiver!.currentClassElement = classElement;
-    const result = visitor(receiver, node);
+    const result = visitor!(receiver, node);
     receiver!.currentClassElement = saved;
     return result;
   }
-  return visitor(receiver, node);
+  return visitor!(receiver, node);
 }
 
 /**
@@ -1601,15 +1602,15 @@ export function classFieldsTransformer_visitEachChildOfNode(receiver: GoPtr<clas
  * 	return visitor(tx, node)
  * }
  */
-export function classFieldsTransformer_setInIterationStatementAnd(receiver: GoPtr<classFieldsTransformer>, inIteration: bool, visitor: (tx: GoPtr<classFieldsTransformer>, node: GoPtr<Node>) => GoPtr<Node>, node: GoPtr<Node>): GoPtr<Node> {
+export function classFieldsTransformer_setInIterationStatementAnd(receiver: GoPtr<classFieldsTransformer>, inIteration: bool, visitor: GoFunc<(tx: GoPtr<classFieldsTransformer>, node: GoPtr<Node>) => GoPtr<Node>>, node: GoPtr<Node>): GoPtr<Node> {
   if (receiver!.inIterationStatement !== inIteration) {
     const saved = receiver!.inIterationStatement;
     receiver!.inIterationStatement = inIteration;
-    const result = visitor(receiver, node);
+    const result = visitor!(receiver, node);
     receiver!.inIterationStatement = saved;
     return result;
   }
-  return visitor(receiver, node);
+  return visitor!(receiver, node);
 }
 
 /**
@@ -3577,7 +3578,7 @@ export function classFieldsTransformer_memberContainsConstructorReference(receiv
   const className = GetNameOfDeclaration(classDecl as unknown as GoPtr<Declaration>);
   const check = (n: GoPtr<Node>): bool => {
     if (IsIdentifier(n) && n !== className) {
-      const decl = receiver!.resolver.GetReferencedValueDeclaration(n as GoPtr<IdentifierNode>);
+      const decl = receiver!.resolver!.GetReferencedValueDeclaration(n as GoPtr<IdentifierNode>);
       if (decl === classOriginal) {
         return true;
       }
@@ -3874,7 +3875,7 @@ export function classFieldsTransformer_visitExpressionWithTypeArgumentsInHeritag
  * 	return result
  * }
  */
-export function classFieldsTransformer_visitInNewClassLexicalEnvironment(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>, visitor: (tx: GoPtr<classFieldsTransformer>, node: GoPtr<Node>, facts: classFacts) => GoPtr<Node>): GoPtr<Node> {
+export function classFieldsTransformer_visitInNewClassLexicalEnvironment(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>, visitor: GoFunc<(tx: GoPtr<classFieldsTransformer>, node: GoPtr<Node>, facts: classFacts) => GoPtr<Node>>): GoPtr<Node> {
   const savedCurrentClassContainer = receiver!.currentClassContainer;
   const savedPendingExpressions = receiver!.pendingExpressions;
   const savedLexicalEnvironment = receiver!.lexicalEnvironment;
@@ -3916,7 +3917,7 @@ export function classFieldsTransformer_visitInNewClassLexicalEnvironment(receive
     classFieldsTransformer_getClassLexicalEnvironment(receiver)!.facts = facts;
   }
 
-  const result = visitor(receiver, node, facts);
+  const result = visitor!(receiver, node, facts);
   Set_Delete(receiver!.enclosingClassDeclarations, original);
   classFieldsTransformer_endClassLexicalEnvironment(receiver);
   receiver!.currentClassContainer = savedCurrentClassContainer;
@@ -7453,14 +7454,14 @@ export function flattenCommaList(node: GoPtr<Expression>): GoSeq<GoPtr<Expressio
  * 	}
  * }
  */
-export function flattenCommaListWorker(node: GoPtr<Expression>, yield_: (arg0: GoPtr<Expression>) => bool): bool {
+export function flattenCommaListWorker(node: GoPtr<Expression>, yield_: GoFunc<(arg0: GoPtr<Expression>) => bool>): bool {
   if (IsParenthesizedExpression(node) && NodeIsSynthesized(node)) {
     return flattenCommaListWorker(Node_Expression(node), yield_);
   } else if (IsCommaExpression(node)) {
     return flattenCommaListWorker(AsBinaryExpression(node)!.Left, yield_) &&
       flattenCommaListWorker(AsBinaryExpression(node)!.Right, yield_);
   } else {
-    return yield_(node);
+    return yield_!(node);
   }
 }
 

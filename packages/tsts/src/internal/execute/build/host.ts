@@ -28,6 +28,7 @@ import type { parseCache } from "./parseCache.js";
 import { parseCache_loadOrStore } from "./parseCache.js";
 import { BuildTask_loadOrStoreBuildInfo } from "./buildtask.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::type::host","kind":"type","status":"implemented","sigHash":"4878a075c6246d276432fff1aab5b03ef485e8fc6f147876280d0e8e305a382a"}
  *
@@ -48,7 +49,7 @@ import { BuildTask_loadOrStoreBuildInfo } from "./buildtask.js";
  */
 export interface host {
   orchestrator: GoPtr<Orchestrator>;
-  host: CompilerHost;
+  host: GoInterface<CompilerHost>;
   extendedConfigCache: ExtendedConfigCache;
   sourceFiles: parseCache<SourceFileParseOptions, GoPtr<SourceFile>>;
   configTimes: SyncMap<Path, Duration>;
@@ -66,13 +67,13 @@ export interface host {
  * 	_ incremental.Host            = (*host)(nil)
  * )
  */
-export let ______46749447_0: CompilerHost = host_as_compiler_CompilerHost(undefined);
+export let ______46749447_0: GoInterface<CompilerHost> = host_as_compiler_CompilerHost(undefined);
 export let ______46749447_1: BuildInfoReader = host_as_incremental_BuildInfoReader(undefined);
 export let ______46749447_2: Host = host_as_incremental_Host(undefined);
 
 export function host_as_compiler_CompilerHost(receiver: GoPtr<host>): CompilerHost {
   return {
-    FS: (): FS_7f03dc1c => host_FS(receiver),
+    FS: (): FS_7f03dc1c => host_FS(receiver)!,
     DefaultLibraryPath: (): string => host_DefaultLibraryPath(receiver),
     GetCurrentDirectory: (): string => host_GetCurrentDirectory(receiver),
     Trace: (msg: GoPtr<Message>, ...args: Array<unknown>): void => host_Trace(receiver, msg, ...args),
@@ -102,8 +103,8 @@ export function host_as_incremental_Host(receiver: GoPtr<host>): Host {
  * 	return h.host.FS()
  * }
  */
-export function host_FS(receiver: GoPtr<host>): FS_7f03dc1c {
-  return receiver!.host.FS();
+export function host_FS(receiver: GoPtr<host>): GoInterface<FS_7f03dc1c> {
+  return receiver!.host!.FS();
 }
 
 /**
@@ -115,7 +116,7 @@ export function host_FS(receiver: GoPtr<host>): FS_7f03dc1c {
  * }
  */
 export function host_DefaultLibraryPath(receiver: GoPtr<host>): string {
-  return receiver!.host.DefaultLibraryPath();
+  return receiver!.host!.DefaultLibraryPath();
 }
 
 /**
@@ -127,7 +128,7 @@ export function host_DefaultLibraryPath(receiver: GoPtr<host>): string {
  * }
  */
 export function host_GetCurrentDirectory(receiver: GoPtr<host>): string {
-  return receiver!.host.GetCurrentDirectory();
+  return receiver!.host!.GetCurrentDirectory();
 }
 
 /**
@@ -156,9 +157,9 @@ export function host_Trace(receiver: GoPtr<host>, msg: GoPtr<Message>, ...args: 
  */
 export function host_GetSourceFile(receiver: GoPtr<host>, opts: SourceFileParseOptions): GoPtr<SourceFile> {
   if (IsDeclarationFileName(opts.FileName) || FileExtensionIs(opts.FileName, ExtensionJson)) {
-    return parseCache_loadOrStore(receiver!.sourceFiles, opts, (o) => receiver!.host.GetSourceFile(o), false);
+    return parseCache_loadOrStore(receiver!.sourceFiles, opts, (o) => receiver!.host!.GetSourceFile(o), false);
   }
-  return receiver!.host.GetSourceFile(opts);
+  return receiver!.host!.GetSourceFile(opts);
 }
 
 /**
@@ -184,7 +185,7 @@ export function host_GetSourceFile(receiver: GoPtr<host>, opts: SourceFileParseO
  */
 export function host_GetResolvedProjectReference(receiver: GoPtr<host>, fileName: string, path: Path): GoPtr<ParsedCommandLine> {
   return parseCache_loadOrStore(receiver!.resolvedReferences, path, (p: Path): GoPtr<ParsedCommandLine> => {
-    const configStart = receiver!.orchestrator!.opts.Sys.Now();
+    const configStart = receiver!.orchestrator!.opts.Sys!.Now();
     let commandLineRaw: GoPtr<OrderedMap<string, unknown>> = undefined;
     const raw = receiver!.orchestrator!.opts.Command!.Raw;
     if (raw !== undefined && raw !== null) {
@@ -196,7 +197,7 @@ export function host_GetResolvedProjectReference(receiver: GoPtr<host>, fileName
       }
     }
     const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, p, receiver!.orchestrator!.opts.Command!.CompilerOptions, commandLineRaw, host_as_compiler_CompilerHost(receiver), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache));
-    const configTime = (receiver!.orchestrator!.opts.Sys.Now() as Time & { Sub(t: Time): Duration }).Sub(configStart);
+    const configTime = (receiver!.orchestrator!.opts.Sys!.Now() as Time & { Sub(t: Time): Duration }).Sub(configStart);
     SyncMap_Store(receiver!.configTimes, p, configTime);
     return commandLine;
   }, true);
@@ -241,7 +242,7 @@ export function host_GetMTime(receiver: GoPtr<host>, file: string): Time {
  * }
  */
 export function host_SetMTime(receiver: GoPtr<host>, file: string, mTime: Time): GoError {
-  return host_FS(receiver).Chtimes(file, new TimeClass(), mTime);
+  return host_FS(receiver)!.Chtimes(file, new TimeClass(), mTime);
 }
 
 /**

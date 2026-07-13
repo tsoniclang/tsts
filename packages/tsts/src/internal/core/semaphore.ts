@@ -2,6 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoChan, GoPtr } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::Semaphore","kind":"type","status":"implemented","sigHash":"3af1dcc6419e253094c19a125f53a81e779ace89ff7548cc097e592a4665a73a"}
  *
@@ -12,8 +13,8 @@ import type { Context } from "../../go/context.js";
  * }
  */
 export interface Semaphore {
-  Acquire(): () => void;
-  TryAcquire(ctx: Context): [() => void, bool];
+  Acquire(): GoFunc<() => void>;
+  TryAcquire(ctx: GoInterface<Context>): [() => void, bool];
 }
 
 /**
@@ -22,7 +23,7 @@ export interface Semaphore {
  * Go source:
  * var _ Semaphore = UnlimitedSemaphore{}
  */
-export let __c5a93a22_0: Semaphore = UnlimitedSemaphore_as_Semaphore({});
+export let __c5a93a22_0: GoInterface<Semaphore> = UnlimitedSemaphore_as_Semaphore({});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::UnlimitedSemaphore","kind":"type","status":"implemented","sigHash":"eccd0e32b4c71792b14c837a176a34fde532f11d1c1de7a6bc8d6e5ecd893ad6"}
@@ -36,7 +37,7 @@ export interface UnlimitedSemaphore {
 
 export function UnlimitedSemaphore_as_Semaphore(receiver: UnlimitedSemaphore): Semaphore {
   return {
-    Acquire: (): () => void => UnlimitedSemaphore_Acquire(receiver),
+    Acquire: (): () => void => UnlimitedSemaphore_Acquire(receiver)!,
     TryAcquire: (ctx: Context): [() => void, bool] => UnlimitedSemaphore_TryAcquire(receiver, ctx),
   };
 }
@@ -49,7 +50,7 @@ export function UnlimitedSemaphore_as_Semaphore(receiver: UnlimitedSemaphore): S
  * 	return func() {}
  * }
  */
-export function UnlimitedSemaphore_Acquire(receiver: UnlimitedSemaphore): () => void {
+export function UnlimitedSemaphore_Acquire(receiver: UnlimitedSemaphore): GoFunc<() => void> {
   return (): void => {};
 }
 
@@ -61,7 +62,7 @@ export function UnlimitedSemaphore_Acquire(receiver: UnlimitedSemaphore): () => 
  * 	return func() {}, true
  * }
  */
-export function UnlimitedSemaphore_TryAcquire(receiver: UnlimitedSemaphore, ctx: Context): [() => void, bool] {
+export function UnlimitedSemaphore_TryAcquire(receiver: UnlimitedSemaphore, ctx: GoInterface<Context>): [() => void, bool] {
   return [(): void => {}, true];
 }
 
@@ -71,7 +72,7 @@ export function UnlimitedSemaphore_TryAcquire(receiver: UnlimitedSemaphore, ctx:
  * Go source:
  * var _ Semaphore = (*LimitedSemaphore)(nil)
  */
-export let ___2_1cad8911_0: Semaphore = LimitedSemaphore_as_Semaphore(undefined);
+export let ___2_1cad8911_0: GoInterface<Semaphore> = LimitedSemaphore_as_Semaphore(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::LimitedSemaphore","kind":"type","status":"implemented","sigHash":"6f0f638a52f144421c3246c9abcfb7d73564bb66fef1678b506f56eacc4422bb"}
@@ -84,12 +85,12 @@ export let ___2_1cad8911_0: Semaphore = LimitedSemaphore_as_Semaphore(undefined)
  */
 export interface LimitedSemaphore {
   ch: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">;
-  release: () => void;
+  release: GoFunc<() => void>;
 }
 
 export function LimitedSemaphore_as_Semaphore(receiver: GoPtr<LimitedSemaphore>): Semaphore {
   return {
-    Acquire: (): () => void => LimitedSemaphore_Acquire(receiver),
+    Acquire: (): () => void => LimitedSemaphore_Acquire(receiver)!,
     TryAcquire: (ctx: Context): [() => void, bool] => LimitedSemaphore_TryAcquire(receiver, ctx),
   };
 }
@@ -129,7 +130,7 @@ export function NewLimitedSemaphore(maxConcurrency: int): GoPtr<LimitedSemaphore
  * 	return s.release
  * }
  */
-export function LimitedSemaphore_Acquire(receiver: GoPtr<LimitedSemaphore>): () => void {
+export function LimitedSemaphore_Acquire(receiver: GoPtr<LimitedSemaphore>): GoFunc<() => void> {
   // Single-threaded: channel send never blocks; return the stored release function.
   return receiver!.release;
 }
@@ -147,7 +148,7 @@ export function LimitedSemaphore_Acquire(receiver: GoPtr<LimitedSemaphore>): () 
  * 	}
  * }
  */
-export function LimitedSemaphore_TryAcquire(receiver: GoPtr<LimitedSemaphore>, ctx: Context): [() => void, bool] {
+export function LimitedSemaphore_TryAcquire(receiver: GoPtr<LimitedSemaphore>, ctx: GoInterface<Context>): [() => void, bool] {
   // Single-threaded: select always takes the acquire branch (no ctx.Done blocking).
-  return [receiver!.release, true];
+  return [receiver!.release!, true];
 }

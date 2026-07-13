@@ -494,10 +494,10 @@ export function Printer_emitFunctionBody(receiver: GoPtr<Printer>, body: GoPtr<B
   Printer_increaseIndent(receiver);
   const detachedState = Printer_emitDetachedCommentsBeforeStatementList(receiver, Node_AsNode(body), body!.Statements!.Loc);
   const statementOffset = Printer_emitPrologueDirectives(receiver, body!.Statements);
-  const pos = receiver!.writer.GetTextPos();
+  const pos = receiver!.writer!.GetTextPos();
   Printer_emitHelpers(receiver, Node_AsNode(body));
 
-  if (Printer_shouldEmitBlockFunctionBodyOnSingleLine(receiver, body) && statementOffset === 0 && pos === receiver!.writer.GetTextPos()) {
+  if (Printer_shouldEmitBlockFunctionBodyOnSingleLine(receiver, body) && statementOffset === 0 && pos === receiver!.writer!.GetTextPos()) {
     Printer_decreaseIndent(receiver);
     Printer_emitListRange(receiver, Printer_emitStatement, Node_AsNode(body), body!.Statements, LFSingleLineFunctionBodyStatements, statementOffset, -1);
     Printer_increaseIndent(receiver);

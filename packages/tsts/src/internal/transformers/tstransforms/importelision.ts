@@ -34,6 +34,7 @@ import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::type::ImportElisionTransformer","kind":"type","status":"implemented","sigHash":"14dbd314bb170c0be6d4a2cff3fc73755b8bdac3dc81bfb877a24bcec60ea804"}
  *
@@ -49,7 +50,7 @@ export interface ImportElisionTransformer {
   __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   currentSourceFile: GoPtr<SourceFile>;
-  emitResolver: EmitResolver;
+  emitResolver: GoInterface<EmitResolver>;
 }
 
 /**
@@ -333,7 +334,7 @@ export function ImportElisionTransformer_shouldEmitImportEqualsDeclaration(recei
  */
 export function ImportElisionTransformer_isReferencedAliasDeclaration(receiver: GoPtr<ImportElisionTransformer>, node: GoPtr<Node>): bool {
   const parsed = EmitContext_ParseNode(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node);
-  return parsed === undefined || receiver!.emitResolver.IsReferencedAliasDeclaration(parsed);
+  return parsed === undefined || receiver!.emitResolver!.IsReferencedAliasDeclaration(parsed);
 }
 
 /**
@@ -347,7 +348,7 @@ export function ImportElisionTransformer_isReferencedAliasDeclaration(receiver: 
  */
 export function ImportElisionTransformer_isValueAliasDeclaration(receiver: GoPtr<ImportElisionTransformer>, node: GoPtr<Node>): bool {
   const parsed = EmitContext_ParseNode(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node);
-  return parsed === undefined || receiver!.emitResolver.IsValueAliasDeclaration(parsed);
+  return parsed === undefined || receiver!.emitResolver!.IsValueAliasDeclaration(parsed);
 }
 
 /**
@@ -361,5 +362,5 @@ export function ImportElisionTransformer_isValueAliasDeclaration(receiver: GoPtr
  */
 export function ImportElisionTransformer_isTopLevelValueImportEqualsWithEntityName(receiver: GoPtr<ImportElisionTransformer>, node: GoPtr<Node>): bool {
   const parsed = EmitContext_ParseNode(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node);
-  return parsed !== undefined && receiver!.emitResolver.IsTopLevelValueImportEqualsWithEntityName(parsed);
+  return parsed !== undefined && receiver!.emitResolver!.IsTopLevelValueImportEqualsWithEntityName(parsed);
 }

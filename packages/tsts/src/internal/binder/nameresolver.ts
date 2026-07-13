@@ -30,6 +30,7 @@ import { TSUnknown, TSTrue, TSFalse } from "../core/tristate.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import { Cannot_access_0_from_another_file_without_qualification_when_1_is_enabled_Use_2_instead, Static_members_cannot_reference_class_type_parameters, Base_class_expressions_cannot_reference_class_type_parameters, A_computed_property_name_cannot_reference_a_type_parameter_from_its_containing_type } from "../diagnostics/generated/messages.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::type::NameResolver","kind":"type","status":"implemented","sigHash":"d94405adce18614a3bbc95fd4d2e6a922712412fd7e622beb57b4a8a12dfc016"}
  *
@@ -58,7 +59,7 @@ export interface NameResolver {
   ArgumentsSymbol?: GoPtr<Symbol>;
   RequireSymbol?: GoPtr<Symbol>;
   Lookup?: (symbols: SymbolTable | undefined, name: string, meaning: SymbolFlags) => GoPtr<Symbol>;
-  SymbolReferenced?: (symbol_: GoPtr<Symbol>, meaning: SymbolFlags) => void;
+  SymbolReferenced?: GoFunc<(symbol_: GoPtr<Symbol>, meaning: SymbolFlags) => void>;
   SetRequiresScopeChangeCache?: (node: GoPtr<Node>, value: Tristate) => void;
   GetRequiresScopeChangeCache?: (node: GoPtr<Node>) => Tristate;
   OnPropertyWithInvalidInitializer?: (location: GoPtr<Node>, name: string, declaration: GoPtr<Node>, result: GoPtr<Symbol>) => bool;

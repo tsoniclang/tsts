@@ -6,6 +6,7 @@ import type { SourceOutputAndProjectReference } from "../tsoptions/parsedcommand
 import type { Path } from "../tspath/path.js";
 import type { EmitResolver } from "./emitresolver.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emithost.go::type::EmitHost","kind":"type","status":"implemented","sigHash":"86d3825eb042c6035fe2cb5b2b3b1f40c7a5774c29d4ec77071e82aed8b8c86b"}
  *
@@ -32,8 +33,8 @@ export interface EmitHost {
   CommonSourceDirectory(): string;
   IsEmitBlocked(file: string): bool;
   WriteFile(fileName: string, text: string): GoError;
-  GetEmitModuleFormatOfFile(file: HasFileName): ModuleKind;
-  GetEmitResolver(): EmitResolver;
+  GetEmitModuleFormatOfFile(file: GoInterface<HasFileName>): ModuleKind;
+  GetEmitResolver(): GoInterface<EmitResolver>;
   GetProjectReferenceFromSource(path: Path): GoPtr<SourceOutputAndProjectReference>;
   IsSourceFileFromExternalLibrary(file: GoPtr<SourceFile>): bool;
 }

@@ -91,24 +91,24 @@ export function GetESTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transform
   const options = opts!.CompilerOptions;
   switch (CompilerOptions_GetEmitScriptTarget(options)) {
     case ScriptTargetESNext:
-      return esDecoratorAndClassFields(opts);
+      return esDecoratorAndClassFields!(opts);
     case ScriptTargetES2025:
     case ScriptTargetES2024:
     case ScriptTargetES2023:
     case ScriptTargetES2022:
     case ScriptTargetES2021:
-      return NewESNextTransformer(opts);
+      return NewESNextTransformer!(opts);
     case ScriptTargetES2020:
-      return NewES2021Transformer(opts);
+      return NewES2021Transformer!(opts);
     case ScriptTargetES2019:
-      return NewES2020Transformer(opts);
+      return NewES2020Transformer!(opts);
     case ScriptTargetES2018:
-      return NewES2019Transformer(opts);
+      return NewES2019Transformer!(opts);
     case ScriptTargetES2017:
-      return NewES2018Transformer(opts);
+      return NewES2018Transformer!(opts);
     case ScriptTargetES2016:
-      return NewES2017Transformer(opts);
+      return NewES2017Transformer!(opts);
     default: // other, older, option, transform maximally
-      return NewES2016Transformer(opts);
+      return NewES2016Transformer!(opts);
   }
 }

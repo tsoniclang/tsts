@@ -553,7 +553,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         const params = NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters);
         const returnType = NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType);
         const fnResult = NewFunctionTypeNode(b.f, typeParams as GoPtr<never>, params as GoPtr<never>, returnType as GoPtr<never>);
-        cleanup();
+        cleanup!();
         return fnResult;
       }
       case PseudoTypeKindTuple: {
@@ -683,7 +683,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
             cleanup();
           }
         }
-        restoreObjectLiteralFlags();
+        restoreObjectLiteralFlags!();
         const result = NewTypeLiteralNode(b.f, NodeFactory_NewNodeList(b.f, newElements) as GoPtr<never>);
         if ((b.ctx!.flags & FlagsMultilineObjectLiterals) === 0) {
           EmitContext_AddEmitFlags(b.e, result, EFSingleLine);

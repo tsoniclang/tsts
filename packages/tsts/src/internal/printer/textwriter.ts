@@ -10,6 +10,7 @@ import type { TextPos } from "../core/text.js";
 import { IsWhiteSpaceLike } from "../stringutil/util.js";
 import type { EmitTextWriter } from "./emittextwriter.js";
 
+import type { GoInterface } from "../../go/compat.js";
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // byte slicing `s[i:]` operates on byte offsets. We mirror that contract by
 // operating over the UTF-8 byte view and converting back at the boundaries.
@@ -70,7 +71,7 @@ function textWriter_as_EmitTextWriter(receiver: GoPtr<textWriter>): EmitTextWrit
  * Go source:
  * var _ EmitTextWriter = &textWriter{}
  */
-export let __f8aeeddb_0: EmitTextWriter = textWriter_as_EmitTextWriter({
+export let __f8aeeddb_0: GoInterface<EmitTextWriter> = textWriter_as_EmitTextWriter({
   newLine: "",
   indentSize: 0,
   builder: new Builder(),
@@ -678,7 +679,7 @@ export function textWriter_WriteTrailingSemicolon(receiver: GoPtr<textWriter>, t
  * 	return &w
  * }
  */
-export function NewTextWriter(newLine: string, indentSize: int): EmitTextWriter {
+export function NewTextWriter(newLine: string, indentSize: int): GoInterface<EmitTextWriter> {
   if (indentSize <= 0) {
     indentSize = 4;
   }

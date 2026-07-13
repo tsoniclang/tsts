@@ -11,6 +11,7 @@ import type { EmitResolver } from "../printer/emitresolver.js";
 import type { Transformer } from "./transformer.js";
 import { Transformer_NewTransformer, Transformer_TransformSourceFile } from "./transformer.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/chain.go::type::chainedTransformer","kind":"type","status":"implemented","sigHash":"de9d40017e936b1e8e82b48e8d1d9621e6a0ea4d075f991c93760265528bd770"}
  *
@@ -66,8 +67,8 @@ export function chainedTransformer_visit(receiver: GoPtr<chainedTransformer>, no
 export interface TransformOptions {
   Context: GoPtr<EmitContext>;
   CompilerOptions: GoPtr<CompilerOptions>;
-  Resolver: ReferenceResolver;
-  EmitResolver: EmitResolver;
+  Resolver: GoInterface<ReferenceResolver>;
+  EmitResolver: GoInterface<EmitResolver>;
   GetEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;
 }
 
@@ -77,7 +78,7 @@ export interface TransformOptions {
  * Go source:
  * TransformerFactory = func(opt *TransformOptions) *Transformer
  */
-export type TransformerFactory = (opt: GoPtr<TransformOptions>) => GoPtr<Transformer>;
+export type TransformerFactory = GoFunc<(opt: GoPtr<TransformOptions>) => GoPtr<Transformer>>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/chain.go::func::Chain","kind":"func","status":"implemented","sigHash":"ffa168786f13de590068dd19e5a154dca7785d7e6826fcd87d9d2df9825402b8"}
@@ -120,7 +121,7 @@ export function Chain(...transforms: Array<TransformerFactory>): TransformerFact
     const constructed: GoSlice<GoPtr<Transformer>> = [];
     for (const t of transforms) {
       // TODO: flatten nested chains?
-      const result = t(opt);
+      const result = t!(opt);
       if (result !== undefined) {
         constructed.push(result);
       }

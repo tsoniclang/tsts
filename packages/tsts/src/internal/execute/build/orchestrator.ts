@@ -43,6 +43,7 @@ import * as strings from "../../../go/strings.js";
 import { Builder } from "../../../go/strings.js";
 import type { parseCache } from "./parseCache.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"ea173f48959bb5742f1a055b1561015dbc45fb79cf6ff15219753c2abb245e1f"}
  *
@@ -54,7 +55,7 @@ import type { parseCache } from "./parseCache.js";
  * }
  */
 export interface Options {
-  Sys: System;
+  Sys: GoInterface<System>;
   Command: GoPtr<ParsedBuildCommandLine>;
   Testing: CommandLineTesting | undefined;
 }
@@ -113,7 +114,7 @@ export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o
     o!.errorSummaryReporter!(receiver!.errors);
   }
   if (receiver!.filesToDelete !== undefined && receiver!.filesToDelete !== null) {
-    Orchestrator_createBuilderStatusReporter(o, undefined)(
+    Orchestrator_createBuilderStatusReporter(o, undefined)!(
       NewCompilerDiagnostic(
         diagnostics.A_non_dry_build_would_delete_the_following_files_Colon_0,
         strings.Join(core_Map(receiver!.filesToDelete, (f: string): string => "\r\n * " + f), ""),
@@ -123,8 +124,8 @@ export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o
   if (!Tristate_IsTrue(o!.opts.Command!.CompilerOptions!.Diagnostics) && !Tristate_IsTrue(o!.opts.Command!.CompilerOptions!.ExtendedDiagnostics)) {
     return;
   }
-  Statistics_SetTotalTime(receiver!.statistics, o!.opts.Sys.SinceStart());
-  Statistics_Report(receiver!.statistics, o!.opts.Sys.Writer(), o!.opts.Testing);
+  Statistics_SetTotalTime(receiver!.statistics, o!.opts.Sys!.SinceStart());
+  Statistics_Report(receiver!.statistics, o!.opts.Sys!.Writer(), o!.opts.Testing);
 }
 
 /**
@@ -162,7 +163,7 @@ export interface Orchestrator {
  * Go source:
  * var _ tsc.Watcher = (*Orchestrator)(nil)
  */
-export let __a05f111f_0: Watcher = Orchestrator_as_tsc_Watcher(undefined);
+export let __a05f111f_0: GoInterface<Watcher> = Orchestrator_as_tsc_Watcher(undefined);
 
 export function Orchestrator_as_tsc_Watcher(receiver: GoPtr<Orchestrator>): Watcher {
   return {
@@ -299,9 +300,9 @@ export function Orchestrator_getTask(receiver: GoPtr<Orchestrator>, path: Path):
  * 	}
  * }
  */
-export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, oldTasks: GoPtr<SyncMap<Path, GoPtr<BuildTask>>>, configs: GoSlice<string>, wg: WorkGroup): void {
+export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, oldTasks: GoPtr<SyncMap<Path, GoPtr<BuildTask>>>, configs: GoSlice<string>, wg: GoInterface<WorkGroup>): void {
   for (const config of configs) {
-    wg.Queue((): void => {
+    wg!.Queue((): void => {
       const path = Orchestrator_toPath(receiver, config);
       let task: GoPtr<BuildTask> = undefined;
       let buildInfo = undefined;
@@ -492,7 +493,7 @@ export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTas
   const projects = ParsedBuildCommandLine_ResolvedProjectPaths(receiver!.opts.Command);
   const wg = NewWorkGroup(Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.SingleThreaded));
   Orchestrator_createBuildTasks(receiver, oldTasks, projects, wg);
-  wg.RunAndWait();
+  wg!.RunAndWait();
 
   const completed: Set<Path> = {} as Set<Path>;
   const analyzing: Set<Path> = {} as Set<Path>;
@@ -519,7 +520,7 @@ export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTas
  * 	return result
  * }
  */
-export function Orchestrator_Start(receiver: GoPtr<Orchestrator>, ctx: Context): CommandLineResult {
+export function Orchestrator_Start(receiver: GoPtr<Orchestrator>, ctx: GoInterface<Context>): CommandLineResult {
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch)) {
     receiver!.watchStatusReporter!(NewCompilerDiagnostic(diagnostics.Starting_compilation_in_watch_mode));
   }
@@ -556,7 +557,7 @@ export function Orchestrator_Start(receiver: GoPtr<Orchestrator>, ctx: Context):
  * 	}
  * }
  */
-export function Orchestrator_Watch(receiver: GoPtr<Orchestrator>, ctx: Context): void {
+export function Orchestrator_Watch(receiver: GoPtr<Orchestrator>, ctx: GoInterface<Context>): void {
   void ctx;
   Orchestrator_updateWatch(receiver);
   Orchestrator_resetCaches(receiver);
@@ -601,7 +602,7 @@ export function Orchestrator_updateWatch(receiver: GoPtr<Orchestrator>): void {
  * }
  */
 export function Orchestrator_resetCaches(receiver: GoPtr<Orchestrator>): void {
-  const cachesVfs = receiver!.host!.host.FS() as unknown as cachedvfs_FS;
+  const cachesVfs = receiver!.host!.host!.FS() as unknown as cachedvfs_FS;
   FS_ClearCache(cachesVfs);
   receiver!.host!.extendedConfigCache = { m: newSyncMap() };
   parseCache_reset(receiver!.host!.sourceFiles);
@@ -706,7 +707,7 @@ export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
  */
 export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): CommandLineResult {
   if (!Tristate_IsTrue(receiver!.opts.Command!.BuildOptions!.Clean) && Tristate_IsTrue(receiver!.opts.Command!.BuildOptions!.Verbose)) {
-    Orchestrator_createBuilderStatusReporter(receiver, undefined)(NewCompilerDiagnostic(
+    Orchestrator_createBuilderStatusReporter(receiver, undefined)!(NewCompilerDiagnostic(
       diagnostics.Projects_in_this_build_Colon_0,
       strings.Join(core_Map(Orchestrator_Order(receiver), (p: string): string => "\r\n    * " + Orchestrator_relativeFileName(receiver, p)), ""),
     ));
@@ -731,7 +732,7 @@ export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): Comman
     buildResult.result.Status = ExitStatusProjectReferenceCycle_OutputsSkipped;
     const reportDiagnostic = Orchestrator_createDiagnosticReporter(receiver, undefined);
     for (const err of receiver!.errors) {
-      reportDiagnostic(err);
+      reportDiagnostic!(err);
     }
     buildResult.errors = receiver!.errors;
   }
@@ -779,7 +780,7 @@ export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): Comman
  * 	}
  * }
  */
-export function Orchestrator_rangeTask(receiver: GoPtr<Orchestrator>, f: (path: Path, task: GoPtr<BuildTask>) => void): void {
+export function Orchestrator_rangeTask(receiver: GoPtr<Orchestrator>, f: GoFunc<(path: Path, task: GoPtr<BuildTask>) => void>): void {
   // In single-threaded TSTS, always run sequentially (numRoutines = 1)
   let currentTaskIndex = 0;
   while (currentTaskIndex < receiver!.order.length) {
@@ -788,7 +789,7 @@ export function Orchestrator_rangeTask(receiver: GoPtr<Orchestrator>, f: (path: 
     const config = receiver!.order[index]!;
     const path = Orchestrator_toPath(receiver, config);
     const task = Orchestrator_getTask(receiver, path);
-    f(path, task);
+    f!(path, task);
   }
 }
 
@@ -840,9 +841,9 @@ export function Orchestrator_buildOrCleanProject(receiver: GoPtr<Orchestrator>, 
  * 	return &task.result.builder
  * }
  */
-export function Orchestrator_getWriter(receiver: GoPtr<Orchestrator>, task: GoPtr<BuildTask>): Writer {
+export function Orchestrator_getWriter(receiver: GoPtr<Orchestrator>, task: GoPtr<BuildTask>): GoInterface<Writer> {
   if (task === undefined || task === null) {
-    return receiver!.opts.Sys.Writer();
+    return receiver!.opts.Sys!.Writer();
   }
   return task!.result!.builder as unknown as Writer;
 }
@@ -918,8 +919,8 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
   const orchestrator: Orchestrator = {
     opts,
     comparePathsOptions: {
-      CurrentDirectory: opts.Sys.GetCurrentDirectory(),
-      UseCaseSensitiveFileNames: opts.Sys.FS().UseCaseSensitiveFileNames(),
+      CurrentDirectory: opts.Sys!.GetCurrentDirectory(),
+      UseCaseSensitiveFileNames: opts.Sys!.FS()!.UseCaseSensitiveFileNames(),
     },
     host: undefined,
     tasks: newSyncMap<Path, GoPtr<BuildTask>>(),
@@ -932,9 +933,9 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
   const innerHost: host = {
     orchestrator,
     host: NewCachedFSCompilerHost(
-      orchestrator.opts.Sys.GetCurrentDirectory(),
-      orchestrator.opts.Sys.FS(),
-      orchestrator.opts.Sys.DefaultLibraryPath(),
+      orchestrator.opts.Sys!.GetCurrentDirectory(),
+      orchestrator.opts.Sys!.FS(),
+      orchestrator.opts.Sys!.DefaultLibraryPath(),
       undefined,
       undefined,
     ),

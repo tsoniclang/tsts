@@ -88,7 +88,7 @@ export function createCompilerSession(options: CompilerSessionOptions): Compiler
   const program = NewProgram(options.programOptions);
   const extensionHost = getExtensionHost(program!);
   const context = options.context ?? Background();
-  return createCompilerSessionFromProgram(program, options.programOptions.Host, options.programOptions.Config, extensionHost, context);
+  return createCompilerSessionFromProgram(program, options.programOptions.Host!, options.programOptions.Config, extensionHost, context);
 }
 
 export function createCompilerSessionFromProgram(program: GoPtr<Program>, host: CompilerHost, config: GoPtr<ParsedCommandLine>, extensionHost = getExtensionHost(program!), context: Context = Background()): CompilerSession {

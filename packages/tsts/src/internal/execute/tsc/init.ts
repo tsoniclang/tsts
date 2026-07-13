@@ -47,6 +47,7 @@ import {
   OrderedMap_Entries,
 } from "../../collections/ordered_map.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/init.go::func::WriteConfigFile","kind":"func","status":"implemented","sigHash":"ededadbb731410ca8ab2ac74c43f9222fa97522188b4b8c08ddb49ca345b0ef2"}
  *
@@ -65,17 +66,17 @@ import {
  * 	}
  * }
  */
-export function WriteConfigFile(sys: System, locale: Locale, reportDiagnostic: DiagnosticReporter, options: GoPtr<OrderedMap<string, unknown>>): void {
-  const getCurrentDirectory = sys.GetCurrentDirectory();
+export function WriteConfigFile(sys: GoInterface<System>, locale: Locale, reportDiagnostic: DiagnosticReporter, options: GoPtr<OrderedMap<string, unknown>>): void {
+  const getCurrentDirectory = sys!.GetCurrentDirectory();
   const file = NormalizePath(CombinePaths(getCurrentDirectory, "tsconfig.json"));
-  if (sys.FS().FileExists(file)) {
-    reportDiagnostic(NewCompilerDiagnostic(A_tsconfig_json_file_is_already_defined_at_Colon_0, file));
+  if (sys!.FS()!.FileExists(file)) {
+    reportDiagnostic!(NewCompilerDiagnostic(A_tsconfig_json_file_is_already_defined_at_Colon_0, file));
   } else {
-    sys.FS().WriteFile(file, generateTSConfig(options, locale));
+    sys!.FS()!.WriteFile(file, generateTSConfig(options, locale));
     const output: string[] = ["\n"];
     output.push(...getHeader(sys, "Created a new tsconfig.json"));
     output.push("You can learn more at https://aka.ms/tsconfig", "\n");
-    Fprint(sys.Writer(), strings.Join(output, ""));
+    Fprint(sys!.Writer()!, strings.Join(output, ""));
   }
 }
 

@@ -158,6 +158,7 @@ import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
 import { getExtensionHost } from "../../extensions/host.js";
 import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderImportSliceKind, ProviderModuleResolution, ProviderRequestedExport, ProviderResolvedModule } from "../../extensions/host.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"9c4a426b0d3e59256e9a7dad7aff7add3d3d2f12512bed81cac56f4e53bc747b"}
  *
@@ -603,7 +604,7 @@ export interface DuplicateSourceFile {
  * Go source:
  * var _ ast.HasFileName = (*redirectsFile)(nil)
  */
-export let __386f9302_0: HasFileName = redirectsFile_as_ast_HasFileName(undefined);
+export let __386f9302_0: GoInterface<HasFileName> = redirectsFile_as_ast_HasFileName(undefined);
 
 export function redirectsFile_as_ast_HasFileName(receiver: GoPtr<redirectsFile>): HasFileName {
   return {
@@ -782,15 +783,15 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
   const supportedExtensionsWithJsonIfResolveJsonModule = GetSupportedExtensionsWithJsonIfResolveJsonModule(compilerOptions, supportedExtensions);
   let maxNodeModuleJsDepth = 0;
   if (compilerOptions!.MaxNodeModuleJsDepth !== undefined) {
-    maxNodeModuleJsDepth = compilerOptions!.MaxNodeModuleJsDepth!;
+    maxNodeModuleJsDepth = compilerOptions!.MaxNodeModuleJsDepth!.v;
   }
   const loader: fileLoader = {
     opts: opts,
     resolver: undefined,
-    defaultLibraryPath: GetNormalizedAbsolutePath(opts.Host.DefaultLibraryPath(), opts.Host.GetCurrentDirectory()),
+    defaultLibraryPath: GetNormalizedAbsolutePath(opts.Host!.DefaultLibraryPath(), opts.Host!.GetCurrentDirectory()),
     comparePathsOptions: {
-      UseCaseSensitiveFileNames: opts.Host.FS().UseCaseSensitiveFileNames(),
-      CurrentDirectory: opts.Host.GetCurrentDirectory(),
+      UseCaseSensitiveFileNames: opts.Host!.FS()!.UseCaseSensitiveFileNames(),
+      CurrentDirectory: opts.Host!.GetCurrentDirectory(),
     },
     filesParser: {
       wg: NewWorkGroup(singleThreaded),
@@ -886,7 +887,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
  * }
  */
 export function fileLoader_toPath(receiver: GoPtr<fileLoader>, file: string): Path_9073472b {
-  return ToPath(file, receiver!.opts.Host.GetCurrentDirectory(), receiver!.opts.Host.FS().UseCaseSensitiveFileNames());
+  return ToPath(file, receiver!.opts.Host!.GetCurrentDirectory(), receiver!.opts.Host!.FS()!.UseCaseSensitiveFileNames());
 }
 
 /**
@@ -905,7 +906,7 @@ export function fileLoader_toPath(receiver: GoPtr<fileLoader>, file: string): Pa
  * }
  */
 export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: string, libFile: GoPtr<LibFile>, includeReason: GoPtr<FileIncludeReason>): void {
-  const absPath = GetNormalizedAbsolutePath(fileName, receiver!.opts.Host.GetCurrentDirectory());
+  const absPath = GetNormalizedAbsolutePath(fileName, receiver!.opts.Host!.GetCurrentDirectory());
   if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.opts.Config)!.AllowNonTsExtensions) || HasExtension(absPath)) {
     receiver!.rootTasks.push({
       normalizedFilePath: absPath,
@@ -968,7 +969,7 @@ export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: st
  * }
  */
 export function fileLoader_addRootFileTask(receiver: GoPtr<fileLoader>, fileName: string, libFile: GoPtr<LibFile>, includeReason: GoPtr<FileIncludeReason>): void {
-  const currDir = receiver!.opts.Host.GetCurrentDirectory();
+  const currDir = receiver!.opts.Host!.GetCurrentDirectory();
   const absPath = GetNormalizedAbsolutePath(fileName, currDir);
   let containingFile = currDir;
   if (receiver!.opts.Config!.ConfigFile !== undefined) {
@@ -1040,7 +1041,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
   if (compilerOptions!.ConfigFilePath !== "") {
     containingDirectory = GetDirectoryPath(compilerOptions!.ConfigFilePath);
   } else {
-    containingDirectory = receiver!.opts.Host.GetCurrentDirectory();
+    containingDirectory = receiver!.opts.Host!.GetCurrentDirectory();
   }
   const containingFileName = CombinePaths(containingDirectory, InferredTypesContainingFile);
   receiver!.rootTasks.push({
@@ -1384,7 +1385,7 @@ export function fileLoader_parseSourceFile(receiver: GoPtr<fileLoader>, t: GoPtr
         ExternalModuleIndicatorOptions: GetExternalModuleIndicatorOptions(t!.normalizedFilePath, options, t!.metadata),
       }, providerVirtualModule.virtualSourceText, ScriptKindTS);
     }
-    const sourceFile = receiver!.opts.Host.GetSourceFile({
+    const sourceFile = receiver!.opts.Host!.GetSourceFile({
       FileName: t!.normalizedFilePath,
       Path: path,
       ExternalModuleIndicatorOptions: GetExternalModuleIndicatorOptions(t!.normalizedFilePath, options, t!.metadata),
@@ -1475,22 +1476,22 @@ export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader
   const allowNonTsExtensions = Tristate_IsTrue(options!.AllowNonTsExtensions);
   const diagnosticFileName = NormalizeSlashes(referenceText);
   if (HasExtension(fileName)) {
-    const canonicalFileName = GetCanonicalFileName(fileName, receiver!.opts.Host.FS().UseCaseSensitiveFileNames());
+    const canonicalFileName = GetCanonicalFileName(fileName, receiver!.opts.Host!.FS()!.UseCaseSensitiveFileNames());
     if (!allowNonTsExtensions && !fileLoader_isSupportedExtension(receiver, canonicalFileName)) {
       if (HasJSFileExtension(canonicalFileName)) {
         return ["", { message: diagnostics.File_0_is_a_JavaScript_file_Did_you_mean_to_enable_the_allowJs_option, args: [diagnosticFileName] }];
       }
       return ["", { message: diagnostics.File_0_has_an_unsupported_extension_The_only_supported_extensions_are_1, args: [diagnosticFileName, "'" + strings.Join(Flatten(receiver!.supportedExtensions), "', '") + "'"] }];
     }
-    if (!receiver!.opts.Host.FS().FileExists(fileName)) {
+    if (!receiver!.opts.Host!.FS()!.FileExists(fileName)) {
       return ["", { message: diagnostics.File_0_not_found, args: [diagnosticFileName] }];
     }
-    if (FileIncludeReason_isReferencedFile(includeReason) && GetCanonicalFileName(containingFile, receiver!.opts.Host.FS().UseCaseSensitiveFileNames()) === canonicalFileName) {
+    if (FileIncludeReason_isReferencedFile(includeReason) && GetCanonicalFileName(containingFile, receiver!.opts.Host!.FS()!.UseCaseSensitiveFileNames()) === canonicalFileName) {
       return ["", { message: diagnostics.A_file_cannot_have_a_reference_to_itself, args: [] }];
     }
     return [fileName, undefined];
   }
-  if (allowNonTsExtensions && receiver!.opts.Host.FS().FileExists(fileName)) {
+  if (allowNonTsExtensions && receiver!.opts.Host!.FS()!.FileExists(fileName)) {
     return [fileName, undefined];
   }
   if (allowNonTsExtensions) {
@@ -1498,7 +1499,7 @@ export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader
   }
   for (const ext of receiver!.supportedExtensions[0]!) {
     const candidate = fileName + ext;
-    if (receiver!.opts.Host.FS().FileExists(candidate)) {
+    if (receiver!.opts.Host!.FS()!.FileExists(candidate)) {
       return [candidate, undefined];
     }
   }
@@ -2023,7 +2024,7 @@ export function fileLoader_pathForLibFile(receiver: GoPtr<fileLoader>, name: str
   let replaced = false;
   if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.opts.Config)!.LibReplacement) && name !== "lib.d.ts") {
     const libraryName = getLibraryNameFromLibFileName(name);
-    const resolveFrom = getInferredLibraryNameResolveFrom(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), receiver!.opts.Host.GetCurrentDirectory(), name);
+    const resolveFrom = getInferredLibraryNameResolveFrom(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), receiver!.opts.Host!.GetCurrentDirectory(), name);
     const [resolution, trace] = fileLoader_resolveLibrary(receiver, libraryName, resolveFrom);
     if (ResolvedModule_IsResolved(resolution)) {
       path = resolution!.ResolvedFileName;

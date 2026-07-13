@@ -223,7 +223,7 @@ export function Checker_GetNameTypeOfSymbol(receiver: GoPtr<Checker>, symbol_: G
   if (!LinkStore_Has(receiver!.valueSymbolLinks, symbol_)) {
     return undefined;
   }
-  return LinkStore_TryGet(receiver!.valueSymbolLinks, symbol_)!.nameType;
+  return LinkStore_TryGet(receiver!.valueSymbolLinks, symbol_)!.v.nameType;
 }
 
 /**

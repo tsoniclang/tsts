@@ -45,6 +45,8 @@ import {
 import { BuildNameMap, NameMap_Get } from "./namemap.js";
 import type { NameMap } from "./namemap.js";
 
+import { GoValueRef } from "../../go/compat.js";
+import type { GoInterface, GoRef } from "../../go/compat.js";
 // Go's `value.(*collections.OrderedMap[string, any])` type assertion: the JSON
 // parser yields OrderedMap instances, which structurally carry `keys`/`mp`.
 function asOrderedMap(value: unknown): GoPtr<OrderedMap> {
@@ -78,7 +80,7 @@ function asOrderedMap(value: unknown): GoPtr<OrderedMap> {
  * 	}
  * }
  */
-export function ParseTristate(value: unknown): Tristate {
+export function ParseTristate(value: GoInterface<unknown>): Tristate {
   if (value === undefined) {
     return TSUnknown;
   }
@@ -113,7 +115,7 @@ export function ParseTristate(value: unknown): Tristate {
  * 	return nil
  * }
  */
-export function ParseStringArray(value: unknown): GoSlice<string> {
+export function ParseStringArray(value: GoInterface<unknown>): GoSlice<string> {
   if (globalThis.Array.isArray(value)) {
     const arr = value as unknown[];
     if (arr === null) {
@@ -145,7 +147,7 @@ export function ParseStringArray(value: unknown): GoSlice<string> {
  * 	return nil
  * }
  */
-export function parseStringMap(value: unknown): GoPtr<OrderedMap<string, GoSlice<string>>> {
+export function parseStringMap(value: GoInterface<unknown>): GoPtr<OrderedMap<string, GoSlice<string>>> {
   const m = asOrderedMap(value);
   if (m !== undefined) {
     const result = NewOrderedMapWithSizeHint<string, GoSlice<string>>(OrderedMap_Size(m));
@@ -169,7 +171,7 @@ export function parseStringMap(value: unknown): GoPtr<OrderedMap<string, GoSlice
  * 	return ""
  * }
  */
-export function ParseString(value: unknown): string {
+export function ParseString(value: GoInterface<unknown>): string {
   if (typeof value === "string") {
     const str: string = value;
     return str;
@@ -192,17 +194,17 @@ export function ParseString(value: unknown): string {
  * 	return nil
  * }
  */
-export function parseNumber(value: unknown): GoPtr<int> {
+export function parseNumber(value: GoInterface<unknown>): GoRef<int> {
   // Go distinguishes `int` (returned as-is) from `float64` (truncated via `int(num)`).
   // TS/JS has a single number type; JSON-sourced values arrive as float64 in Go, so
   // truncate toward zero to match `int(num)` (a no-op for integer-valued numbers).
   if (typeof value === "number") {
     if (globalThis.Number.isInteger(value)) {
       const num: int = value as int;
-      return num;
+      return GoValueRef(num);
     }
     const n: int = globalThis.Math.trunc(value) as int;
-    return n;
+    return GoValueRef(n);
   }
   return undefined;
 }
@@ -226,7 +228,7 @@ export function parseNumber(value: unknown): GoPtr<int> {
  * 	return result
  * }
  */
-export function parseProjectReference(json: unknown): GoSlice<GoPtr<ProjectReference>> {
+export function parseProjectReference(json: GoInterface<unknown>): GoSlice<GoPtr<ProjectReference>> {
   const result: GoSlice<GoPtr<ProjectReference>> = [];
   const v = asOrderedMap(json);
   if (v !== undefined) {
@@ -286,7 +288,7 @@ export function parseProjectReference(json: unknown): GoSlice<GoPtr<ProjectRefer
  * 	return result
  * }
  */
-export function parseJsonToStringKey(json: unknown): GoPtr<OrderedMap<string, unknown>> {
+export function parseJsonToStringKey(json: GoInterface<unknown>): GoPtr<OrderedMap<string, unknown>> {
   const result = NewOrderedMapWithSizeHint<string, unknown>(6 as int);
   const m = asOrderedMap(json) as GoPtr<OrderedMap<string, unknown>>;
   if (m !== undefined) {
@@ -357,7 +359,7 @@ export function parseJsonToStringKey(json: unknown): GoPtr<OrderedMap<string, un
  * }
  */
 export interface optionParser {
-  ParseOption(key: string, value: unknown): GoSlice<GoPtr<Diagnostic>>;
+  ParseOption(key: string, value: GoInterface<unknown>): GoSlice<GoPtr<Diagnostic>>;
   UnknownOptionDiagnostic(): GoPtr<Message>;
   UnknownDidYouMeanDiagnostic(): GoPtr<Message>;
 }
@@ -382,7 +384,7 @@ export interface compilerOptionsParser {
  * 	return ParseCompilerOptions(key, value, o.CompilerOptions)
  * }
  */
-export function compilerOptionsParser_ParseOption(receiver: GoPtr<compilerOptionsParser>, key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> {
+export function compilerOptionsParser_ParseOption(receiver: GoPtr<compilerOptionsParser>, key: string, value: GoInterface<unknown>): GoSlice<GoPtr<Diagnostic>> {
   const o = receiver!;
   return ParseCompilerOptions(key, value, o.__tsgoEmbedded0);
 }
@@ -439,7 +441,7 @@ export interface watchOptionsParser {
  * 	return ParseWatchOptions(key, value, o.WatchOptions)
  * }
  */
-export function watchOptionsParser_ParseOption(receiver: GoPtr<watchOptionsParser>, key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> {
+export function watchOptionsParser_ParseOption(receiver: GoPtr<watchOptionsParser>, key: string, value: GoInterface<unknown>): GoSlice<GoPtr<Diagnostic>> {
   const o = receiver!;
   return ParseWatchOptions(key, value, o.__tsgoEmbedded0);
 }
@@ -496,7 +498,7 @@ export interface typeAcquisitionParser {
  * 	return ParseTypeAcquisition(key, value, o.TypeAcquisition)
  * }
  */
-export function typeAcquisitionParser_ParseOption(receiver: GoPtr<typeAcquisitionParser>, key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> {
+export function typeAcquisitionParser_ParseOption(receiver: GoPtr<typeAcquisitionParser>, key: string, value: GoInterface<unknown>): GoSlice<GoPtr<Diagnostic>> {
   const o = receiver!;
   return ParseTypeAcquisition(key, value, o.__tsgoEmbedded0);
 }
@@ -553,7 +555,7 @@ export interface buildOptionsParser {
  * 	return ParseBuildOptions(key, value, o.BuildOptions)
  * }
  */
-export function buildOptionsParser_ParseOption(receiver: GoPtr<buildOptionsParser>, key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> {
+export function buildOptionsParser_ParseOption(receiver: GoPtr<buildOptionsParser>, key: string, value: GoInterface<unknown>): GoSlice<GoPtr<Diagnostic>> {
   const o = receiver!;
   return ParseBuildOptions(key, value, o.__tsgoEmbedded0);
 }
@@ -605,7 +607,7 @@ export function buildOptionsParser_as_optionParser(receiver: GoPtr<buildOptionsP
  * 	return nil
  * }
  */
-export function ParseCompilerOptions(key: string, value: unknown, allOptions: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
+export function ParseCompilerOptions(key: string, value: GoInterface<unknown>, allOptions: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (value === undefined) {
     return [];
   }
@@ -636,7 +638,7 @@ export function ParseCompilerOptions(key: string, value: unknown, allOptions: Go
  * 	return true
  * }
  */
-export function parseCompilerOptions(key: string, value: unknown, allOptions: GoPtr<CompilerOptions>): bool {
+export function parseCompilerOptions(key: string, value: GoInterface<unknown>, allOptions: GoPtr<CompilerOptions>): bool {
   const option = CommandLineOptionNameMap_Get(CommandLineCompilerOptionsMap, key);
   const k: string = option !== undefined ? option.Name : key;
   const o = allOptions!;
@@ -1056,7 +1058,7 @@ export function parseCompilerOptions(key: string, value: unknown, allOptions: Go
  * 	return T(value.(float64))
  * }
  */
-export function floatOrInt32ToFlag<T extends GoConstraint<"~int32"> & number>(value: unknown): T {
+export function floatOrInt32ToFlag<T extends GoConstraint<"~int32"> & number>(value: GoInterface<unknown>): T {
   // The flag types (JsxEmit, ModuleKind, ...) are all int32-backed; a number
   // value either already is the flag (`value.(T)`) or is a float64 to convert.
   // In both branches the dynamic value is the same number cast to the flag type.
@@ -1096,7 +1098,7 @@ export function floatOrInt32ToFlag<T extends GoConstraint<"~int32"> & number>(va
  * 	return nil
  * }
  */
-export function ParseWatchOptions(key: string, value: unknown, allOptions: GoPtr<WatchOptions>): GoSlice<GoPtr<Diagnostic>> {
+export function ParseWatchOptions(key: string, value: GoInterface<unknown>, allOptions: GoPtr<WatchOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (allOptions === undefined) {
     return [];
   }
@@ -1157,7 +1159,7 @@ export function ParseWatchOptions(key: string, value: unknown, allOptions: GoPtr
  * 	return nil
  * }
  */
-export function ParseTypeAcquisition(key: string, value: unknown, allOptions: GoPtr<TypeAcquisition>): GoSlice<GoPtr<Diagnostic>> {
+export function ParseTypeAcquisition(key: string, value: GoInterface<unknown>, allOptions: GoPtr<TypeAcquisition>): GoSlice<GoPtr<Diagnostic>> {
   if (value === undefined) {
     return [];
   }
@@ -1214,7 +1216,7 @@ export function ParseTypeAcquisition(key: string, value: unknown, allOptions: Go
  * 	return nil
  * }
  */
-export function ParseBuildOptions(key: string, value: unknown, allOptions: GoPtr<BuildOptions>): GoSlice<GoPtr<Diagnostic>> {
+export function ParseBuildOptions(key: string, value: GoInterface<unknown>, allOptions: GoPtr<BuildOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (value === undefined) {
     return [];
   }
@@ -1299,7 +1301,7 @@ export function ParseBuildOptions(key: string, value: unknown, allOptions: GoPtr
  * 	return targetOptions
  * }
  */
-export function mergeCompilerOptions(targetOptions: GoPtr<CompilerOptions>, sourceOptions: GoPtr<CompilerOptions>, rawSource: unknown): GoPtr<CompilerOptions> {
+export function mergeCompilerOptions(targetOptions: GoPtr<CompilerOptions>, sourceOptions: GoPtr<CompilerOptions>, rawSource: GoInterface<unknown>): GoPtr<CompilerOptions> {
   if (sourceOptions === undefined) {
     return targetOptions;
   }
@@ -1425,7 +1427,7 @@ export function convertToOptionsWithAbsolutePaths(optionsBase: GoPtr<OrderedMap<
  * 	return nil, false
  * }
  */
-export function ConvertOptionToAbsolutePath(o: string, v: unknown, optionMap: CommandLineOptionNameMap, cwd: string): [unknown, bool] {
+export function ConvertOptionToAbsolutePath(o: string, v: GoInterface<unknown>, optionMap: CommandLineOptionNameMap, cwd: string): [unknown, bool] {
   const option = CommandLineOptionNameMap_Get(optionMap, o);
   if (option === undefined) {
     return [undefined, false];

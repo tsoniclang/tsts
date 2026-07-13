@@ -1,5 +1,6 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
+import { GoValueRef } from "../../go/compat.js";
 import { Values as SliceValues } from "../../go/slices.js";
 import { Node_DeclarationData, Node_ForEachChild, Node_Name } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
@@ -57,6 +58,7 @@ import { Checker_checkTypeRelatedToEx, Checker_isTypeAssignableTo, Checker_check
 import { ContextFlagsNone, ContextFlagsIgnoreNodeInferences, SignatureKindCall, SignatureKindConstruct, TypeFlagsString, TypeFlagsStringLiteral, TypeFlagsUnion, Type_Types, TypeFlagsNever, TypeFlagsIndexedAccess, AccessFlagsNone, ObjectFlagsJsxAttributes, ObjectFlagsFreshLiteral, ObjectFlagsObjectLiteral, ObjectFlagsContainsObjectOrArrayLiteral, ObjectFlagsPropagatingFlags, ObjectFlagsClassOrInterface, TypeFlagsNone } from "./types.js";
 import type { ContextFlags, ObjectFlags, Signature, Type } from "./types.js";
 
+import type { GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxFlags","kind":"type","status":"implemented","sigHash":"bf33d850d9ce92d74d7ae47047276dff2682895a11571cf45456cd974c50ef00"}
  *
@@ -373,7 +375,7 @@ export function Checker_checkJsxOpeningLikeElementOrOpeningFragment(receiver: Go
         tagType = Checker_checkExpression(receiver, tagName);
       }
       const diagnostics: GoSlice<GoPtr<Diagnostic>> = [];
-      if (!Checker_checkTypeRelatedToEx(receiver, tagType, elementTypeConstraint, receiver!.assignableRelation, tagName, Its_type_0_is_not_a_valid_JSX_element_type, diagnostics)) {
+      if (!Checker_checkTypeRelatedToEx(receiver, tagType, elementTypeConstraint, receiver!.assignableRelation, tagName, Its_type_0_is_not_a_valid_JSX_element_type, GoValueRef(diagnostics))) {
         Checker_addDiagnostic(receiver, NewDiagnosticChain(diagnostics[0], X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(tagName)));
       }
     } else {
@@ -444,7 +446,7 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
     case JsxReferenceKindFunction: {
       const sfcReturnConstraint = Checker_getJsxStatelessElementTypeAt(receiver, openingLikeElement);
       if (sfcReturnConstraint !== undefined) {
-        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, sfcReturnConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_return_type_0_is_not_a_valid_JSX_element, diags);
+        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, sfcReturnConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_return_type_0_is_not_a_valid_JSX_element, GoValueRef(diags));
       }
       break;
     }
@@ -452,7 +454,7 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
       const classConstraint = Checker_getJsxElementClassTypeAt(receiver, openingLikeElement);
       if (classConstraint !== undefined) {
         // Issue an error if this return type isn't assignable to JSX.ElementClass, failing that
-        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, classConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_instance_type_0_is_not_a_valid_JSX_element, diags);
+        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, classConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_instance_type_0_is_not_a_valid_JSX_element, GoValueRef(diags));
       }
       break;
     }
@@ -463,7 +465,7 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
         return;
       }
       const combined = Checker_getUnionType(receiver, [sfcReturnConstraint, classConstraint]);
-      Checker_checkTypeRelatedToEx(receiver, elemInstanceType, combined, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_element_type_0_is_not_a_valid_JSX_element, diags);
+      Checker_checkTypeRelatedToEx(receiver, elemInstanceType, combined, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_element_type_0_is_not_a_valid_JSX_element, GoValueRef(diags));
       break;
     }
   }
@@ -776,7 +778,7 @@ export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPt
  * 	return reportedError
  * }
  */
-export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: GoPtr<Node>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
+export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: GoPtr<Node>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): bool {
   let reportedError = false;
   for (const prop of Node_Properties(node) ?? []) {
     if (!IsJsxSpreadAttribute(prop) && !isHyphenatedJsxName(Node_Text(Node_Name(prop)))) {
@@ -801,7 +803,7 @@ export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: G
     const moreThanOneRealChildren = validChildren.length > 1;
     let arrayLikeTargetParts: GoPtr<Type>;
     let nonArrayLikeTargetParts: GoPtr<Type>;
-    const iterableType = receiver!.getGlobalIterableType();
+    const iterableType = receiver!.getGlobalIterableType!();
     if (iterableType !== receiver!.emptyGenericType) {
       const anyIterable = Checker_createIterableType(receiver, receiver!.anyType);
       arrayLikeTargetParts = Checker_filterType(receiver, childrenTargetType, (candidate) => Checker_isTypeAssignableTo(receiver, candidate, anyIterable));
@@ -1032,7 +1034,7 @@ export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker
  * 	return reportedError
  * }
  */
-export function Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver: GoPtr<Checker>, iterator: GoSeq<JsxElaborationElement>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
+export function Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver: GoPtr<Checker>, iterator: GoSeq<JsxElaborationElement>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): bool {
   const tupleOrArrayLikeTargetParts = Checker_filterType(receiver, target, (candidate) => Checker_isArrayOrTupleLikeType(receiver, candidate));
   const nonTupleOrArrayLikeTargetParts = Checker_filterType(receiver, target, (candidate) => !Checker_isArrayOrTupleLikeType(receiver, candidate));
   let iterationType: GoPtr<Type>;
@@ -1267,7 +1269,7 @@ export function Checker_getJSXFragmentType(receiver: GoPtr<Checker>, node: GoPtr
  * 	return c.resolveCall(node, signatures, candidatesOutArray, checkMode, SignatureFlagsNone, nil)
  * }
  */
-export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
+export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoRef<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
   const isJsxOpenFragment = IsJsxOpeningFragment(node);
   let exprTypes: GoPtr<Type>;
   if (!isJsxOpenFragment) {
@@ -1432,7 +1434,7 @@ export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, n
  * 	return c.checkTypeRelatedToAndOptionallyElaborate(checkAttributesType, paramType, relation, errorNode, attributes, nil, diagnosticOutput)
  * }
  */
-export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: GoPtr<Checker>, node: GoPtr<Node>, signature: GoPtr<Signature>, relation: GoPtr<Relation>, checkMode: CheckMode, reportErrors: bool, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
+export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: GoPtr<Checker>, node: GoPtr<Node>, signature: GoPtr<Signature>, relation: GoPtr<Relation>, checkMode: CheckMode, reportErrors: bool, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): bool {
   const paramType = Checker_getEffectiveFirstArgumentForJsxSignature(receiver, signature, node);
   let attributesType: GoPtr<Type>;
   if (IsJsxOpeningFragment(node)) {
@@ -3169,5 +3171,5 @@ export function Checker_getJsxNamespaceContainerForImplicitImport(receiver: GoPt
  * }
  */
 export function Checker_getJSXRuntimeImportSpecifier(receiver: GoPtr<Checker>, file: GoPtr<SourceFile>): [string, GoPtr<Node>] {
-  return receiver!.program.GetJSXRuntimeImportSpecifier(SourceFile_Path(file));
+  return receiver!.program!.GetJSXRuntimeImportSpecifier(SourceFile_Path(file));
 }

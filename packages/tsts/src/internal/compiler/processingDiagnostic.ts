@@ -16,6 +16,7 @@ import type { FileIncludeReason } from "./fileInclude.js";
 import { includeProcessor_explainRedirectAndImpliedFormat, includeProcessor_getRelatedInfo, includeProcessor_getReferenceLocation } from "./includeprocessor.js";
 import type { Program } from "./program.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnosticKind","kind":"type","status":"implemented","sigHash":"206597e4b3e5492bed070fc03dfcc895035dc1bf0f57a065b6f6021deca831ee"}
  *
@@ -47,7 +48,7 @@ export const processingDiagnosticKindExplainingFileInclude: processingDiagnostic
  */
 export interface processingDiagnostic {
   kind: processingDiagnosticKind;
-  data: unknown;
+  data: GoInterface<unknown>;
 }
 
 /**

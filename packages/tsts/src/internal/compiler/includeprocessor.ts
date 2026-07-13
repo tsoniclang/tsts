@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoValueRef } from "../../go/compat.js";
 import { IsExternalOrCommonJSModule } from "../ast/utilities.js";
 import { SourceFile_FileName } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
@@ -17,7 +18,7 @@ import { ForEachTsConfigPropArray } from "../tsoptions/tsconfigparsing.js";
 import { Identity } from "../core/core.js";
 import { IsObjectLiteralExpression } from "../ast/generated/predicates.js";
 import { AsObjectLiteralExpression } from "../ast/generated/casts.js";
-import type { ObjectLiteralExpression } from "../ast/generated/data.js";
+import type { ObjectLiteralExpression, PropertyAssignment } from "../ast/generated/data.js";
 import { Program_GetImpliedNodeFormatForEmit, Program_GetSourceFileByPath, Program_GetSourceFileMetaData, Program_GetSourceOfProjectReferenceIfOutputIncluded } from "./program.js";
 import type { FileIncludeReason, referenceFileLocation } from "./fileInclude.js";
 import { FileIncludeReason_getReferencedLocation, FileIncludeReason_isReferencedFile, FileIncludeReason_toRelatedInfo } from "./fileInclude.js";
@@ -28,6 +29,7 @@ import { processingDiagnosticKindExplainingFileInclude } from "./processingDiagn
 import type { includeExplainingDiagnostic } from "./processingDiagnostic.js";
 import type { Program } from "./program.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::type::includeProcessor","kind":"type","status":"implemented","sigHash":"47421cd2765ce00a1920cbe94dae00d40ea4fa84c1ec0c9aab767432346ac1ef"}
  *
@@ -262,11 +264,11 @@ export function includeProcessor_getCompilerOptionsObjectLiteralSyntax(receiver:
   receiver!.compilerOptionsSyntaxOnce.Do((): void => {
     const configFile = program!.opts.Config!.ConfigFile;
     if (configFile !== undefined) {
-      const compilerOptionsProperty = ForEachTsConfigPropArray(configFile.SourceFile, "compilerOptions", Identity);
+      const compilerOptionsProperty = ForEachTsConfigPropArray(configFile.SourceFile, "compilerOptions", (property) => GoValueRef<PropertyAssignment>(Identity(property)!));
       if (compilerOptionsProperty !== undefined &&
-        compilerOptionsProperty.Initializer !== undefined &&
-        IsObjectLiteralExpression(compilerOptionsProperty.Initializer)) {
-        receiver!.compilerOptionsSyntax = AsObjectLiteralExpression(compilerOptionsProperty.Initializer);
+        compilerOptionsProperty.v.Initializer !== undefined &&
+        IsObjectLiteralExpression(compilerOptionsProperty.v.Initializer)) {
+        receiver!.compilerOptionsSyntax = AsObjectLiteralExpression(compilerOptionsProperty.v.Initializer);
       }
     } else {
       receiver!.compilerOptionsSyntax = undefined;
@@ -364,7 +366,7 @@ export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor
  * 	return result
  * }
  */
-export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr<includeProcessor>, program: GoPtr<Program>, filePath: Path, toFileName: (fileName: string) => string): GoSlice<GoPtr<Diagnostic>> {
+export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr<includeProcessor>, program: GoPtr<Program>, filePath: Path, toFileName: GoFunc<(fileName: string) => string>): GoSlice<GoPtr<Diagnostic>> {
   const [existing, ok] = SyncMap_Load<Path, GoSlice<GoPtr<Diagnostic>>>(receiver!.redirectAndFileFormat as unknown as SyncMap<Path, GoSlice<GoPtr<Diagnostic>>>, filePath);
   if (ok) {
     return existing;
@@ -386,7 +388,7 @@ export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr
   if (source !== file!.FileName()) {
     result = [...result, NewCompilerDiagnostic(
       File_is_output_of_project_reference_source_0,
-      toFileName(source),
+      toFileName!(source),
     )];
   }
 
@@ -394,7 +396,7 @@ export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr
     const targetFile = Program_GetSourceFileByPath(program, redirectsFile.target);
     result = [...result, NewCompilerDiagnostic(
       File_redirects_to_file_0,
-      toFileName(SourceFile_FileName(targetFile)),
+      toFileName!(SourceFile_FileName(targetFile)),
     )];
   }
 
@@ -405,15 +407,15 @@ export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr
       if (metaData.PackageJsonType === "module") {
         result = [...result, NewCompilerDiagnostic(
           File_is_ECMAScript_module_because_0_has_field_type_with_value_module,
-          toFileName(metaData.PackageJsonDirectory + "/package.json"),
+          toFileName!(metaData.PackageJsonDirectory + "/package.json"),
         )];
       }
     } else if (impliedFormat === ModuleKindCommonJS) {
       if (metaData.PackageJsonType !== "") {
-        result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_has_field_type_whose_value_is_not_module, toFileName(metaData.PackageJsonDirectory + "/package.json"))];
+        result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_has_field_type_whose_value_is_not_module, toFileName!(metaData.PackageJsonDirectory + "/package.json"))];
       } else if (metaData.PackageJsonDirectory !== "") {
         if (metaData.PackageJsonType === "") {
-          result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_does_not_have_field_type, toFileName(metaData.PackageJsonDirectory + "/package.json"))];
+          result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_does_not_have_field_type, toFileName!(metaData.PackageJsonDirectory + "/package.json"))];
         }
       } else {
         result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_package_json_was_not_found)];

@@ -35,6 +35,7 @@ import {
 } from "../tspath/path.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::type::OutputPathsHost","kind":"type","status":"implemented","sigHash":"1e12f35d02217e114e4083de9d178399222d522e51f79aa12010f64642b9fb88"}
  *
@@ -146,15 +147,15 @@ export function OutputPaths_DeclarationMapPath(receiver: GoPtr<OutputPaths>): st
  * 	return paths
  * }
  */
-export function GetOutputPathsFor(sourceFile: GoPtr<SourceFile>, options: GoPtr<CompilerOptions>, host: OutputPathsHost, forceDtsEmit: bool): GoPtr<OutputPaths> {
+export function GetOutputPathsFor(sourceFile: GoPtr<SourceFile>, options: GoPtr<CompilerOptions>, host: GoInterface<OutputPathsHost>, forceDtsEmit: bool): GoPtr<OutputPaths> {
   const fileName = SourceFile_FileName(sourceFile);
   const ownOutputFilePath = getOwnEmitOutputFilePath(fileName, options, host, GetOutputExtension(fileName, options!.Jsx));
   const isJsonFile = IsJsonSourceFile(sourceFile);
   // If json file emits to the same location skip writing it, if emitDeclarationOnly skip writing it
   const isJsonEmittedToSameLocation = isJsonFile &&
     ComparePaths(fileName, ownOutputFilePath, {
-      CurrentDirectory: host.GetCurrentDirectory(),
-      UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),
+      CurrentDirectory: host!.GetCurrentDirectory(),
+      UseCaseSensitiveFileNames: host!.UseCaseSensitiveFileNames(),
     }) === 0;
   const paths: OutputPaths = {
     jsFilePath: "",
@@ -190,9 +191,9 @@ export function GetOutputPathsFor(sourceFile: GoPtr<SourceFile>, options: GoPtr<
  * 	return false
  * }
  */
-export function ForEachEmittedFile(host: OutputPathsHost, options: GoPtr<CompilerOptions>, action: (emitFileNames: GoPtr<OutputPaths>, sourceFile: GoPtr<SourceFile>) => bool, sourceFiles: GoSlice<GoPtr<SourceFile>>, forceDtsEmit: bool): bool {
+export function ForEachEmittedFile(host: GoInterface<OutputPathsHost>, options: GoPtr<CompilerOptions>, action: GoFunc<(emitFileNames: GoPtr<OutputPaths>, sourceFile: GoPtr<SourceFile>) => bool>, sourceFiles: GoSlice<GoPtr<SourceFile>>, forceDtsEmit: bool): bool {
   for (const sourceFile of sourceFiles) {
-    if (action(GetOutputPathsFor(sourceFile, options, host, forceDtsEmit), sourceFile)) {
+    if (action!(GetOutputPathsFor(sourceFile, options, host, forceDtsEmit), sourceFile)) {
       return true;
     }
   }
@@ -218,15 +219,15 @@ export function ForEachEmittedFile(host: OutputPathsHost, options: GoPtr<Compile
  * 	return ""
  * }
  */
-export function GetOutputJSFileName(inputFileName: string, options: GoPtr<CompilerOptions>, host: OutputPathsHost): string {
+export function GetOutputJSFileName(inputFileName: string, options: GoPtr<CompilerOptions>, host: GoInterface<OutputPathsHost>): string {
   if (Tristate_IsTrue(options!.EmitDeclarationOnly)) {
     return "";
   }
   const outputFileName = GetOutputJSFileNameWorker(inputFileName, options, host);
   if (!FileExtensionIs(outputFileName, ExtensionJson) ||
     ComparePaths(inputFileName, outputFileName, {
-      CurrentDirectory: host.GetCurrentDirectory(),
-      UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),
+      CurrentDirectory: host!.GetCurrentDirectory(),
+      UseCaseSensitiveFileNames: host!.UseCaseSensitiveFileNames(),
     }) !== 0) {
     return outputFileName;
   }
@@ -244,7 +245,7 @@ export function GetOutputJSFileName(inputFileName: string, options: GoPtr<Compil
  * 	)
  * }
  */
-export function GetOutputJSFileNameWorker(inputFileName: string, options: GoPtr<CompilerOptions>, host: OutputPathsHost): string {
+export function GetOutputJSFileNameWorker(inputFileName: string, options: GoPtr<CompilerOptions>, host: GoInterface<OutputPathsHost>): string {
   return ChangeExtension(
     getOutputPathWithoutChangingExtension(inputFileName, options!.OutDir, host),
     GetOutputExtension(inputFileName, options!.Jsx),
@@ -266,7 +267,7 @@ export function GetOutputJSFileNameWorker(inputFileName: string, options: GoPtr<
  * 	)
  * }
  */
-export function GetOutputDeclarationFileNameWorker(inputFileName: string, options: GoPtr<CompilerOptions>, host: OutputPathsHost): string {
+export function GetOutputDeclarationFileNameWorker(inputFileName: string, options: GoPtr<CompilerOptions>, host: GoInterface<OutputPathsHost>): string {
   let dir = options!.DeclarationDir;
   if (dir.length === 0) {
     dir = options!.OutDir;
@@ -334,7 +335,7 @@ export function GetOutputExtension(fileName: string, jsx: JsxEmit): string {
  * 	return tspath.RemoveFileExtension(path) + declarationExtension
  * }
  */
-export function GetDeclarationEmitOutputFilePath(file: string, options: GoPtr<CompilerOptions>, host: OutputPathsHost): string {
+export function GetDeclarationEmitOutputFilePath(file: string, options: GoPtr<CompilerOptions>, host: GoInterface<OutputPathsHost>): string {
   let outputDir: string | undefined;
   if (options!.DeclarationDir.length > 0) {
     outputDir = options!.DeclarationDir;
@@ -344,7 +345,7 @@ export function GetDeclarationEmitOutputFilePath(file: string, options: GoPtr<Co
 
   let path: string;
   if (outputDir !== undefined) {
-    path = GetSourceFilePathInNewDirWorker(file, outputDir, host.GetCurrentDirectory(), host.CommonSourceDirectory(), host.UseCaseSensitiveFileNames());
+    path = GetSourceFilePathInNewDirWorker(file, outputDir, host!.GetCurrentDirectory(), host!.CommonSourceDirectory(), host!.UseCaseSensitiveFileNames());
   } else {
     path = file;
   }
@@ -396,11 +397,11 @@ export function GetSourceFilePathInNewDir(fileName: string, newDirPath: string, 
  * 	return inputFileName
  * }
  */
-export function getOutputPathWithoutChangingExtension(inputFileName: string, outputDirectory: string, host: OutputPathsHost): string {
+export function getOutputPathWithoutChangingExtension(inputFileName: string, outputDirectory: string, host: GoInterface<OutputPathsHost>): string {
   if (outputDirectory.length > 0) {
-    return ResolvePath(outputDirectory, GetRelativePathFromDirectory(host.CommonSourceDirectory(), inputFileName, {
-      UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),
-      CurrentDirectory: host.GetCurrentDirectory(),
+    return ResolvePath(outputDirectory, GetRelativePathFromDirectory(host!.CommonSourceDirectory(), inputFileName, {
+      UseCaseSensitiveFileNames: host!.UseCaseSensitiveFileNames(),
+      CurrentDirectory: host!.GetCurrentDirectory(),
     }));
   }
   return inputFileName;
@@ -453,16 +454,16 @@ export function GetSourceFilePathInNewDirWorker(fileName: string, newDirPath: st
  * 	return emitOutputFilePathWithoutExtension + extension
  * }
  */
-export function getOwnEmitOutputFilePath(fileName: string, options: GoPtr<CompilerOptions>, host: OutputPathsHost, extension: string): string {
+export function getOwnEmitOutputFilePath(fileName: string, options: GoPtr<CompilerOptions>, host: GoInterface<OutputPathsHost>, extension: string): string {
   let emitOutputFilePathWithoutExtension: string;
   if (options!.OutDir.length > 0) {
-    const currentDirectory = host.GetCurrentDirectory();
+    const currentDirectory = host!.GetCurrentDirectory();
     emitOutputFilePathWithoutExtension = RemoveFileExtension(GetSourceFilePathInNewDir(
       fileName,
       options!.OutDir,
       currentDirectory,
-      host.CommonSourceDirectory(),
-      host.UseCaseSensitiveFileNames(),
+      host!.CommonSourceDirectory(),
+      host!.UseCaseSensitiveFileNames(),
     ));
   } else {
     emitOutputFilePathWithoutExtension = RemoveFileExtension(fileName);

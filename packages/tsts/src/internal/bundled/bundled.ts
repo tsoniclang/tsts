@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import type { FS } from "../vfs/vfs.js";
 import { embedded, wrapFS, libPath } from "./embed.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::constGroup::Embedded","kind":"constGroup","status":"implemented","sigHash":"f83bb3a895de36d262628c2ffa89238eeb5aeda78485d347176df8c732d05e94"}
  *
@@ -21,7 +22,7 @@ export const Embedded: bool = embedded;
  * 	return wrapFS(fs)
  * }
  */
-export function WrapFS(fs: FS): FS {
+export function WrapFS(fs: GoInterface<FS>): GoInterface<FS> {
   return wrapFS(fs);
 }
 
@@ -49,7 +50,7 @@ export function LibPath(): string {
  * 	return filepath.Dir(filepath.FromSlash(filename))
  * })
  */
-export let bundledSourceDir: () => string = (() => {
+export let bundledSourceDir: GoFunc<() => string> = (() => {
   let value: string | undefined;
   return (): string => {
     if (value === undefined) {
@@ -76,10 +77,10 @@ export let bundledSourceDir: () => string = (() => {
  * 	return tspath.NormalizeSlashes(filepath.Join(bundledSourceDir(), "libs"))
  * })
  */
-export let testingLibPath: () => string = (() => {
+export let testingLibPath: GoFunc<() => string> = (() => {
   let value: string | undefined;
   return (): string => {
-    value ??= path.join(bundledSourceDir(), "libs").replaceAll(path.sep, "/");
+    value ??= path.join(bundledSourceDir!(), "libs").replaceAll(path.sep, "/");
     return value;
   };
 })();
@@ -93,5 +94,5 @@ export let testingLibPath: () => string = (() => {
  * }
  */
 export function TestingLibPath(): string {
-  return testingLibPath();
+  return testingLibPath!();
 }

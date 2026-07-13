@@ -9,6 +9,7 @@ import * as fmt from "../../go/fmt.js";
 import * as io from "../../go/io.js";
 import * as strconv from "../../go/strconv.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::varGroup::ErrInvalidHeader+ErrInvalidContentLength+ErrNoContentLength","kind":"varGroup","status":"implemented","sigHash":"862c9b190fde8da9a1cbb69d9098659668f791284c7faf6fa5562c2b21340571"}
  *
@@ -45,8 +46,8 @@ export interface Reader {
  * 	}
  * }
  */
-export function NewReader(r: Reader_9d71ca04): GoPtr<Reader> {
-  return { r: bufio.NewReader(r) };
+export function NewReader(r: GoInterface<Reader_9d71ca04>): GoPtr<Reader> {
+  return { r: bufio.NewReader(r!) };
 }
 
 /**
@@ -158,8 +159,8 @@ export interface Writer {
  * 	}
  * }
  */
-export function NewWriter(w: Writer_51cf46eb): GoPtr<Writer> {
-  return { w: new bufio.Writer(w) };
+export function NewWriter(w: GoInterface<Writer_51cf46eb>): GoPtr<Writer> {
+  return { w: new bufio.Writer(w!) };
 }
 
 /**

@@ -269,7 +269,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
   const files = Program_GetSourceFiles(receiver!.program);
   const wg = NewWorkGroup(Program_SingleThreaded(receiver!.program));
   for (const file of files) {
-    wg.Queue(() => {
+    wg!.Queue(() => {
       const version = snapshot_computeHash(receiver!.snapshot, SourceFile_Text(file));
       const impliedNodeFormat = Program_GetSourceFileMetaData(receiver!.program, SourceFile_Path(file)).ImpliedNodeFormat;
       const affectsGlobalScope = fileAffectsGlobalScope(file);
@@ -339,7 +339,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
       });
     });
   }
-  wg.RunAndWait();
+  wg!.RunAndWait();
 }
 
 /**

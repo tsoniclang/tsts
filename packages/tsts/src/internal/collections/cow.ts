@@ -2,6 +2,7 @@ import type { bool } from "../../go/scalars.js";
 import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::type::CopyOnWriteMap","kind":"type","status":"implemented","sigHash":"03b1be1ac4b9a5a1409fe9912998e5fd6ae9e9c521fb413c59dfb750753eeb50"}
  *
@@ -97,7 +98,7 @@ export function CopyOnWriteMap_ensureOwned<K extends GoComparable, V>(receiver: 
  * 	return func() { *c = saved }
  * }
  */
-export function CopyOnWriteMap_EnterScope<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>): () => void {
+export function CopyOnWriteMap_EnterScope<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>): GoFunc<() => void> {
   // `saved := *c` copies the struct by value (the backing-map reference and the
   // owned flag); the returned closure restores both via `*c = saved`.
   const saved = { m: receiver!.m, owned: receiver!.owned };
@@ -154,6 +155,6 @@ export function CopyOnWriteSet_Add<K extends GoComparable>(receiver: GoPtr<CopyO
  * 	return c.m.EnterScope()
  * }
  */
-export function CopyOnWriteSet_EnterScope<K extends GoComparable>(receiver: GoPtr<CopyOnWriteSet<K>>): () => void {
+export function CopyOnWriteSet_EnterScope<K extends GoComparable>(receiver: GoPtr<CopyOnWriteSet<K>>): GoFunc<() => void> {
   return CopyOnWriteMap_EnterScope(receiver!.m);
 }

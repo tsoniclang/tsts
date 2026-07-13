@@ -8,6 +8,7 @@ import type { BuildInfo } from "./buildInfo.js";
 import { buildInfoToSnapshot } from "./buildinfotosnapshot.js";
 import type { Program } from "./program.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::type::BuildInfoReader","kind":"type","status":"implemented","sigHash":"19c6bf62c57e783f64019b1642c54ad12b18d1ff63eaeac0f0351389a5a531a8"}
  *
@@ -26,7 +27,7 @@ export interface BuildInfoReader {
  * Go source:
  * var _ BuildInfoReader = (*buildInfoReader)(nil)
  */
-export let __1917d4a9_0: BuildInfoReader = buildInfoReader_as_incremental_BuildInfoReader(undefined);
+export let __1917d4a9_0: GoInterface<BuildInfoReader> = buildInfoReader_as_incremental_BuildInfoReader(undefined);
 
 export function buildInfoReader_as_incremental_BuildInfoReader(receiver: GoPtr<buildInfoReader>): BuildInfoReader {
   return {
@@ -43,7 +44,7 @@ export function buildInfoReader_as_incremental_BuildInfoReader(receiver: GoPtr<b
  * }
  */
 export interface buildInfoReader {
-  host: CompilerHost;
+  host: GoInterface<CompilerHost>;
 }
 
 /**
@@ -76,7 +77,7 @@ export function buildInfoReader_ReadBuildInfo(receiver: GoPtr<buildInfoReader>, 
   }
 
   // Read build info file
-  const [data, ok] = receiver!.host.FS().ReadFile(buildInfoFileName);
+  const [data, ok] = receiver!.host!.FS()!.ReadFile(buildInfoFileName);
   if (!ok) {
     return undefined;
   }
@@ -98,7 +99,7 @@ export function buildInfoReader_ReadBuildInfo(receiver: GoPtr<buildInfoReader>, 
  * 	return &buildInfoReader{host: host}
  * }
  */
-export function NewBuildInfoReader(host: CompilerHost): BuildInfoReader {
+export function NewBuildInfoReader(host: GoInterface<CompilerHost>): GoInterface<BuildInfoReader> {
   const r: buildInfoReader = { host };
   return buildInfoReader_as_incremental_BuildInfoReader(r);
 }
@@ -121,9 +122,9 @@ export function NewBuildInfoReader(host: CompilerHost): BuildInfoReader {
  * 	return incrementalProgram
  * }
  */
-export function ReadBuildInfoProgram(config: GoPtr<ParsedCommandLine>, reader: BuildInfoReader, host: CompilerHost): GoPtr<Program> {
+export function ReadBuildInfoProgram(config: GoPtr<ParsedCommandLine>, reader: GoInterface<BuildInfoReader>, host: GoInterface<CompilerHost>): GoPtr<Program> {
   // Read buildInfo file
-  const buildInfo = reader.ReadBuildInfo(config);
+  const buildInfo = reader!.ReadBuildInfo(config);
   if (buildInfo === undefined || !BuildInfo_IsValidVersion(buildInfo) || !BuildInfo_IsIncremental(buildInfo)) {
     return undefined;
   }

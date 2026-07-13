@@ -48,6 +48,7 @@ import {
 } from "./program.js";
 import type { Program } from "./program.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::EmitHost","kind":"type","status":"implemented","sigHash":"86d3825eb042c6035fe2cb5b2b3b1f40c7a5774c29d4ec77071e82aed8b8c86b"}
  *
@@ -78,7 +79,7 @@ export interface EmitHost extends EmitHost_cf9bdcc7, DeclarationEmitHost {
  * Go source:
  * var _ EmitHost = (*emitHost)(nil)
  */
-export let __6e5ea12b_0: EmitHost = emitHost_as_compiler_EmitHost(undefined);
+export let __6e5ea12b_0: GoInterface<EmitHost> = emitHost_as_compiler_EmitHost(undefined);
 
 export function EmitHost_as_printer_EmitHost(receiver: EmitHost): EmitHost_cf9bdcc7 {
   return receiver;
@@ -117,7 +118,7 @@ export function emitHost_as_printer_EmitHost(receiver: GoPtr<emitHost>): EmitHos
     IsEmitBlocked: (file: string): bool => emitHost_IsEmitBlocked(receiver, file),
     WriteFile: (fileName: string, text: string): GoError => emitHost_WriteFile(receiver, fileName, text),
     GetEmitModuleFormatOfFile: (file: HasFileName): ModuleKind => emitHost_GetEmitModuleFormatOfFile(receiver, file),
-    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver),
+    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver)!,
     GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => emitHost_GetProjectReferenceFromSource(receiver, path),
     IsSourceFileFromExternalLibrary: (file: GoPtr<SourceFile>): bool => emitHost_IsSourceFileFromExternalLibrary(receiver, file),
   };
@@ -141,10 +142,10 @@ export function emitHost_as_declarations_DeclarationEmitHost(receiver: GoPtr<emi
     GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => emitHost_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
     GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => emitHost_GetModeForUsageLocation(receiver, file, moduleSpecifier),
     GetSourceFileFromReference: (origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile> => emitHost_GetSourceFileFromReference(receiver, origin, ref),
-    GetOutputPathsFor: (file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths => emitHost_GetOutputPathsFor(receiver, file, forceDtsPaths),
+    GetOutputPathsFor: (file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths => emitHost_GetOutputPathsFor(receiver, file, forceDtsPaths)!,
     GetResolutionModeOverride: (node: GoPtr<Node>): ResolutionMode => emitHost_GetResolutionModeOverride(receiver, node),
     GetEffectiveDeclarationFlags: (node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags => emitHost_GetEffectiveDeclarationFlags(receiver, node, flags),
-    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver),
+    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver)!,
   };
 }
 
@@ -173,10 +174,10 @@ export function emitHost_as_compiler_EmitHost(receiver: GoPtr<emitHost>): EmitHo
     GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => emitHost_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
     GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => emitHost_GetModeForUsageLocation(receiver, file, moduleSpecifier),
     GetSourceFileFromReference: (origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile> => emitHost_GetSourceFileFromReference(receiver, origin, ref),
-    GetOutputPathsFor: (file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths => emitHost_GetOutputPathsFor(receiver, file, forceDtsPaths),
+    GetOutputPathsFor: (file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths => emitHost_GetOutputPathsFor(receiver, file, forceDtsPaths)!,
     GetResolutionModeOverride: (node: GoPtr<Node>): ResolutionMode => emitHost_GetResolutionModeOverride(receiver, node),
     GetEffectiveDeclarationFlags: (node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags => emitHost_GetEffectiveDeclarationFlags(receiver, node, flags),
-    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver),
+    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver)!,
     Options: (): GoPtr<CompilerOptions> => emitHost_Options(receiver),
     SourceFiles: (): GoSlice<GoPtr<SourceFile>> => emitHost_SourceFiles(receiver),
     IsEmitBlocked: (file: string): bool => emitHost_IsEmitBlocked(receiver, file),
@@ -197,7 +198,7 @@ export function emitHost_as_compiler_EmitHost(receiver: GoPtr<emitHost>): EmitHo
  */
 export interface emitHost {
   program: GoPtr<Program>;
-  emitResolver: EmitResolver;
+  emitResolver: GoInterface<EmitResolver>;
 }
 
 /**
@@ -212,7 +213,7 @@ export interface emitHost {
  * 	}, done
  * }
  */
-export function newEmitHost(ctx: Context, program: GoPtr<Program>, file: GoPtr<SourceFile>): [GoPtr<emitHost>, () => void] {
+export function newEmitHost(ctx: GoInterface<Context>, program: GoPtr<Program>, file: GoPtr<SourceFile>): [GoPtr<emitHost>, () => void] {
   const [checker, done] = Program_GetTypeCheckerForFile(program, ctx, file);
   const emitResolver = EmitResolver_as_printer_EmitResolver(Checker_GetEmitResolver(checker));
   return [{ program, emitResolver }, done];
@@ -226,7 +227,7 @@ export function newEmitHost(ctx: Context, program: GoPtr<Program>, file: GoPtr<S
  * 	return host.program.GetModeForUsageLocation(file, moduleSpecifier)
  * }
  */
-export function emitHost_GetModeForUsageLocation(receiver: GoPtr<emitHost>, file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode {
+export function emitHost_GetModeForUsageLocation(receiver: GoPtr<emitHost>, file: GoInterface<HasFileName>, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode {
   return Program_GetModeForUsageLocation(receiver!.program, file, moduleSpecifier);
 }
 
@@ -238,7 +239,7 @@ export function emitHost_GetModeForUsageLocation(receiver: GoPtr<emitHost>, file
  * 	return host.program.GetResolvedModuleFromModuleSpecifier(file, moduleSpecifier)
  * }
  */
-export function emitHost_GetResolvedModuleFromModuleSpecifier(receiver: GoPtr<emitHost>, file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> {
+export function emitHost_GetResolvedModuleFromModuleSpecifier(receiver: GoPtr<emitHost>, file: GoInterface<HasFileName>, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> {
   return Program_GetResolvedModuleFromModuleSpecifier(receiver!.program, file, moduleSpecifier);
 }
 
@@ -250,7 +251,7 @@ export function emitHost_GetResolvedModuleFromModuleSpecifier(receiver: GoPtr<em
  * 	return host.program.GetDefaultResolutionModeForFile(file)
  * }
  */
-export function emitHost_GetDefaultResolutionModeForFile(receiver: GoPtr<emitHost>, file: HasFileName): ResolutionMode {
+export function emitHost_GetDefaultResolutionModeForFile(receiver: GoPtr<emitHost>, file: GoInterface<HasFileName>): ResolutionMode {
   return Program_GetDefaultResolutionModeForFile(receiver!.program, file);
 }
 
@@ -262,7 +263,7 @@ export function emitHost_GetDefaultResolutionModeForFile(receiver: GoPtr<emitHos
  * 	return host.program.GetEmitModuleFormatOfFile(file)
  * }
  */
-export function emitHost_GetEmitModuleFormatOfFile(receiver: GoPtr<emitHost>, file: HasFileName): ModuleKind {
+export function emitHost_GetEmitModuleFormatOfFile(receiver: GoPtr<emitHost>, file: GoInterface<HasFileName>): ModuleKind {
   return Program_GetEmitModuleFormatOfFile(receiver!.program, file);
 }
 
@@ -322,7 +323,7 @@ export function emitHost_GetPackageJsonInfo(receiver: GoPtr<emitHost>, pkgJsonPa
  * 	return host.program.GetSourceOfProjectReferenceIfOutputIncluded(file)
  * }
  */
-export function emitHost_GetSourceOfProjectReferenceIfOutputIncluded(receiver: GoPtr<emitHost>, file: HasFileName): string {
+export function emitHost_GetSourceOfProjectReferenceIfOutputIncluded(receiver: GoPtr<emitHost>, file: GoInterface<HasFileName>): string {
   return Program_GetSourceOfProjectReferenceIfOutputIncluded(receiver!.program, file);
 }
 
@@ -359,7 +360,7 @@ export function emitHost_GetRedirectTargets(receiver: GoPtr<emitHost>, path: Pat
  * }
  */
 export function emitHost_GetEffectiveDeclarationFlags(receiver: GoPtr<emitHost>, node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags {
-  return emitHost_GetEmitResolver(receiver).GetEffectiveDeclarationFlags(node, flags);
+  return emitHost_GetEmitResolver(receiver)!.GetEffectiveDeclarationFlags(node, flags);
 }
 
 /**
@@ -371,7 +372,7 @@ export function emitHost_GetEffectiveDeclarationFlags(receiver: GoPtr<emitHost>,
  * 	return outputpaths.GetOutputPathsFor(file, host.Options(), host, forceDtsPaths)
  * }
  */
-export function emitHost_GetOutputPathsFor(receiver: GoPtr<emitHost>, file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths {
+export function emitHost_GetOutputPathsFor(receiver: GoPtr<emitHost>, file: GoPtr<SourceFile>, forceDtsPaths: bool): GoInterface<OutputPaths> {
   const host = emitHost_as_outputpaths_OutputPathsHost(receiver);
   const result = GetOutputPathsFor(file, emitHost_Options(receiver), host, forceDtsPaths);
   return {
@@ -389,7 +390,7 @@ export function emitHost_GetOutputPathsFor(receiver: GoPtr<emitHost>, file: GoPt
  * }
  */
 export function emitHost_GetResolutionModeOverride(receiver: GoPtr<emitHost>, node: GoPtr<Node>): ResolutionMode {
-  return emitHost_GetEmitResolver(receiver).GetResolutionModeOverride(node);
+  return emitHost_GetEmitResolver(receiver)!.GetResolutionModeOverride(node);
 }
 
 /**
@@ -477,7 +478,7 @@ export function emitHost_IsEmitBlocked(receiver: GoPtr<emitHost>, file: string):
  * }
  */
 export function emitHost_WriteFile(receiver: GoPtr<emitHost>, fileName: string, text: string): GoError {
-  return Program_Host(receiver!.program).FS().WriteFile(fileName, text);
+  return Program_Host(receiver!.program)!.FS()!.WriteFile(fileName, text);
 }
 
 /**
@@ -488,7 +489,7 @@ export function emitHost_WriteFile(receiver: GoPtr<emitHost>, fileName: string, 
  * 	return host.emitResolver
  * }
  */
-export function emitHost_GetEmitResolver(receiver: GoPtr<emitHost>): EmitResolver {
+export function emitHost_GetEmitResolver(receiver: GoPtr<emitHost>): GoInterface<EmitResolver> {
   return receiver!.emitResolver;
 }
 

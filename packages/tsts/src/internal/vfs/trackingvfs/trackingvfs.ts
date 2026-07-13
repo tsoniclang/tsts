@@ -5,6 +5,7 @@ import type { SyncSet } from "../../collections/syncset.js";
 import { SyncSet_Add } from "../../collections/syncset.js";
 import type { Entries, FileInfo, FS as FS_2329d319, WalkDirFunc } from "../vfs.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/trackingvfs/trackingvfs.go::type::FS","kind":"type","status":"implemented","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4"}
  *
@@ -15,7 +16,7 @@ import type { Entries, FileInfo, FS as FS_2329d319, WalkDirFunc } from "../vfs.j
  * }
  */
 export interface FS {
-  Inner: FS_2329d319;
+  Inner: GoInterface<FS_2329d319>;
   SeenFiles: SyncSet<string>;
 }
 
@@ -25,7 +26,7 @@ export interface FS {
  * Go source:
  * var _ vfs.FS = (*FS)(nil)
  */
-export let __325b3fb8_0: FS_2329d319 = FS_as_vfs_FS(undefined);
+export let __325b3fb8_0: GoInterface<FS_2329d319> = FS_as_vfs_FS(undefined);
 
 export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_2329d319 {
   return {
@@ -55,7 +56,7 @@ export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_2329d319 {
  */
 export function FS_ReadFile(receiver: GoPtr<FS>, path: string): [string, bool] {
   SyncSet_Add(receiver!.SeenFiles, path);
-  return receiver!.Inner.ReadFile(path);
+  return receiver!.Inner!.ReadFile(path);
 }
 
 /**
@@ -69,7 +70,7 @@ export function FS_ReadFile(receiver: GoPtr<FS>, path: string): [string, bool] {
  */
 export function FS_FileExists(receiver: GoPtr<FS>, path: string): bool {
   SyncSet_Add(receiver!.SeenFiles, path);
-  return receiver!.Inner.FileExists(path);
+  return receiver!.Inner!.FileExists(path);
 }
 
 /**
@@ -79,7 +80,7 @@ export function FS_FileExists(receiver: GoPtr<FS>, path: string): bool {
  * func (fs *FS) UseCaseSensitiveFileNames() bool { return fs.Inner.UseCaseSensitiveFileNames() }
  */
 export function FS_UseCaseSensitiveFileNames(receiver: GoPtr<FS>): bool {
-  return receiver!.Inner.UseCaseSensitiveFileNames();
+  return receiver!.Inner!.UseCaseSensitiveFileNames();
 }
 
 /**
@@ -91,7 +92,7 @@ export function FS_UseCaseSensitiveFileNames(receiver: GoPtr<FS>): bool {
  * }
  */
 export function FS_WriteFile(receiver: GoPtr<FS>, path: string, data: string): GoError {
-  return receiver!.Inner.WriteFile(path, data);
+  return receiver!.Inner!.WriteFile(path, data);
 }
 
 /**
@@ -103,7 +104,7 @@ export function FS_WriteFile(receiver: GoPtr<FS>, path: string, data: string): G
  * }
  */
 export function FS_AppendFile(receiver: GoPtr<FS>, path: string, data: string): GoError {
-  return receiver!.Inner.AppendFile(path, data);
+  return receiver!.Inner!.AppendFile(path, data);
 }
 
 /**
@@ -113,7 +114,7 @@ export function FS_AppendFile(receiver: GoPtr<FS>, path: string, data: string): 
  * func (fs *FS) Remove(path string) error { return fs.Inner.Remove(path) }
  */
 export function FS_Remove(receiver: GoPtr<FS>, path: string): GoError {
-  return receiver!.Inner.Remove(path);
+  return receiver!.Inner!.Remove(path);
 }
 
 /**
@@ -125,7 +126,7 @@ export function FS_Remove(receiver: GoPtr<FS>, path: string): GoError {
  * }
  */
 export function FS_Chtimes(receiver: GoPtr<FS>, path: string, aTime: Time, mTime: Time): GoError {
-  return receiver!.Inner.Chtimes(path, aTime, mTime);
+  return receiver!.Inner!.Chtimes(path, aTime, mTime);
 }
 
 /**
@@ -139,7 +140,7 @@ export function FS_Chtimes(receiver: GoPtr<FS>, path: string, aTime: Time, mTime
  */
 export function FS_DirectoryExists(receiver: GoPtr<FS>, path: string): bool {
   SyncSet_Add(receiver!.SeenFiles, path);
-  return receiver!.Inner.DirectoryExists(path);
+  return receiver!.Inner!.DirectoryExists(path);
 }
 
 /**
@@ -153,7 +154,7 @@ export function FS_DirectoryExists(receiver: GoPtr<FS>, path: string): bool {
  */
 export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entries {
   SyncSet_Add(receiver!.SeenFiles, path);
-  return receiver!.Inner.GetAccessibleEntries(path);
+  return receiver!.Inner!.GetAccessibleEntries(path);
 }
 
 /**
@@ -167,7 +168,7 @@ export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entr
  */
 export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
   SyncSet_Add(receiver!.SeenFiles, path);
-  return receiver!.Inner.Stat(path);
+  return receiver!.Inner!.Stat(path);
 }
 
 /**
@@ -184,7 +185,7 @@ export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
  */
 export function FS_WalkDir(receiver: GoPtr<FS>, root: string, walkFn: WalkDirFunc): GoError {
   SyncSet_Add(receiver!.SeenFiles, root);
-  return receiver!.Inner.WalkDir(root, ((path: string, d: unknown, err: unknown): GoError => {
+  return receiver!.Inner!.WalkDir(root, ((path: string, d: unknown, err: unknown): GoError => {
     SyncSet_Add(receiver!.SeenFiles, path);
     return (walkFn as unknown as (path: string, d: unknown, err: unknown) => GoError)(path, d, err);
   }) as unknown as WalkDirFunc);
@@ -201,5 +202,5 @@ export function FS_WalkDir(receiver: GoPtr<FS>, root: string, walkFn: WalkDirFun
  */
 export function FS_Realpath(receiver: GoPtr<FS>, path: string): string {
   SyncSet_Add(receiver!.SeenFiles, path);
-  return receiver!.Inner.Realpath(path);
+  return receiver!.Inner!.Realpath(path);
 }

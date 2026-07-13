@@ -1,6 +1,8 @@
 import type { int } from "../../go/scalars.js";
+import { GoNilSlice, GoSliceElementRef } from "../../go/compat.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 
+import type { GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::type::Arena","kind":"type","status":"implemented","sigHash":"866dd69ab11aaa9aeee1c0e91b8a7af12f59ff5857f9a4e17d1779c0c3f973c2"}
  *
@@ -14,9 +16,7 @@ export interface Arena<T = unknown> {
 }
 
 function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
-  const arena = receiver ?? ({ data: [] } as Arena<T>);
-  arena.data ??= [];
-  return arena;
+  return receiver!;
 }
 
 /**
@@ -34,9 +34,11 @@ function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
  * 	return &a.data[index]
  * }
  */
-export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoPtr<T> {
-  ensureArena(receiver);
-  return {} as GoPtr<T>;
+export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoRef<T> {
+  const arena = ensureArena(receiver);
+  const index = arena.data.length as int;
+  arena.data.push({} as T);
+  return GoSliceElementRef(arena.data, index);
 }
 
 /**
@@ -63,7 +65,7 @@ export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoPtr<T> {
  */
 export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int): GoSlice<T> {
   if (size === 0) {
-    return [];
+    return GoNilSlice();
   }
   ensureArena(receiver);
   return new globalThis.Array<T>(size as number);
@@ -100,7 +102,7 @@ export function Arena_NewSlice1<T>(receiver: GoPtr<Arena<T>>, t: T): GoSlice<T> 
  */
 export function Arena_Clone<T>(receiver: GoPtr<Arena<T>>, t: GoSlice<T>): GoSlice<T> {
   if (t.length === 0) {
-    return [];
+    return GoNilSlice();
   }
   ensureArena(receiver);
   return t.slice();

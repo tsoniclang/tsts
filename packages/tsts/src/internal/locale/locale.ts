@@ -5,6 +5,7 @@ import type { Tag } from "../../go/golang.org/x/text/language.js";
 import { Und } from "../../go/golang.org/x/text/language.js";
 import { Parse as language_Parse } from "../../go/golang.org/x/text/language.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/locale/locale.go::type::contextKey","kind":"type","status":"implemented","sigHash":"145a4d492e87e1caa7fa3707ee5ee0952a786a50fc5f06b34cf46263a3763f73"}
  *
@@ -37,8 +38,8 @@ export let Default: Locale = Und as Locale;
  * 	return context.WithValue(ctx, contextKey(0), locale)
  * }
  */
-export function WithLocale(ctx: Context, locale: Locale): Context {
-  return WithValue(ctx, 0 as contextKey, locale);
+export function WithLocale(ctx: GoInterface<Context>, locale: Locale): GoInterface<Context> {
+  return WithValue(ctx!, 0 as contextKey, locale);
 }
 
 /**
@@ -50,8 +51,8 @@ export function WithLocale(ctx: Context, locale: Locale): Context {
  * 	return locale
  * }
  */
-export function FromContext(ctx: Context): Locale {
-  return ctx.Value(0 as contextKey) as Locale;
+export function FromContext(ctx: GoInterface<Context>): Locale {
+  return ctx!.Value(0 as contextKey) as Locale;
 }
 
 /**

@@ -55,6 +55,7 @@ import { CombinePaths, EnsureTrailingDirectorySeparator, FileExtensionIs, GetBas
 import { ExtensionJson } from "../tspath/extension.js";
 import { EncodeURI, AddUTF8ByteOrderMark } from "../stringutil/util.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::EmitOnly","kind":"type","status":"implemented","sigHash":"1958d246a44daf492c65aec0fb6b1cf3442407dc6463b06769a367a0c26e08ff"}
  *
@@ -96,14 +97,14 @@ export const EmitOnlyForcedDts: EmitOnly = 3;
  * }
  */
 export interface emitter {
-  host: EmitHost;
+  host: GoInterface<EmitHost>;
   emitOnly: EmitOnly;
   emitterDiagnostics: DiagnosticsCollection;
-  writer: EmitTextWriter;
+  writer: GoInterface<EmitTextWriter>;
   paths: GoPtr<OutputPaths>;
   sourceFile: GoPtr<SourceFile>;
   emitResult: EmitResult;
-  writeFile: (fileName: string, text: string, data: GoPtr<WriteFileData>) => GoError;
+  writeFile: GoFunc<(fileName: string, text: string, data: GoPtr<WriteFileData>) => GoError>;
   tr: GoPtr<Tracing>;
 }
 
@@ -146,7 +147,7 @@ export function emitter_emit(receiver: GoPtr<emitter>): void {
  */
 export function emitter_getDeclarationTransformers(receiver: GoPtr<emitter>, emitContext: GoPtr<EmitContext>, declarationFilePath: string, declarationMapPath: string): GoSlice<GoPtr<DeclarationTransformer>> {
   const e = receiver!;
-  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(e.host), emitContext, e.host.Options(), declarationFilePath, declarationMapPath);
+  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(e.host!), emitContext, e.host!.Options(), declarationFilePath, declarationMapPath);
   return [transform];
 }
 
@@ -172,7 +173,7 @@ export function emitter_runScriptTransformers(receiver: GoPtr<emitter>, emitCont
     popTrace = pop;
   }
   let sf = sourceFile;
-  for (const transformer of getScriptTransformers(emitContext, EmitHost_as_printer_EmitHost(e.host), sf)) {
+  for (const transformer of getScriptTransformers(emitContext, EmitHost_as_printer_EmitHost(e.host!), sf)) {
     sf = Transformer_TransformSourceFile(transformer, sf);
   }
   if (popTrace !== undefined) {
@@ -338,19 +339,19 @@ export function getModuleTransformer(opts: GoPtr<TransformOptions>): GoPtr<Trans
  * 	return tx
  * }
  */
-export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: EmitHost_b6591a53, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Transformer>> {
+export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: GoInterface<EmitHost_b6591a53>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Transformer>> {
   const tx: GoSlice<GoPtr<Transformer>> = [];
-  const options = host.Options();
+  const options = host!.Options();
 
   // JS files don't use reference calculations as they don't do import elision, no need to calculate it
   const importElisionEnabled = !Tristate_IsTrue(options!.VerbatimModuleSyntax) && !IsInJSFile(sourceFile as GoPtr<Node>);
   const jsxTransformEnabled = CompilerOptions_GetJSXTransformEnabled(options) && sourceFile!.LanguageVariant === LanguageVariantJSX;
 
-  const emitResolver = host.GetEmitResolver();
+  const emitResolver = host!.GetEmitResolver();
 
-  let referenceResolver: ReferenceResolver;
+  let referenceResolver: GoInterface<ReferenceResolver>;
   if (importElisionEnabled || jsxTransformEnabled || !CompilerOptions_GetIsolatedModules(options) || Tristate_IsTrue(options!.EmitDecoratorMetadata)) {
-    emitResolver.MarkLinkedReferencesRecursively(sourceFile);
+    emitResolver!.MarkLinkedReferencesRecursively(sourceFile);
     referenceResolver = emitResolver;
   } else {
     referenceResolver = NewReferenceResolver(options, {} as ReferenceResolverHooks);
@@ -360,8 +361,8 @@ export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: Emi
     Context: emitContext,
     CompilerOptions: options,
     Resolver: referenceResolver,
-    EmitResolver: emitResolver,
-    GetEmitModuleFormatOfFile: (file) => host.GetEmitModuleFormatOfFile(file),
+    EmitResolver: emitResolver!,
+    GetEmitModuleFormatOfFile: (file) => host!.GetEmitModuleFormatOfFile(file),
   };
 
   // transform TypeScript syntax
@@ -454,13 +455,13 @@ export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: Emi
  */
 export function emitter_emitJSFile(receiver: GoPtr<emitter>, sourceFile: GoPtr<SourceFile>, jsFilePath: string, sourceMapFilePath: string): void {
   const e = receiver!;
-  const options = e.host.Options();
+  const options = e.host!.Options();
 
   if (sourceFile === undefined || (e.emitOnly !== EmitAll && e.emitOnly !== EmitOnlyJs) || jsFilePath.length === 0) {
     return;
   }
 
-  if (options!.NoEmit === TSTrue || e.host.IsEmitBlocked(jsFilePath)) {
+  if (options!.NoEmit === TSTrue || e.host!.IsEmitBlocked(jsFilePath)) {
     e.emitResult.EmitSkipped = true;
     return;
   }
@@ -569,7 +570,7 @@ export function emitter_emitJSFile(receiver: GoPtr<emitter>, sourceFile: GoPtr<S
  */
 export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile: GoPtr<SourceFile>, declarationFilePath: string, declarationMapPath: string): void {
   const e = receiver!;
-  const options = e.host.Options();
+  const options = e.host!.Options();
 
   if (sourceFile === undefined || e.emitOnly === EmitOnlyJs || declarationFilePath.length === 0) {
     return;
@@ -590,7 +591,7 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
       DiagnosticsCollection_Add(e.emitterDiagnostics, elem);
     }
 
-    if (e.emitOnly !== EmitOnlyForcedDts && (options!.NoEmit === TSTrue || e.host.IsEmitBlocked(declarationFilePath))) {
+    if (e.emitOnly !== EmitOnlyForcedDts && (options!.NoEmit === TSTrue || e.host!.IsEmitBlocked(declarationFilePath))) {
       e.emitResult.EmitSkipped = true;
       return;
     }
@@ -724,7 +725,7 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
 export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: string, sourceMapFilePath: string, sourceFile: GoPtr<SourceFile>, printer_: GoPtr<Printer>, mapOptions: GoPtr<CompilerOptions>, shouldEmitSourceMaps: bool): void {
   const e = receiver!;
   // !!! sourceMapGenerator
-  const options = e.host.Options();
+  const options = e.host!.Options();
   let sourceMapGenerator: GoPtr<Generator> = undefined;
   if (shouldEmitSourceMaps) {
     sourceMapGenerator = NewGenerator(
@@ -732,8 +733,8 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
       getSourceRoot(mapOptions),
       emitter_getSourceMapDirectory(receiver, mapOptions, jsFilePath, sourceFile),
       {
-        UseCaseSensitiveFileNames: e.host.UseCaseSensitiveFileNames(),
-        CurrentDirectory: e.host.GetCurrentDirectory(),
+        UseCaseSensitiveFileNames: e.host!.UseCaseSensitiveFileNames(),
+        CurrentDirectory: e.host!.GetCurrentDirectory(),
       } as ComparePathsOptions,
     );
   }
@@ -760,12 +761,12 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
     );
 
     if (sourceMappingURL.length > 0) {
-      if (!e.writer.IsAtStartOfLine()) {
-        e.writer.RawWrite(IfElse(options!.NewLine === NewLineKindCRLF, "\r\n", "\n"));
+      if (!e.writer!.IsAtStartOfLine()) {
+        e.writer!.RawWrite(IfElse(options!.NewLine === NewLineKindCRLF, "\r\n", "\n"));
       }
-      sourceMapUrlPos = e.writer.GetTextPos();
-      e.writer.WriteComment("//# sourceMappingURL=");
-      e.writer.WriteComment(sourceMappingURL);
+      sourceMapUrlPos = e.writer!.GetTextPos();
+      e.writer!.WriteComment("//# sourceMappingURL=");
+      e.writer!.WriteComment(sourceMappingURL);
     }
 
     // Write the source map
@@ -779,11 +780,11 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
       }
     }
   } else {
-    e.writer.WriteLine();
+    e.writer!.WriteLine();
   }
 
   // Write the output file
-  let text = e.writer.String();
+  let text = e.writer!.String();
   if (Tristate_IsTrue(options!.EmitBOM)) {
     text = AddUTF8ByteOrderMark(text);
   }
@@ -802,7 +803,7 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
   }
 
   // Reset state
-  e.writer.Clear();
+  e.writer!.Clear();
 }
 
 /**
@@ -821,7 +822,7 @@ export function emitter_writeText(receiver: GoPtr<emitter>, fileName: string, te
   if (e.writeFile !== undefined) {
     return e.writeFile(fileName, text, data);
   }
-  return EmitHost_as_printer_EmitHost(e.host).WriteFile(fileName, text);
+  return EmitHost_as_printer_EmitHost(e.host!).WriteFile(fileName, text);
 }
 
 /**
@@ -895,7 +896,7 @@ export function getSourceRoot(mapOptions: GoPtr<CompilerOptions>): string {
 export function emitter_getSourceMapDirectory(receiver: GoPtr<emitter>, mapOptions: GoPtr<CompilerOptions>, filePath: string, sourceFile: GoPtr<SourceFile>): string {
   const e = receiver!;
   if (mapOptions!.SourceRoot.length > 0) {
-    return e.host.CommonSourceDirectory();
+    return e.host!.CommonSourceDirectory();
   }
   if (mapOptions!.MapRoot.length > 0) {
     let sourceMapDir = NormalizeSlashes(mapOptions!.MapRoot);
@@ -905,14 +906,14 @@ export function emitter_getSourceMapDirectory(receiver: GoPtr<emitter>, mapOptio
       sourceMapDir = GetDirectoryPath(GetSourceFilePathInNewDir(
         SourceFile_FileName(sourceFile),
         sourceMapDir,
-        e.host.GetCurrentDirectory(),
-        e.host.CommonSourceDirectory(),
-        e.host.UseCaseSensitiveFileNames(),
+        e.host!.GetCurrentDirectory(),
+        e.host!.CommonSourceDirectory(),
+        e.host!.UseCaseSensitiveFileNames(),
       ));
     }
     if (GetRootLength(sourceMapDir) === 0) {
       // The relative paths are relative to the common directory
-      sourceMapDir = CombinePaths(e.host.CommonSourceDirectory(), sourceMapDir);
+      sourceMapDir = CombinePaths(e.host!.CommonSourceDirectory(), sourceMapDir);
     }
     return sourceMapDir;
   }
@@ -980,22 +981,22 @@ export function emitter_getSourceMappingURL(receiver: GoPtr<emitter>, mapOptions
       sourceMapDir = GetDirectoryPath(GetSourceFilePathInNewDir(
         SourceFile_FileName(sourceFile),
         sourceMapDir,
-        e.host.GetCurrentDirectory(),
-        e.host.CommonSourceDirectory(),
-        e.host.UseCaseSensitiveFileNames(),
+        e.host!.GetCurrentDirectory(),
+        e.host!.CommonSourceDirectory(),
+        e.host!.UseCaseSensitiveFileNames(),
       ));
     }
     if (GetRootLength(sourceMapDir) === 0) {
       // The relative paths are relative to the common directory
-      sourceMapDir = CombinePaths(e.host.CommonSourceDirectory(), sourceMapDir);
+      sourceMapDir = CombinePaths(e.host!.CommonSourceDirectory(), sourceMapDir);
       return EncodeURI(
         GetRelativePathToDirectoryOrUrl(
           GetDirectoryPath(NormalizePath(filePath)), // get the relative sourceMapDir path based on jsFilePath
           CombinePaths(sourceMapDir, sourceMapFile),  // this is where user expects to see sourceMap
           true,
           {
-            UseCaseSensitiveFileNames: e.host.UseCaseSensitiveFileNames(),
-            CurrentDirectory: e.host.GetCurrentDirectory(),
+            UseCaseSensitiveFileNames: e.host!.UseCaseSensitiveFileNames(),
+            CurrentDirectory: e.host!.GetCurrentDirectory(),
           } as ComparePathsOptions,
         ),
       );
@@ -1098,10 +1099,10 @@ export function EmitHost_as_emitter_SourceFileMayBeEmittedHost(receiver: EmitHos
  * 	return true
  * }
  */
-export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: SourceFileMayBeEmittedHost, forceDtsEmit: bool): bool {
+export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: GoInterface<SourceFileMayBeEmittedHost>, forceDtsEmit: bool): bool {
   // TODO: move this to outputpaths?
 
-  const options = host.Options();
+  const options = host!.Options();
   // Js files are emitted only if option is enabled
   if (Tristate_IsTrue(options!.NoEmitForJsFiles) && IsSourceFileJS(sourceFile)) {
     return false;
@@ -1113,7 +1114,7 @@ export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: Sour
   }
 
   // Source file from node_modules are not emitted
-  if (host.IsSourceFileFromExternalLibrary(sourceFile)) {
+  if (host!.IsSourceFileFromExternalLibrary(sourceFile)) {
     return false;
   }
 
@@ -1124,7 +1125,7 @@ export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: Sour
 
   // Check other conditions for file emit
   // Source files from referenced projects are not emitted
-  if (host.GetProjectReferenceFromSource(SourceFile_Path(sourceFile)) !== undefined) {
+  if (host!.GetProjectReferenceFromSource(SourceFile_Path(sourceFile)) !== undefined) {
     return false;
   }
 
@@ -1140,11 +1141,11 @@ export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: Sour
 
   // Otherwise, if rootDir is specified or a config file exists, we know the common source directory and can check if the file would be emitted in the same location
   if (options!.RootDir !== "" || options!.ConfigFilePath !== "") {
-    const commonDir = GetNormalizedAbsolutePath(GetCommonSourceDirectory(options, () => [], host.GetCurrentDirectory(), host.UseCaseSensitiveFileNames(), undefined), host.GetCurrentDirectory());
-    const outputPath = GetSourceFilePathInNewDirWorker(SourceFile_FileName(sourceFile), options!.OutDir, host.GetCurrentDirectory(), commonDir, host.UseCaseSensitiveFileNames());
+    const commonDir = GetNormalizedAbsolutePath(GetCommonSourceDirectory(options, () => [], host!.GetCurrentDirectory(), host!.UseCaseSensitiveFileNames(), undefined), host!.GetCurrentDirectory());
+    const outputPath = GetSourceFilePathInNewDirWorker(SourceFile_FileName(sourceFile), options!.OutDir, host!.GetCurrentDirectory(), commonDir, host!.UseCaseSensitiveFileNames());
     if (ComparePaths(SourceFile_FileName(sourceFile), outputPath, {
-      UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),
-      CurrentDirectory: host.GetCurrentDirectory(),
+      UseCaseSensitiveFileNames: host!.UseCaseSensitiveFileNames(),
+      CurrentDirectory: host!.GetCurrentDirectory(),
     } as ComparePathsOptions) === 0) {
       return false;
     }
@@ -1169,12 +1170,12 @@ export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: Sour
  * 	})
  * }
  */
-export function getSourceFilesToEmit(host: SourceFileMayBeEmittedHost, targetSourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): GoSlice<GoPtr<SourceFile>> {
+export function getSourceFilesToEmit(host: GoInterface<SourceFileMayBeEmittedHost>, targetSourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): GoSlice<GoPtr<SourceFile>> {
   let sourceFiles: GoSlice<GoPtr<SourceFile>>;
   if (targetSourceFile !== undefined) {
     sourceFiles = [targetSourceFile];
   } else {
-    sourceFiles = host.SourceFiles();
+    sourceFiles = host!.SourceFiles();
   }
   return Filter(sourceFiles, (sourceFile) => {
     return sourceFileMayBeEmitted(sourceFile, host, forceDtsEmit);
@@ -1209,14 +1210,14 @@ export function isSourceFileNotJson(file: GoPtr<SourceFile>): bool {
  * 	return transform.GetDiagnostics()
  * }
  */
-export function getDeclarationDiagnostics(host: EmitHost, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function getDeclarationDiagnostics(host: GoInterface<EmitHost>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   // TODO: use p.getSourceFilesToEmit cache
-  const fullFiles = Filter(getSourceFilesToEmit(EmitHost_as_emitter_SourceFileMayBeEmittedHost(host), file, false), isSourceFileNotJson);
+  const fullFiles = Filter(getSourceFilesToEmit(EmitHost_as_emitter_SourceFileMayBeEmittedHost(host!), file, false), isSourceFileNotJson);
   if (!Some(fullFiles, (f) => f === file)) {
     return [];
   }
-  const options = host.Options();
-  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(host), undefined, options, "", "");
+  const options = host!.Options();
+  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(host!), undefined, options, "", "");
   Transformer_TransformSourceFile(transform as GoPtr<Transformer>, file);
   return DeclarationTransformer_GetDiagnostics(transform);
 }

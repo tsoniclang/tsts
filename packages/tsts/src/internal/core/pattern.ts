@@ -2,6 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Contains, HasPrefix, HasSuffix, Index } from "../../go/strings.js";
 
+import type { GoFunc } from "../../go/compat.js";
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `s[i:j]` operate on byte offsets. The strings facade returns byte
 // offsets (e.g. Index), so we mirror that contract by operating over the UTF-8
@@ -128,11 +129,11 @@ export function Pattern_MatchedText(receiver: GoPtr<Pattern>, candidate: string)
  * 	return bestPattern
  * }
  */
-export function FindBestPatternMatch<T>(values: GoSlice<T>, getPattern: (v: T) => Pattern, candidate: string): T {
+export function FindBestPatternMatch<T>(values: GoSlice<T>, getPattern: GoFunc<(v: T) => Pattern>, candidate: string): T {
   let bestPattern = undefined as T;
   let longestMatchPrefixLength = -1;
   for (const value of values) {
-    const pattern = getPattern(value);
+    const pattern = getPattern!(value);
     if ((pattern.StarIndex === -1 || pattern.StarIndex > longestMatchPrefixLength) && Pattern_Matches(pattern, candidate)) {
       bestPattern = value;
       longestMatchPrefixLength = pattern.StarIndex;

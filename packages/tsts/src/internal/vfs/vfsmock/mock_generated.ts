@@ -4,13 +4,14 @@ import type { RWMutex } from "../../../go/sync.js";
 import type { Time } from "../../../go/time.js";
 import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ vfs.FS = &FSMock{}
  */
-export let __611a48db_0: FS = FSMock_as_vfs_FS(undefined);
+export let __611a48db_0: GoInterface<FS> = FSMock_as_vfs_FS(undefined);
 
 export function FSMock_as_vfs_FS(receiver: GoPtr<FSMock>): FS {
   return {
@@ -155,18 +156,18 @@ export function FSMock_as_vfs_FS(receiver: GoPtr<FSMock>): FS {
  * }
  */
 export interface FSMock {
-  AppendFileFunc: (path: string, data: string) => GoError;
-  ChtimesFunc: (path: string, aTime: Time, mTime: Time) => GoError;
-  DirectoryExistsFunc: (path: string) => bool;
-  FileExistsFunc: (path: string) => bool;
-  GetAccessibleEntriesFunc: (path: string) => Entries;
-  ReadFileFunc: (path: string) => [string, bool];
-  RealpathFunc: (path: string) => string;
-  RemoveFunc: (path: string) => GoError;
+  AppendFileFunc: GoFunc<(path: string, data: string) => GoError>;
+  ChtimesFunc: GoFunc<(path: string, aTime: Time, mTime: Time) => GoError>;
+  DirectoryExistsFunc: GoFunc<(path: string) => bool>;
+  FileExistsFunc: GoFunc<(path: string) => bool>;
+  GetAccessibleEntriesFunc: GoFunc<(path: string) => Entries>;
+  ReadFileFunc: GoFunc<(path: string) => [string, bool]>;
+  RealpathFunc: GoFunc<(path: string) => string>;
+  RemoveFunc: GoFunc<(path: string) => GoError>;
   StatFunc: (path: string) => GoPtr<FileInfo>;
-  UseCaseSensitiveFileNamesFunc: () => bool;
-  WalkDirFunc: (root: string, walkFn: WalkDirFunc) => GoError;
-  WriteFileFunc: (path: string, data: string) => GoError;
+  UseCaseSensitiveFileNamesFunc: GoFunc<() => bool>;
+  WalkDirFunc: GoFunc<(root: string, walkFn: WalkDirFunc) => GoError>;
+  WriteFileFunc: GoFunc<(path: string, data: string) => GoError>;
   calls: { AppendFile: GoSlice<{ Path: string; Data: string }>; Chtimes: GoSlice<{ Path: string; ATime: Time; MTime: Time }>; DirectoryExists: GoSlice<{ Path: string }>; FileExists: GoSlice<{ Path: string }>; GetAccessibleEntries: GoSlice<{ Path: string }>; ReadFile: GoSlice<{ Path: string }>; Realpath: GoSlice<{ Path: string }>; Remove: GoSlice<{ Path: string }>; Stat: GoSlice<{ Path: string }>; UseCaseSensitiveFileNames: GoSlice<{ readonly __tsgoEmpty?: never }>; WalkDir: GoSlice<{ Root: string; WalkFn: WalkDirFunc }>; WriteFile: GoSlice<{ Path: string; Data: string }> };
   lockAppendFile: RWMutex;
   lockChtimes: RWMutex;

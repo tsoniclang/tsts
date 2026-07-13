@@ -16,6 +16,7 @@ import { rawSourceMapJsonFieldNames } from "./generator.js";
 import { JsonFieldNames } from "../json/json.js";
 import type { ECMALineInfo } from "./lineinfo.js";
 
+import type { GoInterface } from "../../go/compat.js";
 // Go strings are immutable UTF-8 byte sequences; `[]byte(s)` and ranging over a
 // string both operate on the UTF-8 byte / rune views. We mirror that contract by
 // operating over the encoded byte view at the boundaries.
@@ -243,7 +244,7 @@ export interface DocumentPositionMapper {
  * 	}
  * }
  */
-export function createDocumentPositionMapper(host: Host, sourceMap: GoPtr<RawSourceMap>, mapPath: string): GoPtr<DocumentPositionMapper> {
+export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap: GoPtr<RawSourceMap>, mapPath: string): GoPtr<DocumentPositionMapper> {
   const mapDirectory: string = GetDirectoryPath(mapPath);
   let sourceRoot: string;
   if (sourceMap!.SourceRoot !== "") {
@@ -255,7 +256,7 @@ export function createDocumentPositionMapper(host: Host, sourceMap: GoPtr<RawSou
   const sourceFileAbsolutePaths: GoSlice<string> = coreMap(sourceMap!.Sources, (source: string): string => {
     return GetNormalizedAbsolutePath(source, sourceRoot);
   });
-  const useCaseSensitiveFileNames: bool = host.UseCaseSensitiveFileNames();
+  const useCaseSensitiveFileNames: bool = host!.UseCaseSensitiveFileNames();
   const sourceToSourceIndexMap: GoMap<string, SourceIndex> = new globalThis.Map<string, SourceIndex>();
   for (let i = 0; i < sourceFileAbsolutePaths.length; i++) {
     const source: string = sourceFileAbsolutePaths[i]!;
@@ -271,7 +272,7 @@ export function createDocumentPositionMapper(host: Host, sourceMap: GoPtr<RawSou
   MappingsDecoder_Values(decoder)!((mapping): bool => {
     // processMapping()
     let generatedPosition: int = -1;
-    let lineInfo: GoPtr<ECMALineInfo> = host.GetECMALineInfo(generatedAbsoluteFilePath);
+    let lineInfo: GoPtr<ECMALineInfo> = host!.GetECMALineInfo(generatedAbsoluteFilePath);
     if (lineInfo !== undefined) {
       generatedPosition = ComputePositionOfLineAndUTF16Character(
         lineInfo.lineStarts,
@@ -284,7 +285,7 @@ export function createDocumentPositionMapper(host: Host, sourceMap: GoPtr<RawSou
 
     let sourcePosition: int = -1;
     if (Mapping_IsSourceMapping(mapping)) {
-      lineInfo = host.GetECMALineInfo(sourceFileAbsolutePaths[mapping!.SourceIndex]!);
+      lineInfo = host!.GetECMALineInfo(sourceFileAbsolutePaths[mapping!.SourceIndex]!);
       if (lineInfo !== undefined) {
         const pos: int = ComputePositionOfLineAndUTF16Character(
           lineInfo.lineStarts,
@@ -535,7 +536,7 @@ export function DocumentPositionMapper_GetGeneratedPosition(receiver: GoPtr<Docu
  * 	return nil
  * }
  */
-export function GetDocumentPositionMapper(host: Host, generatedFileName: string): GoPtr<DocumentPositionMapper> {
+export function GetDocumentPositionMapper(host: GoInterface<Host>, generatedFileName: string): GoPtr<DocumentPositionMapper> {
   let mapFileName: string = tryGetSourceMappingURL(host, generatedFileName);
   if (mapFileName !== "") {
     const [base64Object, matched] = tryParseBase64Url(mapFileName);
@@ -558,7 +559,7 @@ export function GetDocumentPositionMapper(host: Host, generatedFileName: string)
   possibleMapLocations.push(generatedFileName + ".map");
   for (const location of possibleMapLocations) {
     const resolvedMapFileName: string = GetNormalizedAbsolutePath(location, GetDirectoryPath(generatedFileName));
-    const [mapFileContents, ok] = host.ReadFile(resolvedMapFileName);
+    const [mapFileContents, ok] = host!.ReadFile(resolvedMapFileName);
     if (ok) {
       return convertDocumentToSourceMapper(host, mapFileContents, resolvedMapFileName);
     }
@@ -585,7 +586,7 @@ export function GetDocumentPositionMapper(host: Host, generatedFileName: string)
  * 	return createDocumentPositionMapper(host, sourceMap, mapFileName)
  * }
  */
-export function convertDocumentToSourceMapper(host: Host, contents: string, mapFileName: string): GoPtr<DocumentPositionMapper> {
+export function convertDocumentToSourceMapper(host: GoInterface<Host>, contents: string, mapFileName: string): GoPtr<DocumentPositionMapper> {
   const sourceMap: GoPtr<RawSourceMap> = tryParseRawSourceMap(contents);
   if (sourceMap === undefined || sourceMap.Sources.length === 0 || sourceMap.File === "" || sourceMap.Mappings === "") {
     // invalid map
@@ -646,8 +647,8 @@ export function tryParseRawSourceMap(contents: string): GoPtr<RawSourceMap> {
  * 	return TryGetSourceMappingURL(lineInfo)
  * }
  */
-export function tryGetSourceMappingURL(host: Host, fileName: string): string {
-  const lineInfo: GoPtr<ECMALineInfo> = host.GetECMALineInfo(fileName);
+export function tryGetSourceMappingURL(host: GoInterface<Host>, fileName: string): string {
+  const lineInfo: GoPtr<ECMALineInfo> = host!.GetECMALineInfo(fileName);
   return TryGetSourceMappingURL(lineInfo);
 }
 

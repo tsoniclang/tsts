@@ -11,6 +11,7 @@ import {
 } from "./inference.js";
 import type { Type } from "./types.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperKind","kind":"type","status":"implemented","sigHash":"3af927afc5f2ac6455d13aa4237799729a777fd4ef0b1bc582578d482edf0cb5"}
  *
@@ -44,7 +45,7 @@ export const TypeMapperKindMerged: TypeMapperKind = 3;
  * }
  */
 export interface TypeMapper {
-  data: TypeMapperData;
+  data: GoInterface<TypeMapperData>;
 }
 
 /**
@@ -54,7 +55,7 @@ export interface TypeMapper {
  * func (m *TypeMapper) Map(t *Type) *Type    { return m.data.Map(t) }
  */
 export function TypeMapper_Map(receiver: GoPtr<TypeMapper>, t: GoPtr<Type>): GoPtr<Type> {
-  return receiver!.data.Map(t);
+  return receiver!.data!.Map(t);
 }
 
 /**
@@ -64,7 +65,7 @@ export function TypeMapper_Map(receiver: GoPtr<TypeMapper>, t: GoPtr<Type>): GoP
  * func (m *TypeMapper) Kind() TypeMapperKind { return m.data.Kind() }
  */
 export function TypeMapper_Kind(receiver: GoPtr<TypeMapper>): TypeMapperKind {
-  return receiver!.data.Kind();
+  return receiver!.data!.Kind();
 }
 
 /**
@@ -537,7 +538,7 @@ export function DeferredTypeMapper_Map(receiver: GoPtr<DeferredTypeMapper>, t: G
  */
 export interface FunctionTypeMapper {
   __tsgoEmbedded0: TypeMapperBase;
-  fn: (arg0: GoPtr<Type>) => GoPtr<Type>;
+  fn: GoFunc<(arg0: GoPtr<Type>) => GoPtr<Type>>;
 }
 
 /**
@@ -551,7 +552,7 @@ export interface FunctionTypeMapper {
  * 	return &m.TypeMapper
  * }
  */
-export function newFunctionTypeMapper(fn: (arg0: GoPtr<Type>) => GoPtr<Type>): GoPtr<TypeMapper> {
+export function newFunctionTypeMapper(fn: GoFunc<(arg0: GoPtr<Type>) => GoPtr<Type>>): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
   const m: FunctionTypeMapper = {
     __tsgoEmbedded0: base,
@@ -578,7 +579,7 @@ function FunctionTypeMapper_as_TypeMapperData(receiver: GoPtr<FunctionTypeMapper
  * }
  */
 export function FunctionTypeMapper_Map(receiver: GoPtr<FunctionTypeMapper>, t: GoPtr<Type>): GoPtr<Type> {
-  return receiver!.fn(t);
+  return receiver!.fn!(t);
 }
 
 /**

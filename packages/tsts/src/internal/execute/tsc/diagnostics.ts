@@ -20,6 +20,7 @@ import type { Diagnostic as DwDiagnostic, FormattingOptions } from "../../diagno
 import type { Locale } from "../../locale/locale.js";
 import type { CommandLineTesting, System } from "./compile.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::func::getFormatOptsOfSys","kind":"func","status":"implemented","sigHash":"faec7e54856405e6612d20d2df14789aaea7768b85637acae987a722b4c7e25b"}
  *
@@ -35,12 +36,12 @@ import type { CommandLineTesting, System } from "./compile.js";
  * 	}
  * }
  */
-export function getFormatOptsOfSys(sys: System, locale: Locale): GoPtr<FormattingOptions> {
+export function getFormatOptsOfSys(sys: GoInterface<System>, locale: Locale): GoPtr<FormattingOptions> {
   return {
     NewLine: "\n",
     __tsgoEmbedded0: {
-      CurrentDirectory: sys.GetCurrentDirectory(),
-      UseCaseSensitiveFileNames: sys.FS().UseCaseSensitiveFileNames(),
+      CurrentDirectory: sys!.GetCurrentDirectory(),
+      UseCaseSensitiveFileNames: sys!.FS()!.UseCaseSensitiveFileNames(),
     },
     Locale: locale,
   };
@@ -52,7 +53,7 @@ export function getFormatOptsOfSys(sys: System, locale: Locale): GoPtr<Formattin
  * Go source:
  * DiagnosticReporter = func(*ast.Diagnostic)
  */
-export type DiagnosticReporter = (arg0: GoPtr<Diagnostic>) => void;
+export type DiagnosticReporter = GoFunc<(arg0: GoPtr<Diagnostic>) => void>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::func::QuietDiagnosticReporter","kind":"func","status":"implemented","sigHash":"e477c4e36cf15de44e5d520328fb033786411abb0add8131f9b2d8e7dd0bf142"}
@@ -82,7 +83,7 @@ export function QuietDiagnosticReporter(diagnostic: GoPtr<Diagnostic>): void {}
  * 	}
  * }
  */
-export function CreateDiagnosticReporter(sys: System, w: Writer, locale: Locale, options: GoPtr<CompilerOptions>): DiagnosticReporter {
+export function CreateDiagnosticReporter(sys: GoInterface<System>, w: GoInterface<Writer>, locale: Locale, options: GoPtr<CompilerOptions>): DiagnosticReporter {
   if (Tristate_IsTrue(options!.Quiet)) {
     return QuietDiagnosticReporter;
   }
@@ -90,7 +91,7 @@ export function CreateDiagnosticReporter(sys: System, w: Writer, locale: Locale,
   if (shouldBePretty(sys, options)) {
     return (diagnostic: GoPtr<Diagnostic>): void => {
       FormatDiagnosticWithColorAndContext(w, (WrapASTDiagnostic(diagnostic) as GoPtr<DwDiagnostic>)!, formatOpts!);
-      Fprint(w, formatOpts!.NewLine);
+      Fprint(w!, formatOpts!.NewLine);
     };
   }
   return (diagnostic: GoPtr<Diagnostic>): void => {
@@ -112,14 +113,14 @@ export function CreateDiagnosticReporter(sys: System, w: Writer, locale: Locale,
  * 	return sys.WriteOutputIsTTY()
  * }
  */
-export function defaultIsPretty(sys: System): bool {
-  if (sys.GetEnvironmentVariable("NO_COLOR") !== "") {
+export function defaultIsPretty(sys: GoInterface<System>): bool {
+  if (sys!.GetEnvironmentVariable("NO_COLOR") !== "") {
     return false;
   }
-  if (sys.GetEnvironmentVariable("FORCE_COLOR") !== "") {
+  if (sys!.GetEnvironmentVariable("FORCE_COLOR") !== "") {
     return true;
   }
-  return sys.WriteOutputIsTTY();
+  return sys!.WriteOutputIsTTY();
 }
 
 /**
@@ -133,7 +134,7 @@ export function defaultIsPretty(sys: System): bool {
  * 	return options.Pretty.IsTrue()
  * }
  */
-export function shouldBePretty(sys: System, options: GoPtr<CompilerOptions>): bool {
+export function shouldBePretty(sys: GoInterface<System>, options: GoPtr<CompilerOptions>): bool {
   if (options === undefined || Tristate_IsUnknown(options.Pretty)) {
     return defaultIsPretty(sys);
   }
@@ -185,15 +186,15 @@ export interface colors {
  * 	}
  * }
  */
-export function createColors(sys: System): GoPtr<colors> {
+export function createColors(sys: GoInterface<System>): GoPtr<colors> {
   if (!defaultIsPretty(sys)) {
     return { showColors: false, isWindows: false, isWindowsTerminal: false, isVSCode: false, supportsRicherColors: false };
   }
-  const os = sys.GetEnvironmentVariable("OS");
+  const os = sys!.GetEnvironmentVariable("OS");
   const isWindows = strings.Contains(strings.ToLower(os), "windows");
-  const isWindowsTerminal = sys.GetEnvironmentVariable("WT_SESSION") !== "";
-  const isVSCode = sys.GetEnvironmentVariable("TERM_PROGRAM") === "vscode";
-  const supportsRicherColors = sys.GetEnvironmentVariable("COLORTERM") === "truecolor" || sys.GetEnvironmentVariable("TERM") === "xterm-256color";
+  const isWindowsTerminal = sys!.GetEnvironmentVariable("WT_SESSION") !== "";
+  const isVSCode = sys!.GetEnvironmentVariable("TERM_PROGRAM") === "vscode";
+  const supportsRicherColors = sys!.GetEnvironmentVariable("COLORTERM") === "truecolor" || sys!.GetEnvironmentVariable("TERM") === "xterm-256color";
   return {
     showColors: true,
     isWindows,
@@ -304,7 +305,7 @@ export function colors_brightWhite(receiver: GoPtr<colors>, str: string): string
  * Go source:
  * DiagnosticsReporter = func(diagnostics []*ast.Diagnostic)
  */
-export type DiagnosticsReporter = (diagnostics: GoSlice<GoPtr<Diagnostic>>) => void;
+export type DiagnosticsReporter = GoFunc<(diagnostics: GoSlice<GoPtr<Diagnostic>>) => void>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::func::QuietDiagnosticsReporter","kind":"func","status":"implemented","sigHash":"5866eb42e1d11e1d6e3d78c27eeff3d02994bf2be70a7674c203bbf5e977ac78"}
@@ -328,11 +329,11 @@ export function QuietDiagnosticsReporter(diagnostics: GoSlice<GoPtr<Diagnostic>>
  * 	return QuietDiagnosticsReporter
  * }
  */
-export function CreateReportErrorSummary(sys: System, locale: Locale, options: GoPtr<CompilerOptions>): DiagnosticsReporter {
+export function CreateReportErrorSummary(sys: GoInterface<System>, locale: Locale, options: GoPtr<CompilerOptions>): DiagnosticsReporter {
   if (shouldBePretty(sys, options)) {
     const formatOpts = getFormatOptsOfSys(sys, locale);
     return (diagnostics: GoSlice<GoPtr<Diagnostic>>): void => {
-      WriteErrorSummaryText(sys.Writer(), FromASTDiagnostics(diagnostics), formatOpts!);
+      WriteErrorSummaryText(sys!.Writer(), FromASTDiagnostics(diagnostics), formatOpts!);
     };
   }
   return QuietDiagnosticsReporter;
@@ -360,7 +361,7 @@ export function CreateReportErrorSummary(sys: System, locale: Locale, options: G
  * 	}
  * }
  */
-export function CreateBuilderStatusReporter(sys: System, w: Writer, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting | undefined): DiagnosticReporter {
+export function CreateBuilderStatusReporter(sys: GoInterface<System>, w: GoInterface<Writer>, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting | undefined): DiagnosticReporter {
   if (Tristate_IsTrue(options!.Quiet)) {
     return QuietDiagnosticReporter;
   }
@@ -372,8 +373,8 @@ export function CreateBuilderStatusReporter(sys: System, w: Writer, locale: Loca
       testing.OnBuildStatusReportStart(w);
     }
     try {
-      writeStatus(w, sys.Now().toString(), writerDiagnostic, formatOpts!);
-      Fprint(w, formatOpts!.NewLine, formatOpts!.NewLine);
+      writeStatus(w, sys!.Now().toString(), writerDiagnostic, formatOpts!);
+      Fprint(w!, formatOpts!.NewLine, formatOpts!.NewLine);
     } finally {
       if (testing !== undefined) {
         testing.OnBuildStatusReportEnd(w);
@@ -402,19 +403,19 @@ export function CreateBuilderStatusReporter(sys: System, w: Writer, locale: Loca
  * 	}
  * }
  */
-export function CreateWatchStatusReporter(sys: System, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting | undefined): DiagnosticReporter {
+export function CreateWatchStatusReporter(sys: GoInterface<System>, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting | undefined): DiagnosticReporter {
   const formatOpts = getFormatOptsOfSys(sys, locale);
   const writeStatus = shouldBePretty(sys, options) ? FormatDiagnosticsStatusWithColorAndTime : FormatDiagnosticsStatusAndTime;
   return (diagnostic: GoPtr<Diagnostic>): void => {
     const writerDiagnostic = WrapASTDiagnostic(diagnostic) as GoPtr<DwDiagnostic>;
-    const writer = sys.Writer();
+    const writer = sys!.Writer();
     if (testing !== undefined) {
       testing.OnWatchStatusReportStart();
     }
     try {
       TryClearScreen(writer, writerDiagnostic!, options!);
-      writeStatus(writer, sys.Now().toString(), writerDiagnostic!, formatOpts!);
-      Fprint(writer, formatOpts!.NewLine, formatOpts!.NewLine);
+      writeStatus(writer, sys!.Now().toString(), writerDiagnostic!, formatOpts!);
+      Fprint(writer!, formatOpts!.NewLine, formatOpts!.NewLine);
     } finally {
       if (testing !== undefined) {
         testing.OnWatchStatusReportEnd();

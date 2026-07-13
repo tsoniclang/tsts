@@ -4,6 +4,7 @@ import { Map, Mutex } from "../../../go/sync.js";
 import { SyncMap_Delete, SyncMap_LoadOrStore, SyncMap_Store } from "../../collections/syncmap.js";
 import type { SyncMap } from "../../collections/syncmap.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::type::parseCacheEntry","kind":"type","status":"implemented","sigHash":"b0bcf8db74b0a9edfea4d6619cfb9f126f5464766f72635ef88ace7264561f50"}
  *
@@ -50,7 +51,7 @@ export interface parseCache<K extends GoComparable = unknown, V extends GoCompar
  * 	return newEntry.value
  * }
  */
-export function parseCache_loadOrStore<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, parse: (arg0: K) => V, allowZero: bool): V {
+export function parseCache_loadOrStore<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, parse: GoFunc<(arg0: K) => V>, allowZero: bool): V {
   let newEntry: parseCacheEntry<V> = { value: undefined as V, mu: new Mutex() };
   const [entry, loaded] = SyncMap_LoadOrStore<K, GoPtr<parseCacheEntry<V>>>(receiver!.entries as SyncMap<K, GoPtr<parseCacheEntry<V>>>, key, newEntry);
   if (loaded) {
@@ -59,7 +60,7 @@ export function parseCache_loadOrStore<K extends GoComparable, V extends GoCompa
     }
     newEntry = entry!;
   }
-  newEntry.value = parse(key);
+  newEntry.value = parse!(key);
   return newEntry.value;
 }
 

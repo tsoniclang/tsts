@@ -342,7 +342,7 @@ export function Checker_checkCollisionWithGlobalObjectInGeneratedCode(receiver: 
   }
   // In case of variable declaration, node.parent is variable statement so look at the variable statement's parent
   const parent = GetDeclarationContainer(node);
-  if (IsSourceFile(parent) && IsExternalOrCommonJSModule(AsSourceFile(parent)) && receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(AsSourceFile(parent)), SourceFile_Path(AsSourceFile(parent)))) === ModuleKindCommonJS) {
+  if (IsSourceFile(parent) && IsExternalOrCommonJSModule(AsSourceFile(parent)) && receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(AsSourceFile(parent)), SourceFile_Path(AsSourceFile(parent)))) === ModuleKindCommonJS) {
     // If the declaration happens to be in external module, report error that Object is a reserved identifier.
     Checker_errorSkippedOnNoEmit(receiver, name, Duplicate_identifier_0_Compiler_reserves_name_1_in_top_level_scope_of_a_module, DeclarationNameToString(name), DeclarationNameToString(name));
   }
@@ -912,7 +912,7 @@ export function Checker_getHelperNames(receiver: GoPtr<Checker>, helper: Externa
 export function Checker_resolveHelpersModule(receiver: GoPtr<Checker>, file: GoPtr<SourceFile>, errorNode: GoPtr<Node>): GoPtr<Symbol> {
   const links = Checker_getSourceFileLinks(receiver, file);
   if (links!.externalHelpersModule === undefined) {
-    const location = receiver!.program.GetImportHelpersImportSpecifier(SourceFile_Path(file));
+    const location = receiver!.program!.GetImportHelpersImportSpecifier(SourceFile_Path(file));
     let helpersModule = Checker_resolveExternalModule(receiver, location, externalHelpersModuleNameText, This_syntax_requires_an_imported_helper_but_module_0_cannot_be_found, errorNode, false as bool);
     if (helpersModule === undefined) {
       helpersModule = receiver!.unknownSymbol;

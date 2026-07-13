@@ -69,6 +69,7 @@ import { ExtendedConfigCache_as_tsoptions_ExtendedConfigCache, type ExtendedConf
 import { EmitFilesAndReportErrors } from "./tsc/emit.js";
 import type { EmitInput } from "./tsc/emit.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 // Local byte-code constants for path inspection in perceivedOsRootLengthForWatching,
 // mirroring tspath/path.ts (which keeps its own private CHAR_* constants). Go indexes
 // strings as bytes (root[0], root[1], components[1][0]); we read them via charCodeAt.
@@ -85,7 +86,7 @@ const CHAR_DOLLAR: int = 0x24; // '$'
  * }
  */
 export interface WatchBackend {
-  WatchDirectory(dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: (arg0: string) => bool): [Closer, GoError];
+  WatchDirectory(dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: GoFunc<(arg0: string) => bool>): [Closer, GoError];
 }
 
 /**
@@ -97,7 +98,7 @@ export interface WatchBackend {
  * }
  */
 export interface commandLineTestingWithWatchBackend {
-  WatchBackend(): WatchBackend;
+  WatchBackend(): GoInterface<WatchBackend>;
 }
 
 /**
@@ -107,7 +108,7 @@ export interface commandLineTestingWithWatchBackend {
  * fswatchBackend struct{ inner fswatch.Watcher }
  */
 export interface fswatchBackend {
-  inner: fswatch.Watcher;
+  inner: GoInterface<fswatch.Watcher>;
 }
 
 /**
@@ -125,7 +126,7 @@ export interface fswatchBackend {
  * 	return b.inner.WatchDirectory(dir, fn, opts...)
  * }
  */
-export function fswatchBackend_WatchDirectory(receiver: GoPtr<fswatchBackend>, dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: (arg0: string) => bool): [Closer, GoError] {
+export function fswatchBackend_WatchDirectory(receiver: GoPtr<fswatchBackend>, dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: GoFunc<(arg0: string) => bool>): [Closer, GoError] {
   let opts: GoSlice<fswatch.WatchOption> = [];
   if (recursive) {
     opts = [...opts, fswatch.WithRecursive()];
@@ -133,7 +134,7 @@ export function fswatchBackend_WatchDirectory(receiver: GoPtr<fswatchBackend>, d
   if (ignore !== undefined) {
     opts = [...opts, fswatch.WithIgnore(ignore)];
   }
-  return receiver!.inner.WatchDirectory(dir, fn, ...opts);
+  return receiver!.inner!.WatchDirectory(dir, fn, ...opts);
 }
 
 export function fswatchBackend_as_WatchBackend(receiver: GoPtr<fswatchBackend>): WatchBackend {
@@ -152,7 +153,7 @@ export function fswatchBackend_as_WatchBackend(receiver: GoPtr<fswatchBackend>):
  * }
  */
 export interface watchedDir {
-  closer: Closer;
+  closer: GoInterface<Closer>;
   recursive: bool;
 }
 
@@ -180,18 +181,18 @@ export interface cachedSourceFile {
  * }
  */
 export interface watchCompilerHost {
-  __tsgoEmbedded0: CompilerHost;
+  __tsgoEmbedded0: GoInterface<CompilerHost>;
   cache: GoPtr<SyncMap<Path, GoPtr<cachedSourceFile>>>;
 }
 
 function watchCompilerHost_as_compiler_CompilerHost(receiver: GoPtr<watchCompilerHost>): CompilerHost {
   return {
-    FS: () => receiver!.__tsgoEmbedded0.FS(),
-    DefaultLibraryPath: () => receiver!.__tsgoEmbedded0.DefaultLibraryPath(),
-    GetCurrentDirectory: () => receiver!.__tsgoEmbedded0.GetCurrentDirectory(),
-    Trace: (msg, ...args) => receiver!.__tsgoEmbedded0.Trace(msg, ...args),
+    FS: () => receiver!.__tsgoEmbedded0!.FS(),
+    DefaultLibraryPath: () => receiver!.__tsgoEmbedded0!.DefaultLibraryPath(),
+    GetCurrentDirectory: () => receiver!.__tsgoEmbedded0!.GetCurrentDirectory(),
+    Trace: (msg, ...args) => receiver!.__tsgoEmbedded0!.Trace(msg, ...args),
     GetSourceFile: (opts) => watchCompilerHost_GetSourceFile(receiver, opts),
-    GetResolvedProjectReference: (fileName, path) => receiver!.__tsgoEmbedded0.GetResolvedProjectReference(fileName, path),
+    GetResolvedProjectReference: (fileName, path) => receiver!.__tsgoEmbedded0!.GetResolvedProjectReference(fileName, path),
   };
 }
 
@@ -224,7 +225,7 @@ function watchCompilerHost_as_compiler_CompilerHost(receiver: GoPtr<watchCompile
  */
 export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHost>, opts: SourceFileParseOptions): GoPtr<SourceFile> {
   type FileInfoWithModTime = { ModTime(): { Equal(t: unknown): bool } };
-  const info = receiver!.__tsgoEmbedded0!.FS().Stat(opts.FileName);
+  const info = receiver!.__tsgoEmbedded0!.FS()!.Stat(opts.FileName);
 
   const [cached, ok] = SyncMap_Load(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path);
   if (ok) {
@@ -285,7 +286,7 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
  */
 export interface Watcher {
   mu: Mutex;
-  sys: System;
+  sys: GoInterface<System>;
   configFileName: string;
   config: GoPtr<ParsedCommandLine>;
   compilerOptionsFromCommandLine: GoPtr<CompilerOptions>;
@@ -317,7 +318,7 @@ export interface Watcher {
  * Go source:
  * var _ tsc.Watcher = (*Watcher)(nil)
  */
-export let __30d59bfd_0: Watcher_c5dada01 = Watcher_as_tsc_Watcher(undefined);
+export let __30d59bfd_0: GoInterface<Watcher_c5dada01> = Watcher_as_tsc_Watcher(undefined);
 
 export function Watcher_as_tsc_Watcher(receiver: GoPtr<Watcher>): Watcher_c5dada01 {
   return {
@@ -368,7 +369,7 @@ function newSyncSet<T>(): SyncSet<T> {
  * 	return w
  * }
  */
-export function createWatcher(sys: System, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, commandLineRaw: GoPtr<OrderedMap<string, unknown>>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting | undefined): GoPtr<Watcher> {
+export function createWatcher(sys: GoInterface<System>, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, commandLineRaw: GoPtr<OrderedMap<string, unknown>>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting | undefined): GoPtr<Watcher> {
   const sourceFileCache = newSyncMap<Path, GoPtr<cachedSourceFile>>();
   const w: Watcher = {
     mu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as Watcher["mu"],
@@ -464,15 +465,15 @@ function asCommandLineTestingWithWatchBackend(testing: CommandLineTesting | unde
  * 	}
  * }
  */
-export function Watcher_start(receiver: GoPtr<Watcher>, ctx: Context): void {
+export function Watcher_start(receiver: GoPtr<Watcher>, ctx: GoInterface<Context>): void {
   // mu.Lock() / Unlock() omitted: TSTS is single-threaded
   receiver!.extendedConfigCache = { m: newSyncMap() };
   const host = NewCompilerHost(
-    receiver!.sys.GetCurrentDirectory(),
-    receiver!.sys.FS(),
-    receiver!.sys.DefaultLibraryPath(),
+    receiver!.sys!.GetCurrentDirectory(),
+    receiver!.sys!.FS(),
+    receiver!.sys!.DefaultLibraryPath(),
     ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache),
-    GetTraceWithWriterFromSys(receiver!.sys.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),
+    GetTraceWithWriterFromSys(receiver!.sys!.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),
   );
   receiver!.program = ReadBuildInfoProgram(receiver!.config, NewBuildInfoReader(host), host);
 
@@ -480,8 +481,8 @@ export function Watcher_start(receiver: GoPtr<Watcher>, ctx: Context): void {
     receiver!.configFilePaths = [receiver!.configFileName, ...ParsedCommandLine_ExtendedSourceFiles(receiver!.config)];
   }
 
-  if (receiver!.sys.GetEnvironmentVariable("TS_WATCH_DEBUG") !== "") {
-    receiver!.debugLog = receiver!.sys.Writer();
+  if (receiver!.sys!.GetEnvironmentVariable("TS_WATCH_DEBUG") !== "") {
+    receiver!.debugLog = receiver!.sys!.Writer();
   }
 
   if (receiver!.testing === undefined && receiver!.backend === undefined) {
@@ -492,7 +493,7 @@ export function Watcher_start(receiver: GoPtr<Watcher>, ctx: Context): void {
     }
   }
 
-  receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.Starting_compilation_in_watch_mode));
+  receiver!.reportWatchStatus!(NewCompilerDiagnostic(diagnosticMessages.Starting_compilation_in_watch_mode));
   Watcher_doBuild(receiver);
 
   if (receiver!.testing === undefined) {
@@ -580,27 +581,27 @@ export function Watcher_start(receiver: GoPtr<Watcher>, ctx: Context): void {
  * }
  */
 export function Watcher_computeDesiredWatches(receiver: GoPtr<Watcher>, seenFilePaths: GoSlice<string>): GoMap<string, bool> {
-  const cwd = receiver!.sys.GetCurrentDirectory();
+  const cwd = receiver!.sys!.GetCurrentDirectory();
 
   const desiredDirs: GoMap<string, bool> = new Map<string, bool>(); // dir → recursive
 
   // Wildcard directories from tsconfig (recursive or non-recursive)
   if (receiver!.config!.ConfigFile !== undefined) {
     for (const [dir, recursive] of ParsedCommandLine_WildcardDirectories(receiver!.config)) {
-      const realDir = receiver!.sys.FS().Realpath(dir);
+      const realDir = receiver!.sys!.FS()!.Realpath(dir);
       desiredDirs.set(realDir, recursive);
     }
   }
 
   // For no-config CLI mode, ensure CWD is watched
   if (receiver!.config!.ConfigFile === undefined && desiredDirs.size === 0) {
-    const dir = receiver!.sys.FS().Realpath(cwd);
+    const dir = receiver!.sys!.FS()!.Realpath(cwd);
     desiredDirs.set(dir, false as bool);
   }
 
   // Config file parent directories as non-recursive watches
   for (const cfgPath of receiver!.configFilePaths) {
-    const realPath = receiver!.sys.FS().Realpath(cfgPath);
+    const realPath = receiver!.sys!.FS()!.Realpath(cfgPath);
     const dir = GetDirectoryPath(realPath);
     if (!desiredDirs.has(dir)) {
       desiredDirs.set(dir, false as bool);
@@ -611,7 +612,7 @@ export function Watcher_computeDesiredWatches(receiver: GoPtr<Watcher>, seenFile
   if (receiver!.config!.ConfigFile === undefined) {
     for (const fileName of ParsedCommandLine_FileNames(receiver!.config)) {
       const absPath = GetNormalizedAbsolutePath(fileName, cwd);
-      const realPath = receiver!.sys.FS().Realpath(absPath);
+      const realPath = receiver!.sys!.FS()!.Realpath(absPath);
       const dir = GetDirectoryPath(realPath);
       if (!desiredDirs.has(dir)) {
         desiredDirs.set(dir, false as bool);
@@ -711,14 +712,14 @@ export function Watcher_reconcileWatches(receiver: GoPtr<Watcher>, seenFilePaths
       if (receiver!.debugLog !== undefined) {
         Fprintf(receiver!.debugLog, "[watch] closing stale dir watch: %s\n", dir);
       }
-      wd!.closer.Close();
+      wd!.closer!.Close();
       receiver!.watchedDirs.delete(dir);
     },
     (dir: string, wd: GoPtr<watchedDir>, recursive: bool): void => {
       if (receiver!.debugLog !== undefined) {
         Fprintf(receiver!.debugLog, "[watch] recreating dir watch %s (recursive %v→%v)\n", dir, wd!.recursive, recursive);
       }
-      wd!.closer.Close();
+      wd!.closer!.Close();
       receiver!.watchedDirs.delete(dir);
       Watcher_createDirWatch(receiver, dir, recursive);
     },
@@ -738,8 +739,8 @@ export function Watcher_reconcileWatches(receiver: GoPtr<Watcher>, seenFilePaths
  */
 export function Watcher_comparePathsOptions(receiver: GoPtr<Watcher>): ComparePathsOptions {
   return {
-    UseCaseSensitiveFileNames: receiver!.sys.FS().UseCaseSensitiveFileNames(),
-    CurrentDirectory: receiver!.sys.GetCurrentDirectory(),
+    UseCaseSensitiveFileNames: receiver!.sys!.FS()!.UseCaseSensitiveFileNames(),
+    CurrentDirectory: receiver!.sys!.GetCurrentDirectory(),
   };
 }
 
@@ -783,7 +784,7 @@ export function Watcher_resolveDesiredDirs(receiver: GoPtr<Watcher>, desiredDirs
   for (const [dir, recursive] of desiredDirs) {
     let watchDir = dir;
     let watchRecursive = recursive;
-    while (!receiver!.sys.FS().DirectoryExists(watchDir)) {
+    while (!receiver!.sys!.FS()!.DirectoryExists(watchDir)) {
       const parent = GetDirectoryPath(watchDir);
       if (parent === watchDir) {
         break;
@@ -791,7 +792,7 @@ export function Watcher_resolveDesiredDirs(receiver: GoPtr<Watcher>, desiredDirs
       watchDir = parent;
       watchRecursive = false as bool; // ancestor fallbacks are always non-recursive
     }
-    if (!receiver!.sys.FS().DirectoryExists(watchDir) || !canWatchDirectory(watchDir)) {
+    if (!receiver!.sys!.FS()!.DirectoryExists(watchDir) || !canWatchDirectory(watchDir)) {
       if (receiver!.debugLog !== undefined) {
         Fprintf(receiver!.debugLog, "[watch] no watchable ancestor for %s\n", dir);
       }
@@ -969,7 +970,7 @@ export function Watcher_closeAllWatches(receiver: GoPtr<Watcher>): void {
   // mu.Lock() / Unlock() omitted: TSTS is single-threaded
   let dirs: GoSlice<Closer> = [];
   for (const [dir, wd] of receiver!.watchedDirs) {
-    dirs = [...dirs, wd!.closer];
+    dirs = [...dirs, wd!.closer!];
     receiver!.watchedDirs.delete(dir);
   }
   for (const c of dirs) {
@@ -1098,7 +1099,7 @@ export function Watcher_onWatchEvents(receiver: GoPtr<Watcher>, events: GoSlice<
       Watcher_signalDoCycle(receiver);
       return;
     }
-    Fprintf(receiver!.sys.Writer(), "Warning: File watch error: %v\n", err);
+    Fprintf(receiver!.sys!.Writer()!, "Warning: File watch error: %v\n", err);
     return;
   }
 
@@ -1244,7 +1245,7 @@ export function Watcher_DoCycle(receiver: GoPtr<Watcher>): void {
     return;
   }
 
-  receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.File_change_detected_Starting_incremental_compilation));
+  receiver!.reportWatchStatus!(NewCompilerDiagnostic(diagnosticMessages.File_change_detected_Starting_incremental_compilation));
   Watcher_doBuild(receiver);
 }
 
@@ -1284,8 +1285,8 @@ export function Watcher_DoCycle(receiver: GoPtr<Watcher>): void {
  * }
  */
 export function Watcher_isRelevantChange(receiver: GoPtr<Watcher>, changedPaths: GoMap<string, fswatch.EventKind>): bool {
-  const caseSensitive = receiver!.sys.FS().UseCaseSensitiveFileNames();
-  const cwd = receiver!.sys.GetCurrentDirectory();
+  const caseSensitive = receiver!.sys!.FS()!.UseCaseSensitiveFileNames();
+  const cwd = receiver!.sys!.GetCurrentDirectory();
   const opts = Watcher_comparePathsOptions(receiver);
   for (const [eventPath] of changedPaths) {
     const p = ToPath(eventPath, cwd, caseSensitive);
@@ -1303,7 +1304,7 @@ export function Watcher_isRelevantChange(receiver: GoPtr<Watcher>, changedPaths:
     // non-existent directory we want to watch. Err on the side of
     // false positives (unnecessary rebuild) over false negatives
     // (missed rebuild).
-    if (receiver!.sys.FS().DirectoryExists(eventPath)) {
+    if (receiver!.sys!.FS()!.DirectoryExists(eventPath)) {
       for (const [dir] of receiver!.watchedDirs) {
         if (ContainsPath(dir, eventPath, opts)) {
           return true as bool;
@@ -1393,18 +1394,18 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
     receiver!.sourceFileCache = newSyncMap();
   }
 
-  const cached = cachedvfsFrom(receiver!.sys.FS());
+  const cached = cachedvfsFrom(receiver!.sys!.FS());
   const tfsSeenFiles: SyncSet<string> = newSyncSet<string>();
   const tfs: TrackingFS = {
     Inner: cachedvfsAsVfsFS(cached),
     SeenFiles: tfsSeenFiles,
   };
   const innerHost = NewCompilerHost(
-    receiver!.sys.GetCurrentDirectory(),
+    receiver!.sys!.GetCurrentDirectory(),
     trackingFSAsVfsFS(tfs),
-    receiver!.sys.DefaultLibraryPath(),
+    receiver!.sys!.DefaultLibraryPath(),
     ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache),
-    GetTraceWithWriterFromSys(receiver!.sys.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),
+    GetTraceWithWriterFromSys(receiver!.sys!.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),
   );
   const host: watchCompilerHost = {
     __tsgoEmbedded0: innerHost,
@@ -1418,7 +1419,7 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
       SyncSet_Add(tfs.SeenFiles, dir);
     }
     if (wildcardDirs.size > 0) {
-      receiver!.config = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(receiver!.config, receiver!.sys.FS());
+      receiver!.config = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(receiver!.config, receiver!.sys!.FS());
     }
   }
   for (const path of receiver!.configFilePaths) {
@@ -1435,8 +1436,8 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   const result = Watcher_compileAndEmit(receiver);
   FS_DisableAndClearCache(cached);
 
-  const caseSensitive = receiver!.sys.FS().UseCaseSensitiveFileNames();
-  const cwd = receiver!.sys.GetCurrentDirectory();
+  const caseSensitive = receiver!.sys!.FS()!.UseCaseSensitiveFileNames();
+  const cwd = receiver!.sys!.GetCurrentDirectory();
   const seenSlice = SyncSet_ToSlice(tfsSeenFiles);
   receiver!.seenFiles = NewSetWithSizeHint<Path>(seenSlice.length);
   for (const p of seenSlice) {
@@ -1446,7 +1447,7 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   type FileInfoModTime = { ModTime(): Time };
   receiver!.configMtimes = new Map<string, Time>();
   for (const cfgPath of receiver!.configFilePaths) {
-    const s = receiver!.sys.FS().Stat(cfgPath);
+    const s = receiver!.sys!.FS()!.Stat(cfgPath);
     if (s !== undefined && s !== null) {
       receiver!.configMtimes.set(cfgPath, (s as unknown as FileInfoModTime).ModTime());
     }
@@ -1465,9 +1466,9 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
 
   const errorCount = result.Diagnostics.length;
   if (errorCount === 1) {
-    receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.Found_1_error_Watching_for_file_changes));
+    receiver!.reportWatchStatus!(NewCompilerDiagnostic(diagnosticMessages.Found_1_error_Watching_for_file_changes));
   } else {
-    receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.Found_0_errors_Watching_for_file_changes, errorCount));
+    receiver!.reportWatchStatus!(NewCompilerDiagnostic(diagnosticMessages.Found_0_errors_Watching_for_file_changes, errorCount));
   }
 
   if (receiver!.testing !== undefined) {
@@ -1494,8 +1495,8 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
  * }
  */
 export function Watcher_evictChangedSourceFiles(receiver: GoPtr<Watcher>, changedPaths: GoMap<string, fswatch.EventKind>): void {
-  const caseSensitive = receiver!.sys.FS().UseCaseSensitiveFileNames();
-  const cwd = receiver!.sys.GetCurrentDirectory();
+  const caseSensitive = receiver!.sys!.FS()!.UseCaseSensitiveFileNames();
+  const cwd = receiver!.sys!.GetCurrentDirectory();
   for (const [eventPath] of changedPaths) {
     const p = ToPath(eventPath, cwd, caseSensitive);
     const [, ok] = SyncMap_Load(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, p);
@@ -1534,7 +1535,7 @@ export function Watcher_compileAndEmit(receiver: GoPtr<Watcher>): CompileAndEmit
     Config: receiver!.config,
     ReportDiagnostic: receiver!.reportDiagnostic,
     ReportErrorSummary: receiver!.reportErrorSummary,
-    Writer: receiver!.sys.Writer(),
+    Writer: receiver!.sys!.Writer(),
     CompileTimes: {} as CompileTimes,
     Testing: receiver!.testing,
   } as unknown as EmitInput);
@@ -1597,7 +1598,7 @@ export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
     for (const path of receiver!.configFilePaths) {
       const ok = receiver!.configMtimes !== undefined && receiver!.configMtimes.has(path);
       const oldMtime = ok ? receiver!.configMtimes.get(path)! : undefined;
-      const s = receiver!.sys.FS().Stat(path);
+      const s = receiver!.sys!.FS()!.Stat(path);
       if (!ok) {
         if (s !== undefined && s !== null) {
           changed = true;
@@ -1665,14 +1666,14 @@ export function Watcher_parseConfigFile(receiver: GoPtr<Watcher>): GoPtr<ParsedC
   );
   if (errors.length > 0) {
     for (const e of errors) {
-      receiver!.reportDiagnostic(e);
+      receiver!.reportDiagnostic!(e);
     }
     receiver!.configHasErrors = true;
     const errorCount = errors.length;
     if (errorCount === 1) {
-      receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.Found_1_error_Watching_for_file_changes));
+      receiver!.reportWatchStatus!(NewCompilerDiagnostic(diagnosticMessages.Found_1_error_Watching_for_file_changes));
     } else {
-      receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.Found_0_errors_Watching_for_file_changes, errorCount));
+      receiver!.reportWatchStatus!(NewCompilerDiagnostic(diagnosticMessages.Found_0_errors_Watching_for_file_changes, errorCount));
     }
     return undefined;
   }

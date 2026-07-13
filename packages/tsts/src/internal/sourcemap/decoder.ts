@@ -412,7 +412,7 @@ export function MappingsDecoder_Next(receiver: GoPtr<MappingsDecoder>): [GoPtr<M
  */
 export function MappingsDecoder_captureMapping(receiver: GoPtr<MappingsDecoder>, hasSource: bool, hasName: bool): GoPtr<Mapping> {
   const d: MappingsDecoder = receiver!;
-  const mapping: Mapping = Arena_New<Mapping>(d.mappingArena)!;
+  const mapping: Mapping = Arena_New<Mapping>(d.mappingArena)!.v;
   mapping.GeneratedLine = d.generatedLine;
   mapping.GeneratedCharacter = d.generatedCharacter;
   mapping.SourceIndex = IfElse(hasSource, d.sourceIndex, MissingSource);

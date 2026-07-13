@@ -4,6 +4,7 @@ import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { Duration } from "../../go/time.js";
 import type { Tristate } from "./tristate.js";
 
+import type { GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchOptions","kind":"type","status":"implemented","sigHash":"cb0c0f5cde73c40bd392764df9c11a6c64cdb45186a668c0f7fbc7899c3d5c07"}
  *
@@ -19,7 +20,7 @@ import type { Tristate } from "./tristate.js";
  * }
  */
 export interface WatchOptions {
-  Interval: GoPtr<int>;
+  Interval: GoRef<int>;
   FileKind: WatchFileKind;
   DirectoryKind: WatchDirectoryKind;
   FallbackPolling: PollingKind;
@@ -127,7 +128,7 @@ export function WatchOptions_WatchInterval(receiver: GoPtr<WatchOptions>): Durat
   const millisecond: Duration = 1_000_000 as Duration;
   const defaultInterval: Duration = (2000 * (millisecond as number)) as Duration;
   if (receiver !== undefined && receiver.Interval !== undefined) {
-    return ((receiver.Interval as number) * (millisecond as number)) as Duration;
+    return ((receiver.Interval!.v as number) * (millisecond as number)) as Duration;
   }
   return defaultInterval;
 }

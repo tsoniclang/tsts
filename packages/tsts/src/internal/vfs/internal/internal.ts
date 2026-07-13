@@ -7,6 +7,7 @@ import type { FileMode, FS, WalkDirFunc } from "../../../go/io/fs.js";
 import { GetEncodedRootLength, NormalizePath, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 import type { DirEntry, Entries, FileInfo } from "../vfs.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 // Local duck-type interfaces for calling methods on opaque facade types.
 interface FileInfoMethods {
   IsDir(): bool;
@@ -28,8 +29,8 @@ interface DirEntryMethods {
  * }
  */
 export interface Common {
-  RootFor: (root: string) => FS;
-  IsReparsePoint: (path: string) => bool;
+  RootFor: GoFunc<(root: string) => GoInterface<FS>>;
+  IsReparsePoint: GoFunc<(path: string) => bool>;
 }
 
 /**
@@ -89,12 +90,12 @@ export function SplitPath(p: string): [string, string] {
  * 	return vfs.RootFor(rootName), rootName, rest
  * }
  */
-export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [FS, string, string] {
+export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [GoInterface<FS>, string, string] {
   let [rootName, rest] = SplitPath(path);
   if (rest === "") {
     rest = ".";
   }
-  return [receiver!.RootFor(rootName), rootName, rest];
+  return [receiver!.RootFor!(rootName), rootName, rest];
 }
 
 /**
@@ -427,8 +428,8 @@ function decodeBytesFromBytes(bytes: Uint8Array): [string, bool] {
  * 	return string(utf16.Decode(ints))
  * }
  */
-export function decodeUtf16(s: string, order: ByteOrder): string {
-  return decodeUtf16Bytes(binaryStringToBytes(s), order);
+export function decodeUtf16(s: string, order: GoInterface<ByteOrder>): string {
+  return decodeUtf16Bytes(binaryStringToBytes(s), order!);
 }
 
 function decodeUtf16Bytes(bytes: Uint8Array, order: ByteOrder): string {

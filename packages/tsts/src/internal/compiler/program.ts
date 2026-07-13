@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoSeq2, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
 import { Once, Map as SyncMapMap } from "../../go/sync.js";
@@ -97,6 +97,7 @@ import { recordBoundSourceFileExtensionFacts } from "../../extensions/compiler-i
 import { collectExtensionDiagnosticsForSourceFile } from "../../extensions/diagnostics.js";
 import { attachExtensionHostToProgram } from "../../extensions/host.js";
 
+import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"9eb7d18f0dae3f15940de7ca327de6159681203c5eb38cedc77879444adaee3f"}
  *
@@ -113,7 +114,7 @@ import { attachExtensionHostToProgram } from "../../extensions/host.js";
  * }
  */
 export interface ProgramOptions {
-  Host: CompilerHost;
+  Host: GoInterface<CompilerHost>;
   Config: GoPtr<ParsedCommandLine>;
   UseSourceOfProjectReference?: bool;
   SingleThreaded?: Tristate;
@@ -146,7 +147,7 @@ export function ProgramOptions_canUseProjectReferenceSource(receiver: GoPtr<Prog
  * }
  */
 export interface lazyValue<T = unknown> {
-  value: GoPtr<T>;
+  value: GoRef<T>;
   once: Once;
   initialized: Bool;
 }
@@ -165,10 +166,10 @@ export interface lazyValue<T = unknown> {
  * 	return l.value
  * }
  */
-export function lazyValue_getValue<T>(receiver: GoPtr<lazyValue<T>>, compute: () => GoPtr<T>): GoPtr<T> {
+export function lazyValue_getValue<T>(receiver: GoPtr<lazyValue<T>>, compute: GoFunc<() => GoRef<T>>): GoRef<T> {
   receiver!.once.Do(() => {
     if (receiver!.value === undefined) {
-      receiver!.value = compute();
+      receiver!.value = compute!();
     }
     receiver!.initialized.Store(true as bool);
   });
@@ -287,7 +288,7 @@ export interface Program {
  * }
  */
 export function Program_FileExists(receiver: GoPtr<Program>, path: string): bool {
-  return Program_Host(receiver).FS().FileExists(path);
+  return Program_Host(receiver)!.FS()!.FileExists(path);
 }
 
 /**
@@ -299,7 +300,7 @@ export function Program_FileExists(receiver: GoPtr<Program>, path: string): bool
  * }
  */
 export function Program_GetCurrentDirectory(receiver: GoPtr<Program>): string {
-  return Program_Host(receiver).GetCurrentDirectory();
+  return Program_Host(receiver)!.GetCurrentDirectory();
 }
 
 /**
@@ -379,12 +380,12 @@ export function Program_GetRedirectTargets(receiver: GoPtr<Program>, path: Path)
  * 	return file.FileName()
  * }
  */
-export function Program_GetSourceOfProjectReferenceIfOutputIncluded(receiver: GoPtr<Program>, file: HasFileName): string {
-  const source = receiver!.__tsgoEmbedded0!.outputFileToProjectReferenceSource.get(file.Path());
+export function Program_GetSourceOfProjectReferenceIfOutputIncluded(receiver: GoPtr<Program>, file: GoInterface<HasFileName>): string {
+  const source = receiver!.__tsgoEmbedded0!.outputFileToProjectReferenceSource.get(file!.Path());
   if (source !== undefined) {
     return source;
   }
-  return file.FileName();
+  return file!.FileName();
 }
 
 /**
@@ -444,7 +445,7 @@ export function Program_GetResolvedProjectReferenceFor(receiver: GoPtr<Program>,
  * 	return redirect
  * }
  */
-export function Program_GetRedirectForResolution(receiver: GoPtr<Program>, file: HasFileName): GoPtr<ParsedCommandLine> {
+export function Program_GetRedirectForResolution(receiver: GoPtr<Program>, file: GoInterface<HasFileName>): GoPtr<ParsedCommandLine> {
   const [redirect] = projectReferenceFileMapper_getRedirectForResolution(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, file);
   return redirect;
 }
@@ -481,7 +482,7 @@ export function Program_GetResolvedProjectReferences(receiver: GoPtr<Program>): 
  * 	return p.projectReferenceFileMapper.rangeResolvedProjectReference(f)
  * }
  */
-export function Program_RangeResolvedProjectReference(receiver: GoPtr<Program>, f: (path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool): bool {
+export function Program_RangeResolvedProjectReference(receiver: GoPtr<Program>, f: GoFunc<(path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool>): bool {
   return projectReferenceFileMapper_rangeResolvedProjectReference(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, f);
 }
 
@@ -496,7 +497,7 @@ export function Program_RangeResolvedProjectReference(receiver: GoPtr<Program>, 
  * 	return p.projectReferenceFileMapper.rangeResolvedProjectReferenceInChildConfig(childConfig, f)
  * }
  */
-export function Program_RangeResolvedProjectReferenceInChildConfig(receiver: GoPtr<Program>, childConfig: GoPtr<ParsedCommandLine>, f: (path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool): bool {
+export function Program_RangeResolvedProjectReferenceInChildConfig(receiver: GoPtr<Program>, childConfig: GoPtr<ParsedCommandLine>, f: GoFunc<(path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool>): bool {
   return projectReferenceFileMapper_rangeResolvedProjectReferenceInChildConfig(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, childConfig, f);
 }
 
@@ -509,7 +510,7 @@ export function Program_RangeResolvedProjectReferenceInChildConfig(receiver: GoP
  * }
  */
 export function Program_UseCaseSensitiveFileNames(receiver: GoPtr<Program>): bool {
-  return Program_Host(receiver).FS().UseCaseSensitiveFileNames();
+  return Program_Host(receiver)!.FS()!.UseCaseSensitiveFileNames();
 }
 
 /**
@@ -630,7 +631,7 @@ export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e3
  * Go source:
  * var _ checker.Program = (*Program)(nil)
  */
-export let __7d754c38_0: Program_e32ad451 = Program_as_checker_Program(undefined);
+export let __7d754c38_0: GoInterface<Program_e32ad451> = Program_as_checker_Program(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSourceFileFromReference","kind":"method","status":"implemented","sigHash":"d17110acc4563d1cc15b71c7c34578869a09f5420d3f57151d53da44c275e35a"}
@@ -824,14 +825,14 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
  * 	return result, newFile, true
  * }
  */
-export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath: Path, newHost: CompilerHost, createCheckerPool: (arg0: GoPtr<Program>) => CheckerPool): [GoPtr<Program>, GoPtr<SourceFile>, bool] {
+export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath: Path, newHost: GoInterface<CompilerHost>, createCheckerPool: (arg0: GoPtr<Program>) => CheckerPool): [GoPtr<Program>, GoPtr<SourceFile>, bool] {
   const newOpts: ProgramOptions = { ...receiver!.opts, Host: newHost };
   if (createCheckerPool !== undefined) {
     newOpts.CreateCheckerPool = createCheckerPool;
   }
 
   const oldFile = receiver!.__tsgoEmbedded0!.filesByPath.get(changedFilePath);
-  const newFile = newHost.GetSourceFile(SourceFile_ParseOptions(oldFile));
+  const newFile = newHost!.GetSourceFile(SourceFile_ParseOptions(oldFile));
 
   // If this file is part of a package redirect group (same package installed in multiple
   // node_modules locations), we need to rebuild the program because the redirect targets
@@ -931,7 +932,7 @@ export function Program_initCheckerPool(receiver: GoPtr<Program>): void {
  * 	return p.checkerPool
  * }
  */
-export function Program_GetCheckerPool(receiver: GoPtr<Program>): CheckerPool {
+export function Program_GetCheckerPool(receiver: GoPtr<Program>): GoInterface<CheckerPool> {
   return receiver!.checkerPool!;
 }
 
@@ -1094,7 +1095,7 @@ export function Program_CommandLine(receiver: GoPtr<Program>): GoPtr<ParsedComma
  * Go source:
  * func (p *Program) Host() CompilerHost                           { return p.opts.Host }
  */
-export function Program_Host(receiver: GoPtr<Program>): CompilerHost {
+export function Program_Host(receiver: GoPtr<Program>): GoInterface<CompilerHost> {
   return receiver!.opts.Host;
 }
 
@@ -1129,7 +1130,7 @@ export function Program_GetConfigFileParsingDiagnostics(receiver: GoPtr<Program>
  * }
  */
 export function Program_GetUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Set<string>> {
-  return lazyValue_getValue(receiver!.unresolvedImports, () => Program_extractUnresolvedImports(receiver));
+  return lazyValue_getValue(receiver!.unresolvedImports, () => GoValueRef(Program_extractUnresolvedImports(receiver)!))!.v;
 }
 
 /**
@@ -1246,7 +1247,7 @@ export function Program_BindSourceFiles(receiver: GoPtr<Program>): void {
  * 	return p.checkerPool.GetChecker(ctx, nil)
  * }
  */
-export function Program_GetTypeChecker(receiver: GoPtr<Program>, ctx: Context): [GoPtr<Checker>, () => void] {
+export function Program_GetTypeChecker(receiver: GoPtr<Program>, ctx: GoInterface<Context>): [GoPtr<Checker>, () => void] {
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_getCheckerNonExclusive(receiver!.compilerCheckerPool);
   }
@@ -1263,7 +1264,7 @@ export function Program_GetTypeChecker(receiver: GoPtr<Program>, ctx: Context): 
  * 	}
  * }
  */
-export function Program_ForEachCheckerParallel(receiver: GoPtr<Program>, cb: (idx: int, c: GoPtr<Checker>) => void): void {
+export function Program_ForEachCheckerParallel(receiver: GoPtr<Program>, cb: GoFunc<(idx: int, c: GoPtr<Checker>) => void>): void {
   if (receiver!.compilerCheckerPool !== undefined) {
     checkerPool_forEachCheckerParallel(receiver!.compilerCheckerPool, cb);
   }
@@ -1280,7 +1281,7 @@ export function Program_ForEachCheckerParallel(receiver: GoPtr<Program>, cb: (id
  * 	return p.checkerPool.GetChecker(ctx, file)
  * }
  */
-export function Program_GetTypeCheckerForFile(receiver: GoPtr<Program>, ctx: Context, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
+export function Program_GetTypeCheckerForFile(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_getCheckerForFileNonExclusive(receiver!.compilerCheckerPool, file);
   }
@@ -1298,7 +1299,7 @@ export function Program_GetTypeCheckerForFile(receiver: GoPtr<Program>, ctx: Con
  * 	return p.checkerPool.GetChecker(ctx, file)
  * }
  */
-export function Program_GetTypeCheckerForFileExclusive(receiver: GoPtr<Program>, ctx: Context, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
+export function Program_GetTypeCheckerForFileExclusive(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_getCheckerForFileExclusive(receiver!.compilerCheckerPool, ctx, file);
   }
@@ -1318,8 +1319,8 @@ export function Program_GetTypeCheckerForFileExclusive(receiver: GoPtr<Program>,
  * 	return nil
  * }
  */
-export function Program_GetResolvedModule(receiver: GoPtr<Program>, file: HasFileName, moduleReference: string, mode: ResolutionMode): GoPtr<ResolvedModule> {
-  const resolutions = receiver!.__tsgoEmbedded0!.resolvedModules.get(file.Path());
+export function Program_GetResolvedModule(receiver: GoPtr<Program>, file: GoInterface<HasFileName>, moduleReference: string, mode: ResolutionMode): GoPtr<ResolvedModule> {
+  const resolutions = receiver!.__tsgoEmbedded0!.resolvedModules.get(file!.Path());
   if (resolutions !== undefined) {
     for (const [k, v] of resolutions) {
       if (k.Name === moduleReference && k.Mode === mode) {
@@ -1342,7 +1343,7 @@ export function Program_GetResolvedModule(receiver: GoPtr<Program>, file: HasFil
  * 	return p.GetResolvedModule(file, moduleSpecifier.Text(), mode)
  * }
  */
-export function Program_GetResolvedModuleFromModuleSpecifier(receiver: GoPtr<Program>, file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> {
+export function Program_GetResolvedModuleFromModuleSpecifier(receiver: GoPtr<Program>, file: GoInterface<HasFileName>, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> {
   if (!IsStringLiteralLike(moduleSpecifier)) {
     throw new globalThis.Error("moduleSpecifier must be a StringLiteralLike");
   }
@@ -1413,10 +1414,10 @@ export function Program_GetPackagesMap(receiver: GoPtr<Program>): GoMap<string, 
  * 	return SortAndDeduplicateDiagnostics(result)
  * }
  */
-export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
   let result: GoSlice<GoPtr<Diagnostic>>;
   if (sourceFile !== undefined) {
-    result = collect(ctx, sourceFile);
+    result = collect(ctx!, sourceFile);
   } else {
     const diagnostics = Program_collectDiagnosticsFromFiles(receiver, ctx, receiver!.__tsgoEmbedded0!.files, concurrent, collect);
     result = slices.Concat(...diagnostics);
@@ -1440,10 +1441,10 @@ export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: Contex
  * 	return diagnostics
  * }
  */
-export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: Context, sourceFiles: GoSlice<GoPtr<SourceFile>>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
+export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
   const diagnostics: GoSlice<GoPtr<Diagnostic>>[] = new Array(sourceFiles.length);
   for (let i = 0; i < sourceFiles.length; i++) {
-    diagnostics[i] = collect(ctx, sourceFiles[i]);
+    diagnostics[i] = collect(ctx!, sourceFiles[i]);
   }
   return diagnostics;
 }
@@ -1465,13 +1466,13 @@ export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ct
  * 	return SortAndDeduplicateDiagnostics(slices.Concat(p.collectCheckerDiagnosticsFromFiles(ctx, p.files, collect)...))
  * }
  */
-export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
   if (sourceFile !== undefined) {
     if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
       return undefined!;
     }
     const [c, done] = Program_GetTypeCheckerForFileExclusive(receiver, ctx, sourceFile);
-    const result = collect(ctx, c, sourceFile);
+    const result = collect(ctx!, c, sourceFile);
     done();
     return SortAndDeduplicateDiagnostics(result);
   }
@@ -1506,11 +1507,11 @@ export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx:
  * 	return diagnostics
  * }
  */
-export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: Context, sourceFiles: GoSlice<GoPtr<SourceFile>>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
+export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
   const diagnostics: GoSlice<GoPtr<Diagnostic>>[] = new Array(sourceFiles.length);
   if (receiver!.compilerCheckerPool !== undefined) {
     checkerPool_forEachCheckerGroupDo(receiver!.compilerCheckerPool, ctx, sourceFiles, Program_SingleThreaded(receiver), (c, fileIndex, file) => {
-      diagnostics[fileIndex] = collect(ctx, c, file);
+      diagnostics[fileIndex] = collect(ctx!, c, file);
     });
   } else {
     for (let i = 0; i < sourceFiles.length; i++) {
@@ -1519,7 +1520,7 @@ export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Progr
         continue;
       }
       const [c, done] = receiver!.checkerPool!.GetChecker(ctx, file);
-      diagnostics[i] = collect(ctx, c, file);
+      diagnostics[i] = collect(ctx!, c, file);
       done();
     }
   }
@@ -1543,7 +1544,7 @@ export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Progr
  * 	})
  * }
  */
-export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   return Program_collectDiagnostics(receiver, ctx, sourceFile, false as bool, (_, file) => {
     let diags = Concatenate(SourceFile_Diagnostics(file), SourceFile_JSDiagnostics(file));
     if (IsSourceFileJS(file) && !IsCheckJSEnabledForFile(file, Program_Options(receiver))) {
@@ -1619,7 +1620,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
  * 	})
  * }
  */
-export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (sourceFile !== undefined) {
     BindSourceFile(sourceFile);
     recordBoundSourceFileExtensionFacts(receiver!.opts, sourceFile);
@@ -1639,7 +1640,7 @@ export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Contex
  * 	return p.collectCheckerDiagnostics(ctx, sourceFile, p.getSemanticDiagnosticsWithChecker)
  * }
  */
-export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   const diagnostics = Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSemanticDiagnosticsWithChecker.bind(undefined, receiver)) ?? [];
   const extensionDiagnostics = collectExtensionDiagnosticsForSourceFile(receiver!, sourceFile);
   if (extensionDiagnostics.length === 0) {
@@ -1661,7 +1662,7 @@ export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Co
  * 	return result
  * }
  */
-export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: GoPtr<Program>, ctx: Context, sourceFiles: GoSlice<GoPtr<SourceFile>>): GoMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>> {
+export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>): GoMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>> {
   const allDiags = Program_collectCheckerDiagnosticsFromFiles(receiver, ctx, sourceFiles, Program_getBindAndCheckDiagnosticsWithChecker.bind(undefined, receiver));
   const result = new globalThis.Map<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>();
   for (let i = 0; i < allDiags.length; i++) {
@@ -1679,7 +1680,7 @@ export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: G
  * 	return p.collectCheckerDiagnostics(ctx, sourceFile, p.getSuggestionDiagnosticsWithChecker)
  * }
  */
-export function Program_GetSuggestionDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetSuggestionDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   return Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSuggestionDiagnosticsWithChecker.bind(undefined, receiver));
 }
 
@@ -2320,7 +2321,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   });
 
   const configFilePath = Memoize(() => {
-    const file = sourceFile();
+    const file = sourceFile!();
     if (file !== undefined) {
       return SourceFile_FileName(file);
     }
@@ -2328,34 +2329,34 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   });
 
   const getCompilerOptionsPropertySyntax = Memoize(() => {
-    return ForEachTsConfigPropArray(sourceFile(), "compilerOptions", (x) => x);
+    return ForEachTsConfigPropArray(sourceFile!(), "compilerOptions", (property) => GoValueRef(property!));
   });
 
   const getCompilerOptionsObjectLiteralSyntax = Memoize((): GoPtr<ObjectLiteralExpression> | undefined => {
-    const compilerOptionsProperty = getCompilerOptionsPropertySyntax();
+    const compilerOptionsProperty = getCompilerOptionsPropertySyntax!();
     if (compilerOptionsProperty !== undefined &&
-        compilerOptionsProperty!.Initializer !== undefined &&
-        IsObjectLiteralExpression(compilerOptionsProperty!.Initializer)) {
-      return AsObjectLiteralExpression(compilerOptionsProperty!.Initializer!);
+        compilerOptionsProperty!.v.Initializer !== undefined &&
+        IsObjectLiteralExpression(compilerOptionsProperty!.v.Initializer)) {
+      return AsObjectLiteralExpression(compilerOptionsProperty!.v.Initializer!);
     }
     return undefined;
   });
 
   const createOptionDiagnosticInObjectLiteralSyntax = (objectLiteral: GoPtr<ObjectLiteralExpression>, onKey: bool, key1: string, key2: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
-    const diag = ForEachPropertyAssignment(objectLiteral, key1, (property) => {
-      return CreateDiagnosticForNodeInSourceFile(sourceFile()!, onKey ? NamedMemberBase_Name(property) : property!.Initializer, message, ...args);
+    const diag = ForEachPropertyAssignment<Diagnostic>(objectLiteral, key1, (property) => {
+      return GoValueRef(CreateDiagnosticForNodeInSourceFile(sourceFile!()!, onKey ? NamedMemberBase_Name(property) : property!.Initializer, message, ...args)!);
     }, key2);
     if (diag !== undefined) {
-      receiver!.programDiagnostics = [...receiver!.programDiagnostics, diag];
+      receiver!.programDiagnostics = [...receiver!.programDiagnostics!, diag!.v];
     }
-    return diag;
+    return diag?.v;
   };
 
   const createCompilerOptionsDiagnostic = (message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
-    const compilerOptionsProperty = getCompilerOptionsPropertySyntax();
+    const compilerOptionsProperty = getCompilerOptionsPropertySyntax!();
     let diag: GoPtr<Diagnostic>;
     if (compilerOptionsProperty !== undefined) {
-      diag = CreateDiagnosticForNodeInSourceFile(sourceFile()!, NamedMemberBase_Name(compilerOptionsProperty), message, ...args);
+      diag = CreateDiagnosticForNodeInSourceFile(sourceFile!()!, NamedMemberBase_Name(compilerOptionsProperty!.v), message, ...args);
     } else {
       diag = NewCompilerDiagnostic(message, ...args);
     }
@@ -2364,7 +2365,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   };
 
   const createDiagnosticForOption = (onKey: bool, option1: string, option2: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
-    let diag = createOptionDiagnosticInObjectLiteralSyntax(getCompilerOptionsObjectLiteralSyntax(), onKey, option1, option2, message, ...args);
+    let diag = createOptionDiagnosticInObjectLiteralSyntax(getCompilerOptionsObjectLiteralSyntax!(), onKey, option1, option2, message, ...args);
     if (diag === undefined) {
       diag = createCompilerOptionsDiagnostic(message, ...args);
     }
@@ -2397,8 +2398,8 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
 
   if (options!.BaseUrl !== "") {
     let useInstead = "";
-    if (configFilePath() !== "") {
-      let relative = GetRelativePathFromFile(configFilePath(), options!.BaseUrl, receiver!.comparePathsOptions);
+    if (configFilePath!() !== "") {
+      let relative = GetRelativePathFromFile(configFilePath!(), options!.BaseUrl, receiver!.comparePathsOptions);
       if (!relative.startsWith("./") && !relative.startsWith("../")) {
         relative = "./" + relative;
       }
@@ -2499,7 +2500,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
           data: {
             file: SourceFile_Path(file)!,
             message: diagnostics.File_0_is_not_listed_within_the_file_list_of_project_1_Projects_must_list_all_files_or_use_an_include_pattern,
-            args: [SourceFile_FileName(file), configFilePath()],
+            args: [SourceFile_FileName(file), configFilePath!()],
           } as includeExplainingDiagnostic,
         });
       }
@@ -2507,7 +2508,10 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   }
 
   const forEachOptionPathsSyntax = (callback: (p: GoPtr<PropertyAssignment>) => GoPtr<Diagnostic>): GoPtr<Diagnostic> => {
-    return ForEachPropertyAssignment(getCompilerOptionsObjectLiteralSyntax(), "paths", callback);
+    return ForEachPropertyAssignment<Diagnostic>(getCompilerOptionsObjectLiteralSyntax!(), "paths", (property) => {
+      const diagnostic = callback(property);
+      return diagnostic === undefined ? undefined : GoValueRef(diagnostic);
+    })?.v;
   };
 
   const createDiagnosticForOptionPaths = (onKey: bool, key: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
@@ -2526,18 +2530,18 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   const createDiagnosticForOptionPathKeyValue = (key: string, valueIndex: int, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
     let diag = forEachOptionPathsSyntax((pathProp) => {
       if (IsObjectLiteralExpression(pathProp!.Initializer)) {
-        return ForEachPropertyAssignment(AsObjectLiteralExpression(pathProp!.Initializer!), key, (keyProps) => {
+        return ForEachPropertyAssignment<Diagnostic>(AsObjectLiteralExpression(pathProp!.Initializer!), key, (keyProps) => {
           const initializer = keyProps!.Initializer;
           if (IsArrayLiteralExpression(initializer)) {
             const elements = AsArrayLiteralExpression(initializer!)!.Elements;
             if (elements !== undefined && elements!.Nodes.length > valueIndex) {
-              const d = CreateDiagnosticForNodeInSourceFile(sourceFile()!, elements!.Nodes[valueIndex], message, ...args);
+              const d = CreateDiagnosticForNodeInSourceFile(sourceFile!()!, elements!.Nodes[valueIndex], message, ...args);
               receiver!.programDiagnostics = [...receiver!.programDiagnostics, d];
-              return d;
+              return GoValueRef(d!);
             }
           }
           return undefined;
-        });
+        })?.v;
       }
       return undefined;
     });
@@ -2757,13 +2761,13 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
         const emitFilePath = Program_toPath(receiver, emitFileName);
         if (receiver!.__tsgoEmbedded0!.filesByPath.has(emitFilePath)) {
           const diag = NewCompilerDiagnostic(diagnostics.Cannot_write_file_0_because_it_would_overwrite_input_file, emitFileName);
-          if (configFilePath() === "") {
+          if (configFilePath!() === "") {
             Diagnostic_AddMessageChain(diag, NewCompilerDiagnostic(diagnostics.Adding_a_tsconfig_json_file_will_help_organize_projects_that_contain_both_TypeScript_and_JavaScript_files_Learn_more_at_https_Colon_Slash_Slashaka_ms_Slashtsconfig));
           }
           Program_blockEmittingOfFile(receiver, emitFileName, diag);
         }
 
-        const emitFileKey = !Program_Host(receiver).FS().UseCaseSensitiveFileNames()
+        const emitFileKey = !Program_Host(receiver)!.FS()!.UseCaseSensitiveFileNames()
           ? ToFileNameLowerCase(emitFilePath)
           : emitFilePath;
 
@@ -2963,7 +2967,7 @@ export function emitModuleKindIsNonNodeESM(moduleKind: ModuleKind): bool {
  * 	return nil
  * }
  */
-export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: Context): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>): GoSlice<GoPtr<Diagnostic>> {
   if (receiver!.__tsgoEmbedded0!.files.length === 0) {
     return undefined!;
   }
@@ -2981,7 +2985,7 @@ export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: Cont
  * 	return p.collectDiagnostics(ctx, sourceFile, true /*concurrent* /, p.getDeclarationDiagnosticsForFile)
  * }
  */
-export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   return Program_collectDiagnostics(receiver, ctx, sourceFile, true as bool, Program_getDeclarationDiagnosticsForFile.bind(undefined, receiver));
 }
 
@@ -3016,7 +3020,7 @@ export function FilterNoEmitSemanticDiagnostics(diagnostics: GoSlice<GoPtr<Diagn
  * 	)
  * }
  */
-export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: Context, c: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: GoInterface<Context>, c: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   return Concatenate(
     FilterNoEmitSemanticDiagnostics(Program_getBindAndCheckDiagnosticsWithChecker(receiver, ctx, c, sourceFile), Program_Options(receiver)),
     Program_GetIncludeProcessorDiagnostics(receiver, sourceFile),
@@ -3061,7 +3065,7 @@ export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Progra
  * 	return filtered
  * }
  */
-export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: Context, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: GoInterface<Context>, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   const compilerOptions = Program_Options(receiver);
   if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
     return undefined!;
@@ -3185,7 +3189,7 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
  * 	return diagnostics
  * }
  */
-export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (sourceFile!.IsDeclarationFile) {
     return [];
   }
@@ -3216,7 +3220,7 @@ export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program
  * 	return diags
  * }
  */
-export function Program_getSuggestionDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: Context, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_getSuggestionDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: GoInterface<Context>, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
     return undefined!;
   }
@@ -3485,11 +3489,11 @@ function Program_getCompilerOptionsForFile(receiver: GoPtr<Program>, sourceFile:
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetEmitModuleFormatOfFile","kind":"method","status":"implemented","sigHash":"73eecf33ce88657b0b60f119379740a50fa2d8705d9599b6ea26251190d848ff"}
  */
-export function Program_GetEmitModuleFormatOfFile(receiver: GoPtr<Program>, sourceFile: HasFileName): ModuleKind {
+export function Program_GetEmitModuleFormatOfFile(receiver: GoPtr<Program>, sourceFile: GoInterface<HasFileName>): ModuleKind {
   return GetEmitModuleFormatOfFileWorker(
-    sourceFile.FileName(),
-    Program_getCompilerOptionsForFile(receiver, sourceFile),
-    Program_GetSourceFileMetaData(receiver, sourceFile.Path()),
+    sourceFile!.FileName(),
+    Program_getCompilerOptionsForFile(receiver, sourceFile!),
+    Program_GetSourceFileMetaData(receiver, sourceFile!.Path()),
   );
 }
 
@@ -3501,12 +3505,12 @@ export function Program_GetEmitModuleFormatOfFile(receiver: GoPtr<Program>, sour
  * 	return getEmitSyntaxForUsageLocationWorker(sourceFile.FileName(), p.sourceFileMetaDatas[sourceFile.Path()], location, p.projectReferenceFileMapper.getCompilerOptionsForFile(sourceFile))
  * }
  */
-export function Program_GetEmitSyntaxForUsageLocation(receiver: GoPtr<Program>, sourceFile: HasFileName, location: GoPtr<StringLiteralLike>): ResolutionMode {
+export function Program_GetEmitSyntaxForUsageLocation(receiver: GoPtr<Program>, sourceFile: GoInterface<HasFileName>, location: GoPtr<StringLiteralLike>): ResolutionMode {
   return getEmitSyntaxForUsageLocationWorker(
-    sourceFile.FileName(),
-    receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile.Path())!,
+    sourceFile!.FileName(),
+    receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile!.Path())!,
     location,
-    Program_getCompilerOptionsForFile(receiver, sourceFile),
+    Program_getCompilerOptionsForFile(receiver, sourceFile!),
   );
 }
 
@@ -3518,11 +3522,11 @@ export function Program_GetEmitSyntaxForUsageLocation(receiver: GoPtr<Program>, 
  * 	return ast.GetImpliedNodeFormatForEmitWorker(sourceFile.FileName(), p.projectReferenceFileMapper.getCompilerOptionsForFile(sourceFile).GetEmitModuleKind(), p.GetSourceFileMetaData(sourceFile.Path()))
  * }
  */
-export function Program_GetImpliedNodeFormatForEmit(receiver: GoPtr<Program>, sourceFile: HasFileName): ResolutionMode {
+export function Program_GetImpliedNodeFormatForEmit(receiver: GoPtr<Program>, sourceFile: GoInterface<HasFileName>): ResolutionMode {
   return GetImpliedNodeFormatForEmitWorker(
-    sourceFile.FileName(),
-    CompilerOptions_GetEmitModuleKind(Program_getCompilerOptionsForFile(receiver, sourceFile)),
-    Program_GetSourceFileMetaData(receiver, sourceFile.Path()),
+    sourceFile!.FileName(),
+    CompilerOptions_GetEmitModuleKind(Program_getCompilerOptionsForFile(receiver, sourceFile!)),
+    Program_GetSourceFileMetaData(receiver, sourceFile!.Path()),
   );
 }
 
@@ -3534,12 +3538,12 @@ export function Program_GetImpliedNodeFormatForEmit(receiver: GoPtr<Program>, so
  * 	return getModeForUsageLocation(sourceFile.FileName(), p.sourceFileMetaDatas[sourceFile.Path()], location, p.projectReferenceFileMapper.getCompilerOptionsForFile(sourceFile))
  * }
  */
-export function Program_GetModeForUsageLocation(receiver: GoPtr<Program>, sourceFile: HasFileName, location: GoPtr<StringLiteralLike>): ResolutionMode {
+export function Program_GetModeForUsageLocation(receiver: GoPtr<Program>, sourceFile: GoInterface<HasFileName>, location: GoPtr<StringLiteralLike>): ResolutionMode {
   return getModeForUsageLocation(
-    sourceFile.FileName(),
-    receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile.Path())!,
+    sourceFile!.FileName(),
+    receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile!.Path())!,
     location,
-    Program_getCompilerOptionsForFile(receiver, sourceFile),
+    Program_getCompilerOptionsForFile(receiver, sourceFile!),
   );
 }
 
@@ -3551,11 +3555,11 @@ export function Program_GetModeForUsageLocation(receiver: GoPtr<Program>, source
  * 	return getDefaultResolutionModeForFile(sourceFile.FileName(), p.sourceFileMetaDatas[sourceFile.Path()], p.projectReferenceFileMapper.getCompilerOptionsForFile(sourceFile))
  * }
  */
-export function Program_GetDefaultResolutionModeForFile(receiver: GoPtr<Program>, sourceFile: HasFileName): ResolutionMode {
+export function Program_GetDefaultResolutionModeForFile(receiver: GoPtr<Program>, sourceFile: GoInterface<HasFileName>): ResolutionMode {
   return getDefaultResolutionModeForFile(
-    sourceFile.FileName(),
-    receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile.Path())!,
-    Program_getCompilerOptionsForFile(receiver, sourceFile),
+    sourceFile!.FileName(),
+    receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile!.Path())!,
+    Program_getCompilerOptionsForFile(receiver, sourceFile!),
   );
 }
 
@@ -3712,7 +3716,7 @@ export function Program_checkSourceFilesBelongToPath(receiver: GoPtr<Program>, s
  */
 export interface WriteFileData {
   SourceMapUrlPos: int;
-  BuildInfo: unknown;
+  BuildInfo: GoInterface<unknown>;
   Diagnostics: GoSlice<GoPtr<Diagnostic>>;
   SkippedDtsWrite: bool;
 }
@@ -3723,7 +3727,7 @@ export interface WriteFileData {
  * Go source:
  * WriteFile func(fileName string, text string, data *WriteFileData) error
  */
-export type WriteFile = (fileName: string, text: string, data: GoPtr<WriteFileData>) => GoError;
+export type WriteFile = GoFunc<(fileName: string, text: string, data: GoPtr<WriteFileData>) => GoError>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::EmitOptions","kind":"type","status":"implemented","sigHash":"83ed49471ad2467500bc809d9a9f0d63d64794c8e634e9fce9d4baf6375d0a61"}
@@ -3843,7 +3847,7 @@ export interface SourceMapEmitResult {
  * 	}))
  * }
  */
-export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: EmitOptions): GoPtr<EmitResult> {
+export function Program_Emit(receiver: GoPtr<Program>, ctx: GoInterface<Context>, options: EmitOptions): GoPtr<EmitResult> {
   if (options.EmitOnly !== 3 /* EmitOnlyForcedDts */) {
     const result = HandleNoEmitOnError(ctx, Program_as_compiler_ProgramLike(receiver), options.TargetSourceFile);
     if (result !== undefined) {
@@ -3878,7 +3882,7 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
     const [host, done] = newEmitHost(ctx, receiver, sourceFile);
     e.host = emitHost_as_compiler_EmitHost(host);
     const writer = NewTextWriter(newLine, 0);
-    writer.Clear();
+    writer!.Clear();
     e.writer = writer;
     e.paths = GetOutputPathsFor(sourceFile, emitHost_Options(host), emitHost_as_outputpaths_OutputPathsHost(host), options.EmitOnly === 3 /* EmitOnlyForcedDts */);
     emitter_emit(e);
@@ -3961,14 +3965,14 @@ export interface ProgramLike {
   GetSourceFile(path: string): GoPtr<SourceFile>;
   GetSourceFiles(): GoSlice<GoPtr<SourceFile>>;
   GetConfigFileParsingDiagnostics(): GoSlice<GoPtr<Diagnostic>>;
-  GetSyntacticDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
-  GetBindDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
+  GetSyntacticDiagnostics(ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
+  GetBindDiagnostics(ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
   GetProgramDiagnostics(): GoSlice<GoPtr<Diagnostic>>;
-  GetGlobalDiagnostics(ctx: Context): GoSlice<GoPtr<Diagnostic>>;
-  GetSemanticDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
-  GetDeclarationDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
-  GetSuggestionDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
-  Emit(ctx: Context, options: EmitOptions): GoPtr<EmitResult>;
+  GetGlobalDiagnostics(ctx: GoInterface<Context>): GoSlice<GoPtr<Diagnostic>>;
+  GetSemanticDiagnostics(ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
+  GetDeclarationDiagnostics(ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
+  GetSuggestionDiagnostics(ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
+  Emit(ctx: GoInterface<Context>, options: EmitOptions): GoPtr<EmitResult>;
   CommonSourceDirectory(): string;
   IsSourceFileDefaultLibrary(path: Path): bool;
   Program(): GoPtr<Program>;
@@ -4020,8 +4024,8 @@ export function Program_as_compiler_ProgramLike(receiver: GoPtr<Program>): Progr
  * 	}
  * }
  */
-export function HandleNoEmitOnError(ctx: Context, program: ProgramLike, file: GoPtr<SourceFile>): GoPtr<EmitResult> {
-  if (!Tristate_IsTrue(program.Options()!.NoEmitOnError)) {
+export function HandleNoEmitOnError(ctx: GoInterface<Context>, program: GoInterface<ProgramLike>, file: GoPtr<SourceFile>): GoPtr<EmitResult> {
+  if (!Tristate_IsTrue(program!.Options()!.NoEmitOnError)) {
     return undefined;
   }
   const diags = GetDiagnosticsOfAnyProgram(
@@ -4029,8 +4033,8 @@ export function HandleNoEmitOnError(ctx: Context, program: ProgramLike, file: Go
     program,
     file,
     true as bool,
-    program.GetBindDiagnostics.bind(program),
-    program.GetSemanticDiagnostics.bind(program),
+    program!.GetBindDiagnostics.bind(program),
+    program!.GetSemanticDiagnostics.bind(program),
   );
   if (diags.length === 0) {
     return undefined;
@@ -4085,29 +4089,29 @@ export function HandleNoEmitOnError(ctx: Context, program: ProgramLike, file: Go
  * 	return allDiagnostics
  * }
  */
-export function GetDiagnosticsOfAnyProgram(ctx: Context, program: ProgramLike, file: GoPtr<SourceFile>, skipNoEmitCheckForDtsDiagnostics: bool, getBindDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>, getSemanticDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
-  let allDiagnostics: GoPtr<Diagnostic>[] = [...(slices.Clip(program.GetConfigFileParsingDiagnostics()) ?? [])];
+export function GetDiagnosticsOfAnyProgram(ctx: GoInterface<Context>, program: GoInterface<ProgramLike>, file: GoPtr<SourceFile>, skipNoEmitCheckForDtsDiagnostics: bool, getBindDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>, getSemanticDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+  let allDiagnostics: GoPtr<Diagnostic>[] = [...(slices.Clip(program!.GetConfigFileParsingDiagnostics()) ?? [])];
   const configFileParsingDiagnosticsLength = allDiagnostics.length;
 
-  allDiagnostics = [...allDiagnostics, ...(program.GetSyntacticDiagnostics(ctx, file) ?? [])];
+  allDiagnostics = [...allDiagnostics, ...(program!.GetSyntacticDiagnostics(ctx, file) ?? [])];
 
   // If we didn't have any syntactic errors, then also try getting the program (options),
   // global and semantic errors.
   if (allDiagnostics.length === configFileParsingDiagnosticsLength) {
-    allDiagnostics = [...allDiagnostics, ...(program.GetProgramDiagnostics() ?? [])];
+    allDiagnostics = [...allDiagnostics, ...(program!.GetProgramDiagnostics() ?? [])];
 
-    getBindDiagnostics(ctx, file);
+    getBindDiagnostics(ctx!, file);
 
-    if (Tristate_IsFalseOrUnknown(program.Options()!.ListFilesOnly)) {
-      allDiagnostics = [...allDiagnostics, ...(program.GetGlobalDiagnostics(ctx) ?? [])];
+    if (Tristate_IsFalseOrUnknown(program!.Options()!.ListFilesOnly)) {
+      allDiagnostics = [...allDiagnostics, ...(program!.GetGlobalDiagnostics(ctx) ?? [])];
 
       if (allDiagnostics.length === configFileParsingDiagnosticsLength) {
-        allDiagnostics = [...allDiagnostics, ...(getSemanticDiagnostics(ctx, file) ?? [])];
-        allDiagnostics = [...allDiagnostics, ...(program.GetGlobalDiagnostics(ctx) ?? [])];
+        allDiagnostics = [...allDiagnostics, ...(getSemanticDiagnostics(ctx!, file) ?? [])];
+        allDiagnostics = [...allDiagnostics, ...(program!.GetGlobalDiagnostics(ctx) ?? [])];
       }
 
-      if ((skipNoEmitCheckForDtsDiagnostics || Tristate_IsTrue(program.Options()!.NoEmit)) && CompilerOptions_GetEmitDeclarations(program.Options()) && allDiagnostics.length === configFileParsingDiagnosticsLength) {
-        allDiagnostics = [...allDiagnostics, ...(program.GetDeclarationDiagnostics(ctx, file) ?? [])];
+      if ((skipNoEmitCheckForDtsDiagnostics || Tristate_IsTrue(program!.Options()!.NoEmit)) && CompilerOptions_GetEmitDeclarations(program!.Options()) && allDiagnostics.length === configFileParsingDiagnosticsLength) {
+        allDiagnostics = [...allDiagnostics, ...(program!.GetDeclarationDiagnostics(ctx, file) ?? [])];
       }
     }
   }
@@ -4298,9 +4302,9 @@ export function Program_IsMissingPath(receiver: GoPtr<Program>, path: Path): boo
  * 	explainSourceFiles(len(files) + len(redirectFiles))
  * }
  */
-export function Program_ExplainFiles(receiver: GoPtr<Program>, w: Writer, locale: Locale): void {
+export function Program_ExplainFiles(receiver: GoPtr<Program>, w: GoInterface<Writer>, locale: Locale): void {
   const encoder = new globalThis.TextEncoder();
-  const writeStr = (s: string): void => { w.Write(encoder.encode(s) as unknown as number[]); };
+  const writeStr = (s: string): void => { w!.Write(encoder.encode(s) as unknown as number[]); };
   const toRelativeFileName = (fileName: string): string => {
     return GetRelativePathFromDirectory(Program_GetCurrentDirectory(receiver), fileName, receiver!.comparePathsOptions);
   };
@@ -4650,8 +4654,8 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
         Set_Add(packageNames.unresolved!, impText);
       }
     }
-    return packageNames;
-  });
+    return GoValueRef(packageNames);
+  })!.v;
 }
 
 /**
@@ -4805,8 +4809,8 @@ export function Program_GetSymlinkCache(receiver: GoPtr<Program>): GoPtr<KnownSy
         }
       }
     }
-    return knownSymlinks;
-  });
+    return GoValueRef(knownSymlinks!);
+  })!.v;
 }
 
 /**
@@ -4831,7 +4835,7 @@ export function Program_ResolveModuleName(receiver: GoPtr<Program>, moduleName: 
  * 	forEachResolution(p.resolvedModules, callback, file)
  * }
  */
-export function Program_ForEachResolvedModule(receiver: GoPtr<Program>, callback: (resolution: GoPtr<ResolvedModule>, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
+export function Program_ForEachResolvedModule(receiver: GoPtr<Program>, callback: GoFunc<(resolution: GoPtr<ResolvedModule>, moduleName: string, mode: ResolutionMode, filePath: Path) => void>, file: GoPtr<SourceFile>): void {
   forEachResolution<GoPtr<ResolvedModule>>(receiver!.__tsgoEmbedded0!.resolvedModules, callback, file);
 }
 
@@ -4843,7 +4847,7 @@ export function Program_ForEachResolvedModule(receiver: GoPtr<Program>, callback
  * 	forEachResolution(p.typeResolutionsInFile, callback, file)
  * }
  */
-export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Program>, callback: (resolution: GoPtr<ResolvedTypeReferenceDirective>, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
+export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Program>, callback: GoFunc<(resolution: GoPtr<ResolvedTypeReferenceDirective>, moduleName: string, mode: ResolutionMode, filePath: Path) => void>, file: GoPtr<SourceFile>): void {
   forEachResolution<GoPtr<ResolvedTypeReferenceDirective>>(receiver!.__tsgoEmbedded0!.typeResolutionsInFile, callback, file);
 }
 
@@ -4885,16 +4889,16 @@ const modeAwareCacheEntries = <T>(modeAwareCache: ModeAwareCache<T> | undefined)
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::forEachResolution","kind":"func","status":"implemented","sigHash":"81ad1e76a1bc9f4c9a1cfccfabf6ff831d6183bed38698ac95e80a7c0786dead"}
  */
-export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache<T>>, callback: (resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
+export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache<T>>, callback: GoFunc<(resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void>, file: GoPtr<SourceFile>): void {
   if (file !== undefined) {
     const resolutions = resolutionCache.get(SourceFile_Path(file));
     for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
-      callback(resolution, key.Name, key.Mode, SourceFile_Path(file));
+      callback!(resolution, key.Name, key.Mode, SourceFile_Path(file));
     }
   } else {
     for (const [filePath, resolutions] of resolutionCacheEntries(resolutionCache)) {
       for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
-        callback(resolution, key.Name, key.Mode, filePath);
+        callback!(resolution, key.Name, key.Mode, filePath);
       }
     }
   }

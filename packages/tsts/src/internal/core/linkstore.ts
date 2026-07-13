@@ -1,7 +1,10 @@
 import type { bool } from "../../go/scalars.js";
+import { GoMapIsNil } from "../../go/compat.js";
 import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
+import { Arena_New } from "./arena.js";
 import type { Arena } from "./arena.js";
 
+import type { GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/linkstore.go::type::LinkStore","kind":"type","status":"implemented","sigHash":"96af231f81cab3ea96808ae94d0dd1d2f72fe89e0cdb4c2d385abf3ee3542b3d"}
  *
@@ -12,7 +15,7 @@ import type { Arena } from "./arena.js";
  * }
  */
 export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
-  entries: GoMap<K, GoPtr<V>>;
+  entries: GoMap<K, GoRef<V>>;
   arena: Arena<V>;
 }
 
@@ -33,13 +36,16 @@ export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
  * 	return value
  * }
  */
-export function LinkStore_Get<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoPtr<V> {
+export function LinkStore_Get<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoRef<V> {
+  if (GoMapIsNil(receiver!.entries)) {
+    receiver!.entries = new globalThis.Map<K, GoRef<V>>();
+  }
   const entries = receiver!.entries;
   let value = entries.get(key);
   if (value !== undefined) {
     return value;
   }
-  value = {} as GoPtr<V>;
+  value = Arena_New(receiver!.arena);
   entries.set(key, value);
   return value;
 }
@@ -54,7 +60,7 @@ export function LinkStore_Get<K extends GoComparable, V>(receiver: GoPtr<LinkSto
  * }
  */
 export function LinkStore_Has<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): bool {
-  const ok = receiver!.entries?.has(key) ?? false;
+  const ok = receiver!.entries.has(key);
   return ok;
 }
 
@@ -66,6 +72,6 @@ export function LinkStore_Has<K extends GoComparable, V>(receiver: GoPtr<LinkSto
  * 	return s.entries[key]
  * }
  */
-export function LinkStore_TryGet<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoPtr<V> {
-  return receiver!.entries?.get(key);
+export function LinkStore_TryGet<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoRef<V> {
+  return receiver!.entries.get(key);
 }

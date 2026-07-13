@@ -3,6 +3,7 @@ import type { GoComparable, GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
 import type { SyncMap } from "./syncmap.js";
 import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from "./syncmap.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::type::SyncSet","kind":"type","status":"implemented","sigHash":"570927ea2bf0e4da3a3ad7fdaadd4bd3b7b32ccbc5b750adb2dd0d43ce00e151"}
  *
@@ -77,9 +78,9 @@ export function SyncSet_Delete<T extends GoComparable>(receiver: GoPtr<SyncSet<T
  * 	})
  * }
  */
-export function SyncSet_Range<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, fn: (key: T) => bool): void {
+export function SyncSet_Range<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, fn: GoFunc<(key: T) => bool>): void {
   SyncMap_Range(receiver!.m, (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
-    return fn(key);
+    return fn!(key);
   });
 }
 

@@ -4,6 +4,7 @@ import { IfElse } from "../core/core.js";
 import type { ModifierList, Node, NodeList } from "./spine.js";
 import type { BindingElementNode, TypeArgumentList, TypeNode } from "./generated/unions.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::type::SubtreeFacts","kind":"type","status":"implemented","sigHash":"8f0fe631eec94e4ce88656c0643f0b256cb736f62c69243cc74dfaa5b3312d94"}
  *
@@ -242,7 +243,7 @@ export function propagateSubtreeFacts(child: GoPtr<Node>): SubtreeFacts {
   if (child === undefined) {
     return SubtreeFactsNone;
   }
-  return child.data.propagateSubtreeFacts();
+  return child.data!.propagateSubtreeFacts();
 }
 
 /**
@@ -260,13 +261,13 @@ export function propagateSubtreeFacts(child: GoPtr<Node>): SubtreeFacts {
  * 	return facts
  * }
  */
-export function propagateNodeListSubtreeFacts(children: GoPtr<NodeList>, propagate: (arg0: GoPtr<Node>) => SubtreeFacts): SubtreeFacts {
+export function propagateNodeListSubtreeFacts(children: GoPtr<NodeList>, propagate: GoFunc<(arg0: GoPtr<Node>) => SubtreeFacts>): SubtreeFacts {
   if (children === undefined) {
     return SubtreeFactsNone;
   }
   let facts = SubtreeFactsNone;
   for (const child of children.Nodes) {
-    facts = (facts | propagate(child)) >>> 0;
+    facts = (facts | propagate!(child)) >>> 0;
   }
   return facts;
 }

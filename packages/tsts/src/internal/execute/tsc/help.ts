@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoAppend, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoValueRef, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Fprint } from "../../../go/fmt.js";
 import { SortFunc } from "../../../go/slices.js";
 import { Clone } from "../../../go/slices.js";
@@ -73,6 +73,7 @@ import type { System } from "./compile.js";
 import type { colors } from "./diagnostics.js";
 import { createColors, colors_blue, colors_bold, colors_blueBackground, colors_brightWhite } from "./diagnostics.js";
 
+import type { GoInterface, GoRef } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::PrintVersion","kind":"func","status":"implemented","sigHash":"81f4b3a8da37e32b22c37f209f6f87ec0f65daff59fe4062f2f5a2db67408068"}
  *
@@ -81,8 +82,8 @@ import { createColors, colors_blue, colors_bold, colors_blueBackground, colors_b
  * 	fmt.Fprintln(sys.Writer(), diagnostics.Version_0.Localize(locale, core.Version()))
  * }
  */
-export function PrintVersion(sys: System, locale: Locale): void {
-  Fprint(sys.Writer(), Message_Localize(Version_0, locale, Version()), "\n");
+export function PrintVersion(sys: GoInterface<System>, locale: Locale): void {
+  Fprint(sys!.Writer()!, Message_Localize(Version_0, locale, Version()), "\n");
 }
 
 /**
@@ -97,7 +98,7 @@ export function PrintVersion(sys: System, locale: Locale): void {
  * 	}
  * }
  */
-export function PrintHelp(sys: System, locale: Locale, commandLine: GoPtr<ParsedCommandLine>): void {
+export function PrintHelp(sys: GoInterface<System>, locale: Locale, commandLine: GoPtr<ParsedCommandLine>): void {
   const compilerOptions = ParsedCommandLine_CompilerOptions(commandLine);
   if (Tristate_IsFalseOrUnknown(compilerOptions!.All)) {
     printEasyHelp(sys, locale, getOptionsForHelp(commandLine));
@@ -168,10 +169,10 @@ export function getOptionsForHelp(commandLine: GoPtr<ParsedCommandLine>): GoSlic
  * 	return header
  * }
  */
-export function getHeader(sys: System, message: string): GoSlice<string> {
+export function getHeader(sys: GoInterface<System>, message: string): GoSlice<string> {
   const clrs = createColors(sys);
   const header: string[] = [];
-  const terminalWidth = sys.GetWidthOfTerminal();
+  const terminalWidth = sys!.GetWidthOfTerminal();
   const tsIcon = "     ";
   const tsIconTS = "  TS ";
   const tsIconLength = tsIcon.length;
@@ -243,7 +244,7 @@ export function getHeader(sys: System, message: string): GoSlice<string> {
  * 	}
  * }
  */
-export function printEasyHelp(sys: System, locale: Locale, simpleOptions: GoSlice<GoPtr<CommandLineOption>>): void {
+export function printEasyHelp(sys: GoInterface<System>, locale: Locale, simpleOptions: GoSlice<GoPtr<CommandLineOption>>): void {
   const clrs = createColors(sys);
   const output: string[] = [];
   const example = (examples: GoSlice<string>, desc: GoPtr<Message>): void => {
@@ -279,10 +280,10 @@ export function printEasyHelp(sys: System, locale: Locale, simpleOptions: GoSlic
   output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(COMMAND_LINE_FLAGS, locale), cliCommands, false, undefined, undefined));
 
   const after = Message_Localize(You_can_learn_about_all_of_the_compiler_options_at_0, locale, "https://aka.ms/tsc");
-  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(COMMON_COMPILER_OPTIONS, locale), configOpts, false, undefined, after));
+  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(COMMON_COMPILER_OPTIONS, locale), configOpts, false, undefined, GoValueRef(after)));
 
   for (const chunk of output) {
-    Fprint(sys.Writer(), chunk);
+    Fprint(sys!.Writer()!, chunk);
   }
 }
 
@@ -315,26 +316,26 @@ export function printEasyHelp(sys: System, locale: Locale, simpleOptions: GoSlic
  * 	}
  * }
  */
-export function printAllHelp(sys: System, locale: Locale, options: GoSlice<GoPtr<CommandLineOption>>): void {
+export function printAllHelp(sys: GoInterface<System>, locale: Locale, options: GoSlice<GoPtr<CommandLineOption>>): void {
   const output: string[] = [];
   const msg = Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version());
   output.push(...getHeader(sys, msg));
 
   // ALL COMPILER OPTIONS section
   const afterCompilerOptions = Message_Localize(You_can_learn_about_all_of_the_compiler_options_at_0, locale, "https://aka.ms/tsc");
-  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(ALL_COMPILER_OPTIONS, locale), options, true, undefined, afterCompilerOptions));
+  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(ALL_COMPILER_OPTIONS, locale), options, true, undefined, GoValueRef(afterCompilerOptions)));
 
   // WATCH OPTIONS section
   const beforeWatchOptions = Message_Localize(Including_watch_w_will_start_watching_the_current_project_for_the_file_changes_Once_set_you_can_config_watch_mode_with_Colon, locale);
-  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(WATCH_OPTIONS, locale), OptionsForWatch, false, beforeWatchOptions, undefined));
+  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(WATCH_OPTIONS, locale), OptionsForWatch, false, GoValueRef(beforeWatchOptions), undefined));
 
   // BUILD OPTIONS section
   const beforeBuildOptions = Message_Localize(Using_build_b_will_make_tsc_behave_more_like_a_build_orchestrator_than_a_compiler_This_is_used_to_trigger_building_composite_projects_which_you_can_learn_more_about_at_0, locale, "https://aka.ms/tsc-composite-builds");
   const buildOptions = Filter(OptionsForBuild, (option: GoPtr<CommandLineOption>): bool => option !== TscBuildOption);
-  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), buildOptions, false, beforeBuildOptions, undefined));
+  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), buildOptions, false, GoValueRef(beforeBuildOptions), undefined));
 
   for (const chunk of output) {
-    Fprint(sys.Writer(), chunk);
+    Fprint(sys!.Writer()!, chunk);
   }
 }
 
@@ -356,15 +357,15 @@ export function printAllHelp(sys: System, locale: Locale, options: GoSlice<GoPtr
  * 	}
  * }
  */
-export function PrintBuildHelp(sys: System, locale: Locale, buildOptions: GoSlice<GoPtr<CommandLineOption>>): void {
+export function PrintBuildHelp(sys: GoInterface<System>, locale: Locale, buildOptions: GoSlice<GoPtr<CommandLineOption>>): void {
   const output: string[] = [];
   output.push(...getHeader(sys, Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version())));
   const before = Message_Localize(Using_build_b_will_make_tsc_behave_more_like_a_build_orchestrator_than_a_compiler_This_is_used_to_trigger_building_composite_projects_which_you_can_learn_more_about_at_0, locale, "https://aka.ms/tsc-composite-builds");
   const options = Filter(buildOptions, (option: GoPtr<CommandLineOption>): bool => option !== TscBuildOption);
-  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), options, false, before, undefined));
+  output.push(...generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), options, false, GoValueRef(before), undefined));
 
   for (const chunk of output) {
-    Fprint(sys.Writer(), chunk);
+    Fprint(sys!.Writer()!, chunk);
   }
 }
 
@@ -417,17 +418,17 @@ export function PrintBuildHelp(sys: System, locale: Locale, buildOptions: GoSlic
  * 	return output
  * }
  */
-export function generateSectionOptionsOutput(sys: System, locale: Locale, sectionName: string, options: GoSlice<GoPtr<CommandLineOption>>, subCategory: bool, beforeOptionsDescription: GoPtr<string>, afterOptionsDescription: GoPtr<string>): GoSlice<string> {
+export function generateSectionOptionsOutput(sys: GoInterface<System>, locale: Locale, sectionName: string, options: GoSlice<GoPtr<CommandLineOption>>, subCategory: bool, beforeOptionsDescription: GoRef<string>, afterOptionsDescription: GoRef<string>): GoSlice<string> {
   const output: string[] = [];
   output.push(colors_bold(createColors(sys), sectionName), "\n", "\n");
 
   if (beforeOptionsDescription !== undefined) {
-    output.push(beforeOptionsDescription, "\n", "\n");
+    output.push(beforeOptionsDescription!.v, "\n", "\n");
   }
   if (!subCategory) {
     output.push(...generateGroupOptionOutput(sys, locale, options));
     if (afterOptionsDescription !== undefined) {
-      output.push(afterOptionsDescription, "\n", "\n");
+      output.push(afterOptionsDescription!.v, "\n", "\n");
     }
     return output;
   }
@@ -450,7 +451,7 @@ export function generateSectionOptionsOutput(sys: System, locale: Locale, sectio
     output.push(...generateGroupOptionOutput(sys, locale, value));
   }
   if (afterOptionsDescription !== undefined) {
-    output.push(afterOptionsDescription, "\n", "\n");
+    output.push(afterOptionsDescription!.v, "\n", "\n");
   }
 
   return output;
@@ -488,7 +489,7 @@ export function generateSectionOptionsOutput(sys: System, locale: Locale, sectio
  * 	return lines
  * }
  */
-export function generateGroupOptionOutput(sys: System, locale: Locale, optionsList: GoSlice<GoPtr<CommandLineOption>>): GoSlice<string> {
+export function generateGroupOptionOutput(sys: GoInterface<System>, locale: Locale, optionsList: GoSlice<GoPtr<CommandLineOption>>): GoSlice<string> {
   let maxLength = 0;
   for (const option of optionsList) {
     const curLength = getDisplayNameTextOfOption(option).length;
@@ -593,7 +594,7 @@ export function generateGroupOptionOutput(sys: System, locale: Locale, optionsLi
  * 	return text
  * }
  */
-export function generateOptionOutput(sys: System, locale: Locale, option: GoPtr<CommandLineOption>, rightAlignOfLeft: int, leftAlignOfRight: int): GoSlice<string> {
+export function generateOptionOutput(sys: GoInterface<System>, locale: Locale, option: GoPtr<CommandLineOption>, rightAlignOfLeft: int, leftAlignOfRight: int): GoSlice<string> {
   const text: string[] = [];
   const clrs = createColors(sys);
 
@@ -618,7 +619,7 @@ export function generateOptionOutput(sys: System, locale: Locale, option: GoPtr<
     );
   }
 
-  const terminalWidth = sys.GetWidthOfTerminal();
+  const terminalWidth = sys!.GetWidthOfTerminal();
 
   if (terminalWidth >= 80) {
     const description = option!.Description !== undefined ? Message_Localize(option!.Description, locale) : "";
@@ -682,7 +683,7 @@ export function generateOptionOutput(sys: System, locale: Locale, option: GoPtr<
  * 	return fmt.Sprintf("%v", defaultValue)
  * }
  */
-export function formatDefaultValue(defaultValue: unknown, option: GoPtr<CommandLineOption>): string {
+export function formatDefaultValue(defaultValue: GoInterface<unknown>, option: GoPtr<CommandLineOption>): string {
   if (defaultValue === null || defaultValue === undefined || defaultValue === 0 /* TSUnknown */) {
     return "undefined";
   }
@@ -778,7 +779,7 @@ export function showAdditionalInfoOutput(valueCandidates: GoPtr<valueCandidate>,
  * 	return res
  * }
  */
-export function getValueCandidate(sys: System, locale: Locale, option: GoPtr<CommandLineOption>): GoPtr<valueCandidate> {
+export function getValueCandidate(sys: GoInterface<System>, locale: Locale, option: GoPtr<CommandLineOption>): GoPtr<valueCandidate> {
   if (option!.Kind === CommandLineOptionTypeObject) {
     return undefined;
   }

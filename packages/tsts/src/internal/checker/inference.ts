@@ -253,6 +253,7 @@ import {
 } from "./types.js";
 import { IsTypeAny, isObjectLiteralType, isObjectOrArrayLiteralType, isValidBigIntString, isValidNumberString, pseudoBigIntToString } from "./utilities.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceKey","kind":"type","status":"implemented","sigHash":"b7240472cd57ef405f9a148ef9ec8af6dfa01c094e529face8ce9016e617e024"}
  *
@@ -635,7 +636,7 @@ export function Checker_inferTypes(receiver: GoPtr<Checker>, inferences: GoSlice
 export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>): void {
   const c = receiver!;
   const state = n!;
-  if (!c.couldContainTypeVariables(target) || Checker_isNoInferType(c, target)) {
+  if (!c.couldContainTypeVariables!(target) || Checker_isNoInferType(c, target)) {
     return;
   }
   if (source === c.wildcardType || source === c.blockedStringType) {
@@ -990,7 +991,7 @@ export function Checker_inferFromContravariantTypesIfStrictFunctionTypes(receive
  * 	n.inferencePriority = min(n.inferencePriority, saveInferencePriority)
  * }
  */
-export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>, action: (c: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>) => void): void {
+export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>, action: GoFunc<(c: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>) => void>): void {
   const c = receiver!;
   const state = n!;
   const key: InferenceKey = { s: source!.id, t: target!.id };
@@ -1020,7 +1021,7 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
     state.expandingFlags |= ExpandingFlagsTarget;
   }
   if (state.expandingFlags !== ExpandingFlagsBoth) {
-    action(c, state, source, target);
+    action!(c, state, source, target);
   } else {
     state.inferencePriority = InferencePriorityCircularity;
   }
@@ -1056,13 +1057,13 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
  * 	return sources, targets
  * }
  */
-export function Checker_inferFromMatchingTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, sources: GoSlice<GoPtr<Type>>, targets: GoSlice<GoPtr<Type>>, matches: (c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool): [GoSlice<GoPtr<Type>>, GoSlice<GoPtr<Type>>] {
+export function Checker_inferFromMatchingTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, sources: GoSlice<GoPtr<Type>>, targets: GoSlice<GoPtr<Type>>, matches: GoFunc<(c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool>): [GoSlice<GoPtr<Type>>, GoSlice<GoPtr<Type>>] {
   const c = receiver!;
   let matchedSources: GoSlice<GoPtr<Type>> = [];
   let matchedTargets: GoSlice<GoPtr<Type>> = [];
   for (const t of targets) {
     for (const s of sources) {
-      if (matches(c, s, t)) {
+      if (matches!(c, s, t)) {
         Checker_inferFromTypes(c, n, s, t);
         matchedSources = core.AppendIfUnique(matchedSources, s);
         matchedTargets = core.AppendIfUnique(matchedTargets, t);
@@ -2047,7 +2048,7 @@ export function Checker_inferFromSignature(receiver: GoPtr<Checker>, n: GoPtr<In
  * 	}
  * }
  */
-export function Checker_applyToParameterTypes(receiver: GoPtr<Checker>, source: GoPtr<Signature>, target: GoPtr<Signature>, callback: (s: GoPtr<Type>, t: GoPtr<Type>) => void): void {
+export function Checker_applyToParameterTypes(receiver: GoPtr<Checker>, source: GoPtr<Signature>, target: GoPtr<Signature>, callback: GoFunc<(s: GoPtr<Type>, t: GoPtr<Type>) => void>): void {
   const c = receiver!;
   const sourceCount = Checker_getParameterCount(c, source);
   const targetCount = Checker_getParameterCount(c, target);
@@ -2059,14 +2060,14 @@ export function Checker_applyToParameterTypes(receiver: GoPtr<Checker>, source: 
   if (sourceThisType !== undefined) {
     const targetThisType = Checker_getThisTypeOfSignature(c, target);
     if (targetThisType !== undefined) {
-      callback(sourceThisType, targetThisType);
+      callback!(sourceThisType, targetThisType);
     }
   }
   for (let i = 0; i < paramCount; i++) {
-    callback(Checker_getTypeAtPosition(c, source, i), Checker_getTypeAtPosition(c, target, i));
+    callback!(Checker_getTypeAtPosition(c, source, i), Checker_getTypeAtPosition(c, target, i));
   }
   if (targetRestType !== undefined) {
-    callback(Checker_getRestTypeAtPosition(c, source, paramCount, Checker_isConstTypeVariable(c, targetRestType, 0) && !someType(targetRestType, (t: GoPtr<Type>): bool => Checker_isMutableArrayLikeType(c, t))), targetRestType);
+    callback!(Checker_getRestTypeAtPosition(c, source, paramCount, Checker_isConstTypeVariable(c, targetRestType, 0) && !someType(targetRestType, (t: GoPtr<Type>): bool => Checker_isMutableArrayLikeType(c, t))), targetRestType);
   }
 }
 
@@ -2089,19 +2090,19 @@ export function Checker_applyToParameterTypes(receiver: GoPtr<Checker>, source: 
  * 	}
  * }
  */
-export function Checker_applyToReturnTypes(receiver: GoPtr<Checker>, source: GoPtr<Signature>, target: GoPtr<Signature>, callback: (s: GoPtr<Type>, t: GoPtr<Type>) => void): void {
+export function Checker_applyToReturnTypes(receiver: GoPtr<Checker>, source: GoPtr<Signature>, target: GoPtr<Signature>, callback: GoFunc<(s: GoPtr<Type>, t: GoPtr<Type>) => void>): void {
   const c = receiver!;
   const targetTypePredicate = Checker_getTypePredicateOfSignature(c, target);
   if (targetTypePredicate !== undefined) {
     const sourceTypePredicate = Checker_getTypePredicateOfSignature(c, source);
     if (sourceTypePredicate !== undefined && Checker_typePredicateKindsMatch(c, sourceTypePredicate, targetTypePredicate) && sourceTypePredicate.t !== undefined && targetTypePredicate.t !== undefined) {
-      callback(sourceTypePredicate.t, targetTypePredicate.t);
+      callback!(sourceTypePredicate.t, targetTypePredicate.t);
       return;
     }
   }
   const targetReturnType = Checker_getReturnTypeOfSignature(c, target);
-  if (c.couldContainTypeVariables(targetReturnType)) {
-    callback(Checker_getReturnTypeOfSignature(c, source), targetReturnType);
+  if (c.couldContainTypeVariables!(targetReturnType)) {
+    callback!(Checker_getReturnTypeOfSignature(c, source), targetReturnType);
   }
 }
 
@@ -3122,18 +3123,18 @@ export function Checker_getInferredType(receiver: GoPtr<Checker>, n: GoPtr<Infer
       const instantiatedConstraint = Checker_instantiateType(receiver, constraint, n!.nonFixingMapper);
       if (inferredType !== undefined) {
         const constraintWithThis = Checker_getTypeWithThisArgument(receiver, instantiatedConstraint, inferredType, false);
-        if (n!.compareTypes(inferredType, constraintWithThis, false) === TernaryFalse) {
+        if (n!.compareTypes!(inferredType, constraintWithThis, false) === TernaryFalse) {
           let filteredByConstraint: GoPtr<Type> = undefined;
           if (inference!.priority === InferencePriorityReturnType) {
             filteredByConstraint = Checker_mapType(receiver, inferredType, (t) =>
-              n!.compareTypes(t, constraintWithThis, false) !== TernaryFalse ? t : c.neverType
+              n!.compareTypes!(t, constraintWithThis, false) !== TernaryFalse ? t : c.neverType
             );
           }
           inferredType = (filteredByConstraint !== undefined && (filteredByConstraint!.flags & TypeFlagsNever) === 0) ? filteredByConstraint : undefined;
         }
       }
       if (inferredType === undefined) {
-        inferredType = (fallbackType !== undefined && n!.compareTypes(fallbackType, Checker_getTypeWithThisArgument(receiver, instantiatedConstraint, fallbackType, false), false) !== TernaryFalse) ? fallbackType : instantiatedConstraint;
+        inferredType = (fallbackType !== undefined && n!.compareTypes!(fallbackType, Checker_getTypeWithThisArgument(receiver, instantiatedConstraint, fallbackType, false), false) !== TernaryFalse) ? fallbackType : instantiatedConstraint;
       }
       inference!.inferredType = inferredType;
     }
@@ -3511,10 +3512,10 @@ export function Checker_getSingleCommonSupertype(receiver: GoPtr<Checker>, types
  * 	return candidate
  * }
  */
-export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, f: (c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool): GoPtr<Type> {
+export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, f: GoFunc<(c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool>): GoPtr<Type> {
   let candidate: GoPtr<Type> = undefined;
   for (const t of types) {
-    if (candidate === undefined || f(receiver, candidate, t)) {
+    if (candidate === undefined || f!(receiver, candidate, t)) {
       candidate = t;
     }
   }

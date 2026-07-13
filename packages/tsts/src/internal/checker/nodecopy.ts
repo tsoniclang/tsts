@@ -799,7 +799,7 @@ export function NodeBuilderImpl_getEnclosingDeclarationIgnoringFakeScope(receive
   const links = receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>;
   const loop = (enc: GoPtr<Node>): GoPtr<Node> => {
     if (enc === undefined) return undefined;
-    if (LinkStore_Get(links, enc)!.fakeScopeForSignatureDeclaration === undefined) return enc;
+    if (LinkStore_Get(links, enc)!.v.fakeScopeForSignatureDeclaration === undefined) return enc;
     return loop(enc.Parent);
   };
   return loop(receiver!.ctx!.enclosingDeclaration);
@@ -1227,7 +1227,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       const dispose = NodeBuilderImpl_enterNewScope(b, node, [], Checker_getInferTypeParameters(b!.ch, node), [], undefined);
       const extendsType = visitNode(conditional.ExtendsType);
       const trueType = visitNode(conditional.TrueType);
-      dispose();
+      dispose!();
       const falseType = visitNode(conditional.FalseType);
       return NodeFactory_UpdateConditionalTypeNode(factory, conditional, checkType as GoPtr<never>, extendsType as GoPtr<never>, trueType as GoPtr<never>, falseType as GoPtr<never>);
     }

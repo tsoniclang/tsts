@@ -8,6 +8,7 @@ import { Number_IsInf, Number_IsNaN } from "../../jsnum/jsnum.js";
 import { Number_String } from "../../jsnum/string.js";
 import type { NodeFactory } from "../../printer/factory.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/utilities.go::func::constantExpression","kind":"func","status":"implemented","sigHash":"e65e6e90096edac52c1042408a6c297dceaee868456eb7e28fd2ebeb788f9201"}
  *
@@ -34,7 +35,7 @@ import type { NodeFactory } from "../../printer/factory.js";
  * 	return nil
  * }
  */
-export function constantExpression(value: unknown, factory: GoPtr<NodeFactory>): GoPtr<Expression> {
+export function constantExpression(value: GoInterface<unknown>, factory: GoPtr<NodeFactory>): GoPtr<Expression> {
   const f = factory!.__tsgoEmbedded0!;
   if (typeof value === "string") {
     return NewStringLiteral(f, value, TokenFlagsNone);

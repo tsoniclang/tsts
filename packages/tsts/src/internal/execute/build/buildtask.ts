@@ -263,7 +263,7 @@ export function BuildTask_unblockDownstream(receiver: GoPtr<BuildTask>): void {
  */
 export function BuildTask_reportDiagnostic(receiver: GoPtr<BuildTask>, err: GoPtr<Diagnostic>): void {
   receiver!.errors.push(err);
-  receiver!.result!.diagnosticReporter(err);
+  receiver!.result!.diagnosticReporter!(err);
 }
 
 /**
@@ -306,7 +306,7 @@ export function BuildTask_report(receiver: GoPtr<BuildTask>, orchestrator: GoPtr
     const existing = buildResult!.errors !== undefined && buildResult!.errors !== null ? buildResult!.errors : [];
     buildResult!.errors = [...existing, ...receiver!.errors];
   }
-  Fprint(orchestrator!.opts.Sys.Writer(), receiver!.result!.builder.String());
+  Fprint(orchestrator!.opts.Sys!.Writer()!, receiver!.result!.builder.String());
   if (receiver!.result!.exitStatus > buildResult!.result.Status) {
     buildResult!.result.Status = receiver!.result!.exitStatus;
   }
@@ -388,7 +388,7 @@ export function BuildTask_buildProject(receiver: GoPtr<BuildTask>, orchestrator:
     if (receiver!.errors.length > 0) {
       BuildTask_reportUpToDateStatus(receiver, orchestrator);
       for (const err of receiver!.errors) {
-        receiver!.result!.diagnosticReporter(err);
+        receiver!.result!.diagnosticReporter!(err);
       }
     }
   }
@@ -550,7 +550,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
 
   receiver!.errors = [];
   if (Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Verbose)) {
-    receiver!.result!.reportStatus(NewCompilerDiagnostic(diagnostics.Building_project_0, Orchestrator_relativeFileName(orchestrator, receiver!.config)));
+    receiver!.result!.reportStatus!(NewCompilerDiagnostic(diagnostics.Building_project_0, Orchestrator_relativeFileName(orchestrator, receiver!.config)));
   }
 
   const compileTimes: import("../tsc/compile.js").CompileTimes = {
@@ -567,7 +567,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path);
   compileTimes.ConfigTime = configTime as import("../../../go/time.js").Duration;
 
-  const buildInfoReadStart = orchestrator!.opts.Sys.Now();
+  const buildInfoReadStart = orchestrator!.opts.Sys!.Now();
   let oldProgram: GoPtr<Program> = undefined;
   if (!Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Force)) {
     oldProgram = ReadBuildInfoProgram(
@@ -576,9 +576,9 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
       host_as_compiler_CompilerHost(orchestrator!.host),
     );
   }
-  compileTimes.BuildInfoReadTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(buildInfoReadStart) as import("../../../go/time.js").Duration;
+  compileTimes.BuildInfoReadTime = (orchestrator!.opts.Sys!.Now() as TimeWithSub).Sub(buildInfoReadStart) as import("../../../go/time.js").Duration;
 
-  const parseStart = orchestrator!.opts.Sys.Now();
+  const parseStart = orchestrator!.opts.Sys!.Now();
   const trace = GetTraceWithWriterFromSys(
     receiver!.result!.builder as unknown as Writer,
     ParsedBuildCommandLine_Locale_fn(orchestrator!.opts.Command),
@@ -586,16 +586,16 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   );
   const buildCompilerHost = compilerHost_as_compiler_CompilerHost({ host: orchestrator!.host, trace } as compilerHost);
   const program = compiler_NewProgram({ Config: receiver!.resolved, Host: buildCompilerHost } as import("../../compiler/program.js").ProgramOptions);
-  compileTimes.ParseTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(parseStart) as import("../../../go/time.js").Duration;
+  compileTimes.ParseTime = (orchestrator!.opts.Sys!.Now() as TimeWithSub).Sub(parseStart) as import("../../../go/time.js").Duration;
 
-  const changesComputeStart = orchestrator!.opts.Sys.Now();
+  const changesComputeStart = orchestrator!.opts.Sys!.Now();
   receiver!.result!.program = incremental_NewProgram(
     program,
     oldProgram,
     orchestrator!.host as unknown as Parameters<typeof incremental_NewProgram>[2],
     (orchestrator!.opts.Testing !== undefined && orchestrator!.opts.Testing !== null) as bool,
   );
-  compileTimes.ChangesComputeTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(changesComputeStart) as import("../../../go/time.js").Duration;
+  compileTimes.ChangesComputeTime = (orchestrator!.opts.Sys!.Now() as TimeWithSub).Sub(changesComputeStart) as import("../../../go/time.js").Duration;
 
   const [result, statistics] = EmitAndReportStatistics({
     Sys: orchestrator!.opts.Sys,
@@ -692,13 +692,13 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
   switch (receiver!.status!.kind) {
     case upToDateStatusTypeUpToDate:
       if (Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Dry)) {
-        receiver!.result!.reportStatus(NewCompilerDiagnostic(diagnostics.Project_0_is_up_to_date, receiver!.config));
+        receiver!.result!.reportStatus!(NewCompilerDiagnostic(diagnostics.Project_0_is_up_to_date, receiver!.config));
       }
       return true;
     case upToDateStatusTypeUpstreamErrors: {
       const upstreamStatus = upToDateStatus_upstreamErrors(receiver!.status);
       if (Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Verbose)) {
-        receiver!.result!.reportStatus(NewCompilerDiagnostic(
+        receiver!.result!.reportStatus!(NewCompilerDiagnostic(
           IfElse(
             upstreamStatus!.refHasUpstreamErrors,
             diagnostics.Skipping_build_of_project_0_because_its_dependency_1_was_not_built,
@@ -722,7 +722,7 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
   // update timestamps
   if (upToDateStatus_isPseudoBuild(receiver!.status)) {
     if (Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Dry)) {
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(diagnostics.A_non_dry_build_would_update_timestamps_for_output_of_project_0, receiver!.config));
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(diagnostics.A_non_dry_build_would_update_timestamps_for_output_of_project_0, receiver!.config));
       receiver!.status = { kind: upToDateStatusTypeUpToDate, data: undefined };
       return true;
     }
@@ -733,7 +733,7 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
   }
 
   if (Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Dry)) {
-    receiver!.result!.reportStatus(NewCompilerDiagnostic(diagnostics.A_non_dry_build_would_build_project_0, receiver!.config));
+    receiver!.result!.reportStatus!(NewCompilerDiagnostic(diagnostics.A_non_dry_build_would_build_project_0, receiver!.config));
     receiver!.status = { kind: upToDateStatusTypeUpToDate, data: undefined };
     return true;
   }
@@ -1248,14 +1248,14 @@ export function BuildTask_reportUpToDateStatus(receiver: GoPtr<BuildTask>, orche
   }
   switch (receiver!.status!.kind) {
     case upToDateStatusTypeConfigFileNotFound:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_config_file_does_not_exist,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
       ));
       break;
     case upToDateStatusTypeUpstreamErrors: {
       const upstreamStatus = upToDateStatus_upstreamErrors(receiver!.status);
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         IfElse(
           upstreamStatus!.refHasUpstreamErrors,
           diagnostics.Project_0_can_t_be_built_because_its_dependency_1_was_not_built,
@@ -1267,7 +1267,7 @@ export function BuildTask_reportUpToDateStatus(receiver: GoPtr<BuildTask>, orche
       break;
     }
     case upToDateStatusTypeBuildErrors:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_it_has_errors,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
       ));
@@ -1275,7 +1275,7 @@ export function BuildTask_reportUpToDateStatus(receiver: GoPtr<BuildTask>, orche
     case upToDateStatusTypeUpToDate: {
       const ioFileAndTime = upToDateStatus_inputOutputFileAndTime(receiver!.status);
       if (ioFileAndTime !== undefined) {
-        receiver!.result!.reportStatus(NewCompilerDiagnostic(
+        receiver!.result!.reportStatus!(NewCompilerDiagnostic(
           diagnostics.Project_0_is_up_to_date_because_newest_input_1_is_older_than_output_2,
           Orchestrator_relativeFileName(orchestrator, receiver!.config),
           Orchestrator_relativeFileName(orchestrator, ioFileAndTime.input.file),
@@ -1285,26 +1285,26 @@ export function BuildTask_reportUpToDateStatus(receiver: GoPtr<BuildTask>, orche
       break;
     }
     case upToDateStatusTypeUpToDateWithUpstreamTypes:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_up_to_date_with_d_ts_files_from_its_dependencies,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
       ));
       break;
     case upToDateStatusTypeUpToDateWithInputFileText:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_up_to_date_but_needs_to_update_timestamps_of_output_files_that_are_older_than_input_files,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
       ));
       break;
     case upToDateStatusTypeInputFileMissing:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_input_1_does_not_exist,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
         Orchestrator_relativeFileName(orchestrator, receiver!.status!.data as string),
       ));
       break;
     case upToDateStatusTypeOutputMissing:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_output_file_1_does_not_exist,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
         Orchestrator_relativeFileName(orchestrator, receiver!.status!.data as string),
@@ -1312,7 +1312,7 @@ export function BuildTask_reportUpToDateStatus(receiver: GoPtr<BuildTask>, orche
       break;
     case upToDateStatusTypeInputFileNewer: {
       const inputOutput = upToDateStatus_inputOutputName(receiver!.status);
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_output_1_is_older_than_input_2,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
         Orchestrator_relativeFileName(orchestrator, inputOutput!.output),
@@ -1321,21 +1321,21 @@ export function BuildTask_reportUpToDateStatus(receiver: GoPtr<BuildTask>, orche
       break;
     }
     case upToDateStatusTypeOutOfDateBuildInfoWithPendingEmit:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_buildinfo_file_1_indicates_that_some_of_the_changes_were_not_emitted,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
         Orchestrator_relativeFileName(orchestrator, receiver!.status!.data as string),
       ));
       break;
     case upToDateStatusTypeOutOfDateBuildInfoWithErrors:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_buildinfo_file_1_indicates_that_program_needs_to_report_errors,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
         Orchestrator_relativeFileName(orchestrator, receiver!.status!.data as string),
       ));
       break;
     case upToDateStatusTypeOutOfDateOptions:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_buildinfo_file_1_indicates_there_is_change_in_compilerOptions,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
         Orchestrator_relativeFileName(orchestrator, receiver!.status!.data as string),
@@ -1343,7 +1343,7 @@ export function BuildTask_reportUpToDateStatus(receiver: GoPtr<BuildTask>, orche
       break;
     case upToDateStatusTypeOutOfDateRoots: {
       const inputOutput2 = upToDateStatus_inputOutputName(receiver!.status);
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_buildinfo_file_1_indicates_that_file_2_was_root_file_of_compilation_but_not_any_more,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
         Orchestrator_relativeFileName(orchestrator, inputOutput2!.output),
@@ -1352,7 +1352,7 @@ export function BuildTask_reportUpToDateStatus(receiver: GoPtr<BuildTask>, orche
       break;
     }
     case upToDateStatusTypeTsVersionOutputOfDate:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_out_of_date_because_output_for_it_was_generated_with_version_1_that_differs_with_current_version_2,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
         Orchestrator_relativeFileName(orchestrator, receiver!.status!.data as string),
@@ -1360,7 +1360,7 @@ export function BuildTask_reportUpToDateStatus(receiver: GoPtr<BuildTask>, orche
       ));
       break;
     case upToDateStatusTypeForceBuild:
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(
         diagnostics.Project_0_is_being_forcibly_rebuilt,
         Orchestrator_relativeFileName(orchestrator, receiver!.config),
       ));
@@ -1428,14 +1428,14 @@ export function BuildTask_updateTimeStamps(receiver: GoPtr<BuildTask>, orchestra
   const emitted: GoPtr<Set<string>> = NewSetFromItems(...(emittedFiles ?? []));
   let verboseMessageReported = false;
   const buildInfoName = ParsedCommandLine_GetBuildInfoFileName(receiver!.resolved);
-  const now = orchestrator!.opts.Sys.Now();
+  const now = orchestrator!.opts.Sys!.Now();
 
   const updateTimeStamp = (file: string): void => {
     if (Set_Has(emitted, file)) {
       return;
     }
     if (!verboseMessageReported && Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Verbose)) {
-      receiver!.result!.reportStatus(NewCompilerDiagnostic(verboseMessage, Orchestrator_relativeFileName(orchestrator, receiver!.config)));
+      receiver!.result!.reportStatus!(NewCompilerDiagnostic(verboseMessage, Orchestrator_relativeFileName(orchestrator, receiver!.config)));
       verboseMessageReported = true;
     }
     const err = host_SetMTime(orchestrator!.host, file, now);
@@ -1672,10 +1672,10 @@ export function BuildTask_hasUpdate(receiver: GoPtr<BuildTask>, orchestrator: Go
     }
     if (!needsConfigUpdate) {
       type TimeWithSub = Time & { Sub(t: Time): number };
-      const configStart = orchestrator!.opts.Sys.Now();
+      const configStart = orchestrator!.opts.Sys!.Now();
       const fs = host_FS_fn(orchestrator!.host);
       const newConfig = (receiver!.resolved as unknown as { ReloadFileNamesOfParsedCommandLine(fs: unknown): GoPtr<import("../../tsoptions/parsedcommandline.js").ParsedCommandLine> }).ReloadFileNamesOfParsedCommandLine(fs);
-      const configTime2 = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(configStart);
+      const configTime2 = (orchestrator!.opts.Sys!.Now() as TimeWithSub).Sub(configStart);
       receiver!.reportDone = {} as BuildTask["reportDone"];
       receiver!.done = {} as BuildTask["done"];
       if (!slicesEqual(ParsedCommandLine_FileNames(receiver!.resolved), ParsedCommandLine_FileNames(newConfig))) {
@@ -1722,7 +1722,7 @@ export function BuildTask_loadOrStoreBuildInfo(receiver: GoPtr<BuildTask>, orche
   }
   const reader = NewBuildInfoReader(orchestrator!.host as unknown as Parameters<typeof NewBuildInfoReader>[0]);
   receiver!.buildInfoEntry = {
-    buildInfo: reader.ReadBuildInfo(receiver!.resolved),
+    buildInfo: reader!.ReadBuildInfo(receiver!.resolved),
     path,
     mTime: new TimeClass(),
     dtsTime: undefined,
@@ -1760,7 +1760,7 @@ export function BuildTask_loadOrStoreBuildInfo(receiver: GoPtr<BuildTask>, orche
  */
 export function BuildTask_onBuildInfoEmit(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, buildInfoFileName: string, buildInfo: GoPtr<BuildInfo>, hasChangedDtsFile: bool): void {
   receiver!.buildInfoEntryMu.Lock();
-  const mTime = orchestrator!.opts.Sys.Now();
+  const mTime = orchestrator!.opts.Sys!.Now();
   let dtsTime: GoPtr<Time> = undefined;
   if (hasChangedDtsFile) {
     dtsTime = mTime;
@@ -1870,7 +1870,7 @@ export function BuildTask_writeFile(receiver: GoPtr<BuildTask>, orchestrator: Go
       const hasChangedDts = (receiver!.result!.program as unknown as { HasChangedDtsFile(): bool }).HasChangedDtsFile();
       BuildTask_onBuildInfoEmit(receiver, orchestrator, fileName, data.BuildInfo as unknown as GoPtr<BuildInfo>, hasChangedDts as bool);
     } else if (BuildTask_storeOutputTimeStamp(receiver, orchestrator)) {
-      host_storeMTime(orchestrator!.host, fileName, orchestrator!.opts.Sys.Now());
+      host_storeMTime(orchestrator!.host, fileName, orchestrator!.opts.Sys!.Now());
     }
   }
   return err;

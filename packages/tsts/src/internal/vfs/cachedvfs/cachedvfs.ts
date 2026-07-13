@@ -7,6 +7,7 @@ import { SyncMap_Clear, SyncMap_Load, SyncMap_Store } from "../../collections/sy
 import type { SyncMap } from "../../collections/syncmap.js";
 import type { Entries, FileInfo, FS as FS_296ac81f, WalkDirFunc } from "../vfs.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::type::FS","kind":"type","status":"implemented","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4"}
  *
@@ -23,7 +24,7 @@ import type { Entries, FileInfo, FS as FS_296ac81f, WalkDirFunc } from "../vfs.j
  * }
  */
 export interface FS {
-  fs: FS_296ac81f;
+  fs: GoInterface<FS_296ac81f>;
   enabled: Bool;
   directoryExistsCache: SyncMap<string, bool>;
   fileExistsCache: SyncMap<string, bool>;
@@ -38,7 +39,7 @@ export interface FS {
  * Go source:
  * var _ vfs.FS = (*FS)(nil)
  */
-export let __2bea44dc_0: FS_296ac81f = FS_as_vfs_FS(undefined);
+export let __2bea44dc_0: GoInterface<FS_296ac81f> = FS_as_vfs_FS(undefined);
 
 export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_296ac81f {
   return {
@@ -67,7 +68,7 @@ export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_296ac81f {
  * 	return fsys
  * }
  */
-export function From(fs: FS_296ac81f): GoPtr<FS> {
+export function From(fs: GoInterface<FS_296ac81f>): GoPtr<FS> {
   const fsys: FS = {
     fs: fs,
     enabled: new Bool(),
@@ -156,7 +157,7 @@ export function FS_DirectoryExists(receiver: GoPtr<FS>, path: string): bool {
       return ret;
     }
   }
-  const ret = receiver!.fs.DirectoryExists(path);
+  const ret = receiver!.fs!.DirectoryExists(path);
   if (receiver!.enabled.Load()) {
     SyncMap_Store<string, bool>(receiver!.directoryExistsCache, path, ret);
   }
@@ -190,7 +191,7 @@ export function FS_FileExists(receiver: GoPtr<FS>, path: string): bool {
       return ret;
     }
   }
-  const ret = receiver!.fs.FileExists(path);
+  const ret = receiver!.fs!.FileExists(path);
   if (receiver!.enabled.Load()) {
     SyncMap_Store<string, bool>(receiver!.fileExistsCache, path, ret);
   }
@@ -224,7 +225,7 @@ export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entr
       return ret;
     }
   }
-  const ret = receiver!.fs.GetAccessibleEntries(path);
+  const ret = receiver!.fs!.GetAccessibleEntries(path);
   if (receiver!.enabled.Load()) {
     SyncMap_Store<string, Entries>(receiver!.getAccessibleEntriesCache, path, ret);
   }
@@ -240,7 +241,7 @@ export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entr
  * }
  */
 export function FS_ReadFile(receiver: GoPtr<FS>, path: string): [string, bool] {
-  return receiver!.fs.ReadFile(path);
+  return receiver!.fs!.ReadFile(path);
 }
 
 /**
@@ -270,7 +271,7 @@ export function FS_Realpath(receiver: GoPtr<FS>, path: string): string {
       return ret;
     }
   }
-  const ret = receiver!.fs.Realpath(path);
+  const ret = receiver!.fs!.Realpath(path);
   if (receiver!.enabled.Load()) {
     SyncMap_Store<string, string>(receiver!.realpathCache, path, ret);
   }
@@ -286,7 +287,7 @@ export function FS_Realpath(receiver: GoPtr<FS>, path: string): string {
  * }
  */
 export function FS_Remove(receiver: GoPtr<FS>, path: string): GoError {
-  return receiver!.fs.Remove(path);
+  return receiver!.fs!.Remove(path);
 }
 
 /**
@@ -298,7 +299,7 @@ export function FS_Remove(receiver: GoPtr<FS>, path: string): GoError {
  * }
  */
 export function FS_Chtimes(receiver: GoPtr<FS>, path: string, aTime: Time, mTime: Time): GoError {
-  return receiver!.fs.Chtimes(path, aTime, mTime);
+  return receiver!.fs!.Chtimes(path, aTime, mTime);
 }
 
 /**
@@ -328,7 +329,7 @@ export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
       return ret;
     }
   }
-  const ret = receiver!.fs.Stat(path);
+  const ret = receiver!.fs!.Stat(path);
   if (receiver!.enabled.Load()) {
     SyncMap_Store<string, GoPtr<FileInfo>>(receiver!.statCache, path, ret);
   }
@@ -344,7 +345,7 @@ export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
  * }
  */
 export function FS_UseCaseSensitiveFileNames(receiver: GoPtr<FS>): bool {
-  return receiver!.fs.UseCaseSensitiveFileNames();
+  return receiver!.fs!.UseCaseSensitiveFileNames();
 }
 
 /**
@@ -356,7 +357,7 @@ export function FS_UseCaseSensitiveFileNames(receiver: GoPtr<FS>): bool {
  * }
  */
 export function FS_WalkDir(receiver: GoPtr<FS>, root: string, walkFn: WalkDirFunc): GoError {
-  return receiver!.fs.WalkDir(root, walkFn);
+  return receiver!.fs!.WalkDir(root, walkFn);
 }
 
 /**
@@ -368,7 +369,7 @@ export function FS_WalkDir(receiver: GoPtr<FS>, root: string, walkFn: WalkDirFun
  * }
  */
 export function FS_WriteFile(receiver: GoPtr<FS>, path: string, data: string): GoError {
-  return receiver!.fs.WriteFile(path, data);
+  return receiver!.fs!.WriteFile(path, data);
 }
 
 /**
@@ -380,5 +381,5 @@ export function FS_WriteFile(receiver: GoPtr<FS>, path: string, data: string): G
  * }
  */
 export function FS_AppendFile(receiver: GoPtr<FS>, path: string, data: string): GoError {
-  return receiver!.fs.AppendFile(path, data);
+  return receiver!.fs!.AppendFile(path, data);
 }

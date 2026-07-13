@@ -9,6 +9,7 @@ import {
   GetPathFromPathComponents,
 } from "../tspath/path.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * Port note: upstream implementation source follows.
  *
@@ -178,22 +179,22 @@ export function GetComputedCommonSourceDirectory(emittedFiles: GoSlice<string>, 
  * 	return commonSourceDirectory
  * }
  */
-export function GetCommonSourceDirectory(options: GoPtr<CompilerOptions>, files: () => GoSlice<string>, currentDirectory: string, useCaseSensitiveFileNames: bool, checkSourceFilesBelongToPath: ((sourceFiles: GoSlice<string>, rootDirectory: string) => bool) | undefined): string {
+export function GetCommonSourceDirectory(options: GoPtr<CompilerOptions>, files: GoFunc<() => GoSlice<string>>, currentDirectory: string, useCaseSensitiveFileNames: bool, checkSourceFilesBelongToPath: ((sourceFiles: GoSlice<string>, rootDirectory: string) => bool) | undefined): string {
   let commonSourceDirectory = "";
   if (options!.RootDir !== "") {
     // If a rootDir is specified use it as the commonSourceDirectory
     commonSourceDirectory = options!.RootDir;
     if (checkSourceFilesBelongToPath !== undefined) {
-      checkSourceFilesBelongToPath(files(), options!.RootDir);
+      checkSourceFilesBelongToPath(files!(), options!.RootDir);
     }
   } else if (options!.ConfigFilePath !== "") {
     // If the rootDir is not specified, then the common source directory is the directory of the config file.
     commonSourceDirectory = GetDirectoryPath(options!.ConfigFilePath);
     if (checkSourceFilesBelongToPath !== undefined) {
-      checkSourceFilesBelongToPath(files(), commonSourceDirectory);
+      checkSourceFilesBelongToPath(files!(), commonSourceDirectory);
     }
   } else {
-    commonSourceDirectory = computeCommonSourceDirectoryOfFilenames(files(), currentDirectory, useCaseSensitiveFileNames);
+    commonSourceDirectory = computeCommonSourceDirectoryOfFilenames(files!(), currentDirectory, useCaseSensitiveFileNames);
   }
 
   if (commonSourceDirectory.length > 0) {

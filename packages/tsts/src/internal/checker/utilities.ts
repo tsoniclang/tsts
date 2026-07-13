@@ -219,6 +219,7 @@ import {
   Try_npm_i_save_dev_types_Slash_1_if_it_exists_or_add_a_new_declaration_d_ts_file_containing_declare_module_0,
 } from "../diagnostics/generated/messages.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::NewDiagnosticForNode","kind":"func","status":"implemented","sigHash":"38975070fc52475f953f616cda4a7d53cea35489b9bd5758651180771e977acb"}
  *
@@ -274,10 +275,10 @@ export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<
  * 	return *new(V)
  * }
  */
-export function findInMap<K extends GoComparable, V>(m: GoMap<K, V>, predicate: (arg0: V) => bool): V {
+export function findInMap<K extends GoComparable, V>(m: GoMap<K, V>, predicate: GoFunc<(arg0: V) => bool>): V {
   // Go ranges over a nil map as a no-op.
   for (const value of m?.values() ?? []) {
-    if (predicate(value)) {
+    if (predicate!(value)) {
       return value;
     }
   }
@@ -1082,7 +1083,7 @@ export function createSymbolTable(symbols: GoSlice<GoPtr<Symbol>>): SymbolTable 
  * }
  */
 export function Checker_sortSymbols(receiver: GoPtr<Checker>, symbols: GoSlice<GoPtr<Symbol>>): void {
-  symbols.sort((s1, s2) => receiver!.compareSymbols(s1, s2));
+  symbols.sort((s1, s2) => receiver!.compareSymbols!(s1, s2));
 }
 
 /**
@@ -1418,7 +1419,7 @@ export function CompareTypes(t1: GoPtr<Type>, t2: GoPtr<Type>): int {
     // Only distinguished by type IDs, handled below.
   } else if ((t1!.flags & TypeFlagsObject) !== 0) {
     // Order unnamed or identically named object types by symbol.
-    const symbols = t1!.checker!.compareSymbols(t1!.symbol, t2!.symbol);
+    const symbols = t1!.checker!.compareSymbols!(t1!.symbol, t2!.symbol);
     if (symbols !== 0) {
       return symbols;
     }
@@ -1497,7 +1498,7 @@ export function CompareTypes(t1: GoPtr<Type>, t2: GoPtr<Type>): int {
     }
   } else if ((t1!.flags & (TypeFlagsEnum | TypeFlagsEnumLiteral | TypeFlagsUniqueESSymbol)) !== 0) {
     // Enum members are ordered by their symbol (and thus their declaration order).
-    const symbols = t1!.checker!.compareSymbols(t1!.symbol, t2!.symbol);
+    const symbols = t1!.checker!.compareSymbols!(t1!.symbol, t2!.symbol);
     if (symbols !== 0) {
       return symbols;
     }
@@ -1523,7 +1524,7 @@ export function CompareTypes(t1: GoPtr<Type>, t2: GoPtr<Type>): int {
       return -1;
     }
   } else if ((t1!.flags & TypeFlagsTypeParameter) !== 0) {
-    const symbols = t1!.checker!.compareSymbols(t1!.symbol, t2!.symbol);
+    const symbols = t1!.checker!.compareSymbols!(t1!.symbol, t2!.symbol);
     if (symbols !== 0) {
       return symbols;
     }
@@ -1863,8 +1864,8 @@ export function compareTypeMappers(m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>)
   }
   switch (kind1) {
     case TypeMapperKindSimple: {
-      const mapper1 = m1!.data[goReceiverKey] as GoPtr<SimpleTypeMapper>;
-      const mapper2 = m2!.data[goReceiverKey] as GoPtr<SimpleTypeMapper>;
+      const mapper1 = m1!.data![goReceiverKey] as GoPtr<SimpleTypeMapper>;
+      const mapper2 = m2!.data![goReceiverKey] as GoPtr<SimpleTypeMapper>;
       const sources = CompareTypes(mapper1!.source, mapper2!.source);
       if (sources !== 0) {
         return sources;
@@ -1872,8 +1873,8 @@ export function compareTypeMappers(m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>)
       return CompareTypes(mapper1!.target, mapper2!.target);
     }
     case TypeMapperKindArray: {
-      const mapper1 = m1!.data[goReceiverKey] as GoPtr<ArrayTypeMapper>;
-      const mapper2 = m2!.data[goReceiverKey] as GoPtr<ArrayTypeMapper>;
+      const mapper1 = m1!.data![goReceiverKey] as GoPtr<ArrayTypeMapper>;
+      const mapper2 = m2!.data![goReceiverKey] as GoPtr<ArrayTypeMapper>;
       const sources = compareTypeLists(mapper1!.sources, mapper2!.sources);
       if (sources !== 0) {
         return sources;
@@ -1881,8 +1882,8 @@ export function compareTypeMappers(m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>)
       return compareTypeLists(mapper1!.targets, mapper2!.targets);
     }
     case TypeMapperKindMerged: {
-      const mapper1 = m1!.data[goReceiverKey] as GoPtr<MergedTypeMapper>;
-      const mapper2 = m2!.data[goReceiverKey] as GoPtr<MergedTypeMapper>;
+      const mapper1 = m1!.data![goReceiverKey] as GoPtr<MergedTypeMapper>;
+      const mapper2 = m2!.data![goReceiverKey] as GoPtr<MergedTypeMapper>;
       const first = compareTypeMappers(mapper1!.m1, mapper2!.m1);
       if (first !== 0) {
         return first;
@@ -3197,11 +3198,11 @@ export function getSuperContainer(node: GoPtr<Node>, stopOnFunctions: bool): GoP
  * 	return traverse(body)
  * }
  */
-export function forEachYieldExpression(body: GoPtr<Node>, visitor: (expr: GoPtr<Node>) => bool): bool {
+export function forEachYieldExpression(body: GoPtr<Node>, visitor: GoFunc<(expr: GoPtr<Node>) => bool>): bool {
   const traverse = (node: GoPtr<Node>): bool => {
     switch (node!.Kind) {
       case KindYieldExpression: {
-        if (visitor(node)) {
+        if (visitor!(node)) {
           return true as bool;
         }
         const operand = Node_Expression(node);
@@ -3307,11 +3308,11 @@ export function getNonRestParameterCount(sig: GoPtr<Signature>): int {
  * 	return minValue, maxValue
  * }
  */
-export function minAndMax<T>(slice: GoSlice<T>, getValue: (value: T) => int): [int, int] {
+export function minAndMax<T>(slice: GoSlice<T>, getValue: GoFunc<(value: T) => int>): [int, int] {
   let minValue: int = 0;
   let maxValue: int = 0;
   for (let i = 0; i < slice.length; i++) {
-    const value = getValue(slice[i]!);
+    const value = getValue!(slice[i]!);
     if (i === 0) {
       minValue = value;
       maxValue = value;
@@ -3605,7 +3606,7 @@ let featureMapValue: GoMap<string, GoSlice<FeatureMapEntry>> | undefined;
  * 	}
  * })
  */
-export let getFeatureMap: () => GoMap<string, GoSlice<FeatureMapEntry>> = (): GoMap<string, GoSlice<FeatureMapEntry>> => (featureMapValue ??= new Map<string, GoSlice<FeatureMapEntry>>([
+export let getFeatureMap: GoFunc<() => GoMap<string, GoSlice<FeatureMapEntry>>> = (): GoMap<string, GoSlice<FeatureMapEntry>> => (featureMapValue ??= new Map<string, GoSlice<FeatureMapEntry>>([
   ["Array", [
     { lib: "es2015", props: ["find", "findIndex", "fill", "copyWithin", "entries", "keys", "values"] },
     { lib: "es2016", props: ["includes"] },
@@ -4108,7 +4109,7 @@ export function Checker_checkNotCanceled(receiver: GoPtr<Checker>): void {
 export function Checker_getPackagesMap(receiver: GoPtr<Checker>): GoMap<string, bool> {
   if (receiver!.packagesMap === undefined) {
     receiver!.packagesMap = new globalThis.Map<string, bool>();
-    const resolvedModules = receiver!.program.GetResolvedModules();
+    const resolvedModules = receiver!.program!.GetResolvedModules();
     for (const [, resolvedModulesInFile] of resolvedModules) {
       for (const [, module_] of resolvedModulesInFile) {
         const module = module_ as GoPtr<ResolvedModule>;
@@ -4172,7 +4173,7 @@ export function Checker_packageBundlesTypes(receiver: GoPtr<Checker>, packageNam
  * 	panic("unhandled value type in valueToString")
  * }
  */
-export function ValueToString(value: unknown): string {
+export function ValueToString(value: GoInterface<unknown>): string {
   switch (typeof value) {
     case "string":
       return "\"" + EscapeString(value, QuoteCharDoubleQuote) + "\"";
@@ -4363,9 +4364,9 @@ export interface DiagnosticDetails {
  * 	}
  * }
  */
-export function CreateModuleNotFoundChain(program: Program, file: GoPtr<SourceFile>, moduleReference: string, mode: ResolutionMode, packageName: string): DiagnosticDetails {
+export function CreateModuleNotFoundChain(program: GoInterface<Program>, file: GoPtr<SourceFile>, moduleReference: string, mode: ResolutionMode, packageName: string): DiagnosticDetails {
   const currentSourceFile = NewHasFileName(SourceFile_FileName(file), SourceFile_Path(file)) as HasFileName;
-  const resolvedModule = program.GetResolvedModule(currentSourceFile, moduleReference, mode);
+  const resolvedModule = program!.GetResolvedModule(currentSourceFile, moduleReference, mode);
 
   if (resolvedModule !== undefined && resolvedModule!.AlternateResult !== "") {
     if (resolvedModule!.AlternateResult.includes("/node_modules/@types/")) {
@@ -4377,7 +4378,7 @@ export function CreateModuleNotFoundChain(program: Program, file: GoPtr<SourceFi
     };
   }
 
-  const packagesMap = program.GetPackagesMap();
+  const packagesMap = program!.GetPackagesMap();
   if (packagesMap.has(GetTypesPackageName(packageName))) {
     return {
       Message: If_the_0_package_actually_exposes_this_module_consider_sending_a_pull_request_to_amend_https_Colon_Slash_Slashgithub_com_SlashDefinitelyTyped_SlashDefinitelyTyped_Slashtree_Slashmaster_Slashtypes_Slash_1,
@@ -4431,10 +4432,10 @@ export function CreateModuleNotFoundChain(program: Program, file: GoPtr<SourceFi
  * 	}
  * }
  */
-export function CreateModeMismatchDetails(program: Program, file: GoPtr<SourceFile>): DiagnosticDetails {
+export function CreateModeMismatchDetails(program: GoInterface<Program>, file: GoPtr<SourceFile>): DiagnosticDetails {
   const ext = TryGetExtensionFromPath(SourceFile_FileName(file));
   const targetExt = ext === ExtensionTs ? ExtensionMts : ext === ExtensionJs ? ExtensionMjs : "";
-  const meta = program.GetSourceFileMetaData(SourceFile_Path(file));
+  const meta = program!.GetSourceFileMetaData(SourceFile_Path(file));
   const packageJsonType = meta.PackageJsonType;
   const packageJsonDirectory = meta.PackageJsonDirectory;
 

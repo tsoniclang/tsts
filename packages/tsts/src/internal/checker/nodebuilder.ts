@@ -56,6 +56,7 @@ import {
 import { SymbolFlagsInterface } from "../ast/generated/flags.js";
 import type { IndexInfo, Signature, Type, TypePredicate } from "./types.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::type::NodeBuilder","kind":"type","status":"implemented","sigHash":"76a4249a51e647678e92bd7c18d47a4d92028cf7abbb788a146426ab06fb85df"}
  *
@@ -69,7 +70,7 @@ import type { IndexInfo, Signature, Type, TypePredicate } from "./types.js";
  */
 export interface NodeBuilder {
   ctxStack: GoSlice<GoPtr<NodeBuilderContext>>;
-  host: Host;
+  host: GoInterface<Host>;
   impl: GoPtr<NodeBuilderImpl>;
   verbosity: GoPtr<VerbosityContext>;
 }
@@ -557,7 +558,7 @@ export function simplifyClassDeclaration(f: GoPtr<NodeFactory>, classDecl: GoPtr
  * 	return ast.ReplaceModifiers(f, newDecl, f.NewModifierList(ast.CreateModifiersFromModifierFlags(modifiers, f.NewModifier)))
  * }
  */
-export function simplifyModifiers(f: GoPtr<NodeFactory>, newDecl: GoPtr<Node>, isDeclKind: (arg0: GoPtr<Node>) => bool, symbol_: GoPtr<Symbol>): GoPtr<Node> {
+export function simplifyModifiers(f: GoPtr<NodeFactory>, newDecl: GoPtr<Node>, isDeclKind: GoFunc<(arg0: GoPtr<Node>) => bool>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
   const decls = Filter(symbol_!.Declarations ?? [], isDeclKind);
   let declWithModifiers: GoPtr<Node>;
   if (decls.length > 0) {

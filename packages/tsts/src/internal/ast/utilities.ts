@@ -1,5 +1,6 @@
 import type { bool, int, short, ulong } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoMapIsNil } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Pool } from "../../go/sync.js";
@@ -565,6 +566,7 @@ import {
 import { Assert, FailBadSyntaxKind } from "../debug/debug.js";
 import { Pool as PoolValue } from "../../go/sync.js";
 
+import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::varGroup::nextNodeId+nextSymbolId","kind":"varGroup","status":"implemented","sigHash":"023956e168736dc0e2e208f1009bb0207dce5c0c6e326fb624acc258ef9d4fd8"}
  *
@@ -640,11 +642,11 @@ export function GetSymbolId(symbol_: GoPtr<Symbol>): SymbolId {
  * 	return *data
  * }
  */
-export function GetSymbolTable(data: GoPtr<SymbolTable>): SymbolTable {
-  if (data === undefined) {
-    return new Map();
+export function GetSymbolTable(data: GoRef<SymbolTable>): SymbolTable {
+  if (GoMapIsNil(data!.v)) {
+    data!.v = new globalThis.Map();
   }
-  return data;
+  return data!.v;
 }
 
 /**
@@ -2626,7 +2628,7 @@ export function GetSourceFileOfNode(node: GoPtr<Node>): GoPtr<SourceFile> {
 export let setParentInChildrenPool: Pool = ((): Pool<(node: GoPtr<Node>) => bool> => {
   const pool = new PoolValue<(node: GoPtr<Node>) => bool>();
   pool.New = (): ((node: GoPtr<Node>) => bool) => {
-    return newParentInChildrenSetter();
+    return newParentInChildrenSetter()!;
   };
   return pool;
 })();
@@ -2657,7 +2659,7 @@ export let setParentInChildrenPool: Pool = ((): Pool<(node: GoPtr<Node>) => bool
  * 	return state.visit
  * }
  */
-export function newParentInChildrenSetter(): (node: GoPtr<Node>) => bool {
+export function newParentInChildrenSetter(): GoFunc<(node: GoPtr<Node>) => bool> {
   // Consolidate state into one allocation.
   // Similar to https://go.dev/cl/552375.
   const state: { parent: GoPtr<Node>; visit: ((node: GoPtr<Node>) => bool) | undefined } = {
@@ -2724,9 +2726,9 @@ export function SetImportsOfSourceFile(node: GoPtr<SourceFile>, imports: GoSlice
  * 	return nil
  * }
  */
-export function FindAncestor(node: GoPtr<Node>, callback: (arg0: GoPtr<Node>) => bool): GoPtr<Node> {
+export function FindAncestor(node: GoPtr<Node>, callback: GoFunc<(arg0: GoPtr<Node>) => bool>): GoPtr<Node> {
   for (let current = node; current !== undefined; current = current!.Parent) {
-    if (callback(current)) {
+    if (callback!(current)) {
       return current;
     }
   }
@@ -2813,9 +2815,9 @@ export function ToFindAncestorResult(b: bool): FindAncestorResult {
  * 	return nil
  * }
  */
-export function FindAncestorOrQuit(node: GoPtr<Node>, callback: (arg0: GoPtr<Node>) => FindAncestorResult): GoPtr<Node> {
+export function FindAncestorOrQuit(node: GoPtr<Node>, callback: GoFunc<(arg0: GoPtr<Node>) => FindAncestorResult>): GoPtr<Node> {
   for (let current = node; current !== undefined; current = current!.Parent) {
-    switch (callback(current)) {
+    switch (callback!(current)) {
       case FindAncestorQuit:
         return undefined;
       case FindAncestorTrue:
@@ -3203,11 +3205,11 @@ export function IsFunctionExpressionOrArrowFunction(node: GoPtr<Node>): bool {
  * 	return traverse(body)
  * }
  */
-export function ForEachReturnStatement(body: GoPtr<Node>, visitor: (stmt: GoPtr<Node>) => bool): bool {
+export function ForEachReturnStatement(body: GoPtr<Node>, visitor: GoFunc<(stmt: GoPtr<Node>) => bool>): bool {
   const traverse = (node: GoPtr<Node>): bool => {
     switch (node!.Kind) {
       case KindReturnStatement:
-        return visitor(node);
+        return visitor!(node);
       case KindCaseBlock:
       case KindBlock:
       case KindIfStatement:
@@ -3269,14 +3271,14 @@ export function GetRootDeclaration(node: GoPtr<Node>): GoPtr<Node> {
  * 	return flags
  * }
  */
-export function getCombinedFlags<T extends GoConstraint<"~uint32"> & number>(node: GoPtr<Node>, getFlags: (arg0: GoPtr<Node>) => T): T {
+export function getCombinedFlags<T extends GoConstraint<"~uint32"> & number>(node: GoPtr<Node>, getFlags: GoFunc<(arg0: GoPtr<Node>) => T>): T {
   const root = GetRootDeclaration(node);
-  const flags0 = getFlags(root);
+  const flags0 = getFlags!(root);
   const n1 = root!.Kind === KindVariableDeclaration ? root!.Parent : root;
   const isDeclList = n1 !== undefined && n1!.Kind === KindVariableDeclarationList;
-  const flags1 = isDeclList ? (flags0 | getFlags(n1!)) as T : flags0;
+  const flags1 = isDeclList ? (flags0 | getFlags!(n1!)) as T : flags0;
   const n2 = isDeclList ? n1!.Parent : n1;
-  const flags2 = (n2 !== undefined && n2!.Kind === KindVariableStatement) ? (flags1 | getFlags(n2)) as T : flags1;
+  const flags2 = (n2 !== undefined && n2!.Kind === KindVariableStatement) ? (flags1 | getFlags!(n2)) as T : flags1;
   return flags2;
 }
 
@@ -5599,7 +5601,7 @@ export function IsQuestionToken(node: GoPtr<Node>): bool {
  * 	panic("Unhandled case in EntityNameToString")
  * }
  */
-export function EntityNameToString(name: GoPtr<Node>, getTextOfNode: (arg0: GoPtr<Node>) => string): string {
+export function EntityNameToString(name: GoPtr<Node>, getTextOfNode: GoFunc<(arg0: GoPtr<Node>) => string>): string {
   switch (name!.Kind) {
     case KindThisKeyword:
       return "this";
@@ -8377,52 +8379,52 @@ export function GetExternalModuleImportEqualsDeclarationExpression(node: GoPtr<N
  * 	return result
  * }
  */
-export function CreateModifiersFromModifierFlags(flags: ModifierFlags, createModifier: (kind: Kind) => GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function CreateModifiersFromModifierFlags(flags: ModifierFlags, createModifier: GoFunc<(kind: Kind) => GoPtr<Node>>): GoSlice<GoPtr<Node>> {
   let result: GoSlice<GoPtr<Node>> = [];
   if ((flags & ModifierFlagsExport) !== 0) {
-    result = [...(result ?? []), createModifier(KindExportKeyword)];
+    result = [...(result ?? []), createModifier!(KindExportKeyword)];
   }
   if ((flags & ModifierFlagsAmbient) !== 0) {
-    result = [...(result ?? []), createModifier(KindDeclareKeyword)];
+    result = [...(result ?? []), createModifier!(KindDeclareKeyword)];
   }
   if ((flags & ModifierFlagsDefault) !== 0) {
-    result = [...(result ?? []), createModifier(KindDefaultKeyword)];
+    result = [...(result ?? []), createModifier!(KindDefaultKeyword)];
   }
   if ((flags & ModifierFlagsConst) !== 0) {
-    result = [...(result ?? []), createModifier(KindConstKeyword)];
+    result = [...(result ?? []), createModifier!(KindConstKeyword)];
   }
   if ((flags & ModifierFlagsPublic) !== 0) {
-    result = [...(result ?? []), createModifier(KindPublicKeyword)];
+    result = [...(result ?? []), createModifier!(KindPublicKeyword)];
   }
   if ((flags & ModifierFlagsPrivate) !== 0) {
-    result = [...(result ?? []), createModifier(KindPrivateKeyword)];
+    result = [...(result ?? []), createModifier!(KindPrivateKeyword)];
   }
   if ((flags & ModifierFlagsProtected) !== 0) {
-    result = [...(result ?? []), createModifier(KindProtectedKeyword)];
+    result = [...(result ?? []), createModifier!(KindProtectedKeyword)];
   }
   if ((flags & ModifierFlagsAbstract) !== 0) {
-    result = [...(result ?? []), createModifier(KindAbstractKeyword)];
+    result = [...(result ?? []), createModifier!(KindAbstractKeyword)];
   }
   if ((flags & ModifierFlagsStatic) !== 0) {
-    result = [...(result ?? []), createModifier(KindStaticKeyword)];
+    result = [...(result ?? []), createModifier!(KindStaticKeyword)];
   }
   if ((flags & ModifierFlagsOverride) !== 0) {
-    result = [...(result ?? []), createModifier(KindOverrideKeyword)];
+    result = [...(result ?? []), createModifier!(KindOverrideKeyword)];
   }
   if ((flags & ModifierFlagsReadonly) !== 0) {
-    result = [...(result ?? []), createModifier(KindReadonlyKeyword)];
+    result = [...(result ?? []), createModifier!(KindReadonlyKeyword)];
   }
   if ((flags & ModifierFlagsAccessor) !== 0) {
-    result = [...(result ?? []), createModifier(KindAccessorKeyword)];
+    result = [...(result ?? []), createModifier!(KindAccessorKeyword)];
   }
   if ((flags & ModifierFlagsAsync) !== 0) {
-    result = [...(result ?? []), createModifier(KindAsyncKeyword)];
+    result = [...(result ?? []), createModifier!(KindAsyncKeyword)];
   }
   if ((flags & ModifierFlagsIn) !== 0) {
-    result = [...(result ?? []), createModifier(KindInKeyword)];
+    result = [...(result ?? []), createModifier!(KindInKeyword)];
   }
   if ((flags & ModifierFlagsOut) !== 0) {
-    result = [...(result ?? []), createModifier(KindOutKeyword)];
+    result = [...(result ?? []), createModifier!(KindOutKeyword)];
   }
   return result;
 }
@@ -9327,7 +9329,7 @@ export function IsJsxOpeningLikeElementTagName(node: GoPtr<Node>, includeElement
  * 	return target != nil && target.Parent != nil && pred(target.Parent) && calleeSelector(target.Parent) == target
  * }
  */
-export function isCalleeWorker(node: GoPtr<Node>, pred: (arg0: GoPtr<Node>) => bool, calleeSelector: (arg0: GoPtr<Node>) => GoPtr<Node>, includeElementAccess: bool, skipPastOuterExpressions: bool): bool {
+export function isCalleeWorker(node: GoPtr<Node>, pred: GoFunc<(arg0: GoPtr<Node>) => bool>, calleeSelector: GoFunc<(arg0: GoPtr<Node>) => GoPtr<Node>>, includeElementAccess: bool, skipPastOuterExpressions: bool): bool {
   const target0: GoPtr<Node> = includeElementAccess
     ? climbPastPropertyOrElementAccess(node)
     : ClimbPastPropertyAccess(node);
@@ -9335,7 +9337,7 @@ export function isCalleeWorker(node: GoPtr<Node>, pred: (arg0: GoPtr<Node>) => b
   const target: GoPtr<Node> = skipPastOuterExpressions && IsExpression(target0)
     ? SkipOuterExpressions(target0, OEKAll as OuterExpressionKinds)
     : target0;
-  return (target !== undefined && target!.Parent !== undefined && pred(target!.Parent) && calleeSelector(target!.Parent) === target) as bool;
+  return (target !== undefined && target!.Parent !== undefined && pred!(target!.Parent) && calleeSelector!(target!.Parent) === target) as bool;
 }
 
 /**
@@ -9568,7 +9570,7 @@ export interface hasFileNameImpl {
  * 	}
  * }
  */
-export function NewHasFileName(fileName: string, path: Path_73a9f36e): HasFileName {
+export function NewHasFileName(fileName: string, path: Path_73a9f36e): GoInterface<HasFileName> {
   const impl: GoPtr<hasFileNameImpl> = {
     fileName: fileName,
     path: path,

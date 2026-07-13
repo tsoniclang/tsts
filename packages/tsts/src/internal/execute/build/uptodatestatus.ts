@@ -2,6 +2,7 @@ import type { bool, ushort } from "../../../go/scalars.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { Time } from "../../../go/time.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::upToDateStatusType","kind":"type","status":"implemented","sigHash":"ec47ccebe21a935afa38eac9d2ecc23fc07b8c2d2b395ec87e70849e9d2ff8d3"}
  *
@@ -147,7 +148,7 @@ export interface upstreamErrors {
  */
 export interface upToDateStatus {
   kind: upToDateStatusType;
-  data: unknown;
+  data: GoInterface<unknown>;
 }
 
 /**

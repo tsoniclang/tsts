@@ -11,6 +11,7 @@ import type { Path } from "../../tspath/path.js";
 import type { FS } from "../../vfs/vfs.js";
 import type { Program } from "../incremental/program.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::System","kind":"type","status":"implemented","sigHash":"9796f5a63a81e48716f70a9ce1144968740f12fb78d508829d5be302b9df34ef"}
  *
@@ -29,8 +30,8 @@ import type { Program } from "../incremental/program.js";
  * }
  */
 export interface System {
-  Writer(): Writer;
-  FS(): FS;
+  Writer(): GoInterface<Writer>;
+  FS(): GoInterface<FS>;
   DefaultLibraryPath(): string;
   GetCurrentDirectory(): string;
   WriteOutputIsTTY(): bool;
@@ -115,15 +116,15 @@ export interface CommandLineResult {
  */
 export interface CommandLineTesting {
   OnEmittedFiles(result: GoPtr<EmitResult>, mTimesCache: GoPtr<SyncMap<Path, Time>>): void;
-  OnListFilesStart(w: Writer): void;
-  OnListFilesEnd(w: Writer): void;
-  OnStatisticsStart(w: Writer): void;
-  OnStatisticsEnd(w: Writer): void;
-  OnBuildStatusReportStart(w: Writer): void;
-  OnBuildStatusReportEnd(w: Writer): void;
+  OnListFilesStart(w: GoInterface<Writer>): void;
+  OnListFilesEnd(w: GoInterface<Writer>): void;
+  OnStatisticsStart(w: GoInterface<Writer>): void;
+  OnStatisticsEnd(w: GoInterface<Writer>): void;
+  OnBuildStatusReportStart(w: GoInterface<Writer>): void;
+  OnBuildStatusReportEnd(w: GoInterface<Writer>): void;
   OnWatchStatusReportStart(): void;
   OnWatchStatusReportEnd(): void;
-  GetTrace(w: Writer, locale: Locale): (msg: GoPtr<Message>, ...args: Array<unknown>) => void;
+  GetTrace(w: GoInterface<Writer>, locale: Locale): (msg: GoPtr<Message>, ...args: Array<unknown>) => void;
   OnProgram(program: GoPtr<Program>): void;
 }
 

@@ -13,6 +13,7 @@ import { NormalizePath } from "../../internal/tspath/path.js";
 import { FS as osvfsFS } from "../../internal/vfs/osvfs/os.js";
 import type { FS as FS_12f44eda } from "../../internal/vfs/vfs.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/sys.go::type::osSys","kind":"type","status":"implemented","sigHash":"4d75e085ec2f5c8a56d334fd32dce412d90f6a22836525e3e62f7f9189aaa0cd"}
  *
@@ -26,8 +27,8 @@ import type { FS as FS_12f44eda } from "../../internal/vfs/vfs.js";
  * }
  */
 export interface osSys {
-  writer: Writer_155142d5;
-  fs: FS_12f44eda;
+  writer: GoInterface<Writer_155142d5>;
+  fs: GoInterface<FS_12f44eda>;
   defaultLibraryPath: string;
   cwd: string;
   start: Time;
@@ -35,8 +36,8 @@ export interface osSys {
 
 export function osSys_as_tsc_System(receiver: GoPtr<osSys>): System {
   return {
-    Writer: (): Writer_155142d5 => osSys_Writer(receiver),
-    FS: (): FS_12f44eda => osSys_FS(receiver),
+    Writer: (): Writer_155142d5 => osSys_Writer(receiver)!,
+    FS: (): FS_12f44eda => osSys_FS(receiver)!,
     DefaultLibraryPath: (): string => osSys_DefaultLibraryPath(receiver),
     GetCurrentDirectory: (): string => osSys_GetCurrentDirectory(receiver),
     WriteOutputIsTTY: (): bool => osSys_WriteOutputIsTTY(receiver),
@@ -79,7 +80,7 @@ export function osSys_Now(receiver: GoPtr<osSys>): Time {
  * 	return s.fs
  * }
  */
-export function osSys_FS(receiver: GoPtr<osSys>): FS_12f44eda {
+export function osSys_FS(receiver: GoPtr<osSys>): GoInterface<FS_12f44eda> {
   return receiver!.fs;
 }
 
@@ -115,7 +116,7 @@ export function osSys_GetCurrentDirectory(receiver: GoPtr<osSys>): string {
  * 	return s.writer
  * }
  */
-export function osSys_Writer(receiver: GoPtr<osSys>): Writer_155142d5 {
+export function osSys_Writer(receiver: GoPtr<osSys>): GoInterface<Writer_155142d5> {
   return receiver!.writer;
 }
 

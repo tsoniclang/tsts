@@ -27,6 +27,7 @@ import { metadataSerializer_SerializeParameterTypesOfNode, metadataSerializer_Se
 import { Node_Modifiers } from "../../ast/spine.js";
 import { getDecoratorsOfParameters } from "./legacydecorators.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::constGroup::USE_NEW_TYPE_METADATA_FORMAT","kind":"constGroup","status":"implemented","sigHash":"1894d9bf8ed1a1868a2c3b304b8ced2e4c9d440b32fbdb8bb4035c3bb2a8ac7d"}
  *
@@ -54,7 +55,7 @@ export const USE_NEW_TYPE_METADATA_FORMAT: bool = false;
 export interface MetadataTransformer {
   __tsgoEmbedded0: Transformer;
   legacyDecorators: bool;
-  resolver: EmitResolver;
+  resolver: GoInterface<EmitResolver>;
   serializer: GoPtr<metadataSerializer>;
   languageVersion: ScriptTarget;
   strictNullChecks: bool;

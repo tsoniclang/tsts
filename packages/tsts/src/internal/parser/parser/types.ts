@@ -68,6 +68,7 @@ import { Scanner_ReScanAsteriskEqualsToken, Scanner_ReScanQuestionToken } from "
 import { PCHeritageClauseElement, PCHeritageClauses, PCTupleElementTypes, PCTypeArguments, PCTypeMembers, PCTypeParameters } from "./state.js";
 import type { Parser, jsdocScannerInfo } from "./state.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseTypeAnnotation","kind":"method","status":"implemented","sigHash":"adeb19ed0f33f094ab8118ef44389341fcde713436a0c4f851edefe8318f7b75"}
  *
@@ -299,7 +300,7 @@ export function Parser_parseIntersectionTypeOrHigher(receiver: GoPtr<Parser>): G
  * 	return typeNode
  * }
  */
-export function Parser_parseUnionOrIntersectionType(receiver: GoPtr<Parser>, operator: Kind, parseConstituentType: (p: GoPtr<Parser>) => GoPtr<TypeNode>): GoPtr<TypeNode> {
+export function Parser_parseUnionOrIntersectionType(receiver: GoPtr<Parser>, operator: Kind, parseConstituentType: GoFunc<(p: GoPtr<Parser>) => GoPtr<TypeNode>>): GoPtr<TypeNode> {
   const pos = Parser_nodePos(receiver);
   const isUnionType = operator === KindBarToken;
   const hasLeadingOperator = Parser_parseOptional(receiver, operator);
@@ -307,7 +308,7 @@ export function Parser_parseUnionOrIntersectionType(receiver: GoPtr<Parser>, ope
   if (hasLeadingOperator) {
     typeNode = Parser_parseFunctionOrConstructorTypeToError(receiver, isUnionType, parseConstituentType);
   } else {
-    typeNode = parseConstituentType(receiver);
+    typeNode = parseConstituentType!(receiver);
   }
   if (receiver!.token === operator || hasLeadingOperator) {
     const types: GoSlice<GoPtr<Node>> = [typeNode as GoPtr<Node>];
@@ -1605,7 +1606,7 @@ export function Parser_parseTemplateTypeSpan(receiver: GoPtr<Parser>): GoPtr<Nod
  * 	return parseConstituentType(p)
  * }
  */
-export function Parser_parseFunctionOrConstructorTypeToError(receiver: GoPtr<Parser>, isInUnionType: bool, parseConstituentType: (p: GoPtr<Parser>) => GoPtr<TypeNode>): GoPtr<TypeNode> {
+export function Parser_parseFunctionOrConstructorTypeToError(receiver: GoPtr<Parser>, isInUnionType: bool, parseConstituentType: GoFunc<(p: GoPtr<Parser>) => GoPtr<TypeNode>>): GoPtr<TypeNode> {
   // the function type and constructor type shorthand notation
   // are not allowed directly in unions and intersections, but we'll
   // try to parse them gracefully and issue a helpful message.
@@ -1621,7 +1622,7 @@ export function Parser_parseFunctionOrConstructorTypeToError(receiver: GoPtr<Par
     Parser_parseErrorAtRange(receiver, typeNode!.Loc, diagnostic);
     return typeNode;
   }
-  return parseConstituentType(receiver);
+  return parseConstituentType!(receiver);
 }
 
 /**

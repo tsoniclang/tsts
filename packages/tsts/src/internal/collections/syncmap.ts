@@ -2,6 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoArray, GoComparable, GoMap, GoPtr, GoSeq } from "../../go/compat.js";
 import { Map } from "../../go/sync.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::type::SyncMap","kind":"type","status":"implemented","sigHash":"4f6f655e995f945c3130474631c32240c46c5dd0b984a67769b1fe2ed69a7fa9"}
  *
@@ -128,11 +129,11 @@ export function SyncMap_Clear<K extends GoComparable, V>(receiver: GoPtr<SyncMap
  * 	})
  * }
  */
-export function SyncMap_Range<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>, f: (key: K, value: V) => bool): void {
+export function SyncMap_Range<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>, f: GoFunc<(key: K, value: V) => bool>): void {
   syncMapBacking(receiver).Range((key: unknown, value: unknown): bool => {
     const k = (key !== undefined ? key as K : undefined as K);
     const v = (value !== undefined ? value as V : undefined as V);
-    return f(k, v);
+    return f!(k, v);
   });
 }
 

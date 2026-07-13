@@ -22,6 +22,7 @@ import {
 import type { CommandLineOption } from "./commandlineoption.js";
 
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::OptionsDeclarations","kind":"varGroup","status":"implemented","sigHash":"13c9568bcd832d79be6deb0428dad16819ed913e5ca1740d1c9811ec04b9d830"}
  *
@@ -2431,7 +2432,7 @@ OptionsDeclarations = Concat(commonOptionsWithBuild, optionsForCompiler);
  * Go source:
  * var optionsType = reflect.TypeFor[core.CompilerOptions]()
  */
-export let optionsType: Type = reflect_TypeFor<CompilerOptions>();
+export let optionsType: GoInterface<Type> = reflect_TypeFor<CompilerOptions>();
 const compilerOptionFieldMap: ReadonlyMap<string, GoPtr<CommandLineOption>> = buildCompilerOptionFieldMap();
 
 /**
@@ -2459,7 +2460,7 @@ const compilerOptionFieldMap: ReadonlyMap<string, GoPtr<CommandLineOption>> = bu
  * 	})
  * }
  */
-export function optionsHaveChanges(oldOptions: GoPtr<CompilerOptions>, newOptions: GoPtr<CompilerOptions>, declFilter: (arg0: GoPtr<CommandLineOption>) => bool): bool {
+export function optionsHaveChanges(oldOptions: GoPtr<CompilerOptions>, newOptions: GoPtr<CompilerOptions>, declFilter: GoFunc<(arg0: GoPtr<CommandLineOption>) => bool>): bool {
   if (oldOptions === newOptions) {
     return false;
   }
@@ -2500,15 +2501,15 @@ export function optionsHaveChanges(oldOptions: GoPtr<CompilerOptions>, newOption
  * 	return false
  * }
  */
-export function ForEachCompilerOptionValue(options: GoPtr<CompilerOptions>, declFilter: (arg0: GoPtr<CommandLineOption>) => bool, fn: (option: GoPtr<CommandLineOption>, value: Value, i: int) => bool): bool {
+export function ForEachCompilerOptionValue(options: GoPtr<CompilerOptions>, declFilter: GoFunc<(arg0: GoPtr<CommandLineOption>) => bool>, fn: GoFunc<(option: GoPtr<CommandLineOption>, value: Value, i: int) => bool>): bool {
   if (options === undefined) {
     throw new globalThis.Error("nil CompilerOptions");
   }
   const values = options as unknown as Record<string, unknown>;
   let index = 0;
   for (const [fieldName, optionDeclaration] of compilerOptionFieldMap) {
-    if (optionDeclaration !== undefined && declFilter(optionDeclaration)) {
-      if (fn(optionDeclaration, reflect_ValueOf(values[fieldName]), index as int)) {
+    if (optionDeclaration !== undefined && declFilter!(optionDeclaration)) {
+      if (fn!(optionDeclaration, reflect_ValueOf(values[fieldName]), index as int)) {
         return true;
       }
     }

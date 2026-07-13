@@ -487,6 +487,7 @@ import type { Pattern } from "../core/pattern.js";
 import { RemoveFileExtension } from "../tspath/extension.js";
 import { Node_AsNode, Node_BodyData, Node_DeclarationData, Node_End, Node_FlowNodeData, Node_ExportableData, Node_ForEachChild, Node_LocalsContainerData, Node_Name, Node_Modifiers, Node_Pos } from "../ast/spine.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::ContainerFlags","kind":"type","status":"implemented","sigHash":"068247eebc62ebe4c4b32ff608d4161dc758afa1a02341cf8ec341921dcd4c5d"}
  *
@@ -788,9 +789,9 @@ export function bindSourceFile(file: GoPtr<SourceFile>): void {
 export function Binder_newSymbol(receiver: GoPtr<Binder>, flags: SymbolFlags, name: string): GoPtr<Symbol> {
   receiver!.symbolCount = (receiver!.symbolCount as number + 1) as int;
   const result = Arena_New(receiver!.symbolArena);
-  result!.Flags = flags;
-  result!.Name = name;
-  return result;
+  result!.v.Flags = flags;
+  result!.v.Name = name;
+  return result!.v;
 }
 
 /**
@@ -1401,8 +1402,8 @@ export function Binder_declareSymbolAndAddToSymbolTable(receiver: GoPtr<Binder>,
  */
 export function Binder_newFlowNode(receiver: GoPtr<Binder>, flags: FlowFlags): GoPtr<FlowNode> {
   const result = Arena_New(receiver!.flowNodeArena);
-  result!.Flags = flags;
-  return result;
+  result!.v.Flags = flags;
+  return result!.v;
 }
 
 /**
@@ -1570,9 +1571,9 @@ export function Binder_createFlowCall(receiver: GoPtr<Binder>, antecedent: GoPtr
  */
 export function Binder_newFlowList(receiver: GoPtr<Binder>, head: GoPtr<FlowNode>, tail: GoPtr<FlowList>): GoPtr<FlowList> {
   const result = Arena_New(receiver!.flowListArena);
-  result!.Flow = head;
-  result!.Next = tail;
-  return result;
+  result!.v.Flow = head;
+  result!.v.Next = tail;
+  return result!.v;
 }
 
 /**
@@ -4816,13 +4817,13 @@ export function Binder_bindContinueStatement(receiver: GoPtr<Binder>, node: GoPt
  * 	}
  * }
  */
-export function Binder_bindBreakOrContinueStatement(receiver: GoPtr<Binder>, label: GoPtr<Node>, currentTarget: GoPtr<FlowNode>, getTarget: (arg0: GoPtr<ActiveLabel>) => GoPtr<FlowNode>): void {
+export function Binder_bindBreakOrContinueStatement(receiver: GoPtr<Binder>, label: GoPtr<Node>, currentTarget: GoPtr<FlowNode>, getTarget: GoFunc<(arg0: GoPtr<ActiveLabel>) => GoPtr<FlowNode>>): void {
   Binder_bind(receiver, label);
   if (label !== undefined) {
     const activeLabel = Binder_findActiveLabel(receiver, Node_Text(label!));
     if (activeLabel !== undefined) {
       activeLabel!.referenced = true;
-      Binder_bindBreakOrContinueFlow(receiver, getTarget(activeLabel) as GoPtr<FlowLabel>);
+      Binder_bindBreakOrContinueFlow(receiver, getTarget!(activeLabel) as GoPtr<FlowLabel>);
     }
   } else {
     Binder_bindBreakOrContinueFlow(receiver, currentTarget as GoPtr<FlowLabel>);

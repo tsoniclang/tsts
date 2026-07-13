@@ -50,7 +50,7 @@ import { Printer_emitStatement } from "./statements-declarations.js";
  * }
  */
 export function Printer_writeComment(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteComment(text);
+  receiver!.writer!.WriteComment(text);
 }
 
 /**
@@ -190,7 +190,7 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
         }
 
         // These are number of spaces writer is going to write at current indent
-        const currentWriterIndentSpacing = receiver!.writer.GetIndent() * indentSize;
+        const currentWriterIndentSpacing = receiver!.writer!.GetIndent() * indentSize;
 
         // Number of spaces we want to be writing
         // eg: Assume writer indent
@@ -212,16 +212,16 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
           const indentSizeSpaceString = getIndentString((spacesToEmit - numberOfSingleSpacesToEmit) / indentSize, indentSize);
 
           // Write indent size string ( in eg 1: = "", 2: "" , 3: string with 8 spaces 4: string with 12 spaces
-          receiver!.writer.RawWrite(indentSizeSpaceString);
+          receiver!.writer!.RawWrite(indentSizeSpaceString);
 
           // Emit the single spaces (in eg: 1: 3 spaces, 2: 2 spaces, 3: 1 space, 4: 3 spaces)
           for (; numberOfSingleSpacesToEmit > 0; ) {
-            receiver!.writer.RawWrite(" ");
+            receiver!.writer!.RawWrite(" ");
             numberOfSingleSpacesToEmit--;
           }
         } else {
           // No spaces to emit write empty string
-          receiver!.writer.RawWrite("");
+          receiver!.writer!.RawWrite("");
         }
       }
 
@@ -246,7 +246,7 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
         }
       } else {
         // Empty string - make sure we write empty line
-        receiver!.writer.WriteLineForce(true);
+        receiver!.writer!.WriteLineForce(true);
       }
 
       pos = nextLineStart;
@@ -760,7 +760,7 @@ export function Printer_emitDetachedCommentsAfterStatementList(receiver: GoPtr<P
 
   if (!skipTrailingComments) {
     const hasWrittenComment = Printer_emitLeadingComments(receiver, TextRange_End(detachedRange), false as bool);
-    if (hasWrittenComment && !receiver!.writer.IsAtStartOfLine()) {
+    if (hasWrittenComment && !receiver!.writer!.IsAtStartOfLine()) {
       Printer_writeLine(receiver);
     }
   }
@@ -922,13 +922,13 @@ export function Printer_emitLeadingSyntheticCommentsOfNode(receiver: GoPtr<Print
  */
 export function Printer_emitLeadingSynthesizedComment(receiver: GoPtr<Printer>, comment: SynthesizedComment): void {
   if (comment.HasLeadingNewLine || comment.Kind === KindSingleLineCommentTrivia) {
-    receiver!.writer.WriteLine();
+    receiver!.writer!.WriteLine();
   }
   Printer_writeSynthesizedComment(receiver, comment);
   if (comment.HasTrailingNewLine || comment.Kind === KindSingleLineCommentTrivia) {
-    receiver!.writer.WriteLine();
+    receiver!.writer!.WriteLine();
   } else {
-    receiver!.writer.WriteSpace(" ");
+    receiver!.writer!.WriteSpace(" ");
   }
 }
 
@@ -971,12 +971,12 @@ export function Printer_emitTrailingSyntheticCommentsOfNode(receiver: GoPtr<Prin
  * }
  */
 export function Printer_emitTrailingSynthesizedComment(receiver: GoPtr<Printer>, comment: SynthesizedComment): void {
-  if (!receiver!.writer.IsAtStartOfLine()) {
-    receiver!.writer.WriteSpace(" ");
+  if (!receiver!.writer!.IsAtStartOfLine()) {
+    receiver!.writer!.WriteSpace(" ");
   }
   Printer_writeSynthesizedComment(receiver, comment);
   if (comment.HasTrailingNewLine) {
-    receiver!.writer.WriteLine();
+    receiver!.writer!.WriteLine();
   }
 }
 
@@ -1298,7 +1298,7 @@ export function Printer_emitTrailingCommentsOfPosition(receiver: GoPtr<Printer>,
       if (!Printer_shouldWriteComment(receiver, comment)) {
         continue;
       }
-      if (!receiver!.writer.IsAtStartOfLine()) {
+      if (!receiver!.writer!.IsAtStartOfLine()) {
         Printer_writeSpace(receiver);
       }
       Printer_emitComment(receiver, comment);

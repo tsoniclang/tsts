@@ -160,6 +160,7 @@ import { InternalSymbolNameDefault } from "../../ast/symbol.js";
 import { Checker_getEmitSyntaxForModuleSpecifierExpression, Checker_mergeModuleAugmentation } from "./modules.js";
 import { Checker_addDiagnostic, Checker_addSuggestionDiagnostic, Checker_mergeGlobalSymbol } from "../checker.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnreliableWorker","kind":"method","status":"implemented","sigHash":"f90db0ec4a1e83322abe295dd0931dd486677de0bc0daa2547e75d4b77b49bea"}
  *
@@ -437,10 +438,10 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
     }
   }
   Checker_addUndefinedToGlobalsOrErrorOnRedeclaration(receiver);
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.undefinedSymbol)!.resolvedType = receiver!.undefinedWideningType;
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.argumentsSymbol)!.resolvedType = Checker_getGlobalType(receiver, "IArguments", 0, true);
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.unknownSymbol)!.resolvedType = receiver!.errorType;
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.globalThisSymbol)!.resolvedType = Checker_newObjectType(receiver, ObjectFlagsAnonymous, receiver!.globalThisSymbol);
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.undefinedSymbol)!.v.resolvedType = receiver!.undefinedWideningType;
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.argumentsSymbol)!.v.resolvedType = Checker_getGlobalType(receiver, "IArguments", 0, true);
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.unknownSymbol)!.v.resolvedType = receiver!.errorType;
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.globalThisSymbol)!.v.resolvedType = Checker_newObjectType(receiver, ObjectFlagsAnonymous, receiver!.globalThisSymbol);
   receiver!.globalArrayType = Checker_getGlobalType(receiver, "Array", 1, true);
   receiver!.globalObjectType = Checker_getGlobalType(receiver, "Object", 0, true);
   receiver!.globalFunctionType = Checker_getGlobalType(receiver, "Function", 0, true);
@@ -1397,7 +1398,7 @@ export function Checker_canHaveSyntheticDefault(receiver: GoPtr<Checker>, file: 
   }
   if (sourceFile !== undefined && usageMode !== ModuleKindNone) {
     const sourceFileName = NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile));
-    const targetMode = c.program.GetImpliedNodeFormatForEmit(sourceFileName);
+    const targetMode = c.program!.GetImpliedNodeFormatForEmit(sourceFileName);
     if (usageMode === ModuleKindESNext && targetMode === ModuleKindCommonJS && ModuleKindNode16 <= c.moduleKind && c.moduleKind <= ModuleKindNodeNext) {
       return true;
     }
@@ -1405,8 +1406,8 @@ export function Checker_canHaveSyntheticDefault(receiver: GoPtr<Checker>, file: 
       return false;
     }
     if (targetMode === ModuleKindNone && sourceFile.IsDeclarationFile) {
-      if (c.program.GetRedirectForResolution(sourceFileName) !== undefined || c.program.GetProjectReferenceFromOutputDts(SourceFile_Path(sourceFile)) !== undefined) {
-        const targetModuleKind = c.program.GetEmitModuleFormatOfFile(sourceFileName);
+      if (c.program!.GetRedirectForResolution(sourceFileName) !== undefined || c.program!.GetProjectReferenceFromOutputDts(SourceFile_Path(sourceFile)) !== undefined) {
+        const targetModuleKind = c.program!.GetEmitModuleFormatOfFile(sourceFileName);
         if (usageMode === ModuleKindESNext && ModuleKindES2015 <= targetModuleKind && targetModuleKind <= ModuleKindESNext) {
           return false;
         }
@@ -1645,7 +1646,7 @@ export function Checker_evaluateEntity(receiver: GoPtr<Checker>, expr: GoPtr<Nod
           Node_Initializer(declaration) !== undefined &&
           (location === undefined || (declaration !== location && Checker_isBlockScopedNameDeclaredBeforeUse(receiver, declaration, location)))
         ) {
-          const result = receiver!.evaluate(Node_Initializer(declaration), declaration);
+          const result = receiver!.evaluate!(Node_Initializer(declaration), declaration);
           if (location !== undefined && GetSourceFileOfNode(location) !== GetSourceFileOfNode(declaration)) {
             return NewResult(result.Value, false as bool, true as bool, true as bool);
           }
@@ -1707,7 +1708,7 @@ export function Checker_evaluateEntity(receiver: GoPtr<Checker>, expr: GoPtr<Nod
  * 	return compareTypes(c.getNonMissingTypeOfSymbol(sourceProp), c.getNonMissingTypeOfSymbol(targetProp))
  * }
  */
-export function Checker_compareProperties(receiver: GoPtr<Checker>, sourceProp: GoPtr<Symbol>, targetProp: GoPtr<Symbol>, compareTypes: (source: GoPtr<Type>, target: GoPtr<Type>) => Ternary): Ternary {
+export function Checker_compareProperties(receiver: GoPtr<Checker>, sourceProp: GoPtr<Symbol>, targetProp: GoPtr<Symbol>, compareTypes: GoFunc<(source: GoPtr<Type>, target: GoPtr<Type>) => Ternary>): Ternary {
   // Two members are considered identical when
   // - they are public properties with identical names, optionality, and types,
   // - they are private or protected properties originating in the same declaration and having identical types
@@ -1731,7 +1732,7 @@ export function Checker_compareProperties(receiver: GoPtr<Checker>, sourceProp: 
   if (Checker_isReadonlySymbol(receiver, sourceProp) !== Checker_isReadonlySymbol(receiver, targetProp)) {
     return TernaryFalse;
   }
-  return compareTypes(Checker_getNonMissingTypeOfSymbol(receiver, sourceProp), Checker_getNonMissingTypeOfSymbol(receiver, targetProp));
+  return compareTypes!(Checker_getNonMissingTypeOfSymbol(receiver, sourceProp), Checker_getNonMissingTypeOfSymbol(receiver, targetProp));
 }
 
 /**

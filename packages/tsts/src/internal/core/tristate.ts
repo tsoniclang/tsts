@@ -1,6 +1,7 @@
 import type { bool, byte } from "../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 
+import type { GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate.go::type::Tristate","kind":"type","status":"implemented","sigHash":"afc2764db09003807b774c75192ce4d8150e55a00bf72b284d91e19797999d52"}
  *
@@ -123,7 +124,7 @@ export function Tristate_DefaultIfUnknown(receiver: Tristate, value: Tristate): 
  * 	return nil
  * }
  */
-export function Tristate_UnmarshalJSON(receiver: GoPtr<Tristate>, data: GoSlice<byte>): GoError {
+export function Tristate_UnmarshalJSON(receiver: GoRef<Tristate>, data: GoSlice<byte>): GoError {
   const str = bytesToString(data);
   const value = str === "true" ? TSTrue : str === "false" ? TSFalse : TSUnknown;
   if (typeof receiver === "object" && receiver !== null && "value" in receiver) {

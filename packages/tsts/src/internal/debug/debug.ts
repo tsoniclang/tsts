@@ -1,6 +1,7 @@
 import type { bool } from "../../go/scalars.js";
 import { Sprint, Sprintf } from "../../go/fmt.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/debug/debug.go::func::Fail","kind":"func","status":"implemented","sigHash":"a0d547f8dd4c8ba460a29b8727a111970809c76bed92e8d4ce2fa0d22f3d651b"}
  *
@@ -66,7 +67,7 @@ export function FailBadSyntaxKind(node: { KindString: () => string }, ...message
  * 	Fail(fmt.Sprintf("%s %s", msg, detail))
  * }
  */
-export function AssertNever(member: unknown, ...message: Array<unknown>): void {
+export function AssertNever(member: GoInterface<unknown>, ...message: Array<unknown>): void {
   const msg: string = message.length === 0 ? "Illegal value:" : Sprint(...message);
   const mKind = member as { KindString?: () => string };
   const mStr = member as { String?: () => string };

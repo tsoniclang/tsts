@@ -30,6 +30,7 @@ import { NodeFactory_NewAssignmentExpression, NodeFactory_NewGeneratedNameForNod
 import { isClassThisAssignmentBlock } from "./classthis.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isClassNamedEvaluationHelperBlock","kind":"func","status":"implemented","sigHash":"6237d8463b0ae001fda9291aeee2d73a8fd801211e0a23674e97802ef7b8c569"}
  *
@@ -148,7 +149,7 @@ export type anonymousFunctionDefinition = Node;
  * 	return true
  * }
  */
-export function isAnonymousFunctionDefinition(emitContext: GoPtr<EmitContext>, node: GoPtr<Expression>, cb: (arg0: GoPtr<anonymousFunctionDefinition>) => bool): bool {
+export function isAnonymousFunctionDefinition(emitContext: GoPtr<EmitContext>, node: GoPtr<Expression>, cb: GoFunc<(arg0: GoPtr<anonymousFunctionDefinition>) => bool>): bool {
   const skipped = SkipOuterExpressions(node, OEKAll);
   switch (skipped!.Kind) {
     case KindClassExpression:
@@ -207,7 +208,7 @@ export function isNamedEvaluation(emitContext: GoPtr<EmitContext>, node: GoPtr<N
  * 	}
  * }
  */
-export function isNamedEvaluationAnd(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, cb: (arg0: GoPtr<anonymousFunctionDefinition>) => bool): bool {
+export function isNamedEvaluationAnd(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, cb: GoFunc<(arg0: GoPtr<anonymousFunctionDefinition>) => bool>): bool {
   if (!IsNamedEvaluationSource(node)) {
     return false;
   }

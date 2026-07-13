@@ -25,6 +25,7 @@ import { getAllModulePaths, getInfo, tryGetModuleNameAsNodeModule } from "./spec
 import type { ModulePath, ModuleSpecifierEnding, ModuleSpecifierGenerationHost, ModuleSpecifierOptions, SourceFileForSpecifierGeneration, UserPreferences } from "./types.js";
 import { ModuleSpecifierEndingIndex, ModuleSpecifierEndingJsExtension, ModuleSpecifierEndingMinimal, ModuleSpecifierEndingTsExtension } from "./types.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::type::regexPatternCacheKey","kind":"type","status":"implemented","sigHash":"6cf9e1799f70755daf645d55437ce8e3421da2ff8fddba8a26cfcd6873f8587b"}
  *
@@ -412,7 +413,7 @@ export function extensionFromPath(path: string): string {
  * 	return false
  * }
  */
-export function tryGetAnyFileFromPath(host: ModuleSpecifierGenerationHost, path: string): bool {
+export function tryGetAnyFileFromPath(host: GoInterface<ModuleSpecifierGenerationHost>, path: string): bool {
   // !!! TODO: shouldn't this use readdir instead of fileexists for perf?
   // We check all js, `node` and `json` extensions in addition to TS, since node module resolution would also choose those over the directory
   const extGroups = GetSupportedExtensions(
@@ -433,7 +434,7 @@ export function tryGetAnyFileFromPath(host: ModuleSpecifierGenerationHost, path:
   for (const exts of extGroups) {
     for (const e of exts) {
       const fullPath = path + e;
-      if (host.FileExists(GetNormalizedAbsolutePath(fullPath, host.GetCurrentDirectory()))) {
+      if (host!.FileExists(GetNormalizedAbsolutePath(fullPath, host!.GetCurrentDirectory()))) {
         return true;
       }
     }
@@ -741,7 +742,7 @@ export function GetNodeModulePathParts(fullPath: string): GoPtr<NodeModulePathPa
  * 	return ""
  * }
  */
-export function GetNodeModulesPackageName(compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: GoPtr<SourceFile>, nodeModulesFileName: string, host: ModuleSpecifierGenerationHost, preferences: UserPreferences, options: ModuleSpecifierOptions): string {
+export function GetNodeModulesPackageName(compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: GoPtr<SourceFile>, nodeModulesFileName: string, host: GoInterface<ModuleSpecifierGenerationHost>, preferences: UserPreferences, options: ModuleSpecifierOptions): string {
   const info = getInfo(importingSourceFile!.FileName(), host);
   const modulePaths = getAllModulePaths(info, nodeModulesFileName, host, compilerOptions, preferences, options);
   for (const modulePath of modulePaths) {
@@ -944,7 +945,7 @@ export function GetPackageNameFromDirectory(fileOrDirectoryPath: string): string
  * 	return specifier
  * }
  */
-export function ProcessEntrypointEnding(entrypoint: GoPtr<ResolvedEntrypoint>, prefs: UserPreferences, host: ModuleSpecifierGenerationHost, options: GoPtr<CompilerOptions>, importingSourceFile: SourceFileForSpecifierGeneration, allowedEndings: GoSlice<ModuleSpecifierEnding>): string {
+export function ProcessEntrypointEnding(entrypoint: GoPtr<ResolvedEntrypoint>, prefs: UserPreferences, host: GoInterface<ModuleSpecifierGenerationHost>, options: GoPtr<CompilerOptions>, importingSourceFile: GoInterface<SourceFileForSpecifierGeneration>, allowedEndings: GoSlice<ModuleSpecifierEnding>): string {
   let specifier = entrypoint!.ModuleSpecifier;
   if (entrypoint!.Ending === EndingFixed) {
     return specifier;
@@ -957,7 +958,7 @@ export function ProcessEntrypointEnding(entrypoint: GoPtr<ResolvedEntrypoint>, p
       options,
       importingSourceFile,
       "",
-      host.GetDefaultResolutionModeForFile(importingSourceFile),
+      host!.GetDefaultResolutionModeForFile(importingSourceFile),
     );
   }
 

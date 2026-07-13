@@ -1,7 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
-import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoNilSlice, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../../go/compat.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
 import { isShorthandAmbientModuleSymbol } from "../utilities.js";
@@ -169,6 +169,7 @@ import { PhaseCheckTypes } from "../../tracing/tracing.js";
 import { Type_instantiation_is_excessively_deep_and_possibly_infinite } from "../../diagnostics/generated/messages.js";
 import { A_class_can_only_implement_an_identifier_Slashqualified_name_with_optional_type_arguments, A_class_can_only_implement_an_object_type_or_intersection_of_object_types_with_statically_known_members, A_mixin_class_must_have_a_constructor_with_a_single_rest_parameter_of_type_any, A_mixin_class_that_extends_from_a_type_variable_containing_an_abstract_construct_signature_must_also_be_declared_abstract, Base_constructors_must_all_have_the_same_return_type, Class_0_incorrectly_extends_base_class_1, Class_0_incorrectly_implements_class_1_Did_you_mean_to_extend_1_and_inherit_its_members_as_a_subclass, Class_0_incorrectly_implements_interface_1, Class_static_side_0_incorrectly_extends_base_class_static_side_1 } from "../../diagnostics/generated/messages.js";
 
+import type { GoFunc, GoRef } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getGlobalTypeResolver","kind":"method","status":"implemented","sigHash":"b7162538f53e2dd277927f7a92feb877cea155a3acd551202bdf5db7b187c06d"}
  *
@@ -179,7 +180,7 @@ import { A_class_can_only_implement_an_identifier_Slashqualified_name_with_optio
  * 	})
  * }
  */
-export function Checker_getGlobalTypeResolver(receiver: GoPtr<Checker>, name: string, arity: int, reportErrors: bool): () => GoPtr<Type> {
+export function Checker_getGlobalTypeResolver(receiver: GoPtr<Checker>, name: string, arity: int, reportErrors: bool): GoFunc<() => GoPtr<Type>> {
   return Memoize(() => Checker_getGlobalType(receiver, name, arity, reportErrors));
 }
 
@@ -193,7 +194,7 @@ export function Checker_getGlobalTypeResolver(receiver: GoPtr<Checker>, name: st
  * 	})
  * }
  */
-export function Checker_getGlobalTypeAliasResolver(receiver: GoPtr<Checker>, name: string, arity: int, reportErrors: bool): () => GoPtr<Symbol> {
+export function Checker_getGlobalTypeAliasResolver(receiver: GoPtr<Checker>, name: string, arity: int, reportErrors: bool): GoFunc<() => GoPtr<Symbol>> {
   return Memoize(() => Checker_getGlobalTypeAliasSymbol(receiver, name, arity, reportErrors));
 }
 
@@ -207,7 +208,7 @@ export function Checker_getGlobalTypeAliasResolver(receiver: GoPtr<Checker>, nam
  * 	})
  * }
  */
-export function Checker_getGlobalValueSymbolResolver(receiver: GoPtr<Checker>, name: string, reportErrors: bool): () => GoPtr<Symbol> {
+export function Checker_getGlobalValueSymbolResolver(receiver: GoPtr<Checker>, name: string, reportErrors: bool): GoFunc<() => GoPtr<Symbol>> {
   return Memoize(() => Checker_getGlobalSymbol(receiver, name, SymbolFlagsValue, IfElse(reportErrors, Cannot_find_global_value_0, undefined)));
 }
 
@@ -221,7 +222,7 @@ export function Checker_getGlobalValueSymbolResolver(receiver: GoPtr<Checker>, n
  * 	})
  * }
  */
-export function Checker_getGlobalTypeSymbolResolver(receiver: GoPtr<Checker>, name: string, reportErrors: bool): () => GoPtr<Symbol> {
+export function Checker_getGlobalTypeSymbolResolver(receiver: GoPtr<Checker>, name: string, reportErrors: bool): GoFunc<() => GoPtr<Symbol>> {
   return Memoize(() => Checker_getGlobalSymbol(receiver, name, SymbolFlagsType, IfElse(reportErrors, Cannot_find_global_type_0, undefined)));
 }
 
@@ -237,7 +238,7 @@ export function Checker_getGlobalTypeSymbolResolver(receiver: GoPtr<Checker>, na
  * 	})
  * }
  */
-export function Checker_getGlobalTypesResolver(receiver: GoPtr<Checker>, names: GoSlice<string>, arity: int, reportErrors: bool): () => GoSlice<GoPtr<Type>> {
+export function Checker_getGlobalTypesResolver(receiver: GoPtr<Checker>, names: GoSlice<string>, arity: int, reportErrors: bool): GoFunc<() => GoSlice<GoPtr<Type>>> {
   return Memoize(() => Map(names, (name: string) => Checker_getGlobalType(receiver, name, arity, reportErrors)));
 }
 
@@ -533,7 +534,7 @@ export function Checker_onFailedToResolveSymbol(receiver: GoPtr<Checker>, errorL
  * }
  */
 export function Checker_getSuggestedLibForNonExistentName(receiver: GoPtr<Checker>, name: string): string {
-  const featureMap = getFeatureMap();
+  const featureMap = getFeatureMap!();
   const typeFeatures = featureMap?.get(name);
   if (typeFeatures !== undefined && typeFeatures.length > 0) {
     return typeFeatures[0]!.lib;
@@ -3232,7 +3233,7 @@ export function Checker_checkModuleDeclaration(receiver: GoPtr<Checker>, node: G
       Tristate_IsTrue(receiver!.compilerOptions!.VerbatimModuleSyntax) &&
       IsSourceFile(node!.Parent) &&
       (Node_ModifierFlags(node) & ModifierFlagsExport) !== 0 &&
-      receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS
+      receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS
     ) {
       const exportModifier = Find(Node_ModifierNodes(node) ?? [], (modifier) => modifier!.Kind === KindExportKeyword);
       Checker_error(receiver, exportModifier, A_top_level_export_modifier_cannot_be_used_on_value_declarations_in_a_CommonJS_module_when_verbatimModuleSyntax_is_enabled);
@@ -3370,7 +3371,7 @@ export function Checker_checkImportDeclaration(receiver: GoPtr<Checker>, node: G
           Checker_checkImportBinding(receiver, namedBindings);
           {
             const sourceFile = GetSourceFileOfNode(node);
-            if (receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS) {
+            if (receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS) {
               // import * as ns from "foo";
               needsImportStar = true as bool;
               Checker_checkExternalEmitHelpers(receiver, node, ExternalEmitHelpersImportStar);
@@ -3389,7 +3390,7 @@ export function Checker_checkImportDeclaration(receiver: GoPtr<Checker>, node: G
         const sourceFile = GetSourceFileOfNode(node);
         if (Node_Name(importClause) !== undefined &&
           !needsImportStar &&
-          receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS) {
+          receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS) {
           // import d from "foo";
           Checker_checkExternalEmitHelpers(receiver, node, ExternalEmitHelpersImportDefault);
         }
@@ -3519,7 +3520,7 @@ export function Checker_checkImportBinding(receiver: GoPtr<Checker>, node: GoPtr
     Checker_checkModuleExportName(receiver, Node_PropertyName(node), true);
     const sourceFile = GetSourceFileOfNode(node);
     if (ModuleExportNameIsDefault(Node_PropertyNameOrName(node)) &&
-      receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS) {
+      receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS) {
       Checker_checkExternalEmitHelpers(receiver, node, ExternalEmitHelpersImportDefault);
     }
   }
@@ -3600,7 +3601,7 @@ export function Checker_checkImportAttributes(receiver: GoPtr<Checker>, declarat
   if (node === undefined) {
     return;
   }
-  const importAttributesType = receiver!.getGlobalImportAttributesTypeChecked();
+  const importAttributesType = receiver!.getGlobalImportAttributesTypeChecked!();
   if (importAttributesType !== receiver!.emptyObjectType) {
     Checker_checkTypeAssignableTo(receiver, Checker_getTypeFromImportAttributes(receiver, node), Checker_getNullableType(receiver, importAttributesType, TypeFlagsUndefined), node, undefined);
   }
@@ -3652,19 +3653,19 @@ export function Checker_checkImportAttributes(receiver: GoPtr<Checker>, declarat
  */
 export function Checker_getTypeFromImportAttributes(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
   const links = LinkStore_Get(receiver!.typeNodeLinks, node);
-  if (links!.resolvedType === undefined) {
+  if (links!.v.resolvedType === undefined) {
     const symbol_ = Checker_newSymbol(receiver, SymbolFlagsObjectLiteral, InternalSymbolNameImportAttributes);
     const members: SymbolTable = new globalThis.Map();
     for (const attr of AsImportAttributes(node)!.Attributes!.Nodes) {
       const member = Checker_newSymbol(receiver, SymbolFlagsProperty, Node_Text(Node_Name(attr)));
-      LinkStore_Get(receiver!.valueSymbolLinks, member)!.resolvedType = Checker_getRegularTypeOfLiteralType(receiver, Checker_checkExpression(receiver, AsImportAttribute(attr)!.Value as GoPtr<Node>));
+      LinkStore_Get(receiver!.valueSymbolLinks, member)!.v.resolvedType = Checker_getRegularTypeOfLiteralType(receiver, Checker_checkExpression(receiver, AsImportAttribute(attr)!.Value as GoPtr<Node>));
       members.set(member!.Name, member);
     }
     const t = Checker_newAnonymousType(receiver, symbol_, members, [], [], []);
     t!.objectFlags = (t!.objectFlags | ObjectFlagsObjectLiteral | ObjectFlagsNonInferrableType) as ObjectFlags;
-    links!.resolvedType = t;
+    links!.v.resolvedType = t;
   }
-  return links!.resolvedType;
+  return links!.v.resolvedType;
 }
 
 /**
@@ -3840,7 +3841,7 @@ export function Checker_checkExportDeclaration(receiver: GoPtr<Checker>, node: G
         Checker_checkModuleExportName(receiver, Node_Name(exportDecl!.ExportClause), true);
       }
       const sourceFile = GetSourceFileOfNode(node);
-      if (receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS) {
+      if (receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS) {
         if (AsExportDeclaration(node)!.ExportClause !== undefined) {
           // export * as ns from "foo";
           Checker_checkExternalEmitHelpers(receiver, node, ExternalEmitHelpersImportStar);
@@ -3900,7 +3901,7 @@ export function Checker_checkExportSpecifier(receiver: GoPtr<Checker>, node: GoP
     }
   } else {
     const sourceFile = GetSourceFileOfNode(node);
-    if (receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS &&
+    if (receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) === ModuleKindCommonJS &&
       ModuleExportNameIsDefault(Node_PropertyNameOrName(node))) {
       Checker_checkExternalEmitHelpers(receiver, node, ExternalEmitHelpersImportDefault);
     }
@@ -4349,14 +4350,14 @@ export function Checker_checkVariableLikeDeclaration(receiver: GoPtr<Checker>, n
       Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, initializerType, t, node, initializer, undefined, undefined);
       const blockScopeKind = Checker_getCombinedNodeFlagsCached(receiver, node) & NodeFlagsBlockScoped;
       if (blockScopeKind === NodeFlagsAwaitUsing) {
-        const globalAsyncDisposableType = receiver!.getGlobalAsyncDisposableType();
-        const globalDisposableType = receiver!.getGlobalDisposableType();
+        const globalAsyncDisposableType = receiver!.getGlobalAsyncDisposableType!();
+        const globalDisposableType = receiver!.getGlobalDisposableType!();
         if (globalAsyncDisposableType !== receiver!.emptyObjectType && globalDisposableType !== receiver!.emptyObjectType) {
           const optionalDisposableType = Checker_getUnionType(receiver, [globalAsyncDisposableType, globalDisposableType, receiver!.nullType, receiver!.undefinedType]);
           Checker_checkTypeAssignableTo(receiver, Checker_widenTypeForVariableLikeDeclaration(receiver, initializerType, node, false), optionalDisposableType, initializer, The_initializer_of_an_await_using_declaration_must_be_either_an_object_with_a_Symbol_asyncDispose_or_Symbol_dispose_method_or_be_null_or_undefined);
         }
       } else if (blockScopeKind === NodeFlagsUsing) {
-        const globalDisposableType = receiver!.getGlobalDisposableType();
+        const globalDisposableType = receiver!.getGlobalDisposableType!();
         if (globalDisposableType !== receiver!.emptyObjectType) {
           const optionalDisposableType = Checker_getUnionType(receiver, [globalDisposableType, receiver!.nullType, receiver!.undefinedType]);
           Checker_checkTypeAssignableTo(receiver, Checker_widenTypeForVariableLikeDeclaration(receiver, initializerType, node, false), optionalDisposableType, initializer, The_initializer_of_a_using_declaration_must_be_either_an_object_with_a_Symbol_dispose_method_or_be_null_or_undefined);
@@ -4751,9 +4752,9 @@ export function Checker_checkAliasSymbol(receiver: GoPtr<Checker>, node: GoPtr<N
     }
     const sourceFile = GetSourceFileOfNode(node);
     const sourceFileName = NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile));
-    if (Tristate_IsTrue(receiver!.compilerOptions!.VerbatimModuleSyntax) && !IsImportEqualsDeclaration(node) && !IsInJSFile(node) && receiver!.program.GetEmitModuleFormatOfFile(sourceFileName) === ModuleKindCommonJS) {
+    if (Tristate_IsTrue(receiver!.compilerOptions!.VerbatimModuleSyntax) && !IsImportEqualsDeclaration(node) && !IsInJSFile(node) && receiver!.program!.GetEmitModuleFormatOfFile(sourceFileName) === ModuleKindCommonJS) {
       Checker_error(receiver, node, getVerbatimModuleSyntaxErrorMessage(node));
-    } else if (receiver!.moduleKind === ModuleKindPreserve && !IsImportEqualsDeclaration(node) && !IsVariableDeclaration(node) && receiver!.program.GetEmitModuleFormatOfFile(sourceFileName) === ModuleKindCommonJS) {
+    } else if (receiver!.moduleKind === ModuleKindPreserve && !IsImportEqualsDeclaration(node) && !IsVariableDeclaration(node) && receiver!.program!.GetEmitModuleFormatOfFile(sourceFileName) === ModuleKindCommonJS) {
       Checker_error(receiver, node, ECMAScript_module_syntax_is_not_allowed_in_a_CommonJS_module_when_module_is_set_to_preserve);
     }
     if (Tristate_IsTrue(receiver!.compilerOptions!.VerbatimModuleSyntax) && !IsTypeOnlyImportOrExportDeclaration(node) && (node!.Flags & NodeFlagsAmbient) === 0 && (targetFlags & SymbolFlagsConstEnum) !== 0) {
@@ -4761,7 +4762,7 @@ export function Checker_checkAliasSymbol(receiver: GoPtr<Checker>, node: GoPtr<N
       if (constEnumDeclaration === undefined) {
         throw new globalThis.Error("Const enum alias target has no value declaration");
       }
-      const redirect = receiver!.program.GetProjectReferenceFromOutputDts(SourceFile_Path(GetSourceFileOfNode(constEnumDeclaration)));
+      const redirect = receiver!.program!.GetProjectReferenceFromOutputDts(SourceFile_Path(GetSourceFileOfNode(constEnumDeclaration)));
       if ((constEnumDeclaration!.Flags & NodeFlagsAmbient) !== 0 && (redirect === undefined || !CompilerOptions_ShouldPreserveConstEnums(redirect!.Resolved!.ParsedConfig!.CompilerOptions))) {
         Checker_error(receiver, node, Cannot_access_ambient_const_enums_when_0_is_enabled, Checker_getIsolatedModulesLikeFlagName(receiver));
       }
@@ -5409,10 +5410,10 @@ export function Checker_checkPrivateIdentifierExpression(receiver: GoPtr<Checker
  */
 export function Checker_getSymbolForPrivateIdentifierExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Symbol> {
   const links = LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, node!);
-  if (links!.resolvedSymbol === undefined) {
-    links!.resolvedSymbol = Checker_lookupSymbolForPrivateIdentifierDeclaration(receiver, Node_Text(node), node);
+  if (links!.v.resolvedSymbol === undefined) {
+    links!.v.resolvedSymbol = Checker_lookupSymbolForPrivateIdentifierDeclaration(receiver, Node_Text(node), node);
   }
-  return links!.resolvedSymbol;
+  return links!.v.resolvedSymbol;
 }
 
 /**
@@ -5813,7 +5814,7 @@ export function Checker_checkCollisionsForDeclarationName(receiver: GoPtr<Checke
  */
 export function Checker_checkCollisionWithRequireExportsInGeneratedCode(receiver: GoPtr<Checker>, node: GoPtr<Node>, name: GoPtr<Node>): void {
   const sourceFile = GetSourceFileOfNode(node);
-  if (receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) >= ModuleKindES2015) {
+  if (receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) >= ModuleKindES2015) {
     return;
   }
   if (name === undefined || (!Checker_needCollisionCheckForIdentifier(receiver, node, name, "require") && !Checker_needCollisionCheckForIdentifier(receiver, node, name, "exports"))) {
@@ -5964,7 +5965,7 @@ export function Checker_checkCollisionWithGlobalPromiseInGeneratedCode(receiver:
  */
 export function Checker_checkClassNameCollisionWithObject(receiver: GoPtr<Checker>, name: GoPtr<Node>): void {
   const sourceFile = GetSourceFileOfNode(name);
-  if (Node_Text(name) === "Object" && receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) < ModuleKindES2015) {
+  if (Node_Text(name) === "Object" && receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile))) < ModuleKindES2015) {
     Checker_error(receiver, name, Class_name_cannot_be_Object_when_targeting_ES5_and_above_with_module_0, ModuleKind_String(receiver!.moduleKind));
   }
 }
@@ -6058,7 +6059,7 @@ export function Checker_checkNewTargetMetaProperty(receiver: GoPtr<Checker>, nod
  */
 export function Checker_checkImportMetaProperty(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
   if (ModuleKindNode16 <= receiver!.moduleKind && receiver!.moduleKind <= ModuleKindNodeNext) {
-    const sourceFileMetaData = receiver!.program.GetSourceFileMetaData(SourceFile_Path(GetSourceFileOfNode(node)));
+    const sourceFileMetaData = receiver!.program!.GetSourceFileMetaData(SourceFile_Path(GetSourceFileOfNode(node)));
     if (sourceFileMetaData.ImpliedNodeFormat !== ModuleKindESNext) {
       Checker_error(receiver, node, The_import_meta_meta_property_is_not_allowed_in_files_which_will_build_into_CommonJS_output);
     }
@@ -6070,7 +6071,7 @@ export function Checker_checkImportMetaProperty(receiver: GoPtr<Checker>, node: 
     throw new globalThis.Error("Containing file is missing import meta node flag.");
   }
   if (Node_Text(Node_Name(node)) === "meta") {
-    return receiver!.getGlobalImportMetaType();
+    return receiver!.getGlobalImportMetaType!();
   }
   return receiver!.errorType;
 }
@@ -7035,7 +7036,7 @@ export function Checker_reportNonexistentProperty(receiver: GoPtr<Checker>, prop
 export function Checker_getSuggestedLibForNonExistentProperty(receiver: GoPtr<Checker>, missingProperty: string, containingType: GoPtr<Type>): string {
   const container = Checker_getApparentType(receiver, containingType)!.symbol;
   if (container !== undefined) {
-    const typeFeatures = getFeatureMap().get(container.Name);
+    const typeFeatures = getFeatureMap!().get(container.Name);
     if (typeFeatures !== undefined) {
       for (const entry of typeFeatures) {
         if (entry.props.includes(missingProperty)) {
@@ -7536,9 +7537,9 @@ export function Checker_symbolHasNonMethodDeclaration(receiver: GoPtr<Checker>, 
  * 	return false
  * }
  */
-export function Checker_forEachProperty(receiver: GoPtr<Checker>, prop: GoPtr<Symbol>, callback: (p: GoPtr<Symbol>) => bool): bool {
+export function Checker_forEachProperty(receiver: GoPtr<Checker>, prop: GoPtr<Symbol>, callback: GoFunc<(p: GoPtr<Symbol>) => bool>): bool {
   if ((prop!.CheckFlags & CheckFlagsSynthetic) === 0) {
-    return callback(prop);
+    return callback!(prop);
   }
   for (const t of Type_Types((LinkStore_Get(receiver!.valueSymbolLinks, prop) as GoPtr<ValueSymbolLinks>)!.containingType)) {
     const p = Checker_getPropertyOfType(receiver, t, prop!.Name);
@@ -7638,7 +7639,7 @@ export function Checker_checkForDisallowedESSymbolOperand(receiver: GoPtr<Checke
  */
 export function Checker_isGlobalNaN(receiver: GoPtr<Checker>, expr: GoPtr<Expression>): bool {
   if (IsIdentifier(expr as GoPtr<Node>) && Node_Text(expr as GoPtr<Node>) === "NaN") {
-    const globalNaNSymbol = receiver!.getGlobalNaNSymbolOrNil();
+    const globalNaNSymbol = receiver!.getGlobalNaNSymbolOrNil!();
     return (globalNaNSymbol !== undefined && globalNaNSymbol === Checker_getResolvedSymbol(receiver, expr as GoPtr<Node>)) as bool;
   }
   return false as bool;
@@ -7653,7 +7654,7 @@ export function Checker_isGlobalNaN(receiver: GoPtr<Checker>, expr: GoPtr<Expres
  * }
  */
 export function Checker_isExactOptionalPropertyMismatch(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>): bool {
-  return (source !== undefined && target !== undefined && Checker_maybeTypeOfKind(receiver, source, TypeFlagsUndefined as TypeFlags) && receiver!.containsMissingType(target)) as bool;
+  return (source !== undefined && target !== undefined && Checker_maybeTypeOfKind(receiver, source, TypeFlagsUndefined as TypeFlags) && receiver!.containsMissingType!(target)) as bool;
 }
 
 /**
@@ -8900,7 +8901,7 @@ export function Checker_getExportOfModule(receiver: GoPtr<Checker>, symbol_: GoP
   if ((symbol_!.Flags & SymbolFlagsModule) !== 0) {
     const exportSymbol = Checker_getExportsOfSymbol(receiver, symbol_).get(nameText);
     const resolved = Checker_resolveSymbolEx(receiver, exportSymbol, dontResolveAlias);
-    const exportStarDeclaration = LinkStore_Get<Symbol, ModuleSymbolLinks>(receiver!.moduleSymbolLinks as GoPtr<LinkStore<Symbol, ModuleSymbolLinks>>, symbol_!)!.typeOnlyExportStarMap?.get(nameText);
+    const exportStarDeclaration = LinkStore_Get<Symbol, ModuleSymbolLinks>(receiver!.moduleSymbolLinks as GoPtr<LinkStore<Symbol, ModuleSymbolLinks>>, symbol_!)!.v.typeOnlyExportStarMap?.get(nameText);
     Checker_markSymbolOfAliasDeclarationIfTypeOnly(receiver, specifier, exportStarDeclaration);
     return resolved;
   }
@@ -9450,23 +9451,23 @@ export function Checker_getSuggestedImportSource(receiver: GoPtr<Checker>, modul
  */
 export function Checker_getSuggestedImportExtension(receiver: GoPtr<Checker>, extensionlessImportPath: string): string {
   switch (true) {
-    case receiver!.program.FileExists(extensionlessImportPath + ".mts"):
+    case receiver!.program!.FileExists(extensionlessImportPath + ".mts"):
       return ".mjs";
-    case receiver!.program.FileExists(extensionlessImportPath + ".ts"):
+    case receiver!.program!.FileExists(extensionlessImportPath + ".ts"):
       return ".js";
-    case receiver!.program.FileExists(extensionlessImportPath + ".cts"):
+    case receiver!.program!.FileExists(extensionlessImportPath + ".cts"):
       return ".cjs";
-    case receiver!.program.FileExists(extensionlessImportPath + ".mjs"):
+    case receiver!.program!.FileExists(extensionlessImportPath + ".mjs"):
       return ".mjs";
-    case receiver!.program.FileExists(extensionlessImportPath + ".js"):
+    case receiver!.program!.FileExists(extensionlessImportPath + ".js"):
       return ".js";
-    case receiver!.program.FileExists(extensionlessImportPath + ".cjs"):
+    case receiver!.program!.FileExists(extensionlessImportPath + ".cjs"):
       return ".cjs";
-    case receiver!.program.FileExists(extensionlessImportPath + ".tsx"):
+    case receiver!.program!.FileExists(extensionlessImportPath + ".tsx"):
       return IfElse(receiver!.compilerOptions!.Jsx === JsxEmitPreserve, ".jsx", ".js");
-    case receiver!.program.FileExists(extensionlessImportPath + ".jsx"):
+    case receiver!.program!.FileExists(extensionlessImportPath + ".jsx"):
       return ".jsx";
-    case receiver!.program.FileExists(extensionlessImportPath + ".json"):
+    case receiver!.program!.FileExists(extensionlessImportPath + ".json"):
       return ".json";
   }
   return "";
@@ -9582,7 +9583,7 @@ export function Checker_resolveESModuleSymbol(receiver: GoPtr<Checker>, moduleSy
       const targetFile = moduleSymbol !== undefined ? Find(moduleSymbol!.Declarations ?? [], IsSourceFile) : undefined;
       const usageMode = Checker_getEmitSyntaxForModuleSpecifierExpression(receiver, reference);
       let exportModuleDotExportsSymbol: GoPtr<Symbol>;
-      if (namespaceImport !== undefined && targetFile !== undefined && ModuleKindNode20 <= receiver!.moduleKind && receiver!.moduleKind <= ModuleKindNodeNext && usageMode === ModuleKindCommonJS && receiver!.program.GetImpliedNodeFormatForEmit(NewHasFileName(SourceFile_FileName(targetFile as GoPtr<SourceFile>), SourceFile_Path(targetFile as GoPtr<SourceFile>))) === ModuleKindESNext) {
+      if (namespaceImport !== undefined && targetFile !== undefined && ModuleKindNode20 <= receiver!.moduleKind && receiver!.moduleKind <= ModuleKindNodeNext && usageMode === ModuleKindCommonJS && receiver!.program!.GetImpliedNodeFormatForEmit(NewHasFileName(SourceFile_FileName(targetFile as GoPtr<SourceFile>), SourceFile_Path(targetFile as GoPtr<SourceFile>))) === ModuleKindESNext) {
         exportModuleDotExportsSymbol = Checker_getExportOfModule(receiver, symbol_, InternalSymbolNameModuleExports, namespaceImport, true);
       }
       if (exportModuleDotExportsSymbol !== undefined) {
@@ -9591,7 +9592,7 @@ export function Checker_resolveESModuleSymbol(receiver: GoPtr<Checker>, moduleSy
         }
         return exportModuleDotExportsSymbol;
       }
-      const targetMode = targetFile !== undefined ? receiver!.program.GetImpliedNodeFormatForEmit(NewHasFileName(SourceFile_FileName(targetFile as GoPtr<SourceFile>), SourceFile_Path(targetFile as GoPtr<SourceFile>))) : undefined;
+      const targetMode = targetFile !== undefined ? receiver!.program!.GetImpliedNodeFormatForEmit(NewHasFileName(SourceFile_FileName(targetFile as GoPtr<SourceFile>), SourceFile_Path(targetFile as GoPtr<SourceFile>))) : undefined;
       const isEsmCjsRef = targetMode !== undefined && isESMFormatImportImportingCommonjsFormatFile(usageMode, targetMode);
       if (Checker_hasSignatures(receiver, typ) || Checker_getPropertyOfTypeEx(receiver, typ, InternalSymbolNameDefault, true, false) !== undefined || isEsmCjsRef) {
         let moduleType: GoPtr<Type>;
@@ -11869,10 +11870,10 @@ export function Checker_getUndefinedProperty(receiver: GoPtr<Checker>, prop: GoP
  */
 export function Checker_getTypeOfEnumMember(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
   const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_);
-  if (links!.resolvedType === undefined) {
-    links!.resolvedType = Checker_getDeclaredTypeOfEnumMember(receiver, symbol_);
+  if (links!.v.resolvedType === undefined) {
+    links!.v.resolvedType = Checker_getDeclaredTypeOfEnumMember(receiver, symbol_);
   }
-  return links!.resolvedType;
+  return links!.v.resolvedType;
 }
 
 /**
@@ -11912,28 +11913,28 @@ export function Checker_getTypeOfEnumMember(receiver: GoPtr<Checker>, symbol_: G
  */
 export function Checker_getTypeOfAlias(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
   const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_);
-  if (links!.resolvedType === undefined) {
+  if (links!.v.resolvedType === undefined) {
     if (!Checker_pushTypeResolution(receiver, symbol_, TypeSystemPropertyNameType)) {
       return receiver!.errorType;
     }
     const targetSymbol = Checker_resolveAlias(receiver, symbol_);
     const exportSymbol = Checker_getTargetOfAliasDeclaration(receiver, Checker_getDeclarationOfAliasSymbol(receiver, symbol_));
-    if (links!.resolvedType === undefined) {
+    if (links!.v.resolvedType === undefined) {
       if ((Checker_getSymbolFlags(receiver, targetSymbol) & SymbolFlagsValue) !== 0) {
-        links!.resolvedType = Checker_getTypeOfSymbol(receiver, targetSymbol);
+        links!.v.resolvedType = Checker_getTypeOfSymbol(receiver, targetSymbol);
       } else {
-        links!.resolvedType = receiver!.errorType;
+        links!.v.resolvedType = receiver!.errorType;
       }
     }
     if (!Checker_popTypeResolution(receiver)) {
       Checker_reportCircularityError(receiver, OrElse(exportSymbol, symbol_));
-      if (links!.resolvedType === undefined) {
-        links!.resolvedType = receiver!.errorType;
+      if (links!.v.resolvedType === undefined) {
+        links!.v.resolvedType = receiver!.errorType;
       }
-      return links!.resolvedType;
+      return links!.v.resolvedType;
     }
   }
-  return links!.resolvedType;
+  return links!.v.resolvedType;
 }
 
 /**
@@ -12075,9 +12076,9 @@ export function Checker_findResolutionCycleStartIndex(receiver: GoPtr<Checker>, 
 export function Checker_typeResolutionHasProperty(receiver: GoPtr<Checker>, r: GoPtr<TypeResolution>): bool {
   switch (r!.propertyName) {
     case TypeSystemPropertyNameType:
-      return LinkStore_Get(receiver!.valueSymbolLinks, r!.target as GoPtr<Symbol>)!.resolvedType !== undefined;
+      return LinkStore_Get(receiver!.valueSymbolLinks, r!.target as GoPtr<Symbol>)!.v.resolvedType !== undefined;
     case TypeSystemPropertyNameDeclaredType:
-      return LinkStore_Get(receiver!.typeAliasLinks, r!.target as GoPtr<Symbol>)!.declaredType !== undefined;
+      return LinkStore_Get(receiver!.typeAliasLinks, r!.target as GoPtr<Symbol>)!.v.declaredType !== undefined;
     case TypeSystemPropertyNameResolvedTypeArguments:
       return Type_AsTypeReference(r!.target as GoPtr<Type>)!.resolvedTypeArguments !== undefined;
     case TypeSystemPropertyNameResolvedBaseTypes:
@@ -12091,7 +12092,7 @@ export function Checker_typeResolutionHasProperty(receiver: GoPtr<Checker>, r: G
     case TypeSystemPropertyNameInitializerIsUndefined:
       return ((LinkStore_Get(receiver!.nodeLinks, r!.target as GoPtr<Node>) as GoPtr<NodeLinks>)!.flags & NodeCheckFlagsInitializerIsUndefinedComputed) !== 0;
     case TypeSystemPropertyNameWriteType:
-      return LinkStore_Get(receiver!.valueSymbolLinks, r!.target as GoPtr<Symbol>)!.writeType !== undefined;
+      return LinkStore_Get(receiver!.valueSymbolLinks, r!.target as GoPtr<Symbol>)!.v.writeType !== undefined;
     case TypeSystemPropertyNameAliasTarget:
       return (LinkStore_Get(receiver!.aliasSymbolLinks, r!.target as GoPtr<Symbol>) as GoPtr<AliasSymbolLinks>)!.aliasTarget !== undefined;
     default:
@@ -13307,11 +13308,11 @@ export function Checker_instantiateSymbol(receiver: GoPtr<Checker>, symbol_: GoP
     return undefined;
   }
   let links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>;
-  if (links!.resolvedType !== undefined && !receiver!.couldContainTypeVariables(links!.resolvedType)) {
+  if (links!.resolvedType !== undefined && !receiver!.couldContainTypeVariables!(links!.resolvedType)) {
     if ((symbol_!.Flags & SymbolFlagsSetAccessor) === 0) {
       return symbol_;
     }
-    if (links!.writeType !== undefined && !receiver!.couldContainTypeVariables(links!.writeType)) {
+    if (links!.writeType !== undefined && !receiver!.couldContainTypeVariables!(links!.writeType)) {
       return symbol_;
     }
   }
@@ -13429,7 +13430,7 @@ export function Checker_instantiateSymbol(receiver: GoPtr<Checker>, symbol_: GoP
 export function Checker_resolveMappedTypeMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>): void {
   const members: SymbolTable = new globalThis.Map();
   let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
-  Checker_setStructuredTypeMembers(receiver, t, undefined, undefined, undefined, undefined);
+  Checker_setStructuredTypeMembers(receiver, t, undefined, GoNilSlice(), GoNilSlice(), GoNilSlice());
   const typeParameter = Checker_getTypeParameterFromMappedType(receiver, t);
   const constraintType = Checker_getConstraintTypeFromMappedType(receiver, t);
   const mappedTarget = Type_AsMappedType(t)!.__tsgoEmbedded0!.target;
@@ -13511,7 +13512,7 @@ export function Checker_resolveMappedTypeMembers(receiver: GoPtr<Checker>, t: Go
   } else {
     forEachType(Checker_getLowerBoundOfKeyType(receiver, constraintType), addMemberForKeyType);
   }
-  Checker_setStructuredTypeMembers(receiver, t, members, undefined, undefined, indexInfos);
+  Checker_setStructuredTypeMembers(receiver, t, members, GoNilSlice(), GoNilSlice(), indexInfos);
 }
 
 /**
@@ -14302,7 +14303,7 @@ export function Checker_createUnionOrIntersectionProperty(receiver: GoPtr<Checke
  */
 export function Checker_getTargetSymbol(receiver: GoPtr<Checker>, s: GoPtr<Symbol>): GoPtr<Symbol> {
   if (s !== undefined && (s!.CheckFlags & CheckFlagsInstantiated) !== 0) {
-    return LinkStore_Get(receiver!.valueSymbolLinks, s)!.target;
+    return LinkStore_Get(receiver!.valueSymbolLinks, s)!.v.target;
   }
   return s;
 }
@@ -14575,8 +14576,8 @@ export function Checker_instantiateTypeWithAlias(receiver: GoPtr<Checker>, t: Go
     t === undefined ||
     m === undefined ||
     !(
-      receiver!.couldContainTypeVariables(t) ||
-      (t.alias !== undefined && t.alias.typeArguments.length > 0 && Some(t.alias.typeArguments, (typeArgument: GoPtr<Type>): bool => receiver!.couldContainTypeVariables(typeArgument)))
+      receiver!.couldContainTypeVariables!(t) ||
+      (t.alias !== undefined && t.alias.typeArguments.length > 0 && Some(t.alias.typeArguments, (typeArgument: GoPtr<Type>): bool => receiver!.couldContainTypeVariables!(typeArgument)))
     )
   ) {
     return t;
@@ -14770,14 +14771,14 @@ export function Checker_getESSymbolLikeTypeForNode(receiver: GoPtr<Checker>, nod
  */
 export function Checker_getSymbolFromTypeReference(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Symbol> {
   const links = LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, node!);
-  if (links!.resolvedSymbol === undefined) {
+  if (links!.v.resolvedSymbol === undefined) {
     if (isConstTypeReference(node) && IsAssertionExpression(node!.Parent)) {
-      links!.resolvedSymbol = receiver!.unknownSymbol;
+      links!.v.resolvedSymbol = receiver!.unknownSymbol;
     } else {
-      links!.resolvedSymbol = Checker_resolveTypeReferenceName(receiver, node, SymbolFlagsType, false);
+      links!.v.resolvedSymbol = Checker_resolveTypeReferenceName(receiver, node, SymbolFlagsType, false);
     }
   }
-  return links!.resolvedSymbol;
+  return links!.v.resolvedSymbol;
 }
 
 /**
@@ -14885,7 +14886,7 @@ export function Checker_getUnresolvedSymbolForEntityName(receiver: GoPtr<Checker
       result = Checker_newSymbolEx(receiver, SymbolFlagsTypeAlias, text, CheckFlagsUnresolved);
       receiver!.unresolvedSymbols.set(path, result);
       result!.Parent = parentSymbol;
-      LinkStore_Get(receiver!.typeAliasLinks, result)!.declaredType = receiver!.unresolvedType;
+      LinkStore_Get(receiver!.typeAliasLinks, result)!.v.declaredType = receiver!.unresolvedType;
     }
     return result;
   }
@@ -15070,7 +15071,7 @@ export function Checker_getTypeFromTypeAliasReference(receiver: GoPtr<Checker>, 
     return errorType;
   }
   const t = Checker_getDeclaredTypeOfSymbol(receiver, symbol_);
-  const typeParameters = LinkStore_Get(receiver!.typeAliasLinks, symbol_)!.typeParameters ?? [];
+  const typeParameters = LinkStore_Get(receiver!.typeAliasLinks, symbol_)!.v.typeParameters ?? [];
   if (typeParameters.length !== 0) {
     const numTypeArguments = typeArguments.length;
     const minTypeArgumentCount = Checker_getMinTypeArgumentCount(receiver, typeParameters);
@@ -15267,7 +15268,7 @@ export function Checker_getAliasSymbolForTypeNode(receiver: GoPtr<Checker>, node
  */
 export function Checker_getDeclaredTypeOfTypeAlias(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
   const links = LinkStore_Get(receiver!.typeAliasLinks, symbol_);
-  if (links!.declaredType === undefined) {
+  if (links!.v.declaredType === undefined) {
     if (!Checker_pushTypeResolution(receiver, symbol_, TypeSystemPropertyNameDeclaredType)) {
       return receiver!.errorType;
     }
@@ -15277,12 +15278,12 @@ export function Checker_getDeclaredTypeOfTypeAlias(receiver: GoPtr<Checker>, sym
     if (Checker_popTypeResolution(receiver)) {
       const typeParameters = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver, symbol_);
       if (typeParameters.length !== 0) {
-        links!.typeParameters = typeParameters;
-        links!.instantiations = NewGoStructMap(GoStructKey(
+        links!.v.typeParameters = typeParameters;
+        links!.v.instantiations = NewGoStructMap(GoStructKey(
           [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
           ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
         ));
-        links!.instantiations.set(getTypeListKey(typeParameters), t);
+        links!.v.instantiations.set(getTypeListKey(typeParameters), t);
       }
       if (t === receiver!.intrinsicMarkerType && symbol_!.Name === "BuiltinIteratorReturn") {
         t = Checker_getBuiltinIteratorReturnType(receiver);
@@ -15295,11 +15296,11 @@ export function Checker_getDeclaredTypeOfTypeAlias(receiver: GoPtr<Checker>, sym
       Checker_error(receiver, errorNode, Type_alias_0_circularly_references_itself, Checker_symbolToString(receiver, symbol_));
       t = receiver!.errorType;
     }
-    if (links!.declaredType === undefined) {
-      links!.declaredType = t;
+    if (links!.v.declaredType === undefined) {
+      links!.v.declaredType = t;
     }
   }
-  return links!.declaredType;
+  return links!.v.declaredType;
 }
 
 /**
@@ -15313,7 +15314,7 @@ export function Checker_getDeclaredTypeOfTypeAlias(receiver: GoPtr<Checker>, sym
  */
 export function Checker_getEnumMemberValue(receiver: GoPtr<Checker>, node: GoPtr<Node>): Result {
   Checker_computeEnumMemberValues(receiver, node!.Parent);
-  return LinkStore_Get(receiver!.enumMemberLinks as unknown as GoPtr<LinkStore<GoPtr<Node>, { value: Result }>>, node)!.value ?? {
+  return LinkStore_Get(receiver!.enumMemberLinks as unknown as GoPtr<LinkStore<GoPtr<Node>, { value: Result }>>, node)!.v.value ?? {
     Value: undefined,
     IsSyntacticallyString: false as bool,
     ResolvedOtherFiles: false as bool,
@@ -15338,13 +15339,13 @@ export function Checker_getEnumMemberValue(receiver: GoPtr<Checker>, node: GoPtr
  */
 export function Checker_getDeclaredTypeOfEnumMember(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
   const links = LinkStore_Get(receiver!.declaredTypeLinks as unknown as GoPtr<LinkStore<GoPtr<Symbol>, DeclaredTypeLinks>>, symbol_);
-  if (!(links!.declaredType !== undefined)) {
+  if (!(links!.v.declaredType !== undefined)) {
     const enumType = Checker_getDeclaredTypeOfEnum(receiver, Checker_getParentOfSymbol(receiver, symbol_));
-    if (links!.declaredType === undefined) {
-      links!.declaredType = enumType;
+    if (links!.v.declaredType === undefined) {
+      links!.v.declaredType = enumType;
     }
   }
-  return links!.declaredType;
+  return links!.v.declaredType;
 }
 
 /**
@@ -15373,16 +15374,16 @@ export function Checker_getDeclaredTypeOfEnumMember(receiver: GoPtr<Checker>, sy
  */
 export function Checker_computeEnumMemberValues(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const nodeLinks = LinkStore_Get(receiver!.nodeLinks as unknown as GoPtr<LinkStore<GoPtr<Node>, NodeLinks>>, node);
-  if (!((nodeLinks!.flags & NodeCheckFlagsEnumValuesComputed) !== 0)) {
-    nodeLinks!.flags |= NodeCheckFlagsEnumValuesComputed;
-    let autoValue: GoPtr<Number> = 0 as Number;
+  if (!((nodeLinks!.v.flags & NodeCheckFlagsEnumValuesComputed) !== 0)) {
+    nodeLinks!.v.flags |= NodeCheckFlagsEnumValuesComputed;
+    let autoValue: GoRef<Number> = GoValueRef(0 as Number);
     let previous: GoPtr<Node> = undefined;
     for (const member of Node_Members(node)!) {
       const result = Checker_computeEnumMemberValue(receiver, member, autoValue, previous);
-      LinkStore_Get(receiver!.enumMemberLinks as unknown as GoPtr<LinkStore<GoPtr<Node>, { value: Result }>>, member)!.value = result;
+      LinkStore_Get(receiver!.enumMemberLinks as unknown as GoPtr<LinkStore<GoPtr<Node>, { value: Result }>>, member)!.v.value = result;
       if (typeof result.Value === "number") {
         const nextValue = (result.Value + 1) as Number;
-        autoValue = nextValue;
+        autoValue = GoValueRef(nextValue);
       } else {
         autoValue = undefined;
       }
@@ -15432,7 +15433,7 @@ export function Checker_computeEnumMemberValues(receiver: GoPtr<Checker>, node: 
  * 	return evaluator.NewResult(*autoValue, false, false, false)
  * }
  */
-export function Checker_computeEnumMemberValue(receiver: GoPtr<Checker>, member: GoPtr<Node>, autoValue: GoPtr<Number>, previous: GoPtr<Node>): Result {
+export function Checker_computeEnumMemberValue(receiver: GoPtr<Checker>, member: GoPtr<Node>, autoValue: GoRef<Number>, previous: GoPtr<Node>): Result {
   if (IsComputedNonLiteralName(Node_Name(member))) {
     Checker_error(receiver, Node_Name(member), Computed_property_names_are_not_allowed_in_enums);
   } else if (IsBigIntLiteral(Node_Name(member))) {
@@ -15460,7 +15461,7 @@ export function Checker_computeEnumMemberValue(receiver: GoPtr<Checker>, member:
       Checker_error(receiver, Node_Name(member), Enum_member_following_a_non_literal_numeric_member_must_have_an_initializer_when_isolatedModules_is_enabled);
     }
   }
-  return NewResult(autoValue, false as bool, false as bool, false as bool);
+  return NewResult(autoValue.v, false as bool, false as bool, false as bool);
 }
 
 /**
@@ -15499,7 +15500,7 @@ export function Checker_computeEnumMemberValue(receiver: GoPtr<Checker>, member:
 export function Checker_computeConstantEnumMemberValue(receiver: GoPtr<Checker>, member: GoPtr<Node>): Result {
   const isConstEnum = IsEnumConst(member!.Parent);
   const initializer = Node_Initializer(member);
-  const result = receiver!.evaluate(initializer, member);
+  const result = receiver!.evaluate!(initializer, member);
   if (result.Value !== undefined) {
     if (isConstEnum) {
       if (typeof result.Value === "number" && (Number_IsInf(result.Value as Number) || Number_IsNaN(result.Value as Number))) {
@@ -15588,10 +15589,10 @@ export function Checker_evaluateEnumMember(receiver: GoPtr<Checker>, expr: GoPtr
  */
 export function Checker_getDeclaredTypeOfAlias(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
   const links = LinkStore_Get<Symbol, DeclaredTypeLinks>(receiver!.declaredTypeLinks as GoPtr<LinkStore<Symbol, DeclaredTypeLinks>>, symbol_!);
-  if (links!.declaredType === undefined) {
-    links!.declaredType = Checker_getDeclaredTypeOfSymbol(receiver, Checker_resolveAlias(receiver, symbol_));
+  if (links!.v.declaredType === undefined) {
+    links!.v.declaredType = Checker_getDeclaredTypeOfSymbol(receiver, Checker_resolveAlias(receiver, symbol_));
   }
-  return links!.declaredType;
+  return links!.v.declaredType;
 }
 
 /**
@@ -15807,7 +15808,7 @@ export function Checker_getIdentifierChain(receiver: GoPtr<Checker>, node: GoPtr
  */
 export function Checker_resolveImportSymbolType(receiver: GoPtr<Checker>, node: GoPtr<Node>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags): GoPtr<Type> {
   const resolvedSymbol = Checker_resolveSymbol(receiver, symbol_);
-  LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, node!)!.resolvedSymbol = resolvedSymbol;
+  LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, node!)!.v.resolvedSymbol = resolvedSymbol;
   if (meaning === SymbolFlagsValue) {
     // intentionally doesn't use resolved symbol so type is cached as expected on the alias
     return Checker_getInstantiationExpressionType(receiver, Checker_getTypeOfSymbol(receiver, symbol_), node);
@@ -15874,7 +15875,7 @@ export function Checker_getGlobalStrictFunctionType(receiver: GoPtr<Checker>, na
 export function Checker_getGlobalImportMetaExpressionType(receiver: GoPtr<Checker>): GoPtr<Type> {
   if (receiver!.deferredGlobalImportMetaExpressionType === undefined) {
     const symbol_ = Checker_newSymbol(receiver, SymbolFlagsNone, "ImportMetaExpression");
-    const importMetaType = receiver!.getGlobalImportMetaType();
+    const importMetaType = receiver!.getGlobalImportMetaType!();
     const metaPropertySymbol = Checker_newSymbolEx(receiver, SymbolFlagsProperty, "meta", CheckFlagsReadonly);
     metaPropertySymbol!.Parent = symbol_;
     (LinkStore_Get(receiver!.valueSymbolLinks, metaPropertySymbol) as GoPtr<ValueSymbolLinks>)!.resolvedType = importMetaType;
@@ -15943,7 +15944,7 @@ export function Checker_newUniqueESSymbolType(receiver: GoPtr<Checker>, symbol_:
  * 	data.indexInfos = slices.Clip(indexInfos)
  * }
  */
-export function Checker_setStructuredTypeMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>, members: GoPtr<SymbolTable>, callSignatures: GoPtr<GoSlice<GoPtr<Signature>>>, constructSignatures: GoPtr<GoSlice<GoPtr<Signature>>>, indexInfos: GoPtr<GoSlice<GoPtr<IndexInfo>>>): void {
+export function Checker_setStructuredTypeMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>, members: GoPtr<SymbolTable>, callSignatures: GoSlice<GoPtr<Signature>>, constructSignatures: GoSlice<GoPtr<Signature>>, indexInfos: GoSlice<GoPtr<IndexInfo>>): void {
   t!.objectFlags |= ObjectFlagsMembersResolved;
   const data = Type_AsStructuredType(t);
   const effectiveMembers = members ?? new globalThis.Map<string, GoPtr<Symbol>>();
@@ -16078,7 +16079,7 @@ export function Checker_getWidenedUniqueESSymbolType(receiver: GoPtr<Checker>, t
  * 	return c.mapType(t, f)
  * }
  */
-export function Checker_mapTypeWithAlias(receiver: GoPtr<Checker>, t: GoPtr<Type>, f: (t: GoPtr<Type>) => GoPtr<Type>, alias: GoPtr<TypeAlias>): GoPtr<Type> {
+export function Checker_mapTypeWithAlias(receiver: GoPtr<Checker>, t: GoPtr<Type>, f: GoFunc<(t: GoPtr<Type>) => GoPtr<Type>>, alias: GoPtr<TypeAlias>): GoPtr<Type> {
   if ((t!.flags & TypeFlagsUnion) !== 0 && alias !== undefined) {
     return Checker_getUnionTypeEx(receiver, Map(Type_Types(t), f), UnionReductionLiteral, alias, undefined);
   }
@@ -16311,26 +16312,26 @@ export function Checker_getLiteralTypeFromPropertyName(receiver: GoPtr<Checker>,
 export function Checker_checkComputedPropertyName(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
   const expression = Node_Expression(node);
   const links = LinkStore_Get(receiver!.typeNodeLinks, expression);
-  if (links!.resolvedType === undefined) {
+  if (links!.v.resolvedType === undefined) {
     if (
       (IsTypeLiteralNode(node!.Parent!.Parent) || IsClassLike(node!.Parent!.Parent) || IsInterfaceDeclaration(node!.Parent!.Parent)) &&
       IsBinaryExpression(expression) &&
       AsBinaryExpression(expression)!.OperatorToken!.Kind === KindInKeyword &&
       !IsAccessor(node!.Parent)
     ) {
-      links!.resolvedType = receiver!.errorType;
-      return links!.resolvedType;
+      links!.v.resolvedType = receiver!.errorType;
+      return links!.v.resolvedType;
     }
-    links!.resolvedType = Checker_checkExpression(receiver, expression);
+    links!.v.resolvedType = Checker_checkExpression(receiver, expression);
     if (
-      (links!.resolvedType!.flags & TypeFlagsNullable) !== 0 ||
-      (!Checker_isTypeAssignableToKind(receiver, links!.resolvedType, (TypeFlagsStringLike | TypeFlagsNumberLike | TypeFlagsESSymbolLike) as TypeFlags) &&
-        !Checker_isTypeAssignableTo(receiver, links!.resolvedType, receiver!.stringNumberSymbolType))
+      (links!.v.resolvedType!.flags & TypeFlagsNullable) !== 0 ||
+      (!Checker_isTypeAssignableToKind(receiver, links!.v.resolvedType, (TypeFlagsStringLike | TypeFlagsNumberLike | TypeFlagsESSymbolLike) as TypeFlags) &&
+        !Checker_isTypeAssignableTo(receiver, links!.v.resolvedType, receiver!.stringNumberSymbolType))
     ) {
       Checker_error(receiver, node, A_computed_property_name_must_be_of_type_string_number_symbol_or_any);
     }
   }
-  return links!.resolvedType;
+  return links!.v.resolvedType;
 }
 
 /**
@@ -16624,7 +16625,7 @@ export function Checker_getIndexedAccessTypeOrUndefined(receiver: GoPtr<Checker>
     return receiver!.wildcardType;
   }
   objectType = Checker_getReducedType(receiver, objectType);
-  if (receiver!.isStringIndexSignatureOnlyType(objectType) && (indexType!.flags & TypeFlagsNullable) === 0 && Checker_isTypeAssignableToKind(receiver, indexType, (TypeFlagsString | TypeFlagsNumber) as TypeFlags)) {
+  if (receiver!.isStringIndexSignatureOnlyType!(objectType) && (indexType!.flags & TypeFlagsNullable) === 0 && Checker_isTypeAssignableToKind(receiver, indexType, (TypeFlagsString | TypeFlagsNumber) as TypeFlags)) {
     indexType = receiver!.stringType;
   }
   if (receiver!.compilerOptions!.NoUncheckedIndexedAccess === TSTrue && (accessFlags & AccessFlagsExpressionPosition) !== 0) {
@@ -16929,7 +16930,7 @@ export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, or
           return undefined;
         }
         if ((accessFlags & AccessFlagsCacheSymbol) !== 0) {
-          LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, accessNode!)!.resolvedSymbol = prop;
+          LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, accessNode!)!.v.resolvedSymbol = prop;
         }
         if (Checker_isThisPropertyAccessInConstructor(receiver, accessExpression, prop)) {
           return receiver!.autoType;
@@ -16941,7 +16942,7 @@ export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, or
       if (accessExpression !== undefined && getAssignmentTargetKind(accessExpression) !== AssignmentKindDefinite) {
         return Checker_getFlowTypeOfReference(receiver, accessExpression, propType);
       }
-      if (accessNode !== undefined && IsIndexedAccessTypeNode(accessNode) && receiver!.containsMissingType(propType)) {
+      if (accessNode !== undefined && IsIndexedAccessTypeNode(accessNode) && receiver!.containsMissingType!(propType)) {
         return Checker_getUnionType(receiver, [propType, receiver!.undefinedType]);
       }
       return propType;
@@ -17102,7 +17103,7 @@ function cacheIndexSignatureResolvedSymbol(receiver: GoPtr<Checker>, accessNode:
   if (indexSymbol === undefined) {
     return;
   }
-  LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, accessNode!)!.resolvedSymbol = indexSymbol;
+  LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, accessNode!)!.v.resolvedSymbol = indexSymbol;
 }
 
 /**
@@ -17459,11 +17460,11 @@ export function Checker_distributeIndexOverObjectType(receiver: GoPtr<Checker>, 
  * 	return members
  * }
  */
-export function Checker_transformTypeOfMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>, f: (propertyType: GoPtr<Type>) => GoPtr<Type>): SymbolTable {
+export function Checker_transformTypeOfMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>, f: GoFunc<(propertyType: GoPtr<Type>) => GoPtr<Type>>): SymbolTable {
   const members: SymbolTable = new globalThis.Map();
   for (let property of Checker_getPropertiesOfObjectType(receiver, t)) {
     const original = Checker_getTypeOfSymbol(receiver, property);
-    const updated = f(original);
+    const updated = f!(original);
     if (updated !== original) {
       property = Checker_createSymbolWithType(receiver, property, updated);
     }
@@ -18296,7 +18297,7 @@ export function Checker_getContextualTypeForStaticPropertyDeclaration(receiver: 
  * }
  */
 export function Checker_getContextualImportAttributeType(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  return Checker_getTypeOfPropertyOfContextualType(receiver, receiver!.getGlobalImportAttributesType(), Node_Text(Node_Name(node)));
+  return Checker_getTypeOfPropertyOfContextualType(receiver, receiver!.getGlobalImportAttributesType!(), Node_Text(Node_Name(node)));
 }
 
 /**
@@ -18406,7 +18407,7 @@ export function Checker_newClassMemberDecoratorContextTypeForNode(receiver: GoPt
  * }
  */
 export function Checker_newTypedPropertyDescriptorType(receiver: GoPtr<Checker>, propertyType: GoPtr<Type>): GoPtr<Type> {
-  return Checker_createTypeFromGenericGlobalType(receiver, receiver!.getGlobalTypedPropertyDescriptorType(), [propertyType]);
+  return Checker_createTypeFromGenericGlobalType(receiver, receiver!.getGlobalTypedPropertyDescriptorType!(), [propertyType]);
 }
 
 /**
@@ -18707,7 +18708,7 @@ export function Checker_getTypeFromIndexInfosOfContextualType(receiver: GoPtr<Ch
 export function Checker_isCircularMappedProperty(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
   if ((symbol_!.CheckFlags & CheckFlagsMapped) !== 0) {
     const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_);
-    return links!.resolvedType === undefined && Checker_findResolutionCycleStartIndex(receiver, symbol_, TypeSystemPropertyNameType) >= 0;
+    return links!.v.resolvedType === undefined && Checker_findResolutionCycleStartIndex(receiver, symbol_, TypeSystemPropertyNameType) >= 0;
   }
   return false;
 }
@@ -18984,9 +18985,9 @@ export function Checker_getAwaitedTypeNoAliasEx(receiver: GoPtr<Checker>, t: GoP
     receiver!.cachedTypes.set(key, t);
     return t;
   }
-  const thisTypeForErrorOut: GoSlice<GoPtr<Type>> = [undefined];
-  const promisedType = Checker_getPromisedTypeOfPromiseEx(receiver, t, undefined, thisTypeForErrorOut as unknown as GoPtr<GoPtr<Type>>);
-  const thisTypeForError = thisTypeForErrorOut[0];
+  const thisTypeForErrorOut = GoValueRef<GoPtr<Type>>(undefined);
+  const promisedType = Checker_getPromisedTypeOfPromiseEx(receiver, t, undefined, thisTypeForErrorOut);
+  const thisTypeForError = thisTypeForErrorOut.v;
   if (promisedType !== undefined) {
     if (t === promisedType || SliceContains(receiver!.awaitedTypeStack, promisedType)) {
       if (errorNode !== undefined) {

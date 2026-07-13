@@ -272,6 +272,7 @@ import { createAccessorPropertyBackingField } from "./utilities.js";
 import { IsIdentifierText } from "../../scanner/utilities.js";
 import { LanguageVariantStandard } from "../../core/languagevariant.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::lexicalEntryKind","kind":"type","status":"implemented","sigHash":"15b8208208520c37a488f4f4ecbd5583df43ca92f4096e7e3644b1e26e32ee3f"}
  *
@@ -2747,7 +2748,7 @@ export interface partialResult {
  * Go source:
  * createDescriptorFunc func(member *ast.Node, modifiers *ast.ModifierList) *ast.Expression
  */
-export type createDescriptorFunc = (member: GoPtr<Node>, modifiers: GoPtr<ModifierList>) => GoPtr<Expression>;
+export type createDescriptorFunc = GoFunc<(member: GoPtr<Node>, modifiers: GoPtr<ModifierList>) => GoPtr<Expression>>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.partialTransformClassElement","kind":"method","status":"implemented","sigHash":"1eeeb665ac2d759c9c5cbf3f5a46cc3c54e4aedc08704b06036bc9833d00b8ea"}

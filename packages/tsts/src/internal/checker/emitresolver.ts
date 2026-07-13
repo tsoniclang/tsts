@@ -77,6 +77,7 @@ import type { PseudoBigInt } from "../jsnum/pseudobigint.js";
 import { Number_Abs, Number_IsInf, Number_IsNaN } from "../jsnum/jsnum.js";
 import { Number_String } from "../jsnum/string.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"implemented","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3"}
  *
@@ -192,7 +193,7 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
  * Go source:
  * var _ printer.EmitResolver = (*EmitResolver)(nil)
  */
-export let __69112d2a_0: EmitResolver_969b36a1 = EmitResolver_as_printer_EmitResolver(undefined);
+export let __69112d2a_0: GoInterface<EmitResolver_969b36a1> = EmitResolver_as_printer_EmitResolver(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::newEmitResolver","kind":"func","status":"implemented","sigHash":"e8ab1c6cca31adfe867b8620cfea290b7ce4f2d6e1342ae750685f5756b1de15"}
@@ -394,7 +395,7 @@ export function EmitResolver_GetEnumMemberValue(receiver: GoPtr<EmitResolver>, n
     receiver!.checkerMu!.Unlock();
     return NewResult(undefined, false as bool, false as bool, false as bool);
   }
-  const result = (LinkStore_Get<GoPtr<Node>, EnumMemberLinks>(receiver!.checker!.enumMemberLinks as unknown as LinkStore<GoPtr<Node>, EnumMemberLinks>, node) as EnumMemberLinks).value;
+  const result = (LinkStore_Get<GoPtr<Node>, EnumMemberLinks>(receiver!.checker!.enumMemberLinks as unknown as LinkStore<GoPtr<Node>, EnumMemberLinks>, node)!.v as EnumMemberLinks).value;
   receiver!.checkerMu!.Unlock();
   return result;
 }
@@ -445,14 +446,14 @@ export function EmitResolver_isDeclarationVisible(receiver: GoPtr<EmitResolver>,
   if (!IsParseTreeNode(node)) { return false as bool; }
   if (node === undefined) { return false as bool; }
   const links = LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, node);
-  if ((links!.isVisible ?? TSUnknown) === TSUnknown) {
+  if ((links!.v.isVisible ?? TSUnknown) === TSUnknown) {
     if (EmitResolver_determineIfDeclarationIsVisible(receiver, node)) {
-      links!.isVisible = TSTrue;
+      links!.v.isVisible = TSTrue;
     } else {
-      links!.isVisible = TSFalse;
+      links!.v.isVisible = TSFalse;
     }
   }
-  return ((links!.isVisible ?? TSUnknown) === TSTrue) as bool;
+  return ((links!.v.isVisible ?? TSUnknown) === TSTrue) as bool;
 }
 
 /**
@@ -666,11 +667,11 @@ export function EmitResolver_determineIfDeclarationIsVisible(receiver: GoPtr<Emi
 export function EmitResolver_PrecalculateDeclarationEmitVisibility(receiver: GoPtr<EmitResolver>, file: GoPtr<SourceFile>): void {
   receiver!.checkerMu!.Lock();
   const fileLinks = LinkStore_Get<GoPtr<Node>, DeclarationFileLinks>(receiver!.declarationFileLinks, file as unknown as GoPtr<Node>);
-  if (fileLinks!.aliasesMarked) {
+  if (fileLinks!.v.aliasesMarked) {
     receiver!.checkerMu!.Unlock();
     return;
   }
-  fileLinks!.aliasesMarked = true as bool;
+  fileLinks!.v.aliasesMarked = true as bool;
   Node_ForEachChild(file as unknown as GoPtr<Node>, receiver!.aliasMarkingVisitor);
   receiver!.checkerMu!.Unlock();
 }
@@ -795,7 +796,7 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
 
     let nextSymbol: GoPtr<Symbol> = undefined;
     for (const declaration of exportSymbol!.Declarations ?? []) {
-      (LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, declaration) as DeclarationLinks).isVisible = TSTrue;
+      (LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, declaration)!.v as DeclarationLinks).isVisible = TSTrue;
 
       if (IsInternalModuleImportEqualsDeclaration(declaration)) {
         const internalModuleReference = AsImportEqualsDeclaration(declaration)!.ModuleReference;
@@ -1050,7 +1051,7 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
   let addVisibleAlias: AddVisibleAlias;
   if (shouldComputeAliasToMakeVisible) {
     addVisibleAlias = (declaration: GoPtr<Node>, aliasingStatement: GoPtr<Node>) => {
-      (LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, declaration) as DeclarationLinks).isVisible = TSTrue;
+      (LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, declaration)!.v as DeclarationLinks).isVisible = TSTrue;
       if (aliasesToMakeVisibleSet === undefined) {
         aliasesToMakeVisibleSet = new Map<NodeId, GoPtr<Node>>();
       }
@@ -1369,7 +1370,7 @@ export function EmitResolver_requiresAddingImplicitUndefined(receiver: GoPtr<Emi
              ((symbol_!.Flags & SymbolFlagsOptional) !== 0) &&
              (isOptionalDeclaration(declaration) as unknown as bool) &&
              (LinkStore_Has<GoPtr<Symbol>, ReverseMappedSymbolLinks>(receiver!.checker!.ReverseMappedSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ReverseMappedSymbolLinks>, symbol_) as bool) &&
-             ((LinkStore_Get<GoPtr<Symbol>, ReverseMappedSymbolLinks>(receiver!.checker!.ReverseMappedSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ReverseMappedSymbolLinks>, symbol_) as ReverseMappedSymbolLinks).mappedType !== undefined) &&
+             ((LinkStore_Get<GoPtr<Symbol>, ReverseMappedSymbolLinks>(receiver!.checker!.ReverseMappedSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ReverseMappedSymbolLinks>, symbol_)!.v as ReverseMappedSymbolLinks).mappedType !== undefined) &&
              (containsNonMissingUndefinedType(receiver!.checker, t) as unknown as bool) as bool;
     }
     case KindParameter:
@@ -1609,7 +1610,7 @@ export function EmitResolver_IsReferencedAliasDeclaration(receiver: GoPtr<EmitRe
   if (IsAliasSymbolDeclaration(node)) {
     const symbol = Checker_getSymbolOfDeclaration(c, node);
     if (symbol !== undefined) {
-      const aliasLinks = LinkStore_Get<GoPtr<Symbol>, AliasSymbolLinks>(c!.aliasSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, AliasSymbolLinks>, symbol) as AliasSymbolLinks;
+      const aliasLinks = LinkStore_Get<GoPtr<Symbol>, AliasSymbolLinks>(c!.aliasSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, AliasSymbolLinks>, symbol)!.v as AliasSymbolLinks;
       if (aliasLinks.referenced) {
         result = true as bool;
       } else {
@@ -1913,7 +1914,7 @@ export function EmitResolver_GetExternalModuleFileFromDeclaration(receiver: GoPt
  * 	return r.referenceResolver
  * }
  */
-export function EmitResolver_getReferenceResolver(receiver: GoPtr<EmitResolver>): ReferenceResolver {
+export function EmitResolver_getReferenceResolver(receiver: GoPtr<EmitResolver>): GoInterface<ReferenceResolver> {
   if (receiver!.referenceResolver === undefined) {
     const hooks: ReferenceResolverHooks = {
       ResolveName: receiver!.checker!.resolveName,
@@ -1948,7 +1949,7 @@ export function EmitResolver_getReferenceResolver(receiver: GoPtr<EmitResolver>)
 export function EmitResolver_GetReferencedExportContainer(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>, prefixLocals: bool): GoPtr<Node> {
   if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return undefined; }
   receiver!.checkerMu!.Lock();
-  const result = EmitResolver_getReferenceResolver(receiver).GetReferencedExportContainer(node, prefixLocals);
+  const result = EmitResolver_getReferenceResolver(receiver)!.GetReferencedExportContainer(node, prefixLocals);
   receiver!.checkerMu!.Unlock();
   return result;
 }
@@ -1965,7 +1966,7 @@ export function EmitResolver_GetReferencedExportContainer(receiver: GoPtr<EmitRe
  */
 export function EmitResolver_SetReferencedImportDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>, ref: GoPtr<Declaration>): void {
   receiver!.checkerMu!.Lock();
-  (LinkStore_Get<GoPtr<Node>, JSXLinks>(receiver!.jsxLinks, node as unknown as GoPtr<Node>) as JSXLinks).importRef = ref as unknown as GoPtr<Node>;
+  (LinkStore_Get<GoPtr<Node>, JSXLinks>(receiver!.jsxLinks, node as unknown as GoPtr<Node>)!.v as JSXLinks).importRef = ref as unknown as GoPtr<Node>;
   receiver!.checkerMu!.Unlock();
 }
 
@@ -1987,7 +1988,7 @@ export function EmitResolver_GetReferencedMemberValueDeclaration(receiver: GoPtr
     return undefined;
   }
   receiver!.checkerMu!.Lock();
-  const result = EmitResolver_getReferenceResolver(receiver).GetReferencedMemberValueDeclaration(node);
+  const result = EmitResolver_getReferenceResolver(receiver)!.GetReferencedMemberValueDeclaration(node);
   receiver!.checkerMu!.Unlock();
   return result;
 }
@@ -2013,7 +2014,7 @@ export function EmitResolver_GetReferencedMemberValueDeclaration(receiver: GoPtr
 export function EmitResolver_GetReferencedImportDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoPtr<Declaration> {
   receiver!.checkerMu!.Lock();
   if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) {
-    const result = (LinkStore_Get<GoPtr<Node>, JSXLinks>(receiver!.jsxLinks, node as unknown as GoPtr<Node>) as JSXLinks).importRef as unknown as GoPtr<Declaration>;
+    const result = (LinkStore_Get<GoPtr<Node>, JSXLinks>(receiver!.jsxLinks, node as unknown as GoPtr<Node>)!.v as JSXLinks).importRef as unknown as GoPtr<Declaration>;
     receiver!.checkerMu!.Unlock();
     return result;
   }
@@ -2044,7 +2045,7 @@ export function EmitResolver_GetReferencedImportDeclaration(receiver: GoPtr<Emit
 export function EmitResolver_GetReferencedValueDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoPtr<Declaration> {
   if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return undefined; }
   receiver!.checkerMu!.Lock();
-  const result = EmitResolver_getReferenceResolver(receiver).GetReferencedValueDeclaration(node);
+  const result = EmitResolver_getReferenceResolver(receiver)!.GetReferencedValueDeclaration(node);
   receiver!.checkerMu!.Unlock();
   return result;
 }
@@ -2067,7 +2068,7 @@ export function EmitResolver_GetReferencedValueDeclaration(receiver: GoPtr<EmitR
 export function EmitResolver_GetReferencedValueDeclarations(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> {
   if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return []; }
   receiver!.checkerMu!.Lock();
-  const result = EmitResolver_getReferenceResolver(receiver).GetReferencedValueDeclarations(node);
+  const result = EmitResolver_getReferenceResolver(receiver)!.GetReferencedValueDeclarations(node);
   receiver!.checkerMu!.Unlock();
   return result;
 }
@@ -2090,7 +2091,7 @@ export function EmitResolver_GetReferencedValueDeclarations(receiver: GoPtr<Emit
 export function EmitResolver_GetElementAccessExpressionName(receiver: GoPtr<EmitResolver>, expression: GoPtr<ElementAccessExpression>): string {
   if (!IsParseTreeNode(Node_AsNode(expression as unknown as GoPtr<Node>))) { return ""; }
   receiver!.checkerMu!.Lock();
-  const result = EmitResolver_getReferenceResolver(receiver).GetElementAccessExpressionName(expression);
+  const result = EmitResolver_getReferenceResolver(receiver)!.GetElementAccessExpressionName(expression);
   receiver!.checkerMu!.Unlock();
   return result;
 }
@@ -2111,7 +2112,7 @@ export function EmitResolver_GetElementAccessExpressionName(receiver: GoPtr<Emit
  * 	return requestNodeBuilder.SerializeReturnTypeForSignature(original, enclosingDeclaration, flags, internalFlags, tracker)
  * }
  */
-export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoPtr<Node> {
   const original = EmitContext_ParseNode(emitContext, signatureDeclaration);
   if (original === undefined) {
     return NewKeywordTypeNode(emitContext!.Factory!.__tsgoEmbedded0, KindAnyKeyword);
@@ -2139,7 +2140,7 @@ export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: Go
  * 	return requestNodeBuilder.SerializeTypeParametersForSignature(original, enclosingDeclaration, flags, internalFlags, tracker)
  * }
  */
-export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> {
+export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoSlice<GoPtr<Node>> {
   const original = EmitContext_ParseNode(emitContext, signatureDeclaration);
   if (original === undefined) {
     return [];
@@ -2169,7 +2170,7 @@ export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver
  * 	return requestNodeBuilder.SerializeTypeForDeclaration(declaration, symbol, enclosingDeclaration, flags|nodebuilder.FlagsMultilineObjectLiterals, internalFlags, tracker)
  * }
  */
-export function EmitResolver_CreateTypeOfDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function EmitResolver_CreateTypeOfDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoPtr<Node> {
   const original = EmitContext_ParseNode(emitContext, declaration);
   if (original === undefined) {
     return NewKeywordTypeNode(emitContext!.Factory!.__tsgoEmbedded0, KindAnyKeyword);
@@ -2247,7 +2248,7 @@ export function EmitResolver_CreateTypeOfDeclaration(receiver: GoPtr<EmitResolve
  * 	panic("unhandled literal const value kind")
  * }
  */
-export function EmitResolver_CreateLiteralConstValue(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, tracker: SymbolTracker): GoPtr<Node> {
+export function EmitResolver_CreateLiteralConstValue(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, tracker: GoInterface<SymbolTracker>): GoPtr<Node> {
   node = EmitContext_ParseNode(emitContext, node);
   receiver!.checkerMu!.Lock();
   const t = Checker_getTypeOfSymbol(receiver!.checker, Checker_getSymbolOfDeclaration(receiver!.checker, node));
@@ -2318,7 +2319,7 @@ export function EmitResolver_CreateLiteralConstValue(receiver: GoPtr<EmitResolve
  * 	return requestNodeBuilder.SerializeTypeForExpression(expression, enclosingDeclaration, flags|nodebuilder.FlagsMultilineObjectLiterals, internalFlags, tracker)
  * }
  */
-export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, expression: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, expression: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoPtr<Node> {
   expression = EmitContext_ParseNode(emitContext, expression);
   if (expression === undefined) {
     return NewKeywordTypeNode(emitContext!.Factory!.__tsgoEmbedded0, KindAnyKeyword);
@@ -2424,7 +2425,7 @@ export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver
  * 	return result
  * }
  */
-export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> {
+export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoSlice<GoPtr<Node>> {
   container = EmitContext_ParseNode(emitContext, container);
   receiver!.checkerMu!.Lock();
 
@@ -2470,7 +2471,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
             const firstIdentifier = GetFirstIdentifier(Node_Expression(Node_Name(component)));
             const name = receiver!.checker!.resolveName(firstIdentifier, Node_Text(firstIdentifier), (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true, false);
             if (name !== undefined) {
-              tracker.TrackSymbol(name, enclosingDeclaration, SymbolFlagsValue);
+              tracker!.TrackSymbol(name, enclosingDeclaration, SymbolFlagsValue);
             }
 
             const mods: GoSlice<GoPtr<Node>> = isStatic ? [NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword)] : [];
@@ -2559,7 +2560,7 @@ export function EmitResolver_GetResolutionModeOverride(receiver: GoPtr<EmitResol
  * 	return r.checker.GetConstantValue(node)
  * }
  */
-export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): unknown {
+export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): GoInterface<unknown> {
   receiver!.checkerMu!.Lock();
   const result = Checker_GetConstantValue(receiver!.checker, node);
   receiver!.checkerMu!.Unlock();
@@ -2694,7 +2695,7 @@ export function EmitResolver_GetTypeReferenceSerializationKind(receiver: GoPtr<E
   isTypeOnly = (isTypeOnly || (typeSymbol !== undefined && Checker_getTypeOnlyAliasDeclarationEx(receiver!.checker, typeSymbol, SymbolFlagsType) !== undefined)) as bool;
 
   if (resolvedValueSymbol !== undefined && resolvedValueSymbol === resolvedTypeSymbol) {
-    const globalPromiseSymbol = receiver!.checker!.getGlobalPromiseConstructorSymbol();
+    const globalPromiseSymbol = receiver!.checker!.getGlobalPromiseConstructorSymbol!();
     if (globalPromiseSymbol !== undefined && resolvedValueSymbol === globalPromiseSymbol) {
       receiver!.checkerMu!.Unlock();
       return TypeReferenceSerializationKindPromise;
@@ -2796,7 +2797,7 @@ export function EmitResolver_GetPropertiesOfContainerFunction(receiver: GoPtr<Em
  * 	return requestNodeBuilder.TryJSTypeNodeToTypeNode(typeNode, enclosingDeclaration, flags, internalFlags, tracker)
  * }
  */
-export function EmitResolver_TryJSTypeNodeToTypeNode(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, typeNode: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function EmitResolver_TryJSTypeNodeToTypeNode(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, typeNode: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoPtr<Node> {
   typeNode = EmitContext_ParseNode(emitContext, typeNode);
   receiver!.checkerMu!.Lock();
   const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);

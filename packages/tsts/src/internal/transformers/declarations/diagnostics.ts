@@ -107,13 +107,14 @@ import { NewDiagnosticForNode } from "../../checker/utilities.js";
 import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
 import type { AccessorDeclaration } from "../../ast/generated/unions.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::type::GetSymbolAccessibilityDiagnostic","kind":"type","status":"implemented","sigHash":"30009a2944c1b67c2d004de1a53a6347b93993270876a094093214a1dd3b294d"}
  *
  * Go source:
  * GetSymbolAccessibilityDiagnostic = func(symbolAccessibilityResult printer.SymbolAccessibilityResult) *SymbolAccessibilityDiagnostic
  */
-export type GetSymbolAccessibilityDiagnostic = (symbolAccessibilityResult: SymbolAccessibilityResult) => GoPtr<SymbolAccessibilityDiagnostic>;
+export type GetSymbolAccessibilityDiagnostic = GoFunc<(symbolAccessibilityResult: SymbolAccessibilityResult) => GoPtr<SymbolAccessibilityDiagnostic>>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::type::SymbolAccessibilityDiagnostic","kind":"type","status":"implemented","sigHash":"df75e237fca71aa20b900c85bfdd8a0fd7f6062768000d12e37abddf7dec3618"}
@@ -149,9 +150,9 @@ export interface SymbolAccessibilityDiagnostic {
  * 	}
  * }
  */
-export function wrapSimpleDiagnosticSelector(node: GoPtr<Node>, selector: (node: GoPtr<Node>, symbolAccessibilityResult: SymbolAccessibilityResult) => GoPtr<Message>): GetSymbolAccessibilityDiagnostic {
+export function wrapSimpleDiagnosticSelector(node: GoPtr<Node>, selector: GoFunc<(node: GoPtr<Node>, symbolAccessibilityResult: SymbolAccessibilityResult) => GoPtr<Message>>): GetSymbolAccessibilityDiagnostic {
   return (symbolAccessibilityResult: SymbolAccessibilityResult): GoPtr<SymbolAccessibilityDiagnostic> => {
-    const diagnosticMessage = selector(node, symbolAccessibilityResult);
+    const diagnosticMessage = selector!(node, symbolAccessibilityResult);
     if (diagnosticMessage === undefined) {
       return undefined;
     }
@@ -182,9 +183,9 @@ export function wrapSimpleDiagnosticSelector(node: GoPtr<Node>, selector: (node:
  * 	}
  * }
  */
-export function wrapNamedDiagnosticSelector(node: GoPtr<Node>, selector: (node: GoPtr<Node>, symbolAccessibilityResult: SymbolAccessibilityResult) => GoPtr<Message>): GetSymbolAccessibilityDiagnostic {
+export function wrapNamedDiagnosticSelector(node: GoPtr<Node>, selector: GoFunc<(node: GoPtr<Node>, symbolAccessibilityResult: SymbolAccessibilityResult) => GoPtr<Message>>): GetSymbolAccessibilityDiagnostic {
   return (symbolAccessibilityResult: SymbolAccessibilityResult): GoPtr<SymbolAccessibilityDiagnostic> => {
-    const diagnosticMessage = selector(node, symbolAccessibilityResult);
+    const diagnosticMessage = selector!(node, symbolAccessibilityResult);
     if (diagnosticMessage === undefined) {
       return undefined;
     }
@@ -218,9 +219,9 @@ export function wrapNamedDiagnosticSelector(node: GoPtr<Node>, selector: (node: 
  * 	}
  * }
  */
-export function wrapFallbackErrorDiagnosticSelector(node: GoPtr<Node>, selector: (node: GoPtr<Node>, symbolAccessibilityResult: SymbolAccessibilityResult) => GoPtr<Message>): GetSymbolAccessibilityDiagnostic {
+export function wrapFallbackErrorDiagnosticSelector(node: GoPtr<Node>, selector: GoFunc<(node: GoPtr<Node>, symbolAccessibilityResult: SymbolAccessibilityResult) => GoPtr<Message>>): GetSymbolAccessibilityDiagnostic {
   return (symbolAccessibilityResult: SymbolAccessibilityResult): GoPtr<SymbolAccessibilityDiagnostic> => {
-    const diagnosticMessage = selector(node, symbolAccessibilityResult);
+    const diagnosticMessage = selector!(node, symbolAccessibilityResult);
     if (diagnosticMessage === undefined) {
       return undefined;
     }
@@ -1646,12 +1647,12 @@ export function createExpressionErrorEx(node: GoPtr<Node>, diagnosticMessage: Go
  * 	}
  * }
  */
-export function createGetIsolatedDeclarationErrors(resolver: EmitResolver): (node: GoPtr<Node>) => GoPtr<Diagnostic> {
+export function createGetIsolatedDeclarationErrors(resolver: GoInterface<EmitResolver>): GoFunc<(node: GoPtr<Node>) => GoPtr<Diagnostic>> {
   const createParameterError = (node: GoPtr<Node>): GoPtr<Diagnostic> => {
     if (IsSetAccessorDeclaration(node!.Parent)) {
       return createAccessorTypeError(node!.Parent);
     }
-    const addUndefined = resolver.RequiresAddingImplicitUndefinedUnsafe(node, undefined, undefined); // skip checker lock - node builder will already have one
+    const addUndefined = resolver!.RequiresAddingImplicitUndefinedUnsafe(node, undefined, undefined); // skip checker lock - node builder will already have one
     if (!addUndefined && Node_Initializer(node) !== undefined) {
       return createExpressionError(node);
     }

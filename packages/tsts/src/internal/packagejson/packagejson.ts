@@ -13,6 +13,7 @@ import { JSONValueTypeArray, JSONValueTypeBoolean, JSONValueTypeNotPresent, JSON
 import type { JSONValue, JSONValueType } from "./jsonvalue.js";
 import { objectKindUnknown } from "./exportsorimports.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::HeaderFields","kind":"type","status":"implemented","sigHash":"6558504c2fd9f243450ea189f22d05ceb3b0e27a987c4c06e2a16703307569ff"}
  *
@@ -154,11 +155,11 @@ export function DependencyFields_HasDependency(receiver: GoPtr<DependencyFields>
  * 	}
  * }
  */
-export function DependencyFields_RangeDependencies(receiver: GoPtr<DependencyFields>, f: (name: string, version: string, dependencyField: string) => bool): void {
+export function DependencyFields_RangeDependencies(receiver: GoPtr<DependencyFields>, f: GoFunc<(name: string, version: string, dependencyField: string) => bool>): void {
   const [deps, depsOk] = Expected_GetValue<GoMap<string, string>>(receiver!.Dependencies);
   if (depsOk) {
     for (const [name, version] of deps) {
-      if (!f(name, version, "dependencies")) {
+      if (!f!(name, version, "dependencies")) {
         return;
       }
     }
@@ -166,7 +167,7 @@ export function DependencyFields_RangeDependencies(receiver: GoPtr<DependencyFie
   const [devDeps, devDepsOk] = Expected_GetValue<GoMap<string, string>>(receiver!.DevDependencies);
   if (devDepsOk) {
     for (const [name, version] of devDeps) {
-      if (!f(name, version, "devDependencies")) {
+      if (!f!(name, version, "devDependencies")) {
         return;
       }
     }
@@ -174,7 +175,7 @@ export function DependencyFields_RangeDependencies(receiver: GoPtr<DependencyFie
   const [peerDeps, peerDepsOk] = Expected_GetValue<GoMap<string, string>>(receiver!.PeerDependencies);
   if (peerDepsOk) {
     for (const [name, version] of peerDeps) {
-      if (!f(name, version, "peerDependencies")) {
+      if (!f!(name, version, "peerDependencies")) {
         return;
       }
     }
@@ -182,7 +183,7 @@ export function DependencyFields_RangeDependencies(receiver: GoPtr<DependencyFie
   const [optDeps, optDepsOk] = Expected_GetValue<GoMap<string, string>>(receiver!.OptionalDependencies);
   if (optDepsOk) {
     for (const [name, version] of optDeps) {
-      if (!f(name, version, "optionalDependencies")) {
+      if (!f!(name, version, "optionalDependencies")) {
         return;
       }
     }
@@ -268,7 +269,7 @@ export interface Fields {
  */
 export function Parse(data: GoSlice<byte>): [Fields, GoError] {
   const f = decodeFields(undefined);
-  const err = Unmarshal(data, f, AllowDuplicateNames(true));
+  const err = Unmarshal(data, f, AllowDuplicateNames(true)!);
   if (err !== undefined) {
     return [decodeFields(undefined), err];
   }

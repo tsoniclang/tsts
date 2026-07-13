@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr } from "../../go/compat.js";
+import { GoValueRef } from "../../go/compat.js";
 import type { Once } from "../../go/sync.js";
 import { SourceFile_Imports, SourceFile_Text, SourceFile_FileName, SourceFile_Path, Node_Text } from "../ast/ast.js";
 import type { FileReference, Node, SourceFile } from "../ast/ast.js";
@@ -28,6 +29,7 @@ import { includeProcessor_getReferenceLocation, includeProcessor_getCompilerOpti
 import type { Program } from "./program.js";
 import { Program_GetSourceFileByPath, Program_GetResolvedModuleFromModuleSpecifier, Program_GetCurrentDirectory, Program_Options } from "./program.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::fileIncludeKind","kind":"type","status":"implemented","sigHash":"cfb5545dcc9725e07bdb601f934351c61a7de840776fd29fa357e094c1be7445"}
  *
@@ -79,7 +81,7 @@ export const fileIncludeKindAutomaticTypeDirectiveFile: int = 6;
  */
 export interface FileIncludeReason {
   kind: fileIncludeKind;
-  data: unknown;
+  data: GoInterface<unknown>;
   relativeFileNameDiag: GoPtr<Diagnostic>;
   relativeFileNameDiagOnce: Once;
   diag: GoPtr<Diagnostic>;
@@ -470,7 +472,7 @@ export function FileIncludeReason_toDiagnostic(receiver: GoPtr<FileIncludeReason
  * 	}
  * }
  */
-export function FileIncludeReason_computeDiagnostic(receiver: GoPtr<FileIncludeReason>, program: GoPtr<Program>, toFileName: (arg0: string) => string): GoPtr<Diagnostic> {
+export function FileIncludeReason_computeDiagnostic(receiver: GoPtr<FileIncludeReason>, program: GoPtr<Program>, toFileName: GoFunc<(arg0: string) => string>): GoPtr<Diagnostic> {
   if (FileIncludeReason_isReferencedFile(receiver)) {
     return FileIncludeReason_computeReferenceFileDiagnostic(receiver, program, toFileName);
   }
@@ -481,14 +483,14 @@ export function FileIncludeReason_computeDiagnostic(receiver: GoPtr<FileIncludeR
         const fileName = GetNormalizedAbsolutePath(ParsedCommandLine_FileNames(config)[FileIncludeReason_asIndex(receiver)]!, Program_GetCurrentDirectory(program));
         const matchedFileSpec = ParsedCommandLine_GetMatchedFileSpec(config, fileName);
         if (matchedFileSpec !== "") {
-          return NewCompilerDiagnostic(diagnostics.Part_of_files_list_in_tsconfig_json, matchedFileSpec, toFileName(fileName));
+          return NewCompilerDiagnostic(diagnostics.Part_of_files_list_in_tsconfig_json, matchedFileSpec, toFileName!(fileName));
         }
         const [matchedIncludeSpec, isDefaultIncludeSpec] = ParsedCommandLine_GetMatchedIncludeSpec(config, fileName);
         if (matchedIncludeSpec !== "") {
           if (isDefaultIncludeSpec) {
             return NewCompilerDiagnostic(diagnostics.Matched_by_default_include_pattern_Asterisk_Asterisk_Slash_Asterisk);
           } else {
-            return NewCompilerDiagnostic(diagnostics.Matched_by_include_pattern_0_in_1, matchedIncludeSpec, toFileName(ParsedCommandLine_ConfigName(config)));
+            return NewCompilerDiagnostic(diagnostics.Matched_by_include_pattern_0_in_1, matchedIncludeSpec, toFileName!(ParsedCommandLine_ConfigName(config)));
           }
         }
         return NewCompilerDiagnostic(diagnostics.Root_file_specified_for_compilation);
@@ -573,43 +575,43 @@ export function FileIncludeReason_computeDiagnostic(receiver: GoPtr<FileIncludeR
  * 	}
  * }
  */
-export function FileIncludeReason_computeReferenceFileDiagnostic(receiver: GoPtr<FileIncludeReason>, program: GoPtr<Program>, toFileName: (arg0: string) => string): GoPtr<Diagnostic> {
+export function FileIncludeReason_computeReferenceFileDiagnostic(receiver: GoPtr<FileIncludeReason>, program: GoPtr<Program>, toFileName: GoFunc<(arg0: string) => string>): GoPtr<Diagnostic> {
   const referenceLocation = includeProcessor_getReferenceLocation(program!.__tsgoEmbedded0!.includeProcessor, receiver, program);
   const referenceText = referenceFileLocation_text(referenceLocation);
   switch (receiver!.kind) {
     case fileIncludeKindImport:
       if (!referenceLocation!.isSynthetic) {
         if (referenceLocation!.packageId.Name !== "") {
-          return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_with_packageId_2, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)), PackageId_String(referenceLocation!.packageId));
+          return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_with_packageId_2, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)), PackageId_String(referenceLocation!.packageId));
         } else {
-          return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)));
+          return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)));
         }
       } else {
         const specifier = program!.__tsgoEmbedded0!.importHelpersImportSpecifiers.get(SourceFile_Path(referenceLocation!.file));
         if (specifier !== undefined && (specifier as unknown) === referenceLocation!.node) {
           if (referenceLocation!.packageId.Name !== "") {
-            return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_with_packageId_2_to_import_importHelpers_as_specified_in_compilerOptions, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)), PackageId_String(referenceLocation!.packageId));
+            return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_with_packageId_2_to_import_importHelpers_as_specified_in_compilerOptions, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)), PackageId_String(referenceLocation!.packageId));
           } else {
-            return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_to_import_importHelpers_as_specified_in_compilerOptions, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)));
+            return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_to_import_importHelpers_as_specified_in_compilerOptions, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)));
           }
         } else {
           if (referenceLocation!.packageId.Name !== "") {
-            return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_with_packageId_2_to_import_jsx_and_jsxs_factory_functions, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)), PackageId_String(referenceLocation!.packageId));
+            return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_with_packageId_2_to_import_jsx_and_jsxs_factory_functions, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)), PackageId_String(referenceLocation!.packageId));
           } else {
-            return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_to_import_jsx_and_jsxs_factory_functions, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)));
+            return NewCompilerDiagnostic(diagnostics.Imported_via_0_from_file_1_to_import_jsx_and_jsxs_factory_functions, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)));
           }
         }
       }
     case fileIncludeKindReferenceFile:
-      return NewCompilerDiagnostic(diagnostics.Referenced_via_0_from_file_1, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)));
+      return NewCompilerDiagnostic(diagnostics.Referenced_via_0_from_file_1, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)));
     case fileIncludeKindTypeReferenceDirective:
       if (referenceLocation!.packageId.Name !== "") {
-        return NewCompilerDiagnostic(diagnostics.Type_library_referenced_via_0_from_file_1_with_packageId_2, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)), PackageId_String(referenceLocation!.packageId));
+        return NewCompilerDiagnostic(diagnostics.Type_library_referenced_via_0_from_file_1_with_packageId_2, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)), PackageId_String(referenceLocation!.packageId));
       } else {
-        return NewCompilerDiagnostic(diagnostics.Type_library_referenced_via_0_from_file_1, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)));
+        return NewCompilerDiagnostic(diagnostics.Type_library_referenced_via_0_from_file_1, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)));
       }
     case fileIncludeKindLibReferenceDirective:
-      return NewCompilerDiagnostic(diagnostics.Library_referenced_via_0_from_file_1, referenceText, toFileName(SourceFile_FileName(referenceLocation!.file)));
+      return NewCompilerDiagnostic(diagnostics.Library_referenced_via_0_from_file_1, referenceText, toFileName!(SourceFile_FileName(referenceLocation!.file)));
     default:
       throw new globalThis.Error(`unknown reason: ${receiver!.kind}`);
   }
@@ -710,9 +712,16 @@ export function FileIncludeReason_toRelatedInfo(receiver: GoPtr<FileIncludeReaso
       } else {
         const target = ScriptTarget_String(CompilerOptions_GetEmitScriptTarget(Program_Options(program)));
         if (target !== "") {
-          const targetValueSyntax = ForEachPropertyAssignment(includeProcessor_getCompilerOptionsObjectLiteralSyntax(program!.__tsgoEmbedded0!.includeProcessor, program) as GoPtr<ObjectLiteralExpression>, "target", GetCallbackForFindingPropertyAssignmentByValue(target));
+          const targetValueSyntax = ForEachPropertyAssignment<Node>(
+            includeProcessor_getCompilerOptionsObjectLiteralSyntax(program!.__tsgoEmbedded0!.includeProcessor, program) as GoPtr<ObjectLiteralExpression>,
+            "target",
+            (property) => {
+              const value = GetCallbackForFindingPropertyAssignmentByValue(target)!(property);
+              return value === undefined ? undefined : GoValueRef(value);
+            },
+          );
           if (targetValueSyntax !== undefined) {
-            return CreateDiagnosticForNodeInSourceFile(config!.ConfigFile!.SourceFile, targetValueSyntax, diagnostics.File_is_default_library_for_target_specified_here);
+            return CreateDiagnosticForNodeInSourceFile(config!.ConfigFile!.SourceFile, targetValueSyntax!.v, diagnostics.File_is_default_library_for_target_specified_here);
           }
         }
       }

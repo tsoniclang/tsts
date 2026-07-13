@@ -17,6 +17,7 @@ import { VersionMajorMinor } from "../../core/version.js";
 import { CombinePaths } from "../../tspath/path.js";
 import type { Entries, FileInfo, FS as FS_a37200a9, WalkDirFunc } from "../vfs.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::blockingOpSema+readSema+writeSema","kind":"varGroup","status":"implemented","sigHash":"8ca24dac47eb68e250738b5a02087ad16e286c3e26827f2d686625869672031b"}
  *
@@ -42,14 +43,14 @@ export let writeSema: GoPtr<LimitedSemaphore> = NewLimitedSemaphore(32 as int);
  * 	return osVFS
  * }
  */
-export function FS(): FS_a37200a9 {
+export function FS(): GoInterface<FS_a37200a9> {
   return osVFS;
 }
 
 const _osFS: osFS = {
   common: {
-    RootFor: goOs.DirFS as unknown as (root: string) => import("../../../go/io/fs.js").FS,
-    IsReparsePoint: isReparsePoint as unknown as (path: string) => bool,
+    RootFor: goOs.DirFS,
+    IsReparsePoint: isReparsePoint,
   },
 };
 
@@ -64,7 +65,7 @@ const _osFS: osFS = {
  * 	},
  * }
  */
-export let osVFS: FS_a37200a9 = {
+export let osVFS: GoInterface<FS_a37200a9> = {
   UseCaseSensitiveFileNames: () => osFS_UseCaseSensitiveFileNames(_osFS),
   ReadFile: (path: string) => osFS_ReadFile(_osFS, path),
   DirectoryExists: (path: string) => osFS_DirectoryExists(_osFS, path),
@@ -307,9 +308,9 @@ export interface limitedWalkDirFunc {
  * 	return w.inner(path, d, err)
  * }
  */
-export function limitedWalkDirFunc_walker(receiver: GoPtr<limitedWalkDirFunc>, path: string, d: DirEntry, err: GoError): GoError {
+export function limitedWalkDirFunc_walker(receiver: GoPtr<limitedWalkDirFunc>, path: string, d: GoInterface<DirEntry>, err: GoError): GoError {
   // defer blockingOpSema.Acquire()() — no-op in single-threaded TS
-  return (receiver!.inner as unknown as (path: string, d: DirEntry, err: GoError) => GoError)(path, d, err);
+  return (receiver!.inner as unknown as (path: string, d: DirEntry, err: GoError) => GoError)(path, d!, err);
 }
 
 /**

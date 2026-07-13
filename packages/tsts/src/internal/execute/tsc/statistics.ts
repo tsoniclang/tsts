@@ -17,6 +17,7 @@ import { FormatUint } from "../../../go/strconv.js";
 import type { CommandLineTesting, CompileTimes } from "./compile.js";
 import type { EmitInput } from "./emit.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/statistics.go::type::tableRow","kind":"type","status":"implemented","sigHash":"8a3043eda386dc1a36fa9805876121254bfa574c99fffdcb1e3ad0fdd939860b"}
  *
@@ -54,7 +55,7 @@ export interface table {
  * 	t.rows = append(t.rows, tableRow{name, fmt.Sprint(value)})
  * }
  */
-export function table_add(receiver: GoPtr<table>, name: string, value: unknown): void {
+export function table_add(receiver: GoPtr<table>, name: string, value: GoInterface<unknown>): void {
   const t = receiver!;
   // In Go: if d, ok := value.(time.Duration); ok { value = formatDuration(d) }
   // In TS: Duration = number, cannot do runtime type assertion; use Sprint for all values.
@@ -78,7 +79,7 @@ export function table_add(receiver: GoPtr<table>, name: string, value: unknown):
  * 	}
  * }
  */
-export function table_print(receiver: GoPtr<table>, w: Writer): void {
+export function table_print(receiver: GoPtr<table>, w: GoInterface<Writer>): void {
   const t = receiver!;
   let nameWidth = 0;
   let valueWidth = 0;
@@ -87,7 +88,7 @@ export function table_print(receiver: GoPtr<table>, w: Writer): void {
     valueWidth = Math.max(valueWidth, r.value.length);
   }
   for (const r of t.rows) {
-    Fprintf(w, "%-*s %*s\n", nameWidth + 1, r.name + ":", valueWidth, r.value);
+    Fprintf(w!, "%-*s %*s\n", nameWidth + 1, r.name + ":", valueWidth, r.value);
   }
 }
 
@@ -246,7 +247,7 @@ export function statisticsFromProgram(input: EmitInput, memStats: GoPtr<MemStats
  * 	table.print(w)
  * }
  */
-export function Statistics_Report(receiver: GoPtr<Statistics>, w: Writer, testing: CommandLineTesting | undefined): void {
+export function Statistics_Report(receiver: GoPtr<Statistics>, w: GoInterface<Writer>, testing: CommandLineTesting | undefined): void {
   const s = receiver!;
   if (testing !== undefined) {
     testing.OnStatisticsStart(w);

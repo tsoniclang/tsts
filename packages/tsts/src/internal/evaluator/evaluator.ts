@@ -47,6 +47,7 @@ import type { PseudoBigInt } from "../jsnum/pseudobigint.js";
 import { PseudoBigInt_String } from "../jsnum/pseudobigint.js";
 import { FromString, Number_String } from "../jsnum/string.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Result","kind":"type","status":"implemented","sigHash":"a3a9d32c3240f54837956a383b258f44f9026492dadd7240384a097b26b6d6ca"}
  *
@@ -59,7 +60,7 @@ import { FromString, Number_String } from "../jsnum/string.js";
  * }
  */
 export interface Result {
-  Value: unknown;
+  Value: GoInterface<unknown>;
   IsSyntacticallyString: bool;
   ResolvedOtherFiles: bool;
   HasExternalReferences: bool;
@@ -73,7 +74,7 @@ export interface Result {
  * 	return Result{value, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences}
  * }
  */
-export function NewResult(value: unknown, isSyntacticallyString: bool, resolvedOtherFiles: bool, hasExternalReferences: bool): Result {
+export function NewResult(value: GoInterface<unknown>, isSyntacticallyString: bool, resolvedOtherFiles: bool, hasExternalReferences: bool): Result {
   return {
     Value: value,
     IsSyntacticallyString: isSyntacticallyString,
@@ -88,7 +89,7 @@ export function NewResult(value: unknown, isSyntacticallyString: bool, resolvedO
  * Go source:
  * Evaluator func(expr *ast.Node, location *ast.Node) Result
  */
-export type Evaluator = (expr: GoPtr<Node>, location: GoPtr<Node>) => Result;
+export type Evaluator = GoFunc<(expr: GoPtr<Node>, location: GoPtr<Node>) => Result>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::NewEvaluator","kind":"func","status":"implemented","sigHash":"c788e7be8c5a4a7b604fc445b31bf83a466c0b2ab9747563519c09d25af6b42b"}
@@ -216,7 +217,7 @@ export function NewEvaluator(evaluateEntity: Evaluator, outerExpressionsToSkip: 
     switch (expr!.Kind) {
       case KindPrefixUnaryExpression: {
         const prefix = AsPrefixUnaryExpression(expr)!;
-        const result: Result = evaluate(prefix.Operand, location);
+        const result: Result = evaluate!(prefix.Operand, location);
         resolvedOtherFiles = result.ResolvedOtherFiles;
         hasExternalReferences = result.HasExternalReferences;
         if (typeof result.Value === "number") {
@@ -234,8 +235,8 @@ export function NewEvaluator(evaluateEntity: Evaluator, outerExpressionsToSkip: 
       }
       case KindBinaryExpression: {
         const binary = AsBinaryExpression(expr)!;
-        const left: Result = evaluate(binary.Left, location);
-        const right: Result = evaluate(binary.Right, location);
+        const left: Result = evaluate!(binary.Left, location);
+        const right: Result = evaluate!(binary.Right, location);
         const operator = binary.OperatorToken!.Kind;
         isSyntacticallyString = ((left.IsSyntacticallyString || right.IsSyntacticallyString) && binary.OperatorToken!.Kind === KindPlusToken) as bool;
         resolvedOtherFiles = (left.ResolvedOtherFiles || right.ResolvedOtherFiles) as bool;
@@ -295,11 +296,11 @@ export function NewEvaluator(evaluateEntity: Evaluator, outerExpressionsToSkip: 
       case KindNumericLiteral:
         return { Value: FromString(Node_Text(expr)), IsSyntacticallyString: false, ResolvedOtherFiles: false, HasExternalReferences: false };
       case KindIdentifier:
-        return evaluateEntity(expr, location);
+        return evaluateEntity!(expr, location);
       case KindElementAccessExpression:
       case KindPropertyAccessExpression:
         if (IsEntityNameExpression(Node_Expression(expr))) {
-          return evaluateEntity(expr, location);
+          return evaluateEntity!(expr, location);
         }
         break;
     }
@@ -338,7 +339,7 @@ export function evaluateTemplateExpression(expr: GoPtr<Node>, location: GoPtr<No
   let hasExternalReferences: bool = false;
   for (const span of templateExpression.TemplateSpans!.Nodes) {
     const templateSpan = AsTemplateSpan(span)!;
-    const spanResult: Result = evaluate(templateSpan.Expression, location);
+    const spanResult: Result = evaluate!(templateSpan.Expression, location);
     if (spanResult.Value === undefined) {
       return { Value: undefined, IsSyntacticallyString: true, ResolvedOtherFiles: false, HasExternalReferences: false };
     }
@@ -368,7 +369,7 @@ export function evaluateTemplateExpression(expr: GoPtr<Node>, location: GoPtr<No
  * 	panic("Unhandled case in AnyToString")
  * }
  */
-export function AnyToString(v: unknown): string {
+export function AnyToString(v: GoInterface<unknown>): string {
   if (typeof v === "string") {
     return v;
   }
@@ -402,7 +403,7 @@ export function AnyToString(v: unknown): string {
  * 	panic("Unhandled case in IsTruthy")
  * }
  */
-export function IsTruthy(v: unknown): bool {
+export function IsTruthy(v: GoInterface<unknown>): bool {
   if (typeof v === "string") {
     return v.length !== 0;
   }

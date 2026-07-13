@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBooleanKey, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoBooleanKey, GoNilSlice, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import { GetNodeId, GetSymbolId, GetReparsedNodeForNode } from "../ast/utilities.js";
@@ -429,11 +429,11 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
  */
 export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): GoSlice<GoPtr<Symbol>> {
   if (enclosingDeclaration === undefined) {
-    return [];
+    return GoNilSlice();
   }
   const containingFile = GetSourceFileOfNode(enclosingDeclaration);
   const id = GetNodeId(containingFile as unknown as GoPtr<Node>);
-  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, symbol_) as ContainingSymbolLinks;
+  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, symbol_)!.v as ContainingSymbolLinks;
   if (links.extendedContainersByFile === undefined) {
     links.extendedContainersByFile = new globalThis.Map<NodeId, GoSlice<GoPtr<Symbol>>>();
   }
@@ -441,7 +441,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
   if (existing !== undefined) {
     return existing;
   }
-  let results: GoSlice<GoPtr<Symbol>> = [];
+  let results: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   const imports = SourceFile_Imports(containingFile as unknown as GoPtr<SourceFile>);
   if (imports !== undefined && imports.length > 0) {
     // Try to make an import using an import already in the enclosing file, if possible
@@ -467,7 +467,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
   }
 
   if (links.extendedContainers !== undefined) {
-    return links.extendedContainers;
+    return links.extendedContainers.v;
   }
   // No results from files already being imported by this file - expand search (expensive, but not location-specific, so cached)
   const otherFiles = receiver!.files;
@@ -482,7 +482,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
     }
     results = [...results, sym];
   }
-  links.extendedContainers = results;
+  links.extendedContainers = GoValueRef(results);
   return results;
 }
 
@@ -703,7 +703,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
         continue;
       }
       Checker_checkExpressionCached(receiver, Node_Expression(AsBinaryExpression(d!.Parent)!.Left));
-      const sym = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, Node_Expression(AsBinaryExpression(d!.Parent)!.Left)) as SymbolNodeLinks).resolvedSymbol as GoPtr<Symbol>;
+      const sym = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, Node_Expression(AsBinaryExpression(d!.Parent)!.Left))!.v as SymbolNodeLinks).resolvedSymbol as GoPtr<Symbol>;
       if (sym !== undefined && !candidates.includes(sym)) {
         candidates = [...candidates, sym];
       }
@@ -1007,7 +1007,7 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
     firstRelevantLocation = node;
     return true;
   });
-  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, ctx.symbol) as ContainingSymbolLinks;
+  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, ctx.symbol)!.v as ContainingSymbolLinks;
   const linkKey: accessibleChainCacheKey = { useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, location: firstRelevantLocation, meaning: ctx.meaning };
   if (links.accessibleChainCache === undefined) {
     links.accessibleChainCache = NewGoStructMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>(GoStructKey(

@@ -45,6 +45,7 @@ import {
 import { referenceMap_getReferencedBy } from "./referencemap.js";
 import { Program_GetSourceFiles as incremental_Program_GetSourceFiles } from "./program.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::dtsMayChange","kind":"type","status":"implemented","sigHash":"161a83db43532f7d6c3498aef7567079f27b3d88380b01283197b3f6270c1465"}
  *
@@ -97,7 +98,7 @@ export interface updatedSignature {
  * }
  */
 export interface affectedFilesHandler {
-  ctx: Context;
+  ctx: GoInterface<Context>;
   program: GoPtr<Program>;
   hasAllFilesExcludingDefaultLibraryFile: AtomicBool;
   updatedSignatures: SyncMap<Path, GoPtr<updatedSignature>>;
@@ -756,7 +757,7 @@ export function affectedFilesHandler_handleDtsMayChangeOf(receiver: GoPtr<affect
  * }
  */
 export function affectedFilesHandler_updateSnapshot(receiver: GoPtr<affectedFilesHandler>): void {
-  if (receiver!.ctx.Err() !== undefined) {
+  if (receiver!.ctx!.Err() !== undefined) {
     return;
   }
   SyncMap_Range<Path, GoPtr<updatedSignature>>(
@@ -834,7 +835,7 @@ export function affectedFilesHandler_updateSnapshot(receiver: GoPtr<affectedFile
  * 	handler.updateSnapshot()
  * }
  */
-export function collectAllAffectedFiles(ctx: Context, program: GoPtr<Program>): void {
+export function collectAllAffectedFiles(ctx: GoInterface<Context>, program: GoPtr<Program>): void {
   if (SyncSet_Size<Path>(program!.snapshot!.changedFilesSet as SyncSet<Path>) === 0) {
     return;
   }
@@ -856,7 +857,7 @@ export function collectAllAffectedFiles(ctx: Context, program: GoPtr<Program>): 
   SyncSet_Range<Path>(
     program!.snapshot!.changedFilesSet as SyncSet<Path>,
     (file: Path): bool => {
-      wg.Queue((): void => {
+      wg!.Queue((): void => {
         for (const affectedFile of affectedFilesHandler_getFilesAffectedBy(handler, file)) {
           SyncSet_Add<GoPtr<SourceFile>>(result, affectedFile);
         }
@@ -864,9 +865,9 @@ export function collectAllAffectedFiles(ctx: Context, program: GoPtr<Program>): 
       return true as bool;
     }
   );
-  wg.RunAndWait();
+  wg!.RunAndWait();
 
-  if (ctx.Err() !== undefined) {
+  if (ctx!.Err() !== undefined) {
     return;
   }
 
@@ -876,13 +877,13 @@ export function collectAllAffectedFiles(ctx: Context, program: GoPtr<Program>): 
     result,
     (file: GoPtr<SourceFile>): bool => {
       const dtsChange = affectedFilesHandler_getDtsMayChange(handler, SourceFile_Path(file), emitKind);
-      wg.Queue((): void => {
+      wg!.Queue((): void => {
         affectedFilesHandler_handleDtsMayChangeOfAffectedFile(handler, dtsChange, file);
       });
       return true as bool;
     }
   );
-  wg.RunAndWait();
+  wg!.RunAndWait();
 
   affectedFilesHandler_updateSnapshot(handler);
 }

@@ -34,11 +34,11 @@ export function getBundledLibraryPath(): string {
 export function createInMemoryFileSystem(options: InMemoryFileSystemOptions): CompilerFileSystem {
   const files = options.files instanceof Map ? options.files : new Map(Object.entries(options.files));
   const fs = FromMap(files, (options.useCaseSensitiveFileNames ?? false) as bool);
-  return options.includeBundledLibraries === false ? fs : WrapFS(fs);
+  return options.includeBundledLibraries === false ? fs! : WrapFS(fs)!;
 }
 
 export function withBundledLibraries(fileSystem: CompilerFileSystem): CompilerFileSystem {
-  return WrapFS(fileSystem);
+  return WrapFS(fileSystem)!;
 }
 
 export function createCompilerHost(options: CompilerHostOptions): CompilerHost {
@@ -48,6 +48,6 @@ export function createCompilerHost(options: CompilerHostOptions): CompilerHost {
     : ((message: GoPtr<Message>, ...args: unknown[]): void => options.trace?.(message, ...args));
   const fs = options.includeBundledLibraries === false ? options.fileSystem : withBundledLibraries(options.fileSystem);
   return options.cacheFileSystem === false
-    ? NewCompilerHost(options.currentDirectory, fs, defaultLibraryPath, options.extendedConfigCache, trace)
-    : NewCachedFSCompilerHost(options.currentDirectory, fs, defaultLibraryPath, options.extendedConfigCache, trace);
+    ? NewCompilerHost(options.currentDirectory, fs, defaultLibraryPath, options.extendedConfigCache, trace)!
+    : NewCachedFSCompilerHost(options.currentDirectory, fs, defaultLibraryPath, options.extendedConfigCache, trace)!;
 }

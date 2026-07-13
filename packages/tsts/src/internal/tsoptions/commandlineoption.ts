@@ -21,6 +21,7 @@ import {
   watchFileEnumMap,
 } from "./enummaps.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::CommandLineOptionKind","kind":"type","status":"implemented","sigHash":"c8f201add3454d31edf99485739310a8aedb1f1cfe566de059b461899ef7913f"}
  *
@@ -113,7 +114,7 @@ export interface CommandLineOption {
   IsTSConfigOnly: bool;
   IsCommandLineOnly: bool;
   Description: GoPtr<Message>;
-  DefaultValueDescription: unknown;
+  DefaultValueDescription: GoInterface<unknown>;
   ShowInSimplifiedHelpView: bool;
   Category: GoPtr<Message>;
   extraValidation: extraValidation;

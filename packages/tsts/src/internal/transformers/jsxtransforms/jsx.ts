@@ -47,6 +47,7 @@ import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
 // `s[i]` is a byte, and slices like `s[i:j]` operate on byte offsets. The
 // standard-library facades (strings/strconv/utf8) follow that contract, so we
@@ -76,7 +77,7 @@ const byteSlice = StringByteSlice;
 export interface JSXTransformer {
   __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
-  emitResolver: EmitResolver;
+  emitResolver: GoInterface<EmitResolver>;
   importSpecifier: string;
   filenameDeclaration: GoPtr<Node>;
   utilizedImplicitRuntimeImports: OrderedMap<string, GoMap<string, GoPtr<Node>>>;
@@ -256,7 +257,7 @@ export function JSXTransformer_getImplicitImportForName(receiver: GoPtr<JSXTrans
     Suffix: "",
   });
   const specifier = NewImportSpecifier(astFactory, false, NewIdentifier(astFactory, name), generatedName);
-  receiver!.emitResolver.SetReferencedImportDeclaration(generatedName, specifier);
+  receiver!.emitResolver!.SetReferencedImportDeclaration(generatedName, specifier);
   const [existingMap] = OrderedMap_Get<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource);
   existingMap!.set(name, specifier);
   return AsImportSpecifier(specifier)!.name;
@@ -409,14 +410,14 @@ export function JSXTransformer_shouldUseCreateElement(receiver: GoPtr<JSXTransfo
  * 	return slices.Insert(to, statementIdx, statement)
  * }
  */
-export function insertStatementAfterPrologue<T>(to: GoSlice<GoPtr<Node>>, statement: GoPtr<Node>, isPrologueDirective: (callee: T, node: GoPtr<Node>) => bool, callee: T): GoSlice<GoPtr<Node>> {
+export function insertStatementAfterPrologue<T>(to: GoSlice<GoPtr<Node>>, statement: GoPtr<Node>, isPrologueDirective: GoFunc<(callee: T, node: GoPtr<Node>) => bool>, callee: T): GoSlice<GoPtr<Node>> {
   if (statement === undefined) {
     return to;
   }
   let statementIdx = 0;
   // skip all prologue directives to insert at the correct position
   for (; statementIdx < to.length; statementIdx++) {
-    if (!isPrologueDirective(callee, to[statementIdx])) {
+    if (!isPrologueDirective!(callee, to[statementIdx])) {
       break;
     }
   }
@@ -791,7 +792,7 @@ export function JSXTransformer_transformJsxChildToExpression(receiver: GoPtr<JSX
   const prev = receiver!.inJsxChild;
   JSXTransformer_setInChild(receiver, true);
   try {
-    return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(node);
+    return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(node);
   } finally {
     JSXTransformer_setInChild(receiver, prev);
   }
@@ -1066,15 +1067,15 @@ export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPt
         for (const prop of Node_Properties(Node_Expression(attr)) ?? []) {
           if (IsSpreadAssignment(prop)) {
             [expressions, properties] = JSXTransformer_combinePropertiesIntoNewExpression(receiver, expressions, properties);
-            expressions = [...expressions, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(Node_Expression(prop))];
+            expressions = [...expressions, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(Node_Expression(prop))];
             continue;
           }
-          properties = [...properties, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(prop)];
+          properties = [...properties, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(prop)];
         }
         continue;
       }
       [expressions, properties] = JSXTransformer_combinePropertiesIntoNewExpression(receiver, expressions, properties);
-      expressions = [...expressions, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(Node_Expression(attr))];
+      expressions = [...expressions, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(Node_Expression(attr))];
       continue;
     }
     properties = [...properties, JSXTransformer_transformJsxAttributeToObjectLiteralElement(receiver, AsJsxAttribute(attr))];
@@ -1200,7 +1201,7 @@ export function JSXTransformer_transformJsxSpreadAttributesToProps(receiver: GoP
     const [res] = NodeVisitor_VisitSlice(Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as ConcreteNodeVisitor, Node_Properties(node!.Expression) ?? []);
     return res;
   }
-  return [NewSpreadAssignment(astFactory, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(node!.Expression))];
+  return [NewSpreadAssignment(astFactory, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(node!.Expression))];
 }
 
 /**
@@ -1308,11 +1309,11 @@ export function JSXTransformer_transformJsxAttributeInitializer(receiver: GoPtr<
     if (AsJsxExpression(node)!.Expression === undefined) {
       return NodeFactory_NewTrueExpression(factory);
     }
-    return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(AsJsxExpression(node)!.Expression as unknown as GoPtr<Node>);
+    return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(AsJsxExpression(node)!.Expression as unknown as GoPtr<Node>);
   }
   if (IsJsxElement(node) || IsJsxSelfClosingElement(node) || IsJsxFragment(node)) {
     JSXTransformer_setInChild(receiver, false);
-    return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(node);
+    return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(node);
   }
   throw new globalThis.Error("Unhandled node kind found in jsx initializer: " + KindString(node!.Kind));
 }
@@ -1979,7 +1980,7 @@ export function fixupWhitespaceAndDecodeEntities(text: string): string {
 export function JSXTransformer_visitJsxExpression(receiver: GoPtr<JSXTransformer>, expression: GoPtr<JsxExpression>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  const e = (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(expression!.Expression as unknown as GoPtr<Node>);
+  const e = (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(expression!.Expression as unknown as GoPtr<Node>);
   if (expression!.DotDotDotToken !== undefined) {
     return NewSpreadElement(astFactory, e);
   }

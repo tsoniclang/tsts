@@ -2,6 +2,7 @@ import type { int } from "../../go/scalars.js";
 import type { Context } from "../../go/context.js";
 import { WithValue } from "../../go/context.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::type::key","kind":"type","status":"implemented","sigHash":"f26be130c67fd98788332ccdfb09f91dc509299c557e60555de3f9e4d4bde003"}
  *
@@ -30,8 +31,8 @@ export const checkerLifetimeKey: key = 1;
  * 	return context.WithValue(ctx, requestIDKey, id)
  * }
  */
-export function WithRequestID(ctx: Context, id: string): Context {
-  return WithValue(ctx, requestIDKey, id);
+export function WithRequestID(ctx: GoInterface<Context>, id: string): GoInterface<Context> {
+  return WithValue(ctx!, requestIDKey, id);
 }
 
 /**
@@ -45,8 +46,8 @@ export function WithRequestID(ctx: Context, id: string): Context {
  * 	return ""
  * }
  */
-export function GetRequestID(ctx: Context): string {
-  const value = ctx.Value(requestIDKey);
+export function GetRequestID(ctx: GoInterface<Context>): string {
+  const value = ctx!.Value(requestIDKey);
   if (typeof value === "string") {
     const id = value;
     return id;
@@ -84,8 +85,8 @@ export const CheckerLifetimeAPI: CheckerLifetime = 2;
  * 	return context.WithValue(ctx, checkerLifetimeKey, lifetime)
  * }
  */
-export function WithCheckerLifetime(ctx: Context, lifetime: CheckerLifetime): Context {
-  return WithValue(ctx, checkerLifetimeKey, lifetime);
+export function WithCheckerLifetime(ctx: GoInterface<Context>, lifetime: CheckerLifetime): GoInterface<Context> {
+  return WithValue(ctx!, checkerLifetimeKey, lifetime);
 }
 
 /**
@@ -99,8 +100,8 @@ export function WithCheckerLifetime(ctx: Context, lifetime: CheckerLifetime): Co
  * 	return CheckerLifetimeTemporary
  * }
  */
-export function GetCheckerLifetime(ctx: Context): CheckerLifetime {
-  const value = ctx.Value(checkerLifetimeKey);
+export function GetCheckerLifetime(ctx: GoInterface<Context>): CheckerLifetime {
+  const value = ctx!.Value(checkerLifetimeKey);
   if (typeof value === "number") {
     const lifetime = value;
     return lifetime;

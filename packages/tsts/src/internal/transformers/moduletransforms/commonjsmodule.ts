@@ -54,6 +54,7 @@ import type { externalModuleInfo } from "./externalmoduleinfo.js";
 import { getExternalModuleNameLiteral, isDeclarationNameOfEnumOrNamespace, isFileLevelReservedGeneratedIdentifier, isSimpleInlineableExpression, rewriteModuleSpecifier } from "./utilities.js";
 import { OrderedSet_Values } from "../../collections/ordered_set.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::type::CommonJSModuleTransformer","kind":"type","status":"implemented","sigHash":"6d4c0901945b9e8638e5f6f227099900201a96ea3928cc98c41cdb0923078648"}
  *
@@ -82,7 +83,7 @@ export interface CommonJSModuleTransformer {
   discardedValueVisitor: GoPtr<NodeVisitor>;
   assignmentPatternVisitor: GoPtr<NodeVisitor>;
   compilerOptions: GoPtr<CompilerOptions>;
-  resolver: ReferenceResolver;
+  resolver: GoInterface<ReferenceResolver>;
   getEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;
   moduleKind: ModuleKind;
   languageVersion: ScriptTarget;
@@ -3328,7 +3329,7 @@ export function CommonJSModuleTransformer_createAllExportExpressions(receiver: G
  */
 export function CommonJSModuleTransformer_isDirectExport(receiver: GoPtr<CommonJSModuleTransformer>, name: GoPtr<IdentifierNode>): bool {
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
-  const exportContainer = receiver!.resolver.GetReferencedExportContainer(EmitContext_MostOriginal(emitContext, name), false /*prefixLocals*/);
+  const exportContainer = receiver!.resolver!.GetReferencedExportContainer(EmitContext_MostOriginal(emitContext, name), false /*prefixLocals*/);
   return exportContainer !== undefined && IsSourceFile(exportContainer);
 }
 
@@ -4476,7 +4477,7 @@ export function CommonJSModuleTransformer_visitExpressionIdentifier(receiver: Go
     !IsHelperName(emitContext, node) &&
     !IsLocalName(emitContext, node) &&
     !isDeclarationNameOfEnumOrNamespace(emitContext, node)) {
-    const exportContainer = receiver!.resolver.GetReferencedExportContainer(EmitContext_MostOriginal(emitContext, node), IsExportName(emitContext, node));
+    const exportContainer = receiver!.resolver!.GetReferencedExportContainer(EmitContext_MostOriginal(emitContext, node), IsExportName(emitContext, node));
     if (exportContainer !== undefined && IsSourceFile(exportContainer)) {
       const reference = NewPropertyAccessExpression(
         pf!.__tsgoEmbedded0!,
@@ -4489,7 +4490,7 @@ export function CommonJSModuleTransformer_visitExpressionIdentifier(receiver: Go
       reference!.Loc = node!.Loc;
       return reference;
     }
-    const importDeclaration = receiver!.resolver.GetReferencedImportDeclaration(EmitContext_MostOriginal(emitContext, node));
+    const importDeclaration = receiver!.resolver!.GetReferencedImportDeclaration(EmitContext_MostOriginal(emitContext, node));
     if (importDeclaration !== undefined) {
       if (IsImportClause(importDeclaration)) {
         const reference = NewPropertyAccessExpression(
@@ -4581,13 +4582,13 @@ export function CommonJSModuleTransformer_visitExpressionIdentifier(receiver: Go
 export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSModuleTransformer>, name: GoPtr<IdentifierNode>): GoSlice<GoPtr<ModuleExportName>> {
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   if (!IsGeneratedIdentifier(emitContext, name)) {
-    const importDeclaration = receiver!.resolver.GetReferencedImportDeclaration(EmitContext_MostOriginal(emitContext, name));
+    const importDeclaration = receiver!.resolver!.GetReferencedImportDeclaration(EmitContext_MostOriginal(emitContext, name));
     if (importDeclaration !== undefined) {
       return MultiMap_Get(receiver!.currentModuleInfo!.exportedBindings, importDeclaration);
     }
     const bindingsSet = NewSetWithSizeHint<GoPtr<ModuleExportName>>(0);
     let bindings: GoSlice<GoPtr<ModuleExportName>> = [];
-    const declarations = receiver!.resolver.GetReferencedValueDeclarations(EmitContext_MostOriginal(emitContext, name));
+    const declarations = receiver!.resolver!.GetReferencedValueDeclarations(EmitContext_MostOriginal(emitContext, name));
     if (declarations !== null && declarations !== undefined) {
       for (const declaration of declarations) {
         const exportedBindings = MultiMap_Get(receiver!.currentModuleInfo!.exportedBindings, declaration);

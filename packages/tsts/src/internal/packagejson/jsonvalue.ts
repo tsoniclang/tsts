@@ -4,6 +4,7 @@ import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordere
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Decoder, UnmarshalerFrom } from "../json/json.js";
 
+import type { GoInterface } from "../../go/compat.js";
 const textDecoder = new globalThis.TextDecoder();
 type JSONValueElementFactory<T> = (value: JSONValue) => T;
 
@@ -90,7 +91,7 @@ export function JSONValueType_String(receiver: JSONValueType): string {
  */
 export interface JSONValue {
   Type: JSONValueType;
-  Value: unknown;
+  Value: GoInterface<unknown>;
 }
 
 /**
@@ -201,7 +202,7 @@ export function JSONValue_AsString(receiver: JSONValue): string {
  * Go source:
  * var _ json.UnmarshalerFrom = (*JSONValue)(nil)
  */
-export let __d3c38d60_0: UnmarshalerFrom = JSONValue_as_json_UnmarshalerFrom(undefined);
+export let __d3c38d60_0: GoInterface<UnmarshalerFrom> = JSONValue_as_json_UnmarshalerFrom(undefined);
 
 export function JSONValue_as_json_UnmarshalerFrom(receiver: GoPtr<JSONValue>): UnmarshalerFrom {
   return {

@@ -27,6 +27,7 @@ import { Checker_getApparentType } from "./types.js";
 import { CheckModeNormal, ReferenceHintDecorator, signatureHasRestParameter } from "./state.js";
 import type { Checker, CheckMode } from "./state.js";
 
+import type { GoRef } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkJSDocComments","kind":"method","status":"implemented","sigHash":"e58b196d503c8592581005e0aae4f2c48e3fff65d2a70e506e53edf7d1d4328e"}
  *
@@ -266,7 +267,7 @@ export function Checker_checkDecorator(receiver: GoPtr<Checker>, node: GoPtr<Nod
  * 	return c.resolveCall(node, callSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, headMessage)
  * }
  */
-export function Checker_resolveDecorator(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
+export function Checker_resolveDecorator(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoRef<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
   if (!CanHaveDecorators(node!.Parent)) {
     return Checker_resolveErrorCall(receiver, node);
   }

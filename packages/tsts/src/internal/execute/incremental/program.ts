@@ -46,6 +46,7 @@ import { snapshotToBuildInfo } from "./snapshottobuildinfo.js";
 import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 import { emitFiles } from "./emitfileshandler.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::SignatureUpdateKind","kind":"type","status":"implemented","sigHash":"ac0c33eecbaacc82f41ffe55d9ba7c906febdd4d060a27483938f399b0f01aee"}
  *
@@ -84,7 +85,7 @@ export const SignatureUpdateKindUsedVersion: SignatureUpdateKind = 2 as Signatur
 export interface Program {
   snapshot: GoPtr<snapshot>;
   program: GoPtr<Program_22a0a6ce>;
-  host: Host;
+  host: GoInterface<Host>;
   testingData: GoPtr<TestingData>;
 }
 
@@ -94,7 +95,7 @@ export interface Program {
  * Go source:
  * var _ compiler.ProgramLike = (*Program)(nil)
  */
-export let __9846d1d6_0: ProgramLike = Program_as_compiler_ProgramLike(undefined);
+export let __9846d1d6_0: GoInterface<ProgramLike> = Program_as_compiler_ProgramLike(undefined);
 
 export function Program_as_compiler_ProgramLike(receiver: GoPtr<Program>): ProgramLike {
   return {
@@ -140,7 +141,7 @@ export function Program_as_compiler_ProgramLike(receiver: GoPtr<Program>): Progr
  * 	return incrementalProgram
  * }
  */
-export function NewProgram(program: GoPtr<Program_22a0a6ce>, oldProgram: GoPtr<Program>, host: Host, testing: bool): GoPtr<Program> {
+export function NewProgram(program: GoPtr<Program_22a0a6ce>, oldProgram: GoPtr<Program>, host: GoInterface<Host>, testing: bool): GoPtr<Program> {
   const incrementalProgram: Program = {
     snapshot: programToSnapshot(program, oldProgram, testing),
     program: program,
@@ -335,7 +336,7 @@ export function Program_GetConfigFileParsingDiagnostics(receiver: GoPtr<Program>
  * 	return p.program.GetSyntacticDiagnostics(ctx, file)
  * }
  */
-export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   Program_panicIfNoProgram(receiver, "GetSyntacticDiagnostics");
   return compiler_Program_GetSyntacticDiagnostics(receiver!.program, ctx, file);
 }
@@ -349,7 +350,7 @@ export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: C
  * 	return p.program.GetBindDiagnostics(ctx, file)
  * }
  */
-export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   Program_panicIfNoProgram(receiver, "GetBindDiagnostics");
   return compiler_Program_GetBindDiagnostics(receiver!.program, ctx, file);
 }
@@ -377,7 +378,7 @@ export function Program_GetProgramDiagnostics(receiver: GoPtr<Program>): GoSlice
  * 	return p.program.GetGlobalDiagnostics(ctx)
  * }
  */
-export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: Context): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>): GoSlice<GoPtr<Diagnostic>> {
   Program_panicIfNoProgram(receiver, "GetGlobalDiagnostics");
   return compiler_Program_GetGlobalDiagnostics(receiver!.program, ctx);
 }
@@ -410,14 +411,14 @@ export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: Cont
  * 	return diagnostics
  * }
  */
-export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   Program_panicIfNoProgram(receiver, "GetSemanticDiagnostics");
   if (Tristate_IsTrue(receiver!.snapshot!.options!.NoCheck)) {
     return [];
   }
 
   Program_collectSemanticDiagnosticsOfAffectedFiles(receiver, ctx, file);
-  if (ctx.Err() !== undefined) {
+  if (ctx!.Err() !== undefined) {
     return [];
   }
 
@@ -480,7 +481,7 @@ export function Program_getSemanticDiagnosticsOfFile(receiver: GoPtr<Program>, f
  * 	return nil
  * }
  */
-export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   Program_panicIfNoProgram(receiver, "GetDeclarationDiagnostics");
   const result = emitFiles(ctx, receiver, { TargetSourceFile: file } as EmitOptions, true as bool);
   if (result !== undefined) {
@@ -498,7 +499,7 @@ export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx:
  * 	return p.program.GetSuggestionDiagnostics(ctx, file) // TODO: incremental suggestion diagnostics (only relevant in editor incremental builder?)
  * }
  */
-export function Program_GetSuggestionDiagnostics(receiver: GoPtr<Program>, ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetSuggestionDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   Program_panicIfNoProgram(receiver, "GetSuggestionDiagnostics");
   return compiler_Program_GetSuggestionDiagnostics(receiver!.program, ctx, file);
 }
@@ -535,7 +536,7 @@ export function Program_GetSuggestionDiagnostics(receiver: GoPtr<Program>, ctx: 
  * 	return emitFiles(ctx, p, options, false)
  * }
  */
-export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: EmitOptions): GoPtr<EmitResult> {
+export function Program_Emit(receiver: GoPtr<Program>, ctx: GoInterface<Context>, options: EmitOptions): GoPtr<EmitResult> {
   Program_panicIfNoProgram(receiver, "Emit");
 
   let result: GoPtr<EmitResult>;
@@ -543,7 +544,7 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
     result = { EmitSkipped: true as bool, Diagnostics: [], EmittedFiles: [], SourceMaps: [] } as EmitResult;
   } else {
     result = HandleNoEmitOnError(ctx, Program_as_compiler_ProgramLike(receiver), options.TargetSourceFile);
-    if (ctx.Err() !== undefined) {
+    if (ctx!.Err() !== undefined) {
       return undefined;
     }
   }
@@ -612,10 +613,10 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
  * 	p.snapshot.buildInfoEmitPending.Store(true)
  * }
  */
-export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPtr<Program>, ctx: Context, file: GoPtr<SourceFile>): void {
+export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): void {
   if (snapshot_canUseIncrementalState(receiver!.snapshot)) {
     collectAllAffectedFiles(ctx, receiver);
-    if (ctx.Err() !== undefined) {
+    if (ctx!.Err() !== undefined) {
       return;
     }
 
@@ -649,7 +650,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
   }
 
   const diagnosticsPerFile = compiler_Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver!.program, ctx, affectedFiles);
-  if (ctx.Err() !== undefined) {
+  if (ctx!.Err() !== undefined) {
     return;
   }
 
@@ -722,7 +723,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
  * 	}
  * }
  */
-export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, options: EmitOptions): GoPtr<EmitResult> {
+export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: GoInterface<Context>, options: EmitOptions): GoPtr<EmitResult> {
   // Tracing: omit defer tr.Push (single-threaded, no goroutine cleanup needed)
   const buildInfoFileName = GetBuildInfoFileName(receiver!.snapshot!.options, {
     CurrentDirectory: compiler_Program_GetCurrentDirectory(receiver!.program),
@@ -740,7 +741,7 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
   if (!receiver!.snapshot!.buildInfoEmitPending.Load()) {
     return undefined;
   }
-  if (ctx.Err() !== undefined) {
+  if (ctx!.Err() !== undefined) {
     return undefined;
   }
   const buildInfo = snapshotToBuildInfo(receiver!.snapshot, receiver!.program, buildInfoFileName);
@@ -749,7 +750,7 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
   if (options.WriteFile !== undefined) {
     err = options.WriteFile(buildInfoFileName, text, { BuildInfo: buildInfo } as import("../../compiler/program.js").WriteFileData);
   } else {
-    err = compiler_Program_Host(receiver!.program).FS().WriteFile(buildInfoFileName, text);
+    err = compiler_Program_Host(receiver!.program)!.FS()!.WriteFile(buildInfoFileName, text);
   }
   if (err !== undefined) {
     return {
@@ -839,7 +840,7 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
  * 	}
  * }
  */
-export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: Context, program: GoPtr<Program_22a0a6ce>): void {
+export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: GoInterface<Context>, program: GoPtr<Program_22a0a6ce>): void {
   let hasIncludeProcessingDiagnostics: (() => bool) | undefined;
   let hasEmitDiagnostics = false;
   if (snapshot_canUseIncrementalState(receiver!.snapshot)) {

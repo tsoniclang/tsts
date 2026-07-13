@@ -3,6 +3,7 @@ import { RWMutex } from "../../../go/sync.js";
 import type { FS } from "../vfs.js";
 import type { FSMock } from "./mock_generated.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/wrapper.go::func::Wrap","kind":"func","status":"implemented","sigHash":"462f048fe139267a07e0cf63f1bda61dc164bb450051a3a8e807e726d4b1c98d"}
  *
@@ -24,20 +25,20 @@ import type { FSMock } from "./mock_generated.js";
  * 	}
  * }
  */
-export function Wrap(fs: FS): GoPtr<FSMock> {
+export function Wrap(fs: GoInterface<FS>): GoPtr<FSMock> {
   return {
-    DirectoryExistsFunc: (path: string) => fs.DirectoryExists(path),
-    FileExistsFunc: (path: string) => fs.FileExists(path),
-    GetAccessibleEntriesFunc: (path: string) => fs.GetAccessibleEntries(path),
-    ReadFileFunc: (path: string) => fs.ReadFile(path),
-    RealpathFunc: (path: string) => fs.Realpath(path),
-    RemoveFunc: (path: string) => fs.Remove(path),
-    ChtimesFunc: (path: string, aTime, mTime) => fs.Chtimes(path, aTime, mTime),
-    StatFunc: (path: string) => fs.Stat(path),
-    UseCaseSensitiveFileNamesFunc: () => fs.UseCaseSensitiveFileNames(),
-    WalkDirFunc: (root: string, walkFn) => fs.WalkDir(root, walkFn),
-    WriteFileFunc: (path: string, data: string) => fs.WriteFile(path, data),
-    AppendFileFunc: (path: string, data: string) => fs.AppendFile(path, data),
+    DirectoryExistsFunc: (path: string) => fs!.DirectoryExists(path),
+    FileExistsFunc: (path: string) => fs!.FileExists(path),
+    GetAccessibleEntriesFunc: (path: string) => fs!.GetAccessibleEntries(path),
+    ReadFileFunc: (path: string) => fs!.ReadFile(path),
+    RealpathFunc: (path: string) => fs!.Realpath(path),
+    RemoveFunc: (path: string) => fs!.Remove(path),
+    ChtimesFunc: (path: string, aTime, mTime) => fs!.Chtimes(path, aTime, mTime),
+    StatFunc: (path: string) => fs!.Stat(path),
+    UseCaseSensitiveFileNamesFunc: () => fs!.UseCaseSensitiveFileNames(),
+    WalkDirFunc: (root: string, walkFn) => fs!.WalkDir(root, walkFn),
+    WriteFileFunc: (path: string, data: string) => fs!.WriteFile(path, data),
+    AppendFileFunc: (path: string, data: string) => fs!.AppendFile(path, data),
     calls: {
       AppendFile: [],
       Chtimes: [],

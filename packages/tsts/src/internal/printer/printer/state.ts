@@ -16,6 +16,7 @@ import type { EmitTextWriter } from "../emittextwriter.js";
 import type { NameGenerator } from "../namegenerator.js";
 import type { lineCharacterCache } from "../utilities.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::PrinterOptions","kind":"type","status":"implemented","sigHash":"e05c9b3336abcef2ef37a751378d949c3d6e7064f9bce544fdcba0c8fa66a958"}
  *
@@ -119,13 +120,13 @@ export interface PrinterOptions {
  * }
  */
 export interface PrintHandlers {
-  HasGlobalName?: (name: string) => bool;
-  OnBeforeEmitNode?: (nodeOpt: GoPtr<Node>) => void;
-  OnAfterEmitNode?: (nodeOpt: GoPtr<Node>) => void;
-  OnBeforeEmitNodeList?: (nodesOpt: GoPtr<NodeList>) => void;
-  OnAfterEmitNodeList?: (nodesOpt: GoPtr<NodeList>) => void;
-  OnBeforeEmitToken?: (nodeOpt: GoPtr<TokenNode>) => void;
-  OnAfterEmitToken?: (nodeOpt: GoPtr<TokenNode>) => void;
+  HasGlobalName?: GoFunc<(name: string) => bool>;
+  OnBeforeEmitNode?: GoFunc<(nodeOpt: GoPtr<Node>) => void>;
+  OnAfterEmitNode?: GoFunc<(nodeOpt: GoPtr<Node>) => void>;
+  OnBeforeEmitNodeList?: GoFunc<(nodesOpt: GoPtr<NodeList>) => void>;
+  OnAfterEmitNodeList?: GoFunc<(nodesOpt: GoPtr<NodeList>) => void>;
+  OnBeforeEmitToken?: GoFunc<(nodeOpt: GoPtr<TokenNode>) => void>;
+  OnAfterEmitToken?: GoFunc<(nodeOpt: GoPtr<TokenNode>) => void>;
 }
 
 /**
@@ -169,19 +170,19 @@ export interface Printer {
   Options: PrinterOptions;
   emitContext: GoPtr<EmitContext>;
   currentSourceFile: GoPtr<SourceFile>;
-  uniqueHelperNames: GoPtr<GoMap<string, GoPtr<IdentifierNode>>>;
+  uniqueHelperNames: GoMap<string, GoPtr<IdentifierNode>>;
   externalHelpersModuleName: GoPtr<IdentifierNode>;
   nextListElementPos: int;
-  writer: EmitTextWriter;
-  ownWriter: EmitTextWriter;
+  writer: GoInterface<EmitTextWriter>;
+  ownWriter: GoInterface<EmitTextWriter>;
   writeKind: WriteKind;
   sourceMapsDisabled: bool;
   sourceMapGenerator: GoPtr<Generator>;
-  sourceMapSource: Source;
+  sourceMapSource: GoInterface<Source>;
   sourceMapSourceIndex: SourceIndex;
   sourceMapSourceIsJson: bool;
   sourceMapLineCharCache: GoPtr<lineCharacterCache>;
-  mostRecentSourceMapSource: Source;
+  mostRecentSourceMapSource: GoInterface<Source>;
   mostRecentSourceMapSourceIndex: SourceIndex;
   containerPos: int;
   containerEnd: int;
@@ -190,10 +191,10 @@ export interface Printer {
   commentsDisabled: bool;
   inExtends: bool;
   nameGenerator: NameGenerator;
-  makeFileLevelOptimisticUniqueName: (arg0: string) => string;
+  makeFileLevelOptimisticUniqueName: GoFunc<(arg0: string) => string>;
   commentStateArena: Arena<commentState>;
   sourceMapStateArena: Arena<sourceMapState>;
-  IdToSymbol: GoPtr<GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>>;
+  IdToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>;
 }
 
 /**

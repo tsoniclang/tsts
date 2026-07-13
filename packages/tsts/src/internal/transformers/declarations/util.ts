@@ -82,6 +82,7 @@ import { EmitContext_ParseNode } from "../../printer/emitcontext.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { DeclarationEmitHost } from "./transform.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::needsScopeMarker","kind":"func","status":"implemented","sigHash":"7d7f40e3a8c63a70c2706f7e671f76debd787e6ecd343c7b0a1a101016f32933"}
  *
@@ -110,11 +111,11 @@ export function needsScopeMarker(result: GoPtr<Node>): bool {
  * 	return false
  * }
  */
-export function canHaveLiteralInitializer(host: DeclarationEmitHost, node: GoPtr<Node>): bool {
+export function canHaveLiteralInitializer(host: GoInterface<DeclarationEmitHost>, node: GoPtr<Node>): bool {
   switch (node!.Kind) {
     case KindPropertyDeclaration:
     case KindPropertySignature:
-      return (host.GetEffectiveDeclarationFlags(node, ModifierFlagsPrivate) === 0) as bool;
+      return (host!.GetEffectiveDeclarationFlags(node, ModifierFlagsPrivate) === 0) as bool;
     case KindParameter:
     case KindVariableDeclaration:
       return true as bool;
@@ -209,7 +210,7 @@ export function canProduceDiagnostics(node: GoPtr<Node>): bool {
  * 	return false
  * }
  */
-export function isDeclarationAndNotVisible(emitContext: GoPtr<EmitContext>, resolver: EmitResolver, node: GoPtr<Node>): bool {
+export function isDeclarationAndNotVisible(emitContext: GoPtr<EmitContext>, resolver: GoInterface<EmitResolver>, node: GoPtr<Node>): bool {
   const parseNode = EmitContext_ParseNode(emitContext, node);
   switch (parseNode!.Kind) {
     case KindFunctionDeclaration:
@@ -219,7 +220,7 @@ export function isDeclarationAndNotVisible(emitContext: GoPtr<EmitContext>, reso
     case KindTypeAliasDeclaration:
     case KindJSTypeAliasDeclaration:
     case KindEnumDeclaration:
-      return (!resolver.IsDeclarationVisible(parseNode)) as bool;
+      return (!resolver!.IsDeclarationVisible(parseNode)) as bool;
     // The following should be doing their own visibility checks based on filtering their members
     case KindVariableDeclaration:
       return (!getBindingNameVisible(resolver, parseNode)) as bool;
@@ -261,7 +262,7 @@ export function isDeclarationAndNotVisible(emitContext: GoPtr<EmitContext>, reso
  * 	}
  * }
  */
-export function getBindingNameVisible(resolver: EmitResolver, elem: GoPtr<Node>): bool {
+export function getBindingNameVisible(resolver: GoInterface<EmitResolver>, elem: GoPtr<Node>): bool {
   if (IsOmittedExpression(elem)) {
     return false as bool;
   }
@@ -279,7 +280,7 @@ export function getBindingNameVisible(resolver: EmitResolver, elem: GoPtr<Node>)
     }
     return false as bool;
   } else {
-    return resolver.IsDeclarationVisible(elem) as bool;
+    return resolver!.IsDeclarationVisible(elem) as bool;
   }
 }
 
@@ -385,8 +386,8 @@ export function unwrapParenthesizedExpression(o: GoPtr<Node>): GoPtr<Node> {
  * 	return node.AsNode().Parent.Kind == ast.KindMethodDeclaration && host.GetEffectiveDeclarationFlags(node.AsNode().Parent, ast.ModifierFlagsPrivate) != 0
  * }
  */
-export function isPrivateMethodTypeParameter(host: DeclarationEmitHost, node: GoPtr<TypeParameterDeclaration>): bool {
-  return (NodeDefault_AsNode(node)!.Parent!.Kind === KindMethodDeclaration && host.GetEffectiveDeclarationFlags(NodeDefault_AsNode(node)!.Parent, ModifierFlagsPrivate) !== 0) as bool;
+export function isPrivateMethodTypeParameter(host: GoInterface<DeclarationEmitHost>, node: GoPtr<TypeParameterDeclaration>): bool {
+  return (NodeDefault_AsNode(node)!.Parent!.Kind === KindMethodDeclaration && host!.GetEffectiveDeclarationFlags(NodeDefault_AsNode(node)!.Parent, ModifierFlagsPrivate) !== 0) as bool;
 }
 
 /**

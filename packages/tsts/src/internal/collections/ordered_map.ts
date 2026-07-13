@@ -8,6 +8,7 @@ import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
 import * as strconv from "../../go/strconv.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::OrderedMap","kind":"type","status":"implemented","sigHash":"671bcec921be98d7ca21605a749133736df54c2b4c9e9e08fe72c5ecd5265e1b"}
  *
@@ -478,7 +479,7 @@ export function OrderedMap_clone<K extends GoComparable, V>(receiver: GoPtr<Orde
  * Go source:
  * var _ json.MarshalerTo = (*OrderedMap[string, string])(nil)
  */
-export let __83877ae8_0: MarshalerTo = OrderedMap_as_json_MarshalerTo<string, string>(undefined);
+export let __83877ae8_0: GoInterface<MarshalerTo> = OrderedMap_as_json_MarshalerTo<string, string>(undefined);
 
 export function OrderedMap_as_json_MarshalerTo<K, V>(receiver: GoPtr<OrderedMap<K, V>>): MarshalerTo {
   return {
@@ -585,7 +586,7 @@ export function resolveKeyName(k: Value): [string, GoError] {
  * Go source:
  * var _ json.UnmarshalerFrom = (*OrderedMap[string, string])(nil)
  */
-export let ___2_ffc9f882_0: UnmarshalerFrom = OrderedMap_as_json_UnmarshalerFrom<string, string>(undefined);
+export let ___2_ffc9f882_0: GoInterface<UnmarshalerFrom> = OrderedMap_as_json_UnmarshalerFrom<string, string>(undefined);
 
 export function OrderedMap_as_json_UnmarshalerFrom<K, V>(receiver: GoPtr<OrderedMap<K, V>>): UnmarshalerFrom {
   return {
@@ -665,7 +666,7 @@ export function OrderedMap_UnmarshalJSONFrom<K extends GoComparable, V>(receiver
  * 	}, onAdded, onRemoved, onModified)
  * }
  */
-export function DiffOrderedMaps<K extends GoComparable, V extends GoComparable>(m1: GoPtr<OrderedMap<K, V>>, m2: GoPtr<OrderedMap<K, V>>, onAdded: (key: K, value: V) => void, onRemoved: (key: K, value: V) => void, onModified: (key: K, oldValue: V, newValue: V) => void): void {
+export function DiffOrderedMaps<K extends GoComparable, V extends GoComparable>(m1: GoPtr<OrderedMap<K, V>>, m2: GoPtr<OrderedMap<K, V>>, onAdded: GoFunc<(key: K, value: V) => void>, onRemoved: GoFunc<(key: K, value: V) => void>, onModified: GoFunc<(key: K, oldValue: V, newValue: V) => void>): void {
   DiffOrderedMapsFunc(m1, m2, (a: V, b: V): bool => {
     return a === b;
   }, onAdded, onRemoved, onModified);
@@ -692,22 +693,22 @@ export function DiffOrderedMaps<K extends GoComparable, V extends GoComparable>(
  * 	}
  * }
  */
-export function DiffOrderedMapsFunc<K extends GoComparable, V>(m1: GoPtr<OrderedMap<K, V>>, m2: GoPtr<OrderedMap<K, V>>, equalValues: (a: V, b: V) => bool, onAdded: (key: K, value: V) => void, onRemoved: (key: K, value: V) => void, onModified: (key: K, oldValue: V, newValue: V) => void): void {
+export function DiffOrderedMapsFunc<K extends GoComparable, V>(m1: GoPtr<OrderedMap<K, V>>, m2: GoPtr<OrderedMap<K, V>>, equalValues: GoFunc<(a: V, b: V) => bool>, onAdded: GoFunc<(key: K, value: V) => void>, onRemoved: GoFunc<(key: K, value: V) => void>, onModified: GoFunc<(key: K, oldValue: V, newValue: V) => void>): void {
   OrderedMap_Entries(m2)!((k: K, v2: V): bool => {
     const [, ok] = OrderedMap_Get(m1, k);
     if (!ok) {
-      onAdded(k, v2);
+      onAdded!(k, v2);
     }
     return true;
   });
   OrderedMap_Entries(m1)!((k: K, v1: V): bool => {
     const [v2, ok] = OrderedMap_Get(m2, k);
     if (ok) {
-      if (!equalValues(v1, v2)) {
-        onModified(k, v1, v2);
+      if (!equalValues!(v1, v2)) {
+        onModified!(k, v1, v2);
       }
     } else {
-      onRemoved(k, v1);
+      onRemoved!(k, v1);
     }
     return true;
   });

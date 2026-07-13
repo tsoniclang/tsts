@@ -1121,7 +1121,7 @@ export function NodeBuilderImpl_serializeTypeAliasForNamespace(receiver: GoPtr<N
   const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
   receiver!.ctx!.flags = (receiver!.ctx!.flags | FlagsInTypeAlias) as Flags;
   const typeNode = NodeBuilderImpl_typeToTypeNode(receiver, aliasType);
-  restoreFlags();
+  restoreFlags!();
   receiver!.ctx!.approximateLength += 8 + name.length;
   return NewTypeAliasDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, name), NodeFactory_NewNodeList(receiver!.f, typeParamDecls), typeNode);
 }

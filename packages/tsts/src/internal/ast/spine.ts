@@ -39,6 +39,7 @@ import {
 } from "./subtreefacts.js";
 import { ModifierFlagsAmbient } from "./modifierflags.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 // ──────────────────────────────────────────────────────────────────────
 // Go interface value brand
 //
@@ -56,7 +57,7 @@ import { ModifierFlagsAmbient } from "./modifierflags.js";
  * Go source:
  * type Visitor func(*Node) bool
  */
-export type Visitor = (arg0: GoPtr<Node>) => bool;
+export type Visitor = GoFunc<(arg0: GoPtr<Node>) => bool>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::visit","kind":"func","status":"implemented","sigHash":"bef78268f8a3a18b41ab5c60fb297d2a9369e5cdbf170f785c999f329d979b43"}
@@ -71,7 +72,7 @@ export type Visitor = (arg0: GoPtr<Node>) => bool;
  */
 export function visit(v: Visitor, node: GoPtr<Node>): bool {
   if (node !== undefined) {
-    return v(node);
+    return v!(node);
   }
   return false as bool;
 }
@@ -91,7 +92,7 @@ export function visit(v: Visitor, node: GoPtr<Node>): bool {
  */
 export function visitNodes(v: Visitor, nodes: GoSlice<GoPtr<Node>>): bool {
   for (const node of nodes) {
-    if (v(node)) {
+    if (v!(node)) {
       return true as bool;
     }
   }
@@ -208,7 +209,7 @@ export interface Node {
   Loc: TextRange;
   id: Uint64;
   Parent: GoPtr<Node>;
-  data: nodeData;
+  data: GoInterface<nodeData>;
 }
 
 /**
@@ -244,7 +245,7 @@ export interface nodeData extends GoInterfaceValue<unknown> {
   ForEachChild(v: Visitor): bool;
   IterChildren(): GoSeq<GoPtr<Node>>;
   VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node>;
-  Clone(v: NodeFactoryCoercible): GoPtr<Node>;
+  Clone(v: GoInterface<NodeFactoryCoercible>): GoPtr<Node>;
   Name(): GoPtr<DeclarationName>;
   Modifiers(): GoPtr<ModifierList>;
   setModifiers(modifiers: GoPtr<ModifierList>): void;
@@ -259,7 +260,7 @@ export interface nodeData extends GoInterfaceValue<unknown> {
   TemplateLiteralLikeData(): GoPtr<TemplateLiteralLikeNodeBaseType>;
   SubtreeFacts(): SubtreeFacts;
   computeSubtreeFacts(): SubtreeFacts;
-  subtreeFactsWorker(self: nodeData): SubtreeFacts;
+  subtreeFactsWorker(self: GoInterface<nodeData>): SubtreeFacts;
   propagateSubtreeFacts(): SubtreeFacts;
 }
 
@@ -329,8 +330,8 @@ export function NewNodeFactory(hooks: NodeFactoryHooks): GoPtr<NodeFactory> {
  * 	return n
  * }
  */
-export function newNode(kind: Kind, data: nodeData, hooks: NodeFactoryHooks): GoPtr<Node> {
-  const n = data.AsNode();
+export function newNode(kind: Kind, data: GoInterface<nodeData>, hooks: NodeFactoryHooks): GoPtr<Node> {
+  const n = data!.AsNode();
   n!.Loc = UndefinedTextRange();
   n!.Kind = kind;
   n!.data = data;
@@ -349,7 +350,7 @@ export function newNode(kind: Kind, data: nodeData, hooks: NodeFactoryHooks): Go
  * 	return newNode(kind, data, f.hooks)
  * }
  */
-export function NodeFactory_newNode(receiver: GoPtr<NodeFactory>, kind: Kind, data: nodeData): GoPtr<Node> {
+export function NodeFactory_newNode(receiver: GoPtr<NodeFactory>, kind: Kind, data: GoInterface<nodeData>): GoPtr<Node> {
   receiver!.nodeCount = (receiver!.nodeCount + 1) as int;
   return newNode(kind, data, receiver!.hooks);
 }
@@ -502,8 +503,8 @@ export function NodeList_HasTrailingComma(receiver: GoPtr<NodeList>): bool {
  * 	return result
  * }
  */
-export function NodeList_Clone(receiver: GoPtr<NodeList>, f: NodeFactoryCoercible): GoPtr<NodeList> {
-  const result = NodeFactory_NewNodeList(f.AsNodeFactory(), receiver!.Nodes);
+export function NodeList_Clone(receiver: GoPtr<NodeList>, f: GoInterface<NodeFactoryCoercible>): GoPtr<NodeList> {
+  const result = NodeFactory_NewNodeList(f!.AsNodeFactory(), receiver!.Nodes);
   result!.Loc = receiver!.Loc;
   return result;
 }
@@ -552,9 +553,9 @@ export function ModifierList_Clone(receiver: GoPtr<ModifierList>, f: GoPtr<NodeF
  * 	}
  * }
  */
-export function invert(yield_: (v: GoPtr<Node>) => bool): Visitor {
+export function invert(yield_: GoFunc<(v: GoPtr<Node>) => bool>): Visitor {
   return (n: GoPtr<Node>): bool => {
-    return (!yield_(n)) as bool;
+    return (!yield_!(n)) as bool;
   };
 }
 
@@ -605,8 +606,8 @@ export function NodeDefault_ForEachChild(receiver: GoPtr<NodeDefault>, v: Visito
  * 	node.data.ForEachChild(invert(yield)) // `true` is return early for a ts visitor, `false` is return early for a go iterator yield function
  * }
  */
-export function NodeDefault_forEachChildIter(receiver: GoPtr<NodeDefault>, yield_: (v: GoPtr<Node>) => bool): void {
-  receiver!.data.ForEachChild(invert(yield_));
+export function NodeDefault_forEachChildIter(receiver: GoPtr<NodeDefault>, yield_: GoFunc<(v: GoPtr<Node>) => bool>): void {
+  receiver!.data!.ForEachChild(invert(yield_));
 }
 
 /**
@@ -637,7 +638,7 @@ export function NodeDefault_VisitEachChild(receiver: GoPtr<NodeDefault>, v: GoPt
  * Go source:
  * func (node *NodeDefault) Clone(v NodeFactoryCoercible) *Node                    { return nil }
  */
-export function NodeDefault_Clone(receiver: GoPtr<NodeDefault>, v: NodeFactoryCoercible): GoPtr<Node> {
+export function NodeDefault_Clone(receiver: GoPtr<NodeDefault>, v: GoInterface<NodeFactoryCoercible>): GoPtr<Node> {
   return undefined;
 }
 
@@ -769,7 +770,7 @@ export function NodeDefault_TemplateLiteralLikeData(receiver: GoPtr<NodeDefault>
  * }
  */
 export function NodeDefault_SubtreeFacts(receiver: GoPtr<NodeDefault>): SubtreeFacts {
-  return receiver!.data.subtreeFactsWorker(receiver!.data);
+  return receiver!.data!.subtreeFactsWorker(receiver!.data);
 }
 
 /**
@@ -780,8 +781,8 @@ export function NodeDefault_SubtreeFacts(receiver: GoPtr<NodeDefault>): SubtreeF
  * 	return self.computeSubtreeFacts()
  * }
  */
-export function NodeDefault_subtreeFactsWorker(receiver: GoPtr<NodeDefault>, self: nodeData): SubtreeFacts {
-  return self.computeSubtreeFacts();
+export function NodeDefault_subtreeFactsWorker(receiver: GoPtr<NodeDefault>, self: GoInterface<nodeData>): SubtreeFacts {
+  return self!.computeSubtreeFacts();
 }
 
 /**
@@ -805,7 +806,7 @@ export function NodeDefault_computeSubtreeFacts(receiver: GoPtr<NodeDefault>): S
  * }
  */
 export function NodeDefault_propagateSubtreeFacts(receiver: GoPtr<NodeDefault>): SubtreeFacts {
-  return (receiver!.data.SubtreeFacts() & ~SubtreeExclusionsNode) >>> 0;
+  return (receiver!.data!.SubtreeFacts() & ~SubtreeExclusionsNode) >>> 0;
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -850,7 +851,7 @@ export function Node_End(receiver: GoPtr<Node>): int {
  * func (n *Node) ForEachChild(v Visitor) bool               { return n.data.ForEachChild(v) }
  */
 export function Node_ForEachChild(receiver: GoPtr<Node>, v: Visitor): bool {
-  return receiver!.data.ForEachChild(v);
+  return receiver!.data!.ForEachChild(v);
 }
 
 /**
@@ -860,7 +861,7 @@ export function Node_ForEachChild(receiver: GoPtr<Node>, v: Visitor): bool {
  * func (n *Node) IterChildren() iter.Seq[*Node]             { return n.data.IterChildren() }
  */
 export function Node_IterChildren(receiver: GoPtr<Node>): GoSeq<GoPtr<Node>> {
-  return receiver!.data.IterChildren();
+  return receiver!.data!.IterChildren();
 }
 
 /**
@@ -869,8 +870,8 @@ export function Node_IterChildren(receiver: GoPtr<Node>): GoSeq<GoPtr<Node>> {
  * Go source:
  * func (n *Node) Clone(f NodeFactoryCoercible) *Node        { return n.data.Clone(f) }
  */
-export function Node_Clone(receiver: GoPtr<Node>, f: NodeFactoryCoercible): GoPtr<Node> {
-  return receiver!.data.Clone(f);
+export function Node_Clone(receiver: GoPtr<Node>, f: GoInterface<NodeFactoryCoercible>): GoPtr<Node> {
+  return receiver!.data!.Clone(f);
 }
 
 /**
@@ -880,7 +881,7 @@ export function Node_Clone(receiver: GoPtr<Node>, f: NodeFactoryCoercible): GoPt
  * func (n *Node) VisitEachChild(v *NodeVisitor) *Node       { return n.data.VisitEachChild(v) }
  */
 export function Node_VisitEachChild(receiver: GoPtr<Node>, v: GoPtr<NodeVisitor>): GoPtr<Node> {
-  return receiver!.data.VisitEachChild(v);
+  return receiver!.data!.VisitEachChild(v);
 }
 
 /**
@@ -890,7 +891,7 @@ export function Node_VisitEachChild(receiver: GoPtr<Node>, v: GoPtr<NodeVisitor>
  * func (n *Node) Name() *DeclarationName                    { return n.data.Name() }
  */
 export function Node_Name(receiver: GoPtr<Node>): GoPtr<DeclarationName> {
-  return receiver!.data.Name();
+  return receiver!.data!.Name();
 }
 
 /**
@@ -900,7 +901,7 @@ export function Node_Name(receiver: GoPtr<Node>): GoPtr<DeclarationName> {
  * func (n *Node) Modifiers() *ModifierList                  { return n.data.Modifiers() }
  */
 export function Node_Modifiers(receiver: GoPtr<Node>): GoPtr<ModifierList> {
-  return receiver!.data.Modifiers();
+  return receiver!.data!.Modifiers();
 }
 
 /**
@@ -910,7 +911,7 @@ export function Node_Modifiers(receiver: GoPtr<Node>): GoPtr<ModifierList> {
  * func (n *Node) FlowNodeData() *FlowNodeBase               { return n.data.FlowNodeData() }
  */
 export function Node_FlowNodeData(receiver: GoPtr<Node>): GoPtr<FlowNodeBaseType> {
-  return receiver!.data.FlowNodeData();
+  return receiver!.data!.FlowNodeData();
 }
 
 /**
@@ -920,7 +921,7 @@ export function Node_FlowNodeData(receiver: GoPtr<Node>): GoPtr<FlowNodeBaseType
  * func (n *Node) DeclarationData() *DeclarationBase         { return n.data.DeclarationData() }
  */
 export function Node_DeclarationData(receiver: GoPtr<Node>): GoPtr<DeclarationBaseType> {
-  return receiver!.data.DeclarationData();
+  return receiver!.data!.DeclarationData();
 }
 
 /**
@@ -930,7 +931,7 @@ export function Node_DeclarationData(receiver: GoPtr<Node>): GoPtr<DeclarationBa
  * func (n *Node) ExportableData() *ExportableBase           { return n.data.ExportableData() }
  */
 export function Node_ExportableData(receiver: GoPtr<Node>): GoPtr<ExportableBaseType> {
-  return receiver!.data.ExportableData();
+  return receiver!.data!.ExportableData();
 }
 
 /**
@@ -940,7 +941,7 @@ export function Node_ExportableData(receiver: GoPtr<Node>): GoPtr<ExportableBase
  * func (n *Node) LocalsContainerData() *LocalsContainerBase { return n.data.LocalsContainerData() }
  */
 export function Node_LocalsContainerData(receiver: GoPtr<Node>): GoPtr<LocalsContainerBaseType> {
-  return receiver!.data.LocalsContainerData();
+  return receiver!.data!.LocalsContainerData();
 }
 
 /**
@@ -950,7 +951,7 @@ export function Node_LocalsContainerData(receiver: GoPtr<Node>): GoPtr<LocalsCon
  * func (n *Node) FunctionLikeData() *FunctionLikeBase       { return n.data.FunctionLikeData() }
  */
 export function Node_FunctionLikeData(receiver: GoPtr<Node>): GoPtr<FunctionLikeBaseType> {
-  return receiver!.data.FunctionLikeData();
+  return receiver!.data!.FunctionLikeData();
 }
 
 /**
@@ -960,7 +961,7 @@ export function Node_FunctionLikeData(receiver: GoPtr<Node>): GoPtr<FunctionLike
  * func (n *Node) ClassLikeData() *ClassLikeBase             { return n.data.ClassLikeData() }
  */
 export function Node_ClassLikeData(receiver: GoPtr<Node>): GoPtr<ClassLikeBaseType> {
-  return receiver!.data.ClassLikeData();
+  return receiver!.data!.ClassLikeData();
 }
 
 /**
@@ -970,7 +971,7 @@ export function Node_ClassLikeData(receiver: GoPtr<Node>): GoPtr<ClassLikeBaseTy
  * func (n *Node) BodyData() *BodyBase                       { return n.data.BodyData() }
  */
 export function Node_BodyData(receiver: GoPtr<Node>): GoPtr<BodyBaseType> {
-  return receiver!.data.BodyData();
+  return receiver!.data!.BodyData();
 }
 
 /**
@@ -980,7 +981,7 @@ export function Node_BodyData(receiver: GoPtr<Node>): GoPtr<BodyBaseType> {
  * func (n *Node) SubtreeFacts() SubtreeFacts                { return n.data.SubtreeFacts() }
  */
 export function Node_SubtreeFacts(receiver: GoPtr<Node>): SubtreeFacts {
-  return receiver!.data.SubtreeFacts();
+  return receiver!.data!.SubtreeFacts();
 }
 
 /**
@@ -990,7 +991,7 @@ export function Node_SubtreeFacts(receiver: GoPtr<Node>): SubtreeFacts {
  * func (n *Node) propagateSubtreeFacts() SubtreeFacts       { return n.data.propagateSubtreeFacts() }
  */
 export function Node_propagateSubtreeFacts(receiver: GoPtr<Node>): SubtreeFacts {
-  return receiver!.data.propagateSubtreeFacts();
+  return receiver!.data!.propagateSubtreeFacts();
 }
 
 /**
@@ -1000,7 +1001,7 @@ export function Node_propagateSubtreeFacts(receiver: GoPtr<Node>): SubtreeFacts 
  * func (n *Node) LiteralLikeData() *LiteralLikeNodeBase     { return n.data.LiteralLikeData() }
  */
 export function Node_LiteralLikeData(receiver: GoPtr<Node>): GoPtr<LiteralLikeNodeBaseType> {
-  return receiver!.data.LiteralLikeData();
+  return receiver!.data!.LiteralLikeData();
 }
 
 /**
@@ -1012,7 +1013,7 @@ export function Node_LiteralLikeData(receiver: GoPtr<Node>): GoPtr<LiteralLikeNo
  * }
  */
 export function Node_TemplateLiteralLikeData(receiver: GoPtr<Node>): GoPtr<TemplateLiteralLikeNodeBaseType> {
-  return receiver!.data.TemplateLiteralLikeData();
+  return receiver!.data!.TemplateLiteralLikeData();
 }
 
 /**
@@ -1184,11 +1185,11 @@ export function FlowNodeBase_FlowNodeData(receiver: GoPtr<FlowNodeBaseType>): Go
  * 	return facts &^ SubtreeFactsComputed
  * }
  */
-export function CompositeBase_subtreeFactsWorker(receiver: GoPtr<CompositeBaseType>, self: nodeData): SubtreeFacts {
+export function CompositeBase_subtreeFactsWorker(receiver: GoPtr<CompositeBaseType>, self: GoInterface<nodeData>): SubtreeFacts {
   receiver!.facts ??= new Uint32();
   let facts: SubtreeFacts = receiver!.facts.Load();
   if ((facts & SubtreeFactsComputed) === 0) {
-    facts = (facts | self.computeSubtreeFacts() | SubtreeFactsComputed) >>> 0;
+    facts = (facts | self!.computeSubtreeFacts() | SubtreeFactsComputed) >>> 0;
     receiver!.facts.Store(facts >>> 0);
   }
   return (facts & ~SubtreeFactsComputed) >>> 0;

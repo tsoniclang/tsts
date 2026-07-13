@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoConstraint, GoSlice } from "../../go/compat.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/binarysearch.go::func::BinarySearchUniqueFunc","kind":"func","status":"implemented","sigHash":"eb9aa8d5ae45b66b6740ea5a604ff6184345506ebd0c4f35d9d51c339045e8f6"}
  *
@@ -25,7 +26,7 @@ import type { GoConstraint, GoSlice } from "../../go/compat.js";
  * 	return low, false
  * }
  */
-export function BinarySearchUniqueFunc<S extends GoConstraint<"~[]E"> & GoSlice<E>, E>(x: S, cmp: (arg0: int, arg1: E) => int): [int, bool] {
+export function BinarySearchUniqueFunc<S extends GoConstraint<"~[]E"> & GoSlice<E>, E>(x: S, cmp: GoFunc<(arg0: int, arg1: E) => int>): [int, bool] {
   const n = x.length as int;
   if (n === 0) {
     return [0 as int, false];
@@ -34,7 +35,7 @@ export function BinarySearchUniqueFunc<S extends GoConstraint<"~[]E"> & GoSlice<
   let high = (n - 1) as int;
   while (low <= high) {
     const middle = (low + ((high - low) >> 1)) as int;
-    const value = cmp(middle, x[middle]!);
+    const value = cmp!(middle, x[middle]!);
     if (value < 0) {
       low = (middle + 1) as int;
     } else if (value > 0) {

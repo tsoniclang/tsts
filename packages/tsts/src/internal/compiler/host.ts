@@ -12,6 +12,7 @@ import { From as cachedvfsFrom, FS_as_vfs_FS as cachedvfsAsVfsFS } from "../vfs/
 import { init as initJSDocParser } from "../parser/jsdoc.js";
 import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
 
+import type { GoInterface } from "../../go/compat.js";
 initJSDocParser();
 
 /**
@@ -28,7 +29,7 @@ initJSDocParser();
  * }
  */
 export interface CompilerHost {
-  FS(): FS_4e804012;
+  FS(): GoInterface<FS_4e804012>;
   DefaultLibraryPath(): string;
   GetCurrentDirectory(): string;
   Trace(msg: GoPtr<Message>, ...args: Array<unknown>): void;
@@ -42,11 +43,11 @@ export interface CompilerHost {
  * Go source:
  * var _ CompilerHost = (*compilerHost)(nil)
  */
-export let __9ad05d82_0: CompilerHost = compilerHost_as_compiler_CompilerHost(undefined);
+export let __9ad05d82_0: GoInterface<CompilerHost> = compilerHost_as_compiler_CompilerHost(undefined);
 
 export function compilerHost_as_compiler_CompilerHost(receiver: GoPtr<compilerHost>): CompilerHost {
   return {
-    FS: (): FS_4e804012 => compilerHost_FS(receiver),
+    FS: (): FS_4e804012 => compilerHost_FS(receiver)!,
     DefaultLibraryPath: (): string => compilerHost_DefaultLibraryPath(receiver),
     GetCurrentDirectory: (): string => compilerHost_GetCurrentDirectory(receiver),
     Trace: (msg: GoPtr<Message>, ...args: Array<unknown>): void => compilerHost_Trace(receiver, msg, ...args),
@@ -69,7 +70,7 @@ export function compilerHost_as_compiler_CompilerHost(receiver: GoPtr<compilerHo
  */
 export interface compilerHost {
   currentDirectory: string;
-  fs: FS_4e804012;
+  fs: GoInterface<FS_4e804012>;
   defaultLibraryPath: string;
   extendedConfigCache: GoPtr<ExtendedConfigCache>;
   trace: (msg: GoPtr<Message>, ...args: Array<unknown>) => void;
@@ -89,7 +90,7 @@ export interface compilerHost {
  * 	return NewCompilerHost(currentDirectory, cachedvfs.From(fs), defaultLibraryPath, extendedConfigCache, trace)
  * }
  */
-export function NewCachedFSCompilerHost(currentDirectory: string, fs: FS_4e804012, defaultLibraryPath: string, extendedConfigCache: GoPtr<ExtendedConfigCache>, trace: GoPtr<(msg: GoPtr<Message>, ...args: Array<unknown>) => void>): CompilerHost {
+export function NewCachedFSCompilerHost(currentDirectory: string, fs: GoInterface<FS_4e804012>, defaultLibraryPath: string, extendedConfigCache: GoPtr<ExtendedConfigCache>, trace: GoPtr<(msg: GoPtr<Message>, ...args: Array<unknown>) => void>): GoInterface<CompilerHost> {
   return NewCompilerHost(currentDirectory, cachedvfsAsVfsFS(cachedvfsFrom(fs)), defaultLibraryPath, extendedConfigCache, trace);
 }
 
@@ -116,7 +117,7 @@ export function NewCachedFSCompilerHost(currentDirectory: string, fs: FS_4e80401
  * 	}
  * }
  */
-export function NewCompilerHost(currentDirectory: string, fs: FS_4e804012, defaultLibraryPath: string, extendedConfigCache: GoPtr<ExtendedConfigCache>, trace: GoPtr<(msg: GoPtr<Message>, ...args: Array<unknown>) => void>): CompilerHost {
+export function NewCompilerHost(currentDirectory: string, fs: GoInterface<FS_4e804012>, defaultLibraryPath: string, extendedConfigCache: GoPtr<ExtendedConfigCache>, trace: GoPtr<(msg: GoPtr<Message>, ...args: Array<unknown>) => void>): GoInterface<CompilerHost> {
   if (trace === undefined) {
     trace = (_msg: GoPtr<Message>, ..._args: Array<unknown>): void => {};
   }
@@ -138,7 +139,7 @@ export function NewCompilerHost(currentDirectory: string, fs: FS_4e804012, defau
  * 	return h.fs
  * }
  */
-export function compilerHost_FS(receiver: GoPtr<compilerHost>): FS_4e804012 {
+export function compilerHost_FS(receiver: GoPtr<compilerHost>): GoInterface<FS_4e804012> {
   return receiver!.fs;
 }
 
@@ -191,7 +192,7 @@ export function compilerHost_Trace(receiver: GoPtr<compilerHost>, msg: GoPtr<Mes
  * }
  */
 export function compilerHost_GetSourceFile(receiver: GoPtr<compilerHost>, opts: SourceFileParseOptions): GoPtr<SourceFile> {
-  const [text, ok] = compilerHost_FS(receiver).ReadFile(opts.FileName);
+  const [text, ok] = compilerHost_FS(receiver)!.ReadFile(opts.FileName);
   if (!ok) {
     return undefined;
   }

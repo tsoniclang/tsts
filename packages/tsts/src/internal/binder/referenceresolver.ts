@@ -17,6 +17,7 @@ import type { Message } from "../diagnostics/diagnostics.js";
 import { NameResolver_Resolve } from "./nameresolver.js";
 import type { NameResolver } from "./nameresolver.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"implemented","sigHash":"116c7dbca6419fe3a56769e505765cff79fed3244bc81b4465a5b4fa4058737d"}
  *
@@ -55,14 +56,14 @@ export interface ReferenceResolver {
  * }
  */
 export interface ReferenceResolverHooks {
-  ResolveName: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>;
-  GetResolvedSymbol: (arg0: GoPtr<Node>) => GoPtr<Symbol>;
-  GetMergedSymbol: (arg0: GoPtr<Symbol>) => GoPtr<Symbol>;
-  GetParentOfSymbol: (arg0: GoPtr<Symbol>) => GoPtr<Symbol>;
-  GetSymbolOfDeclaration: (arg0: GoPtr<Declaration>) => GoPtr<Symbol>;
-  GetTypeOnlyAliasDeclaration: (symbol_: GoPtr<Symbol>, include: SymbolFlags) => GoPtr<Declaration>;
-  GetExportSymbolOfValueSymbolIfExported: (arg0: GoPtr<Symbol>) => GoPtr<Symbol>;
-  GetElementAccessExpressionName: (arg0: GoPtr<ElementAccessExpression>) => [string, bool];
+  ResolveName: GoFunc<(location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>>;
+  GetResolvedSymbol: GoFunc<(arg0: GoPtr<Node>) => GoPtr<Symbol>>;
+  GetMergedSymbol: GoFunc<(arg0: GoPtr<Symbol>) => GoPtr<Symbol>>;
+  GetParentOfSymbol: GoFunc<(arg0: GoPtr<Symbol>) => GoPtr<Symbol>>;
+  GetSymbolOfDeclaration: GoFunc<(arg0: GoPtr<Declaration>) => GoPtr<Symbol>>;
+  GetTypeOnlyAliasDeclaration: GoFunc<(symbol_: GoPtr<Symbol>, include: SymbolFlags) => GoPtr<Declaration>>;
+  GetExportSymbolOfValueSymbolIfExported: GoFunc<(arg0: GoPtr<Symbol>) => GoPtr<Symbol>>;
+  GetElementAccessExpressionName: GoFunc<(arg0: GoPtr<ElementAccessExpression>) => [string, bool]>;
 }
 
 /**
@@ -71,7 +72,7 @@ export interface ReferenceResolverHooks {
  * Go source:
  * var _ ReferenceResolver = &referenceResolver{}
  */
-export let __e8d524b9_0: ReferenceResolver = referenceResolver_as_ReferenceResolver(undefined);
+export let __e8d524b9_0: GoInterface<ReferenceResolver> = referenceResolver_as_ReferenceResolver(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::referenceResolver","kind":"type","status":"implemented","sigHash":"d9982ff89ac466401b9be499c4e336677e27f5d99e85f70e986f3c1b31e445a2"}
@@ -124,7 +125,7 @@ function referenceResolver_as_ReferenceResolver(receiver: GoPtr<referenceResolve
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::func::NewReferenceResolver","kind":"func","status":"implemented","sigHash":"ba184e1c6ff3ed11ae3071a1c716cd90a8347e0d3c45d360c5ee8d3b297548a0"}
  */
-export function NewReferenceResolver(options: GoPtr<CompilerOptions>, hooks: ReferenceResolverHooks): ReferenceResolver {
+export function NewReferenceResolver(options: GoPtr<CompilerOptions>, hooks: ReferenceResolverHooks): GoInterface<ReferenceResolver> {
   const r: referenceResolver = {
     resolver: undefined,
     options: options,

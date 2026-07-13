@@ -19,6 +19,7 @@ import type { fileLoader } from "./fileloader.js";
 import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 import type { ProgramOptions } from "./program.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"implemented","sigHash":"bd29532226153c9421c0d64a9c1657c520691d16f8be0fccc4a85fabb8130ee6"}
  *
@@ -72,10 +73,10 @@ export interface projectReferenceFileMapper {
  * 	return ""
  * }
  */
-export function projectReferenceFileMapper_getParseFileRedirect(receiver: GoPtr<projectReferenceFileMapper>, file: HasFileName): string {
+export function projectReferenceFileMapper_getParseFileRedirect(receiver: GoPtr<projectReferenceFileMapper>, file: GoInterface<HasFileName>): string {
   if (ProgramOptions_canUseProjectReferenceSource(receiver!.opts)) {
     // Map to source file from project reference
-    let source = projectReferenceFileMapper_getProjectReferenceFromOutputDts(receiver, file.Path());
+    let source = projectReferenceFileMapper_getProjectReferenceFromOutputDts(receiver, file!.Path());
     if (source === undefined) {
       source = projectReferenceFileMapper_getSourceToDtsIfSymlink(receiver, file);
     }
@@ -84,7 +85,7 @@ export function projectReferenceFileMapper_getParseFileRedirect(receiver: GoPtr<
     }
   } else {
     // Map to dts file from project reference
-    const output = projectReferenceFileMapper_getProjectReferenceFromSource(receiver, file.Path());
+    const output = projectReferenceFileMapper_getProjectReferenceFromSource(receiver, file!.Path());
     if (output !== undefined && output.OutputDts !== "") {
       return output.OutputDts;
     }
@@ -175,7 +176,7 @@ export function projectReferenceFileMapper_isSourceFromProjectReference(receiver
  * 	return module.GetCompilerOptionsWithRedirect(mapper.opts.Config.CompilerOptions(), redirect)
  * }
  */
-export function projectReferenceFileMapper_getCompilerOptionsForFile(receiver: GoPtr<projectReferenceFileMapper>, file: HasFileName): GoPtr<CompilerOptions> {
+export function projectReferenceFileMapper_getCompilerOptionsForFile(receiver: GoPtr<projectReferenceFileMapper>, file: GoInterface<HasFileName>): GoPtr<CompilerOptions> {
   const redirect = projectReferenceFileMapper_getRedirectParsedCommandLineForResolution(receiver, file);
   const redirectedReference: GoPtr<ResolvedProjectReference> = redirect !== undefined
     ? ParsedCommandLine_as_ResolvedProjectReference(redirect)
@@ -192,7 +193,7 @@ export function projectReferenceFileMapper_getCompilerOptionsForFile(receiver: G
  * 	return redirect
  * }
  */
-export function projectReferenceFileMapper_getRedirectParsedCommandLineForResolution(receiver: GoPtr<projectReferenceFileMapper>, file: HasFileName): GoPtr<ParsedCommandLine> {
+export function projectReferenceFileMapper_getRedirectParsedCommandLineForResolution(receiver: GoPtr<projectReferenceFileMapper>, file: GoInterface<HasFileName>): GoPtr<ParsedCommandLine> {
   const [redirect] = projectReferenceFileMapper_getRedirectForResolution(receiver, file);
   return redirect;
 }
@@ -222,8 +223,8 @@ export function projectReferenceFileMapper_getRedirectParsedCommandLineForResolu
  * 	return nil, file.FileName()
  * }
  */
-export function projectReferenceFileMapper_getRedirectForResolution(receiver: GoPtr<projectReferenceFileMapper>, file: HasFileName): [GoPtr<ParsedCommandLine>, string] {
-  const path = file.Path();
+export function projectReferenceFileMapper_getRedirectForResolution(receiver: GoPtr<projectReferenceFileMapper>, file: GoInterface<HasFileName>): [GoPtr<ParsedCommandLine>, string] {
+  const path = file!.Path();
   // Check if outputdts of source file from project reference
   const output = projectReferenceFileMapper_getProjectReferenceFromSource(receiver, path);
   if (output !== undefined) {
@@ -240,7 +241,7 @@ export function projectReferenceFileMapper_getRedirectForResolution(receiver: Go
   if (realpathDtsToSource !== undefined) {
     return [realpathDtsToSource.Resolved, realpathDtsToSource.Source];
   }
-  return [undefined, file.FileName()];
+  return [undefined, file!.FileName()];
 }
 
 /**
@@ -274,7 +275,7 @@ export function projectReferenceFileMapper_getResolvedReferenceFor(receiver: GoP
  * 	return mapper.rangeResolvedReferenceWorker(refs, f, mapper.opts.Config, seenRef)
  * }
  */
-export function projectReferenceFileMapper_rangeResolvedProjectReference(receiver: GoPtr<projectReferenceFileMapper>, f: (path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool): bool {
+export function projectReferenceFileMapper_rangeResolvedProjectReference(receiver: GoPtr<projectReferenceFileMapper>, f: GoFunc<(path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool>): bool {
   if (receiver!.opts.Config!.ConfigFile === undefined) {
     return false;
   }
@@ -309,14 +310,14 @@ export function projectReferenceFileMapper_rangeResolvedProjectReference(receive
  * 	return true
  * }
  */
-export function projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver: GoPtr<projectReferenceFileMapper>, references: GoSlice<Path>, f: (path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool, parent: GoPtr<ParsedCommandLine>, seenRef: GoPtr<Set<Path>>): bool {
+export function projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver: GoPtr<projectReferenceFileMapper>, references: GoSlice<Path>, f: GoFunc<(path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool>, parent: GoPtr<ParsedCommandLine>, seenRef: GoPtr<Set<Path>>): bool {
   for (let index = 0; index < references.length; index++) {
     const path = references[index]!;
     if (!Set_AddIfAbsent(seenRef as GoPtr<Set<Path>>, path)) {
       continue;
     }
     const config = receiver!.configToProjectReference?.get(path);
-    if (!f(path, config, parent, index)) {
+    if (!f!(path, config, parent, index)) {
       return false;
     }
     if (!projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, receiver!.referencesInConfigFile?.get(path) ?? [], f, config, seenRef)) {
@@ -343,7 +344,7 @@ export function projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver
  * 	return mapper.rangeResolvedReferenceWorker(refs, f, mapper.opts.Config, seenRef)
  * }
  */
-export function projectReferenceFileMapper_rangeResolvedProjectReferenceInChildConfig(receiver: GoPtr<projectReferenceFileMapper>, childConfig: GoPtr<ParsedCommandLine>, f: (path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool): bool {
+export function projectReferenceFileMapper_rangeResolvedProjectReferenceInChildConfig(receiver: GoPtr<projectReferenceFileMapper>, childConfig: GoPtr<ParsedCommandLine>, f: GoFunc<(path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool>): bool {
   if (childConfig === undefined || childConfig.ConfigFile === undefined) {
     return false;
   }
@@ -388,22 +389,22 @@ export function projectReferenceFileMapper_rangeResolvedProjectReferenceInChildC
  * 	return nil
  * }
  */
-export function projectReferenceFileMapper_getSourceToDtsIfSymlink(receiver: GoPtr<projectReferenceFileMapper>, file: HasFileName): GoPtr<SourceOutputAndProjectReference> {
+export function projectReferenceFileMapper_getSourceToDtsIfSymlink(receiver: GoPtr<projectReferenceFileMapper>, file: GoInterface<HasFileName>): GoPtr<SourceOutputAndProjectReference> {
   // If preserveSymlinks is true, module resolution wont jump the symlink
   // but the resolved real path may be the .d.ts from project reference
   // Note:: Currently we try the real path only if the
   // file is from node_modules to avoid having to run real path on all file paths
-  const path = file.Path();
+  const path = file!.Path();
   const [realpathDtsToSource, ok] = SyncMap_Load<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path);
   if (ok) {
     return realpathDtsToSource;
   }
   if (receiver!.loader !== undefined && Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.opts.Config)!.PreserveSymlinks)) {
-    const fileName = file.FileName();
+    const fileName = file!.FileName();
     if (!strings.Contains(fileName, "/node_modules/")) {
       SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
     } else {
-      const realDeclarationPath = fileLoader_toPath(receiver!.loader, receiver!.host!.FS().Realpath(fileName));
+      const realDeclarationPath = fileLoader_toPath(receiver!.loader, receiver!.host!.FS()!.Realpath(fileName));
       if (realDeclarationPath === path) {
         SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
       } else {

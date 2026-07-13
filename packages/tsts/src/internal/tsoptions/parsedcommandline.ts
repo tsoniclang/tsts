@@ -35,6 +35,7 @@ import { configFileSpecs_getMatchedFileSpec, configFileSpecs_getMatchedIncludeSp
 import type { FileExtensionInfo, TsConfigSourceFile } from "./tsconfigparsing.js";
 import { getWildcardDirectories } from "./wildcarddirectories.js";
 
+import type { GoInterface, GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::constGroup::fileGlobPattern+recursiveFileGlobPattern","kind":"constGroup","status":"implemented","sigHash":"b72f79c30886c1bb508333146dea617bea7fa7ea2bcd9c06e79b68e1fe236c28"}
  *
@@ -88,8 +89,8 @@ export interface ParsedCommandLine {
   ParsedConfig: GoPtr<ParsedOptions>;
   ConfigFile: GoPtr<TsConfigSourceFile>;
   Errors: GoSlice<GoPtr<Diagnostic>>;
-  Raw: unknown;
-  CompileOnSave: GoPtr<bool>;
+  Raw: GoInterface<unknown>;
+  CompileOnSave: GoRef<bool>;
   comparePathsOptions: ComparePathsOptions;
   wildcardDirectoriesOnce: Once;
   wildcardDirectories: GoMap<string, bool>;
@@ -211,7 +212,7 @@ export interface SourceOutputAndProjectReference {
  * 	_ outputpaths.OutputPathsHost     = (*ParsedCommandLine)(nil)
  * )
  */
-export let ____696f5a2e_0: ResolvedProjectReference = ParsedCommandLine_as_ResolvedProjectReference(undefined);
+export let ____696f5a2e_0: GoInterface<ResolvedProjectReference> = ParsedCommandLine_as_ResolvedProjectReference(undefined);
 export let ____696f5a2e_1: OutputPathsHost = ParsedCommandLine_as_OutputPathsHost(undefined);
 
 /**
@@ -985,7 +986,7 @@ export function ParsedCommandLine_GetMatchedIncludeSpec(receiver: GoPtr<ParsedCo
  * 	return &parsedCommandLine
  * }
  */
-export function ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(receiver: GoPtr<ParsedCommandLine>, fs: FS): GoPtr<ParsedCommandLine> {
+export function ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(receiver: GoPtr<ParsedCommandLine>, fs: GoInterface<FS>): GoPtr<ParsedCommandLine> {
   const p = receiver!;
   const parsedConfig = { ...p.ParsedConfig! };
   const [fileNames, literalFileNamesLen] = getFileNamesFromConfigSpecs(

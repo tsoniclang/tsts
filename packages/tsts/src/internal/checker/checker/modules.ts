@@ -280,7 +280,7 @@ export function Checker_getTargetOfModuleDefault(receiver: GoPtr<Checker>, modul
       ModuleKindNode20 <= receiver!.moduleKind &&
       receiver!.moduleKind <= ModuleKindNodeNext &&
       Checker_getEmitSyntaxForModuleSpecifierExpression(receiver, specifier) === ModuleKindCommonJS &&
-      receiver!.program.GetImpliedNodeFormatForEmit(NewHasFileName(SourceFile_FileName(file as GoPtr<SourceFile>), SourceFile_Path(file as GoPtr<SourceFile>))) === ModuleKindESNext) {
+      receiver!.program!.GetImpliedNodeFormatForEmit(NewHasFileName(SourceFile_FileName(file as GoPtr<SourceFile>), SourceFile_Path(file as GoPtr<SourceFile>))) === ModuleKindESNext) {
     exportModuleDotExportsSymbol = Checker_resolveExportByName(receiver, moduleSymbol, InternalSymbolNameModuleExports, node, dontResolveAlias);
   }
   if (exportModuleDotExportsSymbol !== undefined) {
@@ -328,7 +328,7 @@ export function Checker_getTargetOfModuleDefault(receiver: GoPtr<Checker>, modul
 export function Checker_getEmitSyntaxForModuleSpecifierExpression(receiver: GoPtr<Checker>, usage: GoPtr<Node>): ResolutionMode {
   if (IsStringLiteralLike(usage)) {
     const sourceFile = GetSourceFileOfNode(usage);
-    return receiver!.program.GetEmitSyntaxForUsageLocation(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile)), usage);
+    return receiver!.program!.GetEmitSyntaxForUsageLocation(NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile)), usage);
   }
   return ModuleKindNone;
 }
@@ -675,12 +675,12 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
   }
 
   if (contextSpecifier !== undefined && IsStringLiteralLike(contextSpecifier)) {
-    mode = receiver!.program.GetModeForUsageLocation(importingSourceFile!, contextSpecifier);
+    mode = receiver!.program!.GetModeForUsageLocation(importingSourceFile!, contextSpecifier);
   } else {
-    mode = receiver!.program.GetDefaultResolutionModeForFile(importingSourceFile!);
+    mode = receiver!.program!.GetDefaultResolutionModeForFile(importingSourceFile!);
   }
 
-  const resolvedModule = receiver!.program.GetResolvedModule(importingSourceFile!, moduleReference, mode);
+  const resolvedModule = receiver!.program!.GetResolvedModule(importingSourceFile!, moduleReference, mode);
 
   let resolutionDiagnostic: GoPtr<Message>;
   if (errorNode !== undefined && ResolvedModule_IsResolved(resolvedModule)) {
@@ -690,7 +690,7 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
   let sourceFile: GoPtr<SourceFile>;
   if (ResolvedModule_IsResolved(resolvedModule) &&
     (resolutionDiagnostic === undefined || resolutionDiagnostic === Module_0_was_resolved_to_1_but_jsx_is_not_set)) {
-    sourceFile = receiver!.program.GetSourceFileForResolvedModule(resolvedModule!.ResolvedFileName);
+    sourceFile = receiver!.program!.GetSourceFileForResolvedModule(resolvedModule!.ResolvedFileName);
   }
 
   if (sourceFile !== undefined) {
@@ -736,15 +736,15 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
         const shouldRewrite = ShouldRewriteModuleSpecifier(moduleReference, receiver!.compilerOptions);
         if (!resolvedModule!.ResolvedUsingTsExtension && shouldRewrite) {
           const relativeToSourceFile = GetRelativePathFromFile(
-            GetNormalizedAbsolutePath(SourceFile_FileName(importingSourceFile), receiver!.program.GetCurrentDirectory()),
+            GetNormalizedAbsolutePath(SourceFile_FileName(importingSourceFile), receiver!.program!.GetCurrentDirectory()),
             resolvedModule!.ResolvedFileName,
             {
-              UseCaseSensitiveFileNames: receiver!.program.UseCaseSensitiveFileNames(),
-              CurrentDirectory: receiver!.program.GetCurrentDirectory(),
+              UseCaseSensitiveFileNames: receiver!.program!.UseCaseSensitiveFileNames(),
+              CurrentDirectory: receiver!.program!.GetCurrentDirectory(),
             },
           );
           Checker_error(receiver, errorNode, This_relative_import_path_is_unsafe_to_rewrite_because_it_looks_like_a_file_name_but_actually_resolves_to_0, relativeToSourceFile);
-        } else if (resolvedModule!.ResolvedUsingTsExtension && !shouldRewrite && receiver!.program.SourceFileMayBeEmitted(sourceFile, false)) {
+        } else if (resolvedModule!.ResolvedUsingTsExtension && !shouldRewrite && receiver!.program!.SourceFileMayBeEmitted(sourceFile, false)) {
           Checker_error(
             receiver,
             errorNode,
@@ -752,13 +752,13 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
             GetAnyExtensionFromPath(moduleReference, [], false),
           );
         } else if (resolvedModule!.ResolvedUsingTsExtension && shouldRewrite) {
-          const redirect = receiver!.program.GetRedirectForResolution(sourceFile);
+          const redirect = receiver!.program!.GetRedirectForResolution(sourceFile);
           if (redirect !== undefined) {
-            const ownRootDir = receiver!.program.CommonSourceDirectory();
+            const ownRootDir = receiver!.program!.CommonSourceDirectory();
             const otherRootDir = ParsedCommandLine_CommonSourceDirectory(redirect);
             const compareOptions = {
-              UseCaseSensitiveFileNames: receiver!.program.UseCaseSensitiveFileNames(),
-              CurrentDirectory: receiver!.program.GetCurrentDirectory(),
+              UseCaseSensitiveFileNames: receiver!.program!.UseCaseSensitiveFileNames(),
+              CurrentDirectory: receiver!.program!.GetCurrentDirectory(),
             };
             const rootDirPath = GetRelativePathFromDirectory(ownRootDir, otherRootDir, compareOptions);
             let ownOutDir = receiver!.compilerOptions!.OutDir;
@@ -790,12 +790,12 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
         }
         if (receiver!.moduleKind === ModuleKindNode16 || receiver!.moduleKind === ModuleKindNode18) {
           const isSyncImport =
-            (receiver!.program.GetDefaultResolutionModeForFile(importingSourceFile!) === ModuleKindCommonJS &&
+            (receiver!.program!.GetDefaultResolutionModeForFile(importingSourceFile!) === ModuleKindCommonJS &&
               FindAncestor(location, IsImportCall) === undefined) ||
             FindAncestor(location, (node) => node!.Kind === KindImportEqualsDeclaration) !== undefined;
           const overrideHost = FindAncestor(location, IsResolutionModeOverrideHost);
           if (isSyncImport &&
-            receiver!.program.GetDefaultResolutionModeForFile(sourceFile!) === ModuleKindESNext &&
+            receiver!.program!.GetDefaultResolutionModeForFile(sourceFile!) === ModuleKindESNext &&
             !HasResolutionModeOverride(overrideHost)) {
             if (FindAncestorKind(location, KindImportEqualsDeclaration) !== undefined) {
               Checker_error(
@@ -866,7 +866,7 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
 
   if (moduleNotFoundError !== undefined) {
     if (ResolvedModule_IsResolved(resolvedModule)) {
-      const redirect = receiver!.program.GetProjectReferenceFromSource(ToPath(resolvedModule!.ResolvedFileName, receiver!.program.GetCurrentDirectory(), receiver!.program.UseCaseSensitiveFileNames()));
+      const redirect = receiver!.program!.GetProjectReferenceFromSource(ToPath(resolvedModule!.ResolvedFileName, receiver!.program!.GetCurrentDirectory(), receiver!.program!.UseCaseSensitiveFileNames()));
       if (redirect !== undefined && redirect.OutputDts !== "") {
         Checker_error(receiver, errorNode, Output_file_0_has_not_been_built_from_source_file_1, redirect.OutputDts, resolvedModule!.ResolvedFileName);
         return undefined;

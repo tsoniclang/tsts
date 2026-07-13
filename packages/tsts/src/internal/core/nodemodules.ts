@@ -3,6 +3,7 @@ import type { GoMap } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import { OnceValue } from "../../go/sync.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::UnprefixedNodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"00dcfbd0671d494a2d849d412f7532fcef4b7342281d62da72e1cc8efb4a5388"}
  *
@@ -155,7 +156,7 @@ export let ExclusivelyPrefixedNodeCoreModules: GoMap<string, bool> = new globalT
  * 	return nodeCoreModules
  * })
  */
-export let NodeCoreModules: () => GoMap<string, bool> = OnceValue<GoMap<string, bool>>((): GoMap<string, bool> => {
+export let NodeCoreModules: GoFunc<() => GoMap<string, bool>> = OnceValue<GoMap<string, bool>>((): GoMap<string, bool> => {
   const nodeCoreModules = new globalThis.Map<string, bool>();
   for (const unprefixed of UnprefixedNodeCoreModules.keys()) {
     nodeCoreModules.set(unprefixed, true);
@@ -177,7 +178,7 @@ export let NodeCoreModules: () => GoMap<string, bool> = OnceValue<GoMap<string, 
  * }
  */
 export function NonRelativeModuleNameForTypingCache(moduleName: string): string {
-  if (NodeCoreModules().get(moduleName)) {
+  if (NodeCoreModules!().get(moduleName)) {
     return "node";
   }
   return moduleName;

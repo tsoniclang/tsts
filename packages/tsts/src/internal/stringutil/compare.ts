@@ -3,6 +3,7 @@ import { Compare, EqualFold, HasPrefix as stringsHasPrefix, HasSuffix as strings
 import { ToLower as unicodeToLower } from "../../go/unicode.js";
 import { DecodeRuneInStringViewAt, GetStringByteView, StringByteLen, StringByteSlice } from "../../go/unicode/utf8.js";
 
+import type { GoFunc } from "../../go/compat.js";
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `s[i:j]` operate on byte offsets. The standard-library facades
 // (strings/utf8) follow that contract, so we mirror it here by operating over
@@ -49,7 +50,7 @@ export function EquateStringCaseSensitive(a: string, b: string): bool {
  * 	return EquateStringCaseSensitive
  * }
  */
-export function GetStringEqualityComparer(ignoreCase: bool): (a: string, b: string) => bool {
+export function GetStringEqualityComparer(ignoreCase: bool): GoFunc<(a: string, b: string) => bool> {
   if (ignoreCase) {
     return EquateStringCaseInsensitive;
   }
@@ -167,7 +168,7 @@ export function CompareStringsCaseSensitive(a: string, b: string): Comparison {
  * 	return CompareStringsCaseSensitive
  * }
  */
-export function GetStringComparer(ignoreCase: bool): (a: string, b: string) => Comparison {
+export function GetStringComparer(ignoreCase: bool): GoFunc<(a: string, b: string) => Comparison> {
   if (ignoreCase) {
     return CompareStringsCaseInsensitive;
   }

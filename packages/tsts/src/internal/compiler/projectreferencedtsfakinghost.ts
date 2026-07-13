@@ -32,6 +32,7 @@ import {
   projectReferenceFileMapper_getProjectReferenceFromOutputDts,
 } from "./projectreferencefilemapper.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::type::projectReferenceDtsFakingHost","kind":"type","status":"implemented","sigHash":"99a59785b073b41d30212b9f83c4afba08c180bd8b61ba139673f890dfe7054d"}
  *
@@ -42,7 +43,7 @@ import {
  * }
  */
 export interface projectReferenceDtsFakingHost {
-  host: CompilerHost;
+  host: GoInterface<CompilerHost>;
   fs: GoPtr<FS_2ed33005>;
 }
 
@@ -52,11 +53,11 @@ export interface projectReferenceDtsFakingHost {
  * Go source:
  * var _ module.ResolutionHost = (*projectReferenceDtsFakingHost)(nil)
  */
-export let __1046bc8a_0: ResolutionHost = projectReferenceDtsFakingHost_as_module_ResolutionHost(undefined);
+export let __1046bc8a_0: GoInterface<ResolutionHost> = projectReferenceDtsFakingHost_as_module_ResolutionHost(undefined);
 
 export function projectReferenceDtsFakingHost_as_module_ResolutionHost(receiver: GoPtr<projectReferenceDtsFakingHost>): ResolutionHost {
   return {
-    FS: (): FS_c26bca9d => projectReferenceDtsFakingHost_FS(receiver),
+    FS: (): FS_c26bca9d => projectReferenceDtsFakingHost_FS(receiver)!,
     GetCurrentDirectory: (): string => projectReferenceDtsFakingHost_GetCurrentDirectory(receiver),
   };
 }
@@ -78,7 +79,7 @@ export function projectReferenceDtsFakingHost_as_module_ResolutionHost(receiver:
  * 	return host
  * }
  */
-export function newProjectReferenceDtsFakingHost(loader: GoPtr<fileLoader>): ResolutionHost {
+export function newProjectReferenceDtsFakingHost(loader: GoPtr<fileLoader>): GoInterface<ResolutionHost> {
   const vfsObj: projectReferenceDtsFakingVfs = {
     projectReferenceFileMapper: loader!.projectReferenceFileMapper,
     dtsDirectories: loader!.dtsDirectories,
@@ -106,7 +107,7 @@ export function newProjectReferenceDtsFakingHost(loader: GoPtr<fileLoader>): Res
  * 	return h.fs
  * }
  */
-export function projectReferenceDtsFakingHost_FS(receiver: GoPtr<projectReferenceDtsFakingHost>): FS_c26bca9d {
+export function projectReferenceDtsFakingHost_FS(receiver: GoPtr<projectReferenceDtsFakingHost>): GoInterface<FS_c26bca9d> {
   return cachedvfsAsVfsFS(receiver!.fs);
 }
 
@@ -119,7 +120,7 @@ export function projectReferenceDtsFakingHost_FS(receiver: GoPtr<projectReferenc
  * }
  */
 export function projectReferenceDtsFakingHost_GetCurrentDirectory(receiver: GoPtr<projectReferenceDtsFakingHost>): string {
-  return receiver!.host.GetCurrentDirectory();
+  return receiver!.host!.GetCurrentDirectory();
 }
 
 /**
@@ -144,7 +145,7 @@ export interface projectReferenceDtsFakingVfs {
  * Go source:
  * var _ vfs.FS = (*projectReferenceDtsFakingVfs)(nil)
  */
-export let ___2_fca3b3b1_0: FS_c26bca9d = projectReferenceDtsFakingVfs_as_vfs_FS(undefined);
+export let ___2_fca3b3b1_0: GoInterface<FS_c26bca9d> = projectReferenceDtsFakingVfs_as_vfs_FS(undefined);
 
 export function projectReferenceDtsFakingVfs_as_vfs_FS(receiver: GoPtr<projectReferenceDtsFakingVfs>): FS_c26bca9d {
   return {
@@ -172,7 +173,7 @@ export function projectReferenceDtsFakingVfs_as_vfs_FS(receiver: GoPtr<projectRe
  * }
  */
 export function projectReferenceDtsFakingVfs_UseCaseSensitiveFileNames(receiver: GoPtr<projectReferenceDtsFakingVfs>): bool {
-  return receiver!.projectReferenceFileMapper!.opts.Host.FS().UseCaseSensitiveFileNames();
+  return receiver!.projectReferenceFileMapper!.opts.Host!.FS()!.UseCaseSensitiveFileNames();
 }
 
 /**
@@ -191,7 +192,7 @@ export function projectReferenceDtsFakingVfs_UseCaseSensitiveFileNames(receiver:
  * }
  */
 export function projectReferenceDtsFakingVfs_FileExists(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): bool {
-  if (receiver!.projectReferenceFileMapper!.opts.Host.FS().FileExists(path)) {
+  if (receiver!.projectReferenceFileMapper!.opts.Host!.FS()!.FileExists(path)) {
     return true;
   }
   if (!IsDeclarationFileName(path)) {
@@ -212,7 +213,7 @@ export function projectReferenceDtsFakingVfs_FileExists(receiver: GoPtr<projectR
  */
 export function projectReferenceDtsFakingVfs_ReadFile(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): [string, bool] {
   // Dont need to override as we cannot mimick read file
-  return receiver!.projectReferenceFileMapper!.opts.Host.FS().ReadFile(path);
+  return receiver!.projectReferenceFileMapper!.opts.Host!.FS()!.ReadFile(path);
 }
 
 /**
@@ -276,7 +277,7 @@ export function projectReferenceDtsFakingVfs_Chtimes(receiver: GoPtr<projectRefe
  * }
  */
 export function projectReferenceDtsFakingVfs_DirectoryExists(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): bool {
-  if (receiver!.projectReferenceFileMapper!.opts.Host.FS().DirectoryExists(path)) {
+  if (receiver!.projectReferenceFileMapper!.opts.Host!.FS()!.DirectoryExists(path)) {
     projectReferenceDtsFakingVfs_handleDirectoryCouldBeSymlink(receiver, path);
     return true;
   }
@@ -303,7 +304,7 @@ export function projectReferenceDtsFakingVfs_GetAccessibleEntries(receiver: GoPt
  * 	panic("should not be called by resolver")
  * }
  */
-export function projectReferenceDtsFakingVfs_Stat(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): FileInfo {
+export function projectReferenceDtsFakingVfs_Stat(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): GoInterface<FileInfo> {
   throw new globalThis.Error("should not be called by resolver");
 }
 
@@ -337,7 +338,7 @@ export function projectReferenceDtsFakingVfs_Realpath(receiver: GoPtr<projectRef
   if (ok) {
     return result;
   }
-  return receiver!.projectReferenceFileMapper!.opts.Host.FS().Realpath(path);
+  return receiver!.projectReferenceFileMapper!.opts.Host!.FS()!.Realpath(path);
 }
 
 /**
@@ -349,7 +350,7 @@ export function projectReferenceDtsFakingVfs_Realpath(receiver: GoPtr<projectRef
  * }
  */
 export function projectReferenceDtsFakingVfs_toPath(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): Path {
-  return ToPath(path, receiver!.projectReferenceFileMapper!.opts.Host.GetCurrentDirectory(), projectReferenceDtsFakingVfs_UseCaseSensitiveFileNames(receiver));
+  return ToPath(path, receiver!.projectReferenceFileMapper!.opts.Host!.GetCurrentDirectory(), projectReferenceDtsFakingVfs_UseCaseSensitiveFileNames(receiver));
 }
 
 /**
@@ -509,7 +510,7 @@ export function projectReferenceDtsFakingVfs_fileOrDirectoryExistsUsingSource(re
       exists = true;
       if (isFile) {
         // Store the real path for the file
-        const absolutePath = GetNormalizedAbsolutePath(fileOrDirectory, receiver!.projectReferenceFileMapper!.opts.Host.GetCurrentDirectory());
+        const absolutePath = GetNormalizedAbsolutePath(fileOrDirectory, receiver!.projectReferenceFileMapper!.opts.Host!.GetCurrentDirectory());
         KnownSymlinks_SetFile(
           receiver!.knownSymlinks,
           absolutePath,
@@ -539,7 +540,7 @@ export function projectReferenceDtsFakingVfs_fileOrDirectoryExistsUsingSource(re
 export function projectReferenceDtsFakingVfs_fileExistsIfProjectReferenceDts(receiver: GoPtr<projectReferenceDtsFakingVfs>, file: string): Tristate {
   const source = projectReferenceFileMapper_getProjectReferenceFromOutputDts(receiver!.projectReferenceFileMapper, projectReferenceDtsFakingVfs_toPath(receiver, file));
   if (source !== undefined) {
-    return IfElse(receiver!.projectReferenceFileMapper!.opts.Host.FS().FileExists(source!.Source), TSTrue, TSFalse);
+    return IfElse(receiver!.projectReferenceFileMapper!.opts.Host!.FS()!.FileExists(source!.Source), TSTrue, TSFalse);
   }
   return TSUnknown;
 }

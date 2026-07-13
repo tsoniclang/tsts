@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/reparsepoint_other.go::varGroup::isReparsePoint","kind":"varGroup","status":"implemented","sigHash":"f0026c2c464e814022e423d5a87a1849cc69e9f3a35d6da1599ecc00e15c07b9"}
  *
@@ -7,4 +8,4 @@ import type { bool } from "../../../go/scalars.js";
  * var isReparsePoint func(path string) bool
  */
 // Only Windows has reparse points; leave this nil (undefined) for other OSes.
-export let isReparsePoint: (path: string) => bool;
+export let isReparsePoint: GoFunc<(path: string) => bool>;

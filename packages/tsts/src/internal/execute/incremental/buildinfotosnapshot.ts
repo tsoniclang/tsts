@@ -19,6 +19,7 @@ import type { SyncMap } from "../../collections/syncmap.js";
 import type { SyncSet } from "../../collections/syncset.js";
 import { referenceMap_storeReferences } from "./referencemap.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildinfotosnapshot.go::func::buildInfoToSnapshot","kind":"func","status":"implemented","sigHash":"a5b857c399f4dc273e9d03408127a705fbfa13c5abb98a71ff6e2864571a4cb1"}
  *
@@ -59,7 +60,7 @@ import { referenceMap_storeReferences } from "./referencemap.js";
  * 	return &to.snapshot
  * }
  */
-export function buildInfoToSnapshot(buildInfo: GoPtr<BuildInfo>, config: GoPtr<ParsedCommandLine>, host: CompilerHost): GoPtr<snapshot> {
+export function buildInfoToSnapshot(buildInfo: GoPtr<BuildInfo>, config: GoPtr<ParsedCommandLine>, host: GoInterface<CompilerHost>): GoPtr<snapshot> {
   const buildInfoDirectory = GetDirectoryPath(GetNormalizedAbsolutePath(ParsedCommandLine_GetBuildInfoFileName(config), ParsedCommandLine_GetCurrentDirectory(config)));
   const to: toSnapshot = {
     buildInfo: buildInfo,
@@ -70,7 +71,7 @@ export function buildInfoToSnapshot(buildInfo: GoPtr<BuildInfo>, config: GoPtr<P
   };
   to.filePaths = core.Map(buildInfo!.FileNames, (fileName: string) => {
     if (!fileName.startsWith(".")) {
-      return ToPath(host.DefaultLibraryPath() + "/" + fileName, host.GetCurrentDirectory(), host.FS().UseCaseSensitiveFileNames());
+      return ToPath(host!.DefaultLibraryPath() + "/" + fileName, host!.GetCurrentDirectory(), host!.FS()!.UseCaseSensitiveFileNames());
     }
     return ToPath(fileName, to.buildInfoDirectory, ParsedCommandLine_UseCaseSensitiveFileNames(config));
   });

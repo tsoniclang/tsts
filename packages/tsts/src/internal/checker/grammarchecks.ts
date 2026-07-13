@@ -1258,7 +1258,7 @@ export function Checker_checkGrammarModifiers(receiver: GoPtr<Checker>, node: Go
           flags |= ModifierFlagsReadonly;
           break;
         case KindExportKeyword:
-          if (receiver!.compilerOptions!.VerbatimModuleSyntax === TSTrue && (node!.Flags & NodeFlagsAmbient) === 0 && node!.Kind !== KindTypeAliasDeclaration && node!.Kind !== KindInterfaceDeclaration && node!.Kind !== KindModuleDeclaration && node!.Parent!.Kind === KindSourceFile && receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(GetSourceFileOfNode(node)), SourceFile_Path(GetSourceFileOfNode(node)))) === ModuleKindCommonJS) {
+          if (receiver!.compilerOptions!.VerbatimModuleSyntax === TSTrue && (node!.Flags & NodeFlagsAmbient) === 0 && node!.Kind !== KindTypeAliasDeclaration && node!.Kind !== KindInterfaceDeclaration && node!.Kind !== KindModuleDeclaration && node!.Parent!.Kind === KindSourceFile && receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(GetSourceFileOfNode(node)), SourceFile_Path(GetSourceFileOfNode(node)))) === ModuleKindCommonJS) {
             return Checker_grammarErrorOnNode(receiver, modifier, A_top_level_export_modifier_cannot_be_used_on_value_declarations_in_a_CommonJS_module_when_verbatimModuleSyntax_is_enabled);
           }
           if ((flags & ModifierFlagsExport) !== 0) {
@@ -2877,7 +2877,7 @@ export function Checker_checkGrammarForInOrForOfStatement(receiver: GoPtr<Checke
           const isEsModuleKind2 = receiver!.moduleKind === ModuleKindES2022 || receiver!.moduleKind === ModuleKindESNext || receiver!.moduleKind === ModuleKindPreserve || receiver!.moduleKind === ModuleKindSystem;
           let skipTopLevelForAwaitError = false;
           if (isNodeModuleKind2) {
-            const sourceFileMetaData = receiver!.program.GetSourceFileMetaData(SourceFile_Path(sourceFile));
+            const sourceFileMetaData = receiver!.program!.GetSourceFileMetaData(SourceFile_Path(sourceFile));
             if (sourceFileMetaData!.ImpliedNodeFormat === ModuleKindCommonJS) {
               Checker_addDiagnostic(receiver, createDiagnosticForNode(forInOrOfStatement!.AwaitModifier as unknown as GoPtr<Node>, The_current_file_is_a_CommonJS_module_and_cannot_use_await_at_the_top_level));
               skipTopLevelForAwaitError = true;
@@ -3538,7 +3538,7 @@ export function Checker_checkGrammarVariableDeclaration(receiver: GoPtr<Checker>
     return Checker_grammarErrorOnNode(receiver, node!.ExclamationToken as unknown as GoPtr<Node>, message);
   }
   const sf = GetSourceFileOfNode(asNode);
-  if (receiver!.program.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sf), SourceFile_Path(sf))) < ModuleKindSystem && (asNode!.Parent!.Parent!.Flags & NodeFlagsAmbient) === 0 && HasSyntacticModifier(asNode!.Parent!.Parent, ModifierFlagsExport)) {
+  if (receiver!.program!.GetEmitModuleFormatOfFile(NewHasFileName(SourceFile_FileName(sf), SourceFile_Path(sf))) < ModuleKindSystem && (asNode!.Parent!.Parent!.Flags & NodeFlagsAmbient) === 0 && HasSyntacticModifier(asNode!.Parent!.Parent, ModifierFlagsExport)) {
     Checker_checkGrammarForEsModuleMarkerInBindingName(receiver, Node_Name(asNode));
   }
   return blockScopeKind !== 0 && Checker_checkGrammarNameInLetOrConstDeclarations(receiver, Node_Name(asNode));
@@ -3819,7 +3819,7 @@ export function Checker_checkGrammarAwaitOrAwaitUsing(receiver: GoPtr<Checker>, 
         const isEsModuleKind = receiver!.moduleKind === ModuleKindES2022 || receiver!.moduleKind === ModuleKindESNext || receiver!.moduleKind === ModuleKindPreserve || receiver!.moduleKind === ModuleKindSystem;
         let skipTopLevelError = false;
         if (isNodeModuleKind) {
-          const sourceFileMetaData = receiver!.program.GetSourceFileMetaData(SourceFile_Path(sourceFile));
+          const sourceFileMetaData = receiver!.program!.GetSourceFileMetaData(SourceFile_Path(sourceFile));
           if (sourceFileMetaData!.ImpliedNodeFormat === ModuleKindCommonJS) {
             if (!spanCalculated) {
               span = GetRangeOfTokenAtPosition(sourceFile, Node_Pos(node));

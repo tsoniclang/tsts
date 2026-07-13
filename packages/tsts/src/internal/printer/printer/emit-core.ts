@@ -260,6 +260,7 @@ import {
   commentSeparatorAfter,
 } from "./state.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getTextOfNode","kind":"method","status":"implemented","sigHash":"5480703edd86ebe112d291bc138a414735d7c543c0c943d8a715eef70dd757d3"}
  *
@@ -366,7 +367,7 @@ export function Printer_getTextOfNode(receiver: GoPtr<Printer>, node: GoPtr<Node
 export function Printer_writeAs(receiver: GoPtr<Printer>, text: string, writeKind: WriteKind): void {
   switch (writeKind) {
     case WriteKindNone:
-      receiver!.writer.Write(text);
+      receiver!.writer!.Write(text);
       break;
     case WriteKindParameter:
       Printer_writeParameter(receiver, text);
@@ -384,7 +385,7 @@ export function Printer_writeAs(receiver: GoPtr<Printer>, text: string, writeKin
       Printer_writePunctuation(receiver, text);
       break;
     case WriteKindStringLiteral:
-      receiver!.writer.WriteStringLiteral(text);
+      receiver!.writer!.WriteStringLiteral(text);
       break;
     case WriteKindComment:
       Printer_writeComment(receiver, text);
@@ -441,7 +442,7 @@ export function Printer_writeSymbol(receiver: GoPtr<Printer>, text: string, optS
   if (optSymbol === undefined) {
     Printer_write(receiver, text);
   } else {
-    receiver!.writer.WriteSymbol(text, optSymbol);
+    receiver!.writer!.WriteSymbol(text, optSymbol);
   }
 }
 
@@ -454,7 +455,7 @@ export function Printer_writeSymbol(receiver: GoPtr<Printer>, text: string, optS
  * }
  */
 export function Printer_writePunctuation(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WritePunctuation(text);
+  receiver!.writer!.WritePunctuation(text);
 }
 
 /**
@@ -466,7 +467,7 @@ export function Printer_writePunctuation(receiver: GoPtr<Printer>, text: string)
  * }
  */
 export function Printer_writeOperator(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteOperator(text);
+  receiver!.writer!.WriteOperator(text);
 }
 
 /**
@@ -478,7 +479,7 @@ export function Printer_writeOperator(receiver: GoPtr<Printer>, text: string): v
  * }
  */
 export function Printer_writeKeyword(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteKeyword(text);
+  receiver!.writer!.WriteKeyword(text);
 }
 
 /**
@@ -490,7 +491,7 @@ export function Printer_writeKeyword(receiver: GoPtr<Printer>, text: string): vo
  * }
  */
 export function Printer_writeProperty(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteProperty(text);
+  receiver!.writer!.WriteProperty(text);
 }
 
 /**
@@ -502,7 +503,7 @@ export function Printer_writeProperty(receiver: GoPtr<Printer>, text: string): v
  * }
  */
 export function Printer_writeParameter(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteParameter(text);
+  receiver!.writer!.WriteParameter(text);
 }
 
 /**
@@ -514,7 +515,7 @@ export function Printer_writeParameter(receiver: GoPtr<Printer>, text: string): 
  * }
  */
 export function Printer_writeSpace(receiver: GoPtr<Printer>): void {
-  receiver!.writer.WriteSpace(" ");
+  receiver!.writer!.WriteSpace(" ");
 }
 
 /**
@@ -526,7 +527,7 @@ export function Printer_writeSpace(receiver: GoPtr<Printer>): void {
  * }
  */
 export function Printer_writeTrailingSemicolon(receiver: GoPtr<Printer>): void {
-  receiver!.writer.WriteTrailingSemicolon(";");
+  receiver!.writer!.WriteTrailingSemicolon(";");
 }
 
 /**
@@ -538,7 +539,7 @@ export function Printer_writeTrailingSemicolon(receiver: GoPtr<Printer>): void {
  * }
  */
 export function Printer_increaseIndent(receiver: GoPtr<Printer>): void {
-  receiver!.writer.IncreaseIndent();
+  receiver!.writer!.IncreaseIndent();
 }
 
 /**
@@ -550,7 +551,7 @@ export function Printer_increaseIndent(receiver: GoPtr<Printer>): void {
  * }
  */
 export function Printer_decreaseIndent(receiver: GoPtr<Printer>): void {
-  receiver!.writer.DecreaseIndent();
+  receiver!.writer!.DecreaseIndent();
 }
 
 /**
@@ -2587,7 +2588,7 @@ export function Printer_emitHelpers(receiver: GoPtr<Printer>, node: GoPtr<Node>)
         }
       }
       if (helper.TextCallback !== undefined) {
-        Printer_writeLines(receiver, helper.TextCallback(receiver!.makeFileLevelOptimisticUniqueName));
+        Printer_writeLines(receiver, helper.TextCallback(receiver!.makeFileLevelOptimisticUniqueName!));
       } else {
         Printer_writeLines(receiver, helper.Text);
       }
@@ -2609,7 +2610,7 @@ export function Printer_emitHelpers(receiver: GoPtr<Printer>, node: GoPtr<Node>)
  * 	p.emitListRange(emit, parentNode, children, format, -1 /*start* /, -1 /*count* /)
  * }
  */
-export function Printer_emitList(receiver: GoPtr<Printer>, emit: (p: GoPtr<Printer>, node: GoPtr<Node>) => void, parentNode: GoPtr<Node>, children: GoPtr<NodeList>, format: ListFormat): void {
+export function Printer_emitList(receiver: GoPtr<Printer>, emit: GoFunc<(p: GoPtr<Printer>, node: GoPtr<Node>) => void>, parentNode: GoPtr<Node>, children: GoPtr<NodeList>, format: ListFormat): void {
   if (Printer_shouldEmitOnMultipleLines(receiver, parentNode)) {
     format = (format | LFPreferNewLine | LFIndented) as ListFormat;
   }
@@ -2960,7 +2961,7 @@ export function Printer_writeDelimiter(receiver: GoPtr<Printer>, format: ListFor
  * 	}
  * }
  */
-export function Printer_emitListItems(receiver: GoPtr<Printer>, emit: (p: GoPtr<Printer>, node: GoPtr<Node>) => void, parentNode: GoPtr<Node>, children: GoSlice<GoPtr<Node>>, format: ListFormat, hasTrailingComma: bool, childrenTextRange: TextRange): void {
+export function Printer_emitListItems(receiver: GoPtr<Printer>, emit: GoFunc<(p: GoPtr<Printer>, node: GoPtr<Node>) => void>, parentNode: GoPtr<Node>, children: GoSlice<GoPtr<Node>>, format: ListFormat, hasTrailingComma: bool, childrenTextRange: TextRange): void {
   const mayEmitInterveningComments = ((format & LFNoInterveningComments) === 0) as unknown as bool;
   let shouldEmitInterveningComments = mayEmitInterveningComments;
 
@@ -3023,7 +3024,7 @@ export function Printer_emitListItems(receiver: GoPtr<Printer>, emit: (p: GoPtr<
     }
 
     receiver!.nextListElementPos = Node_Pos(child);
-    emit(receiver, child);
+    emit!(receiver, child);
 
     if (shouldDecreaseIndentAfterEmit) {
       Printer_decreaseIndent(receiver);
@@ -3089,8 +3090,8 @@ export function Printer_Emit(receiver: GoPtr<Printer>, node: GoPtr<Node>, source
     receiver!.ownWriter = NewTextWriter(NewLineKind_GetNewLineCharacter(receiver!.Options.NewLine ?? NewLineKindNone), 0);
   }
   Printer_Write(receiver, node, sourceFile, receiver!.ownWriter, undefined);
-  const text = receiver!.ownWriter.String();
-  receiver!.ownWriter.Clear();
+  const text = receiver!.ownWriter!.String();
+  receiver!.ownWriter!.Clear();
   return text;
 }
 
@@ -3306,7 +3307,7 @@ export function Printer_Emit(receiver: GoPtr<Printer>, node: GoPtr<Node>, source
  * 	p.sourceMapLineCharCache = savedSourceMapLineCharCache
  * }
  */
-export function Printer_Write(receiver: GoPtr<Printer>, node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, writer: EmitTextWriter, sourceMapGenerator: GoPtr<Generator>): void {
+export function Printer_Write(receiver: GoPtr<Printer>, node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, writer: GoInterface<EmitTextWriter>, sourceMapGenerator: GoPtr<Generator>): void {
   const savedCurrentSourceFile = receiver!.currentSourceFile;
   const savedWriter = receiver!.writer;
   const savedUniqueHelperNames = receiver!.uniqueHelperNames;
@@ -3324,7 +3325,7 @@ export function Printer_Write(receiver: GoPtr<Printer>, node: GoPtr<Node>, sourc
 
   Printer_setSourceFile(receiver, sourceFile);
   receiver!.writer = writer;
-  receiver!.writer.Clear();
+  receiver!.writer!.Clear();
   if (sourceFile !== undefined) {
     const w = receiver!.writer as unknown as { Grow?: (n: int) => void };
     if (w.Grow !== undefined) {
@@ -3581,7 +3582,7 @@ export function Printer_emitPos(receiver: GoPtr<Printer>, pos: int): void {
     return;
   }
   const [sourceLine, sourceCharacter] = lineCharacterCache_getLineAndCharacter(receiver!.sourceMapLineCharCache, pos);
-  const err = Generator_AddSourceMapping(receiver!.sourceMapGenerator, receiver!.writer.GetLine(), receiver!.writer.GetColumn(), receiver!.sourceMapSourceIndex, sourceLine, sourceCharacter);
+  const err = Generator_AddSourceMapping(receiver!.sourceMapGenerator, receiver!.writer!.GetLine(), receiver!.writer!.GetColumn(), receiver!.sourceMapSourceIndex, sourceLine, sourceCharacter);
   if (err !== undefined) {
     throw new globalThis.Error(String(err));
   }

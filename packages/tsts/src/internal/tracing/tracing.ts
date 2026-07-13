@@ -1,7 +1,7 @@
 import type { bool, byte, double, int, uint, ulong } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoArray, GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBooleanKey, GoNumberKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoBooleanKey, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
 import { Errorf, Sprintf } from "../../go/fmt.js";
 import { SortFunc } from "../../go/slices.js";
 import { Builder, Compare } from "../../go/strings.js";
@@ -22,6 +22,7 @@ import { GetECMALineAndUTF16CharacterOfPosition, GetTokenPosOfNode } from "../sc
 import { CombinePaths, ToPath } from "../tspath/path.js";
 import type { FS } from "../vfs/vfs.js";
 
+import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 // string([]byte) conversion, matching the established decode idiom used by the
 // other ported internal files.
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
@@ -39,7 +40,7 @@ const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(globalThi
  * }
  */
 export interface Tracer {
-  RecordType(t: TracedType): void;
+  RecordType(t: GoInterface<TracedType>): void;
   DumpTypes(): GoError;
 }
 
@@ -90,30 +91,30 @@ export interface TracedType {
   IsConditional(): bool;
   Symbol(): GoPtr<Symbol>;
   AliasSymbol(): GoPtr<Symbol>;
-  AliasTypeArguments(): GoSlice<TracedType>;
+  AliasTypeArguments(): GoSlice<GoInterface<TracedType>>;
   IntrinsicName(): string;
-  UnionTypes(): GoSlice<TracedType>;
-  IntersectionTypes(): GoSlice<TracedType>;
-  IndexType(): TracedType;
-  IndexedAccessObjectType(): TracedType;
-  IndexedAccessIndexType(): TracedType;
-  ConditionalCheckType(): TracedType;
-  ConditionalExtendsType(): TracedType;
-  ConditionalTrueType(): TracedType;
-  ConditionalFalseType(): TracedType;
-  SubstitutionBaseType(): TracedType;
-  SubstitutionConstraintType(): TracedType;
-  ReferenceTarget(): TracedType;
-  ReferenceTypeArguments(): GoSlice<TracedType>;
+  UnionTypes(): GoSlice<GoInterface<TracedType>>;
+  IntersectionTypes(): GoSlice<GoInterface<TracedType>>;
+  IndexType(): GoInterface<TracedType>;
+  IndexedAccessObjectType(): GoInterface<TracedType>;
+  IndexedAccessIndexType(): GoInterface<TracedType>;
+  ConditionalCheckType(): GoInterface<TracedType>;
+  ConditionalExtendsType(): GoInterface<TracedType>;
+  ConditionalTrueType(): GoInterface<TracedType>;
+  ConditionalFalseType(): GoInterface<TracedType>;
+  SubstitutionBaseType(): GoInterface<TracedType>;
+  SubstitutionConstraintType(): GoInterface<TracedType>;
+  ReferenceTarget(): GoInterface<TracedType>;
+  ReferenceTypeArguments(): GoSlice<GoInterface<TracedType>>;
   ReferenceNode(): GoPtr<Node>;
-  ReverseMappedSourceType(): TracedType;
-  ReverseMappedMappedType(): TracedType;
-  ReverseMappedConstraintType(): TracedType;
-  EvolvingArrayElementType(): TracedType;
-  EvolvingArrayFinalType(): TracedType;
+  ReverseMappedSourceType(): GoInterface<TracedType>;
+  ReverseMappedMappedType(): GoInterface<TracedType>;
+  ReverseMappedConstraintType(): GoInterface<TracedType>;
+  EvolvingArrayElementType(): GoInterface<TracedType>;
+  EvolvingArrayFinalType(): GoInterface<TracedType>;
   IsTuple(): bool;
   Pattern(): GoPtr<Node>;
-  RecursionIdentity(): unknown;
+  RecursionIdentity(): GoInterface<unknown>;
   Display(): string;
 }
 
@@ -159,7 +160,7 @@ export interface traceEvent {
   TS: double;
   Name: string;
   S: string;
-  Dur: GoPtr<double>;
+  Dur: GoRef<double>;
   Args: GoMap<string, unknown>;
 }
 
@@ -217,7 +218,7 @@ export const flushThreshold: int = 256 * 1024;
  * }
  */
 export interface Tracing {
-  fs: FS;
+  fs: GoInterface<FS>;
   traceDir: string;
   tracePath: string;
   configFilePath: string;
@@ -303,7 +304,7 @@ export const PhaseSession: Phase = "session";
  * 	return tr, nil
  * }
  */
-export function StartTracing(fs: FS, traceDir: string, configFilePath: string, deterministic: bool): [GoPtr<Tracing>, GoError] {
+export function StartTracing(fs: GoInterface<FS>, traceDir: string, configFilePath: string, deterministic: bool): [GoPtr<Tracing>, GoError] {
   const traceContent = new Builder();
   const traceStarted = new Bool();
   const tr: Tracing = {
@@ -348,7 +349,7 @@ export function StartTracing(fs: FS, traceDir: string, configFilePath: string, d
 
   // Truncate any existing trace file with the header so subsequent AppendFile
   // calls extend a clean file.
-  const err = tr.fs.WriteFile(tr.tracePath, tr.traceContent.String());
+  const err = tr.fs!.WriteFile(tr.tracePath, tr.traceContent.String());
   if (err !== undefined) {
     return [undefined, Errorf("failed to write trace file header: %w", err)];
   }
@@ -390,7 +391,7 @@ export function Tracing_timestamp(receiver: GoPtr<Tracing>): double {
  * }
  */
 export function writeEventTo(buf: GoPtr<Builder>, event: traceEvent): void {
-  const err = MarshalWrite(buf!, event, Deterministic(true));
+  const err = MarshalWrite(buf!, event, Deterministic(true)!);
   if (err !== undefined) {
     throw new globalThis.Error(Sprintf("failed to marshal trace event: %v", err));
   }
@@ -435,7 +436,7 @@ export function Tracing_maybeFlushLocked(receiver: GoPtr<Tracing>): void {
   if (tr.traceContent.Len() < flushThreshold) {
     return;
   }
-  const err = tr.fs.AppendFile(tr.tracePath, tr.traceContent.String());
+  const err = tr.fs!.AppendFile(tr.tracePath, tr.traceContent.String());
   if (err !== undefined) {
     tr.flushErr = Errorf("failed to flush trace file: %w", err);
   }
@@ -552,7 +553,7 @@ export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: st
  * 	}
  * }
  */
-export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoMap<string, unknown>, separateBeginAndEnd: bool): () => void {
+export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoMap<string, unknown>, separateBeginAndEnd: bool): GoFunc<() => void> {
   const tr = receiver;
   if (tr === undefined || !tr.traceStarted.Load()) {
     return (): void => {};
@@ -608,7 +609,7 @@ export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: strin
       }
       const tid = Tracing_threadIDLocked(tr, argsClone);
       tr.traceContent.WriteString(",\n");
-      Tracing_writeEvent(tr, { PID: 1, TID: tid, PH: "X", Cat: phase as string, TS: startMicros, Name: name, S: "", Dur: dur, Args: argsClone });
+      Tracing_writeEvent(tr, { PID: 1, TID: tid, PH: "X", Cat: phase as string, TS: startMicros, Name: name, S: "", Dur: GoValueRef(dur), Args: argsClone });
       Tracing_maybeFlushLocked(tr);
     } finally {
       tr.mu.Unlock();
@@ -876,7 +877,7 @@ export function stableTraceThreadID(key: traceThreadKey): int {
  * 	return tracer
  * }
  */
-export function Tracing_NewTypeTracer(receiver: GoPtr<Tracing>, checkerIndex: int): Tracer {
+export function Tracing_NewTypeTracer(receiver: GoPtr<Tracing>, checkerIndex: int): GoInterface<Tracer> {
   const tr = receiver!;
   tr.mu.Lock();
   try {
@@ -978,7 +979,7 @@ export function Tracing_StopTracing(receiver: GoPtr<Tracing>): GoError {
         return tr.flushErr;
       }
       // Flush any remaining buffered content and close the JSON array.
-      const err = tr.fs.AppendFile(tr.tracePath, tr.traceContent.String() + "\n]\n");
+      const err = tr.fs!.AppendFile(tr.tracePath, tr.traceContent.String() + "\n]\n");
       if (err !== undefined) {
         return Errorf("failed to write trace file: %w", err);
       }
@@ -997,7 +998,7 @@ export function Tracing_StopTracing(receiver: GoPtr<Tracing>): GoError {
     if (err !== undefined) {
       return Errorf("failed to marshal legend file: %w", err);
     }
-    const writeErr = tr.fs.WriteFile(legendPath, bytesToString(legendData));
+    const writeErr = tr.fs!.WriteFile(legendPath, bytesToString(legendData));
     if (writeErr !== undefined) {
       return Errorf("failed to write legend file: %w", writeErr);
     }
@@ -1021,10 +1022,10 @@ export function Tracing_StopTracing(receiver: GoPtr<Tracing>): GoError {
  * }
  */
 export interface typeTracer {
-  fs: FS;
+  fs: GoInterface<FS>;
   checkerIndex: int;
   typesPath: string;
-  types: GoSlice<TracedType>;
+  types: GoSlice<GoInterface<TracedType>>;
   mu: Mutex;
 }
 
@@ -1033,7 +1034,7 @@ export interface typeTracer {
 // satisfaction (the *typeTracer methods RecordType/DumpTypes).
 export function typeTracer_as_Tracer(receiver: GoPtr<typeTracer>): Tracer {
   return {
-    RecordType(t: TracedType): void {
+    RecordType(t: GoInterface<TracedType>): void {
       typeTracer_RecordType(receiver, t);
     },
     DumpTypes(): GoError {
@@ -1134,7 +1135,7 @@ type LineAndCharJsonFields = JsonFieldNamesForGoStructContract<
  * 	t.types = append(t.types, typ)
  * }
  */
-export function typeTracer_RecordType(receiver: GoPtr<typeTracer>, typ: TracedType): void {
+export function typeTracer_RecordType(receiver: GoPtr<typeTracer>, typ: GoInterface<TracedType>): void {
   const t = receiver!;
   t.mu.Lock();
   try {
@@ -1187,7 +1188,7 @@ export function typeTracer_DumpTypes(receiver: GoPtr<typeTracer>): GoError {
   // Copy the types slice under lock, then release so Display() calls during
   // buildTypeDescriptor don't deadlock when they create new types
   t.mu.Lock();
-  const types: GoSlice<TracedType> = [...t.types];
+  const types: GoSlice<GoInterface<TracedType>> = [...t.types];
   t.mu.Unlock();
 
   if (types.length === 0) {
@@ -1216,7 +1217,7 @@ export function typeTracer_DumpTypes(receiver: GoPtr<typeTracer>): GoError {
 
   sb.WriteString("]\n");
 
-  return t.fs.WriteFile(t.typesPath, sb.String());
+  return t.fs!.WriteFile(t.typesPath, sb.String());
 }
 
 /**
@@ -1261,28 +1262,28 @@ export interface TypeDescriptor {
   ID: uint;
   IntrinsicName: string;
   SymbolName: string;
-  RecursionID: GoPtr<int>;
+  RecursionID: GoRef<int>;
   IsTuple: bool;
   UnionTypes: GoSlice<uint>;
   IntersectionTypes: GoSlice<uint>;
   AliasTypeArguments: GoSlice<uint>;
-  KeyofType: GoPtr<uint>;
-  IndexedAccessObjectType: GoPtr<uint>;
-  IndexedAccessIndexType: GoPtr<uint>;
-  ConditionalCheckType: GoPtr<uint>;
-  ConditionalExtendsType: GoPtr<uint>;
-  ConditionalTrueType: GoPtr<int>;
-  ConditionalFalseType: GoPtr<int>;
-  SubstitutionBaseType: GoPtr<uint>;
-  ConstraintType: GoPtr<uint>;
-  InstantiatedType: GoPtr<uint>;
+  KeyofType: GoRef<uint>;
+  IndexedAccessObjectType: GoRef<uint>;
+  IndexedAccessIndexType: GoRef<uint>;
+  ConditionalCheckType: GoRef<uint>;
+  ConditionalExtendsType: GoRef<uint>;
+  ConditionalTrueType: GoRef<int>;
+  ConditionalFalseType: GoRef<int>;
+  SubstitutionBaseType: GoRef<uint>;
+  ConstraintType: GoRef<uint>;
+  InstantiatedType: GoRef<uint>;
   TypeArguments: GoSlice<uint>;
   ReferenceLocation: GoPtr<Location>;
-  ReverseMappedSourceType: GoPtr<uint>;
-  ReverseMappedMappedType: GoPtr<uint>;
-  ReverseMappedConstraintType: GoPtr<uint>;
-  EvolvingArrayElementType: GoPtr<uint>;
-  EvolvingArrayFinalType: GoPtr<uint>;
+  ReverseMappedSourceType: GoRef<uint>;
+  ReverseMappedMappedType: GoRef<uint>;
+  ReverseMappedConstraintType: GoRef<uint>;
+  EvolvingArrayElementType: GoRef<uint>;
+  EvolvingArrayFinalType: GoRef<uint>;
   DestructuringPattern: GoPtr<Location>;
   FirstDeclaration: GoPtr<Location>;
   Flags: GoSlice<string>;
@@ -1468,13 +1469,13 @@ export interface LineAndChar {
  * 	return desc
  * }
  */
-export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ: TracedType, recursionIdentityMap: GoMap<unknown, int>): TypeDescriptor {
-  const symbol = typ.Symbol();
-  const aliasSymbol = typ.AliasSymbol();
+export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ: GoInterface<TracedType>, recursionIdentityMap: GoMap<unknown, int>): TypeDescriptor {
+  const symbol = typ!.Symbol();
+  const aliasSymbol = typ!.AliasSymbol();
 
   const desc: TypeDescriptor = {
-    ID: typ.Id(),
-    Flags: typ.FormatFlags(),
+    ID: typ!.Id(),
+    Flags: typ!.FormatFlags(),
     IntrinsicName: "",
     SymbolName: "",
     RecursionID: undefined,
@@ -1505,19 +1506,19 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
   };
 
   // Assign a unique integer token per recursion identity, matching TypeScript's behavior.
-  if (typ.RecursionIdentity() !== undefined && typ.RecursionIdentity() !== null) {
-    const identity = typ.RecursionIdentity();
+  if (typ!.RecursionIdentity() !== undefined && typ!.RecursionIdentity() !== null) {
+    const identity = typ!.RecursionIdentity();
     let token = recursionIdentityMap.get(identity);
     const ok = recursionIdentityMap.has(identity);
     if (!ok) {
       token = recursionIdentityMap.size as int;
       recursionIdentityMap.set(identity, token!);
     }
-    desc.RecursionID = token;
+    desc.RecursionID = GoValueRef(token!);
   }
 
   // Intrinsic name
-  const intrinsicName = typ.IntrinsicName();
+  const intrinsicName = typ!.IntrinsicName();
   if (intrinsicName !== "") {
     desc.IntrinsicName = intrinsicName;
   }
@@ -1530,118 +1531,118 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
   }
 
   // Tuple flag
-  if (typ.IsTuple()) {
+  if (typ!.IsTuple()) {
     desc.IsTuple = true;
   }
 
   // Union types
-  const unionTypes = typ.UnionTypes();
+  const unionTypes = typ!.UnionTypes();
   if (unionTypes.length > 0) {
     desc.UnionTypes = mapTypeIds(unionTypes);
   }
 
   // Intersection types
-  const intersectionTypes = typ.IntersectionTypes();
+  const intersectionTypes = typ!.IntersectionTypes();
   if (intersectionTypes.length > 0) {
     desc.IntersectionTypes = mapTypeIds(intersectionTypes);
   }
 
   // Alias type arguments
-  const aliasArgs = typ.AliasTypeArguments();
+  const aliasArgs = typ!.AliasTypeArguments();
   if (aliasArgs.length > 0) {
     desc.AliasTypeArguments = mapTypeIds(aliasArgs);
   }
 
   // Index type (keyof)
-  const indexType = typ.IndexType();
+  const indexType = typ!.IndexType();
   if (indexType !== undefined && indexType !== null) {
-    desc.KeyofType = indexType.Id();
+    desc.KeyofType = GoValueRef(indexType.Id());
   }
 
   // Indexed access type
-  const objType = typ.IndexedAccessObjectType();
+  const objType = typ!.IndexedAccessObjectType();
   if (objType !== undefined && objType !== null) {
-    desc.IndexedAccessObjectType = objType.Id();
+    desc.IndexedAccessObjectType = GoValueRef(objType.Id());
   }
-  const idxType = typ.IndexedAccessIndexType();
+  const idxType = typ!.IndexedAccessIndexType();
   if (idxType !== undefined && idxType !== null) {
-    desc.IndexedAccessIndexType = idxType.Id();
+    desc.IndexedAccessIndexType = GoValueRef(idxType.Id());
   }
 
   // Conditional type
-  if (typ.IsConditional()) {
-    const checkType = typ.ConditionalCheckType();
+  if (typ!.IsConditional()) {
+    const checkType = typ!.ConditionalCheckType();
     if (checkType !== undefined && checkType !== null) {
-      desc.ConditionalCheckType = checkType.Id();
+      desc.ConditionalCheckType = GoValueRef(checkType.Id());
     }
-    const extendsType = typ.ConditionalExtendsType();
+    const extendsType = typ!.ConditionalExtendsType();
     if (extendsType !== undefined && extendsType !== null) {
-      desc.ConditionalExtendsType = extendsType.Id();
+      desc.ConditionalExtendsType = GoValueRef(extendsType.Id());
     }
-    const trueType = typ.ConditionalTrueType();
+    const trueType = typ!.ConditionalTrueType();
     if (trueType !== undefined && trueType !== null) {
-      desc.ConditionalTrueType = trueType.Id() as int;
+      desc.ConditionalTrueType = GoValueRef(trueType.Id() as int);
     } else {
-      desc.ConditionalTrueType = -1 as int;
+      desc.ConditionalTrueType = GoValueRef(-1 as int);
     }
-    const falseType = typ.ConditionalFalseType();
+    const falseType = typ!.ConditionalFalseType();
     if (falseType !== undefined && falseType !== null) {
-      desc.ConditionalFalseType = falseType.Id() as int;
+      desc.ConditionalFalseType = GoValueRef(falseType.Id() as int);
     } else {
-      desc.ConditionalFalseType = -1 as int;
+      desc.ConditionalFalseType = GoValueRef(-1 as int);
     }
   }
 
   // Substitution type
-  const baseType = typ.SubstitutionBaseType();
+  const baseType = typ!.SubstitutionBaseType();
   if (baseType !== undefined && baseType !== null) {
-    desc.SubstitutionBaseType = baseType.Id();
+    desc.SubstitutionBaseType = GoValueRef(baseType.Id());
   }
-  const constraintType = typ.SubstitutionConstraintType();
+  const constraintType = typ!.SubstitutionConstraintType();
   if (constraintType !== undefined && constraintType !== null) {
-    desc.ConstraintType = constraintType.Id();
+    desc.ConstraintType = GoValueRef(constraintType.Id());
   }
 
   // Reference type
-  const target = typ.ReferenceTarget();
+  const target = typ!.ReferenceTarget();
   if (target !== undefined && target !== null) {
-    desc.InstantiatedType = target.Id();
+    desc.InstantiatedType = GoValueRef(target.Id());
   }
-  const refArgs = typ.ReferenceTypeArguments();
+  const refArgs = typ!.ReferenceTypeArguments();
   if (refArgs.length > 0) {
     desc.TypeArguments = mapTypeIds(refArgs);
   }
-  const refNode = typ.ReferenceNode();
+  const refNode = typ!.ReferenceNode();
   if (refNode !== undefined) {
     desc.ReferenceLocation = getLocation(refNode);
   }
 
   // Reverse mapped type
-  const sourceType = typ.ReverseMappedSourceType();
+  const sourceType = typ!.ReverseMappedSourceType();
   if (sourceType !== undefined && sourceType !== null) {
-    desc.ReverseMappedSourceType = sourceType.Id();
+    desc.ReverseMappedSourceType = GoValueRef(sourceType.Id());
   }
-  const mappedType = typ.ReverseMappedMappedType();
+  const mappedType = typ!.ReverseMappedMappedType();
   if (mappedType !== undefined && mappedType !== null) {
-    desc.ReverseMappedMappedType = mappedType.Id();
+    desc.ReverseMappedMappedType = GoValueRef(mappedType.Id());
   }
-  const revConstraintType = typ.ReverseMappedConstraintType();
+  const revConstraintType = typ!.ReverseMappedConstraintType();
   if (revConstraintType !== undefined && revConstraintType !== null) {
-    desc.ReverseMappedConstraintType = revConstraintType.Id();
+    desc.ReverseMappedConstraintType = GoValueRef(revConstraintType.Id());
   }
 
   // Evolving array type
-  const elemType = typ.EvolvingArrayElementType();
+  const elemType = typ!.EvolvingArrayElementType();
   if (elemType !== undefined && elemType !== null) {
-    desc.EvolvingArrayElementType = elemType.Id();
+    desc.EvolvingArrayElementType = GoValueRef(elemType.Id());
   }
-  const finalType = typ.EvolvingArrayFinalType();
+  const finalType = typ!.EvolvingArrayFinalType();
   if (finalType !== undefined && finalType !== null) {
-    desc.EvolvingArrayFinalType = finalType.Id();
+    desc.EvolvingArrayFinalType = GoValueRef(finalType.Id());
   }
 
   // Pattern (destructuring)
-  const pattern = typ.Pattern();
+  const pattern = typ!.Pattern();
   if (pattern !== undefined) {
     desc.DestructuringPattern = getLocation(pattern);
   }
@@ -1656,7 +1657,7 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
   }
 
   // Display text
-  const display = typ.Display();
+  const display = typ!.Display();
   if (display !== "") {
     desc.Display = display;
   }
@@ -1681,7 +1682,7 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
  * 	return ids
  * }
  */
-export function mapTypeIds(types: GoSlice<TracedType>): GoSlice<uint> {
+export function mapTypeIds(types: GoSlice<GoInterface<TracedType>>): GoSlice<uint> {
   if (types.length === 0) {
     return [];
   }

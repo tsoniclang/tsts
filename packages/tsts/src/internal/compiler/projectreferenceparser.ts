@@ -14,6 +14,7 @@ import type { fileLoader } from "./fileloader.js";
 import { newProjectReferenceDtsFakingHost } from "./projectreferencedtsfakinghost.js";
 import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParseTask","kind":"type","status":"implemented","sigHash":"9514d364f391763c424a5d6d9a870f7696a4a0508cf83e21635c4aa906ea5617"}
  *
@@ -51,7 +52,7 @@ export interface projectReferenceParseTask {
  */
 export function projectReferenceParseTask_parse(receiver: GoPtr<projectReferenceParseTask>, projectReferenceParser: GoPtr<projectReferenceParser>): void {
   const loader = projectReferenceParser!.loader;
-  receiver!.resolved = loader!.opts.Host.GetResolvedProjectReference(receiver!.configName, fileLoader_toPath(loader, receiver!.configName));
+  receiver!.resolved = loader!.opts.Host!.GetResolvedProjectReference(receiver!.configName, fileLoader_toPath(loader, receiver!.configName));
   if (receiver!.resolved === undefined) {
     return;
   }
@@ -94,7 +95,7 @@ export function createProjectReferenceParseTasks(projectReferences: GoSlice<stri
  */
 export interface projectReferenceParser {
   loader: GoPtr<fileLoader>;
-  wg: WorkGroup;
+  wg: GoInterface<WorkGroup>;
   tasksByFileName: SyncMap<Path, GoPtr<projectReferenceParseTask>>;
 }
 
@@ -112,7 +113,7 @@ export interface projectReferenceParser {
 export function projectReferenceParser_parse(receiver: GoPtr<projectReferenceParser>, tasks: GoSlice<GoPtr<projectReferenceParseTask>>): void {
   receiver!.loader!.projectReferenceFileMapper!.loader = receiver!.loader;
   projectReferenceParser_start(receiver, tasks);
-  receiver!.wg.RunAndWait();
+  receiver!.wg!.RunAndWait();
   projectReferenceParser_initMapper(receiver, tasks);
 }
 
@@ -144,7 +145,7 @@ export function projectReferenceParser_start(receiver: GoPtr<projectReferencePar
       // dedup tasks to ensure correct file order, regardless of which task would be started first
       tasks[i] = loadedTask;
     } else {
-      receiver!.wg.Queue((): void => {
+      receiver!.wg!.Queue((): void => {
         projectReferenceParseTask_parse(task, receiver);
         projectReferenceParser_start(receiver, task!.subTasks);
       });

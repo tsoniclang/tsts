@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoValueRef } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_TypeArguments, Node_Parameters, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
 import type { Node, SourceFile } from "../../ast/ast.js";
@@ -58,6 +59,7 @@ import { Checker_isReachableFlowNode } from "../flow.js";
 import { Checker_addDiagnostic, Checker_addSuggestionDiagnostic } from "../checker.js";
 import * as slices from "../../../go/slices.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addUndefinedToGlobalsOrErrorOnRedeclaration","kind":"method","status":"implemented","sigHash":"177e4f101b29e5acf47d7d3ba71d55990c08f6963846244e1ce9f3bd84204baf"}
  *
@@ -715,7 +717,7 @@ export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node:
       const baseProp = Checker_getPropertyOfType(receiver, baseWithThis, declaredProp!.Name);
       if (prop !== undefined && baseProp !== undefined) {
         const diags: GoSlice<GoPtr<Diagnostic>> = [];
-        if (!Checker_checkTypeAssignableToEx(receiver, Checker_getTypeOfSymbol(receiver, prop), Checker_getTypeOfSymbol(receiver, baseProp), OrElse(Node_Name(member), member), undefined, diags)) {
+        if (!Checker_checkTypeAssignableToEx(receiver, Checker_getTypeOfSymbol(receiver, prop), Checker_getTypeOfSymbol(receiver, baseProp), OrElse(Node_Name(member), member), undefined, GoValueRef(diags))) {
           Checker_addDiagnostic(receiver, NewDiagnosticChain(diags[0], Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Checker_symbolToString(receiver, declaredProp), Checker_TypeToString(receiver, typeWithThis), Checker_TypeToString(receiver, baseWithThis)));
           issuedMemberError = true;
         }
@@ -754,8 +756,8 @@ export function Checker_reportTypeNotIterableError(receiver: GoPtr<Checker>, err
   const suggestAwait: bool = Checker_getAwaitedTypeOfPromise(receiver, t) !== undefined || (!allowAsyncIterables &&
     IsForOfStatement(errorNode!.Parent) &&
     Node_Expression(errorNode!.Parent) === errorNode &&
-    c.getGlobalAsyncIterableType() !== c.emptyGenericType &&
-    Checker_isTypeAssignableTo(receiver, t, Checker_createTypeFromGenericGlobalType(receiver, c.getGlobalAsyncIterableType(), [c.anyType, c.anyType, c.anyType])));
+    c.getGlobalAsyncIterableType!() !== c.emptyGenericType &&
+    Checker_isTypeAssignableTo(receiver, t, Checker_createTypeFromGenericGlobalType(receiver, c.getGlobalAsyncIterableType!(), [c.anyType, c.anyType, c.anyType])));
   return Checker_errorAndMaybeSuggestAwait(receiver, errorNode, suggestAwait, message, Checker_TypeToString(receiver, t));
 }
 
@@ -1053,7 +1055,7 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
   if (s!.candidatesForArgumentError.length !== 0) {
     const last = s!.candidatesForArgumentError[s!.candidatesForArgumentError.length - 1];
     const diags: Array<GoPtr<Diagnostic>> = [];
-    Checker_isSignatureApplicable(receiver, s!.node, s!.args, last, c.assignableRelation, CheckModeNormal, true as bool, diags);
+    Checker_isSignatureApplicable(receiver, s!.node, s!.args, last, c.assignableRelation, CheckModeNormal, true as bool, GoValueRef(diags));
     for (let diagnostic of diags) {
       if (s!.candidatesForArgumentError.length > 1) {
         diagnostic = NewDiagnosticChain(diagnostic, The_last_overload_gave_the_following_error);
@@ -1353,7 +1355,7 @@ export function Checker_isPromiseResolveArityError(receiver: GoPtr<Checker>, nod
   if (decl === undefined || !IsParameterDeclaration(decl) || !IsFunctionExpressionOrArrowFunction(parent) || !IsNewExpression(grandParent) || !IsIdentifier(Node_Expression(grandParent))) {
     return false;
   }
-  const globalPromiseSymbol = c.getGlobalPromiseConstructorSymbolOrNil();
+  const globalPromiseSymbol = c.getGlobalPromiseConstructorSymbolOrNil!();
   if (globalPromiseSymbol === undefined) {
     return false;
   }
@@ -1667,9 +1669,9 @@ export function Checker_invocationErrorRecovery(receiver: GoPtr<Checker>, appare
     return;
   }
   const links = LinkStore_Get(receiver!.exportTypeLinks as unknown as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, apparentType!.symbol);
-  const importNode = links!.originatingImport;
+  const importNode = links!.v.originatingImport;
   if (importNode !== undefined && !IsImportCall(importNode)) {
-    const sigs = Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, links!.target), kind);
+    const sigs = Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, links!.v.target), kind);
     if (sigs.length === 0) {
       return;
     }
@@ -1763,8 +1765,8 @@ export function Checker_reportOperatorError(receiver: GoPtr<Checker>, leftType: 
  * 	}
  * }
  */
-export function Checker_reportOperatorErrorUnless(receiver: GoPtr<Checker>, leftType: GoPtr<Type>, operator: Kind, rightType: GoPtr<Type>, errorNode: GoPtr<Node>, typesAreCompatible: (left: GoPtr<Type>, right: GoPtr<Type>) => bool): void {
-  if (!typesAreCompatible(leftType, rightType)) {
+export function Checker_reportOperatorErrorUnless(receiver: GoPtr<Checker>, leftType: GoPtr<Type>, operator: Kind, rightType: GoPtr<Type>, errorNode: GoPtr<Node>, typesAreCompatible: GoFunc<(left: GoPtr<Type>, right: GoPtr<Type>) => bool>): void {
+  if (!typesAreCompatible!(leftType, rightType)) {
     Checker_reportOperatorError(receiver, leftType, operator, rightType, errorNode, typesAreCompatible);
   }
 }
@@ -1886,7 +1888,7 @@ export function Checker_getCannotFindNameDiagnosticForName(receiver: GoPtr<Check
  * 	return c.getDiagnostics(ctx, sourceFile, &c.diagnostics)
  * }
  */
-export function Checker_GetDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Checker_GetDiagnostics(receiver: GoPtr<Checker>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   return Checker_getDiagnostics(receiver, ctx, sourceFile, receiver!.diagnostics);
 }
 
@@ -1898,7 +1900,7 @@ export function Checker_GetDiagnostics(receiver: GoPtr<Checker>, ctx: Context, s
  * 	return c.getDiagnostics(ctx, sourceFile, &c.suggestionDiagnostics)
  * }
  */
-export function Checker_GetSuggestionDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Checker_GetSuggestionDiagnostics(receiver: GoPtr<Checker>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   return Checker_getDiagnostics(receiver, ctx, sourceFile, receiver!.suggestionDiagnostics);
 }
 
@@ -1916,7 +1918,7 @@ export function Checker_GetSuggestionDiagnostics(receiver: GoPtr<Checker>, ctx: 
  * 	return collection.GetDiagnosticsForFile(sourceFile.FileName())
  * }
  */
-export function Checker_getDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>, collection: GoPtr<DiagnosticsCollection>): GoSlice<GoPtr<Diagnostic>> {
+export function Checker_getDiagnostics(receiver: GoPtr<Checker>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, collection: GoPtr<DiagnosticsCollection>): GoSlice<GoPtr<Diagnostic>> {
   const c = receiver!;
   Checker_checkNotCanceled(receiver);
   const checkUnused = (Tristate_IsTrue(c.compilerOptions!.NoUnusedLocals) ||
@@ -1953,10 +1955,10 @@ export function Checker_GetGlobalDiagnostics(receiver: GoPtr<Checker>): GoSlice<
  * 	}
  * }
  */
-export function Checker_addDeferredDiagnostic(receiver: GoPtr<Checker>, callback: () => void): void {
+export function Checker_addDeferredDiagnostic(receiver: GoPtr<Checker>, callback: GoFunc<() => void>): void {
   const c = receiver!;
   if (c.saveDeferredDiagnostics) {
-    c.deferredDiagnosticCallbacks = [...(c.deferredDiagnosticCallbacks ?? []), callback];
+    c.deferredDiagnosticCallbacks = [...(c.deferredDiagnosticCallbacks ?? []), callback!];
   }
 }
 
@@ -2329,7 +2331,7 @@ export function Checker_checkAndReportErrorForResolvingImportAliasToTypeOnlySymb
  */
 export function Checker_getCannotResolveModuleNameErrorForSpecificModule(receiver: GoPtr<Checker>, moduleName: GoPtr<Node>): GoPtr<Message> {
   if (IsStringLiteral(moduleName)) {
-    if (NodeCoreModules().get(Node_Text(moduleName))) {
+    if (NodeCoreModules!().get(Node_Text(moduleName))) {
       if (CompilerOptions_UsesWildcardTypes(receiver!.compilerOptions)) {
         return Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode;
       }

@@ -24,7 +24,7 @@ export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callE
     return;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedCall) === undefined) {
     return;
   }
@@ -83,7 +83,7 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
     return;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedPropertyAccess) === undefined) {
     return;
   }
@@ -136,7 +136,7 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
     return;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedElementAccess) === undefined) {
     return;
   }
@@ -197,7 +197,7 @@ export function recordExtensionCheckedOperatorKindMapping(checker: GoPtr<Checker
     return;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedOperator) === undefined) {
     return;
   }
@@ -235,7 +235,7 @@ export function recordExtensionCheckedIterationMapping(checker: GoPtr<Checker>, 
     return;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedIteration) === undefined) {
     return;
   }
@@ -280,7 +280,7 @@ export function recordExtensionTargetConstraintValidation(checker: GoPtr<Checker
     return true;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.validateTargetConstraint) === undefined) {
     return true;
   }
@@ -325,7 +325,7 @@ export function recordExtensionRuntimeCarrierFact(checker: GoPtr<Checker>, typeR
     return;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined) {
     return;
   }
@@ -374,7 +374,7 @@ export function recordExtensionContextualTargetTypeFact(checker: GoPtr<Checker>,
     return;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.recordContextualTargetType) === undefined) {
     return;
   }
@@ -405,7 +405,7 @@ export function recordExtensionPostCheckAssignabilityObservation(checker: GoPtr<
     return;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.observePostCheckAssignability) === undefined) {
     return;
   }
@@ -441,7 +441,7 @@ export function recordExtensionFlowUseValidation(checker: GoPtr<Checker>, useSit
     return;
   }
 
-  const extensionHost = getExtensionHost(checker.program);
+  const extensionHost = getExtensionHost(checker.program!);
   if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.validateExtensionFlowUse) === undefined) {
     return;
   }
@@ -640,7 +640,7 @@ function getSourceSelectedMethodTypeArguments(callExpression: GoPtr<Node>, sourc
       return undefined;
     }
     const explicitTypeNode = explicitTypeNodes[index];
-    const selectedType = sourceSelectedSignature.mapper?.data.Map(typeParameter);
+    const selectedType = sourceSelectedSignature.mapper!?.data!.Map(typeParameter);
     if (selectedType === undefined) {
       return undefined;
     }

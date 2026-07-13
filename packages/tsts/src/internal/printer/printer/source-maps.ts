@@ -1,4 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
+import { GoNilMap } from "../../../go/compat.js";
 import type { GoError, GoMap, GoPtr } from "../../../go/compat.js";
 import { ContainsFunc } from "../../../go/slices.js";
 import type { Node, NodeList } from "../../ast/spine.js";
@@ -69,6 +70,7 @@ import {
 } from "./state.js";
 import { OperatorPrecedenceComma } from "../../ast/precedence.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 // Go strings are immutable UTF-8 byte sequences; `s[i:j]` and `len(s)` operate
 // on byte offsets. Mirror that contract by operating over the UTF-8 byte view
 // (matching internal/stringutil/util.ts), converting back at the boundary.
@@ -84,7 +86,7 @@ const utf8Decoder: TextDecoder = new globalThis.TextDecoder();
  * }
  */
 export function Printer_writeLine(receiver: GoPtr<Printer>): void {
-  receiver!.writer.WriteLine();
+  receiver!.writer!.WriteLine();
 }
 
 /**
@@ -339,13 +341,13 @@ export function Printer_getLinesBetweenNodes(receiver: GoPtr<Printer>, parent: G
  * 	return lines
  * }
  */
-export function Printer_getEffectiveLines(receiver: GoPtr<Printer>, getLineDifference: (includeComments: bool) => int): int {
+export function Printer_getEffectiveLines(receiver: GoPtr<Printer>, getLineDifference: GoFunc<(includeComments: bool) => int>): int {
   if (!receiver!.Options.PreserveSourceNewlines) {
     throw new globalThis.Error("Should not be called when preserveSourceNewlines is false");
   }
-  const lines = getLineDifference(true as bool);
+  const lines = getLineDifference!(true as bool);
   if (lines === 0) {
-    return getLineDifference(false as bool);
+    return getLineDifference!(false as bool);
   }
   return lines;
 }
@@ -970,7 +972,7 @@ export function Printer_emitSourceFile(receiver: GoPtr<Printer>, node: GoPtr<Sou
   if (node!.ScriptKind !== ScriptKindJSON) {
     Printer_emitShebangIfNeeded(receiver, node);
     index = Printer_emitPrologueDirectives(receiver, node!.Statements);
-    if (!receiver!.writer.IsAtStartOfLine()) {
+    if (!receiver!.writer!.IsAtStartOfLine()) {
       Printer_writeLine(receiver);
     }
     state = Printer_emitDetachedCommentsBeforeStatementList(receiver, NodeDefault_AsNode(node), node!.Statements!.Loc);
@@ -1069,7 +1071,7 @@ export function Printer_emitSourceFile(receiver: GoPtr<Printer>, node: GoPtr<Sou
  * 	}
  * }
  */
-export function Printer_emitListRange(receiver: GoPtr<Printer>, emit: (p: GoPtr<Printer>, node: GoPtr<Node>) => void, parentNode: GoPtr<Node>, children: GoPtr<NodeList>, format: ListFormat, start: int, count: int): void {
+export function Printer_emitListRange(receiver: GoPtr<Printer>, emit: GoFunc<(p: GoPtr<Printer>, node: GoPtr<Node>) => void>, parentNode: GoPtr<Node>, children: GoPtr<NodeList>, format: ListFormat, start: int, count: int): void {
   const isNil = children === undefined;
 
   const length = isNil ? 0 : children!.Nodes.length;
@@ -1164,7 +1166,7 @@ export function Printer_EmitSourceFile(receiver: GoPtr<Printer>, sourceFile: GoP
  */
 export function Printer_setSourceFile(receiver: GoPtr<Printer>, sourceFile: GoPtr<SourceFile>): void {
   receiver!.currentSourceFile = sourceFile;
-  receiver!.uniqueHelperNames = undefined;
+  receiver!.uniqueHelperNames = GoNilMap();
   receiver!.externalHelpersModuleName = undefined;
   if (sourceFile !== undefined) {
     if ((EmitContext_EmitFlags(receiver!.emitContext, EmitContext_MostOriginal(receiver!.emitContext, NodeDefault_AsNode(sourceFile))) & EFExternalHelpers) !== 0) {
@@ -1209,7 +1211,7 @@ export function Printer_setSourceFile(receiver: GoPtr<Printer>, sourceFile: GoPt
  * 	p.mostRecentSourceMapSourceIndex = p.sourceMapSourceIndex
  * }
  */
-export function Printer_setSourceMapSource(receiver: GoPtr<Printer>, source: Source): void {
+export function Printer_setSourceMapSource(receiver: GoPtr<Printer>, source: GoInterface<Source>): void {
   if (receiver!.sourceMapsDisabled) {
     return;
   }
@@ -1221,14 +1223,14 @@ export function Printer_setSourceMapSource(receiver: GoPtr<Printer>, source: Sou
     return;
   }
 
-  receiver!.sourceMapSourceIsJson = FileExtensionIs(source.FileName(), ExtensionJson);
+  receiver!.sourceMapSourceIsJson = FileExtensionIs(source!.FileName(), ExtensionJson);
   if (receiver!.sourceMapSourceIsJson) {
     return;
   }
 
-  receiver!.sourceMapSourceIndex = Generator_AddSource(receiver!.sourceMapGenerator, source.FileName());
+  receiver!.sourceMapSourceIndex = Generator_AddSource(receiver!.sourceMapGenerator, source!.FileName());
   if (receiver!.Options.InlineSources) {
-    const err: GoError = Generator_SetSourceContent(receiver!.sourceMapGenerator, receiver!.sourceMapSourceIndex, source.Text());
+    const err: GoError = Generator_SetSourceContent(receiver!.sourceMapGenerator, receiver!.sourceMapSourceIndex, source!.Text());
     if (err !== undefined) {
       throw err;
     }
@@ -1257,7 +1259,7 @@ export function Printer_setSourceMapSource(receiver: GoPtr<Printer>, source: Sou
  * 	}
  * }
  */
-export function Printer_emitSourcePos(receiver: GoPtr<Printer>, source: Source, pos: int): void {
+export function Printer_emitSourcePos(receiver: GoPtr<Printer>, source: GoInterface<Source>, pos: int): void {
   if (source !== receiver!.sourceMapSource) {
     const savedSourceMapSource = receiver!.sourceMapSource;
     const savedSourceMapSourceIndex = receiver!.sourceMapSourceIndex;
@@ -1320,10 +1322,10 @@ export function Printer_emitSourceMapsBeforeNode(receiver: GoPtr<Printer>, node:
   }
 
   const state = Arena_New<sourceMapState>(receiver!.sourceMapStateArena as Arena<sourceMapState>);
-  state!.emitFlags = emitFlags;
-  state!.sourceMapRange = loc;
-  state!.hasTokenSourceMapRange = false as bool;
-  return state;
+  state!.v.emitFlags = emitFlags;
+  state!.v.sourceMapRange = loc;
+  state!.v.hasTokenSourceMapRange = false as bool;
+  return state!.v;
 }
 
 /**
@@ -1413,10 +1415,10 @@ export function Printer_emitSourceMapsBeforeToken(receiver: GoPtr<Printer>, toke
   }
 
   const state = Arena_New<sourceMapState>(receiver!.sourceMapStateArena as Arena<sourceMapState>);
-  state!.emitFlags = emitFlags;
-  state!.sourceMapRange = loc;
-  state!.hasTokenSourceMapRange = hasLoc as bool;
-  return state;
+  state!.v.emitFlags = emitFlags;
+  state!.v.sourceMapRange = loc;
+  state!.v.hasTokenSourceMapRange = hasLoc as bool;
+  return state!.v;
 }
 
 /**

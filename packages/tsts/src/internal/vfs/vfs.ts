@@ -81,7 +81,7 @@ export interface FS {
 export interface Entries {
   Files: GoSlice<string>;
   Directories: GoSlice<string>;
-  Symlinks: GoPtr<GoMap<string, { readonly __tsgoEmpty?: never }>>;
+  Symlinks: GoMap<string, { readonly __tsgoEmpty?: never }>;
 }
 
 /**

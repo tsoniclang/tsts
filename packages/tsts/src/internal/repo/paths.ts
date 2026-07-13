@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { statSync } from "node:fs";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 function onceValue<T>(factory: () => T): () => T {
   let initialized = false;
   let value: T;
@@ -61,7 +62,7 @@ function statPath(path: string): { isFile(): bool; isDirectory(): bool } | undef
  * 	panic("could not find go.mod above " + filename)
  * })
  */
-export let rootPath: () => string = onceValue((): string => {
+export let rootPath: GoFunc<() => string> = onceValue((): string => {
   const filename = fileURLToPath(import.meta.url);
   let dir = dirname(filename);
   for (;;) {
@@ -87,7 +88,7 @@ export let rootPath: () => string = onceValue((): string => {
  * }
  */
 export function RootPath(): string {
-  return rootPath();
+  return rootPath!();
 }
 
 /**
@@ -98,8 +99,8 @@ export function RootPath(): string {
  * 	return filepath.Join(rootPath(), "_submodules", "TypeScript")
  * })
  */
-export let typeScriptSubmodulePath: () => string = onceValue((): string => {
-  return join(rootPath(), "_submodules", "TypeScript");
+export let typeScriptSubmodulePath: GoFunc<() => string> = onceValue((): string => {
+  return join(rootPath!(), "_submodules", "TypeScript");
 });
 
 /**
@@ -111,7 +112,7 @@ export let typeScriptSubmodulePath: () => string = onceValue((): string => {
  * }
  */
 export function TypeScriptSubmodulePath(): string {
-  return typeScriptSubmodulePath();
+  return typeScriptSubmodulePath!();
 }
 
 /**
@@ -122,8 +123,8 @@ export function TypeScriptSubmodulePath(): string {
  * 	return filepath.Join(rootPath(), "testdata")
  * })
  */
-export let testDataPath: () => string = onceValue((): string => {
-  return join(rootPath(), "testdata");
+export let testDataPath: GoFunc<() => string> = onceValue((): string => {
+  return join(rootPath!(), "testdata");
 });
 
 /**
@@ -135,7 +136,7 @@ export let testDataPath: () => string = onceValue((): string => {
  * }
  */
 export function TestDataPath(): string {
-  return testDataPath();
+  return testDataPath!();
 }
 
 /**
@@ -153,8 +154,8 @@ export function TestDataPath(): string {
  * 	return true
  * })
  */
-export let typeScriptSubmoduleExists: () => bool = onceValue((): bool => {
-  const packageJson = join(typeScriptSubmodulePath(), "package.json");
+export let typeScriptSubmoduleExists: GoFunc<() => bool> = onceValue((): bool => {
+  const packageJson = join(typeScriptSubmodulePath!(), "package.json");
   return statPath(packageJson)?.isFile() === true;
 });
 
@@ -167,7 +168,7 @@ export let typeScriptSubmoduleExists: () => bool = onceValue((): bool => {
  * }
  */
 export function TypeScriptSubmoduleExists(): bool {
-  return typeScriptSubmoduleExists();
+  return typeScriptSubmoduleExists!();
 }
 
 /**
@@ -195,9 +196,9 @@ export interface SkippableTest {
  * 	}
  * }
  */
-export function SkipIfNoTypeScriptSubmodule(t: SkippableTest): void {
-  t.Helper();
-  if (!typeScriptSubmoduleExists()) {
-    t.Skipf("TypeScript submodule does not exist");
+export function SkipIfNoTypeScriptSubmodule(t: GoInterface<SkippableTest>): void {
+  t!.Helper();
+  if (!typeScriptSubmoduleExists!()) {
+    t!.Skipf("TypeScript submodule does not exist");
   }
 }

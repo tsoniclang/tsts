@@ -28,6 +28,7 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode } from "../../ast/visitor.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `s[i:j]` operate on byte offsets. `strings.Index` likewise returns
 // a byte offset, so we mirror that contract by operating over the UTF-8 byte view
@@ -55,7 +56,7 @@ export interface ConstEnumInliningTransformer {
   __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   currentSourceFile: GoPtr<SourceFile>;
-  emitResolver: EmitResolver;
+  emitResolver: GoInterface<EmitResolver>;
 }
 
 /**
@@ -159,7 +160,7 @@ export function ConstEnumInliningTransformer_visit(receiver: GoPtr<ConstEnumInli
       if (parse === undefined) {
         return NodeVisitor_VisitEachChild(visitor, node);
       }
-      const value = receiver!.emitResolver.GetConstantValue(parse);
+      const value = receiver!.emitResolver!.GetConstantValue(parse);
       if (value !== undefined && value !== null) {
         let replacement: GoPtr<Node>;
         if (typeof value === "number") {

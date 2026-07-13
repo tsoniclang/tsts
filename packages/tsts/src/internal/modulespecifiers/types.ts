@@ -9,6 +9,7 @@ import type { KnownSymlinks } from "../symlinks/knownsymlinks.js";
 import type { SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
 import type { Path } from "../tspath/path.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::SourceFileForSpecifierGeneration","kind":"type","status":"implemented","sigHash":"22e224940624792a0cfee19756d39bf4642a6e5b3b4f57eb206205843770bbfa"}
  *
@@ -119,13 +120,13 @@ export interface ModuleSpecifierGenerationHost {
   GetCurrentDirectory(): string;
   GetProjectReferenceFromSource(path: Path): GoPtr<SourceOutputAndProjectReference>;
   GetRedirectTargets(path: Path): GoSlice<string>;
-  GetSourceOfProjectReferenceIfOutputIncluded(file: HasFileName): string;
+  GetSourceOfProjectReferenceIfOutputIncluded(file: GoInterface<HasFileName>): string;
   FileExists(path: string): bool;
   GetNearestAncestorDirectoryWithPackageJson(dirname: string): string;
   GetPackageJsonInfo(pkgJsonPath: string): GoPtr<InfoCacheEntry>;
-  GetDefaultResolutionModeForFile(file: HasFileName): ResolutionMode;
-  GetResolvedModuleFromModuleSpecifier(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule>;
-  GetModeForUsageLocation(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode;
+  GetDefaultResolutionModeForFile(file: GoInterface<HasFileName>): ResolutionMode;
+  GetResolvedModuleFromModuleSpecifier(file: GoInterface<HasFileName>, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule>;
+  GetModeForUsageLocation(file: GoInterface<HasFileName>, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode;
 }
 
 /**

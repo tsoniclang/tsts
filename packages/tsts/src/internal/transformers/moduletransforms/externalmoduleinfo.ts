@@ -36,6 +36,7 @@ import { IsFileLevelUniqueName } from "../../printer/utilities.js";
 import { IsLocalName } from "../utilities.js";
 import { CompareStringsCaseSensitive } from "../../stringutil/compare.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfo","kind":"type","status":"implemented","sigHash":"76ea936086f877ffb778dc08a937acc672aba64f64355b8fe64c36697d57f693"}
  *
@@ -78,7 +79,7 @@ export interface externalModuleInfoCollector {
   sourceFile: GoPtr<SourceFile>;
   compilerOptions: GoPtr<CompilerOptions>;
   emitContext: GoPtr<EmitContext>;
-  resolver: ReferenceResolver;
+  resolver: GoInterface<ReferenceResolver>;
   uniqueExports: Set<string>;
   hasExportDefault: bool;
   output: GoPtr<externalModuleInfo>;
@@ -99,7 +100,7 @@ export interface externalModuleInfoCollector {
  * 	return c.collect()
  * }
  */
-export function collectExternalModuleInfo(sourceFile: GoPtr<SourceFile>, compilerOptions: GoPtr<CompilerOptions>, emitContext: GoPtr<EmitContext>, resolver: ReferenceResolver): GoPtr<externalModuleInfo> {
+export function collectExternalModuleInfo(sourceFile: GoPtr<SourceFile>, compilerOptions: GoPtr<CompilerOptions>, emitContext: GoPtr<EmitContext>, resolver: GoInterface<ReferenceResolver>): GoPtr<externalModuleInfo> {
   const c: externalModuleInfoCollector = {
     sourceFile: sourceFile,
     compilerOptions: compilerOptions,
@@ -477,9 +478,9 @@ export function externalModuleInfoCollector_addExportedNamesForExportDeclaration
           MultiMap_Add(receiver!.output!.exportSpecifiers, Node_Text(propName), AsExportSpecifier(specifier));
         }
 
-        let decl = receiver!.resolver.GetReferencedImportDeclaration(EmitContext_MostOriginal(receiver!.emitContext, propName));
+        let decl = receiver!.resolver!.GetReferencedImportDeclaration(EmitContext_MostOriginal(receiver!.emitContext, propName));
         if (decl === undefined) {
-          decl = receiver!.resolver.GetReferencedValueDeclaration(EmitContext_MostOriginal(receiver!.emitContext, propName));
+          decl = receiver!.resolver!.GetReferencedValueDeclaration(EmitContext_MostOriginal(receiver!.emitContext, propName));
         }
         if (decl !== undefined) {
           if (decl!.Kind === KindFunctionDeclaration) {

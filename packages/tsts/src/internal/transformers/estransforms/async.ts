@@ -117,6 +117,7 @@ import type { OrderedSet } from "../../collections/ordered_set.js";
 import { NewOrderedSetWithSizeHint, OrderedSet_Size } from "../../collections/ordered_set.js";
 import { AsyncSuperHelper, AdvancedAsyncSuperHelper } from "../../printer/helpers.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::type::asyncContextFlags","kind":"type","status":"implemented","sigHash":"85a08bd042139636a5a3246dc21913db9d4afe3135d553aef423aa4a18d77161"}
  *
@@ -309,15 +310,15 @@ export function asyncTransformer_inHasLexicalThisContext(receiver: GoPtr<asyncTr
  * 	return cb(tx, node)
  * }
  */
-export function asyncTransformer_doWithContext(receiver: GoPtr<asyncTransformer>, flags: asyncContextFlags, cb: (arg0: GoPtr<asyncTransformer>, arg1: GoPtr<Node>) => GoPtr<Node>, node: GoPtr<Node>): GoPtr<Node> {
+export function asyncTransformer_doWithContext(receiver: GoPtr<asyncTransformer>, flags: asyncContextFlags, cb: GoFunc<(arg0: GoPtr<asyncTransformer>, arg1: GoPtr<Node>) => GoPtr<Node>>, node: GoPtr<Node>): GoPtr<Node> {
   const flagsToSet = flags & ~receiver!.contextFlags;
   if (flagsToSet !== 0) {
     asyncTransformer_setContextFlag(receiver, flagsToSet, true);
-    const result = cb(receiver, node);
+    const result = cb!(receiver, node);
     asyncTransformer_setContextFlag(receiver, flagsToSet, false);
     return result;
   }
-  return cb(receiver, node);
+  return cb!(receiver, node);
 }
 
 /**

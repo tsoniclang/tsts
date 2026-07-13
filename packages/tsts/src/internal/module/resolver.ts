@@ -79,6 +79,7 @@ import {
 import type { extensions, NodeResolutionFeatures, PackageId, ResolutionHost, ResolvedModule, ResolvedProjectReference, ResolvedTypeReferenceDirective } from "./types.js";
 import { ComparePatternKeys, InferredTypesContainingFile, IsApplicableVersionedTypesKey, MangleScopedPackageName, ParseNodeModuleFromPath, ParsePackageName, TryGetJSExtensionForFile } from "./util.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 const packageJsonNotPresentValue = (): JSONValue => ({ Type: JSONValueTypeNotPresent, Value: undefined });
 
 const packageJsonZeroExportsOrImports = (): ExportsOrImports => ({
@@ -214,7 +215,7 @@ export function unresolved(): GoPtr<resolved> {
  * Go source:
  * resolutionKindSpecificLoader = func(extensions extensions, candidate string) *resolved
  */
-export type resolutionKindSpecificLoader = (extensions: extensions, candidate: string) => GoPtr<resolved>;
+export type resolutionKindSpecificLoader = GoFunc<(extensions: extensions, candidate: string) => GoPtr<resolved>>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::tracer","kind":"type","status":"implemented","sigHash":"8050404d5ebf71062a813d6730884efd1d80674c80fc98df74b43c7afe5d103f"}
@@ -471,7 +472,7 @@ export function GetCompilerOptionsWithRedirect(compilerOptions: GoPtr<CompilerOp
  */
 export interface Resolver {
   __tsgoEmbedded0: caches;
-  host: ResolutionHost;
+  host: GoInterface<ResolutionHost>;
   compilerOptions: GoPtr<CompilerOptions>;
   typingsLocation: string;
   projectName: string;
@@ -508,8 +509,8 @@ export interface ResolverOptions {
  * 	}
  * }
  */
-export function NewResolver(host: ResolutionHost, options: GoPtr<CompilerOptions>, typingsLocation: string, projectName: string): GoPtr<Resolver> {
-  const c = newCaches(host.GetCurrentDirectory(), host.FS().UseCaseSensitiveFileNames(), options);
+export function NewResolver(host: GoInterface<ResolutionHost>, options: GoPtr<CompilerOptions>, typingsLocation: string, projectName: string): GoPtr<Resolver> {
+  const c = newCaches(host!.GetCurrentDirectory(), host!.FS()!.UseCaseSensitiveFileNames(), options);
   return {
     __tsgoEmbedded0: c,
     host: host,
@@ -544,7 +545,7 @@ export function NewResolver(host: ResolutionHost, options: GoPtr<CompilerOptions
  * 	return r
  * }
  */
-export function NewResolverWithOptions(host: ResolutionHost, compilerOptions: GoPtr<CompilerOptions>, typingsLocation: string, projectName: string, opts: ResolverOptions): GoPtr<Resolver> {
+export function NewResolverWithOptions(host: GoInterface<ResolutionHost>, compilerOptions: GoPtr<CompilerOptions>, typingsLocation: string, projectName: string, opts: ResolverOptions): GoPtr<Resolver> {
   let embedded: caches;
   if (opts.PackageJsonCache !== undefined) {
     embedded = {
@@ -555,7 +556,7 @@ export function NewResolverWithOptions(host: ResolutionHost, compilerOptions: Go
       parsedPatternsForPaths: undefined,
     };
   } else {
-    embedded = newCaches(host.GetCurrentDirectory(), host.FS().UseCaseSensitiveFileNames(), compilerOptions);
+    embedded = newCaches(host!.GetCurrentDirectory(), host!.FS()!.UseCaseSensitiveFileNames(), compilerOptions);
   }
   return {
     __tsgoEmbedded0: embedded,
@@ -697,7 +698,7 @@ export function Resolver_ResolveTypeReferenceDirective(receiver: GoPtr<Resolver>
     }
   }
   const compilerOptions = GetCompilerOptionsWithRedirect(receiver!.compilerOptions, redirectedReference);
-  const [typeRoots, fromConfig] = CompilerOptions_GetEffectiveTypeRoots(compilerOptions, receiver!.host.GetCurrentDirectory());
+  const [typeRoots, fromConfig] = CompilerOptions_GetEffectiveTypeRoots(compilerOptions, receiver!.host!.GetCurrentDirectory());
   if (traceBuilder !== undefined) {
     tracer_write(traceBuilder, diagnostics.Resolving_type_reference_directive_0_containing_file_1_root_directory_2, typeReferenceDirectiveName, containingFile, strings.Join(typeRoots, ","));
     tracer_traceResolutionUsingProjectReference(traceBuilder, redirectedReference);
@@ -1044,7 +1045,7 @@ export function resolutionState_resolveTypeReferenceDirective(receiver: GoPtr<re
     }
     for (const typeRoot of typeRoots) {
       const candidate = resolutionState_getCandidateFromTypeRoot(receiver, typeRoot);
-      const directoryExists = receiver!.resolver!.host.FS().DirectoryExists(typeRoot);
+      const directoryExists = receiver!.resolver!.host!.FS()!.DirectoryExists(typeRoot);
       if (!directoryExists) {
         if (receiver!.tracer !== undefined) {
           tracer_write(receiver!.tracer, diagnostics.Directory_0_does_not_exist_skipping_all_lookups_in_it, typeRoot);
@@ -1163,7 +1164,7 @@ export function resolutionState_resolveFromTypeRoot(receiver: GoPtr<resolutionSt
   }
   for (const typeRoot of receiver!.compilerOptions!.TypeRoots) {
     const candidate = resolutionState_getCandidateFromTypeRoot(receiver, typeRoot);
-    const directoryExists = receiver!.resolver!.host.FS().DirectoryExists(typeRoot);
+    const directoryExists = receiver!.resolver!.host!.FS()!.DirectoryExists(typeRoot);
     if (!directoryExists) {
       if (receiver!.tracer !== undefined) {
         tracer_write(receiver!.tracer, diagnostics.Directory_0_does_not_exist_skipping_all_lookups_in_it, typeRoot);
@@ -1441,7 +1442,7 @@ export function resolutionState_resolveNodeLikeWorker(receiver: GoPtr<resolution
  * }
  */
 export function resolutionState_loadModuleFromSelfNameReference(receiver: GoPtr<resolutionState>): GoPtr<resolved> {
-  const directoryPath = tspath.GetNormalizedAbsolutePath(receiver!.containingDirectory, receiver!.resolver!.host.GetCurrentDirectory());
+  const directoryPath = tspath.GetNormalizedAbsolutePath(receiver!.containingDirectory, receiver!.resolver!.host!.GetCurrentDirectory());
   const scope = resolutionState_getPackageScopeForPath(receiver, directoryPath);
   if (!InfoCacheEntry_Exists(scope) || JSONValue_IsFalsy(packageJsonExports(scope!.Contents).__tsgoEmbedded0)) {
     return continueSearching();
@@ -1519,7 +1520,7 @@ export function resolutionState_loadModuleFromImports(receiver: GoPtr<resolution
     }
     return continueSearching();
   }
-  const directoryPath = tspath.GetNormalizedAbsolutePath(receiver!.containingDirectory, receiver!.resolver!.host.GetCurrentDirectory());
+  const directoryPath = tspath.GetNormalizedAbsolutePath(receiver!.containingDirectory, receiver!.resolver!.host!.GetCurrentDirectory());
   const scope = resolutionState_getPackageScopeForPath(receiver, directoryPath);
   if (!InfoCacheEntry_Exists(scope)) {
     if (receiver!.tracer !== undefined) {
@@ -1924,9 +1925,9 @@ export function resolutionState_loadModuleFromTargetExportOrImport(receiver: GoP
       }
       let finalPath: string;
       if (isPattern) {
-        finalPath = tspath.GetNormalizedAbsolutePath(strings.ReplaceAll(resolvedTarget, "*", subpath), receiver!.resolver!.host.GetCurrentDirectory());
+        finalPath = tspath.GetNormalizedAbsolutePath(strings.ReplaceAll(resolvedTarget, "*", subpath), receiver!.resolver!.host!.GetCurrentDirectory());
       } else {
-        finalPath = tspath.GetNormalizedAbsolutePath(resolvedTarget + subpath, receiver!.resolver!.host.GetCurrentDirectory());
+        finalPath = tspath.GetNormalizedAbsolutePath(resolvedTarget + subpath, receiver!.resolver!.host!.GetCurrentDirectory());
       }
       const inputLink = resolutionState_tryLoadInputFileForPath(receiver, finalPath, subpath, tspath.CombinePaths(scope!.PackageDirectory, "package.json"), isImports);
       if (!resolved_shouldContinueSearching(inputLink)) {
@@ -2097,8 +2098,8 @@ export function resolutionState_tryLoadInputFileForPath(receiver: GoPtr<resoluti
       tspath.GetDirectoryPath(packagePath),
       receiver!.compilerOptions!.ConfigFilePath,
       {
-        UseCaseSensitiveFileNames: receiver!.resolver!.host.FS().UseCaseSensitiveFileNames(),
-        CurrentDirectory: receiver!.resolver!.host.GetCurrentDirectory(),
+        UseCaseSensitiveFileNames: receiver!.resolver!.host!.FS()!.UseCaseSensitiveFileNames(),
+        CurrentDirectory: receiver!.resolver!.host!.GetCurrentDirectory(),
       },
     ))
   ) {
@@ -2125,8 +2126,8 @@ export function resolutionState_tryLoadInputFileForPath(receiver: GoPtr<resoluti
     const candidateDirectories = resolutionState_getOutputDirectoriesForBaseDirectory(receiver, rootDir);
     for (const candidateDir of candidateDirectories) {
       if (tspath.ContainsPath(candidateDir, finalPath, {
-        UseCaseSensitiveFileNames: receiver!.resolver!.host.FS().UseCaseSensitiveFileNames(),
-        CurrentDirectory: receiver!.resolver!.host.GetCurrentDirectory(),
+        UseCaseSensitiveFileNames: receiver!.resolver!.host!.FS()!.UseCaseSensitiveFileNames(),
+        CurrentDirectory: receiver!.resolver!.host!.GetCurrentDirectory(),
       })) {
         let pathFragment = "";
         if (finalPath.length > candidateDir.length) {
@@ -2142,7 +2143,7 @@ export function resolutionState_tryLoadInputFileForPath(receiver: GoPtr<resoluti
                 continue;
               }
               const possibleInputWithInputExtension = tspathExtension.ChangeExtension(possibleInputBase, possibleExt);
-              if (receiver!.resolver!.host.FS().FileExists(possibleInputWithInputExtension)) {
+              if (receiver!.resolver!.host!.FS()!.FileExists(possibleInputWithInputExtension)) {
                 const result2 = resolutionState_loadFileNameFromPackageJSONField(receiver, receiver!.extensions, possibleInputWithInputExtension, "");
                 if (!resolved_shouldContinueSearching(result2)) {
                   return result2;
@@ -2176,13 +2177,13 @@ export function resolutionState_tryLoadInputFileForPath(receiver: GoPtr<resoluti
  * }
  */
 export function resolutionState_getOutputDirectoriesForBaseDirectory(receiver: GoPtr<resolutionState>, commonSourceDirGuess: string): GoSlice<string> {
-  const currentDir = core.IfElse(receiver!.compilerOptions!.ConfigFilePath !== "", receiver!.resolver!.host.GetCurrentDirectory(), commonSourceDirGuess);
+  const currentDir = core.IfElse(receiver!.compilerOptions!.ConfigFilePath !== "", receiver!.resolver!.host!.GetCurrentDirectory(), commonSourceDirGuess);
   const candidateDirectories: string[] = [];
   if (receiver!.compilerOptions!.DeclarationDir !== "") {
-    candidateDirectories.push(tspath.GetNormalizedAbsolutePath(tspath.CombinePaths(currentDir, receiver!.compilerOptions!.DeclarationDir), receiver!.resolver!.host.GetCurrentDirectory()));
+    candidateDirectories.push(tspath.GetNormalizedAbsolutePath(tspath.CombinePaths(currentDir, receiver!.compilerOptions!.DeclarationDir), receiver!.resolver!.host!.GetCurrentDirectory()));
   }
   if (receiver!.compilerOptions!.OutDir !== "" && receiver!.compilerOptions!.OutDir !== receiver!.compilerOptions!.DeclarationDir) {
-    candidateDirectories.push(tspath.GetNormalizedAbsolutePath(tspath.CombinePaths(currentDir, receiver!.compilerOptions!.OutDir), receiver!.resolver!.host.GetCurrentDirectory()));
+    candidateDirectories.push(tspath.GetNormalizedAbsolutePath(tspath.CombinePaths(currentDir, receiver!.compilerOptions!.OutDir), receiver!.resolver!.host!.GetCurrentDirectory()));
   }
   return candidateDirectories;
 }
@@ -2316,7 +2317,7 @@ export function resolutionState_loadModuleFromNearestNodeModulesDirectoryWorker(
  */
 export function resolutionState_loadModuleFromImmediateNodeModulesDirectory(receiver: GoPtr<resolutionState>, extensions: extensions, directory: string, typesScopeOnly: bool): GoPtr<resolved> {
   const nodeModulesFolder = tspath.CombinePaths(directory, "node_modules");
-  if (!receiver!.resolver!.host.FS().DirectoryExists(nodeModulesFolder)) {
+  if (!receiver!.resolver!.host!.FS()!.DirectoryExists(nodeModulesFolder)) {
     if (receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.Directory_0_does_not_exist_skipping_all_lookups_in_it, nodeModulesFolder);
     }
@@ -2330,7 +2331,7 @@ export function resolutionState_loadModuleFromImmediateNodeModulesDirectory(rece
   }
   if ((extensions & extensionsDeclaration) !== 0) {
     const nodeModulesAtTypes = tspath.CombinePaths(nodeModulesFolder, "@types");
-    if (!receiver!.resolver!.host.FS().DirectoryExists(nodeModulesAtTypes)) {
+    if (!receiver!.resolver!.host!.FS()!.DirectoryExists(nodeModulesAtTypes)) {
       if (receiver!.tracer !== undefined) {
         tracer_write(receiver!.tracer, diagnostics.Directory_0_does_not_exist_skipping_all_lookups_in_it, nodeModulesAtTypes);
       }
@@ -2453,7 +2454,7 @@ export function resolutionState_loadModuleFromSpecificNodeModulesDirectory(recei
     packageDirectory = candidate;
   }
   if (receiver!.resolvePackageDirectoryOnly) {
-    if (receiver!.resolver!.host.FS().DirectoryExists(packageDirectory)) {
+    if (receiver!.resolver!.host!.FS()!.DirectoryExists(packageDirectory)) {
       return { path: packageDirectory, extension: "", packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" }, originalPath: "", resolvedUsingTsExtension: false };
     }
     return continueSearching();
@@ -2692,8 +2693,8 @@ export function resolutionState_createResolvedTypeReferenceDirective(receiver: G
 export function resolutionState_getOriginalAndResolvedFileName(receiver: GoPtr<resolutionState>, fileName: string): [string, string] {
   const resolvedFileName = resolutionState_realPath(receiver, fileName);
   const comparePathsOptions: tspath.ComparePathsOptions = {
-    UseCaseSensitiveFileNames: receiver!.resolver!.host.FS().UseCaseSensitiveFileNames(),
-    CurrentDirectory: receiver!.resolver!.host.GetCurrentDirectory(),
+    UseCaseSensitiveFileNames: receiver!.resolver!.host!.FS()!.UseCaseSensitiveFileNames(),
+    CurrentDirectory: receiver!.resolver!.host!.GetCurrentDirectory(),
   };
   if (tspath.ComparePaths(fileName, resolvedFileName, comparePathsOptions) === 0) {
     return ["", fileName];
@@ -2788,7 +2789,7 @@ export function resolutionState_tryLoadModuleUsingPathsIfEligible(receiver: GoPt
   } else {
     return continueSearching();
   }
-  const baseDirectory = CompilerOptions_GetPathsBasePath(receiver!.compilerOptions, receiver!.resolver!.host.GetCurrentDirectory());
+  const baseDirectory = CompilerOptions_GetPathsBasePath(receiver!.compilerOptions, receiver!.resolver!.host!.GetCurrentDirectory());
   const pathPatterns = resolutionState_getParsedPatternsForPaths(receiver);
   return resolutionState_tryLoadModuleUsingPaths(
     receiver,
@@ -2875,7 +2876,7 @@ export function resolutionState_tryLoadModuleUsingPaths(receiver: GoPtr<resoluti
       if (extensionFromSubst !== "") {
         receiver!.candidateEndingIsFromConfig = true;
       }
-      const resolved2 = loader(extensions, candidate);
+      const resolved2 = loader!(extensions, candidate);
       receiver!.candidateEndingIsFromConfig = saveCandidateEndingIsFromConfig;
       if (!resolved_shouldContinueSearching(resolved2)) {
         return resolved2;
@@ -3074,7 +3075,7 @@ export function resolutionState_nodeLoadModuleByRelativeName(receiver: GoPtr<res
   }
   if (!tspath.HasTrailingDirectorySeparator(candidate)) {
     const parentOfCandidate = tspath.GetDirectoryPath(candidate);
-    if (!receiver!.resolver!.host.FS().DirectoryExists(parentOfCandidate)) {
+    if (!receiver!.resolver!.host!.FS()!.DirectoryExists(parentOfCandidate)) {
       if (receiver!.tracer !== undefined) {
         tracer_write(receiver!.tracer, diagnostics.Directory_0_does_not_exist_skipping_all_lookups_in_it, parentOfCandidate);
       }
@@ -3091,7 +3092,7 @@ export function resolutionState_nodeLoadModuleByRelativeName(receiver: GoPtr<res
       return resolvedFromFile;
     }
   }
-  if (!receiver!.resolver!.host.FS().DirectoryExists(candidate)) {
+  if (!receiver!.resolver!.host!.FS()!.DirectoryExists(candidate)) {
     if (receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.Directory_0_does_not_exist_skipping_all_lookups_in_it, candidate);
     }
@@ -3294,7 +3295,7 @@ export function resolutionState_loadModuleFromFileNoImplicitExtensions(receiver:
  */
 export function resolutionState_tryAddingExtensions(receiver: GoPtr<resolutionState>, extensionless: string, extensions: extensions, originalExtension: string): GoPtr<resolved> {
   const directory = tspath.GetDirectoryPath(extensionless);
-  if (directory !== "" && !receiver!.resolver!.host.FS().DirectoryExists(directory)) {
+  if (directory !== "" && !receiver!.resolver!.host!.FS()!.DirectoryExists(directory)) {
     return continueSearching();
   }
   switch (originalExtension) {
@@ -3482,7 +3483,7 @@ export function resolutionState_tryFile(receiver: GoPtr<resolutionState>, fileNa
  * }
  */
 export function resolutionState_tryFileLookup(receiver: GoPtr<resolutionState>, fileName: string): bool {
-  if (receiver!.resolver!.host.FS().FileExists(fileName)) {
+  if (receiver!.resolver!.host!.FS()!.FileExists(fileName)) {
     if (receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.File_0_exists_use_it_as_a_name_resolution_result, fileName);
     }
@@ -3607,7 +3608,7 @@ export function resolutionState_loadNodeModuleFromDirectoryWorker(receiver: GoPt
   if (InfoCacheEntry_Exists(packageInfo)) {
     const traceFunc = resolutionState_getTraceFunc(receiver) ?? ((_m: GoPtr<Message>, ..._args: Array<unknown>) => {});
     versionPaths = PackageJson_GetVersionPaths(packageInfo!.Contents, traceFunc);
-    const comparePaths0: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.resolver!.host.FS().UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
+    const comparePaths0: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.resolver!.host!.FS()!.UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
     if (tspath.ComparePaths(candidate, packageInfo!.PackageDirectory, comparePaths0) === 0) {
       const [file, fileOk] = resolutionState_getPackageFile(receiver, ext, packageInfo);
       if (fileOk) {
@@ -3672,7 +3673,7 @@ export function resolutionState_loadNodeModuleFromDirectoryWorker(receiver: GoPt
   }
 
   if (!receiver!.esmMode) {
-    if (!receiver!.resolver!.host.FS().DirectoryExists(candidate)) {
+    if (!receiver!.resolver!.host!.FS()!.DirectoryExists(candidate)) {
       return continueSearching();
     }
     return resolutionState_loadModuleFromFile(receiver, ext, indexPath);
@@ -3869,9 +3870,9 @@ export function resolutionState_getPackageJsonInfo(receiver: GoPtr<resolutionSta
     }
   }
 
-  const directoryExists = receiver!.resolver!.host.FS().DirectoryExists(packageDirectory);
-  if (directoryExists && receiver!.resolver!.host.FS().FileExists(packageJsonPath)) {
-    const [contents] = receiver!.resolver!.host.FS().ReadFile(packageJsonPath);
+  const directoryExists = receiver!.resolver!.host!.FS()!.DirectoryExists(packageDirectory);
+  if (directoryExists && receiver!.resolver!.host!.FS()!.FileExists(packageJsonPath)) {
+    const [contents] = receiver!.resolver!.host!.FS()!.ReadFile(packageJsonPath);
     const contentsBytes = Array.from(new globalThis.TextEncoder().encode(contents)) as GoSlice<number>;
     const [packageJsonContent, err] = ParsePackageJson(contentsBytes);
     if (receiver!.tracer !== undefined) {
@@ -4039,7 +4040,7 @@ export function resolutionState_readPackageJsonPeerDependencies(receiver: GoPtr<
  * }
  */
 export function resolutionState_realPath(receiver: GoPtr<resolutionState>, path: string): string {
-  const rp = tspath.NormalizePath(receiver!.resolver!.host.FS().Realpath(path));
+  const rp = tspath.NormalizePath(receiver!.resolver!.host!.FS()!.Realpath(path));
   if (receiver!.tracer !== undefined) {
     tracer_write(receiver!.tracer, diagnostics.Resolving_real_path_for_0_result_1, path, rp);
   }
@@ -4077,13 +4078,13 @@ function Expected_as_TypeValidatedField<T>(field: GoPtr<Expected<T>>): TypeValid
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.validatePackageJSONField","kind":"method","status":"implemented","sigHash":"68ade9e57af6b8b0a247eb042ca8cd98fa320a23fa94b7666589e8794711d3f9"}
  */
-export function resolutionState_validatePackageJSONField(receiver: GoPtr<resolutionState>, fieldName: string, field: TypeValidatedField): bool {
-  if (field.IsPresent()) {
-    if (field.IsValid()) {
+export function resolutionState_validatePackageJSONField(receiver: GoPtr<resolutionState>, fieldName: string, field: GoInterface<TypeValidatedField>): bool {
+  if (field!.IsPresent()) {
+    if (field!.IsValid()) {
       return true as bool;
     }
     if (receiver!.tracer !== undefined) {
-      tracer_write(receiver!.tracer, diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2, fieldName, field.ExpectedJSONType(), field.ActualJSONType());
+      tracer_write(receiver!.tracer, diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2, fieldName, field!.ExpectedJSONType(), field!.ActualJSONType());
     }
   }
   if (receiver!.tracer !== undefined) {
@@ -4518,7 +4519,7 @@ export function extensionIsOk(extensions: extensions, extension: string): bool {
  * 	return resolver.resolveConfig(moduleName, containingFile)
  * }
  */
-export function ResolveConfig(moduleName: string, containingFile: string, host: ResolutionHost): GoPtr<ResolvedModule> {
+export function ResolveConfig(moduleName: string, containingFile: string, host: GoInterface<ResolutionHost>): GoPtr<ResolvedModule> {
   const resolver = NewResolver(host, { ModuleResolution: ModuleResolutionKindNodeNext } as GoPtr<CompilerOptions>, "", "");
   return Resolver_resolveConfig(resolver, moduleName, containingFile);
 }
@@ -4574,7 +4575,7 @@ export function ResolveConfig(moduleName: string, containingFile: string, host: 
  * 	return core.Deduplicate(result)
  * }
  */
-export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, host: ResolutionHost): GoSlice<string> {
+export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, host: GoInterface<ResolutionHost>): GoSlice<string> {
   if (!CompilerOptions_UsesWildcardTypes(options)) {
     if (options!.Types !== undefined) {
       return options!.Types;
@@ -4583,15 +4584,15 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
   }
 
   const wildcardMatches: GoSlice<string> = [];
-  const [typeRoots] = CompilerOptions_GetEffectiveTypeRoots(options, host.GetCurrentDirectory());
+  const [typeRoots] = CompilerOptions_GetEffectiveTypeRoots(options, host!.GetCurrentDirectory());
   for (const root of (typeRoots ?? [])) {
-    if (host.FS().DirectoryExists(root)) {
-      for (const typeDirectivePath of host.FS().GetAccessibleEntries(root).Directories) {
+    if (host!.FS()!.DirectoryExists(root)) {
+      for (const typeDirectivePath of host!.FS()!.GetAccessibleEntries(root).Directories) {
         const normalized = tspath.NormalizePath(typeDirectivePath);
         const packageJsonPath = tspath.CombinePaths(root, normalized, "package.json");
         let isNotNeededPackage = false;
-        if (host.FS().FileExists(packageJsonPath)) {
-          const [contents] = host.FS().ReadFile(packageJsonPath);
+        if (host!.FS()!.FileExists(packageJsonPath)) {
+          const [contents] = host!.FS()!.ReadFile(packageJsonPath);
           const contentsBytes = Array.from(new globalThis.TextEncoder().encode(contents)) as GoSlice<number>;
           const [packageJsonContent] = ParsePackageJson(contentsBytes);
           isNotNeededPackage = packageJsonContent.__tsgoEmbedded1?.Typings.Null ?? false as bool;
@@ -4800,15 +4801,15 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
 
   if (enableDirectorySearch) {
     const otherFiles = vfsmatch.ReadDirectory(
-      receiver!.host.FS(),
-      receiver!.host.GetCurrentDirectory(),
+      receiver!.host!.FS(),
+      receiver!.host!.GetCurrentDirectory(),
       packageJson!.PackageDirectory,
       extensions_Array(exts),
       ["node_modules"],
       ["**/*"],
       vfsmatch.UnlimitedDepth as int,
     );
-    const comparePathsOptions: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.host.FS().UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
+    const comparePathsOptions: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.host!.FS()!.UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
     for (const file of otherFiles) {
       if (resolved_isResolved(mainResolution) && tspath.ComparePaths(file, mainResolution!.path, comparePathsOptions) === 0) {
         continue;
@@ -4855,7 +4856,7 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
 export function Resolver_createResolvedEntrypointHandlingSymlink(receiver: GoPtr<Resolver>, fileName: string, moduleSpecifier: string, includeConditions: GoPtr<Set<string>>, excludeConditions: GoPtr<Set<string>>, ending: Ending): GoPtr<ResolvedEntrypoint> {
   let originalFileName = "";
   let resolvedFileName = fileName;
-  const realPath = receiver!.host.FS().Realpath(fileName);
+  const realPath = receiver!.host!.FS()!.Realpath(fileName);
   if (realPath !== fileName) {
     originalFileName = fileName;
     resolvedFileName = realPath;
@@ -5002,10 +5003,10 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
         }
         const patternPath = tspath.ResolvePath(packageJson!.PackageDirectory, expStr);
         const [leadingSlice, trailingSlice] = strings.Cut(patternPath, "*");
-        const caseSensitive = receiver!.resolver!.host.FS().UseCaseSensitiveFileNames();
+        const caseSensitive = receiver!.resolver!.host!.FS()!.UseCaseSensitiveFileNames();
         const files = vfsmatch.ReadDirectory(
-          receiver!.resolver!.host.FS(),
-          receiver!.resolver!.host.GetCurrentDirectory(),
+          receiver!.resolver!.host!.FS(),
+          receiver!.resolver!.host!.GetCurrentDirectory(),
           packageJson!.PackageDirectory,
           extensions_Array(receiver!.extensions),
           undefined as unknown as GoSlice<string>,

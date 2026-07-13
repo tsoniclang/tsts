@@ -5,6 +5,7 @@ import { type Group, WithContext } from "../../go/golang.org/x/sync/errgroup.js"
 import { Mutex, WaitGroup } from "../../go/sync.js";
 import { Bool } from "../../go/sync/atomic.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::WorkGroup","kind":"type","status":"implemented","sigHash":"19fd930d122948ff76428da13421e7a882e8e100255044419228149409e8e1dc"}
  *
@@ -19,7 +20,7 @@ import { Bool } from "../../go/sync/atomic.js";
  * }
  */
 export interface WorkGroup {
-  Queue(fn: () => void): void;
+  Queue(fn: GoFunc<() => void>): void;
   RunAndWait(): void;
 }
 
@@ -34,7 +35,7 @@ export interface WorkGroup {
  * 	return &parallelWorkGroup{}
  * }
  */
-export function NewWorkGroup(singleThreaded: bool): WorkGroup {
+export function NewWorkGroup(singleThreaded: bool): GoInterface<WorkGroup> {
   if (singleThreaded) {
     const state: singleThreadedWorkGroup = { done: new Bool(), fnsMu: new Mutex(), fns: [] };
     return singleThreadedWorkGroup_as_WorkGroup(state);
@@ -63,7 +64,7 @@ export interface parallelWorkGroup {
  * Go source:
  * var _ WorkGroup = (*parallelWorkGroup)(nil)
  */
-export let __7c9694b3_0: WorkGroup = parallelWorkGroup_as_WorkGroup(undefined);
+export let __7c9694b3_0: GoInterface<WorkGroup> = parallelWorkGroup_as_WorkGroup(undefined);
 
 export function parallelWorkGroup_as_WorkGroup(receiver: GoPtr<parallelWorkGroup>): WorkGroup {
   return {
@@ -86,11 +87,11 @@ export function parallelWorkGroup_as_WorkGroup(receiver: GoPtr<parallelWorkGroup
  * 	})
  * }
  */
-export function parallelWorkGroup_Queue(receiver: GoPtr<parallelWorkGroup>, fn: () => void): void {
+export function parallelWorkGroup_Queue(receiver: GoPtr<parallelWorkGroup>, fn: GoFunc<() => void>): void {
   if (receiver!.done.Load()) {
     throw new globalThis.Error("Queue called after RunAndWait returned");
   }
-  receiver!.wg.Go(fn);
+  receiver!.wg.Go(fn!);
 }
 
 /**
@@ -129,7 +130,7 @@ export interface singleThreadedWorkGroup {
  * Go source:
  * var _ WorkGroup = (*singleThreadedWorkGroup)(nil)
  */
-export let ___2_056fa025_0: WorkGroup = singleThreadedWorkGroup_as_WorkGroup(undefined);
+export let ___2_056fa025_0: GoInterface<WorkGroup> = singleThreadedWorkGroup_as_WorkGroup(undefined);
 
 export function singleThreadedWorkGroup_as_WorkGroup(receiver: GoPtr<singleThreadedWorkGroup>): WorkGroup {
   return {
@@ -152,12 +153,12 @@ export function singleThreadedWorkGroup_as_WorkGroup(receiver: GoPtr<singleThrea
  * 	w.fns = append(w.fns, fn)
  * }
  */
-export function singleThreadedWorkGroup_Queue(receiver: GoPtr<singleThreadedWorkGroup>, fn: () => void): void {
+export function singleThreadedWorkGroup_Queue(receiver: GoPtr<singleThreadedWorkGroup>, fn: GoFunc<() => void>): void {
   if (receiver!.done.Load()) {
     throw new globalThis.Error("Queue called after RunAndWait returned");
   }
   receiver!.fnsMu.Lock();
-  receiver!.fns.push(fn);
+  receiver!.fns.push(fn!);
   receiver!.fnsMu.Unlock();
 }
 
@@ -242,8 +243,8 @@ export interface ThrottleGroup {
  * 	}
  * }
  */
-export function NewThrottleGroup(ctx: Context, semaphore: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">): GoPtr<ThrottleGroup> {
-  const [group] = WithContext(ctx);
+export function NewThrottleGroup(ctx: GoInterface<Context>, semaphore: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">): GoPtr<ThrottleGroup> {
+  const [group] = WithContext(ctx!);
   return {
     semaphore,
     group,
@@ -266,9 +267,9 @@ export function NewThrottleGroup(ctx: Context, semaphore: GoChan<{ readonly __ts
  * 	})
  * }
  */
-export function ThrottleGroup_Go(receiver: GoPtr<ThrottleGroup>, fn: () => GoError): void {
+export function ThrottleGroup_Go(receiver: GoPtr<ThrottleGroup>, fn: GoFunc<() => GoError>): void {
   // Single-threaded: semaphore and errgroup are no-ops; call fn synchronously.
-  const err = fn();
+  const err = fn!();
   if (err !== undefined) {
     throw err;
   }

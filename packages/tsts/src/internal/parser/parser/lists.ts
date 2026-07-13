@@ -113,6 +113,7 @@ import {
   PCVariableDeclarations,
 } from "./state.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::isMissingNodeList","kind":"func","status":"implemented","sigHash":"ef01f56717a6fef68fa90b7c8e0d0661d60d9b4e006200f3148352792a8db128"}
  *
@@ -161,7 +162,7 @@ export function isMissingNodeList(list: GoPtr<NodeList>): bool {
  * 	return p.nodeSliceArena.Clone(list)
  * }
  */
-export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: (p: GoPtr<Parser>, index: int) => GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: GoFunc<(p: GoPtr<Parser>, index: int) => GoPtr<Node>>): GoSlice<GoPtr<Node>> {
   const saveParsingContexts = receiver!.parsingContexts;
   receiver!.parsingContexts |= 1 << kind;
   const outerReparseList = receiver!.reparseList;
@@ -169,7 +170,7 @@ export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingCont
   let list: Array<GoPtr<Node>> = [];
   for (let i = 0; !Parser_isListTerminator(receiver, kind); i++) {
     if (Parser_isListElement(receiver, kind, false /*inErrorRecovery*/)) {
-      const elt = parseElement(receiver, list.length);
+      const elt = parseElement!(receiver, list.length);
       if (receiver!.reparseList.length !== 0) {
         for (const e of receiver!.reparseList) {
           // Propagate @typedef type alias declarations outwards to a context that permits them.
@@ -203,9 +204,9 @@ export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingCont
  * 	return p.newNodeList(core.NewTextRange(pos, p.nodePos()), nodes)
  * }
  */
-export function Parser_parseList(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: (p: GoPtr<Parser>) => GoPtr<Node>): GoPtr<NodeList> {
+export function Parser_parseList(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: GoFunc<(p: GoPtr<Parser>) => GoPtr<Node>>): GoPtr<NodeList> {
   const pos = Parser_nodePos(receiver);
-  const nodes = Parser_parseListIndex(receiver, kind, (p: GoPtr<Parser>, _index: int): GoPtr<Node> => parseElement(p));
+  const nodes = Parser_parseListIndex(receiver, kind, (p: GoPtr<Parser>, _index: int): GoPtr<Node> => parseElement!(p));
   return Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), nodes);
 }
 
@@ -270,7 +271,7 @@ export function Parser_parseList(receiver: GoPtr<Parser>, kind: ParsingContext, 
  * 	return p.newNodeList(core.NewTextRange(pos, p.nodePos()), p.nodeSliceArena.Clone(list))
  * }
  */
-export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: (p: GoPtr<Parser>) => GoPtr<Node>): GoPtr<NodeList> {
+export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: GoFunc<(p: GoPtr<Parser>) => GoPtr<Node>>): GoPtr<NodeList> {
   const pos = Parser_nodePos(receiver);
   const saveParsingContexts = receiver!.parsingContexts;
   receiver!.parsingContexts |= 1 << kind;
@@ -278,7 +279,7 @@ export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: Parsing
   for (;;) {
     if (Parser_isListElement(receiver, kind, false /*inErrorRecovery*/)) {
       const startPos = Parser_nodePos(receiver);
-      const element = parseElement(receiver);
+      const element = parseElement!(receiver);
       if (element === undefined) {
         receiver!.parsingContexts = saveParsingContexts;
         // Return nil to indicate parseElement failed
@@ -340,7 +341,7 @@ export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: Parsing
  * 	return p.createMissingList()
  * }
  */
-export function Parser_parseBracketedList(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: (p: GoPtr<Parser>) => GoPtr<Node>, opening: Kind, closing: Kind): GoPtr<NodeList> {
+export function Parser_parseBracketedList(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: GoFunc<(p: GoPtr<Parser>) => GoPtr<Node>>, opening: Kind, closing: Kind): GoPtr<NodeList> {
   if (Parser_parseExpected(receiver, opening)) {
     const result = Parser_parseDelimitedList(receiver, kind, parseElement);
     Parser_parseExpected(receiver, closing);

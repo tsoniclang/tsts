@@ -61,6 +61,7 @@ import {
 import * as strings from "../../go/strings.js";
 import { getExtensionHost } from "../../extensions/host.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTask","kind":"type","status":"implemented","sigHash":"b84c8bb585614968edfb61e882ab726f44a17b5de567af8dfc0e7ce09ac3dab5"}
  *
@@ -276,7 +277,7 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
     const compilerOptions = ParsedCommandLine_CompilerOptions(loader!.opts.Config);
     const allowNonTsExtensions = Tristate_IsTrue(compilerOptions!.AllowNonTsExtensions);
     if (!allowNonTsExtensions) {
-      const canonicalFileName = GetCanonicalFileName(receiver!.normalizedFilePath, loader!.opts.Host.FS().UseCaseSensitiveFileNames());
+      const canonicalFileName = GetCanonicalFileName(receiver!.normalizedFilePath, loader!.opts.Host!.FS()!.UseCaseSensitiveFileNames());
       if (!fileLoader_isSupportedExtension(loader, canonicalFileName)) {
         if (HasJSFileExtension(canonicalFileName)) {
           receiver!.processingDiagnostics = [...receiver!.processingDiagnostics, {
@@ -524,7 +525,7 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
  * }
  */
 export interface filesParser {
-  wg: WorkGroup;
+  wg: GoInterface<WorkGroup>;
   taskDataByPath: SyncMap<Path_65a900c3, GoPtr<parseTaskData>>;
   maxDepth: int;
 }
@@ -617,7 +618,7 @@ export interface parseTaskData {
  */
 export function filesParser_parse(receiver: GoPtr<filesParser>, loader: GoPtr<fileLoader>, tasks: GoSlice<GoPtr<parseTask>>): void {
   filesParser_start(receiver, loader, tasks, 0);
-  receiver!.wg.RunAndWait();
+  receiver!.wg!.RunAndWait();
 }
 
 /**
@@ -701,7 +702,7 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
 
     const capturedI = i;
     const capturedTask = task;
-    receiver!.wg.Queue((): void => {
+    receiver!.wg!.Queue((): void => {
       data!.mu.Lock();
 
       let startSubtasks = false;
@@ -1093,10 +1094,10 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       }
 
       for (const trace of task!.typeResolutionsTrace) {
-        loader!.opts.Host.Trace(trace.Message, ...trace.Args);
+        loader!.opts.Host!.Trace(trace.Message, ...trace.Args);
       }
       for (const trace of task!.resolutionsTrace) {
-        loader!.opts.Host.Trace(trace.Message, ...trace.Args);
+        loader!.opts.Host!.Trace(trace.Message, ...trace.Args);
       }
 
       let file = task!.file;
@@ -1219,7 +1220,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
     modeAwareCache.set({ Name: value!.libraryName, Mode: ModuleKindCommonJS }, value!.resolution);
     resolvedModules.set(key, modeAwareCache as ModeAwareCache<GoPtr<ResolvedModule>>);
     for (const trace of value!.trace) {
-      loader!.opts.Host.Trace(trace.Message, ...trace.Args);
+      loader!.opts.Host!.Trace(trace.Message, ...trace.Args);
     }
   }
 

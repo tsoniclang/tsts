@@ -2,6 +2,7 @@ import type { GoError, GoPtr } from "../../../go/compat.js";
 import { Time } from "../../../go/time.js";
 import type { CompilerHost } from "../../compiler/host.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::type::Host","kind":"type","status":"implemented","sigHash":"87dbe6f0cfe05a5aa6179f6a36adf26e7d8bf5f0f92113c8de338be891efa895"}
  *
@@ -25,7 +26,7 @@ export interface Host {
  * }
  */
 export interface host {
-  host: CompilerHost;
+  host: GoInterface<CompilerHost>;
 }
 
 /**
@@ -34,7 +35,7 @@ export interface host {
  * Go source:
  * var _ Host = (*host)(nil)
  */
-export let __bbc5d83a_0: Host = host_as_incremental_Host(undefined);
+export let __bbc5d83a_0: GoInterface<Host> = host_as_incremental_Host(undefined);
 
 export function host_as_incremental_Host(receiver: GoPtr<host>): Host {
   return {
@@ -64,7 +65,7 @@ export function host_GetMTime(receiver: GoPtr<host>, fileName: string): Time {
  * }
  */
 export function host_SetMTime(receiver: GoPtr<host>, fileName: string, mTime: Time): GoError {
-  return receiver!.host.FS().Chtimes(fileName, new Time(), mTime);
+  return receiver!.host!.FS()!.Chtimes(fileName, new Time(), mTime);
 }
 
 /**
@@ -75,7 +76,7 @@ export function host_SetMTime(receiver: GoPtr<host>, fileName: string, mTime: Ti
  * 	return &host{host: compilerHost}
  * }
  */
-export function CreateHost(compilerHost: CompilerHost): Host {
+export function CreateHost(compilerHost: GoInterface<CompilerHost>): GoInterface<Host> {
   const h: host = { host: compilerHost };
   return host_as_incremental_Host(h);
 }
@@ -93,9 +94,9 @@ export function CreateHost(compilerHost: CompilerHost): Host {
  * 	return mTime
  * }
  */
-export function GetMTime(host: CompilerHost, fileName: string): Time {
+export function GetMTime(host: GoInterface<CompilerHost>, fileName: string): Time {
   type FileInfoWithModTime = { ModTime(): Time };
-  const stat = host.FS().Stat(fileName);
+  const stat = host!.FS()!.Stat(fileName);
   let mTime: Time = new Time();
   if (stat !== undefined) {
     mTime = (stat as unknown as FileInfoWithModTime).ModTime();

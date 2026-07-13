@@ -12,6 +12,7 @@ import { Parse } from "../locale/locale.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 import { ResolvePath } from "../tspath/path.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::type::ParsedBuildCommandLine","kind":"type","status":"implemented","sigHash":"38430521b70f19c4577653334ca223fc0270319362c20f5925094804f9baee54"}
  *
@@ -39,7 +40,7 @@ export interface ParsedBuildCommandLine {
   WatchOptions: GoPtr<WatchOptions>;
   Projects: GoSlice<string>;
   Errors: GoSlice<GoPtr<Diagnostic>>;
-  Raw: unknown;
+  Raw: GoInterface<unknown>;
   comparePathsOptions: ComparePathsOptions;
   resolvedProjectPaths: GoSlice<string>;
   resolvedProjectPathsOnce: Once;

@@ -51,6 +51,7 @@ import { GetFileEmitKind } from "./snapshot.js";
 import type { referenceMap } from "./referencemap.js";
 import { referenceMap_getPathsWithReferences, referenceMap_getReferences } from "./referencemap.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshottobuildinfo.go::func::snapshotToBuildInfo","kind":"func","status":"implemented","sigHash":"6d176d3df057485735ebe643c8b26bb4e8bdaa0ebe0bc252431ac701006b52f2"}
  *
@@ -275,7 +276,7 @@ export function toBuildInfo_toFileIdListId(receiver: GoPtr<toBuildInfo>, set_: G
  * 	return v
  * }
  */
-export function toBuildInfo_toRelativeToBuildInfoCompilerOptionValue(receiver: GoPtr<toBuildInfo>, option: GoPtr<CommandLineOption>, v: unknown): unknown {
+export function toBuildInfo_toRelativeToBuildInfoCompilerOptionValue(receiver: GoPtr<toBuildInfo>, option: GoPtr<CommandLineOption>, v: GoInterface<unknown>): GoInterface<unknown> {
   if (option!.Kind === CommandLineOptionTypeList) {
     if (CommandLineOption_Elements(option)!.IsFilePath) {
       const arr = v as string[] | undefined;

@@ -3,6 +3,7 @@ import type { GoError } from "../../../go/compat.js";
 import { OnceValue } from "../../../go/sync.js";
 import * as nodeFs from "node:fs";
 
+import type { GoFunc } from "../../../go/compat.js";
 // On Linux, we use the O_PATH + /proc/self/fd trick to resolve the canonical
 // path in O(1) syscalls (open + readlink + close) instead of Go's
 // filepath.EvalSymlinks which does an lstat per path component — O(depth).
@@ -40,7 +41,7 @@ export const _procSelfFD: string = "/proc/self/fd/";
  * 	return unix.Stat(_procSelfFD, &stat) == nil
  * })
  */
-export let hasProcSelfFD: () => bool = OnceValue<bool>((): bool => {
+export let hasProcSelfFD: GoFunc<() => bool> = OnceValue<bool>((): bool => {
   return nodeFs.existsSync(_procSelfFD) as bool;
 });
 

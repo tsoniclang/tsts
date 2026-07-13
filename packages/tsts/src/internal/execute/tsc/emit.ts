@@ -33,6 +33,7 @@ import type { DiagnosticReporter, DiagnosticsReporter } from "./diagnostics.js";
 import { statisticsFromProgram, Statistics_Report } from "./statistics.js";
 import type { Statistics } from "./statistics.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::GetTraceWithWriterFromSys","kind":"func","status":"implemented","sigHash":"17a6384118d8903f7afa1b67bba22dbd81d93ed58d4f8ce909a645b6a1202124"}
  *
@@ -47,10 +48,10 @@ import type { Statistics } from "./statistics.js";
  * 	}
  * }
  */
-export function GetTraceWithWriterFromSys(w: Writer, locale: Locale, testing: CommandLineTesting | undefined): (msg: GoPtr<Message>, ...args: Array<unknown>) => void {
+export function GetTraceWithWriterFromSys(w: GoInterface<Writer>, locale: Locale, testing: CommandLineTesting | undefined): (msg: GoPtr<Message>, ...args: Array<unknown>) => void {
   if (testing === undefined) {
     return (msg: GoPtr<Message>, ...args: Array<unknown>): void => {
-      Fprintln(w, Message_Localize(msg, locale, ...args));
+      Fprintln(w!, Message_Localize(msg, locale, ...args));
     };
   } else {
     return testing.GetTrace(w, locale);
@@ -77,13 +78,13 @@ export function GetTraceWithWriterFromSys(w: Writer, locale: Locale, testing: Co
  * }
  */
 export interface EmitInput {
-  Sys: System;
-  ProgramLike: ProgramLike;
+  Sys: GoInterface<System>;
+  ProgramLike: GoInterface<ProgramLike>;
   Program: GoPtr<Program>;
   Config: GoPtr<ParsedCommandLine>;
   ReportDiagnostic: DiagnosticReporter;
   ReportErrorSummary: DiagnosticsReporter;
-  Writer: Writer;
+  Writer: GoInterface<Writer>;
   WriteFile: WriteFile;
   CompileTimes: GoPtr<CompileTimes>;
   Testing: CommandLineTesting | undefined;
@@ -129,7 +130,7 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
   if (result.Status !== ExitStatusSuccess) {
     return [result, undefined];
   }
-  result = { ...result, times: { ...result.times!, totalTime: input.Sys.SinceStart() } };
+  result = { ...result, times: { ...result.times!, totalTime: input.Sys!.SinceStart() } };
   const options = ParsedCommandLine_CompilerOptions(input.Config);
   if (Tristate_IsTrue(options!.Diagnostics) || Tristate_IsTrue(options!.ExtendedDiagnostics)) {
     const memStats = {} as import("../../../go/runtime.js").MemStats;
@@ -234,9 +235,9 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
       if (input.Tracing !== undefined) {
         pop = Tracing_Push(input.Tracing, PhaseBind, "bindSourceFiles", undefined as unknown as Map<string, unknown>, true);
       }
-      const bindStart = input.Sys.Now();
-      const diags = input.ProgramLike.GetBindDiagnostics(innerCtx, file);
-      result.times!.bindTime = (input.Sys.Now() as TimeWithSub).Sub(bindStart) as import("../../../go/time.js").Duration;
+      const bindStart = input.Sys!.Now();
+      const diags = input.ProgramLike!.GetBindDiagnostics(innerCtx, file);
+      result.times!.bindTime = (input.Sys!.Now() as TimeWithSub).Sub(bindStart) as import("../../../go/time.js").Duration;
       if (pop !== undefined) {
         pop();
       }
@@ -247,9 +248,9 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
       if (input.Tracing !== undefined) {
         pop = Tracing_Push(input.Tracing, PhaseCheck, "checkSourceFiles", undefined as unknown as Map<string, unknown>, true);
       }
-      const checkStart = input.Sys.Now();
-      const diags = input.ProgramLike.GetSemanticDiagnostics(innerCtx, file);
-      result.times!.checkTime = (input.Sys.Now() as TimeWithSub).Sub(checkStart) as import("../../../go/time.js").Duration;
+      const checkStart = input.Sys!.Now();
+      const diags = input.ProgramLike!.GetSemanticDiagnostics(innerCtx, file);
+      result.times!.checkTime = (input.Sys!.Now() as TimeWithSub).Sub(checkStart) as import("../../../go/time.js").Duration;
       if (pop !== undefined) {
         pop();
       }
@@ -258,10 +259,10 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
   );
 
   let emitResult: GoPtr<EmitResult> = { EmitSkipped: true, Diagnostics: [], EmittedFiles: [], SourceMaps: [] };
-  if (!Tristate_IsTrue(input.ProgramLike.Options()!.ListFilesOnly)) {
-    const emitStart = input.Sys.Now();
-    emitResult = input.ProgramLike.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0 as import("../../compiler/emitter.js").EmitOnly, WriteFile: input.WriteFile });
-    result.times!.emitTime = (input.Sys.Now() as TimeWithSub).Sub(emitStart) as import("../../../go/time.js").Duration;
+  if (!Tristate_IsTrue(input.ProgramLike!.Options()!.ListFilesOnly)) {
+    const emitStart = input.Sys!.Now();
+    emitResult = input.ProgramLike!.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0 as import("../../compiler/emitter.js").EmitOnly, WriteFile: input.WriteFile });
+    result.times!.emitTime = (input.Sys!.Now() as TimeWithSub).Sub(emitStart) as import("../../../go/time.js").Duration;
   }
   if (emitResult !== undefined) {
     allDiagnostics = [...allDiagnostics, ...emitResult!.Diagnostics];
@@ -272,12 +273,12 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
 
   allDiagnostics = SortAndDeduplicateDiagnostics(allDiagnostics);
   for (const diagnostic of allDiagnostics) {
-    input.ReportDiagnostic(diagnostic);
+    input.ReportDiagnostic!(diagnostic);
   }
 
   listFiles(input, emitResult);
 
-  input.ReportErrorSummary(allDiagnostics);
+  input.ReportErrorSummary!(allDiagnostics);
   return { ...result, Diagnostics: allDiagnostics, EmitResult: emitResult, Status: ExitStatusSuccess };
 }
 
@@ -313,14 +314,14 @@ export function listFiles(input: EmitInput, emitResult: GoPtr<EmitResult>): void
     const options = Program_Options(input.Program);
     if (Tristate_IsTrue(options!.ListEmittedFiles)) {
       for (const file of emitResult!.EmittedFiles) {
-        Fprintln(input.Writer, "TSFILE: ", GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(input.Program)));
+        Fprintln(input.Writer!, "TSFILE: ", GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(input.Program)));
       }
     }
     if (Tristate_IsTrue(options!.ExplainFiles)) {
       Program_ExplainFiles(input.Program, input.Writer, ParsedCommandLine_Locale(input.Config));
     } else if (Tristate_IsTrue(options!.ListFiles) || Tristate_IsTrue(options!.ListFilesOnly)) {
       for (const file of Program_GetSourceFiles(input.Program)) {
-        Fprintln(input.Writer, SourceFile_FileName(file));
+        Fprintln(input.Writer!, SourceFile_FileName(file));
       }
     }
   } finally {

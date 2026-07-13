@@ -46,6 +46,8 @@ import {
   ParsedCommandLine_UseCaseSensitiveFileNames,
 } from "./parsedcommandline.js";
 
+import { GoValueRef } from "../../go/compat.js";
+import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::computeFn","kind":"func","status":"implemented","sigHash":"ab5b320eb71a492d12e852bdfc827bacfa2e45338162ae7f5b1598b402c04859"}
  *
@@ -56,9 +58,9 @@ import {
  * 	}
  * }
  */
-export function computeFn<T>(fn: (arg0: GoPtr<CompilerOptions>) => T): (arg0: GoPtr<CompilerOptions>) => unknown {
+export function computeFn<T>(fn: GoFunc<(arg0: GoPtr<CompilerOptions>) => T>): (arg0: GoPtr<CompilerOptions>) => unknown {
   return (opts: GoPtr<CompilerOptions>): unknown => {
-    return fn(opts);
+    return fn!(opts);
   };
 }
 
@@ -138,7 +140,7 @@ export interface TSConfig {
   Files: GoSlice<string>;
   Include: GoSlice<string>;
   Exclude: GoSlice<string>;
-  CompileOnSave: GoPtr<bool>;
+  CompileOnSave: GoRef<bool>;
 }
 
 /**
@@ -289,8 +291,8 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   }
 
   // Add compileOnSave
-  if (p.CompileOnSave !== undefined && p.CompileOnSave === true) {
-    config.CompileOnSave = true;
+  if (p.CompileOnSave !== undefined && p.CompileOnSave.v) {
+    config.CompileOnSave = GoValueRef(true as bool);
   }
 
   return config;
@@ -333,19 +335,19 @@ export function filterSameAsDefaultInclude(specs: GoSlice<string>): GoSlice<stri
  * 	return ""
  * }
  */
-export function getNameOfCompilerOptionValue(value: unknown, enumMap: GoPtr<OrderedMap<string, unknown>>): string {
-  const found: { value: string } = { value: "" };
-  const matched: { value: bool } = { value: false };
+export function getNameOfCompilerOptionValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, unknown>>): string {
+  let found = "";
+  let matched = false as bool;
   OrderedMap_Entries(enumMap)!((k: unknown, v: unknown): bool => {
     if (v === value) {
-      found.value = k as string;
-      matched.value = true;
+      found = k as string;
+      matched = true;
       return false;
     }
     return true;
   });
-  if (matched.value) {
-    return found.value;
+  if (matched) {
+    return found;
   }
   return "";
 }
@@ -607,7 +609,7 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
  * 	return getNameOfCompilerOptionValue(value, enumMap)
  * }
  */
-export function serializeEnumValue(value: unknown, enumMap: GoPtr<OrderedMap<string, unknown>>): string {
+export function serializeEnumValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, unknown>>): string {
   if (typeof value === "number") {
     const container = { result: "" };
     OrderedMap_Entries(enumMap)!((k: unknown, v: unknown): bool => {
@@ -783,7 +785,7 @@ export function anyDependencyProvided(dependencies: GoSlice<string>, provided: G
  * 	return value
  * }
  */
-export function serializeImpliedOptionValue(optionDecl: GoPtr<CommandLineOption>, value: unknown): unknown {
+export function serializeImpliedOptionValue(optionDecl: GoPtr<CommandLineOption>, value: GoInterface<unknown>): GoInterface<unknown> {
   if (value === undefined || value === null) {
     return undefined;
   }

@@ -1,5 +1,6 @@
 import type { bool, byte, double, int } from "../../go/scalars.js";
 import type { GoComparable, GoConstraint, GoError, GoMap, GoPtr, GoRune, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
+import { GoNilSlice } from "../../go/compat.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
 import { ExtensionCjs, ExtensionCts, ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, HasTSFileExtension, IsDeclarationFileName } from "../tspath/extension.js";
@@ -21,6 +22,7 @@ import type { ScriptKind } from "./scriptkind.js";
 import type { TextPos } from "./text.js";
 import { Tristate_IsTrue } from "./tristate.js";
 
+import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // byte indexing `s[i]` and slicing `s[i:j]` operate on byte offsets. We mirror
 // that contract by operating over the UTF-8 byte view and converting back to a
@@ -85,15 +87,15 @@ export function ApplyDebugStackLimit(): void {
  * 	return slice
  * }
  */
-export function Filter<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): GoSlice<T> {
+export function Filter<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): GoSlice<T> {
   const values = slice ?? [];
   for (let i = 0; i < values.length; i++) {
     let value = values[i]!;
-    if (!f(value)) {
+    if (!f!(value)) {
       const result = slices.Clone(values.slice(0, i))!;
       for (i++; i < values.length; i++) {
         value = values[i]!;
-        if (f(value)) {
+        if (f!(value)) {
           result.push(value);
         }
       }
@@ -119,10 +121,10 @@ export function Filter<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): GoSli
  * 	}
  * }
  */
-export function FilterSeq<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): GoSeq<T> {
+export function FilterSeq<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): GoSeq<T> {
   return (yield_: (value: T) => bool): void => {
     for (const value of slice ?? []) {
-      if (f(value)) {
+      if (f!(value)) {
         if (!yield_(value)) {
           return;
         }
@@ -151,15 +153,15 @@ export function FilterSeq<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): Go
  * 	return slice
  * }
  */
-export function FilterIndex<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T, arg1: int, arg2: GoSlice<T>) => bool): GoSlice<T> {
+export function FilterIndex<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int, arg2: GoSlice<T>) => bool>): GoSlice<T> {
   const values = slice ?? [];
   for (let i = 0; i < values.length; i++) {
     let value = values[i]!;
-    if (!f(value, i, values)) {
+    if (!f!(value, i, values)) {
       const result = slices.Clone(values.slice(0, i))!;
       for (i++; i < values.length; i++) {
         value = values[i]!;
-        if (f(value, i, values)) {
+        if (f!(value, i, values)) {
           result.push(value);
         }
       }
@@ -184,7 +186,7 @@ export function FilterIndex<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T, arg1: int,
  * 	return result
  * }
  */
-export function Map<T, U>(slice: GoSlice<T>, f: (arg0: T) => U): GoSlice<U> {
+export function Map<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>): GoSlice<U> {
   // A Go nil slice is observationally equivalent to an empty slice in this model
   // (same len, range, indexing, append), so the `slice == nil` early return is
   // represented as returning an empty slice.
@@ -194,7 +196,7 @@ export function Map<T, U>(slice: GoSlice<T>, f: (arg0: T) => U): GoSlice<U> {
   const result: GoSlice<U> = new globalThis.Array<U>(slice.length);
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
-    result[i] = f(value);
+    result[i] = f!(value);
   }
   return result;
 }
@@ -218,14 +220,14 @@ export function Map<T, U>(slice: GoSlice<T>, f: (arg0: T) => U): GoSlice<U> {
  * 	return result, nil
  * }
  */
-export function TryMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => [U, GoError]): [GoSlice<U>, GoError] {
+export function TryMap<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => [U, GoError]>): [GoSlice<U>, GoError] {
   if (slice.length === 0) {
     return [[], undefined];
   }
   const result: GoSlice<U> = new globalThis.Array<U>(slice.length);
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
-    const [mapped, err] = f(value);
+    const [mapped, err] = f!(value);
     if (err !== undefined) {
       return [[], err];
     }
@@ -249,14 +251,14 @@ export function TryMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => [U, GoError]): [
  * 	return result
  * }
  */
-export function MapIndex<T, U>(slice: GoSlice<T>, f: (arg0: T, arg1: int) => U): GoSlice<U> {
+export function MapIndex<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int) => U>): GoSlice<U> {
   if (slice === undefined) {
     return [];
   }
   const result: GoSlice<U> = new globalThis.Array<U>(slice.length);
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
-    result[i] = f(value, i);
+    result[i] = f!(value, i);
   }
   return result;
 }
@@ -276,10 +278,10 @@ export function MapIndex<T, U>(slice: GoSlice<T>, f: (arg0: T, arg1: int) => U):
  * 	return result
  * }
  */
-export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) => U): GoSlice<U> {
+export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>): GoSlice<U> {
   const result: GoSlice<U> = [];
   for (const value of slice) {
-    const mapped = f(value);
+    const mapped = f!(value);
     if (mapped !== (undefined as U)) {
       result.push(mapped);
     }
@@ -303,10 +305,10 @@ export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (arg0
  * 	return result
  * }
  */
-export function MapFiltered<T, U>(slice: GoSlice<T>, f: (arg0: T) => [U, bool]): GoSlice<U> {
+export function MapFiltered<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => [U, bool]>): GoSlice<U> {
   const result: GoSlice<U> = [];
   for (const value of slice) {
-    const [mapped, ok] = f(value);
+    const [mapped, ok] = f!(value);
     if (!ok) {
       continue;
     }
@@ -330,10 +332,10 @@ export function MapFiltered<T, U>(slice: GoSlice<T>, f: (arg0: T) => [U, bool]):
  * 	return result
  * }
  */
-export function FlatMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => GoSlice<U>): GoSlice<U> {
+export function FlatMap<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => GoSlice<U>>): GoSlice<U> {
   const result: GoSlice<U> = [];
   for (const value of slice) {
-    const mapped = f(value);
+    const mapped = f!(value);
     if (mapped.length !== 0) {
       for (const e of mapped) {
         result.push(e);
@@ -363,10 +365,10 @@ export function FlatMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => GoSlice<U>): Go
  * 	return slice
  * }
  */
-export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) => T): GoSlice<T> {
+export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => T>): GoSlice<T> {
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
-    const mapped = f(value);
+    const mapped = f!(value);
     if (mapped !== value) {
       const result: GoSlice<T> = new globalThis.Array<T>(slice.length);
       for (let k = 0; k < i; k++) {
@@ -374,7 +376,7 @@ export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) 
       }
       result[i] = mapped;
       for (let j = i + 1; j < slice.length; j++) {
-        result[j] = f(slice[j]!);
+        result[j] = f!(slice[j]!);
       }
       return result;
     }
@@ -402,10 +404,10 @@ export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) 
  * 	return slice
  * }
  */
-export function SameMapIndex<T extends GoComparable>(slice: GoSlice<T>, f: (arg0: T, arg1: int) => T): GoSlice<T> {
+export function SameMapIndex<T extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int) => T>): GoSlice<T> {
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
-    const mapped = f(value, i);
+    const mapped = f!(value, i);
     if (mapped !== value) {
       const result: GoSlice<T> = new globalThis.Array<T>(slice.length);
       for (let k = 0; k < i; k++) {
@@ -413,7 +415,7 @@ export function SameMapIndex<T extends GoComparable>(slice: GoSlice<T>, f: (arg0
       }
       result[i] = mapped;
       for (let j = i + 1; j < slice.length; j++) {
-        result[j] = f(slice[j]!, j);
+        result[j] = f!(slice[j]!, j);
       }
       return result;
     }
@@ -455,13 +457,13 @@ export function Same<T>(s1: GoSlice<T>, s2: GoSlice<T>): bool {
  * 	return false
  * }
  */
-export function Some<T>(slice: GoSlice<T> | undefined, f: (arg0: T) => bool): bool {
+export function Some<T>(slice: GoSlice<T> | undefined, f: GoFunc<(arg0: T) => bool>): bool {
   if (slice === undefined) {
     return false;
   }
   for (const value of slice) {
     //nolint:modernize
-    if (f(value)) {
+    if (f!(value)) {
       return true;
     }
   }
@@ -481,12 +483,12 @@ export function Some<T>(slice: GoSlice<T> | undefined, f: (arg0: T) => bool): bo
  * 	return true
  * }
  */
-export function Every<T>(slice: GoSlice<T> | undefined, f: (arg0: T) => bool): bool {
+export function Every<T>(slice: GoSlice<T> | undefined, f: GoFunc<(arg0: T) => bool>): bool {
   if (slice === undefined) {
     return true;
   }
   for (const value of slice) {
-    if (!f(value)) {
+    if (!f!(value)) {
       return false;
     }
   }
@@ -508,7 +510,7 @@ export function Every<T>(slice: GoSlice<T> | undefined, f: (arg0: T) => bool): b
  * 	}
  * }
  */
-export function Or<T>(...funcs: Array<(arg0: T) => bool>): (arg0: T) => bool {
+export function Or<T>(...funcs: Array<(arg0: T) => bool>): GoFunc<(arg0: T) => bool> {
   return (input: T): bool => {
     for (const f of funcs) {
       if (f(input)) {
@@ -532,9 +534,9 @@ export function Or<T>(...funcs: Array<(arg0: T) => bool>): (arg0: T) => bool {
  * 	return *new(T)
  * }
  */
-export function Find<T>(slice: GoSlice<T>, f: (arg0: T) => bool): T {
+export function Find<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): T {
   for (const value of slice) {
-    if (f(value)) {
+    if (f!(value)) {
       return value;
     }
   }
@@ -555,10 +557,10 @@ export function Find<T>(slice: GoSlice<T>, f: (arg0: T) => bool): T {
  * 	return *new(T)
  * }
  */
-export function FindLast<T>(slice: GoSlice<T>, f: (arg0: T) => bool): T {
+export function FindLast<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): T {
   for (let i = slice.length - 1; i >= 0; i--) {
     const value = slice[i]!;
-    if (f(value)) {
+    if (f!(value)) {
       return value;
     }
   }
@@ -578,10 +580,10 @@ export function FindLast<T>(slice: GoSlice<T>, f: (arg0: T) => bool): T {
  * 	return -1
  * }
  */
-export function FindIndex<T>(slice: GoSlice<T>, f: (arg0: T) => bool): int {
+export function FindIndex<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): int {
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
-    if (f(value)) {
+    if (f!(value)) {
       return i;
     }
   }
@@ -602,10 +604,10 @@ export function FindIndex<T>(slice: GoSlice<T>, f: (arg0: T) => bool): int {
  * 	return -1
  * }
  */
-export function FindLastIndex<T>(slice: GoSlice<T>, f: (arg0: T) => bool): int {
+export function FindLastIndex<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): int {
   for (let i = slice.length - 1; i >= 0; i--) {
     const value = slice[i]!;
-    if (f(value)) {
+    if (f!(value)) {
       return i;
     }
   }
@@ -704,9 +706,9 @@ export function FirstOrNilSeq<T>(seq: GoSeq<T>): T {
  * 	return *new(U)
  * }
  */
-export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) => U): U {
+export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>): U {
   for (const value of slice) {
-    const mapped = f(value);
+    const mapped = f!(value);
     if (mapped !== (undefined as U)) {
       return mapped;
     }
@@ -751,7 +753,7 @@ export function FirstNonZero<T extends GoComparable>(...values: Array<T>): T {
  * 	return slices.Concat(s1, s2)
  * }
  */
-export function Concatenate<T>(s1: GoPtr<GoSlice<T>>, s2: GoPtr<GoSlice<T>>): GoSlice<T> {
+export function Concatenate<T>(s1: GoSlice<T>, s2: GoSlice<T>): GoSlice<T> {
   const left = s1 ?? [];
   const right = s2 ?? [];
   if (right.length === 0) {
@@ -821,10 +823,10 @@ export function Splice<T>(s1: GoSlice<T>, start: int, deleteCount: int, ...items
  * 	return count
  * }
  */
-export function CountWhere<T>(slice: GoSlice<T>, f: (arg0: T) => bool): int {
+export function CountWhere<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): int {
   let count = 0;
   for (const value of slice) {
-    if (f(value)) {
+    if (f!(value)) {
       count++;
     }
   }
@@ -856,8 +858,8 @@ export function ReplaceElement<T>(slice: GoSlice<T>, i: int, t: T): GoSlice<T> {
  * 	return slices.Insert(slice, i, element)
  * }
  */
-export function InsertSorted<T>(slice: GoSlice<T>, element: T, cmp: (arg0: T, arg1: T) => int): GoSlice<T> {
-  const [i] = slices.BinarySearchFunc(slice, element, cmp);
+export function InsertSorted<T>(slice: GoSlice<T>, element: T, cmp: GoFunc<(arg0: T, arg1: T) => int>): GoSlice<T> {
+  const [i] = slices.BinarySearchFunc(slice, element, cmp!);
   return slices.Insert(slice, i, element);
 }
 
@@ -888,7 +890,7 @@ export function InsertSorted<T>(slice: GoSlice<T>, element: T, cmp: (arg0: T, ar
  * 	return mins
  * }
  */
-export function MinAllFunc<T>(xs: GoSlice<T>, cmp: (a: T, b: T) => int): GoSlice<T> {
+export function MinAllFunc<T>(xs: GoSlice<T>, cmp: GoFunc<(a: T, b: T) => int>): GoSlice<T> {
   if (xs.length === 0) {
     return [];
   }
@@ -897,7 +899,7 @@ export function MinAllFunc<T>(xs: GoSlice<T>, cmp: (a: T, b: T) => int): GoSlice
   const mins: GoSlice<T> = [m];
 
   for (const x of xs.slice(1)) {
-    const c = cmp(x, m);
+    const c = cmp!(x, m);
     if (c < 0) {
       m = x;
       mins.length = 0;
@@ -921,7 +923,7 @@ export function MinAllFunc<T>(xs: GoSlice<T>, cmp: (a: T, b: T) => int): GoSlice
  * 	return append(slice, element)
  * }
  */
-export function AppendIfUnique<T extends GoComparable>(slice: GoPtr<GoSlice<T>>, element: T): GoSlice<T> {
+export function AppendIfUnique<T extends GoComparable>(slice: GoSlice<T>, element: T): GoSlice<T> {
   if (slices.Contains(slice, element)) {
     return slice ?? [];
   }
@@ -943,7 +945,7 @@ export function AppendIfUnique<T extends GoComparable>(slice: GoPtr<GoSlice<T>>,
  * 	}
  * }
  */
-export function Memoize<T>(create: () => T): () => T {
+export function Memoize<T>(create: GoFunc<() => T>): GoFunc<() => T> {
   let value = undefined as T;
   // Go reassigns `create = nil` after the first call to release it and gate
   // re-invocation. The scaffold signature keeps `create` non-nullable, so the
@@ -1257,7 +1259,7 @@ export function FirstResult<T1>(t1: T1, ...arg: Array<unknown>): T1 {
  * 	return string(output), err
  * }
  */
-export function StringifyJson(input: unknown, prefix: string, indent: string): [string, GoError] {
+export function StringifyJson(input: GoInterface<unknown>, prefix: string, indent: string): [string, GoError] {
   const [output, err] = MarshalIndent(input, prefix, indent);
   return [utf8Decoder.decode(globalThis.Uint8Array.from(output)), err];
 }
@@ -1351,7 +1353,7 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
  * 	return bestCandidate
  * }
  */
-export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, getName: (arg0: T) => string, compare: (arg0: T, arg1: T) => int): T {
+export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, getName: GoFunc<(arg0: T) => string>, compare: GoFunc<(arg0: T, arg1: T) => int>): T {
   const searchName = name ?? "";
   const runeName = stringToRunes(searchName);
   const maximumLengthDifference = globalThis.Math.max(2, globalThis.Math.trunc(runeName.length * 0.34));
@@ -1363,7 +1365,7 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
     let bestCandidate = undefined as T;
     let hasBest = false;
     candidates!((candidate: T): bool => {
-      const candidateName = getName(candidate) ?? "";
+      const candidateName = getName!(candidate) ?? "";
       const maxLen = globalThis.Math.max(byteLen(candidateName), runeName.length);
       const minLen = globalThis.Math.min(byteLen(candidateName), runeName.length);
       if (candidateName !== "" && maxLen - minLen <= maximumLengthDifference) {
@@ -1384,7 +1386,7 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
           bestDistance = distance;
           bestCandidate = candidate;
           hasBest = true;
-        } else if (!hasBest || compare(candidate, bestCandidate) < 0) {
+        } else if (!hasBest || compare!(candidate, bestCandidate) < 0) {
           bestCandidate = candidate;
           hasBest = true;
         }
@@ -1631,9 +1633,9 @@ export function ShouldRewriteModuleSpecifier(specifier: string, compilerOptions:
  * 	return []*T{element}
  * }
  */
-export function SingleElementSlice<T>(element: GoPtr<T>): GoSlice<GoPtr<T>> {
+export function SingleElementSlice<T>(element: GoRef<T>): GoSlice<GoRef<T>> {
   if (element === undefined) {
-    return [];
+    return GoNilSlice();
   }
   return [element];
 }
@@ -1727,7 +1729,7 @@ export function comparableValuesEqual<T extends GoComparable>(a: T, b: T): bool 
  * 	DiffMapsFunc(m1, m2, comparableValuesEqual, onAdded, onRemoved, onChanged)
  * }
  */
-export function DiffMaps<K extends GoComparable, V extends GoComparable>(m1: GoMap<K, V>, m2: GoMap<K, V>, onAdded: (arg0: K, arg1: V) => void, onRemoved: (arg0: K, arg1: V) => void, onChanged: (arg0: K, arg1: V, arg2: V) => void): void {
+export function DiffMaps<K extends GoComparable, V extends GoComparable>(m1: GoMap<K, V>, m2: GoMap<K, V>, onAdded: GoFunc<(arg0: K, arg1: V) => void>, onRemoved: GoFunc<(arg0: K, arg1: V) => void>, onChanged: GoFunc<(arg0: K, arg1: V, arg2: V) => void>): void {
   DiffMapsFunc(m1, m2, comparableValuesEqual, onAdded, onRemoved, onChanged);
 }
 
@@ -1757,7 +1759,7 @@ export function DiffMaps<K extends GoComparable, V extends GoComparable>(m1: GoM
  * 	}
  * }
  */
-export function DiffMapsFunc<K extends GoComparable, V1, V2>(m1: GoMap<K, V1>, m2: GoMap<K, V2>, equalValues: (arg0: V1, arg1: V2) => bool, onAdded: (arg0: K, arg1: V2) => void, onRemoved: (arg0: K, arg1: V1) => void, onChanged: (arg0: K, arg1: V1, arg2: V2) => void): void {
+export function DiffMapsFunc<K extends GoComparable, V1, V2>(m1: GoMap<K, V1>, m2: GoMap<K, V2>, equalValues: GoFunc<(arg0: V1, arg1: V2) => bool>, onAdded: GoFunc<(arg0: K, arg1: V2) => void>, onRemoved: GoFunc<(arg0: K, arg1: V1) => void>, onChanged: GoFunc<(arg0: K, arg1: V1, arg2: V2) => void>): void {
   if (onAdded !== undefined) {
     for (const [k, v2] of m2) {
       if (!m1.has(k)) {
@@ -1771,11 +1773,11 @@ export function DiffMapsFunc<K extends GoComparable, V1, V2>(m1: GoMap<K, V1>, m
   for (const [k, v1] of m1) {
     if (m2.has(k)) {
       const v2 = m2.get(k)!;
-      if (onChanged !== undefined && !equalValues(v1, v2)) {
+      if (onChanged !== undefined && !equalValues!(v1, v2)) {
         onChanged(k, v1, v2);
       }
     } else {
-      onRemoved(k, v1);
+      onRemoved!(k, v1);
     }
   }
 }
@@ -1902,7 +1904,7 @@ export function Deduplicate<T extends GoComparable>(slice: GoSlice<T>): GoSlice<
  * 	return deduplicated
  * }
  */
-export function DeduplicateSorted<T>(slice: GoSlice<T>, isEqual: (a: T, b: T) => bool): GoSlice<T> {
+export function DeduplicateSorted<T>(slice: GoSlice<T>, isEqual: GoFunc<(a: T, b: T) => bool>): GoSlice<T> {
   if (slice.length === 0) {
     return slice;
   }
@@ -1913,7 +1915,7 @@ export function DeduplicateSorted<T>(slice: GoSlice<T>, isEqual: (a: T, b: T) =>
   const deduplicated: GoSlice<T> = slice.slice(0, 1);
   for (let i = 1; i < slice.length; i++) {
     const next = slice[i]!;
-    if (isEqual(last, next)) {
+    if (isEqual!(last, next)) {
       continue;
     }
 

@@ -7,6 +7,7 @@ import type { EmitContext as EmitContext_680f09ca } from "../printer/emitcontext
 import { EmitContext_NewNodeVisitor, NewEmitContext } from "../printer/emitcontext.js";
 import type { NodeFactory } from "../printer/factory.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::type::Transformer","kind":"type","status":"implemented","sigHash":"5fa010274cdfe50c30d5bc0081e251425ae74f7e76e7ef1a4923c0c6df44c813"}
  *
@@ -52,7 +53,7 @@ function resolveTransformer(receiver: GoPtr<Transformer | TransformerCarrier>): 
  * 	return tx
  * }
  */
-export function Transformer_NewTransformer(receiver: GoPtr<Transformer>, visit: (node: GoPtr<Node>) => GoPtr<Node>, emitContext: GoPtr<EmitContext_680f09ca>): GoPtr<Transformer> {
+export function Transformer_NewTransformer(receiver: GoPtr<Transformer>, visit: GoFunc<(node: GoPtr<Node>) => GoPtr<Node>>, emitContext: GoPtr<EmitContext_680f09ca>): GoPtr<Transformer> {
   const tx = resolveTransformer(receiver)!;
   if (tx.emitContext !== undefined) {
     throw new globalThis.Error("Transformer already initialized");

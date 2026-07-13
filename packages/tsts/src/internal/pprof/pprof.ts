@@ -11,6 +11,7 @@ import * as runtime from "../../go/runtime.js";
 import * as pprof from "../../go/runtime/pprof.js";
 import * as time from "../../go/time.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::ProfileSession","kind":"type","status":"implemented","sigHash":"a76723aee5edb81e8c1f6267b0588ad887b2600150fd55b9359a35d02584972b"}
  *
@@ -26,7 +27,7 @@ export interface ProfileSession {
   cpuFilePath: string;
   memFilePath: string;
   cpuFile: GoPtr<File>;
-  logWriter: Writer;
+  logWriter: GoInterface<Writer>;
 }
 
 /**
@@ -59,7 +60,7 @@ export interface ProfileSession {
  * 	}
  * }
  */
-export function BeginProfiling(profileDir: string, logWriter: Writer): GoPtr<ProfileSession> {
+export function BeginProfiling(profileDir: string, logWriter: GoInterface<Writer>): GoPtr<ProfileSession> {
   const mkdirErr = os.MkdirAll(profileDir, 0o755);
   if (mkdirErr !== undefined) {
     throw mkdirErr;
@@ -122,10 +123,10 @@ export function ProfileSession_Stop(receiver: GoPtr<ProfileSession>): void {
       throw writeErr;
     }
     memFile.Close();
-    fmt.Fprintf(p.logWriter, "Memory profile: %v\n", p.memFilePath);
+    fmt.Fprintf(p.logWriter!, "Memory profile: %v\n", p.memFilePath);
   }
 
-  fmt.Fprintf(p.logWriter, "CPU profile: %v\n", p.cpuFilePath);
+  fmt.Fprintf(p.logWriter!, "CPU profile: %v\n", p.cpuFilePath);
 }
 
 /**

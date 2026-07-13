@@ -1,4 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
+import { GoValueRef } from "../../go/compat.js";
 import type { GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { FormatUint } from "../../go/strconv.js";
 import { Builder, ToUpper } from "../../go/strings.js";
@@ -120,6 +121,7 @@ import { EmitContext_MostOriginal } from "./emitcontext.js";
 import { GetDefaultIndentSize } from "./textwriter.js";
 import { TokenFlagsIsInvalid, TokenFlagsContainsSeparator, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 
+import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 export const byteLen = StringByteLen;
 export const byteSlice = StringByteSlice;
 const decodeRuneInStringAt = DecodeRuneInStringAt;
@@ -1733,9 +1735,9 @@ export function makeIdentifierFromModuleName(moduleName: string): string {
  * 	return i
  * }
  */
-export function findSpanEndWithEmitContext<T>(c: GoPtr<EmitContext>, array: GoSlice<T>, test: (c: GoPtr<EmitContext>, value: T) => bool, start: int): int {
+export function findSpanEndWithEmitContext<T>(c: GoPtr<EmitContext>, array: GoSlice<T>, test: GoFunc<(c: GoPtr<EmitContext>, value: T) => bool>, start: int): int {
   let i = start;
-  while (i < array.length && test(c, array[i]!)) {
+  while (i < array.length && test!(c, array[i]!)) {
     i++;
   }
   return i;
@@ -1753,9 +1755,9 @@ export function findSpanEndWithEmitContext<T>(c: GoPtr<EmitContext>, array: GoSl
  * 	return i
  * }
  */
-export function findSpanEnd<T>(array: GoSlice<T>, test: (value: T) => bool, start: int): int {
+export function findSpanEnd<T>(array: GoSlice<T>, test: GoFunc<(value: T) => bool>, start: int): int {
   let i = start;
-  while (i < array.length && test(array[i]!)) {
+  while (i < array.length && test!(array[i]!)) {
     i++;
   }
   return i;
@@ -1775,18 +1777,14 @@ export function findSpanEnd<T>(array: GoSlice<T>, test: (value: T) => bool, star
  * 	}
  * }
  */
-// Note: GoPtr<int> for pos is used here to match the porter's generated signature for Go's *int.
-// Callers within this file pass a { v: int } box cast as GoPtr<int>. This works because
-// GoPtr<int> = int | undefined and at runtime the actual value is a mutable object box.
-export function skipWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): void {
-  const box = pos as unknown as { v: int };
+export function skipWhiteSpaceSingleLine(text: string, pos: GoRef<int>): void {
   const textLen = byteLen(text);
-  while ((box.v as number) < textLen) {
-    const [ch, size] = decodeRuneInStringAt(text, box.v);
+  while ((pos!.v as number) < textLen) {
+    const [ch, size] = decodeRuneInStringAt(text, pos!.v);
     if (!IsWhiteSpaceSingleLine(ch)) {
       break;
     }
-    box.v = ((box.v as number) + size) as int;
+    pos!.v = ((pos!.v as number) + size) as int;
   }
 }
 
@@ -1800,11 +1798,10 @@ export function skipWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): void {
  * 	return *pos != startPos
  * }
  */
-export function matchWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): bool {
-  const box = pos as unknown as { v: int };
-  const startPos = box.v;
+export function matchWhiteSpaceSingleLine(text: string, pos: GoRef<int>): bool {
+  const startPos = pos!.v;
   skipWhiteSpaceSingleLine(text, pos);
-  return box.v !== startPos;
+  return pos!.v !== startPos;
 }
 
 /**
@@ -1820,11 +1817,10 @@ export function matchWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): bool {
  * 	return false
  * }
  */
-export function matchRune(text: string, pos: GoPtr<int>, expected: GoRune): bool {
-  const box = pos as unknown as { v: int };
-  const [ch, size] = decodeRuneInStringAt(text, box.v);
+export function matchRune(text: string, pos: GoRef<int>, expected: GoRune): bool {
+  const [ch, size] = decodeRuneInStringAt(text, pos!.v);
   if (ch === expected) {
-    box.v = ((box.v as number) + size) as int;
+    pos!.v = ((pos!.v as number) + size) as int;
     return true;
   }
   return false;
@@ -1854,25 +1850,22 @@ export function matchRune(text: string, pos: GoPtr<int>, expected: GoRune): bool
  * 	return true
  * }
  */
-export function matchString(text: string, pos: GoPtr<int>, expected: string): bool {
-  const box = pos as unknown as { v: int };
+export function matchString(text: string, pos: GoRef<int>, expected: string): bool {
   const textLen = byteLen(text);
   const expectedLen = byteLen(expected);
-  let textPos = box.v as number;
+  const textPos = GoValueRef(pos!.v);
   let expectedPos = 0;
   while (expectedPos < expectedLen) {
-    if (textPos >= textLen) {
+    if ((textPos.v as number) >= textLen) {
       return false;
     }
     const [expectedRune, expectedSize] = decodeRuneInStringAt(expected, expectedPos);
-    const tempBox = { v: textPos as int };
-    if (!matchRune(text, tempBox as unknown as GoPtr<int>, expectedRune)) {
+    if (!matchRune(text, textPos, expectedRune)) {
       return false;
     }
-    textPos = tempBox.v as number;
     expectedPos += expectedSize;
   }
-  box.v = textPos as int;
+  pos!.v = textPos.v;
   return true;
 }
 
@@ -1902,29 +1895,22 @@ export function matchString(text: string, pos: GoPtr<int>, expected: string): bo
  * 	return false
  * }
  */
-export function matchQuotedString(text: string, pos: GoPtr<int>): bool {
-  const box = pos as unknown as { v: int };
-  let textPos = box.v as number;
+export function matchQuotedString(text: string, pos: GoRef<int>): bool {
+  const textPos = GoValueRef(pos!.v);
   const textLen = byteLen(text);
   let quoteChar: GoRune;
-  const tempBox1 = { v: textPos as int };
-  if (matchRune(text, tempBox1 as unknown as GoPtr<int>, 0x27 /* '\'' */)) {
-    textPos = tempBox1.v as number;
+  if (matchRune(text, textPos, 0x27 /* '\'' */)) {
     quoteChar = 0x27;
+  } else if (matchRune(text, textPos, 0x22 /* '"' */)) {
+    quoteChar = 0x22;
   } else {
-    const tempBox2 = { v: textPos as int };
-    if (matchRune(text, tempBox2 as unknown as GoPtr<int>, 0x22 /* '"' */)) {
-      textPos = tempBox2.v as number;
-      quoteChar = 0x22;
-    } else {
-      return false;
-    }
+    return false;
   }
-  while (textPos < textLen) {
-    const [ch, size] = decodeRuneInStringAt(text, textPos);
-    textPos += size;
+  while ((textPos.v as number) < textLen) {
+    const [ch, size] = decodeRuneInStringAt(text, textPos.v);
+    textPos.v = ((textPos.v as number) + size) as int;
     if (ch === quoteChar) {
-      box.v = textPos as int;
+      pos!.v = textPos.v;
       return true;
     }
   }
@@ -2001,8 +1987,7 @@ export function IsRecognizedTripleSlashComment(text: string, commentRange: Comme
     textBytes[TextRange_Pos(commentRange) + 2] === 0x2f /* '/' */
   ) {
     const sub = byteSlice(text, TextRange_Pos(commentRange) + 3, TextRange_End(commentRange));
-    const posBox = { v: 0 as int };
-    const posRef = posBox as unknown as GoPtr<int>;
+    const posRef = GoValueRef(0 as int);
     skipWhiteSpaceSingleLine(sub, posRef);
     if (!matchRune(sub, posRef, 0x3c /* '<' */)) {
       return false;
@@ -2047,7 +2032,7 @@ export function IsRecognizedTripleSlashComment(text: string, commentRange: Comme
     } else {
       return false;
     }
-    const remaining = byteSlice(sub, posBox.v);
+    const remaining = byteSlice(sub, posRef.v);
     return remaining.indexOf("/>") !== -1;
   }
 
@@ -2169,10 +2154,10 @@ export interface lineCharacterCache {
  * 	}
  * }
  */
-export function newLineCharacterCache(source: Source): GoPtr<lineCharacterCache> {
+export function newLineCharacterCache(source: GoInterface<Source>): GoPtr<lineCharacterCache> {
   return {
-    lineMap: source.ECMALineMap(),
-    text: source.Text(),
+    lineMap: source!.ECMALineMap(),
+    text: source!.Text(),
     cachedLine: 0,
     cachedPos: 0,
     cachedChar: 0,

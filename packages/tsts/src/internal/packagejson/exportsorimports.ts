@@ -6,6 +6,7 @@ import type { Decoder, UnmarshalerFrom } from "../json/json.js";
 import { unmarshalJSONValueV2WithFactory, JSONValueTypeObject, JSONValueTypeArray, JSONValueTypeNotPresent } from "./jsonvalue.js";
 import type { JSONValue } from "./jsonvalue.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::type::objectKind","kind":"type","status":"implemented","sigHash":"40af4365e00141a9986d7f8562c3d98a481e932bc1179f15412016475b1e3332"}
  *
@@ -52,7 +53,7 @@ export interface ExportsOrImports {
  * Go source:
  * var _ json.UnmarshalerFrom = (*ExportsOrImports)(nil)
  */
-export let __fac7894a_0: UnmarshalerFrom = ExportsOrImports_as_json_UnmarshalerFrom(undefined);
+export let __fac7894a_0: GoInterface<UnmarshalerFrom> = ExportsOrImports_as_json_UnmarshalerFrom(undefined);
 
 export function ExportsOrImports_as_json_UnmarshalerFrom(receiver: GoPtr<ExportsOrImports>): UnmarshalerFrom {
   return {

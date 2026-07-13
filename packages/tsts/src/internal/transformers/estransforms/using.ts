@@ -1,5 +1,6 @@
 import type { bool, uint } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoValueRef } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, NodeFactory_NewModifierList, Node_Name } from "../../ast/spine.js";
 import { Node_Elements, Node_Text, Node_Initializer, Node_StatementList, Node_Statements, NodeFactory_UpdateBlock, NodeFactory_UpdateForStatement, NodeFactory_UpdateForInOrOfStatement, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateSourceFile, NodeFactory_NewModifier } from "../../ast/ast.js";
@@ -38,6 +39,7 @@ import { isNamedEvaluation, transformNamedEvaluation } from "./namedevaluation.j
 import type { OuterExpressionKinds } from "../../ast/utilities.js";
 import { ModifierFlagsDefault } from "../../ast/modifierflags.js";
 
+import type { GoRef } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingDeclarationTransformer","kind":"type","status":"implemented","sigHash":"c11288edbfe88aa16e8c945b427708e30a077c4eb0bdebe1f153d608e1a48b4a"}
  *
@@ -324,7 +326,7 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
     }
     const envBinding = usingDeclarationTransformer_createEnvBinding(receiver);
     const topLevelStatementsRef = topLevelStatements;
-    const bodyStatements = usingDeclarationTransformer_transformUsingDeclarations(receiver, rest.slice(pos) as GoSlice<GoPtr<Statement>>, envBinding, topLevelStatementsRef);
+    const bodyStatements = usingDeclarationTransformer_transformUsingDeclarations(receiver, rest.slice(pos) as GoSlice<GoPtr<Statement>>, envBinding, GoValueRef(topLevelStatementsRef));
     topLevelStatements = topLevelStatementsRef;
     if (receiver!.exportBindings!.size > 0) {
       const exportSpecifiers: GoSlice<GoPtr<ExportSpecifierNode>> = [];
@@ -671,7 +673,7 @@ export function usingDeclarationTransformer_visitForOfStatement(receiver: GoPtr<
  * 	return statements
  * }
  */
-export function usingDeclarationTransformer_transformUsingDeclarations(receiver: GoPtr<usingDeclarationTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, envBinding: GoPtr<IdentifierNode>, topLevelStatements: GoPtr<GoSlice<GoPtr<Statement>>>): GoSlice<GoPtr<Node>> {
+export function usingDeclarationTransformer_transformUsingDeclarations(receiver: GoPtr<usingDeclarationTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, envBinding: GoPtr<IdentifierNode>, topLevelStatements: GoRef<GoSlice<GoPtr<Statement>>>): GoSlice<GoPtr<Node>> {
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const factory = printerFactory!.__tsgoEmbedded0!;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
@@ -768,8 +770,8 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
  * 	*topLevelStatements = append(*topLevelStatements, node)
  * }
  */
-export function usingDeclarationTransformer_hoistImportOrExportOrHoistedDeclaration(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<Statement>, topLevelStatements: GoPtr<GoSlice<GoPtr<Statement>>>): void {
-  topLevelStatements!.push(node);
+export function usingDeclarationTransformer_hoistImportOrExportOrHoistedDeclaration(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<Statement>, topLevelStatements: GoRef<GoSlice<GoPtr<Statement>>>): void {
+  topLevelStatements!.v.push(node);
 }
 
 /**

@@ -7,6 +7,7 @@ import * as extension from "../tspath/extension.js";
 import type { CompilerOptions, ResolutionMode } from "../core/compileroptions.js";
 import type { FS } from "../vfs/vfs.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolutionHost","kind":"type","status":"implemented","sigHash":"81b515a83683f73d0af1aa924c342ed79313c619154c9294468a27fa0052c0c9"}
  *
@@ -17,7 +18,7 @@ import type { FS } from "../vfs/vfs.js";
  * }
  */
 export interface ResolutionHost {
-  FS(): FS;
+  FS(): GoInterface<FS>;
   GetCurrentDirectory(): string;
 }
 

@@ -10,6 +10,7 @@ import { ComparePathsOptions_GetComparer, CombinePaths, ContainsPath, GetCanonic
 import type { ComparePathsOptions } from "../../tspath/path.js";
 import type { FS } from "../vfs.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::Usage","kind":"type","status":"implemented","sigHash":"47e8ee4b4da9d149b50eedf7a872fae159481b92e688730c131fe23c21e25fbf"}
  *
@@ -48,8 +49,8 @@ export const UnlimitedDepth: int = MaxInt;
  * 	return matchFiles(path, extensions, excludes, includes, host.UseCaseSensitiveFileNames(), currentDir, depth, host)
  * }
  */
-export function ReadDirectory(host: FS, currentDir: string, path: string, extensions: GoSlice<string>, excludes: GoSlice<string>, includes: GoSlice<string>, depth: int): GoSlice<string> {
-  return matchFiles(path, extensions, excludes, includes, host.UseCaseSensitiveFileNames(), currentDir, depth, host);
+export function ReadDirectory(host: GoInterface<FS>, currentDir: string, path: string, extensions: GoSlice<string>, excludes: GoSlice<string>, includes: GoSlice<string>, depth: int): GoSlice<string> {
+  return matchFiles(path, extensions, excludes, includes, host!.UseCaseSensitiveFileNames(), currentDir, depth, host);
 }
 
 /**
@@ -159,7 +160,7 @@ function findFirstWildcard(s: string): int {
  * 	return basePaths
  * }
  */
-export function getBasePaths(path: string, includes: GoPtr<GoSlice<string>>, useCaseSensitiveFileNames: bool): GoSlice<string> {
+export function getBasePaths(path: string, includes: GoSlice<string>, useCaseSensitiveFileNames: bool): GoSlice<string> {
   const basePaths: string[] = [path];
   const includeList = includes ?? [];
 
@@ -178,7 +179,7 @@ export function getBasePaths(path: string, includes: GoPtr<GoSlice<string>>, use
       includeBasePaths.push(getIncludeBasePath(absolute));
     }
 
-    SortStableFunc(includeBasePaths, stringComparer);
+    SortStableFunc(includeBasePaths, stringComparer!);
 
     for (const includeBasePath of includeBasePaths) {
       if (Every(basePaths, (basepath: string) => !ContainsPath(basepath, includeBasePath, comparePathsOptions) as bool)) {
@@ -1097,7 +1098,7 @@ export interface globMatcher {
  * 	return m
  * }
  */
-export function newGlobMatcher(includeSpecs: GoPtr<GoSlice<string>>, excludeSpecs: GoPtr<GoSlice<string>>, basePath: string, caseSensitive: bool, usage: Usage): GoPtr<globMatcher> {
+export function newGlobMatcher(includeSpecs: GoSlice<string>, excludeSpecs: GoSlice<string>, basePath: string, caseSensitive: bool, usage: Usage): GoPtr<globMatcher> {
   const includeList = includeSpecs ?? [];
   const excludeList = excludeSpecs ?? [];
   const m: globMatcher = {
@@ -1218,7 +1219,7 @@ export function globMatcher_matchesDirectoryParts(receiver: GoPtr<globMatcher>, 
  * }
  */
 export interface globVisitor {
-  host: FS;
+  host: GoInterface<FS>;
   fileMatcher: GoPtr<globMatcher>;
   directoryMatcher: GoPtr<globMatcher>;
   extensions: GoSlice<string>;
@@ -1295,7 +1296,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
   if (resolvedRealPath !== "") {
     realPath = resolvedRealPath;
   } else {
-    realPath = receiver!.host.Realpath(absolutePath);
+    realPath = receiver!.host!.Realpath(absolutePath);
   }
   const canonicalPath = GetCanonicalFileName(realPath, receiver!.useCaseSensitiveFileNames);
   if (Set_Has(receiver!.visited, canonicalPath)) {
@@ -1303,7 +1304,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
   }
   Set_Add(receiver!.visited, canonicalPath);
 
-  const entries = receiver!.host.GetAccessibleEntries(absolutePath);
+  const entries = receiver!.host!.GetAccessibleEntries(absolutePath);
 
   const pathPrefix = ensureTrailingSlash(path);
   const absPrefix = ensureTrailingSlash(absolutePath);
@@ -1377,7 +1378,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
  * 	return core.Flatten(v.results)
  * }
  */
-export function matchFiles(path: string, extensions: GoPtr<GoSlice<string>>, excludes: GoPtr<GoSlice<string>>, includes: GoPtr<GoSlice<string>>, useCaseSensitiveFileNames: bool, currentDirectory: string, depth: int, host: FS): GoSlice<string> {
+export function matchFiles(path: string, extensions: GoSlice<string>, excludes: GoSlice<string>, includes: GoSlice<string>, useCaseSensitiveFileNames: bool, currentDirectory: string, depth: int, host: GoInterface<FS>): GoSlice<string> {
   const normalizedPath = NormalizePath(path);
   const normalizedCurrentDir = NormalizePath(currentDirectory);
   const absolutePath = CombinePaths(normalizedCurrentDir, normalizedPath);

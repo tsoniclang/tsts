@@ -225,6 +225,7 @@ import {
 import { Parser_jsErrorAtRange, Parser_parseErrorAt, Parser_parseErrorAtRange, Parser_scanError } from "./errors-recovery.js";
 import { parserPool, viableKeywordSuggestions } from "./state.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 const byteLen = utf8.StringByteLen;
 const byteAt = utf8.StringByteAt;
 const byteSlice = utf8.StringByteSlice;
@@ -713,9 +714,9 @@ export function Parser_rewind(receiver: GoPtr<Parser>, state: ParserState): void
  * 	return result
  * }
  */
-export function Parser_lookAhead(receiver: GoPtr<Parser>, callback: (p: GoPtr<Parser>) => bool): bool {
+export function Parser_lookAhead(receiver: GoPtr<Parser>, callback: GoFunc<(p: GoPtr<Parser>) => bool>): bool {
   const state = Parser_mark(receiver);
-  const result = callback(receiver);
+  const result = callback!(receiver);
   Parser_rewind(receiver, state);
   return result;
 }

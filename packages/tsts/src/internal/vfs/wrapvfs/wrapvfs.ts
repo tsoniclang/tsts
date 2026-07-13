@@ -3,6 +3,7 @@ import type { GoError, GoPtr } from "../../../go/compat.js";
 import type { Time } from "../../../go/time.js";
 import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::type::Replacements","kind":"type","status":"implemented","sigHash":"cefb899fcad2162eeb3a014e97c0b2fea8ff4e05a236a6d42cbe1e62aea57bf7"}
  *
@@ -23,18 +24,18 @@ import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
  * }
  */
 export interface Replacements {
-  UseCaseSensitiveFileNames: () => bool;
-  FileExists: (arg0: string) => bool;
-  ReadFile: (arg0: string) => [string, bool];
-  WriteFile: (arg0: string, arg1: string) => GoError;
-  AppendFile: (arg0: string, arg1: string) => GoError;
-  Remove: (arg0: string) => GoError;
-  Chtimes: (arg0: string, arg1: Time, arg2: Time) => GoError;
-  DirectoryExists: (arg0: string) => bool;
-  GetAccessibleEntries: (arg0: string) => Entries;
+  UseCaseSensitiveFileNames: GoFunc<() => bool>;
+  FileExists: GoFunc<(arg0: string) => bool>;
+  ReadFile: GoFunc<(arg0: string) => [string, bool]>;
+  WriteFile: GoFunc<(arg0: string, arg1: string) => GoError>;
+  AppendFile: GoFunc<(arg0: string, arg1: string) => GoError>;
+  Remove: GoFunc<(arg0: string) => GoError>;
+  Chtimes: GoFunc<(arg0: string, arg1: Time, arg2: Time) => GoError>;
+  DirectoryExists: GoFunc<(arg0: string) => bool>;
+  GetAccessibleEntries: GoFunc<(arg0: string) => Entries>;
   Stat: (arg0: string) => GoPtr<FileInfo>;
-  WalkDir: (arg0: string, arg1: WalkDirFunc) => GoError;
-  Realpath: (arg0: string) => string;
+  WalkDir: GoFunc<(arg0: string, arg1: WalkDirFunc) => GoError>;
+  Realpath: GoFunc<(arg0: string) => string>;
 }
 
 /**
@@ -48,7 +49,7 @@ export interface Replacements {
  * 	}
  * }
  */
-export function Wrap(fs: FS, replacements: Replacements): FS {
+export function Wrap(fs: GoInterface<FS>, replacements: Replacements): GoInterface<FS> {
   const w: wrappedFS = { fs, replacements };
   return wrappedFS_as_vfs_FS(w);
 }
@@ -63,7 +64,7 @@ export function Wrap(fs: FS, replacements: Replacements): FS {
  * }
  */
 export interface wrappedFS {
-  fs: FS;
+  fs: GoInterface<FS>;
   replacements: Replacements;
 }
 
@@ -82,7 +83,7 @@ export function wrappedFS_UseCaseSensitiveFileNames(receiver: GoPtr<wrappedFS>):
   if (receiver!.replacements.UseCaseSensitiveFileNames !== undefined) {
     return receiver!.replacements.UseCaseSensitiveFileNames();
   }
-  return receiver!.fs.UseCaseSensitiveFileNames();
+  return receiver!.fs!.UseCaseSensitiveFileNames();
 }
 
 /**
@@ -100,7 +101,7 @@ export function wrappedFS_FileExists(receiver: GoPtr<wrappedFS>, path: string): 
   if (receiver!.replacements.FileExists !== undefined) {
     return receiver!.replacements.FileExists(path);
   }
-  return receiver!.fs.FileExists(path);
+  return receiver!.fs!.FileExists(path);
 }
 
 /**
@@ -118,7 +119,7 @@ export function wrappedFS_ReadFile(receiver: GoPtr<wrappedFS>, path: string): [s
   if (receiver!.replacements.ReadFile !== undefined) {
     return receiver!.replacements.ReadFile(path);
   }
-  return receiver!.fs.ReadFile(path);
+  return receiver!.fs!.ReadFile(path);
 }
 
 /**
@@ -136,7 +137,7 @@ export function wrappedFS_WriteFile(receiver: GoPtr<wrappedFS>, path: string, da
   if (receiver!.replacements.WriteFile !== undefined) {
     return receiver!.replacements.WriteFile(path, data);
   }
-  return receiver!.fs.WriteFile(path, data);
+  return receiver!.fs!.WriteFile(path, data);
 }
 
 /**
@@ -154,7 +155,7 @@ export function wrappedFS_AppendFile(receiver: GoPtr<wrappedFS>, path: string, d
   if (receiver!.replacements.AppendFile !== undefined) {
     return receiver!.replacements.AppendFile(path, data);
   }
-  return receiver!.fs.AppendFile(path, data);
+  return receiver!.fs!.AppendFile(path, data);
 }
 
 /**
@@ -172,7 +173,7 @@ export function wrappedFS_Remove(receiver: GoPtr<wrappedFS>, path: string): GoEr
   if (receiver!.replacements.Remove !== undefined) {
     return receiver!.replacements.Remove(path);
   }
-  return receiver!.fs.Remove(path);
+  return receiver!.fs!.Remove(path);
 }
 
 /**
@@ -190,7 +191,7 @@ export function wrappedFS_Chtimes(receiver: GoPtr<wrappedFS>, path: string, aTim
   if (receiver!.replacements.Chtimes !== undefined) {
     return receiver!.replacements.Chtimes(path, aTime, mTime);
   }
-  return receiver!.fs.Chtimes(path, aTime, mTime);
+  return receiver!.fs!.Chtimes(path, aTime, mTime);
 }
 
 /**
@@ -208,7 +209,7 @@ export function wrappedFS_DirectoryExists(receiver: GoPtr<wrappedFS>, path: stri
   if (receiver!.replacements.DirectoryExists !== undefined) {
     return receiver!.replacements.DirectoryExists(path);
   }
-  return receiver!.fs.DirectoryExists(path);
+  return receiver!.fs!.DirectoryExists(path);
 }
 
 /**
@@ -226,7 +227,7 @@ export function wrappedFS_GetAccessibleEntries(receiver: GoPtr<wrappedFS>, path:
   if (receiver!.replacements.GetAccessibleEntries !== undefined) {
     return receiver!.replacements.GetAccessibleEntries(path);
   }
-  return receiver!.fs.GetAccessibleEntries(path);
+  return receiver!.fs!.GetAccessibleEntries(path);
 }
 
 /**
@@ -244,7 +245,7 @@ export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): GoPtr<
   if (receiver!.replacements.Stat !== undefined) {
     return receiver!.replacements.Stat(path);
   }
-  return receiver!.fs.Stat(path);
+  return receiver!.fs!.Stat(path);
 }
 
 /**
@@ -262,7 +263,7 @@ export function wrappedFS_WalkDir(receiver: GoPtr<wrappedFS>, root: string, walk
   if (receiver!.replacements.WalkDir !== undefined) {
     return receiver!.replacements.WalkDir(root, walkFn);
   }
-  return receiver!.fs.WalkDir(root, walkFn);
+  return receiver!.fs!.WalkDir(root, walkFn);
 }
 
 /**
@@ -280,7 +281,7 @@ export function wrappedFS_Realpath(receiver: GoPtr<wrappedFS>, path: string): st
   if (receiver!.replacements.Realpath !== undefined) {
     return receiver!.replacements.Realpath(path);
   }
-  return receiver!.fs.Realpath(path);
+  return receiver!.fs!.Realpath(path);
 }
 
 /**
@@ -289,7 +290,7 @@ export function wrappedFS_Realpath(receiver: GoPtr<wrappedFS>, path: string): st
  * Go source:
  * var _ vfs.FS = (*wrappedFS)(nil)
  */
-export let __f805346f_0: FS = wrappedFS_as_vfs_FS(undefined);
+export let __f805346f_0: GoInterface<FS> = wrappedFS_as_vfs_FS(undefined);
 
 export function wrappedFS_as_vfs_FS(receiver: GoPtr<wrappedFS>): FS {
   return {

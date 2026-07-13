@@ -8,6 +8,7 @@ import { Common_DirectoryExists, Common_FileExists, Common_GetAccessibleEntries,
 import { GetDirectoryPath, IsUrl, NormalizePath, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 import type { Entries, FileInfo, FS as FS_f717df58, WalkDirFunc } from "../vfs.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::type::RealpathFS","kind":"type","status":"implemented","sigHash":"76ddb6e93f7dad5be898b3b18f1ba22aa1dfc580f92fb7545edfb26a2713e621"}
  *
@@ -53,7 +54,7 @@ export interface WritableFS extends FS {
  * }
  */
 export interface FsWithSys extends FS_f717df58 {
-  FSys(): FS;
+  FSys(): GoInterface<FS>;
 }
 
 /**
@@ -153,7 +154,7 @@ export interface FsWithSys extends FS_f717df58 {
  * 	}
  * }
  */
-export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
+export function From(fsys: GoInterface<FS>, useCaseSensitiveFileNames: bool): GoInterface<FsWithSys> {
   let realpath: (path: string) => [string, GoError];
   const realpathFsys = fsys as unknown as RealpathFS;
   if (realpathFsys.Realpath !== undefined) {
@@ -222,21 +223,21 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
 
   const result: ioFS = {
     common: {
-      RootFor: (root: string): FS => {
+      RootFor: (root: string): GoInterface<FS> => {
         if (root === "/") {
           return fsys;
         }
         const p = RemoveTrailingDirectorySeparator(root);
-        const [sub, err] = fs_Sub(fsys, p);
+        const [sub, err] = fs_Sub(fsys!, p);
         if (err !== undefined) {
           if (IsUrl(root)) {
-            return undefined as unknown as FS;
+            return undefined;
           }
           throw new globalThis.Error(`vfs: failed to create sub file system for ${JSON.stringify(p)}: ${err.message}`);
         }
         return sub;
       },
-      IsReparsePoint: undefined as unknown as (path: string) => bool,
+      IsReparsePoint: undefined,
     },
     useCaseSensitiveFileNames,
     realpath,
@@ -270,13 +271,13 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
 export interface ioFS {
   common: Common;
   useCaseSensitiveFileNames: bool;
-  realpath: (path: string) => [string, GoError];
-  writeFile: (path: string, content: string) => GoError;
-  appendFile: (path: string, content: string) => GoError;
-  mkdirAll: (path: string) => GoError;
-  remove: (path: string) => GoError;
-  chtimes: (path: string, aTime: Time, mTime: Time) => GoError;
-  fsys: FS;
+  realpath: GoFunc<(path: string) => [string, GoError]>;
+  writeFile: GoFunc<(path: string, content: string) => GoError>;
+  appendFile: GoFunc<(path: string, content: string) => GoError>;
+  mkdirAll: GoFunc<(path: string) => GoError>;
+  remove: GoFunc<(path: string) => GoError>;
+  chtimes: GoFunc<(path: string, aTime: Time, mTime: Time) => GoError>;
+  fsys: GoInterface<FS>;
 }
 
 /**
@@ -285,7 +286,7 @@ export interface ioFS {
  * Go source:
  * var _ FsWithSys = (*ioFS)(nil)
  */
-export let __90decee0_0: FsWithSys = ioFS_as_FsWithSys(undefined);
+export let __90decee0_0: GoInterface<FsWithSys> = ioFS_as_FsWithSys(undefined);
 
 export function ioFS_as_vfs_FS(receiver: GoPtr<ioFS>): FS_f717df58 {
   return {
@@ -307,7 +308,7 @@ export function ioFS_as_vfs_FS(receiver: GoPtr<ioFS>): FS_f717df58 {
 export function ioFS_as_FsWithSys(receiver: GoPtr<ioFS>): FsWithSys {
   return {
     ...ioFS_as_vfs_FS(receiver),
-    FSys: (): FS => ioFS_FSys(receiver),
+    FSys: (): FS => ioFS_FSys(receiver)!,
   };
 }
 
@@ -408,7 +409,7 @@ export function ioFS_WalkDir(receiver: GoPtr<ioFS>, root: string, walkFn: WalkDi
  */
 export function ioFS_Remove(receiver: GoPtr<ioFS>, path: string): GoError {
   void RootLength(path); // Assert path is rooted
-  return receiver!.remove(path);
+  return receiver!.remove!(path);
 }
 
 /**
@@ -422,7 +423,7 @@ export function ioFS_Remove(receiver: GoPtr<ioFS>, path: string): GoError {
  */
 export function ioFS_Chtimes(receiver: GoPtr<ioFS>, path: string, aTime: Time, mTime: Time): GoError {
   void RootLength(path); // Assert path is rooted
-  return receiver!.chtimes(path, aTime, mTime);
+  return receiver!.chtimes!(path, aTime, mTime);
 }
 
 /**
@@ -442,7 +443,7 @@ export function ioFS_Chtimes(receiver: GoPtr<ioFS>, path: string, aTime: Time, m
  */
 export function ioFS_Realpath(receiver: GoPtr<ioFS>, path: string): string {
   const [root, rest] = SplitPath(path);
-  const [realpathResult, err] = receiver!.realpath(root + rest);
+  const [realpathResult, err] = receiver!.realpath!(root + rest);
   if (err !== undefined) {
     return path;
   }
@@ -464,17 +465,17 @@ export function ioFS_Realpath(receiver: GoPtr<ioFS>, path: string): string {
  * 	return write(path, content)
  * }
  */
-export function ioFS_writeFileEnsuringDir(receiver: GoPtr<ioFS>, path: string, content: string, write: (path: string, content: string) => GoError): GoError {
+export function ioFS_writeFileEnsuringDir(receiver: GoPtr<ioFS>, path: string, content: string, write: GoFunc<(path: string, content: string) => GoError>): GoError {
   void RootLength(path); // Assert path is rooted
-  const err = write(path, content);
+  const err = write!(path, content);
   if (err === undefined) {
     return undefined;
   }
-  const mkdirErr = receiver!.mkdirAll(GetDirectoryPath(NormalizePath(path)));
+  const mkdirErr = receiver!.mkdirAll!(GetDirectoryPath(NormalizePath(path)));
   if (mkdirErr !== undefined) {
     return mkdirErr;
   }
-  return write(path, content);
+  return write!(path, content);
 }
 
 /**
@@ -509,6 +510,6 @@ export function ioFS_AppendFile(receiver: GoPtr<ioFS>, path: string, content: st
  * 	return vfs.fsys
  * }
  */
-export function ioFS_FSys(receiver: GoPtr<ioFS>): FS {
+export function ioFS_FSys(receiver: GoPtr<ioFS>): GoInterface<FS> {
   return receiver!.fsys;
 }

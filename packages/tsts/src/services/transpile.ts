@@ -1,5 +1,6 @@
 import type { bool, int } from "../go/scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../go/compat.js";
+import { GoNilMap } from "../go/compat.js";
 import type { Writer } from "../go/io.js";
 import { Background } from "../go/context.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
@@ -335,7 +336,7 @@ class TranspileFileSystem implements FS {
     return {
       Files: files.sort(),
       Directories: [...directories].sort(),
-      Symlinks: undefined,
+      Symlinks: GoNilMap(),
     };
   }
 

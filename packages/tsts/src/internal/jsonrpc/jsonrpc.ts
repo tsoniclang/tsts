@@ -7,6 +7,7 @@ import * as fmt from "../../go/fmt.js";
 import * as strconv from "../../go/strconv.js";
 import * as json from "../json/json.js";
 
+import type { GoInterface, GoRef } from "../../go/compat.js";
 // Go's []byte(string) conversion: the UTF-8 encoding of the string.
 const utf8Encoder = new globalThis.TextEncoder();
 const stringToBytes = (s: string): GoSlice<byte> => globalThis.Array.from(utf8Encoder.encode(s));
@@ -98,9 +99,9 @@ export interface ID {
  */
 export function NewID(rawValue: IntegerOrString): GoPtr<ID> {
   if (rawValue.String !== undefined) {
-    return { str: rawValue.String, int: 0 };
+    return { str: rawValue.String.v, int: 0 };
   }
-  return { str: "", int: rawValue.Integer! };
+  return { str: "", int: rawValue.Integer!.v };
 }
 
 /**
@@ -245,8 +246,8 @@ export function ID_MustInt(receiver: GoPtr<ID>): int {
  * }
  */
 export interface IntegerOrString {
-  Integer: GoPtr<int>;
-  String: GoPtr<string>;
+  Integer: GoRef<int>;
+  String: GoRef<string>;
 }
 
 /**
@@ -262,7 +263,7 @@ export interface IntegerOrString {
 export interface ResponseError {
   Code: int;
   Message: string;
-  Data: unknown;
+  Data: GoInterface<unknown>;
 }
 
 /**
@@ -446,7 +447,7 @@ export interface RequestMessage {
   JSONRPC: JSONRPCVersion;
   ID: GoPtr<ID>;
   Method: string;
-  Params: unknown;
+  Params: GoInterface<unknown>;
 }
 
 /**
@@ -463,7 +464,7 @@ export interface RequestMessage {
 export interface ResponseMessage {
   JSONRPC: JSONRPCVersion;
   ID: GoPtr<ID>;
-  Result: unknown;
+  Result: GoInterface<unknown>;
   Error: GoPtr<ResponseError>;
 }
 

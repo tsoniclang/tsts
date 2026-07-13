@@ -156,6 +156,8 @@ import { jsdocScannerInfoHasDeprecated, jsdocScannerInfoHasJSDoc, jsdocScannerIn
 import { GetJSDocCommentRanges, tokenIsIdentifierOrKeyword } from "./utilities.js";
 import { Parser_reparseTags } from "./reparser.js";
 
+import { GoValueRef } from "../../go/compat.js";
+import type { GoFunc, GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::init","kind":"func","status":"implemented","sigHash":"deadcfe2223147229491ed97a5eb1b413a0acb92061a6dd7ca510eb6614543db"}
  *
@@ -1042,11 +1044,11 @@ export function Parser_parseTrailingTagComments(receiver: GoPtr<Parser>, pos: in
   if (indentText.length === 0) {
     m += end - pos;
   }
-  let initialMargin: string | undefined;
+  let initialMargin = "";
   if (m < indentText.length) {
     initialMargin = indentText.slice(m);
   }
-  return Parser_parseTagComments(receiver, m, initialMargin);
+  return Parser_parseTagComments(receiver, m, GoValueRef(initialMargin));
 }
 
 /**
@@ -1054,7 +1056,7 @@ export function Parser_parseTrailingTagComments(receiver: GoPtr<Parser>, pos: in
  *
  * Port note: (uses arena-cloned string slices: p.stringSliceArena.Clone / p.nodeSliceArena.Clone)
  */
-export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, initialMargin: GoPtr<string>): GoPtr<NodeList> {
+export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, initialMargin: GoRef<string>): GoPtr<NodeList> {
   const commentsPos = Parser_nodePos(receiver);
   let comments: GoSlice<string> = receiver!.jsdocTagCommentsSpace;
   receiver!.jsdocTagCommentsSpace = [];
@@ -1075,8 +1077,8 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
 
   if (initialMargin !== undefined) {
     // jump straight to saving comments if there is some initial indentation
-    if (initialMargin !== "") {
-      pushComment(initialMargin);
+    if (initialMargin.v !== "") {
+      pushComment(initialMargin.v);
     }
     state = jsdocStateSawAsterisk;
   }
@@ -1718,8 +1720,8 @@ export function Parser_parsePropertyAccessEntityNameExpression(receiver: GoPtr<P
  *
  * Port note: (uses parseTrailingTagComments)
  */
-export function Parser_parseSimpleTag(receiver: GoPtr<Parser>, start: int, createTag: (tagName: GoPtr<IdentifierNode>, comment: GoPtr<NodeList>) => GoPtr<Node>, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
-  return Parser_finishNode(receiver, createTag(tagName, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText)!), start);
+export function Parser_parseSimpleTag(receiver: GoPtr<Parser>, start: int, createTag: GoFunc<(tagName: GoPtr<IdentifierNode>, comment: GoPtr<NodeList>) => GoPtr<Node>>, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
+  return Parser_finishNode(receiver, createTag!(tagName, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText)!), start);
 }
 
 /**

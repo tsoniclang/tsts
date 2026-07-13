@@ -7,6 +7,7 @@ import type { ExtendedConfigCache as ExtendedConfigCache_f02f7376, ExtendedConfi
 import { ParseExtendedConfig } from "../../tsoptions/tsconfigparsing.js";
 import type { Path } from "../../tspath/path.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::type::ExtendedConfigCache","kind":"type","status":"implemented","sigHash":"1b52b82667615aefc15acf9d7aa6dbe59c12376e0718375a18c85e3a9f6ade13"}
  *
@@ -39,7 +40,7 @@ export interface extendedConfigCacheEntry {
  * Go source:
  * var _ tsoptions.ExtendedConfigCache = (*ExtendedConfigCache)(nil)
  */
-export let __a568fcce_0: ExtendedConfigCache_f02f7376 = ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(undefined);
+export let __a568fcce_0: GoInterface<ExtendedConfigCache_f02f7376> = ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(undefined);
 
 export function ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver: GoPtr<ExtendedConfigCache>): ExtendedConfigCache_f02f7376 {
   return {
@@ -61,7 +62,7 @@ export function ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver: G
  * 	return entry.ExtendedConfigCacheEntry
  * }
  */
-export function ExtendedConfigCache_GetExtendedConfig(receiver: GoPtr<ExtendedConfigCache>, fileName: string, path: Path, resolutionStack: GoSlice<Path>, host: ParseConfigHost): GoPtr<ExtendedConfigCacheEntry> {
+export function ExtendedConfigCache_GetExtendedConfig(receiver: GoPtr<ExtendedConfigCache>, fileName: string, path: Path, resolutionStack: GoSlice<Path>, host: GoInterface<ParseConfigHost>): GoPtr<ExtendedConfigCacheEntry> {
   const [entry, loaded] = ExtendedConfigCache_loadOrStoreNewLockedEntry(receiver, path);
   try {
     if (!loaded) {

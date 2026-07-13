@@ -1,4 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoValueRef } from "../../go/compat.js";
 import { CopyOnWriteMap_EnterScope, CopyOnWriteSet_EnterScope } from "../collections/cow.js";
 import type { Node } from "../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
@@ -18,6 +19,7 @@ import type { NodeBuilderContext, NodeBuilderImpl, NodeBuilderLinks } from "./no
 import { Checker_getSymbolOfDeclaration } from "./checker/symbols.js";
 import type { Signature, Type } from "./types.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::func::cloneNodeBuilderContext","kind":"func","status":"implemented","sigHash":"cef5cfcbd3fe93c77a553213fca509928f8bb4ea24a9c34c720f8900e0675e8b"}
  *
@@ -47,7 +49,7 @@ import type { Signature, Type } from "./types.js";
  * 	}
  * }
  */
-export function cloneNodeBuilderContext(context: GoPtr<NodeBuilderContext>): () => void {
+export function cloneNodeBuilderContext(context: GoPtr<NodeBuilderContext>): GoFunc<() => void> {
   // Make type parameters created within this context not consume the name outside this context
   // The symbol serializer ends up creating many sibling scopes that all need "separate" contexts when
   // it comes to naming things - within a normal `typeToTypeNode` call, the node builder only ever descends
@@ -65,10 +67,10 @@ export function cloneNodeBuilderContext(context: GoPtr<NodeBuilderContext>): () 
   const restoreNamesByTextNextNameCount = CopyOnWriteMap_EnterScope(context!.typeParameterNamesByTextNextNameCount);
   const restoreSymbolList = CopyOnWriteSet_EnterScope(context!.typeParameterSymbolList);
   return () => {
-    restoreNames();
-    restoreNamesByText();
-    restoreNamesByTextNextNameCount();
-    restoreSymbolList();
+    restoreNames!();
+    restoreNamesByText!();
+    restoreNamesByTextNextNameCount!();
+    restoreSymbolList!();
   };
 }
 
@@ -103,7 +105,7 @@ export interface localsRecord {
  * 	}
  * }
  */
-export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, t: GoPtr<Type>): () => void {
+export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, t: GoPtr<Type>): GoFunc<() => void> {
   const id = GetSymbolId(symbol_);
   const oldType = receiver!.ctx!.enclosingSymbolTypes.get(id);
   const oldTypeExists = receiver!.ctx!.enclosingSymbolTypes.has(id);
@@ -130,7 +132,7 @@ export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuild
 export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>): [GoSlice<GoPtr<Symbol>>, () => void] {
   const expandedParams = Checker_getExpandedParameters(receiver!.ch, signature, true)[0] ?? [];
   const cleanup = NodeBuilderImpl_enterNewScope(receiver, signature!.declaration, expandedParams, signature!.typeParameters, signature!.parameters, signature!.mapper);
-  return [expandedParams, cleanup];
+  return [expandedParams, cleanup!];
 }
 
 /**
@@ -333,7 +335,7 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 	}
  * }
  */
-export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, declaration: GoPtr<Node>, expandedParams: GoSlice<GoPtr<Symbol>>, typeParameters: GoSlice<GoPtr<Type>>, originalParameters: GoSlice<GoPtr<Symbol>>, mapper: GoPtr<TypeMapper>): () => void {
+export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, declaration: GoPtr<Node>, expandedParams: GoSlice<GoPtr<Symbol>>, typeParameters: GoSlice<GoPtr<Type>>, originalParameters: GoSlice<GoPtr<Symbol>>, mapper: GoPtr<TypeMapper>): GoFunc<() => void> {
   const cleanupContext = cloneNodeBuilderContext(receiver!.ctx);
   let cleanupParams: (() => void) | undefined;
   let cleanupTypeParams: (() => void) | undefined;
@@ -349,14 +351,14 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
       let existingFakeScope: GoPtr<Node>;
       if (LinkStore_Has<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration)) {
         const existingLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration);
-        if (existingLinks!.fakeScopeForSignatureDeclaration !== undefined && existingLinks!.fakeScopeForSignatureDeclaration === kind) {
+        if (existingLinks!.v.fakeScopeForSignatureDeclaration !== undefined && existingLinks!.v.fakeScopeForSignatureDeclaration.v === kind) {
           existingFakeScope = receiver!.ctx!.enclosingDeclaration;
         }
       }
       if (existingFakeScope === undefined && receiver!.ctx!.enclosingDeclaration!.Parent !== undefined) {
         if (LinkStore_Has<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent)) {
           const parentLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent);
-          if (parentLinks!.fakeScopeForSignatureDeclaration !== undefined && parentLinks!.fakeScopeForSignatureDeclaration === kind) {
+          if (parentLinks!.v.fakeScopeForSignatureDeclaration !== undefined && parentLinks!.v.fakeScopeForSignatureDeclaration.v === kind) {
             existingFakeScope = receiver!.ctx!.enclosingDeclaration!.Parent;
           }
         }
@@ -382,7 +384,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
       });
       if (existingFakeScope === undefined) {
         const fakeScope = NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []), false);
-        LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, fakeScope)!.fakeScopeForSignatureDeclaration = kind;
+        LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, fakeScope)!.v.fakeScopeForSignatureDeclaration = GoValueRef(kind);
         const data = Node_LocalsContainerData(fakeScope);
         (data as unknown as { Locals?: SymbolTable }).Locals = locals;
         fakeScope!.Parent = receiver!.ctx!.enclosingDeclaration;
@@ -473,7 +475,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
     if (cleanupTypeParams !== undefined) {
       cleanupTypeParams();
     }
-    cleanupContext();
+    cleanupContext!();
     receiver!.ctx!.enclosingDeclaration = oldEnclosingDecl;
     receiver!.ctx!.mapper = oldMapper;
   };

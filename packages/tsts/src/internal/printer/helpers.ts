@@ -1,4 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
+import { GoNilSlice } from "../../go/compat.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 
 /**
@@ -33,7 +34,7 @@ export interface EmitHelper {
   Text: string;
   TextCallback: GoPtr<(makeUniqueName: (arg0: string) => string) => string>;
   Priority: GoPtr<Priority>;
-  Dependencies: GoPtr<GoSlice<GoPtr<EmitHelper>>>;
+  Dependencies: GoSlice<GoPtr<EmitHelper>>;
   ImportName: string;
 }
 
@@ -102,7 +103,7 @@ export let decorateHelper: GoPtr<EmitHelper> = {
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };`,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -128,7 +129,7 @@ export let metadataHelper: GoPtr<EmitHelper> = {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };`,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -154,7 +155,7 @@ export let paramHelper: GoPtr<EmitHelper> = {
     return function (target, key) { decorator(target, key, paramIndex); }
 };`,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -217,7 +218,7 @@ export let addDisposableResourceHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -296,7 +297,7 @@ export let disposeResourcesHelper: GoPtr<EmitHelper> = {
 });`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -325,7 +326,7 @@ export let classPrivateFieldGetHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -356,7 +357,7 @@ export let classPrivateFieldSetHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -383,7 +384,7 @@ export let classPrivateFieldInHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -404,7 +405,7 @@ export let awaitHelper: GoPtr<EmitHelper> = {
   Text: `var __await = (this && this.__await) || function (v) { return this instanceof __await ? (this.v = v, this) : new __await(v); }`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -511,7 +512,7 @@ export let asyncValuesHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -552,7 +553,7 @@ export let restHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -590,7 +591,7 @@ export let awaiterHelper: GoPtr<EmitHelper> = {
     });
 };`,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -614,7 +615,7 @@ export let AsyncSuperHelper: GoPtr<EmitHelper> = {
   Text: "",
   ImportName: "",
   Priority: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -644,7 +645,7 @@ export let AdvancedAsyncSuperHelper: GoPtr<EmitHelper> = {
   Text: "",
   ImportName: "",
   Priority: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -718,7 +719,7 @@ export let esDecorateHelper: GoPtr<EmitHelper> = {
     done = true;
 };`,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -752,7 +753,7 @@ export let runInitializersHelper: GoPtr<EmitHelper> = {
     return useValue ? value : void 0;
 };`,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -780,7 +781,7 @@ export let makeTemplateObjectHelper: GoPtr<EmitHelper> = {
     return cooked;
 };`,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -805,7 +806,7 @@ export let propKeyHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -832,7 +833,7 @@ export let setFunctionNameHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -874,7 +875,7 @@ export let createBindingHelper: GoPtr<EmitHelper> = {
     o[k2] = m[k];
 }));`,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -904,7 +905,7 @@ export let setModuleDefaultHelper: GoPtr<EmitHelper> = {
     o["default"] = v;
 });`,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -984,7 +985,7 @@ export let importDefaultHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };
 
 /**
@@ -1046,5 +1047,5 @@ export let rewriteRelativeImportExtensionsHelper: GoPtr<EmitHelper> = {
 };`,
   Priority: undefined,
   TextCallback: undefined,
-  Dependencies: undefined,
+  Dependencies: GoNilSlice(),
 };

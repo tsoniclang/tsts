@@ -45,6 +45,7 @@ import {
 } from "./textwriter.js";
 import type { PrintHandlers } from "./printer/state.js";
 
+import type { GoInterface } from "../../go/compat.js";
 // Go strings are byte sequences. `len(s)` is the UTF-8 byte length and `s[i]`
 // indexes a byte, so position math (matching textWriter.GetTextPos, which returns
 // a byte offset) is performed over the UTF-8 encoding of the string.
@@ -242,8 +243,8 @@ export function ChangeTrackerWriter_GetPrintHandlers(receiver: GoPtr<ChangeTrack
  * 	ct.pos[node] = ct.lastNonTriviaPosition
  * }
  */
-export function ChangeTrackerWriter_setPos(receiver: GoPtr<ChangeTrackerWriter>, node: triviaPositionKey): void {
-  receiver!.pos.set(node, receiver!.lastNonTriviaPosition);
+export function ChangeTrackerWriter_setPos(receiver: GoPtr<ChangeTrackerWriter>, node: GoInterface<triviaPositionKey>): void {
+  receiver!.pos.set(node!, receiver!.lastNonTriviaPosition);
 }
 
 /**
@@ -254,8 +255,8 @@ export function ChangeTrackerWriter_setPos(receiver: GoPtr<ChangeTrackerWriter>,
  * 	ct.end[node] = ct.lastNonTriviaPosition
  * }
  */
-export function ChangeTrackerWriter_setEnd(receiver: GoPtr<ChangeTrackerWriter>, node: triviaPositionKey): void {
-  receiver!.end.set(node, receiver!.lastNonTriviaPosition);
+export function ChangeTrackerWriter_setEnd(receiver: GoPtr<ChangeTrackerWriter>, node: GoInterface<triviaPositionKey>): void {
+  receiver!.end.set(node!, receiver!.lastNonTriviaPosition);
 }
 
 /**
@@ -266,9 +267,9 @@ export function ChangeTrackerWriter_setEnd(receiver: GoPtr<ChangeTrackerWriter>,
  * 	return ct.pos[node]
  * }
  */
-export function ChangeTrackerWriter_getPos(receiver: GoPtr<ChangeTrackerWriter>, node: triviaPositionKey): int {
+export function ChangeTrackerWriter_getPos(receiver: GoPtr<ChangeTrackerWriter>, node: GoInterface<triviaPositionKey>): int {
   // Go's map read of a missing key yields the int zero value.
-  const value = receiver!.pos.get(node);
+  const value = receiver!.pos.get(node!);
   return value !== undefined ? value : (0 as int);
 }
 
@@ -280,9 +281,9 @@ export function ChangeTrackerWriter_getPos(receiver: GoPtr<ChangeTrackerWriter>,
  * 	return ct.end[node]
  * }
  */
-export function ChangeTrackerWriter_getEnd(receiver: GoPtr<ChangeTrackerWriter>, node: triviaPositionKey): int {
+export function ChangeTrackerWriter_getEnd(receiver: GoPtr<ChangeTrackerWriter>, node: GoInterface<triviaPositionKey>): int {
   // Go's map read of a missing key yields the int zero value.
-  const value = receiver!.end.get(node);
+  const value = receiver!.end.get(node!);
   return value !== undefined ? value : (0 as int);
 }
 

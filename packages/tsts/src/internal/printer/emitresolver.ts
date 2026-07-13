@@ -11,6 +11,7 @@ import type { Result } from "../evaluator/evaluator.js";
 import type { Flags, InternalFlags, SymbolTracker } from "../nodebuilder/types.js";
 import type { EmitContext } from "./emitcontext.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::SymbolAccessibility","kind":"type","status":"implemented","sigHash":"91a84bd8a4b96a252e1c380495b26ea39e6837aa271d4628a091a7e7cf54aa7f"}
  *
@@ -187,7 +188,7 @@ export interface EmitResolver extends ReferenceResolver {
   GetEffectiveDeclarationFlags(node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags;
   GetResolutionModeOverride(node: GoPtr<Node>): ResolutionMode;
   GetTypeReferenceSerializationKind(name: GoPtr<EntityName>, serialScope: GoPtr<Node>): TypeReferenceSerializationKind;
-  GetConstantValue(node: GoPtr<Node>): unknown;
+  GetConstantValue(node: GoPtr<Node>): GoInterface<unknown>;
   GetJsxFactoryEntity(location: GoPtr<Node>): GoPtr<Node>;
   GetJsxFragmentFactoryEntity(location: GoPtr<Node>): GoPtr<Node>;
   SetReferencedImportDeclaration(node: GoPtr<IdentifierNode>, ref: GoPtr<Declaration>): void;
@@ -208,11 +209,11 @@ export interface EmitResolver extends ReferenceResolver {
   GetBaseDeclarationsForPropertyDeclaration(node: GoPtr<Node>): GoSlice<GoPtr<Node>>;
   GetPropertiesOfContainerFunction(node: GoPtr<Node>): GoSlice<GoPtr<Symbol>>;
   RequiresAddingImplicitUndefinedUnsafe(node: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool;
-  CreateTypeOfDeclaration(emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node>;
-  CreateReturnTypeOfSignatureDeclaration(emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node>;
-  CreateTypeParametersOfSignatureDeclaration(emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>>;
-  CreateLiteralConstValue(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, tracker: SymbolTracker): GoPtr<Node>;
-  CreateTypeOfExpression(emitContext: GoPtr<EmitContext>, expression: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node>;
-  CreateLateBoundIndexSignatures(emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>>;
-  TryJSTypeNodeToTypeNode(emitContext: GoPtr<EmitContext>, typeNode: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node>;
+  CreateTypeOfDeclaration(emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoPtr<Node>;
+  CreateReturnTypeOfSignatureDeclaration(emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoPtr<Node>;
+  CreateTypeParametersOfSignatureDeclaration(emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoSlice<GoPtr<Node>>;
+  CreateLiteralConstValue(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, tracker: GoInterface<SymbolTracker>): GoPtr<Node>;
+  CreateTypeOfExpression(emitContext: GoPtr<EmitContext>, expression: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoPtr<Node>;
+  CreateLateBoundIndexSignatures(emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoSlice<GoPtr<Node>>;
+  TryJSTypeNodeToTypeNode(emitContext: GoPtr<EmitContext>, typeNode: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoPtr<Node>;
 }

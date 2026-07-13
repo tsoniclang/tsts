@@ -13,6 +13,7 @@ import { From } from "../iovfs/iofs.js";
 import type { FS } from "../vfs.js";
 import { GetCanonicalFileName, IsRootedDiskPath, NormalizePath, PathIsAbsolute, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 // Internal runtime shape of a fstest.MapFile (opaque in the Go facade).
 interface InternalMapFile {
   Data: Uint8Array;
@@ -74,7 +75,7 @@ export interface MapFS {
   m: MapFS_5332fda7;
   useCaseSensitiveFileNames: bool;
   symlinks: GoMap<canonicalPath, canonicalPath>;
-  clock: Clock;
+  clock: GoInterface<Clock>;
 }
 
 /**
@@ -136,7 +137,7 @@ export function clockImpl_SinceStart(receiver: GoPtr<clockImpl>): Duration {
  * 	_ iovfs.WritableFS = (*MapFS)(nil)
  * )
  */
-export let ____34464f57_0: RealpathFS = MapFS_as_iovfs_RealpathFS(undefined);
+export let ____34464f57_0: GoInterface<RealpathFS> = MapFS_as_iovfs_RealpathFS(undefined);
 export let ____34464f57_1: WritableFS = MapFS_as_iovfs_WritableFS(undefined);
 
 export function MapFS_as_io_fs_FS(receiver: GoPtr<MapFS>): GoFS {
@@ -180,7 +181,7 @@ function MapFS_as_iovfs_FS(receiver: GoPtr<MapFS>): GoFS & RealpathFS & Writable
  * }
  */
 export interface sys {
-  original: unknown;
+  original: GoInterface<unknown>;
   realpath: string;
 }
 
@@ -192,7 +193,7 @@ export interface sys {
  * 	return FromMapWithClock(m, useCaseSensitiveFileNames, &clockImpl{start: time.Now()})
  * }
  */
-export function FromMap<File>(m: GoMap<string, File>, useCaseSensitiveFileNames: bool): FS {
+export function FromMap<File>(m: GoMap<string, File>, useCaseSensitiveFileNames: bool): GoInterface<FS> {
   const clockObj: clockImpl = { start: Now() as unknown as Time };
   return FromMapWithClock(m, useCaseSensitiveFileNames, {
     Now(): Time { return clockImpl_Now(clockObj); },
@@ -267,7 +268,7 @@ export function FromMap<File>(m: GoMap<string, File>, useCaseSensitiveFileNames:
  * 	return iovfs.From(convertMapFS(mfs, useCaseSensitiveFileNames, clock), useCaseSensitiveFileNames)
  * }
  */
-export function FromMapWithClock<File>(m: GoMap<string, File>, useCaseSensitiveFileNames: bool, clock: Clock): FS {
+export function FromMapWithClock<File>(m: GoMap<string, File>, useCaseSensitiveFileNames: bool, clock: GoInterface<Clock>): GoInterface<FS> {
   let posix = false;
   let windows = false;
 
@@ -297,12 +298,12 @@ export function FromMapWithClock<File>(m: GoMap<string, File>, useCaseSensitiveF
 
     let file: InternalMapFile;
     if (typeof f === "string") {
-      file = { Data: new TextEncoder().encode(f), Mode: 0, ModTime: clock.Now(), Sys: undefined };
+      file = { Data: new TextEncoder().encode(f), Mode: 0, ModTime: clock!.Now(), Sys: undefined };
     } else if (f instanceof Uint8Array) {
-      file = { Data: f, Mode: 0, ModTime: clock.Now(), Sys: undefined };
+      file = { Data: f, Mode: 0, ModTime: clock!.Now(), Sys: undefined };
     } else if (f !== null && typeof f === "object" && "Data" in f) {
       const fCopy = f as InternalMapFile;
-      file = { Data: fCopy.Data, Mode: fCopy.Mode, ModTime: clock.Now(), Sys: fCopy.Sys };
+      file = { Data: fCopy.Data, Mode: fCopy.Mode, ModTime: clock!.Now(), Sys: fCopy.Sys };
     } else {
       throw new globalThis.Error(Sprintf("invalid file type %T", f));
     }
@@ -373,9 +374,9 @@ export function FromMapWithClock<File>(m: GoMap<string, File>, useCaseSensitiveF
  * 	return m
  * }
  */
-export function convertMapFS(input: MapFS_5332fda7, useCaseSensitiveFileNames: bool, clock: Clock): GoPtr<MapFS> {
+export function convertMapFS(input: MapFS_5332fda7, useCaseSensitiveFileNames: bool, clock: GoInterface<Clock>): GoPtr<MapFS> {
   const clockObj: clockImpl = { start: Now() as unknown as Time };
-  const clockVal: Clock = (clock as unknown) !== undefined ? clock : {
+  const clockVal: Clock = clock ?? {
     Now(): Time { return clockImpl_Now(clockObj); },
     SinceStart(): Duration { return clockImpl_SinceStart(clockObj); },
   };
@@ -1000,7 +1001,7 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
     const dirFile: InternalMapFile = {
       Data: new Uint8Array(0),
       Mode: (ModeDir as unknown as number) | ((perm as unknown as number) & ~umask),
-      ModTime: receiver!.clock.Now(),
+      ModTime: receiver!.clock!.Now(),
       Sys: undefined,
     };
     MapFS_setEntry(receiver, dirToCreate, MapFS_getCanonicalPath(receiver, dirToCreate), dirFile as unknown as MapFile);
@@ -1020,8 +1021,8 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
  * }
  */
 export interface fileInfo {
-  __tsgoEmbedded0: FileInfo;
-  sys: unknown;
+  __tsgoEmbedded0: GoInterface<FileInfo>;
+  sys: GoInterface<unknown>;
   realpath: string;
   Name(): string;
   Size(): int;
@@ -1051,7 +1052,7 @@ export function fileInfo_Name(receiver: GoPtr<fileInfo>): string {
  * 	return fi.sys
  * }
  */
-export function fileInfo_Sys(receiver: GoPtr<fileInfo>): unknown {
+export function fileInfo_Sys(receiver: GoPtr<fileInfo>): GoInterface<unknown> {
   return receiver!.sys;
 }
 
@@ -1065,7 +1066,7 @@ export function fileInfo_Sys(receiver: GoPtr<fileInfo>): unknown {
  * }
  */
 export interface file {
-  __tsgoEmbedded0: File;
+  __tsgoEmbedded0: GoInterface<File>;
   fileInfo: GoPtr<fileInfo>;
 }
 
@@ -1091,7 +1092,7 @@ export function file_Stat(receiver: GoPtr<file>): [FileInfo, GoError] {
  * }
  */
 export interface readDirFile {
-  __tsgoEmbedded0: ReadDirFile;
+  __tsgoEmbedded0: GoInterface<ReadDirFile>;
   fileInfo: GoPtr<fileInfo>;
 }
 
@@ -1305,7 +1306,7 @@ export function MapFS_Realpath(receiver: GoPtr<MapFS>, name: string): [string, G
  * 	}, true
  * }
  */
-export function convertInfo(info: FileInfo): [GoPtr<fileInfo>, bool] {
+export function convertInfo(info: GoInterface<FileInfo>): [GoPtr<fileInfo>, bool] {
   const internalInfo = info as unknown as InternalFileInfo;
   const sysVal = internalInfo.Sys();
   // Check if sysVal is a sys (has realpath and original fields)
@@ -1317,7 +1318,7 @@ export function convertInfo(info: FileInfo): [GoPtr<fileInfo>, bool] {
     return [undefined, false];
   }
   const typedSys = sysObj as sys;
-  return [makeFileInfo(info, typedSys.original, typedSys.realpath), true];
+  return [makeFileInfo(info!, typedSys.original, typedSys.realpath), true];
 }
 
 function makeFileInfo(info: FileInfo, sysValue: unknown, realpath: string): fileInfo {
@@ -1465,7 +1466,7 @@ export function MapFS_WriteFile(receiver: GoPtr<MapFS>, path: string, data: stri
 
     const newFile: InternalMapFile = {
       Data: new TextEncoder().encode(data),
-      ModTime: receiver!.clock.Now(),
+      ModTime: receiver!.clock!.Now(),
       Mode: (perm as unknown as number) & ~umask,
       Sys: undefined,
     };
@@ -1575,7 +1576,7 @@ export function MapFS_AppendFile(receiver: GoPtr<MapFS>, path: string, data: str
 
     const newFile: InternalMapFile = {
       Data: combined,
-      ModTime: receiver!.clock.Now(),
+      ModTime: receiver!.clock!.Now(),
       Mode: mode,
       Sys: undefined,
     };

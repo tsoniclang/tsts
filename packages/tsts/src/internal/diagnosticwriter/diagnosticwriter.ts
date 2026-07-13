@@ -54,6 +54,7 @@ import {
 import { ConvertToRelativePath, PathIsAbsolute } from "../tspath/path.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FileLike","kind":"type","status":"implemented","sigHash":"c1f2b442a98ac11635887fcdf632a2de167ad0e61b071cd736139c21b5ff5cf1"}
  *
@@ -87,7 +88,7 @@ export interface FileLike {
  * }
  */
 export interface Diagnostic {
-  File(): FileLike;
+  File(): GoInterface<FileLike>;
   Pos(): int;
   End(): int;
   Len(): int;
@@ -143,7 +144,7 @@ export function ASTDiagnostic_RelatedInformation(receiver: GoPtr<ASTDiagnostic>)
  * 	return nil
  * }
  */
-export function ASTDiagnostic_File(receiver: GoPtr<ASTDiagnostic>): FileLike {
+export function ASTDiagnostic_File(receiver: GoPtr<ASTDiagnostic>): GoInterface<FileLike> {
   const file = ASTDiagnostic_File_inner(receiver!.__tsgoEmbedded0);
   if (file !== undefined) {
     return file as unknown as FileLike;
@@ -185,7 +186,7 @@ export function WrapASTDiagnostic(d: GoPtr<Diagnostic_34a9f76f>): GoPtr<ASTDiagn
   const result = {
     __tsgoEmbedded0: d,
   } as ASTDiagnostic;
-  result.File = (): FileLike => ASTDiagnostic_File(result);
+  result.File = (): FileLike => ASTDiagnostic_File(result)!;
   result.Pos = (): int => ASTDiagnostic_Pos(result.__tsgoEmbedded0);
   result.End = (): int => ASTDiagnostic_End(result.__tsgoEmbedded0);
   result.Len = (): int => ASTDiagnostic_Len(result.__tsgoEmbedded0);
@@ -335,14 +336,14 @@ export const ellipsis: string = "...";
  * 	}
  * }
  */
-export function FormatDiagnosticsWithColorAndContext(output: Writer, diags: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+export function FormatDiagnosticsWithColorAndContext(output: GoInterface<Writer>, diags: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
   if (diags.length === 0) {
     return;
   }
   for (let i = 0; i < diags.length; i++) {
     const diagnostic = diags[i]!;
     if (i > 0) {
-      Fprint(output, formatOpts!.NewLine);
+      Fprint(output!, formatOpts!.NewLine);
     }
     FormatDiagnosticWithColorAndContext(output, diagnostic, formatOpts);
   }
@@ -387,38 +388,38 @@ export function FormatDiagnosticsWithColorAndContext(output: Writer, diags: GoSl
  * 	}
  * }
  */
-export function FormatDiagnosticWithColorAndContext(output: Writer, diagnostic: Diagnostic, formatOpts: GoPtr<FormattingOptions>): void {
-  if (diagnostic.File() !== undefined) {
-    const file = diagnostic.File();
-    const pos = diagnostic.Pos();
+export function FormatDiagnosticWithColorAndContext(output: GoInterface<Writer>, diagnostic: GoInterface<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+  if (diagnostic!.File() !== undefined) {
+    const file = diagnostic!.File();
+    const pos = diagnostic!.Pos();
     WriteLocation(output, file, pos, formatOpts, writeWithStyleAndReset);
-    Fprint(output, " - ");
+    Fprint(output!, " - ");
   }
 
-  writeWithStyleAndReset(output, Category_Name(diagnostic.Category()), getCategoryFormat(diagnostic.Category()));
-  Fprintf(output, "%s TS%d: %s", foregroundColorEscapeGrey, diagnostic.Code(), resetEscapeSequence);
+  writeWithStyleAndReset(output, Category_Name(diagnostic!.Category()), getCategoryFormat(diagnostic!.Category()));
+  Fprintf(output!, "%s TS%d: %s", foregroundColorEscapeGrey, diagnostic!.Code(), resetEscapeSequence);
   WriteFlattenedDiagnosticMessage(output, diagnostic, formatOpts!.NewLine, formatOpts!.Locale);
 
-  if (diagnostic.File() !== undefined && diagnostic.Code() !== Message_Code(File_appears_to_be_binary)) {
-    Fprint(output, formatOpts!.NewLine);
-    writeCodeSnippet(output, diagnostic.File(), diagnostic.Pos(), diagnostic.Len(), getCategoryFormat(diagnostic.Category()), "", formatOpts);
-    Fprint(output, formatOpts!.NewLine);
+  if (diagnostic!.File() !== undefined && diagnostic!.Code() !== Message_Code(File_appears_to_be_binary)) {
+    Fprint(output!, formatOpts!.NewLine);
+    writeCodeSnippet(output, diagnostic!.File(), diagnostic!.Pos(), diagnostic!.Len(), getCategoryFormat(diagnostic!.Category()), "", formatOpts);
+    Fprint(output!, formatOpts!.NewLine);
   }
 
-  const relatedInformation = diagnostic.RelatedInformation();
+  const relatedInformation = diagnostic!.RelatedInformation();
   if (relatedInformation !== undefined && relatedInformation.length > 0) {
     for (const relatedInfo of relatedInformation) {
       const file = relatedInfo.File();
       if (file !== undefined) {
-        Fprint(output, formatOpts!.NewLine);
-        Fprint(output, "  ");
+        Fprint(output!, formatOpts!.NewLine);
+        Fprint(output!, "  ");
         const pos = relatedInfo.Pos();
         WriteLocation(output, file, pos, formatOpts, writeWithStyleAndReset);
-        Fprint(output, " - ");
+        Fprint(output!, " - ");
         WriteFlattenedDiagnosticMessage(output, relatedInfo, formatOpts!.NewLine, formatOpts!.Locale);
         writeCodeSnippet(output, file, pos, relatedInfo.Len(), foregroundColorEscapeCyan, "    ", formatOpts);
       }
-      Fprint(output, formatOpts!.NewLine);
+      Fprint(output!, formatOpts!.NewLine);
     }
   }
 }
@@ -511,14 +512,14 @@ export function FormatDiagnosticWithColorAndContext(output: Writer, diagnostic: 
  * 	}
  * }
  */
-export function writeCodeSnippet(writer: Writer, sourceFile: FileLike, start: int, length: int, squiggleColor: string, indent: string, formatOpts: GoPtr<FormattingOptions>): void {
+export function writeCodeSnippet(writer: GoInterface<Writer>, sourceFile: GoInterface<FileLike>, start: int, length: int, squiggleColor: string, indent: string, formatOpts: GoPtr<FormattingOptions>): void {
   const [firstLine, firstLineChar] = GetECMALineAndUTF16CharacterOfPosition(sourceFile, start);
   let [lastLine, lastLineChar] = GetECMALineAndUTF16CharacterOfPosition(sourceFile, start + length);
   if (length === 0) {
     lastLineChar++;
   }
 
-  const lastLineOfFile = GetECMALineOfPosition(sourceFile, byteLen(sourceFile.Text()));
+  const lastLineOfFile = GetECMALineOfPosition(sourceFile, byteLen(sourceFile!.Text()));
 
   const hasMoreThanFiveLines = lastLine - firstLine >= 4;
   let gutterWidth = Itoa(lastLine + 1).length;
@@ -527,15 +528,15 @@ export function writeCodeSnippet(writer: Writer, sourceFile: FileLike, start: in
   }
 
   for (let i = firstLine; i <= lastLine; i++) {
-    Fprint(writer, formatOpts!.NewLine);
+    Fprint(writer!, formatOpts!.NewLine);
 
     if (hasMoreThanFiveLines && firstLine + 1 < i && i < lastLine - 1) {
-      Fprint(writer, indent);
-      Fprint(writer, gutterStyleSequence);
-      Fprintf(writer, "%*s", gutterWidth, ellipsis);
-      Fprint(writer, resetEscapeSequence);
-      Fprint(writer, gutterSeparator);
-      Fprint(writer, formatOpts!.NewLine);
+      Fprint(writer!, indent);
+      Fprint(writer!, gutterStyleSequence);
+      Fprintf(writer!, "%*s", gutterWidth, ellipsis);
+      Fprint(writer!, resetEscapeSequence);
+      Fprint(writer!, gutterSeparator);
+      Fprint(writer!, formatOpts!.NewLine);
       i = lastLine - 1;
     }
 
@@ -544,26 +545,26 @@ export function writeCodeSnippet(writer: Writer, sourceFile: FileLike, start: in
     if (i < lastLineOfFile) {
       lineEnd = GetECMAPositionOfLineAndByteOffset(sourceFile, i + 1, 0);
     } else {
-      lineEnd = byteLen(sourceFile.Text());
+      lineEnd = byteLen(sourceFile!.Text());
     }
 
-    let lineContent = TrimRightFunc(byteSlice(sourceFile.Text(), lineStart, lineEnd), IsSpace);
+    let lineContent = TrimRightFunc(byteSlice(sourceFile!.Text(), lineStart, lineEnd), IsSpace);
     lineContent = ReplaceAll(lineContent, "\t", " ");
 
-    Fprint(writer, indent);
-    Fprint(writer, gutterStyleSequence);
-    Fprintf(writer, "%*d", gutterWidth, i + 1);
-    Fprint(writer, resetEscapeSequence);
-    Fprint(writer, gutterSeparator);
-    Fprint(writer, lineContent);
-    Fprint(writer, formatOpts!.NewLine);
+    Fprint(writer!, indent);
+    Fprint(writer!, gutterStyleSequence);
+    Fprintf(writer!, "%*d", gutterWidth, i + 1);
+    Fprint(writer!, resetEscapeSequence);
+    Fprint(writer!, gutterSeparator);
+    Fprint(writer!, lineContent);
+    Fprint(writer!, formatOpts!.NewLine);
 
-    Fprint(writer, indent);
-    Fprint(writer, gutterStyleSequence);
-    Fprintf(writer, "%*s", gutterWidth, "");
-    Fprint(writer, resetEscapeSequence);
-    Fprint(writer, gutterSeparator);
-    Fprint(writer, squiggleColor);
+    Fprint(writer!, indent);
+    Fprint(writer!, gutterStyleSequence);
+    Fprintf(writer!, "%*s", gutterWidth, "");
+    Fprint(writer!, resetEscapeSequence);
+    Fprint(writer!, gutterSeparator);
+    Fprint(writer!, squiggleColor);
     if (i === firstLine) {
       let lastCharForLine: int;
       if (i === lastLine) {
@@ -571,15 +572,15 @@ export function writeCodeSnippet(writer: Writer, sourceFile: FileLike, start: in
       } else {
         lastCharForLine = UTF16Len(lineContent);
       }
-      Fprint(writer, Repeat(" ", firstLineChar));
-      Fprint(writer, Repeat("~", lastCharForLine - firstLineChar));
+      Fprint(writer!, Repeat(" ", firstLineChar));
+      Fprint(writer!, Repeat("~", lastCharForLine - firstLineChar));
     } else if (i === lastLine) {
-      Fprint(writer, Repeat("~", lastLineChar));
+      Fprint(writer!, Repeat("~", lastLineChar));
     } else {
-      Fprint(writer, Repeat("~", UTF16Len(lineContent)));
+      Fprint(writer!, Repeat("~", UTF16Len(lineContent)));
     }
 
-    Fprint(writer, resetEscapeSequence);
+    Fprint(writer!, resetEscapeSequence);
   }
 }
 
@@ -593,7 +594,7 @@ export function writeCodeSnippet(writer: Writer, sourceFile: FileLike, start: in
  * 	return output.String()
  * }
  */
-export function FlattenDiagnosticMessage(d: Diagnostic, newLine: string, locale: Locale): string {
+export function FlattenDiagnosticMessage(d: GoInterface<Diagnostic>, newLine: string, locale: Locale): string {
   const output = new Builder();
   WriteFlattenedDiagnosticMessage(output, d, newLine, locale);
   return output.String();
@@ -607,7 +608,7 @@ export function FlattenDiagnosticMessage(d: Diagnostic, newLine: string, locale:
  * 	WriteFlattenedDiagnosticMessage(writer, WrapASTDiagnostic(diagnostic), newline, locale)
  * }
  */
-export function WriteFlattenedASTDiagnosticMessage(writer: Writer, diagnostic: GoPtr<Diagnostic_34a9f76f>, newline: string, locale: Locale): void {
+export function WriteFlattenedASTDiagnosticMessage(writer: GoInterface<Writer>, diagnostic: GoPtr<Diagnostic_34a9f76f>, newline: string, locale: Locale): void {
   WriteFlattenedDiagnosticMessage(writer, WrapASTDiagnostic(diagnostic) as unknown as Diagnostic, newline, locale);
 }
 
@@ -623,10 +624,10 @@ export function WriteFlattenedASTDiagnosticMessage(writer: Writer, diagnostic: G
  * 	}
  * }
  */
-export function WriteFlattenedDiagnosticMessage(writer: Writer, diagnostic: Diagnostic, newline: string, locale: Locale): void {
-  Fprint(writer, diagnostic.Localize(locale));
+export function WriteFlattenedDiagnosticMessage(writer: GoInterface<Writer>, diagnostic: GoInterface<Diagnostic>, newline: string, locale: Locale): void {
+  Fprint(writer!, diagnostic!.Localize(locale));
 
-  for (const chain of diagnostic.MessageChain()) {
+  for (const chain of diagnostic!.MessageChain()) {
     flattenDiagnosticMessageChain(writer, chain, newline, locale, 1);
   }
 }
@@ -647,14 +648,14 @@ export function WriteFlattenedDiagnosticMessage(writer: Writer, diagnostic: Diag
  * 	}
  * }
  */
-export function flattenDiagnosticMessageChain(writer: Writer, chain: Diagnostic, newLine: string, locale: Locale, level: int): void {
-  Fprint(writer, newLine);
+export function flattenDiagnosticMessageChain(writer: GoInterface<Writer>, chain: GoInterface<Diagnostic>, newLine: string, locale: Locale, level: int): void {
+  Fprint(writer!, newLine);
   for (let i = 0; i < level; i++) {
-    Fprint(writer, "  ");
+    Fprint(writer!, "  ");
   }
 
-  Fprint(writer, chain.Localize(locale));
-  for (const child of chain.MessageChain()) {
+  Fprint(writer!, chain!.Localize(locale));
+  for (const child of chain!.MessageChain()) {
     flattenDiagnosticMessageChain(writer, child, newLine, locale, level + 1);
   }
 }
@@ -709,10 +710,10 @@ export type FormattedWriter = (output: Writer, text: string, formatStyle: string
  * 	fmt.Fprint(output, resetEscapeSequence)
  * }
  */
-export function writeWithStyleAndReset(output: Writer, text: string, formatStyle: string): void {
-  Fprint(output, formatStyle);
-  Fprint(output, text);
-  Fprint(output, resetEscapeSequence);
+export function writeWithStyleAndReset(output: GoInterface<Writer>, text: string, formatStyle: string): void {
+  Fprint(output!, formatStyle);
+  Fprint(output!, text);
+  Fprint(output!, resetEscapeSequence);
 }
 
 /**
@@ -735,20 +736,20 @@ export function writeWithStyleAndReset(output: Writer, text: string, formatStyle
  * 	writeWithStyleAndReset(output, strconv.Itoa(int(firstChar)+1), foregroundColorEscapeYellow)
  * }
  */
-export function WriteLocation(output: Writer, file: FileLike, pos: int, formatOpts: GoPtr<FormattingOptions>, writeWithStyleAndReset: FormattedWriter): void {
+export function WriteLocation(output: GoInterface<Writer>, file: GoInterface<FileLike>, pos: int, formatOpts: GoPtr<FormattingOptions>, writeWithStyleAndReset: FormattedWriter): void {
   const [firstLine, firstChar] = GetECMALineAndUTF16CharacterOfPosition(file, pos);
   let relativeFileName: string;
   if (formatOpts !== undefined) {
-    relativeFileName = ConvertToRelativePath(file.FileName(), formatOpts.__tsgoEmbedded0 as ComparePathsOptions);
+    relativeFileName = ConvertToRelativePath(file!.FileName(), formatOpts.__tsgoEmbedded0 as ComparePathsOptions);
   } else {
-    relativeFileName = file.FileName();
+    relativeFileName = file!.FileName();
   }
 
-  writeWithStyleAndReset(output, relativeFileName, foregroundColorEscapeCyan);
-  Fprint(output, ":");
-  writeWithStyleAndReset(output, Itoa(firstLine + 1), foregroundColorEscapeYellow);
-  Fprint(output, ":");
-  writeWithStyleAndReset(output, Itoa(firstChar + 1), foregroundColorEscapeYellow);
+  writeWithStyleAndReset(output!, relativeFileName, foregroundColorEscapeCyan);
+  Fprint(output!, ":");
+  writeWithStyleAndReset(output!, Itoa(firstLine + 1), foregroundColorEscapeYellow);
+  Fprint(output!, ":");
+  writeWithStyleAndReset(output!, Itoa(firstChar + 1), foregroundColorEscapeYellow);
 }
 
 /**
@@ -820,7 +821,7 @@ export interface ErrorSummary {
  * 	}
  * }
  */
-export function WriteErrorSummaryText(output: Writer, allDiagnostics: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+export function WriteErrorSummaryText(output: GoInterface<Writer>, allDiagnostics: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
   const errorSummary = getErrorSummary(allDiagnostics);
   const totalErrorCount = errorSummary!.TotalErrorCount;
   if (totalErrorCount === 0) {
@@ -854,13 +855,13 @@ export function WriteErrorSummaryText(output: Writer, allDiagnostics: GoSlice<Di
         break;
     }
   }
-  Fprint(output, formatOpts!.NewLine);
-  Fprint(output, message);
-  Fprint(output, formatOpts!.NewLine);
-  Fprint(output, formatOpts!.NewLine);
+  Fprint(output!, formatOpts!.NewLine);
+  Fprint(output!, message);
+  Fprint(output!, formatOpts!.NewLine);
+  Fprint(output!, formatOpts!.NewLine);
   if (numErroringFiles > 1) {
     writeTabularErrorsDisplay(output, errorSummary, formatOpts);
-    Fprint(output, formatOpts!.NewLine);
+    Fprint(output!, formatOpts!.NewLine);
   }
 }
 
@@ -920,8 +921,8 @@ export function getErrorSummary(diags: GoSlice<Diagnostic>): GoPtr<ErrorSummary>
       if (errorsByFile === undefined) {
         errorsByFile = new Map<FileLike, GoSlice<Diagnostic>>();
       }
-      const existing = errorsByFile.get(diagnostic.File()) ?? [];
-      errorsByFile.set(diagnostic.File(), [...existing, diagnostic]);
+      const existing = errorsByFile.get(diagnostic.File()!) ?? [];
+      errorsByFile.set(diagnostic.File()!, [...existing, diagnostic]);
     }
   }
 
@@ -974,7 +975,7 @@ export function getErrorSummary(diags: GoSlice<Diagnostic>): GoPtr<ErrorSummary>
  * 	}
  * }
  */
-export function writeTabularErrorsDisplay(output: Writer, errorSummary: GoPtr<ErrorSummary>, formatOpts: GoPtr<FormattingOptions>): void {
+export function writeTabularErrorsDisplay(output: GoInterface<Writer>, errorSummary: GoPtr<ErrorSummary>, formatOpts: GoPtr<FormattingOptions>): void {
   const sortedFiles = errorSummary!.SortedFiles;
 
   let maxErrors = 0;
@@ -988,17 +989,17 @@ export function writeTabularErrorsDisplay(output: Writer, errorSummary: GoPtr<Er
   const leftPaddingGoal = Math.max(leftColumnHeadingLength, lengthOfBiggestErrorCount);
   const headerPadding = Math.max(lengthOfBiggestErrorCount - leftColumnHeadingLength, 0);
 
-  Fprint(output, Repeat(" ", headerPadding));
-  Fprint(output, headerRow);
-  Fprint(output, formatOpts!.NewLine);
+  Fprint(output!, Repeat(" ", headerPadding));
+  Fprint(output!, headerRow);
+  Fprint(output!, formatOpts!.NewLine);
 
   for (const file of sortedFiles) {
     const fileErrors = errorSummary!.ErrorsByFile.get(file) ?? [];
     const errorCount = fileErrors.length;
 
-    Fprintf(output, "%*d  ", leftPaddingGoal, errorCount);
-    Fprint(output, prettyPathForFileError(file, fileErrors, formatOpts));
-    Fprint(output, formatOpts!.NewLine);
+    Fprintf(output!, "%*d  ", leftPaddingGoal, errorCount);
+    Fprint(output!, prettyPathForFileError(file, fileErrors, formatOpts));
+    Fprint(output!, formatOpts!.NewLine);
   }
 }
 
@@ -1023,7 +1024,7 @@ export function writeTabularErrorsDisplay(output: Writer, errorSummary: GoPtr<Er
  * 	)
  * }
  */
-export function prettyPathForFileError(file: FileLike, fileErrors: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): string {
+export function prettyPathForFileError(file: GoInterface<FileLike>, fileErrors: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): string {
   if (file === undefined || fileErrors.length === 0) {
     return "";
   }
@@ -1051,7 +1052,7 @@ export function prettyPathForFileError(file: FileLike, fileErrors: GoSlice<Diagn
  * 	}
  * }
  */
-export function WriteFormatDiagnostics(output: Writer, diagnostics: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+export function WriteFormatDiagnostics(output: GoInterface<Writer>, diagnostics: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
   for (const diagnostic of diagnostics) {
     WriteFormatDiagnostic(output, diagnostic, formatOpts);
   }
@@ -1074,17 +1075,17 @@ export function WriteFormatDiagnostics(output: Writer, diagnostics: GoSlice<Diag
  * 	fmt.Fprint(output, formatOpts.NewLine)
  * }
  */
-export function WriteFormatDiagnostic(output: Writer, diagnostic: Diagnostic, formatOpts: GoPtr<FormattingOptions>): void {
-  if (diagnostic.File() !== undefined) {
-    const [line, character] = GetECMALineAndUTF16CharacterOfPosition(diagnostic.File(), diagnostic.Pos());
-    const fileName = diagnostic.File().FileName();
+export function WriteFormatDiagnostic(output: GoInterface<Writer>, diagnostic: GoInterface<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+  if (diagnostic!.File() !== undefined) {
+    const [line, character] = GetECMALineAndUTF16CharacterOfPosition(diagnostic!.File(), diagnostic!.Pos());
+    const fileName = diagnostic!.File()!.FileName();
     const relativeFileName = ConvertToRelativePath(fileName, formatOpts!.__tsgoEmbedded0 as ComparePathsOptions);
-    Fprintf(output, "%s(%d,%d): ", relativeFileName, line + 1, character + 1);
+    Fprintf(output!, "%s(%d,%d): ", relativeFileName, line + 1, character + 1);
   }
 
-  Fprintf(output, "%s TS%d: ", Category_Name(diagnostic.Category()), diagnostic.Code());
+  Fprintf(output!, "%s TS%d: ", Category_Name(diagnostic!.Category()), diagnostic!.Code());
   WriteFlattenedDiagnosticMessage(output, diagnostic, formatOpts!.NewLine, formatOpts!.Locale);
-  Fprint(output, formatOpts!.NewLine);
+  Fprint(output!, formatOpts!.NewLine);
 }
 
 /**
@@ -1098,10 +1099,10 @@ export function WriteFormatDiagnostic(output: Writer, diagnostic: Diagnostic, fo
  * 	WriteFlattenedDiagnosticMessage(output, diag, formatOpts.NewLine, formatOpts.Locale)
  * }
  */
-export function FormatDiagnosticsStatusWithColorAndTime(output: Writer, time: string, diag: Diagnostic, formatOpts: GoPtr<FormattingOptions>): void {
-  Fprint(output, "[");
+export function FormatDiagnosticsStatusWithColorAndTime(output: GoInterface<Writer>, time: string, diag: GoInterface<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+  Fprint(output!, "[");
   writeWithStyleAndReset(output, time, foregroundColorEscapeGrey);
-  Fprint(output, "] ");
+  Fprint(output!, "] ");
   WriteFlattenedDiagnosticMessage(output, diag, formatOpts!.NewLine, formatOpts!.Locale);
 }
 
@@ -1114,8 +1115,8 @@ export function FormatDiagnosticsStatusWithColorAndTime(output: Writer, time: st
  * 	WriteFlattenedDiagnosticMessage(output, diag, formatOpts.NewLine, formatOpts.Locale)
  * }
  */
-export function FormatDiagnosticsStatusAndTime(output: Writer, time: string, diag: Diagnostic, formatOpts: GoPtr<FormattingOptions>): void {
-  Fprint(output, time, " - ");
+export function FormatDiagnosticsStatusAndTime(output: GoInterface<Writer>, time: string, diag: GoInterface<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+  Fprint(output!, time, " - ");
   WriteFlattenedDiagnosticMessage(output, diag, formatOpts!.NewLine, formatOpts!.Locale);
 }
 
@@ -1148,14 +1149,14 @@ export let ScreenStartingCodes: GoSlice<int> = [
  * 	return false
  * }
  */
-export function TryClearScreen(output: Writer, diag: Diagnostic, options: GoPtr<CompilerOptions>): bool {
+export function TryClearScreen(output: GoInterface<Writer>, diag: GoInterface<Diagnostic>, options: GoPtr<CompilerOptions>): bool {
   if (
     !Tristate_IsTrue(options!.PreserveWatchOutput) &&
     !Tristate_IsTrue(options!.ExtendedDiagnostics) &&
     !Tristate_IsTrue(options!.Diagnostics) &&
-    Contains(ScreenStartingCodes, diag.Code())
+    Contains(ScreenStartingCodes, diag!.Code())
   ) {
-    Fprint(output, "\x1B[2J\x1B[3J\x1B[H");
+    Fprint(output!, "\x1B[2J\x1B[3J\x1B[H");
     return true;
   }
   return false;

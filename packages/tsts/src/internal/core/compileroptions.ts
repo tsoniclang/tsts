@@ -18,6 +18,7 @@ import {
 } from "./tristate.js";
 import type { Tristate } from "./tristate.js";
 
+import type { GoInterface, GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::CompilerOptions","kind":"type","status":"implemented","sigHash":"b8f0b2cb8e9d5a13c532f0de6afb68d93e5f3809b57efedc4a582202983e7a77"}
  *
@@ -268,7 +269,7 @@ export interface CompilerOptions {
   UseDefineForClassFields: Tristate;
   UseUnknownInCatchVariables: Tristate;
   VerbatimModuleSyntax: Tristate;
-  MaxNodeModuleJsDepth: GoPtr<int>;
+  MaxNodeModuleJsDepth: GoRef<int>;
   AllowSyntheticDefaultImports: Tristate;
   AlwaysStrict: Tristate;
   BaseUrl: string;
@@ -298,7 +299,7 @@ export interface CompilerOptions {
   PprofDir: string;
   SingleThreaded: Tristate;
   Quiet: Tristate;
-  Checkers: GoPtr<int>;
+  Checkers: GoRef<int>;
 }
 
 /**
@@ -492,7 +493,7 @@ export function NormalizeCompilerOptions(options: GoPtr<CompilerOptions>): GoPtr
  * Go source:
  * var optionsType = reflect.TypeFor[CompilerOptions]()
  */
-export let optionsType: Type = TypeFor<CompilerOptions>();
+export let optionsType: GoInterface<Type> = TypeFor<CompilerOptions>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::CompilerOptions.Clone","kind":"method","status":"implemented","sigHash":"f7d4a926a50c11b48bf433a036d815a2acc0c65ae5238d38c2ccf8340be890b1"}

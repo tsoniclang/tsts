@@ -159,6 +159,7 @@ import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::type::RuntimeSyntaxTransformer","kind":"type","status":"implemented","sigHash":"60ac09ddc0df66acaac125944f07657585e16fe81b3e057942787c81d8c958b6"}
  *
@@ -187,8 +188,8 @@ export interface RuntimeSyntaxTransformer {
   currentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>> | undefined;
   currentEnum: GoPtr<EnumDeclarationNode>;
   currentNamespace: GoPtr<ModuleDeclarationNode>;
-  resolver: ReferenceResolver;
-  emitResolver: EmitResolver;
+  resolver: GoInterface<ReferenceResolver>;
+  emitResolver: GoInterface<EmitResolver>;
 }
 
 /**
@@ -886,7 +887,7 @@ export function RuntimeSyntaxTransformer_transformEnumMember(receiver: GoPtr<Run
   let useExplicitReverseMapping = false;
 
   const parseNode = EmitContext_ParseNode(Transformer_EmitContext(receiver!.__tsgoEmbedded0), memberNode);
-  const result = receiver!.emitResolver.GetEnumMemberValue(parseNode);
+  const result = receiver!.emitResolver!.GetEnumMemberValue(parseNode);
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
   if (typeof result.Value === "number") {
     const value = result.Value as JsNumber;
@@ -1583,7 +1584,7 @@ export function RuntimeSyntaxTransformer_visitExpressionIdentifier(receiver: GoP
     !IsLocalName(Transformer_EmitContext(receiver!.__tsgoEmbedded0), node)
   ) {
     const location = EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), node as unknown as GoPtr<Node>);
-    const container = receiver!.resolver.GetReferencedExportContainer(location as unknown as GoPtr<IdentifierNode>, false /*prefixLocals*/);
+    const container = receiver!.resolver!.GetReferencedExportContainer(location as unknown as GoPtr<IdentifierNode>, false /*prefixLocals*/);
     if (container !== undefined && (IsEnumDeclaration(container) || IsModuleDeclaration(container))) {
       const containerName = RuntimeSyntaxTransformer_getNamespaceContainerName(receiver, container);
       const f = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;

@@ -19,6 +19,7 @@ import type { Scanner } from "../scanner/scanner.js";
 import { GetScannerForSourceFile, GetTokenPosOfNode, Scanner_ReScanJsxToken, Scanner_Scan, Scanner_Token, Scanner_TokenEnd, Scanner_TokenFlags, Scanner_TokenFullStart, Scanner_TokenStart, Scanner_ResetPos } from "../scanner/scanner.js";
 import type { TokenFlags } from "../ast/tokenflags.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::shouldRescanLessThanLessThanToken","kind":"func","status":"implemented","sigHash":"027e136379acde7957dacce28399aee470574eaa534d282f4d10a947c386695d"}
  *
@@ -323,7 +324,7 @@ export function GetTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int)
  * 	}
  * }
  */
-export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int, allowPositionInLeadingTrivia: bool, includePrecedingTokenAtEndPosition: (node: GoPtr<Node>) => bool): GoPtr<Node> {
+export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int, allowPositionInLeadingTrivia: bool, includePrecedingTokenAtEndPosition: GoFunc<(node: GoPtr<Node>) => bool>): GoPtr<Node> {
   let next: GoPtr<Node> = undefined;
   let prevSubtree: GoPtr<Node> = undefined;
   let current: GoPtr<Node> = Node_AsNode(sourceFile);
@@ -446,7 +447,7 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
     VisitEachChildAndJSDoc(current, sourceFile, visitNode, visitNodeList);
     if (prevSubtree !== undefined) {
       const child = FindPrecedingTokenEx(sourceFile, position, prevSubtree, false /*excludeJSDoc*/);
-      if (child !== undefined && Node_End(child) === position && includePrecedingTokenAtEndPosition(child)) {
+      if (child !== undefined && Node_End(child) === position && includePrecedingTokenAtEndPosition!(child)) {
         return child;
       }
       prevSubtree = undefined;
@@ -599,7 +600,7 @@ export function findRightmostNode(node: GoPtr<Node>): GoPtr<Node> {
  * 	node.VisitEachChild(visitor)
  * }
  */
-export function VisitEachChildAndJSDoc(node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, visitNode: (arg0: GoPtr<Node>, arg1: GoPtr<NodeVisitor>) => GoPtr<Node>, visitNodes: (arg0: GoPtr<NodeList>, arg1: GoPtr<NodeVisitor>) => GoPtr<NodeList>): void {
+export function VisitEachChildAndJSDoc(node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, visitNode: GoFunc<(arg0: GoPtr<Node>, arg1: GoPtr<NodeVisitor>) => GoPtr<Node>>, visitNodes: GoFunc<(arg0: GoPtr<NodeList>, arg1: GoPtr<NodeVisitor>) => GoPtr<NodeList>>): void {
   const visitor = getNodeVisitor(visitNode, visitNodes);
   for (const jsdoc of Node_JSDoc(node, sourceFile)) {
     if (visitor!.Hooks.VisitNode !== undefined) {
@@ -1385,7 +1386,7 @@ export function FindNextToken(previousToken: GoPtr<Node>, parent: GoPtr<Node>, f
  * 	})
  * }
  */
-export function getNodeVisitor(visitNode: (arg0: GoPtr<Node>, arg1: GoPtr<NodeVisitor>) => GoPtr<Node>, visitNodes: (arg0: GoPtr<NodeList>, arg1: GoPtr<NodeVisitor>) => GoPtr<NodeList>): GoPtr<NodeVisitor> {
+export function getNodeVisitor(visitNode: GoFunc<(arg0: GoPtr<Node>, arg1: GoPtr<NodeVisitor>) => GoPtr<Node>>, visitNodes: GoFunc<(arg0: GoPtr<NodeList>, arg1: GoPtr<NodeVisitor>) => GoPtr<NodeList>>): GoPtr<NodeVisitor> {
   let wrappedVisitNode: ((n: GoPtr<Node>, v: GoPtr<NodeVisitor>) => GoPtr<Node>) | undefined = undefined;
   let wrappedVisitNodes: ((n: GoPtr<NodeList>, v: GoPtr<NodeVisitor>) => GoPtr<NodeList>) | undefined = undefined;
   if (visitNode !== undefined) {

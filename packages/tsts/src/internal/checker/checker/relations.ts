@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoNilSlice } from "../../../go/compat.js";
 import * as slices from "../../../go/slices.js";
 import { AppendIfUnique, Every, IfElse, LastOrNil, OrElse } from "../../core/core.js";
 import {
@@ -406,7 +407,7 @@ export function Checker_checkExportAssignment(receiver: GoPtr<Checker>, node: Go
   const sourceFile = GetSourceFileOfNode(node);
   const sourceFileName = NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile));
   const compilerOptions = receiver!.compilerOptions!;
-  const isIllegalExportDefaultInCJS = (!isExportEquals && (node!.Flags & NodeFlagsAmbient) === 0 && compilerOptions.VerbatimModuleSyntax === TSTrue && receiver!.program.GetEmitModuleFormatOfFile(sourceFileName) === ModuleKindCommonJS) as bool;
+  const isIllegalExportDefaultInCJS = (!isExportEquals && (node!.Flags & NodeFlagsAmbient) === 0 && compilerOptions.VerbatimModuleSyntax === TSTrue && receiver!.program!.GetEmitModuleFormatOfFile(sourceFileName) === ModuleKindCommonJS) as bool;
   if (IsIdentifier(Node_Expression(node))) {
     const id = Node_Expression(node);
     const sym = Checker_getExportSymbolOfValueSymbolIfExported(receiver, Checker_resolveEntityName(receiver, id, SymbolFlagsAll, true, true, node));
@@ -469,7 +470,7 @@ export function Checker_checkExportAssignment(receiver: GoPtr<Checker>, node: Go
     Checker_grammarErrorOnNode(receiver, Node_Expression(node), The_expression_of_an_export_assignment_must_be_an_identifier_or_qualified_name_in_an_ambient_context);
   }
   if (isExportEquals) {
-    const impliedNodeFormat = receiver!.program.GetImpliedNodeFormatForEmit(sourceFileName);
+    const impliedNodeFormat = receiver!.program!.GetImpliedNodeFormatForEmit(sourceFileName);
     if (receiver!.moduleKind >= ModuleKindES2015 && receiver!.moduleKind !== ModuleKindPreserve && (((node!.Flags & NodeFlagsAmbient) !== 0 && impliedNodeFormat === ModuleKindESNext) || ((node!.Flags & NodeFlagsAmbient) === 0 && impliedNodeFormat !== ModuleKindCommonJS))) {
       Checker_grammarErrorOnNode(receiver, node, Export_assignment_cannot_be_used_when_targeting_ECMAScript_modules_Consider_using_export_default_or_another_module_format_instead);
     } else if (receiver!.moduleKind === ModuleKindSystem && (node!.Flags & NodeFlagsAmbient) === 0) {
@@ -909,7 +910,7 @@ export function Checker_checkReferenceAssignment(receiver: GoPtr<Checker>, targe
 export function Checker_checkAssignmentOperator(receiver: GoPtr<Checker>, left: GoPtr<Node>, operator: Kind, right: GoPtr<Node>, leftType: GoPtr<Type>, rightType: GoPtr<Type>): void {
   if (IsAssignmentOperator(operator)) {
     if (IsDeclarationNode(left!.Parent) && GetAssignmentDeclarationKind(left!.Parent) === JSDeclarationKindExportsProperty) {
-      const symbol_ = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, left) as SymbolNodeLinks).resolvedSymbol;
+      const symbol_ = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, left)!.v as SymbolNodeLinks).resolvedSymbol;
       if (symbol_ !== undefined && symbol_!.Declarations !== undefined && symbol_!.Declarations.length > 1 && (rightType!.flags & TypeFlagsUndefined) !== 0) {
         return;
       }
@@ -1346,7 +1347,7 @@ export function Checker_getAssignmentDeclarationInitializerType(receiver: GoPtr<
  * 	return types
  * }
  */
-export function Checker_removeSubtypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, hasObjectTypes: bool): GoPtr<GoSlice<GoPtr<Type>>> {
+export function Checker_removeSubtypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, hasObjectTypes: bool): GoSlice<GoPtr<Type>> {
   if (types.length < 2) {
     return types;
   }
@@ -1392,7 +1393,7 @@ export function Checker_removeSubtypes(receiver: GoPtr<Checker>, types: GoSlice<
               Tracer_Instant(receiver!.tracer, PhaseCheckTypes, "removeSubtypes_DepthLimit", new globalThis.Map<string, unknown>([["estimatedCount", estimatedCount]]));
             }
             Checker_error(receiver, receiver!.currentNode, Expression_produces_a_union_type_that_is_too_complex_to_represent);
-            return undefined;
+            return GoNilSlice();
           }
         }
         count++;

@@ -3,6 +3,7 @@ import type { GoComparable, GoMap, GoPtr, GoSeq, GoSlice } from "../../go/compat
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::type::MultiMap","kind":"type","status":"implemented","sigHash":"955c1a2ed6ee58a00a33eb9d83a514b829e17934a40779d6671c3715322c6279"}
  *
@@ -43,10 +44,10 @@ export function NewMultiMapWithSizeHint<K extends GoComparable, V extends GoComp
  * 	return m
  * }
  */
-export function GroupBy<K extends GoComparable, V extends GoComparable>(items: GoSlice<V>, groupId: (arg0: V) => K): GoPtr<MultiMap<K, V>> {
+export function GroupBy<K extends GoComparable, V extends GoComparable>(items: GoSlice<V>, groupId: GoFunc<(arg0: V) => K>): GoPtr<MultiMap<K, V>> {
   const m: MultiMap<K, V> = { M: new globalThis.Map<K, GoSlice<V>>() };
   for (const item of items) {
-    MultiMap_Add(m, groupId(item), item);
+    MultiMap_Add(m, groupId!(item), item);
   }
   return m;
 }

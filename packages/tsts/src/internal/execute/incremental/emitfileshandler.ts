@@ -52,6 +52,7 @@ import {
 import type { DiagnosticsOrBuildInfoDiagnosticsWithFileName, emitSignature, FileEmitKind } from "./snapshot.js";
 import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitUpdate","kind":"type","status":"implemented","sigHash":"31f6da710657a6cf30883c75b819cbb029dc74228219b5ef999776b1d3e26e59"}
  *
@@ -85,7 +86,7 @@ export interface emitUpdate {
  * }
  */
 export interface emitFilesHandler {
-  ctx: Context;
+  ctx: GoInterface<Context>;
   program: GoPtr<Program>;
   isForDtsErrors: bool;
   signatures: SyncMap<Path, string>;
@@ -341,7 +342,7 @@ export function emitFilesHandler_emitBuildInfo(receiver: GoPtr<emitFilesHandler>
  */
 export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesHandler>, options: EmitOptions): GoSlice<GoPtr<EmitResult>> {
   collectAllAffectedFiles(receiver!.ctx, receiver!.program);
-  if (receiver!.ctx.Err() !== undefined) {
+  if (receiver!.ctx!.Err() !== undefined) {
     return [];
   }
 
@@ -356,7 +357,7 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
       }
       const pendingKind = emitFilesHandler_getPendingEmitKindForEmitOptions(receiver, emitKind, options);
       if (pendingKind !== 0) {
-        wg.Queue((): void => {
+        wg!.Queue((): void => {
           let emitOnly: EmitOnly = EmitAll;
           if ((pendingKind & FileEmitKindAllJs) !== 0) {
             emitOnly = EmitOnlyJs;
@@ -396,8 +397,8 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
       return true as bool;
     }
   );
-  wg.RunAndWait();
-  if (receiver!.ctx.Err() !== undefined) {
+  wg!.RunAndWait();
+  if (receiver!.ctx!.Err() !== undefined) {
     return [];
   }
 
@@ -528,16 +529,16 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
 
       let aTime: Time = new Time();
       if (differsOnlyInMapBox.v) {
-        aTime = receiver!.program!.host.GetMTime(fileName);
+        aTime = receiver!.program!.host!.GetMTime(fileName);
       }
       let err: GoError;
       if (options.WriteFile !== undefined) {
         err = options.WriteFile(fileName, text, data);
       } else {
-        err = compiler_Program_Host(receiver!.program!.program).FS().WriteFile(fileName, text);
+        err = compiler_Program_Host(receiver!.program!.program)!.FS()!.WriteFile(fileName, text);
       }
       if (err === undefined && differsOnlyInMapBox.v) {
-        err = receiver!.program!.host.SetMTime(fileName, aTime);
+        err = receiver!.program!.host!.SetMTime(fileName, aTime);
       }
       return err;
     },
@@ -781,7 +782,7 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
  * 	return emitHandler.emitAllAffectedFiles(options)
  * }
  */
-export function emitFiles(ctx: Context, program: GoPtr<Program>, options: EmitOptions, isForDtsErrors: bool): GoPtr<EmitResult> {
+export function emitFiles(ctx: GoInterface<Context>, program: GoPtr<Program>, options: EmitOptions, isForDtsErrors: bool): GoPtr<EmitResult> {
   const emitHandler: emitFilesHandler = {
     ctx: ctx,
     program: program,
@@ -798,7 +799,7 @@ export function emitFiles(ctx: Context, program: GoPtr<Program>, options: EmitOp
   if (!isForDtsErrors && options.TargetSourceFile !== undefined) {
     const result = compiler_Program_Emit(program!.program, ctx, emitFilesHandler_getEmitOptions(emitHandler, options));
     emitFilesHandler_updateHasEmitDiagnostics(emitHandler, result);
-    if (ctx.Err() !== undefined) {
+    if (ctx!.Err() !== undefined) {
       return undefined;
     }
     emitFilesHandler_updateSnapshot(emitHandler);

@@ -22,6 +22,7 @@ import { IsGeneratedIdentifier } from "../utilities.js";
 import { ScriptTargetES2020 } from "../../core/compileroptions.js";
 import type { ScriptTarget } from "../../core/compileroptions.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::type::metadataSerializer","kind":"type","status":"implemented","sigHash":"6b0daffe0469d09ea80639f2e02158cafe11021b60fa00adcef956655fdb4f9a"}
  *
@@ -36,7 +37,7 @@ import type { ScriptTarget } from "../../core/compileroptions.js";
  * }
  */
 export interface metadataSerializer {
-  resolver: EmitResolver;
+  resolver: GoInterface<EmitResolver>;
   languageVersion: ScriptTarget;
   strictNullChecks: bool;
   f: GoPtr<NodeFactory>;
@@ -68,7 +69,7 @@ export interface metadataSerializerContext {
  * 	return &metadataSerializer{resolver: resolver, languageVersion: languageVersion, f: f, ec: ec, strictNullChecks: strictNullChecks}
  * }
  */
-export function newMetadataSerializer(resolver: EmitResolver, f: GoPtr<NodeFactory>, ec: GoPtr<EmitContext>, languageVersion: ScriptTarget, strictNullChecks: bool): GoPtr<metadataSerializer> {
+export function newMetadataSerializer(resolver: GoInterface<EmitResolver>, f: GoPtr<NodeFactory>, ec: GoPtr<EmitContext>, languageVersion: ScriptTarget, strictNullChecks: bool): GoPtr<metadataSerializer> {
   return {
     resolver: resolver,
     languageVersion: languageVersion,
@@ -741,7 +742,7 @@ export function metadataSerializer_serializeLiteralOfLiteralTypeNode(receiver: G
 export function metadataSerializer_serializeTypeReferenceNode(receiver: GoPtr<metadataSerializer>, node: GoPtr<TypeReferenceNode>): GoPtr<Node> {
   const f = receiver!.f!.__tsgoEmbedded0!;
   const serialScope = receiver!.c.currentNameScope !== undefined ? receiver!.c.currentNameScope : receiver!.c.currentLexicalScope;
-  const kind = receiver!.resolver.GetTypeReferenceSerializationKind(
+  const kind = receiver!.resolver!.GetTypeReferenceSerializationKind(
     EmitContext_ParseNode(receiver!.ec, node!.TypeName as GoPtr<Node>),
     EmitContext_ParseNode(receiver!.ec, serialScope),
   );

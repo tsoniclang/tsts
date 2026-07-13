@@ -119,6 +119,7 @@ import {
   type ParsingContext,
 } from "./state.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseErrorAtCurrentToken","kind":"method","status":"implemented","sigHash":"f2d34a403aacf239cc93f5ba8717d403b65a24ca42165837cd603e415203fbfc"}
  *
@@ -1197,10 +1198,10 @@ export function Parser_setContextFlags(receiver: GoPtr<Parser>, flags: NodeFlags
  * 	return result
  * }
  */
-export function doInContext<T>(p: GoPtr<Parser>, flags: NodeFlags, value: bool, f: (p: GoPtr<Parser>) => T): T {
+export function doInContext<T>(p: GoPtr<Parser>, flags: NodeFlags, value: bool, f: GoFunc<(p: GoPtr<Parser>) => T>): T {
   const saveContextFlags = p!.contextFlags;
   Parser_setContextFlags(p, flags, value);
-  const result = f(p);
+  const result = f!(p);
   p!.contextFlags = saveContextFlags;
   return result;
 }

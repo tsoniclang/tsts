@@ -64,6 +64,7 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 import { createExternalHelpersImportDeclarationIfNeeded } from "./externalmoduleinfo.js";
 import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifier } from "./utilities.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"implemented","sigHash":"6c77421ab1341d88600cefbfeedc8e8c71434d5c3b8b2e093627623459e1354e"}
  *
@@ -81,7 +82,7 @@ import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifie
 export interface ESModuleTransformer {
   __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
-  resolver: ReferenceResolver;
+  resolver: GoInterface<ReferenceResolver>;
   getEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;
   currentSourceFile: GoPtr<SourceFile>;
   importRequireStatements: GoPtr<importRequireStatements>;

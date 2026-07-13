@@ -84,6 +84,7 @@ import {
   Type_Types,
 } from "./types.js";
 
+import type { GoInterface } from "../../go/compat.js";
 // semicolonRemoverWriter_as_EmitTextWriter adapts a *semicolonRemoverWriter to
 // the EmitTextWriter interface by delegating each method to the corresponding
 // free function (Go interface satisfaction -> method-bearing adapter).
@@ -192,7 +193,7 @@ export function createPrinterWithRemoveCommentsNeverAsciiEscape(emitContext: GoP
  */
 export interface semicolonRemoverWriter {
   hasPendingSemicolon: bool;
-  inner: EmitTextWriter;
+  inner: GoInterface<EmitTextWriter>;
 }
 
 /**
@@ -209,7 +210,7 @@ export interface semicolonRemoverWriter {
 export function semicolonRemoverWriter_commitSemicolon(receiver: GoPtr<semicolonRemoverWriter>): void {
   const s = receiver as semicolonRemoverWriter;
   if (s.hasPendingSemicolon) {
-    s.inner.WriteTrailingSemicolon(";");
+    s.inner!.WriteTrailingSemicolon(";");
     s.hasPendingSemicolon = false;
   }
 }
@@ -224,7 +225,7 @@ export function semicolonRemoverWriter_commitSemicolon(receiver: GoPtr<semicolon
  */
 export function semicolonRemoverWriter_Clear(receiver: GoPtr<semicolonRemoverWriter>): void {
   const s = receiver as semicolonRemoverWriter;
-  s.inner.Clear();
+  s.inner!.Clear();
 }
 
 /**
@@ -239,7 +240,7 @@ export function semicolonRemoverWriter_Clear(receiver: GoPtr<semicolonRemoverWri
 export function semicolonRemoverWriter_DecreaseIndent(receiver: GoPtr<semicolonRemoverWriter>): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.DecreaseIndent();
+  s.inner!.DecreaseIndent();
 }
 
 /**
@@ -252,7 +253,7 @@ export function semicolonRemoverWriter_DecreaseIndent(receiver: GoPtr<semicolonR
  */
 export function semicolonRemoverWriter_GetColumn(receiver: GoPtr<semicolonRemoverWriter>): UTF16Offset {
   const s = receiver as semicolonRemoverWriter;
-  return s.inner.GetColumn();
+  return s.inner!.GetColumn();
 }
 
 /**
@@ -265,7 +266,7 @@ export function semicolonRemoverWriter_GetColumn(receiver: GoPtr<semicolonRemove
  */
 export function semicolonRemoverWriter_GetIndent(receiver: GoPtr<semicolonRemoverWriter>): int {
   const s = receiver as semicolonRemoverWriter;
-  return s.inner.GetIndent();
+  return s.inner!.GetIndent();
 }
 
 /**
@@ -278,7 +279,7 @@ export function semicolonRemoverWriter_GetIndent(receiver: GoPtr<semicolonRemove
  */
 export function semicolonRemoverWriter_GetLine(receiver: GoPtr<semicolonRemoverWriter>): int {
   const s = receiver as semicolonRemoverWriter;
-  return s.inner.GetLine();
+  return s.inner!.GetLine();
 }
 
 /**
@@ -291,7 +292,7 @@ export function semicolonRemoverWriter_GetLine(receiver: GoPtr<semicolonRemoverW
  */
 export function semicolonRemoverWriter_GetTextPos(receiver: GoPtr<semicolonRemoverWriter>): int {
   const s = receiver as semicolonRemoverWriter;
-  return s.inner.GetTextPos();
+  return s.inner!.GetTextPos();
 }
 
 /**
@@ -304,7 +305,7 @@ export function semicolonRemoverWriter_GetTextPos(receiver: GoPtr<semicolonRemov
  */
 export function semicolonRemoverWriter_HasTrailingComment(receiver: GoPtr<semicolonRemoverWriter>): bool {
   const s = receiver as semicolonRemoverWriter;
-  return s.inner.HasTrailingComment();
+  return s.inner!.HasTrailingComment();
 }
 
 /**
@@ -317,7 +318,7 @@ export function semicolonRemoverWriter_HasTrailingComment(receiver: GoPtr<semico
  */
 export function semicolonRemoverWriter_HasTrailingWhitespace(receiver: GoPtr<semicolonRemoverWriter>): bool {
   const s = receiver as semicolonRemoverWriter;
-  return s.inner.HasTrailingWhitespace();
+  return s.inner!.HasTrailingWhitespace();
 }
 
 /**
@@ -332,7 +333,7 @@ export function semicolonRemoverWriter_HasTrailingWhitespace(receiver: GoPtr<sem
 export function semicolonRemoverWriter_IncreaseIndent(receiver: GoPtr<semicolonRemoverWriter>): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.IncreaseIndent();
+  s.inner!.IncreaseIndent();
 }
 
 /**
@@ -345,7 +346,7 @@ export function semicolonRemoverWriter_IncreaseIndent(receiver: GoPtr<semicolonR
  */
 export function semicolonRemoverWriter_IsAtStartOfLine(receiver: GoPtr<semicolonRemoverWriter>): bool {
   const s = receiver as semicolonRemoverWriter;
-  return s.inner.IsAtStartOfLine();
+  return s.inner!.IsAtStartOfLine();
 }
 
 /**
@@ -360,7 +361,7 @@ export function semicolonRemoverWriter_IsAtStartOfLine(receiver: GoPtr<semicolon
 export function semicolonRemoverWriter_RawWrite(receiver: GoPtr<semicolonRemoverWriter>, s1: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.RawWrite(s1);
+  s.inner!.RawWrite(s1);
 }
 
 /**
@@ -375,7 +376,7 @@ export function semicolonRemoverWriter_RawWrite(receiver: GoPtr<semicolonRemover
 export function semicolonRemoverWriter_String(receiver: GoPtr<semicolonRemoverWriter>): string {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  return s.inner.String();
+  return s.inner!.String();
 }
 
 /**
@@ -390,7 +391,7 @@ export function semicolonRemoverWriter_String(receiver: GoPtr<semicolonRemoverWr
 export function semicolonRemoverWriter_Write(receiver: GoPtr<semicolonRemoverWriter>, s1: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.Write(s1);
+  s.inner!.Write(s1);
 }
 
 /**
@@ -405,7 +406,7 @@ export function semicolonRemoverWriter_Write(receiver: GoPtr<semicolonRemoverWri
 export function semicolonRemoverWriter_WriteComment(receiver: GoPtr<semicolonRemoverWriter>, text: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteComment(text);
+  s.inner!.WriteComment(text);
 }
 
 /**
@@ -420,7 +421,7 @@ export function semicolonRemoverWriter_WriteComment(receiver: GoPtr<semicolonRem
 export function semicolonRemoverWriter_WriteKeyword(receiver: GoPtr<semicolonRemoverWriter>, text: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteKeyword(text);
+  s.inner!.WriteKeyword(text);
 }
 
 /**
@@ -435,7 +436,7 @@ export function semicolonRemoverWriter_WriteKeyword(receiver: GoPtr<semicolonRem
 export function semicolonRemoverWriter_WriteLine(receiver: GoPtr<semicolonRemoverWriter>): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteLine();
+  s.inner!.WriteLine();
 }
 
 /**
@@ -450,7 +451,7 @@ export function semicolonRemoverWriter_WriteLine(receiver: GoPtr<semicolonRemove
 export function semicolonRemoverWriter_WriteLineForce(receiver: GoPtr<semicolonRemoverWriter>, force: bool): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteLineForce(force);
+  s.inner!.WriteLineForce(force);
 }
 
 /**
@@ -465,7 +466,7 @@ export function semicolonRemoverWriter_WriteLineForce(receiver: GoPtr<semicolonR
 export function semicolonRemoverWriter_WriteLiteral(receiver: GoPtr<semicolonRemoverWriter>, s1: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteLiteral(s1);
+  s.inner!.WriteLiteral(s1);
 }
 
 /**
@@ -480,7 +481,7 @@ export function semicolonRemoverWriter_WriteLiteral(receiver: GoPtr<semicolonRem
 export function semicolonRemoverWriter_WriteOperator(receiver: GoPtr<semicolonRemoverWriter>, text: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteOperator(text);
+  s.inner!.WriteOperator(text);
 }
 
 /**
@@ -495,7 +496,7 @@ export function semicolonRemoverWriter_WriteOperator(receiver: GoPtr<semicolonRe
 export function semicolonRemoverWriter_WriteParameter(receiver: GoPtr<semicolonRemoverWriter>, text: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteParameter(text);
+  s.inner!.WriteParameter(text);
 }
 
 /**
@@ -510,7 +511,7 @@ export function semicolonRemoverWriter_WriteParameter(receiver: GoPtr<semicolonR
 export function semicolonRemoverWriter_WriteProperty(receiver: GoPtr<semicolonRemoverWriter>, text: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteProperty(text);
+  s.inner!.WriteProperty(text);
 }
 
 /**
@@ -525,7 +526,7 @@ export function semicolonRemoverWriter_WriteProperty(receiver: GoPtr<semicolonRe
 export function semicolonRemoverWriter_WritePunctuation(receiver: GoPtr<semicolonRemoverWriter>, text: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WritePunctuation(text);
+  s.inner!.WritePunctuation(text);
 }
 
 /**
@@ -540,7 +541,7 @@ export function semicolonRemoverWriter_WritePunctuation(receiver: GoPtr<semicolo
 export function semicolonRemoverWriter_WriteSpace(receiver: GoPtr<semicolonRemoverWriter>, text: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteSpace(text);
+  s.inner!.WriteSpace(text);
 }
 
 /**
@@ -555,7 +556,7 @@ export function semicolonRemoverWriter_WriteSpace(receiver: GoPtr<semicolonRemov
 export function semicolonRemoverWriter_WriteStringLiteral(receiver: GoPtr<semicolonRemoverWriter>, text: string): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteStringLiteral(text);
+  s.inner!.WriteStringLiteral(text);
 }
 
 /**
@@ -570,7 +571,7 @@ export function semicolonRemoverWriter_WriteStringLiteral(receiver: GoPtr<semico
 export function semicolonRemoverWriter_WriteSymbol(receiver: GoPtr<semicolonRemoverWriter>, text: string, symbol_: GoPtr<Symbol>): void {
   const s = receiver as semicolonRemoverWriter;
   semicolonRemoverWriter_commitSemicolon(s);
-  s.inner.WriteSymbol(text, symbol_);
+  s.inner!.WriteSymbol(text, symbol_);
 }
 
 /**
@@ -594,7 +595,7 @@ export function semicolonRemoverWriter_WriteTrailingSemicolon(receiver: GoPtr<se
  * 	return &semicolonRemoverWriter{false, writer}
  * }
  */
-export function getTrailingSemicolonDeferringWriter(writer: EmitTextWriter): EmitTextWriter {
+export function getTrailingSemicolonDeferringWriter(writer: GoInterface<EmitTextWriter>): GoInterface<EmitTextWriter> {
   return semicolonRemoverWriter_as_EmitTextWriter({
     hasPendingSemicolon: false,
     inner: writer,
@@ -758,7 +759,7 @@ export function Checker_typeToStringEx(receiver: GoPtr<Checker>, t: GoPtr<Type>,
         sourceFile = GetSourceFileOfNode(enclosingDeclaration);
       }
       Printer_Write(p, typeNode, sourceFile, writer, undefined);
-      const result = writer.String();
+      const result = writer!.String();
 
       let maxLength = defaultMaximumTruncationLength * 2;
       if (vc !== undefined && vc.MaxTruncationLength > 0) {
@@ -1020,7 +1021,7 @@ export function Checker_signatureToStringEx(receiver: GoPtr<Checker>, signature:
       if ((flags & TypeFormatFlagsMultilineObjectLiterals) !== 0) {
         const writer = NewTextWriter("\n", 0);
         Printer_Write(p, sig, sourceFile, getTrailingSemicolonDeferringWriter(writer), undefined);
-        return writer.String();
+        return writer!.String();
       }
       const [writer, putWriter] = GetSingleLineStringWriter();
       try {
@@ -1104,7 +1105,7 @@ export function Checker_typePredicateToStringEx(receiver: GoPtr<Checker>, typePr
  * 	return ValueToString(value)
  * }
  */
-export function Checker_valueToString(receiver: GoPtr<Checker>, value: unknown): string {
+export function Checker_valueToString(receiver: GoPtr<Checker>, value: GoInterface<unknown>): string {
   return ValueToString(value);
 }
 

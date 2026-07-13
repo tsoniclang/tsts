@@ -29,6 +29,7 @@ import { AsExportAssignment } from "../../ast/generated/casts.js";
 import { createGetIsolatedDeclarationErrors, type GetSymbolAccessibilityDiagnostic } from "./diagnostics.js";
 import type { DeclarationEmitHost } from "./transform.js";
 
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"79cac9a60c2d8c8e7c95ac5947d1ee4b007d23cb1f90efc004e66780e6519534"}
  *
@@ -43,11 +44,11 @@ import type { DeclarationEmitHost } from "./transform.js";
  * }
  */
 export interface SymbolTrackerImpl {
-  resolver: EmitResolver;
+  resolver: GoInterface<EmitResolver>;
   state: GoPtr<SymbolTrackerSharedState>;
-  host: DeclarationEmitHost;
+  host: GoInterface<DeclarationEmitHost>;
   fallbackStack: GoSlice<GoPtr<Node>>;
-  getIsolatedDeclarationError: (node: GoPtr<Node>) => GoPtr<Diagnostic>;
+  getIsolatedDeclarationError: GoFunc<(node: GoPtr<Node>) => GoPtr<Diagnostic>>;
 }
 
 /**
@@ -152,10 +153,10 @@ export function SymbolTrackerImpl_ReportInferenceFallback(receiver: GoPtr<Symbol
   if (GetSourceFileOfNode(node) !== receiver!.state!.currentSourceFile) {
     return; // Nested error on a declaration in another file - ignore, will be reemitted if file is in the output file set
   }
-  if (receiver!.state!.resolver.IsExpandoFunctionDeclarationUnsafe(node)) { // within a node builder call that should already lock the checker, use the unsafe call
-    receiver!.state!.reportExpandoFunctionErrors(node);
+  if (receiver!.state!.resolver!.IsExpandoFunctionDeclarationUnsafe(node)) { // within a node builder call that should already lock the checker, use the unsafe call
+    receiver!.state!.reportExpandoFunctionErrors!(node);
   }
-  SymbolTrackerSharedState_addDiagnostic(receiver!.state, receiver!.getIsolatedDeclarationError(node));
+  SymbolTrackerSharedState_addDiagnostic(receiver!.state, receiver!.getIsolatedDeclarationError!(node));
 }
 
 /**
@@ -369,7 +370,7 @@ export function SymbolTrackerImpl_TrackSymbol(receiver: GoPtr<SymbolTrackerImpl>
   if ((symbol_!.Flags & SymbolFlagsTypeParameter) !== 0) {
     return false;
   }
-  const issuedDiagnostic = SymbolTrackerImpl_handleSymbolAccessibilityError(receiver, receiver!.resolver.IsSymbolAccessible(symbol_, enclosingDeclaration, meaning, /*shouldComputeAliasToMarkVisible*/ true));
+  const issuedDiagnostic = SymbolTrackerImpl_handleSymbolAccessibilityError(receiver, receiver!.resolver!.IsSymbolAccessible(symbol_, enclosingDeclaration, meaning, /*shouldComputeAliasToMarkVisible*/ true));
   return issuedDiagnostic;
 }
 
@@ -416,7 +417,7 @@ export function SymbolTrackerImpl_handleSymbolAccessibilityError(receiver: GoPtr
       }
     }
   } else if (symbolAccessibilityResult.Accessibility !== SymbolAccessibilityNotResolved) {
-    const errorInfo = receiver!.state!.getSymbolAccessibilityDiagnostic(symbolAccessibilityResult);
+    const errorInfo = receiver!.state!.getSymbolAccessibilityDiagnostic!(symbolAccessibilityResult);
     if (errorInfo !== undefined) {
       const info = { ...errorInfo };
       let diagNode = symbolAccessibilityResult.ErrorNode;
@@ -470,8 +471,8 @@ export interface SymbolTrackerSharedState {
   isolatedDeclarations: bool;
   stripInternal: bool;
   currentSourceFile: GoPtr<SourceFile>;
-  resolver: EmitResolver;
-  reportExpandoFunctionErrors: (node: GoPtr<Node>) => void;
+  resolver: GoInterface<EmitResolver>;
+  reportExpandoFunctionErrors: GoFunc<(node: GoPtr<Node>) => void>;
 }
 
 /**
@@ -495,7 +496,7 @@ export function SymbolTrackerSharedState_addDiagnostic(receiver: GoPtr<SymbolTra
  * 	return tracker
  * }
  */
-export function NewSymbolTracker(host: DeclarationEmitHost, resolver: EmitResolver, state: GoPtr<SymbolTrackerSharedState>): GoPtr<SymbolTrackerImpl> {
+export function NewSymbolTracker(host: GoInterface<DeclarationEmitHost>, resolver: GoInterface<EmitResolver>, state: GoPtr<SymbolTrackerSharedState>): GoPtr<SymbolTrackerImpl> {
   const tracker: SymbolTrackerImpl = {
     host: host,
     resolver: resolver,

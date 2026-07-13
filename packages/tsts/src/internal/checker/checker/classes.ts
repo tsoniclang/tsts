@@ -53,6 +53,7 @@ import { Checker_grammarErrorOnNode } from "../grammarchecks.js";
 import type { Checker } from "./state.js";
 import { Checker_checkClassExpressionExternalHelpers } from "../checker.js";
 
+import type { GoFunc } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getResolutionModeOverride","kind":"method","status":"implemented","sigHash":"7e0c42fe06d7edb996ccecf014152878148d7b5a6adaa597f78189aa937c483a"}
  *
@@ -267,13 +268,13 @@ export function Checker_isNodeWithinClass(receiver: GoPtr<Checker>, node: GoPtr<
  * 	return false
  * }
  */
-export function Checker_forEachEnclosingClass(receiver: GoPtr<Checker>, node: GoPtr<Node>, callback: (node: GoPtr<Node>) => bool): bool {
+export function Checker_forEachEnclosingClass(receiver: GoPtr<Checker>, node: GoPtr<Node>, callback: GoFunc<(node: GoPtr<Node>) => bool>): bool {
   let containingClass = GetContainingClass(node);
   for (;;) {
     if (containingClass === undefined) {
       break;
     }
-    const result = callback(containingClass);
+    const result = callback!(containingClass);
     if (result) {
       return true;
     }

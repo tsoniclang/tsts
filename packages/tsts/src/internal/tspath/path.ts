@@ -6,6 +6,7 @@ import * as slices from "../../go/slices.js";
 import * as unicode from "../../go/unicode.js";
 import * as stringutil from "../stringutil/compare.js";
 
+import type { GoFunc } from "../../go/compat.js";
 // Byte/char-code constants used for faithful byte-level path inspection.
 // Go indexes path strings by byte; this port indexes the equivalent code unit
 // via charCodeAt and compares against these constants.
@@ -1524,7 +1525,7 @@ export function GetPathComponentsRelativeTo(from_: string, to: string, options: 
         break;
       }
     } else {
-      if (!stringEqualer(fromComponent, toComponent)) {
+      if (!stringEqualer!(fromComponent, toComponent)) {
         break;
       }
     }
@@ -1729,7 +1730,7 @@ export function GetAnyExtensionFromPath(path: string, extensions: GoSlice<string
  * 	return ""
  * }
  */
-export function getAnyExtensionFromPathWorker(path: string, extensions: GoSlice<string>, stringEqualityComparer: (a: string, b: string) => bool): string {
+export function getAnyExtensionFromPathWorker(path: string, extensions: GoSlice<string>, stringEqualityComparer: GoFunc<(a: string, b: string) => bool>): string {
   for (const extension of extensions) {
     const result = tryGetExtensionFromPath(path, extension, stringEqualityComparer);
     if (result !== "") {
@@ -1756,13 +1757,13 @@ export function getAnyExtensionFromPathWorker(path: string, extensions: GoSlice<
  * 	return ""
  * }
  */
-export function tryGetExtensionFromPath(path: string, extension: string, stringEqualityComparer: (a: string, b: string) => bool): string {
+export function tryGetExtensionFromPath(path: string, extension: string, stringEqualityComparer: GoFunc<(a: string, b: string) => bool>): string {
   if (!strings.HasPrefix(extension, ".")) {
     extension = "." + extension;
   }
   if (path.length >= extension.length && path.charCodeAt(path.length - extension.length) === CHAR_DOT) {
     const pathExtension = path.slice(path.length - extension.length);
-    if (stringEqualityComparer(pathExtension, extension)) {
+    if (stringEqualityComparer!(pathExtension, extension)) {
       return pathExtension;
     }
   }
@@ -1867,7 +1868,7 @@ export interface ComparePathsOptions {
  * 	return stringutil.GetStringComparer(!o.UseCaseSensitiveFileNames)
  * }
  */
-export function ComparePathsOptions_GetComparer(receiver: ComparePathsOptions): (a: string, b: string) => int {
+export function ComparePathsOptions_GetComparer(receiver: ComparePathsOptions): GoFunc<(a: string, b: string) => int> {
   return stringutil.GetStringComparer(!receiver.UseCaseSensitiveFileNames);
 }
 
@@ -1879,7 +1880,7 @@ export function ComparePathsOptions_GetComparer(receiver: ComparePathsOptions): 
  * 	return stringutil.GetStringEqualityComparer(!o.UseCaseSensitiveFileNames)
  * }
  */
-export function ComparePathsOptions_getEqualityComparer(receiver: ComparePathsOptions): (a: string, b: string) => bool {
+export function ComparePathsOptions_getEqualityComparer(receiver: ComparePathsOptions): GoFunc<(a: string, b: string) => bool> {
   return stringutil.GetStringEqualityComparer(!receiver.UseCaseSensitiveFileNames);
 }
 
@@ -1960,7 +1961,7 @@ export function ComparePaths(a: string, b: string, options: ComparePathsOptions)
   const aRest = a.slice(aRoot.length);
   const bRest = b.slice(bRoot.length);
   if (!hasRelativePathSegment(aRest) && !hasRelativePathSegment(bRest)) {
-    return ComparePathsOptions_GetComparer(options)(aRest, bRest);
+    return ComparePathsOptions_GetComparer(options)!(aRest, bRest);
   }
 
   // The path contains a relative path segment. Normalize the paths and perform a slower component
@@ -1969,7 +1970,7 @@ export function ComparePaths(a: string, b: string, options: ComparePathsOptions)
   const bComponents = reducePathComponents(GetPathComponents(b, ""));
   const sharedLength = globalThis.Math.min(aComponents.length, bComponents.length);
   for (let i = 1; i < sharedLength; i++) {
-    const result = ComparePathsOptions_GetComparer(options)(aComponents[i]!, bComponents[i]!);
+    const result = ComparePathsOptions_GetComparer(options)!(aComponents[i]!, bComponents[i]!);
     if (result !== 0) {
       return result;
     }
@@ -2058,7 +2059,7 @@ export function ContainsPath(parent: string, child: string, options: ComparePath
     if (i === 0) {
       comparer = stringutil.EquateStringCaseInsensitive;
     } else {
-      comparer = componentComparer;
+      comparer = componentComparer!;
     }
     if (!comparer(parentComponent, childComponents[i]!)) {
       return false;
@@ -2255,7 +2256,7 @@ export function SplitVolumePath(path: string): [string, string, bool] {
  * 	return resultPaths, ignored
  * }
  */
-export function GetCommonParents(paths: GoSlice<string>, minComponents: int, getPathComponents: (path: string, currentDirectory: string) => GoSlice<string>, options: ComparePathsOptions): [GoSlice<string>, GoMap<string, { readonly __tsgoEmpty?: never }>] {
+export function GetCommonParents(paths: GoSlice<string>, minComponents: int, getPathComponents: GoFunc<(path: string, currentDirectory: string) => GoSlice<string>>, options: ComparePathsOptions): [GoSlice<string>, GoMap<string, { readonly __tsgoEmpty?: never }>] {
   if (minComponents < 1) {
     throw new globalThis.Error("minComponents must be at least 1");
   }
@@ -2263,7 +2264,7 @@ export function GetCommonParents(paths: GoSlice<string>, minComponents: int, get
     return [[], new globalThis.Map<string, { readonly __tsgoEmpty?: never }>()];
   }
   if (paths.length === 1) {
-    if (reducePathComponents(getPathComponents(paths[0]!, options.CurrentDirectory)).length < minComponents) {
+    if (reducePathComponents(getPathComponents!(paths[0]!, options.CurrentDirectory)).length < minComponents) {
       const ignoredSingle = new globalThis.Map<string, { readonly __tsgoEmpty?: never }>();
       ignoredSingle.set(paths[0]!, {});
       return [[], ignoredSingle];
@@ -2274,7 +2275,7 @@ export function GetCommonParents(paths: GoSlice<string>, minComponents: int, get
   const ignored = new globalThis.Map<string, { readonly __tsgoEmpty?: never }>();
   const pathComponents: GoSlice<GoSlice<string>> = [];
   for (const path of paths) {
-    const components = reducePathComponents(getPathComponents(path, options.CurrentDirectory));
+    const components = reducePathComponents(getPathComponents!(path, options.CurrentDirectory));
     if (components.length < minComponents) {
       ignored.set(path, {});
     } else {
@@ -2371,7 +2372,7 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
       const rest = componentGroups.slice(1);
       for (let j = 0; j < rest.length; j++) {
         const comps = rest[j]!;
-        if (!equality(candidate, comps[lastCommonIndex]!)) {
+        if (!equality!(candidate, comps[lastCommonIndex]!)) {
           // divergence
           if (lastCommonIndex < minComponents) {
             // Not enough components, we need to fan out

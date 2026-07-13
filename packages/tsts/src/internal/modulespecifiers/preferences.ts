@@ -33,6 +33,7 @@ import {
   RelativePreferenceShortest,
 } from "./types.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::shouldAllowImportingTsExtension","kind":"func","status":"implemented","sigHash":"7d4350127685ad85d1d7c869b509a1b8e4995e6ecf4b77829c7cae4a68a38b9a"}
  *
@@ -59,8 +60,8 @@ export function shouldAllowImportingTsExtension(compilerOptions: GoPtr<CompilerO
  * 	return false
  * }
  */
-export function usesExtensionsOnImports(file: SourceFileForSpecifierGeneration): bool {
-  for (const ref of file.Imports()) {
+export function usesExtensionsOnImports(file: GoInterface<SourceFileForSpecifierGeneration>): bool {
+  for (const ref of file!.Imports()) {
     const text = Node_Text(ref);
     if (PathIsRelative(text) && !FileExtensionIsOneOf(text, ExtensionsNotSupportingExtensionlessResolution)) {
       return HasTSFileExtension(text) || HasJSFileExtension(text);
@@ -114,7 +115,7 @@ export function usesExtensionsOnImports(file: SourceFileForSpecifierGeneration):
  * 	return ModuleSpecifierEndingMinimal
  * }
  */
-export function inferPreference(resolutionMode: ResolutionMode, sourceFile: SourceFileForSpecifierGeneration, moduleResolutionIsNodeNext: bool): ModuleSpecifierEnding {
+export function inferPreference(resolutionMode: ResolutionMode, sourceFile: GoInterface<SourceFileForSpecifierGeneration>, moduleResolutionIsNodeNext: bool): ModuleSpecifierEnding {
   let usesJsExtensions = false;
   let specifiers = sourceFile !== undefined && sourceFile.Imports().length > 0
     ? sourceFile.Imports()
@@ -197,7 +198,7 @@ export function inferPreference(resolutionMode: ResolutionMode, sourceFile: Sour
  * 	return inferPreference(resolutionMode, sourceFile, moduleResolutionIsNodeNext)
  * }
  */
-export function getModuleSpecifierEndingPreference(pref: ImportModuleSpecifierEndingPreference, resolutionMode: ResolutionMode, compilerOptions: GoPtr<CompilerOptions>, sourceFile: SourceFileForSpecifierGeneration): ModuleSpecifierEnding {
+export function getModuleSpecifierEndingPreference(pref: ImportModuleSpecifierEndingPreference, resolutionMode: ResolutionMode, compilerOptions: GoPtr<CompilerOptions>, sourceFile: GoInterface<SourceFileForSpecifierGeneration>): ModuleSpecifierEnding {
   const moduleResolution = CompilerOptions_GetModuleResolutionKind(compilerOptions);
   const moduleResolutionIsNodeNext = ModuleResolutionKindNode16 <= moduleResolution && moduleResolution <= ModuleResolutionKindNodeNext;
 
@@ -268,7 +269,7 @@ export function getModuleSpecifierEndingPreference(pref: ImportModuleSpecifierEn
  * 	)
  * }
  */
-export function getPreferredEnding(prefs: UserPreferences, host: ModuleSpecifierGenerationHost, compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: SourceFileForSpecifierGeneration, oldImportSpecifier: string, resolutionMode: ResolutionMode): ModuleSpecifierEnding {
+export function getPreferredEnding(prefs: UserPreferences, host: GoInterface<ModuleSpecifierGenerationHost>, compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: GoInterface<SourceFileForSpecifierGeneration>, oldImportSpecifier: string, resolutionMode: ResolutionMode): ModuleSpecifierEnding {
   if (oldImportSpecifier.length > 0) {
     if (HasJSFileExtension(oldImportSpecifier)) {
       return ModuleSpecifierEndingJsExtension;
@@ -277,7 +278,7 @@ export function getPreferredEnding(prefs: UserPreferences, host: ModuleSpecifier
       return ModuleSpecifierEndingIndex;
     }
   }
-  const effectiveResolutionMode = resolutionMode === ResolutionModeNone ? host.GetDefaultResolutionModeForFile(importingSourceFile) : resolutionMode;
+  const effectiveResolutionMode = resolutionMode === ResolutionModeNone ? host!.GetDefaultResolutionModeForFile(importingSourceFile) : resolutionMode;
   return getModuleSpecifierEndingPreference(prefs.ImportModuleSpecifierEnding, effectiveResolutionMode, compilerOptions, importingSourceFile);
 }
 
@@ -293,7 +294,7 @@ export function getPreferredEnding(prefs: UserPreferences, host: ModuleSpecifier
  */
 export interface ModuleSpecifierPreferences {
   relativePreference: RelativePreferenceKind;
-  getAllowedEndingsInPreferredOrder: (syntaxImpliedNodeFormat: ResolutionMode) => GoSlice<ModuleSpecifierEnding>;
+  getAllowedEndingsInPreferredOrder: GoFunc<(syntaxImpliedNodeFormat: ResolutionMode) => GoSlice<ModuleSpecifierEnding>>;
   excludeRegexes: GoSlice<string>;
 }
 
@@ -361,15 +362,15 @@ export interface ModuleSpecifierPreferences {
  * 	return []ModuleSpecifierEnding{ModuleSpecifierEndingMinimal}
  * }
  */
-export function GetAllowedEndingsInPreferredOrder(prefs: UserPreferences, host: ModuleSpecifierGenerationHost, compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: SourceFileForSpecifierGeneration, oldImportSpecifier: string, syntaxImpliedNodeFormat: ResolutionMode): GoSlice<ModuleSpecifierEnding> {
+export function GetAllowedEndingsInPreferredOrder(prefs: UserPreferences, host: GoInterface<ModuleSpecifierGenerationHost>, compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: GoInterface<SourceFileForSpecifierGeneration>, oldImportSpecifier: string, syntaxImpliedNodeFormat: ResolutionMode): GoSlice<ModuleSpecifierEnding> {
   const preferredEndingDefault = getPreferredEnding(prefs, host, compilerOptions, importingSourceFile, oldImportSpecifier, ResolutionModeNone);
-  const resolutionMode = host.GetDefaultResolutionModeForFile(importingSourceFile);
+  const resolutionMode = host!.GetDefaultResolutionModeForFile(importingSourceFile);
   const preferredEnding = resolutionMode !== syntaxImpliedNodeFormat
     ? getPreferredEnding(prefs, host, compilerOptions, importingSourceFile, oldImportSpecifier, syntaxImpliedNodeFormat)
     : preferredEndingDefault;
   const moduleResolution = CompilerOptions_GetModuleResolutionKind(compilerOptions);
   const moduleResolutionIsNodeNext = ModuleResolutionKindNode16 <= moduleResolution && moduleResolution <= ModuleResolutionKindNodeNext;
-  const allowImportingTsExtension = shouldAllowImportingTsExtension(compilerOptions, importingSourceFile.FileName());
+  const allowImportingTsExtension = shouldAllowImportingTsExtension(compilerOptions, importingSourceFile!.FileName());
   if (syntaxImpliedNodeFormat === ResolutionModeESM && moduleResolutionIsNodeNext) {
     if (allowImportingTsExtension) {
       return [ModuleSpecifierEndingTsExtension, ModuleSpecifierEndingJsExtension];
@@ -449,7 +450,7 @@ export function GetAllowedEndingsInPreferredOrder(prefs: UserPreferences, host: 
  * 	}
  * }
  */
-export function getModuleSpecifierPreferences(prefs: UserPreferences, host: ModuleSpecifierGenerationHost, compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: SourceFileForSpecifierGeneration, oldImportSpecifier: string): ModuleSpecifierPreferences {
+export function getModuleSpecifierPreferences(prefs: UserPreferences, host: GoInterface<ModuleSpecifierGenerationHost>, compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: GoInterface<SourceFileForSpecifierGeneration>, oldImportSpecifier: string): ModuleSpecifierPreferences {
   const excludes = prefs.AutoImportSpecifierExcludeRegexes;
   let relativePreference: RelativePreferenceKind = RelativePreferenceShortest;
   if (oldImportSpecifier.length > 0) {

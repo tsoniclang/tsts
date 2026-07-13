@@ -94,14 +94,15 @@ import { NewIdentifier, NewPrivateIdentifier, NewPropertyAccessExpression, NewKe
 import { Checker_error } from "./checker/support.js";
 import { Member_0_implicitly_has_an_1_type } from "../diagnostics/generated/messages.js";
 
+import type { GoFunc } from "../../go/compat.js";
 function getMarkedAssignmentSymbolLinks(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): MarkedAssignmentSymbolLinks {
   const links = LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(
     receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>,
     symbol_,
   )!;
-  links.lastAssignmentPos ??= 0 as int;
-  links.hasDefiniteAssignment ??= false as bool;
-  return links;
+  links.v.lastAssignmentPos ??= 0 as int;
+  links.v.hasDefiniteAssignment ??= false as bool;
+  return links.v;
 }
 
 /**
@@ -575,7 +576,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
  * 	return flow.Antecedents
  * }
  */
-export function getBranchLabelAntecedents(flow: GoPtr<FlowNode>, reduceLabels: GoPtr<GoSlice<GoPtr<FlowReduceLabelData>>>): GoPtr<FlowList> {
+export function getBranchLabelAntecedents(flow: GoPtr<FlowNode>, reduceLabels: GoSlice<GoPtr<FlowReduceLabelData>>): GoPtr<FlowList> {
   let i = reduceLabels?.length ?? 0;
   while (i !== 0) {
     i--;
@@ -1132,7 +1133,7 @@ export function Checker_narrowTypeByCallExpression(receiver: GoPtr<Checker>, f: 
       return Checker_narrowTypeByTypePredicate(receiver, f, t, predicate, callExpression, assumeTrue);
     }
   }
-  if (receiver!.containsMissingType(t) && IsAccessExpression(f!.reference) && IsPropertyAccessExpression(Node_Expression(callExpression))) {
+  if (receiver!.containsMissingType!(t) && IsAccessExpression(f!.reference) && IsPropertyAccessExpression(Node_Expression(callExpression))) {
     const callAccess = Node_Expression(callExpression);
     if (
       Checker_isMatchingReference(receiver, Node_Expression(f!.reference), Checker_getReferenceCandidate(receiver, Node_Expression(callAccess))) &&
@@ -1304,7 +1305,7 @@ export function Checker_narrowTypeByBinaryExpression(receiver: GoPtr<Checker>, f
         return Checker_narrowTypeByPrivateIdentifierInInExpression(receiver, f, t, expr, assumeTrue);
       }
       const target = Checker_getReferenceCandidate(receiver, expr!.Right);
-      if (receiver!.containsMissingType(t) && IsAccessExpression(f!.reference) && Checker_isMatchingReference(receiver, Node_Expression(f!.reference), target)) {
+      if (receiver!.containsMissingType!(t) && IsAccessExpression(f!.reference) && Checker_isMatchingReference(receiver, Node_Expression(f!.reference), target)) {
         const leftType = Checker_getTypeOfExpression(receiver, expr!.Left);
         if (isTypeUsableAsPropertyName(leftType)) {
           const [accessedName, ok] = Checker_getAccessedPropertyName(receiver, f!.reference);
@@ -1738,7 +1739,7 @@ export function Checker_narrowTypeByDiscriminantProperty(receiver: GoPtr<Checker
  * 	})
  * }
  */
-export function Checker_narrowTypeByDiscriminant(receiver: GoPtr<Checker>, t: GoPtr<Type>, access: GoPtr<Node>, narrowType: (t: GoPtr<Type>) => GoPtr<Type>): GoPtr<Type> {
+export function Checker_narrowTypeByDiscriminant(receiver: GoPtr<Checker>, t: GoPtr<Type>, access: GoPtr<Node>, narrowType: GoFunc<(t: GoPtr<Type>) => GoPtr<Type>>): GoPtr<Type> {
   const [propName, ok] = Checker_getAccessedPropertyName(receiver, access);
   if (!ok) {
     return t;
@@ -1756,7 +1757,7 @@ export function Checker_narrowTypeByDiscriminant(receiver: GoPtr<Checker>, t: Go
   if (removeNullable && optionalChain) {
     propType = Checker_getOptionalType(receiver, propType, false);
   }
-  const narrowedPropType = narrowType(propType);
+  const narrowedPropType = narrowType!(propType);
   return Checker_filterType(receiver, t, (t) => {
     const discriminantType = OrElse(Checker_getTypeOfPropertyOrIndexSignatureOfType(receiver, t, propName), receiver!.unknownType);
     return !(discriminantType!.flags & TypeFlagsNever) && !(narrowedPropType!.flags & TypeFlagsNever) && Checker_areTypesComparable(receiver, narrowedPropType, discriminantType);
@@ -2325,7 +2326,7 @@ export function Checker_narrowTypeByInKeyword(receiver: GoPtr<Checker>, f: GoPtr
   if (assumeTrue) {
     // If the check is for an unknown property, we intersect the target type with `Record<X, unknown>`,
     // where X is the name of the property.
-    const recordSymbol = receiver!.getGlobalRecordSymbol();
+    const recordSymbol = receiver!.getGlobalRecordSymbol!();
     if (recordSymbol !== undefined) {
       return Checker_getIntersectionType(receiver, [t, Checker_getTypeAliasInstantiation(receiver, recordSymbol, [nameType, receiver!.unknownType], undefined)]);
     }
@@ -2724,7 +2725,7 @@ export function Checker_narrowTypeBySwitchOnTrue(receiver: GoPtr<Checker>, f: Go
  * 	return t
  * }
  */
-export function Checker_narrowTypeBySwitchOptionalChainContainment(receiver: GoPtr<Checker>, t: GoPtr<Type>, data: GoPtr<FlowSwitchClauseData>, clauseCheck: (t: GoPtr<Type>) => bool): GoPtr<Type> {
+export function Checker_narrowTypeBySwitchOptionalChainContainment(receiver: GoPtr<Checker>, t: GoPtr<Type>, data: GoPtr<FlowSwitchClauseData>, clauseCheck: GoFunc<(t: GoPtr<Type>) => bool>): GoPtr<Type> {
   const everyClauseChecks = data!.ClauseStart !== data!.ClauseEnd && Every(Checker_getSwitchClauseTypes(receiver, data!.SwitchStatement).slice(data!.ClauseStart, data!.ClauseEnd), clauseCheck);
   if (everyClauseChecks) {
     return Checker_getTypeWithFacts(receiver, t, TypeFactsNEUndefinedOrNull);
@@ -4286,17 +4287,17 @@ export function isCoercibleUnderDoubleEquals(source: GoPtr<Type>, target: GoPtr<
  */
 export function Checker_isExhaustiveSwitchStatement(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
   const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
-  const exhaustiveState = links!.exhaustiveState ?? ExhaustiveStateUnknown;
+  const exhaustiveState = links!.v.exhaustiveState ?? ExhaustiveStateUnknown;
   if (exhaustiveState === ExhaustiveStateUnknown) {
-    links!.exhaustiveState = ExhaustiveStateComputing;
+    links!.v.exhaustiveState = ExhaustiveStateComputing;
     const isExhaustive = Checker_computeExhaustiveSwitchStatement(receiver, node);
-    if (links!.exhaustiveState === ExhaustiveStateComputing) {
-      links!.exhaustiveState = IfElse(isExhaustive, ExhaustiveStateTrue, ExhaustiveStateFalse);
+    if (links!.v.exhaustiveState === ExhaustiveStateComputing) {
+      links!.v.exhaustiveState = IfElse(isExhaustive, ExhaustiveStateTrue, ExhaustiveStateFalse);
     }
   } else if (exhaustiveState === ExhaustiveStateComputing) {
-    links!.exhaustiveState = ExhaustiveStateFalse;
+    links!.v.exhaustiveState = ExhaustiveStateFalse;
   }
-  return links!.exhaustiveState === ExhaustiveStateTrue;
+  return links!.v.exhaustiveState === ExhaustiveStateTrue;
 }
 
 /**
@@ -4404,7 +4405,7 @@ export function Checker_eachTypeContainedIn(receiver: GoPtr<Checker>, source: Go
  */
 export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<string> {
   const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
-  if (!links!.witnessesComputed) {
+  if (!links!.v.witnessesComputed) {
     const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes;
     const witnesses: string[] = new Array(clauses.length).fill("");
     let valid = true;
@@ -4421,10 +4422,10 @@ export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>,
         }
       }
     }
-    links!.witnesses = valid ? witnesses : (undefined as never);
-    links!.witnessesComputed = true;
+    links!.v.witnesses = valid ? witnesses : (undefined as never);
+    links!.v.witnessesComputed = true;
   }
-  return links!.witnesses;
+  return links!.v.witnesses;
 }
 
 /**
@@ -4477,16 +4478,16 @@ export function Checker_getNotEqualFactsFromTypeofSwitch(receiver: GoPtr<Checker
  */
 export function Checker_getSwitchClauseTypes(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Type>> {
   const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
-  if (!links!.switchTypesComputed) {
+  if (!links!.v.switchTypesComputed) {
     const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes;
     const types: GoPtr<Type>[] = new Array(clauses.length);
     for (let i = 0; i < clauses.length; i++) {
       types[i] = Checker_getTypeOfSwitchClause(receiver, clauses[i]);
     }
-    links!.switchTypes = types;
-    links!.switchTypesComputed = true;
+    links!.v.switchTypes = types;
+    links!.v.switchTypesComputed = true;
   }
-  return links!.switchTypes;
+  return links!.v.switchTypes;
 }
 
 /**
@@ -4556,7 +4557,7 @@ export function Checker_getTypeOfSwitchClause(receiver: GoPtr<Checker>, clause: 
  */
 export function Checker_getEffectsSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Signature> {
   const links = LinkStore_Get<GoPtr<Node>, SignatureLinks>(receiver!.signatureLinks as LinkStore<GoPtr<Node>, SignatureLinks>, node);
-  let signature = links!.effectsSignature;
+  let signature = links!.v.effectsSignature;
   if (signature === undefined) {
     let funcType: GoPtr<Type>;
     if (IsBinaryExpression(node)) {
@@ -4584,7 +4585,7 @@ export function Checker_getEffectsSignature(receiver: GoPtr<Checker>, node: GoPt
     if (!(signature !== undefined && Checker_hasTypePredicateOrNeverReturnType(receiver, signature))) {
       signature = receiver!.unknownSignature;
     }
-    links!.effectsSignature = signature;
+    links!.v.effectsSignature = signature;
   }
   if (signature === receiver!.unknownSignature) {
     return undefined;
@@ -4640,7 +4641,7 @@ export function Checker_getSymbolHasInstanceMethodOfObjectType(receiver: GoPtr<C
  * }
  */
 export function Checker_getPropertyNameForKnownSymbolName(receiver: GoPtr<Checker>, symbolName: string): string {
-  const ctorType = receiver!.getGlobalESSymbolConstructorSymbolOrNil();
+  const ctorType = receiver!.getGlobalESSymbolConstructorSymbolOrNil!();
   if (ctorType !== undefined) {
     const uniqueType = Checker_getTypeOfPropertyOfType(receiver, Checker_getTypeOfSymbol(receiver, ctorType), symbolName);
     if (uniqueType !== undefined && isTypeUsableAsPropertyName(uniqueType)) {
@@ -4772,7 +4773,7 @@ export function Checker_getExplicitTypeOfSymbol(receiver: GoPtr<Checker>, symbol
   }
   if (symbol!.Flags & (SymbolFlagsVariable | SymbolFlagsProperty)) {
     if (symbol!.CheckFlags & CheckFlagsMapped) {
-      const origin = LinkStore_Get<GoPtr<Symbol>, MappedSymbolLinks>(receiver!.mappedSymbolLinks as LinkStore<GoPtr<Symbol>, MappedSymbolLinks>, symbol)!.syntheticOrigin;
+      const origin = LinkStore_Get<GoPtr<Symbol>, MappedSymbolLinks>(receiver!.mappedSymbolLinks as LinkStore<GoPtr<Symbol>, MappedSymbolLinks>, symbol)!.v.syntheticOrigin;
       if (origin !== undefined && Checker_getExplicitTypeOfSymbol(receiver, origin, diagnostic) !== undefined) {
         return Checker_getTypeOfSymbol(receiver, symbol);
       }
@@ -4967,7 +4968,7 @@ export function Checker_getInitialTypeOfVariableDeclaration(receiver: GoPtr<Chec
  */
 export function Checker_getTypeOfInitializer(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
   if (LinkStore_Has<GoPtr<Node>, TypeNodeLinks>(receiver!.typeNodeLinks as unknown as LinkStore<GoPtr<Node>, TypeNodeLinks>, node)) {
-    const t = LinkStore_Get<GoPtr<Node>, TypeNodeLinks>(receiver!.typeNodeLinks as unknown as LinkStore<GoPtr<Node>, TypeNodeLinks>, node)!.resolvedType;
+    const t = LinkStore_Get<GoPtr<Node>, TypeNodeLinks>(receiver!.typeNodeLinks as unknown as LinkStore<GoPtr<Node>, TypeNodeLinks>, node)!.v.resolvedType;
     if (t !== undefined) { return t; }
   }
   return Checker_getTypeOfExpression(receiver, node);
@@ -5831,10 +5832,10 @@ export function Checker_ensureAssignmentsMarked(receiver: GoPtr<Checker>, symbol
   const parent = FindAncestor(symbol_!.ValueDeclaration, IsFunctionOrSourceFile);
   if (parent === undefined) { return; }
   const links = LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, parent)!;
-  if (!(links.flags & NodeCheckFlagsAssignmentsMarked)) {
-    links.flags |= NodeCheckFlagsAssignmentsMarked;
+  if (!(links.v.flags & NodeCheckFlagsAssignmentsMarked)) {
+    links.v.flags |= NodeCheckFlagsAssignmentsMarked;
     if (!Checker_hasParentWithAssignmentsMarked(receiver, parent)) {
-      receiver!.markNodeAssignments(parent);
+      receiver!.markNodeAssignments!(parent);
     }
   }
 }
@@ -5850,7 +5851,7 @@ export function Checker_ensureAssignmentsMarked(receiver: GoPtr<Checker>, symbol
  * }
  */
 export function Checker_hasParentWithAssignmentsMarked(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  return FindAncestor(node!.Parent, (n) => IsFunctionOrSourceFile(n) && !!(LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, n)!.flags & NodeCheckFlagsAssignmentsMarked)) !== undefined;
+  return FindAncestor(node!.Parent, (n) => IsFunctionOrSourceFile(n) && !!(LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, n)!.v.flags & NodeCheckFlagsAssignmentsMarked)) !== undefined;
 }
 
 /**

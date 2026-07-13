@@ -9,6 +9,7 @@ import { SyncSet_AddIfAbsent } from "../collections/syncset.js";
 import type { SyncSet } from "../collections/syncset.js";
 import { Map } from "./core.js";
 
+import type { GoFunc } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchResult","kind":"type","status":"implemented","sigHash":"983db95743f083de914f46fe0f414fcaaeedb3c83b8b8885774e02abb1a1bf77"}
  *
@@ -85,9 +86,9 @@ export function BreadthFirstSearchLevel_Delete<K extends GoComparable, N>(receiv
  * 	}
  * }
  */
-export function BreadthFirstSearchLevel_Range<K extends GoComparable, N>(receiver: GoPtr<BreadthFirstSearchLevel<K, N>>, f: (node: N) => bool): void {
+export function BreadthFirstSearchLevel_Range<K extends GoComparable, N>(receiver: GoPtr<BreadthFirstSearchLevel<K, N>>, f: GoFunc<(node: N) => bool>): void {
   (OrderedMap_Values(receiver!.jobs) as (yield_: (value: GoPtr<breadthFirstSearchJob<N>>) => bool) => void)((job: GoPtr<breadthFirstSearchJob<N>>): bool => {
-    if (!f(job!.node)) {
+    if (!f!(job!.node)) {
       return false;
     }
     return true;
@@ -109,7 +110,7 @@ export function BreadthFirstSearchLevel_Range<K extends GoComparable, N>(receive
  */
 export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N = unknown> {
   Visited: GoPtr<SyncSet<K>>;
-  PreprocessLevel: (arg0: GoPtr<BreadthFirstSearchLevel<K, N>>) => void;
+  PreprocessLevel: GoFunc<(arg0: GoPtr<BreadthFirstSearchLevel<K, N>>) => void>;
 }
 
 /**
@@ -124,7 +125,7 @@ export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N =
  * 	return BreadthFirstSearchParallelEx(start, neighbors, visit, BreadthFirstSearchOptions[N, N]{}, Identity)
  * }
  */
-export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, neighbors: (arg0: N) => GoSlice<N>, visit: (node: N) => [bool, bool]): BreadthFirstSearchResult<N> {
+export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool]): BreadthFirstSearchResult<N> {
   return BreadthFirstSearchParallelEx<N, N>(start, neighbors, visit, {} as BreadthFirstSearchOptions<N, N>, (n: N): N => n);
 }
 
@@ -140,7 +141,7 @@ export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, nei
  * 	getKey func(N) K,
  * ) BreadthFirstSearchResult[N] { ... }
  */
-export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: (arg0: N) => GoSlice<N>, visit: (node: N) => [bool, bool], options: BreadthFirstSearchOptions<K, N>, getKey: (arg0: N) => K): BreadthFirstSearchResult<N> {
+export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], options: BreadthFirstSearchOptions<K, N>, getKey: GoFunc<(arg0: N) => K>): BreadthFirstSearchResult<N> {
   let visited = options.Visited;
   if (visited === undefined) {
     visited = { set: new globalThis.Set<unknown>() } as unknown as SyncSet<K>;
@@ -171,7 +172,7 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
         return true; // continue iteration
       }
       // If we have already visited this node, skip it.
-      if (!SyncSet_AddIfAbsent(visited, getKey(j!.node))) {
+      if (!SyncSet_AddIfAbsent(visited, getKey!(j!.node))) {
         return true;
       }
       const [isResult, stop] = visit(j!.node);
@@ -192,7 +193,7 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
         return true;
       }
       // Add the next level jobs
-      const neighborNodes = neighbors(j!.node);
+      const neighborNodes = neighbors!(j!.node);
       if (neighborNodes.length > 0) {
         nextJobCount += neighborNodes.length;
         next[curI] = Map(neighborNodes, (child: N): GoPtr<breadthFirstSearchJob<N>> => {
@@ -214,8 +215,8 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
     const nextJobs = NewOrderedMapWithSizeHint<K, GoPtr<breadthFirstSearchJob<N>>>(nextJobCount as int);
     for (const jobList of next) {
       for (const j of jobList) {
-        if (!OrderedMap_Has(nextJobs, getKey(j!.node))) {
-          OrderedMap_Set(nextJobs, getKey(j!.node), j);
+        if (!OrderedMap_Has(nextJobs, getKey!(j!.node))) {
+          OrderedMap_Set(nextJobs, getKey!(j!.node), j);
         }
       }
     }
@@ -234,7 +235,7 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
 
   let levelIndex = 0;
   let level = NewOrderedMapFromList<K, GoPtr<breadthFirstSearchJob<N>>>([
-    { Key: getKey(start), Value: { node: start, parent: undefined } } as MapEntry<K, GoPtr<breadthFirstSearchJob<N>>>,
+    { Key: getKey!(start), Value: { node: start, parent: undefined } } as MapEntry<K, GoPtr<breadthFirstSearchJob<N>>>,
   ]);
   while (OrderedMap_Size(level) > 0) {
     const r = processLevel(levelIndex, level);

@@ -9,7 +9,6 @@ import { KindClassDeclaration, KindClassExpression, KindComputedPropertyName, Ki
 import { Node_Locals, Node_Text } from "../ast/ast.js";
 import { Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
 import { SymbolFlagsValue, SymbolFlagsExportValue, SymbolFlagsAlias } from "../ast/symbolflags.js";
-import { IfElse } from "../core/core.js";
 import { Set_Has, Set_Add } from "../collections/set.js";
 import type { Set } from "../collections/set.js";
 import type { AutoGenerateId, EmitContext } from "./emitcontext.js";
@@ -19,6 +18,7 @@ import { GeneratedIdentifierFlagsAuto, GeneratedIdentifierFlagsLoop, GeneratedId
 import { GeneratedIdentifierFlags_IsNode, GeneratedIdentifierFlags_Kind, GeneratedIdentifierFlags_IsOptimistic, GeneratedIdentifierFlags_IsReservedInNestedScopes, GeneratedIdentifierFlags_IsFileLevel } from "./generatedidentifierflags.js";
 import { FormatGeneratedName, ensureLeadingHash, removeLeadingHash, makeIdentifierFromModuleName } from "./utilities.js";
 
+import type { GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::tempFlags","kind":"type","status":"implemented","sigHash":"743dd98db6ac806ced73789710bf9f48c2924a29522016b43a75017c04ea73e8"}
  *
@@ -88,6 +88,20 @@ export interface nameGenerationScope {
   reservedNames: Set<string>;
 }
 
+function nameGenerationScopeRef(receiver: NameGenerator): NonNullable<GoRef<GoPtr<nameGenerationScope>>> {
+  return {
+    get v(): GoPtr<nameGenerationScope> { return receiver.nameGenerationScope; },
+    set v(value: GoPtr<nameGenerationScope>) { receiver.nameGenerationScope = value; },
+  };
+}
+
+function privateNameGenerationScopeRef(receiver: NameGenerator): NonNullable<GoRef<GoPtr<nameGenerationScope>>> {
+  return {
+    get v(): GoPtr<nameGenerationScope> { return receiver.privateNameGenerationScope; },
+    set v(value: GoPtr<nameGenerationScope>) { receiver.privateNameGenerationScope = value; },
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.PushScope","kind":"method","status":"implemented","sigHash":"2ad09250ca60180e83c58a1da88b2fe4f6017857d4f72febf1b24b4d1494ba7a"}
  *
@@ -146,10 +160,8 @@ export function NameGenerator_PopScope(receiver: GoPtr<NameGenerator>, reuseTemp
  * 	return core.IfElse(privateName, &g.privateNameGenerationScope, &g.nameGenerationScope)
  * }
  */
-export function NameGenerator_getScope(receiver: GoPtr<NameGenerator>, privateName: bool): GoPtr<GoPtr<nameGenerationScope>> {
-  // In TS we cannot return a pointer-to-field. Callers inline scope selection.
-  // This function returns the current scope value (not a mutable reference).
-  return IfElse(privateName, receiver!.privateNameGenerationScope, receiver!.nameGenerationScope);
+export function NameGenerator_getScope(receiver: GoPtr<NameGenerator>, privateName: bool): GoRef<GoPtr<nameGenerationScope>> {
+  return privateName ? privateNameGenerationScopeRef(receiver!) : nameGenerationScopeRef(receiver!);
 }
 
 /**
@@ -165,9 +177,9 @@ export function NameGenerator_getScope(receiver: GoPtr<NameGenerator>, privateNa
  * }
  */
 export function NameGenerator_getTempFlags(receiver: GoPtr<NameGenerator>, privateName: bool): tempFlags {
-  const scope = IfElse(privateName, receiver!.privateNameGenerationScope, receiver!.nameGenerationScope);
-  if (scope !== undefined) {
-    return scope.tempFlags;
+  const scope = NameGenerator_getScope(receiver, privateName)!;
+  if (scope.v !== undefined) {
+    return scope.v.tempFlags;
   }
   return tempFlagsAuto;
 }
@@ -185,27 +197,16 @@ export function NameGenerator_getTempFlags(receiver: GoPtr<NameGenerator>, priva
  * }
  */
 export function NameGenerator_setTempFlags(receiver: GoPtr<NameGenerator>, privateName: bool, flags: tempFlags): void {
-  if (privateName) {
-    if (receiver!.privateNameGenerationScope === undefined) {
-      receiver!.privateNameGenerationScope = {
-        next: undefined,
-        tempFlags: tempFlagsAuto,
-        formattedNameTempFlags: new globalThis.Map(),
-        reservedNames: { M: new globalThis.Map() },
-      };
-    }
-    receiver!.privateNameGenerationScope.tempFlags = flags;
-  } else {
-    if (receiver!.nameGenerationScope === undefined) {
-      receiver!.nameGenerationScope = {
-        next: undefined,
-        tempFlags: tempFlagsAuto,
-        formattedNameTempFlags: new globalThis.Map(),
-        reservedNames: { M: new globalThis.Map() },
-      };
-    }
-    receiver!.nameGenerationScope.tempFlags = flags;
+  const scope = NameGenerator_getScope(receiver, privateName)!;
+  if (scope.v === undefined) {
+    scope.v = {
+      next: undefined,
+      tempFlags: tempFlagsAuto,
+      formattedNameTempFlags: new globalThis.Map(),
+      reservedNames: { M: new globalThis.Map() },
+    };
   }
+  scope.v!.tempFlags = flags;
 }
 
 /**
@@ -223,9 +224,9 @@ export function NameGenerator_setTempFlags(receiver: GoPtr<NameGenerator>, priva
  * }
  */
 export function NameGenerator_getTempFlagsForFormattedName(receiver: GoPtr<NameGenerator>, privateName: bool, formattedNameKey: string): tempFlags {
-  const scope = IfElse(privateName, receiver!.privateNameGenerationScope, receiver!.nameGenerationScope);
-  if (scope !== undefined) {
-    const flags = scope.formattedNameTempFlags.get(formattedNameKey);
+  const scope = NameGenerator_getScope(receiver, privateName)!;
+  if (scope.v !== undefined) {
+    const flags = scope.v.formattedNameTempFlags.get(formattedNameKey);
     if (flags !== undefined) {
       return flags;
     }
@@ -249,33 +250,16 @@ export function NameGenerator_getTempFlagsForFormattedName(receiver: GoPtr<NameG
  * }
  */
 export function NameGenerator_setTempFlagsForFormattedName(receiver: GoPtr<NameGenerator>, privateName: bool, formattedNameKey: string, flags: tempFlags): void {
-  if (privateName) {
-    if (receiver!.privateNameGenerationScope === undefined) {
-      receiver!.privateNameGenerationScope = {
-        next: undefined,
-        tempFlags: tempFlagsAuto,
-        formattedNameTempFlags: new globalThis.Map(),
-        reservedNames: { M: new globalThis.Map() },
-      };
-    }
-    if (receiver!.privateNameGenerationScope.formattedNameTempFlags === undefined) {
-      receiver!.privateNameGenerationScope.formattedNameTempFlags = new globalThis.Map();
-    }
-    receiver!.privateNameGenerationScope.formattedNameTempFlags.set(formattedNameKey, flags);
-  } else {
-    if (receiver!.nameGenerationScope === undefined) {
-      receiver!.nameGenerationScope = {
-        next: undefined,
-        tempFlags: tempFlagsAuto,
-        formattedNameTempFlags: new globalThis.Map(),
-        reservedNames: { M: new globalThis.Map() },
-      };
-    }
-    if (receiver!.nameGenerationScope.formattedNameTempFlags === undefined) {
-      receiver!.nameGenerationScope.formattedNameTempFlags = new globalThis.Map();
-    }
-    receiver!.nameGenerationScope.formattedNameTempFlags.set(formattedNameKey, flags);
+  const scope = NameGenerator_getScope(receiver, privateName)!;
+  if (scope.v === undefined) {
+    scope.v = {
+      next: undefined,
+      tempFlags: tempFlagsAuto,
+      formattedNameTempFlags: new globalThis.Map(),
+      reservedNames: { M: new globalThis.Map() },
+    };
   }
+  scope.v!.formattedNameTempFlags.set(formattedNameKey, flags);
 }
 
 /**
@@ -296,34 +280,19 @@ export function NameGenerator_setTempFlagsForFormattedName(receiver: GoPtr<NameG
  * }
  */
 export function NameGenerator_reserveName(receiver: GoPtr<NameGenerator>, name: string, privateName: bool, scoped: bool, temp: bool): void {
-  if (privateName) {
-    if (receiver!.privateNameGenerationScope === undefined) {
-      receiver!.privateNameGenerationScope = {
-        next: undefined,
-        tempFlags: tempFlagsAuto,
-        formattedNameTempFlags: new globalThis.Map(),
-        reservedNames: { M: new globalThis.Map() },
-      };
-    }
-    if (privateName || scoped) {
-      Set_Add(receiver!.privateNameGenerationScope.reservedNames, name);
-    } else if (!temp) {
-      Set_Add(receiver!.generatedNames, name);
-    }
-  } else {
-    if (receiver!.nameGenerationScope === undefined) {
-      receiver!.nameGenerationScope = {
-        next: undefined,
-        tempFlags: tempFlagsAuto,
-        formattedNameTempFlags: new globalThis.Map(),
-        reservedNames: { M: new globalThis.Map() },
-      };
-    }
-    if (privateName || scoped) {
-      Set_Add(receiver!.nameGenerationScope.reservedNames, name);
-    } else if (!temp) {
-      Set_Add(receiver!.generatedNames, name);
-    }
+  const scope = NameGenerator_getScope(receiver, privateName)!;
+  if (scope.v === undefined) {
+    scope.v = {
+      next: undefined,
+      tempFlags: tempFlagsAuto,
+      formattedNameTempFlags: new globalThis.Map(),
+      reservedNames: { M: new globalThis.Map() },
+    };
+  }
+  if (privateName || scoped) {
+    Set_Add(scope.v!.reservedNames, name);
+  } else if (!temp) {
+    Set_Add(receiver!.generatedNames, name);
   }
 }
 
@@ -1025,7 +994,7 @@ export function NameGenerator_isReservedName(receiver: GoPtr<NameGenerator>, nam
     return true;
   }
 
-  let scope = IfElse(privateName, receiver!.privateNameGenerationScope, receiver!.nameGenerationScope);
+  let scope = NameGenerator_getScope(receiver, privateName)!.v;
   while (scope !== undefined) {
     if (Set_Has(scope.reservedNames, name)) {
       return true;

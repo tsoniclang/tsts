@@ -4,6 +4,7 @@ import type { GoInterfaceValue, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { TypeParameterDeclaration } from "../ast/generated/data.js";
 
+import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeKind","kind":"type","status":"implemented","sigHash":"5f6d05dddcd7c40b06567b6639fcc9e2653dcc7ba9a670dd5bc328b039640dea"}
  *
@@ -71,7 +72,7 @@ export const PseudoTypeKindBigIntLiteral: PseudoTypeKind = 19 as short;
  */
 export interface PseudoType {
   Kind: PseudoTypeKind;
-  data: pseudoTypeData;
+  data: GoInterface<pseudoTypeData>;
 }
 
 /**
@@ -85,8 +86,8 @@ export interface PseudoType {
  * 	return n
  * }
  */
-export function newPseudoType(kind: PseudoTypeKind, data: pseudoTypeData): GoPtr<PseudoType> {
-  const n = data.AsPseudoType();
+export function newPseudoType(kind: PseudoTypeKind, data: GoInterface<pseudoTypeData>): GoPtr<PseudoType> {
+  const n = data!.AsPseudoType();
   n!.Kind = kind;
   n!.data = data;
   return n;
@@ -208,7 +209,7 @@ export function NewPseudoTypeDirect(typeNode: GoPtr<Node>): GoPtr<PseudoType> {
  * func (t *PseudoType) AsPseudoTypeDirect() *PseudoTypeDirect { return t.data.(*PseudoTypeDirect) }
  */
 export function PseudoType_AsPseudoTypeDirect(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeDirect> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoTypeDirect>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeDirect>;
 }
 
 /**
@@ -263,7 +264,7 @@ export function NewPseudoTypeInferredWithErrors(expr: GoPtr<Node>, errorNodes: G
  * func (t *PseudoType) AsPseudoTypeInferred() *PseudoTypeInferred { return t.data.(*PseudoTypeInferred) }
  */
 export function PseudoType_AsPseudoTypeInferred(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeInferred> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoTypeInferred>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeInferred>;
 }
 
 /**
@@ -300,7 +301,7 @@ export function NewPseudoTypeNoResult(decl: GoPtr<Node>): GoPtr<PseudoType> {
  * func (t *PseudoType) AsPseudoTypeNoResult() *PseudoTypeNoResult { return t.data.(*PseudoTypeNoResult) }
  */
 export function PseudoType_AsPseudoTypeNoResult(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeNoResult> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoTypeNoResult>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeNoResult>;
 }
 
 /**
@@ -345,7 +346,7 @@ export function NewPseudoTypeMaybeConstLocation(loc: GoPtr<Node>, ct: GoPtr<Pseu
  * }
  */
 export function PseudoType_AsPseudoTypeMaybeConstLocation(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeMaybeConstLocation> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoTypeMaybeConstLocation>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeMaybeConstLocation>;
 }
 
 /**
@@ -384,7 +385,7 @@ export function NewPseudoTypeUnion(types: GoSlice<GoPtr<PseudoType>>): GoPtr<Pse
  * }
  */
 export function PseudoType_AsPseudoTypeUnion(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeUnion> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoTypeUnion>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeUnion>;
 }
 
 /**
@@ -472,7 +473,7 @@ export function NewPseudoTypeSingleCallSignature(signature: GoPtr<Node>, paramet
  * }
  */
 export function PseudoType_AsPseudoTypeSingleCallSignature(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeSingleCallSignature> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoTypeSingleCallSignature>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeSingleCallSignature>;
 }
 
 /**
@@ -513,7 +514,7 @@ export function NewPseudoTypeTuple(elements: GoSlice<GoPtr<PseudoType>>): GoPtr<
  * }
  */
 export function PseudoType_AsPseudoTypeTuple(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeTuple> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoTypeTuple>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeTuple>;
 }
 
 /**
@@ -531,7 +532,7 @@ export interface PseudoObjectElement {
   Name: GoPtr<Node>;
   Optional: bool;
   Kind: PseudoObjectElementKind;
-  data: pseudoObjectElementData;
+  data: GoInterface<pseudoObjectElementData>;
 }
 
 /**
@@ -623,8 +624,8 @@ export interface pseudoObjectElementData extends GoInterfaceValue<unknown> {
  * 	return e
  * }
  */
-export function newPseudoObjectElement(kind: PseudoObjectElementKind, name: GoPtr<Node>, optional: bool, data: pseudoObjectElementData): GoPtr<PseudoObjectElement> {
-  const e = data.AsPseudoObjectElement();
+export function newPseudoObjectElement(kind: PseudoObjectElementKind, name: GoPtr<Node>, optional: bool, data: GoInterface<pseudoObjectElementData>): GoPtr<PseudoObjectElement> {
+  const e = data!.AsPseudoObjectElement();
   e!.Kind = kind;
   e!.Name = name;
   e!.Optional = optional;
@@ -695,7 +696,7 @@ export function NewPseudoObjectMethod(signature: GoPtr<Node>, name: GoPtr<Node>,
  * }
  */
 export function PseudoObjectElement_AsPseudoObjectMethod(receiver: GoPtr<PseudoObjectElement>): GoPtr<PseudoObjectMethod> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoObjectMethod>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoObjectMethod>;
 }
 
 /**
@@ -740,7 +741,7 @@ export function NewPseudoPropertyAssignment(readonly: bool, name: GoPtr<Node>, o
  * }
  */
 export function PseudoObjectElement_AsPseudoPropertyAssignment(receiver: GoPtr<PseudoObjectElement>): GoPtr<PseudoPropertyAssignment> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoPropertyAssignment>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoPropertyAssignment>;
 }
 
 /**
@@ -785,7 +786,7 @@ export function NewPseudoSetAccessor(signature: GoPtr<Node>, name: GoPtr<Node>, 
  * }
  */
 export function PseudoObjectElement_AsPseudoSetAccessor(receiver: GoPtr<PseudoObjectElement>): GoPtr<PseudoSetAccessor> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoSetAccessor>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoSetAccessor>;
 }
 
 /**
@@ -830,7 +831,7 @@ export function NewPseudoGetAccessor(signature: GoPtr<Node>, name: GoPtr<Node>, 
  * }
  */
 export function PseudoObjectElement_AsPseudoGetAccessor(receiver: GoPtr<PseudoObjectElement>): GoPtr<PseudoGetAccessor> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoGetAccessor>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoGetAccessor>;
 }
 
 /**
@@ -871,7 +872,7 @@ export function NewPseudoTypeObjectLiteral(elements: GoSlice<GoPtr<PseudoObjectE
  * }
  */
 export function PseudoType_AsPseudoTypeObjectLiteral(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeObjectLiteral> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoTypeObjectLiteral>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeObjectLiteral>;
 }
 
 /**
@@ -944,5 +945,5 @@ export function NewPseudoTypeBigIntLiteral(node: GoPtr<Node>): GoPtr<PseudoType>
  * }
  */
 export function PseudoType_AsPseudoTypeLiteral(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeLiteral> {
-  return receiver!.data[goReceiverKey] as GoPtr<PseudoTypeLiteral>;
+  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeLiteral>;
 }

@@ -213,6 +213,7 @@ import {
 import type { regExpParser, regularExpressionFlags } from "./regexp.js";
 import { tokenIsIdentifierOrKeyword } from "./utilities.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 // Go strings are UTF-8 byte sequences; the scanner tracks byte offsets (s.pos).
 // The shared utf8 string-byte view keeps those byte semantics while avoiding
 // repeated TextEncoder/TextDecoder work on hot scanner paths.
@@ -1467,7 +1468,7 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 	s.pos += i
  * }
  */
-export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: (arg0: byte) => bool): void {
+export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: GoFunc<(arg0: byte) => bool>): void {
   const s = receiver!;
   // Scan in place over s.text rather than materializing s.text[pos:end] each call. The byte-string
   // slice is O(rest-of-file) (decode/copy) per call, which is O(n^2) over a large source such as the
@@ -1481,7 +1482,7 @@ export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: (arg0: by
     const text = s.text;
     while (pos < end) {
       const b = text.charCodeAt(pos) as byte;
-      if (b >= utf8.RuneSelf || !pred(b)) {
+      if (b >= utf8.RuneSelf || !pred!(b)) {
         break;
       }
       pos++;
@@ -1490,7 +1491,7 @@ export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: (arg0: by
     const bytes = view.bytes!;
     while (pos < end) {
       const b = bytes[pos]! as byte;
-      if (b >= utf8.RuneSelf || !pred(b)) {
+      if (b >= utf8.RuneSelf || !pred!(b)) {
         break;
       }
       pos++;
@@ -6437,8 +6438,8 @@ export function ComputeLineOfPosition(lineStarts: GoSlice<TextPos>, pos: int): i
  * 	return sourceFile.ECMALineMap()
  * }
  */
-export function GetECMALineStarts(sourceFile: SourceFileLike): GoSlice<TextPos> {
-  return sourceFile.ECMALineMap();
+export function GetECMALineStarts(sourceFile: GoInterface<SourceFileLike>): GoSlice<TextPos> {
+  return sourceFile!.ECMALineMap();
 }
 
 // sourceFileLikeFromSourceFile adapts a *ast.SourceFile to the SourceFileLike
@@ -6458,7 +6459,7 @@ const sourceFileLikeFromSourceFile = (sourceFile: GoPtr<SourceFile>): SourceFile
  * 	return ComputeLineOfPosition(lineMap, pos)
  * }
  */
-export function GetECMALineOfPosition(sourceFile: SourceFileLike, pos: int): int {
+export function GetECMALineOfPosition(sourceFile: GoInterface<SourceFileLike>, pos: int): int {
   const lineMap = GetECMALineStarts(sourceFile);
   return ComputeLineOfPosition(lineMap, pos);
 }
@@ -6474,10 +6475,10 @@ export function GetECMALineOfPosition(sourceFile: SourceFileLike, pos: int): int
  * 	return line, character
  * }
  */
-export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: SourceFileLike, pos: int): [int, UTF16Offset] {
+export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: GoInterface<SourceFileLike>, pos: int): [int, UTF16Offset] {
   const lineMap = GetECMALineStarts(sourceFile);
   const line = ComputeLineOfPosition(lineMap, pos);
-  const text = sourceFile.Text();
+  const text = sourceFile!.Text();
   const textView = utf8.GetStringByteView(text);
   const character = utf8.StringByteViewUTF16Len(text, textView, lineMap[line]!, pos);
   return [line, character];
@@ -6494,7 +6495,7 @@ export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: SourceFileLik
  * 	return line, byteOffset
  * }
  */
-export function GetECMALineAndByteOffsetOfPosition(sourceFile: SourceFileLike, pos: int): [int, int] {
+export function GetECMALineAndByteOffsetOfPosition(sourceFile: GoInterface<SourceFileLike>, pos: int): [int, int] {
   const lineMap = GetECMALineStarts(sourceFile);
   const line = ComputeLineOfPosition(lineMap, pos);
   const byteOffset = pos - (lineMap[line]! as int);
@@ -6537,9 +6538,9 @@ export function GetECMAEndLinePosition(sourceFile: GoPtr<SourceFile>, line: int)
  * 	return ComputePositionOfLineAndUTF16Character(lineStarts, line, character, sourceFile.Text(), false)
  * }
  */
-export function GetECMAPositionOfLineAndUTF16Character(sourceFile: SourceFileLike, line: int, character: UTF16Offset): int {
+export function GetECMAPositionOfLineAndUTF16Character(sourceFile: GoInterface<SourceFileLike>, line: int, character: UTF16Offset): int {
   const lineStarts = GetECMALineStarts(sourceFile);
-  return ComputePositionOfLineAndUTF16Character(lineStarts, line, character, sourceFile.Text(), false);
+  return ComputePositionOfLineAndUTF16Character(lineStarts, line, character, sourceFile!.Text(), false);
 }
 
 /**
@@ -6550,7 +6551,7 @@ export function GetECMAPositionOfLineAndUTF16Character(sourceFile: SourceFileLik
  * 	return ComputePositionOfLineAndByteOffset(GetECMALineStarts(sourceFile), line, byteOffset)
  * }
  */
-export function GetECMAPositionOfLineAndByteOffset(sourceFile: SourceFileLike, line: int, byteOffset: int): int {
+export function GetECMAPositionOfLineAndByteOffset(sourceFile: GoInterface<SourceFileLike>, line: int, byteOffset: int): int {
   return ComputePositionOfLineAndByteOffset(GetECMALineStarts(sourceFile), line, byteOffset);
 }
 

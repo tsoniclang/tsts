@@ -68,6 +68,7 @@ import { CreateDiagnosticReporter, CreateReportErrorSummary } from "./tsc/diagno
 import type { DiagnosticReporter, DiagnosticsReporter } from "./tsc/diagnostics.js";
 import { GetTraceWithWriterFromSys } from "./tsc/emit.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::startTracingIfNeeded","kind":"func","status":"implemented","sigHash":"42f5eed2c85a5deb3027e6f19fe244c4decd9026a0423e345d4350618fe06017"}
  *
@@ -88,7 +89,7 @@ import { GetTraceWithWriterFromSys } from "./tsc/emit.js";
  * 	return tr
  * }
  */
-export function startTracingIfNeeded(sys: System, config: GoPtr<ParsedCommandLine>, testing: CommandLineTesting | undefined): GoPtr<Tracing> {
+export function startTracingIfNeeded(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, testing: CommandLineTesting | undefined): GoPtr<Tracing> {
   const traceDir = ParsedCommandLine_CompilerOptions(config)!.GenerateTrace ?? "";
   if (traceDir === "") {
     return undefined;
@@ -97,9 +98,9 @@ export function startTracingIfNeeded(sys: System, config: GoPtr<ParsedCommandLin
   if (config!.ConfigFile !== undefined && config!.ConfigFile!.SourceFile !== undefined) {
     configFilePath = SourceFile_FileName(config!.ConfigFile!.SourceFile);
   }
-  const [tr, err] = StartTracing(sys.FS(), traceDir, configFilePath, testing !== undefined);
+  const [tr, err] = StartTracing(sys!.FS(), traceDir, configFilePath, testing !== undefined);
   if (err !== undefined) {
-    Fprintf(sys.Writer(), "Warning: Failed to start tracing: %v\n", err);
+    Fprintf(sys!.Writer()!, "Warning: Failed to start tracing: %v\n", err);
   }
   return tr;
 }
@@ -117,13 +118,13 @@ export function startTracingIfNeeded(sys: System, config: GoPtr<ParsedCommandLin
  * 	}
  * }
  */
-export function stopTracing(sys: System, tr: GoPtr<Tracing>): void {
+export function stopTracing(sys: GoInterface<System>, tr: GoPtr<Tracing>): void {
   if (tr === undefined) {
     return;
   }
   const err = Tracing_StopTracing(tr);
   if (err !== undefined) {
-    Fprintf(sys.Writer(), "Warning: Failed to stop tracing: %v\n", err);
+    Fprintf(sys!.Writer()!, "Warning: Failed to stop tracing: %v\n", err);
   }
 }
 
@@ -144,7 +145,7 @@ export function stopTracing(sys: System, tr: GoPtr<Tracing>): void {
  * 	return tscCompilation(ctx, sys, tsoptions.ParseCommandLine(commandLineArgs, sys), testing)
  * }
  */
-export function CommandLine(ctx: Context, sys: System, commandLineArgs: GoSlice<string>, testing: CommandLineTesting | undefined): CommandLineResult {
+export function CommandLine(ctx: GoInterface<Context>, sys: GoInterface<System>, commandLineArgs: GoSlice<string>, testing: CommandLineTesting | undefined): CommandLineResult {
   if (commandLineArgs.length > 0) {
     switch (ToLower(commandLineArgs[0]!)) {
       case "-b":
@@ -187,7 +188,7 @@ export function CommandLine(ctx: Context, sys: System, commandLineArgs: GoSlice<
  * }
  */
 export function fmtMain(sys: System, input: string, output: string): ExitStatus {
-  Fprintf(sys.Writer(), "Format command is outside the standalone compiler surface: %s -> %s\n", input, output);
+  Fprintf(sys.Writer()!, "Format command is outside the standalone compiler surface: %s -> %s\n", input, output);
   return ExitStatusNotImplemented;
 }
 
@@ -226,13 +227,13 @@ export function fmtMain(sys: System, input: string, output: string): ExitStatus 
  * 	return orchestrator.Start(ctx)
  * }
  */
-export function tscBuildCompilation(ctx: Context, sys: System, buildCommand: GoPtr<ParsedBuildCommandLine>, testing: CommandLineTesting | undefined): CommandLineResult {
+export function tscBuildCompilation(ctx: GoInterface<Context>, sys: GoInterface<System>, buildCommand: GoPtr<ParsedBuildCommandLine>, testing: CommandLineTesting | undefined): CommandLineResult {
   const locale = ParsedBuildCommandLine_Locale(buildCommand);
-  const reportDiagnostic = CreateDiagnosticReporter(sys, sys.Writer(), locale, buildCommand!.CompilerOptions);
+  const reportDiagnostic = CreateDiagnosticReporter(sys, sys!.Writer(), locale, buildCommand!.CompilerOptions);
 
   if (buildCommand!.Errors.length > 0) {
     for (const err of buildCommand!.Errors) {
-      reportDiagnostic(err);
+      reportDiagnostic!(err);
     }
     return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
   }
@@ -241,7 +242,7 @@ export function tscBuildCompilation(ctx: Context, sys: System, buildCommand: GoP
   let profileSession: GoPtr<import("../pprof/pprof.js").ProfileSession> = undefined;
   if (pprofDir !== "") {
     // !!! stderr?
-    profileSession = BeginProfiling(pprofDir, sys.Writer());
+    profileSession = BeginProfiling(pprofDir, sys!.Writer());
   }
   try {
     if (Tristate_IsTrue(buildCommand!.CompilerOptions!.Help)) {
@@ -408,14 +409,14 @@ export function tscBuildCompilation(ctx: Context, sys: System, buildCommand: GoP
  * 	)
  * }
  */
-export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<ParsedCommandLine>, testing: CommandLineTesting | undefined): CommandLineResult {
+export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<System>, commandLine: GoPtr<ParsedCommandLine>, testing: CommandLineTesting | undefined): CommandLineResult {
   let configFileName = "";
   const locale = ParsedCommandLine_Locale(commandLine);
-  let reportDiagnostic = CreateDiagnosticReporter(sys, sys.Writer(), locale, ParsedCommandLine_CompilerOptions(commandLine));
+  let reportDiagnostic = CreateDiagnosticReporter(sys, sys!.Writer(), locale, ParsedCommandLine_CompilerOptions(commandLine));
 
   if (commandLine!.Errors.length > 0) {
     for (const e of commandLine!.Errors) {
-      reportDiagnostic(e);
+      reportDiagnostic!(e);
     }
     return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
   }
@@ -424,7 +425,7 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
   let profileSession: GoPtr<import("../pprof/pprof.js").ProfileSession> = undefined;
   if (pprofDir !== "") {
     // !!! stderr?
-    profileSession = BeginProfiling(pprofDir, sys.Writer());
+    profileSession = BeginProfiling(pprofDir, sys!.Writer());
   }
   try {
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Init)) {
@@ -443,42 +444,42 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
     }
 
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Watch) && Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.ListFilesOnly)) {
-      reportDiagnostic(NewCompilerDiagnostic(Options_0_and_1_cannot_be_combined, "watch", "listFilesOnly"));
+      reportDiagnostic!(NewCompilerDiagnostic(Options_0_and_1_cannot_be_combined, "watch", "listFilesOnly"));
       return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
     }
 
     if ((ParsedCommandLine_CompilerOptions(commandLine)!.Project ?? "") !== "") {
       if (ParsedCommandLine_FileNames(commandLine).length !== 0) {
-        reportDiagnostic(NewCompilerDiagnostic(Option_project_cannot_be_mixed_with_source_files_on_a_command_line));
+        reportDiagnostic!(NewCompilerDiagnostic(Option_project_cannot_be_mixed_with_source_files_on_a_command_line));
         return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
       }
 
       const fileOrDirectory = NormalizePath(ParsedCommandLine_CompilerOptions(commandLine)!.Project);
-      if (sys.FS().DirectoryExists(fileOrDirectory)) {
+      if (sys!.FS()!.DirectoryExists(fileOrDirectory)) {
         configFileName = CombinePaths(fileOrDirectory, "tsconfig.json");
-        if (!sys.FS().FileExists(configFileName)) {
-          reportDiagnostic(NewCompilerDiagnostic(Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0, configFileName));
+        if (!sys!.FS()!.FileExists(configFileName)) {
+          reportDiagnostic!(NewCompilerDiagnostic(Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0, configFileName));
           return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
         }
       } else {
         configFileName = fileOrDirectory;
-        if (!sys.FS().FileExists(configFileName)) {
-          reportDiagnostic(NewCompilerDiagnostic(The_specified_path_does_not_exist_Colon_0, fileOrDirectory));
+        if (!sys!.FS()!.FileExists(configFileName)) {
+          reportDiagnostic!(NewCompilerDiagnostic(The_specified_path_does_not_exist_Colon_0, fileOrDirectory));
           return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
         }
       }
     } else if (!Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.IgnoreConfig) || ParsedCommandLine_FileNames(commandLine).length === 0) {
-      const searchPath = NormalizePath(sys.GetCurrentDirectory());
-      configFileName = findConfigFile(searchPath, (f) => sys.FS().FileExists(f), "tsconfig.json");
+      const searchPath = NormalizePath(sys!.GetCurrentDirectory());
+      configFileName = findConfigFile(searchPath, (f) => sys!.FS()!.FileExists(f), "tsconfig.json");
       if (ParsedCommandLine_FileNames(commandLine).length !== 0) {
         if (configFileName !== "") {
           // Error to not specify config file
-          reportDiagnostic(NewCompilerDiagnostic(X_tsconfig_json_is_present_but_will_not_be_loaded_if_files_are_specified_on_commandline_Use_ignoreConfig_to_skip_this_error));
+          reportDiagnostic!(NewCompilerDiagnostic(X_tsconfig_json_is_present_but_will_not_be_loaded_if_files_are_specified_on_commandline_Use_ignoreConfig_to_skip_this_error));
           return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
         }
       } else if (configFileName === "") {
         if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.ShowConfig)) {
-          reportDiagnostic(NewCompilerDiagnostic(Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0, NormalizePath(sys.GetCurrentDirectory())));
+          reportDiagnostic!(NewCompilerDiagnostic(Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0, NormalizePath(sys!.GetCurrentDirectory())));
         } else {
           PrintVersion(sys, locale);
           PrintHelp(sys, locale, commandLine);
@@ -494,7 +495,7 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
     const compileTimes: import("./tsc/compile.js").CompileTimes = { ConfigTime: 0, ParseTime: 0, bindTime: 0, checkTime: 0, totalTime: 0, emitTime: 0, BuildInfoReadTime: 0, ChangesComputeTime: 0 };
     let commandLineRaw: GoPtr<OrderedMap<string, unknown>> = undefined;
     if (configFileName !== "") {
-      const configStart = sys.Now();
+      const configStart = sys!.Now();
       const raw = commandLine!.Raw;
       if (raw !== undefined && raw !== null) {
         const rawMap = raw as OrderedMap<string, unknown>;
@@ -507,17 +508,17 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
       }
       const [configParseResult, errors] = GetParsedCommandLineOfConfigFile(configFileName, compilerOptionsFromCommandLine, commandLineRaw, sys as unknown as import("../tsoptions/tsconfigparsing.js").ParseConfigHost, ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache));
       type TimeWithSub = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
-      compileTimes.ConfigTime = (sys.Now() as TimeWithSub).Sub(configStart) as import("../../go/time.js").Duration;
+      compileTimes.ConfigTime = (sys!.Now() as TimeWithSub).Sub(configStart) as import("../../go/time.js").Duration;
       if ((errors?.length ?? 0) !== 0) {
         // these are unrecoverable errors--exit to report them as diagnostics
         for (const e of errors ?? []) {
-          reportDiagnostic(e);
+          reportDiagnostic!(e);
         }
         return { Status: ExitStatusDiagnosticsPresent_OutputsGenerated, Watcher: undefined };
       }
       configForCompilation = configParseResult;
       // Updater to reflect pretty
-      reportDiagnostic = CreateDiagnosticReporter(sys, sys.Writer(), locale, ParsedCommandLine_CompilerOptions(commandLine));
+      reportDiagnostic = CreateDiagnosticReporter(sys, sys!.Writer(), locale, ParsedCommandLine_CompilerOptions(commandLine));
     }
 
     const reportErrorSummary = CreateReportErrorSummary(sys, locale, ParsedCommandLine_CompilerOptions(configForCompilation));
@@ -582,10 +583,10 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
  * 	return result
  * }
  */
-export function findConfigFile(searchPath: string, fileExists: (arg0: string) => bool, configName: string): string {
+export function findConfigFile(searchPath: string, fileExists: GoFunc<(arg0: string) => bool>, configName: string): string {
   const [result, ok] = ForEachAncestorDirectory(searchPath, (ancestor) => {
     const fullConfigName = CombinePaths(ancestor, configName);
-    if (fileExists(fullConfigName)) {
+    if (fileExists!(fullConfigName)) {
       return [fullConfigName, true] as [string, bool];
     }
     return [fullConfigName, false] as [string, bool];
@@ -604,8 +605,8 @@ export function findConfigFile(searchPath: string, fileExists: (arg0: string) =>
  * 	return tsc.GetTraceWithWriterFromSys(sys.Writer(), locale, testing)
  * }
  */
-export function getTraceFromSys(sys: System, locale: Locale, testing: CommandLineTesting | undefined): (msg: GoPtr<Message>, ...args: Array<unknown>) => void {
-  return GetTraceWithWriterFromSys(sys.Writer(), locale, testing);
+export function getTraceFromSys(sys: GoInterface<System>, locale: Locale, testing: CommandLineTesting | undefined): (msg: GoPtr<Message>, ...args: Array<unknown>) => void {
+  return GetTraceWithWriterFromSys(sys!.Writer(), locale, testing);
 }
 
 /**
@@ -661,21 +662,21 @@ export function getTraceFromSys(sys: System, locale: Locale, testing: CommandLin
  * 	}
  * }
  */
-export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting | undefined): CommandLineResult {
-  const host = NewCachedFSCompilerHost(sys.GetCurrentDirectory(), sys.FS(), sys.DefaultLibraryPath(), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache), getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
-  const buildInfoReadStart = sys.Now();
+export function performIncrementalCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting | undefined): CommandLineResult {
+  const host = NewCachedFSCompilerHost(sys!.GetCurrentDirectory(), sys!.FS(), sys!.DefaultLibraryPath(), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache), getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
+  const buildInfoReadStart = sys!.Now();
   const oldProgram = ReadBuildInfoProgram(config, NewBuildInfoReader(host), host);
   type TimeWithSub2 = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
-  compileTimes!.BuildInfoReadTime = (sys.Now() as TimeWithSub2).Sub(buildInfoReadStart) as import("../../go/time.js").Duration;
+  compileTimes!.BuildInfoReadTime = (sys!.Now() as TimeWithSub2).Sub(buildInfoReadStart) as import("../../go/time.js").Duration;
 
   const tr = startTracingIfNeeded(sys, config, testing);
 
-  const parseStart = sys.Now();
+  const parseStart = sys!.Now();
   const program = NewProgram({ Config: config, Host: host, Tracing: tr } as ProgramOptions);
-  compileTimes!.ParseTime = (sys.Now() as TimeWithSub2).Sub(parseStart) as import("../../go/time.js").Duration;
-  const changesComputeStart = sys.Now();
+  compileTimes!.ParseTime = (sys!.Now() as TimeWithSub2).Sub(parseStart) as import("../../go/time.js").Duration;
+  const changesComputeStart = sys!.Now();
   const incrementalProgram = IncrementalNewProgram(program, oldProgram, IncrementalCreateHost(host), testing !== undefined);
-  compileTimes!.ChangesComputeTime = (sys.Now() as TimeWithSub2).Sub(changesComputeStart) as import("../../go/time.js").Duration;
+  compileTimes!.ChangesComputeTime = (sys!.Now() as TimeWithSub2).Sub(changesComputeStart) as import("../../go/time.js").Duration;
   const [result] = EmitAndReportStatistics({
     Sys: sys,
     ProgramLike: IncrementalProgram_as_compiler_ProgramLike(incrementalProgram),
@@ -683,7 +684,7 @@ export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedC
     Config: config,
     ReportDiagnostic: reportDiagnostic,
     ReportErrorSummary: reportErrorSummary,
-    Writer: sys.Writer(),
+    Writer: sys!.Writer(),
     WriteFile: undefined as unknown as import("../compiler/program.js").WriteFile,
     CompileTimes: compileTimes,
     Testing: testing,
@@ -743,15 +744,15 @@ export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedC
  * 	}
  * }
  */
-export function performCompilation(sys: System, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting | undefined): CommandLineResult {
-  const host = NewCachedFSCompilerHost(sys.GetCurrentDirectory(), sys.FS(), sys.DefaultLibraryPath(), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache), getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
+export function performCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting | undefined): CommandLineResult {
+  const host = NewCachedFSCompilerHost(sys!.GetCurrentDirectory(), sys!.FS(), sys!.DefaultLibraryPath(), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache), getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
 
   const tr = startTracingIfNeeded(sys, config, testing);
 
-  const parseStart = sys.Now();
+  const parseStart = sys!.Now();
   const program = NewProgram({ Config: config, Host: host, Tracing: tr } as ProgramOptions);
   type TimeWithSub3 = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
-  compileTimes!.ParseTime = (sys.Now() as TimeWithSub3).Sub(parseStart) as import("../../go/time.js").Duration;
+  compileTimes!.ParseTime = (sys!.Now() as TimeWithSub3).Sub(parseStart) as import("../../go/time.js").Duration;
   const [result] = EmitAndReportStatistics({
     Sys: sys,
     ProgramLike: Program_as_compiler_ProgramLike(program),
@@ -759,7 +760,7 @@ export function performCompilation(sys: System, config: GoPtr<ParsedCommandLine>
     Config: config,
     ReportDiagnostic: reportDiagnostic,
     ReportErrorSummary: reportErrorSummary,
-    Writer: sys.Writer(),
+    Writer: sys!.Writer(),
     WriteFile: undefined as unknown as import("../compiler/program.js").WriteFile,
     CompileTimes: compileTimes,
     Testing: testing,
@@ -781,7 +782,7 @@ export function performCompilation(sys: System, config: GoPtr<ParsedCommandLine>
  * 	_ = json.MarshalIndentWrite(sys.Writer(), tsConfig, "", "    ")
  * }
  */
-export function showConfig(sys: System, config: GoPtr<ParsedCommandLine>, configFileName: string): void {
+export function showConfig(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, configFileName: string): void {
   const tsConfig = ConvertToTSConfig(config, configFileName);
-  MarshalIndentWrite(sys.Writer(), tsConfig, "", "    ");
+  MarshalIndentWrite(sys!.Writer(), tsConfig, "", "    ");
 }

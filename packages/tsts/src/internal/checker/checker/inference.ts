@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoSliceIsNil, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { Node_Name, NodeList_Pos, NodeList_End } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Elements, Node_Expression, Node_Members, Node_TypeArgumentList, SourceFile_Text } from "../../ast/ast.js";
@@ -467,7 +467,7 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
     );
     return SameMap(applicableSignatures, (sig): GoPtr<Signature> => {
       const typeArgumentTypes = Checker_checkTypeArguments(receiver, sig, typeArgumentNodes, true, undefined);
-      if (typeArgumentTypes !== undefined) {
+      if (!GoSliceIsNil(typeArgumentTypes)) {
         return Checker_getSignatureInstantiation(receiver, sig, typeArgumentTypes, IsInJSFile(sig!.declaration), undefined);
       }
       return sig;
@@ -542,10 +542,10 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
  */
 export function Checker_getTypeOfInstantiatedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
   const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_);
-  if (links!.resolvedType === undefined) {
-    links!.resolvedType = Checker_instantiateType(receiver, Checker_getTypeOfSymbol(receiver, links!.target), links!.mapper);
+  if (links!.v.resolvedType === undefined) {
+    links!.v.resolvedType = Checker_instantiateType(receiver, Checker_getTypeOfSymbol(receiver, links!.v.target), links!.v.mapper);
   }
-  return links!.resolvedType;
+  return links!.v.resolvedType;
 }
 
 /**
@@ -562,10 +562,10 @@ export function Checker_getTypeOfInstantiatedSymbol(receiver: GoPtr<Checker>, sy
  */
 export function Checker_getWriteTypeOfInstantiatedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
   const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_);
-  if (links!.writeType === undefined) {
-    links!.writeType = Checker_instantiateType(receiver, Checker_getWriteTypeOfSymbol(receiver, links!.target), links!.mapper);
+  if (links!.v.writeType === undefined) {
+    links!.v.writeType = Checker_instantiateType(receiver, Checker_getWriteTypeOfSymbol(receiver, links!.v.target), links!.v.mapper);
   }
-  return links!.writeType;
+  return links!.v.writeType;
 }
 
 /**
@@ -862,7 +862,7 @@ export function Checker_getConstraintOfDistributiveConditionalType(receiver: GoP
  * 	return result
  * }
  */
-export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, symbols: GoPtr<GoSlice<GoPtr<Symbol>>>, m: GoPtr<TypeMapper>): SymbolTable {
+export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, symbols: GoSlice<GoPtr<Symbol>>, m: GoPtr<TypeMapper>): SymbolTable {
   const sourceSymbols = symbols ?? [];
   if (sourceSymbols.length === 0) {
     return undefined as unknown as SymbolTable;
@@ -1125,7 +1125,7 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
     }
     data!.instantiations.set(key, result);
     if ((result!.flags & TypeFlagsObjectFlagsType) !== 0 && (result!.objectFlags & ObjectFlagsCouldContainTypeVariablesComputed) === 0) {
-      const resultCouldContainObjectFlags = Some(typeArguments, (ta: GoPtr<Type>): bool => receiver!.couldContainTypeVariables(ta));
+      const resultCouldContainObjectFlags = Some(typeArguments, (ta: GoPtr<Type>): bool => receiver!.couldContainTypeVariables!(ta));
       if ((result!.objectFlags & ObjectFlagsCouldContainTypeVariablesComputed) === 0) {
         if ((result!.objectFlags & (ObjectFlagsMapped | ObjectFlagsAnonymous | ObjectFlagsReference)) !== 0) {
           result!.objectFlags |= ObjectFlagsCouldContainTypeVariablesComputed | IfElse(resultCouldContainObjectFlags, ObjectFlagsCouldContainTypeVariables, 0);
@@ -1302,13 +1302,13 @@ export function Checker_getTypeAliasInstantiation(receiver: GoPtr<Checker>, symb
     }
   }
   const links = LinkStore_Get(receiver!.typeAliasLinks, symbol_);
-  const typeParameters = links!.typeParameters;
+  const typeParameters = links!.v.typeParameters;
   const key = getTypeAliasInstantiationKey(typeArguments, alias);
-  let instantiation = links!.instantiations.get(key);
+  let instantiation = links!.v.instantiations.get(key);
   if (instantiation === undefined) {
     const mapper = newTypeMapper(typeParameters, Checker_fillMissingTypeArguments(receiver, typeArguments, typeParameters, Checker_getMinTypeArgumentCount(receiver, typeParameters), IsInJSFile(symbol_!.ValueDeclaration)));
     instantiation = Checker_instantiateTypeWithAlias(receiver, t, mapper, alias);
-    links!.instantiations.set(key, instantiation);
+    links!.v.instantiations.set(key, instantiation);
   }
   return instantiation;
 }
@@ -1460,10 +1460,10 @@ export function Checker_getInferredTrueTypeFromConditionalType(receiver: GoPtr<C
  */
 export function Checker_getTypeFromInferTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
   const links = LinkStore_Get(receiver!.typeNodeLinks, node);
-  if (links!.resolvedType === undefined) {
-    links!.resolvedType = Checker_getDeclaredTypeOfTypeParameter(receiver, Checker_getSymbolOfDeclaration(receiver, AsInferTypeNode(node)!.TypeParameter));
+  if (links!.v.resolvedType === undefined) {
+    links!.v.resolvedType = Checker_getDeclaredTypeOfTypeParameter(receiver, Checker_getSymbolOfDeclaration(receiver, AsInferTypeNode(node)!.TypeParameter));
   }
-  return links!.resolvedType;
+  return links!.v.resolvedType;
 }
 
 /**
@@ -2316,7 +2316,7 @@ export function Checker_getInferenceContext(receiver: GoPtr<Checker>, node: GoPt
  * }
  */
 export function Checker_getGlobalNonNullableTypeInstantiation(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
-  const alias = receiver!.getGlobalNonNullableTypeAliasOrNil();
+  const alias = receiver!.getGlobalNonNullableTypeAliasOrNil!();
   if (alias !== undefined) {
     return Checker_getTypeAliasInstantiation(receiver, alias, [t], undefined);
   }
@@ -2337,7 +2337,7 @@ export function Checker_getGlobalNonNullableTypeInstantiation(receiver: GoPtr<Ch
  */
 export function Checker_isAwaitedTypeInstantiation(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
   if ((t!.flags & TypeFlagsConditional) !== 0) {
-    const awaitedSymbol = receiver!.getGlobalAwaitedSymbolOrNil();
+    const awaitedSymbol = receiver!.getGlobalAwaitedSymbolOrNil!();
     return awaitedSymbol !== undefined && t!.alias !== undefined && t!.alias!.symbol === awaitedSymbol && TypeAlias_TypeArguments(t!.alias)!.length === 1;
   }
   return false;

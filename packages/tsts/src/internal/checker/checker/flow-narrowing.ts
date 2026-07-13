@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoValueRef } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Name } from "../../ast/spine.js";
 import { Node_Body, Node_Elements, Node_Expression, Node_Initializer, Node_ModifierFlags, Node_Parameters, Node_Text, Node_Type } from "../../ast/ast.js";
@@ -218,7 +219,7 @@ export function Checker_checkTypePredicate(receiver: GoPtr<Checker>, node: GoPtr
         Checker_error(receiver, parameterName, A_type_predicate_cannot_reference_a_rest_parameter);
       } else if (typePredicate!.t !== undefined) {
         const diags: GoSlice<GoPtr<Diagnostic>> = [];
-        if (!Checker_checkTypeAssignableToEx(receiver, typePredicate!.t, Checker_getTypeOfSymbol(receiver, signature!.parameters[typePredicate!.parameterIndex]), Node_Type(node), undefined, diags)) {
+        if (!Checker_checkTypeAssignableToEx(receiver, typePredicate!.t, Checker_getTypeOfSymbol(receiver, signature!.parameters[typePredicate!.parameterIndex]), Node_Type(node), undefined, GoValueRef(diags))) {
           Checker_addDiagnostic(receiver, NewDiagnosticChain(diags[0], A_type_predicate_s_type_must_be_assignable_to_its_parameter_s_type));
         }
       }
@@ -859,8 +860,8 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
         IsParameterDeclaration(rootDeclaration)
       ) {
         const links = LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, parent)!;
-        if ((links.flags & NodeCheckFlagsInCheckIdentifier) === 0) {
-          links.flags |= NodeCheckFlagsInCheckIdentifier;
+        if ((links.v.flags & NodeCheckFlagsInCheckIdentifier) === 0) {
+          links.v.flags |= NodeCheckFlagsInCheckIdentifier;
           const parentType = Checker_getTypeForBindingElementParent(receiver, parent, CheckModeNormal);
           let parentTypeConstraint: GoPtr<Type>;
           if (parentType !== undefined) {
@@ -879,7 +880,7 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
               t = Checker_getBindingElementTypeFromParentType(receiver, declaration, narrowedType, true);
             }
           }
-          links.flags &= ~NodeCheckFlagsInCheckIdentifier;
+          links.v.flags &= ~NodeCheckFlagsInCheckIdentifier;
         }
       }
     } else if (

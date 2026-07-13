@@ -3,6 +3,7 @@ import type { FS } from "../vfs/vfs.js";
 import { FS as OSFS } from "../vfs/osvfs/os.js";
 import { CombinePaths, GetDirectoryPath, NormalizeSlashes } from "../tspath/path.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/noembed.go::constGroup::embedded","kind":"constGroup","status":"implemented","sigHash":"4c71f07d139be967c63073fca793530940c74775bb8902e2816a1d12ec2bd08f"}
  *
@@ -19,7 +20,7 @@ export const embedded: bool = false;
  * 	return fs
  * }
  */
-export function wrapFS(fs: FS): FS {
+export function wrapFS(fs: GoInterface<FS>): GoInterface<FS> {
   return fs;
 }
 
@@ -37,10 +38,10 @@ export function wrapFS(fs: FS): FS {
  * 	return tspath.GetDirectoryPath(exe)
  * })
  */
-export let executableDir: () => string = (() => {
+export let executableDir: GoFunc<() => string> = (() => {
   let value: string | undefined;
   return (): string => {
-    value ??= GetDirectoryPath(OSFS().Realpath(NormalizeSlashes(process.execPath)));
+    value ??= GetDirectoryPath(OSFS()!.Realpath(NormalizeSlashes(process.execPath)));
     return value;
   };
 })();
@@ -63,13 +64,13 @@ export let executableDir: () => string = (() => {
  * 	return dir
  * })
  */
-export let libPath: () => string = (() => {
+export let libPath: GoFunc<() => string> = (() => {
   let value: string | undefined;
   return (): string => {
     if (value === undefined) {
-      const dir = executableDir();
+      const dir = executableDir!();
       const libdts = CombinePaths(dir, "lib.d.ts");
-      if (OSFS().Stat(libdts) === undefined) {
+      if (OSFS()!.Stat(libdts) === undefined) {
         throw new globalThis.Error(`bundled: ${libdts} does not exist; this executable may be misplaced`);
       }
       value = dir;

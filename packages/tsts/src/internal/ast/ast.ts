@@ -295,6 +295,7 @@ import * as utilities from "./utilities.js";
 import { NodeVisitor_visitNode, NodeVisitor_visitNodes, NodeVisitor_visitToken, NodeVisitor_visitTopLevelStatements } from "./visitor.js";
 import type { NodeVisitor } from "./visitor.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 export type { Node, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeBase } from "./spine.js";
 
 /**
@@ -303,7 +304,7 @@ export type { Node, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeD
  * Go source:
  * var parseJSDocForNode func(*SourceFile, *Node) []*Node
  */
-export let parseJSDocForNode: (arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoSlice<GoPtr<Node>>;
+export let parseJSDocForNode: GoFunc<(arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoSlice<GoPtr<Node>>>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::SetParseJSDocForNode","kind":"func","status":"implemented","sigHash":"5aca890b39fdda6f4899a1aa07e2be2add8bfdb3e21fbf63d0ef1efdeccb0d2a"}
@@ -313,7 +314,7 @@ export let parseJSDocForNode: (arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => Go
  * 	parseJSDocForNode = fn
  * }
  */
-export function SetParseJSDocForNode(fn: (arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoSlice<GoPtr<Node>>): void {
+export function SetParseJSDocForNode(fn: GoFunc<(arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoSlice<GoPtr<Node>>>): void {
   parseJSDocForNode = fn;
 }
 
@@ -380,7 +381,7 @@ export function Node_AsMutable(receiver: GoPtr<Node>): GoPtr<MutableNode> {
  * func (n *MutableNode) SetModifiers(modifiers *ModifierList) { n.data.setModifiers(modifiers) }
  */
 export function MutableNode_SetModifiers(receiver: GoPtr<MutableNode>, modifiers: GoPtr<ModifierList>): void {
-  receiver!.data.setModifiers(modifiers);
+  receiver!.data!.setModifiers(modifiers);
 }
 
 /**
@@ -2528,7 +2529,7 @@ export function Node_Contains(receiver: GoPtr<Node>, descendant: GoPtr<Node>): b
  * }
  */
 export function Node_AsFlowSwitchClauseData(receiver: GoPtr<Node>): GoPtr<FlowSwitchClauseData> {
-  return receiver!.data[goReceiverKey] as GoPtr<FlowSwitchClauseData>;
+  return receiver!.data![goReceiverKey] as GoPtr<FlowSwitchClauseData>;
 }
 
 /**
@@ -2540,7 +2541,7 @@ export function Node_AsFlowSwitchClauseData(receiver: GoPtr<Node>): GoPtr<FlowSw
  * }
  */
 export function Node_AsFlowReduceLabelData(receiver: GoPtr<Node>): GoPtr<FlowReduceLabelData> {
-  return receiver!.data[goReceiverKey] as GoPtr<FlowReduceLabelData>;
+  return receiver!.data![goReceiverKey] as GoPtr<FlowReduceLabelData>;
 }
 
 /**
@@ -5359,7 +5360,7 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
 // recovers the concrete *SourceFile receiver behind a node's `nodeData` interface
 // value, mirroring the generated `AsXxx` casts in generated/casts.ts.
 export function AsSourceFile(n: GoPtr<Node>): GoPtr<SourceFile> {
-  return n!.data[goReceiverKey] as GoPtr<SourceFile>;
+  return n!.data![goReceiverKey] as GoPtr<SourceFile>;
 }
 
 // SourceFile_as_nodeData builds the method-bearing `nodeData` adapter for a
@@ -5789,11 +5790,11 @@ export function SourceFile_copyFrom(receiver: GoPtr<SourceFile>, other: GoPtr<So
  * 	return cloneNode(updated, node.AsNode(), f.AsNodeFactory().hooks)
  * }
  */
-export function SourceFile_Clone(receiver: GoPtr<SourceFile>, f: NodeFactoryCoercible): GoPtr<Node> {
-  const updated = NodeFactory_NewSourceFile(f.AsNodeFactory()!, receiver!.parseOptions, receiver!.text, receiver!.Statements, receiver!.EndOfFileToken);
+export function SourceFile_Clone(receiver: GoPtr<SourceFile>, f: GoInterface<NodeFactoryCoercible>): GoPtr<Node> {
+  const updated = NodeFactory_NewSourceFile(f!.AsNodeFactory()!, receiver!.parseOptions, receiver!.text, receiver!.Statements, receiver!.EndOfFileToken);
   const newFile = AsSourceFile(updated);
   SourceFile_copyFrom(newFile, receiver);
-  return cloneNode(updated, NodeDefault_AsNode(receiver), f.AsNodeFactory()!.hooks);
+  return cloneNode(updated, NodeDefault_AsNode(receiver), f!.AsNodeFactory()!.hooks);
 }
 
 /**
@@ -5985,9 +5986,9 @@ export function SourceFile_GetPositionMap(receiver: GoPtr<SourceFile>): GoPtr<Po
  * 	})
  * }
  */
-export function SourceFile_BindOnce(receiver: GoPtr<SourceFile>, bind: () => void): void {
+export function SourceFile_BindOnce(receiver: GoPtr<SourceFile>, bind: GoFunc<() => void>): void {
   receiver!.bindOnce.Do((): void => {
-    bind();
+    bind!();
     receiver!.isBound.Store(true);
   });
 }

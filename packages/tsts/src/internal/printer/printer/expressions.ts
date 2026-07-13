@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr } from "../../../go/compat.js";
+import { GoNilMap } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_End, Node_Modifiers, Node_Name, Node_Pos, NodeList_HasTrailingComma } from "../../ast/spine.js";
@@ -220,7 +221,7 @@ export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers, emi
     makeFileLevelOptimisticUniqueName: undefined!,
     commentStateArena: { data: [] },
     sourceMapStateArena: { data: [] },
-    IdToSymbol: undefined,
+    IdToSymbol: GoNilMap(),
   };
   printer.emitContext = printer.emitContext ?? NewEmitContext();
   printer.nameGenerator.Context = printer.emitContext;
@@ -314,7 +315,7 @@ export function Printer_getLiteralTextOfNode(receiver: GoPtr<Printer>, node: GoP
  * }
  */
 export function Printer_writeLiteral(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteLiteral(text);
+  receiver!.writer!.WriteLiteral(text);
 }
 
 /**
@@ -380,7 +381,7 @@ export function Printer_emitLiteral(receiver: GoPtr<Printer>, node: GoPtr<Litera
 
   // Quick info expects all literals to be called with writeStringLiteral, as there's no specific type for
   // numberLiterals
-  receiver!.writer.WriteStringLiteral(text);
+  receiver!.writer!.WriteStringLiteral(text);
 
   // }
 }
@@ -923,8 +924,8 @@ export function Printer_emitPropertyAccessExpression(receiver: GoPtr<Printer>, n
   const shouldEmitDotDot =
     token!.Kind !== KindQuestionDotToken &&
     Printer_mayNeedDotDotForPropertyAccess(receiver, node!.Expression) &&
-    !receiver!.writer.HasTrailingComment() &&
-    !receiver!.writer.HasTrailingWhitespace();
+    !receiver!.writer!.HasTrailingComment() &&
+    !receiver!.writer!.HasTrailingWhitespace();
   if (shouldEmitDotDot) {
     Printer_writePunctuation(receiver, ".");
   }

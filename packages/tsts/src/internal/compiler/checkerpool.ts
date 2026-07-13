@@ -14,6 +14,7 @@ import { Concat, Index } from "../../go/slices.js";
 import type { Program } from "./program.js";
 import { Program_as_checker_Program, Program_Options, Program_SingleThreaded, SortAndDeduplicateDiagnostics } from "./program.js";
 
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::type::CheckerPool","kind":"type","status":"implemented","sigHash":"0ae9932ac5eea7302f43fdaded6b82addcb4d06b9f9209ed8ff2be51bb7f7d16"}
  *
@@ -23,7 +24,7 @@ import { Program_as_checker_Program, Program_Options, Program_SingleThreaded, So
  * }
  */
 export interface CheckerPool {
-  GetChecker(ctx: Context, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void];
+  GetChecker(ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void];
 }
 
 /**
@@ -55,7 +56,7 @@ export interface checkerPool {
  * Go source:
  * var _ CheckerPool = (*checkerPool)(nil)
  */
-export let __34031131_0: CheckerPool = checkerPool_as_compiler_CheckerPool(undefined);
+export let __34031131_0: GoInterface<CheckerPool> = checkerPool_as_compiler_CheckerPool(undefined);
 
 export function checkerPool_as_compiler_CheckerPool(receiver: GoPtr<checkerPool>): CheckerPool {
   return {
@@ -106,7 +107,7 @@ export function newCheckerPoolWithTracing(program: GoPtr<Program>, tr: GoPtr<Tra
   } else {
     const c = Program_Options(program)!.Checkers;
     if (c !== undefined) {
-      checkerCount = c;
+      checkerCount = c.v;
     }
   }
   const files = program!.__tsgoEmbedded0!.files;
@@ -138,7 +139,7 @@ export function newCheckerPoolWithTracing(program: GoPtr<Program>, tr: GoPtr<Tra
  * 	})
  * }
  */
-export function checkerPool_GetChecker(receiver: GoPtr<checkerPool>, ctx: Context, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
+export function checkerPool_GetChecker(receiver: GoPtr<checkerPool>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
   if (file !== undefined) {
     return checkerPool_getCheckerForFileExclusive(receiver, ctx, file);
   }
@@ -178,7 +179,7 @@ export function checkerPool_getCheckerForFileNonExclusive(receiver: GoPtr<checke
  * 	})
  * }
  */
-export function checkerPool_getCheckerForFileExclusive(receiver: GoPtr<checkerPool>, ctx: Context, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
+export function checkerPool_getCheckerForFileExclusive(receiver: GoPtr<checkerPool>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
   checkerPool_createCheckers(receiver);
   const c = receiver!.fileAssociations.get(file);
   const idx = Index(receiver!.checkers, c);
@@ -235,7 +236,7 @@ export function checkerPool_createCheckers(receiver: GoPtr<checkerPool>): void {
     const wg = NewWorkGroup(Program_SingleThreaded(receiver!.program));
     for (let i = 0; i < checkerCount; i++) {
       const idx = i;
-      wg.Queue((): void => {
+      wg!.Queue((): void => {
         let tracer = undefined;
         if (receiver!.tracing !== undefined) {
           tracer = NewTracer(receiver!.tracing, idx as int);
@@ -245,7 +246,7 @@ export function checkerPool_createCheckers(receiver: GoPtr<checkerPool>): void {
         receiver!.locks[idx] = lock;
       });
     }
-    wg.RunAndWait();
+    wg!.RunAndWait();
     receiver!.fileAssociations = new globalThis.Map<GoPtr<SourceFile>, GoPtr<Checker>>();
     const files = receiver!.program!.__tsgoEmbedded0!.files;
     for (let i = 0; i < files.length; i++) {
@@ -271,22 +272,22 @@ export function checkerPool_createCheckers(receiver: GoPtr<checkerPool>): void {
  * 	wg.RunAndWait()
  * }
  */
-export function checkerPool_forEachCheckerParallel(receiver: GoPtr<checkerPool>, cb: (idx: int, c: GoPtr<Checker>) => void): void {
+export function checkerPool_forEachCheckerParallel(receiver: GoPtr<checkerPool>, cb: GoFunc<(idx: int, c: GoPtr<Checker>) => void>): void {
   checkerPool_createCheckers(receiver);
   const wg = NewWorkGroup(Program_SingleThreaded(receiver!.program));
   for (let idx = 0; idx < receiver!.checkers.length; idx++) {
     const checkerIdx = idx;
     const checkerVal = receiver!.checkers[idx];
-    wg.Queue((): void => {
+    wg!.Queue((): void => {
       receiver!.locks[checkerIdx]!.Lock();
       try {
-        cb(checkerIdx as int, checkerVal);
+        cb!(checkerIdx as int, checkerVal);
       } finally {
         receiver!.locks[checkerIdx]!.Unlock();
       }
     });
   }
-  wg.RunAndWait();
+  wg!.RunAndWait();
 }
 
 /**
@@ -334,20 +335,20 @@ export function checkerPool_GetGlobalDiagnostics(receiver: GoPtr<checkerPool>): 
  * 	wg.RunAndWait()
  * }
  */
-export function checkerPool_forEachCheckerGroupDo(receiver: GoPtr<checkerPool>, ctx: Context, files: GoSlice<GoPtr<SourceFile>>, singleThreaded: bool, cb: (c: GoPtr<Checker>, fileIndex: int, file: GoPtr<SourceFile>) => void): void {
+export function checkerPool_forEachCheckerGroupDo(receiver: GoPtr<checkerPool>, ctx: GoInterface<Context>, files: GoSlice<GoPtr<SourceFile>>, singleThreaded: bool, cb: GoFunc<(c: GoPtr<Checker>, fileIndex: int, file: GoPtr<SourceFile>) => void>): void {
   checkerPool_createCheckers(receiver);
   const checkerCount = receiver!.checkers.length;
   const wg = NewWorkGroup(singleThreaded);
   for (let checkerIdx = 0; checkerIdx < checkerCount; checkerIdx++) {
     const ci = checkerIdx;
-    wg.Queue((): void => {
+    wg!.Queue((): void => {
       receiver!.locks[ci]!.Lock();
       try {
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           const checker = receiver!.checkers[ci];
           if (checker === receiver!.fileAssociations.get(file)) {
-            cb(checker, i as int, file);
+            cb!(checker, i as int, file);
           }
         }
       } finally {
@@ -355,7 +356,7 @@ export function checkerPool_forEachCheckerGroupDo(receiver: GoPtr<checkerPool>, 
       }
     });
   }
-  wg.RunAndWait();
+  wg!.RunAndWait();
 }
 
 /**

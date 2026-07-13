@@ -22,6 +22,7 @@ import type { NodeFactory } from "../../printer/factory.js";
 import { GeneratedIdentifierFlags_IsFileLevel, GeneratedIdentifierFlags_IsOptimistic, GeneratedIdentifierFlags_IsReservedInNestedScopes } from "../../printer/generatedidentifierflags.js";
 import { IsSimpleCopiableExpression } from "../utilities.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::isDeclarationNameOfEnumOrNamespace","kind":"func","status":"implemented","sigHash":"d38d773126c953f9b255a45fbb25827b9abb3c44aded0810ccd50fda275c740a"}
  *
@@ -126,7 +127,7 @@ export function createEmptyImports(factory: GoPtr<NodeFactory>): GoPtr<Statement
  * 	return nil
  * }
  */
-export function getExternalModuleNameLiteral(factory: GoPtr<NodeFactory>, importNode: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, host: unknown, resolver: EmitResolver, compilerOptions: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
+export function getExternalModuleNameLiteral(factory: GoPtr<NodeFactory>, importNode: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, host: GoInterface<unknown>, resolver: GoInterface<EmitResolver>, compilerOptions: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
   const moduleName = GetExternalModuleName(importNode);
   if (moduleName !== undefined && IsStringLiteral(moduleName as unknown as GoPtr<Node>)) {
     let name = tryGetModuleNameFromDeclaration(importNode, host, factory, resolver, compilerOptions);
@@ -156,7 +157,7 @@ export function getExternalModuleNameLiteral(factory: GoPtr<NodeFactory>, import
  * 	return nil
  * }
  */
-export function tryGetModuleNameFromFile(factory: GoPtr<NodeFactory>, file: GoPtr<SourceFile>, host: unknown, options: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
+export function tryGetModuleNameFromFile(factory: GoPtr<NodeFactory>, file: GoPtr<SourceFile>, host: GoInterface<unknown>, options: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
   if (file === undefined) {
     return undefined;
   }
@@ -178,7 +179,7 @@ export function tryGetModuleNameFromFile(factory: GoPtr<NodeFactory>, file: GoPt
  * 	return tryGetModuleNameFromFile(factory, resolver.GetExternalModuleFileFromDeclaration(declaration), host, compilerOptions)
  * }
  */
-export function tryGetModuleNameFromDeclaration(declaration: GoPtr<Node>, host: unknown, factory: GoPtr<NodeFactory>, resolver: EmitResolver, compilerOptions: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
+export function tryGetModuleNameFromDeclaration(declaration: GoPtr<Node>, host: GoInterface<unknown>, factory: GoPtr<NodeFactory>, resolver: GoInterface<EmitResolver>, compilerOptions: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
   if (resolver === undefined) {
     return undefined;
   }
@@ -194,7 +195,7 @@ export function tryGetModuleNameFromDeclaration(declaration: GoPtr<Node>, host: 
  * 	return ""
  * }
  */
-export function getExternalModuleNameFromPath(host: unknown, fileName: string, referencePath: string): string {
+export function getExternalModuleNameFromPath(host: GoInterface<unknown>, fileName: string, referencePath: string): string {
   // !!!
   return "";
 }

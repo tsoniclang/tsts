@@ -26,6 +26,7 @@ import { isTupleType } from "./checker/state.js";
 import type { TypeMapper } from "./mapper.js";
 import { ValueToString } from "./utilities.js";
 
+import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ParseFlags","kind":"type","status":"implemented","sigHash":"351ebf721cd2754016dc44fcbdf16dc89d33b4fc6a92eed1f9db4696eed47fcd"}
  *
@@ -436,7 +437,7 @@ export interface AliasSymbolLinks {
  */
 export interface ModuleSymbolLinks {
   resolvedExports: SymbolTable;
-  typeOnlyExportStarMap: GoPtr<GoMap<string, GoPtr<Node>>>;
+  typeOnlyExportStarMap: GoMap<string, GoPtr<Node>>;
   exportsChecked: bool;
 }
 
@@ -711,7 +712,7 @@ export interface accessibleChainCacheKey {
  */
 export interface ContainingSymbolLinks {
   extendedContainersByFile: GoMap<NodeId, GoSlice<GoPtr<Symbol_62f2f8bf>>>;
-  extendedContainers: GoPtr<GoSlice<GoPtr<Symbol_62f2f8bf>>>;
+  extendedContainers: GoRef<GoSlice<GoPtr<Symbol_62f2f8bf>>>;
   accessibleChainCache: GoMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol_62f2f8bf>>>;
 }
 
@@ -1543,7 +1544,7 @@ export interface Type {
   "symbol": GoPtr<Symbol_62f2f8bf>;
   alias: GoPtr<TypeAlias>;
   checker: GoPtr<Checker>;
-  data: TypeData;
+  data: GoInterface<TypeData>;
 }
 
 /**
@@ -1761,7 +1762,7 @@ export function Type_AsConditionalType(receiver: GoPtr<Type>): GoPtr<Conditional
  * func (t *Type) AsConstrainedType() *ConstrainedType { return t.data.AsConstrainedType() }
  */
 export function Type_AsConstrainedType(receiver: GoPtr<Type>): GoPtr<ConstrainedType> {
-  return receiver!.data.AsConstrainedType();
+  return receiver!.data!.AsConstrainedType();
 }
 
 /**
@@ -1771,7 +1772,7 @@ export function Type_AsConstrainedType(receiver: GoPtr<Type>): GoPtr<Constrained
  * func (t *Type) AsStructuredType() *StructuredType   { return t.data.AsStructuredType() }
  */
 export function Type_AsStructuredType(receiver: GoPtr<Type>): GoPtr<StructuredType> {
-  return receiver!.data.AsStructuredType();
+  return receiver!.data!.AsStructuredType();
 }
 
 /**
@@ -1781,7 +1782,7 @@ export function Type_AsStructuredType(receiver: GoPtr<Type>): GoPtr<StructuredTy
  * func (t *Type) AsObjectType() *ObjectType           { return t.data.AsObjectType() }
  */
 export function Type_AsObjectType(receiver: GoPtr<Type>): GoPtr<ObjectType> {
-  return receiver!.data.AsObjectType();
+  return receiver!.data!.AsObjectType();
 }
 
 /**
@@ -1791,7 +1792,7 @@ export function Type_AsObjectType(receiver: GoPtr<Type>): GoPtr<ObjectType> {
  * func (t *Type) AsTypeReference() *TypeReference     { return t.data.AsTypeReference() }
  */
 export function Type_AsTypeReference(receiver: GoPtr<Type>): GoPtr<TypeReference> {
-  return receiver!.data.AsTypeReference();
+  return receiver!.data!.AsTypeReference();
 }
 
 /**
@@ -1801,7 +1802,7 @@ export function Type_AsTypeReference(receiver: GoPtr<Type>): GoPtr<TypeReference
  * func (t *Type) AsInterfaceType() *InterfaceType     { return t.data.AsInterfaceType() }
  */
 export function Type_AsInterfaceType(receiver: GoPtr<Type>): GoPtr<InterfaceType> {
-  return receiver!.data.AsInterfaceType();
+  return receiver!.data!.AsInterfaceType();
 }
 
 /**
@@ -1813,7 +1814,7 @@ export function Type_AsInterfaceType(receiver: GoPtr<Type>): GoPtr<InterfaceType
  * }
  */
 export function Type_AsUnionOrIntersectionType(receiver: GoPtr<Type>): GoPtr<UnionOrIntersectionType> {
-  return receiver!.data.AsUnionOrIntersectionType();
+  return receiver!.data!.AsUnionOrIntersectionType();
 }
 
 /**
@@ -2279,7 +2280,7 @@ export function IntrinsicType_IntrinsicName(receiver: GoPtr<IntrinsicType>): str
  */
 export interface LiteralType {
   __tsgoEmbedded0: TypeBase;
-  value: unknown;
+  value: GoInterface<unknown>;
   freshType: GoPtr<Type>;
   regularType: GoPtr<Type>;
 }
@@ -2292,7 +2293,7 @@ export interface LiteralType {
  * 	return t.value
  * }
  */
-export function LiteralType_Value(receiver: GoPtr<LiteralType>): unknown {
+export function LiteralType_Value(receiver: GoPtr<LiteralType>): GoInterface<unknown> {
   return receiver!.value;
 }
 
@@ -3568,7 +3569,7 @@ export const TernaryTrue: Ternary = -1;
  * Go source:
  * TypeComparer func(s *Type, t *Type, reportErrors bool) Ternary
  */
-export type TypeComparer = (s: GoPtr<Type>, t: GoPtr<Type>, reportErrors: bool) => Ternary;
+export type TypeComparer = GoFunc<(s: GoPtr<Type>, t: GoPtr<Type>, reportErrors: bool) => Ternary>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::LanguageFeatureMinimumTargetMap","kind":"type","status":"implemented","sigHash":"09dde4006da9de6c518eb754e1b4afef60d3432668ab587704bfcdfbe99e267c"}

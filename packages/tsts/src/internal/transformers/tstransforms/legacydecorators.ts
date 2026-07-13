@@ -34,6 +34,7 @@ import { IsSimpleInlineableExpression, MoveRangePastModifiers } from "../utiliti
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "../../ast/visitor.js";
 
+import type { GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::type::LegacyDecoratorsTransformer","kind":"type","status":"implemented","sigHash":"3e8b6000d7df99dfb03cbd1021762c270351f393bd09b326bf1c1b0c9648c6e3"}
  *
@@ -54,7 +55,7 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_Vis
 export interface LegacyDecoratorsTransformer {
   __tsgoEmbedded0: Transformer;
   languageVersion: ScriptTarget;
-  referenceResolver: ReferenceResolver;
+  referenceResolver: GoInterface<ReferenceResolver>;
   classAliases: GoMap<GoPtr<Node>, GoPtr<Node>>;
   enclosingClasses: GoSlice<GoPtr<ClassDeclaration>>;
 }
@@ -187,7 +188,7 @@ export function LegacyDecoratorsTransformer_visitIdentifier(receiver: GoPtr<Lega
   const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   for (const d of receiver!.enclosingClasses) {
     const dNode = d as unknown as GoPtr<Node>;
-    if (receiver!.classAliases.has(dNode) && receiver!.referenceResolver.GetReferencedValueDeclaration(EmitContext_MostOriginal(emitCtx, node as unknown as GoPtr<Node>) as unknown as GoPtr<IdentifierNode>) === EmitContext_MostOriginal(emitCtx, dNode)) {
+    if (receiver!.classAliases.has(dNode) && receiver!.referenceResolver!.GetReferencedValueDeclaration(EmitContext_MostOriginal(emitCtx, node as unknown as GoPtr<Node>) as unknown as GoPtr<IdentifierNode>) === EmitContext_MostOriginal(emitCtx, dNode)) {
       return receiver!.classAliases.get(dNode);
     }
   }
@@ -1080,7 +1081,7 @@ export function LegacyDecoratorsTransformer_hasInternalStaticReference(receiver:
   const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   const classNode = EmitContext_MostOriginal(emitCtx, node as unknown as GoPtr<Node>);
   const isOrContainsStaticSelfReference = (n: GoPtr<Node>): bool => {
-    if (IsIdentifier(n) && receiver!.referenceResolver.GetReferencedValueDeclaration(EmitContext_MostOriginal(emitCtx, n) as unknown as GoPtr<IdentifierNode>) === classNode) {
+    if (IsIdentifier(n) && receiver!.referenceResolver!.GetReferencedValueDeclaration(EmitContext_MostOriginal(emitCtx, n) as unknown as GoPtr<IdentifierNode>) === classNode) {
       return true as bool;
     }
     if (IsPropertyAccessExpression(n)) {
