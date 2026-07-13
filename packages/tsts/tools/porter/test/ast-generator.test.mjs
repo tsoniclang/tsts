@@ -504,7 +504,7 @@ test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/ca
   );
   const casts = files.get("internal/ast/generated/casts.ts");
   assert.match(casts, /import \{ goReceiverKey \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
-  assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data\[goReceiverKey\] as GoPtr<Identifier>;/);
+  assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data!\[goReceiverKey\] as GoPtr<Identifier>;/);
 });
 
 test("ast-generator: raw slices use their intrinsic carrier", () => {
