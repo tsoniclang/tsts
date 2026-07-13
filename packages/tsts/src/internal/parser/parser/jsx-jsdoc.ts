@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Node_End, NodeList_End, NodeList_Pos, Node_Pos } from "../../ast/spine.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { Node_TagName, Node_Children } from "../../ast/ast.js";
@@ -437,7 +437,7 @@ export function Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver: G
     case KindJsxOpeningElement: {
       let children: GoPtr<NodeList> = Parser_parseJsxChildren(receiver, opening);
       let closingElement: GoPtr<Node>;
-      const lastChild = LastOrNil(children!.Nodes);
+      const lastChild = LastOrNil(children!.Nodes, GoZeroPointer<Node>);
       if (lastChild !== undefined && lastChild.Kind === KindJsxElement &&
         !TagNamesAreEquivalent(Node_TagName(AsJsxElement(lastChild)!.OpeningElement), Node_TagName(AsJsxElement(lastChild)!.ClosingElement)) &&
         TagNamesAreEquivalent(Node_TagName(opening), Node_TagName(AsJsxElement(lastChild)!.ClosingElement))) {

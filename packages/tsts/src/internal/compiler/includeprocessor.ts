@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNilMap, GoNilSlice, GoValueRef } from "../../go/compat.js";
+import { GoNilMap, GoNilSlice, GoValueRef, GoZeroPointer, GoZeroSlice } from "../../go/compat.js";
 import { IsExternalOrCommonJSModule } from "../ast/utilities.js";
 import { SourceFile_FileName } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
@@ -232,7 +232,7 @@ export function includeProcessor_addProcessingDiagnosticsForFileCasing(receiver:
  * }
  */
 export function includeProcessor_getReferenceLocation(receiver: GoPtr<includeProcessor>, r: GoPtr<FileIncludeReason>, program: GoPtr<Program>): GoPtr<referenceFileLocation> {
-  const [existing, ok] = SyncMap_Load<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>(receiver!.reasonToReferenceLocation as unknown as SyncMap<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>, r);
+  const [existing, ok] = SyncMap_Load(receiver!.reasonToReferenceLocation, r, GoZeroPointer<referenceFileLocation>);
   if (ok) {
     return existing;
   }
@@ -291,7 +291,7 @@ export function includeProcessor_getCompilerOptionsObjectLiteralSyntax(receiver:
  * }
  */
 export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor>, r: GoPtr<FileIncludeReason>, program: GoPtr<Program>): GoPtr<Diagnostic> {
-  const [existing, ok] = SyncMap_Load<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>(receiver!.includeReasonToRelatedInfo as unknown as SyncMap<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>, r);
+  const [existing, ok] = SyncMap_Load(receiver!.includeReasonToRelatedInfo, r, GoZeroPointer<Diagnostic>);
   if (ok) {
     return existing;
   }
@@ -367,7 +367,7 @@ export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor
  * }
  */
 export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr<includeProcessor>, program: GoPtr<Program>, filePath: Path, toFileName: GoFunc<(fileName: string) => string>): GoSlice<GoPtr<Diagnostic>> {
-  const [existing, ok] = SyncMap_Load<Path, GoSlice<GoPtr<Diagnostic>>>(receiver!.redirectAndFileFormat as unknown as SyncMap<Path, GoSlice<GoPtr<Diagnostic>>>, filePath);
+  const [existing, ok] = SyncMap_Load(receiver!.redirectAndFileFormat, filePath, GoZeroSlice<GoPtr<Diagnostic>>);
   if (ok) {
     return existing;
   }

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoEqualStrict, GoNumberKey, GoStructField, GoStructKey, GoZeroMap, GoZeroNumber, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../ast/spine.js";
 import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -465,6 +465,31 @@ export interface NodeBuilderLinks {
  */
 export interface NodeBuilderSymbolLinks {
   specifierCache: ModeAwareCache<string>;
+}
+
+function goZeroValueSymbolLinks(): ValueSymbolLinks {
+  return {
+    resolvedType: undefined,
+    writeType: undefined,
+    target: undefined,
+    mapper: undefined,
+    nameType: undefined,
+    containingType: undefined,
+    functionOrConstructorChecked: false,
+  };
+}
+
+function goZeroNodeBuilderLinks(): NodeBuilderLinks {
+  return {
+    serializedTypes: GoZeroMap<CompositeTypeCacheIdentity, GoPtr<SerializedTypeEntry>>(),
+    fakeScopeForSignatureDeclaration: undefined,
+  };
+}
+
+function goZeroNodeBuilderSymbolLinks(): NodeBuilderSymbolLinks {
+  return {
+    specifierCache: GoZeroMap<ModeAwareCacheKey, string>(),
+  };
 }
 
 /**
@@ -1550,7 +1575,7 @@ export function NodeBuilderImpl_symbolToNode(receiver: GoPtr<NodeBuilderImpl>, s
       }
     }
     if (LinkStore_Has(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_)) {
-      const nameType = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_)!.v.nameType;
+      const nameType = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_, goZeroValueSymbolLinks)!.v.nameType;
       if (nameType !== undefined && (nameType!.flags & (TypeFlagsEnumLiteral | TypeFlagsUniqueESSymbol)) !== 0) {
         const oldEnclosing = receiver!.ctx!.enclosingDeclaration;
         receiver!.ctx!.enclosingDeclaration = nameType!.symbol!.ValueDeclaration;
@@ -2300,7 +2325,7 @@ export function isDefaultBindingContext(location: GoPtr<Node>): bool {
  */
 export function NodeBuilderImpl_getNameOfSymbolFromNameType(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): string {
   if (LinkStore_Has(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_)) {
-    const nameType = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_)!.v.nameType;
+    const nameType = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_, goZeroValueSymbolLinks)!.v.nameType;
     if (nameType === undefined) {
       return "";
     }
@@ -2394,10 +2419,10 @@ export function NodeBuilderImpl_getNameOfSymbolAsWritten(receiver: GoPtr<NodeBui
     return "default";
   }
   if (sym!.Declarations !== undefined && sym!.Declarations.length > 0) {
-    const name = FirstNonNil(sym!.Declarations, GetNameOfDeclaration);
+    const name = FirstNonNil(sym!.Declarations, GetNameOfDeclaration, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>);
     if (name !== undefined) {
       if (IsComputedPropertyName(name) && (sym!.CheckFlags & CheckFlagsLate) === 0) {
-        if (LinkStore_Has(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, sym) && LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, sym)!.v.nameType !== undefined && (LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, sym)!.v.nameType!.flags & TypeFlagsStringOrNumberLiteral) !== 0) {
+        if (LinkStore_Has(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, sym) && LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, sym, goZeroValueSymbolLinks)!.v.nameType !== undefined && (LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, sym, goZeroValueSymbolLinks)!.v.nameType!.flags & TypeFlagsStringOrNumberLiteral) !== 0) {
           const result = NodeBuilderImpl_getNameOfSymbolFromNameType(receiver, sym);
           if (result.length > 0) {
             return result;
@@ -2976,7 +3001,7 @@ export function tryGetModuleSpecifierFromDeclarationWorker(node: GoPtr<Node>): G
 export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, overrideImportMode: ResolutionMode): string {
   let file = GetDeclarationOfKind(symbol_, KindSourceFile);
   if (file === undefined) {
-    const equivalentSymbol = FirstNonNil(symbol_!.Declarations ?? [], (d) => Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver!.ch, d, symbol_));
+    const equivalentSymbol = FirstNonNil(symbol_!.Declarations ?? [], (d) => Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver!.ch, d, symbol_), GoZeroPointer<Symbol>, GoEqualStrict<GoPtr<Symbol>>);
     if (equivalentSymbol !== undefined) {
       file = GetDeclarationOfKind(equivalentSymbol as GoPtr<Symbol>, KindSourceFile);
     }
@@ -3004,7 +3029,7 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
     resolutionMode = receiver!.ch!.program!.GetImpliedNodeFormatForEmit(contextHasFileName) as unknown as ResolutionMode;
   }
   const cacheKey: ModeAwareCacheKey = { Name: String(SourceFile_Path(contextFile)), Mode: resolutionMode };
-  const links = LinkStore_Get<GoPtr<Symbol>, NodeBuilderSymbolLinks>(receiver!.symbolLinks as unknown as LinkStore<GoPtr<Symbol>, NodeBuilderSymbolLinks>, symbol_);
+  const links = LinkStore_Get<GoPtr<Symbol>, NodeBuilderSymbolLinks>(receiver!.symbolLinks as unknown as LinkStore<GoPtr<Symbol>, NodeBuilderSymbolLinks>, symbol_, goZeroNodeBuilderSymbolLinks);
   if (links!.v.specifierCache === undefined) {
     links!.v.specifierCache = new globalThis.Map() as ModeAwareCache<string>;
   }
@@ -3249,7 +3274,7 @@ export function NodeBuilderImpl_typeParameterShadowsOtherTypeParameterInScope(re
  */
 export function NodeBuilderImpl_typeParameterToName(receiver: GoPtr<NodeBuilderImpl>, typeParameter: GoPtr<Type>): GoPtr<Identifier> {
   if ((receiver!.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0) {
-    const [cached, ok] = CopyOnWriteMap_Get(receiver!.ctx!.typeParameterNames, typeParameter!.id);
+    const [cached, ok] = CopyOnWriteMap_Get<TypeId, GoPtr<Identifier>>(receiver!.ctx!.typeParameterNames, typeParameter!.id, GoZeroPointer<Identifier>);
     if (ok) {
       return cached;
     }
@@ -3267,8 +3292,8 @@ export function NodeBuilderImpl_typeParameterToName(receiver: GoPtr<NodeBuilderI
   if ((receiver!.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0) {
     const rawText = AsIdentifier(result)!.Text;
     // Go's `i, _ := ...Get(rawText)` yields the zero value (0) when the key is absent.
-    const [prevI] = CopyOnWriteMap_Get(receiver!.ctx!.typeParameterNamesByTextNextNameCount, rawText);
-    let i = prevI ?? 0;
+    const [prevI] = CopyOnWriteMap_Get<string, int>(receiver!.ctx!.typeParameterNamesByTextNextNameCount, rawText, GoZeroNumber);
+    let i = prevI;
     let text = rawText;
     while (true) {
       if (!CopyOnWriteSet_Has(receiver!.ctx!.typeParameterNamesByText, text) && !NodeBuilderImpl_typeParameterShadowsOtherTypeParameterInScope(receiver, text, typeParameter)) {
@@ -4374,7 +4399,7 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
           checkFlags = CheckFlagsOptionalParameter;
         }
         const symbol_ = Checker_newSymbolEx(receiver, SymbolFlagsFunctionScopedVariable, name, checkFlags);
-        const links = LinkStore_Get(receiver!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_);
+        const links = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_, goZeroValueSymbolLinks);
         links!.v.resolvedType = (flags & ElementFlagsRest) !== 0 ? Checker_createArrayType(receiver, type_) : type_;
         return symbol_;
       });
@@ -4827,7 +4852,7 @@ export function NodeBuilderImpl_serializeTypeForDeclaration(receiver: GoPtr<Node
   if (declaration === undefined && symbol_ !== undefined) {
     declaration = symbol_!.ValueDeclaration as GoPtr<Declaration>;
     if (declaration === undefined) {
-      declaration = FirstOrNil(symbol_!.Declarations ?? []) as GoPtr<Declaration>;
+      declaration = FirstOrNil(symbol_!.Declarations ?? [], GoZeroPointer<Node>) as GoPtr<Declaration>;
     }
   }
   if (symbol_ === undefined && declaration !== undefined) {
@@ -4878,7 +4903,7 @@ export function NodeBuilderImpl_serializeTypeForDeclaration(receiver: GoPtr<Node
       pt = PseudoChecker_GetTypeOfDeclaration(receiver!.pc, declaration);
     }
     if ((pt === undefined || pt!.Kind === PseudoTypeKindNoResult) && IsBinaryExpression(declaration)) {
-      const decl = Find(symbol_!.Declarations ?? [], hasTypeAnnotation);
+      const decl = Find(symbol_!.Declarations ?? [], hasTypeAnnotation, GoZeroPointer<Node>);
       if (decl !== undefined) {
         // Binary expressions have a first-in-wins type annotation system. The first one with an annotation supplies the type for the rest.
         pt = PseudoChecker_GetTypeOfDeclaration(receiver!.pc, decl as GoPtr<Declaration>);
@@ -5007,7 +5032,7 @@ export function NodeBuilderImpl_shouldUsePlaceholderForProperty(receiver: GoPtr<
     return false;
   }
   // (1)
-  if (slices.Contains(receiver!.ctx!.reverseMappedStack, propertySymbol)) {
+  if (slices.Contains(receiver!.ctx!.reverseMappedStack, propertySymbol, GoEqualStrict<GoPtr<Symbol>>)) {
     return true;
   }
   // (2)
@@ -5513,7 +5538,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
     if (!Checker_isErrorType(receiver!.ch, propertyType) && !Checker_isErrorType(receiver!.ch, writeType)) {
       const propDeclaration = GetDeclarationOfKind(propertySymbol, KindPropertyDeclaration);
       if (propertyType !== writeType || (propertySymbol!.Parent !== undefined && (propertySymbol!.Parent!.Flags & SymbolFlagsClass) !== 0 && propDeclaration === undefined)) {
-        const symbolMapper = LinkStore_Get(receiver!.ch!.valueSymbolLinks, propertySymbol)!.v.mapper;
+        const symbolMapper = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks, propertySymbol, goZeroValueSymbolLinks)!.v.mapper;
         const getterDeclaration = GetDeclarationOfKind(propertySymbol, KindGetAccessor);
         if (getterDeclaration !== undefined) {
           let getterSignature = Checker_getSignatureFromDeclaration(receiver!.ch, getterDeclaration);
@@ -5557,7 +5582,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
         typeElements.push(fakeGetterDeclaration as GoPtr<TypeElement>);
 
         const setterParam = Checker_newSymbol(receiver!.ch, SymbolFlagsFunctionScopedVariable, "arg");
-        LinkStore_Get(receiver!.ch!.valueSymbolLinks, setterParam)!.v.resolvedType = writeType;
+        LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks, setterParam, goZeroValueSymbolLinks)!.v.resolvedType = writeType;
         const fakeSetterSignature = Checker_newSignature(receiver!.ch, SignatureFlagsNone, undefined, [], undefined, [setterParam], receiver!.ch!.voidType, undefined, 0);
         const fakeSetterDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, fakeSetterSignature, KindSetAccessor, {
           modifiers: [],
@@ -6493,7 +6518,7 @@ export function NodeBuilderImpl_typeReferenceToTypeNode(receiver: GoPtr<NodeBuil
       do {
         typeParameterOffset++;
       } while (typeParameterOffset < length && NodeBuilderImpl_getParentSymbolOfTypeParameter(receiver, Type_AsTypeParameter(outerTypeParameters[typeParameterOffset])) === parent);
-      if (!slices.Equal(outerTypeParameters.slice(start, typeParameterOffset), typeArguments.slice(start, typeParameterOffset))) {
+      if (!slices.Equal(outerTypeParameters.slice(start, typeParameterOffset), typeArguments.slice(start, typeParameterOffset), GoEqualStrict<GoPtr<Type>>)) {
         const typeArgumentSlice = NodeBuilderImpl_mapToTypeNodes(receiver, typeArguments.slice(start, typeParameterOffset), false);
         const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
         receiver!.ctx!.flags |= FlagsForbidIndexedAccessSymbolReferences;
@@ -6652,7 +6677,7 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   // Don't rely on type cache if we're expanding a type, because we need to compute `canIncreaseExpansionDepth`.
   const canUseCache = receiver!.ctx!.maxExpansionDepth < 0;
   if (canUseCache && receiver!.ctx!.enclosingDeclaration !== undefined && LinkStore_Has(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration)) {
-    const links = LinkStore_Get(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration);
+    const links = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration, goZeroNodeBuilderLinks);
     const cachedResult = links!.v.serializedTypes?.get(key);
     if (cachedResult !== undefined) {
       for (const arg of cachedResult!.trackedSymbols ?? []) {
@@ -6680,7 +6705,7 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   const result = transform!(receiver, t);
   const addedLength = receiver!.ctx!.approximateLength - startLength;
   if (canUseCache && !receiver!.ctx!.reportedDiagnostic && !receiver!.ctx!.encounteredError) {
-    const links = LinkStore_Get(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration);
+    const links = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration, goZeroNodeBuilderLinks);
     if (links!.v.serializedTypes === undefined) {
       links!.v.serializedTypes = NewGoStructMap<CompositeTypeCacheIdentity, GoPtr<SerializedTypeEntry>>(GoStructKey(
         [
@@ -7221,7 +7246,7 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
           receiver!.ctx!.depth--;
         }
       }
-      if ((t!.flags & TypeFlagsTypeParameter) !== 0 && slices.Contains(receiver!.ctx!.inferTypeParameters, t)) {
+      if ((t!.flags & TypeFlagsTypeParameter) !== 0 && slices.Contains(receiver!.ctx!.inferTypeParameters, t, GoEqualStrict<GoPtr<Type>>)) {
         receiver!.ctx!.approximateLength += SymbolName(t!.symbol).length + 6;
         let constraintNode: GoPtr<TypeNode>;
         const constraint = Checker_getConstraintOfTypeParameter(receiver!.ch, t);
@@ -7469,7 +7494,7 @@ export function NodeBuilderImpl_lookupInstantiatedTypeArgumentNodes(receiver: Go
       targetSymbol = Checker_resolveAlias(receiver!.ch, symbol_);
     }
     let params = NodeBuilderImpl_getTypeParametersOfClassOrInterface(receiver, targetSymbol);
-    const targetMapper = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, nextSymbol)!.v.mapper;
+    const targetMapper = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, nextSymbol, goZeroValueSymbolLinks)!.v.mapper;
     if (targetMapper !== undefined) {
       params = CoreMap(params, (param) => TypeMapper_Map(targetMapper, param));
     }

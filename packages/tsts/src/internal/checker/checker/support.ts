@@ -98,7 +98,7 @@ import { GetEnclosingBlockScopeContainer, GetExtendsHeritageClauseElement, GetSo
 import { Every, Some } from "../../core/core.js";
 import { ModuleKindCommonJS, ModuleKindES2015, ModuleKindESNext, ModuleKindNode16, ModuleKindNodeNext, ModuleKindNone } from "../../core/compileroptions.js";
 import { NewTextRange } from "../../core/text.js";
-import { Tristate_IsTrue, TSTrue } from "../../core/tristate.js";
+import { Tristate_IsTrue, TSUnknown, TSTrue } from "../../core/tristate.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import { CategorySuggestion } from "../../diagnostics/diagnostics.js";
 import { Assert } from "../../debug/debug.js";
@@ -132,11 +132,11 @@ import { Checker_isPostSuperFlowNode, Checker_markNodeAssignmentsWorker } from "
 import { Checker_isCanceled, Checker_isConstantVariable } from "../utilities.js";
 import { Checker_checkGrammarBindingElement, Checker_checkGrammarStatementInAmbientContext } from "../grammarchecks.js";
 import { ObjectFlagsAnonymous, SignatureKindConstruct, Type_Types, TypeFlagsNonPrimitive, TypeFlagsPrimitive, TypeFlagsUnion } from "../types.js";
-import { NodeCheckFlagsContainsClassWithPrivateIdentifiers, NodeCheckFlagsContainsSuperPropertyInStaticInitializer } from "../types.js";
+import { NodeCheckFlagsContainsClassWithPrivateIdentifiers, NodeCheckFlagsContainsSuperPropertyInStaticInitializer, NodeCheckFlagsNone } from "../types.js";
 import type { NodeLinks } from "../types.js";
 import { newEmitResolver } from "../emitresolver.js";
 import type { EmitResolver } from "../emitresolver.js";
-import type { SymbolReferenceLinks, Ternary, Type } from "../types.js";
+import type { SymbolReferenceLinks, Ternary, Type, ValueSymbolLinks } from "../types.js";
 import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
 import { Diagnostic_SetSkippedOnNoEmit } from "../../ast/diagnostic.js";
 import { entityNameToString, getDeclarationModifierFlagsFromSymbol, hasExportAssignmentSymbol, isConstTypeReference, isSyntacticDefault, NewDiagnosticForNode } from "../utilities.js";
@@ -161,6 +161,35 @@ import { Checker_getEmitSyntaxForModuleSpecifierExpression, Checker_mergeModuleA
 import { Checker_addDiagnostic, Checker_addSuggestionDiagnostic, Checker_mergeGlobalSymbol } from "../checker.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+
+function goZeroAssertionLinks(): AssertionLinks {
+  return { exprType: undefined };
+}
+
+function goZeroNodeLinks(): NodeLinks {
+  return {
+    flags: NodeCheckFlagsNone,
+    declarationRequiresScopeChange: TSUnknown,
+    hasReportedStatementInAmbientContext: false,
+  };
+}
+
+function goZeroSymbolReferenceLinks(): SymbolReferenceLinks {
+  return { referenceKinds: SymbolFlagsNone };
+}
+
+function goZeroValueSymbolLinks(): ValueSymbolLinks {
+  return {
+    resolvedType: undefined,
+    writeType: undefined,
+    target: undefined,
+    mapper: undefined,
+    nameType: undefined,
+    containingType: undefined,
+    functionOrConstructorChecked: false,
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnreliableWorker","kind":"method","status":"implemented","sigHash":"f90db0ec4a1e83322abe295dd0931dd486677de0bc0daa2547e75d4b77b49bea"}
  *
@@ -438,10 +467,10 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
     }
   }
   Checker_addUndefinedToGlobalsOrErrorOnRedeclaration(receiver);
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.undefinedSymbol)!.v.resolvedType = receiver!.undefinedWideningType;
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.argumentsSymbol)!.v.resolvedType = Checker_getGlobalType(receiver, "IArguments", 0, true);
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.unknownSymbol)!.v.resolvedType = receiver!.errorType;
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.globalThisSymbol)!.v.resolvedType = Checker_newObjectType(receiver, ObjectFlagsAnonymous, receiver!.globalThisSymbol);
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.undefinedSymbol, goZeroValueSymbolLinks)!.v.resolvedType = receiver!.undefinedWideningType;
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.argumentsSymbol, goZeroValueSymbolLinks)!.v.resolvedType = Checker_getGlobalType(receiver, "IArguments", 0, true);
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.unknownSymbol, goZeroValueSymbolLinks)!.v.resolvedType = receiver!.errorType;
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.globalThisSymbol, goZeroValueSymbolLinks)!.v.resolvedType = Checker_newObjectType(receiver, ObjectFlagsAnonymous, receiver!.globalThisSymbol);
   receiver!.globalArrayType = Checker_getGlobalType(receiver, "Array", 1, true);
   receiver!.globalObjectType = Checker_getGlobalType(receiver, "Object", 0, true);
   receiver!.globalFunctionType = Checker_getGlobalType(receiver, "Function", 0, true);
@@ -484,7 +513,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
  * }
  */
 export function Checker_symbolReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags): void {
-  LinkStore_Get(receiver!.symbolReferenceLinks, symbol_)!.v.referenceKinds |= meaning;
+  LinkStore_Get(receiver!.symbolReferenceLinks, symbol_, goZeroSymbolReferenceLinks)!.v.referenceKinds |= meaning;
 }
 
 /**
@@ -994,7 +1023,7 @@ export function Checker_reportUnusedBindingElements(receiver: GoPtr<Checker>, no
  */
 export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checker>): void {
   for (const node of receiver!.renamedBindingElementsInTypes) {
-    const links = LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node))!.v;
+    const links = LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node), goZeroSymbolReferenceLinks)!.v;
     if ((links!.referenceKinds ?? SymbolFlagsNone) === 0) {
       const wrappingDeclaration = WalkUpBindingElementsAndPatterns(node);
       Assert(IsPartOfParameterDeclaration(wrappingDeclaration), "Only parameter declaration should be checked here");
@@ -1038,7 +1067,7 @@ export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checke
  */
 export function Checker_checkWeakMapSetCollision(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const enclosingBlockScope = GetEnclosingBlockScopeContainer(node);
-  if ((LinkStore_Get(receiver!.nodeLinks, enclosingBlockScope)!.v.flags & NodeCheckFlagsContainsClassWithPrivateIdentifiers) !== 0) {
+  if ((LinkStore_Get(receiver!.nodeLinks, enclosingBlockScope, goZeroNodeLinks)!.v.flags & NodeCheckFlagsContainsClassWithPrivateIdentifiers) !== 0) {
     const name = Node_Name(node);
     if (name !== undefined && IsIdentifier(name)) {
       Checker_errorSkippedOnNoEmit(receiver, node, Compiler_reserves_name_0_when_emitting_private_identifier_downlevel, Node_Text(name));
@@ -1083,18 +1112,18 @@ export function Checker_checkReflectCollision(receiver: GoPtr<Checker>, node: Go
   let hasCollision: bool = false;
   if (IsClassExpression(node)) {
     for (const member of Node_Members(node) ?? []) {
-      if ((LinkStore_Get(receiver!.nodeLinks, member)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
+      if ((LinkStore_Get(receiver!.nodeLinks, member, goZeroNodeLinks)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
         hasCollision = true;
         break;
       }
     }
   } else if (IsFunctionExpression(node)) {
-    if ((LinkStore_Get(receiver!.nodeLinks, node)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
+    if ((LinkStore_Get(receiver!.nodeLinks, node, goZeroNodeLinks)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
       hasCollision = true;
     }
   } else {
     const container = GetEnclosingBlockScopeContainer(node);
-    if (container !== undefined && (LinkStore_Get(receiver!.nodeLinks, container)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
+    if (container !== undefined && (LinkStore_Get(receiver!.nodeLinks, container, goZeroNodeLinks)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
       hasCollision = true;
     }
   }
@@ -1178,7 +1207,7 @@ export function Checker_checkAssertion(receiver: GoPtr<Checker>, node: GoPtr<Nod
     }
     return Checker_getRegularTypeOfLiteralType(receiver, exprType);
   }
-  const links = LinkStore_Get(receiver!.assertionLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.assertionLinks, node, goZeroAssertionLinks)!.v;
   links!.exprType = exprType;
   Checker_checkSourceElement(receiver, typeNode);
   Checker_checkNodeDeferred(receiver, node);
@@ -1207,7 +1236,7 @@ export function Checker_checkAssertion(receiver: GoPtr<Checker>, node: GoPtr<Nod
  */
 export function Checker_checkAssertionDeferred(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const typeNode = Node_Type(node);
-  const exprType = Checker_getRegularTypeOfObjectLiteral(receiver, Checker_getBaseTypeOfLiteralType(receiver, LinkStore_Get(receiver!.assertionLinks, node)!.v.exprType));
+  const exprType = Checker_getRegularTypeOfObjectLiteral(receiver, Checker_getBaseTypeOfLiteralType(receiver, LinkStore_Get(receiver!.assertionLinks, node, goZeroAssertionLinks)!.v.exprType));
   const targetType = Checker_getTypeFromTypeNode(receiver, typeNode);
   if (!Checker_isErrorType(receiver, targetType)) {
     const widenedType = Checker_getWidenedType(receiver, exprType);

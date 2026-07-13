@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Entries, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -491,7 +491,7 @@ export function NewInfoCache(currentDirectory: string, useCaseSensitiveFileNames
  */
 export function InfoCache_Get(receiver: GoPtr<InfoCache>, packageJsonPath: string): GoPtr<InfoCacheEntry> {
   const key = ToPath(packageJsonPath, receiver!.currentDirectory, receiver!.useCaseSensitiveFileNames);
-  const [value, ok] = SyncMap_Load<Path, GoPtr<InfoCacheEntry>>(receiver!.cache as GoPtr<SyncMap<Path, GoPtr<InfoCacheEntry>>>, key);
+  const [value, ok] = SyncMap_Load(receiver!.cache, key, GoZeroPointer<InfoCacheEntry>);
   if (ok) {
     return value;
   }

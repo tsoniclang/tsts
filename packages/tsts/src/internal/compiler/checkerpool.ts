@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { Mutex, Once, OnceFunc } from "../../go/sync.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -182,7 +182,7 @@ export function checkerPool_getCheckerForFileNonExclusive(receiver: GoPtr<checke
 export function checkerPool_getCheckerForFileExclusive(receiver: GoPtr<checkerPool>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
   checkerPool_createCheckers(receiver);
   const c = receiver!.fileAssociations.get(file);
-  const idx = Index(receiver!.checkers, c);
+  const idx = Index(receiver!.checkers, c, GoEqualStrict);
   receiver!.locks[idx]!.Lock();
   return [c, OnceFunc((): void => {
     receiver!.locks[idx]!.Unlock();

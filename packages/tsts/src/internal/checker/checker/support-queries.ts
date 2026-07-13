@@ -1,7 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { Filter, IfElse, Map as core_Map, OrElse, Some } from "../../core/core.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoSliceIsNil } from "../../../go/compat.js";
+import { GoEqualStrict, GoSliceIsNil, GoZeroPointer } from "../../../go/compat.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Modifiers } from "../../ast/spine.js";
@@ -105,6 +105,18 @@ import { isInternalModuleImportEqualsDeclaration, isTupleType, IterationTypeKind
 import { Checker_markExportAssignmentAliasReferenced } from "./relations.js";
 import { The_call_would_have_succeeded_against_this_implementation_but_implementation_signatures_of_overloads_are_not_externally_visible } from "../../diagnostics/generated/messages.js";
 
+function goZeroSymbolReferenceLinks(): SymbolReferenceLinks {
+  return { referenceKinds: SymbolFlagsNone };
+}
+
+function goZeroArrayLiteralLinks(): ArrayLiteralLinks {
+  return {
+    indicesComputed: false,
+    firstSpreadIndex: 0,
+    lastSpreadIndex: 0,
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isIteratorResult","kind":"method","status":"implemented","sigHash":"c68abca3eb06cf808f42dbcbaa7b5579291a43e12a0eda979bc92ec57c49ee0a"}
  *
@@ -123,7 +135,12 @@ export function Checker_isIteratorResult(receiver: GoPtr<Checker>, t: GoPtr<Type
   // > [done] is the result status of an iterator `next` method call. If the end of the iterator was reached `done` is `true`.
   // > If the end was not reached `done` is `false` and a value is available.
   // > If a `done` property (either own or inherited) does not exist, it is consider to have the value `false`.
-  const doneType = OrElse(Checker_getTypeOfPropertyOfType(receiver, t, "done"), receiver!.falseType);
+  const doneType = OrElse(
+    Checker_getTypeOfPropertyOfType(receiver, t, "done"),
+    receiver!.falseType,
+    GoZeroPointer<Type>,
+    GoEqualStrict<GoPtr<Type>>,
+  );
   return Checker_isTypeAssignableTo(receiver, IfElse(kind === IterationTypeKindYield, receiver!.falseType, receiver!.trueType), doneType);
 }
 
@@ -136,7 +153,7 @@ export function Checker_isIteratorResult(receiver: GoPtr<Checker>, t: GoPtr<Type
  * }
  */
 export function Checker_isReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  return (LinkStore_Get(receiver!.symbolReferenceLinks, symbol_)!.v.referenceKinds ?? SymbolFlagsNone) !== 0;
+  return (LinkStore_Get(receiver!.symbolReferenceLinks, symbol_, goZeroSymbolReferenceLinks)!.v.referenceKinds ?? SymbolFlagsNone) !== 0;
 }
 
 /**
@@ -965,7 +982,7 @@ export function Checker_markLinkedReferences(receiver: GoPtr<Checker>, location:
  * }
  */
 export function Checker_getSpreadIndices(receiver: GoPtr<Checker>, node: GoPtr<Node>): [int, int] {
-  const links = LinkStore_Get(receiver!.arrayLiteralLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.arrayLiteralLinks, node, goZeroArrayLiteralLinks)!.v;
   if (!links.indicesComputed) {
     let first = -1;
     let last = -1;

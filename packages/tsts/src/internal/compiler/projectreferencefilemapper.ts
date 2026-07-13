@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { SourceFile_Path } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
@@ -395,7 +395,7 @@ export function projectReferenceFileMapper_getSourceToDtsIfSymlink(receiver: GoP
   // Note:: Currently we try the real path only if the
   // file is from node_modules to avoid having to run real path on all file paths
   const path = file!.Path();
-  const [realpathDtsToSource, ok] = SyncMap_Load<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path);
+  const [realpathDtsToSource, ok] = SyncMap_Load(receiver!.realpathDtsToSource, path, GoZeroPointer<SourceOutputAndProjectReference>);
   if (ok) {
     return realpathDtsToSource;
   }

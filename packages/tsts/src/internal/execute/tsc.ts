@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroString, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { Map as SyncGoMap } from "../../go/sync.js";
 import { ToLower } from "../../go/strings.js";
@@ -590,7 +590,7 @@ export function findConfigFile(searchPath: string, fileExists: GoFunc<(arg0: str
       return [fullConfigName, true] as [string, bool];
     }
     return [fullConfigName, false] as [string, bool];
-  });
+  }, GoZeroString);
   if (!ok) {
     return "";
   }

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice, GoMap } from "../../go/compat.js";
+import type { GoPtr, GoRef, GoSlice, GoMap } from "../../go/compat.js";
 import type { Mutex } from "../../go/sync.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression, Node_Type, Node_Initializer, NodeFactory_NewModifier, NodeFactory_UpdateIndexSignatureDeclaration, Node_ModifierNodes, Node_ParameterList, Node_QuestionToken } from "../ast/ast.js";
@@ -114,6 +114,39 @@ export interface DeclarationFileLinks {
   aliasesMarked: bool;
 }
 
+function GoZeroJSXLinks(): JSXLinks {
+  return { importRef: undefined };
+}
+
+function GoZeroDeclarationLinks(): DeclarationLinks {
+  return { isVisible: TSUnknown };
+}
+
+function GoZeroDeclarationFileLinks(): DeclarationFileLinks {
+  return { aliasesMarked: false };
+}
+
+function GoZeroEnumMemberLinks(): EnumMemberLinks {
+  return { value: NewResult(undefined, false, false, false) };
+}
+
+function GoZeroReverseMappedSymbolLinks(): ReverseMappedSymbolLinks {
+  return {
+    propertyType: undefined,
+    mappedType: undefined,
+    constraintType: undefined,
+  };
+}
+
+function GoZeroAliasSymbolLinks(): AliasSymbolLinks {
+  return {
+    immediateTarget: undefined,
+    aliasTarget: undefined,
+    referenced: false,
+    typeOnlyDeclaration: undefined,
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"aa28f97bdefb2b251294f9bbc7d012089c1646af46f1fb8a64ab0574d6228e00"}
  *
@@ -214,9 +247,9 @@ export function newEmitResolver(checker: GoPtr<Checker>): GoPtr<EmitResolver> {
     isValueAliasDeclaration: (node: GoPtr<Node>) => EmitResolver_isValueAliasDeclarationWorker(e, node),
     aliasMarkingVisitor: (node: GoPtr<Node>) => EmitResolver_aliasMarkingVisitorWorker(e, node),
     referenceResolver: undefined,
-    jsxLinks: { entries: new Map(), arena: { data: [] } } as unknown as LinkStore<GoPtr<Node>, JSXLinks>,
-    declarationLinks: { entries: new Map(), arena: { data: [] } } as unknown as LinkStore<GoPtr<Node>, DeclarationLinks>,
-    declarationFileLinks: { entries: new Map(), arena: { data: [] } } as unknown as LinkStore<GoPtr<Node>, DeclarationFileLinks>,
+    jsxLinks: { entries: new Map<GoPtr<Node>, GoRef<JSXLinks>>(), arena: { data: [] } },
+    declarationLinks: { entries: new Map<GoPtr<Node>, GoRef<DeclarationLinks>>(), arena: { data: [] } },
+    declarationFileLinks: { entries: new Map<GoPtr<Node>, GoRef<DeclarationFileLinks>>(), arena: { data: [] } },
   };
   return e;
 }
@@ -390,12 +423,12 @@ export function EmitResolver_GetEnumMemberValue(receiver: GoPtr<EmitResolver>, n
   }
   receiver!.checkerMu!.Lock();
   Checker_computeEnumMemberValues(receiver!.checker, node!.Parent);
-  const has = LinkStore_Has<GoPtr<Node>, EnumMemberLinks>(receiver!.checker!.enumMemberLinks as unknown as LinkStore<GoPtr<Node>, EnumMemberLinks>, node);
+  const has = LinkStore_Has(receiver!.checker!.enumMemberLinks, node);
   if (!has) {
     receiver!.checkerMu!.Unlock();
     return NewResult(undefined, false as bool, false as bool, false as bool);
   }
-  const result = (LinkStore_Get<GoPtr<Node>, EnumMemberLinks>(receiver!.checker!.enumMemberLinks as unknown as LinkStore<GoPtr<Node>, EnumMemberLinks>, node)!.v as EnumMemberLinks).value;
+  const result = LinkStore_Get(receiver!.checker!.enumMemberLinks, node, GoZeroEnumMemberLinks)!.v.value;
   receiver!.checkerMu!.Unlock();
   return result;
 }
@@ -445,15 +478,15 @@ export function EmitResolver_IsDeclarationVisible(receiver: GoPtr<EmitResolver>,
 export function EmitResolver_isDeclarationVisible(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
   if (!IsParseTreeNode(node)) { return false as bool; }
   if (node === undefined) { return false as bool; }
-  const links = LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, node);
-  if ((links!.v.isVisible ?? TSUnknown) === TSUnknown) {
+  const links = LinkStore_Get(receiver!.declarationLinks, node, GoZeroDeclarationLinks);
+  if (links!.v.isVisible === TSUnknown) {
     if (EmitResolver_determineIfDeclarationIsVisible(receiver, node)) {
       links!.v.isVisible = TSTrue;
     } else {
       links!.v.isVisible = TSFalse;
     }
   }
-  return ((links!.v.isVisible ?? TSUnknown) === TSTrue) as bool;
+  return (links!.v.isVisible === TSTrue) as bool;
 }
 
 /**
@@ -666,7 +699,7 @@ export function EmitResolver_determineIfDeclarationIsVisible(receiver: GoPtr<Emi
  */
 export function EmitResolver_PrecalculateDeclarationEmitVisibility(receiver: GoPtr<EmitResolver>, file: GoPtr<SourceFile>): void {
   receiver!.checkerMu!.Lock();
-  const fileLinks = LinkStore_Get<GoPtr<Node>, DeclarationFileLinks>(receiver!.declarationFileLinks, file as unknown as GoPtr<Node>);
+  const fileLinks = LinkStore_Get(receiver!.declarationFileLinks, file, GoZeroDeclarationFileLinks);
   if (fileLinks!.v.aliasesMarked) {
     receiver!.checkerMu!.Unlock();
     return;
@@ -796,7 +829,7 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
 
     let nextSymbol: GoPtr<Symbol> = undefined;
     for (const declaration of exportSymbol!.Declarations ?? []) {
-      (LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, declaration)!.v as DeclarationLinks).isVisible = TSTrue;
+      LinkStore_Get(receiver!.declarationLinks, declaration, GoZeroDeclarationLinks)!.v.isVisible = TSTrue;
 
       if (IsInternalModuleImportEqualsDeclaration(declaration)) {
         const internalModuleReference = AsImportEqualsDeclaration(declaration)!.ModuleReference;
@@ -1051,7 +1084,7 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
   let addVisibleAlias: AddVisibleAlias;
   if (shouldComputeAliasToMakeVisible) {
     addVisibleAlias = (declaration: GoPtr<Node>, aliasingStatement: GoPtr<Node>) => {
-      (LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, declaration)!.v as DeclarationLinks).isVisible = TSTrue;
+      LinkStore_Get(receiver!.declarationLinks, declaration, GoZeroDeclarationLinks)!.v.isVisible = TSTrue;
       if (aliasesToMakeVisibleSet === undefined) {
         aliasesToMakeVisibleSet = new Map<NodeId, GoPtr<Node>>();
       }
@@ -1369,8 +1402,8 @@ export function EmitResolver_requiresAddingImplicitUndefined(receiver: GoPtr<Emi
       return ((symbol_!.Flags & SymbolFlagsProperty) !== 0) &&
              ((symbol_!.Flags & SymbolFlagsOptional) !== 0) &&
              (isOptionalDeclaration(declaration) as unknown as bool) &&
-             (LinkStore_Has<GoPtr<Symbol>, ReverseMappedSymbolLinks>(receiver!.checker!.ReverseMappedSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ReverseMappedSymbolLinks>, symbol_) as bool) &&
-             ((LinkStore_Get<GoPtr<Symbol>, ReverseMappedSymbolLinks>(receiver!.checker!.ReverseMappedSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ReverseMappedSymbolLinks>, symbol_)!.v as ReverseMappedSymbolLinks).mappedType !== undefined) &&
+             (LinkStore_Has(receiver!.checker!.ReverseMappedSymbolLinks, symbol_) as bool) &&
+             (LinkStore_Get(receiver!.checker!.ReverseMappedSymbolLinks, symbol_, GoZeroReverseMappedSymbolLinks)!.v.mappedType !== undefined) &&
              (containsNonMissingUndefinedType(receiver!.checker, t) as unknown as bool) as bool;
     }
     case KindParameter:
@@ -1610,7 +1643,7 @@ export function EmitResolver_IsReferencedAliasDeclaration(receiver: GoPtr<EmitRe
   if (IsAliasSymbolDeclaration(node)) {
     const symbol = Checker_getSymbolOfDeclaration(c, node);
     if (symbol !== undefined) {
-      const aliasLinks = LinkStore_Get<GoPtr<Symbol>, AliasSymbolLinks>(c!.aliasSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, AliasSymbolLinks>, symbol)!.v as AliasSymbolLinks;
+      const aliasLinks = LinkStore_Get(c!.aliasSymbolLinks, symbol, GoZeroAliasSymbolLinks)!.v;
       if (aliasLinks.referenced) {
         result = true as bool;
       } else {
@@ -1966,7 +1999,7 @@ export function EmitResolver_GetReferencedExportContainer(receiver: GoPtr<EmitRe
  */
 export function EmitResolver_SetReferencedImportDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>, ref: GoPtr<Declaration>): void {
   receiver!.checkerMu!.Lock();
-  (LinkStore_Get<GoPtr<Node>, JSXLinks>(receiver!.jsxLinks, node as unknown as GoPtr<Node>)!.v as JSXLinks).importRef = ref as unknown as GoPtr<Node>;
+  LinkStore_Get(receiver!.jsxLinks, node, GoZeroJSXLinks)!.v.importRef = ref;
   receiver!.checkerMu!.Unlock();
 }
 
@@ -2013,12 +2046,12 @@ export function EmitResolver_GetReferencedMemberValueDeclaration(receiver: GoPtr
  */
 export function EmitResolver_GetReferencedImportDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoPtr<Declaration> {
   receiver!.checkerMu!.Lock();
-  if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) {
-    const result = (LinkStore_Get<GoPtr<Node>, JSXLinks>(receiver!.jsxLinks, node as unknown as GoPtr<Node>)!.v as JSXLinks).importRef as unknown as GoPtr<Declaration>;
+  if (!IsParseTreeNode(node)) {
+    const result = LinkStore_Get(receiver!.jsxLinks, node, GoZeroJSXLinks)!.v.importRef;
     receiver!.checkerMu!.Unlock();
     return result;
   }
-  const symbol = Checker_getReferencedValueOrAliasSymbol(receiver!.checker, node as unknown as GoPtr<Node>);
+  const symbol = Checker_getReferencedValueOrAliasSymbol(receiver!.checker, node);
   let result: GoPtr<Declaration> = undefined;
   if (IsNonLocalAlias(symbol, SymbolFlagsValue as SymbolFlags) && Checker_getTypeOnlyAliasDeclarationEx(receiver!.checker, symbol, SymbolFlagsValue as SymbolFlags) === undefined) {
     result = Checker_getDeclarationOfAliasSymbol(receiver!.checker, symbol) as unknown as GoPtr<Declaration>;

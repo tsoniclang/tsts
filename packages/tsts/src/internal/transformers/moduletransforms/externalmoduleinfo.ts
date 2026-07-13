@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { SortFunc } from "../../../go/slices.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Elements, Node_PropertyNameOrName, Node_Text } from "../../ast/ast.js";
@@ -695,7 +695,7 @@ export function createExternalHelpersImportDeclarationIfNeeded(emitContext: GoPt
       for (const helper of helpers) {
         const importName = helper!.ImportName;
         if (importName.length > 0) {
-          helperNames = AppendIfUnique(helperNames, importName);
+          helperNames = AppendIfUnique(helperNames, importName, GoEqualStrict);
         }
       }
       if (helperNames.length > 0) {

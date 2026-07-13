@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, type GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import * as slices from "../../go/slices.js";
 import { GetAnyExtensionFromPath, GetBaseFileName, FileExtensionIs } from "./path.js";
@@ -271,7 +271,7 @@ export function IsDeclarationFileName(fileName: string): bool {
  * }
  */
 export function ExtensionIsOneOf(ext: string, extensions: GoSlice<string>): bool {
-  return slices.Contains(extensions, ext);
+  return slices.Contains(extensions, ext, GoEqualStrict);
 }
 
 /**

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoEqualStrict, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Map as SyncMapImpl } from "../../go/sync.js";
 import { Int32 as Int32Impl } from "../../go/sync/atomic.js";
@@ -1284,7 +1284,7 @@ export function fileLoader_getDefaultLibFilePriority(receiver: GoPtr<fileLoader>
       return 0;
     }
     const name = strings.TrimSuffix(strings.TrimPrefix(basename, "lib."), ".d.ts");
-    const index = slices.Index(Libs, name);
+    const index = slices.Index(Libs, name, GoEqualStrict);
     if (index !== -1) {
       return index + 1;
     }
@@ -2016,7 +2016,7 @@ export function fileLoader_createSyntheticImport(receiver: GoPtr<fileLoader>, te
  * }
  */
 export function fileLoader_pathForLibFile(receiver: GoPtr<fileLoader>, name: string): GoPtr<LibFile> {
-  const [cached, ok] = SyncMap_Load<string, GoPtr<LibFile>>(receiver!.pathForLibFileCache as unknown as GoPtr<SyncMap<string, GoPtr<LibFile>>>, name);
+  const [cached, ok] = SyncMap_Load(receiver!.pathForLibFileCache, name, GoZeroPointer<LibFile>);
   if (ok) {
     return cached;
   }

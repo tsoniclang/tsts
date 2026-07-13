@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { OrderedMap_Size } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import * as slices from "../../go/slices.js";
@@ -856,7 +856,7 @@ export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOp
   ForEachAncestorDirectory<unknown>(baseDir, (dir: string): [unknown, bool] => {
     typeRoots.push(CombinePaths(dir, "node_modules", "@types"));
     return [undefined, false];
-  });
+  }, GoZeroInterface);
   return [typeRoots, false];
 }
 
@@ -870,7 +870,7 @@ export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOp
  */
 export function CompilerOptions_UsesWildcardTypes(receiver: GoPtr<CompilerOptions>): bool {
   const options: GoPtr<CompilerOptions> = receiver;
-  return slices.Contains(options!.Types, "*");
+  return slices.Contains(options!.Types, "*", GoEqualStrict);
 }
 
 /**

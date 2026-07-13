@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import { Pool, Mutex, Once } from "../../go/sync.js";
 import { Join as strings_Join } from "../../go/strings.js";
 import type { SourceFile, SourceFileMetaData } from "../ast/ast.js";
@@ -692,7 +692,7 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
     task.path = fileLoader_toPath(loader, task.normalizedFilePath);
     const candidate = getParseTaskData(task);
     const [data, loaded] = SyncMap_LoadOrStore<Path_65a900c3, GoPtr<parseTaskData>>(
-      receiver!.taskDataByPath as unknown as import("../collections/syncmap.js").SyncMap<Path_65a900c3, GoPtr<parseTaskData>>,
+      receiver!.taskDataByPath,
       task.path,
       candidate,
     );
@@ -1054,8 +1054,9 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
         filesParser_addIncludeReason(receiver, inclProcessor, task, includeReason);
       }
       const [data] = SyncMap_Load<Path_65a900c3, GoPtr<parseTaskData>>(
-        receiver!.taskDataByPath as unknown as import("../collections/syncmap.js").SyncMap<Path_65a900c3, GoPtr<parseTaskData>>,
+        receiver!.taskDataByPath,
         task!.path,
+        GoZeroPointer<parseTaskData>,
       );
       if (!task!.loaded) {
         continue;
@@ -1205,13 +1206,14 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
   }
 
   const keys = Collect(SyncMap_Keys<Path_65a900c3, GoPtr<libResolution>>(
-    loader!.pathForLibFileResolutions as unknown as import("../collections/syncmap.js").SyncMap<Path_65a900c3, GoPtr<libResolution>>,
+    loader!.pathForLibFileResolutions,
   ));
   Sort(keys);
   for (const key of keys) {
     const [value] = SyncMap_Load<Path_65a900c3, GoPtr<libResolution>>(
-      loader!.pathForLibFileResolutions as unknown as import("../collections/syncmap.js").SyncMap<Path_65a900c3, GoPtr<libResolution>>,
+      loader!.pathForLibFileResolutions,
       key,
+      GoZeroPointer<libResolution>,
     );
     const modeAwareCache = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(GoStructKey(
       [GoStructField((value: ModeAwareCacheKey) => value.Name, GoStringKey), GoStructField((value: ModeAwareCacheKey) => value.Mode, GoNumberKey)],

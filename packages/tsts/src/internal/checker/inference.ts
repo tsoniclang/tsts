@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoNumberKey, GoStructField, GoStructKey, GoZeroBoolean, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as core from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
@@ -38,6 +38,7 @@ import {
   InferencePriorityReturnType,
   InferencePrioritySpeculativeTuple,
   UnionReductionSubtype,
+  type CacheHashKey,
   getEndElementCount,
   getMappedTypeModifiers,
   isTupleType,
@@ -254,6 +255,40 @@ import {
 import { IsTypeAny, isObjectLiteralType, isObjectOrArrayLiteralType, isValidBigIntString, isValidNumberString, pseudoBigIntToString } from "./utilities.js";
 
 import type { GoFunc } from "../../go/compat.js";
+
+function goZeroTypeAliasLinks(): TypeAliasLinks {
+  return {
+    declaredType: undefined,
+    typeParameters: GoNilSlice<GoPtr<Type>>(),
+    instantiations: GoZeroMap<CacheHashKey, GoPtr<Type>>(),
+    isConstructorDeclaredProperty: false,
+  };
+}
+
+function goZeroValueSymbolLinks(): ValueSymbolLinks {
+  return {
+    resolvedType: undefined,
+    writeType: undefined,
+    target: undefined,
+    mapper: undefined,
+    nameType: undefined,
+    containingType: undefined,
+    functionOrConstructorChecked: false,
+  };
+}
+
+function goZeroReverseMappedSymbolLinks(): ReverseMappedSymbolLinks {
+  return {
+    propertyType: undefined,
+    mappedType: undefined,
+    constraintType: undefined,
+  };
+}
+
+function goEqualTupleElementInfo(left: TupleElementInfo, right: TupleElementInfo): bool {
+  return left.flags === right.flags && left.labeledDeclaration === right.labeledDeclaration;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceKey","kind":"type","status":"implemented","sigHash":"b7240472cd57ef405f9a148ef9ec8af6dfa01c094e529face8ce9016e617e024"}
  *
@@ -654,7 +689,7 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
       // Source and target are types originating in the same generic type alias declaration.
       // Simply infer from source type arguments to target type arguments, with defaults applied.
       const aliasSymbol = source!.alias!["symbol"] as GoPtr<Symbol>;
-      const params = LinkStore_Get(c.typeAliasLinks, aliasSymbol)!.v.typeParameters;
+      const params = LinkStore_Get(c.typeAliasLinks, aliasSymbol, goZeroTypeAliasLinks)!.v.typeParameters;
       const minParams = Checker_getMinTypeArgumentCount(c, params);
       const nodeIsInJsFile = IsInJSFile(aliasSymbol!.ValueDeclaration);
       const sourceTypes = Checker_fillMissingTypeArguments(c, source!.alias!.typeArguments, params, minParams, nodeIsInJsFile);
@@ -742,7 +777,7 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
         return;
       }
       if (!inference.isFixed) {
-        const candidate = core.OrElse(state.propagationType, source);
+        const candidate = core.OrElse(state.propagationType, source, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
         if (candidate === c.blockedStringType) {
           return;
         }
@@ -756,11 +791,11 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
           // We make contravariant inferences only if we are in a pure contravariant position,
           // i.e. only if we have not descended into a bivariant position.
           if (state.contravariant && !state.bivariant) {
-            if (!slices.Contains(inference.contraCandidates, candidate)) {
+            if (!slices.Contains(inference.contraCandidates, candidate, GoEqualStrict<GoPtr<Type>>)) {
               inference.contraCandidates = [...inference.contraCandidates, candidate];
               clearCachedInferences(state.inferences);
             }
-          } else if (!slices.Contains(inference.candidates, candidate)) {
+          } else if (!slices.Contains(inference.candidates, candidate, GoEqualStrict<GoPtr<Type>>)) {
             inference.candidates = [...inference.candidates, candidate];
             clearCachedInferences(state.inferences);
           }
@@ -1065,18 +1100,18 @@ export function Checker_inferFromMatchingTypes(receiver: GoPtr<Checker>, n: GoPt
     for (const s of sources) {
       if (matches!(c, s, t)) {
         Checker_inferFromTypes(c, n, s, t);
-        matchedSources = core.AppendIfUnique(matchedSources, s);
-        matchedTargets = core.AppendIfUnique(matchedTargets, t);
+        matchedSources = core.AppendIfUnique(matchedSources, s, GoEqualStrict<GoPtr<Type>>);
+        matchedTargets = core.AppendIfUnique(matchedTargets, t, GoEqualStrict<GoPtr<Type>>);
       }
     }
   }
   let resultSources = sources;
   let resultTargets = targets;
   if (matchedSources.length !== 0) {
-    resultSources = core.Filter(sources, (t: GoPtr<Type>): bool => !slices.Contains(matchedSources, t));
+    resultSources = core.Filter(sources, (t: GoPtr<Type>): bool => !slices.Contains(matchedSources, t, GoEqualStrict<GoPtr<Type>>));
   }
   if (matchedTargets.length !== 0) {
-    resultTargets = core.Filter(targets, (t: GoPtr<Type>): bool => !slices.Contains(matchedTargets, t));
+    resultTargets = core.Filter(targets, (t: GoPtr<Type>): bool => !slices.Contains(matchedTargets, t, GoEqualStrict<GoPtr<Type>>));
   }
   return [resultSources, resultTargets];
 }
@@ -1280,7 +1315,7 @@ export function getSingleTypeVariableFromIntersectionTypes(n: GoPtr<InferenceSta
     if ((t!.flags & TypeFlagsIntersection) === 0) {
       return undefined;
     }
-    const v = core.Find(Type_Types(t), (t2: GoPtr<Type>): bool => getInferenceInfoForType(n, t2) !== undefined);
+    const v = core.Find(Type_Types(t), (t2: GoPtr<Type>): bool => getInferenceInfoForType(n, t2) !== undefined, GoZeroPointer<Type>);
     if (v === undefined || (typeVariable !== undefined && v !== typeVariable)) {
       return undefined;
     }
@@ -2247,7 +2282,7 @@ export function Checker_inferToMappedType(receiver: GoPtr<Checker>, n: GoPtr<Inf
   if ((constraintType!.flags & TypeFlagsUnion) !== 0 || (constraintType!.flags & TypeFlagsIntersection) !== 0) {
     let result = false;
     for (const t of Type_Types(constraintType)) {
-      result = core.OrElse(Checker_inferToMappedType(c, state, source, target, t), result);
+      result = core.OrElse(Checker_inferToMappedType(c, state, source, target, t), result, GoZeroBoolean, GoEqualStrict<bool>);
     }
     return result;
   }
@@ -2397,7 +2432,7 @@ export function Checker_createReverseMappedType(receiver: GoPtr<Checker>, source
           return { flags: ElementFlagsRequired, labeledDeclaration: info.labeledDeclaration };
         }
         return info;
-      });
+      }, goEqualTupleElementInfo);
     }
     return Checker_createTupleTypeEx(c, elementTypes, elementInfos, Type_TargetTupleType(source)!.readonly);
   }
@@ -2465,7 +2500,7 @@ export function Checker_inferReverseMappedType(receiver: GoPtr<Checker>, source:
   const key: ReverseMappedTypeKey = { sourceId: source!.id, targetId: target!.id, constraintId: constraint!.id };
   const cached = c.reverseMappedCache.get(key);
   if (cached !== undefined) {
-    return core.OrElse(cached, c.unknownType);
+    return core.OrElse(cached, c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   }
   c.reverseMappedSourceStack = [...c.reverseMappedSourceStack, source];
   c.reverseMappedTargetStack = [...c.reverseMappedTargetStack, target];
@@ -2505,7 +2540,7 @@ export function Checker_inferReverseMappedTypeWorker(receiver: GoPtr<Checker>, s
   const templateType = Checker_getTemplateTypeFromMappedType(c, target);
   const inference = newInferenceInfo(typeParameter);
   Checker_inferTypes(c, [inference], source, templateType, InferencePriorityNone, false);
-  return Checker_getWidenedType(c, core.OrElse(Checker_getTypeFromInference(c, inference), c.unknownType));
+  return Checker_getWidenedType(c, core.OrElse(Checker_getTypeFromInference(c, inference), c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>));
 }
 
 /**
@@ -2567,7 +2602,7 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
   const optionalMask = (modifiers & MappedTypeModifiersIncludeOptional) !== 0 ? 0 : SymbolFlagsOptional;
   let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
   if (indexInfo !== undefined) {
-    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, core.OrElse(Checker_inferReverseMappedType(receiver, indexInfo!.valueType, r.mappedType, r.constraintType), c.unknownType), readonlyMask && indexInfo!.isReadonly, undefined, [])];
+    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, core.OrElse(Checker_inferReverseMappedType(receiver, indexInfo!.valueType, r.mappedType, r.constraintType), c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), readonlyMask && indexInfo!.isReadonly, undefined, [])];
   }
   const members: SymbolTable = new Map();
   const limitedConstraint = Checker_getLimitedConstraint(receiver, t);
@@ -2581,8 +2616,8 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
     const checkFlags = CheckFlagsReverseMapped | (readonlyMask && Checker_isReadonlySymbol(receiver, prop) ? CheckFlagsReadonly : 0);
     const inferredProp = Checker_newSymbolEx(receiver, SymbolFlagsProperty | (prop!.Flags & optionalMask), prop!.Name, checkFlags);
     inferredProp!.Declarations = prop!.Declarations;
-    LinkStore_Get(c.valueSymbolLinks, inferredProp)!.v.nameType = LinkStore_Get(c.valueSymbolLinks, prop)!.v.nameType;
-    const links = LinkStore_Get(c.ReverseMappedSymbolLinks, inferredProp)!.v;
+    LinkStore_Get(c.valueSymbolLinks, inferredProp, goZeroValueSymbolLinks)!.v.nameType = LinkStore_Get(c.valueSymbolLinks, prop, goZeroValueSymbolLinks)!.v.nameType;
+    const links = LinkStore_Get(c.ReverseMappedSymbolLinks, inferredProp, goZeroReverseMappedSymbolLinks)!.v;
     links.propertyType = Checker_getTypeOfSymbol(receiver, prop);
     const constraintTarget = Type_AsIndexType(r.constraintType)!.target;
     if ((constraintTarget!.flags & TypeFlagsIndexedAccess) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.objectType!.flags & TypeFlagsTypeParameter) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.indexType!.flags & TypeFlagsTypeParameter) !== 0) {
@@ -2614,10 +2649,10 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
  */
 export function Checker_getTypeOfReverseMappedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
   const c = receiver!;
-  const links = LinkStore_Get(c.valueSymbolLinks, symbol_)!.v;
+  const links = LinkStore_Get(c.valueSymbolLinks, symbol_, goZeroValueSymbolLinks)!.v;
   if (links.resolvedType === undefined) {
-    const reverseLinks = LinkStore_Get(c.ReverseMappedSymbolLinks, symbol_)!.v;
-    links.resolvedType = core.OrElse(Checker_inferReverseMappedType(receiver, reverseLinks.propertyType, reverseLinks.mappedType, reverseLinks.constraintType), c.unknownType);
+    const reverseLinks = LinkStore_Get(c.ReverseMappedSymbolLinks, symbol_, goZeroReverseMappedSymbolLinks)!.v;
+    links.resolvedType = core.OrElse(Checker_inferReverseMappedType(receiver, reverseLinks.propertyType, reverseLinks.mappedType, reverseLinks.constraintType), c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   }
   return links.resolvedType;
 }
@@ -2827,7 +2862,7 @@ export function Checker_createEmptyObjectTypeFromStringLiteral(receiver: GoPtr<C
     }
     const name = getStringLiteralValue(t2);
     const literalProp = Checker_newSymbol(receiver, SymbolFlagsProperty, name);
-    LinkStore_Get(c.valueSymbolLinks, literalProp)!.v.resolvedType = c.anyType;
+    LinkStore_Get(c.valueSymbolLinks, literalProp, goZeroValueSymbolLinks)!.v.resolvedType = c.anyType;
     if (t2!.symbol !== undefined) {
       literalProp!.Declarations = t2!.symbol!.Declarations;
       literalProp!.ValueDeclaration = t2!.symbol!.ValueDeclaration;
@@ -3246,9 +3281,9 @@ export function Checker_getCovariantInference(receiver: GoPtr<Checker>, inferenc
   const widenLiteralTypes = !primitiveConstraint && inference!.topLevel && (inference!.isFixed || !Checker_isTypeParameterAtTopLevelInReturnType(receiver, signature, inference!.typeParameter));
   let baseCandidates: GoSlice<GoPtr<Type>>;
   if (primitiveConstraint) {
-    baseCandidates = core.SameMap(candidates, (t) => Checker_getRegularTypeOfLiteralType(receiver, t));
+    baseCandidates = core.SameMap(candidates, (t) => Checker_getRegularTypeOfLiteralType(receiver, t), GoEqualStrict<GoPtr<Type>>);
   } else if (widenLiteralTypes) {
-    baseCandidates = core.SameMap(candidates, (t) => Checker_getWidenedLiteralType(receiver, t));
+    baseCandidates = core.SameMap(candidates, (t) => Checker_getWidenedLiteralType(receiver, t), GoEqualStrict<GoPtr<Type>>);
   } else {
     baseCandidates = candidates;
   }
@@ -3461,7 +3496,7 @@ export function Checker_getCommonSupertype(receiver: GoPtr<Checker>, types: GoSl
   }
   let primaryTypes = types;
   if (c.strictNullChecks) {
-    primaryTypes = core.SameMap(types, (t) => Checker_filterType(receiver, t, (u) => (u!.flags & TypeFlagsNullable) === 0));
+    primaryTypes = core.SameMap(types, (t) => Checker_filterType(receiver, t, (u) => (u!.flags & TypeFlagsNullable) === 0), GoEqualStrict<GoPtr<Type>>);
   }
   let supertype: GoPtr<Type>;
   if (Checker_literalTypesWithSameBaseType(receiver, primaryTypes)) {

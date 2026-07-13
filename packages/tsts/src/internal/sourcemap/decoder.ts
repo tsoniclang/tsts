@@ -37,6 +37,17 @@ export interface Mapping {
   NameIndex: NameIndex;
 }
 
+function zeroMapping(): Mapping {
+  return {
+    GeneratedLine: 0,
+    GeneratedCharacter: 0,
+    SourceIndex: 0,
+    SourceLine: 0,
+    SourceCharacter: 0,
+    NameIndex: 0,
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::Mapping.Equals","kind":"method","status":"implemented","sigHash":"206387b36f011946248cc914011541d2bedb97cf76548957f8f4a8a9581aee5a"}
  *
@@ -413,7 +424,7 @@ export function MappingsDecoder_Next(receiver: GoPtr<MappingsDecoder>): [GoPtr<M
  */
 export function MappingsDecoder_captureMapping(receiver: GoPtr<MappingsDecoder>, hasSource: bool, hasName: bool): GoPtr<Mapping> {
   const d: MappingsDecoder = receiver!;
-  const mapping: Mapping = Arena_New<Mapping>(d.mappingArena)!.v;
+  const mapping: Mapping = Arena_New<Mapping>(d.mappingArena, zeroMapping)!.v;
   mapping.GeneratedLine = d.generatedLine;
   mapping.GeneratedCharacter = d.generatedCharacter;
   mapping.SourceIndex = IfElse(hasSource, d.sourceIndex, MissingSource);

@@ -1,8 +1,8 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Node_Name } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
-import type { SourceFile } from "../../ast/ast.js";
+import type { PatternAmbientModule, SourceFile } from "../../ast/ast.js";
 import { Diagnostic_SetRepopulateInfo, DiagnosticsCollection_Add, RepopulateModuleNotFound } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import { IsImportDeclarationOrJSImportDeclaration, Node_Arguments, Node_Elements, Node_Expression, Node_ImportClause, Node_IsTypeOnly, Node_ModuleSpecifier, Node_PropertyNameOrName, Node_Symbol, Node_Text, SourceFile_FileName, SourceFile_Path } from "../../ast/ast.js";
@@ -270,7 +270,7 @@ export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_getTargetOfModuleDefault(receiver: GoPtr<Checker>, moduleSymbol: GoPtr<Symbol>, node: GoPtr<Node>, dontResolveAlias: bool): GoPtr<Symbol> {
-  const file = Find(moduleSymbol!.Declarations ?? [], IsSourceFile);
+  const file = Find(moduleSymbol!.Declarations ?? [], IsSourceFile, GoZeroPointer<Node>);
   const specifier = Checker_getModuleSpecifierForImportOrExport(receiver, node);
   let exportDefaultSymbol: GoPtr<Symbol>;
   let exportModuleDotExportsSymbol: GoPtr<Symbol>;
@@ -834,7 +834,7 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
   }
 
   if (receiver!.patternAmbientModules.length !== 0) {
-    const pattern = FindBestPatternMatch(receiver!.patternAmbientModules, (value) => value!.Pattern, moduleReference);
+    const pattern = FindBestPatternMatch(receiver!.patternAmbientModules, (value) => value!.Pattern, moduleReference, GoZeroPointer<PatternAmbientModule>);
     if (pattern !== undefined) {
       const augmentation = receiver!.patternAmbientModuleAugmentations.get(moduleReference);
       if (augmentation !== undefined) {

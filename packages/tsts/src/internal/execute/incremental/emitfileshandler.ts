@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoPtr, GoRef, GoSlice } from "../../../go/compat.js";
+import { GoZeroNumber, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";
@@ -181,7 +182,8 @@ export function emitFilesHandler_emitAllAffectedFiles(receiver: GoPtr<emitFilesH
         // Result from cache
         const [diagnostics] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
           receiver!.program!.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-          SourceFile_Path(options.TargetSourceFile)
+          SourceFile_Path(options.TargetSourceFile),
+          GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
         );
         const result: EmitResult = {
           EmitSkipped: true as bool,
@@ -407,7 +409,8 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
     (path: Path, diagnostics: GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>): bool => {
       const [, ok] = SyncMap_Load<Path, GoPtr<emitUpdate>>(
         receiver!.emitUpdates as SyncMap<Path, GoPtr<emitUpdate>>,
-        path
+        path,
+        GoZeroPointer<emitUpdate>
       );
       if (!ok) {
         const affectedFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, path);
@@ -417,7 +420,8 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
         }
         const [pendingKind] = SyncMap_Load<Path, FileEmitKind>(
           receiver!.program!.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>,
-          path
+          path,
+          GoZeroNumber
         );
         SyncMap_Store<Path, GoPtr<emitUpdate>>(
           receiver!.emitUpdates as SyncMap<Path, GoPtr<emitUpdate>>,
@@ -506,7 +510,8 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
           let emitSig = "";
           const [info] = SyncMap_Load<Path, GoPtr<import("./snapshot.js").FileInfo>>(
             receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<import("./snapshot.js").FileInfo>>,
-            SourceFile_Path(options.TargetSourceFile)
+            SourceFile_Path(options.TargetSourceFile),
+            GoZeroPointer<import("./snapshot.js").FileInfo>
           );
           if (info!.signature === info!.version) {
             const signature = snapshot_computeSignatureWithDiagnostics(receiver!.program!.snapshot, options.TargetSourceFile, text, data);
@@ -586,7 +591,8 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
   let oldSignature = "";
   const [oldSignatureFormat, ok] = SyncMap_Load<Path, GoPtr<emitSignature>>(
     receiver!.program!.snapshot!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>,
-    SourceFile_Path(file)
+    SourceFile_Path(file),
+    GoZeroPointer<emitSignature>
   );
   if (ok) {
     if (oldSignatureFormat!.signature !== "") {
@@ -682,7 +688,8 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
       (file: Path, signature: string): bool => {
         const [info] = SyncMap_Load<Path, GoPtr<import("./snapshot.js").FileInfo>>(
           receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<import("./snapshot.js").FileInfo>>,
-          file
+          file,
+          GoZeroPointer<import("./snapshot.js").FileInfo>
         );
         info!.signature = signature;
         if (receiver!.program!.testingData !== undefined) {
@@ -715,7 +722,8 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
     for (const file of incremental_Program_GetSourceFiles(receiver!.program)) {
       const [latestChangedDtsFile, ok1] = SyncMap_Load<Path, string>(
         receiver!.latestChangedDtsFiles as SyncMap<Path, string>,
-        SourceFile_Path(file)
+        SourceFile_Path(file),
+        GoZeroString
       );
       if (ok1) {
         receiver!.program!.snapshot!.latestChangedDtsFile = latestChangedDtsFile;
@@ -724,7 +732,8 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
       }
       const [update, ok2] = SyncMap_Load<Path, GoPtr<emitUpdate>>(
         receiver!.emitUpdates as SyncMap<Path, GoPtr<emitUpdate>>,
-        SourceFile_Path(file)
+        SourceFile_Path(file),
+        GoZeroPointer<emitUpdate>
       );
       if (ok2) {
         if (!update!.dtsErrorsFromCache) {

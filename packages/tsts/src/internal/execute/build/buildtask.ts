@@ -1,5 +1,5 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
-import type { GoChan, GoError, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoZeroNumber, GoZeroString, type GoChan, type GoError, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Writer } from "../../../go/io.js";
 import { Builder } from "../../../go/strings.js";
 import type { Mutex } from "../../../go/sync.js";
@@ -564,7 +564,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     ChangesComputeTime: 0 as import("../../../go/time.js").Duration,
   };
 
-  const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path);
+  const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path, GoZeroNumber);
   compileTimes.ConfigTime = configTime as import("../../../go/time.js").Duration;
 
   const buildInfoReadStart = orchestrator!.opts.Sys!.Now();
@@ -628,7 +628,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     if (result.EmitResult!.EmittedFiles.length > 0) {
       oldestOutputFileName = result.EmitResult!.EmittedFiles[0]!;
     } else {
-      oldestOutputFileName = FirstOrNilSeq(ParsedCommandLine_GetOutputFileNames(receiver!.resolved)) ?? "";
+      oldestOutputFileName = FirstOrNilSeq(ParsedCommandLine_GetOutputFileNames(receiver!.resolved), GoZeroString);
     }
     receiver!.status = { kind: upToDateStatusTypeUpToDate, data: oldestOutputFileName };
   }
@@ -1678,7 +1678,7 @@ export function BuildTask_hasUpdate(receiver: GoPtr<BuildTask>, orchestrator: Go
       const configTime2 = (orchestrator!.opts.Sys!.Now() as TimeWithSub).Sub(configStart);
       receiver!.reportDone = {} as BuildTask["reportDone"];
       receiver!.done = {} as BuildTask["done"];
-      if (!slicesEqual(ParsedCommandLine_FileNames(receiver!.resolved), ParsedCommandLine_FileNames(newConfig))) {
+      if (!slicesEqual(ParsedCommandLine_FileNames(receiver!.resolved), ParsedCommandLine_FileNames(newConfig), GoEqualStrict)) {
         parseCache_store(orchestrator!.host!.resolvedReferences, path, newConfig);
         SyncMap_Store(orchestrator!.host!.configTimes, path, configTime2);
         receiver!.resolved = newConfig;

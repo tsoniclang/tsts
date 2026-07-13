@@ -1,5 +1,5 @@
 import type { bool, int, sbyte } from "../../../go/scalars.js";
-import type { GoPtr, GoRune, GoSlice } from "../../../go/compat.js";
+import { GoZeroString, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
 import { MaxInt } from "../../../go/math.js";
 import { SortStableFunc } from "../../../go/slices.js";
 import { Every, Flatten, LastOrNil } from "../../core/core.js";
@@ -324,7 +324,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
   const parts = GetNormalizedPathComponents(spec, basePath);
 
   // "src/**" without a filename matches nothing (for include patterns)
-  if (usage !== UsageExclude && LastOrNil(parts) === "**") {
+  if (usage !== UsageExclude && LastOrNil(parts, GoZeroString) === "**") {
     return [{ components: [], isExclude: false, caseSensitive: false, excludeMinJs: false }, false];
   }
 
@@ -332,7 +332,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
   parts[0] = RemoveTrailingDirectorySeparator(parts[0]!);
 
   // Directories implicitly match all files: "src" -> "src/** /*"
-  if (IsImplicitGlob(LastOrNil(parts))) {
+  if (IsImplicitGlob(LastOrNil(parts, GoZeroString))) {
     parts.push("**", "*");
   }
 

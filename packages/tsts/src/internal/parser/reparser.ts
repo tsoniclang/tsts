@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer } from "../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../ast/spine.js";
 import { Node_Modifiers, Node_FunctionLikeData, Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
 import { NodeFlagsReparsed, NodeFlagsHasJSDoc, NodeFlagsReparserTransformedLiteral } from "../ast/generated/flags.js";
@@ -601,7 +602,7 @@ export function Parser_reparseJSDocSignature(receiver: GoPtr<Parser>, jsSignatur
   if (tag!.Kind !== KindJSDocCallbackTag) {
     Node_FunctionLikeData(signature)!.TypeParameters = Parser_gatherTypeParameters(receiver, jsDoc, false as bool);
   }
-  let parameters = Arena_NewSlice(receiver!.nodeSliceArena, 0) as GoSlice<GoPtr<Node>>;
+  let parameters = Arena_NewSlice(receiver!.nodeSliceArena, 0, GoZeroPointer) as GoSlice<GoPtr<Node>>;
   const jsSignatureParameters = Node_Parameters(jsSignature);
   for (let pi: int = 0; pi < jsSignatureParameters.length; pi++) {
     const param = jsSignatureParameters[pi];
@@ -746,7 +747,7 @@ export function Parser_reparseJSDocTypeLiteral(receiver: GoPtr<Parser>, t: GoPtr
   if (t!.Kind === KindJSDocTypeLiteral) {
     const jstypeliteral = AsJSDocTypeLiteral(t);
     const isArrayType = jstypeliteral!.IsArrayType;
-    let properties = Arena_NewSlice(receiver!.nodeSliceArena, 0) as GoSlice<GoPtr<Node>>;
+    let properties = Arena_NewSlice(receiver!.nodeSliceArena, 0, GoZeroPointer) as GoSlice<GoPtr<Node>>;
     for (const prop of jstypeliteral!.JSDocPropertyTags) {
       if (prop!.Kind !== KindJSDocPropertyTag && prop!.Kind !== KindJSDocParameterTag) {
         continue;
@@ -899,7 +900,7 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
         reparse = Parser_addDeepCloneReparse(receiver, tp);
       }
       if (typeParameters === undefined) {
-        typeParameters = Arena_NewSlice(receiver!.nodeSliceArena, 0) as GoSlice<GoPtr<Node>>;
+        typeParameters = Arena_NewSlice(receiver!.nodeSliceArena, 0, GoZeroPointer) as GoSlice<GoPtr<Node>>;
       }
       typeParameters = [...typeParameters!, reparse];
       firstTypeParameter = false;
@@ -1384,7 +1385,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
           }
           Parser_finishReparsedNode(receiver, thisParam, Node_TagName(tag));
 
-          const newParams = Arena_NewSlice(receiver!.nodeSliceArena, (params.length + 1) as int) as GoSlice<GoPtr<Node>>;
+          const newParams = Arena_NewSlice(receiver!.nodeSliceArena, (params.length + 1) as int, GoZeroPointer) as GoSlice<GoPtr<Node>>;
           newParams[0] = thisParam;
           for (let i: int = 0; i < params.length; i++) {
             newParams[i + 1] = params[i];
@@ -1446,7 +1447,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
           let nodes: GoSlice<GoPtr<Node>>;
           let loc: TextRange;
           if (Node_Modifiers(p) === undefined) {
-            nodes = Arena_NewSlice(receiver!.nodeSliceArena, 1 as int) as GoSlice<GoPtr<Node>>;
+            nodes = Arena_NewSlice(receiver!.nodeSliceArena, 1 as int, GoZeroPointer) as GoSlice<GoPtr<Node>>;
             nodes[0] = modifier;
             loc = tag!.Loc;
           } else {
@@ -1466,7 +1467,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
         const implementsTag = AsJSDocImplementsTag(tag);
 
         if (cls!.HeritageClauses !== undefined) {
-          const implementsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindImplementsKeyword) as bool);
+          const implementsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindImplementsKeyword) as bool, GoZeroPointer<Node>);
           if (implementsClause !== undefined) {
             AsHeritageClause(implementsClause)!.Types!.Nodes = [...AsHeritageClause(implementsClause)!.Types!.Nodes, Parser_addDeepCloneReparse(receiver, implementsTag!.ClassName)];
             Parser_finishMutatedNode(receiver, implementsClause);
@@ -1490,13 +1491,13 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
     case KindJSDocAugmentsTag: {
       const cls = getClassLikeData(parent);
       if (cls !== undefined && cls!.HeritageClauses !== undefined) {
-        const extendsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindExtendsKeyword) as bool);
+        const extendsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindExtendsKeyword) as bool, GoZeroPointer<Node>);
         if (extendsClause !== undefined && AsHeritageClause(extendsClause)!.Types!.Nodes.length === 1) {
           const target = AsExpressionWithTypeArguments(AsHeritageClause(extendsClause)!.Types!.Nodes[0]);
           const source = AsExpressionWithTypeArguments(Node_ClassName(tag));
           if (HasSamePropertyAccessName(target!.Expression, source!.Expression)) {
             if (target!.TypeArguments === undefined && source!.TypeArguments !== undefined) {
-              const newArguments = Arena_NewSlice(receiver!.nodeSliceArena, source!.TypeArguments!.Nodes.length as int) as GoSlice<GoPtr<Node>>;
+              const newArguments = Arena_NewSlice(receiver!.nodeSliceArena, source!.TypeArguments!.Nodes.length as int, GoZeroPointer) as GoSlice<GoPtr<Node>>;
               for (let i: int = 0; i < source!.TypeArguments!.Nodes.length; i++) {
                 newArguments[i] = Parser_addDeepCloneReparse(receiver, source!.TypeArguments!.Nodes[i]);
               }

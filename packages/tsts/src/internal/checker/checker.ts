@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as core from "../core/core.js";
 import type { Node } from "../ast/spine.js";
 import { Node_ForEachChild, Node_Name } from "../ast/spine.js";
@@ -232,7 +232,7 @@ export function Checker_getFirstTransformableStaticClassElement(receiver: GoPtr<
   if (willTransformStaticElementsOfDecoratedClass || willTransformPrivateElementsOrClassStaticBlocks) {
     for (const member of Node_Members(node) ?? []) {
       if (willTransformStaticElementsOfDecoratedClass && ClassElementOrClassElementParameterIsDecorated(false as bool, member, node)) {
-        const firstDecorator = core.FirstOrNil(Node_Decorators(node) ?? []);
+        const firstDecorator = core.FirstOrNil(Node_Decorators(node) ?? [], GoZeroPointer<Node>);
         if (firstDecorator !== undefined) {
           return firstDecorator;
         }
@@ -296,7 +296,7 @@ export function Checker_checkClassExpressionExternalHelpers(receiver: GoPtr<Chec
   let location: GoPtr<Node>;
   if (willTransformESDecorators && ClassOrConstructorParameterIsDecorated(false as bool, node)) {
     location = node;
-    const firstDecorator = core.FirstOrNil(Node_Decorators(node) ?? []);
+    const firstDecorator = core.FirstOrNil(Node_Decorators(node) ?? [], GoZeroPointer<Node>);
     if (firstDecorator !== undefined) {
       location = firstDecorator;
     }

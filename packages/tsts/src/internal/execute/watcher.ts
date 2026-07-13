@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoChan, GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer, type GoChan, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { Is as errors_Is } from "../../go/errors.js";
 import { Fprint, Fprintf, Fprintln } from "../../go/fmt.js";
@@ -227,7 +227,7 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
   type FileInfoWithModTime = { ModTime(): { Equal(t: unknown): bool } };
   const info = receiver!.__tsgoEmbedded0!.FS()!.Stat(opts.FileName);
 
-  const [cached, ok] = SyncMap_Load(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path);
+  const [cached, ok] = SyncMap_Load(receiver!.cache, opts.Path, GoZeroPointer<cachedSourceFile>);
   if (ok) {
     if (info !== undefined && (info as unknown as FileInfoWithModTime).ModTime().Equal(cached!.modTime)) {
       return cached!.file;
@@ -1499,7 +1499,7 @@ export function Watcher_evictChangedSourceFiles(receiver: GoPtr<Watcher>, change
   const cwd = receiver!.sys!.GetCurrentDirectory();
   for (const [eventPath] of changedPaths) {
     const p = ToPath(eventPath, cwd, caseSensitive);
-    const [, ok] = SyncMap_Load(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, p);
+    const [, ok] = SyncMap_Load(receiver!.sourceFileCache, p, GoZeroPointer<cachedSourceFile>);
     if (ok) {
       if (receiver!.debugLog !== undefined) {
         Fprintf(receiver!.debugLog, "[watch] evicting cached source file: %s\n", p);

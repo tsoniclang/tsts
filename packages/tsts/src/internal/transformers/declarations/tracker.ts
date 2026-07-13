@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Symbol } from "../../ast/ast.js";
@@ -221,7 +221,7 @@ export function SymbolTrackerImpl_ReportNonSerializableProperty(receiver: GoPtr<
  * }
  */
 export function SymbolTrackerImpl_ReportNonlocalAugmentation(receiver: GoPtr<SymbolTrackerImpl>, containingFile: GoPtr<SourceFile>, parentSymbol: GoPtr<Symbol>, augmentingSymbol: GoPtr<Symbol>): void {
-  const primaryDeclaration = Find(parentSymbol!.Declarations ?? [], (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) === containingFile);
+  const primaryDeclaration = Find(parentSymbol!.Declarations ?? [], (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) === containingFile, GoZeroPointer<Node>);
   const augmentingDeclarations = Filter(augmentingSymbol!.Declarations ?? [], (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) !== containingFile);
   if (primaryDeclaration !== undefined && augmentingDeclarations.length > 0) {
     for (const augmentations of augmentingDeclarations) {
@@ -413,7 +413,7 @@ export function SymbolTrackerImpl_handleSymbolAccessibilityError(receiver: GoPtr
   if (symbolAccessibilityResult.Accessibility === SymbolAccessibilityAccessible) {
     if (symbolAccessibilityResult.AliasesToMakeVisible.length > 0) {
       for (const ref of symbolAccessibilityResult.AliasesToMakeVisible) {
-        receiver!.state!.lateMarkedStatements = AppendIfUnique(receiver!.state!.lateMarkedStatements, ref);
+        receiver!.state!.lateMarkedStatements = AppendIfUnique(receiver!.state!.lateMarkedStatements, ref, GoEqualStrict);
       }
     }
   } else if (symbolAccessibilityResult.Accessibility !== SymbolAccessibilityNotResolved) {

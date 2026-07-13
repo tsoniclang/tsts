@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoError, GoPtr } from "../../go/compat.js";
+import { GoZeroPointer, GoZeroString, type GoError, type GoPtr } from "../../go/compat.js";
 import { Map as sync_Map } from "../../go/sync.js";
 import type { Time } from "../../go/time.js";
 import * as strings from "../../go/strings.js";
@@ -334,7 +334,7 @@ export function projectReferenceDtsFakingVfs_WalkDir(receiver: GoPtr<projectRefe
  */
 export function projectReferenceDtsFakingVfs_Realpath(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): string {
   const files = KnownSymlinks_Files(receiver!.knownSymlinks);
-  const [result, ok] = SyncMap_Load<Path, string>(files as SyncMap<Path, string>, projectReferenceDtsFakingVfs_toPath(receiver, path));
+  const [result, ok] = SyncMap_Load(files, projectReferenceDtsFakingVfs_toPath(receiver, path), GoZeroString);
   if (ok) {
     return result;
   }
@@ -400,7 +400,7 @@ export function projectReferenceDtsFakingVfs_handleDirectoryCouldBeSymlink(recei
 
   const directoryPath = EnsureTrailingDirectorySeparator(projectReferenceDtsFakingVfs_toPath(receiver, directory) as string) as Path;
   const directories = KnownSymlinks_Directories(receiver!.knownSymlinks);
-  const [, ok] = SyncMap_Load<Path, GoPtr<KnownDirectoryLink>>(directories as SyncMap<Path, GoPtr<KnownDirectoryLink>>, directoryPath);
+  const [, ok] = SyncMap_Load(directories, directoryPath, GoZeroPointer<KnownDirectoryLink>);
   if (ok) {
     return;
   }
@@ -490,7 +490,7 @@ export function projectReferenceDtsFakingVfs_fileOrDirectoryExistsUsingSource(re
   }
   if (isFile) {
     const files = KnownSymlinks_Files(receiver!.knownSymlinks);
-    const [, okFile] = SyncMap_Load<Path, string>(files as SyncMap<Path, string>, fileOrDirectoryPath);
+    const [, okFile] = SyncMap_Load(files, fileOrDirectoryPath, GoZeroString);
     if (okFile) {
       return true;
     }

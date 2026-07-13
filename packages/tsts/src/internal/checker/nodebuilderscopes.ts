@@ -1,5 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoValueRef } from "../../go/compat.js";
+import { GoValueRef, GoZeroMap } from "../../go/compat.js";
 import { CopyOnWriteMap_EnterScope, CopyOnWriteSet_EnterScope } from "../collections/cow.js";
 import type { Node } from "../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
@@ -10,16 +10,23 @@ import { IsBindingElement, IsBlock, IsOmittedExpression, IsParameterDeclaration 
 import { GetLocals, GetSymbolId, IsBindingPattern } from "../ast/utilities.js";
 import { Some } from "../core/core.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
-import type { LinkStore } from "../core/linkstore.js";
 import { Assert } from "../debug/debug.js";
 import { FlagsGenerateNamesForShadowedTypeParams } from "../nodebuilder/types.js";
 import { Checker_getExpandedParameters, NodeBuilderImpl_typeParameterToName } from "./nodebuilderimpl.js";
 import type { TypeMapper } from "./mapper.js";
-import type { NodeBuilderContext, NodeBuilderImpl, NodeBuilderLinks } from "./nodebuilderimpl.js";
+import type { CompositeTypeCacheIdentity, NodeBuilderContext, NodeBuilderImpl, NodeBuilderLinks, SerializedTypeEntry } from "./nodebuilderimpl.js";
 import { Checker_getSymbolOfDeclaration } from "./checker/symbols.js";
 import type { Signature, Type } from "./types.js";
 
 import type { GoFunc } from "../../go/compat.js";
+
+function goZeroNodeBuilderLinks(): NodeBuilderLinks {
+  return {
+    serializedTypes: GoZeroMap<CompositeTypeCacheIdentity, GoPtr<SerializedTypeEntry>>(),
+    fakeScopeForSignatureDeclaration: undefined,
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::func::cloneNodeBuilderContext","kind":"func","status":"implemented","sigHash":"cef5cfcbd3fe93c77a553213fca509928f8bb4ea24a9c34c720f8900e0675e8b"}
  *
@@ -345,19 +352,19 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
     receiver!.ctx!.mapper = mapper;
   }
   if (receiver!.ctx!.enclosingDeclaration !== undefined && declaration !== undefined) {
-    const links = receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>;
+    const links = receiver!.links;
     const pushFakeScope = (kind: string, addAll: (addSymbol: (name: string, symbol_: GoPtr<Symbol>) => void) => void): (() => void) | undefined => {
       Assert(receiver!.ctx!.enclosingDeclaration !== undefined);
       let existingFakeScope: GoPtr<Node>;
       if (LinkStore_Has<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration)) {
-        const existingLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration);
+        const existingLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration, goZeroNodeBuilderLinks);
         if (existingLinks!.v.fakeScopeForSignatureDeclaration !== undefined && existingLinks!.v.fakeScopeForSignatureDeclaration.v === kind) {
           existingFakeScope = receiver!.ctx!.enclosingDeclaration;
         }
       }
       if (existingFakeScope === undefined && receiver!.ctx!.enclosingDeclaration!.Parent !== undefined) {
         if (LinkStore_Has<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent)) {
-          const parentLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent);
+          const parentLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent, goZeroNodeBuilderLinks);
           if (parentLinks!.v.fakeScopeForSignatureDeclaration !== undefined && parentLinks!.v.fakeScopeForSignatureDeclaration.v === kind) {
             existingFakeScope = receiver!.ctx!.enclosingDeclaration!.Parent;
           }
@@ -384,7 +391,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
       });
       if (existingFakeScope === undefined) {
         const fakeScope = NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []), false);
-        LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, fakeScope)!.v.fakeScopeForSignatureDeclaration = GoValueRef(kind);
+        LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, fakeScope, goZeroNodeBuilderLinks)!.v.fakeScopeForSignatureDeclaration = GoValueRef(kind);
         const data = Node_LocalsContainerData(fakeScope);
         (data as unknown as { Locals?: SymbolTable }).Locals = locals;
         fakeScope!.Parent = receiver!.ctx!.enclosingDeclaration;

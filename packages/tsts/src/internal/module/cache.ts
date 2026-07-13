@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoMap, GoPtr } from "../../go/compat.js";
+import { GoZeroPointer, type GoMap, type GoPtr } from "../../go/compat.js";
 import { Map, Once } from "../../go/sync.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Store } from "../collections/syncmap.js";
@@ -56,7 +56,7 @@ export interface moduleResolutionCache {
  * }
  */
 export function moduleResolutionCache_Get(receiver: GoPtr<moduleResolutionCache>, key: moduleResolutionCacheKey): [GoPtr<ResolvedModule>, bool] {
-  return SyncMap_Load(receiver!.cache, key);
+  return SyncMap_Load(receiver!.cache, key, GoZeroPointer<ResolvedModule>);
 }
 
 /**
@@ -112,7 +112,7 @@ export interface typeRefDirectiveResolutionCache {
  * }
  */
 export function typeRefDirectiveResolutionCache_Get(receiver: GoPtr<typeRefDirectiveResolutionCache>, key: typeRefDirectiveResolutionCacheKey): [GoPtr<ResolvedTypeReferenceDirective>, bool] {
-  return SyncMap_Load(receiver!.cache, key);
+  return SyncMap_Load(receiver!.cache, key, GoZeroPointer<ResolvedTypeReferenceDirective>);
 }
 
 /**

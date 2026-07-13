@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_End, Node_Pos, Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { BindingElement, BindingPattern, VariableDeclaration } from "../ast/generated/data.js";
@@ -846,7 +846,7 @@ export function MoveRangePastModifiers(node: GoPtr<Node>): TextRange {
   }
   let lastModifier: GoPtr<Node> = undefined;
   if (CanHaveModifiers(node)) {
-    lastModifier = LastOrNil(Node_ModifierNodes(node) ?? []);
+    lastModifier = LastOrNil(Node_ModifierNodes(node) ?? [], GoZeroPointer<Node>);
   }
   if (lastModifier !== undefined && !PositionIsSynthesized(Node_End(lastModifier))) {
     return NewTextRange(Node_End(lastModifier), Node_End(node));
@@ -878,7 +878,7 @@ export function MoveRangePastDecorators(node: GoPtr<Node>): TextRange {
   if (CanHaveModifiers(node)) {
     const nodes = Node_ModifierNodes(node);
     if (nodes !== undefined) {
-      lastDecorator = FindLast(nodes, IsDecorator);
+      lastDecorator = FindLast(nodes, IsDecorator, GoZeroPointer<Node>);
     }
   }
   if (lastDecorator !== undefined && !PositionIsSynthesized(Node_End(lastDecorator))) {

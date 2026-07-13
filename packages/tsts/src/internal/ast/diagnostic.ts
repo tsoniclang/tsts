@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Mutex } from "../../go/sync.js";
@@ -784,7 +784,7 @@ export function EqualDiagnosticsNoRelatedInfo(d1: GoPtr<Diagnostic>, d2: GoPtr<D
   return getDiagnosticPath(d1) === getDiagnosticPath(d2) &&
     Diagnostic_Loc(d1).pos === Diagnostic_Loc(d2).pos && Diagnostic_Loc(d1).end === Diagnostic_Loc(d2).end &&
     Diagnostic_Code(d1) === Diagnostic_Code(d2) &&
-    slices.Equal(Diagnostic_MessageArgs(d1), Diagnostic_MessageArgs(d2)) &&
+    slices.Equal(Diagnostic_MessageArgs(d1), Diagnostic_MessageArgs(d2), GoEqualStrict) &&
     slices.EqualFunc(Diagnostic_MessageChain(d1), Diagnostic_MessageChain(d2), equalMessageChain);
 }
 
@@ -806,7 +806,7 @@ export function equalMessageChain(c1: GoPtr<Diagnostic>, c2: GoPtr<Diagnostic>):
     return true;
   }
   return Diagnostic_Code(c1) === Diagnostic_Code(c2) &&
-    slices.Equal(Diagnostic_MessageArgs(c1), Diagnostic_MessageArgs(c2)) &&
+    slices.Equal(Diagnostic_MessageArgs(c1), Diagnostic_MessageArgs(c2), GoEqualStrict) &&
     slices.EqualFunc(Diagnostic_MessageChain(c1), Diagnostic_MessageChain(c2), equalMessageChain);
 }
 

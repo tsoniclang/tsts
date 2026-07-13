@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer } from "../../go/compat.js";
 import { TrimLeft, TrimRightFunc } from "../../go/strings.js";
 import { byteLen, hasAsciiPrefixAt, isJSDocLikeTextAt, lastNewlineBefore } from "./utilities.js";
 import { Node_End, Node_Name, Node_Pos } from "../ast/spine.js";
@@ -345,7 +346,7 @@ export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, inf
 
   // Should only be called once per node
   receiver!.hasDeprecatedTag = false;
-  const jsdoc: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, ranges.length).slice(0, 0);
+  const jsdoc: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, ranges.length, GoZeroPointer<Node>).slice(0, 0);
   let pos = Node_Pos(node);
   for (const comment of ranges) {
     const parsed = Parser_parseJSDocComment(receiver, node, comment.pos, comment.end, pos);
@@ -560,13 +561,13 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
 export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: int, end: int, fullStart: int, indent: int): GoPtr<Node> {
   // Initially we can parse out a tag.  We also have seen a starting asterisk.
   // This is so that /** * @type */ doesn't parse.
-  let tags: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1).slice(0, 0);
+  let tags: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1, GoZeroPointer<Node>).slice(0, 0);
   let tagsPos = -1;
   let tagsEnd = -1;
   let state: jsdocState = jsdocStateSawAsterisk;
   let backtickCount = 0;
   let inFencedCodeBlock = false;
-  let commentParts: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1).slice(0, 0);
+  let commentParts: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1, GoZeroPointer<Node>).slice(0, 0);
   let comments: GoSlice<string> = receiver!.jsdocCommentsSpace;
   let commentsPos = -1;
   let linkEnd = start;

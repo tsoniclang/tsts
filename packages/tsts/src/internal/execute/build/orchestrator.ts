@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoComparable, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroPointer, GoZeroString, type GoComparable, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
@@ -256,11 +256,11 @@ export function Orchestrator_Downstream(receiver: GoPtr<Orchestrator>, configNam
  * }
  */
 export function Orchestrator_getTask(receiver: GoPtr<Orchestrator>, path: Path): GoPtr<BuildTask> {
-  const [task, ok] = SyncMap_Load(receiver!.tasks, path);
+  const [task, ok] = SyncMap_Load(receiver!.tasks, path, GoZeroPointer<BuildTask>);
   if (!ok) {
     throw new globalThis.Error("No build task found for " + path);
   }
-  return task as GoPtr<BuildTask>;
+  return task;
 }
 
 /**
@@ -307,13 +307,12 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
       let task: GoPtr<BuildTask> = undefined;
       let buildInfo = undefined;
       if (oldTasks !== undefined) {
-        const [existing, ok] = SyncMap_Load(oldTasks, path);
+        const [existing, ok] = SyncMap_Load(oldTasks, path, GoZeroPointer<BuildTask>);
         if (ok) {
-          const existingTask = existing as GoPtr<BuildTask>;
-          if (!existingTask!.dirty) {
-            task = existingTask;
+          if (!existing!.dirty) {
+            task = existing;
           } else {
-            buildInfo = existingTask!.buildInfoEntry;
+            buildInfo = existing!.buildInfoEntry;
           }
         }
       }
@@ -436,7 +435,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
     circularityStack = circularityStack.slice(0, circularityStack.length - 1);
     Set_Add(completed, path);
     task!.reportDone = {} as BuildTask["reportDone"];
-    const prev = LastOrNil(receiver!.order);
+    const prev = LastOrNil(receiver!.order, GoZeroString);
     if (prev !== "") {
       task!.prevReporter = Orchestrator_getTask(receiver, Orchestrator_toPath(receiver, prev));
     }

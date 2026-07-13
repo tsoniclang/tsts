@@ -1,6 +1,6 @@
 import type { bool, uint } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoValueRef } from "../../../go/compat.js";
+import { GoValueRef, GoZeroPointer } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, NodeFactory_NewModifierList, Node_Name } from "../../ast/spine.js";
 import { Node_Elements, Node_Text, Node_Initializer, Node_StatementList, Node_Statements, NodeFactory_UpdateBlock, NodeFactory_UpdateForStatement, NodeFactory_UpdateForInOrOfStatement, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateSourceFile, NodeFactory_NewModifier } from "../../ast/ast.js";
@@ -543,7 +543,7 @@ export function usingDeclarationTransformer_visitForOfStatement(receiver: GoPtr<
     const factory = printerFactory!.__tsgoEmbedded0!;
     const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
     const forInitializer = AsVariableDeclarationList(node!.Initializer);
-    let forDecl = FirstOrNil(forInitializer!.Declarations!.Nodes) as GoPtr<Node>;
+    let forDecl = FirstOrNil(forInitializer!.Declarations!.Nodes, GoZeroPointer<Node>);
     if (forDecl === undefined) {
       forDecl = NewVariableDeclaration(factory, NodeFactory_NewTempVariable(printerFactory), undefined, undefined, undefined) as GoPtr<Node>;
     }

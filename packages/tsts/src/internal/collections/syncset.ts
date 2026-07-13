@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import type { GoComparable, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroEmptyStruct, type GoComparable, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { SyncMap } from "./syncmap.js";
 import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from "./syncmap.js";
 
@@ -27,7 +27,7 @@ export interface SyncSet<T extends GoComparable = unknown> {
  * }
  */
 export function SyncSet_Has<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T): bool {
-  const [, ok] = SyncMap_Load(receiver!.m, key);
+  const [, ok] = SyncMap_Load(receiver!.m, key, GoZeroEmptyStruct);
   return ok;
 }
 

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoNilMap, GoValueRef, GoZeroInterface, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
@@ -645,7 +645,7 @@ export function parseOwnConfigOfJsonSourceFile(sourceFile: GoPtr<SourceFile>, ho
         if (keyText === "excludes") {
           propertySetErrors.push(CreateDiagnosticForNodeInSourceFile(sourceFile, propertyAssignment as unknown as GoPtr<Node>, diagnostics.Unknown_option_excludes_Did_you_mean_exclude));
         }
-        if (core.Find(OptionsDeclarations, (opt: GoPtr<CommandLineOption>): bool => opt!.Name === keyText) !== undefined) {
+        if (core.Find(OptionsDeclarations, (opt: GoPtr<CommandLineOption>): bool => opt!.Name === keyText, GoZeroPointer<CommandLineOption>) !== undefined) {
           // rootCompilerOptions tracking: not used in current implementation
         }
       }
@@ -791,6 +791,7 @@ export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonCon
       const firstObject = core.Find(
         (Node_Elements(rootExpression) ?? []) as GoSlice<GoPtr<Node>>,
         (n: GoPtr<Node>): bool => IsObjectLiteralExpression(n) as bool,
+        GoZeroPointer<Node>,
       );
       if (firstObject !== undefined) {
         return convertToJson(sourceFile, firstObject as GoPtr<Expression>, true /*returnValue*/, jsonConversionNotifier);
@@ -2207,7 +2208,7 @@ export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extende
   // The cache locks entries during parsing, and a cycle would cause the same goroutine
   // to re-lock the same entry, resulting in a deadlock. Let parseConfig handle the
   // circularity error via its own resolution stack check.
-  if (extendedConfigCache !== undefined && !Contains(resolutionStack, extendedConfigPath)) {
+  if (extendedConfigCache !== undefined && !Contains(resolutionStack, extendedConfigPath, GoEqualStrict<Path>)) {
     cacheEntry = extendedConfigCache.GetExtendedConfig(extendedConfigFileName, extendedConfigPath, resolutionStack, host);
   } else {
     cacheEntry = ParseExtendedConfig(extendedConfigFileName, extendedConfigPath, resolutionStack, host, extendedConfigCache);
@@ -2424,7 +2425,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
   const resolvedPath = ToPath(configFileName, basePath, host!.FS()!.UseCaseSensitiveFileNames());
   const errors: GoPtr<Diagnostic>[] = [];
 
-  if (Contains(resolutionStack, resolvedPath)) {
+  if (Contains(resolutionStack, resolvedPath, GoEqualStrict<Path>)) {
     errors.push(NewCompilerDiagnostic(diagnostics.Circularity_detected_while_resolving_configuration_Colon_0));
     let result: GoPtr<parsedTsconfig>;
     const jsonMap = json as GoPtr<OrderedMap<string, unknown>>;
@@ -3225,6 +3226,7 @@ export function GetCallbackForFindingPropertyAssignmentByValue(value: string): G
       return core.Find(
         (Node_Elements(property!.Initializer) ?? []) as GoSlice<GoPtr<Node>>,
         (element: GoPtr<Node>): bool => (IsStringLiteral(element) && Node_Text(element) === value) as bool,
+        GoZeroPointer<Node>,
       );
     }
     return undefined;
@@ -3564,7 +3566,7 @@ export function removeWildcardFilesWithLowerPriorityExtension(file: string, wild
       return;
     }
     const lowerPriorityPath = keyMapper!(ChangeExtension(file, ext!));
-    OrderedMap_Delete(wildcardFiles as GoPtr<OrderedMap<string, string>>, lowerPriorityPath, GoZeroString);
+    OrderedMap_Delete(wildcardFiles as GoPtr<OrderedMap<string, string>>, lowerPriorityPath, GoZeroString, GoEqualStrict<string>);
   }
 }
 
@@ -3784,7 +3786,7 @@ export function GetSupportedExtensions(compilerOptions: GoPtr<CompilerOptions>, 
   const flatBuiltins = core.Flatten(builtins);
   const result: GoSlice<string>[] = [];
   for (const x of extraFileExtensions) {
-    if (x.ScriptKind === ScriptKindDeferred || (needJSExtensions && (x.ScriptKind === ScriptKindJS || x.ScriptKind === ScriptKindJSX)) && !Contains(flatBuiltins, x.Extension)) {
+    if (x.ScriptKind === ScriptKindDeferred || (needJSExtensions && (x.ScriptKind === ScriptKindJS || x.ScriptKind === ScriptKindJSX)) && !Contains(flatBuiltins, x.Extension, GoEqualStrict<string>)) {
       result.push([x.Extension]);
     }
   }

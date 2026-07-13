@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, type GoConstraint, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Fprint, Fprintf, Sprintf } from "../../go/fmt.js";
 import type { Writer } from "../../go/io.js";
 import { Keys } from "../../go/maps.js";
@@ -1154,7 +1154,7 @@ export function TryClearScreen(output: GoInterface<Writer>, diag: GoInterface<Di
     !Tristate_IsTrue(options!.PreserveWatchOutput) &&
     !Tristate_IsTrue(options!.ExtendedDiagnostics) &&
     !Tristate_IsTrue(options!.Diagnostics) &&
-    Contains(ScreenStartingCodes, diag!.Code())
+    Contains(ScreenStartingCodes, diag!.Code(), GoEqualStrict)
   ) {
     Fprint(output!, "\x1B[2J\x1B[3J\x1B[H");
     return true;

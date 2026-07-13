@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoError, GoPtr } from "../../../go/compat.js";
+import { GoNilMap, GoNilSlice, GoZeroBoolean, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
+import type { GoError, GoInterface, GoPtr } from "../../../go/compat.js";
 import { Map as SyncGoMap } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";
 import type { Time } from "../../../go/time.js";
@@ -7,7 +8,14 @@ import { SyncMap_Clear, SyncMap_Load, SyncMap_Store } from "../../collections/sy
 import type { SyncMap } from "../../collections/syncmap.js";
 import type { Entries, FileInfo, FS as FS_296ac81f, WalkDirFunc } from "../vfs.js";
 
-import type { GoInterface } from "../../../go/compat.js";
+function zeroEntries(): Entries {
+  return {
+    Files: GoNilSlice<string>(),
+    Directories: GoNilSlice<string>(),
+    Symlinks: GoNilMap<string, { readonly __tsgoEmpty?: never }>(),
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::type::FS","kind":"type","status":"implemented","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4"}
  *
@@ -152,7 +160,7 @@ export function FS_ClearCache(receiver: GoPtr<FS>): void {
  */
 export function FS_DirectoryExists(receiver: GoPtr<FS>, path: string): bool {
   if (receiver!.enabled.Load()) {
-    const [ret, ok] = SyncMap_Load<string, bool>(receiver!.directoryExistsCache, path);
+    const [ret, ok] = SyncMap_Load<string, bool>(receiver!.directoryExistsCache, path, GoZeroBoolean);
     if (ok) {
       return ret;
     }
@@ -186,7 +194,7 @@ export function FS_DirectoryExists(receiver: GoPtr<FS>, path: string): bool {
  */
 export function FS_FileExists(receiver: GoPtr<FS>, path: string): bool {
   if (receiver!.enabled.Load()) {
-    const [ret, ok] = SyncMap_Load<string, bool>(receiver!.fileExistsCache, path);
+    const [ret, ok] = SyncMap_Load<string, bool>(receiver!.fileExistsCache, path, GoZeroBoolean);
     if (ok) {
       return ret;
     }
@@ -220,7 +228,7 @@ export function FS_FileExists(receiver: GoPtr<FS>, path: string): bool {
  */
 export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entries {
   if (receiver!.enabled.Load()) {
-    const [ret, ok] = SyncMap_Load<string, Entries>(receiver!.getAccessibleEntriesCache, path);
+    const [ret, ok] = SyncMap_Load<string, Entries>(receiver!.getAccessibleEntriesCache, path, zeroEntries);
     if (ok) {
       return ret;
     }
@@ -266,7 +274,7 @@ export function FS_ReadFile(receiver: GoPtr<FS>, path: string): [string, bool] {
  */
 export function FS_Realpath(receiver: GoPtr<FS>, path: string): string {
   if (receiver!.enabled.Load()) {
-    const [ret, ok] = SyncMap_Load<string, string>(receiver!.realpathCache, path);
+    const [ret, ok] = SyncMap_Load<string, string>(receiver!.realpathCache, path, GoZeroString);
     if (ok) {
       return ret;
     }
@@ -324,7 +332,7 @@ export function FS_Chtimes(receiver: GoPtr<FS>, path: string, aTime: Time, mTime
  */
 export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
   if (receiver!.enabled.Load()) {
-    const [ret, ok] = SyncMap_Load<string, GoPtr<FileInfo>>(receiver!.statCache, path);
+    const [ret, ok] = SyncMap_Load<string, GoPtr<FileInfo>>(receiver!.statCache, path, GoZeroPointer<FileInfo>);
     if (ok) {
       return ret;
     }

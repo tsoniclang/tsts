@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
+import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoZeroPointer } from "../../../go/compat.js";
 import { recordExtensionCheckedIterationMapping, recordExtensionCheckedOperatorKindMapping, recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
 import type { Context } from "../../../go/context.js";
 import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
@@ -167,9 +168,9 @@ import {
 import { KindAmpersandAmpersandEqualsToken, KindAmpersandAmpersandToken, KindAmpersandEqualsToken, KindAmpersandToken, KindAsteriskAsteriskEqualsToken, KindAsteriskAsteriskToken, KindAsteriskEqualsToken, KindAsteriskToken, KindBarBarEqualsToken, KindBarBarToken, KindBarEqualsToken, KindBarToken, KindCaretEqualsToken, KindCaretToken, KindCommaToken, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindGreaterThanEqualsToken, KindGreaterThanGreaterThanEqualsToken, KindGreaterThanGreaterThanGreaterThanEqualsToken, KindGreaterThanGreaterThanGreaterThanToken, KindGreaterThanGreaterThanToken, KindGreaterThanToken, KindInKeyword, KindInstanceOfKeyword, KindLessThanEqualsToken, KindLessThanLessThanEqualsToken, KindLessThanLessThanToken, KindLessThanToken, KindMinusEqualsToken, KindPercentEqualsToken, KindPercentToken, KindPlusEqualsToken, KindQuestionQuestionEqualsToken, KindQuestionQuestionToken, KindSlashEqualsToken, KindSlashToken, KindUnknown } from "../../ast/generated/kinds.js";
 import { SkipTrivia, TokenToString } from "../../scanner/scanner.js";
 import { GetTextOfNode } from "../../scanner/utilities.js";
-import { Tristate_IsTrue, Tristate_IsFalse, TSTrue, TSFalse } from "../../core/tristate.js";
+import { Tristate_IsTrue, Tristate_IsFalse, TSUnknown, TSTrue, TSFalse } from "../../core/tristate.js";
 import type { NodeLinks, SourceFileLinks, SymbolNodeLinks, TypeNodeLinks } from "../types.js";
-import { NodeCheckFlagsContainsSuperPropertyInStaticInitializer, Type_AsInterfaceType } from "../types.js";
+import { NodeCheckFlagsContainsSuperPropertyInStaticInitializer, NodeCheckFlagsNone, Type_AsInterfaceType } from "../types.js";
 import {
   The_body_of_an_if_statement_cannot_be_the_empty_statement,
   X_with_statements_are_not_allowed_in_an_async_function_block,
@@ -251,6 +252,26 @@ import { NewPseudoBigInt, ParsePseudoBigInt } from "../../jsnum/pseudobigint.js"
 import { Checker_isSkipDirectInferenceNode } from "../inference.js";
 
 import type { GoInterface, GoRef } from "../../../go/compat.js";
+
+function zeroNodeLinks(): NodeLinks {
+  return {
+    flags: NodeCheckFlagsNone,
+    declarationRequiresScopeChange: TSUnknown,
+    hasReportedStatementInAmbientContext: false,
+  };
+}
+
+function zeroSymbolNodeLinks(): SymbolNodeLinks {
+  return { resolvedSymbol: undefined };
+}
+
+function zeroTypeNodeLinks(): TypeNodeLinks {
+  return {
+    resolvedType: undefined,
+    outerTypeParameters: GoNilSlice<GoPtr<Type>>(),
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceFile","kind":"method","status":"implemented","sigHash":"73742795303ebe59bb331756ff6743713f7b9c4fbd309e3a8507a615e2dbf18f"}
  *
@@ -771,7 +792,7 @@ export function Checker_checkForOfStatement(receiver: GoPtr<Checker>, node: GoPt
     const varExpr = data!.Initializer;
     iteratedType = Checker_checkRightHandSideOfForOf(receiver, node);
     if (IsArrayLiteralExpression(varExpr) || IsObjectLiteralExpression(varExpr)) {
-      Checker_checkDestructuringAssignment(receiver, varExpr, OrElse(iteratedType, receiver!.errorType), CheckModeNormal, false as bool);
+      Checker_checkDestructuringAssignment(receiver, varExpr, OrElse(iteratedType, receiver!.errorType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), CheckModeNormal, false as bool);
     } else {
       const leftType = Checker_checkExpression(receiver, varExpr);
       Checker_checkReferenceExpression(receiver, varExpr, The_left_hand_side_of_a_for_of_statement_must_be_a_variable_or_a_property_access, The_left_hand_side_of_a_for_of_statement_may_not_be_an_optional_property_access);
@@ -878,7 +899,7 @@ export function Checker_checkReturnStatement(receiver: GoPtr<Checker>, node: GoP
         Checker_error(receiver, node, Return_type_of_constructor_signature_must_be_assignable_to_the_instance_type_of_the_class);
       }
     } else if (Checker_getReturnTypeFromAnnotation(receiver, container) !== undefined) {
-      const unwrappedReturnType = OrElse(Checker_unwrapReturnType(receiver, returnType, functionFlags), returnType);
+      const unwrappedReturnType = OrElse(Checker_unwrapReturnType(receiver, returnType, functionFlags), returnType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
       Checker_checkReturnExpression(receiver, container, unwrappedReturnType, node, Node_Expression(node), exprType, false as bool);
     }
   } else if (!IsConstructorDeclaration(container) && Tristate_IsTrue(receiver!.compilerOptions!.NoImplicitReturns) && !Checker_isUnwrappedReturnTypeUndefinedVoidOrAny(receiver, container, returnType)) {
@@ -1360,12 +1381,12 @@ export function Checker_checkExpressionCachedEx(receiver: GoPtr<Checker>, node: 
   if (checkMode !== CheckModeNormal) {
     return Checker_checkExpressionEx(receiver, node, checkMode);
   }
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v;
   if (links!.resolvedType === undefined) {
     const saveFlowLoopStack = receiver!.flowLoopStack;
     const saveFlowTypeCache = receiver!.flowTypeCache;
-    receiver!.flowLoopStack = [];
-    receiver!.flowTypeCache = undefined as unknown as GoMap<GoPtr<Node>, GoPtr<Type>>;
+    receiver!.flowLoopStack = GoNilSlice<FlowLoopInfo>();
+    receiver!.flowTypeCache = GoNilMap<GoPtr<Node>, GoPtr<Type>>();
     links!.resolvedType = Checker_checkExpressionEx(receiver, node, checkMode);
     receiver!.flowTypeCache = saveFlowTypeCache;
     receiver!.flowLoopStack = saveFlowLoopStack;
@@ -1816,7 +1837,7 @@ export function Checker_checkSuperExpression(receiver: GoPtr<Checker>, node: GoP
   const classType = Checker_getDeclaredTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, classLikeDeclaration));
   let baseClassType: GoPtr<Type>;
   if (classType !== undefined) {
-    baseClassType = FirstOrNil(Checker_getBaseTypes(receiver, classType));
+    baseClassType = FirstOrNil(Checker_getBaseTypes(receiver, classType), GoZeroPointer<Type>);
   }
   if (baseClassType === undefined) {
     return receiver!.errorType;
@@ -1833,7 +1854,7 @@ export function Checker_checkSuperExpression(receiver: GoPtr<Checker>, node: GoP
     ) {
       for (let current = GetEnclosingBlockScopeContainer(node!.Parent); current !== undefined; current = GetEnclosingBlockScopeContainer(current)) {
         if (!IsSourceFile(current) || IsExternalOrCommonJSModule(AsSourceFile(current))) {
-          LinkStore_Get(receiver!.nodeLinks, current)!.v.flags |= NodeCheckFlagsContainsSuperPropertyInStaticInitializer;
+          LinkStore_Get(receiver!.nodeLinks, current, zeroNodeLinks)!.v.flags |= NodeCheckFlagsContainsSuperPropertyInStaticInitializer;
         }
       }
     }
@@ -2562,21 +2583,21 @@ export function Checker_checkYieldExpression(receiver: GoPtr<Checker>, node: GoP
   if (returnType !== undefined) {
     iterationTypes = Checker_getIterationTypesOfGeneratorFunctionReturnType(receiver, returnType, isAsync);
   }
-  const signatureYieldType = OrElse(iterationTypes.yieldType, receiver!.anyType);
-  const signatureNextType = OrElse(iterationTypes.nextType, receiver!.anyType);
+  const signatureYieldType = OrElse(iterationTypes.yieldType, receiver!.anyType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
+  const signatureNextType = OrElse(iterationTypes.nextType, receiver!.anyType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   const yieldExpr = AsYieldExpression(node)!;
   const expression = Node_Expression(node);
   const yieldExpressionType = expression !== undefined ? Checker_checkExpression(receiver, expression) : receiver!.undefinedWideningType;
   const yieldedType = Checker_getYieldedTypeOfYieldExpression(receiver, node, yieldExpressionType, signatureNextType, isAsync);
   if (returnType !== undefined && yieldedType !== undefined) {
-    Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, yieldedType, signatureYieldType, OrElse(expression, node), expression, undefined, undefined);
+    Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, yieldedType, signatureYieldType, OrElse(expression, node, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>), expression, undefined, undefined);
   }
   if (yieldExpr.AsteriskToken !== undefined) {
     const use = IfElse(isAsync, IterationUseAsyncYieldStar, IterationUseYieldStar);
-    return OrElse(Checker_getIterationTypeOfIterable(receiver, use, IterationTypeKindReturn, yieldExpressionType, expression), receiver!.anyType);
+    return OrElse(Checker_getIterationTypeOfIterable(receiver, use, IterationTypeKindReturn, yieldExpressionType, expression), receiver!.anyType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   }
   if (returnType !== undefined) {
-    return OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindNext, returnType, isAsync), receiver!.anyType);
+    return OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindNext, returnType, isAsync), receiver!.anyType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   }
   let t = Checker_getContextualIterationType(receiver, IterationTypeKindNext, fn);
   if (t === undefined) {
@@ -2621,7 +2642,7 @@ export function Checker_checkSyntheticExpression(receiver: GoPtr<Checker>, node:
  * }
  */
 export function Checker_containerSeemsToBeEmptyDomElement(receiver: GoPtr<Checker>, containingType: GoPtr<Type>): bool {
-  return !slicesContains(receiver!.compilerOptions!.Lib ?? [], "lib.dom.d.ts") && everyContainedType(containingType, hasCommonDomTypeName) && Checker_isEmptyObjectType(receiver, containingType);
+  return !slicesContains(receiver!.compilerOptions!.Lib ?? [], "lib.dom.d.ts", GoEqualStrict<string>) && everyContainedType(containingType, hasCommonDomTypeName) && Checker_isEmptyObjectType(receiver, containingType);
 }
 
 /**
@@ -3423,7 +3444,7 @@ export function Checker_checkInExpression(receiver: GoPtr<Checker>, left: GoPtr<
     ) {
       Checker_checkExternalEmitHelpers(receiver, left, ExternalEmitHelpersClassPrivateFieldIn);
     }
-    const links = LinkStore_Get(receiver!.symbolNodeLinks, left as unknown as GoPtr<Node>)!.v;
+    const links = LinkStore_Get(receiver!.symbolNodeLinks, left as unknown as GoPtr<Node>, zeroSymbolNodeLinks)!.v;
     if (links!.resolvedSymbol === undefined && GetContainingClass(left as unknown as GoPtr<Node>) !== undefined) {
       const isUncheckedJS = Checker_isUncheckedJSSuggestion(receiver, left as unknown as GoPtr<Node>, rightType!.symbol, true);
       Checker_reportNonexistentProperty(receiver, left as unknown as GoPtr<Node>, rightType, isUncheckedJS);

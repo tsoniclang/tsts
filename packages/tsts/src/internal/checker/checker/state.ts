@@ -1,7 +1,7 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoComparable, GoConstraint, GoEquality, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroBoolean, GoZeroNumber, GoZeroPointer, GoZeroString, NewGoStructMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Hasher, Uint128 } from "../../../go/github.com/zeebo/xxh3.js";
 import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
@@ -1967,12 +1967,36 @@ function newCheckerSet<T extends GoComparable>(): Set<T> {
   return NewSetWithSizeHint<T>(0 as int)!;
 }
 
+function zeroSourceFileLinks(): SourceFileLinks {
+  return {
+    typeChecked: GoZeroBoolean(),
+    unusedChecked: GoZeroBoolean(),
+    externalHelpersModule: GoZeroPointer<Symbol>(),
+    requestedExternalEmitHelpers: GoZeroNumber(),
+    deferredNodes: {
+      m: {
+        __tsgoBlank0: {},
+        keys: GoNilSlice<GoPtr<Node>>(),
+        mp: GoNilMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>(),
+      },
+    },
+    identifierCheckNodes: GoNilSlice<GoPtr<Node>>(),
+    localJsxNamespace: GoZeroString(),
+    localJsxFragmentNamespace: GoZeroString(),
+    localJsxFactory: GoZeroPointer<Node>(),
+    localJsxFragmentFactory: GoZeroPointer<Node>(),
+    jsxFragmentType: GoZeroPointer<Type>(),
+  };
+}
+
 export function Checker_getSourceFileLinks(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoPtr<SourceFileLinks> {
-  const links = LinkStore_Get(receiver!.sourceFileLinks as LinkStore<GoPtr<SourceFile>, SourceFileLinks>, sourceFile);
-  links!.v.deferredNodes ??= NewOrderedSetWithSizeHint<GoPtr<Node>>(0 as int)!;
-  links!.v.identifierCheckNodes ??= [];
-  links!.v.localJsxNamespace ??= "";
-  links!.v.localJsxFragmentNamespace ??= "";
+  const links = LinkStore_Get(receiver!.sourceFileLinks, sourceFile, zeroSourceFileLinks);
+  if (GoMapIsNil(links!.v.deferredNodes.m.mp)) {
+    links!.v.deferredNodes = NewOrderedSetWithSizeHint<GoPtr<Node>>(0 as int)!;
+  }
+  if (GoSliceIsNil(links!.v.identifierCheckNodes)) {
+    links!.v.identifierCheckNodes = [];
+  }
   return links!.v;
 }
 
@@ -4635,7 +4659,7 @@ export function isSingleElementGenericTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isLocalTypeAlias(symbol_: GoPtr<Symbol>): bool {
-  const declaration = Find(symbol_!.Declarations ?? [], isTypeAlias);
+  const declaration = Find(symbol_!.Declarations ?? [], isTypeAlias, GoZeroPointer<Node>);
   return declaration !== undefined && GetContainingFunction(declaration) !== undefined;
 }
 
@@ -5218,7 +5242,7 @@ export function compareTypesEqual(s: GoPtr<Type>, t: GoPtr<Type>): Ternary {
  * }
  */
 export function hasRestParameter(signature: GoPtr<Node>): bool {
-  const last = LastOrNil(Node_Parameters(signature) as unknown as GoSlice<GoPtr<Node>>);
+  const last = LastOrNil(Node_Parameters(signature) as unknown as GoSlice<GoPtr<Node>>, GoZeroPointer<Node>);
   return last !== undefined && isRestParameter(last);
 }
 

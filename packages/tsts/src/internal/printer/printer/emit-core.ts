@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import * as slices from "../../../go/slices.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -1411,7 +1411,7 @@ export function Printer_emitModifierList(receiver: GoPtr<Printer>, parentNode: G
     }
   }
 
-  return greatestEnd(Node_Pos(parentNode), LastOrNil(modifiers!.Nodes) as unknown as { End: () => int });
+  return greatestEnd(Node_Pos(parentNode), LastOrNil(modifiers!.Nodes, GoZeroPointer<Node>) as unknown as { End: () => int });
 }
 
 /**
@@ -3058,7 +3058,7 @@ export function Printer_emitListItems(receiver: GoPtr<Printer>, emit: GoFunc<(p:
     Printer_decreaseIndent(receiver);
   }
 
-  const closingLineTerminatorCount = Printer_getClosingLineTerminatorCount(receiver, parentNode, LastOrNil(children), format, childrenTextRange);
+  const closingLineTerminatorCount = Printer_getClosingLineTerminatorCount(receiver, parentNode, LastOrNil(children, GoZeroPointer<Node>), format, childrenTextRange);
   if (closingLineTerminatorCount > 0) {
     for (let i = 0; i < closingLineTerminatorCount; i++) {
       Printer_writeLine(receiver);

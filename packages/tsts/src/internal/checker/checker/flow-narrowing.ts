@@ -72,13 +72,15 @@ import {
   TypePredicateKindAssertsThis,
   TypePredicateKindThis,
   SignatureKindCall,
+  NodeCheckFlagsNone,
   NodeCheckFlagsInCheckIdentifier,
   type NodeLinks,
 } from "../types.js";
 import type { Type, TypePredicate } from "../types.js";
 import { Checker_getFlowTypeOfReference, Checker_getFlowTypeOfReferenceEx, getFlowNodeOfNode } from "../flow.js";
 import { AssignmentKindDefinite, AssignmentKindNone, getAssignmentTargetKind, hasDotDotDotToken } from "../utilities.js";
-import { LinkStore_Get, type LinkStore } from "../../core/linkstore.js";
+import { LinkStore_Get } from "../../core/linkstore.js";
+import { TSUnknown } from "../../core/tristate.js";
 import {
   Checker_getBaseConstraintOrType,
   Checker_getInferenceContext,
@@ -116,6 +118,7 @@ import {
   Checker_mapType,
   Checker_removeMissingType,
 } from "./types.js";
+
 import {
   CheckModeInferential,
   CheckModeNormal,
@@ -153,6 +156,14 @@ import {
 } from "../../diagnostics/generated/messages.js";
 import { Checker_addDiagnostic } from "../checker.js";
 import { Checker_addOptionalityEx } from "./support-queries.js";
+
+function zeroNodeLinks(): NodeLinks {
+  return {
+    flags: NodeCheckFlagsNone,
+    declarationRequiresScopeChange: TSUnknown,
+    hasReportedStatementInAmbientContext: false,
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTypePredicate","kind":"method","status":"implemented","sigHash":"6da97a8a624e73d4a6eb203ec1af1e20c6662fbe42888fcc923e66c300d1fe8d"}
@@ -859,7 +870,7 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
         (IsVariableDeclaration(rootDeclaration) && (Checker_getCombinedNodeFlagsCached(receiver, rootDeclaration) & NodeFlagsConstant) !== 0) ||
         IsParameterDeclaration(rootDeclaration)
       ) {
-        const links = LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, parent)!;
+        const links = LinkStore_Get(receiver!.nodeLinks, parent, zeroNodeLinks)!;
         if ((links.v.flags & NodeCheckFlagsInCheckIdentifier) === 0) {
           links.v.flags |= NodeCheckFlagsInCheckIdentifier;
           const parentType = Checker_getTypeForBindingElementParent(receiver, parent, CheckModeNormal);

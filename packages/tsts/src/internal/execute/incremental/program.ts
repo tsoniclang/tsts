@@ -1,5 +1,5 @@
 import type { bool, byte } from "../../../go/scalars.js";
-import type { GoError, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -452,8 +452,9 @@ export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Go
  */
 export function Program_getSemanticDiagnosticsOfFile(receiver: GoPtr<Program>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   const [cachedDiagnostics, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
-    receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-    SourceFile_Path(file)
+    receiver!.snapshot!.semanticDiagnosticsPerFile,
+    SourceFile_Path(file),
+    GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
   );
   if (!ok) {
     throw new globalThis.Error("After handling all the affected files, there shouldnt be more changes");
@@ -630,8 +631,9 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
   const affectedFiles: GoPtr<SourceFile>[] = [];
   if (file !== undefined) {
     const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
-      receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-      SourceFile_Path(file)
+      receiver!.snapshot!.semanticDiagnosticsPerFile,
+      SourceFile_Path(file),
+      GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
     );
     if (ok) {
       return;
@@ -640,8 +642,9 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
   } else {
     for (const f of compiler_Program_GetSourceFiles(receiver!.program)) {
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
-        receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-        SourceFile_Path(f)
+        receiver!.snapshot!.semanticDiagnosticsPerFile,
+        SourceFile_Path(f),
+        GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
       );
       if (!ok) {
         affectedFiles.push(f);
@@ -847,8 +850,9 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: G
     const sourceFiles = compiler_Program_GetSourceFiles(program);
     for (const file of sourceFiles) {
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
-        receiver!.snapshot!.emitDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-        SourceFile_Path(file)
+        receiver!.snapshot!.emitDiagnosticsPerFile,
+        SourceFile_Path(file),
+        GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
       );
       if (ok) {
         hasEmitDiagnostics = true;
@@ -889,8 +893,9 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: G
   receiver!.snapshot!.hasErrors = TSFalse;
   const hasSemanticErrors = compiler_Program_GetSourceFiles(program).some((file: GoPtr<SourceFile>): boolean => {
     const [semanticDiagnostics, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
-      receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-      SourceFile_Path(file)
+      receiver!.snapshot!.semanticDiagnosticsPerFile,
+      SourceFile_Path(file),
+      GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
     );
     if (!ok) {
       return CompilerOptions_IsIncremental(receiver!.snapshot!.options) as boolean;

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoBigIntKey, GoMapIsNil, GoSliceIsNil, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../../go/compat.js";
 import { Node_Name, NodeList_Pos, NodeList_End } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Elements, Node_Expression, Node_Members, Node_TypeArgumentList, SourceFile_Text } from "../../ast/ast.js";
@@ -94,6 +94,8 @@ import type {
   SubstitutionType,
   TypeData,
   DeclaredTypeLinks,
+  ValueSymbolLinks,
+  TypeAliasLinks,
   TypeNodeLinks,
   StructuredType,
   Signature,
@@ -145,6 +147,44 @@ import { SkipTrivia } from "../../scanner/scanner.js";
 import { Checker_isErrorType } from "./diagnostics.js";
 import { Checker_addDiagnostic } from "../checker.js";
 
+function goZeroDeclaredTypeLinks(): DeclaredTypeLinks {
+  return {
+    declaredType: undefined,
+    interfaceChecked: false,
+    indexSignaturesChecked: false,
+    typeParametersChecked: false,
+    enumChecked: false,
+  };
+}
+
+function goZeroValueSymbolLinks(): ValueSymbolLinks {
+  return {
+    resolvedType: undefined,
+    writeType: undefined,
+    target: undefined,
+    mapper: undefined,
+    nameType: undefined,
+    containingType: undefined,
+    functionOrConstructorChecked: false,
+  };
+}
+
+function goZeroTypeAliasLinks(): TypeAliasLinks {
+  return {
+    declaredType: undefined,
+    typeParameters: GoNilSlice<GoPtr<Type>>(),
+    instantiations: GoZeroMap<CacheHashKey, GoPtr<Type>>(),
+    isConstructorDeclaredProperty: false,
+  };
+}
+
+function goZeroTypeNodeLinks(): TypeNodeLinks {
+  return {
+    resolvedType: undefined,
+    outerTypeParameters: GoNilSlice<GoPtr<Type>>(),
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkInferType","kind":"method","status":"implemented","sigHash":"e2af2d9c2cc28901ca0482b7aa53939d3873152da30ef08d2e378c076fb9c8ca"}
  *
@@ -185,7 +225,7 @@ export function Checker_checkInferType(receiver: GoPtr<Checker>, node: GoPtr<Nod
   Checker_checkSourceElement(receiver, typeParameterDeclarationNode);
   const symbol_ = Checker_getSymbolOfDeclaration(receiver, typeParameterDeclarationNode);
   if ((symbol_!.Declarations?.length ?? 0) > 1) {
-    const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_)!.v;
+    const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_, goZeroDeclaredTypeLinks)!.v;
     if (!links!.typeParametersChecked) {
       links!.typeParametersChecked = true as bool;
       const typeParameter = Checker_getDeclaredTypeOfTypeParameter(receiver, symbol_);
@@ -341,7 +381,7 @@ export function Checker_checkIndexConstraintForProperty(receiver: GoPtr<Checker>
     if (info!.declaration !== undefined && Checker_getParentOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, info!.declaration)) === t!.symbol) {
       localIndexDeclaration = info!.declaration;
     }
-    let errorNode = OrElse(localPropDeclaration, localIndexDeclaration);
+    let errorNode = OrElse<GoPtr<Node>>(localPropDeclaration, localIndexDeclaration, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>);
     if (errorNode === undefined && interfaceDeclaration !== undefined && !Some(Checker_getBaseTypes(receiver, t), (base: GoPtr<Type>): bool =>
       (Checker_getPropertyOfObjectType(receiver, base, prop!.Name) !== undefined && Checker_getIndexTypeOfType(receiver, base, info!.keyType) !== undefined) as bool,
     )) {
@@ -472,7 +512,7 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
         return Checker_getSignatureInstantiation(receiver, sig, typeArgumentTypes, IsInJSFile(sig!.declaration), undefined);
       }
       return sig;
-    });
+    }, GoEqualStrict);
   };
   const getInstantiatedType = (t: GoPtr<Type>): GoPtr<Type> => {
     let hasSignatures = false;
@@ -507,7 +547,7 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
       } else if ((part!.flags & TypeFlagsUnion) !== 0) {
         return Checker_mapType(receiver, part, getInstantiatedType);
       } else if ((part!.flags & TypeFlagsIntersection) !== 0) {
-        return Checker_getIntersectionType(receiver, SameMap(Type_AsUnionOrIntersectionType(part)!.types, getInstantiatedTypePart));
+        return Checker_getIntersectionType(receiver, SameMap(Type_AsUnionOrIntersectionType(part)!.types, getInstantiatedTypePart, GoEqualStrict));
       }
       return part;
     };
@@ -542,7 +582,7 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_getTypeOfInstantiatedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_);
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks);
   if (links!.v.resolvedType === undefined) {
     links!.v.resolvedType = Checker_instantiateType(receiver, Checker_getTypeOfSymbol(receiver, links!.v.target), links!.v.mapper);
   }
@@ -562,7 +602,7 @@ export function Checker_getTypeOfInstantiatedSymbol(receiver: GoPtr<Checker>, sy
  * }
  */
 export function Checker_getWriteTypeOfInstantiatedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_);
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks);
   if (links!.v.writeType === undefined) {
     links!.v.writeType = Checker_instantiateType(receiver, Checker_getWriteTypeOfSymbol(receiver, links!.v.target), links!.v.mapper);
   }
@@ -1066,7 +1106,7 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
   } else {
     declaration = t!.symbol!.Declarations![0];
   }
-  const links = LinkStore_Get(receiver!.typeNodeLinks, declaration)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, declaration, goZeroTypeNodeLinks)!.v;
   let target: GoPtr<Type>;
   if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
     target = links!.resolvedType;
@@ -1232,7 +1272,12 @@ export function Checker_hasArrayOrTypeTypeConstraint(receiver: GoPtr<Checker>, t
 export function Checker_getConstraintTypeFromMappedType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
   const m = Type_AsMappedType(t);
   if (m!.constraintType === undefined) {
-    m!.constraintType = OrElse(Checker_getConstraintOfTypeParameter(receiver, Checker_getTypeParameterFromMappedType(receiver, t)), receiver!.errorType);
+    m!.constraintType = OrElse<GoPtr<Type>>(
+      Checker_getConstraintOfTypeParameter(receiver, Checker_getTypeParameterFromMappedType(receiver, t)),
+      receiver!.errorType,
+      GoZeroPointer<Type>,
+      GoEqualStrict<GoPtr<Type>>,
+    );
   }
   return m!.constraintType;
 }
@@ -1302,7 +1347,7 @@ export function Checker_getTypeAliasInstantiation(receiver: GoPtr<Checker>, symb
       return Checker_getStringMappingType(receiver, symbol_, typeArguments[0]);
     }
   }
-  const links = LinkStore_Get(receiver!.typeAliasLinks, symbol_);
+  const links = LinkStore_Get(receiver!.typeAliasLinks, symbol_, goZeroTypeAliasLinks);
   const typeParameters = links!.v.typeParameters;
   const key = getTypeAliasInstantiationKey(typeArguments, alias);
   let instantiation = links!.v.instantiations.get(key);
@@ -1460,7 +1505,7 @@ export function Checker_getInferredTrueTypeFromConditionalType(receiver: GoPtr<C
  * }
  */
 export function Checker_getTypeFromInferTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node);
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, goZeroTypeNodeLinks);
   if (links!.v.resolvedType === undefined) {
     links!.v.resolvedType = Checker_getDeclaredTypeOfTypeParameter(receiver, Checker_getSymbolOfDeclaration(receiver, AsInferTypeNode(node)!.TypeParameter));
   }
@@ -2004,7 +2049,12 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
     if (intersectionConstraint !== undefined && Checker_isTypeAssignableTo(receiver, intersectionConstraint, substitutionConstraint)) {
       return intersectionConstraint;
     }
-    return OrElse(Checker_getNextBaseConstraint(receiver, substitutionConstraint, stack), intersectionConstraint);
+    return OrElse<GoPtr<Type>>(
+      Checker_getNextBaseConstraint(receiver, substitutionConstraint, stack),
+      intersectionConstraint,
+      GoZeroPointer<Type>,
+      GoEqualStrict<GoPtr<Type>>,
+    );
   }
   if (Checker_isGenericTupleType(receiver, t)) {
     const elementTypes = Checker_getElementTypes(receiver, t);

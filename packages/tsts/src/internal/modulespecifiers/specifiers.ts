@@ -1,6 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { Seq2 } from "../../go/iter.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { Node_Expression, Node_Symbol, Node_Text } from "../ast/ast.js";
 import type { HasFileName, Node, SourceFile } from "../ast/ast.js";
@@ -15,6 +15,7 @@ import { OrderedMap_Entries } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { SyncMap_Load } from "../collections/syncmap.js";
 import { SyncSet_Range } from "../collections/syncset.js";
+import type { SyncSet } from "../collections/syncset.js";
 import {
   CompilerOptions_GetModuleResolutionKind,
   CompilerOptions_GetPathsBasePath,
@@ -690,7 +691,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
       host!.GetGlobalTypingsCacheLocation(),
       GetDirectoryPath(fullImportedFileName),
       (realPathDirectory: string): [boolean, boolean] => {
-        const [symlinkSet, ok] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(symlinkCache), EnsureTrailingDirectorySeparator(ToPath(realPathDirectory, cwd, host!.UseCaseSensitiveFileNames())) as any);
+        const [symlinkSet, ok] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(symlinkCache), EnsureTrailingDirectorySeparator(ToPath(realPathDirectory, cwd, host!.UseCaseSensitiveFileNames())), GoZeroPointer<SyncSet<string>>);
         if (!ok) {
           return [false, false]; // Continue to ancestor directory
         }
@@ -709,7 +710,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
             UseCaseSensitiveFileNames: host!.UseCaseSensitiveFileNames(),
             CurrentDirectory: cwd,
           });
-          SyncSet_Range(symlinkSet as any, (symlinkDirectory: string): bool => {
+          SyncSet_Range(symlinkSet, (symlinkDirectory: string): bool => {
             const option = ResolvePath(symlinkDirectory, relative);
             results.push({
               FileName: option,
@@ -723,6 +724,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
 
         return [false, false];
       },
+      GoZeroBoolean,
     );
   }
 

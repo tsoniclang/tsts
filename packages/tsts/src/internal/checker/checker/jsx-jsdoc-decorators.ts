@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Every, Find } from "../../core/core.js";
 import type { Node } from "../../ast/spine.js";
 import { DiagnosticsCollection_Add, NewDiagnosticChain } from "../../ast/diagnostic.js";
@@ -118,7 +118,7 @@ export function Checker_checkDecorators(receiver: GoPtr<Checker>, node: GoPtr<No
   if (!CanHaveDecorators(node) || !HasDecorators(node) || !NodeCanBeDecorated(receiver!.legacyDecorators, node, node!.Parent, node!.Parent!.Parent)) {
     return;
   }
-  const firstDecorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator);
+  const firstDecorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator, GoZeroPointer<Node>);
   if (firstDecorator === undefined) {
     return;
   }

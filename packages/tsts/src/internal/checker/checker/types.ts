@@ -1,8 +1,8 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef } from "../../../go/compat.js";
-import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
+import { GoBigIntKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { recordExtensionContextualTargetTypeFact } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
@@ -40,7 +40,7 @@ import type { SymbolFlags, NodeFlags } from "../../ast/generated/flags.js";
 import { SymbolFlagsOptional, NodeFlagsOptionalChain, NodeFlagsAmbient, NodeFlagsConstant, NodeFlagsInWithStatement, NodeFlagsJSDoc, SymbolFlagsEnumMember, SymbolFlagsTypeLiteral, SymbolFlagsInterface, SymbolFlagsTypeAlias, SymbolFlagsFunction, SymbolFlagsMethod, SymbolFlagsObjectLiteral, SymbolFlagsAlias, NodeFlagsHasExplicitReturn, SymbolFlagsProperty, SymbolFlagsType, NodeFlagsReparsed, SymbolFlagsGetAccessor, SymbolFlagsSetAccessor } from "../../ast/generated/flags.js";
 import type { ResolutionMode } from "../../core/compileroptions.js";
 import { CompilerOptions_ShouldPreserveConstEnums, ScriptTargetES2015 } from "../../core/compileroptions.js";
-import { TSTrue } from "../../core/tristate.js";
+import { TSUnknown, TSTrue } from "../../core/tristate.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import * as diagnosticsMessages from "../../diagnostics/generated/messages.js";
 import type { Number } from "../../jsnum/jsnum.js";
@@ -56,7 +56,7 @@ import { TypeMapper_Map, appendTypeMapping, Checker_combineTypeMappers, newSimpl
 import { Checker_createNormalizedTupleTypeEx, Checker_createTypeReferenceEx, Checker_addDiagnostic } from "../checker.js";
 import type { AccessFlags, ConditionalRoot, ContextFlags, ElementFlags, IndexFlags, IndexInfo, NodeLinks, ObjectFlags, Signature, StructuredType, TupleElementInfo, Type, TypeAlias, TypeBase, TypeComparer, TypeData, TypeFlags, TypeNodeLinks, ConstrainedType, ObjectType, TypeReference, InterfaceType, UnionOrIntersectionType, IntrinsicType, LiteralType, UniqueESSymbolType, UnionType, IntersectionType, TypeParameter, IndexType, IndexedAccessType, TemplateLiteralType, StringMappingType, SubstitutionType, MappedType, ReverseMappedType, EvolvingArrayType, InstantiationExpressionType, TupleType, ConditionalType, ExportTypeLinks, DeclaredTypeLinks } from "../types.js";
 import { AccessFlagsAllowMissing, AccessFlagsExpressionPosition, AccessFlagsNone, ElementFlagsNone, ElementFlagsNonRequired, ElementFlagsFixed, ElementFlagsVariadic, ElementFlagsRest, ElementFlagsRequired, ElementFlagsOptional as ElementFlagsOptionalFlag, ElementFlagsVariable, ObjectFlagsReference, ObjectFlagsObjectLiteral, ObjectFlagsObjectLiteralPatternWithComputedProperties, Type_Target, Type_TargetTupleType, TypeFlagsAny, TypeFlagsVoid, TypeFlagsNull, TypeFlagsUndefined, TypeFlagsNever, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsObject, TypeFlagsTypeParameter, TypeFlagsStringLiteral, TypeFlagsTemplateLiteral, TypeFlagsInstantiableNonPrimitive, TypeFlagsStringLike, TypeFlagsNonPrimitive, TypeFlagsIndex, TypeFlagsBooleanLike, TypeFlagsEnumLike, TypeFlagsUnionOrIntersection, Type_Types, SignatureKindCall, Type_AsInterfaceType, InterfaceType_TypeParameters, InterfaceType_LocalTypeParameters, InterfaceType_OuterTypeParameters, Type_Mapper, Type_AsIndexType, TypeFlagsBigIntLike, TypeFlagsAnyOrUnknown, TypeFlagsNumberLike, NodeCheckFlagsTypeChecked, NodeCheckFlagsContextChecked, NodeCheckFlagsInitializerIsUndefined, NodeCheckFlagsInitializerIsUndefinedComputed, TypeFlagsTypeVariable, TypeFlagsInstantiable, TypeFlagsStructuredOrInstantiable, TypeFlagsESSymbolLike, TypeFlagsEnumLiteral, ObjectFlagsClass, ObjectFlagsInterface, ObjectFlagsClassOrInterface, ObjectFlagsTuple, ObjectFlagsMembersResolved, ObjectFlagsCouldContainTypeVariablesComputed, ObjectFlagsCouldContainTypeVariables, ObjectFlagsInstantiationExpressionType, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsReverseMapped, ObjectFlagsContainsIntersections, ObjectFlagsIsNeverIntersectionComputed, ObjectFlagsIsNeverIntersection, ObjectFlagsIsGenericObjectType, Type_AsUnionType, StructuredType_Properties, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsUnionOrIntersectionType, ObjectFlagsMapped, TypeFlagsUnknown, Type_AsMappedType, Type_AsIntersectionType, Type_AsTypeReference, Type_AsTypeParameter, TypeFlagsSubstitution, TypeFlagsIndexedAccess, Type_AsSubstitutionType, Type_AsIndexedAccessType, IndexedAccessType_ObjectType, IndexedAccessType_IndexType, SubstitutionType_BaseType, TypeFlagsNullable, TypeFlagsConditional, TypeFlagsNumberLiteral, Type_AsConditionalType, TypeFlagsStringOrNumberLiteral, TypeFlagsStringOrNumberLiteralOrUnique, ObjectFlagsNone, ObjectFlagsFromTypeNode, ObjectFlagsPrimitiveUnion, Type_Distributed, ContextFlagsNone, ContextFlagsNoConstraints, ContextFlagsSignature, ObjectFlagsPropagatingFlags, TypeFlagsNone, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsStringMapping, TypeFlagsLiteral, Type_AsTemplateLiteralType, TypeFlagsBooleanLiteral, TypeFlagsBigIntLiteral, TypeFlagsEnum, Type_AsLiteralType, TypeFlagsFreshable, ObjectFlagsEvolvingArray, ObjectFlagsContainsWideningType, Type_AsIntrinsicType, Type_AsStructuredType, Type_AsObjectType, TypeFormatFlagsWriteArrayAsGenericType, TypeFlagsPrimitive, ObjectFlagsArrayLiteral, ObjectFlagsContainsObjectOrArrayLiteral, Type_AsTupleType, SignatureKindConstruct, SignatureFlagsIsNonInferrable, TypeFormatFlagsNoTypeReduction, ObjectFlagsIsUnknownLikeUnionComputed, ObjectFlagsIsUnknownLikeUnion, TypeFlagsSimplifiable, ContextFlagsSkipBindingPatterns, TypeFlagsUniqueESSymbol, TypeFlagsESSymbol, TypeFlagsIncludesMask, TypeFlagsIncludesInstantiable, TypeFlagsIncludesConstrainedTypeVariable, TypeFlagsIncludesWildcard, TypeFlagsIncludesError, TypeFlagsIncludesNonWideningType, TypeFlagsIncludesEmptyObject, TypeFlagsIncludesMissingType, TypeFlagsUnit, ObjectFlagsIsConstrainedTypeVariable, ObjectFlagsObjectRestType, TypeFlagsBoolean, ObjectFlagsFreshLiteral, TypeFlagsNotPrimitiveUnion, TypeFlagsDisjointDomains, TypeFlagsVoidLike, TypeFlagsDefinitelyNonNullable, ObjectFlagsUnresolvedMembers, IndexFlagsNone, ObjectFlagsIsGenericTypeComputed, ObjectFlagsIsGenericType, ObjectFlagsIsGenericIndexType, ObjectFlagsJSLiteral, ObjectFlagsNonInferrableType, ObjectFlagsRequiresWidening, Type_AsInstantiationExpressionType, Type_AsReverseMappedType, Type_AsStringMappingType, TypeAlias_Symbol, ObjectFlagsContainsSpread } from "../types.js";
-import { SignatureFlagsNone } from "../types.js";
+import { NodeCheckFlagsNone, SignatureFlagsNone } from "../types.js";
 import type { orderedSet } from "../utilities.js";
 import { CompareTypes, IsTypeAny, NewDiagnosticForNode, NewDiagnosticChainForNode, hasDotDotDotToken, isDeclarationReadonly, isOptionalDeclaration, orderedSet_contains, orderedSet_add, entityNameToString, isConstTypeReference, isObjectLiteralType, isTypeUsableAsPropertyName, getPropertyNameFromType, getDeclarationModifierFlagsFromSymbol } from "../utilities.js";
 import type { Checker, CheckMode, ContextualInfo, EnumLiteralKey, InferenceContext, IntersectionFlags, IterationTypeKind, IterationTypes, IterationTypesKey, IterationTypesResolver, IterationUse, keyBuilder, ObjectLiteralDiscriminator, PredicateSemantics, TupleNormalizer, TypeFacts, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, UnionOfUnionKey, UnionReduction, WideningContext, WideningKind, CachedTypeKey, CacheHashKey, PropertiesTypesKey } from "./state.js";
@@ -108,6 +108,64 @@ import { Checker_getIsolatedModulesLikeFlagName } from "./symbols.js";
 import { Checker_createModuleNotFoundChain } from "./modules.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../../go/compat.js";
+
+function zeroNodeLinks(): NodeLinks {
+  return {
+    flags: NodeCheckFlagsNone,
+    declarationRequiresScopeChange: TSUnknown,
+    hasReportedStatementInAmbientContext: false,
+  };
+}
+
+function zeroValueSymbolLinks(): ValueSymbolLinks {
+  return {
+    resolvedType: undefined,
+    writeType: undefined,
+    target: undefined,
+    mapper: undefined,
+    nameType: undefined,
+    containingType: undefined,
+    functionOrConstructorChecked: false,
+  };
+}
+
+function zeroMappedSymbolLinks(): MappedSymbolLinks {
+  return {
+    keyType: undefined,
+    syntheticOrigin: undefined,
+  };
+}
+
+function zeroExportTypeLinks(): ExportTypeLinks {
+  return {
+    target: undefined,
+    originatingImport: undefined,
+  };
+}
+
+function zeroDeclaredTypeLinks(): DeclaredTypeLinks {
+  return {
+    declaredType: undefined,
+    interfaceChecked: false,
+    indexSignaturesChecked: false,
+    typeParametersChecked: false,
+    enumChecked: false,
+  };
+}
+
+function zeroSpreadLinks(): SpreadLinks {
+  return {
+    leftSpread: undefined,
+    rightSpread: undefined,
+  };
+}
+
+function zeroTypeNodeLinks(): TypeNodeLinks {
+  return {
+    resolvedType: undefined,
+    outerTypeParameters: GoNilSlice<GoPtr<Type>>(),
+  };
+}
 
 class TypeValue implements Type {
   flags: TypeFlags = 0;
@@ -1649,8 +1707,8 @@ export function Checker_getIterationTypesOfIterableFast(receiver: GoPtr<Checker>
  */
 export function IterationTypesResolver_getResolvedIterationTypes(receiver: GoPtr<IterationTypesResolver>, yieldType: GoPtr<Type>, returnType: GoPtr<Type>, nextType: GoPtr<Type>): IterationTypes {
   return {
-    yieldType: core.OrElse(receiver!.resolveIterationType!(yieldType, undefined), yieldType),
-    returnType: core.OrElse(receiver!.resolveIterationType!(returnType, undefined), returnType),
+    yieldType: core.OrElse(receiver!.resolveIterationType!(yieldType, undefined), yieldType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>),
+    returnType: core.OrElse(receiver!.resolveIterationType!(returnType, undefined), returnType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>),
     nextType: nextType,
   };
 }
@@ -1676,7 +1734,7 @@ export function Checker_isReferenceToType(receiver: GoPtr<Checker>, t: GoPtr<Typ
  * }
  */
 export function Checker_isReferenceToSomeType(receiver: GoPtr<Checker>, t: GoPtr<Type>, targets: GoSlice<GoPtr<Type>>): bool {
-  return t !== undefined && (t.objectFlags & ObjectFlagsReference) !== 0 && slices.Contains(targets, Type_Target(t));
+  return t !== undefined && (t.objectFlags & ObjectFlagsReference) !== 0 && slices.Contains(targets, Type_Target(t), GoEqualStrict<GoPtr<Type>>);
 }
 
 /**
@@ -1752,7 +1810,7 @@ export function Checker_combineIterationTypes(receiver: GoPtr<Checker>, iteratio
  * }
  */
 export function Checker_getIterationTypeUnion(receiver: GoPtr<Checker>, iterationTypes: GoSlice<IterationTypes>, f: GoFunc<(arg0: IterationTypes) => GoPtr<Type>>): GoPtr<Type> {
-  const types = core.MapNonNil(iterationTypes, f);
+  const types = core.MapNonNil(iterationTypes, f, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   if (types.length === 0) {
     return undefined;
   }
@@ -1788,8 +1846,8 @@ export function Checker_getAsyncFromSyncIterationTypes(receiver: GoPtr<Checker>,
     receiver!.getGlobalAwaitedSymbol!();
   }
   return {
-    yieldType: core.OrElse(Checker_getAwaitedTypeEx(receiver, iterationTypes.yieldType, errorNode, undefined), receiver!.anyType),
-    returnType: core.OrElse(Checker_getAwaitedTypeEx(receiver, iterationTypes.returnType, errorNode, undefined), receiver!.anyType),
+    yieldType: core.OrElse(Checker_getAwaitedTypeEx(receiver, iterationTypes.yieldType, errorNode, undefined), receiver!.anyType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>),
+    returnType: core.OrElse(Checker_getAwaitedTypeEx(receiver, iterationTypes.returnType, errorNode, undefined), receiver!.anyType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>),
     nextType: iterationTypes.nextType,
   };
 }
@@ -2111,7 +2169,7 @@ export function Checker_getIterationTypesOfMethod(receiver: GoPtr<Checker>, t: G
     if (methodName === "next") {
       nextType = methodParameterType;
     } else if (methodName === "return") {
-      const resolvedMethodParameterType = core.OrElse(resolver!.resolveIterationType!(methodParameterType, errorNode), receiver!.anyType);
+      const resolvedMethodParameterType = core.OrElse(resolver!.resolveIterationType!(methodParameterType, errorNode), receiver!.anyType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
       returnTypes.push(resolvedMethodParameterType);
     }
   }
@@ -2122,7 +2180,7 @@ export function Checker_getIterationTypesOfMethod(receiver: GoPtr<Checker>, t: G
   } else {
     methodReturnType = receiver!.neverType;
   }
-  const resolvedMethodReturnType = core.OrElse(resolver!.resolveIterationType!(methodReturnType, errorNode), receiver!.anyType);
+  const resolvedMethodReturnType = core.OrElse(resolver!.resolveIterationType!(methodReturnType, errorNode), receiver!.anyType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   const iterationTypes = Checker_getIterationTypesOfIteratorResult(receiver, resolvedMethodReturnType);
   if (!IterationTypes_hasTypes(iterationTypes)) {
     if (errorNode !== undefined) {
@@ -2197,7 +2255,7 @@ export function Checker_getIterationTypesOfIteratorResult(receiver: GoPtr<Checke
   if (yieldType === undefined && returnType === undefined) {
     return { yieldType: undefined, returnType: undefined, nextType: undefined };
   }
-  return { yieldType: yieldType, returnType: core.OrElse(returnType, receiver!.voidType), nextType: undefined };
+  return { yieldType: yieldType, returnType: core.OrElse(returnType, receiver!.voidType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), nextType: undefined };
 }
 
 /**
@@ -2557,7 +2615,7 @@ export function Checker_checkTemplateExpression(receiver: GoPtr<Checker>, node: 
   if (
     Checker_isConstContext(receiver, node) ||
     Checker_isTemplateLiteralContext(receiver, node) ||
-    someType(core.OrElse(Checker_getContextualType(receiver, node, ContextFlagsNone), receiver!.unknownType), (candidate: GoPtr<Type>): bool => Checker_isTemplateLiteralContextualType(receiver, candidate))
+    someType(core.OrElse(Checker_getContextualType(receiver, node, ContextFlagsNone), receiver!.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), (candidate: GoPtr<Type>): bool => Checker_isTemplateLiteralContextualType(receiver, candidate))
   ) {
     return Checker_getTemplateLiteralType(receiver, texts, types);
   }
@@ -2587,7 +2645,7 @@ export function Checker_isTemplateLiteralContext(receiver: GoPtr<Checker>, node:
  * }
  */
 export function Checker_isTemplateLiteralContextualType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  return (t!.flags & (TypeFlagsStringLiteral | TypeFlagsTemplateLiteral)) !== 0 || ((t!.flags & TypeFlagsInstantiableNonPrimitive) !== 0 && Checker_maybeTypeOfKind(receiver, core.OrElse(Checker_getBaseConstraintOfType(receiver, t), receiver!.unknownType), TypeFlagsStringLike));
+  return (t!.flags & (TypeFlagsStringLiteral | TypeFlagsTemplateLiteral)) !== 0 || ((t!.flags & TypeFlagsInstantiableNonPrimitive) !== 0 && Checker_maybeTypeOfKind(receiver, core.OrElse(Checker_getBaseConstraintOfType(receiver, t), receiver!.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), TypeFlagsStringLike));
 }
 
 /**
@@ -2604,7 +2662,7 @@ export function Checker_isTemplateLiteralContextualType(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_checkRegularExpressionLiteral(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const nodeLinks = LinkStore_Get(receiver!.nodeLinks, node)!.v;
+  const nodeLinks = LinkStore_Get(receiver!.nodeLinks, node, zeroNodeLinks)!.v;
   if ((nodeLinks!.flags & NodeCheckFlagsTypeChecked) === 0) {
     nodeLinks!.flags |= NodeCheckFlagsTypeChecked;
     Checker_checkGrammarRegularExpressionLiteral(receiver, AsRegularExpressionLiteral(node));
@@ -2712,7 +2770,7 @@ export function Checker_checkArrayLiteral(receiver: GoPtr<Checker>, node: GoPtr<
         Checker_isTupleLikeType(receiver, t) ||
         (Checker_isGenericMappedType(receiver, t) &&
           Type_AsMappedType(t)!.nameType === undefined &&
-          Checker_getHomomorphicTypeVariable(receiver, core.OrElse(Type_AsMappedType(t)!.__tsgoEmbedded0!.target, t)) !== undefined),
+          Checker_getHomomorphicTypeVariable(receiver, core.OrElse(Type_AsMappedType(t)!.__tsgoEmbedded0!.target, t, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>)) !== undefined),
       ));
     let hasOmittedExpression = false;
     for (let i = 0; i < elements.length; i++) {
@@ -2765,7 +2823,7 @@ export function Checker_checkArrayLiteral(receiver: GoPtr<Checker>, node: GoPtr<
     if (elementTypes.length !== 0) {
       for (let i = 0; i < elementTypes.length; i++) {
         if ((elementInfos[i]!.flags & ElementFlagsVariadic) !== 0) {
-          elementTypes[i] = core.OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, elementTypes[i], receiver!.numberType, AccessFlagsNone, undefined, undefined), receiver!.anyType);
+          elementTypes[i] = core.OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, elementTypes[i], receiver!.numberType, AccessFlagsNone, undefined, undefined), receiver!.anyType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
         }
       }
       elementType = Checker_getUnionTypeEx(receiver, elementTypes, UnionReductionSubtype, undefined, undefined);
@@ -3086,12 +3144,12 @@ export function Checker_checkFunctionExpressionOrObjectLiteralMethod(receiver: G
  * }
  */
 export function Checker_contextuallyCheckFunctionExpressionOrObjectLiteralMethod(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): void {
-  const links = LinkStore_Get(receiver!.nodeLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.nodeLinks, node, zeroNodeLinks)!.v;
   if ((links!.flags & NodeCheckFlagsContextChecked) === 0) {
     const contextualSignature = Checker_getContextualSignature(receiver, node);
     if ((links!.flags & NodeCheckFlagsContextChecked) === 0) {
       links!.flags |= NodeCheckFlagsContextChecked;
-      const signature = core.FirstOrNil(Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, node)), SignatureKindCall));
+      const signature = core.FirstOrNil(Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, node)), SignatureKindCall), GoZeroPointer<Signature>);
       if (signature === undefined) {
         return;
       }
@@ -3218,7 +3276,7 @@ export function Checker_assignBindingElementTypes(receiver: GoPtr<Checker>, patt
     if (name !== undefined) {
       const t = Checker_getBindingElementTypeFromParentType(receiver, element, parentType, false);
       if (IsIdentifier(name)) {
-        LinkStore_Get(receiver!.valueSymbolLinks, Checker_getSymbolOfDeclaration(receiver, element))!.v.resolvedType = t;
+        LinkStore_Get(receiver!.valueSymbolLinks, Checker_getSymbolOfDeclaration(receiver, element), zeroValueSymbolLinks)!.v.resolvedType = t;
       } else {
         Checker_assignBindingElementTypes(receiver, name, t);
       }
@@ -3356,7 +3414,7 @@ export function Checker_checkConditionalExpression(receiver: GoPtr<Checker>, nod
  * }
  */
 export function Checker_getYieldedTypeOfYieldExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, expressionType: GoPtr<Type>, sentType: GoPtr<Type>, isAsync: bool): GoPtr<Type> {
-  const errorNode = core.OrElse(Node_Expression(node), node);
+  const errorNode = core.OrElse(Node_Expression(node), node, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>);
   const isYieldStar = AsYieldExpression(node)!.AsteriskToken !== undefined;
   let yieldedType = expressionType;
   if (isYieldStar) {
@@ -3414,7 +3472,7 @@ export function Checker_removeOptionalityFromDeclaredType(receiver: GoPtr<Checke
  * }
  */
 export function Checker_parameterInitializerContainsUndefined(receiver: GoPtr<Checker>, declaration: GoPtr<Node>): bool {
-  const links = LinkStore_Get(receiver!.nodeLinks, declaration)!.v;
+  const links = LinkStore_Get(receiver!.nodeLinks, declaration, zeroNodeLinks)!.v;
   if ((links!.flags & NodeCheckFlagsInitializerIsUndefinedComputed) === 0) {
     if (!Checker_pushTypeResolution(receiver, declaration, TypeSystemPropertyNameInitializerIsUndefined)) {
       Checker_reportCircularityError(receiver, Node_Symbol(declaration));
@@ -4002,7 +4060,7 @@ export function Checker_checkObjectLiteral(receiver: GoPtr<Checker>, node: GoPtr
       } else {
         prop = Checker_newSymbolEx(receiver, (SymbolFlagsProperty | member!.Flags) as SymbolFlags, member!.Name, checkFlags as int);
       }
-      const links = LinkStore_Get(receiver!.valueSymbolLinks, prop);
+      const links = LinkStore_Get(receiver!.valueSymbolLinks, prop, zeroValueSymbolLinks);
       if (nameType !== undefined) {
         links!.v.nameType = nameType;
       }
@@ -4287,7 +4345,7 @@ export function Checker_getSpreadType(receiver: GoPtr<Checker>, left: GoPtr<Type
         const declarations = core.Concatenate(leftProp!.Declarations, rightProp!.Declarations);
         const flags = (SymbolFlagsProperty | (leftProp!.Flags & SymbolFlagsOptional)) as SymbolFlags;
         const result = Checker_newSymbol(receiver, flags, leftProp!.Name);
-        const links = LinkStore_Get(receiver!.valueSymbolLinks, result)!.v;
+        const links = LinkStore_Get(receiver!.valueSymbolLinks, result, zeroValueSymbolLinks)!.v;
         const leftType = Checker_getTypeOfSymbol(receiver, leftProp);
         const leftTypeWithoutUndefined = Checker_removeMissingOrUndefinedType(receiver, leftType);
         const rightTypeWithoutUndefined = Checker_removeMissingOrUndefinedType(receiver, rightType);
@@ -4296,10 +4354,10 @@ export function Checker_getSpreadType(receiver: GoPtr<Checker>, left: GoPtr<Type
         } else {
           links!.resolvedType = Checker_getUnionTypeEx(receiver, [leftType, rightTypeWithoutUndefined], UnionReductionSubtype, undefined, undefined);
         }
-        LinkStore_Get(receiver!.spreadLinks, result)!.v.leftSpread = leftProp;
-        LinkStore_Get(receiver!.spreadLinks, result)!.v.rightSpread = rightProp;
+        LinkStore_Get(receiver!.spreadLinks, result, zeroSpreadLinks)!.v.leftSpread = leftProp;
+        LinkStore_Get(receiver!.spreadLinks, result, zeroSpreadLinks)!.v.rightSpread = rightProp;
         result!.Declarations = declarations;
-        links!.nameType = LinkStore_Get(receiver!.valueSymbolLinks, leftProp)!.v.nameType;
+        links!.nameType = LinkStore_Get(receiver!.valueSymbolLinks, leftProp, zeroValueSymbolLinks)!.v.nameType;
         members.set(leftProp!.Name, result);
       }
     } else {
@@ -4308,7 +4366,7 @@ export function Checker_getSpreadType(receiver: GoPtr<Checker>, left: GoPtr<Type
   }
   const spreadIndexInfos = core.SameMap(indexInfos, (info: GoPtr<IndexInfo>): GoPtr<IndexInfo> => {
     return Checker_getIndexInfoWithReadonly(receiver, info, readonly);
-  });
+  }, GoEqualStrict<GoPtr<IndexInfo>>);
   const spread = Checker_newAnonymousType(receiver, symbol_, members, [], [], spreadIndexInfos);
   spread!.objectFlags |= (ObjectFlagsObjectLiteral | ObjectFlagsContainsObjectOrArrayLiteral | ObjectFlagsContainsSpread | objectFlags) as ObjectFlags;
   return spread;
@@ -4401,7 +4459,7 @@ export function Checker_tryMergeUnionOfObjectTypeAndEmptyObject(receiver: GoPtr<
   }
   const types = Type_Types(t)!;
   if (core.Every(types, (ty: GoPtr<Type>): bool => Checker_isEmptyObjectTypeOrSpreadsIntoEmptyObject(receiver, ty))) {
-    const empty = core.Find(types, (ty: GoPtr<Type>): bool => Checker_isEmptyObjectType(receiver, ty));
+    const empty = core.Find(types, (ty: GoPtr<Type>): bool => Checker_isEmptyObjectType(receiver, ty), GoZeroPointer<Type>);
     if (empty !== undefined) {
       return empty;
     }
@@ -4409,13 +4467,13 @@ export function Checker_tryMergeUnionOfObjectTypeAndEmptyObject(receiver: GoPtr<
   }
   const firstType = core.Find(types, (ty: GoPtr<Type>): bool => {
     return !Checker_isEmptyObjectTypeOrSpreadsIntoEmptyObject(receiver, ty);
-  });
+  }, GoZeroPointer<Type>);
   if (firstType === undefined) {
     return t;
   }
   const secondType = core.Find(types, (ty: GoPtr<Type>): bool => {
     return ty !== firstType && !Checker_isEmptyObjectTypeOrSpreadsIntoEmptyObject(receiver, ty);
-  });
+  }, GoZeroPointer<Type>);
   if (secondType !== undefined) {
     return t;
   }
@@ -4428,15 +4486,15 @@ export function Checker_tryMergeUnionOfObjectTypeAndEmptyObject(receiver: GoPtr<
       const isSetonlyAccessor = (prop!.Flags & SymbolFlagsSetAccessor) !== 0 && (prop!.Flags & SymbolFlagsGetAccessor) === 0;
       const flags = (SymbolFlagsProperty | SymbolFlagsOptional) as SymbolFlags;
       const result = Checker_newSymbolEx(receiver, flags, prop!.Name, (prop!.CheckFlags & CheckFlagsLate) | (readonly ? CheckFlagsReadonly : 0));
-      const links = LinkStore_Get(receiver!.valueSymbolLinks, result)!.v;
+      const links = LinkStore_Get(receiver!.valueSymbolLinks, result, zeroValueSymbolLinks)!.v;
       if (isSetonlyAccessor) {
         links!.resolvedType = receiver!.undefinedType;
       } else {
         links!.resolvedType = Checker_addOptionalityEx(receiver, Checker_getTypeOfSymbol(receiver, prop), true, true);
       }
       result!.Declarations = prop!.Declarations;
-      links!.nameType = LinkStore_Get(receiver!.valueSymbolLinks, prop)!.v.nameType;
-      LinkStore_Get(receiver!.mappedSymbolLinks, result)!.v.syntheticOrigin = prop;
+      links!.nameType = LinkStore_Get(receiver!.valueSymbolLinks, prop, zeroValueSymbolLinks)!.v.nameType;
+      LinkStore_Get(receiver!.mappedSymbolLinks, result, zeroMappedSymbolLinks)!.v.syntheticOrigin = prop;
       members.set(prop!.Name, result);
     }
   }
@@ -4681,11 +4739,11 @@ export function Checker_cloneTypeAsModuleType(receiver: GoPtr<Checker>, symbol_:
   result!.Members = maps.Clone(symbol_!.Members) as SymbolTable;
   result!.Exports = maps.Clone(symbol_!.Exports) as SymbolTable;
   result!.Parent = symbol_!.Parent;
-  const links = LinkStore_Get<GoPtr<Symbol>, ExportTypeLinks>(receiver!.exportTypeLinks as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, result);
+  const links = LinkStore_Get<GoPtr<Symbol>, ExportTypeLinks>(receiver!.exportTypeLinks as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, result, zeroExportTypeLinks);
   links!.v.target = symbol_;
   links!.v.originatingImport = referenceParent;
   const resolvedModuleType = Checker_resolveStructuredTypeMembers(receiver, moduleType);
-  LinkStore_Get(receiver!.valueSymbolLinks, result)!.v.resolvedType = Checker_newAnonymousType(receiver, result, resolvedModuleType!.members, StructuredType_CallSignatures(resolvedModuleType), StructuredType_ConstructSignatures(resolvedModuleType), resolvedModuleType!.indexInfos);
+  LinkStore_Get(receiver!.valueSymbolLinks, result, zeroValueSymbolLinks)!.v.resolvedType = Checker_newAnonymousType(receiver, result, resolvedModuleType!.members, StructuredType_CallSignatures(resolvedModuleType), StructuredType_ConstructSignatures(resolvedModuleType), resolvedModuleType!.indexInfos);
   return result;
 }
 
@@ -4739,7 +4797,7 @@ export function Checker_padObjectLiteralType(receiver: GoPtr<Checker>, t: GoPtr<
   }
   for (const e of missingElements) {
     const symbol = Checker_newSymbol(receiver, SymbolFlagsProperty | SymbolFlagsOptional, Checker_getPropertyNameFromBindingElement(receiver, e));
-    LinkStore_Get(receiver!.valueSymbolLinks, symbol)!.v.resolvedType = Checker_getTypeFromBindingElement(receiver, e, false, false);
+    LinkStore_Get(receiver!.valueSymbolLinks, symbol, zeroValueSymbolLinks)!.v.resolvedType = Checker_getTypeFromBindingElement(receiver, e, false, false);
     members.set(symbol!.Name, symbol);
   }
   const result = Checker_newAnonymousType(receiver, t!.symbol, members, [], [], Checker_getIndexInfosOfType(receiver, t));
@@ -4830,7 +4888,7 @@ export function Checker_getWidenedLiteralTypeForInitializer(receiver: GoPtr<Chec
  * }
  */
 export function Checker_getTypeOfFuncClassEnumModule(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v;
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, zeroValueSymbolLinks)!.v;
   if (links!.resolvedType === undefined) {
     links!.resolvedType = Checker_getTypeOfFuncClassEnumModuleWorker(receiver, symbol_);
   }
@@ -4916,7 +4974,7 @@ export function Checker_getBaseTypeVariableOfClass(receiver: GoPtr<Checker>, sym
     return baseConstructorType;
   }
   if ((baseConstructorType!.flags & TypeFlagsIntersection) !== 0) {
-    return core.Find(Type_Types(baseConstructorType), (t) => (t!.flags & TypeFlagsTypeVariable) !== 0);
+    return core.Find(Type_Types(baseConstructorType), (t) => (t!.flags & TypeFlagsTypeVariable) !== 0, GoZeroPointer<Type>);
   }
   return undefined;
 }
@@ -4968,7 +5026,7 @@ export function Checker_isFunctionType(receiver: GoPtr<Checker>, t: GoPtr<Type>)
  * }
  */
 export function Checker_getDeclaredTypeOfClassOrInterface(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_)!.v;
+  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_, zeroDeclaredTypeLinks)!.v;
   if (links!.declaredType === undefined) {
     const kind = (symbol_!.Flags & SymbolFlagsClass) !== 0 ? ObjectFlagsClass : ObjectFlagsInterface;
     const t = Checker_newObjectType(receiver, kind, symbol_);
@@ -5073,7 +5131,7 @@ export function keyBuilder_writeGenericTypeReferences(receiver: GoPtr<keyBuilder
     for (const t of Type_AsTypeReference(ref)!.resolvedTypeArguments) {
       if ((t!.flags & TypeFlagsTypeParameter) !== 0) {
         if (ignoreConstraints || Checker_getConstraintOfTypeParameter(t!.checker, t) === undefined) {
-          let index = slices.Index(typeParameters, t);
+          let index = slices.Index(typeParameters, t, GoEqualStrict<GoPtr<Type>>);
           if (index < 0) {
             index = typeParameters.length as int;
             typeParameters.push(t);
@@ -5167,7 +5225,7 @@ export function Checker_getTypeForBindingElementParent(receiver: GoPtr<Checker>,
   if (checkMode === CheckModeNormal) {
     const symbol_ = Checker_getSymbolOfDeclaration(receiver, node);
     if (symbol_ !== undefined) {
-      const resolvedType = LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v.resolvedType;
+      const resolvedType = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, zeroValueSymbolLinks)!.v.resolvedType;
       if (resolvedType !== undefined && !(receiver!.strictNullChecks && isOptionalDeclaration(node))) {
         return resolvedType;
       }
@@ -5306,7 +5364,7 @@ export function Checker_getBindingElementTypeFromParentType(receiver: GoPtr<Chec
       receiver!.undefinedType,
       pattern,
     );
-    const index = slices.Index(Node_Elements(pattern) ?? [], declaration);
+    const index = slices.Index(Node_Elements(pattern) ?? [], declaration, GoEqualStrict<GoPtr<Node>>);
     if (hasDotDotDotToken(declaration)) {
       const baseConstraint = Checker_mapType(receiver, parentType, (type_: GoPtr<Type>): GoPtr<Type> => {
         if ((type_!.flags & TypeFlagsInstantiableNonPrimitive) !== 0) {
@@ -5321,7 +5379,7 @@ export function Checker_getBindingElementTypeFromParentType(receiver: GoPtr<Chec
       }
     } else if (Checker_isArrayLikeType(receiver, parentType)) {
       const indexType = Checker_getNumberLiteralType(receiver, index as Number);
-      const declaredType = core.OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, parentType, indexType, accessFlags, Node_Name(declaration), undefined), receiver!.errorType);
+      const declaredType = core.OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, parentType, indexType, accessFlags, Node_Name(declaration), undefined), receiver!.errorType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
       t = Checker_getFlowTypeOfDestructuring(receiver, declaration, declaredType);
     } else {
       t = elementType;
@@ -5435,7 +5493,7 @@ export function Checker_getTypeFromObjectBindingPattern(receiver: GoPtr<Checker>
     const text = getPropertyNameFromType(exprType);
     const flags = (SymbolFlagsProperty | (Node_Initializer(e) !== undefined ? SymbolFlagsOptional : 0)) as SymbolFlags;
     const symbol = Checker_newSymbol(receiver, flags, text);
-    LinkStore_Get(receiver!.valueSymbolLinks, symbol)!.v.resolvedType = Checker_getTypeFromBindingElement(receiver, e, includePatternInType, reportErrors);
+    LinkStore_Get(receiver!.valueSymbolLinks, symbol, zeroValueSymbolLinks)!.v.resolvedType = Checker_getTypeFromBindingElement(receiver, e, includePatternInType, reportErrors);
     members.set(symbol!.Name, symbol);
   }
   const indexInfos = stringIndexInfo !== undefined ? [stringIndexInfo] : [];
@@ -5500,7 +5558,7 @@ export function Checker_getTypeFromObjectBindingPattern(receiver: GoPtr<Checker>
  */
 export function Checker_getTypeFromArrayBindingPattern(receiver: GoPtr<Checker>, pattern: GoPtr<Node>, includePatternInType: bool, reportErrors: bool): GoPtr<Type> {
   const elements = Node_Elements(pattern) ?? [];
-  const lastElement = core.LastOrNil(elements) as GoPtr<Node>;
+  const lastElement = core.LastOrNil(elements, GoZeroPointer<Node>) as GoPtr<Node>;
   let restElement: GoPtr<Node>;
   if (lastElement !== undefined && IsBindingElement(lastElement) && hasDotDotDotToken(lastElement)) {
     restElement = lastElement;
@@ -5702,10 +5760,10 @@ export function Checker_reportImplicitAny(receiver: GoPtr<Checker>, declaration:
         const parameters = Node_Parameters(declaration!.Parent) ?? [];
         if (
           (IsCallSignatureDeclaration(declaration!.Parent) || IsMethodSignatureDeclaration(declaration!.Parent) || IsFunctionTypeNode(declaration!.Parent)) &&
-          slices.Contains(parameters, declaration) &&
+          slices.Contains(parameters, declaration, GoEqualStrict<GoPtr<Node>>) &&
           (IsTypeNodeKind(originalKeywordKind) || receiver!.resolveName(declaration, Node_Text(name), SymbolFlagsType, undefined, true, false) !== undefined)
         ) {
-          const newName = `arg${slices.Index(parameters, declaration)}`;
+          const newName = `arg${slices.Index(parameters, declaration, GoEqualStrict<GoPtr<Node>>)}`;
           const typeName = DeclarationNameToString(name) + core.IfElse(hasDotDotDotToken(declaration), "[]", "");
           Checker_errorOrSuggestion(receiver, receiver!.noImplicitAny, declaration, diagnosticsMessages.Parameter_has_a_name_but_no_type_Did_you_mean_0_Colon_1, newName, typeName);
           return;
@@ -5859,7 +5917,7 @@ export function Checker_getWidenedTypeWithContext(receiver: GoPtr<Checker>, t: G
           return type_;
         }
         return Checker_getWidenedTypeWithContext(receiver, type_, unionContext);
-      });
+      }, GoEqualStrict<GoPtr<Type>>);
       result = Checker_getUnionTypeEx(
         receiver,
         widenedTypes,
@@ -5868,14 +5926,14 @@ export function Checker_getWidenedTypeWithContext(receiver: GoPtr<Checker>, t: G
         undefined,
       );
     } else if ((t!.flags & TypeFlagsIntersection) !== 0) {
-      result = Checker_getIntersectionType(receiver, core.SameMap(Type_Types(t) ?? [], (type_: GoPtr<Type>): GoPtr<Type> => Checker_getWidenedType(receiver, type_)));
+      result = Checker_getIntersectionType(receiver, core.SameMap(Type_Types(t) ?? [], (type_: GoPtr<Type>): GoPtr<Type> => Checker_getWidenedType(receiver, type_), GoEqualStrict<GoPtr<Type>>));
     } else if (Checker_isArrayOrTupleType(receiver, t)) {
-      result = Checker_createTypeReference(receiver, Type_Target(t), core.SameMap(Checker_getTypeArguments(receiver, t), (type_: GoPtr<Type>): GoPtr<Type> => Checker_getWidenedType(receiver, type_)));
+      result = Checker_createTypeReference(receiver, Type_Target(t), core.SameMap(Checker_getTypeArguments(receiver, t), (type_: GoPtr<Type>): GoPtr<Type> => Checker_getWidenedType(receiver, type_), GoEqualStrict<GoPtr<Type>>));
     }
     if (result !== undefined && context === undefined) {
       receiver!.cachedTypes.set({ kind: CachedTypeKindWidened, typeId: t!.id } as CachedTypeKey, result);
     }
-    return core.OrElse(result, t);
+    return core.OrElse(result, t, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   }
   return t;
 }
@@ -5940,7 +5998,7 @@ export function Checker_getWidenedTypeOfObjectLiteral(receiver: GoPtr<Checker>, 
     members,
     [],
     [],
-    core.SameMap(Checker_getIndexInfosOfType(receiver, t), (info: GoPtr<IndexInfo>): GoPtr<IndexInfo> => Checker_newIndexInfo(receiver, info!.keyType, Checker_getWidenedType(receiver, info!.valueType), info!.isReadonly, info!.declaration, info!.components)),
+    core.SameMap(Checker_getIndexInfosOfType(receiver, t), (info: GoPtr<IndexInfo>): GoPtr<IndexInfo> => Checker_newIndexInfo(receiver, info!.keyType, Checker_getWidenedType(receiver, info!.valueType), info!.isReadonly, info!.declaration, info!.components), GoEqualStrict<GoPtr<IndexInfo>>),
   );
   result!.objectFlags = (result!.objectFlags | (t!.objectFlags & (ObjectFlagsJSLiteral | ObjectFlagsNonInferrableType))) as ObjectFlags;
   if (context !== undefined && context!.parent !== undefined) {
@@ -6048,14 +6106,14 @@ export function WideningContext_getChildContext(receiver: GoPtr<WideningContext>
  * }
  */
 export function Checker_getTypeOfAccessors(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v;
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, zeroValueSymbolLinks)!.v;
   if (links!.resolvedType === undefined) {
     if (!Checker_pushTypeResolution(receiver, symbol_, TypeSystemPropertyNameType)) {
       return receiver!.errorType;
     }
     const getter = GetDeclarationOfKind(symbol_, KindGetAccessor);
     const setter = GetDeclarationOfKind(symbol_, KindSetAccessor);
-    const accessor = core.Find(symbol_!.Declarations ?? [], IsAutoAccessorPropertyDeclaration);
+    const accessor = core.Find(symbol_!.Declarations ?? [], IsAutoAccessorPropertyDeclaration, GoZeroPointer<Node>);
     let t = Checker_getAnnotatedAccessorType(receiver, getter);
     if (t === undefined) {
       t = Checker_getAnnotatedAccessorType(receiver, setter);
@@ -6137,7 +6195,7 @@ export function Checker_getTypeOfAccessors(receiver: GoPtr<Checker>, symbol_: Go
  * }
  */
 export function Checker_getWriteTypeOfAccessors(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v;
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, zeroValueSymbolLinks)!.v;
   if (links!.writeType === undefined) {
     if (!Checker_pushTypeResolution(receiver, symbol_, TypeSystemPropertyNameWriteType)) {
       return receiver!.errorType;
@@ -6389,8 +6447,8 @@ export function Checker_getPropertiesOfUnionOrIntersectionType(receiver: GoPtr<C
     let props: GoSlice<GoPtr<Symbol>> = [];
     for (const current of d!.types) {
       for (const prop of Checker_getPropertiesOfType(receiver, current)) {
-        if (!orderedSet_contains(checked, prop!.Name)) {
-          orderedSet_add(checked, prop!.Name);
+        if (!orderedSet_contains(checked, prop!.Name, GoEqualStrict<string>)) {
+          orderedSet_add(checked, prop!.Name, GoStringKey);
           const combinedProp = Checker_getPropertyOfUnionOrIntersectionType(receiver, t, prop!.Name, (t!.flags & TypeFlagsIntersection) !== 0);
           if (combinedProp !== undefined) {
             props = [...props, combinedProp];
@@ -6867,14 +6925,14 @@ export function Checker_checkAndAggregateReturnExpressionTypes(receiver: GoPtr<C
     if (Checker_isConstContext(receiver, expr)) {
       t = Checker_getRegularTypeOfLiteralType(receiver, t);
     }
-    aggregatedTypes = core.AppendIfUnique(aggregatedTypes, t);
+    aggregatedTypes = core.AppendIfUnique(aggregatedTypes, t, GoEqualStrict<GoPtr<Type>>);
     return false;
   });
   if (aggregatedTypes.length === 0 && !hasReturnWithNoExpression && (hasReturnOfTypeNever || mayReturnNever(fn))) {
     return [undefined as unknown as GoSlice<GoPtr<Type>>, true];
   }
   if (receiver!.strictNullChecks && aggregatedTypes.length !== 0 && hasReturnWithNoExpression) {
-    aggregatedTypes = core.AppendIfUnique(aggregatedTypes, receiver!.undefinedType);
+    aggregatedTypes = core.AppendIfUnique(aggregatedTypes, receiver!.undefinedType, GoEqualStrict<GoPtr<Type>>);
   }
   return [aggregatedTypes, false];
 }
@@ -6922,7 +6980,7 @@ export function Checker_checkAndAggregateYieldOperandTypes(receiver: GoPtr<Check
     if (expression !== undefined && Checker_isConstContext(receiver, expression)) {
       yieldExprType = Checker_getRegularTypeOfLiteralType(receiver, yieldExprType);
     }
-    yieldTypes = core.AppendIfUnique(yieldTypes, Checker_getYieldedTypeOfYieldExpression(receiver, yieldExpr, yieldExprType, receiver!.anyType, isAsync));
+    yieldTypes = core.AppendIfUnique(yieldTypes, Checker_getYieldedTypeOfYieldExpression(receiver, yieldExpr, yieldExprType, receiver!.anyType, isAsync), GoEqualStrict<GoPtr<Type>>);
     let nextType: GoPtr<Type>;
     if (AsYieldExpression(yieldExpr)!.AsteriskToken !== undefined) {
       const iterationTypes = Checker_getIterationTypesOfIterable(receiver, yieldExprType, core.IfElse(isAsync, IterationUseAsyncYieldStar, IterationUseYieldStar), expression);
@@ -6931,7 +6989,7 @@ export function Checker_checkAndAggregateYieldOperandTypes(receiver: GoPtr<Check
       nextType = Checker_getContextualType(receiver, yieldExpr, ContextFlagsNone);
     }
     if (nextType !== undefined) {
-      nextTypes = core.AppendIfUnique(nextTypes, nextType);
+      nextTypes = core.AppendIfUnique(nextTypes, nextType, GoEqualStrict<GoPtr<Type>>);
     }
     return false;
   });
@@ -6957,7 +7015,7 @@ export function Checker_checkAndAggregateYieldOperandTypes(receiver: GoPtr<Check
 export function Checker_createPromiseType(receiver: GoPtr<Checker>, promisedType: GoPtr<Type>): GoPtr<Type> {
   const globalPromiseType = receiver!.getGlobalPromiseTypeChecked!();
   if (globalPromiseType !== receiver!.emptyGenericType) {
-    promisedType = core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, Checker_unwrapAwaitedType(receiver, promisedType)), receiver!.unknownType);
+    promisedType = core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, Checker_unwrapAwaitedType(receiver, promisedType)), receiver!.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
     return Checker_createTypeReference(receiver, globalPromiseType, [promisedType]);
   }
   return receiver!.unknownType;
@@ -6982,7 +7040,7 @@ export function Checker_createPromiseType(receiver: GoPtr<Checker>, promisedType
 export function Checker_createPromiseLikeType(receiver: GoPtr<Checker>, promisedType: GoPtr<Type>): GoPtr<Type> {
   const globalPromiseLikeType = receiver!.getGlobalPromiseLikeType!();
   if (globalPromiseLikeType !== receiver!.emptyGenericType) {
-    promisedType = core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, Checker_unwrapAwaitedType(receiver, promisedType)), receiver!.unknownType);
+    promisedType = core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, Checker_unwrapAwaitedType(receiver, promisedType)), receiver!.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
     return Checker_createTypeReference(receiver, globalPromiseLikeType, [promisedType]);
   }
   return receiver!.unknownType;
@@ -7039,8 +7097,8 @@ export function Checker_getWidenedLiteralLikeTypeForContextualIterationTypeIfNee
 export function Checker_createGeneratorType(receiver: GoPtr<Checker>, yieldType: GoPtr<Type>, returnType: GoPtr<Type>, nextType: GoPtr<Type>, isAsyncGenerator: bool): GoPtr<Type> {
   const resolver = (isAsyncGenerator ? receiver!.asyncIterationTypesResolver : receiver!.syncIterationTypesResolver)!;
   const globalGeneratorType = resolver.getGlobalGeneratorType!();
-  yieldType = core.OrElse(resolver.resolveIterationType!(yieldType, undefined), receiver!.unknownType);
-  returnType = core.OrElse(resolver.resolveIterationType!(returnType, undefined), receiver!.unknownType);
+  yieldType = core.OrElse(resolver.resolveIterationType!(yieldType, undefined), receiver!.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
+  returnType = core.OrElse(resolver.resolveIterationType!(returnType, undefined), receiver!.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   if (globalGeneratorType === receiver!.emptyGenericType) {
     const globalIterableIteratorType = resolver.getGlobalIterableIteratorType!();
     if (globalIterableIteratorType !== receiver!.emptyGenericType) {
@@ -7132,7 +7190,7 @@ export function Checker_getLowerBoundOfKeyType(receiver: GoPtr<Checker>, t: GoPt
     if (types.length === 2 && (types[0]!.flags & (TypeFlagsString | TypeFlagsNumber | TypeFlagsBigInt)) !== 0 && types[1] === receiver!.emptyTypeLiteralType) {
       return t;
     }
-    return Checker_getIntersectionType(receiver, core.SameMap(types, (ty: GoPtr<Type>): GoPtr<Type> => Checker_getLowerBoundOfKeyType(receiver, ty)));
+    return Checker_getIntersectionType(receiver, core.SameMap(types, (ty: GoPtr<Type>): GoPtr<Type> => Checker_getLowerBoundOfKeyType(receiver, ty), GoEqualStrict<GoPtr<Type>>));
   }
   return t;
 }
@@ -7316,7 +7374,7 @@ export function Checker_getApparentTypeOfMappedType(receiver: GoPtr<Checker>, t:
  * }
  */
 export function Checker_getResolvedApparentTypeOfMappedType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
-  const target = core.OrElse(Type_Target(t), t);
+  const target = core.OrElse(Type_Target(t), t, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   const typeVariable = Checker_getHomomorphicTypeVariable(receiver, target);
   if (typeVariable !== undefined && AsMappedTypeNode(Type_AsMappedType(target)!.declaration)!.NameType === undefined) {
     const modifiersType = Checker_getModifiersTypeFromMappedType(receiver, t);
@@ -7443,7 +7501,7 @@ export function Checker_getReducedType(receiver: GoPtr<Checker>, t: GoPtr<Type>)
  * }
  */
 export function Checker_getReducedUnionType(receiver: GoPtr<Checker>, unionType: GoPtr<Type>): GoPtr<Type> {
-  const reducedTypes = core.SameMap(Type_Types(unionType), (t) => Checker_getReducedType(receiver, t));
+  const reducedTypes = core.SameMap(Type_Types(unionType), (t) => Checker_getReducedType(receiver, t), GoEqualStrict<GoPtr<Type>>);
   if (core.Same(reducedTypes, Type_Types(unionType))) {
     return unionType;
   }
@@ -7490,11 +7548,11 @@ export function Checker_getReducedApparentType(receiver: GoPtr<Checker>, t: GoPt
  */
 export function Checker_elaborateNeverIntersection(receiver: GoPtr<Checker>, chain: GoPtr<Diagnostic>, node: GoPtr<Node>, t: GoPtr<Type>): GoPtr<Diagnostic> {
   if ((t!.flags & TypeFlagsIntersection) !== 0 && (t!.objectFlags & ObjectFlagsIsNeverIntersection) !== 0) {
-    const neverProp = core.Find(Checker_getPropertiesOfUnionOrIntersectionType(receiver, t), (prop: GoPtr<Symbol>): bool => Checker_isDiscriminantWithNeverType(receiver, prop));
+    const neverProp = core.Find(Checker_getPropertiesOfUnionOrIntersectionType(receiver, t), (prop: GoPtr<Symbol>): bool => Checker_isDiscriminantWithNeverType(receiver, prop), GoZeroPointer<Symbol>);
     if (neverProp !== undefined) {
       return NewDiagnosticChainForNode(chain, node, diagnosticsMessages.The_intersection_0_was_reduced_to_never_because_property_1_has_conflicting_types_in_some_constituents, Checker_TypeToStringEx(receiver, t, undefined, TypeFormatFlagsNoTypeReduction, undefined), Checker_symbolToString(receiver, neverProp));
     }
-    const privateProp = core.Find(Checker_getPropertiesOfUnionOrIntersectionType(receiver, t), isConflictingPrivateProperty);
+    const privateProp = core.Find(Checker_getPropertiesOfUnionOrIntersectionType(receiver, t), isConflictingPrivateProperty, GoZeroPointer<Symbol>);
     if (privateProp !== undefined) {
       return NewDiagnosticChainForNode(chain, node, diagnosticsMessages.The_intersection_0_was_reduced_to_never_because_property_1_exists_in_multiple_constituents_and_is_private_in_some, Checker_TypeToStringEx(receiver, t, undefined, TypeFormatFlagsNoTypeReduction, undefined), Checker_symbolToString(receiver, privateProp));
     }
@@ -8060,7 +8118,7 @@ export function Checker_instantiateMappedTupleType(receiver: GoPtr<Checker>, tup
     newElementTypes[i] = mapped;
   }
   const newReadonly = getModifiedReadonlyState(Type_TargetTupleType(tupleType)!.readonly, getMappedTypeModifiers(mappedType));
-  if (slices.Contains(newElementTypes, receiver!.errorType)) {
+  if (slices.Contains(newElementTypes, receiver!.errorType, GoEqualStrict<GoPtr<Type>>)) {
     return receiver!.errorType;
   }
   return Checker_createTupleTypeEx(receiver, newElementTypes, newElementInfos, newReadonly);
@@ -8196,7 +8254,7 @@ export function Checker_instantiateReverseMappedType(receiver: GoPtr<Checker>, t
  * }
  */
 export function Checker_instantiateTypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, m: GoPtr<TypeMapper>): GoSlice<GoPtr<Type>> {
-  return instantiateList(receiver, types, m, Checker_instantiateType);
+  return instantiateList(receiver, types, m, Checker_instantiateType, GoEqualStrict<GoPtr<Type>>);
 }
 
 /**
@@ -8439,7 +8497,7 @@ export function Checker_getTypeFromLiteralTypeNode(receiver: GoPtr<Checker>, nod
   if (literal!.Kind === KindNullKeyword) {
     return receiver!.nullType;
   }
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v;
   if (links!.resolvedType === undefined) {
     links!.resolvedType = Checker_getRegularTypeOfLiteralType(receiver, Checker_checkExpression(receiver, literal));
   }
@@ -8473,7 +8531,7 @@ export function Checker_getTypeFromLiteralTypeNode(receiver: GoPtr<Checker>, nod
  * }
  */
 export function Checker_getTypeFromTypeOperatorNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get<Node, TypeNodeLinks>(receiver!.typeNodeLinks as GoPtr<LinkStore<Node, TypeNodeLinks>>, node!);
+  const links = LinkStore_Get<Node, TypeNodeLinks>(receiver!.typeNodeLinks as GoPtr<LinkStore<Node, TypeNodeLinks>>, node!, zeroTypeNodeLinks);
   if (links!.v.resolvedType === undefined) {
     const argType = Node_Type(node);
     switch (AsTypeOperatorNode(node)!.Operator) {
@@ -8519,7 +8577,7 @@ export function Checker_getTypeFromTypeOperatorNode(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_getTypeFromTypeReference(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get<Node, TypeNodeLinks>(receiver!.typeNodeLinks as GoPtr<LinkStore<Node, TypeNodeLinks>>, node!);
+  const links = LinkStore_Get<Node, TypeNodeLinks>(receiver!.typeNodeLinks as GoPtr<LinkStore<Node, TypeNodeLinks>>, node!, zeroTypeNodeLinks);
   if (links!.v.resolvedType === undefined) {
     if (isConstTypeReference(node) && IsAssertionExpression(node!.Parent)) {
       links!.v.resolvedType = Checker_checkExpressionCached(receiver, Node_Expression(node!.Parent)!);
@@ -9294,7 +9352,7 @@ export function Checker_getTupleElementType(receiver: GoPtr<Checker>, t: GoPtr<T
  * }
  */
 export function Checker_getDeclaredTypeOfEnum(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_)!.v;
+  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_, zeroDeclaredTypeLinks)!.v;
   if (links!.declaredType === undefined) {
     const memberTypeList: GoSlice<GoPtr<Type>> = [];
     for (const declaration of symbol_!.Declarations ?? []) {
@@ -9309,7 +9367,7 @@ export function Checker_getDeclaredTypeOfEnum(receiver: GoPtr<Checker>, symbol_:
             } else {
               memberType = Checker_createComputedEnumType(receiver, memberSymbol);
             }
-            LinkStore_Get(receiver!.declaredTypeLinks, memberSymbol)!.v.declaredType = Checker_getFreshTypeOfLiteralType(receiver, memberType);
+            LinkStore_Get(receiver!.declaredTypeLinks, memberSymbol, zeroDeclaredTypeLinks)!.v.declaredType = Checker_getFreshTypeOfLiteralType(receiver, memberType);
             memberTypeList.push(memberType);
           }
         }
@@ -9372,7 +9430,7 @@ export function Checker_createComputedEnumType(receiver: GoPtr<Checker>, symbol_
  * }
  */
 export function Checker_getTypeFromTypeQueryNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node);
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks);
   if (links!.v.resolvedType === undefined) {
     const t = Checker_checkExpressionWithTypeArguments(receiver, node);
     links!.v.resolvedType = Checker_getRegularTypeOfLiteralType(receiver, Checker_getWidenedType(receiver, t));
@@ -9414,7 +9472,7 @@ export function Checker_getTypeFromTypeQueryNode(receiver: GoPtr<Checker>, node:
  * }
  */
 export function Checker_getTypeFromArrayOrTupleTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v;
   if (links!.resolvedType === undefined) {
     const target = Checker_getArrayOrTupleTargetType(receiver, node);
     if (target === receiver!.emptyGenericType) {
@@ -9564,7 +9622,7 @@ export function Checker_getTypeFromOptionalTypeNode(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_getTypeFromUnionTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v;
   if (links!.resolvedType === undefined) {
     const alias = Checker_getAliasForTypeNode(receiver, node);
     links!.resolvedType = Checker_getUnionTypeEx(receiver, core.Map(AsUnionTypeNode(node)!.Types!.Nodes, (typeNode) => Checker_getTypeFromTypeNode(receiver, typeNode)), UnionReductionLiteral, alias, undefined);
@@ -9598,13 +9656,13 @@ export function Checker_getTypeFromUnionTypeNode(receiver: GoPtr<Checker>, node:
  * }
  */
 export function Checker_getTypeFromIntersectionTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v;
   if (links!.resolvedType === undefined) {
     const alias = Checker_getAliasForTypeNode(receiver, node);
     const types = core.Map(AsIntersectionTypeNode(node)!.Types!.Nodes, (typeNode) => Checker_getTypeFromTypeNode(receiver, typeNode));
     let noSupertypeReduction = false;
     if (types.length === 2) {
-      const emptyIndex = slices.Index(types, receiver!.emptyTypeLiteralType);
+      const emptyIndex = slices.Index(types, receiver!.emptyTypeLiteralType, GoEqualStrict<GoPtr<Type>>);
       if (emptyIndex >= 0) {
         const t = types[1 - emptyIndex];
         noSupertypeReduction = (t!.flags & (TypeFlagsString | TypeFlagsNumber | TypeFlagsBigInt)) !== 0 ||
@@ -9637,7 +9695,7 @@ export function Checker_getTypeFromIntersectionTypeNode(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_getTypeFromTemplateTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v;
   if (links!.resolvedType === undefined) {
     const data = AsTemplateLiteralTypeNode(node)!;
     const spans = data.TemplateSpans!.Nodes;
@@ -9673,7 +9731,7 @@ export function Checker_getTypeFromTemplateTypeNode(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_getTypeFromMappedTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v;
   if (links!.resolvedType === undefined) {
     const t = Checker_newObjectType(receiver, ObjectFlagsMapped, Node_Symbol(node));
     Type_AsMappedType(t)!.declaration = AsMappedTypeNode(node);
@@ -9720,7 +9778,7 @@ export function Checker_getTypeFromMappedTypeNode(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_getTypeFromConditionalTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v;
   if (links!.resolvedType === undefined) {
     const conditionalTypeNode = AsConditionalTypeNode(node)!;
     const checkType = Checker_getTypeFromTypeNode(receiver, conditionalTypeNode.CheckType);
@@ -9956,7 +10014,7 @@ export function Checker_getConditionalType(receiver: GoPtr<Checker>, root: GoPtr
               Checker_isTypeAssignableTo(receiver, t, Checker_getPermissiveInstantiation(receiver, checkType)),
             ))
         ) {
-          extraTypes = [...(extraTypes ?? []), Checker_instantiateType(receiver, Checker_getTypeFromTypeNode(receiver, rootNode.TrueType), core.OrElse(combinedMapper, mapper))];
+          extraTypes = [...(extraTypes ?? []), Checker_instantiateType(receiver, Checker_getTypeFromTypeNode(receiver, rootNode.TrueType), core.OrElse(combinedMapper, mapper, GoZeroPointer<TypeMapper>, GoEqualStrict<GoPtr<TypeMapper>>))];
         }
         const falseType = Checker_getTypeFromTypeNode(receiver, rootNode.FalseType);
         if ((falseType!.flags & TypeFlagsConditional) !== 0) {
@@ -9984,7 +10042,7 @@ export function Checker_getConditionalType(receiver: GoPtr<Checker>, root: GoPtr
         Checker_isTypeAssignableTo(receiver, Checker_getRestrictiveInstantiation(receiver, checkType), Checker_getRestrictiveInstantiation(receiver, inferredExtendsType))
       ) {
         const trueType = Checker_getTypeFromTypeNode(receiver, rootNode.TrueType);
-        const trueMapper = core.OrElse(combinedMapper, mapper);
+        const trueMapper = core.OrElse(combinedMapper, mapper, GoZeroPointer<TypeMapper>, GoEqualStrict<GoPtr<TypeMapper>>);
         const [tailRoot, tailMapper] = Checker_getTailRecursionRoot(receiver, trueType, trueMapper);
         if (tailRoot !== undefined) {
           root = tailRoot;
@@ -10335,7 +10393,7 @@ export function Checker_createTupleTargetType(receiver: GoPtr<Checker>, elementI
           strconv.Itoa(index),
           readonly ? CheckFlagsReadonly : 0,
         );
-        LinkStore_Get(receiver!.valueSymbolLinks, property)!.v.resolvedType = typeParameter;
+        LinkStore_Get(receiver!.valueSymbolLinks, property, zeroValueSymbolLinks)!.v.resolvedType = typeParameter;
         members.set(property!.Name, property);
       }
     }
@@ -10343,13 +10401,13 @@ export function Checker_createTupleTargetType(receiver: GoPtr<Checker>, elementI
   const fixedLength = members.size;
   const lengthSymbol = Checker_newSymbolEx(receiver, SymbolFlagsProperty, "length", readonly ? CheckFlagsReadonly : 0);
   if ((combinedFlags & ElementFlagsVariable) !== 0) {
-    LinkStore_Get(receiver!.valueSymbolLinks, lengthSymbol)!.v.resolvedType = receiver!.numberType;
+    LinkStore_Get(receiver!.valueSymbolLinks, lengthSymbol, zeroValueSymbolLinks)!.v.resolvedType = receiver!.numberType;
   } else {
     const literalTypes: GoSlice<GoPtr<Type>> = [];
     for (let length = minLength; length <= arity; length++) {
       literalTypes.push(Checker_getNumberLiteralType(receiver, length));
     }
-    LinkStore_Get(receiver!.valueSymbolLinks, lengthSymbol)!.v.resolvedType = Checker_getUnionType(receiver, literalTypes);
+    LinkStore_Get(receiver!.valueSymbolLinks, lengthSymbol, zeroValueSymbolLinks)!.v.resolvedType = Checker_getUnionType(receiver, literalTypes);
   }
   members.set(lengthSymbol!.Name, lengthSymbol);
   const t = Checker_newObjectType(receiver, ObjectFlagsTuple | ObjectFlagsReference, undefined);
@@ -11253,7 +11311,7 @@ export function Checker_isUnitLikeType(receiver: GoPtr<Checker>, t: GoPtr<Type>)
  */
 export function Checker_extractUnitType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
   if ((t!.flags & TypeFlagsIntersection) !== 0) {
-    const u = core.Find(Type_Types(t), isUnitType);
+    const u = core.Find(Type_Types(t), isUnitType, GoZeroPointer<Type>);
     if (u !== undefined) {
       return u;
     }
@@ -11491,7 +11549,7 @@ export function Checker_isLiteralOfContextualType(receiver: GoPtr<Checker>, cand
       return core.Some(Type_Types(contextualType), (t: GoPtr<Type>): bool => Checker_isLiteralOfContextualType(receiver, candidateType, t));
     }
     if ((contextualType!.flags & TypeFlagsInstantiableNonPrimitive) !== 0) {
-      const constraint = core.OrElse(Checker_getBaseConstraintOfType(receiver, contextualType), receiver!.unknownType);
+      const constraint = core.OrElse(Checker_getBaseConstraintOfType(receiver, contextualType), receiver!.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
       return (
         (Checker_maybeTypeOfKind(receiver, constraint, TypeFlagsString) && Checker_maybeTypeOfKind(receiver, candidateType, TypeFlagsStringLiteral)) ||
         (Checker_maybeTypeOfKind(receiver, constraint, TypeFlagsNumber) && Checker_maybeTypeOfKind(receiver, candidateType, TypeFlagsNumberLiteral)) ||
@@ -12165,7 +12223,7 @@ export function Checker_removeConstrainedTypeVariables(receiver: GoPtr<Checker>,
       if ((Type_Types(t)[0]!.flags & TypeFlagsTypeVariable) === 0) {
         index = 1;
       }
-      typeVariables = core.AppendIfUnique(typeVariables, Type_Types(t)[index]);
+      typeVariables = core.AppendIfUnique(typeVariables, Type_Types(t)[index], GoEqualStrict<GoPtr<Type>>);
     }
   }
   for (const typeVariable of typeVariables) {
@@ -12470,7 +12528,7 @@ export function Checker_getIntersectionTypeEx(receiver: GoPtr<Checker>, types: G
     }
   }
   if ((includes & TypeFlagsIncludesMissingType) !== 0) {
-    typeSet[slices.Index(typeSet, receiver!.undefinedType)] = receiver!.missingType;
+    typeSet[slices.Index(typeSet, receiver!.undefinedType, GoEqualStrict<GoPtr<Type>>)] = receiver!.missingType;
   }
   if (typeSet.length === 0) {
     return receiver!.unknownType;
@@ -12612,7 +12670,7 @@ export function Checker_addTypeToIntersection(receiver: GoPtr<Checker>, typeSet:
   if (Checker_IsEmptyAnonymousObjectType(receiver, t)) {
     if ((includes & TypeFlagsIncludesEmptyObject) === 0) {
       includes = (includes | TypeFlagsIncludesEmptyObject) as TypeFlags;
-      orderedSet_add(typeSet, t);
+      orderedSet_add(typeSet, t, GoPointerKey<Type>());
     }
   } else {
     if ((flags & TypeFlagsAnyOrUnknown) !== 0) {
@@ -12627,11 +12685,11 @@ export function Checker_addTypeToIntersection(receiver: GoPtr<Checker>, typeSet:
         includes = (includes | TypeFlagsIncludesMissingType) as TypeFlags;
         t = receiver!.undefinedType;
       }
-      if (!orderedSet_contains(typeSet, t)) {
+      if (!orderedSet_contains(typeSet, t, GoEqualStrict<GoPtr<Type>>)) {
         if ((t!.flags & TypeFlagsUnit) !== 0 && (includes & TypeFlagsUnit) !== 0) {
           includes = (includes | TypeFlagsNonPrimitive) as TypeFlags;
         }
-        orderedSet_add(typeSet, t);
+        orderedSet_add(typeSet, t, GoPointerKey<Type>());
       }
     }
     includes = (includes | (flags & TypeFlagsIncludesMask)) as TypeFlags;
@@ -13304,7 +13362,7 @@ export function Checker_isKeyTypeIncluded(receiver: GoPtr<Checker>, keyType: GoP
  */
 export function Checker_getSuggestedTypeForNonexistentStringLiteralType(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>): GoPtr<Type> {
   const candidates = core.FilterSeq(Type_Types(target), (candidate) => (candidate!.flags & TypeFlagsStringLiteral) !== 0);
-  return core.GetSpellingSuggestion(getStringLiteralValue(source), candidates, getStringLiteralValue, CompareTypes);
+  return core.GetSpellingSuggestion(getStringLiteralValue(source), candidates, getStringLiteralValue, CompareTypes, GoZeroPointer<Type>);
 }
 
 /**
@@ -13594,7 +13652,7 @@ export function Checker_getNormalizedUnionOrIntersectionType(receiver: GoPtr<Che
   }
   if ((t!.flags & TypeFlagsIntersection) !== 0 && Checker_shouldNormalizeIntersection(receiver, t)) {
     const types = Type_Types(t);
-    const normalizedTypes = core.SameMap(types, (u: GoPtr<Type>): GoPtr<Type> => Checker_getNormalizedType(receiver, u, writing));
+    const normalizedTypes = core.SameMap(types, (u: GoPtr<Type>): GoPtr<Type> => Checker_getNormalizedType(receiver, u, writing), GoEqualStrict<GoPtr<Type>>);
     if (!core.Same(normalizedTypes, types)) {
       return Checker_getIntersectionType(receiver, normalizedTypes);
     }
@@ -13657,7 +13715,7 @@ export function Checker_getNormalizedTupleType(receiver: GoPtr<Checker>, t: GoPt
       return Checker_getSimplifiedType(receiver, ty, writing);
     }
     return ty;
-  });
+  }, GoEqualStrict<GoPtr<Type>>);
   if (!core.Same(elements, normalizedElements)) {
     return Checker_createNormalizedTupleType(receiver, Type_Target(t), normalizedElements);
   }
@@ -14207,7 +14265,7 @@ export function Checker_getTemplateLiteralType(receiver: GoPtr<Checker>, texts: 
       Checker_getTemplateLiteralType(receiver, texts, core.ReplaceElement(types, unionIndex, t))
     );
   }
-  if (slices.Contains(types, receiver!.wildcardType)) {
+  if (slices.Contains(types, receiver!.wildcardType, GoEqualStrict<GoPtr<Type>>)) {
     return receiver!.wildcardType;
   }
   const newTypes: GoSlice<GoPtr<Type>> = [];
@@ -14563,7 +14621,7 @@ export function Checker_getContextualTypeForBindingElement(receiver: GoPtr<Check
     return undefined;
   }
   if (IsArrayBindingPattern(Node_Name(parent))) {
-    const index = slices.Index(Node_Elements(declaration!.Parent) ?? [], declaration);
+    const index = slices.Index(Node_Elements(declaration!.Parent) ?? [], declaration, GoEqualStrict<GoPtr<Node>>);
     if (index < 0) {
       return undefined;
     }
@@ -14718,9 +14776,9 @@ export function Checker_getContextualTypeForYieldOperand(receiver: GoPtr<Checker
       }
       if (isYieldStar) {
         const iterationTypes = Checker_getIterationTypesOfGeneratorFunctionReturnType(receiver, contextualReturnType, isAsyncGenerator);
-        const yieldType = core.OrElse(iterationTypes.yieldType, receiver!.silentNeverType);
-        const returnType = core.OrElse(Checker_getContextualType(receiver, node, contextFlags), receiver!.silentNeverType);
-        const nextType = core.OrElse(iterationTypes.nextType, receiver!.unknownType);
+        const yieldType = core.OrElse(iterationTypes.yieldType, receiver!.silentNeverType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
+        const returnType = core.OrElse(Checker_getContextualType(receiver, node, contextFlags), receiver!.silentNeverType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
+        const nextType = core.OrElse(iterationTypes.nextType, receiver!.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
         const generatorType = Checker_createGeneratorType(receiver, yieldType, returnType, nextType, false);
         if (isAsyncGenerator) {
           const asyncGeneratorType = Checker_createGeneratorType(receiver, yieldType, returnType, nextType, true);
@@ -14908,7 +14966,7 @@ export function Checker_getContextualTypeForObjectLiteralElement(receiver: GoPtr
   if (contextualType !== undefined) {
     if (Checker_hasBindableName(receiver, element)) {
       const symbol_ = Checker_getSymbolOfDeclaration(receiver, element);
-      return Checker_getTypeOfPropertyOfContextualTypeEx(receiver, contextualType, symbol_!.Name, LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v.nameType);
+      return Checker_getTypeOfPropertyOfContextualTypeEx(receiver, contextualType, symbol_!.Name, LinkStore_Get(receiver!.valueSymbolLinks, symbol_, zeroValueSymbolLinks)!.v.nameType);
     }
     if (HasDynamicName(element)) {
       const name = GetNameOfDeclaration(element);
@@ -15401,11 +15459,14 @@ export function ObjectLiteralDiscriminator_matches(receiver: GoPtr<ObjectLiteral
 export function Checker_getMatchingUnionConstituentForObjectLiteral(receiver: GoPtr<Checker>, unionType: GoPtr<Type>, node: GoPtr<Node>): GoPtr<Type> {
   const keyPropertyName = Checker_getKeyPropertyName(receiver, unionType);
   if (keyPropertyName !== "") {
-    const propNode = core.Find(Node_Properties(node) ?? [], (p: GoPtr<Node>): bool =>
-      Node_Symbol(p) !== undefined &&
-      IsPropertyAssignment(p) &&
-      Node_Symbol(p)!.Name === keyPropertyName &&
-      Checker_isPossiblyDiscriminantValue(receiver, Node_Initializer(p))
+    const propNode = core.Find(
+      Node_Properties(node) ?? [],
+      (p: GoPtr<Node>): bool =>
+        Node_Symbol(p) !== undefined &&
+        IsPropertyAssignment(p) &&
+        Node_Symbol(p)!.Name === keyPropertyName &&
+        Checker_isPossiblyDiscriminantValue(receiver, Node_Initializer(p)),
+      GoZeroPointer<Node>,
     );
     if (propNode !== undefined) {
       const propType = Checker_getContextFreeTypeOfExpression(receiver, Node_Initializer(propNode));
@@ -16549,7 +16610,7 @@ export function Checker_getTypeOfNode(receiver: GoPtr<Checker>, node: GoPtr<Node
   }
 
   if (classType !== undefined && !isImplements) {
-    const baseType = core.FirstOrNil(Checker_getBaseTypes(receiver, classType));
+    const baseType = core.FirstOrNil(Checker_getBaseTypes(receiver, classType), GoZeroPointer<Type>);
     if (baseType !== undefined) {
       return Checker_getTypeWithThisArgument(
         receiver,

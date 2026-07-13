@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { ModifierList, Node } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
@@ -198,7 +198,7 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
       members = [...members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, last!.Name), NodeBuilderImpl_enumMemberInitializer(receiver, last))];
       break;
     }
-    const memberDecl = Find(p!.Declarations ?? [], IsEnumMember);
+    const memberDecl = Find(p!.Declarations ?? [], IsEnumMember, GoZeroPointer<Node>);
     let initializer: GoPtr<Node>;
     if (memberDecl !== undefined && AsEnumMember(memberDecl)!.Initializer !== undefined) {
       initializer = NodeFactory_DeepCloneNode(receiver!.f, AsEnumMember(memberDecl)!.Initializer);
@@ -242,7 +242,7 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
  * }
  */
 export function NodeBuilderImpl_enumMemberInitializer(receiver: GoPtr<NodeBuilderImpl>, p: GoPtr<Symbol>): GoPtr<Node> {
-  const memberDecl = Find(p!.Declarations ?? [], IsEnumMember);
+  const memberDecl = Find(p!.Declarations ?? [], IsEnumMember, GoZeroPointer<Node>);
   if (memberDecl === undefined) {
     return undefined;
   }
@@ -341,7 +341,7 @@ export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>
   const name = SymbolName(symbol_);
   receiver!.ctx!.approximateLength += 9 + name.length;
   const classLikeDeclarations = Filter(symbol_!.Declarations ?? [], IsClassLike);
-  const originalDecl = FirstOrNil(classLikeDeclarations);
+  const originalDecl = FirstOrNil(classLikeDeclarations, GoZeroPointer<Node>);
   const oldEnclosing = receiver!.ctx!.enclosingDeclaration;
   if (originalDecl !== undefined) {
     receiver!.ctx!.enclosingDeclaration = originalDecl;
@@ -379,7 +379,7 @@ export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>
     privateMembers = typeElementsToClassElements(receiver!.f, privateMembers);
   }
   const constructors = NodeBuilderImpl_serializeConstructors(receiver, staticType, staticBaseType, isClass, symbol_);
-  const indexSigs = NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, classType, FirstOrNil(baseTypes));
+  const indexSigs = NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, classType, FirstOrNil(baseTypes, GoZeroPointer<Type>));
   const allMembers = [...indexSigs, ...staticMembers, ...constructors, ...instanceMembers, ...privateMembers];
   receiver!.ctx!.enclosingDeclaration = oldEnclosing;
   return NewClassDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, name), NodeFactory_NewNodeList(receiver!.f, typeParamDecls), NodeFactory_NewNodeList(receiver!.f, heritageClauses), NodeFactory_NewNodeList(receiver!.f, allMembers));

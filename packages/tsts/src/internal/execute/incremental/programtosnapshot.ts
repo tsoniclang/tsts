@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroPointer, type GoComparable, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { TODO } from "../../../go/context.js";
 import { Map as GoSyncMap, Once } from "../../../go/sync.js";
@@ -279,7 +279,11 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
         referenceMap_storeReferences(receiver!.snapshot!.referencedMap, SourceFile_Path(file), newReferences);
       }
       if (receiver!.oldProgram !== undefined) {
-        const [oldFileInfo, ok] = SyncMap_Load(receiver!.oldProgram.snapshot!.fileInfos as SyncMap<Path, FileInfo>, SourceFile_Path(file));
+        const [oldFileInfo, ok] = SyncMap_Load(
+          receiver!.oldProgram.snapshot!.fileInfos,
+          SourceFile_Path(file),
+          GoZeroPointer<FileInfo>,
+        );
         if (ok) {
           signature = oldFileInfo!.signature;
           if (oldFileInfo!.version !== version || oldFileInfo!.affectsGlobalScope !== affectsGlobalScope || oldFileInfo!.impliedNodeFormat !== impliedNodeFormat) {
@@ -292,7 +296,11 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
             } else if (newReferences !== undefined) {
               for (const [refPath] of Set_Keys(newReferences as GoPtr<Set<Path>>)) {
                 if (Program_GetSourceFileByPath(receiver!.program, refPath) === undefined) {
-                  const [, hadOldInfo] = SyncMap_Load(receiver!.oldProgram.snapshot!.fileInfos as SyncMap<Path, FileInfo>, refPath);
+                  const [, hadOldInfo] = SyncMap_Load(
+                    receiver!.oldProgram.snapshot!.fileInfos,
+                    refPath,
+                    GoZeroPointer<FileInfo>,
+                  );
                   if (hadOldInfo) {
                     // Referenced file was deleted in the new program
                     snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
@@ -306,32 +314,44 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
           snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
         }
         if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(file))) {
-          const [emitDiagnostics, hasEmitDiag] = SyncMap_Load(receiver!.oldProgram.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, SourceFile_Path(file));
+          const [emitDiagnostics, hasEmitDiag] = SyncMap_Load(
+            receiver!.oldProgram.snapshot!.emitDiagnosticsPerFile,
+            SourceFile_Path(file),
+            GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
+          );
           if (hasEmitDiag) {
-            SyncMap_Store(receiver!.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, SourceFile_Path(file), repopulateDiagnosticsOfFile(emitDiagnostics, receiver!.program, file));
+            SyncMap_Store(receiver!.snapshot!.emitDiagnosticsPerFile, SourceFile_Path(file), repopulateDiagnosticsOfFile(emitDiagnostics, receiver!.program, file));
           }
           if (canCopySemanticDiagnostics) {
             if ((!file!.IsDeclarationFile || copyDeclarationFileDiagnostics) &&
               (!Program_IsSourceFileDefaultLibrary(receiver!.program, SourceFile_Path(file)) || copyLibFileDiagnostics)) {
               // Unchanged file copy diagnostics
-              const [diagnostics, hasDiag] = SyncMap_Load(receiver!.oldProgram.snapshot!.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, SourceFile_Path(file));
+              const [diagnostics, hasDiag] = SyncMap_Load(
+                receiver!.oldProgram.snapshot!.semanticDiagnosticsPerFile,
+                SourceFile_Path(file),
+                GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
+              );
               if (hasDiag) {
-                SyncMap_Store(receiver!.snapshot!.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, SourceFile_Path(file), repopulateDiagnosticsOfFile(diagnostics, receiver!.program, file));
+                SyncMap_Store(receiver!.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), repopulateDiagnosticsOfFile(diagnostics, receiver!.program, file));
               }
             }
           }
         }
         if (canCopyEmitSignatures) {
-          const [oldEmitSignature, hasOldEmit] = SyncMap_Load(receiver!.oldProgram.snapshot!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>, SourceFile_Path(file));
+          const [oldEmitSignature, hasOldEmit] = SyncMap_Load(
+            receiver!.oldProgram.snapshot!.emitSignatures,
+            SourceFile_Path(file),
+            GoZeroPointer<emitSignature>,
+          );
           if (hasOldEmit) {
-            SyncMap_Store(receiver!.snapshot!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>, SourceFile_Path(file), emitSignature_getNewEmitSignature(oldEmitSignature, receiver!.oldProgram.snapshot!.options, receiver!.snapshot!.options));
+            SyncMap_Store(receiver!.snapshot!.emitSignatures, SourceFile_Path(file), emitSignature_getNewEmitSignature(oldEmitSignature, receiver!.oldProgram.snapshot!.options, receiver!.snapshot!.options));
           }
         }
       } else {
         snapshot_addFileToAffectedFilesPendingEmit(receiver!.snapshot, SourceFile_Path(file), GetFileEmitKind(receiver!.snapshot!.options));
         signature = version;
       }
-      SyncMap_Store(receiver!.snapshot!.fileInfos as SyncMap<Path, FileInfo>, SourceFile_Path(file), {
+      SyncMap_Store(receiver!.snapshot!.fileInfos, SourceFile_Path(file), {
         version: version,
         signature: signature,
         affectsGlobalScope: affectsGlobalScope,
@@ -369,10 +389,14 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
 export function toProgramSnapshot_handleFileDelete(receiver: GoPtr<toProgramSnapshot>): void {
   if (receiver!.oldProgram !== undefined) {
     // If the global file is removed, add all files as changed
-    SyncMap_Range(receiver!.oldProgram.snapshot!.fileInfos as SyncMap<Path, FileInfo>, (filePath: Path, oldInfo: FileInfo) => {
-      const [, ok] = SyncMap_Load(receiver!.snapshot!.fileInfos as SyncMap<Path, FileInfo>, filePath);
+    SyncMap_Range(receiver!.oldProgram.snapshot!.fileInfos, (filePath: Path, oldInfo: GoPtr<FileInfo>) => {
+      const [, ok] = SyncMap_Load(
+        receiver!.snapshot!.fileInfos,
+        filePath,
+        GoZeroPointer<FileInfo>,
+      );
       if (!ok) {
-        if (oldInfo.affectsGlobalScope) {
+        if (oldInfo!.affectsGlobalScope) {
           for (const file of snapshot_getAllFilesExcludingDefaultLibraryFile(receiver!.snapshot, receiver!.program, undefined)) {
             snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
           }

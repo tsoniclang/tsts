@@ -1,6 +1,6 @@
 import type { bool, int, short, ulong } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoMapIsNil } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoZeroPointer } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Pool } from "../../go/sync.js";
@@ -790,7 +790,7 @@ export function FindLastVisibleNode(nodes: GoSlice<GoPtr<Node>>): GoPtr<Node> {
  * }
  */
 export function NodeKindIs(node: GoPtr<Node>, ...kinds: Array<Kind>): bool {
-  return slices.Contains(kinds, node!.Kind);
+  return slices.Contains(kinds, node!.Kind, GoEqualStrict);
 }
 
 /**
@@ -4578,7 +4578,7 @@ export function GetContainingClass(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function GetExtendsHeritageClauseElement(node: GoPtr<Node>): GoPtr<ExpressionWithTypeArgumentsNode> {
-  return FirstOrNil(GetExtendsHeritageClauseElements(node));
+  return FirstOrNil(GetExtendsHeritageClauseElements(node), GoZeroPointer<ExpressionWithTypeArgumentsNode>);
 }
 
 /**
@@ -5062,7 +5062,7 @@ export function GetExternalModuleName(node: GoPtr<Node>): GoPtr<Expression> {
     case KindImportType:
       return getImportTypeNodeLiteral(node);
     case KindCallExpression:
-      return FirstOrNil(Node_Arguments(node)!);
+      return FirstOrNil(Node_Arguments(node)!, GoZeroPointer<Node>);
     case KindModuleDeclaration:
       if (IsStringLiteral(Node_Name(node))) {
         return Node_Name(node);
@@ -5474,7 +5474,7 @@ export function isPartOfTypeNodeInParent(node: GoPtr<Node>): bool {
     case KindCallExpression:
     case KindNewExpression:
     case KindTaggedTemplateExpression:
-      return slices.Contains(Node_TypeArguments(parent)!, node);
+      return slices.Contains(Node_TypeArguments(parent)!, node, GoEqualStrict);
   }
   return false as bool;
 }
@@ -7525,7 +7525,7 @@ export function IsExclusivelyTypeOnlyImportOrExport(node: GoPtr<Node>): bool {
  * }
  */
 export function GetClassLikeDeclarationOfSymbol(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  return Find(symbol_!.Declarations ?? [], IsClassLike);
+  return Find(symbol_!.Declarations ?? [], IsClassLike, GoZeroPointer<Node>);
 }
 
 /**
@@ -9062,7 +9062,7 @@ export function GetSourceFileOfModule(module_: GoPtr<Symbol>): GoPtr<SourceFile>
 export function GetNonAugmentationDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
   return Find(symbol_!.Declarations ?? [], (d: GoPtr<Node>): bool => {
     return (!IsExternalModuleAugmentation(d) && !IsGlobalScopeAugmentation(d)) as bool;
-  });
+  }, GoZeroPointer<Node>);
 }
 
 /**
@@ -10500,7 +10500,7 @@ export function HasContextSensitiveParameters(node: GoPtr<Node>): bool {
     if (!IsArrowFunction(node)) {
       // If the first parameter is not an explicit 'this' parameter, then the function has
       // an implicit 'this' parameter which is subject to contextual typing.
-      const parameter: GoPtr<Node> = FirstOrNil(Node_Parameters(node));
+      const parameter: GoPtr<Node> = FirstOrNil(Node_Parameters(node), GoZeroPointer<Node>);
       if (parameter === undefined || !IsThisParameter(parameter)) {
         return ((node!.Flags & NodeFlagsContainsThis) !== 0) as bool;
       }
@@ -11012,7 +11012,7 @@ export function GetRestParameterElementType(node: GoPtr<ParameterDeclarationNode
     return AsArrayTypeNode(node)!.ElementType;
   }
   if (node!.Kind === KindTypeReference && AsTypeReferenceNode(node)!.TypeArguments !== undefined) {
-    return FirstOrNil(AsTypeReferenceNode(node)!.TypeArguments!.Nodes);
+    return FirstOrNil(AsTypeReferenceNode(node)!.TypeArguments!.Nodes, GoZeroPointer<Node>);
   }
   return undefined;
 }

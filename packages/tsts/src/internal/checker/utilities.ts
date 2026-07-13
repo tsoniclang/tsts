@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import { Every, Find, FirstOrNil, Filter, Some } from "../core/core.js";
-import type { GoComparable, GoEquality, GoMap, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
-import { GoMapIsNil } from "../../go/compat.js";
+import type { GoComparable, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
+import { GoMapIsNil, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { IsTypeOrJSTypeAliasDeclaration, Node_Arguments, Node_Body, Node_Elements, Node_Expression, Node_ImportClause, Node_Initializer, Node_Members, Node_ModifierFlags, Node_Parameters, Node_Properties, Node_PropertyNameOrName, Node_Text, Node_Type, Node_TypeArguments, SourceFile_FileName, SourceFile_Path, SourceFile_Text } from "../ast/ast.js";
@@ -534,7 +534,7 @@ export function GetSingleVariableOfVariableStatement(node: GoPtr<Node>): GoPtr<N
   if (!IsVariableStatement(node)) {
     return undefined;
   }
-  return FirstOrNil(AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes);
+  return FirstOrNil<GoPtr<Node>>(AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes, GoZeroPointer<Node>);
 }
 
 /**
@@ -1955,10 +1955,10 @@ export function getDeclarationModifierFlagsFromSymbolEx(s: GoPtr<Symbol>, isWrit
   if (s!.ValueDeclaration !== undefined) {
     let declaration: GoPtr<Node> = undefined;
     if (isWrite) {
-      declaration = Find(s!.Declarations ?? [], IsSetAccessorDeclaration);
+      declaration = Find<GoPtr<Node>>(s!.Declarations ?? [], IsSetAccessorDeclaration, GoZeroPointer<Node>);
     }
     if (declaration === undefined && (s!.Flags & SymbolFlagsGetAccessor) !== 0) {
-      declaration = Find(s!.Declarations ?? [], IsGetAccessorDeclaration);
+      declaration = Find<GoPtr<Node>>(s!.Declarations ?? [], IsGetAccessorDeclaration, GoZeroPointer<Node>);
     }
     if (declaration === undefined) {
       declaration = s!.ValueDeclaration;
@@ -2258,6 +2258,7 @@ export function orderedSet_contains<T extends GoComparable>(receiver: GoPtr<orde
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::method::orderedSet.add","kind":"method","status":"implemented","sigHash":"780f9106360da89759277f7728d7eacda5a81d3279d5126745fad67e81a89be6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-set map construction receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *orderedSet[T]) add(value T) {
@@ -2276,7 +2277,7 @@ export function orderedSet_contains<T extends GoComparable>(receiver: GoPtr<orde
  * 	s.valuesByKey[value] = struct{}{}
  * }
  */
-export function orderedSet_add<T extends GoComparable>(receiver: GoPtr<orderedSet<T>>, value: T): void {
+export function orderedSet_add<T extends GoComparable>(receiver: GoPtr<orderedSet<T>>, value: T, keyDescriptor: GoMapKeyDescriptor<T>): void {
   receiver!.values = [...receiver!.values, value];
   // Small sets are served by a linear scan over values; only materialize the map once the set
   // grows large enough for hashing to win.
@@ -2284,7 +2285,7 @@ export function orderedSet_add<T extends GoComparable>(receiver: GoPtr<orderedSe
     if (receiver!.values.length <= orderedSetMapThreshold) {
       return;
     }
-    receiver!.valuesByKey = new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
+    receiver!.valuesByKey = NewGoStructMap<T, { readonly __tsgoEmpty?: never }>(keyDescriptor);
     for (const v of receiver!.values.slice(0, receiver!.values.length - 1)) {
       receiver!.valuesByKey.set(v, {});
     }
@@ -4252,7 +4253,7 @@ export function Checker_isUncheckedJSSuggestion(receiver: GoPtr<Checker>, node: 
     if (Tristate_IsUnknown(receiver!.compilerOptions!.CheckJs) && file!.CheckJsDirective === undefined && (file!.ScriptKind === ScriptKindJS || file!.ScriptKind === ScriptKindJSX)) {
       let declarationFile: GoPtr<SourceFile> = undefined;
       if (suggestion !== undefined) {
-        const firstDeclaration = FirstOrNil(suggestion!.Declarations ?? []);
+        const firstDeclaration = FirstOrNil<GoPtr<Node>>(suggestion!.Declarations ?? [], GoZeroPointer<Node>);
         if (firstDeclaration !== undefined) {
           declarationFile = GetSourceFileOfNode(firstDeclaration);
         }

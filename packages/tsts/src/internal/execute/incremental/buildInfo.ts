@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq, Seq2 } from "../../../go/iter.js";
 import type { JsonFieldNamesForGoStructContract } from "../../json/json.js";
-import { GoZeroString, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoZeroPointer, GoZeroString, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Errorf } from "../../../go/fmt.js";
 import type { RepopulateDiagnosticKind } from "../../ast/diagnostic.js";
 import {
@@ -875,7 +875,7 @@ export function BuildInfoEmitSignature_toEmitSignature(receiver: GoPtr<BuildInfo
   let signatureWithDifferentOptions: GoSlice<string> | undefined;
   if (receiver!.DiffersOnlyInDtsMap) {
     signatureWithDifferentOptions = [];
-    const [info] = SyncMap_Load(emitSignatures as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<emitSignature>>, path);
+    const [info] = SyncMap_Load(emitSignatures, path, GoZeroPointer<emitSignature>);
     signatureWithDifferentOptions.push(info!.signature);
   } else if (receiver!.DiffersInOptions) {
     signatureWithDifferentOptions = [receiver!.Signature];

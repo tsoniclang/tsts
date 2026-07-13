@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Coalesce, Find, IfElse } from "../../core/core.js";
 import type { ModifierList, Node, NodeFactoryCoercible } from "../../ast/spine.js";
 import { Node_Clone, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_AsNode, Node_Modifiers, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
@@ -1252,7 +1252,7 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
   }
   const heritageClauses = NodeVisitor_VisitNodes(visitor, node!.HeritageClauses);
   let members = NodeVisitor_VisitNodes(visitor, node!.Members);
-  const parameterProperties = RuntimeSyntaxTransformer_getParameterProperties(receiver, Find(node!.Members!.Nodes!, IsConstructorDeclaration));
+  const parameterProperties = RuntimeSyntaxTransformer_getParameterProperties(receiver, Find(node!.Members!.Nodes!, IsConstructorDeclaration, GoZeroPointer<Node>));
 
   if (parameterProperties.length > 0) {
     let newMembers: GoSlice<GoPtr<Node>> = [];
@@ -1304,7 +1304,7 @@ export function RuntimeSyntaxTransformer_visitClassExpression(receiver: GoPtr<Ru
   const name = NodeVisitor_VisitNode(visitor, node!.name) as unknown as GoPtr<IdentifierNode>;
   const heritageClauses = NodeVisitor_VisitNodes(visitor, node!.HeritageClauses);
   let members = NodeVisitor_VisitNodes(visitor, node!.Members);
-  const parameterProperties = RuntimeSyntaxTransformer_getParameterProperties(receiver, Find(node!.Members!.Nodes!, IsConstructorDeclaration));
+  const parameterProperties = RuntimeSyntaxTransformer_getParameterProperties(receiver, Find(node!.Members!.Nodes!, IsConstructorDeclaration, GoZeroPointer<Node>));
 
   if (parameterProperties.length > 0) {
     let newMembers: GoSlice<GoPtr<Node>> = [];

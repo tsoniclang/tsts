@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
@@ -1216,6 +1216,7 @@ export function resolutionState_getPackageScopeForPath(receiver: GoPtr<resolutio
       }
       return [undefined, false];
     },
+    GoZeroPointer<InfoCacheEntry>,
   );
   return result;
 }
@@ -1276,7 +1277,7 @@ export function resolutionState_resolveNodeLike(receiver: GoPtr<resolutionState>
     ResolvedModule_IsResolved(result) &&
     result!.IsExternalLibraryImport &&
     !extensionIsOk(extensionsTypeScript | extensionsDeclaration, result!.Extension) &&
-    slices.Contains(receiver!.conditions, "import")
+    slices.Contains(receiver!.conditions, "import", GoEqualStrict)
   ) {
     if (receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.Resolution_of_non_relative_name_failed_trying_with_modern_Node_resolution_features_disabled_to_see_if_npm_library_needs_configuration_update);
@@ -1453,7 +1454,7 @@ export function resolutionState_loadModuleFromSelfNameReference(receiver: GoPtr<
   }
   const parts = tspath.GetPathComponents(receiver!.name, "");
   const nameParts = tspath.GetPathComponents(name, "");
-  if (parts.length < nameParts.length || !slices.Equal(nameParts, parts.slice(0, nameParts.length))) {
+  if (parts.length < nameParts.length || !slices.Equal(nameParts, parts.slice(0, nameParts.length), GoEqualStrict)) {
     return continueSearching();
   }
   const trailingParts = parts.slice(nameParts.length);
@@ -1900,7 +1901,7 @@ export function resolutionState_loadModuleFromTargetExportOrImport(receiver: GoP
         parts = tspath.GetPathComponents(targetString, "");
       }
       const partsAfterFirst = parts.slice(1);
-      if (slices.Contains(partsAfterFirst, "..") || slices.Contains(partsAfterFirst, ".") || slices.Contains(partsAfterFirst, "node_modules")) {
+      if (slices.Contains(partsAfterFirst, "..", GoEqualStrict) || slices.Contains(partsAfterFirst, ".", GoEqualStrict) || slices.Contains(partsAfterFirst, "node_modules", GoEqualStrict)) {
         if (receiver!.tracer !== undefined) {
           tracer_write(receiver!.tracer, diagnostics.X_package_json_scope_0_has_invalid_type_for_target_of_specifier_1, scope!.PackageDirectory, moduleName);
         }
@@ -1908,7 +1909,7 @@ export function resolutionState_loadModuleFromTargetExportOrImport(receiver: GoP
       }
       const resolvedTarget = tspath.CombinePaths(scope!.PackageDirectory, targetString);
       const subpathParts = tspath.GetPathComponents(subpath, "");
-      if (slices.Contains(subpathParts, "..") || slices.Contains(subpathParts, ".") || slices.Contains(subpathParts, "node_modules")) {
+      if (slices.Contains(subpathParts, "..", GoEqualStrict) || slices.Contains(subpathParts, ".", GoEqualStrict) || slices.Contains(subpathParts, "node_modules", GoEqualStrict)) {
         if (receiver!.tracer !== undefined) {
           tracer_write(receiver!.tracer, diagnostics.X_package_json_scope_0_has_invalid_type_for_target_of_specifier_1, scope!.PackageDirectory, moduleName);
         }
@@ -2278,6 +2279,7 @@ export function resolutionState_loadModuleFromNearestNodeModulesDirectoryWorker(
       }
       return [continueSearching(), false];
     },
+    GoZeroPointer<resolved>,
   );
   return result;
 }
@@ -4146,10 +4148,10 @@ export function resolutionState_getPackageJSONPathField(receiver: GoPtr<resoluti
  * }
  */
 export function resolutionState_conditionMatches(receiver: GoPtr<resolutionState>, condition: string): bool {
-  if (condition === "default" || slices.Contains(receiver!.conditions, condition)) {
+  if (condition === "default" || slices.Contains(receiver!.conditions, condition, GoEqualStrict)) {
     return true as bool;
   }
-  if (!slices.Contains(receiver!.conditions, "types")) {
+  if (!slices.Contains(receiver!.conditions, "types", GoEqualStrict)) {
     return false as bool;
   }
   return IsApplicableVersionedTypesKey(condition);
@@ -4437,7 +4439,7 @@ export function MatchPatternOrExact(patterns: GoPtr<ParsedPatterns>, candidate: 
   }
   // Go instantiates FindBestPatternMatch with T=core.Pattern, whose zero value is
   // Pattern{} (StarIndex 0, empty Text) — IsValid() false — not nil.
-  return FindBestPatternMatch(patterns!.patterns, (v: Pattern) => v, candidate) ?? { Text: "", StarIndex: 0 };
+  return FindBestPatternMatch(patterns!.patterns, (v: Pattern) => v, candidate, (): Pattern => ({ Text: "", StarIndex: 0 }));
 }
 
 /**
@@ -4615,7 +4617,7 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
       result.push(t);
     }
   }
-  return core.Deduplicate(result);
+  return core.Deduplicate(result, GoEqualStrict);
 }
 
 /**
@@ -5028,7 +5030,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
         }
       } else {
         const partsAfterFirst = tspath.GetPathComponents(expStr, "").slice(2);
-        if (slices.Contains(partsAfterFirst, "..") || slices.Contains(partsAfterFirst, ".") || slices.Contains(partsAfterFirst, "node_modules")) {
+        if (slices.Contains(partsAfterFirst, "..", GoEqualStrict) || slices.Contains(partsAfterFirst, ".", GoEqualStrict) || slices.Contains(partsAfterFirst, "node_modules", GoEqualStrict)) {
           return;
         }
         const resolvedTarget = tspath.ResolvePath(packageJson!.PackageDirectory, expStr);

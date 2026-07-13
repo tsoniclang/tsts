@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBooleanKey, GoNilSlice, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
+import { GoBooleanKey, GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import { GetNodeId, GetSymbolId, GetReparsedNodeForNode } from "../ast/utilities.js";
@@ -17,8 +17,7 @@ import { GetSourceFileOfNode, NodeIsSynthesized } from "../ast/utilities.js";
 import { Node_Locals, Node_Initializer, Node_Type, Node_ModuleSpecifier, AsSourceFile, Node_Expression } from "../ast/ast.js";
 import type { SourceFile } from "../ast/ast.js";
 import { SourceFile_Imports } from "../ast/ast.js";
-import type { LinkStore } from "../core/linkstore.js";
-import { LinkStore_Get, LinkStore_TryGet } from "../core/linkstore.js";
+import { LinkStore_Get } from "../core/linkstore.js";
 import { canHaveLocals } from "./utilities.js";
 import { getDeclarationsOfKind } from "./utilities.js";
 import { Some, FirstNonNil, IfElse } from "../core/core.js";
@@ -38,6 +37,18 @@ import { SymbolAccessibilityAccessible, SymbolAccessibilityNotAccessible, Symbol
 import { IsBinaryExpression } from "../ast/generated/predicates.js";
 import { AsBinaryExpression } from "../ast/generated/casts.js";
 import { Checker_symbolToString, Checker_symbolToStringEx } from "./printer.js";
+
+function zeroContainingSymbolLinks(): ContainingSymbolLinks {
+  return {
+    extendedContainersByFile: GoNilMap<NodeId, GoSlice<GoPtr<Symbol>>>(),
+    extendedContainers: GoZeroRef<GoSlice<GoPtr<Symbol>>>(),
+    accessibleChainCache: GoNilMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>(),
+  };
+}
+
+function zeroSymbolNodeLinks(): SymbolNodeLinks {
+  return { resolvedSymbol: GoZeroPointer<Symbol>() };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsTypeSymbolAccessible","kind":"method","status":"implemented","sigHash":"440a2ce92fa318d7affc71ef085015b5296f863b84860c64ce4cbc198626c4a9"}
@@ -433,7 +444,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
   }
   const containingFile = GetSourceFileOfNode(enclosingDeclaration);
   const id = GetNodeId(containingFile as unknown as GoPtr<Node>);
-  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, symbol_)!.v as ContainingSymbolLinks;
+  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks, symbol_, zeroContainingSymbolLinks)!.v;
   if (links.extendedContainersByFile === undefined) {
     links.extendedContainersByFile = new globalThis.Map<NodeId, GoSlice<GoPtr<Symbol>>>();
   }
@@ -703,7 +714,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
         continue;
       }
       Checker_checkExpressionCached(receiver, Node_Expression(AsBinaryExpression(d!.Parent)!.Left));
-      const sym = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, Node_Expression(AsBinaryExpression(d!.Parent)!.Left))!.v as SymbolNodeLinks).resolvedSymbol as GoPtr<Symbol>;
+      const sym = LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks, Node_Expression(AsBinaryExpression(d!.Parent)!.Left), zeroSymbolNodeLinks)!.v.resolvedSymbol;
       if (sym !== undefined && !candidates.includes(sym)) {
         candidates = [...candidates, sym];
       }
@@ -1007,7 +1018,7 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
     firstRelevantLocation = node;
     return true;
   });
-  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, ctx.symbol)!.v as ContainingSymbolLinks;
+  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks, ctx.symbol, zeroContainingSymbolLinks)!.v;
   const linkKey: accessibleChainCacheKey = { useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, location: firstRelevantLocation, meaning: ctx.meaning };
   if (links.accessibleChainCache === undefined) {
     links.accessibleChainCache = NewGoStructMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>(GoStructKey(
@@ -1746,7 +1757,12 @@ export function Checker_isSymbolAccessibleWorker(receiver: GoPtr<Checker>, symbo
 
     // This could be a symbol that is not exported in the external module
     // or it could be a symbol from different external module that is not aliased and hence cannot be named
-    const symbolExternalModule = FirstNonNil(symbol_!.Declarations ?? [], (d: GoPtr<Node>) => Checker_getExternalModuleContainer(receiver, d));
+    const symbolExternalModule = FirstNonNil<GoPtr<Node>, GoPtr<Symbol>>(
+      symbol_!.Declarations ?? [],
+      (d: GoPtr<Node>) => Checker_getExternalModuleContainer(receiver, d),
+      GoZeroPointer<Symbol>,
+      GoEqualStrict<GoPtr<Symbol>>,
+    );
     if (symbolExternalModule !== undefined) {
       const enclosingExternalModule = Checker_getExternalModuleContainer(receiver, enclosingDeclaration);
       if (symbolExternalModule !== enclosingExternalModule) {

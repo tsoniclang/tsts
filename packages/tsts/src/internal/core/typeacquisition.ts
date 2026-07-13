@@ -1,6 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Tristate } from "./tristate.js";
 
@@ -51,8 +51,8 @@ export function TypeAcquisition_Equals(receiver: GoPtr<TypeAcquisition>, other: 
 
   return (
     ta.Enable === other.Enable &&
-    slices.Equal(ta.Include, other.Include) &&
-    slices.Equal(ta.Exclude, other.Exclude) &&
+    slices.Equal(ta.Include, other.Include, GoEqualStrict) &&
+    slices.Equal(ta.Exclude, other.Exclude, GoEqualStrict) &&
     ta.DisableFilenameBasedTypeAcquisition === other.DisableFilenameBasedTypeAcquisition
   );
 }

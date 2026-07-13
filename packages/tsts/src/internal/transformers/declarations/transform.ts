@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import type { GoFunc, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoZeroPointer, type GoFunc, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { CommentRange, FileReference, SourceFile } from "../../ast/ast.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { SourceFile_Text, SourceFile_FileName, AsSourceFile, SourceFile_IsJS, Node_Symbol, Node_Initializer, Node_Type, Node_Expression, Node_Parameters, Node_ParameterList, Node_Elements, Node_IsTypeOnly, Node_ModuleSpecifier, NodeFactory_NewModifier, Node_Text, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateExpressionWithTypeArguments, Node_Arguments, NodeFactory_UpdateFunctionDeclaration, Node_StatementList, NodeFactory_UpdateSourceFile, Node_PropertyName, Node_EagerJSDoc, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateVariableDeclarationList, NodeFactory_UpdateBindingElement } from "../../ast/ast.js";
@@ -2821,7 +2821,7 @@ export function DeclarationTransformer_preservePartialJsDoc(receiver: GoPtr<Decl
   if ((original!.Flags & NodeFlagsReparsed) === 0) {
     return;
   }
-  const jsdoc = FirstOrNil(Node_EagerJSDoc(original, GetSourceFileOfNode(original)));
+  const jsdoc = FirstOrNil(Node_EagerJSDoc(original, GetSourceFileOfNode(original)), GoZeroPointer<Node>);
   if (jsdoc === undefined) {
     return;
   }
@@ -4196,7 +4196,7 @@ export function DeclarationTransformer_transformEnumDeclaration(receiver: GoPtr<
     const result = updateNode(NewEnumMember(astFactory, enumMember.name, newInitializer), m, astFactory!.hooks);
     DeclarationTransformer_preserveJsDoc(receiver, result, m);
     return result;
-  });
+  }, GoZeroPointer<Node>, GoEqualStrict);
   const newMembersList = NodeFactory_NewNodeList(astFactory, newMembers);
   if (modifiers !== input!.modifiers || newMembersList !== input!.Members) {
     return updateNode(NewEnumDeclaration(astFactory, modifiers, input!.name, newMembersList), input, astFactory!.hooks);

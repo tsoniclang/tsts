@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoNilSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoZeroPointer } from "../../../go/compat.js";
 import * as slices from "../../../go/slices.js";
 import { AppendIfUnique, Every, IfElse, LastOrNil, OrElse } from "../../core/core.js";
 import {
@@ -176,7 +176,6 @@ import {
   TypeFlagsVoid,
 } from "../types.js";
 import type { Type, TypeAlias, TypeFlags } from "../types.js";
-import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
 import { TSTrue } from "../../core/tristate.js";
 import { CompilerOptions_GetIsolatedModules, ModuleKindCommonJS, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindSystem } from "../../core/compileroptions.js";
@@ -187,6 +186,10 @@ import { newTypeMapper } from "../mapper.js";
 import { Checker_addDiagnostic, Checker_checkExternalEmitHelpers, Checker_containsSameNamedThisProperty, Checker_hasParentWithTypeAnnotation } from "../checker.js";
 import { Checker_isEmptyArrayLiteralType } from "./types.js";
 import { LanguageFeatureMinimumTarget, ExternalEmitHelpersRest } from "../types.js";
+
+function zeroSymbolNodeLinks(): SymbolNodeLinks {
+  return { resolvedSymbol: undefined };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkInheritedPropertiesAreIdentical","kind":"method","status":"implemented","sigHash":"2cfdd4534d57cdaa28eedef2c8073db14c95a2a1a0272411d5330d0b99cd43bc"}
@@ -750,13 +753,13 @@ export function Checker_checkObjectLiteralDestructuringPropertyAssignment(receiv
  */
 export function Checker_checkArrayLiteralAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceType: GoPtr<Type>, checkMode: CheckMode): GoPtr<Type> {
   const elements = Node_Elements(node);
-  const possiblyOutOfBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, (IterationUseDestructuring | IterationUsePossiblyOutOfBounds) as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType);
+  const possiblyOutOfBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, (IterationUseDestructuring | IterationUsePossiblyOutOfBounds) as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   let inBoundsType: GoPtr<Type> = IfElse(receiver!.compilerOptions!.NoUncheckedIndexedAccess === TSTrue, undefined, possiblyOutOfBoundsType);
   for (let i = 0; i < elements!.length; i++) {
     let t = possiblyOutOfBoundsType;
     if (elements![i]!.Kind === KindSpreadElement) {
       if (inBoundsType === undefined) {
-        inBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, IterationUseDestructuring as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType);
+        inBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, IterationUseDestructuring as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
       }
       t = inBoundsType;
     }
@@ -818,7 +821,7 @@ export function Checker_checkArrayLiteralDestructuringElementAssignment(receiver
       const indexType = Checker_getNumberLiteralType(receiver, elementIndex);
       if (Checker_isArrayLikeType(receiver, sourceType)) {
         const accessFlags = (AccessFlagsExpressionPosition | (Checker_hasDefaultValue(receiver, element) ? AccessFlagsAllowMissing : 0)) as AccessFlags;
-        let localElementType: GoPtr<Type> = OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, sourceType, indexType, accessFlags, Checker_createSyntheticExpression(receiver, element, indexType, false as bool, undefined), undefined), receiver!.errorType);
+        let localElementType: GoPtr<Type> = OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, sourceType, indexType, accessFlags, Checker_createSyntheticExpression(receiver, element, indexType, false as bool, undefined), undefined), receiver!.errorType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
         let assignedType = localElementType;
         if (Checker_hasDefaultValue(receiver, element)) {
           assignedType = Checker_getTypeWithFacts(receiver, localElementType, TypeFactsNEUndefined);
@@ -910,7 +913,7 @@ export function Checker_checkReferenceAssignment(receiver: GoPtr<Checker>, targe
 export function Checker_checkAssignmentOperator(receiver: GoPtr<Checker>, left: GoPtr<Node>, operator: Kind, right: GoPtr<Node>, leftType: GoPtr<Type>, rightType: GoPtr<Type>): void {
   if (IsAssignmentOperator(operator)) {
     if (IsDeclarationNode(left!.Parent) && GetAssignmentDeclarationKind(left!.Parent) === JSDeclarationKindExportsProperty) {
-      const symbol_ = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, left)!.v as SymbolNodeLinks).resolvedSymbol;
+      const symbol_ = LinkStore_Get(receiver!.symbolNodeLinks, left, zeroSymbolNodeLinks)!.v.resolvedSymbol;
       if (symbol_ !== undefined && symbol_!.Declarations !== undefined && symbol_!.Declarations.length > 1 && (rightType!.flags & TypeFlagsUndefined) !== 0) {
         return;
       }
@@ -1165,13 +1168,13 @@ export function Checker_getWidenedTypeForAssignmentDeclaration(receiver: GoPtr<C
       const assignedType = Checker_getAssignmentDeclarationInitializerType(receiver, declaration);
       if (assignedType !== undefined) {
         if (GetAssignmentDeclarationKind(declaration) !== JSDeclarationKindExportsProperty || i !== 0 || symbol_!.Declarations!.length === 1 || (assignedType!.flags & TypeFlagsUndefined) === 0) {
-          types = AppendIfUnique(types, assignedType);
+          types = AppendIfUnique(types, assignedType, GoEqualStrict<GoPtr<Type>>);
         }
       }
     }
     if (kind === thisAssignmentDeclarationMethod && types.length > 0) {
       if (receiver!.strictNullChecks) {
-        types = AppendIfUnique(types, receiver!.undefinedOrMissingType);
+        types = AppendIfUnique(types, receiver!.undefinedOrMissingType, GoEqualStrict<GoPtr<Type>>);
       }
     }
     if (t === undefined) {
@@ -1726,7 +1729,7 @@ export function Checker_getSingleBaseForNonAugmentingSubtype(receiver: GoPtr<Che
     instantiatedBase = Checker_instantiateType(receiver, bases[0], newTypeMapper(typeParameters, typeArguments.slice(0, typeParameters.length)));
   }
   if (typeArguments.length > typeParameters.length) {
-    instantiatedBase = Checker_getTypeWithThisArgument(receiver, instantiatedBase, LastOrNil(typeArguments), false);
+    instantiatedBase = Checker_getTypeWithThisArgument(receiver, instantiatedBase, LastOrNil(typeArguments, GoZeroPointer<Type>), false);
   }
   receiver!.cachedTypes.set(key, instantiatedBase);
   return instantiatedBase;

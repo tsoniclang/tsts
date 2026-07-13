@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer } from "../../go/compat.js";
 import { GetSourceFileOfNode, HasSyntacticModifier, HasDecorators, IsDynamicName, IsEntityNameExpression, IsEffectiveExternalModule, IsInTopLevelContext, IsFunctionLikeDeclaration, IsBindingPattern, IsAmbientModule, IsAutoAccessorPropertyDeclaration, IsStringOrNumericLiteralLike, CanHaveIllegalDecorators, CanHaveIllegalModifiers, CanHaveModifiers, HasAbstractModifier, NodeCanBeDecorated, IsIterationStatement, IsFunctionLikeOrClassStaticBlockDeclaration, IsClassLike, IsCommaSequence, IsDeclaration, GetContainingFunction, GetAllAccessorDeclarationsForDeclaration, SkipParentheses, IsInJSFile } from "../ast/utilities.js";
 import { Node_EagerJSDoc, Node_ModifierNodes, Node_PostfixToken, Node_Attributes, Node_TagName, Node_TypeArgumentList, Node_Parameters, Node_Label, Node_Statement, Node_ClassName, Node_Statements, Node_StatementList, Node_Properties } from "../ast/ast.js";
 import type { SourceFile, SourceFileLike } from "../ast/ast.js";
@@ -58,7 +59,7 @@ import { Find, LastOrNil, Filter, Some } from "../core/core.js";
 import { Node_Expression, Node_Body, SourceFile_Text, SourceFile_ECMALineMap } from "../ast/ast.js";
 import { GetContainingClass, IsExpressionNode, IsModifier, NodeIsPresent, IsThisParameter, IsPrivateIdentifierClassElementDeclaration, NewHasFileName } from "../ast/utilities.js";
 import { NodeFlagsNone } from "../ast/generated/flags.js";
-import { TSTrue } from "../core/tristate.js";
+import { TSTrue, TSUnknown } from "../core/tristate.js";
 import { NewScanner, Scanner_SetScriptTarget, Scanner_SetLanguageVariant, Scanner_SetOnError, Scanner_SetText, Scanner_ResetTokenState, Scanner_Scan, Scanner_ReScanSlashToken } from "../scanner/scanner.js";
 import type { Scanner, ErrorCallback } from "../scanner/scanner.js";
 import { CategoryMessage, Message_Category } from "../diagnostics/diagnostics.js";
@@ -262,7 +263,7 @@ import { IsIntrinsicJsxName } from "../scanner/utilities.js";
 import { CompilerOptions_GetJSXTransformEnabled } from "../core/compileroptions.js";
 import { LinkStore_Get } from "../core/linkstore.js";
 import type { NodeLinks, Type } from "./types.js";
-import { TypeFlagsStringOrNumberLiteralOrUnique, TypeFlagsEnumLike } from "./types.js";
+import { NodeCheckFlagsNone, TypeFlagsStringOrNumberLiteralOrUnique, TypeFlagsEnumLike } from "./types.js";
 import { FromString } from "../jsnum/string.js";
 import { MaxSafeInteger } from "../jsnum/jsnum.js";
 import { TokenFlagsScientific } from "../ast/tokenflags.js";
@@ -299,6 +300,14 @@ import {
   Duplicate_identifier_0,
   Initializers_are_not_allowed_in_ambient_contexts,
 } from "../diagnostics/generated/messages.js";
+
+function GoZeroNodeLinks(): NodeLinks {
+  return {
+    flags: NodeCheckFlagsNone,
+    declarationRequiresScopeChange: TSUnknown,
+    hasReportedStatementInAmbientContext: false,
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.grammarErrorOnFirstToken","kind":"method","status":"implemented","sigHash":"9fab30665e440946aaaa3690f3b401ad23c823e57bb21da03bf92c49f43e9680"}
@@ -1459,7 +1468,7 @@ export function Checker_reportObviousModifierErrors(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_findFirstModifierExcept(receiver: GoPtr<Checker>, node: GoPtr<Node>, allowedModifier: Kind): GoPtr<Node> {
-  const modifier = Find(Node_ModifierNodes(node) ?? [], IsModifier);
+  const modifier = Find(Node_ModifierNodes(node) ?? [], IsModifier, GoZeroPointer<Node>);
   if (modifier !== undefined && modifier!.Kind !== allowedModifier) {
     return modifier;
   }
@@ -1552,7 +1561,7 @@ export function Checker_findFirstIllegalModifier(receiver: GoPtr<Checker>, node:
     case KindShorthandPropertyAssignment:
     case KindNamespaceExportDeclaration:
     case KindMissingDeclaration:
-      return Find(Node_ModifierNodes(node) ?? [], IsModifier);
+      return Find(Node_ModifierNodes(node) ?? [], IsModifier, GoZeroPointer<Node>);
     default:
       if (node!.Parent!.Kind === KindModuleBlock || node!.Parent!.Kind === KindSourceFile) {
         return undefined;
@@ -1566,12 +1575,12 @@ export function Checker_findFirstIllegalModifier(receiver: GoPtr<Checker>, node:
         case KindClassExpression:
         case KindInterfaceDeclaration:
         case KindTypeAliasDeclaration:
-          return Find(Node_ModifierNodes(node) ?? [], IsModifier);
+          return Find(Node_ModifierNodes(node) ?? [], IsModifier, GoZeroPointer<Node>);
         case KindVariableStatement:
           if ((AsVariableStatement(node)!.DeclarationList!.Flags & NodeFlagsUsing) !== 0) {
             return Checker_findFirstModifierExcept(receiver, node, KindAwaitKeyword);
           }
-          return Find(Node_ModifierNodes(node) ?? [], IsModifier);
+          return Find(Node_ModifierNodes(node) ?? [], IsModifier, GoZeroPointer<Node>);
         case KindEnumDeclaration:
           return Checker_findFirstModifierExcept(receiver, node, KindConstKeyword);
         default:
@@ -1615,7 +1624,7 @@ export function Checker_reportObviousDecoratorErrors(receiver: GoPtr<Checker>, n
  */
 export function Checker_findFirstIllegalDecorator(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Node> {
   if (CanHaveIllegalDecorators(node)) {
-    const decorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator);
+    const decorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator, GoZeroPointer<Node>);
     return decorator;
   } else {
     return undefined;
@@ -3421,7 +3430,7 @@ export function Checker_checkGrammarBindingElement(receiver: GoPtr<Checker>, nod
   const asNode = node as unknown as GoPtr<Node>;
   if (node!.DotDotDotToken !== undefined) {
     const elements = Node_ElementList(asNode!.Parent);
-    if (asNode !== LastOrNil(elements!.Nodes)) {
+    if (asNode !== LastOrNil(elements!.Nodes, GoZeroPointer<Node>)) {
       return Checker_grammarErrorOnNode(receiver, asNode, A_rest_element_must_be_last_in_a_destructuring_pattern);
     }
     Checker_checkGrammarForDisallowedTrailingComma(receiver, elements, A_rest_parameter_or_binding_pattern_may_not_have_a_trailing_comma);
@@ -4477,13 +4486,13 @@ export function Checker_checkGrammarSourceFile(receiver: GoPtr<Checker>, node: G
  */
 export function Checker_checkGrammarStatementInAmbientContext(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
   if ((node!.Flags & NodeFlagsAmbient) !== 0) {
-    const links = LinkStore_Get(receiver!.nodeLinks, node)!.v;
+    const links = LinkStore_Get(receiver!.nodeLinks, node, GoZeroNodeLinks)!.v;
     if (!links!.hasReportedStatementInAmbientContext && (IsFunctionLike(node!.Parent) || IsAccessor(node!.Parent))) {
       links!.hasReportedStatementInAmbientContext = Checker_grammarErrorOnFirstToken(receiver, node, An_implementation_cannot_be_declared_in_ambient_contexts);
       return links!.hasReportedStatementInAmbientContext;
     }
     if (node!.Parent!.Kind === KindBlock || node!.Parent!.Kind === KindModuleBlock || node!.Parent!.Kind === KindSourceFile) {
-      const parentLinks = LinkStore_Get(receiver!.nodeLinks, node!.Parent)!.v;
+      const parentLinks = LinkStore_Get(receiver!.nodeLinks, node!.Parent, GoZeroNodeLinks)!.v;
       if (!parentLinks!.hasReportedStatementInAmbientContext) {
         parentLinks!.hasReportedStatementInAmbientContext = Checker_grammarErrorOnFirstToken(receiver, node, Statements_are_not_allowed_in_ambient_contexts);
         return parentLinks!.hasReportedStatementInAmbientContext;
@@ -4740,7 +4749,7 @@ export function Checker_checkGrammarImportCallExpression(receiver: GoPtr<Checker
   if (argumentNodes.length === 0 || argumentNodes.length > 2) {
     return Checker_grammarErrorOnNode(receiver, node, Dynamic_imports_can_only_accept_a_module_specifier_and_an_optional_set_of_attributes_as_arguments);
   }
-  const spreadElement = Find(argumentNodes, IsSpreadElement);
+  const spreadElement = Find(argumentNodes, IsSpreadElement, GoZeroPointer<Node>);
   if (spreadElement !== undefined) {
     return Checker_grammarErrorOnNode(receiver, spreadElement, Argument_of_dynamic_import_cannot_be_spread_element);
   }

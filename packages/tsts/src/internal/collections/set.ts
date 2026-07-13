@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
-import { GoMapIsNil, GoNilMap } from "../../go/compat.js";
+import { GoEqualEmptyStruct, GoMapIsNil, GoNilMap } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
 /**
@@ -267,7 +267,7 @@ export function Set_Equals<T extends GoComparable>(receiver: GoPtr<Set<T>>, othe
   if (receiver === undefined || other === undefined) {
     return false;
   }
-  return maps.Equal(receiver.M, other.M);
+  return maps.Equal(receiver.M, other.M, GoEqualEmptyStruct);
 }
 
 /**

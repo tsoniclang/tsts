@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoValueRef } from "../../../go/compat.js";
+import { GoEqualStrict, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_TypeArguments, Node_Parameters, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
 import type { Node, SourceFile } from "../../ast/ast.js";
@@ -26,7 +26,6 @@ import { AsPropertyDeclaration, AsHeritageClause, AsQualifiedName, AsTaggedTempl
 import { Set_Has, Set_Add } from "../../collections/set.js";
 import { CompilerOptions_GetEmitStandardClassFields, CompilerOptions_ShouldPreserveConstEnums, CompilerOptions_UsesWildcardTypes } from "../../core/compileroptions.js";
 import { IfElse, Every, Some, Filter, Find, OrElse, ElementOrNil } from "../../core/core.js";
-import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get, LinkStore_Has } from "../../core/linkstore.js";
 import { NodeCoreModules } from "../../core/nodemodules.js";
 import { NewTextRange, TextRange_ContainsInclusive, TextRange_Pos, TextRange_End } from "../../core/text.js";
@@ -60,6 +59,14 @@ import { Checker_addDiagnostic, Checker_addSuggestionDiagnostic } from "../check
 import * as slices from "../../../go/slices.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+
+function zeroExportTypeLinks(): ExportTypeLinks {
+  return {
+    target: undefined,
+    originatingImport: undefined,
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addUndefinedToGlobalsOrErrorOnRedeclaration","kind":"method","status":"implemented","sigHash":"177e4f101b29e5acf47d7d3ba71d55990c08f6963846244e1ce9f3bd84204baf"}
  *
@@ -512,7 +519,7 @@ export function Checker_checkSourceElementUnreachable(receiver: GoPtr<Checker>, 
   if (Node_CanHaveStatements(parent)) {
     const statements = Node_Statements(parent);
     if (statements !== undefined) {
-      const offset = slices.Index(statements, node);
+      const offset = slices.Index<GoPtr<Node>>(statements, node, GoEqualStrict<GoPtr<Node>>);
       if (offset >= 0) {
         const first = offset;
         let last = offset;
@@ -717,7 +724,7 @@ export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node:
       const baseProp = Checker_getPropertyOfType(receiver, baseWithThis, declaredProp!.Name);
       if (prop !== undefined && baseProp !== undefined) {
         const diags: GoSlice<GoPtr<Diagnostic>> = [];
-        if (!Checker_checkTypeAssignableToEx(receiver, Checker_getTypeOfSymbol(receiver, prop), Checker_getTypeOfSymbol(receiver, baseProp), OrElse(Node_Name(member), member), undefined, GoValueRef(diags))) {
+        if (!Checker_checkTypeAssignableToEx(receiver, Checker_getTypeOfSymbol(receiver, prop), Checker_getTypeOfSymbol(receiver, baseProp), OrElse<GoPtr<Node>>(Node_Name(member), member, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>), undefined, GoValueRef(diags))) {
           Checker_addDiagnostic(receiver, NewDiagnosticChain(diags[0], Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Checker_symbolToString(receiver, declaredProp), Checker_TypeToString(receiver, typeWithThis), Checker_TypeToString(receiver, baseWithThis)));
           issuedMemberError = true;
         }
@@ -725,7 +732,7 @@ export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node:
     }
   }
   if (!issuedMemberError) {
-    Checker_checkTypeAssignableTo(receiver, typeWithThis, baseWithThis, OrElse(Node_Name(node), node), broadDiag);
+    Checker_checkTypeAssignableTo(receiver, typeWithThis, baseWithThis, OrElse<GoPtr<Node>>(Node_Name(node), node, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>), broadDiag);
   }
 }
 
@@ -1275,7 +1282,7 @@ export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: Go
     }
     let parameter: GoPtr<Node> = undefined;
     if (closestSignature !== undefined && closestSignature!.declaration !== undefined) {
-      parameter = ElementOrNil(Node_Parameters(closestSignature!.declaration) as unknown as GoSlice<GoPtr<Node>>, args.length + IfElse(closestSignature!.thisParameter !== undefined, 1, 0));
+      parameter = ElementOrNil<GoPtr<Node>>(Node_Parameters(closestSignature!.declaration), args.length + IfElse(closestSignature!.thisParameter !== undefined, 1, 0), GoZeroPointer<Node>);
     }
     if (parameter !== undefined) {
       let related: GoPtr<Diagnostic>;
@@ -1668,7 +1675,7 @@ export function Checker_invocationErrorRecovery(receiver: GoPtr<Checker>, appare
   if (apparentType!.symbol === undefined) {
     return;
   }
-  const links = LinkStore_Get(receiver!.exportTypeLinks as unknown as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, apparentType!.symbol);
+  const links = LinkStore_Get<GoPtr<Symbol>, ExportTypeLinks>(receiver!.exportTypeLinks, apparentType!.symbol, zeroExportTypeLinks);
   const importNode = links!.v.originatingImport;
   if (importNode !== undefined && !IsImportCall(importNode)) {
     const sigs = Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, links!.v.target), kind);
@@ -2452,9 +2459,9 @@ export function Checker_shouldReportErrorsFromWideningWithContextualSignature(re
   switch (wideningKind) {
     case WideningKindFunctionReturn:
       if ((flags & FunctionFlagsGenerator) !== 0) {
-        returnType = OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindReturn, returnType, (flags & FunctionFlagsAsync) !== 0), returnType);
+        returnType = OrElse<GoPtr<Type>>(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindReturn, returnType, (flags & FunctionFlagsAsync) !== 0), returnType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
       } else if ((flags & FunctionFlagsAsync) !== 0) {
-        returnType = OrElse(Checker_getAwaitedTypeNoAlias(receiver, returnType), returnType);
+        returnType = OrElse<GoPtr<Type>>(Checker_getAwaitedTypeNoAlias(receiver, returnType), returnType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
       }
       return Checker_isGenericType(receiver, returnType);
     case WideningKindGeneratorYield: {
@@ -2532,10 +2539,10 @@ export function Checker_reportWideningErrorsInType(receiver: GoPtr<Checker>, t: 
         if ((s!.objectFlags & ObjectFlagsContainsWideningType) !== 0) {
           errorReported = Checker_reportWideningErrorsInType(receiver, s);
           if (!errorReported) {
-            const valueDeclaration = Find(p!.Declarations ?? [], (d: GoPtr<Node>) => {
+            const valueDeclaration = Find<GoPtr<Node>>(p!.Declarations ?? [], (d: GoPtr<Node>) => {
               const declarationValue = Node_Symbol(d)!.ValueDeclaration;
               return declarationValue !== undefined && declarationValue!.Parent === t!.symbol!.ValueDeclaration;
-            });
+            }, GoZeroPointer<Node>);
             if (valueDeclaration !== undefined) {
               Checker_error(receiver, valueDeclaration, Object_literal_s_property_0_implicitly_has_an_1_type, Checker_symbolToString(receiver, p), Checker_TypeToString(receiver, Checker_getWidenedType(receiver, s)));
               errorReported = true;

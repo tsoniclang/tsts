@@ -7,7 +7,7 @@
 // mirroring how diagnostics_generated.go is produced by generate.go.
 
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Sprintf } from "../../go/fmt.js";
 import * as regexp from "../../go/regexp.js";
 import { ParseInt } from "../../go/strconv.js";
@@ -320,7 +320,7 @@ export function Format(text: string, args: GoSlice<string>): string {
   // Replace invalid UTF-8 with Unicode replacement character
   args = SameMap<string>(args, (arg: string): string => {
     return ToValidUTF8(arg, "�");
-  });
+  }, GoEqualStrict);
 
   return placeholderRegexp!.ReplaceAllStringFunc(text, (match: string): string => {
     const [index, err] = ParseInt(byteSlice(match, 1, (byteLen(match) - 1) as int), 10, 0);

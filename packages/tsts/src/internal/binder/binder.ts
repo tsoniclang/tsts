@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import * as strconv from "../../go/strconv.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNilMap, GoNilSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint64 } from "../../go/sync/atomic.js";
 import {
@@ -490,6 +490,29 @@ import { RemoveFileExtension } from "../tspath/extension.js";
 import { Node_AsNode, Node_BodyData, Node_DeclarationData, Node_End, Node_FlowNodeData, Node_ExportableData, Node_ForEachChild, Node_LocalsContainerData, Node_Name, Node_Modifiers, Node_Pos } from "../ast/spine.js";
 
 import type { GoFunc } from "../../go/compat.js";
+
+function zeroSymbol(): Symbol {
+  return {
+    Flags: SymbolFlagsNone,
+    CheckFlags: 0,
+    Name: "",
+    Declarations: GoNilSlice(),
+    ValueDeclaration: undefined,
+    Members: GoNilMap(),
+    Exports: GoNilMap(),
+    id: new Uint64(),
+    Parent: undefined,
+    ExportSymbol: undefined,
+  };
+}
+
+function zeroFlowNode(): FlowNode {
+  return { Flags: 0, Node: undefined, Antecedent: undefined, Antecedents: undefined };
+}
+
+function zeroFlowList(): FlowList {
+  return { Flow: undefined, Next: undefined };
+}
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::ContainerFlags","kind":"type","status":"implemented","sigHash":"068247eebc62ebe4c4b32ff608d4161dc758afa1a02341cf8ec341921dcd4c5d"}
  *
@@ -848,7 +871,7 @@ export function bindSourceFile(file: GoPtr<SourceFile>): void {
  */
 export function Binder_newSymbol(receiver: GoPtr<Binder>, flags: SymbolFlags, name: string): GoPtr<Symbol> {
   receiver!.symbolCount = (receiver!.symbolCount as number + 1) as int;
-  const result = Arena_New(receiver!.symbolArena);
+  const result = Arena_New(receiver!.symbolArena, zeroSymbol);
   result!.v = {
     Flags: flags,
     CheckFlags: 0,
@@ -1471,7 +1494,7 @@ export function Binder_declareSymbolAndAddToSymbolTable(receiver: GoPtr<Binder>,
  * }
  */
 export function Binder_newFlowNode(receiver: GoPtr<Binder>, flags: FlowFlags): GoPtr<FlowNode> {
-  const result = Arena_New(receiver!.flowNodeArena);
+  const result = Arena_New(receiver!.flowNodeArena, zeroFlowNode);
   result!.v = {
     Flags: flags,
     Node: undefined,
@@ -1645,7 +1668,7 @@ export function Binder_createFlowCall(receiver: GoPtr<Binder>, antecedent: GoPtr
  * }
  */
 export function Binder_newFlowList(receiver: GoPtr<Binder>, head: GoPtr<FlowNode>, tail: GoPtr<FlowList>): GoPtr<FlowList> {
-  const result = Arena_New(receiver!.flowListArena);
+  const result = Arena_New(receiver!.flowListArena, zeroFlowList);
   result!.v = { Flow: head, Next: tail };
   return result!.v;
 }
@@ -3410,7 +3433,7 @@ export function Binder_lookupName(receiver: GoPtr<Binder>, name: string, contain
     const localsMap = (localsContainer as unknown as { Locals?: SymbolTable }).Locals;
     const local = localsMap?.get(name);
     if (local !== undefined) {
-      return OrElse(local!.ExportSymbol, local);
+      return OrElse(local!.ExportSymbol, local, GoZeroPointer<Symbol>, GoEqualStrict);
     }
   }
   const declaration = Node_DeclarationData(container);
@@ -6135,7 +6158,7 @@ export function Binder_addDeclarationToSymbol(receiver: GoPtr<Binder>, symbol_: 
   if (symbol_!.Declarations === undefined || symbol_!.Declarations.length === 0) {
     symbol_!.Declarations = Binder_newSingleDeclaration(receiver, node);
   } else {
-    symbol_!.Declarations = AppendIfUnique(symbol_!.Declarations, node);
+    symbol_!.Declarations = AppendIfUnique(symbol_!.Declarations, node, GoEqualStrict);
   }
   if ((symbol_!.Flags & SymbolFlagsConstEnumOnlyModule) !== 0 && (symbol_!.Flags & (SymbolFlagsFunction | SymbolFlagsClass | SymbolFlagsRegularEnum)) !== 0) {
     symbol_!.Flags = (symbol_!.Flags & ~SymbolFlagsConstEnumOnlyModule) as SymbolFlags;

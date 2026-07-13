@@ -9,7 +9,7 @@ import { AsSourceFile, SourceFile_Text, SourceFile_ECMALineMap } from "../../ast
 import { Node_End, Node_Pos, NodeFactory_AsNodeFactory } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { NodeFactory } from "../factory.js";
-import { KindJsxExpression, KindJsxText, KindMultiLineCommentTrivia, KindNotEmittedStatement, KindSingleLineCommentTrivia, KindVariableDeclarationList } from "../../ast/generated/kinds.js";
+import { KindJsxExpression, KindJsxText, KindMultiLineCommentTrivia, KindNotEmittedStatement, KindSingleLineCommentTrivia, KindUnknown, KindVariableDeclarationList } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import type { StatementList } from "../../ast/generated/unions.js";
 import { IsSourceFile } from "../../ast/generated/predicates.js";
@@ -30,7 +30,7 @@ import { IsLineBreak } from "../../stringutil/util.js";
 import { TrimSpace } from "../../../go/strings.js";
 import { EmitContext_CommentRange, EmitContext_EmitFlags, EmitContext_GetSyntheticLeadingComments, EmitContext_GetSyntheticTrailingComments, EmitContext_GetTypeNode, EmitContext_ParseNode } from "../emitcontext.js";
 import type { SynthesizedComment } from "../emitcontext.js";
-import { EFNoLeadingComments, EFNoNestedComments, EFNoTrailingComments } from "../emitflags.js";
+import { EFNoLeadingComments, EFNoNestedComments, EFNoTrailingComments, EFNone } from "../emitflags.js";
 import type { EmitFlags } from "../emitflags.js";
 import { GetDefaultIndentSize, getIndentString } from "../textwriter.js";
 import { byteLen, byteSlice, calculateIndent, IsRecognizedTripleSlashComment, IsPinnedComment, isJSDocLikeText, PositionsAreOnSameLine } from "../utilities.js";
@@ -41,6 +41,25 @@ import type { commentSeparator, commentState, detachedCommentsInfo, Printer, tok
 import { Printer_increaseIndentIf, Printer_decreaseIndentIf } from "./statements-declarations.js";
 import { Printer_writeSpace } from "./emit-core.js";
 import { Printer_emitStatement } from "./statements-declarations.js";
+
+function zeroCommentState(): commentState {
+  return {
+    emitFlags: EFNone,
+    commentRange: NewTextRange(0, 0),
+    containerPos: 0,
+    containerEnd: 0,
+    declarationListContainerEnd: 0,
+  };
+}
+
+function zeroCommentRange(): CommentRange {
+  return {
+    pos: 0,
+    end: 0,
+    Kind: KindUnknown,
+    HasTrailingNewLine: false,
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.writeComment","kind":"method","status":"implemented","sigHash":"c1c0f51ed3a37c19cd84555c6211889787f344841f7bac42a41c0747c3f1cc06"}
@@ -525,7 +544,7 @@ export function Printer_emitCommentsBeforeNode(receiver: GoPtr<Printer>, node: G
     receiver!.commentsDisabled = true;
   }
 
-  const c = Arena_New(receiver!.commentStateArena) as GoPtr<commentState>;
+  const c = Arena_New(receiver!.commentStateArena, zeroCommentState) as GoPtr<commentState>;
   c!.emitFlags = emitFlags;
   c!.commentRange = commentRange;
   c!.containerPos = containerPos;
@@ -654,7 +673,7 @@ export function Printer_emitCommentsBeforeToken(receiver: GoPtr<Printer>, token:
     Printer_decreaseIndentIf(receiver, needsIndent);
   }
 
-  return [Arena_New(receiver!.commentStateArena) as GoPtr<commentState>, pos];
+  return [Arena_New(receiver!.commentStateArena, zeroCommentState) as GoPtr<commentState>, pos];
 }
 
 /**
@@ -1482,7 +1501,7 @@ export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange
       // All comments look like they could have been part of the copyright header. Make
       // sure there is at least one blank line between it and the node. If not, it's not
       // a copyright header.
-      const lastDetachedComment = LastOrNil(detachedComments) as CommentRange;
+      const lastDetachedComment = LastOrNil(detachedComments, zeroCommentRange);
       const lastCommentLine = ComputeLineOfPosition(lineMap, TextRange_End(lastDetachedComment));
       const nodeLine = ComputeLineOfPosition(lineMap, SkipTrivia(text, TextRange_Pos(textRange)));
       if (nodeLine >= lastCommentLine + 2) {

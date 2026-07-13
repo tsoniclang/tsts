@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroMap } from "../../go/compat.js";
 import type { Node, NodeList, ModifierList, NodeVisitor } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { TypeNode } from "../ast/generated/unions.js";
@@ -49,7 +50,6 @@ import {
 import { Node_Clone, Node_ForEachChild, Node_Modifiers, Node_Name, Node_VisitEachChild, NodeFactory_NewNodeList, NodeList_Clone } from "../ast/spine.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../ast/visitor.js";
 import { NewNodeVisitor, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "../ast/visitor.js";
-import type { LinkStore } from "../core/linkstore.js";
 import { LinkStore_Get } from "../core/linkstore.js";
 import { NewTextRange } from "../core/text.js";
 import type { SymbolTracker } from "../nodebuilder/types.js";
@@ -86,9 +86,20 @@ import { TypeMapper_Map } from "./mapper.js";
 import { Checker_getDeclaredTypeOfSymbol, Checker_getExportSymbolOfValueSymbolIfExported, Checker_getExternalModuleFileFromDeclaration, Checker_getPropertyOfType, Checker_getSymbolIfSameReference, Checker_getSymbolOfDeclaration, Checker_hasLateBindableName, Checker_checkComputedPropertyName, Checker_resolveEntityName } from "./checker/symbols.js";
 import { Checker_getDeclaredTypeOfTypeParameter, Checker_getInferTypeParameters, Checker_getSignatureFromDeclaration } from "./checker/signatures.js";
 import { getMeaningOfEntityNameReference } from "./emitresolver.js";
-import type { NodeBuilderContext, NodeBuilderImpl, NodeBuilderLinks, TrackedSymbolArgs } from "./nodebuilderimpl.js";
+import type { CompositeTypeCacheIdentity, NodeBuilderContext, NodeBuilderImpl, NodeBuilderLinks, SerializedTypeEntry, TrackedSymbolArgs } from "./nodebuilderimpl.js";
 import type { SymbolNodeLinks, Type } from "./types.js";
 import { TypeFlagsAny } from "./types.js";
+
+function goZeroSymbolNodeLinks(): SymbolNodeLinks {
+  return { resolvedSymbol: undefined };
+}
+
+function goZeroNodeBuilderLinks(): NodeBuilderLinks {
+  return {
+    serializedTypes: GoZeroMap<CompositeTypeCacheIdentity, GoPtr<SerializedTypeEntry>>(),
+    fakeScopeForSignatureDeclaration: undefined,
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::NodeBuilderImpl.reuseNode","kind":"method","status":"implemented","sigHash":"4dd3d0a7af1286966a11e12383e2ef457a4a06fd6f05408d7ceada8f3bde9de2"}
@@ -731,7 +742,7 @@ export function NodeBuilderImpl_getModuleSpecifierOverride(receiver: GoPtr<NodeB
     }
     let name = Node_Text(lit);
     const originalName = name;
-    const nodeSymbol = LinkStore_Get(receiver!.ch!.symbolNodeLinks, parent)!.v.resolvedSymbol;
+    const nodeSymbol = LinkStore_Get(receiver!.ch!.symbolNodeLinks, parent, goZeroSymbolNodeLinks)!.v.resolvedSymbol;
     let meaning: SymbolFlags = SymbolFlagsType;
     if (importTypeNode.IsTypeOf) {
       meaning = SymbolFlagsValue;
@@ -796,10 +807,9 @@ export function NodeBuilderImpl_rewriteModuleSpecifier(receiver: GoPtr<NodeBuild
  * }
  */
 export function NodeBuilderImpl_getEnclosingDeclarationIgnoringFakeScope(receiver: GoPtr<NodeBuilderImpl>): GoPtr<Node> {
-  const links = receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>;
   const loop = (enc: GoPtr<Node>): GoPtr<Node> => {
     if (enc === undefined) return undefined;
-    if (LinkStore_Get(links, enc)!.v.fakeScopeForSignatureDeclaration === undefined) return enc;
+    if (LinkStore_Get(receiver!.links, enc, goZeroNodeBuilderLinks)!.v.fakeScopeForSignatureDeclaration === undefined) return enc;
     return loop(enc.Parent);
   };
   return loop(receiver!.ctx!.enclosingDeclaration);
@@ -954,7 +964,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (IsConstTypeReference(node)) {
       return undefined;
     }
-    const links = LinkStore_Get(b!.ch!.symbolNodeLinks, node)!.v;
+    const links = LinkStore_Get(b!.ch!.symbolNodeLinks, node, goZeroSymbolNodeLinks)!.v;
     const symbol_ = links?.resolvedSymbol;
     if (symbol_ === undefined) {
       return undefined;

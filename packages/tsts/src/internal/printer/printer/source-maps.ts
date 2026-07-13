@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoNilMap } from "../../../go/compat.js";
+import { GoNilMap, GoZeroPointer } from "../../../go/compat.js";
 import type { GoError, GoMap, GoPtr } from "../../../go/compat.js";
 import { ContainsFunc } from "../../../go/slices.js";
 import type { Node, NodeList } from "../../ast/spine.js";
@@ -27,7 +27,7 @@ import { SkipTrivia, GetLeadingCommentRanges, GetTrailingCommentRanges } from ".
 import { NodeFactory_AsNodeFactory } from "../../ast/spine.js";
 import { EmitContext_EmitFlags, EmitContext_GetSyntheticLeadingComments, EmitContext_MostOriginal, EmitContext_ParseNode, EmitContext_SourceMapRange, EmitContext_TokenSourceMapRange, EmitContext_GetExternalHelpersModuleName } from "../emitcontext.js";
 import type { SynthesizedComment } from "../emitcontext.js";
-import { EFExternalHelpers, EFMultiLine, EFNoLeadingSourceMap, EFNoNestedSourceMaps, EFNoTokenLeadingSourceMaps, EFNoTokenTrailingSourceMaps, EFNoTrailingSourceMap, EFSingleLine, EFStartOnNewLine } from "../emitflags.js";
+import { EFExternalHelpers, EFMultiLine, EFNoLeadingSourceMap, EFNoNestedSourceMaps, EFNoTokenLeadingSourceMaps, EFNoTokenTrailingSourceMaps, EFNoTrailingSourceMap, EFNone, EFSingleLine, EFStartOnNewLine } from "../emitflags.js";
 import { newLineCharacterCache, greatestEnd, getLinesBetweenRangeEndAndRangeStart, getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter, getLinesBetweenPositionAndNextNonWhitespaceCharacter, originalNodesHaveSameParent, rangeEndIsOnSameLineAsRangeStart, rangeEndPositionsAreOnSameLine, RangeStartPositionsAreOnSameLine, RangeIsOnSingleLine, siblingNodePositionsAreComparable, skipSynthesizedParentheses } from "../utilities.js";
 import { Arena_New } from "../../core/arena.js";
 import type { Arena } from "../../core/arena.js";
@@ -76,6 +76,10 @@ import type { GoFunc, GoInterface } from "../../../go/compat.js";
 // (matching internal/stringutil/util.ts), converting back at the boundary.
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder();
+
+function zeroSourceMapState(): sourceMapState {
+  return { emitFlags: EFNone, sourceMapRange: NewTextRange(0, 0), hasTokenSourceMapRange: false };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.writeLine","kind":"method","status":"implemented","sigHash":"9277d5c0da9c1ecd86b5796e50d36b9519356984e3e63f002faed0bb8df3f53b"}
@@ -680,8 +684,8 @@ export function Printer_shouldEmitBlockFunctionBodyOnSingleLine(receiver: GoPtr<
     return false as bool;
   }
 
-  if (Printer_getLeadingLineTerminatorCount(receiver, NodeDefault_AsNode(body), FirstOrNil(body!.Statements!.Nodes) as GoPtr<Node>, LFPreserveLines) > 0 ||
-    Printer_getClosingLineTerminatorCount(receiver, NodeDefault_AsNode(body), LastOrNil(body!.Statements!.Nodes) as GoPtr<Node>, LFPreserveLines, body!.Statements!.Loc) > 0) {
+  if (Printer_getLeadingLineTerminatorCount(receiver, NodeDefault_AsNode(body), FirstOrNil(body!.Statements!.Nodes, GoZeroPointer<Node>), LFPreserveLines) > 0 ||
+    Printer_getClosingLineTerminatorCount(receiver, NodeDefault_AsNode(body), LastOrNil(body!.Statements!.Nodes, GoZeroPointer<Node>), LFPreserveLines, body!.Statements!.Loc) > 0) {
     return false as bool;
   }
 
@@ -1321,7 +1325,7 @@ export function Printer_emitSourceMapsBeforeNode(receiver: GoPtr<Printer>, node:
     receiver!.sourceMapsDisabled = true as bool;
   }
 
-  const state = Arena_New<sourceMapState>(receiver!.sourceMapStateArena as Arena<sourceMapState>);
+  const state = Arena_New<sourceMapState>(receiver!.sourceMapStateArena as Arena<sourceMapState>, zeroSourceMapState);
   state!.v.emitFlags = emitFlags;
   state!.v.sourceMapRange = loc;
   state!.v.hasTokenSourceMapRange = false as bool;
@@ -1414,7 +1418,7 @@ export function Printer_emitSourceMapsBeforeToken(receiver: GoPtr<Printer>, toke
     Printer_emitSourcePos(receiver, receiver!.sourceMapSource, posResolved);
   }
 
-  const state = Arena_New<sourceMapState>(receiver!.sourceMapStateArena as Arena<sourceMapState>);
+  const state = Arena_New<sourceMapState>(receiver!.sourceMapStateArena as Arena<sourceMapState>, zeroSourceMapState);
   state!.v.emitFlags = emitFlags;
   state!.v.sourceMapRange = loc;
   state!.v.hasTokenSourceMapRange = hasLoc as bool;

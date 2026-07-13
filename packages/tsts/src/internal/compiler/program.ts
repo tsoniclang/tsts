@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNilMap, GoNilSlice, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, GoZeroSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
 import { Once, Map as SyncMapMap } from "../../go/sync.js";
@@ -960,7 +960,7 @@ export function canReplaceFileInProgram(file1: GoPtr<SourceFile>, file2: GoPtr<S
     file1!.UsesUriStyleNodeCoreModules === file2!.UsesUriStyleNodeCoreModules &&
     slices.EqualFunc(SourceFile_Imports(file1), SourceFile_Imports(file2), equalModuleSpecifiers) &&
     slices.EqualFunc(file1!.ModuleAugmentations, file2!.ModuleAugmentations, equalModuleAugmentationNames) &&
-    slices.Equal(file1!.AmbientModuleNames, file2!.AmbientModuleNames) &&
+    slices.Equal(file1!.AmbientModuleNames, file2!.AmbientModuleNames, GoEqualStrict<string>) &&
     slices.EqualFunc(file1!.ReferencedFiles, file2!.ReferencedFiles, equalFileReferences) &&
     slices.EqualFunc(file1!.TypeReferenceDirectives, file2!.TypeReferenceDirectives, equalFileReferences) &&
     slices.EqualFunc(file1!.LibReferenceDirectives, file2!.LibReferenceDirectives, equalFileReferences) &&
@@ -1594,7 +1594,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
       return false as bool;
     }
     if (node!.Kind === KindParameter && HasDecorators(node)) {
-      const decorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator);
+      const decorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator, GoZeroPointer<Node>);
       if (decorator !== undefined) {
         diags.push(NewDiagnostic(file, decorator!.Loc, diagnostics.Decorators_are_not_valid_here));
       }
@@ -2319,7 +2319,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
       return undefined as GoPtr<import("../ast/ast.js").SourceFile>;
     }
     return configFile!.SourceFile;
-  });
+  }, GoZeroPointer<SourceFile>);
 
   const configFilePath = Memoize(() => {
     const file = sourceFile!();
@@ -2327,11 +2327,11 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
       return SourceFile_FileName(file);
     }
     return "";
-  });
+  }, GoZeroString);
 
   const getCompilerOptionsPropertySyntax = Memoize(() => {
     return ForEachTsConfigPropArray(sourceFile!(), "compilerOptions", (property) => GoValueRef(property!));
-  });
+  }, GoZeroRef<PropertyAssignment>);
 
   const getCompilerOptionsObjectLiteralSyntax = Memoize((): GoPtr<ObjectLiteralExpression> | undefined => {
     const compilerOptionsProperty = getCompilerOptionsPropertySyntax!();
@@ -2341,7 +2341,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
       return AsObjectLiteralExpression(compilerOptionsProperty!.v.Initializer!);
     }
     return undefined;
-  });
+  }, GoZeroPointer<ObjectLiteralExpression>);
 
   const createOptionDiagnosticInObjectLiteralSyntax = (objectLiteral: GoPtr<ObjectLiteralExpression>, onKey: bool, key1: string, key2: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
     const diag = ForEachPropertyAssignment<Diagnostic>(objectLiteral, key1, (property) => {
@@ -3194,7 +3194,7 @@ export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program
   if (sourceFile!.IsDeclarationFile) {
     return [];
   }
-  const [cached, ok] = SyncMap_Load(receiver!.declarationDiagnosticCache, sourceFile);
+  const [cached, ok] = SyncMap_Load(receiver!.declarationDiagnosticCache, sourceFile, GoZeroSlice<GoPtr<Diagnostic>>);
   if (ok) {
     return cached as GoSlice<GoPtr<Diagnostic>>;
   }
