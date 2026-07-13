@@ -2,6 +2,7 @@ import { compareText } from "./deterministic-order.mjs";
 import {
   authoredFacadeModuleSet,
   buildExternalFacadeStoragePlan,
+  externalFacadeStoragePlanBootstrapFacades,
   externalFacadeStoragePlanAuthoredRoots,
   finalizeExternalFacadeStorageCatalog,
 } from "./external-facades.mjs";
@@ -23,12 +24,9 @@ export async function prepareExternalFacadeStorageCatalog(config, snapshot, repo
     distRoot: join(repoRoot, profile.parser.distRoot),
     freshnessSrcDirs: profile.parser.freshnessSrcDirs.map((directory) => join(repoRoot, directory)),
   });
-  const moduleIndex = indexTypeScriptModuleSources(
-    api,
-    collectAuthoredFacadeModuleSources(config, snapshot, repoRoot),
-  );
-  const valueEnvironments = buildIndexedModuleValueEnvironments(api, moduleIndex);
   const plan = buildExternalFacadeStoragePlan(config, snapshot);
+  const moduleIndex = indexTypeScriptModuleSources(api, collectAuthoredFacadeModuleSources(config, snapshot, plan, repoRoot));
+  const valueEnvironments = buildIndexedModuleValueEnvironments(api, moduleIndex);
   const authoredSurfaces = buildAuthoredFacadeSurfaceIndex({
     api,
     config,
@@ -39,10 +37,10 @@ export async function prepareExternalFacadeStorageCatalog(config, snapshot, repo
   return finalizeExternalFacadeStorageCatalog(plan, authoredSurfaces);
 }
 
-function collectAuthoredFacadeModuleSources(config, snapshot, repoRoot) {
+function collectAuthoredFacadeModuleSources(config, snapshot, plan, repoRoot) {
   const moduleRoot = requireExactTypeScriptModuleRoot(config.tsRoot);
   const sourceRoot = sourceRootContext(repoRoot, moduleRoot);
-  const sources = expectedVirtualFacadeSources(moduleRoot, snapshot);
+  const sources = expectedVirtualFacadeSources(moduleRoot, snapshot, plan);
 
   for (const authoredModule of [...authoredFacadeModuleSet(config)].sort(compareText)) {
     const moduleId = `${moduleRoot}/${authoredModule}`;
@@ -55,8 +53,8 @@ function collectAuthoredFacadeModuleSources(config, snapshot, repoRoot) {
   return sources;
 }
 
-function expectedVirtualFacadeSources(moduleRoot, snapshot) {
-  return new Map([
+function expectedVirtualFacadeSources(moduleRoot, snapshot, plan) {
+  const sources = new Map([
     [
       `${moduleRoot}/go/scalars.ts`,
       renderGeneratedArtifact(snapshot, "go/scalars.ts", "go-scalars", renderGoScalarsModule()),
@@ -66,6 +64,19 @@ function expectedVirtualFacadeSources(moduleRoot, snapshot) {
       renderGeneratedArtifact(snapshot, "go/compat.ts", "go-compat", renderGoCompatModule()),
     ],
   ]);
+  const groups = new Map();
+  for (const facade of externalFacadeStoragePlanBootstrapFacades(plan).values()) {
+    const declarations = groups.get(facade.tsModule) ?? [];
+    const parameters = Array.from({ length: facade.arity }, (_unused, index) => `T${index}`);
+    declarations.push(`export type ${facade.tsName}${parameters.length === 0 ? "" : `<${parameters.join(", ")}>`} = never;`);
+    groups.set(facade.tsModule, declarations);
+  }
+  for (const [relativePath, declarations] of [...groups].sort(([left], [right]) => compareText(left, right))) {
+    const moduleId = `${moduleRoot}/${relativePath}`;
+    if (sources.has(moduleId)) throw new Error(`generated facade bootstrap module '${relativePath}' conflicts with core Porter storage`);
+    sources.set(moduleId, renderGeneratedArtifact(snapshot, relativePath, "go-facade", `${declarations.sort(compareText).join("\n")}\n`));
+  }
+  return sources;
 }
 
 function requireExactTypeScriptModuleRoot(value) {

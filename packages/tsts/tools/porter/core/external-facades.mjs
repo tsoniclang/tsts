@@ -120,6 +120,13 @@ export function externalFacadeStoragePlanAuthoredRoots(plan) {
   return new Map(requireExternalFacadeStoragePlan(plan).authoredRoots);
 }
 
+export function externalFacadeStoragePlanBootstrapFacades(plan) {
+  const { auditContext } = requireExternalFacadeStoragePlan(plan);
+  const selected = selectExternalFacadeObjectIds(auditContext, undefined, true);
+  return new Map([...materializeExternalFacadeMap(auditContext, selected)]
+    .filter(([_objectId, facade]) => facade.storageStrategy === "generated"));
+}
+
 export function finalizeExternalFacadeStorageCatalog(plan, authoredSurfaces) {
   const { artifactContext, auditContext, authoredRoots } = requireExternalFacadeStoragePlan(plan);
   const surfaces = requireExactAuthoredSurfaces(authoredRoots, authoredSurfaces, auditContext.methodSetSignatures);
@@ -388,7 +395,7 @@ function requireExactOptionKeys(options, allowed, label) {
   if (unknown.length > 0) throw new Error(`${label} options contain unknown current-contract key(s): ${unknown.join(", ")}`);
 }
 
-function selectExternalFacadeObjectIds(context, authoredSurfaces) {
+function selectExternalFacadeObjectIds(context, authoredSurfaces, expandCompleteAuthoredSurface = false) {
   const {
     config,
     directUsages,
@@ -428,19 +435,13 @@ function selectExternalFacadeObjectIds(context, authoredSurfaces) {
     }
     selected.add(current.objectId);
     if (policy.storageStrategy === "authored") {
-      if (!finalized || expanded.has(current.key)) continue;
+      if ((!finalized && !expandCompleteAuthoredSurface) || expanded.has(current.key)) continue;
       expanded.add(current.key);
       const facade = materializeExternalFacade(config, semantic, policy);
-      const authoredSurface = authoredSurfaces.get(current.objectId);
-      if (facade === undefined || authoredSurface === undefined) {
-        throw new Error(`authored external facade '${current.objectId}' has no finalized declaration surface`);
-      }
-      const contractSurface = buildAuthoredContractSurface(
-        facade,
-        declaration,
-        methodSetSignatures,
-        authoredSurface,
-      );
+      const authoredSurface = authoredSurfaces?.get(current.objectId);
+      const contractSurface = finalized
+        ? buildAuthoredContractSurface(facade, declaration, methodSetSignatures, authoredSurface)
+        : undefined;
       for (const dependency of dependencyDeclarationDependencies(
         declaration,
         semanticIndex,
@@ -448,8 +449,8 @@ function selectExternalFacadeObjectIds(context, authoredSurfaces) {
         config.goModulePath,
         methodSetSignatures,
         current.profile,
-        "authored-surface",
-        { contractSurface },
+        finalized ? "authored-surface" : "generated-surface",
+        contractSurface === undefined ? {} : { contractSurface },
       )) {
         requireDependencySemanticUsage(
           semanticIndex,
