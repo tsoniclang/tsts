@@ -1,4 +1,5 @@
 import test from "node:test";
+import type { Seq } from "./iter.js";
 import assert from "node:assert/strict";
 import {
   Index,
@@ -33,7 +34,6 @@ import {
   Collect,
   AppendSeq,
 } from "./slices.js";
-import type { GoSeq } from "./compat.js";
 
 test("slices.Index / Contains", () => {
   const s = ["a", "b", "c"];
@@ -185,9 +185,9 @@ test("slices.IsSorted", () => {
 });
 
 test("slices.Sorted / SortedFunc collect-and-sort from a seq", () => {
-  const seq: GoSeq<number> = (yieldValue) => {
+  const seq: Seq<number> = (yieldValue) => {
     for (const v of [3, 1, 2]) {
-      if (!yieldValue(v)) {
+      if (!yieldValue!(v)) {
         return;
       }
     }

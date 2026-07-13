@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import type { Seq } from "../../../go/iter.js";
+import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
 import { GoBigIntKey, GoMapIsNil, GoNilMap, GoNilSlice, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../../go/compat.js";
 import { Uint64 } from "../../../go/sync/atomic.js";
@@ -577,7 +578,7 @@ export function Checker_getSuggestionForSymbolNameLookup(receiver: GoPtr<Checker
   if (symbol_ !== undefined) {
     return symbol_;
   }
-  let extras: GoSeq<GoPtr<Symbol>> | undefined;
+  let extras: Seq<GoPtr<Symbol>> | undefined;
   if ((meaning & SymbolFlagsGlobalLookup) !== 0) {
     extras = getPrimitiveTypeAliasSuggestions(symbols);
   }
@@ -608,7 +609,7 @@ export function Checker_getSuggestionForSymbolNameLookup(receiver: GoPtr<Checker
  * 	return core.GetSpellingSuggestion(name, symbols, getCandidateName, c.compareSymbols)
  * }
  */
-export function Checker_getSpellingSuggestionForName(receiver: GoPtr<Checker>, name: string, symbols: GoSeq<GoPtr<Symbol>>, meaning: SymbolFlags): GoPtr<Symbol> {
+export function Checker_getSpellingSuggestionForName(receiver: GoPtr<Checker>, name: string, symbols: Seq<GoPtr<Symbol>>, meaning: SymbolFlags): GoPtr<Symbol> {
   const getCandidateName = (candidate: GoPtr<Symbol>): string => {
     const candidateName = SymbolName(candidate);
     if (candidateName.length === 0 || candidateName[0] === '"' || candidateName.charCodeAt(0) === 0xFE) {

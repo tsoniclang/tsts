@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoComparable, GoPtr, GoSeq } from "../../go/compat.js";
+import type { Seq } from "../../go/iter.js";
+import type { GoComparable, GoPtr } from "../../go/compat.js";
 import type { OrderedMap } from "./ordered_map.js";
 import {
   newMapWithSizeHint,
@@ -89,7 +90,7 @@ export function OrderedSet_Delete<T extends GoComparable>(receiver: GoPtr<Ordere
  * 	return s.m.Keys()
  * }
  */
-export function OrderedSet_Values<T extends GoComparable>(receiver: GoPtr<OrderedSet<T>>): GoSeq<T> {
+export function OrderedSet_Values<T extends GoComparable>(receiver: GoPtr<OrderedSet<T>>): Seq<T> {
   const s = receiver!;
   return OrderedMap_Keys(s.m);
 }

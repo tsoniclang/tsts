@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import type { Seq } from "../../../go/iter.js";
+import type { GoFunc, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { CommentRange, FileReference, SourceFile } from "../../ast/ast.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { SourceFile_Text, SourceFile_FileName, AsSourceFile, SourceFile_IsJS, Node_Symbol, Node_Initializer, Node_Type, Node_Expression, Node_Parameters, Node_ParameterList, Node_Elements, Node_IsTypeOnly, Node_ModuleSpecifier, NodeFactory_NewModifier, Node_Text, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateExpressionWithTypeArguments, Node_Arguments, NodeFactory_UpdateFunctionDeclaration, Node_StatementList, NodeFactory_UpdateSourceFile, Node_PropertyName, Node_EagerJSDoc, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateVariableDeclarationList, NodeFactory_UpdateBindingElement } from "../../ast/ast.js";
@@ -424,9 +425,9 @@ export function DeclarationTransformer_isInternalDeclaration(receiver: GoPtr<Dec
  * 	return scanner.GetLeadingCommentRanges(tx.Factory().AsNodeFactory(), sourceFile.Text(), node.Pos())
  * }
  */
-export function DeclarationTransformer_getLeadingCommentRangesOfNode(receiver: GoPtr<DeclarationTransformer>, node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>): GoSeq<CommentRange> {
+export function DeclarationTransformer_getLeadingCommentRangesOfNode(receiver: GoPtr<DeclarationTransformer>, node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>): Seq<CommentRange> {
   if (node === undefined || node!.Kind === KindJsxText) {
-    return (_yield: (c: CommentRange) => bool): void => {};
+    return (_yield: GoFunc<(c: CommentRange) => bool>): void => {};
   }
   return GetLeadingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, SourceFile_Text(sourceFile), Node_Pos(node!));
 }

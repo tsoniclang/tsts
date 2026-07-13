@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoArray, GoComparable, GoMap, GoPtr, GoSeq } from "../../go/compat.js";
+import type { Seq } from "../../go/iter.js";
+import type { GoArray, GoComparable, GoMap, GoPtr } from "../../go/compat.js";
 import { Map } from "../../go/sync.js";
 
 import type { GoFunc } from "../../go/compat.js";
@@ -196,10 +197,10 @@ export function SyncMap_ToMap<K extends GoComparable, V>(receiver: GoPtr<SyncMap
  * 	}
  * }
  */
-export function SyncMap_Keys<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>): GoSeq<K> {
-  return (yield_: (value: K) => bool): void => {
+export function SyncMap_Keys<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>): Seq<K> {
+  return (yield_: GoFunc<(value: K) => bool>): void => {
     syncMapBacking(receiver).Range((key: unknown, _value: unknown): bool => {
-      if (!yield_(key as K)) {
+      if (!yield_!(key as K)) {
         return false;
       }
       return true;

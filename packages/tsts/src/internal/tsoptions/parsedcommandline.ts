@@ -1,8 +1,9 @@
 import type { bool, int } from "../../go/scalars.js";
+import type { Seq, Seq2 } from "../../go/iter.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
-import type { GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
+import type { GoFunc, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import { NewCompilerDiagnostic } from "../ast/diagnostic.js";
@@ -426,14 +427,14 @@ export function ParsedCommandLine_UseCaseSensitiveFileNames(receiver: GoPtr<Pars
  * 	}
  * }
  */
-export function ParsedCommandLine_getOutputDeclarationAndSourceFileNames(receiver: GoPtr<ParsedCommandLine>): GoSeq2<string, string> {
+export function ParsedCommandLine_getOutputDeclarationAndSourceFileNames(receiver: GoPtr<ParsedCommandLine>): Seq2<string, string> {
   const p = receiver!;
-  return (yield_: (dtsName: string, inputName: string) => bool): void => {
+  return (yield_: GoFunc<(dtsName: string, inputName: string) => bool>): void => {
     for (const fileName of p.ParsedConfig!.FileNames) {
       const outputDts = (!IsDeclarationFileName(fileName) && !FileExtensionIs(fileName, ExtensionJson))
         ? GetOutputDeclarationFileNameWorker(fileName, ParsedCommandLine_CompilerOptions(p), ParsedCommandLine_as_OutputPathsHost(p))
         : "";
-      if (!yield_(outputDts, fileName)) {
+      if (!yield_!(outputDts, fileName)) {
         return;
       }
     }
@@ -486,9 +487,9 @@ export function ParsedCommandLine_getOutputDeclarationAndSourceFileNames(receive
  * 	}
  * }
  */
-export function ParsedCommandLine_GetOutputFileNames(receiver: GoPtr<ParsedCommandLine>): GoSeq<string> {
+export function ParsedCommandLine_GetOutputFileNames(receiver: GoPtr<ParsedCommandLine>): Seq<string> {
   const p = receiver!;
-  return (yield_: (outputName: string) => bool): void => {
+  return (yield_: GoFunc<(outputName: string) => bool>): void => {
     for (const fileName of p.ParsedConfig!.FileNames) {
       if (IsDeclarationFileName(fileName)) {
         continue;
@@ -496,13 +497,13 @@ export function ParsedCommandLine_GetOutputFileNames(receiver: GoPtr<ParsedComma
       const jsFileName = GetOutputJSFileName(fileName, ParsedCommandLine_CompilerOptions(p), ParsedCommandLine_as_OutputPathsHost(p));
       const isJson = FileExtensionIs(fileName, ExtensionJson);
       if (jsFileName !== "") {
-        if (!yield_(jsFileName)) {
+        if (!yield_!(jsFileName)) {
           return;
         }
         if (!isJson) {
           const sourceMap = GetSourceMapFilePath(jsFileName, ParsedCommandLine_CompilerOptions(p));
           if (sourceMap !== "") {
-            if (!yield_(sourceMap)) {
+            if (!yield_!(sourceMap)) {
               return;
             }
           }
@@ -514,12 +515,12 @@ export function ParsedCommandLine_GetOutputFileNames(receiver: GoPtr<ParsedComma
       if (CompilerOptions_GetEmitDeclarations(ParsedCommandLine_CompilerOptions(p))) {
         const dtsFileName = GetOutputDeclarationFileNameWorker(fileName, ParsedCommandLine_CompilerOptions(p), ParsedCommandLine_as_OutputPathsHost(p));
         if (dtsFileName !== "") {
-          if (!yield_(dtsFileName)) {
+          if (!yield_!(dtsFileName)) {
             return;
           }
           if (CompilerOptions_GetAreDeclarationMapsEnabled(ParsedCommandLine_CompilerOptions(p))) {
             const declarationMap = dtsFileName + ".map";
-            if (!yield_(declarationMap)) {
+            if (!yield_!(declarationMap)) {
               return;
             }
           }

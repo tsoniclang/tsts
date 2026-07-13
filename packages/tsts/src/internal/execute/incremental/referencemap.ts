@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import type { Seq } from "../../../go/iter.js";
+import type { GoFunc, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Once } from "../../../go/sync.js";
 import * as maps from "../../../go/maps.js";
 import * as slices from "../../../go/slices.js";
@@ -60,7 +61,7 @@ export function referenceMap_getReferences(receiver: GoPtr<referenceMap>, path: 
  * }
  */
 export function referenceMap_getPathsWithReferences(receiver: GoPtr<referenceMap>): GoSlice<Path> {
-  return slices.Collect(SyncMap_Keys(receiver!.references) as GoSeq<Path>);
+  return slices.Collect(SyncMap_Keys(receiver!.references) as Seq<Path>);
 }
 
 /**
@@ -89,7 +90,7 @@ export function referenceMap_getPathsWithReferences(receiver: GoPtr<referenceMap
  * 	return func(yield func(tspath.Path) bool) {}
  * }
  */
-export function referenceMap_getReferencedBy(receiver: GoPtr<referenceMap>, path: Path): GoSeq<Path> {
+export function referenceMap_getReferencedBy(receiver: GoPtr<referenceMap>, path: Path): Seq<Path> {
   receiver!.referenceBy.Do(() => {
     receiver!.referencedBy = new globalThis.Map<Path, GoPtr<Set<Path>>>();
     SyncMap_Range(receiver!.references, (key: Path, value: GoPtr<Set<Path>>): bool => {
@@ -109,5 +110,5 @@ export function referenceMap_getReferencedBy(receiver: GoPtr<referenceMap>, path
   if (refs !== undefined) {
     return maps.Keys(Set_Keys(refs));
   }
-  return (_yield: (value: Path) => bool): void => {};
+  return (_yield: GoFunc<(value: Path) => bool>): void => {};
 }

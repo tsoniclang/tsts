@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import type { Seq } from "../../../go/iter.js";
+import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { ModifierList_Clone, Node_Clone, NodeFactory_NewNodeList, NodeFactory_NewModifierList } from "../../ast/spine.js";
 import { AsSourceFile, Node_Body, Node_MemberList, Node_Members, Node_Expression, Node_Initializer, Node_ParameterList, Node_Text } from "../../ast/ast.js";
@@ -7433,8 +7434,8 @@ export function classFieldsTransformer_createAccessorPropertySetRedirector(recei
  * 	}
  * }
  */
-export function flattenCommaList(node: GoPtr<Expression>): GoSeq<GoPtr<Expression>> {
-  return (yield_: (value: GoPtr<Expression>) => bool): void => {
+export function flattenCommaList(node: GoPtr<Expression>): Seq<GoPtr<Expression>> {
+  return (yield_: GoFunc<(value: GoPtr<Expression>) => bool>): void => {
     flattenCommaListWorker(node, yield_);
   };
 }

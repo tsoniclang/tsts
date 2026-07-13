@@ -1,5 +1,6 @@
 import type { bool, byte, double, int } from "../../go/scalars.js";
-import type { GoComparable, GoConstraint, GoError, GoMap, GoPtr, GoRune, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
+import type { Seq, Seq2 } from "../../go/iter.js";
+import type { GoComparable, GoConstraint, GoError, GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { GoNilSlice } from "../../go/compat.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
@@ -121,11 +122,11 @@ export function Filter<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): GoSl
  * 	}
  * }
  */
-export function FilterSeq<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): GoSeq<T> {
-  return (yield_: (value: T) => bool): void => {
+export function FilterSeq<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): Seq<T> {
+  return (yield_: GoFunc<(value: T) => bool>): void => {
     for (const value of slice ?? []) {
       if (f!(value)) {
-        if (!yield_(value)) {
+        if (!yield_!(value)) {
           return;
         }
       }
@@ -681,7 +682,7 @@ export function ElementOrNil<T>(slice: GoSlice<T>, index: int): T {
  * 	return *new(T)
  * }
  */
-export function FirstOrNilSeq<T>(seq: GoSeq<T>): T {
+export function FirstOrNilSeq<T>(seq: Seq<T>): T {
   let result = undefined as T;
   if (seq !== undefined) {
     seq((value: T): bool => {
@@ -1096,8 +1097,8 @@ export function ComputeECMALineStarts(text: string): ECMALineStarts {
  * 	}
  * }
  */
-export function ComputeECMALineStartsSeq(text: string): GoSeq<TextPos> {
-  return (yield_: (value: TextPos) => bool): void => {
+export function ComputeECMALineStartsSeq(text: string): Seq<TextPos> {
+  return (yield_: GoFunc<(value: TextPos) => bool>): void => {
     const textLen: int = text.length;
     let index: int = 0;
     let bytePos: TextPos = 0;
@@ -1115,7 +1116,7 @@ export function ComputeECMALineStartsSeq(text: string): GoSeq<TextPos> {
             }
           // fallthrough
           case 0x0a /* '\n' */:
-            if (!yield_(lineStart)) {
+            if (!yield_!(lineStart)) {
               return;
             }
             lineStart = bytePos;
@@ -1134,14 +1135,14 @@ export function ComputeECMALineStartsSeq(text: string): GoSeq<TextPos> {
       } else {
         bytePos += 3;
         if (ch === 0x2028 || ch === 0x2029) {
-          if (!yield_(lineStart)) {
+          if (!yield_!(lineStart)) {
             return;
           }
           lineStart = bytePos;
         }
       }
     }
-    yield_(lineStart);
+    yield_!(lineStart);
   };
 }
 
@@ -1353,7 +1354,7 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
  * 	return bestCandidate
  * }
  */
-export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, getName: GoFunc<(arg0: T) => string>, compare: GoFunc<(arg0: T, arg1: T) => int>): T {
+export function GetSpellingSuggestion<T>(name: string, candidates: Seq<T>, getName: GoFunc<(arg0: T) => string>, compare: GoFunc<(arg0: T, arg1: T) => int>): T {
   const searchName = name ?? "";
   const runeName = stringToRunes(searchName);
   const maximumLengthDifference = globalThis.Math.max(2, globalThis.Math.trunc(runeName.length * 0.34));
@@ -1407,7 +1408,7 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
  * 	return GetSpellingSuggestion(name, candidates, Identity, strings.Compare)
  * }
  */
-export function GetSpellingSuggestionForStrings(name: string, candidates: GoSeq<string>): string {
+export function GetSpellingSuggestionForStrings(name: string, candidates: Seq<string>): string {
   // Go instantiates GetSpellingSuggestion with T=string, whose zero value is "" — the
   // value callers test for "no suggestion". The generic port yields undefined instead.
   return GetSpellingSuggestion(name, candidates, Identity, strings.Compare) ?? "";
@@ -1659,15 +1660,15 @@ export function SingleElementSlice<T>(element: GoRef<T>): GoSlice<GoRef<T>> {
  * 	}
  * }
  */
-export function ConcatenateSeq<T>(...seqs: Array<GoSeq<T>>): GoSeq<T> {
-  return (yield_: (value: T) => bool): void => {
+export function ConcatenateSeq<T>(...seqs: Array<Seq<T>>): Seq<T> {
+  return (yield_: GoFunc<(value: T) => bool>): void => {
     for (const seq of seqs) {
       if (seq === undefined) {
         continue;
       }
       let stopped = false;
       seq((e: T): bool => {
-        if (!yield_(e)) {
+        if (!yield_!(e)) {
           stopped = true;
           return false;
         }
@@ -1696,11 +1697,11 @@ export function ConcatenateSeq<T>(...seqs: Array<GoSeq<T>>): GoSeq<T> {
  * 	}
  * }
  */
-export function Enumerate<T>(seq: GoSeq<T>): GoSeq2<int, T> {
-  return (yield_: (key: int, value: T) => bool): void => {
+export function Enumerate<T>(seq: Seq<T>): Seq2<int, T> {
+  return (yield_: GoFunc<(key: int, value: T) => bool>): void => {
     let i = 0;
     seq!((v: T): bool => {
-      if (!yield_(i, v)) {
+      if (!yield_!(i, v)) {
         return false;
       }
       i++;

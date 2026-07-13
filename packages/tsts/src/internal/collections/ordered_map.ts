@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoComparable, GoError, GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
+import type { Seq, Seq2 } from "../../go/iter.js";
+import type { GoComparable, GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
 import type { Value } from "../../go/reflect.js";
 import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode } from "../json/json.js";
@@ -297,16 +298,16 @@ export function OrderedMap_Delete<K extends GoComparable, V>(receiver: GoPtr<Ord
  * 	}
  * }
  */
-export function OrderedMap_Keys<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): GoSeq<K> {
+export function OrderedMap_Keys<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): Seq<K> {
   const m = receiver;
-  return (yield_: (value: K) => bool): void => {
+  return (yield_: GoFunc<(value: K) => bool>): void => {
     if (m === undefined) {
       return;
     }
 
     // We use a for loop here to ensure we enumerate new items added during iteration.
     const iterate = (i: number): void => {
-      if (i < m.keys.length && yield_(m.keys[i]!)) {
+      if (i < m.keys.length && yield_!(m.keys[i]!)) {
         iterate(i + 1);
       }
     };
@@ -334,16 +335,16 @@ export function OrderedMap_Keys<K extends GoComparable, V>(receiver: GoPtr<Order
  * 	}
  * }
  */
-export function OrderedMap_Values<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): GoSeq<V> {
+export function OrderedMap_Values<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): Seq<V> {
   const m = receiver;
-  return (yield_: (value: V) => bool): void => {
+  return (yield_: GoFunc<(value: V) => bool>): void => {
     if (m === undefined) {
       return;
     }
 
     // We use a for loop here to ensure we enumerate new items added during iteration.
     const iterate = (i: number): void => {
-      if (i < m.keys.length && yield_(m.mp.get(m.keys[i]!) as V)) {
+      if (i < m.keys.length && yield_!(m.mp.get(m.keys[i]!) as V)) {
         iterate(i + 1);
       }
     };
@@ -372,9 +373,9 @@ export function OrderedMap_Values<K extends GoComparable, V>(receiver: GoPtr<Ord
  * 	}
  * }
  */
-export function OrderedMap_Entries<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): GoSeq2<K, V> {
+export function OrderedMap_Entries<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): Seq2<K, V> {
   const m = receiver;
-  return (yield_: (key: K, value: V) => bool): void => {
+  return (yield_: GoFunc<(key: K, value: V) => bool>): void => {
     if (m === undefined) {
       return;
     }
@@ -383,7 +384,7 @@ export function OrderedMap_Entries<K extends GoComparable, V>(receiver: GoPtr<Or
     const iterate = (i: number): void => {
       if (i < m.keys.length) {
         const key = m.keys[i]!;
-        if (yield_(key, m.mp.get(key) as V)) {
+        if (yield_!(key, m.mp.get(key) as V)) {
           iterate(i + 1);
         }
       }

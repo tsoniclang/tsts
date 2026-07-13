@@ -1,5 +1,6 @@
 import type { bool } from "./scalars.js";
-import type { GoMap, GoSeq } from "./compat.js";
+import type { Seq } from "./iter.js";
+import type { GoFunc, GoMap } from "./compat.js";
 import { GoMapIsNil, GoNilMap } from "./compat.js";
 
 // Go: package maps (standard library, Go 1.21+/1.23 iterators).
@@ -70,10 +71,10 @@ export function EqualFunc<K, V1, V2>(
 
 // Keys returns an iterator over keys in m. The iteration order is not
 // specified and is not guaranteed to be the same from one call to the next.
-export function Keys<K, V>(m: GoMap<K, V>): GoSeq<K> {
-  return (yieldValue: (value: K) => bool): void => {
+export function Keys<K, V>(m: GoMap<K, V>): Seq<K> {
+  return (yieldValue: GoFunc<(value: K) => bool>): void => {
     for (const k of m.keys()) {
-      if (!yieldValue(k)) {
+      if (!yieldValue!(k)) {
         return;
       }
     }
@@ -82,10 +83,10 @@ export function Keys<K, V>(m: GoMap<K, V>): GoSeq<K> {
 
 // Values returns an iterator over values in m. The iteration order is not
 // specified and is not guaranteed to be the same from one call to the next.
-export function Values<K, V>(m: GoMap<K, V>): GoSeq<V> {
-  return (yieldValue: (value: V) => bool): void => {
+export function Values<K, V>(m: GoMap<K, V>): Seq<V> {
+  return (yieldValue: GoFunc<(value: V) => bool>): void => {
     for (const v of m.values()) {
-      if (!yieldValue(v)) {
+      if (!yieldValue!(v)) {
         return;
       }
     }

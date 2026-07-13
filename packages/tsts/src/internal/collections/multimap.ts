@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoComparable, GoMap, GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
+import type { Seq } from "../../go/iter.js";
+import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 
@@ -159,7 +160,7 @@ export function MultiMap_Len<K extends GoComparable, V extends GoComparable>(rec
  * 	return maps.Keys(s.M)
  * }
  */
-export function MultiMap_Keys<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>): GoSeq<K> {
+export function MultiMap_Keys<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>): Seq<K> {
   return maps.Keys(receiver!.M);
 }
 
@@ -171,7 +172,7 @@ export function MultiMap_Keys<K extends GoComparable, V extends GoComparable>(re
  * 	return maps.Values(s.M)
  * }
  */
-export function MultiMap_Values<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>): GoSeq<GoSlice<V>> {
+export function MultiMap_Values<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>): Seq<GoSlice<V>> {
   return maps.Values(receiver!.M);
 }
 

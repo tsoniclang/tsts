@@ -1,6 +1,7 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
+import type { Seq, Seq2 } from "../../../go/iter.js";
 import type { JsonFieldNamesForGoStructContract } from "../../json/json.js";
-import type { GoError, GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../../go/compat.js";
+import type { GoError, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { Errorf } from "../../../go/fmt.js";
 import type { RepopulateDiagnosticKind } from "../../ast/diagnostic.js";
 import {
@@ -1215,7 +1216,7 @@ export function BuildInfo_fileInfo(receiver: GoPtr<BuildInfo>, fileId: BuildInfo
  */
 export function BuildInfo_GetCompilerOptions(receiver: GoPtr<BuildInfo>, buildInfoDirectory: string): GoPtr<CompilerOptions> {
   const options: CompilerOptions = {} as CompilerOptions;
-  const entries: GoSeq2<string, unknown> = OrderedMap_Entries(receiver!.Options as import("../../collections/ordered_map.js").OrderedMap<string, unknown>);
+  const entries: Seq2<string, unknown> = OrderedMap_Entries(receiver!.Options as import("../../collections/ordered_map.js").OrderedMap<string, unknown>);
   entries!((option: string, value: unknown): bool => {
     if (buildInfoDirectory !== "") {
       const [result, ok] = ConvertOptionToAbsolutePath(option, value, CommandLineCompilerOptionsMap, buildInfoDirectory);
@@ -1395,7 +1396,7 @@ export function BuildInfoRootInfoReader_GetBuildInfoFileInfo(receiver: GoPtr<Bui
  * 	return b.rootToResolved.Keys()
  * }
  */
-export function BuildInfoRootInfoReader_Roots(receiver: GoPtr<BuildInfoRootInfoReader>): GoSeq<Path> {
+export function BuildInfoRootInfoReader_Roots(receiver: GoPtr<BuildInfoRootInfoReader>): Seq<Path> {
   return OrderedMap_Keys(receiver!.rootToResolved as import("../../collections/ordered_map.js").OrderedMap<Path, Path>);
 }
 

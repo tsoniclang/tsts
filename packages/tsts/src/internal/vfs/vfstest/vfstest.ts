@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoError, GoMap, GoPtr, GoSeq2, GoSlice } from "../../../go/compat.js";
+import type { Seq2 } from "../../../go/iter.js";
+import type { GoError, GoFunc, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { AsType } from "../../../go/errors.js";
 import { Sprintf, Errorf } from "../../../go/fmt.js";
 import type { DirEntry, File, FileInfo, FileMode, FS as GoFS, ReadDirFile } from "../../../go/io/fs.js";
@@ -1735,8 +1736,8 @@ export function MapFS_GetModTime(receiver: GoPtr<MapFS>, path: string): Time {
  * 	}
  * }
  */
-export function MapFS_Entries(receiver: GoPtr<MapFS>): GoSeq2<string, GoPtr<MapFile>> {
-  return (yieldValue: (key: string, value: GoPtr<MapFile>) => bool): void => {
+export function MapFS_Entries(receiver: GoPtr<MapFS>): Seq2<string, GoPtr<MapFile>> {
+  return (yieldValue: GoFunc<(key: string, value: GoPtr<MapFile>) => bool>): void => {
     receiver!.mu.RLock();
     try {
       const internalMap = receiver!.m as unknown as InternalMapFS;
@@ -1750,7 +1751,7 @@ export function MapFS_Entries(receiver: GoPtr<MapFS>): GoSeq2<string, GoPtr<MapF
         if (!PathIsAbsolute(path)) {
           path = "/" + path;
         }
-        if (!yieldValue(path, file as unknown as MapFile)) {
+        if (!yieldValue!(path, file as unknown as MapFile)) {
           break;
         }
       }

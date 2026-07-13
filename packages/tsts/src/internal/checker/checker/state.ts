@@ -1,5 +1,6 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
-import type { GoComparable, GoConstraint, GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import type { Seq } from "../../../go/iter.js";
+import type { GoComparable, GoConstraint, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Hasher, Uint128 } from "../../../go/github.com/zeebo/xxh3.js";
@@ -2795,11 +2796,11 @@ export let primitiveTypeAliasSuggestions: GoFunc<() => GoMap<string, GoPtr<Symbo
  * 	}
  * }
  */
-export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable | undefined): GoSeq<GoPtr<Symbol>> {
-  return (yield_: (s: GoPtr<Symbol>) => bool): void => {
+export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable | undefined): Seq<GoPtr<Symbol>> {
+  return (yield_: GoFunc<(s: GoPtr<Symbol>) => bool>): void => {
     for (const [builtinName, suggestion] of primitiveTypeAliasSuggestions!()) {
       if (symbols !== undefined && symbols.has(builtinName)) {
-        if (!yield_(suggestion)) {
+        if (!yield_!(suggestion)) {
           return;
         }
       }

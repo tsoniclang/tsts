@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoPtr, GoSeq2, GoSlice } from "../../../go/compat.js";
+import type { Seq, Seq2 } from "../../../go/iter.js";
+import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Members, Node_Initializer, Node_Expression, Node_Text, Node_Body, Node_ParameterList, Node_MemberList, Node_Decorators, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateForStatement, NodeFactory_UpdateHeritageClause, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateTryStatement, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePartiallyEmittedExpression } from "../../ast/ast.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
@@ -2249,7 +2250,7 @@ export function esDecoratorTransformer_emitMemberInfoDeclarations(receiver: GoPt
   const stmts: GoPtr<Statement>[] = [];
   (OrderedMap_Entries(ci!.memberInfos) as ReturnType<typeof OrderedMap_Entries<GoPtr<Node>, GoPtr<memberInfo>>>)!((member, mi) => {
     if (IsStatic(member as GoPtr<Node>) !== isStatic) {
-      // Go `continue`: the GoSeq yield returns true to keep iterating.
+      // Go `continue`: the Seq yield returns true to keep iterating.
       return true;
     }
     stmts.push(esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberDecoratorsName, undefined));

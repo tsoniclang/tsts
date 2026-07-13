@@ -1,5 +1,6 @@
 import type { bool, int, short } from "../../go/scalars.js";
-import type { GoInterfaceValue, GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
+import type { Seq } from "../../go/iter.js";
+import type { GoInterfaceValue, GoPtr, GoSlice } from "../../go/compat.js";
 import { Uint32, Uint64 } from "../../go/sync/atomic.js";
 import { TextRange_End, TextRange_Pos, UndefinedTextRange } from "../core/text.js";
 import type { TextRange } from "../core/text.js";
@@ -265,7 +266,7 @@ export interface Node {
 export interface nodeData extends GoInterfaceValue<unknown> {
   AsNode(): GoPtr<Node>;
   ForEachChild(v: Visitor): bool;
-  IterChildren(): GoSeq<GoPtr<Node>>;
+  IterChildren(): Seq<GoPtr<Node>>;
   VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node>;
   Clone(v: GoInterface<NodeFactoryCoercible>): GoPtr<Node>;
   Name(): GoPtr<DeclarationName>;
@@ -288,7 +289,7 @@ export interface nodeData extends GoInterfaceValue<unknown> {
 
 // `iter.Seq[*Node]`: an iterator-yielding function. Modeled faithfully as a
 // Go range-func (a function taking a `yield` callback returning bool).
-export type NodeIter = GoSeq<GoPtr<Node>>;
+export type NodeIter = Seq<GoPtr<Node>>;
 
 // `*NodeVisitor` is owned by the hand-written `internal/ast/visitor.go` (a later,
 // co-landing wave). The spine only needs its identity for the `nodeData`/Node
@@ -639,8 +640,8 @@ export function NodeDefault_forEachChildIter(receiver: GoPtr<NodeDefault>, yield
  * 	return node.forEachChildIter
  * }
  */
-export function NodeDefault_IterChildren(receiver: GoPtr<NodeDefault>): GoSeq<GoPtr<Node>> {
-  return (yield_: (v: GoPtr<Node>) => bool): void => NodeDefault_forEachChildIter(receiver, yield_);
+export function NodeDefault_IterChildren(receiver: GoPtr<NodeDefault>): Seq<GoPtr<Node>> {
+  return (yield_: GoFunc<(v: GoPtr<Node>) => bool>): void => NodeDefault_forEachChildIter(receiver, yield_);
 }
 
 /**
@@ -881,7 +882,7 @@ export function Node_ForEachChild(receiver: GoPtr<Node>, v: Visitor): bool {
  * Go source:
  * func (n *Node) IterChildren() iter.Seq[*Node]             { return n.data.IterChildren() }
  */
-export function Node_IterChildren(receiver: GoPtr<Node>): GoSeq<GoPtr<Node>> {
+export function Node_IterChildren(receiver: GoPtr<Node>): Seq<GoPtr<Node>> {
   return receiver!.data!.IterChildren();
 }
 

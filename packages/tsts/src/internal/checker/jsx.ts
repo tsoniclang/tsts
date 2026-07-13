@@ -1,5 +1,6 @@
 import type { bool, int, uint } from "../../go/scalars.js";
-import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
+import type { Seq } from "../../go/iter.js";
+import type { GoFunc, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoValueRef } from "../../go/compat.js";
 import { Values as SliceValues } from "../../go/slices.js";
 import { Node_DeclarationData, Node_ForEachChild, Node_Name } from "../ast/spine.js";
@@ -886,7 +887,7 @@ export interface JsxElaborationElement {
  * 	}
  * }
  */
-export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<unknown>]): GoSeq<JsxElaborationElement> {
+export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<unknown>]): Seq<JsxElaborationElement> {
   return (yieldValue) => {
     let memberOffset = 0;
     const children = Node_Children(node)!.Nodes;
@@ -895,7 +896,7 @@ export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPt
       const nameType = Checker_getNumberLiteralType(receiver, i - memberOffset);
       const element = Checker_getElaborationElementForJsxChild(receiver, child, nameType, getInvalidTextDiagnostic);
       if (element.errorNode !== undefined) {
-        if (!yieldValue(element)) {
+        if (!yieldValue!(element)) {
           return;
         }
       } else {
@@ -1034,7 +1035,7 @@ export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker
  * 	return reportedError
  * }
  */
-export function Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver: GoPtr<Checker>, iterator: GoSeq<JsxElaborationElement>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): bool {
+export function Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver: GoPtr<Checker>, iterator: Seq<JsxElaborationElement>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): bool {
   const tupleOrArrayLikeTargetParts = Checker_filterType(receiver, target, (candidate) => Checker_isArrayOrTupleLikeType(receiver, candidate));
   const nonTupleOrArrayLikeTargetParts = Checker_filterType(receiver, target, (candidate) => !Checker_isArrayOrTupleLikeType(receiver, candidate));
   let iterationType: GoPtr<Type>;

@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import type { Seq } from "../../../go/iter.js";
+import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { AsSourceFile, Node_Text, SourceFile_FileName, SourceFile_Path, Node_Elements, Node_Properties, Node_Expression, Node_Initializer } from "../../ast/ast.js";
 import type { HasFileName, SourceFile } from "../../ast/ast.js";
 import { IsAssignmentExpression, IsCommaExpression, IsDestructuringAssignment, IsEffectiveExternalModule, IsExpression, IsExternalModule, IsExternalModuleImportEqualsDeclaration, IsInJSFile, IsRequireCall, IsStringLiteralLike, IsImportCall, ShouldTransformImportCall, FindAncestor } from "../../ast/utilities.js";
@@ -873,7 +874,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
   const exportedFunctionsStart = statements.length;
   OrderedSet_Values(receiver!.currentModuleInfo!.exportedFunctions as GoPtr<OrderedSet<GoPtr<FunctionDeclarationNode>>>)!((f_: GoPtr<FunctionDeclarationNode>) => {
     statements = CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclaration(receiver, statements, f_ as GoPtr<Declaration>);
-    // Go `for ... range` iterates the whole set; the GoSeq yield returns true to continue.
+    // Go `for ... range` iterates the whole set; the Seq yield returns true to continue.
     return true;
   });
   for (const s of statements.slice(exportedFunctionsStart)) {

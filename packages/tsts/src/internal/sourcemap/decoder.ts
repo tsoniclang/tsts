@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
-import type { GoError, GoPtr, GoSeq } from "../../go/compat.js";
+import type { Seq } from "../../go/iter.js";
+import type { GoError, GoFunc, GoPtr } from "../../go/compat.js";
 import { New as errorsNew } from "../../go/errors.js";
 import { Arena_New } from "../core/arena.js";
 import type { Arena } from "../core/arena.js";
@@ -215,11 +216,11 @@ export function MappingsDecoder_State(receiver: GoPtr<MappingsDecoder>): GoPtr<M
  * 	}
  * }
  */
-export function MappingsDecoder_Values(receiver: GoPtr<MappingsDecoder>): GoSeq<GoPtr<Mapping>> {
+export function MappingsDecoder_Values(receiver: GoPtr<MappingsDecoder>): Seq<GoPtr<Mapping>> {
   const d: MappingsDecoder = receiver!;
-  return (yield_: (value: GoPtr<Mapping>) => bool): void => {
+  return (yield_: GoFunc<(value: GoPtr<Mapping>) => bool>): void => {
     for (let [value, done] = MappingsDecoder_Next(d); !done; [value, done] = MappingsDecoder_Next(d)) {
-      if (!yield_(value)) {
+      if (!yield_!(value)) {
         break;
       }
     }

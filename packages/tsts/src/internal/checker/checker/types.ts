@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import type { Seq } from "../../../go/iter.js";
+import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef } from "../../../go/compat.js";
 import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { recordExtensionContextualTargetTypeFact } from "../../../extensions/checker-integration.js";
@@ -11907,10 +11908,10 @@ export function Checker_getUnionTypeFromSortedList(receiver: GoPtr<Checker>, typ
  * 	return maps.Values(c.unionTypes)
  * }
  */
-export function Checker_UnionTypes(receiver: GoPtr<Checker>): GoSeq<GoPtr<Type>> {
-  return (yieldValue: (value: GoPtr<Type>) => bool): void => {
+export function Checker_UnionTypes(receiver: GoPtr<Checker>): Seq<GoPtr<Type>> {
+  return (yieldValue: GoFunc<(value: GoPtr<Type>) => bool>): void => {
     for (const value of receiver!.unionTypes.values()) {
-      if (!yieldValue(value)) {
+      if (!yieldValue!(value)) {
         return;
       }
     }

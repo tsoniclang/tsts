@@ -1,5 +1,6 @@
 import type { bool, int } from "./scalars.js";
-import type { GoPtr, GoSlice, GoSeq, GoOrdered } from "./compat.js";
+import type { Seq } from "./iter.js";
+import type { GoFunc, GoPtr, GoSlice, GoOrdered } from "./compat.js";
 import { Compare as cmpCompare } from "./cmp.js";
 
 // Go: package slices (standard library).
@@ -331,7 +332,7 @@ export function SortStableFunc<T>(x: GoPtr<GoSlice<T>>, cmp: (a: T, b: T) => int
 
 // Sorted collects values from an iterator into a new slice, sorts the slice in
 // ascending order, and returns it.
-export function Sorted<T extends GoOrdered>(seq: GoSeq<T>): GoSlice<T> {
+export function Sorted<T extends GoOrdered>(seq: Seq<T>): GoSlice<T> {
   const result = Collect(seq);
   Sort(result);
   return result;
@@ -339,7 +340,7 @@ export function Sorted<T extends GoOrdered>(seq: GoSeq<T>): GoSlice<T> {
 
 // SortedFunc collects values from an iterator into a new slice, sorts the slice
 // using the comparison function, and returns it.
-export function SortedFunc<T>(seq: GoSeq<T>, cmp: (a: T, b: T) => int): GoSlice<T> {
+export function SortedFunc<T>(seq: Seq<T>, cmp: (a: T, b: T) => int): GoSlice<T> {
   const result = Collect(seq);
   SortFunc(result, cmp);
   return result;
@@ -402,11 +403,11 @@ export function BinarySearchFunc<T, S>(
 // ---------------------------------------------------------------------------
 
 // Values returns an iterator that yields the slice elements in order.
-export function Values<T>(s: GoPtr<GoSlice<T>>): GoSeq<T> {
+export function Values<T>(s: GoPtr<GoSlice<T>>): Seq<T> {
   const slice = s ?? [];
-  return (yieldValue: (value: T) => bool): void => {
+  return (yieldValue: GoFunc<(value: T) => bool>): void => {
     for (let i = 0; i < slice.length; i++) {
-      if (!yieldValue(slice[i]!)) {
+      if (!yieldValue!(slice[i]!)) {
         return;
       }
     }
@@ -414,13 +415,13 @@ export function Values<T>(s: GoPtr<GoSlice<T>>): GoSeq<T> {
 }
 
 // Collect collects values from seq into a new slice and returns it.
-export function Collect<T>(seq: GoSeq<T>): GoSlice<T> {
+export function Collect<T>(seq: Seq<T>): GoSlice<T> {
   return AppendSeq([], seq);
 }
 
 // AppendSeq appends the values from seq to the slice and returns the extended
 // slice.
-export function AppendSeq<T>(s: GoPtr<GoSlice<T>>, seq: GoSeq<T>): GoSlice<T> {
+export function AppendSeq<T>(s: GoPtr<GoSlice<T>>, seq: Seq<T>): GoSlice<T> {
   const slice = s ?? [];
   seq!((value: T): bool => {
     slice.push(value);

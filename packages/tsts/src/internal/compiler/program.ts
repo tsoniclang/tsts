@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoError, GoMap, GoPtr, GoSeq2, GoSlice } from "../../go/compat.js";
+import type { Seq, Seq2 } from "../../go/iter.js";
+import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoNilMap, GoNilSlice, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
@@ -2571,7 +2572,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
         }
       }
     }
-    // Go `for ... range` iterates every entry; the GoSeq yield returns true to continue.
+    // Go `for ... range` iterates every entry; the Seq yield returns true to continue.
     return true as bool;
   });
 

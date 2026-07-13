@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoPtr, GoSeq2, GoSlice } from "../../go/compat.js";
+import type { Seq2 } from "../../go/iter.js";
+import type { GoPtr, GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { Node_Expression, Node_Symbol, Node_Text } from "../ast/ast.js";
 import type { HasFileName, Node, SourceFile } from "../ast/ast.js";

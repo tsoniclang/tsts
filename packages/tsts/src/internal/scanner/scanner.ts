@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
-import type { GoArray, GoComparable, GoConstraint, GoMap, GoPtr, GoRune, GoSeq, GoSlice } from "../../go/compat.js";
+import type { Seq } from "../../go/iter.js";
+import type { GoArray, GoComparable, GoConstraint, GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strconv from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
@@ -6701,7 +6702,7 @@ export function ComputePositionOfLineAndUTF16Character(lineStarts: GoSlice<TextP
  * 	return iterateCommentRanges(f, text, pos, false)
  * }
  */
-export function GetLeadingCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: int): GoSeq<CommentRange> {
+export function GetLeadingCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: int): Seq<CommentRange> {
   return iterateCommentRanges(f, text, pos, false);
 }
 
@@ -6713,7 +6714,7 @@ export function GetLeadingCommentRanges(f: GoPtr<NodeFactory>, text: string, pos
  * 	return iterateCommentRanges(f, text, pos, true)
  * }
  */
-export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: int): GoSeq<CommentRange> {
+export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: int): Seq<CommentRange> {
   return iterateCommentRanges(f, text, pos, true);
 }
 
@@ -6827,8 +6828,8 @@ export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, po
  * 	}
  * }
  */
-export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: int, trailing: bool): GoSeq<CommentRange> {
-  return (yield_: (value: CommentRange) => bool): void => {
+export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: int, trailing: bool): Seq<CommentRange> {
+  return (yield_: GoFunc<(value: CommentRange) => bool>): void => {
     const textView = utf8.GetStringByteView(text);
     const textLen = utf8.StringByteViewLen(text, textView);
     let pendingPos = 0;
@@ -6908,7 +6909,7 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
 
             if (collecting) {
               if (hasPendingCommentRange) {
-                if (!yield_(NodeFactory_NewCommentRange(f, pendingKind, pendingPos, pendingEnd, pendingHasTrailingNewLine))) {
+                if (!yield_!(NodeFactory_NewCommentRange(f, pendingKind, pendingPos, pendingEnd, pendingHasTrailingNewLine))) {
                   return;
                 }
               }
@@ -6938,7 +6939,7 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
     }
 
     if (hasPendingCommentRange) {
-      yield_(NodeFactory_NewCommentRange(f, pendingKind, pendingPos, pendingEnd, pendingHasTrailingNewLine));
+      yield_!(NodeFactory_NewCommentRange(f, pendingKind, pendingPos, pendingEnd, pendingHasTrailingNewLine));
     }
   };
 }
