@@ -48,7 +48,10 @@ export function resolveOverride(localOverride, id, expected, actual, canon, over
   return { ignore, reason: localOverride?.reason ?? "" };
 }
 
-const GO_ZERO_FACTORY_ID = "packages/tsts/src/go/compat.ts::GoZeroFactory";
+const RUNTIME_DICTIONARY_TYPES = new Map([
+  ["zero-value", { id: "packages/tsts/src/go/compat.ts::GoZeroFactory", name: "GoZeroFactory" }],
+  ["equality", { id: "packages/tsts/src/go/compat.ts::GoEquality", name: "GoEquality" }],
+]);
 const RUNTIME_DICTIONARY_PARAMETER_FIELDS = new Set([
   "name", "role", "modifiers", "type", "rest", "optional", "optionalSyntax", "question", "missingType",
   "initializerStatus", "initializer", "initializerIssue",
@@ -68,18 +71,24 @@ function validateRuntimeDictionaryProjection(dictionaries, expected, actual, can
     issues.push("runtime dictionary projection requires complete parameter and type-parameter arrays");
     return;
   }
-  if (signature.params.length < dictionaries.length) {
-    issues.push(`runtime dictionary projection expected ${dictionaries.length} trailing parameter(s), found only ${signature.params.length} total parameter(s)`);
-    return;
-  }
   const projected = structuredClone(actual);
   const projectedSignature = projected.signatures[0];
-  const firstDictionary = signature.params.length - dictionaries.length;
+  const restIndices = signature.params.flatMap((parameter, index) => parameter?.rest === true ? [index] : []);
+  if (restIndices.length > 1 || (restIndices.length === 1 && restIndices[0] !== signature.params.length - 1)) {
+    issues.push("runtime dictionary projection requires the TypeScript rest parameter to be unique and last");
+    return;
+  }
+  const dictionaryEnd = restIndices.length === 1 ? restIndices[0] : signature.params.length;
+  const firstDictionary = dictionaryEnd - dictionaries.length;
+  if (firstDictionary < 0) {
+    issues.push(`runtime dictionary projection expected ${dictionaries.length} dictionary parameter(s), found only ${dictionaryEnd} available slot(s)`);
+    return;
+  }
   for (const [index, dictionary] of dictionaries.entries()) {
     const parameter = signature.params[firstDictionary + index];
     const label = `runtime dictionary '${dictionary.parameter}'`;
     if (parameter?.name !== dictionary.parameter) {
-      issues.push(`${label} must be trailing parameter #${firstDictionary + index}; found '${parameter?.name ?? "<missing>"}'`);
+      issues.push(`${label} must occupy dictionary parameter #${firstDictionary + index}; found '${parameter?.name ?? "<missing>"}'`);
       continue;
     }
     const typeParameterIndex = signature.typeParams.findIndex((candidate) => candidate?.name === dictionary.typeParameter);
@@ -87,16 +96,19 @@ function validateRuntimeDictionaryProjection(dictionaries, expected, actual, can
       issues.push(`${label} references missing type parameter '${dictionary.typeParameter}'`);
       continue;
     }
-    validateRuntimeDictionaryParameter(parameter, signature.typeParams[typeParameterIndex], typeParameterIndex, label, canon, issues);
+    validateRuntimeDictionaryParameter(parameter, signature.typeParams[typeParameterIndex], typeParameterIndex, dictionary.kind, label, canon, issues);
   }
-  projectedSignature.params = projectedSignature.params.slice(0, firstDictionary);
+  projectedSignature.params = [
+    ...projectedSignature.params.slice(0, firstDictionary),
+    ...projectedSignature.params.slice(dictionaryEnd),
+  ];
   const mismatches = compareSignatures(expected, projected, null, canon, conventions, ambientReferences);
   if (mismatches.length > 0) {
     issues.push(`runtime dictionary projection leaves ${mismatches.length} unrelated signature mismatch(es): ${mismatches.slice(0, 4).map((mismatch) => `${mismatch.kind} (${mismatch.detail})`).join("; ")}`);
   }
 }
 
-function validateRuntimeDictionaryParameter(parameter, typeParameter, typeParameterIndex, label, canon, issues) {
+function validateRuntimeDictionaryParameter(parameter, typeParameter, typeParameterIndex, dictionaryKind, label, canon, issues) {
   if (parameter === null || typeof parameter !== "object" || Array.isArray(parameter)) {
     issues.push(`${label} must be a complete parameter descriptor`);
     return;
@@ -125,9 +137,14 @@ function validateRuntimeDictionaryParameter(parameter, typeParameter, typeParame
     issues.push(`${label} must not have an initializer or initializer issue`);
   }
   const type = parameter?.type;
-  const canonicalFactory = type?.t === "ref" && typeof type.id === "string" ? canon(type.id) : undefined;
-  if (type?.t !== "ref" || canonicalFactory !== canon(GO_ZERO_FACTORY_ID) || !Array.isArray(type.args) || type.args.length !== 1) {
-    issues.push(`${label} must have exact type GoZeroFactory<${typeParameter.name}>`);
+  const dictionaryType = RUNTIME_DICTIONARY_TYPES.get(dictionaryKind);
+  if (dictionaryType === undefined) {
+    issues.push(`${label} has unsupported dictionary kind '${dictionaryKind}'`);
+    return;
+  }
+  const canonicalDictionary = type?.t === "ref" && typeof type.id === "string" ? canon(type.id) : undefined;
+  if (type?.t !== "ref" || canonicalDictionary !== canon(dictionaryType.id) || !Array.isArray(type.args) || type.args.length !== 1) {
+    issues.push(`${label} must have exact type ${dictionaryType.name}<${typeParameter.name}>`);
     return;
   }
   const argument = type.args[0];

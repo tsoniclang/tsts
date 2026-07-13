@@ -97,6 +97,9 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export type GoError = GoInterface<Error>;/);
   assert.match(source, /export type GoUnsafePointer = GoNilable<\{ readonly \[goUnsafePointerBrand\]: never \}>;/);
   assert.match(source, /export type GoZeroFactory<T> = \(\) => T;/);
+  assert.match(source, /export type GoEquality<T> = \(left: T, right: T\) => bool;/);
+  assert.match(source, /export function GoEqualStrict<T extends GoComparable>\(left: T, right: T\): bool/);
+  assert.match(source, /export function GoEqualEmptyStruct\(/);
   assert.match(source, /export function GoZeroBoolean\(\): bool/);
   assert.match(source, /export function GoZeroNumber\(\): number/);
   assert.match(source, /export function GoZeroBigInt\(\): bigint/);
@@ -164,6 +167,9 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.equal(nilSlice.length, 0);
 
   assert.equal(runtime.GoZeroBoolean(), false);
+  assert.equal(runtime.GoEqualStrict("same", "same"), true);
+  assert.equal(runtime.GoEqualStrict("left", "right"), false);
+  assert.equal(runtime.GoEqualEmptyStruct({}, {}), true);
   assert.equal(runtime.GoZeroNumber(), 0);
   assert.equal(runtime.GoZeroBigInt(), 0n);
   assert.equal(runtime.GoZeroString(), "");

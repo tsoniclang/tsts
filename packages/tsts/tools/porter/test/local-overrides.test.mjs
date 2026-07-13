@@ -125,6 +125,26 @@ test("buildLocalOverrideStatus accepts exact runtime zero dictionaries without b
   assert.deepEqual(collectLocalOverrideFailures(status), []);
 });
 
+test("runtime zero and equality dictionaries may bind the same erased type parameter", () => {
+  const status = buildLocalOverrideStatus(baseConfig, { units: [{
+    id: "github.com/microsoft/typescript-go::internal/core/core.go::func::FirstNonZero",
+    kind: "func",
+    status: "implemented",
+    path: "packages/tsts/src/internal/core/core.ts",
+    override: {
+      category: "runtime-representation",
+      allow: ["signature"],
+      reason: "Erased generic zero comparison receives exact static zero-value and equality dictionaries.",
+      runtimeDictionaries: [
+        { kind: "zero-value", parameter: "zeroValue", typeParameter: "T" },
+        { kind: "equality", parameter: "equal", typeParameter: "T" },
+      ],
+    },
+  }] });
+
+  assert.deepEqual(collectLocalOverrideFailures(status), []);
+});
+
 test("runtime dictionary metadata is closed and declaration-specific", () => {
   const invalidOverrides = [
     [{
@@ -147,7 +167,7 @@ test("runtime dictionary metadata is closed and declaration-specific", () => {
         { kind: "zero-value", parameter: "zeroValue", typeParameter: "V" },
         { kind: "zero-value", parameter: "zeroValue", typeParameter: "V" },
       ],
-    }, /parameter duplicates 'zeroValue'.*typeParameter duplicates 'V'/],
+    }, /parameter duplicates 'zeroValue'.*duplicates the 'zero-value' dictionary for type parameter 'V'/],
     [{
       category: "runtime-representation",
       allow: ["signature"],
