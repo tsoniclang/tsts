@@ -695,6 +695,8 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
       receiver!.taskDataByPath,
       task.path,
       candidate,
+      GoZeroPointer<parseTaskData>,
+      GoStringKey,
     );
     if (loaded) {
       putParseTaskData(candidate);
@@ -1127,7 +1129,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
           });
           filesByPath.set(task!.path, packageIdFile);
           if (data!.lowestDepth > 0) {
-            Set_Add(sourceFilesFoundSearchingNodeModules, task!.path);
+            Set_Add(sourceFilesFoundSearchingNodeModules, task!.path, GoStringKey);
           }
           continue;
         } else if (file !== undefined) {
@@ -1189,7 +1191,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
         importHelpersImportSpecifiers.set(path, task!.importHelpersImportSpecifier);
       }
       if (data!.lowestDepth > 0) {
-        Set_Add(sourceFilesFoundSearchingNodeModules, path);
+        Set_Add(sourceFilesFoundSearchingNodeModules, path, GoStringKey);
       }
     }
   };

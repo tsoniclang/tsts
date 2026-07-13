@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoStringKey, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Set } from "../collections/set.js";
 import { NewSetFromItems } from "../collections/set.js";
@@ -464,9 +464,9 @@ export let commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap<string, unkn
  * }
  */
 export let commandLineOptionDeprecated: GoMap<string, GoPtr<Set<string>>> = new globalThis.Map<string, GoPtr<Set<string>>>([
-  ["module", NewSetFromItems<string>("none", "amd", "system", "umd")],
-  ["moduleResolution", NewSetFromItems<string>("node", "classic", "node10")],
-  ["target", NewSetFromItems<string>("es5")],
+  ["module", NewSetFromItems<string>(GoStringKey, "none", "amd", "system", "umd")],
+  ["moduleResolution", NewSetFromItems<string>(GoStringKey, "node", "classic", "node10")],
+  ["target", NewSetFromItems<string>(GoStringKey, "es5")],
 ]);
 
 /**

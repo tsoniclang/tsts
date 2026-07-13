@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoEqualStrict, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoPointerKey, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { SortFunc } from "../../../go/slices.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Elements, Node_PropertyNameOrName, Node_Text } from "../../ast/ast.js";
@@ -37,6 +37,9 @@ import { IsLocalName } from "../utilities.js";
 import { CompareStringsCaseSensitive } from "../../stringutil/compare.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+
+const declarationPointerKey = GoPointerKey<Declaration>();
+const functionDeclarationNodePointerKey = GoPointerKey<FunctionDeclarationNode>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfo","kind":"type","status":"implemented","sigHash":"76ea936086f877ffb778dc08a937acc672aba64f64355b8fe64c36697d57f693"}
  *
@@ -106,14 +109,14 @@ export function collectExternalModuleInfo(sourceFile: GoPtr<SourceFile>, compile
     compilerOptions: compilerOptions,
     emitContext: emitContext,
     resolver: resolver,
-    uniqueExports: NewSetWithSizeHint<string>(0)!,
+    uniqueExports: NewSetWithSizeHint<string>(0, GoStringKey)!,
     hasExportDefault: false,
     output: {
       externalImports: [],
-      exportSpecifiers: NewMultiMapWithSizeHint<string, GoPtr<ExportSpecifier>>(0)!,
-      exportedBindings: NewMultiMapWithSizeHint<GoPtr<Declaration>, GoPtr<ModuleExportName>>(0)!,
+      exportSpecifiers: NewMultiMapWithSizeHint<string, GoPtr<ExportSpecifier>>(0, GoStringKey)!,
+      exportedBindings: NewMultiMapWithSizeHint<GoPtr<Declaration>, GoPtr<ModuleExportName>>(0, declarationPointerKey)!,
       exportedNames: [],
-      exportedFunctions: NewOrderedSetWithSizeHint<GoPtr<FunctionDeclarationNode>>(0)!,
+      exportedFunctions: NewOrderedSetWithSizeHint<GoPtr<FunctionDeclarationNode>>(0, functionDeclarationNodePointerKey)!,
       exportEquals: undefined,
       hasExportStarsToExportValues: false,
     },
@@ -390,7 +393,7 @@ export function externalModuleInfoCollector_collect(receiver: GoPtr<externalModu
  */
 export function externalModuleInfoCollector_addUniqueExport(receiver: GoPtr<externalModuleInfoCollector>, name: string): bool {
   if (!Set_Has(receiver!.uniqueExports, name)) {
-    Set_Add(receiver!.uniqueExports, name);
+    Set_Add(receiver!.uniqueExports, name, GoStringKey);
     return true;
   }
   return false;
@@ -405,7 +408,7 @@ export function externalModuleInfoCollector_addUniqueExport(receiver: GoPtr<exte
  * }
  */
 export function externalModuleInfoCollector_addExportedBinding(receiver: GoPtr<externalModuleInfoCollector>, decl: GoPtr<Declaration>, name: GoPtr<ModuleExportName>): void {
-  MultiMap_Add(receiver!.output!.exportedBindings, EmitContext_MostOriginal(receiver!.emitContext, decl), name);
+  MultiMap_Add(receiver!.output!.exportedBindings, EmitContext_MostOriginal(receiver!.emitContext, decl), name, declarationPointerKey);
 }
 
 /**
@@ -475,7 +478,7 @@ export function externalModuleInfoCollector_addExportedNamesForExportDeclaration
       const propName = Node_PropertyNameOrName(specifier);
       if (propName!.Kind !== KindStringLiteral) {
         if (node!.ModuleSpecifier === undefined) {
-          MultiMap_Add(receiver!.output!.exportSpecifiers, Node_Text(propName), AsExportSpecifier(specifier));
+          MultiMap_Add(receiver!.output!.exportSpecifiers, Node_Text(propName), AsExportSpecifier(specifier), GoStringKey);
         }
 
         let decl = receiver!.resolver!.GetReferencedImportDeclaration(EmitContext_MostOriginal(receiver!.emitContext, propName));
@@ -527,7 +530,7 @@ export function externalModuleInfoCollector_addExportedNamesForExportDeclaration
  * }
  */
 export function externalModuleInfoCollector_addExportedFunctionDeclaration(receiver: GoPtr<externalModuleInfoCollector>, node: GoPtr<FunctionDeclaration>, name: GoPtr<ModuleExportName>, isDefault: bool): void {
-  OrderedSet_Add(receiver!.output!.exportedFunctions, EmitContext_MostOriginal(receiver!.emitContext, Node_AsNode(node)));
+  OrderedSet_Add(receiver!.output!.exportedFunctions, EmitContext_MostOriginal(receiver!.emitContext, Node_AsNode(node)), functionDeclarationNodePointerKey);
   if (isDefault) {
     // export default function() { }
     // function x() { } + export { x as default };

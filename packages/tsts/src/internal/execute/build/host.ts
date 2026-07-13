@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoEqualStrict, GoZeroPointer, type GoError, type GoPtr } from "../../../go/compat.js";
+import { GoBooleanKey, GoEqualStrict, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, type GoError, type GoPtr } from "../../../go/compat.js";
 import type { Duration, Time } from "../../../go/time.js";
 import { Time as TimeClass } from "../../../go/time.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -33,6 +33,16 @@ import type { GoInterface } from "../../../go/compat.js";
 function zeroTime(): Time {
   return new TimeClass();
 }
+
+const sourceFileParseOptionsKey = GoStructKey<SourceFileParseOptions, readonly [string, Path, bool, bool]>(
+  [
+    GoStructField((value) => value.FileName, GoStringKey),
+    GoStructField((value) => value.Path, GoStringKey),
+    GoStructField((value) => value.ExternalModuleIndicatorOptions?.JSX ?? false, GoBooleanKey),
+    GoStructField((value) => value.ExternalModuleIndicatorOptions?.Force ?? false, GoBooleanKey),
+  ],
+  ([FileName, Path, JSX, Force]) => ({ FileName, Path, ExternalModuleIndicatorOptions: { JSX, Force } }),
+);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::type::host","kind":"type","status":"implemented","sigHash":"4878a075c6246d276432fff1aab5b03ef485e8fc6f147876280d0e8e305a382a"}
@@ -162,7 +172,7 @@ export function host_Trace(receiver: GoPtr<host>, msg: GoPtr<Message>, ...args: 
  */
 export function host_GetSourceFile(receiver: GoPtr<host>, opts: SourceFileParseOptions): GoPtr<SourceFile> {
   if (IsDeclarationFileName(opts.FileName) || FileExtensionIs(opts.FileName, ExtensionJson)) {
-    return parseCache_loadOrStore(receiver!.sourceFiles, opts, (o) => receiver!.host!.GetSourceFile(o), false, GoZeroPointer<SourceFile>, GoEqualStrict<GoPtr<SourceFile>>);
+    return parseCache_loadOrStore(receiver!.sourceFiles, opts, (o) => receiver!.host!.GetSourceFile(o), false, GoZeroPointer<SourceFile>, GoEqualStrict<GoPtr<SourceFile>>, sourceFileParseOptionsKey);
   }
   return receiver!.host!.GetSourceFile(opts);
 }
@@ -197,15 +207,15 @@ export function host_GetResolvedProjectReference(receiver: GoPtr<host>, fileName
       const rawMap = raw as OrderedMap<string, unknown>;
       if (rawMap.keys !== undefined) {
         const wrapped: OrderedMap<string, unknown> = { __tsgoBlank0: {}, keys: [], mp: new Map() };
-        OrderedMap_Set(wrapped, "compilerOptions", rawMap);
+        OrderedMap_Set(wrapped, "compilerOptions", rawMap, GoStringKey);
         commandLineRaw = wrapped;
       }
     }
     const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, p, receiver!.orchestrator!.opts.Command!.CompilerOptions, commandLineRaw, host_as_compiler_CompilerHost(receiver), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache));
     const configTime = (receiver!.orchestrator!.opts.Sys!.Now() as Time & { Sub(t: Time): Duration }).Sub(configStart);
-    SyncMap_Store(receiver!.configTimes, p, configTime);
+    SyncMap_Store(receiver!.configTimes, p, configTime, GoStringKey);
     return commandLine;
-  }, true, GoZeroPointer<ParsedCommandLine>, GoEqualStrict<GoPtr<ParsedCommandLine>>);
+  }, true, GoZeroPointer<ParsedCommandLine>, GoEqualStrict<GoPtr<ParsedCommandLine>>, GoStringKey);
 }
 
 /**
@@ -292,7 +302,7 @@ export function host_loadOrStoreMTime(receiver: GoPtr<host>, file: string, oldCa
     mTime = incremental_GetMTime(receiver!.host, file);
   }
   if (store) {
-    const [storedMTime] = SyncMap_LoadOrStore(receiver!.mTimes, path, mTime);
+    const [storedMTime] = SyncMap_LoadOrStore(receiver!.mTimes, path, mTime, zeroTime, GoStringKey);
     mTime = storedMTime;
   }
   return mTime;
@@ -309,7 +319,7 @@ export function host_loadOrStoreMTime(receiver: GoPtr<host>, file: string, oldCa
  */
 export function host_storeMTime(receiver: GoPtr<host>, file: string, mTime: Time): void {
   const path = Orchestrator_toPath(receiver!.orchestrator, file);
-  SyncMap_Store(receiver!.mTimes, path, mTime);
+  SyncMap_Store(receiver!.mTimes, path, mTime, GoStringKey);
 }
 
 /**
@@ -327,6 +337,6 @@ export function host_storeMTimeFromOldCache(receiver: GoPtr<host>, file: string,
   const path = Orchestrator_toPath(receiver!.orchestrator, file);
   const [mTime, found] = SyncMap_Load(oldCache, path, zeroTime);
   if (found) {
-    SyncMap_Store(receiver!.mTimes, path, mTime);
+    SyncMap_Store(receiver!.mTimes, path, mTime, GoStringKey);
   }
 }

@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import * as strconv from "../../go/strconv.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoNilMap, GoNilSlice, GoZeroPointer } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint64 } from "../../go/sync/atomic.js";
 import {
@@ -490,6 +490,8 @@ import { RemoveFileExtension } from "../tspath/extension.js";
 import { Node_AsNode, Node_BodyData, Node_DeclarationData, Node_End, Node_FlowNodeData, Node_ExportableData, Node_ForEachChild, Node_LocalsContainerData, Node_Name, Node_Modifiers, Node_Pos } from "../ast/spine.js";
 
 import type { GoFunc } from "../../go/compat.js";
+
+const symbolPointerKey = GoPointerKey<Symbol>();
 
 function zeroSymbol(): Symbol {
   return {
@@ -1069,7 +1071,7 @@ export function Binder_declareSymbolEx(receiver: GoPtr<Binder>, symbolTable: Sym
     symbol = Binder_newSymbol(receiver, SymbolFlagsNone, InternalSymbolNameMissing);
   } else {
     if ((includes & SymbolFlagsClassifiable) !== 0) {
-      Set_Add(receiver!.classifiableNames, name);
+      Set_Add(receiver!.classifiableNames, name, GoStringKey);
     }
     symbol = symbolTable.get(name);
     if (symbol === undefined) {
@@ -2326,7 +2328,7 @@ export function Binder_bindModuleDeclaration(receiver: GoPtr<Binder>, node: GoPt
         symbol!.Flags = (symbol!.Flags | SymbolFlagsConstEnumOnlyModule) as SymbolFlags;
       } else {
         symbol!.Flags = (symbol!.Flags & ~SymbolFlagsConstEnumOnlyModule) as SymbolFlags;
-        Set_Add(receiver!.notConstEnumOnlyModules, symbol);
+        Set_Add(receiver!.notConstEnumOnlyModules, symbol, symbolPointerKey);
       }
     }
   }
@@ -2690,7 +2692,7 @@ export function Binder_bindClassLikeDeclaration(receiver: GoPtr<Binder>, node: G
       let nameText = InternalSymbolNameClass;
       if (name !== undefined) {
         nameText = Node_Text(name as unknown as Node);
-        Set_Add(receiver!.classifiableNames, nameText);
+        Set_Add(receiver!.classifiableNames, nameText, GoStringKey);
       }
       Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsClass, nameText);
       break;
@@ -6162,7 +6164,7 @@ export function Binder_addDeclarationToSymbol(receiver: GoPtr<Binder>, symbol_: 
   }
   if ((symbol_!.Flags & SymbolFlagsConstEnumOnlyModule) !== 0 && (symbol_!.Flags & (SymbolFlagsFunction | SymbolFlagsClass | SymbolFlagsRegularEnum)) !== 0) {
     symbol_!.Flags = (symbol_!.Flags & ~SymbolFlagsConstEnumOnlyModule) as SymbolFlags;
-    Set_Add(receiver!.notConstEnumOnlyModules, symbol_!);
+    Set_Add(receiver!.notConstEnumOnlyModules, symbol_!, symbolPointerKey);
   }
   if ((symbolFlags & SymbolFlagsValue) !== 0) {
     SetValueDeclaration(symbol_, node);

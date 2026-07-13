@@ -177,6 +177,7 @@ import {
 } from "../types.js";
 import type { Type, TypeAlias, TypeFlags } from "../types.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
+import { goNodePointerKey } from "../map-key-descriptors.js";
 import { TSTrue } from "../../core/tristate.js";
 import { CompilerOptions_GetIsolatedModules, ModuleKindCommonJS, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindSystem } from "../../core/compileroptions.js";
 import type { SymbolNodeLinks } from "../types.js";
@@ -913,7 +914,7 @@ export function Checker_checkReferenceAssignment(receiver: GoPtr<Checker>, targe
 export function Checker_checkAssignmentOperator(receiver: GoPtr<Checker>, left: GoPtr<Node>, operator: Kind, right: GoPtr<Node>, leftType: GoPtr<Type>, rightType: GoPtr<Type>): void {
   if (IsAssignmentOperator(operator)) {
     if (IsDeclarationNode(left!.Parent) && GetAssignmentDeclarationKind(left!.Parent) === JSDeclarationKindExportsProperty) {
-      const symbol_ = LinkStore_Get(receiver!.symbolNodeLinks, left, zeroSymbolNodeLinks)!.v.resolvedSymbol;
+      const symbol_ = LinkStore_Get(receiver!.symbolNodeLinks, left, zeroSymbolNodeLinks, goNodePointerKey)!.v.resolvedSymbol;
       if (symbol_ !== undefined && symbol_!.Declarations !== undefined && symbol_!.Declarations.length > 1 && (rightType!.flags & TypeFlagsUndefined) !== 0) {
         return;
       }

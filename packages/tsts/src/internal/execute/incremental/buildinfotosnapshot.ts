@@ -1,4 +1,4 @@
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { RepopulateDiagnosticInfo } from "../../ast/diagnostic.js";
 import type { Set } from "../../collections/set.js";
 import { NewSetWithSizeHint } from "../../collections/set.js";
@@ -76,7 +76,7 @@ export function buildInfoToSnapshot(buildInfo: GoPtr<BuildInfo>, config: GoPtr<P
     return ToPath(fileName, to.buildInfoDirectory, ParsedCommandLine_UseCaseSensitiveFileNames(config));
   });
   to.filePathSet = core.Map(buildInfo!.FileIdsList, (fileIdList: GoSlice<BuildInfoFileId>) => {
-    const fileSet = NewSetWithSizeHint<Path>(fileIdList.length);
+    const fileSet = NewSetWithSizeHint<Path>(fileIdList.length, GoStringKey);
     for (const fileId of fileIdList) {
       fileSet!.M.set(toSnapshot_toFilePath(to, fileId), {} as { readonly __tsgoEmpty?: never });
     }
@@ -297,9 +297,9 @@ export function toSnapshot_setFileInfoAndEmitSignatures(receiver: GoPtr<toSnapsh
     const buildInfoFileInfo = receiver!.buildInfo!.FileInfos[index]!;
     const path = toSnapshot_toFilePath(receiver, (index + 1) as BuildInfoFileId);
     const info = BuildInfoFileInfo_GetFileInfo(buildInfoFileInfo);
-    SyncMap_Store(receiver!.snapshot.fileInfos as SyncMap<Path, FileInfo>, path, info);
+    SyncMap_Store(receiver!.snapshot.fileInfos as SyncMap<Path, FileInfo>, path, info, GoStringKey);
     if (info!.signature !== "" && isComposite) {
-      SyncMap_Store(receiver!.snapshot.emitSignatures, path, { signature: info!.signature, signatureWithDifferentOptions: [] });
+      SyncMap_Store(receiver!.snapshot.emitSignatures, path, { signature: info!.signature, signatureWithDifferentOptions: [] }, GoStringKey);
     }
   }
   for (const value of receiver!.buildInfo!.EmitSignatures) {
@@ -307,7 +307,7 @@ export function toSnapshot_setFileInfoAndEmitSignatures(receiver: GoPtr<toSnapsh
       SyncMap_Delete(receiver!.snapshot.emitSignatures, toSnapshot_toFilePath(receiver, value!.FileId));
     } else {
       const path = toSnapshot_toFilePath(receiver, value!.FileId);
-      SyncMap_Store(receiver!.snapshot.emitSignatures, path, BuildInfoEmitSignature_toEmitSignature(value, path, receiver!.snapshot.emitSignatures));
+      SyncMap_Store(receiver!.snapshot.emitSignatures, path, BuildInfoEmitSignature_toEmitSignature(value, path, receiver!.snapshot.emitSignatures), GoStringKey);
     }
   }
 }
@@ -342,7 +342,7 @@ export function toSnapshot_setReferencedMap(receiver: GoPtr<toSnapshot>): void {
 export function toSnapshot_setChangeFileSet(receiver: GoPtr<toSnapshot>): void {
   for (const fileId of receiver!.buildInfo!.ChangeFileSet) {
     const filePath = toSnapshot_toFilePath(receiver, fileId);
-    SyncSet_Add(receiver!.snapshot.changedFilesSet as SyncSet<Path>, filePath);
+    SyncSet_Add(receiver!.snapshot.changedFilesSet as SyncSet<Path>, filePath, GoStringKey);
   }
 }
 
@@ -373,7 +373,7 @@ export function toSnapshot_setSemanticDiagnostics(receiver: GoPtr<toSnapshot>): 
   SyncMap_Range(receiver!.snapshot.fileInfos as SyncMap<Path, FileInfo>, (path: Path, _info: FileInfo) => {
     // Initialize to have no diagnostics if its not changed file
     if (!SyncSet_Has(receiver!.snapshot.changedFilesSet as SyncSet<Path>, path)) {
-      SyncMap_Store(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, path, { diagnostics: [], buildInfoDiagnostics: [] });
+      SyncMap_Store(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, path, { diagnostics: [], buildInfoDiagnostics: [] }, GoStringKey);
     }
     return true;
   });
@@ -383,7 +383,7 @@ export function toSnapshot_setSemanticDiagnostics(receiver: GoPtr<toSnapshot>): 
       SyncMap_Delete(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath); // does not have cached diagnostics
     } else {
       const filePath = toSnapshot_toFilePath(receiver, diagnostic!.Diagnostics!.FileId);
-      SyncMap_Store(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath, toSnapshot_toDiagnosticsOrBuildInfoDiagnosticsWithFileName(receiver, diagnostic!.Diagnostics));
+      SyncMap_Store(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath, toSnapshot_toDiagnosticsOrBuildInfoDiagnosticsWithFileName(receiver, diagnostic!.Diagnostics), GoStringKey);
     }
   }
 }
@@ -402,7 +402,7 @@ export function toSnapshot_setSemanticDiagnostics(receiver: GoPtr<toSnapshot>): 
 export function toSnapshot_setEmitDiagnostics(receiver: GoPtr<toSnapshot>): void {
   for (const diagnostic of receiver!.buildInfo!.EmitDiagnosticsPerFile) {
     const filePath = toSnapshot_toFilePath(receiver, diagnostic!.FileId);
-    SyncMap_Store(receiver!.snapshot.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath, toSnapshot_toDiagnosticsOrBuildInfoDiagnosticsWithFileName(receiver, diagnostic));
+    SyncMap_Store(receiver!.snapshot.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath, toSnapshot_toDiagnosticsOrBuildInfoDiagnosticsWithFileName(receiver, diagnostic), GoStringKey);
   }
 }
 
@@ -426,6 +426,6 @@ export function toSnapshot_setAffectedFilesPendingEmit(receiver: GoPtr<toSnapsho
   }
   const ownOptionsEmitKind = GetFileEmitKind(receiver!.snapshot.options);
   for (const pendingEmit of receiver!.buildInfo!.AffectedFilesPendingEmit) {
-    SyncMap_Store(receiver!.snapshot.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>, toSnapshot_toFilePath(receiver, pendingEmit!.FileId), core.IfElse(pendingEmit!.EmitKind === 0, ownOptionsEmitKind, pendingEmit!.EmitKind));
+    SyncMap_Store(receiver!.snapshot.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>, toSnapshot_toFilePath(receiver, pendingEmit!.FileId), core.IfElse(pendingEmit!.EmitKind === 0, ownOptionsEmitKind, pendingEmit!.EmitKind), GoStringKey);
   }
 }

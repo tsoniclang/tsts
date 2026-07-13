@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_Name } from "../../ast/spine.js";
 import type { CallExpression, ClassDeclaration, PropertyDeclaration } from "../../ast/generated/data.js";
@@ -621,7 +621,7 @@ export function superAccessState_trackSuperAccess(receiver: GoPtr<superAccessSta
   switch (node!.Kind) {
     case KindPropertyAccessExpressionKind:
       if (Node_Expression(node)!.Kind === KindSuperKeyword) {
-        OrderedSet_Add(receiver!.capturedSuperProperties!, Node_Text(Node_Name(node)!));
+        OrderedSet_Add(receiver!.capturedSuperProperties!, Node_Text(Node_Name(node)!), GoStringKey);
       }
       break;
     case KindElementAccessExpressionKind:

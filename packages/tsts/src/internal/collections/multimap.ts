@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import type { GoComparable, GoEquality, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoComparable, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoMapIsNil, GoMapMake, GoNilMap } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 
@@ -19,6 +20,7 @@ export interface MultiMap<K extends GoComparable = unknown, V extends GoComparab
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::func::NewMultiMapWithSizeHint","kind":"func","status":"implemented","sigHash":"58f9bfeafa8eb6db3f0b665be009113ad9db3a0790abd5ce6f4165ae005cc499"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic multimap construction receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func NewMultiMapWithSizeHint[K comparable, V comparable](hint int) *MultiMap[K, V] {
@@ -27,14 +29,15 @@ export interface MultiMap<K extends GoComparable = unknown, V extends GoComparab
  * 	}
  * }
  */
-export function NewMultiMapWithSizeHint<K extends GoComparable, V extends GoComparable>(hint: int): GoPtr<MultiMap<K, V>> {
+export function NewMultiMapWithSizeHint<K extends GoComparable, V extends GoComparable>(hint: int, keyDescriptor: GoMapKeyDescriptor<K>): GoPtr<MultiMap<K, V>> {
   return {
-    M: new globalThis.Map<K, GoSlice<V>>(),
+    M: GoMapMake<K, GoSlice<V>>(keyDescriptor),
   };
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::func::GroupBy","kind":"func","status":"implemented","sigHash":"dca9bec35095fffba77521f0103dbd239076e0eb2c1ab06c3a4224e7d3b0f013"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic grouping forwards the exact static Go map-key descriptor to lazy multimap allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func GroupBy[K comparable, V comparable](items []V, groupId func(V) K) *MultiMap[K, V] {
@@ -45,10 +48,10 @@ export function NewMultiMapWithSizeHint<K extends GoComparable, V extends GoComp
  * 	return m
  * }
  */
-export function GroupBy<K extends GoComparable, V extends GoComparable>(items: GoSlice<V>, groupId: GoFunc<(arg0: V) => K>): GoPtr<MultiMap<K, V>> {
-  const m: MultiMap<K, V> = { M: new globalThis.Map<K, GoSlice<V>>() };
+export function GroupBy<K extends GoComparable, V extends GoComparable>(items: GoSlice<V>, groupId: GoFunc<(arg0: V) => K>, keyDescriptor: GoMapKeyDescriptor<K>): GoPtr<MultiMap<K, V>> {
+  const m: MultiMap<K, V> = { M: GoNilMap() };
   for (const item of items) {
-    MultiMap_Add(m, groupId!(item), item);
+    MultiMap_Add(m, groupId!(item), item, keyDescriptor);
   }
   return m;
 }
@@ -81,6 +84,7 @@ export function MultiMap_Get<K extends GoComparable, V extends GoComparable>(rec
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::method::MultiMap.Add","kind":"method","status":"implemented","sigHash":"64e28fd3385c790f5abed8cd688703d0bccb64cbb070ade258ebc3569f0f41f9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic zero-multimap mutation receives the exact static Go map-key descriptor for lazy allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (s *MultiMap[K, V]) Add(key K, value V) {
@@ -90,7 +94,10 @@ export function MultiMap_Get<K extends GoComparable, V extends GoComparable>(rec
  * 	s.M[key] = append(s.M[key], value)
  * }
  */
-export function MultiMap_Add<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K, value: V): void {
+export function MultiMap_Add<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K, value: V, keyDescriptor: GoMapKeyDescriptor<K>): void {
+  if (GoMapIsNil(receiver!.M)) {
+    receiver!.M = GoMapMake<K, GoSlice<V>>(keyDescriptor);
+  }
   const existing = receiver!.M.get(key) ?? [];
   existing.push(value);
   receiver!.M.set(key, existing);

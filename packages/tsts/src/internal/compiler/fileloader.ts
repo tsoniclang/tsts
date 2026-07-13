@@ -2033,13 +2033,17 @@ export function fileLoader_pathForLibFile(receiver: GoPtr<fileLoader>, name: str
     SyncMap_LoadOrStore<Path_9073472b, GoPtr<libResolution>>(
       receiver!.pathForLibFileResolutions as unknown as GoPtr<SyncMap<Path_9073472b, GoPtr<libResolution>>>,
       fileLoader_toPath(receiver, resolveFrom),
-      { libraryName, resolution, trace }
+      { libraryName, resolution, trace },
+      GoZeroPointer<libResolution>,
+      GoStringKey,
     );
   }
   const [libPath] = SyncMap_LoadOrStore<string, GoPtr<LibFile>>(
     receiver!.pathForLibFileCache as unknown as GoPtr<SyncMap<string, GoPtr<LibFile>>>,
     name,
-    { Name: name, path, Replaced: replaced }
+    { Name: name, path, Replaced: replaced },
+    GoZeroPointer<LibFile>,
+    GoStringKey,
   );
   return libPath;
 }

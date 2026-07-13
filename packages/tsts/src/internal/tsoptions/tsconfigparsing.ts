@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, GoNilMap, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoStringKey, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
@@ -797,7 +797,7 @@ export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonCon
         return convertToJson(sourceFile, firstObject as GoPtr<Expression>, true /*returnValue*/, jsonConversionNotifier);
       }
     }
-    return [newMapWithSizeHint<string, unknown>(0), errors];
+    return [newMapWithSizeHint<string, unknown>(0, GoStringKey), errors];
   }
   return convertToJson(sourceFile, rootExpression, true, jsonConversionNotifier);
 }
@@ -1731,7 +1731,7 @@ export function ParseJsonSourceFileConfigFileContent(sourceFile: GoPtr<TsConfigS
 export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFile>, returnValue: bool, node: GoPtr<ObjectLiteralExpression>, objectOption: GoPtr<CommandLineOption>, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [GoPtr<OrderedMap<string, unknown>>, GoSlice<GoPtr<Diagnostic>>] {
   let result: GoPtr<OrderedMap<string, unknown>> = undefined;
   if (returnValue) {
-    result = newMapWithSizeHint<string, unknown>(0);
+    result = newMapWithSizeHint<string, unknown>(0, GoStringKey);
   }
   const errors: GoPtr<Diagnostic>[] = [];
   for (const element of (node!.Properties!.Nodes! ?? [])) {
@@ -1762,7 +1762,7 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
     errors.push(...err);
     if (keyText !== "") {
       if (returnValue) {
-        OrderedMap_Set(result as GoPtr<OrderedMap<string, unknown>>, keyText, value);
+        OrderedMap_Set(result as GoPtr<OrderedMap<string, unknown>>, keyText, value, GoStringKey);
       }
       // Notify key value set, if user asked for it
       if (jsonConversionNotifier !== undefined) {
@@ -2220,9 +2220,9 @@ export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extende
 
   if (cacheEntry!.extendedResult !== undefined) {
     if (sourceFile !== undefined) {
-      Set_Add(result!.extendedSourceFiles, SourceFile_FileName(cacheEntry!.extendedResult!.SourceFile));
+      Set_Add(result!.extendedSourceFiles, SourceFile_FileName(cacheEntry!.extendedResult!.SourceFile), GoStringKey);
       for (const extendedSourceFile of (cacheEntry!.extendedResult!.ExtendedSourceFiles ?? [])) {
-        Set_Add(result!.extendedSourceFiles, extendedSourceFile);
+        Set_Add(result!.extendedSourceFiles, extendedSourceFile, GoStringKey);
       }
     }
   }
@@ -2530,16 +2530,16 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
     }
     const ownRawMap = ownConfig!.raw as GoPtr<OrderedMap<string, unknown>>;
     if (result.include !== undefined && (result.include as unknown[]).length > 0) {
-      OrderedMap_Set(ownRawMap, "include", result.include);
+      OrderedMap_Set(ownRawMap, "include", result.include, GoStringKey);
     }
     if (result.exclude !== undefined && (result.exclude as unknown[]).length > 0) {
-      OrderedMap_Set(ownRawMap, "exclude", result.exclude);
+      OrderedMap_Set(ownRawMap, "exclude", result.exclude, GoStringKey);
     }
     if (result.files !== undefined && (result.files as unknown[]).length > 0) {
-      OrderedMap_Set(ownRawMap, "files", result.files);
+      OrderedMap_Set(ownRawMap, "files", result.files, GoStringKey);
     }
     if (result.compileOnSave && !OrderedMap_Has(ownRawMap, "compileOnSave")) {
-      OrderedMap_Set(ownRawMap, "compileOnSave", result.compileOnSave);
+      OrderedMap_Set(ownRawMap, "compileOnSave", result.compileOnSave, GoStringKey);
     }
     if (sourceFile !== undefined) {
       for (const [extendedSourceFile] of Set_Keys(result.extendedSourceFiles)) {
@@ -3423,7 +3423,7 @@ export function handleOptionConfigDirTemplateSubstitution(compilerOptions: GoPtr
   OrderedMap_Entries(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>)!((k: string, v: GoSlice<string>): bool => {
     const substitution = getSubstitutedStringArrayWithConfigDirTemplate(v, basePath);
     if (substitution !== undefined) {
-      OrderedMap_Set(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>, k, substitution);
+      OrderedMap_Set(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>, k, substitution, GoStringKey);
     }
     return true;
   });
@@ -3674,11 +3674,11 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
   const keyMapper = (value: string): string => GetCanonicalFileName(value, host!.UseCaseSensitiveFileNames());
   // Literal file names (provided via the "files" array in tsconfig.json) are stored in a
   // file map with a possibly case insensitive key. We use this map later when including wildcard paths.
-  const literalFileMap = newMapWithSizeHint<string, string>(0);
+  const literalFileMap = newMapWithSizeHint<string, string>(0, GoStringKey);
   // Wildcard paths
-  const wildcardFileMap = newMapWithSizeHint<string, string>(0);
+  const wildcardFileMap = newMapWithSizeHint<string, string>(0, GoStringKey);
   // Wildcard paths of json files
-  const wildCardJsonFileMap = newMapWithSizeHint<string, string>(0);
+  const wildCardJsonFileMap = newMapWithSizeHint<string, string>(0, GoStringKey);
   const validatedFilesSpec = configFileSpecs.validatedFilesSpec;
   const validatedIncludeSpecs = configFileSpecs.validatedIncludeSpecs;
   const validatedExcludeSpecs = configFileSpecs.validatedExcludeSpecs;
@@ -3688,7 +3688,7 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
   // Literal files are always included verbatim.
   for (const fileName of (validatedFilesSpec ?? [])) {
     const file = GetNormalizedAbsolutePath(fileName, basePath);
-    OrderedMap_Set(literalFileMap as GoPtr<OrderedMap<string, string>>, keyMapper(fileName), file);
+    OrderedMap_Set(literalFileMap as GoPtr<OrderedMap<string, string>>, keyMapper(fileName), file, GoStringKey);
   }
 
   let jsonOnlyIncludeMatchers: GoPtr<ReturnType<typeof NewSpecMatcher>> = undefined;
@@ -3707,7 +3707,7 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
         if (includeIndex !== -1) {
           const key = keyMapper(file);
           if (!OrderedMap_Has(literalFileMap as GoPtr<OrderedMap<string, string>>, key) && !OrderedMap_Has(wildCardJsonFileMap as GoPtr<OrderedMap<string, string>>, key)) {
-            OrderedMap_Set(wildCardJsonFileMap as GoPtr<OrderedMap<string, string>>, key, file);
+            OrderedMap_Set(wildCardJsonFileMap as GoPtr<OrderedMap<string, string>>, key, file, GoStringKey);
           }
         }
         continue;
@@ -3723,7 +3723,7 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
       removeWildcardFilesWithLowerPriorityExtension(file, wildcardFileMap as GoPtr<OrderedMap<string, string>>, supportedExtensions, keyMapper);
       const key = keyMapper(file);
       if (!OrderedMap_Has(literalFileMap as GoPtr<OrderedMap<string, string>>, key) && !OrderedMap_Has(wildcardFileMap as GoPtr<OrderedMap<string, string>>, key)) {
-        OrderedMap_Set(wildcardFileMap as GoPtr<OrderedMap<string, string>>, key, file);
+        OrderedMap_Set(wildcardFileMap as GoPtr<OrderedMap<string, string>>, key, file, GoStringKey);
       }
     }
   }

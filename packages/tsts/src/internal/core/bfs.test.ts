@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GoZeroString } from "../../go/compat.js";
+import { GoStringKey, GoZeroString } from "../../go/compat.js";
 import { Map as SyncMapBacking } from "../../go/sync.js";
 import { SyncSet_Has } from "../collections/syncset.js";
 import {
@@ -21,13 +21,13 @@ function makeVisitedSet(): SyncSet<string> {
       __tsgoBlank1: [],
       m: new SyncMapBacking<string, { readonly __tsgoEmpty?: never }>(),
     },
-  } as SyncSet<string>;
+  };
 }
 
 function makeOptions(visited: SyncSet<string>): BreadthFirstSearchOptions<string, string> {
   return {
     Visited: visited,
-    PreprocessLevel: undefined as unknown as BreadthFirstSearchOptions<string, string>["PreprocessLevel"],
+    PreprocessLevel: undefined,
   };
 }
 
@@ -41,7 +41,7 @@ test("BreadthFirstSearchParallel finds a specific node", () => {
 
   const result = BreadthFirstSearchParallel("A", childrenFromGraph(graph), (node: string): [boolean, boolean] => {
     return [node === "D", true];
-  }, GoZeroString);
+  }, GoZeroString, GoStringKey);
 
   assert.equal(result.Stopped, true);
   assert.deepEqual(result.Path, ["D", "B", "A"]);
@@ -59,7 +59,7 @@ test("BreadthFirstSearchParallel visits all nodes when visit never stops", () =>
   const result = BreadthFirstSearchParallel("A", childrenFromGraph(graph), (node: string): [boolean, boolean] => {
     visitedNodes.push(node);
     return [false, false];
-  }, GoZeroString);
+  }, GoZeroString, GoStringKey);
 
   assert.equal(result.Stopped, false);
   assert.deepEqual(result.Path, []);
@@ -85,6 +85,7 @@ test("BreadthFirstSearchParallelEx stops before visiting deeper levels", () => {
     makeOptions(visited),
     (node: string): string => node,
     GoZeroString,
+    GoStringKey,
   );
 
   assert.equal(SyncSet_Has(visited, "Root"), true);
@@ -111,6 +112,7 @@ test("BreadthFirstSearchParallelEx returns fallback when no stop result exists",
     makeOptions(visited),
     (node: string): string => node,
     GoZeroString,
+    GoStringKey,
   );
 
   assert.equal(result.Stopped, false);
@@ -137,7 +139,7 @@ test("BreadthFirstSearchParallel prefers a stop result over fallback", () => {
       default:
         return [false, false];
     }
-  }, GoZeroString);
+  }, GoZeroString, GoStringKey);
 
   assert.equal(result.Stopped, true);
   assert.deepEqual(result.Path, ["D", "B", "A"]);

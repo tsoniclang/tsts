@@ -86,6 +86,11 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export type GoMap<K, V> = Map<K, V>;/);
   assert.match(source, /export function GoNilMap<K, V>\(\): GoMap<K, V>/);
   assert.doesNotMatch(source, /__tsgo(?:Key|Value)Zero|class GoNativeMap|function NewGoMap/);
+  assert.match(source, /makeMap<V>\(\): GoMap<K, V>/);
+  assert.match(source, /export function GoMapMake<K, V>\(keyDescriptor: GoMapKeyDescriptor<K>\): GoMap<K, V>/);
+  assert.match(source, /export function GoMapClone<K, V>\(map: GoMap<K, V>, keyDescriptor: GoMapKeyDescriptor<K>\): GoMap<K, V>/);
+  assert.doesNotMatch(source, /instanceof Go(?:Struct|Number)Map|isGoCloneableMap/);
+  assert.match(source, /export class GoNumberMap<V> implements Map<number, V>/);
   assert.match(source, /assignment to entry in nil map/);
   assert.match(source, /export type GoChan<T, Direction extends string = "bidirectional"> = \{/);
   assert.match(source, /export function GoNilChan<T, Direction extends string = "bidirectional">\(\): GoChan<T, Direction>/);
@@ -213,6 +218,25 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   allocatedMap.set("key", 1);
   assert.deepEqual(runtime.GoMapLookup(allocatedMap, "key", runtime.GoZeroNumber), [1, true]);
 
+  const stringMap = runtime.GoMapMake(runtime.GoStringKey);
+  stringMap.set("key", 1);
+  assert.equal(stringMap.get("key"), 1);
+
+  const numberMap = runtime.GoMapMake(runtime.GoNumberKey);
+  numberMap.set(0, "positive zero");
+  numberMap.set(-0, "negative zero");
+  assert.equal(numberMap.size, 1);
+  assert.equal(numberMap.get(0), "negative zero");
+  numberMap.set(Number.NaN, "first NaN");
+  numberMap.set(Number.NaN, "second NaN");
+  assert.equal(numberMap.size, 3);
+  assert.equal(numberMap.has(Number.NaN), false);
+  assert.equal(numberMap.get(Number.NaN), undefined);
+  assert.equal(numberMap.delete(Number.NaN), false);
+  assert.deepEqual(runtime.GoMapLookup(numberMap, Number.NaN, runtime.GoZeroString), ["", false]);
+  assert.deepEqual([...numberMap.values()], ["negative zero", "first NaN", "second NaN"]);
+  assert.deepEqual([...runtime.GoMapClone(numberMap, runtime.GoNumberKey).values()], ["negative zero", "first NaN", "second NaN"]);
+
   class StructuredKey {
     constructor(value) { this.value = value; }
     text() { return String(this.value); }
@@ -221,13 +245,16 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
     [runtime.GoStructField((value) => value.value, runtime.GoNumberKey)],
     ([value], source) => Object.assign(Object.create(Object.getPrototypeOf(source)), source, { value }),
   );
-  const structuredMap = runtime.NewGoStructMap(structuredKey);
+  const structuredMap = runtime.GoMapMake(structuredKey);
   const sourceKey = new StructuredKey(1);
   structuredMap.set(sourceKey, "stored");
   sourceKey.value = 2;
   assert.equal(structuredMap.get(new StructuredKey(1)), "stored");
   assert.equal(structuredMap.keys().next().value.text(), "1");
   assert.deepEqual(runtime.GoMapLookup(structuredMap, new StructuredKey(2), runtime.GoZeroString), ["", false]);
+  const exactStructuredMap = runtime.GoMapMake(structuredKey);
+  exactStructuredMap.set(new StructuredKey(3), "exact");
+  assert.equal(exactStructuredMap.get(new StructuredKey(3)), "exact");
 
   const nilChannel = runtime.GoNilChan();
   assert.equal(runtime.GoChanIsNil(nilChannel), true);

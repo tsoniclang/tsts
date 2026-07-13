@@ -80,6 +80,7 @@ import type { Type, TypePredicate } from "../types.js";
 import { Checker_getFlowTypeOfReference, Checker_getFlowTypeOfReferenceEx, getFlowNodeOfNode } from "../flow.js";
 import { AssignmentKindDefinite, AssignmentKindNone, getAssignmentTargetKind, hasDotDotDotToken } from "../utilities.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
+import { goNodePointerKey } from "../map-key-descriptors.js";
 import { TSUnknown } from "../../core/tristate.js";
 import {
   Checker_getBaseConstraintOrType,
@@ -870,7 +871,7 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
         (IsVariableDeclaration(rootDeclaration) && (Checker_getCombinedNodeFlagsCached(receiver, rootDeclaration) & NodeFlagsConstant) !== 0) ||
         IsParameterDeclaration(rootDeclaration)
       ) {
-        const links = LinkStore_Get(receiver!.nodeLinks, parent, zeroNodeLinks)!;
+        const links = LinkStore_Get(receiver!.nodeLinks, parent, zeroNodeLinks, goNodePointerKey)!;
         if ((links.v.flags & NodeCheckFlagsInCheckIdentifier) === 0) {
           links.v.flags |= NodeCheckFlagsInCheckIdentifier;
           const parentType = Checker_getTypeForBindingElementParent(receiver, parent, CheckModeNormal);

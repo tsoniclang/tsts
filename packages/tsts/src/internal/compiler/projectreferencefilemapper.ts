@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { SourceFile_Path } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
@@ -279,8 +279,8 @@ export function projectReferenceFileMapper_rangeResolvedProjectReference(receive
   if (receiver!.opts.Config!.ConfigFile === undefined) {
     return false;
   }
-  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile?.size ?? 0);
-  Set_Add(seenRef, SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile));
+  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile?.size ?? 0, GoStringKey);
+  Set_Add(seenRef, SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile), GoStringKey);
   const refs = receiver!.referencesInConfigFile?.get(SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile)) ?? [];
   return projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, refs, f, receiver!.opts.Config, seenRef);
 }
@@ -313,7 +313,7 @@ export function projectReferenceFileMapper_rangeResolvedProjectReference(receive
 export function projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver: GoPtr<projectReferenceFileMapper>, references: GoSlice<Path>, f: GoFunc<(path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool>, parent: GoPtr<ParsedCommandLine>, seenRef: GoPtr<Set<Path>>): bool {
   for (let index = 0; index < references.length; index++) {
     const path = references[index]!;
-    if (!Set_AddIfAbsent(seenRef as GoPtr<Set<Path>>, path)) {
+    if (!Set_AddIfAbsent(seenRef as GoPtr<Set<Path>>, path, GoStringKey)) {
       continue;
     }
     const config = receiver!.configToProjectReference?.get(path);
@@ -348,8 +348,8 @@ export function projectReferenceFileMapper_rangeResolvedProjectReferenceInChildC
   if (childConfig === undefined || childConfig.ConfigFile === undefined) {
     return false;
   }
-  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile?.size ?? 0);
-  Set_Add(seenRef, SourceFile_Path(childConfig.ConfigFile!.SourceFile));
+  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile?.size ?? 0, GoStringKey);
+  Set_Add(seenRef, SourceFile_Path(childConfig.ConfigFile!.SourceFile), GoStringKey);
   const refs = receiver!.referencesInConfigFile?.get(SourceFile_Path(childConfig.ConfigFile!.SourceFile)) ?? [];
   return projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, refs, f, receiver!.opts.Config, seenRef);
 }
@@ -402,18 +402,18 @@ export function projectReferenceFileMapper_getSourceToDtsIfSymlink(receiver: GoP
   if (receiver!.loader !== undefined && Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.opts.Config)!.PreserveSymlinks)) {
     const fileName = file!.FileName();
     if (!strings.Contains(fileName, "/node_modules/")) {
-      SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
+      SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined, GoStringKey);
     } else {
       const realDeclarationPath = fileLoader_toPath(receiver!.loader, receiver!.host!.FS()!.Realpath(fileName));
       if (realDeclarationPath === path) {
-        SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
+        SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined, GoStringKey);
       } else {
         const realpathDtsToSourceResult = projectReferenceFileMapper_getProjectReferenceFromOutputDts(receiver, realDeclarationPath);
         if (realpathDtsToSourceResult !== undefined) {
-          SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, realpathDtsToSourceResult);
+          SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, realpathDtsToSourceResult, GoStringKey);
           return realpathDtsToSourceResult;
         }
-        SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
+        SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined, GoStringKey);
       }
     }
   }

@@ -1,5 +1,6 @@
 import type { int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerKey } from "../../go/compat.js";
 import { Diagnostic_SetMessageChain, Diagnostic_SetRelatedInfo, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import { Set_AddIfAbsent, Set_Len } from "../collections/set.js";
@@ -15,6 +16,8 @@ import { fileIncludeKindLibReferenceDirective, fileIncludeKindTypeReferenceDirec
 import type { FileIncludeReason } from "./fileInclude.js";
 import { includeProcessor_explainRedirectAndImpliedFormat, includeProcessor_getRelatedInfo, includeProcessor_getReferenceLocation } from "./includeprocessor.js";
 import type { Program } from "./program.js";
+
+const fileIncludeReasonKey = GoPointerKey<FileIncludeReason>();
 
 import type { GoInterface } from "../../go/compat.js";
 /**
@@ -250,7 +253,7 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
   };
 
   const processInclude = (includeReason: GoPtr<FileIncludeReason>): void => {
-    if (!Set_AddIfAbsent(seenReasons, includeReason)) {
+    if (!Set_AddIfAbsent(seenReasons, includeReason, fileIncludeReasonKey)) {
       return;
     }
     includeDetails = [...includeDetails, FileIncludeReason_toDiagnostic(includeReason, program, false)];

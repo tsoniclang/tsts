@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoZeroPointer, GoZeroString, type GoPtr } from "../../go/compat.js";
+import { GoStringKey, GoZeroPointer, GoZeroString, type GoPtr } from "../../go/compat.js";
 import { Map } from "../../go/sync.js";
 import * as strings from "../../go/strings.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -143,11 +143,11 @@ export function KnownSymlinks_SetDirectory(receiver: GoPtr<KnownSymlinks>, symli
     const [, ok] = SyncMap_Load(receiver!.directories, symlinkPath, GoZeroPointer<KnownDirectoryLink>);
     if (!ok) {
       const newSet: SyncSet<string> = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new Map() } };
-      const [set] = SyncMap_LoadOrStore<Path, GoPtr<SyncSet<string>>>(receiver!.directoriesByRealpath as SyncMap<Path, GoPtr<SyncSet<string>>>, realDirectory!.RealPath, newSet);
-      SyncSet_Add<string>(set, symlink);
+      const [set] = SyncMap_LoadOrStore<Path, GoPtr<SyncSet<string>>>(receiver!.directoriesByRealpath as SyncMap<Path, GoPtr<SyncSet<string>>>, realDirectory!.RealPath, newSet, GoZeroPointer<SyncSet<string>>, GoStringKey);
+      SyncSet_Add<string>(set, symlink, GoStringKey);
     }
   }
-  SyncMap_Store<Path, GoPtr<KnownDirectoryLink>>(receiver!.directories as SyncMap<Path, GoPtr<KnownDirectoryLink>>, symlinkPath, realDirectory);
+  SyncMap_Store<Path, GoPtr<KnownDirectoryLink>>(receiver!.directories as SyncMap<Path, GoPtr<KnownDirectoryLink>>, symlinkPath, realDirectory, GoStringKey);
 }
 
 /**
@@ -168,10 +168,10 @@ export function KnownSymlinks_SetFile(receiver: GoPtr<KnownSymlinks>, symlink: s
   if (!ok) {
     const realpathPath = ToPath(realpath, receiver!.cwd, receiver!.useCaseSensitiveFileNames);
     const newSet: SyncSet<string> = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new Map() } };
-    const [set] = SyncMap_LoadOrStore<Path, GoPtr<SyncSet<string>>>(receiver!.filesByRealpath as SyncMap<Path, GoPtr<SyncSet<string>>>, realpathPath, newSet);
-    SyncSet_Add<string>(set, symlink);
+    const [set] = SyncMap_LoadOrStore<Path, GoPtr<SyncSet<string>>>(receiver!.filesByRealpath as SyncMap<Path, GoPtr<SyncSet<string>>>, realpathPath, newSet, GoZeroPointer<SyncSet<string>>, GoStringKey);
+    SyncSet_Add<string>(set, symlink, GoStringKey);
   }
-  SyncMap_Store<Path, string>(receiver!.files as SyncMap<Path, string>, symlinkPath, realpath);
+  SyncMap_Store<Path, string>(receiver!.files as SyncMap<Path, string>, symlinkPath, realpath, GoStringKey);
 }
 
 /**

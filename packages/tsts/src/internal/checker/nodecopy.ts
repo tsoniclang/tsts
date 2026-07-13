@@ -51,6 +51,7 @@ import { Node_Clone, Node_ForEachChild, Node_Modifiers, Node_Name, Node_VisitEac
 import type { NodeVisitor as ConcreteNodeVisitor } from "../ast/visitor.js";
 import { NewNodeVisitor, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "../ast/visitor.js";
 import { LinkStore_Get } from "../core/linkstore.js";
+import { goNodePointerKey } from "./map-key-descriptors.js";
 import { NewTextRange } from "../core/text.js";
 import type { SymbolTracker } from "../nodebuilder/types.js";
 import { FlagsMultilineObjectLiterals, FlagsUseSingleQuotesForStringLiteralType, InternalFlagsAllowUnresolvedNames } from "../nodebuilder/types.js";
@@ -742,7 +743,7 @@ export function NodeBuilderImpl_getModuleSpecifierOverride(receiver: GoPtr<NodeB
     }
     let name = Node_Text(lit);
     const originalName = name;
-    const nodeSymbol = LinkStore_Get(receiver!.ch!.symbolNodeLinks, parent, goZeroSymbolNodeLinks)!.v.resolvedSymbol;
+    const nodeSymbol = LinkStore_Get(receiver!.ch!.symbolNodeLinks, parent, goZeroSymbolNodeLinks, goNodePointerKey)!.v.resolvedSymbol;
     let meaning: SymbolFlags = SymbolFlagsType;
     if (importTypeNode.IsTypeOf) {
       meaning = SymbolFlagsValue;
@@ -809,7 +810,7 @@ export function NodeBuilderImpl_rewriteModuleSpecifier(receiver: GoPtr<NodeBuild
 export function NodeBuilderImpl_getEnclosingDeclarationIgnoringFakeScope(receiver: GoPtr<NodeBuilderImpl>): GoPtr<Node> {
   const loop = (enc: GoPtr<Node>): GoPtr<Node> => {
     if (enc === undefined) return undefined;
-    if (LinkStore_Get(receiver!.links, enc, goZeroNodeBuilderLinks)!.v.fakeScopeForSignatureDeclaration === undefined) return enc;
+    if (LinkStore_Get(receiver!.links, enc, goZeroNodeBuilderLinks, goNodePointerKey)!.v.fakeScopeForSignatureDeclaration === undefined) return enc;
     return loop(enc.Parent);
   };
   return loop(receiver!.ctx!.enclosingDeclaration);
@@ -964,7 +965,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (IsConstTypeReference(node)) {
       return undefined;
     }
-    const links = LinkStore_Get(b!.ch!.symbolNodeLinks, node, goZeroSymbolNodeLinks)!.v;
+    const links = LinkStore_Get(b!.ch!.symbolNodeLinks, node, goZeroSymbolNodeLinks, goNodePointerKey)!.v;
     const symbol_ = links?.resolvedSymbol;
     if (symbol_ === undefined) {
       return undefined;

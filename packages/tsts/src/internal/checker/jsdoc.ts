@@ -1,4 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoNumberKey, GoStringKey } from "../../go/compat.js";
 import { NewSetWithSizeHint, Set_Add, Set_Has } from "../collections/set.js";
 import { AsJSDoc, AsJSDocParameterOrPropertyTag, AsQualifiedName } from "../ast/generated/casts.js";
 import type { Node } from "../ast/spine.js";
@@ -111,17 +112,17 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
   }
 
   const isJs = IsInJSFile(node);
-  const parameters = NewSetWithSizeHint<string>(0);
-  const excludedParameters = NewSetWithSizeHint<number>(0);
+  const parameters = NewSetWithSizeHint<string>(0, GoStringKey);
+  const excludedParameters = NewSetWithSizeHint<number>(0, GoNumberKey);
 
   for (let index = 0; index < Node_Parameters(node).length; index++) {
     const param = Node_Parameters(node)[index];
     const name = Node_Name(param);
     if (IsIdentifier(name)) {
-      Set_Add(parameters, Node_Text(name));
+      Set_Add(parameters, Node_Text(name), GoStringKey);
     }
     if (IsBindingPattern(name)) {
-      Set_Add(excludedParameters, index);
+      Set_Add(excludedParameters, index, GoNumberKey);
     }
   }
   if (Checker_containsArgumentsReference(receiver, node)) {

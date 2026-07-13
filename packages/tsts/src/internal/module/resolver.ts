@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
@@ -4378,7 +4378,7 @@ export function Resolver_getParsedPatternsForPaths(receiver: GoPtr<Resolver>): G
  */
 export function TryParsePatterns(pathMappings: GoPtr<OrderedMap<string, GoSlice<string>>>): GoPtr<ParsedPatterns> {
   if (pathMappings === undefined) {
-    return { matchableStringSet: NewSetWithSizeHint<string>(0)!, patterns: [] };
+    return { matchableStringSet: NewSetWithSizeHint<string>(0, GoStringKey)!, patterns: [] };
   }
   const typedMappings = pathMappings as GoPtr<OrderedMap<string, GoSlice<string>>>;
   // Count patterns (wildcard) vs matchables (exact)
@@ -4393,13 +4393,13 @@ export function TryParsePatterns(pathMappings: GoPtr<OrderedMap<string, GoSlice<
   const numMatchables = OrderedMap_Size(typedMappings) - numPatterns;
 
   const patterns: GoSlice<Pattern> = [];
-  const matchableStringSet: Set<string> = NewSetWithSizeHint<string>(numMatchables)!;
+  const matchableStringSet: Set<string> = NewSetWithSizeHint<string>(numMatchables, GoStringKey)!;
 
   OrderedMap_Keys<string, GoSlice<string>>(typedMappings)!((p: string): bool => {
     const pattern = TryParsePattern(p);
     if (Pattern_IsValid(pattern)) {
       if (pattern.StarIndex === -1) {
-        Set_Add(matchableStringSet, p);
+        Set_Add(matchableStringSet, p, GoStringKey);
       } else {
         patterns.push(pattern);
       }
@@ -5060,17 +5060,17 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
         let newIncludeConditions = includeConditions;
         let newExcludeConditions = excludeConditions;
         if (!conditionAlwaysMatches) {
-          newIncludeConditions = Set_Clone(includeConditions);
-          newExcludeConditions = Set_Clone(excludeConditions);
+          newIncludeConditions = Set_Clone(includeConditions, GoStringKey);
+          newExcludeConditions = Set_Clone(excludeConditions, GoStringKey);
           if (newIncludeConditions === undefined) {
-            newIncludeConditions = NewSetWithSizeHint<string>(0);
+            newIncludeConditions = NewSetWithSizeHint<string>(0, GoStringKey);
           }
-          Set_Add(newIncludeConditions!, condition);
+          Set_Add(newIncludeConditions!, condition, GoStringKey);
           for (const prevCondition of prevConditions) {
             if (newExcludeConditions === undefined) {
-              newExcludeConditions = NewSetWithSizeHint<string>(0);
+              newExcludeConditions = NewSetWithSizeHint<string>(0, GoStringKey);
             }
-            Set_Add(newExcludeConditions!, prevCondition);
+            Set_Add(newExcludeConditions!, prevCondition, GoStringKey);
           }
         }
         prevConditions.push(condition);

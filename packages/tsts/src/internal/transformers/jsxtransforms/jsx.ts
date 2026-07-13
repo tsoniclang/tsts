@@ -1,5 +1,5 @@
 import type { bool, int, long } from "../../../go/scalars.js";
-import { GoZeroMap, type GoError, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
+import { GoNilMap, GoStringKey, GoZeroMap, type GoError, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
 import { Builder, IndexByte } from "../../../go/strings.js";
 import { FormatInt, ParseInt } from "../../../go/strconv.js";
 import { DecodeRuneInStringAt, StringByteAt, StringByteLen, StringByteSlice } from "../../../go/unicode/utf8.js";
@@ -107,7 +107,7 @@ export function NewJSXTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transfor
     emitResolver: opts!.EmitResolver,
     importSpecifier: "",
     filenameDeclaration: undefined,
-    utilizedImplicitRuntimeImports: { __tsgoBlank0: {}, keys: [], mp: new globalThis.Map() },
+    utilizedImplicitRuntimeImports: { __tsgoBlank0: {}, keys: [], mp: GoNilMap() },
     inJsxChild: false,
     currentSourceFile: undefined,
   };
@@ -246,7 +246,7 @@ export function JSXTransformer_getImplicitImportForName(receiver: GoPtr<JSXTrans
       return AsImportSpecifier(elem)!.name;
     }
   } else {
-    OrderedMap_Set<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource, new globalThis.Map<string, GoPtr<Node>>());
+    OrderedMap_Set(receiver!.utilizedImplicitRuntimeImports, importSource, new globalThis.Map<string, GoPtr<Node>>(), GoStringKey);
   }
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;

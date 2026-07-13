@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_Modifiers, Node_Name } from "../../ast/spine.js";
 import { Node_Body, Node_ParameterList, Node_Parameters, Node_StatementList, NodeFactory_UpdateArrowFunction, NodeFactory_UpdateBlock, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateFunctionExpression, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateReturnStatement, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateYieldExpression } from "../../ast/ast.js";
@@ -1821,7 +1821,7 @@ export function forawaitTransformer_transformAsyncGeneratorFunctionBody(receiver
   const savedHasSuperPropertyAssignment = superState.hasSuperPropertyAssignment;
   const savedSuperBinding = superState.superBinding;
   const savedSuperIndexBinding = superState.superIndexBinding;
-  superState.capturedSuperProperties = NewOrderedSetWithSizeHint<string>(0);
+  superState.capturedSuperProperties = NewOrderedSetWithSizeHint<string>(0, GoStringKey);
   superState.hasSuperElementAccess = false;
   superState.hasSuperPropertyAssignment = false;
   superState.superBinding = NodeFactory_NewUniqueNameEx(

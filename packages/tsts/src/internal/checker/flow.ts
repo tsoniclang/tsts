@@ -36,6 +36,7 @@ import { UnionReductionLiteral, UnionReductionSubtype } from "./checker/state.js
 import { NodeCheckFlagsAssignmentsMarked, NodeCheckFlagsNone, ExhaustiveStateComputing, ExhaustiveStateFalse, ExhaustiveStateTrue, ExhaustiveStateUnknown } from "./types.js";
 import type { MappedSymbolLinks, MarkedAssignmentSymbolLinks, NodeLinks, SignatureLinks, SwitchStatementLinks, TypeNodeLinks } from "./types.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
+import { goNodePointerKey, goSymbolPointerKey } from "./map-key-descriptors.js";
 import { CacheHashKey_IsZero, keyBuilder_writeByte, keyBuilder_writeString } from "./checker/support.js";
 import { keyBuilder_hash } from "./checker/support-queries.js";
 import { keyBuilder_writeNode } from "./checker/syntax-checking.js";
@@ -146,7 +147,7 @@ function getMarkedAssignmentSymbolLinks(receiver: GoPtr<Checker>, symbol_: GoPtr
   const links = LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(
     receiver!.markedAssignmentSymbolLinks,
     symbol_,
-    zeroMarkedAssignmentSymbolLinks,
+    zeroMarkedAssignmentSymbolLinks, goSymbolPointerKey,
   )!;
   return links.v;
 }
@@ -4337,7 +4338,7 @@ export function isCoercibleUnderDoubleEquals(source: GoPtr<Type>, target: GoPtr<
  * }
  */
 export function Checker_isExhaustiveSwitchStatement(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks, node, zeroSwitchStatementLinks);
+  const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks, node, zeroSwitchStatementLinks, goNodePointerKey);
   const exhaustiveState = links!.v.exhaustiveState;
   if (exhaustiveState === ExhaustiveStateUnknown) {
     links!.v.exhaustiveState = ExhaustiveStateComputing;
@@ -4455,7 +4456,7 @@ export function Checker_eachTypeContainedIn(receiver: GoPtr<Checker>, source: Go
  * }
  */
 export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<string> {
-  const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks, node, zeroSwitchStatementLinks);
+  const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks, node, zeroSwitchStatementLinks, goNodePointerKey);
   if (!links!.v.witnessesComputed) {
     const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes;
     const witnesses: string[] = new Array(clauses.length).fill("");
@@ -4528,7 +4529,7 @@ export function Checker_getNotEqualFactsFromTypeofSwitch(receiver: GoPtr<Checker
  * }
  */
 export function Checker_getSwitchClauseTypes(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Type>> {
-  const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks, node, zeroSwitchStatementLinks);
+  const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks, node, zeroSwitchStatementLinks, goNodePointerKey);
   if (!links!.v.switchTypesComputed) {
     const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes;
     const types: GoPtr<Type>[] = new Array(clauses.length);
@@ -4607,7 +4608,7 @@ export function Checker_getTypeOfSwitchClause(receiver: GoPtr<Checker>, clause: 
  * }
  */
 export function Checker_getEffectsSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Signature> {
-  const links = LinkStore_Get<GoPtr<Node>, SignatureLinks>(receiver!.signatureLinks, node, zeroSignatureLinks);
+  const links = LinkStore_Get<GoPtr<Node>, SignatureLinks>(receiver!.signatureLinks, node, zeroSignatureLinks, goNodePointerKey);
   let signature = links!.v.effectsSignature;
   if (signature === undefined) {
     let funcType: GoPtr<Type>;
@@ -4828,7 +4829,7 @@ export function Checker_getExplicitTypeOfSymbol(receiver: GoPtr<Checker>, symbol
   }
   if (symbol!.Flags & (SymbolFlagsVariable | SymbolFlagsProperty)) {
     if (symbol!.CheckFlags & CheckFlagsMapped) {
-      const origin = LinkStore_Get<GoPtr<Symbol>, MappedSymbolLinks>(receiver!.mappedSymbolLinks, symbol, zeroMappedSymbolLinks)!.v.syntheticOrigin;
+      const origin = LinkStore_Get<GoPtr<Symbol>, MappedSymbolLinks>(receiver!.mappedSymbolLinks, symbol, zeroMappedSymbolLinks, goSymbolPointerKey)!.v.syntheticOrigin;
       if (origin !== undefined && Checker_getExplicitTypeOfSymbol(receiver, origin, diagnostic) !== undefined) {
         return Checker_getTypeOfSymbol(receiver, symbol);
       }
@@ -5028,7 +5029,7 @@ export function Checker_getInitialTypeOfVariableDeclaration(receiver: GoPtr<Chec
  */
 export function Checker_getTypeOfInitializer(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
   if (LinkStore_Has<GoPtr<Node>, TypeNodeLinks>(receiver!.typeNodeLinks, node)) {
-    const t = LinkStore_Get<GoPtr<Node>, TypeNodeLinks>(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v.resolvedType;
+    const t = LinkStore_Get<GoPtr<Node>, TypeNodeLinks>(receiver!.typeNodeLinks, node, zeroTypeNodeLinks, goNodePointerKey)!.v.resolvedType;
     if (t !== undefined) { return t; }
   }
   return Checker_getTypeOfExpression(receiver, node);
@@ -5891,7 +5892,7 @@ export function Checker_ensureAssignmentsMarked(receiver: GoPtr<Checker>, symbol
   if (getMarkedAssignmentSymbolLinks(receiver, symbol_).lastAssignmentPos !== 0) { return; }
   const parent = FindAncestor(symbol_!.ValueDeclaration, IsFunctionOrSourceFile);
   if (parent === undefined) { return; }
-  const links = LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks, parent, zeroNodeLinks)!;
+  const links = LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks, parent, zeroNodeLinks, goNodePointerKey)!;
   if (!(links.v.flags & NodeCheckFlagsAssignmentsMarked)) {
     links.v.flags |= NodeCheckFlagsAssignmentsMarked;
     if (!Checker_hasParentWithAssignmentsMarked(receiver, parent)) {
@@ -5911,7 +5912,7 @@ export function Checker_ensureAssignmentsMarked(receiver: GoPtr<Checker>, symbol
  * }
  */
 export function Checker_hasParentWithAssignmentsMarked(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  return FindAncestor(node!.Parent, (n) => IsFunctionOrSourceFile(n) && !!(LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks, n, zeroNodeLinks)!.v.flags & NodeCheckFlagsAssignmentsMarked)) !== undefined;
+  return FindAncestor(node!.Parent, (n) => IsFunctionOrSourceFile(n) && !!(LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks, n, zeroNodeLinks, goNodePointerKey)!.v.flags & NodeCheckFlagsAssignmentsMarked)) !== undefined;
 }
 
 /**

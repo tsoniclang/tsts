@@ -1,7 +1,7 @@
 import type { bool, byte, double, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import type { GoComparable, GoConstraint, GoEquality, GoError, GoMap, GoMapKeyDescriptor, GoPtr, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
-import { GoNilSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
+import { GoMapMake, GoNilSlice, GoZeroString } from "../../go/compat.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
 import { ExtensionCjs, ExtensionCts, ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, HasTSFileExtension, IsDeclarationFileName } from "../tspath/extension.js";
@@ -1786,6 +1786,7 @@ export function DiffMapsFunc<K extends GoComparable, V1, V2>(m1: GoMap<K, V1>, m
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::CopyMapInto","kind":"func","status":"implemented","sigHash":"fd702b4259fea6ec44fd16663c03f9e2ba72382a6560f546b7da5bf9d476cd56"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic map cloning receives the exact static Go map-key descriptor for result allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func CopyMapInto[M1 ~map[K]V, M2 ~map[K]V, K comparable, V any](dst M1, src M2) map[K]V {
@@ -1796,9 +1797,9 @@ export function DiffMapsFunc<K extends GoComparable, V1, V2>(m1: GoMap<K, V1>, m
  * 	return dst
  * }
  */
-export function CopyMapInto<M1 extends GoConstraint<"~map[K]V"> & GoMap<K, V>, M2 extends GoConstraint<"~map[K]V"> & GoMap<K, V>, K extends GoComparable, V>(dst: M1, src: M2): GoMap<K, V> {
+export function CopyMapInto<M1 extends GoConstraint<"~map[K]V"> & GoMap<K, V>, M2 extends GoConstraint<"~map[K]V"> & GoMap<K, V>, K extends GoComparable, V>(dst: M1, src: M2, keyDescriptor: GoMapKeyDescriptor<K>): GoMap<K, V> {
   if (dst === undefined) {
-    return maps.Clone(src)!;
+    return maps.Clone(src, keyDescriptor);
   }
   maps.Copy(dst, src);
   return dst;
@@ -1830,7 +1831,7 @@ export function UnorderedEqual<T extends GoComparable>(s1: GoSlice<T>, s2: GoSli
   if (s1.length !== s2.length) {
     return false;
   }
-  const counts: GoMap<T, int> = NewGoStructMap<T, int>(keyDescriptor);
+  const counts: GoMap<T, int> = GoMapMake<T, int>(keyDescriptor);
   for (const v of s1) {
     counts.set(v, (counts.get(v) ?? 0) + 1);
   }

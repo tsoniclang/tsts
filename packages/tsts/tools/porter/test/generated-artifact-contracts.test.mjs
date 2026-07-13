@@ -56,12 +56,17 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /\/\/ @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"porter:facades","sourceRevision":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","path":"go\/compat\.ts","contentHash":"[a-f0-9]{64}"}/);
   assert.match(compat, /export type GoMap<K, V> = Map<K, V>;/);
   assert.match(compat, /export class GoStructMap<K, V> implements Map<K, V>/);
+  assert.match(compat, /export class GoNumberMap<V> implements Map<number, V>/);
   assert.match(compat, /export function NewGoStructMap<K, V>\(keyDescriptor: GoMapKeyDescriptor<K>\): GoStructMap<K, V>/);
+  assert.match(compat, /export function GoMapMake<K, V>\(keyDescriptor: GoMapKeyDescriptor<K>\): GoMap<K, V>/);
   assert.match(compat, /export function GoStructKey<K, const Values extends readonly unknown\[\]>/);
   assert.match(compat, /export function GoInterfaceKey<K>/);
+  assert.match(compat, /export function GoNamedStringKey<K extends string>/);
+  assert.match(compat, /export function GoNamedNumberKey<K extends number>/);
   assert.match(compat, /export interface GoInterfaceValue<T> \{\s*__tsgoGoReceiver\(\): GoPtr<T>;/);
   assert.match(compat, /readonly identity: symbol/);
   assert.match(compat, /snapshot\(value: K\): K/);
+  assert.match(compat, /makeMap<V>\(\): GoMap<K, V>/);
   assert.doesNotMatch(compat, /goStructMapKey|JSON\.stringify|\.Hi\b|\.Lo\b|\.pos\b|\.end\b/);
   assert.doesNotMatch(compat, /goReceiverKey|GoInterfaceAdapter|GoInterfaceTryAssert|GoInterfaceAssert|Object\.defineProperties/);
   assert.match(compat, /export function MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): GoChan<T>/);

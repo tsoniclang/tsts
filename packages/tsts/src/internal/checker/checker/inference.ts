@@ -14,6 +14,7 @@ import { SymbolFlagsMethod, SymbolFlagsNone, SymbolFlagsPrototype, SymbolFlagsTy
 import { Diagnostic_AddRelatedInfo, DiagnosticsCollection_Add, NewDiagnostic } from "../../ast/diagnostic.js";
 import { Filter, FindLastIndex, IfElse, Map, OrElse, Same, SameMap, Some } from "../../core/core.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
+import { goNodePointerKey, goSymbolPointerKey } from "../map-key-descriptors.js";
 import { getDeclarationsOfKind, isNodeDescendantOf, IsTypeAny, NewDiagnosticForNode } from "../utilities.js";
 import { Checker_symbolToString, Checker_TypeToString } from "../printer.js";
 import { All_declarations_of_0_must_have_identical_constraints, Type_parameter_0_has_a_circular_constraint, Circularity_originates_in_type_at_this_location, Property_0_of_type_1_is_not_assignable_to_2_index_type_3, X_0_is_declared_here, X_infer_declarations_are_only_permitted_in_the_extends_clause_of_a_conditional_type, Type_0_has_no_signatures_for_which_the_type_argument_list_is_applicable } from "../../diagnostics/generated/messages.js";
@@ -225,7 +226,7 @@ export function Checker_checkInferType(receiver: GoPtr<Checker>, node: GoPtr<Nod
   Checker_checkSourceElement(receiver, typeParameterDeclarationNode);
   const symbol_ = Checker_getSymbolOfDeclaration(receiver, typeParameterDeclarationNode);
   if ((symbol_!.Declarations?.length ?? 0) > 1) {
-    const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_, goZeroDeclaredTypeLinks)!.v;
+    const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_, goZeroDeclaredTypeLinks, goSymbolPointerKey)!.v;
     if (!links!.typeParametersChecked) {
       links!.typeParametersChecked = true as bool;
       const typeParameter = Checker_getDeclaredTypeOfTypeParameter(receiver, symbol_);
@@ -582,7 +583,7 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_getTypeOfInstantiatedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks);
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks, goSymbolPointerKey);
   if (links!.v.resolvedType === undefined) {
     links!.v.resolvedType = Checker_instantiateType(receiver, Checker_getTypeOfSymbol(receiver, links!.v.target), links!.v.mapper);
   }
@@ -602,7 +603,7 @@ export function Checker_getTypeOfInstantiatedSymbol(receiver: GoPtr<Checker>, sy
  * }
  */
 export function Checker_getWriteTypeOfInstantiatedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks);
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks, goSymbolPointerKey);
   if (links!.v.writeType === undefined) {
     links!.v.writeType = Checker_instantiateType(receiver, Checker_getWriteTypeOfSymbol(receiver, links!.v.target), links!.v.mapper);
   }
@@ -1106,7 +1107,7 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
   } else {
     declaration = t!.symbol!.Declarations![0];
   }
-  const links = LinkStore_Get(receiver!.typeNodeLinks, declaration, goZeroTypeNodeLinks)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, declaration, goZeroTypeNodeLinks, goNodePointerKey)!.v;
   let target: GoPtr<Type>;
   if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
     target = links!.resolvedType;
@@ -1347,7 +1348,7 @@ export function Checker_getTypeAliasInstantiation(receiver: GoPtr<Checker>, symb
       return Checker_getStringMappingType(receiver, symbol_, typeArguments[0]);
     }
   }
-  const links = LinkStore_Get(receiver!.typeAliasLinks, symbol_, goZeroTypeAliasLinks);
+  const links = LinkStore_Get(receiver!.typeAliasLinks, symbol_, goZeroTypeAliasLinks, goSymbolPointerKey);
   const typeParameters = links!.v.typeParameters;
   const key = getTypeAliasInstantiationKey(typeArguments, alias);
   let instantiation = links!.v.instantiations.get(key);
@@ -1505,7 +1506,7 @@ export function Checker_getInferredTrueTypeFromConditionalType(receiver: GoPtr<C
  * }
  */
 export function Checker_getTypeFromInferTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node, goZeroTypeNodeLinks);
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, goZeroTypeNodeLinks, goNodePointerKey);
   if (links!.v.resolvedType === undefined) {
     links!.v.resolvedType = Checker_getDeclaredTypeOfTypeParameter(receiver, Checker_getSymbolOfDeclaration(receiver, AsInferTypeNode(node)!.TypeParameter));
   }

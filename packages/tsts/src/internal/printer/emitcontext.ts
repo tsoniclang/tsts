@@ -1,6 +1,6 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoNilMap, GoNilSlice, GoZeroPointer } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint32 } from "../../go/sync/atomic.js";
 import * as maps from "../../go/maps.js";
@@ -44,6 +44,9 @@ import { GeneratedIdentifierFlags_IsNode } from "./generatedidentifierflags.js";
 import type { EmitHelper } from "./helpers.js";
 
 import type { GoFunc } from "../../go/compat.js";
+
+const nodePointerKey = GoPointerKey<Node>();
+const emitHelperPointerKey = GoPointerKey<EmitHelper>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::EmitContext","kind":"type","status":"implemented","sigHash":"6d5f48a2b47922c7624b8c9a29245f8616e2ace7e8c5704549fa66ece9746147"}
  *
@@ -130,12 +133,12 @@ export function NewEmitContext(): GoPtr<EmitContext> {
     autoGenerate: new globalThis.Map(),
     textSource: new globalThis.Map(),
     original: new globalThis.Map(),
-    emitNodes: { entries: new globalThis.Map(), arena: { data: [] } },
+    emitNodes: { entries: GoNilMap(), arena: { data: [] } },
     assignedName: new globalThis.Map(),
     classThis: new globalThis.Map(),
     varScopeStack: { data: [] },
     letScopeStack: { data: [] },
-    emitHelpers: { m: { __tsgoBlank0: {}, keys: [], mp: new globalThis.Map() } },
+    emitHelpers: { m: { __tsgoBlank0: {}, keys: [], mp: GoNilMap() } },
   };
   c.Factory = NewNodeFactory(c);
   return c;
@@ -193,12 +196,12 @@ export function EmitContext_Reset(receiver: GoPtr<EmitContext>): void {
   c.autoGenerate = new globalThis.Map();
   c.textSource = new globalThis.Map();
   c.original = new globalThis.Map();
-  c.emitNodes = { entries: new globalThis.Map(), arena: { data: [] } };
+  c.emitNodes = { entries: GoNilMap(), arena: { data: [] } };
   c.assignedName = new globalThis.Map();
   c.classThis = new globalThis.Map();
   c.varScopeStack = { data: [] };
   c.letScopeStack = { data: [] };
-  c.emitHelpers = { m: { __tsgoBlank0: {}, keys: [], mp: new globalThis.Map() } };
+  c.emitHelpers = { m: { __tsgoBlank0: {}, keys: [], mp: GoNilMap() } };
   c.Factory = factory;
 }
 
@@ -735,10 +738,10 @@ export function EmitContext_mergeEnvironment(receiver: GoPtr<EmitContext>, state
       left = Splice(left, 0, 0, ...declarations.slice(0, rightStandardPrologueEnd));
       changed = true;
     } else {
-      const leftPrologues: Set<string> = { M: new globalThis.Map() };
+      const leftPrologues: Set<string> = { M: GoNilMap() };
       for (let i = 0; i < leftStandardPrologueEnd; i++) {
         const leftPrologue = statements[i]!;
-        Set_Add(leftPrologues, Node_Text(leftPrologue));
+        Set_Add(leftPrologues, Node_Text(leftPrologue), GoStringKey);
       }
       for (let i = rightStandardPrologueEnd - 1; i >= 0; i--) {
         const rightPrologue = declarations[i]!;
@@ -1025,7 +1028,7 @@ export function EmitContext_SetOriginalEx(receiver: GoPtr<EmitContext>, node: Go
     c.original.set(node, original);
     const emitNode = LinkStore_TryGet(c.emitNodes, original);
     if (emitNode !== undefined) {
-      emitNode_copyFrom(LinkStore_Get(c.emitNodes, node, zeroEmitNode)!.v, emitNode.v);
+      emitNode_copyFrom(LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v, emitNode.v);
     }
   } else if (!allowOverwrite && existing !== original) {
     throw new globalThis.Error("Original node already set.");
@@ -1195,7 +1198,7 @@ export function emitNode_copyFrom(receiver: GoPtr<emitNode>, source: GoPtr<emitN
   e.emitFlags = src.emitFlags;
   e.commentRange = src.commentRange;
   e.sourceMapRange = src.sourceMapRange;
-  e.tokenSourceMapRanges = maps.Clone(src.tokenSourceMapRanges)!;
+  e.tokenSourceMapRanges = maps.Clone(src.tokenSourceMapRanges, GoNumberKey)!;
   e.helpers = slices.Clone(src.helpers)!;
   e.externalHelpersModuleName = src.externalHelpersModuleName;
 }
@@ -1230,7 +1233,7 @@ export function EmitContext_EmitFlags(receiver: GoPtr<EmitContext>, node: GoPtr<
  */
 export function EmitContext_SetEmitFlags(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, flags: EmitFlags_30313d69): void {
   const c = receiver!;
-  LinkStore_Get(c.emitNodes, node, zeroEmitNode)!.v.emitFlags = flags;
+  LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.emitFlags = flags;
 }
 
 /**
@@ -1243,7 +1246,7 @@ export function EmitContext_SetEmitFlags(receiver: GoPtr<EmitContext>, node: GoP
  */
 export function EmitContext_AddEmitFlags(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, flags: EmitFlags_30313d69): void {
   const c = receiver!;
-  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode)!;
+  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
   emitNode.v.emitFlags = (emitNode.v.emitFlags | flags) >>> 0;
 }
 
@@ -1279,7 +1282,7 @@ export function EmitContext_CommentRange(receiver: GoPtr<EmitContext>, node: GoP
  */
 export function EmitContext_SetCommentRange(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, loc: TextRange): void {
   const c = receiver!;
-  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode)!;
+  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
   emitNode.v.commentRange = loc;
   emitNode.v.flags = (emitNode.v.flags | hasCommentRange) >>> 0;
 }
@@ -1328,7 +1331,7 @@ export function EmitContext_SourceMapRange(receiver: GoPtr<EmitContext>, node: G
  */
 export function EmitContext_SetSourceMapRange(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, loc: TextRange): void {
   const c = receiver!;
-  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode)!;
+  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
   emitNode.v.sourceMapRange = loc;
   emitNode.v.flags = (emitNode.v.flags | hasSourceMapRange) >>> 0;
 }
@@ -1360,7 +1363,7 @@ export function EmitContext_AssignSourceMapRange(receiver: GoPtr<EmitContext>, t
  */
 export function EmitContext_AssignCommentAndSourceMapRanges(receiver: GoPtr<EmitContext>, to: GoPtr<Node>, from_: GoPtr<Node>): void {
   const c = receiver!;
-  const emitNode = LinkStore_Get(c.emitNodes, to, zeroEmitNode)!;
+  const emitNode = LinkStore_Get(c.emitNodes, to, zeroEmitNode, nodePointerKey)!;
   const commentRange = EmitContext_CommentRange(receiver, from_);
   const sourceMapRange = EmitContext_SourceMapRange(receiver, from_);
   emitNode.v.commentRange = commentRange;
@@ -1408,7 +1411,7 @@ export function EmitContext_TokenSourceMapRange(receiver: GoPtr<EmitContext>, no
  */
 export function EmitContext_SetTokenSourceMapRange(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, kind: Kind, loc: TextRange): void {
   const c = receiver!;
-  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode)!;
+  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
   if (emitNode.v.tokenSourceMapRanges === undefined) {
     emitNode.v.tokenSourceMapRanges = new globalThis.Map<Kind, TextRange>();
   }
@@ -1511,7 +1514,7 @@ export function EmitContext_RequestEmitHelper(receiver: GoPtr<EmitContext>, help
       EmitContext_RequestEmitHelper(receiver, h);
     }
   }
-  OrderedSet_Add(c.emitHelpers, helper);
+  OrderedSet_Add(c.emitHelpers, helper, emitHelperPointerKey);
 }
 
 /**
@@ -1545,7 +1548,7 @@ export function EmitContext_ReadEmitHelpers(receiver: GoPtr<EmitContext>): GoSli
  */
 export function EmitContext_AddEmitHelper(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, ...helper: Array<GoPtr<EmitHelper>>): void {
   const c = receiver!;
-  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode)!;
+  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
   emitNode.v.helpers ??= [];
   for (const h of helper) {
     emitNode.v.helpers = AppendIfUnique(emitNode.v.helpers, h, GoEqualStrict<GoPtr<EmitHelper>>);
@@ -1595,7 +1598,7 @@ export function EmitContext_MoveEmitHelpers(receiver: GoPtr<EmitContext>, source
     return;
   }
 
-  const targetEmitNode = LinkStore_Get(c.emitNodes, target, zeroEmitNode)!;
+  const targetEmitNode = LinkStore_Get(c.emitNodes, target, zeroEmitNode, nodePointerKey)!;
   targetEmitNode.v.helpers ??= [];
   let helpersRemoved = 0;
   for (let i = 0; i < sourceEmitHelpers.length; i++) {
@@ -1679,7 +1682,7 @@ export function EmitContext_SetExternalHelpersModuleName(receiver: GoPtr<EmitCon
   if (parseNode === undefined) {
     throw new globalThis.Error("Node must be a parse tree node or have an Original pointer to a parse tree node.");
   }
-  const emitNode = LinkStore_Get(c.emitNodes, parseNode, zeroEmitNode)!;
+  const emitNode = LinkStore_Get(c.emitNodes, parseNode, zeroEmitNode, nodePointerKey)!;
   emitNode.v.externalHelpersModuleName = name;
 }
 
@@ -2197,7 +2200,7 @@ export function EmitContext_VisitEmbeddedStatement(receiver: GoPtr<EmitContext>,
  */
 export function EmitContext_SetSyntheticLeadingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, comments: GoSlice<SynthesizedComment>): GoPtr<Node> {
   const c = receiver!;
-  LinkStore_Get(c.emitNodes, node, zeroEmitNode)!.v.leadingComments = comments;
+  LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.leadingComments = comments;
   return node;
 }
 
@@ -2212,7 +2215,7 @@ export function EmitContext_SetSyntheticLeadingComments(receiver: GoPtr<EmitCont
  */
 export function EmitContext_AddSyntheticLeadingComment(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, kind: Kind, text: string, hasTrailingNewLine: bool): GoPtr<Node> {
   const c = receiver!;
-  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode)!;
+  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
   emitNode.v.leadingComments = [...(emitNode.v.leadingComments ?? []), { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text }];
   return node;
 }
@@ -2231,7 +2234,7 @@ export function EmitContext_AddSyntheticLeadingComment(receiver: GoPtr<EmitConte
 export function EmitContext_GetSyntheticLeadingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoSlice<SynthesizedComment> {
   const c = receiver!;
   if (LinkStore_Has(c.emitNodes, node)) {
-    return LinkStore_Get(c.emitNodes, node, zeroEmitNode)!.v.leadingComments ?? [];
+    return LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.leadingComments ?? [];
   }
   return [];
 }
@@ -2247,7 +2250,7 @@ export function EmitContext_GetSyntheticLeadingComments(receiver: GoPtr<EmitCont
  */
 export function EmitContext_SetSyntheticTrailingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, comments: GoSlice<SynthesizedComment>): GoPtr<Node> {
   const c = receiver!;
-  LinkStore_Get(c.emitNodes, node, zeroEmitNode)!.v.trailingComments = comments;
+  LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.trailingComments = comments;
   return node;
 }
 
@@ -2262,7 +2265,7 @@ export function EmitContext_SetSyntheticTrailingComments(receiver: GoPtr<EmitCon
  */
 export function EmitContext_AddSyntheticTrailingComment(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, kind: Kind, text: string, hasTrailingNewLine: bool): GoPtr<Node> {
   const c = receiver!;
-  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode)!;
+  const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
   emitNode.v.trailingComments = [...(emitNode.v.trailingComments ?? []), { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text }];
   return node;
 }
@@ -2281,7 +2284,7 @@ export function EmitContext_AddSyntheticTrailingComment(receiver: GoPtr<EmitCont
 export function EmitContext_GetSyntheticTrailingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoSlice<SynthesizedComment> {
   const c = receiver!;
   if (LinkStore_Has(c.emitNodes, node)) {
-    return LinkStore_Get(c.emitNodes, node, zeroEmitNode)!.v.trailingComments ?? [];
+    return LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.trailingComments ?? [];
   }
   return [];
 }
@@ -2296,7 +2299,7 @@ export function EmitContext_GetSyntheticTrailingComments(receiver: GoPtr<EmitCon
  */
 export function EmitContext_SetTypeNode(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, typeNode: GoPtr<TypeNode>): void {
   const c = receiver!;
-  LinkStore_Get(c.emitNodes, node, zeroEmitNode)!.v.typeNode = typeNode;
+  LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.typeNode = typeNode;
 }
 
 /**

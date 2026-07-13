@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoZeroInterface, type GoConstraint, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroInterface, type GoConstraint, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -150,9 +150,9 @@ export function ParseStringArray(value: GoInterface<unknown>): GoSlice<string> {
 export function parseStringMap(value: GoInterface<unknown>): GoPtr<OrderedMap<string, GoSlice<string>>> {
   const m = asOrderedMap(value);
   if (m !== undefined) {
-    const result = NewOrderedMapWithSizeHint<string, GoSlice<string>>(OrderedMap_Size(m));
+    const result = NewOrderedMapWithSizeHint<string, GoSlice<string>>(OrderedMap_Size(m), GoStringKey);
     OrderedMap_Entries(m as GoPtr<OrderedMap<string, unknown>>)!((k: string, v: unknown): bool => {
-      OrderedMap_Set(result, k, ParseStringArray(v));
+      OrderedMap_Set(result, k, ParseStringArray(v), GoStringKey);
       return true;
     });
     return result;
@@ -289,31 +289,31 @@ export function parseProjectReference(json: GoInterface<unknown>): GoSlice<GoPtr
  * }
  */
 export function parseJsonToStringKey(json: GoInterface<unknown>): GoPtr<OrderedMap<string, unknown>> {
-  const result = NewOrderedMapWithSizeHint<string, unknown>(6 as int);
+  const result = NewOrderedMapWithSizeHint<string, unknown>(6 as int, GoStringKey);
   const m = asOrderedMap(json) as GoPtr<OrderedMap<string, unknown>>;
   if (m !== undefined) {
     {
       const [v, ok] = OrderedMap_Get(m, "include", GoZeroInterface);
       if (ok) {
-        OrderedMap_Set(result, "include", v);
+        OrderedMap_Set(result, "include", v, GoStringKey);
       }
     }
     {
       const [v, ok] = OrderedMap_Get(m, "exclude", GoZeroInterface);
       if (ok) {
-        OrderedMap_Set(result, "exclude", v);
+        OrderedMap_Set(result, "exclude", v, GoStringKey);
       }
     }
     {
       const [v, ok] = OrderedMap_Get(m, "files", GoZeroInterface);
       if (ok) {
-        OrderedMap_Set(result, "files", v);
+        OrderedMap_Set(result, "files", v, GoStringKey);
       }
     }
     {
       const [v, ok] = OrderedMap_Get(m, "references", GoZeroInterface);
       if (ok) {
-        OrderedMap_Set(result, "references", v);
+        OrderedMap_Set(result, "references", v, GoStringKey);
       }
     }
     {
@@ -321,27 +321,27 @@ export function parseJsonToStringKey(json: GoInterface<unknown>): GoPtr<OrderedM
       if (ok) {
         if (typeof v === "string") {
           const str: string = v;
-          OrderedMap_Set(result, "extends", [str] as GoSlice<unknown>);
+          OrderedMap_Set(result, "extends", [str] as GoSlice<unknown>, GoStringKey);
         }
-        OrderedMap_Set(result, "extends", v);
+        OrderedMap_Set(result, "extends", v, GoStringKey);
       }
     }
     {
       const [v, ok] = OrderedMap_Get(m, "compilerOptions", GoZeroInterface);
       if (ok) {
-        OrderedMap_Set(result, "compilerOptions", v);
+        OrderedMap_Set(result, "compilerOptions", v, GoStringKey);
       }
     }
     {
       const [v, ok] = OrderedMap_Get(m, "excludes", GoZeroInterface);
       if (ok) {
-        OrderedMap_Set(result, "excludes", v);
+        OrderedMap_Set(result, "excludes", v, GoStringKey);
       }
     }
     {
       const [v, ok] = OrderedMap_Get(m, "typeAcquisition", GoZeroInterface);
       if (ok) {
-        OrderedMap_Set(result, "typeAcquisition", v);
+        OrderedMap_Set(result, "typeAcquisition", v, GoStringKey);
       }
     }
   }
@@ -1387,7 +1387,7 @@ export function convertToOptionsWithAbsolutePaths(optionsBase: GoPtr<OrderedMap<
   OrderedMap_Entries(base)!((o: string, v: unknown): bool => {
     const [result, ok] = ConvertOptionToAbsolutePath(o, v, optionMap, cwd);
     if (ok) {
-      OrderedMap_Set(base, o, result);
+      OrderedMap_Set(base, o, result, GoStringKey);
     }
     return true;
   });

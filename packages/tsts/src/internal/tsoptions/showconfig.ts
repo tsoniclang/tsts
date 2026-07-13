@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import { GoEqualStrict, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoStringKey, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
@@ -264,10 +264,10 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   if (refs.length > 0) {
     const references: GoSlice<unknown> = [];
     for (const r of refs) {
-      const ref = NewOrderedMapWithSizeHint<string, unknown>(2 as int);
-      OrderedMap_Set(ref, "path", r!.OriginalPath);
+      const ref = NewOrderedMapWithSizeHint<string, unknown>(2 as int, GoStringKey);
+      OrderedMap_Set(ref, "path", r!.OriginalPath, GoStringKey);
       if (r!.Circular) {
-        OrderedMap_Set(ref, "circular", true);
+        OrderedMap_Set(ref, "circular", true, GoStringKey);
       }
       references.push(ref);
     }
@@ -470,7 +470,7 @@ export function getNameOfCompilerOptionValue(value: GoInterface<unknown>, enumMa
  * }
  */
 export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, configFilePath: string, comparePathsOptions: ComparePathsOptions): GoPtr<OrderedMap<string, unknown>> {
-  const result = NewOrderedMapWithSizeHint<string, unknown>(32 as int);
+  const result = NewOrderedMapWithSizeHint<string, unknown>(32 as int, GoStringKey);
   const configDir = GetDirectoryPath(configFilePath);
   const optionsObj = options as unknown as globalThis.Record<string, unknown>;
 
@@ -504,7 +504,7 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
       // Enum option - convert numeric value to string name
       const serialized = serializeEnumValue(value, enumMap);
       if (serialized !== "") {
-        OrderedMap_Set(result, name, serialized);
+        OrderedMap_Set(result, name, serialized, GoStringKey);
       }
       continue;
     }
@@ -524,7 +524,7 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
               const absPath = GetNormalizedAbsolutePath(s, configDir);
               relPaths.push(GetRelativePathFromFile(configFilePath, absPath, comparePathsOptions));
             }
-            OrderedMap_Set(result, name, relPaths);
+            OrderedMap_Set(result, name, relPaths, GoStringKey);
             continue;
           }
         }
@@ -543,11 +543,11 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
                 serialized.push(s);
               }
             }
-            OrderedMap_Set(result, name, serialized);
+            OrderedMap_Set(result, name, serialized, GoStringKey);
             continue;
           }
         }
-        OrderedMap_Set(result, name, value);
+        OrderedMap_Set(result, name, value, GoStringKey);
         break;
       }
       case CommandLineOptionTypeString: {
@@ -555,11 +555,11 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
           // File path option - make relative to config
           if (typeof value === "string" && value !== "") {
             const absPath = GetNormalizedAbsolutePath(value, configDir);
-            OrderedMap_Set(result, name, GetRelativePathFromFile(configFilePath, absPath, comparePathsOptions));
+            OrderedMap_Set(result, name, GetRelativePathFromFile(configFilePath, absPath, comparePathsOptions), GoStringKey);
             continue;
           }
         }
-        OrderedMap_Set(result, name, value);
+        OrderedMap_Set(result, name, value, GoStringKey);
         break;
       }
       case CommandLineOptionTypeBoolean: {
@@ -567,20 +567,20 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
         if (typeof value === "number") {
           const t = value as Tristate;
           if (Tristate_IsTrue(t)) {
-            OrderedMap_Set(result, name, true);
+            OrderedMap_Set(result, name, true, GoStringKey);
           } else if (Tristate_IsFalse(t)) {
-            OrderedMap_Set(result, name, false);
+            OrderedMap_Set(result, name, false, GoStringKey);
           }
         } else {
-          OrderedMap_Set(result, name, value);
+          OrderedMap_Set(result, name, value, GoStringKey);
         }
         break;
       }
       case CommandLineOptionTypeNumber:
-        OrderedMap_Set(result, name, value);
+        OrderedMap_Set(result, name, value, GoStringKey);
         break;
       default:
-        OrderedMap_Set(result, name, value);
+        OrderedMap_Set(result, name, value, GoStringKey);
         break;
     }
   }
@@ -727,7 +727,7 @@ export function addImpliedOptions(optionMap: GoPtr<OrderedMap<string, unknown>>,
     if (serialized === undefined || serialized === null) {
       continue;
     }
-    OrderedMap_Set(optionMap, optionDecl.Name, serialized);
+    OrderedMap_Set(optionMap, optionDecl.Name, serialized, GoStringKey);
   }
 }
 

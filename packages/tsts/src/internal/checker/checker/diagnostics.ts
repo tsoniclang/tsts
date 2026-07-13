@@ -27,6 +27,7 @@ import { Set_Has, Set_Add } from "../../collections/set.js";
 import { CompilerOptions_GetEmitStandardClassFields, CompilerOptions_ShouldPreserveConstEnums, CompilerOptions_UsesWildcardTypes } from "../../core/compileroptions.js";
 import { IfElse, Every, Some, Filter, Find, OrElse, ElementOrNil } from "../../core/core.js";
 import { LinkStore_Get, LinkStore_Has } from "../../core/linkstore.js";
+import { goNodePointerKey, goSymbolPointerKey } from "../map-key-descriptors.js";
 import { NodeCoreModules } from "../../core/nodemodules.js";
 import { NewTextRange, TextRange_ContainsInclusive, TextRange_Pos, TextRange_End } from "../../core/text.js";
 import { TSFalse } from "../../core/tristate.js";
@@ -511,7 +512,7 @@ export function Checker_checkSourceElementUnreachable(receiver: GoPtr<Checker>, 
   if (!Checker_isSourceElementUnreachable(receiver, node)) {
     return false;
   }
-  Set_Add(c.reportedUnreachableNodes, node);
+  Set_Add(c.reportedUnreachableNodes, node, goNodePointerKey);
   const sourceFile = GetSourceFileOfNode(node);
   let startNode = node;
   let endNode = node;
@@ -529,7 +530,7 @@ export function Checker_checkSourceElementUnreachable(receiver: GoPtr<Checker>, 
             break;
           }
           last = i;
-          Set_Add(c.reportedUnreachableNodes, nextNode);
+          Set_Add(c.reportedUnreachableNodes, nextNode, goNodePointerKey);
         }
         startNode = statements[first];
         endNode = statements[last];
@@ -1675,7 +1676,7 @@ export function Checker_invocationErrorRecovery(receiver: GoPtr<Checker>, appare
   if (apparentType!.symbol === undefined) {
     return;
   }
-  const links = LinkStore_Get<GoPtr<Symbol>, ExportTypeLinks>(receiver!.exportTypeLinks, apparentType!.symbol, zeroExportTypeLinks);
+  const links = LinkStore_Get<GoPtr<Symbol>, ExportTypeLinks>(receiver!.exportTypeLinks, apparentType!.symbol, zeroExportTypeLinks, goSymbolPointerKey);
   const importNode = links!.v.originatingImport;
   if (importNode !== undefined && !IsImportCall(importNode)) {
     const sigs = Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, links!.v.target), kind);

@@ -1,6 +1,20 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
-import type { GoComparable, GoEquality, GoError, GoFunc, GoInterface, GoMap, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
+import {
+  GoMapIsNil,
+  GoMapMake,
+  GoStringKey,
+  type GoComparable,
+  type GoEquality,
+  type GoError,
+  type GoFunc,
+  type GoInterface,
+  type GoMap,
+  type GoMapKeyDescriptor,
+  type GoPtr,
+  type GoSlice,
+  type GoZeroFactory,
+} from "../../go/compat.js";
 import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
 import type { Value } from "../../go/reflect.js";
 import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode } from "../json/json.js";
@@ -53,6 +67,7 @@ export function noCopy_Unlock(receiver: GoPtr<noCopy>): void {}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::NewOrderedMapWithSizeHint","kind":"func","status":"implemented","sigHash":"0f4b48feb0d709268ce7bfa826eb0576bb266d7d5288af2ec386e19b94d9d96d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-map construction forwards the exact static Go map-key descriptor to its allocation site.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func NewOrderedMapWithSizeHint[K comparable, V any](hint int) *OrderedMap[K, V] {
@@ -60,13 +75,14 @@ export function noCopy_Unlock(receiver: GoPtr<noCopy>): void {}
  * 	return &m
  * }
  */
-export function NewOrderedMapWithSizeHint<K extends GoComparable, V>(hint: int): GoPtr<OrderedMap<K, V>> {
-  const m = newMapWithSizeHint<K, V>(hint);
+export function NewOrderedMapWithSizeHint<K extends GoComparable, V>(hint: int, keyDescriptor: GoMapKeyDescriptor<K>): GoPtr<OrderedMap<K, V>> {
+  const m = newMapWithSizeHint<K, V>(hint, keyDescriptor);
   return m;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::newMapWithSizeHint","kind":"func","status":"implemented","sigHash":"9f925b2c16d1d7b12e2daf84eb6bea932acf8473c8c8da665148256cf505f61a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-map allocation receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func newMapWithSizeHint[K comparable, V any](hint int) OrderedMap[K, V] {
@@ -76,11 +92,11 @@ export function NewOrderedMapWithSizeHint<K extends GoComparable, V>(hint: int):
  * 	}
  * }
  */
-export function newMapWithSizeHint<K extends GoComparable, V>(hint: int): OrderedMap<K, V> {
+export function newMapWithSizeHint<K extends GoComparable, V>(hint: int, keyDescriptor: GoMapKeyDescriptor<K>): OrderedMap<K, V> {
   return {
     __tsgoBlank0: {},
     keys: [],
-    mp: new globalThis.Map<K, V>(),
+    mp: GoMapMake<K, V>(keyDescriptor),
   };
 }
 
@@ -100,6 +116,7 @@ export interface MapEntry<K extends GoComparable = unknown, V = unknown> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::NewOrderedMapFromList","kind":"func","status":"implemented","sigHash":"bf79157fc2248e0cc47ce4bf9c7bc5339ae7f4e7019b10c543780f354199e53b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-map list construction forwards the exact static Go map-key descriptor through every possible allocation path.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func NewOrderedMapFromList[K comparable, V any](items []MapEntry[K, V]) *OrderedMap[K, V] {
@@ -110,16 +127,17 @@ export interface MapEntry<K extends GoComparable = unknown, V = unknown> {
  * 	return mp
  * }
  */
-export function NewOrderedMapFromList<K extends GoComparable, V>(items: GoSlice<MapEntry<K, V>>): GoPtr<OrderedMap<K, V>> {
-  const mp = NewOrderedMapWithSizeHint<K, V>(items.length as int);
+export function NewOrderedMapFromList<K extends GoComparable, V>(items: GoSlice<MapEntry<K, V>>, keyDescriptor: GoMapKeyDescriptor<K>): GoPtr<OrderedMap<K, V>> {
+  const mp = NewOrderedMapWithSizeHint<K, V>(items.length as int, keyDescriptor);
   for (const item of items) {
-    OrderedMap_Set(mp, item.Key, item.Value);
+    OrderedMap_Set(mp, item.Key, item.Value, keyDescriptor);
   }
   return mp;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Set","kind":"method","status":"implemented","sigHash":"4469e0419152708c32019c17e81db5753ad891e423fc90155f2f7530d2c865a2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A zero-value erased generic ordered map receives the exact static Go map-key descriptor before allocating its backing map.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Set(key K, value V) {
@@ -133,10 +151,10 @@ export function NewOrderedMapFromList<K extends GoComparable, V>(items: GoSlice<
  * 	m.mp[key] = value
  * }
  */
-export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, value: V): void {
+export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, value: V, keyDescriptor: GoMapKeyDescriptor<K>): void {
   const m = receiver!;
-  if (m.mp === undefined) {
-    m.mp = new globalThis.Map<K, V>();
+  if (GoMapIsNil(m.mp)) {
+    m.mp = GoMapMake<K, V>(keyDescriptor);
   }
 
   if (!m.mp.has(key)) {
@@ -428,6 +446,7 @@ export function OrderedMap_Size<K extends GoComparable, V>(receiver: GoPtr<Order
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Clone","kind":"method","status":"implemented","sigHash":"79a6223338a87d9a81747f660d6a7ac8f185eb06a918681e1a8038e56b1c61be"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-map cloning forwards the exact static Go map-key descriptor to result allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Clone() *OrderedMap[K, V] {
@@ -439,18 +458,19 @@ export function OrderedMap_Size<K extends GoComparable, V>(receiver: GoPtr<Order
  * 	return &m2
  * }
  */
-export function OrderedMap_Clone<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): GoPtr<OrderedMap<K, V>> {
+export function OrderedMap_Clone<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, keyDescriptor: GoMapKeyDescriptor<K>): GoPtr<OrderedMap<K, V>> {
   const m = receiver;
   if (m === undefined) {
     return undefined;
   }
 
-  const m2 = OrderedMap_clone(m);
+  const m2 = OrderedMap_clone(m, keyDescriptor);
   return m2;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.clone","kind":"method","status":"implemented","sigHash":"48c31116827c5700de38de8064c82ec3e972387addbfc7f9d82e4c8c9ff1c6a5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-map clone allocation receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) clone() OrderedMap[K, V] {
@@ -460,12 +480,12 @@ export function OrderedMap_Clone<K extends GoComparable, V>(receiver: GoPtr<Orde
  * 	}
  * }
  */
-export function OrderedMap_clone<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): OrderedMap<K, V> {
+export function OrderedMap_clone<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, keyDescriptor: GoMapKeyDescriptor<K>): OrderedMap<K, V> {
   const m = receiver!;
   return {
     __tsgoBlank0: {},
     keys: slices.Clone(m.keys)!,
-    mp: maps.Clone(m.mp)!,
+    mp: maps.Clone(m.mp, keyDescriptor),
   };
 }
 
@@ -582,16 +602,17 @@ export function resolveKeyName(k: Value): [string, GoError] {
  * Go source:
  * var _ json.UnmarshalerFrom = (*OrderedMap[string, string])(nil)
  */
-export let ___2_ffc9f882_0: GoInterface<UnmarshalerFrom> = OrderedMap_as_json_UnmarshalerFrom<string, string>(undefined);
+export let ___2_ffc9f882_0: GoInterface<UnmarshalerFrom> = OrderedMap_as_json_UnmarshalerFrom<string, string>(undefined, GoStringKey);
 
-export function OrderedMap_as_json_UnmarshalerFrom<K, V>(receiver: GoPtr<OrderedMap<K, V>>): UnmarshalerFrom {
+export function OrderedMap_as_json_UnmarshalerFrom<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, keyDescriptor: GoMapKeyDescriptor<K>): UnmarshalerFrom {
   return {
-    UnmarshalJSONFrom: (decoder: Decoder): GoError => OrderedMap_UnmarshalJSONFrom(receiver, decoder),
+    UnmarshalJSONFrom: (decoder: Decoder): GoError => OrderedMap_UnmarshalJSONFrom(receiver, decoder, keyDescriptor),
   };
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.UnmarshalJSONFrom","kind":"method","status":"implemented","sigHash":"a7144f1a9e8365998959b2007618110405c3631c153fe92dbfe6516a80ef469d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Generic JSON insertion forwards the exact static Go map-key descriptor to the ordered map's possible allocation path.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) UnmarshalJSONFrom(dec *json.Decoder) error {
@@ -626,7 +647,7 @@ export function OrderedMap_as_json_UnmarshalerFrom<K, V>(receiver: GoPtr<Ordered
  * 	return nil
  * }
  */
-export function OrderedMap_UnmarshalJSONFrom<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, dec: GoPtr<Decoder>): GoError {
+export function OrderedMap_UnmarshalJSONFrom<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, dec: GoPtr<Decoder>, keyDescriptor: GoMapKeyDescriptor<K>): GoError {
   if (dec === undefined) {
     return new globalThis.Error("nil json decoder");
   }
@@ -639,7 +660,7 @@ export function OrderedMap_UnmarshalJSONFrom<K extends GoComparable, V>(receiver
   }
   if (value instanceof globalThis.Map) {
     for (const [key, element] of value.entries()) {
-      OrderedMap_Set(receiver, key as K, element as V);
+      OrderedMap_Set(receiver, key as K, element as V, keyDescriptor);
     }
     return undefined;
   }
@@ -647,7 +668,7 @@ export function OrderedMap_UnmarshalJSONFrom<K extends GoComparable, V>(receiver
     return new globalThis.Error("cannot unmarshal non-object JSON value into Map");
   }
   for (const [key, element] of globalThis.Object.entries(value as Record<string, unknown>)) {
-    OrderedMap_Set(receiver, key as K, element as V);
+    OrderedMap_Set(receiver, key as K, element as V, keyDescriptor);
   }
   return undefined;
 }

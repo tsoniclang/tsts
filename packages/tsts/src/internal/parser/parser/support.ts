@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoNumberKey, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { NewNodeFactory, Node_ForEachChild } from "../../ast/spine.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 // SourceFile, Pragma, CommentRange (structs) and NodeFactory_NewModifier (the
@@ -606,7 +606,7 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
   receiver!.hasParseError = false;
   receiver!.identifiers = undefined as unknown as GoMap<string, string>;
   receiver!.identifierCount = 0 as int;
-  receiver!.notParenthesizedArrow = NewSetWithSizeHint<int>(0 as int)!;
+  receiver!.notParenthesizedArrow = NewSetWithSizeHint<int>(0 as int, GoNumberKey)!;
   receiver!.nodeSliceArena = { data: [] } as Arena<GoPtr<Node>>;
   receiver!.stringSliceArena = { data: [] } as Arena<string>;
   receiver!.jsdocInfos = [];

@@ -18,6 +18,7 @@ import { Node_Locals, Node_Initializer, Node_Type, Node_ModuleSpecifier, AsSourc
 import type { SourceFile } from "../ast/ast.js";
 import { SourceFile_Imports } from "../ast/ast.js";
 import { LinkStore_Get } from "../core/linkstore.js";
+import { goNodePointerKey, goSymbolPointerKey } from "./map-key-descriptors.js";
 import { canHaveLocals } from "./utilities.js";
 import { getDeclarationsOfKind } from "./utilities.js";
 import { Some, FirstNonNil, IfElse } from "../core/core.js";
@@ -444,7 +445,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
   }
   const containingFile = GetSourceFileOfNode(enclosingDeclaration);
   const id = GetNodeId(containingFile as unknown as GoPtr<Node>);
-  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks, symbol_, zeroContainingSymbolLinks)!.v;
+  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks, symbol_, zeroContainingSymbolLinks, goSymbolPointerKey)!.v;
   if (links.extendedContainersByFile === undefined) {
     links.extendedContainersByFile = new globalThis.Map<NodeId, GoSlice<GoPtr<Symbol>>>();
   }
@@ -714,7 +715,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
         continue;
       }
       Checker_checkExpressionCached(receiver, Node_Expression(AsBinaryExpression(d!.Parent)!.Left));
-      const sym = LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks, Node_Expression(AsBinaryExpression(d!.Parent)!.Left), zeroSymbolNodeLinks)!.v.resolvedSymbol;
+      const sym = LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks, Node_Expression(AsBinaryExpression(d!.Parent)!.Left), zeroSymbolNodeLinks, goNodePointerKey)!.v.resolvedSymbol;
       if (sym !== undefined && !candidates.includes(sym)) {
         candidates = [...candidates, sym];
       }
@@ -1018,7 +1019,7 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
     firstRelevantLocation = node;
     return true;
   });
-  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks, ctx.symbol, zeroContainingSymbolLinks)!.v;
+  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks, ctx.symbol, zeroContainingSymbolLinks, goSymbolPointerKey)!.v;
   const linkKey: accessibleChainCacheKey = { useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, location: firstRelevantLocation, meaning: ctx.meaning };
   if (links.accessibleChainCache === undefined) {
     links.accessibleChainCache = NewGoStructMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>(GoStructKey(

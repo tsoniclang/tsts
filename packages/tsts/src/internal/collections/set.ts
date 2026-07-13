@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
-import { GoEqualEmptyStruct, GoMapIsNil, GoNilMap } from "../../go/compat.js";
+import type { GoComparable, GoMap, GoMapKeyDescriptor, GoPtr } from "../../go/compat.js";
+import { GoEqualEmptyStruct, GoMapIsNil, GoMapMake, GoNilMap } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
 /**
@@ -17,6 +17,7 @@ export interface Set<T extends GoComparable = unknown> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::func::NewSetWithSizeHint","kind":"func","status":"implemented","sigHash":"c15b107ff0d15d004f5b4a1f19dc8b9f9dea9715bd6974fed8bcb970f7af301b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic set construction receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func NewSetWithSizeHint[T comparable](hint int) *Set[T] {
@@ -25,9 +26,9 @@ export interface Set<T extends GoComparable = unknown> {
  * 	}
  * }
  */
-export function NewSetWithSizeHint<T extends GoComparable>(hint: int): GoPtr<Set<T>> {
+export function NewSetWithSizeHint<T extends GoComparable>(hint: int, keyDescriptor: GoMapKeyDescriptor<T>): GoPtr<Set<T>> {
   return {
-    M: new globalThis.Map<T, { readonly __tsgoEmpty?: never }>(),
+    M: GoMapMake<T, { readonly __tsgoEmpty?: never }>(keyDescriptor),
   };
 }
 
@@ -53,6 +54,7 @@ export function Set_Has<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::method::Set.Add","kind":"method","status":"implemented","sigHash":"944adc575acc7b5f8af5bf75a041f737d6dabcfaf85f4e51a96184b39d0a2e7e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic zero-set mutation receives the exact static Go map-key descriptor for lazy map allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *Set[T]) Add(key T) {
@@ -62,9 +64,9 @@ export function Set_Has<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T)
  * 	s.M[key] = struct{}{}
  * }
  */
-export function Set_Add<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T): void {
+export function Set_Add<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T, keyDescriptor: GoMapKeyDescriptor<T>): void {
   if (GoMapIsNil(receiver!.M)) {
-    receiver!.M = new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
+    receiver!.M = GoMapMake<T, { readonly __tsgoEmpty?: never }>(keyDescriptor);
   }
   receiver!.M.set(key, {});
 }
@@ -137,6 +139,7 @@ export function Set_Clear<T extends GoComparable>(receiver: GoPtr<Set<T>>): void
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::method::Set.AddIfAbsent","kind":"method","status":"implemented","sigHash":"6ac4332c884dc335a7c9c941b408b45593b6326496ef93cf3a83aa2b1167f8e3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic add-if-absent forwards the exact static Go map-key descriptor to lazy set allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *Set[T]) AddIfAbsent(key T) bool {
@@ -147,16 +150,17 @@ export function Set_Clear<T extends GoComparable>(receiver: GoPtr<Set<T>>): void
  * 	return true
  * }
  */
-export function Set_AddIfAbsent<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T): bool {
+export function Set_AddIfAbsent<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T, keyDescriptor: GoMapKeyDescriptor<T>): bool {
   if (Set_Has(receiver, key)) {
     return false;
   }
-  Set_Add(receiver, key);
+  Set_Add(receiver, key, keyDescriptor);
   return true;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::method::Set.Clone","kind":"method","status":"implemented","sigHash":"6a973a74abeb3e1a19c0cbdf39b9a019d36e0e8a3b5e1531929b1eaa414708e0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic set cloning receives the exact static Go map-key descriptor for result allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *Set[T]) Clone() *Set[T] {
@@ -167,16 +171,17 @@ export function Set_AddIfAbsent<T extends GoComparable>(receiver: GoPtr<Set<T>>,
  * 	return clone
  * }
  */
-export function Set_Clone<T extends GoComparable>(receiver: GoPtr<Set<T>>): GoPtr<Set<T>> {
+export function Set_Clone<T extends GoComparable>(receiver: GoPtr<Set<T>>, keyDescriptor: GoMapKeyDescriptor<T>): GoPtr<Set<T>> {
   if (receiver === undefined) {
     return undefined;
   }
-  const clone: Set<T> = { M: maps.Clone(receiver.M) };
+  const clone: Set<T> = { M: maps.Clone(receiver.M, keyDescriptor) };
   return clone;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::method::Set.Union","kind":"method","status":"implemented","sigHash":"5f646c6f16fc7124120c65c4707699558f97d70bce2e29100856e783d150b921"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic set union receives the exact static Go map-key descriptor for clone allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *Set[T]) Union(other *Set[T]) {
@@ -193,7 +198,7 @@ export function Set_Clone<T extends GoComparable>(receiver: GoPtr<Set<T>>): GoPt
  * 	maps.Copy(s.M, other.M)
  * }
  */
-export function Set_Union<T extends GoComparable>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>): void {
+export function Set_Union<T extends GoComparable>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>, keyDescriptor: GoMapKeyDescriptor<T>): void {
   if (Set_Len(receiver) === 0 && Set_Len(other) === 0) {
     return;
   }
@@ -201,7 +206,7 @@ export function Set_Union<T extends GoComparable>(receiver: GoPtr<Set<T>>, other
     throw new globalThis.Error("cannot modify nil Set");
   }
   if (GoMapIsNil(receiver.M)) {
-    receiver.M = maps.Clone(other!.M);
+    receiver.M = maps.Clone(other!.M, keyDescriptor);
     return;
   }
   maps.Copy(receiver.M, other!.M);
@@ -209,6 +214,7 @@ export function Set_Union<T extends GoComparable>(receiver: GoPtr<Set<T>>, other
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::method::Set.UnionedWith","kind":"method","status":"implemented","sigHash":"3346c9538e36f0751bb74b5a16d55acfa2df3b9001e0df71a0995541db32a107"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic set union receives the exact static Go map-key descriptor for the nil-result allocation path.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *Set[T]) UnionedWith(other *Set[T]) *Set[T] {
@@ -228,11 +234,11 @@ export function Set_Union<T extends GoComparable>(receiver: GoPtr<Set<T>>, other
  * 	return result
  * }
  */
-export function Set_UnionedWith<T extends GoComparable>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>): GoPtr<Set<T>> {
+export function Set_UnionedWith<T extends GoComparable>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>, keyDescriptor: GoMapKeyDescriptor<T>): GoPtr<Set<T>> {
   if (receiver === undefined && other === undefined) {
     return undefined;
   }
-  const cloned = Set_Clone(receiver);
+  const cloned = Set_Clone(receiver, keyDescriptor);
   if (other === undefined) {
     return cloned;
   }
@@ -240,7 +246,7 @@ export function Set_UnionedWith<T extends GoComparable>(receiver: GoPtr<Set<T>>,
     ? cloned
     : { M: GoNilMap<T, { readonly __tsgoEmpty?: never }>() };
   if (GoMapIsNil(result.M)) {
-    result.M = new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
+    result.M = GoMapMake<T, { readonly __tsgoEmpty?: never }>(keyDescriptor);
   }
   maps.Copy(result.M, other.M);
   return result;
@@ -328,6 +334,7 @@ export function Set_Intersects<T extends GoComparable>(receiver: GoPtr<Set<T>>, 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::func::NewSetFromItems","kind":"func","status":"implemented","sigHash":"e9b35dd7a6df85934f276b3f036ab3ab9deb3e8153d651f2ec59ce5f489e0a97"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic variadic set construction forwards the exact static Go map-key descriptor to lazy allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func NewSetFromItems[T comparable](items ...T) *Set[T] {
@@ -338,10 +345,10 @@ export function Set_Intersects<T extends GoComparable>(receiver: GoPtr<Set<T>>, 
  * 	return s
  * }
  */
-export function NewSetFromItems<T extends GoComparable>(...items: Array<T>): GoPtr<Set<T>> {
+export function NewSetFromItems<T extends GoComparable>(keyDescriptor: GoMapKeyDescriptor<T>, ...items: Array<T>): GoPtr<Set<T>> {
   const s: Set<T> = { M: GoNilMap() };
   for (const item of items) {
-    Set_Add(s, item);
+    Set_Add(s, item, keyDescriptor);
   }
   return s;
 }

@@ -1,6 +1,6 @@
 import type { bool, byte } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoStringKey, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewSetWithSizeHint, Set_Add } from "../collections/set.js";
@@ -220,20 +220,20 @@ export function DependencyFields_GetRuntimeDependencyNames(receiver: GoPtr<Depen
   const [peerDeps, peerDepsOk] = Expected_GetValue<GoMap<string, string>>(receiver!.PeerDependencies);
   const [optDeps, optDepsOk] = Expected_GetValue<GoMap<string, string>>(receiver!.OptionalDependencies);
   const count = (depsOk ? deps.size : 0) + (peerDepsOk ? peerDeps.size : 0) + (optDepsOk ? optDeps.size : 0);
-  const names = NewSetWithSizeHint<string>(count);
+  const names = NewSetWithSizeHint<string>(count, GoStringKey);
   if (depsOk) {
     for (const name of deps.keys()) {
-      Set_Add(names, name);
+      Set_Add(names, name, GoStringKey);
     }
   }
   if (peerDepsOk) {
     for (const name of peerDeps.keys()) {
-      Set_Add(names, name);
+      Set_Add(names, name, GoStringKey);
     }
   }
   if (optDepsOk) {
     for (const name of optDeps.keys()) {
-      Set_Add(names, name);
+      Set_Add(names, name, GoStringKey);
     }
   }
   return names;
@@ -374,9 +374,9 @@ function decodeJSONValue<T = JSONValue>(value: unknown, elementFactory: (value: 
   }
   if (typeof value === "object") {
     const entries = globalThis.Object.entries(value as Record<string, unknown>);
-    const map = NewOrderedMapWithSizeHint<string, T>(entries.length as byte)!;
+    const map = NewOrderedMapWithSizeHint<string, T>(entries.length as byte, GoStringKey)!;
     for (const [key, entry] of entries) {
-      OrderedMap_Set(map, key, elementFactory(decodeJSONValue(entry, elementFactory)));
+      OrderedMap_Set(map, key, elementFactory(decodeJSONValue(entry, elementFactory)), GoStringKey);
     }
     return { Type: JSONValueTypeObject, Value: map };
   }

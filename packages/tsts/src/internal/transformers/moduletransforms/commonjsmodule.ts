@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerKey, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { AsSourceFile, Node_Text, SourceFile_FileName, SourceFile_Path, Node_Elements, Node_Properties, Node_Expression, Node_Initializer } from "../../ast/ast.js";
 import type { HasFileName, SourceFile } from "../../ast/ast.js";
 import { IsAssignmentExpression, IsCommaExpression, IsDestructuringAssignment, IsEffectiveExternalModule, IsExpression, IsExternalModule, IsExternalModuleImportEqualsDeclaration, IsInJSFile, IsRequireCall, IsStringLiteralLike, IsImportCall, ShouldTransformImportCall, FindAncestor } from "../../ast/utilities.js";
@@ -56,6 +56,8 @@ import { getExternalModuleNameLiteral, isDeclarationNameOfEnumOrNamespace, isFil
 import { OrderedSet_Values } from "../../collections/ordered_set.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+
+const moduleExportNamePointerKey = GoPointerKey<ModuleExportName>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::type::CommonJSModuleTransformer","kind":"type","status":"implemented","sigHash":"6d4c0901945b9e8638e5f6f227099900201a96ea3928cc98c41cdb0923078648"}
  *
@@ -1030,7 +1032,7 @@ export function CommonJSModuleTransformer_appendExportsOfImportDeclaration(recei
     return statements;
   }
 
-  const seen = NewSetWithSizeHint<string>(0);
+  const seen = NewSetWithSizeHint<string>(0, GoStringKey);
   if (Node_Name(importClause) !== undefined) {
     statements = CommonJSModuleTransformer_appendExportsOfDeclaration(receiver, statements, importClause as GoPtr<Declaration>, seen, false /*liveBinding*/);
   }
@@ -1169,7 +1171,7 @@ export function CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclarat
   }
 
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
-  const seen = NewSetWithSizeHint<string>(0);
+  const seen = NewSetWithSizeHint<string>(0, GoStringKey);
   if (HasSyntacticModifier(Node_AsNode(decl), ModifierFlagsExport)) {
     let exportName: GoPtr<IdentifierNode>;
     if (HasSyntacticModifier(Node_AsNode(decl), ModifierFlagsDefault)) {
@@ -1222,7 +1224,7 @@ export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: G
   }
 
   if (seen === undefined) {
-    seen = NewSetWithSizeHint<string>(0);
+    seen = NewSetWithSizeHint<string>(0, GoStringKey);
   }
 
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
@@ -1261,7 +1263,7 @@ export function CommonJSModuleTransformer_appendExportStatement(receiver: GoPtr<
     if (Set_Has(seen, Node_Text(exportName))) {
       return statements;
     }
-    Set_Add(seen, Node_Text(exportName));
+    Set_Add(seen, Node_Text(exportName), GoStringKey);
   }
   return [...statements, CommonJSModuleTransformer_createExportStatement(receiver, exportName, expression, location, allowComments, liveBinding)];
 }
@@ -4587,7 +4589,7 @@ export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSMod
     if (importDeclaration !== undefined) {
       return MultiMap_Get(receiver!.currentModuleInfo!.exportedBindings, importDeclaration);
     }
-    const bindingsSet = NewSetWithSizeHint<GoPtr<ModuleExportName>>(0);
+    const bindingsSet = NewSetWithSizeHint<GoPtr<ModuleExportName>>(0, moduleExportNamePointerKey);
     let bindings: GoSlice<GoPtr<ModuleExportName>> = [];
     const declarations = receiver!.resolver!.GetReferencedValueDeclarations(EmitContext_MostOriginal(emitContext, name));
     if (declarations !== null && declarations !== undefined) {
@@ -4595,7 +4597,7 @@ export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSMod
         const exportedBindings = MultiMap_Get(receiver!.currentModuleInfo!.exportedBindings, declaration);
         for (const binding of exportedBindings) {
           if (!Set_Has(bindingsSet, binding)) {
-            Set_Add(bindingsSet, binding);
+            Set_Add(bindingsSet, binding, moduleExportNamePointerKey);
             bindings = [...bindings, binding];
           }
         }

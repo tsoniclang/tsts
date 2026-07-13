@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoZeroString, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroString, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { Map as SyncGoMap } from "../../go/sync.js";
 import { ToLower } from "../../go/strings.js";
@@ -501,8 +501,8 @@ export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<Syste
         const rawMap = raw as OrderedMap<string, unknown>;
         if (rawMap.keys !== undefined) {
           // Wrap command line options in a "compilerOptions" key to match tsconfig.json structure
-          const wrapped = NewOrderedMapWithSizeHint<string, unknown>(0);
-          OrderedMap_Set(wrapped, "compilerOptions", rawMap);
+          const wrapped = NewOrderedMapWithSizeHint<string, unknown>(0, GoStringKey);
+          OrderedMap_Set(wrapped, "compilerOptions", rawMap, GoStringKey);
           commandLineRaw = wrapped;
         }
       }

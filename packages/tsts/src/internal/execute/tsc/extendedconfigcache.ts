@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer } from "../../../go/compat.js";
 import { Mutex } from "../../../go/sync.js";
 import type { SyncMap } from "../../collections/syncmap.js";
 import { SyncMap_LoadOrStore } from "../../collections/syncmap.js";
@@ -91,7 +92,7 @@ export function ExtendedConfigCache_GetExtendedConfig(receiver: GoPtr<ExtendedCo
 export function ExtendedConfigCache_loadOrStoreNewLockedEntry(receiver: GoPtr<ExtendedConfigCache>, path: Path): [GoPtr<extendedConfigCacheEntry>, bool] {
   const entry: extendedConfigCacheEntry = { __tsgoEmbedded0: undefined, mu: new Mutex() };
   entry.mu.Lock();
-  const [existing, loaded] = SyncMap_LoadOrStore<Path, GoPtr<extendedConfigCacheEntry>>(receiver!.m, path, entry);
+  const [existing, loaded] = SyncMap_LoadOrStore<Path, GoPtr<extendedConfigCacheEntry>>(receiver!.m, path, entry, GoZeroPointer<extendedConfigCacheEntry>, GoStringKey);
   if (loaded) {
     existing!.mu.Lock();
     return [existing, true];

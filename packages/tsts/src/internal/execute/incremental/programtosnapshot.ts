@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoZeroPointer, type GoComparable, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoComparable, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { TODO } from "../../../go/context.js";
 import { Map as GoSyncMap, Once } from "../../../go/sync.js";
@@ -215,11 +215,11 @@ export function toProgramSnapshot_reuseFromOldProgram(receiver: GoPtr<toProgramS
     }
     // Copy old snapshot's changed files set
     SyncSet_Range(receiver!.oldProgram.snapshot!.changedFilesSet as SyncSet<Path>, (key: Path) => {
-      SyncSet_Add(receiver!.snapshot!.changedFilesSet as SyncSet<Path>, key);
+      SyncSet_Add(receiver!.snapshot!.changedFilesSet as SyncSet<Path>, key, GoStringKey);
       return true;
     });
     SyncMap_Range(receiver!.oldProgram.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>, (key: Path, emitKind: FileEmitKind) => {
-      SyncMap_Store(receiver!.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>, key, emitKind);
+      SyncMap_Store(receiver!.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>, key, emitKind, GoStringKey);
       return true;
     });
     receiver!.snapshot!.buildInfoEmitPending.Store(receiver!.oldProgram.snapshot!.buildInfoEmitPending.Load());
@@ -320,7 +320,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
             GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
           );
           if (hasEmitDiag) {
-            SyncMap_Store(receiver!.snapshot!.emitDiagnosticsPerFile, SourceFile_Path(file), repopulateDiagnosticsOfFile(emitDiagnostics, receiver!.program, file));
+            SyncMap_Store(receiver!.snapshot!.emitDiagnosticsPerFile, SourceFile_Path(file), repopulateDiagnosticsOfFile(emitDiagnostics, receiver!.program, file), GoStringKey);
           }
           if (canCopySemanticDiagnostics) {
             if ((!file!.IsDeclarationFile || copyDeclarationFileDiagnostics) &&
@@ -332,7 +332,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
                 GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
               );
               if (hasDiag) {
-                SyncMap_Store(receiver!.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), repopulateDiagnosticsOfFile(diagnostics, receiver!.program, file));
+                SyncMap_Store(receiver!.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), repopulateDiagnosticsOfFile(diagnostics, receiver!.program, file), GoStringKey);
               }
             }
           }
@@ -344,7 +344,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
             GoZeroPointer<emitSignature>,
           );
           if (hasOldEmit) {
-            SyncMap_Store(receiver!.snapshot!.emitSignatures, SourceFile_Path(file), emitSignature_getNewEmitSignature(oldEmitSignature, receiver!.oldProgram.snapshot!.options, receiver!.snapshot!.options));
+            SyncMap_Store(receiver!.snapshot!.emitSignatures, SourceFile_Path(file), emitSignature_getNewEmitSignature(oldEmitSignature, receiver!.oldProgram.snapshot!.options, receiver!.snapshot!.options), GoStringKey);
           }
         }
       } else {
@@ -356,7 +356,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
         signature: signature,
         affectsGlobalScope: affectsGlobalScope,
         impliedNodeFormat: impliedNodeFormat,
-      });
+      }, GoStringKey);
     });
   }
   wg!.RunAndWait();
@@ -544,7 +544,7 @@ export function addReferencedFilesFromSymbol(file: GoPtr<SourceFile>, referenced
       continue;
     }
     if (file !== fileOfDecl) {
-      Set_Add(referencedFiles as GoPtr<Set<Path>>, SourceFile_Path(fileOfDecl));
+      Set_Add(referencedFiles as GoPtr<Set<Path>>, SourceFile_Path(fileOfDecl), GoStringKey);
     }
   }
 }
@@ -578,9 +578,9 @@ export function addReferencedFilesFromImportLiteral(file: GoPtr<SourceFile>, ref
 export function addReferencedFileFromFileName(program: GoPtr<Program>, fileName: string, referencedFiles: GoPtr<Set<Path>>, sourceFileDirectory: string): void {
   const redirect = Program_GetParseFileRedirect(program, fileName);
   if (redirect !== "") {
-    Set_Add(referencedFiles as GoPtr<Set<Path>>, ToPath(redirect, Program_GetCurrentDirectory(program), Program_UseCaseSensitiveFileNames(program)));
+    Set_Add(referencedFiles as GoPtr<Set<Path>>, ToPath(redirect, Program_GetCurrentDirectory(program), Program_UseCaseSensitiveFileNames(program)), GoStringKey);
   } else {
-    Set_Add(referencedFiles as GoPtr<Set<Path>>, ToPath(fileName, sourceFileDirectory, Program_UseCaseSensitiveFileNames(program)));
+    Set_Add(referencedFiles as GoPtr<Set<Path>>, ToPath(fileName, sourceFileDirectory, Program_UseCaseSensitiveFileNames(program)), GoStringKey);
   }
 }
 
@@ -619,7 +619,7 @@ export function addReferencedFileFromFileName(program: GoPtr<Program>, fileName:
  * }
  */
 export function getReferencedFiles(program: GoPtr<Program>, file: GoPtr<SourceFile>): GoPtr<Set<Path>> {
-  const referencedFiles = NewSetWithSizeHint<Path>(0)!;
+  const referencedFiles = NewSetWithSizeHint<Path>(0, GoStringKey)!;
   const [checker, done] = Program_GetTypeCheckerForFileExclusive(program, TODO() as Context, file);
   try {
     for (const importName of SourceFile_Imports(file)) {

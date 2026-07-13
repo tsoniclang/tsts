@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_GetOrZero, OrderedMap_Set } from "../collections/ordered_map.js";
 import * as strings from "../../go/strings.js";
@@ -45,10 +45,10 @@ export let WatchNameMap: GoPtr<NameMap> = undefined;
  * }
  */
 export function GetNameMapFromList(optDecls: GoSlice<GoPtr<CommandLineOption>>): GoPtr<NameMap> {
-  const optionsNames = NewOrderedMapWithSizeHint<string, GoPtr<CommandLineOption>>(optDecls.length);
+  const optionsNames = NewOrderedMapWithSizeHint<string, GoPtr<CommandLineOption>>(optDecls.length, GoStringKey);
   const shortOptionNames: GoMap<string, string> = new globalThis.Map<string, string>();
   for (const option of optDecls) {
-    OrderedMap_Set(optionsNames, strings.ToLower(option!.Name), option);
+    OrderedMap_Set(optionsNames, strings.ToLower(option!.Name), option, GoStringKey);
     if (option!.ShortName !== "") {
       shortOptionNames.set(option!.ShortName, option!.Name);
     }

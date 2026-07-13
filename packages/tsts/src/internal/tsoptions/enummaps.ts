@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -308,7 +308,7 @@ export let LibMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<st
   // Decorators
   { Key: "decorators", Value: "lib.decorators.d.ts" },
   { Key: "decorators.legacy", Value: "lib.decorators.legacy.d.ts" },
-]);
+], GoStringKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::Libs+LibFilesSet","kind":"varGroup","status":"implemented","sigHash":"7f1bb88b496484fefb9642125ab0f5889147d8de34f5b852bfca1c516b32dc76"}
@@ -321,6 +321,7 @@ export let LibMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<st
  */
 export let Libs: GoSlice<string> = slices.Collect(OrderedMap_Keys(LibMap));
 export let LibFilesSet: GoPtr<Set<string>> = NewSetFromItems<string>(
+  GoStringKey,
   ...core.Map(slices.Collect(OrderedMap_Values(LibMap)), (s: unknown): string => {
     return s as string;
   }),
@@ -376,7 +377,7 @@ export let moduleResolutionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOr
   { Key: "classic", Value: ModuleResolutionKindClassic },
   { Key: "node", Value: ModuleResolutionKindNode10 },
   { Key: "node10", Value: ModuleResolutionKindNode10 },
-]);
+], GoStringKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::targetOptionMap","kind":"varGroup","status":"implemented","sigHash":"92a48d3d94cc5a2f462dbcfec9ae6f229dff387c261b19be382e4884767f8961"}
@@ -414,7 +415,7 @@ export let targetOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFr
   { Key: "es2024", Value: ScriptTargetES2024 },
   { Key: "es2025", Value: ScriptTargetES2025 },
   { Key: "esnext", Value: ScriptTargetESNext },
-]);
+], GoStringKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleOptionMap","kind":"varGroup","status":"implemented","sigHash":"d0dd550632fe1a8a4dcaae49672b36df2c1ea14aca7968e260f162565c008c60"}
@@ -452,7 +453,7 @@ export let moduleOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFr
   { Key: "node20", Value: ModuleKindNode20 },
   { Key: "nodenext", Value: ModuleKindNodeNext },
   { Key: "preserve", Value: ModuleKindPreserve },
-]);
+], GoStringKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleDetectionOptionMap","kind":"varGroup","status":"implemented","sigHash":"b1d7ff4c506a30641873666d457d5cfe8de0f7b3c284efc32134614edd7401f4"}
@@ -468,7 +469,7 @@ export let moduleDetectionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrd
   { Key: "auto", Value: ModuleDetectionKindAuto },
   { Key: "legacy", Value: ModuleDetectionKindLegacy },
   { Key: "force", Value: ModuleDetectionKindForce },
-]);
+], GoStringKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::jsxOptionMap","kind":"varGroup","status":"implemented","sigHash":"67a1927d0067927b27a294e7887e3c4828ccb4d7155d1a2c1abbab40e69b6532"}
@@ -488,7 +489,7 @@ export let jsxOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromL
   { Key: "react-jsx", Value: JsxEmitReactJSX },
   { Key: "react-jsxdev", Value: JsxEmitReactJSXDev },
   { Key: "react", Value: JsxEmitReact },
-]);
+], GoStringKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::newLineOptionMap","kind":"varGroup","status":"implemented","sigHash":"1bee69fa1348308e4a98214939c9257767dbb4ac18f27e9953c12fa9b0e3cefd"}
@@ -502,7 +503,7 @@ export let jsxOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromL
 export let newLineOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "crlf", Value: NewLineKindCRLF },
   { Key: "lf", Value: NewLineKindLF },
-]);
+], GoStringKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::targetToLibMap","kind":"varGroup","status":"implemented","sigHash":"1ff6ecd54d75b300816a428a8de0ff6e050ae9d83afbf5df21cdb43fe2991df4"}
@@ -592,7 +593,7 @@ export let watchFileEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapF
   { Key: "fixedchunksizepolling", Value: WatchFileKindFixedChunkSizePolling },
   { Key: "usefsevents", Value: WatchFileKindUseFsEvents },
   { Key: "usefseventsonparentdirectory", Value: WatchFileKindUseFsEventsOnParentDirectory },
-]);
+], GoStringKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::watchDirectoryEnumMap","kind":"varGroup","status":"implemented","sigHash":"40f83ac41ebf2272716ba8266adcb474c4fdbdd6f8518dace47766b504baef72"}
@@ -610,7 +611,7 @@ export let watchDirectoryEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrdere
   { Key: "fixedpollinginterval", Value: WatchDirectoryKindFixedPollingInterval },
   { Key: "dynamicprioritypolling", Value: WatchDirectoryKindDynamicPriorityPolling },
   { Key: "fixedchunksizepolling", Value: WatchDirectoryKindFixedChunkSizePolling },
-]);
+], GoStringKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::fallbackEnumMap","kind":"varGroup","status":"implemented","sigHash":"c031524664983e24b8bfc74381b1a808b5f6710b4dc6512b27e6bf3964cfa201"}
@@ -628,4 +629,4 @@ export let fallbackEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFr
   { Key: "priorityinterval", Value: PollingKindPriorityInterval },
   { Key: "dynamicpriority", Value: PollingKindDynamicPriority },
   { Key: "fixedchunksize", Value: PollingKindFixedChunkSize },
-]);
+], GoStringKey);

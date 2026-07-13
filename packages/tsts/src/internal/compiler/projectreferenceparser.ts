@@ -1,4 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import { NewSetWithSizeHint, Set_AddIfAbsent } from "../collections/set.js";
 import type { Set } from "../collections/set.js";
@@ -15,6 +16,8 @@ import { newProjectReferenceDtsFakingHost } from "./projectreferencedtsfakinghos
 import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 
 import type { GoInterface } from "../../go/compat.js";
+
+const projectReferenceParseTaskKey = GoPointerKey<projectReferenceParseTask>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParseTask","kind":"type","status":"implemented","sigHash":"9514d364f391763c424a5d6d9a870f7696a4a0508cf83e21635c4aa906ea5617"}
  *
@@ -140,7 +143,7 @@ export function projectReferenceParser_start(receiver: GoPtr<projectReferencePar
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
     const path = fileLoader_toPath(receiver!.loader, task!.configName);
-    const [loadedTask, loaded] = SyncMap_LoadOrStore<Path, GoPtr<projectReferenceParseTask>>(receiver!.tasksByFileName as SyncMap<Path, GoPtr<projectReferenceParseTask>>, path, task);
+    const [loadedTask, loaded] = SyncMap_LoadOrStore<Path, GoPtr<projectReferenceParseTask>>(receiver!.tasksByFileName as SyncMap<Path, GoPtr<projectReferenceParseTask>>, path, task, GoZeroPointer<projectReferenceParseTask>, GoStringKey);
     if (loaded) {
       // dedup tasks to ensure correct file order, regardless of which task would be started first
       tasks[i] = loadedTask;
@@ -175,7 +178,7 @@ export function projectReferenceParser_initMapper(receiver: GoPtr<projectReferen
   receiver!.loader!.projectReferenceFileMapper!.referencesInConfigFile = new globalThis.Map<Path, GoSlice<Path>>();
   receiver!.loader!.projectReferenceFileMapper!.sourceToProjectReference = new globalThis.Map<Path, GoPtr<import("../tsoptions/parsedcommandline.js").SourceOutputAndProjectReference>>();
   receiver!.loader!.projectReferenceFileMapper!.outputDtsToProjectReference = new globalThis.Map<Path, GoPtr<import("../tsoptions/parsedcommandline.js").SourceOutputAndProjectReference>>();
-  const seen = NewSetWithSizeHint<GoPtr<projectReferenceParseTask>>(tasks.length);
+  const seen = NewSetWithSizeHint<GoPtr<projectReferenceParseTask>>(tasks.length, projectReferenceParseTaskKey);
   receiver!.loader!.projectReferenceFileMapper!.referencesInConfigFile.set(
     SourceFile_Path(receiver!.loader!.opts.Config!.ConfigFile!.SourceFile),
     projectReferenceParser_initMapperWorker(receiver, tasks, seen),
@@ -234,7 +237,7 @@ export function projectReferenceParser_initMapperWorker(receiver: GoPtr<projectR
     const path = fileLoader_toPath(receiver!.loader, task!.configName);
     results.push(path);
     // ensure we only walk each task once
-    if (!Set_AddIfAbsent(seen as GoPtr<Set<GoPtr<projectReferenceParseTask>>>, task)) {
+    if (!Set_AddIfAbsent(seen as GoPtr<Set<GoPtr<projectReferenceParseTask>>>, task, projectReferenceParseTaskKey)) {
       continue;
     }
     receiver!.loader!.projectReferenceFileMapper!.configToProjectReference.set(path, task!.resolved);
@@ -250,7 +253,7 @@ export function projectReferenceParser_initMapperWorker(receiver: GoPtr<projectR
           declDir = ParsedCommandLine_CompilerOptions(task!.resolved)!.OutDir;
         }
         if (declDir !== "") {
-          Set_AddIfAbsent(receiver!.loader!.dtsDirectories as GoPtr<Set<Path>>, fileLoader_toPath(receiver!.loader, declDir));
+          Set_AddIfAbsent(receiver!.loader!.dtsDirectories as GoPtr<Set<Path>>, fileLoader_toPath(receiver!.loader, declDir), GoStringKey);
         }
       }
     }

@@ -10,6 +10,7 @@ import { IsBindingElement, IsBlock, IsOmittedExpression, IsParameterDeclaration 
 import { GetLocals, GetSymbolId, IsBindingPattern } from "../ast/utilities.js";
 import { Some } from "../core/core.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
+import { goNodePointerKey } from "./map-key-descriptors.js";
 import { Assert } from "../debug/debug.js";
 import { FlagsGenerateNamesForShadowedTypeParams } from "../nodebuilder/types.js";
 import { Checker_getExpandedParameters, NodeBuilderImpl_typeParameterToName } from "./nodebuilderimpl.js";
@@ -357,14 +358,14 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
       Assert(receiver!.ctx!.enclosingDeclaration !== undefined);
       let existingFakeScope: GoPtr<Node>;
       if (LinkStore_Has<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration)) {
-        const existingLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration, goZeroNodeBuilderLinks);
+        const existingLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration, goZeroNodeBuilderLinks, goNodePointerKey);
         if (existingLinks!.v.fakeScopeForSignatureDeclaration !== undefined && existingLinks!.v.fakeScopeForSignatureDeclaration.v === kind) {
           existingFakeScope = receiver!.ctx!.enclosingDeclaration;
         }
       }
       if (existingFakeScope === undefined && receiver!.ctx!.enclosingDeclaration!.Parent !== undefined) {
         if (LinkStore_Has<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent)) {
-          const parentLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent, goZeroNodeBuilderLinks);
+          const parentLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent, goZeroNodeBuilderLinks, goNodePointerKey);
           if (parentLinks!.v.fakeScopeForSignatureDeclaration !== undefined && parentLinks!.v.fakeScopeForSignatureDeclaration.v === kind) {
             existingFakeScope = receiver!.ctx!.enclosingDeclaration!.Parent;
           }
@@ -391,7 +392,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
       });
       if (existingFakeScope === undefined) {
         const fakeScope = NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []), false);
-        LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, fakeScope, goZeroNodeBuilderLinks)!.v.fakeScopeForSignatureDeclaration = GoValueRef(kind);
+        LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, fakeScope, goZeroNodeBuilderLinks, goNodePointerKey)!.v.fakeScopeForSignatureDeclaration = GoValueRef(kind);
         const data = Node_LocalsContainerData(fakeScope);
         (data as unknown as { Locals?: SymbolTable }).Locals = locals;
         fakeScope!.Parent = receiver!.ctx!.enclosingDeclaration;

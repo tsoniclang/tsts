@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoZeroPointer, type GoFunc, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoFunc, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Once } from "../../../go/sync.js";
 import * as maps from "../../../go/maps.js";
 import * as slices from "../../../go/slices.js";
@@ -35,7 +35,7 @@ export interface referenceMap {
  * }
  */
 export function referenceMap_storeReferences(receiver: GoPtr<referenceMap>, path: Path, refs: GoPtr<Set<Path>>): void {
-  SyncMap_Store(receiver!.references, path, refs);
+  SyncMap_Store(receiver!.references, path, refs, GoStringKey);
 }
 
 /**
@@ -101,7 +101,7 @@ export function referenceMap_getReferencedBy(receiver: GoPtr<referenceMap>, path
           set = { M: new globalThis.Map<Path, { readonly __tsgoEmpty?: never }>() };
           receiver!.referencedBy!.set(ref, set);
         }
-        Set_Add(set, key);
+        Set_Add(set, key, GoStringKey);
       }
       return true;
     });

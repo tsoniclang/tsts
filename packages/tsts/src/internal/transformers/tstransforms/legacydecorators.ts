@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoBooleanKey, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_ForEachChild, Node_Modifiers, Node_Name, Node_SubtreeFacts } from "../../ast/spine.js";
 import type { ClassDeclaration, ClassExpression, ComputedPropertyName, ConstructorDeclaration, GetAccessorDeclaration, Identifier, MethodDeclaration, ParameterDeclaration, PropertyAccessExpression, PropertyDeclaration, SetAccessorDeclaration } from "../../ast/generated/data.js";
@@ -1820,7 +1820,7 @@ export function LegacyDecoratorsTransformer_transformAllDecoratorsOfDeclaration(
   if (allDecorators === undefined) {
     return [];
   }
-  const mm = GroupBy(allDecorators!.decorators, (d) => LegacyDecoratorsTransformer_isSyntheticMetadataDecorator(receiver, d));
+  const mm = GroupBy(allDecorators!.decorators, (d) => LegacyDecoratorsTransformer_isSyntheticMetadataDecorator(receiver, d), GoBooleanKey);
   const metadata = MultiMap_Get(mm, true as bool);
   const decorators = MultiMap_Get(mm, false as bool);
   return [

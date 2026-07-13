@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoZeroPointer, type GoChan, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoChan, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { Is as errors_Is } from "../../go/errors.js";
 import { Fprint, Fprintf, Fprintln } from "../../go/fmt.js";
@@ -240,7 +240,7 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
       SyncMap_Store(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path, {
         file,
         modTime: (info as unknown as FileInfoWithModTime).ModTime() as unknown as Time,
-      });
+      }, GoStringKey);
     }
   } else {
     SyncMap_Delete(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path);
@@ -1416,14 +1416,14 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   if (receiver!.config!.ConfigFile !== undefined) {
     wildcardDirs = ParsedCommandLine_WildcardDirectories(receiver!.config);
     for (const [dir] of wildcardDirs) {
-      SyncSet_Add(tfs.SeenFiles, dir);
+      SyncSet_Add(tfs.SeenFiles, dir, GoStringKey);
     }
     if (wildcardDirs.size > 0) {
       receiver!.config = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(receiver!.config, receiver!.sys!.FS());
     }
   }
   for (const path of receiver!.configFilePaths) {
-    SyncSet_Add(tfs.SeenFiles, path);
+    SyncSet_Add(tfs.SeenFiles, path, GoStringKey);
   }
 
   receiver!.program = IncrementalNewProgram(
@@ -1439,9 +1439,9 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   const caseSensitive = receiver!.sys!.FS()!.UseCaseSensitiveFileNames();
   const cwd = receiver!.sys!.GetCurrentDirectory();
   const seenSlice = SyncSet_ToSlice(tfsSeenFiles);
-  receiver!.seenFiles = NewSetWithSizeHint<Path>(seenSlice.length);
+  receiver!.seenFiles = NewSetWithSizeHint<Path>(seenSlice.length, GoStringKey);
   for (const p of seenSlice) {
-    Set_Add(receiver!.seenFiles, ToPath(p, cwd, caseSensitive));
+    Set_Add(receiver!.seenFiles, ToPath(p, cwd, caseSensitive), GoStringKey);
   }
 
   type FileInfoModTime = { ModTime(): Time };

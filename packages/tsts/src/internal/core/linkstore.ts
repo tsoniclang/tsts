@@ -1,6 +1,6 @@
 import type { bool } from "../../go/scalars.js";
-import { GoMapIsNil } from "../../go/compat.js";
-import type { GoComparable, GoMap, GoPtr, GoZeroFactory } from "../../go/compat.js";
+import { GoMapIsNil, GoMapMake } from "../../go/compat.js";
+import type { GoComparable, GoMap, GoMapKeyDescriptor, GoPtr, GoZeroFactory } from "../../go/compat.js";
 import { Arena_New } from "./arena.js";
 import type { Arena } from "./arena.js";
 
@@ -21,7 +21,7 @@ export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/linkstore.go::method::LinkStore.Get","kind":"method","status":"implemented","sigHash":"9c97508aca07f6b6e2bf5511597c28312a377451b939490932beace4e6ef9302"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic link allocation forwards the exact static zero-value constructor for the stored link type.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic link allocation receives the exact static stored-value zero and map-key operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"},{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (s *LinkStore[K, V]) Get(key K) *V {
@@ -37,9 +37,9 @@ export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
  * 	return value
  * }
  */
-export function LinkStore_Get<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K, zeroValue: GoZeroFactory<V>): GoRef<V> {
+export function LinkStore_Get<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K, zeroValue: GoZeroFactory<V>, keyDescriptor: GoMapKeyDescriptor<K>): GoRef<V> {
   if (GoMapIsNil(receiver!.entries)) {
-    receiver!.entries = new globalThis.Map<K, GoRef<V>>();
+    receiver!.entries = GoMapMake<K, GoRef<V>>(keyDescriptor);
   }
   const entries = receiver!.entries;
   let value = entries.get(key);

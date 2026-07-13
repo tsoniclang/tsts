@@ -1,6 +1,6 @@
 import type { bool } from "./scalars.js";
 import type { Seq } from "./iter.js";
-import type { GoEquality, GoFunc, GoMap } from "./compat.js";
+import type { GoEquality, GoFunc, GoMap, GoMapKeyDescriptor } from "./compat.js";
 import { GoMapClone } from "./compat.js";
 
 // Go: package maps (standard library, Go 1.21+/1.23 iterators).
@@ -11,8 +11,8 @@ import { GoMapClone } from "./compat.js";
 
 // Clone returns a copy of m. This is a shallow clone: the new keys and values
 // are set using ordinary assignment.
-export function Clone<K, V>(m: GoMap<K, V>): GoMap<K, V> {
-  return GoMapClone(m);
+export function Clone<K, V>(m: GoMap<K, V>, keyDescriptor: GoMapKeyDescriptor<K>): GoMap<K, V> {
+  return GoMapClone(m, keyDescriptor);
 }
 
 // Copy copies all key/value pairs in src adding them to dst. When a key in src

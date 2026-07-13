@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { bool, int } from "../../go/scalars.js";
-import { GoZeroInterface, type GoPtr } from "../../go/compat.js";
+import { GoStringKey, GoZeroInterface, type GoPtr } from "../../go/compat.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -47,8 +47,8 @@ test("ParseCommandLine preserves explicit null command-line overrides through co
   assert.equal(rawCustomConditionsExists, true);
   assert.equal(rawCustomConditions, undefined);
 
-  const wrappedRaw = NewOrderedMapWithSizeHint<string, unknown>(1 as int)!;
-  OrderedMap_Set(wrappedRaw, "compilerOptions", commandLine.Raw);
+  const wrappedRaw = NewOrderedMapWithSizeHint<string, unknown>(1 as int, GoStringKey)!;
+  OrderedMap_Set(wrappedRaw, "compilerOptions", commandLine.Raw, GoStringKey);
   const [parsed, errors] = GetParsedCommandLineOfConfigFile(
     "/project/tsconfig.json",
     commandLine.ParsedConfig!.CompilerOptions,

@@ -157,6 +157,7 @@ export interface GoMapKeyDescriptor<K> {
   readonly identity: symbol;
   appendHashParts(parts: unknown[], value: K): void;
   snapshot(value: K): K;
+  makeMap<V>(): GoMap<K, V>;
 }
 
 export interface GoStructKeyField<K, V> {
@@ -175,8 +176,29 @@ const goNilInterfaceKey = Symbol("GoKey.nilInterface");
 function createGoMapKeyDescriptor<K>(
   appendHashParts: (parts: unknown[], value: K) => void,
   snapshot: (value: K) => K,
+  makeMap: <V>(descriptor: GoMapKeyDescriptor<K>) => GoMap<K, V>,
 ): GoMapKeyDescriptor<K> {
-  return globalThis.Object.freeze({ identity: Symbol("GoKey.type"), appendHashParts, snapshot });
+  const descriptor: GoMapKeyDescriptor<K> = {
+    identity: Symbol("GoKey.type"),
+    appendHashParts,
+    snapshot,
+    makeMap<V>(): GoMap<K, V> {
+      return makeMap<V>(descriptor);
+    },
+  };
+  return globalThis.Object.freeze(descriptor);
+}
+
+function newNativeGoMap<K, V>(_descriptor: GoMapKeyDescriptor<K>): GoMap<K, V> {
+  return new globalThis.Map<K, V>();
+}
+
+function newNumberGoMap<K extends number, V>(_descriptor: GoMapKeyDescriptor<K>): GoMap<K, V> {
+  return new GoNumberMap<K, V>();
+}
+
+function newStructuredGoMap<K, V>(descriptor: GoMapKeyDescriptor<K>): GoMap<K, V> {
+  return new GoStructMap<K, V>(descriptor);
 }
 
 function appendGoMapKey<K>(parts: unknown[], descriptor: GoMapKeyDescriptor<K>, value: K): void {
@@ -188,37 +210,37 @@ function requireGoKeyType(value: unknown, expected: string): void {
   if (typeof value !== expected) throw new TypeError("Go map key descriptor expected " + expected + ", got " + typeof value);
 }
 
-export const GoBooleanKey: GoMapKeyDescriptor<boolean> = createGoMapKeyDescriptor((parts, value) => {
+export const GoBooleanKey: GoMapKeyDescriptor<boolean> = createGoMapKeyDescriptor<boolean>((parts, value) => {
   requireGoKeyType(value, "boolean");
   parts.push(value);
 }, (value) => {
   requireGoKeyType(value, "boolean");
   return value;
-});
+}, newNativeGoMap);
 
-export const GoNumberKey: GoMapKeyDescriptor<number> = createGoMapKeyDescriptor((parts, value) => {
+export const GoNumberKey: GoMapKeyDescriptor<number> = createGoMapKeyDescriptor<number>((parts, value) => {
   requireGoKeyType(value, "number");
   parts.push(Number.isNaN(value) ? Symbol("GoKey.NaN") : value);
 }, (value) => {
   requireGoKeyType(value, "number");
   return value;
-});
+}, newNumberGoMap);
 
-export const GoBigIntKey: GoMapKeyDescriptor<bigint> = createGoMapKeyDescriptor((parts, value) => {
+export const GoBigIntKey: GoMapKeyDescriptor<bigint> = createGoMapKeyDescriptor<bigint>((parts, value) => {
   requireGoKeyType(value, "bigint");
   parts.push(value);
 }, (value) => {
   requireGoKeyType(value, "bigint");
   return value;
-});
+}, newNativeGoMap);
 
-export const GoStringKey: GoMapKeyDescriptor<string> = createGoMapKeyDescriptor((parts, value) => {
+export const GoStringKey: GoMapKeyDescriptor<string> = createGoMapKeyDescriptor<string>((parts, value) => {
   requireGoKeyType(value, "string");
   parts.push(value);
 }, (value) => {
   requireGoKeyType(value, "string");
   return value;
-});
+}, newNativeGoMap);
 
 export function GoPointerKey<T extends object>(): GoMapKeyDescriptor<GoPtr<T>> {
   const exact = (value: GoPtr<T>): GoPtr<T> => {
@@ -228,13 +250,13 @@ export function GoPointerKey<T extends object>(): GoMapKeyDescriptor<GoPtr<T>> {
     }
     return value;
   };
-  return createGoMapKeyDescriptor((parts, value) => {
+  return createGoMapKeyDescriptor<GoPtr<T>>((parts, value) => {
     if (exact(value) === undefined) {
       parts.push(goNilPointerKey);
       return;
     }
     parts.push(value);
-  }, exact);
+  }, exact, newNativeGoMap);
 }
 
 export function GoArrayKey<T>(length: number, element: GoMapKeyDescriptor<T>): GoMapKeyDescriptor<readonly T[]> {
@@ -244,13 +266,13 @@ export function GoArrayKey<T>(length: number, element: GoMapKeyDescriptor<T>): G
       throw new TypeError("Go array map key expected length " + length);
     }
   };
-  return createGoMapKeyDescriptor((parts, value) => {
+  return createGoMapKeyDescriptor<readonly T[]>((parts, value) => {
     requireArray(value);
     for (const item of value) appendGoMapKey(parts, element, item);
   }, (value) => {
     requireArray(value);
     return value.map((item) => element.snapshot(item));
-  });
+  }, newStructuredGoMap);
 }
 
 export function GoStructField<K, V>(read: (value: K) => V, descriptor: GoMapKeyDescriptor<V>): GoStructKeyField<K, V> {
@@ -264,21 +286,34 @@ export function GoStructKey<K, const Values extends readonly unknown[]>(
   fields: { readonly [Index in keyof Values]: GoStructKeyField<K, Values[Index]> },
   construct: (values: Values, source: K) => K,
 ): GoMapKeyDescriptor<K> {
-  return createGoMapKeyDescriptor((parts, value) => {
+  return createGoMapKeyDescriptor<K>((parts, value) => {
     if (typeof value !== "object" || value === null) throw new TypeError("Go struct map key must be an object value");
     for (const field of fields) field.appendHashParts(parts, value);
   }, (value) => {
     if (typeof value !== "object" || value === null) throw new TypeError("Go struct map key must be an object value");
     const snapshots = fields.map((field) => field.snapshot(value)) as unknown as Values;
     return construct(snapshots, value);
-  });
+  }, newStructuredGoMap);
 }
 
-export function GoNamedKey<K>(underlying: GoMapKeyDescriptor<K>): GoMapKeyDescriptor<K> {
-  return createGoMapKeyDescriptor(
-    (parts, value) => appendGoMapKey(parts, underlying, value),
-    (value) => underlying.snapshot(value),
-  );
+export function GoNamedStringKey<K extends string>(): GoMapKeyDescriptor<K> {
+  return createGoMapKeyDescriptor<K>((parts, value) => {
+    requireGoKeyType(value, "string");
+    parts.push(value);
+  }, (value) => {
+    requireGoKeyType(value, "string");
+    return value;
+  }, newNativeGoMap);
+}
+
+export function GoNamedNumberKey<K extends number>(): GoMapKeyDescriptor<K> {
+  return createGoMapKeyDescriptor<K>((parts, value) => {
+    requireGoKeyType(value, "number");
+    parts.push(Number.isNaN(value) ? Symbol("GoKey.NaN") : value);
+  }, (value) => {
+    requireGoKeyType(value, "number");
+    return value;
+  }, newNumberGoMap);
 }
 
 export function GoDynamicValue<T>(descriptor: GoMapKeyDescriptor<T>, value: T): GoDynamicComparable<T> {
@@ -289,7 +324,7 @@ export function GoInterfaceKey<K>(
   dynamic: (value: K) => GoDynamicComparable | undefined,
   construct: (dynamic: GoDynamicComparable | undefined) => K,
 ): GoMapKeyDescriptor<K> {
-  return createGoMapKeyDescriptor((parts, value) => {
+  return createGoMapKeyDescriptor<K>((parts, value) => {
     const selected = dynamic(value);
     if (selected === undefined) {
       parts.push(goNilInterfaceKey);
@@ -301,7 +336,83 @@ export function GoInterfaceKey<K>(
     return selected === undefined
       ? construct(undefined)
       : construct(GoDynamicValue(selected.descriptor, selected.descriptor.snapshot(selected.value)));
-  });
+  }, newStructuredGoMap);
+}
+
+interface GoNumberMapEntry<K extends number, V> {
+  readonly key: K;
+  value: V;
+  active: boolean;
+}
+
+export class GoNumberMap<K extends number = number, V = unknown> implements Map<K, V> {
+  readonly [Symbol.toStringTag] = "Map";
+  private readonly indexedEntries = new globalThis.Map<number, GoNumberMapEntry<K, V>>();
+  private readonly orderedEntries: Array<GoNumberMapEntry<K, V>> = [];
+  private activeSize = 0;
+
+  get size(): number { return this.activeSize; }
+
+  clear(): void {
+    this.indexedEntries.clear();
+    this.orderedEntries.length = 0;
+    this.activeSize = 0;
+  }
+
+  delete(key: K): boolean {
+    requireGoKeyType(key, "number");
+    if (Number.isNaN(key)) return false;
+    const entry = this.indexedEntries.get(key);
+    if (entry === undefined) return false;
+    entry.active = false;
+    this.indexedEntries.delete(key);
+    this.activeSize--;
+    return true;
+  }
+
+  forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: unknown): void {
+    for (const entry of this.orderedEntries) if (entry.active) callbackfn.call(thisArg, entry.value, entry.key, this);
+  }
+
+  get(key: K): V | undefined {
+    requireGoKeyType(key, "number");
+    return Number.isNaN(key) ? undefined : this.indexedEntries.get(key)?.value;
+  }
+
+  has(key: K): boolean {
+    requireGoKeyType(key, "number");
+    return !Number.isNaN(key) && this.indexedEntries.has(key);
+  }
+
+  set(key: K, value: V): this {
+    requireGoKeyType(key, "number");
+    if (!Number.isNaN(key)) {
+      const existing = this.indexedEntries.get(key);
+      if (existing !== undefined) {
+        existing.value = value;
+        return this;
+      }
+    }
+    const entry: GoNumberMapEntry<K, V> = { key, value, active: true };
+    if (!Number.isNaN(key)) this.indexedEntries.set(key, entry);
+    this.orderedEntries.push(entry);
+    this.activeSize++;
+    return this;
+  }
+
+  *entries(): MapIterator<[K, V]> {
+    for (const entry of this.orderedEntries) if (entry.active) yield [entry.key, entry.value];
+  }
+
+  *keys(): MapIterator<K> {
+    for (const entry of this.orderedEntries) if (entry.active) yield entry.key;
+  }
+
+  *values(): MapIterator<V> {
+    for (const entry of this.orderedEntries) if (entry.active) yield entry.value;
+  }
+
+  [Symbol.iterator](): MapIterator<[K, V]> { return this.entries(); }
 }
 
 interface GoStructMapEntry<K, V> {
@@ -441,15 +552,19 @@ export function NewGoStructMap<K, V>(keyDescriptor: GoMapKeyDescriptor<K>): GoSt
   return new GoStructMap<K, V>(keyDescriptor);
 }
 
+export function GoMapMake<K, V>(keyDescriptor: GoMapKeyDescriptor<K>): GoMap<K, V> {
+  return keyDescriptor.makeMap<V>();
+}
+
+export function GoMapClone<K, V>(map: GoMap<K, V>, keyDescriptor: GoMapKeyDescriptor<K>): GoMap<K, V> {
+  if (GoMapIsNil(map)) return GoNilMap();
+  const clone = GoMapMake<K, V>(keyDescriptor);
+  for (const [key, value] of map) clone.set(key, value);
+  return clone;
+}
+
 export function GoMapGetExisting<K, V>(map: NonNullable<GoMap<K, V>>, key: K): V {
-  if (map instanceof GoStructMap) {
-    const entry = map.lookup(key);
-    if (entry !== undefined) {
-      return entry.value;
-    }
-  } else if (map.has(key)) {
-    return map.get(key)!;
-  }
+  if (map.has(key)) return map.get(key)!;
   throw new TypeError("map key lookup is inconsistent with its entries");
 }
 

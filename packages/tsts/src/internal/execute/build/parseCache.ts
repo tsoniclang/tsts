@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoComparable, GoEquality, GoPtr, GoZeroFactory } from "../../../go/compat.js";
+import { GoZeroPointer, type GoComparable, type GoEquality, type GoMapKeyDescriptor, type GoPtr, type GoZeroFactory } from "../../../go/compat.js";
 import { Map, Mutex } from "../../../go/sync.js";
 import { SyncMap_Delete, SyncMap_LoadOrStore, SyncMap_Store } from "../../collections/syncmap.js";
 import type { SyncMap } from "../../collections/syncmap.js";
@@ -33,7 +33,7 @@ export interface parseCache<K extends GoComparable = unknown, V extends GoCompar
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::method::parseCache.loadOrStore","kind":"method","status":"implemented","sigHash":"687be8bd3c251584c9bd3de8cf5bf2f89bf4feb2ee573b40939cecde954cff19"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic cache storage receives exact static zero-value and equality operations for the cached value type.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"},{"kind":"equality","parameter":"equal","typeParameter":"V"}]}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic cache storage receives exact static zero-value, equality, and map-key operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"},{"kind":"equality","parameter":"equal","typeParameter":"V"},{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (c *parseCache[K, V]) loadOrStore(key K, parse func(K) V, allowZero bool) V {
@@ -52,10 +52,10 @@ export interface parseCache<K extends GoComparable = unknown, V extends GoCompar
  * 	return newEntry.value
  * }
  */
-export function parseCache_loadOrStore<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, parse: GoFunc<(arg0: K) => V>, allowZero: bool, zeroValue: GoZeroFactory<V>, equal: GoEquality<V>): V {
+export function parseCache_loadOrStore<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, parse: GoFunc<(arg0: K) => V>, allowZero: bool, zeroValue: GoZeroFactory<V>, equal: GoEquality<V>, keyDescriptor: GoMapKeyDescriptor<K>): V {
   const zero = zeroValue();
   let newEntry: parseCacheEntry<V> = { value: zero, mu: new Mutex() };
-  const [entry, loaded] = SyncMap_LoadOrStore<K, GoPtr<parseCacheEntry<V>>>(receiver!.entries as SyncMap<K, GoPtr<parseCacheEntry<V>>>, key, newEntry);
+  const [entry, loaded] = SyncMap_LoadOrStore<K, GoPtr<parseCacheEntry<V>>>(receiver!.entries as SyncMap<K, GoPtr<parseCacheEntry<V>>>, key, newEntry, GoZeroPointer<parseCacheEntry<V>>, keyDescriptor);
   if (loaded) {
     if (allowZero || !equal(entry!.value, zero)) {
       return entry!.value;
@@ -68,14 +68,15 @@ export function parseCache_loadOrStore<K extends GoComparable, V extends GoCompa
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::method::parseCache.store","kind":"method","status":"implemented","sigHash":"de712529c2c154ace9c8004bdd136f2ad68b3c9876537c35c541721b789e245d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic cache storage receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (c *parseCache[K, V]) store(key K, value V) {
  * 	c.entries.Store(key, &parseCacheEntry[V]{value: value})
  * }
  */
-export function parseCache_store<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, value: V): void {
-  SyncMap_Store<K, GoPtr<parseCacheEntry<V>>>(receiver!.entries as SyncMap<K, GoPtr<parseCacheEntry<V>>>, key, { value, mu: new Mutex() });
+export function parseCache_store<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, value: V, keyDescriptor: GoMapKeyDescriptor<K>): void {
+  SyncMap_Store<K, GoPtr<parseCacheEntry<V>>>(receiver!.entries as SyncMap<K, GoPtr<parseCacheEntry<V>>>, key, { value, mu: new Mutex() }, keyDescriptor);
 }
 
 /**

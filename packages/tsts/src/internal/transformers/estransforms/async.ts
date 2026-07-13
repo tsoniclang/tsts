@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { Node_Text } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -597,7 +597,7 @@ export function asyncTransformer_visitAsyncBodyNode(receiver: GoPtr<asyncTransfo
  * }
  */
 export function asyncTransformer_visitCatchClauseInAsyncBody(receiver: GoPtr<asyncTransformer>, node: GoPtr<CatchClause>): GoPtr<Node> {
-  const catchClauseNames: GoPtr<Set<string>> = NewSetWithSizeHint<string>(0);
+  const catchClauseNames: GoPtr<Set<string>> = NewSetWithSizeHint<string>(0, GoStringKey);
   if (node!.VariableDeclaration !== undefined) {
     asyncTransformer_recordDeclarationName(receiver, node!.VariableDeclaration as unknown as GoPtr<Node>, catchClauseNames);
   }
@@ -606,7 +606,7 @@ export function asyncTransformer_visitCatchClauseInAsyncBody(receiver: GoPtr<asy
   for (const escapedName of catchClauseNames!.M.keys()) {
     if (receiver!.enclosingFunctionParameterNames !== undefined && Set_Has(receiver!.enclosingFunctionParameterNames, escapedName)) {
       if (catchClauseUnshadowedNames === undefined) {
-        catchClauseUnshadowedNames = Set_Clone(receiver!.enclosingFunctionParameterNames as GoPtr<Set<string>>);
+        catchClauseUnshadowedNames = Set_Clone(receiver!.enclosingFunctionParameterNames, GoStringKey);
       }
       Set_Delete(catchClauseUnshadowedNames, escapedName);
     }
@@ -1218,7 +1218,7 @@ export function asyncTransformer_recordDeclarationName(receiver: GoPtr<asyncTran
     return;
   }
   if (IsIdentifier(name)) {
-    Set_Add(names as GoPtr<Set<string>>, Node_Text(name));
+    Set_Add(names as GoPtr<Set<string>>, Node_Text(name), GoStringKey);
   } else if (IsBindingPattern(name)) {
     const bp = AsBindingPattern(name)!;
     for (const element of bp.Elements!.Nodes) {
@@ -1489,7 +1489,7 @@ export function asyncTransformer_transformMethodBody(receiver: GoPtr<asyncTransf
   const savedSuperIndexBinding = receiver!.__tsgoEmbedded1!.superIndexBinding;
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const factory = printerFactory!.__tsgoEmbedded0!;
-  receiver!.__tsgoEmbedded1!.capturedSuperProperties = NewOrderedSetWithSizeHint<string>(0);
+  receiver!.__tsgoEmbedded1!.capturedSuperProperties = NewOrderedSetWithSizeHint<string>(0, GoStringKey);
   receiver!.__tsgoEmbedded1!.hasSuperElementAccess = false as bool;
   receiver!.__tsgoEmbedded1!.hasSuperPropertyAssignment = false as bool;
   receiver!.__tsgoEmbedded1!.superBinding = NodeFactory_NewUniqueNameEx(printerFactory!, "_super", { Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel, Prefix: "", Suffix: "" });
@@ -1713,7 +1713,7 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const factory = printerFactory!.__tsgoEmbedded0!;
   if (!isArrow) {
-    receiver!.__tsgoEmbedded1!.capturedSuperProperties = NewOrderedSetWithSizeHint<string>(0);
+    receiver!.__tsgoEmbedded1!.capturedSuperProperties = NewOrderedSetWithSizeHint<string>(0, GoStringKey);
     receiver!.__tsgoEmbedded1!.hasSuperElementAccess = false as bool;
     receiver!.__tsgoEmbedded1!.hasSuperPropertyAssignment = false as bool;
     receiver!.__tsgoEmbedded1!.superBinding = NodeFactory_NewUniqueNameEx(printerFactory!, "_super", { Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel, Prefix: "", Suffix: "" });
@@ -1753,7 +1753,7 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
   }
   // An async function is emit as an outer function that calls an inner generator function.
   const savedEnclosingFunctionParameterNames = receiver!.enclosingFunctionParameterNames;
-  receiver!.enclosingFunctionParameterNames = NewSetWithSizeHint<string>(0);
+  receiver!.enclosingFunctionParameterNames = NewSetWithSizeHint<string>(0, GoStringKey);
   for (const parameter of Node_Parameters(node)) {
     asyncTransformer_recordDeclarationName(receiver, parameter as unknown as GoPtr<Node>, receiver!.enclosingFunctionParameterNames);
   }

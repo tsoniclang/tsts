@@ -1,5 +1,5 @@
 import type { bool, byte } from "../../../go/scalars.js";
-import { GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -661,7 +661,8 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
     SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
       SourceFile_Path(f),
-      { diagnostics: diagnostics, buildInfoDiagnostics: [] }
+      { diagnostics: diagnostics, buildInfoDiagnostics: [] },
+      GoStringKey,
     );
   }
   if (SyncMap_Size<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(

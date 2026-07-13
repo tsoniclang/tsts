@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq, Seq2 } from "../../../go/iter.js";
 import type { JsonFieldNamesForGoStructContract } from "../../json/json.js";
-import { GoZeroPointer, GoZeroString, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer, GoZeroString, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Errorf } from "../../../go/fmt.js";
 import type { RepopulateDiagnosticKind } from "../../ast/diagnostic.js";
 import {
@@ -1309,7 +1309,7 @@ export function BuildInfo_IsEmitPending(receiver: GoPtr<BuildInfo>, resolved: Go
  */
 export function BuildInfo_GetBuildInfoRootInfoReader(receiver: GoPtr<BuildInfo>, buildInfoDirectory: string, comparePathOptions: ComparePathsOptions): GoPtr<BuildInfoRootInfoReader> {
   const resolvedRootFileInfos: GoMap<Path, GoPtr<BuildInfoFileInfo>> = new Map<Path, GoPtr<BuildInfoFileInfo>>();
-  const rootToResolved = NewOrderedMapWithSizeHint<Path, Path>(receiver!.FileNames?.length ?? 0);
+  const rootToResolved = NewOrderedMapWithSizeHint<Path, Path>(receiver!.FileNames?.length ?? 0, GoStringKey);
   const resolvedToRoot: Map<Path, Path> = new Map<Path, Path>();
   const toPath = (fileName: string): Path => ToPath(fileName, buildInfoDirectory, comparePathOptions.UseCaseSensitiveFileNames);
 
@@ -1321,9 +1321,9 @@ export function BuildInfo_GetBuildInfoRootInfoReader(receiver: GoPtr<BuildInfo>,
     const resolvedRootPath = toPath(resolvedRoot);
     const rootPath = resolvedToRoot.get(resolvedRootPath);
     if (rootPath !== undefined) {
-      OrderedMap_Set(rootToResolved, rootPath, resolvedRootPath);
+      OrderedMap_Set(rootToResolved, rootPath, resolvedRootPath, GoStringKey);
     } else {
-      OrderedMap_Set(rootToResolved, resolvedRootPath, resolvedRootPath);
+      OrderedMap_Set(rootToResolved, resolvedRootPath, resolvedRootPath, GoStringKey);
     }
     if (fileInfo !== undefined) {
       resolvedRootFileInfos.set(resolvedRootPath, fileInfo);

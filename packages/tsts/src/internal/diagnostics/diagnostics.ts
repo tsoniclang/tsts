@@ -7,7 +7,7 @@
 // mirroring how diagnostics_generated.go is produced by generate.go.
 
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNamedStringKey, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Sprintf } from "../../go/fmt.js";
 import * as regexp from "../../go/regexp.js";
 import { ParseInt } from "../../go/strconv.js";
@@ -236,7 +236,8 @@ export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...a
  * Go source:
  * var localizedMessagesCache sync.Map // map[language.Tag]map[Key]string
  */
-export let localizedMessagesCache: Map = new Map<Tag, GoMap<Key, string> | undefined>();
+export let localizedMessagesCache: Map<Tag, GoMap<Key, string> | undefined> = new Map<Tag, GoMap<Key, string> | undefined>();
+const languageTagKey = GoNamedStringKey<Tag>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::getLocalizedMessages","kind":"func","status":"implemented","sigHash":"938c8f866fbc7ee358e1b68eceb4d247f7dae4739f97723bc330ddc5a3047236"}
@@ -277,7 +278,7 @@ export function getLocalizedMessages(loc: Tag): GoMap<Key, string> | undefined {
     return cached[0] as GoMap<Key, string> | undefined;
   }
   const messages = loadMatchedLocaleMessages(loc);
-  localizedMessagesCache.Store(loc, messages);
+  localizedMessagesCache.Store(loc, messages, languageTagKey);
   return messages;
 }
 

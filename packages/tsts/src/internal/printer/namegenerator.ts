@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr } from "../../go/compat.js";
+import { GoNilMap, GoStringKey, type GoMap, type GoPtr } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { MemberName } from "../ast/generated/unions.js";
 import type { NodeId } from "../ast/ids.js";
@@ -118,14 +118,14 @@ export function NameGenerator_PushScope(receiver: GoPtr<NameGenerator>, reuseTem
     next: receiver!.privateNameGenerationScope,
     tempFlags: tempFlagsAuto,
     formattedNameTempFlags: new globalThis.Map(),
-    reservedNames: { M: new globalThis.Map() },
+    reservedNames: { M: GoNilMap() },
   };
   if (!reuseTempVariableScope) {
     receiver!.nameGenerationScope = {
       next: receiver!.nameGenerationScope,
       tempFlags: tempFlagsAuto,
       formattedNameTempFlags: new globalThis.Map(),
-      reservedNames: { M: new globalThis.Map() },
+      reservedNames: { M: GoNilMap() },
     };
   }
 }
@@ -203,7 +203,7 @@ export function NameGenerator_setTempFlags(receiver: GoPtr<NameGenerator>, priva
       next: undefined,
       tempFlags: tempFlagsAuto,
       formattedNameTempFlags: new globalThis.Map(),
-      reservedNames: { M: new globalThis.Map() },
+      reservedNames: { M: GoNilMap() },
     };
   }
   scope.v!.tempFlags = flags;
@@ -256,7 +256,7 @@ export function NameGenerator_setTempFlagsForFormattedName(receiver: GoPtr<NameG
       next: undefined,
       tempFlags: tempFlagsAuto,
       formattedNameTempFlags: new globalThis.Map(),
-      reservedNames: { M: new globalThis.Map() },
+      reservedNames: { M: GoNilMap() },
     };
   }
   scope.v!.formattedNameTempFlags.set(formattedNameKey, flags);
@@ -286,13 +286,13 @@ export function NameGenerator_reserveName(receiver: GoPtr<NameGenerator>, name: 
       next: undefined,
       tempFlags: tempFlagsAuto,
       formattedNameTempFlags: new globalThis.Map(),
-      reservedNames: { M: new globalThis.Map() },
+      reservedNames: { M: GoNilMap() },
     };
   }
   if (privateName || scoped) {
-    Set_Add(scope.v!.reservedNames, name);
+    Set_Add(scope.v!.reservedNames, name, GoStringKey);
   } else if (!temp) {
-    Set_Add(receiver!.generatedNames, name);
+    Set_Add(receiver!.generatedNames, name, GoStringKey);
   }
 }
 

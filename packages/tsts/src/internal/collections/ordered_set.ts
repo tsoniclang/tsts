@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import { GoZeroEmptyStruct, type GoComparable, type GoEquality, type GoPtr } from "../../go/compat.js";
+import { GoZeroEmptyStruct, type GoComparable, type GoEquality, type GoMapKeyDescriptor, type GoPtr } from "../../go/compat.js";
 import type { OrderedMap } from "./ordered_map.js";
 import {
   newMapWithSizeHint,
@@ -27,6 +27,7 @@ export interface OrderedSet<T extends GoComparable = unknown> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::func::NewOrderedSetWithSizeHint","kind":"func","status":"implemented","sigHash":"2bd650c681d534d4023474281ecd97208315c6b1f2ec9d49ff10a359d6391c29"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-set construction forwards the exact static Go map-key descriptor to its backing ordered-map allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func NewOrderedSetWithSizeHint[T comparable](hint int) *OrderedSet[T] {
@@ -35,23 +36,24 @@ export interface OrderedSet<T extends GoComparable = unknown> {
  * 	}
  * }
  */
-export function NewOrderedSetWithSizeHint<T extends GoComparable>(hint: int): GoPtr<OrderedSet<T>> {
+export function NewOrderedSetWithSizeHint<T extends GoComparable>(hint: int, keyDescriptor: GoMapKeyDescriptor<T>): GoPtr<OrderedSet<T>> {
   return {
-    m: newMapWithSizeHint<T, { readonly __tsgoEmpty?: never }>(hint),
+    m: newMapWithSizeHint<T, { readonly __tsgoEmpty?: never }>(hint, keyDescriptor),
   };
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Add","kind":"method","status":"implemented","sigHash":"8e67ec1a0fffb976220a62deae1a24995548cba5fd22f26d594253e6fb1f44d2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-set insertion forwards the exact static Go map-key descriptor to its backing ordered map's possible allocation path.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *OrderedSet[T]) Add(value T) {
  * 	s.m.Set(value, struct{}{})
  * }
  */
-export function OrderedSet_Add<T extends GoComparable>(receiver: GoPtr<OrderedSet<T>>, value: T): void {
+export function OrderedSet_Add<T extends GoComparable>(receiver: GoPtr<OrderedSet<T>>, value: T, keyDescriptor: GoMapKeyDescriptor<T>): void {
   const s = receiver!;
-  OrderedMap_Set(s.m, value, {});
+  OrderedMap_Set(s.m, value, {}, keyDescriptor);
 }
 
 /**
@@ -124,6 +126,7 @@ export function OrderedSet_Size<T extends GoComparable>(receiver: GoPtr<OrderedS
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Clone","kind":"method","status":"implemented","sigHash":"848e18191b0e69ad1571be58d996bac53dbb50dfb8f38f6ee98b97dcc556f37b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-set cloning forwards the exact static Go map-key descriptor to backing-map allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *OrderedSet[T]) Clone() *OrderedSet[T] {
@@ -132,9 +135,9 @@ export function OrderedSet_Size<T extends GoComparable>(receiver: GoPtr<OrderedS
  * 	}
  * }
  */
-export function OrderedSet_Clone<T extends GoComparable>(receiver: GoPtr<OrderedSet<T>>): GoPtr<OrderedSet<T>> {
+export function OrderedSet_Clone<T extends GoComparable>(receiver: GoPtr<OrderedSet<T>>, keyDescriptor: GoMapKeyDescriptor<T>): GoPtr<OrderedSet<T>> {
   const s = receiver!;
   return {
-    m: OrderedMap_clone(s.m),
+    m: OrderedMap_clone(s.m, keyDescriptor),
   };
 }

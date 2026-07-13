@@ -27,6 +27,7 @@ import type { NodeFlags } from "../ast/nodeflags.js";
 import { Filter, MapNonNil, Deduplicate, OrElse, IfElse, FirstOrNil, Some } from "../core/core.js";
 import { Set_Add, Set_Has, Set_Clear } from "../collections/set.js";
 import { LinkStore_Get, LinkStore_Has, LinkStore_TryGet } from "../core/linkstore.js";
+import { goNodePointerKey, goSymbolPointerKey } from "./map-key-descriptors.js";
 import { GetTouchingPropertyName } from "../astnav/tokens.js";
 import { IsIdentifierPart } from "../scanner/scanner.js";
 import { NewEmitContext, EmitContext_ParseNode } from "../printer/emitcontext.js";
@@ -834,7 +835,7 @@ export function runWithInferenceBlockedFromSourceNode<T>(c: GoPtr<Checker>, node
   if (containingCall !== undefined) {
     let toMarkSkip: GoPtr<Node> = node;
     for (;;) {
-      Set_Add(c!.skipDirectInferenceNodes, toMarkSkip);
+      Set_Add(c!.skipDirectInferenceNodes, toMarkSkip, goNodePointerKey);
       toMarkSkip = toMarkSkip!.Parent;
       if (toMarkSkip === undefined || toMarkSkip === containingCall) {
         break;
@@ -914,11 +915,11 @@ export function runWithoutResolvedSignatureCaching<T>(c: GoPtr<Checker>, node: G
     const cachedTypes: Map<ValueSymbolLinks, GoPtr<Type>> = new globalThis.Map();
     let current: GoPtr<Node> = ancestorNode;
     while (current !== undefined) {
-      const signatureLinks = LinkStore_Get(c!.signatureLinks, current, zeroSignatureLinks)!;
+      const signatureLinks = LinkStore_Get(c!.signatureLinks, current, zeroSignatureLinks, goNodePointerKey)!;
       cachedResolvedSignatures.set(signatureLinks!.v, signatureLinks.v.resolvedSignature);
       signatureLinks.v.resolvedSignature = undefined;
       if (IsFunctionExpressionOrArrowFunction(current)) {
-        const symbolLinks = LinkStore_Get(c!.valueSymbolLinks, Checker_getSymbolOfDeclaration(c, current), zeroValueSymbolLinks)!;
+        const symbolLinks = LinkStore_Get(c!.valueSymbolLinks, Checker_getSymbolOfDeclaration(c, current), zeroValueSymbolLinks, goSymbolPointerKey)!;
         const resolvedType = symbolLinks.v.resolvedType;
         cachedTypes.set(symbolLinks!.v, resolvedType);
         symbolLinks.v.resolvedType = undefined;
@@ -1039,7 +1040,7 @@ export function Checker_GetMappedTypeSymbolOfProperty(receiver: GoPtr<Checker>, 
 export function Checker_getImmediateRootSymbols(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Symbol>> {
   if ((symbol_!.CheckFlags & CheckFlagsSynthetic) !== 0) {
     return MapNonNil<GoPtr<Type>, GoPtr<Symbol>>(
-      Type_Types(LinkStore_Get(receiver!.valueSymbolLinks, symbol_, zeroValueSymbolLinks)!.v.containingType),
+      Type_Types(LinkStore_Get(receiver!.valueSymbolLinks, symbol_, zeroValueSymbolLinks, goSymbolPointerKey)!.v.containingType),
       (t: GoPtr<Type>) => {
         return Checker_getPropertyOfType(receiver, t, symbol_!.Name);
       },
@@ -1049,14 +1050,14 @@ export function Checker_getImmediateRootSymbols(receiver: GoPtr<Checker>, symbol
   }
   if ((symbol_!.Flags & SymbolFlagsTransient) !== 0) {
     if (LinkStore_Has(receiver!.spreadLinks, symbol_)) {
-      const leftSpread = LinkStore_Get(receiver!.spreadLinks, symbol_, zeroSpreadLinks)!.v.leftSpread;
-      const rightSpread = LinkStore_Get(receiver!.spreadLinks, symbol_, zeroSpreadLinks)!.v.rightSpread;
+      const leftSpread = LinkStore_Get(receiver!.spreadLinks, symbol_, zeroSpreadLinks, goSymbolPointerKey)!.v.leftSpread;
+      const rightSpread = LinkStore_Get(receiver!.spreadLinks, symbol_, zeroSpreadLinks, goSymbolPointerKey)!.v.rightSpread;
       if (leftSpread !== undefined) {
         return [leftSpread, rightSpread];
       }
     }
     if (LinkStore_Has(receiver!.mappedSymbolLinks, symbol_)) {
-      const syntheticOrigin = LinkStore_Get(receiver!.mappedSymbolLinks, symbol_, zeroMappedSymbolLinks)!.v.syntheticOrigin;
+      const syntheticOrigin = LinkStore_Get(receiver!.mappedSymbolLinks, symbol_, zeroMappedSymbolLinks, goSymbolPointerKey)!.v.syntheticOrigin;
       if (syntheticOrigin !== undefined) {
         return [syntheticOrigin];
       }
@@ -1097,9 +1098,9 @@ export function Checker_tryGetTarget(receiver: GoPtr<Checker>, symbol_: GoPtr<Sy
   let next: GoPtr<Symbol> = symbol_;
   for (;;) {
     if (LinkStore_Has(receiver!.valueSymbolLinks, next)) {
-      next = LinkStore_Get(receiver!.valueSymbolLinks, next, zeroValueSymbolLinks)!.v.target;
+      next = LinkStore_Get(receiver!.valueSymbolLinks, next, zeroValueSymbolLinks, goSymbolPointerKey)!.v.target;
     } else if (LinkStore_Has(receiver!.exportTypeLinks, next)) {
-      next = LinkStore_Get(receiver!.exportTypeLinks, next, zeroExportTypeLinks)!.v.target;
+      next = LinkStore_Get(receiver!.exportTypeLinks, next, zeroExportTypeLinks, goSymbolPointerKey)!.v.target;
     } else {
       next = undefined;
     }
@@ -1996,10 +1997,10 @@ export function Checker_GetConstantValue(receiver: GoPtr<Checker>, node: GoPtr<N
     return Checker_getEnumMemberValue(receiver, node).Value;
   }
 
-  if (LinkStore_Get(receiver!.symbolNodeLinks, node, zeroSymbolNodeLinks)!.v.resolvedSymbol === undefined) {
+  if (LinkStore_Get(receiver!.symbolNodeLinks, node, zeroSymbolNodeLinks, goNodePointerKey)!.v.resolvedSymbol === undefined) {
     Checker_checkExpressionCached(receiver, node); // ensure cached resolved symbol is set
   }
-  let symbol_ = LinkStore_Get(receiver!.symbolNodeLinks, node, zeroSymbolNodeLinks)!.v.resolvedSymbol;
+  let symbol_ = LinkStore_Get(receiver!.symbolNodeLinks, node, zeroSymbolNodeLinks, goNodePointerKey)!.v.resolvedSymbol;
   if (symbol_ === undefined && IsEntityNameExpression(node)) {
     symbol_ = Checker_resolveEntityName(
       receiver,

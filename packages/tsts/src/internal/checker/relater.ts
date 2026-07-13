@@ -1,7 +1,7 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../go/compat.js";
-import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoStringKey, NewGoStructMap } from "../../go/compat.js";
 import { recordExtensionPostCheckAssignabilityObservation } from "../../extensions/checker-integration.js";
 import type { Node } from "../ast/spine.js";
 import { Node_Name } from "../ast/spine.js";
@@ -113,6 +113,7 @@ import { Checker_isErrorType } from "./checker/diagnostics.js";
 import { newSimpleTypeMapper } from "./mapper.js";
 import type { LinkStore } from "../core/linkstore.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
+import { cacheHashKeyDescriptor, goSymbolPointerKey, goTypePointerKey } from "./map-key-descriptors.js";
 import * as slices from "../../go/slices.js";
 import { SymbolFlagsTypeAlias } from "../ast/symbolflags.js";
 import {
@@ -470,10 +471,7 @@ export function Relation_get(receiver: GoPtr<Relation>, key: CacheHashKey): Rela
  */
 export function Relation_set(receiver: GoPtr<Relation>, key: CacheHashKey, result: RelationComparisonResult): void {
   if (receiver!.results === undefined) {
-    receiver!.results = NewGoStructMap<CacheHashKey, RelationComparisonResult>(GoStructKey(
-      [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
-      ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
-    ));
+    receiver!.results = NewGoStructMap<CacheHashKey, RelationComparisonResult>(cacheHashKeyDescriptor);
   }
   receiver!.results.set(key, result);
 }
@@ -1094,7 +1092,7 @@ export function Checker_checkTypeRelatedToEx(receiver: GoPtr<Checker>, source: G
     Checker_reportDiagnostic(receiver, NewDiagnosticForNode(en, message, Checker_TypeToString(receiver, source), Checker_TypeToString(receiver, target)), diagnosticOutput);
   } else if (r!.errorChain !== undefined) {
     if (headMessage !== undefined && errorNode !== undefined && result === TernaryFalse && source!.symbol !== undefined && LinkStore_Has(receiver!.exportTypeLinks as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, source!.symbol)) {
-      const links = LinkStore_Get<GoPtr<Symbol>, ExportTypeLinks>(receiver!.exportTypeLinks as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, source!.symbol, zeroExportTypeLinks)!;
+      const links = LinkStore_Get<GoPtr<Symbol>, ExportTypeLinks>(receiver!.exportTypeLinks as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, source!.symbol, zeroExportTypeLinks, goSymbolPointerKey)!;
       if (links.v.originatingImport !== undefined && !IsImportCall(links.v.originatingImport)) {
         const helpfulRetry = Checker_checkTypeRelatedTo(receiver, Checker_getTypeOfSymbol(receiver, links.v.target), target, relation, undefined);
         if (helpfulRetry) {
@@ -3099,7 +3097,7 @@ export function Checker_getVariances(receiver: GoPtr<Checker>, t: GoPtr<Type>): 
  * }
  */
 export function Checker_getAliasVariances(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoSlice<VarianceFlags> {
-  return Checker_getVariancesWorker(receiver, symbol_, LinkStore_Get(receiver!.typeAliasLinks, symbol_, zeroTypeAliasLinks)!.v.typeParameters);
+  return Checker_getVariancesWorker(receiver, symbol_, LinkStore_Get(receiver!.typeAliasLinks, symbol_, zeroTypeAliasLinks, goSymbolPointerKey)!.v.typeParameters);
 }
 
 /**
@@ -3179,7 +3177,7 @@ export function Checker_getAliasVariances(receiver: GoPtr<Checker>, symbol_: GoP
  * }
  */
 export function Checker_getVariancesWorker(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, typeParameters: GoSlice<GoPtr<Type>>): GoSlice<VarianceFlags> {
-  const links = LinkStore_Get<GoPtr<Symbol>, VarianceLinks>(receiver!.varianceLinks as GoPtr<LinkStore<GoPtr<Symbol>, VarianceLinks>>, symbol_, zeroVarianceLinks);
+  const links = LinkStore_Get<GoPtr<Symbol>, VarianceLinks>(receiver!.varianceLinks as GoPtr<LinkStore<GoPtr<Symbol>, VarianceLinks>>, symbol_, zeroVarianceLinks, goSymbolPointerKey);
   if (GoSliceIsNil(links!.v.variances)) {
     const oldVarianceComputation = receiver!.inVarianceComputation;
     const saveResolutionStart = receiver!.resolutionStart;
@@ -3258,11 +3256,11 @@ export function Checker_createMarkerType(receiver: GoPtr<Checker>, symbol_: GoPt
   }
   let result: GoPtr<Type>;
   if ((symbol_!.Flags & SymbolFlagsTypeAlias) !== 0) {
-    result = Checker_getTypeAliasInstantiation(receiver, symbol_, Checker_instantiateTypes(receiver, LinkStore_Get(receiver!.typeAliasLinks, symbol_, zeroTypeAliasLinks)!.v.typeParameters, mapper), undefined);
+    result = Checker_getTypeAliasInstantiation(receiver, symbol_, Checker_instantiateTypes(receiver, LinkStore_Get(receiver!.typeAliasLinks, symbol_, zeroTypeAliasLinks, goSymbolPointerKey)!.v.typeParameters, mapper), undefined);
   } else {
     result = Checker_createTypeReference(receiver, t, Checker_instantiateTypes(receiver, InterfaceType_TypeParameters(Type_AsInterfaceType(t)), mapper));
   }
-  Set_Add(receiver!.markerTypes, result);
+  Set_Add(receiver!.markerTypes, result, goTypePointerKey);
   return result;
 }
 
@@ -5664,10 +5662,7 @@ export function Checker_getRelater(receiver: GoPtr<Checker>): GoPtr<Relater> {
 
 function newCacheHashKeySet(): Set<CacheHashKey> {
   return {
-    M: NewGoStructMap<CacheHashKey, { readonly __tsgoEmpty?: never }>(GoStructKey(
-      [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
-      ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
-    )),
+    M: NewGoStructMap<CacheHashKey, { readonly __tsgoEmpty?: never }>(cacheHashKeyDescriptor),
   };
 }
 
@@ -6842,7 +6837,7 @@ export function Relater_recursiveTypeRelatedTo(receiver: GoPtr<Relater>, source:
   }
   const maybeStart = receiver!.maybeKeys.length;
   receiver!.maybeKeys.push(id);
-  Set_Add(receiver!.maybeKeysSet, id);
+  Set_Add(receiver!.maybeKeysSet, id, cacheHashKeyDescriptor);
   const saveExpandingFlags = receiver!.expandingFlags;
   if ((recursionFlags & RecursionFlagsSource) !== 0) {
     receiver!.sourceStack.push(source);
@@ -7837,7 +7832,7 @@ export function Relater_structuredTypeRelatedToWorker(receiver: GoPtr<Relater>, 
     if (variances.length === 0) {
       return TernaryUnknown;
     }
-    const params = LinkStore_Get(c!.typeAliasLinks, source!.alias.symbol, zeroTypeAliasLinks)!.v.typeParameters;
+    const params = LinkStore_Get(c!.typeAliasLinks, source!.alias.symbol, zeroTypeAliasLinks, goSymbolPointerKey)!.v.typeParameters;
     const minParams = Checker_getMinTypeArgumentCount(c, params);
     const nodeIsInJsFile = IsInJSFile(source!.alias.symbol!.ValueDeclaration);
     const sourceTypes = Checker_fillMissingTypeArguments(c, source!.alias.typeArguments, params, minParams, nodeIsInJsFile);
@@ -8232,7 +8227,7 @@ export function Relater_structuredTypeRelatedToWorker(receiver: GoPtr<Relater>, 
     }
     if ((source!.flags & (TypeFlagsObject | TypeFlagsIntersection)) !== 0 && (target!.flags & TypeFlagsObject) !== 0) {
       const reportStructuralErrors = reportErrors && receiver!.errorChain === saveErrorState.errorChain && !sourceIsPrimitive;
-      result = Relater_propertiesRelatedTo(receiver, source, target, reportStructuralErrors, NewSetWithSizeHint<string>(0 as int)!, false, intersectionState);
+      result = Relater_propertiesRelatedTo(receiver, source, target, reportStructuralErrors, NewSetWithSizeHint<string>(0 as int, GoStringKey)!, false, intersectionState);
       if (result !== TernaryFalse) {
         result = (result & Relater_signaturesRelatedTo(receiver, source, target, SignatureKindCall, reportStructuralErrors, intersectionState)) as Ternary;
         if (result !== TernaryFalse) {
@@ -8575,12 +8570,12 @@ export function Relater_typeRelatedToDiscriminatedType(receiver: GoPtr<Relater>,
     }
   }
   const sourceDiscriminantTypes: GoPtr<Type>[][] = new globalThis.Array(sourcePropertiesFiltered.length);
-  const excludedProperties = NewSetWithSizeHint<string>(0 as int)!;
+  const excludedProperties = NewSetWithSizeHint<string>(0 as int, GoStringKey)!;
   for (let i = 0; i < sourcePropertiesFiltered.length; i++) {
     const sourceProperty = sourcePropertiesFiltered[i]!;
     const sourcePropertyType = Checker_getNonMissingTypeOfSymbol(receiver!.c, sourceProperty);
     sourceDiscriminantTypes[i] = Type_Distributed(sourcePropertyType);
-    Set_Add(excludedProperties, sourceProperty.Name);
+    Set_Add(excludedProperties, sourceProperty.Name, GoStringKey);
   }
   const discriminantCombinations: GoPtr<Type>[][] = new globalThis.Array(numCombinations);
   for (let i = 0; i < numCombinations; i++) {

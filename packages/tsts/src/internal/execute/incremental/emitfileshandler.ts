@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoPtr, GoRef, GoSlice } from "../../../go/compat.js";
-import { GoZeroNumber, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
+import { GoStringKey, GoZeroNumber, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";
@@ -354,7 +354,7 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
     (path: Path, emitKind: FileEmitKind): bool => {
       const affectedFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, path);
       if (affectedFile === undefined || !Program_SourceFileMayBeEmitted(receiver!.program!.program, affectedFile, false as bool)) {
-        Set_Add<Path>(receiver!.deletedPendingKinds as Set<Path>, path);
+        Set_Add<Path>(receiver!.deletedPendingKinds as Set<Path>, path, GoStringKey);
         return true as bool;
       }
       const pendingKind = emitFilesHandler_getPendingEmitKindForEmitOptions(receiver, emitKind, options);
@@ -392,7 +392,8 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
           SyncMap_Store<Path, GoPtr<emitUpdate>>(
             receiver!.emitUpdates as SyncMap<Path, GoPtr<emitUpdate>>,
             path,
-            { pendingKind: getPendingEmitKind(emitKind, pendingKind), result: result, dtsErrorsFromCache: false as bool }
+            { pendingKind: getPendingEmitKind(emitKind, pendingKind), result: result, dtsErrorsFromCache: false as bool },
+            GoStringKey,
           );
         });
       }
@@ -415,7 +416,7 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
       if (!ok) {
         const affectedFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, path);
         if (affectedFile === undefined || !Program_SourceFileMayBeEmitted(receiver!.program!.program, affectedFile, false as bool)) {
-          Set_Add<Path>(receiver!.deletedPendingKinds as Set<Path>, path);
+          Set_Add<Path>(receiver!.deletedPendingKinds as Set<Path>, path, GoStringKey);
           return true as bool;
         }
         const [pendingKind] = SyncMap_Load<Path, FileEmitKind>(
@@ -435,7 +436,8 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
               SourceMaps: [],
             } as EmitResult,
             dtsErrorsFromCache: true as bool,
-          }
+          },
+          GoStringKey,
         );
       }
       return true as bool;
@@ -522,7 +524,8 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
               SyncMap_Store<Path, string>(
                 receiver!.signatures as SyncMap<Path, string>,
                 SourceFile_Path(options.TargetSourceFile),
-                signature
+                signature,
+                GoStringKey,
               );
             }
           }
@@ -615,13 +618,15 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
     SyncMap_Store<Path, string>(
       receiver!.latestChangedDtsFiles as SyncMap<Path, string>,
       SourceFile_Path(file),
-      outputFileName
+      outputFileName,
+      GoStringKey,
     );
   }
   SyncMap_Store<Path, GoPtr<emitSignature>>(
     receiver!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>,
     SourceFile_Path(file),
-    { signature: newSignature, signatureWithDifferentOptions: [] }
+    { signature: newSignature, signatureWithDifferentOptions: [] },
+    GoStringKey,
   );
   return false as bool;
 }
@@ -705,7 +710,8 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
         SyncMap_Store<Path, GoPtr<emitSignature>>(
           receiver!.program!.snapshot!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>,
           file,
-          signature
+          signature,
+          GoStringKey,
         );
         receiver!.program!.snapshot!.buildInfoEmitPending.Store(true as bool);
         return true as bool;
@@ -746,7 +752,8 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
             SyncMap_Store<Path, FileEmitKind>(
               receiver!.program!.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>,
               SourceFile_Path(file),
-              update!.pendingKind
+              update!.pendingKind,
+              GoStringKey,
             );
           }
           receiver!.program!.snapshot!.buildInfoEmitPending.Store(true as bool);
@@ -757,7 +764,8 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
             SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
               receiver!.program!.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
               SourceFile_Path(file),
-              { diagnostics: update!.result!.Diagnostics, buildInfoDiagnostics: [] } as DiagnosticsOrBuildInfoDiagnosticsWithFileName
+              { diagnostics: update!.result!.Diagnostics, buildInfoDiagnostics: [] } as DiagnosticsOrBuildInfoDiagnosticsWithFileName,
+              GoStringKey,
             );
           }
         }

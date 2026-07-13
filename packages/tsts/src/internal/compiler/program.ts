@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, GoZeroSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, GoZeroSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
 import { Once, Map as SyncMapMap } from "../../go/sync.js";
@@ -99,6 +99,8 @@ import { collectExtensionDiagnosticsForSourceFile } from "../../extensions/diagn
 import { attachExtensionHostToProgram } from "../../extensions/host.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+
+const sourceFileKey = GoPointerKey<SourceFile>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"9eb7d18f0dae3f15940de7ca327de6159681203c5eb38cedc77879444adaee3f"}
  *
@@ -887,7 +889,7 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
   const index = FindIndex(resultPf.files, (file: GoPtr<SourceFile>): bool => (SourceFile_Path(file) === SourceFile_Path(newFile)) as bool);
   resultPf.files = slices.Clone(resultPf.files) ?? [];
   resultPf.files[index] = newFile;
-  resultPf.filesByPath = maps.Clone(resultPf.filesByPath) ?? new globalThis.Map();
+  resultPf.filesByPath = maps.Clone(resultPf.filesByPath, GoStringKey);
   resultPf.filesByPath.set(SourceFile_Path(newFile), newFile);
   updateFileIncludeProcessor(result);
   return [result, newFile, true as bool];
@@ -1156,7 +1158,7 @@ export function Program_extractUnresolvedImports(receiver: GoPtr<Program>): GoPt
   for (const sourceFile of receiver!.__tsgoEmbedded0!.files) {
     const unresolvedImports = Program_extractUnresolvedImportsFromSourceFile(receiver, sourceFile);
     for (const imp of unresolvedImports) {
-      Set_Add(unresolvedSet, imp);
+      Set_Add(unresolvedSet, imp, GoStringKey);
     }
   }
   return unresolvedSet;
@@ -2491,7 +2493,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   if (Tristate_IsTrue(options!.Composite)) {
     const rootPaths: Set<Path> = { M: new globalThis.Map() };
     for (const fileName of ParsedCommandLine_FileNames(receiver!.opts.Config)) {
-      Set_Add(rootPaths, Program_toPath(receiver, fileName));
+      Set_Add(rootPaths, Program_toPath(receiver, fileName), GoStringKey);
     }
 
     for (const file of receiver!.__tsgoEmbedded0!.files) {
@@ -2775,7 +2777,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
         if (Set_Has(emitFilesSeen, emitFileKey)) {
           Program_blockEmittingOfFile(receiver, emitFileName, NewCompilerDiagnostic(diagnostics.Cannot_write_file_0_because_it_would_be_overwritten_by_multiple_input_files, emitFileName));
         } else {
-          Set_Add(emitFilesSeen, emitFileKey);
+          Set_Add(emitFilesSeen, emitFileKey, GoStringKey);
         }
       }
     };
@@ -2801,7 +2803,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
  * }
  */
 export function Program_blockEmittingOfFile(receiver: GoPtr<Program>, emitFileName: string, diag: GoPtr<Diagnostic>): void {
-  Set_Add(receiver!.hasEmitBlockingDiagnostics, Program_toPath(receiver, emitFileName));
+  Set_Add(receiver!.hasEmitBlockingDiagnostics, Program_toPath(receiver, emitFileName), GoStringKey);
   receiver!.programDiagnostics = [...receiver!.programDiagnostics, diag];
 }
 
@@ -2887,7 +2889,7 @@ export function Program_verifyProjectReferences(receiver: GoPtr<Program>): void 
     }
     if (buildInfoFileName !== "" && buildInfoFileName === ParsedCommandLine_GetBuildInfoFileName(config)) {
       createDiagnosticForReference(parent, index, diagnostics.Cannot_write_file_0_because_it_will_overwrite_tsbuildinfo_file_generated_by_referenced_project_1, buildInfoFileName, ref!.Path);
-      Set_Add(receiver!.hasEmitBlockingDiagnostics, Program_toPath(receiver, buildInfoFileName));
+      Set_Add(receiver!.hasEmitBlockingDiagnostics, Program_toPath(receiver, buildInfoFileName), GoStringKey);
     }
     return true as bool;
   });
@@ -3200,7 +3202,7 @@ export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program
   }
   const [host, done] = newEmitHost(ctx, receiver, sourceFile);
   const diags = getDeclarationDiagnostics(emitHost_as_compiler_EmitHost(host), sourceFile);
-  const [stored] = SyncMap_LoadOrStore(receiver!.declarationDiagnosticCache, sourceFile, diags);
+  const [stored] = SyncMap_LoadOrStore(receiver!.declarationDiagnosticCache, sourceFile, diags, GoZeroSlice<GoPtr<Diagnostic>>, sourceFileKey);
   done();
   return stored !== undefined ? stored as GoSlice<GoPtr<Diagnostic>> : diags;
 }
@@ -4629,7 +4631,7 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
               name = GetPackageNameFromDirectory(mod!.ResolvedFileName);
             }
             if (name !== "") {
-              Set_Add(packageNames.resolved!, name);
+              Set_Add(packageNames.resolved!, name, GoStringKey);
               // Detect deep imports: subpath imports in packages without exports.
               // These are imports like "lodash/fp" where the package has no exports
               // map, so auto-import can only find them via recursive directory search.
@@ -4644,7 +4646,7 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
                     scopeContents!.__tsgoEmbedded0!.__tsgoEmbedded1 !== undefined &&
                     !JSONValue_IsPresent(scopeContents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0)
                   ) {
-                    Set_Add(packageNames.deepImportPackages!, GetPackageNameFromTypesPackageName(name));
+                    Set_Add(packageNames.deepImportPackages!, GetPackageNameFromTypesPackageName(name), GoStringKey);
                   }
                 }
               }
@@ -4652,7 +4654,7 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
             continue;
           }
         }
-        Set_Add(packageNames.unresolved!, impText);
+        Set_Add(packageNames.unresolved!, impText, GoStringKey);
       }
     }
     return GoValueRef(packageNames);
@@ -4770,7 +4772,7 @@ export function Program_GetSymlinkCache(receiver: GoPtr<Program>): GoPtr<KnownSy
       if (
         meta.PackageJsonDirectory === "" ||
         !Program_SourceFileMayBeEmitted(receiver, Program_GetSourceFileByPath(receiver, filePath), false as bool) ||
-        !Set_AddIfAbsent(seenPackageJsons, Program_toPath(receiver, meta.PackageJsonDirectory))
+        !Set_AddIfAbsent(seenPackageJsons, Program_toPath(receiver, meta.PackageJsonDirectory), GoStringKey)
       ) {
         continue;
       }
@@ -5007,6 +5009,7 @@ export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache
  * )
  */
 export let plainJSErrors: GoPtr<Set<int>> = NewSetFromItems<int>(
+  GoNumberKey,
   // binder errors
   diagnostics.Cannot_redeclare_block_scoped_variable_0.code,
   diagnostics.A_module_cannot_have_multiple_default_exports.code,

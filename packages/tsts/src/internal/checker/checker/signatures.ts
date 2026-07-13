@@ -51,6 +51,7 @@ import { Node_QuestionDotToken, Node_TypeArgumentList, SourceFile_Text } from ".
 import { CheckFlagsIndexSymbol, CheckFlagsLate, CheckFlagsNone, CheckFlagsOptionalParameter, CheckFlagsRestParameter, CheckFlagsDeferredType } from "../../ast/checkflags.js";
 import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
+import { goNodePointerKey, goSymbolPointerKey } from "../map-key-descriptors.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import { Arena_New } from "../../core/arena.js";
 import { Checker_checkComputedPropertyName, Checker_checkDeclarationInitializer, Checker_checkPropertyDeclaration, Checker_checkTypeNameIsReserved, Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_cloneSymbol, Checker_createCombinedSymbolFromTypes, Checker_createSymbolWithType, Checker_getAliasForTypeNode, Checker_getAwaitedTypeNoAlias, Checker_getClassElementPropertyKeyType, Checker_getClassOrInterfaceDeclarationsOfSymbol, Checker_getDeclarationOfAliasSymbol, Checker_getDeclaredTypeOfSymbol, Checker_getEffectiveDeclarationFlags, Checker_getIndexInfoOfType, Checker_getIndexInfosOfType, Checker_getIndexSymbol, Checker_getIndexTypeOfType, Checker_getLiteralTypeFromProperty, Checker_getLiteralTypeFromPropertyName, Checker_getMembersOfSymbol, Checker_getMergedSymbol, Checker_getParentOfSymbol, Checker_getPropertyOfObjectType, Checker_getPropertyOfType, Checker_getResolvedSymbol, Checker_getResolvedSymbolOrNil, Checker_getSymbolFromTypeReference, Checker_getSymbolOfDeclaration, Checker_getSymbolOfNode, Checker_getTypeOfPrototypeProperty, Checker_getTypeOfPropertyOfType, Checker_getTypeOfSymbol, Checker_getTypeOfEnumMember, Checker_getTypeWithSyntheticDefaultImportType, Checker_getUniqAssociatedNamesFromTupleType, Checker_getWidenedTypeForVariableLikeDeclaration, Checker_widenTypeForVariableLikeDeclaration, Checker_hasBindableName, Checker_instantiateSymbol, Checker_instantiateSymbols, Checker_isArrayOrTupleSymbol, Checker_isAutoTypedProperty, Checker_isGenericIndexType, Checker_isReadonlyArraySymbol, Checker_isSpreadableProperty, Checker_getSpreadSymbol, Checker_newIndexInfo, Checker_newSymbol, Checker_newSymbolEx, Checker_newClassMemberDecoratorContextTypeForNode, Checker_newTypedPropertyDescriptorType, Checker_registerForUnusedIdentifiersCheck, Checker_reportUnusedImports, Checker_reportUnusedLocal, Checker_reportUnusedVariableDeclarations, Checker_resolveEntityName, Checker_resolveExternalModuleName, Checker_resolveExternalModuleSymbol, Checker_resolveStructuredTypeMembers, Checker_getIndexedAccessTypeEx, Checker_setStructuredTypeMembers } from "./symbols.js";
@@ -180,7 +181,7 @@ export function Checker_GetTypeAliasTypeParameters(receiver: GoPtr<Checker>, sym
     throw new globalThis.Error("Attempted to fetch type alias parameters for non-type-alias symbol");
   }
   Checker_getDeclaredTypeOfSymbol(receiver, symbol_);
-  return LinkStore_Get(receiver!.typeAliasLinks, symbol_, goZeroTypeAliasLinks)!.v.typeParameters;
+  return LinkStore_Get(receiver!.typeAliasLinks, symbol_, goZeroTypeAliasLinks, goSymbolPointerKey)!.v.typeParameters;
 }
 
 /**
@@ -777,7 +778,7 @@ export function Checker_checkThisType(receiver: GoPtr<Checker>, node: GoPtr<Node
  * }
  */
 export function Checker_checkFunctionOrConstructorSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): void {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks)!.v;
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks, goSymbolPointerKey)!.v;
   if (!links!.functionOrConstructorChecked) {
     links!.functionOrConstructorChecked = true;
     Checker_checkFunctionOrConstructorSymbolWorker(receiver, symbol_);
@@ -1325,7 +1326,7 @@ export function Checker_checkTypeParameterListsIdentical(receiver: GoPtr<Checker
   if ((symbol_!.Declarations?.length ?? 0) === 1) {
     return;
   }
-  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_, goZeroDeclaredTypeLinks)!.v;
+  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_, goZeroDeclaredTypeLinks, goSymbolPointerKey)!.v;
   if (!links!.typeParametersChecked) {
     links!.typeParametersChecked = true as bool;
     const declarations = Checker_getClassOrInterfaceDeclarationsOfSymbol(receiver, symbol_);
@@ -1545,7 +1546,7 @@ export function Checker_checkIndexConstraintForIndexSignature(receiver: GoPtr<Ch
  * }
  */
 export function Checker_checkClassOrInterfaceForDuplicateIndexSignatures(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  const links = LinkStore_Get<GoPtr<Symbol>, DeclaredTypeLinks>(receiver!.declaredTypeLinks as LinkStore<GoPtr<Symbol>, DeclaredTypeLinks>, Checker_getSymbolOfDeclaration(receiver, node), goZeroDeclaredTypeLinks);
+  const links = LinkStore_Get<GoPtr<Symbol>, DeclaredTypeLinks>(receiver!.declaredTypeLinks as LinkStore<GoPtr<Symbol>, DeclaredTypeLinks>, Checker_getSymbolOfDeclaration(receiver, node), goZeroDeclaredTypeLinks, goSymbolPointerKey);
   if (!links!.v.indexSignaturesChecked) {
     links!.v.indexSignaturesChecked = true;
     Checker_checkTypeForDuplicateIndexSignatures(receiver, node);
@@ -1836,7 +1837,7 @@ export function Checker_checkUnusedLocalsAndParameters(receiver: GoPtr<Checker>,
   const variableParents = new globalThis.Set<GoPtr<Node>>();
   const importClauses = new globalThis.Map<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
   for (const local of Node_Locals(node)?.values() ?? []) {
-    const referenceKinds = LinkStore_Get(receiver!.symbolReferenceLinks, local, goZeroSymbolReferenceLinks)!.v.referenceKinds ?? SymbolFlagsNone;
+    const referenceKinds = LinkStore_Get(receiver!.symbolReferenceLinks, local, goZeroSymbolReferenceLinks, goSymbolPointerKey)!.v.referenceKinds ?? SymbolFlagsNone;
     if (((local!.Flags & SymbolFlagsTypeParameter) !== 0 && ((local!.Flags & SymbolFlagsVariable) === 0 || (referenceKinds & SymbolFlagsVariable) !== 0)) ||
       ((local!.Flags & SymbolFlagsTypeParameter) === 0 && (referenceKinds !== 0 || local!.ExportSymbol !== undefined || (local!.Flags & SymbolFlagsModuleExports) !== 0))) {
       continue;
@@ -1956,7 +1957,7 @@ export function Checker_checkUnusedTypeParameters(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_isUnreferencedTypeParameter(receiver: GoPtr<Checker>, typeParameter: GoPtr<Node>): bool {
-  return ((LinkStore_Get<GoPtr<Symbol>, SymbolReferenceLinks>(receiver!.symbolReferenceLinks as LinkStore<GoPtr<Symbol>, SymbolReferenceLinks>, Checker_getMergedSymbol(receiver, Node_Symbol(typeParameter)), goZeroSymbolReferenceLinks)!.v.referenceKinds ?? SymbolFlagsNone) & SymbolFlagsTypeParameter) === 0 &&
+  return ((LinkStore_Get<GoPtr<Symbol>, SymbolReferenceLinks>(receiver!.symbolReferenceLinks as LinkStore<GoPtr<Symbol>, SymbolReferenceLinks>, Checker_getMergedSymbol(receiver, Node_Symbol(typeParameter)), goZeroSymbolReferenceLinks, goSymbolPointerKey)!.v.referenceKinds ?? SymbolFlagsNone) & SymbolFlagsTypeParameter) === 0 &&
     !isIdentifierThatStartsWithUnderscore(Node_Name(typeParameter));
 }
 
@@ -2524,7 +2525,7 @@ export function Checker_isSymbolOrSymbolForCall(receiver: GoPtr<Checker>, node: 
  * }
  */
 export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoRef<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
-  const links = LinkStore_Get(receiver!.signatureLinks, node, goZeroSignatureLinks)!.v;
+  const links = LinkStore_Get(receiver!.signatureLinks, node, goZeroSignatureLinks, goNodePointerKey)!.v;
   const cached = links!.resolvedSignature;
   if (cached !== undefined && cached !== receiver!.resolvingSignature && candidatesOutArray === undefined) {
     return cached;
@@ -3004,7 +3005,7 @@ export function Checker_resolveCall(receiver: GoPtr<Checker>, node: GoPtr<Node>,
     return result;
   }
   result = Checker_getCandidateForOverloadFailure(receiver, callState.node, callState.candidates, callState.args, candidatesOutArray !== undefined, checkMode);
-  LinkStore_Get(receiver!.signatureLinks, node, goZeroSignatureLinks)!.v.resolvedSignature = result;
+  LinkStore_Get(receiver!.signatureLinks, node, goZeroSignatureLinks, goNodePointerKey)!.v.resolvedSignature = result;
   if (reportErrors) {
     const resolvedHeadMessage = headMessage === undefined && isInstanceof
       ? The_left_hand_side_of_an_instanceof_expression_must_be_assignable_to_the_first_argument_of_the_right_hand_side_s_Symbol_hasInstance_method
@@ -4775,7 +4776,7 @@ export function Checker_assignNonContextualParameterTypes(receiver: GoPtr<Checke
  * }
  */
 export function Checker_assignParameterType(receiver: GoPtr<Checker>, parameter: GoPtr<Symbol>, contextualType: GoPtr<Type>): void {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, parameter, goZeroValueSymbolLinks)!.v;
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, parameter, goZeroValueSymbolLinks, goSymbolPointerKey)!.v;
   if (links!.resolvedType !== undefined) {
     return;
   }
@@ -5277,7 +5278,7 @@ export function Checker_isValidConstAssertionArgument(receiver: GoPtr<Checker>, 
  */
 export function Checker_newParameter(receiver: GoPtr<Checker>, name: string, t: GoPtr<Type>): GoPtr<Symbol> {
   const symbol_ = Checker_newSymbol(receiver, SymbolFlagsFunctionScopedVariable, name);
-  LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks)!.v.resolvedType = t;
+  LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = t;
   return symbol_;
 }
 
@@ -5360,7 +5361,7 @@ export function Checker_lateBindIndexSignature(receiver: GoPtr<Checker>, parent:
  * }
  */
 export function Checker_getTypeOfVariableOrParameterOrProperty(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks)!.v;
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks, goSymbolPointerKey)!.v;
   if (links!.resolvedType === undefined) {
     const t = Checker_getTypeOfVariableOrParameterOrPropertyWorker(receiver, symbol_);
     if (t === undefined) {
@@ -6026,7 +6027,7 @@ export function Checker_getTypeParametersForTypeReferenceOrImport(receiver: GoPt
 export function Checker_getTypeParametersForTypeAndSymbol(receiver: GoPtr<Checker>, t: GoPtr<Type>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Type>> {
   if (!Checker_isErrorType(receiver, t)) {
     if ((symbol_!.Flags & SymbolFlagsTypeAlias) !== 0) {
-      const typeParameters = LinkStore_Get<GoPtr<Symbol>, TypeAliasLinks>(receiver!.typeAliasLinks, symbol_, goZeroTypeAliasLinks)!.v.typeParameters;
+      const typeParameters = LinkStore_Get<GoPtr<Symbol>, TypeAliasLinks>(receiver!.typeAliasLinks, symbol_, goZeroTypeAliasLinks, goSymbolPointerKey)!.v.typeParameters;
       if ((typeParameters ?? []).length !== 0) {
         return typeParameters;
       }
@@ -7124,7 +7125,7 @@ export function Checker_getSignaturesOfSymbol(receiver: GoPtr<Checker>, symbol_:
  * }
  */
 export function Checker_getSignatureFromDeclaration(receiver: GoPtr<Checker>, declaration: GoPtr<Node>): GoPtr<Signature> {
-  const links = LinkStore_Get(receiver!.signatureLinks, declaration, goZeroSignatureLinks)!.v;
+  const links = LinkStore_Get(receiver!.signatureLinks, declaration, goZeroSignatureLinks, goNodePointerKey)!.v;
   if (links!.resolvedSignature !== undefined) {
     return links!.resolvedSignature;
   }
@@ -8539,7 +8540,7 @@ export function Checker_combineUnionOrIntersectionParameters(receiver: GoPtr<Che
       paramName,
       core.IfElse(isRestParam, CheckFlagsRestParameter, core.IfElse(isOptional, CheckFlagsOptionalParameter, 0)),
     );
-    const links = LinkStore_Get(receiver!.valueSymbolLinks, paramSymbol, goZeroValueSymbolLinks)!.v;
+    const links = LinkStore_Get(receiver!.valueSymbolLinks, paramSymbol, goZeroValueSymbolLinks, goSymbolPointerKey)!.v;
     if (isRestParam) {
       links!.resolvedType = Checker_createArrayType(receiver, combinedParamType);
     } else {
@@ -8549,7 +8550,7 @@ export function Checker_combineUnionOrIntersectionParameters(receiver: GoPtr<Che
   }
   if (needsExtraRestElement) {
     const restParamSymbol = Checker_newSymbolEx(receiver, SymbolFlagsFunctionScopedVariable as SymbolFlags, "args", CheckFlagsRestParameter);
-    const links = LinkStore_Get(receiver!.valueSymbolLinks, restParamSymbol, goZeroValueSymbolLinks)!.v;
+    const links = LinkStore_Get(receiver!.valueSymbolLinks, restParamSymbol, goZeroValueSymbolLinks, goSymbolPointerKey)!.v;
     links!.resolvedType = Checker_createArrayType(receiver, Checker_getTypeAtPosition(receiver, shorter, longestCount));
     if (shorter === right) {
       links!.resolvedType = Checker_instantiateType(receiver, links!.resolvedType, mapper);
@@ -9147,7 +9148,7 @@ export function Checker_instantiateSignatures(receiver: GoPtr<Checker>, signatur
  * }
  */
 export function Checker_getTypeFromThisTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node, goZeroTypeNodeLinks);
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, goZeroTypeNodeLinks, goNodePointerKey);
   if (links!.v.resolvedType === undefined) {
     links!.v.resolvedType = Checker_getThisType(receiver, node);
   }
@@ -9207,7 +9208,7 @@ export function Checker_getThisType(receiver: GoPtr<Checker>, node: GoPtr<Node>)
  * }
  */
 export function Checker_getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node, goZeroTypeNodeLinks);
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, goZeroTypeNodeLinks, goNodePointerKey);
   if (links!.v.resolvedType === undefined) {
     // Deferred resolution of members is handled by resolveObjectTypeMembers
     const alias = Checker_getAliasForTypeNode(receiver, node);
@@ -9520,7 +9521,7 @@ export function Checker_appendTypeParameters(receiver: GoPtr<Checker>, typeParam
  * }
  */
 export function Checker_getDeclaredTypeOfTypeParameter(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get<GoPtr<Symbol>, DeclaredTypeLinks>(receiver!.declaredTypeLinks as LinkStore<GoPtr<Symbol>, DeclaredTypeLinks>, symbol_, goZeroDeclaredTypeLinks);
+  const links = LinkStore_Get<GoPtr<Symbol>, DeclaredTypeLinks>(receiver!.declaredTypeLinks as LinkStore<GoPtr<Symbol>, DeclaredTypeLinks>, symbol_, goZeroDeclaredTypeLinks, goSymbolPointerKey);
   if (links!.v.declaredType === undefined) {
     links!.v.declaredType = Checker_newTypeParameter(receiver, symbol_);
   }
@@ -9826,7 +9827,7 @@ export function Checker_expandSignatureParametersWithTupleMembers(receiver: GoPt
       checkFlags = CheckFlagsOptionalParameter;
     }
     const symbol_ = Checker_newSymbolEx(receiver, SymbolFlagsFunctionScopedVariable, associatedNames[i]!, checkFlags);
-    const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks)!.v;
+    const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks, goSymbolPointerKey)!.v;
     if ((flags & ElementFlagsRest) !== 0) {
       links!.resolvedType = Checker_createArrayType(receiver, type_);
     } else {
@@ -9981,7 +9982,7 @@ export function Checker_getContextuallyTypedParameterType(receiver: GoPtr<Checke
     if (hasDotDotDotToken(parameter)) {
       return Checker_getSpreadArgumentType(receiver, args, indexOfParameter, args.length, receiver!.anyType, undefined, CheckModeNormal);
     }
-    const links = LinkStore_Get(receiver!.signatureLinks, iife, goZeroSignatureLinks)!.v;
+    const links = LinkStore_Get(receiver!.signatureLinks, iife, goZeroSignatureLinks, goNodePointerKey)!.v;
     const cached = links!.resolvedSignature;
     links!.resolvedSignature = receiver!.anySignature;
     let t: GoPtr<Type>;
@@ -10327,7 +10328,7 @@ export function Checker_getContextualTypeForArgumentAtIndex(receiver: GoPtr<Chec
     return receiver!.anyType;
   }
   let signature: GoPtr<Signature>;
-  if (LinkStore_Get(receiver!.signatureLinks, callTarget, goZeroSignatureLinks)!.v.resolvedSignature === receiver!.resolvingSignature) {
+  if (LinkStore_Get(receiver!.signatureLinks, callTarget, goZeroSignatureLinks, goNodePointerKey)!.v.resolvedSignature === receiver!.resolvingSignature) {
     signature = receiver!.resolvingSignature;
   } else {
     signature = Checker_getResolvedSignature(receiver, callTarget, undefined, CheckModeNormal);
@@ -10610,7 +10611,7 @@ export function Checker_getDecoratorCallSignature(receiver: GoPtr<Checker>, deco
  */
 export function Checker_getLegacyDecoratorCallSignature(receiver: GoPtr<Checker>, decorator: GoPtr<Node>): GoPtr<Signature> {
   const node = decorator!.Parent;
-  const links = LinkStore_Get(receiver!.signatureLinks, node, goZeroSignatureLinks)!.v;
+  const links = LinkStore_Get(receiver!.signatureLinks, node, goZeroSignatureLinks, goNodePointerKey)!.v;
   if (links!.decoratorSignature === undefined) {
     links!.decoratorSignature = receiver!.anySignature;
     switch (node!.Kind) {
@@ -10867,7 +10868,7 @@ export function Checker_getLegacyDecoratorCallSignature(receiver: GoPtr<Checker>
  */
 export function Checker_getESDecoratorCallSignature(receiver: GoPtr<Checker>, decorator: GoPtr<Node>): GoPtr<Signature> {
   const node = decorator!.Parent;
-  const links = LinkStore_Get(receiver!.signatureLinks, node, goZeroSignatureLinks)!.v;
+  const links = LinkStore_Get(receiver!.signatureLinks, node, goZeroSignatureLinks, goNodePointerKey)!.v;
   if (links!.decoratorSignature === undefined) {
     links!.decoratorSignature = receiver!.anySignature;
     switch (node!.Kind) {
@@ -11194,7 +11195,7 @@ export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: Go
         symbol_!.Declarations = declarations;
         symbol_!.ValueDeclaration = declarations![0];
         symbol_!.Parent = t!["symbol"];
-        LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks)!.v.resolvedType = info!.valueType;
+        LinkStore_Get(receiver!.valueSymbolLinks, symbol_, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = info!.valueType;
         info!.indexSymbol = symbol_;
       }
     }

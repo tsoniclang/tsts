@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoComparable, GoMap, GoPtr, GoZeroFactory } from "../../go/compat.js";
+import type { GoComparable, GoMap, GoMapKeyDescriptor, GoPtr, GoZeroFactory } from "../../go/compat.js";
+import { GoMapIsNil, GoMapMake } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
 import type { GoFunc } from "../../go/compat.js";
@@ -49,6 +50,7 @@ export function CopyOnWriteMap_Has<K extends GoComparable, V>(receiver: GoPtr<Co
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.Set","kind":"method","status":"implemented","sigHash":"788a0a7860b47d62f6567180f5ec5bbc43a0f84224d416fa3e779ce14061cde8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic copy-on-write mutation forwards the exact static Go map-key descriptor to backing-map allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (c *CopyOnWriteMap[K, V]) Set(k K, v V) {
@@ -56,13 +58,14 @@ export function CopyOnWriteMap_Has<K extends GoComparable, V>(receiver: GoPtr<Co
  * 	c.m[k] = v
  * }
  */
-export function CopyOnWriteMap_Set<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K, v: V): void {
-  CopyOnWriteMap_ensureOwned(receiver);
+export function CopyOnWriteMap_Set<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K, v: V, keyDescriptor: GoMapKeyDescriptor<K>): void {
+  CopyOnWriteMap_ensureOwned(receiver, keyDescriptor);
   receiver!.m!.set(k, v);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.ensureOwned","kind":"method","status":"implemented","sigHash":"d53a59d9f48f96fc0293e6071a317bc46d984515d43fb60a1cd92e23e912f30b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic copy-on-write backing allocation receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (c *CopyOnWriteMap[K, V]) ensureOwned() {
@@ -77,16 +80,16 @@ export function CopyOnWriteMap_Set<K extends GoComparable, V>(receiver: GoPtr<Co
  * 	c.owned = true
  * }
  */
-export function CopyOnWriteMap_ensureOwned<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>): void {
+export function CopyOnWriteMap_ensureOwned<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, keyDescriptor: GoMapKeyDescriptor<K>): void {
   if (receiver!.owned) {
     return;
   }
-  if (receiver!.m === undefined) {
-    receiver!.m = new globalThis.Map<K, V>();
+  if (GoMapIsNil(receiver!.m)) {
+    receiver!.m = GoMapMake<K, V>(keyDescriptor);
   } else {
-    receiver!.m = maps.Clone(receiver!.m)!;
+    receiver!.m = maps.Clone(receiver!.m, keyDescriptor);
   }
-  receiver!.owned = true as bool;
+  receiver!.owned = true;
 }
 
 /**
@@ -137,14 +140,15 @@ export function CopyOnWriteSet_Has<K extends GoComparable>(receiver: GoPtr<CopyO
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteSet.Add","kind":"method","status":"implemented","sigHash":"350bee723194f4d1bd2c390f4aec3a6ac49d7272d2e35d6228e138ffb59ba1b0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic copy-on-write set mutation forwards the exact static Go map-key descriptor to backing-map allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (c *CopyOnWriteSet[K]) Add(k K) {
  * 	c.m.Set(k, struct{}{})
  * }
  */
-export function CopyOnWriteSet_Add<K extends GoComparable>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K): void {
-  CopyOnWriteMap_Set(receiver!.m, k, {});
+export function CopyOnWriteSet_Add<K extends GoComparable>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K, keyDescriptor: GoMapKeyDescriptor<K>): void {
+  CopyOnWriteMap_Set(receiver!.m, k, {}, keyDescriptor);
 }
 
 /**

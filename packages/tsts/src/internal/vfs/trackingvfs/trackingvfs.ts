@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoPtr } from "../../../go/compat.js";
+import { GoStringKey } from "../../../go/compat.js";
 import type { Time } from "../../../go/time.js";
 import type { SyncSet } from "../../collections/syncset.js";
 import { SyncSet_Add } from "../../collections/syncset.js";
@@ -55,7 +56,7 @@ export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_2329d319 {
  * }
  */
 export function FS_ReadFile(receiver: GoPtr<FS>, path: string): [string, bool] {
-  SyncSet_Add(receiver!.SeenFiles, path);
+  SyncSet_Add(receiver!.SeenFiles, path, GoStringKey);
   return receiver!.Inner!.ReadFile(path);
 }
 
@@ -69,7 +70,7 @@ export function FS_ReadFile(receiver: GoPtr<FS>, path: string): [string, bool] {
  * }
  */
 export function FS_FileExists(receiver: GoPtr<FS>, path: string): bool {
-  SyncSet_Add(receiver!.SeenFiles, path);
+  SyncSet_Add(receiver!.SeenFiles, path, GoStringKey);
   return receiver!.Inner!.FileExists(path);
 }
 
@@ -139,7 +140,7 @@ export function FS_Chtimes(receiver: GoPtr<FS>, path: string, aTime: Time, mTime
  * }
  */
 export function FS_DirectoryExists(receiver: GoPtr<FS>, path: string): bool {
-  SyncSet_Add(receiver!.SeenFiles, path);
+  SyncSet_Add(receiver!.SeenFiles, path, GoStringKey);
   return receiver!.Inner!.DirectoryExists(path);
 }
 
@@ -153,7 +154,7 @@ export function FS_DirectoryExists(receiver: GoPtr<FS>, path: string): bool {
  * }
  */
 export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entries {
-  SyncSet_Add(receiver!.SeenFiles, path);
+  SyncSet_Add(receiver!.SeenFiles, path, GoStringKey);
   return receiver!.Inner!.GetAccessibleEntries(path);
 }
 
@@ -167,7 +168,7 @@ export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entr
  * }
  */
 export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
-  SyncSet_Add(receiver!.SeenFiles, path);
+  SyncSet_Add(receiver!.SeenFiles, path, GoStringKey);
   return receiver!.Inner!.Stat(path);
 }
 
@@ -184,9 +185,9 @@ export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
  * }
  */
 export function FS_WalkDir(receiver: GoPtr<FS>, root: string, walkFn: WalkDirFunc): GoError {
-  SyncSet_Add(receiver!.SeenFiles, root);
+  SyncSet_Add(receiver!.SeenFiles, root, GoStringKey);
   return receiver!.Inner!.WalkDir(root, ((path: string, d: unknown, err: unknown): GoError => {
-    SyncSet_Add(receiver!.SeenFiles, path);
+    SyncSet_Add(receiver!.SeenFiles, path, GoStringKey);
     return (walkFn as unknown as (path: string, d: unknown, err: unknown) => GoError)(path, d, err);
   }) as unknown as WalkDirFunc);
 }
@@ -201,6 +202,6 @@ export function FS_WalkDir(receiver: GoPtr<FS>, root: string, walkFn: WalkDirFun
  * }
  */
 export function FS_Realpath(receiver: GoPtr<FS>, path: string): string {
-  SyncSet_Add(receiver!.SeenFiles, path);
+  SyncSet_Add(receiver!.SeenFiles, path, GoStringKey);
   return receiver!.Inner!.Realpath(path);
 }

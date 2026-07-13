@@ -1,6 +1,6 @@
-import type { int, bool } from "./scalars.js";
-import type { GoMapKeyDescriptor } from "./compat.js";
-import { NewGoStructMap } from "./compat.js";
+import type { bool, int } from "./scalars.js";
+import type { GoMap, GoMapKeyDescriptor } from "./compat.js";
+import { GoMapGetExisting, GoMapIsNil, GoMapMake, GoNilMap } from "./compat.js";
 
 // Go: package sync
 //
@@ -109,100 +109,46 @@ export function OnceValues<T1, T2>(f: () => [T1, T2]): () => [T1, T2] {
 // Map is like a Go sync.Map: a concurrent map of any/any. Single-threaded, it is
 // a thin wrapper over a plain Map preserving the (value, ok) and Range contracts.
 export class Map<K = unknown, V = unknown> {
-  private readonly primitive = new globalThis.Map<K, V>();
-  private readonly structured: globalThis.Map<K, V>;
-  private readonly nanNumberEntries: [K, V][] = [];
-
-  constructor(keyDescriptor?: GoMapKeyDescriptor<K>) {
-    this.structured = keyDescriptor === undefined ? new globalThis.Map<K, V>() : NewGoStructMap<K, V>(keyDescriptor);
-  }
+  private entries: GoMap<K, V> = GoNilMap();
 
   // Load returns the value stored for key, and whether it was present.
   Load(key: K): [V | undefined, bool] {
-    const bucket = mapKeyBucket(key);
-    if (bucket === mapKeyBucketPrimitive) {
-      const value = this.primitive.get(key);
-      return [value, value !== undefined || this.primitive.has(key)];
-    }
-    if (bucket === mapKeyBucketNanNumber) {
-      return [undefined, false];
-    }
-    const value = this.structured.get(key);
-    return [value, value !== undefined || this.structured.has(key)];
+    return this.entries.has(key)
+      ? [GoMapGetExisting(this.entries, key), true]
+      : [undefined, false];
   }
 
   // Store sets the value for a key.
-  Store(key: K, value: V): void {
-    const bucket = mapKeyBucket(key);
-    if (bucket === mapKeyBucketPrimitive) {
-      this.primitive.set(key, value);
-      return;
-    }
-    if (bucket === mapKeyBucketNanNumber) {
-      this.nanNumberEntries.push([key, value]);
-      return;
-    }
-    this.structured.set(key, value);
+  Store(key: K, value: V, keyDescriptor: GoMapKeyDescriptor<K>): void {
+    if (GoMapIsNil(this.entries)) this.entries = GoMapMake<K, V>(keyDescriptor);
+    this.entries.set(key, value);
   }
 
   // LoadOrStore returns the existing value if present; otherwise stores and returns
   // the given value. loaded is true if the value was already present.
-  LoadOrStore(key: K, value: V): [V, bool] {
-    const bucket = mapKeyBucket(key);
-    if (bucket === mapKeyBucketPrimitive) {
-      const existing = this.primitive.get(key);
-      if (existing !== undefined || this.primitive.has(key)) {
-        return [existing as V, true];
-      }
-      this.primitive.set(key, value);
-      return [value, false];
-    }
-    if (bucket === mapKeyBucketNanNumber) {
-      this.nanNumberEntries.push([key, value]);
-      return [value, false];
-    }
-    const existing = this.structured.get(key);
-    if (existing !== undefined || this.structured.has(key)) return [existing as V, true];
-    this.structured.set(key, value);
+  LoadOrStore(key: K, value: V, keyDescriptor: GoMapKeyDescriptor<K>): [V, bool] {
+    if (this.entries.has(key)) return [GoMapGetExisting(this.entries, key), true];
+    if (GoMapIsNil(this.entries)) this.entries = GoMapMake<K, V>(keyDescriptor);
+    this.entries.set(key, value);
     return [value, false];
   }
 
   // LoadAndDelete deletes the value for a key, returning the previous value if any.
   LoadAndDelete(key: K): [V | undefined, bool] {
-    const bucket = mapKeyBucket(key);
-    if (bucket === mapKeyBucketPrimitive) {
-      const existing = this.primitive.get(key);
-      const ok = existing !== undefined || this.primitive.has(key);
-      this.primitive.delete(key);
-      return [existing, ok];
-    }
-    if (bucket === mapKeyBucketNanNumber) {
-      return [undefined, false];
-    }
-    const existing = this.structured.get(key);
-    const ok = existing !== undefined || this.structured.has(key);
-    this.structured.delete(key);
-    return [existing, ok];
+    if (!this.entries.has(key)) return [undefined, false];
+    const existing = GoMapGetExisting(this.entries, key);
+    this.entries.delete(key);
+    return [existing, true];
   }
 
   // Delete deletes the value for a key.
   Delete(key: K): void {
-    const bucket = mapKeyBucket(key);
-    if (bucket === mapKeyBucketPrimitive) {
-      this.primitive.delete(key);
-      return;
-    }
-    if (bucket === mapKeyBucketNanNumber) {
-      return;
-    }
-    this.structured.delete(key);
+    this.entries.delete(key);
   }
 
   // Clear deletes all the entries.
   Clear(): void {
-    this.primitive.clear();
-    this.structured.clear();
-    this.nanNumberEntries.length = 0;
+    this.entries.clear();
   }
 
   // Range calls f sequentially for each key and value present in the map.
@@ -211,37 +157,12 @@ export class Map<K = unknown, V = unknown> {
     // Snapshot keys so the callback may safely Store/Delete during iteration,
     // matching sync.Map's "Range does not necessarily correspond to any
     // consistent snapshot" but allowing concurrent mutation.
-    for (const [key, value] of globalThis.Array.from(this.primitive.entries())) {
-      if (!f(key, value)) {
-        return;
-      }
-    }
-    for (const [key, value] of globalThis.Array.from(this.structured.entries())) {
-      if (!f(key, value)) {
-        return;
-      }
-    }
-    for (const [key, value] of globalThis.Array.from(this.nanNumberEntries)) {
+    for (const [key, value] of globalThis.Array.from(this.entries)) {
       if (!f(key, value)) {
         return;
       }
     }
   }
-}
-
-const mapKeyBucketStructured: int = 0;
-const mapKeyBucketPrimitive: int = 1;
-const mapKeyBucketNanNumber: int = 2;
-
-function mapKeyBucket(key: unknown): int {
-  const keyType = typeof key;
-  if (keyType === "number") {
-    return globalThis.Number.isNaN(key) ? mapKeyBucketNanNumber : mapKeyBucketPrimitive;
-  }
-  if (keyType === "string" || keyType === "boolean" || keyType === "bigint") {
-    return mapKeyBucketPrimitive;
-  }
-  return mapKeyBucketStructured;
 }
 
 export class Pool<T = unknown> {

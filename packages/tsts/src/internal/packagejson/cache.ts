@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Entries, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -319,7 +319,7 @@ export function VersionPaths_GetPaths(receiver: GoPtr<VersionPaths>): GoPtr<Orde
   if (receiver!.paths !== undefined) {
     return receiver!.paths;
   }
-  const paths = NewOrderedMapWithSizeHint<string, GoSlice<string>>(0);
+  const paths = NewOrderedMapWithSizeHint<string, GoSlice<string>>(0, GoStringKey);
   OrderedMap_Entries<string, JSONValue>(receiver!.pathsJSON as GoPtr<OrderedMap<string, JSONValue>>)!((key, value) => {
     if (value.Type !== JSONValueTypeArray) {
       return false;
@@ -333,7 +333,7 @@ export function VersionPaths_GetPaths(receiver: GoPtr<VersionPaths>): GoPtr<Orde
       }
       slice[i] = elem.Value as string;
     }
-    OrderedMap_Set(paths, key, slice);
+    OrderedMap_Set(paths, key, slice, GoStringKey);
     return false;
   });
   receiver!.paths = paths;
@@ -471,7 +471,7 @@ export interface InfoCache {
  */
 export function NewInfoCache(currentDirectory: string, useCaseSensitiveFileNames: bool): GoPtr<InfoCache> {
   return {
-    cache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() },
+    cache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap<Path, GoPtr<InfoCacheEntry>>() },
     currentDirectory,
     useCaseSensitiveFileNames,
   };
@@ -510,6 +510,6 @@ export function InfoCache_Get(receiver: GoPtr<InfoCache>, packageJsonPath: strin
  */
 export function InfoCache_Set(receiver: GoPtr<InfoCache>, packageJsonPath: string, info: GoPtr<InfoCacheEntry>): GoPtr<InfoCacheEntry> {
   const key = ToPath(packageJsonPath, receiver!.currentDirectory, receiver!.useCaseSensitiveFileNames);
-  const [actual] = SyncMap_LoadOrStore<Path, GoPtr<InfoCacheEntry>>(receiver!.cache as GoPtr<SyncMap<Path, GoPtr<InfoCacheEntry>>>, key, info);
+  const [actual] = SyncMap_LoadOrStore<Path, GoPtr<InfoCacheEntry>>(receiver!.cache, key, info, GoZeroPointer<InfoCacheEntry>, GoStringKey);
   return actual;
 }

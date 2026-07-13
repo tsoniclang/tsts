@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import type { GoComparable, GoConstraint, GoEquality, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoConstraint, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroBoolean, GoZeroNumber, GoZeroPointer, GoZeroString, NewGoStructMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Hasher, Uint128 } from "../../../go/github.com/zeebo/xxh3.js";
@@ -40,6 +40,7 @@ import type { CompilerOptions, ModuleKind, ModuleResolutionKind, ResolutionMode,
 import { Every, Find, IfElse, LastOrNil, Map, Some } from "../../core/core.js";
 import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
+import { goNodePointerKey, goSourceFilePointerKey, goTypePointerKey, nonExistentPropertyKeyDescriptor } from "../map-key-descriptors.js";
 import { Tristate_IsFalseOrUnknown, TSTrue } from "../../core/tristate.js";
 import { ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax, ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax_Adjust_the_type_field_in_the_nearest_package_json_to_make_this_file_an_ECMAScript_module_or_adjust_your_verbatimModuleSyntax_module_and_moduleResolution_settings_in_TypeScript } from "../../diagnostics/generated/messages.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
@@ -1963,8 +1964,8 @@ function newLinkStore<K extends GoComparable, V>(): LinkStore<K, V> {
   };
 }
 
-function newCheckerSet<T extends GoComparable>(): Set<T> {
-  return NewSetWithSizeHint<T>(0 as int)!;
+function newCheckerSet<T extends GoComparable>(keyDescriptor: GoMapKeyDescriptor<T>): Set<T> {
+  return NewSetWithSizeHint<T>(0 as int, keyDescriptor)!;
 }
 
 function zeroSourceFileLinks(): SourceFileLinks {
@@ -1990,9 +1991,9 @@ function zeroSourceFileLinks(): SourceFileLinks {
 }
 
 export function Checker_getSourceFileLinks(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoPtr<SourceFileLinks> {
-  const links = LinkStore_Get(receiver!.sourceFileLinks, sourceFile, zeroSourceFileLinks);
+  const links = LinkStore_Get(receiver!.sourceFileLinks, sourceFile, zeroSourceFileLinks, goSourceFilePointerKey);
   if (GoMapIsNil(links!.v.deferredNodes.m.mp)) {
-    links!.v.deferredNodes = NewOrderedSetWithSizeHint<GoPtr<Node>>(0 as int)!;
+    links!.v.deferredNodes = NewOrderedSetWithSizeHint<GoPtr<Node>>(0 as int, goNodePointerKey)!;
   }
   if (GoSliceIsNil(links!.v.identifierCheckNodes)) {
     links!.v.identifierCheckNodes = [];
@@ -2005,7 +2006,7 @@ function newDiagnosticsCollection(): DiagnosticsCollection {
     mu: new Mutex(),
     count: 0 as int,
     fileDiagnostics: GoNilMap(),
-    fileDiagnosticsSorted: newCheckerSet<string>(),
+    fileDiagnosticsSorted: newCheckerSet<string>(GoStringKey),
     nonFileDiagnostics: GoNilSlice(),
     nonFileDiagnosticsSorted: false,
   };
@@ -2433,7 +2434,7 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
   checker.reverseMappedCache = NewGoStructMap(reverseMappedTypeKey);
   checker.reverseHomomorphicMappedCache = NewGoStructMap(reverseMappedTypeKey);
   checker.iterationTypesCache = NewGoStructMap(iterationTypesKey);
-  checker.markerTypes = newCheckerSet<GoPtr<Type>>();
+  checker.markerTypes = newCheckerSet<GoPtr<Type>>(goTypePointerKey);
   checker.symbolArena = newArena<Symbol>();
   checker.signatureArena = newArena<Signature>();
   checker.indexInfoArena = newArena<IndexInfo>();
@@ -2641,15 +2642,15 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
   checker.getGlobalClassAccessorDecoratorTargetType = Checker_getGlobalTypeResolver(checker, "ClassAccessorDecoratorTarget", 2, true);
   checker.getGlobalClassAccessorDecoratorResultType = Checker_getGlobalTypeResolver(checker, "ClassAccessorDecoratorResult", 2, true);
   checker.getGlobalClassFieldDecoratorContextType = Checker_getGlobalTypeResolver(checker, "ClassFieldDecoratorContext", 2, true);
-  checker.skipDirectInferenceNodes = newCheckerSet<GoPtr<Node>>();
+  checker.skipDirectInferenceNodes = newCheckerSet<GoPtr<Node>>(goNodePointerKey);
   checker.packagesMap = program!.GetPackagesMap();
   checker.activeMappers = [];
   checker.activeTypeMappersCaches = [];
   checker.emitResolverOnce = new Once();
   checker.ambientModulesOnce = new Once();
   checker.ambientModules = [];
-  checker.reportedUnreachableNodes = newCheckerSet<GoPtr<Node>>();
-  checker.nonExistentProperties = newCheckerSet<NonExistentPropertyKey>();
+  checker.reportedUnreachableNodes = newCheckerSet<GoPtr<Node>>(goNodePointerKey);
+  checker.nonExistentProperties = newCheckerSet<NonExistentPropertyKey>(nonExistentPropertyKeyDescriptor);
   checker.deferredDiagnosticCallbacks = [];
   checker.mu = new Mutex();
   Checker_initializeClosures(checker);

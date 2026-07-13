@@ -1,5 +1,5 @@
 import type { bool, int, sbyte } from "../../../go/scalars.js";
-import { GoZeroString, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroString, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
 import { MaxInt } from "../../../go/math.js";
 import { SortStableFunc } from "../../../go/slices.js";
 import { Every, Flatten, LastOrNil } from "../../core/core.js";
@@ -1302,7 +1302,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
   if (Set_Has(receiver!.visited, canonicalPath)) {
     return;
   }
-  Set_Add(receiver!.visited, canonicalPath);
+  Set_Add(receiver!.visited, canonicalPath, GoStringKey);
 
   const entries = receiver!.host!.GetAccessibleEntries(absolutePath);
 
@@ -1399,7 +1399,7 @@ export function matchFiles(path: string, extensions: GoSlice<string>, excludes: 
     directoryMatcher: directoryMatcher,
     extensions: extensionList,
     useCaseSensitiveFileNames: useCaseSensitiveFileNames,
-    visited: NewSetWithSizeHint<string>(0 as int)!,
+    visited: NewSetWithSizeHint<string>(0 as int, GoStringKey)!,
     results: results,
   };
 

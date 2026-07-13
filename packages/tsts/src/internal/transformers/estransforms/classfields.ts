@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoNilMap, GoPointerKey, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { ModifierList_Clone, Node_Clone, NodeFactory_NewNodeList, NodeFactory_NewModifierList } from "../../ast/spine.js";
 import { AsSourceFile, Node_Body, Node_MemberList, Node_Members, Node_Expression, Node_Initializer, Node_ParameterList, Node_Text } from "../../ast/ast.js";
@@ -55,6 +55,8 @@ import { IsIdentifierText } from "../../scanner/utilities.js";
 import { Filter, Some } from "../../core/core.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+
+const nodePointerKey = GoPointerKey<Node>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classFacts","kind":"type","status":"implemented","sigHash":"13a741db1e6964ac18f53134eb775f7a34d4093e7915d3598bb8218637998b35"}
  *
@@ -366,7 +368,7 @@ export function newClassFieldsTransformer(opts: GoPtr<TransformOptions>): GoPtr<
     currentClassContainer: undefined,
     currentClassElement: undefined,
     classAliases: new globalThis.Map(),
-    enclosingClassDeclarations: { M: new globalThis.Map() },
+    enclosingClassDeclarations: { M: GoNilMap() },
     inIterationStatement: false,
     insideComputedPropertyName: false,
     parentNode: undefined,
@@ -3884,7 +3886,7 @@ export function classFieldsTransformer_visitInNewClassLexicalEnvironment(receive
   receiver!.pendingExpressions = [];
   classFieldsTransformer_startClassLexicalEnvironment(receiver);
   const original = EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node);
-  Set_Add(receiver!.enclosingClassDeclarations, original);
+  Set_Add(receiver!.enclosingClassDeclarations, original, nodePointerKey);
 
   if (receiver!.shouldTransformPrivateElementsOrClassStaticBlocks || classFieldsTransformer_nodeHasTransformPrivateStaticElementsFlag(receiver, node)) {
     const name = GetNameOfDeclaration(node);

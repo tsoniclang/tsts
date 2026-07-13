@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoEqualStrict, GoZeroPointer, type GoFunc, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoPointerKey, GoStringKey, GoZeroPointer, type GoFunc, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { CommentRange, FileReference, SourceFile } from "../../ast/ast.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { SourceFile_Text, SourceFile_FileName, AsSourceFile, SourceFile_IsJS, Node_Symbol, Node_Initializer, Node_Type, Node_Expression, Node_Parameters, Node_ParameterList, Node_Elements, Node_IsTypeOnly, Node_ModuleSpecifier, NodeFactory_NewModifier, Node_Text, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateExpressionWithTypeArguments, Node_Arguments, NodeFactory_UpdateFunctionDeclaration, Node_StatementList, NodeFactory_UpdateSourceFile, Node_PropertyName, Node_EagerJSDoc, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateVariableDeclarationList, NodeFactory_UpdateBindingElement } from "../../ast/ast.js";
@@ -59,6 +59,8 @@ import * as diagnosticMessages from "../../diagnostics/generated/messages.js";
 import * as strings from "../../../go/strings.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+
+const nodePointerKey = GoPointerKey<Node>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::ReferencedFilePair","kind":"type","status":"implemented","sigHash":"1acae0a7e39042fd1870c208a4ed0078a626c88d9ad3c80e264bb4445390836a"}
  *
@@ -249,11 +251,11 @@ export function NewDeclarationTransformer(host: GoInterface<DeclarationEmitHost>
     enclosingDeclaration: undefined,
     resultHasExternalModuleIndicator: false,
     suppressNewDiagnosticContexts: false,
-    witnessedCjsExports: { M: new globalThis.Map() },
+    witnessedCjsExports: { M: GoNilMap() },
     lateStatementReplacementMap: new globalThis.Map(),
     expandoHosts: new globalThis.Map(),
     expandoMembers: new globalThis.Map(),
-    seenProperties: { M: new globalThis.Map() },
+    seenProperties: { M: GoNilMap() },
     thisPropertyAssignmentsCollected: [],
     rawReferencedFiles: [],
     rawTypeReferenceDirectives: [],
@@ -2638,7 +2640,7 @@ export function DeclarationTransformer_transformCommonJSExport(receiver: GoPtr<D
   if (Set_Has(receiver!.witnessedCjsExports, nameText) && nameText !== "") {
     return undefined; // Already emitted this export name
   }
-  Set_Add(receiver!.witnessedCjsExports, nameText);
+  Set_Add(receiver!.witnessedCjsExports, nameText, GoStringKey);
   receiver!.resultHasExternalModuleIndicator = true;
   receiver!.resultHasScopeMarker = true;
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
@@ -3803,7 +3805,7 @@ export function DeclarationTransformer_visitThisPropertyAssignments(receiver: Go
       if (base === undefined || Set_Has(receiver!.seenProperties, base)) {
         break;
       }
-      Set_Add(receiver!.seenProperties, base);
+      Set_Add(receiver!.seenProperties, base, nodePointerKey);
 
       // problem: this prop might be overriding a prop from a base type. The checker has special bails for override compat comparisons for binary expression properties,
       // but what we transform to won't - so we either need to match the base type (for example, if it's a getter/setter) or emit nothing
@@ -3918,11 +3920,11 @@ export function isClassExtendingNull(node: GoPtr<Node>): bool {
  * }
  */
 export function DeclarationTransformer_collectThisPropertyAssignments(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<ClassDeclaration>): GoSlice<GoPtr<Node>> {
-  const seen: Set<GoPtr<Node>> = { M: new globalThis.Map() };
+  const seen: Set<GoPtr<Node>> = { M: GoNilMap() };
   // Pre-populate seen with existing direct member nodes to avoid duplicates
   for (const member of input!.Members!.Nodes) {
     if (Node_Name(member) !== undefined) {
-      Set_Add(seen, member);
+      Set_Add(seen, member, nodePointerKey);
     }
   }
   receiver!.seenProperties = seen;

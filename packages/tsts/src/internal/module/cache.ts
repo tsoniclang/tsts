@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoZeroPointer, type GoMap, type GoPtr } from "../../go/compat.js";
+import { GoBooleanKey, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, type GoMap, type GoPtr } from "../../go/compat.js";
 import { Map, Once } from "../../go/sync.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Store } from "../collections/syncmap.js";
@@ -35,6 +35,16 @@ export interface moduleResolutionCacheKey {
   redirectConfigName: string;
 }
 
+const moduleResolutionCacheKeyDescriptor = GoStructKey<moduleResolutionCacheKey, readonly [string, string, ResolutionMode, string]>(
+  [
+    GoStructField((value) => value.containingDirectory, GoStringKey),
+    GoStructField((value) => value.moduleName, GoStringKey),
+    GoStructField((value) => value.resolutionMode, GoNumberKey),
+    GoStructField((value) => value.redirectConfigName, GoStringKey),
+  ],
+  ([containingDirectory, moduleName, resolutionMode, redirectConfigName]) => ({ containingDirectory, moduleName, resolutionMode, redirectConfigName }),
+);
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::moduleResolutionCache","kind":"type","status":"implemented","sigHash":"66cde73c5c4cf5575efeb5988afcd9bef9987b0d9fec3c6f8a3169a97cae8170"}
  *
@@ -68,7 +78,7 @@ export function moduleResolutionCache_Get(receiver: GoPtr<moduleResolutionCache>
  * }
  */
 export function moduleResolutionCache_Set(receiver: GoPtr<moduleResolutionCache>, key: moduleResolutionCacheKey, value: GoPtr<ResolvedModule>): void {
-  SyncMap_LoadOrStore(receiver!.cache, key, value);
+  SyncMap_LoadOrStore(receiver!.cache, key, value, GoZeroPointer<ResolvedModule>, moduleResolutionCacheKeyDescriptor);
 }
 
 /**
@@ -90,6 +100,17 @@ export interface typeRefDirectiveResolutionCacheKey {
   redirectConfigName: string;
   fromInferredTypesContainingFile: bool;
 }
+
+const typeRefDirectiveResolutionCacheKeyDescriptor = GoStructKey<typeRefDirectiveResolutionCacheKey, readonly [string, string, ResolutionMode, string, bool]>(
+  [
+    GoStructField((value) => value.containingDirectory, GoStringKey),
+    GoStructField((value) => value.typeReferenceName, GoStringKey),
+    GoStructField((value) => value.resolutionMode, GoNumberKey),
+    GoStructField((value) => value.redirectConfigName, GoStringKey),
+    GoStructField((value) => value.fromInferredTypesContainingFile, GoBooleanKey),
+  ],
+  ([containingDirectory, typeReferenceName, resolutionMode, redirectConfigName, fromInferredTypesContainingFile]) => ({ containingDirectory, typeReferenceName, resolutionMode, redirectConfigName, fromInferredTypesContainingFile }),
+);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::typeRefDirectiveResolutionCache","kind":"type","status":"implemented","sigHash":"bef38d55f610311801f058fd12ad8fad2d28e6ea9c7f500e398707857d187dbc"}
@@ -124,7 +145,7 @@ export function typeRefDirectiveResolutionCache_Get(receiver: GoPtr<typeRefDirec
  * }
  */
 export function typeRefDirectiveResolutionCache_Set(receiver: GoPtr<typeRefDirectiveResolutionCache>, key: typeRefDirectiveResolutionCacheKey, value: GoPtr<ResolvedTypeReferenceDirective>): void {
-  SyncMap_Store(receiver!.cache, key, value);
+  SyncMap_Store(receiver!.cache, key, value, typeRefDirectiveResolutionCacheKeyDescriptor);
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { GoMap, GoPtr } from "../../go/compat.js";
+import { GoStringKey, type GoMap, type GoPtr } from "../../go/compat.js";
 import { NewSetFromItems } from "../collections/set.js";
 import type { Set } from "../collections/set.js";
 
@@ -64,6 +64,7 @@ export let nonBinaryUnicodeProperties: GoMap<string, string> = new Map<string, s
  * )
  */
 export let binaryUnicodeProperties: GoPtr<Set<string>> = NewSetFromItems<string>(
+	GoStringKey,
 	"ASCII", "ASCII_Hex_Digit", "AHex", "Alphabetic", "Alpha", "Any", "Assigned",
 	"Bidi_Control", "Bidi_C", "Bidi_Mirrored", "Bidi_M",
 	"Case_Ignorable", "CI", "Cased",
@@ -109,6 +110,7 @@ export let binaryUnicodeProperties: GoPtr<Set<string>> = NewSetFromItems<string>
  * )
  */
 export let binaryUnicodePropertiesOfStrings: GoPtr<Set<string>> = NewSetFromItems<string>(
+	GoStringKey,
 	"Basic_Emoji", "Emoji_Keycap_Sequence", "RGI_Emoji_Modifier_Sequence",
 	"RGI_Emoji_Flag_Sequence", "RGI_Emoji_Tag_Sequence",
 	"RGI_Emoji_ZWJ_Sequence", "RGI_Emoji",
@@ -196,6 +198,7 @@ export let binaryUnicodePropertiesOfStrings: GoPtr<Set<string>> = NewSetFromItem
  * )
  */
 export let scriptValues: GoPtr<Set<string>> = NewSetFromItems<string>(
+	GoStringKey,
 	"Adlm", "Adlam", "Aghb", "Caucasian_Albanian", "Ahom", "Arab", "Arabic",
 	"Armi", "Imperial_Aramaic", "Armn", "Armenian", "Avst", "Avestan",
 	"Bali", "Balinese", "Bamu", "Bamum", "Bass", "Bassa_Vah", "Batk", "Batak",
@@ -303,6 +306,7 @@ export let scriptValues: GoPtr<Set<string>> = NewSetFromItems<string>(
  */
 export let valuesOfNonBinaryUnicodeProperties: GoMap<string, GoPtr<Set<string>>> = new Map<string, GoPtr<Set<string>>>([
 	["General_Category", NewSetFromItems<string>(
+		GoStringKey,
 		"C", "Other", "Cc", "Control", "cntrl", "Cf", "Format", "Cn", "Unassigned",
 		"Co", "Private_Use", "Cs", "Surrogate",
 		"L", "Letter", "LC", "Cased_Letter", "Ll", "Lowercase_Letter", "Lm", "Modifier_Letter",

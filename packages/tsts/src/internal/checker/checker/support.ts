@@ -126,6 +126,7 @@ import type { Result } from "../../evaluator/evaluator.js";
 import { NewResult } from "../../evaluator/evaluator.js";
 import { Map } from "../../core/core.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
+import { goNodePointerKey, goSymbolPointerKey } from "../map-key-descriptors.js";
 import { RelationComparisonResultReportsUnmeasurable, RelationComparisonResultReportsUnreliable } from "../relater.js";
 import { Checker_checkTypeComparableTo, Checker_compareTypesAssignableWorker, Checker_isTypeComparableTo } from "../relater.js";
 import { Checker_isPostSuperFlowNode, Checker_markNodeAssignmentsWorker } from "../flow.js";
@@ -467,10 +468,10 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
     }
   }
   Checker_addUndefinedToGlobalsOrErrorOnRedeclaration(receiver);
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.undefinedSymbol, goZeroValueSymbolLinks)!.v.resolvedType = receiver!.undefinedWideningType;
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.argumentsSymbol, goZeroValueSymbolLinks)!.v.resolvedType = Checker_getGlobalType(receiver, "IArguments", 0, true);
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.unknownSymbol, goZeroValueSymbolLinks)!.v.resolvedType = receiver!.errorType;
-  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.globalThisSymbol, goZeroValueSymbolLinks)!.v.resolvedType = Checker_newObjectType(receiver, ObjectFlagsAnonymous, receiver!.globalThisSymbol);
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.undefinedSymbol, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = receiver!.undefinedWideningType;
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.argumentsSymbol, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = Checker_getGlobalType(receiver, "IArguments", 0, true);
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.unknownSymbol, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = receiver!.errorType;
+  LinkStore_Get(receiver!.valueSymbolLinks, receiver!.globalThisSymbol, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = Checker_newObjectType(receiver, ObjectFlagsAnonymous, receiver!.globalThisSymbol);
   receiver!.globalArrayType = Checker_getGlobalType(receiver, "Array", 1, true);
   receiver!.globalObjectType = Checker_getGlobalType(receiver, "Object", 0, true);
   receiver!.globalFunctionType = Checker_getGlobalType(receiver, "Function", 0, true);
@@ -513,7 +514,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
  * }
  */
 export function Checker_symbolReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags): void {
-  LinkStore_Get(receiver!.symbolReferenceLinks, symbol_, goZeroSymbolReferenceLinks)!.v.referenceKinds |= meaning;
+  LinkStore_Get(receiver!.symbolReferenceLinks, symbol_, goZeroSymbolReferenceLinks, goSymbolPointerKey)!.v.referenceKinds |= meaning;
 }
 
 /**
@@ -1023,7 +1024,7 @@ export function Checker_reportUnusedBindingElements(receiver: GoPtr<Checker>, no
  */
 export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checker>): void {
   for (const node of receiver!.renamedBindingElementsInTypes) {
-    const links = LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node), goZeroSymbolReferenceLinks)!.v;
+    const links = LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node), goZeroSymbolReferenceLinks, goSymbolPointerKey)!.v;
     if ((links!.referenceKinds ?? SymbolFlagsNone) === 0) {
       const wrappingDeclaration = WalkUpBindingElementsAndPatterns(node);
       Assert(IsPartOfParameterDeclaration(wrappingDeclaration), "Only parameter declaration should be checked here");
@@ -1067,7 +1068,7 @@ export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checke
  */
 export function Checker_checkWeakMapSetCollision(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const enclosingBlockScope = GetEnclosingBlockScopeContainer(node);
-  if ((LinkStore_Get(receiver!.nodeLinks, enclosingBlockScope, goZeroNodeLinks)!.v.flags & NodeCheckFlagsContainsClassWithPrivateIdentifiers) !== 0) {
+  if ((LinkStore_Get(receiver!.nodeLinks, enclosingBlockScope, goZeroNodeLinks, goNodePointerKey)!.v.flags & NodeCheckFlagsContainsClassWithPrivateIdentifiers) !== 0) {
     const name = Node_Name(node);
     if (name !== undefined && IsIdentifier(name)) {
       Checker_errorSkippedOnNoEmit(receiver, node, Compiler_reserves_name_0_when_emitting_private_identifier_downlevel, Node_Text(name));
@@ -1112,18 +1113,18 @@ export function Checker_checkReflectCollision(receiver: GoPtr<Checker>, node: Go
   let hasCollision: bool = false;
   if (IsClassExpression(node)) {
     for (const member of Node_Members(node) ?? []) {
-      if ((LinkStore_Get(receiver!.nodeLinks, member, goZeroNodeLinks)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
+      if ((LinkStore_Get(receiver!.nodeLinks, member, goZeroNodeLinks, goNodePointerKey)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
         hasCollision = true;
         break;
       }
     }
   } else if (IsFunctionExpression(node)) {
-    if ((LinkStore_Get(receiver!.nodeLinks, node, goZeroNodeLinks)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
+    if ((LinkStore_Get(receiver!.nodeLinks, node, goZeroNodeLinks, goNodePointerKey)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
       hasCollision = true;
     }
   } else {
     const container = GetEnclosingBlockScopeContainer(node);
-    if (container !== undefined && (LinkStore_Get(receiver!.nodeLinks, container, goZeroNodeLinks)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
+    if (container !== undefined && (LinkStore_Get(receiver!.nodeLinks, container, goZeroNodeLinks, goNodePointerKey)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
       hasCollision = true;
     }
   }
@@ -1207,7 +1208,7 @@ export function Checker_checkAssertion(receiver: GoPtr<Checker>, node: GoPtr<Nod
     }
     return Checker_getRegularTypeOfLiteralType(receiver, exprType);
   }
-  const links = LinkStore_Get(receiver!.assertionLinks, node, goZeroAssertionLinks)!.v;
+  const links = LinkStore_Get(receiver!.assertionLinks, node, goZeroAssertionLinks, goNodePointerKey)!.v;
   links!.exprType = exprType;
   Checker_checkSourceElement(receiver, typeNode);
   Checker_checkNodeDeferred(receiver, node);
@@ -1236,7 +1237,7 @@ export function Checker_checkAssertion(receiver: GoPtr<Checker>, node: GoPtr<Nod
  */
 export function Checker_checkAssertionDeferred(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const typeNode = Node_Type(node);
-  const exprType = Checker_getRegularTypeOfObjectLiteral(receiver, Checker_getBaseTypeOfLiteralType(receiver, LinkStore_Get(receiver!.assertionLinks, node, goZeroAssertionLinks)!.v.exprType));
+  const exprType = Checker_getRegularTypeOfObjectLiteral(receiver, Checker_getBaseTypeOfLiteralType(receiver, LinkStore_Get(receiver!.assertionLinks, node, goZeroAssertionLinks, goNodePointerKey)!.v.exprType));
   const targetType = Checker_getTypeFromTypeNode(receiver, typeNode);
   if (!Checker_isErrorType(receiver, targetType)) {
     const widenedType = Checker_getWidenedType(receiver, exprType);

@@ -262,6 +262,7 @@ import { Node_Text, Node_ElementList, Node_IsTypeOnly, Node_TypeParameterList, N
 import { IsIntrinsicJsxName } from "../scanner/utilities.js";
 import { CompilerOptions_GetJSXTransformEnabled } from "../core/compileroptions.js";
 import { LinkStore_Get } from "../core/linkstore.js";
+import { goNodePointerKey } from "./map-key-descriptors.js";
 import type { NodeLinks, Type } from "./types.js";
 import { NodeCheckFlagsNone, TypeFlagsStringOrNumberLiteralOrUnique, TypeFlagsEnumLike } from "./types.js";
 import { FromString } from "../jsnum/string.js";
@@ -4486,13 +4487,13 @@ export function Checker_checkGrammarSourceFile(receiver: GoPtr<Checker>, node: G
  */
 export function Checker_checkGrammarStatementInAmbientContext(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
   if ((node!.Flags & NodeFlagsAmbient) !== 0) {
-    const links = LinkStore_Get(receiver!.nodeLinks, node, GoZeroNodeLinks)!.v;
+    const links = LinkStore_Get(receiver!.nodeLinks, node, GoZeroNodeLinks, goNodePointerKey)!.v;
     if (!links!.hasReportedStatementInAmbientContext && (IsFunctionLike(node!.Parent) || IsAccessor(node!.Parent))) {
       links!.hasReportedStatementInAmbientContext = Checker_grammarErrorOnFirstToken(receiver, node, An_implementation_cannot_be_declared_in_ambient_contexts);
       return links!.hasReportedStatementInAmbientContext;
     }
     if (node!.Parent!.Kind === KindBlock || node!.Parent!.Kind === KindModuleBlock || node!.Parent!.Kind === KindSourceFile) {
-      const parentLinks = LinkStore_Get(receiver!.nodeLinks, node!.Parent, GoZeroNodeLinks)!.v;
+      const parentLinks = LinkStore_Get(receiver!.nodeLinks, node!.Parent, GoZeroNodeLinks, goNodePointerKey)!.v;
       if (!parentLinks!.hasReportedStatementInAmbientContext) {
         parentLinks!.hasReportedStatementInAmbientContext = Checker_grammarErrorOnFirstToken(receiver, node, Statements_are_not_allowed_in_ambient_contexts);
         return parentLinks!.hasReportedStatementInAmbientContext;

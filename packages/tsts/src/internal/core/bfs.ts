@@ -1,10 +1,10 @@
 import type { bool, int, long } from "../../go/scalars.js";
-import { GoZeroPointer, type GoComparable, type GoEquality, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
+import { GoZeroPointer, type GoComparable, type GoEquality, type GoMapKeyDescriptor, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
+import { Map as SyncMapBacking } from "../../go/sync.js";
 import type { Int64 } from "../../go/sync/atomic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { OrderedMap_Delete, OrderedMap_EntryAt, OrderedMap_Has, OrderedMap_Set, OrderedMap_Size, OrderedMap_Values } from "../collections/ordered_map.js";
 import { NewOrderedMapFromList, NewOrderedMapWithSizeHint } from "../collections/ordered_map.js";
-import type { MapEntry } from "../collections/ordered_map.js";
 import { SyncSet_AddIfAbsent } from "../collections/syncset.js";
 import type { SyncSet } from "../collections/syncset.js";
 import { Map } from "./core.js";
@@ -116,7 +116,7 @@ export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N =
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallel","kind":"func","status":"implemented","sigHash":"5b479e33bd171b6ba49da3f144e952a82e69fe245d13aa2e9b148836b846669a"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic search forwards an exact static key zero factory to OrderedMap.EntryAt.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"N"}]}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic search forwards exact static key zero and map-key operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"N"},{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"N"}]}
  *
  * Go source:
  * func BreadthFirstSearchParallel[N comparable](
@@ -127,13 +127,13 @@ export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N =
  * 	return BreadthFirstSearchParallelEx(start, neighbors, visit, BreadthFirstSearchOptions[N, N]{}, Identity)
  * }
  */
-export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], zeroKey: GoZeroFactory<N>): BreadthFirstSearchResult<N> {
-  return BreadthFirstSearchParallelEx<N, N>(start, neighbors, visit, {} as BreadthFirstSearchOptions<N, N>, (n: N): N => n, zeroKey);
+export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], zeroKey: GoZeroFactory<N>, keyDescriptor: GoMapKeyDescriptor<N>): BreadthFirstSearchResult<N> {
+  return BreadthFirstSearchParallelEx<N, N>(start, neighbors, visit, { Visited: undefined, PreprocessLevel: undefined }, (n: N): N => n, zeroKey, keyDescriptor);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallelEx","kind":"func","status":"implemented","sigHash":"89e6ce09eedbf0d5603510cbecb3482eb5e8b1ea6807e890e060d8d756668705"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic search supplies OrderedMap.EntryAt with the exact erased key zero value.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"K"}]}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic search supplies exact erased key zero and map-key operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"K"},{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func BreadthFirstSearchParallelEx[K comparable, N any](
@@ -144,10 +144,16 @@ export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, nei
  * 	getKey func(N) K,
  * ) BreadthFirstSearchResult[N] { ... }
  */
-export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], options: BreadthFirstSearchOptions<K, N>, getKey: GoFunc<(arg0: N) => K>, zeroKey: GoZeroFactory<K>): BreadthFirstSearchResult<N> {
+export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], options: BreadthFirstSearchOptions<K, N>, getKey: GoFunc<(arg0: N) => K>, zeroKey: GoZeroFactory<K>, keyDescriptor: GoMapKeyDescriptor<K>): BreadthFirstSearchResult<N> {
   let visited = options.Visited;
   if (visited === undefined) {
-    visited = { set: new globalThis.Set<unknown>() } as unknown as SyncSet<K>;
+    visited = {
+      m: {
+        __tsgoBlank0: [],
+        __tsgoBlank1: [],
+        m: new SyncMapBacking<K, { readonly __tsgoEmpty?: never }>(),
+      },
+    };
   }
 
   interface result {
@@ -164,7 +170,7 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
     let lowestGoal = Number.MAX_SAFE_INTEGER;
     let nextJobCount = 0;
     if (options.PreprocessLevel !== undefined) {
-      options.PreprocessLevel({ jobs: jobs } as BreadthFirstSearchLevel<K, N>);
+      options.PreprocessLevel({ jobs });
     }
     const next: GoSlice<GoSlice<GoPtr<breadthFirstSearchJob<N>>>> = new globalThis.Array(OrderedMap_Size(jobs)).fill([]);
     let i = 0;
@@ -175,7 +181,7 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
         return true; // continue iteration
       }
       // If we have already visited this node, skip it.
-      if (!SyncSet_AddIfAbsent(visited, getKey!(j!.node))) {
+      if (!SyncSet_AddIfAbsent(visited, getKey!(j!.node), keyDescriptor)) {
         return true;
       }
       const [isResult, stop] = visit(j!.node);
@@ -215,11 +221,11 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
         fallback = fb;
       }
     }
-    const nextJobs = NewOrderedMapWithSizeHint<K, GoPtr<breadthFirstSearchJob<N>>>(nextJobCount as int);
+    const nextJobs = NewOrderedMapWithSizeHint<K, GoPtr<breadthFirstSearchJob<N>>>(nextJobCount as int, keyDescriptor);
     for (const jobList of next) {
       for (const j of jobList) {
         if (!OrderedMap_Has(nextJobs, getKey!(j!.node))) {
-          OrderedMap_Set(nextJobs, getKey!(j!.node), j);
+          OrderedMap_Set(nextJobs, getKey!(j!.node), j, keyDescriptor);
         }
       }
     }
@@ -238,8 +244,8 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
 
   let levelIndex = 0;
   let level = NewOrderedMapFromList<K, GoPtr<breadthFirstSearchJob<N>>>([
-    { Key: getKey!(start), Value: { node: start, parent: undefined } } as MapEntry<K, GoPtr<breadthFirstSearchJob<N>>>,
-  ]);
+    { Key: getKey!(start), Value: { node: start, parent: undefined } },
+  ], keyDescriptor);
   while (OrderedMap_Size(level) > 0) {
     const r = processLevel(levelIndex, level);
     if (r.stop) {

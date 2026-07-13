@@ -1,4 +1,4 @@
-import { GoZeroPointer, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import * as maps from "../../../go/maps.js";
 import * as slices from "../../../go/slices.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -674,9 +674,9 @@ export function toBuildInfo_setCompilerOptions(receiver: GoPtr<toBuildInfo>): vo
         return false;
       }
       if (receiver!.buildInfo!.Options === undefined) {
-        receiver!.buildInfo!.Options = newMapWithSizeHint<string, unknown>(0);
+        receiver!.buildInfo!.Options = newMapWithSizeHint<string, unknown>(0, GoStringKey);
       }
-      OrderedMap_Set(receiver!.buildInfo!.Options as GoPtr<OrderedMap<string, unknown>>, option!.Name, toBuildInfo_toRelativeToBuildInfoCompilerOptionValue(receiver, option, value.Interface()));
+      OrderedMap_Set(receiver!.buildInfo!.Options as GoPtr<OrderedMap<string, unknown>>, option!.Name, toBuildInfo_toRelativeToBuildInfoCompilerOptionValue(receiver, option, value.Interface()), GoStringKey);
       return false;
     },
   );

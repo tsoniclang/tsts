@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Mutex } from "../../go/sync.js";
@@ -687,7 +687,7 @@ export function DiagnosticsCollection_getDiagnosticsForFileLocked(receiver: GoPt
   if (!collections.Set_Has(receiver!.fileDiagnosticsSorted, fileName)) {
     const diags = receiver!.fileDiagnostics.get(fileName) ?? GoNilSlice();
     slices.SortStableFunc(diags, CompareDiagnostics);
-    collections.Set_Add(receiver!.fileDiagnosticsSorted, fileName);
+    collections.Set_Add(receiver!.fileDiagnosticsSorted, fileName, GoStringKey);
   }
   return slices.Clone(receiver!.fileDiagnostics.get(fileName) ?? GoNilSlice())!;
 }

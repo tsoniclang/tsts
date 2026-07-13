@@ -28,6 +28,7 @@ import type { ReferenceResolver } from "../binder/referenceresolver.js";
 import { CompilerOptions_ShouldPreserveConstEnums } from "../core/compileroptions.js";
 import type { ResolutionMode, CompilerOptions } from "../core/compileroptions.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
+import { goNodePointerKey, goSymbolPointerKey } from "./map-key-descriptors.js";
 import type { LinkStore } from "../core/linkstore.js";
 import { TSTrue, TSFalse, TSUnknown } from "../core/tristate.js";
 import type { Tristate } from "../core/tristate.js";
@@ -428,7 +429,7 @@ export function EmitResolver_GetEnumMemberValue(receiver: GoPtr<EmitResolver>, n
     receiver!.checkerMu!.Unlock();
     return NewResult(undefined, false as bool, false as bool, false as bool);
   }
-  const result = LinkStore_Get(receiver!.checker!.enumMemberLinks, node, GoZeroEnumMemberLinks)!.v.value;
+  const result = LinkStore_Get(receiver!.checker!.enumMemberLinks, node, GoZeroEnumMemberLinks, goNodePointerKey)!.v.value;
   receiver!.checkerMu!.Unlock();
   return result;
 }
@@ -478,7 +479,7 @@ export function EmitResolver_IsDeclarationVisible(receiver: GoPtr<EmitResolver>,
 export function EmitResolver_isDeclarationVisible(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
   if (!IsParseTreeNode(node)) { return false as bool; }
   if (node === undefined) { return false as bool; }
-  const links = LinkStore_Get(receiver!.declarationLinks, node, GoZeroDeclarationLinks);
+  const links = LinkStore_Get(receiver!.declarationLinks, node, GoZeroDeclarationLinks, goNodePointerKey);
   if (links!.v.isVisible === TSUnknown) {
     if (EmitResolver_determineIfDeclarationIsVisible(receiver, node)) {
       links!.v.isVisible = TSTrue;
@@ -699,7 +700,7 @@ export function EmitResolver_determineIfDeclarationIsVisible(receiver: GoPtr<Emi
  */
 export function EmitResolver_PrecalculateDeclarationEmitVisibility(receiver: GoPtr<EmitResolver>, file: GoPtr<SourceFile>): void {
   receiver!.checkerMu!.Lock();
-  const fileLinks = LinkStore_Get(receiver!.declarationFileLinks, file, GoZeroDeclarationFileLinks);
+  const fileLinks = LinkStore_Get(receiver!.declarationFileLinks, file, GoZeroDeclarationFileLinks, goNodePointerKey);
   if (fileLinks!.v.aliasesMarked) {
     receiver!.checkerMu!.Unlock();
     return;
@@ -829,7 +830,7 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
 
     let nextSymbol: GoPtr<Symbol> = undefined;
     for (const declaration of exportSymbol!.Declarations ?? []) {
-      LinkStore_Get(receiver!.declarationLinks, declaration, GoZeroDeclarationLinks)!.v.isVisible = TSTrue;
+      LinkStore_Get(receiver!.declarationLinks, declaration, GoZeroDeclarationLinks, goNodePointerKey)!.v.isVisible = TSTrue;
 
       if (IsInternalModuleImportEqualsDeclaration(declaration)) {
         const internalModuleReference = AsImportEqualsDeclaration(declaration)!.ModuleReference;
@@ -1084,7 +1085,7 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
   let addVisibleAlias: AddVisibleAlias;
   if (shouldComputeAliasToMakeVisible) {
     addVisibleAlias = (declaration: GoPtr<Node>, aliasingStatement: GoPtr<Node>) => {
-      LinkStore_Get(receiver!.declarationLinks, declaration, GoZeroDeclarationLinks)!.v.isVisible = TSTrue;
+      LinkStore_Get(receiver!.declarationLinks, declaration, GoZeroDeclarationLinks, goNodePointerKey)!.v.isVisible = TSTrue;
       if (aliasesToMakeVisibleSet === undefined) {
         aliasesToMakeVisibleSet = new Map<NodeId, GoPtr<Node>>();
       }
@@ -1403,7 +1404,7 @@ export function EmitResolver_requiresAddingImplicitUndefined(receiver: GoPtr<Emi
              ((symbol_!.Flags & SymbolFlagsOptional) !== 0) &&
              (isOptionalDeclaration(declaration) as unknown as bool) &&
              (LinkStore_Has(receiver!.checker!.ReverseMappedSymbolLinks, symbol_) as bool) &&
-             (LinkStore_Get(receiver!.checker!.ReverseMappedSymbolLinks, symbol_, GoZeroReverseMappedSymbolLinks)!.v.mappedType !== undefined) &&
+             (LinkStore_Get(receiver!.checker!.ReverseMappedSymbolLinks, symbol_, GoZeroReverseMappedSymbolLinks, goSymbolPointerKey)!.v.mappedType !== undefined) &&
              (containsNonMissingUndefinedType(receiver!.checker, t) as unknown as bool) as bool;
     }
     case KindParameter:
@@ -1643,7 +1644,7 @@ export function EmitResolver_IsReferencedAliasDeclaration(receiver: GoPtr<EmitRe
   if (IsAliasSymbolDeclaration(node)) {
     const symbol = Checker_getSymbolOfDeclaration(c, node);
     if (symbol !== undefined) {
-      const aliasLinks = LinkStore_Get(c!.aliasSymbolLinks, symbol, GoZeroAliasSymbolLinks)!.v;
+      const aliasLinks = LinkStore_Get(c!.aliasSymbolLinks, symbol, GoZeroAliasSymbolLinks, goSymbolPointerKey)!.v;
       if (aliasLinks.referenced) {
         result = true as bool;
       } else {
@@ -1999,7 +2000,7 @@ export function EmitResolver_GetReferencedExportContainer(receiver: GoPtr<EmitRe
  */
 export function EmitResolver_SetReferencedImportDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>, ref: GoPtr<Declaration>): void {
   receiver!.checkerMu!.Lock();
-  LinkStore_Get(receiver!.jsxLinks, node, GoZeroJSXLinks)!.v.importRef = ref;
+  LinkStore_Get(receiver!.jsxLinks, node, GoZeroJSXLinks, goNodePointerKey)!.v.importRef = ref;
   receiver!.checkerMu!.Unlock();
 }
 
@@ -2047,7 +2048,7 @@ export function EmitResolver_GetReferencedMemberValueDeclaration(receiver: GoPtr
 export function EmitResolver_GetReferencedImportDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoPtr<Declaration> {
   receiver!.checkerMu!.Lock();
   if (!IsParseTreeNode(node)) {
-    const result = LinkStore_Get(receiver!.jsxLinks, node, GoZeroJSXLinks)!.v.importRef;
+    const result = LinkStore_Get(receiver!.jsxLinks, node, GoZeroJSXLinks, goNodePointerKey)!.v.importRef;
     receiver!.checkerMu!.Unlock();
     return result;
   }

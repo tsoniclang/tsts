@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoZeroPointer } from "../../../go/compat.js";
+import { GoPointerKey, GoStringKey, GoZeroBoolean, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl, Mutex, Once } from "../../../go/sync.js";
 import type { Bool as AtomicBool } from "../../../go/sync/atomic.js";
@@ -47,6 +47,8 @@ import { referenceMap_getReferencedBy } from "./referencemap.js";
 import { Program_GetSourceFiles as incremental_Program_GetSourceFiles } from "./program.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+
+const sourceFileKey = GoPointerKey<SourceFile>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::dtsMayChange","kind":"type","status":"implemented","sigHash":"161a83db43532f7d6c3498aef7567079f27b3d88380b01283197b3f6270c1465"}
  *
@@ -159,7 +161,7 @@ export function affectedFilesHandler_isChangedSignature(receiver: GoPtr<affected
  * }
  */
 export function affectedFilesHandler_removeSemanticDiagnosticsOf(receiver: GoPtr<affectedFilesHandler>, path: Path): void {
-  SyncSet_Add<Path>(receiver!.filesToRemoveDiagnostics as SyncSet<Path>, path);
+  SyncSet_Add<Path>(receiver!.filesToRemoveDiagnostics as SyncSet<Path>, path, GoStringKey);
 }
 
 /**
@@ -258,7 +260,9 @@ export function affectedFilesHandler_updateShapeSignature(receiver: GoPtr<affect
   const [existing, ok] = SyncMap_LoadOrStore<Path, GoPtr<updatedSignature>>(
     receiver!.updatedSignatures as SyncMap<Path, GoPtr<updatedSignature>>,
     SourceFile_Path(file),
-    update
+    update,
+    GoZeroPointer<updatedSignature>,
+    GoStringKey,
   );
   if (ok) {
     existing!.mu.Lock();
@@ -628,7 +632,9 @@ export function affectedFilesHandler_handleDtsMayChangeOfFileAndReferences(recei
   const [existing, loaded] = SyncMap_LoadOrStore<Path, bool>(
     receiver!.seenFileAndReferences as SyncMap<Path, bool>,
     filePath,
-    invalidateJsFiles
+    invalidateJsFiles,
+    GoZeroBoolean,
+    GoStringKey,
   );
   if (loaded && (existing || !invalidateJsFiles)) {
     return false as bool;
@@ -636,7 +642,8 @@ export function affectedFilesHandler_handleDtsMayChangeOfFileAndReferences(recei
     SyncMap_Store<Path, bool>(
       receiver!.seenFileAndReferences as SyncMap<Path, bool>,
       filePath,
-      true as bool
+      true as bool,
+      GoStringKey,
     );
   }
 
@@ -866,7 +873,7 @@ export function collectAllAffectedFiles(ctx: GoInterface<Context>, program: GoPt
     (file: Path): bool => {
       wg!.Queue((): void => {
         for (const affectedFile of affectedFilesHandler_getFilesAffectedBy(handler, file)) {
-          SyncSet_Add<GoPtr<SourceFile>>(result, affectedFile);
+          SyncSet_Add<GoPtr<SourceFile>>(result, affectedFile, sourceFileKey);
         }
       });
       return true as bool;

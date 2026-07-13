@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoNumberKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { ObjectLiteralExpression } from "../../ast/generated/data.js";
 import type { Expression, Statement, TypeNode } from "../../ast/generated/unions.js";
@@ -1923,7 +1923,7 @@ export function Parser_parsePossibleParenthesizedArrowFunctionExpression(receive
   }
   const result = Parser_parseParenthesizedArrowFunctionExpression(receiver, false /*allowAmbiguity*/, allowReturnTypeInArrowFunction);
   if (result === undefined) {
-    Set_Add(receiver!.notParenthesizedArrow, tokenPos);
+    Set_Add(receiver!.notParenthesizedArrow, tokenPos, GoNumberKey);
   }
   return result;
 }

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import { GoZeroEmptyStruct, type GoComparable, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoZeroEmptyStruct, type GoComparable, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { SyncMap } from "./syncmap.js";
 import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from "./syncmap.js";
 
@@ -33,18 +33,20 @@ export function SyncSet_Has<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>,
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Add","kind":"method","status":"implemented","sigHash":"17f2afbd26952225a4933765a22786cf85da3de557aa0e4effac67331f0fb0f7"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic synchronized-set insertion forwards the exact static Go map-key descriptor to backing allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *SyncSet[T]) Add(key T) {
  * 	s.AddIfAbsent(key)
  * }
  */
-export function SyncSet_Add<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T): void {
-  SyncSet_AddIfAbsent(receiver, key);
+export function SyncSet_Add<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T, keyDescriptor: GoMapKeyDescriptor<T>): void {
+  SyncSet_AddIfAbsent(receiver, key, keyDescriptor);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.AddIfAbsent","kind":"method","status":"implemented","sigHash":"bb712274c5a0ac98bda050eecb8986c92464f878ee34bb7ca5c95040b0a1a1f4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic synchronized-set load-or-store receives the exact static Go map-key descriptor for backing allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *SyncSet[T]) AddIfAbsent(key T) bool {
@@ -52,8 +54,8 @@ export function SyncSet_Add<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>,
  * 	return !loaded
  * }
  */
-export function SyncSet_AddIfAbsent<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T): bool {
-  const [, loaded] = SyncMap_LoadOrStore(receiver!.m, key, {});
+export function SyncSet_AddIfAbsent<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T, keyDescriptor: GoMapKeyDescriptor<T>): bool {
+  const [, loaded] = SyncMap_LoadOrStore(receiver!.m, key, {}, GoZeroEmptyStruct, keyDescriptor);
   return !loaded;
 }
 

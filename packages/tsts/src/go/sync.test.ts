@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GoNumberKey, GoStructField, GoStructKey } from "./compat.js";
+import { GoNumberKey, GoStringKey, GoStructField, GoStructKey } from "./compat.js";
 import {
   Mutex,
   RWMutex,
@@ -85,12 +85,12 @@ test("sync.Map Load/Store/LoadOrStore/Delete/Range", () => {
   // Missing key -> (undefined, false).
   assert.deepEqual(m.Load("a"), [undefined, false]);
 
-  m.Store("a", 1);
+  m.Store("a", 1, GoStringKey);
   assert.deepEqual(m.Load("a"), [1, true]);
 
   // LoadOrStore returns existing without overwriting.
-  assert.deepEqual(m.LoadOrStore("a", 99), [1, true]);
-  assert.deepEqual(m.LoadOrStore("b", 2), [2, false]);
+  assert.deepEqual(m.LoadOrStore("a", 99, GoStringKey), [1, true]);
+  assert.deepEqual(m.LoadOrStore("b", 2, GoStringKey), [2, false]);
   assert.deepEqual(m.Load("b"), [2, true]);
 
   // LoadAndDelete.
@@ -98,7 +98,7 @@ test("sync.Map Load/Store/LoadOrStore/Delete/Range", () => {
   assert.deepEqual(m.Load("b"), [undefined, false]);
 
   // Range over all entries.
-  m.Store("c", 3);
+  m.Store("c", 3, GoStringKey);
   const seen = new globalThis.Map<string, number>();
   m.Range((k, v) => {
     seen.set(k, v);
@@ -130,7 +130,7 @@ test("sync.Map Load/Store/LoadOrStore/Delete/Range", () => {
 test("sync.Map keeps Go NaN key lookup semantics", () => {
   const m = new SyncMap<number, string>();
   const key = globalThis.Number.NaN;
-  m.Store(key, "value");
+  m.Store(key, "value", GoNumberKey);
   assert.deepEqual(m.Load(key), [undefined, false]);
   assert.deepEqual(m.LoadAndDelete(key), [undefined, false]);
 });
@@ -141,9 +141,9 @@ test("sync.Map uses an explicit descriptor for Go struct value keys", () => {
     [GoStructField((key) => key.value, GoNumberKey)],
     ([value]) => ({ value }),
   );
-  const map = new SyncMap<Key, string>(keyDescriptor);
+  const map = new SyncMap<Key, string>();
   const source = { value: 1 };
-  map.Store(source, "stored");
+  map.Store(source, "stored", keyDescriptor);
   source.value = 2;
   assert.deepEqual(map.Load({ value: 1 }), ["stored", true]);
   assert.deepEqual(map.Load({ value: 2 }), [undefined, false]);

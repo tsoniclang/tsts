@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoZeroPointer, GoZeroString, type GoComparable, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer, GoZeroString, type GoComparable, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
@@ -342,7 +342,7 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
         task!.pending.Store(true as bool);
         task!.buildInfoEntry = buildInfo;
       }
-      const [, loaded] = SyncMap_LoadOrStore(receiver!.tasks, path, task);
+      const [, loaded] = SyncMap_LoadOrStore(receiver!.tasks, path, task, GoZeroPointer<BuildTask>, GoStringKey);
       if (loaded) {
         return;
       }
@@ -419,7 +419,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
       }
       return undefined;
     }
-    Set_Add(analyzing, path);
+    Set_Add(analyzing, path, GoStringKey);
     circularityStack = [...circularityStack, configName];
     if (task!.resolved !== undefined) {
       const subRefs = ParsedCommandLine_ResolvedProjectReferencePaths(task!.resolved);
@@ -433,7 +433,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
       }
     }
     circularityStack = circularityStack.slice(0, circularityStack.length - 1);
-    Set_Add(completed, path);
+    Set_Add(completed, path, GoStringKey);
     task!.reportDone = {} as BuildTask["reportDone"];
     const prev = LastOrNil(receiver!.order, GoZeroString);
     if (prev !== "") {
@@ -645,7 +645,7 @@ export function Orchestrator_resetCaches(receiver: GoPtr<Orchestrator>): void {
 export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
   const needsConfigUpdate = new Bool();
   const needsUpdate = new Bool();
-  const mTimes = SyncMap_Clone(receiver!.host!.mTimes);
+  const mTimes = SyncMap_Clone(receiver!.host!.mTimes, GoStringKey);
   Orchestrator_rangeTask(receiver, (path: Path, task: GoPtr<BuildTask>): void => {
     const kind = BuildTask_hasUpdate(task, receiver, path);
     if (kind !== updateKindNone) {

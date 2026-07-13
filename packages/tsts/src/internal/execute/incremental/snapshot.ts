@@ -1,5 +1,6 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoStringKey } from "../../../go/compat.js";
 import * as strings from "../../../go/strings.js";
 import type { Builder } from "../../../go/strings.js";
 import { Sprintf } from "../../../go/fmt.js";
@@ -772,7 +773,7 @@ export interface snapshot {
  * }
  */
 export function snapshot_addFileToChangeSet(receiver: GoPtr<snapshot>, filePath: Path): void {
-  SyncSet_Add(receiver!.changedFilesSet as import("../../collections/syncset.js").SyncSet<Path>, filePath);
+  SyncSet_Add(receiver!.changedFilesSet as import("../../collections/syncset.js").SyncSet<Path>, filePath, GoStringKey);
   receiver!.buildInfoEmitPending.Store(true);
 }
 
@@ -791,7 +792,7 @@ export function snapshot_addFileToChangeSet(receiver: GoPtr<snapshot>, filePath:
  */
 export function snapshot_addFileToAffectedFilesPendingEmit(receiver: GoPtr<snapshot>, filePath: Path, emitKind: FileEmitKind): void {
   const [existingKind] = SyncMap_Load(receiver!.affectedFilesPendingEmit, filePath, (): FileEmitKind => FileEmitKindNone);
-  SyncMap_Store(receiver!.affectedFilesPendingEmit, filePath, (existingKind | emitKind) as FileEmitKind);
+  SyncMap_Store(receiver!.affectedFilesPendingEmit, filePath, (existingKind | emitKind) as FileEmitKind, GoStringKey);
   if ((emitKind & FileEmitKindDtsErrors) !== 0) {
     SyncMap_Delete(receiver!.emitDiagnosticsPerFile, filePath);
   }

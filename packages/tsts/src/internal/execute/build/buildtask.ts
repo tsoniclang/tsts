@@ -1,5 +1,5 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
-import { GoEqualStrict, GoZeroNumber, GoZeroString, type GoChan, type GoError, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoStringKey, GoZeroNumber, GoZeroString, type GoChan, type GoError, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Writer } from "../../../go/io.js";
 import { Builder } from "../../../go/strings.js";
 import type { Mutex } from "../../../go/sync.js";
@@ -1050,7 +1050,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
     if ((inputTime as TimeWithOps).After(newestInputFileAndTime.time)) {
       newestInputFileAndTime = { file: inputFile, time: inputTime };
     }
-    Set_Add(seenRoots, inputPath);
+    Set_Add(seenRoots, inputPath, GoStringKey);
   }
 
   if (buildInfoRootInfoReader === undefined) {
@@ -1425,7 +1425,7 @@ export function BuildTask_canUpdateJsDtsOutputTimestamps(receiver: GoPtr<BuildTa
  * }
  */
 export function BuildTask_updateTimeStamps(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, emittedFiles: GoSlice<string>, verboseMessage: GoPtr<Message>): void {
-  const emitted: GoPtr<Set<string>> = NewSetFromItems(...(emittedFiles ?? []));
+  const emitted: GoPtr<Set<string>> = NewSetFromItems(GoStringKey, ...(emittedFiles ?? []));
   let verboseMessageReported = false;
   const buildInfoName = ParsedCommandLine_GetBuildInfoFileName(receiver!.resolved);
   const now = orchestrator!.opts.Sys!.Now();
@@ -1484,7 +1484,7 @@ export function BuildTask_cleanProject(receiver: GoPtr<BuildTask>, orchestrator:
     receiver!.result!.exitStatus = ExitStatusDiagnosticsPresent_OutputsSkipped;
     return;
   }
-  const inputs: GoPtr<Set<Path>> = NewSetFromItems(...core_Map(ParsedCommandLine_FileNames(receiver!.resolved), (f: string) => Orchestrator_toPath(orchestrator, f)));
+  const inputs: GoPtr<Set<Path>> = NewSetFromItems(GoStringKey, ...core_Map(ParsedCommandLine_FileNames(receiver!.resolved), (f: string) => Orchestrator_toPath(orchestrator, f)));
   for (const outputFile of slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved))) {
     BuildTask_cleanProjectOutput(receiver, orchestrator, outputFile, inputs);
   }
@@ -1679,8 +1679,8 @@ export function BuildTask_hasUpdate(receiver: GoPtr<BuildTask>, orchestrator: Go
       receiver!.reportDone = {} as BuildTask["reportDone"];
       receiver!.done = {} as BuildTask["done"];
       if (!slicesEqual(ParsedCommandLine_FileNames(receiver!.resolved), ParsedCommandLine_FileNames(newConfig), GoEqualStrict)) {
-        parseCache_store(orchestrator!.host!.resolvedReferences, path, newConfig);
-        SyncMap_Store(orchestrator!.host!.configTimes, path, configTime2);
+        parseCache_store(orchestrator!.host!.resolvedReferences, path, newConfig, GoStringKey);
+        SyncMap_Store(orchestrator!.host!.configTimes, path, configTime2, GoStringKey);
         receiver!.resolved = newConfig;
         BuildTask_resetStatus(receiver);
         needsUpdate = true;

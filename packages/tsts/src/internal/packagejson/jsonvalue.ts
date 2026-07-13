@@ -1,5 +1,5 @@
 import type { bool, byte, int, sbyte } from "../../go/scalars.js";
-import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoStringKey, type GoError, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Decoder, UnmarshalerFrom } from "../json/json.js";
@@ -371,9 +371,9 @@ function decodeJSONValue<T>(value: unknown, elementFactory: JSONValueElementFact
   }
   if (typeof value === "object") {
     const entries = globalThis.Object.entries(value as Record<string, unknown>);
-    const object = NewOrderedMapWithSizeHint<string, T>(entries.length as int)!;
+    const object = NewOrderedMapWithSizeHint<string, T>(entries.length as int, GoStringKey)!;
     for (const [key, element] of entries) {
-      OrderedMap_Set(object, key, elementFactory(decodeJSONValue(element, elementFactory)));
+      OrderedMap_Set(object, key, elementFactory(decodeJSONValue(element, elementFactory)), GoStringKey);
     }
     return { Type: JSONValueTypeObject, Value: object };
   }

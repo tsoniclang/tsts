@@ -145,6 +145,7 @@ import { TextRange_Contains } from "../../core/text.js";
 import { OrderedSet_Add, OrderedSet_Values, OrderedSet_Clear } from "../../collections/ordered_set.js";
 import { Set_Clear } from "../../collections/set.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
+import { goNodePointerKey } from "../map-key-descriptors.js";
 import {
   type Kind,
   KindBlock, KindVariableDeclarationList, KindReturnStatement,
@@ -363,7 +364,7 @@ export function Checker_checkNodeDeferred(receiver: GoPtr<Checker>, node: GoPtr<
   const enclosingFile = GetSourceFileOfNode(node);
   const links = Checker_getSourceFileLinks(receiver, enclosingFile);
   if (!links!.typeChecked) {
-    OrderedSet_Add(links!.deferredNodes, node);
+    OrderedSet_Add(links!.deferredNodes, node, goNodePointerKey);
   }
 }
 
@@ -1381,7 +1382,7 @@ export function Checker_checkExpressionCachedEx(receiver: GoPtr<Checker>, node: 
   if (checkMode !== CheckModeNormal) {
     return Checker_checkExpressionEx(receiver, node, checkMode);
   }
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks)!.v;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node, zeroTypeNodeLinks, goNodePointerKey)!.v;
   if (links!.resolvedType === undefined) {
     const saveFlowLoopStack = receiver!.flowLoopStack;
     const saveFlowTypeCache = receiver!.flowTypeCache;
@@ -1854,7 +1855,7 @@ export function Checker_checkSuperExpression(receiver: GoPtr<Checker>, node: GoP
     ) {
       for (let current = GetEnclosingBlockScopeContainer(node!.Parent); current !== undefined; current = GetEnclosingBlockScopeContainer(current)) {
         if (!IsSourceFile(current) || IsExternalOrCommonJSModule(AsSourceFile(current))) {
-          LinkStore_Get(receiver!.nodeLinks, current, zeroNodeLinks)!.v.flags |= NodeCheckFlagsContainsSuperPropertyInStaticInitializer;
+          LinkStore_Get(receiver!.nodeLinks, current, zeroNodeLinks, goNodePointerKey)!.v.flags |= NodeCheckFlagsContainsSuperPropertyInStaticInitializer;
         }
       }
     }
@@ -3444,7 +3445,7 @@ export function Checker_checkInExpression(receiver: GoPtr<Checker>, left: GoPtr<
     ) {
       Checker_checkExternalEmitHelpers(receiver, left, ExternalEmitHelpersClassPrivateFieldIn);
     }
-    const links = LinkStore_Get(receiver!.symbolNodeLinks, left as unknown as GoPtr<Node>, zeroSymbolNodeLinks)!.v;
+    const links = LinkStore_Get(receiver!.symbolNodeLinks, left as unknown as GoPtr<Node>, zeroSymbolNodeLinks, goNodePointerKey)!.v;
     if (links!.resolvedSymbol === undefined && GetContainingClass(left as unknown as GoPtr<Node>) !== undefined) {
       const isUncheckedJS = Checker_isUncheckedJSSuggestion(receiver, left as unknown as GoPtr<Node>, rightType!.symbol, true);
       Checker_reportNonexistentProperty(receiver, left as unknown as GoPtr<Node>, rightType, isUncheckedJS);

@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { ModifierList, Node } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
@@ -42,6 +42,7 @@ import { Find, Filter, Every, Some, Map, FirstOrNil } from "../core/core.js";
 import type { Symbol } from "../ast/symbol.js";
 import { NewSetWithSizeHint, Set_Add, Set_AddIfAbsent, Set_Has, Set_Len } from "../collections/set.js";
 import type { Set } from "../collections/set.js";
+import { goSymbolPointerKey } from "./map-key-descriptors.js";
 import type { NodeBuilderContext, NodeBuilderImpl } from "./nodebuilderimpl.js";
 import { NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper, NodeBuilderImpl_serializeTypeForDeclaration } from "./nodebuilderimpl.js";
 import { Checker_getIndexInfoOfType, Checker_getIndexInfosOfType } from "./checker/symbols.js";
@@ -999,7 +1000,7 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
     isLocal: bool;
   }
   let bodyStmts: GoSlice<HoverStatement> = [];
-  const emittedLocals: GoPtr<Set<GoPtr<Symbol>>> = NewSetWithSizeHint<GoPtr<Symbol>>(0);
+  const emittedLocals: GoPtr<Set<GoPtr<Symbol>>> = NewSetWithSizeHint<GoPtr<Symbol>>(0, goSymbolPointerKey);
   for (let i = 0; i < members.length; i++) {
     const m = members[i];
     if (NodeBuilderImpl_checkTruncationLengthIfExpanding(receiver) && i + 3 < members.length - 1) {
@@ -1013,7 +1014,7 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
       const target = Checker_getMergedSymbol(receiver!.ch, Checker_getTargetOfAliasDeclaration(receiver!.ch, aliasDecl));
       if (target !== undefined) {
         if ((target!.Flags & (SymbolFlagsBlockScopedVariable | SymbolFlagsFunctionScopedVariable | SymbolFlagsProperty)) !== 0) {
-          if (Set_AddIfAbsent(emittedLocals, target)) {
+          if (Set_AddIfAbsent(emittedLocals, target, goSymbolPointerKey)) {
             const localType = Checker_getWidenedType(receiver!.ch, Checker_getTypeOfSymbol(receiver!.ch, target));
             receiver!.ctx!.approximateLength += target!.Name.length + 5;
             const localStmt = NewVariableStatement(
@@ -1165,13 +1166,13 @@ export function NodeBuilderImpl_filterInheritedProperties(receiver: GoPtr<NodeBu
   for (const p of properties) {
     propsByName.set(p!.Name, p);
   }
-  const inherited: GoPtr<Set<string>> = NewSetWithSizeHint<string>(0);
+  const inherited: GoPtr<Set<string>> = NewSetWithSizeHint<string>(0, GoStringKey);
   for (const base of baseTypes) {
     const baseWithThis = Checker_getTypeWithThisArgument(receiver!.ch, base, Type_AsInterfaceType(Checker_getTargetType(receiver!.ch, t))!.thisType, false as bool);
     for (const prop of Checker_getPropertiesOfType(receiver!.ch, baseWithThis)) {
       const existing = propsByName.get(prop!.Name);
       if (existing !== undefined && prop!.Parent === existing!.Parent) {
-        Set_Add(inherited, prop!.Name);
+        Set_Add(inherited, prop!.Name, GoStringKey);
       }
     }
   }

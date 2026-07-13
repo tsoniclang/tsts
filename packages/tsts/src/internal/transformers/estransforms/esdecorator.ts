@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq, Seq2 } from "../../../go/iter.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoPointerKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Members, Node_Initializer, Node_Expression, Node_Text, Node_Body, Node_ParameterList, Node_MemberList, Node_Decorators, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateForStatement, NodeFactory_UpdateHeritageClause, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateTryStatement, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePartiallyEmittedExpression } from "../../ast/ast.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
@@ -274,6 +274,8 @@ import { IsIdentifierText } from "../../scanner/utilities.js";
 import { LanguageVariantStandard } from "../../core/languagevariant.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+
+const nodePointerKey = GoPointerKey<Node>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::lexicalEntryKind","kind":"type","status":"implemented","sigHash":"15b8208208520c37a488f4f4ecbd5583df43ca92f4096e7e3644b1e26e32ee3f"}
  *
@@ -1389,7 +1391,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
       Prefix: "",
       Suffix: "",
     }),
-    memberInfos: NewOrderedMapWithSizeHint(0)!,
+    memberInfos: NewOrderedMapWithSizeHint(0, nodePointerKey)!,
     instanceMethodExtraInitializersName: undefined,
     staticMethodExtraInitializersName: undefined,
     staticNonFieldDecorationStatements: [],
@@ -2984,7 +2986,7 @@ export function esDecoratorTransformer_partialTransformClassElement(receiver: Go
     const memberDecoratorsArray = NewArrayLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, memberDecorators as GoPtr<Node>[]) as GoPtr<never>, false) as GoPtr<Expression>;
     const memberDecoratorsAssignment = NodeFactory_NewAssignmentExpression(f, memberDecoratorsName as GoPtr<Expression>, memberDecoratorsArray);
     const mi: memberInfo = { memberDecoratorsName, memberInitializersName: undefined, memberExtraInitializersName: undefined, memberDescriptorName: undefined };
-    OrderedMap_Set(ci!.memberInfos, member!, mi);
+    OrderedMap_Set(ci!.memberInfos, member!, mi, nodePointerKey);
     tx.pendingExpressions = [...tx.pendingExpressions, memberDecoratorsAssignment!];
 
     let kind: string;
