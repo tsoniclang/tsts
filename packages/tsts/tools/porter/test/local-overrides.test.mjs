@@ -145,6 +145,25 @@ test("runtime zero and equality dictionaries may bind the same erased type param
   assert.deepEqual(collectLocalOverrideFailures(status), []);
 });
 
+test("runtime map-key dictionaries are accepted for comparable type parameters", () => {
+  const status = buildLocalOverrideStatus(baseConfig, { units: [{
+    id: "github.com/microsoft/typescript-go::internal/core/core.go::func::UnorderedEqual",
+    kind: "func",
+    status: "implemented",
+    path: "packages/tsts/src/internal/core/core.ts",
+    override: {
+      category: "runtime-representation",
+      allow: ["signature"],
+      reason: "Erased generic map construction receives the exact static Go map-key descriptor.",
+      runtimeDictionaries: [
+        { kind: "map-key", parameter: "keyDescriptor", typeParameter: "T" },
+      ],
+    },
+  }] });
+
+  assert.deepEqual(collectLocalOverrideFailures(status), []);
+});
+
 test("runtime dictionary metadata is closed and declaration-specific", () => {
   const invalidOverrides = [
     [{
