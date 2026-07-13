@@ -4,6 +4,7 @@ import test from "node:test";
 import { buildDependencySemanticTypeIndex, buildExternalFacadeStoragePlan } from "./core/external-facades.mjs";
 import { buildExternalPackageSurfaceDeclarationIndex } from "./core/external-package-declarations.mjs";
 import { createExternalFacadeContractRenderer, renderExternalFacadeModules } from "./core/facade-artifacts.mjs";
+import { renderGoCompatModule, renderGoScalarsModule } from "./core/runtime-templates.mjs";
 import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
 import { collectExternalPackageSurfaceMismatches } from "./sig-check/external-package-declarations.mjs";
 import {
@@ -198,6 +199,8 @@ test("selected external types reuse the authored-facade comparison without becom
   const audit = (text) => {
     const moduleIndex = indexTypeScriptModuleSources(parser, new Map([
       [`${config.tsRoot}/go/example.com/native.ts`, text],
+      [`${config.tsRoot}/go/compat.ts`, renderGoCompatModule()],
+      [`${config.tsRoot}/go/scalars.ts`, renderGoScalarsModule()],
     ]));
     const profile = loadProfile(config);
     const facades = finalizedCatalog(config, snapshot, moduleIndex);

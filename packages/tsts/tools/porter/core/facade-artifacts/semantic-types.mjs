@@ -7,9 +7,13 @@ import {
   semanticTypeParameterKey,
 } from "../../ts-extractor/semantic-type-contract.mjs";
 
-export function externalDefinedTypeBrand(declaration) {
+export function externalDefinedTypeIdentity(declaration) {
   if (declaration.alias) throw new Error(`Go alias '${declaration.object?.id ?? "<unknown>"}' cannot carry defined-type identity`);
   return `__goDefinedType::${declaration.object.id}::${hashText(canonicalSchemaValue(declaration))}`;
+}
+
+export function renderExternalDefinedType(declaration, body, operations) {
+  return `${operations.compat("GoDefined")}<${body}, ${JSON.stringify(externalDefinedTypeIdentity(declaration))}>`;
 }
 
 export function externalConstraintSources(parameters, ownerId) {

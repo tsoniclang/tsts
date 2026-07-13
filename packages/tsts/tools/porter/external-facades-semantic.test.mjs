@@ -62,6 +62,19 @@ test("external facade identity and signatures come only from extracted go/types 
     externalType({ packagePath: "example.com/native", name: "Box", rhs: structType([
       variable("example.com/native::type::Box::rhs::field::0", "Value", basic("string"), true),
     ]) }),
+    externalType({
+      packagePath: "example.com/native",
+      name: "Visitor",
+      rhs: {
+        kind: "signature",
+        nilable: true,
+        signature: signature([
+          variable("example.com/native::type::Visitor::rhs::parameters::0", "value", basic("string")),
+        ], [
+          variable("example.com/native::type::Visitor::rhs::results::0", "", basic("bool")),
+        ]),
+      },
+    }),
   ]);
   const config = {
     ...baseConfig,
@@ -70,6 +83,7 @@ test("external facade identity and signatures come only from extracted go/types 
       { objectId: "io::type::Writer", tsModule: "go/io.ts", tsName: "Writer", storageStrategy: "authored" },
       { objectId: "time::type::Duration", tsModule: "go/time.ts", tsName: "Duration", storageStrategy: "authored" },
       { objectId: "example.com/native::type::Box", tsModule: "go/example.com/native.ts", tsName: "Box", storageStrategy: "generated" },
+      { objectId: "example.com/native::type::Visitor", tsModule: "go/example.com/native.ts", tsName: "Visitor", storageStrategy: "generated" },
     ],
   };
   const semantic = buildDependencySemanticTypeIndex(snapshot);
@@ -90,7 +104,8 @@ test("external facade identity and signatures come only from extracted go/types 
   const modules = renderExternalFacadeModules(config, snapshot, facades);
   assert.equal(modules.has("go/io.ts"), false, "authored modules are excluded before rendering");
   assert.equal(modules.has("go/time.ts"), false, "authored modules are excluded before rendering");
-  assert.match(modules.get("go/example.com/native.ts"), /export type Box = \(\{ Value: string \}\) & \{ readonly "__goDefinedType::example\.com\/native::type::Box::[0-9a-f]{64}": never \};/);
+  assert.match(modules.get("go/example.com/native.ts"), /export type Box = GoDefined<\{ Value: string \}, "__goDefinedType::example\.com\/native::type::Box::[0-9a-f]{64}">;/);
+  assert.match(modules.get("go/example.com/native.ts"), /export type Visitor = GoDefined<GoFunc<\(value: string\) => bool>, "__goDefinedType::example\.com\/native::type::Visitor::[0-9a-f]{64}">;/);
   assert.doesNotMatch(modules.get("go/example.com/native.ts"), /Nilable extends boolean|, true>|, false>/);
 });
 

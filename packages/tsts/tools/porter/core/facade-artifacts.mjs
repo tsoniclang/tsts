@@ -25,8 +25,9 @@ import { buildTypeStorageIdentityMap } from "./type-storage-policies.mjs";
 import { buildFacadeSemanticIndex } from "./facade-renderer-context.mjs";
 import {
   externalConstraintSources,
-  externalDefinedTypeBrand,
+  externalDefinedTypeIdentity,
   externalMethodSelectionBrand,
+  renderExternalDefinedType,
   renderExternalType,
   selectedMethodTypeParameterAliases,
   selectedTypeParameterName,
@@ -287,7 +288,7 @@ export function renderExternalFacadeContractPolicy(facade, declaration, profileI
     const scalar = facade.runtimeAdaptation.scalarStorage;
     const body = declaration.alias
       ? scalar
-      : `(${scalar}) & { readonly ${safePropertyName(externalDefinedTypeBrand(declaration))}: never }`;
+      : `(${scalar}) & { readonly ${safePropertyName(externalDefinedTypeIdentity(declaration))}: never }`;
     return externalDeclarationVisibility(
       facade,
       `export type ${name}${typeParameters} = ${body};`,
@@ -399,7 +400,7 @@ function renderExternalDeclarationBody(declaration, semanticContext, operations,
       ? renderExternalInterface(declaration.rhs, semanticContext, operations, memberSelection)
       : renderExternalType(declaration.rhs, semanticContext, semanticTypeContexts.declarationShape, operations);
   if (declaration.alias || declaration.rhs.kind === "interface") return body;
-  return `(${body}) & { readonly ${safePropertyName(externalDefinedTypeBrand(declaration))}: never }`;
+  return renderExternalDefinedType(declaration, body, operations);
 }
 
 function renderExternalStruct(type, semanticContext, operations, memberSelection = undefined) {
