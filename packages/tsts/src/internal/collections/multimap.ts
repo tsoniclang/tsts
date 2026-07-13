@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoComparable, GoEquality, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 
@@ -98,6 +98,7 @@ export function MultiMap_Add<K extends GoComparable, V extends GoComparable>(rec
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::method::MultiMap.Remove","kind":"method","status":"implemented","sigHash":"0ea0dff4fd3e8f01b8ae63b0221510a18d7c70c86e185367cfc9ddfccfcf9f03"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased multimap value type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"V"}]}
  *
  * Go source:
  * func (s *MultiMap[K, V]) Remove(key K, value V) {
@@ -114,10 +115,10 @@ export function MultiMap_Add<K extends GoComparable, V extends GoComparable>(rec
  * 	}
  * }
  */
-export function MultiMap_Remove<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K, value: V): void {
+export function MultiMap_Remove<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K, value: V, equal: GoEquality<V>): void {
   const values0 = receiver!.M.get(key);
   if (values0 !== undefined) {
-    const i = slices.Index(values0, value);
+    const i = slices.Index(values0, value, equal);
     if (i >= 0) {
       if (values0.length === 1) {
         receiver!.M.delete(key);

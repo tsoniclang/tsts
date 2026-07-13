@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import type { GoArray, GoComparable, GoMap, GoPtr } from "../../go/compat.js";
+import type { GoArray, GoComparable, GoMap, GoPtr, GoZeroFactory } from "../../go/compat.js";
 import { Map } from "../../go/sync.js";
 
 import type { GoFunc } from "../../go/compat.js";
@@ -32,6 +32,7 @@ function syncMapBacking<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::method::SyncMap.Load","kind":"method","status":"implemented","sigHash":"8742a04ce4355c00eb82c36f8edccdfd8129995ae390641be36caee7a3d59b03"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic synchronized lookup receives the exact static zero-value constructor for its missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
  * func (s *SyncMap[K, V]) Load(key K) (value V, ok bool) {
@@ -42,8 +43,8 @@ function syncMapBacking<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>
  * 	return val.(V), true
  * }
  */
-export function SyncMap_Load<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>, key: K): [V, bool] {
-  const value = undefined as V;
+export function SyncMap_Load<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>, key: K, zeroValue: GoZeroFactory<V>): [V, bool] {
+  const value = zeroValue();
   const [val, ok] = syncMapBacking(receiver).Load(key);
   if (!ok || val === undefined) {
     return [value, ok];

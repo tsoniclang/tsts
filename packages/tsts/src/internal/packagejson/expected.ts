@@ -1,5 +1,5 @@
 import type { bool, byte } from "../../go/scalars.js";
-import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoError, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::type::Expected","kind":"type","status":"implemented","sigHash":"0578b81f0116b83fc7391bb752528a2a0749e2b333b2c137bdcb48192067b93b"}
@@ -21,6 +21,7 @@ export interface Expected<T = unknown> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::method::Expected.UnmarshalJSON","kind":"method","status":"implemented","sigHash":"9b8483a42fe647f7a39db7f3368e9697ada696b748d0db98690cca9ad1067f70"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic JSON reset receives the exact static zero-value constructor for its value field.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func (e *Expected[T]) UnmarshalJSON(data []byte) error {
@@ -46,12 +47,13 @@ export interface Expected<T = unknown> {
  * 	return nil
  * }
  */
-export function Expected_UnmarshalJSON<T>(receiver: GoPtr<Expected<T>>, data: GoSlice<byte>): GoError {
+export function Expected_UnmarshalJSON<T>(receiver: GoPtr<Expected<T>>, data: GoSlice<byte>, zeroValue: GoZeroFactory<T>): GoError {
   const str = new globalThis.TextDecoder("utf-8").decode(new globalThis.Uint8Array(data as number[]));
   if (str === "null") {
     receiver!.Null = true as bool;
     receiver!.Valid = false as bool;
     receiver!.actualJSONType = "null";
+    receiver!.Value = zeroValue();
     return undefined;
   }
   const first = data[0] ?? 0;

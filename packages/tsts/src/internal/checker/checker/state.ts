@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import type { GoComparable, GoConstraint, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoConstraint, GoEquality, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Hasher, Uint128 } from "../../../go/github.com/zeebo/xxh3.js";
@@ -4439,6 +4439,7 @@ export function getModifiedReadonlyState(state: bool, modifiers: MappedTypeModif
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::instantiateList","kind":"func","status":"implemented","sigHash":"798e854f616764de539ed579444d2f17223799cceca6e9a93fc3240c96f9352f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased instantiated-list element type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func instantiateList[T comparable](c *Checker, values []T, m *TypeMapper, instantiator func(c *Checker, value T, m *TypeMapper) T) []T {
@@ -4457,11 +4458,11 @@ export function getModifiedReadonlyState(state: bool, modifiers: MappedTypeModif
  * 	return values
  * }
  */
-export function instantiateList<T extends GoComparable>(c: GoPtr<Checker>, values: GoSlice<T>, m: GoPtr<TypeMapper>, instantiator: GoFunc<(c: GoPtr<Checker>, value: T, m: GoPtr<TypeMapper>) => T>): GoSlice<T> {
+export function instantiateList<T extends GoComparable>(c: GoPtr<Checker>, values: GoSlice<T>, m: GoPtr<TypeMapper>, instantiator: GoFunc<(c: GoPtr<Checker>, value: T, m: GoPtr<TypeMapper>) => T>, equal: GoEquality<T>): GoSlice<T> {
   for (let i = 0; i < (values !== undefined ? values.length : 0); i++) {
     const value = values![i]!;
     const mapped = instantiator!(c, value, m);
-    if (mapped !== value) {
+    if (!equal(mapped, value)) {
       const result: T[] = new Array(values!.length) as T[];
       for (let k = 0; k < i; k++) result[k] = values![k]!;
       result[i] = mapped;

@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoComparable, GoPtr } from "../../../go/compat.js";
+import type { GoComparable, GoEquality, GoPtr, GoZeroFactory } from "../../../go/compat.js";
 import { Map, Mutex } from "../../../go/sync.js";
 import { SyncMap_Delete, SyncMap_LoadOrStore, SyncMap_Store } from "../../collections/syncmap.js";
 import type { SyncMap } from "../../collections/syncmap.js";
@@ -33,6 +33,7 @@ export interface parseCache<K extends GoComparable = unknown, V extends GoCompar
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::method::parseCache.loadOrStore","kind":"method","status":"implemented","sigHash":"687be8bd3c251584c9bd3de8cf5bf2f89bf4feb2ee573b40939cecde954cff19"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic cache storage receives exact static zero-value and equality operations for the cached value type.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"},{"kind":"equality","parameter":"equal","typeParameter":"V"}]}
  *
  * Go source:
  * func (c *parseCache[K, V]) loadOrStore(key K, parse func(K) V, allowZero bool) V {
@@ -51,11 +52,12 @@ export interface parseCache<K extends GoComparable = unknown, V extends GoCompar
  * 	return newEntry.value
  * }
  */
-export function parseCache_loadOrStore<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, parse: GoFunc<(arg0: K) => V>, allowZero: bool): V {
-  let newEntry: parseCacheEntry<V> = { value: undefined as V, mu: new Mutex() };
+export function parseCache_loadOrStore<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, parse: GoFunc<(arg0: K) => V>, allowZero: bool, zeroValue: GoZeroFactory<V>, equal: GoEquality<V>): V {
+  const zero = zeroValue();
+  let newEntry: parseCacheEntry<V> = { value: zero, mu: new Mutex() };
   const [entry, loaded] = SyncMap_LoadOrStore<K, GoPtr<parseCacheEntry<V>>>(receiver!.entries as SyncMap<K, GoPtr<parseCacheEntry<V>>>, key, newEntry);
   if (loaded) {
-    if (allowZero || entry!.value !== undefined) {
+    if (allowZero || !equal(entry!.value, zero)) {
       return entry!.value;
     }
     newEntry = entry!;

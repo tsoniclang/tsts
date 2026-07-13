@@ -1,5 +1,5 @@
 import type { bool, byte, int } from "../../go/scalars.js";
-import type { GoMap, GoRune, GoSlice } from "../../go/compat.js";
+import type { GoMap, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import * as cmp from "../../go/cmp.js";
 import * as slices from "../../go/slices.js";
@@ -2101,6 +2101,7 @@ export function FileExtensionIs(path: string, extension: string): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectoryStoppingAtGlobalCache","kind":"func","status":"implemented","sigHash":"0356b04f3dd886a51f1660fe51149012eb4b73b4f58bb64b0a92961be4fab077"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic wrapper forwards the exact static zero-value constructor used by ancestor traversal.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func ForEachAncestorDirectoryStoppingAtGlobalCache[T any](
@@ -2118,19 +2119,20 @@ export function FileExtensionIs(path: string, extension: string): bool {
  * 	return result
  * }
  */
-export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLocation: string, directory: string, callback: (directory: string) => [T, bool]): T {
+export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLocation: string, directory: string, callback: (directory: string) => [T, bool], zeroValue: GoZeroFactory<T>): T {
   const [result] = ForEachAncestorDirectory<T>(directory, (ancestorDirectory: string): [T, bool] => {
     const [result, stop] = callback(ancestorDirectory);
     if (stop || ancestorDirectory === globalCacheLocation) {
       return [result, true];
     }
     return [result, false];
-  });
+  }, zeroValue);
   return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectory","kind":"func","status":"implemented","sigHash":"6c00ad2499515e2ef162ee822663fd2c811471a883b248d5d0d4bc804bc08aee"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic traversal receives the exact static zero-value constructor for its exhausted path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func ForEachAncestorDirectory[T any](directory string, callback func(directory string) (result T, stop bool)) (result T, ok bool) {
@@ -2150,7 +2152,7 @@ export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLoca
  * 	}
  * }
  */
-export function ForEachAncestorDirectory<T>(directory: string, callback: (directory: string) => [T, bool]): [T, bool] {
+export function ForEachAncestorDirectory<T>(directory: string, callback: (directory: string) => [T, bool], zeroValue: GoZeroFactory<T>): [T, bool] {
   for (;;) {
     const [result, stop] = callback(directory);
     if (stop) {
@@ -2159,8 +2161,7 @@ export function ForEachAncestorDirectory<T>(directory: string, callback: (direct
 
     const parentPath = GetDirectoryPath(directory);
     if (parentPath === directory) {
-      const zero = undefined as T;
-      return [zero, false];
+      return [zeroValue(), false];
     }
 
     directory = parentPath;
@@ -2169,6 +2170,7 @@ export function ForEachAncestorDirectory<T>(directory: string, callback: (direct
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectoryPath","kind":"func","status":"implemented","sigHash":"4cec0fe3612f19afa164ee3ebd4ba0148e63660e69929d354ae5742cf2cf57d5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The path-typed wrapper forwards the exact static zero-value constructor used by ancestor traversal.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func ForEachAncestorDirectoryPath[T any](directory Path, callback func(directory Path) (result T, stop bool)) (result T, ok bool) {
@@ -2177,10 +2179,10 @@ export function ForEachAncestorDirectory<T>(directory: string, callback: (direct
  * 	})
  * }
  */
-export function ForEachAncestorDirectoryPath<T>(directory: Path, callback: (directory: Path) => [T, bool]): [T, bool] {
+export function ForEachAncestorDirectoryPath<T>(directory: Path, callback: (directory: Path) => [T, bool], zeroValue: GoZeroFactory<T>): [T, bool] {
   return ForEachAncestorDirectory<T>(directory, (directory: string): [T, bool] => {
     return callback(directory);
-  });
+  }, zeroValue);
 }
 
 /**

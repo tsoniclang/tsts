@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import { GoZeroEmptyStruct, type GoComparable, type GoPtr } from "../../go/compat.js";
+import { GoZeroEmptyStruct, type GoComparable, type GoEquality, type GoPtr } from "../../go/compat.js";
 import type { OrderedMap } from "./ordered_map.js";
 import {
   newMapWithSizeHint,
@@ -69,6 +69,7 @@ export function OrderedSet_Has<T extends GoComparable>(receiver: GoPtr<OrderedSe
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Delete","kind":"method","status":"implemented","sigHash":"1de758c0c30fa12a3f098df86d3f59ea146c62abf15029cc975efe870591ed42"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic ordered-set deletion forwards the exact static equality operation for its erased key type.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *OrderedSet[T]) Delete(value T) bool {
@@ -76,9 +77,9 @@ export function OrderedSet_Has<T extends GoComparable>(receiver: GoPtr<OrderedSe
  * 	return ok
  * }
  */
-export function OrderedSet_Delete<T extends GoComparable>(receiver: GoPtr<OrderedSet<T>>, value: T): bool {
+export function OrderedSet_Delete<T extends GoComparable>(receiver: GoPtr<OrderedSet<T>>, value: T, equal: GoEquality<T>): bool {
   const s = receiver!;
-  const [, ok] = OrderedMap_Delete(s.m, value, GoZeroEmptyStruct);
+  const [, ok] = OrderedMap_Delete(s.m, value, GoZeroEmptyStruct, equal);
   return ok;
 }
 

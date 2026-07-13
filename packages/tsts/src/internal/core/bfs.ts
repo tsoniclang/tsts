@@ -1,5 +1,5 @@
 import type { bool, int, long } from "../../go/scalars.js";
-import { GoZeroPointer, type GoComparable, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
+import { GoZeroPointer, type GoComparable, type GoEquality, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
 import type { Int64 } from "../../go/sync/atomic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { OrderedMap_Delete, OrderedMap_EntryAt, OrderedMap_Has, OrderedMap_Set, OrderedMap_Size, OrderedMap_Values } from "../collections/ordered_map.js";
@@ -64,14 +64,15 @@ export function BreadthFirstSearchLevel_Has<K extends GoComparable, N>(receiver:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::method::BreadthFirstSearchLevel.Delete","kind":"method","status":"implemented","sigHash":"dea852faac43ca3117e2ec79c62db799b6c9fcd3ecfb7de84a73dfb7b233c3d3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic breadth-first level forwards the exact static equality operation for its erased key type.","runtimeDictionaries":[{"kind":"equality","parameter":"equalKey","typeParameter":"K"}]}
  *
  * Go source:
  * func (l *BreadthFirstSearchLevel[K, N]) Delete(key K) {
  * 	l.jobs.Delete(key)
  * }
  */
-export function BreadthFirstSearchLevel_Delete<K extends GoComparable, N>(receiver: GoPtr<BreadthFirstSearchLevel<K, N>>, key: K): void {
-  OrderedMap_Delete(receiver!.jobs, key, GoZeroPointer);
+export function BreadthFirstSearchLevel_Delete<K extends GoComparable, N>(receiver: GoPtr<BreadthFirstSearchLevel<K, N>>, key: K, equalKey: GoEquality<K>): void {
+  OrderedMap_Delete(receiver!.jobs, key, GoZeroPointer, equalKey);
 }
 
 /**

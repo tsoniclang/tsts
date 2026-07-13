@@ -1,6 +1,6 @@
 import type { bool, int } from "./scalars.js";
 import type { Seq } from "./iter.js";
-import type { GoFunc, GoPtr, GoSlice, GoOrdered } from "./compat.js";
+import type { GoEquality, GoFunc, GoPtr, GoSlice, GoOrdered } from "./compat.js";
 import { Compare as cmpCompare } from "./cmp.js";
 
 // Go: package slices (standard library).
@@ -19,10 +19,10 @@ import { Compare as cmpCompare } from "./cmp.js";
 // ---------------------------------------------------------------------------
 
 // Index returns the index of the first occurrence of v in s, or -1 if not present.
-export function Index<T>(s: GoPtr<GoSlice<T>>, v: T): int {
+export function Index<T>(s: GoPtr<GoSlice<T>>, v: T, equal: GoEquality<T>): int {
   const slice = s ?? [];
   for (let i = 0; i < slice.length; i++) {
-    if (slice[i]! === v) {
+    if (equal(slice[i]!, v)) {
       return i;
     }
   }
@@ -41,8 +41,8 @@ export function IndexFunc<T>(s: GoPtr<GoSlice<T>>, f: (e: T) => bool): int {
 }
 
 // Contains reports whether v is present in s.
-export function Contains<T>(s: GoPtr<GoSlice<T>>, v: T): bool {
-  return Index(s, v) >= 0;
+export function Contains<T>(s: GoPtr<GoSlice<T>>, v: T, equal: GoEquality<T>): bool {
+  return Index(s, v, equal) >= 0;
 }
 
 // ContainsFunc reports whether at least one element e of s satisfies f(e).
@@ -56,14 +56,14 @@ export function ContainsFunc<T>(s: GoPtr<GoSlice<T>>, f: (e: T) => bool): bool {
 
 // Equal reports whether two slices are equal: the same length and all elements
 // equal (using ==). Empty and nil slices are considered equal.
-export function Equal<T>(s1: GoPtr<GoSlice<T>>, s2: GoPtr<GoSlice<T>>): bool {
+export function Equal<T>(s1: GoPtr<GoSlice<T>>, s2: GoPtr<GoSlice<T>>, equal: GoEquality<T>): bool {
   const left = s1 ?? [];
   const right = s2 ?? [];
   if (left.length !== right.length) {
     return false;
   }
   for (let i = 0; i < left.length; i++) {
-    if (left[i] !== right[i]) {
+    if (!equal(left[i]!, right[i]!)) {
       return false;
     }
   }
@@ -266,7 +266,7 @@ export function Reverse<T>(s: GoPtr<GoSlice<T>>): void {
 // Compact replaces consecutive runs of equal elements with a single copy. This
 // is like the uniq command found on Unix. Compact modifies the contents of the
 // slice s and returns the modified slice, which may have a smaller length.
-export function Compact<T>(s: GoPtr<GoSlice<T>>): GoSlice<T> {
+export function Compact<T>(s: GoPtr<GoSlice<T>>, equal: GoEquality<T>): GoSlice<T> {
   const slice = s ?? [];
   if (slice.length < 2) {
     return slice;
@@ -274,7 +274,7 @@ export function Compact<T>(s: GoPtr<GoSlice<T>>): GoSlice<T> {
   let w = 1;
   for (let k = 1; k < slice.length; k++) {
     const e = slice[k]!;
-    if (e !== slice[k - 1]!) {
+    if (!equal(e, slice[k - 1]!)) {
       slice[w] = e;
       w++;
     }

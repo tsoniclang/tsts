@@ -1,6 +1,6 @@
 import type { int } from "../../go/scalars.js";
 import { GoNilSlice, GoSliceElementRef, GoSliceIsNil } from "../../go/compat.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
 
 import type { GoRef } from "../../go/compat.js";
 /**
@@ -21,6 +21,7 @@ function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.New","kind":"method","status":"implemented","sigHash":"7f61e2bb57de57610e5585534f7544ee42ef4fef68509f3a42c767cf9152e756"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic arena allocation receives the exact static zero-value constructor for its element type.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func (a *Arena[T]) New() *T {
@@ -34,18 +35,19 @@ function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
  * 	return &a.data[index]
  * }
  */
-export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoRef<T> {
+export function Arena_New<T>(receiver: GoPtr<Arena<T>>, zeroValue: GoZeroFactory<T>): GoRef<T> {
   const arena = ensureArena(receiver);
   if (GoSliceIsNil(arena.data)) {
     arena.data = [];
   }
   const index = arena.data.length as int;
-  arena.data.push({} as T);
+  arena.data.push(zeroValue());
   return GoSliceElementRef(arena.data, index);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice","kind":"method","status":"implemented","sigHash":"e6e68464be11603146e0ba334fce4d5628033c5389e68c2032220be0b3bef2c3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic slice allocation receives the exact static zero-value constructor for each observable element.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func (a *Arena[T]) NewSlice(size int) []T {
@@ -66,12 +68,14 @@ export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoRef<T> {
  * 	return slice
  * }
  */
-export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int): GoSlice<T> {
+export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int, zeroValue: GoZeroFactory<T>): GoSlice<T> {
   if (size === 0) {
     return GoNilSlice();
   }
   ensureArena(receiver);
-  return new globalThis.Array<T>(size as number);
+  const result: GoSlice<T> = [];
+  for (let index = 0; index < size; index++) result.push(zeroValue());
+  return result;
 }
 
 /**
@@ -85,9 +89,8 @@ export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int): GoSlice
  * }
  */
 export function Arena_NewSlice1<T>(receiver: GoPtr<Arena<T>>, t: T): GoSlice<T> {
-  const slice = Arena_NewSlice(receiver, 1 as int);
-  slice[0] = t;
-  return slice;
+  ensureArena(receiver);
+  return [t];
 }
 
 /**

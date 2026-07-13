@@ -1,7 +1,7 @@
 import type { bool, byte, double, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
-import type { GoComparable, GoConstraint, GoError, GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
-import { GoNilSlice } from "../../go/compat.js";
+import type { GoComparable, GoConstraint, GoEquality, GoError, GoMap, GoMapKeyDescriptor, GoPtr, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
+import { GoNilSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
 import { ExtensionCjs, ExtensionCts, ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, HasTSFileExtension, IsDeclarationFileName } from "../tspath/extension.js";
@@ -266,6 +266,7 @@ export function MapIndex<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::MapNonNil","kind":"func","status":"implemented","sigHash":"38a745442a53036b38c2d0687c6b7436bddeeef191ba490264b170c3a1ba972c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic zero comparison receives exact static zero-value and equality operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"U"},{"kind":"equality","parameter":"equal","typeParameter":"U"}]}
  *
  * Go source:
  * func MapNonNil[T any, U comparable](slice []T, f func(T) U) []U {
@@ -279,11 +280,12 @@ export function MapIndex<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int)
  * 	return result
  * }
  */
-export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>): GoSlice<U> {
+export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>, zeroValue: GoZeroFactory<U>, equal: GoEquality<U>): GoSlice<U> {
   const result: GoSlice<U> = [];
+  const zero = zeroValue();
   for (const value of slice) {
     const mapped = f!(value);
-    if (mapped !== (undefined as U)) {
+    if (!equal(mapped, zero)) {
       result.push(mapped);
     }
   }
@@ -348,6 +350,7 @@ export function FlatMap<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => GoSlice<
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::SameMap","kind":"func","status":"implemented","sigHash":"b37cc02f2d681b441a2bcf95a170a037c3e31ff3971463fba5f6290a56167d14"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased element type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func SameMap[T comparable](slice []T, f func(T) T) []T {
@@ -366,11 +369,11 @@ export function FlatMap<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => GoSlice<
  * 	return slice
  * }
  */
-export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => T>): GoSlice<T> {
+export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => T>, equal: GoEquality<T>): GoSlice<T> {
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
     const mapped = f!(value);
-    if (mapped !== value) {
+    if (!equal(mapped, value)) {
       const result: GoSlice<T> = new globalThis.Array<T>(slice.length);
       for (let k = 0; k < i; k++) {
         result[k] = slice[k]!;
@@ -387,6 +390,7 @@ export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(ar
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::SameMapIndex","kind":"func","status":"implemented","sigHash":"6505040355c13afa243941839d6d044526ed0335e81bb95e22d06a24c0ff4d80"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased element type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func SameMapIndex[T comparable](slice []T, f func(T, int) T) []T {
@@ -405,11 +409,11 @@ export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(ar
  * 	return slice
  * }
  */
-export function SameMapIndex<T extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int) => T>): GoSlice<T> {
+export function SameMapIndex<T extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int) => T>, equal: GoEquality<T>): GoSlice<T> {
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
     const mapped = f!(value, i);
-    if (mapped !== value) {
+    if (!equal(mapped, value)) {
       const result: GoSlice<T> = new globalThis.Array<T>(slice.length);
       for (let k = 0; k < i; k++) {
         result[k] = slice[k]!;
@@ -524,6 +528,7 @@ export function Or<T>(...funcs: Array<(arg0: T) => bool>): GoFunc<(arg0: T) => b
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Find","kind":"func","status":"implemented","sigHash":"2ee16e58ad0deb6cc7714a39d341a00341dee7669cbba6922629edbe0e420e37"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic search receives the exact static zero-value constructor for its missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func Find[T any](slice []T, f func(T) bool) T {
@@ -535,17 +540,18 @@ export function Or<T>(...funcs: Array<(arg0: T) => bool>): GoFunc<(arg0: T) => b
  * 	return *new(T)
  * }
  */
-export function Find<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): T {
+export function Find<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>, zeroValue: GoZeroFactory<T>): T {
   for (const value of slice) {
     if (f!(value)) {
       return value;
     }
   }
-  return undefined as T;
+  return zeroValue();
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FindLast","kind":"func","status":"implemented","sigHash":"f52df98008b7638fb14b25ad503a9663f6455e0ca181d35ed26aa054670afde5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic search receives the exact static zero-value constructor for its missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func FindLast[T any](slice []T, f func(T) bool) T {
@@ -558,14 +564,14 @@ export function Find<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): T {
  * 	return *new(T)
  * }
  */
-export function FindLast<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): T {
+export function FindLast<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>, zeroValue: GoZeroFactory<T>): T {
   for (let i = slice.length - 1; i >= 0; i--) {
     const value = slice[i]!;
     if (f!(value)) {
       return value;
     }
   }
-  return undefined as T;
+  return zeroValue();
 }
 
 /**
@@ -617,6 +623,7 @@ export function FindLastIndex<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstOrNil","kind":"func","status":"implemented","sigHash":"5b02323d9799c251ff81888dc2253e15b12b9f05ae4ef699fff5fa580f5eb211"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic selection receives the exact static zero-value constructor for its empty-input path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func FirstOrNil[T any](slice []T) T {
@@ -626,15 +633,16 @@ export function FindLastIndex<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>
  * 	return *new(T)
  * }
  */
-export function FirstOrNil<T>(slice: GoSlice<T>): T {
+export function FirstOrNil<T>(slice: GoSlice<T>, zeroValue: GoZeroFactory<T>): T {
   if (slice.length !== 0) {
     return slice[0]!;
   }
-  return undefined as T;
+  return zeroValue();
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::LastOrNil","kind":"func","status":"implemented","sigHash":"2e9c8036f902e50e1d0808502292b6458d1ff3e636a34424a4556b67480537f3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic selection receives the exact static zero-value constructor for its empty-input path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func LastOrNil[T any](slice []T) T {
@@ -644,15 +652,16 @@ export function FirstOrNil<T>(slice: GoSlice<T>): T {
  * 	return *new(T)
  * }
  */
-export function LastOrNil<T>(slice: GoSlice<T>): T {
+export function LastOrNil<T>(slice: GoSlice<T>, zeroValue: GoZeroFactory<T>): T {
   if (slice.length !== 0) {
     return slice[slice.length - 1]!;
   }
-  return undefined as T;
+  return zeroValue();
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::ElementOrNil","kind":"func","status":"implemented","sigHash":"5d72715cfc3550ed669b5d8a565bc6c23b5fac16e70c7653b76bb357348970bf"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic indexing receives the exact static zero-value constructor for its out-of-range path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func ElementOrNil[T any](slice []T, index int) T {
@@ -662,15 +671,16 @@ export function LastOrNil<T>(slice: GoSlice<T>): T {
  * 	return *new(T)
  * }
  */
-export function ElementOrNil<T>(slice: GoSlice<T>, index: int): T {
+export function ElementOrNil<T>(slice: GoSlice<T>, index: int, zeroValue: GoZeroFactory<T>): T {
   if (index < slice.length) {
     return slice[index]!;
   }
-  return undefined as T;
+  return zeroValue();
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstOrNilSeq","kind":"func","status":"implemented","sigHash":"0cb753a080e39d02e9c60ac785b748dd0bb0bc0674fc721f4493447df92bf9b6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic iteration receives the exact static zero-value constructor for its empty-sequence path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func FirstOrNilSeq[T any](seq iter.Seq[T]) T {
@@ -682,8 +692,8 @@ export function ElementOrNil<T>(slice: GoSlice<T>, index: int): T {
  * 	return *new(T)
  * }
  */
-export function FirstOrNilSeq<T>(seq: Seq<T>): T {
-  let result = undefined as T;
+export function FirstOrNilSeq<T>(seq: Seq<T>, zeroValue: GoZeroFactory<T>): T {
+  let result = zeroValue();
   if (seq !== undefined) {
     seq((value: T): bool => {
       result = value;
@@ -695,6 +705,7 @@ export function FirstOrNilSeq<T>(seq: Seq<T>): T {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstNonNil","kind":"func","status":"implemented","sigHash":"5af1740123b28a4598c1e21e27b051d47d7414505d1076442a7c88bce368177f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic zero comparison receives exact static zero-value and equality operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"U"},{"kind":"equality","parameter":"equal","typeParameter":"U"}]}
  *
  * Go source:
  * func FirstNonNil[T any, U comparable](slice []T, f func(T) U) U {
@@ -707,18 +718,20 @@ export function FirstOrNilSeq<T>(seq: Seq<T>): T {
  * 	return *new(U)
  * }
  */
-export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>): U {
+export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>, zeroValue: GoZeroFactory<U>, equal: GoEquality<U>): U {
+  const zero = zeroValue();
   for (const value of slice) {
     const mapped = f!(value);
-    if (mapped !== (undefined as U)) {
+    if (!equal(mapped, zero)) {
       return mapped;
     }
   }
-  return undefined as U;
+  return zero;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstNonZero","kind":"func","status":"implemented","sigHash":"937815920a82b37fd05c1efdc4ae241c40a80974d412adad80b281393fe3e833"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic zero comparison receives exact static zero-value and equality operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"},{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func FirstNonZero[T comparable](values ...T) T {
@@ -731,13 +744,14 @@ export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoF
  * 	return zero
  * }
  */
-export function FirstNonZero<T extends GoComparable>(...values: Array<T>): T {
+export function FirstNonZero<T extends GoComparable>(zeroValue: GoZeroFactory<T>, equal: GoEquality<T>, ...values: Array<T>): T {
+  const zero = zeroValue();
   for (const value of values) {
-    if (!isGoZeroValue(value)) {
+    if (!equal(value, zero)) {
       return value;
     }
   }
-  return undefined as T;
+  return zero;
 }
 
 /**
@@ -915,6 +929,7 @@ export function MinAllFunc<T>(xs: GoSlice<T>, cmp: GoFunc<(a: T, b: T) => int>):
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::AppendIfUnique","kind":"func","status":"implemented","sigHash":"306355ba71b10478033aadff90f427c91e2f254307d310e3474ae0425de73760"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased element type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func AppendIfUnique[T comparable](slice []T, element T) []T {
@@ -924,8 +939,8 @@ export function MinAllFunc<T>(xs: GoSlice<T>, cmp: GoFunc<(a: T, b: T) => int>):
  * 	return append(slice, element)
  * }
  */
-export function AppendIfUnique<T extends GoComparable>(slice: GoSlice<T>, element: T): GoSlice<T> {
-  if (slices.Contains(slice, element)) {
+export function AppendIfUnique<T extends GoComparable>(slice: GoSlice<T>, element: T, equal: GoEquality<T>): GoSlice<T> {
+  if (slices.Contains(slice, element, equal)) {
     return slice ?? [];
   }
   return [...(slice ?? []), element];
@@ -933,6 +948,7 @@ export function AppendIfUnique<T extends GoComparable>(slice: GoSlice<T>, elemen
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Memoize","kind":"func","status":"implemented","sigHash":"bf3d5a24243b53fb586b7a917e212771d780a4104a57e141340c1fb6637a4d3b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic memoization receives the exact static zero-value constructor for its pre-initialization storage.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func Memoize[T any](create func() T) func() T {
@@ -946,8 +962,8 @@ export function AppendIfUnique<T extends GoComparable>(slice: GoSlice<T>, elemen
  * 	}
  * }
  */
-export function Memoize<T>(create: GoFunc<() => T>): GoFunc<() => T> {
-  let value = undefined as T;
+export function Memoize<T>(create: GoFunc<() => T>, zeroValue: GoZeroFactory<T>): GoFunc<() => T> {
+  let value = zeroValue();
   // Go reassigns `create = nil` after the first call to release it and gate
   // re-invocation. The scaffold signature keeps `create` non-nullable, so the
   // nil-able gate is held in a local copy.
@@ -981,6 +997,7 @@ export function IfElse<T>(b: bool, whenTrue: T, whenFalse: T): T {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::OrElse","kind":"func","status":"implemented","sigHash":"9673f73c97aa3a1b08241a6c2c75f525437fce5ef18c9352bce103faac12a8a1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic zero comparison receives exact static zero-value and equality operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"},{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func OrElse[T comparable](value T, defaultValue T) T {
@@ -990,28 +1007,11 @@ export function IfElse<T>(b: bool, whenTrue: T, whenFalse: T): T {
  * 	return defaultValue
  * }
  */
-export function OrElse<T extends GoComparable>(value: T, defaultValue: T): T {
-  if (!isGoZeroValue(value)) {
+export function OrElse<T extends GoComparable>(value: T, defaultValue: T, zeroValue: GoZeroFactory<T>, equal: GoEquality<T>): T {
+  if (!equal(value, zeroValue())) {
     return value;
   }
   return defaultValue;
-}
-
-function isGoZeroValue(value: unknown): bool {
-  switch (typeof value) {
-    case "undefined":
-      return true;
-    case "boolean":
-      return value === false;
-    case "number":
-      return value === 0;
-    case "bigint":
-      return value === 0n;
-    case "string":
-      return value === "";
-    default:
-      return false;
-  }
 }
 
 /**
@@ -1313,6 +1313,7 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::GetSpellingSuggestion","kind":"func","status":"implemented","sigHash":"971be06af4af217009a0ac68576e7d5fbb4686b6c0e82c8a9b6d7bd09ba6b162"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic suggestion selection receives the exact static zero-value constructor for its no-candidate result.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func GetSpellingSuggestion[T any](name string, candidates iter.Seq[T], getName func(T) string, compare func(T, T) int) T {
@@ -1354,7 +1355,7 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
  * 	return bestCandidate
  * }
  */
-export function GetSpellingSuggestion<T>(name: string, candidates: Seq<T>, getName: GoFunc<(arg0: T) => string>, compare: GoFunc<(arg0: T, arg1: T) => int>): T {
+export function GetSpellingSuggestion<T>(name: string, candidates: Seq<T>, getName: GoFunc<(arg0: T) => string>, compare: GoFunc<(arg0: T, arg1: T) => int>, zeroValue: GoZeroFactory<T>): T {
   const searchName = name ?? "";
   const runeName = stringToRunes(searchName);
   const maximumLengthDifference = globalThis.Math.max(2, globalThis.Math.trunc(runeName.length * 0.34));
@@ -1363,7 +1364,7 @@ export function GetSpellingSuggestion<T>(name: string, candidates: Seq<T>, getNa
   // always set, so the pool never yields nil and the type assertion holds.
   const buffers = levenshteinBuffersPool.Get() as levenshteinBuffers;
   try {
-    let bestCandidate = undefined as T;
+    let bestCandidate = zeroValue();
     let hasBest = false;
     candidates!((candidate: T): bool => {
       const candidateName = getName!(candidate) ?? "";
@@ -1409,9 +1410,7 @@ export function GetSpellingSuggestion<T>(name: string, candidates: Seq<T>, getNa
  * }
  */
 export function GetSpellingSuggestionForStrings(name: string, candidates: Seq<string>): string {
-  // Go instantiates GetSpellingSuggestion with T=string, whose zero value is "" — the
-  // value callers test for "no suggestion". The generic port yields undefined instead.
-  return GetSpellingSuggestion(name, candidates, Identity, strings.Compare) ?? "";
+  return GetSpellingSuggestion(name, candidates, Identity, strings.Compare, GoZeroString);
 }
 
 /**
@@ -1712,26 +1711,28 @@ export function Enumerate<T>(seq: Seq<T>): Seq2<int, T> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::comparableValuesEqual","kind":"func","status":"implemented","sigHash":"b8f1bf1bfa79a35f285653c43edf369a51e87e9329f4f46fb1afc65183aa2e25"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased value type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func comparableValuesEqual[T comparable](a, b T) bool {
  * 	return a == b
  * }
  */
-export function comparableValuesEqual<T extends GoComparable>(a: T, b: T): bool {
-  return a === b;
+export function comparableValuesEqual<T extends GoComparable>(a: T, b: T, equal: GoEquality<T>): bool {
+  return equal(a, b);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::DiffMaps","kind":"func","status":"implemented","sigHash":"705db3666dc504a1dfe1f8fde907c1e04acb85ea6aa1fa4ad8a5345267c3dee1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased map value type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equalValues","typeParameter":"V"}]}
  *
  * Go source:
  * func DiffMaps[K comparable, V comparable](m1 map[K]V, m2 map[K]V, onAdded func(K, V), onRemoved func(K, V), onChanged func(K, V, V)) {
  * 	DiffMapsFunc(m1, m2, comparableValuesEqual, onAdded, onRemoved, onChanged)
  * }
  */
-export function DiffMaps<K extends GoComparable, V extends GoComparable>(m1: GoMap<K, V>, m2: GoMap<K, V>, onAdded: GoFunc<(arg0: K, arg1: V) => void>, onRemoved: GoFunc<(arg0: K, arg1: V) => void>, onChanged: GoFunc<(arg0: K, arg1: V, arg2: V) => void>): void {
-  DiffMapsFunc(m1, m2, comparableValuesEqual, onAdded, onRemoved, onChanged);
+export function DiffMaps<K extends GoComparable, V extends GoComparable>(m1: GoMap<K, V>, m2: GoMap<K, V>, onAdded: GoFunc<(arg0: K, arg1: V) => void>, onRemoved: GoFunc<(arg0: K, arg1: V) => void>, onChanged: GoFunc<(arg0: K, arg1: V, arg2: V) => void>, equalValues: GoEquality<V>): void {
+  DiffMapsFunc(m1, m2, equalValues, onAdded, onRemoved, onChanged);
 }
 
 /**
@@ -1805,6 +1806,7 @@ export function CopyMapInto<M1 extends GoConstraint<"~map[K]V"> & GoMap<K, V>, M
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::UnorderedEqual","kind":"func","status":"implemented","sigHash":"a4912c0012afa2fb516bd04ccdd04b7e8f552b9fa648abf3c0d14ef6162be25c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic map construction receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func UnorderedEqual[T comparable](s1 []T, s2 []T) bool {
@@ -1824,11 +1826,11 @@ export function CopyMapInto<M1 extends GoConstraint<"~map[K]V"> & GoMap<K, V>, M
  * 	return true
  * }
  */
-export function UnorderedEqual<T extends GoComparable>(s1: GoSlice<T>, s2: GoSlice<T>): bool {
+export function UnorderedEqual<T extends GoComparable>(s1: GoSlice<T>, s2: GoSlice<T>, keyDescriptor: GoMapKeyDescriptor<T>): bool {
   if (s1.length !== s2.length) {
     return false;
   }
-  const counts: GoMap<T, int> = new globalThis.Map<T, int>();
+  const counts: GoMap<T, int> = NewGoStructMap<T, int>(keyDescriptor);
   for (const v of s1) {
     counts.set(v, (counts.get(v) ?? 0) + 1);
   }
@@ -1843,6 +1845,7 @@ export function UnorderedEqual<T extends GoComparable>(s1: GoSlice<T>, s2: GoSli
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Deduplicate","kind":"func","status":"implemented","sigHash":"9a48c7a2471597670d0e43bc7482ff4566ad093029c455021cff6f30490e2bd3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased element type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func Deduplicate[T comparable](slice []T) []T {
@@ -1863,15 +1866,15 @@ export function UnorderedEqual<T extends GoComparable>(s1: GoSlice<T>, s2: GoSli
  * 	return slice
  * }
  */
-export function Deduplicate<T extends GoComparable>(slice: GoSlice<T>): GoSlice<T> {
+export function Deduplicate<T extends GoComparable>(slice: GoSlice<T>, equal: GoEquality<T>): GoSlice<T> {
   if (slice.length > 1) {
     for (let i = 0; i < slice.length; i++) {
       let value = slice[i]!;
-      if (slices.Contains(slice.slice(0, i), value)) {
+      if (slices.Contains(slice.slice(0, i), value, equal)) {
         const result = slices.Clone(slice.slice(0, i))!;
         for (i++; i < slice.length; i++) {
           value = slice[i]!;
-          if (!slices.Contains(result, value)) {
+          if (!slices.Contains(result, value, equal)) {
             result.push(value);
           }
         }

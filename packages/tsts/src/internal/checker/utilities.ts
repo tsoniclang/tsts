@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { Every, Find, FirstOrNil, Filter, Some } from "../core/core.js";
-import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoComparable, GoEquality, GoMap, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
 import { GoMapIsNil } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Node, NodeList } from "../ast/spine.js";
@@ -264,6 +264,7 @@ export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::findInMap","kind":"func","status":"implemented","sigHash":"17bb318d799d271abd20ee5867b8b5d856df62276fe304ece91444a26f84b0f6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic map search receives the exact static zero-value constructor for its missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
  * func findInMap[K comparable, V any](m map[K]V, predicate func(V) bool) V {
@@ -275,14 +276,14 @@ export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<
  * 	return *new(V)
  * }
  */
-export function findInMap<K extends GoComparable, V>(m: GoMap<K, V>, predicate: GoFunc<(arg0: V) => bool>): V {
+export function findInMap<K extends GoComparable, V>(m: GoMap<K, V>, predicate: GoFunc<(arg0: V) => bool>, zeroValue: GoZeroFactory<V>): V {
   // Go ranges over a nil map as a no-op.
   for (const value of m?.values() ?? []) {
     if (predicate!(value)) {
       return value;
     }
   }
-  return undefined as V;
+  return zeroValue();
 }
 
 /**
@@ -2237,6 +2238,7 @@ export interface orderedSet<T extends GoComparable = unknown> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::method::orderedSet.contains","kind":"method","status":"implemented","sigHash":"2460cca9f495c58bfd288bba1cb596fcda44bfefe3d01c509566a50a397acd7d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over the erased linear-set element type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *orderedSet[T]) contains(value T) bool {
@@ -2247,9 +2249,9 @@ export interface orderedSet<T extends GoComparable = unknown> {
  * 	return ok
  * }
  */
-export function orderedSet_contains<T extends GoComparable>(receiver: GoPtr<orderedSet<T>>, value: T): bool {
+export function orderedSet_contains<T extends GoComparable>(receiver: GoPtr<orderedSet<T>>, value: T, equal: GoEquality<T>): bool {
   if (GoMapIsNil(receiver!.valuesByKey)) {
-    return slices.Contains(receiver!.values, value);
+    return slices.Contains(receiver!.values, value, equal);
   }
   return receiver!.valuesByKey.has(value) as bool;
 }

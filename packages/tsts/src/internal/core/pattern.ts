@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
 import { Contains, HasPrefix, HasSuffix, Index } from "../../go/strings.js";
 
 import type { GoFunc } from "../../go/compat.js";
@@ -114,6 +114,7 @@ export function Pattern_MatchedText(receiver: GoPtr<Pattern>, candidate: string)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::func::FindBestPatternMatch","kind":"func","status":"implemented","sigHash":"ee5f33df4d5e42a42ee65593218eaeb0eefa4c62b87d10f487d894afc491329c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic pattern selection receives the exact static zero-value constructor for its no-match result.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
  * func FindBestPatternMatch[T any](values []T, getPattern func(v T) Pattern, candidate string) T {
@@ -129,8 +130,8 @@ export function Pattern_MatchedText(receiver: GoPtr<Pattern>, candidate: string)
  * 	return bestPattern
  * }
  */
-export function FindBestPatternMatch<T>(values: GoSlice<T>, getPattern: GoFunc<(v: T) => Pattern>, candidate: string): T {
-  let bestPattern = undefined as T;
+export function FindBestPatternMatch<T>(values: GoSlice<T>, getPattern: GoFunc<(v: T) => Pattern>, candidate: string, zeroValue: GoZeroFactory<T>): T {
+  let bestPattern = zeroValue();
   let longestMatchPrefixLength = -1;
   for (const value of values) {
     const pattern = getPattern!(value);

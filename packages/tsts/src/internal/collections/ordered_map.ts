@@ -147,7 +147,7 @@ export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<Ordere
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Get","kind":"method","status":"implemented","sigHash":"d32439c79fc90fa79c6ccc0d49a836f88237405347f2c6405ea0dd7bf357813b"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic execution receives an explicit static zero-value dictionary for the missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic deletion receives the exact static missing-value zero and key equality operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"},{"kind":"equality","parameter":"equalKey","typeParameter":"K"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Get(key K) (V, bool) {
@@ -249,7 +249,7 @@ export function OrderedMap_Has<K extends GoComparable, V>(receiver: GoPtr<Ordere
  * 	return v, true
  * }
  */
-export function OrderedMap_Delete<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, zeroValue: GoZeroFactory<V>): [V, bool] {
+export function OrderedMap_Delete<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, zeroValue: GoZeroFactory<V>, equalKey: GoEquality<K>): [V, bool] {
   const m = receiver!;
   const ok = m.mp.has(key);
   if (!ok) {
@@ -258,7 +258,7 @@ export function OrderedMap_Delete<K extends GoComparable, V>(receiver: GoPtr<Ord
   const v = m.mp.get(key)!;
 
   m.mp.delete(key);
-  const i = slices.Index(m.keys, key);
+  const i = slices.Index(m.keys, key, equalKey);
   if (i === 0) {
     m.keys = m.keys.slice(1);
   } else {

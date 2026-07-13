@@ -569,6 +569,12 @@ export class GoStructMap<K, V> implements Map<K, V> {
     return [value, true];
   }
 
+  clone(): GoStructMap<K, V> {
+    const clone = new GoStructMap<K, V>(this.keyDescriptor);
+    for (const [key, value] of this) clone.set(key, value);
+    return clone;
+  }
+
   *entries(): MapIterator<[K, V]> { for (const entry of this.orderedEntries) if (entry.active) yield [entry.key, entry.value]; }
   *keys(): MapIterator<K> { for (const entry of this.orderedEntries) if (entry.active) yield entry.key; }
   *values(): MapIterator<V> { for (const entry of this.orderedEntries) if (entry.active) yield entry.value; }
@@ -609,6 +615,11 @@ export class GoStructMap<K, V> implements Map<K, V> {
 
 export function NewGoStructMap<K, V>(keyDescriptor: GoMapKeyDescriptor<K>): GoStructMap<K, V> {
   return new GoStructMap<K, V>(keyDescriptor);
+}
+
+export function GoMapClone<K, V>(map: GoMap<K, V>): GoMap<K, V> {
+  if (GoMapIsNil(map)) return GoNilMap();
+  return map instanceof GoStructMap ? map.clone() : new globalThis.Map<K, V>(map);
 }
 
 export function GoMapGetExisting<K, V>(map: NonNullable<GoMap<K, V>>, key: K): V {

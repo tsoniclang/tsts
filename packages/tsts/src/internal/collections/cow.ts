@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
+import type { GoComparable, GoMap, GoPtr, GoZeroFactory } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
 import type { GoFunc } from "../../go/compat.js";
@@ -21,6 +21,7 @@ export interface CopyOnWriteMap<K extends GoComparable = unknown, V = unknown> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.Get","kind":"method","status":"implemented","sigHash":"524fff945dd4c8c999c50f30588706af0cce65c8fc0a20eb0c44639bf22c09f9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic map lookup receives the exact static zero-value constructor for its missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
  * func (c *CopyOnWriteMap[K, V]) Get(k K) (V, bool) {
@@ -28,9 +29,9 @@ export interface CopyOnWriteMap<K extends GoComparable = unknown, V = unknown> {
  * 	return v, ok
  * }
  */
-export function CopyOnWriteMap_Get<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K): [V, bool] {
+export function CopyOnWriteMap_Get<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K, zeroValue: GoZeroFactory<V>): [V, bool] {
   const ok = receiver!.m?.has(k) ?? false;
-  return [receiver!.m?.get(k) as V, ok];
+  return [ok ? receiver!.m.get(k)! : zeroValue(), ok];
 }
 
 /**
@@ -131,8 +132,7 @@ export interface CopyOnWriteSet<K extends GoComparable = unknown> {
  * }
  */
 export function CopyOnWriteSet_Has<K extends GoComparable>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K): bool {
-  const [, ok] = CopyOnWriteMap_Get(receiver!.m, k);
-  return ok;
+  return CopyOnWriteMap_Has(receiver!.m, k);
 }
 
 /**

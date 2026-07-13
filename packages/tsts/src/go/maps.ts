@@ -1,7 +1,7 @@
 import type { bool } from "./scalars.js";
 import type { Seq } from "./iter.js";
-import type { GoFunc, GoMap } from "./compat.js";
-import { GoMapIsNil, GoNilMap } from "./compat.js";
+import type { GoEquality, GoFunc, GoMap } from "./compat.js";
+import { GoMapClone } from "./compat.js";
 
 // Go: package maps (standard library, Go 1.21+/1.23 iterators).
 //
@@ -12,11 +12,7 @@ import { GoMapIsNil, GoNilMap } from "./compat.js";
 // Clone returns a copy of m. This is a shallow clone: the new keys and values
 // are set using ordinary assignment.
 export function Clone<K, V>(m: GoMap<K, V>): GoMap<K, V> {
-  // Go: Clone(nil) returns nil.
-  if (GoMapIsNil(m)) {
-    return GoNilMap();
-  }
-  return new globalThis.Map<K, V>(m);
+  return GoMapClone(m);
 }
 
 // Copy copies all key/value pairs in src adding them to dst. When a key in src
@@ -30,7 +26,7 @@ export function Copy<K, V>(dst: GoMap<K, V>, src: GoMap<K, V>): void {
 
 // Equal reports whether two maps contain the same key/value pairs.
 // Values are compared using ==.
-export function Equal<K, V>(m1: GoMap<K, V>, m2: GoMap<K, V>): bool {
+export function Equal<K, V>(m1: GoMap<K, V>, m2: GoMap<K, V>, equal: GoEquality<V>): bool {
   if (m1.size !== m2.size) {
     return false;
   }
@@ -39,8 +35,7 @@ export function Equal<K, V>(m1: GoMap<K, V>, m2: GoMap<K, V>): bool {
       return false;
     }
     const v2 = m2.get(k);
-    // Go uses == on comparable values; mirror with strict equality.
-    if (v1 !== v2) {
+    if (!equal(v1, v2!)) {
       return false;
     }
   }
