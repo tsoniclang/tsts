@@ -30,8 +30,10 @@ export function emitData(schema) {
   lines.push(`} from "./kinds.js";`);
   lines.push(`import {`);
   lines.push(`  cloneNode,`);
+  lines.push(`  Node_End,`);
   lines.push(`  NodeFactory_NewModifierList,`);
   lines.push(`  NodeFactory_NewNodeList,`);
+  lines.push(`  Node_Pos,`);
   lines.push(`  visit,`);
   lines.push(`  visitModifiers,`);
   lines.push(`  visitNodeList,`);
@@ -521,6 +523,8 @@ function emitAdapter(schema, node, lines) {
   const adapter = `${node}NodeData`;
   lines.push(`class ${adapter} implements nodeData {`);
   lines.push(`  __tsgoGoReceiver(): GoPtr<${node}> { return this; }`);
+  lines.push(`  Pos(): int { return Node_Pos(this); }`);
+  lines.push(`  End(): int { return Node_End(this); }`);
   for (const method of NODE_DATA_METHODS) {
     const t = resolveAdapterTarget(schema, node, method);
     const slot = adapterSlot(node, method, t);
