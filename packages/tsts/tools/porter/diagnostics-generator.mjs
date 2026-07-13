@@ -117,19 +117,20 @@ export function loadCatalog(config) {
 // Emitter
 // ---------------------------------------------------------------------------
 
-// Faithful analogue of the `&Message{...}` literal. Optional bool fields are
-// emitted only when true, exactly as generate.go does, so the TypeScript catalog
-// mirrors the Go catalog field-for-field.
+// Faithful analogue of the `&Message{...}` value. Go composite literals may
+// omit zero-valued fields, but the resulting struct still contains every field.
+// Emit those zero values explicitly so the TypeScript object has the exact
+// required Message shape rather than representing Go fields as optional.
 function emitMessage(record) {
   const parts = [
     `code: ${record.code}`,
     `category: ${record.category}`,
     `key: ${JSON.stringify(record.key)}`,
     `text: ${JSON.stringify(record.text)}`,
+    `reportsUnnecessary: ${record.reportsUnnecessary}`,
+    `elidedInCompatibilityPyramid: ${record.elidedInCompatibilityPyramid}`,
+    `reportsDeprecated: ${record.reportsDeprecated}`,
   ];
-  if (record.reportsUnnecessary) parts.push("reportsUnnecessary: true");
-  if (record.elidedInCompatibilityPyramid) parts.push("elidedInCompatibilityPyramid: true");
-  if (record.reportsDeprecated) parts.push("reportsDeprecated: true");
   return `export const ${record.varName}: Message = { ${parts.join(", ")} };`;
 }
 

@@ -12,6 +12,7 @@ import { SourceFile_FileName } from "../ast/ast.js";
 import { LibPath, WrapFS } from "../bundled/bundled.js";
 import type { CompilerOptions, ScriptTarget } from "../core/compileroptions.js";
 import { ScriptTargetESNext } from "../core/compileroptions.js";
+import { TSUnknown } from "../core/tristate.js";
 import { Parse as locale_Parse } from "../locale/locale.js";
 import type { ParsedCommandLine } from "../tsoptions/parsedcommandline.js";
 import { FromMap } from "../vfs/vfstest/vfstest.js";
@@ -271,6 +272,12 @@ for (const testCase of programTestCases) {
     const program = NewProgram({
       Config: parsedCommandLine(["c:/dev/src/index.ts"], opts)!,
       Host: NewCompilerHost("c:/dev/src", fs, LibPath(), undefined, undefined)!,
+      UseSourceOfProjectReference: false,
+      SingleThreaded: TSUnknown,
+      CreateCheckerPool: undefined,
+      TypingsLocation: "",
+      ProjectName: "",
+      Tracing: undefined,
     })!;
 
     const actualFiles: string[] = [];

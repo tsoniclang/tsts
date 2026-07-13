@@ -20,8 +20,8 @@ import { SyncSet_Add, SyncSet_ToSlice } from "../collections/syncset.js";
 import type { CompilerHost } from "../compiler/host.js";
 import { NewCompilerHost } from "../compiler/host.js";
 import { NewProgram, Program_FilesByPath } from "../compiler/program.js";
-import type { ProgramOptions } from "../compiler/program.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
+import { TSUnknown } from "../core/tristate.js";
 import { DiffMapsFunc } from "../core/core.js";
 import * as fswatch from "../fswatch/fswatch.js";
 import type { ParsedCommandLine } from "../tsoptions/parsedcommandline.js";
@@ -1427,7 +1427,16 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   }
 
   receiver!.program = IncrementalNewProgram(
-    NewProgram({ Config: receiver!.config, Host: watchCompilerHost_as_compiler_CompilerHost(host) } as ProgramOptions),
+    NewProgram({
+      Config: receiver!.config,
+      Host: watchCompilerHost_as_compiler_CompilerHost(host),
+      UseSourceOfProjectReference: false,
+      SingleThreaded: TSUnknown,
+      CreateCheckerPool: undefined,
+      TypingsLocation: "",
+      ProjectName: "",
+      Tracing: undefined,
+    }),
     receiver!.program,
     undefined as unknown as IncrementalHost,
     receiver!.testing !== undefined,

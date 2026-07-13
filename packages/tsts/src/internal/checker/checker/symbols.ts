@@ -537,6 +537,9 @@ export function Checker_createNameResolverForSuggestion(receiver: GoPtr<Checker>
     SymbolReferenced: (symbol_, meaning) => Checker_symbolReferenced(receiver, symbol_, meaning),
     SetRequiresScopeChangeCache: (node, value) => Checker_setRequiresScopeChangeCache(receiver, node, value),
     GetRequiresScopeChangeCache: (node) => Checker_getRequiresScopeChangeCache(receiver, node),
+    OnPropertyWithInvalidInitializer: undefined,
+    OnFailedToResolveSymbol: undefined,
+    OnSuccessfullyResolvedSymbol: undefined,
   };
 }
 

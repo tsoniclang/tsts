@@ -639,7 +639,17 @@ export function newNodeBuilderImpl(ch: GoPtr<Checker>, e: GoPtr<EmitContext>, id
     cloneBindingNameVisitor: undefined,
     idToSymbol: resolvedIdToSymbol,
   };
-  b.cloneBindingNameVisitor = NewNodeVisitor((node) => NodeBuilderImpl_cloneBindingName(b, node), b.f, {} as NodeVisitorHooks);
+  b.cloneBindingNameVisitor = NewNodeVisitor((node) => NodeBuilderImpl_cloneBindingName(b, node), b.f, {
+    VisitNode: undefined,
+    VisitToken: undefined,
+    VisitNodes: undefined,
+    VisitModifiers: undefined,
+    VisitEmbeddedStatement: undefined,
+    VisitIterationBody: undefined,
+    VisitParameters: undefined,
+    VisitFunctionBody: undefined,
+    VisitTopLevelStatements: undefined,
+  });
   return b;
 }
 

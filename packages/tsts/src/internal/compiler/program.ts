@@ -119,12 +119,12 @@ const sourceFileKey = GoPointerKey<SourceFile>();
 export interface ProgramOptions {
   Host: GoInterface<CompilerHost>;
   Config: GoPtr<ParsedCommandLine>;
-  UseSourceOfProjectReference?: bool;
-  SingleThreaded?: Tristate;
-  CreateCheckerPool?: (arg0: GoPtr<Program>) => CheckerPool;
-  TypingsLocation?: string;
-  ProjectName?: string;
-  Tracing?: GoPtr<Tracing_bcfc8412>;
+  UseSourceOfProjectReference: bool;
+  SingleThreaded: Tristate;
+  CreateCheckerPool: GoFunc<(arg0: GoPtr<Program>) => GoInterface<CheckerPool>>;
+  TypingsLocation: string;
+  ProjectName: string;
+  Tracing: GoPtr<Tracing_bcfc8412>;
 }
 
 /**

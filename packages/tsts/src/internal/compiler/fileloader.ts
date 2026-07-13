@@ -802,7 +802,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
     totalFileCount: new Int32Impl(),
     libFileCount: new Int32Impl(),
     factoryMu: new Mutex(),
-    factory: NewNodeFactory({}) as NodeFactory,
+    factory: NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined }) as NodeFactory,
     projectReferenceFileMapper: undefined,
     dtsDirectories: { M: new globalThis.Map() },
     pathForLibFileCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as unknown as SyncMap<string, GoPtr<LibFile>>,

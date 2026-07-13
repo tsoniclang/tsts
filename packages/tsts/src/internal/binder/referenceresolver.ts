@@ -275,7 +275,18 @@ export function referenceResolver_getReferencedValueSymbol(receiver: GoPtr<refer
   if (receiver!.resolver === undefined) {
     receiver!.resolver = {
       CompilerOptions: receiver!.options,
+      GetSymbolOfDeclaration: undefined,
+      Error: undefined,
       Globals: GoNilMap(),
+      ArgumentsSymbol: undefined,
+      RequireSymbol: undefined,
+      Lookup: undefined,
+      SymbolReferenced: undefined,
+      SetRequiresScopeChangeCache: undefined,
+      GetRequiresScopeChangeCache: undefined,
+      OnPropertyWithInvalidInitializer: undefined,
+      OnFailedToResolveSymbol: undefined,
+      OnSuccessfullyResolvedSymbol: undefined,
     };
   }
 

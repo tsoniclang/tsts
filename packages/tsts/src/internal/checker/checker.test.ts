@@ -14,6 +14,7 @@ import { NewCompilerHost } from "../compiler/host.js";
 import type { ProgramOptions } from "../compiler/program.js";
 import { NewProgram, Program_BindSourceFiles, Program_GetSourceFile, Program_GetTypeChecker } from "../compiler/program.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
+import { TSUnknown } from "../core/tristate.js";
 import { Checker_GetSymbolAtLocation } from "./checker/symbols.js";
 import type { ParseConfigHost } from "../tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigparsing.js";
@@ -45,6 +46,12 @@ foo.bar;`;
   const p = NewProgram({
     Config: parsed,
     Host: host,
+    UseSourceOfProjectReference: false,
+    SingleThreaded: TSUnknown,
+    CreateCheckerPool: undefined,
+    TypingsLocation: "",
+    ProjectName: "",
+    Tracing: undefined,
   } satisfies ProgramOptions);
   Program_BindSourceFiles(p);
   const [c, done] = Program_GetTypeChecker(p, Background());

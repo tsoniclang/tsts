@@ -25,7 +25,7 @@ import { GetNormalizedAbsolutePath, GetDirectoryPath } from "../../tspath/path.j
 import type { Path } from "../../tspath/path.js";
 import { Fprint } from "../../../go/fmt.js";
 import { Equal as slicesEqual, Collect as slicesCollect } from "../../../go/slices.js";
-import { Tristate_IsTrue } from "../../core/tristate.js";
+import { Tristate_IsTrue, TSUnknown } from "../../core/tristate.js";
 import { CompilerOptions_IsIncremental, CompilerOptions_GetEmitDeclarations } from "../../core/compileroptions.js";
 import { NewBuildInfoReader, ReadBuildInfoProgram } from "../incremental/incremental.js";
 import { ComputeHash } from "../incremental/snapshot.js";
@@ -585,7 +585,16 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     orchestrator!.opts.Testing,
   );
   const buildCompilerHost = compilerHost_as_compiler_CompilerHost({ host: orchestrator!.host, trace } as compilerHost);
-  const program = compiler_NewProgram({ Config: receiver!.resolved, Host: buildCompilerHost } as import("../../compiler/program.js").ProgramOptions);
+  const program = compiler_NewProgram({
+    Config: receiver!.resolved,
+    Host: buildCompilerHost,
+    UseSourceOfProjectReference: false,
+    SingleThreaded: TSUnknown,
+    CreateCheckerPool: undefined,
+    TypingsLocation: "",
+    ProjectName: "",
+    Tracing: undefined,
+  });
   compileTimes.ParseTime = (orchestrator!.opts.Sys!.Now() as TimeWithSub).Sub(parseStart) as import("../../../go/time.js").Duration;
 
   const changesComputeStart = orchestrator!.opts.Sys!.Now();

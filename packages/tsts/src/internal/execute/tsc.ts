@@ -27,11 +27,10 @@ import { ParseCommandLine, ParseBuildCommandLine } from "../tsoptions/commandlin
 import { ConvertToTSConfig } from "../tsoptions/showconfig.js";
 import { MarshalIndentWrite } from "../json/json.js";
 import { CombinePaths, ForEachAncestorDirectory, NormalizePath } from "../tspath/path.js";
-import { Tristate_IsTrue } from "../core/tristate.js";
+import { Tristate_IsTrue, TSUnknown } from "../core/tristate.js";
 import { CompilerOptions_IsIncremental } from "../core/compileroptions.js";
 import { NewCachedFSCompilerHost } from "../compiler/host.js";
 import { NewProgram, Program_as_compiler_ProgramLike } from "../compiler/program.js";
-import type { ProgramOptions } from "../compiler/program.js";
 import {
   Options_0_and_1_cannot_be_combined,
   Option_project_cannot_be_mixed_with_source_files_on_a_command_line,
@@ -672,7 +671,16 @@ export function performIncrementalCompilation(sys: GoInterface<System>, config: 
   const tr = startTracingIfNeeded(sys, config, testing);
 
   const parseStart = sys!.Now();
-  const program = NewProgram({ Config: config, Host: host, Tracing: tr } as ProgramOptions);
+  const program = NewProgram({
+    Config: config,
+    Host: host,
+    UseSourceOfProjectReference: false,
+    SingleThreaded: TSUnknown,
+    CreateCheckerPool: undefined,
+    TypingsLocation: "",
+    ProjectName: "",
+    Tracing: tr,
+  });
   compileTimes!.ParseTime = (sys!.Now() as TimeWithSub2).Sub(parseStart) as import("../../go/time.js").Duration;
   const changesComputeStart = sys!.Now();
   const incrementalProgram = IncrementalNewProgram(program, oldProgram, IncrementalCreateHost(host), testing !== undefined);
@@ -750,7 +758,16 @@ export function performCompilation(sys: GoInterface<System>, config: GoPtr<Parse
   const tr = startTracingIfNeeded(sys, config, testing);
 
   const parseStart = sys!.Now();
-  const program = NewProgram({ Config: config, Host: host, Tracing: tr } as ProgramOptions);
+  const program = NewProgram({
+    Config: config,
+    Host: host,
+    UseSourceOfProjectReference: false,
+    SingleThreaded: TSUnknown,
+    CreateCheckerPool: undefined,
+    TypingsLocation: "",
+    ProjectName: "",
+    Tracing: tr,
+  });
   type TimeWithSub3 = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
   compileTimes!.ParseTime = (sys!.Now() as TimeWithSub3).Sub(parseStart) as import("../../go/time.js").Duration;
   const [result] = EmitAndReportStatistics({

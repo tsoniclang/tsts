@@ -99,6 +99,8 @@ export function getDeepCloneVisitor(f: GoPtr<NodeFactory>, syntheticLocation: bo
     },
     f,
     {
+      VisitNode: undefined,
+      VisitToken: undefined,
       VisitNodes: (nodes, nodeVisitor) => {
         if (nodes === undefined) {
           return undefined;
@@ -127,6 +129,11 @@ export function getDeepCloneVisitor(f: GoPtr<NodeFactory>, syntheticLocation: bo
         }
         return newList;
       },
+      VisitEmbeddedStatement: undefined,
+      VisitIterationBody: undefined,
+      VisitParameters: undefined,
+      VisitFunctionBody: undefined,
+      VisitTopLevelStatements: undefined,
     },
   );
   return visitor;

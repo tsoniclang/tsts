@@ -52,6 +52,9 @@ function createExtensionDiagnosticMessage(diagnostic: ExtensionDiagnostic): Mess
     category: mapExtensionDiagnosticCategory(diagnostic.category),
     key,
     text: `[${publicCode}] ${diagnostic.message}`,
+    reportsUnnecessary: false,
+    elidedInCompatibilityPyramid: false,
+    reportsDeprecated: false,
   };
 }
 

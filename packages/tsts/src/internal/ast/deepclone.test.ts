@@ -32,7 +32,17 @@ function getChildren(node: GoPtr<Node>): Array<GoPtr<Node>> {
   Node_VisitEachChild(node, NewNodeVisitor((child) => {
     children.push(child);
     return child;
-  }, undefined, {} as NodeVisitorHooks));
+  }, undefined, {
+    VisitNode: undefined,
+    VisitToken: undefined,
+    VisitNodes: undefined,
+    VisitModifiers: undefined,
+    VisitEmbeddedStatement: undefined,
+    VisitIterationBody: undefined,
+    VisitParameters: undefined,
+    VisitFunctionBody: undefined,
+    VisitTopLevelStatements: undefined,
+  }));
   return children;
 }
 
@@ -582,7 +592,7 @@ const data: Array<{ title: string; input: string; jsx?: boolean }> = [
 
 for (const rec of data) {
   test(`Clone ${rec.title}`, () => {
-    const factory = NewNodeFactory({} as NodeFactoryHooks);
+    const factory = NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined });
     const file = parseTypeScript(rec.input, false);
     const clone = NodeFactory_DeepCloneNode(factory, file);
 

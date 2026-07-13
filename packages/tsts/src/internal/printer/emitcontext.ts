@@ -272,12 +272,16 @@ export function EmitContext_onClone(receiver: GoPtr<EmitContext>, updated: GoPtr
  */
 export function EmitContext_NewNodeVisitor(receiver: GoPtr<EmitContext>, visit: GoFunc<(node: GoPtr<Node>) => GoPtr<Node>>): GoPtr<ConcreteNodeVisitor> {
   const hooks: NodeVisitorHooks = {
+    VisitNode: undefined,
+    VisitToken: undefined,
+    VisitNodes: undefined,
+    VisitModifiers: undefined,
     VisitParameters: (nodes, visitor) => EmitContext_VisitParameters(receiver, nodes, visitor as GoPtr<NodeVisitor>),
     VisitFunctionBody: (node, visitor) => EmitContext_VisitFunctionBody(receiver, node, visitor as GoPtr<NodeVisitor>),
     VisitIterationBody: (body, visitor) => EmitContext_VisitIterationBody(receiver, body, visitor as GoPtr<NodeVisitor>),
     VisitTopLevelStatements: (nodes, visitor) => EmitContext_VisitVariableEnvironment(receiver, nodes, visitor as GoPtr<NodeVisitor>),
     VisitEmbeddedStatement: (node, visitor) => EmitContext_VisitEmbeddedStatement(receiver, node, visitor as GoPtr<NodeVisitor>),
-  } as NodeVisitorHooks;
+  };
   return NewNodeVisitor(visit, NodeFactory_AsNodeFactory(receiver!.Factory!.__tsgoEmbedded0!), hooks);
 }
 

@@ -53,18 +53,18 @@ import type { GoFunc } from "../../go/compat.js";
  */
 export interface NameResolver {
   CompilerOptions: GoPtr<CompilerOptions>;
-  GetSymbolOfDeclaration?: (node: GoPtr<Node>) => GoPtr<Symbol>;
-  Error?: (location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => GoPtr<Diagnostic>;
+  GetSymbolOfDeclaration: GoFunc<(node: GoPtr<Node>) => GoPtr<Symbol>>;
+  Error: GoFunc<(location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => GoPtr<Diagnostic>>;
   Globals: SymbolTable;
-  ArgumentsSymbol?: GoPtr<Symbol>;
-  RequireSymbol?: GoPtr<Symbol>;
-  Lookup?: (symbols: SymbolTable, name: string, meaning: SymbolFlags) => GoPtr<Symbol>;
-  SymbolReferenced?: GoFunc<(symbol_: GoPtr<Symbol>, meaning: SymbolFlags) => void>;
-  SetRequiresScopeChangeCache?: (node: GoPtr<Node>, value: Tristate) => void;
-  GetRequiresScopeChangeCache?: (node: GoPtr<Node>) => Tristate;
-  OnPropertyWithInvalidInitializer?: (location: GoPtr<Node>, name: string, declaration: GoPtr<Node>, result: GoPtr<Symbol>) => bool;
-  OnFailedToResolveSymbol?: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>) => void;
-  OnSuccessfullyResolvedSymbol?: (location: GoPtr<Node>, result: GoPtr<Symbol>, meaning: SymbolFlags, lastLocation: GoPtr<Node>, associatedDeclarationForContainingInitializerOrBindingName: GoPtr<Node>, withinDeferredContext: bool) => void;
+  ArgumentsSymbol: GoPtr<Symbol>;
+  RequireSymbol: GoPtr<Symbol>;
+  Lookup: GoFunc<(symbols: SymbolTable, name: string, meaning: SymbolFlags) => GoPtr<Symbol>>;
+  SymbolReferenced: GoFunc<(symbol_: GoPtr<Symbol>, meaning: SymbolFlags) => void>;
+  SetRequiresScopeChangeCache: GoFunc<(node: GoPtr<Node>, value: Tristate) => void>;
+  GetRequiresScopeChangeCache: GoFunc<(node: GoPtr<Node>) => Tristate>;
+  OnPropertyWithInvalidInitializer: GoFunc<(location: GoPtr<Node>, name: string, declaration: GoPtr<Node>, result: GoPtr<Symbol>) => bool>;
+  OnFailedToResolveSymbol: GoFunc<(location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>) => void>;
+  OnSuccessfullyResolvedSymbol: GoFunc<(location: GoPtr<Node>, result: GoPtr<Symbol>, meaning: SymbolFlags, lastLocation: GoPtr<Node>, associatedDeclarationForContainingInitializerOrBindingName: GoPtr<Node>, withinDeferredContext: bool) => void>;
 }
 
 /**

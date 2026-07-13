@@ -198,7 +198,7 @@ export function NewFlowSwitchClauseData(switchStatement: GoPtr<Node>, clauseStar
   node.SwitchStatement = switchStatement;
   node.ClauseStart = clauseStart;
   node.ClauseEnd = clauseEnd;
-  return newNode(KindUnknown, FlowSwitchClauseData_as_nodeData(node), {} as NodeFactoryHooks);
+  return newNode(KindUnknown, FlowSwitchClauseData_as_nodeData(node), { OnCreate: undefined, OnUpdate: undefined, OnClone: undefined });
 }
 
 /**
@@ -277,5 +277,5 @@ export function NewFlowReduceLabelData(target: GoPtr<FlowLabel>, antecedents: Go
   const node: FlowReduceLabelData = new FlowReduceLabelNodeData();
   node.Target = target;
   node.Antecedents = antecedents;
-  return newNode(KindUnknown, FlowReduceLabelData_as_nodeData(node), {} as NodeFactoryHooks);
+  return newNode(KindUnknown, FlowReduceLabelData_as_nodeData(node), { OnCreate: undefined, OnUpdate: undefined, OnClone: undefined });
 }

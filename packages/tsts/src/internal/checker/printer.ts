@@ -15,6 +15,7 @@ import type { Symbol } from "../ast/symbol.js";
 import type { SourceFile } from "../ast/ast.js";
 import { GetSourceFileOfNode } from "../ast/utilities.js";
 import type { UTF16Offset } from "../core/core.js";
+import { NewLineKindNone, ScriptTargetNone } from "../core/compileroptions.js";
 import { TSTrue } from "../core/tristate.js";
 import {
   type Flags,
@@ -135,7 +136,28 @@ function semicolonRemoverWriter_as_EmitTextWriter(
  * }
  */
 export function createPrinterWithDefaults(emitContext: GoPtr<EmitContext>): GoPtr<Printer> {
-  return NewPrinter({}, {}, emitContext);
+  return NewPrinter({
+    RemoveComments: false,
+    NewLine: NewLineKindNone,
+    NoEmitHelpers: false,
+    Target: ScriptTargetNone,
+    SourceMap: false,
+    InlineSourceMap: false,
+    InlineSources: false,
+    OmitBraceSourceMapPositions: false,
+    OnlyPrintJSDocStyle: false,
+    NeverAsciiEscape: false,
+    PreserveSourceNewlines: false,
+    TerminateUnterminatedLiterals: false,
+  }, {
+    HasGlobalName: undefined,
+    OnBeforeEmitNode: undefined,
+    OnAfterEmitNode: undefined,
+    OnBeforeEmitNodeList: undefined,
+    OnAfterEmitNodeList: undefined,
+    OnBeforeEmitToken: undefined,
+    OnAfterEmitToken: undefined,
+  }, emitContext);
 }
 
 /**
@@ -147,7 +169,28 @@ export function createPrinterWithDefaults(emitContext: GoPtr<EmitContext>): GoPt
  * }
  */
 export function createPrinterWithRemoveComments(emitContext: GoPtr<EmitContext>): GoPtr<Printer> {
-  return NewPrinter({ RemoveComments: true }, {}, emitContext);
+  return NewPrinter({
+    RemoveComments: true,
+    NewLine: NewLineKindNone,
+    NoEmitHelpers: false,
+    Target: ScriptTargetNone,
+    SourceMap: false,
+    InlineSourceMap: false,
+    InlineSources: false,
+    OmitBraceSourceMapPositions: false,
+    OnlyPrintJSDocStyle: false,
+    NeverAsciiEscape: false,
+    PreserveSourceNewlines: false,
+    TerminateUnterminatedLiterals: false,
+  }, {
+    HasGlobalName: undefined,
+    OnBeforeEmitNode: undefined,
+    OnAfterEmitNode: undefined,
+    OnBeforeEmitNodeList: undefined,
+    OnAfterEmitNodeList: undefined,
+    OnBeforeEmitToken: undefined,
+    OnAfterEmitToken: undefined,
+  }, emitContext);
 }
 
 /**
@@ -164,7 +207,28 @@ export function createPrinterWithRemoveComments(emitContext: GoPtr<EmitContext>)
  */
 export function createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape(emitContext: GoPtr<EmitContext>): GoPtr<Printer> {
   // TODO: OmitTrailingSemicolon support
-  return NewPrinter({ RemoveComments: true, NeverAsciiEscape: true }, {}, emitContext);
+  return NewPrinter({
+    RemoveComments: true,
+    NewLine: NewLineKindNone,
+    NoEmitHelpers: false,
+    Target: ScriptTargetNone,
+    SourceMap: false,
+    InlineSourceMap: false,
+    InlineSources: false,
+    OmitBraceSourceMapPositions: false,
+    OnlyPrintJSDocStyle: false,
+    NeverAsciiEscape: true,
+    PreserveSourceNewlines: false,
+    TerminateUnterminatedLiterals: false,
+  }, {
+    HasGlobalName: undefined,
+    OnBeforeEmitNode: undefined,
+    OnAfterEmitNode: undefined,
+    OnBeforeEmitNodeList: undefined,
+    OnAfterEmitNodeList: undefined,
+    OnBeforeEmitToken: undefined,
+    OnAfterEmitToken: undefined,
+  }, emitContext);
 }
 
 /**
@@ -179,7 +243,28 @@ export function createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEs
  * }
  */
 export function createPrinterWithRemoveCommentsNeverAsciiEscape(emitContext: GoPtr<EmitContext>): GoPtr<Printer> {
-  return NewPrinter({ RemoveComments: true, NeverAsciiEscape: true }, {}, emitContext);
+  return NewPrinter({
+    RemoveComments: true,
+    NewLine: NewLineKindNone,
+    NoEmitHelpers: false,
+    Target: ScriptTargetNone,
+    SourceMap: false,
+    InlineSourceMap: false,
+    InlineSources: false,
+    OmitBraceSourceMapPositions: false,
+    OnlyPrintJSDocStyle: false,
+    NeverAsciiEscape: true,
+    PreserveSourceNewlines: false,
+    TerminateUnterminatedLiterals: false,
+  }, {
+    HasGlobalName: undefined,
+    OnBeforeEmitNode: undefined,
+    OnAfterEmitNode: undefined,
+    OnBeforeEmitNodeList: undefined,
+    OnAfterEmitNodeList: undefined,
+    OnBeforeEmitToken: undefined,
+    OnAfterEmitToken: undefined,
+  }, emitContext);
 }
 
 /**

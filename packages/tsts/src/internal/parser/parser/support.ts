@@ -594,7 +594,7 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
     throw new globalThis.Error("ScriptKind must be specified when parsing source file: " + opts.FileName);
   }
 
-  receiver!.factory = NewNodeFactory({})!;
+  receiver!.factory = NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined })!;
   receiver!.diagnostics = [];
   receiver!.jsDiagnostics = [];
   receiver!.jsdocDiagnostics = [];

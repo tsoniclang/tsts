@@ -42,18 +42,18 @@ import type { GoFunc, GoInterface } from "../../../go/compat.js";
  * }
  */
 export interface PrinterOptions {
-  RemoveComments?: bool;
-  NewLine?: NewLineKind;
-  NoEmitHelpers?: bool;
-  Target?: ScriptTarget;
-  SourceMap?: bool;
-  InlineSourceMap?: bool;
-  InlineSources?: bool;
-  OmitBraceSourceMapPositions?: bool;
-  OnlyPrintJSDocStyle?: bool;
-  NeverAsciiEscape?: bool;
-  PreserveSourceNewlines?: bool;
-  TerminateUnterminatedLiterals?: bool;
+  RemoveComments: bool;
+  NewLine: NewLineKind;
+  NoEmitHelpers: bool;
+  Target: ScriptTarget;
+  SourceMap: bool;
+  InlineSourceMap: bool;
+  InlineSources: bool;
+  OmitBraceSourceMapPositions: bool;
+  OnlyPrintJSDocStyle: bool;
+  NeverAsciiEscape: bool;
+  PreserveSourceNewlines: bool;
+  TerminateUnterminatedLiterals: bool;
 }
 
 /**
@@ -120,13 +120,13 @@ export interface PrinterOptions {
  * }
  */
 export interface PrintHandlers {
-  HasGlobalName?: GoFunc<(name: string) => bool>;
-  OnBeforeEmitNode?: GoFunc<(nodeOpt: GoPtr<Node>) => void>;
-  OnAfterEmitNode?: GoFunc<(nodeOpt: GoPtr<Node>) => void>;
-  OnBeforeEmitNodeList?: GoFunc<(nodesOpt: GoPtr<NodeList>) => void>;
-  OnAfterEmitNodeList?: GoFunc<(nodesOpt: GoPtr<NodeList>) => void>;
-  OnBeforeEmitToken?: GoFunc<(nodeOpt: GoPtr<TokenNode>) => void>;
-  OnAfterEmitToken?: GoFunc<(nodeOpt: GoPtr<TokenNode>) => void>;
+  HasGlobalName: GoFunc<(name: string) => bool>;
+  OnBeforeEmitNode: GoFunc<(nodeOpt: GoPtr<Node>) => void>;
+  OnAfterEmitNode: GoFunc<(nodeOpt: GoPtr<Node>) => void>;
+  OnBeforeEmitNodeList: GoFunc<(nodesOpt: GoPtr<NodeList>) => void>;
+  OnAfterEmitNodeList: GoFunc<(nodesOpt: GoPtr<NodeList>) => void>;
+  OnBeforeEmitToken: GoFunc<(nodeOpt: GoPtr<TokenNode>) => void>;
+  OnAfterEmitToken: GoFunc<(nodeOpt: GoPtr<TokenNode>) => void>;
 }
 
 /**

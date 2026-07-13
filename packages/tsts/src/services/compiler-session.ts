@@ -4,6 +4,7 @@ import type { Context } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import type { Diagnostic } from "../internal/ast/diagnostic.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
+import { TSUnknown } from "../internal/core/tristate.js";
 import type { CompilerHost } from "../internal/compiler/host.js";
 import {
   NewProgram,
@@ -134,7 +135,16 @@ export function createCompilerSessionFromFiles(options: InMemoryCompilerSessionO
   const defaultOptions = {} as CompilerOptions;
   const [config, configErrors] = GetParsedCommandLineOfConfigFile(configFileName, defaultOptions, undefined, host as ParseConfigHost, undefined);
   if ((configErrors ?? []).length !== 0) {
-    const programOptions = { Config: config, Host: host } satisfies ProgramOptions;
+    const programOptions = {
+      Config: config,
+      Host: host,
+      UseSourceOfProjectReference: false,
+      SingleThreaded: TSUnknown,
+      CreateCheckerPool: undefined,
+      TypingsLocation: "",
+      ProjectName: "",
+      Tracing: undefined,
+    } satisfies ProgramOptions;
     return createCompilerSession({
       programOptions,
       ...(options.extensionHostOptions !== undefined ? { extensionHostOptions: options.extensionHostOptions } : {}),
@@ -145,6 +155,12 @@ export function createCompilerSessionFromFiles(options: InMemoryCompilerSessionO
     programOptions: {
       Config: config,
       Host: host,
+      UseSourceOfProjectReference: false,
+      SingleThreaded: TSUnknown,
+      CreateCheckerPool: undefined,
+      TypingsLocation: "",
+      ProjectName: "",
+      Tracing: undefined,
     },
     ...(options.extensionHostOptions !== undefined ? { extensionHostOptions: options.extensionHostOptions } : {}),
     ...(options.context !== undefined ? { context: options.context } : {}),

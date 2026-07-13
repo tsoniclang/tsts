@@ -99,7 +99,7 @@ import { Node_Expression } from "../ast/ast.js";
 import type { NodeVisitor, NodeVisitorHooks } from "../ast/visitor.js";
 import { NewNodeVisitor, NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes, NodeVisitor_VisitSourceFile } from "../ast/visitor.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
-import { NewLineKindLF } from "../core/compileroptions.js";
+import { NewLineKindLF, ScriptTargetNone } from "../core/compileroptions.js";
 import { GetScriptKindFromFileName } from "../core/core.js";
 import { LanguageVariantJSX } from "../core/languagevariant.js";
 import { UndefinedTextRange } from "../core/text.js";
@@ -113,7 +113,6 @@ import type { EmitContext } from "./emitcontext.js";
 import { EmitContext_NewNodeVisitor, NewEmitContext } from "./emitcontext.js";
 import { NodeFactory_NewTempVariable } from "./factory.js";
 import { NewPrinter } from "./printer/expressions.js";
-import type { PrinterOptions, PrintHandlers } from "./printer/state.js";
 import { Printer_EmitSourceFile } from "./printer/source-maps.js";
 
 // testutil/parsetestutil.ParseTypeScript
@@ -130,7 +129,28 @@ function checkDiagnostics(file: GoPtr<SourceFile>, message: string): void {
 
 // testutil/emittestutil.CheckEmit
 function checkEmit(emitContext: GoPtr<EmitContext>, file: GoPtr<SourceFile>, expected: string): void {
-  const printer = NewPrinter({ NewLine: NewLineKindLF } as PrinterOptions, {} as PrintHandlers, emitContext);
+  const printer = NewPrinter({
+    RemoveComments: false,
+    NewLine: NewLineKindLF,
+    NoEmitHelpers: false,
+    Target: ScriptTargetNone,
+    SourceMap: false,
+    InlineSourceMap: false,
+    InlineSources: false,
+    OmitBraceSourceMapPositions: false,
+    OnlyPrintJSDocStyle: false,
+    NeverAsciiEscape: false,
+    PreserveSourceNewlines: false,
+    TerminateUnterminatedLiterals: false,
+  }, {
+    HasGlobalName: undefined,
+    OnBeforeEmitNode: undefined,
+    OnAfterEmitNode: undefined,
+    OnBeforeEmitNodeList: undefined,
+    OnAfterEmitNodeList: undefined,
+    OnBeforeEmitToken: undefined,
+    OnAfterEmitToken: undefined,
+  }, emitContext);
   const text = Printer_EmitSourceFile(printer, file);
   const actual = text.endsWith("\n") ? text.slice(0, -1) : text;
   assert.equal(actual, expected);
@@ -143,7 +163,7 @@ function markSyntheticRecursive(node: GoPtr<Node>): void {
   let v: GoPtr<NodeVisitor>;
   v = NewNodeVisitor(
     (n) => NodeVisitor_VisitEachChild(v, n),
-    NewNodeFactory({} as NodeFactoryHooks),
+    NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined }),
     {
       VisitNode: (n, visitor) => {
         if (n !== undefined) {
@@ -169,13 +189,18 @@ function markSyntheticRecursive(node: GoPtr<Node>): void {
         }
         return NodeVisitor_VisitModifiers(visitor, nodes);
       },
-    } as NodeVisitorHooks,
+      VisitEmbeddedStatement: undefined,
+      VisitIterationBody: undefined,
+      VisitParameters: undefined,
+      VisitFunctionBody: undefined,
+      VisitTopLevelStatements: undefined,
+    },
   );
   NodeVisitor_VisitNode(v, node);
 }
 
 function zeroFactory(): GoPtr<NodeFactory> {
-  return NewNodeFactory({} as NodeFactoryHooks);
+  return NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined });
 }
 
 function sourceFileOf(f: GoPtr<NodeFactory>, statements: Array<GoPtr<Node>>): GoPtr<SourceFile> {

@@ -151,7 +151,7 @@ test("diagnostics-generator: emitMessages renders faithful Message constants + k
   // category value constant.
   assert.match(
     body,
-    /export const Unterminated_string_literal: Message = \{ code: 1002, category: CategoryError, key: "Unterminated_string_literal_1002", text: "Unterminated string literal\." \};/,
+    /export const Unterminated_string_literal: Message = \{ code: 1002, category: CategoryError, key: "Unterminated_string_literal_1002", text: "Unterminated string literal\.", reportsUnnecessary: false, elidedInCompatibilityPyramid: false, reportsDeprecated: false \};/,
   );
   assert.ok(body.includes("const CategoryError: Category = 1;"));
   assert.ok(body.includes("const CategorySuggestion: Category = 2;"));
@@ -159,9 +159,10 @@ test("diagnostics-generator: emitMessages renders faithful Message constants + k
   assert.ok(!body.includes("const CategoryWarning: Category = 0;"));
   assert.ok(body.includes('import type { Category, Key, Message } from "../diagnostics.js";'));
   assert.ok(!body.includes("import {\n"));
-  // Optional bool fields are emitted only when true, mirroring generate.go.
-  assert.match(body, /text: "'\{0\}' is deprecated\.", reportsDeprecated: true \};/);
-  assert.match(body, /text: "Unreachable code detected\.", reportsUnnecessary: true \};/);
+  // Go struct fields exist even when their composite-literal spelling is
+  // omitted, so emitted objects carry all three exact boolean fields.
+  assert.match(body, /text: "'\{0\}' is deprecated\.", reportsUnnecessary: false, elidedInCompatibilityPyramid: false, reportsDeprecated: true \};/);
+  assert.match(body, /text: "Unreachable code detected\.", reportsUnnecessary: true, elidedInCompatibilityPyramid: false, reportsDeprecated: false \};/);
   // keyToMessage maps key -> const, undefined default (Go nil).
   assert.match(body, /export function keyToMessage\(key: Key\): Message \| undefined \{/);
   assert.match(body, /case "Unterminated_string_literal_1002":\s*\n\s*return Unterminated_string_literal;/);

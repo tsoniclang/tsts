@@ -17,7 +17,7 @@ import { EmitResolver_as_printer_EmitResolver } from "../../checker/emitresolver
 import { NewChecker } from "../../checker/checker/state.js";
 import type { Program } from "../../checker/checker/state.js";
 import type { CompilerOptions, ModuleKind, ResolutionMode } from "../../core/compileroptions.js";
-import { ModuleKindESNext, NewLineKindLF } from "../../core/compileroptions.js";
+import { ModuleKindESNext, NewLineKindLF, ScriptTargetNone } from "../../core/compileroptions.js";
 import { GetScriptKindFromFileName } from "../../core/core.js";
 import { LanguageVariantJSX } from "../../core/languagevariant.js";
 import type { PackageId, ResolvedModule } from "../../module/types.js";
@@ -26,7 +26,6 @@ import { ParseSourceFile } from "../../parser/parser/statements-declarations.js"
 import { NewEmitContext } from "../../printer/emitcontext.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
 import { NewPrinter } from "../../printer/printer/expressions.js";
-import type { PrinterOptions, PrintHandlers } from "../../printer/printer/state.js";
 import { Printer_EmitSourceFile } from "../../printer/printer/source-maps.js";
 import type { KnownSymlinks } from "../../symlinks/knownsymlinks.js";
 import type { ParsedCommandLine, SourceOutputAndProjectReference } from "../../tsoptions/parsedcommandline.js";
@@ -51,7 +50,28 @@ function checkDiagnostics(file: GoPtr<SourceFile>, message: string): void {
 
 // testutil/emittestutil.CheckEmit
 function checkEmit(emitContext: GoPtr<EmitContext>, file: GoPtr<SourceFile>, expected: string): void {
-  const printer = NewPrinter({ NewLine: NewLineKindLF } as PrinterOptions, {} as PrintHandlers, emitContext);
+  const printer = NewPrinter({
+    RemoveComments: false,
+    NewLine: NewLineKindLF,
+    NoEmitHelpers: false,
+    Target: ScriptTargetNone,
+    SourceMap: false,
+    InlineSourceMap: false,
+    InlineSources: false,
+    OmitBraceSourceMapPositions: false,
+    OnlyPrintJSDocStyle: false,
+    NeverAsciiEscape: false,
+    PreserveSourceNewlines: false,
+    TerminateUnterminatedLiterals: false,
+  }, {
+    HasGlobalName: undefined,
+    OnBeforeEmitNode: undefined,
+    OnAfterEmitNode: undefined,
+    OnBeforeEmitNodeList: undefined,
+    OnAfterEmitNodeList: undefined,
+    OnBeforeEmitToken: undefined,
+    OnAfterEmitToken: undefined,
+  }, emitContext);
   const text = Printer_EmitSourceFile(printer, file);
   const actual = text.endsWith("\n") ? text.slice(0, -1) : text;
   assert.equal(actual, expected);

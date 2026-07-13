@@ -348,11 +348,11 @@ export function ChangeTrackerWriter_AssignPositionsToNode(receiver: GoPtr<Change
         }
         return modifiers;
       },
-      VisitEmbeddedStatement: undefined as never,
-      VisitIterationBody: undefined as never,
-      VisitParameters: undefined as never,
-      VisitFunctionBody: undefined as never,
-      VisitTopLevelStatements: undefined as never,
+      VisitEmbeddedStatement: undefined,
+      VisitIterationBody: undefined,
+      VisitParameters: undefined,
+      VisitFunctionBody: undefined,
+      VisitTopLevelStatements: undefined,
     },
   );
   return ChangeTrackerWriter_assignPositionsToNodeWorker(receiver, node, visitor);

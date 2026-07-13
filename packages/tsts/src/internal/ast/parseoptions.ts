@@ -56,7 +56,7 @@ import { ScriptKindJSON } from "../core/scriptkind.js";
 export interface SourceFileParseOptions {
   FileName: string;
   Path: Path;
-  ExternalModuleIndicatorOptions?: ExternalModuleIndicatorOptions;
+  ExternalModuleIndicatorOptions: ExternalModuleIndicatorOptions;
 }
 
 /**

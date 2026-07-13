@@ -2462,7 +2462,7 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
   checker.diagnostics = newDiagnosticsCollection();
   checker.suggestionDiagnostics = newDiagnosticsCollection();
   checker.mergedSymbols = new globalThis.Map();
-  checker.factory = NewNodeFactory({})!;
+  checker.factory = NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined })!;
   checker.nodeLinks = newLinkStore<Node, NodeLinks>();
   checker.signatureLinks = newLinkStore<Node, SignatureLinks>();
   checker.symbolNodeLinks = newLinkStore<Node, SymbolNodeLinks>();

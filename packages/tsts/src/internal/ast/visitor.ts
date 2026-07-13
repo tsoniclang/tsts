@@ -47,15 +47,15 @@ export interface NodeVisitor {
  * }
  */
 export interface NodeVisitorHooks {
-  VisitNode?: GoFunc<(node: GoPtr<Node>, v: GoPtr<NodeVisitor>) => GoPtr<Node>>;
-  VisitToken?: GoFunc<(node: GoPtr<TokenNode>, v: GoPtr<NodeVisitor>) => GoPtr<Node>>;
-  VisitNodes?: GoFunc<(nodes: GoPtr<NodeList>, v: GoPtr<NodeVisitor>) => GoPtr<NodeList>>;
-  VisitModifiers?: GoFunc<(nodes: GoPtr<ModifierList>, v: GoPtr<NodeVisitor>) => GoPtr<ModifierList>>;
-  VisitEmbeddedStatement?: GoFunc<(node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>>;
-  VisitIterationBody?: GoFunc<(node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>>;
-  VisitParameters?: GoFunc<(nodes: GoPtr<ParameterList>, v: GoPtr<NodeVisitor>) => GoPtr<ParameterList>>;
-  VisitFunctionBody?: GoFunc<(node: GoPtr<BlockOrExpression>, v: GoPtr<NodeVisitor>) => GoPtr<BlockOrExpression>>;
-  VisitTopLevelStatements?: GoFunc<(nodes: GoPtr<StatementList>, v: GoPtr<NodeVisitor>) => GoPtr<StatementList>>;
+  VisitNode: GoFunc<(node: GoPtr<Node>, v: GoPtr<NodeVisitor>) => GoPtr<Node>>;
+  VisitToken: GoFunc<(node: GoPtr<TokenNode>, v: GoPtr<NodeVisitor>) => GoPtr<Node>>;
+  VisitNodes: GoFunc<(nodes: GoPtr<NodeList>, v: GoPtr<NodeVisitor>) => GoPtr<NodeList>>;
+  VisitModifiers: GoFunc<(nodes: GoPtr<ModifierList>, v: GoPtr<NodeVisitor>) => GoPtr<ModifierList>>;
+  VisitEmbeddedStatement: GoFunc<(node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>>;
+  VisitIterationBody: GoFunc<(node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>>;
+  VisitParameters: GoFunc<(nodes: GoPtr<ParameterList>, v: GoPtr<NodeVisitor>) => GoPtr<ParameterList>>;
+  VisitFunctionBody: GoFunc<(node: GoPtr<BlockOrExpression>, v: GoPtr<NodeVisitor>) => GoPtr<BlockOrExpression>>;
+  VisitTopLevelStatements: GoFunc<(nodes: GoPtr<StatementList>, v: GoPtr<NodeVisitor>) => GoPtr<StatementList>>;
 }
 
 /**
@@ -70,7 +70,9 @@ export interface NodeVisitorHooks {
  * }
  */
 export function NewNodeVisitor(visit: GoFunc<(node: GoPtr<Node>) => GoPtr<Node>>, factory: GoPtr<NodeFactory>, hooks: NodeVisitorHooks): GoPtr<NodeVisitor> {
-  const resolvedFactory = factory === undefined ? NewNodeFactory({}) : factory;
+  const resolvedFactory = factory === undefined
+    ? NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined })
+    : factory;
   return { Visit: visit, Factory: resolvedFactory, Hooks: hooks };
 }
 

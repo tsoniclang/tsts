@@ -493,7 +493,15 @@ export function emitter_emitJSFile(receiver: GoPtr<emitter>, sourceFile: GoPtr<S
     };
 
     // create a printer to print the nodes
-    const p = NewPrinter(printerOptions, {} as PrintHandlers, emitContext);
+    const p = NewPrinter(printerOptions, {
+      HasGlobalName: undefined,
+      OnBeforeEmitNode: undefined,
+      OnAfterEmitNode: undefined,
+      OnBeforeEmitNodeList: undefined,
+      OnAfterEmitNodeList: undefined,
+      OnBeforeEmitToken: undefined,
+      OnAfterEmitToken: undefined,
+    }, emitContext);
 
     emitter_printSourceFile(receiver, jsFilePath, sourceMapFilePath, sf, p, options, shouldEmitSourceMaps(options, sf));
   } finally {
@@ -611,7 +619,7 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
       Target: CompilerOptions_GetEmitScriptTarget(options),
       SourceMap: e.emitOnly !== EmitOnlyForcedDts && Tristate_IsTrue(options!.DeclarationMap),
       InlineSourceMap: Tristate_IsTrue(options!.InlineSourceMap),
-      // InlineSources:       options.InlineSources.IsTrue(), // ignored, per strada
+      InlineSources: false,
       // ExtendedDiagnostics: options.ExtendedDiagnostics.IsTrue(), // NYI
       OnlyPrintJSDocStyle: true,
       OmitBraceSourceMapPositions: true,
@@ -621,7 +629,15 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
     };
 
     // create a printer to print the nodes
-    const p = NewPrinter(printerOptions, {} as PrintHandlers, emitContext);
+    const p = NewPrinter(printerOptions, {
+      HasGlobalName: undefined,
+      OnBeforeEmitNode: undefined,
+      OnAfterEmitNode: undefined,
+      OnBeforeEmitNodeList: undefined,
+      OnAfterEmitNodeList: undefined,
+      OnBeforeEmitToken: undefined,
+      OnAfterEmitToken: undefined,
+    }, emitContext);
 
     const declarationMapOptions: GoPtr<CompilerOptions> = {
       SourceMap: IfElse(e.emitOnly !== EmitOnlyForcedDts && Tristate_IsTrue(options!.DeclarationMap), TSTrue, TSFalse),

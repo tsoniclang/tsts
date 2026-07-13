@@ -1417,11 +1417,11 @@ export function getNodeVisitor(visitNode: GoFunc<(arg0: GoPtr<Node>, arg1: GoPtr
       }
       return modifiers;
     },
-    VisitEmbeddedStatement: undefined!,
-    VisitIterationBody: undefined!,
-    VisitParameters: undefined!,
-    VisitFunctionBody: undefined!,
-    VisitTopLevelStatements: undefined!,
+    VisitEmbeddedStatement: undefined,
+    VisitIterationBody: undefined,
+    VisitParameters: undefined,
+    VisitFunctionBody: undefined,
+    VisitTopLevelStatements: undefined,
   };
   return NewNodeVisitor(Identity, undefined, hooks);
 }

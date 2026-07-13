@@ -103,9 +103,9 @@ export interface Message {
   category: Category;
   key: Key;
   text: string;
-  reportsUnnecessary?: bool;
-  elidedInCompatibilityPyramid?: bool;
-  reportsDeprecated?: bool;
+  reportsUnnecessary: bool;
+  elidedInCompatibilityPyramid: bool;
+  reportsDeprecated: bool;
 }
 
 /**
@@ -145,7 +145,7 @@ export function Message_Key(receiver: GoPtr<Message>): Key {
  * func (m *Message) ReportsUnnecessary() bool           { return m.reportsUnnecessary }
  */
 export function Message_ReportsUnnecessary(receiver: GoPtr<Message>): bool {
-  return (receiver!.reportsUnnecessary ?? false) as bool;
+  return receiver!.reportsUnnecessary;
 }
 
 /**
@@ -155,7 +155,7 @@ export function Message_ReportsUnnecessary(receiver: GoPtr<Message>): bool {
  * func (m *Message) ElidedInCompatibilityPyramid() bool { return m.elidedInCompatibilityPyramid }
  */
 export function Message_ElidedInCompatibilityPyramid(receiver: GoPtr<Message>): bool {
-  return (receiver!.elidedInCompatibilityPyramid ?? false) as bool;
+  return receiver!.elidedInCompatibilityPyramid;
 }
 
 /**
@@ -165,7 +165,7 @@ export function Message_ElidedInCompatibilityPyramid(receiver: GoPtr<Message>): 
  * func (m *Message) ReportsDeprecated() bool            { return m.reportsDeprecated }
  */
 export function Message_ReportsDeprecated(receiver: GoPtr<Message>): bool {
-  return (receiver!.reportsDeprecated ?? false) as bool;
+  return receiver!.reportsDeprecated;
 }
 
 /**

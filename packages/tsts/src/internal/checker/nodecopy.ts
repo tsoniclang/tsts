@@ -858,7 +858,17 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       }
       return NodeBuilderImpl_setTextRange(b, Node_VisitEachChild(current, vis as unknown as GoPtr<NodeVisitor>), current);
     };
-    vis = NewNodeVisitor(visitorFunc, b!.f, {});
+    vis = NewNodeVisitor(visitorFunc, b!.f, {
+      VisitNode: undefined,
+      VisitToken: undefined,
+      VisitNodes: undefined,
+      VisitModifiers: undefined,
+      VisitEmbeddedStatement: undefined,
+      VisitIterationBody: undefined,
+      VisitParameters: undefined,
+      VisitFunctionBody: undefined,
+      VisitTopLevelStatements: undefined,
+    });
     return visitorFunc(node);
   };
 
@@ -1324,6 +1334,13 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       nonLocalNode = oldNonLocalNode;
       return result;
     },
+    VisitToken: undefined,
+    VisitModifiers: undefined,
+    VisitEmbeddedStatement: undefined,
+    VisitIterationBody: undefined,
+    VisitParameters: undefined,
+    VisitFunctionBody: undefined,
+    VisitTopLevelStatements: undefined,
   });
   return visitor as unknown as GoPtr<NodeVisitor>;
 }

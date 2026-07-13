@@ -6098,7 +6098,7 @@ export function SourceFile_GetOrCreateToken(receiver: GoPtr<SourceFile>, kind: K
  */
 export function createToken(kind: Kind, file: GoPtr<SourceFile>, pos: int, end: int, flags: TokenFlags): GoPtr<Node> {
   if (file!.tokenFactory === undefined) {
-    file!.tokenFactory = NewNodeFactory({} as NodeFactoryHooks);
+    file!.tokenFactory = NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined });
   }
   const text = StringByteSlice(file!.text, pos, end);
   switch (kind) {
