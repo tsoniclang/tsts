@@ -4,6 +4,7 @@ import test from "node:test";
 import { compareSignatures, resolveOverride } from "./sig-check.mjs";
 
 const zeroFactoryId = "packages/tsts/src/go/compat.ts::GoZeroFactory";
+const equalityId = "packages/tsts/src/go/compat.ts::GoEquality";
 const identity = (value) => value;
 const keyword = (name) => ({ t: "kw", kw: name });
 const typeParameterReference = (index) => ({ t: "tp", depth: 0, index });
@@ -35,6 +36,11 @@ const zeroDictionaryParameter = (name, typeParameterIndex, changes = {}) => para
   id: zeroFactoryId,
   args: [typeParameterReference(typeParameterIndex)],
 }, changes);
+const equalityDictionaryParameter = (name, typeParameterIndex, changes = {}) => parameter(name, {
+  t: "ref",
+  id: equalityId,
+  args: [typeParameterReference(typeParameterIndex)],
+}, changes);
 const signature = ({ params, ret = keyword("void"), typeParams }) => ({
   role: "implementation",
   declarationModifiers: ["export"],
@@ -48,6 +54,11 @@ const signature = ({ params, ret = keyword("void"), typeParams }) => ({
 const func = (value) => ({ kind: "func", modifiers: ["export"], signatures: [signature(value)] });
 const dictionary = (parameterName, typeParameterName) => ({
   kind: "zero-value",
+  parameter: parameterName,
+  typeParameter: typeParameterName,
+});
+const equalityDictionary = (parameterName, typeParameterName) => ({
+  kind: "equality",
   parameter: parameterName,
   typeParameter: typeParameterName,
 });
@@ -103,7 +114,49 @@ test("runtime dictionary override preserves declared order for multiple factorie
   assert.match(resolve([
     dictionary("zeroValue", "V"),
     dictionary("zeroKey", "K"),
-  ], expected, actual).issues[0].reason, /must be trailing parameter/);
+  ], expected, actual).issues[0].reason, /must occupy dictionary parameter/);
+});
+
+test("runtime dictionary override uses the canonical slot before a variadic rest", () => {
+  const typeParams = [typeParameter("T", 0)];
+  const expected = func({
+    typeParams,
+    params: [parameter("values", { t: "array", element: typeParameterReference(0) }, { rest: true })],
+    ret: typeParameterReference(0),
+  });
+  const actual = func({
+    typeParams,
+    params: [
+      zeroDictionaryParameter("zeroValue", 0),
+      parameter("values", { t: "array", element: typeParameterReference(0) }, { rest: true }),
+    ],
+    ret: typeParameterReference(0),
+  });
+
+  const { issues, resolved } = resolve([dictionary("zeroValue", "T")], expected, actual);
+  assert.deepEqual(issues, []);
+  assert.deepEqual(compareSignatures(expected, actual, resolved), []);
+
+  const invalidRestPlacement = structuredClone(actual);
+  invalidRestPlacement.signatures[0].params.reverse();
+  assert.match(resolve([dictionary("zeroValue", "T")], expected, invalidRestPlacement).issues[0].reason, /rest parameter to be unique and last/);
+});
+
+test("runtime dictionary override validates equality dictionaries by exact identity", () => {
+  const typeParams = [typeParameter("T", 0)];
+  const expected = func({
+    typeParams,
+    params: [parameter("value", typeParameterReference(0))],
+    ret: keyword("boolean"),
+  });
+  const actual = func({
+    typeParams,
+    params: [parameter("value", typeParameterReference(0)), equalityDictionaryParameter("equal", 0)],
+    ret: keyword("boolean"),
+  });
+
+  assert.deepEqual(resolve([equalityDictionary("equal", "T")], expected, actual).issues, []);
+  assert.match(resolve([dictionary("equal", "T")], expected, actual).issues[0].reason, /exact type GoZeroFactory/);
 });
 
 test("runtime dictionary override rejects every malformed dictionary parameter shape", () => {
@@ -115,12 +168,12 @@ test("runtime dictionary override rejects every malformed dictionary parameter s
   const missingField = zeroDictionaryParameter("zeroValue", 1);
   delete missingField.initializerIssue;
   const cases = [
-    ["name", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("other", 1)], /must be trailing parameter/],
+    ["name", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("other", 1)], /must occupy dictionary parameter/],
     ["factory", [parameter("key", typeParameterReference(0)), parameter("zeroValue", { t: "ref", id: "m::Other", args: [typeParameterReference(1)] })], /exact type GoZeroFactory/],
     ["factory arity", [parameter("key", typeParameterReference(0)), parameter("zeroValue", { t: "ref", id: zeroFactoryId, args: [] })], /exact type GoZeroFactory/],
     ["type parameter", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 0)], /exact lexical type parameter/],
     ["optional", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { optional: true, optionalSyntax: "question", question: true })], /optional must be false/],
-    ["rest", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { rest: true })], /rest must be false/],
+    ["rest", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { rest: true })], /must occupy dictionary parameter/],
     ["initializer", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { initializerStatus: "known", initializer: { kind: "identifier", name: "factory" } })], /initializerStatus must be "missing"/],
     ["unknown descriptor field", [parameter("key", typeParameterReference(0)), unknownField], /unknown=legacy/],
     ["missing descriptor field", [parameter("key", typeParameterReference(0)), missingField], /missing=initializerIssue/],

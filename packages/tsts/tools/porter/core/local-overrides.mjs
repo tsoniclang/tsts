@@ -161,7 +161,7 @@ function validateRuntimeDictionaries(value, unit) {
     return issues;
   }
   const parameters = new Set();
-  const typeParameters = new Set();
+  const dictionaryBindings = new Set();
   for (const [index, dictionary] of value.runtimeDictionaries.entries()) {
     const label = `runtimeDictionaries[${index}]`;
     if (dictionary === null || typeof dictionary !== "object" || Array.isArray(dictionary)) {
@@ -172,7 +172,9 @@ function validateRuntimeDictionaries(value, unit) {
     if (JSON.stringify(keys) !== JSON.stringify(["kind", "parameter", "typeParameter"])) {
       issues.push(`${label} must contain exactly kind, parameter, and typeParameter`);
     }
-    if (dictionary.kind !== "zero-value") issues.push(`${label}.kind must be 'zero-value'`);
+    if (dictionary.kind !== "zero-value" && dictionary.kind !== "equality") {
+      issues.push(`${label}.kind must be 'zero-value' or 'equality'`);
+    }
     if (typeof dictionary.parameter !== "string" || dictionary.parameter.trim() === "") {
       issues.push(`${label}.parameter must be a non-empty string`);
     } else if (parameters.has(dictionary.parameter)) {
@@ -182,10 +184,13 @@ function validateRuntimeDictionaries(value, unit) {
     }
     if (typeof dictionary.typeParameter !== "string" || dictionary.typeParameter.trim() === "") {
       issues.push(`${label}.typeParameter must be a non-empty string`);
-    } else if (typeParameters.has(dictionary.typeParameter)) {
-      issues.push(`${label}.typeParameter duplicates '${dictionary.typeParameter}'`);
     } else {
-      typeParameters.add(dictionary.typeParameter);
+      const binding = `${dictionary.kind}\0${dictionary.typeParameter}`;
+      if (dictionaryBindings.has(binding)) {
+        issues.push(`${label} duplicates the '${dictionary.kind}' dictionary for type parameter '${dictionary.typeParameter}'`);
+      } else {
+        dictionaryBindings.add(binding);
+      }
     }
   }
   return issues;

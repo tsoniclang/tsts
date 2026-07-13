@@ -67,6 +67,7 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /export function MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): GoChan<T>/);
   assert.match(compat, /export function GoRequireNonNilAfterSuccess<T>/);
   assert.match(compat, /export type GoZeroFactory<T> = \(\) => T;/);
+  assert.match(compat, /export type GoEquality<T> = \(left: T, right: T\) => bool;/);
   assert.match(compat, /export function GoZeroSlice<T>\(\): GoSlice<T>/);
   assert.match(compat, /export function GoZeroMap<K, V>\(\): GoMap<K, V>/);
   assert.match(compat, /export function GoMapLookup<K, V>/);
