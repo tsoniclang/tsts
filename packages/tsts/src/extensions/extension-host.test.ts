@@ -48,6 +48,7 @@ import type {
   TargetIdentity,
   TargetOperationFact,
   TargetSemanticProvider,
+  TargetTypeRef,
   ExtensionFlowUseValidationRequest,
   ExtensionFlowUseValidationResult,
 } from "./index.js";
@@ -381,10 +382,10 @@ test("semantic provider methods own typed observations without hook boilerplate"
   const lambda = {};
   const flowUse = {};
   const voidType = {};
-  const int32Type = {};
+  const int32Type = { kind: "source-primitive", name: "int32" } satisfies TargetTypeRef;
   const longType = {};
   const byteType = {};
-  const charType = {};
+  const charType = { kind: "source-primitive", name: "char" } satisfies TargetTypeRef;
   const stringType = {};
   const delegateType = {};
   const listAdd = {};
@@ -1751,8 +1752,8 @@ test("property, element, and operator observations expose target operations", ()
   const indexArgument = {};
   const leftOperand = {};
   const rightOperand = {};
-  const int32Type = {};
-  const elementType = {};
+  const int32Type = { kind: "source-primitive", name: "int32" } satisfies TargetTypeRef;
+  const elementType = { kind: "target-named", id: "Acme.Element" } satisfies TargetTypeRef;
   const host = new ExtensionHost({}, {
     extensions: [
       extension("surface", {

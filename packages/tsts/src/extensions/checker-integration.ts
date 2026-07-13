@@ -9,13 +9,14 @@ import { NodeFlagsOptionalChain } from "../internal/ast/generated/flags.js";
 import type { Kind } from "../internal/ast/generated/kinds.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Checker } from "../internal/checker/checker/state.js";
+import { Type_Flags, Type_Symbol, TypeFlagsUniqueESSymbol } from "../internal/checker/types.js";
 import type { Signature, Type } from "../internal/checker/types.js";
 import { Checker_GetReturnTypeOfSignature } from "../internal/checker/exports.js";
 import { Checker_isTypeIdenticalTo } from "../internal/checker/relater.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
-import type { ArgumentPassingFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetOperationFact, TargetOperationProvenance, TargetParameter } from "./facts.js";
+import type { ArgumentPassingFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetOperationFact, TargetOperationProvenance, TargetParameter, TargetTypeRef } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
 import { recordProviderTypeFamilyReferenceFacts } from "./compiler-integration.js";
@@ -698,12 +699,28 @@ function preserveEquivalentCheckedSourceResultType(
   if (!targetOperationFactKey.equals(existing, withExistingSourceResultType)) {
     return incoming;
   }
-  return Checker_isTypeIdenticalTo(checker, existingSourceResultType, incomingSourceResultType)
+  return checkedSourceResultTypesEquivalent(checker, existingSourceResultType, incomingSourceResultType)
     ? withExistingSourceResultType
     : incoming;
 }
 
-function withCheckedOperationResultType(operation: TargetOperationFact, resultType: ExtensionFactSubject | undefined): TargetOperationFact {
+function checkedSourceResultTypesEquivalent(checker: GoPtr<Checker>, left: GoPtr<Type>, right: GoPtr<Type>): boolean {
+  if (Checker_isTypeIdenticalTo(checker, left, right)) {
+    return true;
+  }
+  if ((Type_Flags(left) & TypeFlagsUniqueESSymbol) === 0 || (Type_Flags(right) & TypeFlagsUniqueESSymbol) === 0) {
+    return false;
+  }
+  const leftSymbol = Type_Symbol(left);
+  const rightSymbol = Type_Symbol(right);
+  if (leftSymbol === undefined || leftSymbol !== rightSymbol) {
+    return false;
+  }
+  const declaration = primarySymbolDeclaration(leftSymbol);
+  return declaration !== undefined && declaration === primarySymbolDeclaration(rightSymbol);
+}
+
+function withCheckedOperationResultType(operation: TargetOperationFact, resultType: TargetTypeRef | undefined): TargetOperationFact {
   if (operation.resultType !== undefined || resultType === undefined) {
     return operation;
   }

@@ -165,7 +165,7 @@ export interface CheckedIterationMappingRequest {
 
 export interface CheckedOperationMappingResult {
   readonly operation: TargetOperationFact;
-  readonly resultType?: ExtensionFactSubject;
+  readonly resultType?: TargetTypeRef;
   readonly provenance?: TargetOperationProvenance;
 }
 

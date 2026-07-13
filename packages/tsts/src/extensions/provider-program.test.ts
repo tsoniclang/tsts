@@ -13,6 +13,7 @@ import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindMappedType, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
+import { Type_Flags, Type_Symbol, TypeFlagsUniqueESSymbol } from "../internal/checker/types.js";
 import type { Type } from "../internal/checker/types.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
@@ -37,8 +38,8 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ParameterPassingRequest, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest } from "./index.js";
-import { recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ParameterPassingRequest, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
+import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -1521,7 +1522,7 @@ test("checker exposes selected source member evidence on checked property access
         observedRequests.push(request);
         return acceptObservation({
           operation: targetOperation(`Acme.${request.propertyName}`, "property", "int32"),
-          resultType: semanticSubject("int32"),
+          resultType: targetResultType("int32"),
         });
       },
     })],
@@ -1539,7 +1540,7 @@ test("checker exposes selected source member evidence on checked property access
   assert.ok(splitRequest?.sourceResultType !== undefined);
   assert.ok(lengthRequest?.sourceResultType !== undefined);
   const lengthAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "Length");
-  assert.equal(extended.extensionHost.facts.get(lengthAccess, targetOperationFactKey)?.resultType, semanticSubject("int32"));
+  assert.deepEqual(extended.extensionHost.facts.get(lengthAccess, targetOperationFactKey)?.resultType, targetResultType("int32"));
 });
 
 test("repeated checked property observations preserve equivalent source result type provenance", () => {
@@ -1627,7 +1628,7 @@ test("repeated checked property observations preserve equivalent source result t
         observedRequests.push(request);
         return acceptObservation({
           operation: targetOperation("Acme.DeclarationOnly.Property", "property", "int32"),
-          resultType: semanticSubject("int32"),
+          resultType: targetResultType("int32"),
         });
       },
     })],
@@ -1709,6 +1710,276 @@ test("repeated checked property observations preserve equivalent source result t
   assert.ok(countFact?.provenance?.sourceResultType !== undefined);
 });
 
+test("repeated unique-symbol property results use their selected declaration identity", () => {
+  const observedRequests: CheckedPropertyAccessMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", `
+      interface Object {}
+      interface Function {}
+      interface Boolean {}
+      interface Number {}
+      interface String {}
+      interface RegExp {}
+      interface IArguments {}
+
+      interface SymbolConstructor {
+        readonly iterator: unique symbol;
+      }
+      declare var Symbol: SymbolConstructor;
+
+      interface OtherSymbolConstructor {
+        readonly other: unique symbol;
+      }
+      declare var OtherSymbol: OtherSymbolConstructor;
+
+      interface IteratorResult<T, TReturn = unknown> {
+        done?: boolean;
+        value: T | TReturn;
+      }
+      interface Iterator<T, TReturn = unknown, TNext = unknown> {
+        next(...args: [] | [TNext]): IteratorResult<T, TReturn>;
+      }
+      interface Iterable<T> {
+        [Symbol.iterator](): Iterator<T>;
+      }
+      interface Array<T> extends Iterable<T> {
+        readonly Length: number;
+        [index: number]: T;
+      }
+      type Parameters<T extends (...args: any) => any> =
+        T extends (...args: infer P) => any ? P : never;
+    `],
+    ["/src/index.ts", `
+      type Fn = (input: { count: number }) => number;
+      type Args = Parameters<Fn>;
+      const other = OtherSymbol.other;
+
+      export function read([input]: Args): number {
+        return input.count;
+      }
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["profile.d.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-unique-symbol-property-extension", {
+      identity: semanticProviderIdentity("acme-unique-symbol-property-provider"),
+      mapCheckedPropertyAccess: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          operation: targetOperation("Acme.DeclarationOnly.Property", "property", undefined),
+          resultType: targetResultType("int32"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const iteratorRequest = observedRequests.find((request) => request.propertyName === "iterator");
+  assert.ok(iteratorRequest?.sourceSelectedSymbol !== undefined);
+  assert.ok(iteratorRequest.sourceSelectedDeclaration !== undefined);
+  const sourceResultType = iteratorRequest.sourceResultType as GoPtr<Type>;
+  assert.ok(sourceResultType !== undefined);
+  const repeatedSourceResultType = { ...sourceResultType } satisfies Type;
+  assert.notEqual(sourceResultType, repeatedSourceResultType);
+  assert.notEqual(Type_Flags(sourceResultType) & TypeFlagsUniqueESSymbol, 0);
+  assert.notEqual(Type_Flags(repeatedSourceResultType) & TypeFlagsUniqueESSymbol, 0);
+  const sourceResultSymbol = Type_Symbol(sourceResultType);
+  const repeatedSourceResultSymbol = Type_Symbol(repeatedSourceResultType);
+  assert.ok(sourceResultSymbol !== undefined);
+  assert.equal(sourceResultSymbol, repeatedSourceResultSymbol);
+  const sourceResultDeclaration = sourceResultSymbol.ValueDeclaration ?? sourceResultSymbol.Declarations?.find((declaration) => declaration !== undefined);
+  const repeatedSourceResultDeclaration = repeatedSourceResultSymbol?.ValueDeclaration ?? repeatedSourceResultSymbol?.Declarations?.find((declaration) => declaration !== undefined);
+  assert.ok(sourceResultDeclaration !== undefined);
+  assert.equal(sourceResultDeclaration, repeatedSourceResultDeclaration);
+  assert.equal(sourceResultDeclaration, iteratorRequest.sourceSelectedDeclaration);
+
+  const otherRequest = observedRequests.find((request) => request.propertyName === "other");
+  assert.ok(otherRequest?.sourceResultType !== undefined);
+  const otherSourceResultType = otherRequest.sourceResultType as GoPtr<Type>;
+  assert.notEqual(Type_Flags(otherSourceResultType) & TypeFlagsUniqueESSymbol, 0);
+  assert.notEqual(Type_Symbol(otherSourceResultType), sourceResultSymbol);
+
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), index);
+  try {
+    assert.equal(Checker_isTypeIdenticalTo(checker, sourceResultType, repeatedSourceResultType), false);
+    recordExtensionCheckedPropertyAccessMapping(
+      checker,
+      iteratorRequest.expression as GoPtr<Node>,
+      iteratorRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      repeatedSourceResultType,
+    );
+    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
+    assert.equal(
+      extended.extensionHost.facts.get(iteratorRequest.expression, targetOperationFactKey)?.provenance?.sourceResultType,
+      sourceResultType,
+    );
+
+    assert.equal(Checker_isTypeIdenticalTo(checker, sourceResultType, otherSourceResultType), false);
+    recordExtensionCheckedPropertyAccessMapping(
+      checker,
+      iteratorRequest.expression as GoPtr<Node>,
+      iteratorRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      otherSourceResultType,
+    );
+  } finally {
+    done();
+  }
+
+  assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 1);
+});
+
+test("repeated property and element mappings compare target result references structurally", () => {
+  const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
+  const elementRequests: CheckedElementAccessMappingRequest[] = [];
+  const propertyResultTypes: TargetTypeRef[] = [];
+  const elementResultTypes: TargetTypeRef[] = [];
+  let propertyResultName: "int32" | "char" = "int32";
+  let elementResultName: "int32" | "char" = "int32";
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", `
+      interface Object {}
+      interface Function {}
+      interface Boolean {}
+      interface Number {}
+      interface String {}
+      interface RegExp {}
+      interface IArguments {}
+
+      interface IndexedValues {
+        readonly size: number;
+        [index: number]: number;
+      }
+    `],
+    ["/src/index.ts", `
+      declare const values: IndexedValues;
+      export const size = values.size;
+      export const first = values[0];
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["profile.d.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-structural-target-result-extension", {
+      identity: semanticProviderIdentity("acme-structural-target-result-provider"),
+      mapCheckedPropertyAccess: (request) => {
+        propertyRequests.push(request);
+        const resultType = targetResultType(propertyResultName);
+        propertyResultTypes.push(resultType);
+        return acceptObservation({
+          operation: targetOperation("Acme.Collection.Size", "property", undefined),
+          resultType,
+        });
+      },
+      mapCheckedElementAccess: (request) => {
+        elementRequests.push(request);
+        const resultType = targetResultType(elementResultName);
+        elementResultTypes.push(resultType);
+        return acceptObservation({
+          operation: targetOperation("Acme.Collection.Get", "indexer", undefined),
+          resultType,
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const propertyRequest = propertyRequests.find((request) => request.propertyName === "size");
+  const elementRequest = elementRequests[0];
+  assert.ok(propertyRequest?.sourceSelectedSymbol !== undefined);
+  assert.ok(propertyRequest.sourceResultType !== undefined);
+  assert.ok(elementRequest?.sourceSelectedSymbol !== undefined);
+  assert.ok(elementRequest.sourceResultType !== undefined);
+  assert.deepEqual(extended.extensionHost.facts.get(propertyRequest.expression, targetOperationFactKey)?.resultType, targetResultType("int32"));
+  assert.deepEqual(extended.extensionHost.facts.get(elementRequest.expression, targetOperationFactKey)?.resultType, targetResultType("int32"));
+
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), index);
+  try {
+    recordExtensionCheckedPropertyAccessMapping(
+      checker,
+      propertyRequest.expression as GoPtr<Node>,
+      propertyRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      propertyRequest.sourceResultType as GoPtr<Type>,
+    );
+    recordExtensionCheckedElementAccessMapping(
+      checker,
+      elementRequest.expression as GoPtr<Node>,
+      elementRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      elementRequest.sourceResultType as GoPtr<Type>,
+    );
+    assert.ok(propertyResultTypes.length >= 2);
+    assert.ok(elementResultTypes.length >= 2);
+    assert.notEqual(propertyResultTypes.at(-2), propertyResultTypes.at(-1));
+    assert.notEqual(elementResultTypes.at(-2), elementResultTypes.at(-1));
+    assert.deepEqual(propertyResultTypes.at(-2), propertyResultTypes.at(-1));
+    assert.deepEqual(elementResultTypes.at(-2), elementResultTypes.at(-1));
+    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
+
+    propertyResultName = "char";
+    recordExtensionCheckedPropertyAccessMapping(
+      checker,
+      propertyRequest.expression as GoPtr<Node>,
+      propertyRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      propertyRequest.sourceResultType as GoPtr<Type>,
+    );
+    assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 1);
+
+    elementResultName = "char";
+    recordExtensionCheckedElementAccessMapping(
+      checker,
+      elementRequest.expression as GoPtr<Node>,
+      elementRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      elementRequest.sourceResultType as GoPtr<Type>,
+    );
+  } finally {
+    done();
+  }
+
+  assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 2);
+});
+
 test("checker exposes selected source index-signature evidence on checked element access", () => {
   const observedRequests: CheckedElementAccessMappingRequest[] = [];
   let fs = FromMap(new Map<string, string>([
@@ -1760,7 +2031,7 @@ test("checker exposes selected source index-signature evidence on checked elemen
         observedRequests.push(request);
         return acceptObservation({
           operation: targetOperation("Acme.Index", "property", "int32"),
-          resultType: semanticSubject("int32"),
+          resultType: targetResultType("int32"),
         });
       },
     })],
@@ -1823,7 +2094,7 @@ test("checker exposes selected source member evidence on optional-chain property
         observedRequests.push(request);
         return acceptObservation({
           operation: targetOperation(`Acme.${request.propertyName}`, "property", "int32"),
-          resultType: semanticSubject("int32"),
+          resultType: targetResultType("int32"),
         });
       },
     })],
@@ -1889,7 +2160,7 @@ test("checker exposes source element types on for-of declaration and assignment 
         });
         return acceptObservation({
           operation: targetOperation("Acme.Iterate", "method", "int32"),
-          resultType: semanticSubject("int32"),
+          resultType: targetResultType("int32"),
         });
       },
     })],
@@ -1949,7 +2220,7 @@ test("checker maps checked unary operators through the operator observation", ()
         observedRequests.push(request);
         return acceptObservation({
           operation: targetOperation(`Acme.Operator.${request.operator}`, "operator", request.operator === "!" ? "boolean" : "number"),
-          resultType: semanticSubject(request.operator === "!" ? "boolean" : "number"),
+          resultType: targetResultType(request.operator === "!" ? "boolean" : "number"),
         });
       },
     })],
@@ -4594,18 +4865,18 @@ function surfaceSemanticProvider(): TargetSemanticProvider {
     identity: semanticProviderIdentity("acme-surface-semantic-provider"),
     mapCheckedPropertyAccess: () => acceptObservation({
       operation: targetOperation("Acme.String.Length", "property", "int32"),
-      resultType: semanticSubject("int32"),
+      resultType: targetResultType("int32"),
       provenance: {
         providerDeclaration: providerDeclarationIdentity("acme-property-provider", "acme-native", "acme.string", "length"),
       },
     }),
     mapCheckedElementAccess: () => acceptObservation({
       operation: targetOperation("Acme.ReadOnlySpan.GetItem", "indexer", "char"),
-      resultType: semanticSubject("char"),
+      resultType: targetResultType("char"),
     }),
     mapCheckedOperator: () => acceptObservation({
       operation: targetOperation("Acme.Int32.op_Addition", "operator", "int32"),
-      resultType: semanticSubject("int32"),
+      resultType: targetResultType("int32"),
     }),
   };
 }
@@ -4826,13 +5097,27 @@ function providerDeclarationIdentity(providerId: string, _providerTarget: string
   };
 }
 
-function targetOperation(operationId: string, operationKind: TargetOperationFact["operationKind"], resultType: string | TargetOperationFact["resultType"]): TargetOperationFact {
+function targetOperation(operationId: string, operationKind: TargetOperationFact["operationKind"], resultType?: string | TargetOperationFact["resultType"]): TargetOperationFact {
   return {
     operationId,
     operationKind,
     targetOperation: operationId,
-    ...(resultType !== undefined ? { resultType: typeof resultType === "string" ? semanticSubject(resultType) : resultType } : {}),
+    ...(resultType !== undefined ? { resultType: typeof resultType === "string" ? targetResultType(resultType) : resultType } : {}),
   };
+}
+
+function targetResultType(name: string): TargetTypeRef {
+  switch (name) {
+    case "boolean":
+      return { kind: "source-primitive", name: "bool" };
+    case "number":
+      return { kind: "source-primitive", name: "float64" };
+    case "char":
+    case "int32":
+      return { kind: "source-primitive", name };
+    default:
+      return { kind: "target-named", id: `Acme.${name}` };
+  }
 }
 
 function acmeProvider(specifier: string, reject: boolean): TargetBindingProvider {
