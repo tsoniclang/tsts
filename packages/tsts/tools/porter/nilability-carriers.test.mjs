@@ -107,7 +107,9 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   }).outputText;
   const runtime = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString("base64")}`);
   const nilSlice = runtime.GoNilSlice();
+  const sameNilSlice = runtime.GoNilSlice();
   assert.equal(nilSlice.length, 0);
+  assert.equal(nilSlice, sameNilSlice);
   assert.equal(runtime.GoSliceIsNil(nilSlice), true);
   assert.equal(runtime.GoSliceIsNil([]), false);
   const valueRef = runtime.GoValueRef(1);
@@ -120,7 +122,10 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.deepEqual(values, [1, 3]);
   assert.throws(() => runtime.GoSliceElementRef(values, 2), /index out of range/);
   assert.equal(runtime.GoAppend(nilSlice), nilSlice);
-  assert.deepEqual(runtime.GoAppend(nilSlice, 1), [1]);
+  const appended = runtime.GoAppend(nilSlice, 1);
+  assert.deepEqual(appended, [1]);
+  assert.notEqual(appended, nilSlice);
+  assert.equal(nilSlice.length, 0);
 
   const nilMap = runtime.GoNilMap();
   assert.equal(nilMap.size, 0);
