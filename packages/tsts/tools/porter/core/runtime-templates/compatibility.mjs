@@ -20,7 +20,7 @@ type GoPointerMethods<T> = typeof ${pointerMethodSetSymbol} extends keyof T
   : unknown;
 export type GoPtr<T> = GoNilable<T & GoPointerMethods<T>>;
 export type GoRef<T> = GoNilable<{ v: T } & GoPointerMethods<T>>;
-export type GoSlice<T> = T[];
+export type GoSlice<T> = T[] & { __tsgoGoNil?: bool };
 export type GoArray<T, Length extends string> = T[] & { readonly [__goBrand]?: { readonly length: Length } };
 export type GoMap<K, V> = Map<K, V>;
 export type GoChan<T, Direction extends string = "bidirectional"> = {
@@ -63,14 +63,14 @@ export function GoRequireNonNilAfterSuccess<T>(value: GoPtr<T>, operation: strin
   return value;
 }
 
-const goNilSlice: GoSlice<never> = [];
-
 export function GoNilSlice<T>(): GoSlice<T> {
-  return goNilSlice as GoSlice<T>;
+  const slice: GoSlice<T> = [];
+  slice.__tsgoGoNil = true as bool;
+  return slice;
 }
 
 export function GoSliceIsNil<T>(slice: GoSlice<T>): bool {
-  return (slice === goNilSlice) as bool;
+  return (slice.__tsgoGoNil === true) as bool;
 }
 
 const goNilMap: Map<unknown, unknown> = new class extends Map<unknown, unknown> {

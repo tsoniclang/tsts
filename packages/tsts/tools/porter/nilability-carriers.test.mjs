@@ -80,7 +80,7 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export type GoRef<T> = GoNilable<\{ v: T \} & GoPointerMethods<T>>;/);
   assert.match(source, /export function GoValueRef<T>\(value: T\): NonNullable<GoRef<T>>/);
   assert.match(source, /export function GoSliceElementRef<T>\(slice: GoSlice<T>, index: int\): NonNullable<GoRef<T>>/);
-  assert.match(source, /export type GoSlice<T> = T\[];/);
+  assert.match(source, /export type GoSlice<T> = T\[] & \{ __tsgoGoNil\?: bool \};/);
   assert.match(source, /export function GoNilSlice<T>\(\): GoSlice<T>/);
   assert.match(source, /export function GoSliceIsNil<T>\(slice: GoSlice<T>\): bool/);
   assert.match(source, /export type GoMap<K, V> = Map<K, V>;/);
@@ -109,8 +109,9 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   const nilSlice = runtime.GoNilSlice();
   const sameNilSlice = runtime.GoNilSlice();
   assert.equal(nilSlice.length, 0);
-  assert.equal(nilSlice, sameNilSlice);
+  assert.notEqual(nilSlice, sameNilSlice);
   assert.equal(runtime.GoSliceIsNil(nilSlice), true);
+  assert.equal(runtime.GoSliceIsNil(sameNilSlice), true);
   assert.equal(runtime.GoSliceIsNil([]), false);
   const valueRef = runtime.GoValueRef(1);
   valueRef.v = 2;
