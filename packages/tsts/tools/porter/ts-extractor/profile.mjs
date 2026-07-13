@@ -25,7 +25,7 @@ export const TSTS_PROFILE = {
   },
   // Go representation carriers -> exact generic name (resolved in `modules.compat`).
   bridge: {
-    nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", slice: "GoSlice", array: "GoArray",
+    nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", pointerConstraint: "GoPointerConstraint", slice: "GoSlice", array: "GoArray",
     map: "GoMap", chan: "GoChan", func: "GoFunc", interface: "GoInterface", unsafePointer: "GoUnsafePointer",
   },
   primitives: {
@@ -73,7 +73,7 @@ export function loadProfile(config) {
     ["annotation", ["tag", "idSeparator", "methodNameJoin"]],
     ["parser", ["distRoot", "freshnessSrcDirs"]],
     ["modules", ["core", "compat"]],
-    ["bridge", ["nilable", "pointer", "ref", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]],
+    ["bridge", ["nilable", "pointer", "ref", "pointerConstraint", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]],
     ["primitives", ["keyword", "core", "compat"]],
     ["constantRepresentations", ["bigintBasics", "bigintNamedTypes"]],
     ["conventions", ["goConstraintId"]],
@@ -96,7 +96,7 @@ function validateProfile(profile) {
   requireKnownKeys(profile, new Set(Object.keys(TSTS_PROFILE)), "signatureCheck");
   requireStringRecord(profile.annotation, "signatureCheck.annotation", ["tag", "idSeparator", "methodNameJoin"]);
   requireStringRecord(profile.modules, "signatureCheck.modules", ["core", "compat"]);
-  requireStringRecord(profile.bridge, "signatureCheck.bridge", ["nilable", "pointer", "ref", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]);
+  requireStringRecord(profile.bridge, "signatureCheck.bridge", ["nilable", "pointer", "ref", "pointerConstraint", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]);
   requirePlainRecord(profile.parser, "signatureCheck.parser");
   requireNonEmptyString(profile.parser.distRoot, "signatureCheck.parser.distRoot");
   requireStringArray(profile.parser.freshnessSrcDirs, "signatureCheck.parser.freshnessSrcDirs");

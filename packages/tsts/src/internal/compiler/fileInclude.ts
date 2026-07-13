@@ -721,7 +721,7 @@ export function FileIncludeReason_toRelatedInfo(receiver: GoPtr<FileIncludeReaso
             },
           );
           if (targetValueSyntax !== undefined) {
-            return CreateDiagnosticForNodeInSourceFile(config!.ConfigFile!.SourceFile, targetValueSyntax!.v, diagnostics.File_is_default_library_for_target_specified_here);
+            return CreateDiagnosticForNodeInSourceFile(config!.ConfigFile!.SourceFile, targetValueSyntax.v, diagnostics.File_is_default_library_for_target_specified_here);
           }
         }
       }

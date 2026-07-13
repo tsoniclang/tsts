@@ -40,7 +40,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
  */
 export interface projectReferenceFileMapper {
   opts: ProgramOptions;
-  host: GoPtr<ResolutionHost>;
+  host: GoInterface<ResolutionHost>;
   loader: GoPtr<fileLoader>;
   configToProjectReference: GoMap<Path, GoPtr<ParsedCommandLine>>;
   referencesInConfigFile: GoMap<Path, GoSlice<Path>>;

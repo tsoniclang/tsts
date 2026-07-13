@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoError, GoFunc, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoError, GoFunc, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoPointerKey, GoStringKey, GoZeroBoolean, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl, Mutex, Once } from "../../../go/sync.js";
@@ -48,7 +48,7 @@ import { Program_GetSourceFiles as incremental_Program_GetSourceFiles } from "./
 
 import type { GoInterface } from "../../../go/compat.js";
 
-const sourceFileKey = GoPointerKey<SourceFile>();
+const sourceFileKey: GoMapKeyDescriptor<GoPtr<SourceFile>> = GoPointerKey<SourceFile>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::dtsMayChange","kind":"type","status":"implemented","sigHash":"161a83db43532f7d6c3498aef7567079f27b3d88380b01283197b3f6270c1465"}
  *

@@ -42,7 +42,7 @@ export type JsonFieldNamesForGoStructContract<T, Id extends string, Fields> = T 
  * Go source:
  * var allowInvalid []json.Options = slices.Clip([]json.Options{jsontext.AllowInvalidUTF8(true)})
  */
-export let allowInvalid: GoSlice<Options> = Clip([jsontext_AllowInvalidUTF8(true) as Options]);
+export let allowInvalid: GoSlice<GoInterface<Options>> = Clip([jsontext_AllowInvalidUTF8(true) as Options]);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::func::Marshal","kind":"func","status":"implemented","sigHash":"dae80d7bc275a95555465a2200ab5240a71e863562a537cf8f91a6c5974667fe"}
@@ -57,8 +57,8 @@ export let allowInvalid: GoSlice<Options> = Clip([jsontext_AllowInvalidUTF8(true
  * 	return json.Marshal(in, opts...)
  * }
  */
-export function Marshal(in_: GoInterface<unknown>, ...opts: Array<Options>): [out: GoSlice<byte>, err: GoError] {
-  const resolvedOpts: Array<Options> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
+export function Marshal(in_: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): [out: GoSlice<byte>, err: GoError] {
+  const resolvedOpts: Array<GoInterface<Options>> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
   return json_Marshal(in_, ...resolvedOpts) as [GoSlice<byte>, GoError];
 }
 
@@ -75,8 +75,8 @@ export function Marshal(in_: GoInterface<unknown>, ...opts: Array<Options>): [ou
  * 	return json.MarshalEncode(out, in, opts...)
  * }
  */
-export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: GoInterface<unknown>, ...opts: Array<Options>): GoError {
-  const resolvedOpts: Array<Options> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
+export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
+  const resolvedOpts: Array<GoInterface<Options>> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
   return json_MarshalEncode(out, in_, ...resolvedOpts) as GoError;
 }
 
@@ -93,8 +93,8 @@ export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: GoInterface<unk
  * 	return json.MarshalWrite(out, in, opts...)
  * }
  */
-export function MarshalWrite(out: GoInterface<Writer>, in_: GoInterface<unknown>, ...opts: Array<Options>): GoError {
-  const resolvedOpts: Array<Options> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
+export function MarshalWrite(out: GoInterface<Writer>, in_: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
+  const resolvedOpts: Array<GoInterface<Options>> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
   return json_MarshalWrite(out!, in_, ...resolvedOpts) as GoError;
 }
 
@@ -144,7 +144,7 @@ export function MarshalIndentWrite(out: GoInterface<Writer>, in_: GoInterface<un
  * 	return json.Unmarshal(in, out, opts...)
  * }
  */
-export function Unmarshal(in_: GoSlice<byte>, out: GoInterface<unknown>, ...opts: Array<Options>): GoError {
+export function Unmarshal(in_: GoSlice<byte>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
   return json_Unmarshal(in_, out, ...opts) as GoError;
 }
 
@@ -156,7 +156,7 @@ export function Unmarshal(in_: GoSlice<byte>, out: GoInterface<unknown>, ...opts
  * 	return json.UnmarshalDecode(in, out, opts...)
  * }
  */
-export function UnmarshalDecode(in_: GoPtr<Decoder_d2f8186c>, out: GoInterface<unknown>, ...opts: Array<Options>): GoError {
+export function UnmarshalDecode(in_: GoPtr<Decoder_d2f8186c>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
   return json_UnmarshalDecode(in_, out, ...opts) as GoError;
 }
 
@@ -168,7 +168,7 @@ export function UnmarshalDecode(in_: GoPtr<Decoder_d2f8186c>, out: GoInterface<u
  * 	return json.UnmarshalRead(in, out, opts...)
  * }
  */
-export function UnmarshalRead(in_: GoInterface<Reader>, out: GoInterface<unknown>, ...opts: Array<Options>): GoError {
+export function UnmarshalRead(in_: GoInterface<Reader>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
   return json_UnmarshalRead(in_!, out, ...opts) as GoError;
 }
 

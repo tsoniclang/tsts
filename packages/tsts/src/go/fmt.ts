@@ -485,8 +485,8 @@ function renderHex(arg: unknown, upper: bool, spec: Spec): string {
 
 // Synthetic, stable per-object handle used only for %p so repeated formatting of
 // the same object yields the same text. No real address semantics are implied.
-const pointerHandles = new globalThis.WeakMap<object, number>();
-let pointerCounter = 0xc000000000;
+const pointerHandles: WeakMap<object, number> = new globalThis.WeakMap<object, number>();
+let pointerCounter: number = 0xc000000000;
 function pointerHandle(v: unknown): number {
   if (typeof v !== "object" || v === null) {
     return 0;
@@ -823,7 +823,7 @@ function toGoError(v: { Error(): string }): GoError {
   return wrapped;
 }
 
-const encoder = new globalThis.TextEncoder();
+const encoder: TextEncoder = new globalThis.TextEncoder();
 
 function utf8Bytes(s: string): GoSlice<byte> {
   return globalThis.Array.from(encoder.encode(s));

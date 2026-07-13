@@ -230,6 +230,91 @@ export interface Callbacks {
   assert.ok(audit(reorderedFields).mismatches.some((mismatch) => mismatch.kind === "member-order"));
 });
 
+test("authored facades require explicit consumed storage for lossless Go basic values", () => {
+  const packagePath = "example.com/native";
+  const objectId = `${packagePath}::type::Digest`;
+  const methodId = `${objectId}::method::Sum64`;
+  const receiver = variable(`${methodId}::signature::receiver`, "digest", namedType(objectId, packagePath, "Digest"));
+  const sum64 = {
+    id: methodId,
+    ownerId: objectId,
+    name: "Sum64",
+    packagePath,
+    exported: true,
+    signature: { ...signature([], [variable(`${methodId}::signature::results::0`, "", basic("uint64"))]), receiver },
+  };
+  const declaration = externalType({
+    packagePath,
+    name: "Digest",
+    rhs: structType([variable(`${objectId}::field::Hi`, "Hi", basic("uint64"), true)]),
+    methods: [sum64],
+  });
+  const snapshot = externalSnapshot([declaration]);
+  const moduleId = `${baseConfig.tsRoot}/go/example.com/native.ts`;
+  const source = "export interface Digest { Hi: bigint; Sum64(): bigint; }";
+  const semantic = buildDependencySemanticTypeIndex(snapshot).get(objectId);
+  const config = {
+    ...baseConfig,
+    authoredFacadeModules: ["go/example.com/native.ts"],
+    externalFacadePolicies: [{
+      objectId,
+      tsModule: "go/example.com/native.ts",
+      tsName: "Digest",
+      storageStrategy: "authored",
+      runtimeAdaptation: {
+        representation: "structural",
+        pointer: "aggregate",
+        nominality: "erased",
+        nominalityReason: "The structural digest interface intentionally erases the distinct Go digest type identity.",
+        basicStorage: [{
+          goBasic: "uint64",
+          tsScalar: "bigint",
+          reason: "The digest fields and methods require lossless 64-bit arithmetic beyond JavaScript Number precision.",
+        }],
+        goDeclarationHash: semanticDeclarationVariantsHash(semantic),
+        tsDeclarationHash: authoredTypeHash(moduleId, "Digest", source),
+        reason: "The digest uses one exact structural interface while preserving each lossless 64-bit value as bigint.",
+      },
+    }],
+  };
+  const audit = (candidate, candidateConfig = config) => {
+    const moduleIndex = indexTypeScriptModuleSources(parser, new Map([[moduleId, candidate]]));
+    return collectAuthoredFacadeMismatches({
+      api: parser,
+      canonicalIdentity: (identity) => identity,
+      config: candidateConfig,
+      conventions: {},
+      facades: finalizedCatalog(candidateConfig, snapshot, moduleIndex),
+      moduleIndex,
+      profile: loadProfile(candidateConfig),
+      snapshot,
+      valueEnvironments: buildIndexedModuleValueEnvironments(parser, moduleIndex),
+    });
+  };
+  assert.deepEqual(audit(source).mismatches, []);
+  assert.ok(audit(source.replaceAll("bigint", "number"), {
+    ...config,
+    externalFacadePolicies: [{
+      ...config.externalFacadePolicies[0],
+      runtimeAdaptation: {
+        ...config.externalFacadePolicies[0].runtimeAdaptation,
+        tsDeclarationHash: authoredTypeHash(moduleId, "Digest", source.replaceAll("bigint", "number")),
+      },
+    }],
+  }).mismatches.some((mismatch) => mismatch.kind === "member-type" || mismatch.kind === "return-type"));
+  const unusedConfig = {
+    ...config,
+    externalFacadePolicies: [{
+      ...config.externalFacadePolicies[0],
+      runtimeAdaptation: {
+        ...config.externalFacadePolicies[0].runtimeAdaptation,
+        basicStorage: [{ goBasic: "int16", tsScalar: "number", reason: "This intentionally unused exact basic storage rule must fail closed during contract rendering." }],
+      },
+    }],
+  };
+  assert.ok(audit(source, unusedConfig).mismatches.some((mismatch) => mismatch.detail.includes("basicStorage is unused")));
+});
+
 test("scalar method bindings are authored-surface roots even when the type selects no members", () => {
   const packagePath = "example.com/native";
   const objectId = `${packagePath}::type::Code`;

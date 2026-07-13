@@ -9,11 +9,11 @@ import * as json from "../json/json.js";
 
 import type { GoInterface, GoRef } from "../../go/compat.js";
 // Go's []byte(string) conversion: the UTF-8 encoding of the string.
-const utf8Encoder = new globalThis.TextEncoder();
+const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const stringToBytes = (s: string): GoSlice<byte> => globalThis.Array.from(utf8Encoder.encode(s));
 
 // Go's string([]byte) conversion: decode the byte slice as UTF-8.
-const utf8Decoder = new globalThis.TextDecoder();
+const utf8Decoder: TextDecoder = new globalThis.TextDecoder();
 const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(globalThis.Uint8Array.from(b));
 
 /**

@@ -1,5 +1,5 @@
-import type { bool, byte, int } from "../../scalars.js";
-import type { GoError, GoSlice } from "../../compat.js";
+import type { byte, int } from "../../scalars.js";
+import type { GoArray, GoError, GoSlice } from "../../compat.js";
 
 export interface Hasher {
   Write(p: GoSlice<byte>): [int, GoError];
@@ -12,40 +12,30 @@ export interface Hasher {
 export interface Uint128 {
   Hi: bigint;
   Lo: bigint;
-  Bytes(): GoSlice<byte>;
-  IsZero(): bool;
-  String(): string;
+  Bytes(): GoArray<byte, "16">;
 }
 
 const offset64: bigint = 14695981039346656037n;
 const prime64: bigint = 1099511628211n;
 const secondSeed: bigint = 0x9e3779b97f4a7c15n;
-const encoder = new TextEncoder();
-const uint32Base = 0x100000000;
-const prime64Low = Number(prime64 & 0xffffffffn);
-const prime64High = Number((prime64 >> 32n) & 0xffffffffn);
-const offset64Low = Number(offset64 & 0xffffffffn);
-const offset64High = Number((offset64 >> 32n) & 0xffffffffn);
-const secondSeedLow = Number(secondSeed & 0xffffffffn);
-const secondSeedHigh = Number((secondSeed >> 32n) & 0xffffffffn);
+const encoder: TextEncoder = new TextEncoder();
+const uint32Base: number = 0x100000000;
+const prime64Low: number = Number(prime64 & 0xffffffffn);
+const prime64High: number = Number((prime64 >> 32n) & 0xffffffffn);
+const offset64Low: number = Number(offset64 & 0xffffffffn);
+const offset64High: number = Number((offset64 >> 32n) & 0xffffffffn);
+const secondSeedLow: number = Number(secondSeed & 0xffffffffn);
+const secondSeedHigh: number = Number((secondSeed >> 32n) & 0xffffffffn);
 
-function uint64FromParts(high: number, low: number): bigint {
+function uint64BigIntFromParts(high: number, low: number): bigint {
   return (BigInt(high >>> 0) << 32n) | BigInt(low >>> 0);
 }
 
 class uint128 implements Uint128 {
   constructor(readonly Hi: bigint, readonly Lo: bigint) {}
 
-  Bytes(): GoSlice<byte> {
+  Bytes(): GoArray<byte, "16"> {
     return [...uint64Bytes(this.Hi), ...uint64Bytes(this.Lo)];
-  }
-
-  IsZero(): bool {
-    return this.Hi === 0n && this.Lo === 0n;
-  }
-
-  String(): string {
-    return this.Hi.toString(16).padStart(16, "0") + this.Lo.toString(16).padStart(16, "0");
   }
 }
 
@@ -56,10 +46,10 @@ class uint128 implements Uint128 {
 // eventually exhausted the heap. Consumers that need Go value-key semantics use
 // GoStructMap instead.)
 class hasher implements Hasher {
-  private highHigh = (offset64High ^ secondSeedHigh) >>> 0;
-  private highLow = (offset64Low ^ secondSeedLow) >>> 0;
-  private lowHigh = offset64High;
-  private lowLow = offset64Low;
+  private highHigh: number = (offset64High ^ secondSeedHigh) >>> 0;
+  private highLow: number = (offset64Low ^ secondSeedLow) >>> 0;
+  private lowHigh: number = offset64High;
+  private lowLow: number = offset64Low;
 
   private writeByte(value: number): void {
     const byteValue = value & 0xff;
@@ -111,11 +101,11 @@ class hasher implements Hasher {
   }
 
   Sum128(): Uint128 {
-    return new uint128(uint64FromParts(this.highHigh, this.highLow), uint64FromParts(this.lowHigh, this.lowLow));
+    return new uint128(uint64BigIntFromParts(this.highHigh, this.highLow), uint64BigIntFromParts(this.lowHigh, this.lowLow));
   }
 
   Sum64(): bigint {
-    return uint64FromParts(this.lowHigh, this.lowLow);
+    return uint64BigIntFromParts(this.lowHigh, this.lowLow);
   }
 
   Reset(): void {
@@ -136,8 +126,8 @@ export function New(): Hasher {
   return new hasher();
 }
 
-function uint64Bytes(value: bigint): GoSlice<byte> {
-  const out: GoSlice<byte> = [];
+function uint64Bytes(value: bigint): GoArray<byte, "8"> {
+  const out: GoArray<byte, "8"> = [];
   for (let shift = 56n; shift >= 0n; shift -= 8n) {
     out.push(Number((value >> shift) & 0xffn) as byte);
   }

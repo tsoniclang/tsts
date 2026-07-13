@@ -95,7 +95,7 @@ function renderCarrier(contract, operations) {
 }
 
 function renderPointer(contract, operations) {
-  if (!new Set(["aggregate", "slot"]).has(contract.representation)) {
+  if (!new Set(["aggregate", "slot", "constraint"]).has(contract.representation)) {
     throw new Error(`canonical semantic pointer has unknown representation '${contract.representation}'`);
   }
   const element = renderCanonicalType(contract.element, operations);

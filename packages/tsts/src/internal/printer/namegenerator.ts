@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoNilMap, GoStringKey, type GoFunc, type GoMap, type GoPtr } from "../../go/compat.js";
+import { GoFieldRef, GoNilMap, GoStringKey, type GoFunc, type GoMap, type GoPtr } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { MemberName } from "../ast/generated/unions.js";
 import type { NodeId } from "../ast/ids.js";
@@ -89,17 +89,11 @@ export interface nameGenerationScope {
 }
 
 function nameGenerationScopeRef(receiver: NameGenerator): NonNullable<GoRef<GoPtr<nameGenerationScope>>> {
-  return {
-    get v(): GoPtr<nameGenerationScope> { return receiver.nameGenerationScope; },
-    set v(value: GoPtr<nameGenerationScope>) { receiver.nameGenerationScope = value; },
-  };
+  return GoFieldRef(() => receiver.nameGenerationScope, (value) => { receiver.nameGenerationScope = value; });
 }
 
 function privateNameGenerationScopeRef(receiver: NameGenerator): NonNullable<GoRef<GoPtr<nameGenerationScope>>> {
-  return {
-    get v(): GoPtr<nameGenerationScope> { return receiver.privateNameGenerationScope; },
-    set v(value: GoPtr<nameGenerationScope>) { receiver.privateNameGenerationScope = value; },
-  };
+  return GoFieldRef(() => receiver.privateNameGenerationScope, (value) => { receiver.privateNameGenerationScope = value; });
 }
 
 /**

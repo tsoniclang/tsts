@@ -5,6 +5,10 @@ import { assertSourceModuleId } from "../ts-extractor/source-structure/modules.m
 const policyKeys = new Set(["methodBindings", "objectId", "runtimeAdaptation", "storageStrategy", "tsModule", "tsName"]);
 const storageStrategies = new Set(["authored", "generated"]);
 const scalarStorageTypes = new Set(["bigint", "boolean", "number", "string"]);
+const goBasicStorageTypes = new Set([
+  "bool", "byte", "float32", "float64", "int", "int16", "int32", "int64", "int8",
+  "rune", "string", "uint", "uint16", "uint32", "uint64", "uint8", "uintptr",
+]);
 
 export function normalizeAuthoredFacadeModules(config) {
   const entries = config.authoredFacadeModules ?? [];
@@ -76,7 +80,7 @@ export function normalizeRuntimeAdaptationConfig(value, objectId) {
   const label = `external facade '${objectId}' runtimeAdaptation`;
   requirePlainObject(value, label);
   requireExactKeys(value, new Set([
-    "extraMembers", "goDeclarationHash", "nominality", "nominalityReason", "pointer", "reason", "representation", "scalarCarrierIdentity", "scalarStorage", "tsDeclarationHash",
+    "basicStorage", "extraMembers", "goDeclarationHash", "nominality", "nominalityReason", "pointer", "reason", "representation", "scalarCarrierIdentity", "scalarStorage", "tsDeclarationHash",
   ]), label);
   if (value.representation !== undefined && !new Set(["class", "scalar", "structural"]).has(value.representation)) {
     throw new Error(`${label}.representation must be 'class', 'scalar', or 'structural'`);
@@ -103,8 +107,10 @@ export function normalizeRuntimeAdaptationConfig(value, objectId) {
   requireHash(value.goDeclarationHash, `${label}.goDeclarationHash`);
   if (value.tsDeclarationHash !== undefined) requireHash(value.tsDeclarationHash, `${label}.tsDeclarationHash`);
   if (value.representation === undefined && value.tsDeclarationHash !== undefined) throw new Error(`${label}.tsDeclarationHash applies only to a runtime representation adaptation`);
+  const basicStorage = normalizeBasicStorage(value.basicStorage, objectId);
   const extraMembers = normalizeExtraMembers(value.extraMembers, objectId);
   return {
+    ...(basicStorage.length === 0 ? {} : { basicStorage }),
     ...(extraMembers.length === 0 ? {} : { extraMembers }),
     ...(value.representation === undefined ? {} : { representation: value.representation }),
     ...(value.pointer === undefined ? {} : { pointer: value.pointer }),
@@ -116,6 +122,23 @@ export function normalizeRuntimeAdaptationConfig(value, objectId) {
     ...(value.tsDeclarationHash === undefined ? {} : { tsDeclarationHash: value.tsDeclarationHash }),
     reason: value.reason.trim(),
   };
+}
+
+function normalizeBasicStorage(value, objectId) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) throw new Error(`external facade '${objectId}' runtimeAdaptation.basicStorage must be an array`);
+  const basics = new Set();
+  return value.map((entry, index) => {
+    const label = `external facade '${objectId}' runtimeAdaptation.basicStorage[${index}]`;
+    requirePlainObject(entry, label);
+    requireExactKeys(entry, new Set(["goBasic", "reason", "tsScalar"]), label);
+    if (!goBasicStorageTypes.has(entry.goBasic)) throw new Error(`${label}.goBasic must be one exact Go basic type`);
+    if (!scalarStorageTypes.has(entry.tsScalar)) throw new Error(`${label}.tsScalar must be 'bigint', 'boolean', 'number', or 'string'`);
+    requireReason(entry.reason, `${label}.reason`, `storing Go ${entry.goBasic} as TypeScript ${entry.tsScalar}`);
+    if (basics.has(entry.goBasic)) throw new Error(`${label} duplicates Go basic type '${entry.goBasic}'`);
+    basics.add(entry.goBasic);
+    return { goBasic: entry.goBasic, tsScalar: entry.tsScalar, reason: entry.reason.trim() };
+  }).sort((left, right) => compareText(left.goBasic, right.goBasic));
 }
 
 export function requireExactTsModule(value, label) {

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import { GoEqualStrict, GoStringKey, GoZeroInterface, type GoComparableInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
@@ -47,7 +47,7 @@ import {
 } from "./parsedcommandline.js";
 
 import { GoValueRef } from "../../go/compat.js";
-import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import type { GoFunc, GoRef } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::computeFn","kind":"func","status":"implemented","sigHash":"ab5b320eb71a492d12e852bdfc827bacfa2e45338162ae7f5b1598b402c04859"}
  *
@@ -335,11 +335,11 @@ export function filterSameAsDefaultInclude(specs: GoSlice<string>): GoSlice<stri
  * 	return ""
  * }
  */
-export function getNameOfCompilerOptionValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, GoComparableInterface>>): string {
+export function getNameOfCompilerOptionValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, GoInterface<unknown>>>): string {
   let found = "";
   let matched = false as bool;
-  OrderedMap_Entries(enumMap)!((k: string, v: GoComparableInterface): bool => {
-    if (v?.value === value) {
+  OrderedMap_Entries(enumMap)!((k: string, v: GoInterface<unknown>): bool => {
+    if (GoUnboxComparableInterface(v) === value) {
       found = k;
       matched = true;
       return false;
@@ -609,11 +609,12 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
  * 	return getNameOfCompilerOptionValue(value, enumMap)
  * }
  */
-export function serializeEnumValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, GoComparableInterface>>): string {
+export function serializeEnumValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, GoInterface<unknown>>>): string {
   if (typeof value === "number") {
     const container = { result: "" };
-    OrderedMap_Entries(enumMap)!((k: string, v: GoComparableInterface): bool => {
-      if (typeof v?.value === "number" && v.value === value) {
+    OrderedMap_Entries(enumMap)!((k: string, v: GoInterface<unknown>): bool => {
+      const unboxed = GoUnboxComparableInterface(v);
+      if (typeof unboxed === "number" && unboxed === value) {
         container.result = k;
         return false as bool;
       }

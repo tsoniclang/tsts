@@ -7,13 +7,13 @@
 // and convert back to a JavaScript string at the boundaries.
 
 import type { bool, int, byte } from "./scalars.js";
-import type { GoRune, GoSlice } from "./compat.js";
+import type { GoError, GoRune, GoSlice } from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
 
-const nonASCII = /[^\x00-\x7F]/;
+const nonASCII: RegExp = /[^\x00-\x7F]/;
 
-const encode = utf8.StringUtf8Bytes;
-const decode = utf8.StringFromUtf8Bytes;
+const encode: typeof utf8.StringUtf8Bytes = utf8.StringUtf8Bytes;
+const decode: typeof utf8.StringFromUtf8Bytes = utf8.StringFromUtf8Bytes;
 const isASCIIString = (s: string): bool => !nonASCII.test(s);
 
 // RuneError mirrors unicode/utf8.RuneError (U+FFFD, the replacement char).
@@ -212,7 +212,7 @@ export class Builder {
     // no-op: capacity reservation has no observable effect
   }
 
-  WriteString(s: string): [int, Error | undefined] {
+  WriteString(s: string): [int, GoError] {
     const bytes = encode(s);
     for (const b of bytes) {
       this.buf.push(b);
@@ -220,18 +220,18 @@ export class Builder {
     return [bytes.length, undefined];
   }
 
-  WriteByte(c: byte): Error | undefined {
+  WriteByte(c: byte): GoError {
     this.buf.push(c & 0xff);
     return undefined;
   }
 
-  WriteRune(r: GoRune): [int, Error | undefined] {
+  WriteRune(r: GoRune): [int, GoError] {
     const before = this.buf.length;
     encodeRune(this.buf, r);
     return [this.buf.length - before, undefined];
   }
 
-  Write(p: GoSlice<byte>): [int, Error | undefined] {
+  Write(p: GoSlice<byte>): [int, GoError] {
     for (const b of p) {
       this.buf.push(b & 0xff);
     }

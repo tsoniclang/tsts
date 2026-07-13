@@ -1,21 +1,21 @@
 import type { byte, bool } from "../../scalars.js";
-import type { GoError, GoPtr, GoSlice } from "../../compat.js";
+import type { GoError, GoInterface, GoPtr, GoSlice } from "../../compat.js";
+import { GoIsRef } from "../../compat.js";
 import type { Reader, Writer } from "../../io.js";
 import type { Decoder, Encoder, Option } from "./json/jsontext.js";
 import { NewDecoder, NewEncoder, writeTo } from "./json/jsontext.js";
 
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+const textEncoder: TextEncoder = new TextEncoder();
+const textDecoder: TextDecoder = new TextDecoder();
 
-export interface Options extends Option {
-  readonly __jsonOptions?: never;
-}
+export interface Options {}
 
 export const JsonFieldNames: unique symbol = Symbol("tsts.jsonFieldNames");
 
 export interface JsonFieldSpec {
   readonly name: string;
   readonly omitZero?: bool;
+  readonly decode?: (value: unknown) => unknown;
 }
 
 export type JsonFieldName = string | JsonFieldSpec;
@@ -23,18 +23,18 @@ export type JsonFieldName = string | JsonFieldSpec;
 export type JsonFieldNameMap = Record<string, JsonFieldName>;
 
 export interface MarshalerTo {
-  MarshalJSONTo(encoder: Encoder): GoError;
+  MarshalJSONTo(encoder: GoPtr<Encoder>): GoError;
 }
 
 export interface UnmarshalerFrom {
-  UnmarshalJSONFrom(decoder: Decoder): GoError;
+  UnmarshalJSONFrom(decoder: GoPtr<Decoder>): GoError;
 }
 
-export function Deterministic(value: bool): Options {
-  return { name: "Deterministic", value };
+export function Deterministic(value: bool): GoInterface<Options> {
+  return { name: "Deterministic", value } as Options;
 }
 
-export function Marshal(value: unknown, ...opts: Array<Options>): [GoSlice<byte>, GoError] {
+export function Marshal(value: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): [GoSlice<byte>, GoError] {
   try {
     return [Array.from(textEncoder.encode(stringify(value, opts))), undefined];
   } catch (error) {
@@ -42,7 +42,7 @@ export function Marshal(value: unknown, ...opts: Array<Options>): [GoSlice<byte>
   }
 }
 
-export function MarshalEncode(encoder: GoPtr<Encoder>, value: unknown, ...opts: Array<Options>): GoError {
+export function MarshalEncode(encoder: GoPtr<Encoder>, value: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
   if (encoder === undefined) {
     return new Error("nil json encoder");
   }
@@ -52,15 +52,15 @@ export function MarshalEncode(encoder: GoPtr<Encoder>, value: unknown, ...opts: 
   return encoder.WriteValue(JSON.parse(stringify(value, opts)));
 }
 
-export function MarshalWrite(writer: Writer, value: unknown, ...opts: Array<Options>): GoError {
+export function MarshalWrite(writer: GoInterface<Writer>, value: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
   const [bytes, err] = Marshal(value, ...opts);
   if (err !== undefined) {
     return err;
   }
-  return writeTo(writer, bytes);
+  return writeTo(writer!, bytes);
 }
 
-export function Unmarshal(data: GoSlice<byte>, out: unknown, ...opts: Array<Options>): GoError {
+export function Unmarshal(data: GoSlice<byte>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
   void opts;
   try {
     assignDecoded(out, JSON.parse(textDecoder.decode(Uint8Array.from(data as Array<number>))));
@@ -70,7 +70,7 @@ export function Unmarshal(data: GoSlice<byte>, out: unknown, ...opts: Array<Opti
   }
 }
 
-export function UnmarshalDecode(decoder: GoPtr<Decoder>, out: unknown, ...opts: Array<Options>): GoError {
+export function UnmarshalDecode(decoder: GoPtr<Decoder>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
   void opts;
   if (decoder === undefined) {
     return new Error("nil json decoder");
@@ -86,16 +86,19 @@ export function UnmarshalDecode(decoder: GoPtr<Decoder>, out: unknown, ...opts: 
   return undefined;
 }
 
-export function UnmarshalRead(reader: Reader, out: unknown, ...opts: Array<Options>): GoError {
-  return UnmarshalDecode(NewDecoder(reader), out, ...opts);
+export function UnmarshalRead(reader: GoInterface<Reader>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
+  return UnmarshalDecode(NewDecoder(reader!), out, ...opts);
 }
 
-const stringify = (value: unknown, opts: Array<Options>): string => {
-  const indent = opts.find((option) => option.name === "WithIndent")?.value;
+const stringify = (value: GoInterface<unknown>, opts: Array<GoInterface<Options>>): string => {
+  const indent = opts.map(optionStorage).find((option) => option.name === "WithIndent")?.value;
   return JSON.stringify(value, (_key, current) => normalizeForJson(current), typeof indent === "string" ? indent : undefined);
 }
 
 const normalizeForJson = (value: unknown): unknown => {
+  if (GoIsRef(value)) {
+    return value.v;
+  }
   if (value instanceof Map) {
     return Object.fromEntries(value);
   }
@@ -125,6 +128,10 @@ const assignDecoded = (out: unknown, value: unknown): void => {
   if (out === undefined || out === null) {
     return;
   }
+  if (GoIsRef(out)) {
+    out.v = value;
+    return;
+  }
   if (Array.isArray(out) && Array.isArray(value)) {
     out.splice(0, out.length, ...value);
     return;
@@ -139,13 +146,17 @@ const decodeFieldNames = (out: object, value: Record<string, unknown>): Record<s
   if (fieldNames === undefined) {
     return value;
   }
-  const reverse = new Map<string, string>();
+  const reverse = new Map<string, { readonly key: string; readonly decode?: (value: unknown) => unknown }>();
   for (const [key, field] of Object.entries(fieldNames)) {
-    reverse.set(typeof field === "string" ? field : field.name, key);
+    reverse.set(typeof field === "string" ? field : field.name, {
+      key,
+      ...(typeof field === "object" && field.decode !== undefined ? { decode: field.decode } : {}),
+    });
   }
   const decoded: Record<string, unknown> = {};
   for (const [key, current] of Object.entries(value)) {
-    decoded[reverse.get(key) ?? key] = current;
+    const field = reverse.get(key);
+    decoded[field?.key ?? key] = field?.decode === undefined ? current : field.decode(current);
   }
   return decoded;
 }
@@ -168,6 +179,8 @@ const isMarshalerTo = (value: unknown): value is MarshalerTo => {
 const isUnmarshalerFrom = (value: unknown): value is UnmarshalerFrom => {
   return typeof value === "object" && value !== null && "UnmarshalJSONFrom" in value && typeof (value as { UnmarshalJSONFrom: unknown }).UnmarshalJSONFrom === "function";
 }
+
+const optionStorage = (option: GoInterface<Options>): Option => option as Option;
 
 const toError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));

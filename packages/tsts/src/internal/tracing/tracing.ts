@@ -1199,7 +1199,7 @@ export function typeTracer_DumpTypes(receiver: GoPtr<typeTracer>): GoError {
   // Write opening bracket (no newline so type ID matches line number)
   sb.WriteString("[");
 
-  const recursionIdentityMap: GoMap<unknown, int> = new globalThis.Map<unknown, int>();
+  const recursionIdentityMap: GoMap<GoInterface<unknown>, int> = new globalThis.Map<GoInterface<unknown>, int>();
 
   for (let i = 0; i < types.length; i++) {
     const typ = types[i]!;
@@ -1469,7 +1469,7 @@ export interface LineAndChar {
  * 	return desc
  * }
  */
-export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ: GoInterface<TracedType>, recursionIdentityMap: GoMap<unknown, int>): TypeDescriptor {
+export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ: GoInterface<TracedType>, recursionIdentityMap: GoMap<GoInterface<unknown>, int>): TypeDescriptor {
   const symbol = typ!.Symbol();
   const aliasSymbol = typ!.AliasSymbol();
 

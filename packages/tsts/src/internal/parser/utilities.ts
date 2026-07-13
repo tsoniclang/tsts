@@ -36,11 +36,11 @@ import { StringByteAt, StringByteLen, StringByteSlice } from "../../go/unicode/u
 // non-ASCII strings through here (lib texts and their derived slices), and an
 // unbounded cache retains a full encoded copy of every one of them — measured
 // at multiple GB on a single full-lib-check compilation.
-export const byteLen = StringByteLen;
+export const byteLen: (text: string) => int = StringByteLen;
 
-export const byteSlice = StringByteSlice;
+export const byteSlice: (text: string, start: int, end?: int) => string = StringByteSlice;
 
-export const byteAt = StringByteAt;
+export const byteAt: (text: string, index: int) => int = StringByteAt;
 
 // Positional equivalents of Go's `text[start:]`-then-inspect patterns. Go tail
 // slices are free views; materializing them here allocates a decode of the

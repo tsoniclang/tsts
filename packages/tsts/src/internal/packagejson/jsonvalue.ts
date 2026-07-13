@@ -5,7 +5,7 @@ import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Decoder, UnmarshalerFrom } from "../json/json.js";
 
 import type { GoInterface } from "../../go/compat.js";
-const textDecoder = new globalThis.TextDecoder();
+const textDecoder: TextDecoder = new globalThis.TextDecoder();
 type JSONValueElementFactory<T> = (value: JSONValue) => T;
 
 /**

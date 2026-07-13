@@ -7,7 +7,7 @@
 // mirroring how diagnostics_generated.go is produced by generate.go.
 
 import type { bool, int } from "../../go/scalars.js";
-import { GoDynamicValue, GoEqualStrict, GoNamedStringKey, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoDynamicValue, GoEqualStrict, GoNamedStringKey, GoNilMap, type GoInterface, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Sprintf } from "../../go/fmt.js";
 import * as regexp from "../../go/regexp.js";
 import { ParseInt } from "../../go/strconv.js";
@@ -222,7 +222,7 @@ export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...a
 
   let text = message.text;
   const localizedMessages = getLocalizedMessages(locale);
-  const localized = localizedMessages?.get(message.key);
+  const localized = localizedMessages.get(message.key);
   if (localized !== undefined) {
     text = localized;
   }
@@ -237,7 +237,7 @@ export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...a
  * var localizedMessagesCache sync.Map // map[language.Tag]map[Key]string
  */
 export let localizedMessagesCache: Map = new Map();
-const languageTagKey = GoNamedStringKey<Tag>();
+const languageTagKey: GoMapKeyDescriptor<Tag> = GoNamedStringKey<Tag>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::getLocalizedMessages","kind":"func","status":"implemented","sigHash":"938c8f866fbc7ee358e1b68eceb4d247f7dae4739f97723bc330ddc5a3047236"}
@@ -269,15 +269,35 @@ const languageTagKey = GoNamedStringKey<Tag>();
  * 	return messages
  * }
  */
-export function getLocalizedMessages(loc: Tag): GoMap<Key, string> | undefined {
+export function getLocalizedMessages(loc: Tag): GoMap<Key, string> {
+  function isLocalizedMessages(value: GoInterface<unknown>): value is GoMap<Key, string> {
+    if (!(value instanceof globalThis.Map)) {
+      return false;
+    }
+    for (const [key, message] of value) {
+      if (typeof key !== "string" || typeof message !== "string") {
+        return false;
+      }
+    }
+    return true;
+  }
+
   if (loc === Und) {
-    return undefined;
+    return GoNilMap<Key, string>();
   }
   const cached = localizedMessagesCache.Load(GoDynamicValue(languageTagKey, loc));
   if (cached[1]) {
-    return cached[0] as GoMap<Key, string> | undefined;
+    const cachedMessages = cached[0];
+    if (cachedMessages === undefined) {
+      return GoNilMap<Key, string>();
+    }
+    if (!isLocalizedMessages(cachedMessages)) {
+      throw new globalThis.TypeError("localized messages cache contains an invalid value");
+    }
+    return cachedMessages;
   }
-  const messages = loadMatchedLocaleMessages(loc);
+  const loadedMessages = loadMatchedLocaleMessages(loc);
+  const messages = loadedMessages === undefined ? GoNilMap<Key, string>() : loadedMessages;
   localizedMessagesCache.Store(GoDynamicValue(languageTagKey, loc), messages);
   return messages;
 }
@@ -373,7 +393,7 @@ export function StringifyArgs(args: GoSlice<GoInterface<unknown>>): GoSlice<stri
 // internal/jsnum/string.ts). `Format` slices the regexp placeholder match
 // `match[1:len(match)-1]` with Go byte semantics; placeholder matches are
 // ASCII (`{<digits>}`), so byte and code-unit offsets coincide.
-const utf8Encoder = new globalThis.TextEncoder();
+const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 function byteLen(s: string): int {
   return utf8Encoder.encode(s).length as int;
 }

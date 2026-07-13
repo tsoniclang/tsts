@@ -3,7 +3,7 @@ import { CutPrefix, TrimLeft, TrimSuffix } from "../../go/strings.js";
 import { Sprintf } from "../../go/fmt.js";
 import { StringByteAt, StringByteLen } from "../../go/unicode/utf8.js";
 
-const byteLen = StringByteLen;
+const byteLen: (s: string) => int = StringByteLen;
 const byteAt = (s: string, i: int): byte => StringByteAt(s, i) as byte;
 
 /**

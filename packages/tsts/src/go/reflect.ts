@@ -1,5 +1,6 @@
-import type { int, uint, bool } from "./scalars.js";
-import type { GoSlice } from "./compat.js";
+import type { int, long, ulong, bool } from "./scalars.js";
+import type { GoInterface, GoSlice } from "./compat.js";
+import type { Seq } from "./iter.js";
 
 // Go: package reflect
 //
@@ -89,10 +90,11 @@ function classifyKind(value: unknown): Kind {
 // the value's Kind; structural type identity is not available.
 export interface Type {
   Kind(): Kind;
-  Name?(): string;
-  Elem?(): Type | undefined;
-  Fields?(): GoSlice<StructField>;
-  Zero?(): unknown;
+  Name(): string;
+  Elem(): GoInterface<Type>;
+  Fields(): Seq<StructField>;
+  readonly "__goUnexportedMethod::reflect::common::024f25728e0d81798885251395120b1da8e606e18a480d941d9e0bc24bef2890": never;
+  readonly "__goUnexportedMethod::reflect::uncommon::24228770a276b8adb671f9b44a1ea230d4f6f548ae52974311ade8942f363304": never;
 }
 
 export interface TypeDescriptor {
@@ -104,6 +106,9 @@ export interface TypeDescriptor {
 }
 
 class descriptorType implements Type {
+  declare readonly "__goUnexportedMethod::reflect::common::024f25728e0d81798885251395120b1da8e606e18a480d941d9e0bc24bef2890": never;
+  declare readonly "__goUnexportedMethod::reflect::uncommon::24228770a276b8adb671f9b44a1ea230d4f6f548ae52974311ade8942f363304": never;
+
   constructor(private readonly descriptor: TypeDescriptor) {}
 
   Kind(): Kind {
@@ -114,15 +119,22 @@ class descriptorType implements Type {
     return this.descriptor.name ?? "";
   }
 
-  Elem(): Type | undefined {
+  Elem(): GoInterface<Type> {
     return this.descriptor.elem;
   }
 
-  Fields(): GoSlice<StructField> {
-    return this.descriptor.fields ?? [];
+  Fields(): Seq<StructField> {
+    const fields = this.descriptor.fields;
+    return (yield_) => {
+      for (const field of fields ?? []) {
+        if (!yield_!(field)) {
+          return;
+        }
+      }
+    };
   }
 
-  Zero(): unknown {
+  zeroValue(): unknown {
     if (this.descriptor.zero !== undefined) {
       return this.descriptor.zero();
     }
@@ -130,8 +142,8 @@ class descriptorType implements Type {
   }
 }
 
-const registeredTypes = new globalThis.Map<string, Type>();
-const interfaceType = new descriptorType({ kind: Interface, name: "interface{}" });
+const registeredTypes: Map<string, Type> = new globalThis.Map<string, Type>();
+const interfaceType: descriptorType = new descriptorType({ kind: Interface, name: "interface{}" });
 
 export function NewType(descriptor: TypeDescriptor): Type {
   return new descriptorType(descriptor);
@@ -156,9 +168,9 @@ export class Value {
   }
 
   // Type returns v's type.
-  Type(): Type {
+  Type(): GoInterface<Type> {
     const kind = classifyKind(this.v);
-    return { Kind: (): Kind => kind };
+    return new descriptorType({ kind });
   }
 
   // IsNil reports whether its argument v is nil. Valid for chan, func, interface,
@@ -212,23 +224,23 @@ export class Value {
   }
 
   // Int returns v's underlying value, as an int64. Valid for the int kinds.
-  Int(): int {
+  Int(): long {
     if (typeof this.v === "number") {
-      return globalThis.Math.trunc(this.v) as int;
+      return globalThis.Math.trunc(this.v) as long;
     }
     if (typeof this.v === "bigint") {
-      return globalThis.Number(this.v) as int;
+      return globalThis.Number(this.v) as long;
     }
     throw new globalThis.Error("reflect: call of reflect.Value.Int on " + this.Kind() + " value");
   }
 
   // Uint returns v's underlying value, as a uint64. Valid for the uint kinds.
-  Uint(): uint {
+  Uint(): ulong {
     if (typeof this.v === "number") {
-      return globalThis.Math.trunc(this.v) as uint;
+      return globalThis.Math.trunc(this.v) as ulong;
     }
     if (typeof this.v === "bigint") {
-      return globalThis.Number(this.v) as uint;
+      return globalThis.Number(this.v) as ulong;
     }
     throw new globalThis.Error("reflect: call of reflect.Value.Uint on " + this.Kind() + " value");
   }
@@ -252,7 +264,7 @@ export class Value {
   }
 
   // Interface returns v's current value as an interface{} (the raw JS value).
-  Interface(): unknown {
+  Interface(): GoInterface<unknown> {
     return this.v;
   }
 }
@@ -264,7 +276,7 @@ export function TypeOf(value: unknown): Type | undefined {
     return undefined;
   }
   const kind = classifyKind(value);
-  return { Kind: (): Kind => kind };
+  return new descriptorType({ kind });
 }
 
 // ValueOf returns a new Value initialized to the concrete value stored in the
@@ -361,8 +373,8 @@ function deepEqual(x: unknown, y: unknown, seen: Set<unknown>): bool {
 // Modeled minimally; populated only by the struct-static paths that are not
 // faithfully portable here.
 export interface StructField {
-  readonly Name: string;
-  readonly Type: Type;
+  Name: string;
+  Type: GoInterface<Type>;
 }
 
 export function TypeFor<T>(name?: string): Type {
@@ -387,8 +399,8 @@ export function MakeSlice(typ: Type, len: int, cap: int): Value {
   if ((len as number) < 0 || (cap as number) < (len as number)) {
     throw new globalThis.Error("reflect.MakeSlice: length/capacity out of range");
   }
-  const elem = typ.Elem?.();
-  const zero = elem?.Zero?.() ?? zeroForKind(elem?.Kind() ?? Interface);
+  const elem = typ.Elem();
+  const zero = zeroForType(elem);
   return new Value(new globalThis.Array(len as number).fill(zero));
 }
 
@@ -401,11 +413,26 @@ export function Append(s: Value, ...x: GoSlice<Value>): Value {
 }
 
 export function Zero(typ: Type): Value {
-  return new Value(typ.Zero?.() ?? zeroForKind(typ.Kind()));
+  return new Value(zeroForType(typ));
 }
 
 export function VisibleFields(t: Type): GoSlice<StructField> {
-  return t.Fields?.() ?? [];
+  const fields: GoSlice<StructField> = [];
+  t.Fields()!((field) => {
+    fields.push(field);
+    return true;
+  });
+  return fields;
+}
+
+function zeroForType(typ: GoInterface<Type>): unknown {
+  if (typ === undefined) {
+    return undefined;
+  }
+  if (typ instanceof descriptorType) {
+    return typ.zeroValue();
+  }
+  return zeroForKind(typ.Kind());
 }
 
 function zeroForKind(kind: Kind): unknown {

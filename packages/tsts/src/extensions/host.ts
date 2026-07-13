@@ -52,7 +52,37 @@ export interface ExtensionDiagnosticRange {
   readonly end: number;
 }
 
-export const ExtensionHostDiagnosticCode = {
+export const ExtensionHostDiagnosticCode: {
+  readonly factConflict: 9000001;
+  readonly duplicateExtension: 9000002;
+  readonly missingDependency: 9000003;
+  readonly dependencyCycle: 9000004;
+  readonly observationOwnerConflict: 9000005;
+  readonly observationOwnerMissing: 9000006;
+  readonly initializationFailed: 9000007;
+  readonly factStoreSealed: 9000008;
+  readonly consumerBeforeFinalization: 9000009;
+  readonly invalidProvider: 9000010;
+  readonly observationOwnerDeferred: 9000011;
+  readonly observationConflict: 9000012;
+  readonly unknownObservationOwner: 9000013;
+  readonly multipleTargetExtensions: 9000014;
+  readonly duplicateProvider: 9000015;
+  readonly providerOwnershipConflict: 9000016;
+  readonly providerResolutionFailed: 9000017;
+  readonly invalidProviderDeclaration: 9000018;
+  readonly lifecycleHookFailed: 9000019;
+  readonly requiredFactMissing: 9000020;
+  readonly providerContractMismatch: 9000021;
+  readonly providerMissing: 9000022;
+  readonly providerOwnershipFailed: 9000023;
+  readonly providerResolveFailed: 9000024;
+  readonly providerDeclarationFailed: 9000025;
+  readonly observationHookFailed: 9000026;
+  readonly diagnosticRangeInvalid: 9000027;
+  readonly diagnosticCodeOutOfRange: 9000028;
+  readonly invalidFactSubject: 9000029;
+} = {
   factConflict: 9000001,
   duplicateExtension: 9000002,
   missingDependency: 9000003,
@@ -84,7 +114,7 @@ export const ExtensionHostDiagnosticCode = {
   invalidFactSubject: 9000029,
 } as const;
 
-export const TstsProviderContractVersion = "tsts.provider.1";
+export const TstsProviderContractVersion: "tsts.provider.1" = "tsts.provider.1";
 
 export interface CompilerExtensionIdentity {
   readonly id: string;
@@ -399,7 +429,10 @@ export interface ProviderVirtualDeclarationDocument {
   readonly evidence?: readonly ExtensionEvidence[];
 }
 
-export const ExtensionLifecycleEvent = {
+export const ExtensionLifecycleEvent: {
+  readonly afterSourceFileBound: "binder.afterSourceFileBound";
+  readonly beforeSemanticsFinalized: "semantics.beforeFinalized";
+} = {
   afterSourceFileBound: "binder.afterSourceFileBound",
   beforeSemanticsFinalized: "semantics.beforeFinalized",
 } as const;
@@ -490,8 +523,8 @@ export function defineExtensionFactKey<T>(options: ExtensionFactKeyOptions<T>): 
 
 export class ExtensionDiagnosticStore {
   readonly #diagnostics: ExtensionDiagnostic[] = [];
-  readonly #identities = new Set<string>();
-  readonly #diagnosticRanges = new Map<string, ExtensionDiagnosticRange>();
+  readonly #identities: Set<string> = new Set<string>();
+  readonly #diagnosticRanges: Map<string, ExtensionDiagnosticRange> = new Map<string, ExtensionDiagnosticRange>();
 
   registerDiagnosticRange(extensionId: string, range: ExtensionDiagnosticRange | undefined): boolean {
     if (range === undefined) {
@@ -580,11 +613,11 @@ export class ExtensionDiagnosticStore {
 }
 
 export class ExtensionFactStore {
-  readonly #objectFacts = new WeakMap<object, Map<string, ExtensionFactEntry<unknown>>>();
-  readonly #objectSubjectIds = new WeakMap<object, number>();
+  readonly #objectFacts: WeakMap<object, Map<string, ExtensionFactEntry<unknown>>> = new WeakMap<object, Map<string, ExtensionFactEntry<unknown>>>();
+  readonly #objectSubjectIds: WeakMap<object, number> = new WeakMap<object, number>();
   readonly #diagnostics: ExtensionDiagnosticStore;
-  #nextObjectSubjectId = 1;
-  #sealed = false;
+  #nextObjectSubjectId: number = 1;
+  #sealed: boolean = false;
 
   constructor(diagnostics: ExtensionDiagnosticStore) {
     this.#diagnostics = diagnostics;
@@ -704,7 +737,7 @@ export class ExtensionFactStore {
 export class ExtensionFactResolver {
   readonly #facts: ExtensionFactStore;
   readonly #diagnostics: ExtensionDiagnosticStore;
-  readonly #resolvers = new Map<string, ExtensionFactResolverCallback<unknown>[]>();
+  readonly #resolvers: Map<string, ExtensionFactResolverCallback<unknown>[]> = new Map<string, ExtensionFactResolverCallback<unknown>[]>();
 
   constructor(facts: ExtensionFactStore, diagnostics: ExtensionDiagnosticStore) {
     this.#facts = facts;
@@ -745,15 +778,15 @@ export class ExtensionFactResolver {
 export class ProviderRegistry {
   readonly #diagnostics: ExtensionDiagnosticStore;
   readonly #requiredProviderModules: readonly RequiredProviderModuleSpec[];
-  readonly #bindingProviders = new Map<string, TargetBindingProvider>();
-  readonly #semanticProviders = new Map<string, TargetSemanticProvider>();
-  readonly #virtualModules = new Map<string, ProviderResolvedModule>();
-  readonly #virtualModulesByFileName = new Map<string, ProviderResolvedModule>();
-  readonly #virtualDocumentsByUri = new Map<string, ProviderVirtualDeclarationDocument>();
-  readonly #virtualSourceVariantsByBaseFileName = new Map<string, { readonly sourceText: string; readonly fileName: string }[]>();
-  readonly #virtualBaseFileIdentities = new Map<string, string>();
-  readonly #canonicalExportsByBaseFileName = new Map<string, Map<string, string>>();
-  readonly #renderedExportSetsByBaseFileName = new Map<string, Set<string>>();
+  readonly #bindingProviders: Map<string, TargetBindingProvider> = new Map<string, TargetBindingProvider>();
+  readonly #semanticProviders: Map<string, TargetSemanticProvider> = new Map<string, TargetSemanticProvider>();
+  readonly #virtualModules: Map<string, ProviderResolvedModule> = new Map<string, ProviderResolvedModule>();
+  readonly #virtualModulesByFileName: Map<string, ProviderResolvedModule> = new Map<string, ProviderResolvedModule>();
+  readonly #virtualDocumentsByUri: Map<string, ProviderVirtualDeclarationDocument> = new Map<string, ProviderVirtualDeclarationDocument>();
+  readonly #virtualSourceVariantsByBaseFileName: Map<string, { readonly sourceText: string; readonly fileName: string }[]> = new Map<string, { readonly sourceText: string; readonly fileName: string }[]>();
+  readonly #virtualBaseFileIdentities: Map<string, string> = new Map<string, string>();
+  readonly #canonicalExportsByBaseFileName: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
+  readonly #renderedExportSetsByBaseFileName: Map<string, Set<string>> = new Map<string, Set<string>>();
 
   constructor(diagnostics: ExtensionDiagnosticStore, requiredProviderModules: readonly RequiredProviderModuleSpec[] = []) {
     this.#diagnostics = diagnostics;
@@ -1087,15 +1120,15 @@ export class ExtensionHost {
   readonly extensions: readonly CompilerExtension[];
   readonly activeTarget: string | undefined;
   readonly activeSurface: string | undefined;
-  readonly #extensionsById = new Map<string, CompilerExtension>();
-  readonly #observationOwners = new Map<ExtensionObservationPointName, string>();
-  readonly #observationHooks = new Map<ExtensionObservationPointName, RegisteredObservationHook[]>();
-  readonly #lifecycleHooks = new Map<string, RegisteredLifecycleHook[]>();
-  readonly #consumerSubjectIds = new WeakMap<object, number>();
+  readonly #extensionsById: Map<string, CompilerExtension> = new Map<string, CompilerExtension>();
+  readonly #observationOwners: Map<ExtensionObservationPointName, string> = new Map<ExtensionObservationPointName, string>();
+  readonly #observationHooks: Map<ExtensionObservationPointName, RegisteredObservationHook[]> = new Map<ExtensionObservationPointName, RegisteredObservationHook[]>();
+  readonly #lifecycleHooks: Map<string, RegisteredLifecycleHook[]> = new Map<string, RegisteredLifecycleHook[]>();
+  readonly #consumerSubjectIds: WeakMap<object, number> = new WeakMap<object, number>();
   #program: object;
   #compilerContext: ExtensionCompilerQueryContext | undefined;
-  #nextConsumerSubjectId = 1;
-  #finalized = false;
+  #nextConsumerSubjectId: number = 1;
+  #finalized: boolean = false;
 
   constructor(program: object, options: ExtensionHostOptions = {}) {
     this.#program = program;
@@ -1519,7 +1552,7 @@ function registerProviderObservation<TObservation extends ExtensionObservationPo
   host.registerObservation(observation, extensionId, (request, context) => handler(request, context));
 }
 
-const attachedExtensionHosts = new WeakMap<object, ExtensionHost>();
+const attachedExtensionHosts: WeakMap<object, ExtensionHost> = new WeakMap<object, ExtensionHost>();
 
 export function attachExtensionHost<TProgram extends object>(program: TProgram, options: ExtensionHostOptions = {}): ExtendedProgram<TProgram> {
   const host = new ExtensionHost(program, options);
@@ -1896,8 +1929,8 @@ interface ProviderExportRenderOptions {
   readonly localOnly?: boolean;
 }
 
-const providerTypeFamilyDefaultValueName = "__tstsProviderTypeFamilyDefault";
-const providerTypeFamilyDefaultTypeName = "__TstsProviderTypeFamilyDefault";
+const providerTypeFamilyDefaultValueName: "__tstsProviderTypeFamilyDefault" = "__tstsProviderTypeFamilyDefault";
+const providerTypeFamilyDefaultTypeName: "__TstsProviderTypeFamilyDefault" = "__TstsProviderTypeFamilyDefault";
 
 function getProviderCanonicalExportLocalNameMap(canonicalExports: ReadonlyMap<string, string>): ReadonlyMap<string, string> {
   return new Map([...canonicalExports.keys()].map((exportName) => [exportName, getProviderCanonicalExportLocalName(exportName)]));
@@ -2165,10 +2198,10 @@ function renderProviderTypeExpression(type: ProviderTypeExpression, context: Pro
   return renderProviderTypeExpressionWorker(type, providerTypePrecedenceNone, context, options);
 }
 
-const providerTypePrecedenceNone = 0;
-const providerTypePrecedenceUnion = 1;
-const providerTypePrecedenceIntersection = 2;
-const providerTypePrecedencePostfix = 3;
+const providerTypePrecedenceNone: 0 = 0;
+const providerTypePrecedenceUnion: 1 = 1;
+const providerTypePrecedenceIntersection: 2 = 2;
+const providerTypePrecedencePostfix: 3 = 3;
 
 function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parentPrecedence: number, context: ProviderRenderContext, options: ProviderTypeExpressionRenderOptions): string {
   switch (type.kind) {
@@ -2430,7 +2463,7 @@ function isValidProviderTypeFamilyDeclaration(value: ProviderExportDeclaration):
 }
 
 function isValidProviderTypeFamilyDeclarations(exports: readonly ProviderExportDeclaration[], imports: readonly ProviderImportDeclaration[]): boolean {
-  const reservedLocalNames = new Set([providerTypeFamilyDefaultValueName, providerTypeFamilyDefaultTypeName]);
+  const reservedLocalNames: Set<string> = new Set<string>([providerTypeFamilyDefaultValueName, providerTypeFamilyDefaultTypeName]);
   const importLocalNames = new Set<string>();
   const collectImportLocalName = (name: string | undefined) => {
     if (name !== undefined) {

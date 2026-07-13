@@ -60,7 +60,7 @@ export class Int {
 }
 
 export class Float {
-  constructor(readonly value = 0) {}
+  constructor(readonly value: number = 0) {}
 
   String(): string {
     return String(this.value);

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoError, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import type { GoError, GoInterface, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import type { Stringer } from "../../go/fmt.js";
 import * as errors from "../../go/errors.js";
 import * as fmt from "../../go/fmt.js";
@@ -135,7 +135,7 @@ const isSlash = (e: element): bool => isSlashCarrier(e);
  * }
  */
 export interface Glob {
-  elems: GoSlice<element>;
+  elems: GoSlice<GoInterface<element>>;
 }
 
 /**
@@ -736,7 +736,7 @@ export function Glob_Match(receiver: GoPtr<Glob>, input: string): bool {
  * 	return len(input) == 0
  * }
  */
-export function match(elems: GoSlice<element>, input: string): bool {
+export function match(elems: GoSlice<GoInterface<element>>, input: string): bool {
   while (elems.length > 0) {
     const elem: element = elems[0]!;
     elems = elems.slice(1);
@@ -817,7 +817,7 @@ export function match(elems: GoSlice<element>, input: string): bool {
     } else if (isGroupCarrier(elem)) {
       // Append remaining pattern elements to each group member looking for a
       // match.
-      let branch: GoSlice<element> = [];
+      let branch: GoSlice<GoInterface<element>> = [];
       for (const m of elem.value) {
         branch = branch.slice(0, 0);
         branch = [...branch, ...m!.elems];

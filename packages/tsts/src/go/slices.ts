@@ -1,6 +1,7 @@
 import type { bool, int } from "./scalars.js";
 import type { Seq } from "./iter.js";
 import type { GoEquality, GoFunc, GoPtr, GoSlice, GoOrdered } from "./compat.js";
+import { GoNilSlice, GoSliceIsNil } from "./compat.js";
 import { Compare as cmpCompare } from "./cmp.js";
 
 // Go: package slices (standard library).
@@ -150,11 +151,11 @@ export function CompareFunc<T1, T2>(
 
 // Clone returns a copy of the slice. The elements are copied using assignment,
 // so this is a shallow clone. Clone(nil) returns nil in Go; we mirror that.
-export function Clone<T>(s: GoSlice<T> | undefined): GoSlice<T> | undefined {
-  if (s === undefined) {
-    return undefined;
+export function Clone<T>(s: GoSlice<T>): GoSlice<T> {
+  if (GoSliceIsNil(s)) {
+    return GoNilSlice<T>();
   }
-  return s.slice();
+  return s.slice() as GoSlice<T>;
 }
 
 // Concat returns a new slice concatenating the passed in slices.

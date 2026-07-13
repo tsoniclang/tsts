@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
-import type { GoError, GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import type { GoError, GoMap, GoPtr, GoRef, GoRune, GoSlice } from "../../go/compat.js";
+import { GoNilSlice } from "../../go/compat.js";
 import { StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { BinarySearchFunc as slicesBinarySearchFunc, SortFunc as slicesSortFunc } from "../../go/slices.js";
 import { CutPrefix, EqualFold } from "../../go/strings.js";
@@ -594,7 +595,7 @@ export function convertDocumentToSourceMapper(host: GoInterface<Host>, contents:
   }
 
   // Don't support source maps that contain inlined sources
-  if (Some(sourceMap.SourcesContent, (s: GoPtr<string>): bool => { return s !== undefined; })) {
+  if (Some(sourceMap.SourcesContent, (s: GoRef<string>): bool => { return s !== undefined; })) {
     return undefined;
   }
 
@@ -618,7 +619,7 @@ export function convertDocumentToSourceMapper(host: GoInterface<Host>, contents:
  * }
  */
 export function tryParseRawSourceMap(contents: string): GoPtr<RawSourceMap> {
-  const sourceMap: RawSourceMap = {
+  const sourceMap: RawSourceMap & { [JsonFieldNames]: typeof rawSourceMapJsonFieldNames } = {
     [JsonFieldNames]: rawSourceMapJsonFieldNames,
     Version: 0,
     File: "",
@@ -626,7 +627,7 @@ export function tryParseRawSourceMap(contents: string): GoPtr<RawSourceMap> {
     Sources: [],
     Names: [],
     Mappings: "",
-    SourcesContent: [],
+    SourcesContent: GoNilSlice<GoRef<string>>(),
   };
   const err: GoError = jsonUnmarshal(stringToBytes(contents), sourceMap);
   if (err !== undefined) {

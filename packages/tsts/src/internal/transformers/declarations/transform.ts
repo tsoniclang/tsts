@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoEqualStrict, GoNilMap, GoPointerKey, GoStringKey, GoZeroPointer, type GoFunc, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer, type GoFunc, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { CommentRange, FileReference, SourceFile } from "../../ast/ast.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { SourceFile_Text, SourceFile_FileName, AsSourceFile, SourceFile_IsJS, Node_Symbol, Node_Initializer, Node_Type, Node_Expression, Node_Parameters, Node_ParameterList, Node_Elements, Node_IsTypeOnly, Node_ModuleSpecifier, NodeFactory_NewModifier, Node_Text, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateExpressionWithTypeArguments, Node_Arguments, NodeFactory_UpdateFunctionDeclaration, Node_StatementList, NodeFactory_UpdateSourceFile, Node_PropertyName, Node_EagerJSDoc, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateVariableDeclarationList, NodeFactory_UpdateBindingElement } from "../../ast/ast.js";
@@ -61,7 +61,7 @@ import * as strings from "../../../go/strings.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 
-const nodePointerKey = GoPointerKey<Node>();
+const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::ReferencedFilePair","kind":"type","status":"implemented","sigHash":"1acae0a7e39042fd1870c208a4ed0078a626c88d9ad3c80e264bb4445390836a"}
  *
@@ -107,7 +107,6 @@ export interface OutputPaths {
  * }
  */
 export interface DeclarationEmitHost extends ModuleSpecifierGenerationHost {
-  readonly __tsgoEmbedded0?: ModuleSpecifierGenerationHost;
   GetCurrentDirectory(): string;
   UseCaseSensitiveFileNames(): bool;
   GetSourceFileFromReference(origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile>;
@@ -172,7 +171,7 @@ export interface DeclarationTransformer {
   expandoHosts: GoMap<NodeId, GoPtr<Node>>;
   expandoMembers: GoMap<NodeId, GoSlice<GoPtr<Node>>>;
   seenProperties: Set<GoPtr<Node>>;
-  thisPropertyAssignmentsCollected: GoSlice<GoPtr<Node>> | undefined;
+  thisPropertyAssignmentsCollected: GoSlice<GoPtr<Node>>;
   rawReferencedFiles: GoSlice<ReferencedFilePair>;
   rawTypeReferenceDirectives: GoSlice<GoPtr<FileReference>>;
   rawLibReferenceDirectives: GoSlice<GoPtr<FileReference>>;
@@ -257,7 +256,7 @@ export function NewDeclarationTransformer(host: GoInterface<DeclarationEmitHost>
     expandoHosts: new globalThis.Map(),
     expandoMembers: new globalThis.Map(),
     seenProperties: { M: GoNilMap() },
-    thisPropertyAssignmentsCollected: [],
+    thisPropertyAssignmentsCollected: GoNilSlice<GoPtr<Node>>(),
     rawReferencedFiles: [],
     rawTypeReferenceDirectives: [],
     rawLibReferenceDirectives: [],
@@ -3842,7 +3841,7 @@ export function DeclarationTransformer_visitThisPropertyAssignments(receiver: Go
       if (IsExpressionStatement(node!.Parent)) {
         DeclarationTransformer_preserveJsDoc(receiver, prop, node!.Parent);
       }
-      receiver!.thisPropertyAssignmentsCollected = [...(receiver!.thisPropertyAssignmentsCollected ?? []), prop];
+      receiver!.thisPropertyAssignmentsCollected = [...receiver!.thisPropertyAssignmentsCollected, prop];
       break;
     }
   }
@@ -3935,9 +3934,9 @@ export function DeclarationTransformer_collectThisPropertyAssignments(receiver: 
       for (const n of input!.Members!.Nodes) {
         Node_VisitEachChild(n, receiver!.thisPropertyVisitor);
       }
-      return receiver!.thisPropertyAssignmentsCollected ?? [];
+      return receiver!.thisPropertyAssignmentsCollected;
     } finally {
-      receiver!.thisPropertyAssignmentsCollected = undefined;
+      receiver!.thisPropertyAssignmentsCollected = GoNilSlice<GoPtr<Node>>();
     }
   } finally {
     Set_Clear(receiver!.seenProperties);

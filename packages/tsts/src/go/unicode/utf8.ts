@@ -21,8 +21,8 @@ export const MaxRune: GoRune = 0x10ffff;
 export const UTFMax: int = 4;
 
 const decoder: TextDecoder = new globalThis.TextDecoder("utf-8", { ignoreBOM: true });
-const nonASCII = /[^\x00-\x7F]/;
-const surrogate = /[\uD800-\uDFFF]/;
+const nonASCII: RegExp = /[^\x00-\x7F]/;
+const surrogate: RegExp = /[\uD800-\uDFFF]/;
 
 const encodeScalar = (bytes: Array<number>, codePoint: number): void => {
   if (codePoint < 0x80) {
@@ -85,9 +85,9 @@ const decodeBytesToString = (bytes: Uint8Array): string => {
 
 export type StringByteView = { ascii: boolean; bytes?: Uint8Array; hasSurrogate?: boolean };
 const asciiStringByteView: StringByteView = { ascii: true };
-const stringByteViewCache = new globalThis.Map<string, StringByteView>();
-const stringByteViewCacheBudget = 64 * 1024 * 1024;
-const stringByteViewCacheState = { bytes: 0 };
+const stringByteViewCache: Map<string, StringByteView> = new globalThis.Map<string, StringByteView>();
+const stringByteViewCacheBudget: number = 64 * 1024 * 1024;
+const stringByteViewCacheState: { bytes: number } = { bytes: 0 };
 
 export function GetStringByteView(s: string): StringByteView {
   const cached = stringByteViewCache.get(s);

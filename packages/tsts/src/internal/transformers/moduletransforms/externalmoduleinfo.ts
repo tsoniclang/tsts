@@ -36,10 +36,10 @@ import { IsFileLevelUniqueName } from "../../printer/utilities.js";
 import { IsLocalName } from "../utilities.js";
 import { CompareStringsCaseSensitive } from "../../stringutil/compare.js";
 
-import type { GoInterface } from "../../../go/compat.js";
+import type { GoInterface, GoMapKeyDescriptor } from "../../../go/compat.js";
 
-const declarationPointerKey = GoPointerKey<Declaration>();
-const functionDeclarationNodePointerKey = GoPointerKey<FunctionDeclarationNode>();
+const declarationPointerKey: GoMapKeyDescriptor<GoPtr<Declaration>> = GoPointerKey<Declaration>();
+const functionDeclarationNodePointerKey: GoMapKeyDescriptor<GoPtr<FunctionDeclarationNode>> = GoPointerKey<FunctionDeclarationNode>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfo","kind":"type","status":"implemented","sigHash":"76ea936086f877ffb778dc08a937acc672aba64f64355b8fe64c36697d57f693"}
  *

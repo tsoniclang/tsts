@@ -1,16 +1,17 @@
-import type { long } from "./scalars.js";
+import type { bool, long } from "./scalars.js";
+import type { GoDefined } from "./compat.js";
 
-export type Duration = long;
+export type Duration = GoDefined<long, "__goDefinedType::time::type::Duration::0facaa5a28ee96142bfd2e61a7c449390e0dceecf7f6d464fe3b68ae2523fd33">;
 
-const nanosecondsPerMillisecond = 1_000_000;
-const nanosecondsPerSecond = 1_000_000_000;
-const nanosecondsPerMinute = 60 * nanosecondsPerSecond;
+const nanosecondsPerMillisecond: number = 1_000_000;
+const nanosecondsPerSecond: number = 1_000_000_000;
+const nanosecondsPerMinute: number = 60 * nanosecondsPerSecond;
 
-export const Millisecond = nanosecondsPerMillisecond as Duration;
+export const Millisecond: Duration = nanosecondsPerMillisecond as Duration;
 
-export const Second = nanosecondsPerSecond as Duration;
+export const Second: Duration = nanosecondsPerSecond as Duration;
 
-export const Minute = nanosecondsPerMinute as Duration;
+export const Minute: Duration = nanosecondsPerMinute as Duration;
 
 export class Time {
   readonly #date: Date;
@@ -27,12 +28,8 @@ export class Time {
     return this.#date.getTime() as long;
   }
 
-  IsZero(): boolean {
+  IsZero(): bool {
     return this.#date.getTime() === 0;
-  }
-
-  ToDate(): Date {
-    return new Date(this.#date.getTime());
   }
 }
 

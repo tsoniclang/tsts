@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoStringKey, type GoComparableInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoNilMap, GoStringKey, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Set } from "../collections/set.js";
 import { NewSetFromItems } from "../collections/set.js";
@@ -21,7 +21,6 @@ import {
   watchFileEnumMap,
 } from "./enummaps.js";
 
-import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::CommandLineOptionKind","kind":"type","status":"implemented","sigHash":"c8f201add3454d31edf99485739310a8aedb1f1cfe566de059b461899ef7913f"}
  *
@@ -132,7 +131,7 @@ export interface CommandLineOption {
   strictFlag: bool;
   transpileOptionValue: Tristate;
   listPreserveFalsyValues: bool;
-  ElementOptions: CommandLineOptionNameMap | undefined;
+  ElementOptions: CommandLineOptionNameMap;
 }
 
 /**
@@ -187,7 +186,7 @@ export function CommandLineOption_DeprecatedKeys(receiver: GoPtr<CommandLineOpti
  * 	return commandLineOptionEnumMap[o.Name]
  * }
  */
-export function CommandLineOption_EnumMap(receiver: GoPtr<CommandLineOption>): GoPtr<OrderedMap<string, GoComparableInterface>> {
+export function CommandLineOption_EnumMap(receiver: GoPtr<CommandLineOption>): GoPtr<OrderedMap<string, GoInterface<unknown>>> {
   const o = receiver!;
   if (o.Kind !== CommandLineOptionTypeEnum) {
     return undefined;
@@ -333,7 +332,7 @@ export function newCommandLineOption(fields: Partial<CommandLineOption>): Comman
     strictFlag: false,
     transpileOptionValue: TSUnknown,
     listPreserveFalsyValues: false,
-    ElementOptions: undefined,
+    ElementOptions: GoNilMap<string, GoPtr<CommandLineOption>>(),
     ...fields,
   };
 }
@@ -440,7 +439,7 @@ export let commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> = 
  * 	"fallbackPolling":  fallbackEnumMap,
  * }
  */
-export let commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap<string, GoComparableInterface>>> = new globalThis.Map<string, GoPtr<OrderedMap<string, GoComparableInterface>>>([
+export let commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap<string, GoInterface<unknown>>>> = new globalThis.Map<string, GoPtr<OrderedMap<string, GoInterface<unknown>>>>([
   ["lib", LibMap],
   ["moduleResolution", moduleResolutionOptionMap],
   ["module", moduleOptionMap],

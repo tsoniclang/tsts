@@ -92,7 +92,7 @@ export let __7e0fb603_0: GoInterface<EmitTextWriter> = singleLineStringWriter_as
  * 	}
  * }
  */
-export function GetSingleLineStringWriter(): [EmitTextWriter, GoFunc<() => void>] {
+export function GetSingleLineStringWriter(): [GoInterface<EmitTextWriter>, GoFunc<() => void>] {
   const w = singleLineStringWriterPool.Get() as singleLineStringWriter;
   singleLineStringWriter_Clear(w);
   return [

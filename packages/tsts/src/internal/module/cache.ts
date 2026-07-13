@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoBooleanKey, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, type GoInterface, type GoMap, type GoPtr } from "../../go/compat.js";
+import { GoBooleanKey, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, type GoInterface, type GoMap, type GoMapKeyDescriptor, type GoPtr } from "../../go/compat.js";
 import { Map, Once } from "../../go/sync.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Store } from "../collections/syncmap.js";
@@ -35,7 +35,7 @@ export interface moduleResolutionCacheKey {
   redirectConfigName: string;
 }
 
-const moduleResolutionCacheKeyDescriptor = GoStructKey<moduleResolutionCacheKey, readonly [string, string, ResolutionMode, string]>(
+const moduleResolutionCacheKeyDescriptor: GoMapKeyDescriptor<moduleResolutionCacheKey> = GoStructKey<moduleResolutionCacheKey, readonly [string, string, ResolutionMode, string]>(
   [
     GoStructField((value) => value.containingDirectory, GoStringKey),
     GoStructField((value) => value.moduleName, GoStringKey),
@@ -101,7 +101,7 @@ export interface typeRefDirectiveResolutionCacheKey {
   fromInferredTypesContainingFile: bool;
 }
 
-const typeRefDirectiveResolutionCacheKeyDescriptor = GoStructKey<typeRefDirectiveResolutionCacheKey, readonly [string, string, ResolutionMode, string, bool]>(
+const typeRefDirectiveResolutionCacheKeyDescriptor: GoMapKeyDescriptor<typeRefDirectiveResolutionCacheKey> = GoStructKey<typeRefDirectiveResolutionCacheKey, readonly [string, string, ResolutionMode, string, bool]>(
   [
     GoStructField((value) => value.containingDirectory, GoStringKey),
     GoStructField((value) => value.typeReferenceName, GoStringKey),

@@ -1,4 +1,4 @@
-import type { bool, int } from "./scalars.js";
+import type { bool, int, uint, ulong } from "./scalars.js";
 import { fileURLToPath } from "node:url";
 import process from "node:process";
 import nodeOs from "node:os";
@@ -15,10 +15,10 @@ export const GOARCH: string =
   process.arch;
 
 export interface MemStats {
-  Alloc?: number;
-  TotalAlloc?: number;
-  Sys?: number;
-  NumGC?: number;
+  Alloc: ulong;
+  TotalAlloc: ulong;
+  Sys: ulong;
+  NumGC: uint;
 }
 
 export function Caller(skip: int): [unknown, string, int, bool] {

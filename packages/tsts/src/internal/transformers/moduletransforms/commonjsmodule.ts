@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoPointerKey, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { AsSourceFile, Node_Text, SourceFile_FileName, SourceFile_Path, Node_Elements, Node_Properties, Node_Expression, Node_Initializer } from "../../ast/ast.js";
 import type { HasFileName, SourceFile } from "../../ast/ast.js";
 import { IsAssignmentExpression, IsCommaExpression, IsDestructuringAssignment, IsEffectiveExternalModule, IsExpression, IsExternalModule, IsExternalModuleImportEqualsDeclaration, IsInJSFile, IsRequireCall, IsStringLiteralLike, IsImportCall, ShouldTransformImportCall, FindAncestor } from "../../ast/utilities.js";
@@ -56,9 +56,9 @@ import type { externalModuleInfo } from "./externalmoduleinfo.js";
 import { getExternalModuleNameLiteral, isDeclarationNameOfEnumOrNamespace, isFileLevelReservedGeneratedIdentifier, isSimpleInlineableExpression, rewriteModuleSpecifier } from "./utilities.js";
 import { OrderedSet_Values } from "../../collections/ordered_set.js";
 
-import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import type { GoFunc, GoInterface, GoMapKeyDescriptor } from "../../../go/compat.js";
 
-const moduleExportNamePointerKey = GoPointerKey<ModuleExportName>();
+const moduleExportNamePointerKey: GoMapKeyDescriptor<GoPtr<ModuleExportName>> = GoPointerKey<ModuleExportName>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::type::CommonJSModuleTransformer","kind":"type","status":"implemented","sigHash":"6d4c0901945b9e8638e5f6f227099900201a96ea3928cc98c41cdb0923078648"}
  *
@@ -2394,7 +2394,7 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
     commitPendingVariables();
     commitPendingExpressions();
     statements = CommonJSModuleTransformer_appendExportsOfVariableStatement(receiver, statements, node);
-    return SingleOrMany(statements.length === 0 ? undefined : statements, pf);
+    return SingleOrMany(statements.length === 0 ? GoNilSlice<GoPtr<Node>>() : statements, pf);
   }
   return CommonJSModuleTransformer_visitTopLevelNestedVariableStatement(receiver, node);
 }

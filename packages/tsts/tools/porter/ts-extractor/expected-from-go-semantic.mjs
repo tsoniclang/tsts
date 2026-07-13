@@ -396,6 +396,7 @@ function requireBridge(index, key) {
 function pointerBridgeKey(representation) {
   if (representation === "aggregate") return "pointer";
   if (representation === "slot") return "ref";
+  if (representation === "constraint") return "pointerConstraint";
   throw new Error(`canonical semantic pointer has unknown representation '${representation}'`);
 }
 

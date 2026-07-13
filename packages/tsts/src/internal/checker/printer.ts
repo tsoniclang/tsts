@@ -1003,7 +1003,7 @@ export function Checker_symbolToStringEx(receiver: GoPtr<Checker>, symbol_: GoPt
         entity = NodeBuilder_SymbolToEntityName(nodeBuilder, symbol_, meaning, enclosingDeclaration, nodeFlags, internalNodeFlags, undefined); // TODO: GH#18217
       }
       Printer_Write(printer_, entity, sourceFile, getTrailingSemicolonDeferringWriter(writer), undefined); // TODO: GH#18217
-      return writer.String();
+      return writer!.String();
     } finally {
       release!();
     }
@@ -1111,7 +1111,7 @@ export function Checker_signatureToStringEx(receiver: GoPtr<Checker>, signature:
       const [writer, putWriter] = GetSingleLineStringWriter();
       try {
         Printer_Write(p, sig, sourceFile, getTrailingSemicolonDeferringWriter(writer), undefined);
-        return writer.String();
+        return writer!.String();
       } finally {
         putWriter!();
       }
@@ -1173,7 +1173,7 @@ export function Checker_typePredicateToStringEx(receiver: GoPtr<Checker>, typePr
         sourceFile = GetSourceFileOfNode(enclosingDeclaration);
       }
       Printer_Write(printer_, predicate, sourceFile, writer, undefined);
-      return writer.String();
+      return writer!.String();
     } finally {
       release!();
     }

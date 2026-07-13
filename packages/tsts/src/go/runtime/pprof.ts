@@ -37,7 +37,7 @@ export function StopCPUProfile(): void {
   writeProfile(session.writer, "cpu", 0 as int, session.startedAt);
 }
 
-const encoder = new globalThis.TextEncoder();
+const encoder: TextEncoder = new globalThis.TextEncoder();
 
 function writeProfile(writer: Writer, name: string, debug: int, startedAt: number | undefined): GoError {
   const endedAt = globalThis.Date.now();

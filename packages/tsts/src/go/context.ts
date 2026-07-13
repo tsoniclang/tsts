@@ -5,7 +5,7 @@
 // TS-Go runs single-threaded, so cancellation and deadlines never actually fire.
 // We therefore model the inert, never-canceled behavior of Go's `emptyCtx`:
 //   - `Done()` returns a nil channel (Go: `emptyCtx.Done()` returns nil), i.e. a
-//     channel that is never ready, represented as `undefined`.
+//     channel that is never ready, represented by the canonical Go channel carrier.
 //   - `Err()` returns nil (no error), i.e. `undefined`.
 //   - `Deadline()` returns the zero `time.Time` and `false` (no deadline set).
 //   - `Value(key)` walks the value chain (Go's `valueCtx.Value` / `value`).
@@ -18,7 +18,7 @@
 // `[Time, bool]`.
 
 import type { bool } from "./scalars.js";
-import type { GoChan, GoError } from "./compat.js";
+import { GoNilChan, type GoChan, type GoError, type GoInterface } from "./compat.js";
 import { New } from "./errors.js";
 import { Time } from "./time.js";
 
@@ -33,13 +33,13 @@ export type CancelCauseFunc = (cause: GoError) => void;
 
 // Go: type Context interface { Deadline; Done; Err; Value }
 //
-// Done() returns `<-chan struct{}` which may be nil; the nil channel is modeled as
-// `undefined`. Deadline()'s `(time.Time, bool)` becomes a `[Time, bool]` tuple.
+// Done() returns `<-chan struct{}`; nilability is intrinsic to the Go channel
+// carrier. Deadline()'s `(time.Time, bool)` becomes a `[Time, bool]` tuple.
 export interface Context {
   Deadline(): [Time, bool];
-  Done(): GoChan<EmptyStruct, "receive"> | undefined;
+  Done(): GoChan<{ readonly __tsgoEmpty?: never }, "receive">;
   Err(): GoError;
-  Value(key: unknown): unknown;
+  Value(key: GoInterface<unknown>): GoInterface<unknown>;
 }
 
 // Go's `struct{}` element type for the Done channel, matching the empty-struct
@@ -57,8 +57,8 @@ class emptyCtx implements Context {
   }
 
   // Go: func (emptyCtx) Done() <-chan struct{} { return nil }
-  Done(): GoChan<EmptyStruct, "receive"> | undefined {
-    return undefined;
+  Done(): GoChan<EmptyStruct, "receive"> {
+    return GoNilChan<EmptyStruct, "receive">();
   }
 
   // Go: func (emptyCtx) Err() error { return nil }
@@ -67,7 +67,7 @@ class emptyCtx implements Context {
   }
 
   // Go: func (emptyCtx) Value(key any) any { return nil }
-  Value(_key: unknown): unknown {
+  Value(_key: GoInterface<unknown>): GoInterface<unknown> {
     return undefined;
   }
 }
@@ -97,17 +97,17 @@ export function TODO(): Context {
 // delegates all other calls to the embedded Context (`parent`).
 class valueCtx implements Context {
   readonly parent: Context;
-  readonly key: unknown;
-  readonly val: unknown;
+  readonly key: GoInterface<unknown>;
+  readonly val: GoInterface<unknown>;
 
-  constructor(parent: Context, key: unknown, val: unknown) {
+  constructor(parent: Context, key: GoInterface<unknown>, val: GoInterface<unknown>) {
     this.parent = parent;
     this.key = key;
     this.val = val;
   }
 
   // Go: func (c *valueCtx) Value(key any) any { if c.key == key { return c.val }; return value(c.Context, key) }
-  Value(key: unknown): unknown {
+  Value(key: GoInterface<unknown>): GoInterface<unknown> {
     if (this.key === key) {
       return this.val;
     }
@@ -118,7 +118,7 @@ class valueCtx implements Context {
     return this.parent.Deadline();
   }
 
-  Done(): GoChan<EmptyStruct, "receive"> | undefined {
+  Done(): GoChan<EmptyStruct, "receive"> {
     return this.parent.Done();
   }
 

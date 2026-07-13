@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import * as strconv from "../../go/strconv.js";
-import type { GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoInterface, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoEqualStrict, GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint64 } from "../../go/sync/atomic.js";
@@ -492,7 +492,7 @@ import { Node_AsNode, Node_BodyData, Node_DeclarationData, Node_End, Node_FlowNo
 
 import type { GoFunc } from "../../go/compat.js";
 
-const symbolPointerKey = GoPointerKey<Symbol>();
+const symbolPointerKey: GoMapKeyDescriptor<GoPtr<Symbol>> = GoPointerKey<Symbol>();
 
 function zeroSymbol(): Symbol {
   return {

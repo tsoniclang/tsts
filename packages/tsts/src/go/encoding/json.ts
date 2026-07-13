@@ -1,7 +1,7 @@
 import type { byte } from "../scalars.js";
 import type { GoError, GoSlice } from "../compat.js";
 
-const textDecoder = new TextDecoder();
+const textDecoder: TextDecoder = new TextDecoder();
 
 export function Unmarshal(data: GoSlice<byte>, out: unknown): GoError {
   try {

@@ -22,8 +22,8 @@ import { IsIdentifierPartEx, IsIdentifierStart, SkipTrivia, textToKeyword } from
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `name[i:]` operate on byte offsets. We mirror that contract by
 // operating over the UTF-8 byte view of the JS string.
-const byteLen = StringByteLen;
-const byteSlice = StringByteSlice;
+const byteLen: (text: string) => int = StringByteLen;
+const byteSlice: (text: string, start: int, end?: int) => string = StringByteSlice;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::tokenIsIdentifierOrKeyword","kind":"func","status":"implemented","sigHash":"538026bcddd56581a52c2d4c5ae6b1f36ef3386ee89dd8f7605ba57f9f21df7d"}

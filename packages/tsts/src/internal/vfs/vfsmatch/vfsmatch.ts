@@ -35,6 +35,7 @@ export const UsageExclude: Usage = 2 as Usage;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::UnlimitedDepth","kind":"constGroup","status":"implemented","sigHash":"014f91465101a37e9f3d5e3d2269e6189ded89b9430d014ea987228d62bc25f5"}
+ * @tsgo-override {"category":"runtime-numeric-representation","allow":["initializer"],"reason":"The JavaScript number carrier cannot represent the profile-dependent Go MaxInt values exactly; the rounded 64-bit sentinel remains behaviorally unlimited and is hash-pinned.","goInitializer":"[2,3,8,9,16,17,22,23,32,33,38,39,46,47,48,49,58,59,64,65,66,67,72,73,78,79,82,83,88,89]=>UnlimitedDepth={\"kind\":\"number\",\"value\":\"2147483647\"}|[0,1,4,5,6,7,10,11,12,13,14,15,18,19,20,21,24,25,26,27,28,29,30,31,34,35,36,37,40,41,42,43,44,45,50,51,52,53,54,55,56,57,60,61,62,63,68,69,70,71,74,75,76,77,80,81,84,85,86,87,90,91,92,93]=>UnlimitedDepth={\"kind\":\"number\",\"value\":\"9223372036854775807\"}","tsInitializer":"UnlimitedDepth={\"kind\":\"number\",\"value\":\"9223372036854776000\"}"}
  *
  * Go source:
  * const UnlimitedDepth = math.MaxInt

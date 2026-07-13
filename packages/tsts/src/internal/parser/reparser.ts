@@ -189,7 +189,7 @@ import { PCObjectLiteralMembers } from "./parser/state.js";
 // Byte-string helpers mirroring Go's `s[i:]` / `len(s)` semantics over UTF-8 bytes,
 // used to faithfully port the `for i, ch := range s` rune iteration in
 // reparseJSDocSignature (matches the convention used in scanner.ts/support.ts).
-const byteLen = StringByteLen;
+const byteLen: (s: string) => int = StringByteLen;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.finishReparsedNode","kind":"method","status":"implemented","sigHash":"9746fe8b20ebd2539697c4040b2a128334306a1a0d090567ea8bdba97f6a5691"}

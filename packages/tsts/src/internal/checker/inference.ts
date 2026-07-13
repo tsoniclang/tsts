@@ -1510,13 +1510,13 @@ export function Checker_inferToTemplateLiteralType(receiver: GoPtr<Checker>, n: 
   // assignment check will fail. If we make no inferences, we'll likely end up with the constraint 'string' which,
   // upon instantiation, would collapse all the placeholders to just 'string', and an assignment check might
   // succeed. That would be a pointless and confusing outcome.
-  const matchCount = matches?.length ?? 0;
+  const matchCount = matches.length;
   if (matchCount !== 0 || core.Every(target!.texts, (s: string): bool => s === "")) {
     outer: for (let i = 0; i < types.length; i++) {
       const targetType = types[i];
       let sourceType: GoPtr<Type>;
       if (matchCount !== 0) {
-        sourceType = matches![i];
+        sourceType = matches[i];
       } else {
         sourceType = c.neverType;
       }
@@ -2888,7 +2888,7 @@ export function Checker_createEmptyObjectTypeFromStringLiteral(receiver: GoPtr<C
  * 	return c.newInferenceContextWorker(core.Map(typeParameters, newInferenceInfo), signature, flags, compareTypes)
  * }
  */
-export function Checker_newInferenceContext(receiver: GoPtr<Checker>, typeParameters: GoSlice<GoPtr<Type>>, signature: GoPtr<Signature>, flags: InferenceFlags, compareTypes: TypeComparer | undefined): GoPtr<InferenceContext> {
+export function Checker_newInferenceContext(receiver: GoPtr<Checker>, typeParameters: GoSlice<GoPtr<Type>>, signature: GoPtr<Signature>, flags: InferenceFlags, compareTypes: TypeComparer): GoPtr<InferenceContext> {
   const c = receiver!;
   const ct = compareTypes !== undefined ? compareTypes : c.compareTypesAssignable;
   return Checker_newInferenceContextWorker(receiver, core.Map(typeParameters, newInferenceInfo), signature, flags, ct);

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoInterfaceValue, GoMap, GoPtr } from "../../go/compat.js";
+import type { GoMap, GoPtr } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import type { ModifierList, Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
 import { Node_Clone, Node_ForEachChild, Node_VisitEachChild, NodeFactory_NewModifierList, NodeFactory_NewNodeList, NodeList_Clone } from "../ast/spine.js";
@@ -65,8 +65,8 @@ const byteLen = (s: string): int => utf8Encoder.encode(s).length as int;
 export interface ChangeTrackerWriter {
   __tsgoEmbedded0: textWriter;
   lastNonTriviaPosition: int;
-  pos: GoMap<triviaPositionKey, int>;
-  end: GoMap<triviaPositionKey, int>;
+  pos: GoMap<GoInterface<triviaPositionKey>, int>;
+  end: GoMap<GoInterface<triviaPositionKey>, int>;
 }
 
 /**
@@ -78,7 +78,7 @@ export interface ChangeTrackerWriter {
  * 	End() int
  * }
  */
-export interface triviaPositionKey extends GoInterfaceValue<GoPtr<Node> | GoPtr<NodeList>> {
+export interface triviaPositionKey {
   Pos(): int;
   End(): int;
 }
@@ -133,8 +133,8 @@ export function NewChangeTrackerWriter(newline: string, indentSize: int): GoPtr<
   const ctw: ChangeTrackerWriter = {
     __tsgoEmbedded0: embedded,
     lastNonTriviaPosition: 0 as int,
-    pos: new globalThis.Map<triviaPositionKey, int>(),
-    end: new globalThis.Map<triviaPositionKey, int>(),
+    pos: new globalThis.Map<GoInterface<triviaPositionKey>, int>(),
+    end: new globalThis.Map<GoInterface<triviaPositionKey>, int>(),
   };
   textWriter_Clear(ctw.__tsgoEmbedded0);
   return ctw;

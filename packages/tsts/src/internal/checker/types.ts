@@ -2138,6 +2138,7 @@ export function Type_IsTupleType(receiver: GoPtr<Type>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeData","kind":"type","status":"implemented","sigHash":"cb9773d76e7a0ca25b0cd133e7f903b1a70e4bb9ae7367d8248fd99da5646634"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic type dispatch without a side table or wrapper object.","goSignatureHash":"16843bbd579fbf691b26db94d7b60899c384a1173af409771b7976d9a9340cc9","tsSignatureHash":"fad9b10b6b6ef54ed3d2ea303897392bb535919b50ea5cb921ef2b89916ce2f5"}
  *
  * Go source:
  * TypeData interface {

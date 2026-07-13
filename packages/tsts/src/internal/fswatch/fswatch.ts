@@ -85,7 +85,7 @@ export interface Watcher {
   WatchFile(path: string, fn: WatchCallback): [Watch, GoError];
 }
 
-const TSGO_FSWATCH_UNIMPLEMENTED =
+const TSGO_FSWATCH_UNIMPLEMENTED: string =
   "TSGO_EXTERNAL_FACADE_UNIMPLEMENTED internal/fswatch host backend (watch mode is not supported in the TSTS host)";
 
 // hostWatcher is the host stub. The introspection methods return inert values so

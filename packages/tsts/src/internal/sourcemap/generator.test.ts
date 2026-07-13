@@ -4,7 +4,8 @@
 // same comparison. Go nil slices/pointers map to undefined.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoError, GoPtr, GoRef, GoSlice } from "../../go/compat.js";
+import { GoNilSlice, GoValueRef } from "../../go/compat.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 import type { Generator, RawSourceMap } from "./generator.js";
 import {
@@ -26,7 +27,7 @@ interface rawFields {
   Sources: GoSlice<string>;
   Mappings: string;
   Names: GoSlice<string>;
-  SourcesContent: GoSlice<GoPtr<string>> | undefined;
+  SourcesContent: GoSlice<GoRef<string>>;
 }
 
 function rawFields(m: GoPtr<RawSourceMap>): rawFields {
@@ -64,7 +65,7 @@ test("SourceMapGenerator_Empty", () => {
     Sources: [],
     Mappings: "",
     Names: [],
-    SourcesContent: undefined,
+    SourcesContent: GoNilSlice<GoRef<string>>(),
   });
 });
 
@@ -84,7 +85,7 @@ test("SourceMapGenerator_AddSource", () => {
     Sources: ["main.ts"],
     Mappings: "",
     Names: [],
-    SourcesContent: undefined,
+    SourcesContent: GoNilSlice<GoRef<string>>(),
   });
 });
 
@@ -100,7 +101,7 @@ test("SourceMapGenerator_SetSourceContent", () => {
     Sources: ["main.ts"],
     Mappings: "",
     Names: [],
-    SourcesContent: ["foo"],
+    SourcesContent: [GoValueRef("foo")],
   });
 });
 
@@ -117,7 +118,7 @@ test("SourceMapGenerator_SetSourceContent_ForSecondSourceOnly", () => {
     Sources: ["skipped.ts", "main.ts"],
     Mappings: "",
     Names: [],
-    SourcesContent: [undefined, "foo"],
+    SourcesContent: [undefined, GoValueRef("foo")],
   });
 });
 
@@ -149,7 +150,7 @@ test("SourceMapGenerator_AddName", () => {
     Sources: [],
     Mappings: "",
     Names: ["foo"],
-    SourcesContent: undefined,
+    SourcesContent: GoNilSlice<GoRef<string>>(),
   });
 });
 

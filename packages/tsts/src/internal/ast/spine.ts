@@ -180,6 +180,7 @@ export interface NodeList {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::ModifierList","kind":"type","status":"implemented","sigHash":"80b250fc51b865f7edb37240022a8f9449ea9a772460fe5dde59c0046e578e80"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go AST data contract exposes the embedded node list through direct structural heritage rather than reproducing Go memory layout.","goSignatureHash":"801d71ca5f81909ffecd783ac952f881eac7d7ece9963479a5c29ae4b102e117","tsSignatureHash":"e24aefcfaf9c6ea36205b7e61369ba94c3de259b4cb914dc21be41369297ce13"}
  *
  * Go source:
  * ModifierList struct {
@@ -238,6 +239,7 @@ export interface Node {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::nodeData","kind":"type","status":"implemented","sigHash":"917909b9dde382933bf1d3f2d7a85eaed5809b3c52e9e455d41c7f90de91fb0f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic interface dispatch without a side table or wrapper object.","goSignatureHash":"d1153a21cb20405e3a743104341a9037528d9489c47028a21e97feb530ceb6dd","tsSignatureHash":"adc98a3302beb31a8f20a173b7131846fc63d98a446364328bd878910dec38a7"}
  *
  * Go source:
  * nodeData interface {
@@ -294,6 +296,7 @@ export type NodeIter = Seq<GoPtr<Node>>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeDefault","kind":"type","status":"implemented","sigHash":"98473325b5fb802ab1d83d800388f663291e457c1b9fb2fd0ef00e4092d4e71b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go schema exposes the embedded Node contract through structural heritage so AST fields stay schema-shaped rather than mirroring Go memory layout.","goSignatureHash":"f74264dc4d60bb2acefb05fc1a3c58cb56332e151653871bcf5e791c00d3413b","tsSignatureHash":"8009b0837041828b004aa7ce1a48fc7942cb14a32e9f9650eb594047f5125df5"}
  *
  * Go source:
  * NodeDefault struct {
@@ -305,6 +308,7 @@ export interface NodeDefault extends Node {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeBase","kind":"type","status":"implemented","sigHash":"fd0a1f2632da19f7e695534a077c4fd53616e79189f0fff8c044120d40b44ab2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go schema exposes the embedded default node contract through structural heritage rather than reproducing Go memory layout.","goSignatureHash":"3f4f9b424d8be8c3a2d8e8f91596131575ad0e5d929ba0ead3ab9a5f44852800","tsSignatureHash":"d026e59c1db8ec434923caa3a9781fe2d3df8dad06ebb0e68ab8c5bf4403dffc"}
  *
  * Go source:
  * NodeBase struct {

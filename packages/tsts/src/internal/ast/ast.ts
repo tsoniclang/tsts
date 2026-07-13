@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoPointerKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Once, RWMutex } from "../../go/sync.js";
 import { Bool, Uint32 } from "../../go/sync/atomic.js";
@@ -23,6 +23,8 @@ import * as casts from "./generated/casts.js";
 import * as predicates from "./generated/predicates.js";
 import { NewToken as NodeFactory_NewToken, NewArrayLiteralExpression, NewArrowFunction, NewAsExpression, NewBinaryExpression, NewBindingElement, NewBlock, NewCallExpression, NewCaseOrDefaultClause, NewCatchClause, NewClassDeclaration, NewClassExpression, NewComputedPropertyName, NewConditionalExpression, NewConstructorDeclaration, NewConstructorTypeNode, NewDoStatement, NewElementAccessExpression, NewEnumDeclaration, NewExportAssignment, NewExportDeclaration, NewExpressionStatement, NewExpressionWithTypeArguments, NewForInOrOfStatement, NewForStatement, NewFunctionDeclaration, NewFunctionExpression, NewGetAccessorDeclaration, NewHeritageClause, NewIfStatement, NewImportClause, NewImportDeclaration, NewImportEqualsDeclaration, NewIndexSignatureDeclaration, NewInterfaceDeclaration, NewJsxOpeningElement, NewJsxSelfClosingElement, NewLabeledStatement, NewMethodDeclaration, NewMethodSignatureDeclaration, NewModuleDeclaration, NewNamedExports, NewNamedImports, NewNewExpression, NewNonNullExpression, NewObjectLiteralExpression, NewParameterDeclaration, NewParenthesizedExpression, NewPartiallyEmittedExpression, NewPostfixUnaryExpression, NewPrefixUnaryExpression, NewPropertyAccessExpression, NewPropertyAssignment, NewPropertyDeclaration, NewPropertySignatureDeclaration, NewReturnStatement, NewSatisfiesExpression, NewSetAccessorDeclaration, NewShorthandPropertyAssignment, NewSpreadAssignment, NewSpreadElement, NewSwitchStatement, NewTaggedTemplateExpression, NewTryStatement, NewTypeAliasDeclaration, NewJSTypeAliasDeclaration, NewTypeParameterDeclaration, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement, NewWhileStatement, NewWithStatement, NewYieldExpression, NewIdentifier as NodeFactory_NewIdentifier, NewPrivateIdentifier as NodeFactory_NewPrivateIdentifier, NewStringLiteral as NodeFactory_NewStringLiteral, NewNumericLiteral as NodeFactory_NewNumericLiteral, NewBigIntLiteral as NodeFactory_NewBigIntLiteral, NewRegularExpressionLiteral as NodeFactory_NewRegularExpressionLiteral, NewNoSubstitutionTemplateLiteral as NodeFactory_NewNoSubstitutionTemplateLiteral, NewTemplateHead as NodeFactory_NewTemplateHead, NewTemplateMiddle as NodeFactory_NewTemplateMiddle, NewTemplateTail as NodeFactory_NewTemplateTail, NewJsxText as NodeFactory_NewJsxText, NewJSDocParameterOrPropertyTag as NodeFactory_NewJSDocParameterOrPropertyTag } from "./generated/factory.js";
 import type { AsteriskToken, AwaitKeyword, BindingName, BinaryOperatorToken, BlockNode, CaseBlockNode, CaseClausesList, CatchClauseNode, ClassElementList, ColonToken, ConciseBody, DotDotDotToken, ElementList, EntityName, EnumMemberList, EqualsGreaterThanToken, EqualsToken, ExclamationToken, ExportSpecifierList, ExpressionWithTypeArgumentsList, ForInitializer, FunctionBody, HeritageClauseList, IdentifierNode, ImportClauseNode, ImportSpecifierList, JsxAttributesNode, JsxTagNameExpression, MemberName, ModuleBody, ModuleReference, NamedExportBindings, NamedImportBindings, ParameterList, PropertyName, QuestionDotToken, QuestionToken, Statement, StatementList, TemplateLiteral, TypeElementList, TypeList, TypeNode, TypeParameterList, VariableDeclarationListNode, VariableDeclarationNode, VariableDeclarationNodeList } from "./generated/unions.js";
+import type { DeclarationName } from "./generated/unions.js";
+import type { BodyBase as BodyBaseType, ClassLikeBase as ClassLikeBaseType, DeclarationBase as DeclarationBaseType, ExportableBase as ExportableBaseType, FlowNodeBase as FlowNodeBaseType, FunctionLikeBase as FunctionLikeBaseType, LiteralLikeNodeBase as LiteralLikeNodeBaseType, LocalsContainerBase as LocalsContainerBaseType, TemplateLiteralLikeNodeBase as TemplateLiteralLikeNodeBaseType } from "./generated/node.js";
 import type { Kind } from "./generated/kinds.js";
 import {
   KindAbstractKeyword,
@@ -350,9 +352,9 @@ export function Node_Parameters(receiver: GoPtr<Node>): GoSlice<GoPtr<ParameterD
  * 	return core.Filter(n.Modifiers().Nodes, IsDecorator)
  * }
  */
-export function Node_Decorators(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_Decorators(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   if (Node_Modifiers(receiver) === undefined) {
-    return undefined;
+    return GoNilSlice();
   }
   return Filter(Node_Modifiers(receiver)!.Nodes, predicates.IsDecorator);
 }
@@ -962,12 +964,12 @@ export function Node_ArgumentList(receiver: GoPtr<Node>): GoPtr<NodeList> {
  * 	return nil
  * }
  */
-export function Node_Arguments(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_Arguments(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const list = Node_ArgumentList(receiver);
   if (list !== undefined) {
     return list!.Nodes;
   }
-  return undefined;
+  return GoNilSlice();
 }
 
 /**
@@ -1034,12 +1036,12 @@ export function Node_TypeArgumentList(receiver: GoPtr<Node>): GoPtr<NodeList> {
  * 	return nil
  * }
  */
-export function Node_TypeArguments(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_TypeArguments(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const list = Node_TypeArgumentList(receiver);
   if (list !== undefined) {
     return list!.Nodes;
   }
-  return undefined;
+  return GoNilSlice();
 }
 
 /**
@@ -1102,12 +1104,12 @@ export function Node_TypeParameterList(receiver: GoPtr<Node>): GoPtr<NodeList> {
  * 	return nil
  * }
  */
-export function Node_TypeParameters(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_TypeParameters(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const list = Node_TypeParameterList(receiver);
   if (list !== undefined) {
     return list!.Nodes;
   }
-  return undefined;
+  return GoNilSlice();
 }
 
 /**
@@ -1162,12 +1164,12 @@ export function Node_MemberList(receiver: GoPtr<Node>): GoPtr<NodeList> {
  * 	return nil
  * }
  */
-export function Node_Members(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_Members(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const list = Node_MemberList(receiver);
   if (list !== undefined) {
     return list!.Nodes;
   }
-  return undefined;
+  return GoNilSlice();
 }
 
 /**
@@ -1215,12 +1217,12 @@ export function Node_StatementList(receiver: GoPtr<Node>): GoPtr<NodeList> {
  * 	return nil
  * }
  */
-export function Node_Statements(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_Statements(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const list = Node_StatementList(receiver);
   if (list !== undefined) {
     return list!.Nodes;
   }
-  return undefined;
+  return GoNilSlice();
 }
 
 /**
@@ -1281,12 +1283,12 @@ export function Node_ModifierFlags(receiver: GoPtr<Node>): ModifierFlags_d6bd836
  * 	return nil
  * }
  */
-export function Node_ModifierNodes(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_ModifierNodes(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const modifiers = Node_Modifiers(receiver);
   if (modifiers !== undefined) {
     return modifiers!.Nodes;
   }
-  return undefined;
+  return GoNilSlice();
 }
 
 /**
@@ -2016,12 +2018,12 @@ export function Node_CommentList(receiver: GoPtr<Node>): GoPtr<NodeList> {
  * 	return nil
  * }
  */
-export function Node_Comments(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_Comments(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const list = Node_CommentList(receiver);
   if (list !== undefined) {
     return list!.Nodes;
   }
-  return undefined;
+  return GoNilSlice();
 }
 
 /**
@@ -2231,12 +2233,12 @@ export function Node_PropertyList(receiver: GoPtr<Node>): GoPtr<NodeList> {
  * 	return nil
  * }
  */
-export function Node_Properties(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_Properties(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const list = Node_PropertyList(receiver);
   if (list !== undefined) {
     return list!.Nodes;
   }
-  return undefined;
+  return GoNilSlice();
 }
 
 /**
@@ -2288,12 +2290,12 @@ export function Node_ElementList(receiver: GoPtr<Node>): GoPtr<NodeList> {
  * 	return nil
  * }
  */
-export function Node_Elements(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
+export function Node_Elements(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const list = Node_ElementList(receiver);
   if (list !== undefined) {
     return list!.Nodes;
   }
-  return undefined;
+  return GoNilSlice();
 }
 
 /**
@@ -5196,6 +5198,7 @@ function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): TokenCacheKey {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFile","kind":"type","status":"implemented","sigHash":"53bc3d216fc97196ba25b91ad0f1a75f9bad287f452bf3347a3eb4370d6154a9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go SourceFile schema flattens embedded AST bases and their promoted operations into one schema-level object without targeting Go memory layout.","goSignatureHash":"7feba8488b16d2aa6113c120a1bb745fc931d472d343f81efc5c50d760f3db02","tsSignatureHash":"271e17642a009ce98bd2150dc7841d4b6fc5dbcbd613c35011145d30ce0aaab4"}
  *
  * Go source:
  * SourceFile struct {
@@ -5373,22 +5376,22 @@ class SourceFileData implements nodeData {
   IterChildren(): NodeIter { return NodeDefault_IterChildren(this); }
   VisitEachChild(v: GoPtr<NodeDataVisitor>): GoPtr<Node> { return SourceFile_VisitEachChild(this, v as GoPtr<NodeVisitor>); }
   Clone(f: NodeFactoryCoercible): GoPtr<Node> { return SourceFile_Clone(this, f); }
-  Name() { return NodeDefault_Name(this); }
-  Modifiers() { return NodeDefault_Modifiers(this); }
+  Name(): GoPtr<DeclarationName> { return NodeDefault_Name(this); }
+  Modifiers(): GoPtr<ModifierList> { return NodeDefault_Modifiers(this); }
   setModifiers(modifiers: GoPtr<ModifierList>): void { NodeDefault_setModifiers(this, modifiers); }
-  FlowNodeData() { return NodeDefault_FlowNodeData(this); }
-  DeclarationData() { return DeclarationBase_DeclarationData(this); }
-  ExportableData() { return NodeDefault_ExportableData(this); }
-  LocalsContainerData() { return LocalsContainerBase_LocalsContainerData(this); }
-  FunctionLikeData() { return NodeDefault_FunctionLikeData(this); }
-  ClassLikeData() { return NodeDefault_ClassLikeData(this); }
-  BodyData() { return NodeDefault_BodyData(this); }
-  LiteralLikeData() { return NodeDefault_LiteralLikeData(this); }
-  TemplateLiteralLikeData() { return NodeDefault_TemplateLiteralLikeData(this); }
-  SubtreeFacts() { return NodeDefault_SubtreeFacts(this); }
-  computeSubtreeFacts() { return SourceFile_computeSubtreeFacts(this); }
+  FlowNodeData(): GoPtr<FlowNodeBaseType> { return NodeDefault_FlowNodeData(this); }
+  DeclarationData(): GoPtr<DeclarationBaseType> { return DeclarationBase_DeclarationData(this); }
+  ExportableData(): GoPtr<ExportableBaseType> { return NodeDefault_ExportableData(this); }
+  LocalsContainerData(): GoPtr<LocalsContainerBaseType> { return LocalsContainerBase_LocalsContainerData(this); }
+  FunctionLikeData(): GoPtr<FunctionLikeBaseType> { return NodeDefault_FunctionLikeData(this); }
+  ClassLikeData(): GoPtr<ClassLikeBaseType> { return NodeDefault_ClassLikeData(this); }
+  BodyData(): GoPtr<BodyBaseType> { return NodeDefault_BodyData(this); }
+  LiteralLikeData(): GoPtr<LiteralLikeNodeBaseType> { return NodeDefault_LiteralLikeData(this); }
+  TemplateLiteralLikeData(): GoPtr<TemplateLiteralLikeNodeBaseType> { return NodeDefault_TemplateLiteralLikeData(this); }
+  SubtreeFacts(): SubtreeFacts { return NodeDefault_SubtreeFacts(this); }
+  computeSubtreeFacts(): SubtreeFacts { return SourceFile_computeSubtreeFacts(this); }
   subtreeFactsWorker(self: nodeData): SubtreeFacts { return CompositeBase_subtreeFactsWorker(this, self); }
-  propagateSubtreeFacts() { return NodeDefault_propagateSubtreeFacts(this); }
+  propagateSubtreeFacts(): SubtreeFacts { return NodeDefault_propagateSubtreeFacts(this); }
   FileName(): string { return SourceFile_FileName(this); }
   Path(): Path_79c49227 { return SourceFile_Path(this); }
   Text(): string { return SourceFile_Text(this); }
@@ -5415,28 +5418,33 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   data.text = text;
   data.Statements = statements;
   data.EndOfFileToken = endOfFileToken;
-  data.diagnostics = [];
-  data.jsDiagnostics = [];
-  data.jsdocDiagnostics = [];
-  data.Identifiers = new globalThis.Map<string, string>();
-  data.imports = [];
-  data.ModuleAugmentations = [];
-  data.AmbientModuleNames = [];
-  data.CommentDirectives = [];
-  data.ReparsedClones = [];
-  data.Pragmas = [];
-  data.ReferencedFiles = [];
-  data.TypeReferenceDirectives = [];
-  data.LibReferenceDirectives = [];
+  data.diagnostics = GoNilSlice();
+  data.jsDiagnostics = GoNilSlice();
+  data.jsdocDiagnostics = GoNilSlice();
+  data.Identifiers = GoNilMap();
+  data.imports = GoNilSlice();
+  data.ModuleAugmentations = GoNilSlice();
+  data.AmbientModuleNames = GoNilSlice();
+  data.CommentDirectives = GoNilSlice();
+  data.jsdocCache = GoNilMap();
+  data.ReparsedClones = GoNilSlice();
+  data.Pragmas = GoNilSlice();
+  data.ReferencedFiles = GoNilSlice();
+  data.TypeReferenceDirectives = GoNilSlice();
+  data.LibReferenceDirectives = GoNilSlice();
   data.jsdocMu = new RWMutex();
   data.isBound = new Bool();
   data.bindOnce = new Once();
-  data.bindDiagnostics = [];
-  data.BindSuggestionDiagnostics = [];
-  data.ClassifiableNames = { M: new globalThis.Map() };
-  data.PatternAmbientModules = [];
-  data.NestedCJSExports = [];
-  data.GlobalExports = new globalThis.Map();
+  data.bindDiagnostics = GoNilSlice();
+  data.BindSuggestionDiagnostics = GoNilSlice();
+  data.ClassifiableNames = { M: GoNilMap() };
+  data.PatternAmbientModules = GoNilSlice();
+  data.NestedCJSExports = GoNilSlice();
+  data.GlobalExports = GoNilMap();
+  data.ecmaLineMap = GoNilSlice();
+  data.tokenCache = GoNilMap();
+  data.declarationMap = GoNilMap();
+  data.nameTable = GoNilMap();
   data.ecmaLineMapMu = new RWMutex();
   data.tokenCacheMu = new Mutex();
   data.declarationMapMu = new Mutex();
@@ -5645,7 +5653,7 @@ export function SourceFile_resolveJSDoc(receiver: GoPtr<SourceFile>, n: GoPtr<No
   }
   // Fast path: check cache under read lock
   receiver!.jsdocMu.RLock();
-  if (receiver!.jsdocCache !== undefined && receiver!.jsdocCache.has(n)) {
+  if (receiver!.jsdocCache.has(n)) {
     const jsdocs = receiver!.jsdocCache.get(n)!;
     receiver!.jsdocMu.RUnlock();
     return jsdocs;
@@ -5656,11 +5664,11 @@ export function SourceFile_resolveJSDoc(receiver: GoPtr<SourceFile>, n: GoPtr<No
   receiver!.jsdocMu.Lock();
   try {
     // Double-check after acquiring write lock
-    if (receiver!.jsdocCache !== undefined && receiver!.jsdocCache.has(n)) {
+    if (receiver!.jsdocCache.has(n)) {
       return receiver!.jsdocCache.get(n)!;
     }
     const jsdocs = parseJSDocForNode(receiver, n) ?? [];
-    if (receiver!.jsdocCache === undefined) {
+    if (GoMapIsNil(receiver!.jsdocCache)) {
       receiver!.jsdocCache = new Map<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
     }
     receiver!.jsdocCache.set(n, jsdocs);
@@ -6464,6 +6472,7 @@ export interface SourceFileLike {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CommentRange","kind":"type","status":"implemented","sigHash":"6abe6c7c0d330cd4dda72b74e6c12e3884675c76deef16376c593072bef825ba"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go AST data contract exposes the embedded text range through direct structural heritage rather than reproducing Go memory layout.","goSignatureHash":"2b8df5318c288e7fe65b10cd3f52bc817b3d1c0ad721f05a81682178f4e35246","tsSignatureHash":"d9cd4bea41954f34f42a3da0f6ceb977e3e08a7d0c0466a1e951dad9a97ea693"}
  *
  * Go source:
  * CommentRange struct {
@@ -6501,6 +6510,7 @@ export function NodeFactory_NewCommentRange(receiver: GoPtr<NodeFactory>, kind: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::FileReference","kind":"type","status":"implemented","sigHash":"8e4016d25dc67b7eff4c2c9d74613a043bc230db6abab32c67d01e370d7bad49"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go AST data contract exposes the embedded text range through direct structural heritage rather than reproducing Go memory layout.","goSignatureHash":"1fb90eab3f015e6852415f66ee2af083ca12e7a70e8d295335079f3b2a0ab280","tsSignatureHash":"2f77ce1a51a65316b01ce74f2c31fc8bf6227746ef75d60dd96d4a2d63ef3f7a"}
  *
  * Go source:
  * FileReference struct {
@@ -6518,6 +6528,7 @@ export interface FileReference extends TextRange {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaArgument","kind":"type","status":"implemented","sigHash":"3f902144cb82dbf89d2255bc3fce73baed3e4d0f32d617cdf592a5db11f610d9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go AST data contract exposes the embedded text range through direct structural heritage rather than reproducing Go memory layout.","goSignatureHash":"da2d061bf5f360f62ced68806416fc8f364e3ca9e23dfecc92e416a60661cc72","tsSignatureHash":"8f6b87d008f36f4de16652133b5e23ae1dc4d656616c1cec8063cbe9948b9e06"}
  *
  * Go source:
  * PragmaArgument struct {
@@ -6533,6 +6544,7 @@ export interface PragmaArgument extends TextRange {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Pragma","kind":"type","status":"implemented","sigHash":"468c93cec9912ff95bb395fa13974742ec5b2b0295bff67a3e3f0865d51a29fa"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go AST data contract exposes the embedded comment range through direct structural heritage rather than reproducing Go memory layout.","goSignatureHash":"cd07a6dc405081f28113686f3ffea7a371925a3688bb124ba7ebe3cf95483d1a","tsSignatureHash":"ea36c20dee39eb9cc3865cfc19a6555ed1a739de7f730dd22ba25b17edba5fb9"}
  *
  * Go source:
  * Pragma struct {

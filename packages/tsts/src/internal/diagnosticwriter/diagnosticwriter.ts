@@ -95,8 +95,8 @@ export interface Diagnostic {
   Code(): int;
   Category(): Category;
   Localize(locale: Locale): string;
-  MessageChain(): GoSlice<Diagnostic>;
-  RelatedInformation(): GoSlice<Diagnostic>;
+  MessageChain(): GoSlice<GoInterface<Diagnostic>>;
+  RelatedInformation(): GoSlice<GoInterface<Diagnostic>>;
 }
 
 /**
@@ -107,8 +107,56 @@ export interface Diagnostic {
  * 	*ast.Diagnostic
  * }
  */
-export interface ASTDiagnostic extends Diagnostic {
+export interface ASTDiagnostic {
   __tsgoEmbedded0: GoPtr<Diagnostic_34a9f76f>;
+}
+
+class ASTDiagnosticValue implements ASTDiagnostic, Diagnostic {
+  __tsgoEmbedded0: GoPtr<Diagnostic_34a9f76f>;
+
+  constructor(diagnostic: GoPtr<Diagnostic_34a9f76f>) {
+    this.__tsgoEmbedded0 = diagnostic;
+  }
+
+  File(): GoInterface<FileLike> {
+    return ASTDiagnostic_File(this);
+  }
+
+  Pos(): int {
+    return ASTDiagnostic_Pos(this.__tsgoEmbedded0);
+  }
+
+  End(): int {
+    return ASTDiagnostic_End(this.__tsgoEmbedded0);
+  }
+
+  Len(): int {
+    return ASTDiagnostic_Len(this.__tsgoEmbedded0);
+  }
+
+  Code(): int {
+    return ASTDiagnostic_Code(this.__tsgoEmbedded0);
+  }
+
+  Category(): Category {
+    return ASTDiagnostic_Category(this.__tsgoEmbedded0);
+  }
+
+  Localize(locale: Locale): string {
+    return ASTDiagnostic_Localize(this.__tsgoEmbedded0, locale);
+  }
+
+  MessageChain(): GoSlice<GoInterface<Diagnostic>> {
+    return ASTDiagnostic_MessageChain(this);
+  }
+
+  RelatedInformation(): GoSlice<GoInterface<Diagnostic>> {
+    return ASTDiagnostic_RelatedInformation(this);
+  }
+}
+
+function newASTDiagnosticValue(diagnostic: GoPtr<Diagnostic_34a9f76f>): ASTDiagnosticValue {
+  return new ASTDiagnosticValue(diagnostic);
 }
 
 /**
@@ -124,11 +172,11 @@ export interface ASTDiagnostic extends Diagnostic {
  * 	return result
  * }
  */
-export function ASTDiagnostic_RelatedInformation(receiver: GoPtr<ASTDiagnostic>): GoSlice<Diagnostic> {
+export function ASTDiagnostic_RelatedInformation(receiver: GoPtr<ASTDiagnostic>): GoSlice<GoInterface<Diagnostic>> {
   const related = ASTDiagnostic_RelatedInformation_inner(receiver!.__tsgoEmbedded0);
-  const result: Diagnostic[] = new Array(related.length);
+  const result: GoInterface<Diagnostic>[] = new Array(related.length);
   for (let i = 0; i < related.length; i++) {
-    result[i] = WrapASTDiagnostic(related[i]) as Diagnostic;
+    result[i] = newASTDiagnosticValue(related[i]);
   }
   return result;
 }
@@ -165,11 +213,11 @@ export function ASTDiagnostic_File(receiver: GoPtr<ASTDiagnostic>): GoInterface<
  * 	return result
  * }
  */
-export function ASTDiagnostic_MessageChain(receiver: GoPtr<ASTDiagnostic>): GoSlice<Diagnostic> {
+export function ASTDiagnostic_MessageChain(receiver: GoPtr<ASTDiagnostic>): GoSlice<GoInterface<Diagnostic>> {
   const chain = ASTDiagnostic_MessageChain_inner(receiver!.__tsgoEmbedded0);
-  const result: Diagnostic[] = new Array(chain.length);
+  const result: GoInterface<Diagnostic>[] = new Array(chain.length);
   for (let i = 0; i < chain.length; i++) {
-    result[i] = WrapASTDiagnostic(chain[i]) as Diagnostic;
+    result[i] = newASTDiagnosticValue(chain[i]);
   }
   return result;
 }
@@ -183,19 +231,7 @@ export function ASTDiagnostic_MessageChain(receiver: GoPtr<ASTDiagnostic>): GoSl
  * }
  */
 export function WrapASTDiagnostic(d: GoPtr<Diagnostic_34a9f76f>): GoPtr<ASTDiagnostic> {
-  const result = {
-    __tsgoEmbedded0: d,
-  } as ASTDiagnostic;
-  result.File = (): FileLike => ASTDiagnostic_File(result)!;
-  result.Pos = (): int => ASTDiagnostic_Pos(result.__tsgoEmbedded0);
-  result.End = (): int => ASTDiagnostic_End(result.__tsgoEmbedded0);
-  result.Len = (): int => ASTDiagnostic_Len(result.__tsgoEmbedded0);
-  result.Code = (): int => ASTDiagnostic_Code(result.__tsgoEmbedded0);
-  result.Category = (): Category => ASTDiagnostic_Category(result.__tsgoEmbedded0);
-  result.Localize = (locale_: Locale): string => ASTDiagnostic_Localize(result.__tsgoEmbedded0, locale_);
-  result.MessageChain = (): GoSlice<Diagnostic> => ASTDiagnostic_MessageChain(result);
-  result.RelatedInformation = (): GoSlice<Diagnostic> => ASTDiagnostic_RelatedInformation(result);
-  return result;
+  return newASTDiagnosticValue(d);
 }
 
 /**
@@ -230,10 +266,10 @@ export function WrapASTDiagnostics(diags: GoSlice<GoPtr<Diagnostic_34a9f76f>>): 
  * 	return result
  * }
  */
-export function FromASTDiagnostics(diags: GoSlice<GoPtr<Diagnostic_34a9f76f>>): GoSlice<Diagnostic> {
-  const result: Diagnostic[] = new Array(diags.length);
+export function FromASTDiagnostics(diags: GoSlice<GoPtr<Diagnostic_34a9f76f>>): GoSlice<GoInterface<Diagnostic>> {
+  const result: GoInterface<Diagnostic>[] = new Array(diags.length);
   for (let i = 0; i < diags.length; i++) {
-    result[i] = WrapASTDiagnostic(diags[i]) as unknown as Diagnostic;
+    result[i] = newASTDiagnosticValue(diags[i]);
   }
   return result;
 }
@@ -250,10 +286,10 @@ export function FromASTDiagnostics(diags: GoSlice<GoPtr<Diagnostic_34a9f76f>>): 
  * 	return result
  * }
  */
-export function ToDiagnostics<T extends Diagnostic>(diags: GoSlice<T>): GoSlice<Diagnostic> {
-  const result: Diagnostic[] = new Array(diags.length);
+export function ToDiagnostics<T extends Diagnostic>(diags: GoSlice<T>): GoSlice<GoInterface<Diagnostic>> {
+  const result: GoInterface<Diagnostic>[] = new Array(diags.length);
   for (let i = 0; i < diags.length; i++) {
-    result[i] = diags[i] as unknown as Diagnostic;
+    result[i] = diags[i];
   }
   return result;
 }
@@ -336,7 +372,7 @@ export const ellipsis: string = "...";
  * 	}
  * }
  */
-export function FormatDiagnosticsWithColorAndContext(output: GoInterface<Writer>, diags: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+export function FormatDiagnosticsWithColorAndContext(output: GoInterface<Writer>, diags: GoSlice<GoInterface<Diagnostic>>, formatOpts: GoPtr<FormattingOptions>): void {
   if (diags.length === 0) {
     return;
   }
@@ -409,15 +445,15 @@ export function FormatDiagnosticWithColorAndContext(output: GoInterface<Writer>,
   const relatedInformation = diagnostic!.RelatedInformation();
   if (relatedInformation !== undefined && relatedInformation.length > 0) {
     for (const relatedInfo of relatedInformation) {
-      const file = relatedInfo.File();
+      const file = relatedInfo!.File();
       if (file !== undefined) {
         Fprint(output!, formatOpts!.NewLine);
         Fprint(output!, "  ");
-        const pos = relatedInfo.Pos();
+        const pos = relatedInfo!.Pos();
         WriteLocation(output, file, pos, formatOpts, writeWithStyleAndReset);
         Fprint(output!, " - ");
         WriteFlattenedDiagnosticMessage(output, relatedInfo, formatOpts!.NewLine, formatOpts!.Locale);
-        writeCodeSnippet(output, file, pos, relatedInfo.Len(), foregroundColorEscapeCyan, "    ", formatOpts);
+        writeCodeSnippet(output, file, pos, relatedInfo!.Len(), foregroundColorEscapeCyan, "    ", formatOpts);
       }
       Fprint(output!, formatOpts!.NewLine);
     }
@@ -765,9 +801,9 @@ export function WriteLocation(output: GoInterface<Writer>, file: GoInterface<Fil
  */
 export interface ErrorSummary {
   TotalErrorCount: int;
-  GlobalErrors: GoSlice<Diagnostic>;
-  ErrorsByFile: GoMap<FileLike, GoSlice<Diagnostic>>;
-  SortedFiles: GoSlice<FileLike>;
+  GlobalErrors: GoSlice<GoInterface<Diagnostic>>;
+  ErrorsByFile: GoMap<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>>;
+  SortedFiles: GoSlice<GoInterface<FileLike>>;
 }
 
 /**
@@ -821,7 +857,7 @@ export interface ErrorSummary {
  * 	}
  * }
  */
-export function WriteErrorSummaryText(output: GoInterface<Writer>, allDiagnostics: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+export function WriteErrorSummaryText(output: GoInterface<Writer>, allDiagnostics: GoSlice<GoInterface<Diagnostic>>, formatOpts: GoPtr<FormattingOptions>): void {
   const errorSummary = getErrorSummary(allDiagnostics);
   const totalErrorCount = errorSummary!.TotalErrorCount;
   if (totalErrorCount === 0) {
@@ -904,32 +940,32 @@ export function WriteErrorSummaryText(output: GoInterface<Writer>, allDiagnostic
  * 	}
  * }
  */
-export function getErrorSummary(diags: GoSlice<Diagnostic>): GoPtr<ErrorSummary> {
+export function getErrorSummary(diags: GoSlice<GoInterface<Diagnostic>>): GoPtr<ErrorSummary> {
   let totalErrorCount = 0;
-  let globalErrors: GoSlice<Diagnostic> = [];
-  let errorsByFile: GoMap<FileLike, GoSlice<Diagnostic>> | undefined = undefined;
+  let globalErrors: GoSlice<GoInterface<Diagnostic>> = [];
+  let errorsByFile: GoMap<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>> | undefined = undefined;
 
   for (const diagnostic of diags) {
-    if (diagnostic.Category() !== CategoryError) {
+    if (diagnostic!.Category() !== CategoryError) {
       continue;
     }
 
     totalErrorCount++;
-    if (diagnostic.File() === undefined) {
+    if (diagnostic!.File() === undefined) {
       globalErrors = [...globalErrors, diagnostic];
     } else {
       if (errorsByFile === undefined) {
-        errorsByFile = new Map<FileLike, GoSlice<Diagnostic>>();
+        errorsByFile = new Map<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>>();
       }
-      const existing = errorsByFile.get(diagnostic.File()!) ?? [];
-      errorsByFile.set(diagnostic.File()!, [...existing, diagnostic]);
+      const existing = errorsByFile.get(diagnostic!.File()) ?? [];
+      errorsByFile.set(diagnostic!.File(), [...existing, diagnostic]);
     }
   }
 
-  const effectiveErrorsByFile: GoMap<FileLike, GoSlice<Diagnostic>> = errorsByFile ?? new Map<FileLike, GoSlice<Diagnostic>>();
+  const effectiveErrorsByFile: GoMap<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>> = errorsByFile ?? new Map<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>>();
 
-  const sortedFiles = SortedFunc(Keys(effectiveErrorsByFile), (a: FileLike, b: FileLike) => {
-    return Compare(a.FileName(), b.FileName());
+  const sortedFiles = SortedFunc(Keys(effectiveErrorsByFile), (a: GoInterface<FileLike>, b: GoInterface<FileLike>) => {
+    return Compare(a!.FileName(), b!.FileName());
   });
 
   return {
@@ -1024,7 +1060,7 @@ export function writeTabularErrorsDisplay(output: GoInterface<Writer>, errorSumm
  * 	)
  * }
  */
-export function prettyPathForFileError(file: GoInterface<FileLike>, fileErrors: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): string {
+export function prettyPathForFileError(file: GoInterface<FileLike>, fileErrors: GoSlice<GoInterface<Diagnostic>>, formatOpts: GoPtr<FormattingOptions>): string {
   if (file === undefined || fileErrors.length === 0) {
     return "";
   }
@@ -1052,7 +1088,7 @@ export function prettyPathForFileError(file: GoInterface<FileLike>, fileErrors: 
  * 	}
  * }
  */
-export function WriteFormatDiagnostics(output: GoInterface<Writer>, diagnostics: GoSlice<Diagnostic>, formatOpts: GoPtr<FormattingOptions>): void {
+export function WriteFormatDiagnostics(output: GoInterface<Writer>, diagnostics: GoSlice<GoInterface<Diagnostic>>, formatOpts: GoPtr<FormattingOptions>): void {
   for (const diagnostic of diagnostics) {
     WriteFormatDiagnostic(output, diagnostic, formatOpts);
   }

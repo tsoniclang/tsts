@@ -155,8 +155,8 @@ export interface Orchestrator {
   tasks: GoPtr<SyncMap<Path, GoPtr<BuildTask>>>;
   order: GoSlice<string>;
   errors: GoSlice<GoPtr<Diagnostic>>;
-  errorSummaryReporter: DiagnosticsReporter | undefined;
-  watchStatusReporter: DiagnosticReporter | undefined;
+  errorSummaryReporter: DiagnosticsReporter;
+  watchStatusReporter: DiagnosticReporter;
 }
 
 /**

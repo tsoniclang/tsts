@@ -161,8 +161,8 @@ export function Tristate_MarshalJSON(receiver: Tristate): [GoSlice<byte>, GoErro
 }
 
 // Go's []byte(string) conversion: the UTF-8 encoding of the string as a byte slice.
-const utf8Encoder = new globalThis.TextEncoder();
-const utf8Decoder = new globalThis.TextDecoder();
+const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
+const utf8Decoder: TextDecoder = new globalThis.TextDecoder();
 function stringToBytes(s: string): GoSlice<byte> {
   return globalThis.Array.from(utf8Encoder.encode(s));
 }

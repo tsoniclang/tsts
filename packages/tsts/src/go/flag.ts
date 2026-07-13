@@ -1,7 +1,7 @@
 import type { bool, int } from "./scalars.js";
 import type { GoError, GoSlice } from "./compat.js";
 
-export const ContinueOnError = 0 as int;
+export const ContinueOnError: int = 0 as int;
 
 export interface FlagValue<T> {
   value: T;
@@ -16,7 +16,7 @@ interface RegisteredFlag<T> {
 }
 
 export class FlagSet {
-  private readonly flags = new Map<string, RegisteredFlag<unknown>>();
+  private readonly flags: Map<string, RegisteredFlag<unknown>> = new Map<string, RegisteredFlag<unknown>>();
 
   constructor(readonly name: string, readonly errorHandling: int) {}
 

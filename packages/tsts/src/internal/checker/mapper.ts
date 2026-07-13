@@ -69,6 +69,7 @@ export function TypeMapper_Kind(receiver: GoPtr<TypeMapper>): TypeMapperKind {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperData","kind":"type","status":"implemented","sigHash":"4649cb141073582297deefb530f542430d796079063ef027818276bd88663ea8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic mapper dispatch without a side table or wrapper object.","goSignatureHash":"45284edb6f62742a1ed49c2c3a89e8acf9c04d31a593b2176200915230705598","tsSignatureHash":"eb00a8c7d277bb724833cdde86b19bd44cfbdc28004f4d006f9b3ad26a272910"}
  *
  * Go source:
  * TypeMapperData interface {

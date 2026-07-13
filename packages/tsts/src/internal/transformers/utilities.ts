@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoSliceIsNil, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_End, Node_Pos, Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { BindingElement, BindingPattern, VariableDeclaration } from "../ast/generated/data.js";
@@ -658,8 +658,8 @@ export function ConvertVariableDeclarationToAssignmentExpression(emitContext: Go
  * 	return factory.NewSyntaxList(nodes)
  * }
  */
-export function SingleOrMany(nodes: GoSlice<GoPtr<Node>> | undefined, factory: GoPtr<NodeFactory>): GoPtr<Node> {
-  if (nodes === undefined) {
+export function SingleOrMany(nodes: GoSlice<GoPtr<Node>>, factory: GoPtr<NodeFactory>): GoPtr<Node> {
+  if (GoSliceIsNil(nodes)) {
     return undefined;
   }
   if (nodes.length === 1) {

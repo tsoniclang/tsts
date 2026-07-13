@@ -32,7 +32,7 @@ export interface EmitHelper {
   Name: string;
   Scoped: bool;
   Text: string;
-  TextCallback: GoFunc<(makeUniqueName: (arg0: string) => string) => string>;
+  TextCallback: GoFunc<(makeUniqueName: GoFunc<(arg0: string) => string>) => string>;
   Priority: GoPtr<Priority>;
   Dependencies: GoSlice<GoPtr<EmitHelper>>;
   ImportName: string;
@@ -609,8 +609,8 @@ export let awaiterHelper: GoPtr<EmitHelper> = {
 export let AsyncSuperHelper: GoPtr<EmitHelper> = {
   Name: "typescript:async-super",
   Scoped: true,
-  TextCallback: (makeUniqueName: (arg0: string) => string): string => {
-    return "\nconst " + makeUniqueName("_superIndex") + " = name => super[name];";
+  TextCallback: (makeUniqueName: GoFunc<(arg0: string) => string>): string => {
+    return "\nconst " + makeUniqueName!("_superIndex") + " = name => super[name];";
   },
   Text: "",
   ImportName: "",
@@ -636,8 +636,8 @@ export let AsyncSuperHelper: GoPtr<EmitHelper> = {
 export let AdvancedAsyncSuperHelper: GoPtr<EmitHelper> = {
   Name: "typescript:advanced-async-super",
   Scoped: true,
-  TextCallback: (makeUniqueName: (arg0: string) => string): string => {
-    return "\nconst " + makeUniqueName("_superIndex") + " = (function (geti, seti) {\n" +
+  TextCallback: (makeUniqueName: GoFunc<(arg0: string) => string>): string => {
+    return "\nconst " + makeUniqueName!("_superIndex") + " = (function (geti, seti) {\n" +
       "    const cache = Object.create(null);\n" +
       "    return name => cache[name] || (cache[name] = { get value() { return geti(name); }, set value(v) { seti(name, v); } });\n" +
       "})(name => super[name], (name, value) => super[name] = value);";

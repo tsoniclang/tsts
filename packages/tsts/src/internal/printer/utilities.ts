@@ -122,9 +122,9 @@ import { GetDefaultIndentSize } from "./textwriter.js";
 import { TokenFlagsIsInvalid, TokenFlagsContainsSeparator, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
-export const byteLen = StringByteLen;
-export const byteSlice = StringByteSlice;
-const decodeRuneInStringAt = DecodeRuneInStringAt;
+export const byteLen: (text: string) => int = StringByteLen;
+export const byteSlice: (text: string, start: int, end?: int) => string = StringByteSlice;
+const decodeRuneInStringAt: (text: string, index: int) => [GoRune, int] = DecodeRuneInStringAt;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::type::getLiteralTextFlags","kind":"type","status":"implemented","sigHash":"dd5ef391e67032e911741fa2b5a893b18cdeda34ef28edcdc7be3ee3f98a83ee"}
@@ -1430,7 +1430,7 @@ export function originalNodesHaveSameParent(emitContext: GoPtr<EmitContext>, nod
  * 	return 0, false
  * }
  */
-export function tryGetEnd(node: { End: () => int }): [int, bool] {
+export function tryGetEnd(node: GoInterface<{ End(): int }>): [int, bool] {
   if (node === undefined) {
     return [0 as int, false];
   }
@@ -1464,7 +1464,7 @@ export function tryGetEnd(node: { End: () => int }): [int, bool] {
  * 	return end
  * }
  */
-export function greatestEnd(end: int, ...nodes: Array<{ End: () => int }>): int {
+export function greatestEnd(end: int, ...nodes: Array<GoInterface<{ End(): int }>>): int {
   for (let i = nodes.length - 1; i >= 0; i--) {
     const node = nodes[i]!;
     const [nodeEnd, ok] = tryGetEnd(node);

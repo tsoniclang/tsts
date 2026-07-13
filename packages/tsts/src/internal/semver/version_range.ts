@@ -1,5 +1,6 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoSliceIsNil } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import * as regexp from "../../go/regexp.js";
 import * as strings from "../../go/strings.js";
@@ -382,8 +383,8 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
 
     const comparators: GoSlice<versionComparator> = [];
 
-    const hyphenMatch: GoSlice<string> | undefined = hyphenRegExp!.FindStringSubmatch(r);
-    if (hyphenMatch !== undefined) {
+    const hyphenMatch: GoSlice<string> = hyphenRegExp!.FindStringSubmatch(r);
+    if (!GoSliceIsNil(hyphenMatch)) {
       const [parsedComparators, ok] = parseHyphen(hyphenMatch[1]!, hyphenMatch[2]!);
       if (ok) {
         for (const c of parsedComparators) {
@@ -394,8 +395,8 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
       }
     } else {
       for (const simple of whitespaceRegExp!.Split(r, -1) ?? []) {
-        const match: GoSlice<string> | undefined = rangeRegExp!.FindStringSubmatch(strings.TrimSpace(simple));
-        if (match === undefined) {
+        const match: GoSlice<string> = rangeRegExp!.FindStringSubmatch(strings.TrimSpace(simple));
+        if (GoSliceIsNil(match)) {
           return [[], false];
         }
 
@@ -629,8 +630,8 @@ export function parsePartial(text: string): [partialVersion, bool] {
     patchStr: "",
   };
 
-  const match: GoSlice<string> | undefined = partialRegExp!.FindStringSubmatch(text);
-  if (match === undefined) {
+  const match: GoSlice<string> = partialRegExp!.FindStringSubmatch(text);
+  if (GoSliceIsNil(match)) {
     return [zeroPartial, false];
   }
 

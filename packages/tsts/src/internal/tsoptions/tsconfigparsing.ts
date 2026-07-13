@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, GoNilMap, GoStringKey, GoValueRef, GoZeroComparableInterface, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoStringKey, GoUnboxComparableInterface, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
@@ -773,7 +773,7 @@ export interface jsonConversionNotifier {
  * 	return convertToJson(sourceFile, rootExpression, true, jsonConversionNotifier)
  * }
  */
-export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   let rootExpression: GoPtr<Expression> = undefined;
   if ((sourceFile!.Statements!.Nodes?.length ?? 0) > 0) {
     rootExpression = Node_Expression(sourceFile!.Statements!.Nodes![0]) as GoPtr<Expression>;
@@ -924,7 +924,7 @@ export function isCompilerOptionsValue(option: GoPtr<CommandLineOption>, value: 
  * 	return val, nil
  * }
  */
-export function validateJsonOptionValue(opt: GoPtr<CommandLineOption>, val: GoInterface<unknown>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function validateJsonOptionValue(opt: GoPtr<CommandLineOption>, val: GoInterface<unknown>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   if (val === undefined || val === null) {
     return [undefined, []];
   }
@@ -1120,7 +1120,7 @@ export function normalizeNonListOptionValue(option: GoPtr<CommandLineOption>, ba
  * 	}
  * }
  */
-export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: GoInterface<unknown>, basePath: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: GoInterface<unknown>, basePath: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   if (opt!.IsCommandLineOnly) {
     let nodeValue: GoPtr<Node> = undefined;
     if (propertyAssignment !== undefined) {
@@ -1490,9 +1490,9 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
     const commandLineOptionEnumMapVal = CommandLineOption_EnumMap(opt);
     if (commandLineOptionEnumMapVal !== undefined) {
       if (typeof value === "string") {
-        const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal, strings.ToLower(value), GoZeroComparableInterface);
+        const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal, strings.ToLower(value), GoZeroInterface<unknown>);
         if (ok) {
-          const compilerOptionsErr = result.ParseOption(key, val?.value);
+          const compilerOptionsErr = result.ParseOption(key, GoUnboxComparableInterface(val));
           errors.push(...(compilerOptionsErr ?? []));
         }
       } else {
@@ -1546,7 +1546,7 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
  * 	return value, errors
  * }
  */
-export function convertArrayLiteralExpressionToJson(sourceFile: GoPtr<SourceFile>, elements: GoSlice<GoPtr<Expression>>, elementOption: GoPtr<CommandLineOption>, returnValue: bool): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function convertArrayLiteralExpressionToJson(sourceFile: GoPtr<SourceFile>, elements: GoSlice<GoPtr<Expression>>, elementOption: GoPtr<CommandLineOption>, returnValue: bool): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   if (!returnValue) {
     for (const element of elements) {
       convertPropertyValueToJson(sourceFile, element, elementOption, returnValue, undefined);
@@ -1603,7 +1603,7 @@ export function directoryOfCombinedPath(fileName: string, basePath: string): str
  * 	return config, errors
  * }
  */
-export function ParseConfigFileTextToJson(fileName: string, path: Path, jsonText: string): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function ParseConfigFileTextToJson(fileName: string, path: Path, jsonText: string): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   const jsonSourceFile = ParseSourceFile({ FileName: fileName, Path: path } as SourceFileParseOptions, jsonText, ScriptKindJSON);
   const [config, errors] = convertConfigFileToObject(jsonSourceFile, undefined);
   const diags = SourceFile_Diagnostics(jsonSourceFile);
@@ -1798,7 +1798,7 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
  * 	return convertPropertyValueToJson(sourceFile, rootExpression, rootOptions, returnValue, jsonConversionNotifier)
  * }
  */
-export function convertToJson(sourceFile: GoPtr<SourceFile>, rootExpression: GoPtr<Expression>, returnValue: bool, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function convertToJson(sourceFile: GoPtr<SourceFile>, rootExpression: GoPtr<Expression>, returnValue: bool, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   if (rootExpression === undefined) {
     if (returnValue) {
       return [{}, []];
@@ -1879,7 +1879,7 @@ export function isDoubleQuotedString(node: GoPtr<Node>): bool {
  * 	return nil, errors
  * }
  */
-export function convertPropertyValueToJson(sourceFile: GoPtr<SourceFile>, valueExpression: GoPtr<Expression>, option: GoPtr<CommandLineOption>, returnValue: bool, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function convertPropertyValueToJson(sourceFile: GoPtr<SourceFile>, valueExpression: GoPtr<Expression>, option: GoPtr<CommandLineOption>, returnValue: bool, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   switch (valueExpression!.Kind) {
     case KindTrueKeyword:
       return [true, []];
@@ -1949,7 +1949,7 @@ export function ParseJsonConfigFileContent(json: GoInterface<unknown>, host: GoI
  * 	return convertToJson(sourceFile, rootExpression, true /*returnValue* /, nil /*jsonConversionNotifier* /)
  * }
  */
-export function convertToObject(sourceFile: GoPtr<SourceFile>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function convertToObject(sourceFile: GoPtr<SourceFile>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   let rootExpression: GoPtr<Expression> = undefined;
   if (sourceFile!.Statements!.Nodes!.length !== 0) {
     rootExpression = Node_Expression(sourceFile!.Statements!.Nodes![0]) as GoPtr<Expression>;

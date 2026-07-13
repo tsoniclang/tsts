@@ -210,7 +210,7 @@ function testParityImportMismatches(config, moduleIndex, testParityModules) {
 }
 
 function declarationContract(api, module, statement, valueEnvironment) {
-  const descriptor = declarationDescriptor(api, statement, {
+  const descriptor = nonGoDeclarationSignatureDescriptor(declarationDescriptor(api, statement, {
     api,
     imports: module.descriptorImports ?? module.structure.imports,
     localNamespaces: module.structure.localNamespaceNames,
@@ -219,8 +219,24 @@ function declarationContract(api, module, statement, valueEnvironment) {
     moduleId: module.moduleId,
     text: module.text,
     valueEnvironment,
-  });
+  }));
   return { descriptor, hash: hashText(canonicalSchemaValue(descriptor)), issues: declarationContractIssues(descriptor) };
+}
+
+function nonGoDeclarationSignatureDescriptor(descriptor) {
+  return normalize(descriptor);
+
+  function normalize(value) {
+    if (Array.isArray(value)) return value.map(normalize);
+    if (value === null || typeof value !== "object") return value;
+    const result = {};
+    const explicitVariableType = typeof value.declarationKind === "string" && value.missing === false;
+    for (const [key, child] of Object.entries(value)) {
+      if (explicitVariableType && value.initializerStatus === "unsupported" && key === "valueIssue") continue;
+      result[key] = normalize(child);
+    }
+    return result;
+  }
 }
 
 function declarationContractIssues(descriptor) {

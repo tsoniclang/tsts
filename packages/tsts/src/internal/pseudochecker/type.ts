@@ -94,6 +94,7 @@ export function newPseudoType(kind: PseudoTypeKind, data: GoInterface<pseudoType
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::pseudoTypeData","kind":"type","status":"implemented","sigHash":"364e55fe8444f9e686ba5a9261d288f7640824100e9fbf5e34b94d2f23645c7e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic pseudo-type dispatch without a side table or wrapper object.","goSignatureHash":"d27167a5c55e4e50d30b7f9a84b0b554acbf7231271959e73f01c8251eecedbb","tsSignatureHash":"2a554099e6ecb17a250610734ea99e020f3cc9e6f5bb14b29ecceafaf2fb5530"}
  *
  * Go source:
  * pseudoTypeData interface {
@@ -112,7 +113,8 @@ export interface pseudoTypeData extends GoInterfaceValue<unknown> {
  * 	PseudoType
  * }
  */
-export interface PseudoTypeDefault extends PseudoType {
+export interface PseudoTypeDefault {
+  __tsgoEmbedded0: PseudoType;
 }
 
 /**
@@ -122,7 +124,7 @@ export interface PseudoTypeDefault extends PseudoType {
  * func (b *PseudoTypeDefault) AsPseudoType() *PseudoType { return &b.PseudoType }
  */
 export function PseudoTypeDefault_AsPseudoType(receiver: GoPtr<PseudoTypeDefault>): GoPtr<PseudoType> {
-  return receiver;
+  return receiver!.__tsgoEmbedded0;
 }
 
 /**
@@ -133,19 +135,33 @@ export function PseudoTypeDefault_AsPseudoType(receiver: GoPtr<PseudoTypeDefault
  * 	PseudoTypeDefault
  * }
  */
-export interface PseudoTypeBase extends PseudoTypeDefault {
+export interface PseudoTypeBase {
+  __tsgoEmbedded0: PseudoTypeDefault;
 }
 
 class PseudoTypeBaseData implements PseudoTypeBase, pseudoTypeData {
-  Kind!: PseudoTypeKind;
-  data!: GoInterface<pseudoTypeData>;
+  __tsgoEmbedded0: PseudoTypeDefault = {
+    __tsgoEmbedded0: {
+      Kind: PseudoTypeKindDirect,
+      data: undefined,
+    },
+  };
 
   __tsgoGoReceiver(): GoPtr<PseudoTypeBase> {
     return this;
   }
 
   AsPseudoType(): GoPtr<PseudoType> {
-    return PseudoTypeDefault_AsPseudoType(this);
+    return PseudoTypeDefault_AsPseudoType(this.__tsgoEmbedded0);
+  }
+}
+
+abstract class PseudoTypeBaseEmbeddedData<TReceiver> implements pseudoTypeData {
+  abstract __tsgoEmbedded0: PseudoTypeBaseData;
+  abstract __tsgoGoReceiver(): GoPtr<TReceiver>;
+
+  AsPseudoType(): GoPtr<PseudoType> {
+    return this.__tsgoEmbedded0.AsPseudoType();
   }
 }
 
@@ -184,16 +200,22 @@ export let PseudoTypeTrue: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindTrue,
  * 	TypeNode *ast.Node
  * }
  */
-export interface PseudoTypeDirect extends PseudoTypeBase {
+export interface PseudoTypeDirect {
+  __tsgoEmbedded0: PseudoTypeBase;
   TypeNode: GoPtr<Node>;
 }
 
-class PseudoTypeDirectData extends PseudoTypeBaseData implements PseudoTypeDirect {
+class PseudoTypeDirectData extends PseudoTypeBaseEmbeddedData<PseudoTypeDirect> implements PseudoTypeDirect {
+  __tsgoEmbedded0: PseudoTypeBaseData = new PseudoTypeBaseData();
   TypeNode: GoPtr<Node>;
 
   constructor(typeNode: GoPtr<Node>) {
     super();
     this.TypeNode = typeNode;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeDirect> {
+    return this;
   }
 }
 
@@ -229,12 +251,14 @@ export function PseudoType_AsPseudoTypeDirect(receiver: GoPtr<PseudoType>): GoPt
  * 	ErrorNodes []*ast.Node
  * }
  */
-export interface PseudoTypeInferred extends PseudoTypeBase {
+export interface PseudoTypeInferred {
+  __tsgoEmbedded0: PseudoTypeBase;
   Expression: GoPtr<Node>;
   ErrorNodes: GoSlice<GoPtr<Node>>;
 }
 
-class PseudoTypeInferredData extends PseudoTypeBaseData implements PseudoTypeInferred {
+class PseudoTypeInferredData extends PseudoTypeBaseEmbeddedData<PseudoTypeInferred> implements PseudoTypeInferred {
+  __tsgoEmbedded0: PseudoTypeBaseData = new PseudoTypeBaseData();
   Expression: GoPtr<Node>;
   ErrorNodes: GoSlice<GoPtr<Node>>;
 
@@ -242,6 +266,10 @@ class PseudoTypeInferredData extends PseudoTypeBaseData implements PseudoTypeInf
     super();
     this.Expression = expression;
     this.ErrorNodes = errorNodes;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeInferred> {
+    return this;
   }
 }
 
@@ -288,16 +316,22 @@ export function PseudoType_AsPseudoTypeInferred(receiver: GoPtr<PseudoType>): Go
  * 	Declaration *ast.Node
  * }
  */
-export interface PseudoTypeNoResult extends PseudoTypeBase {
+export interface PseudoTypeNoResult {
+  __tsgoEmbedded0: PseudoTypeBase;
   Declaration: GoPtr<Node>;
 }
 
-class PseudoTypeNoResultData extends PseudoTypeBaseData implements PseudoTypeNoResult {
+class PseudoTypeNoResultData extends PseudoTypeBaseEmbeddedData<PseudoTypeNoResult> implements PseudoTypeNoResult {
+  __tsgoEmbedded0: PseudoTypeBaseData = new PseudoTypeBaseData();
   Declaration: GoPtr<Node>;
 
   constructor(declaration: GoPtr<Node>) {
     super();
     this.Declaration = declaration;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeNoResult> {
+    return this;
   }
 }
 
@@ -334,13 +368,15 @@ export function PseudoType_AsPseudoTypeNoResult(receiver: GoPtr<PseudoType>): Go
  * 	RegularType *PseudoType
  * }
  */
-export interface PseudoTypeMaybeConstLocation extends PseudoTypeBase {
+export interface PseudoTypeMaybeConstLocation {
+  __tsgoEmbedded0: PseudoTypeBase;
   Node: GoPtr<Node>;
   ConstType: GoPtr<PseudoType>;
   RegularType: GoPtr<PseudoType>;
 }
 
-class PseudoTypeMaybeConstLocationData extends PseudoTypeBaseData implements PseudoTypeMaybeConstLocation {
+class PseudoTypeMaybeConstLocationData extends PseudoTypeBaseEmbeddedData<PseudoTypeMaybeConstLocation> implements PseudoTypeMaybeConstLocation {
+  __tsgoEmbedded0: PseudoTypeBaseData = new PseudoTypeBaseData();
   Node: GoPtr<Node>;
   ConstType: GoPtr<PseudoType>;
   RegularType: GoPtr<PseudoType>;
@@ -350,6 +386,10 @@ class PseudoTypeMaybeConstLocationData extends PseudoTypeBaseData implements Pse
     this.Node = node;
     this.ConstType = constType;
     this.RegularType = regularType;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeMaybeConstLocation> {
+    return this;
   }
 }
 
@@ -386,16 +426,22 @@ export function PseudoType_AsPseudoTypeMaybeConstLocation(receiver: GoPtr<Pseudo
  * 	Types []*PseudoType
  * }
  */
-export interface PseudoTypeUnion extends PseudoTypeBase {
+export interface PseudoTypeUnion {
+  __tsgoEmbedded0: PseudoTypeBase;
   Types: GoSlice<GoPtr<PseudoType>>;
 }
 
-class PseudoTypeUnionData extends PseudoTypeBaseData implements PseudoTypeUnion {
+class PseudoTypeUnionData extends PseudoTypeBaseEmbeddedData<PseudoTypeUnion> implements PseudoTypeUnion {
+  __tsgoEmbedded0: PseudoTypeBaseData = new PseudoTypeBaseData();
   Types: GoSlice<GoPtr<PseudoType>>;
 
   constructor(types: GoSlice<GoPtr<PseudoType>>) {
     super();
     this.Types = types;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeUnion> {
+    return this;
   }
 }
 
@@ -470,14 +516,16 @@ export function NewPseudoParameter(isRest: bool, name: GoPtr<Node>, isOptional: 
  * 	ReturnType     *PseudoType
  * }
  */
-export interface PseudoTypeSingleCallSignature extends PseudoTypeBase {
+export interface PseudoTypeSingleCallSignature {
+  __tsgoEmbedded0: PseudoTypeBase;
   Signature: GoPtr<Node>;
   Parameters: GoSlice<GoPtr<PseudoParameter>>;
   TypeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>;
   ReturnType: GoPtr<PseudoType>;
 }
 
-class PseudoTypeSingleCallSignatureData extends PseudoTypeBaseData implements PseudoTypeSingleCallSignature {
+class PseudoTypeSingleCallSignatureData extends PseudoTypeBaseEmbeddedData<PseudoTypeSingleCallSignature> implements PseudoTypeSingleCallSignature {
+  __tsgoEmbedded0: PseudoTypeBaseData = new PseudoTypeBaseData();
   Signature: GoPtr<Node>;
   Parameters: GoSlice<GoPtr<PseudoParameter>>;
   TypeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>;
@@ -494,6 +542,10 @@ class PseudoTypeSingleCallSignatureData extends PseudoTypeBaseData implements Ps
     this.Parameters = parameters;
     this.TypeParameters = typeParameters;
     this.ReturnType = returnType;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeSingleCallSignature> {
+    return this;
   }
 }
 
@@ -538,16 +590,22 @@ export function PseudoType_AsPseudoTypeSingleCallSignature(receiver: GoPtr<Pseud
  * 	Elements []*PseudoType
  * }
  */
-export interface PseudoTypeTuple extends PseudoTypeBase {
+export interface PseudoTypeTuple {
+  __tsgoEmbedded0: PseudoTypeBase;
   Elements: GoSlice<GoPtr<PseudoType>>;
 }
 
-class PseudoTypeTupleData extends PseudoTypeBaseData implements PseudoTypeTuple {
+class PseudoTypeTupleData extends PseudoTypeBaseEmbeddedData<PseudoTypeTuple> implements PseudoTypeTuple {
+  __tsgoEmbedded0: PseudoTypeBaseData = new PseudoTypeBaseData();
   Elements: GoSlice<GoPtr<PseudoType>>;
 
   constructor(elements: GoSlice<GoPtr<PseudoType>>) {
     super();
     this.Elements = elements;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeTuple> {
+    return this;
   }
 }
 
@@ -661,6 +719,7 @@ export const PseudoObjectElementKindGetAccessor: PseudoObjectElementKind = 3 as 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::pseudoObjectElementData","kind":"type","status":"implemented","sigHash":"84e8709d8b6cabad9571818ae09e4abde1d5cb6e5f91f2e02156cfbb01d1e59d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic pseudo-element dispatch without a side table or wrapper object.","goSignatureHash":"e55c690f70723b9e13dfafd09eff15e50e59e11b3130d686f4c10920469ed4ef","tsSignatureHash":"7c2b05b2130b39a5b696d8991c9fd732753977dd117aeb47246ec533cc53c6cc"}
  *
  * Go source:
  * pseudoObjectElementData interface {
@@ -683,6 +742,15 @@ class PseudoObjectElementData implements PseudoObjectElement, pseudoObjectElemen
 
   AsPseudoObjectElement(): GoPtr<PseudoObjectElement> {
     return PseudoObjectElement_AsPseudoObjectElement(this);
+  }
+}
+
+abstract class PseudoObjectElementEmbeddedData<TReceiver> implements pseudoObjectElementData {
+  abstract __tsgoEmbedded0: PseudoObjectElementData;
+  abstract __tsgoGoReceiver(): GoPtr<TReceiver>;
+
+  AsPseudoObjectElement(): GoPtr<PseudoObjectElement> {
+    return this.__tsgoEmbedded0.AsPseudoObjectElement();
   }
 }
 
@@ -720,14 +788,16 @@ export function newPseudoObjectElement(kind: PseudoObjectElementKind, name: GoPt
  * 	ReturnType     *PseudoType
  * }
  */
-export interface PseudoObjectMethod extends PseudoObjectElement {
+export interface PseudoObjectMethod {
+  __tsgoEmbedded0: PseudoObjectElement;
   Signature: GoPtr<Node>;
   TypeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>;
   Parameters: GoSlice<GoPtr<PseudoParameter>>;
   ReturnType: GoPtr<PseudoType>;
 }
 
-class PseudoObjectMethodData extends PseudoObjectElementData implements PseudoObjectMethod {
+class PseudoObjectMethodData extends PseudoObjectElementEmbeddedData<PseudoObjectMethod> implements PseudoObjectMethod {
+  __tsgoEmbedded0: PseudoObjectElementData = new PseudoObjectElementData();
   Signature: GoPtr<Node>;
   TypeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>;
   Parameters: GoSlice<GoPtr<PseudoParameter>>;
@@ -744,6 +814,10 @@ class PseudoObjectMethodData extends PseudoObjectElementData implements PseudoOb
     this.TypeParameters = typeParameters;
     this.Parameters = parameters;
     this.ReturnType = returnType;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoObjectMethod> {
+    return this;
   }
 }
 
@@ -791,12 +865,14 @@ export function PseudoObjectElement_AsPseudoObjectMethod(receiver: GoPtr<PseudoO
  * 	Type     *PseudoType
  * }
  */
-export interface PseudoPropertyAssignment extends PseudoObjectElement {
+export interface PseudoPropertyAssignment {
+  __tsgoEmbedded0: PseudoObjectElement;
   Readonly: bool;
   Type: GoPtr<PseudoType>;
 }
 
-class PseudoPropertyAssignmentData extends PseudoObjectElementData implements PseudoPropertyAssignment {
+class PseudoPropertyAssignmentData extends PseudoObjectElementEmbeddedData<PseudoPropertyAssignment> implements PseudoPropertyAssignment {
+  __tsgoEmbedded0: PseudoObjectElementData = new PseudoObjectElementData();
   Readonly: bool;
   Type: GoPtr<PseudoType>;
 
@@ -804,6 +880,10 @@ class PseudoPropertyAssignmentData extends PseudoObjectElementData implements Ps
     super();
     this.Readonly = readonly;
     this.Type = type;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoPropertyAssignment> {
+    return this;
   }
 }
 
@@ -849,12 +929,14 @@ export function PseudoObjectElement_AsPseudoPropertyAssignment(receiver: GoPtr<P
  * 	Parameter *PseudoParameter
  * }
  */
-export interface PseudoSetAccessor extends PseudoObjectElement {
+export interface PseudoSetAccessor {
+  __tsgoEmbedded0: PseudoObjectElement;
   Signature: GoPtr<Node>;
   Parameter: GoPtr<PseudoParameter>;
 }
 
-class PseudoSetAccessorData extends PseudoObjectElementData implements PseudoSetAccessor {
+class PseudoSetAccessorData extends PseudoObjectElementEmbeddedData<PseudoSetAccessor> implements PseudoSetAccessor {
+  __tsgoEmbedded0: PseudoObjectElementData = new PseudoObjectElementData();
   Signature: GoPtr<Node>;
   Parameter: GoPtr<PseudoParameter>;
 
@@ -862,6 +944,10 @@ class PseudoSetAccessorData extends PseudoObjectElementData implements PseudoSet
     super();
     this.Signature = signature;
     this.Parameter = parameter;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoSetAccessor> {
+    return this;
   }
 }
 
@@ -907,12 +993,14 @@ export function PseudoObjectElement_AsPseudoSetAccessor(receiver: GoPtr<PseudoOb
  * 	Type      *PseudoType
  * }
  */
-export interface PseudoGetAccessor extends PseudoObjectElement {
+export interface PseudoGetAccessor {
+  __tsgoEmbedded0: PseudoObjectElement;
   Signature: GoPtr<Node>;
   Type: GoPtr<PseudoType>;
 }
 
-class PseudoGetAccessorData extends PseudoObjectElementData implements PseudoGetAccessor {
+class PseudoGetAccessorData extends PseudoObjectElementEmbeddedData<PseudoGetAccessor> implements PseudoGetAccessor {
+  __tsgoEmbedded0: PseudoObjectElementData = new PseudoObjectElementData();
   Signature: GoPtr<Node>;
   Type: GoPtr<PseudoType>;
 
@@ -920,6 +1008,10 @@ class PseudoGetAccessorData extends PseudoObjectElementData implements PseudoGet
     super();
     this.Signature = signature;
     this.Type = type;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoGetAccessor> {
+    return this;
   }
 }
 
@@ -964,16 +1056,22 @@ export function PseudoObjectElement_AsPseudoGetAccessor(receiver: GoPtr<PseudoOb
  * 	Elements []*PseudoObjectElement
  * }
  */
-export interface PseudoTypeObjectLiteral extends PseudoTypeBase {
+export interface PseudoTypeObjectLiteral {
+  __tsgoEmbedded0: PseudoTypeBase;
   Elements: GoSlice<GoPtr<PseudoObjectElement>>;
 }
 
-class PseudoTypeObjectLiteralData extends PseudoTypeBaseData implements PseudoTypeObjectLiteral {
+class PseudoTypeObjectLiteralData extends PseudoTypeBaseEmbeddedData<PseudoTypeObjectLiteral> implements PseudoTypeObjectLiteral {
+  __tsgoEmbedded0: PseudoTypeBaseData = new PseudoTypeBaseData();
   Elements: GoSlice<GoPtr<PseudoObjectElement>>;
 
   constructor(elements: GoSlice<GoPtr<PseudoObjectElement>>) {
     super();
     this.Elements = elements;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeObjectLiteral> {
+    return this;
   }
 }
 
@@ -1012,16 +1110,22 @@ export function PseudoType_AsPseudoTypeObjectLiteral(receiver: GoPtr<PseudoType>
  * 	Node *ast.Node
  * }
  */
-export interface PseudoTypeLiteral extends PseudoTypeBase {
+export interface PseudoTypeLiteral {
+  __tsgoEmbedded0: PseudoTypeBase;
   Node: GoPtr<Node>;
 }
 
-class PseudoTypeLiteralData extends PseudoTypeBaseData implements PseudoTypeLiteral {
+class PseudoTypeLiteralData extends PseudoTypeBaseEmbeddedData<PseudoTypeLiteral> implements PseudoTypeLiteral {
+  __tsgoEmbedded0: PseudoTypeBaseData = new PseudoTypeBaseData();
   Node: GoPtr<Node>;
 
   constructor(node: GoPtr<Node>) {
     super();
     this.Node = node;
+  }
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeLiteral> {
+    return this;
   }
 }
 

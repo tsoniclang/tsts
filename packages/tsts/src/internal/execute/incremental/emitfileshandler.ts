@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoPtr, GoRef, GoSlice } from "../../../go/compat.js";
-import { GoStringKey, GoZeroNumber, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
+import { GoStringKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";
@@ -509,7 +509,7 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
     TargetSourceFile: options.TargetSourceFile,
     EmitOnly: options.EmitOnly,
     WriteFile: (fileName: string, text: string, data: GoPtr<WriteFileData>): GoError => {
-      const differsOnlyInMapBox: GoRef<bool> = { v: false as bool };
+      const differsOnlyInMapBox: GoRef<bool> = GoValueRef(false as bool);
       if (IsDeclarationFileName(fileName)) {
         if (canUseIncrementalState) {
           let emitSig = "";

@@ -29,18 +29,18 @@ export function Identical(x: Type | undefined, y: Type | undefined): bool {
   return false as bool;
 }
 
-export const Alias = "Alias";
-export const Array = "Array";
-export const Basic = "Basic";
-export const Chan = "Chan";
-export const Interface = "Interface";
-export const Map = "Map";
-export const Named = "Named";
-export const Pointer = "Pointer";
-export const Signature = "Signature";
-export const Slice = "Slice";
-export const Struct = "Struct";
-export const TypeName = "TypeName";
-export const TypeParam = "TypeParam";
+export const Alias: "Alias" = "Alias";
+export const Array: "Array" = "Array";
+export const Basic: "Basic" = "Basic";
+export const Chan: "Chan" = "Chan";
+export const Interface: "Interface" = "Interface";
+export const Map: "Map" = "Map";
+export const Named: "Named" = "Named";
+export const Pointer: "Pointer" = "Pointer";
+export const Signature: "Signature" = "Signature";
+export const Slice: "Slice" = "Slice";
+export const Struct: "Struct" = "Struct";
+export const TypeName: "TypeName" = "TypeName";
+export const TypeParam: "TypeParam" = "TypeParam";
 export const Universe: Scope = {};
-export const Var = "Var";
+export const Var: "Var" = "Var";

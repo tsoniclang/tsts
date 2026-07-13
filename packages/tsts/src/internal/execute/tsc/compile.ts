@@ -92,7 +92,7 @@ export interface Watcher {
  */
 export interface CommandLineResult {
   Status: ExitStatus;
-  Watcher: Watcher | undefined;
+  Watcher: GoInterface<Watcher>;
 }
 
 /**

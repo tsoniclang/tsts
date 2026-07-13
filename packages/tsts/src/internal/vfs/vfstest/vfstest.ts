@@ -1,12 +1,13 @@
-import type { bool, int } from "../../../go/scalars.js";
+import type { bool, byte, int, long } from "../../../go/scalars.js";
 import type { Seq2 } from "../../../go/iter.js";
-import type { GoError, GoFunc, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoError, GoFunc, GoInterface, GoMap, GoPointerMethodSet, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroInterface, GoZeroSlice } from "../../../go/compat.js";
 import { AsType } from "../../../go/errors.js";
 import { Sprintf, Errorf } from "../../../go/fmt.js";
 import type { DirEntry, File, FileInfo, FileMode, FS as GoFS, ReadDirFile } from "../../../go/io/fs.js";
 import { ErrNotExist, FileInfoToDirEntry, ModeDir, ModeSymlink } from "../../../go/io/fs.js";
 import { RWMutex } from "../../../go/sync.js";
-import type { MapFile, MapFS as MapFS_5332fda7 } from "../../../go/testing/fstest.js";
+import type { MapFile, MapFS as FstestMapFS } from "../../../go/testing/fstest.js";
 import { Now, Since, Time } from "../../../go/time.js";
 import type { Duration } from "../../../go/time.js";
 import type { RealpathFS, WritableFS } from "../iovfs/iofs.js";
@@ -14,22 +15,10 @@ import { From } from "../iovfs/iofs.js";
 import type { FS } from "../vfs.js";
 import { GetCanonicalFileName, IsRootedDiskPath, NormalizePath, PathIsAbsolute, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 
-import type { GoInterface } from "../../../go/compat.js";
-// Internal runtime shape of a fstest.MapFile (opaque in the Go facade).
-interface InternalMapFile {
-  Data: Uint8Array;
-  Mode: number;
-  ModTime: Time;
-  Sys: unknown;
-}
-
-// Internal runtime shape of a fstest.MapFS (opaque in the Go facade) = Map<string, InternalMapFile>.
-type InternalMapFS = Map<string, InternalMapFile>;
-
 // Internal runtime shape of a fs.FileInfo.
 interface InternalFileInfo {
   Name(): string;
-  Sys(): unknown;
+  Sys(): GoInterface<unknown>;
   Mode(): number;
   IsDir(): bool;
   IsRegular(): bool;
@@ -50,6 +39,14 @@ interface InternalReadDirFile extends InternalFile {
 // Internal runtime shape of a fs.DirEntry.
 interface InternalDirEntry {
   Info(): [InternalFileInfo, GoError];
+}
+
+function bytesFromString(value: string): GoSlice<byte> {
+  return globalThis.Array.from(new TextEncoder().encode(value));
+}
+
+function stringFromBytes(value: GoSlice<byte>): string {
+  return new TextDecoder().decode(globalThis.Uint8Array.from(value));
 }
 
 /**
@@ -73,7 +70,7 @@ interface InternalDirEntry {
  */
 export interface MapFS {
   mu: RWMutex;
-  m: MapFS_5332fda7;
+  m: FstestMapFS;
   useCaseSensitiveFileNames: bool;
   symlinks: GoMap<canonicalPath, canonicalPath>;
   clock: GoInterface<Clock>;
@@ -139,11 +136,11 @@ export function clockImpl_SinceStart(receiver: GoPtr<clockImpl>): Duration {
  * )
  */
 export let ____34464f57_0: GoInterface<RealpathFS> = MapFS_as_iovfs_RealpathFS(undefined);
-export let ____34464f57_1: WritableFS = MapFS_as_iovfs_WritableFS(undefined);
+export let ____34464f57_1: GoInterface<WritableFS> = MapFS_as_iovfs_WritableFS(undefined);
 
 export function MapFS_as_io_fs_FS(receiver: GoPtr<MapFS>): GoFS {
   return {
-    Open: (name: string): [File, GoError] => MapFS_Open(receiver, name),
+    Open: (name: string): [GoInterface<File>, GoError] => MapFS_Open(receiver, name),
   };
 }
 
@@ -288,32 +285,32 @@ export function FromMapWithClock<File>(m: GoMap<string, File>, useCaseSensitiveF
     }
   };
 
-  const mfs = new Map<string, InternalMapFile>();
+  const mfs: FstestMapFS = new Map<string, GoPtr<MapFile>>();
   // Sorted creation to ensure times are always guaranteed to be in order.
   const keys = globalThis.Array.from(m.keys());
   keys.sort(comparePathsByParts);
   for (const p0 of keys) {
     let p = p0;
-    const f = m.get(p) as unknown;
+    const f: unknown = m.get(p);
     checkPath(p);
 
-    let file: InternalMapFile;
+    let file: MapFile;
     if (typeof f === "string") {
-      file = { Data: new TextEncoder().encode(f), Mode: 0, ModTime: clock!.Now(), Sys: undefined };
-    } else if (f instanceof Uint8Array) {
-      file = { Data: f, Mode: 0, ModTime: clock!.Now(), Sys: undefined };
+      file = { Data: bytesFromString(f), Mode: 0, ModTime: clock!.Now(), Sys: GoZeroInterface<unknown>() };
+    } else if (globalThis.Array.isArray(f)) {
+      file = { Data: f, Mode: 0, ModTime: clock!.Now(), Sys: GoZeroInterface<unknown>() };
     } else if (f !== null && typeof f === "object" && "Data" in f) {
-      const fCopy = f as InternalMapFile;
+      const fCopy = f as MapFile;
       file = { Data: fCopy.Data, Mode: fCopy.Mode, ModTime: clock!.Now(), Sys: fCopy.Sys };
     } else {
       throw new globalThis.Error(Sprintf("invalid file type %T", f));
     }
 
-    if ((file.Mode & (ModeSymlink as unknown as number)) !== 0) {
-      const target = new TextDecoder().decode(file.Data);
+    if ((file.Mode & ModeSymlink) !== 0) {
+      const target = stringFromBytes(file.Data);
       checkPath(target);
       const cutTarget = target.startsWith("/") ? target.slice(1) : target;
-      file = { Data: new TextEncoder().encode(cutTarget), Mode: file.Mode, ModTime: file.ModTime, Sys: file.Sys };
+      file = { Data: bytesFromString(cutTarget), Mode: file.Mode, ModTime: file.ModTime, Sys: file.Sys };
     }
 
     p = p.startsWith("/") ? p.slice(1) : p;
@@ -324,7 +321,7 @@ export function FromMapWithClock<File>(m: GoMap<string, File>, useCaseSensitiveF
     throw new globalThis.Error("mixed posix and windows paths");
   }
 
-  return From(MapFS_as_iovfs_FS(convertMapFS(mfs as unknown as MapFS_5332fda7, useCaseSensitiveFileNames, clock)), useCaseSensitiveFileNames);
+  return From(MapFS_as_iovfs_FS(convertMapFS(mfs, useCaseSensitiveFileNames, clock)), useCaseSensitiveFileNames);
 }
 
 /**
@@ -375,7 +372,7 @@ export function FromMapWithClock<File>(m: GoMap<string, File>, useCaseSensitiveF
  * 	return m
  * }
  */
-export function convertMapFS(input: MapFS_5332fda7, useCaseSensitiveFileNames: bool, clock: GoInterface<Clock>): GoPtr<MapFS> {
+export function convertMapFS(input: FstestMapFS, useCaseSensitiveFileNames: bool, clock: GoInterface<Clock>): GoPtr<MapFS> {
   const clockObj: clockImpl = { start: Now() as unknown as Time };
   const clockVal: Clock = clock ?? {
     Now(): Time { return clockImpl_Now(clockObj); },
@@ -383,17 +380,15 @@ export function convertMapFS(input: MapFS_5332fda7, useCaseSensitiveFileNames: b
   };
   const m: MapFS = {
     mu: new RWMutex(),
-    m: new Map<string, InternalMapFile>() as unknown as MapFS_5332fda7,
+    m: new Map<string, GoPtr<MapFile>>(),
     useCaseSensitiveFileNames,
     symlinks: new Map<canonicalPath, canonicalPath>(),
     clock: clockVal,
   };
 
-  const inputMap = input as unknown as InternalMapFS;
-
   // Verify that the input is well-formed.
   const canonicalPaths = new Map<canonicalPath, string>();
-  for (const path0 of inputMap.keys()) {
+  for (const path0 of input.keys()) {
     const canonical = MapFS_getCanonicalPath(m, path0);
     if (canonicalPaths.has(canonical)) {
       let pathVar = path0;
@@ -411,21 +406,21 @@ export function convertMapFS(input: MapFS_5332fda7, useCaseSensitiveFileNames: b
 
   // Sort the input by depth and path so we ensure parent dirs are created
   // before their children, if explicitly specified by the input.
-  const inputKeys = globalThis.Array.from(inputMap.keys());
+  const inputKeys = globalThis.Array.from(input.keys());
   inputKeys.sort(comparePathsByParts);
 
   for (const p of inputKeys) {
-    const file = inputMap.get(p)!;
+    const file = input.get(p)!;
 
     // Create all missing intermediate directories
     const dir = dirName(p);
     if (dir !== "") {
-      const err = MapFS_mkdirAll(m, dir, 0o777 as unknown as FileMode);
+      const err = MapFS_mkdirAll(m, dir, 0o777);
       if (err !== undefined) {
         throw new globalThis.Error(Sprintf("failed to create intermediate directories for %q: %v", p, err));
       }
     }
-    MapFS_setEntry(m, p, MapFS_getCanonicalPath(m, p), file as unknown as MapFile);
+    MapFS_setEntry(m, p, MapFS_getCanonicalPath(m, p), file);
   }
 
   return m;
@@ -514,9 +509,9 @@ export function MapFS_getCanonicalPath(receiver: GoPtr<MapFS>, p: string): canon
  * 	return m.m.Open(string(p))
  * }
  */
-export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoError] {
-  const internalMap = receiver!.m as unknown as InternalMapFS;
-  let file = internalMap.get(p);
+export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [GoInterface<File>, GoError] {
+  const map = receiver!.m;
+  let file = map.get(p);
   if (file === undefined) {
     // Go's fstest.MapFS synthesizes directories on the fly: opening "." (the root) or
     // any path that prefixes existing entries yields a directory file even without an
@@ -524,9 +519,9 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoE
     // the root never gets an entry, so synthesize it here like the Go stdlib does.
     const isRoot = p === "." || p === "";
     const prefix = isRoot ? "" : `${p}/`;
-    let isSyntheticDir = isRoot && internalMap.size > 0;
+    let isSyntheticDir = isRoot && map.size > 0;
     if (!isSyntheticDir) {
-      for (const key of internalMap.keys()) {
+      for (const key of map.keys()) {
         if (key.startsWith(prefix)) {
           isSyntheticDir = true;
           break;
@@ -536,7 +531,7 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoE
     if (!isSyntheticDir) {
       return [undefined as unknown as File, ErrNotExist as unknown as GoError];
     }
-    file = { Data: new Uint8Array(0), Mode: ModeDir as unknown as number, ModTime: undefined as never, Sys: undefined };
+    file = { Data: GoZeroSlice<byte>(), Mode: ModeDir, ModTime: new Time(), Sys: GoZeroInterface<unknown>() };
   }
   let offset = 0;
   const bytes = file.Data;
@@ -545,8 +540,8 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoE
     Name(): string { return baseName(p); },
     Sys(): unknown { return file.Sys; },
     Mode(): number { return file.Mode; },
-    IsDir(): bool { return (file.Mode & (ModeDir as unknown as number)) !== 0; },
-    IsRegular(): bool { return (file.Mode & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number))) === 0; },
+    IsDir(): bool { return (file.Mode & ModeDir) !== 0; },
+    IsRegular(): bool { return (file.Mode & (ModeDir | ModeSymlink)) === 0; },
   };
   const f: InternalReadDirFile = {
     Stat(): [InternalFileInfo, GoError] { return [fi, undefined]; },
@@ -566,16 +561,16 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoE
       // fstest.MapFS uses "." for the root directory; its children carry bare keys.
       const prefix = p === "" || p === "." ? "" : p + "/";
       const entries: InternalDirEntry[] = [];
-      for (const [k, v] of internalMap.entries()) {
+      for (const [k, v] of map.entries()) {
         if (k !== p && k.startsWith(prefix) && k.slice(prefix.length).indexOf("/") < 0) {
-          const entryFile = v;
+          const entryFile = v!;
           const entryName = k.slice(prefix.length);
           const entryFi: InternalFileInfo = {
             Name(): string { return entryName; },
             Sys(): unknown { return entryFile.Sys; },
             Mode(): number { return entryFile.Mode; },
-            IsDir(): bool { return (entryFile.Mode & (ModeDir as unknown as number)) !== 0; },
-            IsRegular(): bool { return (entryFile.Mode & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number))) === 0; },
+            IsDir(): bool { return (entryFile.Mode & ModeDir) !== 0; },
+            IsRegular(): bool { return (entryFile.Mode & (ModeDir | ModeSymlink)) === 0; },
           };
           entries.push({
             Info(): [InternalFileInfo, GoError] { return [entryFi, undefined]; },
@@ -618,25 +613,25 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoE
 export function MapFS_remove(receiver: GoPtr<MapFS>, path: string): GoError {
   const canonical = MapFS_getCanonicalPath(receiver, path);
   const canonicalString = canonical;
-  const internalMap = receiver!.m as unknown as InternalMapFS;
-  const fileInfo = internalMap.get(canonicalString);
+  const map = receiver!.m;
+  const fileInfo = map.get(canonicalString);
   if (fileInfo === undefined) {
     // file does not exist
     return undefined;
   }
-  internalMap.delete(canonicalString);
+  map.delete(canonicalString);
   receiver!.symlinks.delete(canonical);
 
-  if ((fileInfo.Mode & (ModeDir as unknown as number)) !== 0) {
+  if ((fileInfo.Mode & ModeDir) !== 0) {
     const prefix = canonicalString + "/";
     const keysToDelete: string[] = [];
-    for (const p of internalMap.keys()) {
+    for (const p of map.keys()) {
       if (p.startsWith(prefix)) {
         keysToDelete.push(p);
       }
     }
     for (const k of keysToDelete) {
-      internalMap.delete(k);
+      map.delete(k);
       receiver!.symlinks.delete(k as canonicalPath);
     }
   }
@@ -655,13 +650,13 @@ export function MapFS_remove(receiver: GoPtr<MapFS>, path: string): GoError {
  * }
  */
 export function Symlink(target: string): GoPtr<MapFile> {
-  const f: InternalMapFile = {
-    Data: new TextEncoder().encode(target),
-    Mode: ModeSymlink as unknown as number,
+  const f: MapFile = {
+    Data: bytesFromString(target),
+    Mode: ModeSymlink,
     ModTime: new Time(),
-    Sys: undefined,
+    Sys: GoZeroInterface<unknown>(),
   };
-  return f as unknown as MapFile;
+  return f;
 }
 
 /**
@@ -755,10 +750,9 @@ export function isBrokenSymlinkError(err: GoError): bool {
  * }
  */
 export function MapFS_getFollowingSymlinksWorker(receiver: GoPtr<MapFS>, p: canonicalPath, symlinkFrom: canonicalPath, symlinkTo: canonicalPath): [GoPtr<MapFile>, canonicalPath, GoError] {
-  const internalMap = receiver!.m as unknown as InternalMapFS;
-  const file = internalMap.get(p);
-  if (file !== undefined && (file.Mode & (ModeSymlink as unknown as number)) === 0) {
-    return [file as unknown as MapFile, p, undefined];
+  const file = receiver!.m.get(p);
+  if (file !== undefined && (file.Mode & ModeSymlink) === 0) {
+    return [file, p, undefined];
   }
 
   const target = receiver!.symlinks.get(p);
@@ -773,7 +767,7 @@ export function MapFS_getFollowingSymlinksWorker(receiver: GoPtr<MapFS>, p: cano
     }
   }
 
-  let err: GoError = ErrNotExist as unknown as GoError;
+  let err: GoError = ErrNotExist;
   if (symlinkFrom !== "") {
     err = new BrokenSymlinkErrorImpl(symlinkFrom, symlinkTo);
   }
@@ -789,8 +783,7 @@ export function MapFS_getFollowingSymlinksWorker(receiver: GoPtr<MapFS>, p: cano
  * }
  */
 export function MapFS_set(receiver: GoPtr<MapFS>, p: canonicalPath, file: GoPtr<MapFile>): void {
-  const internalMap = receiver!.m as unknown as InternalMapFS;
-  internalMap.set(p, file as unknown as InternalMapFile);
+  receiver!.m.set(p, file);
 }
 
 /**
@@ -820,20 +813,19 @@ export function MapFS_setEntry(receiver: GoPtr<MapFS>, realpath: string, canonic
   if (realpath === "" || canonical === "") {
     throw new globalThis.Error("empty path");
   }
-  const internalFile = file as unknown as InternalMapFile;
-  const fileCopy: InternalMapFile = {
-    Data: internalFile.Data,
-    Mode: internalFile.Mode,
-    ModTime: internalFile.ModTime,
-    Sys: { original: internalFile.Sys, realpath } satisfies sys,
+  const fileCopy: MapFile = {
+    Data: file.Data,
+    Mode: file.Mode,
+    ModTime: file.ModTime,
+    Sys: { original: file.Sys, realpath } satisfies sys,
   };
-  MapFS_set(receiver, canonical, fileCopy as unknown as MapFile);
+  MapFS_set(receiver, canonical, fileCopy);
 
-  if ((fileCopy.Mode & (ModeSymlink as unknown as number)) !== 0) {
+  if ((fileCopy.Mode & ModeSymlink) !== 0) {
     if (receiver!.symlinks === undefined) {
       receiver!.symlinks = new Map<canonicalPath, canonicalPath>();
     }
-    const dataStr = new TextDecoder().decode(fileCopy.Data);
+    const dataStr = stringFromBytes(fileCopy.Data);
     receiver!.symlinks.set(canonical, MapFS_getCanonicalPath(receiver, dataStr));
   }
 }
@@ -958,8 +950,7 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
   // Fast path; already exists.
   const [fastOther, , fastErr] = MapFS_getFollowingSymlinks(receiver, MapFS_getCanonicalPath(receiver, p));
   if (fastErr === undefined) {
-    const fastFile = fastOther as unknown as InternalMapFile;
-    if ((fastFile.Mode & (ModeDir as unknown as number)) === 0) {
+    if ((fastOther!.Mode & ModeDir) === 0) {
       return Errorf("mkdir %q: path exists but is not a directory", p);
     }
     return undefined;
@@ -979,8 +970,8 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
       }
       toCreate.push(dir);
     } else {
-      const otherFile = other as unknown as InternalMapFile;
-      if ((otherFile.Mode & (ModeDir as unknown as number)) === 0) {
+      const otherFile = other!;
+      if ((otherFile.Mode & ModeDir) === 0) {
         return Errorf("mkdir %q: path exists but is not a directory", otherPath);
       }
       if (canonical !== otherPath) {
@@ -999,13 +990,13 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
   }
 
   for (const dirToCreate of toCreate) {
-    const dirFile: InternalMapFile = {
-      Data: new Uint8Array(0),
-      Mode: (ModeDir as unknown as number) | ((perm as unknown as number) & ~umask),
+    const dirFile: MapFile = {
+      Data: GoZeroSlice<byte>(),
+      Mode: ModeDir | (perm & ~umask),
       ModTime: receiver!.clock!.Now(),
-      Sys: undefined,
+      Sys: GoZeroInterface<unknown>(),
     };
-    MapFS_setEntry(receiver, dirToCreate, MapFS_getCanonicalPath(receiver, dirToCreate), dirFile as unknown as MapFile);
+    MapFS_setEntry(receiver, dirToCreate, MapFS_getCanonicalPath(receiver, dirToCreate), dirFile);
   }
 
   return undefined;
@@ -1013,6 +1004,7 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::fileInfo","kind":"type","status":"implemented","sigHash":"faa9b0357889cb408ff2e938cc4e7f875987a9454f9d36a1c5d4d1b821973e4c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The hidden pointer-method carrier statically exposes the Go pointer receiver set without adding value methods, reflection, prototype mutation, or a wrapper object.","goSignatureHash":"08f318a169d911e0f4993b7975b672d9971b5eee8bea8bb68fda891d4e1db29c","tsSignatureHash":"f4c27bfbcd92b3bffdaada1f39b981f71c69e1bfd30bba15117bbfe12e85bafa"}
  *
  * Go source:
  * fileInfo struct {
@@ -1025,12 +1017,14 @@ export interface fileInfo {
   __tsgoEmbedded0: GoInterface<FileInfo>;
   sys: GoInterface<unknown>;
   realpath: string;
-  Name(): string;
-  Size(): int;
-  Mode(): FileMode;
-  ModTime(): Date;
-  IsDir(): bool;
-  Sys(): unknown;
+  readonly [__tsgoPointerMethodSet]?: GoPointerMethodSet<{
+    Name(): string;
+    Size(): long;
+    Mode(): FileMode;
+    ModTime(): Time;
+    IsDir(): bool;
+    Sys(): GoInterface<unknown>;
+  }>;
 }
 
 /**
@@ -1079,8 +1073,8 @@ export interface file {
  * 	return f.fileInfo, nil
  * }
  */
-export function file_Stat(receiver: GoPtr<file>): [FileInfo, GoError] {
-  return [receiver!.fileInfo as unknown as FileInfo, undefined];
+export function file_Stat(receiver: GoPtr<file>): [GoInterface<FileInfo>, GoError] {
+  return [receiver!.fileInfo, undefined];
 }
 
 /**
@@ -1105,8 +1099,8 @@ export interface readDirFile {
  * 	return f.fileInfo, nil
  * }
  */
-export function readDirFile_Stat(receiver: GoPtr<readDirFile>): [FileInfo, GoError] {
-  return [receiver!.fileInfo as unknown as FileInfo, undefined];
+export function readDirFile_Stat(receiver: GoPtr<readDirFile>): [GoInterface<FileInfo>, GoError] {
+  return [receiver!.fileInfo, undefined];
 }
 
 /**
@@ -1132,14 +1126,14 @@ export function readDirFile_Stat(receiver: GoPtr<readDirFile>): [FileInfo, GoErr
  * 	return entries, nil
  * }
  */
-export function readDirFile_ReadDir(receiver: GoPtr<readDirFile>, n: int): [GoSlice<DirEntry>, GoError] {
+export function readDirFile_ReadDir(receiver: GoPtr<readDirFile>, n: int): [GoSlice<GoInterface<DirEntry>>, GoError] {
   const embedded = receiver!.__tsgoEmbedded0 as unknown as InternalReadDirFile;
   const [list, err] = embedded.ReadDir(n);
   if (err !== undefined) {
     return [[], err];
   }
 
-  const entries: DirEntry[] = new globalThis.Array(list.length);
+  const entries: GoSlice<GoInterface<DirEntry>> = new globalThis.Array(list.length);
   for (let i = 0; i < list.length; i++) {
     const entry = list[i]!;
     const [infoVal, infoErr] = entry.Info();
@@ -1149,7 +1143,7 @@ export function readDirFile_ReadDir(receiver: GoPtr<readDirFile>, n: int): [GoSl
       const infoInternal = info as unknown as InternalFileInfo;
       throw new globalThis.Error(Sprintf("unexpected synthesized dir: %q", infoInternal.Name()));
     }
-    entries[i] = FileInfoToDirEntry(newInfo) as unknown as DirEntry;
+    entries[i] = FileInfoToDirEntry(newInfo);
   }
 
   return [entries, undefined];
@@ -1201,7 +1195,7 @@ export function readDirFile_ReadDir(receiver: GoPtr<readDirFile>, n: int): [GoSl
  * 	}, nil
  * }
  */
-export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [File, GoError] {
+export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [GoInterface<File>, GoError] {
   receiver!.mu.RLock();
   try {
     const [, cp] = MapFS_getFollowingSymlinks(receiver, MapFS_getCanonicalPath(receiver, name));
@@ -1226,10 +1220,10 @@ export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [File, GoError
       const rdfResult: readDirFile & ReadDirFile = {
         __tsgoEmbedded0: f as unknown as ReadDirFile,
         fileInfo: fileInfoResult,
-        Stat: (): [FileInfo, GoError] => readDirFile_Stat(rdfResult),
+        Stat: (): [GoInterface<FileInfo>, GoError] => readDirFile_Stat(rdfResult),
         Read: (buffer: GoSlice<number>): [int, GoError] => (f as unknown as File).Read(buffer),
         Close: (): GoError => (f as unknown as File).Close(),
-        ReadDir: (n: int): [GoSlice<DirEntry>, GoError] => readDirFile_ReadDir(rdfResult, n),
+        ReadDir: (n: int): [GoSlice<GoInterface<DirEntry>>, GoError] => readDirFile_ReadDir(rdfResult, n),
       };
       return [rdfResult as unknown as File, undefined];
     }
@@ -1240,10 +1234,10 @@ export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [File, GoError
       const rdfResult: readDirFile & ReadDirFile = {
         __tsgoEmbedded0: f as unknown as ReadDirFile,
         fileInfo: newInfo!,
-        Stat: (): [FileInfo, GoError] => readDirFile_Stat(rdfResult),
+        Stat: (): [GoInterface<FileInfo>, GoError] => readDirFile_Stat(rdfResult),
         Read: (buffer: GoSlice<number>): [int, GoError] => (f as unknown as File).Read(buffer),
         Close: (): GoError => (f as unknown as File).Close(),
-        ReadDir: (n: int): [GoSlice<DirEntry>, GoError] => readDirFile_ReadDir(rdfResult, n),
+        ReadDir: (n: int): [GoSlice<GoInterface<DirEntry>>, GoError] => readDirFile_ReadDir(rdfResult, n),
       };
       return [rdfResult as unknown as File, undefined];
     }
@@ -1251,7 +1245,7 @@ export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [File, GoError
     const fileResult: file & File = {
       __tsgoEmbedded0: f,
       fileInfo: newInfo!,
-      Stat: (): [FileInfo, GoError] => file_Stat(fileResult),
+      Stat: (): [GoInterface<FileInfo>, GoError] => file_Stat(fileResult),
       Read: (buffer: GoSlice<number>): [int, GoError] => (f as unknown as File).Read(buffer),
       Close: (): GoError => (f as unknown as File).Close(),
     };
@@ -1283,8 +1277,7 @@ export function MapFS_Realpath(receiver: GoPtr<MapFS>, name: string): [string, G
     if (err !== undefined) {
       return ["", err];
     }
-    const internalFile = file as unknown as InternalMapFile;
-    const sysData = internalFile.Sys as sys;
+    const sysData = file!.Sys as sys;
     return [sysData.realpath, undefined];
   } finally {
     receiver!.mu.RUnlock();
@@ -1322,17 +1315,17 @@ export function convertInfo(info: GoInterface<FileInfo>): [GoPtr<fileInfo>, bool
   return [makeFileInfo(info!, typedSys.original, typedSys.realpath), true];
 }
 
-function makeFileInfo(info: FileInfo, sysValue: unknown, realpath: string): fileInfo {
-  const result: fileInfo = {
+function makeFileInfo(info: FileInfo, sysValue: GoInterface<unknown>, realpath: string): NonNullable<GoPtr<fileInfo>> {
+  const result: NonNullable<GoPtr<fileInfo>> = {
     __tsgoEmbedded0: info,
     sys: sysValue,
     realpath,
     Name: (): string => fileInfo_Name(result),
-    Size: (): int => info.Size(),
+    Size: (): long => info.Size(),
     Mode: (): FileMode => info.Mode(),
-    ModTime: (): Date => info.ModTime(),
+    ModTime: (): Time => info.ModTime(),
     IsDir: (): bool => info.IsDir(),
-    Sys: (): unknown => fileInfo_Sys(result),
+    Sys: (): GoInterface<unknown> => fileInfo_Sys(result),
   };
   return result;
 }
@@ -1384,13 +1377,13 @@ export function MapFS_AddSymlink(receiver: GoPtr<MapFS>, path: string, target: s
   receiver!.mu.Lock();
   try {
     const canonical = MapFS_getCanonicalPath(receiver, path);
-    const f: InternalMapFile = {
-      Data: new TextEncoder().encode(target),
-      Mode: ModeSymlink as unknown as number,
+    const f: MapFile = {
+      Data: bytesFromString(target),
+      Mode: ModeSymlink,
       ModTime: new Time(),
-      Sys: undefined,
+      Sys: GoZeroInterface<unknown>(),
     };
-    MapFS_setEntry(receiver, path, canonical, f as unknown as MapFile);
+    MapFS_setEntry(receiver, path, canonical, f);
   } finally {
     receiver!.mu.Unlock();
   }
@@ -1446,32 +1439,30 @@ export function MapFS_WriteFile(receiver: GoPtr<MapFS>, path: string, data: stri
       if (parentErr !== undefined) {
         return Errorf("write %q: %w", path, parentErr);
       }
-      const parentInternal = parentFile as unknown as InternalMapFile;
-      if ((parentInternal.Mode & (ModeDir as unknown as number)) === 0) {
+      if ((parentFile!.Mode & ModeDir) === 0) {
         return Errorf("write %q: parent path exists but is not a directory", path);
       }
     }
 
     const [file, cp, err] = MapFS_getFollowingSymlinks(receiver, MapFS_getCanonicalPath(receiver, path));
     if (err !== undefined) {
-      if (err !== (ErrNotExist as unknown as GoError) && !isBrokenSymlinkError(err)) {
+      if (err !== ErrNotExist && !isBrokenSymlinkError(err)) {
         // No other errors are possible.
         throw err;
       }
     } else {
-      const fileInternal = file as unknown as InternalMapFile;
-      if ((fileInternal.Mode & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number))) !== 0) {
+      if ((file!.Mode & (ModeDir | ModeSymlink)) !== 0) {
         return Errorf("write %q: path exists but is not a regular file", path);
       }
     }
 
-    const newFile: InternalMapFile = {
-      Data: new TextEncoder().encode(data),
+    const newFile: MapFile = {
+      Data: bytesFromString(data),
       ModTime: receiver!.clock!.Now(),
-      Mode: (perm as unknown as number) & ~umask,
-      Sys: undefined,
+      Mode: perm & ~umask,
+      Sys: GoZeroInterface<unknown>(),
     };
-    MapFS_setEntry(receiver, path, cp, newFile as unknown as MapFile);
+    MapFS_setEntry(receiver, path, cp, newFile);
 
     return undefined;
   } finally {
@@ -1542,46 +1533,42 @@ export function MapFS_AppendFile(receiver: GoPtr<MapFS>, path: string, data: str
       if (parentErr !== undefined) {
         return Errorf("append %q: %w", path, parentErr);
       }
-      const parentInternal = parentFile as unknown as InternalMapFile;
-      if ((parentInternal.Mode & (ModeDir as unknown as number)) === 0) {
+      if ((parentFile!.Mode & ModeDir) === 0) {
         return Errorf("append %q: parent path exists but is not a directory", path);
       }
     }
 
-    let existing: Uint8Array = new Uint8Array(0);
-    let existingMode: number = 0;
+    let existing: GoSlice<byte> = GoZeroSlice<byte>();
+    let existingMode: FileMode = 0;
     const [file, cp, err] = MapFS_getFollowingSymlinks(receiver, MapFS_getCanonicalPath(receiver, path));
     if (err !== undefined) {
-      if (err !== (ErrNotExist as unknown as GoError) && !isBrokenSymlinkError(err)) {
+      if (err !== ErrNotExist && !isBrokenSymlinkError(err)) {
         // No other errors are possible.
         throw err;
       }
     } else {
-      const fileInternal = file as unknown as InternalMapFile;
-      if ((fileInternal.Mode & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number))) !== 0) {
+      if ((file!.Mode & (ModeDir | ModeSymlink)) !== 0) {
         return Errorf("append %q: path exists but is not a regular file", path);
       }
-      existing = fileInternal.Data;
-      existingMode = fileInternal.Mode;
+      existing = file!.Data;
+      existingMode = file!.Mode;
     }
 
-    const dataBytes = new TextEncoder().encode(data);
-    const combined = new Uint8Array(existing.length + dataBytes.length);
-    combined.set(existing, 0);
-    combined.set(dataBytes, existing.length);
+    const dataBytes = bytesFromString(data);
+    const combined: GoSlice<byte> = [...existing, ...dataBytes];
 
     let mode = existingMode;
     if (mode === 0) {
-      mode = (perm as unknown as number) & ~umask;
+      mode = perm & ~umask;
     }
 
-    const newFile: InternalMapFile = {
+    const newFile: MapFile = {
       Data: combined,
       ModTime: receiver!.clock!.Now(),
       Mode: mode,
-      Sys: undefined,
+      Sys: GoZeroInterface<unknown>(),
     };
-    MapFS_setEntry(receiver, path, cp, newFile as unknown as MapFile);
+    MapFS_setEntry(receiver, path, cp, newFile);
 
     return undefined;
   } finally {
@@ -1631,11 +1618,10 @@ export function MapFS_Chtimes(receiver: GoPtr<MapFS>, path: string, aTime: Time,
   receiver!.mu.Lock();
   try {
     const canonical = MapFS_getCanonicalPath(receiver, path);
-    const internalMap = receiver!.m as unknown as InternalMapFS;
-    const fileInfo = internalMap.get(canonical);
+    const fileInfo = receiver!.m.get(canonical);
     if (fileInfo === undefined) {
       // file does not exist
-      return ErrNotExist as unknown as GoError;
+      return ErrNotExist;
     }
     fileInfo.ModTime = mTime;
     return undefined;
@@ -1667,11 +1653,10 @@ export function MapFS_GetTargetOfSymlink(receiver: GoPtr<MapFS>, path: string): 
   receiver!.mu.RLock();
   try {
     const canonical = MapFS_getCanonicalPath(receiver, pathVar);
-    const internalMap = receiver!.m as unknown as InternalMapFS;
-    const fileInfo = internalMap.get(canonical);
+    const fileInfo = receiver!.m.get(canonical);
     if (fileInfo !== undefined) {
-      if ((fileInfo.Mode & (ModeSymlink as unknown as number)) !== 0) {
-        return ["/" + new TextDecoder().decode(fileInfo.Data), true];
+      if ((fileInfo.Mode & ModeSymlink) !== 0) {
+        return ["/" + stringFromBytes(fileInfo.Data), true];
       }
     }
     return ["", false];
@@ -1701,8 +1686,7 @@ export function MapFS_GetModTime(receiver: GoPtr<MapFS>, path: string): Time {
   receiver!.mu.RLock();
   try {
     const canonical = MapFS_getCanonicalPath(receiver, pathVar);
-    const internalMap = receiver!.m as unknown as InternalMapFS;
-    const fileInfo = internalMap.get(canonical);
+    const fileInfo = receiver!.m.get(canonical);
     if (fileInfo !== undefined) {
       return fileInfo.ModTime;
     }
@@ -1740,18 +1724,17 @@ export function MapFS_Entries(receiver: GoPtr<MapFS>): Seq2<string, GoPtr<MapFil
   return (yieldValue: GoFunc<(key: string, value: GoPtr<MapFile>) => bool>): void => {
     receiver!.mu.RLock();
     try {
-      const internalMap = receiver!.m as unknown as InternalMapFS;
-      const inputKeys = globalThis.Array.from(internalMap.keys());
+      const inputKeys = globalThis.Array.from(receiver!.m.keys());
       inputKeys.sort(comparePathsByParts);
 
       for (const p of inputKeys) {
-        const file = internalMap.get(p)!;
+        const file = receiver!.m.get(p)!;
         const sysData = file.Sys as sys;
         let path = sysData.realpath;
         if (!PathIsAbsolute(path)) {
           path = "/" + path;
         }
-        if (!yieldValue!(path, file as unknown as MapFile)) {
+        if (!yieldValue!(path, file)) {
           break;
         }
       }
@@ -1779,8 +1762,7 @@ export function MapFS_GetFileInfo(receiver: GoPtr<MapFS>, path: string): GoPtr<M
   receiver!.mu.RLock();
   try {
     const canonical = MapFS_getCanonicalPath(receiver, pathVar);
-    const internalMap = receiver!.m as unknown as InternalMapFS;
-    return internalMap.get(canonical) as unknown as MapFile | undefined;
+    return receiver!.m.get(canonical);
   } finally {
     receiver!.mu.RUnlock();
   }

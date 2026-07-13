@@ -529,9 +529,9 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
   const numberHash = authoredTypeHash(moduleId, "Tag", numberSource);
   assert.throws(
     () => audit(numberSource),
-    new RegExp(`reviewed TypeScript declaration hash: config=${tsDeclarationHash} current=${numberHash}`),
+    new RegExp(`authored facade surfaces drifted[\\s\\S]*example\\.com/native::type::Tag: config=${tsDeclarationHash} current=${numberHash}`),
   );
-  assert.throws(() => audit('export type Tag = string & { mutable: "Tag" };'), /reviewed TypeScript declaration hash/);
+  assert.throws(() => audit('export type Tag = string & { mutable: "Tag" };'), /reviewed TypeScript declaration hashes/);
   assert.throws(() => buildExternalFacadeStoragePlan({
     ...config,
     externalFacadePolicies: [{
@@ -554,4 +554,46 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
       },
     }],
   }, snapshot), /Go declaration snapshot drifted/);
+});
+
+test("authored facade declaration-hash drift reports every reviewed surface deterministically", () => {
+  const tsModule = "go/example.com/native.ts";
+  const moduleId = `${baseConfig.tsRoot}/${tsModule}`;
+  const exactSource = "export type Alpha = string;\nexport type Zeta = string;\n";
+  const snapshot = externalSnapshot([
+    externalType({ packagePath: "example.com/native", name: "Zeta", rhs: basic("string") }),
+    externalType({ packagePath: "example.com/native", name: "Alpha", rhs: basic("string") }),
+  ]);
+  const semanticTypes = buildDependencySemanticTypeIndex(snapshot);
+  const policies = ["Zeta", "Alpha"].map((name) => ({
+    objectId: `example.com/native::type::${name}`,
+    tsModule,
+    tsName: name,
+    storageStrategy: "authored",
+    runtimeAdaptation: {
+      representation: "scalar",
+      scalarStorage: "string",
+      nominality: "preserved",
+      goDeclarationHash: semanticDeclarationVariantsHash(semanticTypes.get(`example.com/native::type::${name}`)),
+      tsDeclarationHash: authoredTypeHash(moduleId, name, exactSource),
+      reason: "The native identifier is stored as one exact branded JavaScript string scalar.",
+    },
+  }));
+  const config = {
+    ...baseConfig,
+    authoredFacadeModules: [tsModule],
+    externalFacadePolicies: policies,
+  };
+  const driftSource = "export type Alpha = number;\nexport type Zeta = number;\n";
+  const moduleIndex = indexTypeScriptModuleSources(parser, new Map([[moduleId, driftSource]]));
+  assert.throws(
+    () => finalizedCatalog(config, snapshot, moduleIndex),
+    (error) => {
+      assert.match(error.message, /authored facade surfaces drifted from their reviewed TypeScript declaration hashes/);
+      const alpha = error.message.indexOf("example.com/native::type::Alpha");
+      const zeta = error.message.indexOf("example.com/native::type::Zeta");
+      assert.ok(alpha >= 0 && zeta > alpha, error.message);
+      return true;
+    },
+  );
 });

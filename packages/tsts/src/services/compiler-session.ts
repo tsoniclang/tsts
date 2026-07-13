@@ -92,7 +92,7 @@ export function createCompilerSession(options: CompilerSessionOptions): Compiler
   return createCompilerSessionFromProgram(program, options.programOptions.Host!, options.programOptions.Config, extensionHost, context);
 }
 
-export function createCompilerSessionFromProgram(program: GoPtr<Program>, host: CompilerHost, config: GoPtr<ParsedCommandLine>, extensionHost = getExtensionHost(program!), context: Context = Background()): CompilerSession {
+export function createCompilerSessionFromProgram(program: GoPtr<Program>, host: CompilerHost, config: GoPtr<ParsedCommandLine>, extensionHost: ExtensionHost | undefined = getExtensionHost(program!), context: Context = Background()): CompilerSession {
   const ast = createAstReader();
   const checker = createTypeCheckerQueries(program, { context });
   const types = createTypeShapeQueries(program, { context });

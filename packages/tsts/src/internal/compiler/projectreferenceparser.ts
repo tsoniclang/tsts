@@ -1,4 +1,4 @@
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import { NewSetWithSizeHint, Set_AddIfAbsent } from "../collections/set.js";
@@ -17,7 +17,7 @@ import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 
 import type { GoInterface } from "../../go/compat.js";
 
-const projectReferenceParseTaskKey = GoPointerKey<projectReferenceParseTask>();
+const projectReferenceParseTaskKey: GoMapKeyDescriptor<GoPtr<projectReferenceParseTask>> = GoPointerKey<projectReferenceParseTask>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParseTask","kind":"type","status":"implemented","sigHash":"9514d364f391763c424a5d6d9a870f7696a4a0508cf83e21635c4aa906ea5617"}
  *

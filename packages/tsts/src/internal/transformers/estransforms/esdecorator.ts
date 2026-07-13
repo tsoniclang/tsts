@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq, Seq2 } from "../../../go/iter.js";
-import { GoPointerKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerKey, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Members, Node_Initializer, Node_Expression, Node_Text, Node_Body, Node_ParameterList, Node_MemberList, Node_Decorators, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateForStatement, NodeFactory_UpdateHeritageClause, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateTryStatement, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePartiallyEmittedExpression } from "../../ast/ast.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
@@ -276,7 +276,7 @@ import { LanguageVariantStandard } from "../../core/languagevariant.js";
 
 import type { GoFunc } from "../../../go/compat.js";
 
-const nodePointerKey = GoPointerKey<Node>();
+const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::lexicalEntryKind","kind":"type","status":"implemented","sigHash":"15b8208208520c37a488f4f4ecbd5583df43ca92f4096e7e3644b1e26e32ee3f"}
  *
@@ -2959,7 +2959,7 @@ export type createDescriptorFunc = GoFunc<(member: GoPtr<Node>, modifiers: GoPtr
  * 	return result
  * }
  */
-export function esDecoratorTransformer_partialTransformClassElement(receiver: GoPtr<esDecoratorTransformer>, member: GoPtr<Node>, ci: GoPtr<classInfo>, createDescriptor: GoPtr<createDescriptorFunc>): partialResult {
+export function esDecoratorTransformer_partialTransformClassElement(receiver: GoPtr<esDecoratorTransformer>, member: GoPtr<Node>, ci: GoPtr<classInfo>, createDescriptor: createDescriptorFunc): partialResult {
   const tx = receiver!;
   const f = Transformer_Factory(tx.__tsgoEmbedded0!);
   const astFactory = f!.__tsgoEmbedded0!;
@@ -3537,7 +3537,7 @@ export function esDecoratorTransformer_visitPropertyDeclaration(receiver: GoPtr<
     node = transformNamedEvaluation(ec, node, canIgnoreEmptyStringLiteralInAssignedName(Node_Initializer(node) as GoPtr<Node>), "");
   }
   esDecoratorTransformer_enterClassElement(tx, node);
-  let createDescriptor: createDescriptorFunc | undefined = undefined;
+  let createDescriptor: createDescriptorFunc = undefined;
   if (HasAccessorModifier(node)) {
     createDescriptor = (member, modifiers) => esDecoratorTransformer_createAccessorPropertyDescriptorObject(tx, member, modifiers);
   }

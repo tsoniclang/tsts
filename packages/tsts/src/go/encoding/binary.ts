@@ -1,21 +1,21 @@
-import type { byte, int } from "../scalars.js";
+import type { byte, int, ushort } from "../scalars.js";
 import type { GoError, GoSlice } from "../compat.js";
 
 export interface ByteOrder {
-  Uint16(bytes: GoSlice<byte>): int;
-  PutUint16(bytes: GoSlice<byte>, value: int): void;
+  Uint16(bytes: GoSlice<byte>): ushort;
+  PutUint16(bytes: GoSlice<byte>, value: ushort): void;
 }
 
 class byteOrder implements ByteOrder {
   constructor(private readonly endian: "big" | "little") {}
 
-  Uint16(bytes: GoSlice<byte>): int {
+  Uint16(bytes: GoSlice<byte>): ushort {
     const b0 = bytes[0] ?? 0;
     const b1 = bytes[1] ?? 0;
-    return (this.endian === "big" ? (b0 << 8) | b1 : (b1 << 8) | b0) as int;
+    return (this.endian === "big" ? (b0 << 8) | b1 : (b1 << 8) | b0) as ushort;
   }
 
-  PutUint16(bytes: GoSlice<byte>, value: int): void {
+  PutUint16(bytes: GoSlice<byte>, value: ushort): void {
     const v = value & 0xffff;
     if (this.endian === "big") {
       bytes[0] = (v >> 8) as byte;

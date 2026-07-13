@@ -24,7 +24,7 @@ import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import type { FS, Entries, FileInfo, WalkDirFunc } from "../internal/vfs/vfs.js";
 import { Default as DefaultLocale } from "../internal/locale/locale.js";
 import { TSTrue } from "../internal/core/tristate.js";
-import type { Time } from "../go/time.js";
+import { Time } from "../go/time.js";
 
 export interface TranspileOptions {
   compilerOptions?: TranspileCompilerOptions;
@@ -50,7 +50,25 @@ export type TranspileCompilerOptionValue =
   | readonly number[]
   | undefined;
 
-export const barebonesLibContent = `interface Boolean {}
+export const barebonesLibContent: `interface Boolean {}
+interface Function {}
+interface CallableFunction {}
+interface NewableFunction {}
+interface IArguments {}
+interface Number {}
+interface Object {}
+interface RegExp {}
+interface String {}
+interface Array<T> { length: number; [n: number]: T; }
+interface SymbolConstructor {
+    (desc?: string | number): symbol;
+    for(name: string): symbol;
+    readonly toStringTag: symbol;
+}
+declare var Symbol: SymbolConstructor;
+interface Symbol {
+    readonly [Symbol.toStringTag]: string;
+}` = `interface Boolean {}
 interface Function {}
 interface CallableFunction {}
 interface NewableFunction {}
@@ -104,7 +122,7 @@ export function transpile(
   return output.outputText;
 }
 
-export function formatDiagnostics(diagnostics: readonly Diagnostic[], currentDirectory = ""): string {
+export function formatDiagnostics(diagnostics: readonly Diagnostic[], currentDirectory: string = ""): string {
   if (diagnostics.length === 0) {
     return "";
   }
@@ -263,7 +281,7 @@ function defaultInputFileName(compilerOptions: TranspileCompilerOptions | undefi
 }
 
 class TranspileFileSystem implements FS {
-  private readonly files = new Map<string, string>();
+  private readonly files: Map<string, string> = new Map<string, string>();
 
   constructor(inputFile: string, input: string, private readonly declaration: boolean) {
     this.setFile(inputFile, input);
@@ -379,8 +397,8 @@ class TranspileFileInfo implements FileInfo {
     return this.directory ? 0x80000000 : 0;
   }
 
-  ModTime(): Date {
-    return new Date(0);
+  ModTime(): Time {
+    return new Time(0);
   }
 
   IsDir(): bool {

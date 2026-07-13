@@ -105,6 +105,18 @@ export function semanticPointerPointeeRepresentation(type, context) {
   return pointeeRepresentation(type.element, context, new Set());
 }
 
+export function semanticPointerConstraintRepresentation(type, context) {
+  if (type?.kind !== "pointer") throw new Error("canonical Go pointer constraint selection requires a pointer type");
+  assertSemanticNilability(type);
+  if (type.element?.kind !== "typeParameter") return pointeeRepresentation(type.element, context, new Set());
+  const key = typeParameterKey(type.element.typeParameter);
+  const constraint = context.typeParameterConstraints?.get(key);
+  if (constraint === undefined) return "constraint";
+  const representations = constraintRepresentations(constraint, context, new Set(), new Set());
+  if (representations === undefined || representations.size !== 1) return "constraint";
+  return representations.values().next().value;
+}
+
 function pointeeRepresentation(type, context, resolving) {
   if (!type || typeof type.kind !== "string") throw new Error("Go pointer has no canonical pointee type");
   assertSemanticNilability(type, "canonical Go pointer pointee");
@@ -146,6 +158,10 @@ function typeParameterRepresentation(type, context, resolving) {
 }
 
 function constraintRepresentations(type, context, resolvingTypes, resolvingConstraints) {
+  if ((type?.kind === "named" || type?.kind === "alias") &&
+      (type.reference?.objectId === "builtin::type::any" || type.reference?.objectId === "builtin::type::comparable")) {
+    return undefined;
+  }
   if (type?.kind === "union") {
     const terms = type.union?.terms;
     if (!Array.isArray(terms) || terms.length === 0) throw new Error("canonical Go type-parameter union constraint has no terms");

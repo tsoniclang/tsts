@@ -251,6 +251,25 @@ test("function-valued variables pin complete signatures while ignoring implement
   assert.ok(inferred.mismatches.some((row) => row.kind === "non-go-declaration-signature-incomplete"));
 });
 
+test("explicit non-Go declaration types exclude runtime initializer bodies from signature evidence", async () => {
+  const counted = await parserWithCount();
+  const moduleId = "packages/tsts/src/internal/runtime-storage.ts";
+  const inspect = (source) => collectUntrackedTypeScriptDeclarations({
+    api: counted.api,
+    annotation: ANNOTATION,
+    config: exactConfig(),
+    moduleIndex: indexTypeScriptModuleSources(counted.api, new Map([[moduleId, source]])),
+  });
+  const first = inspect("export const failure: Error = new Error('first');");
+  const bodyChanged = inspect("export const failure: Error = makeFailure();");
+  assert.deepEqual(first.exportedDeclarations.map((row) => row.declarationHash), bodyChanged.exportedDeclarations.map((row) => row.declarationHash));
+  assert.ok(first.mismatches.every((row) => row.kind !== "non-go-declaration-signature-incomplete"));
+  assert.ok(bodyChanged.mismatches.every((row) => row.kind !== "non-go-declaration-signature-incomplete"));
+
+  const inferred = inspect("export const failure = makeFailure();");
+  assert.ok(inferred.mismatches.some((row) => row.kind === "non-go-declaration-signature-incomplete"));
+});
+
 test("reviewed routes pin default targets and star-export closure", async () => {
   const counted = await parserWithCount();
   const moduleId = "packages/tsts/src/internal/index.ts";

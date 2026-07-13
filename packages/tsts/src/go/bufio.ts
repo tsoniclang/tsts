@@ -3,7 +3,7 @@ import type { GoError, GoSlice } from "./compat.js";
 import type { Reader as IoReader, Writer as IoWriter } from "./io.js";
 import { EOF } from "./io.js";
 
-export class Reader implements IoReader {
+export class Reader {
   private readonly buffer: GoSlice<byte> = [];
 
   constructor(private readonly source: IoReader) {}
@@ -48,7 +48,7 @@ export class Reader implements IoReader {
   }
 }
 
-export class Writer implements IoWriter {
+export class Writer {
   private readonly buffer: GoSlice<byte> = [];
 
   constructor(private readonly target: IoWriter) {}
@@ -78,7 +78,7 @@ export class Writer implements IoWriter {
 
 export class Scanner {
   private readonly lines: string[];
-  private index = -1;
+  private index: number = -1;
 
   constructor(reader: IoReader) {
     const bytes: GoSlice<byte> = [];

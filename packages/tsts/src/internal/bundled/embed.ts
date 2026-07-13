@@ -274,11 +274,11 @@ export function wrappedFS_GetAccessibleEntries(receiver: GoPtr<wrappedFS>, path:
  * 	fs.FileInfoToDirEntry(&fileInfo{name: "libs", mode: fs.ModeDir}),
  * }
  */
-export let rootEntries: GoSlice<DirEntry> = [
+export let rootEntries: GoSlice<GoInterface<DirEntry>> = [
   fileInfo_as_io_fs_DirEntry({ name: "libs", mode: ModeDir, size: 0 as long }),
 ];
 
-export let libsEntries: GoSlice<DirEntry> = LibNames.map((name): DirEntry =>
+export let libsEntries: GoSlice<GoInterface<DirEntry>> = LibNames.map((name): DirEntry =>
   fileInfo_as_io_fs_DirEntry({
     name,
     mode: 0 as FileMode,
@@ -389,7 +389,7 @@ export function wrappedFS_WalkDir(receiver: GoPtr<wrappedFS>, root: string, walk
  * }
  */
 export function wrappedFS_walkDir(receiver: GoPtr<wrappedFS>, rest: string, walkFn: WalkDirFunc): GoError {
-  let entries: GoSlice<DirEntry>;
+  let entries: GoSlice<GoInterface<DirEntry>>;
   switch (rest) {
     case "":
       entries = rootEntries;
@@ -402,8 +402,8 @@ export function wrappedFS_walkDir(receiver: GoPtr<wrappedFS>, rest: string, walk
   }
 
   for (const entry of entries) {
-    const name = `${rest}/${entry.Name()}`;
-    const err = walkFn(`${scheme}${name}`, entry, undefined);
+    const name = `${rest}/${entry!.Name()}`;
+    const err = walkFn!(`${scheme}${name}`, entry, undefined);
     if (err !== undefined) {
       if (err === fs_SkipAll) {
         return fs_SkipAll;
@@ -413,7 +413,7 @@ export function wrappedFS_walkDir(receiver: GoPtr<wrappedFS>, rest: string, walk
       }
       return err;
     }
-    if (entry.IsDir()) {
+    if (entry!.IsDir()) {
       const childErr = wrappedFS_walkDir(receiver, strings.TrimPrefix(name, "/"), walkFn);
       if (childErr !== undefined) {
         return childErr;
@@ -545,16 +545,16 @@ export interface fileInfo {
  * )
  */
 export let ____85348954_0: GoInterface<FileInfo_2d3efe16> = fileInfo_as_io_fs_FileInfo(undefined);
-export let ____85348954_1: DirEntry = fileInfo_as_io_fs_DirEntry(undefined);
+export let ____85348954_1: GoInterface<DirEntry> = fileInfo_as_io_fs_DirEntry(undefined);
 
 export function fileInfo_as_io_fs_FileInfo(receiver: GoPtr<fileInfo>): FileInfo_2d3efe16 {
   return {
     Name: (): string => fileInfo_Name(receiver),
-    Size: (): int => fileInfo_Size(receiver) as unknown as int,
+    Size: (): long => fileInfo_Size(receiver),
     Mode: (): FileMode => fileInfo_Mode(receiver),
-    ModTime: (): Date => fileInfo_ModTime(receiver) as unknown as Date,
+    ModTime: (): Time => fileInfo_ModTime(receiver),
     IsDir: (): bool => fileInfo_IsDir(receiver),
-    Sys: (): unknown => fileInfo_Sys(receiver),
+    Sys: (): GoInterface<unknown> => fileInfo_Sys(receiver),
   };
 }
 
@@ -563,7 +563,7 @@ export function fileInfo_as_io_fs_DirEntry(receiver: GoPtr<fileInfo>): DirEntry 
     Name: (): string => fileInfo_Name(receiver),
     IsDir: (): bool => fileInfo_IsDir(receiver),
     Type: (): FileMode => fileInfo_Type(receiver),
-    Info: (): [FileInfo_2d3efe16, GoError] => fileInfo_Info(receiver),
+    Info: (): [GoInterface<FileInfo_2d3efe16>, GoError] => fileInfo_Info(receiver),
   };
 }
 
@@ -647,7 +647,7 @@ export function fileInfo_Sys(receiver: GoPtr<fileInfo>): GoInterface<unknown> {
  * 	return fi, nil
  * }
  */
-export function fileInfo_Info(receiver: GoPtr<fileInfo>): [FileInfo_2d3efe16, GoError] {
+export function fileInfo_Info(receiver: GoPtr<fileInfo>): [GoInterface<FileInfo_2d3efe16>, GoError] {
   return [fileInfo_as_io_fs_FileInfo(receiver), undefined];
 }
 

@@ -15,7 +15,7 @@ import { finalizeGeneratedFacadeFixtureCatalog } from "./test/external-facade-fi
 const profile = {
   modules: { core: "src/go/scalars.ts", compat: "src/go/compat.ts" },
   bridge: {
-    nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", slice: "GoSlice", array: "GoArray",
+    nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", pointerConstraint: "GoPointerConstraint", slice: "GoSlice", array: "GoArray",
     map: "GoMap", chan: "GoChan", func: "GoFunc", interface: "GoInterface",
   },
   primitives: {

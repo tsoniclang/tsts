@@ -8,8 +8,8 @@ import type { GoFunc } from "../../go/compat.js";
 // slices like `s[i:j]` operate on byte offsets. The standard-library facades
 // (strings/utf8) follow that contract, so we mirror it here by operating over
 // the UTF-8 byte view and converting back to a JS string at the boundaries.
-const byteLen = StringByteLen;
-const byteSlice = StringByteSlice;
+const byteLen: (s: string) => int = StringByteLen;
+const byteSlice: (s: string, start: int, end?: int) => string = StringByteSlice;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/compare.go::func::EquateStringCaseInsensitive","kind":"func","status":"implemented","sigHash":"284949f704df7913456cab1010135bb5e23c8c347f244220d90a0321ec45440e"}

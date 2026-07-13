@@ -1,9 +1,9 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import type { GoComparable, GoConstraint, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoConstraint, GoDefined, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroBoolean, GoZeroNumber, GoZeroPointer, GoZeroString, NewGoStructMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
-import type { Hasher, Uint128 } from "../../../go/github.com/zeebo/xxh3.js";
+import type { Hasher } from "../../../go/github.com/zeebo/xxh3.js";
 import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
 import { Uint32, Uint64 } from "../../../go/sync/atomic.js";
 import * as strconv from "../../../go/strconv.js";
@@ -1302,7 +1302,7 @@ export interface Program extends Host {
  * }
  */
 export interface Host extends ModuleSpecifierGenerationHost {
-  readonly __tsgoEmbedded0?: ModuleSpecifierGenerationHost;
+  readonly __tsgoEmpty?: never;
 }
 
 /**
@@ -2822,10 +2822,10 @@ export let primitiveTypeAliasSuggestions: GoFunc<() => GoMap<string, GoPtr<Symbo
  * 	}
  * }
  */
-export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable | undefined): Seq<GoPtr<Symbol>> {
+export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable): Seq<GoPtr<Symbol>> {
   return (yield_: GoFunc<(s: GoPtr<Symbol>) => bool>): void => {
     for (const [builtinName, suggestion] of primitiveTypeAliasSuggestions!()) {
-      if (symbols !== undefined && symbols.has(builtinName)) {
+      if (symbols.has(builtinName)) {
         if (!yield_!(suggestion)) {
           return;
         }
@@ -3708,15 +3708,20 @@ export function hashWrite64<T extends GoConstraint<"~int | ~uint | ~int64 | ~uin
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::CacheHashKey","kind":"type","status":"implemented","sigHash":"e3dbefec6d8bd88b2110d947caa5d087fca65b7fb64a07244b8d9b3cc1ebd1af"}
+ * @tsgo-override {"category":"runtime-numeric-representation","allow":["signature"],"reason":"The distinct hash-key type stores both unsigned 64-bit limbs as lossless bigint fields while preserving its Go defined-type identity.","goSignatureHash":"6869bf25cacfe9485e5e689c7ed3022567988144b515be41e1a0b52a26d15fd2","tsSignatureHash":"a25dcaaa2ebd4c58de85e9ba3cc37bd2387b7af53d90afbaab894f03e875903b"}
  *
  * Go source:
  * CacheHashKey xxh3.Uint128
  *
- * CacheHashKey remains the Go value type. Cache maps that use this key must use
- * GoStructMap/NewGoStructMap so Uint128 keys compare by value rather than JS
+ * CacheHashKey is a distinct Go defined type whose underlying fields match
+ * Uint128. It does not inherit Uint128's methods. Cache maps that use this key
+ * must use GoStructMap/NewGoStructMap so keys compare by value rather than JS
  * object identity.
  */
-export type CacheHashKey = Uint128;
+export type CacheHashKey = GoDefined<{
+  Hi: bigint;
+  Lo: bigint;
+}, "github.com/microsoft/typescript-go/internal/checker::type::CacheHashKey">;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::keyBuilder","kind":"type","status":"implemented","sigHash":"61a39d68253539619efdc805aa5cde328442284428e189b1b3653a95f63dc755"}

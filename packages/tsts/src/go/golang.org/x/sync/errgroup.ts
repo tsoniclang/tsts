@@ -1,14 +1,14 @@
-import type { GoError } from "../../../compat.js";
+import type { GoError, GoFunc } from "../../../compat.js";
 import type { Context } from "../../../context.js";
 
 export class Group {
   private err: GoError;
 
-  Go(fn: () => GoError): void {
+  Go(fn: GoFunc<() => GoError>): void {
     if (this.err !== undefined) {
       return;
     }
-    const err = fn();
+    const err = fn!();
     if (err !== undefined) {
       this.err = err;
     }

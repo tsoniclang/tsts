@@ -52,9 +52,9 @@ import type { GoFunc, GoInterface } from "../../../go/compat.js";
 // standard-library facades (strings/strconv/utf8) follow that contract, so we
 // mirror it here by operating over the UTF-8 byte view and converting back to a
 // JS string at the boundaries.
-const byteLen = StringByteLen;
-const byteAt = StringByteAt;
-const byteSlice = StringByteSlice;
+const byteLen: (s: string) => int = StringByteLen;
+const byteAt: (s: string, i: int) => int = StringByteAt;
+const byteSlice: (s: string, start: int, end?: int) => string = StringByteSlice;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::type::JSXTransformer","kind":"type","status":"implemented","sigHash":"f4d543aef50805c0daf1acbda906f9cd8582889e57dcbb274d9f2ec3142daf12"}

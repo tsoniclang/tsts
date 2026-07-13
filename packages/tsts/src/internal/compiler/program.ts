@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
-import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoError, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, GoZeroSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
@@ -101,7 +101,7 @@ import { attachExtensionHostToProgram } from "../../extensions/host.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 
-const sourceFileKey = GoPointerKey<SourceFile>();
+const sourceFileKey: GoMapKeyDescriptor<GoPtr<SourceFile>> = GoPointerKey<SourceFile>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"9eb7d18f0dae3f15940de7ca327de6159681203c5eb38cedc77879444adaee3f"}
  *
@@ -262,7 +262,7 @@ export interface packageNamesInfo {
  */
 export interface Program {
   opts: ProgramOptions;
-  checkerPool: CheckerPool | undefined;
+  checkerPool: GoInterface<CheckerPool>;
   compilerCheckerPool: GoPtr<checkerPool>;
   comparePathsOptions: ComparePathsOptions;
   __tsgoEmbedded0: processedFiles;
@@ -569,7 +569,6 @@ export function Program_as_modulespecifiers_ModuleSpecifierGenerationHost(receiv
 
 export function Program_as_checker_Host(receiver: GoPtr<Program>): CheckerHost {
   return {
-    __tsgoEmbedded0: Program_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver),
     GetSymlinkCache: (): GoPtr<KnownSymlinks> => Program_GetSymlinkCache(receiver),
     CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
     GetGlobalTypingsCacheLocation: (): string => Program_GetGlobalTypingsCacheLocation(receiver),
@@ -589,7 +588,6 @@ export function Program_as_checker_Host(receiver: GoPtr<Program>): CheckerHost {
 
 export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e32ad451 {
   const adapter: Program_e32ad451 = {
-    __tsgoEmbedded0: Program_as_checker_Host(receiver),
     GetSymlinkCache: (): GoPtr<KnownSymlinks> => Program_GetSymlinkCache(receiver),
     CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
     GetGlobalTypingsCacheLocation: (): string => Program_GetGlobalTypingsCacheLocation(receiver),
@@ -937,7 +935,7 @@ export function Program_initCheckerPool(receiver: GoPtr<Program>): void {
  * }
  */
 export function Program_GetCheckerPool(receiver: GoPtr<Program>): GoInterface<CheckerPool> {
-  return receiver!.checkerPool!;
+  return receiver!.checkerPool;
 }
 
 /**
@@ -1134,7 +1132,7 @@ export function Program_GetConfigFileParsingDiagnostics(receiver: GoPtr<Program>
  * }
  */
 export function Program_GetUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Set<string>> {
-  return lazyValue_getValue(receiver!.unresolvedImports, () => GoValueRef(Program_extractUnresolvedImports(receiver)!))!.v;
+  return lazyValue_getValue(receiver!.unresolvedImports, () => GoValueRef(Program_extractUnresolvedImports(receiver)!)!)!.v;
 }
 
 /**
@@ -2338,10 +2336,11 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
 
   const getCompilerOptionsObjectLiteralSyntax = Memoize((): GoPtr<ObjectLiteralExpression> | undefined => {
     const compilerOptionsProperty = getCompilerOptionsPropertySyntax!();
-    if (compilerOptionsProperty !== undefined &&
-        compilerOptionsProperty!.v.Initializer !== undefined &&
-        IsObjectLiteralExpression(compilerOptionsProperty!.v.Initializer)) {
-      return AsObjectLiteralExpression(compilerOptionsProperty!.v.Initializer!);
+    if (compilerOptionsProperty !== undefined) {
+      const property = compilerOptionsProperty.v;
+      if (property.Initializer !== undefined && IsObjectLiteralExpression(property.Initializer)) {
+        return AsObjectLiteralExpression(property.Initializer);
+      }
     }
     return undefined;
   }, GoZeroPointer<ObjectLiteralExpression>);
@@ -2351,7 +2350,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
       return GoValueRef(CreateDiagnosticForNodeInSourceFile(sourceFile!()!, onKey ? NamedMemberBase_Name(property) : property!.Initializer, message, ...args)!);
     }, key2);
     if (diag !== undefined) {
-      receiver!.programDiagnostics = [...receiver!.programDiagnostics!, diag!.v];
+      receiver!.programDiagnostics = [...receiver!.programDiagnostics!, diag.v];
     }
     return diag?.v;
   };
@@ -2360,7 +2359,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     const compilerOptionsProperty = getCompilerOptionsPropertySyntax!();
     let diag: GoPtr<Diagnostic>;
     if (compilerOptionsProperty !== undefined) {
-      diag = CreateDiagnosticForNodeInSourceFile(sourceFile!()!, NamedMemberBase_Name(compilerOptionsProperty!.v), message, ...args);
+      diag = CreateDiagnosticForNodeInSourceFile(sourceFile!()!, NamedMemberBase_Name(compilerOptionsProperty.v), message, ...args);
     } else {
       diag = NewCompilerDiagnostic(message, ...args);
     }
@@ -2512,10 +2511,11 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   }
 
   const forEachOptionPathsSyntax = (callback: (p: GoPtr<PropertyAssignment>) => GoPtr<Diagnostic>): GoPtr<Diagnostic> => {
-    return ForEachPropertyAssignment<Diagnostic>(getCompilerOptionsObjectLiteralSyntax!(), "paths", (property) => {
+    const result = ForEachPropertyAssignment<Diagnostic>(getCompilerOptionsObjectLiteralSyntax!(), "paths", (property) => {
       const diagnostic = callback(property);
       return diagnostic === undefined ? undefined : GoValueRef(diagnostic);
-    })?.v;
+    });
+    return result?.v;
   };
 
   const createDiagnosticForOptionPaths = (onKey: bool, key: string, message: GoPtr<Message>, ...args: GoInterface<unknown>[]): GoPtr<Diagnostic> => {
@@ -2534,7 +2534,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   const createDiagnosticForOptionPathKeyValue = (key: string, valueIndex: int, message: GoPtr<Message>, ...args: GoInterface<unknown>[]): GoPtr<Diagnostic> => {
     let diag = forEachOptionPathsSyntax((pathProp) => {
       if (IsObjectLiteralExpression(pathProp!.Initializer)) {
-        return ForEachPropertyAssignment<Diagnostic>(AsObjectLiteralExpression(pathProp!.Initializer!), key, (keyProps) => {
+        const result = ForEachPropertyAssignment<Diagnostic>(AsObjectLiteralExpression(pathProp!.Initializer!), key, (keyProps) => {
           const initializer = keyProps!.Initializer;
           if (IsArrayLiteralExpression(initializer)) {
             const elements = AsArrayLiteralExpression(initializer!)!.Elements;
@@ -2545,7 +2545,8 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
             }
           }
           return undefined;
-        })?.v;
+        });
+        return result?.v;
       }
       return undefined;
     });

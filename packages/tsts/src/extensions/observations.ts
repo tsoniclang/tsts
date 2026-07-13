@@ -49,7 +49,21 @@ export interface ExtensionCompilerQueryContext {
   readonly getSourceFile: (fileName: string) => GoPtr<SourceFile>;
 }
 
-export const ExtensionObservationPoint = {
+export const ExtensionObservationPoint: {
+  readonly validateTargetConstraint: "target.validateConstraint";
+  readonly observePostCheckAssignability: "target.observePostCheckAssignability";
+  readonly mapCheckedCall: "operation.mapCheckedCall";
+  readonly mapInferredSourceTypeArgumentsToTarget: "operation.mapInferredSourceTypeArgumentsToTarget";
+  readonly mapCheckedPropertyAccess: "operation.mapCheckedPropertyAccess";
+  readonly mapCheckedElementAccess: "operation.mapCheckedElementAccess";
+  readonly mapCheckedOperator: "operation.mapCheckedOperator";
+  readonly mapCheckedIteration: "operation.mapCheckedIteration";
+  readonly recordContextualTargetType: "type.recordContextualTargetType";
+  readonly mapCheckedConversion: "operation.mapCheckedConversion";
+  readonly resolveParameterPassing: "parameter.resolvePassing";
+  readonly resolveRuntimeCarrier: "type.resolveRuntimeCarrier";
+  readonly validateExtensionFlowUse: "flow.validateExtensionUse";
+} = {
   validateTargetConstraint: "target.validateConstraint",
   observePostCheckAssignability: "target.observePostCheckAssignability",
   mapCheckedCall: "operation.mapCheckedCall",

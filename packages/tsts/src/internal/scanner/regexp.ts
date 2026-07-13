@@ -82,9 +82,9 @@ import { CodePointToSurrogatePair, DecodeJSStringRune, EncodeJSStringRune } from
 
 // Go strings are UTF-8 byte sequences; the regexp parser tracks byte offsets
 // (p.pos()). These helpers reproduce Go's byte-indexed string operations.
-const byteSlice = utf8.StringByteSlice;
-const byteAt = utf8.StringByteAt;
-const byteLen = utf8.StringByteLen;
+const byteSlice: (text: string, start: int, end?: int) => string = utf8.StringByteSlice;
+const byteAt: (text: string, index: int) => int = utf8.StringByteAt;
+const byteLen: (text: string) => int = utf8.StringByteLen;
 
 // stringFromRune reproduces Go's `string(rune)`: the rune is UTF-8 encoded.
 // String.fromCodePoint yields the JS string whose UTF-8 byte view matches.

@@ -214,7 +214,7 @@ export interface SourceOutputAndProjectReference {
  * )
  */
 export let ____696f5a2e_0: GoInterface<ResolvedProjectReference> = ParsedCommandLine_as_ResolvedProjectReference(undefined);
-export let ____696f5a2e_1: OutputPathsHost = ParsedCommandLine_as_OutputPathsHost(undefined);
+export let ____696f5a2e_1: GoInterface<OutputPathsHost> = ParsedCommandLine_as_OutputPathsHost(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.ConfigName","kind":"method","status":"implemented","sigHash":"ca2a0fcae55a827972ed0dddfca3fe277a8c3dcd47c3a3b8f4f2948d5df7f888"}

@@ -5,8 +5,8 @@ import { DecodeRuneInStringAt, RuneSelf, StringByteAt, StringByteLen } from "../
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
 // `s[i]` reads a byte, and slices like `s[i:]` operate on byte offsets. We
 // mirror that contract by operating over the UTF-8 byte view of the JS string.
-const byteLen = StringByteLen;
-const byteAt = StringByteAt;
+const byteLen: (text: string) => int = StringByteLen;
+const byteAt: (text: string, index: int) => int = StringByteAt;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::type::PositionMap","kind":"type","status":"implemented","sigHash":"af42c60e448ed6f9beb9d484a182432f29f3f0756d741f9de9565477889ba3bf"}

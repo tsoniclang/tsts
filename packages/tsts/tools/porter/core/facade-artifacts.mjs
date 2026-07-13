@@ -34,6 +34,8 @@ import {
 } from "./facade-artifacts/semantic-types.mjs";
 import { buildExternalFacadeComparisonEvidence } from "./facade-artifacts/comparison-evidence.mjs";
 import { buildAuthoredContractSurface } from "./authored-contract-surface.mjs";
+import { directAuthoredMethodSetMode, memberIsSelected } from "./facade-artifacts/member-selection.mjs";
+import { externalRuntimeStorageOperations } from "./facade-artifacts/runtime-basic-storage.mjs";
 import { renderGeneratedArtifact } from "./facade-artifacts/generated-envelope.mjs";
 
 export { renderGeneratedArtifact, stripGeneratedArtifactHeader } from "./facade-artifacts/generated-envelope.mjs";
@@ -195,7 +197,7 @@ export function createExternalMethodBindingContractRenderer(config, snapshot, ca
       declaration.typeParameters,
     );
     const unit = { id: `external-method:${binding.methodId}`, semantic: [{ profiles: [profileIndex] }] };
-    const operations = semanticRendererOperations(context, unit);
+    const operations = externalRuntimeStorageOperations(facade, semanticRendererOperations(context, unit)).operations;
     const lowered = lowerSemanticSignature(method.signature, semanticContext, { includeReceiver: true });
     const parameters = [...lowered.receiverTypeParameters, ...lowered.typeParameters];
     const typeParameters = renderCanonicalTypeParameters(
@@ -274,7 +276,12 @@ export function renderExternalFacadeContractPolicy(facade, declaration, profileI
   const representation = facade.runtimeAdaptation?.representation;
   const unit = { id: `external-facade:${facade.objectId}`, semantic: [{ profiles: [profileIndex] }] };
   const semanticContext = semanticContextWithTypeParameters({ index: context.semanticIndex, profile: profileIndex }, declaration.typeParameters);
-  const operations = semanticRendererOperations(context, unit);
+  const runtimeOperations = externalRuntimeStorageOperations(facade, semanticRendererOperations(context, unit));
+  const operations = runtimeOperations.operations;
+  const finish = (declarationText) => {
+    runtimeOperations.assertConsumed();
+    return declarationText;
+  };
   const parameters = lowerSemanticTypeParameters(declaration.typeParameters, semanticContext);
   const typeParameters = renderCanonicalTypeParameters(
     parameters,
@@ -289,16 +296,16 @@ export function renderExternalFacadeContractPolicy(facade, declaration, profileI
     const body = declaration.alias
       ? scalar
       : `(${scalar}) & { readonly ${safePropertyName(externalDefinedTypeIdentity(declaration))}: never }`;
-    return externalDeclarationVisibility(
+    return finish(externalDeclarationVisibility(
       facade,
       `export type ${name}${typeParameters} = ${body};`,
-    );
+    ));
   }
   if (representation === "class") {
     if (declaration.rhs.kind !== "struct" || declaration.alias) {
       throw new Error(`external facade ${facade.objectId} can use class runtime adaptation only for a defined Go struct`);
     }
-    return externalDeclarationVisibility(facade, renderAuthoredClassContract(
+    return finish(externalDeclarationVisibility(facade, renderAuthoredClassContract(
       name,
       typeParameters,
       facade,
@@ -307,7 +314,7 @@ export function renderExternalFacadeContractPolicy(facade, declaration, profileI
       operations,
       context,
       memberSelection,
-    ));
+    )));
   }
   if (contractSurface.declarationKind === "object-alias") {
     const members = [];
@@ -329,14 +336,14 @@ export function renderExternalFacadeContractPolicy(facade, declaration, profileI
     if (members.length > 0) bodyParts.push(`{ ${members.join("; ")} }`);
     bodyParts.push(...heritage.map((entry) => `(${entry})`));
     const body = bodyParts.length === 0 ? "unknown" : bodyParts.join(" & ");
-    return externalDeclarationVisibility(
+    return finish(externalDeclarationVisibility(
       facade,
       `export type ${name}${typeParameters} = ${attachPointerMethodSet(body, pointerMethods)};`,
-    );
+    ));
   }
   if (representation !== "structural") {
     if (!declaration.alias && declaration.rhs.kind === "interface" && externalInterfaceCanUseDeclaration(declaration.rhs)) {
-      return externalDeclarationVisibility(facade, renderExternalInterfaceDeclaration(
+      return finish(externalDeclarationVisibility(facade, renderExternalInterfaceDeclaration(
         name,
         typeParameters,
         declaration,
@@ -345,7 +352,7 @@ export function renderExternalFacadeContractPolicy(facade, declaration, profileI
         context,
         pointerMethods,
         memberSelection,
-      ));
+      )));
     }
     const valueMethods = renderSelectedMethodSetSurface(
       declaration,
@@ -355,10 +362,10 @@ export function renderExternalFacadeContractPolicy(facade, declaration, profileI
       context,
       memberSelection,
     );
-    return externalDeclarationVisibility(
+    return finish(externalDeclarationVisibility(
       facade,
       `export type ${name}${typeParameters} = ${attachPointerMethodSet(attachMethodSet(renderExternalDeclarationBody(declaration, semanticContext, operations, memberSelection), valueMethods), pointerMethods)};`,
-    );
+    ));
   }
   const members = [];
   for (const field of contractSurface.fields) {
@@ -370,7 +377,7 @@ export function renderExternalFacadeContractPolicy(facade, declaration, profileI
     members.push(`  ${renderMethodSignature(method.name, method.signature, semanticContext, operations, aliases, true)};`);
   }
   if (pointerMethods !== undefined) members.push(renderPointerMethodSetMember(pointerMethods, "  "));
-  return externalDeclarationVisibility(facade, `export interface ${safeIdentifier(facade.tsName)}${typeParameters} {\n${members.join("\n")}\n}`);
+  return finish(externalDeclarationVisibility(facade, `export interface ${safeIdentifier(facade.tsName)}${typeParameters} {\n${members.join("\n")}\n}`));
 }
 
 function externalDeclarationVisibility(facade, declaration) {
@@ -586,12 +593,4 @@ function renderAuthoredClassContract(name, typeParameters, facade, declaration, 
     lines.push(`  ${safePropertyName(method.name)}${methodParameters}(${rendered.parameters.join(", ")}): ${rendered.returnType};`);
   }
   return `export class ${name}${typeParameters} {\n${lines.join("\n")}\n}`;
-}
-
-function directAuthoredMethodSetMode(facade) {
-  return facade.runtimeAdaptation?.pointer === "aggregate" ? "pointer" : "value";
-}
-
-function memberIsSelected(selection, kind, name) {
-  return selection === undefined || selection.has(`${kind}\0${name}`);
 }

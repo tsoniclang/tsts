@@ -7,7 +7,7 @@ import process from "node:process";
 export class Cmd {
   Path: string;
   Args: GoSlice<string>;
-  Dir = "";
+  Dir: string = "";
   Env: GoSlice<string> | undefined;
 
   constructor(name: string, args: GoSlice<string>) {

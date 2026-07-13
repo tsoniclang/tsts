@@ -1,5 +1,6 @@
 import { FACADE_POINTER_METHOD_SET_SYMBOL } from "../pointer-method-facades.mjs";
 import { channelRuntime } from "./compatibility/channels.mjs";
+import { comparableInterfaceRuntime } from "./compatibility/comparable-interfaces.mjs";
 
 export function renderGoCompatModule() {
   const pointerMethodSetSymbol = FACADE_POINTER_METHOD_SET_SYMBOL;
@@ -11,6 +12,7 @@ declare global {
 
 declare const __goBrand: unique symbol;
 declare const __goDefinedTypeBrand: unique symbol;
+const goRefStorage: unique symbol = Symbol("GoRef.storage");
 
 export type GoNilable<T> = T | undefined;
 export type GoDefined<T, Identity extends string> = T extends undefined
@@ -23,7 +25,8 @@ type GoPointerMethods<T> = typeof ${pointerMethodSetSymbol} extends keyof T
     : unknown
   : unknown;
 export type GoPtr<T> = GoNilable<T & GoPointerMethods<T>>;
-export type GoRef<T> = GoNilable<{ v: T } & GoPointerMethods<T>>;
+export type GoRef<T> = GoNilable<{ v: T; readonly [goRefStorage]: true } & GoPointerMethods<T>>;
+export type GoPointerConstraint<T> = GoPtr<T> | GoRef<T>;
 export type GoSlice<T> = T[] & { __tsgoGoNil?: bool };
 export type GoArray<T, Length extends string> = T[] & { readonly [__goBrand]?: { readonly length: Length } };
 export type GoMap<K, V> = Map<K, V>;
@@ -107,7 +110,7 @@ export function GoZeroEmptyStruct(): { readonly __tsgoEmpty?: never } {
 }
 
 export function GoValueRef<T>(value: T): NonNullable<GoRef<T>> {
-  return { v: value } as NonNullable<GoRef<T>>;
+  return { v: value, [goRefStorage]: true } as NonNullable<GoRef<T>>;
 }
 
 export function GoSliceElementRef<T>(slice: GoSlice<T>, index: int): NonNullable<GoRef<T>> {
@@ -115,9 +118,22 @@ export function GoSliceElementRef<T>(slice: GoSlice<T>, index: int): NonNullable
     throw new RangeError("index out of range");
   }
   return {
+    [goRefStorage]: true,
     get v(): T { return slice[index]!; },
     set v(value: T) { slice[index] = value; },
   } as NonNullable<GoRef<T>>;
+}
+
+export function GoFieldRef<T>(read: () => T, write: (value: T) => void): NonNullable<GoRef<T>> {
+  return {
+    [goRefStorage]: true,
+    get v(): T { return read(); },
+    set v(value: T) { write(value); },
+  } as NonNullable<GoRef<T>>;
+}
+
+export function GoIsRef(value: unknown): value is NonNullable<GoRef<unknown>> {
+  return typeof value === "object" && value !== null && (value as { readonly [goRefStorage]?: unknown })[goRefStorage] === true;
 }
 
 export function GoRequireNonNilAfterSuccess<T>(value: GoPtr<T>, operation: string): T {
@@ -324,43 +340,7 @@ export function GoNamedNumberKey<K extends number>(): GoMapKeyDescriptor<K> {
   }, newNumberGoMap);
 }
 
-export function GoDynamicValue<T>(descriptor: GoMapKeyDescriptor<T>, value: T): GoDynamicComparable<T> {
-  return globalThis.Object.freeze({
-    typeIdentity: descriptor.identity,
-    value,
-    appendHashParts(parts: unknown[]): void {
-      descriptor.appendHashParts(parts, value);
-    },
-    snapshot(): GoDynamicComparable<T> {
-      return GoDynamicValue(descriptor, descriptor.snapshot(value));
-    },
-  });
-}
-
-export function GoInterfaceKey<K>(
-  dynamic: (value: K) => GoDynamicComparable | undefined,
-  construct: (dynamic: GoDynamicComparable | undefined) => K,
-): GoMapKeyDescriptor<K> {
-  return createGoMapKeyDescriptor<K>((parts, value) => {
-    const selected = dynamic(value);
-    if (selected === undefined) {
-      parts.push(goNilInterfaceKey);
-      return;
-    }
-    parts.push(selected.typeIdentity);
-    selected.appendHashParts(parts);
-  }, (value) => {
-    const selected = dynamic(value);
-    return selected === undefined
-      ? construct(undefined)
-      : construct(selected.snapshot());
-  }, newStructuredGoMap);
-}
-
-export const GoComparableInterfaceKey: GoMapKeyDescriptor<GoComparableInterface> = GoInterfaceKey<GoComparableInterface>(
-  (value) => value,
-  (value) => value,
-);
+${comparableInterfaceRuntime}
 
 interface GoNumberMapEntry<K extends number, V> {
   readonly key: K;

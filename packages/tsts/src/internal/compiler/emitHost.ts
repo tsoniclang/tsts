@@ -126,7 +126,6 @@ export function emitHost_as_printer_EmitHost(receiver: GoPtr<emitHost>): EmitHos
 
 export function emitHost_as_declarations_DeclarationEmitHost(receiver: GoPtr<emitHost>): DeclarationEmitHost {
   return {
-    __tsgoEmbedded0: emitHost_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver),
     GetSymlinkCache: (): GoPtr<KnownSymlinks> => emitHost_GetSymlinkCache(receiver),
     CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
     GetGlobalTypingsCacheLocation: (): string => emitHost_GetGlobalTypingsCacheLocation(receiver),

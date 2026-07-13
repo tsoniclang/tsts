@@ -1334,8 +1334,8 @@ export function Checker_getImmediateAliasedSymbol(receiver: GoPtr<Checker>, symb
  * 	return nil
  * }
  */
-export function Checker_getSymbol(receiver: GoPtr<Checker>, symbols: SymbolTable | undefined, name: string, meaning: SymbolFlags): GoPtr<Symbol> {
-  if (symbols !== undefined && (meaning & SymbolFlagsAll) !== 0) {
+export function Checker_getSymbol(receiver: GoPtr<Checker>, symbols: SymbolTable, name: string, meaning: SymbolFlags): GoPtr<Symbol> {
+  if ((meaning & SymbolFlagsAll) !== 0) {
     const symbol_ = Checker_getMergedSymbol(receiver, symbols.get(name));
     if (symbol_ !== undefined) {
       if ((symbol_!.Flags & meaning) !== 0) {
@@ -13283,7 +13283,7 @@ export function Checker_resolveAnonymousTypeMembers(receiver: GoPtr<Checker>, t:
   const d = Type_AsObjectType(t);
   const structured = Type_AsStructuredType(t);
   if (d!.target !== undefined) {
-    Checker_setStructuredTypeMembers(receiver, t, undefined as unknown as SymbolTable, [], [], []);
+    Checker_setStructuredTypeMembers(receiver, t, GoNilMap<string, GoPtr<Symbol>>(), GoNilSlice<GoPtr<Signature>>(), GoNilSlice<GoPtr<Signature>>(), GoNilSlice<GoPtr<IndexInfo>>());
     const members = Checker_createInstantiatedSymbolTable(receiver, Checker_getPropertiesOfObjectType(receiver, d!.target), d!.mapper);
     const callSignatures = Checker_instantiateSignatures(receiver, Checker_getSignaturesOfType(receiver, d!.target, SignatureKindCall), d!.mapper);
     const constructSignatures = Checker_instantiateSignatures(receiver, Checker_getSignaturesOfType(receiver, d!.target, SignatureKindConstruct), d!.mapper);
@@ -13293,7 +13293,7 @@ export function Checker_resolveAnonymousTypeMembers(receiver: GoPtr<Checker>, t:
   }
   const symbol_ = Checker_getMergedSymbol(receiver, t!.symbol);
   if ((symbol_!.Flags & SymbolFlagsTypeLiteral) !== 0) {
-    Checker_setStructuredTypeMembers(receiver, t, undefined as unknown as SymbolTable, [], [], []);
+    Checker_setStructuredTypeMembers(receiver, t, GoNilMap<string, GoPtr<Symbol>>(), GoNilSlice<GoPtr<Signature>>(), GoNilSlice<GoPtr<Signature>>(), GoNilSlice<GoPtr<IndexInfo>>());
     const members = Checker_getMembersOfSymbol(receiver, symbol_);
     const callSignatures = Checker_getSignaturesOfSymbol(receiver, members.get(InternalSymbolNameCall));
     const constructSignatures = Checker_getSignaturesOfSymbol(receiver, members.get(InternalSymbolNameNew));
@@ -13560,7 +13560,7 @@ export function Checker_instantiateSymbol(receiver: GoPtr<Checker>, symbol_: GoP
 export function Checker_resolveMappedTypeMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>): void {
   const members: SymbolTable = new globalThis.Map();
   let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
-  Checker_setStructuredTypeMembers(receiver, t, undefined, GoNilSlice(), GoNilSlice(), GoNilSlice());
+  Checker_setStructuredTypeMembers(receiver, t, GoNilMap<string, GoPtr<Symbol>>(), GoNilSlice(), GoNilSlice(), GoNilSlice());
   const typeParameter = Checker_getTypeParameterFromMappedType(receiver, t);
   const constraintType = Checker_getConstraintTypeFromMappedType(receiver, t);
   const mappedTarget = Type_AsMappedType(t)!.__tsgoEmbedded0!.target;
@@ -13754,7 +13754,7 @@ export function Checker_resolveUnionTypeMembers(receiver: GoPtr<Checker>, t: GoP
     return Checker_getSignaturesOfType(receiver, type_, SignatureKindConstruct);
   }));
   const indexInfos = Checker_getUnionIndexInfos(receiver, Type_Types(t));
-  Checker_setStructuredTypeMembers(receiver, t, undefined as unknown as SymbolTable, callSignatures, constructSignatures, indexInfos);
+  Checker_setStructuredTypeMembers(receiver, t, GoNilMap<string, GoPtr<Symbol>>(), callSignatures, constructSignatures, indexInfos);
 }
 
 /**
@@ -13854,7 +13854,7 @@ export function Checker_resolveIntersectionTypeMembers(receiver: GoPtr<Checker>,
       indexInfos = Checker_appendIndexInfo(receiver, indexInfos, info, false);
     }
   }
-  Checker_setStructuredTypeMembers(receiver, t, undefined as unknown as SymbolTable, callSignatures, constructSignatures, indexInfos);
+  Checker_setStructuredTypeMembers(receiver, t, GoNilMap<string, GoPtr<Symbol>>(), callSignatures, constructSignatures, indexInfos);
 }
 
 /**
@@ -16075,31 +16075,27 @@ export function Checker_newUniqueESSymbolType(receiver: GoPtr<Checker>, symbol_:
  * 	data.indexInfos = slices.Clip(indexInfos)
  * }
  */
-export function Checker_setStructuredTypeMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>, members: GoPtr<SymbolTable>, callSignatures: GoSlice<GoPtr<Signature>>, constructSignatures: GoSlice<GoPtr<Signature>>, indexInfos: GoSlice<GoPtr<IndexInfo>>): void {
+export function Checker_setStructuredTypeMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>, members: SymbolTable, callSignatures: GoSlice<GoPtr<Signature>>, constructSignatures: GoSlice<GoPtr<Signature>>, indexInfos: GoSlice<GoPtr<IndexInfo>>): void {
   t!.objectFlags |= ObjectFlagsMembersResolved;
   const data = Type_AsStructuredType(t);
-  const effectiveMembers = members ?? new globalThis.Map<string, GoPtr<Symbol>>();
-  const effectiveCallSignatures = callSignatures ?? [];
-  const effectiveConstructSignatures = constructSignatures ?? [];
-  const effectiveIndexInfos = indexInfos ?? [];
-  data!.members = effectiveMembers;
-  data!.properties = Checker_getNamedMembers(receiver, effectiveMembers, t!["symbol"]);
-  if (effectiveCallSignatures.length !== 0) {
-    if (effectiveConstructSignatures.length !== 0) {
-      data!.signatures = effectiveCallSignatures.concat(effectiveConstructSignatures);
+  data!.members = members;
+  data!.properties = Checker_getNamedMembers(receiver, members, t!["symbol"]);
+  if (callSignatures.length !== 0) {
+    if (constructSignatures.length !== 0) {
+      data!.signatures = callSignatures.concat(constructSignatures);
     } else {
-      data!.signatures = effectiveCallSignatures.slice();
+      data!.signatures = callSignatures.slice();
     }
-    data!.callSignatureCount = effectiveCallSignatures.length;
+    data!.callSignatureCount = callSignatures.length;
   } else {
-    if (effectiveConstructSignatures.length !== 0) {
-      data!.signatures = effectiveConstructSignatures.slice();
+    if (constructSignatures.length !== 0) {
+      data!.signatures = constructSignatures.slice();
     } else {
       data!.signatures = [];
     }
     data!.callSignatureCount = 0;
   }
-  data!.indexInfos = effectiveIndexInfos.slice();
+  data!.indexInfos = indexInfos.slice();
 }
 
 /**

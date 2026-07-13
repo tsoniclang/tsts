@@ -38,11 +38,11 @@ import {
 import type { emitSignature, FileEmitKind, FileInfo } from "./snapshot.js";
 
 // Go's []byte(string) conversion: the UTF-8 encoding of the string.
-const utf8Encoder = new globalThis.TextEncoder();
+const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const stringToBytes = (s: string): GoSlice<byte> => globalThis.Array.from(utf8Encoder.encode(s)) as GoSlice<byte>;
 
 // Go's string([]byte) conversion: decode the byte slice as UTF-8.
-const utf8Decoder = new globalThis.TextDecoder();
+const utf8Decoder: TextDecoder = new globalThis.TextDecoder();
 const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(globalThis.Uint8Array.from(b as number[]));
 
 /**
@@ -242,7 +242,7 @@ export interface BuildInfoFileInfo {
  * 	}}
  * }
  */
-export function newBuildInfoFileInfo(fileInfo: GoInterface<FileInfo>): GoPtr<BuildInfoFileInfo> {
+export function newBuildInfoFileInfo(fileInfo: GoPtr<FileInfo>): GoPtr<BuildInfoFileInfo> {
   if (fileInfo!.version === fileInfo!.signature) {
     if (!fileInfo!.affectsGlobalScope && fileInfo!.impliedNodeFormat === ResolutionModeCommonJS) {
       return { signature: fileInfo!.signature, noSignature: undefined, fileInfo: undefined };
@@ -301,7 +301,7 @@ export function newBuildInfoFileInfo(fileInfo: GoInterface<FileInfo>): GoPtr<Bui
  * 	}
  * }
  */
-export function BuildInfoFileInfo_GetFileInfo(receiver: GoPtr<BuildInfoFileInfo>): GoInterface<FileInfo> {
+export function BuildInfoFileInfo_GetFileInfo(receiver: GoPtr<BuildInfoFileInfo>): GoPtr<FileInfo> {
   if (receiver === undefined) {
     return undefined;
   }

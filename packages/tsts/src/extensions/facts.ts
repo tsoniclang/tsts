@@ -1,5 +1,5 @@
 import { defineExtensionFactKey } from "./host.js";
-import type { ExtensionEvidence, ExtensionFactSubject } from "./host.js";
+import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject } from "./host.js";
 export type { ArgumentPassingMode } from "./argument-passing.js";
 import type { ArgumentPassingMode } from "./argument-passing.js";
 
@@ -288,7 +288,7 @@ export interface ConstGenericFact {
   readonly value: string | number | bigint | boolean;
 }
 
-export const canonicalIdentityFactKey = defineExtensionFactKey<ExtensionCanonicalIdentity>({
+export const canonicalIdentityFactKey: ExtensionFactKey<ExtensionCanonicalIdentity> = defineExtensionFactKey<ExtensionCanonicalIdentity>({
   extensionId: "tsts.identity",
   name: "canonicalIdentity",
   equals: (left, right) =>
@@ -302,13 +302,13 @@ export const canonicalIdentityFactKey = defineExtensionFactKey<ExtensionCanonica
     && left.canonicalSymbolId === right.canonicalSymbolId,
 });
 
-export const sourcePrimitiveFactKey = defineExtensionFactKey<SourcePrimitiveFact>({
+export const sourcePrimitiveFactKey: ExtensionFactKey<SourcePrimitiveFact> = defineExtensionFactKey<SourcePrimitiveFact>({
   extensionId: "tsts.source-semantics",
   name: "sourcePrimitive",
   equals: (left, right) => left.kind === right.kind && left.width === right.width && left.signed === right.signed && left.runtimeBase === right.runtimeBase,
 });
 
-export const argumentPassingFactKey = defineExtensionFactKey<ArgumentPassingFact>({
+export const argumentPassingFactKey: ExtensionFactKey<ArgumentPassingFact> = defineExtensionFactKey<ArgumentPassingFact>({
   extensionId: "tsts.source-semantics",
   name: "argumentPassing",
   equals: (left, right) =>
@@ -319,7 +319,7 @@ export const argumentPassingFactKey = defineExtensionFactKey<ArgumentPassingFact
     && optionalProviderDeclarationIdentityEquals(left.selectedSignature, right.selectedSignature),
 });
 
-export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact>({
+export const functionPointerFactKey: ExtensionFactKey<FunctionPointerFact> = defineExtensionFactKey<FunctionPointerFact>({
   extensionId: "tsts.source-semantics",
   name: "functionPointer",
   equals: (left, right) =>
@@ -330,13 +330,13 @@ export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact
     && left.abi.every((abi, index) => abi === right.abi[index]),
 });
 
-export const pointerFactKey = defineExtensionFactKey<PointerFact>({
+export const pointerFactKey: ExtensionFactKey<PointerFact> = defineExtensionFactKey<PointerFact>({
   extensionId: "tsts.source-semantics",
   name: "pointer",
   equals: (left, right) => left.pointee === right.pointee && left.mutability === right.mutability && left.unsafeRequired === right.unsafeRequired,
 });
 
-export const structFactKey = defineExtensionFactKey<StructFact>({
+export const structFactKey: ExtensionFactKey<StructFact> = defineExtensionFactKey<StructFact>({
   extensionId: "tsts.source-semantics",
   name: "struct",
   equals: (left, right) =>
@@ -344,13 +344,13 @@ export const structFactKey = defineExtensionFactKey<StructFact>({
     && fieldFactArrayEquals(left.fields, right.fields),
 });
 
-export const fieldFactKey = defineExtensionFactKey<FieldFact>({
+export const fieldFactKey: ExtensionFactKey<FieldFact> = defineExtensionFactKey<FieldFact>({
   extensionId: "tsts.source-semantics",
   name: "field",
   equals: (left, right) => left.name === right.name && left.type === right.type && left.readonly === right.readonly,
 });
 
-export const attributeFactKey = defineExtensionFactKey<AttributeFact>({
+export const attributeFactKey: ExtensionFactKey<AttributeFact> = defineExtensionFactKey<AttributeFact>({
   extensionId: "tsts.source-semantics",
   name: "attribute",
   equals: (left, right) =>
@@ -359,19 +359,19 @@ export const attributeFactKey = defineExtensionFactKey<AttributeFact>({
     && factSubjectArrayEquals(left.arguments, right.arguments),
 });
 
-export const defaultValueFactKey = defineExtensionFactKey<DefaultValueFact>({
+export const defaultValueFactKey: ExtensionFactKey<DefaultValueFact> = defineExtensionFactKey<DefaultValueFact>({
   extensionId: "tsts.source-semantics",
   name: "defaultValue",
   equals: (left, right) => left.type === right.type,
 });
 
-export const targetBindingFactKey = defineExtensionFactKey<TargetBindingFact>({
+export const targetBindingFactKey: ExtensionFactKey<TargetBindingFact> = defineExtensionFactKey<TargetBindingFact>({
   extensionId: "tsts.target-bindings",
   name: "targetBinding",
   equals: targetBindingFactEquals,
 });
 
-export const instantiatedTargetTypeFactKey = defineExtensionFactKey<InstantiatedTargetTypeFact>({
+export const instantiatedTargetTypeFactKey: ExtensionFactKey<InstantiatedTargetTypeFact> = defineExtensionFactKey<InstantiatedTargetTypeFact>({
   extensionId: "tsts.target-bindings",
   name: "instantiatedTargetType",
   equals: (left, right) =>
@@ -380,7 +380,7 @@ export const instantiatedTargetTypeFactKey = defineExtensionFactKey<Instantiated
     && targetTypeRefArrayEquals(left.resolvedTypeArguments, right.resolvedTypeArguments),
 });
 
-export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTargetSignatureFact>({
+export const selectedTargetSignatureFactKey: ExtensionFactKey<SelectedTargetSignatureFact> = defineExtensionFactKey<SelectedTargetSignatureFact>({
   extensionId: "tsts.target-bindings",
   name: "selectedTargetSignature",
   equals: (left, right) =>
@@ -397,25 +397,25 @@ export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTar
     && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration),
 });
 
-export const contextualTargetTypeFactKey = defineExtensionFactKey<ContextualTargetTypeFact>({
+export const contextualTargetTypeFactKey: ExtensionFactKey<ContextualTargetTypeFact> = defineExtensionFactKey<ContextualTargetTypeFact>({
   extensionId: "tsts.target-bindings",
   name: "contextualTargetType",
   equals: (left, right) => left.type === right.type && optionalTargetTypeRefEquals(left.targetType, right.targetType),
 });
 
-export const targetOperationFactKey = defineExtensionFactKey<TargetOperationFact>({
+export const targetOperationFactKey: ExtensionFactKey<TargetOperationFact> = defineExtensionFactKey<TargetOperationFact>({
   extensionId: "tsts.target-bindings",
   name: "targetOperation",
   equals: targetOperationFactEquals,
 });
 
-export const flowStateFactKey = defineExtensionFactKey<FlowStateFact>({
+export const flowStateFactKey: ExtensionFactKey<FlowStateFact> = defineExtensionFactKey<FlowStateFact>({
   extensionId: "tsts.flow",
   name: "flowState",
   equals: (left, right) => left.state === right.state && left.targetCompiler === right.targetCompiler,
 });
 
-export const runtimeCarrierFactKey = defineExtensionFactKey<RuntimeCarrierFact>({
+export const runtimeCarrierFactKey: ExtensionFactKey<RuntimeCarrierFact> = defineExtensionFactKey<RuntimeCarrierFact>({
   extensionId: "tsts.target-bindings",
   name: "runtimeCarrier",
   equals: (left, right) =>
@@ -424,13 +424,13 @@ export const runtimeCarrierFactKey = defineExtensionFactKey<RuntimeCarrierFact>(
     && optionalRuntimeCarrierProvenanceEquals(left.provenance, right.provenance),
 });
 
-export const targetConversionFactKey = defineExtensionFactKey<TargetConversionFact>({
+export const targetConversionFactKey: ExtensionFactKey<TargetConversionFact> = defineExtensionFactKey<TargetConversionFact>({
   extensionId: "tsts.target-bindings",
   name: "targetConversion",
   equals: (left, right) => optionalTargetTypeRefEquals(left.convertedType, right.convertedType) && optionalTargetOperationFactEquals(left.operation, right.operation),
 });
 
-export const providerVirtualDeclarationFactKey = defineExtensionFactKey<ProviderVirtualDeclarationFact>({
+export const providerVirtualDeclarationFactKey: ExtensionFactKey<ProviderVirtualDeclarationFact> = defineExtensionFactKey<ProviderVirtualDeclarationFact>({
   extensionId: "tsts.provider",
   name: "virtualDeclaration",
   equals: (left, right) =>
@@ -448,7 +448,7 @@ export const providerVirtualDeclarationFactKey = defineExtensionFactKey<Provider
     && optionalTargetTypeRefEquals(left.targetIdentity, right.targetIdentity),
 });
 
-export const providerTypeFamilyFactKey = defineExtensionFactKey<ProviderTypeFamilyFact>({
+export const providerTypeFamilyFactKey: ExtensionFactKey<ProviderTypeFamilyFact> = defineExtensionFactKey<ProviderTypeFamilyFact>({
   extensionId: "tsts.provider",
   name: "typeFamily",
   equals: (left, right) =>
@@ -456,13 +456,13 @@ export const providerTypeFamilyFactKey = defineExtensionFactKey<ProviderTypeFami
     && providerTypeFamilyVariantArrayEquals(left.variants, right.variants),
 });
 
-export const associatedTypeFactKey = defineExtensionFactKey<AssociatedTypeFact>({
+export const associatedTypeFactKey: ExtensionFactKey<AssociatedTypeFact> = defineExtensionFactKey<AssociatedTypeFact>({
   extensionId: "tsts.target-bindings",
   name: "associatedType",
   equals: (left, right) => left.owner === right.owner && left.name === right.name && left.value === right.value,
 });
 
-export const constGenericFactKey = defineExtensionFactKey<ConstGenericFact>({
+export const constGenericFactKey: ExtensionFactKey<ConstGenericFact> = defineExtensionFactKey<ConstGenericFact>({
   extensionId: "tsts.target-bindings",
   name: "constGeneric",
   equals: (left, right) => left.name === right.name && left.value === right.value,

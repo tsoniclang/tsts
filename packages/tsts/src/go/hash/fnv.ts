@@ -1,9 +1,9 @@
 import type { byte, int } from "../scalars.js";
 import type { GoError, GoSlice } from "../compat.js";
 
-const offset64 = 14695981039346656037n;
-const prime64 = 1099511628211n;
-const mask64 = (1n << 64n) - 1n;
+const offset64: bigint = 14695981039346656037n;
+const prime64: bigint = 1099511628211n;
+const mask64: bigint = (1n << 64n) - 1n;
 
 export interface Hash64 {
   Write(p: GoSlice<byte>): [int, GoError];
@@ -13,7 +13,7 @@ export interface Hash64 {
 }
 
 class fnv64a implements Hash64 {
-  private value = offset64;
+  private value: bigint = offset64;
 
   Write(p: GoSlice<byte>): [int, GoError] {
     for (const byteValue of p) {

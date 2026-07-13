@@ -1,5 +1,6 @@
 import type { int, uint } from "../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoSliceIsNil } from "../../go/compat.js";
 import * as cmp from "../../go/cmp.js";
 import * as fmt from "../../go/fmt.js";
 import * as regexp from "../../go/regexp.js";
@@ -521,8 +522,8 @@ export function TryParseVersion(text: string): [Version, GoError] {
     build: [],
   };
 
-  const match: GoSlice<string> | undefined = versionRegexp!.FindStringSubmatch(text);
-  if (match === undefined) {
+  const match: GoSlice<string> = versionRegexp!.FindStringSubmatch(text);
+  if (GoSliceIsNil(match)) {
     return [result, new globalThis.Error(SemverParseError_Error({ origInput: text }))];
   }
 

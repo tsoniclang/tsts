@@ -2,6 +2,8 @@ import type { bool, int } from "../../../go/scalars.js";
 import {
   GoAppend,
   GoComparableInterfaceKey,
+  GoRequireComparableInterface,
+  GoUnboxComparableInterface,
   GoValueRef,
   GoZeroSlice,
   type GoComparableInterface,
@@ -700,8 +702,8 @@ export function formatDefaultValue(defaultValue: GoInterface<unknown>, option: G
     // e.g. ScriptTarget.ES2015 -> "es6/es2015"
     const names: string[] = [];
     const enumMap = CommandLineOption_EnumMap(option);
-    OrderedMap_Entries(enumMap)!((name: string, value: GoComparableInterface): bool => {
-      if (value?.value === defaultValue) {
+    OrderedMap_Entries(enumMap)!((name: string, value: unknown): bool => {
+      if (GoUnboxComparableInterface(value) === defaultValue) {
         names.push(name);
       }
       return true;
@@ -872,12 +874,13 @@ export function getPossibleValues(option: GoPtr<CommandLineOption>): string {
       );
       const deprecatedKeys = CommandLineOption_DeprecatedKeys(option);
 
-      OrderedMap_Entries(enumMap)!((name: string, value: GoComparableInterface): bool => {
+      OrderedMap_Entries(enumMap)!((name: string, value: unknown): bool => {
         if (deprecatedKeys === undefined || !Set_Has(deprecatedKeys, name)) {
+          const comparableValue = GoRequireComparableInterface(value);
           OrderedMap_Set(
             inverted,
-            value,
-            GoAppend(OrderedMap_GetOrZero(inverted, value, GoZeroSlice), name),
+            comparableValue,
+            GoAppend(OrderedMap_GetOrZero(inverted, comparableValue, GoZeroSlice), name),
             GoComparableInterfaceKey,
           );
         }

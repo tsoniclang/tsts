@@ -218,11 +218,11 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
 // Go strings are UTF-8 byte sequences; the scanner tracks byte offsets (s.pos).
 // The shared utf8 string-byte view keeps those byte semantics while avoiding
 // repeated TextEncoder/TextDecoder work on hot scanner paths.
-const byteSlice = utf8.StringByteSlice;
-const byteAt = utf8.StringByteAt;
-const byteLen = utf8.StringByteLen;
-const decodeRuneInStringAt = utf8.DecodeRuneInStringAt;
-const decodeLastRuneInStringBefore = utf8.DecodeLastRuneInStringBefore;
+const byteSlice: (s: string, start: int, end?: int) => string = utf8.StringByteSlice;
+const byteAt: (s: string, i: int) => int = utf8.StringByteAt;
+const byteLen: (s: string) => int = utf8.StringByteLen;
+const decodeRuneInStringAt: (s: string, i: int) => [GoRune, int] = utf8.DecodeRuneInStringAt;
+const decodeLastRuneInStringBefore: (s: string, end: int) => [GoRune, int] = utf8.DecodeLastRuneInStringBefore;
 
 function scannerByteLen(s: Scanner): int {
   return s.end;

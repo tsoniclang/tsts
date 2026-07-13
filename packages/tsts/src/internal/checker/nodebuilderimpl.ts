@@ -3048,7 +3048,7 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
   if (links!.v.specifierCache.has(cacheKey)) {
     return links!.v.specifierCache.get(cacheKey) as string;
   }
-  const host = (receiver!.ctx!.host!.__tsgoEmbedded0 ?? receiver!.ctx!.host) as unknown as ModuleSpecifierGenerationHost;
+  const host = receiver!.ctx!.host as ModuleSpecifierGenerationHost;
   const specifierCompilerOptions = receiver!.ch!.compilerOptions;
   const specifierPref = ImportModuleSpecifierPreferenceProjectRelative;
   let endingPref = ImportModuleSpecifierEndingPreferenceNone;

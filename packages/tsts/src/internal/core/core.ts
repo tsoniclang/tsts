@@ -23,13 +23,13 @@ import type { ScriptKind } from "./scriptkind.js";
 import type { TextPos } from "./text.js";
 import { Tristate_IsTrue } from "./tristate.js";
 
-import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import type { GoFunc, GoInterface, GoPointerConstraint, GoRef } from "../../go/compat.js";
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // byte indexing `s[i]` and slicing `s[i:j]` operate on byte offsets. We mirror
 // that contract by operating over the UTF-8 byte view and converting back to a
 // JS string at the boundaries.
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-const byteLen = utf8.StringByteLen;
+const byteLen: (value: string) => int = utf8.StringByteLen;
 const byteSliceFrom = (s: string, start: int): string => utf8.StringByteSlice(s, start);
 // []rune(s): decode the string into Unicode code points (runes).
 const stringToRunes = (s: string): GoSlice<GoRune> => {
@@ -462,10 +462,7 @@ export function Same<T>(s1: GoSlice<T>, s2: GoSlice<T>): bool {
  * 	return false
  * }
  */
-export function Some<T>(slice: GoSlice<T> | undefined, f: GoFunc<(arg0: T) => bool>): bool {
-  if (slice === undefined) {
-    return false;
-  }
+export function Some<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): bool {
   for (const value of slice) {
     //nolint:modernize
     if (f!(value)) {
@@ -488,10 +485,7 @@ export function Some<T>(slice: GoSlice<T> | undefined, f: GoFunc<(arg0: T) => bo
  * 	return true
  * }
  */
-export function Every<T>(slice: GoSlice<T> | undefined, f: GoFunc<(arg0: T) => bool>): bool {
-  if (slice === undefined) {
-    return true;
-  }
+export function Every<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): bool {
   for (const value of slice) {
     if (!f!(value)) {
       return false;
@@ -1026,9 +1020,9 @@ export function OrElse<T extends GoComparable>(value: T, defaultValue: T, zeroVa
  * 	}
  * }
  */
-export function Coalesce<T extends GoPtr<U>, U>(a: T, b: T): T {
+export function Coalesce<T extends GoPointerConstraint<U>, U>(a: T, b: T): T {
   // T is a pointer type *U in Go, so the zero value tested against nil is undefined.
-  if (a === (undefined as T)) {
+  if (a === undefined) {
     return b;
   } else {
     return a;
@@ -1579,7 +1573,7 @@ export function Identity<T>(t: T): T {
  * 	return s
  * }
  */
-export function CheckEachDefined<S>(s: GoSlice<GoPtr<S>>, msg: string): GoSlice<GoPtr<S>> {
+export function CheckEachDefined<S>(s: GoSlice<GoRef<S>>, msg: string): GoSlice<GoRef<S>> {
   for (const value of s) {
     if (value === undefined) {
       throw new globalThis.Error(msg);

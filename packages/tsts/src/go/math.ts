@@ -168,9 +168,9 @@ export function Min(x: double, y: double): double {
 // Shared 8-byte buffer for IEEE-754 bit reinterpretation. A BigUint64Array view
 // extracts the full 64-bit pattern exactly (as a bigint) before it is narrowed to
 // the ulong (number) boundary.
-const float64Buffer = new globalThis.ArrayBuffer(8);
-const float64View = new globalThis.Float64Array(float64Buffer);
-const bigUint64View = new globalThis.BigUint64Array(float64Buffer);
+const float64Buffer: ArrayBuffer = new globalThis.ArrayBuffer(8);
+const float64View: Float64Array = new globalThis.Float64Array(float64Buffer);
+const bigUint64View: BigUint64Array = new globalThis.BigUint64Array(float64Buffer);
 
 // Float64bits returns the IEEE 754 binary representation of f, with the sign bit of
 // f and the result in the same bit position (Go returns uint64). The 64-bit pattern

@@ -1,6 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import type { GoError, GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import type { GoError, GoMap, GoPtr, GoRef, GoRune, GoSlice } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef } from "../../go/compat.js";
 import { NewEncoder as base64NewEncoder, StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { New as errorsNew } from "../../go/errors.js";
 import type { WriteCloser } from "../../go/io.js";
@@ -91,7 +92,7 @@ export interface Generator {
   rawSources: GoSlice<string>;
   sources: GoSlice<string>;
   sourceToSourceIndexMap: GoMap<string, SourceIndex>;
-  sourcesContent: GoSlice<GoPtr<string>> | undefined;
+  sourcesContent: GoSlice<GoRef<string>>;
   names: GoSlice<string>;
   nameToNameIndexMap: GoMap<string, NameIndex>;
   mappings: Builder;
@@ -128,15 +129,31 @@ export interface Generator {
  * }
  */
 export interface RawSourceMap {
-  [JsonFieldNames]?: JsonFieldNameMap;
   Version: int;
   File: string;
   SourceRoot: string;
   Sources: GoSlice<string>;
   Names: GoSlice<string>;
   Mappings: string;
-  SourcesContent: GoSlice<GoPtr<string>> | undefined;
+  SourcesContent: GoSlice<GoRef<string>>;
 }
+
+const decodeSourceContent = (value: unknown): GoSlice<GoRef<string>> => {
+  if (!globalThis.Array.isArray(value)) {
+    throw new globalThis.TypeError("sourcesContent must be a JSON array");
+  }
+  const decoded: GoSlice<GoRef<string>> = [];
+  for (const item of value) {
+    if (item === null) {
+      decoded.push(undefined);
+    } else if (typeof item === "string") {
+      decoded.push(GoValueRef(item));
+    } else {
+      throw new globalThis.TypeError("sourcesContent elements must be strings or null");
+    }
+  }
+  return decoded;
+};
 
 export const rawSourceMapJsonFieldNames: JsonFieldNameMap = {
   Version: "version",
@@ -145,7 +162,7 @@ export const rawSourceMapJsonFieldNames: JsonFieldNameMap = {
   Sources: "sources",
   Names: "names",
   Mappings: "mappings",
-  SourcesContent: { name: "sourcesContent", omitZero: true },
+  SourcesContent: { name: "sourcesContent", omitZero: true, decode: decodeSourceContent },
 };
 
 /**
@@ -167,12 +184,12 @@ export function NewGenerator(file: string, sourceRoot: string, sourcesDirectoryP
     sourceRoot: sourceRoot,
     sourcesDirectoryPath: sourcesDirectoryPath,
     pathOptions: options,
-    rawSources: [],
-    sources: [],
-    sourceToSourceIndexMap: new globalThis.Map<string, SourceIndex>(),
-    sourcesContent: undefined,
-    names: [],
-    nameToNameIndexMap: new globalThis.Map<string, NameIndex>(),
+    rawSources: GoNilSlice<string>(),
+    sources: GoNilSlice<string>(),
+    sourceToSourceIndexMap: GoNilMap<string, SourceIndex>(),
+    sourcesContent: GoNilSlice<GoRef<string>>(),
+    names: GoNilSlice<string>(),
+    nameToNameIndexMap: GoNilMap<string, NameIndex>(),
     mappings: new Builder(),
     lastGeneratedLine: 0,
     lastGeneratedCharacter: 0,
@@ -243,9 +260,9 @@ export function Generator_AddSource(receiver: GoPtr<Generator>, fileName: string
   let sourceIndex: SourceIndex = found ? gen.sourceToSourceIndexMap.get(source)! : 0;
   if (!found) {
     sourceIndex = gen.sources.length;
-    gen.sources.push(source);
-    gen.rawSources.push(fileName);
-    if (gen.sourceToSourceIndexMap === undefined) {
+    gen.sources = GoAppend(gen.sources, source);
+    gen.rawSources = GoAppend(gen.rawSources, fileName);
+    if (GoMapIsNil(gen.sourceToSourceIndexMap)) {
       gen.sourceToSourceIndexMap = new globalThis.Map<string, SourceIndex>();
     }
     gen.sourceToSourceIndexMap.set(source, sourceIndex);
@@ -274,10 +291,10 @@ export function Generator_SetSourceContent(receiver: GoPtr<Generator>, sourceInd
   if (sourceIndex < 0 || sourceIndex >= gen.sources.length) {
     return errorsNew("sourceIndex is out of range");
   }
-  while ((gen.sourcesContent ?? []).length <= sourceIndex) {
-    gen.sourcesContent = [...(gen.sourcesContent ?? []), undefined];
+  while (gen.sourcesContent.length <= sourceIndex) {
+    gen.sourcesContent = GoAppend(gen.sourcesContent, undefined);
   }
-  gen.sourcesContent![sourceIndex] = content;
+  gen.sourcesContent[sourceIndex] = GoValueRef(content);
   return undefined;
 }
 
@@ -304,8 +321,8 @@ export function Generator_AddName(receiver: GoPtr<Generator>, name: string): Nam
   let nameIndex: NameIndex = found ? gen.nameToNameIndexMap.get(name)! : 0;
   if (!found) {
     nameIndex = gen.names.length;
-    gen.names.push(name);
-    if (gen.nameToNameIndexMap === undefined) {
+    gen.names = GoAppend(gen.names, name);
+    if (GoMapIsNil(gen.nameToNameIndexMap)) {
       gen.nameToNameIndexMap = new globalThis.Map<string, NameIndex>();
     }
     gen.nameToNameIndexMap.set(name, nameIndex);
@@ -767,15 +784,15 @@ export function Generator_AddNamedSourceMapping(receiver: GoPtr<Generator>, gene
 export function Generator_RawSourceMap(receiver: GoPtr<Generator>): GoPtr<RawSourceMap> {
   const gen: Generator = receiver!;
   Generator_commitPendingMapping(gen);
-  let sources: GoSlice<string> | undefined = slicesClone(gen.sources);
-  if (sources === undefined) {
+  let sources = slicesClone(gen.sources);
+  if (GoSliceIsNil(sources)) {
     sources = [];
   }
-  let names: GoSlice<string> | undefined = slicesClone(gen.names);
-  if (names === undefined) {
+  let names = slicesClone(gen.names);
+  if (GoSliceIsNil(names)) {
     names = [];
   }
-  return {
+  const rawSourceMap: RawSourceMap & { [JsonFieldNames]: JsonFieldNameMap } = {
     [JsonFieldNames]: rawSourceMapJsonFieldNames,
     Version: 3,
     File: gen.file,
@@ -785,6 +802,7 @@ export function Generator_RawSourceMap(receiver: GoPtr<Generator>): GoPtr<RawSou
     Mappings: gen.mappings.String(),
     SourcesContent: slicesClone(gen.sourcesContent),
   };
+  return rawSourceMap;
 }
 
 /**

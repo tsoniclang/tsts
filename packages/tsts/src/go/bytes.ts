@@ -1,7 +1,7 @@
 import type { int } from "./scalars.js";
 
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+const textEncoder: TextEncoder = new TextEncoder();
+const textDecoder: TextDecoder = new TextDecoder();
 
 type ByteSlice = Uint8Array | Array<number>;
 

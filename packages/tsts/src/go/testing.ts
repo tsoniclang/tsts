@@ -23,7 +23,7 @@ export interface TB {
 }
 
 class testingBase implements TB {
-  private failed = false;
+  private failed: boolean = false;
 
   Helper(): void {}
 

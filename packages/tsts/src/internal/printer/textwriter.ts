@@ -21,7 +21,7 @@ const byteSliceFrom = (s: string, start: int): string => {
   const bytes = utf8Encoder.encode(s);
   return utf8Decoder.decode(bytes.subarray(start));
 };
-const currentColumnByWriter = new WeakMap<textWriter, UTF16Offset>();
+const currentColumnByWriter: WeakMap<textWriter, UTF16Offset> = new WeakMap<textWriter, UTF16Offset>();
 const textWriter_getCurrentColumn = (w: textWriter): UTF16Offset => currentColumnByWriter.get(w) ?? UTF16Len(byteSliceFrom(w.builder.String(), w.linePos));
 const textWriter_setCurrentColumn = (w: textWriter, column: UTF16Offset): void => {
   currentColumnByWriter.set(w, column);

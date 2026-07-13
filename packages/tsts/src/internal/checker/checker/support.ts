@@ -1470,7 +1470,7 @@ export function Checker_canHaveSyntheticDefault(receiver: GoPtr<Checker>, file: 
  * }
  */
 export function CacheHashKey_IsZero(receiver: CacheHashKey): bool {
-  return receiver === undefined || receiver.IsZero();
+  return receiver.Hi === 0n && receiver.Lo === 0n;
 }
 
 /**

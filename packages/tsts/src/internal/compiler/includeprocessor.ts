@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoValueRef, GoZeroPointer, GoZeroSlice } from "../../go/compat.js";
 import { IsExternalOrCommonJSModule } from "../ast/utilities.js";
 import { SourceFile_FileName } from "../ast/ast.js";
@@ -31,7 +31,7 @@ import type { Program } from "./program.js";
 
 import type { GoFunc } from "../../go/compat.js";
 
-const fileIncludeReasonKey = GoPointerKey<FileIncludeReason>();
+const fileIncludeReasonKey: GoMapKeyDescriptor<GoPtr<FileIncludeReason>> = GoPointerKey<FileIncludeReason>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::type::includeProcessor","kind":"type","status":"implemented","sigHash":"47421cd2765ce00a1920cbe94dae00d40ea4fa84c1ec0c9aab767432346ac1ef"}
  *
@@ -267,10 +267,11 @@ export function includeProcessor_getCompilerOptionsObjectLiteralSyntax(receiver:
     const configFile = program!.opts.Config!.ConfigFile;
     if (configFile !== undefined) {
       const compilerOptionsProperty = ForEachTsConfigPropArray(configFile.SourceFile, "compilerOptions", (property) => GoValueRef<PropertyAssignment>(Identity(property)!));
-      if (compilerOptionsProperty !== undefined &&
-        compilerOptionsProperty.v.Initializer !== undefined &&
-        IsObjectLiteralExpression(compilerOptionsProperty.v.Initializer)) {
-        receiver!.compilerOptionsSyntax = AsObjectLiteralExpression(compilerOptionsProperty.v.Initializer);
+      if (compilerOptionsProperty !== undefined) {
+        const property = compilerOptionsProperty.v;
+        if (property.Initializer !== undefined && IsObjectLiteralExpression(property.Initializer)) {
+          receiver!.compilerOptionsSyntax = AsObjectLiteralExpression(property.Initializer);
+        }
       }
     } else {
       receiver!.compilerOptionsSyntax = undefined;

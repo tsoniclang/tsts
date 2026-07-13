@@ -1,9 +1,9 @@
-import type { GoSlice } from "../compat.js";
+import { GoNilChan, type GoSlice } from "../compat.js";
 import type { Context, CancelFunc } from "../context.js";
 import { Canceled } from "../context.js";
 
 class signalContext implements Context {
-  private canceled = false;
+  private canceled: boolean = false;
 
   constructor(private readonly parent: Context) {}
 
@@ -16,7 +16,7 @@ class signalContext implements Context {
   }
 
   Done(): ReturnType<Context["Done"]> {
-    return undefined;
+    return GoNilChan<{ readonly __tsgoEmpty?: never }, "receive">();
   }
 
   Err(): ReturnType<Context["Err"]> {

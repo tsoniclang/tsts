@@ -39,6 +39,8 @@ import type {
 } from "./spine.js";
 import type { NodeVisitor } from "./visitor.js";
 import type { SubtreeFacts } from "./subtreefacts.js";
+import type { BodyBase as BodyBaseType, ClassLikeBase as ClassLikeBaseType, DeclarationBase as DeclarationBaseType, ExportableBase as ExportableBaseType, FlowNodeBase as FlowNodeBaseType, FunctionLikeBase as FunctionLikeBaseType, LiteralLikeNodeBase as LiteralLikeNodeBaseType, LocalsContainerBase as LocalsContainerBaseType, TemplateLiteralLikeNodeBase as TemplateLiteralLikeNodeBaseType } from "./generated/node.js";
+import type { DeclarationName } from "./generated/unions.js";
 
 // FlowFlags
 
@@ -134,6 +136,7 @@ export type FlowLabel = FlowNode;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowSwitchClauseData","kind":"type","status":"implemented","sigHash":"752719aacafe9f4e1a95d1c94780bf847c0764fed0c856e5cc5e5f5c493004e5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Synthetic flow nodes follow the pinned TS-Go AST schema by flattening the embedded node base and interface operations into one schema-level object.","goSignatureHash":"ce597b88baf27a4d8fc8974b0b934dc7b147ff6c743904c061c33d254306409f","tsSignatureHash":"0b89bd3a3ec6a5cf92f845b61f06405ea50612d772f01692ffdaa4cfac1e884e"}
  *
  * Go source:
  * FlowSwitchClauseData struct {
@@ -158,22 +161,22 @@ class FlowSwitchClauseNodeData implements nodeData {
   IterChildren(): NodeIter { return NodeDefault_IterChildren(this); }
   VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return NodeDefault_VisitEachChild(this, v); }
   Clone(f: NodeFactoryCoercible): GoPtr<Node> { return NodeDefault_Clone(this, f); }
-  Name() { return NodeDefault_Name(this); }
-  Modifiers() { return NodeDefault_Modifiers(this); }
+  Name(): GoPtr<DeclarationName> { return NodeDefault_Name(this); }
+  Modifiers(): GoPtr<ModifierList> { return NodeDefault_Modifiers(this); }
   setModifiers(modifiers: GoPtr<ModifierList>): void { NodeDefault_setModifiers(this, modifiers); }
-  FlowNodeData() { return NodeDefault_FlowNodeData(this); }
-  DeclarationData() { return NodeDefault_DeclarationData(this); }
-  ExportableData() { return NodeDefault_ExportableData(this); }
-  LocalsContainerData() { return NodeDefault_LocalsContainerData(this); }
-  FunctionLikeData() { return NodeDefault_FunctionLikeData(this); }
-  ClassLikeData() { return NodeDefault_ClassLikeData(this); }
-  BodyData() { return NodeDefault_BodyData(this); }
-  LiteralLikeData() { return NodeDefault_LiteralLikeData(this); }
-  TemplateLiteralLikeData() { return NodeDefault_TemplateLiteralLikeData(this); }
-  SubtreeFacts() { return NodeDefault_SubtreeFacts(this); }
-  computeSubtreeFacts() { return NodeDefault_computeSubtreeFacts(this); }
+  FlowNodeData(): GoPtr<FlowNodeBaseType> { return NodeDefault_FlowNodeData(this); }
+  DeclarationData(): GoPtr<DeclarationBaseType> { return NodeDefault_DeclarationData(this); }
+  ExportableData(): GoPtr<ExportableBaseType> { return NodeDefault_ExportableData(this); }
+  LocalsContainerData(): GoPtr<LocalsContainerBaseType> { return NodeDefault_LocalsContainerData(this); }
+  FunctionLikeData(): GoPtr<FunctionLikeBaseType> { return NodeDefault_FunctionLikeData(this); }
+  ClassLikeData(): GoPtr<ClassLikeBaseType> { return NodeDefault_ClassLikeData(this); }
+  BodyData(): GoPtr<BodyBaseType> { return NodeDefault_BodyData(this); }
+  LiteralLikeData(): GoPtr<LiteralLikeNodeBaseType> { return NodeDefault_LiteralLikeData(this); }
+  TemplateLiteralLikeData(): GoPtr<TemplateLiteralLikeNodeBaseType> { return NodeDefault_TemplateLiteralLikeData(this); }
+  SubtreeFacts(): SubtreeFacts { return NodeDefault_SubtreeFacts(this); }
+  computeSubtreeFacts(): SubtreeFacts { return NodeDefault_computeSubtreeFacts(this); }
   subtreeFactsWorker(self: nodeData): SubtreeFacts { return NodeDefault_subtreeFactsWorker(this, self); }
-  propagateSubtreeFacts() { return NodeDefault_propagateSubtreeFacts(this); }
+  propagateSubtreeFacts(): SubtreeFacts { return NodeDefault_propagateSubtreeFacts(this); }
 }
 interface FlowSwitchClauseNodeData extends FlowSwitchClauseData {}
 
@@ -217,6 +220,7 @@ export function FlowSwitchClauseData_IsEmpty(receiver: GoPtr<FlowSwitchClauseDat
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowReduceLabelData","kind":"type","status":"implemented","sigHash":"c8600db3a6774589ea77d8cf9cadb98ea46d6a725ba6b6e5bd55bf3957c16231"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Synthetic flow nodes follow the pinned TS-Go AST schema by flattening the embedded node base and interface operations into one schema-level object.","goSignatureHash":"7e185fc376eacdb46ff8d03eeb0769dad47d119bcc08c792936fbb888cceed3c","tsSignatureHash":"94869fb15e8fb3b60ec99516267fdd9b1e3e675c6ab4421b3c76f4a29ca96d61"}
  *
  * Go source:
  * FlowReduceLabelData struct {
@@ -239,22 +243,22 @@ class FlowReduceLabelNodeData implements nodeData {
   IterChildren(): NodeIter { return NodeDefault_IterChildren(this); }
   VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return NodeDefault_VisitEachChild(this, v); }
   Clone(f: NodeFactoryCoercible): GoPtr<Node> { return NodeDefault_Clone(this, f); }
-  Name() { return NodeDefault_Name(this); }
-  Modifiers() { return NodeDefault_Modifiers(this); }
+  Name(): GoPtr<DeclarationName> { return NodeDefault_Name(this); }
+  Modifiers(): GoPtr<ModifierList> { return NodeDefault_Modifiers(this); }
   setModifiers(modifiers: GoPtr<ModifierList>): void { NodeDefault_setModifiers(this, modifiers); }
-  FlowNodeData() { return NodeDefault_FlowNodeData(this); }
-  DeclarationData() { return NodeDefault_DeclarationData(this); }
-  ExportableData() { return NodeDefault_ExportableData(this); }
-  LocalsContainerData() { return NodeDefault_LocalsContainerData(this); }
-  FunctionLikeData() { return NodeDefault_FunctionLikeData(this); }
-  ClassLikeData() { return NodeDefault_ClassLikeData(this); }
-  BodyData() { return NodeDefault_BodyData(this); }
-  LiteralLikeData() { return NodeDefault_LiteralLikeData(this); }
-  TemplateLiteralLikeData() { return NodeDefault_TemplateLiteralLikeData(this); }
-  SubtreeFacts() { return NodeDefault_SubtreeFacts(this); }
-  computeSubtreeFacts() { return NodeDefault_computeSubtreeFacts(this); }
+  FlowNodeData(): GoPtr<FlowNodeBaseType> { return NodeDefault_FlowNodeData(this); }
+  DeclarationData(): GoPtr<DeclarationBaseType> { return NodeDefault_DeclarationData(this); }
+  ExportableData(): GoPtr<ExportableBaseType> { return NodeDefault_ExportableData(this); }
+  LocalsContainerData(): GoPtr<LocalsContainerBaseType> { return NodeDefault_LocalsContainerData(this); }
+  FunctionLikeData(): GoPtr<FunctionLikeBaseType> { return NodeDefault_FunctionLikeData(this); }
+  ClassLikeData(): GoPtr<ClassLikeBaseType> { return NodeDefault_ClassLikeData(this); }
+  BodyData(): GoPtr<BodyBaseType> { return NodeDefault_BodyData(this); }
+  LiteralLikeData(): GoPtr<LiteralLikeNodeBaseType> { return NodeDefault_LiteralLikeData(this); }
+  TemplateLiteralLikeData(): GoPtr<TemplateLiteralLikeNodeBaseType> { return NodeDefault_TemplateLiteralLikeData(this); }
+  SubtreeFacts(): SubtreeFacts { return NodeDefault_SubtreeFacts(this); }
+  computeSubtreeFacts(): SubtreeFacts { return NodeDefault_computeSubtreeFacts(this); }
   subtreeFactsWorker(self: nodeData): SubtreeFacts { return NodeDefault_subtreeFactsWorker(this, self); }
-  propagateSubtreeFacts() { return NodeDefault_propagateSubtreeFacts(this); }
+  propagateSubtreeFacts(): SubtreeFacts { return NodeDefault_propagateSubtreeFacts(this); }
 }
 interface FlowReduceLabelNodeData extends FlowReduceLabelData {}
 

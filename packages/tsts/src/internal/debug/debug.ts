@@ -40,9 +40,9 @@ export function Fail(reason: string): void {
  * 	Fail(fmt.Sprintf("%s\nNode %s was unexpected.", msg, node.KindString()))
  * }
  */
-export function FailBadSyntaxKind(node: { KindString: () => string }, ...message: Array<GoInterface<unknown>>): void {
+export function FailBadSyntaxKind(node: GoInterface<{ KindString(): string }>, ...message: Array<GoInterface<unknown>>): void {
   const msg: string = message.length === 0 ? "Unexpected node." : Sprint(...message);
-  Fail(Sprintf("%s\nNode %s was unexpected.", msg, node.KindString()));
+  Fail(Sprintf("%s\nNode %s was unexpected.", msg, node!.KindString()));
 }
 
 /**

@@ -121,7 +121,7 @@ function parameterIssue(parameter, label) {
   if (!new Set(["required", "question", "initializer", "question+initializer"]).has(parameter.optionalSyntax)) return `${label}.optionalSyntax is invalid`;
   if (typeof parameter.question !== "boolean") return `${label}.question must be boolean`;
   if (typeof parameter.missingType !== "boolean") return `${label}.missingType must be boolean`;
-  if (!new Set(["known", "missing", "unsupported"]).has(parameter.initializerStatus)) return `${label}.initializerStatus is invalid`;
+  if (!new Set(["known", "missing", "runtime", "unsupported"]).has(parameter.initializerStatus)) return `${label}.initializerStatus is invalid`;
   if (parameter.initializer !== undefined) {
     const issue = constantValueIssue(parameter.initializer, `${label}.initializer`);
     if (issue) return issue;

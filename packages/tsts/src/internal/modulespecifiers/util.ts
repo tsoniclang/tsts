@@ -199,7 +199,7 @@ export function IsExcludedByRegex(moduleSpecifier: string, excludes: GoSlice<str
  * }
  */
 // Internal string-keyed cache used at runtime (Go uses struct key; TS uses serialized string key)
-const _regexPatternCacheInternal = new Map<string, GoPtr<Regexp>>();
+const _regexPatternCacheInternal: globalThis.Map<string, GoPtr<Regexp>> = new globalThis.Map<string, GoPtr<Regexp>>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::stringToRegex","kind":"func","status":"implemented","sigHash":"98e2fa5bb16ffdc03a7579f0c689e066e1489319a37a366d4f1077123e53ed09"}

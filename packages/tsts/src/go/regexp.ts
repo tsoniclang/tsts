@@ -25,7 +25,7 @@
 // Go (T, error) maps to a `[T, GoError]` tuple; Go panic maps to `throw`.
 
 import type { bool, int } from "./scalars.js";
-import type { GoError, GoSlice } from "./compat.js";
+import { GoNilSlice, type GoError, type GoFunc, type GoSlice } from "./compat.js";
 
 // translatePattern rewrites a Go RE2 pattern source into an equivalent JS
 // RegExp source plus the set of JS flags required. It scans character by
@@ -150,13 +150,13 @@ export class Regexp {
   }
 
   // FindStringSubmatch returns a slice holding the leftmost match of the regexp
-  // and the matches of its subexpressions. Returns nil (undefined) if there is
+  // and the matches of its subexpressions. Returns a nil Go slice if there is
   // no match. A non-participating capture group is the empty string in Go's
   // []string, so JS `undefined` groups are mapped to "".
-  FindStringSubmatch(s: string): GoSlice<string> | undefined {
+  FindStringSubmatch(s: string): GoSlice<string> {
     const m = this.compileFlags("").exec(s);
     if (m === null) {
-      return undefined;
+      return GoNilSlice<string>();
     }
     return m.map((g) => (g === undefined ? "" : g));
   }
@@ -213,11 +213,11 @@ export class Regexp {
   //
   // Go semantics (which differ from JS String.split):
   //   n < 0  -> all substrings
-  //   n == 0 -> nil (undefined)
+  //   n == 0 -> nil Go slice
   //   n > 0  -> at most n substrings; the last one is the unsplit remainder.
-  Split(s: string, n: int): GoSlice<string> | undefined {
+  Split(s: string, n: int): GoSlice<string> {
     if (n === 0) {
-      return undefined;
+      return GoNilSlice<string>();
     }
 
     if (this.pattern.length > 0 && s.length === 0) {
@@ -255,7 +255,7 @@ export class Regexp {
   // Indices are JS string offsets (== Go byte offsets for the ASCII text in
   // use); the matched substring is passed to repl, which is responsible for any
   // byte-level handling of multi-byte content.
-  ReplaceAllStringFunc(src: string, repl: (match: string) => string): string {
+  ReplaceAllStringFunc(src: string, repl: GoFunc<(match: string) => string>): string {
     const re = this.compileFlags("g");
     const out: string[] = [];
     const endPos = src.length;
@@ -276,7 +276,7 @@ export class Regexp {
       // Insert the replacement, but not for an empty match immediately after a
       // previous match (avoids double replacement).
       if (a1 > lastMatchEnd || a0 === 0) {
-        out.push(repl(src.slice(a0, a1)));
+        out.push(repl!(src.slice(a0, a1)));
       }
       lastMatchEnd = a1;
 

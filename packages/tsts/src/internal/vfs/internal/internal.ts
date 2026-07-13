@@ -114,12 +114,12 @@ export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [fsys
  * 	return stat
  * }
  */
-export function Common_Stat(receiver: GoPtr<Common>, path: string): FileInfo | undefined {
+export function Common_Stat(receiver: GoPtr<Common>, path: string): GoInterface<FileInfo> {
   const [fsys, , rest] = Common_RootAndPath(receiver, path);
   if (fsys === undefined) {
     return undefined;
   }
-  const [stat, err] = fs_Stat(fsys, rest) as [FileInfo, GoError];
+  const [stat, err] = fs_Stat(fsys, rest) as [GoInterface<FileInfo>, GoError];
   if (err !== undefined) {
     return undefined;
   }
@@ -278,13 +278,13 @@ export function Common_GetAccessibleEntries(receiver: GoPtr<Common>, path: strin
  * 	return entries
  * }
  */
-export function Common_getEntries(receiver: GoPtr<Common>, path: string): GoSlice<DirEntry> {
+export function Common_getEntries(receiver: GoPtr<Common>, path: string): GoSlice<GoInterface<DirEntry>> {
   const [fsys, , rest] = Common_RootAndPath(receiver, path);
   if (fsys === undefined) {
     return [];
   }
 
-  const [entries, err] = fs_ReadDir(fsys, rest) as [GoSlice<DirEntry>, GoError];
+  const [entries, err] = fs_ReadDir(fsys, rest) as [GoSlice<GoInterface<DirEntry>>, GoError];
   if (err !== undefined) {
     return [];
   }

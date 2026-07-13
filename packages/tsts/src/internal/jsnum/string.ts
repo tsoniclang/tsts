@@ -12,8 +12,8 @@ import { Inf, MaxSafeInteger, MinSafeInteger, NaN, Number_IsInf, Number_IsNaN } 
 import type { Number } from "./jsnum.js";
 
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-const byteLen = StringByteLen;
-const byteSlice = StringByteSlice;
+const byteLen: (s: string) => int = StringByteLen;
+const byteSlice: (s: string, start: int, end?: int) => string = StringByteSlice;
 // `string([]byte)` reinterprets the byte slice as a UTF-8 string.
 const BytesToString = (b: ReadonlyArray<byte>): string => utf8Decoder.decode(globalThis.Uint8Array.from(b));
 // `for _, r := range s` iterates the UTF-8 byte view, decoding one rune per

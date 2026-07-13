@@ -178,7 +178,7 @@ export function FlowType_isNil(receiver: GoPtr<FlowType>): bool {
   return receiver?.t === undefined;
 }
 
-const flowLoopKeys = new WeakMap<FlowNode, globalThis.Map<CacheHashKey, FlowLoopKey>>();
+const flowLoopKeys: WeakMap<FlowNode, globalThis.Map<CacheHashKey, FlowLoopKey>> = new WeakMap<FlowNode, globalThis.Map<CacheHashKey, FlowLoopKey>>();
 
 function getFlowLoopKey(flow: GoPtr<FlowNode>, refKey: CacheHashKey): FlowLoopKey {
   let byRefKey = flowLoopKeys.get(flow!);
@@ -1536,7 +1536,7 @@ export function Checker_narrowTypeByTypeof(receiver: GoPtr<Checker>, f: GoPtr<Fl
  * }
  */
 class LazyTypeofNEFacts extends Map<string, TypeFacts> {
-  private initialized = false;
+  private initialized: boolean = false;
 
   private ensureInitialized(): void {
     if (this.initialized) {

@@ -1,4 +1,4 @@
-import { GoZeroInterface, type GoComparableInterface, type GoPtr } from "../../../go/compat.js";
+import { GoUnboxComparableInterface, GoZeroInterface, type GoPtr } from "../../../go/compat.js";
 import { Fprint } from "../../../go/fmt.js";
 import * as strings from "../../../go/strings.js";
 import {
@@ -290,12 +290,12 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, GoInterface<u
     result.push(...args);
   };
 
-  const formatSingleValue = (value: unknown, enumMap: GoPtr<OrderedMap<string, GoComparableInterface>>): string => {
+  const formatSingleValue = (value: unknown, enumMap: GoPtr<OrderedMap<string, unknown>>): string => {
     let resolvedValue = value;
     if (enumMap !== undefined) {
       let found = false;
-      OrderedMap_Entries(enumMap)!((k: string, v: GoComparableInterface): boolean => {
-        if (v?.value === resolvedValue) {
+      OrderedMap_Entries(enumMap)!((k: string, v: unknown): boolean => {
+        if (GoUnboxComparableInterface(v) === resolvedValue) {
           resolvedValue = k;
           found = true;
           return false; // break
@@ -322,7 +322,7 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, GoInterface<u
     }
 
     if (globalThis.Array.isArray(value)) {
-      let enumMap: GoPtr<OrderedMap<string, GoComparableInterface>> = undefined;
+      let enumMap: GoPtr<OrderedMap<string, unknown>> = undefined;
       const elemOption = CommandLineOption_Elements(option);
       if (elemOption !== undefined) {
         enumMap = CommandLineOption_EnumMap(elemOption);

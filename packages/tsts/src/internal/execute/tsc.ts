@@ -19,6 +19,7 @@ import {
 import { SourceFile_FileName } from "../ast/ast.js";
 import { NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import { GetParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigparsing.js";
+import type { ExtendedConfigCache as SourceExtendedConfigCache } from "../tsoptions/tsconfigparsing.js";
 import { ExtendedConfigCache_as_tsoptions_ExtendedConfigCache, type ExtendedConfigCache, type extendedConfigCacheEntry } from "./tsc/extendedconfigcache.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -543,7 +544,7 @@ export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<Syste
         configForCompilation,
         reportDiagnostic,
         reportErrorSummary,
-        extendedConfigCache,
+        ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache),
         compileTimes,
         testing,
       );
@@ -553,7 +554,7 @@ export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<Syste
       configForCompilation,
       reportDiagnostic,
       reportErrorSummary,
-      extendedConfigCache,
+      ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache),
       compileTimes,
       testing,
     );
@@ -661,8 +662,8 @@ export function getTraceFromSys(sys: GoInterface<System>, locale: Locale, testin
  * 	}
  * }
  */
-export function performIncrementalCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
-  const host = NewCachedFSCompilerHost(sys!.GetCurrentDirectory(), sys!.FS(), sys!.DefaultLibraryPath(), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache), getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
+export function performIncrementalCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: GoInterface<SourceExtendedConfigCache>, compileTimes: GoPtr<CompileTimes>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
+  const host = NewCachedFSCompilerHost(sys!.GetCurrentDirectory(), sys!.FS(), sys!.DefaultLibraryPath(), extendedConfigCache, getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
   const buildInfoReadStart = sys!.Now();
   const oldProgram = ReadBuildInfoProgram(config, NewBuildInfoReader(host), host);
   type TimeWithSub2 = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
@@ -752,8 +753,8 @@ export function performIncrementalCompilation(sys: GoInterface<System>, config: 
  * 	}
  * }
  */
-export function performCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
-  const host = NewCachedFSCompilerHost(sys!.GetCurrentDirectory(), sys!.FS(), sys!.DefaultLibraryPath(), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache), getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
+export function performCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: GoInterface<SourceExtendedConfigCache>, compileTimes: GoPtr<CompileTimes>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
+  const host = NewCachedFSCompilerHost(sys!.GetCurrentDirectory(), sys!.FS(), sys!.DefaultLibraryPath(), extendedConfigCache, getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
 
   const tr = startTracingIfNeeded(sys, config, testing);
 

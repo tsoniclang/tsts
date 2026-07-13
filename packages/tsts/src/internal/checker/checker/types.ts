@@ -54,7 +54,7 @@ import { IsExternalModuleNameRelative } from "../../tspath/path.js";
 import type { TypeMapper } from "../mapper.js";
 import { TypeMapper_Map, appendTypeMapping, Checker_combineTypeMappers, newSimpleTypeMapper, prependTypeMapping } from "../mapper.js";
 import { Checker_createNormalizedTupleTypeEx, Checker_createTypeReferenceEx, Checker_addDiagnostic } from "../checker.js";
-import type { AccessFlags, ConditionalRoot, ContextFlags, ElementFlags, IndexFlags, IndexInfo, NodeLinks, ObjectFlags, Signature, StructuredType, TupleElementInfo, Type, TypeAlias, TypeBase, TypeComparer, TypeData, TypeFlags, TypeNodeLinks, ConstrainedType, ObjectType, TypeReference, InterfaceType, UnionOrIntersectionType, IntrinsicType, LiteralType, UniqueESSymbolType, UnionType, IntersectionType, TypeParameter, IndexType, IndexedAccessType, TemplateLiteralType, StringMappingType, SubstitutionType, MappedType, ReverseMappedType, EvolvingArrayType, InstantiationExpressionType, TupleType, ConditionalType, ExportTypeLinks, DeclaredTypeLinks } from "../types.js";
+import type { AccessFlags, ConditionalRoot, ContextFlags, ElementFlags, IndexFlags, IndexInfo, NodeLinks, ObjectFlags, Signature, StructuredType, TupleElementInfo, Type, TypeAlias, TypeBase, TypeComparer, TypeData, TypeFlags, TypeId, TypeNodeLinks, ConstrainedType, ObjectType, TypeReference, InterfaceType, UnionOrIntersectionType, IntrinsicType, LiteralType, UniqueESSymbolType, UnionType, IntersectionType, TypeParameter, IndexType, IndexedAccessType, TemplateLiteralType, StringMappingType, SubstitutionType, MappedType, ReverseMappedType, EvolvingArrayType, InstantiationExpressionType, TupleType, ConditionalType, ExportTypeLinks, DeclaredTypeLinks } from "../types.js";
 import { AccessFlagsAllowMissing, AccessFlagsExpressionPosition, AccessFlagsNone, ElementFlagsNone, ElementFlagsNonRequired, ElementFlagsFixed, ElementFlagsVariadic, ElementFlagsRest, ElementFlagsRequired, ElementFlagsOptional as ElementFlagsOptionalFlag, ElementFlagsVariable, ObjectFlagsReference, ObjectFlagsObjectLiteral, ObjectFlagsObjectLiteralPatternWithComputedProperties, Type_Target, Type_TargetTupleType, TypeFlagsAny, TypeFlagsVoid, TypeFlagsNull, TypeFlagsUndefined, TypeFlagsNever, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsObject, TypeFlagsTypeParameter, TypeFlagsStringLiteral, TypeFlagsTemplateLiteral, TypeFlagsInstantiableNonPrimitive, TypeFlagsStringLike, TypeFlagsNonPrimitive, TypeFlagsIndex, TypeFlagsBooleanLike, TypeFlagsEnumLike, TypeFlagsUnionOrIntersection, Type_Types, SignatureKindCall, Type_AsInterfaceType, InterfaceType_TypeParameters, InterfaceType_LocalTypeParameters, InterfaceType_OuterTypeParameters, Type_Mapper, Type_AsIndexType, TypeFlagsBigIntLike, TypeFlagsAnyOrUnknown, TypeFlagsNumberLike, NodeCheckFlagsTypeChecked, NodeCheckFlagsContextChecked, NodeCheckFlagsInitializerIsUndefined, NodeCheckFlagsInitializerIsUndefinedComputed, TypeFlagsTypeVariable, TypeFlagsInstantiable, TypeFlagsStructuredOrInstantiable, TypeFlagsESSymbolLike, TypeFlagsEnumLiteral, ObjectFlagsClass, ObjectFlagsInterface, ObjectFlagsClassOrInterface, ObjectFlagsTuple, ObjectFlagsMembersResolved, ObjectFlagsCouldContainTypeVariablesComputed, ObjectFlagsCouldContainTypeVariables, ObjectFlagsInstantiationExpressionType, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsReverseMapped, ObjectFlagsContainsIntersections, ObjectFlagsIsNeverIntersectionComputed, ObjectFlagsIsNeverIntersection, ObjectFlagsIsGenericObjectType, Type_AsUnionType, StructuredType_Properties, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsUnionOrIntersectionType, ObjectFlagsMapped, TypeFlagsUnknown, Type_AsMappedType, Type_AsIntersectionType, Type_AsTypeReference, Type_AsTypeParameter, TypeFlagsSubstitution, TypeFlagsIndexedAccess, Type_AsSubstitutionType, Type_AsIndexedAccessType, IndexedAccessType_ObjectType, IndexedAccessType_IndexType, SubstitutionType_BaseType, TypeFlagsNullable, TypeFlagsConditional, TypeFlagsNumberLiteral, Type_AsConditionalType, TypeFlagsStringOrNumberLiteral, TypeFlagsStringOrNumberLiteralOrUnique, ObjectFlagsNone, ObjectFlagsFromTypeNode, ObjectFlagsPrimitiveUnion, Type_Distributed, ContextFlagsNone, ContextFlagsNoConstraints, ContextFlagsSignature, ObjectFlagsPropagatingFlags, TypeFlagsNone, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsStringMapping, TypeFlagsLiteral, Type_AsTemplateLiteralType, TypeFlagsBooleanLiteral, TypeFlagsBigIntLiteral, TypeFlagsEnum, Type_AsLiteralType, TypeFlagsFreshable, ObjectFlagsEvolvingArray, ObjectFlagsContainsWideningType, Type_AsIntrinsicType, Type_AsStructuredType, Type_AsObjectType, TypeFormatFlagsWriteArrayAsGenericType, TypeFlagsPrimitive, ObjectFlagsArrayLiteral, ObjectFlagsContainsObjectOrArrayLiteral, Type_AsTupleType, SignatureKindConstruct, SignatureFlagsIsNonInferrable, TypeFormatFlagsNoTypeReduction, ObjectFlagsIsUnknownLikeUnionComputed, ObjectFlagsIsUnknownLikeUnion, TypeFlagsSimplifiable, ContextFlagsSkipBindingPatterns, TypeFlagsUniqueESSymbol, TypeFlagsESSymbol, TypeFlagsIncludesMask, TypeFlagsIncludesInstantiable, TypeFlagsIncludesConstrainedTypeVariable, TypeFlagsIncludesWildcard, TypeFlagsIncludesError, TypeFlagsIncludesNonWideningType, TypeFlagsIncludesEmptyObject, TypeFlagsIncludesMissingType, TypeFlagsUnit, ObjectFlagsIsConstrainedTypeVariable, ObjectFlagsObjectRestType, TypeFlagsBoolean, ObjectFlagsFreshLiteral, TypeFlagsNotPrimitiveUnion, TypeFlagsDisjointDomains, TypeFlagsVoidLike, TypeFlagsDefinitelyNonNullable, ObjectFlagsUnresolvedMembers, IndexFlagsNone, ObjectFlagsIsGenericTypeComputed, ObjectFlagsIsGenericType, ObjectFlagsIsGenericIndexType, ObjectFlagsJSLiteral, ObjectFlagsNonInferrableType, ObjectFlagsRequiresWidening, Type_AsInstantiationExpressionType, Type_AsReverseMappedType, Type_AsStringMappingType, TypeAlias_Symbol, ObjectFlagsContainsSpread } from "../types.js";
 import { NodeCheckFlagsNone, SignatureFlagsNone } from "../types.js";
 import type { orderedSet } from "../utilities.js";
@@ -171,7 +171,7 @@ function zeroTypeNodeLinks(): TypeNodeLinks {
 class TypeValue implements Type {
   flags: TypeFlags = 0;
   objectFlags: ObjectFlags = 0;
-  id = 0;
+  id: TypeId = 0;
   "symbol": GoPtr<Symbol> = undefined;
   alias: GoPtr<TypeAlias> = undefined;
   checker: GoPtr<Checker> = undefined;
@@ -248,8 +248,8 @@ abstract class TypeBaseEmbeddedData<TReceiver> implements TypeData {
 }
 
 export class IntrinsicTypeData extends TypeBaseEmbeddedData<IntrinsicType> implements IntrinsicType {
-  __tsgoEmbedded0 = new TypeBaseData();
-  intrinsicName = "";
+  __tsgoEmbedded0: TypeBaseData = new TypeBaseData();
+  intrinsicName: string = "";
 
   __tsgoGoReceiver(): GoPtr<IntrinsicType> {
     return this;
@@ -257,7 +257,7 @@ export class IntrinsicTypeData extends TypeBaseEmbeddedData<IntrinsicType> imple
 }
 
 export class LiteralTypeData extends TypeBaseEmbeddedData<LiteralType> implements LiteralType {
-  __tsgoEmbedded0 = new TypeBaseData();
+  __tsgoEmbedded0: TypeBaseData = new TypeBaseData();
   value: GoInterface<unknown> = undefined;
   freshType: GoPtr<Type> = undefined;
   regularType: GoPtr<Type> = undefined;
@@ -268,8 +268,8 @@ export class LiteralTypeData extends TypeBaseEmbeddedData<LiteralType> implement
 }
 
 export class UniqueESSymbolTypeData extends TypeBaseEmbeddedData<UniqueESSymbolType> implements UniqueESSymbolType {
-  __tsgoEmbedded0 = new TypeBaseData();
-  name = "";
+  __tsgoEmbedded0: TypeBaseData = new TypeBaseData();
+  name: string = "";
 
   __tsgoGoReceiver(): GoPtr<UniqueESSymbolType> {
     return this;
@@ -277,7 +277,7 @@ export class UniqueESSymbolTypeData extends TypeBaseEmbeddedData<UniqueESSymbolT
 }
 
 export class ConstrainedTypeData extends TypeBaseEmbeddedData<ConstrainedType> implements ConstrainedType {
-  __tsgoEmbedded0 = new TypeBaseData();
+  __tsgoEmbedded0: TypeBaseData = new TypeBaseData();
   resolvedBaseConstraint: GoPtr<Type> = undefined;
 
   __tsgoGoReceiver(): GoPtr<ConstrainedType> {
@@ -323,11 +323,11 @@ abstract class ConstrainedTypeEmbeddedData<TReceiver> implements TypeData {
 }
 
 export class StructuredTypeData extends ConstrainedTypeEmbeddedData<StructuredType> implements StructuredType {
-  __tsgoEmbedded0 = new ConstrainedTypeData();
+  __tsgoEmbedded0: ConstrainedTypeData = new ConstrainedTypeData();
   members: SymbolTable = GoNilMap();
   properties: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   signatures: GoSlice<GoPtr<Signature>> = GoNilSlice();
-  callSignatureCount = 0;
+  callSignatureCount: int = 0;
   indexInfos: GoSlice<GoPtr<IndexInfo>> = GoNilSlice();
   objectTypeWithoutAbstractConstructSignatures: GoPtr<Type> = undefined;
 
@@ -374,7 +374,7 @@ abstract class StructuredTypeEmbeddedData<TReceiver> implements TypeData {
 }
 
 export class ObjectTypeData extends StructuredTypeEmbeddedData<ObjectType> implements ObjectType {
-  __tsgoEmbedded0 = new StructuredTypeData();
+  __tsgoEmbedded0: StructuredTypeData = new StructuredTypeData();
   target: GoPtr<Type> = undefined;
   mapper: GoPtr<TypeMapper> = undefined;
   instantiations: GoMap<CacheHashKey, GoPtr<Type>> = GoNilMap();
@@ -422,7 +422,7 @@ abstract class ObjectTypeEmbeddedData<TReceiver> implements TypeData {
 }
 
 export class TypeReferenceData extends ObjectTypeEmbeddedData<TypeReference> implements TypeReference {
-  __tsgoEmbedded0 = new ObjectTypeData();
+  __tsgoEmbedded0: ObjectTypeData = new ObjectTypeData();
   node: GoPtr<Node> = undefined;
   resolvedTypeArguments: GoSlice<GoPtr<Type>> = GoNilSlice();
 
@@ -469,12 +469,12 @@ abstract class TypeReferenceEmbeddedData<TReceiver> implements TypeData {
 }
 
 export class InterfaceTypeData extends TypeReferenceEmbeddedData<InterfaceType> implements InterfaceType {
-  __tsgoEmbedded0 = new TypeReferenceData();
+  __tsgoEmbedded0: TypeReferenceData = new TypeReferenceData();
   allTypeParameters: GoSlice<GoPtr<Type>> = GoNilSlice();
-  outerTypeParameterCount = 0;
+  outerTypeParameterCount: int = 0;
   thisType: GoPtr<Type> = undefined;
-  baseTypesResolved = false;
-  declaredMembersResolved = false;
+  baseTypesResolved: bool = false;
+  declaredMembersResolved: bool = false;
   resolvedBaseConstructorType: GoPtr<Type> = undefined;
   resolvedBaseTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
   declaredMembers: SymbolTable = GoNilMap();
@@ -525,12 +525,12 @@ abstract class InterfaceTypeEmbeddedData<TReceiver> implements TypeData {
 }
 
 export class TupleTypeData extends InterfaceTypeEmbeddedData<TupleType> implements TupleType {
-  __tsgoEmbedded0 = new InterfaceTypeData();
+  __tsgoEmbedded0: InterfaceTypeData = new InterfaceTypeData();
   elementInfos: GoSlice<TupleElementInfo> = GoNilSlice();
-  minLength = 0;
-  fixedLength = 0;
+  minLength: int = 0;
+  fixedLength: int = 0;
   combinedFlags: ElementFlags = 0;
-  readonly = false;
+  readonly: bool = false;
 
   __tsgoGoReceiver(): GoPtr<TupleType> {
     return this;
@@ -538,7 +538,7 @@ export class TupleTypeData extends InterfaceTypeEmbeddedData<TupleType> implemen
 }
 
 export class InstantiationExpressionTypeData extends ObjectTypeEmbeddedData<InstantiationExpressionType> implements InstantiationExpressionType {
-  __tsgoEmbedded0 = new ObjectTypeData();
+  __tsgoEmbedded0: ObjectTypeData = new ObjectTypeData();
   node: GoPtr<Node> = undefined;
 
   __tsgoGoReceiver(): GoPtr<InstantiationExpressionType> {
@@ -547,7 +547,7 @@ export class InstantiationExpressionTypeData extends ObjectTypeEmbeddedData<Inst
 }
 
 export class MappedTypeData extends ObjectTypeEmbeddedData<MappedType> implements MappedType {
-  __tsgoEmbedded0 = new ObjectTypeData();
+  __tsgoEmbedded0: ObjectTypeData = new ObjectTypeData();
   declaration: MappedType["declaration"] = undefined;
   typeParameter: GoPtr<Type> = undefined;
   constraintType: GoPtr<Type> = undefined;
@@ -555,7 +555,7 @@ export class MappedTypeData extends ObjectTypeEmbeddedData<MappedType> implement
   templateType: GoPtr<Type> = undefined;
   modifiersType: GoPtr<Type> = undefined;
   resolvedApparentType: GoPtr<Type> = undefined;
-  containsError = false;
+  containsError: bool = false;
 
   __tsgoGoReceiver(): GoPtr<MappedType> {
     return this;
@@ -563,7 +563,7 @@ export class MappedTypeData extends ObjectTypeEmbeddedData<MappedType> implement
 }
 
 export class ReverseMappedTypeData extends ObjectTypeEmbeddedData<ReverseMappedType> implements ReverseMappedType {
-  __tsgoEmbedded0 = new ObjectTypeData();
+  __tsgoEmbedded0: ObjectTypeData = new ObjectTypeData();
   source: GoPtr<Type> = undefined;
   mappedType: GoPtr<Type> = undefined;
   constraintType: GoPtr<Type> = undefined;
@@ -574,7 +574,7 @@ export class ReverseMappedTypeData extends ObjectTypeEmbeddedData<ReverseMappedT
 }
 
 export class EvolvingArrayTypeData extends ObjectTypeEmbeddedData<EvolvingArrayType> implements EvolvingArrayType {
-  __tsgoEmbedded0 = new ObjectTypeData();
+  __tsgoEmbedded0: ObjectTypeData = new ObjectTypeData();
   elementType: GoPtr<Type> = undefined;
   finalArrayType: GoPtr<Type> = undefined;
 
@@ -584,7 +584,7 @@ export class EvolvingArrayTypeData extends ObjectTypeEmbeddedData<EvolvingArrayT
 }
 
 export class UnionOrIntersectionTypeData extends StructuredTypeEmbeddedData<UnionOrIntersectionType> implements UnionOrIntersectionType {
-  __tsgoEmbedded0 = new StructuredTypeData();
+  __tsgoEmbedded0: StructuredTypeData = new StructuredTypeData();
   types: GoSlice<GoPtr<Type>> = GoNilSlice();
   propertyCache: SymbolTable = GoNilMap();
   propertyCacheWithoutFunctionPropertyAugment: SymbolTable = GoNilMap();
@@ -633,11 +633,11 @@ abstract class UnionOrIntersectionTypeEmbeddedData<TReceiver> implements TypeDat
 }
 
 export class UnionTypeData extends UnionOrIntersectionTypeEmbeddedData<UnionType> implements UnionType {
-  __tsgoEmbedded0 = new UnionOrIntersectionTypeData();
+  __tsgoEmbedded0: UnionOrIntersectionTypeData = new UnionOrIntersectionTypeData();
   resolvedReducedType: GoPtr<Type> = undefined;
   regularType: GoPtr<Type> = undefined;
   origin: GoPtr<Type> = undefined;
-  keyPropertyName = "";
+  keyPropertyName: string = "";
   constituentMap: GoMap<GoPtr<Type>, GoPtr<Type>> = GoNilMap();
 
   __tsgoGoReceiver(): GoPtr<UnionType> {
@@ -646,7 +646,7 @@ export class UnionTypeData extends UnionOrIntersectionTypeEmbeddedData<UnionType
 }
 
 export class IntersectionTypeData extends UnionOrIntersectionTypeEmbeddedData<IntersectionType> implements IntersectionType {
-  __tsgoEmbedded0 = new UnionOrIntersectionTypeData();
+  __tsgoEmbedded0: UnionOrIntersectionTypeData = new UnionOrIntersectionTypeData();
   resolvedApparentType: GoPtr<Type> = undefined;
   uniqueLiteralFilledInstantiation: GoPtr<Type> = undefined;
 
@@ -656,11 +656,11 @@ export class IntersectionTypeData extends UnionOrIntersectionTypeEmbeddedData<In
 }
 
 export class TypeParameterData extends ConstrainedTypeEmbeddedData<TypeParameter> implements TypeParameter {
-  __tsgoEmbedded0 = new ConstrainedTypeData();
+  __tsgoEmbedded0: ConstrainedTypeData = new ConstrainedTypeData();
   constraint: GoPtr<Type> = undefined;
   target: GoPtr<Type> = undefined;
   mapper: GoPtr<TypeMapper> = undefined;
-  isThisType = false;
+  isThisType: bool = false;
   resolvedDefaultType: GoPtr<Type> = undefined;
 
   __tsgoGoReceiver(): GoPtr<TypeParameter> {
@@ -669,7 +669,7 @@ export class TypeParameterData extends ConstrainedTypeEmbeddedData<TypeParameter
 }
 
 export class IndexTypeData extends ConstrainedTypeEmbeddedData<IndexType> implements IndexType {
-  __tsgoEmbedded0 = new ConstrainedTypeData();
+  __tsgoEmbedded0: ConstrainedTypeData = new ConstrainedTypeData();
   target: GoPtr<Type> = undefined;
   indexFlags: IndexFlags = 0;
 
@@ -679,7 +679,7 @@ export class IndexTypeData extends ConstrainedTypeEmbeddedData<IndexType> implem
 }
 
 export class IndexedAccessTypeData extends ConstrainedTypeEmbeddedData<IndexedAccessType> implements IndexedAccessType {
-  __tsgoEmbedded0 = new ConstrainedTypeData();
+  __tsgoEmbedded0: ConstrainedTypeData = new ConstrainedTypeData();
   objectType: GoPtr<Type> = undefined;
   indexType: GoPtr<Type> = undefined;
   accessFlags: AccessFlags = 0;
@@ -690,7 +690,7 @@ export class IndexedAccessTypeData extends ConstrainedTypeEmbeddedData<IndexedAc
 }
 
 export class TemplateLiteralTypeData extends ConstrainedTypeEmbeddedData<TemplateLiteralType> implements TemplateLiteralType {
-  __tsgoEmbedded0 = new ConstrainedTypeData();
+  __tsgoEmbedded0: ConstrainedTypeData = new ConstrainedTypeData();
   texts: GoSlice<string> = GoNilSlice();
   types: GoSlice<GoPtr<Type>> = GoNilSlice();
 
@@ -700,7 +700,7 @@ export class TemplateLiteralTypeData extends ConstrainedTypeEmbeddedData<Templat
 }
 
 export class StringMappingTypeData extends ConstrainedTypeEmbeddedData<StringMappingType> implements StringMappingType {
-  __tsgoEmbedded0 = new ConstrainedTypeData();
+  __tsgoEmbedded0: ConstrainedTypeData = new ConstrainedTypeData();
   target: GoPtr<Type> = undefined;
 
   __tsgoGoReceiver(): GoPtr<StringMappingType> {
@@ -709,7 +709,7 @@ export class StringMappingTypeData extends ConstrainedTypeEmbeddedData<StringMap
 }
 
 export class SubstitutionTypeData extends ConstrainedTypeEmbeddedData<SubstitutionType> implements SubstitutionType {
-  __tsgoEmbedded0 = new ConstrainedTypeData();
+  __tsgoEmbedded0: ConstrainedTypeData = new ConstrainedTypeData();
   baseType: GoPtr<Type> = undefined;
   constraint: GoPtr<Type> = undefined;
 
@@ -719,7 +719,7 @@ export class SubstitutionTypeData extends ConstrainedTypeEmbeddedData<Substituti
 }
 
 export class ConditionalTypeData extends ConstrainedTypeEmbeddedData<ConditionalType> implements ConditionalType {
-  __tsgoEmbedded0 = new ConstrainedTypeData();
+  __tsgoEmbedded0: ConstrainedTypeData = new ConstrainedTypeData();
   root: GoPtr<ConditionalRoot> = undefined;
   checkType: GoPtr<Type> = undefined;
   extendsType: GoPtr<Type> = undefined;

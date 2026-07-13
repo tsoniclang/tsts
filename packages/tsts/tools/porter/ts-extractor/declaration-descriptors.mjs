@@ -4,6 +4,7 @@ import {
   evaluateTypeScriptConstant,
   knownTypeScriptConstant,
 } from "./constant-evaluation.mjs";
+import { parameterInitializerDescriptor } from "./parameter-initializer.mjs";
 import { resolveModuleId } from "./source-structure.mjs";
 import {
   canonicalizeType,
@@ -11,11 +12,7 @@ import {
   typeParamDescriptors,
   typeParamIndexOf,
 } from "./type-descriptors.mjs";
-
-const WELL_KNOWN_SYMBOLS = new Set([
-  "asyncDispose", "asyncIterator", "dispose", "hasInstance", "isConcatSpreadable", "iterator", "match", "matchAll",
-  "replace", "search", "species", "split", "toPrimitive", "toStringTag", "unscopables",
-]);
+import { computedPropertyIdentity } from "./type-descriptors/computed-property-identity.mjs";
 
 export function declarationDescriptor(api, node, baseCtx) {
   const K = api.Kinds;
@@ -324,7 +321,7 @@ function parameterDescriptor(api, node, ctx, allowParameterProperties) {
   if (!allowParameterProperties && modifiers.length > 0) {
     throw new Error(`parameter modifiers are valid only on constructor parameter properties in '${ctx.moduleId}'`);
   }
-  const initializer = evaluateTypeScriptConstant(api, parameter.Initializer, ctx.valueEnvironment);
+  const initializerDescriptor = parameterInitializerDescriptor(api, parameter.Initializer, ctx.valueEnvironment);
   const isThis = parameter.name.Text === "this";
   const isParameterProperty = !isThis && modifiers.some((modifier) =>
     modifier === "public" || modifier === "protected" || modifier === "private" || modifier === "readonly" || modifier === "override");
@@ -340,9 +337,7 @@ function parameterDescriptor(api, node, ctx, allowParameterProperties) {
       ? "question+initializer"
       : parameter.QuestionToken ? "question" : parameter.Initializer !== undefined ? "initializer" : "required",
     missingType: !parameter.Type,
-    initializerStatus: initializer.status,
-    initializer: canonicalTypeScriptConstantValue(initializer),
-    initializerIssue: initializer.status === "unsupported" ? constantEvaluationIssue(initializer) : undefined,
+    ...initializerDescriptor,
   };
 }
 
@@ -385,31 +380,11 @@ function propertyIdentity(api, node, ctx) {
   if (evaluation.status === "known" && new Set(["string", "number", "bigint"]).has(evaluation.value.kind)) {
     return String(evaluation.value.value);
   }
-  const parts = valueReferenceParts(api, expression);
-  if (parts.length === 0) {
+  const identity = computedPropertyIdentity(api, node, ctx);
+  if (identity === undefined) {
     throw new Error(`Porter requires a structural computed-property identity for ${sourceText(api, ctx, expression)} in '${ctx.moduleId}'`);
   }
-  const identity = valueReferenceIdentity(parts, ctx);
-  if (identity === `global::Symbol.${parts.at(-1)}` && parts.length === 2 && WELL_KNOWN_SYMBOLS.has(parts[1])) return `symbol:${identity}`;
-  return `computed:${identity}`;
-}
-
-function valueReferenceParts(api, node) {
-  if (node?.Kind === api.Kinds.KindIdentifier) return [node.Text];
-  if (node?.Kind !== api.Kinds.KindPropertyAccessExpression) return [];
-  const access = api.Casts.AsPropertyAccessExpression(node);
-  return [...valueReferenceParts(api, access.Expression), access.name?.Text].filter((part) => typeof part === "string");
-}
-
-function valueReferenceIdentity(parts, ctx) {
-  const [head, ...tail] = parts;
-  const named = ctx.imports.named.get(head);
-  if (named !== undefined && !named.typeOnly) return `${resolveModuleId(named.module, ctx.moduleId)}::${[named.imported, ...tail].join(".")}`;
-  const namespace = ctx.imports.namespaces.get(head);
-  if (namespace !== undefined && !namespace.typeOnly) return `${resolveModuleId(namespace.module, ctx.moduleId)}::${tail.join(".")}`;
-  if (ctx.valueEnvironment?.has(head)) return `${ctx.moduleId}::${parts.join(".")}`;
-  if (ctx.localTypes.has(head)) return `unresolved::${parts.join(".")}`;
-  return `global::${parts.join(".")}`;
+  return identity;
 }
 
 function declarationModifiers(api, node, allowed) {

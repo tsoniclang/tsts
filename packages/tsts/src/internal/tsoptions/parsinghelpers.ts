@@ -1427,7 +1427,7 @@ export function convertToOptionsWithAbsolutePaths(optionsBase: GoPtr<OrderedMap<
  * 	return nil, false
  * }
  */
-export function ConvertOptionToAbsolutePath(o: string, v: GoInterface<unknown>, optionMap: CommandLineOptionNameMap, cwd: string): [unknown, bool] {
+export function ConvertOptionToAbsolutePath(o: string, v: GoInterface<unknown>, optionMap: CommandLineOptionNameMap, cwd: string): [GoInterface<unknown>, bool] {
   const option = CommandLineOptionNameMap_Get(optionMap, o);
   if (option === undefined) {
     return [undefined, false];

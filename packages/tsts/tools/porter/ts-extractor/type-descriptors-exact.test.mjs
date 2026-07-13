@@ -205,6 +205,9 @@ class MethodRoles {
 `);
   assert.equal(parsed.initialized.params[0].optional, true);
   assert.equal(parsed.initialized.params[0].optionalSyntax, "initializer");
+  assert.equal(parsed.initialized.params[0].initializerStatus, "runtime");
+  assert.equal(parsed.initialized.params[0].initializer, undefined);
+  assert.equal(parsed.initialized.params[0].initializerIssue, undefined);
   assert.deepEqual(parsed.predicate.params.map((parameter) => parameter.role), ["this", "parameter"]);
   assert.deepEqual(parsed.predicate.ret.subject, { kind: "parameter", index: 1 });
   assert.deepEqual(parsed.generate.signatureModifiers, ["async", "generator"]);
@@ -217,6 +220,24 @@ class MethodRoles {
   assert.deepEqual(parsed.MethodRoles.members.map((member) => member.role), ["declaration", "implementation"]);
   assert.doesNotMatch(canonicalKey(constructor.type), /invalidDescriptor/);
   assert.equal(JSON.stringify([parsed.initialized, parsed.predicate, parsed.generate, parsed.Holder, parsed.MethodRoles]).includes("implementationBody"), false);
+});
+
+test("computed declaration members retain exact local unique-symbol identity", async () => {
+  const parsed = await descriptors(`
+declare const marker: unique symbol;
+type Marked = { [marker]?: true };
+`, new Set(["marker"]));
+  assert.deepEqual(parsed.Marked.type.members, [{
+    kind: "property",
+    name: `computed:${MODULE_ID}::marker`,
+    type: { t: "literal", kind: "boolean", value: true },
+    optional: true,
+    definite: undefined,
+    readonly: undefined,
+    missingType: undefined,
+    modifiers: [],
+  }]);
+  assert.doesNotMatch(canonicalKey(parsed.Marked.type), /invalidDescriptor/);
 });
 
 test("normalization traverses every structured child without collapsing declaration identities", async () => {

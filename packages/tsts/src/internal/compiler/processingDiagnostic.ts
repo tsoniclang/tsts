@@ -1,5 +1,5 @@
 import type { int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerKey } from "../../go/compat.js";
 import { Diagnostic_SetMessageChain, Diagnostic_SetRelatedInfo, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
@@ -17,7 +17,7 @@ import type { FileIncludeReason } from "./fileInclude.js";
 import { includeProcessor_explainRedirectAndImpliedFormat, includeProcessor_getRelatedInfo, includeProcessor_getReferenceLocation } from "./includeprocessor.js";
 import type { Program } from "./program.js";
 
-const fileIncludeReasonKey = GoPointerKey<FileIncludeReason>();
+const fileIncludeReasonKey: GoMapKeyDescriptor<GoPtr<FileIncludeReason>> = GoPointerKey<FileIncludeReason>();
 
 import type { GoInterface } from "../../go/compat.js";
 /**

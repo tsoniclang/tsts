@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoNilMap, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Node_End, NodeList_End, NodeList_Pos, Node_Pos } from "../../ast/spine.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { Node_TagName, Node_Children } from "../../ast/ast.js";
@@ -163,10 +163,10 @@ export function Parser_nextJSDocCommentTextToken(receiver: GoPtr<Parser>, inBack
  * 	return result
  * }
  */
-export function Parser_createJSDocCache(receiver: GoPtr<Parser>): GoMap<GoPtr<Node>, GoSlice<GoPtr<Node>>> | undefined {
+export function Parser_createJSDocCache(receiver: GoPtr<Parser>): GoMap<GoPtr<Node>, GoSlice<GoPtr<Node>>> {
   const p: Parser = receiver!;
   if (p.jsdocInfos.length === 0) {
-    return undefined;
+    return GoNilMap<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
   }
   const result: GoMap<GoPtr<Node>, GoSlice<GoPtr<Node>>> = new globalThis.Map<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
   for (const info of p.jsdocInfos) {

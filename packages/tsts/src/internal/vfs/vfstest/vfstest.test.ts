@@ -1,10 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { bool } from "../../../go/scalars.js";
+import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
 import { ReadDir, ReadFile, Stat } from "../../../go/io/fs.js";
+import type { FileMode } from "../../../go/io/fs.js";
+import type { bool, byte } from "../../../go/scalars.js";
 import { TestFS } from "../../../go/testing/fstest.js";
 import type { MapFile, MapFS as FstestMapFS } from "../../../go/testing/fstest.js";
-import { ModeDir } from "../../../go/io/fs.js";
+import { Time } from "../../../go/time.js";
 import type { Clock } from "./vfstest.js";
 import {
   convertMapFS,
@@ -14,8 +16,21 @@ import {
   Symlink,
 } from "./vfstest.js";
 
-function bytes(text: string): Uint8Array {
-  return new TextEncoder().encode(text);
+function bytes(text: string): GoSlice<byte> {
+  return Array.from(new TextEncoder().encode(text));
+}
+
+function mapFile(data: GoSlice<byte>, sys: GoInterface<unknown>): GoPtr<MapFile> {
+  return {
+    Data: data,
+    Mode: 0 as FileMode,
+    ModTime: new Time(),
+    Sys: sys,
+  };
+}
+
+function mapFS(entries: Array<[string, GoPtr<MapFile>]>): FstestMapFS {
+  return new Map<string, GoPtr<MapFile>>(entries);
 }
 
 function assertErrorContains(error: unknown, expected: string): void {
@@ -27,17 +42,17 @@ function dirEntriesToNames(entries: Array<{ Name(): string }>): string[] {
   return entries.map((entry) => entry.Name());
 }
 
-function nilClock(): Clock {
-  return undefined as unknown as Clock;
+function nilClock(): GoInterface<Clock> {
+  return undefined;
 }
 
 test("convertMapFS mirrors TS-Go case-insensitive lookup and realpath behavior", () => {
   const contents = bytes("bar");
-  const map = new Map<string, MapFile>([
-    ["foo/bar/baz", { Data: contents, Sys: 1234 }],
-    ["foo/bar2/baz2", { Data: contents, Sys: 1234 }],
-    ["foo/bar3/baz3", { Data: contents, Sys: 1234 }],
-  ]) as FstestMapFS;
+  const map = mapFS([
+    ["foo/bar/baz", mapFile(contents, 1234)],
+    ["foo/bar2/baz2", mapFile(contents, 1234)],
+    ["foo/bar3/baz3", mapFile(contents, 1234)],
+  ]);
   const mapFS = convertMapFS(map, false as bool, nilClock());
   const fs = MapFS_as_io_fs_FS(mapFS);
 
@@ -62,11 +77,11 @@ test("convertMapFS mirrors TS-Go case-insensitive lookup and realpath behavior",
 
 test("convertMapFS mirrors TS-Go case-sensitive lookup behavior", () => {
   const contents = bytes("bar");
-  const map = new Map<string, MapFile>([
-    ["foo/bar/baz", { Data: contents, Sys: 1234 }],
-    ["foo/bar2/baz2", { Data: contents, Sys: 1234 }],
-    ["foo/bar3/baz3", { Data: contents, Sys: 1234 }],
-  ]) as FstestMapFS;
+  const map = mapFS([
+    ["foo/bar/baz", mapFile(contents, 1234)],
+    ["foo/bar2/baz2", mapFile(contents, 1234)],
+    ["foo/bar3/baz3", mapFile(contents, 1234)],
+  ]);
   const fs = MapFS_as_io_fs_FS(convertMapFS(map, true as bool, nilClock()));
 
   assert.deepEqual(ReadFile(fs, "foo/bar/baz"), ["bar", undefined]);
@@ -77,23 +92,23 @@ test("convertMapFS mirrors TS-Go case-sensitive lookup behavior", () => {
 
 test("convertMapFS mirrors TS-Go duplicate and parent-file panics", () => {
   assert.throws(
-    () => convertMapFS(new Map<string, MapFile>([
-      ["foo", { Data: bytes("bar") }],
-      ["Foo", { Data: bytes("baz") }],
-    ]) as FstestMapFS, false as bool, nilClock()),
+    () => convertMapFS(mapFS([
+      ["foo", mapFile(bytes("bar"), undefined)],
+      ["Foo", mapFile(bytes("baz"), undefined)],
+    ]), false as bool, nilClock()),
     /duplicate path: "Foo" and "foo" have the same canonical path/,
   );
 
-  assert.doesNotThrow(() => convertMapFS(new Map<string, MapFile>([
-    ["foo", { Data: bytes("bar") }],
-    ["Foo", { Data: bytes("baz") }],
-  ]) as FstestMapFS, true as bool, nilClock()));
+  assert.doesNotThrow(() => convertMapFS(mapFS([
+    ["foo", mapFile(bytes("bar"), undefined)],
+    ["Foo", mapFile(bytes("baz"), undefined)],
+  ]), true as bool, nilClock()));
 
   assert.throws(
-    () => convertMapFS(new Map<string, MapFile>([
-      ["foo", { Data: bytes("bar") }],
-      ["foo/oops", { Data: bytes("baz") }],
-    ]) as FstestMapFS, false as bool, nilClock()),
+    () => convertMapFS(mapFS([
+      ["foo", mapFile(bytes("bar"), undefined)],
+      ["foo/oops", mapFile(bytes("baz"), undefined)],
+    ]), false as bool, nilClock()),
     /failed to create intermediate directories for "foo\/oops": mkdir "foo": path exists but is not a directory/,
   );
 });
@@ -139,7 +154,7 @@ test("FromMap mirrors TS-Go POSIX, Windows, and BOM read behavior", () => {
   const posix = FromMap(new Map<string, unknown>([
     ["/string", "hello, world"],
     ["/bytes", bytes("hello, world")],
-    ["/mapfile", { Data: bytes("hello, world") } satisfies MapFile],
+    ["/mapfile", mapFile(bytes("hello, world"), undefined)],
   ]), false as bool)!;
   assert.deepEqual(posix.ReadFile("/string"), ["hello, world", true]);
   assert.deepEqual(posix.ReadFile("/bytes"), ["hello, world", true]);
@@ -148,15 +163,15 @@ test("FromMap mirrors TS-Go POSIX, Windows, and BOM read behavior", () => {
   const windows = FromMap(new Map<string, unknown>([
     ["c:/string", "hello, world"],
     ["d:/bytes", bytes("hello, world")],
-    ["e:/mapfile", { Data: bytes("hello, world") } satisfies MapFile],
+    ["e:/mapfile", mapFile(bytes("hello, world"), undefined)],
   ]), false as bool)!;
   assert.deepEqual(windows.ReadFile("c:/string"), ["hello, world", true]);
   assert.deepEqual(windows.ReadFile("d:/bytes"), ["hello, world", true]);
   assert.deepEqual(windows.ReadFile("e:/mapfile"), ["hello, world", true]);
 
-  const utf16be = new Uint8Array([0xfe, 0xff, 0x00, 0x68, 0x00, 0x69]);
-  const utf16le = new Uint8Array([0xff, 0xfe, 0x68, 0x00, 0x69, 0x00]);
-  const utf8Bom = new Uint8Array([0xef, 0xbb, 0xbf, ...bytes("hi")]);
+  const utf16be: GoSlice<byte> = [0xfe, 0xff, 0x00, 0x68, 0x00, 0x69];
+  const utf16le: GoSlice<byte> = [0xff, 0xfe, 0x68, 0x00, 0x69, 0x00];
+  const utf8Bom: GoSlice<byte> = [0xef, 0xbb, 0xbf, ...bytes("hi")];
   assert.deepEqual(FromMap(new Map([["/foo.ts", utf16be]]), true as bool)!.ReadFile("/foo.ts"), ["hi", true]);
   assert.deepEqual(FromMap(new Map([["/foo.ts", utf16le]]), true as bool)!.ReadFile("/foo.ts"), ["hi", true]);
   assert.deepEqual(FromMap(new Map([["/foo.ts", utf8Bom]]), true as bool)!.ReadFile("/foo.ts"), ["hi", true]);

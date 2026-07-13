@@ -4,7 +4,7 @@ import {
   semanticTypeContexts,
 } from "../core/semantic-type-nilability.mjs";
 import { semanticNamedNilabilityDisposition } from "./semantic-named-nilability.mjs";
-import { semanticPointerPointeeRepresentation } from "./semantic-pointer-lowering.mjs";
+import { semanticPointerConstraintRepresentation, semanticPointerPointeeRepresentation } from "./semantic-pointer-lowering.mjs";
 
 export function lowerSemanticType(type, context, typeContext = semanticTypeContexts.value) {
   requireSemanticType(type);
@@ -21,7 +21,9 @@ export function lowerSemanticType(type, context, typeContext = semanticTypeConte
     case "pointer":
       return {
         kind: "pointer",
-        representation: semanticPointerPointeeRepresentation(type, context),
+        representation: typeContext === semanticTypeContexts.constraint
+          ? semanticPointerConstraintRepresentation(type, context)
+          : semanticPointerPointeeRepresentation(type, context),
         element: lowerValue(type.element, context),
       };
     case "slice":

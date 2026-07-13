@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoStringKey, GoZeroPointer, type GoChan, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoStringKey, GoZeroPointer, type GoChan, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { Is as errors_Is } from "../../go/errors.js";
 import { Fprint, Fprintf, Fprintln } from "../../go/fmt.js";
@@ -86,7 +86,7 @@ const CHAR_DOLLAR: int = 0x24; // '$'
  * }
  */
 export interface WatchBackend {
-  WatchDirectory(dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: GoFunc<(arg0: string) => bool>): [Closer, GoError];
+  WatchDirectory(dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: GoFunc<(arg0: string) => bool>): [GoInterface<Closer>, GoError];
 }
 
 /**
@@ -126,7 +126,7 @@ export interface fswatchBackend {
  * 	return b.inner.WatchDirectory(dir, fn, opts...)
  * }
  */
-export function fswatchBackend_WatchDirectory(receiver: GoPtr<fswatchBackend>, dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: GoFunc<(arg0: string) => bool>): [Closer, GoError] {
+export function fswatchBackend_WatchDirectory(receiver: GoPtr<fswatchBackend>, dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: GoFunc<(arg0: string) => bool>): [GoInterface<Closer>, GoError] {
   let opts: GoSlice<fswatch.WatchOption> = [];
   if (recursive) {
     opts = [...opts, fswatch.WithRecursive()];
@@ -139,7 +139,7 @@ export function fswatchBackend_WatchDirectory(receiver: GoPtr<fswatchBackend>, d
 
 export function fswatchBackend_as_WatchBackend(receiver: GoPtr<fswatchBackend>): WatchBackend {
   return {
-    WatchDirectory: (dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: (arg0: string) => bool): [Closer, GoError] => fswatchBackend_WatchDirectory(receiver, dir, fn, recursive, ignore),
+    WatchDirectory: (dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: GoFunc<(arg0: string) => bool>): [GoInterface<Closer>, GoError] => fswatchBackend_WatchDirectory(receiver, dir, fn, recursive, ignore),
   };
 }
 
@@ -296,7 +296,7 @@ export interface Watcher {
   reportWatchStatus: DiagnosticReporter;
   testing: GoInterface<CommandLineTesting>;
   program: GoPtr<Program>;
-  extendedConfigCache: GoInterface<ExtendedConfigCache>;
+  extendedConfigCache: GoPtr<ExtendedConfigCache>;
   configModified: bool;
   configHasErrors: bool;
   configFilePaths: GoSlice<string>;
@@ -306,9 +306,9 @@ export interface Watcher {
   seenFiles: GoPtr<Set<Path>>;
   configMtimes: GoMap<string, Time>;
   doCycleCh: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">;
-  debugLog: Writer | undefined;
+  debugLog: GoInterface<Writer>;
   changedMu: Mutex;
-  changedPaths: GoMap<string, fswatch.EventKind> | undefined;
+  changedPaths: GoMap<string, fswatch.EventKind>;
   changedOverflow: bool;
 }
 
@@ -395,7 +395,7 @@ export function createWatcher(sys: GoInterface<System>, configParseResult: GoPtr
     doCycleCh: {} as GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">,
     debugLog: undefined,
     changedMu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as Watcher["changedMu"],
-    changedPaths: undefined,
+    changedPaths: GoNilMap<string, fswatch.EventKind>(),
     changedOverflow: false,
   };
   if (configParseResult!.ConfigFile !== undefined && configParseResult!.ConfigFile !== null) {
@@ -930,7 +930,7 @@ export function perceivedOsRootLengthForWatching(components: GoSlice<string>): i
  * }
  */
 export function Watcher_createDirWatch(receiver: GoPtr<Watcher>, dir: string, recursive: bool): void {
-  const entry: watchedDir = { closer: undefined as unknown as Closer, recursive };
+  const entry: watchedDir = { closer: undefined, recursive };
   const cb: fswatch.WatchCallback = (events: GoSlice<fswatch.Event>, err: GoError): void => {
     if (err !== undefined && errors_Is(err, fswatch.ErrWatchTerminated)) {
       Watcher_handleWatchTerminated(receiver, dir, entry);
@@ -968,13 +968,13 @@ export function Watcher_createDirWatch(receiver: GoPtr<Watcher>, dir: string, re
  */
 export function Watcher_closeAllWatches(receiver: GoPtr<Watcher>): void {
   // mu.Lock() / Unlock() omitted: TSTS is single-threaded
-  let dirs: GoSlice<Closer> = [];
+  let dirs: GoSlice<GoInterface<Closer>> = [];
   for (const [dir, wd] of receiver!.watchedDirs) {
-    dirs = [...dirs, wd!.closer!];
+    dirs = [...dirs, wd!.closer];
     receiver!.watchedDirs.delete(dir);
   }
   for (const c of dirs) {
-    c.Close();
+    c!.Close();
   }
 }
 
@@ -1120,7 +1120,7 @@ export function Watcher_onWatchEvents(receiver: GoPtr<Watcher>, events: GoSlice<
       Fprintln(receiver!.debugLog);
     }
     // changedMu.Lock() / Unlock() omitted: TSTS is single-threaded
-    if (receiver!.changedPaths === undefined) {
+    if (GoMapIsNil(receiver!.changedPaths)) {
       receiver!.changedPaths = new Map<string, fswatch.EventKind>();
     }
     for (const e of events) {
@@ -1209,10 +1209,10 @@ export function Watcher_DoCycle(receiver: GoPtr<Watcher>): void {
   // changedMu.Lock() / Unlock() omitted: TSTS is single-threaded
   const changedPaths = receiver!.changedPaths;
   const overflow = receiver!.changedOverflow;
-  receiver!.changedPaths = undefined;
+  receiver!.changedPaths = GoNilMap<string, fswatch.EventKind>();
   receiver!.changedOverflow = false as bool;
 
-  const hasEvents = (changedPaths?.size ?? 0) > 0 || overflow;
+  const hasEvents = changedPaths.size > 0 || overflow;
 
   if (Watcher_recheckTsConfig(receiver)) {
     return;
@@ -1220,11 +1220,11 @@ export function Watcher_DoCycle(receiver: GoPtr<Watcher>): void {
 
   if (hasEvents && !overflow && !receiver!.configModified) {
     // Filter fswatch events against known dependencies
-    if (Watcher_isRelevantChange(receiver, changedPaths ?? new Map<string, fswatch.EventKind>())) {
-      Watcher_evictChangedSourceFiles(receiver, changedPaths ?? new Map<string, fswatch.EventKind>());
+    if (Watcher_isRelevantChange(receiver, changedPaths)) {
+      Watcher_evictChangedSourceFiles(receiver, changedPaths);
     } else {
       if (receiver!.debugLog !== undefined) {
-        Fprintf(receiver!.debugLog, "[watch] DoCycle: %d event(s) not relevant to compilation, skipping rebuild\n", changedPaths?.size ?? 0);
+        Fprintf(receiver!.debugLog, "[watch] DoCycle: %d event(s) not relevant to compilation, skipping rebuild\n", changedPaths.size);
       }
       if (receiver!.testing !== undefined) {
         receiver!.testing.OnProgram(receiver!.program);

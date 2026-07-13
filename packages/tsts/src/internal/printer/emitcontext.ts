@@ -1,5 +1,5 @@
 import type { bool, int, uint } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint32 } from "../../go/sync/atomic.js";
@@ -46,8 +46,8 @@ import type { EmitHelper } from "./helpers.js";
 
 import type { GoFunc } from "../../go/compat.js";
 
-const nodePointerKey = GoPointerKey<Node>();
-const emitHelperPointerKey = GoPointerKey<EmitHelper>();
+const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
+const emitHelperPointerKey: GoMapKeyDescriptor<GoPtr<EmitHelper>> = GoPointerKey<EmitHelper>();
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::EmitContext","kind":"type","status":"implemented","sigHash":"6d5f48a2b47922c7624b8c9a29245f8616e2ace7e8c5704549fa66ece9746147"}
  *

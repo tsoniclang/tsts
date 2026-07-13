@@ -2,7 +2,9 @@
 // are opaque; every supported value below comes from declaration syntax only.
 
 import { compareText } from "../../core/deterministic-order.mjs";
+import { parameterInitializerDescriptor } from "../parameter-initializer.mjs";
 import { keywordOf, resolveModuleId, sliceText } from "../source-structure.mjs";
+import { computedPropertyIdentity } from "./computed-property-identity.mjs";
 
 export function canonicalizeType(node, ctx) {
   if (!node) return { t: "kw", kw: "any" };
@@ -67,6 +69,7 @@ function parameterDescriptor(parameter, ctx) {
   }
   const question = !!parameter.QuestionToken;
   const initializer = !!parameter.Initializer;
+  const initializerDescriptor = parameterInitializerDescriptor(ctx.api, parameter.Initializer, ctx.valueEnvironment);
   return {
     name: parameter.name.Text,
     type: parameter.Type ? canonicalizeType(parameter.Type, ctx) : { t: "kw", kw: "any" },
@@ -77,9 +80,7 @@ function parameterDescriptor(parameter, ctx) {
     role: parameter.name.Text === "this" ? "this" : "parameter",
     modifiers: modifierKinds(ctx.api, parameter),
     missingType: !parameter.Type,
-    initializerStatus: initializer ? "unsupported" : "missing",
-    initializer: undefined,
-    initializerIssue: initializer ? "function type parameters cannot carry initializer expressions" : undefined,
+    ...initializerDescriptor,
   };
 }
 
@@ -419,7 +420,7 @@ export function memberDescriptor(api, member, ctx) {
   }
   if (member.Kind === K.KindPropertySignature || member.Kind === K.KindPropertyDeclaration) {
     const property = member.Kind === K.KindPropertySignature ? api.Casts.AsPropertySignatureDeclaration(member) : api.Casts.AsPropertyDeclaration(member);
-    const name = propertyNameText(api, property.name);
+    const name = propertyNameText(api, property.name, ctx);
     if (name === undefined) return unsupportedMember(api, property, ctx, "ComputedPropertyName");
     return {
       kind: "property", name, type: property.Type ? canonicalizeType(property.Type, ctx) : { t: "kw", kw: "any" },
@@ -446,7 +447,7 @@ export function memberDescriptor(api, member, ctx) {
 
 function functionMember(api, declaration, ctx, kind) {
   const name = kind === "call" ? "<call>" : kind === "construct" ? "<construct>" : kind === "index" ? "<index>" :
-    kind === "constructor" ? "<constructor>" : propertyNameText(api, declaration.name);
+    kind === "constructor" ? "<constructor>" : propertyNameText(api, declaration.name, ctx);
   if (name === undefined) return unsupportedMember(api, declaration, ctx, "ComputedPropertyName");
   const signature = functionDescriptor(api, declaration, ctx);
   return {
@@ -469,9 +470,10 @@ function callableMemberRole(api, declaration) {
   return declaration.Body === undefined ? "declaration" : "implementation";
 }
 
-function propertyNameText(api, name) {
-  return name?.Kind === api.Kinds.KindIdentifier || name?.Kind === api.Kinds.KindPrivateIdentifier ||
-    name?.Kind === api.Kinds.KindStringLiteral || name?.Kind === api.Kinds.KindNumericLiteral ? name.Text : undefined;
+function propertyNameText(api, name, context) {
+  if (name?.Kind === api.Kinds.KindIdentifier || name?.Kind === api.Kinds.KindPrivateIdentifier ||
+      name?.Kind === api.Kinds.KindStringLiteral || name?.Kind === api.Kinds.KindNumericLiteral) return name.Text;
+  return computedPropertyIdentity(api, name, context);
 }
 
 function callableModifiers(api, node) {

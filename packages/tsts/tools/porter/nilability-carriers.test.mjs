@@ -3,7 +3,7 @@ import test from "node:test";
 import ts from "typescript";
 
 import { renderGoCompatModule } from "./core/runtime-templates.mjs";
-import { semanticNilabilityIssue } from "./core/semantic-type-nilability.mjs";
+import { semanticNilabilityIssue, semanticTypeContexts } from "./core/semantic-type-nilability.mjs";
 import { goUnitDescriptor, semanticTypeDescriptor } from "./ts-extractor/expected-from-go-semantic.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 
@@ -11,7 +11,7 @@ const compat = "src/go/compat.ts";
 const core = "src/go/scalars.ts";
 const packagePath = "example/p";
 const bridge = {
-  nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", slice: "GoSlice", array: "GoArray",
+  nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", pointerConstraint: "GoPointerConstraint", slice: "GoSlice", array: "GoArray",
   map: "GoMap", chan: "GoChan", func: "GoFunc", interface: "GoInterface", unsafePointer: "GoUnsafePointer",
 };
 
@@ -77,9 +77,12 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export type GoPointerMethodSet<Methods extends object> = Methods;/);
   assert.match(source, /type GoPointerMethods<T> = typeof __tsgoPointerMethodSet extends keyof T/);
   assert.match(source, /export type GoPtr<T> = GoNilable<T & GoPointerMethods<T>>;/);
-  assert.match(source, /export type GoRef<T> = GoNilable<\{ v: T \} & GoPointerMethods<T>>;/);
+  assert.match(source, /export type GoRef<T> = GoNilable<\{ v: T; readonly \[goRefStorage\]: true \} & GoPointerMethods<T>>;/);
+  assert.match(source, /export type GoPointerConstraint<T> = GoPtr<T> \| GoRef<T>;/);
   assert.match(source, /export function GoValueRef<T>\(value: T\): NonNullable<GoRef<T>>/);
   assert.match(source, /export function GoSliceElementRef<T>\(slice: GoSlice<T>, index: int\): NonNullable<GoRef<T>>/);
+  assert.match(source, /export function GoFieldRef<T>\(read: \(\) => T, write: \(value: T\) => void\): NonNullable<GoRef<T>>/);
+  assert.match(source, /export function GoIsRef\(value: unknown\): value is NonNullable<GoRef<unknown>>/);
   assert.match(source, /export type GoSlice<T> = T\[] & \{ __tsgoGoNil\?: bool \};/);
   assert.match(source, /export function GoNilSlice<T>\(\): GoSlice<T>/);
   assert.match(source, /export function GoSliceIsNil<T>\(slice: GoSlice<T>\): bool/);
@@ -92,6 +95,10 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.doesNotMatch(source, /instanceof Go(?:Struct|Number)Map|isGoCloneableMap/);
   assert.match(source, /export class GoNumberMap<K extends number = number, V = unknown> implements Map<K, V>/);
   assert.match(source, /export type GoComparableInterface<T = unknown> = GoDynamicComparable<T> \| undefined;/);
+  assert.match(source, /export function GoBoxComparableInterface<T>\(descriptor: GoMapKeyDescriptor<T>, value: T\): GoInterface<unknown>/);
+  assert.match(source, /export function GoRequireComparableInterface\(value: GoInterface<unknown>\): GoComparableInterface/);
+  assert.match(source, /export function GoUnboxComparableInterface\(value: GoInterface<unknown>\): GoInterface<unknown>/);
+  assert.match(source, /export function GoAssertComparableInterface<T>\(value: GoInterface<unknown>, descriptor: GoMapKeyDescriptor<T>, expectedType: string\): T/);
   assert.match(source, /export const GoComparableInterfaceKey: GoMapKeyDescriptor<GoComparableInterface>/);
   assert.match(source, /assignment to entry in nil map/);
   assert.match(source, /export type GoChan<T, Direction extends string = "bidirectional"> = \{/);
@@ -248,6 +255,14 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   interfaceMap.set(runtime.GoDynamicValue(secondNamedNumberKey, 1), "second type");
   assert.deepEqual([...interfaceMap.values()], ["first type", "second type"]);
 
+  const boxed = runtime.GoBoxComparableInterface(firstNamedNumberKey, 7);
+  assert.equal(runtime.GoRequireComparableInterface(boxed), boxed);
+  assert.throws(() => runtime.GoRequireComparableInterface(7), /unboxed Go interface value/);
+  assert.equal(runtime.GoUnboxComparableInterface(boxed), 7);
+  assert.equal(runtime.GoAssertComparableInterface(boxed, firstNamedNumberKey, "First"), 7);
+  assert.throws(() => runtime.GoAssertComparableInterface(undefined, firstNamedNumberKey, "First"), /interface is nil, not First/);
+  assert.throws(() => runtime.GoAssertComparableInterface(boxed, secondNamedNumberKey, "Second"), /interface does not contain Second/);
+
   class StructuredKey {
     constructor(value) { this.value = value; }
     text() { return String(this.value); }
@@ -331,6 +346,25 @@ test("pointer lowering uses addressable slots for scalar and open type-parameter
     id: `${compat}::GoRef`,
     args: [{ t: "tp", depth: 0, index: 0 }],
   });
+  const openPointerConstraint = semanticTypeDescriptor(typeParameter, {
+    ...context(index),
+    typeParameters: new Map([["owner::type::0", { depth: 0, index: 0 }]]),
+  }, { typeContext: semanticTypeContexts.constraint });
+  assert.deepEqual(openPointerConstraint, {
+    t: "ref",
+    id: `${compat}::GoPointerConstraint`,
+    args: [{ t: "tp", depth: 0, index: 0 }],
+  });
+  const anyConstraint = {
+    kind: "named", nilable: true,
+    reference: { objectId: "builtin::type::any", packagePath: "", name: "any", typeArgs: [] },
+  };
+  const anyConstrainedTypeParameter = semanticTypeDescriptor(typeParameter, {
+    ...context(index),
+    typeParameters: new Map([["owner::type::0", { depth: 0, index: 0 }]]),
+    typeParameterConstraints: new Map([["owner::type::0", anyConstraint]]),
+  });
+  assert.deepEqual(anyConstrainedTypeParameter, openTypeParameter);
 });
 
 test("pointers to builtin interface values use mutable slot storage", () => {

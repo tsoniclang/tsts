@@ -1,9 +1,10 @@
 import type { bool, byte } from "../../../scalars.js";
-import type { GoError, GoSlice } from "../../../compat.js";
+import type { GoDefined, GoError, GoSlice } from "../../../compat.js";
+import { GoIsRef, GoNilSlice } from "../../../compat.js";
 import type { Reader, Writer } from "../../../io.js";
 
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+const textEncoder: TextEncoder = new TextEncoder();
+const textDecoder: TextDecoder = new TextDecoder();
 
 export interface Option {
   readonly name: string;
@@ -36,29 +37,31 @@ export class Token {
   }
 }
 
-export const BeginArray = new Token("[");
-export const BeginObject = new Token("{");
-export const EndArray = new Token("]");
-export const EndObject = new Token("}");
-export const Null = new Token("n");
+export const BeginArray: Token = new Token("[");
+export const BeginObject: Token = new Token("{");
+export const EndArray: Token = new Token("]");
+export const EndObject: Token = new Token("}");
+export const Null: Token = new Token("n");
 
-export type Value = GoSlice<byte>;
+export type Value = GoDefined<
+  GoSlice<byte>,
+  "__goDefinedType::github.com/go-json-experiment/json/jsontext::type::Value::e83a93b64e2ccb2d4a377d9f9967e79a3b67d10c1f888316e94321bf7cda027e"
+>;
 
 export interface Decoder {
   PeekKind(): Kind;
   ReadToken(): [Token, GoError];
-  ReadValue(): [unknown, GoError];
+  ReadValue(): [Value, GoError];
 }
 
 export interface Encoder {
   WriteToken(token: Token): GoError;
-  WriteValue(value: unknown): GoError;
-  Bytes(): GoSlice<byte>;
+  WriteValue(value: Value): GoError;
 }
 
 class JsonDecoder implements Decoder {
-  readonly #value: unknown;
-  #consumed = false;
+  readonly #value: Value;
+  #consumed: boolean = false;
 
   constructor(input: unknown) {
     this.#value = parseInput(input);
@@ -76,12 +79,12 @@ class JsonDecoder implements Decoder {
     return [new Token(kindOf(this.#value)), undefined];
   }
 
-  ReadValue(): [unknown, GoError] {
+  ReadValue(): [Value, GoError] {
     if (this.#consumed) {
-      return [undefined, new Error("json decoder exhausted")];
+      return [GoNilSlice<byte>(), new Error("json decoder exhausted")];
     }
     this.#consumed = true;
-    return [this.#value, undefined];
+    return [this.#value.slice(), undefined];
   }
 }
 
@@ -119,34 +122,35 @@ class JsonEncoder implements Encoder {
     }
   }
 
-  WriteValue(value: unknown): GoError {
+  WriteValue(value: Value): GoError {
     try {
+      const rawValue = textDecoder.decode(Uint8Array.from(value));
+      const decodedValue: unknown = JSON.parse(rawValue);
       const frame = this.#stack[this.#stack.length - 1];
       const objectFrame = asJsonObjectFrame(frame);
       if (objectFrame !== undefined) {
         if (objectFrame.expecting !== "key") {
           this.#writeValuePrefix();
-          this.#chunks.push(JSON.stringify(normalizeForJson(value)));
+          this.#chunks.push(rawValue);
           return undefined;
+        }
+        if (typeof decodedValue !== "string") {
+          return new Error("json object name must be a string");
         }
         if (objectFrame.count > 0) {
           this.#chunks.push(",");
         }
-        this.#chunks.push(JSON.stringify(String(value)));
+        this.#chunks.push(JSON.stringify(decodedValue));
         this.#chunks.push(":");
         objectFrame.expecting = "value";
         return undefined;
       }
       this.#writeValuePrefix();
-      this.#chunks.push(JSON.stringify(normalizeForJson(value)));
+      this.#chunks.push(rawValue);
       return undefined;
     } catch (error) {
       return toError(error);
     }
-  }
-
-  Bytes(): GoSlice<byte> {
-    return Array.from(textEncoder.encode(this.#chunks.join("")));
   }
 
   #writeValuePrefix(): void {
@@ -224,12 +228,15 @@ export function WithIndentPrefix(prefix: string): Option {
   return { name: "WithIndentPrefix", value: prefix };
 }
 
-const parseInput = (input: unknown): unknown => {
+const parseInput = (input: unknown): Value => {
   if (typeof input === "string") {
-    return JSON.parse(input);
+    JSON.parse(input);
+    return Array.from(textEncoder.encode(input));
   }
   if (Array.isArray(input) || input instanceof Uint8Array) {
-    return JSON.parse(textDecoder.decode(Uint8Array.from(input as ArrayLike<number>)));
+    const bytes = Array.from(input);
+    JSON.parse(textDecoder.decode(Uint8Array.from(bytes)));
+    return bytes;
   }
   if (typeof input === "object" && input !== null && "Read" in input) {
     const bytes: Array<byte> = [];
@@ -243,31 +250,25 @@ const parseInput = (input: unknown): unknown => {
         break;
       }
     }
-    return JSON.parse(textDecoder.decode(Uint8Array.from(bytes as Array<number>)));
+    JSON.parse(textDecoder.decode(Uint8Array.from(bytes)));
+    return bytes;
   }
-  return input;
+  const text = JSON.stringify(normalizeForJson(input));
+  if (text === undefined) {
+    throw new Error("json input cannot be represented as a JSON value");
+  }
+  return Array.from(textEncoder.encode(text));
 }
 
-const kindOf = (value: unknown): string => {
-  if (value === null) {
-    return "n";
-  }
-  if (Array.isArray(value)) {
-    return "[";
-  }
-  if (typeof value === "object") {
-    return "{";
-  }
-  if (typeof value === "string") {
-    return "\"";
-  }
-  if (typeof value === "boolean") {
-    return value ? "t" : "f";
-  }
-  return "0";
-}
+const kindOf = (value: Value): string => {
+  const first = textDecoder.decode(Uint8Array.from(value)).trimStart().charAt(0);
+  return first === "-" || (first >= "0" && first <= "9") ? "0" : first;
+};
 
 const normalizeForJson = (value: unknown): unknown => {
+  if (GoIsRef(value)) {
+    return value.v;
+  }
   if (value instanceof Map) {
     return Object.fromEntries(value);
   }

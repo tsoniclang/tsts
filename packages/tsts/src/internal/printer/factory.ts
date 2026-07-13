@@ -1,8 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoPointerMethodSet, GoPtr, GoSlice } from "../../go/compat.js";
 import { Itoa } from "../../go/strconv.js";
-import type { Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
-import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone, Node_Name } from "../ast/spine.js";
+import type { Node, NodeFactoryCoercible, NodeList } from "../ast/spine.js";
+import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory as AstNodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone, Node_Name } from "../ast/spine.js";
 import type { NodeFactory as NodeFactory_88523d1c } from "../ast/generated/factory.js";
 import type { LabeledStatement, NonNullExpression, ParenthesizedExpression, PartiallyEmittedExpression, SatisfiesExpression, AsExpression, ExpressionWithTypeArguments, VariableDeclaration, VariableDeclarationList } from "../ast/generated/data.js";
 import { GetNonAssignedNameOfDeclaration, GetNameOfDeclaration, HasSyntacticModifier, IsMemberName, IsNodeDescendantOf, IsPrologueDirective, NodeIsSynthesized, RangeIsSynthesized, GetNodeId, TryGetPropertyNameOfBindingOrAssignmentElement, IsOuterExpression, OEKAll } from "../ast/utilities.js";
@@ -61,6 +61,7 @@ import { GeneratedIdentifierFlagsAuto, GeneratedIdentifierFlagsKindMask, Generat
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::NodeFactory","kind":"type","status":"implemented","sigHash":"090eeeccd7a9312c831c8c23dfcfe79fc09da23cd3a387758c5fda1591b6992f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The hidden pointer-method carrier statically exposes the Go pointer receiver set without adding value methods, reflection, prototype mutation, or a wrapper object.","goSignatureHash":"0f3846dcdcb4c3a6b17a7ec53b8d2da74981cca95e3998a9812cea968d5a4f7f","tsSignatureHash":"fca8a2d43aaa5a15d83ca16a93708068515ce38ba7ff1d1c106f840cf08df43a"}
  *
  * Go source:
  * NodeFactory struct {
@@ -70,8 +71,10 @@ import { GeneratedIdentifierFlagsAuto, GeneratedIdentifierFlagsKindMask, Generat
  */
 export interface NodeFactory {
   __tsgoEmbedded0: NodeFactory_88523d1c;
-  AsNodeFactory(): GoPtr<NodeFactory_88523d1c>;
   emitContext: GoPtr<EmitContext>;
+  readonly [__tsgoPointerMethodSet]?: GoPointerMethodSet<{
+    AsNodeFactory(): GoPtr<NodeFactory_88523d1c>;
+  }>;
 }
 
 /**
@@ -99,7 +102,7 @@ export function NewNodeFactory(context: GoPtr<EmitContext>): GoPtr<NodeFactory> 
     // Go embeds the value `*ast.NewNodeFactory(...)`; the `*` dereference is
     // expressed here via the non-null assertion on the returned GoPtr.
     __tsgoEmbedded0: embedded,
-    AsNodeFactory: () => NodeFactory_AsNodeFactory(embedded),
+    AsNodeFactory: () => AstNodeFactory_AsNodeFactory(embedded),
     emitContext: context,
   };
 }
@@ -690,7 +693,7 @@ export function NodeFactory_CreateExpressionFromEntityName(receiver: GoPtr<NodeF
   const f = receiver!;
   if (IsQualifiedName(node)) {
     const left = NodeFactory_CreateExpressionFromEntityName(f, AsQualifiedName(node)!.Left);
-    const right = Node_Clone(AsQualifiedName(node)!.Right, NodeFactory_AsNodeFactory(f.__tsgoEmbedded0)! as unknown as NodeFactoryCoercible);
+    const right = Node_Clone(AsQualifiedName(node)!.Right, AstNodeFactory_AsNodeFactory(f.__tsgoEmbedded0));
     right!.Loc = AsQualifiedName(node)!.Right!.Loc;
     // TODO(rbuckton): Does this need to be parented?
     right!.Parent = AsQualifiedName(node)!.Right!.Parent;
@@ -698,7 +701,7 @@ export function NodeFactory_CreateExpressionFromEntityName(receiver: GoPtr<NodeF
     propAccess!.Loc = node!.Loc;
     return propAccess;
   }
-  const res = Node_Clone(node, NodeFactory_AsNodeFactory(f.__tsgoEmbedded0)! as unknown as NodeFactoryCoercible);
+  const res = Node_Clone(node, AstNodeFactory_AsNodeFactory(f.__tsgoEmbedded0));
   res!.Loc = node!.Loc;
   // TODO(rbuckton): Does this need to be parented?
   res!.Parent = node!.Parent;

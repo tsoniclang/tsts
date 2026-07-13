@@ -1,18 +1,34 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { bool } from "../../../go/scalars.js";
+import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import type { FileMode } from "../../../go/io/fs.js";
+import type { bool, byte } from "../../../go/scalars.js";
 import { MapFS_as_FS } from "../../../go/testing/fstest.js";
-import type { MapFS } from "../../../go/testing/fstest.js";
+import type { MapFile, MapFS } from "../../../go/testing/fstest.js";
+import { Time } from "../../../go/time.js";
 import { SkipDir } from "../vfs.js";
 import type { DirEntry, WalkDirFunc } from "../vfs.js";
 import { From } from "./iofs.js";
 
+function bytes(text: string): GoSlice<byte> {
+  return Array.from(new TextEncoder().encode(text));
+}
+
+function mapFile(text: string): GoPtr<MapFile> {
+  return {
+    Data: bytes(text),
+    Mode: 0 as FileMode,
+    ModTime: new Time(),
+    Sys: undefined,
+  };
+}
+
 function createTestFS(): MapFS {
-  return new Map([
-    ["foo.ts", { Data: "hello, world" }],
-    ["dir1/file1.ts", { Data: "export const foo = 42;" }],
-    ["dir1/file2.ts", { Data: "export const foo = 42;" }],
-    ["dir2/file1.ts", { Data: "export const foo = 42;" }],
+  return new Map<string, GoPtr<MapFile>>([
+    ["foo.ts", mapFile("hello, world")],
+    ["dir1/file1.ts", mapFile("export const foo = 42;")],
+    ["dir1/file2.ts", mapFile("export const foo = 42;")],
+    ["dir2/file1.ts", mapFile("export const foo = 42;")],
   ]);
 }
 

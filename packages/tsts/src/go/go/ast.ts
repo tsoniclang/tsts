@@ -22,26 +22,26 @@ export interface Ident extends Expr { Name?: string }
 export interface TypeSpec extends Node { Name?: Ident; Type?: Expr }
 export interface ValueSpec extends Node { Names?: Ident[]; Type?: Expr; Values?: Expr[] }
 
-export const ArrayType = "ArrayType";
-export const AssignStmt = "AssignStmt";
-export const BasicLit = "BasicLit";
-export const BinaryExpr = "BinaryExpr";
-export const CaseClause = "CaseClause";
-export const ChanType = "ChanType";
-export const CommClause = "CommClause";
-export const Ellipsis = "Ellipsis";
-export const GenDecl = "GenDecl";
-export const IndexExpr = "IndexExpr";
-export const IndexListExpr = "IndexListExpr";
-export const InterfaceType = "InterfaceType";
-export const MapType = "MapType";
-export const ParenExpr = "ParenExpr";
-export const SelectorExpr = "SelectorExpr";
-export const SelectStmt = "SelectStmt";
-export const StarExpr = "StarExpr";
-export const StructType = "StructType";
-export const SwitchStmt = "SwitchStmt";
-export const UnaryExpr = "UnaryExpr";
+export const ArrayType: "ArrayType" = "ArrayType";
+export const AssignStmt: "AssignStmt" = "AssignStmt";
+export const BasicLit: "BasicLit" = "BasicLit";
+export const BinaryExpr: "BinaryExpr" = "BinaryExpr";
+export const CaseClause: "CaseClause" = "CaseClause";
+export const ChanType: "ChanType" = "ChanType";
+export const CommClause: "CommClause" = "CommClause";
+export const Ellipsis: "Ellipsis" = "Ellipsis";
+export const GenDecl: "GenDecl" = "GenDecl";
+export const IndexExpr: "IndexExpr" = "IndexExpr";
+export const IndexListExpr: "IndexListExpr" = "IndexListExpr";
+export const InterfaceType: "InterfaceType" = "InterfaceType";
+export const MapType: "MapType" = "MapType";
+export const ParenExpr: "ParenExpr" = "ParenExpr";
+export const SelectorExpr: "SelectorExpr" = "SelectorExpr";
+export const SelectStmt: "SelectStmt" = "SelectStmt";
+export const StarExpr: "StarExpr" = "StarExpr";
+export const StructType: "StructType" = "StructType";
+export const SwitchStmt: "SwitchStmt" = "SwitchStmt";
+export const UnaryExpr: "UnaryExpr" = "UnaryExpr";
 
 export function Inspect(root: Node | undefined, fn: (node: Node | undefined) => bool): void {
   const seen = new WeakSet<object>();

@@ -20,9 +20,9 @@ import * as utf16 from "../../go/unicode/utf16.js";
 // standard-library facades (strings/utf8) follow that contract, so we mirror it
 // here by operating over the UTF-8 byte view and converting back to a JS string
 // at the boundaries.
-const byteLen = StringByteLen;
+const byteLen: (s: string) => int = StringByteLen;
 const byteAt = (s: string, i: int): byte => StringByteAt(s, i) as byte;
-const byteSlice = StringByteSlice;
+const byteSlice: (s: string, start: int, end?: int) => string = StringByteSlice;
 // runeToString encodes a single rune to its UTF-8 JS string form, mirroring
 // Go's `string(rune)` conversion.
 const runeToString = (r: GoRune): string => {

@@ -1,5 +1,5 @@
-import type { byte, int } from "./scalars.js";
-import type { GoError, GoSlice } from "./compat.js";
+import type { byte, int, long, nuint } from "./scalars.js";
+import type { GoError, GoInterface, GoSlice } from "./compat.js";
 import * as nodeFs from "node:fs";
 import * as nodeOs from "node:os";
 import * as nodePath from "node:path";
@@ -7,21 +7,22 @@ import process from "node:process";
 import type { Writable } from "node:stream";
 import { NodeFS } from "./io/fs.js";
 import type { FileInfo, FS } from "./io/fs.js";
-import type { Writer } from "./io.js";
+import { Time } from "./time.js";
 
 export const Args: GoSlice<string> = [process.argv[1] ?? process.argv[0] ?? "node", ...process.argv.slice(2)];
-export const Interrupt = "SIGINT";
-export const PathError = Error;
+export const Interrupt: "SIGINT" = "SIGINT";
+export const PathError: ErrorConstructor = Error;
 
 export const O_APPEND: int = nodeFs.constants.O_APPEND as int;
 export const O_CREATE: int = nodeFs.constants.O_CREAT as int;
 export const O_TRUNC: int = nodeFs.constants.O_TRUNC as int;
 export const O_WRONLY: int = nodeFs.constants.O_WRONLY as int;
 
-export interface File extends Writer {
+export interface File {
+  Write(p: GoSlice<byte>): [int, GoError];
   WriteString(s: string): [int, GoError];
   Close(): GoError;
-  Fd(): int;
+  Fd(): nuint;
 }
 
 class NodeFile implements File {
@@ -52,8 +53,8 @@ class NodeFile implements File {
     }
   }
 
-  Fd(): int {
-    return this.fd;
+  Fd(): nuint {
+    return this.fd as nuint;
   }
 }
 
@@ -110,8 +111,8 @@ class stdioFile implements File {
     return undefined;
   }
 
-  Fd(): int {
-    return this.fd;
+  Fd(): nuint {
+    return this.fd as nuint;
   }
 }
 
@@ -214,19 +215,19 @@ export function RemoveAll(path: string): GoError {
   }
 }
 
-export function Stat(path: string): [FileInfo, GoError] {
+export function Stat(path: string): [GoInterface<FileInfo>, GoError] {
   try {
     const stats = nodeFs.statSync(path);
     return [{
       Name: () => nodePath.basename(path),
-      Size: () => stats.size as int,
+      Size: () => stats.size as long,
       Mode: () => (stats.isDirectory() ? 0x80000000 : (stats.mode & 0o777)) as unknown as import("./io/fs.js").FileMode,
-      ModTime: () => stats.mtime,
+      ModTime: () => new Time(stats.mtime),
       IsDir: () => stats.isDirectory(),
       Sys: () => stats,
     }, undefined];
   } catch (error) {
-    return [undefined as unknown as FileInfo, normalizeError(error)];
+    return [undefined, normalizeError(error)];
   }
 }
 
@@ -261,7 +262,7 @@ export function WriteFile(path: string, data: string, perm: int): GoError {
   }
 }
 
-export function Chtimes(path: string, aTime: unknown, mTime: unknown): GoError {
+export function Chtimes(path: string, aTime: Time, mTime: Time): GoError {
   try {
     nodeFs.utimesSync(path, toDate(aTime), toDate(mTime));
     return undefined;
@@ -270,8 +271,8 @@ export function Chtimes(path: string, aTime: unknown, mTime: unknown): GoError {
   }
 }
 
-function toDate(value: unknown): Date {
-  return value instanceof Date ? value : new Date();
+function toDate(value: Time): Date {
+  return new Date(value.UnixMilli() as number);
 }
 
 function normalizeError(error: unknown): GoError {

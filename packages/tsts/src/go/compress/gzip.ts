@@ -7,7 +7,7 @@ import * as nodeZlib from "node:zlib";
 export const BestCompression: int = 9 as int;
 
 class gzipReader implements IoReader {
-  private offset = 0;
+  private offset: number = 0;
 
   constructor(private readonly data: Uint8Array) {}
 

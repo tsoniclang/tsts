@@ -314,7 +314,9 @@ Facade generation has declaration inputs only:
 - Every runtime adaptation snapshots all canonical external Go declaration variants and their profile sets with `goDeclarationHash`. A pin that changes fields, underlying type, methods, constraints, profile coverage, or any other declaration evidence invalidates the adaptation even when the public TypeScript storage still happens to type-check.
 - A Go method stored as a top-level authored TypeScript function requires one exact `methodBindings` row: canonical Go method ID, TypeScript export name, and the receiver parameter's local TypeScript name. The function signature is still rendered only from Go evidence, including the promoted receiver type; policy cannot restate parameters, generics, or results.
 - Type identities in active Go signatures produce typed facades such as `io.Writer`, `io.Reader`, `time.Duration`, and `context.Context`; policy presence is not a usage root.
-- Go declaration identity and JavaScript runtime storage remain separate contracts. The shared `uint64` signature carrier is `ulong`, whose established runtime storage is `number`; declarations that require exact 64-bit integer operations use an explicit reviewed `bigint` representation rather than silently migrating every `uint64` operation.
+- Go declaration identity and JavaScript runtime storage remain separate contracts. The shared `uint64` signature carrier is `ulong`, whose established runtime storage is `number`; an authored facade that requires exact 64-bit integer operations must declare a facade-local `runtimeAdaptation.basicStorage` row from `uint64` to `bigint`, with a durable reason. The exact Go declaration and authored TypeScript declaration remain hash-pinned, every configured basic-storage row must be consumed by the selected facade contract, and the exception never changes unrelated `uint64` operations.
+- A pointer to a storage-proven aggregate uses `GoPtr<T>`. A pointer to replaceable scalar/header/interface storage, including an open type parameter whose constraint does not prove aggregate storage, uses `GoRef<T>`. This keeps every open `*T` addressable and write-through; it never admits a direct value representation that Go's pointer type cannot have.
+- `GoPointerConstraint<T>` is used only to model a generic type parameter constrained by Go's `*T` type set, where different legal instantiations can select `GoPtr<T>` or `GoRef<T>`. It is never a value carrier and requires no runtime discrimination.
 - An authored external-package surface is a separate explicit, partial declaration contract. Callable/value entries can be compared only when supplied by that catalog; type entries additionally require an explicit TypeScript storage contract and fail closed without one. The catalog never becomes a reachability root and never enters generated facade artifacts. Porter never discovers package surfaces by scanning implementation bodies or by enumerating every package export.
 - Porter finalizes one declaration registry with two explicit projections: the active artifact closure and the external-surface audit closure. Only the active projection can create generated files. Both projections consume the same parser-proven authored declaration surfaces, so audit-only evidence can never leak into artifact reachability.
 - Configured authored policies are validated against their exact direct TypeScript declaration origins even when inactive, but neither the policy nor that validation becomes a usage root. Once an authored type is reached by one of the explicit closures, only its selected public declaration members, mandatory heritage, emitted pointer metadata, and explicit method bindings can add dependencies.
@@ -334,6 +336,20 @@ module; they must not be hidden among mechanically ported declarations.
 Export declarations are not duplicate declarations: named, namespace, and star
 re-export routes are inventoried separately and validated by the exact module
 index for missing or ambiguous targets.
+
+Reviewed non-Go variables must carry an explicit type unless a function-valued
+initializer itself supplies a complete explicit callable signature. Pure
+declaration-constant values remain hash-pinned. An explicitly typed variable
+whose initializer is outside that closed constant grammar records only that a
+runtime initializer is present; the initializer expression is implementation
+code and cannot make the declaration incomplete or enter its hash. Parameter
+default syntax and any closed constant default remain declaration semantics.
+
+Parameter defaults follow the same boundary: default presence remains exact
+signature syntax, closed primitive constant defaults retain their exact value,
+and every other default expression is recorded as a runtime initializer without
+entering the declaration hash. This preserves function arity/optionality without
+turning executable initializer bodies into Porter scope.
 
 Parser-backed Porter tests require a fresh built TSTS parser. Missing, empty, or
 unreadable configured freshness source trees, stale output, and parser loading

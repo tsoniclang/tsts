@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoBooleanKey, GoEqualStrict, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, type GoError, type GoPtr } from "../../../go/compat.js";
+import { GoBooleanKey, GoEqualStrict, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, type GoError, type GoMapKeyDescriptor, type GoPtr } from "../../../go/compat.js";
 import type { Duration, Time } from "../../../go/time.js";
 import { Time as TimeClass } from "../../../go/time.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -34,7 +34,7 @@ function zeroTime(): Time {
   return new TimeClass();
 }
 
-const sourceFileParseOptionsKey = GoStructKey<SourceFileParseOptions, readonly [string, Path, bool, bool]>(
+const sourceFileParseOptionsKey: GoMapKeyDescriptor<SourceFileParseOptions> = GoStructKey<SourceFileParseOptions, readonly [string, Path, bool, bool]>(
   [
     GoStructField((value) => value.FileName, GoStringKey),
     GoStructField((value) => value.Path, GoStringKey),
@@ -83,8 +83,8 @@ export interface host {
  * )
  */
 export let ______46749447_0: GoInterface<CompilerHost> = host_as_compiler_CompilerHost(undefined);
-export let ______46749447_1: BuildInfoReader = host_as_incremental_BuildInfoReader(undefined);
-export let ______46749447_2: Host = host_as_incremental_Host(undefined);
+export let ______46749447_1: GoInterface<BuildInfoReader> = host_as_incremental_BuildInfoReader(undefined);
+export let ______46749447_2: GoInterface<Host> = host_as_incremental_Host(undefined);
 
 export function host_as_compiler_CompilerHost(receiver: GoPtr<host>): CompilerHost {
   return {

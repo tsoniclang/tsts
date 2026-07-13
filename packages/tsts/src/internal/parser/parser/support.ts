@@ -226,9 +226,9 @@ import { Parser_jsErrorAtRange, Parser_parseErrorAt, Parser_parseErrorAtRange, P
 import { parserPool, viableKeywordSuggestions } from "./state.js";
 
 import type { GoFunc } from "../../../go/compat.js";
-const byteLen = utf8.StringByteLen;
-const byteAt = utf8.StringByteAt;
-const byteSlice = utf8.StringByteSlice;
+const byteLen: (text: string) => int = utf8.StringByteLen;
+const byteAt: (text: string, index: int) => int = utf8.StringByteAt;
+const byteSlice: (text: string, start: int, end?: int) => string = utf8.StringByteSlice;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::newParser","kind":"func","status":"implemented","sigHash":"e8799413d77acc7643df3b0c789d3524ab29dc535207b91246362c4eacd2aeb8"}

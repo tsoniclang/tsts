@@ -524,6 +524,7 @@ function requireExternalFacadeStoragePlan(value) {
 function requireExactAuthoredSurfaces(authoredRoots, value, methodSetSignatures) {
   if (!(value instanceof Map)) throw new Error("finalized external facade catalog requires one exact authored-surface map");
   const surfaces = new Map();
+  const declarationHashDrift = [];
   for (const [objectId, surface] of value) {
     const root = authoredRoots.get(objectId);
     if (root === undefined) throw new Error(`authored facade surface '${objectId}' has no storage-plan root`);
@@ -532,10 +533,7 @@ function requireExactAuthoredSurfaces(authoredRoots, value, methodSetSignatures)
     }
     const configuredHash = root.runtimeAdaptation?.tsDeclarationHash;
     if (configuredHash !== undefined && surface.declarationHash !== configuredHash) {
-      throw new Error(
-        `authored facade surface '${objectId}' drifted from its reviewed TypeScript declaration hash: ` +
-        `config=${configuredHash} current=${surface.declarationHash}`,
-      );
+      declarationHashDrift.push({ objectId, configuredHash, currentHash: surface.declarationHash });
     }
     for (const variant of root.variants) {
       buildAuthoredContractSurface(root, variant.declaration, methodSetSignatures, surface);
@@ -544,6 +542,12 @@ function requireExactAuthoredSurfaces(authoredRoots, value, methodSetSignatures)
   }
   for (const objectId of authoredRoots.keys()) {
     if (!surfaces.has(objectId)) throw new Error(`authored facade root '${objectId}' has no source declaration surface`);
+  }
+  if (declarationHashDrift.length > 0) {
+    throw new Error(`authored facade surfaces drifted from their reviewed TypeScript declaration hashes:\n${declarationHashDrift
+      .sort((left, right) => compareText(left.objectId, right.objectId))
+      .map(({ objectId, configuredHash, currentHash }) => `- ${objectId}: config=${configuredHash} current=${currentHash}`)
+      .join("\n")}`);
   }
   return surfaces;
 }
