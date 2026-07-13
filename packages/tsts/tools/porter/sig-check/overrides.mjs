@@ -51,6 +51,7 @@ export function resolveOverride(localOverride, id, expected, actual, canon, over
 const RUNTIME_DICTIONARY_TYPES = new Map([
   ["zero-value", { id: "packages/tsts/src/go/compat.ts::GoZeroFactory", name: "GoZeroFactory" }],
   ["equality", { id: "packages/tsts/src/go/compat.ts::GoEquality", name: "GoEquality" }],
+  ["map-key", { id: "packages/tsts/src/go/compat.ts::GoMapKeyDescriptor", name: "GoMapKeyDescriptor" }],
 ]);
 const RUNTIME_DICTIONARY_PARAMETER_FIELDS = new Set([
   "name", "role", "modifiers", "type", "rest", "optional", "optionalSyntax", "question", "missingType",

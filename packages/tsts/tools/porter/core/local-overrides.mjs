@@ -172,8 +172,8 @@ function validateRuntimeDictionaries(value, unit) {
     if (JSON.stringify(keys) !== JSON.stringify(["kind", "parameter", "typeParameter"])) {
       issues.push(`${label} must contain exactly kind, parameter, and typeParameter`);
     }
-    if (dictionary.kind !== "zero-value" && dictionary.kind !== "equality") {
-      issues.push(`${label}.kind must be 'zero-value' or 'equality'`);
+    if (dictionary.kind !== "zero-value" && dictionary.kind !== "equality" && dictionary.kind !== "map-key") {
+      issues.push(`${label}.kind must be 'zero-value', 'equality', or 'map-key'`);
     }
     if (typeof dictionary.parameter !== "string" || dictionary.parameter.trim() === "") {
       issues.push(`${label}.parameter must be a non-empty string`);

@@ -5,6 +5,7 @@ import { compareSignatures, resolveOverride } from "./sig-check.mjs";
 
 const zeroFactoryId = "packages/tsts/src/go/compat.ts::GoZeroFactory";
 const equalityId = "packages/tsts/src/go/compat.ts::GoEquality";
+const mapKeyDescriptorId = "packages/tsts/src/go/compat.ts::GoMapKeyDescriptor";
 const identity = (value) => value;
 const keyword = (name) => ({ t: "kw", kw: name });
 const typeParameterReference = (index) => ({ t: "tp", depth: 0, index });
@@ -41,6 +42,11 @@ const equalityDictionaryParameter = (name, typeParameterIndex, changes = {}) => 
   id: equalityId,
   args: [typeParameterReference(typeParameterIndex)],
 }, changes);
+const mapKeyDictionaryParameter = (name, typeParameterIndex, changes = {}) => parameter(name, {
+  t: "ref",
+  id: mapKeyDescriptorId,
+  args: [typeParameterReference(typeParameterIndex)],
+}, changes);
 const signature = ({ params, ret = keyword("void"), typeParams }) => ({
   role: "implementation",
   declarationModifiers: ["export"],
@@ -59,6 +65,11 @@ const dictionary = (parameterName, typeParameterName) => ({
 });
 const equalityDictionary = (parameterName, typeParameterName) => ({
   kind: "equality",
+  parameter: parameterName,
+  typeParameter: typeParameterName,
+});
+const mapKeyDictionary = (parameterName, typeParameterName) => ({
+  kind: "map-key",
   parameter: parameterName,
   typeParameter: typeParameterName,
 });
@@ -157,6 +168,23 @@ test("runtime dictionary override validates equality dictionaries by exact ident
 
   assert.deepEqual(resolve([equalityDictionary("equal", "T")], expected, actual).issues, []);
   assert.match(resolve([dictionary("equal", "T")], expected, actual).issues[0].reason, /exact type GoZeroFactory/);
+});
+
+test("runtime dictionary override validates map-key descriptors by exact identity", () => {
+  const typeParams = [typeParameter("T", 0)];
+  const expected = func({
+    typeParams,
+    params: [parameter("value", typeParameterReference(0))],
+    ret: keyword("boolean"),
+  });
+  const actual = func({
+    typeParams,
+    params: [parameter("value", typeParameterReference(0)), mapKeyDictionaryParameter("keyDescriptor", 0)],
+    ret: keyword("boolean"),
+  });
+
+  assert.deepEqual(resolve([mapKeyDictionary("keyDescriptor", "T")], expected, actual).issues, []);
+  assert.match(resolve([equalityDictionary("keyDescriptor", "T")], expected, actual).issues[0].reason, /exact type GoEquality/);
 });
 
 test("runtime dictionary override rejects every malformed dictionary parameter shape", () => {
