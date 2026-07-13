@@ -469,29 +469,33 @@ test("ast-generator parses the exact upstream nodeData method order", () => {
 test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion, not NodeDefault", () => {
   const files = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-1");
   const data = files.get("internal/ast/generated/data.ts");
-  assert.ok(data.includes("export interface Identifier extends PrimaryExpressionBase, FlowNodeBase {"));
+  assert.ok(data.includes("export interface Identifier extends PrimaryExpressionBase, FlowNodeBase, nodeData {"));
   // Promotion: Identifier embeds FlowNodeBase, so FlowNodeData -> FlowNodeBase_FlowNodeData.
-  assert.match(data, /const Identifier_nodeDataPrototype: nodeData & ThisType<GoPtr<Identifier>> = \{[\s\S]*?FlowNodeData\(\) \{ return FlowNodeBase_FlowNodeData\(this\); \},/);
+  assert.match(data, /class IdentifierNodeData implements nodeData \{[\s\S]*?FlowNodeData\(\) \{ return FlowNodeBase_FlowNodeData\(this\); \}/);
   // No override -> NodeDefault for DeclarationData (Identifier has no DeclarationBase).
-  assert.match(data, /const Identifier_nodeDataPrototype: nodeData & ThisType<GoPtr<Identifier>> = \{[\s\S]*?DeclarationData\(\) \{ return NodeDefault_DeclarationData\(this\); \},/);
+  assert.match(data, /class IdentifierNodeData implements nodeData \{[\s\S]*?DeclarationData\(\) \{ return NodeDefault_DeclarationData\(this\); \}/);
   // Leaf nodes still use NodeDefault for VisitEachChild.
-  assert.match(data, /const Identifier_nodeDataPrototype: nodeData & ThisType<GoPtr<Identifier>> = \{[\s\S]*?VisitEachChild\(v: GoPtr<NodeVisitor>\): GoPtr<Node> \{ return NodeDefault_VisitEachChild\(this, v\); \},/);
+  assert.match(data, /class IdentifierNodeData implements nodeData \{[\s\S]*?VisitEachChild\(v: GoPtr<NodeVisitor>\): GoPtr<Node> \{ return NodeDefault_VisitEachChild\(this, v\); \}/);
   // Child-bearing nodes get generated VisitEachChild rewrites.
   assert.match(data, /export function ExpressionStatement_VisitEachChild\(receiver: GoPtr<ExpressionStatement>, v: GoPtr<NodeVisitor>\): GoPtr<Node> \{\s*return Factory\.NodeFactory_UpdateExpressionStatement\(generatedVisitorFactory\(v\), receiver, generatedVisitNode\(v, receiver!\.Expression\) as GoPtr<Expression>\);\s*\}/);
-  assert.match(data, /const ExpressionStatement_nodeDataPrototype: nodeData & ThisType<GoPtr<ExpressionStatement>> = \{[\s\S]*?VisitEachChild\(v: GoPtr<NodeVisitor>\): GoPtr<Node> \{ return ExpressionStatement_VisitEachChild\(this, v\); \},/);
-  // The statically named carrier field preserves the concrete interface receiver.
+  assert.match(data, /class ExpressionStatementNodeData implements nodeData \{[\s\S]*?VisitEachChild\(v: GoPtr<NodeVisitor>\): GoPtr<Node> \{ return ExpressionStatement_VisitEachChild\(this, v\); \}/);
+  // A generated class gives the concrete Go type a static, non-enumerable
+  // method set without prototype mutation or an extra interface-box object.
   assert.match(data, /import \{ GoNilSlice \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
   assert.doesNotMatch(data, /goReceiverKey/);
-  assert.match(data, /__tsgoGoReceiver\(\): GoPtr<Identifier> \{ return this; \},/);
-  assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return globalThis\.Object\.setPrototypeOf\(receiver!, Identifier_nodeDataPrototype\) as nodeData;\s*\}/);
-  assert.match(data, /export function createIdentifierData\(\): Identifier & nodeData \{\s*return globalThis\.Object\.create\(Identifier_nodeDataPrototype\) as Identifier & nodeData;\s*\}/);
+  assert.match(data, /export interface Identifier extends PrimaryExpressionBase, FlowNodeBase, nodeData \{/);
+  assert.match(data, /__tsgoGoReceiver\(\): GoPtr<Identifier> \{ return this; \}/);
+  assert.match(data, /interface IdentifierNodeData extends Identifier \{\}/);
+  assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return receiver!;\s*\}/);
+  assert.match(data, /export function createIdentifierData\(\): Identifier \{\s*return new IdentifierNodeData\(\);\s*\}/);
+  assert.doesNotMatch(data, /Object\.(?:create|setPrototypeOf)|ThisType</);
 });
 
 test("ast-generator: named concrete nodes expose their generated Name override", () => {
   const files = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-name");
   const data = files.get("internal/ast/generated/data.ts");
   assert.match(data, /export function ParameterDeclaration_Name\(receiver: GoPtr<ParameterDeclaration>\): GoPtr<Node> \{\s*return receiver!\.name;\s*\}/);
-  assert.match(data, /const ParameterDeclaration_nodeDataPrototype: nodeData & ThisType<GoPtr<ParameterDeclaration>> = \{[\s\S]*?Name\(\) \{ return ParameterDeclaration_Name\(this\); \},/);
+  assert.match(data, /class ParameterDeclarationNodeData implements nodeData \{[\s\S]*?Name\(\) \{ return ParameterDeclaration_Name\(this\); \}/);
 });
 
 test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/cast", () => {
