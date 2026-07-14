@@ -42,6 +42,7 @@ test("the finalized operation plan uses direct storage ownership and package-lev
       fields: [{ name: "value", blank: false, shape: { kind: "typeParameter", key: `${fixture.objectId}::type::0`, name: "T" } }],
   });
   assert.equal(entry.semanticDeclaration, fixture.unit.semantic[0].type);
+  assert.equal(entry.sourceUnit, unitOwnership.goByID.get(fixture.unit.id));
   assert.equal(entry.storageIdentity, "src/internal/sample/value.ts::Pair");
   assert.equal(entry.storageAudit, auditedStorage.get(fixture.objectId));
   assert.equal(entry.tsPath, "src/internal/sample/value.ts");
@@ -190,6 +191,7 @@ function auditedStorageFor(fixture, unitOwnership, rawMismatches = []) {
       goUnit: unitOwnership.goByID.get(fixture.unit.id),
       rawMismatches,
       tsUnit: unitOwnership.tsByID.get(fixture.unit.id),
+      valueType: { t: "ref", id: "src/internal/sample/value.ts::Pair", args: [{ t: "tp", depth: 0, index: 0 }] },
     }],
     snapshot: fixture.snapshot,
     tsUnits: fixture.tsUnits,

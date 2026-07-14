@@ -3,7 +3,11 @@ import {
   assertSemanticTypeContext,
   semanticTypeContexts,
 } from "../core/semantic-type-nilability.mjs";
-import { semanticNamedNilabilityDisposition } from "./semantic-named-nilability.mjs";
+import {
+  semanticDeclaredNilabilityDisposition,
+  semanticNamedNilabilityDisposition,
+} from "./semantic-named-nilability.mjs";
+import { exactSemanticTypeDeclarationIdentity } from "../core/semantic-type-declaration-identity.mjs";
 import { semanticPointerConstraintRepresentation, semanticPointerPointeeRepresentation } from "./semantic-pointer-lowering.mjs";
 
 export function lowerSemanticType(type, context, typeContext = semanticTypeContexts.value) {
@@ -110,6 +114,24 @@ export function lowerSemanticTypeParameters(parameters, context) {
   });
 }
 
+export function lowerSemanticDeclaredValue(declaration, context, label = "Go type declaration") {
+  const { objectType, intrinsicKind } = exactSemanticTypeDeclarationIdentity(declaration, label);
+  const typeParameters = requireArray(declaration.typeParameters, `${label} type parameters`);
+  if (intrinsicKind === "unsafe-pointer-basic") {
+    if (typeParameters.length !== 0) throw new Error(`${label} unsafe-pointer declaration cannot have type parameters`);
+    return lowerSemanticType(objectType, context, semanticTypeContexts.value);
+  }
+  const base = {
+    kind: "reference",
+    reference: objectType.reference,
+    typeArguments: typeParameters.map((parameter, index) => ({
+      kind: "typeParameter",
+      reference: requireTypeParameterReference(parameter?.reference, `${label} type parameter #${index}`),
+    })),
+  };
+  return applyNamedDisposition(base, semanticDeclaredNilabilityDisposition(declaration, context, label), semanticTypeContexts.value, objectType.reference.objectId);
+}
+
 export function semanticContextWithTypeParameters(context, parameters) {
   const typeParameterConstraints = new Map(context.typeParameterConstraints ?? []);
   for (const [index, parameter] of requireArray(parameters, "canonical Go type parameters").entries()) {
@@ -176,12 +198,16 @@ function lowerNamed(type, context, typeContext) {
   const typeArguments = reference.typeArgs.map((argument) => lowerValue(argument, context));
   const base = { kind: "reference", reference, typeArguments };
   const disposition = semanticNamedNilabilityDisposition(type, context);
+  return applyNamedDisposition(base, disposition, typeContext, reference.objectId);
+}
+
+function applyNamedDisposition(base, disposition, typeContext, objectId) {
   if (disposition.kind === "plain") return base;
   if (disposition.kind === "rawInterface") {
     return typeContext === semanticTypeContexts.value ? carrier("interface", [base]) : base;
   }
   if (disposition.kind === "carrier") return carrier(disposition.carrier, [base]);
-  throw new Error(`named/alias Go type '${reference.objectId}' has no exact semantic lowering contract in profile '${context.profile}'`);
+  throw new Error(`named/alias Go type '${objectId}' has no exact semantic lowering contract`);
 }
 
 function lowerTypeParameter(reference) {

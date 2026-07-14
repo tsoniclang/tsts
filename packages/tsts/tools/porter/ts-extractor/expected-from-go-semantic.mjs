@@ -9,15 +9,14 @@ import {
   semanticContractDescriptor,
   semanticSignatureDescriptor,
 } from "./semantic-contract-descriptor.mjs";
-import {
-  semanticTypeDeclarationContract,
-} from "./semantic-named-nilability.mjs";
+import { semanticTypeDeclarationContract } from "./semantic-named-nilability.mjs";
 import {
   addProfileSemanticStorageEvidence,
   buildTypeRepresentationEvidence,
 } from "./semantic-pointer-lowering.mjs";
 import {
   lowerSemanticSignature,
+  lowerSemanticDeclaredValue,
   lowerSemanticType,
   lowerSemanticTypeParameters,
   semanticContextWithTypeParameters,
@@ -97,6 +96,48 @@ export function goUnitDescriptor(unit, index) {
   rows.sort((left, right) => compareText(JSON.stringify(left.descriptor), JSON.stringify(right.descriptor)));
   if (rows.length === 1) return rows[0].descriptor;
   return { kind: "profileVariants", variants: rows };
+}
+
+export function goTypeUnitValueDescriptor(unit, index) {
+  if (unit?.kind !== "type") throw new Error(`Go value-type descriptor requires one type unit, got '${unit?.kind ?? "missing"}'`);
+  const variants = semanticVariants(unit).map((declaration) => ({ declaration, profiles: declaration.profiles ?? [] }));
+  return semanticNamedValueDescriptor({ objectId: unit.semantic?.[0]?.type?.object?.id, variants }, index, `Go type unit '${unit.id}'`);
+}
+
+export function semanticNamedValueDescriptor(semantic, index, label = "semantic Go type") {
+  if (semantic === null || typeof semantic !== "object" || !Array.isArray(semantic.variants) || semantic.variants.length === 0) {
+    throw new Error(`${label} has no semantic declaration variants`);
+  }
+  const byDescriptor = new Map();
+  const seenProfiles = new Set();
+  for (const variant of semantic.variants) {
+    const declaration = variant.declaration?.type;
+    if (declaration === undefined) throw new Error(`${label} has no semantic type declaration`);
+    for (const profile of variant.profiles ?? []) {
+      if (seenProfiles.has(profile)) throw new Error(`${label} duplicates semantic profile '${profile}'`);
+      seenProfiles.add(profile);
+      const loweringContext = semanticContextWithTypeParameters({ index, profile }, declaration.typeParameters ?? []);
+      const parameters = lowerSemanticTypeParameters(declaration.typeParameters ?? [], loweringContext);
+      const descriptorContext = {
+        index,
+        profile,
+        typeParameterConstraints: loweringContext.typeParameterConstraints,
+        typeParameters: bindTypeParameters(parameters, new Map()),
+      };
+      const contract = lowerSemanticDeclaredValue(declaration, loweringContext, label);
+      const descriptor = semanticContractDescriptor(contract, descriptorContext, descriptorOperations(index));
+      const key = JSON.stringify(descriptor);
+      const row = byDescriptor.get(key) ?? { descriptor, profiles: [] };
+      row.profiles.push(profile);
+      byDescriptor.set(key, row);
+    }
+  }
+  const rows = [...byDescriptor.values()].map((row) => ({ ...row, profiles: row.profiles.sort((left, right) => left - right) }));
+  rows.sort((left, right) => compareText(JSON.stringify(left.descriptor), JSON.stringify(right.descriptor)));
+  if (rows.length !== 1) {
+    throw new Error(`${label} has ${rows.length} profile-dependent value representation contracts`);
+  }
+  return rows[0].descriptor;
 }
 
 export function semanticTypeDescriptor(type, context, options = {}) {

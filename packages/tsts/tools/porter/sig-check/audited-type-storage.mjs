@@ -6,7 +6,7 @@ import { unitSignatureHash, unitSignatureSnapshot } from "./overrides.mjs";
 
 const finalizedInputs = new WeakMap();
 const inputKeys = Object.freeze(["canonicalIdentity", "config", "largeFileSplits", "records", "snapshot", "tsUnits", "unitOwnership"]);
-const recordKeys = Object.freeze(["actual", "expected", "goUnit", "rawMismatches", "tsUnit"]);
+const recordKeys = Object.freeze(["actual", "expected", "goUnit", "rawMismatches", "tsUnit", "valueType"]);
 
 export class FinalizedAuditedTypeStorageCatalog {
   #entries;
@@ -40,7 +40,7 @@ export function buildAuditedTypeStorageCatalog(input) {
   for (const [index, record] of records.entries()) {
     const label = `audited type-storage record[${index}]`;
     requireExactObject(record, recordKeys, label);
-    const { actual, expected, goUnit, rawMismatches, tsUnit } = record;
+    const { actual, expected, goUnit, rawMismatches, tsUnit, valueType } = record;
     if (goUnit?.kind !== "type") throw new Error(`${label}.goUnit must be one type declaration`);
     if (!Array.isArray(rawMismatches)) throw new Error(`${label}.rawMismatches must be an array`);
     const semanticDeclaration = invariantSemanticVariant(goUnit, "bound to audited TypeScript storage").type;
@@ -67,6 +67,9 @@ export function buildAuditedTypeStorageCatalog(input) {
       semanticDeclaration,
       storageIdentity,
       unitId: goUnit.id,
+      valueTypeDescriptor: deepFreeze(structuredClone(valueType)),
+      valueTypeDescriptorHash: unitSignatureHash(valueType, canonicalIdentity),
+      valueTypeDescriptorSnapshot: unitSignatureSnapshot(valueType, canonicalIdentity),
     }));
   }
   entries.sort((left, right) => compareText(left.objectId, right.objectId));
@@ -131,5 +134,13 @@ function requireExactObject(value, keys, label) {
 
 function requireIdentity(value, label) {
   if (typeof value !== "string" || value === "" || value.includes("\0")) throw new Error(`${label} is missing`);
+  return value;
+}
+
+function deepFreeze(value) {
+  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+    for (const child of Object.values(value)) deepFreeze(child);
+    Object.freeze(value);
+  }
   return value;
 }

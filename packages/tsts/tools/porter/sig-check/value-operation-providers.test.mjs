@@ -10,6 +10,8 @@ import {
   extractIndexedValueExportDescriptor,
 } from "../ts-extractor/extract-signatures.mjs";
 import { indexTypeScriptModuleSources } from "../ts-extractor/module-index.mjs";
+import { buildExpectedIndex } from "../ts-extractor/expected-from-go.mjs";
+import { loadProfile } from "../ts-extractor/profile.mjs";
 import { collectGoValueOperationProviderMismatches } from "./value-operation-providers.mjs";
 
 const api = await loadParser();
@@ -34,7 +36,7 @@ export function PairValueOps<T>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> {
   const relation = reviewedRelation(first);
   const config = fixtureConfig([relation]);
   const { moduleIndex, valueEnvironments } = indexed(source);
-  const result = collectGoValueOperationProviderMismatches({ api, config, moduleIndex, snapshot, valueEnvironments });
+  const result = collect(config, { moduleIndex, valueEnvironments }, snapshot);
   assert.equal(result.checked, 1);
   assert.deepEqual(result.mismatches, []);
   assert.equal(result.ownedDeclarationIds.size, 1);
@@ -49,14 +51,14 @@ export function PairValueOps<T>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> { 
   const hash = operationHash(source, "PairValueOps", "function");
   const config = fixtureConfig([reviewedRelation(hash)]);
   const drifted = indexed(source.replace("valueOps: GoValueOps<T>", "valueOps: T"));
-  const drift = collectGoValueOperationProviderMismatches({ api, config, ...drifted, snapshot });
+  const drift = collect(config, drifted, snapshot);
   assert.equal(drift.mismatches[0].kind, "go-value-operation-typescript-drift");
 
   const reexported = indexed(new Map([
     [moduleId, 'export { PairValueOps } from "./implementation.js";'],
     ["src/go/implementation.ts", source],
   ]));
-  const reexport = collectGoValueOperationProviderMismatches({ api, config, ...reexported, snapshot });
+  const reexport = collect(config, reexported, snapshot);
   assert.equal(reexport.mismatches[0].kind, "go-value-operation-contract-error");
   assert.match(reexport.mismatches[0].detail, /instead of direct declaration/);
 
@@ -65,7 +67,7 @@ export function PairValueOps<T>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> { 
     "export const PairValueOps: GoValueOps<Pair<unknown>> = undefined as never;",
   );
   const wrongKind = indexed(valueSource);
-  const kindResult = collectGoValueOperationProviderMismatches({ api, config, ...wrongKind, snapshot });
+  const kindResult = collect(config, wrongKind, snapshot);
   assert.equal(kindResult.mismatches[0].kind, "go-value-operation-contract-error");
   assert.match(kindResult.mismatches[0].detail, /function/);
 });
@@ -81,12 +83,7 @@ export function PairValueOps<T extends object>(valueOps: GoValueOps<T>): GoValue
     tsDeclarationHash: operationHash(source, "PairValueOps", "function"),
   };
   const validConfig = fixtureConfig([validRelation]);
-  const valid = collectGoValueOperationProviderMismatches({
-    api,
-    config: validConfig,
-    ...indexed(source),
-    snapshot,
-  });
+  const valid = collect(validConfig, indexed(source), snapshot);
   assert.deepEqual(valid.mismatches, []);
 
   for (const { prior, replacement, expected } of [
@@ -96,12 +93,7 @@ export function PairValueOps<T extends object>(valueOps: GoValueOps<T>): GoValue
   ]) {
     const changed = source.replace(prior, replacement);
     const relation = { ...validRelation, tsDeclarationHash: operationHash(changed, "PairValueOps", "function") };
-    const result = collectGoValueOperationProviderMismatches({
-      api,
-      config: { ...validConfig, semanticRelations: [relation] },
-      ...indexed(changed),
-      snapshot,
-    });
+    const result = collect({ ...validConfig, semanticRelations: [relation] }, indexed(changed), snapshot);
     assert.equal(result.mismatches[0].kind, "go-value-operation-contract-error");
     assert.match(result.mismatches[0].detail, expected);
   }
@@ -123,12 +115,8 @@ export const MarkerValueOps: GoValueOps<Marker> = undefined as never;
     typeParameterCount: 0,
     goDeclarationHash: semanticHash(markerDeclaration, markerId, "Marker"),
   };
-  const result = collectGoValueOperationProviderMismatches({
-    api,
-    config: fixtureConfig([relation]),
-    ...indexed(source),
-    snapshot: semanticSnapshot(markerDeclaration),
-  });
+  const markerSnapshot = semanticSnapshot(markerDeclaration);
+  const result = collect(fixtureConfig([relation]), indexed(source), markerSnapshot);
   assert.deepEqual(result.mismatches, []);
 });
 
@@ -168,6 +156,17 @@ function indexed(sourceOrSources) {
   return { moduleIndex, valueEnvironments: buildIndexedModuleValueEnvironments(api, moduleIndex) };
 }
 
+function collect(config, indexedSources, semanticEvidence) {
+  const tsById = new Map((semanticEvidence.files ?? []).flatMap((file) => (file.units ?? []).map((unit) => [unit.id, { path: moduleId }])));
+  return collectGoValueOperationProviderMismatches({
+    api,
+    config,
+    expectedIndex: buildExpectedIndex(config, semanticEvidence, tsById, loadProfile(config)),
+    ...indexedSources,
+    snapshot: semanticEvidence,
+  });
+}
+
 function semanticHash(value, id, name) {
   return semanticDeclarationVariantsHash({
     objectId: id,
@@ -180,7 +179,7 @@ function semanticHash(value, id, name) {
 
 function semanticSnapshot(...declarations) {
   return {
-    files: [{ units: declarations.map((entry, index) => ({ id: `unit-${index}`, kind: "type", semantic: [entry] })) }],
+    files: [{ units: declarations.map((entry, index) => ({ id: `unit-${index}`, kind: "type", name: entry.type.object.name, semantic: [entry] })) }],
     semantic: { dependencyTypeDeclarations: [], externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [] } },
   };
 }

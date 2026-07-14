@@ -8,11 +8,13 @@ import {
   extractIndexedValueExportDescriptor,
 } from "../ts-extractor/extract-signatures.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
+import { semanticNamedValueDescriptor } from "../ts-extractor/expected-from-go.mjs";
 import { declarationOwnershipIds, descriptorOwnershipKind } from "./declaration-ownership.mjs";
 
 export function collectGoValueOperationProviderMismatches({
   api,
   config,
+  expectedIndex,
   moduleIndex,
   snapshot,
   valueEnvironments,
@@ -36,6 +38,10 @@ export function collectGoValueOperationProviderMismatches({
     });
     try {
       const storage = extractDirectStorage(api, moduleIndex, policy.storageIdentity, valueEnvironments);
+      const valueType = semanticNamedValueDescriptor(policy.semantic, expectedIndex, `reviewed Go value operations '${policy.objectId}'`);
+      if (!descriptorContainsReference(valueType, policy.storageIdentity)) {
+        throw new Error(`selected Go value representation does not reference direct storage '${policy.storageIdentity}'`);
+      }
       const extracted = policy.typeParameterCount === 0
         ? extractIndexedValueExportDescriptor(api, moduleIndex, moduleId, name, valueEnvironments)
         : extractIndexedFunctionExportDescriptor(api, moduleIndex, moduleId, name, valueEnvironments);
@@ -51,7 +57,7 @@ export function collectGoValueOperationProviderMismatches({
           detail: `reviewed TypeScript value-operation declaration drifted: config=${policy.tsDeclarationHash} current=${actualHash}`,
         });
       }
-      requireOperationShape(policy, extracted.descriptor, storage.descriptor, goValueOpsIdentity);
+      requireOperationShape(policy, extracted.descriptor, storage.descriptor, valueType, goValueOpsIdentity);
       for (const id of declarationOwnershipIds(moduleId, name, descriptorOwnershipKind(extracted.descriptor))) {
         ownedDeclarationIds.add(id);
       }
@@ -78,17 +84,12 @@ function extractDirectStorage(api, moduleIndex, identity, valueEnvironments) {
   return storage;
 }
 
-function requireOperationShape(policy, descriptor, storageDescriptor, goValueOpsIdentity) {
+function requireOperationShape(policy, descriptor, storageDescriptor, valueType, goValueOpsIdentity) {
   const storageTypeParameters = Array.isArray(storageDescriptor.typeParams) ? storageDescriptor.typeParams : [];
   if (storageTypeParameters.length !== policy.typeParameterCount) {
     throw new Error(`storage '${policy.storageIdentity}' has generic arity ${storageTypeParameters.length}, expected ${policy.typeParameterCount}`);
   }
-  const storageReference = {
-    t: "ref",
-    id: policy.storageIdentity,
-    args: storageTypeParameters.map((_, index) => typeParameterReference(index)),
-  };
-  const resultType = goValueOperationsReference(goValueOpsIdentity, storageReference);
+  const resultType = goValueOperationsReference(goValueOpsIdentity, valueType);
   if (policy.typeParameterCount === 0) {
     requireConstantOperation(descriptor, resultType);
     return;
@@ -146,6 +147,13 @@ function requireSameDescriptor(actual, expected, label) {
   const actualShape = canonicalSchemaValue(actual);
   const expectedShape = canonicalSchemaValue(expected);
   if (actualShape !== expectedShape) throw new Error(`${label} differs from the exact storage contract`);
+}
+
+function descriptorContainsReference(value, identity) {
+  if (value === null || typeof value !== "object") return false;
+  if (Array.isArray(value)) return value.some((entry) => descriptorContainsReference(entry, identity));
+  if (value.t === "ref" && value.id === identity) return true;
+  return Object.values(value).some((entry) => descriptorContainsReference(entry, identity));
 }
 
 function splitOperationIdentity(identity) {

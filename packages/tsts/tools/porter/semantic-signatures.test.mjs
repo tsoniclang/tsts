@@ -6,6 +6,7 @@ import { semanticTypeContexts } from "./core/semantic-type-nilability.mjs";
 import { isSemanticPrimaryUnitKind } from "./core/unit-kinds.mjs";
 import {
   buildExpectedIndex,
+  goTypeUnitValueDescriptor,
   goUnitDescriptor,
   semanticTypeDescriptor,
 } from "./ts-extractor/expected-from-go-semantic.mjs";
@@ -153,6 +154,64 @@ test("canonical semantic types map resolved array lengths, identities, and const
       ],
     },
   );
+});
+
+test("named declaration values preserve exact storage and interface carriers", () => {
+  const constraint = { kind: "interface", nilable: true, interface: {
+    explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: false, implicit: true, methodSetOnly: false,
+    explicitMethodOrderProvenance: "source",
+  } };
+  const makeUnit = (name, rhs, nilable) => {
+    const objectId = `example/p::type::${name}`;
+    const typeParameter = parameter(objectId, 0, constraint, "T");
+    const object = {
+      id: objectId,
+      packagePath: "example/p",
+      name,
+      exported: true,
+      type: named("example/p", name, objectId, [], nilable),
+    };
+    return {
+      id: `example::p.go::type::${name}`,
+      kind: "type",
+      name,
+      semantic: variants({
+        kind: "type",
+        packagePath: "example/p",
+        object,
+        type: {
+          alias: false,
+          object,
+          typeParameters: [typeParameter],
+          rhs,
+          methodSurface: "declaration-units",
+          methods: [],
+          valueMethodSet: [],
+          pointerMethodSet: [],
+        },
+      }),
+    };
+  };
+  const box = makeUnit("Box", { kind: "struct", nilable: false, struct: { fields: [] } }, false);
+  const contract = makeUnit("Contract", { kind: "interface", nilable: true, interface: {
+    explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: false, implicit: false, methodSetOnly: false,
+    explicitMethodOrderProvenance: "source",
+  } }, true);
+  const index = indexFor([box, contract]);
+  assert.deepEqual(goTypeUnitValueDescriptor(box, index), {
+    t: "ref",
+    id: "src/p/Box.ts::Box",
+    args: [{ t: "tp", depth: 0, index: 0 }],
+  });
+  assert.deepEqual(goTypeUnitValueDescriptor(contract, index), {
+    t: "ref",
+    id: "src/go/compat.ts::GoInterface",
+    args: [{
+      t: "ref",
+      id: "src/p/Contract.ts::Contract",
+      args: [{ t: "tp", depth: 0, index: 0 }],
+    }],
+  });
 });
 
 test("function descriptors use exact go/types parameters, constraints, variadics, and results", () => {

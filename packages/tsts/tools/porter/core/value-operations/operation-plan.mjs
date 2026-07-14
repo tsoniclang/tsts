@@ -109,6 +109,7 @@ export function buildGoValueOperationPlan(input) {
     return Object.freeze({
       ...entry,
       operationIdentity,
+      sourceUnit: ownership.goUnit,
       storageAudit,
       storageIdentity,
       tsPath: ownership.tsUnit.path,

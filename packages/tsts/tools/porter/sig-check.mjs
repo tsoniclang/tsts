@@ -16,7 +16,7 @@ import {
   requireDeclarationAuditPrerequisites,
 } from "./core/declaration-prerequisites.mjs";
 import { buildIndexedModuleValueEnvironments, extractParsedFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
-import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
+import { buildExpectedIndex, goTypeUnitValueDescriptor, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { collectJsonTagMismatches } from "./ts-extractor/json-tags.mjs";
 import { requireIndexedModule } from "./ts-extractor/module-index.mjs";
 import { compareSignatures } from "./sig-check/comparison.mjs";
@@ -174,6 +174,7 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
     ? collectTypeStoragePolicyMismatches({
       api,
       config: deps.config,
+      expectedIndex,
       moduleIndex,
       snapshot: deps.snapshot,
       valueEnvironments,
@@ -253,6 +254,7 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
         goUnit: go,
         rawMismatches: result.evidence.rawMismatches,
         tsUnit,
+        valueType: goTypeUnitValueDescriptor(go, expectedIndex),
       });
     }
   }

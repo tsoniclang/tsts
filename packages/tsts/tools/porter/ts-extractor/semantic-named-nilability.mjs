@@ -76,6 +76,20 @@ export function semanticNamedNilabilityDisposition(type, context) {
   }
   assertSemanticNilability(type);
   const reference = requireReference(type.reference);
+  return namedNilabilityDisposition(type, reference, reference.typeArgs.length, context);
+}
+
+export function semanticDeclaredNilabilityDisposition(declaration, context, label = "Go type declaration") {
+  const { objectType, intrinsicKind } = exactSemanticTypeDeclarationIdentity(declaration, label);
+  if (intrinsicKind === "unsafe-pointer-basic") {
+    throw new Error(`${label} unsafe-pointer declaration has no named nilability disposition`);
+  }
+  if (!Array.isArray(declaration.typeParameters)) throw new Error(`${label} has no exact type-parameter list`);
+  const reference = requireReference(objectType.reference);
+  return namedNilabilityDisposition(objectType, reference, declaration.typeParameters.length, context);
+}
+
+function namedNilabilityDisposition(type, reference, typeArgumentCount, context) {
   if (reference.objectId === "builtin::type::any") {
     requireNilabilityMatch(type, true, reference.objectId, "go/types builtin interface");
     return { kind: "rawInterface" };
@@ -86,14 +100,14 @@ export function semanticNamedNilabilityDisposition(type, context) {
   }
   const declaration = context.index.declaredTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
   if (declaration !== undefined) {
-    if (reference.typeArgs.length !== declaration.typeParameterCount) {
-      throw new Error(`Go type '${reference.objectId}' expected ${declaration.typeParameterCount} canonical type argument(s), got ${reference.typeArgs.length}`);
+    if (typeArgumentCount !== declaration.typeParameterCount) {
+      throw new Error(`Go type '${reference.objectId}' expected ${declaration.typeParameterCount} canonical type argument(s), got ${typeArgumentCount}`);
     }
     requireNilabilityMatch(type, declaration.nilable, reference.objectId, "declaration");
   }
 
   const storageIdentity = context.index.namedTypeStorage?.get(reference.objectId);
-  if (storageIdentity !== undefined) return storageDisposition(type, reference, storageIdentity, context);
+  if (storageIdentity !== undefined) return storageDisposition(type, reference, typeArgumentCount, storageIdentity, context);
 
   if (declaration !== undefined) {
     if (usesRawInterfaceStorage(declaration.rhs, context, new Set([reference.objectId]))) return { kind: "rawInterface" };
@@ -106,11 +120,11 @@ export function semanticNamedNilabilityDisposition(type, context) {
   }
 
   const dependency = context.index.dependencyTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
-  if (dependency !== undefined) return dependencyDisposition(type, reference, dependency);
+  if (dependency !== undefined) return dependencyDisposition(type, reference, typeArgumentCount, dependency);
   return { kind: "unresolved" };
 }
 
-function storageDisposition(type, reference, storageIdentity, context) {
+function storageDisposition(type, reference, typeArgumentCount, storageIdentity, context) {
   const index = context.index;
   const builtinStorage = builtinStorageIdentity(reference, index);
   if (builtinStorage !== undefined && builtinStorage !== storageIdentity) {
@@ -122,7 +136,7 @@ function storageDisposition(type, reference, storageIdentity, context) {
     if (dependency.storageIdentity !== storageIdentity) {
       throw new Error(`dependency Go type '${reference.objectId}' storage '${storageIdentity}' does not equal reviewed storage '${dependency.storageIdentity}'`);
     }
-    return dependencyDisposition(type, reference, dependency);
+    return dependencyDisposition(type, reference, typeArgumentCount, dependency);
   }
   const carrier = index.storageCarrierByIdentity?.get(storageIdentity);
   if (carrier !== undefined) {
@@ -155,9 +169,9 @@ function builtinStorageIdentity(reference, index) {
   return undefined;
 }
 
-function dependencyDisposition(type, reference, dependency) {
-  if (reference.typeArgs.length !== dependency.arity) {
-    throw new Error(`Go type '${reference.objectId}' expected ${dependency.arity} canonical type argument(s), got ${reference.typeArgs.length}`);
+function dependencyDisposition(type, reference, typeArgumentCount, dependency) {
+  if (typeArgumentCount !== dependency.arity) {
+    throw new Error(`Go type '${reference.objectId}' expected ${dependency.arity} canonical type argument(s), got ${typeArgumentCount}`);
   }
   requireNilabilityMatch(type, dependency.intrinsicNilable, reference.objectId, "dependency go/types declaration");
   if (dependency.rawInterface) return { kind: "rawInterface" };
