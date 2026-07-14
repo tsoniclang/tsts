@@ -167,9 +167,11 @@ function operationFixture() {
   });
   const reviewedProviders = buildReviewedGoValueOperationCatalog(config, snapshot);
   const generatorOwnedProviders = emptyGeneratorOwnedGoValueOperationCatalog(config, snapshot);
+  const externalFacadeCatalog = finalizeGeneratedFacadeFixtureCatalog(config, snapshot);
   const plan = buildGoValueOperationPlan({
     auditedStorage,
     config,
+    externalFacadeCatalog,
     generatorOwnedProviders,
     largeFileSplits,
     reviewedProviders,
@@ -179,7 +181,7 @@ function operationFixture() {
   });
   return {
     config,
-    externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot),
+    externalFacadeCatalog,
     largeFileSplits,
     plan,
     snapshot,

@@ -119,7 +119,9 @@ function methodSignature(ownerId, objectId, packagePath, parameters, includeRece
       receiver: {
         id: `${ownerId}::receiver`,
         name: "receiver",
+        nameKind: "named",
         packagePath,
+        embedded: false,
         exported: false,
         type: {
           kind: "pointer",
@@ -165,5 +167,13 @@ function namedType(objectId, packagePath, name, typeArgs = []) {
 }
 
 function semanticVariable(ownerId, role, index, name, packagePath, type) {
-  return { id: `${ownerId}::${role}::${index}`, name, packagePath, exported: false, type };
+  return {
+    id: `${ownerId}::${role}::${index}`,
+    name,
+    nameKind: name === "" ? "unnamed" : name === "_" ? "blank" : "named",
+    packagePath,
+    embedded: false,
+    exported: false,
+    type,
+  };
 }

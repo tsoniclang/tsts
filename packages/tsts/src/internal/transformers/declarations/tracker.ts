@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoAppend, GoEqualStrict, GoNilSlice, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -464,7 +464,7 @@ export function SymbolTrackerImpl_handleSymbolAccessibilityError(receiver: GoPtr
  * 	return checker.NewDiagnosticForNode(node, message, args...)
  * }
  */
-export function createDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function createDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   return NewDiagnosticForNode(node, message, ...args);
 }
 

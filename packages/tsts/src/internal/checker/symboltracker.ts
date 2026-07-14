@@ -1,7 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoInterface, GoPtr } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { Symbol } from "../ast/symbol.js";

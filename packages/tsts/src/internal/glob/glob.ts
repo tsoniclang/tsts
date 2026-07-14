@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoInterface, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceToZeroLength } from "../../go/compat.js";
+import { GoNilSlice } from "../../go/compat.js";
 import type { Stringer } from "../../go/fmt.js";
 import * as errors from "../../go/errors.js";
 import * as fmt from "../../go/fmt.js";

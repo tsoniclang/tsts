@@ -1,8 +1,8 @@
 import type { bool, byte, int, sbyte, uint } from "../../go/scalars.js";
 import type { GoArray, GoInterfaceValue, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
-import { GoAppend, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
-import { GoSlicePrefix, GoSliceRange } from "../../go/slice-runtime.js";
+import { GoSliceAppend, GoStringValueOps, GoSliceReslice } from "../../go/compat.js";
+import { GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
+
 import { Clip } from "../../go/slices.js";
 import type { Node } from "../ast/spine.js";
 import type { EntityName } from "../ast/generated/unions.js";
@@ -2429,7 +2429,7 @@ export function StructuredType_CallSignatures(receiver: GoPtr<StructuredType>): 
   if (GoSliceIsNil(receiver!.signatures)) {
     return GoNilSlice<GoPtr<Signature>>();
   }
-  return Clip(GoSlicePrefix(receiver!.signatures, receiver!.callSignatureCount));
+  return Clip(GoSliceReslice(receiver!.signatures, 0, receiver!.callSignatureCount));
 }
 
 /**
@@ -2444,7 +2444,7 @@ export function StructuredType_ConstructSignatures(receiver: GoPtr<StructuredTyp
   if (GoSliceIsNil(receiver!.signatures)) {
     return GoNilSlice<GoPtr<Signature>>();
   }
-  return Clip(GoSliceRange(receiver!.signatures, receiver!.callSignatureCount));
+  return Clip(GoSliceReslice(receiver!.signatures, receiver!.callSignatureCount, receiver!.signatures.length));
 }
 
 /**
@@ -2572,7 +2572,7 @@ export function InterfaceType_OuterTypeParameters(receiver: GoPtr<InterfaceType>
   if (receiver!.allTypeParameters.length === 0) {
     return GoNilSlice<GoPtr<Type>>();
   }
-  return Clip(GoSlicePrefix(receiver!.allTypeParameters, receiver!.outerTypeParameterCount));
+  return Clip(GoSliceReslice(receiver!.allTypeParameters, 0, receiver!.outerTypeParameterCount));
 }
 
 /**
@@ -2590,7 +2590,7 @@ export function InterfaceType_LocalTypeParameters(receiver: GoPtr<InterfaceType>
   if (receiver!.allTypeParameters.length === 0) {
     return GoNilSlice<GoPtr<Type>>();
   }
-  return Clip(GoSliceRange(receiver!.allTypeParameters, receiver!.outerTypeParameterCount, receiver!.allTypeParameters.length - 1));
+  return Clip(GoSliceReslice(receiver!.allTypeParameters, receiver!.outerTypeParameterCount, receiver!.allTypeParameters.length - 1));
 }
 
 /**
@@ -2608,7 +2608,7 @@ export function InterfaceType_TypeParameters(receiver: GoPtr<InterfaceType>): Go
   if (receiver!.allTypeParameters.length === 0) {
     return GoNilSlice<GoPtr<Type>>();
   }
-  return Clip(GoSlicePrefix(receiver!.allTypeParameters, receiver!.allTypeParameters.length - 1));
+  return Clip(GoSliceReslice(receiver!.allTypeParameters, 0, receiver!.allTypeParameters.length - 1));
 }
 
 /**

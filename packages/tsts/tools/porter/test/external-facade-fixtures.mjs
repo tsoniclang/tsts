@@ -233,5 +233,5 @@ export function signature(parameters, results = []) {
 }
 
 export function variable(id, name, type, exported = false) {
-  return { id, name, nameKind: name === "" ? "unnamed" : name === "_" ? "blank" : "named", packagePath: "", exported, type };
+  return { id, name, nameKind: name === "" ? "unnamed" : name === "_" ? "blank" : "named", packagePath: "", embedded: false, exported, type };
 }

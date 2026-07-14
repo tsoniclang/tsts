@@ -20,6 +20,7 @@ export function buildGoValueOperationArtifactInput(input) {
   const plan = buildGoValueOperationPlan({
     auditedStorage: evidence.auditedTypeStorage,
     config: workspace.config,
+    externalFacadeCatalog: workspace.externalFacadeCatalog,
     generatorOwnedProviders: evidence.generatorOwnedProviders,
     largeFileSplits: workspace.largeFileSplits,
     reviewedProviders: evidence.reviewedProviders,

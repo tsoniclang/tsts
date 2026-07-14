@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { buildPorterUnitOwnership } from "../unit-ownership.mjs";
 import { buildAuditedTypeStorageCatalog } from "../../sig-check/audited-type-storage.mjs";
+import { finalizeGeneratedFacadeFixtureCatalog } from "../../test/external-facade-fixtures.mjs";
 import { emptyGeneratorOwnedGoValueOperationCatalog } from "./generator-owned-providers.mjs";
 import { buildGoValueOperationPlan } from "./operation-plan.mjs";
 import { buildReviewedGoValueOperationCatalog } from "./reviewed-providers.mjs";
@@ -21,6 +22,7 @@ test("the finalized operation plan uses direct storage ownership and package-lev
   const plan = buildGoValueOperationPlan({
     auditedStorage,
     config: fixture.config,
+    externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(fixture.config, fixture.snapshot),
     generatorOwnedProviders,
     largeFileSplits: fixture.largeFileSplits,
     reviewedProviders,
@@ -68,6 +70,7 @@ test("operation planning rejects unfinalized and stale type ownership", () => {
   assert.throws(() => buildGoValueOperationPlan({
     auditedStorage: auditedStorageFor({ ...fixture, tsUnits: staleTsUnits }, ownership),
     config: fixture.config,
+    externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(fixture.config, fixture.snapshot),
     generatorOwnedProviders,
     largeFileSplits: fixture.largeFileSplits,
     reviewedProviders,
@@ -91,6 +94,7 @@ test("operation planning rejects generated operations for adapted TypeScript sto
   assert.throws(() => buildGoValueOperationPlan({
     auditedStorage,
     config: fixture.config,
+    externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(fixture.config, fixture.snapshot),
     generatorOwnedProviders,
     largeFileSplits: fixture.largeFileSplits,
     reviewedProviders,
@@ -117,6 +121,10 @@ function planFixture() {
         nilable: false,
         struct: { fields: [{ variable: { id: `${objectId}::rhs::field::0`, name: "value", embedded: false, type: { kind: "typeParameter", nilable: false, typeParameter: parameter } } }] },
       },
+      methodSurface: "declaration-units",
+      methods: [],
+      valueMethodSet: [],
+      pointerMethodSet: [],
     },
     profiles: [0],
   };

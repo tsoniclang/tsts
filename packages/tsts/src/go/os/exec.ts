@@ -1,4 +1,4 @@
-import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceIsNil, type GoError, type GoSlice } from "../compat.js";
+import { GoNilSlice, GoSliceIsNil, type GoError, type GoSlice } from "../compat.js";
 import * as nodeChildProcess from "node:child_process";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";

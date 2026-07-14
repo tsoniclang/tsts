@@ -1,8 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberValueOps, GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoEqualStrict, GoMapIsNil, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroMap, GoZeroNumber, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
-import { GoSlicePrefix } from "../../go/slice-runtime.js";
+import { GoNumberValueOps, GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceReslice } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroMap, GoZeroNumber, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+
 import * as maps from "../../go/maps.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList } from "../ast/spine.js";
 import type { NodeVisitor } from "../ast/visitor.js";
@@ -901,7 +901,7 @@ export function NodeBuilderImpl_checkTypeExpandability(receiver: GoPtr<NodeBuild
   if (!receiver!.ctx!.canIncreaseExpansionDepth) {
     NodeBuilderImpl_shouldExpandType(receiver, t, false as bool);
   }
-  receiver!.ctx!.typeStack = GoSlicePrefix(receiver!.ctx!.typeStack, receiver!.ctx!.typeStack.length - 1);
+  receiver!.ctx!.typeStack = GoSliceReslice(receiver!.ctx!.typeStack, 0, receiver!.ctx!.typeStack.length - 1);
   if (receiver!.ctx!.canIncreaseExpansionDepth) {
     return;
   }
@@ -5773,7 +5773,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
       propertyTypeNode = NewKeywordTypeNode(receiver!.f, KindAnyKeyword);
     }
     if (propertyIsReverseMapped) {
-      receiver!.ctx!.reverseMappedStack = GoSlicePrefix(receiver!.ctx!.reverseMappedStack, receiver!.ctx!.reverseMappedStack.length - 1);
+      receiver!.ctx!.reverseMappedStack = GoSliceReslice(receiver!.ctx!.reverseMappedStack, 0, receiver!.ctx!.reverseMappedStack.length - 1);
     }
   }
 
@@ -7531,7 +7531,7 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
     throw new globalThis.Error("Should be unreachable.");
   } finally {
     if (pushedType) {
-      receiver!.ctx!.typeStack = GoSlicePrefix(receiver!.ctx!.typeStack, receiver!.ctx!.typeStack.length - 1);
+      receiver!.ctx!.typeStack = GoSliceReslice(receiver!.ctx!.typeStack, 0, receiver!.ctx!.typeStack.length - 1);
     }
   }
 }

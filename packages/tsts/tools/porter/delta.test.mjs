@@ -400,7 +400,7 @@ function provenance(value) {
 function snapshot(gitRevision, files) {
   const requiredFiles = files.filter((candidate) => candidate.units.length > 0).map((candidate) => candidate.path).sort();
   return {
-    schemaVersion: 12,
+    schemaVersion: 13,
     sourceRoot: "/source",
     modulePath: "m",
     gitRevision,

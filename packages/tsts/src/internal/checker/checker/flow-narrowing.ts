@@ -1,7 +1,7 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
-import { GoAppend, GoNilSlice, GoValueRef } from "../../../go/compat.js";
+import { GoNilSlice, GoValueRef } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Name } from "../../ast/spine.js";
 import { Node_Body, Node_Elements, Node_Expression, Node_Initializer, Node_ModifierFlags, Node_Parameters, Node_Text, Node_Type } from "../../ast/ast.js";

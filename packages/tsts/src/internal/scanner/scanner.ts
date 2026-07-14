@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, type GoArray, type GoComparable, type GoConstraint, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice, type GoArray, type GoComparable, type GoConstraint, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../go/compat.js";
 import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strconv from "../../go/strconv.js";
@@ -301,7 +301,7 @@ export const EscapeSequenceScanningFlagsAllowExtendedUnicodeEscape: EscapeSequen
  * Go source:
  * ErrorCallback func(diagnostic *diagnostics.Message, start, length int, args ...any)
  */
-export type ErrorCallback = GoFunc<(diagnostic: GoPtr<Message>, start: int, length: int, ...args: Array<GoInterface<unknown>>) => void>;
+export type ErrorCallback = GoFunc<(diagnostic: GoPtr<Message>, start: int, length: int, args: GoSlice<GoInterface<unknown>>) => void>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::textToKeyword","kind":"varGroup","status":"implemented","sigHash":"14ef13cdcb0dfd5339e1b49cf7c515e53400b35faf22b708215134cacd64cfb2"}
@@ -1235,7 +1235,7 @@ function stringByteViewIndexByteInRange(text: string, view: utf8.StringByteView,
  * 	return false
  * }
  */
-export function hasJSDocTag(text: string, ...tags: Array<string>): bool {
+export function hasJSDocTag(text: string, tags: GoSlice<string>): bool {
   const view = utf8.GetStringByteView(text);
   return hasJSDocTagAt(text, view, 0, utf8.StringByteViewLen(text, view), ...tags);
 }
@@ -1371,7 +1371,7 @@ export function Scanner_error(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Messag
  * 	}
  * }
  */
-export function Scanner_errorAt(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Message>, pos: int, length: int, ...args: Array<GoInterface<unknown>>): void {
+export function Scanner_errorAt(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Message>, pos: int, length: int, args: GoSlice<GoInterface<unknown>>): void {
   const s = receiver!;
   if (s.onError !== undefined) {
     s.onError(diagnostic, pos, length, ...args);
@@ -2990,7 +2990,7 @@ export function Scanner_ReScanAsteriskEqualsToken(receiver: GoPtr<Scanner>): Kin
  * 	return s.token
  * }
  */
-export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErrors: Array<bool>): Kind {
+export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, reportErrors: GoSlice<bool>): Kind {
   const s = receiver!;
   const st = s.__tsgoEmbedded0;
   const shouldReportErrors = reportErrors.length > 0 && reportErrors[0]!;
@@ -5921,7 +5921,7 @@ export function isConflictMarkerTrivia(text: string, pos: int): bool {
 export function scanConflictMarkerTrivia(
   text: string,
   pos: int,
-  reportError: GoFunc<(diag: GoPtr<Message>, pos: int, length: int, ...args: Array<GoInterface<unknown>>) => void>,
+  reportError: GoFunc<(diag: GoPtr<Message>, pos: int, length: int, args: GoSlice<GoInterface<unknown>>) => void>,
 ): int {
   if (reportError !== undefined) {
     reportError(Merge_conflict_marker_encountered, pos, mergeConflictMarkerLength);

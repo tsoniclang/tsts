@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoRef, GoRune, GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
-import { GoAppend, GoNilSlice } from "../../go/compat.js";
+import { GoNilSlice } from "../../go/compat.js";
 import { StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { BinarySearchFunc as slicesBinarySearchFunc, SortFunc as slicesSortFunc } from "../../go/slices.js";
 import { CutPrefix, EqualFold } from "../../go/strings.js";

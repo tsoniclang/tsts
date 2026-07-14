@@ -1466,7 +1466,7 @@ export function tryGetEnd(node: GoInterface<{ End(): int }>): [int, bool] {
  * 	return end
  * }
  */
-export function greatestEnd(end: int, ...nodes: Array<GoInterface<{ End(): int }>>): int {
+export function greatestEnd(end: int, nodes: GoSlice<GoInterface<{ End(): int }>>): int {
   for (let i = nodes.length - 1; i >= 0; i--) {
     const node = nodes[i]!;
     const [nodeEnd, ok] = tryGetEnd(node);

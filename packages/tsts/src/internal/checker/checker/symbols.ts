@@ -1,10 +1,10 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoInterface, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps, GoSliceReslice } from "../../../go/compat.js";
 import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
-import { GoAppend, GoAppendSlice, GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroSlice, NewGoStructMap } from "../../../go/compat.js";
-import { GoSlicePrefix, GoSliceRange } from "../../../go/slice-runtime.js";
+import { GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroSlice, NewGoStructMap } from "../../../go/compat.js";
+
 import { Uint64 } from "../../../go/sync/atomic.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
@@ -12511,7 +12511,7 @@ export function Checker_tryGetNameFromType(receiver: GoPtr<Checker>, t: GoPtr<Ty
  * 	return -1
  * }
  */
-export function Checker_findResolutionCycleStartIndex(receiver: GoPtr<Checker>, target: TypeSystemEntity, propertyName: TypeSystemPropertyName): int {
+export function Checker_findResolutionCycleStartIndex(receiver: GoPtr<Checker>, target: GoInterface<TypeSystemEntity>, propertyName: TypeSystemPropertyName): int {
   for (let i = receiver!.typeResolutions.length - 1; i >= receiver!.resolutionStart; i--) {
     const resolution = receiver!.typeResolutions[i]!;
     if (Checker_typeResolutionHasProperty(receiver, resolution)) {
@@ -15043,8 +15043,8 @@ export function Checker_getNamedMembers(receiver: GoPtr<Checker>, members: Symbo
       result = GoSliceAppend(result, symbol_, GoPointerValueOps<Symbol>());
     }
   }
-  const contained = GoSlicePrefix(result, containedCount);
-  const inherited = GoSliceRange(result, containedCount);
+  const contained = GoSliceReslice(result, 0, containedCount);
+  const inherited = GoSliceReslice(result, containedCount, result.length);
   Checker_sortSymbols(receiver, contained);
   Checker_sortSymbols(receiver, inherited);
   result.splice(0, result.length, ...contained, ...inherited);
@@ -19609,7 +19609,7 @@ export function Checker_getAwaitedTypeNoAlias(receiver: GoPtr<Checker>, t: GoPtr
  * 	return t
  * }
  */
-export function Checker_getAwaitedTypeNoAliasEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Type> {
+export function Checker_getAwaitedTypeNoAliasEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Type> {
   if (IsTypeAny(t)) {
     return t;
   }
@@ -19631,7 +19631,7 @@ export function Checker_getAwaitedTypeNoAliasEx(receiver: GoPtr<Checker>, t: GoP
     receiver!.awaitedTypeStack = GoSliceAppend(receiver!.awaitedTypeStack, t, GoPointerValueOps<Type>());
     const mapped = Checker_mapType(receiver, t, (mappedType: GoPtr<Type>): GoPtr<Type> =>
       Checker_getAwaitedTypeNoAliasEx(receiver, mappedType, errorNode, diagnosticMessage, ...args));
-    receiver!.awaitedTypeStack = GoSlicePrefix(receiver!.awaitedTypeStack, receiver!.awaitedTypeStack.length - 1);
+    receiver!.awaitedTypeStack = GoSliceReslice(receiver!.awaitedTypeStack, 0, receiver!.awaitedTypeStack.length - 1);
     receiver!.cachedTypes.set(key, mapped);
     return mapped;
   }
@@ -19651,7 +19651,7 @@ export function Checker_getAwaitedTypeNoAliasEx(receiver: GoPtr<Checker>, t: GoP
     }
     receiver!.awaitedTypeStack = GoSliceAppend(receiver!.awaitedTypeStack, t, GoPointerValueOps<Type>());
     const awaitedType = Checker_getAwaitedTypeNoAliasEx(receiver, promisedType, errorNode, diagnosticMessage, ...args);
-    receiver!.awaitedTypeStack = GoSlicePrefix(receiver!.awaitedTypeStack, receiver!.awaitedTypeStack.length - 1);
+    receiver!.awaitedTypeStack = GoSliceReslice(receiver!.awaitedTypeStack, 0, receiver!.awaitedTypeStack.length - 1);
     if (awaitedType === undefined) {
       return undefined;
     }

@@ -2,7 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import * as strconv from "../../go/strconv.js";
 import type { GoInterface, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoFieldRef, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer } from "../../go/compat.js";
+import { GoEqualStrict, GoFieldRef, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint64 } from "../../go/sync/atomic.js";
 import {
@@ -34,7 +34,7 @@ import {
 } from "../ast/ast.js";
 import type { ModifierList, NodeList, SourceFile } from "../ast/ast.js";
 import type { Node } from "../ast/spine.js";
-import type { BinaryExpression } from "../ast/ast_generated.js";
+import type { BinaryExpression } from "../ast/generated/index.js";
 import {
   AsBinaryExpression,
   AsBindingElement,
@@ -6657,7 +6657,7 @@ export function isNarrowingTypeOfOperands(expr1: GoPtr<Node>, expr2: GoPtr<Node>
  * 	b.addDiagnostic(b.createDiagnosticForNode(node, message, args...))
  * }
  */
-export function Binder_errorOnNode(receiver: GoPtr<Binder>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
+export function Binder_errorOnNode(receiver: GoPtr<Binder>, node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void {
   Binder_addDiagnostic(receiver, Binder_createDiagnosticForNode(receiver, node, message, ...args));
 }
 
@@ -6670,7 +6670,7 @@ export function Binder_errorOnNode(receiver: GoPtr<Binder>, node: GoPtr<Node>, m
  * 	b.addDiagnostic(ast.NewDiagnostic(b.file, span, message, args...))
  * }
  */
-export function Binder_errorOnFirstToken(receiver: GoPtr<Binder>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
+export function Binder_errorOnFirstToken(receiver: GoPtr<Binder>, node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void {
   const span = GetRangeOfTokenAtPosition(receiver!.file, Node_Pos(node));
   Binder_addDiagnostic(receiver, NewDiagnostic(receiver!.file, span, message, ...args));
 }
@@ -6721,7 +6721,7 @@ export function Binder_errorOrSuggestionOnRange(receiver: GoPtr<Binder>, isError
  * 	return ast.NewDiagnostic(b.file, scanner.GetErrorRangeForNode(b.file, node), message, args...)
  * }
  */
-export function Binder_createDiagnosticForNode(receiver: GoPtr<Binder>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function Binder_createDiagnosticForNode(receiver: GoPtr<Binder>, node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   return NewDiagnostic(receiver!.file, GetErrorRangeForNode(receiver!.file, node), message, ...args);
 }
 

@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceValueOps } from "../../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice } from "../../../go/compat.js";
+import { GoNilMap, GoNilSlice } from "../../../go/compat.js";
 import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
@@ -1423,7 +1423,7 @@ export function Checker_checkNaNEquality(receiver: GoPtr<Checker>, errorNode: Go
  * 	return diagnostic
  * }
  */
-export function Checker_error(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function Checker_error(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   const diagnostic = NewDiagnosticForNode(location, message, ...args);
   Checker_addDiagnostic(receiver, diagnostic);
   return diagnostic;
@@ -1439,7 +1439,7 @@ export function Checker_error(receiver: GoPtr<Checker>, location: GoPtr<Node>, m
  * 	return diagnostic
  * }
  */
-export function Checker_errorSkippedOnNoEmit(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function Checker_errorSkippedOnNoEmit(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   const diagnostic = Checker_error(receiver, location, message, ...args);
   Diagnostic_SetSkippedOnNoEmit(diagnostic);
   return diagnostic;
@@ -1453,7 +1453,7 @@ export function Checker_errorSkippedOnNoEmit(receiver: GoPtr<Checker>, location:
  * 	c.addErrorOrSuggestion(isError, NewDiagnosticForNode(location, message, args...))
  * }
  */
-export function Checker_errorOrSuggestion(receiver: GoPtr<Checker>, isError: bool, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
+export function Checker_errorOrSuggestion(receiver: GoPtr<Checker>, isError: bool, location: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void {
   Checker_addErrorOrSuggestion(receiver, isError, NewDiagnosticForNode(location, message, ...args));
 }
 

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAppend, GoAssertComparableInterface, GoStringKey, GoZeroInterface, type GoConstraint, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAssertComparableInterface, GoStringKey, GoZeroInterface, type GoConstraint, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";

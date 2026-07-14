@@ -1,4 +1,4 @@
-import { GoAppend, GoStringKey, GoZeroPointer, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceValueOps, GoStringValueOps } from "../../../go/compat.js";
 import * as maps from "../../../go/maps.js";
 import * as slices from "../../../go/slices.js";

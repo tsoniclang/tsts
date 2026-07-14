@@ -119,7 +119,7 @@ import {
   type ParsingContext,
 } from "./state.js";
 
-import type { GoFunc } from "../../../go/compat.js";
+import type { GoFunc, GoSlice } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseErrorAtCurrentToken","kind":"method","status":"implemented","sigHash":"f2d34a403aacf239cc93f5ba8717d403b65a24ca42165837cd603e415203fbfc"}
  *
@@ -128,7 +128,7 @@ import type { GoFunc } from "../../../go/compat.js";
  * 	return p.parseErrorAtRange(p.scanner.TokenRange(), message, args...)
  * }
  */
-export function Parser_parseErrorAtCurrentToken(receiver: GoPtr<Parser>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function Parser_parseErrorAtCurrentToken(receiver: GoPtr<Parser>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   return Parser_parseErrorAtRange(receiver, Scanner_TokenRange(receiver!.scanner), message, ...args);
 }
 

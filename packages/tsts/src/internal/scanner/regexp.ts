@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAppend, type GoInterface, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../go/compat.js";
+import { type GoInterface, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../go/compat.js";
 import { GoMapValueOps, GoSliceAppend } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as math from "../../go/math.js";
@@ -380,7 +380,7 @@ export function regExpParser_charAt(receiver: GoPtr<regExpParser>, pos: int): Go
  * 	p.scanner.errorAt(msg, pos, length, args...)
  * }
  */
-export function regExpParser_error(receiver: GoPtr<regExpParser>, msg: GoPtr<Message>, pos: int, length: int, ...args: Array<GoInterface<unknown>>): void {
+export function regExpParser_error(receiver: GoPtr<regExpParser>, msg: GoPtr<Message>, pos: int, length: int, args: GoSlice<GoInterface<unknown>>): void {
   Scanner_errorAt(receiver!.scanner, msg, pos, length, ...args);
 }
 

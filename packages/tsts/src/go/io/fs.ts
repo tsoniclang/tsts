@@ -61,7 +61,7 @@ export interface FS {
   Open(name: string): [GoInterface<File>, GoError];
 }
 
-export type WalkDirFunc = GoDefined<GoFunc<(path: string, d: GoInterface<DirEntry>, err: GoError) => GoError>, "__goDefinedType::io/fs::type::WalkDirFunc::80e388257bb662fdc7aea4a472cd73207bb4a8a619d2b6ef001ef6043cae28a0">;
+export type WalkDirFunc = GoDefined<GoFunc<(path: string, d: GoInterface<DirEntry>, err: GoError) => GoError>, "__goDefinedType::io/fs::type::WalkDirFunc::8ee37751cc57cbf5114ab821a1c7fa1ef16c4f5fc759187d9841ccf6c9e635ba">;
 
 interface NodeFsRoot extends FS {
   readonly root: string;

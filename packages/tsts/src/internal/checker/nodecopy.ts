@@ -1,8 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoFunc, GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoFunctionValueOps, GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend, GoNilSlice, GoZeroMap } from "../../go/compat.js";
-import { GoSlicePrefix } from "../../go/slice-runtime.js";
+import { GoFunctionValueOps, GoPointerValueOps, GoSliceAppend, GoSliceReslice } from "../../go/compat.js";
+import { GoNilSlice, GoZeroMap } from "../../go/compat.js";
+
 import type { Node, NodeList, ModifierList } from "../ast/spine.js";
 import type { NodeVisitor } from "../ast/visitor.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -382,8 +382,8 @@ export function recoveryBoundary_startRecoveryScope(receiver: GoPtr<recoveryBoun
  */
 export function recoveryBoundary_endRecoveryScope(receiver: GoPtr<recoveryBoundary>, state: originalRecoveryScopeState): void {
   receiver!.hadError = state.hadError;
-  receiver!.ctx!.trackedSymbols = GoSlicePrefix(receiver!.ctx!.trackedSymbols, state.trackedSymbolsTop);
-  receiver!.deferredReports = GoSlicePrefix(receiver!.deferredReports, state.unreportedErrorsTop);
+  receiver!.ctx!.trackedSymbols = GoSliceReslice(receiver!.ctx!.trackedSymbols, 0, state.trackedSymbolsTop);
+  receiver!.deferredReports = GoSliceReslice(receiver!.deferredReports, 0, state.unreportedErrorsTop);
 }
 
 /**

@@ -2,7 +2,7 @@ import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
 import { GoSliceAppendSlice } from "../../go/compat.js";
 import { GoSliceAppend, GoSliceValueOps, GoStringValueOps } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoNilSlice } from "../../go/compat.js";
+import { GoNilSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import * as cmp from "../../go/cmp.js";
 import * as slices from "../../go/slices.js";
@@ -182,7 +182,7 @@ export function HasTrailingDirectorySeparator(path: string): bool {
  * 	return result()
  * }
  */
-export function CombinePaths(firstPath: string, ...paths: Array<string>): string {
+export function CombinePaths(firstPath: string, paths: GoSlice<string>): string {
   // TODO (drosen): There is potential for a fast path here.
   // In the case where we find the last absolute path and just path.Join from there.
   firstPath = NormalizeSlashes(firstPath);
@@ -651,7 +651,7 @@ export function reducePathComponents(components: GoSlice<string>): GoSlice<strin
  * 	return NormalizePath(combinedPath)
  * }
  */
-export function ResolvePath(path: string, ...paths: Array<string>): string {
+export function ResolvePath(path: string, paths: GoSlice<string>): string {
   let combinedPath: string;
   if (paths.length > 0) {
     combinedPath = CombinePaths(path, ...paths);

@@ -322,6 +322,7 @@ function semanticDeclaration(kind, name, valueSpecs = [], goPath = "internal/deb
           name: "",
           nameKind: "unnamed",
           packagePath,
+          embedded: false,
           exported: false,
           type: { kind: "named", nilable: false, reference: { objectId: `${packagePath}::type::${receiverName}`, packagePath, name: receiverName, typeArgs: [] } },
         },
@@ -425,7 +426,7 @@ function testSemanticSignature(ownerPath, packagePath, parameters, results, pack
     return items.flatMap((item) => (item.names?.length ? item.names : [""]).map((name) => {
       const id = `${ownerPath}::${role}::${index++}`;
       const nameKind = name === "" ? "unnamed" : name === "_" ? "blank" : "named";
-      return { id, name, nameKind, packagePath, exported: false, type: testSemanticType(item.type, packagePath, false, packages, `${id}::type`) };
+      return { id, name, nameKind, packagePath, embedded: false, exported: false, type: testSemanticType(item.type, packagePath, false, packages, `${id}::type`) };
     }));
   };
   return {

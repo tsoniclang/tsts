@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import * as strings from "../../../go/strings.js";
-import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_SubtreeFacts, Node_TemplateLiteralLikeData, NodeFactory_NewNodeList } from "../../ast/spine.js";

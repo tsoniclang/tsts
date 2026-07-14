@@ -1,8 +1,8 @@
 import type { bool, int } from "./scalars.js";
 import type { Seq } from "./iter.js";
 import type { GoEquality, GoFunc, GoPtr, GoSlice, GoOrdered } from "./compat.js";
-import { GoAppend, GoNilSlice, GoSliceIsNil } from "./compat.js";
-import { GoSlicePrefix } from "./slice-runtime.js";
+import { GoNilSlice, GoSliceIsNil, GoSliceReslice } from "./compat.js";
+
 import { Compare as cmpCompare } from "./cmp.js";
 import { GoEmptySlice } from "./compat.js";
 
@@ -243,7 +243,7 @@ export function DeleteFunc<T>(s: GoPtr<GoSlice<T>>, del: (e: T) => bool): GoSlic
       w++;
     }
   }
-  return GoSlicePrefix(slice, w);
+  return GoSliceReslice(slice, 0, w);
 }
 
 // Insert inserts the values v... into s at index i, returning the modified
@@ -304,7 +304,7 @@ export function Compact<T>(s: GoPtr<GoSlice<T>>, equal: GoEquality<T>): GoSlice<
       w++;
     }
   }
-  return GoSlicePrefix(slice, w);
+  return GoSliceReslice(slice, 0, w);
 }
 
 // CompactFunc is like Compact but uses an equality function to compare
@@ -323,7 +323,7 @@ export function CompactFunc<T>(s: GoPtr<GoSlice<T>>, eq: (a: T, b: T) => bool): 
       w++;
     }
   }
-  return GoSlicePrefix(slice, w);
+  return GoSliceReslice(slice, 0, w);
 }
 
 // ---------------------------------------------------------------------------

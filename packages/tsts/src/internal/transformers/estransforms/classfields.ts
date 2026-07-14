@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList } from "../../ast/spine.js";
 import type { NodeVisitor } from "../../ast/visitor.js";
@@ -6154,7 +6154,7 @@ export function classFieldsTransformer_getPrivateIdentifierEnvironment(receiver:
  * 	tx.pendingExpressions = append(tx.pendingExpressions, exprs...)
  * }
  */
-export function classFieldsTransformer_addPendingExpressions(receiver: GoPtr<classFieldsTransformer>, ...exprs: Array<GoPtr<Expression>>): void {
+export function classFieldsTransformer_addPendingExpressions(receiver: GoPtr<classFieldsTransformer>, exprs: GoSlice<GoPtr<Expression>>): void {
   receiver!.pendingExpressions = GoSliceAppendSlice(receiver!.pendingExpressions, exprs, GoPointerValueOps<Node>());
 }
 

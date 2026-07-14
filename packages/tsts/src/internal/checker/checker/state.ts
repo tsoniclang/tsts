@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import type { GoComparable, GoConstraint, GoDefined, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoConstraint, GoDefined, GoEquality, GoInterface, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroBoolean, GoZeroNumber, GoZeroPointer, GoZeroString, NewGoStructMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Hasher } from "../../../go/github.com/zeebo/xxh3.js";
@@ -92,7 +92,7 @@ import { Checker_permissiveMapperWorker, Checker_restrictiveMapperWorker } from 
 import { typeofNEFacts } from "../flow.js";
 import { Mutex, Once } from "../../../go/sync.js";
 
-import type { GoFunc, GoInterface, GoRef } from "../../../go/compat.js";
+import type { GoFunc, GoRef } from "../../../go/compat.js";
 import { GoNumberValueOps, GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
 import { GoSliceLoad } from "../../../go/compat.js";
 import { GoEmptySlice } from "../../../go/compat.js";
@@ -190,7 +190,7 @@ export const TypeSystemPropertyNameAliasTarget: TypeSystemPropertyName = 9;
  * }
  */
 export interface TypeResolution {
-  target: TypeSystemEntity;
+  target: GoInterface<TypeSystemEntity>;
   propertyName: TypeSystemPropertyName;
   result: bool;
 }
@@ -3513,7 +3513,7 @@ export const PredicateSemanticsSometimes: PredicateSemantics = PredicateSemantic
  * 	return NewDiagnosticForNode(node, message, args...)
  * }
  */
-export function createDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function createDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   return NewDiagnosticForNode(node, message, ...args);
 }
 

@@ -1,8 +1,8 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap, GoZeroPointer } from "../../../go/compat.js";
-import { GoSlicePrefix } from "../../../go/slice-runtime.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceReslice } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap, GoZeroPointer } from "../../../go/compat.js";
+
 import { recordExtensionCheckedCallMapping } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
@@ -10,7 +10,7 @@ import type { Number } from "../../jsnum/jsnum.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
-import type { ParameterDeclarationNode } from "../../ast/ast_generated.js";
+import type { ParameterDeclarationNode } from "../../ast/generated/index.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import { Diagnostic_AddRelatedInfo, Diagnostic_SetRelatedInfo, DiagnosticsCollection_Add, NewDiagnostic, NewDiagnosticChain } from "../../ast/diagnostic.js";
 import type { FunctionFlags } from "../../ast/functionflags.js";
@@ -4334,7 +4334,7 @@ export function Checker_getLongestCandidateIndex(receiver: GoPtr<Checker>, candi
 export function Checker_getTypeArgumentsFromNodes(receiver: GoPtr<Checker>, typeArgumentNodes: GoSlice<GoPtr<Node>>, typeParameters: GoSlice<GoPtr<Type>>): GoSlice<GoPtr<Type>> {
   let nodes = typeArgumentNodes;
   if ((nodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length > (typeParameters ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())).length) {
-    nodes = GoSlicePrefix(nodes, typeParameters.length);
+    nodes = GoSliceReslice(nodes, 0, typeParameters.length);
   }
   const typeArguments = core.Map(nodes, (n: GoPtr<Node>) => Checker_getTypeFromTypeNode(receiver, n));
   let result: GoSlice<GoPtr<Type>> = typeArguments;
@@ -10803,7 +10803,7 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
   const args = Node_Arguments(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const spreadIndex = Checker_getSpreadArgumentIndex(receiver, args);
   if (spreadIndex >= 0) {
-    let effectiveArgs = slices.Clip(GoSlicePrefix(args, spreadIndex)) as GoSlice<GoPtr<Node>>;
+    let effectiveArgs = slices.Clip(GoSliceReslice(args, 0, spreadIndex)) as GoSlice<GoPtr<Node>>;
     for (let i = spreadIndex; i < args.length; i++) {
       const arg = GoSliceLoad(args, i, GoPointerValueOps<Node>());
       let spreadType: GoPtr<Type>;

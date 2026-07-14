@@ -1,13 +1,13 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend, GoBigIntKey, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
-import { GoSlicePrefix, GoSliceRange } from "../../go/slice-runtime.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceReslice } from "../../go/compat.js";
+import { GoBigIntKey, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, Node_End, NodeList_Pos } from "../ast/spine.js";
 import { Node_Arguments, Node_AsFlowReduceLabelData, Node_AsFlowSwitchClauseData, Node_Elements, Node_Expression, Node_Initializer, Node_Parameters, Node_PropertyNameOrName, Node_StatementList, Node_Text, Node_Type } from "../ast/ast.js";
-import type { BinaryExpression, ElementAccessExpression, LiteralExpression, TypeOfExpression } from "../ast/ast_generated.js";
+import type { BinaryExpression, ElementAccessExpression, LiteralExpression, TypeOfExpression } from "../ast/generated/index.js";
 import { AsBinaryExpression, AsBindingElement, AsCaseBlock, AsClassStaticBlockDeclaration, AsConstructorDeclaration, AsElementAccessExpression, AsExportDeclaration, AsExportSpecifier, AsForInOrOfStatement, AsMetaProperty, AsPrefixUnaryExpression, AsQualifiedName, AsShorthandPropertyAssignment, AsSwitchStatement, AsTypeOfExpression } from "../ast/generated/casts.js";
 import { IsAccessExpression, IsAssignmentExpression, IsBooleanLiteral, IsBindingPattern, IsClassLike, IsEntityNameExpression, IsExpressionOfOptionalChainRoot, IsFunctionLike, IsFunctionOrModuleBlock, IsFunctionOrSourceFile, IsFunctionExpressionOrArrowFunction, IsObjectLiteralMethod, IsOptionalChain, IsStatic, IsStringLiteralLike, IsStringOrNumericLiteralLike, IsTypeNode, SkipParentheses, GetRootDeclaration, GetSourceFileOfNode, GetThisContainer, FindAncestor, TryGetTextOfPropertyName, IsThisInTypeQuery, HasStaticModifier, IsPushOrUnshiftIdentifier, IsAssignmentTarget, IsInJSFile, IsVarConstLike } from "../ast/utilities.js";
 import { IsArrowFunction, IsArrayBindingPattern, IsArrayLiteralExpression, IsBinaryExpression, IsBindingElement, IsCallExpression, IsCatchClause, IsElementAccessExpression, IsEnumMember, IsExpressionStatement, IsExportSpecifier, IsForInStatement, IsForOfStatement, IsIdentifier, IsMetaProperty, IsNonNullExpression, IsObjectBindingPattern, IsParameterDeclaration, IsParenthesizedExpression, IsPrivateIdentifier, IsPropertyAccessExpression, IsPropertyAssignment, IsPropertyDeclaration, IsPropertySignatureDeclaration, IsShorthandPropertyAssignment, IsStringLiteral, IsTypeOfExpression, IsVariableDeclaration } from "../ast/generated/predicates.js";
@@ -18,7 +18,7 @@ import type { DiagnosticsCollection } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { FlowList, FlowNode, FlowReduceLabelData, FlowSwitchClauseData } from "../ast/flow.js";
 import { FlowFlagsAssignment, FlowFlagsArrayMutation, FlowFlagsBranchLabel, FlowFlagsCall, FlowFlagsCondition, FlowFlagsLoopLabel, FlowFlagsReduceLabel, FlowFlagsShared, FlowFlagsStart, FlowFlagsSwitchClause, FlowFlagsTrueCondition, FlowFlagsUnreachable, FlowSwitchClauseData_IsEmpty } from "../ast/flow.js";
-import type { Kind } from "../ast/kind_generated.js";
+import type { Kind } from "../ast/generated/kinds.js";
 import { KindAmpersandAmpersandEqualsToken, KindAmpersandAmpersandToken, KindArrowFunction, KindArrayLiteralExpression, KindBarBarEqualsToken, KindBarBarToken, KindBinaryExpression, KindBindingElement, KindCallExpression, KindCaseClause, KindClassDeclaration, KindCommaToken, KindDefaultClause, KindDeleteExpression, KindDoStatement, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindExclamationToken, KindExpressionStatement, KindFalseKeyword, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindIdentifier, KindIfStatement, KindInKeyword, KindInstanceOfKeyword, KindMetaProperty, KindMethodDeclaration, KindObjectBindingPattern, KindArrayBindingPattern, KindParenthesizedExpression, KindNonNullExpression, KindPrefixUnaryExpression, KindPrivateIdentifier, KindPropertyAccessExpression, KindElementAccessExpression, KindPropertyAssignment, KindQualifiedName, KindQuestionQuestionEqualsToken, KindQuestionQuestionToken, KindSatisfiesExpression, KindShorthandPropertyAssignment, KindSpreadElement, KindSuperKeyword, KindSwitchStatement, KindThisKeyword, KindTrueKeyword, KindTryStatement, KindTypeAliasDeclaration, KindTypeOfExpression, KindVariableDeclaration, KindVariableStatement, KindWhileStatement, KindWithStatement, KindEnumDeclaration, KindInterfaceDeclaration, KindJSTypeAliasDeclaration } from "../ast/generated/kinds.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
 import type { CheckFlags } from "../ast/checkflags.js";
@@ -410,7 +410,7 @@ export function Checker_getFlowTypeOfReferenceEx(receiver: GoPtr<Checker>, refer
   f!.sharedFlowStart = receiver!.sharedFlows.length;
   receiver!.flowInvocationCount++;
   const evolvedType = Checker_getTypeAtFlowNode(receiver, f, resolvedFlowNode).t;
-  receiver!.sharedFlows = GoSlicePrefix(receiver!.sharedFlows, f!.sharedFlowStart);
+  receiver!.sharedFlows = GoSliceReslice(receiver!.sharedFlows, 0, f!.sharedFlowStart);
   Checker_putFlowState(receiver, f);
   let resultType: GoPtr<Type>;
   if ((evolvedType!.objectFlags & ObjectFlagsEvolvingArray) !== 0 && Checker_isEvolvingArrayOperationTarget(receiver, reference)) {
@@ -587,7 +587,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
     } else if ((flags & FlowFlagsReduceLabel) !== 0) {
       f!.reduceLabels = GoSliceAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(currentFlow!.Node), GoPointerValueOps<FlowReduceLabelData>());
       t = Checker_getTypeAtFlowNode(receiver, f, currentFlow!.Antecedent);
-      f!.reduceLabels = GoSlicePrefix(f!.reduceLabels, f!.reduceLabels.length - 1);
+      f!.reduceLabels = GoSliceReslice(f!.reduceLabels, 0, f!.reduceLabels.length - 1);
     } else if ((flags & FlowFlagsStart) !== 0) {
       const container = currentFlow!.Node;
       if (
@@ -2616,7 +2616,7 @@ export function Checker_narrowTypeBySwitchOnDiscriminant(receiver: GoPtr<Checker
   if (switchTypes.length === 0) {
     return t;
   }
-  const clauseTypes = GoSliceRange(switchTypes, data!.ClauseStart, data!.ClauseEnd);
+  const clauseTypes = GoSliceReslice(switchTypes, data!.ClauseStart, data!.ClauseEnd);
   const hasDefaultClause = data!.ClauseStart === data!.ClauseEnd || clauseTypes.includes(receiver!.neverType);
   if ((t!.flags & TypeFlagsUnknown) && !hasDefaultClause) {
     let groundClauseTypes = GoNilSlice<GoPtr<Type>>();
@@ -2628,7 +2628,7 @@ export function Checker_narrowTypeBySwitchOnDiscriminant(receiver: GoPtr<Checker
         }
       } else if (s!.flags & TypeFlagsObject) {
         if (GoSliceIsNil(groundClauseTypes)) {
-          groundClauseTypes = GoSlicePrefix(clauseTypes, i);
+          groundClauseTypes = GoSliceReslice(clauseTypes, 0, i);
         }
         groundClauseTypes = GoSliceAppend(groundClauseTypes, receiver!.nonPrimitiveType, GoPointerValueOps<Type>());
       } else {
@@ -2716,7 +2716,7 @@ export function Checker_narrowTypeBySwitchOnTypeOf(receiver: GoPtr<Checker>, t: 
     return Checker_filterType(receiver, t, (t) => Checker_getTypeFacts(receiver, t, notEqualFacts) === notEqualFacts);
   }
   // In the non-default case we create a union of the type narrowed by each of the listed cases.
-  const clauseWitnesses = GoSliceRange(witnesses, clauseStart, clauseEnd);
+  const clauseWitnesses = GoSliceReslice(witnesses, clauseStart, clauseEnd);
   return Checker_getUnionType(receiver, core_Map(clauseWitnesses, (text) => {
     if (text !== "") {
       return Checker_narrowTypeByTypeName(receiver, t, text);
@@ -2850,7 +2850,7 @@ export function Checker_narrowTypeBySwitchOnDiscriminantProperty(receiver: GoPtr
   if (data!.ClauseStart < data!.ClauseEnd && t!.flags & TypeFlagsUnion) {
     const [accessedName] = Checker_getAccessedPropertyName(receiver, access);
     if (accessedName !== "" && Checker_getKeyPropertyName(receiver, t) === accessedName) {
-      const clauseTypes = GoSliceRange(Checker_getSwitchClauseTypes(receiver, data!.SwitchStatement), data!.ClauseStart, data!.ClauseEnd);
+      const clauseTypes = GoSliceReslice(Checker_getSwitchClauseTypes(receiver, data!.SwitchStatement), data!.ClauseStart, data!.ClauseEnd);
       const candidate = Checker_getUnionType(receiver, core_Map(clauseTypes, (s) => {
         const result = Checker_getConstituentTypeForKeyType(receiver, t, s);
         if (result !== undefined) {
@@ -2944,7 +2944,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
     // If the type at a particular antecedent path is the declared type and the
     // reference is known to always be assigned, there is no reason to process more antecedents.
     if (flowType.t === f!.declaredType && f!.declaredType === f!.initialType) {
-      receiver!.antecedentTypes = GoSlicePrefix(receiver!.antecedentTypes, antecedentStart);
+      receiver!.antecedentTypes = GoSliceReslice(receiver!.antecedentTypes, 0, antecedentStart);
       return { t: flowType.t, incomplete: false };
     }
     if (!receiver!.antecedentTypes.slice(antecedentStart).includes(flowType.t)) {
@@ -2964,7 +2964,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
     // isn't exhaustive, process the bypass flow type.
     if (!(flowType.t!.flags & TypeFlagsNever) && !receiver!.antecedentTypes.slice(antecedentStart).includes(flowType.t) && !Checker_isExhaustiveSwitchStatement(receiver, Node_AsFlowSwitchClauseData(bypassFlow!.Node)!.SwitchStatement)) {
       if (flowType.t === f!.declaredType && f!.declaredType === f!.initialType) {
-        receiver!.antecedentTypes = GoSlicePrefix(receiver!.antecedentTypes, antecedentStart);
+        receiver!.antecedentTypes = GoSliceReslice(receiver!.antecedentTypes, 0, antecedentStart);
         return { t: flowType.t, incomplete: false };
       }
       receiver!.antecedentTypes = GoSliceAppend(receiver!.antecedentTypes, flowType.t, GoPointerValueOps<Type>());
@@ -2977,7 +2977,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
     }
   }
   const result = Checker_newFlowType(receiver, Checker_getUnionOrEvolvingArrayType(receiver, f, receiver!.antecedentTypes.slice(antecedentStart), IfElse(subtypeReduction, UnionReductionSubtype, UnionReductionLiteral)), seenIncomplete);
-  receiver!.antecedentTypes = GoSlicePrefix(receiver!.antecedentTypes, antecedentStart);
+  receiver!.antecedentTypes = GoSliceReslice(receiver!.antecedentTypes, 0, antecedentStart);
   return result;
 }
 
@@ -3140,7 +3140,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
       receiver!.flowTypeCache = GoNilMap<GoPtr<Node>, GoPtr<Type>>();
       flowType = Checker_getTypeAtFlowNode(receiver, f, list!.Flow);
       receiver!.flowTypeCache = saveFlowTypeCache;
-      receiver!.flowLoopStack = GoSlicePrefix(receiver!.flowLoopStack, receiver!.flowLoopStack.length - 1);
+      receiver!.flowLoopStack = GoSliceReslice(receiver!.flowLoopStack, 0, receiver!.flowLoopStack.length - 1);
       // If we see a value appear in the cache it is a sign that control flow analysis
       // was restarted and completed by checkExpressionCached. We can simply pick up
       // the resulting type and bail out.
@@ -5769,7 +5769,7 @@ export function Checker_isReachableFlowNodeWorker(receiver: GoPtr<Checker>, f: G
       receiver!.lastFlowNode = undefined;
       f!.reduceLabels = GoSliceAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!, GoPointerValueOps<FlowReduceLabelData>());
       const result = Checker_isReachableFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
-      f!.reduceLabels = GoSlicePrefix(f!.reduceLabels, f!.reduceLabels.length - 1);
+      f!.reduceLabels = GoSliceReslice(f!.reduceLabels, 0, f!.reduceLabels.length - 1);
       return result;
     } else {
       return !(flags & FlowFlagsUnreachable);
@@ -5897,7 +5897,7 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
     } else if (flags & FlowFlagsReduceLabel) {
       f!.reduceLabels = GoSliceAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!, GoPointerValueOps<FlowReduceLabelData>());
       const result = Checker_isPostSuperFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
-      f!.reduceLabels = GoSlicePrefix(f!.reduceLabels, f!.reduceLabels.length - 1);
+      f!.reduceLabels = GoSliceReslice(f!.reduceLabels, 0, f!.reduceLabels.length - 1);
       return result;
     } else {
       return !!(flags & FlowFlagsUnreachable);

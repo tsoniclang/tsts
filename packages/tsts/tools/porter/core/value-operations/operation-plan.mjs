@@ -4,6 +4,10 @@ import { compareText } from "../deterministic-order.mjs";
 import { safeIdentifier } from "../names.mjs";
 import { requirePorterUnitOwnership } from "../unit-ownership.mjs";
 import { requireGeneratorOwnedGoValueOperationCatalog } from "./generator-owned-providers.mjs";
+import {
+  buildIntrinsicInterfaceGoValueOperationCatalog,
+  requireIntrinsicInterfaceGoValueOperationCatalog,
+} from "./intrinsic-interface-providers.mjs";
 import { requireReviewedGoValueOperationCatalog } from "./reviewed-providers.mjs";
 import { buildGoValueOperationCatalog } from "./shape-plan.mjs";
 import { directUnitStorageIdentity } from "./storage-identity.mjs";
@@ -12,6 +16,7 @@ import { requireAuditedTypeStorageCatalog } from "../../sig-check/audited-type-s
 const inputKeys = Object.freeze([
   "auditedStorage",
   "config",
+  "externalFacadeCatalog",
   "generatorOwnedProviders",
   "largeFileSplits",
   "reviewedProviders",
@@ -19,16 +24,6 @@ const inputKeys = Object.freeze([
   "tsUnits",
   "unitOwnership",
 ]);
-const intrinsicProviders = new Map([
-  ["builtin::type::any", intrinsicInterfaceProvider("any")],
-  ["builtin::type::error", intrinsicInterfaceProvider("error")],
-]);
-const intrinsicRequirements = new Map([...intrinsicProviders].map(([objectId, provider]) => [objectId, Object.freeze({
-  disposition: provider.disposition,
-  operationTypeParameterIndexes: provider.operationTypeParameterIndexes,
-  typeParameterCount: provider.typeParameterCount,
-})]));
-
 export class FinalizedGoValueOperationPlan {
   #config;
   #entries;
@@ -70,15 +65,27 @@ export class FinalizedGoValueOperationPlan {
 
 export function buildGoValueOperationPlan(input) {
   requireExactInput(input, inputKeys, "Go value-operation plan input");
-  const { auditedStorage, config, generatorOwnedProviders, largeFileSplits, reviewedProviders, snapshot, tsUnits, unitOwnership } = input;
+  const {
+    auditedStorage,
+    config,
+    externalFacadeCatalog,
+    generatorOwnedProviders,
+    largeFileSplits,
+    reviewedProviders,
+    snapshot,
+    tsUnits,
+    unitOwnership,
+  } = input;
   requirePorterUnitOwnership(unitOwnership, { config, largeFileSplits, snapshot, tsUnits });
   requireReviewedGoValueOperationCatalog(reviewedProviders, config, snapshot);
   requireGeneratorOwnedGoValueOperationCatalog(generatorOwnedProviders, config, snapshot);
   requireAuditedTypeStorageCatalog(auditedStorage, { config, snapshot, unitOwnership });
   requireCleanTypeOwnership(unitOwnership);
+  const intrinsicProviders = buildIntrinsicInterfaceGoValueOperationCatalog(config, snapshot, externalFacadeCatalog);
+  requireIntrinsicInterfaceGoValueOperationCatalog(intrinsicProviders, config, snapshot);
 
   const providers = mergeProviderRequirements(
-    intrinsicRequirements,
+    intrinsicProviders.requirements(config, snapshot),
     reviewedProviders.requirements(config, snapshot),
     generatorOwnedProviders.requirements(config, snapshot),
   );
@@ -211,17 +218,6 @@ function claimOperationIdentity(owners, identity, objectId) {
   const previous = owners.get(identity);
   if (previous !== undefined) throw new Error(`Go value operation '${identity}' is shared by '${previous}' and '${objectId}'`);
   owners.set(identity, objectId);
-}
-
-function intrinsicInterfaceProvider(name) {
-  const objectId = `builtin::type::${name}`;
-  return Object.freeze({
-    disposition: "intrinsic",
-    objectId,
-    operationIdentity: "packages/tsts/src/go/compat.ts::GoInterfaceValueOps",
-    operationTypeParameterIndexes: Object.freeze([]),
-    typeParameterCount: 0,
-  });
 }
 
 function requireExactInput(value, expectedKeys, label) {

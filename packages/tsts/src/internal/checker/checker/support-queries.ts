@@ -2,7 +2,7 @@ import type { bool, int } from "../../../go/scalars.js";
 import { Filter, IfElse, Map as core_Map, OrElse, Some } from "../../core/core.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppendSlice } from "../../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../../go/compat.js";
 import * as maps from "../../../go/maps.js";
 import * as slices from "../../../go/slices.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";

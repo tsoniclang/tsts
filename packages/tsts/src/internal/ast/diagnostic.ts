@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoInterface, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Mutex } from "../../go/sync.js";
@@ -464,7 +464,7 @@ export function NewDiagnosticFromSerialized(file: GoPtr<SourceFile>, loc: TextRa
  * 	}
  * }
  */
-export function NewDiagnostic(file: GoPtr<SourceFile>, loc: TextRange, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function NewDiagnostic(file: GoPtr<SourceFile>, loc: TextRange, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   return {
     file: file,
     loc: loc,
@@ -493,7 +493,7 @@ export function NewDiagnostic(file: GoPtr<SourceFile>, loc: TextRange, message: 
  * 	return NewDiagnostic(nil, core.TextRange{}, message, args...)
  * }
  */
-export function NewDiagnosticChain(chain: GoPtr<Diagnostic>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function NewDiagnosticChain(chain: GoPtr<Diagnostic>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   if (chain !== undefined) {
     return Diagnostic_SetRelatedInfo(Diagnostic_AddMessageChain(NewDiagnostic(chain.file, chain.loc, message, ...args), chain), chain.relatedInformation);
   }
@@ -508,7 +508,7 @@ export function NewDiagnosticChain(chain: GoPtr<Diagnostic>, message: GoPtr<Mess
  * 	return NewDiagnostic(nil, core.UndefinedTextRange(), message, args...)
  * }
  */
-export function NewCompilerDiagnostic(message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function NewCompilerDiagnostic(message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   return NewDiagnostic(undefined, core.UndefinedTextRange(), message, ...args);
 }
 

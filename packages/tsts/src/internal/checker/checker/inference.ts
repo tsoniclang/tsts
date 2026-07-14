@@ -1,8 +1,8 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoMapValueOps, GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
-import { GoAppend, GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../../go/compat.js";
-import { GoSlicePrefix } from "../../../go/slice-runtime.js";
+import { GoMapValueOps, GoPointerValueOps, GoSliceAppend, GoSliceReslice } from "../../../go/compat.js";
+import { GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../../go/compat.js";
+
 import * as slices from "../../../go/slices.js";
 import { Node_Name, NodeList_Pos, NodeList_End } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
@@ -1006,10 +1006,10 @@ export function Checker_pushActiveMapper(receiver: GoPtr<Checker>, mapper: GoPtr
  */
 export function Checker_popActiveMapper(receiver: GoPtr<Checker>): void {
   GoSliceStore(receiver!.activeMappers, receiver!.activeMappers.length - 1, undefined, GoPointerValueOps<TypeMapper>());
-  receiver!.activeMappers = GoSlicePrefix(receiver!.activeMappers, receiver!.activeMappers.length - 1);
+  receiver!.activeMappers = GoSliceReslice(receiver!.activeMappers, 0, receiver!.activeMappers.length - 1);
   const lastIndex = receiver!.activeTypeMappersCaches.length - 1;
   GoSliceLoad(receiver!.activeTypeMappersCaches, lastIndex, GoMapValueOps<CacheHashKey, GoPtr<Type>>())!.clear();
-  receiver!.activeTypeMappersCaches = GoSlicePrefix(receiver!.activeTypeMappersCaches, lastIndex);
+  receiver!.activeTypeMappersCaches = GoSliceReslice(receiver!.activeTypeMappersCaches, 0, lastIndex);
 }
 
 /**
@@ -2412,7 +2412,7 @@ export function Checker_pushInferenceContext(receiver: GoPtr<Checker>, node: GoP
 export function Checker_popInferenceContext(receiver: GoPtr<Checker>): void {
   const lastIndex = receiver!.inferenceContextInfos.length - 1;
   receiver!.inferenceContextInfos[lastIndex] = { node: undefined, context: undefined };
-  receiver!.inferenceContextInfos = GoSlicePrefix(receiver!.inferenceContextInfos, lastIndex);
+  receiver!.inferenceContextInfos = GoSliceReslice(receiver!.inferenceContextInfos, 0, lastIndex);
 }
 
 /**

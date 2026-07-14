@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAppend, GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import { Atoi, Itoa } from "../../go/strconv.js";

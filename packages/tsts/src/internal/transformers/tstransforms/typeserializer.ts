@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { Node_Clone, Node_Name, NodeFactory_NewNodeList } from "../../ast/spine.js";

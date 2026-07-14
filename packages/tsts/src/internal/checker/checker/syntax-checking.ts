@@ -3556,7 +3556,7 @@ export function Checker_checkExpressionForMutableLocation(receiver: GoPtr<Checke
  * 	return diagnostic
  * }
  */
-export function Checker_errorAndMaybeSuggestAwait(receiver: GoPtr<Checker>, location: GoPtr<Node>, maybeMissingAwait: bool, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function Checker_errorAndMaybeSuggestAwait(receiver: GoPtr<Checker>, location: GoPtr<Node>, maybeMissingAwait: bool, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   const diagnostic = Checker_error(receiver, location, message, ...args);
   if (maybeMissingAwait) {
     Diagnostic_AddRelatedInfo(diagnostic, createDiagnosticForNode(location, Did_you_forget_to_use_await));

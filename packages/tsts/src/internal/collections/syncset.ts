@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import { GoAppend, GoZeroEmptyStruct, type GoComparable, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoZeroEmptyStruct, type GoComparable, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { SyncMap } from "./syncmap.js";
 import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from "./syncmap.js";
 

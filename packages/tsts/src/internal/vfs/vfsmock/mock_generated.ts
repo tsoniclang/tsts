@@ -1,6 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoAppend } from "../../../go/compat.js";
 import type { RWMutex } from "../../../go/sync.js";
 import type { Time } from "../../../go/time.js";
 import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";

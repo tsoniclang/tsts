@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoInterface, GoPtr } from "../../go/compat.js";
+import type { GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
 import { Node_Locals, Node_Body, Node_Type, Node_Parameters, Node_Expression, Node_Symbol, Node_LocalSymbol, AsSourceFile, Node_ModuleSpecifier, Node_Text } from "../ast/ast.js";
 import { Node_Name, Node_BodyData, Node_ForEachChild, Node_Pos, Node_End } from "../ast/spine.js";
 import type { Node } from "../ast/ast.js";
@@ -58,7 +58,7 @@ import { GoSliceLoad } from "../../go/compat.js";
 export interface NameResolver {
   CompilerOptions: GoPtr<CompilerOptions>;
   GetSymbolOfDeclaration: GoFunc<(node: GoPtr<Node>) => GoPtr<Symbol>>;
-  Error: GoFunc<(location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => GoPtr<Diagnostic>>;
+  Error: GoFunc<(location: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => GoPtr<Diagnostic>>;
   Globals: SymbolTable;
   ArgumentsSymbol: GoPtr<Symbol>;
   RequireSymbol: GoPtr<Symbol>;
@@ -888,7 +888,7 @@ export function NameResolver_requiresScopeChangeWorker(receiver: GoPtr<NameResol
  * 	// Default implementation does not report errors
  * }
  */
-export function NameResolver_error(receiver: GoPtr<NameResolver>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
+export function NameResolver_error(receiver: GoPtr<NameResolver>, location: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void {
   if (receiver!.Error !== undefined) {
     receiver!.Error(location, message, ...args);
   }

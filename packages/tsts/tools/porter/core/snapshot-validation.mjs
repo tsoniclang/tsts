@@ -9,7 +9,7 @@ import {
 import { validateStructTagContract } from "./struct-tag-validation.mjs";
 import { isSemanticPrimaryUnitKind, SEMANTIC_PRIMARY_UNIT_KINDS } from "./unit-kinds.mjs";
 
-export const PORTER_SNAPSHOT_SCHEMA_VERSION = 12;
+export const PORTER_SNAPSHOT_SCHEMA_VERSION = 13;
 
 export { canonicalSchemaValue, canonicalSemanticDeclaration, canonicalSemanticModule, semanticProfileKey, semanticProfileStateKey };
 export { validateStructTagContract };

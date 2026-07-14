@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoComparable, GoMap, GoMapKeyDescriptor, GoPtr } from "../../go/compat.js";
+import type { GoComparable, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoEqualEmptyStruct, GoMapIsNil, GoMapMake, GoNilMap } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
@@ -345,7 +345,7 @@ export function Set_Intersects<T extends GoComparable>(receiver: GoPtr<Set<T>>, 
  * 	return s
  * }
  */
-export function NewSetFromItems<T extends GoComparable>(keyDescriptor: GoMapKeyDescriptor<T>, ...items: Array<T>): GoPtr<Set<T>> {
+export function NewSetFromItems<T extends GoComparable>(items: GoSlice<T>, keyDescriptor: GoMapKeyDescriptor<T>): GoPtr<Set<T>> {
   const s: Set<T> = { M: GoNilMap() };
   for (const item of items) {
     Set_Add(s, item, keyDescriptor);

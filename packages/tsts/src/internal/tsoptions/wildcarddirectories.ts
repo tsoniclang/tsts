@@ -1,7 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
-import { GoAppend } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 import {

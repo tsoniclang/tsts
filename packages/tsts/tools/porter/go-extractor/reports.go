@@ -1,6 +1,6 @@
 package main
 
-const porterSnapshotSchemaVersion = 12
+const porterSnapshotSchemaVersion = 13
 
 type Snapshot struct {
 	SchemaVersion int                    `json:"schemaVersion"`
@@ -318,7 +318,7 @@ type SemanticVariableReport struct {
 	Name        string              `json:"name"`
 	NameKind    string              `json:"nameKind"`
 	PackagePath string              `json:"packagePath"`
-	Embedded    bool                `json:"embedded,omitempty"`
+	Embedded    bool                `json:"embedded"`
 	Exported    bool                `json:"exported"`
 	Type        *SemanticTypeReport `json:"type"`
 }

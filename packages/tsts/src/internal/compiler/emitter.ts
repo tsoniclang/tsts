@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoNilSlice } from "../../go/compat.js";
+import { GoNilSlice } from "../../go/compat.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import type { Diagnostic, DiagnosticsCollection } from "../ast/diagnostic.js";
 import type { ReferenceResolver, ReferenceResolverHooks } from "../binder/referenceresolver.js";

@@ -1,5 +1,5 @@
 import type { bool, byte } from "../../go/scalars.js";
-import { GoAppend, GoAppendSlice, type GoError, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { type GoError, type GoPtr, type GoSlice } from "../../go/compat.js";
 import {
   Deterministic as json_Deterministic,
   JsonFieldNames,
@@ -57,7 +57,7 @@ export let allowInvalid: GoSlice<GoInterface<Options>> = Clip([jsontext_AllowInv
  * 	return json.Marshal(in, opts...)
  * }
  */
-export function Marshal(in_: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): [out: GoSlice<byte>, err: GoError] {
+export function Marshal(in_: GoInterface<unknown>, opts: GoSlice<GoInterface<Options>>): [out: GoSlice<byte>, err: GoError] {
   const resolvedOpts = opts.length === 0 ? allowInvalid : GoAppendSlice(allowInvalid, opts);
   return json_Marshal(in_, ...resolvedOpts) as [GoSlice<byte>, GoError];
 }
@@ -75,7 +75,7 @@ export function Marshal(in_: GoInterface<unknown>, ...opts: Array<GoInterface<Op
  * 	return json.MarshalEncode(out, in, opts...)
  * }
  */
-export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
+export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: GoInterface<unknown>, opts: GoSlice<GoInterface<Options>>): GoError {
   const resolvedOpts = opts.length === 0 ? allowInvalid : GoAppendSlice(allowInvalid, opts);
   return json_MarshalEncode(out, in_, ...resolvedOpts) as GoError;
 }
@@ -93,7 +93,7 @@ export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: GoInterface<unk
  * 	return json.MarshalWrite(out, in, opts...)
  * }
  */
-export function MarshalWrite(out: GoInterface<Writer>, in_: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
+export function MarshalWrite(out: GoInterface<Writer>, in_: GoInterface<unknown>, opts: GoSlice<GoInterface<Options>>): GoError {
   const resolvedOpts = opts.length === 0 ? allowInvalid : GoAppendSlice(allowInvalid, opts);
   return json_MarshalWrite(out!, in_, ...resolvedOpts) as GoError;
 }
@@ -144,7 +144,7 @@ export function MarshalIndentWrite(out: GoInterface<Writer>, in_: GoInterface<un
  * 	return json.Unmarshal(in, out, opts...)
  * }
  */
-export function Unmarshal(in_: GoSlice<byte>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
+export function Unmarshal(in_: GoSlice<byte>, out: GoInterface<unknown>, opts: GoSlice<GoInterface<Options>>): GoError {
   return json_Unmarshal(in_, out, ...opts) as GoError;
 }
 
@@ -156,7 +156,7 @@ export function Unmarshal(in_: GoSlice<byte>, out: GoInterface<unknown>, ...opts
  * 	return json.UnmarshalDecode(in, out, opts...)
  * }
  */
-export function UnmarshalDecode(in_: GoPtr<Decoder_d2f8186c>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
+export function UnmarshalDecode(in_: GoPtr<Decoder_d2f8186c>, out: GoInterface<unknown>, opts: GoSlice<GoInterface<Options>>): GoError {
   return json_UnmarshalDecode(in_, out, ...opts) as GoError;
 }
 
@@ -168,7 +168,7 @@ export function UnmarshalDecode(in_: GoPtr<Decoder_d2f8186c>, out: GoInterface<u
  * 	return json.UnmarshalRead(in, out, opts...)
  * }
  */
-export function UnmarshalRead(in_: GoInterface<Reader>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
+export function UnmarshalRead(in_: GoInterface<Reader>, out: GoInterface<unknown>, opts: GoSlice<GoInterface<Options>>): GoError {
   return json_UnmarshalRead(in_!, out, ...opts) as GoError;
 }
 

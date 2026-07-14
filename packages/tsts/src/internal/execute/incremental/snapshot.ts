@@ -1,7 +1,7 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
 import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
-import { GoAppend, GoNilSlice, GoSliceIsNil, GoStringKey } from "../../../go/compat.js";
+import { GoNilSlice, GoSliceIsNil, GoStringKey } from "../../../go/compat.js";
 import { Map as core_Map } from "../../core/core.js";
 import * as strings from "../../../go/strings.js";
 import type { Builder } from "../../../go/strings.js";

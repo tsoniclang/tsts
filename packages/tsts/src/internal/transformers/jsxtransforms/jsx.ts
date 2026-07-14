@@ -1,5 +1,5 @@
 import type { bool, int, long } from "../../../go/scalars.js";
-import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice, GoStringKey, GoZeroMap, type GoError, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
+import { GoNilMap, GoNilSlice, GoStringKey, GoZeroMap, type GoError, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../../go/compat.js";
 import { Builder, IndexByte } from "../../../go/strings.js";
 import { FormatInt, ParseInt } from "../../../go/strconv.js";

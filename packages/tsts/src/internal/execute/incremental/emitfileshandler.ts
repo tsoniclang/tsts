@@ -1,7 +1,7 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoPtr, GoRef, GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoNilSlice, GoStringKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
+import { GoNilSlice, GoStringKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";

@@ -1,5 +1,5 @@
 import type { bool, int, long } from "../../go/scalars.js";
-import { GoAppend, GoZeroPointer, type GoComparable, type GoEquality, type GoMapKeyDescriptor, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
+import { GoZeroPointer, type GoComparable, type GoEquality, type GoMapKeyDescriptor, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
 import { Map as SyncMapBacking } from "../../go/sync.js";
 import type { Int64 } from "../../go/sync/atomic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";

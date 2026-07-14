@@ -1,7 +1,6 @@
 import type { byte, int, ushort } from "../scalars.js";
 import type { GoError, GoSlice } from "../compat.js";
 import { GoNumberValueOps, GoSliceAppendSlice } from "../compat.js";
-import { GoAppend, GoAppendSlice } from "../compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../compat.js";
 import { GoSliceLoad } from "../compat.js";
 

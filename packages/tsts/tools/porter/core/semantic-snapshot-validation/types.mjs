@@ -196,7 +196,7 @@ function validateTuple(tuple, label, issues, scope, ownerPath) {
 
 export function validateVariable(variable, label, issues, scope, ownerPath) {
   const allowed = new Set(["embedded", "exported", "id", "name", "nameKind", "packagePath", "type"]);
-  const required = new Set(["exported", "id", "name", "nameKind", "packagePath", "type"]);
+  const required = new Set(["embedded", "exported", "id", "name", "nameKind", "packagePath", "type"]);
   validateSnapshotObject(variable, allowed, label, issues, required);
   if (!isObject(variable)) return;
   if (typeof variable.id !== "string" || variable.id === "") issues.push(`${label}.id must be a non-empty string`);
@@ -207,7 +207,7 @@ export function validateVariable(variable, label, issues, scope, ownerPath) {
   if (typeof variable.packagePath !== "string") issues.push(`${label}.packagePath must be a string`);
   if (typeof variable.exported !== "boolean") issues.push(`${label}.exported must be boolean`);
   if (typeof variable.name === "string" && variable.exported !== isGoExported(variable.name)) issues.push(`${label}.exported must match the Go variable name`);
-  if (variable.embedded !== undefined && typeof variable.embedded !== "boolean") issues.push(`${label}.embedded must be boolean when present`);
+  if (typeof variable.embedded !== "boolean") issues.push(`${label}.embedded must be boolean`);
   validateType(variable.type, `${label}.type`, issues, scope, `${ownerPath}::type`);
 }
 

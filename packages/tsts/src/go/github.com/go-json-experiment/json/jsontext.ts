@@ -45,7 +45,7 @@ export const Null: Token = new Token("n");
 
 export type Value = GoDefined<
   GoSlice<byte>,
-  "__goDefinedType::github.com/go-json-experiment/json/jsontext::type::Value::e83a93b64e2ccb2d4a377d9f9967e79a3b67d10c1f888316e94321bf7cda027e"
+  "__goDefinedType::github.com/go-json-experiment/json/jsontext::type::Value::affd457443859fae2d3075a32543bd0c10339f644bf51d4faff36f3aab0589c2"
 >;
 
 export interface Decoder {

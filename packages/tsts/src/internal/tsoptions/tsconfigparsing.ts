@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAppend, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
@@ -93,7 +93,7 @@ import type { ParsedCommandLine } from "./parsedcommandline.js";
 import { NewParsedCommandLine } from "./parsedcommandline.js";
 
 
-import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import type { GoFunc, GoRef } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
 import { GoEmptySlice } from "../../go/compat.js";
@@ -1228,7 +1228,7 @@ export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: GoInterf
  * 	return extendedConfigPathArray, errors
  * }
  */
-export function getExtendsConfigPathOrArray(value: CompilerOptionsValue, host: GoInterface<ParseConfigHost>, basePath: string, configFileName: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [GoSlice<string>, GoSlice<GoPtr<Diagnostic>>] {
+export function getExtendsConfigPathOrArray(value: GoInterface<CompilerOptionsValue>, host: GoInterface<ParseConfigHost>, basePath: string, configFileName: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [GoSlice<string>, GoSlice<GoPtr<Diagnostic>>] {
   const extendedConfigPathArray: string[] = [];
   let newBase = basePath;
   if (configFileName !== "") {
@@ -3256,7 +3256,7 @@ export function ForEachTsConfigPropArray<T>(tsConfigSourceFile: GoPtr<SourceFile
  * 	})
  * }
  */
-export function CreateDiagnosticAtReferenceSyntax(config: GoPtr<ParsedCommandLine>, index: int, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function CreateDiagnosticAtReferenceSyntax(config: GoPtr<ParsedCommandLine>, index: int, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   const result = ForEachTsConfigPropArray<Diagnostic>(config!.ConfigFile!.SourceFile, "references", (property: GoPtr<PropertyAssignment>): GoRef<Diagnostic> => {
     if (IsArrayLiteralExpression(property!.Initializer)) {
       const value = Node_Elements(property!.Initializer) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
@@ -3334,7 +3334,7 @@ export function GetOptionsSyntaxByArrayElementValue(objectLiteral: GoPtr<ObjectL
  * 	return nil
  * }
  */
-export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralExpression>, key: string, callback: GoFunc<(property: GoPtr<PropertyAssignment>) => GoRef<T>>, ...key2: Array<string>): GoRef<T> {
+export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralExpression>, key: string, callback: GoFunc<(property: GoPtr<PropertyAssignment>) => GoRef<T>>, key2: GoSlice<string>): GoRef<T> {
   if (objectLiteral !== undefined) {
     for (
       let __goRangeSlice = (objectLiteral!.Properties!.Nodes! ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())),

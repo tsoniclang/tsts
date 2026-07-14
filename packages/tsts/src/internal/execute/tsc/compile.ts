@@ -124,7 +124,7 @@ export interface CommandLineTesting {
   OnBuildStatusReportEnd(w: GoInterface<Writer>): void;
   OnWatchStatusReportStart(): void;
   OnWatchStatusReportEnd(): void;
-  GetTrace(w: GoInterface<Writer>, locale: Locale): GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>;
+  GetTrace(w: GoInterface<Writer>, locale: Locale): GoFunc<(msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => void>;
   OnProgram(program: GoPtr<Program>): void;
 }
 

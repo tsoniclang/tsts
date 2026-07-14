@@ -1,23 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
-import {
-  GoAppend,
-  GoMapIsNil,
-  GoMapMake,
-  GoSliceToZeroLength,
-  GoStringKey,
-  GoValueRef,
-  type GoComparable,
-  type GoEquality,
-  type GoError,
-  type GoFunc,
-  type GoInterface,
-  type GoMap,
-  type GoMapKeyDescriptor,
-  type GoPtr,
-  type GoSlice,
-  type GoZeroFactory,
-} from "../../go/compat.js";
+import { GoMapIsNil, GoMapMake, GoStringKey, GoValueRef, type GoComparable, type GoEquality, type GoError, type GoFunc, type GoInterface, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
 import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
 import type { Value } from "../../go/reflect.js";
 import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode, UnmarshalDecode as json_UnmarshalDecode } from "../json/json.js";

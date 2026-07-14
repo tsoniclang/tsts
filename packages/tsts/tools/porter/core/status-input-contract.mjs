@@ -24,6 +24,7 @@ const tsUnitFileEvidenceKeys = Object.freeze(["metadataCount", "path"]);
 const tsUnitRecordEvidenceKeys = Object.freeze(["id", "kind", "metadata", "path", "sigHash", "status"]);
 const tsUnitRecordWithOverrideEvidenceKeys = Object.freeze([...tsUnitRecordEvidenceKeys, "override"]);
 const tsUnitMetadataEvidenceKeys = Object.freeze(["id", "kind", "sigHash", "status"]);
+const tsUnitInternalEvidenceKeys = new Set(["declarationMetadata", "declarationName"]);
 
 export function validateBuildStatusInput(input) {
   if (input === null || typeof input !== "object" || Array.isArray(input) ||
@@ -105,7 +106,12 @@ function validateCurrentTsUnitRecord(unit, config, label) {
   const expectedKeys = Object.hasOwn(unit ?? {}, "override")
     ? tsUnitRecordWithOverrideEvidenceKeys
     : tsUnitRecordEvidenceKeys;
-  requireExactDataObject(unit, expectedKeys, label, new Set(["declarationMetadata"]));
+  requireExactDataObject(unit, expectedKeys, label, tsUnitInternalEvidenceKeys);
+  if (Object.hasOwn(unit, "declarationName") &&
+      unit.declarationName !== undefined &&
+      (typeof unit.declarationName !== "string" || unit.declarationName.length === 0)) {
+    throw new TypeError(`${label}.declarationName must be undefined or one non-empty string`);
+  }
   requireCurrentTsPath(unit.path, config, `${label}.path`);
   requireExactDataObject(unit.metadata, tsUnitMetadataEvidenceKeys, `${label}.metadata`);
   const metadataIssues = validateTsgoUnitMetadata(unit.metadata);

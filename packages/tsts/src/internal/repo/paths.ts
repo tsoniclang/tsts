@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { statSync } from "node:fs";
 
-import type { GoFunc, GoInterface } from "../../go/compat.js";
+import type { GoFunc, GoInterface, GoSlice } from "../../go/compat.js";
 function onceValue<T>(factory: () => T): () => T {
   let initialized = false;
   let value: T;
@@ -182,7 +182,7 @@ export function TypeScriptSubmoduleExists(): bool {
  */
 export interface SkippableTest {
   Helper(): void;
-  Skipf(format: string, ...args: Array<GoInterface<unknown>>): void;
+  Skipf(format: string, args: GoSlice<GoInterface<unknown>>): void;
 }
 
 /**

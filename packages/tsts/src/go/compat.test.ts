@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength } from "./compat.js";
+import { GoNilSlice, GoSliceIsNil } from "./compat.js";
 
 test("GoAppend appends to a nil slice like Go append(nil, ...)", () => {
   const nilSlice = GoNilSlice<string>();

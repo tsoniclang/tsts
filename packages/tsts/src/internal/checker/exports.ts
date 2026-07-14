@@ -2,7 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node } from "../ast/ast.js";
 import { Node_Symbol, Node_Text } from "../ast/ast.js";
-import type { ImportAttributes } from "../ast/ast_generated.js";
+import type { ImportAttributes } from "../ast/generated/index.js";
 import type { ModifierFlags } from "../ast/modifierflags.js";
 import type { Symbol } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";

@@ -91,7 +91,7 @@ test("semantic profile keys and file provenance are exact relational evidence", 
   }
 });
 
-test("canonical semantic identity retains every snapshot-schema-12 declaration field", () => {
+test("canonical semantic identity retains every snapshot-schema-13 declaration field", () => {
   const method = methodSnapshot().files[0].units[0].semantic[0];
   const pointerMethod = structuredClone(method);
   pointerMethod.signature.receiverMode = "pointer";
@@ -154,7 +154,7 @@ test("method-set selections reference one exact normalized selected-signature po
     packagePath,
     exported: true,
     signature: {
-      receiver: { id: `${methodId}::signature::receiver`, name: "", nameKind: "unnamed", packagePath, exported: false, type: objectType },
+      receiver: { id: `${methodId}::signature::receiver`, name: "", nameKind: "unnamed", packagePath, embedded: false, exported: false, type: objectType },
       receiverMode: "value",
       ...signature,
     },
@@ -322,11 +322,11 @@ function genericFunctionSnapshot() {
   const typeParameter = { reference, constraint: emptyInterfaceType(), constraintSyntax: "any" };
   const parameterType = { kind: "typeParameter", nilable: false, typeParameter: reference };
   declaration.signature.typeParameters = [typeParameter];
-  declaration.signature.parameters.variables = [{ id: `${declaration.object.id}::signature::parameters::0`, name: "value", nameKind: "named", packagePath: declaration.packagePath, exported: false, type: parameterType }];
+  declaration.signature.parameters.variables = [{ id: `${declaration.object.id}::signature::parameters::0`, name: "value", nameKind: "named", packagePath: declaration.packagePath, embedded: false, exported: false, type: parameterType }];
   declaration.object.type.signature = structuredClone(declaration.signature);
   declaration.object.type.signature.parameters.variables[0].id = `${declaration.object.id}::type::parameters::0`;
-  declaration.signature.results.variables = [{ id: `${declaration.object.id}::signature::results::0`, name: "", nameKind: "unnamed", packagePath: declaration.packagePath, exported: false, type: parameterType }];
-  declaration.object.type.signature.results.variables = [{ id: `${declaration.object.id}::type::results::0`, name: "", nameKind: "unnamed", packagePath: declaration.packagePath, exported: false, type: parameterType }];
+  declaration.signature.results.variables = [{ id: `${declaration.object.id}::signature::results::0`, name: "", nameKind: "unnamed", packagePath: declaration.packagePath, embedded: false, exported: false, type: parameterType }];
+  declaration.object.type.signature.results.variables = [{ id: `${declaration.object.id}::type::results::0`, name: "", nameKind: "unnamed", packagePath: declaration.packagePath, embedded: false, exported: false, type: parameterType }];
   snapshot.files[0].units[0].typeParameters = ["T"];
   snapshot.files[0].units[0].typeParameterDetails = [{ name: "T", constraint: { kind: "interface", text: "any", members: [] } }];
   snapshot.files[0].units[0].parameters = [{ names: ["value"], type: identType("T") }];
@@ -360,7 +360,7 @@ function identityRichTypeSnapshot() {
   declaration.type.rhs = {
     kind: "struct",
     nilable: false,
-    struct: { fields: [{ variable: { id: fieldId, name: "Handler", nameKind: "named", packagePath: declaration.packagePath, exported: true, type: interfaceType }, tag: "", tagValues: [], tagRemainder: "" }] },
+    struct: { fields: [{ variable: { id: fieldId, name: "Handler", nameKind: "named", packagePath: declaration.packagePath, embedded: false, exported: true, type: interfaceType }, tag: "", tagValues: [], tagRemainder: "" }] },
   };
   return snapshot;
 }
@@ -458,7 +458,7 @@ function profile({ goos = "linux", goarch = "amd64", coveredFiles, experiments =
 
 function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
   const snapshot = {
-    schemaVersion: 12,
+    schemaVersion: 13,
     sourceRoot: path.resolve(repoRoot),
     modulePath: "m",
     gitRevision: "e".repeat(40),

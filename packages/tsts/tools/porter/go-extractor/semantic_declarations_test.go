@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"go/token"
 	"go/types"
 	"io/fs"
@@ -81,6 +82,13 @@ func TestDeclarationOnlyExtractorCapturesExactGoSemantics(t *testing.T) {
 	}
 	if recursive.Fields[0].Variable.ID == recursive.Fields[1].Variable.ID {
 		t.Fatalf("struct field IDs are not owner/index-qualified: %#v", recursive.Fields)
+	}
+	encodedField, err := json.Marshal(recursive.Fields[1].Variable)
+	if err != nil {
+		t.Fatalf("encode non-embedded field evidence: %v", err)
+	}
+	if !strings.Contains(string(encodedField), `"embedded":false`) {
+		t.Fatalf("non-embedded field lost explicit false evidence: %s", encodedField)
 	}
 
 	constraint := singleSemanticVariant(t, requireSemanticUnit(t, snapshot, "type", "Constraint")).Type.RHS.Interface

@@ -28,7 +28,7 @@ import type { parseCache } from "./parseCache.js";
 import { parseCache_loadOrStore } from "./parseCache.js";
 import { BuildTask_loadOrStoreBuildInfo } from "./buildtask.js";
 
-import type { GoInterface } from "../../../go/compat.js";
+import type { GoInterface, GoSlice } from "../../../go/compat.js";
 import { GoSliceMake, GoStringValueOps } from "../../../go/compat.js";
 
 
@@ -156,7 +156,7 @@ export function host_GetCurrentDirectory(receiver: GoPtr<host>): string {
  * 	panic("build.Orchestrator.host does not support tracing, use a different host for tracing")
  * }
  */
-export function host_Trace(receiver: GoPtr<host>, msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
+export function host_Trace(receiver: GoPtr<host>, msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void {
   throw new globalThis.Error("build.Orchestrator.host does not support tracing, use a different host for tracing");
 }
 

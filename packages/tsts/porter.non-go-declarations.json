@@ -11706,7 +11706,7 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "9a299d03ffaf4b161d13a054bb970c4e0b2f73782ab7543d8422aedc76b5cbe3",
+      "declarationHash": "37d9efceb30cedec26f2754d1f652b33c4122a0e367823ed54cbb55b42550542",
       "file": "packages/tsts/src/go/reflect.ts",
       "fragmentIndex": 0,
       "kind": "class",
@@ -28809,118 +28809,6 @@
       "target": "packages/tsts/src/services/embedding-host.ts::withBundledLibraries"
     },
     {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "type-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "7f46ef449629faa6ef707dc8a9a250c456beaaf91fdea1e35e28aa1528caa99c",
-      "target": "packages/tsts/src/internal/ast/generated/casts.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "type-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "3b19b43036f6f4b1bd93d8f51c4a576648704917487f8f63d49766f88ef19b58",
-      "target": "packages/tsts/src/internal/ast/generated/data.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "type-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "aeee7efe36d6def7112e97e95d4fac40b35cfc8269f3afe884b50b12d9093a7d",
-      "target": "packages/tsts/src/internal/ast/generated/factory.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "type-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "ba82688f2bde649a9090347205cecfee18f34b872e6c6be09978c5aec8a03dbe",
-      "target": "packages/tsts/src/internal/ast/generated/node.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "type-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "d9902bc0bac02af09a2d9d891422d05ee9eeaf6342efcff2feb306563bccb0dd",
-      "target": "packages/tsts/src/internal/ast/generated/predicates.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "type-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "47cacf322a070f2df64ffae29c10f997602d95f61c3dfdb690743696cb2ed3aa",
-      "target": "packages/tsts/src/internal/ast/generated/unions.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "type-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "e2b4944485373417fe91d7d2cf362af90cac55792cad96102c8754c6512eaa65",
-      "target": "packages/tsts/src/internal/ast/generated/visitor.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "value-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "f72999203df7aa8ae877a07649fcf9199e8e793b4fa6ba6d3082f652a7e8a43e",
-      "target": "packages/tsts/src/internal/ast/generated/casts.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "value-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "5f8ff2fc56c7bcb6377d1da9b77fcbdb82c4d052df55635d5f21943f6627a897",
-      "target": "packages/tsts/src/internal/ast/generated/data.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "value-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "d1ce6d06e659221b64f50574f8c6e0c05a1160f99efbe34080120a98089942d8",
-      "target": "packages/tsts/src/internal/ast/generated/factory.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "value-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "75861be44a187da8d86340ad4fc9ab9d8cb2b16f143985b3f895d04fd9f80d37",
-      "target": "packages/tsts/src/internal/ast/generated/node.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "value-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "76ea72d15897ff7a906180cc5507a0c463c62bf80d97f89aa391700b8e334b99",
-      "target": "packages/tsts/src/internal/ast/generated/predicates.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "value-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "20258bb3174f3d8e30d5c53a14a12ba0fb280267863dd4af156e88c0b6325e4f",
-      "target": "packages/tsts/src/internal/ast/generated/unions.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/ast_generated.ts",
-      "name": "*",
-      "namespace": "value-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "7d8f8cdff9c417eb7df9cfcdd0e0cdcb9019f2ccff4095b508780afa0fcc717b",
-      "target": "packages/tsts/src/internal/ast/generated/visitor.ts"
-    },
-    {
       "file": "packages/tsts/src/internal/ast/ast.ts",
       "name": "ModifierList",
       "namespace": "type",
@@ -28975,22 +28863,6 @@
       "owner": "compiler-port-runtime",
       "routeHash": "4f1c5ece2e3847b3c30b36b71a77098df71fe7f5e751bf6837e90e1673a618fc",
       "target": "packages/tsts/src/internal/ast/spine.ts::Visitor"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/kind_generated.ts",
-      "name": "*",
-      "namespace": "type-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "e1beb91b21f0452eca2afac25ebab51970792cd29af1be9a7b8e5a004c55d677",
-      "target": "packages/tsts/src/internal/ast/generated/kinds.ts"
-    },
-    {
-      "file": "packages/tsts/src/internal/ast/kind_generated.ts",
-      "name": "*",
-      "namespace": "value-star",
-      "owner": "compiler-port-runtime",
-      "routeHash": "0f6e37bfa4204bbdbab8a27661b3505a52a3a09b6c1a4e4848baab4449b68b94",
-      "target": "packages/tsts/src/internal/ast/generated/kinds.ts"
     },
     {
       "file": "packages/tsts/src/internal/json/json.ts",

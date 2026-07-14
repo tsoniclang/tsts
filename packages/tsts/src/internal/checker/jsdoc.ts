@@ -1,6 +1,6 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend, GoNilSlice, GoNumberKey, GoStringKey } from "../../go/compat.js";
+import { GoNilSlice, GoNumberKey, GoStringKey } from "../../go/compat.js";
 import { NewSetWithSizeHint, Set_Add, Set_Has } from "../collections/set.js";
 import { AsJSDoc, AsJSDocParameterOrPropertyTag, AsQualifiedName } from "../ast/generated/casts.js";
 import type { Node } from "../ast/spine.js";

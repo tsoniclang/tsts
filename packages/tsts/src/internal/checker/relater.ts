@@ -1,8 +1,8 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoValueRef, GoZeroPointer } from "../../go/compat.js";
-import { GoSlicePrefix, GoSliceRange } from "../../go/slice-runtime.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceReslice } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../go/compat.js";
+
 import { GoStringKey, NewGoStructMap } from "../../go/compat.js";
 import { recordExtensionPostCheckAssignabilityObservation } from "../../extensions/checker-integration.js";
 import type { Node } from "../ast/spine.js";
@@ -413,7 +413,7 @@ export interface ErrorOutputContainer {
  * Go source:
  * ErrorReporter func(message *diagnostics.Message, args ...any)
  */
-export type ErrorReporter = GoFunc<(message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>;
+export type ErrorReporter = GoFunc<(message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => void>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::RecursionId","kind":"type","status":"implemented","sigHash":"46c6ddec8fc3f1448edadaba235205abf1f28d0db424e2de8486a3563cede39c"}
@@ -2496,7 +2496,7 @@ export function excludeProperties(properties: GoSlice<GoPtr<Symbol>>, excludedPr
         reduced = GoSliceAppend(reduced, prop, GoPointerValueOps<Symbol>());
       }
     } else if (!excluded) {
-      reduced = slices.Clip(GoSlicePrefix(sourceProperties, i));
+      reduced = slices.Clip(GoSliceReslice(sourceProperties, 0, i));
       excluded = true;
     }
   }
@@ -5526,7 +5526,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
         matchTexts[k] = GoSliceLoad(sourceTexts, seg + k, GoStringValueOps)!;
       }
       matchTexts[s - seg] = getSourceText(s).slice(0, p);
-      matchType = Checker_getTemplateLiteralType(receiver, matchTexts, GoSliceRange(sourceTypes, seg, s));
+      matchType = Checker_getTemplateLiteralType(receiver, matchTexts, GoSliceReslice(sourceTypes, seg, s));
     }
     matches = GoSliceAppend(matches, matchType, GoPointerValueOps<Type>());
     seg = s;
@@ -7087,10 +7087,10 @@ export function Relater_recursiveTypeRelatedTo(receiver: GoPtr<Relater>, source:
   const propagatingVarianceFlags = receiver!.c!.reliabilityFlags;
   receiver!.c!.reliabilityFlags = (receiver!.c!.reliabilityFlags | saveReliabilityFlags) as RelationComparisonResult;
   if ((recursionFlags & RecursionFlagsSource) !== 0) {
-    receiver!.sourceStack = GoSlicePrefix(receiver!.sourceStack, receiver!.sourceStack.length - 1);
+    receiver!.sourceStack = GoSliceReslice(receiver!.sourceStack, 0, receiver!.sourceStack.length - 1);
   }
   if ((recursionFlags & RecursionFlagsTarget) !== 0) {
-    receiver!.targetStack = GoSlicePrefix(receiver!.targetStack, receiver!.targetStack.length - 1);
+    receiver!.targetStack = GoSliceReslice(receiver!.targetStack, 0, receiver!.targetStack.length - 1);
   }
   receiver!.expandingFlags = saveExpandingFlags;
   if (result !== TernaryFalse) {
@@ -7132,7 +7132,7 @@ export function Relater_resetMaybeStack(receiver: GoPtr<Relater>, maybeStart: in
       receiver!.relationCount--;
     }
   }
-  receiver!.maybeKeys = GoSlicePrefix(receiver!.maybeKeys, maybeStart);
+  receiver!.maybeKeys = GoSliceReslice(receiver!.maybeKeys, 0, maybeStart);
 }
 
 /**
@@ -10542,7 +10542,7 @@ export function Relater_reportRelationError(receiver: GoPtr<Relater>, message: G
  * 	r.errorChain = &ErrorChain{next: r.errorChain, message: message, args: args}
  * }
  */
-export function Relater_reportError(receiver: GoPtr<Relater>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
+export function Relater_reportError(receiver: GoPtr<Relater>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void {
   if (message === Types_of_property_0_are_incompatible) {
     switch (Relater_getChainMessage(receiver, 0)) {
       case Object_literal_may_only_specify_known_properties_and_0_does_not_exist_in_type_1:
@@ -10678,7 +10678,7 @@ export function Relater_getChainMessage(receiver: GoPtr<Relater>, index: int): G
  * 	return true
  * }
  */
-export function Relater_chainArgsMatch(receiver: GoPtr<Relater>, ...args: Array<GoInterface<unknown>>): bool {
+export function Relater_chainArgsMatch(receiver: GoPtr<Relater>, args: GoSlice<GoInterface<unknown>>): bool {
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a !== undefined && a !== receiver!.errorChain!.args[i]) {

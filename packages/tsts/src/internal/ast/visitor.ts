@@ -1,7 +1,7 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
+import { GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import { AsSourceFile } from "./ast.js";
 import type { SourceFile } from "./ast.js";

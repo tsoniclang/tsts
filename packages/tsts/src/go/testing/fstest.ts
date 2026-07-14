@@ -17,7 +17,7 @@ export interface MapFile {
   Sys: GoInterface<unknown>;
 }
 
-export type MapFS = GoDefined<GoMap<string, GoPtr<MapFile>>, "__goDefinedType::testing/fstest::type::MapFS::cf85c84c3e20711899a136abf73c8b60a8eb8a5a4904fd17de1c9813fa0be8f4">;
+export type MapFS = GoDefined<GoMap<string, GoPtr<MapFile>>, "__goDefinedType::testing/fstest::type::MapFS::b8627aef32496cc43ea7bbb8279fe3e2485fa65a78cf2ec23843ec88742066cb">;
 
 export function MapFS_as_FS(map: MapFS): FS {
   return {

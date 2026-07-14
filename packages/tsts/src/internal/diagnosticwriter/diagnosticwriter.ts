@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, type GoConstraint, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, type GoConstraint, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Fprint, Fprintf, Sprintf } from "../../go/fmt.js";
 import type { Writer } from "../../go/io.js";
 import { Keys } from "../../go/maps.js";

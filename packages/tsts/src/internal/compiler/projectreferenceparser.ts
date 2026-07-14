@@ -1,6 +1,6 @@
 import type { GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
-import { GoAppend, GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
+import { GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import { NewSetWithSizeHint, Set_AddIfAbsent } from "../collections/set.js";
 import type { Set } from "../collections/set.js";

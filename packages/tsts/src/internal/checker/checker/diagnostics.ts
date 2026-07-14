@@ -1,7 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoFunctionValueOps, GoSliceAppend } from "../../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_TypeArguments, Node_Parameters, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -13,7 +13,7 @@ import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js"
 import { CompareDiagnostics } from "../../ast/diagnostic.js";
 import { GetFunctionFlags, FunctionFlagsGenerator, FunctionFlagsAsync } from "../../ast/functionflags.js";
 import { KindCallExpression, KindClassDeclaration, KindClassExpression, KindDecorator, KindElementAccessExpression, KindEnumDeclaration, KindExportDeclaration, KindExportSpecifier, KindExtendsKeyword, KindGetAccessor, KindImplementsKeyword, KindInterfaceDeclaration, KindJsxOpeningElement, KindJsxSelfClosingElement, KindMethodDeclaration, KindModuleDeclaration, KindNewExpression, KindNullKeyword, KindParameter, KindPropertyAccessExpression, KindPropertyDeclaration, KindSetAccessor, KindShorthandPropertyAssignment, KindTaggedTemplateExpression, KindTypeReference, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken } from "../../ast/generated/kinds.js";
-import type { Kind } from "../../ast/kind_generated.js";
+import type { Kind } from "../../ast/generated/kinds.js";
 import { NodeFlagsUnreachable } from "../../ast/nodeflags.js";
 import { IsCallExpression, IsConstructorDeclaration, IsDecorator, IsExportDeclaration, IsExportSpecifier, IsForOfStatement, IsHeritageClause, IsIdentifier, IsJsxOpeningFragment, IsNamespaceExport, IsNewExpression, IsParameterDeclaration, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral } from "../../ast/generated/predicates.js";
 import type { Symbol } from "../../ast/symbol.js";
@@ -2352,7 +2352,7 @@ export function Checker_addDuplicateDeclarationError(receiver: GoPtr<Checker>, n
  * 	return diagnostic
  * }
  */
-export function Checker_lookupOrIssueError(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function Checker_lookupOrIssueError(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   const diagnostic = NewDiagnosticForNode(location, message, ...args);
   const existing = DiagnosticsCollection_Lookup(receiver!.diagnostics, diagnostic);
   if (existing !== undefined) {

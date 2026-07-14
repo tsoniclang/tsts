@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoValueRef, GoZeroPointer, GoZeroSlice } from "../../go/compat.js";
+import { GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoValueRef, GoZeroPointer, GoZeroSlice } from "../../go/compat.js";
 import { IsExternalOrCommonJSModule } from "../ast/utilities.js";
 import { SourceFile_FileName } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
@@ -190,7 +190,7 @@ export function includeProcessor_getDiagnostics(receiver: GoPtr<includeProcessor
  * 	i.processingDiagnostics = append(i.processingDiagnostics, d...)
  * }
  */
-export function includeProcessor_addProcessingDiagnostic(receiver: GoPtr<includeProcessor>, ...d: Array<GoPtr<processingDiagnostic>>): void {
+export function includeProcessor_addProcessingDiagnostic(receiver: GoPtr<includeProcessor>, d: GoSlice<GoPtr<processingDiagnostic>>): void {
   receiver!.processingDiagnostics = GoSliceAppendSlice(receiver!.processingDiagnostics, d, GoPointerValueOps<processingDiagnostic>());
 }
 

@@ -1,8 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend, GoBooleanKey, GoNilMap, GoNilSlice, GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
-import { GoSlicePrefix } from "../../go/slice-runtime.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceReslice } from "../../go/compat.js";
+import { GoBooleanKey, GoNilMap, GoNilSlice, GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+
 import type { Node } from "../ast/spine.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import { KindClassDeclaration, KindEnumDeclaration, KindInterfaceDeclaration, KindModuleDeclaration } from "../ast/generated/kinds.js";
@@ -245,7 +245,7 @@ export function NodeBuilder_popContext(receiver: GoPtr<NodeBuilder>): void {
     b.impl!.ctx = undefined;
   } else {
     b.impl!.ctx = GoSliceLoad(b.ctxStack, stackSize - 1, GoPointerValueOps<NodeBuilderContext>());
-    b.ctxStack = GoSlicePrefix(b.ctxStack, stackSize - 1);
+    b.ctxStack = GoSliceReslice(b.ctxStack, 0, stackSize - 1);
   }
 }
 
@@ -471,7 +471,7 @@ export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, s
   b.impl!.ctx!.typeStack = GoSliceAppend(b.impl!.ctx!.typeStack, declaredType, GoPointerValueOps<Type>());
   b.impl!.ctx!.typeStack = GoSliceAppend(b.impl!.ctx!.typeStack, undefined, GoPointerValueOps<Type>());
   const nodes = NodeBuilderImpl_expandSymbolForHover(b.impl, symbol_);
-  b.impl!.ctx!.typeStack = GoSlicePrefix(b.impl!.ctx!.typeStack, b.impl!.ctx!.typeStack.length - 2);
+  b.impl!.ctx!.typeStack = GoSliceReslice(b.impl!.ctx!.typeStack, 0, b.impl!.ctx!.typeStack.length - 2);
   NodeBuilder_propagateVerbosityOut(b);
   let result: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (

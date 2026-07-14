@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr } from "../../go/compat.js";
+import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { GoValueRef } from "../../go/compat.js";
 import type { Once } from "../../go/sync.js";
 import { SourceFile_Imports, SourceFile_Text, SourceFile_FileName, SourceFile_Path, Node_Text } from "../ast/ast.js";
@@ -168,7 +168,7 @@ export function referenceFileLocation_text(receiver: GoPtr<referenceFileLocation
  * 	}
  * }
  */
-export function referenceFileLocation_diagnosticAt(receiver: GoPtr<referenceFileLocation>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function referenceFileLocation_diagnosticAt(receiver: GoPtr<referenceFileLocation>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   if (receiver!.node !== undefined) {
     return CreateDiagnosticForNodeInSourceFile(receiver!.file, receiver!.node, message, ...args);
   } else {

@@ -1,8 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoSliceToZeroLength, GoStructField, GoStructKey, GoZeroBoolean, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
-import { GoSlicePrefix } from "../../go/slice-runtime.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceReslice } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoStructField, GoStructKey, GoZeroBoolean, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+
 import * as slices from "../../go/slices.js";
 import * as core from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
@@ -1084,8 +1084,8 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
   } else {
     state.inferencePriority = InferencePriorityCircularity;
   }
-  state.targetStack = GoSlicePrefix(state.targetStack, state.targetStack.length - 1);
-  state.sourceStack = GoSlicePrefix(state.sourceStack, state.sourceStack.length - 1);
+  state.targetStack = GoSliceReslice(state.targetStack, 0, state.targetStack.length - 1);
+  state.sourceStack = GoSliceReslice(state.sourceStack, 0, state.sourceStack.length - 1);
   state.expandingFlags = saveExpandingFlags;
   state.visited.set(key, state.inferencePriority);
   state.inferencePriority = Math.min(state.inferencePriority, saveInferencePriority);
@@ -2656,8 +2656,8 @@ export function Checker_inferReverseMappedType(receiver: GoPtr<Checker>, source:
   if (c.reverseExpandingFlags !== ExpandingFlagsBoth) {
     t = Checker_inferReverseMappedTypeWorker(receiver, source, target, constraint);
   }
-  c.reverseMappedSourceStack = GoSlicePrefix(c.reverseMappedSourceStack, c.reverseMappedSourceStack.length - 1);
-  c.reverseMappedTargetStack = GoSlicePrefix(c.reverseMappedTargetStack, c.reverseMappedTargetStack.length - 1);
+  c.reverseMappedSourceStack = GoSliceReslice(c.reverseMappedSourceStack, 0, c.reverseMappedSourceStack.length - 1);
+  c.reverseMappedTargetStack = GoSliceReslice(c.reverseMappedTargetStack, 0, c.reverseMappedTargetStack.length - 1);
   c.reverseExpandingFlags = saveExpandingFlags;
   c.reverseMappedCache.set(key, t);
   return t;

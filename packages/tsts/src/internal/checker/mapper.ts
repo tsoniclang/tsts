@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoInterfaceValue, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoSliceRange } from "../../go/slice-runtime.js";
+
 import * as core from "../core/core.js";
 import type { Checker, InferenceContext, InferenceInfo } from "./checker/state.js";
 import { Checker_instantiateType } from "./checker/types.js";
@@ -12,7 +12,7 @@ import {
 import type { Type } from "./types.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
-import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad, GoSliceReslice } from "../../go/compat.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperKind","kind":"type","status":"implemented","sigHash":"93afd4209ed7acb0c7063285beb2cccdf1426ddedee7dce25c71f2770bdc60d2"}
@@ -188,7 +188,7 @@ export function appendTypeMapping(mapper: GoPtr<TypeMapper>, source: GoPtr<Type>
  * }
  */
 export function Checker_newBackreferenceMapper(receiver: GoPtr<Checker>, context: GoPtr<InferenceContext>, index: int): GoPtr<TypeMapper> {
-  const forwardInferences = GoSliceRange(context!.inferences, index);
+  const forwardInferences = GoSliceReslice(context!.inferences, index, context!.inferences.length);
   const typeParameters = core.Map(forwardInferences, (i: GoPtr<InferenceInfo>): GoPtr<Type> => {
     return i!.typeParameter;
   });

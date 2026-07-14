@@ -1,4 +1,4 @@
-import { GoAppend, GoAppendSlice, GoNilSlice, type GoPtr } from "../../../go/compat.js";
+import { GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppendSlice } from "../../../go/compat.js";
 import { Background } from "../../../go/context.js";
 import type { Context } from "../../../go/context.js";
@@ -53,7 +53,7 @@ import { GoSliceLoad, GoStringValueOps } from "../../../go/compat.js";
  * 	}
  * }
  */
-export function GetTraceWithWriterFromSys(w: GoInterface<Writer>, locale: Locale, testing: GoInterface<CommandLineTesting>): GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void> {
+export function GetTraceWithWriterFromSys(w: GoInterface<Writer>, locale: Locale, testing: GoInterface<CommandLineTesting>): GoFunc<(msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => void> {
   if (testing === undefined) {
     return (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void => {
       Fprintln(w!, Message_Localize(msg, locale, ...args));

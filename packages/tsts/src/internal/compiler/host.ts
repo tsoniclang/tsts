@@ -1,4 +1,4 @@
-import type { GoFunc, GoPtr } from "../../go/compat.js";
+import type { GoFunc, GoPtr, GoSlice } from "../../go/compat.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { SourceFileParseOptions } from "../ast/parseoptions.js";
 import { GetScriptKindFromFileName } from "../core/core.js";
@@ -32,7 +32,7 @@ export interface CompilerHost {
   FS(): GoInterface<FS_4e804012>;
   DefaultLibraryPath(): string;
   GetCurrentDirectory(): string;
-  Trace(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void;
+  Trace(msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void;
   GetSourceFile(opts: SourceFileParseOptions): GoPtr<SourceFile>;
   GetResolvedProjectReference(fileName: string, path: Path): GoPtr<ParsedCommandLine>;
 }
@@ -73,7 +73,7 @@ export interface compilerHost {
   fs: GoInterface<FS_4e804012>;
   defaultLibraryPath: string;
   extendedConfigCache: GoInterface<ExtendedConfigCache>;
-  trace: GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>;
+  trace: GoFunc<(msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => void>;
 }
 
 /**
@@ -90,7 +90,7 @@ export interface compilerHost {
  * 	return NewCompilerHost(currentDirectory, cachedvfs.From(fs), defaultLibraryPath, extendedConfigCache, trace)
  * }
  */
-export function NewCachedFSCompilerHost(currentDirectory: string, fs: GoInterface<FS_4e804012>, defaultLibraryPath: string, extendedConfigCache: GoInterface<ExtendedConfigCache>, trace: GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>): GoInterface<CompilerHost> {
+export function NewCachedFSCompilerHost(currentDirectory: string, fs: GoInterface<FS_4e804012>, defaultLibraryPath: string, extendedConfigCache: GoInterface<ExtendedConfigCache>, trace: GoFunc<(msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => void>): GoInterface<CompilerHost> {
   return NewCompilerHost(currentDirectory, cachedvfsAsVfsFS(cachedvfsFrom(fs)), defaultLibraryPath, extendedConfigCache, trace);
 }
 
@@ -117,7 +117,7 @@ export function NewCachedFSCompilerHost(currentDirectory: string, fs: GoInterfac
  * 	}
  * }
  */
-export function NewCompilerHost(currentDirectory: string, fs: GoInterface<FS_4e804012>, defaultLibraryPath: string, extendedConfigCache: GoInterface<ExtendedConfigCache>, trace: GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>): GoInterface<CompilerHost> {
+export function NewCompilerHost(currentDirectory: string, fs: GoInterface<FS_4e804012>, defaultLibraryPath: string, extendedConfigCache: GoInterface<ExtendedConfigCache>, trace: GoFunc<(msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => void>): GoInterface<CompilerHost> {
   if (trace === undefined) {
     trace = (_msg: GoPtr<Message>, ..._args: Array<GoInterface<unknown>>): void => {};
   }
@@ -175,7 +175,7 @@ export function compilerHost_GetCurrentDirectory(receiver: GoPtr<compilerHost>):
  * 	h.trace(msg, args...)
  * }
  */
-export function compilerHost_Trace(receiver: GoPtr<compilerHost>, msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
+export function compilerHost_Trace(receiver: GoPtr<compilerHost>, msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void {
   receiver!.trace!(msg, ...args);
 }
 

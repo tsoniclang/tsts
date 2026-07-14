@@ -25,7 +25,7 @@
 // Go (T, error) maps to a `[T, GoError]` tuple; Go panic maps to `throw`.
 
 import type { bool, int } from "./scalars.js";
-import { GoAppend, GoNilSlice, GoSliceIsNil, type GoError, type GoFunc, type GoSlice } from "./compat.js";
+import { GoNilSlice, GoSliceIsNil, type GoError, type GoFunc, type GoSlice } from "./compat.js";
 import { GoSliceAppend, GoStringValueOps } from "./compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "./compat.js";
 

@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoAppend, type GoPtr } from "../../go/compat.js";
+import { type GoPtr } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { AsSourceFile, Node_Body, Node_Text, SourceFile_Imports } from "../ast/ast.js";
 import type { SourceFile } from "../ast/ast.js";

@@ -100,6 +100,7 @@ test("local generic method objects and declarations use their receiver declarati
       name: "box",
       nameKind: "named",
       packagePath,
+      embedded: false,
       exported: false,
       type: {
         kind: "named",
@@ -159,6 +160,7 @@ function selectedMethodSignature() {
         name: "value",
         nameKind: "named",
         packagePath,
+        embedded: false,
         exported: false,
         type: { kind: "typeParameter", nilable: false, typeParameter: selectedTypeParameter },
       }],

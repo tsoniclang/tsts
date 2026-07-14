@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoAppend, GoNilSlice, GoStringKey, GoZeroPointer, type GoFunc, type GoInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoNilSlice, GoStringKey, GoZeroPointer, type GoFunc, type GoInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Entries, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -183,7 +183,7 @@ export interface diagnosticAndArgs {
  * 	return p.versionPaths
  * }
  */
-export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace: GoFunc<(m: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>): VersionPaths {
+export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace: GoFunc<(m: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => void>): VersionPaths {
   receiver!.once.Do(() => {
     const typesVersions: JSONValue = receiver!.__tsgoEmbedded0?.__tsgoEmbedded1?.TypesVersions ?? { Type: JSONValueTypeNotPresent, Value: undefined };
     receiver!.versionTraces ??= GoNilSlice();

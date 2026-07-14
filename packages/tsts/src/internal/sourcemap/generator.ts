@@ -2,7 +2,7 @@ import type { bool, byte, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoError, GoMap, GoPtr, GoRef, GoRune, GoSlice } from "../../go/compat.js";
 import { GoRefValueOps, GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
-import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef } from "../../go/compat.js";
 import { NewEncoder as base64NewEncoder, StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { New as errorsNew } from "../../go/errors.js";
 import type { WriteCloser } from "../../go/io.js";

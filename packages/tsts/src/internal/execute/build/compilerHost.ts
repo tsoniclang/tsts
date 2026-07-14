@@ -1,4 +1,4 @@
-import type { GoPtr } from "../../../go/compat.js";
+import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { SourceFileParseOptions } from "../../ast/parseoptions.js";
 import type { CompilerHost } from "../../compiler/host.js";
@@ -21,7 +21,7 @@ import type { GoFunc, GoInterface } from "../../../go/compat.js";
  */
 export interface compilerHost {
   host: GoPtr<host>;
-  trace: GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>;
+  trace: GoFunc<(msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => void>;
 }
 
 /**
@@ -87,7 +87,7 @@ export function compilerHost_GetCurrentDirectory(receiver: GoPtr<compilerHost>):
  * 	h.trace(msg, args...)
  * }
  */
-export function compilerHost_Trace(receiver: GoPtr<compilerHost>, msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
+export function compilerHost_Trace(receiver: GoPtr<compilerHost>, msg: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void {
   receiver!.trace!(msg, ...args);
 }
 

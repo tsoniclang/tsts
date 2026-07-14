@@ -192,7 +192,7 @@ export function Message_String(receiver: GoPtr<Message>): string {
  * 	return Localize(locale, m, "", StringifyArgs(args)...)
  * }
  */
-export function Message_Localize(receiver: GoPtr<Message>, locale: Locale, ...args: Array<GoInterface<unknown>>): string {
+export function Message_Localize(receiver: GoPtr<Message>, locale: Locale, args: GoSlice<GoInterface<unknown>>): string {
   return Localize(locale, receiver, "", ...StringifyArgs(args));
 }
 
@@ -216,7 +216,7 @@ export function Message_Localize(receiver: GoPtr<Message>, locale: Locale, ...ar
  * 	return Format(text, args)
  * }
  */
-export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...args: Array<string>): string {
+export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, args: GoSlice<string>): string {
   if (message === undefined) {
     message = keyToMessage(key);
   }

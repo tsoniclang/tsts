@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoNumberValueOps, GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import { Index } from "../../go/strings.js";
@@ -12,7 +12,7 @@ import type { SymbolTable } from "../ast/symbol.js";
 import { Node_Pos, Node_End } from "../ast/spine.js";
 import { Node_Locals, Node_Expression, Node_Properties, Node_Elements, Node_TypeArguments, Node_TagName, Node_PropertyNameOrName, Node_ModuleSpecifier, Node_Text, Node_Symbol } from "../ast/ast.js";
 import { Node_Name } from "../ast/spine.js";
-import type { CallLikeExpression, ExportSpecifier, Expression, Identifier, JsxAttributeLike } from "../ast/ast_generated.js";
+import type { CallLikeExpression, ExportSpecifier, Expression, Identifier, JsxAttributeLike } from "../ast/generated/index.js";
 import { AsIdentifier, AsQualifiedName, AsTaggedTemplateExpression, AsExportSpecifier, AsClassExpression, AsBinaryExpression } from "../ast/generated/casts.js";
 import { IsIdentifier, IsExportSpecifier, IsObjectLiteralExpression, IsJsxAttributes, IsForOfStatement, IsBinaryExpression, IsPropertyAssignment, IsDecorator, IsExpressionStatement, IsExpressionWithTypeArguments, IsJsxNamespacedName, IsSpreadElement } from "../ast/generated/predicates.js";
 import { KindSourceFile, KindModuleDeclaration, KindEnumDeclaration, KindClassExpression, KindClassDeclaration, KindInterfaceDeclaration, KindFunctionExpression, KindCallExpression, KindNewExpression, KindTaggedTemplateExpression, KindBinaryExpression, KindJsxSelfClosingElement, KindJsxOpeningElement, KindJsxOpeningFragment, KindSuperKeyword, KindStringLiteral, KindShorthandPropertyAssignment, KindEnumMember, KindPropertyAccessExpression, KindQualifiedName, KindImportType, KindNamespaceExport, KindExportSpecifier, KindDecorator, KindIdentifier } from "../ast/generated/kinds.js";

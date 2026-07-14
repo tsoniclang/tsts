@@ -1,5 +1,5 @@
 import type { bool, byte } from "../../../go/scalars.js";
-import { GoAppend, GoAppendSlice, GoNilSlice, GoStringKey, GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoNilSlice, GoStringKey, GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../../go/compat.js";
 import { Concat } from "../../../go/slices.js";
 import type { Context } from "../../../go/context.js";

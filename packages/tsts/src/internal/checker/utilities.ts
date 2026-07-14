@@ -2,7 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import { Every, Find, FirstOrNil, Filter, Some } from "../core/core.js";
 import type { GoComparable, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { IsTypeOrJSTypeAliasDeclaration, Node_Arguments, Node_Body, Node_Elements, Node_Expression, Node_ImportClause, Node_Initializer, Node_Members, Node_ModifierFlags, Node_Parameters, Node_Properties, Node_PropertyNameOrName, Node_Text, Node_Type, Node_TypeArguments, SourceFile_FileName, SourceFile_Path, SourceFile_Text } from "../ast/ast.js";
@@ -239,7 +239,7 @@ import { GoSliceLoad } from "../../go/compat.js";
  * 	return ast.NewDiagnostic(file, loc, message, args...)
  * }
  */
-export function NewDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function NewDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   let file: GoPtr<SourceFile> = undefined;
   let loc: TextRange = NewTextRange(0, 0);
   if (node !== undefined) {
@@ -260,7 +260,7 @@ export function NewDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>,
  * 	return NewDiagnosticForNode(node, message, args...)
  * }
  */
-export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
+export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Diagnostic> {
   if (chain !== undefined) {
     return NewDiagnosticChain(chain, message, ...args);
   }

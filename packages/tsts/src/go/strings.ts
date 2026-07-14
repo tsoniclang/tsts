@@ -9,7 +9,7 @@
 import type { bool, int, byte } from "./scalars.js";
 import type { GoError, GoRune, GoSlice } from "./compat.js";
 import { GoNumberValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "./compat.js";
-import { GoAppend, GoAppendSlice, GoNilSlice } from "./compat.js";
+import { GoNilSlice } from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
 import { GoSliceLoad, GoStringValueOps } from "./compat.js";
 

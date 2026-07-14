@@ -1,16 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import {
-  GoAppend, GoAppendSlice,
-  GoComparableInterfaceKey,
-  GoNilSlice,
-  GoRequireComparableInterface,
-  GoUnboxComparableInterface,
-  GoValueRef,
-  GoZeroSlice,
-  type GoComparableInterface,
-  type GoPtr,
-  type GoSlice,
-} from "../../../go/compat.js";
+import { GoComparableInterfaceKey, GoNilSlice, GoRequireComparableInterface, GoUnboxComparableInterface, GoValueRef, GoZeroSlice, type GoComparableInterface, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
 import { Fprint } from "../../../go/fmt.js";
 import { SortFunc } from "../../../go/slices.js";

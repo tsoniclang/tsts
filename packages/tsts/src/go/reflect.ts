@@ -1,6 +1,5 @@
 import type { int, long, ulong, bool } from "./scalars.js";
 import type { GoInterface, GoSlice } from "./compat.js";
-import { GoAppend, GoAppendSlice } from "./compat.js";
 import type { Seq } from "./iter.js";
 
 // Go: package reflect
@@ -94,8 +93,8 @@ export interface Type {
   Name(): string;
   Elem(): GoInterface<Type>;
   Fields(): Seq<StructField>;
-  readonly "__goUnexportedMethod::reflect::common::024f25728e0d81798885251395120b1da8e606e18a480d941d9e0bc24bef2890": never;
-  readonly "__goUnexportedMethod::reflect::uncommon::24228770a276b8adb671f9b44a1ea230d4f6f548ae52974311ade8942f363304": never;
+  readonly "__goUnexportedMethod::reflect::common::97850bb57ddc046d893c746ce97936804609b555515fe6d5c3670976773237c1": never;
+  readonly "__goUnexportedMethod::reflect::uncommon::427423eb53ef894320cc19d1dfb9a3e96a779194213a799ae4794d21b9c82a4c": never;
 }
 
 export interface TypeDescriptor {
@@ -107,8 +106,8 @@ export interface TypeDescriptor {
 }
 
 class descriptorType implements Type {
-  declare readonly "__goUnexportedMethod::reflect::common::024f25728e0d81798885251395120b1da8e606e18a480d941d9e0bc24bef2890": never;
-  declare readonly "__goUnexportedMethod::reflect::uncommon::24228770a276b8adb671f9b44a1ea230d4f6f548ae52974311ade8942f363304": never;
+  declare readonly "__goUnexportedMethod::reflect::common::97850bb57ddc046d893c746ce97936804609b555515fe6d5c3670976773237c1": never;
+  declare readonly "__goUnexportedMethod::reflect::uncommon::427423eb53ef894320cc19d1dfb9a3e96a779194213a799ae4794d21b9c82a4c": never;
 
   constructor(private readonly descriptor: TypeDescriptor) {}
 

@@ -5,7 +5,6 @@ import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
 import type { GoFunc, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import { NewCompilerDiagnostic } from "../ast/diagnostic.js";

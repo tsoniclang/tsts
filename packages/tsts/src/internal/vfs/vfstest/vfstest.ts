@@ -2,7 +2,7 @@ import type { bool, byte, int, long } from "../../../go/scalars.js";
 import type { Seq2 } from "../../../go/iter.js";
 import type { GoError, GoFunc, GoInterface, GoMap, GoPointerMethodSet, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoSliceAppend, GoStringValueOps } from "../../../go/compat.js";
-import { GoAppend, GoMapIsNil, GoNilSlice, GoSliceToZeroLength, GoZeroInterface, GoZeroSlice } from "../../../go/compat.js";
+import { GoMapIsNil, GoNilSlice, GoZeroInterface, GoZeroSlice } from "../../../go/compat.js";
 import { AsType } from "../../../go/errors.js";
 import { Sprintf, Errorf } from "../../../go/fmt.js";
 import type { DirEntry, File, FileInfo, FileMode, FS as GoFS, ReadDirFile } from "../../../go/io/fs.js";

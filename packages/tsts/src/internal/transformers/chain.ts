@@ -1,4 +1,4 @@
-import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoNilSlice, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import { NodeDefault_AsNode } from "../ast/spine.js";
@@ -121,7 +121,7 @@ export type TransformerFactory = GoFunc<(opt: GoPtr<TransformOptions>) => GoPtr<
  * 	}
  * }
  */
-export function Chain(...transforms: Array<TransformerFactory>): TransformerFactory {
+export function Chain(transforms: GoSlice<TransformerFactory>): TransformerFactory {
   if (transforms.length < 2) {
     if (transforms.length === 0) {
       throw new globalThis.Error("Expected some number of transforms to chain, but got none");

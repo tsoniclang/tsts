@@ -1,7 +1,7 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { GoSliceAppend, GoSliceValueOps } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
+import { GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import * as regexp from "../../go/regexp.js";
 import * as strings from "../../go/strings.js";

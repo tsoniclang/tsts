@@ -43,6 +43,10 @@ test("buildStatus rejects partial and forged TS-unit status evidence before matc
   });
 
   assert.equal(buildStatus(inputFor(exactUnit)).counts.implemented, 1);
+  const exactScannedUnit = structuredClone(exactUnit);
+  Object.defineProperty(exactScannedUnit, "declarationMetadata", { value: { statement: {} }, enumerable: false });
+  Object.defineProperty(exactScannedUnit, "declarationName", { value: "Fail", enumerable: false });
+  assert.equal(buildStatus(inputFor(exactScannedUnit)).counts.implemented, 1);
   const partial = structuredClone(exactUnit);
   delete partial.metadata;
   const missingKind = structuredClone(exactUnit);
@@ -55,6 +59,10 @@ test("buildStatus rejects partial and forged TS-unit status evidence before matc
   invalidDigest.sigHash = invalidDigest.metadata.sigHash = "not-a-digest";
   const accessor = structuredClone(exactUnit);
   Object.defineProperty(accessor, "status", { enumerable: true, get: () => "implemented" });
+  const hiddenExtra = structuredClone(exactUnit);
+  Object.defineProperty(hiddenExtra, "trusted", { value: true, enumerable: false });
+  const invalidDeclarationName = structuredClone(exactUnit);
+  Object.defineProperty(invalidDeclarationName, "declarationName", { value: "", enumerable: false });
 
   for (const [description, unit] of [
     ["missing metadata", partial],
@@ -64,6 +72,8 @@ test("buildStatus rejects partial and forged TS-unit status evidence before matc
     ["extra metadata field", forgedMetadata],
     ["invalid signature digest", invalidDigest],
     ["accessor-backed status", accessor],
+    ["unexpected hidden evidence", hiddenExtra],
+    ["invalid declaration name", invalidDeclarationName],
   ]) {
     assert.throws(() => buildStatus(inputFor(unit)), /buildStatus tsUnits\.units\[0\]/, description);
   }

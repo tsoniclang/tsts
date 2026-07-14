@@ -328,7 +328,7 @@ function GoZeroNodeLinks(): NodeLinks {
  * 	return false
  * }
  */
-export function Checker_grammarErrorOnFirstToken(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): bool {
+export function Checker_grammarErrorOnFirstToken(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): bool {
   const sourceFile = GetSourceFileOfNode(node);
   if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
     const span = GetRangeOfTokenAtPosition(sourceFile, Node_Pos(node));
@@ -351,7 +351,7 @@ export function Checker_grammarErrorOnFirstToken(receiver: GoPtr<Checker>, node:
  * 	return false
  * }
  */
-export function Checker_grammarErrorAtPos(receiver: GoPtr<Checker>, nodeForSourceFile: GoPtr<Node>, start: int, length: int, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): bool {
+export function Checker_grammarErrorAtPos(receiver: GoPtr<Checker>, nodeForSourceFile: GoPtr<Node>, start: int, length: int, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): bool {
   const sourceFile = GetSourceFileOfNode(nodeForSourceFile);
   if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
     Checker_addDiagnostic(receiver, NewDiagnostic(sourceFile, NewTextRange(start, start + length), message, ...args));
@@ -373,7 +373,7 @@ export function Checker_grammarErrorAtPos(receiver: GoPtr<Checker>, nodeForSourc
  * 	return false
  * }
  */
-export function Checker_grammarErrorOnNode(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): bool {
+export function Checker_grammarErrorOnNode(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): bool {
   const sourceFile = GetSourceFileOfNode(node);
   if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
     Checker_error(receiver, node, message, ...args);
@@ -397,7 +397,7 @@ export function Checker_grammarErrorOnNode(receiver: GoPtr<Checker>, node: GoPtr
  * 	return false
  * }
  */
-export function Checker_grammarErrorOnNodeSkippedOnNoEmit(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): bool {
+export function Checker_grammarErrorOnNodeSkippedOnNoEmit(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): bool {
   const sourceFile = GetSourceFileOfNode(node);
   if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
     const d = createDiagnosticForNode(node, message, ...args);

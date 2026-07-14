@@ -1,5 +1,5 @@
 import type { bool, byte, int, sbyte } from "../../go/scalars.js";
-import { GoAppend, GoNilSlice, GoStringKey, GoValueRef, type GoError, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoNilSlice, GoStringKey, GoValueRef, type GoError, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { UnmarshalDecode as json_UnmarshalDecode } from "../json/json.js";

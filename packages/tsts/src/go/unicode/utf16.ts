@@ -4,7 +4,6 @@
 import type { int } from "../scalars.js";
 import type { GoRune, GoSlice } from "../compat.js";
 import { GoNumberValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "../compat.js";
-import { GoAppend } from "../compat.js";
 import { GoSliceMake } from "../compat.js";
 import { GoSliceLoad } from "../compat.js";
 

@@ -1,4 +1,4 @@
-import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoNilMap, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../../go/compat.js";
 import type { bool } from "../../../go/scalars.js";
 import type { HasFileName, Node, SourceFile } from "../../ast/ast.js";
@@ -7,10 +7,10 @@ import {
   NodeFactory_UpdateImportDeclaration, NodeFactory_UpdateExportDeclaration,
   NodeFactory_UpdateCallExpression, NodeFactory_UpdateSourceFile,
 } from "../../ast/ast.js";
-import type { CallExpression, ExportAssignment, ExportDeclaration, Expression, IdentifierNode, ImportDeclaration, ImportEqualsDeclaration, Statement } from "../../ast/ast_generated.js";
+import type { CallExpression, ExportAssignment, ExportDeclaration, Expression, IdentifierNode, ImportDeclaration, ImportEqualsDeclaration, Statement } from "../../ast/generated/index.js";
 import {
   AsCallExpression, AsExportAssignment, AsExportDeclaration, AsImportDeclaration, AsImportEqualsDeclaration,
-} from "../../ast/ast_generated.js";
+} from "../../ast/generated/index.js";
 import {
   IsExternalModule, IsExternalModuleImportEqualsDeclaration, IsExternalModuleIndicator,
   HasSyntacticModifier, IsExportNamespaceAsDefaultDeclaration, IsStringLiteralLike,

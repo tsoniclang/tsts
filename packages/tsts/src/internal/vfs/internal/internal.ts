@@ -1,7 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoSliceAppend, GoStringValueOps } from "../../../go/compat.js";
-import { GoAppend } from "../../../go/compat.js";
 import { BigEndian, LittleEndian } from "../../../go/encoding/binary.js";
 import type { ByteOrder } from "../../../go/encoding/binary.js";
 import { FileMode_IsDir, FileMode_IsRegular, ModeIrregular, ModeSymlink, ReadDir as fs_ReadDir, ReadFileBytes as fs_ReadFileBytes, Stat as fs_Stat, WalkDir as fs_WalkDir } from "../../../go/io/fs.js";

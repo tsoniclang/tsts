@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
 import type { GoComparable, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoMapIsNil, GoMapMake, GoNilMap } from "../../go/compat.js";
+import { GoMapIsNil, GoMapMake, GoNilMap } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 

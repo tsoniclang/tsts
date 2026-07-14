@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
@@ -260,7 +260,7 @@ export interface DiagAndArgs {
  * 	}
  * }
  */
-export function tracer_write(receiver: GoPtr<tracer>, diag: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
+export function tracer_write(receiver: GoPtr<tracer>, diag: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): void {
   if (receiver !== undefined) {
     receiver.traces = [...receiver.traces, { Message: diag, Args: args }];
   }
@@ -4247,7 +4247,7 @@ export function resolutionState_conditionMatches(receiver: GoPtr<resolutionState
  * 	return nil
  * }
  */
-export function resolutionState_getTraceFunc(receiver: GoPtr<resolutionState>): GoFunc<(m: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void> {
+export function resolutionState_getTraceFunc(receiver: GoPtr<resolutionState>): GoFunc<(m: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>) => void> {
   if (receiver!.tracer !== undefined) {
     return (m: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => tracer_write(receiver!.tracer, m, ...args);
   }

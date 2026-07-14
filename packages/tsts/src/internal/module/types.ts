@@ -1,7 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
 import type { Diagnostic } from "../ast/diagnostic.js";

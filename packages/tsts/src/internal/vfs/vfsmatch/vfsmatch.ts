@@ -1,5 +1,5 @@
 import type { bool, int, sbyte } from "../../../go/scalars.js";
-import { GoAppend, GoMapIsNil, GoStringKey, GoZeroString, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
+import { GoMapIsNil, GoStringKey, GoZeroString, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
 import { GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
 import { MaxInt } from "../../../go/math.js";
 import { SortStableFunc } from "../../../go/slices.js";

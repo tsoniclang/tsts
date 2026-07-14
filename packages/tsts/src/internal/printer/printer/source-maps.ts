@@ -6,7 +6,7 @@ import type { Node, NodeList } from "../../ast/spine.js";
 import { NodeDefault_AsNode, NodeList_End, NodeList_Pos, Node_Pos, Node_End } from "../../ast/spine.js";
 import type { CommentRange, SourceFile } from "../../ast/ast.js";
 import { SourceFile_Text } from "../../ast/ast.js";
-import type { IdentifierNode } from "../../ast/ast_generated.js";
+import type { IdentifierNode } from "../../ast/generated/index.js";
 import type { Block, PartiallyEmittedExpression, TemplateLiteralTypeSpan, TemplateSpan } from "../../ast/generated/data.js";
 import type { Expression, TemplateLiteralTypeSpanNode, TemplateSpanNode, Statement } from "../../ast/generated/unions.js";
 import { AsTemplateLiteralTypeSpan, AsTemplateSpan, AsPartiallyEmittedExpression } from "../../ast/generated/casts.js";

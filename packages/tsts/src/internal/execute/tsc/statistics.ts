@@ -1,6 +1,5 @@
 import type { bool, int, ulong } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoAppend } from "../../../go/compat.js";
 import { Fprintf, Sprint, Sprintf } from "../../../go/fmt.js";
 import type { Writer } from "../../../go/io.js";
 import type { MemStats } from "../../../go/runtime.js";

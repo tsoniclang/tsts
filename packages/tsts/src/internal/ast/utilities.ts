@@ -1,8 +1,8 @@
 import type { bool, int, short, ulong } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
-import { GoSlicePrefix } from "../../go/slice-runtime.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceReslice } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
+
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Pool } from "../../go/sync.js";
@@ -797,7 +797,7 @@ export function FindLastVisibleNode(nodes: GoSlice<GoPtr<Node>>): GoPtr<Node> {
  * 	return slices.Contains(kinds, node.Kind)
  * }
  */
-export function NodeKindIs(node: GoPtr<Node>, ...kinds: Array<Kind>): bool {
+export function NodeKindIs(node: GoPtr<Node>, kinds: GoSlice<Kind>): bool {
   return slices.Contains(kinds, node!.Kind, GoEqualStrict);
 }
 
@@ -6091,7 +6091,7 @@ export function popAncestor(ancestors: GoSlice<GoPtr<Node>>, node: GoPtr<Node>):
     return [GoNilSlice(), node!.Parent];
   }
   const n = ancestors.length - 1;
-  return [GoSlicePrefix(ancestors, n), GoSliceLoad(ancestors, n, GoPointerValueOps<Node>())];
+  return [GoSliceReslice(ancestors, 0, n), GoSliceLoad(ancestors, n, GoPointerValueOps<Node>())];
 }
 
 /**

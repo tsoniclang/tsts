@@ -44,6 +44,13 @@ export function Fail(): void {
     assert.equal(result.fileCount, 2);
     assert.equal(result.units.length, 1);
     assert.equal(Object.hasOwn(result.units[0], "embeddedGoSource"), false);
+    assert.equal(result.units[0].declarationName, "Fail");
+    assert.deepEqual(Object.getOwnPropertyDescriptor(result.units[0], "declarationName"), {
+      configurable: false,
+      enumerable: false,
+      value: "Fail",
+      writable: false,
+    });
     assert.deepEqual(result.units[0].override, {
       category: "runtime-performance",
       allow: ["signature"],

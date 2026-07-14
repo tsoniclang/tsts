@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoAppend, GoEqualStrict, GoNilSlice, GoPointerKey, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoPointerKey, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import { SortFunc } from "../../../go/slices.js";
 import type { SourceFile } from "../../ast/ast.js";

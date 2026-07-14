@@ -97,6 +97,7 @@ test("nested semantic object and local provenance identities are exact", () => {
   assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].tagRemainder = "malformed"), /exact unparsed struct-tag suffix/, "semantic struct-tag remainder");
   assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].tagValues[0].value = "wrong"), /exact reflect-compatible struct-tag prefix/, "semantic struct-tag prefix");
   assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].variable.id += "-drift"), /variable.id must equal|\.id must equal/, "struct field id");
+  assertRejected(mutateClone(snapshot, (value) => delete value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].variable.embedded), /missing snapshot-schema-13 key 'embedded'|embedded must be boolean/, "struct field embedded evidence omission");
   assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].variable.type.interface.explicitMethods[0].id += "-drift"), /\.id must equal/, "interface method id");
   assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].variable.type.interface.embeddedTypes[0].reference.objectId += "-drift"), /objectId must equal/, "nested type reference id");
   assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].variable.type.interface.explicitMethodOrderProvenance = "guessed"), /explicitMethodOrderProvenance/, "interface explicit-method order provenance");
@@ -145,7 +146,7 @@ test("semantic array lengths are unbounded canonical decimal strings", () => {
   assertRejected(mutateClone(snapshot, (value) => {
     value.files[0].units[0].semantic[0].signature.parameters.variables[0].type.element.basic.kind = 2;
     value.files[0].units[0].semantic[0].object.type.signature.parameters.variables[0].type.element.basic.kind = 2;
-  }), /unknown snapshot-schema-12 key 'kind'/, "removed redundant basic kind");
+  }), /unknown snapshot-schema-13 key 'kind'/, "removed redundant basic kind");
   assertRejected(mutateClone(snapshot, (value) => {
     value.files[0].units[0].semantic[0].signature.parameters.variables[0].type.element.basic.untyped = true;
     value.files[0].units[0].semantic[0].object.type.signature.parameters.variables[0].type.element.basic.untyped = true;
@@ -220,11 +221,11 @@ function genericFunctionSnapshot() {
   const typeParameter = { reference, constraint: emptyInterfaceType(), constraintSyntax: "any" };
   const parameterType = { kind: "typeParameter", nilable: false, typeParameter: reference };
   declaration.signature.typeParameters = [typeParameter];
-  declaration.signature.parameters.variables = [{ id: `${declaration.object.id}::signature::parameters::0`, name: "value", nameKind: "named", packagePath: declaration.packagePath, exported: false, type: parameterType }];
+  declaration.signature.parameters.variables = [{ id: `${declaration.object.id}::signature::parameters::0`, name: "value", nameKind: "named", packagePath: declaration.packagePath, embedded: false, exported: false, type: parameterType }];
   declaration.object.type.signature = structuredClone(declaration.signature);
   declaration.object.type.signature.parameters.variables[0].id = `${declaration.object.id}::type::parameters::0`;
-  declaration.signature.results.variables = [{ id: `${declaration.object.id}::signature::results::0`, name: "", nameKind: "unnamed", packagePath: declaration.packagePath, exported: false, type: parameterType }];
-  declaration.object.type.signature.results.variables = [{ id: `${declaration.object.id}::type::results::0`, name: "", nameKind: "unnamed", packagePath: declaration.packagePath, exported: false, type: parameterType }];
+  declaration.signature.results.variables = [{ id: `${declaration.object.id}::signature::results::0`, name: "", nameKind: "unnamed", packagePath: declaration.packagePath, embedded: false, exported: false, type: parameterType }];
+  declaration.object.type.signature.results.variables = [{ id: `${declaration.object.id}::type::results::0`, name: "", nameKind: "unnamed", packagePath: declaration.packagePath, embedded: false, exported: false, type: parameterType }];
   snapshot.files[0].units[0].typeParameters = ["T"];
   snapshot.files[0].units[0].typeParameterDetails = [{ name: "T", constraint: { kind: "interface", text: "any", members: [] } }];
   snapshot.files[0].units[0].parameters = [{ names: ["value"], type: identType("T") }];
@@ -258,7 +259,7 @@ function identityRichTypeSnapshot() {
   declaration.type.rhs = {
     kind: "struct",
     nilable: false,
-    struct: { fields: [{ variable: { id: fieldId, name: "Handler", nameKind: "named", packagePath: declaration.packagePath, exported: true, type: interfaceType }, tag: "", tagValues: [], tagRemainder: "" }] },
+    struct: { fields: [{ variable: { id: fieldId, name: "Handler", nameKind: "named", packagePath: declaration.packagePath, embedded: false, exported: true, type: interfaceType }, tag: "", tagValues: [], tagRemainder: "" }] },
   };
   return snapshot;
 }
@@ -345,7 +346,7 @@ function profile({ goos = "linux", goarch = "amd64", coveredFiles, experiments =
 
 function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
   const snapshot = {
-    schemaVersion: 12,
+    schemaVersion: 13,
     sourceRoot: path.resolve(repoRoot),
     modulePath: "m",
     gitRevision: "e".repeat(40),

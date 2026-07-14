@@ -1,6 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { Seq2 } from "../../go/iter.js";
-import { GoAppend, GoAppendSlice, GoNilSlice, GoStringKey, GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoNilSlice, GoStringKey, GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { Node_Expression, Node_Symbol, Node_Text } from "../ast/ast.js";

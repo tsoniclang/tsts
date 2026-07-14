@@ -1,7 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { DeleteFunc } from "../../go/slices.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend } from "../../go/compat.js";
 import type { CommentRange } from "../ast/ast.js";
 import type { Node } from "../ast/spine.js";
 import { Node_End, Node_Pos } from "../ast/spine.js";

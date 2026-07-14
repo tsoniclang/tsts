@@ -1,7 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoAppend, GoNilSlice } from "../../../go/compat.js";
+import { GoNilSlice } from "../../../go/compat.js";
 // CommentRange, FileReference, SourceFile are hand-written AST struct types that are
 // not yet ported into the spine/generated split; they live in the canonical ../../ast/ast.js
 // barrel (see internal/ast/ast.go). Units whose signatures reference them remain stubs.

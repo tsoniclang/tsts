@@ -1,7 +1,7 @@
 import type { int } from "../../go/scalars.js";
 import type { GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoNilSlice, GoPointerKey } from "../../go/compat.js";
+import { GoNilSlice, GoPointerKey } from "../../go/compat.js";
 import { Diagnostic_SetMessageChain, Diagnostic_SetRelatedInfo, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import { Set_AddIfAbsent, Set_Len } from "../collections/set.js";

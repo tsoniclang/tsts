@@ -1,7 +1,7 @@
 import type { bool, long } from "./scalars.js";
 import type { GoDefined } from "./compat.js";
 
-export type Duration = GoDefined<long, "__goDefinedType::time::type::Duration::0facaa5a28ee96142bfd2e61a7c449390e0dceecf7f6d464fe3b68ae2523fd33">;
+export type Duration = GoDefined<long, "__goDefinedType::time::type::Duration::a2b59f69065fc1762fc4d97e11e27b8eb52c2372d68658f9858161696d2f1796">;
 
 const nanosecondsPerMillisecond: number = 1_000_000;
 const nanosecondsPerSecond: number = 1_000_000_000;

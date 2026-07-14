@@ -1,8 +1,8 @@
 import type { bool, byte, double, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import type { GoComparable, GoConstraint, GoEquality, GoError, GoMap, GoMapKeyDescriptor, GoPtr, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
-import { GoAppend, GoMapMake, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoZeroString } from "../../go/compat.js";
-import { GoSlicePrefix } from "../../go/slice-runtime.js";
+import { GoMapMake, GoNilSlice, GoSliceIsNil, GoZeroString, GoSliceReslice } from "../../go/compat.js";
+
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
 import { ExtensionCjs, ExtensionCts, ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, HasTSFileExtension, IsDeclarationFileName } from "../tspath/extension.js";
@@ -515,7 +515,7 @@ export function Every<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): bool 
  * 	}
  * }
  */
-export function Or<T>(...funcs: Array<GoFunc<(arg0: T) => bool>>): GoFunc<(arg0: T) => bool> {
+export function Or<T>(funcs: GoSlice<GoFunc<(arg0: T) => bool>>): GoFunc<(arg0: T) => bool> {
   return (input: T): bool => {
     for (const f of funcs) {
       if (f!(input)) {
@@ -744,7 +744,7 @@ export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoF
  * 	return zero
  * }
  */
-export function FirstNonZero<T extends GoComparable>(zeroValue: GoZeroFactory<T>, equal: GoEquality<T>, ...values: Array<T>): T {
+export function FirstNonZero<T extends GoComparable>(values: GoSlice<T>, zeroValue: GoZeroFactory<T>, equal: GoEquality<T>): T {
   const zero = zeroValue();
   for (const value of values) {
     if (!equal(value, zero)) {
@@ -804,7 +804,7 @@ export function Concatenate<T>(s1: GoSlice<T>, s2: GoSlice<T>): GoSlice<T> {
  * 	return slices.Concat(s1[:start], items, s1[end:])
  * }
  */
-export function Splice<T>(s1: GoSlice<T>, start: int, deleteCount: int, ...items: Array<T>): GoSlice<T> {
+export function Splice<T>(s1: GoSlice<T>, start: int, deleteCount: int, items: GoSlice<T>): GoSlice<T> {
   if (start < 0) {
     start = s1.length + start;
   }
@@ -1255,7 +1255,7 @@ export function Must<T>(v: T, err: GoError): T {
  * 	return t1
  * }
  */
-export function FirstResult<T1>(t1: T1, ...arg: Array<GoInterface<unknown>>): T1 {
+export function FirstResult<T1>(t1: T1, arg: GoSlice<GoInterface<unknown>>): T1 {
   return t1;
 }
 
@@ -1677,7 +1677,7 @@ export function SingleElementSlice<T>(element: GoRef<T>): GoSlice<GoRef<T>> {
  * 	}
  * }
  */
-export function ConcatenateSeq<T>(...seqs: Array<Seq<T>>): Seq<T> {
+export function ConcatenateSeq<T>(seqs: GoSlice<Seq<T>>): Seq<T> {
   return (yield_: GoFunc<(value: T) => bool>): void => {
     for (const seq of seqs) {
       if (seq === undefined) {
@@ -1932,7 +1932,7 @@ export function DeduplicateSorted<T>(slice: GoSlice<T>, isEqual: GoFunc<(a: T, b
     return slice;
   }
   let last = slice[0]!;
-  let deduplicated: GoSlice<T> = GoSlicePrefix(slice, 1);
+  let deduplicated: GoSlice<T> = GoSliceReslice(slice, 0, 1);
   for (let i = 1; i < slice.length; i++) {
     const next = slice[i]!;
     if (isEqual!(last, next)) {

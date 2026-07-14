@@ -1,9 +1,9 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../../go/compat.js";
-import { GoAppend, GoAppendSlice, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
-import { GoSlicePrefix } from "../../../go/slice-runtime.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps, GoSliceReslice } from "../../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
+
 import { GoBigIntKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { recordExtensionContextualTargetTypeFact } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
@@ -5625,7 +5625,7 @@ export function Checker_getTypeFromBindingPattern(receiver: GoPtr<Checker>, patt
     ? Checker_getTypeFromObjectBindingPattern(receiver, pattern, includePatternInType, reportErrors)
     : Checker_getTypeFromArrayBindingPattern(receiver, pattern, includePatternInType, reportErrors);
   if (includePatternInType) {
-    receiver!.contextualBindingPatterns = GoSlicePrefix(receiver!.contextualBindingPatterns, receiver!.contextualBindingPatterns.length - 1);
+    receiver!.contextualBindingPatterns = GoSliceReslice(receiver!.contextualBindingPatterns, 0, receiver!.contextualBindingPatterns.length - 1);
   }
   return result;
 }
@@ -6571,7 +6571,7 @@ export function Checker_getNonNullableTypeIfNeeded(receiver: GoPtr<Checker>, t: 
  * 	return true
  * }
  */
-export function Checker_pushTypeResolution(receiver: GoPtr<Checker>, target: TypeSystemEntity, propertyName: TypeSystemPropertyName): bool {
+export function Checker_pushTypeResolution(receiver: GoPtr<Checker>, target: GoInterface<TypeSystemEntity>, propertyName: TypeSystemPropertyName): bool {
   const resolutionCycleStartIndex = Checker_findResolutionCycleStartIndex(receiver, target, propertyName);
   if (resolutionCycleStartIndex >= 0) {
     for (let i = resolutionCycleStartIndex; i < receiver!.typeResolutions.length; i++) {
@@ -6599,7 +6599,7 @@ export function Checker_popTypeResolution(receiver: GoPtr<Checker>): bool {
   const lastIndex = receiver!.typeResolutions.length - 1;
   const result = receiver!.typeResolutions[lastIndex]!.result;
   receiver!.typeResolutions[lastIndex] = {} as TypeResolution;
-  receiver!.typeResolutions = GoSlicePrefix(receiver!.typeResolutions, lastIndex);
+  receiver!.typeResolutions = GoSliceReslice(receiver!.typeResolutions, 0, lastIndex);
   return result;
 }
 
@@ -9401,7 +9401,7 @@ export function Checker_getElementTypes(receiver: GoPtr<Checker>, t: GoPtr<Type>
   if (typeArguments.length === arity) {
     return typeArguments;
   }
-  return GoSlicePrefix(typeArguments, arity);
+  return GoSliceReslice(typeArguments, 0, arity);
 }
 
 /**
@@ -16181,7 +16181,7 @@ export function Checker_pushContextualType(receiver: GoPtr<Checker>, node: GoPtr
 export function Checker_popContextualType(receiver: GoPtr<Checker>): void {
   const lastIndex = receiver!.contextualInfos!.length - 1;
   receiver!.contextualInfos![lastIndex] = {} as ContextualInfo;
-  receiver!.contextualInfos = GoSlicePrefix(receiver!.contextualInfos, lastIndex);
+  receiver!.contextualInfos = GoSliceReslice(receiver!.contextualInfos, 0, lastIndex);
 }
 
 /**
@@ -16777,7 +16777,7 @@ export function Checker_getAwaitedType(receiver: GoPtr<Checker>, t: GoPtr<Type>)
  * 	return nil
  * }
  */
-export function Checker_getAwaitedTypeEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Type> {
+export function Checker_getAwaitedTypeEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Type> {
   const awaitedType = Checker_getAwaitedTypeNoAliasEx(receiver, t, errorNode, diagnosticMessage, ...args);
   if (awaitedType !== undefined) {
     return Checker_createAwaitedTypeIfNeeded(receiver, awaitedType);
@@ -16948,7 +16948,7 @@ export function Checker_getAwaitedTypeOfPromise(receiver: GoPtr<Checker>, t: GoP
  * 	return nil
  * }
  */
-export function Checker_getAwaitedTypeOfPromiseEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Type> {
+export function Checker_getAwaitedTypeOfPromiseEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, args: GoSlice<GoInterface<unknown>>): GoPtr<Type> {
   const promisedType = Checker_getPromisedTypeOfPromiseEx(receiver, t, errorNode, undefined);
   if (promisedType !== undefined) {
     return Checker_getAwaitedTypeEx(receiver, promisedType, errorNode, diagnosticMessage, ...args);
