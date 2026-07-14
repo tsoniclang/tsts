@@ -11,19 +11,21 @@ import {
 const toolRoot = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(toolRoot, "../../../..");
 const sourcePin = JSON.parse(readFileSync(path.join(repositoryRoot, "packages/tsts/tools/porter/source-pin.json"), "utf8"));
-const expectedPath = path.join(toolRoot, "slices.expected.json");
 const toolchain = resolveAndVerifyPinnedGoToolchain(sourcePin.extractor);
-const output = run(toolchain.executable, ["run", "./slices"], toolRoot, toolchain.environment);
-const canonical = `${JSON.stringify(JSON.parse(output), null, 2)}\n`;
-if (process.argv.includes("--write")) {
-  writeFileSync(expectedPath, canonical);
-  console.log(`wrote ${path.relative(repositoryRoot, expectedPath)}`);
-} else {
-  const expected = readFileSync(expectedPath, "utf8");
-  if (canonical !== expected) {
-    throw new Error("Go slice oracle drifted; inspect the pinned toolchain/source contract before regenerating");
+for (const name of ["slices", "time"]) {
+  const expectedPath = path.join(toolRoot, `${name}.expected.json`);
+  const output = run(toolchain.executable, ["run", `./${name}`], toolRoot, toolchain.environment);
+  const canonical = `${JSON.stringify(JSON.parse(output), null, 2)}\n`;
+  if (process.argv.includes("--write")) {
+    writeFileSync(expectedPath, canonical);
+    console.log(`wrote ${path.relative(repositoryRoot, expectedPath)}`);
+  } else {
+    const expected = readFileSync(expectedPath, "utf8");
+    if (canonical !== expected) {
+      throw new Error(`Go ${name} oracle drifted; inspect the pinned toolchain/source contract before regenerating`);
+    }
+    console.log(`Go ${name} oracle matches the checked-in expectation`);
   }
-  console.log("Go slice oracle matches the checked-in expectation");
 }
 assertPinnedGoToolchainStable(toolchain);
 

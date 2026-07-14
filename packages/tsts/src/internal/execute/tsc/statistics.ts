@@ -3,7 +3,7 @@ import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { Fprintf, Sprint, Sprintf } from "../../../go/fmt.js";
 import type { Writer } from "../../../go/io.js";
 import type { MemStats } from "../../../go/runtime.js";
-import type { Duration } from "../../../go/time.js";
+import { DurationValueOps, Second, type Duration } from "../../../go/time.js";
 import {
   Program_IdentifierCount,
   Program_InstantiationCount,
@@ -58,7 +58,7 @@ export interface table {
 export function table_add(receiver: GoPtr<table>, name: string, value: GoInterface<unknown>): void {
   const t = receiver!;
   // In Go: if d, ok := value.(time.Duration); ok { value = formatDuration(d) }
-  // In TS: Duration = number, cannot do runtime type assertion; use Sprint for all values.
+  // Duration has no distinct JavaScript runtime tag, so use Sprint for all values.
   t.rows = GoAppend(t.rows, { name, value: Sprint(value) });
 }
 
@@ -101,8 +101,7 @@ export function table_print(receiver: GoPtr<table>, w: GoInterface<Writer>): voi
  * }
  */
 export function formatDuration(d: Duration): string {
-  // Duration = long = number in nanoseconds. d.Seconds() in Go = d / 1e9.
-  return Sprintf("%.3fs", (d as number) / 1e9);
+  return Sprintf("%.3fs", Number(d) / Number(Second));
 }
 
 /**
@@ -269,23 +268,23 @@ export function Statistics_Report(receiver: GoPtr<Statistics>, w: GoInterface<Wr
     table_add(t, prefix + "Instantiations", s.instantiations);
     table_add(t, prefix + "Memory used", Sprintf("%vK", (s.memoryUsed as number) / 1024));
     table_add(t, prefix + "Memory allocs", FormatUint(s.memoryAllocs as ulong, 10));
-    if (s.compileTimes!.ConfigTime !== 0) {
+    if (s.compileTimes!.ConfigTime !== 0n) {
       table_add(t, prefix + "Config time", formatDuration(s.compileTimes!.ConfigTime));
     }
-    if (s.compileTimes!.BuildInfoReadTime !== 0) {
+    if (s.compileTimes!.BuildInfoReadTime !== 0n) {
       table_add(t, prefix + "BuildInfo read time", formatDuration(s.compileTimes!.BuildInfoReadTime));
     }
     table_add(t, prefix + "Parse time", formatDuration(s.compileTimes!.ParseTime));
-    if (s.compileTimes!.bindTime !== 0) {
+    if (s.compileTimes!.bindTime !== 0n) {
       table_add(t, prefix + "Bind time", formatDuration(s.compileTimes!.bindTime));
     }
-    if (s.compileTimes!.checkTime !== 0) {
+    if (s.compileTimes!.checkTime !== 0n) {
       table_add(t, prefix + "Check time", formatDuration(s.compileTimes!.checkTime));
     }
-    if (s.compileTimes!.emitTime !== 0) {
+    if (s.compileTimes!.emitTime !== 0n) {
       table_add(t, prefix + "Emit time", formatDuration(s.compileTimes!.emitTime));
     }
-    if (s.compileTimes!.ChangesComputeTime !== 0) {
+    if (s.compileTimes!.ChangesComputeTime !== 0n) {
       table_add(t, prefix + "Changes compute time", formatDuration(s.compileTimes!.ChangesComputeTime));
     }
     table_add(t, prefix + "Total time", formatDuration(s.compileTimes!.totalTime));
@@ -328,7 +327,7 @@ export function Statistics_Aggregate(receiver: GoPtr<Statistics>, stat: GoPtr<St
   const s = receiver!;
   s.isAggregate = true;
   if (s.compileTimes === undefined) {
-    s.compileTimes = { ConfigTime: 0, ParseTime: 0, bindTime: 0, checkTime: 0, totalTime: 0, emitTime: 0, BuildInfoReadTime: 0, ChangesComputeTime: 0 };
+    s.compileTimes = { ConfigTime: DurationValueOps.zero(), ParseTime: DurationValueOps.zero(), bindTime: DurationValueOps.zero(), checkTime: DurationValueOps.zero(), totalTime: DurationValueOps.zero(), emitTime: DurationValueOps.zero(), BuildInfoReadTime: DurationValueOps.zero(), ChangesComputeTime: DurationValueOps.zero() };
   }
   s.files += stat!.files;
   s.lines += stat!.lines;
@@ -338,13 +337,13 @@ export function Statistics_Aggregate(receiver: GoPtr<Statistics>, stat: GoPtr<St
   s.instantiations += stat!.instantiations;
   s.memoryUsed = ((s.memoryUsed as number) + (stat!.memoryUsed as number)) as ulong;
   s.memoryAllocs = ((s.memoryAllocs as number) + (stat!.memoryAllocs as number)) as ulong;
-  s.compileTimes.ConfigTime = ((s.compileTimes.ConfigTime as number) + (stat!.compileTimes!.ConfigTime as number)) as Duration;
-  s.compileTimes.BuildInfoReadTime = ((s.compileTimes.BuildInfoReadTime as number) + (stat!.compileTimes!.BuildInfoReadTime as number)) as Duration;
-  s.compileTimes.ParseTime = ((s.compileTimes.ParseTime as number) + (stat!.compileTimes!.ParseTime as number)) as Duration;
-  s.compileTimes.bindTime = ((s.compileTimes.bindTime as number) + (stat!.compileTimes!.bindTime as number)) as Duration;
-  s.compileTimes.checkTime = ((s.compileTimes.checkTime as number) + (stat!.compileTimes!.checkTime as number)) as Duration;
-  s.compileTimes.emitTime = ((s.compileTimes.emitTime as number) + (stat!.compileTimes!.emitTime as number)) as Duration;
-  s.compileTimes.ChangesComputeTime = ((s.compileTimes.ChangesComputeTime as number) + (stat!.compileTimes!.ChangesComputeTime as number)) as Duration;
+  s.compileTimes.ConfigTime = addDuration(s.compileTimes.ConfigTime, stat!.compileTimes!.ConfigTime);
+  s.compileTimes.BuildInfoReadTime = addDuration(s.compileTimes.BuildInfoReadTime, stat!.compileTimes!.BuildInfoReadTime);
+  s.compileTimes.ParseTime = addDuration(s.compileTimes.ParseTime, stat!.compileTimes!.ParseTime);
+  s.compileTimes.bindTime = addDuration(s.compileTimes.bindTime, stat!.compileTimes!.bindTime);
+  s.compileTimes.checkTime = addDuration(s.compileTimes.checkTime, stat!.compileTimes!.checkTime);
+  s.compileTimes.emitTime = addDuration(s.compileTimes.emitTime, stat!.compileTimes!.emitTime);
+  s.compileTimes.ChangesComputeTime = addDuration(s.compileTimes.ChangesComputeTime, stat!.compileTimes!.ChangesComputeTime);
 }
 
 /**
@@ -361,7 +360,11 @@ export function Statistics_Aggregate(receiver: GoPtr<Statistics>, stat: GoPtr<St
 export function Statistics_SetTotalTime(receiver: GoPtr<Statistics>, totalTime: Duration): void {
   const s = receiver!;
   if (s.compileTimes === undefined) {
-    s.compileTimes = { ConfigTime: 0, ParseTime: 0, bindTime: 0, checkTime: 0, totalTime: 0, emitTime: 0, BuildInfoReadTime: 0, ChangesComputeTime: 0 };
+    s.compileTimes = { ConfigTime: DurationValueOps.zero(), ParseTime: DurationValueOps.zero(), bindTime: DurationValueOps.zero(), checkTime: DurationValueOps.zero(), totalTime: DurationValueOps.zero(), emitTime: DurationValueOps.zero(), BuildInfoReadTime: DurationValueOps.zero(), ChangesComputeTime: DurationValueOps.zero() };
   }
   s.compileTimes.totalTime = totalTime;
+}
+
+function addDuration(left: Duration, right: Duration): Duration {
+  return BigInt.asIntN(64, left + right) as Duration;
 }

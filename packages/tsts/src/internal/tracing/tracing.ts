@@ -177,7 +177,7 @@ export interface traceEvent {
  */
 // 10 * time.Millisecond expressed in nanoseconds (Go time.Duration unit).
 // Push uses sampleInterval / 1000.0 to convert to microseconds for comparison.
-export const sampleInterval: Duration = 10_000_000 as Duration;
+export const sampleInterval: Duration = 10_000_000n as Duration;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::constGroup::traceFileName","kind":"constGroup","status":"implemented","sigHash":"37f9e5340e09ed15dfeaff9a185b0b544a0361e252a9c2a37dbe751bffd5b997"}
@@ -603,7 +603,7 @@ export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: strin
   return (): void => {
     const endMicros = (globalThis.performance.now() * 1000.0) as double;
     const dur = (endMicros as number - startMicros as number) as double;
-    const intervalMicros = (sampleInterval as number / 1000.0) as double;
+    const intervalMicros = Number(sampleInterval / 1_000n) as double;
     if ((intervalMicros as number) - ((startMicros as number) % (intervalMicros as number)) > (dur as number)) {
       return;
     }

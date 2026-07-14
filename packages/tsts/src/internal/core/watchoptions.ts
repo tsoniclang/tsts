@@ -1,7 +1,7 @@
 import type { int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import type { Duration } from "../../go/time.js";
+import { Millisecond, type Duration } from "../../go/time.js";
 import type { Tristate } from "./tristate.js";
 
 import type { GoRef } from "../../go/compat.js";
@@ -124,11 +124,12 @@ export const PollingKindFixedChunkSize: PollingKind = 4;
  * }
  */
 export function WatchOptions_WatchInterval(receiver: GoPtr<WatchOptions>): Duration {
-  // time.Millisecond = 1_000_000 nanoseconds; Duration = long (nanoseconds).
-  const millisecond: Duration = 1_000_000 as Duration;
-  const defaultInterval: Duration = (2000 * (millisecond as number)) as Duration;
+  const defaultInterval = BigInt.asIntN(64, 2_000n * Millisecond) as Duration;
   if (receiver !== undefined && receiver.Interval !== undefined) {
-    return ((receiver.Interval!.v as number) * (millisecond as number)) as Duration;
+    if (!Number.isSafeInteger(receiver.Interval.v)) {
+      throw new RangeError("watch interval must be a safe integer");
+    }
+    return BigInt.asIntN(64, BigInt(receiver.Interval.v) * Millisecond) as Duration;
   }
   return defaultInterval;
 }

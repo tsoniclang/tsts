@@ -128,7 +128,7 @@ export function clockImpl_Now(receiver: GoPtr<clockImpl>): Time {
  * }
  */
 export function clockImpl_SinceStart(receiver: GoPtr<clockImpl>): Duration {
-  return Since(receiver!.start) as unknown as Duration;
+  return Since(receiver!.start);
 }
 
 /**

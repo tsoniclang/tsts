@@ -410,7 +410,7 @@ class TranspileFileInfo implements FileInfo {
   }
 
   ModTime(): Time {
-    return new Time(0);
+    return new Time();
   }
 
   IsDir(): bool {

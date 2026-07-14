@@ -57,7 +57,7 @@ export function osSys_as_tsc_System(receiver: GoPtr<osSys>): System {
  * }
  */
 export function osSys_SinceStart(receiver: GoPtr<osSys>): Duration {
-  return Since(receiver!.start) as Duration;
+  return Since(receiver!.start);
 }
 
 /**

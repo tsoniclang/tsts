@@ -218,7 +218,6 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
  * }
  */
 export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult {
-  type TimeWithSub = import("../../../go/time.js").Time & { Sub(t: import("../../../go/time.js").Time): number };
   const result: CompileAndEmitResult = {
     Diagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     EmitResult: undefined,
@@ -242,7 +241,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
       }
       const bindStart = input.Sys!.Now();
       const diags = input.ProgramLike!.GetBindDiagnostics(innerCtx, file);
-      result.times!.bindTime = (input.Sys!.Now() as TimeWithSub).Sub(bindStart) as import("../../../go/time.js").Duration;
+      result.times!.bindTime = input.Sys!.Now().Sub(bindStart);
       if (pop !== undefined) {
         pop();
       }
@@ -255,7 +254,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
       }
       const checkStart = input.Sys!.Now();
       const diags = input.ProgramLike!.GetSemanticDiagnostics(innerCtx, file);
-      result.times!.checkTime = (input.Sys!.Now() as TimeWithSub).Sub(checkStart) as import("../../../go/time.js").Duration;
+      result.times!.checkTime = input.Sys!.Now().Sub(checkStart);
       if (pop !== undefined) {
         pop();
       }
@@ -272,7 +271,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
   if (!Tristate_IsTrue(input.ProgramLike!.Options()!.ListFilesOnly)) {
     const emitStart = input.Sys!.Now();
     emitResult = input.ProgramLike!.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0 as import("../../compiler/emitter.js").EmitOnly, WriteFile: input.WriteFile });
-    result.times!.emitTime = (input.Sys!.Now() as TimeWithSub).Sub(emitStart) as import("../../../go/time.js").Duration;
+    result.times!.emitTime = input.Sys!.Now().Sub(emitStart);
   }
   if (emitResult !== undefined) {
     allDiagnostics = GoSliceAppendSlice(allDiagnostics, emitResult!.Diagnostics, GoPointerValueOps<Diagnostic>());

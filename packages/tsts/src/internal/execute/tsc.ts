@@ -4,6 +4,7 @@ import type { Context } from "../../go/context.js";
 import { Map as SyncGoMap } from "../../go/sync.js";
 import { ToLower } from "../../go/strings.js";
 import { Fprintf } from "../../go/fmt.js";
+import { DurationValueOps } from "../../go/time.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import type { Locale } from "../locale/locale.js";
 import type { Tracing } from "../tracing/tracing.js";
@@ -496,7 +497,7 @@ export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<Syste
     const compilerOptionsFromCommandLine = ParsedCommandLine_CompilerOptions(commandLine);
     let configForCompilation = commandLine;
     const extendedConfigCache: ExtendedConfigCache = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<string, GoPtr<extendedConfigCacheEntry>> };
-    const compileTimes: import("./tsc/compile.js").CompileTimes = { ConfigTime: 0, ParseTime: 0, bindTime: 0, checkTime: 0, totalTime: 0, emitTime: 0, BuildInfoReadTime: 0, ChangesComputeTime: 0 };
+    const compileTimes: import("./tsc/compile.js").CompileTimes = { ConfigTime: DurationValueOps.zero(), ParseTime: DurationValueOps.zero(), bindTime: DurationValueOps.zero(), checkTime: DurationValueOps.zero(), totalTime: DurationValueOps.zero(), emitTime: DurationValueOps.zero(), BuildInfoReadTime: DurationValueOps.zero(), ChangesComputeTime: DurationValueOps.zero() };
     let commandLineRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>> = undefined;
     if (configFileName !== "") {
       const configStart = sys!.Now();
@@ -511,8 +512,7 @@ export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<Syste
         }
       }
       const [configParseResult, errors] = GetParsedCommandLineOfConfigFile(configFileName, compilerOptionsFromCommandLine, commandLineRaw, sys as unknown as import("../tsoptions/tsconfigparsing.js").ParseConfigHost, ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache));
-      type TimeWithSub = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
-      compileTimes.ConfigTime = (sys!.Now() as TimeWithSub).Sub(configStart) as import("../../go/time.js").Duration;
+      compileTimes.ConfigTime = sys!.Now().Sub(configStart);
       if ((errors?.length ?? 0) !== 0) {
         // these are unrecoverable errors--exit to report them as diagnostics
         for (const e of errors ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())) {
@@ -670,8 +670,7 @@ export function performIncrementalCompilation(sys: GoInterface<System>, config: 
   const host = NewCachedFSCompilerHost(sys!.GetCurrentDirectory(), sys!.FS(), sys!.DefaultLibraryPath(), extendedConfigCache, getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
   const buildInfoReadStart = sys!.Now();
   const oldProgram = ReadBuildInfoProgram(config, NewBuildInfoReader(host), host);
-  type TimeWithSub2 = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
-  compileTimes!.BuildInfoReadTime = (sys!.Now() as TimeWithSub2).Sub(buildInfoReadStart) as import("../../go/time.js").Duration;
+  compileTimes!.BuildInfoReadTime = sys!.Now().Sub(buildInfoReadStart);
 
   const tr = startTracingIfNeeded(sys, config, testing);
 
@@ -686,10 +685,10 @@ export function performIncrementalCompilation(sys: GoInterface<System>, config: 
     ProjectName: "",
     Tracing: tr,
   });
-  compileTimes!.ParseTime = (sys!.Now() as TimeWithSub2).Sub(parseStart) as import("../../go/time.js").Duration;
+  compileTimes!.ParseTime = sys!.Now().Sub(parseStart);
   const changesComputeStart = sys!.Now();
   const incrementalProgram = IncrementalNewProgram(program, oldProgram, IncrementalCreateHost(host), testing !== undefined);
-  compileTimes!.ChangesComputeTime = (sys!.Now() as TimeWithSub2).Sub(changesComputeStart) as import("../../go/time.js").Duration;
+  compileTimes!.ChangesComputeTime = sys!.Now().Sub(changesComputeStart);
   const [result] = EmitAndReportStatistics({
     Sys: sys,
     ProgramLike: IncrementalProgram_as_compiler_ProgramLike(incrementalProgram),
@@ -773,8 +772,7 @@ export function performCompilation(sys: GoInterface<System>, config: GoPtr<Parse
     ProjectName: "",
     Tracing: tr,
   });
-  type TimeWithSub3 = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
-  compileTimes!.ParseTime = (sys!.Now() as TimeWithSub3).Sub(parseStart) as import("../../go/time.js").Duration;
+  compileTimes!.ParseTime = sys!.Now().Sub(parseStart);
   const [result] = EmitAndReportStatistics({
     Sys: sys,
     ProgramLike: Program_as_compiler_ProgramLike(program),

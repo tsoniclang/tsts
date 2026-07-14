@@ -214,7 +214,7 @@ export function host_GetResolvedProjectReference(receiver: GoPtr<host>, fileName
       }
     }
     const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, p, receiver!.orchestrator!.opts.Command!.CompilerOptions, commandLineRaw, host_as_compiler_CompilerHost(receiver), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache));
-    const configTime = (receiver!.orchestrator!.opts.Sys!.Now() as Time & { Sub(t: Time): Duration }).Sub(configStart);
+    const configTime = receiver!.orchestrator!.opts.Sys!.Now().Sub(configStart);
     SyncMap_Store(receiver!.configTimes, p, configTime, GoStringKey);
     return commandLine;
   }, true, GoZeroPointer<ParsedCommandLine>, GoEqualStrict<GoPtr<ParsedCommandLine>>, GoStringKey);

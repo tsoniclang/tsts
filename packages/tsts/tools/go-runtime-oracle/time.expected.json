@@ -1,0 +1,40 @@
+{
+  "duration": {
+    "minimum": "-9223372036854775808",
+    "maximum": "9223372036854775807",
+    "millisecond": "1000000",
+    "second": "1000000000",
+    "minute": "60000000000"
+  },
+  "zero": {
+    "freshAddresses": true,
+    "rawEqual": true,
+    "isZero": true,
+    "unixMilliseconds": -62135596800000,
+    "epochIsZero": false,
+    "epochMilliseconds": 0,
+    "localYearOneIsZero": true,
+    "sameInstant": true,
+    "sameRepresentation": false
+  },
+  "copy": {
+    "freshAddress": true,
+    "sameRepresentation": true,
+    "sameInstant": true,
+    "difference": "0",
+    "wallOnlySameInstant": true,
+    "wallOnlySameRepresentation": false
+  },
+  "normalization": {
+    "negativeNanosecondDifference": "999999999",
+    "negativeNanosecondMillis": 999,
+    "beforeEpochDifference": "-1",
+    "beforeEpochMillis": -1,
+    "overflowNanosecondDifference": "1000000001",
+    "overflowNanosecondMillis": 1000
+  },
+  "subtraction": {
+    "maximum": "9223372036854775807",
+    "minimum": "-9223372036854775808"
+  }
+}
