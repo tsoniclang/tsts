@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../scalars.js";
-import type { GoError, GoSlice } from "../../../compat.js";
+import type { GoError, GoSlice, GoValueOps } from "../../../compat.js";
+import { GoSliceLoad, GoSliceMake, GoSliceStore } from "../../../compat.js";
 
 export type Tag = string & { readonly __goFacadeName: "golang.org/x/text/language.Tag" };
 export type Confidence = int;
@@ -11,6 +12,11 @@ export const Exact: Confidence = 3 as Confidence;
 
 export const Und: Tag = "" as Tag;
 export const English: Tag = "en" as Tag;
+
+export const TagValueOps: GoValueOps<Tag> = Object.freeze({
+  zero: (): Tag => Und,
+  copy: (value: Tag): Tag => value,
+});
 
 export interface Matcher {
   Match(tag: Tag): [Tag, int, Confidence];
@@ -40,7 +46,10 @@ export function MustParse(value: string): Tag {
 }
 
 export function NewMatcher(tags: GoSlice<Tag>): Matcher {
-  const canonicalTags = tags.map((tag) => canonicalize(tag));
+  const canonicalTags = GoSliceMake(tags.length, tags.length, TagValueOps);
+  for (let index = 0; index < tags.length; index++) {
+    GoSliceStore(canonicalTags, index as int, canonicalize(GoSliceLoad(tags, index as int, TagValueOps)), TagValueOps);
+  }
   return {
     Match(tag: Tag): [Tag, int, Confidence] {
       const requested = canonicalize(tag);
@@ -50,12 +59,12 @@ export function NewMatcher(tags: GoSlice<Tag>): Matcher {
       }
       const exact = indexOf(canonicalTags, requested);
       if (exact >= 0) {
-        return [canonicalTags[exact]!, exact as int, Exact];
+        return [GoSliceLoad(canonicalTags, exact, TagValueOps), exact as int, Exact];
       }
       const baseLanguage = requested.split("-")[0] ?? requested;
-      const languageMatch = canonicalTags.findIndex((candidate) => candidate.split("-")[0] === baseLanguage);
+      const languageMatch = findBaseLanguage(canonicalTags, baseLanguage);
       if (languageMatch >= 0) {
-        return [canonicalTags[languageMatch]!, languageMatch as int, Low];
+        return [GoSliceLoad(canonicalTags, languageMatch, TagValueOps), languageMatch as int, Low];
       }
       const english = indexOf(canonicalTags, English);
       if (english >= 0) {
@@ -75,7 +84,17 @@ function canonicalize(tag: Tag): Tag {
 }
 
 function indexOf(tags: GoSlice<Tag>, tag: Tag): int {
-  return tags.findIndex((candidate) => candidate === tag) as int;
+  for (let index = 0; index < tags.length; index++) {
+    if (GoSliceLoad(tags, index as int, TagValueOps) === tag) return index as int;
+  }
+  return -1 as int;
+}
+
+function findBaseLanguage(tags: GoSlice<Tag>, baseLanguage: string): int {
+  for (let index = 0; index < tags.length; index++) {
+    if (GoSliceLoad(tags, index as int, TagValueOps).split("-")[0] === baseLanguage) return index as int;
+  }
+  return -1 as int;
 }
 
 function normalizeError(error: unknown, value: string): GoError {
