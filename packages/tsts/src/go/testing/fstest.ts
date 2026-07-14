@@ -1,14 +1,12 @@
 import type { byte, int, long } from "../scalars.js";
 import type { GoDefined, GoError, GoInterface, GoMap, GoPtr, GoSlice } from "../compat.js";
 import type { DirEntry, File, FileInfo, FileMode, FS, ReadDirFile } from "../io/fs.js";
-import { ErrNotExist, ModeDir } from "../io/fs.js";
-import { Time } from "../time.js";
-import { GoInterfaceValueOps, GoSliceMake } from "../compat.js";
-import { GoNumberValueOps, GoSliceStore } from "../compat.js";
-import { GoSliceLoad, GoStringValueOps } from "../compat.js";
+import { ErrInvalid, ErrNotExist, ModeDir } from "../io/fs.js";
+import { EOF } from "../io.js";
+import { Time, TimeValueOps } from "../time.js";
+import { GoInterfaceValueOps, GoNilSlice, GoNumberValueOps, GoSliceCopy, GoSliceLoad, GoSliceMake, GoSliceReslice, GoSliceStore, GoStringValueOps } from "../compat.js";
 
-
-
+const utf8Encoder = new TextEncoder();
 
 export interface MapFile {
   Data: GoSlice<byte>;
@@ -25,7 +23,7 @@ export function MapFS_as_FS(map: MapFS): FS {
   };
 }
 
-export function TestFS(fsys: FS, ...expected: GoSlice<string>): GoError {
+export function TestFS(fsys: FS, expected: GoSlice<string>): GoError {
   for (
     let __goRangeSlice = expected,
       __goRangeLength = __goRangeSlice.length,
@@ -51,73 +49,105 @@ export function TestFS(fsys: FS, ...expected: GoSlice<string>): GoError {
 }
 
 export function Open(map: MapFS, name: string): [GoInterface<File>, GoError] {
-  const normalizedName = normalizeName(name);
-  const file = map.get(normalizedName);
-  if (file === undefined && !hasDirectory(map, normalizedName)) {
+  if (!validPath(name)) {
     return [undefined, ErrNotExist];
   }
-  const isSyntheticDirectory = file === undefined;
-  const mode = isSyntheticDirectory ? ModeDir : file.Mode;
-  const bytes = isSyntheticDirectory ? new Uint8Array() : bytesForFile(file);
+
+  const file = map.get(name);
+  if (file !== undefined && !isDirectory(file)) {
+    return [openRegularFile(name, file), undefined];
+  }
+
+  const entries = directoryEntries(map, name);
+  if (name !== "." && file === undefined && entries.length === 0) {
+    return [undefined, ErrNotExist];
+  }
+
+  const directory = file ?? syntheticDirectory();
+  return [openDirectory(name, directory, entries), undefined];
+}
+
+function openRegularFile(path: string, file: MapFile): File {
   let offset = 0;
-  const mapFile: ReadDirFile = {
+  const info = mapFileInfo(baseName(path), file);
+  return {
     Stat(): [GoInterface<FileInfo>, GoError] {
-      return [{
-        Name: () => baseName(normalizedName),
-        IsDir: () => (((mode as number) & (ModeDir as number)) !== 0) as boolean,
-        Mode: () => mode,
-        Size: () => bytes.length as long,
-        ModTime: () => file?.ModTime ?? new Time(0),
-        Sys: () => file?.Sys,
-      }, undefined];
-    },
-    ReadDir(n: int): [GoSlice<GoInterface<DirEntry>>, GoError] {
-      if (((mode as number) & (ModeDir as number)) === 0) {
-        return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), ErrNotExist];
-      }
-      const entries = directoryEntries(map, normalizedName);
-      return [n >= 0 ? entries.slice(0, n) : entries, undefined];
+      return [info, undefined];
     },
     Read(buffer: GoSlice<byte>): [int, GoError] {
-      const remaining = bytes.length - offset;
-      const count = Math.max(0, Math.min(buffer.length, remaining));
-      for (let index = 0; index < count; index += 1) {
-        GoSliceStore(buffer, index, bytes[offset + index]!, GoNumberValueOps);
+      const data = file.Data;
+      if (offset >= data.length) {
+        return [0, EOF];
       }
+      const remaining = GoSliceReslice(data, offset, data.length);
+      const count = GoSliceCopy(buffer, remaining, GoNumberValueOps);
       offset += count;
-      return [count as int, undefined];
+      return [count, undefined];
     },
     Close(): GoError {
       return undefined;
     },
   };
-  return [mapFile, undefined];
 }
 
-function normalizeName(name: string): string {
-  if (name === "." || name === "") {
-    return ".";
-  }
-  return name.replace(/^\.\/+/, "").replace(/\/+$/, "");
+function openDirectory(path: string, file: MapFile, entries: GoSlice<GoInterface<DirEntry>>): ReadDirFile {
+  let offset = 0;
+  const info = mapFileInfo(baseName(path), file);
+  return {
+    Stat(): [GoInterface<FileInfo>, GoError] {
+      return [info, undefined];
+    },
+    Read(buffer: GoSlice<byte>): [int, GoError] {
+      void buffer;
+      return [0, ErrInvalid];
+    },
+    ReadDir(count: int): [GoSlice<GoInterface<DirEntry>>, GoError] {
+      let length = entries.length - offset;
+      if (length === 0 && count > 0) {
+        return [GoNilSlice(), EOF];
+      }
+      if (count > 0 && length > count) {
+        length = count;
+      }
+      const result = GoSliceMake(length, length, GoInterfaceValueOps<DirEntry>());
+      const remaining = GoSliceReslice(entries, offset, offset + length);
+      GoSliceCopy(result, remaining, GoInterfaceValueOps<DirEntry>());
+      offset += length;
+      return [result, undefined];
+    },
+    Close(): GoError {
+      return undefined;
+    },
+  };
 }
 
-function hasDirectory(map: MapFS, name: string): boolean {
+function validPath(name: string): boolean {
   if (name === ".") {
-    return map.size > 0;
+    return true;
   }
-  const prefix = `${name}/`;
-  for (const path of map.keys()) {
-    if (path.startsWith(prefix)) {
-      return true;
+  if (name.length === 0 || name.startsWith("/") || name.endsWith("/")) {
+    return false;
+  }
+  let elementStart = 0;
+  for (let index = 0; index <= name.length; index += 1) {
+    if (index === name.length || name[index] === "/") {
+      const element = name.slice(elementStart, index);
+      if (element === "" || element === "." || element === "..") {
+        return false;
+      }
+      elementStart = index + 1;
     }
   }
-  return false;
+  return true;
 }
 
 function directoryEntries(map: MapFS, name: string): GoSlice<GoInterface<DirEntry>> {
   const prefix = name === "." ? "" : `${name}/`;
-  const childNames = new Map<string, FileMode>();
-  for (const [path, file] of map.entries()) {
+  const children = new Map<string, GoPtr<MapFile>>();
+  for (const [path, file] of map) {
+    if (name === "." && path === ".") {
+      continue;
+    }
     if (!path.startsWith(prefix)) {
       continue;
     }
@@ -127,30 +157,21 @@ function directoryEntries(map: MapFS, name: string): GoSlice<GoInterface<DirEntr
     }
     const slash = remainder.indexOf("/");
     if (slash < 0) {
-      childNames.set(remainder, file?.Mode ?? 0 as FileMode);
-    } else {
-      childNames.set(remainder.slice(0, slash), ModeDir);
+      children.set(remainder, file);
+    } else if (!children.has(remainder.slice(0, slash))) {
+      children.set(remainder.slice(0, slash), syntheticDirectory());
     }
   }
-  return Array.from(childNames.entries())
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([childName, mode]) => {
-      const isDir = (((mode as number) & (ModeDir as number)) !== 0) as boolean;
-      const info: FileInfo = {
-        Name: () => childName,
-        IsDir: () => isDir,
-        Mode: () => mode,
-        Size: () => 0 as long,
-        ModTime: () => new Time(0),
-        Sys: () => undefined,
-      };
-      return {
-        Name: () => childName,
-        IsDir: () => isDir,
-        Type: () => mode,
-        Info: (): [GoInterface<FileInfo>, GoError] => [info, undefined],
-      };
-    });
+
+  const valueOps = GoInterfaceValueOps<DirEntry>();
+  const result = GoSliceMake(children.size, children.size, valueOps);
+  let index = 0;
+  for (const [childName, child] of children) {
+    GoSliceStore(result, index, mapDirEntry(childName, requireMapFile(child)), valueOps);
+    index += 1;
+  }
+  sortDirEntries(result);
+  return result;
 }
 
 function baseName(name: string): string {
@@ -160,6 +181,78 @@ function baseName(name: string): string {
   return name.split("/").pop() ?? name;
 }
 
-function bytesForFile(file: MapFile): Uint8Array {
-  return Uint8Array.from(file.Data);
+function syntheticDirectory(): MapFile {
+  return {
+    Data: GoNilSlice(),
+    Mode: ModeDir + 0o555,
+    ModTime: new Time(),
+    Sys: undefined,
+  };
+}
+
+function requireMapFile(file: GoPtr<MapFile>): MapFile {
+  if (file === undefined) {
+    throw new TypeError("fstest.MapFS contains a nil MapFile entry");
+  }
+  return file;
+}
+
+function isDirectory(file: MapFile): boolean {
+  return (file.Mode & ModeDir) !== 0;
+}
+
+function mapFileInfo(name: string, file: MapFile): FileInfo {
+  return {
+    Name: () => baseName(name),
+    Size: (): long => file.Data.length,
+    Mode: () => file.Mode,
+    ModTime: () => TimeValueOps.copy(file.ModTime),
+    IsDir: () => isDirectory(file),
+    Sys: () => file.Sys,
+  };
+}
+
+function mapDirEntry(name: string, file: MapFile): DirEntry {
+  const info = mapFileInfo(name, file);
+  return {
+    Name: () => baseName(name),
+    IsDir: () => isDirectory(file),
+    Type: () => file.Mode,
+    Info: (): [GoInterface<FileInfo>, GoError] => [info, undefined],
+  };
+}
+
+function sortDirEntries(entries: GoSlice<GoInterface<DirEntry>>): void {
+  const valueOps = GoInterfaceValueOps<DirEntry>();
+  for (let index = 1; index < entries.length; index += 1) {
+    const entry = requireDirEntry(GoSliceLoad(entries, index, valueOps));
+    let insertion = index;
+    while (insertion > 0) {
+      const previous = requireDirEntry(GoSliceLoad(entries, insertion - 1, valueOps));
+      if (compareGoStrings(previous.Name(), entry.Name()) <= 0) {
+        break;
+      }
+      GoSliceStore(entries, insertion, previous, valueOps);
+      insertion -= 1;
+    }
+    GoSliceStore(entries, insertion, entry, valueOps);
+  }
+}
+
+function compareGoStrings(left: string, right: string): number {
+  const leftBytes = utf8Encoder.encode(left);
+  const rightBytes = utf8Encoder.encode(right);
+  const length = Math.min(leftBytes.length, rightBytes.length);
+  for (let index = 0; index < length; index += 1) {
+    const difference = leftBytes[index]! - rightBytes[index]!;
+    if (difference !== 0) return difference;
+  }
+  return leftBytes.length - rightBytes.length;
+}
+
+function requireDirEntry(entry: GoInterface<DirEntry>): DirEntry {
+  if (entry === undefined) {
+    throw new TypeError("fstest.MapFS directory entry is nil");
+  }
+  return entry;
 }
