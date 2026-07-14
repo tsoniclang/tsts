@@ -185,6 +185,7 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
     ? collectGoValueOperationProviderMismatches({
       api,
       config: deps.config,
+      expectedIndex,
       moduleIndex,
       snapshot: deps.snapshot,
       valueEnvironments,
@@ -375,6 +376,11 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
 export function requireSignatureOperationEvidence(report) {
   const evidence = signatureOperationEvidence.get(report);
   if (evidence === undefined) throw new Error("Go value-operation planning requires one complete whole-program signature audit");
+  if (report.state !== "complete" || report.selection?.kind !== "all-active" ||
+      !Array.isArray(report.mismatches) || report.mismatches.length !== 0 ||
+      !Array.isArray(report.overrideIssues) || report.overrideIssues.length !== 0) {
+    throw new Error("Go value-operation planning requires one clean whole-program signature audit with no mismatches or override issues");
+  }
   return evidence;
 }
 

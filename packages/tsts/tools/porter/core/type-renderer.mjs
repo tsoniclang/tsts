@@ -384,7 +384,7 @@ export function importTypeName(context, targetPath, exportName, unit) {
   const existing = names.get(safeExport);
   if (existing !== undefined) return existing;
   const alias = context.localTopLevelNames.has(safeExport) || isImportAliasUsed(context, safeExport)
-    ? uniqueImportAlias(safeExport, unit, targetPath) : safeExport;
+    ? allocateImportAlias(context, safeExport, unit, targetPath) : safeExport;
   names.set(safeExport, alias);
   return alias;
 }
@@ -406,7 +406,7 @@ export function importValueName(context, targetPath, exportName, unit) {
     return typeAlias;
   }
   const alias = context.localTopLevelNames.has(safeExport) || isImportAliasUsed(context, safeExport)
-    ? uniqueImportAlias(safeExport, unit, targetPath) : safeExport;
+    ? allocateImportAlias(context, safeExport, unit, targetPath) : safeExport;
   names.set(safeExport, alias);
   return alias;
 }
@@ -447,6 +447,16 @@ export function importExternalFacadeName(context, policy, unit) {
 export function uniqueImportAlias(exportName, unit, targetPath = "") {
   const hash = createHash("sha256").update(`${unit?.id ?? ""}:${targetPath}:${exportName}`).digest("hex").slice(0, 8);
   return `${exportName}_${hash}`;
+}
+
+function allocateImportAlias(context, exportName, unit, targetPath) {
+  const base = uniqueImportAlias(exportName, unit, targetPath);
+  let candidate = base;
+  let suffix = 0;
+  while (context.localTopLevelNames.has(candidate) || isImportAliasUsed(context, candidate)) {
+    candidate = `${base}_${++suffix}`;
+  }
+  return candidate;
 }
 
 export function isImportAliasUsed(context, alias) {
