@@ -22,6 +22,9 @@ export const generatedArtifactProviders = Object.freeze([
   artifactProvider("porter:unicode", "unicodeGeneratedArtifacts", [
     artifactArea("internal/stringutil/generated", ["internal/stringutil/generated/**"], true),
   ], ["unicode-generated"]),
+  artifactProvider("porter:value-operations", "valueOperationGeneratedArtifacts", [
+    artifactArea("internal/go-value-operations/generated", ["internal/go-value-operations/generated/**"], true),
+  ], ["go-value-operations"]),
 ]);
 
 validateProviderRegistry(generatedArtifactProviders);

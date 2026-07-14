@@ -289,6 +289,11 @@
       "reason": "Generated Unicode data tables (identifier ID_Start/ID_Continue ranges, Cased/Case_Ignorable ranges, special-casing map) emitted by porter:unicode from the pinned @unicode/unicode-15.1.0 package; carries @tsgo-generated metadata, not @tsgo-unit."
     },
     {
+      "match": "packages/tsts/src/internal/go-value-operations/generated/**",
+      "category": "go-value-operations-generated",
+      "reason": "Declaration-derived Go zero/copy operation dictionaries emitted by porter:value-operations from the pinned Go declarations and audited TypeScript storage; carries @tsgo-generated metadata, not @tsgo-unit."
+    },
+    {
       "match": "packages/tsts/src/internal/bundled/*_generated.ts",
       "category": "bundled-generated",
       "reason": "Generated bundled library indexes emitted by bundled:generate from TS-Go internal/bundled/libs; carries @tsgo-generated metadata, not @tsgo-unit."

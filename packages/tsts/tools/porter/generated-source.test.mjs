@@ -107,6 +107,7 @@ test("one exact envelope renderer covers every registered provider schema", () =
     { providerId: "porter:diagnostics", kind: "diagnostics-generated", path: "internal/diagnostics/generated/example.ts", inputs: [{ path: "vendor/messages.go", contentHash: "b".repeat(64) }] },
     { providerId: "porter:bundled", kind: "bundled-generated", path: "internal/bundled/libs/example.d.ts" },
     { providerId: "porter:unicode", kind: "unicode-generated", path: "internal/stringutil/generated/example.ts" },
+    { providerId: "porter:value-operations", kind: "go-value-operations", path: "internal/go-value-operations/generated/example.ts" },
   ];
   assert.equal(cases.length, generatedArtifactProviders.length);
   assert.equal(new Set(generatedArtifactProviders.map((provider) => provider.id)).size, generatedArtifactProviders.length);
