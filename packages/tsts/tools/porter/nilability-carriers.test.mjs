@@ -114,6 +114,10 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export type GoError = GoInterface<Error>;/);
   assert.match(source, /export type GoUnsafePointer = GoNilable<\{ readonly \[goUnsafePointerBrand\]: never \}>;/);
   assert.match(source, /export type GoZeroFactory<T> = \(\) => T;/);
+  assert.match(source, /export type GoCopy<T> = \(value: T\) => T;/);
+  assert.match(source, /export interface GoValueOps<T> \{/);
+  assert.match(source, /readonly zero: GoZeroFactory<T>;/);
+  assert.match(source, /readonly copy: GoCopy<T>;/);
   assert.match(source, /export type GoEquality<T> = \(left: T, right: T\) => bool;/);
   assert.match(source, /export function GoEqualStrict<T extends GoComparable>\(left: T, right: T\): bool/);
   assert.match(source, /export function GoEqualEmptyStruct\(/);

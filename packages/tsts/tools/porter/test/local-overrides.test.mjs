@@ -164,6 +164,61 @@ test("runtime map-key dictionaries are accepted for comparable type parameters",
   assert.deepEqual(collectLocalOverrideFailures(status), []);
 });
 
+test("runtime value-operation dictionaries replace zero-only evidence for the same type parameter", () => {
+  const accepted = buildLocalOverrideStatus(baseConfig, { units: [{
+    id: "github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.Clone",
+    kind: "method",
+    status: "implemented",
+    path: "packages/tsts/src/internal/core/arena.ts",
+    override: {
+      category: "runtime-representation",
+      allow: ["signature"],
+      reason: "Erased generic copy receives exact static zero and copy operations.",
+      runtimeDictionaries: [
+        { kind: "value-ops", parameter: "valueOps", typeParameter: "T" },
+      ],
+    },
+  }] });
+  assert.deepEqual(collectLocalOverrideFailures(accepted), []);
+
+  const rejected = buildLocalOverrideStatus(baseConfig, { units: [{
+    id: "github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.Clone",
+    kind: "method",
+    status: "implemented",
+    path: "packages/tsts/src/internal/core/arena.ts",
+    override: {
+      category: "runtime-representation",
+      allow: ["signature"],
+      reason: "This invalid fixture duplicates zero evidence through two dictionary shapes.",
+      runtimeDictionaries: [
+        { kind: "zero-value", parameter: "zeroValue", typeParameter: "T" },
+        { kind: "value-ops", parameter: "valueOps", typeParameter: "T" },
+      ],
+    },
+  }] });
+  assert.equal(rejected.failureCount, 1);
+  assert.match(rejected.invalidInline[0].reason, /cannot combine 'value-ops' with 'zero-value' for type parameter 'T'/);
+
+  const reversed = {
+    id: "github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.Clone",
+    kind: "method",
+    status: "implemented",
+    path: "packages/tsts/src/internal/core/arena.ts",
+    override: {
+      category: "runtime-representation",
+      allow: ["signature"],
+      reason: "This invalid fixture duplicates zero evidence in reverse order.",
+      runtimeDictionaries: [
+        { kind: "value-ops", parameter: "valueOps", typeParameter: "T" },
+        { kind: "zero-value", parameter: "zeroValue", typeParameter: "T" },
+      ],
+    },
+  };
+  const reversedStatus = buildLocalOverrideStatus(baseConfig, { units: [reversed] });
+  assert.equal(reversedStatus.failureCount, 1);
+  assert.match(reversedStatus.invalidInline[0].reason, /cannot combine 'zero-value' with 'value-ops' for type parameter 'T'/);
+});
+
 test("runtime dictionary metadata is closed and declaration-specific", () => {
   const invalidOverrides = [
     [{
@@ -194,6 +249,12 @@ test("runtime dictionary metadata is closed and declaration-specific", () => {
       runtimeDictionaries: [{ kind: "zero-value", parameter: "zeroValue", typeParameter: "V" }],
       goSignatureHash: "0".repeat(64),
     }, /unknown or inapplicable override key 'goSignatureHash'/],
+    [{
+      category: "runtime-representation",
+      allow: ["signature"],
+      reason: "This invalid fixture uses an unregistered dictionary kind.",
+      runtimeDictionaries: [{ kind: "legacy-copy", parameter: "copy", typeParameter: "V" }],
+    }, /kind must be 'zero-value', 'value-ops', 'equality', or 'map-key'/],
   ];
 
   for (const [override, expectedIssue] of invalidOverrides) {

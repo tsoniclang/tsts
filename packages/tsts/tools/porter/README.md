@@ -12,9 +12,10 @@ The scope is closed at the declaration boundary. Porter captures functions and m
 
 Generic operations that need erased runtime type semantics use one explicit
 runtime dictionary contract. The generated compatibility module exports
-`GoZeroFactory<T>`, `GoEquality<T>`, shared zero factories for common carriers,
-and exact equality operations. An authored generic implementation that
-materializes `var zero T` or compares erased values may accept the required
+`GoZeroFactory<T>`, `GoValueOps<T>`, `GoEquality<T>`, and
+`GoMapKeyDescriptor<T>`. An authored generic implementation that materializes
+`var zero T`, copies an erased value, compares erased values, or operates on an
+erased map key may accept the required
 dictionaries as a reviewed local `runtime-representation` signature override.
 It must not guess from a value, type name, constructor, or source spelling. A
 dictionary is attached only to the generic operation that needs erased type
@@ -191,11 +192,12 @@ Go drift or local TypeScript signature drift invalidates the override and fails
 `porter:verify`; hashes are storage compression, not a weaker comparison.
 
 One narrower signature contract exists for erased generic execution that must
-materialize a Go zero value. JavaScript cannot construct `var zero T` from an
-erased type parameter, so the implementation receives an explicit
-`GoZeroFactory<T>` dictionary after all ordinary fixed parameters. For a Go
-variadic, the dictionary sits immediately before the final TypeScript rest
-parameter so that rest parameter remains valid syntax:
+materialize or operate on a Go value. JavaScript cannot construct `var zero T`,
+copy a value of an erased aggregate type, compare every comparable `T`, or
+select exact map-key semantics from an erased type parameter. The implementation
+therefore receives the required explicit runtime dictionaries after all ordinary
+fixed parameters. For a Go variadic, dictionaries sit immediately before the
+final TypeScript rest parameter so that rest parameter remains valid syntax:
 
 ```ts
 /**
@@ -210,7 +212,11 @@ dictionary is a required, non-rest, initializer-free parameter in the one
 canonical dictionary slot—at the end, or immediately before a final rest—with
 the exact name, exact declared dictionary identity, and exact lexical
 type-parameter binding stated in metadata. A `zero-value` dictionary must be
-`GoZeroFactory<T>`; an `equality` dictionary must be `GoEquality<T>`. Porter
+`GoZeroFactory<T>`; a `value-ops` dictionary must be `GoValueOps<T>`; an
+`equality` dictionary must be `GoEquality<T>`; and a `map-key` dictionary must
+be `GoMapKeyDescriptor<T>`. Because `GoValueOps<T>` already contains exact zero
+and copy operations, `zero-value` and `value-ops` dictionaries cannot both bind
+the same type parameter in one declaration. Porter
 removes only those declared dictionaries from a temporary descriptor and then
 performs the complete ordinary Go/TS
 declaration comparison. A changed ordinary parameter, result, constraint,

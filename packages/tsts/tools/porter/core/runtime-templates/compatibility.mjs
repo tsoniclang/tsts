@@ -47,6 +47,11 @@ declare const goUnsafePointerBrand: unique symbol;
 export type GoUnsafePointer = GoNilable<{ readonly [goUnsafePointerBrand]: never }>;
 export type GoRune = int;
 export type GoZeroFactory<T> = () => T;
+export type GoCopy<T> = (value: T) => T;
+export interface GoValueOps<T> {
+  readonly zero: GoZeroFactory<T>;
+  readonly copy: GoCopy<T>;
+}
 export type GoEquality<T> = (left: T, right: T) => bool;
 
 export function GoEqualStrict<T extends GoComparable>(left: T, right: T): bool {

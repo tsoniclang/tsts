@@ -4,6 +4,7 @@ import test from "node:test";
 import { compareSignatures, resolveOverride } from "./sig-check.mjs";
 
 const zeroFactoryId = "packages/tsts/src/go/compat.ts::GoZeroFactory";
+const valueOpsId = "packages/tsts/src/go/compat.ts::GoValueOps";
 const equalityId = "packages/tsts/src/go/compat.ts::GoEquality";
 const mapKeyDescriptorId = "packages/tsts/src/go/compat.ts::GoMapKeyDescriptor";
 const identity = (value) => value;
@@ -42,6 +43,11 @@ const equalityDictionaryParameter = (name, typeParameterIndex, changes = {}) => 
   id: equalityId,
   args: [typeParameterReference(typeParameterIndex)],
 }, changes);
+const valueOpsDictionaryParameter = (name, typeParameterIndex, changes = {}) => parameter(name, {
+  t: "ref",
+  id: valueOpsId,
+  args: [typeParameterReference(typeParameterIndex)],
+}, changes);
 const mapKeyDictionaryParameter = (name, typeParameterIndex, changes = {}) => parameter(name, {
   t: "ref",
   id: mapKeyDescriptorId,
@@ -65,6 +71,11 @@ const dictionary = (parameterName, typeParameterName) => ({
 });
 const equalityDictionary = (parameterName, typeParameterName) => ({
   kind: "equality",
+  parameter: parameterName,
+  typeParameter: typeParameterName,
+});
+const valueOpsDictionary = (parameterName, typeParameterName) => ({
+  kind: "value-ops",
   parameter: parameterName,
   typeParameter: typeParameterName,
 });
@@ -151,6 +162,18 @@ test("runtime dictionary override uses the canonical slot before a variadic rest
   const invalidRestPlacement = structuredClone(actual);
   invalidRestPlacement.signatures[0].params.reverse();
   assert.match(resolve([dictionary("zeroValue", "T")], expected, invalidRestPlacement).issues[0].reason, /rest parameter to be unique and last/);
+
+  const valueOpsActual = func({
+    typeParams,
+    params: [
+      valueOpsDictionaryParameter("valueOps", 0),
+      parameter("values", { t: "array", element: typeParameterReference(0) }, { rest: true }),
+    ],
+    ret: typeParameterReference(0),
+  });
+  const valueOpsProjection = resolve([valueOpsDictionary("valueOps", "T")], expected, valueOpsActual);
+  assert.deepEqual(valueOpsProjection.issues, []);
+  assert.deepEqual(compareSignatures(expected, valueOpsActual, valueOpsProjection.resolved), []);
 });
 
 test("runtime dictionary override validates equality dictionaries by exact identity", () => {
@@ -168,6 +191,23 @@ test("runtime dictionary override validates equality dictionaries by exact ident
 
   assert.deepEqual(resolve([equalityDictionary("equal", "T")], expected, actual).issues, []);
   assert.match(resolve([dictionary("equal", "T")], expected, actual).issues[0].reason, /exact type GoZeroFactory/);
+});
+
+test("runtime dictionary override validates value operations by exact identity", () => {
+  const typeParams = [typeParameter("T", 0)];
+  const expected = func({
+    typeParams,
+    params: [parameter("value", typeParameterReference(0))],
+    ret: typeParameterReference(0),
+  });
+  const actual = func({
+    typeParams,
+    params: [parameter("value", typeParameterReference(0)), valueOpsDictionaryParameter("valueOps", 0)],
+    ret: typeParameterReference(0),
+  });
+
+  assert.deepEqual(resolve([valueOpsDictionary("valueOps", "T")], expected, actual).issues, []);
+  assert.match(resolve([dictionary("valueOps", "T")], expected, actual).issues[0].reason, /exact type GoZeroFactory/);
 });
 
 test("runtime dictionary override validates map-key descriptors by exact identity", () => {

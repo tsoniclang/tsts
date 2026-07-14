@@ -164,6 +164,7 @@ function validateRuntimeDictionaries(value, unit) {
   }
   const parameters = new Set();
   const dictionaryBindings = new Set();
+  const zeroOrValueOpsByTypeParameter = new Map();
   for (const [index, dictionary] of value.runtimeDictionaries.entries()) {
     const label = `runtimeDictionaries[${index}]`;
     if (dictionary === null || typeof dictionary !== "object" || Array.isArray(dictionary)) {
@@ -174,8 +175,8 @@ function validateRuntimeDictionaries(value, unit) {
     if (JSON.stringify(keys) !== JSON.stringify(["kind", "parameter", "typeParameter"])) {
       issues.push(`${label} must contain exactly kind, parameter, and typeParameter`);
     }
-    if (dictionary.kind !== "zero-value" && dictionary.kind !== "equality" && dictionary.kind !== "map-key") {
-      issues.push(`${label}.kind must be 'zero-value', 'equality', or 'map-key'`);
+    if (dictionary.kind !== "zero-value" && dictionary.kind !== "value-ops" && dictionary.kind !== "equality" && dictionary.kind !== "map-key") {
+      issues.push(`${label}.kind must be 'zero-value', 'value-ops', 'equality', or 'map-key'`);
     }
     if (typeof dictionary.parameter !== "string" || dictionary.parameter.trim() === "") {
       issues.push(`${label}.parameter must be a non-empty string`);
@@ -192,6 +193,14 @@ function validateRuntimeDictionaries(value, unit) {
         issues.push(`${label} duplicates the '${dictionary.kind}' dictionary for type parameter '${dictionary.typeParameter}'`);
       } else {
         dictionaryBindings.add(binding);
+      }
+      if (dictionary.kind === "zero-value" || dictionary.kind === "value-ops") {
+        const previous = zeroOrValueOpsByTypeParameter.get(dictionary.typeParameter);
+        if (previous !== undefined && previous !== dictionary.kind) {
+          issues.push(`${label} cannot combine '${dictionary.kind}' with '${previous}' for type parameter '${dictionary.typeParameter}'`);
+        } else {
+          zeroOrValueOpsByTypeParameter.set(dictionary.typeParameter, dictionary.kind);
+        }
       }
     }
   }
