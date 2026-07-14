@@ -62,8 +62,10 @@ import type {
 import {
   getProviderVirtualArtifactForCompiler,
   providerCanonicalExportOwnerMarker,
+  providerCanonicalModuleDependencyContextMarker,
   providerVirtualInternalRoot,
 } from "./provider-virtual-internal.js";
+import { providerAncillaryDataLimits, providerDeclarationClosureLimits } from "./provider-resource-limits.js";
 
 const primitiveFactKey = defineExtensionFactKey({
   extensionId: "source-primitives",
@@ -793,6 +795,44 @@ test("provider resolution rejects callback re-entry transactionally and caches t
   assert.equal(retry, rejected);
   assert.equal(declarationCount, 1);
   assert.equal(host.providers.getVirtualDeclarationDocuments().length, 0);
+  assert.equal(getCanonicalExportOwnerDocuments(host).length, 0);
+});
+
+test("provider resolution validates reentrant specifiers before diagnostics and rejects the outer transaction", () => {
+  const specifier = "@target/reentrant-invalid-specifier.js";
+  const oversizedSpecifier = "s".repeat(providerAncillaryDataLimits.maxStringCodeUnits + 1);
+  let nestedResult: ReturnType<ExtensionHost["providers"]["resolveVirtualModule"]> | undefined;
+  let declarationCount = 0;
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("reentrant-invalid-specifier-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier) => {
+      nestedResult = host.providers.resolveVirtualModule(oversizedSpecifier, { activeTarget: "demo" });
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: "tsts-provider://reentrant-invalid-specifier/model",
+        providerModuleId: "reentrant.invalid.specifier.model",
+      };
+    },
+    getDeclarationModel: (resolution) => {
+      declarationCount += 1;
+      return {
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        exports: [{ id: "Value", name: "Value", kind: "value", type: { kind: "number" } }],
+      };
+    },
+  });
+
+  const rejected = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(nestedResult?.kind, "rejected");
+  assert.equal(nestedResult?.diagnostic.extensionCode, "INVALID_PROVIDER_MODULE_SPECIFIER");
+  assert.equal(rejected.kind, "rejected");
+  assert.equal(rejected.diagnostic, nestedResult?.diagnostic);
+  assert.equal(declarationCount, 1);
+  assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), []);
   assert.equal(getCanonicalExportOwnerDocuments(host).length, 0);
 });
 
@@ -1596,8 +1636,8 @@ test("canonical export dependencies receive host-owned containing files instead 
   const dependencyContainingFile = dependencyContainingFiles[0]!;
   assert.equal(rawRootFileNames.includes(dependencyContainingFile as typeof rawRootFileNames[number]), false);
   assert.equal(dependencyContainingFile.startsWith(providerVirtualInternalRoot), true);
-  assert.equal(dependencyContainingFile.includes(providerCanonicalExportOwnerMarker), true);
-  assert.equal(getProviderVirtualArtifactForCompiler(host.providers, dependencyContainingFile)?.kind, "canonical-export-owner");
+  assert.equal(dependencyContainingFile.includes(providerCanonicalModuleDependencyContextMarker), true);
+  assert.equal(getProviderVirtualArtifactForCompiler(host.providers, dependencyContainingFile), undefined);
   assert.equal(getCanonicalExportOwnerDocuments(host).length, 2);
 });
 
@@ -1729,7 +1769,7 @@ test("canonical export owner source ignores provider import aliases and declarat
   assert.equal(`${secondOwner.fileName}\n${secondOwner.sourceText}`, firstSnapshot);
   assert.equal(secondOwner.sourceText.includes("FirstTokenAlias"), false);
   assert.equal(secondOwner.sourceText.includes("SecondTokenAlias"), false);
-  assert.equal(observedContainingFiles.some((fileName) => fileName.includes(providerCanonicalExportOwnerMarker)), true);
+  assert.equal(observedContainingFiles.some((fileName) => fileName.includes(providerCanonicalModuleDependencyContextMarker)), true);
   const publicDocument = host.providers.getVirtualDeclarationDocuments().find((document) => document.moduleSpecifier === rootSpecifier);
   assert.ok(publicDocument !== undefined);
   assert.equal(publicDocument.sourceText.includes(dependencySpecifier), false);
@@ -1792,7 +1832,7 @@ test("provider references require a provider-owned canonical target", () => {
   }).kind, "resolved");
   assert.equal(owned.observedDependencyContainingFiles.length, 1);
   assert.equal(owned.observedDependencyContainingFiles[0]?.startsWith(providerVirtualInternalRoot), true);
-  assert.equal(owned.observedDependencyContainingFiles[0]?.includes(providerCanonicalExportOwnerMarker), true);
+  assert.equal(owned.observedDependencyContainingFiles[0]?.includes(providerCanonicalModuleDependencyContextMarker), true);
   const holderOwner = getCanonicalExportOwnerDocuments(owned.host)
     .find((document) => document.declarationModel.exports[0]?.id === "Holder");
   assert.ok(holderOwner !== undefined);
@@ -3244,6 +3284,142 @@ test("provider package metadata is exact and rejects empty or partial package id
   }
 });
 
+test("provider resolution identity fields share one bounded ancillary envelope", () => {
+  const oversizedSpecifierHost = new ExtensionHost({});
+  let ownershipCalls = 0;
+  oversizedSpecifierHost.providers.registerTargetBindingProvider({
+    ...acmeBindingProvider("@target/unused.js", { id: "oversized-specifier-provider" }),
+    ownsModule: () => {
+      ownershipCalls += 1;
+      return { kind: "unowned" };
+    },
+  });
+  assert.equal(
+    oversizedSpecifierHost.providers.resolveVirtualModule(
+      "s".repeat(providerAncillaryDataLimits.maxStringCodeUnits + 1),
+    ).kind,
+    "rejected",
+  );
+  assert.equal(ownershipCalls, 0);
+  assert.equal(oversizedSpecifierHost.diagnostics.all().at(-1)?.extensionCode, "INVALID_PROVIDER_MODULE_SPECIFIER");
+
+  const oversizedFields = ["virtualFileName", "providerModuleId", "packageName", "packageVersion"] as const;
+  for (const field of oversizedFields) {
+    const specifier = `@target/oversized-resolution-${field}.js`;
+    let declarationCalls = 0;
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider({
+      identity: providerIdentity(`oversized-resolution-${field}`, "demo", "binding"),
+      ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+      resolveModule: (moduleSpecifier) => ({
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: field === "virtualFileName"
+          ? "v".repeat(providerAncillaryDataLimits.maxStringCodeUnits + 1)
+          : `tsts-provider://resolution-envelope/${field}`,
+        providerModuleId: field === "providerModuleId"
+          ? "m".repeat(providerAncillaryDataLimits.maxStringCodeUnits + 1)
+          : `resolution.envelope.${field}`,
+        ...(field === "packageName"
+          ? { packageName: "p".repeat(providerAncillaryDataLimits.maxStringCodeUnits + 1) }
+          : field === "packageVersion"
+            ? {
+              packageName: "@target/resolution-envelope",
+              packageVersion: "v".repeat(providerAncillaryDataLimits.maxStringCodeUnits + 1),
+            }
+            : {}),
+      }),
+      getDeclarationModel: (resolution) => {
+        declarationCalls += 1;
+        return {
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [],
+        };
+      },
+    });
+    assert.equal(host.providers.resolveVirtualModule(specifier).kind, "rejected", field);
+    assert.equal(declarationCalls, 0, field);
+    assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "INVALID_PROVIDER_MODULE_RESOLUTION", field);
+    assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), [], field);
+  }
+
+  const specifier = "@target/exact-resolution-envelope.js";
+  const virtualFileName = "v".repeat(providerAncillaryDataLimits.maxStringCodeUnits);
+  const providerModuleId = "m".repeat(providerAncillaryDataLimits.maxStringCodeUnits);
+  const packageName = "p".repeat(providerAncillaryDataLimits.maxStringCodeUnits);
+  const exactPackageVersionLength = providerAncillaryDataLimits.maxTotalScalarCodeUnits
+    - specifier.length
+    - virtualFileName.length
+    - providerModuleId.length
+    - packageName.length;
+  assert.ok(exactPackageVersionLength > 0);
+  const createEnvelopeHost = (packageVersionLength: number) => {
+    let declarationCalls = 0;
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider({
+      identity: providerIdentity(`exact-resolution-envelope-${packageVersionLength}`, "demo", "binding"),
+      ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+      resolveModule: (moduleSpecifier) => ({
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName,
+        providerModuleId,
+        packageName,
+        packageVersion: "r".repeat(packageVersionLength),
+      }),
+      getDeclarationModel: (resolution) => {
+        declarationCalls += 1;
+        return {
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [],
+        };
+      },
+    });
+    return { host, declarationCalls: () => declarationCalls };
+  };
+  const exact = createEnvelopeHost(exactPackageVersionLength);
+  assert.equal(exact.host.providers.resolveVirtualModule(specifier).kind, "resolved");
+  assert.equal(exact.declarationCalls(), 1);
+  const over = createEnvelopeHost(exactPackageVersionLength + 1);
+  assert.equal(over.host.providers.resolveVirtualModule(specifier).kind, "rejected");
+  assert.equal(over.declarationCalls(), 0);
+  assert.match(JSON.stringify(over.host.diagnostics.all().at(-1)?.evidence), /exceeds the total string limit/);
+});
+
+test("provider-returned diagnostics share one bounded ancillary envelope", () => {
+  const specifier = "@target/oversized-diagnostic.js";
+  const payload = "d".repeat(60_000);
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("oversized-diagnostic-provider", "demo", "binding"),
+    ownsModule: () => ({
+      kind: "reject",
+      diagnostic: {
+        extensionId: payload,
+        extensionCode: payload,
+        numericCode: 1,
+        publicCode: payload,
+        category: "error",
+        message: payload,
+        identity: payload,
+      },
+    }),
+    resolveModule: () => {
+      throw new Error("resolveModule must not run");
+    },
+    getDeclarationModel: () => {
+      throw new Error("getDeclarationModel must not run");
+    },
+  });
+
+  assert.equal(host.providers.resolveVirtualModule(specifier).kind, "rejected");
+  assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "INVALID_PROVIDER_CALLBACK_RESULT");
+  assert.match(JSON.stringify(host.diagnostics.all().at(-1)?.evidence), /exceeds the total string limit/);
+  assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), []);
+});
+
 test("provider virtual module source variants receive distinct internal file identities", () => {
   const specifier = "@target/sliced.js";
   const createHost = () => {
@@ -3907,6 +4083,69 @@ test("rejected provider slices do not reserve virtual file ownership", () => {
   assert.equal(host.providers.resolveVirtualModule(firstSpecifier, { activeTarget: "demo", containingFile: "/src/accepted.ts" }).kind, "resolved");
   assert.equal(host.providers.resolveVirtualModule(firstSpecifier, { activeTarget: "demo", containingFile: "/src/rejected.ts" }).kind, "rejected");
   assert.equal(host.providers.resolveVirtualModule(secondSpecifier, { activeTarget: "demo", containingFile: "/src/later.ts" }).kind, "resolved");
+});
+
+test("successful provider closure reserves transitive raw virtual file identities", () => {
+  const rootSpecifier = "@target/transitive-file-root.js";
+  const dependencySpecifier = "@target/transitive-file-dependency.js";
+  const collidingSpecifier = "@target/transitive-file-collision.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("transitive-file-identity-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => [rootSpecifier, dependencySpecifier, collidingSpecifier].includes(moduleSpecifier)
+      ? { kind: "owned" }
+      : { kind: "unowned" },
+    resolveModule: (moduleSpecifier) => ({
+      kind: "virtual",
+      moduleSpecifier,
+      virtualFileName: moduleSpecifier === rootSpecifier
+        ? "tsts-provider://transitive-file/root"
+        : "tsts-provider://transitive-file/shared",
+      providerModuleId: moduleSpecifier === rootSpecifier
+        ? "transitive.file.root"
+        : moduleSpecifier === dependencySpecifier
+          ? "transitive.file.dependency"
+          : "transitive.file.collision",
+    }),
+    getDeclarationModel: (resolution) => resolution.moduleSpecifier === rootSpecifier
+      ? {
+        moduleSpecifier: rootSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        imports: [{
+          moduleSpecifier: dependencySpecifier,
+          namedImports: [{ exportedName: "Dependency" }],
+          typeOnly: true,
+        }],
+        exports: [{
+          id: "Root",
+          name: "Root",
+          kind: "interface",
+          members: [{
+            id: "Root.dependency",
+            name: "dependency",
+            kind: "property",
+            type: { kind: "provider-ref", moduleSpecifier: dependencySpecifier, exportName: "Dependency" },
+          }],
+        }],
+      }
+      : {
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        exports: [{
+          id: resolution.moduleSpecifier === dependencySpecifier ? "Dependency" : "Collision",
+          name: resolution.moduleSpecifier === dependencySpecifier ? "Dependency" : "Collision",
+          kind: "interface",
+          members: [],
+        }],
+      },
+  });
+
+  assert.equal(host.providers.resolveVirtualModule(rootSpecifier, { activeTarget: "demo" }).kind, "resolved");
+  const documentsBeforeCollision = host.providers.getVirtualDeclarationDocuments();
+  assert.equal(host.providers.resolveVirtualModule(collidingSpecifier, { activeTarget: "demo" }).kind, "rejected");
+  assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "INVALID_PROVIDER_MODULE_RESOLUTION");
+  assert.match(host.diagnostics.all().at(-1)?.message ?? "", /used for multiple public provider module identities/);
+  assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), documentsBeforeCollision);
 });
 
 test("generated provider slice files cannot be reused as another module base", () => {
@@ -5353,24 +5592,117 @@ test("non-string config hashes and hostile context arrays or proxies fail closed
   }
 });
 
+test("provider host resolves bounded SDK-scale declaration models above ancillary limits", () => {
+  const specifier = "@target/sdk-scale-model.js";
+  const documentation = "d".repeat(16_384);
+  const exports = Array.from({ length: 48 }, (_, index): ProviderExportDeclaration => ({
+    id: `Documented${index}`,
+    name: `Documented${index}`,
+    kind: "class",
+    documentation,
+    members: [],
+  }));
+  let resolutionCalls = 0;
+  let declarationCalls = 0;
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("sdk-scale-model-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier) => {
+      resolutionCalls += 1;
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: "tsts-provider://sdk-scale/model",
+        providerModuleId: "sdk.scale.model",
+      };
+    },
+    getDeclarationModel: (resolution) => {
+      declarationCalls += 1;
+      return {
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        exports,
+      };
+    },
+  });
+
+  const first = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(first.kind, "resolved");
+  assert.equal(resolutionCalls, 1);
+  assert.equal(declarationCalls, 1);
+  const documents = host.providers.getVirtualDeclarationDocuments();
+  assert.equal(documents.length, 1);
+  assert.match(documents[0]?.sourceText ?? "", /as Documented47 \};/);
+  const ownerDocuments = getCanonicalExportOwnerDocuments(host);
+  assert.equal(ownerDocuments.length, exports.length);
+  assert.equal(host.diagnostics.hasErrors(), false);
+  const second = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(second, first);
+  assert.equal(resolutionCalls, 1);
+  assert.equal(declarationCalls, 1);
+});
+
 test("recursive canonical-owner planning enforces aggregate declaration graph budgets", () => {
+  const expandedNodeContribution = 2 ** 15 - 1;
+  const expandedScalarContribution = 32 * providerAncillaryDataLimits.maxStringCodeUnits;
+  const retainedEntryContribution = Math.floor(providerAncillaryDataLimits.maxTotalEntries * 0.9);
+  const retainedScalarContribution = 16 * providerAncillaryDataLimits.maxStringCodeUnits;
   const cases: readonly {
     readonly name: string;
     readonly moduleCount: number;
     readonly expectedDimension: string;
   }[] = [{
     name: "expanded-nodes",
-    moduleCount: 12,
+    moduleCount: Math.floor(
+      providerDeclarationClosureLimits.maxExpandedSemanticNodeAndArrayEntries / expandedNodeContribution,
+    ) + 2,
     expectedDimension: "expanded semantic declaration nodes",
   }, {
-    name: "scalar-code-units",
-    moduleCount: 8,
-    expectedDimension: "provider declaration scalar code units",
+    name: "expanded-scalars",
+    moduleCount: Math.floor(
+      providerDeclarationClosureLimits.maxExpandedSemanticScalarCodeUnits / expandedScalarContribution,
+    ) + 2,
+    expectedDimension: "expanded semantic provider declaration scalar code units",
+  }, {
+    name: "physical-entries",
+    moduleCount: Math.floor(
+      providerDeclarationClosureLimits.maxRetainedNodeAndCollectionEntries / retainedEntryContribution,
+    ) + 2,
+    expectedDimension: "retained provider closure nodes and collection entries",
+  }, {
+    name: "resolution-evidence",
+    moduleCount: Math.floor(
+      providerDeclarationClosureLimits.maxRetainedNodeAndCollectionEntries / retainedEntryContribution,
+    ) + 2,
+    expectedDimension: "retained provider closure nodes and collection entries",
+  }, {
+    name: "physical-scalars",
+    moduleCount: Math.floor(
+      providerDeclarationClosureLimits.maxRetainedScalarCodeUnits / retainedScalarContribution,
+    ) + 2,
+    expectedDimension: "retained provider closure scalar code units",
   }];
 
   for (const entry of cases) {
     const specifiers = Array.from({ length: entry.moduleCount }, (_, index) => `@target/aggregate-${entry.name}-${index}.js`);
     const indexBySpecifier = new Map(specifiers.map((specifier, index) => [specifier, index] as const));
+    let sharedExpandedType: ProviderTypeExpression = { kind: "number" };
+    for (let depth = 0; depth < 14; depth++) {
+      sharedExpandedType = { kind: "union", types: [sharedExpandedType, sharedExpandedType] };
+    }
+    const sharedScalarType: ProviderTypeExpression = {
+      kind: "target-named",
+      target: "neutral",
+      id: "I".repeat(providerAncillaryDataLimits.maxStringCodeUnits),
+      displayName: "Native",
+      sourceShape: { kind: "string" },
+    };
+    const sharedExpandedScalarTypes = Array.from({ length: 32 }, () => sharedScalarType);
+    const sharedScalarPayload = "x".repeat(providerAncillaryDataLimits.maxStringCodeUnits);
+    const sharedPhysicalEvidence = Array.from({
+      length: retainedEntryContribution,
+    }, () => 1);
     let declarationCalls = 0;
     const host = new ExtensionHost({});
     host.providers.registerTargetBindingProvider({
@@ -5383,23 +5715,30 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
           moduleSpecifier,
           virtualFileName: `tsts-provider://aggregate-${entry.name}/${index}`,
           providerModuleId: `aggregate.${entry.name}.${index}`,
+          ...(entry.name === "resolution-evidence"
+            ? { evidence: [{ message: "resolution entries", details: sharedPhysicalEvidence }] }
+            : {}),
         };
       },
       getDeclarationModel: (resolution) => {
         declarationCalls += 1;
         const index = indexBySpecifier.get(resolution.moduleSpecifier)!;
         const nextSpecifier = specifiers[index + 1];
-        const sharedElementType: ProviderTypeExpression = { kind: "number" };
         const members: ProviderMemberDeclaration[] = [
           ...(entry.name === "expanded-nodes"
             ? [{
               id: `Node${index}.payload`,
               name: "payload",
               kind: "property" as const,
-              type: {
-                kind: "tuple" as const,
-                elementTypes: new Array<ProviderTypeExpression>(8_000).fill(sharedElementType),
-              },
+              type: sharedExpandedType,
+            }]
+            : []),
+          ...(entry.name === "expanded-scalars"
+            ? [{
+              id: `Node${index}.payload`,
+              name: "payload",
+              kind: "property" as const,
+              type: { kind: "tuple" as const, elementTypes: sharedExpandedScalarTypes },
             }]
             : []),
           ...(nextSpecifier === undefined
@@ -5418,8 +5757,8 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
         return {
           moduleSpecifier: resolution.moduleSpecifier,
           providerModuleId: resolution.providerModuleId,
-          ...(entry.name === "scalar-code-units"
-            ? { evidence: [{ message: "x".repeat(50_000) }] }
+          ...(entry.name === "physical-entries"
+            ? { evidence: [{ message: "physical entries", details: sharedPhysicalEvidence }] }
             : {}),
           ...(nextSpecifier === undefined
             ? {}
@@ -5430,7 +5769,15 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
                 typeOnly: true,
               }],
             }),
-          exports: [{ id: `Node${index}`, name: "Node", kind: "interface", members }],
+          exports: [{ id: `Node${index}`, name: "Node", kind: "interface", members },
+            ...(entry.name === "physical-scalars"
+              ? Array.from({ length: 16 }, (_, paddingIndex): ProviderExportDeclaration => ({
+                id: `Padding${index}_${paddingIndex}`,
+                name: `Padding${index}_${paddingIndex}`,
+                kind: "interface",
+                documentation: sharedScalarPayload,
+              }))
+              : [])],
         };
       },
     });
@@ -5441,11 +5788,112 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
     assert.ok(declarationCalls <= entry.moduleCount, entry.name);
     const diagnostic = host.diagnostics.all().at(-1);
     assert.match(diagnostic?.message ?? "", /exceeds the transaction limit/, entry.name);
-    const details = JSON.stringify(diagnostic?.evidence?.find((evidence) => evidence.message === "Provider declaration closure budget")?.details);
-    assert.match(details, new RegExp(`"dimension":"${entry.expectedDimension}"`), `${entry.name}: ${JSON.stringify(host.diagnostics.all())}`);
-    assert.match(details, /"actual":[0-9]+,"limit":(?:65536|262144)/, entry.name);
+    const details = diagnostic?.evidence?.find((evidence) => evidence.message === "Provider declaration closure budget")?.details as {
+      readonly dimension: string;
+      readonly actual: number;
+      readonly limit: number;
+    } | undefined;
+    assert.equal(details?.dimension, entry.expectedDimension, `${entry.name}: ${JSON.stringify(host.diagnostics.all())}`);
+    const expectedLimit = entry.name === "expanded-nodes"
+      ? providerDeclarationClosureLimits.maxExpandedSemanticNodeAndArrayEntries
+      : entry.name === "expanded-scalars"
+        ? providerDeclarationClosureLimits.maxExpandedSemanticScalarCodeUnits
+        : entry.name === "physical-entries" || entry.name === "resolution-evidence"
+          ? providerDeclarationClosureLimits.maxRetainedNodeAndCollectionEntries
+          : providerDeclarationClosureLimits.maxRetainedScalarCodeUnits;
+    assert.equal(details?.limit, expectedLimit, entry.name);
+    assert.ok((details?.actual ?? 0) > (details?.limit ?? Number.POSITIVE_INFINITY), entry.name);
     assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), [], entry.name);
   }
+});
+
+test("failed provider closure transactions retain only the terminal root rejection", () => {
+  const evidencePayloadLength = Math.floor(providerAncillaryDataLimits.maxTotalEntries * 0.9);
+  const moduleCount = Math.floor(
+    providerDeclarationClosureLimits.maxRetainedNodeAndCollectionEntries / evidencePayloadLength,
+  ) + 1;
+  const specifiers = Array.from({ length: moduleCount }, (_, index) => `@target/rollback-${index}.js`);
+  const indexBySpecifier = new Map(specifiers.map((specifier, index) => [specifier, index] as const));
+  const evidencePayload = Array.from({
+    length: evidencePayloadLength,
+  }, () => 1);
+  const declarationCallsBySpecifier = new Map<string, number>();
+  let firstDependencyContext: ProviderModuleContext | undefined;
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("provider-closure-rollback", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => indexBySpecifier.has(moduleSpecifier) ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      const index = indexBySpecifier.get(moduleSpecifier)!;
+      if (index === 1 && firstDependencyContext === undefined) {
+        firstDependencyContext = context;
+      }
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: `tsts-provider://rollback/${index}`,
+        providerModuleId: `rollback.${index}`,
+      };
+    },
+    getDeclarationModel: (resolution) => {
+      declarationCallsBySpecifier.set(
+        resolution.moduleSpecifier,
+        (declarationCallsBySpecifier.get(resolution.moduleSpecifier) ?? 0) + 1,
+      );
+      const index = indexBySpecifier.get(resolution.moduleSpecifier)!;
+      const nextSpecifier = specifiers[index + 1];
+      return {
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        evidence: [{ message: "physical entries", details: evidencePayload }],
+        ...(nextSpecifier === undefined
+          ? {}
+          : {
+            imports: [{
+              moduleSpecifier: nextSpecifier,
+              namedImports: [{ exportedName: "Node" }],
+              typeOnly: true,
+            }],
+          }),
+        exports: [{
+          id: `Node${index}`,
+          name: "Node",
+          kind: "interface",
+          members: nextSpecifier === undefined
+            ? []
+            : [{
+              id: `Node${index}.next`,
+              name: "next",
+              kind: "property",
+              type: {
+                kind: "provider-ref",
+                moduleSpecifier: nextSpecifier,
+                exportName: "Node",
+              },
+            }],
+        }],
+      };
+    },
+  });
+
+  const rootContext = { activeTarget: "demo" } as const;
+  const rejected = host.providers.resolveVirtualModule(specifiers[0]!, rootContext);
+  assert.equal(rejected.kind, "rejected");
+  assert.equal(host.providers.getVirtualDeclarationDocuments().length, 0);
+  assert.equal(getCanonicalExportOwnerDocuments(host).length, 0);
+  const callsAfterFailure = new Map(declarationCallsBySpecifier);
+  assert.equal(host.providers.resolveVirtualModule(specifiers[0]!, rootContext), rejected);
+  assert.deepEqual(declarationCallsBySpecifier, callsAfterFailure);
+
+  const dependencySpecifier = specifiers[1]!;
+  assert.ok(firstDependencyContext !== undefined);
+  const dependencyCallsBeforeRetry = declarationCallsBySpecifier.get(dependencySpecifier);
+  const dependency = host.providers.resolveVirtualModule(dependencySpecifier, firstDependencyContext);
+  assert.equal(dependency.kind, "resolved");
+  assert.equal(declarationCallsBySpecifier.get(dependencySpecifier), (dependencyCallsBeforeRetry ?? 0) + 1);
+  assert.equal(declarationCallsBySpecifier.get(specifiers[0]!), callsAfterFailure.get(specifiers[0]!));
+  assert.equal(host.providers.getVirtualDeclarationDocuments().length, 1);
+  assert.equal(getCanonicalExportOwnerDocuments(host).length, moduleCount - 1);
 });
 
 function acmeBindingProvider(

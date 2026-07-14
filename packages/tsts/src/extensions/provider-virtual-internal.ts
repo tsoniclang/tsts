@@ -3,6 +3,7 @@ import type { ProviderVirtualModuleArtifact } from "./host.js";
 export const providerVirtualInternalRoot = "tsts-provider://tsts-internal/";
 export const providerVirtualPublicRoot = "tsts-provider://tsts-public/";
 export const providerCanonicalExportOwnerMarker = ".tsts-export-owner-";
+export const providerCanonicalModuleDependencyContextMarker = ".tsts-module-context";
 export const providerPublicVirtualSliceMarker = ".tsts-slice-";
 
 export const providerVirtualCompilerArtifactLookup: unique symbol = Symbol("tsts.provider.virtualCompilerArtifactLookup");

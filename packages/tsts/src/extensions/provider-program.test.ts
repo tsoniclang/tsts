@@ -45,6 +45,7 @@ import { recordExtensionCheckedAssertionConversion, recordExtensionCheckedElemen
 import {
   getProviderVirtualArtifactForCompiler,
   providerCanonicalExportOwnerMarker,
+  providerCanonicalModuleDependencyContextMarker,
   providerVirtualInternalRoot,
   providerVirtualPublicRoot,
 } from "./provider-virtual-internal.js";
@@ -828,7 +829,7 @@ test("provider virtual public export identity is independent of dependency-first
   assertCleanProgram(program, sourceFile);
   assertCleanProgram(program, reflectionSourceFile);
   assert.equal(reflectionResolutionContexts[0]?.startsWith(providerVirtualInternalRoot), true);
-  assert.equal(reflectionResolutionContexts[0]?.includes(providerCanonicalExportOwnerMarker), true);
+  assert.equal(reflectionResolutionContexts[0]?.includes(providerCanonicalModuleDependencyContextMarker), true);
 
   const reflectionFiles = getPublicProviderSourceFiles(program, extended.extensionHost, "@acme/public/reflection.js");
   assert.equal(reflectionFiles.length, 1);

@@ -16,15 +16,10 @@ import type {
 } from "./host.js";
 import { isArgumentPassingMode } from "./argument-passing.js";
 import {
-  providerBoundaryMaxArrayEntries,
-  providerBoundaryMaxStringCodeUnits,
-  providerBoundaryMaxTotalStringCodeUnits,
   snapshotProviderEvidenceArray,
 } from "./provider-boundary-data.js";
+import { providerDeclarationModelLimits } from "./provider-resource-limits.js";
 
-const maxProviderDeclarationModelNestingDepth = 256;
-const maxProviderDeclarationModelExpandedNodeCount = providerBoundaryMaxArrayEntries;
-const maxProviderDeclarationModelPhysicalNodeAndArrayEntryCount = providerBoundaryMaxArrayEntries;
 const providerModelReadFailure = Symbol("provider-model-read-failure");
 
 type ProviderModelGraphNodeKind =
@@ -50,8 +45,10 @@ interface ProviderModelGraphFrame {
 }
 
 export interface ProviderDeclarationModelGraphMetrics {
+  readonly physicalNodeAndArrayEntryCount: number;
+  readonly physicalScalarCodeUnitCount: number;
   readonly expandedSemanticNodeAndArrayEntryCount: number;
-  readonly totalScalarCodeUnitCount: number;
+  readonly expandedSemanticScalarCodeUnitCount: number;
 }
 
 export type ProviderDeclarationModelGraphValidation =
@@ -127,14 +124,22 @@ interface ProviderModelReadContext {
   readonly arrays: WeakMap<object, readonly unknown[]>;
   readonly arrayTraversal: WeakMap<object, Map<ProviderModelGraphNodeKind, ProviderModelArrayTraversalState>>;
   readonly physicalNodes: WeakSet<object>;
+  readonly semanticScalarUsage: WeakMap<object, Map<ProviderModelGraphNodeKind, ProviderModelSemanticScalarUsage>>;
   evidenceCaptured: boolean;
   evidenceSnapshot: readonly ExtensionEvidence[] | undefined;
   physicalNodeAndArrayEntryCount: number;
   totalScalarCodeUnitCount: number;
   traversalMode: "physical" | "complexity";
+  currentSemanticNode: object | undefined;
+  currentSemanticNodeKind: ProviderModelGraphNodeKind | undefined;
   currentPath: string;
   currentDepth: number;
   failure: InvalidProviderDeclarationModelGraphValidation | undefined;
+}
+
+interface ProviderModelSemanticScalarUsage {
+  readonly fieldsByRecord: WeakMap<object, Set<ProviderModelFieldName>>;
+  totalCodeUnits: number;
 }
 
 interface ProviderModelArrayTraversalState {
@@ -163,11 +168,14 @@ export function validateProviderDeclarationModelGraph(value: unknown): ProviderD
     arrays: new WeakMap(),
     arrayTraversal: new WeakMap(),
     physicalNodes: new WeakSet(),
+    semanticScalarUsage: new WeakMap(),
     evidenceCaptured: false,
     evidenceSnapshot: undefined,
     physicalNodeAndArrayEntryCount: 0,
     totalScalarCodeUnitCount: 0,
     traversalMode: "physical",
+    currentSemanticNode: undefined,
+    currentSemanticNodeKind: undefined,
     currentPath: "$",
     currentDepth: 1,
     failure: undefined,
@@ -195,8 +203,14 @@ export function validateProviderDeclarationModelGraph(value: unknown): ProviderD
     if (firstPath !== undefined) {
       return { kind: "invalid", reason: "cycle", path: frame.path, firstPath, depth: frame.depth };
     }
-    if (frame.depth > maxProviderDeclarationModelNestingDepth) {
-      return { kind: "invalid", reason: "depth", path: frame.path, depth: frame.depth };
+    if (frame.depth > providerDeclarationModelLimits.maxNestingDepth) {
+      return {
+        kind: "invalid",
+        reason: "depth",
+        path: frame.path,
+        depth: frame.depth,
+        limit: providerDeclarationModelLimits.maxNestingDepth,
+      };
     }
     if (complete.get(frame.value)?.has(frame.kind) === true) {
       continue;
@@ -208,7 +222,12 @@ export function validateProviderDeclarationModelGraph(value: unknown): ProviderD
     stack.push({ ...frame, exit: true });
     reads.currentPath = frame.path;
     reads.currentDepth = frame.depth;
-    if (!pushProviderModelGraphChildren(reads, stack, frame)) {
+    reads.currentSemanticNode = frame.value;
+    reads.currentSemanticNodeKind = frame.kind;
+    const pushed = pushProviderModelGraphChildren(reads, stack, frame);
+    reads.currentSemanticNode = undefined;
+    reads.currentSemanticNodeKind = undefined;
+    if (!pushed) {
       return reads.failure ?? { kind: "invalid", reason: "shape", path: frame.path, depth: frame.depth };
     }
   }
@@ -229,8 +248,10 @@ export function validateProviderDeclarationModelGraph(value: unknown): ProviderD
   };
   const model = snapshotProviderDeclarationModel(snapshotContext, value as ProviderDeclarationModel);
   const metrics: ProviderDeclarationModelGraphMetrics = Object.freeze({
+    physicalNodeAndArrayEntryCount: reads.physicalNodeAndArrayEntryCount,
+    physicalScalarCodeUnitCount: reads.totalScalarCodeUnitCount,
     expandedSemanticNodeAndArrayEntryCount: complexityValidation.expandedSemanticNodeAndArrayEntryCount,
-    totalScalarCodeUnitCount: reads.totalScalarCodeUnitCount,
+    expandedSemanticScalarCodeUnitCount: complexityValidation.expandedSemanticScalarCodeUnitCount,
   });
   return {
     kind: "valid",
@@ -689,15 +710,15 @@ function captureProviderModelArrayValues(
     return undefined;
   }
   if (!Number.isSafeInteger(length)
-    || length > maxProviderDeclarationModelPhysicalNodeAndArrayEntryCount
+    || length > providerDeclarationModelLimits.maxPhysicalNodeAndArrayEntries
     || reads.physicalNodeAndArrayEntryCount
-      > maxProviderDeclarationModelPhysicalNodeAndArrayEntryCount - length) {
+      > providerDeclarationModelLimits.maxPhysicalNodeAndArrayEntries - length) {
     setProviderModelReadFailure(reads, {
       kind: "invalid",
       reason: "complexity",
       path,
       depth,
-      limit: maxProviderDeclarationModelPhysicalNodeAndArrayEntryCount,
+      limit: providerDeclarationModelLimits.maxPhysicalNodeAndArrayEntries,
     });
     return undefined;
   }
@@ -768,13 +789,13 @@ function reserveProviderModelPhysicalEntries(
 ): boolean {
   if (!Number.isSafeInteger(count)
     || count < 0
-    || count > maxProviderDeclarationModelPhysicalNodeAndArrayEntryCount - reads.physicalNodeAndArrayEntryCount) {
+    || count > providerDeclarationModelLimits.maxPhysicalNodeAndArrayEntries - reads.physicalNodeAndArrayEntryCount) {
     setProviderModelReadFailure(reads, {
       kind: "invalid",
       reason: "complexity",
       path,
       depth,
-      limit: maxProviderDeclarationModelPhysicalNodeAndArrayEntryCount,
+      limit: providerDeclarationModelLimits.maxPhysicalNodeAndArrayEntries,
     });
     return false;
   }
@@ -789,13 +810,13 @@ function reserveProviderModelScalarCodeUnits(
   depth: number,
   aggregateOnly = false,
 ): boolean {
-  const limit = aggregateOnly || count <= providerBoundaryMaxStringCodeUnits
-    ? providerBoundaryMaxTotalStringCodeUnits
-    : providerBoundaryMaxStringCodeUnits;
+  const limit = aggregateOnly || count <= providerDeclarationModelLimits.maxStringCodeUnits
+    ? providerDeclarationModelLimits.maxPhysicalScalarCodeUnits
+    : providerDeclarationModelLimits.maxStringCodeUnits;
   if (!Number.isSafeInteger(count)
     || count < 0
-    || (!aggregateOnly && count > providerBoundaryMaxStringCodeUnits)
-    || count > providerBoundaryMaxTotalStringCodeUnits - reads.totalScalarCodeUnitCount) {
+    || (!aggregateOnly && count > providerDeclarationModelLimits.maxStringCodeUnits)
+    || count > providerDeclarationModelLimits.maxPhysicalScalarCodeUnits - reads.totalScalarCodeUnitCount) {
     setProviderModelReadFailure(reads, {
       kind: "invalid",
       reason: "complexity",
@@ -913,25 +934,69 @@ function readProviderModelField<T extends object, K extends keyof T & ProviderMo
   if (fields === undefined) {
     fields = new Map();
     reads.fields.set(record, fields);
-  } else if (fields.has(fieldName)) {
-    return fields.get(fieldName) as T[K];
   }
   let value: T[K] | typeof providerModelReadFailure;
-  try {
-    value = record[fieldName];
-  } catch {
-    value = providerModelReadFailure;
+  if (fields.has(fieldName)) {
+    value = fields.get(fieldName) as T[K] | typeof providerModelReadFailure;
+  } else {
+    try {
+      value = record[fieldName];
+    } catch {
+      value = providerModelReadFailure;
+    }
+    if (typeof value === "string" && !reserveProviderModelScalarCodeUnits(
+      reads,
+      value.length,
+      `${reads.currentPath}.${String(fieldName)}`,
+      reads.currentDepth + 1,
+    )) {
+      value = providerModelReadFailure;
+    }
+    fields.set(fieldName, value);
   }
-  if (typeof value === "string" && !reserveProviderModelScalarCodeUnits(
-    reads,
-    value.length,
-    `${reads.currentPath}.${String(fieldName)}`,
-    reads.currentDepth + 1,
-  )) {
-    value = providerModelReadFailure;
+  if (typeof value === "string") {
+    recordProviderModelSemanticScalarField(reads, record, fieldName, value.length);
   }
-  fields.set(fieldName, value);
   return value as T[K];
+}
+
+function recordProviderModelSemanticScalarField(
+  reads: ProviderModelReadContext,
+  record: object,
+  fieldName: ProviderModelFieldName,
+  codeUnits: number,
+): void {
+  const semanticNode = reads.currentSemanticNode;
+  const semanticNodeKind = reads.currentSemanticNodeKind;
+  if (semanticNode === undefined || semanticNodeKind === undefined) {
+    return;
+  }
+  let usageByKind = reads.semanticScalarUsage.get(semanticNode);
+  if (usageByKind === undefined) {
+    usageByKind = new Map();
+    reads.semanticScalarUsage.set(semanticNode, usageByKind);
+  }
+  let usage = usageByKind.get(semanticNodeKind);
+  if (usage === undefined) {
+    usage = { fieldsByRecord: new WeakMap(), totalCodeUnits: 0 };
+    usageByKind.set(semanticNodeKind, usage);
+  }
+  let fields = usage.fieldsByRecord.get(record);
+  if (fields === undefined) {
+    fields = new Set();
+    usage.fieldsByRecord.set(record, fields);
+  }
+  if (!fields.has(fieldName)) {
+    fields.add(fieldName);
+    usage.totalCodeUnits += codeUnits;
+  }
+}
+
+function getProviderModelDirectSemanticScalarCodeUnits(
+  reads: ProviderModelReadContext,
+  frame: ProviderModelGraphFrame,
+): number {
+  return reads.semanticScalarUsage.get(frame.value as object)?.get(frame.kind)?.totalCodeUnits ?? 0;
 }
 
 function snapshotProviderModelEvidence(
@@ -955,7 +1020,7 @@ function snapshotProviderModelEvidence(
     });
     return false;
   }
-  if (!reserveProviderModelPhysicalEntries(reads, snapshot.entries, path, depth)
+  if (!reserveProviderModelPhysicalEntries(reads, snapshot.physicalNodeAndCollectionEntryCount, path, depth)
     || !reserveProviderModelScalarCodeUnits(reads, snapshot.scalarCodeUnits, path, depth, true)) {
     return false;
   }
@@ -1624,6 +1689,7 @@ function setProviderModelNodeSnapshot(
 
 interface ProviderModelGraphComplexity {
   readonly expandedNodeCount: number;
+  readonly expandedScalarCodeUnitCount: number;
   readonly maximumRelativeDepth: number;
 }
 
@@ -1638,12 +1704,17 @@ interface ProviderModelGraphComplexityTraversalFrame {
   children: readonly ProviderModelGraphFrame[] | undefined;
   nextChildIndex: number;
   expandedNodeCount: number;
+  expandedScalarCodeUnitCount: number;
   maximumRelativeDepth: number;
 }
 
 type ProviderModelGraphComplexityValidation =
   | InvalidProviderDeclarationModelGraphValidation
-  | { readonly kind: "valid"; readonly expandedSemanticNodeAndArrayEntryCount: number };
+  | {
+    readonly kind: "valid";
+    readonly expandedSemanticNodeAndArrayEntryCount: number;
+    readonly expandedSemanticScalarCodeUnitCount: number;
+  };
 
 function validateProviderModelGraphComplexity(
   reads: ProviderModelReadContext,
@@ -1659,6 +1730,7 @@ function validateProviderModelGraphComplexity(
     children: undefined,
     nextChildIndex: 0,
     expandedNodeCount: 1,
+    expandedScalarCodeUnitCount: getProviderModelDirectSemanticScalarCodeUnits(reads, root),
     maximumRelativeDepth: 0,
   }];
   while (stack.length > 0) {
@@ -1688,47 +1760,68 @@ function validateProviderModelGraphComplexity(
           children: undefined,
           nextChildIndex: 0,
           expandedNodeCount: child.complexityArray === true ? 0 : 1,
+          expandedScalarCodeUnitCount: child.complexityArray === true
+            ? 0
+            : getProviderModelDirectSemanticScalarCodeUnits(reads, child),
           maximumRelativeDepth: 0,
         });
         continue;
       }
       traversal.nextChildIndex++;
       if (childComplexity.expandedNodeCount
-        > maxProviderDeclarationModelExpandedNodeCount - traversal.expandedNodeCount) {
+        > providerDeclarationModelLimits.maxExpandedSemanticNodeAndArrayEntries - traversal.expandedNodeCount) {
         return {
           kind: "invalid",
           reason: "complexity",
           path: child.path,
           depth: child.depth,
-          limit: maxProviderDeclarationModelExpandedNodeCount,
+          limit: providerDeclarationModelLimits.maxExpandedSemanticNodeAndArrayEntries,
         };
       }
       traversal.expandedNodeCount += childComplexity.expandedNodeCount;
+      if (childComplexity.expandedScalarCodeUnitCount
+        > providerDeclarationModelLimits.maxExpandedSemanticScalarCodeUnits
+          - traversal.expandedScalarCodeUnitCount) {
+        return {
+          kind: "invalid",
+          reason: "complexity",
+          path: child.path,
+          depth: child.depth,
+          limit: providerDeclarationModelLimits.maxExpandedSemanticScalarCodeUnits,
+        };
+      }
+      traversal.expandedScalarCodeUnitCount += childComplexity.expandedScalarCodeUnitCount;
       const childDepthIncrement = traversal.graph.complexityArray === true ? 0 : 1;
       traversal.maximumRelativeDepth = Math.max(
         traversal.maximumRelativeDepth,
         childComplexity.maximumRelativeDepth + childDepthIncrement,
       );
       const childMaximumDepth = child.depth + childComplexity.maximumRelativeDepth;
-      if (childMaximumDepth > maxProviderDeclarationModelNestingDepth) {
+      if (childMaximumDepth > providerDeclarationModelLimits.maxNestingDepth) {
         return {
           kind: "invalid",
           reason: "depth",
           path: child.path,
           depth: childMaximumDepth,
+          limit: providerDeclarationModelLimits.maxNestingDepth,
         };
       }
       continue;
     }
     setProviderModelGraphComplexity(context, traversal.graph, {
       expandedNodeCount: traversal.expandedNodeCount,
+      expandedScalarCodeUnitCount: traversal.expandedScalarCodeUnitCount,
       maximumRelativeDepth: traversal.maximumRelativeDepth,
     });
     stack.pop();
   }
 
   const complexity = requireProviderModelGraphComplexity(context, root);
-  return { kind: "valid", expandedSemanticNodeAndArrayEntryCount: complexity.expandedNodeCount };
+  return {
+    kind: "valid",
+    expandedSemanticNodeAndArrayEntryCount: complexity.expandedNodeCount,
+    expandedSemanticScalarCodeUnitCount: complexity.expandedScalarCodeUnitCount,
+  };
 }
 
 function getProviderModelGraphComplexity(
