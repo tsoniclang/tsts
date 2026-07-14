@@ -33,6 +33,7 @@ import type {
   ProviderDeclarationModel,
   ProviderMemberDeclaration,
   ProviderModuleResolution,
+  ProviderTypeExpression,
   CheckedCallMappingRequest,
   CheckedCallMappingResult,
   CheckedElementAccessMappingRequest,
@@ -1075,6 +1076,150 @@ test("provider declaration models reject namespace members that cannot render as
   }]);
 });
 
+test("provider interface heritage keeps type-family references in type position", () => {
+  const specifier = "@target/type-family-interface.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(typeFamilyBindingProvider(specifier, [{
+    id: "Shape",
+    name: "Shape",
+    kind: "interface",
+    sourceTypeFamily: { exportName: "Shape", typeArgumentCount: 0 },
+    members: [],
+  }, {
+    id: "Shape_1",
+    name: "Shape_1",
+    kind: "interface",
+    sourceTypeFamily: { exportName: "Shape", typeArgumentCount: 1 },
+    typeParameters: [{ name: "T" }],
+    members: [],
+  }, {
+    id: "StringShape",
+    name: "StringShape",
+    kind: "interface",
+    heritage: [{
+      kind: "extends",
+      type: {
+        kind: "provider-ref",
+        moduleSpecifier: specifier,
+        exportName: "Shape",
+        typeArguments: [{ kind: "string" }],
+      },
+    }],
+    members: [],
+  }]));
+
+  const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(resolved.kind, "resolved");
+  if (resolved.kind !== "resolved") {
+    return;
+  }
+  assert.match(resolved.module.virtualSourceText, /export interface StringShape extends Shape<string>/);
+  assert.equal(resolved.module.virtualSourceText.includes("StringShape extends __TstsProvider_Shape_1"), false);
+});
+
+test("external provider-family value heritage fails closed for unavailable and non-class variants", () => {
+  const familySpecifier = "@target/external-family.js";
+  const derivedSpecifier = "@target/external-derived.js";
+  const cases: readonly {
+    readonly name: string;
+    readonly familyExports: ProviderDeclarationModel["exports"];
+    readonly typeArguments?: readonly ProviderTypeExpression[];
+    readonly diagnostic: RegExp;
+  }[] = [{
+    name: "unavailable arity",
+    familyExports: [typeFamilyVariant("Task", 0), typeFamilyVariant("Task_1", 1)],
+    typeArguments: [{ kind: "unknown" }, { kind: "unknown" }],
+    diagnostic: /unavailable type-family arity 2/,
+  }, {
+    name: "non-class variant",
+    familyExports: [{ ...typeFamilyVariant("Task", 0), kind: "interface", members: [] }],
+    diagnostic: /requires a class variant/,
+  }];
+
+  for (const entry of cases) {
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider(multiModuleTypeFamilyBindingProvider(new Map([
+      [familySpecifier, {
+        moduleSpecifier: familySpecifier,
+        providerModuleId: "matrix.external-family",
+        exports: entry.familyExports,
+      }],
+      [derivedSpecifier, {
+        moduleSpecifier: derivedSpecifier,
+        providerModuleId: "matrix.external-derived",
+        imports: [{
+          moduleSpecifier: familySpecifier,
+          namedImports: [{ exportedName: "Task", localName: "ImportedTask" }],
+        }],
+        exports: [{
+          id: "Derived",
+          name: "Derived",
+          kind: "class",
+          heritage: [{
+            kind: "extends",
+            type: {
+              kind: "provider-ref",
+              moduleSpecifier: familySpecifier,
+              exportName: "Task",
+              localName: "ImportedTask",
+              ...(entry.typeArguments === undefined ? {} : { typeArguments: entry.typeArguments }),
+            },
+          }],
+          members: [],
+        }],
+      }],
+    ])));
+
+    const resolved = host.providers.resolveVirtualModule(derivedSpecifier, { activeTarget: "demo" });
+    assert.equal(resolved.kind, "rejected", entry.name);
+    assert.match(host.diagnostics.all().at(-1)?.message ?? "", entry.diagnostic, entry.name);
+  }
+});
+
+test("recursive external provider-family value heritage fails closed", () => {
+  const leftSpecifier = "@target/cycle-left.js";
+  const rightSpecifier = "@target/cycle-right.js";
+  const family = (
+    moduleSpecifier: string,
+    providerModuleId: string,
+    exportName: string,
+    dependencySpecifier: string,
+    dependencyExportName: string,
+  ): ProviderDeclarationModel => ({
+    moduleSpecifier,
+    providerModuleId,
+    imports: [{
+      moduleSpecifier: dependencySpecifier,
+      namedImports: [{ exportedName: dependencyExportName, localName: `Imported${dependencyExportName}` }],
+    }],
+    exports: [{
+      id: exportName,
+      name: exportName,
+      kind: "class",
+      sourceTypeFamily: { exportName, typeArgumentCount: 0 },
+      heritage: [{
+        kind: "extends",
+        type: {
+          kind: "provider-ref",
+          moduleSpecifier: dependencySpecifier,
+          exportName: dependencyExportName,
+          localName: `Imported${dependencyExportName}`,
+        },
+      }],
+      members: [],
+    }],
+  });
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(multiModuleTypeFamilyBindingProvider(new Map([
+    [leftSpecifier, family(leftSpecifier, "matrix.cycle-left", "Left", rightSpecifier, "Right")],
+    [rightSpecifier, family(rightSpecifier, "matrix.cycle-right", "Right", leftSpecifier, "Left")],
+  ])));
+
+  const resolved = host.providers.resolveVirtualModule(leftSpecifier, { activeTarget: "demo" });
+  assert.equal(resolved.kind, "rejected");
+  assert.match(host.diagnostics.all().at(-1)?.message ?? "", /recursive type-family dependency/);
+});
+
 test("provider declaration models reject invalid type-family declarations", () => {
   const specifier = "@target/type-family.js";
   const invalidFamilies: readonly {
@@ -1174,6 +1319,59 @@ test("provider declaration models reject invalid type-family declarations", () =
       { ...typeFamilyVariant("Task", 0), kind: "interface" },
       typeFamilyVariant("Task_1", 1),
     ],
+  }, {
+    name: "public family reference with missing arity",
+    exports: [
+      typeFamilyVariant("Task", 0),
+      typeFamilyVariant("Task_1", 1),
+      {
+        id: "Consumer",
+        name: "Consumer",
+        kind: "interface",
+        members: [{
+          id: "Consumer.value",
+          name: "value",
+          kind: "property",
+          type: {
+            kind: "provider-ref",
+            moduleSpecifier: specifier,
+            exportName: "Task",
+            typeArguments: [{ kind: "unknown" }, { kind: "unknown" }],
+          },
+        }],
+      },
+    ],
+  }, {
+    name: "type-only external class heritage",
+    imports: [{
+      moduleSpecifier: "@target/base.js",
+      typeOnly: true,
+      namedImports: [{ exportedName: "Base", localName: "ImportedBase" }],
+    }],
+    exports: [{
+      id: "Derived",
+      name: "Derived",
+      kind: "class",
+      heritage: [{
+        kind: "extends",
+        type: {
+          kind: "provider-ref",
+          moduleSpecifier: "@target/base.js",
+          exportName: "Base",
+          localName: "ImportedBase",
+        },
+      }],
+      members: [],
+    }],
+  }, {
+    name: "non-reference class heritage",
+    exports: [{
+      id: "Derived",
+      name: "Derived",
+      kind: "class",
+      heritage: [{ kind: "extends", type: { kind: "object" } }],
+      members: [],
+    }],
   }];
 
   for (const entry of invalidFamilies) {
@@ -1839,6 +2037,30 @@ test("generated provider slice files cannot be reused as another module base", (
   assert.match(generatedFileName, /#tsts-slice-/);
   const colliding = host.providers.resolveVirtualModule(collidingSpecifier, { activeTarget: "demo", containingFile: "/src/collision.ts" });
   assert.equal(colliding.kind, "rejected");
+  assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "INVALID_PROVIDER_MODULE_RESOLUTION");
+});
+
+test("provider resolutions cannot claim host-owned family companion file names", () => {
+  const specifier = "@target/reserved-family-companion.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("reserved-family-companion-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier) => ({
+      kind: "virtual",
+      moduleSpecifier,
+      virtualFileName: "tsts-provider://reserved/base.tsts-family-variants-provider-owned.d.ts",
+      providerModuleId: "reserved.family-companion",
+    }),
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{ id: "Token", name: "Token", kind: "class", members: [] }],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  assert.equal(host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" }).kind, "rejected");
   assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "INVALID_PROVIDER_MODULE_RESOLUTION");
 });
 
@@ -2781,6 +3003,24 @@ function typeFamilyBindingProvider(ownedSpecifier: string, exports: ProviderDecl
       ...(imports !== undefined ? { imports } : {}),
       exports,
     }),
+    getTargetIdentity: () => undefined,
+  };
+}
+
+function multiModuleTypeFamilyBindingProvider(models: ReadonlyMap<string, ProviderDeclarationModel>): TargetBindingProvider {
+  return {
+    identity: providerIdentity("multi-module-type-family-provider", "demo", "binding"),
+    ownsModule: (specifier) => models.has(specifier) ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (specifier) => {
+      const model = models.get(specifier)!;
+      return {
+        kind: "virtual",
+        moduleSpecifier: specifier,
+        virtualFileName: `tsts-provider://matrix/type-family/${encodeURIComponent(specifier)}`,
+        providerModuleId: model.providerModuleId,
+      };
+    },
+    getDeclarationModel: (resolution) => models.get(resolution.moduleSpecifier)!,
     getTargetIdentity: () => undefined,
   };
 }

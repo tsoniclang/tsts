@@ -156,6 +156,7 @@ import type { projectReferenceParser } from "./projectreferenceparser.js";
 import { PhaseParse, PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
 import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
 import { getExtensionHost } from "../../extensions/host.js";
+import { providerFamilyVariantCompanionMarker } from "../../extensions/provider-virtual-internal.js";
 import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderImportSliceKind, ProviderModuleResolution, ProviderRequestedExport, ProviderResolvedModule } from "../../extensions/host.js";
 
 /**
@@ -346,10 +347,13 @@ function fileLoader_getProviderVirtualSubModuleName(packageName: string, moduleS
 
 function getProviderVirtualPackageSliceMarker(virtualFileName: string): string {
   const markerIndex = virtualFileName.indexOf("#tsts-slice-");
-  if (markerIndex < 0) {
-    return "";
+  if (markerIndex >= 0) {
+    return virtualFileName.slice(markerIndex + 1);
   }
-  return virtualFileName.slice(markerIndex + 1);
+  const familyVariantMarkerIndex = virtualFileName.indexOf(providerFamilyVariantCompanionMarker);
+  return familyVariantMarkerIndex < 0
+    ? ""
+    : virtualFileName.slice(familyVariantMarkerIndex + 1);
 }
 
 function fileLoader_getProviderImportSlice(moduleSpecifier: string, importSite: GoPtr<Node>): ProviderImportSlice {

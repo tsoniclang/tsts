@@ -196,6 +196,7 @@ test("provider-backed virtual declarations expose undefined as a source type", (
   const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(sourceFile !== undefined);
   assertCleanProgram(program, sourceFile);
+  assertCleanProviderVirtualFiles(program);
 
   const providerFile = Program_GetSourceFiles(program).find((file) =>
     SourceFile_FileName(file).startsWith("tsts-provider://acme/Native.Tasks"));
@@ -622,6 +623,7 @@ test("provider virtual module dependency slices preserve public export identity 
   assert.ok(repeatedSourceFile !== undefined);
   assertCleanProgram(program, sourceFile);
   assertCleanProgram(program, repeatedSourceFile);
+  assertCleanProviderVirtualFiles(program);
 
   const reflectionFiles = Program_GetSourceFiles(program).filter((file) =>
     SourceFile_FileName(file).startsWith("tsts-provider://acme/public-reflection"));
@@ -963,19 +965,66 @@ test("provider virtual canonical default exports bind as one value and type iden
 });
 
 test("provider virtual external generic heritage uses value-capable family variants", () => {
+  for (const familyFirst of [true, false]) {
+    assertExternalGenericHeritageProgram(familyFirst);
+  }
+});
+
+function assertExternalGenericHeritageProgram(familyFirst: boolean): void {
+  const providerRequests: { readonly moduleSpecifier: string; readonly requestedExports: readonly string[] }[] = [];
+  const imports = familyFirst
+    ? `
+      import { ReadOnlyCollection } from "@acme/public/collections.js";
+      import {
+        ModelCollection,
+        ModelMetadata,
+        ModelPropertyCollection,
+        NamespaceModelCollection,
+        OpaqueModelPropertyCollection,
+        WrappedModelPropertyCollection,
+      } from "@acme/public/model-binding.js";
+    `
+    : `
+      import {
+        ModelCollection,
+        ModelMetadata,
+        ModelPropertyCollection,
+        NamespaceModelCollection,
+        OpaqueModelPropertyCollection,
+        WrappedModelPropertyCollection,
+      } from "@acme/public/model-binding.js";
+      import { ReadOnlyCollection } from "@acme/public/collections.js";
+    `;
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
-      import { ReadOnlyCollection } from "@acme/public/collections.js";
-      import { ModelMetadata, ModelPropertyCollection } from "@acme/public/model-binding.js";
+      ${imports}
 
+      declare const plain: ModelCollection;
       declare const collection: ModelPropertyCollection;
+      declare const namespaceCollection: NamespaceModelCollection;
+      declare const wrappedCollection: WrappedModelPropertyCollection;
+      declare const opaqueCollection: OpaqueModelPropertyCollection;
       declare const metadata: ModelMetadata;
+      declare const plainReadOnly: ReadOnlyCollection;
       declare const readOnly: ReadOnlyCollection<ModelMetadata>;
+      const count: number = plain.Count;
       const item: ModelMetadata = collection.Item;
+      const namespaceCount: number = namespaceCollection.Count;
+      const wrappedItem: ModelMetadata = wrappedCollection.Item;
+      const opaqueItem: ModelMetadata = opaqueCollection.Item;
+      plain;
       collection;
+      namespaceCollection;
+      wrappedCollection;
+      opaqueCollection;
       metadata;
+      plainReadOnly;
       readOnly;
+      count;
       item;
+      namespaceCount;
+      wrappedItem;
+      opaqueItem;
     `],
     ["/src/tsconfig.json", JSON.stringify({
       compilerOptions: {
@@ -999,29 +1048,64 @@ test("provider virtual external generic heritage uses value-capable family varia
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
-    extensions: [externalGenericHeritageProviderExtension()],
+    extensions: [externalGenericHeritageProviderExtension((moduleSpecifier, requestedExports) => {
+      providerRequests.push({ moduleSpecifier, requestedExports });
+    })],
   });
 
   const program = NewProgram(options);
   const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(sourceFile !== undefined);
   assertCleanProgram(program, sourceFile);
+  assertCleanProviderVirtualFiles(program);
 
   const modelBindingFile = Program_GetSourceFiles(program).find((file) =>
     SourceFile_FileName(file).startsWith("tsts-provider://acme/public-model-binding"));
   assert.ok(modelBindingFile !== undefined);
   const modelBindingText = SourceFile_Text(modelBindingFile);
-  assert.match(modelBindingText, /class ModelPropertyCollection extends/);
-  assert.ok(modelBindingText.includes("extends ImportedReadOnlyCollection<ModelMetadata>"));
+  const exactZeroImport = modelBindingText.match(/import \{ __TstsProvider_ReadOnlyCollection_0 as ([A-Za-z0-9_$]+) \} from "([^"]+\.tsts-family-variants-[^"]+\.d\.ts)";/);
+  const exactOneImport = modelBindingText.match(/import \{ __TstsProvider_ReadOnlyCollection_1 as ([A-Za-z0-9_$]+) \} from "([^"]+\.tsts-family-variants-[^"]+\.d\.ts)";/);
+  assert.ok(exactZeroImport !== null);
+  assert.ok(exactOneImport !== null);
+  assert.equal(exactZeroImport[2], exactOneImport[2]);
+  assert.ok(modelBindingText.includes(`class ModelCollection extends ${exactZeroImport[1]}`));
+  assert.ok(modelBindingText.includes(`class ModelPropertyCollection extends ${exactOneImport[1]}<ModelMetadata>`));
+  assert.ok(modelBindingText.includes(`class NamespaceModelCollection extends ${exactZeroImport[1]}`));
+  assert.ok(modelBindingText.includes(`class WrappedModelPropertyCollection extends ${exactOneImport[1]}<ModelMetadata>`));
+  assert.ok(modelBindingText.includes(`class OpaqueModelPropertyCollection extends ${exactOneImport[1]}<ModelMetadata>`));
+  assert.equal(modelBindingText.includes("extends ImportedReadOnlyCollection"), false);
+  assert.equal(providerRequests.some((request) =>
+    request.moduleSpecifier.startsWith("tsts-provider://")
+    || request.requestedExports.some((exportName) => exportName.startsWith("__TstsProvider_"))), false);
   const collectionFiles = Program_GetSourceFiles(program).filter((file) =>
     SourceFile_FileName(file).startsWith("tsts-provider://acme/public-collections-generic"));
-  assert.equal(collectionFiles.length, 2);
-  const fullCollectionFile = collectionFiles.find((file) => SourceFile_Text(file).includes("export declare const ReadOnlyCollection: typeof __TstsProvider_ReadOnlyCollection_1;"));
+  assert.equal(collectionFiles.length, 3);
+  const fullCollectionFile = collectionFiles.find((file) => SourceFile_FileName(file) === "tsts-provider://acme/public-collections-generic");
   const aliasCollectionFile = collectionFiles.find((file) => SourceFile_Text(file).includes("export { __TstsProviderCanonical_ReadOnlyCollection as ReadOnlyCollection };"));
+  const variantCompanionFile = collectionFiles.find((file) => SourceFile_FileName(file) === exactZeroImport[2]);
   assert.ok(fullCollectionFile !== undefined);
   assert.ok(aliasCollectionFile !== undefined);
+  assert.ok(variantCompanionFile !== undefined);
+  const companionModule = extended.extensionHost.providers.getVirtualModuleByFileName(exactZeroImport[2]!);
+  assert.ok(companionModule !== undefined);
+  assert.equal(companionModule.resolution.packageName, "@acme/public");
+  assert.equal(companionModule.resolution.packageVersion, "1.0.0");
+  assert.match(SourceFile_Text(fullCollectionFile), /export declare const ReadOnlyCollection: typeof __TstsProvider_ReadOnlyCollection_0 & typeof __TstsProvider_ReadOnlyCollection_1;/);
   assert.equal(SourceFile_Text(aliasCollectionFile).includes("export type { __TstsProviderCanonical_ReadOnlyCollection as ReadOnlyCollection };"), false);
+  assert.match(SourceFile_Text(variantCompanionFile), /export \{ __TstsProvider_ReadOnlyCollection_0 \};/);
+  assert.match(SourceFile_Text(variantCompanionFile), /export \{ __TstsProvider_ReadOnlyCollection_1 \};/);
   Program_BindSourceFiles(program);
+  assert.equal(Node_Symbol(variantCompanionFile as never)?.Exports?.has("ReadOnlyCollection"), false);
+  const companionZero = Node_Locals(variantCompanionFile)?.get("__TstsProvider_ReadOnlyCollection_0");
+  const companionOne = Node_Locals(variantCompanionFile)?.get("__TstsProvider_ReadOnlyCollection_1");
+  assert.ok(companionZero !== undefined);
+  assert.ok(companionOne !== undefined);
+  assert.equal(extended.extensionHost.facts.get(companionZero, providerVirtualDeclarationFactKey)?.exportId, "ReadOnlyCollection");
+  assert.equal(extended.extensionHost.facts.get(companionOne, providerVirtualDeclarationFactKey)?.exportId, "ReadOnlyCollection_1");
+  assert.equal(extended.extensionHost.facts.get(companionZero, targetBindingFactKey)?.id, "Acme.Collections.ReadOnlyCollection");
+  assert.equal(extended.extensionHost.facts.get(companionOne, targetBindingFactKey)?.id, "Acme.Collections.ReadOnlyCollection`1");
+  assert.equal(extended.extensionHost.facts.get(companionZero, canonicalIdentityFactKey)?.packageName, "@acme/public");
+  assert.equal(extended.extensionHost.facts.get(companionOne, canonicalIdentityFactKey)?.packageVersion, "1.0.0");
   const canonicalFamilySymbol = Node_Symbol(fullCollectionFile as never)?.Exports?.get("ReadOnlyCollection");
   const aliasFamilySymbol = Node_Symbol(aliasCollectionFile as never)?.Exports?.get("ReadOnlyCollection");
   assert.ok(canonicalFamilySymbol !== undefined);
@@ -1029,8 +1113,112 @@ test("provider virtual external generic heritage uses value-capable family varia
   const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), sourceFile);
   try {
     assert.ok(Checker_GetAliasedSymbol(checker, aliasFamilySymbol) === canonicalFamilySymbol);
+    const zeroHeritageAlias = Node_Locals(modelBindingFile)?.get(exactZeroImport[1]!);
+    const oneHeritageAlias = Node_Locals(modelBindingFile)?.get(exactOneImport[1]!);
+    assert.ok(zeroHeritageAlias !== undefined);
+    assert.ok(oneHeritageAlias !== undefined);
+    assert.ok(Checker_GetAliasedSymbol(checker, zeroHeritageAlias) === companionZero);
+    assert.ok(Checker_GetAliasedSymbol(checker, oneHeritageAlias) === companionOne);
   } finally {
     done();
+  }
+}
+
+test("exact provider-family variant companions remain internal to provider virtual declarations", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", "export {};"],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+  const options = { Config: parsed, Host: host } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [externalGenericHeritageProviderExtension()],
+  });
+  const prepared = extended.extensionHost.providers.resolveVirtualModule("@acme/public/model-binding.js", {
+    activeTarget: "acme",
+    containingFile: "/src/bootstrap.ts",
+    importSlice: {
+      moduleSpecifier: "@acme/public/model-binding.js",
+      kind: "named",
+      requestedExports: [{ exportedName: "ModelCollection", kind: "value" }],
+      typeOnly: false,
+    },
+  });
+  assert.equal(prepared.kind, "resolved");
+  const companion = extended.extensionHost.providers.getVirtualDeclarationDocuments().find((document) =>
+    document.fileName.includes(".tsts-family-variants-"));
+  assert.ok(companion !== undefined);
+  assert.equal(fs.WriteFile("/src/index.ts", `
+    import { __TstsProvider_ReadOnlyCollection_0 } from "@acme/public/collections.js";
+    import { __TstsProvider_ReadOnlyCollection_1 } from ${JSON.stringify(companion.fileName)};
+    __TstsProvider_ReadOnlyCollection_0;
+    __TstsProvider_ReadOnlyCollection_1;
+  `), undefined);
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), sourceFile).length, 0);
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), sourceFile);
+  assert.deepEqual(diagnostics.map(Diagnostic_Code).sort((left, right) => left - right), [2307, 2459]);
+});
+
+test("provider virtual canonical slices preserve exact multi-arity family heritage", () => {
+  for (const fileOrder of [
+    ["base.ts", "derived.ts"],
+    ["derived.ts", "base.ts"],
+    ["base.ts", "middle.ts", "derived.ts"],
+    ["base.ts", "derived.ts", "middle.ts"],
+    ["middle.ts", "base.ts", "derived.ts"],
+    ["middle.ts", "derived.ts", "base.ts"],
+    ["derived.ts", "base.ts", "middle.ts"],
+    ["derived.ts", "middle.ts", "base.ts"],
+  ] as const) {
+    const { program, sourceFiles, extended } = createCanonicalMultiArityHeritageProgram(fileOrder);
+    for (const sourceFile of sourceFiles) {
+      assertCleanProgram(program, sourceFile);
+    }
+    assertCleanProviderVirtualFiles(program);
+
+    const familyFiles = Program_GetSourceFiles(program).filter((file) =>
+      SourceFile_FileName(file).startsWith("tsts-provider://acme/canonical-family")
+      && !SourceFile_FileName(file).startsWith("tsts-provider://acme/canonical-family-support"));
+    assert.equal(familyFiles.length, fileOrder.length);
+    const canonicalFile = familyFiles.find((file) => SourceFile_FileName(file) === "tsts-provider://acme/canonical-family");
+    assert.ok(canonicalFile !== undefined);
+    assert.match(SourceFile_Text(canonicalFile), /export declare const Base: typeof __TstsProvider_Base_0 & typeof __TstsProvider_Base_1;/);
+    const derivedFile = familyFiles.find((file) => SourceFile_Text(file).includes("class Derived0"));
+    const middleOwnerFile = familyFiles.find((file) => SourceFile_Text(file).includes("class Middle0"));
+    assert.ok(derivedFile !== undefined);
+    assert.ok(middleOwnerFile !== undefined);
+    const derivedText = SourceFile_Text(derivedFile);
+    const middleOwnerText = SourceFile_Text(middleOwnerFile);
+    assert.ok(middleOwnerText.includes("class Middle0 extends __TstsProvider_Base_0"));
+    assert.ok(middleOwnerText.includes("class Middle1<T> extends __TstsProvider_Base_1<T>"));
+    assert.match(derivedText, /class Derived0 extends (?:Middle0|__TstsProviderCanonical_Middle0)/);
+    assert.match(derivedText, /class Derived1<T> extends (?:Middle1|__TstsProviderCanonical_Middle1)<T>/);
+    assert.equal(derivedText.includes("extends __TstsProviderCanonical_Base"), false);
+    Program_BindSourceFiles(program);
+    const exactZero = Node_Locals(middleOwnerFile)?.get("__TstsProvider_Base_0");
+    const exactOne = Node_Locals(middleOwnerFile)?.get("__TstsProvider_Base_1");
+    assert.ok(exactZero !== undefined);
+    assert.ok(exactOne !== undefined);
+    assert.equal(extended.extensionHost.facts.get(exactZero, providerVirtualDeclarationFactKey)?.exportId, "Base");
+    assert.equal(extended.extensionHost.facts.get(exactOne, providerVirtualDeclarationFactKey)?.exportId, "Base_1");
+    assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
   }
 });
 
@@ -1234,6 +1422,7 @@ test("provider type families select same-name variants by source type-argument a
   const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(sourceFile !== undefined);
   assertCleanProgram(program, sourceFile);
+  assertCleanProviderVirtualFiles(program);
 
   Program_BindSourceFiles(program);
   const virtualFile = Program_GetSourceFile(program, "tsts-provider://acme/native-tasks");
@@ -1242,7 +1431,7 @@ test("provider type families select same-name variants by source type-argument a
   assert.match(virtualText, /declare class __TstsProvider_Task_0/);
   assert.match(virtualText, /declare class __TstsProvider_Task_1<TResult> extends __TstsProvider_Task_0/);
   assert.match(virtualText, /Duplicate: Task<TResult>;/);
-  assert.equal(virtualText.includes("extends Task"), false);
+  assert.equal(/declare class __TstsProvider_Task_[01][^\n]* extends Task(?:<|\s*\{)/.test(virtualText), false);
   assert.match(virtualText, /export type Task<TResult = __TstsProviderTypeFamilyDefault> = \[TResult\] extends \[__TstsProviderTypeFamilyDefault\] \? __TstsProvider_Task_0 : __TstsProvider_Task_1<TResult>;/);
   assert.match(virtualText, /export declare const Task: typeof __TstsProvider_Task_0 & typeof __TstsProvider_Task_1;/);
   assert.equal(virtualText.includes("export { Task_1 as Task }"), false);
@@ -4908,7 +5097,6 @@ function publicProviderSliceIdentityProviderExtension(reflectionResolutionContex
           const imports = [
             ...(needsDerived ? [{
               moduleSpecifier: "@acme/public/core.js",
-              typeOnly: true,
               namedImports: [{ exportedName: "Base" }],
             }] : []),
             ...(reflectionNeedsSupportImport ? [{
@@ -5044,7 +5232,9 @@ function publicProviderSliceIdentityProviderExtension(reflectionResolutionContex
   };
 }
 
-function externalGenericHeritageProviderExtension(): CompilerExtension {
+function externalGenericHeritageProviderExtension(
+  observeRequest?: (moduleSpecifier: string, requestedExports: readonly string[]) => void,
+): CompilerExtension {
   let collectionsNeedSupportImport = false;
   return {
     identity: {
@@ -5067,6 +5257,11 @@ function externalGenericHeritageProviderExtension(): CompilerExtension {
           ? { kind: "owned" }
           : { kind: "unowned" },
         resolveModule: (moduleSpecifier, moduleContext) => {
+          assert.equal(moduleSpecifier.startsWith("tsts-provider://"), false);
+          observeRequest?.(
+            moduleSpecifier,
+            (moduleContext.importSlice?.requestedExports ?? []).map((request) => request.exportedName),
+          );
           if (moduleSpecifier === "@acme/public/collections.js") {
             collectionsNeedSupportImport = moduleContext.containingFile?.startsWith("tsts-provider://acme/public-model-binding") !== true;
           }
@@ -5112,6 +5307,25 @@ function externalGenericHeritageProviderExtension(): CompilerExtension {
                 }],
               } : {}),
               exports: [{
+                id: "ReadOnlyCollection",
+                name: "ReadOnlyCollection",
+                kind: "class",
+                sourceTypeFamily: {
+                  exportName: "ReadOnlyCollection",
+                  typeArgumentCount: 0,
+                },
+                targetIdentity: {
+                  target: "acme",
+                  id: "Acme.Collections.ReadOnlyCollection",
+                },
+                members: [{
+                  id: "ReadOnlyCollection.Count",
+                  name: "Count",
+                  kind: "property",
+                  readonly: true,
+                  type: { kind: "number" },
+                }],
+              }, {
                 id: "ReadOnlyCollection_1",
                 name: "ReadOnlyCollection_1",
                 kind: "class",
@@ -5119,19 +5333,25 @@ function externalGenericHeritageProviderExtension(): CompilerExtension {
                   exportName: "ReadOnlyCollection",
                   typeArgumentCount: 1,
                 },
+                targetIdentity: {
+                  target: "acme",
+                  id: "Acme.Collections.ReadOnlyCollection`1",
+                },
                 typeParameters: [{ name: "T" }],
+                heritage: [{
+                  kind: "extends",
+                  type: {
+                    kind: "provider-ref",
+                    moduleSpecifier: "@acme/public/collections.js",
+                    exportName: "ReadOnlyCollection",
+                  },
+                }],
                 members: [{
                   id: "ReadOnlyCollection.Item",
                   name: "Item",
                   kind: "property",
                   readonly: true,
                   type: { kind: "type-parameter", name: "T" },
-                }, {
-                  id: "ReadOnlyCollection.Count",
-                  name: "Count",
-                  kind: "property",
-                  readonly: true,
-                  type: { kind: "number" },
                 }],
               }],
             };
@@ -5145,11 +5365,28 @@ function externalGenericHeritageProviderExtension(): CompilerExtension {
                 exportedName: "ReadOnlyCollection",
                 localName: "ImportedReadOnlyCollection",
               }],
+            }, {
+              moduleSpecifier: "@acme/public/collections.js",
+              namespaceImport: "Collections",
             }],
             exports: [{
               id: "ModelMetadata",
               name: "ModelMetadata",
               kind: "class",
+              members: [],
+            }, {
+              id: "ModelCollection",
+              name: "ModelCollection",
+              kind: "class",
+              heritage: [{
+                kind: "extends",
+                type: {
+                  kind: "provider-ref",
+                  moduleSpecifier: "@acme/public/collections.js",
+                  exportName: "ReadOnlyCollection",
+                  localName: "ImportedReadOnlyCollection",
+                },
+              }],
               members: [],
             }, {
               id: "ModelPropertyCollection",
@@ -5170,7 +5407,276 @@ function externalGenericHeritageProviderExtension(): CompilerExtension {
                 },
               }],
               members: [],
+            }, {
+              id: "NamespaceModelCollection",
+              name: "NamespaceModelCollection",
+              kind: "class",
+              heritage: [{
+                kind: "extends",
+                type: {
+                  kind: "provider-ref",
+                  moduleSpecifier: "@acme/public/collections.js",
+                  exportName: "ReadOnlyCollection",
+                  namespaceImport: "Collections",
+                },
+              }],
+              members: [],
+            }, {
+              id: "WrappedModelPropertyCollection",
+              name: "WrappedModelPropertyCollection",
+              kind: "class",
+              heritage: [{
+                kind: "extends",
+                type: {
+                  kind: "target-named",
+                  target: "acme",
+                  id: "Acme.Collections.ReadOnlyCollection`1",
+                  sourceShape: {
+                    kind: "provider-ref",
+                    moduleSpecifier: "@acme/public/collections.js",
+                    exportName: "ReadOnlyCollection",
+                    localName: "ImportedReadOnlyCollection",
+                    typeArguments: [{
+                      kind: "provider-ref",
+                      moduleSpecifier: "@acme/public/model-binding.js",
+                      exportName: "ModelMetadata",
+                    }],
+                  },
+                },
+              }],
+              members: [],
+            }, {
+              id: "OpaqueModelPropertyCollection",
+              name: "OpaqueModelPropertyCollection",
+              kind: "class",
+              heritage: [{
+                kind: "extends",
+                type: {
+                  kind: "opaque",
+                  id: "acme-read-only-collection-of-model-metadata",
+                  sourceShape: {
+                    kind: "provider-ref",
+                    moduleSpecifier: "@acme/public/collections.js",
+                    exportName: "ReadOnlyCollection",
+                    localName: "ImportedReadOnlyCollection",
+                    typeArguments: [{
+                      kind: "provider-ref",
+                      moduleSpecifier: "@acme/public/model-binding.js",
+                      exportName: "ModelMetadata",
+                    }],
+                  },
+                },
+              }],
+              members: [],
             }],
+          };
+        },
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function createCanonicalMultiArityHeritageProgram(fileOrder: readonly string[]): {
+  readonly program: GoPtr<Program>;
+  readonly sourceFiles: readonly GoPtr<SourceFile>[];
+  readonly extended: ReturnType<typeof attachExtensionHost>;
+} {
+  const sourceByName = new Map<string, string>([
+    ["base.ts", `
+      import { Base } from "@acme/canonical/family.js";
+
+      declare const base: Base;
+      const zero: number = base.Zero;
+      zero;
+    `],
+    ["middle.ts", `
+      import { Middle0, Middle1 } from "@acme/canonical/family.js";
+
+      declare const zero: Middle0;
+      declare const one: Middle1<string>;
+      const zeroValue: number = zero.Zero;
+      const value: string = one.Value;
+      zeroValue;
+      value;
+    `],
+    ["derived.ts", `
+      import { Derived0, Derived1 } from "@acme/canonical/family.js";
+
+      declare const zero: Derived0;
+      declare const one: Derived1<string>;
+      const inheritedZero: number = zero.Zero;
+      const inheritedValue: string = one.Value;
+      inheritedZero;
+      inheritedValue;
+    `],
+  ]);
+  let fs = FromMap(new Map<string, string>([
+    ...fileOrder.map((fileName) => [`/src/${fileName}`, sourceByName.get(fileName)!] as const),
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+        verbatimModuleSyntax: true,
+      },
+      files: fileOrder,
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+  const options = { Config: parsed, Host: host } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [canonicalMultiArityHeritageProviderExtension()],
+  });
+  const program = NewProgram(options);
+  const sourceFiles = fileOrder.map((fileName) => {
+    const sourceFile = Program_GetSourceFile(program, `/src/${fileName}`);
+    assert.ok(sourceFile !== undefined);
+    return sourceFile;
+  });
+  return { program, sourceFiles, extended };
+}
+
+function canonicalMultiArityHeritageProviderExtension(): CompilerExtension {
+  const familySpecifier = "@acme/canonical/family.js";
+  const supportSpecifier = "@acme/canonical/support.js";
+  let pendingExports: readonly string[] = [];
+  let includeSupport = false;
+  return {
+    identity: {
+      id: "acme-canonical-multi-arity-heritage-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-canonical-multi-arity-heritage",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-canonical-multi-arity-heritage-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === familySpecifier || moduleSpecifier === supportSpecifier
+          ? { kind: "owned" }
+          : { kind: "unowned" },
+        resolveModule: (moduleSpecifier, moduleContext) => {
+          pendingExports = (moduleContext.importSlice?.requestedExports ?? []).map((request) => request.exportedName);
+          includeSupport = moduleContext.containingFile?.endsWith("/middle.ts") === true;
+          return {
+            kind: "virtual",
+            moduleSpecifier,
+            virtualFileName: moduleSpecifier === familySpecifier
+              ? "tsts-provider://acme/canonical-family"
+              : "tsts-provider://acme/canonical-family-support",
+            providerModuleId: moduleSpecifier === familySpecifier
+              ? "acme.canonical.family"
+              : "acme.canonical.support",
+          };
+        },
+        getDeclarationModel: (resolution) => {
+          if (resolution.moduleSpecifier === supportSpecifier) {
+            return {
+              moduleSpecifier: resolution.moduleSpecifier,
+              providerModuleId: resolution.providerModuleId,
+              exports: [{ id: "Marker", name: "Marker", kind: "interface", members: [] }],
+            };
+          }
+          const includeDerived = pendingExports.includes("Derived0") || pendingExports.includes("Derived1");
+          const includeMiddle = includeDerived || pendingExports.includes("Middle0") || pendingExports.includes("Middle1");
+          return {
+            moduleSpecifier: resolution.moduleSpecifier,
+            providerModuleId: resolution.providerModuleId,
+            ...(includeSupport ? {
+              imports: [{
+                moduleSpecifier: supportSpecifier,
+                typeOnly: true,
+                namedImports: [{ exportedName: "Marker" }],
+              }],
+            } : {}),
+            exports: [{
+              id: "Base",
+              name: "Base",
+              kind: "class" as const,
+              sourceTypeFamily: { exportName: "Base", typeArgumentCount: 0 },
+              members: [{
+                id: "Base.Zero",
+                name: "Zero",
+                kind: "property" as const,
+                readonly: true,
+                type: { kind: "number" as const },
+              }],
+            }, {
+              id: "Base_1",
+              name: "Base_1",
+              kind: "class" as const,
+              sourceTypeFamily: { exportName: "Base", typeArgumentCount: 1 },
+              typeParameters: [{ name: "T" }],
+              heritage: [{
+                kind: "extends" as const,
+                type: { kind: "provider-ref" as const, moduleSpecifier: familySpecifier, exportName: "Base" },
+              }],
+              members: [{
+                id: "Base_1.Value",
+                name: "Value",
+                kind: "property" as const,
+                readonly: true,
+                type: { kind: "type-parameter" as const, name: "T" },
+              }],
+            }, ...(includeMiddle ? [{
+              id: "Middle0",
+              name: "Middle0",
+              kind: "class" as const,
+              heritage: [{
+                kind: "extends" as const,
+                type: { kind: "provider-ref" as const, moduleSpecifier: familySpecifier, exportName: "Base" },
+              }],
+              members: [],
+            }, {
+              id: "Middle1",
+              name: "Middle1",
+              kind: "class" as const,
+              typeParameters: [{ name: "T" }],
+              heritage: [{
+                kind: "extends" as const,
+                type: {
+                  kind: "provider-ref" as const,
+                  moduleSpecifier: familySpecifier,
+                  exportName: "Base",
+                  typeArguments: [{ kind: "type-parameter" as const, name: "T" }],
+                },
+              }],
+              members: [],
+            }] : []), ...(includeDerived ? [{
+              id: "Derived0",
+              name: "Derived0",
+              kind: "class" as const,
+              heritage: [{
+                kind: "extends" as const,
+                type: { kind: "provider-ref" as const, moduleSpecifier: familySpecifier, exportName: "Middle0" },
+              }],
+              members: [],
+            }, {
+              id: "Derived1",
+              name: "Derived1",
+              kind: "class" as const,
+              typeParameters: [{ name: "T" }],
+              heritage: [{
+                kind: "extends" as const,
+                type: {
+                  kind: "provider-ref" as const,
+                  moduleSpecifier: familySpecifier,
+                  exportName: "Middle1",
+                  typeArguments: [{ kind: "type-parameter" as const, name: "T" }],
+                },
+              }],
+              members: [],
+            }] : [])],
           };
         },
         getTargetIdentity: () => undefined,
@@ -6349,6 +6855,14 @@ function assertCleanProgram(program: GoPtr<Program>, sourceFile: GoPtr<SourceFil
   assert.equal(programDiagnostics.length, 0, programDiagnostics.map(Diagnostic_String).join("\n"));
   assert.equal(syntacticDiagnostics.length, 0, syntacticDiagnostics.map(Diagnostic_String).join("\n"));
   assert.equal(semanticDiagnostics.length, 0, semanticDiagnostics.map(Diagnostic_String).join("\n"));
+}
+
+function assertCleanProviderVirtualFiles(program: GoPtr<Program>): void {
+  for (const file of Program_GetSourceFiles(program)) {
+    if (SourceFile_FileName(file).startsWith("tsts-provider://")) {
+      assertCleanProgram(program, file);
+    }
+  }
 }
 
 function findFirstNodeByKind(root: GoPtr<Node>, kind: number): GoPtr<Node> {
