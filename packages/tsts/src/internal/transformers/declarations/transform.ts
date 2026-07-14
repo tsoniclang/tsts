@@ -5253,8 +5253,8 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
   try {
     const [, cleanupDiagnosticContext] = DeclarationTransformer_setupDiagnosticContext(receiver, NodeDefault_AsNode(node));
     try {
-      let statements: GoSlice<GoPtr<Node>> = [
-        NewVariableStatement(
+      let statements: GoSlice<GoPtr<Node>> = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral2) => {
+        GoSliceStore(__goSliceLiteral2, 0, NewVariableStatement(
           astFactory,
           varModifiers,
           NewVariableDeclarationList(
@@ -5264,8 +5264,8 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
             })) as GoPtr<VariableDeclarationNodeList>,
             NodeFlagsNone,
           ),
-        ),
-      ];
+        ), GoPointerValueOps<Node>());
+      });
 
       if (isNonContextualKeywordName) {
         const namedExports = NewNamedExports(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {

@@ -2404,10 +2404,13 @@ export function Checker_narrowTypeByInKeyword(receiver: GoPtr<Checker>, f: GoPtr
     // where X is the name of the property.
     const recordSymbol = receiver!.getGlobalRecordSymbol!();
     if (recordSymbol !== undefined) {
-      return Checker_getIntersectionType(receiver, [t, Checker_getTypeAliasInstantiation(receiver, recordSymbol, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+      return Checker_getIntersectionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral2) => {
+        GoSliceStore(__goSliceLiteral2, 0, t, GoPointerValueOps<Type>());
+        GoSliceStore(__goSliceLiteral2, 1, Checker_getTypeAliasInstantiation(receiver, recordSymbol, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
         GoSliceStore(__goSliceLiteral, 0, nameType, GoPointerValueOps<Type>());
         GoSliceStore(__goSliceLiteral, 1, receiver!.unknownType, GoPointerValueOps<Type>());
-      }), undefined)]);
+      }), undefined), GoPointerValueOps<Type>());
+      }));
     }
   }
   return t;

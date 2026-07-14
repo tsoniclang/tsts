@@ -1133,8 +1133,8 @@ export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr
 
   const catchBody = NewBlock(
     factory,
-    NodeFactory_NewNodeList(factory, [
-      NewExpressionStatement(
+    NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral2) => {
+      GoSliceStore(__goSliceLiteral2, 0, NewExpressionStatement(
         factory,
         NodeFactory_NewAssignmentExpression(
           printerFactory,
@@ -1147,8 +1147,8 @@ export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr
             false,
           ),
         ),
-      ),
-    ]),
+      ), GoPointerValueOps<Node>());
+    })),
     false,
   );
   EmitContext_AddEmitFlags(emitContext, catchBody, EFSingleLine);

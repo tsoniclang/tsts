@@ -641,8 +641,8 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
           undefined,
           NewVariableDeclarationList(
             astFactory,
-            NodeFactory_NewNodeList(astFactory, [
-              NewVariableDeclaration(
+            NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral2) => {
+              GoSliceStore(__goSliceLiteral2, 0, NewVariableDeclaration(
                 astFactory,
                 NewBindingPattern(astFactory, KindObjectBindingPattern, NodeFactory_NewNodeList(astFactory, asBindingElems)),
                 undefined,
@@ -657,8 +657,8 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
                   })),
                   NodeFlagsNone,
                 ),
-              ),
-            ]),
+              ), GoPointerValueOps<Node>());
+            })),
             NodeFlagsConst,
           ),
         );

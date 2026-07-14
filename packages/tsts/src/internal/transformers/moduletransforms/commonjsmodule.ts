@@ -4116,15 +4116,15 @@ export function CommonJSModuleTransformer_createImportCallExpressionCommonJS(rec
   const needSyncEval = arg !== undefined && !isSimpleInlineableExpression(arg);
   let promiseResolveArguments: GoSlice<GoPtr<Expression>> = GoNilSlice();
   if (needSyncEval) {
-    promiseResolveArguments = [
-      NewTemplateExpression(
+    promiseResolveArguments = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral2) => {
+      GoSliceStore(__goSliceLiteral2, 0, NewTemplateExpression(
         f,
         NewTemplateHead(f, "", "", TokenFlagsNone),
         NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
           GoSliceStore(__goSliceLiteral, 0, NewTemplateSpan(f, arg, NewTemplateTail(f, "", "", TokenFlagsNone)), GoPointerValueOps<Node>());
         })),
-      ) as GoPtr<Expression>,
-    ];
+      ) as GoPtr<Expression>, GoPointerValueOps<Node>());
+    });
   }
   const promiseResolveCall = NewCallExpression(
     f,

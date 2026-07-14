@@ -712,7 +712,9 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
   if (isNonConstructable) {
     receiver!.ctx!.approximateLength += 21;
     const modifiers = CreateModifiersFromModifierFlags(ModifierFlagsPrivate, (kind) => NodeFactory_NewModifier(receiver!.f, kind));
-    return [NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, modifiers), undefined, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), undefined, undefined, undefined)];
+    return GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, modifiers), undefined, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), undefined, undefined, undefined), GoPointerValueOps<Node>());
+    });
   }
   const signatures = Checker_getSignaturesOfType(receiver!.ch, staticType, SignatureKindConstruct);
   if (staticBaseType !== undefined) {
@@ -739,7 +741,9 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
       }
     }
     if (privateProtected !== 0) {
-      return [NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, CreateModifiersFromModifierFlags(privateProtected, (kind) => NodeFactory_NewModifier(receiver!.f, kind))), undefined, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), undefined, undefined, undefined)];
+      return GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, CreateModifiersFromModifierFlags(privateProtected, (kind) => NodeFactory_NewModifier(receiver!.f, kind))), undefined, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), undefined, undefined, undefined), GoPointerValueOps<Node>());
+      });
     }
   } else if (Every(signatures, (sig) => (sig!.parameters.length === 0) as bool)) {
     return GoNilSlice();

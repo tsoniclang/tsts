@@ -2734,9 +2734,12 @@ export function Checker_replaceIndexedAccess(receiver: GoPtr<Checker>, instantia
       GoSliceStore(__goSliceLiteral, 0, Type_AsIndexedAccessType(t)!.indexType, GoPointerValueOps<Type>());
       GoSliceStore(__goSliceLiteral, 1, Type_AsIndexedAccessType(t)!.objectType, GoPointerValueOps<Type>());
     }),
-    [Checker_getNumberLiteralType(receiver, 0), Checker_createTupleType(receiver, GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral2) => {
+      GoSliceStore(__goSliceLiteral2, 0, Checker_getNumberLiteralType(receiver, 0), GoPointerValueOps<Type>());
+      GoSliceStore(__goSliceLiteral2, 1, Checker_createTupleType(receiver, GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
       GoSliceStore(__goSliceLiteral, 0, replacement, GoPointerValueOps<Type>());
-    }))]
+    })), GoPointerValueOps<Type>());
+    })
   ));
 }
 

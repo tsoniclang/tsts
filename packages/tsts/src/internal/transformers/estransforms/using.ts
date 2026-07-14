@@ -1416,8 +1416,8 @@ export function usingDeclarationTransformer_createDownlevelUsingStatements(recei
         const result = NodeFactory_NewUniqueName(printerFactory, "result");
         return NewBlock(
           factory,
-          NodeFactory_NewNodeList(factory, [
-            NewVariableStatement(
+          NodeFactory_NewNodeList(factory, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral2) => {
+            GoSliceStore(__goSliceLiteral2, 0, NewVariableStatement(
               factory,
               undefined,
               NewVariableDeclarationList(
@@ -1427,14 +1427,14 @@ export function usingDeclarationTransformer_createDownlevelUsingStatements(recei
                 })),
                 NodeFlagsConst,
               ) as GoPtr<Node>,
-            ),
-            NewIfStatement(
+            ), GoPointerValueOps<Node>());
+            GoSliceStore(__goSliceLiteral2, 1, NewIfStatement(
               factory,
               result as GoPtr<Expression>,
               NewExpressionStatement(factory, NewAwaitExpression(factory, result as GoPtr<Expression>) as GoPtr<Expression>) as GoPtr<Statement>,
               undefined,
-            ),
-          ] as GoSlice<GoPtr<Node>>),
+            ), GoPointerValueOps<Node>());
+          })),
           true as bool,
         );
       })()

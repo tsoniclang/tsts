@@ -80,14 +80,38 @@ export let supportedTSExtensionsForExtractExtension: GoSlice<string> = GoSliceBu
   GoSliceStore(__goSliceLiteral, 6, ExtensionCts, GoStringValueOps);
 });
 export let AllSupportedExtensions: GoSlice<GoSlice<string>> = GoSliceBuild(3, 3, GoSliceValueOps<string>(), (__goSliceLiteral) => {
-  GoSliceStore(__goSliceLiteral, 0, [ExtensionTs, ExtensionTsx, ExtensionDts, ExtensionJs, ExtensionJsx], GoSliceValueOps<string>());
-  GoSliceStore(__goSliceLiteral, 1, [ExtensionCts, ExtensionDcts, ExtensionCjs], GoSliceValueOps<string>());
-  GoSliceStore(__goSliceLiteral, 2, [ExtensionMts, ExtensionDmts, ExtensionMjs], GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 0, GoSliceBuild(5, 5, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionTs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionTsx, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionDts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 3, ExtensionJs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 4, ExtensionJsx, GoStringValueOps);
+  }), GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 1, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionCts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionDcts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionCjs, GoStringValueOps);
+  }), GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 2, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionMts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionDmts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionMjs, GoStringValueOps);
+  }), GoSliceValueOps<string>());
 });
 export let SupportedTSExtensions: GoSlice<GoSlice<string>> = GoSliceBuild(3, 3, GoSliceValueOps<string>(), (__goSliceLiteral) => {
-  GoSliceStore(__goSliceLiteral, 0, [ExtensionTs, ExtensionTsx, ExtensionDts], GoSliceValueOps<string>());
-  GoSliceStore(__goSliceLiteral, 1, [ExtensionCts, ExtensionDcts], GoSliceValueOps<string>());
-  GoSliceStore(__goSliceLiteral, 2, [ExtensionMts, ExtensionDmts], GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 0, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionTs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionTsx, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionDts, GoStringValueOps);
+  }), GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 1, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionCts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionDcts, GoStringValueOps);
+  }), GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 2, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionMts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionDmts, GoStringValueOps);
+  }), GoSliceValueOps<string>());
 });
 export let SupportedTSExtensionsFlat: GoSlice<string> = GoSliceBuild(7, 7, GoStringValueOps, (__goSliceLiteral) => {
   GoSliceStore(__goSliceLiteral, 0, ExtensionTs, GoStringValueOps);
@@ -99,9 +123,16 @@ export let SupportedTSExtensionsFlat: GoSlice<string> = GoSliceBuild(7, 7, GoStr
   GoSliceStore(__goSliceLiteral, 6, ExtensionDmts, GoStringValueOps);
 });
 export let SupportedJSExtensions: GoSlice<GoSlice<string>> = GoSliceBuild(3, 3, GoSliceValueOps<string>(), (__goSliceLiteral) => {
-  GoSliceStore(__goSliceLiteral, 0, [ExtensionJs, ExtensionJsx], GoSliceValueOps<string>());
-  GoSliceStore(__goSliceLiteral, 1, [ExtensionMjs], GoSliceValueOps<string>());
-  GoSliceStore(__goSliceLiteral, 2, [ExtensionCjs], GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 0, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionJs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionJsx, GoStringValueOps);
+  }), GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 1, GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionMjs, GoStringValueOps);
+  }), GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 2, GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionCjs, GoStringValueOps);
+  }), GoSliceValueOps<string>());
 });
 export let SupportedJSExtensionsFlat: GoSlice<string> = GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
   GoSliceStore(__goSliceLiteral, 0, ExtensionJs, GoStringValueOps);
