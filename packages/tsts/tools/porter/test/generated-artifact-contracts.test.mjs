@@ -6,8 +6,10 @@ import test from "node:test";
 
 import {
   authoredFacadePathSet,
+  buildCoreRuntimeArtifactStatus,
   buildGeneratedArtifactStatus,
   prepareExternalFacadeStorageCatalog,
+  renderCoreRuntimeGeneratedArtifacts,
   renderExpectedGeneratedArtifacts,
   repoRoot,
 } from "../porter.mjs";
@@ -86,6 +88,48 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /export function GoChanTrySend<T>\(channel: GoChan<T, string>, value: T\): bool/);
   assert.match(compat, /export function GoChanReceive<T>\(channel: GoChan<T, string>, receiver: GoChannelReceiver<T>\): \(\) => void/);
   assert.match(compat, /export function GoChanClose<T>\(channel: GoChan<T, string>\): void/);
+});
+
+test("core runtime bootstrap artifacts are the exact core subset of full facade output", () => {
+  const snapshot = snapshotWith([]);
+  const core = renderCoreRuntimeGeneratedArtifacts(baseConfig, snapshot);
+  const full = renderExpectedGeneratedArtifacts(baseConfig, snapshot, finalizeGeneratedFacadeFixtureCatalog(baseConfig, snapshot));
+  assert.deepEqual([...core.keys()], ["packages/tsts/src/go/scalars.ts", "packages/tsts/src/go/compat.ts"]);
+  for (const [artifactPath, text] of core) assert.equal(full.get(artifactPath), text);
+});
+
+test("core runtime bootstrap status verifies its exact generated artifact set", () => {
+  const root = makePorterTestTemp("porter-core-runtime-test-");
+  try {
+    const config = {
+      ...baseConfig,
+      tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/"),
+    };
+    const snapshot = snapshotWith([]);
+    const expected = renderCoreRuntimeGeneratedArtifacts(config, snapshot);
+    for (const [relativePath, text] of expected) {
+      const targetPath = path.join(repoRoot, relativePath);
+      mkdirSync(path.dirname(targetPath), { recursive: true });
+      writeFileSync(targetPath, text);
+    }
+    assert.deepEqual(buildCoreRuntimeArtifactStatus(config, snapshot), {
+      missing: [], stale: [], orphan: [], untracked: [], invalid: [],
+    });
+
+    const compatPath = `${config.tsRoot}/go/compat.ts`;
+    const scalarsPath = `${config.tsRoot}/go/scalars.ts`;
+    writeFileSync(path.join(repoRoot, compatPath), `${expected.get(compatPath)}export const stale = true;\n`);
+    assert.deepEqual(buildCoreRuntimeArtifactStatus(config, snapshot).stale.map((issue) => issue.path), [compatPath]);
+
+    writeFileSync(path.join(repoRoot, compatPath), "// @tsgo-generated {bad-json}\n");
+    assert.deepEqual(buildCoreRuntimeArtifactStatus(config, snapshot).invalid.map((issue) => issue.path), [compatPath]);
+
+    writeFileSync(path.join(repoRoot, compatPath), expected.get(compatPath));
+    unlinkSync(path.join(repoRoot, scalarsPath));
+    assert.deepEqual(buildCoreRuntimeArtifactStatus(config, snapshot).missing.map((issue) => issue.path), [scalarsPath]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("host-native source signatures create only declaration-level facade obligations", () => {

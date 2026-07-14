@@ -99,6 +99,7 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export function GoArrayValueOps<T, Length extends string>\(length: int, elementOps: GoValueOps<T>\): GoValueOps<GoArray<T, Length>>/);
   assert.doesNotMatch(source, /__tsgoGoNil/);
   assert.match(source, /export function GoNilSlice<T>\(\): GoSlice<T>/);
+  assert.match(source, /export function GoEmptySlice<T>\(\): GoSlice<T>/);
   assert.match(source, /export function GoSliceIsNil<T>\(slice: GoSlice<T>\): bool/);
   assert.match(source, /export function GoSliceMake<T>\(length: int, capacity: int, valueOps: GoValueOps<T>\): GoSlice<T>/);
   assert.match(source, /export function GoSliceReslice<T>\(slice: GoSlice<T>, low: int, high: int\): GoSlice<T>/);
@@ -230,6 +231,7 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   const runtime = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString("base64")}`);
   const nilSlice = runtime.GoNilSlice();
   const sameNilSlice = runtime.GoNilSlice();
+  const emptySlice = runtime.GoEmptySlice();
   assert.equal(nilSlice.length, 0);
 
   assert.equal(runtime.GoZeroBoolean(), false);
@@ -249,6 +251,9 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.deepEqual(runtime.GoZeroEmptyStruct(), {});
   assert.equal(runtime.GoSliceIsNil(nilSlice), true);
   assert.equal(runtime.GoSliceIsNil(sameNilSlice), true);
+  assert.equal(runtime.GoSliceIsNil(emptySlice), false);
+  assert.equal(emptySlice.length, 0);
+  assert.equal(runtime.GoSliceCapacity(emptySlice), 0);
   assert.equal(runtime.GoSliceCapacity(nilSlice), 0);
   const nonNilSlice = runtime.GoSliceBuild(3, 3, runtime.GoNumberValueOps, (slice) => {
     runtime.GoSliceStore(slice, 0, 1, runtime.GoNumberValueOps);
@@ -278,8 +283,8 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.equal(runtime.GoSliceLoad(appended, 0, runtime.GoNumberValueOps), 1);
   assert.notEqual(appended, nilSlice);
   assert.equal(nilSlice.length, 0);
-  const emptySlice = runtime.GoSliceMake(0, 0, runtime.GoNumberValueOps);
-  assert.equal(runtime.GoSliceAppendSlice(nilSlice, emptySlice, runtime.GoNumberValueOps), nilSlice);
+  const explicitEmptySlice = runtime.GoSliceMake(0, 0, runtime.GoNumberValueOps);
+  assert.equal(runtime.GoSliceAppendSlice(nilSlice, explicitEmptySlice, runtime.GoNumberValueOps), nilSlice);
   const appendSource = runtime.GoSliceBuild(2, 150_002, runtime.GoNumberValueOps, (slice) => {
     runtime.GoSliceStore(slice, 0, 1, runtime.GoNumberValueOps);
     runtime.GoSliceStore(slice, 1, 2, runtime.GoNumberValueOps);

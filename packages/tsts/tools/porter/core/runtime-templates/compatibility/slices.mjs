@@ -86,6 +86,10 @@ class GoSliceHeader<T> {
     return new GoSliceHeader<T>(undefined, 0, 0, 0);
   }
 
+  static empty<T>(): GoSliceHeader<T> {
+    return GoSliceHeader.fromSequence(allocateUninitializedGoSequenceBacking<T>(0), 0, 0, 0);
+  }
+
   static make<T>(length: int, capacity: int, valueOps: GoValueOps<T>): GoSliceHeader<T> {
     requireGoSequenceExtent(length, "length");
     requireGoSequenceExtent(capacity, "capacity");
@@ -280,6 +284,10 @@ function goSliceGrowthCapacity(current: int, required: int): int {
 
 export function GoNilSlice<T>(): GoSlice<T> {
   return GoSliceHeader.nil<T>();
+}
+
+export function GoEmptySlice<T>(): GoSlice<T> {
+  return GoSliceHeader.empty<T>();
 }
 
 export function GoArrayMake<T, Length extends string>(length: int, valueOps: GoValueOps<T>): GoArray<T, Length> {

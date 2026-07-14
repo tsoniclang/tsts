@@ -5,9 +5,9 @@ import { buildDiagnosticsGeneratedArtifactStatus, collectDiagnosticsArtifactFail
 import { renderGeneratedSourceCoverage } from "../generated-source.mjs";
 import { computeSignatureReport } from "../sig-check.mjs";
 import { runDelta, runDeltaVerify } from "./delta-command.mjs";
-import { writeExternalFacades } from "./facade-artifacts.mjs";
+import { writeCoreRuntimeFacades, writeExternalFacades } from "./facade-artifacts.mjs";
 import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
-import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
+import { buildCoreRuntimeArtifactStatus, buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
 import { buildDraftLargeFileSplitPlan, buildLargeFileSplitStatus, printLargeFileSplitStatus, splitPlanLabel, verifyLargeFileSplitStatus } from "./large-files.mjs";
 import { applyMetadataReconciliationPlan, buildMetadataReconciliationPlan } from "./metadata-reconciliation.mjs";
 import { printScanSummary, printStatus, renderStatusMarkdown } from "./reporting.mjs";
@@ -19,6 +19,7 @@ import { buildSchemaSourceSyncStatus, collectSchemaSourceSyncFailures } from "./
 import { collectGeneratedArtifactFailures, verifyStatus } from "./verification.mjs";
 import { prepareDeclarationAuditPrerequisites } from "./declaration-prerequisites.mjs";
 import { preparePorterWorkspaceState } from "./workspace-state.mjs";
+import { buildSourcePinStatus } from "../source-pin.mjs";
 import process from "node:process";
 
 export async function main() {
@@ -130,6 +131,19 @@ export async function main() {
   }
 
   if (command === "facades") {
+    if (options["core-runtime"] === true) {
+      const sourcePin = buildSourcePinStatus(repoRoot, config);
+      if (sourcePin.issues.length > 0) fail(`source pin validation failed: ${sourcePin.issues.map((issue) => `${issue.path}: ${issue.reason}`).join("; ")}`);
+      const snapshot = { gitRevision: sourcePin.source.revision };
+      if (options.check === true) {
+        const failures = collectGeneratedArtifactFailures(buildCoreRuntimeArtifactStatus(config, snapshot));
+        if (failures.length > 0) fail(`generated core runtime check failed: ${failures.join(", ")}`);
+        console.log("generated core runtime check passed");
+      } else {
+        writeCoreRuntimeFacades(config, snapshot, options);
+      }
+      return;
+    }
     const snapshot = runPinnedScan(config);
     const facades = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
     writeJson(resolveRepo(config.snapshotOut), snapshot);

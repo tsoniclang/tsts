@@ -67,7 +67,7 @@ test("opaque slice carrier matches pinned Go header, backing, append, copy, and 
   const numberOps = runtime.GoNumberValueOps;
 
   const nilSlice = runtime.GoNilSlice();
-  const emptySlice = runtime.GoSliceMake(0, 0, numberOps);
+  const emptySlice = runtime.GoEmptySlice();
   assert.deepEqual({
     nilIsNil: runtime.GoSliceIsNil(nilSlice),
     emptyIsNil: runtime.GoSliceIsNil(emptySlice),

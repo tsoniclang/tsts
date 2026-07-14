@@ -34,6 +34,7 @@ test("Porter command option schemas accept only their typed options", () => {
   }
   assert.deepEqual(parseArgs("scaffold", ["--all"]), { all: true });
   assert.deepEqual(parseArgs("facades", ["--check"]), { check: true });
+  assert.deepEqual(parseArgs("facades", ["--core-runtime", "--force"]), { "core-runtime": true, force: true });
   assert.deepEqual(parseArgs("large-files", []), {});
   assert.deepEqual(parseArgs("large-files", ["--write-draft"]), { "write-draft": true });
 });

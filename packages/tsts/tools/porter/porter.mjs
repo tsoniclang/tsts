@@ -43,10 +43,11 @@ export { scanTsUnits, validateTsgoUnitMetadata } from "./core/ts-units.mjs";
 export { buildLocalOverrideStatus, emptyLocalOverrideStatus } from "./core/local-overrides.mjs";
 export {
   authoredFacadePathSet,
+  renderCoreRuntimeGeneratedArtifacts,
   renderExpectedGeneratedArtifacts,
   renderExternalFacadeModules,
 } from "./core/facade-artifacts.mjs";
-export { buildGeneratedArtifactStatus, emptyGeneratedArtifactStatus } from "./core/generated-artifacts.mjs";
+export { buildCoreRuntimeArtifactStatus, buildGeneratedArtifactStatus, emptyGeneratedArtifactStatus } from "./core/generated-artifacts.mjs";
 export { buildDraftLargeFileSplitPlan, buildLargeFileSplitStatus } from "./core/large-files.mjs";
 export { checkSkeletons, scaffoldMissing } from "./core/scaffolding.mjs";
 export { renderUnitGroup } from "./core/type-renderer.mjs";

@@ -43,8 +43,15 @@ export { authoredFacadePathSet } from "./facade-artifacts/authored-paths.mjs";
 
 export function writeExternalFacades(config, snapshot, facades, options) {
   requireFinalizedExternalFacadeStorageCatalog(facades, config, snapshot);
+  writeFacadeArtifactMap(config, renderExpectedGeneratedArtifacts(config, snapshot, facades), options);
+}
+
+export function writeCoreRuntimeFacades(config, snapshot, options) {
+  writeFacadeArtifactMap(config, renderCoreRuntimeGeneratedArtifacts(config, snapshot), options);
+}
+
+function writeFacadeArtifactMap(config, artifacts, options) {
   const outRoot = resolveRepo(options.out ?? config.tsRoot);
-  const artifacts = renderExpectedGeneratedArtifacts(config, snapshot, facades);
   const sourceRootPrefix = `${config.tsRoot.replace(/\/$/, "")}/`;
   let count = 0;
   for (const [repoRelativePath, text] of artifacts) {
@@ -60,20 +67,20 @@ export function writeExternalFacades(config, snapshot, facades, options) {
 
 export function renderExpectedGeneratedArtifacts(config, snapshot, facades) {
   requireFinalizedExternalFacadeStorageCatalog(facades, config, snapshot);
-  const artifacts = new Map();
+  const artifacts = renderCoreRuntimeGeneratedArtifacts(config, snapshot);
   const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
-  artifacts.set(
-    `${sourceRootPrefix}/go/scalars.ts`,
-    renderGeneratedArtifact(snapshot, "go/scalars.ts", "go-scalars", renderGoScalarsModule()),
-  );
-  artifacts.set(
-    `${sourceRootPrefix}/go/compat.ts`,
-    renderGeneratedArtifact(snapshot, "go/compat.ts", "go-compat", renderGoCompatModule()),
-  );
   for (const [relativePath, body] of renderExternalFacadeModules(config, snapshot, facades)) {
     artifacts.set(`${sourceRootPrefix}/${relativePath}`, renderGeneratedArtifact(snapshot, relativePath, "go-facade", body));
   }
   return new Map([...artifacts.entries()].sort(([left], [right]) => compareText(left, right)));
+}
+
+export function renderCoreRuntimeGeneratedArtifacts(config, snapshot) {
+  const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
+  return new Map([
+    [`${sourceRootPrefix}/go/scalars.ts`, renderGeneratedArtifact(snapshot, "go/scalars.ts", "go-scalars", renderGoScalarsModule())],
+    [`${sourceRootPrefix}/go/compat.ts`, renderGeneratedArtifact(snapshot, "go/compat.ts", "go-compat", renderGoCompatModule())],
+  ]);
 }
 
 export function renderExternalFacadeModules(config, snapshot, catalog) {

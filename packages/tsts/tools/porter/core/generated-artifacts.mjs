@@ -1,4 +1,4 @@
-import { authoredFacadePathSet, renderExpectedGeneratedArtifacts, stripGeneratedArtifactHeader } from "./facade-artifacts.mjs";
+import { authoredFacadePathSet, renderCoreRuntimeGeneratedArtifacts, renderExpectedGeneratedArtifacts, stripGeneratedArtifactHeader } from "./facade-artifacts.mjs";
 import { hashText, resolveRepo } from "./runtime.mjs";
 import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
 import { inventoryGeneratedArtifactsForProvider } from "../generated-artifact-registry.mjs";
@@ -94,4 +94,38 @@ export function buildGeneratedArtifactStatus(config, snapshot, catalog) {
 
 export function emptyGeneratedArtifactStatus() {
   return { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
+}
+
+export function buildCoreRuntimeArtifactStatus(config, snapshot) {
+  const expected = renderCoreRuntimeGeneratedArtifacts(config, snapshot);
+  const missing = [];
+  const stale = [];
+  const invalid = [];
+  for (const [relativePath, expectedText] of expected) {
+    const absolutePath = resolveRepo(relativePath);
+    let text;
+    try {
+      text = readFileSync(absolutePath, "utf8");
+    } catch (error) {
+      if (error?.code === "ENOENT") {
+        missing.push({ path: relativePath, reason: "Expected generated Go core runtime artifact is missing." });
+        continue;
+      }
+      throw error;
+    }
+    const artifactPath = relativePath.slice(`${config.tsRoot.replace(/\/$/, "")}/`.length);
+    const registration = inspectGeneratedArtifactRegistration(artifactPath, text);
+    if (registration.error !== undefined || registration.metadata === undefined) {
+      invalid.push({ path: relativePath, reason: registration.error ?? "Generated core runtime artifact has no registration metadata." });
+    } else if (text !== expectedText) {
+      stale.push({
+        path: relativePath,
+        metadata: registration.metadata,
+        expectedHash: hashText(stripGeneratedArtifactHeader(expectedText)),
+        actualHash: hashText(stripGeneratedArtifactHeader(text)),
+        reason: "Generated core runtime artifact differs from current deterministic Porter output.",
+      });
+    }
+  }
+  return { missing, stale, orphan: [], untracked: [], invalid };
 }

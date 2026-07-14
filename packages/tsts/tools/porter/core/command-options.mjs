@@ -33,7 +33,7 @@ const commandSchemas = Object.freeze({
     },
   ),
   facades: schema(
-    { check: booleanOption, out: valueOption, force: booleanOption },
+    { check: booleanOption, out: valueOption, force: booleanOption, "core-runtime": booleanOption },
     { conflicts: [["check", "out"], ["check", "force"]] },
   ),
   "large-files": schema(
