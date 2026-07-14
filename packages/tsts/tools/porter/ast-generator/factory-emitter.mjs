@@ -79,25 +79,30 @@ function factoryCompatTypes(schema) {
 }
 
 function emitNodeFactoryStruct(schema, lines) {
-  const arenaFields = [];
-  for (const node of schema.nodeNames()) {
-    if (!schema.definitions[node].arena) continue;
-    arenaFields.push({ field: `${schema.uncapitalize(node)}Arena`, type: node });
-  }
-  arenaFields.push({ field: "modifierListArena", type: "ModifierList" });
-  arenaFields.push({ field: "nodeListArena", type: "NodeList" });
-  arenaFields.sort((left, right) => compareText(left.field, right.field));
+  const arenaFields = nodeFactoryArenaFields(schema);
 
   lines.push(`export interface NodeFactory {`);
   lines.push(`  hooks: NodeFactoryHooks;`);
   lines.push(`  AsNodeFactory(): GoPtr<NodeFactory>;`);
   for (const { field, type } of arenaFields) {
-    lines.push(`  ${field}?: Arena<${type}>;`);
+    lines.push(`  ${field}: Arena<${type}>;`);
   }
   lines.push(`  nodeCount: int;`);
   lines.push(`  textCount: int;`);
   lines.push(`}`);
   lines.push("");
+}
+
+export function nodeFactoryArenaFields(schema) {
+  const arenaFields = [];
+  for (const node of schema.nodeNames()) {
+    if (!schema.definitions[node].arena) continue;
+    arenaFields.push(Object.freeze({ field: `${schema.uncapitalize(node)}Arena`, type: node }));
+  }
+  arenaFields.push(Object.freeze({ field: "modifierListArena", type: "ModifierList" }));
+  arenaFields.push(Object.freeze({ field: "nodeListArena", type: "NodeList" }));
+  arenaFields.sort((left, right) => compareText(left.field, right.field));
+  return Object.freeze(arenaFields);
 }
 
 function factoryKindConstants(schema) {

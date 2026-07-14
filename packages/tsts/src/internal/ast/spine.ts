@@ -25,6 +25,7 @@ import type {
 } from "./generated/node.js";
 import type { CompositeBase as CompositeBaseType } from "./generated/node.js";
 import type { NodeFactory } from "./generated/factory.js";
+import { createNodeFactoryValue } from "./generated/factory-storage.js";
 import type { DeclarationName } from "./generated/unions.js";
 import type { SubtreeFacts } from "./subtreefacts.js";
 import type { NodeVisitor } from "./visitor.js";
@@ -579,16 +580,9 @@ export function invert(yield_: GoFunc<(v: GoPtr<Node>) => bool>): Visitor {
   };
 }
 
-// `NewNodeFactory` allocates a fresh generated NodeFactory. The arena fields are
-// lazily-initialized (single-threaded model), so a zero-valued factory is just
-// the hooks plus zero counters.
 function newNodeFactory(hooks: NodeFactoryHooks): GoPtr<NodeFactory> {
-  const factory: NodeFactory = {
-    hooks: hooks,
-    nodeCount: 0 as int,
-    textCount: 0 as int,
-    AsNodeFactory: () => factory,
-  };
+  const factory = createNodeFactoryValue();
+  factory.hooks = hooks;
   return factory;
 }
 

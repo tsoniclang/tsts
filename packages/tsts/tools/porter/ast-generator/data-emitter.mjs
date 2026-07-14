@@ -7,6 +7,12 @@ import {
   NODE_DATA_METHODS,
   resolveAdapterTarget,
 } from "./node-emitters.mjs";
+import {
+  concreteNodeValueStorage,
+  renderStorageCopyAssignment,
+  renderStorageProperty,
+  renderValueCopyHelpers,
+} from "./value-storage.mjs";
 
 // ── data.ts (concrete interfaces + adapters + generated override free-fns) ───
 
@@ -15,7 +21,9 @@ export function emitData(schema) {
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   lines.push(`import type { ${dataCompatTypes(schema).join(", ")} } from "../../../go/compat.js";`);
   lines.push(`import { GoNilMap, GoNilSlice } from "../../../go/compat.js";`);
-  lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
+  lines.push(`import { Uint32, Uint64 } from "../../../go/sync/atomic.js";`);
+  lines.push(`import { NewTextRange } from "../../core/text.js";`);
+  lines.push(`import type { TextRange } from "../../core/text.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { NodeFlags } from "./flags.js";`);
   lines.push(`import type { Kind } from "./kinds.js";`);
@@ -76,6 +84,7 @@ export function emitData(schema) {
   for (const u of unionImports) lines.push(`  ${u},`);
   lines.push(`} from "./unions.js";`);
   lines.push("");
+  lines.push(...renderValueCopyHelpers());
   emitGeneratedVisitHelpers(lines);
 
   for (const node of schema.nodeNames()) {
@@ -103,7 +112,7 @@ function baseFreeFnsUsed() {
 }
 
 function dataCompatTypes(schema) {
-  const types = new Set(["GoPtr", "GoSlice"]);
+  const types = new Set(["GoInterface", "GoPtr", "GoSlice", "GoValueOps"]);
   for (const node of schema.nodeNames()) {
     for (const member of schema.members(node)) {
       if (member.noTS && !member.goOnly) continue;
@@ -521,7 +530,12 @@ function emitComputeSubtreeFactsFreeFn(schema, node, lines) {
 
 function emitAdapter(schema, node, lines) {
   const adapter = `${node}NodeData`;
+  const storage = concreteNodeValueStorage(schema, node, {
+    handWrittenBases: HAND_WRITTEN_BASES,
+    memberType: astMemberTsType,
+  });
   lines.push(`class ${adapter} implements nodeData {`);
+  for (const field of storage) lines.push(`  ${renderStorageProperty(field)}`);
   lines.push(`  __tsgoGoReceiver(): GoPtr<${node}> { return this; }`);
   lines.push(`  Pos(): int { return Node_Pos(this); }`);
   lines.push(`  End(): int { return Node_End(this); }`);
@@ -538,16 +552,23 @@ function emitAdapter(schema, node, lines) {
   lines.push(`}`);
   lines.push("");
   lines.push(`export function create${node}Data(): ${node} {`);
-  if (schema.baseChainOf(node).includes("LocalsContainerBase")) {
-    lines.push(`  const data = new ${adapter}();`);
-    lines.push(`  data.Locals = GoNilMap();`);
-    lines.push(`  return data;`);
-  } else {
-    lines.push(`  return new ${adapter}();`);
-  }
+  lines.push(`  return new ${adapter}();`);
   lines.push(`}`);
   lines.push("");
+  lines.push(`export const ${node}ValueOps: GoValueOps<${node}> = Object.freeze({`);
+  lines.push(`  zero: create${node}Data,`);
+  lines.push(`  copy: (value: ${node}): ${node} => {`);
+  lines.push(`    const result = create${node}Data();`);
+  for (const field of storage) {
+    const assignment = renderStorageCopyAssignment(field);
+    if (assignment !== undefined) lines.push(`    ${assignment}`);
+  }
+  lines.push(`    return result;`);
+  lines.push(`  },`);
+  lines.push(`});`);
+  lines.push("");
 }
+
 
 function adapterSlot(node, method, t) {
   const receiver = `this`;

@@ -8,6 +8,7 @@ import { emitData } from "./data-emitter.mjs";
 import { emitFlags, emitKinds } from "./flag-emitters.mjs";
 import { assertNodeDataMethodsMatchUpstream, emitNode, emitUnions, HAND_WRITTEN_BASES } from "./node-emitters.mjs";
 import { emitFactory } from "./factory-emitter.mjs";
+import { emitFactoryStorage } from "./factory-storage-emitter.mjs";
 import { emitCasts, emitPredicates, emitVisitor } from "./runtime-helper-emitters.mjs";
 
 const GENERATOR = "porter:ast";
@@ -40,6 +41,7 @@ function emitIndex() {
   lines.push(`export * from "./node.js";`);
   lines.push(`export * from "./data.js";`);
   lines.push(`export * from "./factory.js";`);
+  lines.push(`export * from "./factory-storage.js";`);
   lines.push(`export * from "./predicates.js";`);
   lines.push(`export * from "./casts.js";`);
   // visitor.ts re-exports the Concrete_ForEachChild surface already exported by
@@ -55,6 +57,7 @@ const EMITTERS = [
   { file: "node.ts", emit: emitNode, model: true },
   { file: "data.ts", emit: emitData, model: true },
   { file: "factory.ts", emit: emitFactory, model: true },
+  { file: "factory-storage.ts", emit: emitFactoryStorage, model: true },
   { file: "predicates.ts", emit: emitPredicates, model: true },
   { file: "casts.ts", emit: emitCasts, model: true },
   { file: "visitor.ts", emit: emitVisitor, model: true },

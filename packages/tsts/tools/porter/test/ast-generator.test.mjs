@@ -363,7 +363,7 @@ test("ast-generator: a protocol.generated.ts content change makes committed outp
     assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-protocol").stale.length, 0);
     const protocolPath = path.join(root, "source/_packages/native-preview/src/api/node/protocol.generated.ts");
     writeFileSync(protocolPath, `${readFileSync(protocolPath, "utf8")}\n// pinned input changed\n`);
-    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-protocol").stale.length, 10);
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-protocol").stale.length, 11);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -496,7 +496,8 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   assert.match(data, /interface IdentifierNodeData extends Identifier \{\}/);
   assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return receiver!;\s*\}/);
   assert.match(data, /export function createIdentifierData\(\): Identifier \{\s*return new IdentifierNodeData\(\);\s*\}/);
-  assert.match(data, /export function createForStatementData\(\): ForStatement \{\s*const data = new ForStatementNodeData\(\);\s*data\.Locals = GoNilMap\(\);\s*return data;\s*\}/);
+  assert.match(data, /class ForStatementNodeData implements nodeData \{[\s\S]*?Locals: SymbolTable = GoNilMap\(\);/);
+  assert.match(data, /export function createForStatementData\(\): ForStatement \{\s*return new ForStatementNodeData\(\);\s*\}/);
   assert.doesNotMatch(data, /Object\.(?:create|setPrototypeOf)|ThisType</);
 });
 
@@ -511,6 +512,8 @@ test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/ca
   const files = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-2");
   const factory = files.get("internal/ast/generated/factory.ts");
   assert.match(factory, /export interface NodeFactory \{[\s\S]*?AsNodeFactory\(\): GoPtr<NodeFactory>;/);
+  assert.match(factory, /identifierArena: Arena<Identifier>;/);
+  assert.doesNotMatch(factory, /identifierArena\?: Arena<Identifier>;/);
   assert.match(
     factory,
     /export function NewIdentifier\(receiver: GoPtr<NodeFactory>, text: string\): GoPtr<Node> \{[\s\S]*?const data = createIdentifierData\(\);[\s\S]*?return NodeFactory_newNode\(receiver, KindIdentifier, data\);/,

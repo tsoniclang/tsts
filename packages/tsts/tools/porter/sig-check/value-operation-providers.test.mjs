@@ -12,6 +12,7 @@ import {
 import { indexTypeScriptModuleSources } from "../ts-extractor/module-index.mjs";
 import { buildExpectedIndex } from "../ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
+import { auditAstGoValueOperationRoutes } from "./ast-value-operation-providers.mjs";
 import { collectGoValueOperationProviderMismatches } from "./value-operation-providers.mjs";
 
 const api = await loadParser();
@@ -118,6 +119,68 @@ export const MarkerValueOps: GoValueOps<Marker> = undefined as never;
   const markerSnapshot = semanticSnapshot(markerDeclaration);
   const result = collect(fixtureConfig([relation]), indexed(source), markerSnapshot);
   assert.deepEqual(result.mismatches, []);
+});
+
+test("generator-owned AST operations are audited structurally before catalog finalization", () => {
+  const astModuleId = "src/internal/ast/generated/data.ts";
+  const compatModuleId = "src/go/compat.ts";
+  const markerId = "example.test/native::type::Marker";
+  const markerDeclaration = semanticDeclaration(markerId, false);
+  const markerSnapshot = semanticSnapshot(markerDeclaration);
+  const sources = new Map([
+    [compatModuleId, "export interface GoValueOps<T> { readonly zero: () => T; readonly copy: (value: T) => T; }"],
+    [astModuleId, `
+import type { GoValueOps } from "../../../go/compat.js";
+export interface Marker { value: number; }
+export const MarkerValueOps: GoValueOps<Marker> = undefined as never;
+`],
+  ]);
+  const indexedSources = indexed(sources);
+  const config = {
+    semanticRelations: [],
+    signatureCheck: { modules: { compat: compatModuleId, core: "src/go/scalars.ts" } },
+    tsRoot: "src",
+  };
+  const route = {
+    goDeclarationHash: semanticHash(markerDeclaration, markerId, "Marker"),
+    objectId: markerId,
+    operationIdentity: `${astModuleId}::MarkerValueOps`,
+    operationTypeParameterIndexes: [],
+    ownerId: "porter:ast",
+    storageIdentity: `${astModuleId}::Marker`,
+    typeParameterCount: 0,
+  };
+  Object.defineProperty(route, "semantic", {
+    enumerable: false,
+    value: {
+      objectId: markerId,
+      packagePath: "example.test/native",
+      name: "Marker",
+      variants: [{ declaration: markerDeclaration, profiles: [0] }],
+      byProfile: new Map([[0, markerDeclaration]]),
+    },
+  });
+  const expectedIndex = buildExpectedIndex(
+    config,
+    markerSnapshot,
+    new Map([["unit-0", { path: astModuleId }]]),
+    loadProfile(config),
+  );
+  const result = auditAstGoValueOperationRoutes({
+    api,
+    config,
+    expectedIndex,
+    moduleIndex: indexedSources.moduleIndex,
+    routes: [Object.freeze(route)],
+    snapshot: markerSnapshot,
+    valueEnvironments: indexedSources.valueEnvironments,
+  });
+
+  assert.equal(result.checked, 1);
+  assert.deepEqual(result.mismatches, []);
+  assert.equal(result.catalog.size, 1);
+  assert.equal(result.catalog.get(markerId).storageIdentity, `${astModuleId}::Marker`);
+  assert.equal(result.inventory[0].disposition, "generator-owned");
 });
 
 function reviewedRelation(tsDeclarationHash, id = objectId) {

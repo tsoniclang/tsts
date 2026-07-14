@@ -15,6 +15,12 @@ export const HAND_WRITTEN_BASES = new Set(["NodeBase"]);
 // Generated per-concrete overrides exist for Clone/ForEachChild/VisitEachChild/
 // computeSubtreeFacts (+ subtreeFactsWorker via CompositeBase). Hand-written
 // visitor exceptions route through ast.ts.
+import {
+  generatedBaseValueStorage,
+  renderStorageCopyAssignment,
+  renderStorageProperty,
+  renderValueCopyHelpers,
+} from "./value-storage.mjs";
 export const NODE_DATA_METHODS = [
   "AsNode",
   "ForEachChild",
@@ -333,12 +339,17 @@ export function emitNode(schema) {
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   const compatTypes = baseCompatTypes(schema);
   lines.push(`import type { ${compatTypes.join(", ")} } from "../../../go/compat.js";`);
-  lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
-  lines.push(`import type { ModifierList, Node, NodeBase, NodeList } from "../spine.js";`);
+  lines.push(`import { GoNilMap, GoNilSlice } from "../../../go/compat.js";`);
+  lines.push(`import { Uint32, Uint64 } from "../../../go/sync/atomic.js";`);
+  lines.push(`import { NewTextRange } from "../../core/text.js";`);
+  lines.push(`import type { TextRange } from "../../core/text.js";`);
+  lines.push(`import type { ModifierList, Node, NodeBase, NodeList, nodeData } from "../spine.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { TokenFlags } from "../tokenflags.js";`);
   lines.push(`import type { FlowNode } from "../flow.js";`);
   lines.push(`import type { Symbol, SymbolTable } from "../symbol.js";`);
+  lines.push(`import type { NodeFlags } from "./flags.js";`);
+  lines.push(`import type { Kind } from "./kinds.js";`);
   lines.push(`import type {`);
   // forward node-union / list references used by base fields
   const unionRefs = collectBaseFieldRefs(schema);
@@ -349,6 +360,7 @@ export function emitNode(schema) {
   lines.push(`// remain central here even though the schema marks them goOnly: the TypeScript`);
   lines.push(`// runtime shares the same Node state rather than maintaining divergent side tables.`);
   lines.push("");
+  lines.push(...renderValueCopyHelpers());
 
   for (const baseName of schema.baseNames()) {
     if (HAND_WRITTEN_BASES.has(baseName)) continue;
@@ -368,8 +380,38 @@ export function emitNode(schema) {
     const body = fieldLines.length > 0 ? `\n${fieldLines.join("\n")}\n` : "";
     lines.push(`export interface ${baseName}${extendsClause} {${body}}`);
     lines.push("");
+    emitGeneratedBaseValueStorage(schema, baseName, lines);
   }
   return lines.join("\n");
+}
+
+function emitGeneratedBaseValueStorage(schema, baseName, lines) {
+  const storage = generatedBaseValueStorage(schema, baseName, {
+    handWrittenBases: HAND_WRITTEN_BASES,
+    memberType: astMemberTsType,
+  });
+  const storageClass = `${baseName}Value`;
+  const createFunction = `create${baseName}Value`;
+  lines.push(`class ${storageClass} implements ${baseName} {`);
+  for (const field of storage) lines.push(`  ${renderStorageProperty(field)}`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`export function ${createFunction}(): ${baseName} {`);
+  lines.push(`  return new ${storageClass}();`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`export const ${baseName}ValueOps: GoValueOps<${baseName}> = Object.freeze({`);
+  lines.push(`  zero: ${createFunction},`);
+  lines.push(`  copy: (value: ${baseName}): ${baseName} => {`);
+  lines.push(`    const result = ${createFunction}();`);
+  for (const field of storage) {
+    const assignment = renderStorageCopyAssignment(field);
+    if (assignment !== undefined) lines.push(`    ${assignment}`);
+  }
+  lines.push(`    return result;`);
+  lines.push(`  },`);
+  lines.push(`});`);
+  lines.push("");
 }
 
 const AST_VALUE_TS_TYPES = new Map([
@@ -454,7 +496,7 @@ function hasReviewedAggregatePointerProvenance(field) {
 }
 
 function baseCompatTypes(schema) {
-  const types = new Set(["GoPtr", "GoSlice"]);
+  const types = new Set(["GoInterface", "GoPtr", "GoSlice", "GoValueOps"]);
   for (const baseName of schema.baseNames()) {
     for (const field of schema.baseFields(baseName)) {
       if (field.noTS && !field.goOnly) continue;

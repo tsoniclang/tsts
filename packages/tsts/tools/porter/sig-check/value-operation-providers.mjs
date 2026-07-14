@@ -19,14 +19,15 @@ export function collectGoValueOperationProviderMismatches({
   snapshot,
   valueEnvironments,
 }) {
-  const catalog = buildReviewedGoValueOperationCatalog(config, snapshot);
+  const reviewedCatalog = buildReviewedGoValueOperationCatalog(config, snapshot);
   const inventory = [];
   const mismatches = [];
   const ownedDeclarationIds = new Set();
   const goValueOpsIdentity = `${loadProfile(config).modules.compat}::GoValueOps`;
-  for (const policy of catalog.values()) {
+  for (const policy of reviewedCatalog.values()) {
     const { moduleId, name } = splitOperationIdentity(policy.operationIdentity);
     inventory.push({
+      disposition: "reviewed",
       goDeclarationHash: policy.goDeclarationHash,
       objectId: policy.objectId,
       operationIdentity: policy.operationIdentity,
@@ -37,16 +38,17 @@ export function collectGoValueOperationProviderMismatches({
       typeParameterCount: policy.typeParameterCount,
     });
     try {
-      const storage = extractDirectStorage(api, moduleIndex, policy.storageIdentity, valueEnvironments);
-      const valueType = semanticNamedValueDescriptor(policy.semantic, expectedIndex, `reviewed Go value operations '${policy.objectId}'`);
-      requireExactValueStorage(valueType, policy.storageIdentity, expectedIndex);
-      const extracted = policy.typeParameterCount === 0
-        ? extractIndexedValueExportDescriptor(api, moduleIndex, moduleId, name, valueEnvironments)
-        : extractIndexedFunctionExportDescriptor(api, moduleIndex, moduleId, name, valueEnvironments);
-      if (extracted.declarationId !== policy.operationIdentity) {
-        throw new Error(`operation export resolves to '${extracted.declarationId}' instead of direct declaration '${policy.operationIdentity}'`);
-      }
-      const actualHash = externalTypeScriptDeclarationHash(extracted.descriptor);
+      const audited = auditGoValueOperationProvider({
+        api,
+        expectedIndex,
+        goValueOpsIdentity,
+        moduleId,
+        moduleIndex,
+        name,
+        policy,
+        valueEnvironments,
+      });
+      const actualHash = audited.tsDeclarationHash;
       if (actualHash !== policy.tsDeclarationHash) {
         mismatches.push({
           id: `go-value-ops:${policy.objectId}`,
@@ -55,10 +57,7 @@ export function collectGoValueOperationProviderMismatches({
           detail: `reviewed TypeScript value-operation declaration drifted: config=${policy.tsDeclarationHash} current=${actualHash}`,
         });
       }
-      requireOperationShape(policy, extracted.descriptor, storage.descriptor, valueType, goValueOpsIdentity);
-      for (const id of declarationOwnershipIds(moduleId, name, descriptorOwnershipKind(extracted.descriptor))) {
-        ownedDeclarationIds.add(id);
-      }
+      for (const id of audited.ownedDeclarationIds) ownedDeclarationIds.add(id);
     } catch (error) {
       mismatches.push({
         id: `go-value-ops:${policy.objectId}`,
@@ -70,7 +69,30 @@ export function collectGoValueOperationProviderMismatches({
   }
   inventory.sort((left, right) => compareText(left.objectId, right.objectId));
   mismatches.sort((left, right) => compareText(left.file, right.file) || compareText(left.id, right.id));
-  return { checked: inventory.length, inventory, mismatches, ownedDeclarationIds };
+  return {
+    checked: reviewedCatalog.size,
+    inventory,
+    mismatches,
+    ownedDeclarationIds,
+    reviewedCatalog,
+  };
+}
+
+export function auditGoValueOperationProvider({ api, expectedIndex, goValueOpsIdentity, moduleId, moduleIndex, name, policy, valueEnvironments }) {
+  const storage = extractDirectStorage(api, moduleIndex, policy.storageIdentity, valueEnvironments);
+  const valueType = semanticNamedValueDescriptor(policy.semantic, expectedIndex, `Go value operations '${policy.objectId}'`);
+  requireExactValueStorage(valueType, policy.storageIdentity, expectedIndex);
+  const extracted = policy.typeParameterCount === 0
+    ? extractIndexedValueExportDescriptor(api, moduleIndex, moduleId, name, valueEnvironments)
+    : extractIndexedFunctionExportDescriptor(api, moduleIndex, moduleId, name, valueEnvironments);
+  if (extracted.declarationId !== policy.operationIdentity) {
+    throw new Error(`operation export resolves to '${extracted.declarationId}' instead of direct declaration '${policy.operationIdentity}'`);
+  }
+  requireOperationShape(policy, extracted.descriptor, storage.descriptor, valueType, goValueOpsIdentity);
+  return Object.freeze({
+    ownedDeclarationIds: Object.freeze(declarationOwnershipIds(moduleId, name, descriptorOwnershipKind(extracted.descriptor))),
+    tsDeclarationHash: externalTypeScriptDeclarationHash(extracted.descriptor),
+  });
 }
 
 function extractDirectStorage(api, moduleIndex, identity, valueEnvironments) {
@@ -159,7 +181,7 @@ function isExactStorageReference(value, identity) {
   return value?.t === "ref" && value.id === identity && Array.isArray(value.args);
 }
 
-function splitOperationIdentity(identity) {
+export function splitOperationIdentity(identity) {
   return splitIdentity(identity, "TypeScript value-operation");
 }
 

@@ -24,6 +24,7 @@ import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mj
 import { collectExternalPackageSurfaceMismatches } from "./sig-check/external-package-declarations.mjs";
 import { collectUntrackedTypeScriptDeclarations } from "./sig-check/untracked-declarations.mjs";
 import { collectTypeStoragePolicyMismatches } from "./sig-check/type-storage-policies.mjs";
+import { collectAstGoValueOperationProviderMismatches } from "./sig-check/ast-value-operation-providers.mjs";
 import { collectGoValueOperationProviderMismatches } from "./sig-check/value-operation-providers.mjs";
 import { buildAuditedTypeStorageCatalog } from "./sig-check/audited-type-storage.mjs";
 import { buildTypeEquivalenceRelationRegistry } from "./sig-check/type-equivalence-relations.mjs";
@@ -175,13 +176,14 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
       api,
       config: deps.config,
       expectedIndex,
+      generatedTypeOwnership,
       moduleIndex,
       snapshot: deps.snapshot,
       valueEnvironments,
     })
     : { checked: 0, inventory: [], mismatches: [], ownedDeclarationIds: new Set() };
   mismatches.push(...typeStoragePolicies.mismatches);
-  const valueOperationProviders = wholeProgramAudit
+  const reviewedValueOperationProviders = wholeProgramAudit
     ? collectGoValueOperationProviderMismatches({
       api,
       config: deps.config,
@@ -191,6 +193,21 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
       valueEnvironments,
     })
     : { checked: 0, inventory: [], mismatches: [], ownedDeclarationIds: new Set() };
+  const astValueOperationProviders = wholeProgramAudit
+    ? collectAstGoValueOperationProviderMismatches({
+      api,
+      config: deps.config,
+      expectedIndex,
+      generatedTypeOwnership,
+      moduleIndex,
+      snapshot: deps.snapshot,
+      valueEnvironments,
+    })
+    : { checked: 0, inventory: [], mismatches: [], ownedDeclarationIds: new Set() };
+  const valueOperationProviders = combineValueOperationProviderAudits(
+    reviewedValueOperationProviders,
+    astValueOperationProviders,
+  );
   mismatches.push(...valueOperationProviders.mismatches);
   const externalPackageSurface = wholeProgramAudit
     ? collectExternalPackageSurfaceMismatches({
@@ -368,9 +385,25 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
       : wholeProgramAuditNotRun(),
   });
   if (wholeProgramAudit) {
-    signatureOperationEvidence.set(report, Object.freeze({ auditedTypeStorage, unitOwnership }));
+    signatureOperationEvidence.set(report, Object.freeze({
+      auditedTypeStorage,
+      generatorOwnedProviders: astValueOperationProviders.catalog,
+      reviewedProviders: reviewedValueOperationProviders.reviewedCatalog,
+      unitOwnership,
+    }));
   }
   return report;
+}
+
+function combineValueOperationProviderAudits(...audits) {
+  return {
+    checked: audits.reduce((count, audit) => count + audit.checked, 0),
+    inventory: audits.flatMap((audit) => audit.inventory)
+      .sort((left, right) => compareText(left.objectId, right.objectId)),
+    mismatches: audits.flatMap((audit) => audit.mismatches)
+      .sort((left, right) => compareText(left.file, right.file) || compareText(left.id, right.id)),
+    ownedDeclarationIds: new Set(audits.flatMap((audit) => [...audit.ownedDeclarationIds])),
+  };
 }
 
 export function requireSignatureOperationEvidence(report) {
@@ -380,6 +413,14 @@ export function requireSignatureOperationEvidence(report) {
       !Array.isArray(report.mismatches) || report.mismatches.length !== 0 ||
       !Array.isArray(report.overrideIssues) || report.overrideIssues.length !== 0) {
     throw new Error("Go value-operation planning requires one clean whole-program signature audit with no mismatches or override issues");
+  }
+  const expectedKeys = ["auditedTypeStorage", "generatorOwnedProviders", "reviewedProviders", "unitOwnership"];
+  const actualKeys = Object.keys(evidence).sort(compareText);
+  if (actualKeys.length !== expectedKeys.length || actualKeys.some((key, index) => key !== expectedKeys[index])) {
+    throw new Error(`Go value-operation evidence keys must be exactly ${expectedKeys.join(", ")}; got ${actualKeys.join(", ")}`);
+  }
+  for (const key of expectedKeys) {
+    if (evidence[key] === undefined) throw new Error(`Go value-operation evidence '${key}' was not finalized`);
   }
   return evidence;
 }
