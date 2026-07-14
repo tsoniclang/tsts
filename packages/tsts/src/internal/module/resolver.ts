@@ -83,6 +83,8 @@ import { ComparePatternKeys, InferredTypesContainingFile, IsApplicableVersionedT
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 
 const packageJsonNotPresentValue = (): JSONValue => ({ Type: JSONValueTypeNotPresent, Value: undefined });
@@ -4383,7 +4385,7 @@ export function Resolver_getParsedPatternsForPaths(receiver: GoPtr<Resolver>): G
  */
 export function TryParsePatterns(pathMappings: GoPtr<OrderedMap<string, GoSlice<string>>>): GoPtr<ParsedPatterns> {
   if (pathMappings === undefined) {
-    return { matchableStringSet: NewSetWithSizeHint<string>(0, GoStringKey)!, patterns: [] };
+    return { matchableStringSet: NewSetWithSizeHint<string>(0, GoStringKey)!, patterns: GoEmptySlice<Pattern>() };
   }
   const typedMappings = pathMappings as GoPtr<OrderedMap<string, GoSlice<string>>>;
   // Count patterns (wildcard) vs matchables (exact)
@@ -4397,7 +4399,7 @@ export function TryParsePatterns(pathMappings: GoPtr<OrderedMap<string, GoSlice<
   });
   const numMatchables = OrderedMap_Size(typedMappings) - numPatterns;
 
-  let patterns: GoSlice<Pattern> = [];
+  let patterns: GoSlice<Pattern> = GoEmptySlice<Pattern>();
   const matchableStringSet: Set<string> = NewSetWithSizeHint<string>(numMatchables, GoStringKey)!;
 
   OrderedMap_Keys<string, GoSlice<string>>(typedMappings)!((p: string): bool => {

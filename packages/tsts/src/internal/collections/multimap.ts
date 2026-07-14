@@ -6,6 +6,8 @@ import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::type::MultiMap","kind":"type","status":"implemented","sigHash":"5fa746f9ad8184af45af12e61f174c3763b0f6e232c9d3cf29c17b36e4bd2f94"}
  *
@@ -79,7 +81,7 @@ export function MultiMap_Has<K extends GoComparable, V extends GoComparable>(rec
  * }
  */
 export function MultiMap_Get<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K): GoSlice<V> {
-  return receiver!.M.get(key) ?? [];
+  return receiver!.M.get(key) ?? GoEmptySlice<V>();
 }
 
 /**

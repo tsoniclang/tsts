@@ -10,6 +10,8 @@ import type { SyncSet } from "../collections/syncset.js";
 import { Map } from "./core.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchResult","kind":"type","status":"implemented","sigHash":"309ebf85a8e1d1c8b853258caf629d5709d4c50933b4039bb5709ae637129405"}
  *
@@ -233,7 +235,7 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
   };
 
   const createPath = (job: GoPtr<breadthFirstSearchJob<N>>): GoSlice<N> => {
-    let path: GoSlice<N> = [];
+    let path: GoSlice<N> = GoEmptySlice<N>();
     let cur = job;
     while (cur !== undefined) {
       path = GoAppend(path, cur.node);

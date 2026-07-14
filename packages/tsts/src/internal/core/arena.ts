@@ -3,6 +3,8 @@ import { GoNilSlice, GoSliceElementRef, GoSliceIsNil } from "../../go/compat.js"
 import type { GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
 
 import type { GoRef } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::type::Arena","kind":"type","status":"implemented","sigHash":"38f2190ab841cbf54c059e3dedb3a5a315a1cd4bc80b3c78ed2d38b4c0300932"}
  *
@@ -38,7 +40,7 @@ function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
 export function Arena_New<T>(receiver: GoPtr<Arena<T>>, zeroValue: GoZeroFactory<T>): GoRef<T> {
   const arena = ensureArena(receiver);
   if (GoSliceIsNil(arena.data)) {
-    arena.data = [];
+    arena.data = GoEmptySlice<T>();
   }
   const index = arena.data.length as int;
   arena.data.push(zeroValue());
@@ -73,7 +75,7 @@ export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int, zeroValu
     return GoNilSlice();
   }
   ensureArena(receiver);
-  const result: GoSlice<T> = [];
+  const result: GoSlice<T> = GoEmptySlice<T>();
   for (let index = 0; index < size; index++) result.push(zeroValue());
   return result;
 }

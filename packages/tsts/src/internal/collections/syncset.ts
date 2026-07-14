@@ -5,6 +5,8 @@ import type { SyncMap } from "./syncmap.js";
 import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from "./syncmap.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::type::SyncSet","kind":"type","status":"implemented","sigHash":"0e2e94afb12a20e228869161c6096511665888582db035691c74d3203f2f7238"}
  *
@@ -144,7 +146,7 @@ export function SyncSet_IsEmpty<T extends GoComparable>(receiver: GoPtr<SyncSet<
  * }
  */
 export function SyncSet_ToSlice<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>): GoSlice<T> {
-  let arr: GoSlice<T> = [];
+  let arr: GoSlice<T> = GoEmptySlice<T>();
   SyncMap_Range(receiver!.m, (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
     arr = GoAppend(arr, key);
     return true;

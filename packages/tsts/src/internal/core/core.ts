@@ -27,6 +27,8 @@ import { Tristate_IsTrue } from "./tristate.js";
 import type { GoFunc, GoInterface, GoPointerConstraint, GoRef } from "../../go/compat.js";
 import { GoNumberValueOps, GoRefValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
@@ -94,7 +96,7 @@ export function ApplyDebugStackLimit(): void {
  * }
  */
 export function Filter<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): GoSlice<T> {
-  const values = slice ?? [];
+  const values = slice ?? GoEmptySlice<T>();
   for (let i = 0; i < values.length; i++) {
     let value = values[i]!;
     if (!f!(value)) {
@@ -129,7 +131,7 @@ export function Filter<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): GoSl
  */
 export function FilterSeq<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): Seq<T> {
   return (yield_: GoFunc<(value: T) => bool>): void => {
-    for (const value of slice ?? []) {
+    for (const value of slice ?? GoEmptySlice<T>()) {
       if (f!(value)) {
         if (!yield_!(value)) {
           return;
@@ -160,7 +162,7 @@ export function FilterSeq<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): S
  * }
  */
 export function FilterIndex<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int, arg2: GoSlice<T>) => bool>): GoSlice<T> {
-  const values = slice ?? [];
+  const values = slice ?? GoEmptySlice<T>();
   for (let i = 0; i < values.length; i++) {
     let value = values[i]!;
     if (!f!(value, i, values)) {
@@ -225,14 +227,14 @@ export function Map<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>): GoSlice
  */
 export function TryMap<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => [U, GoError]>): [GoSlice<U>, GoError] {
   if (slice.length === 0) {
-    return [[], undefined];
+    return [GoEmptySlice<U>(), undefined];
   }
   const result: GoSlice<U> = new globalThis.Array<U>(slice.length);
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
     const [mapped, err] = f!(value);
     if (err !== undefined) {
-      return [[], err];
+      return [GoEmptySlice<U>(), err];
     }
     result[i] = mapped;
   }
@@ -283,7 +285,7 @@ export function MapIndex<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int)
  * }
  */
 export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>, zeroValue: GoZeroFactory<U>, equal: GoEquality<U>): GoSlice<U> {
-  let result: GoSlice<U> = [];
+  let result: GoSlice<U> = GoEmptySlice<U>();
   const zero = zeroValue();
   for (const value of slice) {
     const mapped = f!(value);
@@ -311,7 +313,7 @@ export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFun
  * }
  */
 export function MapFiltered<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => [U, bool]>): GoSlice<U> {
-  let result: GoSlice<U> = [];
+  let result: GoSlice<U> = GoEmptySlice<U>();
   for (const value of slice) {
     const [mapped, ok] = f!(value);
     if (!ok) {
@@ -338,7 +340,7 @@ export function MapFiltered<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => [U, 
  * }
  */
 export function FlatMap<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => GoSlice<U>>): GoSlice<U> {
-  let result: GoSlice<U> = [];
+  let result: GoSlice<U> = GoEmptySlice<U>();
   for (const value of slice) {
     const mapped = f!(value);
     if (mapped.length !== 0) {
@@ -765,8 +767,8 @@ export function FirstNonZero<T extends GoComparable>(zeroValue: GoZeroFactory<T>
  * }
  */
 export function Concatenate<T>(s1: GoSlice<T>, s2: GoSlice<T>): GoSlice<T> {
-  const left = s1 ?? [];
-  const right = s2 ?? [];
+  const left = s1 ?? GoEmptySlice<T>();
+  const right = s2 ?? GoEmptySlice<T>();
   if (right.length === 0) {
     return left;
   }
@@ -903,7 +905,7 @@ export function InsertSorted<T>(slice: GoSlice<T>, element: T, cmp: GoFunc<(arg0
  */
 export function MinAllFunc<T>(xs: GoSlice<T>, cmp: GoFunc<(a: T, b: T) => int>): GoSlice<T> {
   if (xs.length === 0) {
-    return [];
+    return GoEmptySlice<T>();
   }
 
   let m: T = xs[0]!;
@@ -1208,7 +1210,7 @@ export function UTF16Len(s: string): UTF16Offset {
  * }
  */
 export function Flatten<T>(array: GoSlice<GoSlice<T>>): GoSlice<T> {
-  let result: GoSlice<T> = [];
+  let result: GoSlice<T> = GoEmptySlice<T>();
   for (const subArray of array) {
     for (const e of subArray) {
       result = GoAppend(result, e);

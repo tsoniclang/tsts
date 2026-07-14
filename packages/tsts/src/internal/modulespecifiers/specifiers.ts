@@ -129,6 +129,8 @@ import type { NodeModulePathParts } from "./util.js";
 import type { GoInterface } from "../../go/compat.js";
 import { GoNumberValueOps, GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 
 /**
@@ -500,7 +502,7 @@ export function getAllModulePathsWorker(info: Info, importedFileName: string, ho
   const comparePaths_ = (a: ModulePath, b: ModulePath): number => comparePathsByRedirect(a, b, useCaseSensitiveFileNames);
 
   // Sort by paths closest to importing file Name directory
-  let sortedPaths: GoSlice<ModulePath> = [];
+  let sortedPaths: GoSlice<ModulePath> = GoEmptySlice<ModulePath>();
   let directory = info.SourceDirectory;
   while (allFileNames.size !== 0) {
     const directoryStart = EnsureTrailingDirectorySeparator(directory);

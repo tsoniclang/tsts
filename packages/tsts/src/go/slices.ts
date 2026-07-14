@@ -4,6 +4,8 @@ import type { GoEquality, GoFunc, GoPtr, GoSlice, GoOrdered } from "./compat.js"
 import { GoAppend, GoNilSlice, GoSliceIsNil } from "./compat.js";
 import { GoSlicePrefix } from "./slice-runtime.js";
 import { Compare as cmpCompare } from "./cmp.js";
+import { GoEmptySlice } from "./compat.js";
+
 
 // Go: package slices (standard library).
 //
@@ -195,7 +197,7 @@ export function Grow<T>(s: GoPtr<GoSlice<T>>, n: int): GoSlice<T> {
   }
   const slice = s ?? GoNilSlice<T>();
   if (n !== 0 && GoSliceIsNil(slice)) {
-    return [];
+    return GoEmptySlice<T>();
   }
   return slice;
 }

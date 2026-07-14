@@ -95,6 +95,8 @@ import { Mutex, Once } from "../../../go/sync.js";
 import type { GoFunc, GoInterface, GoRef } from "../../../go/compat.js";
 import { GoNumberValueOps, GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
 import { GoSliceLoad } from "../../../go/compat.js";
+import { GoEmptySlice } from "../../../go/compat.js";
+
 
 
 /**
@@ -1961,7 +1963,7 @@ export interface Checker {
 }
 
 function newArena<T>(): Arena<T> {
-  return { data: [] };
+  return { data: GoEmptySlice<T>() };
 }
 
 function newLinkStore<K extends GoComparable, V>(): LinkStore<K, V> {

@@ -66,6 +66,8 @@ import { commandLineParser_createUnknownOptionError, createDiagnosticForInvalidE
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 
 /**
@@ -834,17 +836,17 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
   value = strings.TrimSpace(value);
   let errors: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   if (strings.HasPrefix(value, "-")) {
-    return [[], errors];
+    return [GoEmptySlice<unknown>(), errors];
   }
   if (opt!.Kind === CommandLineOptionTypeListOrElement && !strings.ContainsRune(value, ",".charCodeAt(0))) {
     const [val, err] = validateJsonOptionValue(opt, value, undefined, undefined);
     if (!GoSliceIsNil(err)) {
-      return [[], err];
+      return [GoEmptySlice<unknown>(), err];
     }
     return [[val as string], errors];
   }
   if (value === "") {
-    return [[], errors];
+    return [GoEmptySlice<unknown>(), errors];
   }
   const values = strings.Split(value, ",");
   const elementsKind = CommandLineOption_Elements(opt)!.Kind;

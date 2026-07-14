@@ -229,6 +229,8 @@ import { parserPool, viableKeywordSuggestions } from "./state.js";
 import type { GoFunc } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
 import { GoSliceLoad } from "../../../go/compat.js";
+import { GoEmptySlice } from "../../../go/compat.js";
+
 
 
 const byteLen: (text: string) => int = utf8.StringByteLen;
@@ -2284,7 +2286,7 @@ export function Parser_processPragmasIntoFields(receiver: GoPtr<Parser>, context
   context!.ReferencedFiles = GoNilSlice();
   context!.TypeReferenceDirectives = GoNilSlice();
   context!.LibReferenceDirectives = GoNilSlice();
-  for (const pragma of (context!.Pragmas ?? [])) {
+  for (const pragma of (context!.Pragmas ?? GoEmptySlice<Pragma>())) {
     switch (pragma.Name) {
       case "reference": {
         const types = pragma.Args?.get("types");

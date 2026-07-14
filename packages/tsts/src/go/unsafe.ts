@@ -1,5 +1,7 @@
 import type { byte, int } from "./scalars.js";
 import type { GoPtr, GoSlice, GoUnsafePointer } from "./compat.js";
+import { GoEmptySlice } from "./compat.js";
+
 
 export function Pointer<T>(value: GoPtr<T>): GoUnsafePointer {
   return value as GoUnsafePointer;
@@ -12,14 +14,14 @@ export function Slice<T>(ptr: GoPtr<T> | ArrayLike<T>, len: int): GoSlice<T> {
   }
   if (ptr === undefined || ptr === null) {
     if (length === 0) {
-      return [];
+      return GoEmptySlice<T>();
     }
     throw new globalThis.Error("unsafe.Slice: ptr is nil and len is not zero");
   }
   if (typeof ptr === "object" && "length" in ptr) {
     return globalThis.Array.prototype.slice.call(ptr, 0, length) as GoSlice<T>;
   }
-  return length === 0 ? [] : [ptr as T];
+  return length === 0 ? GoEmptySlice<T>() : [ptr as T];
 }
 
 export function String(ptr: GoPtr<byte> | ArrayLike<byte>, len: int): string {

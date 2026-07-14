@@ -96,6 +96,8 @@ import { NewParsedCommandLine } from "./parsedcommandline.js";
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 
 /**
@@ -1013,7 +1015,7 @@ export function convertJsonOptionOfListType(option: GoPtr<CommandLineOption>, va
     }
     return [filteredValues, errors];
   }
-  return [[], errors];
+  return [GoEmptySlice<unknown>(), errors];
 }
 
 /**

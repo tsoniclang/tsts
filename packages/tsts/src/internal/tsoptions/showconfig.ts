@@ -51,6 +51,8 @@ import { GoValueRef } from "../../go/compat.js";
 import type { GoFunc, GoRef } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 
 /**
@@ -257,7 +259,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
 
   const config: TSConfig = {
     CompilerOptions: optionMap,
-    References: [],
+    References: GoEmptySlice<unknown>(),
     Files: GoSliceMake(0, 0, GoStringValueOps),
     Include: GoSliceMake(0, 0, GoStringValueOps),
     Exclude: GoSliceMake(0, 0, GoStringValueOps),
@@ -267,7 +269,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   // Add references
   const refs = ParsedCommandLine_ProjectReferences(configParseResult);
   if (refs.length > 0) {
-    let references: GoSlice<GoInterface<unknown>> = [];
+    let references: GoSlice<GoInterface<unknown>> = GoEmptySlice<unknown>();
     for (const r of refs) {
       const ref = NewOrderedMapWithSizeHint<string, unknown>(2 as int, GoStringKey);
       OrderedMap_Set(ref, "path", r!.OriginalPath, GoStringKey);

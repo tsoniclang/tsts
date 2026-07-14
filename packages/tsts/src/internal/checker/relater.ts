@@ -196,6 +196,8 @@ import { PhaseCheckTypes } from "../tracing/tracing.js";
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 import { GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
 import { GoSliceLoad, GoSliceValueOps } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 
 
@@ -1133,9 +1135,9 @@ export function createDiagnosticChainFromErrorChain(chain: GoPtr<ErrorChain>, er
   }
   const next = createDiagnosticChainFromErrorChain(chain!.next, errorNode, relatedInfo);
   if (next === undefined) {
-    return Diagnostic_SetRelatedInfo(NewDiagnosticForNode(errorNode, chain!.message, ...(chain!.args ?? [])), relatedInfo);
+    return Diagnostic_SetRelatedInfo(NewDiagnosticForNode(errorNode, chain!.message, ...(chain!.args ?? GoEmptySlice<unknown>())), relatedInfo);
   }
-  return NewDiagnosticChain(next, chain!.message, ...(chain!.args ?? []));
+  return NewDiagnosticChain(next, chain!.message, ...(chain!.args ?? GoEmptySlice<unknown>()));
 }
 
 /**
@@ -4065,7 +4067,7 @@ export function Checker_getRestTypeAtPosition(receiver: GoPtr<Checker>, source: 
   }
   const length = parameterCount - pos;
   if (length <= 0) {
-    return Checker_createTupleTypeEx(receiver, GoSliceMake(0, 0, GoPointerValueOps<Type>()), [], readonly);
+    return Checker_createTupleTypeEx(receiver, GoSliceMake(0, 0, GoPointerValueOps<Type>()), GoEmptySlice<TupleElementInfo>(), readonly);
   }
   const types: GoPtr<Type>[] = new Array(length);
   const infos: TupleElementInfo[] = new Array(length);

@@ -41,6 +41,8 @@ import { getWildcardDirectories } from "./wildcarddirectories.js";
 import type { GoInterface, GoRef } from "../../go/compat.js";
 import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 
 /**
@@ -178,7 +180,7 @@ export function NewParsedCommandLine(compilerOptions: GoPtr<CompilerOptions_3bab
     wildcardDirectories: new globalThis.Map<string, bool>(),
     includeGlobsOnce: new Once(),
     includeGlobs: GoSliceMake(0, 0, GoPointerValueOps<Glob>()),
-    extraFileExtensions: [],
+    extraFileExtensions: GoEmptySlice<FileExtensionInfo>(),
     sourceAndOutputMapsOnce: new Once(),
     sourceToProjectReference: new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>(),
     outputDtsToProjectReference: new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>(),

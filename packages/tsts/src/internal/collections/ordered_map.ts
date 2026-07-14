@@ -25,6 +25,8 @@ import type { Decoder, Encoder, MarshalerTo, UnmarshalerFrom } from "../json/jso
 import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
 import * as strconv from "../../go/strconv.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::OrderedMap","kind":"type","status":"implemented","sigHash":"bc8af819f23afd83c888135f21577068246145d683364cf6c276ac62c2caee43"}
@@ -98,7 +100,7 @@ export function NewOrderedMapWithSizeHint<K extends GoComparable, V>(hint: int, 
 export function newMapWithSizeHint<K extends GoComparable, V>(hint: int, keyDescriptor: GoMapKeyDescriptor<K>): OrderedMap<K, V> {
   return {
     __tsgoBlank0: {},
-    keys: [],
+    keys: GoEmptySlice<K>(),
     mp: GoMapMake<K, V>(keyDescriptor),
   };
 }

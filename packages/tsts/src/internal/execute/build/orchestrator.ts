@@ -49,6 +49,8 @@ import type { parseCache } from "./parseCache.js";
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoSliceMake } from "../../../go/compat.js";
 import { GoSliceLoad } from "../../../go/compat.js";
+import { GoEmptySlice } from "../../../go/compat.js";
+
 
 
 /**
@@ -336,8 +338,8 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
           prevReporter: undefined,
           reportDone: {} as BuildTask["reportDone"],
           configTime: {} as Time,
-          extendedConfigTimes: [],
-          inputFiles: [],
+          extendedConfigTimes: GoEmptySlice<Time>(),
+          inputFiles: GoEmptySlice<Time>(),
           buildInfoEntry: buildInfo,
           buildInfoEntryMu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as BuildTask["buildInfoEntryMu"],
           errors: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),

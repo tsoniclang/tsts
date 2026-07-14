@@ -162,6 +162,8 @@ import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, Pro
 import type { GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
 import { GoSliceLoad, GoSliceValueOps } from "../../go/compat.js";
+import { GoEmptySlice } from "../../go/compat.js";
+
 
 
 /**
@@ -1139,7 +1141,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
 export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLoader>, containingFileName: string): [toParse: GoSlice<resolvedRef>, typeResolutionsInFile: ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>, typeResolutionsTrace: GoSlice<DiagAndArgs>, pDiagnostics: GoSlice<GoPtr<processingDiagnostic>>] {
   const automaticTypeDirectiveNames = GetAutomaticTypeDirectiveNames(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), receiver!.opts.Host);
   if (automaticTypeDirectiveNames.length !== 0) {
-    let toParse: GoSlice<resolvedRef> = [];
+    let toParse: GoSlice<resolvedRef> = GoEmptySlice<resolvedRef>();
     const typeResolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(GoStructKey(
       [GoStructField((value: ModeAwareCacheKey) => value.Name, GoStringKey), GoStructField((value: ModeAwareCacheKey) => value.Mode, GoNumberKey)],
       ([Name, Mode]) => ({ Name, Mode }),

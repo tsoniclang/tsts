@@ -113,6 +113,8 @@ import { Checker_createModuleNotFoundChain } from "./modules.js";
 import type { GoFunc, GoInterface, GoRef } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
 import { GoBooleanValueOps, GoSliceLoad } from "../../../go/compat.js";
+import { GoEmptySlice } from "../../../go/compat.js";
+
 
 
 
@@ -1600,7 +1602,7 @@ export function Checker_getIterationTypesOfIterable(receiver: GoPtr<Checker>, t:
  */
 export function Checker_getIterationTypesOfIterableWorker(receiver: GoPtr<Checker>, t: GoPtr<Type>, use: IterationUse, errorNode: GoPtr<Node>, noCache: bool): IterationTypes {
   if ((t!.flags & TypeFlagsUnion) !== 0) {
-    let allIterationTypes: GoSlice<IterationTypes> = [];
+    let allIterationTypes: GoSlice<IterationTypes> = GoEmptySlice<IterationTypes>();
     for (const constituent of Type_Types(t)!) {
       const iterationTypes = Checker_getIterationTypesOfIterableWorker(receiver, constituent, use, undefined, noCache);
       if (!IterationTypes_hasTypes(iterationTypes)) {
