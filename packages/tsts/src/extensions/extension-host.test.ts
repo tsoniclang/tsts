@@ -1168,6 +1168,12 @@ test("provider declaration models reject invalid type-family declarations", () =
       typeFamilyVariant("Task", 0),
       { id: "Canonical", name: "__TstsProviderCanonical_Task", kind: "interface", members: [] },
     ],
+  }, {
+    name: "mixed value-capable and type-only variants",
+    exports: [
+      { ...typeFamilyVariant("Task", 0), kind: "interface" },
+      typeFamilyVariant("Task_1", 1),
+    ],
   }];
 
   for (const entry of invalidFamilies) {
@@ -1176,6 +1182,22 @@ test("provider declaration models reject invalid type-family declarations", () =
     const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
     assert.equal(resolved.kind, "rejected", entry.name);
     assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration, entry.name);
+  }
+});
+
+test("provider declaration models reject non-finite numeric literal types", () => {
+  const specifier = "@target/non-finite-literal.js";
+  for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider(typeFamilyBindingProvider(specifier, [{
+      id: "Value",
+      name: "Value",
+      kind: "type",
+      type: { kind: "literal", value },
+    }]));
+    const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+    assert.equal(resolved.kind, "rejected");
+    assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
   }
 });
 
@@ -1230,6 +1252,7 @@ test("provider virtual module cache is separated by provider identity and resolu
 test("provider virtual module source variants receive distinct internal file identities", () => {
   const specifier = "@target/sliced.js";
   const host = new ExtensionHost({});
+  let pendingExports: readonly string[] = [];
   host.providers.registerTargetBindingProvider({
     identity: {
       id: "sliced-provider",
@@ -1240,13 +1263,12 @@ test("provider virtual module source variants receive distinct internal file ide
     },
     ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
     resolveModule: (moduleSpecifier, context) => {
-      const requestedExports = (context.importSlice?.requestedExports ?? []).map((request) => request.exportedName).sort();
-      const sliceId = requestedExports.length === 0 ? "all" : requestedExports.join(".");
+      pendingExports = (context.importSlice?.requestedExports ?? []).map((request) => request.exportedName).sort();
       return {
         kind: "virtual",
         moduleSpecifier,
         virtualFileName: "tsts-provider://sliced/runtime",
-        providerModuleId: `sliced.runtime.${sliceId}`,
+        providerModuleId: "sliced.runtime",
         packageName: "@target/sliced",
         packageVersion: "1.0.0",
       };
@@ -1256,7 +1278,7 @@ test("provider virtual module source variants receive distinct internal file ide
       providerModuleId: resolution.providerModuleId,
       exports: [{
         id: resolution.moduleSpecifier,
-        name: resolution.providerModuleId.includes(".Second") ? "Second" : "First",
+        name: pendingExports.includes("Second") ? "Second" : "First",
         kind: "interface",
         members: [],
       }],
@@ -1301,6 +1323,583 @@ test("provider virtual module source variants receive distinct internal file ide
   assert.equal(firstAgain.module.resolution.virtualFileName, first.module.resolution.virtualFileName);
   assert.equal(host.providers.getVirtualDeclarationDocument(first.module.resolution.virtualFileName)?.sourceText, first.module.virtualSourceText);
   assert.equal(host.providers.getVirtualDeclarationDocument(second.module.resolution.virtualFileName)?.sourceText, second.module.virtualSourceText);
+});
+
+test("provider virtual source variants canonicalize repeated public exports before redeclaration", () => {
+  const specifier = "@target/canonical.js";
+  const host = new ExtensionHost({});
+  let dependencyLocalName = "DependencyWithoutContext";
+  let includeHolder = false;
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("canonical-source-variant-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      const withDependencyContext = context.containingFile === "/src/with-dependency.ts";
+      includeHolder = withDependencyContext;
+      dependencyLocalName = withDependencyContext ? "DependencyWithContext" : "DependencyWithoutContext";
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: context.containingFile === "/src/alternate-base.ts"
+          ? "tsts-provider://canonical/source-variant-alternate"
+          : withDependencyContext
+            ? "tsts-provider://canonical/source-variant-with-dependency"
+            : "tsts-provider://canonical/source-variant",
+        providerModuleId: "canonical.source.variant",
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      imports: [{
+        moduleSpecifier: "@target/dependency.js",
+        typeOnly: true,
+        namedImports: [{ exportedName: "Dependency", localName: dependencyLocalName }],
+      }],
+      exports: [{
+        id: "Token",
+        name: "TokenImplementation",
+        exportName: "Token",
+        kind: "class",
+        members: [{
+          id: "Token.dependency",
+          name: "dependency",
+          kind: "property",
+          type: {
+            kind: "provider-ref",
+            moduleSpecifier: "@target/dependency.js",
+            exportName: "Dependency",
+            localName: dependencyLocalName,
+          },
+        }],
+      }, {
+        id: "TokenShape",
+        name: "TokenShape",
+        kind: "interface",
+        members: [],
+      }, ...(includeHolder ? [{
+        id: "Holder",
+        name: "Holder",
+        kind: "interface" as const,
+        members: [{
+          id: "Holder.token",
+          name: "token",
+          kind: "property" as const,
+          type: {
+            kind: "provider-ref" as const,
+            moduleSpecifier: specifier,
+            exportName: "Token",
+            localName: "TokenImplementation",
+          },
+        }],
+      }] : [])],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  const first = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/without-dependency.ts" });
+  const second = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/with-dependency.ts" });
+  const exactSourceAlternateBase = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/alternate-base.ts" });
+
+  assert.equal(first.kind, "resolved");
+  assert.equal(second.kind, "resolved");
+  assert.equal(exactSourceAlternateBase.kind, "resolved");
+  if (first.kind !== "resolved" || second.kind !== "resolved" || exactSourceAlternateBase.kind !== "resolved") {
+    return;
+  }
+
+  assert.equal(exactSourceAlternateBase.module.resolution.virtualFileName, first.module.resolution.virtualFileName);
+  assert.match(second.module.resolution.virtualFileName, /^tsts-provider:\/\/canonical\/source-variant-with-dependency#tsts-slice-/);
+  assert.match(second.module.virtualSourceText, /import \{ Token as __TstsProviderCanonical_Token \} from "tsts-provider:\/\/canonical\/source-variant";/);
+  assert.match(second.module.virtualSourceText, /import type \{ TokenShape as __TstsProviderCanonical_TokenShape \} from "tsts-provider:\/\/canonical\/source-variant";/);
+  assert.match(second.module.virtualSourceText, /export \{ __TstsProviderCanonical_Token as Token \};/);
+  assert.match(second.module.virtualSourceText, /export type \{ __TstsProviderCanonical_TokenShape as TokenShape \};/);
+  assert.match(second.module.virtualSourceText, /token: __TstsProviderCanonical_Token;/);
+  assert.equal(second.module.virtualSourceText.includes("declare class TokenImplementation"), false);
+  assert.equal(second.module.virtualSourceText.includes("export interface TokenShape"), false);
+});
+
+test("provider virtual source variants canonicalize value and type-only default exports", () => {
+  for (const kind of ["class", "interface"] as const) {
+    const specifier = `@target/default-${kind}.js`;
+    const host = new ExtensionHost({});
+    let includeSupportImport = false;
+    host.providers.registerTargetBindingProvider({
+      identity: providerIdentity(`default-${kind}-provider`, "demo", "binding"),
+      ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+      resolveModule: (moduleSpecifier, context) => {
+        includeSupportImport = context.containingFile === "/src/second.ts";
+        return {
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: `tsts-provider://default/${kind}`,
+          providerModuleId: `default.${kind}`,
+        };
+      },
+      getDeclarationModel: (resolution) => ({
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        ...(includeSupportImport ? {
+          imports: [{
+            moduleSpecifier: "@target/support.js",
+            typeOnly: true,
+            namedImports: [{ exportedName: "Marker" }],
+          }],
+        } : {}),
+        exports: [{
+          id: "DefaultToken",
+          name: "DefaultToken",
+          ...(includeSupportImport ? { exportName: "default" } : { exportKind: "default" as const }),
+          kind,
+          members: [],
+        }],
+      }),
+      getTargetIdentity: () => undefined,
+    });
+
+    const first = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/first.ts" });
+    const second = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/second.ts" });
+    assert.equal(first.kind, "resolved");
+    assert.equal(second.kind, "resolved");
+    if (first.kind !== "resolved" || second.kind !== "resolved") {
+      continue;
+    }
+
+    const typeKeyword = kind === "interface" ? "type " : "";
+    assert.match(second.module.virtualSourceText, new RegExp(`import ${typeKeyword}\\{ default as __TstsProviderCanonical_default \\}`));
+    assert.match(second.module.virtualSourceText, new RegExp(`export ${typeKeyword}\\{ __TstsProviderCanonical_default as default \\}`));
+    assert.equal(second.module.virtualSourceText.includes(`DefaultToken`), false);
+  }
+});
+
+test("provider virtual source variants canonicalize complete multi-arity type families", () => {
+  for (const kind of ["class", "interface"] as const) {
+    const specifier = `@target/family-${kind}.js`;
+    const host = new ExtensionHost({});
+    let contextKind: "first" | "second" | "conflicting" = "first";
+    host.providers.registerTargetBindingProvider({
+      identity: providerIdentity(`family-${kind}-provider`, "demo", "binding"),
+      ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+      resolveModule: (moduleSpecifier, context) => {
+        contextKind = context.containingFile === "/src/second.ts"
+          ? "second"
+          : context.containingFile === "/src/conflicting.ts"
+            ? "conflicting"
+            : "first";
+        return {
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: `tsts-provider://family/${kind}`,
+          providerModuleId: `family.${kind}`,
+        };
+      },
+      getDeclarationModel: (resolution) => {
+        const variants = [{
+          id: "Family_0",
+          name: "Family_0",
+          kind,
+          sourceTypeFamily: { exportName: "Family", typeArgumentCount: 0 },
+          members: [],
+        }, {
+          id: "Family_1",
+          name: "Family_1",
+          kind,
+          sourceTypeFamily: { exportName: "Family", typeArgumentCount: 1 },
+          typeParameters: [{ name: "T" }],
+          members: contextKind === "conflicting" ? [{
+            id: "Family_1.value",
+            name: "value",
+            kind: "property" as const,
+            type: { kind: "type-parameter" as const, name: "T" },
+          }] : [],
+        }];
+        return {
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          ...(contextKind === "first" ? {} : {
+            imports: [{
+              moduleSpecifier: "@target/support.js",
+              typeOnly: true,
+              namedImports: [{ exportedName: "Marker" }],
+            }],
+          }),
+          exports: contextKind === "first" ? variants : [...variants].reverse(),
+        };
+      },
+      getTargetIdentity: () => undefined,
+    });
+
+    const first = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/first.ts" });
+    const second = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/second.ts" });
+    const conflicting = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/conflicting.ts" });
+    assert.equal(first.kind, "resolved");
+    assert.equal(second.kind, "resolved");
+    assert.equal(conflicting.kind, "rejected");
+    if (second.kind !== "resolved") {
+      continue;
+    }
+
+    const typeKeyword = kind === "interface" ? "type " : "";
+    assert.match(second.module.virtualSourceText, new RegExp(`import ${typeKeyword}\\{ Family as __TstsProviderCanonical_Family \\}`));
+    assert.match(second.module.virtualSourceText, new RegExp(`export ${typeKeyword}\\{ __TstsProviderCanonical_Family as Family \\}`));
+    assert.equal(second.module.virtualSourceText.includes("__TstsProvider_Family_0"), false);
+    assert.equal(second.module.virtualSourceText.includes("__TstsProvider_Family_1"), false);
+  }
+});
+
+test("provider virtual export ownership composes subset superset overlap and disjoint slices", () => {
+  const specifier = "@target/composed.js";
+  const cases = [
+    { first: ["A", "B"], second: ["B"] },
+    { first: ["B"], second: ["A", "B"] },
+    { first: ["A", "B"], second: ["B", "C"] },
+    { first: ["B", "C"], second: ["A", "B"] },
+    { first: ["A"], second: ["B"] },
+  ] as const;
+
+  for (const entry of cases) {
+    const host = new ExtensionHost({});
+    let pendingExports: readonly string[] = [];
+    host.providers.registerTargetBindingProvider({
+      identity: providerIdentity(`composed-slice-provider-${entry.first.join("")}-${entry.second.join("")}`, "demo", "binding"),
+      ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+      resolveModule: (moduleSpecifier, context) => {
+        pendingExports = (context.importSlice?.requestedExports ?? []).map((request) => request.exportedName).sort();
+        return {
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: "tsts-provider://composed/slices",
+          providerModuleId: "composed.slices",
+        };
+      },
+      getDeclarationModel: (resolution) => ({
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        exports: pendingExports.map((exportName) => ({
+          id: exportName,
+          name: exportName,
+          kind: "class" as const,
+          members: [],
+        })),
+      }),
+      getTargetIdentity: () => undefined,
+    });
+
+    const resolve = (requestedExports: readonly string[]) => host.providers.resolveVirtualModule(specifier, {
+      activeTarget: "demo",
+      importSlice: {
+        moduleSpecifier: specifier,
+        kind: "named",
+        requestedExports: requestedExports.map((exportedName) => ({ exportedName })),
+      },
+    });
+    const first = resolve(entry.first);
+    const second = resolve(entry.second);
+    assert.equal(first.kind, "resolved");
+    assert.equal(second.kind, "resolved");
+    if (first.kind !== "resolved" || second.kind !== "resolved") {
+      continue;
+    }
+
+    const firstExports = new Set(entry.first);
+    for (const exportName of entry.second) {
+      if (firstExports.has(exportName)) {
+        assert.match(second.module.virtualSourceText, new RegExp(`export \\{ __TstsProviderCanonical_${exportName} as ${exportName} \\};`));
+        assert.equal(second.module.virtualSourceText.includes(`export declare class ${exportName}`), false);
+      } else {
+        assert.match(second.module.virtualSourceText, new RegExp(`export declare class ${exportName}`));
+      }
+    }
+    const secondExports = new Set<string>(entry.second);
+    if (entry.first.every((exportName) => !secondExports.has(exportName))) {
+      const combined = [...new Set([...entry.first, ...entry.second])].sort();
+      const third = resolve(combined);
+      assert.equal(third.kind, "resolved");
+      if (third.kind === "resolved") {
+        for (const exportName of combined) {
+          assert.match(third.module.virtualSourceText, new RegExp(`export \\{ __TstsProviderCanonical_${exportName} as ${exportName} \\};`));
+          assert.equal(third.module.virtualSourceText.includes(`export declare class ${exportName}`), false);
+        }
+      }
+    }
+  }
+});
+
+test("provider virtual slices reject conflicting contracts for one public export", () => {
+  const specifier = "@target/conflicting-export.js";
+  const host = new ExtensionHost({});
+  let includeMember = false;
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("conflicting-export-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      includeMember = context.containingFile === "/src/second.ts";
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: "tsts-provider://conflicting/export",
+        providerModuleId: "conflicting.export",
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{
+        id: "Token",
+        name: "Token",
+        kind: "class",
+        members: includeMember ? [{
+          id: "Token.value",
+          name: "value",
+          kind: "property",
+          type: { kind: "number" },
+        }] : [],
+      }],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  const first = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/first.ts" });
+  const conflicting = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/second.ts" });
+
+  assert.equal(first.kind, "resolved");
+  assert.equal(conflicting.kind, "rejected");
+  assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+  assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "INVALID_PROVIDER_DECLARATION_MODEL");
+  assert.match(host.diagnostics.all().at(-1)?.message ?? "", /conflicting declarations for public export '@target\/conflicting-export\.js#Token'/);
+});
+
+test("provider export contracts distinguish text keys from well-known symbol keys", () => {
+  const specifier = "@target/property-key-contract.js";
+  const host = new ExtensionHost({});
+  let useWellKnownSymbol = false;
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("property-key-contract-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      useWellKnownSymbol = context.containingFile === "/src/symbol.ts";
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: "tsts-provider://property-key/contract",
+        providerModuleId: "property-key.contract",
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{
+        id: "Token",
+        name: "Token",
+        kind: "interface",
+        members: [{
+          id: "Token.member",
+          name: useWellKnownSymbol
+            ? { kind: "well-known-symbol", name: "iterator" }
+            : { kind: "string-literal", text: "Symbol.iterator" },
+          kind: "property",
+          type: { kind: "number" },
+        }],
+      }],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  assert.equal(host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/text.ts" }).kind, "resolved");
+  const conflicting = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/symbol.ts" });
+  assert.equal(conflicting.kind, "rejected");
+  assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "INVALID_PROVIDER_DECLARATION_MODEL");
+});
+
+test("provider export contracts normalize negative zero to its rendered numeric literal", () => {
+  const specifier = "@target/negative-zero-contract.js";
+  const host = new ExtensionHost({});
+  let value = -0;
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("negative-zero-contract-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      value = context.containingFile === "/src/negative.ts" ? -0 : 0;
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: "tsts-provider://negative-zero/contract",
+        providerModuleId: "negative-zero.contract",
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{
+        id: "Zero",
+        name: "Zero",
+        kind: "type",
+        type: { kind: "literal", value },
+      }],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  const negative = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/negative.ts" });
+  const positive = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", containingFile: "/src/positive.ts" });
+  assert.equal(negative.kind, "resolved");
+  assert.equal(positive.kind, "resolved");
+  if (negative.kind === "resolved" && positive.kind === "resolved") {
+    assert.equal(negative.module.resolution.virtualFileName, positive.module.resolution.virtualFileName);
+  }
+});
+
+test("rejected provider slices do not reserve virtual file ownership", () => {
+  const firstSpecifier = "@target/rejected-owner.js";
+  const secondSpecifier = "@target/later-owner.js";
+  const rejectedBaseFileName = "tsts-provider://rejected/uncommitted-base";
+  const host = new ExtensionHost({});
+  let conflictingFirstModule = false;
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("transactional-file-owner-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === firstSpecifier || moduleSpecifier === secondSpecifier
+      ? { kind: "owned" }
+      : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      conflictingFirstModule = moduleSpecifier === firstSpecifier && context.containingFile === "/src/rejected.ts";
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: conflictingFirstModule || moduleSpecifier === secondSpecifier
+          ? rejectedBaseFileName
+          : "tsts-provider://rejected/canonical-base",
+        providerModuleId: moduleSpecifier === firstSpecifier ? "rejected.owner" : "later.owner",
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{
+        id: "Token",
+        name: "Token",
+        kind: "class",
+        members: conflictingFirstModule ? [{
+          id: "Token.value",
+          name: "value",
+          kind: "property",
+          type: { kind: "number" },
+        }] : [],
+      }],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  assert.equal(host.providers.resolveVirtualModule(firstSpecifier, { activeTarget: "demo", containingFile: "/src/accepted.ts" }).kind, "resolved");
+  assert.equal(host.providers.resolveVirtualModule(firstSpecifier, { activeTarget: "demo", containingFile: "/src/rejected.ts" }).kind, "rejected");
+  assert.equal(host.providers.resolveVirtualModule(secondSpecifier, { activeTarget: "demo", containingFile: "/src/later.ts" }).kind, "resolved");
+});
+
+test("generated provider slice files cannot be reused as another module base", () => {
+  const slicedSpecifier = "@target/generated-owner.js";
+  const collidingSpecifier = "@target/generated-collision.js";
+  const host = new ExtensionHost({});
+  let generatedFileName = "";
+  let includeMember = false;
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("generated-file-owner-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === slicedSpecifier || moduleSpecifier === collidingSpecifier
+      ? { kind: "owned" }
+      : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      includeMember = moduleSpecifier === slicedSpecifier && context.containingFile === "/src/second.ts";
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: moduleSpecifier === collidingSpecifier ? generatedFileName : "tsts-provider://generated/owner",
+        providerModuleId: moduleSpecifier === slicedSpecifier ? "generated.owner" : "generated.collision",
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      ...(includeMember ? {
+        imports: [{
+          moduleSpecifier: "@target/dependency.js",
+          typeOnly: true,
+          namedImports: [{ exportedName: "Marker" }],
+        }],
+      } : {}),
+      exports: [{ id: "Token", name: "Token", kind: "class", members: [] }],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  assert.equal(host.providers.resolveVirtualModule(slicedSpecifier, { activeTarget: "demo", containingFile: "/src/first.ts" }).kind, "resolved");
+  const second = host.providers.resolveVirtualModule(slicedSpecifier, { activeTarget: "demo", containingFile: "/src/second.ts" });
+  assert.equal(second.kind, "resolved");
+  if (second.kind !== "resolved") {
+    return;
+  }
+  generatedFileName = second.module.resolution.virtualFileName;
+  assert.match(generatedFileName, /#tsts-slice-/);
+  const colliding = host.providers.resolveVirtualModule(collidingSpecifier, { activeTarget: "demo", containingFile: "/src/collision.ts" });
+  assert.equal(colliding.kind, "rejected");
+  assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "INVALID_PROVIDER_MODULE_RESOLUTION");
+});
+
+test("provider slice allocation disambiguates a generated name already owned as a base", () => {
+  const slicedSpecifier = "@target/preoccupied-generated.js";
+  const occupyingSpecifier = "@target/preoccupied-base.js";
+  const createHost = (occupiedFileName: string | undefined) => {
+    const host = new ExtensionHost({});
+    let includeDependency = false;
+    host.providers.registerTargetBindingProvider({
+      identity: providerIdentity("preoccupied-generated-file-provider", "demo", "binding"),
+      ownsModule: (moduleSpecifier) => moduleSpecifier === slicedSpecifier || moduleSpecifier === occupyingSpecifier
+        ? { kind: "owned" }
+        : { kind: "unowned" },
+      resolveModule: (moduleSpecifier, context) => {
+        includeDependency = moduleSpecifier === slicedSpecifier && context.containingFile === "/src/second.ts";
+        return {
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: moduleSpecifier === occupyingSpecifier
+            ? occupiedFileName ?? "tsts-provider://unused/probe-occupier"
+            : "tsts-provider://preoccupied/generated-owner",
+          providerModuleId: moduleSpecifier === slicedSpecifier ? "preoccupied.generated.owner" : "preoccupied.base.owner",
+        };
+      },
+      getDeclarationModel: (resolution) => ({
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        ...(includeDependency ? {
+          imports: [{
+            moduleSpecifier: "@target/dependency.js",
+            typeOnly: true,
+            namedImports: [{ exportedName: "Marker" }],
+          }],
+        } : {}),
+        exports: [{ id: "Token", name: "Token", kind: "class", members: [] }],
+      }),
+      getTargetIdentity: () => undefined,
+    });
+    return host;
+  };
+
+  const probe = createHost(undefined);
+  assert.equal(probe.providers.resolveVirtualModule(slicedSpecifier, { activeTarget: "demo", containingFile: "/src/first.ts" }).kind, "resolved");
+  const probeSecond = probe.providers.resolveVirtualModule(slicedSpecifier, { activeTarget: "demo", containingFile: "/src/second.ts" });
+  assert.equal(probeSecond.kind, "resolved");
+  if (probeSecond.kind !== "resolved") {
+    return;
+  }
+  const occupiedFileName = probeSecond.module.resolution.virtualFileName;
+  assert.match(occupiedFileName, /#tsts-slice-/);
+
+  const host = createHost(occupiedFileName);
+  assert.equal(host.providers.resolveVirtualModule(occupyingSpecifier, { activeTarget: "demo", containingFile: "/src/occupier.ts" }).kind, "resolved");
+  assert.equal(host.providers.resolveVirtualModule(slicedSpecifier, { activeTarget: "demo", containingFile: "/src/first.ts" }).kind, "resolved");
+  const second = host.providers.resolveVirtualModule(slicedSpecifier, { activeTarget: "demo", containingFile: "/src/second.ts" });
+  assert.equal(second.kind, "resolved");
+  if (second.kind === "resolved") {
+    assert.notEqual(second.module.resolution.virtualFileName, occupiedFileName);
+    assert.match(second.module.resolution.virtualFileName, /#tsts-slice-[a-z0-9]+-2$/);
+  }
 });
 
 test("provider virtual base file names cannot represent multiple public module identities", () => {

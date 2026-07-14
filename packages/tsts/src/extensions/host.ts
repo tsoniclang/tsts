@@ -23,6 +23,7 @@ import { ExtensionObservationPoint } from "./observations.js";
 import type { ArgumentPassingMode } from "./argument-passing.js";
 import { isArgumentPassingMode } from "./argument-passing.js";
 import type { SourcePrimitiveKind } from "./facts.js";
+import { getProviderExportContractKeyMap } from "./provider-export-contract.js";
 
 export interface ExtensionEvidence {
   readonly message: string;
@@ -750,10 +751,9 @@ export class ProviderRegistry {
   readonly #virtualModules = new Map<string, ProviderResolvedModule>();
   readonly #virtualModulesByFileName = new Map<string, ProviderResolvedModule>();
   readonly #virtualDocumentsByUri = new Map<string, ProviderVirtualDeclarationDocument>();
-  readonly #virtualSourceVariantsByBaseFileName = new Map<string, { readonly sourceText: string; readonly fileName: string }[]>();
-  readonly #virtualBaseFileIdentities = new Map<string, string>();
-  readonly #canonicalExportsByBaseFileName = new Map<string, Map<string, string>>();
-  readonly #renderedExportSetsByBaseFileName = new Map<string, Set<string>>();
+  readonly #virtualSourceVariantsByModuleIdentity = new Map<string, { readonly sourceText: string; readonly fileName: string }[]>();
+  readonly #virtualFileIdentities = new Map<string, string>();
+  readonly #canonicalExportsByModuleIdentity = new Map<string, Map<string, ProviderCanonicalExport>>();
 
   constructor(diagnostics: ExtensionDiagnosticStore, requiredProviderModules: readonly RequiredProviderModuleSpec[] = []) {
     this.#diagnostics = diagnostics;
@@ -917,16 +917,27 @@ export class ProviderRegistry {
       this.#diagnostics.append(diagnostic);
       return { kind: "rejected", diagnostic };
     }
-    const virtualBaseFileDiagnostic = this.#validateVirtualBaseFileIdentity(owner.provider.identity, resolution, declarationModel);
-    if (virtualBaseFileDiagnostic !== undefined) {
-      this.#diagnostics.append(virtualBaseFileDiagnostic);
-      return { kind: "rejected", diagnostic: virtualBaseFileDiagnostic };
+    const virtualModuleIdentity = getProviderVirtualModuleIdentity(owner.provider.identity, resolution, declarationModel);
+    const virtualFileDiagnostic = this.#validateVirtualFileIdentity(resolution.virtualFileName, virtualModuleIdentity);
+    if (virtualFileDiagnostic !== undefined) {
+      this.#diagnostics.append(virtualFileDiagnostic);
+      return { kind: "rejected", diagnostic: virtualFileDiagnostic };
+    }
+    const canonicalExportDiagnostic = this.#validateCanonicalExportContracts(owner.provider.identity, virtualModuleIdentity, declarationModel);
+    if (canonicalExportDiagnostic !== undefined) {
+      this.#diagnostics.append(canonicalExportDiagnostic);
+      return { kind: "rejected", diagnostic: canonicalExportDiagnostic };
     }
 
-    const canonicalExports = this.#getCanonicalExportsForRender(resolution.virtualFileName, declarationModel);
-    const virtualSourceText = renderProviderDeclarationModel(declarationModel, { canonicalExports });
-    const effectiveVirtualFileName = this.#getEffectiveVirtualFileName(resolution.virtualFileName, virtualSourceText, cacheKey);
-    this.#recordCanonicalExports(resolution.virtualFileName, declarationModel, effectiveVirtualFileName, canonicalExports);
+    const directVirtualSourceText = renderProviderDeclarationModel(declarationModel);
+    const canonicalExports = this.#getCanonicalExportsForRender(virtualModuleIdentity, declarationModel, directVirtualSourceText);
+    const virtualSourceText = canonicalExports.size === 0
+      ? directVirtualSourceText
+      : renderProviderDeclarationModel(declarationModel, { canonicalExports });
+    const effectiveVirtualFileName = this.#getEffectiveVirtualFileName(virtualModuleIdentity, resolution.virtualFileName, virtualSourceText, cacheKey);
+    this.#recordVirtualFileIdentity(resolution.virtualFileName, virtualModuleIdentity);
+    this.#recordVirtualFileIdentity(effectiveVirtualFileName, virtualModuleIdentity);
+    this.#recordCanonicalExports(virtualModuleIdentity, declarationModel, effectiveVirtualFileName, canonicalExports);
     const effectiveResolution = effectiveVirtualFileName === resolution.virtualFileName
       ? resolution
       : { ...resolution, virtualFileName: effectiveVirtualFileName };
@@ -959,74 +970,97 @@ export class ProviderRegistry {
     return { kind: "resolved", module };
   }
 
-  #getEffectiveVirtualFileName(baseFileName: string, sourceText: string, cacheKey: string): string {
-    const variants = this.#virtualSourceVariantsByBaseFileName.get(baseFileName) ?? [];
+  #getEffectiveVirtualFileName(moduleIdentity: string, baseFileName: string, sourceText: string, cacheKey: string): string {
+    const variants = this.#virtualSourceVariantsByModuleIdentity.get(moduleIdentity) ?? [];
     const existing = variants.find((variant) => variant.sourceText === sourceText);
     if (existing !== undefined) {
       return existing.fileName;
     }
     const fileName = variants.length === 0
       ? baseFileName
-      : getProviderVirtualSliceFileName(baseFileName, cacheKey, variants);
+      : getProviderVirtualSliceFileName(baseFileName, cacheKey, (candidate) =>
+        variants.some((variant) => variant.fileName === candidate)
+        || this.#virtualFileIdentities.has(candidate)
+        || this.#virtualModulesByFileName.has(candidate)
+        || this.#virtualDocumentsByUri.has(candidate));
     variants.push({ sourceText, fileName });
-    this.#virtualSourceVariantsByBaseFileName.set(baseFileName, variants);
+    this.#virtualSourceVariantsByModuleIdentity.set(moduleIdentity, variants);
     return fileName;
   }
 
-  #getCanonicalExportsForRender(baseFileName: string, declarationModel: ProviderDeclarationModel): ReadonlyMap<string, string> {
-    const canonicalExports = this.#canonicalExportsByBaseFileName.get(baseFileName);
+  #getCanonicalExportsForRender(moduleIdentity: string, declarationModel: ProviderDeclarationModel, directSourceText: string): ReadonlyMap<string, ProviderCanonicalExport> {
+    if (this.#virtualSourceVariantsByModuleIdentity.get(moduleIdentity)?.some((variant) => variant.sourceText === directSourceText) === true) {
+      return new Map();
+    }
+    const canonicalExports = this.#canonicalExportsByModuleIdentity.get(moduleIdentity);
     if (canonicalExports === undefined || canonicalExports.size === 0) {
       return new Map();
     }
     const exportNames = getProviderDeclarationModelExportNames(declarationModel);
-    if (exportNames.every((exportName) => canonicalExports.has(exportName))
-      && this.#renderedExportSetsByBaseFileName.get(baseFileName)?.has(getProviderExportSetKey(exportNames)) === true) {
-      return new Map();
-    }
     const exportNameSet = new Set(exportNames);
     return new Map([...canonicalExports].filter(([exportName]) => exportNameSet.has(exportName)));
   }
 
-  #recordCanonicalExports(baseFileName: string, declarationModel: ProviderDeclarationModel, effectiveVirtualFileName: string, canonicalizedExports: ReadonlyMap<string, string>): void {
-    let canonicalExports = this.#canonicalExportsByBaseFileName.get(baseFileName);
+  #recordCanonicalExports(moduleIdentity: string, declarationModel: ProviderDeclarationModel, effectiveVirtualFileName: string, canonicalizedExports: ReadonlyMap<string, ProviderCanonicalExport>): void {
+    let canonicalExports = this.#canonicalExportsByModuleIdentity.get(moduleIdentity);
     if (canonicalExports === undefined) {
       canonicalExports = new Map();
-      this.#canonicalExportsByBaseFileName.set(baseFileName, canonicalExports);
+      this.#canonicalExportsByModuleIdentity.set(moduleIdentity, canonicalExports);
     }
-    const exportNames = getProviderDeclarationModelExportNames(declarationModel);
-    if (canonicalizedExports.size === 0) {
-      const renderedExportSets = this.#renderedExportSetsByBaseFileName.get(baseFileName) ?? new Set<string>();
-      renderedExportSets.add(getProviderExportSetKey(exportNames));
-      this.#renderedExportSetsByBaseFileName.set(baseFileName, renderedExportSets);
-    }
-    for (const declaration of declarationModel.exports) {
-      const exportName = getProviderSourceExportName(declaration);
+    const contractKeys = getProviderExportContractKeyMap(declarationModel.exports);
+    for (const [exportName, typeOnly] of getProviderExportTypeOnlyMap(declarationModel.exports)) {
       if (!canonicalizedExports.has(exportName) && !canonicalExports.has(exportName)) {
-        canonicalExports.set(exportName, effectiveVirtualFileName);
+        canonicalExports.set(exportName, { fileName: effectiveVirtualFileName, typeOnly, contractKey: contractKeys.get(exportName)! });
       }
     }
   }
 
-  #validateVirtualBaseFileIdentity(provider: ProviderIdentity, resolution: ProviderModuleResolution, declarationModel: ProviderDeclarationModel): ExtensionDiagnostic | undefined {
-    const identity = getProviderVirtualBaseFileIdentity(provider, resolution, declarationModel);
-    const existing = this.#virtualBaseFileIdentities.get(resolution.virtualFileName);
-    if (existing === undefined) {
-      this.#virtualBaseFileIdentities.set(resolution.virtualFileName, identity);
+  #validateCanonicalExportContracts(provider: ProviderIdentity, moduleIdentity: string, declarationModel: ProviderDeclarationModel): ExtensionDiagnostic | undefined {
+    const canonicalExports = this.#canonicalExportsByModuleIdentity.get(moduleIdentity);
+    if (canonicalExports === undefined || canonicalExports.size === 0) {
       return undefined;
     }
-    if (existing === identity) {
+    const incomingContracts = getProviderExportContractKeyMap(declarationModel.exports);
+    for (const [exportName, incomingContract] of incomingContracts) {
+      const canonicalExport = canonicalExports.get(exportName);
+      if (canonicalExport === undefined || canonicalExport.contractKey === incomingContract) {
+        continue;
+      }
+      return createHostDiagnostic({
+        extensionCode: "INVALID_PROVIDER_DECLARATION_MODEL",
+        numericCode: ExtensionHostDiagnosticCode.invalidProviderDeclaration,
+        message: `Provider '${provider.id}' returned conflicting declarations for public export '${declarationModel.moduleSpecifier}#${exportName}'.`,
+        evidence: [
+          { message: "Canonical export contract", details: canonicalExport.contractKey },
+          { message: "Incoming export contract", details: incomingContract },
+        ],
+        identity: `provider-export-contract-conflict:${provider.id}:${declarationModel.moduleSpecifier}:${exportName}:${getStableProviderVirtualSliceSuffix(`${canonicalExport.contractKey}\0${incomingContract}`)}`,
+      });
+    }
+    return undefined;
+  }
+
+  #validateVirtualFileIdentity(fileName: string, moduleIdentity: string): ExtensionDiagnostic | undefined {
+    const existing = this.#virtualFileIdentities.get(fileName);
+    if (existing === undefined || existing === moduleIdentity) {
       return undefined;
     }
     return createHostDiagnostic({
       extensionCode: "INVALID_PROVIDER_MODULE_RESOLUTION",
       numericCode: ExtensionHostDiagnosticCode.providerResolutionFailed,
-      message: `Provider virtual base file '${resolution.virtualFileName}' is used for multiple public provider module identities.`,
+      message: `Provider virtual file '${fileName}' is used for multiple public provider module identities.`,
       evidence: [
-        { message: "Existing virtual base identity", details: existing },
-        { message: "Incoming virtual base identity", details: identity },
+        { message: "Existing virtual file identity", details: existing },
+        { message: "Incoming virtual file identity", details: moduleIdentity },
       ],
-      identity: `provider-virtual-base-conflict:${resolution.virtualFileName}:${existing}:${identity}`,
+      identity: `provider-virtual-file-conflict:${fileName}:${existing}:${moduleIdentity}`,
     });
+  }
+
+  #recordVirtualFileIdentity(fileName: string, moduleIdentity: string): void {
+    if (!this.#virtualFileIdentities.has(fileName)) {
+      this.#virtualFileIdentities.set(fileName, moduleIdentity);
+    }
   }
 
   getVirtualModuleByFileName(fileName: string): ProviderResolvedModule | undefined {
@@ -1765,31 +1799,32 @@ function getProviderResolveCacheKey(identity: ProviderIdentity, specifier: strin
   ].join("\0");
 }
 
-function getProviderVirtualBaseFileIdentity(provider: ProviderIdentity, resolution: ProviderModuleResolution, declarationModel: ProviderDeclarationModel): string {
-  return [
+function getProviderVirtualModuleIdentity(provider: ProviderIdentity, resolution: ProviderModuleResolution, declarationModel: ProviderDeclarationModel): string {
+  return JSON.stringify([
     provider.id,
     provider.version,
     provider.target,
     provider.extensionContractVersion,
+    provider.providerKind ?? "binding",
     provider.configHash ?? "",
     resolution.moduleSpecifier,
     declarationModel.moduleSpecifier,
-  ].join("\0");
+    resolution.providerModuleId,
+    declarationModel.providerModuleId,
+    resolution.packageName ?? "",
+    resolution.packageVersion ?? "",
+  ]);
 }
 
 function getProviderDeclarationModelExportNames(model: ProviderDeclarationModel): readonly string[] {
   return [...new Set(model.exports.map(getProviderSourceExportName))].sort();
 }
 
-function getProviderExportSetKey(exportNames: readonly string[]): string {
-  return [...exportNames].sort().join("\0");
-}
-
-function getProviderVirtualSliceFileName(baseFileName: string, cacheKey: string, variants: readonly { readonly fileName: string }[]): string {
+function getProviderVirtualSliceFileName(baseFileName: string, cacheKey: string, isUnavailable: (candidate: string) => boolean): string {
   const suffix = getStableProviderVirtualSliceSuffix(cacheKey);
   let candidate = `${baseFileName}#tsts-slice-${suffix}`;
   let disambiguator = 1;
-  while (variants.some((variant) => variant.fileName === candidate)) {
+  while (isUnavailable(candidate)) {
     disambiguator += 1;
     candidate = `${baseFileName}#tsts-slice-${suffix}-${disambiguator}`;
   }
@@ -1806,7 +1841,13 @@ function getStableProviderVirtualSliceSuffix(value: string): string {
 }
 
 interface ProviderDeclarationRenderOptions {
-  readonly canonicalExports?: ReadonlyMap<string, string>;
+  readonly canonicalExports?: ReadonlyMap<string, ProviderCanonicalExport>;
+}
+
+interface ProviderCanonicalExport {
+  readonly fileName: string;
+  readonly typeOnly: boolean;
+  readonly contractKey: string;
 }
 
 function renderProviderDeclarationModel(model: ProviderDeclarationModel, options: ProviderDeclarationRenderOptions = {}): string {
@@ -1819,15 +1860,16 @@ function renderProviderDeclarationModel(model: ProviderDeclarationModel, options
   const renderContext: ProviderRenderContext = {
     moduleSpecifier: model.moduleSpecifier,
     canonicalLocalNameByExportName,
+    localDeclarationNameByExportName: getProviderLocalDeclarationNameByExportName(model.exports),
     typeFamilyVariantByProviderRefKey: getProviderTypeFamilyVariantExportMap(model.moduleSpecifier, typeFamilyGroups),
   };
   for (const importDeclaration of model.imports ?? []) {
     lines.push(renderProviderImportDeclaration(importDeclaration));
   }
   for (const [exportName, localName] of canonicalLocalNameByExportName) {
-    const canonicalFileName = options.canonicalExports?.get(exportName);
-    if (canonicalFileName !== undefined) {
-      lines.push(`import { ${exportName} as ${localName} } from ${JSON.stringify(canonicalFileName)};`);
+    const canonicalExport = options.canonicalExports?.get(exportName);
+    if (canonicalExport !== undefined) {
+      lines.push(`import ${canonicalExport.typeOnly ? "type " : ""}{ ${exportName} as ${localName} } from ${JSON.stringify(canonicalExport.fileName)};`);
     }
   }
   if (typeFamilyGroups.size > 0) {
@@ -1841,7 +1883,8 @@ function renderProviderDeclarationModel(model: ProviderDeclarationModel, options
     const canonicalLocalName = canonicalLocalNameByExportName.get(exportName);
     if (canonicalLocalName !== undefined) {
       if (!renderedCanonicalExports.has(exportName)) {
-        lines.push(`export { ${canonicalLocalName} as ${exportName} };`);
+        const canonicalExport = options.canonicalExports?.get(exportName);
+        lines.push(`export ${canonicalExport?.typeOnly === true ? "type " : ""}{ ${canonicalLocalName} as ${exportName} };`);
         renderedCanonicalExports.add(exportName);
       }
       continue;
@@ -1883,6 +1926,7 @@ function renderProviderImportDeclaration(declaration: ProviderImportDeclaration)
 interface ProviderRenderContext {
   readonly moduleSpecifier: string;
   readonly canonicalLocalNameByExportName: ReadonlyMap<string, string>;
+  readonly localDeclarationNameByExportName: ReadonlyMap<string, string>;
   readonly typeFamilyVariantByProviderRefKey: ReadonlyMap<string, ProviderExportDeclaration>;
 }
 
@@ -1899,8 +1943,24 @@ interface ProviderExportRenderOptions {
 const providerTypeFamilyDefaultValueName = "__tstsProviderTypeFamilyDefault";
 const providerTypeFamilyDefaultTypeName = "__TstsProviderTypeFamilyDefault";
 
-function getProviderCanonicalExportLocalNameMap(canonicalExports: ReadonlyMap<string, string>): ReadonlyMap<string, string> {
+function getProviderCanonicalExportLocalNameMap(canonicalExports: ReadonlyMap<string, ProviderCanonicalExport>): ReadonlyMap<string, string> {
   return new Map([...canonicalExports.keys()].map((exportName) => [exportName, getProviderCanonicalExportLocalName(exportName)]));
+}
+
+function getProviderExportTypeOnlyMap(exports: readonly ProviderExportDeclaration[]): ReadonlyMap<string, boolean> {
+  const result = new Map<string, boolean>();
+  const typeFamilies = collectProviderTypeFamilyRenderGroups(exports);
+  for (const declaration of exports) {
+    const exportName = getProviderSourceExportName(declaration);
+    if (result.has(exportName)) {
+      continue;
+    }
+    const typeOnly = declaration.sourceTypeFamily === undefined
+      ? declaration.kind === "interface" || declaration.kind === "type"
+      : typeFamilies.get(exportName)?.variants.every((variant) => variant.kind === "class") !== true;
+    result.set(exportName, typeOnly);
+  }
+  return result;
 }
 
 function getProviderCanonicalExportLocalName(exportName: string): string {
@@ -1967,12 +2027,7 @@ function renderProviderTypeFamilyDeclaration(group: ProviderTypeFamilyRenderGrou
   const minArity = variants[0]!.sourceTypeFamily!.typeArgumentCount;
   const maxArity = maxVariant.sourceTypeFamily!.typeArgumentCount;
   const maxTypeParameters = maxVariant.typeParameters ?? [];
-  const variantDeclarations = variants.map((variant) =>
-    renderProviderExportDeclaration(variant, context, {
-      localName: getProviderTypeFamilyVariantLocalName(variant),
-      localOnly: true,
-    })
-  );
+  const variantDeclarations = renderProviderTypeFamilyLocalVariants({ ...group, variants }, context);
   const familyTypeParameters = maxArity === 0
     ? ""
     : `<${maxTypeParameters.map((parameter, index) => {
@@ -1983,7 +2038,16 @@ function renderProviderTypeFamilyDeclaration(group: ProviderTypeFamilyRenderGrou
     }).join(", ")}>`;
   const aliasType = renderProviderTypeFamilyAliasType(variants, maxTypeParameters);
   const valueExport = renderProviderTypeFamilyValueExport(group.exportName, variants);
-  return `${variantDeclarations.join("\n")}\nexport type ${group.exportName}${familyTypeParameters} = ${aliasType};${valueExport}`;
+  return `${variantDeclarations}\nexport type ${group.exportName}${familyTypeParameters} = ${aliasType};${valueExport}`;
+}
+
+function renderProviderTypeFamilyLocalVariants(group: ProviderTypeFamilyRenderGroup, context: ProviderRenderContext): string {
+  return group.variants.map((variant) =>
+    renderProviderExportDeclaration(variant, context, {
+      localName: getProviderTypeFamilyVariantLocalName(variant),
+      localOnly: true,
+    })
+  ).join("\n");
 }
 
 function renderProviderTypeFamilyValueExport(exportName: string, variants: readonly ProviderExportDeclaration[]): string {
@@ -2209,15 +2273,23 @@ function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parent
     case "literal":
       return type.value === null ? "null" : JSON.stringify(type.value);
     case "provider-ref":
-      const familyVariant = context.typeFamilyVariantByProviderRefKey.get(getProviderRefKey(type.moduleSpecifier, type.exportName));
-      const family = familyVariant?.sourceTypeFamily;
       const typeArgumentCount = type.typeArguments?.length ?? 0;
-      const canonicalLocalName = type.moduleSpecifier === context.moduleSpecifier
+      const familyVariant = context.typeFamilyVariantByProviderRefKey.get(getProviderRefKey(type.moduleSpecifier, type.exportName, typeArgumentCount));
+      const family = familyVariant?.sourceTypeFamily;
+      const sameModule = type.moduleSpecifier === context.moduleSpecifier;
+      const canonicalLocalName = sameModule
         ? context.canonicalLocalNameByExportName.get(family?.exportName ?? type.exportName)
         : undefined;
-      const providerRefName = type.namespaceImport === undefined
-        ? type.localName ?? canonicalLocalName ?? renderProviderRefIdentifier(type.exportName, familyVariant, typeArgumentCount, options)
-        : `${type.namespaceImport}.${type.exportName}`;
+      const providerRefName = sameModule
+        ? options.providerRefPosition === "value-heritage" && familyVariant !== undefined && canonicalLocalName === undefined
+          ? getProviderTypeFamilyVariantLocalName(familyVariant)
+          : canonicalLocalName
+            ?? (familyVariant === undefined
+              ? context.localDeclarationNameByExportName.get(type.exportName) ?? type.exportName
+              : renderProviderRefIdentifier(type.exportName, familyVariant, typeArgumentCount, options))
+        : type.namespaceImport === undefined
+          ? type.localName ?? type.exportName
+          : `${type.namespaceImport}.${type.exportName}`;
       return type.typeArguments === undefined || type.typeArguments.length === 0
         ? providerRefName
         : `${providerRefName}<${type.typeArguments.map((typeArgument) => renderProviderTypeExpression(typeArgument, context)).join(", ")}>`;
@@ -2272,14 +2344,22 @@ function getProviderTypeFamilyVariantExportMap(moduleSpecifier: string, groups: 
   const variants = new Map<string, ProviderExportDeclaration>();
   for (const group of groups.values()) {
     for (const variant of group.variants) {
-      variants.set(getProviderRefKey(moduleSpecifier, getProviderExportName(variant)), variant);
+      const typeArgumentCount = variant.sourceTypeFamily!.typeArgumentCount;
+      variants.set(getProviderRefKey(moduleSpecifier, getProviderExportName(variant), typeArgumentCount), variant);
+      variants.set(getProviderRefKey(moduleSpecifier, group.exportName, typeArgumentCount), variant);
     }
   }
   return variants;
 }
 
-function getProviderRefKey(moduleSpecifier: string, exportName: string): string {
-  return `${moduleSpecifier}\0${exportName}`;
+function getProviderLocalDeclarationNameByExportName(exports: readonly ProviderExportDeclaration[]): ReadonlyMap<string, string> {
+  return new Map(exports
+    .filter((declaration) => declaration.sourceTypeFamily === undefined)
+    .map((declaration) => [getProviderExportName(declaration), declaration.name]));
+}
+
+function getProviderRefKey(moduleSpecifier: string, exportName: string, typeArgumentCount: number): string {
+  return `${moduleSpecifier}\0${exportName}\0${typeArgumentCount}`;
 }
 
 function getProviderTypeFamilyVariantLocalName(declaration: ProviderExportDeclaration): string {
@@ -2476,6 +2556,9 @@ function isValidProviderTypeFamilyDeclarations(exports: readonly ProviderExportD
       return false;
     }
     publicExports.add(familyName);
+    if (variants.some((variant) => variant.kind === "class") && !variants.every((variant) => variant.kind === "class")) {
+      return false;
+    }
     const arities = variants.map((variant) => variant.sourceTypeFamily!.typeArgumentCount).sort((left, right) => left - right);
     const generatedLocalNames = variants.map(getProviderTypeFamilyVariantLocalName);
     if (generatedLocalNames.some((name) => localNames.has(name) || importLocalNames.has(name) || reservedLocalNames.has(name))) {
@@ -2632,7 +2715,7 @@ function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
         && isValidProviderTypeExpression(value.returnType)
         && (value.typeParameters ?? []).every(isValidProviderTypeParameterDeclaration);
     case "literal":
-      return true;
+      return typeof value.value !== "number" || Number.isFinite(value.value);
     case "provider-ref":
       return value.moduleSpecifier.length > 0
         && (isIdentifierText(value.exportName) || value.exportName === "default")

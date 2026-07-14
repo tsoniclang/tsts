@@ -9,6 +9,7 @@ import { Node_Arguments, Node_Locals, Node_Members, Node_ModifierFlags, Node_Sym
 import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_End, Node_ForEachChild, Node_Name, Node_Pos } from "../internal/ast/spine.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
+import { SymbolFlagsAlias } from "../internal/ast/symbolflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
@@ -31,6 +32,7 @@ import {
   Program_GetTypeCheckerForFile,
 } from "../internal/compiler/program.js";
 import { Checker_isTypeIdenticalTo } from "../internal/checker/relater.js";
+import { Checker_GetAliasedSymbol } from "../internal/checker/checker/symbols.js";
 import { ResolvedModuleExtensionProviderVirtual, ResolvedModule_IsProviderVirtual } from "../internal/module/types.js";
 import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
@@ -583,8 +585,10 @@ test("provider virtual module dependency slices preserve public export identity 
     `],
     ["/src/again.ts", `
       import { Token } from "@acme/public/reflection.js";
+      import { Base } from "@acme/public/core.js";
 
-      declare const token: Token;
+      declare const base: Base;
+      const token: Token = base.make();
       token;
     `],
     ["/src/tsconfig.json", JSON.stringify({
@@ -621,31 +625,356 @@ test("provider virtual module dependency slices preserve public export identity 
 
   const reflectionFiles = Program_GetSourceFiles(program).filter((file) =>
     SourceFile_FileName(file).startsWith("tsts-provider://acme/public-reflection"));
-  assert.equal(reflectionFiles.length, 2);
-  const fullReflectionFile = reflectionFiles.find((file) => SourceFile_Text(file).includes("enum Token") && SourceFile_Text(file).includes("class Derived"));
-  const aliasReflectionFile = reflectionFiles.find((file) => SourceFile_Text(file).includes("export { __TstsProviderCanonical_Token as Token };"));
+  assert.equal(reflectionFiles.length, 3);
+  const fullReflectionFile = reflectionFiles.find((file) => SourceFile_Text(file).includes("class TokenImplementation") && SourceFile_Text(file).includes("class Derived"));
+  const aliasReflectionFiles = reflectionFiles.filter((file) => SourceFile_Text(file).includes("export { __TstsProviderCanonical_Token as Token };"));
   assert.ok(fullReflectionFile !== undefined);
-  assert.ok(aliasReflectionFile !== undefined);
-  assert.equal(SourceFile_Text(aliasReflectionFile).includes("enum Token"), false);
+  assert.equal(aliasReflectionFiles.length, 2);
+  assert.ok(aliasReflectionFiles.some((file) => SourceFile_Text(file).includes("Marker")));
+  assert.equal(aliasReflectionFiles.some((file) => SourceFile_Text(file).includes("class TokenImplementation")), false);
+  assert.ok(aliasReflectionFiles.every((file) => SourceFile_Text(file).includes("export type { __TstsProviderCanonical_Descriptor as Descriptor };")));
 
   Program_BindSourceFiles(program);
   const fullReflectionSymbol = Node_Symbol(fullReflectionFile as never);
-  const aliasReflectionSymbol = Node_Symbol(aliasReflectionFile as never);
-  assert.ok(fullReflectionSymbol?.Exports?.get("Token") !== undefined);
-  assert.ok(aliasReflectionSymbol?.Exports?.get("Token") !== undefined);
+  const canonicalSymbols = new Map(["Token", "Member", "Flags", "Descriptor"].map((exportName) => [exportName, fullReflectionSymbol?.Exports?.get(exportName)]));
+  for (const [exportName, canonicalSymbol] of canonicalSymbols) {
+    assert.ok(canonicalSymbol !== undefined);
+    assert.equal(extended.extensionHost.facts.get(canonicalSymbol, canonicalIdentityFactKey)?.id, `acme.public.Reflection::${exportName}`);
+  }
+  assert.notEqual(canonicalSymbols.get("Token"), canonicalSymbols.get("Member"));
+  assert.notEqual(canonicalSymbols.get("Token"), canonicalSymbols.get("Flags"));
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), sourceFile);
+  try {
+    for (const aliasReflectionFile of aliasReflectionFiles) {
+      const aliasModuleSymbol = Node_Symbol(aliasReflectionFile as never);
+      for (const [exportName, canonicalSymbol] of canonicalSymbols) {
+        const aliasSymbol = aliasModuleSymbol?.Exports?.get(exportName);
+        assert.ok(canonicalSymbol !== undefined);
+        assert.ok(aliasSymbol !== undefined);
+        const canonicalTarget = (canonicalSymbol.Flags & SymbolFlagsAlias) !== 0
+          ? Checker_GetAliasedSymbol(checker, canonicalSymbol)
+          : canonicalSymbol;
+        assert.ok(Checker_GetAliasedSymbol(checker, aliasSymbol) === canonicalTarget, exportName);
+      }
+    }
+  } finally {
+    done();
+  }
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
+test("provider virtual public export identity is independent of dependency-first slice order", () => {
+  const reflectionResolutionContexts: string[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { Base } from "@acme/public/core.js";
+
+      declare const base: Base;
+      base.make();
+    `],
+    ["/src/reflection.ts", `
+      import { Token } from "@acme/public/reflection.js";
+
+      declare const token: Token;
+      token;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+        verbatimModuleSyntax: true,
+      },
+      files: ["index.ts", "reflection.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [publicProviderSliceIdentityProviderExtension(reflectionResolutionContexts)],
+  });
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  const reflectionSourceFile = Program_GetSourceFile(program, "/src/reflection.ts");
+  assert.ok(sourceFile !== undefined);
+  assert.ok(reflectionSourceFile !== undefined);
+  assertCleanProgram(program, sourceFile);
+  assertCleanProgram(program, reflectionSourceFile);
+  assert.match(reflectionResolutionContexts[0] ?? "", /^tsts-provider:\/\/acme\/public-core/);
+
+  const reflectionFiles = Program_GetSourceFiles(program).filter((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/public-reflection"));
+  assert.equal(reflectionFiles.length, 2);
+  const fullReflectionFile = reflectionFiles.find((file) => SourceFile_Text(file).includes("class TokenImplementation"));
+  const aliasReflectionFile = reflectionFiles.find((file) => SourceFile_Text(file).includes("export { __TstsProviderCanonical_Token as Token };"));
+  assert.ok(fullReflectionFile !== undefined);
+  assert.ok(aliasReflectionFile !== undefined);
+  assert.equal(SourceFile_Text(fullReflectionFile).includes("Marker"), false);
+  assert.ok(SourceFile_Text(aliasReflectionFile).includes("Marker"));
+  assert.equal(SourceFile_Text(aliasReflectionFile).includes("class TokenImplementation"), false);
+  assert.ok(SourceFile_Text(aliasReflectionFile).includes("export type { __TstsProviderCanonical_Descriptor as Descriptor };"));
+
+  Program_BindSourceFiles(program);
+  const canonicalModuleSymbol = Node_Symbol(fullReflectionFile as never);
+  const aliasModuleSymbol = Node_Symbol(aliasReflectionFile as never);
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), sourceFile);
+  try {
+    for (const exportName of ["Token", "Member", "Flags", "Descriptor"]) {
+      const canonicalSymbol = canonicalModuleSymbol?.Exports?.get(exportName);
+      const aliasSymbol = aliasModuleSymbol?.Exports?.get(exportName);
+      assert.ok(canonicalSymbol !== undefined);
+      assert.ok(aliasSymbol !== undefined);
+      const canonicalTarget = (canonicalSymbol.Flags & SymbolFlagsAlias) !== 0
+        ? Checker_GetAliasedSymbol(checker, canonicalSymbol)
+        : canonicalSymbol;
+      assert.ok(Checker_GetAliasedSymbol(checker, aliasSymbol) === canonicalTarget, exportName);
+    }
+  } finally {
+    done();
+  }
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
+test("provider virtual public export identity is independent of direct-first slice order", () => {
+  const reflectionResolutionContexts: string[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/reflection.ts", `
+      import { Token } from "@acme/public/reflection.js";
+
+      declare const token: Token;
+      token;
+    `],
+    ["/src/index.ts", `
+      import { Base } from "@acme/public/core.js";
+
+      declare const base: Base;
+      base.make();
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+        verbatimModuleSyntax: true,
+      },
+      files: ["reflection.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+  const options = { Config: parsed, Host: host } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [publicProviderSliceIdentityProviderExtension(reflectionResolutionContexts)],
+  });
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/reflection.ts");
+  const coreSourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  assert.ok(coreSourceFile !== undefined);
+  assertCleanProgram(program, sourceFile);
+  assertCleanProgram(program, coreSourceFile);
+  assert.equal(reflectionResolutionContexts[0], "/src/reflection.ts");
+
+  const reflectionFiles = Program_GetSourceFiles(program).filter((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/public-reflection"));
+  assert.equal(reflectionFiles.length, 2);
+  const canonicalFile = reflectionFiles.find((file) => SourceFile_Text(file).includes("class TokenImplementation"));
+  const aliasFile = reflectionFiles.find((file) => SourceFile_Text(file).includes("export { __TstsProviderCanonical_Token as Token };"));
+  assert.ok(canonicalFile !== undefined);
+  assert.ok(aliasFile !== undefined);
+
+  Program_BindSourceFiles(program);
+  const canonicalModuleSymbol = Node_Symbol(canonicalFile as never);
+  const aliasModuleSymbol = Node_Symbol(aliasFile as never);
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), sourceFile);
+  try {
+    for (const exportName of ["Token", "Member", "Flags", "Descriptor"]) {
+      const canonicalSymbol = canonicalModuleSymbol?.Exports?.get(exportName);
+      const aliasSymbol = aliasModuleSymbol?.Exports?.get(exportName);
+      assert.ok(canonicalSymbol !== undefined);
+      assert.ok(aliasSymbol !== undefined);
+      const canonicalTarget = (canonicalSymbol.Flags & SymbolFlagsAlias) !== 0
+        ? Checker_GetAliasedSymbol(checker, canonicalSymbol)
+        : canonicalSymbol;
+      assert.ok(Checker_GetAliasedSymbol(checker, aliasSymbol) === canonicalTarget, exportName);
+    }
+  } finally {
+    done();
+  }
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
+test("provider virtual canonical default exports bind as one value and type identity", () => {
+  const valueSpecifier = "@acme/default/value.js";
+  const typeSpecifier = "@acme/default/type.js";
+  const supportSpecifier = "@acme/default/support.js";
+  let needsSupportImport = false;
+  const defaultProviderExtension: CompilerExtension = {
+    identity: {
+      id: "acme-default-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-default-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-default-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === valueSpecifier || moduleSpecifier === typeSpecifier || moduleSpecifier === supportSpecifier
+          ? { kind: "owned" }
+          : { kind: "unowned" },
+        resolveModule: (moduleSpecifier, moduleContext) => {
+          needsSupportImport = moduleContext.containingFile?.includes("second") === true;
+          return {
+            kind: "virtual",
+            moduleSpecifier,
+            virtualFileName: moduleSpecifier === valueSpecifier
+              ? "tsts-provider://acme/default-value"
+              : moduleSpecifier === typeSpecifier
+                ? "tsts-provider://acme/default-type"
+                : "tsts-provider://acme/default-support",
+            providerModuleId: moduleSpecifier === valueSpecifier
+              ? "acme.default.value"
+              : moduleSpecifier === typeSpecifier
+                ? "acme.default.type"
+                : "acme.default.support",
+          };
+        },
+        getDeclarationModel: (resolution) => {
+          if (resolution.moduleSpecifier === supportSpecifier) {
+            return {
+              moduleSpecifier: resolution.moduleSpecifier,
+              providerModuleId: resolution.providerModuleId,
+              exports: [{ id: "Marker", name: "Marker", kind: "interface", members: [] }],
+            };
+          }
+          const kind = resolution.moduleSpecifier === valueSpecifier ? "class" : "interface";
+          return {
+            moduleSpecifier: resolution.moduleSpecifier,
+            providerModuleId: resolution.providerModuleId,
+            ...(needsSupportImport ? {
+              imports: [{
+                moduleSpecifier: supportSpecifier,
+                typeOnly: true,
+                namedImports: [{ exportedName: "Marker" }],
+              }],
+            } : {}),
+            exports: [{
+              id: kind === "class" ? "DefaultToken" : "DefaultShape",
+              name: kind === "class" ? "DefaultToken" : "DefaultShape",
+              exportKind: "default",
+              kind,
+              members: [],
+            }],
+          };
+        },
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+  let fs = FromMap(new Map<string, string>([
+    ["/src/value-first.ts", `
+      import DefaultToken from "${valueSpecifier}";
+      declare const token: DefaultToken;
+      token;
+    `],
+    ["/src/value-second.ts", `
+      import DefaultToken from "${valueSpecifier}";
+      declare const token: DefaultToken;
+      token;
+    `],
+    ["/src/type-first.ts", `
+      import type DefaultShape from "${typeSpecifier}";
+      declare const shape: DefaultShape;
+      shape;
+    `],
+    ["/src/type-second.ts", `
+      import type DefaultShape from "${typeSpecifier}";
+      declare const shape: DefaultShape;
+      shape;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+        verbatimModuleSyntax: true,
+      },
+      files: ["value-first.ts", "value-second.ts", "type-first.ts", "type-second.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+  const options = { Config: parsed, Host: host } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, { activeTarget: "acme", extensions: [defaultProviderExtension] });
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/value-first.ts");
+  assert.ok(sourceFile !== undefined);
+  for (const fileName of ["/src/value-first.ts", "/src/value-second.ts", "/src/type-first.ts", "/src/type-second.ts"]) {
+    const file = Program_GetSourceFile(program, fileName);
+    assert.ok(file !== undefined);
+    assertCleanProgram(program, file);
+  }
+
+  Program_BindSourceFiles(program);
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), sourceFile);
+  try {
+    for (const prefix of ["tsts-provider://acme/default-value", "tsts-provider://acme/default-type"]) {
+      const files = Program_GetSourceFiles(program).filter((file) => SourceFile_FileName(file).startsWith(prefix));
+      assert.equal(files.length, 2);
+      const canonicalFile = files.find((file) => !SourceFile_FileName(file).includes("#tsts-slice-"));
+      const aliasFile = files.find((file) => SourceFile_FileName(file).includes("#tsts-slice-"));
+      assert.ok(canonicalFile !== undefined);
+      assert.ok(aliasFile !== undefined);
+      const canonicalSymbol = Node_Symbol(canonicalFile as never)?.Exports?.get("default");
+      const aliasSymbol = Node_Symbol(aliasFile as never)?.Exports?.get("default");
+      assert.ok(canonicalSymbol !== undefined);
+      assert.ok(aliasSymbol !== undefined);
+      const canonicalTarget = (canonicalSymbol.Flags & SymbolFlagsAlias) !== 0
+        ? Checker_GetAliasedSymbol(checker, canonicalSymbol)
+        : canonicalSymbol;
+      assert.ok(Checker_GetAliasedSymbol(checker, aliasSymbol) === canonicalTarget, prefix);
+    }
+  } finally {
+    done();
+  }
   assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
 });
 
 test("provider virtual external generic heritage uses value-capable family variants", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
+      import { ReadOnlyCollection } from "@acme/public/collections.js";
       import { ModelMetadata, ModelPropertyCollection } from "@acme/public/model-binding.js";
 
       declare const collection: ModelPropertyCollection;
       declare const metadata: ModelMetadata;
+      declare const readOnly: ReadOnlyCollection<ModelMetadata>;
       const item: ModelMetadata = collection.Item;
       collection;
       metadata;
+      readOnly;
       item;
     `],
     ["/src/tsconfig.json", JSON.stringify({
@@ -653,6 +982,7 @@ test("provider virtual external generic heritage uses value-capable family varia
         noLib: true,
         module: "esnext",
         moduleResolution: "bundler",
+        verbatimModuleSyntax: true,
       },
       files: ["index.ts"],
     })],
@@ -683,10 +1013,25 @@ test("provider virtual external generic heritage uses value-capable family varia
   const modelBindingText = SourceFile_Text(modelBindingFile);
   assert.match(modelBindingText, /class ModelPropertyCollection extends/);
   assert.ok(modelBindingText.includes("extends ImportedReadOnlyCollection<ModelMetadata>"));
-  const collectionFile = Program_GetSourceFiles(program).find((file) =>
+  const collectionFiles = Program_GetSourceFiles(program).filter((file) =>
     SourceFile_FileName(file).startsWith("tsts-provider://acme/public-collections-generic"));
-  assert.ok(collectionFile !== undefined);
-  assert.ok(SourceFile_Text(collectionFile).includes("export declare const ReadOnlyCollection: typeof __TstsProvider_ReadOnlyCollection_1;"));
+  assert.equal(collectionFiles.length, 2);
+  const fullCollectionFile = collectionFiles.find((file) => SourceFile_Text(file).includes("export declare const ReadOnlyCollection: typeof __TstsProvider_ReadOnlyCollection_1;"));
+  const aliasCollectionFile = collectionFiles.find((file) => SourceFile_Text(file).includes("export { __TstsProviderCanonical_ReadOnlyCollection as ReadOnlyCollection };"));
+  assert.ok(fullCollectionFile !== undefined);
+  assert.ok(aliasCollectionFile !== undefined);
+  assert.equal(SourceFile_Text(aliasCollectionFile).includes("export type { __TstsProviderCanonical_ReadOnlyCollection as ReadOnlyCollection };"), false);
+  Program_BindSourceFiles(program);
+  const canonicalFamilySymbol = Node_Symbol(fullCollectionFile as never)?.Exports?.get("ReadOnlyCollection");
+  const aliasFamilySymbol = Node_Symbol(aliasCollectionFile as never)?.Exports?.get("ReadOnlyCollection");
+  assert.ok(canonicalFamilySymbol !== undefined);
+  assert.ok(aliasFamilySymbol !== undefined);
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), sourceFile);
+  try {
+    assert.ok(Checker_GetAliasedSymbol(checker, aliasFamilySymbol) === canonicalFamilySymbol);
+  } finally {
+    done();
+  }
 });
 
 test("provider virtual generic member chains do not leave stale unresolved property diagnostics", () => {
@@ -4455,8 +4800,9 @@ function orderDependentSliceProviderExtension(): CompilerExtension {
   };
 }
 
-function publicProviderSliceIdentityProviderExtension(): CompilerExtension {
+function publicProviderSliceIdentityProviderExtension(reflectionResolutionContexts?: string[]): CompilerExtension {
   const pendingExportsByModule = new Map<string, readonly string[]>();
+  let reflectionNeedsSupportImport = false;
   return {
     identity: {
       id: "acme-public-provider-slice-identity-extension",
@@ -4477,20 +4823,40 @@ function publicProviderSliceIdentityProviderExtension(): CompilerExtension {
           pendingExportsByModule.set(moduleSpecifier, (moduleContext.importSlice?.requestedExports ?? [])
             .map((request) => request.exportedName)
             .sort());
+          if (moduleSpecifier === "@acme/public/reflection.js") {
+            reflectionResolutionContexts?.push(moduleContext.containingFile ?? "");
+            reflectionNeedsSupportImport = moduleContext.containingFile?.startsWith("tsts-provider://acme/public-core") !== true;
+          }
           return {
             kind: "virtual",
             moduleSpecifier,
             virtualFileName: moduleSpecifier === "@acme/public/reflection.js"
               ? "tsts-provider://acme/public-reflection"
-              : "tsts-provider://acme/public-core",
+              : moduleSpecifier === "@acme/public/core.js"
+                ? "tsts-provider://acme/public-core"
+                : "tsts-provider://acme/public-support",
             providerModuleId: moduleSpecifier === "@acme/public/reflection.js"
               ? "acme.public.Reflection"
-              : "acme.public.Core",
+              : moduleSpecifier === "@acme/public/core.js"
+                ? "acme.public.Core"
+                : "acme.public.Support",
             packageName: "@acme/public",
             packageVersion: "1.0.0",
           };
         },
         getDeclarationModel: (resolution) => {
+          if (resolution.moduleSpecifier === "@acme/public/support.js") {
+            return {
+              moduleSpecifier: resolution.moduleSpecifier,
+              providerModuleId: resolution.providerModuleId,
+              exports: [{
+                id: "Marker",
+                name: "Marker",
+                kind: "interface",
+                members: [],
+              }],
+            };
+          }
           if (resolution.moduleSpecifier === "@acme/public/core.js") {
             return {
               moduleSpecifier: resolution.moduleSpecifier,
@@ -4539,26 +4905,92 @@ function publicProviderSliceIdentityProviderExtension(): CompilerExtension {
           }
           const requested = pendingExportsByModule.get(resolution.moduleSpecifier) ?? [];
           const needsDerived = requested.length === 0 || requested.includes("Derived");
+          const imports = [
+            ...(needsDerived ? [{
+              moduleSpecifier: "@acme/public/core.js",
+              typeOnly: true,
+              namedImports: [{ exportedName: "Base" }],
+            }] : []),
+            ...(reflectionNeedsSupportImport ? [{
+              moduleSpecifier: "@acme/public/support.js",
+              typeOnly: true,
+              namedImports: [{ exportedName: "Marker" }],
+            }] : []),
+          ];
           return {
             moduleSpecifier: resolution.moduleSpecifier,
             providerModuleId: resolution.providerModuleId,
-            ...(needsDerived ? {
-              imports: [{
-                moduleSpecifier: "@acme/public/core.js",
-                typeOnly: true,
-                namedImports: [{ exportedName: "Base" }],
-              }],
-            } : {}),
+            ...(imports.length > 0 ? { imports } : {}),
             exports: [
               {
                 id: "Token",
-                name: "Token",
+                name: "TokenImplementation",
+                exportName: "Token",
+                kind: "class" as const,
+                members: [{
+                  id: "Token.invoke",
+                  name: "invoke",
+                  kind: "method" as const,
+                  signatures: [{
+                    id: "Token.invoke(Flags)",
+                    parameters: [{
+                      name: "flags",
+                      type: {
+                        kind: "provider-ref" as const,
+                        moduleSpecifier: "@acme/public/reflection.js",
+                        exportName: "Flags",
+                      },
+                    }],
+                    returnType: {
+                      kind: "provider-ref" as const,
+                      moduleSpecifier: "@acme/public/reflection.js",
+                      exportName: "Member",
+                    },
+                  }],
+                }, {
+                  id: "Token.describe",
+                  name: "describe",
+                  kind: "method" as const,
+                  signatures: [{
+                    id: "Token.describe()",
+                    parameters: [],
+                    returnType: {
+                      kind: "provider-ref" as const,
+                      moduleSpecifier: "@acme/public/reflection.js",
+                      exportName: "Descriptor",
+                    },
+                  }],
+                }],
+              }, {
+                id: "Member",
+                name: "Member",
+                kind: "class" as const,
+                members: [{
+                  id: "Member.token",
+                  name: "token",
+                  kind: "property" as const,
+                  readonly: true,
+                  type: {
+                    kind: "provider-ref" as const,
+                    moduleSpecifier: "@acme/public/reflection.js",
+                    exportName: "Token",
+                    localName: "TokenImplementation",
+                  },
+                }],
+              }, {
+                id: "Flags",
+                name: "Flags",
                 kind: "enum" as const,
                 members: [{
-                  id: "Token.ready",
-                  name: "ready",
+                  id: "Flags.none",
+                  name: "none",
                   kind: "field" as const,
                 }],
+              }, {
+                id: "Descriptor",
+                name: "Descriptor",
+                kind: "interface" as const,
+                members: [],
               },
               ...(needsDerived ? [{
                 id: "Derived",
@@ -4613,6 +5045,7 @@ function publicProviderSliceIdentityProviderExtension(): CompilerExtension {
 }
 
 function externalGenericHeritageProviderExtension(): CompilerExtension {
+  let collectionsNeedSupportImport = false;
   return {
     identity: {
       id: "acme-external-generic-heritage-extension",
@@ -4628,26 +5061,56 @@ function externalGenericHeritageProviderExtension(): CompilerExtension {
           extensionContractVersion: TstsProviderContractVersion,
           providerKind: "binding",
         },
-        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/public/collections.js" || moduleSpecifier === "@acme/public/model-binding.js"
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/public/collections.js"
+          || moduleSpecifier === "@acme/public/model-binding.js"
+          || moduleSpecifier === "@acme/public/support.js"
           ? { kind: "owned" }
           : { kind: "unowned" },
-        resolveModule: (moduleSpecifier) => ({
-          kind: "virtual",
-          moduleSpecifier,
-          virtualFileName: moduleSpecifier === "@acme/public/collections.js"
-            ? "tsts-provider://acme/public-collections-generic"
-            : "tsts-provider://acme/public-model-binding",
-          providerModuleId: moduleSpecifier === "@acme/public/collections.js"
-            ? "acme.public.Collections"
-            : "acme.public.ModelBinding",
-          packageName: "@acme/public",
-          packageVersion: "1.0.0",
-        }),
+        resolveModule: (moduleSpecifier, moduleContext) => {
+          if (moduleSpecifier === "@acme/public/collections.js") {
+            collectionsNeedSupportImport = moduleContext.containingFile?.startsWith("tsts-provider://acme/public-model-binding") !== true;
+          }
+          return {
+            kind: "virtual",
+            moduleSpecifier,
+            virtualFileName: moduleSpecifier === "@acme/public/collections.js"
+              ? "tsts-provider://acme/public-collections-generic"
+              : moduleSpecifier === "@acme/public/model-binding.js"
+                ? "tsts-provider://acme/public-model-binding"
+                : "tsts-provider://acme/public-support-generic",
+            providerModuleId: moduleSpecifier === "@acme/public/collections.js"
+              ? "acme.public.Collections"
+              : moduleSpecifier === "@acme/public/model-binding.js"
+                ? "acme.public.ModelBinding"
+                : "acme.public.Support",
+            packageName: "@acme/public",
+            packageVersion: "1.0.0",
+          };
+        },
         getDeclarationModel: (resolution) => {
+          if (resolution.moduleSpecifier === "@acme/public/support.js") {
+            return {
+              moduleSpecifier: resolution.moduleSpecifier,
+              providerModuleId: resolution.providerModuleId,
+              exports: [{
+                id: "Marker",
+                name: "Marker",
+                kind: "interface",
+                members: [],
+              }],
+            };
+          }
           if (resolution.moduleSpecifier === "@acme/public/collections.js") {
             return {
               moduleSpecifier: resolution.moduleSpecifier,
               providerModuleId: resolution.providerModuleId,
+              ...(collectionsNeedSupportImport ? {
+                imports: [{
+                  moduleSpecifier: "@acme/public/support.js",
+                  typeOnly: true,
+                  namedImports: [{ exportedName: "Marker" }],
+                }],
+              } : {}),
               exports: [{
                 id: "ReadOnlyCollection_1",
                 name: "ReadOnlyCollection_1",
@@ -4678,7 +5141,6 @@ function externalGenericHeritageProviderExtension(): CompilerExtension {
             providerModuleId: resolution.providerModuleId,
             imports: [{
               moduleSpecifier: "@acme/public/collections.js",
-              typeOnly: true,
               namedImports: [{
                 exportedName: "ReadOnlyCollection",
                 localName: "ImportedReadOnlyCollection",
