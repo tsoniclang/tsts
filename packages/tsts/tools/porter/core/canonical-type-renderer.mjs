@@ -1,4 +1,5 @@
 import { safeIdentifier, safePropertyName } from "./names.mjs";
+import { canonicalStructFieldLayout } from "./struct-field-layout.mjs";
 
 export function renderCanonicalType(contract, operations) {
   requireContract(contract);
@@ -105,11 +106,7 @@ function renderPointer(contract, operations) {
 function renderStruct(contract, operations) {
   const fields = requireArray(contract.fields, "canonical semantic struct fields");
   if (fields.length === 0) return "{ readonly __tsgoEmpty?: never }";
-  let embeddedIndex = 0;
-  let blankIndex = 0;
-  const members = fields.map((field) => {
-    const name = field.embedded ? `__tsgoEmbedded${embeddedIndex++}`
-      : field.name === "_" ? `__tsgoBlank${blankIndex++}` : field.name;
+  const members = canonicalStructFieldLayout(fields, "canonical semantic struct fields").map(({ field, name }) => {
     return `${safePropertyName(name)}: ${renderCanonicalType(field.type, operations)}`;
   });
   return `{ ${members.join("; ")} }`;

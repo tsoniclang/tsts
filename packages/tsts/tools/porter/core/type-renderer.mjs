@@ -22,6 +22,7 @@ import { semanticContractContainsApproximation, semanticTypeParameterKey } from 
 import { loadProfile } from "../ts-extractor/profile.mjs";
 import { buildTypeStorageIdentityMap } from "./type-storage-policies.mjs";
 import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
+import { canonicalStructFieldLayout } from "./struct-field-layout.mjs";
 
 export function renderUnitGroup(config, snapshot, relativeTargetPath, units, options = {}) {
   requireOnlyRendererOptions(options);
@@ -30,13 +31,13 @@ export function renderUnitGroup(config, snapshot, relativeTargetPath, units, opt
       throw new Error(`cannot render scaffold for non-portable Go unit kind '${unit.kind}': ${unit.id}`);
     }
   }
-  const context = rendererContext(config, snapshot, relativeTargetPath, units, options);
+  const context = createSemanticRendererContext(config, snapshot, relativeTargetPath, units, options);
   const body = units.map((unit) => renderUnit(unit, context)).join("\n");
   return `${renderImports(context)}${body}`.replace(/\s*$/, "\n");
 }
 
 function requireOnlyRendererOptions(options) {
-  const allowed = new Set(["diagnostics", "externalFacadeCatalog", "filesByPath", "largeFileSplits", "symbolIndex"]);
+  const allowed = new Set(["diagnostics", "externalFacadeCatalog", "filesByPath", "largeFileSplits", "localTopLevelNames", "symbolIndex"]);
   const unknown = Reflect.ownKeys(options).filter((key) => typeof key !== "string" || !allowed.has(key)).map(String).sort();
   if (unknown.length > 0) throw new Error(`unit renderer options contain unknown current-contract key(s): ${unknown.join(", ")}`);
   if (!Object.hasOwn(options, "largeFileSplits") || options.largeFileSplits === undefined) {
@@ -44,7 +45,8 @@ function requireOnlyRendererOptions(options) {
   }
 }
 
-function rendererContext(config, snapshot, relativeTargetPath, units, options) {
+export function createSemanticRendererContext(config, snapshot, relativeTargetPath, units, options = {}) {
+  requireOnlyRendererOptions(options);
   const filesByPath = options.filesByPath ?? new Map(snapshot.files.map((file) => [file.path, file]));
   const largeFileSplits = options.largeFileSplits;
   const symbolIndex = options.symbolIndex ?? buildSymbolIndex(config, snapshot, largeFileSplits);
@@ -76,6 +78,10 @@ function rendererContext(config, snapshot, relativeTargetPath, units, options) {
     storageCarrierByIdentity: evidence.storageCarrierByIdentity,
     knownStorageIdentities: evidence.knownStorageIdentities,
   };
+  const localTopLevelNames = options.localTopLevelNames ?? new Set(units.flatMap((unit) => topLevelNamesForUnit(unit)));
+  if (!(localTopLevelNames instanceof Set) || [...localTopLevelNames].some((name) => typeof name !== "string" || name === "")) {
+    throw new Error("semantic renderer localTopLevelNames must be one Set of non-empty strings");
+  }
   return {
     config,
     snapshot,
@@ -84,10 +90,11 @@ function rendererContext(config, snapshot, relativeTargetPath, units, options) {
     file,
     relativeTargetPath,
     imports: new Map(),
+    valueImports: new Map(),
     coreImports: new Set(),
     compatImports: new Set(),
     diagnostics: options.diagnostics ?? [],
-    localTopLevelNames: new Set(units.flatMap((unit) => topLevelNamesForUnit(unit))),
+    localTopLevelNames: new Set(localTopLevelNames),
     importAliases: rendererImportAliases(file.imports ?? []),
     externalFacades,
     bridge: profile.bridge,
@@ -191,13 +198,10 @@ export function tsCanonicalType(type, context, _scope, unit, options = {}) {
 function renderStructDeclaration(shape, sourceMembers, context, unit) {
   if (shape.kind !== "struct") throw new Error(`Go struct unit '${unit.id}' did not lower to a struct shape`);
   if (!Array.isArray(sourceMembers) || sourceMembers.length !== shape.fields.length) throw new Error(`Go struct unit '${unit.id}' syntax/semantic field counts differ`);
-  let embeddedIndex = 0;
-  let blankIndex = 0;
-  const members = shape.fields.map((field, index) => {
+  const members = canonicalStructFieldLayout(shape.fields, `Go struct unit '${unit.id}' semantic fields`).map(({ field, index, name }) => {
     const source = sourceMembers[index];
     const expectedKind = field.embedded ? "embeddedField" : "field";
     if (source?.kind !== expectedKind || (!field.embedded && source.name !== field.name)) throw new Error(`Go struct unit '${unit.id}' syntax/semantic field #${index} differs`);
-    const name = field.embedded ? `__tsgoEmbedded${embeddedIndex++}` : field.name === "_" ? `__tsgoBlank${blankIndex++}` : source.name;
     return `  ${safePropertyName(name)}: ${renderSemanticContract(field.type, context, unit)};`;
   });
   return members.length === 0 ? ["  readonly __tsgoEmpty?: never;"] : members;
@@ -371,9 +375,12 @@ export function resolvePackageSymbol(context, importPath, name, unit) {
 
 export function importTypeName(context, targetPath, exportName, unit) {
   const source = relativeImportPath(context.relativeTargetPath, targetPath);
+  const valueNames = context.valueImports?.get(source);
+  const safeExport = safeIdentifier(exportName);
+  const valueAlias = valueNames?.get(safeExport);
+  if (valueAlias !== undefined) return valueAlias;
   const names = context.imports.get(source) ?? new Map();
   context.imports.set(source, names);
-  const safeExport = safeIdentifier(exportName);
   const existing = names.get(safeExport);
   if (existing !== undefined) return existing;
   const alias = context.localTopLevelNames.has(safeExport) || isImportAliasUsed(context, safeExport)
@@ -382,13 +389,40 @@ export function importTypeName(context, targetPath, exportName, unit) {
   return alias;
 }
 
+export function importValueName(context, targetPath, exportName, unit) {
+  if (!(context.valueImports instanceof Map)) throw new Error("semantic renderer context has no runtime-value import registry");
+  if (targetPath === context.relativeTargetPath) return safeIdentifier(exportName);
+  const source = relativeImportPath(context.relativeTargetPath, targetPath);
+  const safeExport = safeIdentifier(exportName);
+  const names = context.valueImports.get(source) ?? new Map();
+  context.valueImports.set(source, names);
+  const existing = names.get(safeExport);
+  if (existing !== undefined) return existing;
+  const typeNames = context.imports.get(source);
+  const typeAlias = typeNames?.get(safeExport);
+  if (typeAlias !== undefined) {
+    typeNames.delete(safeExport);
+    names.set(safeExport, typeAlias);
+    return typeAlias;
+  }
+  const alias = context.localTopLevelNames.has(safeExport) || isImportAliasUsed(context, safeExport)
+    ? uniqueImportAlias(safeExport, unit, targetPath) : safeExport;
+  names.set(safeExport, alias);
+  return alias;
+}
+
 export function renderImports(context) {
   const lines = [];
+  for (const [source, names] of [...(context.valueImports ?? new Map()).entries()].sort()) {
+    if (names.size === 0) continue;
+    const specifiers = renderImportSpecifiers(names);
+    lines.push(`import { ${specifiers} } from "${source}";`);
+  }
   if (context.coreImports.size > 0) lines.push(`import type { ${[...context.coreImports].sort().join(", ")} } from "${relativeImportPath(context.relativeTargetPath, `${context.config.tsRoot}/go/scalars.ts`)}";`);
   if (context.compatImports.size > 0) lines.push(`import type { ${[...context.compatImports].sort().join(", ")} } from "${relativeImportPath(context.relativeTargetPath, `${context.config.tsRoot}/go/compat.ts`)}";`);
   for (const [source, names] of [...context.imports.entries()].sort()) {
-    const specifiers = [...names.entries()].sort(([left], [right]) => compareText(left, right))
-      .map(([exportName, alias]) => exportName === alias ? exportName : `${exportName} as ${alias}`).join(", ");
+    if (names.size === 0) continue;
+    const specifiers = renderImportSpecifiers(names);
     lines.push(`import type { ${specifiers} } from "${source}";`);
   }
   return lines.length === 0 ? "" : `${lines.join("\n")}\n\n`;
@@ -416,7 +450,13 @@ export function uniqueImportAlias(exportName, unit, targetPath = "") {
 }
 
 export function isImportAliasUsed(context, alias) {
-  return [...context.imports.values()].some((names) => [...names.values()].includes(alias));
+  return [...context.imports.values(), ...(context.valueImports?.values() ?? [])]
+    .some((names) => [...names.values()].includes(alias));
+}
+
+function renderImportSpecifiers(names) {
+  return [...names.entries()].sort(([left], [right]) => compareText(left, right))
+    .map(([exportName, alias]) => exportName === alias ? exportName : `${exportName} as ${alias}`).join(", ");
 }
 
 function rendererImportAliases(imports) {

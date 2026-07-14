@@ -108,11 +108,15 @@ export function semanticNamedValueDescriptor(semantic, index, label = "semantic 
   if (semantic === null || typeof semantic !== "object" || !Array.isArray(semantic.variants) || semantic.variants.length === 0) {
     throw new Error(`${label} has no semantic declaration variants`);
   }
+  if (typeof semantic.objectId !== "string" || semantic.objectId === "") throw new Error(`${label} has no exact object identity`);
   const byDescriptor = new Map();
   const seenProfiles = new Set();
   for (const variant of semantic.variants) {
     const declaration = variant.declaration?.type;
     if (declaration === undefined) throw new Error(`${label} has no semantic type declaration`);
+    if (declaration.object?.id !== semantic.objectId) {
+      throw new Error(`${label} variant object '${declaration.object?.id ?? "missing"}' differs from '${semantic.objectId}'`);
+    }
     for (const profile of variant.profiles ?? []) {
       if (seenProfiles.has(profile)) throw new Error(`${label} duplicates semantic profile '${profile}'`);
       seenProfiles.add(profile);

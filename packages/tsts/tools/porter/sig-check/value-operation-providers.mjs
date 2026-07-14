@@ -39,9 +39,7 @@ export function collectGoValueOperationProviderMismatches({
     try {
       const storage = extractDirectStorage(api, moduleIndex, policy.storageIdentity, valueEnvironments);
       const valueType = semanticNamedValueDescriptor(policy.semantic, expectedIndex, `reviewed Go value operations '${policy.objectId}'`);
-      if (!descriptorContainsReference(valueType, policy.storageIdentity)) {
-        throw new Error(`selected Go value representation does not reference direct storage '${policy.storageIdentity}'`);
-      }
+      requireExactValueStorage(valueType, policy.storageIdentity, expectedIndex);
       const extracted = policy.typeParameterCount === 0
         ? extractIndexedValueExportDescriptor(api, moduleIndex, moduleId, name, valueEnvironments)
         : extractIndexedFunctionExportDescriptor(api, moduleIndex, moduleId, name, valueEnvironments);
@@ -149,11 +147,16 @@ function requireSameDescriptor(actual, expected, label) {
   if (actualShape !== expectedShape) throw new Error(`${label} differs from the exact storage contract`);
 }
 
-function descriptorContainsReference(value, identity) {
-  if (value === null || typeof value !== "object") return false;
-  if (Array.isArray(value)) return value.some((entry) => descriptorContainsReference(entry, identity));
-  if (value.t === "ref" && value.id === identity) return true;
-  return Object.values(value).some((entry) => descriptorContainsReference(entry, identity));
+function requireExactValueStorage(value, identity, index) {
+  if (isExactStorageReference(value, identity)) return;
+  const wrapperIds = new Set(["interface", "nilable"].map((key) => `${index.compat}::${index.bridge[key]}`));
+  if (value?.t === "ref" && wrapperIds.has(value.id) && Array.isArray(value.args) && value.args.length === 1 &&
+      isExactStorageReference(value.args[0], identity)) return;
+  throw new Error(`selected Go value representation must be direct storage '${identity}' or one exact interface/nilable wrapper around it`);
+}
+
+function isExactStorageReference(value, identity) {
+  return value?.t === "ref" && value.id === identity && Array.isArray(value.args);
 }
 
 function splitOperationIdentity(identity) {

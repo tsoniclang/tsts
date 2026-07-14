@@ -1,5 +1,6 @@
 import { compareText } from "../deterministic-order.mjs";
 import { invariantSemanticVariant } from "../semantic-variants.mjs";
+import { canonicalStructFieldLayout } from "../struct-field-layout.mjs";
 
 const scalarBasics = new Set([
   "bool", "byte", "float32", "float64", "int", "int8", "int16", "int32", "int64",
@@ -75,6 +76,7 @@ export function buildGoValueOperationCatalog(units, options = {}) {
         name: requireIdentity(parameter.reference?.name, `Go type unit '${unit.id}' type-parameter name`),
         semanticParameter: parameter,
       })),
+      typeParameterCount: declaration.typeParameters.length,
       requirementShape: buildGoValueRequirementShape(declaration.rhs),
     });
   }
@@ -161,16 +163,15 @@ function requirementsForShape(shape, localTypeParameters, resolveNamed, declarat
 
 function buildStructFields(structure) {
   const fields = requireArray(structure?.fields, "Go value struct fields");
-  let embeddedIndex = 0;
-  let blankIndex = 0;
-  return fields.map((field, index) => {
+  const semanticFields = fields.map((field, index) => {
     const variable = field?.variable;
     requireSemanticType(variable?.type, `Go value struct field #${index}`);
     const sourceName = requireIdentity(variable.name, `Go value struct field #${index} name`);
-    const blank = sourceName === "_";
-    const name = variable.embedded === true ? `__tsgoEmbedded${embeddedIndex++}` : blank ? `__tsgoBlank${blankIndex++}` : sourceName;
-    return { name, blank, shape: buildGoValueRequirementShape(variable.type) };
+    if (variable.embedded !== true && variable.embedded !== false) throw new Error(`Go value struct field #${index} has no exact embedded flag`);
+    return { embedded: variable.embedded, name: sourceName, type: variable.type };
   });
+  return canonicalStructFieldLayout(semanticFields, "Go value struct fields")
+    .map(({ blank, field, name }) => ({ name, blank, shape: buildGoValueRequirementShape(field.type) }));
 }
 
 function unionSets(sets) {

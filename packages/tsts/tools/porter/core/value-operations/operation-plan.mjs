@@ -184,7 +184,7 @@ function generatedOperationIdentity(config, goUnit, typeName) {
     throw new Error(`generated Go value operation package '${packagePath}' is outside module '${modulePath}'`);
   }
   const exportName = safeIdentifier(`${typeName}ValueOps`);
-  return `${config.tsRoot.replace(/\/+$/, "")}/go/value-ops/${relativePackage}.ts::${exportName}`;
+  return `${config.tsRoot.replace(/\/+$/, "")}/internal/go-value-operations/generated/${relativePackage}.ts::${exportName}`;
 }
 
 function providerEvidence(objectId, disposition, reviewed, generatorOwned) {

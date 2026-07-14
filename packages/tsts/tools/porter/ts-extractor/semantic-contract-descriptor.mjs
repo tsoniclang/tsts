@@ -1,4 +1,5 @@
 import { safeParamName, uniqueName } from "../core/names.mjs";
+import { canonicalStructFieldLayout } from "../core/struct-field-layout.mjs";
 import { semanticTypeParameterKey } from "./semantic-type-contract.mjs";
 
 export function semanticContractDescriptor(contract, context, operations, options = {}) {
@@ -145,12 +146,9 @@ export function bindTypeParameters(parameters, inherited = new Map()) {
 }
 
 function structDescriptor(contract, context, operations, objectContract) {
-  let embeddedIndex = 0;
-  let blankIndex = 0;
-  const members = contract.fields.map((field) => ({
+  const members = canonicalStructFieldLayout(contract.fields, "canonical semantic struct fields").map(({ field, name }) => ({
     kind: "property",
-    name: field.embedded ? `__tsgoEmbedded${embeddedIndex++}`
-      : field.name === "_" && objectContract === "declaration" ? `__tsgoBlank${blankIndex++}` : field.name,
+    name: field.name === "_" && objectContract !== "declaration" ? field.name : name,
     modifiers: [],
     optional: undefined,
     type: semanticContractDescriptor(field.type, context, operations),

@@ -35,7 +35,7 @@ test("the finalized operation plan uses direct storage ownership and package-lev
   assert.equal(entry.disposition, "generated");
   assert.equal(entry.name, "Pair");
   assert.equal(entry.objectId, fixture.objectId);
-  assert.equal(entry.operationIdentity, "src/go/value-ops/internal/sample.ts::PairValueOps");
+  assert.equal(entry.operationIdentity, "src/internal/go-value-operations/generated/internal/sample.ts::PairValueOps");
   assert.deepEqual(entry.operationTypeParameterIndexes, [0]);
   assert.deepEqual(entry.requirementShape, {
       kind: "struct",

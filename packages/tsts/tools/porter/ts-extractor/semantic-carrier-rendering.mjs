@@ -1,6 +1,7 @@
 import { canonicalSchemaValue, invariantSemanticVariant } from "../core/semantic-variants.mjs";
 import { semanticTypeContexts } from "../core/semantic-type-nilability.mjs";
 import {
+  lowerSemanticDeclaredValue,
   lowerSemanticSignature,
   lowerSemanticType,
   lowerSemanticTypeParameters,
@@ -31,6 +32,13 @@ export function invariantSemanticDeclarationContext(declaration, context, unit) 
       parameters: lowerSemanticTypeParameters(declaration.typeParameters ?? [], scoped),
       typeParameterConstraints: [...scoped.typeParameterConstraints.entries()],
     };
+  });
+}
+
+export function invariantSemanticDeclaredValueContract(declaration, context, unit) {
+  return invariantAcrossProfiles(unit, "lowering a declared Go value type", (profile) => {
+    const scoped = semanticContextWithTypeParameters({ index: semanticIndex(context), profile }, declaration.typeParameters ?? []);
+    return lowerSemanticDeclaredValue(declaration, scoped, `Go type unit '${unit.id}'`);
   });
 }
 

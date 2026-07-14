@@ -17,7 +17,7 @@ const profile = {
   modules: { core: "src/go/scalars.ts", compat: "src/go/compat.ts" },
   bridge: {
     nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", pointerConstraint: "GoPointerConstraint", slice: "GoSlice", array: "GoArray",
-    map: "GoMap", chan: "GoChan", func: "GoFunc", interface: "GoInterface",
+    map: "GoMap", chan: "GoChan", func: "GoFunc", interface: "GoInterface", unsafePointer: "GoUnsafePointer",
   },
   primitives: {
     keyword: { string: "string", any: "unknown" },
@@ -211,6 +211,99 @@ test("named declaration values preserve exact storage and interface carriers", (
       id: "src/p/Contract.ts::Contract",
       args: [{ t: "tp", depth: 0, index: 0 }],
     }],
+  });
+});
+
+test("declared value targets preserve aliases and defined carriers without lowering to their RHS", () => {
+  const makeUnit = ({ alias = false, name, nilable, packagePath = "example/p", rhs }) => {
+    const objectId = `${packagePath}::type::${name}`;
+    const kind = alias ? "alias" : "named";
+    const object = {
+      id: objectId,
+      packagePath,
+      name,
+      exported: true,
+      type: { kind, nilable, reference: { objectId, packagePath, name, typeArgs: [] } },
+    };
+    return {
+      id: `example::p.go::type::${name}`,
+      kind: "type",
+      name,
+      semantic: variants({
+        kind: "type",
+        packagePath,
+        object,
+        type: {
+          alias,
+          object,
+          typeParameters: [],
+          rhs,
+          methodSurface: "declaration-units",
+          methods: [],
+          valueMethodSet: [],
+          pointerMethodSet: [],
+        },
+      }),
+    };
+  };
+  const aliasAny = makeUnit({
+    alias: true,
+    name: "Anything",
+    nilable: true,
+    rhs: named("", "any", "builtin::type::any", [], true),
+  });
+  const definedPointer = makeUnit({
+    name: "Pointer",
+    nilable: true,
+    rhs: { kind: "pointer", nilable: true, element: basic("int") },
+  });
+  const definedSlice = makeUnit({
+    name: "Sequence",
+    nilable: true,
+    rhs: { kind: "slice", nilable: true, element: basic("string") },
+  });
+  const index = indexFor([aliasAny, definedPointer, definedSlice]);
+  assert.deepEqual(goTypeUnitValueDescriptor(aliasAny, index), {
+    t: "ref",
+    id: "src/go/compat.ts::GoInterface",
+    args: [{ t: "ref", id: "src/p/Anything.ts::Anything", args: [] }],
+  });
+  assert.deepEqual(goTypeUnitValueDescriptor(definedPointer, index), {
+    t: "ref", id: "src/p/Pointer.ts::Pointer", args: [],
+  });
+  assert.deepEqual(goTypeUnitValueDescriptor(definedSlice, index), {
+    t: "ref", id: "src/p/Sequence.ts::Sequence", args: [],
+  });
+
+  const unsafeObject = {
+    id: "unsafe::type::Pointer",
+    packagePath: "unsafe",
+    name: "Pointer",
+    exported: true,
+    type: { kind: "basic", nilable: true, basic: { name: "Pointer", untyped: false } },
+  };
+  const unsafePointer = {
+    id: "unsafe::pointer.go::type::Pointer",
+    kind: "type",
+    name: "Pointer",
+    semantic: variants({
+      kind: "type",
+      packagePath: "unsafe",
+      object: unsafeObject,
+      type: {
+        alias: false,
+        object: unsafeObject,
+        typeParameters: [],
+        rhs: { kind: "basic", nilable: true, basic: { name: "Pointer", untyped: false } },
+        methodSurface: "declaration-units",
+        methods: [],
+        valueMethodSet: [],
+        pointerMethodSet: [],
+      },
+    }),
+  };
+  assert.deepEqual(goTypeUnitValueDescriptor(unsafePointer, indexFor([unsafePointer])), {
+    t: "ref", id: "src/go/compat.ts::GoUnsafePointer", args: [],
   });
 });
 

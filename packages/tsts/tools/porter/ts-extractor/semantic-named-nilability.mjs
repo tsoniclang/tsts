@@ -182,6 +182,7 @@ function usesRawInterfaceStorage(type, context, resolving) {
   if (type?.kind === "interface") return true;
   if (type?.kind !== "named" && type?.kind !== "alias") return false;
   const reference = requireReference(type.reference);
+  if (reference.objectId === "builtin::type::any" || reference.objectId === "builtin::type::error") return true;
   if (context.index.rawInterfaceObjects?.has(reference.objectId) === true) return true;
   const dependency = context.index.dependencyTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
   if (dependency?.rawInterface === true) return true;
