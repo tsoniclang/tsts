@@ -387,6 +387,7 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
   if (wholeProgramAudit) {
     signatureOperationEvidence.set(report, Object.freeze({
       auditedTypeStorage,
+      generatedDeclarationOwners: generatedTypeOwnership,
       generatorOwnedProviders: astValueOperationProviders.catalog,
       reviewedProviders: reviewedValueOperationProviders.reviewedCatalog,
       unitOwnership,
@@ -410,7 +411,7 @@ export function requireSignatureOperationEvidence(report) {
   const evidence = signatureOperationEvidence.get(report);
   const issue = signatureOperationEvidenceIssue(report);
   if (issue !== undefined) throw new Error(issue);
-  const expectedKeys = ["auditedTypeStorage", "generatorOwnedProviders", "reviewedProviders", "unitOwnership"];
+  const expectedKeys = ["auditedTypeStorage", "generatedDeclarationOwners", "generatorOwnedProviders", "reviewedProviders", "unitOwnership"];
   const actualKeys = Object.keys(evidence).sort(compareText);
   if (actualKeys.length !== expectedKeys.length || actualKeys.some((key, index) => key !== expectedKeys[index])) {
     throw new Error(`Go value-operation evidence keys must be exactly ${expectedKeys.join(", ")}; got ${actualKeys.join(", ")}`);

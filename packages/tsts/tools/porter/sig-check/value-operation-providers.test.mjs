@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { externalTypeScriptDeclarationHash } from "../core/external-facade-runtime-adaptation.mjs";
+import { emptyGeneratedDeclarationOwnerCatalog } from "../core/generated-declaration-owner-catalog.mjs";
 import { semanticDeclarationVariantsHash } from "../core/semantic-declaration-hash.mjs";
 import { loadParser } from "../ts-extractor/ast-signatures.mjs";
 import {
@@ -231,7 +232,7 @@ function collect(config, indexedSources, semanticEvidence) {
 
 function buildFixtureExpectedIndex(config, semanticEvidence, tsById) {
   const catalog = finalizeGeneratedFacadeFixtureCatalog(config, semanticEvidence);
-  return buildExpectedIndex(config, semanticEvidence, tsById, loadProfile(config), new Map(), {
+  return buildExpectedIndex(config, semanticEvidence, tsById, loadProfile(config), emptyGeneratedDeclarationOwnerCatalog(config, semanticEvidence), {
     externalFacadeStorageView: catalog.artifactFacades(config, semanticEvidence),
   });
 }

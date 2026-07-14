@@ -3,7 +3,7 @@ import path from "node:path";
 import { AstSchema } from "../ast-schema-model.mjs";
 import { readStableRegularFile } from "../core/provenance-filesystem.mjs";
 import { normalizeGeneratorInputs, readSourcePinManifest } from "../source-pin.mjs";
-import { repoRoot, resolveRepo } from "../porter.mjs";
+import { repoRoot, resolveRepo } from "../core/runtime.mjs";
 import { validateJsonSchemaDocument } from "./json-schema-validation.mjs";
 
 // ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import { buildDependencySemanticTypeIndex, buildExternalFacadeStoragePlan } from
 import { buildExternalPackageSurfaceDeclarationIndex } from "./core/external-package-declarations.mjs";
 import { createExternalFacadeContractRenderer, renderExternalFacadeModules } from "./core/facade-artifacts.mjs";
 import { renderGoCompatModule, renderGoScalarsModule } from "./core/runtime-templates.mjs";
+import { emptyGeneratedDeclarationOwnerCatalog } from "./core/generated-declaration-owner-catalog.mjs";
 import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
 import { collectExternalPackageSurfaceMismatches } from "./sig-check/external-package-declarations.mjs";
 import {
@@ -139,7 +140,7 @@ test("external package surfaces are explicit and never seed generated facade art
       canonicalIdentity: createCanonicalDeclarationResolver(moduleIndex, {}),
       config,
       conventions: loadConventions(profile.conventions),
-      expectedIndex: buildExpectedIndex(config, currentSnapshot, new Map(), profile, new Map(), {
+      expectedIndex: buildExpectedIndex(config, currentSnapshot, new Map(), profile, emptyGeneratedDeclarationOwnerCatalog(config, currentSnapshot), {
         externalFacadeStorageView: facades.auditFacades(config, currentSnapshot),
       }),
       moduleIndex,
@@ -279,7 +280,7 @@ export let CurrentCallback: GoFunc<(currentValue: ${callbackParameterType}) => v
       canonicalIdentity: createCanonicalDeclarationResolver(moduleIndex),
       config,
       conventions: loadConventions(profile.conventions),
-      expectedIndex: buildExpectedIndex(config, snapshot, new Map(), profile, new Map(), {
+      expectedIndex: buildExpectedIndex(config, snapshot, new Map(), profile, emptyGeneratedDeclarationOwnerCatalog(config, snapshot), {
         externalFacadeStorageView: facades.auditFacades(config, snapshot),
       }),
       moduleIndex,

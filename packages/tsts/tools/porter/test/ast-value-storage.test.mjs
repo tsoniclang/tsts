@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { loadConfig } from "../core/runtime.mjs";
+import { finalizeGeneratedDeclarationOwners } from "../core/generated-declaration-owner-catalog.mjs";
 import { loadAstSchema } from "../ast-generator/config.mjs";
 import { emitData } from "../ast-generator/data-emitter.mjs";
 import { emitFactory } from "../ast-generator/factory-emitter.mjs";
 import { emitFactoryStorage } from "../ast-generator/factory-storage-emitter.mjs";
+import { emitKinds } from "../ast-generator/flag-emitters.mjs";
 import { astMemberTsType, emitNode, HAND_WRITTEN_BASES } from "../ast-generator/node-emitters.mjs";
 import {
   concreteNodeValueStorage,
@@ -81,7 +83,9 @@ test("ast value storage flattens promoted Go fields with exact zero and copy sem
 });
 
 test("ast value storage emits explicit generated zero and copy providers", () => {
-  const schema = loadAstSchema(loadConfig()).model;
+  const loaded = loadAstSchema(loadConfig());
+  const schema = loaded.model;
+  const kindsOutput = emitKinds(loaded);
   const dataOutput = emitData(schema);
   const baseOutput = emitNode(schema);
 
@@ -99,6 +103,7 @@ test("ast value storage emits explicit generated zero and copy providers", () =>
   assert.match(baseOutput, /result\.facts = copyUint32\(value\.facts\);/);
   assert.match(baseOutput, /class LocalsContainerBaseValue implements LocalsContainerBase \{/);
   assert.match(baseOutput, /  Locals: SymbolTable = GoNilMap\(\);/);
+  assert.match(kindsOutput, /export const KindValueOps: GoValueOps<Kind> = GoNumberValueOps;/);
 });
 
 test("node factory storage initializes and copies every Go struct field", () => {
@@ -136,23 +141,27 @@ test("AST generator owns one exact value-operation route for every generated Go 
   })) }] };
   const root = `${config.tsRoot}/internal/ast/generated`;
   const baseNames = new Set(loadAstSchema(config).model.baseNames());
-  const generatedTypeOwnership = new Map(declarations.map((declaration, index) => {
+  const generatedTypeOwnership = finalizeGeneratedDeclarationOwners(config, snapshot, declarations.map((declaration, index) => {
     const name = declaration.type.object.name;
-    const moduleId = name === "NodeFactory" ? `${root}/factory.ts`
+    const moduleId = name === "Kind" ? `${root}/kinds.ts`
+      : name === "NodeFactory" ? `${root}/factory.ts`
       : baseNames.has(name) ? `${root}/node.ts`
         : `${root}/data.ts`;
-    return [declaration.type.object.id, Object.freeze({
+    return Object.freeze({
       generator: "porter:ast",
       moduleId,
       objectId: declaration.type.object.id,
       tsName: name,
       unitId: `ast-generated-${index}`,
-    })];
+    });
   }));
   const routes = buildAstGeneratorOwnedGoValueOperationRoutes(config, snapshot, generatedTypeOwnership);
 
-  assert.equal(names.length, 226);
-  assert.equal(routes.length, 226);
+  assert.equal(names.length, 227);
+  assert.equal(routes.length, 227);
+  const kind = routes.find(({ storageIdentity }) => storageIdentity.endsWith("::Kind"));
+  assert.equal(kind.storageIdentity, `${root}/kinds.ts::Kind`);
+  assert.equal(kind.operationIdentity, `${root}/kinds.ts::KindValueOps`);
   const nodeFactory = routes.find(({ storageIdentity }) => storageIdentity.endsWith("::NodeFactory"));
   assert.equal(nodeFactory.storageIdentity, `${root}/factory.ts::NodeFactory`);
   assert.equal(nodeFactory.operationIdentity, `${root}/factory-storage.ts::NodeFactoryValueOps`);

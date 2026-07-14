@@ -50,6 +50,17 @@ export function invariantSemanticVariant(unit, purpose) {
   return variants[0];
 }
 
+export function exactSemanticTypeObjectId(unit) {
+  if (unit?.kind !== "type") throw new Error(`semantic type identity requires one Go type unit, got '${unit?.kind ?? "missing"}'`);
+  const objectIds = new Set(semanticVariants(unit)
+    .map((variant) => variant?.type?.object?.id)
+    .filter((objectId) => typeof objectId === "string" && objectId !== ""));
+  if (objectIds.size !== 1) {
+    throw new Error(`Go type '${unit.id}' must have one profile-invariant semantic object identity`);
+  }
+  return objectIds.values().next().value;
+}
+
 export function semanticVariantForProfile(unit, profileIndex, semanticEvidence) {
   if (!Number.isSafeInteger(profileIndex) || profileIndex < 0) throw new TypeError("semantic profile selection requires a non-negative integer index");
   if (Array.isArray(semanticEvidence?.profiles) && profileIndex >= semanticEvidence.profiles.length) throw new RangeError(`semantic ${profileLabel(profileIndex, semanticEvidence)} is out of bounds`);

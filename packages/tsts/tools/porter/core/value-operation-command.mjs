@@ -31,6 +31,7 @@ export function buildGoValueOperationArtifactInput(input) {
   return Object.freeze({
     config: workspace.config,
     externalFacadeCatalog: workspace.externalFacadeCatalog,
+    generatedDeclarationOwners: evidence.generatedDeclarationOwners,
     largeFileSplits: workspace.largeFileSplits,
     plan,
     snapshot: workspace.snapshot,

@@ -5,6 +5,7 @@ import { largeLiteralUnitsForFile } from "../core/large-files.mjs";
 import { isActivePortPolicy } from "../core/policies.mjs";
 import { buildSymbolIndex } from "../core/render-indexes.mjs";
 import { buildSemanticUnitEligibility } from "../core/semantic-unit-eligibility.mjs";
+import { emptyGeneratedDeclarationOwnerCatalog } from "../core/generated-declaration-owner-catalog.mjs";
 
 const declarationlessFile = Object.freeze({ path: "internal/compiler/pkg.go", imports: [], units: [] });
 const primaryFile = Object.freeze({
@@ -47,11 +48,13 @@ test("required semantic profiles cannot be assigned to declarationless files", (
 });
 
 test("one effective policy excludes toolchain-inactive declarations from every downstream planner", () => {
+  const objectId = "example.test/compiler::type::GeneratedOnly";
   const unit = {
     id: "example.test/compiler::type::GeneratedOnly",
     kind: "type",
     name: "GeneratedOnly",
     metadata: { goPath: "internal/compiler/generated_only.go" },
+    semantic: [{ type: { object: { id: objectId } } }],
   };
   const file = {
     path: "internal/compiler/generated_only.go",
@@ -66,6 +69,6 @@ test("one effective policy excludes toolchain-inactive declarations from every d
   const policy = resolver.unit(unit, file);
   assert.equal(policy.category, "semantic-excluded");
   assert.equal(isActivePortPolicy(policy), false);
-  assert.equal(buildSymbolIndex(config, snapshot).get("example.test/compiler::GeneratedOnly").active, false);
+  assert.equal(buildSymbolIndex(config, snapshot, undefined, emptyGeneratedDeclarationOwnerCatalog(config, snapshot)).get(objectId).active, false);
   assert.deepEqual(largeLiteralUnitsForFile(config, snapshot, file, 5000), []);
 });

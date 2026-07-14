@@ -23,7 +23,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { inspectGeneratedArtifactRegistration, inventoryGeneratedArtifactsForProvider, renderGeneratedArtifactEnvelope } from "./generated-artifact-registry.mjs";
-import { hashText, resolveRepo, writeTextSafely } from "./porter.mjs";
+import { hashText, resolveRepo, writeTextSafely } from "./core/runtime.mjs";
 
 const GENERATOR = "porter:diagnostics";
 const GENERATED_KIND = "diagnostics-generated";

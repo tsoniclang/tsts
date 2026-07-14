@@ -41,6 +41,7 @@ import {
   writeAstGenerated,
 } from "../ast-generator.mjs";
 import { semanticDeclarationVariantsHash } from "../core/semantic-declaration-hash.mjs";
+import { emptyGeneratedDeclarationOwnerCatalog } from "../core/generated-declaration-owner-catalog.mjs";
 import { buildSemanticTypeCatalog } from "../core/type-storage-policies.mjs";
 import { AstSchema } from "../ast-schema-model.mjs";
 import {
@@ -307,7 +308,7 @@ test("renderUnitGroup requires explicit storage for excluded source-boundary typ
     snapshot,
     "packages/tsts/src/internal/format/api.ts",
     [withFormatCodeSettings],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(mapped, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(mapped, snapshot), generatedDeclarationOwners: emptyGeneratedDeclarationOwnerCatalog(mapped, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
   assert.match(text, /import type \{ FormatCodeSettings \} from "\.\/source-boundaries\.js";/);
   assert.match(text, /options: FormatCodeSettings/);

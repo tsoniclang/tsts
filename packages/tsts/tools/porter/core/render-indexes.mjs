@@ -1,21 +1,29 @@
 import { safeIdentifier } from "./names.mjs";
 import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
 import { expectedTsPath, isActivePortPolicy } from "./policies.mjs";
+import { requireGeneratedDeclarationOwnerCatalog } from "./generated-declaration-owner-catalog.mjs";
+import { exactSemanticTypeObjectId } from "./semantic-variants.mjs";
 import path from "node:path";
 
-export function buildSymbolIndex(config, snapshot, largeFileSplits = undefined) {
+export function buildSymbolIndex(config, snapshot, largeFileSplits, generatedDeclarationOwners) {
+  const generated = requireGeneratedDeclarationOwnerCatalog(generatedDeclarationOwners, config, snapshot);
   const index = new Map();
   const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
-      if (unit.kind !== "type") continue;
+      if (unit.kind !== "type" || !Array.isArray(unit.semantic) || unit.semantic.length === 0) continue;
+      const objectId = exactSemanticTypeObjectId(unit);
       const policy = effectivePolicies.unit(unit, file);
-      index.set(`${file.importPath}::${unit.name}`, {
-        exportName: safeIdentifier(unit.name),
-        targetPath: expectedTsPath(config, unit, largeFileSplits),
+      const owner = generated.get(objectId);
+      const entry = {
+        exportName: owner?.tsName ?? safeIdentifier(unit.name),
+        targetPath: owner?.moduleId ?? expectedTsPath(config, unit, largeFileSplits),
         active: isActivePortPolicy(policy),
         goName: `${file.importPath}.${unit.name}`,
-      });
+        ownership: owner === undefined ? "scaffold" : "generated",
+      };
+      if (index.has(objectId)) throw new Error(`internal semantic Go type '${objectId}' has more than one symbol owner`);
+      index.set(objectId, Object.freeze(entry));
     }
   }
   return index;

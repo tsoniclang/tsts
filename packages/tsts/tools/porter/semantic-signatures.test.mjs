@@ -12,6 +12,7 @@ import {
 } from "./ts-extractor/expected-from-go-semantic.mjs";
 import { testSemanticProfile } from "./test/helpers.mjs";
 import { finalizeGeneratedFacadeFixtureCatalog } from "./test/external-facade-fixtures.mjs";
+import { emptyGeneratedDeclarationOwnerCatalog } from "./core/generated-declaration-owner-catalog.mjs";
 
 const profile = {
   modules: { core: "src/go/scalars.ts", compat: "src/go/compat.ts" },
@@ -33,7 +34,7 @@ function indexFor(units = []) {
   const tsById = new Map(units.map((unit) => [unit.id, { path: `src/p/${unit.name}.ts` }]));
   const config = { goModulePath: "example", tsRoot: "src" };
   const externalFacadeCatalog = finalizeGeneratedFacadeFixtureCatalog(config, snapshot);
-  return buildExpectedIndex(config, snapshot, tsById, profile, new Map(), {
+  return buildExpectedIndex(config, snapshot, tsById, profile, emptyGeneratedDeclarationOwnerCatalog(config, snapshot), {
     externalFacadeStorageView: externalFacadeCatalog.artifactFacades(config, snapshot),
   });
 }

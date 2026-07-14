@@ -17,7 +17,7 @@ export const skeletonOutputSentinelName = ".tsts-porter-skeleton-output";
 const skeletonOutputSentinelContents = "tsts-porter:skeleton-check-output:v1\n";
 const skeletonOutputPathComponents = Object.freeze(skeletonOutputRelativePath.split("/"));
 
-export async function scaffoldMissing(config, status, snapshot, externalFacadeCatalog, options) {
+export async function scaffoldMissing(config, status, snapshot, externalFacadeCatalog, generatedDeclarationOwners, options) {
   assertLargeFileSplitPlanClean(status);
   const write = options.write === true;
   const scaffoldAll = options.all === true;
@@ -64,6 +64,7 @@ export async function scaffoldMissing(config, status, snapshot, externalFacadeCa
     });
     const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, {
       externalFacadeCatalog,
+      generatedDeclarationOwners,
       largeFileSplits: status.largeFileSplits,
     });
     const targetLabel = path.relative(repoRoot, targetPath);
@@ -112,7 +113,7 @@ export async function scaffoldMissing(config, status, snapshot, externalFacadeCa
   }
 }
 
-export function checkSkeletons(config, status, snapshot, externalFacadeCatalog, options) {
+export function checkSkeletons(config, status, snapshot, externalFacadeCatalog, generatedDeclarationOwners, options) {
   assertLargeFileSplitPlanClean(status);
   const emitTemp = options["no-emit-temp"] !== true;
   const compile = emitTemp && options["no-compile"] !== true;
@@ -154,6 +155,7 @@ export function checkSkeletons(config, status, snapshot, externalFacadeCatalog, 
       const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, {
         diagnostics,
         externalFacadeCatalog,
+        generatedDeclarationOwners,
         largeFileSplits: status.largeFileSplits,
       });
       renderedFiles++;

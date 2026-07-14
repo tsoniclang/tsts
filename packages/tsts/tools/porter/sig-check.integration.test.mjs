@@ -10,6 +10,7 @@ import { loadProfile } from "./ts-extractor/profile.mjs";
 import { compareSignatures } from "./sig-check.mjs";
 import { testSemanticProfile } from "./test/helpers.mjs";
 import { finalizeGeneratedFacadeFixtureCatalog } from "./test/external-facade-fixtures.mjs";
+import { emptyGeneratedDeclarationOwnerCatalog } from "./core/generated-declaration-owner-catalog.mjs";
 
 const ANNO = { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" };
 const parser = await loadParser();
@@ -147,7 +148,7 @@ export const mask: bigint = 0x8000000000000000n;
     EMPTY_SEMANTIC_SNAPSHOT,
     new Map(),
     profile,
-    new Map(),
+    emptyGeneratedDeclarationOwnerCatalog(config, EMPTY_SEMANTIC_SNAPSHOT),
     { externalFacadeStorageView: externalFacadeCatalog.artifactFacades(config, EMPTY_SEMANTIC_SNAPSHOT) },
   );
   const expected = goUnitDescriptor({
@@ -176,11 +177,11 @@ test("integration: expected indexes reject provisional and retired facade inputs
   const config = { goModulePath: "m", tsRoot: "pkg" };
   const profile = loadProfile(config);
   assert.throws(
-    () => buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map(), { externalFacades: new Map() }),
+    () => buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, emptyGeneratedDeclarationOwnerCatalog(config, EMPTY_SEMANTIC_SNAPSHOT), { externalFacades: new Map() }),
     /unsupported option.*externalFacades/,
   );
   assert.throws(
-    () => buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map(), { externalFacadeStorageView: new Map() }),
+    () => buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, emptyGeneratedDeclarationOwnerCatalog(config, EMPTY_SEMANTIC_SNAPSHOT), { externalFacadeStorageView: new Map() }),
     /finalized external facade storage view/,
   );
 });
@@ -220,7 +221,7 @@ test("integration: end-to-end expected(Go-model) vs actual — match and drift",
   const config = { goModulePath: "m", tsRoot: "pkg", signatureCheck: { modules: { core: "pkg/scalars.ts", compat: "pkg/compat.ts" } } };
   const profile = loadProfile(config);
   const externalFacadeCatalog = finalizeGeneratedFacadeFixtureCatalog(config, EMPTY_SEMANTIC_SNAPSHOT);
-  const index = buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map(), {
+  const index = buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, emptyGeneratedDeclarationOwnerCatalog(config, EMPTY_SEMANTIC_SNAPSHOT), {
     externalFacadeStorageView: externalFacadeCatalog.artifactFacades(config, EMPTY_SEMANTIC_SNAPSHOT),
   });
   // Go: func f(a string, b *int) — expected [string, GoRef<int>].

@@ -10,7 +10,7 @@ import { resolveRepo, writeTextSafely } from "../runtime.mjs";
 import { renderGoValueOperationArtifacts } from "./artifact-renderer.mjs";
 import { registerGoValueOperationArtifacts } from "./registered-artifacts.mjs";
 
-const inputKeys = Object.freeze(["config", "externalFacadeCatalog", "largeFileSplits", "plan", "snapshot"]);
+const inputKeys = Object.freeze(["config", "externalFacadeCatalog", "generatedDeclarationOwners", "largeFileSplits", "plan", "snapshot"]);
 
 export function buildGoValueOperationGeneratedFiles(input) {
   requireExactInput(input, inputKeys, "Go value-operation generated-file input");

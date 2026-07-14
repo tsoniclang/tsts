@@ -20,7 +20,7 @@ import { semanticTypeParameterKey } from "../../ts-extractor/semantic-type-contr
 import { requireDirectProviderIdentity } from "./provider-identity.mjs";
 import { requireGoValueOperationPlan } from "./operation-plan.mjs";
 
-const inputKeys = Object.freeze(["config", "externalFacadeCatalog", "largeFileSplits", "plan", "snapshot"]);
+const inputKeys = Object.freeze(["config", "externalFacadeCatalog", "generatedDeclarationOwners", "largeFileSplits", "plan", "snapshot"]);
 const numericBasics = new Set([
   "byte", "float32", "float64", "int", "int8", "int16", "int32", "int64", "rune",
   "uint", "uint8", "uint16", "uint32", "uint64", "uintptr",
@@ -28,7 +28,7 @@ const numericBasics = new Set([
 
 export function renderGoValueOperationArtifacts(input) {
   requireExactInput(input, inputKeys, "Go value-operation artifact input");
-  const { config, externalFacadeCatalog, largeFileSplits, plan, snapshot } = input;
+  const { config, externalFacadeCatalog, generatedDeclarationOwners, largeFileSplits, plan, snapshot } = input;
   requireGoValueOperationPlan(plan, config, snapshot);
   const groups = new Map();
   for (const entry of plan.generated(config, snapshot)) {
@@ -47,6 +47,7 @@ export function renderGoValueOperationArtifacts(input) {
       group.map(({ entry }) => entry.sourceUnit),
       {
         externalFacadeCatalog,
+        generatedDeclarationOwners,
         largeFileSplits,
         localTopLevelNames: new Set(group.map(({ identity }) => identity.exportName)),
       },

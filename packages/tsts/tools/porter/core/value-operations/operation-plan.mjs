@@ -126,7 +126,6 @@ export function buildGoValueOperationPlan(input) {
 
   const usedProviderIds = new Set(catalog.usedProviderObjectIds);
   requireAllConfiguredProvidersUsed(reviewedProviders, usedProviderIds, "reviewed");
-  requireAllConfiguredProvidersUsed(generatorOwnedProviders, usedProviderIds, "generator-owned");
   const localObjectIds = new Set(entries.map((entry) => entry.objectId));
   const externalProviders = catalog.usedProviderObjectIds
     .filter((objectId) => !localObjectIds.has(objectId))

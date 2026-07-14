@@ -21,10 +21,15 @@ import {
   renderGeneratedArtifactEnvelope,
   stripGeneratedArtifactEnvelope,
 } from "../porter/generated-artifact-registry.mjs";
+import {
+  unicodeCaseArtifactPath,
+  unicodeGeneratorId,
+  unicodeIdentifierArtifactPath,
+} from "./config.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const generatedKind = "unicode-generated";
-const generatedBy = "porter:unicode";
+const generatedBy = unicodeGeneratorId;
 
 // The pinned Unicode version. Recorded in @tsgo-generated metadata as
 // sourceRevision because these tables derive from the Unicode database, not the
@@ -33,9 +38,8 @@ export const UNICODE_VERSION = "15.1.0";
 const PACKAGE = `@unicode/unicode-${UNICODE_VERSION}`;
 
 const TS_ROOT = "packages/tsts/src";
-const GENERATED_DIR = "internal/stringutil/generated";
-const IDENTIFIER_ARTIFACT_PATH = `${GENERATED_DIR}/identifier_parts_generated.ts`;
-const CASE_ARTIFACT_PATH = `${GENERATED_DIR}/js_case_generated.ts`;
+const IDENTIFIER_ARTIFACT_PATH = unicodeIdentifierArtifactPath;
+const CASE_ARTIFACT_PATH = unicodeCaseArtifactPath;
 
 // ── Data loading (async; mirrors the upstream loadCodePoints/loadMapping) ──
 

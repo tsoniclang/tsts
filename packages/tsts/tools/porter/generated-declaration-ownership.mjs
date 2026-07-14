@@ -1,31 +1,69 @@
-import { buildAstGeneratedTypeOwnership } from "./ast-generator/artifacts.mjs";
+import { buildAstGeneratedDeclarationOwnerRows } from "./ast-generator/artifacts.mjs";
 import { compareText } from "./core/deterministic-order.mjs";
-import { inspectGeneratedArtifactRegistration } from "./generated-source.mjs";
-
-const UNICODE_GENERATOR = "porter:unicode";
-const UNICODE_SOURCE_PATH = "internal/stringutil/js_case_generated.go";
-const UNICODE_MODULE_PATH = "internal/stringutil/generated/js_case_generated.ts";
-const UNICODE_TYPE_NAMES = Object.freeze(["specialCasingCondition", "specialCasingMapping"]);
+import {
+  finalizeGeneratedDeclarationOwners,
+  validateGeneratedDeclarationOwnerShape,
+} from "./core/generated-declaration-owner-catalog.mjs";
+import { exactSemanticTypeObjectId } from "./core/semantic-variants.mjs";
+import { buildTypeStorageIdentityMap } from "./core/type-storage-policies.mjs";
+import { generatedArtifactProviders, inspectGeneratedArtifactRegistration } from "./generated-artifact-registry.mjs";
+import { buildUnicodeGeneratedDeclarationOwnerRows } from "../unicode/declaration-ownership.mjs";
 
 export function buildGeneratedTypeDeclarationOwnership(config, snapshot, moduleIndex) {
-  return validateGeneratedTypeDeclarationOwnership(config, moduleIndex, [
-    ...buildAstGeneratedTypeOwnership(config, snapshot),
-    ...buildUnicodeGeneratedTypeOwnership(config, snapshot),
+  return validateGeneratedTypeDeclarationOwnership(config, snapshot, moduleIndex, [
+    ...buildAstGeneratedDeclarationOwnerRows(config, snapshot),
+    ...buildUnicodeGeneratedDeclarationOwnerRows(config, snapshot),
   ]);
 }
 
-export function validateGeneratedTypeDeclarationOwnership(config, moduleIndex, rows) {
+export function validateGeneratedTypeDeclarationOwnership(config, snapshot, moduleIndex, rows) {
+  requireModuleIndex(moduleIndex);
+  if (!Array.isArray(rows)) throw new Error("generated declaration ownership rows must be one array");
+  const unitsById = indexSnapshotUnits(snapshot);
+  const storagePolicies = buildTypeStorageIdentityMap(config, snapshot);
+  const registeredGenerators = new Set(generatedArtifactProviders.map((provider) => provider.id));
+  const owners = [];
   const byObjectId = new Map();
+  const byUnitId = new Map();
   const byStorage = new Map();
-  const prefix = `${config.tsRoot.replace(/\/$/, "")}/`;
+  const prefix = `${config.tsRoot.replace(/\/+$/, "")}/`;
+  for (const row of rows) validateGeneratedDeclarationOwnerShape(row);
   for (const row of [...rows].sort(compareOwnership)) {
-    validateOwnershipRow(row);
-    if (byObjectId.has(row.objectId)) throw new Error(`generated Go object '${row.objectId}' has more than one TypeScript owner`);
-    const storageIdentity = `${row.moduleId}::${row.tsName}`;
-    if (byStorage.has(storageIdentity)) {
-      throw new Error(`generated TypeScript declaration '${storageIdentity}' owns both '${byStorage.get(storageIdentity)}' and '${row.objectId}'`);
+    if (!registeredGenerators.has(row.generator)) {
+      throw new Error(`generated declaration owner '${row.objectId}' names unregistered generator '${row.generator}'`);
     }
-    if (!row.moduleId.startsWith(prefix)) throw new Error(`generated declaration module '${row.moduleId}' is outside configured tsRoot '${config.tsRoot}'`);
+    const record = unitsById.get(row.unitId);
+    if (record === undefined) throw new Error(`generated declaration owner '${row.objectId}' references missing Go unit '${row.unitId}'`);
+    if (record.unit.kind !== "type" || record.unit.generated !== true || record.file.generated !== true) {
+      throw new Error(`generated declaration owner '${row.objectId}' must reference one generated Go type unit`);
+    }
+    const semanticObjectId = exactSemanticTypeObjectId(record.unit);
+    if (semanticObjectId !== row.objectId) {
+      throw new Error(`generated declaration owner '${row.objectId}' references Go unit '${row.unitId}' owned by '${semanticObjectId}'`);
+    }
+    if (record.unit.name !== row.tsName) {
+      throw new Error(`generated declaration owner '${row.objectId}' changes source name '${record.unit.name}' to '${row.tsName}'`);
+    }
+    if (moduleIndex.metadataById.has(row.unitId)) {
+      const competing = moduleIndex.metadataById.get(row.unitId);
+      throw new Error(`generated Go unit '${row.unitId}' also has @tsgo-unit ownership in '${competing.moduleId}'`);
+    }
+    const configuredStorage = storagePolicies.get(row.objectId);
+    if (configuredStorage !== undefined) {
+      throw new Error(`generated Go object '${row.objectId}' also has configured TypeScript storage '${configuredStorage}'`);
+    }
+    const previousObject = byObjectId.get(row.objectId);
+    if (previousObject !== undefined) throw new Error(`generated Go object '${row.objectId}' has more than one TypeScript owner`);
+    const previousUnit = byUnitId.get(row.unitId);
+    if (previousUnit !== undefined) throw new Error(`generated Go unit '${row.unitId}' owns both '${previousUnit}' and '${row.objectId}'`);
+    const storageIdentity = `${row.moduleId}::${row.tsName}`;
+    const previousStorage = byStorage.get(storageIdentity);
+    if (previousStorage !== undefined) {
+      throw new Error(`generated TypeScript declaration '${storageIdentity}' owns both '${previousStorage}' and '${row.objectId}'`);
+    }
+    if (!row.moduleId.startsWith(prefix)) {
+      throw new Error(`generated declaration module '${row.moduleId}' is outside configured tsRoot '${config.tsRoot}'`);
+    }
     const module = moduleIndex.modules.get(row.moduleId);
     if (module === undefined) throw new Error(`generated declaration owner module '${row.moduleId}' is missing from the TypeScript module index`);
     const relativePath = row.moduleId.slice(prefix.length);
@@ -35,48 +73,33 @@ export function validateGeneratedTypeDeclarationOwnership(config, moduleIndex, r
       throw new Error(`generated declaration '${storageIdentity}' claims '${row.generator}' but its registered provider is '${registration.provider?.id ?? "missing"}'`);
     }
     if (!module.structure.exportedTypeNames.has(row.tsName)) {
-      throw new Error(`generated declaration owner '${storageIdentity}' is not an exported type declaration`);
+      throw new Error(`generated declaration owner '${storageIdentity}' is not a direct exported type declaration`);
     }
     const owner = Object.freeze({ ...row });
+    owners.push(owner);
     byObjectId.set(row.objectId, owner);
+    byUnitId.set(row.unitId, row.objectId);
     byStorage.set(storageIdentity, row.objectId);
   }
-  return byObjectId;
+  return finalizeGeneratedDeclarationOwners(config, snapshot, owners);
 }
 
-function buildUnicodeGeneratedTypeOwnership(config, snapshot) {
-  const file = (snapshot.files ?? []).find((candidate) => candidate.path === UNICODE_SOURCE_PATH);
-  if (file === undefined) throw new Error(`Unicode generated type source '${UNICODE_SOURCE_PATH}' is missing from the Porter snapshot`);
-  const units = (file.units ?? []).filter((unit) => unit.kind === "type");
-  const names = units.map((unit) => unit.name).sort(compareText);
-  const expected = [...UNICODE_TYPE_NAMES].sort(compareText);
-  if (names.length !== expected.length || names.some((name, index) => name !== expected[index])) {
-    throw new Error(`Unicode generated type ownership must cover exactly ${expected.join(", ")}; got ${names.join(", ")}`);
+function indexSnapshotUnits(snapshot) {
+  if (!Array.isArray(snapshot?.files)) throw new Error("generated declaration ownership requires one exact Porter snapshot");
+  const byId = new Map();
+  for (const file of snapshot.files) {
+    for (const unit of file.units ?? []) {
+      if (byId.has(unit.id)) throw new Error(`Porter snapshot duplicates Go unit '${unit.id}'`);
+      byId.set(unit.id, { file, unit });
+    }
   }
-  const moduleId = `${config.tsRoot.replace(/\/$/, "")}/${UNICODE_MODULE_PATH}`;
-  return units.map((unit) => ({
-    generator: UNICODE_GENERATOR,
-    objectId: exactSemanticTypeObjectId(unit),
-    unitId: unit.id,
-    moduleId,
-    tsName: unit.name,
-  }));
+  return byId;
 }
 
-function exactSemanticTypeObjectId(unit) {
-  const objectIds = new Set((unit.semantic ?? []).map((variant) => variant?.type?.object?.id).filter((id) => typeof id === "string" && id !== ""));
-  if (objectIds.size !== 1) throw new Error(`generated Go type '${unit.id}' must have one profile-invariant object identity`);
-  return [...objectIds][0];
-}
-
-function validateOwnershipRow(row) {
-  const expectedKeys = ["generator", "moduleId", "objectId", "tsName", "unitId"];
-  if (row === null || typeof row !== "object" || Array.isArray(row)) throw new Error("generated declaration ownership row must be an object");
-  const actualKeys = Object.keys(row).sort(compareText);
-  if (actualKeys.length !== expectedKeys.length || actualKeys.some((key, index) => key !== expectedKeys[index])) {
-    throw new Error(`generated declaration ownership keys must be exactly ${expectedKeys.join(", ")}; got ${actualKeys.join(", ")}`);
+function requireModuleIndex(moduleIndex) {
+  if (!(moduleIndex?.modules instanceof Map) || !(moduleIndex?.metadataById instanceof Map)) {
+    throw new Error("generated declaration ownership requires one finalized TypeScript module index");
   }
-  for (const key of expectedKeys) if (typeof row[key] !== "string" || row[key] === "") throw new Error(`generated declaration ownership ${key} must be non-empty`);
 }
 
 function compareOwnership(left, right) {

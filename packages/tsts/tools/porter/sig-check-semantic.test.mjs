@@ -9,11 +9,15 @@ import { testSemanticProfile } from "./test/helpers.mjs";
 import { buildSemanticTypeCatalog } from "./core/type-storage-policies.mjs";
 import { semanticDeclarationVariantsHash } from "./core/semantic-declaration-hash.mjs";
 import { finalizeGeneratedFacadeFixtureCatalog } from "./test/external-facade-fixtures.mjs";
+import {
+  emptyGeneratedDeclarationOwnerCatalog,
+  finalizeGeneratedDeclarationOwners,
+} from "./core/generated-declaration-owner-catalog.mjs";
 
 const modulePath = "example.com/proj";
 const packagePath = `${modulePath}/pkg`;
 
-function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeOwnership = new Map()) {
+function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeOwnership = emptyGeneratedDeclarationOwnerCatalog(config, snapshot)) {
   const externalFacadeCatalog = finalizeGeneratedFacadeFixtureCatalog(config, snapshot);
   return buildExpectedIndexRaw(config, snapshot, tsById, profile, generatedTypeOwnership, {
     externalFacadeStorageView: externalFacadeCatalog.artifactFacades(config, snapshot),
@@ -36,7 +40,13 @@ test("expected type index resolves one exact generated declaration and rejects a
   const snapshot = semanticSnapshot([{ importPath: packagePath, units: [generated] }]);
   const profile = loadProfile(config);
   const objectId = `${packagePath}::type::Generated`;
-  const exact = new Map([[objectId, { moduleId: "src/pkg/generated/types.ts", tsName: "Generated" }]]);
+  const exact = finalizeGeneratedDeclarationOwners(config, snapshot, [{
+    generator: "porter:ast",
+    moduleId: "src/pkg/generated/types.ts",
+    objectId,
+    tsName: "Generated",
+    unitId: generated.id,
+  }]);
   const index = buildExpectedIndex(config, snapshot, new Map(), profile, exact);
   assert.deepEqual(index.pkgType.get(objectId), { moduleId: "src/pkg/generated/types.ts", tsName: "Generated" });
 });
@@ -54,6 +64,7 @@ test("generated type identities require exact object and registered artifact own
     contentHash: "a".repeat(64),
   })}`;
   const moduleIndex = {
+    metadataById: new Map(),
     modules: new Map([
       [generatedModule, {
         text: `// Code generated. DO NOT EDIT.\n${metadata}\n\nexport type Generated = unknown;`,
@@ -72,14 +83,14 @@ test("generated type identities require exact object and registered artifact own
     moduleId: generatedModule,
     tsName: "Generated",
   };
-  const declarations = validateGeneratedTypeDeclarationOwnership({ tsRoot: "src" }, moduleIndex, [row]);
+  const generated = { ...typeUnit("generated.go", "Generated", structType([])), generated: true };
+  const snapshot = semanticSnapshot([{ path: "pkg/generated.go", importPath: packagePath, generated: true, units: [generated] }]);
+  const config = projectConfig({ keyword: { string: "string" }, core: {} });
+  const declarations = validateGeneratedTypeDeclarationOwnership(config, snapshot, moduleIndex, [row]);
   assert.deepEqual(declarations.get(row.objectId), row);
   assert.throws(
-    () => validateGeneratedTypeDeclarationOwnership({ tsRoot: "src" }, moduleIndex, [
-      row,
-      { ...row, objectId: "example.com/proj/pkg::type::Other", unitId: "example.com/proj::pkg/generated.go::type::Other" },
-    ]),
-    /owns both/,
+    () => validateGeneratedTypeDeclarationOwnership(config, snapshot, moduleIndex, [row, row]),
+    /more than one TypeScript owner/,
   );
 });
 

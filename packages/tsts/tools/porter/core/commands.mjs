@@ -243,9 +243,11 @@ export async function main() {
     });
     const { externalFacadeCatalog } = workspace;
     let { status } = workspace;
+    const declarationPrerequisites = command === "status"
+      ? undefined
+      : await prepareDeclarationAuditPrerequisites(workspace);
     if (command === "verify") {
-      const prerequisites = await prepareDeclarationAuditPrerequisites(workspace);
-      const signatureReport = await computeSignatureReport(prerequisites);
+      const signatureReport = await computeSignatureReport(declarationPrerequisites);
       status = {
         ...status,
         signatureCheck: summarizeSignatureReport(signatureReport),
@@ -267,15 +269,24 @@ export async function main() {
       return;
     }
     if (command === "scaffold") {
-      await scaffoldMissing(config, status, snapshot, externalFacadeCatalog, options);
+      requireCompleteDeclarationPrerequisites(declarationPrerequisites, command);
+      await scaffoldMissing(config, status, snapshot, externalFacadeCatalog, declarationPrerequisites.generatedTypeOwnership, options);
       return;
     }
     if (command === "skeleton-check") {
-      checkSkeletons(config, status, snapshot, externalFacadeCatalog, options);
+      requireCompleteDeclarationPrerequisites(declarationPrerequisites, command);
+      checkSkeletons(config, status, snapshot, externalFacadeCatalog, declarationPrerequisites.generatedTypeOwnership, options);
       return;
     }
     return;
   }
 
   fail(`unknown command '${command}'. Expected delta, delta-verify, generated-source-coverage, bundled, unicode, scan, status, verify, reconcile-metadata, sig-check, scaffold, facades, large-files, ast, diagnostics, value-operations, or skeleton-check.`);
+}
+
+function requireCompleteDeclarationPrerequisites(prerequisites, command) {
+  if (prerequisites?.state === "complete") return;
+  const issues = prerequisites?.issues ?? [];
+  const details = issues.slice(0, 20).map((issue) => `${issue.category}:${issue.path}: ${issue.reason}`);
+  fail(`${command} requires complete declaration prerequisites (${issues.length} issue(s))${details.length === 0 ? "" : `\n${details.join("\n")}`}`);
 }

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildPorterUnitOwnership } from "../unit-ownership.mjs";
+import { emptyGeneratedDeclarationOwnerCatalog } from "../generated-declaration-owner-catalog.mjs";
 import { buildAuditedTypeStorageCatalog } from "../../sig-check/audited-type-storage.mjs";
 import { finalizeGeneratedFacadeFixtureCatalog } from "../../test/external-facade-fixtures.mjs";
 import { snapshotWith } from "../../test/helpers.mjs";
@@ -15,6 +16,7 @@ test("generated value operations use exact audited storage and operation-bearing
   const artifacts = renderGoValueOperationArtifacts({
     config: fixture.config,
     externalFacadeCatalog: fixture.externalFacadeCatalog,
+    generatedDeclarationOwners: fixture.generatedDeclarationOwners,
     largeFileSplits: fixture.largeFileSplits,
     plan: fixture.plan,
     snapshot: fixture.snapshot,
@@ -182,6 +184,7 @@ function operationFixture() {
   return {
     config,
     externalFacadeCatalog,
+    generatedDeclarationOwners: emptyGeneratedDeclarationOwnerCatalog(config, snapshot),
     largeFileSplits,
     plan,
     snapshot,

@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { inspectGeneratedArtifactRegistration, inventoryGeneratedArtifactsForProvider, renderGeneratedArtifactEnvelope } from "../generated-artifact-registry.mjs";
-import { hashText, resolveRepo, writeTextSafely } from "../porter.mjs";
+import { hashText, resolveRepo, writeTextSafely } from "../core/runtime.mjs";
+import { exactSemanticTypeObjectId } from "../core/semantic-variants.mjs";
 import { astConfig, loadAstSchema } from "./config.mjs";
 import { emitData } from "./data-emitter.mjs";
 import { emitFlags, emitKinds } from "./flag-emitters.mjs";
@@ -106,27 +107,41 @@ export function buildAstGeneratedFiles(config, sourceRevision) {
   return files;
 }
 
-export function buildAstGeneratedTypeOwnership(config, snapshot) {
+export function buildAstGeneratedDeclarationOwnerRows(config, snapshot) {
   const ac = astConfig(config);
   const model = loadAstSchema(config).model;
   const routes = astGeneratedTypeRoutes(ac.generatedDir, model);
-  const sourcePaths = new Set(["internal/ast/ast_generated.go", "internal/ast/kind_generated.go"]);
-  const units = (snapshot.files ?? [])
-    .filter((file) => sourcePaths.has(file.path))
-    .flatMap((file) => (file.units ?? []).filter((unit) => unit.kind === "type"));
-  const unitNames = new Set(units.map((unit) => unit.name));
-  const missing = [...unitNames].filter((name) => !routes.has(name)).sort();
-  const extra = [...routes.keys()].filter((name) => !unitNames.has(name)).sort();
-  if (missing.length > 0 || extra.length > 0) {
-    throw new Error(`AST generated type ownership differs from pinned Go declarations (missing routes: ${missing.join(", ") || "none"}; extra routes: ${extra.join(", ") || "none"})`);
+  const kindNames = new Set(["Kind", ...model.kindAliasNames()]);
+  const expectedBySource = new Map([
+    ["internal/ast/kind_generated.go", kindNames],
+    ["internal/ast/ast_generated.go", new Set([...routes.keys()].filter((name) => !kindNames.has(name)))],
+  ]);
+  const units = [];
+  for (const [sourcePath, expectedNames] of expectedBySource) {
+    const files = (snapshot.files ?? []).filter((file) => file.path === sourcePath);
+    if (files.length !== 1) throw new Error(`AST generated type source '${sourcePath}' must occur exactly once; got ${files.length}`);
+    const sourceUnits = (files[0].units ?? []).filter((unit) => unit.kind === "type");
+    const byName = new Map();
+    for (const unit of sourceUnits) {
+      if (byName.has(unit.name)) throw new Error(`AST generated type source '${sourcePath}' duplicates '${unit.name}'`);
+      byName.set(unit.name, unit);
+    }
+    const actualNames = [...byName.keys()].sort();
+    const expected = [...expectedNames].sort();
+    if (actualNames.length !== expected.length || actualNames.some((name, index) => name !== expected[index])) {
+      const missing = expected.filter((name) => !byName.has(name));
+      const extra = actualNames.filter((name) => !expectedNames.has(name));
+      throw new Error(`AST generated type ownership for '${sourcePath}' differs from pinned Go declarations (missing: ${missing.join(", ") || "none"}; extra: ${extra.join(", ") || "none"})`);
+    }
+    units.push(...sourceUnits);
   }
-  return units.map((unit) => ({
+  return Object.freeze(units.map((unit) => Object.freeze({
     generator: GENERATOR,
     objectId: exactSemanticTypeObjectId(unit),
     unitId: unit.id,
     moduleId: `${config.tsRoot.replace(/\/$/, "")}/${routes.get(unit.name)}`,
     tsName: unit.name,
-  })).sort((left, right) => compareOwnership(left, right));
+  })).sort((left, right) => compareOwnership(left, right)));
 }
 
 function astGeneratedTypeRoutes(generatedDir, model) {
@@ -147,12 +162,6 @@ function astGeneratedTypeRoutes(generatedDir, model) {
   for (const name of Object.keys(model.listAliases)) add(name, "unions.ts");
   for (const name of Object.keys(model.aliases)) add(name, "unions.ts");
   return routes;
-}
-
-function exactSemanticTypeObjectId(unit) {
-  const objectIds = new Set((unit.semantic ?? []).map((variant) => variant?.type?.object?.id).filter((id) => typeof id === "string" && id !== ""));
-  if (objectIds.size !== 1) throw new Error(`generated Go type '${unit.id}' must have one profile-invariant object identity`);
-  return [...objectIds][0];
 }
 
 function compareOwnership(left, right) {

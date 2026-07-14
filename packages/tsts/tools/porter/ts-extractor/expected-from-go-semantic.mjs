@@ -22,11 +22,13 @@ import {
   semanticContextWithTypeParameters,
 } from "./semantic-type-contract.mjs";
 import { buildTypeStorageIdentityMap } from "../core/type-storage-policies.mjs";
+import { requireGeneratedDeclarationOwnerCatalog } from "../core/generated-declaration-owner-catalog.mjs";
 
 export const ref = (id, args = []) => ({ t: "ref", id, args });
 
-export function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeOwnership = new Map(), options = {}) {
+export function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeOwnership, options = {}) {
   requireOnlyOptions(options, new Set(["externalFacadeStorageView"]), "expected signature index");
+  const generatedOwners = requireGeneratedDeclarationOwnerCatalog(generatedTypeOwnership, config, snapshot);
   const evidence = addProfileSemanticStorageEvidence(
     buildTypeRepresentationEvidence(config, snapshot, options.externalFacadeStorageView),
     profile,
@@ -41,7 +43,10 @@ export function buildExpectedIndex(config, snapshot, tsById, profile, generatedT
       for (const variant of semanticVariants(unit)) {
         const object = variant.type?.object;
         if (object === undefined) continue;
-        const generated = generatedTypeOwnership.get(object.id);
+        const generated = generatedOwners.get(object.id);
+        if (ts !== undefined && generated !== undefined) {
+          throw new Error(`Go type '${object.id}' has both @tsgo-unit and generated declaration ownership`);
+        }
         if (ts === undefined && generated === undefined) continue;
         const owner = ts === undefined
           ? { moduleId: generated.moduleId, tsName: generated.tsName }

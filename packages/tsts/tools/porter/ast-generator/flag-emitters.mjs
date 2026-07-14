@@ -204,10 +204,13 @@ export function emitKinds(schema) {
   const elements = schema.ast.kinds?.elements ?? [];
   const markers = schema.ast.kinds?.markers ?? [];
   const lines = [];
+  lines.push(`import type { GoValueOps } from "../../../go/compat.js";`);
+  lines.push(`import { GoNumberValueOps } from "../../../go/compat.js";`);
   lines.push(`import type { short } from "../../../go/scalars.js";`);
   lines.push("");
   lines.push("// SyntaxKind constants. Go: type Kind int16 (iota-sequential).");
   lines.push("export type Kind = short;");
+  lines.push("export const KindValueOps: GoValueOps<Kind> = GoNumberValueOps;");
   lines.push("");
 
   const names = [];

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades.mjs";
+import { requireGeneratedDeclarationOwnerCatalog } from "./generated-declaration-owner-catalog.mjs";
 import {
   renderCanonicalSignature,
   renderCanonicalType,
@@ -37,11 +38,14 @@ export function renderUnitGroup(config, snapshot, relativeTargetPath, units, opt
 }
 
 function requireOnlyRendererOptions(options) {
-  const allowed = new Set(["diagnostics", "externalFacadeCatalog", "filesByPath", "largeFileSplits", "localTopLevelNames", "symbolIndex"]);
+  const allowed = new Set(["diagnostics", "externalFacadeCatalog", "filesByPath", "generatedDeclarationOwners", "largeFileSplits", "localTopLevelNames"]);
   const unknown = Reflect.ownKeys(options).filter((key) => typeof key !== "string" || !allowed.has(key)).map(String).sort();
   if (unknown.length > 0) throw new Error(`unit renderer options contain unknown current-contract key(s): ${unknown.join(", ")}`);
   if (!Object.hasOwn(options, "largeFileSplits") || options.largeFileSplits === undefined) {
     throw new Error("unit renderer options must contain finalized largeFileSplits evidence");
+  }
+  if (!Object.hasOwn(options, "generatedDeclarationOwners") || options.generatedDeclarationOwners === undefined) {
+    throw new Error("unit renderer options must contain finalized generatedDeclarationOwners evidence");
   }
 }
 
@@ -49,7 +53,8 @@ export function createSemanticRendererContext(config, snapshot, relativeTargetPa
   requireOnlyRendererOptions(options);
   const filesByPath = options.filesByPath ?? new Map(snapshot.files.map((file) => [file.path, file]));
   const largeFileSplits = options.largeFileSplits;
-  const symbolIndex = options.symbolIndex ?? buildSymbolIndex(config, snapshot, largeFileSplits);
+  const generatedDeclarationOwners = requireGeneratedDeclarationOwnerCatalog(options.generatedDeclarationOwners, config, snapshot);
+  const symbolIndex = buildSymbolIndex(config, snapshot, largeFileSplits, generatedDeclarationOwners);
   const firstUnit = units[0];
   const file = filesByPath.get(firstUnit?.metadata?.goPath ?? "") ?? fileFromUnit(firstUnit);
   const externalFacadeCatalog = requireFinalizedExternalFacadeStorageCatalog(options.externalFacadeCatalog, config, snapshot);
@@ -313,7 +318,7 @@ function renderReference(reference, argumentsList, context, unit) {
     if (storageIdentity !== undefined) {
       base = renderStorageIdentity(storageIdentity, context, unit);
     } else if (isInternal(reference.packagePath, context.config.goModulePath)) {
-      base = resolvePackageSymbol(context, reference.packagePath, reference.name, unit);
+      base = resolvePackageSymbol(context, reference.objectId, unit);
       if (base === undefined) throw new Error(`internal canonical Go type '${reference.objectId}' has no exact scaffold symbol`);
     } else {
       if (context.semanticIndex.externalTypeContracts.has(reference.objectId)) return tsExternalType(context, reference, argumentsList, unit);
@@ -365,10 +370,12 @@ export function topLevelNamesForUnit(unit) {
   return [localTsName(unit)];
 }
 
-export function resolvePackageSymbol(context, importPath, name, unit) {
-  const symbol = context.symbolIndex.get(`${importPath}::${name}`);
+export function resolvePackageSymbol(context, objectId, unit) {
+  const symbol = context.symbolIndex.get(objectId);
   if (symbol === undefined) return undefined;
-  if (!symbol.active) throw new Error(`internal Go type '${symbol.goName}' is excluded and has no active semantic scaffold declaration`);
+  if (!symbol.active && symbol.ownership !== "generated") {
+    throw new Error(`internal Go type '${symbol.goName}' is excluded and has no active semantic scaffold declaration`);
+  }
   if (symbol.targetPath === context.relativeTargetPath) return safeIdentifier(symbol.exportName);
   return importTypeName(context, symbol.targetPath, symbol.exportName, unit);
 }

@@ -5,6 +5,7 @@ import {
   renderUnitGroup,
 } from "../porter.mjs";
 import { buildLargeFileSplitStatusFromPlan } from "../core/large-files.mjs";
+import { emptyGeneratedDeclarationOwnerCatalog } from "../core/generated-declaration-owner-catalog.mjs";
 
 import {
   baseConfig,
@@ -98,7 +99,7 @@ test("renderUnitGroup emits higher-order function and inline interface signature
     debugSnapshot,
     "packages/tsts/src/internal/debug/debug.ts",
     [nodeAssert],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, debugSnapshot), largeFileSplits: emptyLargeFileSplitStatus() },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, debugSnapshot), generatedDeclarationOwners: emptyGeneratedDeclarationOwnerCatalog(config, debugSnapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
   const diffSnapshot = snapshotWith([fileRecord({ path: "internal/collections/ordered_map.go", importPath: collectionsPackage, units: [diffFunc] })]);
   const diffText = renderUnitGroup(
@@ -106,7 +107,7 @@ test("renderUnitGroup emits higher-order function and inline interface signature
     diffSnapshot,
     "packages/tsts/src/internal/collections/ordered_map.ts",
     [diffFunc],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, diffSnapshot), largeFileSplits: emptyLargeFileSplitStatus() },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, diffSnapshot), generatedDeclarationOwners: emptyGeneratedDeclarationOwnerCatalog(config, diffSnapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
   assert.match(debugText, /node: GoInterface<\{ KindString\(\): string \}>, message: GoSlice<GoInterface<unknown>>/);
   assert.match(diffText, /equalValues: GoFunc<\(a: V, b: V\) => bool>/);
@@ -153,7 +154,7 @@ test("renderUnitGroup resolves Go external types through generated facades", () 
     snapshot,
     "packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts",
     [diagnosticWriter],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), generatedDeclarationOwners: emptyGeneratedDeclarationOwnerCatalog(config, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
 
   assert.match(text, /import type \{ Writer \} from "\.\.\/\.\.\/go\/io\.js";/);
@@ -222,7 +223,7 @@ test("renderUnitGroup imports symbols from semantic split targets", () => {
     snapshot,
     "packages/tsts/src/internal/checker/emitresolver.ts",
     [emitResolverFactory],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), largeFileSplits: splitStatus },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), generatedDeclarationOwners: emptyGeneratedDeclarationOwnerCatalog(config, snapshot), largeFileSplits: splitStatus },
   );
 
   assert.match(text, /import type \{ Checker \} from "\.\/checker\/state\.js";/);
@@ -281,7 +282,7 @@ test("renderUnitGroup uses canonical declaration value types", () => {
     snapshot,
     "packages/tsts/src/internal/ast/kind_generated.ts",
     [kindType, values, kindBounds, channels],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), generatedDeclarationOwners: emptyGeneratedDeclarationOwnerCatalog(config, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
 
   assert.match(text, /export const handlePrefixProject: GoRune = undefined as never;/);
