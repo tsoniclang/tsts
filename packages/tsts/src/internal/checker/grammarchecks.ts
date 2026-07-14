@@ -2246,7 +2246,15 @@ export function Checker_checkGrammarClassDeclarationHeritageClauses(receiver: Go
   let seenImplementsClause = false;
   const classLikeData = Node_ClassLikeData(node as unknown as GoPtr<Node>);
   if (!Checker_checkGrammarModifiers(receiver, node as unknown as GoPtr<Node>) && classLikeData!.HeritageClauses !== undefined) {
-    for (const heritageClauseNode of classLikeData!.HeritageClauses!.Nodes) {
+    for (
+      let __goRangeSlice3 = classLikeData!.HeritageClauses!.Nodes,
+        __goRangeLength3 = __goRangeSlice3.length,
+        __goRangeValueOps3 = GoPointerValueOps<Node>(),
+        __goRangeIndex3 = 0;
+      __goRangeIndex3 < __goRangeLength3;
+      __goRangeIndex3++
+    ) {
+      const heritageClauseNode = GoSliceLoad(__goRangeSlice3, __goRangeIndex3, __goRangeValueOps3);
       const heritageClause = AsHeritageClause(heritageClauseNode);
       if (heritageClause!.Token === KindExtendsKeyword) {
         if (seenExtendsClause) {
