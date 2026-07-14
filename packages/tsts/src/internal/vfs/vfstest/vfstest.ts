@@ -554,7 +554,7 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [GoInterfa
       const remaining = bytes.length - offset;
       const count = Math.max(0, Math.min(buffer.length, remaining));
       for (let index = 0; index < count; index += 1) {
-        buffer[index] = GoSliceLoad(bytes, offset + index, GoNumberValueOps)!;
+        GoSliceStore(buffer, index, GoSliceLoad(bytes, offset + index, GoNumberValueOps)!, GoNumberValueOps);
       }
       offset += count;
       return [count as int, undefined];

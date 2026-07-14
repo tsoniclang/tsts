@@ -743,7 +743,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
   }
 
   if (comments.length > 0) {
-    comments[comments.length - 1] = GoSliceLoad(comments, comments.length - 1, GoStringValueOps)!.replace(/\s+$/, "");
+    GoSliceStore(comments, comments.length - 1, GoSliceLoad(comments, comments.length - 1, GoStringValueOps)!.replace(/\s+$/, ""), GoStringValueOps);
     const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentsPos);
     commentParts = GoSliceAppend(commentParts, jsdocText!, GoPointerValueOps<Node>());
   }

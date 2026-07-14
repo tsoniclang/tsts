@@ -338,7 +338,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
   }
 
   // Normalize root: "/home/" -> "/home"
-  parts[0] = RemoveTrailingDirectorySeparator(GoSliceLoad(parts, 0, GoStringValueOps)!);
+  GoSliceStore(parts, 0, RemoveTrailingDirectorySeparator(GoSliceLoad(parts, 0, GoStringValueOps)!), GoStringValueOps);
 
   // Directories implicitly match all files: "src" -> "src/** /*"
   if (IsImplicitGlob(LastOrNil(parts, GoZeroString))) {
@@ -1324,7 +1324,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
     }
     const [idx, ok] = globMatcher_matchesFileParts(receiver!.fileMatcher, absPrefix, file);
     if (ok) {
-      receiver!.results[idx] = GoSliceAppend(GoSliceLoad(receiver!.results, idx, GoSliceValueOps<string>())!, pathPrefix + file, GoStringValueOps);
+      GoSliceStore(receiver!.results, idx, GoSliceAppend(GoSliceLoad(receiver!.results, idx, GoSliceValueOps<string>())!, pathPrefix + file, GoStringValueOps), GoSliceValueOps<string>());
     }
   }
 

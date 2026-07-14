@@ -2271,11 +2271,11 @@ export function Checker_applyTemplateStringMapping(receiver: GoPtr<Checker>, sym
   if (kind === IntrinsicTypeKindCapitalize || kind === IntrinsicTypeKindUncapitalize) {
     if (GoSliceLoad(texts!, 0, GoStringValueOps) !== "") {
       const newTexts = slices.Clone(texts);
-      newTexts[0] = applyStringMapping(symbol_, GoSliceLoad(newTexts, 0, GoStringValueOps)!);
+      GoSliceStore(newTexts, 0, applyStringMapping(symbol_, GoSliceLoad(newTexts, 0, GoStringValueOps)!), GoStringValueOps);
       return [newTexts, types];
     }
     const newTypes = slices.Clone(types);
-    newTypes[0] = Checker_getStringMappingType(receiver, symbol_, GoSliceLoad(newTypes, 0, GoPointerValueOps<Type>()));
+    GoSliceStore(newTypes, 0, Checker_getStringMappingType(receiver, symbol_, GoSliceLoad(newTypes, 0, GoPointerValueOps<Type>())), GoPointerValueOps<Type>());
     return [texts, newTypes];
   }
   return [texts, types];

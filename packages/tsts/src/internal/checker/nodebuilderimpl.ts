@@ -5837,7 +5837,7 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
     }
     if (NodeBuilderImpl_checkTruncationLength(receiver) && (i + 2 < properties.length - 1)) {
       if ((receiver!.ctx!.flags & FlagsNoTruncation) !== 0) {
-        typeElements[typeElements.length - 1] = EmitContext_AddSyntheticTrailingComment(receiver!.e, GoSliceLoad(typeElements, typeElements.length - 1, GoPointerValueOps<Node>()), KindMultiLineCommentTrivia, `... ${properties.length - i} more elided ...`, false) as GoPtr<TypeElement>;
+        GoSliceStore(typeElements, typeElements.length - 1, EmitContext_AddSyntheticTrailingComment(receiver!.e, GoSliceLoad(typeElements, typeElements.length - 1, GoPointerValueOps<Node>()), KindMultiLineCommentTrivia, `... ${properties.length - i} more elided ...`, false) as GoPtr<TypeElement>, GoPointerValueOps<Node>());
       } else {
         const text = `... ${properties.length - i} more ...`;
         typeElements = GoSliceAppend(typeElements, NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, text), undefined, undefined, undefined) as GoPtr<TypeElement>, GoPointerValueOps<Node>());

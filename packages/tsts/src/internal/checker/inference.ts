@@ -3849,7 +3849,7 @@ export function hasOverlappingInferences(a: GoSlice<GoPtr<InferenceInfo>>, b: Go
 export function Checker_mergeInferences(receiver: GoPtr<Checker>, target: GoSlice<GoPtr<InferenceInfo>>, source: GoSlice<GoPtr<InferenceInfo>>): void {
   for (let i = 0; i < target.length; i++) {
     if (!hasInferenceCandidates(GoSliceLoad(target, i, GoPointerValueOps<InferenceInfo>())) && hasInferenceCandidates(GoSliceLoad(source, i, GoPointerValueOps<InferenceInfo>()))) {
-      target[i] = GoSliceLoad(source, i, GoPointerValueOps<InferenceInfo>());
+      GoSliceStore(target, i, GoSliceLoad(source, i, GoPointerValueOps<InferenceInfo>()), GoPointerValueOps<InferenceInfo>());
     }
   }
 }

@@ -1391,7 +1391,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
           const newParams = Arena_NewSlice(receiver!.nodeSliceArena, (params.length + 1) as int, GoZeroPointer) as GoSlice<GoPtr<Node>>;
           GoSliceStore(newParams, 0, thisParam, GoPointerValueOps<Node>());
           for (let i: int = 0; i < params.length; i++) {
-            newParams[i + 1] = GoSliceLoad(params, i, GoPointerValueOps<Node>());
+            GoSliceStore(newParams, i + 1, GoSliceLoad(params, i, GoPointerValueOps<Node>()), GoPointerValueOps<Node>());
           }
 
           Node_FunctionLikeData(fun)!.Parameters = Parser_newNodeList(receiver, Node_ParameterList(fun)!.Loc, newParams);
@@ -1502,7 +1502,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
             if (target!.TypeArguments === undefined && source!.TypeArguments !== undefined) {
               const newArguments = Arena_NewSlice(receiver!.nodeSliceArena, source!.TypeArguments!.Nodes.length as int, GoZeroPointer) as GoSlice<GoPtr<Node>>;
               for (let i: int = 0; i < source!.TypeArguments!.Nodes.length; i++) {
-                newArguments[i] = Parser_addDeepCloneReparse(receiver, GoSliceLoad(source!.TypeArguments!.Nodes, i, GoPointerValueOps<Node>()));
+                GoSliceStore(newArguments, i, Parser_addDeepCloneReparse(receiver, GoSliceLoad(source!.TypeArguments!.Nodes, i, GoPointerValueOps<Node>())), GoPointerValueOps<Node>());
               }
               target!.TypeArguments = Parser_newNodeList(receiver, source!.TypeArguments!.Loc, newArguments);
               Parser_finishMutatedNode(receiver, target);

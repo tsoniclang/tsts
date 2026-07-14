@@ -7321,7 +7321,7 @@ export function Checker_includeMixinType(receiver: GoPtr<Checker>, t: GoPtr<Type
     if (i === index) {
       mixedTypes = GoSliceAppend(mixedTypes, t, GoPointerValueOps<Type>());
     } else if (GoSliceLoad(mixinFlags, i, GoBooleanValueOps)) {
-      mixedTypes = GoSliceAppend(mixedTypes, Checker_getReturnTypeOfSignature(receiver, Checker_getSignaturesOfType(receiver, GoSliceLoad(types, i, GoPointerValueOps<Type>()), SignatureKindConstruct)[0]), GoPointerValueOps<Type>());
+      mixedTypes = GoSliceAppend(mixedTypes, Checker_getReturnTypeOfSignature(receiver, GoSliceLoad(Checker_getSignaturesOfType(receiver, GoSliceLoad(types, i, GoPointerValueOps<Type>()), SignatureKindConstruct), 0, GoPointerValueOps<Signature>())), GoPointerValueOps<Type>());
     }
   }
   return Checker_getIntersectionType(receiver, mixedTypes);
@@ -9786,7 +9786,7 @@ export function Checker_getTypeFromTemplateTypeNode(receiver: GoPtr<Checker>, no
     for (let i = 0; i < spans.length; i++) {
       const span = AsTemplateLiteralTypeSpan(GoSliceLoad(spans, i, GoPointerValueOps<Node>()))!;
       GoSliceStore(texts, i + 1, Node_Text(span.Literal), GoStringValueOps);
-      types[i] = Checker_getTypeFromTypeNode(receiver, Node_Type(GoSliceLoad(spans, i, GoPointerValueOps<Node>())));
+      GoSliceStore(types, i, Checker_getTypeFromTypeNode(receiver, Node_Type(GoSliceLoad(spans, i, GoPointerValueOps<Node>()))), GoPointerValueOps<Type>());
     }
     links!.resolvedType = Checker_getTemplateLiteralType(receiver, texts, types);
   }
@@ -13043,7 +13043,7 @@ export function Checker_getCrossProductIntersections(receiver: GoPtr<Checker>, t
       if ((GoSliceLoad(types, j, GoPointerValueOps<Type>())!.flags & TypeFlagsUnion) !== 0) {
         const sourceTypes = Type_Types(GoSliceLoad(types, j, GoPointerValueOps<Type>()));
         const length = sourceTypes.length;
-        constituents[j] = GoSliceLoad(sourceTypes, n % length, GoPointerValueOps<Type>());
+        GoSliceStore(constituents, j, GoSliceLoad(sourceTypes, n % length, GoPointerValueOps<Type>()), GoPointerValueOps<Type>());
         n = Math.trunc(n / length);
       }
     }
@@ -13067,7 +13067,7 @@ export function Checker_getCrossProductIntersections(receiver: GoPtr<Checker>, t
  */
 export function Checker_filterTypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, predicate: GoFunc<(arg0: GoPtr<Type>) => bool>): void {
   for (let i = 0; i < types.length; i++) {
-    types[i] = Checker_filterType(receiver, GoSliceLoad(types, i, GoPointerValueOps<Type>()), predicate);
+    GoSliceStore(types, i, Checker_filterType(receiver, GoSliceLoad(types, i, GoPointerValueOps<Type>()), predicate), GoPointerValueOps<Type>());
   }
 }
 

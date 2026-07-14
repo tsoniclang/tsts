@@ -2299,7 +2299,7 @@ export function GetCommonParents(paths: GoSlice<string>, minComponents: int, get
   const results = getCommonParentsWorker(pathComponents, minComponents, options);
   const resultPaths: GoSlice<string> = new globalThis.Array<string>(results.length);
   for (let i = 0; i < results.length; i++) {
-    resultPaths[i] = GetPathFromPathComponents(GoSliceLoad(results, i, GoSliceValueOps<string>())!);
+    GoSliceStore(resultPaths, i, GetPathFromPathComponents(GoSliceLoad(results, i, GoSliceValueOps<string>())!), GoStringValueOps);
   }
 
   return [resultPaths, ignored];
@@ -2380,7 +2380,7 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
 
   const equality = ComparePathsOptions_getEqualityComparer(options);
   for (let lastCommonIndex = 0; lastCommonIndex < maxDepth; lastCommonIndex++) {
-    const candidate = GoSliceLoad(componentGroups, 0, GoSliceValueOps<string>())![lastCommonIndex]!;
+    const candidate = GoSliceLoad(GoSliceLoad(componentGroups, 0, GoSliceValueOps<string>())!, lastCommonIndex, GoStringValueOps)!;
     {
       const rest = componentGroups.slice(1);
       for (let j = 0; j < rest.length; j++) {

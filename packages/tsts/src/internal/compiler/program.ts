@@ -1451,7 +1451,7 @@ export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: GoInte
 export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, concurrent: bool, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
   const diagnostics: GoSlice<GoSlice<GoPtr<Diagnostic>>> = new Array<GoSlice<GoPtr<Diagnostic>>>(sourceFiles.length).fill(GoNilSlice<GoPtr<Diagnostic>>());
   for (let i = 0; i < sourceFiles.length; i++) {
-    diagnostics[i] = collect!(ctx, GoSliceLoad(sourceFiles, i, GoPointerValueOps<SourceFile>()));
+    GoSliceStore(diagnostics, i, collect!(ctx, GoSliceLoad(sourceFiles, i, GoPointerValueOps<SourceFile>())), GoSliceValueOps<GoPtr<Diagnostic>>());
   }
   return diagnostics;
 }

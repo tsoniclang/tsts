@@ -5702,7 +5702,7 @@ export function Checker_isMixinConstructorType(receiver: GoPtr<Checker>, t: GoPt
   if (signatures.length === 1) {
     const s = GoSliceLoad(signatures, 0, GoPointerValueOps<Signature>());
     if (s!.typeParameters.length === 0 && s!.parameters.length === 1 && signatureHasRestParameter(s)) {
-      const paramType = Checker_getTypeOfParameter(receiver, s!.parameters[0]);
+      const paramType = Checker_getTypeOfParameter(receiver, GoSliceLoad(s!.parameters, 0, GoPointerValueOps<Symbol>()));
       return IsTypeAny(paramType) || Checker_getElementTypeOfArrayType(receiver, paramType) === receiver!.anyType;
     }
   }
@@ -10444,7 +10444,7 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
     const args: GoSlice<GoPtr<Node>> = new globalThis.Array(spans.length + 1);
     GoSliceStore(args, 0, firstArg, GoPointerValueOps<Node>());
     for (let i = 0; i < spans.length; i++) {
-      args[i + 1] = Node_Expression(GoSliceLoad(spans, i, GoPointerValueOps<Node>()));
+      GoSliceStore(args, i + 1, Node_Expression(GoSliceLoad(spans, i, GoPointerValueOps<Node>())), GoPointerValueOps<Node>());
     }
     return args;
   }
