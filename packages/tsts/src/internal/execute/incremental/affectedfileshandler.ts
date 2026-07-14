@@ -49,6 +49,8 @@ import { Program_GetSourceFiles as incremental_Program_GetSourceFiles } from "./
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 const sourceFileKey: GoMapKeyDescriptor<GoPtr<SourceFile>> = GoPointerKey<SourceFile>();
@@ -420,7 +422,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
   });
 
   while (queue.length > 0) {
-    const currentPath = queue[queue.length - 1];
+    const currentPath = GoSliceLoad(queue, queue.length - 1, GoStringValueOps);
     queue = queue.slice(0, queue.length - 1);
     if (!seenFileNamesMap.has(currentPath!)) {
       const currentFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, currentPath!);

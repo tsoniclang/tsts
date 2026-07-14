@@ -102,6 +102,8 @@ import { attachExtensionHostToProgram } from "../../extensions/host.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad, GoSliceStore, GoSliceValueOps } from "../../go/compat.js";
+
 
 
 const sourceFileKey: GoMapKeyDescriptor<GoPtr<SourceFile>> = GoPointerKey<SourceFile>();
@@ -712,7 +714,7 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
       return extensionless;
     }
   }
-  for (const ext of supportedExtensions[0]!) {
+  for (const ext of GoSliceLoad(supportedExtensions, 0, GoSliceValueOps<string>())!) {
     const result = Program_GetSourceFileForResolvedModule(receiver, fileName + ext);
     if (result !== undefined) {
       return result;
@@ -890,7 +892,7 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
   Program_initCheckerPool(result);
   const index = FindIndex(resultPf.files, (file: GoPtr<SourceFile>): bool => (SourceFile_Path(file) === SourceFile_Path(newFile)) as bool);
   resultPf.files = slices.Clone(resultPf.files);
-  resultPf.files[index] = newFile;
+  GoSliceStore(resultPf.files, index, newFile, GoPointerValueOps<SourceFile>());
   resultPf.filesByPath = maps.Clone(resultPf.filesByPath, GoStringKey);
   resultPf.filesByPath.set(SourceFile_Path(newFile), newFile);
   updateFileIncludeProcessor(result);
@@ -1449,7 +1451,7 @@ export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: GoInte
 export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, concurrent: bool, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
   const diagnostics: GoSlice<GoSlice<GoPtr<Diagnostic>>> = new Array<GoSlice<GoPtr<Diagnostic>>>(sourceFiles.length).fill(GoNilSlice<GoPtr<Diagnostic>>());
   for (let i = 0; i < sourceFiles.length; i++) {
-    diagnostics[i] = collect!(ctx, sourceFiles[i]);
+    diagnostics[i] = collect!(ctx, GoSliceLoad(sourceFiles, i, GoPointerValueOps<SourceFile>()));
   }
   return diagnostics;
 }
@@ -1516,16 +1518,16 @@ export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Progr
   const diagnostics: GoSlice<GoSlice<GoPtr<Diagnostic>>> = new Array<GoSlice<GoPtr<Diagnostic>>>(sourceFiles.length).fill(GoNilSlice<GoPtr<Diagnostic>>());
   if (receiver!.compilerCheckerPool !== undefined) {
     checkerPool_forEachCheckerGroupDo(receiver!.compilerCheckerPool, ctx, sourceFiles, Program_SingleThreaded(receiver), (c, fileIndex, file) => {
-      diagnostics[fileIndex] = collect!(ctx, c, file);
+      GoSliceStore(diagnostics, fileIndex, collect!(ctx, c, file), GoSliceValueOps<GoPtr<Diagnostic>>());
     });
   } else {
     for (let i = 0; i < sourceFiles.length; i++) {
-      const file = sourceFiles[i];
+      const file = GoSliceLoad(sourceFiles, i, GoPointerValueOps<SourceFile>());
       if (Program_SkipTypeChecking(receiver, file, false as bool)) {
         continue;
       }
       const [c, done] = receiver!.checkerPool!.GetChecker(ctx, file);
-      diagnostics[i] = collect!(ctx, c, file);
+      GoSliceStore(diagnostics, i, collect!(ctx, c, file), GoSliceValueOps<GoPtr<Diagnostic>>());
       done!();
     }
   }
@@ -1671,8 +1673,8 @@ export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: G
   const allDiags = Program_collectCheckerDiagnosticsFromFiles(receiver, ctx, sourceFiles, Program_getBindAndCheckDiagnosticsWithChecker.bind(undefined, receiver));
   const result = new globalThis.Map<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>();
   for (let i = 0; i < allDiags.length; i++) {
-    const file = sourceFiles[i];
-    result.set(file, SortAndDeduplicateDiagnostics(GoSliceAppendSlice(allDiags[i]!, collectExtensionDiagnosticsForSourceFile(receiver!, file), GoPointerValueOps<Diagnostic>())));
+    const file = GoSliceLoad(sourceFiles, i, GoPointerValueOps<SourceFile>());
+    result.set(file, SortAndDeduplicateDiagnostics(GoSliceAppendSlice(GoSliceLoad(allDiags, i, GoSliceValueOps<GoPtr<Diagnostic>>())!, collectExtensionDiagnosticsForSourceFile(receiver!, file), GoPointerValueOps<Diagnostic>())));
   }
   return result;
 }
@@ -2542,7 +2544,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
           if (IsArrayLiteralExpression(initializer)) {
             const elements = AsArrayLiteralExpression(initializer!)!.Elements;
             if (elements !== undefined && elements!.Nodes.length > valueIndex) {
-              const d = CreateDiagnosticForNodeInSourceFile(sourceFile!()!, elements!.Nodes[valueIndex], message, ...args);
+              const d = CreateDiagnosticForNodeInSourceFile(sourceFile!()!, GoSliceLoad(elements!.Nodes, valueIndex, GoPointerValueOps<Node>()), message, ...args);
               receiver!.programDiagnostics = GoSliceAppend(receiver!.programDiagnostics, d, GoPointerValueOps<Diagnostic>());
               return GoValueRef(d!);
             }
@@ -2570,7 +2572,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     }
     if (!GoSliceIsNil(value)) {
       for (let i = 0; i < value.length; i++) {
-        const subst = value[i]!;
+        const subst = GoSliceLoad(value, i, GoStringValueOps)!;
         if (!hasZeroOrOneAsteriskCharacter(subst)) {
           createDiagnosticForOptionPathKeyValue(key, i, diagnostics.Substitution_0_in_pattern_1_can_have_at_most_one_Asterisk_character, subst, key);
         }
@@ -3164,7 +3166,7 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
         directivesByLine.set(line, { ...dir, Kind: CommentDirectiveKindIgnore });
         break;
       }
-      if (!isCommentOrBlankLine(SourceFile_Text(sourceFile), lineStarts[line]!)) {
+      if (!isCommentOrBlankLine(SourceFile_Text(sourceFile), GoSliceLoad(lineStarts, line, GoNumberValueOps)!)) {
         break;
       }
     }
@@ -3316,23 +3318,23 @@ export function compactAndMergeRelatedInfos(diagnostics: GoSlice<GoPtr<Diagnosti
   const result: GoPtr<Diagnostic>[] = [];
   let i = 0;
   while (i < diagnostics.length) {
-    let d = diagnostics[i];
+    let d = GoSliceLoad(diagnostics, i, GoPointerValueOps<Diagnostic>());
     let n = 1;
-    while (i + n < diagnostics.length && EqualDiagnosticsNoRelatedInfo(d, diagnostics[i + n])) {
+    while (i + n < diagnostics.length && EqualDiagnosticsNoRelatedInfo(d, GoSliceLoad(diagnostics, i + n, GoPointerValueOps<Diagnostic>()))) {
       n++;
     }
     if (n > 1) {
       let relatedInfos: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
       for (let k = 0; k < n; k++) {
-        relatedInfos = GoSliceAppendSlice(relatedInfos, Diagnostic_RelatedInformation(diagnostics[i + k]), GoPointerValueOps<Diagnostic>());
+        relatedInfos = GoSliceAppendSlice(relatedInfos, Diagnostic_RelatedInformation(GoSliceLoad(diagnostics, i + k, GoPointerValueOps<Diagnostic>())), GoPointerValueOps<Diagnostic>());
       }
       if (relatedInfos.length > 0) {
         relatedInfos.sort(CompareDiagnostics);
         // compact: remove adjacent equal entries
         const compacted: GoPtr<Diagnostic>[] = [];
         for (let m = 0; m < relatedInfos.length; m++) {
-          if (m === 0 || !EqualDiagnostics(relatedInfos[m], relatedInfos[m - 1])) {
-            compacted.push(relatedInfos[m]);
+          if (m === 0 || !EqualDiagnostics(GoSliceLoad(relatedInfos, m, GoPointerValueOps<Diagnostic>()), GoSliceLoad(relatedInfos, m - 1, GoPointerValueOps<Diagnostic>()))) {
+            compacted.push(GoSliceLoad(relatedInfos, m, GoPointerValueOps<Diagnostic>()));
           }
         }
         d = Diagnostic_SetRelatedInfo(Diagnostic_Clone(d), compacted);
@@ -4339,7 +4341,7 @@ export function Program_ExplainFiles(receiver: GoPtr<Program>, w: GoInterface<Wr
   let sourceFileIndex = 0;
   const explainSourceFiles = (endIndex: number): void => {
     while (filesExplained < endIndex) {
-      explainFile(files[sourceFileIndex]! as unknown as HasFileName);
+      explainFile(GoSliceLoad(files, sourceFileIndex, GoPointerValueOps<SourceFile>())! as unknown as HasFileName);
       sourceFileIndex++;
     }
   };

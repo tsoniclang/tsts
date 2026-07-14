@@ -88,6 +88,8 @@ import {
 } from "./types.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 // semicolonRemoverWriter_as_EmitTextWriter adapts a *semicolonRemoverWriter to
 // the EmitTextWriter interface by delegating each method to the corresponding
 // free function (Go interface satisfaction -> method-bearing adapter).
@@ -1239,7 +1241,7 @@ export function Checker_formatUnionTypes(receiver: GoPtr<Checker>, types: GoSlic
   let result: GoSlice<GoPtr<Type>> = GoNilSlice();
   let flags: TypeFlags = 0;
   for (let i = 0; i < types.length; i++) {
-    const t = types[i];
+    const t = GoSliceLoad(types, i, GoPointerValueOps<Type>());
     flags = (flags | t!.flags) as TypeFlags;
     if ((t!.flags & TypeFlagsNullable) === 0) {
       if ((t!.flags & TypeFlagsBooleanLiteral) !== 0 || (!expandingEnum && (t!.flags & TypeFlagsEnumLike) !== 0)) {
@@ -1254,8 +1256,8 @@ export function Checker_formatUnionTypes(receiver: GoPtr<Checker>, types: GoSlic
           const count = baseTypes.length;
           if (
             i + count <= types.length &&
-            Checker_getRegularTypeOfLiteralType(receiver, types[i + count - 1]) ===
-              Checker_getRegularTypeOfLiteralType(receiver, baseTypes[count - 1])
+            Checker_getRegularTypeOfLiteralType(receiver, GoSliceLoad(types, i + count - 1, GoPointerValueOps<Type>())) ===
+              Checker_getRegularTypeOfLiteralType(receiver, GoSliceLoad(baseTypes, count - 1, GoPointerValueOps<Type>()))
           ) {
             result = GoSliceAppend(result, baseType, GoPointerValueOps<Type>());
             i += count - 1;
@@ -1360,7 +1362,7 @@ export function Checker_ExpandSymbolForHover(receiver: GoPtr<Checker>, symbol_: 
         if (i > 0) {
           b += "\n";
         }
-        b += Printer_Emit(p, nodes[i], sourceFile);
+        b += Printer_Emit(p, GoSliceLoad(nodes, i, GoPointerValueOps<Node>()), sourceFile);
       }
       return b;
     } finally {

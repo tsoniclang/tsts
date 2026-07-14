@@ -122,6 +122,8 @@ import { GetDefaultIndentSize } from "./textwriter.js";
 import { TokenFlagsIsInvalid, TokenFlagsContainsSeparator, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad } from "../../go/compat.js";
+
 export const byteLen: (text: string) => int = StringByteLen;
 export const byteSlice: (text: string, start: int, end?: int) => string = StringByteSlice;
 const decodeRuneInStringAt: (text: string, index: int) => [GoRune, int] = DecodeRuneInStringAt;
@@ -2196,7 +2198,7 @@ export function newLineCharacterCache(source: GoInterface<Source>): GoPtr<lineCh
  */
 export function lineCharacterCache_getLineAndCharacter(receiver: GoPtr<lineCharacterCache>, pos: int): [line: int, character: UTF16Offset] {
   const line = ComputeLineOfPosition(receiver!.lineMap, pos);
-  const lineStart = receiver!.lineMap[line]!;
+  const lineStart = GoSliceLoad(receiver!.lineMap, line, GoNumberValueOps)!;
   // When pos is beyond the source text (e.g., for error-recovery tokens like
   // missing closing braces), we can't slice past the text end. Compute the
   // UTF-16 length up to EOF and add the remaining byte offset arithmetically,

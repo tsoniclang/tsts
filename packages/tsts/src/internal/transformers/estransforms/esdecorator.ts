@@ -277,6 +277,8 @@ import { LanguageVariantStandard } from "../../core/languagevariant.js";
 
 import type { GoFunc } from "../../../go/compat.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 
 
 const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
@@ -1961,7 +1963,7 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
   if (extendsClause !== undefined) {
     const hc = AsHeritageClause(extendsClause)!;
     if (hc.Types !== undefined && hc.Types.Nodes.length > 0) {
-      extendsElement = hc.Types.Nodes[0];
+      extendsElement = GoSliceLoad(hc.Types.Nodes, 0, GoPointerValueOps<Node>());
     }
   }
   let extendsExpression: GoPtr<Expression> = undefined;
@@ -2164,7 +2166,7 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
     let newMembers: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
     let existingNamedEvaluationHelperBlockIndex = -1;
     for (let i = 0; i < members!.Nodes.length; i++) {
-      const member = members!.Nodes[i];
+      const member = GoSliceLoad(members!.Nodes, i, GoPointerValueOps<Node>());
       if (isClassNamedEvaluationHelperBlock(ec, member)) {
         existingNamedEvaluationHelperBlockIndex = i;
         break;
@@ -2591,7 +2593,7 @@ export function esDecoratorTransformer_transformConstructorBodyWorker(receiver: 
   const f = Transformer_Factory(tx.__tsgoEmbedded0!);
   const astFactory = f!.__tsgoEmbedded0!;
   const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
-  const superStatementIndex = superPath[superPathDepth]!;
+  const superStatementIndex = GoSliceLoad(superPath, superPathDepth, GoNumberValueOps)!;
   let out = statementsOut;
   // Visit statements before super
   if (superStatementIndex > statementOffset) {
@@ -2599,7 +2601,7 @@ export function esDecoratorTransformer_transformConstructorBodyWorker(receiver: 
       out = GoSliceAppend(out, NodeVisitor_VisitNode(visitor, s as GoPtr<Node>) as GoPtr<Statement>, GoPointerValueOps<Node>());
     }
   }
-  const superStatement = statementsIn[superStatementIndex]!;
+  const superStatement = GoSliceLoad(statementsIn, superStatementIndex, GoPointerValueOps<Node>())!;
   if (IsTryStatement(superStatement as GoPtr<Node>)) {
     // Recurse into try block
     const tryStmt = AsTryStatement(superStatement as GoPtr<Node>)!;

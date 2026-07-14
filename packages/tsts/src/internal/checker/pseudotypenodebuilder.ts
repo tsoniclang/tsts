@@ -96,6 +96,8 @@ import type { Signature, Type, TypePredicate } from "./types.js";
 import { ContextFlagsNone, ElementFlagsNonRequired, TernaryTrue, Type_TargetTupleType, TypeFlagsUnion, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindThis } from "./types.js";
 import { FlagsInObjectTypeLiteral, FlagsMultilineObjectLiterals } from "../nodebuilder/types.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -508,7 +510,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           res = GoSliceAppend(res, NodeBuilderImpl_pseudoTypeToNode(b, member), GoPointerValueOps<Node>());
         }
         if (res.length === 1) {
-          return res[0];
+          return GoSliceLoad(res, 0, GoPointerValueOps<Node>());
         }
         if (res.length === 0) {
           if (hasElidedType) {
@@ -578,7 +580,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
           return result;
         }
-        const isConst = Checker_isConstContext(b.ch, elements[0]!.Name!.Parent!.Parent);
+        const isConst = Checker_isConstContext(b.ch, GoSliceLoad(elements, 0, GoPointerValueOps<PseudoObjectElement>())!.Name!.Parent!.Parent);
         let newElements: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
 
         // Member types are serialized within an object type literal, so set the
@@ -1185,7 +1187,7 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
         return false;
       }
       for (let index = 0; index < pt.Elements.length; index++) {
-        if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, pt.Elements[index], elementTypes[index], false, reportErrors)) {
+        if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, GoSliceLoad(pt.Elements, index, GoPointerValueOps<PseudoType>()), GoSliceLoad(elementTypes, index, GoPointerValueOps<Type>()), false, reportErrors)) {
           return false;
         }
       }
@@ -1290,12 +1292,12 @@ export function NodeBuilderImpl_pseudoParametersEquivalentToParameters(receiver:
       b.ctx!.tracker!.ReportInferenceFallback(nonParamErrorLocation); // missing `this` param
     }
     return false;
-  } else if (targetSig!.thisParameter !== undefined && IsThisIdentifier(remainingParams[0]!.Name)) {
+  } else if (targetSig!.thisParameter !== undefined && IsThisIdentifier(GoSliceLoad(remainingParams, 0, GoPointerValueOps<PseudoParameter>())!.Name)) {
     const targetParam = targetSig!.thisParameter;
     const paramType = Checker_getTypeOfParameter(b.ch, targetParam);
-    if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, remainingParams[0]!.Type, paramType, remainingParams[0]!.Optional, false as bool)) {
+    if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, GoSliceLoad(remainingParams, 0, GoPointerValueOps<PseudoParameter>())!.Type, paramType, GoSliceLoad(remainingParams, 0, GoPointerValueOps<PseudoParameter>())!.Optional, false as bool)) {
       if (reportErrors) {
-        b.ctx!.tracker!.ReportInferenceFallback(remainingParams[0]!.Name!.Parent);
+        b.ctx!.tracker!.ReportInferenceFallback(GoSliceLoad(remainingParams, 0, GoPointerValueOps<PseudoParameter>())!.Name!.Parent);
       }
       return false;
     }
@@ -1314,7 +1316,7 @@ export function NodeBuilderImpl_pseudoParametersEquivalentToParameters(receiver:
     return false; // TODO: spread tuple params may mess with this check
   }
   for (let i = 0; i < remainingParams.length; i++) {
-    const p = remainingParams[i]!;
+    const p = GoSliceLoad(remainingParams, i, GoPointerValueOps<PseudoParameter>())!;
     const targetParam = targetParameters[i]!;
     if (p.Optional !== Checker_isOptionalParameter(b.ch, targetParam.ValueDeclaration)) {
       if (reportErrors) {
@@ -1574,7 +1576,7 @@ export function NodeBuilderImpl_pseudoTypeToType(receiver: GoPtr<NodeBuilderImpl
         res = GoSliceAppend(res, mt, GoPointerValueOps<Type>());
       }
       if (res.length === 1) {
-        return res[0];
+        return GoSliceLoad(res, 0, GoPointerValueOps<Type>());
       }
       if (res.length === 0) {
         if (hasElidedType) {

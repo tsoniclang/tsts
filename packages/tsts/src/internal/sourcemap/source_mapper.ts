@@ -20,6 +20,8 @@ import type { ECMALineInfo } from "./lineinfo.js";
 
 import type { GoInterface } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 // Go strings are immutable UTF-8 byte sequences; `[]byte(s)` and ranging over a
 // string both operate on the UTF-8 byte / rune views. We mirror that contract by
@@ -263,7 +265,7 @@ export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap:
   const useCaseSensitiveFileNames: bool = host!.UseCaseSensitiveFileNames();
   const sourceToSourceIndexMap: GoMap<string, SourceIndex> = new globalThis.Map<string, SourceIndex>();
   for (let i = 0; i < sourceFileAbsolutePaths.length; i++) {
-    const source: string = sourceFileAbsolutePaths[i]!;
+    const source: string = GoSliceLoad(sourceFileAbsolutePaths, i, GoStringValueOps)!;
     sourceToSourceIndexMap.set(GetCanonicalFileName(source, useCaseSensitiveFileNames), i);
   }
 
@@ -289,7 +291,7 @@ export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap:
 
     let sourcePosition: int = -1;
     if (Mapping_IsSourceMapping(mapping)) {
-      lineInfo = host!.GetECMALineInfo(sourceFileAbsolutePaths[mapping!.SourceIndex]!);
+      lineInfo = host!.GetECMALineInfo(GoSliceLoad(sourceFileAbsolutePaths, mapping!.SourceIndex, GoStringValueOps)!);
       if (lineInfo !== undefined) {
         const pos: int = ComputePositionOfLineAndUTF16Character(
           lineInfo.lineStarts,
@@ -431,7 +433,7 @@ export function DocumentPositionMapper_GetSourcePosition(receiver: GoPtr<Documen
 
   // Closest position
   return {
-    FileName: d.sourceFileAbsolutePaths[mapping!.sourceIndex]!,
+    FileName: GoSliceLoad(d.sourceFileAbsolutePaths, mapping!.sourceIndex, GoStringValueOps)!,
     Pos: mapping!.sourcePosition,
   };
 }

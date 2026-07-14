@@ -56,6 +56,8 @@ import type {
   ProviderTypeExpression,
 } from "./host.js";
 import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+import { GoSliceLoad } from "../go/compat.js";
+
 
 
 export function recordBoundSourceFileExtensionFacts(program: object, file: GoPtr<SourceFile>): void {
@@ -386,7 +388,7 @@ function recordProviderVirtualSignatureFacts(
   }
 
   for (let index = 0; index < signatures.length; index++) {
-    const signatureDeclaration = symbol.Declarations[index];
+    const signatureDeclaration = GoSliceLoad(symbol.Declarations, index, GoPointerValueOps<Node>());
     if (signatureDeclaration === undefined) {
       continue;
     }

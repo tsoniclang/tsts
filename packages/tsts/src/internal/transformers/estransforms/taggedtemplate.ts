@@ -292,13 +292,13 @@ export function taggedTemplateTransformer_processTaggedTemplateExpression(receiv
   if (IsExternalModule(receiver!.currentSourceFile)) {
     const tempVar = NodeFactory_NewUniqueName(pf, "templateObject");
     receiver!.taggedTemplateStringDeclarations = GoSliceAppend(receiver!.taggedTemplateStringDeclarations, NewVariableDeclaration(af, tempVar as unknown as GoPtr<Node>, undefined, undefined, undefined), GoPointerValueOps<Node>());
-    templateArguments[0] = NodeFactory_NewLogicalORExpression(
+    GoSliceStore(templateArguments, 0, NodeFactory_NewLogicalORExpression(
       pf,
       tempVar as unknown as GoPtr<Node>,
       NodeFactory_NewAssignmentExpression(pf, tempVar as unknown as GoPtr<Node>, helperCall),
-    );
+    ), GoPointerValueOps<Node>());
   } else {
-    templateArguments[0] = helperCall;
+    GoSliceStore(templateArguments, 0, helperCall, GoPointerValueOps<Node>());
   }
 
   const call = NewCallExpression(af, tag, undefined, undefined, NodeFactory_NewNodeList(af, templateArguments), NodeFlagsNone);

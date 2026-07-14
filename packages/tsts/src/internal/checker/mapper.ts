@@ -12,6 +12,8 @@ import {
 import type { Type } from "./types.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperKind","kind":"type","status":"implemented","sigHash":"93afd4209ed7acb0c7063285beb2cccdf1426ddedee7dce25c71f2770bdc60d2"}
  *
@@ -96,7 +98,7 @@ export interface TypeMapperData extends GoInterfaceValue<unknown> {
  */
 export function newTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSlice<GoPtr<Type>>): GoPtr<TypeMapper> {
   if (sources.length === 1) {
-    return newSimpleTypeMapper(sources[0], targets[0]);
+    return newSimpleTypeMapper(GoSliceLoad(sources, 0, GoPointerValueOps<Type>()), GoSliceLoad(targets, 0, GoPointerValueOps<Type>()));
   }
   return newArrayTypeMapper(sources, targets);
 }
@@ -389,9 +391,9 @@ export function newArrayTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSli
  */
 export function ArrayTypeMapper_Map(receiver: GoPtr<ArrayTypeMapper>, t: GoPtr<Type>): GoPtr<Type> {
   for (let i = 0; i < receiver!.sources.length; i++) {
-    const s = receiver!.sources[i];
+    const s = GoSliceLoad(receiver!.sources, i, GoPointerValueOps<Type>());
     if (t === s) {
-      return receiver!.targets[i];
+      return GoSliceLoad(receiver!.targets, i, GoPointerValueOps<Type>());
     }
   }
   return t;
@@ -552,7 +554,7 @@ export function newDeferredTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: Go
  */
 export function DeferredTypeMapper_Map(receiver: GoPtr<DeferredTypeMapper>, t: GoPtr<Type>): GoPtr<Type> {
   for (let i = 0; i < receiver!.sources.length; i++) {
-    const s = receiver!.sources[i];
+    const s = GoSliceLoad(receiver!.sources, i, GoPointerValueOps<Type>());
     if (t === s) {
       return receiver!.targets[i]!();
     }
@@ -862,7 +864,7 @@ export function Checker_newInferenceTypeMapper(receiver: GoPtr<Checker>, n: GoPt
  */
 export function InferenceTypeMapper_Map(receiver: GoPtr<InferenceTypeMapper>, t: GoPtr<Type>): GoPtr<Type> {
   for (let i = 0; i < receiver!.n!.inferences.length; i++) {
-    const inference = receiver!.n!.inferences[i];
+    const inference = GoSliceLoad(receiver!.n!.inferences, i, GoPointerValueOps<InferenceInfo>());
     if (t === inference!.typeParameter) {
       if (receiver!.fixing && !inference!.isFixed) {
         // Before we commit to a particular inference (and thus lock out any further inferences),

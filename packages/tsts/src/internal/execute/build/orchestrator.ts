@@ -48,6 +48,8 @@ import type { parseCache } from "./parseCache.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"69628808be0501ab69e7a2e5cf9c349ab1129718bc63d4ddc222553efb32cabf"}
@@ -430,7 +432,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
       const subRefs = ParsedCommandLine_ResolvedProjectReferencePaths(task!.resolved);
       const projectRefs = ParsedCommandLine_ProjectReferences(task!.resolved);
       for (let index = 0; index < subRefs.length; index++) {
-        const subReference = subRefs[index]!;
+        const subReference = GoSliceLoad(subRefs, index, GoStringValueOps)!;
         const upstream = Orchestrator_setupBuildTask(receiver, subReference, task, (inCircularContext || projectRefs[index]!.Circular) as bool, completed, analyzing, circularityStack);
         if (upstream !== undefined) {
           task!.upStream = GoSliceAppend(task!.upStream, { task: upstream, refIndex: index }, GoPointerValueOps<upstreamTask>());
@@ -790,7 +792,7 @@ export function Orchestrator_rangeTask(receiver: GoPtr<Orchestrator>, f: GoFunc<
   while (currentTaskIndex < receiver!.order.length) {
     const index = currentTaskIndex;
     currentTaskIndex++;
-    const config = receiver!.order[index]!;
+    const config = GoSliceLoad(receiver!.order, index, GoStringValueOps)!;
     const path = Orchestrator_toPath(receiver, config);
     const task = Orchestrator_getTask(receiver, path);
     f!(path, task);

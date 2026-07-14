@@ -159,6 +159,8 @@ import {
 import { Checker_addDiagnostic } from "../checker.js";
 import { Checker_addOptionalityEx } from "./support-queries.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 function zeroNodeLinks(): NodeLinks {
@@ -234,8 +236,8 @@ export function Checker_checkTypePredicate(receiver: GoPtr<Checker>, node: GoPtr
         Checker_error(receiver, parameterName, A_type_predicate_cannot_reference_a_rest_parameter);
       } else if (typePredicate!.t !== undefined) {
         const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
-        if (!Checker_checkTypeAssignableToEx(receiver, typePredicate!.t, Checker_getTypeOfSymbol(receiver, signature!.parameters[typePredicate!.parameterIndex]), Node_Type(node), undefined, GoValueRef(diags))) {
-          Checker_addDiagnostic(receiver, NewDiagnosticChain(diags[0], A_type_predicate_s_type_must_be_assignable_to_its_parameter_s_type));
+        if (!Checker_checkTypeAssignableToEx(receiver, typePredicate!.t, Checker_getTypeOfSymbol(receiver, GoSliceLoad(signature!.parameters, typePredicate!.parameterIndex, GoPointerValueOps<Symbol>())), Node_Type(node), undefined, GoValueRef(diags))) {
+          Checker_addDiagnostic(receiver, NewDiagnosticChain(GoSliceLoad(diags, 0, GoPointerValueOps<Diagnostic>()), A_type_predicate_s_type_must_be_assignable_to_its_parameter_s_type));
         }
       }
     } else if (parameterName !== undefined) {
@@ -916,7 +918,7 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
           if (context !== undefined) {
             mapper = context!.nonFixingMapper;
           }
-          const restType = Checker_getReducedApparentType(receiver, Checker_instantiateType(receiver, Checker_getTypeOfSymbol(receiver, contextualSignature!.parameters[0]), mapper));
+          const restType = Checker_getReducedApparentType(receiver, Checker_instantiateType(receiver, Checker_getTypeOfSymbol(receiver, GoSliceLoad(contextualSignature!.parameters, 0, GoPointerValueOps<Symbol>())), mapper));
           if (
             (restType!.flags & TypeFlagsUnion) !== 0 &&
             everyType(restType, isTupleType) &&

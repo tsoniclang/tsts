@@ -50,6 +50,8 @@ import {
 import { GoValueRef } from "../../go/compat.js";
 import type { GoFunc, GoRef } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::computeFn","kind":"func","status":"implemented","sigHash":"c976f8f36f9a23d960445aa7ff17ed76d49942d64298203a41e3adf1993b8a81"}
@@ -319,7 +321,7 @@ export function filterSameAsDefaultInclude(specs: GoSlice<string>): GoSlice<stri
   if (specs.length === 0) {
     return GoSliceMake(0, 0, GoStringValueOps);
   }
-  if (specs.length === 1 && specs[0] === defaultIncludeSpec) {
+  if (specs.length === 1 && GoSliceLoad(specs, 0, GoStringValueOps) === defaultIncludeSpec) {
     return GoSliceMake(0, 0, GoStringValueOps);
   }
   return specs;

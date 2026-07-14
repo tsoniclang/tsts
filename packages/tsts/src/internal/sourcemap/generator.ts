@@ -14,6 +14,8 @@ import type { JsonFieldNameMap } from "../json/json.js";
 import { GetRelativePathToDirectoryOrUrl } from "../tspath/path.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceStore } from "../../go/compat.js";
+
 
 
 // Go's `string([]byte)` decodes the bytes as UTF-8. We mirror that with a
@@ -297,7 +299,7 @@ export function Generator_SetSourceContent(receiver: GoPtr<Generator>, sourceInd
   while (gen.sourcesContent.length <= sourceIndex) {
     gen.sourcesContent = GoSliceAppend(gen.sourcesContent, undefined, GoRefValueOps<string>());
   }
-  gen.sourcesContent[sourceIndex] = GoValueRef(content);
+  GoSliceStore(gen.sourcesContent, sourceIndex, GoValueRef(content), GoRefValueOps<string>());
   return undefined;
 }
 

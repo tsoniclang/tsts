@@ -95,6 +95,8 @@ import { NewParsedCommandLine } from "./parsedcommandline.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::extendsResult","kind":"type","status":"implemented","sigHash":"a9a5e4be3ccd0e78727df342c62c509aaaf6cc61a508b4445c448b8a516cc80d"}
@@ -352,12 +354,12 @@ export function configFileSpecs_getMatchedIncludeSpec(receiver: GoPtr<configFile
     return "";
   }
   for (let index = 0; index < receiver!.validatedIncludeSpecs.length; index++) {
-    const spec = receiver!.validatedIncludeSpecs[index];
+    const spec = GoSliceLoad(receiver!.validatedIncludeSpecs, index, GoStringValueOps);
     const includeMatcher = NewSpecMatcher(GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
       GoSliceStore(__goSliceLiteral, 0, spec!, GoStringValueOps);
     }), comparePathsOptions.CurrentDirectory, UsageFiles, comparePathsOptions.UseCaseSensitiveFileNames);
     if (includeMatcher !== undefined && SpecMatcher_MatchString(includeMatcher, fileName)) {
-      return receiver!.validatedIncludeSpecsBeforeSubstitution[index]!;
+      return GoSliceLoad(receiver!.validatedIncludeSpecsBeforeSubstitution, index, GoStringValueOps)!;
     }
   }
   return "";
@@ -386,9 +388,9 @@ export function configFileSpecs_getMatchedFileSpec(receiver: GoPtr<configFileSpe
   }
   const filePath = ToPath(fileName, comparePathsOptions.CurrentDirectory, comparePathsOptions.UseCaseSensitiveFileNames);
   for (let index = 0; index < receiver!.validatedFilesSpec.length; index++) {
-    const spec = receiver!.validatedFilesSpec[index];
+    const spec = GoSliceLoad(receiver!.validatedFilesSpec, index, GoStringValueOps);
     if (ToPath(spec!, comparePathsOptions.CurrentDirectory, comparePathsOptions.UseCaseSensitiveFileNames) === filePath) {
-      return receiver!.validatedFilesSpecBeforeSubstitution[index]!;
+      return GoSliceLoad(receiver!.validatedFilesSpecBeforeSubstitution, index, GoStringValueOps)!;
     }
   }
   return "";
@@ -780,7 +782,7 @@ export interface jsonConversionNotifier {
 export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   let rootExpression: GoPtr<Expression> = undefined;
   if ((sourceFile!.Statements!.Nodes?.length ?? 0) > 0) {
-    rootExpression = Node_Expression(sourceFile!.Statements!.Nodes![0]) as GoPtr<Expression>;
+    rootExpression = Node_Expression(GoSliceLoad(sourceFile!.Statements!.Nodes!, 0, GoPointerValueOps<Node>())) as GoPtr<Expression>;
   }
   if (rootExpression !== undefined && rootExpression!.Kind !== KindObjectLiteralExpression) {
     let baseFileName = "tsconfig.json";
@@ -997,7 +999,7 @@ export function convertJsonOptionOfListType(option: GoPtr<CommandLineOption>, va
     const mappedValues = core.MapIndex(valuesArr, (v: unknown, index: int): unknown => {
       if (valueExpression !== undefined) {
         const elems = Node_Elements(valueExpression);
-        expression = elems !== undefined ? elems[index] : undefined;
+        expression = elems !== undefined ? GoSliceLoad(elems, index, GoPointerValueOps<Node>()) : undefined;
       }
       const [result, err] = convertJsonOption(CommandLineOption_Elements(option), v, basePath, propertyAssignment, expression as GoPtr<Expression>, sourceFile);
       errors.push(...err);
@@ -1247,7 +1249,7 @@ export function getExtendsConfigPathOrArray(value: CompilerOptionsValue, host: G
       let expression: GoPtr<Expression> = undefined;
       if (valueExpression !== undefined) {
         const elems = Node_Elements(valueExpression);
-        expression = elems !== undefined ? elems[index] as GoPtr<Expression> : undefined;
+        expression = elems !== undefined ? GoSliceLoad(elems, index, GoPointerValueOps<Node>()) as GoPtr<Expression> : undefined;
       }
       if (typeof fileName === "string") {
         const [val, err] = getExtendsConfigPath(fileName, host, newBase, expression, sourceFile);
@@ -1619,7 +1621,7 @@ export function ParseConfigFileTextToJson(fileName: string, path: Path, jsonText
   const diags = SourceFile_Diagnostics(jsonSourceFile);
   if (diags.length > 0) {
     return [config, GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
-      GoSliceStore(__goSliceLiteral, 0, diags[0], GoPointerValueOps<Diagnostic>());
+      GoSliceStore(__goSliceLiteral, 0, GoSliceLoad(diags, 0, GoPointerValueOps<Diagnostic>()), GoPointerValueOps<Diagnostic>());
     })];
   }
   return [config, errors];
@@ -1970,7 +1972,7 @@ export function ParseJsonConfigFileContent(json: GoInterface<unknown>, host: GoI
 export function convertToObject(sourceFile: GoPtr<SourceFile>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   let rootExpression: GoPtr<Expression> = undefined;
   if (sourceFile!.Statements!.Nodes!.length !== 0) {
-    rootExpression = Node_Expression(sourceFile!.Statements!.Nodes![0]) as GoPtr<Expression>;
+    rootExpression = Node_Expression(GoSliceLoad(sourceFile!.Statements!.Nodes!, 0, GoPointerValueOps<Node>())) as GoPtr<Expression>;
   }
   return convertToJson(sourceFile, rootExpression, true /*returnValue*/, undefined /*jsonConversionNotifier*/);
 }
@@ -3215,7 +3217,7 @@ export function CreateDiagnosticAtReferenceSyntax(config: GoPtr<ParsedCommandLin
     if (IsArrayLiteralExpression(property!.Initializer)) {
       const value = Node_Elements(property!.Initializer) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
       if (value.length > index) {
-        return GoValueRef<Diagnostic>(CreateDiagnosticForNodeInSourceFile(config!.ConfigFile!.SourceFile, value[index], message, ...args)!);
+        return GoValueRef<Diagnostic>(CreateDiagnosticForNodeInSourceFile(config!.ConfigFile!.SourceFile, GoSliceLoad(value, index, GoPointerValueOps<Node>()), message, ...args)!);
       }
     }
     return undefined;
@@ -3323,7 +3325,7 @@ export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralE
  */
 export function getTsConfigObjectLiteralExpression(tsConfigSourceFile: GoPtr<SourceFile>): GoPtr<ObjectLiteralExpression> {
   if (tsConfigSourceFile !== undefined && tsConfigSourceFile!.Statements !== undefined && tsConfigSourceFile!.Statements.Nodes.length > 0) {
-    const expression = Node_Expression(tsConfigSourceFile!.Statements.Nodes[0]);
+    const expression = Node_Expression(GoSliceLoad(tsConfigSourceFile!.Statements.Nodes, 0, GoPointerValueOps<Node>()));
     if (IsObjectLiteralExpression(expression)) {
       return AsObjectLiteralExpression(expression);
     }
@@ -3366,12 +3368,12 @@ export function getSubstitutedPathWithConfigDirTemplate(value: string, basePath:
 export function getSubstitutedStringArrayWithConfigDirTemplate(list: GoSlice<string>, basePath: string): GoSlice<string> {
   let result = GoNilSlice<string>();
   for (let i = 0; i < list.length; i++) {
-    const element = list[i]!;
+    const element = GoSliceLoad(list, i, GoStringValueOps)!;
     if (startsWithConfigDirTemplate(element)) {
       if (GoSliceIsNil(result)) {
         result = Clone(list);
       }
-      result[i] = getSubstitutedPathWithConfigDirTemplate(element, basePath);
+      GoSliceStore(result, i, getSubstitutedPathWithConfigDirTemplate(element, basePath), GoStringValueOps);
     }
   }
   if (!GoSliceIsNil(result)) {

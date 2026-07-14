@@ -42,6 +42,8 @@ import { ModifierFlagsDefault } from "../../ast/modifierflags.js";
 
 import type { GoRef } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingDeclarationTransformer","kind":"type","status":"implemented","sigHash":"47d5d92ec15b175fe4faa8f2f3f9b3cdbd0f24a4759973c04156c2b95c3b2342"}
@@ -314,7 +316,7 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
     topLevelStatements = GoSliceAppendSlice(topLevelStatements, prologueVisited as GoSlice<GoPtr<Statement>>, GoPointerValueOps<Node>());
     let pos = 0;
     while (pos < rest.length) {
-      const statement = rest[pos];
+      const statement = GoSliceLoad(rest, pos, GoPointerValueOps<Node>());
       if (getUsingKind(statement as GoPtr<Node>) !== usingKindNone) {
         if (pos > 0) {
           const leadingVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), rest.slice(0, pos) as GoSlice<GoPtr<Node>>)[0];

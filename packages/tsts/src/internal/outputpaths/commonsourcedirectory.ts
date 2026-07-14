@@ -8,6 +8,8 @@ import {
   GetNormalizedPathComponents,
   GetPathFromPathComponents,
 } from "../tspath/path.js";
+import { GoSliceLoad, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/commonsourcedirectory.go::func::computeCommonSourceDirectoryOfFilenames","kind":"func","status":"implemented","sigHash":"4239085a76e414c3bc2d225bca263ee0fdb177ca3c2f317fd883f6bd2075ecee"}
@@ -70,7 +72,7 @@ export function computeCommonSourceDirectoryOfFilenames(fileNames: GoSlice<strin
     const count = Math.min(commonPathComponents.length, sourcePathComponents.length);
     for (let index = 0; index < count; index++) {
       if (
-        GetCanonicalFileName(commonPathComponents[index]!, useCaseSensitiveFileNames) !==
+        GetCanonicalFileName(GoSliceLoad(commonPathComponents, index, GoStringValueOps)!, useCaseSensitiveFileNames) !==
         GetCanonicalFileName(sourcePathComponents[index]!, useCaseSensitiveFileNames)
       ) {
         if (index === 0) {

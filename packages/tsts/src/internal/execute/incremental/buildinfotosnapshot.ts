@@ -21,6 +21,8 @@ import { referenceMap_storeReferences } from "./referencemap.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceMake, GoStringValueOps } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildinfotosnapshot.go::func::buildInfoToSnapshot","kind":"func","status":"implemented","sigHash":"a5b857c399f4dc273e9d03408127a705fbfa13c5abb98a71ff6e2864571a4cb1"}
@@ -141,7 +143,7 @@ export function toSnapshot_toAbsolutePath(receiver: GoPtr<toSnapshot>, path: str
  * }
  */
 export function toSnapshot_toFilePath(receiver: GoPtr<toSnapshot>, fileId: BuildInfoFileId): Path {
-  return receiver!.filePaths[fileId - 1]!;
+  return GoSliceLoad(receiver!.filePaths, fileId - 1, GoStringValueOps)!;
 }
 
 /**
@@ -296,7 +298,7 @@ export function toSnapshot_setCompilerOptions(receiver: GoPtr<toSnapshot>): void
 export function toSnapshot_setFileInfoAndEmitSignatures(receiver: GoPtr<toSnapshot>): void {
   const isComposite = Tristate_IsTrue(receiver!.snapshot.options!.Composite);
   for (let index = 0; index < receiver!.buildInfo!.FileInfos.length; index++) {
-    const buildInfoFileInfo = receiver!.buildInfo!.FileInfos[index]!;
+    const buildInfoFileInfo = GoSliceLoad(receiver!.buildInfo!.FileInfos, index, GoPointerValueOps<BuildInfoFileInfo>())!;
     const path = toSnapshot_toFilePath(receiver, (index + 1) as BuildInfoFileId);
     const info = BuildInfoFileInfo_GetFileInfo(buildInfoFileInfo);
     SyncMap_Store(receiver!.snapshot.fileInfos as SyncMap<Path, FileInfo>, path, info, GoStringKey);

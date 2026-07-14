@@ -56,6 +56,8 @@ import type { ComparePathsOptions } from "../tspath/path.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoInterfaceValueOps, GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FileLike","kind":"type","status":"implemented","sigHash":"86b16b30f106734da4f4f55656622d5ddde2e7076ec0004c1b21ef5df4823e97"}
@@ -178,7 +180,7 @@ export function ASTDiagnostic_RelatedInformation(receiver: GoPtr<ASTDiagnostic>)
   const related = ASTDiagnostic_RelatedInformation_inner(receiver!.__tsgoEmbedded0);
   const result: GoInterface<Diagnostic>[] = new Array(related.length);
   for (let i = 0; i < related.length; i++) {
-    result[i] = newASTDiagnosticValue(related[i]);
+    result[i] = newASTDiagnosticValue(GoSliceLoad(related, i, GoPointerValueOps<Diagnostic_34a9f76f>()));
   }
   return result;
 }
@@ -219,7 +221,7 @@ export function ASTDiagnostic_MessageChain(receiver: GoPtr<ASTDiagnostic>): GoSl
   const chain = ASTDiagnostic_MessageChain_inner(receiver!.__tsgoEmbedded0);
   const result: GoInterface<Diagnostic>[] = new Array(chain.length);
   for (let i = 0; i < chain.length; i++) {
-    result[i] = newASTDiagnosticValue(chain[i]);
+    result[i] = newASTDiagnosticValue(GoSliceLoad(chain, i, GoPointerValueOps<Diagnostic_34a9f76f>()));
   }
   return result;
 }
@@ -251,7 +253,7 @@ export function WrapASTDiagnostic(d: GoPtr<Diagnostic_34a9f76f>): GoPtr<ASTDiagn
 export function WrapASTDiagnostics(diags: GoSlice<GoPtr<Diagnostic_34a9f76f>>): GoSlice<GoPtr<ASTDiagnostic>> {
   const result: GoPtr<ASTDiagnostic>[] = new Array(diags.length);
   for (let i = 0; i < diags.length; i++) {
-    result[i] = WrapASTDiagnostic(diags[i]);
+    result[i] = WrapASTDiagnostic(GoSliceLoad(diags, i, GoPointerValueOps<Diagnostic_34a9f76f>()));
   }
   return result;
 }
@@ -271,7 +273,7 @@ export function WrapASTDiagnostics(diags: GoSlice<GoPtr<Diagnostic_34a9f76f>>): 
 export function FromASTDiagnostics(diags: GoSlice<GoPtr<Diagnostic_34a9f76f>>): GoSlice<GoInterface<Diagnostic>> {
   const result: GoInterface<Diagnostic>[] = new Array(diags.length);
   for (let i = 0; i < diags.length; i++) {
-    result[i] = newASTDiagnosticValue(diags[i]);
+    result[i] = newASTDiagnosticValue(GoSliceLoad(diags, i, GoPointerValueOps<Diagnostic_34a9f76f>()));
   }
   return result;
 }
@@ -1020,7 +1022,7 @@ export function writeTabularErrorsDisplay(output: GoInterface<Writer>, errorSumm
   }
 
   const headerRow = Message_Localize(Errors_Files, formatOpts!.Locale);
-  const leftColumnHeadingLength = Split(headerRow, " ")[0]!.length;
+  const leftColumnHeadingLength = GoSliceLoad(Split(headerRow, " "), 0, GoStringValueOps)!.length;
   const lengthOfBiggestErrorCount = Itoa(maxErrors).length;
   const leftPaddingGoal = Math.max(leftColumnHeadingLength, lengthOfBiggestErrorCount);
   const headerPadding = Math.max(lengthOfBiggestErrorCount - leftColumnHeadingLength, 0);

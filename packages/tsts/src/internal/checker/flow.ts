@@ -98,6 +98,8 @@ import { Member_0_implicitly_has_an_1_type } from "../diagnostics/generated/mess
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad, GoStringValueOps } from "../../go/compat.js";
+
 
 
 function zeroMarkedAssignmentSymbolLinks(): MarkedAssignmentSymbolLinks {
@@ -630,7 +632,7 @@ export function getBranchLabelAntecedents(flow: GoPtr<FlowNode>, reduceLabels: G
   let i = reduceLabels?.length ?? 0;
   while (i !== 0) {
     i--;
-    const data = reduceLabels![i];
+    const data = GoSliceLoad(reduceLabels!, i, GoPointerValueOps<FlowReduceLabelData>());
     if (data!.Target === flow) {
       return data!.Antecedents;
     }
@@ -829,7 +831,7 @@ export function Checker_getTypeAtFlowCall(receiver: GoPtr<Checker>, f: GoPtr<Flo
       if (predicate!.t !== undefined) {
         narrowedType = Checker_narrowTypeByTypePredicate(receiver, f, t, predicate, flow!.Node, true);
       } else if (predicate!.kind === TypePredicateKindAssertsIdentifier && predicate!.parameterIndex >= 0 && predicate!.parameterIndex < Node_Arguments(flow!.Node)!.length) {
-        narrowedType = Checker_narrowTypeByAssertion(receiver, f, t, Node_Arguments(flow!.Node)![predicate!.parameterIndex]);
+        narrowedType = Checker_narrowTypeByAssertion(receiver, f, t, GoSliceLoad(Node_Arguments(flow!.Node)!, predicate!.parameterIndex, GoPointerValueOps<Node>()));
       } else {
         narrowedType = t;
       }
@@ -1194,7 +1196,7 @@ export function Checker_narrowTypeByCallExpression(receiver: GoPtr<Checker>, f: 
       Node_Text(Node_Name(callAccess)) === "hasOwnProperty" &&
       Node_Arguments(callExpression)!.length === 1
     ) {
-      const argument = Node_Arguments(callExpression)![0];
+      const argument = GoSliceLoad(Node_Arguments(callExpression)!, 0, GoPointerValueOps<Node>());
       const [accessedName, ok] = Checker_getAccessedPropertyName(receiver, f!.reference);
       if (ok && IsStringLiteralLike(argument) && accessedName === Node_Text(argument)) {
         return Checker_getTypeWithFacts(receiver, t, IfElse(assumeTrue, TypeFactsNEUndefined, TypeFactsEQUndefined));
@@ -2619,7 +2621,7 @@ export function Checker_narrowTypeBySwitchOnDiscriminant(receiver: GoPtr<Checker
   if ((t!.flags & TypeFlagsUnknown) && !hasDefaultClause) {
     let groundClauseTypes = GoNilSlice<GoPtr<Type>>();
     for (let i = 0; i < clauseTypes.length; i++) {
-      const s = clauseTypes[i];
+      const s = GoSliceLoad(clauseTypes, i, GoPointerValueOps<Type>());
       if (s!.flags & (TypeFlagsPrimitive | TypeFlagsNonPrimitive)) {
         if (!GoSliceIsNil(groundClauseTypes)) {
           groundClauseTypes = GoSliceAppend(groundClauseTypes, s, GoPointerValueOps<Type>());
@@ -2772,7 +2774,7 @@ export function Checker_narrowTypeBySwitchOnTrue(receiver: GoPtr<Checker>, f: Go
   // First, narrow away all of the cases that preceded this set of cases.
   let localT = t;
   for (let i = 0; i < clauseStart; i++) {
-    const clause = clauses[i];
+    const clause = GoSliceLoad(clauses, i, GoPointerValueOps<Node>());
     if (clause!.Kind === KindCaseClause) {
       localT = Checker_narrowType(receiver, f, localT, Node_Expression(clause), false /*assumeTrue*/);
     }
@@ -2782,7 +2784,7 @@ export function Checker_narrowTypeBySwitchOnTrue(receiver: GoPtr<Checker>, f: Go
   // get here through other paths.
   if (hasDefaultClause) {
     for (let i = clauseEnd; i < clauses.length; i++) {
-      const clause = clauses[i];
+      const clause = GoSliceLoad(clauses, i, GoPointerValueOps<Node>());
       if (clause!.Kind === KindCaseClause) {
         localT = Checker_narrowType(receiver, f, localT, Node_Expression(clause), false /*assumeTrue*/);
       }
@@ -3005,7 +3007,7 @@ export function Checker_getUnionOrEvolvingArrayType(receiver: GoPtr<Checker>, f:
     const declaredUnion = Type_AsUnionOrIntersectionType(f!.declaredType);
     if (resultUnion !== undefined && declaredUnion !== undefined &&
         resultUnion!.types.length === declaredUnion!.types.length &&
-        resultUnion!.types.every((t, i) => t === declaredUnion!.types[i])) {
+        resultUnion!.types.every((t, i) => t === GoSliceLoad(declaredUnion!.types, i, GoPointerValueOps<Type>()))) {
       return f!.declaredType;
     }
   }
@@ -4498,7 +4500,7 @@ export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>,
     const witnesses: string[] = new Array(clauses.length).fill("");
     let valid = true;
     for (let i = 0; i < clauses.length; i++) {
-      const clause = clauses[i];
+      const clause = GoSliceLoad(clauses, i, GoPointerValueOps<Node>());
       if (clause!.Kind === KindCaseClause) {
         if (!IsStringLiteralLike(Node_Expression(clause))) {
           valid = false;
@@ -4537,7 +4539,7 @@ export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>,
 export function Checker_getNotEqualFactsFromTypeofSwitch(receiver: GoPtr<Checker>, start: int, end: int, witnesses: GoSlice<string>): TypeFacts {
   let facts: TypeFacts = TypeFactsNone;
   for (let i = 0; i < witnesses.length; i++) {
-    const witness = witnesses[i];
+    const witness = GoSliceLoad(witnesses, i, GoStringValueOps);
       if ((i < start || i >= end) && witness !== undefined && witness !== "") {
       const f = typeofNEFacts.get(witness);
       facts |= (f !== undefined ? f : TypeFactsTypeofNEHostObject);
@@ -4570,7 +4572,7 @@ export function Checker_getSwitchClauseTypes(receiver: GoPtr<Checker>, node: GoP
     const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes;
     const types: GoPtr<Type>[] = new Array(clauses.length);
     for (let i = 0; i < clauses.length; i++) {
-      types[i] = Checker_getTypeOfSwitchClause(receiver, clauses[i]);
+      types[i] = Checker_getTypeOfSwitchClause(receiver, GoSliceLoad(clauses, i, GoPointerValueOps<Node>()));
     }
     links!.v.switchTypes = types;
     links!.v.switchTypesComputed = true;
@@ -4669,8 +4671,8 @@ export function Checker_getEffectsSignature(receiver: GoPtr<Checker>, node: GoPt
       OrElse(apparentType, receiver!.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>),
       SignatureKindCall,
     );
-    if (signatures.length === 1 && signatures[0]!.typeParameters.length === 0) {
-      signature = signatures[0];
+    if (signatures.length === 1 && GoSliceLoad(signatures, 0, GoPointerValueOps<Signature>())!.typeParameters.length === 0) {
+      signature = GoSliceLoad(signatures, 0, GoPointerValueOps<Signature>());
     } else if (Some(signatures, (s) => Checker_hasTypePredicateOrNeverReturnType(receiver, s))) {
       signature = Checker_getResolvedSignature(receiver, node, undefined, CheckModeNormal);
     }
@@ -5482,7 +5484,7 @@ export function Checker_getTypePredicateArgument(receiver: GoPtr<Checker>, predi
   if (predicate!.kind === TypePredicateKindIdentifier || predicate!.kind === TypePredicateKindAssertsIdentifier) {
     const arguments_ = Node_Arguments(callExpression)!;
     if (predicate!.parameterIndex >= 0 && predicate!.parameterIndex < arguments_.length) {
-      return arguments_[predicate!.parameterIndex];
+      return GoSliceLoad(arguments_, predicate!.parameterIndex, GoPointerValueOps<Node>());
     }
   } else {
     const invokedExpression = SkipParentheses(Node_Expression(callExpression));
@@ -5704,7 +5706,7 @@ export function Checker_isReachableFlowNodeWorker(receiver: GoPtr<Checker>, f: G
         const predicate = Checker_getTypePredicateOfSignature(receiver, signature);
         if (predicate !== undefined && predicate!.kind === TypePredicateKindAssertsIdentifier && predicate!.t === undefined) {
           const arguments_ = Node_Arguments(flow!.Node)!;
-          if (predicate!.parameterIndex >= 0 && predicate!.parameterIndex < arguments_.length && Checker_isFalseExpression(receiver, arguments_[predicate!.parameterIndex])) {
+          if (predicate!.parameterIndex >= 0 && predicate!.parameterIndex < arguments_.length && Checker_isFalseExpression(receiver, GoSliceLoad(arguments_, predicate!.parameterIndex, GoPointerValueOps<Node>()))) {
             return false;
           }
         }

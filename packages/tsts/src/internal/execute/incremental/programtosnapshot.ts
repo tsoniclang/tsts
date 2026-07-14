@@ -82,6 +82,8 @@ import {
 } from "./snapshot.js";
 import { referenceMap_getReferences, referenceMap_storeReferences } from "./referencemap.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 function newSyncMap<K extends GoComparable, V>(): SyncMap<K, V> {
@@ -719,7 +721,7 @@ export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: 
   let changed = false;
   const result: GoPtr<Diagnostic>[] = new Array(diags.length);
   for (let i = 0; i < diags.length; i++) {
-    const d = diags[i];
+    const d = GoSliceLoad(diags, i, GoPointerValueOps<Diagnostic>());
     const repopulated = repopulateDiagnosticMessageChain(Diagnostic_MessageChain(d), p, file);
     if (!GoSliceIsNil(repopulated)) {
       const clone = Diagnostic_Clone(d);
@@ -777,7 +779,7 @@ export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic
   let changed = false;
   const result: GoPtr<Diagnostic>[] = new Array(chain.length);
   for (let i = 0; i < chain.length; i++) {
-    const c = chain[i];
+    const c = GoSliceLoad(chain, i, GoPointerValueOps<Diagnostic>());
     if (Diagnostic_RepopulateInfo(c) !== undefined) {
       // Convert to buildInfoDiagnosticWithFileName and repopulate
       const b: buildInfoDiagnosticWithFileName = {

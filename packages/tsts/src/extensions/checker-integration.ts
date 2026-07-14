@@ -19,6 +19,8 @@ import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, Extensi
 import { getExtensionHost } from "./host.js";
 import { recordProviderTypeFamilyReferenceFacts } from "./compiler-integration.js";
 import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+import { GoSliceLoad } from "../go/compat.js";
+
 
 
 export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callExpression: GoPtr<Node>, sourceSelectedSignature?: GoPtr<Signature>, resolvedCalleeSymbol?: GoPtr<Symbol>): void {
@@ -303,7 +305,7 @@ export function recordExtensionTargetConstraintValidation(checker: GoPtr<Checker
   let valid = true;
   for (let parameterIndex = 0; parameterIndex < typeParameters.length; parameterIndex++) {
     const parameter = typeParameters[parameterIndex];
-    const argument = typeArguments[parameterIndex];
+    const argument = GoSliceLoad(typeArguments, parameterIndex, GoPointerValueOps<Node>());
     if (parameter === undefined || argument === undefined) {
       continue;
     }
@@ -642,12 +644,12 @@ function getSourceSelectedMethodTypeArguments(callExpression: GoPtr<Node>, sourc
   const explicitTypeNodes = Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const selected: SourceSelectedMethodTypeArgument[] = [];
   for (let index = 0; index < typeParameters.length; index++) {
-    const typeParameter = typeParameters[index];
+    const typeParameter = GoSliceLoad(typeParameters, index, GoPointerValueOps<Type>());
     const typeParameterName = typeParameter?.symbol?.Name ?? "";
     if (typeParameter === undefined || typeParameterName === "") {
       return undefined;
     }
-    const explicitTypeNode = explicitTypeNodes[index];
+    const explicitTypeNode = GoSliceLoad(explicitTypeNodes, index, GoPointerValueOps<Node>());
     const selectedType = sourceSelectedSignature.mapper!?.data!.Map(typeParameter);
     if (selectedType === undefined) {
       return undefined;

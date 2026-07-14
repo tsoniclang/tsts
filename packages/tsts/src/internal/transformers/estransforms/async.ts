@@ -121,6 +121,8 @@ import { AsyncSuperHelper, AdvancedAsyncSuperHelper } from "../../printer/helper
 
 import type { GoFunc } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::type::asyncContextFlags","kind":"type","status":"implemented","sigHash":"16f1660d2d95757cf8a9439ea4e2fc76f496703918b639d88719db90af30a092"}
@@ -1298,7 +1300,7 @@ export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(
   }
   if (variables === undefined || variables.length === 0) {
     if (hasReceiver) {
-      const name = Node_Name(node!.Declarations!.Nodes[0]);
+      const name = Node_Name(GoSliceLoad(node!.Declarations!.Nodes, 0, GoPointerValueOps<Node>()));
       let target: GoPtr<Node>;
       if (IsBindingPattern(name)) {
         target = ConvertBindingPatternToAssignmentPattern(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), AsBindingPattern(name)!) as unknown as GoPtr<Node>;
@@ -1752,13 +1754,13 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
       const params = Node_Parameters(node);
       for (let i = 0; i < params.length; i++) {
         if (i >= outerLen) break;
-        const originalParameter = AsParameterDeclaration(params[i])!;
-        const outerParameter = AsParameterDeclaration(outerParameters!.Nodes[i])!;
+        const originalParameter = AsParameterDeclaration(GoSliceLoad(params, i, GoPointerValueOps<Node>()))!;
+        const outerParameter = AsParameterDeclaration(GoSliceLoad(outerParameters!.Nodes, i, GoPointerValueOps<Node>()))!;
         if (originalParameter.Initializer !== undefined || originalParameter.DotDotDotToken !== undefined) {
-          parameterBindings = GoSliceAppend(parameterBindings, NewSpreadElement(factory, Node_Name(outerParameters!.Nodes[i]) as unknown as GoPtr<never>) as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
+          parameterBindings = GoSliceAppend(parameterBindings, NewSpreadElement(factory, Node_Name(GoSliceLoad(outerParameters!.Nodes, i, GoPointerValueOps<Node>())) as unknown as GoPtr<never>) as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
           break;
         }
-        parameterBindings = GoSliceAppend(parameterBindings, Node_Name(outerParameters!.Nodes[i]) as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
+        parameterBindings = GoSliceAppend(parameterBindings, Node_Name(GoSliceLoad(outerParameters!.Nodes, i, GoPointerValueOps<Node>())) as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
       }
       argumentsExpression = NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, parameterBindings) as unknown as GoPtr<never>, false) as unknown as GoPtr<Node>;
     } else {

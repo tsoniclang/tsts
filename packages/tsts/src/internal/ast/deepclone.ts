@@ -8,6 +8,8 @@ import { ModifierList_Clone, NodeList_Clone, NodeList_HasTrailingComma, Node_Clo
 import { SetParentInChildren } from "./utilities.js";
 import type { NodeVisitor } from "./visitor.js";
 import { NewNodeVisitor, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "./visitor.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::func::getDeepCloneVisitor","kind":"func","status":"implemented","sigHash":"4a820a659ae7c6b683548df260880b21dafad1d4c70a78454cb8de414d568524"}
@@ -110,7 +112,7 @@ export function getDeepCloneVisitor(f: GoPtr<NodeFactory>, syntheticLocation: bo
         if (syntheticLocation) {
           newList!.Loc = syntheticNodeLocation();
           if (NodeList_HasTrailingComma(nodes)) {
-            newList!.Nodes[newList!.Nodes.length - 1]!.Loc = trailingCommaLocation();
+            GoSliceLoad(newList!.Nodes, newList!.Nodes.length - 1, GoPointerValueOps<Node>())!.Loc = trailingCommaLocation();
           }
         }
         return newList;
@@ -124,7 +126,7 @@ export function getDeepCloneVisitor(f: GoPtr<NodeFactory>, syntheticLocation: bo
         if (syntheticLocation) {
           newList!.Loc = syntheticNodeLocation();
           if (NodeList_HasTrailingComma(nodes)) {
-            newList!.Nodes[newList!.Nodes.length - 1]!.Loc = trailingCommaLocation();
+            GoSliceLoad(newList!.Nodes, newList!.Nodes.length - 1, GoPointerValueOps<Node>())!.Loc = trailingCommaLocation();
           }
         }
         return newList;

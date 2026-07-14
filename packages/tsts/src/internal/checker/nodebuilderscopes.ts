@@ -22,6 +22,8 @@ import type { Signature, Type } from "./types.js";
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad, GoSliceValueOps } from "../../go/compat.js";
+
 
 
 function goZeroNodeBuilderLinks(): NodeBuilderLinks {
@@ -141,7 +143,7 @@ export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuild
  * }
  */
 export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>): [expandedParams: GoSlice<GoPtr<Symbol>>, cleanup: GoFunc<() => void>] {
-  const expandedParams = Checker_getExpandedParameters(receiver!.ch, signature, true)[0] ?? GoNilSlice();
+  const expandedParams = GoSliceLoad(Checker_getExpandedParameters(receiver!.ch, signature, true), 0, GoSliceValueOps<GoPtr<Symbol>>()) ?? GoNilSlice();
   const cleanup = NodeBuilderImpl_enterNewScope(receiver, signature!.declaration, expandedParams, signature!.typeParameters, signature!.parameters, signature!.mapper);
   return [expandedParams, cleanup!];
 }
@@ -421,10 +423,10 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
           return;
         }
         for (let pIndex = 0; pIndex < expandedParams.length; pIndex++) {
-          const param = expandedParams[pIndex];
+          const param = GoSliceLoad(expandedParams, pIndex, GoPointerValueOps<Symbol>());
           let originalParam: GoPtr<Symbol>;
           if (pIndex < originalParameters.length) {
-            originalParam = originalParameters[pIndex];
+            originalParam = GoSliceLoad(originalParameters, pIndex, GoPointerValueOps<Symbol>());
           }
           if (!GoSliceIsNil(originalParameters) && originalParam !== param) {
             add(param!.Name, receiver!.ch!.unknownSymbol);

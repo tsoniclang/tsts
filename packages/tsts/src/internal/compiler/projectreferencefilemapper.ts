@@ -22,6 +22,8 @@ import type { ProgramOptions } from "./program.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"implemented","sigHash":"6ba4d34374b0e8d11cb5ffc2a70018db101db1ceb8e2288f9e1c82a2d29a0864"}
@@ -315,7 +317,7 @@ export function projectReferenceFileMapper_rangeResolvedProjectReference(receive
  */
 export function projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver: GoPtr<projectReferenceFileMapper>, references: GoSlice<Path>, f: GoFunc<(path: Path, config: GoPtr<ParsedCommandLine>, parent: GoPtr<ParsedCommandLine>, index: int) => bool>, parent: GoPtr<ParsedCommandLine>, seenRef: GoPtr<Set<Path>>): bool {
   for (let index = 0; index < references.length; index++) {
-    const path = references[index]!;
+    const path = GoSliceLoad(references, index, GoStringValueOps)!;
     if (!Set_AddIfAbsent(seenRef as GoPtr<Set<Path>>, path, GoStringKey)) {
       continue;
     }

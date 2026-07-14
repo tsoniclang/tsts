@@ -13,6 +13,8 @@ import type { Transformer } from "./transformer.js";
 import { Transformer_NewTransformer, Transformer_TransformSourceFile } from "./transformer.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/chain.go::type::chainedTransformer","kind":"type","status":"implemented","sigHash":"48e08dc8c1052921aa216ab0dbe966a1daf0fe1e267f2ba63ab4f590f4609b5a"}
  *
@@ -131,7 +133,7 @@ export function Chain(...transforms: Array<TransformerFactory>): TransformerFact
       case 0:
         return undefined;
       case 1:
-        return constructed[0];
+        return GoSliceLoad(constructed, 0, GoPointerValueOps<Transformer>());
     }
     const ch: chainedTransformer = {
       __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },

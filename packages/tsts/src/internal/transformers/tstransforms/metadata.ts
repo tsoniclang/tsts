@@ -30,6 +30,8 @@ import { getDecoratorsOfParameters } from "./legacydecorators.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::constGroup::USE_NEW_TYPE_METADATA_FORMAT","kind":"constGroup","status":"implemented","sigHash":"273dcdebb539096b9ef13508c6039fa57341a018341ac680cd2d1666a81759b4"}
@@ -555,10 +557,10 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
       return res;
     }
     let modifiersArray: GoSlice<GoPtr<Node>> = GoNilSlice();
-    if (IsModifier(originalNodes[0]) && (originalNodes[0]!.Kind === KindDefaultKeyword || originalNodes[0]!.Kind === KindExportKeyword)) {
-      modifiersArray = GoSliceAppend(modifiersArray, originalNodes[0], GoPointerValueOps<Node>());
-      if (originalNodes.length > 1 && (originalNodes[1]!.Kind === KindDefaultKeyword || originalNodes[1]!.Kind === KindExportKeyword)) {
-        modifiersArray = GoSliceAppend(modifiersArray, originalNodes[1], GoPointerValueOps<Node>());
+    if (IsModifier(GoSliceLoad(originalNodes, 0, GoPointerValueOps<Node>())) && (GoSliceLoad(originalNodes, 0, GoPointerValueOps<Node>())!.Kind === KindDefaultKeyword || GoSliceLoad(originalNodes, 0, GoPointerValueOps<Node>())!.Kind === KindExportKeyword)) {
+      modifiersArray = GoSliceAppend(modifiersArray, GoSliceLoad(originalNodes, 0, GoPointerValueOps<Node>()), GoPointerValueOps<Node>());
+      if (originalNodes.length > 1 && (GoSliceLoad(originalNodes, 1, GoPointerValueOps<Node>())!.Kind === KindDefaultKeyword || GoSliceLoad(originalNodes, 1, GoPointerValueOps<Node>())!.Kind === KindExportKeyword)) {
+        modifiersArray = GoSliceAppend(modifiersArray, GoSliceLoad(originalNodes, 1, GoPointerValueOps<Node>()), GoPointerValueOps<Node>());
       }
     }
     const restStart = modifiersArray.length;

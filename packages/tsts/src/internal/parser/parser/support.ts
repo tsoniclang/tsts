@@ -228,6 +228,8 @@ import { parserPool, viableKeywordSuggestions } from "./state.js";
 
 import type { GoFunc } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 const byteLen: (text: string) => int = utf8.StringByteLen;
 const byteAt: (text: string, index: int) => int = utf8.StringByteAt;
@@ -464,7 +466,7 @@ export function Parser_parseJSONText(receiver: GoPtr<Parser>): GoPtr<SourceFile>
   const node = Parser_finishNode(receiver, NodeFactory_NewSourceFile(receiver!.factory, receiver!.opts, receiver!.sourceText, statements, eof), pos);
   const result = AsSourceFile(node);
   if ((result!.Statements!.Nodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length > 0) {
-    Parser_validateJsonValue(receiver, result, Node_Expression(result!.Statements!.Nodes[0]));
+    Parser_validateJsonValue(receiver, result, Node_Expression(GoSliceLoad(result!.Statements!.Nodes, 0, GoPointerValueOps<Node>())));
   }
   Parser_finishSourceFile(receiver, result, false);
   return result;
@@ -1084,7 +1086,7 @@ export function Parser_parseParameterEx(receiver: GoPtr<Parser>, inOuterAwaitCon
       undefined /*initializer*/,
     );
     if (modifiers !== undefined) {
-      Parser_parseErrorAtRange(receiver, modifiers.Nodes[0]!.Loc, Neither_decorators_nor_modifiers_may_be_applied_to_this_parameters);
+      Parser_parseErrorAtRange(receiver, GoSliceLoad(modifiers.Nodes, 0, GoPointerValueOps<Node>())!.Loc, Neither_decorators_nor_modifiers_may_be_applied_to_this_parameters);
     }
     Parser_withJSDoc(receiver, Parser_finishNode(receiver, thisResult, pos), jsdoc);
     return thisResult;
@@ -2462,12 +2464,12 @@ export function Parser_checkJSDecoratorSyntax(receiver: GoPtr<Parser>, node: GoP
           const defaultIndex = FindIndex(modifiers, (m: GoPtr<Node>): bool => m!.Kind === KindDefaultKeyword);
           if (decoratorIndex > exportIndex && defaultIndex >= 0 && decoratorIndex < defaultIndex) {
             // Decorator between `export` and `default`
-            Parser_jsErrorAtRange(receiver, modifiers[decoratorIndex]!.Loc, Decorators_are_not_valid_here);
+            Parser_jsErrorAtRange(receiver, GoSliceLoad(modifiers, decoratorIndex, GoPointerValueOps<Node>())!.Loc, Decorators_are_not_valid_here);
           } else if (decoratorIndex < exportIndex) {
             // Find a trailing decorator after the export keyword
             let trailingDecoratorIndex = -1;
             for (let i = exportIndex; i < modifiers.length; i++) {
-              if (IsDecorator(modifiers[i])) {
+              if (IsDecorator(GoSliceLoad(modifiers, i, GoPointerValueOps<Node>()))) {
                 trailingDecoratorIndex = i;
                 break;
               }
@@ -2475,12 +2477,12 @@ export function Parser_checkJSDecoratorSyntax(receiver: GoPtr<Parser>, node: GoP
             if (trailingDecoratorIndex >= 0) {
               const diag = NewDiagnostic(
                 undefined,
-                NewTextRange(SkipTrivia(receiver!.sourceText, modifiers[trailingDecoratorIndex]!.Loc.pos), modifiers[trailingDecoratorIndex]!.Loc.end),
+                NewTextRange(SkipTrivia(receiver!.sourceText, GoSliceLoad(modifiers, trailingDecoratorIndex, GoPointerValueOps<Node>())!.Loc.pos), GoSliceLoad(modifiers, trailingDecoratorIndex, GoPointerValueOps<Node>())!.Loc.end),
                 Decorators_may_not_appear_after_export_or_export_default_if_they_also_appear_before_export,
               );
               Diagnostic_AddRelatedInfo(diag, NewDiagnostic(
                 undefined,
-                NewTextRange(SkipTrivia(receiver!.sourceText, modifiers[decoratorIndex]!.Loc.pos), modifiers[decoratorIndex]!.Loc.end),
+                NewTextRange(SkipTrivia(receiver!.sourceText, GoSliceLoad(modifiers, decoratorIndex, GoPointerValueOps<Node>())!.Loc.pos), GoSliceLoad(modifiers, decoratorIndex, GoPointerValueOps<Node>())!.Loc.end),
                 Decorator_used_before_export_here,
               ));
               receiver!.jsDiagnostics = GoSliceAppend(receiver!.jsDiagnostics, diag, GoPointerValueOps<Diagnostic>());

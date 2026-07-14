@@ -17,6 +17,8 @@ import type { bool, byte, int, long, uint } from "../scalars.js";
 import type { GoError, GoSlice } from "../compat.js";
 import { FormatInt } from "../strconv.js";
 import type { WriteCloser, Writer } from "../io.js";
+import { GoNumberValueOps, GoSliceLoad, GoSliceStore } from "../compat.js";
+
 
 // Go's StdPadding ('=') and NoPadding (-1) rune constants.
 const StdPaddingValue: int = 0x3d; // '='
@@ -92,11 +94,11 @@ export class Encoding {
     const n: int = globalThis.Math.trunc(src.length / 3) * 3;
     while (si < n) {
       // Convert 3x 8bit source bytes into 4 bytes.
-      const val: uint = ((src[si + 0]! << 16) | (src[si + 1]! << 8) | src[si + 2]!) >>> 0;
-      dst[di + 0] = this.encode[(val >>> 18) & 0x3f]!;
-      dst[di + 1] = this.encode[(val >>> 12) & 0x3f]!;
-      dst[di + 2] = this.encode[(val >>> 6) & 0x3f]!;
-      dst[di + 3] = this.encode[val & 0x3f]!;
+      const val: uint = ((GoSliceLoad(src, si + 0, GoNumberValueOps)! << 16) | (GoSliceLoad(src, si + 1, GoNumberValueOps)! << 8) | GoSliceLoad(src, si + 2, GoNumberValueOps)!) >>> 0;
+      GoSliceStore(dst, di + 0, this.encode[(val >>> 18) & 0x3f]!, GoNumberValueOps);
+      GoSliceStore(dst, di + 1, this.encode[(val >>> 12) & 0x3f]!, GoNumberValueOps);
+      GoSliceStore(dst, di + 2, this.encode[(val >>> 6) & 0x3f]!, GoNumberValueOps);
+      GoSliceStore(dst, di + 3, this.encode[val & 0x3f]!, GoNumberValueOps);
       si += 3;
       di += 4;
     }
@@ -106,23 +108,23 @@ export class Encoding {
       return;
     }
     // Add the remaining small block.
-    let val: uint = (src[si + 0]! << 16) >>> 0;
+    let val: uint = (GoSliceLoad(src, si + 0, GoNumberValueOps)! << 16) >>> 0;
     if (remain === 2) {
-      val = (val | (src[si + 1]! << 8)) >>> 0;
+      val = (val | (GoSliceLoad(src, si + 1, GoNumberValueOps)! << 8)) >>> 0;
     }
 
-    dst[di + 0] = this.encode[(val >>> 18) & 0x3f]!;
-    dst[di + 1] = this.encode[(val >>> 12) & 0x3f]!;
+    GoSliceStore(dst, di + 0, this.encode[(val >>> 18) & 0x3f]!, GoNumberValueOps);
+    GoSliceStore(dst, di + 1, this.encode[(val >>> 12) & 0x3f]!, GoNumberValueOps);
 
     if (remain === 2) {
-      dst[di + 2] = this.encode[(val >>> 6) & 0x3f]!;
+      GoSliceStore(dst, di + 2, this.encode[(val >>> 6) & 0x3f]!, GoNumberValueOps);
       if (this.padChar !== NoPaddingValue) {
-        dst[di + 3] = this.padChar & 0xff;
+        GoSliceStore(dst, di + 3, this.padChar & 0xff, GoNumberValueOps);
       }
     } else if (remain === 1) {
       if (this.padChar !== NoPaddingValue) {
-        dst[di + 2] = this.padChar & 0xff;
-        dst[di + 3] = this.padChar & 0xff;
+        GoSliceStore(dst, di + 2, this.padChar & 0xff, GoNumberValueOps);
+        GoSliceStore(dst, di + 3, this.padChar & 0xff, GoNumberValueOps);
       }
     }
   }
@@ -184,7 +186,7 @@ export class Encoding {
         dlen = j;
         break;
       }
-      const inByte: byte = src[si]!;
+      const inByte: byte = GoSliceLoad(src, si, GoNumberValueOps)!;
       si++;
 
       const out: byte = this.decodeMap[inByte]!;
@@ -209,14 +211,14 @@ export class Encoding {
       }
       if (j === 2) {
         // "==" is expected, the first "=" is already consumed; skip newlines.
-        while (si < src.length && (src[si] === 0x0a || src[si] === 0x0d)) {
+        while (si < src.length && (GoSliceLoad(src, si, GoNumberValueOps) === 0x0a || GoSliceLoad(src, si, GoNumberValueOps) === 0x0d)) {
           si++;
         }
         if (si === src.length) {
           // not enough padding
           return [si, 0, new CorruptInputError(src.length)];
         }
-        if (src[si]! !== this.padChar) {
+        if (GoSliceLoad(src, si, GoNumberValueOps)! !== this.padChar) {
           // incorrect padding
           return [si, 0, new CorruptInputError(si - 1)];
         }
@@ -224,7 +226,7 @@ export class Encoding {
       }
 
       // skip over newlines
-      while (si < src.length && (src[si] === 0x0a || src[si] === 0x0d)) {
+      while (si < src.length && (GoSliceLoad(src, si, GoNumberValueOps) === 0x0a || GoSliceLoad(src, si, GoNumberValueOps) === 0x0d)) {
         si++;
       }
       if (si < src.length) {
@@ -245,18 +247,18 @@ export class Encoding {
     dbuf[0] = b0;
     // dlen falls through from 4 -> 3 -> 2 in Go; replicate explicitly.
     if (dlen >= 4) {
-      dst[dstOff + 2] = dbuf[2]!;
+      GoSliceStore(dst, dstOff + 2, dbuf[2]!, GoNumberValueOps);
       dbuf[2] = 0;
     }
     if (dlen >= 3) {
-      dst[dstOff + 1] = dbuf[1]!;
+      GoSliceStore(dst, dstOff + 1, dbuf[1]!, GoNumberValueOps);
       if (this.strict && dbuf[2] !== 0) {
         return [si, 0, new CorruptInputError(si - 1)];
       }
       dbuf[1] = 0;
     }
     if (dlen >= 2) {
-      dst[dstOff + 0] = dbuf[0]!;
+      GoSliceStore(dst, dstOff + 0, dbuf[0]!, GoNumberValueOps);
       if (this.strict && (dbuf[1] !== 0 || dbuf[2] !== 0)) {
         return [si, 0, new CorruptInputError(si - 2)];
       }
@@ -308,7 +310,7 @@ class encoder implements WriteCloser {
     if (this.nbuf > 0) {
       let i: int = 0;
       for (i = 0; i < p.length && this.nbuf < 3; i++) {
-        this.buf[this.nbuf] = p[i]!;
+        this.buf[this.nbuf] = GoSliceLoad(p, i, GoNumberValueOps)!;
         this.nbuf++;
       }
       n += i;
@@ -346,7 +348,7 @@ class encoder implements WriteCloser {
 
     // Trailing fringe.
     for (let k = 0; k < p.length; k++) {
-      this.buf[k] = p[k]!;
+      this.buf[k] = GoSliceLoad(p, k, GoNumberValueOps)!;
     }
     this.nbuf = p.length;
     n += p.length;

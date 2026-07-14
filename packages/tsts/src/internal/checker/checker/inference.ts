@@ -151,6 +151,8 @@ import { SkipTrivia } from "../../scanner/scanner.js";
 import { Checker_isErrorType } from "./diagnostics.js";
 import { Checker_addDiagnostic } from "../checker.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 function goZeroDeclaredTypeLinks(): DeclaredTypeLinks {
@@ -971,10 +973,10 @@ export function Checker_pushActiveMapper(receiver: GoPtr<Checker>, mapper: GoPtr
  * }
  */
 export function Checker_popActiveMapper(receiver: GoPtr<Checker>): void {
-  receiver!.activeMappers[receiver!.activeMappers.length - 1] = undefined;
+  GoSliceStore(receiver!.activeMappers, receiver!.activeMappers.length - 1, undefined, GoPointerValueOps<TypeMapper>());
   receiver!.activeMappers = GoSlicePrefix(receiver!.activeMappers, receiver!.activeMappers.length - 1);
   const lastIndex = receiver!.activeTypeMappersCaches.length - 1;
-  receiver!.activeTypeMappersCaches[lastIndex]!.clear();
+  GoSliceLoad(receiver!.activeTypeMappersCaches, lastIndex, GoMapValueOps<CacheHashKey, GoPtr<Type>>())!.clear();
   receiver!.activeTypeMappersCaches = GoSlicePrefix(receiver!.activeTypeMappersCaches, lastIndex);
 }
 
@@ -1117,7 +1119,7 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
   } else if ((t!.objectFlags & ObjectFlagsInstantiationExpressionType) !== 0) {
     declaration = Type_AsInstantiationExpressionType(t)!.node;
   } else {
-    declaration = t!.symbol!.Declarations![0];
+    declaration = GoSliceLoad(t!.symbol!.Declarations!, 0, GoPointerValueOps<Node>());
   }
   const links = LinkStore_Get(receiver!.typeNodeLinks, declaration, goZeroTypeNodeLinks, goNodePointerKey)!.v;
   let target: GoPtr<Type>;
@@ -1355,9 +1357,9 @@ export function Checker_getTypeAliasInstantiation(receiver: GoPtr<Checker>, symb
     const typeKindEntry = intrinsicTypeKinds.get(symbol_!.Name);
     if (typeKindEntry !== undefined && typeArguments.length === 1) {
       if (typeKindEntry === IntrinsicTypeKindNoInfer) {
-        return Checker_getNoInferType(receiver, typeArguments[0]);
+        return Checker_getNoInferType(receiver, GoSliceLoad(typeArguments, 0, GoPointerValueOps<Type>()));
       }
-      return Checker_getStringMappingType(receiver, symbol_, typeArguments[0]);
+      return Checker_getStringMappingType(receiver, symbol_, GoSliceLoad(typeArguments, 0, GoPointerValueOps<Type>()));
     }
   }
   const links = LinkStore_Get(receiver!.typeAliasLinks, symbol_, goZeroTypeAliasLinks, goSymbolPointerKey);
@@ -1541,7 +1543,7 @@ export function Checker_getTypeFromInferTypeNode(receiver: GoPtr<Checker>, node:
  */
 export function Checker_getImpliedConstraint(receiver: GoPtr<Checker>, t: GoPtr<Type>, checkNode: GoPtr<Node>, extendsNode: GoPtr<Node>): GoPtr<Type> {
   if (isUnaryTupleTypeNode(checkNode) && isUnaryTupleTypeNode(extendsNode)) {
-    return Checker_getImpliedConstraint(receiver, t, Node_Elements(checkNode)![0], Node_Elements(extendsNode)![0]);
+    return Checker_getImpliedConstraint(receiver, t, GoSliceLoad(Node_Elements(checkNode)!, 0, GoPointerValueOps<Node>()), GoSliceLoad(Node_Elements(extendsNode)!, 0, GoPointerValueOps<Node>()));
   }
   if (Checker_getActualTypeVariable(receiver, Checker_getTypeFromTypeNode(receiver, checkNode)) === Checker_getActualTypeVariable(receiver, t)) {
     return Checker_getTypeFromTypeNode(receiver, extendsNode);
@@ -2077,8 +2079,8 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
     const elementInfos = Type_TargetTupleType(t)!.elementInfos;
     let newElements: GoSlice<GoPtr<Type>> = GoSliceMake(0, 0, GoPointerValueOps<Type>());
     for (let i = 0; i < elementTypes!.length; i++) {
-      let newElement = elementTypes![i];
-      const v = elementTypes![i];
+      let newElement = GoSliceLoad(elementTypes!, i, GoPointerValueOps<Type>());
+      const v = GoSliceLoad(elementTypes!, i, GoPointerValueOps<Type>());
       if ((v!.flags & TypeFlagsTypeParameter) !== 0 && (elementInfos![i]!.flags & ElementFlagsVariadic) !== 0) {
         const constraint = Checker_getNextBaseConstraint(receiver, v, stack);
         if (constraint !== undefined && constraint !== v && everyType(constraint, (n: GoPtr<Type>): bool => Checker_isArrayOrTupleType(receiver, n) && !Checker_isGenericTupleType(receiver, n))) {
@@ -2267,13 +2269,13 @@ export function Checker_applyTemplateStringMapping(receiver: GoPtr<Checker>, sym
     return [Map(texts, (t: string): string => applyStringMapping(symbol_, t)), Map(types, (t: GoPtr<Type>): GoPtr<Type> => Checker_getStringMappingType(receiver, symbol_, t))];
   }
   if (kind === IntrinsicTypeKindCapitalize || kind === IntrinsicTypeKindUncapitalize) {
-    if (texts![0] !== "") {
+    if (GoSliceLoad(texts!, 0, GoStringValueOps) !== "") {
       const newTexts = slices.Clone(texts);
-      newTexts[0] = applyStringMapping(symbol_, newTexts[0]!);
+      newTexts[0] = applyStringMapping(symbol_, GoSliceLoad(newTexts, 0, GoStringValueOps)!);
       return [newTexts, types];
     }
     const newTypes = slices.Clone(types);
-    newTypes[0] = Checker_getStringMappingType(receiver, symbol_, newTypes[0]);
+    newTypes[0] = Checker_getStringMappingType(receiver, symbol_, GoSliceLoad(newTypes, 0, GoPointerValueOps<Type>()));
     return [texts, newTypes];
   }
   return [texts, types];

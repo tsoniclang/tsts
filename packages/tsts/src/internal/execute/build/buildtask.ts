@@ -64,6 +64,8 @@ import {
 } from "./uptodatestatus.js";
 import type { upToDateStatus, inputOutputName, inputOutputFileAndTime, fileAndTime, upstreamErrors as upstreamErrorsType } from "./uptodatestatus.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 /**
@@ -637,7 +639,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   } else {
     let oldestOutputFileName: string;
     if (result.EmitResult!.EmittedFiles.length > 0) {
-      oldestOutputFileName = result.EmitResult!.EmittedFiles[0]!;
+      oldestOutputFileName = GoSliceLoad(result.EmitResult!.EmittedFiles, 0, GoStringValueOps)!;
     } else {
       oldestOutputFileName = FirstOrNilSeq(ParsedCommandLine_GetOutputFileNames(receiver!.resolved), GoZeroString);
     }
@@ -1665,7 +1667,7 @@ export function BuildTask_hasUpdate(receiver: GoPtr<BuildTask>, orchestrator: Go
   if (receiver!.resolved !== undefined) {
     const extendedFiles = ParsedCommandLine_ExtendedSourceFiles(receiver!.resolved);
     for (let idx = 0; idx < extendedFiles.length; idx++) {
-      const file = extendedFiles[idx]!;
+      const file = GoSliceLoad(extendedFiles, idx, GoStringValueOps)!;
       const mtime = host_GetMTime(orchestrator!.host, file);
       if (mtime !== receiver!.extendedConfigTimes[idx] && !(mtime as unknown as { equal?: (t: unknown) => bool }).equal?.(receiver!.extendedConfigTimes[idx])) {
         BuildTask_resetConfig(receiver, orchestrator, path);
@@ -1674,7 +1676,7 @@ export function BuildTask_hasUpdate(receiver: GoPtr<BuildTask>, orchestrator: Go
     }
     const fileNames = ParsedCommandLine_FileNames(receiver!.resolved);
     for (let idx = 0; idx < fileNames.length; idx++) {
-      const file = fileNames[idx]!;
+      const file = GoSliceLoad(fileNames, idx, GoStringValueOps)!;
       const mtime = host_GetMTime(orchestrator!.host, file);
       if (mtime !== receiver!.inputFiles[idx] && !(mtime as unknown as { equal?: (t: unknown) => bool }).equal?.(receiver!.inputFiles[idx])) {
         BuildTask_resetStatus(receiver);

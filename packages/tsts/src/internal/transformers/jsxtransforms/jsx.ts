@@ -49,6 +49,8 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
 // `s[i]` is a byte, and slices like `s[i:j]` operate on byte offsets. The
@@ -419,7 +421,7 @@ export function insertStatementAfterPrologue<T>(to: GoSlice<GoPtr<Node>>, statem
   let statementIdx = 0;
   // skip all prologue directives to insert at the correct position
   for (; statementIdx < to.length; statementIdx++) {
-    if (!isPrologueDirective!(callee, to[statementIdx])) {
+    if (!isPrologueDirective!(callee, GoSliceLoad(to, statementIdx, GoPointerValueOps<Node>()))) {
       break;
     }
   }
@@ -841,8 +843,8 @@ export function JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiv
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  if (nonWhitespaceChildren.length === 1 && (nonWhitespaceChildren[0]!.Kind !== KindJsxExpression || AsJsxExpression(nonWhitespaceChildren[0])!.DotDotDotToken === undefined)) {
-    const result = JSXTransformer_transformJsxChildToExpression(receiver, nonWhitespaceChildren[0] as unknown as GoPtr<Node>);
+  if (nonWhitespaceChildren.length === 1 && (GoSliceLoad(nonWhitespaceChildren, 0, GoPointerValueOps<Node>())!.Kind !== KindJsxExpression || AsJsxExpression(GoSliceLoad(nonWhitespaceChildren, 0, GoPointerValueOps<Node>()))!.DotDotDotToken === undefined)) {
+    const result = JSXTransformer_transformJsxChildToExpression(receiver, GoSliceLoad(nonWhitespaceChildren, 0, GoPointerValueOps<Node>()) as unknown as GoPtr<Node>);
     if (result === undefined) {
       return undefined;
     }
@@ -961,7 +963,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementJSX(receiver: GoPtr<JSX
   let keyAttr: GoPtr<Node> = undefined;
   let attrs: GoSlice<GoPtr<Node>> = Node_Properties(Node_Attributes(element)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (let i = 0; i < attrs.length; i++) {
-    const p = attrs[i]!;
+    const p = GoSliceLoad(attrs, i, GoPointerValueOps<Node>())!;
     if (p!.Kind === KindJsxAttribute && Node_Name(p) !== undefined && IsIdentifier(Node_Name(p)) && Node_Text(Node_Name(p)) === "key") {
       keyAttr = p;
       attrs = [...attrs.slice(0, i), ...attrs.slice(i + 1)];
@@ -1095,7 +1097,7 @@ export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPt
 
   [expressions] = JSXTransformer_combinePropertiesIntoNewExpression(receiver, expressions, properties);
 
-  if (expressions.length > 0 && !IsObjectLiteralExpression(expressions[0])) {
+  if (expressions.length > 0 && !IsObjectLiteralExpression(GoSliceLoad(expressions, 0, GoPointerValueOps<Node>()))) {
     // We must always emit at least one object literal before a spread attribute
     // as the JSX always factory expects a fresh object, so we need to make a copy here
     // we also avoid mutating an external reference by doing this (first expression is used as assign's target)
@@ -1106,7 +1108,7 @@ export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPt
   }
 
   if (expressions.length === 1) {
-    return expressions[0];
+    return GoSliceLoad(expressions, 0, GoPointerValueOps<Node>());
   }
   return NodeFactory_NewAssignHelper(factory, expressions, CompilerOptions_GetEmitScriptTarget(receiver!.compilerOptions));
 }
@@ -1400,7 +1402,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(receiver:
   }
   const isStaticChildren =
     nonWhitespaceChildren.length > 1 ||
-    (nonWhitespaceChildren.length === 1 && IsJsxExpression(nonWhitespaceChildren[0]) && AsJsxExpression(nonWhitespaceChildren[0])!.DotDotDotToken !== undefined);
+    (nonWhitespaceChildren.length === 1 && IsJsxExpression(GoSliceLoad(nonWhitespaceChildren, 0, GoPointerValueOps<Node>())) && AsJsxExpression(GoSliceLoad(nonWhitespaceChildren, 0, GoPointerValueOps<Node>()))!.DotDotDotToken !== undefined);
   let args: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   args = GoSliceAppend(args, tagName as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
   args = GoSliceAppend(args, object as unknown as GoPtr<Node>, GoPointerValueOps<Node>());

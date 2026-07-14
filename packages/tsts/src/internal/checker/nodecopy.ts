@@ -94,6 +94,8 @@ import type { CompositeTypeCacheIdentity, NodeBuilderContext, NodeBuilderImpl, N
 import type { SymbolNodeLinks, Type } from "./types.js";
 import { TypeFlagsAny } from "./types.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 function goZeroSymbolNodeLinks(): SymbolNodeLinks {
@@ -755,7 +757,7 @@ export function NodeBuilderImpl_getModuleSpecifierOverride(receiver: GoPtr<NodeB
     }
     let parentSymbol = undefined;
     if (nodeSymbol !== undefined && Checker_IsSymbolAccessible(receiver!.ch, nodeSymbol, receiver!.ctx!.enclosingDeclaration, meaning, false).Accessibility === SymbolAccessibilityAccessible) {
-      parentSymbol = NodeBuilderImpl_lookupSymbolChain(receiver, nodeSymbol, meaning, true)[0];
+      parentSymbol = GoSliceLoad(NodeBuilderImpl_lookupSymbolChain(receiver, nodeSymbol, meaning, true), 0, GoPointerValueOps<Symbol>());
     }
     if (parentSymbol !== undefined && IsExternalModuleSymbol(parentSymbol)) {
       name = NodeBuilderImpl_getSpecifierForModuleSymbol(receiver, parentSymbol, mode);

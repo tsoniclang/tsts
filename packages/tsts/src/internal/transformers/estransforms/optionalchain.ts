@@ -67,6 +67,8 @@ import {
 } from "../../printer/emitcontext.js";
 import { EFNoComments } from "../../printer/emitflags.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 /**
@@ -515,7 +517,7 @@ export function optionalChainTransformer_visitOptionalExpression(receiver: GoPtr
   const left = optionalChainTransformer_visitNonOptionalExpression(
     receiver,
     SkipPartiallyEmittedExpressions(expression),
-    isCallChain(chain[0]),
+    isCallChain(GoSliceLoad(chain, 0, GoPointerValueOps<Node>())),
     false
   );
 
@@ -538,7 +540,7 @@ export function optionalChainTransformer_visitOptionalExpression(receiver: GoPtr
   let thisArg: GoPtr<Expression> = undefined;
 
   for (let i = 0; i < chain.length; i++) {
-    const segment = chain[i]!;
+    const segment = GoSliceLoad(chain, i, GoPointerValueOps<Node>())!;
     switch (segment.Kind) {
       case KindElementAccessExpression:
       case KindPropertyAccessExpression:
@@ -552,17 +554,17 @@ export function optionalChainTransformer_visitOptionalExpression(receiver: GoPtr
           }
         }
         if (segment.Kind === KindElementAccessExpression) {
-          const p = AsElementAccessExpression(chain[i])!;
+          const p = AsElementAccessExpression(GoSliceLoad(chain, i, GoPointerValueOps<Node>()))!;
           const visitedArg = NodeVisitor_VisitNode(visitor, p.ArgumentExpression as unknown as GoPtr<Node>);
           rightExpression = NewElementAccessExpression(af, rightExpression, undefined, visitedArg as unknown as GoPtr<Expression>, NodeFlagsNone) as unknown as GoPtr<Expression>;
         } else {
-          const p = AsPropertyAccessExpression(chain[i])!;
+          const p = AsPropertyAccessExpression(GoSliceLoad(chain, i, GoPointerValueOps<Node>()))!;
           const visitedName = NodeVisitor_VisitNode(visitor, p.name as unknown as GoPtr<Node>);
           rightExpression = NewPropertyAccessExpression(af, rightExpression, undefined, visitedName as unknown as GoPtr<Node>, NodeFlagsNone) as unknown as GoPtr<Expression>;
         }
         break;
       case KindCallExpression: {
-        const segmentCallExpr = AsCallExpression(chain[i])!;
+        const segmentCallExpr = AsCallExpression(GoSliceLoad(chain, i, GoPointerValueOps<Node>()))!;
         const segmentArgList = NodeVisitor_VisitNodes(visitor, segmentCallExpr.Arguments);
         if (i === 0 && leftThisArg !== undefined) {
           let lta: GoPtr<Expression> = leftThisArg;
@@ -581,7 +583,7 @@ export function optionalChainTransformer_visitOptionalExpression(receiver: GoPtr
         break;
       }
     }
-    EmitContext_SetOriginal(emitContext, rightExpression as unknown as GoPtr<Node>, chain[i]);
+    EmitContext_SetOriginal(emitContext, rightExpression as unknown as GoPtr<Node>, GoSliceLoad(chain, i, GoPointerValueOps<Node>()));
   }
 
   const notNullCond = createNotNullCondition(emitContext, leftExpression as unknown as GoPtr<Node>, capturedLeft as unknown as GoPtr<Node>, true);

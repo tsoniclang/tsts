@@ -11,6 +11,8 @@ import type { GoError, GoRune, GoSlice } from "./compat.js";
 import { GoNumberValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "./compat.js";
 import { GoAppend, GoAppendSlice, GoNilSlice } from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
+import { GoSliceLoad, GoStringValueOps } from "./compat.js";
+
 
 const nonASCII: RegExp = /[^\x00-\x7F]/;
 
@@ -644,7 +646,7 @@ export class Replacer {
   constructor(oldnew: GoSlice<string>) {
     const pairs: Array<[string, string]> = [];
     for (let i = 0; i + 1 < oldnew.length; i += 2) {
-      pairs.push([oldnew[i]!, oldnew[i + 1]!]);
+      pairs.push([GoSliceLoad(oldnew, i, GoStringValueOps)!, GoSliceLoad(oldnew, i + 1, GoStringValueOps)!]);
     }
     this.pairs = pairs;
   }

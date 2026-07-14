@@ -65,6 +65,8 @@ import { commandLineParser_createUnknownOptionError, createDiagnosticForInvalidE
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.AlternateMode","kind":"method","status":"implemented","sigHash":"b7a4cccfda5482aa6b416c22abfac4443b53ac96e25e4fbf2233fc1d6c068ac3"}
@@ -372,7 +374,7 @@ export function commandLineParser_parseStrings(receiver: GoPtr<commandLineParser
   const p = receiver!;
   let i = 0;
   while (i < args.length) {
-    const s = args[i]!;
+    const s = GoSliceLoad(args, i, GoStringValueOps)!;
     i++;
     if (s === "") {
       continue;
@@ -659,7 +661,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
   if (opt!.IsTSConfigOnly && i <= args.length) {
     let optValue = "";
     if (i < args.length) {
-      optValue = args[i]!;
+      optValue = GoSliceLoad(args, i, GoStringValueOps)!;
     }
     if (optValue === "null") {
       OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, undefined, GoStringKey);
@@ -695,11 +697,11 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
       }
       return i;
     }
-    if (args[i]! !== "null") {
+    if (GoSliceLoad(args, i, GoStringValueOps)! !== "null") {
       switch (opt!.Kind) {
         case CommandLineOptionTypeNumber: {
           // !!! Make sure this parseInt matches JS parseInt
-          const [num, e] = Atoi(args[i]!);
+          const [num, e] = Atoi(GoSliceLoad(args, i, GoStringValueOps)!);
           if (e === undefined) {
             if (num >= opt!.minValue) {
               OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, num, GoStringKey);
@@ -714,7 +716,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
         }
         case CommandLineOptionTypeBoolean: {
           // boolean flag has optional value true, false, others
-          const optValue = args[i]!;
+          const optValue = GoSliceLoad(args, i, GoStringValueOps)!;
 
           // check next argument as boolean flag value
           if (optValue === "false") {
@@ -729,7 +731,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
           break;
         }
         case CommandLineOptionTypeString: {
-          const [val, err] = validateJsonOptionValue(opt, args[i]!, undefined, undefined);
+          const [val, err] = validateJsonOptionValue(opt, GoSliceLoad(args, i, GoStringValueOps)!, undefined, undefined);
           if (GoSliceIsNil(err)) {
             OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, val, GoStringKey);
           } else {
@@ -739,7 +741,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
           break;
         }
         case CommandLineOptionTypeList: {
-          const [result, err] = commandLineParser_parseListTypeOption(p, opt, args[i]!);
+          const [result, err] = commandLineParser_parseListTypeOption(p, opt, GoSliceLoad(args, i, GoStringValueOps)!);
           OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, result, GoStringKey);
           p.errors = [...p.errors, ...err];
           if (result.length > 0 || err.length > 0) {
@@ -752,7 +754,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
           throw new globalThis.Error("listOrElement not supported here");
         }
         default: {
-          const [val, err] = convertJsonOptionOfEnumType(opt, strings.TrimFunc(args[i]!, IsWhiteSpaceLike), undefined, undefined);
+          const [val, err] = convertJsonOptionOfEnumType(opt, strings.TrimFunc(GoSliceLoad(args, i, GoStringValueOps)!, IsWhiteSpaceLike), undefined, undefined);
           OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, val, GoStringKey);
           p.errors = [...p.errors, ...err];
           i++;

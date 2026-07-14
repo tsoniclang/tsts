@@ -195,6 +195,8 @@ import { PhaseCheckTypes } from "../tracing/tracing.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 import { GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad, GoSliceValueOps } from "../../go/compat.js";
+
 
 
 function zeroExportTypeLinks(): ExportTypeLinks {
@@ -1320,7 +1322,7 @@ export function Checker_elaborateDidYouMeanToCallOrConstruct(receiver: GoPtr<Che
   ) {
     const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
     if (!Checker_checkTypeRelatedToEx(receiver, source, target, relation, node, headMessage, GoValueRef(diags))) {
-      const diagnostic = diags[0]!;
+      const diagnostic = GoSliceLoad(diags, 0, GoPointerValueOps<Diagnostic>())!;
       const message = kind === SignatureKindConstruct ? Did_you_mean_to_use_new_with_this_expression : Did_you_mean_to_call_this_expression;
       Checker_reportDiagnostic(receiver, Diagnostic_AddRelatedInfo(diagnostic, createDiagnosticForNode(node, message)), diagnosticOutput);
       return true;
@@ -1423,7 +1425,7 @@ export function Checker_elaborateArrayLiteral(receiver: GoPtr<Checker>, node: Go
   let reportedError = false;
   const elements = Node_Elements(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
+    const element = GoSliceLoad(elements, i, GoPointerValueOps<Node>());
     const indexName = Number_String(i as JsNumber);
     if (IsOmittedExpression(element) || (Checker_isTupleLikeType(receiver, target) && Checker_getPropertyOfType(receiver, target, indexName) === undefined)) {
       continue;
@@ -1548,7 +1550,7 @@ export function Checker_elaborateElement(receiver: GoPtr<Checker>, source: GoPtr
   if (diags.length === 0) {
     return false;
   }
-  const diagnostic = diags[0]!;
+  const diagnostic = GoSliceLoad(diags, 0, GoPointerValueOps<Diagnostic>())!;
   let propertyName = "";
   let targetProp: GoPtr<Symbol>;
   if (isTypeUsableAsPropertyName(nameType)) {
@@ -1566,9 +1568,9 @@ export function Checker_elaborateElement(receiver: GoPtr<Checker>, source: GoPtr
   if (!issuedElaboration && ((targetProp !== undefined && (targetProp!.Declarations?.length ?? 0) !== 0) || (target!.symbol !== undefined && (target!.symbol!.Declarations?.length ?? 0) !== 0))) {
     let targetNode: GoPtr<Node>;
     if (targetProp !== undefined && (targetProp!.Declarations?.length ?? 0) !== 0) {
-      targetNode = targetProp!.Declarations![0];
+      targetNode = GoSliceLoad(targetProp!.Declarations!, 0, GoPointerValueOps<Node>());
     } else {
-      targetNode = target!.symbol!.Declarations![0];
+      targetNode = GoSliceLoad(target!.symbol!.Declarations!, 0, GoPointerValueOps<Node>());
     }
     if (propertyName === "" || (nameType!.flags & TypeFlagsUniqueESSymbol) !== 0) {
       propertyName = Checker_TypeToString(receiver, nameType);
@@ -1698,9 +1700,9 @@ export function Checker_elaborateArrowFunction(receiver: GoPtr<Checker>, node: G
   const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   Checker_checkTypeRelatedToEx(receiver, sourceReturn, targetReturn, relation, returnExpression, undefined, GoValueRef(diags));
   if (diags.length !== 0) {
-    const diagnostic = diags[0]!;
+    const diagnostic = GoSliceLoad(diags, 0, GoPointerValueOps<Diagnostic>())!;
     if (target!.symbol !== undefined && (target!.symbol!.Declarations?.length ?? 0) !== 0) {
-      Diagnostic_AddRelatedInfo(diagnostic, createDiagnosticForNode(target!.symbol!.Declarations![0], The_expected_type_comes_from_the_return_type_of_this_signature));
+      Diagnostic_AddRelatedInfo(diagnostic, createDiagnosticForNode(GoSliceLoad(target!.symbol!.Declarations!, 0, GoPointerValueOps<Node>()), The_expected_type_comes_from_the_return_type_of_this_signature));
     }
     if ((GetFunctionFlags(node) & FunctionFlagsAsync) === 0 && Checker_getTypeOfPropertyOfType(receiver, sourceReturn, "then") === undefined &&
       Checker_checkTypeRelatedTo(receiver, Checker_createPromiseType(receiver, sourceReturn), targetReturn, relation, undefined)) {
@@ -2406,7 +2408,7 @@ export function excludeProperties(properties: GoSlice<GoPtr<Symbol>>, excludedPr
   let excluded = false;
   let reduced: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   for (let i = 0; i < sourceProperties.length; i++) {
-    const prop = sourceProperties[i]!;
+    const prop = GoSliceLoad(sourceProperties, i, GoPointerValueOps<Symbol>())!;
     if (!Set_Has(excludedProperties, prop!.Name)) {
       if (excluded) {
         reduced = GoSliceAppend(reduced, prop, GoPointerValueOps<Symbol>());
@@ -2459,7 +2461,7 @@ export function TypeDiscriminator_len(receiver: GoPtr<TypeDiscriminator>): int {
  * }
  */
 export function TypeDiscriminator_name(receiver: GoPtr<TypeDiscriminator>, index: int): string {
-  return receiver!.props[index]!.Name;
+  return GoSliceLoad(receiver!.props, index, GoPointerValueOps<Symbol>())!.Name;
 }
 
 /**
@@ -2477,7 +2479,7 @@ export function TypeDiscriminator_name(receiver: GoPtr<TypeDiscriminator>, index
  * }
  */
 export function TypeDiscriminator_matches(receiver: GoPtr<TypeDiscriminator>, index: int, t: GoPtr<Type>): bool {
-  const propType = Checker_getTypeOfSymbol(receiver!.c, receiver!.props[index]);
+  const propType = Checker_getTypeOfSymbol(receiver!.c, GoSliceLoad(receiver!.props, index, GoPointerValueOps<Symbol>()));
   for (const s of Type_Distributed(propType)) {
     if (receiver!.isRelatedTo!(s, t) !== TernaryFalse) {
       return true;
@@ -2882,7 +2884,7 @@ export function Checker_discriminateTypeByDiscriminableItems(receiver: GoPtr<Che
   const types = Type_Types(target)!;
   const include: Ternary[] = new Array(types.length).fill(0) as Ternary[];
   for (let i = 0; i < types.length; i++) {
-    if ((types[i]!.flags & TypeFlagsPrimitive) === 0 && (Checker_getReducedType(receiver, types[i])!.flags & TypeFlagsNever) === 0) {
+    if ((GoSliceLoad(types, i, GoPointerValueOps<Type>())!.flags & TypeFlagsPrimitive) === 0 && (Checker_getReducedType(receiver, GoSliceLoad(types, i, GoPointerValueOps<Type>()))!.flags & TypeFlagsNever) === 0) {
       include[i] = TernaryTrue;
     }
   }
@@ -2890,7 +2892,7 @@ export function Checker_discriminateTypeByDiscriminableItems(receiver: GoPtr<Che
     let matched = false;
     for (let i = 0; i < types.length; i++) {
       if (include[i] !== TernaryFalse) {
-        const targetType = Checker_getTypeOfPropertyOrIndexSignatureOfType(receiver, types[i], discriminator!.name(n));
+        const targetType = Checker_getTypeOfPropertyOrIndexSignatureOfType(receiver, GoSliceLoad(types, i, GoPointerValueOps<Type>()), discriminator!.name(n));
         if (targetType !== undefined) {
           if (discriminator!.matches(n, targetType)) {
             matched = true;
@@ -2914,7 +2916,7 @@ export function Checker_discriminateTypeByDiscriminableItems(receiver: GoPtr<Che
     let filteredTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
     for (let i = 0; i < types.length; i++) {
       if (include[i] === TernaryTrue) {
-        filteredTypes = GoSliceAppend(filteredTypes, types[i], GoPointerValueOps<Type>());
+        filteredTypes = GoSliceAppend(filteredTypes, GoSliceLoad(types, i, GoPointerValueOps<Type>()), GoPointerValueOps<Type>());
       }
     }
     const filtered = Checker_getUnionTypeEx(receiver, filteredTypes, UnionReductionNone, undefined, undefined);
@@ -3187,7 +3189,7 @@ export function Checker_getVariancesWorker(receiver: GoPtr<Checker>, symbol_: Go
     links!.v.variances = GoSliceMake(0, 0, GoNumberValueOps);
     const variances: VarianceFlags[] = new Array(typeParameters.length).fill(0);
     for (let i = 0; i < typeParameters.length; i++) {
-      const tp = typeParameters[i];
+      const tp = GoSliceLoad(typeParameters, i, GoPointerValueOps<Type>());
       const modifiers = Checker_getTypeParameterModifiers(receiver, tp);
       let variance: VarianceFlags = 0;
       if ((modifiers & ModifierFlagsOut) !== 0) {
@@ -3314,7 +3316,7 @@ export function Checker_getTypeParameterModifiers(receiver: GoPtr<Checker>, tp: 
  */
 export function Checker_hasCovariantVoidArgument(receiver: GoPtr<Checker>, typeArguments: GoSlice<GoPtr<Type>>, variances: GoSlice<VarianceFlags>): bool {
   for (let i = 0; i < variances.length; i++) {
-    if (((variances[i]! & VarianceFlagsVarianceMask)) === VarianceFlagsCovariant && (typeArguments[i]!.flags & TypeFlagsVoid) !== 0) {
+    if (((GoSliceLoad(variances, i, GoNumberValueOps)! & VarianceFlagsVarianceMask)) === VarianceFlagsCovariant && (GoSliceLoad(typeArguments, i, GoPointerValueOps<Type>())!.flags & TypeFlagsVoid) !== 0) {
       return true;
     }
   }
@@ -3779,10 +3781,10 @@ export function Checker_compareTypePredicateRelatedTo(receiver: GoPtr<Checker>, 
 export function Checker_isTopSignature(receiver: GoPtr<Checker>, s: GoPtr<Signature>): bool {
   if (s!.typeParameters.length === 0) {
     if ((s!.thisParameter === undefined || IsTypeAny(Checker_getTypeOfParameter(receiver, s!.thisParameter))) && s!.parameters.length === 1 && signatureHasRestParameter(s)) {
-      const paramType = Checker_getTypeOfParameter(receiver, s!.parameters[0]);
+      const paramType = Checker_getTypeOfParameter(receiver, GoSliceLoad(s!.parameters, 0, GoPointerValueOps<Symbol>()));
       let restType: GoPtr<Type>;
       if (Checker_isArrayType(receiver, paramType)) {
-        restType = Checker_getTypeArguments(receiver, paramType)![0];
+        restType = GoSliceLoad(Checker_getTypeArguments(receiver, paramType)!, 0, GoPointerValueOps<Type>());
       } else {
         restType = paramType;
       }
@@ -3810,7 +3812,7 @@ export function Checker_isTopSignature(receiver: GoPtr<Checker>, s: GoPtr<Signat
 export function Checker_getParameterCount(receiver: GoPtr<Checker>, signature: GoPtr<Signature>): int {
   const length = signature!.parameters.length;
   if (signatureHasRestParameter(signature)) {
-    const restType = Checker_getTypeOfSymbol(receiver, signature!.parameters[length - 1]);
+    const restType = Checker_getTypeOfSymbol(receiver, GoSliceLoad(signature!.parameters, length - 1, GoPointerValueOps<Symbol>()));
     if (isTupleType(restType)) {
       const tupleType = Type_TargetTupleType(restType);
       return length + tupleType!.fixedLength - ((tupleType!.combinedFlags & ElementFlagsVariable) !== 0 ? 0 : 1);
@@ -3882,7 +3884,7 @@ export function Checker_getMinArgumentCountEx(receiver: GoPtr<Checker>, signatur
   if (voidIsNonOptional !== 0 || signature!.resolvedMinArgumentCount === -1) {
     let minArgumentCount = -1;
     if (signatureHasRestParameter(signature)) {
-      const restType = Checker_getTypeOfSymbol(receiver, signature!.parameters[signature!.parameters.length - 1]);
+      const restType = Checker_getTypeOfSymbol(receiver, GoSliceLoad(signature!.parameters, signature!.parameters.length - 1, GoPointerValueOps<Symbol>()));
       if (isTupleType(restType)) {
         const tupleType = Type_TargetTupleType(restType);
         const firstOptionalIndex = FindIndex(tupleType!.elementInfos, (info: TupleElementInfo) => (info.flags & ElementFlagsRequired) === 0);
@@ -3927,7 +3929,7 @@ export function Checker_getMinArgumentCountEx(receiver: GoPtr<Checker>, signatur
  */
 export function Checker_hasEffectiveRestParameter(receiver: GoPtr<Checker>, signature: GoPtr<Signature>): bool {
   if (signatureHasRestParameter(signature)) {
-    const restType = Checker_getTypeOfSymbol(receiver, signature!.parameters[signature!.parameters.length - 1]);
+    const restType = Checker_getTypeOfSymbol(receiver, GoSliceLoad(signature!.parameters, signature!.parameters.length - 1, GoPointerValueOps<Symbol>()));
     return (!isTupleType(restType) || (Type_TargetTupleType(restType)!.combinedFlags & ElementFlagsVariable) !== 0) as bool;
   }
   return false as bool;
@@ -3978,10 +3980,10 @@ export function Checker_getTypeAtPosition(receiver: GoPtr<Checker>, signature: G
 export function Checker_tryGetTypeAtPosition(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, pos: int): GoPtr<Type> {
   const paramCount = signature!.parameters.length - (signatureHasRestParameter(signature) ? 1 : 0);
   if (pos < paramCount) {
-    return Checker_getTypeOfParameter(receiver, signature!.parameters[pos]);
+    return Checker_getTypeOfParameter(receiver, GoSliceLoad(signature!.parameters, pos, GoPointerValueOps<Symbol>()));
   }
   if (signatureHasRestParameter(signature)) {
-    const restType = Checker_getTypeOfSymbol(receiver, signature!.parameters[paramCount]);
+    const restType = Checker_getTypeOfSymbol(receiver, GoSliceLoad(signature!.parameters, paramCount, GoPointerValueOps<Symbol>()));
     const index = pos - paramCount;
     if (!isTupleType(restType) || (Type_TargetTupleType(restType)!.combinedFlags & ElementFlagsVariable) !== 0 || index < Type_TargetTupleType(restType)!.fixedLength) {
       return Checker_getIndexedAccessType(receiver, restType, Checker_getNumberLiteralType(receiver, index));
@@ -4115,14 +4117,14 @@ export function Checker_getRestTypeAtPosition(receiver: GoPtr<Checker>, source: 
 export function Checker_getNameableDeclarationAtPosition(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, pos: int): GoPtr<Node> {
   const paramCount = signature!.parameters.length - (signatureHasRestParameter(signature) ? 1 : 0);
   if (pos < paramCount) {
-    const decl = signature!.parameters[pos]!.ValueDeclaration;
+    const decl = GoSliceLoad(signature!.parameters, pos, GoPointerValueOps<Symbol>())!.ValueDeclaration;
     if (decl !== undefined && Checker_isValidDeclarationForTupleLabel(receiver, decl)) {
       return decl;
     }
     return undefined;
   }
   if (signatureHasRestParameter(signature)) {
-    const restParameter = signature!.parameters[paramCount];
+    const restParameter = GoSliceLoad(signature!.parameters, paramCount, GoPointerValueOps<Symbol>());
     const restType = Checker_getTypeOfSymbol(receiver, restParameter);
     if (isTupleType(restType)) {
       const elementInfos = Type_TargetTupleType(restType)!.elementInfos;
@@ -4193,7 +4195,7 @@ export function Checker_getNonArrayRestType(receiver: GoPtr<Checker>, signature:
  */
 export function Checker_getEffectiveRestType(receiver: GoPtr<Checker>, signature: GoPtr<Signature>): GoPtr<Type> {
   if (signatureHasRestParameter(signature)) {
-    const restType = Checker_getTypeOfSymbol(receiver, signature!.parameters[signature!.parameters.length - 1]);
+    const restType = Checker_getTypeOfSymbol(receiver, GoSliceLoad(signature!.parameters, signature!.parameters.length - 1, GoPointerValueOps<Symbol>()));
     if (!isTupleType(restType)) {
       if (IsTypeAny(restType)) {
         return receiver!.anyArrayType;
@@ -4344,9 +4346,9 @@ export function Checker_isInstantiatedGenericParameter(receiver: GoPtr<Checker>,
 export function Checker_getParameterNameAtPosition(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, pos: int): string {
   const paramCount = signature!.parameters.length - (signatureHasRestParameter(signature) ? 1 : 0);
   if (pos < paramCount) {
-    return signature!.parameters[pos]!.Name;
+    return GoSliceLoad(signature!.parameters, pos, GoPointerValueOps<Symbol>())!.Name;
   }
-  const restParameter = signature!.parameters[paramCount];
+  const restParameter = GoSliceLoad(signature!.parameters, paramCount, GoPointerValueOps<Symbol>());
   const restType = Checker_getTypeOfSymbol(receiver, restParameter);
   if (isTupleType(restType)) {
     const index = pos - paramCount;
@@ -4470,7 +4472,7 @@ export function Checker_getTupleElementLabelFromBindingElement(receiver: GoPtr<C
         const lastElementIsBindingElementRest = lastElement !== undefined && IsBindingElement(lastElement) && hasDotDotDotToken(lastElement);
         const elementCount = elements.length - (lastElementIsBindingElementRest ? 1 : 0);
         if (index < elementCount) {
-          const element = elements[index];
+          const element = GoSliceLoad(elements, index, GoPointerValueOps<Node>());
           if (IsBindingElement(element)) {
             return Checker_getTupleElementLabelFromBindingElement(receiver, element, index, elementFlags);
           }
@@ -4758,7 +4760,7 @@ export function Checker_findMatchingSignatures(receiver: GoPtr<Checker>, signatu
       return GoNilSlice<GoPtr<Signature>>();
     }
     for (let i = 1; i < signatureLists.length; i++) {
-      if (Checker_findMatchingSignature(receiver, signatureLists[i]!, signature, false as bool, false as bool, false as bool) === undefined) {
+      if (Checker_findMatchingSignature(receiver, GoSliceLoad(signatureLists, i, GoSliceValueOps<GoPtr<Signature>>())!, signature, false as bool, false as bool, false as bool) === undefined) {
         return GoNilSlice<GoPtr<Signature>>();
       }
     }
@@ -4772,9 +4774,9 @@ export function Checker_findMatchingSignatures(receiver: GoPtr<Checker>, signatu
     if (i === listIndex) {
       match = signature;
     } else {
-      match = Checker_findMatchingSignature(receiver, signatureLists[i]!, signature, false as bool, false as bool, true as bool);
+      match = Checker_findMatchingSignature(receiver, GoSliceLoad(signatureLists, i, GoSliceValueOps<GoPtr<Signature>>())!, signature, false as bool, false as bool, true as bool);
       if (match === undefined) {
-        match = Checker_findMatchingSignature(receiver, signatureLists[i]!, signature, true as bool, false as bool, true as bool);
+        match = Checker_findMatchingSignature(receiver, GoSliceLoad(signatureLists, i, GoSliceValueOps<GoPtr<Signature>>())!, signature, true as bool, false as bool, true as bool);
       }
     }
     if (match === undefined) {
@@ -4891,8 +4893,8 @@ export function Checker_compareSignaturesIdentical(receiver: GoPtr<Checker>, sou
   if (tgtTpLen !== 0) {
     const mapper = newTypeMapper(source!.typeParameters, target!.typeParameters);
     for (let i = 0; i < tgtTpLen; i++) {
-      const s = source!.typeParameters![i];
-      const t = target!.typeParameters![i];
+      const s = GoSliceLoad(source!.typeParameters!, i, GoPointerValueOps<Type>());
+      const t = GoSliceLoad(target!.typeParameters!, i, GoPointerValueOps<Type>());
       if (!(s === t ||
         compareTypes!(Checker_instantiateType(receiver, Checker_getConstraintOrUnknownFromTypeParameter(receiver, s), mapper), Checker_getConstraintOrUnknownFromTypeParameter(receiver, t)) !== TernaryFalse &&
         compareTypes!(Checker_instantiateType(receiver, Checker_getDefaultOrUnknownFromTypeParameter(receiver, s), mapper), Checker_getDefaultOrUnknownFromTypeParameter(receiver, t)) !== TernaryFalse)) {
@@ -5012,8 +5014,8 @@ export function Checker_compareTypeParametersIdentical(receiver: GoPtr<Checker>,
   }
   const mapper = newTypeMapper(targetParams, sourceParams);
   for (let i = 0; i < srcLen; i++) {
-    const source = sourceParams![i];
-    const target = targetParams![i];
+    const source = GoSliceLoad(sourceParams!, i, GoPointerValueOps<Type>());
+    const target = GoSliceLoad(targetParams!, i, GoPointerValueOps<Type>());
     if (source === target) {
       continue;
     }
@@ -5146,10 +5148,10 @@ export function Checker_getEffectiveConstraintOfIntersection(receiver: GoPtr<Che
  * }
  */
 export function Checker_templateLiteralTypesDefinitelyUnrelated(receiver: GoPtr<Checker>, source: GoPtr<TemplateLiteralType>, target: GoPtr<TemplateLiteralType>): bool {
-  const sourceStart = source!.texts[0]!;
-  const targetStart = target!.texts[0]!;
-  const sourceEnd = source!.texts[source!.texts.length - 1]!;
-  const targetEnd = target!.texts[target!.texts.length - 1]!;
+  const sourceStart = GoSliceLoad(source!.texts, 0, GoStringValueOps)!;
+  const targetStart = GoSliceLoad(target!.texts, 0, GoStringValueOps)!;
+  const sourceEnd = GoSliceLoad(source!.texts, source!.texts.length - 1, GoStringValueOps)!;
+  const targetEnd = GoSliceLoad(target!.texts, target!.texts.length - 1, GoStringValueOps)!;
   const startLen = globalThis.Math.min(sourceStart.length, targetStart.length);
   const endLen = globalThis.Math.min(sourceEnd.length, targetEnd.length);
   return sourceStart.slice(0, startLen) !== targetStart.slice(0, startLen) ||
@@ -5177,7 +5179,7 @@ export function Checker_isTypeMatchedByTemplateLiteralType(receiver: GoPtr<Check
   const inferences = Checker_inferTypesFromTemplateLiteralType(receiver, source, target);
   if (!GoSliceIsNil(inferences)) {
     for (let i = 0; i < inferences.length; i++) {
-      if (!Checker_isValidTypeForTemplateLiteralPlaceholder(receiver, inferences[i]!, target!.types[i]!, compareTypes)) {
+      if (!Checker_isValidTypeForTemplateLiteralPlaceholder(receiver, GoSliceLoad(inferences, i, GoPointerValueOps<Type>())!, GoSliceLoad(target!.types, i, GoPointerValueOps<Type>())!, compareTypes)) {
         return false as bool;
       }
     }
@@ -5220,10 +5222,10 @@ export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checke
     const srcTypes = Type_AsTemplateLiteralType(source)!.types;
     const tgtTexts = target!.texts;
     const tgtLen = srcTexts.length === tgtTexts.length;
-    const textEqual = tgtLen && srcTexts.every((v, i) => v === tgtTexts[i]);
+    const textEqual = tgtLen && srcTexts.every((v, i) => v === GoSliceLoad(tgtTexts, i, GoStringValueOps));
     if (textEqual) {
       return MapIndex(srcTypes, (s: GoPtr<Type>, i: int) => {
-        if (Checker_isTypeAssignableTo(receiver, Checker_getBaseConstraintOrType(receiver, s), Checker_getBaseConstraintOrType(receiver, target!.types[i]!))) {
+        if (Checker_isTypeAssignableTo(receiver, Checker_getBaseConstraintOrType(receiver, s), Checker_getBaseConstraintOrType(receiver, GoSliceLoad(target!.types, i, GoPointerValueOps<Type>())!))) {
           return s;
         }
         return Checker_getStringLikeTypeForType(receiver, s);
@@ -5324,12 +5326,12 @@ export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checke
  */
 export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<Checker>, sourceTexts: GoSlice<string>, sourceTypes: GoSlice<GoPtr<Type>>, target: GoPtr<TemplateLiteralType>): GoSlice<GoPtr<Type>> {
   const lastSourceIndex = sourceTexts.length - 1;
-  const sourceStartText = sourceTexts[0]!;
-  const sourceEndText = sourceTexts[lastSourceIndex]!;
+  const sourceStartText = GoSliceLoad(sourceTexts, 0, GoStringValueOps)!;
+  const sourceEndText = GoSliceLoad(sourceTexts, lastSourceIndex, GoStringValueOps)!;
   const targetTexts = target!.texts;
   const lastTargetIndex = targetTexts.length - 1;
-  const targetStartText = targetTexts[0]!;
-  const targetEndText = targetTexts[lastTargetIndex]!;
+  const targetStartText = GoSliceLoad(targetTexts, 0, GoStringValueOps)!;
+  const targetEndText = GoSliceLoad(targetTexts, lastTargetIndex, GoStringValueOps)!;
   if (lastSourceIndex === 0 && sourceStartText.length < targetStartText.length + targetEndText.length || !sourceStartText.startsWith(targetStartText) || !sourceEndText.endsWith(targetEndText)) {
     return GoNilSlice<GoPtr<Type>>();
   }
@@ -5339,7 +5341,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
   let matches = GoNilSlice<GoPtr<Type>>();
   const getSourceText = (index: int): string => {
     if (index < lastSourceIndex) {
-      return sourceTexts[index]!;
+      return GoSliceLoad(sourceTexts, index, GoStringValueOps)!;
     }
     return remainingEndText;
   };
@@ -5349,9 +5351,9 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
       matchType = Checker_getStringLiteralType(receiver, CombineSurrogatePairs(getSourceText(s).slice(pos, p)));
     } else {
       const matchTexts: string[] = new Array(s - seg + 1);
-      matchTexts[0] = sourceTexts[seg]!.slice(pos);
+      matchTexts[0] = GoSliceLoad(sourceTexts, seg, GoStringValueOps)!.slice(pos);
       for (let k = 1; k < s - seg; k++) {
-        matchTexts[k] = sourceTexts[seg + k]!;
+        matchTexts[k] = GoSliceLoad(sourceTexts, seg + k, GoStringValueOps)!;
       }
       matchTexts[s - seg] = getSourceText(s).slice(0, p);
       matchType = Checker_getTemplateLiteralType(receiver, matchTexts, GoSliceRange(sourceTypes, seg, s));
@@ -5361,7 +5363,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
     pos = p;
   };
   for (let i = 1; i < lastTargetIndex; i++) {
-    const delim = targetTexts[i]!;
+    const delim = GoSliceLoad(targetTexts, i, GoStringValueOps)!;
     if (delim.length > 0) {
       let s = seg;
       let p = pos;
@@ -5470,7 +5472,7 @@ export function Checker_isValidTypeForTemplateLiteralPlaceholder(receiver: GoPtr
   }
   if ((source!.flags & TypeFlagsTemplateLiteral) !== 0) {
     const texts = Type_AsTemplateLiteralType(source)!.texts;
-    return (texts.length === 2 && texts[0]! === "" && texts[1]! === "" && compareTypes!(Type_AsTemplateLiteralType(source)!.types[0]!, target, false as bool) !== TernaryFalse) as bool;
+    return (texts.length === 2 && GoSliceLoad(texts, 0, GoStringValueOps)! === "" && GoSliceLoad(texts, 1, GoStringValueOps)! === "" && compareTypes!(GoSliceLoad(Type_AsTemplateLiteralType(source)!.types, 0, GoPointerValueOps<Type>())!, target, false as bool) !== TernaryFalse) as bool;
   }
   return false as bool;
 }
@@ -5908,10 +5910,10 @@ export function Relater_isRelatedToEx(receiver: GoPtr<Relater>, originalSource: 
   if ((source!.flags & TypeFlagsDefinitelyNonNullable) !== 0 && (target!.flags & TypeFlagsUnion) !== 0) {
     const types = Type_Types(target)!;
     let candidate: GoPtr<Type>;
-    if (types.length === 2 && (types[0]!.flags & TypeFlagsNullable) !== 0) {
-      candidate = types[1];
-    } else if (types.length === 3 && (types[0]!.flags & TypeFlagsNullable) !== 0 && (types[1]!.flags & TypeFlagsNullable) !== 0) {
-      candidate = types[2];
+    if (types.length === 2 && (GoSliceLoad(types, 0, GoPointerValueOps<Type>())!.flags & TypeFlagsNullable) !== 0) {
+      candidate = GoSliceLoad(types, 1, GoPointerValueOps<Type>());
+    } else if (types.length === 3 && (GoSliceLoad(types, 0, GoPointerValueOps<Type>())!.flags & TypeFlagsNullable) !== 0 && (GoSliceLoad(types, 1, GoPointerValueOps<Type>())!.flags & TypeFlagsNullable) !== 0) {
+      candidate = GoSliceLoad(types, 2, GoPointerValueOps<Type>());
     }
     if (candidate !== undefined && (candidate!.flags & TypeFlagsNullable) === 0) {
       target = Checker_getNormalizedType(receiver!.c, candidate, true);
@@ -5952,8 +5954,8 @@ export function Relater_isRelatedToEx(receiver: GoPtr<Relater>, originalSource: 
         const calls = Checker_getSignaturesOfType(receiver!.c, source, SignatureKindCall);
         const constructs = Checker_getSignaturesOfType(receiver!.c, source, SignatureKindConstruct);
         if (
-          (calls.length > 0 && Relater_isRelatedTo(receiver, Checker_getReturnTypeOfSignature(receiver!.c, calls[0]!), target, RecursionFlagsSource, false) !== TernaryFalse) ||
-          (constructs.length > 0 && Relater_isRelatedTo(receiver, Checker_getReturnTypeOfSignature(receiver!.c, constructs[0]!), target, RecursionFlagsSource, false) !== TernaryFalse)
+          (calls.length > 0 && Relater_isRelatedTo(receiver, Checker_getReturnTypeOfSignature(receiver!.c, GoSliceLoad(calls, 0, GoPointerValueOps<Signature>())!), target, RecursionFlagsSource, false) !== TernaryFalse) ||
+          (constructs.length > 0 && Relater_isRelatedTo(receiver, Checker_getReturnTypeOfSignature(receiver!.c, GoSliceLoad(constructs, 0, GoPointerValueOps<Signature>())!), target, RecursionFlagsSource, false) !== TernaryFalse)
         ) {
           Relater_reportError(receiver, Value_of_type_0_has_no_properties_in_common_with_type_1_Did_you_mean_to_call_it, sourceString, targetString);
         } else {
@@ -6429,7 +6431,7 @@ export function Relater_someTypeRelatedToType(receiver: GoPtr<Relater>, source: 
     return TernaryTrue;
   }
   for (let i = 0; i < sourceTypes.length; i++) {
-    const t = sourceTypes[i];
+    const t = GoSliceLoad(sourceTypes, i, GoPointerValueOps<Type>());
     const related = Relater_isRelatedToEx(receiver, t, target, RecursionFlagsSource, reportErrors && i === sourceTypes.length - 1, undefined, intersectionState);
     if (related !== TernaryFalse) {
       return related;
@@ -6483,9 +6485,9 @@ export function Relater_eachTypeRelatedToType(receiver: GoPtr<Relater>, source: 
     strippedTypes = Type_Types(strippedTarget)!;
   }
   for (let i = 0; i < sourceTypes.length; i++) {
-    const sourceType = sourceTypes[i];
+    const sourceType = GoSliceLoad(sourceTypes, i, GoPointerValueOps<Type>());
     if ((strippedTarget!.flags & TypeFlagsUnion) !== 0 && sourceTypes.length >= strippedTypes.length && sourceTypes.length % strippedTypes.length === 0) {
-      const related = Relater_isRelatedToEx(receiver, sourceType, strippedTypes[i % strippedTypes.length], RecursionFlagsBoth, false, undefined, intersectionState);
+      const related = Relater_isRelatedToEx(receiver, sourceType, GoSliceLoad(strippedTypes, i % strippedTypes.length, GoPointerValueOps<Type>()), RecursionFlagsBoth, false, undefined, intersectionState);
       if (related !== TernaryFalse) {
         result = (result & related) as Ternary;
         continue;
@@ -6512,7 +6514,7 @@ export function Relater_eachTypeRelatedToType(receiver: GoPtr<Relater>, source: 
  * }
  */
 export function Relater_getUndefinedStrippedTargetIfNeeded(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>): GoPtr<Type> {
-  if ((source!.flags & TypeFlagsUnion) !== 0 && (target!.flags & TypeFlagsUnion) !== 0 && (Type_Types(source)![0]!.flags & TypeFlagsUndefined) === 0 && (Type_Types(target)![0]!.flags & TypeFlagsUndefined) !== 0) {
+  if ((source!.flags & TypeFlagsUnion) !== 0 && (target!.flags & TypeFlagsUnion) !== 0 && (GoSliceLoad(Type_Types(source)!, 0, GoPointerValueOps<Type>())!.flags & TypeFlagsUndefined) === 0 && (GoSliceLoad(Type_Types(target)!, 0, GoPointerValueOps<Type>())!.flags & TypeFlagsUndefined) !== 0) {
     return Checker_extractTypesOfKind(receiver!.c, target, (~TypeFlagsUndefined) >>> 0);
   }
   return target;
@@ -7796,7 +7798,7 @@ export function Relater_structuredTypeRelatedToWorker(receiver: GoPtr<Relater>, 
       if (slices.Equal(sourceTemplate.texts, targetTemplate.texts, GoEqualStrict<string>)) {
         result = TernaryTrue;
         for (let index = 0; index < sourceTemplate.types.length; index++) {
-          result = (result & Relater_isRelatedTo(receiver, sourceTemplate.types[index], targetTemplate.types[index], RecursionFlagsBoth, false)) as Ternary;
+          result = (result & Relater_isRelatedTo(receiver, GoSliceLoad(sourceTemplate.types, index, GoPointerValueOps<Type>()), GoSliceLoad(targetTemplate.types, index, GoPointerValueOps<Type>()), RecursionFlagsBoth, false)) as Ternary;
           if (result === TernaryFalse) {
             return result;
           }
@@ -7849,13 +7851,13 @@ export function Relater_structuredTypeRelatedToWorker(receiver: GoPtr<Relater>, 
   }
 
   if (isSingleElementGenericTupleType(source) && !Type_TargetTupleType(source)!.readonly) {
-    result = Relater_isRelatedTo(receiver, Checker_getTypeArguments(c, source)[0], target, RecursionFlagsSource, false);
+    result = Relater_isRelatedTo(receiver, GoSliceLoad(Checker_getTypeArguments(c, source), 0, GoPointerValueOps<Type>()), target, RecursionFlagsSource, false);
     if (result !== TernaryFalse) {
       return result;
     }
   }
   if (isSingleElementGenericTupleType(target) && (Type_TargetTupleType(target)!.readonly || Checker_isMutableArrayOrTuple(c, Checker_getBaseConstraintOrType(c, source)))) {
-    result = Relater_isRelatedTo(receiver, source, Checker_getTypeArguments(c, target)[0], RecursionFlagsTarget, false);
+    result = Relater_isRelatedTo(receiver, source, GoSliceLoad(Checker_getTypeArguments(c, target), 0, GoPointerValueOps<Type>()), RecursionFlagsTarget, false);
     if (result !== TernaryFalse) {
       return result;
     }
@@ -8351,12 +8353,12 @@ export function Relater_typeArgumentsRelatedTo(receiver: GoPtr<Relater>, sources
   for (let i = 0; i < length; i++) {
     let varianceFlags: VarianceFlags = VarianceFlagsCovariant;
     if (i < variances.length) {
-      varianceFlags = variances[i]!;
+      varianceFlags = GoSliceLoad(variances, i, GoNumberValueOps)!;
     }
     const variance = varianceFlags & VarianceFlagsVarianceMask;
     if (variance !== VarianceFlagsIndependent) {
-      const s = sources[i]!;
-      const t = targets[i]!;
+      const s = GoSliceLoad(sources, i, GoPointerValueOps<Type>())!;
+      const t = GoSliceLoad(targets, i, GoPointerValueOps<Type>())!;
       let related: Ternary;
       if ((varianceFlags & VarianceFlagsUnmeasurable) !== 0) {
         if (receiver!.relation === receiver!.c!.identityRelation) {
@@ -8583,7 +8585,7 @@ export function Relater_typeRelatedToDiscriminatedType(receiver: GoPtr<Relater>,
   const sourceDiscriminantTypes: GoPtr<Type>[][] = new globalThis.Array(sourcePropertiesFiltered.length);
   const excludedProperties = NewSetWithSizeHint<string>(0 as int, GoStringKey)!;
   for (let i = 0; i < sourcePropertiesFiltered.length; i++) {
-    const sourceProperty = sourcePropertiesFiltered[i]!;
+    const sourceProperty = GoSliceLoad(sourcePropertiesFiltered, i, GoPointerValueOps<Symbol>())!;
     const sourcePropertyType = Checker_getNonMissingTypeOfSymbol(receiver!.c, sourceProperty);
     sourceDiscriminantTypes[i] = Type_Distributed(sourcePropertyType);
     Set_Add(excludedProperties, sourceProperty.Name, GoStringKey);
@@ -8605,7 +8607,7 @@ export function Relater_typeRelatedToDiscriminatedType(receiver: GoPtr<Relater>,
     let hasMatch = false;
     targetLoop: for (const t of Type_Types(target)) {
       for (let i = 0; i < sourcePropertiesFiltered.length; i++) {
-        const sourceProperty = sourcePropertiesFiltered[i]!;
+        const sourceProperty = GoSliceLoad(sourcePropertiesFiltered, i, GoPointerValueOps<Symbol>())!;
         const targetProperty = Checker_getPropertyOfType(receiver!.c, t, sourceProperty.Name);
         if (targetProperty === undefined) {
           continue targetLoop;
@@ -8919,8 +8921,8 @@ export function Relater_propertiesRelatedTo(receiver: GoPtr<Relater>, source: Go
             continue;
           }
         }
-        const sourceType = Checker_removeMissingType(receiver!.c, sourceTypeArguments[sourcePosition], (sourceFlags & targetFlags & ElementFlagsOptional) !== 0);
-        const targetType = targetTypeArguments[targetPosition];
+        const sourceType = Checker_removeMissingType(receiver!.c, GoSliceLoad(sourceTypeArguments, sourcePosition, GoPointerValueOps<Type>()), (sourceFlags & targetFlags & ElementFlagsOptional) !== 0);
+        const targetType = GoSliceLoad(targetTypeArguments, targetPosition, GoPointerValueOps<Type>());
         let targetCheckType: GoPtr<Type>;
         if ((sourceFlags & ElementFlagsVariadic) !== 0 && (targetFlags & ElementFlagsRest) !== 0) {
           targetCheckType = Checker_createArrayType(receiver!.c, targetType);
@@ -9228,7 +9230,7 @@ export function Relater_reportUnmatchedProperty(receiver: GoPtr<Relater>, source
     const propName = Checker_symbolToString(receiver!.c, unmatchedProperty);
     Relater_reportError(receiver, Property_0_is_missing_in_type_1_but_required_in_type_2, propName, sourceType, targetType);
     if ((unmatchedProperty!.Declarations?.length ?? 0) !== 0) {
-      receiver!.relatedInfo = GoSliceAppend(receiver!.relatedInfo, createDiagnosticForNode(unmatchedProperty!.Declarations![0], X_0_is_declared_here, propName), GoPointerValueOps<Diagnostic>());
+      receiver!.relatedInfo = GoSliceAppend(receiver!.relatedInfo, createDiagnosticForNode(GoSliceLoad(unmatchedProperty!.Declarations!, 0, GoPointerValueOps<Node>()), X_0_is_declared_here, propName), GoPointerValueOps<Diagnostic>());
     }
   } else if (Relater_tryElaborateArrayLikeErrors(receiver, source, target, false)) {
     const [sourceType, targetType] = Checker_getTypeNamesForErrorDisplay(receiver!.c, source, target);
@@ -9467,15 +9469,15 @@ export function Relater_signaturesRelatedTo(receiver: GoPtr<Relater>, source: Go
   const sourceSignatures = Checker_getSignaturesOfType(receiver!.c, source, kind);
   const targetSignatures = Checker_getSignaturesOfType(receiver!.c, target, kind);
   if (kind === SignatureKindConstruct && sourceSignatures.length !== 0 && targetSignatures.length !== 0) {
-    const sourceIsAbstract = (sourceSignatures[0]!.flags & SignatureFlagsAbstract) !== 0;
-    const targetIsAbstract = (targetSignatures[0]!.flags & SignatureFlagsAbstract) !== 0;
+    const sourceIsAbstract = (GoSliceLoad(sourceSignatures, 0, GoPointerValueOps<Signature>())!.flags & SignatureFlagsAbstract) !== 0;
+    const targetIsAbstract = (GoSliceLoad(targetSignatures, 0, GoPointerValueOps<Signature>())!.flags & SignatureFlagsAbstract) !== 0;
     if (sourceIsAbstract && !targetIsAbstract) {
       if (reportErrors) {
         Relater_reportError(receiver, Cannot_assign_an_abstract_constructor_type_to_a_non_abstract_constructor_type);
       }
       return TernaryFalse;
     }
-    if (!Relater_constructorVisibilitiesAreCompatible(receiver, sourceSignatures[0], targetSignatures[0], reportErrors)) {
+    if (!Relater_constructorVisibilitiesAreCompatible(receiver, GoSliceLoad(sourceSignatures, 0, GoPointerValueOps<Signature>()), GoSliceLoad(targetSignatures, 0, GoPointerValueOps<Signature>()), reportErrors)) {
       return TernaryFalse;
     }
   }
@@ -9485,7 +9487,7 @@ export function Relater_signaturesRelatedTo(receiver: GoPtr<Relater>, source: Go
       ((source!.objectFlags & ObjectFlagsReference) !== 0 && (target!.objectFlags & ObjectFlagsReference) !== 0 && Type_Target(source) === Type_Target(target)))
   ) {
     for (let i = 0; i < targetSignatures.length; i++) {
-      const related = Relater_signatureRelatedTo(receiver, sourceSignatures[i]!, targetSignatures[i]!, true, reportErrors, intersectionState);
+      const related = Relater_signatureRelatedTo(receiver, GoSliceLoad(sourceSignatures, i, GoPointerValueOps<Signature>())!, GoSliceLoad(targetSignatures, i, GoPointerValueOps<Signature>())!, true, reportErrors, intersectionState);
       if (related === TernaryFalse) {
         return TernaryFalse;
       }
@@ -9493,7 +9495,7 @@ export function Relater_signaturesRelatedTo(receiver: GoPtr<Relater>, source: Go
     }
   } else if (sourceSignatures.length === 1 && targetSignatures.length === 1) {
     const eraseGenerics = receiver!.relation === receiver!.c!.comparableRelation;
-    result = Relater_signatureRelatedTo(receiver, sourceSignatures[0], targetSignatures[0], eraseGenerics, reportErrors, intersectionState);
+    result = Relater_signatureRelatedTo(receiver, GoSliceLoad(sourceSignatures, 0, GoPointerValueOps<Signature>()), GoSliceLoad(targetSignatures, 0, GoPointerValueOps<Signature>()), eraseGenerics, reportErrors, intersectionState);
   } else {
     targetLoop:
     for (const t of targetSignatures) {
@@ -9645,7 +9647,7 @@ export function Relater_signaturesIdenticalTo(receiver: GoPtr<Relater>, source: 
   }
   let result: Ternary = TernaryTrue;
   for (let i = 0; i < sourceSignatures.length; i++) {
-    const related = Checker_compareSignaturesIdentical(receiver!.c, sourceSignatures[i]!, targetSignatures[i]!, false, false, false, (s: GoPtr<Type>, t: GoPtr<Type>) => Relater_isRelatedToSimple(receiver, s, t));
+    const related = Checker_compareSignaturesIdentical(receiver!.c, GoSliceLoad(sourceSignatures, i, GoPointerValueOps<Signature>())!, GoSliceLoad(targetSignatures, i, GoPointerValueOps<Signature>())!, false, false, false, (s: GoPtr<Type>, t: GoPtr<Type>) => Relater_isRelatedToSimple(receiver, s, t));
     if (related === 0) {
       return TernaryFalse;
     }
@@ -10014,7 +10016,7 @@ export function Relater_reportErrorResults(receiver: GoPtr<Relater>, originalSou
     Type_AsTypeParameter(syntheticParam)!.constraint = Checker_instantiateType(receiver!.c, target, newSimpleTypeMapper(source, syntheticParam));
     if (Checker_hasNonCircularBaseConstraint(receiver!.c, syntheticParam)) {
       const targetConstraintString = Checker_TypeToString(receiver!.c, target);
-      receiver!.relatedInfo = GoSliceAppend(receiver!.relatedInfo, NewDiagnosticForNode(source!.symbol!.Declarations![0], This_type_parameter_might_need_an_extends_0_constraint, targetConstraintString), GoPointerValueOps<Diagnostic>());
+      receiver!.relatedInfo = GoSliceAppend(receiver!.relatedInfo, NewDiagnosticForNode(GoSliceLoad(source!.symbol!.Declarations!, 0, GoPointerValueOps<Node>()), This_type_parameter_might_need_an_extends_0_constraint, targetConstraintString), GoPointerValueOps<Diagnostic>());
     }
   }
 }

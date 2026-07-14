@@ -7,6 +7,8 @@ import * as errors from "../../go/errors.js";
 import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
 import * as utf8 from "../../go/unicode/utf8.js";
+import { GoInterfaceValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 // runeToString mirrors Go's string(rune) conversion: a valid rune yields its
 // UTF-8 character, an invalid rune yields the Unicode replacement character.
@@ -254,7 +256,7 @@ export function parse(pattern: string, nested: bool): [GoPtr<Glob>, string, GoEr
 
       case "*": {
         if (pattern.length > 1 && pattern[1] === "*") {
-          if ((g.elems.length > 0 && !isSlash(g.elems[g.elems.length - 1]!)) || (pattern.length > 2 && pattern[2] !== "/")) {
+          if ((g.elems.length > 0 && !isSlash(GoSliceLoad(g.elems, g.elems.length - 1, GoInterfaceValueOps<Stringer>())!)) || (pattern.length > 2 && pattern[2] !== "/")) {
             return [undefined, "", errors.New("** may only be adjacent to '/'")];
           }
           pattern = pattern.slice(2);
@@ -740,7 +742,7 @@ export function Glob_Match(receiver: GoPtr<Glob>, input: string): bool {
  */
 export function match(elems: GoSlice<GoInterface<element>>, input: string): bool {
   while (elems.length > 0) {
-    const elem: element = elems[0]!;
+    const elem: element = GoSliceLoad(elems, 0, GoInterfaceValueOps<Stringer>())!;
     elems = elems.slice(1);
     if (isSlashCarrier(elem)) {
       if (input.length === 0 || input[0] !== "/") {
@@ -785,7 +787,7 @@ export function match(elems: GoSlice<GoInterface<element>>, input: string): bool
 
       let elemEnd = elems.length;
       for (let i = 0; i < elems.length; i++) {
-        const e = elems[i]!;
+        const e = GoSliceLoad(elems, i, GoInterfaceValueOps<Stringer>())!;
         if (isSlash(e)) {
           elemEnd = i;
           break;

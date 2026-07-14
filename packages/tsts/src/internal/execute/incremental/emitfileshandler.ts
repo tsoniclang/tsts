@@ -56,6 +56,8 @@ import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitUpdate","kind":"type","status":"implemented","sigHash":"b514029a6cc46f502243219e2a3c85568fca34dadd062aa2a02a0ca0bd34f46e"}
@@ -609,7 +611,7 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
     if (oldSignatureFormat!.signature !== "") {
       oldSignature = oldSignatureFormat!.signature;
     } else {
-      oldSignature = oldSignatureFormat!.signatureWithDifferentOptions[0]!;
+      oldSignature = GoSliceLoad(oldSignatureFormat!.signatureWithDifferentOptions, 0, GoStringValueOps)!;
     }
   }
   if (newSignature === "") {

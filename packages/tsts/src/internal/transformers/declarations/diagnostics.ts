@@ -109,6 +109,8 @@ import type { AccessorDeclaration } from "../../ast/generated/unions.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::type::GetSymbolAccessibilityDiagnostic","kind":"type","status":"implemented","sigHash":"4690a42c6a896f808be1de81243ee38276220e9254501e06249727e1731785fa"}
@@ -564,8 +566,8 @@ export function createGetSymbolAccessibilityDiagnosticForNode(node: GoPtr<Node>)
         diagnostics.Exported_variable_0_has_or_is_using_name_1_from_private_module_2,
         diagnostics.Exported_variable_0_has_or_is_using_private_name_1,
       );
-      const errorNode = Node_Arguments(node)![1];
-      const typeName = Node_Arguments(node)![1];
+      const errorNode = GoSliceLoad(Node_Arguments(node)!, 1, GoPointerValueOps<Node>());
+      const typeName = GoSliceLoad(Node_Arguments(node)!, 1, GoPointerValueOps<Node>());
       return {
         errorNode: errorNode,
         diagnosticMessage: diagnosticMessage,
@@ -1390,7 +1392,7 @@ export function createAccessorTypeError(node: GoPtr<Node>): GoPtr<Diagnostic> {
   const setAccessor = allDeclarations.SetAccessor;
   let targetNode = node;
   if (IsSetAccessorDeclaration(node) && Node_Parameters(node).length > 0) {
-    targetNode = Node_Parameters(node)[0];
+    targetNode = GoSliceLoad(Node_Parameters(node), 0, GoPointerValueOps<Node>());
   }
   const diag = NewDiagnosticForNode(targetNode, getErrorByDeclarationKind(node!.Kind));
   if (setAccessor !== undefined) {

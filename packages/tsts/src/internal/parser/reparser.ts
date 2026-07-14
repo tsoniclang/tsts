@@ -186,6 +186,8 @@ import type { GoRune } from "../../go/compat.js";
 import { Parser_newNodeList, Parser_newModifierList } from "./parser/lists.js";
 import { Parser_finishNodeWithEnd } from "./parser/statements-declarations.js";
 import { PCObjectLiteralMembers } from "./parser/state.js";
+import { GoSliceLoad, GoSliceStore } from "../../go/compat.js";
+
 
 // Byte-string helpers mirroring Go's `s[i:]` / `len(s)` semantics over UTF-8 bytes,
 // used to faithfully port the `for i, ch := range s` rune iteration in
@@ -306,7 +308,7 @@ export function Parser_checkNonIdentifierName(receiver: GoPtr<Parser>, name: GoP
  */
 export function Parser_reparseTags(receiver: GoPtr<Parser>, parent: GoPtr<Node>, jsDoc: GoSlice<GoPtr<Node>>): void {
   for (const j of jsDoc) {
-    const isLast = j === jsDoc[jsDoc.length - 1];
+    const isLast = j === GoSliceLoad(jsDoc, jsDoc.length - 1, GoPointerValueOps<Node>());
     const tags = AsJSDoc(j)!.Tags;
     if (tags === undefined) {
       continue;
@@ -606,7 +608,7 @@ export function Parser_reparseJSDocSignature(receiver: GoPtr<Parser>, jsSignatur
   let parameters = Arena_NewSlice(receiver!.nodeSliceArena, 0, GoZeroPointer) as GoSlice<GoPtr<Node>>;
   const jsSignatureParameters = Node_Parameters(jsSignature);
   for (let pi: int = 0; pi < jsSignatureParameters.length; pi++) {
-    const param = jsSignatureParameters[pi];
+    const param = GoSliceLoad(jsSignatureParameters, pi, GoPointerValueOps<Node>());
     let parameter: GoPtr<Node>;
     if (param!.Kind === KindJSDocThisTag) {
       const thisTag = AsJSDocThisTag(param);
@@ -1371,7 +1373,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
       const fun = getFunctionLikeHost(parent);
       if (fun !== undefined) {
         const params = Node_Parameters(fun);
-        if (params.length === 0 || (Node_Name(params[0])!.Kind !== KindThisKeyword && !IsThisIdentifier(Node_Name(params[0])))) {
+        if (params.length === 0 || (Node_Name(GoSliceLoad(params, 0, GoPointerValueOps<Node>()))!.Kind !== KindThisKeyword && !IsThisIdentifier(Node_Name(GoSliceLoad(params, 0, GoPointerValueOps<Node>()))))) {
           const thisParam = NewParameterDeclaration(
             receiver!.factory,
             undefined, // decorators
@@ -1387,9 +1389,9 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
           Parser_finishReparsedNode(receiver, thisParam, Node_TagName(tag));
 
           const newParams = Arena_NewSlice(receiver!.nodeSliceArena, (params.length + 1) as int, GoZeroPointer) as GoSlice<GoPtr<Node>>;
-          newParams[0] = thisParam;
+          GoSliceStore(newParams, 0, thisParam, GoPointerValueOps<Node>());
           for (let i: int = 0; i < params.length; i++) {
-            newParams[i + 1] = params[i];
+            newParams[i + 1] = GoSliceLoad(params, i, GoPointerValueOps<Node>());
           }
 
           Node_FunctionLikeData(fun)!.Parameters = Parser_newNodeList(receiver, Node_ParameterList(fun)!.Loc, newParams);
@@ -1449,7 +1451,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
           let loc: TextRange;
           if (Node_Modifiers(p) === undefined) {
             nodes = Arena_NewSlice(receiver!.nodeSliceArena, 1 as int, GoZeroPointer) as GoSlice<GoPtr<Node>>;
-            nodes[0] = modifier;
+            GoSliceStore(nodes, 0, modifier, GoPointerValueOps<Node>());
             loc = tag!.Loc;
           } else {
             nodes = GoSliceAppend(Node_ModifierNodes(p)!, modifier, GoPointerValueOps<Node>());
@@ -1494,13 +1496,13 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
       if (cls !== undefined && cls!.HeritageClauses !== undefined) {
         const extendsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindExtendsKeyword) as bool, GoZeroPointer<Node>);
         if (extendsClause !== undefined && AsHeritageClause(extendsClause)!.Types!.Nodes.length === 1) {
-          const target = AsExpressionWithTypeArguments(AsHeritageClause(extendsClause)!.Types!.Nodes[0]);
+          const target = AsExpressionWithTypeArguments(GoSliceLoad(AsHeritageClause(extendsClause)!.Types!.Nodes, 0, GoPointerValueOps<Node>()));
           const source = AsExpressionWithTypeArguments(Node_ClassName(tag));
           if (HasSamePropertyAccessName(target!.Expression, source!.Expression)) {
             if (target!.TypeArguments === undefined && source!.TypeArguments !== undefined) {
               const newArguments = Arena_NewSlice(receiver!.nodeSliceArena, source!.TypeArguments!.Nodes.length as int, GoZeroPointer) as GoSlice<GoPtr<Node>>;
               for (let i: int = 0; i < source!.TypeArguments!.Nodes.length; i++) {
-                newArguments[i] = Parser_addDeepCloneReparse(receiver, source!.TypeArguments!.Nodes[i]);
+                newArguments[i] = Parser_addDeepCloneReparse(receiver, GoSliceLoad(source!.TypeArguments!.Nodes, i, GoPointerValueOps<Node>()));
               }
               target!.TypeArguments = Parser_newNodeList(receiver, source!.TypeArguments!.Loc, newArguments);
               Parser_finishMutatedNode(receiver, target);
@@ -1580,7 +1582,7 @@ export function findMatchingParameter(fun: GoPtr<Node>, parameterTag: GoPtr<JSDo
   }
   const parameters = Node_Parameters(fun);
   for (let parameterIndex: int = 0; parameterIndex < parameters.length; parameterIndex++) {
-    const parameter = parameters[parameterIndex];
+    const parameter = GoSliceLoad(parameters, parameterIndex, GoPointerValueOps<Node>());
     if (Node_Name(parameter)!.Kind === KindIdentifier) {
       if (parameterTag!.name!.Kind === KindIdentifier &&
           ((Node_Text(Node_Name(parameter)) === Node_Text(parameterTag!.name)) || (parameterIndex === tagIndex && Node_Text(parameterTag!.name).length === 0))) {
@@ -1643,7 +1645,7 @@ export function getFunctionLikeHost(host: GoPtr<Node>): GoPtr<Node> {
     case KindVariableStatement: {
       const nodes = AsVariableDeclarationList(AsVariableStatement(host)!.DeclarationList)!.Declarations!.Nodes;
       if (nodes.length !== 0) {
-        fun = Node_Initializer(nodes[0]);
+        fun = Node_Initializer(GoSliceLoad(nodes, 0, GoPointerValueOps<Node>()));
       }
       break;
     }

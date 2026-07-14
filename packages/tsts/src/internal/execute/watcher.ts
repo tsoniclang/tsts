@@ -71,6 +71,8 @@ import type { EmitInput } from "./tsc/emit.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 // Local byte-code constants for path inspection in perceivedOsRootLengthForWatching,
 // mirroring tspath/path.ts (which keeps its own private CHAR_* constants). Go indexes
@@ -879,13 +881,13 @@ export function perceivedOsRootLengthForWatching(components: GoSlice<string>): i
   if (length <= 1) {
     return 1;
   }
-  const root = components[0]!;
+  const root = GoSliceLoad(components, 0, GoStringValueOps)!;
   let indexAfterOsRoot = 1;
   let isDosStyle = root.length >= 2 && IsVolumeCharacter(root.charCodeAt(0)) && root.charCodeAt(1) === CHAR_COLON;
 
   if (root !== "/" && !isDosStyle && components.length > 1) {
     // Check for UNC-like paths: //server/c$/...
-    if (components[1]!.length >= 2 && IsVolumeCharacter(components[1]!.charCodeAt(0)) && strings.HasSuffix(components[1]!, "$")) {
+    if (GoSliceLoad(components, 1, GoStringValueOps)!.length >= 2 && IsVolumeCharacter(GoSliceLoad(components, 1, GoStringValueOps)!.charCodeAt(0)) && strings.HasSuffix(GoSliceLoad(components, 1, GoStringValueOps)!, "$")) {
       if (length === 2) {
         return 2;
       }
@@ -894,11 +896,11 @@ export function perceivedOsRootLengthForWatching(components: GoSlice<string>): i
     }
   }
 
-  if (isDosStyle && (indexAfterOsRoot >= length || !strings.EqualFold(components[indexAfterOsRoot]!, "users"))) {
+  if (isDosStyle && (indexAfterOsRoot >= length || !strings.EqualFold(GoSliceLoad(components, indexAfterOsRoot, GoStringValueOps)!, "users"))) {
     return indexAfterOsRoot;
   }
 
-  if (indexAfterOsRoot < length && strings.EqualFold(components[indexAfterOsRoot]!, "workspaces")) {
+  if (indexAfterOsRoot < length && strings.EqualFold(GoSliceLoad(components, indexAfterOsRoot, GoStringValueOps)!, "workspaces")) {
     // Codespaces: /workspaces repos are hoisted here
     return indexAfterOsRoot + 1;
   }

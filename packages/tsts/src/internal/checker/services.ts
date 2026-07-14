@@ -61,6 +61,8 @@ import { IterationUseDestructuring } from "./checker/state.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 function zeroSignatureLinks(): SignatureLinks {
@@ -1776,7 +1778,7 @@ export function Checker_getTypeArgumentConstraint(receiver: GoPtr<Checker>, node
   if (HasTypeArguments(node!.Parent)) {
     const typeArgs = Node_TypeArguments(node!.Parent) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     for (let i = 0; i < typeArgs.length; i++) {
-      if (typeArgs[i] === node) {
+      if (GoSliceLoad(typeArgs, i, GoPointerValueOps<Node>()) === node) {
         typeArgumentPosition = i;
         break;
       }
@@ -1839,7 +1841,7 @@ export function Checker_getTypeArgumentConstraint(receiver: GoPtr<Checker>, node
       if (typeArgumentPosition >= typeParameters.length) {
         return undefined;
       }
-      const relevantTypeParameter = typeParameters[typeArgumentPosition];
+      const relevantTypeParameter = GoSliceLoad(typeParameters, typeArgumentPosition, GoPointerValueOps<Type>());
       const constraint = Checker_getConstraintOfTypeParameter(receiver, relevantTypeParameter);
       if (constraint !== undefined) {
         return Checker_instantiateType(
@@ -2197,7 +2199,7 @@ export function Checker_GetContextualTypeForArrayLiteralAtPosition(receiver: GoP
   let elementIndex = 0;
   const elements = Node_Elements(arrayLiteral) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (let i = 0; i < elements.length; i++) {
-    const elem = elements[i];
+    const elem = GoSliceLoad(elements, i, GoPointerValueOps<Node>());
     if (Node_Pos(elem) < position) {
       elementIndex++;
     }

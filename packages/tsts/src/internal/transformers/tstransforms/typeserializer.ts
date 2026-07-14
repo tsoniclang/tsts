@@ -25,6 +25,8 @@ import type { ScriptTarget } from "../../core/compileroptions.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::type::metadataSerializer","kind":"type","status":"implemented","sigHash":"22b1519fdeaf3cffc9fac77e5b92464bd60d3c11862b52fe6451e6bdc94fca3f"}
@@ -174,10 +176,10 @@ export function metadataSerializer_SerializeReturnTypeOfNode(receiver: GoPtr<met
  */
 export function GetSetAccessorValueParameter(node: GoPtr<SetAccessorDeclaration>): GoPtr<Node> {
   if (node !== undefined && node!.Parameters !== undefined && node!.Parameters!.Nodes.length > 0) {
-    if (node!.Parameters!.Nodes.length >= 2 && IsThisParameter(node!.Parameters!.Nodes[0])) {
-      return node!.Parameters!.Nodes[1];
+    if (node!.Parameters!.Nodes.length >= 2 && IsThisParameter(GoSliceLoad(node!.Parameters!.Nodes, 0, GoPointerValueOps<Node>()))) {
+      return GoSliceLoad(node!.Parameters!.Nodes, 1, GoPointerValueOps<Node>());
     }
-    return node!.Parameters!.Nodes[0];
+    return GoSliceLoad(node!.Parameters!.Nodes, 0, GoPointerValueOps<Node>());
   }
   return undefined;
 }

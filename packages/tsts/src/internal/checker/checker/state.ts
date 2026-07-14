@@ -94,6 +94,8 @@ import { Mutex, Once } from "../../../go/sync.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../../go/compat.js";
 import { GoNumberValueOps, GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::CheckMode","kind":"type","status":"implemented","sigHash":"fd000c0f73136e37569f36cab9cec7e26a980eacd1124f26b93cc8ecf94fc319"}
@@ -2704,7 +2706,7 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
 export function createFileIndexMap(files: GoSlice<GoPtr<SourceFile>>): GoMap<GoPtr<SourceFile>, int> {
   const result: GoMap<GoPtr<SourceFile>, int> = new globalThis.Map();
   for (let i = 0; i < files.length; i++) {
-    result.set(files[i], i);
+    result.set(GoSliceLoad(files, i, GoPointerValueOps<SourceFile>()), i);
   }
   return result;
 }
@@ -3514,7 +3516,7 @@ export function getAdjustedNodeForError(node: GoPtr<Node>): GoPtr<Node> {
  */
 export function getFirstDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
   if (symbol_!.Declarations.length > 0) {
-    return symbol_!.Declarations[0];
+    return GoSliceLoad(symbol_!.Declarations, 0, GoPointerValueOps<Node>());
   }
   return undefined;
 }
@@ -4338,7 +4340,7 @@ export function mayReturnNever(fn: GoPtr<Node>): bool {
  */
 export function isThisless(symbol_: GoPtr<Symbol>): bool {
   if (symbol_!.Declarations.length === 1) {
-    const declaration = symbol_!.Declarations[0];
+    const declaration = GoSliceLoad(symbol_!.Declarations, 0, GoPointerValueOps<Node>());
     if (declaration !== undefined) {
       switch (declaration!.Kind) {
         case KindPropertyDeclaration:
@@ -4914,7 +4916,7 @@ export const IntersectionFlagsNoConstraintReduction: IntersectionFlags = 1 << 1;
  * }
  */
 export function isUnionWithUndefined(t: GoPtr<Type>): bool {
-  return (t!.flags & TypeFlagsUnion) !== 0 && (Type_Types(t)![0]!.flags & TypeFlagsUndefined) !== 0;
+  return (t!.flags & TypeFlagsUnion) !== 0 && (GoSliceLoad(Type_Types(t)!, 0, GoPointerValueOps<Type>())!.flags & TypeFlagsUndefined) !== 0;
 }
 
 /**
@@ -4926,7 +4928,7 @@ export function isUnionWithUndefined(t: GoPtr<Type>): bool {
  * }
  */
 export function isUnionWithNull(t: GoPtr<Type>): bool {
-  return (t!.flags & TypeFlagsUnion) !== 0 && ((Type_Types(t)![0]!.flags & TypeFlagsNull) !== 0 || (Type_Types(t)![1]!.flags & TypeFlagsNull) !== 0);
+  return (t!.flags & TypeFlagsUnion) !== 0 && ((GoSliceLoad(Type_Types(t)!, 0, GoPointerValueOps<Type>())!.flags & TypeFlagsNull) !== 0 || (GoSliceLoad(Type_Types(t)!, 1, GoPointerValueOps<Type>())!.flags & TypeFlagsNull) !== 0);
 }
 
 /**
@@ -5308,7 +5310,7 @@ export function isRestParameter(param: GoPtr<Node>): bool {
 export function getNameFromIndexInfo(info: GoPtr<IndexInfo>): string {
   if (info!.declaration !== undefined) {
     const params = Node_Parameters(info!.declaration) as unknown as GoSlice<GoPtr<Node>>;
-    const param0 = params !== undefined ? params[0] : undefined;
+    const param0 = params !== undefined ? GoSliceLoad(params, 0, GoPointerValueOps<Node>()) : undefined;
     return DeclarationNameToString(Node_Name(param0) as unknown as GoPtr<Node>);
   }
   return "x";

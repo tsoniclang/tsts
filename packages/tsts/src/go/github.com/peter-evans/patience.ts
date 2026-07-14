@@ -1,5 +1,7 @@
 import type { int } from "../../scalars.js";
 import type { GoSlice } from "../../compat.js";
+import { GoSliceLoad, GoStringValueOps } from "../../compat.js";
+
 
 export type DiffKind = "equal" | "delete" | "insert";
 
@@ -22,21 +24,21 @@ export function Diff(oldLines: GoSlice<string>, newLines: GoSlice<string>): GoSl
   const lcs = Array.from({ length: oldLength + 1 }, () => new Array<number>(newLength + 1).fill(0));
   for (let i = oldLength - 1; i >= 0; i--) {
     for (let j = newLength - 1; j >= 0; j--) {
-      lcs[i]![j] = oldLines[i] === newLines[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
+      lcs[i]![j] = GoSliceLoad(oldLines, i, GoStringValueOps) === GoSliceLoad(newLines, j, GoStringValueOps) ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
     }
   }
   let i = 0;
   let j = 0;
   while (i < oldLength || j < newLength) {
-    if (i < oldLength && j < newLength && oldLines[i] === newLines[j]) {
-      result.push({ Kind: "equal", Text: oldLines[i]! });
+    if (i < oldLength && j < newLength && GoSliceLoad(oldLines, i, GoStringValueOps) === GoSliceLoad(newLines, j, GoStringValueOps)) {
+      result.push({ Kind: "equal", Text: GoSliceLoad(oldLines, i, GoStringValueOps)! });
       i++;
       j++;
     } else if (j < newLength && (i === oldLength || lcs[i]![j + 1]! >= lcs[i + 1]![j]!)) {
-      result.push({ Kind: "insert", Text: newLines[j]! });
+      result.push({ Kind: "insert", Text: GoSliceLoad(newLines, j, GoStringValueOps)! });
       j++;
     } else if (i < oldLength) {
-      result.push({ Kind: "delete", Text: oldLines[i]! });
+      result.push({ Kind: "delete", Text: GoSliceLoad(oldLines, i, GoStringValueOps)! });
       i++;
     }
   }

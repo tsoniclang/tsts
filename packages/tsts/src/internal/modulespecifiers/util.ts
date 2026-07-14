@@ -28,6 +28,8 @@ import { ModuleSpecifierEndingIndex, ModuleSpecifierEndingJsExtension, ModuleSpe
 
 import type { GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceStore } from "../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::type::regexPatternCacheKey","kind":"type","status":"implemented","sigHash":"63f8dffdde16d3c433e1fb857a621811381ec4edabce90ea5657ef97194fce9d"}
@@ -965,7 +967,7 @@ export function ProcessEntrypointEnding(entrypoint: GoPtr<ResolvedEntrypoint>, p
     );
   }
 
-  const preferredEnding = allowedEndings[0];
+  const preferredEnding = GoSliceLoad(allowedEndings, 0, GoNumberValueOps);
 
   // Handle declaration file extensions
   const dtsExtension = GetDeclarationFileExtension(specifier);

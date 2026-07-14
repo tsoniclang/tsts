@@ -67,6 +67,8 @@ import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifie
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"implemented","sigHash":"604c7a0ae11037259df4b4db8955cc610f2e95f77176d6bce970398cdc41f572"}
@@ -664,12 +666,12 @@ export function ESModuleTransformer_visitImportOrRequireCall(receiver: GoPtr<ESM
   const expression = NodeVisitor_VisitNode(visitor, node!.Expression as unknown as GoPtr<Node>);
 
   let argument: GoPtr<Expression>;
-  if (IsStringLiteralLike(node!.Arguments!.Nodes[0])) {
-    argument = rewriteModuleSpecifier(emitContext, node!.Arguments!.Nodes[0] as unknown as GoPtr<Expression>, receiver!.compilerOptions);
+  if (IsStringLiteralLike(GoSliceLoad(node!.Arguments!.Nodes, 0, GoPointerValueOps<Node>()))) {
+    argument = rewriteModuleSpecifier(emitContext, GoSliceLoad(node!.Arguments!.Nodes, 0, GoPointerValueOps<Node>()) as unknown as GoPtr<Expression>, receiver!.compilerOptions);
   } else {
     argument = NodeFactory_NewRewriteRelativeImportExtensionsHelper(
       pf!,
-      node!.Arguments!.Nodes[0],
+      GoSliceLoad(node!.Arguments!.Nodes, 0, GoPointerValueOps<Node>()),
       receiver!.compilerOptions!.Jsx === JsxEmitPreserve,
     );
   }

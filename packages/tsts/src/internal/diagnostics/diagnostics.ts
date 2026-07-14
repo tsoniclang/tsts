@@ -20,6 +20,8 @@ import type { Locale } from "../locale/locale.js";
 import { loadMatchedLocaleMessages } from "./generated/loc.js";
 import { keyToMessage } from "./generated/messages.js";
 import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad, GoSliceStore } from "../../go/compat.js";
+
 
 
 /**
@@ -350,7 +352,7 @@ export function Format(text: string, args: GoSlice<string>): string {
     if (err !== undefined || (index as int) >= args.length) {
       throw new globalThis.Error("Invalid formatting placeholder");
     }
-    return args[index as int]!;
+    return GoSliceLoad(args, index as int, GoStringValueOps)!;
   });
 }
 
@@ -383,9 +385,9 @@ export function StringifyArgs(args: GoSlice<GoInterface<unknown>>): GoSlice<stri
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (typeof arg === "string") {
-      result[i] = arg;
+      GoSliceStore(result, i, arg, GoStringValueOps);
     } else {
-      result[i] = Sprintf("%v", arg);
+      GoSliceStore(result, i, Sprintf("%v", arg), GoStringValueOps);
     }
   }
   return result;

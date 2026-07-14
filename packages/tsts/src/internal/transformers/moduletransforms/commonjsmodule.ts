@@ -59,6 +59,8 @@ import { OrderedSet_Values } from "../../collections/ordered_set.js";
 
 import type { GoFunc, GoInterface, GoMapKeyDescriptor } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 const moduleExportNamePointerKey: GoMapKeyDescriptor<GoPtr<ModuleExportName>> = GoPointerKey<ModuleExportName>();
@@ -3213,7 +3215,7 @@ export function CommonJSModuleTransformer_destructuringNeedsFlattening(receiver:
     // natively: substitution will rewrite the identifier to `exports.X`, so no flattening
     // is needed. Re-aliased exports (where the export name differs from the local name) or
     // multi-exported names cannot be expressed natively in a destructuring assignment.
-    if (exportedNames.length === 1 && CommonJSModuleTransformer_isDirectExport(receiver, node) && Node_Text(exportedNames[0]!) === Node_Text(node)) {
+    if (exportedNames.length === 1 && CommonJSModuleTransformer_isDirectExport(receiver, node) && Node_Text(GoSliceLoad(exportedNames, 0, GoPointerValueOps<Node>())!) === Node_Text(node)) {
       return false as bool;
     }
     return true as bool;
@@ -4249,7 +4251,7 @@ export function CommonJSModuleTransformer_shimOrRewriteImportOrRequireCall(recei
   const expression = NodeVisitor_VisitNode(visitor, node!.Expression);
   let argumentsList = node!.Arguments;
   if ((node!.Arguments?.Nodes?.length ?? 0) > 0) {
-    let firstArgument: GoPtr<Node> = node!.Arguments!.Nodes[0];
+    let firstArgument: GoPtr<Node> = GoSliceLoad(node!.Arguments!.Nodes, 0, GoPointerValueOps<Node>());
     let firstArgumentChanged = false;
     if (IsStringLiteralLike(firstArgument)) {
       const rewritten = rewriteModuleSpecifier(emitContext, firstArgument, receiver!.compilerOptions);

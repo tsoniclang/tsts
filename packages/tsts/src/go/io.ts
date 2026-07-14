@@ -1,6 +1,8 @@
 import type { byte, int } from "./scalars.js";
 import type { GoError, GoSlice } from "./compat.js";
 import * as errors from "./errors.js";
+import { GoNumberValueOps, GoSliceStore } from "./compat.js";
+
 
 export const EOF: GoError = errors.New("EOF");
 
@@ -33,7 +35,7 @@ export function ReadFull(reader: Reader, buffer: GoSlice<byte>): [int, GoError] 
     const [count, err] = reader.Read(view);
     if (count > 0) {
       for (let index = 0; index < count; index++) {
-        buffer[total + index] = view[index]!;
+        GoSliceStore(buffer, total + index, view[index]!, GoNumberValueOps);
       }
       total += count;
     }

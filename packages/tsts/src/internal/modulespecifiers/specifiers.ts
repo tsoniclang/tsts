@@ -128,6 +128,8 @@ import type { NodeModulePathParts } from "./util.js";
 
 import type { GoInterface } from "../../go/compat.js";
 import { GoNumberValueOps, GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifiers","kind":"func","status":"implemented","sigHash":"641b2e3d5872a25627b6cdbba77e7300466b63adde2a5ec47c7c9bda998c6190"}
@@ -1377,7 +1379,7 @@ export function processEnding(fileName: string, allowedEndings: GoSlice<ModuleSp
     }
   }
 
-  switch (allowedEndings[0]) {
+  switch (GoSliceLoad(allowedEndings, 0, GoNumberValueOps)) {
     case ModuleSpecifierEndingMinimal: {
       const withoutIndex = strings.TrimSuffix(noExtension, "/index");
       if (host !== undefined && withoutIndex !== noExtension && tryGetAnyFileFromPath(host, withoutIndex)) {
@@ -1396,7 +1398,7 @@ export function processEnding(fileName: string, allowedEndings: GoSlice<ModuleSp
       if (IsDeclarationFileName(fileName)) {
         let extensionlessPriority = -1;
         for (let i = 0; i < allowedEndings.length; i++) {
-          if (allowedEndings[i] === ModuleSpecifierEndingMinimal || allowedEndings[i] === ModuleSpecifierEndingIndex) {
+          if (GoSliceLoad(allowedEndings, i, GoNumberValueOps) === ModuleSpecifierEndingMinimal || GoSliceLoad(allowedEndings, i, GoNumberValueOps) === ModuleSpecifierEndingIndex) {
             extensionlessPriority = i;
             break;
           }
@@ -1409,7 +1411,7 @@ export function processEnding(fileName: string, allowedEndings: GoSlice<ModuleSp
       return fileName;
     }
     default:
-      AssertNever(allowedEndings[0]);
+      AssertNever(GoSliceLoad(allowedEndings, 0, GoNumberValueOps));
       return "";
   }
 }

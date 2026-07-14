@@ -109,6 +109,8 @@ import { isInternalModuleImportEqualsDeclaration, isTupleType, IterationTypeKind
 import { Checker_markExportAssignmentAliasReferenced } from "./relations.js";
 import { The_call_would_have_succeeded_against_this_implementation_but_implementation_signatures_of_overloads_are_not_externally_visible } from "../../diagnostics/generated/messages.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 function goZeroSymbolReferenceLinks(): SymbolReferenceLinks {
@@ -997,7 +999,7 @@ export function Checker_getSpreadIndices(receiver: GoPtr<Checker>, node: GoPtr<N
     const elements = Node_Elements(node);
     if (elements !== undefined) {
       for (let i = 0; i < elements.length; i++) {
-        const element = elements[i];
+        const element = GoSliceLoad(elements, i, GoPointerValueOps<Node>());
         if (IsSpreadElement(element)) {
           if (first < 0) {
             first = i;

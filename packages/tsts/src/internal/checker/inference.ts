@@ -259,6 +259,8 @@ import { IsTypeAny, isObjectLiteralType, isObjectOrArrayLiteralType, isValidBigI
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 
 function goZeroTypeAliasLinks(): TypeAliasLinks {
@@ -905,10 +907,10 @@ export function Checker_inferFromTypeArguments(receiver: GoPtr<Checker>, n: GoPt
   const c = receiver!;
   const count = Math.min(sourceTypes.length, targetTypes.length);
   for (let i = 0; i < count; i++) {
-    if (i < variances.length && (variances[i]! & VarianceFlagsVarianceMask) === VarianceFlagsContravariant) {
-      Checker_inferFromContravariantTypes(c, n, sourceTypes[i], targetTypes[i]);
+    if (i < variances.length && (GoSliceLoad(variances, i, GoNumberValueOps)! & VarianceFlagsVarianceMask) === VarianceFlagsContravariant) {
+      Checker_inferFromContravariantTypes(c, n, GoSliceLoad(sourceTypes, i, GoPointerValueOps<Type>()), GoSliceLoad(targetTypes, i, GoPointerValueOps<Type>()));
     } else {
-      Checker_inferFromTypes(c, n, sourceTypes[i], targetTypes[i]);
+      Checker_inferFromTypes(c, n, GoSliceLoad(sourceTypes, i, GoPointerValueOps<Type>()), GoSliceLoad(targetTypes, i, GoPointerValueOps<Type>()));
     }
   }
 }
@@ -1238,7 +1240,7 @@ export function Checker_inferToMultipleTypes(receiver: GoPtr<Checker>, n: GoPtr<
         for (let i = 0; i < sources.length; i++) {
           const saveInferencePriority = state.inferencePriority;
           state.inferencePriority = InferencePriorityMaxValue;
-          Checker_inferFromTypes(c, state, sources[i], t);
+          Checker_inferFromTypes(c, state, GoSliceLoad(sources, i, GoPointerValueOps<Type>()), t);
           if (state.inferencePriority === state.priority) {
             matched[i] = true;
           }
@@ -1265,7 +1267,7 @@ export function Checker_inferToMultipleTypes(receiver: GoPtr<Checker>, n: GoPtr<
       let unmatched: GoSlice<GoPtr<Type>> = GoNilSlice();
       for (let i = 0; i < sources.length; i++) {
         if (!matched[i]) {
-          unmatched = GoSliceAppend(unmatched, sources[i], GoPointerValueOps<Type>());
+          unmatched = GoSliceAppend(unmatched, GoSliceLoad(sources, i, GoPointerValueOps<Type>()), GoPointerValueOps<Type>());
         }
       }
       if (unmatched.length !== 0) {
@@ -1523,10 +1525,10 @@ export function Checker_inferToTemplateLiteralType(receiver: GoPtr<Checker>, n: 
   const matchCount = matches.length;
   if (matchCount !== 0 || core.Every(target!.texts, (s: string): bool => s === "")) {
     outer: for (let i = 0; i < types.length; i++) {
-      const targetType = types[i];
+      const targetType = GoSliceLoad(types, i, GoPointerValueOps<Type>());
       let sourceType: GoPtr<Type>;
       if (matchCount !== 0) {
-        sourceType = matches[i];
+        sourceType = GoSliceLoad(matches, i, GoPointerValueOps<Type>());
       } else {
         sourceType = c.neverType;
       }
@@ -1857,7 +1859,7 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
       // to the same kind in each position), simply infer between the element types.
       if (isTupleType(source) && Checker_isTupleTypeStructureMatching(c, source, target)) {
         for (let i = 0; i < targetArity; i++) {
-          Checker_inferFromTypes(c, state, Checker_getTypeArguments(c, source)[i], elementTypes[i]);
+          Checker_inferFromTypes(c, state, GoSliceLoad(Checker_getTypeArguments(c, source), i, GoPointerValueOps<Type>()), GoSliceLoad(elementTypes, i, GoPointerValueOps<Type>()));
         }
         return;
       }
@@ -1871,48 +1873,48 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
       }
       // Infer between starting fixed elements.
       for (let i = 0; i < startLength; i++) {
-        Checker_inferFromTypes(c, state, Checker_getTypeArguments(c, source)[i], elementTypes[i]);
+        Checker_inferFromTypes(c, state, GoSliceLoad(Checker_getTypeArguments(c, source), i, GoPointerValueOps<Type>()), GoSliceLoad(elementTypes, i, GoPointerValueOps<Type>()));
       }
       if (!isTupleType(source) || (sourceArity - startLength - endLength === 1 && (Type_TargetTupleType(source)!.elementInfos[startLength]!.flags & ElementFlagsRest) !== 0)) {
         // Single rest element remains in source, infer from that to every element in target
-        const restType = Checker_getTypeArguments(c, source)[startLength];
+        const restType = GoSliceLoad(Checker_getTypeArguments(c, source), startLength, GoPointerValueOps<Type>());
         for (let i = startLength; i < targetArity - endLength; i++) {
           let t = restType;
           if ((elementInfos[i]!.flags & ElementFlagsVariadic) !== 0) {
             t = Checker_createArrayType(c, t);
           }
-          Checker_inferFromTypes(c, state, t, elementTypes[i]);
+          Checker_inferFromTypes(c, state, t, GoSliceLoad(elementTypes, i, GoPointerValueOps<Type>()));
         }
       } else {
         const middleLength = targetArity - startLength - endLength;
         if (middleLength === 2) {
           if ((elementInfos[startLength]!.flags & elementInfos[startLength + 1]!.flags & ElementFlagsVariadic) !== 0) {
             // Middle of target is [...T, ...U] and source is tuple type
-            const targetInfo = getInferenceInfoForType(state, elementTypes[startLength]);
+            const targetInfo = getInferenceInfoForType(state, GoSliceLoad(elementTypes, startLength, GoPointerValueOps<Type>()));
             if (targetInfo !== undefined && targetInfo.impliedArity >= 0) {
               // Infer slices from source based on implied arity of T.
-              Checker_inferFromTypes(c, state, Checker_sliceTupleType(c, source, startLength, endLength + sourceArity - targetInfo.impliedArity), elementTypes[startLength]);
-              Checker_inferFromTypes(c, state, Checker_sliceTupleType(c, source, startLength + targetInfo.impliedArity, endLength), elementTypes[startLength + 1]);
+              Checker_inferFromTypes(c, state, Checker_sliceTupleType(c, source, startLength, endLength + sourceArity - targetInfo.impliedArity), GoSliceLoad(elementTypes, startLength, GoPointerValueOps<Type>()));
+              Checker_inferFromTypes(c, state, Checker_sliceTupleType(c, source, startLength + targetInfo.impliedArity, endLength), GoSliceLoad(elementTypes, startLength + 1, GoPointerValueOps<Type>()));
             }
           } else if ((elementInfos[startLength]!.flags & ElementFlagsVariadic) !== 0 && (elementInfos[startLength + 1]!.flags & ElementFlagsRest) !== 0) {
             // Middle of target is [...T, ...rest] and source is tuple type
             // if T is constrained by a fixed-size tuple we might be able to use its arity to infer T
-            const info = getInferenceInfoForType(state, elementTypes[startLength]);
+            const info = getInferenceInfoForType(state, GoSliceLoad(elementTypes, startLength, GoPointerValueOps<Type>()));
             if (info !== undefined) {
               const constraint = Checker_getBaseConstraintOfType(c, info.typeParameter);
               if (constraint !== undefined && isTupleType(constraint) && (Type_TargetTupleType(constraint)!.combinedFlags & ElementFlagsVariable) === 0) {
                 const impliedArity = Type_TargetTupleType(constraint)!.fixedLength;
-                Checker_inferFromTypes(c, state, Checker_sliceTupleType(c, source, startLength, sourceArity - (startLength + impliedArity)), elementTypes[startLength]);
+                Checker_inferFromTypes(c, state, Checker_sliceTupleType(c, source, startLength, sourceArity - (startLength + impliedArity)), GoSliceLoad(elementTypes, startLength, GoPointerValueOps<Type>()));
                 const restType = Checker_getElementTypeOfSliceOfTupleType(c, source, startLength + impliedArity, endLength, false, false);
                 if (restType !== undefined) {
-                  Checker_inferFromTypes(c, state, restType, elementTypes[startLength + 1]);
+                  Checker_inferFromTypes(c, state, restType, GoSliceLoad(elementTypes, startLength + 1, GoPointerValueOps<Type>()));
                 }
               }
             }
           } else if ((elementInfos[startLength]!.flags & ElementFlagsRest) !== 0 && (elementInfos[startLength + 1]!.flags & ElementFlagsVariadic) !== 0) {
             // Middle of target is [...rest, ...T] and source is tuple type
             // if T is constrained by a fixed-size tuple we might be able to use its arity to infer T
-            const info = getInferenceInfoForType(state, elementTypes[startLength + 1]);
+            const info = getInferenceInfoForType(state, GoSliceLoad(elementTypes, startLength + 1, GoPointerValueOps<Type>()));
             if (info !== undefined) {
               const constraint = Checker_getBaseConstraintOfType(c, info.typeParameter);
               if (constraint !== undefined && isTupleType(constraint) && (Type_TargetTupleType(constraint)!.combinedFlags & ElementFlagsVariable) === 0) {
@@ -1923,9 +1925,9 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
                   const trailingSlice = Checker_createTupleTypeEx(c, Checker_getTypeArguments(c, source).slice(startIndex, endIndex), Type_TargetTupleType(source)!.elementInfos.slice(startIndex, endIndex), false);
                   const restType = Checker_getElementTypeOfSliceOfTupleType(c, source, startLength, endLength + impliedArity, false, false);
                   if (restType !== undefined) {
-                    Checker_inferFromTypes(c, state, restType, elementTypes[startLength]);
+                    Checker_inferFromTypes(c, state, restType, GoSliceLoad(elementTypes, startLength, GoPointerValueOps<Type>()));
                   }
-                  Checker_inferFromTypes(c, state, trailingSlice, elementTypes[startLength + 1]);
+                  Checker_inferFromTypes(c, state, trailingSlice, GoSliceLoad(elementTypes, startLength + 1, GoPointerValueOps<Type>()));
                 }
               }
             }
@@ -1935,18 +1937,18 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
           // If target ends in optional element(s), make a lower priority a speculative inference.
           const priority = core.IfElse<InferencePriority>((elementInfos[targetArity - 1]!.flags & ElementFlagsOptional) !== 0, InferencePrioritySpeculativeTuple, 0);
           const sourceSlice = Checker_sliceTupleType(c, source, startLength, endLength);
-          Checker_inferWithPriority(c, state, sourceSlice, elementTypes[startLength], priority);
+          Checker_inferWithPriority(c, state, sourceSlice, GoSliceLoad(elementTypes, startLength, GoPointerValueOps<Type>()), priority);
         } else if (middleLength === 1 && (elementInfos[startLength]!.flags & ElementFlagsRest) !== 0) {
           // Middle of target is exactly one rest element. If middle of source is not empty, infer union of middle element types.
           const restType = Checker_getElementTypeOfSliceOfTupleType(c, source, startLength, endLength, false, false);
           if (restType !== undefined) {
-            Checker_inferFromTypes(c, state, restType, elementTypes[startLength]);
+            Checker_inferFromTypes(c, state, restType, GoSliceLoad(elementTypes, startLength, GoPointerValueOps<Type>()));
           }
         }
       }
       // Infer between ending fixed elements
       for (let i = 0; i < endLength; i++) {
-        Checker_inferFromTypes(c, state, Checker_getTypeArguments(c, source)[sourceArity - i - 1], elementTypes[targetArity - i - 1]);
+        Checker_inferFromTypes(c, state, GoSliceLoad(Checker_getTypeArguments(c, source), sourceArity - i - 1, GoPointerValueOps<Type>()), GoSliceLoad(elementTypes, targetArity - i - 1, GoPointerValueOps<Type>()));
       }
       return;
     }
@@ -2017,7 +2019,7 @@ export function Checker_inferFromSignatures(receiver: GoPtr<Checker>, n: GoPtr<I
     const targetLen = targetSignatures.length;
     for (let i = 0; i < targetLen; i++) {
       const sourceIndex = Math.max(sourceLen - targetLen + i, 0);
-      Checker_inferFromSignature(c, state, Checker_getBaseSignature(c, sourceSignatures[sourceIndex]), Checker_getErasedSignature(c, targetSignatures[i]));
+      Checker_inferFromSignature(c, state, Checker_getBaseSignature(c, GoSliceLoad(sourceSignatures, sourceIndex, GoPointerValueOps<Signature>())), Checker_getErasedSignature(c, GoSliceLoad(targetSignatures, i, GoPointerValueOps<Signature>())));
     }
   }
 }
@@ -2423,7 +2425,7 @@ export function Checker_createReverseMappedType(receiver: GoPtr<Checker>, source
   // For arrays and tuples we infer new arrays and tuples where the reverse mapping has been
   // applied to the element type(s).
   if (Checker_isArrayType(c, source)) {
-    const elementType = Checker_inferReverseMappedType(c, Checker_getTypeArguments(c, source)[0], target, constraint);
+    const elementType = Checker_inferReverseMappedType(c, GoSliceLoad(Checker_getTypeArguments(c, source), 0, GoPointerValueOps<Type>()), target, constraint);
     if (elementType === undefined) {
       return undefined;
     }
@@ -3132,7 +3134,7 @@ export function Checker_inferFromIntraExpressionSites(receiver: GoPtr<Checker>, 
  */
 export function Checker_getInferredType(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>, index: int): GoPtr<Type> {
   const c = receiver!;
-  const inference = n!.inferences[index];
+  const inference = GoSliceLoad(n!.inferences, index, GoPointerValueOps<InferenceInfo>());
   if (inference!.inferredType === undefined) {
     if (inference!.typeParameter === c.errorType) {
       return inference!.typeParameter;
@@ -3218,7 +3220,7 @@ export function Checker_getInferredType(receiver: GoPtr<Checker>, n: GoPtr<Infer
 export function Checker_getInferredTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>): GoSlice<GoPtr<Type>> {
   const result: GoSlice<GoPtr<Type>> = new Array(n!.inferences.length);
   for (let i = 0; i < n!.inferences.length; i++) {
-    result[i] = Checker_getInferredType(receiver, n, i);
+    GoSliceStore(result, i, Checker_getInferredType(receiver, n, i), GoPointerValueOps<Type>());
   }
   return result;
 }
@@ -3519,7 +3521,7 @@ export function getInferenceInfoForType(n: GoPtr<InferenceState>, t: GoPtr<Type>
 export function Checker_getCommonSupertype(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
   const c = receiver!;
   if (types.length === 1) {
-    return types[0];
+    return GoSliceLoad(types, 0, GoPointerValueOps<Type>());
   }
   let primaryTypes = types;
   if (c.strictNullChecks) {
@@ -3825,7 +3827,7 @@ export function hasTypeParameterDefault(tp: GoPtr<Type>): bool {
  */
 export function hasOverlappingInferences(a: GoSlice<GoPtr<InferenceInfo>>, b: GoSlice<GoPtr<InferenceInfo>>): bool {
   for (let i = 0; i < a.length; i++) {
-    if (hasInferenceCandidates(a[i]) && hasInferenceCandidates(b[i])) {
+    if (hasInferenceCandidates(GoSliceLoad(a, i, GoPointerValueOps<InferenceInfo>())) && hasInferenceCandidates(GoSliceLoad(b, i, GoPointerValueOps<InferenceInfo>()))) {
       return true;
     }
   }
@@ -3846,8 +3848,8 @@ export function hasOverlappingInferences(a: GoSlice<GoPtr<InferenceInfo>>, b: Go
  */
 export function Checker_mergeInferences(receiver: GoPtr<Checker>, target: GoSlice<GoPtr<InferenceInfo>>, source: GoSlice<GoPtr<InferenceInfo>>): void {
   for (let i = 0; i < target.length; i++) {
-    if (!hasInferenceCandidates(target[i]) && hasInferenceCandidates(source[i])) {
-      target[i] = source[i];
+    if (!hasInferenceCandidates(GoSliceLoad(target, i, GoPointerValueOps<InferenceInfo>())) && hasInferenceCandidates(GoSliceLoad(source, i, GoPointerValueOps<InferenceInfo>()))) {
+      target[i] = GoSliceLoad(source, i, GoPointerValueOps<InferenceInfo>());
     }
   }
 }

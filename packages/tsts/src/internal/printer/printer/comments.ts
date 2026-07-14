@@ -43,6 +43,8 @@ import { Printer_increaseIndentIf, Printer_decreaseIndentIf } from "./statements
 import { Printer_writeSpace } from "./emit-core.js";
 import { Printer_emitStatement } from "./statements-declarations.js";
 import { GoNumberValueOps, GoSliceMake } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 
 
 function zeroCommentState(): commentState {
@@ -204,12 +206,12 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
     let currentLine = firstLine;
     for (; pos < TextRange_End(loc); currentLine++) {
       const nextLineStart =
-        currentLine + 1 === lineCount ? byteLen(text) + 1 : lineMap[currentLine + 1]!;
+        currentLine + 1 === lineCount ? byteLen(text) + 1 : GoSliceLoad(lineMap, currentLine + 1, GoNumberValueOps)!;
 
       if (pos !== TextRange_Pos(loc)) {
         // If we are not emitting first line, we need to write the spaces to adjust the alignment
         if (firstCommentLineIndent === -1) {
-          firstCommentLineIndent = calculateIndent(text, lineMap[firstLine]!, TextRange_Pos(loc));
+          firstCommentLineIndent = calculateIndent(text, GoSliceLoad(lineMap, firstLine, GoNumberValueOps)!, TextRange_Pos(loc));
         }
 
         // These are number of spaces writer is going to write at current indent
@@ -376,8 +378,8 @@ export function Printer_shouldEmitDetachedComments(receiver: GoPtr<Printer>, nod
   // Emit detached comment if there are no prologue directives or if the first node is synthesized.
   // The synthesized node will have no leading comment so some comments may be missed.
   return (file!.Statements!.Nodes.length === 0 ||
-    !IsPrologueDirective(file!.Statements!.Nodes[0]) ||
-    NodeIsSynthesized(file!.Statements!.Nodes[0])) as bool;
+    !IsPrologueDirective(GoSliceLoad(file!.Statements!.Nodes, 0, GoPointerValueOps<Node>())) ||
+    NodeIsSynthesized(GoSliceLoad(file!.Statements!.Nodes, 0, GoPointerValueOps<Node>()))) as bool;
 }
 
 /**
@@ -449,7 +451,7 @@ export function Printer_syntheticCommentWillEmitNewLine(receiver: GoPtr<Printer>
  */
 export function Printer_emitPrologueDirectives(receiver: GoPtr<Printer>, statements: GoPtr<StatementList>): int {
   for (let i = 0; i < statements!.Nodes.length; i++) {
-    const statement = statements!.Nodes[i];
+    const statement = GoSliceLoad(statements!.Nodes, i, GoPointerValueOps<Node>());
     if (IsPrologueDirective(statement)) {
       Printer_writeLine(receiver);
       Printer_emitStatement(receiver, statement);

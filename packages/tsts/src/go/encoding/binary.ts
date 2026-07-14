@@ -3,6 +3,8 @@ import type { GoError, GoSlice } from "../compat.js";
 import { GoNumberValueOps, GoSliceAppendSlice } from "../compat.js";
 import { GoAppend, GoAppendSlice } from "../compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../compat.js";
+import { GoSliceLoad } from "../compat.js";
+
 
 
 export interface ByteOrder {
@@ -14,19 +16,19 @@ class byteOrder implements ByteOrder {
   constructor(private readonly endian: "big" | "little") {}
 
   Uint16(bytes: GoSlice<byte>): ushort {
-    const b0 = bytes[0] ?? 0;
-    const b1 = bytes[1] ?? 0;
+    const b0 = GoSliceLoad(bytes, 0, GoNumberValueOps) ?? 0;
+    const b1 = GoSliceLoad(bytes, 1, GoNumberValueOps) ?? 0;
     return (this.endian === "big" ? (b0 << 8) | b1 : (b1 << 8) | b0) as ushort;
   }
 
   PutUint16(bytes: GoSlice<byte>, value: ushort): void {
     const v = value & 0xffff;
     if (this.endian === "big") {
-      bytes[0] = (v >> 8) as byte;
-      bytes[1] = (v & 0xff) as byte;
+      GoSliceStore(bytes, 0, (v >> 8) as byte, GoNumberValueOps);
+      GoSliceStore(bytes, 1, (v & 0xff) as byte, GoNumberValueOps);
     } else {
-      bytes[0] = (v & 0xff) as byte;
-      bytes[1] = (v >> 8) as byte;
+      GoSliceStore(bytes, 0, (v & 0xff) as byte, GoNumberValueOps);
+      GoSliceStore(bytes, 1, (v >> 8) as byte, GoNumberValueOps);
     }
   }
 }
@@ -85,10 +87,10 @@ export function Read(reader: unknown, order: ByteOrder, data: GoSlice<int>): GoE
     if (err1 !== undefined) {
       return err1;
     }
-    data[i] = order.Uint16(GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
+    GoSliceStore(data, i, order.Uint16(GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
       GoSliceStore(__goSliceLiteral, 0, b0, GoNumberValueOps);
       GoSliceStore(__goSliceLiteral, 1, b1, GoNumberValueOps);
-    }));
+    })), GoNumberValueOps);
   }
   return undefined;
 }

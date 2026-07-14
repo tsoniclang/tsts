@@ -16,6 +16,8 @@ import { Checker_containsArgumentsReference } from "./checker/signatures.js";
 import { Checker_error, Checker_errorOrSuggestion } from "./checker/support.js";
 import { Checker_getTypeFromTypeNode, Checker_isArrayType } from "./checker/types.js";
 import { entityNameToString } from "./utilities.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsdoc.go::method::Checker.checkUnmatchedJSDocParameters","kind":"method","status":"implemented","sigHash":"2921bfbb0d5749e0b07664d20c5321dcdb700d68c9c0ee7ba882b0ad6f06011b"}
@@ -117,7 +119,7 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
   const excludedParameters = NewSetWithSizeHint<number>(0, GoNumberKey);
 
   for (let index = 0; index < Node_Parameters(node).length; index++) {
-    const param = Node_Parameters(node)[index];
+    const param = GoSliceLoad(Node_Parameters(node), index, GoPointerValueOps<Node>());
     const name = Node_Name(param);
     if (IsIdentifier(name)) {
       Set_Add(parameters, Node_Text(name), GoStringKey);
@@ -129,7 +131,7 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
   if (Checker_containsArgumentsReference(receiver, node)) {
     if (isJs) {
       const lastJSDocParamIndex = jsdocParameters.length - 1;
-      const lastJSDocParam = AsJSDocParameterOrPropertyTag(jsdocParameters[lastJSDocParamIndex]);
+      const lastJSDocParam = AsJSDocParameterOrPropertyTag(GoSliceLoad(jsdocParameters, lastJSDocParamIndex, GoPointerValueOps<Node>()));
       if (lastJSDocParam === undefined || !IsIdentifier(lastJSDocParam.name)) {
         return;
       }
@@ -146,7 +148,7 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
     }
   } else {
     for (let index = 0; index < jsdocParameters.length; index++) {
-      const tag = jsdocParameters[index];
+      const tag = GoSliceLoad(jsdocParameters, index, GoPointerValueOps<Node>());
       const jsdocTag = AsJSDocParameterOrPropertyTag(tag)!;
       const name = jsdocTag.name;
       const isNameFirst = jsdocTag.IsNameFirst;
@@ -207,7 +209,7 @@ export function getAllJSDocTags(node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
       if ((jsdocs?.length ?? 0) === 0) {
         continue;
       }
-      const lastJSDoc = AsJSDoc(jsdocs![jsdocs!.length - 1]);
+      const lastJSDoc = AsJSDoc(GoSliceLoad(jsdocs!, jsdocs!.length - 1, GoPointerValueOps<Node>()));
       if (lastJSDoc!.Tags !== undefined) {
         return lastJSDoc!.Tags!.Nodes;
       }

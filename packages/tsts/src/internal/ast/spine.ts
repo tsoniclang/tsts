@@ -42,6 +42,8 @@ import {
 import { ModifierFlagsAmbient } from "./modifierflags.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 // ──────────────────────────────────────────────────────────────────────
 // Go interface value brand
 //
@@ -510,7 +512,7 @@ export function NodeList_HasTrailingComma(receiver: GoPtr<NodeList>): bool {
   if (receiver!.Nodes.length === 0) {
     return false as bool;
   }
-  const last = receiver!.Nodes[receiver!.Nodes.length - 1];
+  const last = GoSliceLoad(receiver!.Nodes, receiver!.Nodes.length - 1, GoPointerValueOps<DeclarationName>());
   return (Node_End(last) < NodeList_End(receiver)) as bool;
 }
 

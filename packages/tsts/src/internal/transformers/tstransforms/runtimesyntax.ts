@@ -162,6 +162,8 @@ import { Tristate_IsTrue } from "../../core/tristate.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::type::RuntimeSyntaxTransformer","kind":"type","status":"implemented","sigHash":"f6da722d67500e59af9792d655cb93c0162bf9294c6412407cbdc162733836ae"}
@@ -882,7 +884,7 @@ export function RuntimeSyntaxTransformer_transformEnumBody(receiver: GoPtr<Runti
  * }
  */
 export function RuntimeSyntaxTransformer_transformEnumMember(receiver: GoPtr<RuntimeSyntaxTransformer>, statements: GoSlice<GoPtr<Statement>>, enum_: GoPtr<EnumDeclaration>, index: int): GoSlice<GoPtr<Statement>> {
-  const memberNode = enum_!.Members!.Nodes![index];
+  const memberNode = GoSliceLoad(enum_!.Members!.Nodes!, index, GoPointerValueOps<Node>());
   const member = AsEnumMember(memberNode);
 
   const savedParent = receiver!.parentNode;
@@ -1465,8 +1467,8 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
  */
 export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver: GoPtr<RuntimeSyntaxTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, superPath: GoSlice<int>, initializerStatements: GoSlice<GoPtr<Statement>>): GoSlice<GoPtr<Statement>> {
   let statementsOut: GoSlice<GoPtr<Statement>> = GoNilSlice();
-  const superStatementIndex = superPath[0]!;
-  const superStatement = statementsIn[superStatementIndex];
+  const superStatementIndex = GoSliceLoad(superPath, 0, GoNumberValueOps)!;
+  const superStatement = GoSliceLoad(statementsIn, superStatementIndex, GoPointerValueOps<Node>());
 
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;

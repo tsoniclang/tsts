@@ -60,6 +60,8 @@ import type { IndexInfo, Signature, Type, TypePredicate } from "./types.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::type::NodeBuilder","kind":"type","status":"implemented","sigHash":"124bf1d1a7a2b0f1d3e43db875844c14ec51925de9e8999b8ec1a04195cbc32b"}
@@ -242,7 +244,7 @@ export function NodeBuilder_popContext(receiver: GoPtr<NodeBuilder>): void {
   if (stackSize === 0) {
     b.impl!.ctx = undefined;
   } else {
-    b.impl!.ctx = b.ctxStack[stackSize - 1];
+    b.impl!.ctx = GoSliceLoad(b.ctxStack, stackSize - 1, GoPointerValueOps<NodeBuilderContext>());
     b.ctxStack = GoSlicePrefix(b.ctxStack, stackSize - 1);
   }
 }
@@ -525,7 +527,7 @@ export function simplifyClassDeclaration(f: GoPtr<NodeFactory>, classDecl: GoPtr
   const classDeclarations = Filter(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsClassLike);
   let originalClassDecl: GoPtr<Node>;
   if (classDeclarations.length > 0) {
-    originalClassDecl = classDeclarations[0];
+    originalClassDecl = GoSliceLoad(classDeclarations, 0, GoPointerValueOps<Node>());
   } else {
     originalClassDecl = classDecl;
   }
@@ -566,7 +568,7 @@ export function simplifyModifiers(f: GoPtr<NodeFactory>, newDecl: GoPtr<Node>, i
   const decls = Filter(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), isDeclKind);
   let declWithModifiers: GoPtr<Node>;
   if (decls.length > 0) {
-    declWithModifiers = decls[0];
+    declWithModifiers = GoSliceLoad(decls, 0, GoPointerValueOps<Node>());
   } else {
     declWithModifiers = newDecl;
   }

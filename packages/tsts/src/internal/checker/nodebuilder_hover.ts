@@ -71,6 +71,8 @@ import { NodeBuilderImpl_addPropertyToElementList, NodeBuilderImpl_checkTruncati
 import type { Flags } from "../nodebuilder/types.js";
 import { FlagsInTypeAlias, FlagsWriteTypeParametersInQualifiedName } from "../nodebuilder/types.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -194,11 +196,11 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
   const memberProps = Filter(Checker_getPropertiesOfType(receiver!.ch, Checker_getTypeOfSymbol(receiver!.ch, symbol_)), (p) => ((p!.Flags & SymbolFlagsEnumMember) !== 0) as bool);
   let members: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; i < memberProps.length; i++) {
-    const p = memberProps[i];
+    const p = GoSliceLoad(memberProps, i, GoPointerValueOps<Symbol>());
     if (NodeBuilderImpl_checkTruncationLengthIfExpanding(receiver) && i + 3 < memberProps.length - 1) {
       receiver!.ctx!.expansionTruncated = true as bool;
       members = GoSliceAppend(members, NewEnumMember(receiver!.f, NewStringLiteral(receiver!.f, ` ... ${memberProps.length - i - 1} more ... `, TokenFlagsNone), undefined), GoPointerValueOps<Node>());
-      const last = memberProps[memberProps.length - 1];
+      const last = GoSliceLoad(memberProps, memberProps.length - 1, GoPointerValueOps<Symbol>());
       members = GoSliceAppend(members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, last!.Name), NodeBuilderImpl_enumMemberInitializer(receiver, last)), GoPointerValueOps<Node>());
       break;
     }
@@ -428,7 +430,7 @@ export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>
 export function NodeBuilderImpl_addClassModifiers(receiver: GoPtr<NodeBuilderImpl>, members: GoSlice<GoPtr<Node>>, isStatic: bool): GoSlice<GoPtr<Node>> {
   const result = members;
   for (let i = 0; i < result.length; i++) {
-    const m = result[i];
+    const m = GoSliceLoad(result, i, GoPointerValueOps<Node>());
     let memberSymbol: GoPtr<Symbol>;
     const memberName = Node_Name(m);
     if (memberName !== undefined) {
@@ -447,7 +449,7 @@ export function NodeBuilderImpl_addClassModifiers(receiver: GoPtr<NodeBuilderImp
     if (modFlags !== 0 && CanHaveModifiers(m)) {
       const existing = Node_ModifierFlags(m);
       if (modFlags !== existing) {
-        result[i] = ReplaceModifiers(receiver!.f, m, NodeFactory_NewModifierList(receiver!.f, CreateModifiersFromModifierFlags(modFlags | existing, (kind) => NodeFactory_NewModifier(receiver!.f, kind))));
+        GoSliceStore(result, i, ReplaceModifiers(receiver!.f, m, NodeFactory_NewModifierList(receiver!.f, CreateModifiersFromModifierFlags(modFlags | existing, (kind) => NodeFactory_NewModifier(receiver!.f, kind)))), GoPointerValueOps<Node>());
       }
     }
   }
@@ -636,12 +638,12 @@ export function NodeBuilderImpl_serializePropertiesWithTruncation(receiver: GoPt
   const filtered = Filter(properties, (p) => ((p!.Flags & SymbolFlagsPrototype) === 0) as bool);
   let result = elements;
   for (let i = 0; i < filtered.length; i++) {
-    const p = filtered[i];
+    const p = GoSliceLoad(filtered, i, GoPointerValueOps<Symbol>());
     if (NodeBuilderImpl_checkTruncationLengthIfExpanding(receiver) && (i + 3 < filtered.length - 1)) {
       receiver!.ctx!.expansionTruncated = true as bool;
       const text = `... ${filtered.length - i - 1} more ...`;
       result = GoSliceAppend(result, NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, text), undefined, undefined, undefined), GoPointerValueOps<Node>());
-      result = NodeBuilderImpl_addPropertyToElementList(receiver, filtered[filtered.length - 1], result as GoSlice<GoPtr<TypeElement>>) as GoSlice<GoPtr<Node>>;
+      result = NodeBuilderImpl_addPropertyToElementList(receiver, GoSliceLoad(filtered, filtered.length - 1, GoPointerValueOps<Symbol>()), result as GoSlice<GoPtr<TypeElement>>) as GoSlice<GoPtr<Node>>;
       break;
     }
     result = NodeBuilderImpl_addPropertyToElementList(receiver, p, result as GoSlice<GoPtr<TypeElement>>) as GoSlice<GoPtr<Node>>;
@@ -725,7 +727,7 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
     if (baseSigs.length === signatures.length) {
       let allMatch = true;
       for (let i = 0; i < baseSigs.length; i++) {
-        if (Checker_compareSignaturesIdentical(receiver!.ch, signatures[i], baseSigs[i], false as bool, false as bool, true as bool, (s, t) => Checker_compareTypesIdentical(receiver!.ch, s, t)) !== TernaryTrue) {
+        if (Checker_compareSignaturesIdentical(receiver!.ch, GoSliceLoad(signatures, i, GoPointerValueOps<Signature>()), GoSliceLoad(baseSigs, i, GoPointerValueOps<Signature>()), false as bool, false as bool, true as bool, (s, t) => Checker_compareTypesIdentical(receiver!.ch, s, t)) !== TernaryTrue) {
           allMatch = false;
           break;
         }
@@ -1014,7 +1016,7 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
   let bodyStmts: GoSlice<HoverStatement> = GoNilSlice();
   const emittedLocals: GoPtr<Set<GoPtr<Symbol>>> = NewSetWithSizeHint<GoPtr<Symbol>>(0, goSymbolPointerKey);
   for (let i = 0; i < members.length; i++) {
-    const m = members[i];
+    const m = GoSliceLoad(members, i, GoPointerValueOps<Symbol>());
     if (NodeBuilderImpl_checkTruncationLengthIfExpanding(receiver) && i + 3 < members.length - 1) {
       receiver!.ctx!.expansionTruncated = true as bool;
       bodyStmts = GoAppend(bodyStmts, { node: NewExpressionStatement(receiver!.f, NewIdentifier(receiver!.f, `... (${members.length - i - 1} more) ...`)), isLocal: false as bool });

@@ -70,6 +70,8 @@ import { GetTraceWithWriterFromSys } from "./tsc/emit.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::startTracingIfNeeded","kind":"func","status":"implemented","sigHash":"42f5eed2c85a5deb3027e6f19fe244c4decd9026a0423e345d4350618fe06017"}
@@ -149,7 +151,7 @@ export function stopTracing(sys: GoInterface<System>, tr: GoPtr<Tracing>): void 
  */
 export function CommandLine(ctx: GoInterface<Context>, sys: GoInterface<System>, commandLineArgs: GoSlice<string>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
   if (commandLineArgs.length > 0) {
-    switch (ToLower(commandLineArgs[0]!)) {
+    switch (ToLower(GoSliceLoad(commandLineArgs, 0, GoStringValueOps)!)) {
       case "-b":
       case "--b":
       case "-build":

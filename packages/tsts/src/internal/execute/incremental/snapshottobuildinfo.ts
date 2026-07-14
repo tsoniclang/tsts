@@ -52,6 +52,8 @@ import { FileEmitKindNone, GetFileEmitKind } from "./snapshot.js";
 import type { referenceMap } from "./referencemap.js";
 import { referenceMap_getPathsWithReferences, referenceMap_getReferences } from "./referencemap.js";
 import { GoNumberValueOps, GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 /**
@@ -552,10 +554,10 @@ export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuild
   receiver!.buildInfo!.FileInfos = core.Map(Program_GetSourceFiles(receiver!.program), (file: GoPtr<import("../../ast/ast.js").SourceFile>) => {
     const [info] = SyncMap_Load<Path, GoInterface<FileInfo>>(receiver!.snapshot!.fileInfos, SourceFile_Path(file), GoZeroPointer<FileInfo>, GoStringKey);
     const fileId = toBuildInfo_toFileId(receiver, SourceFile_Path(file));
-    if (receiver!.buildInfo!.FileNames[fileId - 1] !== toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)) {
+    if (GoSliceLoad(receiver!.buildInfo!.FileNames, fileId - 1, GoStringValueOps) !== toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)) {
       const libFile = Program_GetDefaultLibFile(receiver!.program, SourceFile_Path(file));
-      if (libFile === undefined || libFile.Replaced || receiver!.buildInfo!.FileNames[fileId - 1] !== libFile.Name) {
-        throw new globalThis.Error(`File name at index ${fileId - 1} does not match expected relative path or libName: ${receiver!.buildInfo!.FileNames[fileId - 1]} != ${toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)}`);
+      if (libFile === undefined || libFile.Replaced || GoSliceLoad(receiver!.buildInfo!.FileNames, fileId - 1, GoStringValueOps) !== libFile.Name) {
+        throw new globalThis.Error(`File name at index ${fileId - 1} does not match expected relative path or libName: ${GoSliceLoad(receiver!.buildInfo!.FileNames, fileId - 1, GoStringValueOps)} != ${toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)}`);
       }
     }
     if (Tristate_IsTrue(receiver!.snapshot!.options!.Composite)) {
@@ -567,10 +569,10 @@ export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuild
           const incrementalEmitSignature: BuildInfoEmitSignature = { FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false };
           if (emitSignature!.signature !== "") {
             incrementalEmitSignature.Signature = emitSignature!.signature;
-          } else if (emitSignature!.signatureWithDifferentOptions[0] === info!.signature) {
+          } else if (GoSliceLoad(emitSignature!.signatureWithDifferentOptions, 0, GoStringValueOps) === info!.signature) {
             incrementalEmitSignature.DiffersOnlyInDtsMap = true;
           } else {
-            incrementalEmitSignature.Signature = emitSignature!.signatureWithDifferentOptions[0]!;
+            incrementalEmitSignature.Signature = GoSliceLoad(emitSignature!.signatureWithDifferentOptions, 0, GoStringValueOps)!;
             incrementalEmitSignature.DiffersInOptions = true;
           }
           receiver!.buildInfo!.EmitSignatures = GoSliceAppend(receiver!.buildInfo!.EmitSignatures, incrementalEmitSignature, GoPointerValueOps<BuildInfoEmitSignature>());
@@ -629,7 +631,7 @@ export function toBuildInfo_setRootOfIncrementalProgram(receiver: GoPtr<toBuildI
     if (receiver!.buildInfo!.Root.length === 0) {
       receiver!.buildInfo!.Root = GoSliceAppend(receiver!.buildInfo!.Root, { Start: resolved, End: 0, NonIncremental: "" }, GoPointerValueOps<BuildInfoRoot>());
     } else {
-      const last = receiver!.buildInfo!.Root[receiver!.buildInfo!.Root.length - 1]!;
+      const last = GoSliceLoad(receiver!.buildInfo!.Root, receiver!.buildInfo!.Root.length - 1, GoPointerValueOps<BuildInfoRoot>())!;
       if (last.End === resolved - 1) {
         last.End = resolved;
       } else if (last.End === 0 && last.Start === resolved - 1) {

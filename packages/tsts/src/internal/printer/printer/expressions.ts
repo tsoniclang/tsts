@@ -153,6 +153,8 @@ import {
   WriteKindPunctuation,
   tefNoSourceMaps,
 } from "./state.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::func::NewPrinter","kind":"func","status":"implemented","sigHash":"925479666aa66f6fd4bf95732fac23255b36fdf6b9810635f7d1f9c54c7ce832"}
@@ -607,7 +609,7 @@ export function canEmitSimpleArrowHead(parentNode: GoPtr<Node>, parameters: GoPt
   }
 
   const parent = AsArrowFunction(parentNode);
-  const parameter = AsParameterDeclaration(parameters!.Nodes[0]);
+  const parameter = AsParameterDeclaration(GoSliceLoad(parameters!.Nodes, 0, GoPointerValueOps<Node>()));
 
   const parentModifiers = Node_Modifiers(parent);
   const parameterModifiers = Node_Modifiers(parameter);

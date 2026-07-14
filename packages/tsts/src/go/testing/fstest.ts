@@ -4,6 +4,8 @@ import type { DirEntry, File, FileInfo, FileMode, FS, ReadDirFile } from "../io/
 import { ErrNotExist, ModeDir } from "../io/fs.js";
 import { Time } from "../time.js";
 import { GoInterfaceValueOps, GoSliceMake } from "../compat.js";
+import { GoNumberValueOps, GoSliceStore } from "../compat.js";
+
 
 
 export interface MapFile {
@@ -70,7 +72,7 @@ export function Open(map: MapFS, name: string): [GoInterface<File>, GoError] {
       const remaining = bytes.length - offset;
       const count = Math.max(0, Math.min(buffer.length, remaining));
       for (let index = 0; index < count; index += 1) {
-        buffer[index] = bytes[offset + index]!;
+        GoSliceStore(buffer, index, bytes[offset + index]!, GoNumberValueOps);
       }
       offset += count;
       return [count as int, undefined];

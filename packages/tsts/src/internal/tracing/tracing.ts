@@ -25,6 +25,8 @@ import type { FS } from "../vfs/vfs.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 import { GoInterfaceValueOps, GoNumberValueOps, GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 // string([]byte) conversion, matching the established decode idiom used by the
 // other ported internal files.
@@ -1656,7 +1658,7 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
     firstDeclSymbol = symbol;
   }
   if (firstDeclSymbol !== undefined && (firstDeclSymbol!.Declarations?.length ?? 0) > 0) {
-    desc.FirstDeclaration = getLocation(firstDeclSymbol!.Declarations![0]);
+    desc.FirstDeclaration = getLocation(GoSliceLoad(firstDeclSymbol!.Declarations!, 0, GoPointerValueOps<Node>()));
   }
 
   // Display text

@@ -188,6 +188,8 @@ import { newTypeMapper } from "../mapper.js";
 import { Checker_addDiagnostic, Checker_checkExternalEmitHelpers, Checker_containsSameNamedThisProperty, Checker_hasParentWithTypeAnnotation } from "../checker.js";
 import { Checker_isEmptyArrayLiteralType } from "./types.js";
 import { LanguageFeatureMinimumTarget, ExternalEmitHelpersRest } from "../types.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 function zeroSymbolNodeLinks(): SymbolNodeLinks {
   return { resolvedSymbol: undefined };
@@ -684,7 +686,7 @@ export function Checker_checkObjectLiteralAssignment(receiver: GoPtr<Checker>, n
  */
 export function Checker_checkObjectLiteralDestructuringPropertyAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, objectLiteralType: GoPtr<Type>, propertyIndex: int, allProperties: GoPtr<NodeList>, rightIsThis: bool): GoPtr<Type> {
   const properties = Node_Properties(node);
-  const property = properties![propertyIndex];
+  const property = GoSliceLoad(properties!, propertyIndex, GoPointerValueOps<Node>());
   if (IsPropertyAssignment(property) || IsShorthandPropertyAssignment(property)) {
     const name = Node_Name(property);
     const exprType = Checker_getLiteralTypeFromPropertyName(receiver, name);
@@ -715,7 +717,7 @@ export function Checker_checkObjectLiteralDestructuringPropertyAssignment(receiv
     let nonRestNames: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (allProperties !== undefined) {
       for (let i = 0; i < allProperties.Nodes.length; i++) {
-        const otherProperty = allProperties.Nodes[i];
+        const otherProperty = GoSliceLoad(allProperties.Nodes, i, GoPointerValueOps<Node>());
         if (!IsSpreadAssignment(otherProperty)) {
           nonRestNames = GoSliceAppend(nonRestNames, Node_Name(otherProperty), GoPointerValueOps<Node>());
         }
@@ -759,7 +761,7 @@ export function Checker_checkArrayLiteralAssignment(receiver: GoPtr<Checker>, no
   let inBoundsType: GoPtr<Type> = IfElse(receiver!.compilerOptions!.NoUncheckedIndexedAccess === TSTrue, undefined, possiblyOutOfBoundsType);
   for (let i = 0; i < elements!.length; i++) {
     let t = possiblyOutOfBoundsType;
-    if (elements![i]!.Kind === KindSpreadElement) {
+    if (GoSliceLoad(elements!, i, GoPointerValueOps<Node>())!.Kind === KindSpreadElement) {
       if (inBoundsType === undefined) {
         inBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, IterationUseDestructuring as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
       }
@@ -817,7 +819,7 @@ export function Checker_checkArrayLiteralAssignment(receiver: GoPtr<Checker>, no
  */
 export function Checker_checkArrayLiteralDestructuringElementAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceType: GoPtr<Type>, elementIndex: int, elementType: GoPtr<Type>, checkMode: CheckMode): GoPtr<Type> {
   const elements = Node_ElementList(node);
-  const element = elements!.Nodes[elementIndex];
+  const element = GoSliceLoad(elements!.Nodes, elementIndex, GoPointerValueOps<Node>());
   if (!IsOmittedExpression(element)) {
     if (!IsSpreadElement(element)) {
       const indexType = Checker_getNumberLiteralType(receiver, elementIndex);
@@ -1051,7 +1053,7 @@ export function Checker_isReadonlyAssignmentDeclaration(receiver: GoPtr<Checker>
     return false;
   }
   const args = Node_Arguments(node);
-  const propertyDescriptorType = Checker_checkExpressionCached(receiver, args![2]);
+  const propertyDescriptorType = Checker_checkExpressionCached(receiver, GoSliceLoad(args!, 2, GoPointerValueOps<Node>()));
   const valueType = Checker_getTypeOfPropertyOfType(receiver, propertyDescriptorType, "value");
   if (valueType !== undefined) {
     const writableProp = Checker_getPropertyOfType(receiver, propertyDescriptorType, "writable");
@@ -1161,7 +1163,7 @@ export function Checker_getWidenedTypeForAssignmentDeclaration(receiver: GoPtr<C
   if (t === undefined) {
     let types: GoSlice<GoPtr<Type>> = GoNilSlice();
     for (let i = 0; i < symbol_!.Declarations!.length; i++) {
-      const declaration = symbol_!.Declarations![i];
+      const declaration = GoSliceLoad(symbol_!.Declarations!, i, GoPointerValueOps<Node>());
       const typeNode = Node_Type(declaration);
       if (IsBinaryExpression(declaration) && typeNode !== undefined) {
         t = Checker_getTypeFromTypeNode(receiver, typeNode);
@@ -1253,7 +1255,7 @@ export function Checker_getAssignmentDeclarationInitializerType(receiver: GoPtr<
   }
   if (IsCallExpression(node)) {
     const args = Node_Arguments(node);
-    return Checker_getTypeFromPropertyDescriptor(receiver, args![2]);
+    return Checker_getTypeFromPropertyDescriptor(receiver, GoSliceLoad(args!, 2, GoPointerValueOps<Node>()));
   }
   return undefined;
 }
@@ -1371,7 +1373,7 @@ export function Checker_removeSubtypes(receiver: GoPtr<Checker>, types: GoSlice<
   let count = 0;
   while (i > 0) {
     i--;
-    const source = types[i]!;
+    const source = GoSliceLoad(types, i, GoPointerValueOps<Type>())!;
     if (hasEmptyObject || (source!.flags & TypeFlagsStructuredOrInstantiable) !== 0) {
       if ((source!.flags & TypeFlagsTypeParameter) !== 0 && (Checker_getBaseConstraintOrType(receiver, source)!.flags & TypeFlagsUnion) !== 0) {
         if (Checker_isTypeRelatedTo(receiver, source, Checker_getUnionType(receiver, types.map((t) => t === source ? receiver!.neverType : t)), receiver!.strictSubtypeRelation)) {
@@ -1456,7 +1458,7 @@ export function Checker_removeRedundantSupertypes(receiver: GoPtr<Checker>, type
   let i = result.length;
   while (i > 0) {
     i--;
-    const t = result[i];
+    const t = GoSliceLoad(result, i, GoPointerValueOps<Type>());
     const remove = ((t!.flags & TypeFlagsString) !== 0 && (includes & (TypeFlagsStringLiteral | TypeFlagsTemplateLiteral | TypeFlagsStringMapping)) !== 0) ||
       ((t!.flags & TypeFlagsNumber) !== 0 && (includes & TypeFlagsNumberLiteral) !== 0) ||
       ((t!.flags & TypeFlagsBigInt) !== 0 && (includes & TypeFlagsBigIntLiteral) !== 0) ||
@@ -1726,9 +1728,9 @@ export function Checker_getSingleBaseForNonAugmentingSubtype(receiver: GoPtr<Che
   const typeParameters = InterfaceType_TypeParameters(Type_AsInterfaceType(target));
   const typeArguments = Checker_getTypeArguments(receiver, t);
   if (typeParameters.length === 0) {
-    instantiatedBase = bases[0];
+    instantiatedBase = GoSliceLoad(bases, 0, GoPointerValueOps<Type>());
   } else {
-    instantiatedBase = Checker_instantiateType(receiver, bases[0], newTypeMapper(typeParameters, typeArguments.slice(0, typeParameters.length)));
+    instantiatedBase = Checker_instantiateType(receiver, GoSliceLoad(bases, 0, GoPointerValueOps<Type>()), newTypeMapper(typeParameters, typeArguments.slice(0, typeParameters.length)));
   }
   if (typeArguments.length > typeParameters.length) {
     instantiatedBase = Checker_getTypeWithThisArgument(receiver, instantiatedBase, LastOrNil(typeArguments, GoZeroPointer<Type>), false);

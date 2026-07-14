@@ -4,6 +4,8 @@ import { Time } from "../time.js";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
 import { GoInterfaceValueOps, GoSliceMake } from "../compat.js";
+import { GoNumberValueOps, GoSliceLoad, GoSliceStore } from "../compat.js";
+
 
 
 export type FileMode = number;
@@ -113,7 +115,7 @@ export function ReadFileBytes(fsys: FS, name: string): [Uint8Array, GoError] {
       break;
     }
     for (let index = 0; index < count; index += 1) {
-      chunks.push(buffer[index]!);
+      chunks.push(GoSliceLoad(buffer, index, GoNumberValueOps)!);
     }
     if (count < buffer.length) {
       break;
@@ -281,7 +283,7 @@ function openNodeFile(root: string, name: string): [GoInterface<File>, GoError] 
           const bytes = Buffer.alloc(buffer.length);
           const count = nodeFs.readSync(descriptor, bytes, 0, bytes.length, offset);
           offset += count;
-          for (let index = 0; index < count; index += 1) buffer[index] = bytes[index]!;
+          for (let index = 0; index < count; index += 1) GoSliceStore(buffer, index, bytes[index]!, GoNumberValueOps);
           return [count as int, undefined];
         } catch (error) {
           return [0, normalizeFsError(error)];

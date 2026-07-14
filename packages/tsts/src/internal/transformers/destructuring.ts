@@ -67,6 +67,8 @@ import type { Transformer } from "./transformer.js";
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::FlattenLevel","kind":"type","status":"implemented","sigHash":"ccbbed42a7410b2965acabbf9c1fb86eabca1bab73508cc3377beefbd68a8797"}
@@ -694,7 +696,7 @@ export function flattener_flattenDestructuringBinding(receiver: GoPtr<flattener>
   }
 
   if (decls.length === 1) {
-    return decls[0];
+    return GoSliceLoad(decls, 0, GoPointerValueOps<Node>());
   }
   if (decls.length === 0) {
     return undefined;
@@ -828,7 +830,7 @@ export function flattener_flattenObjectBindingOrAssignmentPattern(receiver: GoPt
   let bindingElements: GoSlice<GoPtr<Node>> = GoNilSlice();
   let computedTempVariables: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
+    const element = GoSliceLoad(elements, i, GoPointerValueOps<Node>());
     if (GetRestIndicatorOfBindingOrAssignmentElement(element) === undefined) {
       const propertyName = TryGetPropertyNameOfBindingOrAssignmentElement(element);
       if (
@@ -936,7 +938,7 @@ export function flattener_flattenArrayBindingOrAssignmentPattern(receiver: GoPtr
   let bindingElements: GoSlice<GoPtr<Node>> = GoNilSlice();
   let restContainingElements: GoSlice<restIdElemPair> = GoNilSlice();
   for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
+    const element = GoSliceLoad(elements, i, GoPointerValueOps<Node>());
     if (receiver!.level >= FlattenLevelObjectRest) {
       if ((Node_SubtreeFacts(element) & SubtreeContainsObjectRestOrSpread) !== 0 || receiver!.hasTransformedPriorElement && !isSimpleBindingOrAssignmentElement(element)) {
         receiver!.hasTransformedPriorElement = true;

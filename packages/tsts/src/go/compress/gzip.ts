@@ -3,6 +3,8 @@ import type { GoError, GoSlice } from "../compat.js";
 import type { Reader as IoReader, Writer as IoWriter } from "../io.js";
 import { EOF } from "../io.js";
 import * as nodeZlib from "node:zlib";
+import { GoNumberValueOps, GoSliceStore } from "../compat.js";
+
 
 export const BestCompression: int = 9 as int;
 
@@ -17,7 +19,7 @@ class gzipReader implements IoReader {
     }
     const count = Math.min(p.length, this.data.length - this.offset);
     for (let index = 0; index < count; index++) {
-      p[index] = this.data[this.offset + index]! as byte;
+      GoSliceStore(p, index, this.data[this.offset + index]! as byte, GoNumberValueOps);
     }
     this.offset += count;
     return [count as int, undefined];

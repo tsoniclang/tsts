@@ -61,6 +61,8 @@ import { addDisposableResourceHelper, asyncDelegatorHelper, asyncGeneratorHelper
 import type { GeneratedIdentifierFlags } from "./generatedidentifierflags.js";
 import { GeneratedIdentifierFlagsAuto, GeneratedIdentifierFlagsKindMask, GeneratedIdentifierFlagsLoop, GeneratedIdentifierFlagsNode, GeneratedIdentifierFlagsOptimistic, GeneratedIdentifierFlagsUnique } from "./generatedidentifierflags.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -661,10 +663,10 @@ export function NodeFactory_InlineExpressions(receiver: GoPtr<NodeFactory>, expr
     return undefined;
   }
   if (expressions.length === 1) {
-    return expressions[0];
+    return GoSliceLoad(expressions, 0, GoPointerValueOps<Node>());
   }
   const flattened = flattenCommaElements(expressions);
-  let expression = flattened[0];
+  let expression = GoSliceLoad(flattened, 0, GoPointerValueOps<Node>());
   for (const next of flattened.slice(1)) {
     expression = NodeFactory_NewCommaExpression(receiver, expression, next);
   }
@@ -782,7 +784,7 @@ export function NodeFactory_RestoreEnclosingLabel(receiver: GoPtr<NodeFactory>, 
 export function NodeFactory_CreateForOfBindingStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<Node>, boundValue: GoPtr<Node>): GoPtr<Node> {
   const f = receiver!.__tsgoEmbedded0!;
   if (IsVariableDeclarationList(node)) {
-    const firstDeclaration = AsVariableDeclarationList(node)!.Declarations!.Nodes[0];
+    const firstDeclaration = GoSliceLoad(AsVariableDeclarationList(node)!.Declarations!.Nodes, 0, GoPointerValueOps<Node>());
     const updatedDeclaration = NodeFactory_UpdateVariableDeclaration(
       f,
       AsVariableDeclaration(firstDeclaration),
@@ -1077,7 +1079,7 @@ export function NodeFactory_EnsureUseStrict(receiver: GoPtr<NodeFactory>, statem
  */
 export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, source: GoSlice<GoPtr<Statement>>): [prologue: GoSlice<GoPtr<Statement>>, rest: GoSlice<GoPtr<Statement>>] {
   for (let i = 0; i < source.length; i++) {
-    if (!IsPrologueDirective(source[i])) {
+    if (!IsPrologueDirective(GoSliceLoad(source, i, GoPointerValueOps<Node>()))) {
       return [source.slice(0, i), source.slice(i)];
     }
   }
@@ -1099,7 +1101,7 @@ export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, 
  */
 export function NodeFactory_SplitCustomPrologue(receiver: GoPtr<NodeFactory>, source: GoSlice<GoPtr<Statement>>): [prologue: GoSlice<GoPtr<Statement>>, rest: GoSlice<GoPtr<Statement>>] {
   for (let i = 0; i < source.length; i++) {
-    if (IsPrologueDirective(source[i]) || (EmitContext_EmitFlags(receiver!.emitContext, source[i]) & EFCustomPrologue) === 0) {
+    if (IsPrologueDirective(GoSliceLoad(source, i, GoPointerValueOps<Node>())) || (EmitContext_EmitFlags(receiver!.emitContext, GoSliceLoad(source, i, GoPointerValueOps<Node>())) & EFCustomPrologue) === 0) {
       return [source.slice(0, i), source.slice(i)];
     }
   }
@@ -1954,11 +1956,11 @@ export function NodeFactory_NewRestHelper(receiver: GoPtr<NodeFactory>, value: G
     if (i === elements.length - 1) {
       break;
     }
-    const element = elements[i];
+    const element = GoSliceLoad(elements, i, GoPointerValueOps<Node>());
     const propertyName = TryGetPropertyNameOfBindingOrAssignmentElement(element);
     if (propertyName !== undefined) {
       if (IsComputedPropertyName(propertyName)) {
-        const temp = computedTempVariables[computedTempVariableOffset];
+        const temp = GoSliceLoad(computedTempVariables, computedTempVariableOffset, GoPointerValueOps<Node>());
         computedTempVariableOffset++;
         // typeof _tmp === "symbol" ? _tmp : _tmp + ""
         propertyNames = GoSliceAppend(propertyNames, NewConditionalExpression(

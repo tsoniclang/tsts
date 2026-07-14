@@ -40,6 +40,8 @@ import { getWildcardDirectories } from "./wildcarddirectories.js";
 
 import type { GoInterface, GoRef } from "../../go/compat.js";
 import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::constGroup::fileGlobPattern+recursiveFileGlobPattern","kind":"constGroup","status":"implemented","sigHash":"beaaec06113aca6510e27d43edae16455fb426b97ea0b4f79b8193f1ccb5d65d"}
@@ -956,7 +958,7 @@ export function ParsedCommandLine_GetMatchedIncludeSpec(receiver: GoPtr<ParsedCo
   }
 
   if (p.ConfigFile!.configFileSpecs!.isDefaultIncludeSpec) {
-    return [p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs[0]!, true];
+    return [GoSliceLoad(p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs, 0, GoStringValueOps)!, true];
   }
 
   return [configFileSpecs_getMatchedIncludeSpec(p.ConfigFile!.configFileSpecs, fileName, p.comparePathsOptions), false];

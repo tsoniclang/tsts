@@ -13,6 +13,8 @@ import type { FS } from "../vfs.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoNumberValueOps, GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad, GoSliceValueOps } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::Usage","kind":"type","status":"implemented","sigHash":"56c72bc27d92dabb6a98e08c0218812331e176b895533580d85b7591ec37069d"}
@@ -336,7 +338,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
   }
 
   // Normalize root: "/home/" -> "/home"
-  parts[0] = RemoveTrailingDirectorySeparator(parts[0]!);
+  parts[0] = RemoveTrailingDirectorySeparator(GoSliceLoad(parts, 0, GoStringValueOps)!);
 
   // Directories implicitly match all files: "src" -> "src/** /*"
   if (IsImplicitGlob(LastOrNil(parts, GoZeroString))) {
@@ -1322,7 +1324,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
     }
     const [idx, ok] = globMatcher_matchesFileParts(receiver!.fileMatcher, absPrefix, file);
     if (ok) {
-      receiver!.results[idx] = GoSliceAppend(receiver!.results[idx]!, pathPrefix + file, GoStringValueOps);
+      receiver!.results[idx] = GoSliceAppend(GoSliceLoad(receiver!.results, idx, GoSliceValueOps<string>())!, pathPrefix + file, GoStringValueOps);
     }
   }
 
@@ -1416,7 +1418,7 @@ export function matchFiles(path: string, extensions: GoSlice<string>, excludes: 
 
   // Fast path: a single include bucket (or no includes) doesn't need flattening.
   if (v.results.length === 1) {
-    return v.results[0]!;
+    return GoSliceLoad(v.results, 0, GoSliceValueOps<string>())!;
   }
   return Flatten(v.results);
 }

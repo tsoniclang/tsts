@@ -80,6 +80,8 @@ import {
 } from "./scanner.js";
 import type { EscapeSequenceScanningFlags, Scanner } from "./scanner.js";
 import { CodePointToSurrogatePair, DecodeJSStringRune, EncodeJSStringRune } from "../stringutil/util.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 // Go strings are UTF-8 byte sequences; the regexp parser tracks byte offsets
 // (p.pos()). These helpers reproduce Go's byte-indexed string operations.
@@ -1121,7 +1123,7 @@ export function regExpParser_scanGroupName(receiver: GoPtr<regExpParser>, isRefe
     );
   } else {
     if (receiver!.namedCapturingGroups.length > 0) {
-      receiver!.namedCapturingGroups[receiver!.namedCapturingGroups.length - 1]!.set(
+      GoSliceLoad(receiver!.namedCapturingGroups, receiver!.namedCapturingGroups.length - 1, GoMapValueOps<string, boolean>())!.set(
         receiver!.scanner!.__tsgoEmbedded0!.tokenValue,
         true,
       );

@@ -161,6 +161,8 @@ import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, Pro
 
 import type { GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad, GoSliceValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"e4d76c1ba9ccfb10d7454bc6476b0b4aba5b90252da267c2a9e78887e7354047"}
@@ -821,7 +823,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
   }
   try {
     for (let index = 0; index < rootFiles.length; index++) {
-      const rootFile = rootFiles[index]!;
+      const rootFile = GoSliceLoad(rootFiles, index, GoStringValueOps)!;
       fileLoader_addRootFileTask(loader, rootFile, undefined, {
         kind: fileIncludeKindRootFile,
         data: index,
@@ -845,7 +847,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
         });
       } else {
         for (let index = 0; index < compilerOptions!.Lib.length; index++) {
-          const lib = compilerOptions!.Lib[index]!;
+          const lib = GoSliceLoad(compilerOptions!.Lib, index, GoStringValueOps)!;
           const [name, ok] = GetLibFileName(lib);
           if (ok) {
             const libFile = fileLoader_pathForLibFile(loader, name);
@@ -1507,7 +1509,7 @@ export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader
   if (allowNonTsExtensions) {
     return ["", { message: diagnostics.File_0_not_found, args: [diagnosticFileName] }];
   }
-  for (const ext of receiver!.supportedExtensions[0]!) {
+  for (const ext of GoSliceLoad(receiver!.supportedExtensions, 0, GoSliceValueOps<string>())!) {
     const candidate = fileName + ext;
     if (receiver!.opts.Host!.FS()!.FileExists(candidate)) {
       return [candidate, undefined];
@@ -1668,7 +1670,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
     ));
     let typeResolutionsTrace: GoSlice<DiagAndArgs> = GoNilSlice();
     for (let index = 0; index < file!.TypeReferenceDirectives.length; index++) {
-      const ref = file!.TypeReferenceDirectives[index]!;
+      const ref = GoSliceLoad(file!.TypeReferenceDirectives, index, GoPointerValueOps<FileReference>())!;
       const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, SourceFile_as_ast_HasFileName(file));
       const redirectedReference = redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined;
       const resolutionMode = getModeForTypeReferenceDirectiveInFile(ref, file, meta, GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirectedReference));
@@ -1899,7 +1901,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
       const extensionHost = fileLoader_getExtensionHost(receiver);
 
       for (let index = 0; index < moduleNames.length; index++) {
-        const entry = moduleNames[index]!;
+        const entry = GoSliceLoad(moduleNames, index, GoPointerValueOps<Node>())!;
         const moduleName = Node_Text(entry);
         if (moduleName === "") {
           continue;
@@ -1938,7 +1940,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
           GetResolutionDiagnostic(optionsForFile, resolvedModule, file) === undefined &&
           !Tristate_IsTrue(optionsForFile!.NoResolve) &&
           !(isJsFile && !CompilerOptions_GetAllowJS(optionsForFile)) &&
-          (importIndex < 0 || (importIndex < fileImports.length && (IsInJSFile(fileImports[importIndex]) || (fileImports[importIndex]!.Flags & NodeFlagsJSDoc) === 0)));
+          (importIndex < 0 || (importIndex < fileImports.length && (IsInJSFile(GoSliceLoad(fileImports, importIndex, GoPointerValueOps<Node>())) || (GoSliceLoad(fileImports, importIndex, GoPointerValueOps<Node>())!.Flags & NodeFlagsJSDoc) === 0)));
 
         if (shouldAddFile) {
           parseTask_addSubTask(t, {
@@ -2114,16 +2116,16 @@ export function getLibraryNameFromLibFileName(libFileName: string): string {
   const components = strings.Split(libFileName, ".");
   let path = "@typescript/lib-";
   if (components.length > 1) {
-    path += components[1];
+    path += GoSliceLoad(components, 1, GoStringValueOps);
   }
   let i = 2;
-  while (i < components.length && components[i] !== "" && components[i] !== "d") {
+  while (i < components.length && GoSliceLoad(components, i, GoStringValueOps) !== "" && GoSliceLoad(components, i, GoStringValueOps) !== "d") {
     if (i === 2) {
       path += "/";
     } else {
       path += "-";
     }
-    path += components[i];
+    path += GoSliceLoad(components, i, GoStringValueOps);
     i++;
   }
   return path;

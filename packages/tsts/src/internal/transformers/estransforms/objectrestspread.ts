@@ -28,6 +28,8 @@ import { Transformer_NewTransformer, Transformer_EmitContext, Transformer_Factor
 import { NodeVisitor_VisitNode, NodeVisitor_VisitEachChild, NodeVisitor_VisitNodes } from "../../ast/visitor.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 /**
@@ -684,7 +686,7 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
     let custom = false;
     const bodyStmts = Node_Statements(body) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     for (let i = 0; i < bodyStmts.length; i++) {
-      const statement = bodyStmts[i];
+      const statement = GoSliceLoad(bodyStmts, i, GoPointerValueOps<Node>());
       if (!custom && IsPrologueDirective(statement)) {
         prefix = GoSliceAppend(prefix, statement, GoPointerValueOps<Node>());
       } else if ((EmitContext_EmitFlags(emitContext, statement) & EFCustomPrologue) !== 0) {
@@ -1241,19 +1243,19 @@ export function objectRestSpreadTransformer_visitObjectLiteralExpression(receive
     return NodeVisitor_VisitEachChild(visitor, nodeAsNode);
   }
   let objects = objectRestSpreadTransformer_chunkObjectLiteralElements(receiver, node!.Properties);
-  if (objects.length > 0 && objects[0]!.Kind !== KindObjectLiteralExpression) {
+  if (objects.length > 0 && GoSliceLoad(objects, 0, GoPointerValueOps<Node>())!.Kind !== KindObjectLiteralExpression) {
     objects = GoAppendSlice(
       [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, GoNilSlice<GoPtr<Node>>()) as unknown as GoPtr<never>, false)],
       objects,
     );
   }
-  let expression = objects[0];
+  let expression = GoSliceLoad(objects, 0, GoPointerValueOps<Node>());
   if (objects.length > 1) {
     for (let i = 0; i < objects.length; i++) {
       if (i === 0) {
         continue;
       }
-      expression = NodeFactory_NewAssignHelper(printerFactory, [expression, objects[i]] as unknown as GoPtr<never>[], CompilerOptions_GetEmitScriptTarget(receiver!.compilerOptions)) as unknown as GoPtr<Node>;
+      expression = NodeFactory_NewAssignHelper(printerFactory, [expression, GoSliceLoad(objects, i, GoPointerValueOps<Node>())] as unknown as GoPtr<never>[], CompilerOptions_GetEmitScriptTarget(receiver!.compilerOptions)) as unknown as GoPtr<Node>;
     }
     return expression;
   }

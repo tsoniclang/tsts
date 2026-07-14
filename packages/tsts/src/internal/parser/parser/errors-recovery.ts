@@ -11,6 +11,8 @@ import type { TextRange } from "../../core/text.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import { SkipTrivia } from "../../scanner/scanner.js";
 import type { Parser } from "./state.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.scanError","kind":"method","status":"implemented","sigHash":"4cb77a38a6d3ba42f133ea91d3303ab6f366aec1c1e60aa0365afb68874ed7bb"}
@@ -54,7 +56,7 @@ export function Parser_parseErrorAt(receiver: GoPtr<Parser>, pos: int, end: int,
 export function Parser_parseErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   // Don't report another error if it would just be at the same location as the last error
   let result: GoPtr<Diagnostic> = undefined;
-  if (receiver!.diagnostics.length === 0 || Diagnostic_Pos(receiver!.diagnostics[receiver!.diagnostics.length - 1]) !== TextRange_Pos(loc)) {
+  if (receiver!.diagnostics.length === 0 || Diagnostic_Pos(GoSliceLoad(receiver!.diagnostics, receiver!.diagnostics.length - 1, GoPointerValueOps<Diagnostic>())) !== TextRange_Pos(loc)) {
     result = NewDiagnostic(undefined, loc, message, ...args);
     receiver!.diagnostics = GoSliceAppend(receiver!.diagnostics, result, GoPointerValueOps<Diagnostic>());
   }

@@ -22,6 +22,8 @@ import type { TokenFlags } from "../ast/tokenflags.js";
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::shouldRescanLessThanLessThanToken","kind":"func","status":"implemented","sigHash":"027e136379acde7957dacce28399aee470574eaa534d282f4d10a947c386695d"}
@@ -393,8 +395,8 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
         left = NodeList_End(nodeList);
         nodeAfterLeft = undefined;
         for (let i = nodeList.Nodes.length - 1; i >= 0; i--) {
-          if ((nodeList.Nodes[i]!.Flags & NodeFlagsReparsed) === 0) {
-            prevSubtree = nodeList.Nodes[i];
+          if ((GoSliceLoad(nodeList.Nodes, i, GoPointerValueOps<Node>())!.Flags & NodeFlagsReparsed) === 0) {
+            prevSubtree = GoSliceLoad(nodeList.Nodes, i, GoPointerValueOps<Node>());
             break;
           }
         }
@@ -412,15 +414,15 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
             left = Node_End(node);
             nodeAfterLeft = undefined;
             for (let i = middle + 1; i < nodes.length; i++) {
-              if ((nodes[i]!.Flags & NodeFlagsReparsed) === 0) {
-                nodeAfterLeft = nodes[i];
+              if ((GoSliceLoad(nodes, i, GoPointerValueOps<Node>())!.Flags & NodeFlagsReparsed) === 0) {
+                nodeAfterLeft = GoSliceLoad(nodes, i, GoPointerValueOps<Node>());
                 break;
               }
             }
           }
           return cmp;
         });
-        if (match && (nodes[index]!.Flags & NodeFlagsReparsed) !== 0) {
+        if (match && (GoSliceLoad(nodes, index, GoPointerValueOps<Node>())!.Flags & NodeFlagsReparsed) !== 0) {
           // filter and search again
           nodes = Filter(nodes, (node: GoPtr<Node>): bool => {
             return ((node!.Flags & NodeFlagsReparsed) === 0) as bool;
@@ -430,7 +432,7 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
             if (cmp < 0) {
               left = Node_End(node);
               if (middle + 1 < nodes.length) {
-                nodeAfterLeft = nodes[middle + 1];
+                nodeAfterLeft = GoSliceLoad(nodes, middle + 1, GoPointerValueOps<Node>());
               } else {
                 nodeAfterLeft = undefined;
               }
@@ -439,7 +441,7 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
           });
         }
         if (match) {
-          next = nodes[index];
+          next = GoSliceLoad(nodes, index, GoPointerValueOps<Node>());
         }
       }
     }
@@ -801,11 +803,11 @@ export function FindPrecedingTokenEx(sourceFile: GoPtr<SourceFile>, position: in
         const nodes = nodeList.Nodes;
         const [index, match] = BinarySearchUniqueFunc(nodes, (middle: int, _node: GoPtr<Node>): int => {
           // synthetic jsdoc nodes should have jsdocNode.End() <= n.Pos()
-          if ((nodes[middle]!.Flags & NodeFlagsReparsed) !== 0) {
+          if ((GoSliceLoad(nodes, middle, GoPointerValueOps<Node>())!.Flags & NodeFlagsReparsed) !== 0) {
             return comparisonLessThan;
           }
-          if (position < Node_End(nodes[middle])) {
-            if (middle === 0 || position >= Node_End(nodes[middle - 1])) {
+          if (position < Node_End(GoSliceLoad(nodes, middle, GoPointerValueOps<Node>()))) {
+            if (middle === 0 || position >= Node_End(GoSliceLoad(nodes, middle - 1, GoPointerValueOps<Node>()))) {
               return comparisonEqualTo;
             }
             return comparisonGreaterThan;
@@ -814,16 +816,16 @@ export function FindPrecedingTokenEx(sourceFile: GoPtr<SourceFile>, position: in
         });
 
         if (match) {
-          foundChild = nodes[index];
+          foundChild = GoSliceLoad(nodes, index, GoPointerValueOps<Node>());
         }
 
         const validLookupIndex = IfElse(match, index - 1, nodes.length - 1);
         for (let i = validLookupIndex; i >= 0; i--) {
-          if ((nodes[i]!.Flags & NodeFlagsReparsed) !== 0) {
+          if ((GoSliceLoad(nodes, i, GoPointerValueOps<Node>())!.Flags & NodeFlagsReparsed) !== 0) {
             continue;
           }
           if (prevChild === undefined) {
-            prevChild = nodes[i];
+            prevChild = GoSliceLoad(nodes, i, GoPointerValueOps<Node>());
           }
         }
       }
@@ -841,8 +843,8 @@ export function FindPrecedingTokenEx(sourceFile: GoPtr<SourceFile>, position: in
           let jsDoc: GoPtr<Node> = undefined;
           const nodeJSDoc = Node_JSDoc(n, sourceFile);
           for (let i = nodeJSDoc.length - 1; i >= 0; i--) {
-            if (Node_Pos(nodeJSDoc[i]) >= Node_Pos(foundChild)) {
-              jsDoc = nodeJSDoc[i];
+            if (Node_Pos(GoSliceLoad(nodeJSDoc, i, GoPointerValueOps<Node>())) >= Node_Pos(foundChild)) {
+              jsDoc = GoSliceLoad(nodeJSDoc, i, GoPointerValueOps<Node>());
               break;
             }
           }
@@ -1111,20 +1113,20 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
         });
         let validIndex = -1;
         for (let i = index - 1; i >= 0; i--) {
-          if (!shouldVisitNode(nodeList.Nodes[i])) {
+          if (!shouldVisitNode(GoSliceLoad(nodeList.Nodes, i, GoPointerValueOps<Node>()))) {
             continue;
           }
-          if (isValidPrecedingNode(nodeList.Nodes[i], sourceFile)) {
+          if (isValidPrecedingNode(GoSliceLoad(nodeList.Nodes, i, GoPointerValueOps<Node>()), sourceFile)) {
             validIndex = i;
-            rightmostValidNode = nodeList.Nodes[i];
+            rightmostValidNode = GoSliceLoad(nodeList.Nodes, i, GoPointerValueOps<Node>());
             break;
           }
         }
         for (let i = validIndex + 1; i < index; i++) {
-          if (!shouldVisitNode(nodeList.Nodes[i])) {
+          if (!shouldVisitNode(GoSliceLoad(nodeList.Nodes, i, GoPointerValueOps<Node>()))) {
             continue;
           }
-          rightmostVisitedNodes = GoSliceAppend(rightmostVisitedNodes, nodeList.Nodes[i], GoPointerValueOps<Node>());
+          rightmostVisitedNodes = GoSliceAppend(rightmostVisitedNodes, GoSliceLoad(nodeList.Nodes, i, GoPointerValueOps<Node>()), GoPointerValueOps<Node>());
         }
       }
       return nodeList;
@@ -1183,8 +1185,8 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
       const lastToken = tokens.length - 1;
       // Find preceding valid token.
       for (let i = lastToken; i >= 0; i--) {
-        if (!IsWhitespaceOnlyJsxText(tokens[i])) {
-          return tokens[i];
+        if (!IsWhitespaceOnlyJsxText(GoSliceLoad(tokens, i, GoPointerValueOps<Node>()))) {
+          return GoSliceLoad(tokens, i, GoPointerValueOps<Node>());
         }
       }
     }
@@ -1311,7 +1313,7 @@ export function FindNextToken(previousToken: GoPtr<Node>, parent: GoPtr<Node>, f
           return comparisonEqualTo;
         });
         if (match) {
-          foundNode = nodes[index];
+          foundNode = GoSliceLoad(nodes, index, GoPointerValueOps<Node>());
         }
       }
       return nodeList;

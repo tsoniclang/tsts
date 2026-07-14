@@ -33,6 +33,8 @@ import type { EmitContext } from "../../printer/emitcontext.js";
 
 import type { GoFunc } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isClassNamedEvaluationHelperBlock","kind":"func","status":"implemented","sigHash":"915e1187f285d1c5273cfd1809f7b31c9ef3b7e5dc03cbc819cd0ccf0f70683f"}
@@ -65,14 +67,14 @@ export function isClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitContext
     return false;
   }
 
-  const statement = bodyStatements[0];
+  const statement = GoSliceLoad(bodyStatements, 0, GoPointerValueOps<Node>());
   if (IsExpressionStatement(statement)) {
     const expression = Node_Expression(statement);
     if (EmitContext_IsCallToHelper(emitContext, expression, "__setFunctionName")) {
       const callExpr = AsCallExpression(expression);
       const args = callExpr!.Arguments;
       return args!.Nodes.length >= 2 &&
-        args!.Nodes[1] === EmitContext_AssignedName(emitContext, node);
+        GoSliceLoad(args!.Nodes, 1, GoPointerValueOps<Node>()) === EmitContext_AssignedName(emitContext, node);
     }
   }
   return false;
@@ -444,14 +446,14 @@ export function injectClassNamedEvaluationHelperBlockIfMissing(emitContext: GoPt
     const csbd = AsClassStaticBlockDeclaration(namedEvaluationBlock)!;
     const bodyStmts = Node_Statements(csbd.Body as unknown as GoPtr<Node>);
     if (bodyStmts !== undefined && bodyStmts.length > 0) {
-      EmitContext_SetSourceMapRange(emitContext, bodyStmts[0], nodeName!.Loc);
+      EmitContext_SetSourceMapRange(emitContext, GoSliceLoad(bodyStmts, 0, GoPointerValueOps<Node>()), nodeName!.Loc);
     }
   }
   // Find insertionIndex: index after last isClassThisAssignmentBlock (or 0 if none)
   const members = Node_Members(node as unknown as GoPtr<Node>) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   let insertionIndex = 0;
   for (let i = 0; i < members.length; i++) {
-    if (isClassThisAssignmentBlock(emitContext, members[i])) {
+    if (isClassThisAssignmentBlock(emitContext, GoSliceLoad(members, i, GoPointerValueOps<Node>()))) {
       insertionIndex = i + 1;
     }
   }

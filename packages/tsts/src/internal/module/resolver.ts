@@ -82,6 +82,8 @@ import { ComparePatternKeys, InferredTypesContainingFile, IsApplicableVersionedT
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 const packageJsonNotPresentValue = (): JSONValue => ({ Type: JSONValueTypeNotPresent, Value: undefined });
 
@@ -4462,7 +4464,7 @@ export function MatchPatternOrExact(patterns: GoPtr<ParsedPatterns>, candidate: 
 export function normalizePathForCJSResolution(containingDirectory: string, moduleName: string): string {
   const combined = tspath.CombinePaths(containingDirectory, moduleName);
   const parts = tspath.GetPathComponents(combined, "");
-  const lastPart = parts[parts.length - 1];
+  const lastPart = GoSliceLoad(parts, parts.length - 1, GoStringValueOps);
   if (lastPart === "." || lastPart === "..") {
     return tspath.EnsureTrailingDirectorySeparator(tspath.NormalizePath(combined));
   }

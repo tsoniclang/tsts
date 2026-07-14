@@ -301,6 +301,8 @@ import type { NodeVisitor } from "./visitor.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad, GoSliceStore } from "../../go/compat.js";
+
 
 export type { Node, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeBase } from "./spine.js";
 
@@ -4802,7 +4804,7 @@ export function ImportAttributesNode_GetResolutionModeOverride(receiver: GoPtr<I
     return [ResolutionModeNone, false];
   }
 
-  const elem = casts.AsImportAttribute(attributes!.Nodes[0]);
+  const elem = casts.AsImportAttribute(GoSliceLoad(attributes!.Nodes, 0, GoPointerValueOps<Node>()));
   const name = elem!.name;
   if (!utilities.IsStringLiteralLike(name)) {
     return [ResolutionModeNone, false];
@@ -6307,11 +6309,11 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
           let declarations = result.get(declarationName);
           let lastDeclaration: GoPtr<Node>;
           if (declarations !== undefined && declarations.length !== 0) {
-            lastDeclaration = declarations[declarations.length - 1];
+            lastDeclaration = GoSliceLoad(declarations, declarations.length - 1, GoPointerValueOps<Node>());
           }
           if (lastDeclaration !== undefined && node!.Parent === lastDeclaration!.Parent && Node_Symbol(node) === Node_Symbol(lastDeclaration)) {
             if (Node_Body(node) !== undefined && Node_Body(lastDeclaration) === undefined) {
-              declarations![declarations!.length - 1] = node;
+              GoSliceStore(declarations!, declarations!.length - 1, node, GoPointerValueOps<Node>());
             }
           } else {
             if (declarations === undefined) {

@@ -16,6 +16,8 @@ import { From } from "../iovfs/iofs.js";
 import type { FS } from "../vfs.js";
 import { GetCanonicalFileName, IsRootedDiskPath, NormalizePath, PathIsAbsolute, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 import { GoInterfaceValueOps, GoSliceMake } from "../../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad, GoSliceStore } from "../../../go/compat.js";
+
 
 
 // Internal runtime shape of a fs.FileInfo.
@@ -552,7 +554,7 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [GoInterfa
       const remaining = bytes.length - offset;
       const count = Math.max(0, Math.min(buffer.length, remaining));
       for (let index = 0; index < count; index += 1) {
-        buffer[index] = bytes[offset + index]!;
+        buffer[index] = GoSliceLoad(bytes, offset + index, GoNumberValueOps)!;
       }
       offset += count;
       return [count as int, undefined];
@@ -1146,7 +1148,7 @@ export function readDirFile_ReadDir(receiver: GoPtr<readDirFile>, n: int): [GoSl
       const infoInternal = info as unknown as InternalFileInfo;
       throw new globalThis.Error(Sprintf("unexpected synthesized dir: %q", infoInternal.Name()));
     }
-    entries[i] = FileInfoToDirEntry(newInfo);
+    GoSliceStore(entries, i, FileInfoToDirEntry(newInfo), GoInterfaceValueOps<DirEntry>());
   }
 
   return [entries, undefined];

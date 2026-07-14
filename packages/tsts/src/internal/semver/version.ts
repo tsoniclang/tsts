@@ -8,6 +8,8 @@ import * as slices from "../../go/slices.js";
 import * as strconv from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -531,11 +533,11 @@ export function TryParseVersion(text: string): [Version, GoError] {
     return [result, new globalThis.Error(SemverParseError_Error({ origInput: text }))];
   }
 
-  const majorStr: string = match[1]!;
-  const minorStr: string = match[2]!;
-  const patchStr: string = match[3]!;
-  const prereleaseStr: string = match[4]!;
-  const buildStr: string = match[5]!;
+  const majorStr: string = GoSliceLoad(match, 1, GoStringValueOps)!;
+  const minorStr: string = GoSliceLoad(match, 2, GoStringValueOps)!;
+  const patchStr: string = GoSliceLoad(match, 3, GoStringValueOps)!;
+  const prereleaseStr: string = GoSliceLoad(match, 4, GoStringValueOps)!;
+  const buildStr: string = GoSliceLoad(match, 5, GoStringValueOps)!;
 
   const [majorVal, majorErr] = getUintComponent(majorStr);
   if (majorErr !== undefined) {

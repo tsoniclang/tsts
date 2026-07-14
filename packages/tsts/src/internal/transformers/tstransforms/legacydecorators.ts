@@ -37,6 +37,8 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_Vis
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore, GoSliceValueOps } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::type::LegacyDecoratorsTransformer","kind":"type","status":"implemented","sigHash":"b66f56e4f4d049b0ce7ef446589bacd50681f85953dddb5eda4dd31aa81e8d7f"}
@@ -1052,7 +1054,7 @@ export function LegacyDecoratorsTransformer_transformClassDeclarationWithClassDe
   }
 
   if (statements.length === 1) {
-    return statements[0];
+    return GoSliceLoad(statements, 0, GoPointerValueOps<Node>());
   }
   return NewSyntaxList(astFactory, statements);
 }
@@ -1215,7 +1217,7 @@ export function LegacyDecoratorsTransformer_getConstructorDecorationStatement(re
 export function LegacyDecoratorsTransformer_generateConstructorDecorationExpression(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>): GoPtr<Node> {
   const allDecorators = getAllDecoratorsOfClass(node, true as bool);
   const nodeAsNode = node as unknown as GoPtr<Node>;
-  const hasAlias = receiver!.enclosingClasses.length > 0 && receiver!.enclosingClasses[receiver!.enclosingClasses.length - 1] === node;
+  const hasAlias = receiver!.enclosingClasses.length > 0 && GoSliceLoad(receiver!.enclosingClasses, receiver!.enclosingClasses.length - 1, GoPointerValueOps<ClassDeclaration>()) === node;
   if (hasAlias) {
     LegacyDecoratorsTransformer_popEnclosingClass(receiver);
   }
@@ -1561,18 +1563,18 @@ export function getDecoratorsOfParameters(node: GoPtr<Node>): GoSlice<GoSlice<Go
   const decorators: GoSlice<GoSlice<GoPtr<Node>>> = GoSliceMake(0, 0, GoSliceValueOps<GoPtr<Node>>());
   if (node !== undefined) {
     const parameters = Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
-    const firstParameterIsThis = parameters.length > 0 && IsThisParameter(parameters[0] as unknown as GoPtr<Node>);
+    const firstParameterIsThis = parameters.length > 0 && IsThisParameter(GoSliceLoad(parameters, 0, GoPointerValueOps<Node>()) as unknown as GoPtr<Node>);
     const firstParameterOffset: int = firstParameterIsThis ? 1 : 0;
     const numParameters: int = parameters.length - firstParameterOffset;
     for (let i = 0; i < numParameters; i++) {
-      const p = parameters[i + firstParameterOffset] as unknown as GoPtr<Node>;
+      const p = GoSliceLoad(parameters, i + firstParameterOffset, GoPointerValueOps<Node>()) as unknown as GoPtr<Node>;
       if (decorators.length > 0 || HasDecorators(p)) {
         if (decorators.length === 0) {
           for (let j = 0; j < numParameters; j++) {
             decorators.push([]);
           }
         }
-        decorators[i] = Node_Decorators(p) ?? [];
+        GoSliceStore(decorators, i, Node_Decorators(p) ?? [], GoSliceValueOps<GoPtr<Node>>());
       }
     }
   }
@@ -1879,7 +1881,7 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   let results: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; i < parameters.length; i++) {
-    const decorators = parameters[i];
+    const decorators = GoSliceLoad(parameters, i, GoSliceValueOps<GoPtr<Node>>());
     if (decorators !== undefined && decorators.length > 0) {
       for (const decorator of decorators) {
         const decoratorExpr = Node_Expression(decorator);

@@ -1,6 +1,8 @@
 import type { bool, int } from "./scalars.js";
 import type { GoError, GoSlice } from "./compat.js";
 import { GoSliceMake, GoStringValueOps } from "./compat.js";
+import { GoSliceLoad } from "./compat.js";
+
 
 
 export const ContinueOnError: int = 0 as int;
@@ -36,7 +38,7 @@ export class FlagSet {
 
   Parse(args: GoSlice<string>): GoError {
     for (let i = 0; i < args.length; i++) {
-      const arg = args[i]!;
+      const arg = GoSliceLoad(args, i, GoStringValueOps)!;
       if (!arg.startsWith("-")) {
         continue;
       }
@@ -57,7 +59,7 @@ export class FlagSet {
           if (i >= args.length) {
             return new globalThis.Error(`flag needs an argument: -${name}`);
           }
-          text = args[i]!;
+          text = GoSliceLoad(args, i, GoStringValueOps)!;
         }
         (flag.target as FlagValue<string>).value = text;
       }

@@ -63,6 +63,8 @@ import type { ContextFlags, IndexInfo, ObjectFlags, Signature, Type } from "./ty
 
 import type { GoRef } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 function goZeroValueSymbolLinks(): ValueSymbolLinks {
@@ -415,7 +417,7 @@ export function Checker_checkJsxOpeningLikeElementOrOpeningFragment(receiver: Go
       }
       const diagnostics = GoValueRef<GoSlice<GoPtr<Diagnostic>>>(GoNilSlice());
       if (!Checker_checkTypeRelatedToEx(receiver, tagType, elementTypeConstraint, receiver!.assignableRelation, tagName, Its_type_0_is_not_a_valid_JSX_element_type, diagnostics)) {
-        Checker_addDiagnostic(receiver, NewDiagnosticChain(diagnostics.v[0], X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(tagName)));
+        Checker_addDiagnostic(receiver, NewDiagnosticChain(GoSliceLoad(diagnostics.v, 0, GoPointerValueOps<Diagnostic>()), X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(tagName)));
       }
     } else {
       Checker_checkJsxReturnAssignableToAppropriateBound(receiver, Checker_getJsxReferenceKind(receiver, node), Checker_getReturnTypeOfSignature(receiver, sig), node);
@@ -512,7 +514,7 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
     }
   }
   if (diags.v.length !== 0) {
-    Checker_addDiagnostic(receiver, NewDiagnosticChain(diags.v[0], X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(Node_TagName(openingLikeElement))));
+    Checker_addDiagnostic(receiver, NewDiagnosticChain(GoSliceLoad(diags.v, 0, GoPointerValueOps<Diagnostic>()), X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(Node_TagName(openingLikeElement))));
   }
 }
 
@@ -875,7 +877,7 @@ export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: G
         reportedError = true;
       }
     } else if (nonArrayLikeTargetParts !== receiver!.neverType) {
-      const child = validChildren[0];
+      const child = GoSliceLoad(validChildren, 0, GoPointerValueOps<Node>());
       const element = Checker_getElaborationElementForJsxChild(receiver, child, childrenNameType, getInvalidTextualChildDiagnostic);
       if (element.errorNode !== undefined) {
         reportedError = Checker_elaborateElement(receiver, source, target, relation, element.errorNode, element.innerExpression, element.nameType, undefined, element.createDiagnostic, diagnosticOutput) || reportedError;
@@ -933,7 +935,7 @@ export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPt
     let memberOffset = 0;
     const children = Node_Children(node)!.Nodes;
     for (let i = 0; i < children.length; i++) {
-      const child = children[i]!;
+      const child = GoSliceLoad(children, i, GoPointerValueOps<Node>())!;
       const nameType = Checker_getNumberLiteralType(receiver, i - memberOffset);
       const element = Checker_getElaborationElementForJsxChild(receiver, child, nameType, getInvalidTextDiagnostic);
       if (element.errorNode !== undefined) {
@@ -1873,7 +1875,7 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
       const childrenPropSymbol = Checker_newSymbol(receiver, SymbolFlagsProperty, jsxChildrenPropertyName);
       const links = LinkStore_Get(receiver!.valueSymbolLinks, childrenPropSymbol, goZeroValueSymbolLinks, goSymbolPointerKey)!.v;
       if (childTypes.length === 1) {
-        links!.resolvedType = childTypes[0];
+        links!.resolvedType = GoSliceLoad(childTypes, 0, GoPointerValueOps<Type>());
       } else if (childrenContextualType !== undefined && someType(childrenContextualType, (candidate) => Checker_isTupleLikeType(receiver, candidate))) {
         links!.resolvedType = Checker_createTupleType(receiver, childTypes);
       } else {
@@ -2424,10 +2426,10 @@ export function Checker_getNameFromJsxElementAttributesContainer(receiver: GoPtr
         return "";
       }
       if (propertiesOfJsxElementAttribPropInterface!.length === 1) {
-        return propertiesOfJsxElementAttribPropInterface![0]!.Name;
+        return GoSliceLoad(propertiesOfJsxElementAttribPropInterface!, 0, GoPointerValueOps<Symbol>())!.Name;
       }
       if (propertiesOfJsxElementAttribPropInterface!.length > 1 && jsxElementAttribPropInterfaceSym!.Declarations.length !== 0) {
-        Checker_error(receiver, jsxElementAttribPropInterfaceSym!.Declarations![0], The_global_type_JSX_0_may_not_have_more_than_one_property, nameOfAttribPropContainer);
+        Checker_error(receiver, GoSliceLoad(jsxElementAttribPropInterfaceSym!.Declarations!, 0, GoPointerValueOps<Node>()), The_global_type_JSX_0_may_not_have_more_than_one_property, nameOfAttribPropContainer);
       }
     }
   }

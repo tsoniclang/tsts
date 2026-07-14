@@ -494,6 +494,8 @@ import { Node_AsNode, Node_BodyData, Node_DeclarationData, Node_End, Node_FlowNo
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 const symbolPointerKey: GoMapKeyDescriptor<GoPtr<Symbol>> = GoPointerKey<Symbol>();
@@ -1132,7 +1134,7 @@ export function Binder_declareSymbolEx(receiver: GoPtr<Binder>, symbolTable: Sym
           Diagnostic_AddRelatedInfo(diag!, Binder_createDiagnosticForNode(receiver, node, Did_you_mean_0, "export type { " + Node_Text(AsTypeAliasDeclaration(node)!.name as unknown as Node) + " }"));
         }
         for (let index = 0; index < (symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length; index++) {
-          const declaration = symbol!.Declarations![index];
+          const declaration = GoSliceLoad(symbol!.Declarations!, index, GoPointerValueOps<Node>());
           let decl: GoPtr<Node> = GetNameOfDeclaration(declaration);
           if (decl === undefined) {
             decl = declaration;
@@ -2709,7 +2711,7 @@ export function Binder_bindClassLikeDeclaration(receiver: GoPtr<Binder>, node: G
   const exports = GetExports(symbol);
   const symbolExport = exports?.get(prototypeSymbol!.Name);
   if (symbolExport !== undefined) {
-    Binder_errorOnNode(receiver, symbolExport!.Declarations![0], Duplicate_identifier_0, SymbolName(prototypeSymbol));
+    Binder_errorOnNode(receiver, GoSliceLoad(symbolExport!.Declarations!, 0, GoPointerValueOps<Node>()), Duplicate_identifier_0, SymbolName(prototypeSymbol));
   }
   exports?.set(prototypeSymbol!.Name, prototypeSymbol!);
   prototypeSymbol!.Parent = symbol;
@@ -2958,7 +2960,7 @@ export function getParentOfPropertyAssignment(node: GoPtr<Node>): GoPtr<Node> {
     case KindBinaryExpression:
       return Node_Expression(AsBinaryExpression(node)!.Left);
     case KindCallExpression:
-      return Node_Arguments(node)![0];
+      return GoSliceLoad(Node_Arguments(node)!, 0, GoPointerValueOps<Node>());
   }
   throw new globalThis.Error("Unhandled case in getParentOfPropertyAssignment");
 }
@@ -4128,7 +4130,7 @@ export function Binder_declareCommonJSVariable(receiver: GoPtr<Binder>, name: st
   if (locals !== undefined && locals.get(name) === undefined) {
     const symbol = Binder_newSymbol(receiver, (SymbolFlagsFunctionScopedVariable | SymbolFlagsModuleExports) as SymbolFlags, name);
     symbol!.Declarations = Binder_newSingleDeclaration(receiver, fileNode);
-    symbol!.ValueDeclaration = symbol!.Declarations![0];
+    symbol!.ValueDeclaration = GoSliceLoad(symbol!.Declarations!, 0, GoPointerValueOps<Node>());
     if (name === "module") {
       const exportsProperty = Binder_newSymbol(receiver, (SymbolFlagsModuleExports | SymbolFlagsProperty) as SymbolFlags, "exports");
       exportsProperty!.Declarations = symbol!.Declarations;
@@ -5200,11 +5202,11 @@ export function Binder_bindCaseBlock(receiver: GoPtr<Binder>, node: GoPtr<Node>)
   let i = 0;
   while (i < clauses.length) {
     const clauseStart = i;
-    while ((Node_Statements(clauses[i]) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length === 0 && i + 1 < clauses.length) {
+    while ((Node_Statements(GoSliceLoad(clauses, i, GoPointerValueOps<Node>())) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length === 0 && i + 1 < clauses.length) {
       if (fallthroughFlow === receiver!.unreachableFlow) {
         receiver!.currentFlow = receiver!.preSwitchCaseFlow;
       }
-      Binder_bind(receiver, clauses[i]);
+      Binder_bind(receiver, GoSliceLoad(clauses, i, GoPointerValueOps<Node>()));
       i++;
     }
     const preCaseLabel = Binder_createBranchLabel(receiver);
@@ -5215,7 +5217,7 @@ export function Binder_bindCaseBlock(receiver: GoPtr<Binder>, node: GoPtr<Node>)
     Binder_addAntecedent(receiver, preCaseLabel!, preCaseFlow!);
     Binder_addAntecedent(receiver, preCaseLabel!, fallthroughFlow!);
     receiver!.currentFlow = Binder_finishFlowLabel(receiver, preCaseLabel);
-    const clause = clauses[i];
+    const clause = GoSliceLoad(clauses, i, GoPointerValueOps<Node>());
     Binder_bind(receiver, clause);
     fallthroughFlow = receiver!.currentFlow;
     if ((receiver!.currentFlow!.Flags & FlowFlagsUnreachable) === 0 && i !== clauses.length - 1) {

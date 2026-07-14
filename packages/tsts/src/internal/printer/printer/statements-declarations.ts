@@ -244,6 +244,8 @@ import {
   tefNoComments,
   tefNone,
 } from "./state.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.increaseIndentIf","kind":"method","status":"implemented","sigHash":"479f9aa12e4722ac256ccd029c43dc7fcd4338acd7ef864a05ceb2f1ddf6adb8"}
@@ -2535,8 +2537,8 @@ export function Printer_emitCaseOrDefaultClauseStatements(receiver: GoPtr<Printe
     // treat synthesized nodes as located on the same line for emit purposes
     (receiver!.currentSourceFile === undefined ||
       NodeIsSynthesized(Node_AsNode(node)) ||
-      NodeIsSynthesized(node!.Statements!.Nodes[0]) ||
-      RangeStartPositionsAreOnSameLine(node!.Loc, node!.Statements!.Nodes[0]!.Loc, receiver!.currentSourceFile));
+      NodeIsSynthesized(GoSliceLoad(node!.Statements!.Nodes, 0, GoPointerValueOps<Node>())) ||
+      RangeStartPositionsAreOnSameLine(node!.Loc, GoSliceLoad(node!.Statements!.Nodes, 0, GoPointerValueOps<Node>())!.Loc, receiver!.currentSourceFile));
 
   let format: int = LFCaseOrDefaultClauseStatements;
   if (emitAsSingleStatement) {

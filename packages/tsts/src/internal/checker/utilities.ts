@@ -222,6 +222,8 @@ import {
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::NewDiagnosticForNode","kind":"func","status":"implemented","sigHash":"38975070fc52475f953f616cda4a7d53cea35489b9bd5758651180771e977acb"}
@@ -761,7 +763,7 @@ export function isSideEffectImport(node: GoPtr<Node>): bool {
  */
 export function getExternalModuleRequireArgument(node: GoPtr<Node>): GoPtr<Node> {
   if (IsVariableDeclarationInitializedToRequire(node)) {
-    return Node_Arguments(Node_Initializer(node))![0];
+    return GoSliceLoad(Node_Arguments(Node_Initializer(node))!, 0, GoPointerValueOps<Node>());
   }
   return undefined;
 }
@@ -1134,7 +1136,7 @@ export function Checker_compareSymbolsWorker(receiver: GoPtr<Checker>, s1: GoPtr
   const declarations1 = s1!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const declarations2 = s2!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   if (declarations1.length !== 0 && declarations2.length !== 0) {
-    const r = Checker_compareNodes(receiver, declarations1[0], declarations2[0]);
+    const r = Checker_compareNodes(receiver, GoSliceLoad(declarations1, 0, GoPointerValueOps<Node>()), GoSliceLoad(declarations2, 0, GoPointerValueOps<Node>()));
     if (r !== 0) {
       return r;
     }
@@ -1217,7 +1219,7 @@ function compareStringLists(s1: GoSlice<string>, s2: GoSlice<string>): int {
     return a1.length - a2.length;
   }
   for (let i = 0; i < a1.length; i++) {
-    const c = strings_Compare(a1[i]!, a2[i]!);
+    const c = strings_Compare(GoSliceLoad(a1, i, GoStringValueOps)!, GoSliceLoad(a2, i, GoStringValueOps)!);
     if (c !== 0) {
       return c;
     }
@@ -1798,7 +1800,7 @@ export function compareTypeLists(s1: GoSlice<GoPtr<Type>>, s2: GoSlice<GoPtr<Typ
     return a1.length - a2.length;
   }
   for (let i = 0; i < a1.length; i++) {
-    const c = CompareTypes(a1[i], a2[i]);
+    const c = CompareTypes(GoSliceLoad(a1, i, GoPointerValueOps<Type>()), GoSliceLoad(a2, i, GoPointerValueOps<Type>()));
     if (c !== 0) {
       return c;
     }
@@ -3904,7 +3906,7 @@ export function allDeclarationsInSameSourceFile(symbol_: GoPtr<Symbol>): bool {
   if ((symbol_!.Declarations?.length ?? 0) > 1) {
     let sourceFile: GoPtr<SourceFile> = undefined;
     for (let i = 0; i < symbol_!.Declarations!.length; i++) {
-      const d = symbol_!.Declarations![i]!;
+      const d = GoSliceLoad(symbol_!.Declarations!, i, GoPointerValueOps<Node>())!;
       if (i === 0) {
         sourceFile = GetSourceFileOfNode(d);
       } else if (GetSourceFileOfNode(d) !== sourceFile) {
@@ -3930,7 +3932,7 @@ export function allDeclarationsInSameSourceFile(symbol_: GoPtr<Symbol>): bool {
  * }
  */
 export function containsNonMissingUndefinedType(c: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  const candidate = (t!.flags & TypeFlagsUnion) !== 0 ? Type_Types(t)[0] : t;
+  const candidate = (t!.flags & TypeFlagsUnion) !== 0 ? GoSliceLoad(Type_Types(t), 0, GoPointerValueOps<Type>()) : t;
   return ((candidate!.flags & TypeFlagsUndefined) !== 0 && candidate !== c!.missingType) as bool;
 }
 
@@ -4505,8 +4507,8 @@ export function walkUpOuterExpressions(node: GoPtr<Node>): GoPtr<Node> {
 export function GetSetAccessorValueParameter(accessor: GoPtr<Node>): GoPtr<Node> {
   const parameters = Node_Parameters(accessor);
   if (parameters.length > 0) {
-    const hasThis = (parameters.length === 2 && IsThisParameter(parameters[0])) as bool;
-    return parameters[hasThis ? 1 : 0];
+    const hasThis = (parameters.length === 2 && IsThisParameter(GoSliceLoad(parameters, 0, GoPointerValueOps<Node>()))) as bool;
+    return GoSliceLoad(parameters, hasThis ? 1 : 0, GoPointerValueOps<Node>());
   }
   return undefined;
 }

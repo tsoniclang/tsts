@@ -26,6 +26,8 @@ import { Tristate_IsTrue } from "./tristate.js";
 
 import type { GoFunc, GoInterface, GoPointerConstraint, GoRef } from "../../go/compat.js";
 import { GoNumberValueOps, GoRefValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // byte indexing `s[i]` and slicing `s[i:j]` operate on byte offsets. We mirror
@@ -1154,11 +1156,11 @@ export function ComputeECMALineStartsSeq(text: string): Seq<TextPos> {
 export function PositionToLineAndByteOffset(position: int, lineStarts: GoSlice<TextPos>): [line: int, byteOffset: int] {
   const line = globalThis.Math.max(
     sort.Search(lineStarts.length, (i: int): bool => {
-      return lineStarts[i]! > position;
+      return GoSliceLoad(lineStarts, i, GoNumberValueOps)! > position;
     }) - 1,
     0,
   );
-  return [line, position - lineStarts[line]!];
+  return [line, position - GoSliceLoad(lineStarts, line, GoNumberValueOps)!];
 }
 
 /**
@@ -1505,35 +1507,35 @@ export function levenshteinWithMax(buffers: GoPtr<levenshteinBuffers>, s1: GoSli
 
   const big = maxValue + 0.01;
   for (let i = 0; i < previous.length; i++) {
-    previous[i] = i;
+    GoSliceStore(previous, i, i, GoNumberValueOps);
   }
   for (let i = 1; i <= s1.length; i++) {
-    const c1 = s1[i - 1]!;
+    const c1 = GoSliceLoad(s1, i - 1, GoNumberValueOps)!;
     const minJ = globalThis.Math.max(globalThis.Math.trunc(math.Ceil(i - maxValue)), 1);
     const maxJ = globalThis.Math.min(globalThis.Math.trunc(math.Floor(maxValue + i)), s2.length);
     let colMin = i;
-    current[0] = colMin;
+    GoSliceStore(current, 0, colMin, GoNumberValueOps);
     for (let j = 1; j < minJ; j++) {
-      current[j] = big;
+      GoSliceStore(current, j, big, GoNumberValueOps);
     }
     for (let j = minJ; j <= maxJ; j++) {
       let substitutionDistance: double;
       let dist: double;
-      if (unicode.ToLower(s1[i - 1]!) === unicode.ToLower(s2[j - 1]!)) {
-        substitutionDistance = previous[j - 1]! + 0.1;
+      if (unicode.ToLower(GoSliceLoad(s1, i - 1, GoNumberValueOps)!) === unicode.ToLower(GoSliceLoad(s2, j - 1, GoNumberValueOps)!)) {
+        substitutionDistance = GoSliceLoad(previous, j - 1, GoNumberValueOps)! + 0.1;
       } else {
-        substitutionDistance = previous[j - 1]! + 2;
+        substitutionDistance = GoSliceLoad(previous, j - 1, GoNumberValueOps)! + 2;
       }
-      if (c1 === s2[j - 1]!) {
-        dist = previous[j - 1]!;
+      if (c1 === GoSliceLoad(s2, j - 1, GoNumberValueOps)!) {
+        dist = GoSliceLoad(previous, j - 1, GoNumberValueOps)!;
       } else {
-        dist = math.Min(previous[j]! + 1, math.Min(current[j - 1]! + 1, substitutionDistance));
+        dist = math.Min(GoSliceLoad(previous, j, GoNumberValueOps)! + 1, math.Min(GoSliceLoad(current, j - 1, GoNumberValueOps)! + 1, substitutionDistance));
       }
-      current[j] = dist;
+      GoSliceStore(current, j, dist, GoNumberValueOps);
       colMin = math.Min(colMin, dist);
     }
     for (let j = maxJ + 1; j <= s2.length; j++) {
-      current[j] = big;
+      GoSliceStore(current, j, big, GoNumberValueOps);
     }
     if (colMin > maxValue) {
       // Give up -- everything in this column is > max and it can't get better in future columns.
@@ -1541,7 +1543,7 @@ export function levenshteinWithMax(buffers: GoPtr<levenshteinBuffers>, s1: GoSli
     }
     [previous, current] = [current, previous];
   }
-  const res = previous[s2.length]!;
+  const res = GoSliceLoad(previous, s2.length, GoNumberValueOps)!;
   if (res > maxValue) {
     return -1;
   }

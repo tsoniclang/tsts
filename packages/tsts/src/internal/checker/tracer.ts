@@ -41,6 +41,8 @@ import {
 import type { IntrinsicType, Type } from "./types.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::type::Tracer","kind":"type","status":"implemented","sigHash":"6af7bd12623c8e5aa4fceed128e77b4c5f1aff234df6e3f6ad12f3af1e37d9d1"}
  *
@@ -946,7 +948,7 @@ export function wrapTypes(types: GoSlice<GoPtr<Type>>): GoSlice<GoInterface<Trac
   }
   const result: GoSlice<GoInterface<TracedType>> = new Array(types.length);
   for (let i = 0; i < types.length; i++) {
-    result[i] = wrapType(types[i]);
+    result[i] = wrapType(GoSliceLoad(types, i, GoPointerValueOps<Type>()));
   }
   return result;
 }

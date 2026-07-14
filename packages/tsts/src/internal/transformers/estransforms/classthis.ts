@@ -8,6 +8,8 @@ import { IsAssignmentExpression } from "../../ast/utilities.js";
 import { Node_Expression } from "../../ast/ast.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
 import { EmitContext_ClassThis } from "../../printer/emitcontext.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classthis.go::func::isClassThisAssignmentBlock","kind":"func","status":"implemented","sigHash":"4202eea0fb8990efd491e168fbdd18f1c432e56d5a4fcab99bea4b80a3979c96"}
@@ -38,7 +40,7 @@ export function isClassThisAssignmentBlock(emitContext: GoPtr<EmitContext>, node
     const n = AsClassStaticBlockDeclaration(node);
     const body = AsBlock(n!.Body);
     if (body!.Statements!.Nodes.length === 1) {
-      const statement = body!.Statements!.Nodes[0];
+      const statement = GoSliceLoad(body!.Statements!.Nodes, 0, GoPointerValueOps<Node>());
       if (IsExpressionStatement(statement)) {
         const expression = Node_Expression(statement);
         if (IsAssignmentExpression(expression, true as bool)) {

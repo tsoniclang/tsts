@@ -6,6 +6,8 @@ import type { GoRune, GoSlice } from "../compat.js";
 import { GoNumberValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "../compat.js";
 import { GoAppend } from "../compat.js";
 import { GoSliceMake } from "../compat.js";
+import { GoSliceLoad } from "../compat.js";
+
 
 
 // replacementChar is U+FFFD, the Unicode replacement character.
@@ -44,14 +46,14 @@ export function Decode(s: GoSlice<int>): GoSlice<GoRune> {
   let i = 0;
   const n = s.length;
   while (i < n) {
-    const r = s[i]!;
+    const r = GoSliceLoad(s, i, GoNumberValueOps)!;
     if (r < surr1 || surr3 <= r) {
       // Normal rune (not a surrogate half).
       result = GoSliceAppend(result, r, GoNumberValueOps);
       i++;
-    } else if (surr1 <= r && r < surr2 && i + 1 < n && surr2 <= s[i + 1]! && s[i + 1]! < surr3) {
+    } else if (surr1 <= r && r < surr2 && i + 1 < n && surr2 <= GoSliceLoad(s, i + 1, GoNumberValueOps)! && GoSliceLoad(s, i + 1, GoNumberValueOps)! < surr3) {
       // Valid surrogate pair.
-      const r2 = s[i + 1]!;
+      const r2 = GoSliceLoad(s, i + 1, GoNumberValueOps)!;
       const dec = (r - surr1) * 0x400 + (r2 - surr2) + surrSelf;
       result = GoSliceAppend(result, dec, GoNumberValueOps);
       i += 2;

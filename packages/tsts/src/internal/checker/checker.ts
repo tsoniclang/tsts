@@ -106,6 +106,8 @@ import { Checker_error, Checker_errorSkippedOnNoEmit } from "./checker/support.j
 import { Checker_getSourceFileLinks, MappedTypeNameTypeKindRemapping, getTypeListKey } from "./checker/state.js";
 import type { Checker, TupleNormalizer } from "./checker/state.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -494,7 +496,7 @@ export function Checker_createNormalizedTupleTypeEx(receiver: GoPtr<Checker>, ta
   }
   if ((d.combinedFlags & ElementFlagsVariadic) !== 0) {
     for (let i = 0; i < elementTypes.length; i++) {
-      const e = elementTypes[i];
+      const e = GoSliceLoad(elementTypes, i, GoPointerValueOps<Type>());
       if (i < d.elementInfos.length && (d.elementInfos[i]!.flags & ElementFlagsVariadic) !== 0 && (e!.flags & (TypeFlagsNever | TypeFlagsUnion)) !== 0) {
         // Transform [A, ...(X | Y | Z)] into [A, ...X] | [A, ...Y] | [A, ...Z]
         const checkTypes = core.MapIndex(elementTypes, (t: GoPtr<Type>, ti: int): GoPtr<Type> => {
@@ -522,7 +524,7 @@ export function Checker_createNormalizedTupleTypeEx(receiver: GoPtr<Checker>, ta
     return receiver!.errorType;
   }
   if (elementTypes.length > d.elementInfos.length) {
-    n.types = GoSliceAppend(n.types, elementTypes[d.elementInfos.length], GoPointerValueOps<Type>());
+    n.types = GoSliceAppend(n.types, GoSliceLoad(elementTypes, d.elementInfos.length, GoPointerValueOps<Type>()), GoPointerValueOps<Type>());
   }
   const tupleTarget = Checker_getTupleTargetType(receiver, n.infos, d.readonly);
   if (tupleTarget === receiver!.emptyGenericType) {

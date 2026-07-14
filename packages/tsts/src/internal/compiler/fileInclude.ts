@@ -30,6 +30,8 @@ import type { Program } from "./program.js";
 import { Program_GetSourceFileByPath, Program_GetResolvedModuleFromModuleSpecifier, Program_GetCurrentDirectory, Program_Options } from "./program.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad, GoStringValueOps } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::fileIncludeKind","kind":"type","status":"implemented","sigHash":"6e1f1cdd7041c475e136b50ecf3fbc5d1666cc360df8db6a221b153123b1562f"}
  *
@@ -323,7 +325,7 @@ export function FileIncludeReason_getReferencedLocation(receiver: GoPtr<FileIncl
           isSynthetic: true,
         };
       } else if (ref!.index < imports.length) {
-        const specifier = imports[ref!.index];
+        const specifier = GoSliceLoad(imports, ref!.index, GoPointerValueOps<Node>());
         return {
           file,
           node: specifier,
@@ -356,7 +358,7 @@ export function FileIncludeReason_getReferencedLocation(receiver: GoPtr<FileIncl
       return {
         file,
         node: undefined,
-        ref: file!.ReferencedFiles[ref!.index],
+        ref: GoSliceLoad(file!.ReferencedFiles, ref!.index, GoPointerValueOps<FileReference>()),
         packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
         isSynthetic: false,
       };
@@ -364,7 +366,7 @@ export function FileIncludeReason_getReferencedLocation(receiver: GoPtr<FileIncl
       return {
         file,
         node: undefined,
-        ref: file!.TypeReferenceDirectives[ref!.index],
+        ref: GoSliceLoad(file!.TypeReferenceDirectives, ref!.index, GoPointerValueOps<FileReference>()),
         packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
         isSynthetic: false,
       };
@@ -372,7 +374,7 @@ export function FileIncludeReason_getReferencedLocation(receiver: GoPtr<FileIncl
       return {
         file,
         node: undefined,
-        ref: file!.LibReferenceDirectives[ref!.index],
+        ref: GoSliceLoad(file!.LibReferenceDirectives, ref!.index, GoPointerValueOps<FileReference>()),
         packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
         isSynthetic: false,
       };
@@ -480,7 +482,7 @@ export function FileIncludeReason_computeDiagnostic(receiver: GoPtr<FileIncludeR
     case fileIncludeKindRootFile: {
       if (program!.opts.Config!.ConfigFile !== undefined) {
         const config = program!.opts.Config;
-        const fileName = GetNormalizedAbsolutePath(ParsedCommandLine_FileNames(config)[FileIncludeReason_asIndex(receiver)]!, Program_GetCurrentDirectory(program));
+        const fileName = GetNormalizedAbsolutePath(GoSliceLoad(ParsedCommandLine_FileNames(config), FileIncludeReason_asIndex(receiver), GoStringValueOps)!, Program_GetCurrentDirectory(program));
         const matchedFileSpec = ParsedCommandLine_GetMatchedFileSpec(config, fileName);
         if (matchedFileSpec !== "") {
           return NewCompilerDiagnostic(diagnostics.Part_of_files_list_in_tsconfig_json, matchedFileSpec, toFileName!(fileName));
@@ -517,7 +519,7 @@ export function FileIncludeReason_computeDiagnostic(receiver: GoPtr<FileIncludeR
     case fileIncludeKindLibFile: {
       const [index, ok] = FileIncludeReason_asLibFileIndex(receiver);
       if (ok) {
-        return NewCompilerDiagnostic(diagnostics.Library_0_specified_in_compilerOptions, Program_Options(program)!.Lib[index]!);
+        return NewCompilerDiagnostic(diagnostics.Library_0_specified_in_compilerOptions, GoSliceLoad(Program_Options(program)!.Lib, index, GoStringValueOps)!);
       } else {
         const target = ScriptTarget_String(CompilerOptions_GetEmitScriptTarget(Program_Options(program)));
         if (target !== "") {
@@ -674,7 +676,7 @@ export function FileIncludeReason_toRelatedInfo(receiver: GoPtr<FileIncludeReaso
   const config = program!.opts.Config;
   switch (receiver!.kind) {
     case fileIncludeKindRootFile: {
-      const fileName = GetNormalizedAbsolutePath(ParsedCommandLine_FileNames(config)[FileIncludeReason_asIndex(receiver)]!, Program_GetCurrentDirectory(program));
+      const fileName = GetNormalizedAbsolutePath(GoSliceLoad(ParsedCommandLine_FileNames(config), FileIncludeReason_asIndex(receiver), GoStringValueOps)!, Program_GetCurrentDirectory(program));
       const matchedFileSpec = ParsedCommandLine_GetMatchedFileSpec(config, fileName);
       if (matchedFileSpec !== "") {
         const filesNode = GetTsConfigPropArrayElementValue(config!.ConfigFile!.SourceFile, "files", matchedFileSpec);
@@ -705,7 +707,7 @@ export function FileIncludeReason_toRelatedInfo(receiver: GoPtr<FileIncludeReaso
     case fileIncludeKindLibFile: {
       const [index, ok] = FileIncludeReason_asLibFileIndex(receiver);
       if (ok) {
-        const libSyntax = GetOptionsSyntaxByArrayElementValue(includeProcessor_getCompilerOptionsObjectLiteralSyntax(program!.__tsgoEmbedded0!.includeProcessor, program) as GoPtr<ObjectLiteralExpression>, "lib", Program_Options(program)!.Lib[index]!);
+        const libSyntax = GetOptionsSyntaxByArrayElementValue(includeProcessor_getCompilerOptionsObjectLiteralSyntax(program!.__tsgoEmbedded0!.includeProcessor, program) as GoPtr<ObjectLiteralExpression>, "lib", GoSliceLoad(Program_Options(program)!.Lib, index, GoStringValueOps)!);
         if (libSyntax !== undefined) {
           return CreateDiagnosticForNodeInSourceFile(config!.ConfigFile!.SourceFile, libSyntax, diagnostics.File_is_library_specified_here);
         }

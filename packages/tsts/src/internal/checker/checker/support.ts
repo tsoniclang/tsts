@@ -165,6 +165,8 @@ import { Checker_addDiagnostic, Checker_addSuggestionDiagnostic, Checker_mergeGl
 
 import type { GoFunc } from "../../../go/compat.js";
 import { GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
+import { GoBooleanValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 
 
 function goZeroAssertionLinks(): AssertionLinks {
@@ -253,7 +255,7 @@ export function Checker_initializeClosures(receiver: GoPtr<Checker>): void {
     return (t!.flags & (TypeFlagsPrimitive | TypeFlagsNonPrimitive)) !== 0 || Checker_IsEmptyAnonymousObjectType(receiver, t);
   };
   receiver!.containsMissingType = (t: GoPtr<Type>): bool => {
-    return t === receiver!.missingType || ((t!.flags & TypeFlagsUnion) !== 0 && Type_Types(t)[0] === receiver!.missingType);
+    return t === receiver!.missingType || ((t!.flags & TypeFlagsUnion) !== 0 && GoSliceLoad(Type_Types(t), 0, GoPointerValueOps<Type>()) === receiver!.missingType);
   };
   receiver!.couldContainTypeVariables = (t: GoPtr<Type>): bool => Checker_couldContainTypeVariablesWorker(receiver, t);
   receiver!.isStringIndexSignatureOnlyType = (t: GoPtr<Type>): bool => Checker_isStringIndexSignatureOnlyTypeWorker(receiver, t);
@@ -1560,11 +1562,11 @@ export function Checker_findMixins(receiver: GoPtr<Checker>, types: GoSlice<GoPt
   let mixinCount = 0;
   let firstMixinIndex = -1;
   for (let i = 0; i < types.length; i++) {
-    const t = types[i];
+    const t = GoSliceLoad(types, i, GoPointerValueOps<Type>());
     if (Checker_getSignaturesOfType(receiver, t, SignatureKindConstruct).length > 0) {
       constructorTypeCount++;
     }
-    if (mixinFlags[i]) {
+    if (GoSliceLoad(mixinFlags, i, GoBooleanValueOps)) {
       if (firstMixinIndex < 0) {
         firstMixinIndex = i;
       }
@@ -1572,7 +1574,7 @@ export function Checker_findMixins(receiver: GoPtr<Checker>, types: GoSlice<GoPt
     }
   }
   if (constructorTypeCount > 0 && constructorTypeCount === mixinCount) {
-    mixinFlags[firstMixinIndex] = false;
+    GoSliceStore(mixinFlags, firstMixinIndex, false, GoBooleanValueOps);
     mixinCount--;
   }
   return [mixinFlags, mixinCount];

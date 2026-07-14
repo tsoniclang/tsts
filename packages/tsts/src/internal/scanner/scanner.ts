@@ -217,6 +217,8 @@ import { tokenIsIdentifierOrKeyword } from "./utilities.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoNumberValueOps, GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 // Go strings are UTF-8 byte sequences; the scanner tracks byte offsets (s.pos).
 // The shared utf8 string-byte view keeps those byte semantics while avoiding
@@ -6111,7 +6113,7 @@ export function GetTokenPosOfNode(node: GoPtr<Node>, sourceFile: GoPtr<SourceFil
     return SkipTriviaEx(SourceFile_Text(sourceFile), Node_Pos(node), { StopAfterLineBreak: false, StopAtComments: true, InJSDoc: false });
   }
   if (includeJSDoc && Node_JSDoc(node, sourceFile).length > 0) {
-    return GetTokenPosOfNode(Node_JSDoc(node, sourceFile)[0]!, sourceFile, false /*includeJSDoc*/);
+    return GetTokenPosOfNode(GoSliceLoad(Node_JSDoc(node, sourceFile), 0, GoPointerValueOps<Node>())!, sourceFile, false /*includeJSDoc*/);
   }
   return SkipTriviaEx(SourceFile_Text(sourceFile), Node_Pos(node), {
     StopAfterLineBreak: false,
@@ -6353,7 +6355,7 @@ export function GetErrorRangeForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<
     let end = Node_End(node);
     const statements = Node_Statements(node);
     if (statements !== undefined && statements.length !== 0) {
-      end = Node_Pos(statements[0]!);
+      end = Node_Pos(GoSliceLoad(statements, 0, GoPointerValueOps<Node>())!);
     }
     return NewTextRange(start, end);
   } else if (!handled && (kind === kinds.KindReturnStatement || kind === kinds.KindYieldExpression)) {
@@ -6422,7 +6424,7 @@ export function ComputeLineOfPosition(lineStarts: GoSlice<TextPos>, pos: int): i
   let high = lineStarts.length - 1;
   while (low <= high) {
     const middle = low + ((high - low) >> 1);
-    const value = lineStarts[middle]!;
+    const value = GoSliceLoad(lineStarts, middle, GoNumberValueOps)!;
     if (value < pos) {
       low = middle + 1;
     } else if (value > pos) {
@@ -6484,7 +6486,7 @@ export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: GoInterface<S
   const line = ComputeLineOfPosition(lineMap, pos);
   const text = sourceFile!.Text();
   const textView = utf8.GetStringByteView(text);
-  const character = utf8.StringByteViewUTF16Len(text, textView, lineMap[line]!, pos);
+  const character = utf8.StringByteViewUTF16Len(text, textView, GoSliceLoad(lineMap, line, GoNumberValueOps)!, pos);
   return [line, character];
 }
 
@@ -6502,7 +6504,7 @@ export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: GoInterface<S
 export function GetECMALineAndByteOffsetOfPosition(sourceFile: GoInterface<SourceFileLike>, pos: int): [line: int, byteOffset: int] {
   const lineMap = GetECMALineStarts(sourceFile);
   const line = ComputeLineOfPosition(lineMap, pos);
-  const byteOffset = pos - (lineMap[line]! as int);
+  const byteOffset = pos - (GoSliceLoad(lineMap, line, GoNumberValueOps)! as int);
   return [line, byteOffset];
 }
 
@@ -6523,7 +6525,7 @@ export function GetECMALineAndByteOffsetOfPosition(sourceFile: GoInterface<Sourc
  */
 export function GetECMAEndLinePosition(sourceFile: GoPtr<SourceFile>, line: int): int {
   const like = sourceFileLikeFromSourceFile(sourceFile);
-  let pos = GetECMALineStarts(like)[line]! as int;
+  let pos = GoSliceLoad(GetECMALineStarts(like), line, GoNumberValueOps)! as int;
   for (;;) {
     const [ch, size] = decodeRuneInStringAt(SourceFile_Text(sourceFile), pos);
     if (size === 0 || IsLineBreak(ch)) {
@@ -6574,7 +6576,7 @@ export function ComputePositionOfLineAndByteOffset(lineStarts: GoSlice<TextPos>,
   if (line < 0 || line >= lineStarts.length) {
     throw new globalThis.Error(fmt.Sprintf("Bad line number. Line: %d, lineStarts.length: %d.", line, lineStarts.length));
   }
-  return lineStarts[line]! + byteOffset;
+  return GoSliceLoad(lineStarts, line, GoNumberValueOps)! + byteOffset;
 }
 
 /**
@@ -6653,13 +6655,13 @@ export function ComputePositionOfLineAndUTF16Character(lineStarts: GoSlice<TextP
     }
   }
 
-  const lineStart = lineStarts[line]!;
+  const lineStart = GoSliceLoad(lineStarts, line, GoNumberValueOps)!;
 
   if (character > 0) {
     // UTF-16 character offset: scan from line start counting UTF-16 code units.
     let lineEnd = byteLen(text);
     if (line + 1 < lineStarts.length) {
-      lineEnd = lineStarts[line + 1]!;
+      lineEnd = GoSliceLoad(lineStarts, line + 1, GoNumberValueOps)!;
     }
     let utf16Count: UTF16Offset = 0;
     let pos = lineStart;

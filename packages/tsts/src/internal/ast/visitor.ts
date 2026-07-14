@@ -15,6 +15,8 @@ import { NewNodeFactory, NodeDefault_AsNode, NodeFactory_NewModifierList, NodeFa
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 // NodeVisitor
 
@@ -131,7 +133,7 @@ export function NodeVisitor_VisitNode(receiver: GoPtr<NodeVisitor>, node: GoPtr<
       if (nodes.length !== 1) {
         throw new globalThis.Error("Expected only a single node to be written to output");
       }
-      visited = nodes[0];
+      visited = GoSliceLoad(nodes, 0, GoPointerValueOps<Node>());
       if (visited !== undefined && visited.Kind === KindSyntaxList) {
         throw new globalThis.Error("The result of visiting and lifting a Node may not be SyntaxList");
       }
@@ -294,7 +296,7 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSl
   }
 
   for (let i = 0; i < nodes.length; i++) {
-    let node = nodes[i];
+    let node = GoSliceLoad(nodes, i, GoPointerValueOps<Node>());
     if (receiver!.Visit === undefined) {
       break;
     }
@@ -321,7 +323,7 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSl
         }
 
         if (receiver!.Visit !== undefined) {
-          node = nodes[i];
+          node = GoSliceLoad(nodes, i, GoPointerValueOps<Node>());
           visited = receiver!.Visit(node);
         } else {
           updated = GoSliceAppendSlice(updated, nodes.slice(i), GoPointerValueOps<Node>());
@@ -560,7 +562,7 @@ export function NodeVisitor_liftToBlock(receiver: GoPtr<NodeVisitor>, node: GoPt
     }
   }
   if (nodes.length === 1) {
-    node = nodes[0];
+    node = GoSliceLoad(nodes, 0, GoPointerValueOps<Node>());
   } else {
     node = NewBlock(receiver!.Factory, NodeFactory_NewNodeList(receiver!.Factory, nodes), true as bool);
   }

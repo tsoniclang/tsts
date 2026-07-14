@@ -87,6 +87,8 @@ import { createColors, colors_blue, colors_bold, colors_blueBackground, colors_b
 
 import type { GoInterface, GoRef } from "../../../go/compat.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::PrintVersion","kind":"func","status":"implemented","sigHash":"81f4b3a8da37e32b22c37f209f6f87ec0f65daff59fe4062f2f5a2db67408068"}
@@ -532,7 +534,7 @@ export function generateGroupOptionOutput(sys: GoInterface<System>, locale: Loca
   }
 
   // make sure always a blank line in the end.
-  if (lines.length < 2 || lines[lines.length - 2] !== "\n") {
+  if (lines.length < 2 || GoSliceLoad(lines, lines.length - 2, GoStringValueOps) !== "\n") {
     lines = GoSliceAppend(lines, "\n", GoStringValueOps);
   }
 

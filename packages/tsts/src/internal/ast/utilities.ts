@@ -572,6 +572,8 @@ import { Pool as PoolValue } from "../../go/sync.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::varGroup::nextNodeId+nextSymbolId","kind":"varGroup","status":"implemented","sigHash":"fbef67155733acb7724b7c5d0c6ae3f163db49b04f971919d4f057e9ec169cfc"}
@@ -781,7 +783,7 @@ export function PositionIsSynthesized(pos: int): bool {
 export function FindLastVisibleNode(nodes: GoSlice<GoPtr<Node>>): GoPtr<Node> {
   const loop = (fromEnd: int): GoPtr<Node> => {
     if (fromEnd > nodes.length) return undefined;
-    if ((nodes[nodes.length - fromEnd]!.Flags & NodeFlagsReparsed) === 0) return nodes[nodes.length - fromEnd];
+    if ((GoSliceLoad(nodes, nodes.length - fromEnd, GoPointerValueOps<Node>())!.Flags & NodeFlagsReparsed) === 0) return GoSliceLoad(nodes, nodes.length - fromEnd, GoPointerValueOps<Node>());
     return loop((fromEnd + 1) as int);
   };
   return loop(1 as int);
@@ -4010,7 +4012,7 @@ export function GetNonAssignedNameOfDeclaration(declaration: GoPtr<Node>): GoPtr
         }
         case JSDeclarationKindObjectDefinePropertyValue:
         case JSDeclarationKindObjectDefinePropertyExports:
-          return Node_Arguments(declaration)![1];
+          return GoSliceLoad(Node_Arguments(declaration)!, 1, GoPointerValueOps<Node>());
       }
       return undefined;
     case KindExportAssignment: {
@@ -4208,7 +4210,7 @@ export function GetAssignmentDeclarationKind(node: GoPtr<Node>): JSDeclarationKi
     }
     case KindCallExpression:
       if (IsInJSFile(node) && IsBindableObjectDefinePropertyCall(node)) {
-        const entityName: GoPtr<Node> = Node_Arguments(node)![0];
+        const entityName: GoPtr<Node> = GoSliceLoad(Node_Arguments(node)!, 0, GoPointerValueOps<Node>());
         if (IsExportsIdentifier(entityName) || IsModuleExportsAccessExpression(entityName)) {
           return JSDeclarationKindObjectDefinePropertyExports;
         }
@@ -4243,8 +4245,8 @@ export function IsBindableObjectDefinePropertyCall(node: GoPtr<Node>): bool {
     if (IsPropertyAccessExpression(expr) &&
       IsIdentifier(Node_Expression(expr)) && Node_Text(Node_Expression(expr)) === "Object" &&
       Node_Text(Node_Name(expr)) === "defineProperty" &&
-      IsStringOrNumericLiteralLike(args[1]) &&
-      IsBindableStaticNameExpression(args[0], true /*excludeThisKeyword*/)) {
+      IsStringOrNumericLiteralLike(GoSliceLoad(args, 1, GoPointerValueOps<Node>())) &&
+      IsBindableStaticNameExpression(GoSliceLoad(args, 0, GoPointerValueOps<Node>()), true /*excludeThisKeyword*/)) {
       return true as bool;
     }
   }
@@ -6065,7 +6067,7 @@ export function popAncestor(ancestors: GoSlice<GoPtr<Node>>, node: GoPtr<Node>):
     return [GoNilSlice(), node!.Parent];
   }
   const n = ancestors.length - 1;
-  return [GoSlicePrefix(ancestors, n), ancestors[n]];
+  return [GoSlicePrefix(ancestors, n), GoSliceLoad(ancestors, n, GoPointerValueOps<Node>())];
 }
 
 /**
@@ -7068,9 +7070,9 @@ export function ForEachDynamicImportOrRequireCall(file: GoPtr<SourceFile>, inclu
     if (lastIndex < 0) return false as bool;
     const node: GoPtr<Node> = GetNodeAtPosition(file, lastIndex, (isJavaScriptFile && includeTypeSpaceImports) as bool);
     if (isJavaScriptFile && IsRequireCall(node, requireStringLiteralLikeArgument)) {
-      if (cb!(node, Node_Arguments(node)![0])) return true as bool;
-    } else if (IsImportCall(node) && (Node_Arguments(node)?.length ?? 0) > 0 && (!requireStringLiteralLikeArgument || IsStringLiteralLike(Node_Arguments(node)![0]))) {
-      if (cb!(node, Node_Arguments(node)![0])) return true as bool;
+      if (cb!(node, GoSliceLoad(Node_Arguments(node)!, 0, GoPointerValueOps<Node>()))) return true as bool;
+    } else if (IsImportCall(node) && (Node_Arguments(node)?.length ?? 0) > 0 && (!requireStringLiteralLikeArgument || IsStringLiteralLike(GoSliceLoad(Node_Arguments(node)!, 0, GoPointerValueOps<Node>())))) {
+      if (cb!(node, GoSliceLoad(Node_Arguments(node)!, 0, GoPointerValueOps<Node>()))) return true as bool;
     } else if (includeTypeSpaceImports && IsLiteralImportTypeNode(node)) {
       if (cb!(node, AsLiteralTypeNode(AsImportTypeNode(node)!.Argument)!.Literal)) return true as bool;
     }
@@ -7111,7 +7113,7 @@ export function IsRequireCall(node: GoPtr<Node>, requireStringLiteralLikeArgumen
   if (call!.Arguments!.Nodes.length !== 1) {
     return false as bool;
   }
-  return (!requireStringLiteralLikeArgument || IsStringLiteralLike(call!.Arguments!.Nodes[0])) as bool;
+  return (!requireStringLiteralLikeArgument || IsStringLiteralLike(GoSliceLoad(call!.Arguments!.Nodes, 0, GoPointerValueOps<Node>()))) as bool;
 }
 
 /**
@@ -7333,12 +7335,12 @@ export function isVariableDeclarationInitializedWithRequireHelper(node: GoPtr<No
  */
 export function GetModuleSpecifierOfBareOrAccessedRequire(node: GoPtr<Node>): GoPtr<Node> {
   if (isVariableDeclarationInitializedWithRequireHelper(node, false /*allowAccessedRequire*/)) {
-    return Node_Arguments(Node_Initializer(node))![0];
+    return GoSliceLoad(Node_Arguments(Node_Initializer(node))!, 0, GoPointerValueOps<Node>());
   }
   if (isVariableDeclarationInitializedWithRequireHelper(node, true /*allowAccessedRequire*/)) {
     const leftmost: GoPtr<Node> = GetLeftmostAccessExpression(Node_Initializer(node));
     if (IsRequireCall(leftmost, true /*requireStringLiteralLikeArgument*/)) {
-      return Node_Arguments(leftmost)![0];
+      return GoSliceLoad(Node_Arguments(leftmost)!, 0, GoPointerValueOps<Node>());
     }
   }
   return undefined;
@@ -7954,7 +7956,7 @@ export function IsClassOrTypeElement(node: GoPtr<Node>): bool {
 export function GetClassExtendsHeritageElement(node: GoPtr<Node>): GoPtr<ExpressionWithTypeArgumentsNode> {
   const heritageElements: GoSlice<GoPtr<ExpressionWithTypeArgumentsNode>> = GetHeritageElements(node, KindExtendsKeyword);
   if ((heritageElements?.length ?? 0) > 0) {
-    return heritageElements[0];
+    return GoSliceLoad(heritageElements, 0, GoPointerValueOps<Node>());
   }
   return undefined;
 }
@@ -8002,7 +8004,7 @@ export function IsJSDocSingleCommentNodeList(nodeList: GoPtr<NodeList>): bool {
   if (nodeList === undefined || nodeList!.Nodes.length === 0) {
     return false as bool;
   }
-  const parent: GoPtr<Node> = nodeList!.Nodes[0]!.Parent;
+  const parent: GoPtr<Node> = GoSliceLoad(nodeList!.Nodes, 0, GoPointerValueOps<Node>())!.Parent;
   if (parent === undefined) {
     return false as bool;
   }
@@ -8024,7 +8026,7 @@ export function IsJSDocSingleCommentNodeComment(node: GoPtr<Node>): bool {
   if (node === undefined || node!.Parent === undefined) {
     return false as bool;
   }
-  return (IsJSDocSingleCommentNode(node!.Parent) && node === Node_CommentList(node!.Parent)!.Nodes[0]) as bool;
+  return (IsJSDocSingleCommentNode(node!.Parent) && node === GoSliceLoad(Node_CommentList(node!.Parent)!.Nodes, 0, GoPointerValueOps<Node>())) as bool;
 }
 
 /**
@@ -8474,7 +8476,7 @@ export function CreateModifiersFromModifierFlags(flags: ModifierFlags, createMod
 export function GetThisParameter(signature: GoPtr<Node>): GoPtr<Node> {
   // callback tags do not currently support this parameters
   if (Node_Parameters(signature).length !== 0) {
-    const thisParameter: GoPtr<Node> = Node_Parameters(signature)[0];
+    const thisParameter: GoPtr<Node> = GoSliceLoad(Node_Parameters(signature), 0, GoPointerValueOps<Node>());
     if (IsThisParameter(thisParameter)) {
       return thisParameter;
     }
@@ -10191,7 +10193,7 @@ export function GetNextJSDocCommentLocation(node: GoPtr<Node>): GoPtr<Node> {
       case KindExpressionStatement:
         return parent;
       case KindVariableDeclarationList:
-        if (AsVariableDeclarationList(parent)!.Declarations!.Nodes[0] === node) {
+        if (GoSliceLoad(AsVariableDeclarationList(parent)!.Declarations!.Nodes, 0, GoPointerValueOps<Node>()) === node) {
           return parent;
         }
     }
@@ -11167,7 +11169,7 @@ export function GetReparsedNodeForNode(node: GoPtr<Node>): GoPtr<Node> {
     if (file !== undefined && file!.ReparsedClones.length !== 0) {
       const [rawPos, found] = slices.BinarySearchFunc(file!.ReparsedClones, node, CompareNodePositions);
       const pos: int = (!found && rawPos > 0) ? (rawPos - 1) as int : rawPos;
-      const candidate: GoPtr<Node> = file!.ReparsedClones[pos];
+      const candidate: GoPtr<Node> = GoSliceLoad(file!.ReparsedClones, pos, GoPointerValueOps<Node>());
       if (TextRange_ContainedBy(node!.Loc, candidate!.Loc)) {
         const reparsed: GoPtr<Node> = findCloneInNode(candidate, node);
         if (reparsed !== undefined) {

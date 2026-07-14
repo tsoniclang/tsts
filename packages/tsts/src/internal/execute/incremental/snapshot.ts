@@ -60,6 +60,8 @@ import * as hex from "../../../go/encoding/hex.js";
 import { byteSlice } from "../../printer/utilities.js";
 import type { referenceMap } from "./referencemap.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 /**
@@ -341,7 +343,7 @@ export function emitSignature_getNewEmitSignature(receiver: GoPtr<emitSignature>
     };
   } else {
     return {
-      signature: receiver!.signatureWithDifferentOptions[0]!,
+      signature: GoSliceLoad(receiver!.signatureWithDifferentOptions, 0, GoStringValueOps)!,
       signatureWithDifferentOptions: GoNilSlice(),
     };
   }

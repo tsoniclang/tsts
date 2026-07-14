@@ -62,6 +62,8 @@ import * as strings from "../../../go/strings.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
@@ -384,14 +386,14 @@ export function DeclarationTransformer_isInternalDeclaration(receiver: GoPtr<Dec
     const params = Node_ParameterList(parseTreeNode!.Parent!);
     let paramIdx = -1;
     for (let i = 0; i < params!.Nodes.length; i++) {
-      if (params!.Nodes[i] === parseTreeNode) {
+      if (GoSliceLoad(params!.Nodes, i, GoPointerValueOps<Node>()) === parseTreeNode) {
         paramIdx = i;
         break;
       }
     }
     let previousSibling: GoPtr<Node> = undefined;
     if (paramIdx > 0) {
-      previousSibling = params!.Nodes[paramIdx - 1];
+      previousSibling = GoSliceLoad(params!.Nodes, paramIdx - 1, GoPointerValueOps<Node>());
     }
     const text = SourceFile_Text(sourceFile);
     let commentRanges: GoSlice<CommentRange> = GoNilSlice();
@@ -849,7 +851,7 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
     if (receiver!.state!.lateMarkedStatements.length === 0) {
       break;
     }
-    const next = receiver!.state!.lateMarkedStatements[0];
+    const next = GoSliceLoad(receiver!.state!.lateMarkedStatements, 0, GoPointerValueOps<Node>());
     receiver!.state!.lateMarkedStatements = receiver!.state!.lateMarkedStatements.slice(1);
     const saveNeedsDeclare = receiver!.needsDeclare;
     receiver!.needsDeclare = (next!.Parent !== undefined && IsSourceFile(next!.Parent)) as bool;
@@ -1293,7 +1295,7 @@ export function DeclarationTransformer_visitDeclarationSubtree(receiver: GoPtr<D
   if (input!.Kind === KindSemicolonClassElement) {
     return undefined;
   }
-  if (IsHeritageClause(input) && (AsHeritageClause(input)!.Types!.Nodes.length === 0 || (AsHeritageClause(input)!.Types!.Nodes.length === 1 && NodeIsMissing(AsHeritageClause(input)!.Types!.Nodes[0])))) {
+  if (IsHeritageClause(input) && (AsHeritageClause(input)!.Types!.Nodes.length === 0 || (AsHeritageClause(input)!.Types!.Nodes.length === 1 && NodeIsMissing(GoSliceLoad(AsHeritageClause(input)!.Types!.Nodes, 0, GoPointerValueOps<Node>()))))) {
     return undefined;
   }
   const previousEnclosingDeclaration = receiver!.enclosingDeclaration;
@@ -1810,7 +1812,7 @@ export function DeclarationTransformer_transformVariableDeclaration(receiver: Go
 export function DeclarationTransformer_transformCjsRequireVariableDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<VariableDeclaration>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  const specifier = DeclarationTransformer_rewriteModuleSpecifier(receiver, input, AsCallExpression(Node_Initializer(input))!.Arguments!.Nodes[0]);
+  const specifier = DeclarationTransformer_rewriteModuleSpecifier(receiver, input, GoSliceLoad(AsCallExpression(Node_Initializer(input))!.Arguments!.Nodes, 0, GoPointerValueOps<Node>()));
   if (IsIdentifier(Node_Name(input))) {
     // `const x = require("something")` -> `import x = require("something")`
     return NewImportEqualsDeclaration(astFactory, undefined, false as bool, Node_Name(input), NewExternalModuleReference(astFactory, specifier));
@@ -1888,7 +1890,7 @@ export function DeclarationTransformer_recreateBindingPattern(receiver: GoPtr<De
     return undefined;
   }
   if (results.length === 1) {
-    return results[0];
+    return GoSliceLoad(results, 0, GoPointerValueOps<Node>());
   }
   return NewSyntaxList(factory!.__tsgoEmbedded0, results);
 }
@@ -2283,7 +2285,7 @@ export function DeclarationTransformer_transformConstructSignatureDeclaration(re
  */
 export function DeclarationTransformer_omitPrivateMethodType(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<Node>): GoPtr<Node> {
   const sym = Node_Symbol(input);
-  if (sym !== undefined && (sym.Declarations?.length ?? 0) > 0 && sym.Declarations![0] !== input) {
+  if (sym !== undefined && (sym.Declarations?.length ?? 0) > 0 && GoSliceLoad(sym.Declarations!, 0, GoPointerValueOps<Node>()) !== input) {
     return undefined;
   }
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
@@ -3917,7 +3919,7 @@ export function isClassExtendingNull(node: GoPtr<Node>): bool {
   if (heritage!.Nodes.length > 1 || heritage!.Nodes.length === 0) {
     return false;
   }
-  for (const expA of AsHeritageClause(heritage!.Nodes[0])!.Types!.Nodes) {
+  for (const expA of AsHeritageClause(GoSliceLoad(heritage!.Nodes, 0, GoPointerValueOps<Node>()))!.Types!.Nodes) {
     const expr = AsExpressionWithTypeArguments(expA)!.Expression;
     if (expr !== undefined && expr!.Kind === KindNullKeyword) {
       return true as bool;
@@ -5017,7 +5019,7 @@ export function DeclarationTransformer_visitExpressionStatement(receiver: GoPtr<
           return undefined; // handled in pre-walk
         case JSDeclarationKindObjectDefinePropertyExports:
           if (IsSourceFile(node!.Parent) && AsSourceFile(node!.Parent)!.CommonJSModuleIndicator !== undefined) {
-            return DeclarationTransformer_transformCommonJSExport(receiver, expression, DeclarationTransformer_getNameExpressionPreferringIdentifier(receiver, Node_Arguments(expression)![1]));
+            return DeclarationTransformer_transformCommonJSExport(receiver, expression, DeclarationTransformer_getNameExpressionPreferringIdentifier(receiver, GoSliceLoad(Node_Arguments(expression)!, 1, GoPointerValueOps<Node>())));
           }
           break;
       }

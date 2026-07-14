@@ -38,6 +38,8 @@ import {
 } from "./snapshot.js";
 import type { emitSignature, FileEmitKind, FileInfo } from "./snapshot.js";
 import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 // Go's []byte(string) conversion: the UTF-8 encoding of the string.
@@ -1182,7 +1184,7 @@ export function BuildInfo_IsIncremental(receiver: GoPtr<BuildInfo>): bool {
  * }
  */
 export function BuildInfo_fileName(receiver: GoPtr<BuildInfo>, fileId: BuildInfoFileId): string {
-  return receiver!.FileNames[fileId - 1]!;
+  return GoSliceLoad(receiver!.FileNames, fileId - 1, GoStringValueOps)!;
 }
 
 /**

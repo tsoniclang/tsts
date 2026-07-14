@@ -1,5 +1,7 @@
 import type { bool, byte } from "../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::type::Expected","kind":"type","status":"implemented","sigHash":"41b5bba1ecb1d12dd768979039da756c40c2058df2ffd4e7cb129d45a8bfbeaf"}
@@ -56,7 +58,7 @@ export function Expected_UnmarshalJSON<T>(receiver: GoPtr<Expected<T>>, data: Go
     receiver!.Value = zeroValue();
     return undefined;
   }
-  const first = data[0] ?? 0;
+  const first = GoSliceLoad(data, 0, GoNumberValueOps) ?? 0;
   receiver!.actualJSONType =
     first === 0x22 ? "string" :
     first === 0x74 || first === 0x66 ? "boolean" :

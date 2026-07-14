@@ -58,6 +58,8 @@ import { Filter, Some } from "../../core/core.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 
 
 const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
@@ -2992,7 +2994,7 @@ export function classFieldsTransformer_visitTaggedTemplateExpression(receiver: G
 export function classFieldsTransformer_transformClassStaticBlockDeclaration(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): GoPtr<Expression> {
   if (receiver!.shouldTransformPrivateElementsOrClassStaticBlocks) {
     if (isClassThisAssignmentBlock(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node)) {
-      const firstStatement = AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes[0];
+      const firstStatement = GoSliceLoad(AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes, 0, GoPointerValueOps<Node>());
       const result = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), Node_Expression(firstStatement));
       if (IsAssignmentExpression(result, true)) {
         const binary = AsBinaryExpression(result);
@@ -3004,7 +3006,7 @@ export function classFieldsTransformer_transformClassStaticBlockDeclaration(rece
     }
 
     if (isClassNamedEvaluationHelperBlock(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node)) {
-      const firstStatement = AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes[0];
+      const firstStatement = GoSliceLoad(AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes, 0, GoPointerValueOps<Node>());
       return NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), Node_Expression(firstStatement)) as GoPtr<Expression>;
     }
 
@@ -3927,7 +3929,7 @@ export function classFieldsTransformer_visitInNewClassLexicalEnvironment(receive
   if (receiver!.shouldTransformPrivateElementsOrClassStaticBlocks) {
     const privateInstanceMethodsAndAccessors = classFieldsTransformer_getPrivateInstanceMethodsAndAccessors(receiver, node);
     if (privateInstanceMethodsAndAccessors.length > 0) {
-      classFieldsTransformer_getPrivateIdentifierEnvironment(receiver)!.data.weakSetName = classFieldsTransformer_createHoistedVariableForClass(receiver, "instances", Node_Name(privateInstanceMethodsAndAccessors[0]), "");
+      classFieldsTransformer_getPrivateIdentifierEnvironment(receiver)!.data.weakSetName = classFieldsTransformer_createHoistedVariableForClass(receiver, "instances", Node_Name(GoSliceLoad(privateInstanceMethodsAndAccessors, 0, GoPointerValueOps<Node>())), "");
     }
   }
 
@@ -5076,8 +5078,8 @@ export function classFieldsTransformer_transformConstructor(receiver: GoPtr<clas
  * }
  */
 export function classFieldsTransformer_transformConstructorBodyWorker(receiver: GoPtr<classFieldsTransformer>, statementsOut: GoSlice<GoPtr<Statement>>, statementsIn: GoSlice<GoPtr<Statement>>, statementOffset: int, superPath: GoSlice<int>, superPathDepth: int, initializerStatements: GoSlice<GoPtr<Statement>>, constructor_: GoPtr<ConstructorDeclaration>): GoSlice<GoPtr<Statement>> {
-  const superStatementIndex = superPath[superPathDepth]!;
-  const superStatement = statementsIn[superStatementIndex];
+  const superStatementIndex = GoSliceLoad(superPath, superPathDepth, GoNumberValueOps)!;
+  const superStatement = GoSliceLoad(statementsIn, superStatementIndex, GoPointerValueOps<Node>());
 
   // Visit statements before super
   const [visitedBefore] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), statementsIn.slice(statementOffset, superStatementIndex) as unknown as GoSlice<GoPtr<Node>>);
@@ -5124,7 +5126,7 @@ export function classFieldsTransformer_transformConstructorBodyWorker(receiver: 
     // parameter-property assignments should occur immediately after the prologue and `super()`,
     // so only count the statements that immediately follow.
     while (newOffset < statementsIn.length) {
-      const stmt = statementsIn[newOffset];
+      const stmt = GoSliceLoad(statementsIn, newOffset, GoPointerValueOps<Node>());
       const orig = EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), stmt as unknown as GoPtr<Node>);
       if (IsParameterPropertyDeclaration(orig, constructor_ as unknown as GoPtr<Node>)) {
         newOffset++;
@@ -5343,7 +5345,7 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
       // so only count the statements that immediately follow.
       const bodyNodes = body!.Statements!.Nodes as unknown as GoSlice<GoPtr<Statement>>;
       while (statementOffset < bodyNodes.length) {
-        const stmt = bodyNodes[statementOffset];
+        const stmt = GoSliceLoad(bodyNodes, statementOffset, GoPointerValueOps<Node>());
         const orig = EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), stmt as unknown as GoPtr<Node>);
         if (IsParameterPropertyDeclaration(orig, constructor_ as unknown as GoPtr<Node>)) {
           statementOffset++;

@@ -63,6 +63,8 @@ import * as slices from "../../../go/slices.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 function zeroExportTypeLinks(): ExportTypeLinks {
@@ -529,15 +531,15 @@ export function Checker_checkSourceElementUnreachable(receiver: GoPtr<Checker>, 
         const first = offset;
         let last = offset;
         for (let i = offset + 1; i < statements.length; i++) {
-          const nextNode = statements[i];
+          const nextNode = GoSliceLoad(statements, i, GoPointerValueOps<Node>());
           if (!IsPotentiallyExecutableNode(nextNode) || !Checker_isSourceElementUnreachable(receiver, nextNode)) {
             break;
           }
           last = i;
           Set_Add(c.reportedUnreachableNodes, nextNode, goNodePointerKey);
         }
-        startNode = statements[first];
-        endNode = statements[last];
+        startNode = GoSliceLoad(statements, first, GoPointerValueOps<Node>());
+        endNode = GoSliceLoad(statements, last, GoPointerValueOps<Node>());
       }
     }
   }
@@ -730,7 +732,7 @@ export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node:
       if (prop !== undefined && baseProp !== undefined) {
         const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
         if (!Checker_checkTypeAssignableToEx(receiver, Checker_getTypeOfSymbol(receiver, prop), Checker_getTypeOfSymbol(receiver, baseProp), OrElse<GoPtr<Node>>(Node_Name(member), member, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>), undefined, GoValueRef(diags))) {
-          Checker_addDiagnostic(receiver, NewDiagnosticChain(diags[0], Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Checker_symbolToString(receiver, declaredProp), Checker_TypeToString(receiver, typeWithThis), Checker_TypeToString(receiver, baseWithThis)));
+          Checker_addDiagnostic(receiver, NewDiagnosticChain(GoSliceLoad(diags, 0, GoPointerValueOps<Diagnostic>()), Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Checker_symbolToString(receiver, declaredProp), Checker_TypeToString(receiver, typeWithThis), Checker_TypeToString(receiver, baseWithThis)));
           issuedMemberError = true;
         }
       }
@@ -1071,7 +1073,7 @@ export function Checker_getDiagnosticHeadMessageForDecoratorResolution(receiver:
 export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, node: GoPtr<Node>, s: GoPtr<CallState>, signatures: GoSlice<GoPtr<Signature>>, headMessage: GoPtr<Message>): void {
   const c = receiver!;
   if (s!.candidatesForArgumentError.length !== 0) {
-    const last = s!.candidatesForArgumentError[s!.candidatesForArgumentError.length - 1];
+    const last = GoSliceLoad(s!.candidatesForArgumentError, s!.candidatesForArgumentError.length - 1, GoPointerValueOps<Signature>());
     const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
     Checker_isSignatureApplicable(receiver, s!.node, s!.args, last, c.assignableRelation, CheckModeNormal, true as bool, GoValueRef(diags));
     for (let diagnostic of diags) {
@@ -1230,7 +1232,7 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
 export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: GoPtr<Node>, signatures: GoSlice<GoPtr<Signature>>, args: GoSlice<GoPtr<Node>>, headMessage: GoPtr<Message>): GoPtr<Diagnostic> {
   const spreadIndex = Checker_getSpreadArgumentIndex(receiver, args);
   if (spreadIndex > -1) {
-    return NewDiagnosticForNode(args[spreadIndex], A_spread_argument_must_either_have_a_tuple_type_or_be_passed_to_a_rest_parameter);
+    return NewDiagnosticForNode(GoSliceLoad(args, spreadIndex, GoPointerValueOps<Node>()), A_spread_argument_must_either_have_a_tuple_type_or_be_passed_to_a_rest_parameter);
   }
   let minCount = Number.MAX_SAFE_INTEGER; // smallest parameter count
   let maxCount = Number.MIN_SAFE_INTEGER; // largest parameter count
@@ -1319,8 +1321,8 @@ export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: Go
       return diagnostic;
     }
     const sourceFile = GetSourceFileOfNode(node);
-    let pos = Node_Pos(args[maxCount]);
-    let end = Node_End(args[args.length - 1]);
+    let pos = Node_Pos(GoSliceLoad(args, maxCount, GoPointerValueOps<Node>()));
+    let end = Node_End(GoSliceLoad(args, args.length - 1, GoPointerValueOps<Node>()));
     if (end === pos) {
       end++;
     }
@@ -1436,7 +1438,7 @@ export function Checker_getTypeArgumentArityError(receiver: GoPtr<Checker>, node
   const loc = NewTextRange(SkipTrivia(SourceFile_Text(sourceFile), TextRange_Pos(typeArgumentList!.Loc)), TextRange_End(typeArgumentList!.Loc));
   if (signatures.length === 1) {
     // No overloads exist
-    const sig = signatures[0];
+    const sig = GoSliceLoad(signatures, 0, GoPointerValueOps<Signature>());
     const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters);
     const maxCount = sig!.typeParameters.length;
     let expected = String(minCount);

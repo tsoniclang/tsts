@@ -168,6 +168,8 @@ import { EFExportName, EFHelperName, EFLocalName } from "../printer/emitflags.js
 import type { NodeFactory } from "../printer/factory.js";
 import { NodeFactory_NewAssignmentExpression } from "../printer/factory.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -668,7 +670,7 @@ export function SingleOrMany(nodes: GoSlice<GoPtr<Node>>, factory: GoPtr<NodeFac
     return undefined;
   }
   if (nodes.length === 1) {
-    return nodes[0];
+    return GoSliceLoad(nodes, 0, GoPointerValueOps<Node>());
   }
   return NewSyntaxList(factory!.__tsgoEmbedded0, nodes);
 }
@@ -780,7 +782,7 @@ export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>
  */
 export function findSuperStatementIndexPathWorker(statements: GoSlice<GoPtr<Statement>>, start: int, indices: GoSlice<int>): GoSlice<int> {
   for (let i = start; i < statements.length; i++) {
-    const statement = statements[i];
+    const statement = GoSliceLoad(statements, i, GoPointerValueOps<Node>());
     if (GetSuperCallFromStatement(statement) !== undefined) {
       return GoSliceAppend(indices, i, GoNumberValueOps);
     } else if (IsTryStatement(statement as unknown as GoPtr<Node>)) {

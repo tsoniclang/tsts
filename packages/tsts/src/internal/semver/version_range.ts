@@ -16,6 +16,8 @@ import {
   versionZero,
 } from "./version.js";
 import { GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -388,7 +390,7 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
 
     const hyphenMatch: GoSlice<string> = hyphenRegExp!.FindStringSubmatch(r);
     if (!GoSliceIsNil(hyphenMatch)) {
-      const [parsedComparators, ok] = parseHyphen(hyphenMatch[1]!, hyphenMatch[2]!);
+      const [parsedComparators, ok] = parseHyphen(GoSliceLoad(hyphenMatch, 1, GoStringValueOps)!, GoSliceLoad(hyphenMatch, 2, GoStringValueOps)!);
       if (ok) {
         comparators = GoAppendSlice(comparators, parsedComparators);
       } else {
@@ -401,7 +403,7 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
           return [GoNilSlice(), false];
         }
 
-        const [parsedComparators, ok] = parseComparator(match[1]!, match[2]!);
+        const [parsedComparators, ok] = parseComparator(GoSliceLoad(match, 1, GoStringValueOps)!, GoSliceLoad(match, 2, GoStringValueOps)!);
         if (ok) {
           comparators = GoAppendSlice(comparators, parsedComparators);
         } else {
@@ -634,11 +636,11 @@ export function parsePartial(text: string): [partialVersion, bool] {
     return [zeroPartial, false];
   }
 
-  const majorStr: string = match[1]!;
-  let minorStr: string = match[2]!;
-  let patchStr: string = match[3]!;
-  const prereleaseStr: string = match[4]!;
-  const buildStr: string = match[5]!;
+  const majorStr: string = GoSliceLoad(match, 1, GoStringValueOps)!;
+  let minorStr: string = GoSliceLoad(match, 2, GoStringValueOps)!;
+  let patchStr: string = GoSliceLoad(match, 3, GoStringValueOps)!;
+  const prereleaseStr: string = GoSliceLoad(match, 4, GoStringValueOps)!;
+  const buildStr: string = GoSliceLoad(match, 5, GoStringValueOps)!;
 
   if (minorStr === "") {
     minorStr = "*";

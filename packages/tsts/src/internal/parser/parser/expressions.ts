@@ -282,6 +282,8 @@ import {
   Parser_inDecoratorContext,
 } from "./tokens-speculation.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoNumberValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 
 
 /**
@@ -425,10 +427,10 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
 
   let afterAwaitStatement = 0;
   for (let i = 0; i < receiver!.possibleAwaitSpans.length; i += 2) {
-    const nextAwaitStatement = receiver!.possibleAwaitSpans[i];
+    const nextAwaitStatement = GoSliceLoad(receiver!.possibleAwaitSpans, i, GoNumberValueOps);
     // append all non-await statements between afterAwaitStatement and nextAwaitStatement
-    const prevStatement = sourceFile!.Statements!.Nodes[afterAwaitStatement];
-    const nextStatement = sourceFile!.Statements!.Nodes[nextAwaitStatement!];
+    const prevStatement = GoSliceLoad(sourceFile!.Statements!.Nodes, afterAwaitStatement, GoPointerValueOps<Node>());
+    const nextStatement = GoSliceLoad(sourceFile!.Statements!.Nodes, nextAwaitStatement!, GoPointerValueOps<Node>());
     statements = GoSliceAppendSlice(statements, sourceFile!.Statements!.Nodes.slice(afterAwaitStatement, nextAwaitStatement), GoPointerValueOps<Node>());
 
     // append all diagnostics associated with the copied range
@@ -457,7 +459,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     Scanner_ResetPos(receiver!.scanner, Node_Pos(nextStatement));
     Parser_nextToken(receiver);
 
-    afterAwaitStatement = receiver!.possibleAwaitSpans[i + 1]!;
+    afterAwaitStatement = GoSliceLoad(receiver!.possibleAwaitSpans, i + 1, GoNumberValueOps)!;
     while (receiver!.token !== KindEndOfFile) {
       const startPos = Scanner_TokenFullStart(receiver!.scanner);
       const statement = Parser_parseStatement(receiver);
@@ -466,7 +468,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
         Parser_nextToken(receiver);
       }
       if (afterAwaitStatement < sourceFile!.Statements!.Nodes.length) {
-        const lastAwaitStatement = sourceFile!.Statements!.Nodes[afterAwaitStatement - 1];
+        const lastAwaitStatement = GoSliceLoad(sourceFile!.Statements!.Nodes, afterAwaitStatement - 1, GoPointerValueOps<Node>());
         if (Node_End(statement) === Node_End(lastAwaitStatement)) {
           // done reparsing this section
           break;
@@ -475,7 +477,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
           // we ate into the next statement, so we must continue reparsing the next span
           i += 2;
           if (i < receiver!.possibleAwaitSpans.length) {
-            afterAwaitStatement = receiver!.possibleAwaitSpans[i + 1]!;
+            afterAwaitStatement = GoSliceLoad(receiver!.possibleAwaitSpans, i + 1, GoNumberValueOps)!;
           } else {
             afterAwaitStatement = sourceFile!.Statements!.Nodes.length;
           }
@@ -490,7 +492,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
 
   // append all statements between pos and the end of the list
   if (afterAwaitStatement < sourceFile!.Statements!.Nodes.length) {
-    const prevStatement2 = sourceFile!.Statements!.Nodes[afterAwaitStatement];
+    const prevStatement2 = GoSliceLoad(sourceFile!.Statements!.Nodes, afterAwaitStatement, GoPointerValueOps<Node>());
     statements = GoSliceAppendSlice(statements, sourceFile!.Statements!.Nodes.slice(afterAwaitStatement), GoPointerValueOps<Node>());
 
     // append all diagnostics associated with the copied range

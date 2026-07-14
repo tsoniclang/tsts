@@ -47,6 +47,8 @@ import type { EmitHelper } from "./helpers.js";
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
@@ -754,11 +756,11 @@ export function EmitContext_mergeEnvironment(receiver: GoPtr<EmitContext>, state
     } else {
       const leftPrologues: Set<string> = { M: GoNilMap() };
       for (let i = 0; i < leftStandardPrologueEnd; i++) {
-        const leftPrologue = statements[i]!;
+        const leftPrologue = GoSliceLoad(statements, i, GoPointerValueOps<Node>())!;
         Set_Add(leftPrologues, Node_Text(leftPrologue), GoStringKey);
       }
       for (let i = rightStandardPrologueEnd - 1; i >= 0; i--) {
-        const rightPrologue = declarations[i]!;
+        const rightPrologue = GoSliceLoad(declarations, i, GoPointerValueOps<Node>())!;
         if (!Set_Has(leftPrologues, Node_Text(rightPrologue))) {
           left = Concatenate(GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
             GoSliceStore(__goSliceLiteral, 0, rightPrologue, GoPointerValueOps<Node>());
@@ -1622,12 +1624,12 @@ export function EmitContext_MoveEmitHelpers(receiver: GoPtr<EmitContext>, source
   const targetEmitNode = LinkStore_Get(c.emitNodes, target, zeroEmitNode, nodePointerKey)!;
   let helpersRemoved = 0;
   for (let i = 0; i < sourceEmitHelpers.length; i++) {
-    const helper = sourceEmitHelpers[i]!;
+    const helper = GoSliceLoad(sourceEmitHelpers, i, GoPointerValueOps<EmitHelper>())!;
     if (predicate!(helper)) {
       helpersRemoved++;
       targetEmitNode.v.helpers = AppendIfUnique(targetEmitNode.v.helpers, helper, GoEqualStrict<GoPtr<EmitHelper>>);
     } else if (helpersRemoved > 0) {
-      sourceEmitHelpers[i - helpersRemoved] = helper;
+      GoSliceStore(sourceEmitHelpers, i - helpersRemoved, helper, GoPointerValueOps<EmitHelper>());
     }
   }
 
@@ -1842,13 +1844,13 @@ export function EmitContext_addDefaultValueAssignmentsIfNeeded(receiver: GoPtr<E
   const nodes = nodeList.Nodes;
   let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; i < nodes.length; i++) {
-    const parameter = nodes[i]!;
+    const parameter = GoSliceLoad(nodes, i, GoPointerValueOps<Node>())!;
     const updated = EmitContext_addDefaultValueAssignmentIfNeeded(receiver, parameter as GoPtr<ParameterDeclaration>);
     if (updated !== parameter) {
       if (GoSliceIsNil(result)) {
         result = slices.Clone(nodes);
       }
-      result[i] = updated;
+      GoSliceStore(result, i, updated, GoPointerValueOps<Node>());
     }
   }
   if (!GoSliceIsNil(result)) {

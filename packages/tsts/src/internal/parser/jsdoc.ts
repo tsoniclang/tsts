@@ -161,6 +161,8 @@ import { Parser_reparseTags } from "./reparser.js";
 import { GoValueRef } from "../../go/compat.js";
 import type { GoFunc, GoRef } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::init","kind":"func","status":"implemented","sigHash":"deadcfe2223147229491ed97a5eb1b413a0acb92061a6dd7ca510eb6614543db"}
@@ -741,7 +743,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
   }
 
   if (comments.length > 0) {
-    comments[comments.length - 1] = comments[comments.length - 1]!.replace(/\s+$/, "");
+    comments[comments.length - 1] = GoSliceLoad(comments, comments.length - 1, GoStringValueOps)!.replace(/\s+$/, "");
     const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentsPos);
     commentParts = GoSliceAppend(commentParts, jsdocText!, GoPointerValueOps<Node>());
   }
@@ -769,7 +771,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
  */
 export function removeLeadingNewlines(comments: GoSlice<string>): GoSlice<string> {
   let i = 0;
-  while (i < comments.length && TrimLeft(comments[i]!, "\r\n") === "") {
+  while (i < comments.length && TrimLeft(GoSliceLoad(comments, i, GoStringValueOps)!, "\r\n") === "") {
     i++;
   }
   return comments.slice(i);
@@ -808,11 +810,11 @@ export function trimEnd(s: string): string {
 export function removeTrailingWhitespace(comments: GoSlice<string>): GoSlice<string> {
   let end = comments.length;
   for (let i = comments.length - 1; i >= 0; i--) {
-    const trimmed = trimEnd(comments[i]!);
+    const trimmed = trimEnd(GoSliceLoad(comments, i, GoStringValueOps)!);
     if (trimmed === "") {
       end = i;
     } else {
-      comments[i] = trimmed;
+      GoSliceStore(comments, i, trimmed, GoStringValueOps);
       break;
     }
   }
@@ -1852,7 +1854,7 @@ export function Parser_parseTypedefTag(receiver: GoPtr<Parser>, start: int, tagN
         // !!! This differs from Strada but prevents a crash
         let pos = start;
         if (jsdocPropertyTags.length > 0) {
-          pos = Node_Pos(jsdocPropertyTags[0]);
+          pos = Node_Pos(GoSliceLoad(jsdocPropertyTags, 0, GoPointerValueOps<Node>()));
         }
         typeExpression = Parser_finishNode(receiver, jsdocTypeLiteral, pos);
       }

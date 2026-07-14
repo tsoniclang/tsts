@@ -55,6 +55,8 @@ import { Checker_checkClassExpressionExternalHelpers } from "../checker.js";
 
 import type { GoFunc } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getResolutionModeOverride","kind":"method","status":"implemented","sigHash":"7e0c42fe06d7edb996ccecf014152878148d7b5a6adaa597f78189aa937c483a"}
@@ -100,7 +102,7 @@ export function Checker_getResolutionModeOverride(receiver: GoPtr<Checker>, node
     }
     return ResolutionModeNone;
   }
-  const elem = node!.Attributes!.Nodes[0];
+  const elem = GoSliceLoad(node!.Attributes!.Nodes, 0, GoPointerValueOps<Node>());
   if (!IsStringLiteralLike(Node_Name(elem))) {
     return ResolutionModeNone;
   }

@@ -340,6 +340,8 @@ import {
   Parser_parseTypeAliasDeclaration,
 } from "./types.js";
 import { Parser_createJSDocCache } from "./jsx-jsdoc.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::ParseSourceFile","kind":"func","status":"implemented","sigHash":"31f36166c647dbc2dee9793ebd53865364ccab4ac720b10f9e5098b59de22987"}
@@ -581,10 +583,10 @@ export function Parser_parseToplevelStatement(receiver: GoPtr<Parser>, i: int): 
   // statement's index for possibleAwaitSpans.
   i += receiver!.reparseList.length;
   if (receiver!.statementHasAwaitIdentifier && (statement!.Flags & NodeFlagsAwaitContext) === 0) {
-    if (receiver!.possibleAwaitSpans.length === 0 || receiver!.possibleAwaitSpans[receiver!.possibleAwaitSpans.length - 1] !== i) {
+    if (receiver!.possibleAwaitSpans.length === 0 || GoSliceLoad(receiver!.possibleAwaitSpans, receiver!.possibleAwaitSpans.length - 1, GoNumberValueOps) !== i) {
       receiver!.possibleAwaitSpans = GoSliceAppendSlice(receiver!.possibleAwaitSpans, GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral_54b8) => { GoSliceStore(__goSliceLiteral_54b8, 0, i, GoNumberValueOps); GoSliceStore(__goSliceLiteral_54b8, 1, i + 1, GoNumberValueOps); }), GoNumberValueOps);
     } else {
-      receiver!.possibleAwaitSpans[receiver!.possibleAwaitSpans.length - 1] = i + 1;
+      GoSliceStore(receiver!.possibleAwaitSpans, receiver!.possibleAwaitSpans.length - 1, i + 1, GoNumberValueOps);
     }
   }
   return statement;
@@ -3503,7 +3505,7 @@ export function Parser_parseImportAttributes(receiver: GoPtr<Parser>, token: Kin
     elements = Parser_parseDelimitedList(receiver, PCImportAttributes, Parser_parseImportAttribute);
     if (!Parser_parseExpected(receiver, KindCloseBraceToken)) {
       if (receiver!.diagnostics.length !== 0) {
-        const lastDiagnostic = receiver!.diagnostics[receiver!.diagnostics.length - 1];
+        const lastDiagnostic = GoSliceLoad(receiver!.diagnostics, receiver!.diagnostics.length - 1, GoPointerValueOps<Diagnostic>());
         if (Diagnostic_Code(lastDiagnostic) === Message_Code(diagnostics.X_0_expected)) {
           const related = NewDiagnostic(undefined, NewTextRange(openBracePosition, openBracePosition), diagnostics.The_parser_expected_to_find_a_1_to_match_the_0_token_here, "{", "}");
           Diagnostic_AddRelatedInfo(lastDiagnostic, related);

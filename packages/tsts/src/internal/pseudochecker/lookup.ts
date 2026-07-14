@@ -178,6 +178,8 @@ import {
   PseudoTypeUndefined,
 } from "./type.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -605,7 +607,7 @@ export function PseudoChecker_getTypeAnnotationFromAccessor(receiver: GoPtr<Pseu
   if (set.Parameters === undefined || set.Parameters!.Nodes.length < 1) {
     return undefined;
   }
-  const p = set.Parameters!.Nodes[0];
+  const p = GoSliceLoad(set.Parameters!.Nodes, 0, GoPointerValueOps<Node>());
   if (!IsParameterDeclaration(p)) {
     return undefined;
   }
@@ -1011,7 +1013,7 @@ export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, 
   const allAccessors = GetAllAccessorDeclarationsForDeclaration(accessor as GoPtr<AccessorDeclaration>, Node_Symbol(accessor)!.Declarations);
 
   if (allAccessors.GetAccessor !== undefined && allAccessors.GetAccessor.Type !== undefined &&
-    allAccessors.SetAccessor !== undefined && allAccessors.SetAccessor.Parameters !== undefined && allAccessors.SetAccessor.Parameters.Nodes.length > 0 && AsParameterDeclaration(allAccessors.SetAccessor.Parameters.Nodes[0])!.Type !== undefined) {
+    allAccessors.SetAccessor !== undefined && allAccessors.SetAccessor.Parameters !== undefined && allAccessors.SetAccessor.Parameters.Nodes.length > 0 && AsParameterDeclaration(GoSliceLoad(allAccessors.SetAccessor.Parameters.Nodes, 0, GoPointerValueOps<Node>()))!.Type !== undefined) {
     if (IsGetAccessorDeclaration(accessor)) {
       return NewPseudoGetAccessor(
         accessor,
@@ -1024,7 +1026,7 @@ export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, 
       accessor,
       name,
       false,
-      PseudoChecker_cloneParameters(receiver, AsSetAccessorDeclaration(accessor)!.Parameters as GoPtr<NodeList>)[0],
+      GoSliceLoad(PseudoChecker_cloneParameters(receiver, AsSetAccessorDeclaration(accessor)!.Parameters as GoPtr<NodeList>), 0, GoPointerValueOps<PseudoParameter>()),
     );
   }
 
@@ -1512,7 +1514,7 @@ export function isOptionalInitializedOrRestParameter(node: GoPtr<ParameterDeclar
  */
 export function lastRequiredParamIndex(params: GoSlice<GoPtr<Node>>): int {
   for (let i = params.length - 1; i >= 0; i--) {
-    if (!isOptionalInitializedOrRestParameter(params[i])) {
+    if (!isOptionalInitializedOrRestParameter(GoSliceLoad(params, i, GoPointerValueOps<Node>()))) {
       return i + 1;
     }
   }
@@ -1701,7 +1703,7 @@ export function PseudoChecker_cloneParameters(receiver: GoPtr<PseudoChecker>, no
   const lastRequired = lastRequiredParamIndex(nodes!.Nodes);
   let result: GoSlice<GoPtr<PseudoParameter>> = GoSliceMake(0, 0, GoPointerValueOps<PseudoParameter>());
   for (let i = 0; i < nodes!.Nodes.length; i++) {
-    const e = nodes!.Nodes[i];
+    const e = GoSliceLoad(nodes!.Nodes, i, GoPointerValueOps<Node>());
     const p = AsParameterDeclaration(e);
     let optional = p!.QuestionToken !== undefined;
     if (!optional && p!.Initializer !== undefined) {

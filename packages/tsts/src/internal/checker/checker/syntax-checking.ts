@@ -254,6 +254,8 @@ import { Checker_isSkipDirectInferenceNode } from "../inference.js";
 
 import type { GoInterface, GoRef } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 function zeroNodeLinks(): NodeLinks {
@@ -693,8 +695,8 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
   const rightType = Checker_getNonNullableTypeIfNeeded(receiver, Checker_checkExpression(receiver, data!.Expression));
   if (IsVariableDeclarationList(data!.Initializer)) {
     const declarations = AsVariableDeclarationList(data!.Initializer)!.Declarations!.Nodes;
-    if (declarations.length !== 0 && IsBindingPattern(Node_Name(declarations[0]))) {
-      Checker_error(receiver, Node_Name(declarations[0]), The_left_hand_side_of_a_for_in_statement_cannot_be_a_destructuring_pattern);
+    if (declarations.length !== 0 && IsBindingPattern(Node_Name(GoSliceLoad(declarations, 0, GoPointerValueOps<Node>())))) {
+      Checker_error(receiver, Node_Name(GoSliceLoad(declarations, 0, GoPointerValueOps<Node>())), The_left_hand_side_of_a_for_in_statement_cannot_be_a_destructuring_pattern);
     }
     Checker_checkVariableDeclarationList(receiver, data!.Initializer);
   } else {
@@ -1960,7 +1962,7 @@ export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoP
   }
   const constructSignatures = Checker_getSignaturesOfType(receiver, expressionType, SignatureKindConstruct);
   if (constructSignatures.length !== 0) {
-    if (!Checker_isConstructorAccessible(receiver, node, constructSignatures[0])) {
+    if (!Checker_isConstructorAccessible(receiver, node, GoSliceLoad(constructSignatures, 0, GoPointerValueOps<Signature>()))) {
       return Checker_resolveErrorCall(receiver, node);
     }
     if (someSignature(constructSignatures, (signature) => (signature!.flags & SignatureFlagsAbstract) !== 0)) {
@@ -2081,7 +2083,7 @@ export function Checker_maybeAddMissingAwaitInfo(receiver: GoPtr<Checker>, error
     }
     const awaitedTypeOfSource = Checker_getAwaitedTypeOfPromise(receiver, source);
     if (awaitedTypeOfSource !== undefined && Checker_isTypeRelatedTo(receiver, awaitedTypeOfSource, target, relation)) {
-      Diagnostic_AddRelatedInfo(diagnosticOutput.v[0], NewDiagnosticForNode(errorNode, Did_you_forget_to_use_await));
+      Diagnostic_AddRelatedInfo(GoSliceLoad(diagnosticOutput.v, 0, GoPointerValueOps<Diagnostic>()), NewDiagnosticForNode(errorNode, Did_you_forget_to_use_await));
     }
   }
 }

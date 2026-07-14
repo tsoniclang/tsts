@@ -15,6 +15,8 @@ import type { Program } from "./program.js";
 import { Program_as_checker_Program, Program_Options, Program_SingleThreaded, SortAndDeduplicateDiagnostics } from "./program.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad, GoSliceStore, GoSliceValueOps } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::type::CheckerPool","kind":"type","status":"implemented","sigHash":"c982af3c817df71dc9ae1af140208863183d3eaa1e11d94bfdcf98a350318845"}
  *
@@ -144,10 +146,10 @@ export function checkerPool_GetChecker(receiver: GoPtr<checkerPool>, ctx: GoInte
     return checkerPool_getCheckerForFileExclusive(receiver, ctx, file);
   }
   checkerPool_createCheckers(receiver);
-  const c = receiver!.checkers[0];
-  receiver!.locks[0]!.Lock();
+  const c = GoSliceLoad(receiver!.checkers, 0, GoPointerValueOps<Checker>());
+  GoSliceLoad(receiver!.locks, 0, GoPointerValueOps<Mutex>())!.Lock();
   return [c, OnceFunc((): void => {
-    receiver!.locks[0]!.Unlock();
+    GoSliceLoad(receiver!.locks, 0, GoPointerValueOps<Mutex>())!.Unlock();
   })];
 }
 
@@ -183,9 +185,9 @@ export function checkerPool_getCheckerForFileExclusive(receiver: GoPtr<checkerPo
   checkerPool_createCheckers(receiver);
   const c = receiver!.fileAssociations.get(file);
   const idx = Index(receiver!.checkers, c, GoEqualStrict);
-  receiver!.locks[idx]!.Lock();
+  GoSliceLoad(receiver!.locks, idx, GoPointerValueOps<Mutex>())!.Lock();
   return [c, OnceFunc((): void => {
-    receiver!.locks[idx]!.Unlock();
+    GoSliceLoad(receiver!.locks, idx, GoPointerValueOps<Mutex>())!.Unlock();
   })];
 }
 
@@ -200,7 +202,7 @@ export function checkerPool_getCheckerForFileExclusive(receiver: GoPtr<checkerPo
  */
 export function checkerPool_getCheckerNonExclusive(receiver: GoPtr<checkerPool>): [GoPtr<Checker>, GoFunc<() => void>] {
   checkerPool_createCheckers(receiver);
-  return [receiver!.checkers[0], noop];
+  return [GoSliceLoad(receiver!.checkers, 0, GoPointerValueOps<Checker>()), noop];
 }
 
 /**
@@ -242,15 +244,15 @@ export function checkerPool_createCheckers(receiver: GoPtr<checkerPool>): void {
           tracer = NewTracer(receiver!.tracing, idx as int);
         }
         const [c, lock] = NewChecker(Program_as_checker_Program(receiver!.program), tracer);
-        receiver!.checkers[idx] = c;
-        receiver!.locks[idx] = lock;
+        GoSliceStore(receiver!.checkers, idx, c, GoPointerValueOps<Checker>());
+        GoSliceStore(receiver!.locks, idx, lock, GoPointerValueOps<Mutex>());
       });
     }
     wg!.RunAndWait();
     receiver!.fileAssociations = new globalThis.Map<GoPtr<SourceFile>, GoPtr<Checker>>();
     const files = receiver!.program!.__tsgoEmbedded0!.files;
     for (let i = 0; i < files.length; i++) {
-      receiver!.fileAssociations.set(files[i], receiver!.checkers[i % checkerCount]);
+      receiver!.fileAssociations.set(GoSliceLoad(files, i, GoPointerValueOps<SourceFile>()), GoSliceLoad(receiver!.checkers, i % checkerCount, GoPointerValueOps<Checker>()));
     }
   });
 }
@@ -277,13 +279,13 @@ export function checkerPool_forEachCheckerParallel(receiver: GoPtr<checkerPool>,
   const wg = NewWorkGroup(Program_SingleThreaded(receiver!.program));
   for (let idx = 0; idx < receiver!.checkers.length; idx++) {
     const checkerIdx = idx;
-    const checkerVal = receiver!.checkers[idx];
+    const checkerVal = GoSliceLoad(receiver!.checkers, idx, GoPointerValueOps<Checker>());
     wg!.Queue((): void => {
-      receiver!.locks[checkerIdx]!.Lock();
+      GoSliceLoad(receiver!.locks, checkerIdx, GoPointerValueOps<Mutex>())!.Lock();
       try {
         cb!(checkerIdx as int, checkerVal);
       } finally {
-        receiver!.locks[checkerIdx]!.Unlock();
+        GoSliceLoad(receiver!.locks, checkerIdx, GoPointerValueOps<Mutex>())!.Unlock();
       }
     });
   }
@@ -307,7 +309,7 @@ export function checkerPool_GetGlobalDiagnostics(receiver: GoPtr<checkerPool>): 
   checkerPool_createCheckers(receiver);
   const globalDiagnostics: GoSlice<GoSlice<GoPtr<Diagnostic>>> = new globalThis.Array(receiver!.checkers.length).fill([]);
   checkerPool_forEachCheckerParallel(receiver, (idx: int, checker: GoPtr<Checker>): void => {
-    globalDiagnostics[idx] = Checker_GetGlobalDiagnostics(checker);
+    GoSliceStore(globalDiagnostics, idx, Checker_GetGlobalDiagnostics(checker), GoSliceValueOps<GoPtr<Diagnostic>>());
   });
   return SortAndDeduplicateDiagnostics(Concat(...globalDiagnostics));
 }
@@ -342,17 +344,17 @@ export function checkerPool_forEachCheckerGroupDo(receiver: GoPtr<checkerPool>, 
   for (let checkerIdx = 0; checkerIdx < checkerCount; checkerIdx++) {
     const ci = checkerIdx;
     wg!.Queue((): void => {
-      receiver!.locks[ci]!.Lock();
+      GoSliceLoad(receiver!.locks, ci, GoPointerValueOps<Mutex>())!.Lock();
       try {
         for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const checker = receiver!.checkers[ci];
+          const file = GoSliceLoad(files, i, GoPointerValueOps<SourceFile>());
+          const checker = GoSliceLoad(receiver!.checkers, ci, GoPointerValueOps<Checker>());
           if (checker === receiver!.fileAssociations.get(file)) {
             cb!(checker, i as int, file);
           }
         }
       } finally {
-        receiver!.locks[ci]!.Unlock();
+        GoSliceLoad(receiver!.locks, ci, GoPointerValueOps<Mutex>())!.Unlock();
       }
     });
   }

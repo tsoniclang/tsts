@@ -3,6 +3,8 @@ import type { GoError, GoSlice } from "./compat.js";
 import type { Reader as IoReader, Writer as IoWriter } from "./io.js";
 import { EOF } from "./io.js";
 import { GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "./compat.js";
+import { GoSliceLoad } from "./compat.js";
+
 
 
 export class Reader {
@@ -17,7 +19,7 @@ export class Reader {
       if (err !== undefined) {
         return [count as int, count > 0 ? undefined : err];
       }
-      p[count] = b;
+      GoSliceStore(p, count, b, GoNumberValueOps);
       count++;
     }
     return [count as int, undefined];
@@ -32,7 +34,7 @@ export class Reader {
     });
     const [n, err] = this.source.Read(one);
     if (n > 0) {
-      return [one[0]!, undefined];
+      return [GoSliceLoad(one, 0, GoNumberValueOps)!, undefined];
     }
     return [0 as byte, err ?? EOF];
   }

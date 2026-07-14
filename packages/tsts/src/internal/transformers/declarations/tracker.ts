@@ -32,6 +32,8 @@ import type { DeclarationEmitHost } from "./transform.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"3d0b1e2bb9b95fe041f24a5d5e940015e3814938b736ed7ca2618eba6fa1b31e"}
@@ -295,7 +297,7 @@ export function SymbolTrackerImpl_ReportTruncationError(receiver: GoPtr<SymbolTr
  */
 export function SymbolTrackerImpl_errorFallbackNode(receiver: GoPtr<SymbolTrackerImpl>): GoPtr<Node> {
   if (receiver!.fallbackStack.length >= 1) {
-    return receiver!.fallbackStack[receiver!.fallbackStack.length - 1];
+    return GoSliceLoad(receiver!.fallbackStack, receiver!.fallbackStack.length - 1, GoPointerValueOps<Node>());
   }
   return undefined;
 }

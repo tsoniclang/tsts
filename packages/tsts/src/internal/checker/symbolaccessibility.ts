@@ -40,6 +40,8 @@ import { IsBinaryExpression } from "../ast/generated/predicates.js";
 import { AsBinaryExpression } from "../ast/generated/casts.js";
 import { Checker_symbolToString, Checker_symbolToStringEx } from "./printer.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 function zeroContainingSymbolLinks(): ContainingSymbolLinks {
@@ -192,7 +194,7 @@ export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols:
     if (accessibleSymbolChain.length > 0) {
       hadAccessibleChain = symbol_;
       // TODO: going through emit resolver here is weird. Relayer these APIs.
-      const hasAccessibleDeclarations = EmitResolver_hasVisibleDeclarations(Checker_GetEmitResolver(receiver), accessibleSymbolChain[0], shouldComputeAliasesToMakeVisible);
+      const hasAccessibleDeclarations = EmitResolver_hasVisibleDeclarations(Checker_GetEmitResolver(receiver), GoSliceLoad(accessibleSymbolChain, 0, GoPointerValueOps<Symbol>()), shouldComputeAliasesToMakeVisible);
       if (hasAccessibleDeclarations !== undefined) {
         return hasAccessibleDeclarations;
       }
@@ -538,7 +540,7 @@ export function Checker_getVariableDeclarationOfObjectLiteral(receiver: GoPtr<Ch
   if (symbol_!.Declarations.length === 0) {
     return undefined;
   }
-  const firstDecl = symbol_!.Declarations[0];
+  const firstDecl = GoSliceLoad(symbol_!.Declarations, 0, GoPointerValueOps<Node>());
   if (firstDecl!.Parent === undefined) {
     return undefined;
   }
@@ -739,7 +741,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
     if (allAlts.length === 0) {
       continue;
     }
-    bestContainers = GoSliceAppend(bestContainers, allAlts[0], GoPointerValueOps<Symbol>());
+    bestContainers = GoSliceAppend(bestContainers, GoSliceLoad(allAlts, 0, GoPointerValueOps<Symbol>()), GoPointerValueOps<Symbol>());
     alternativeContainers = GoSliceAppendSlice(alternativeContainers, allAlts.slice(1), GoPointerValueOps<Symbol>());
   }
   return GoSliceAppendSlice(bestContainers, alternativeContainers, GoPointerValueOps<Symbol>());
@@ -806,7 +808,7 @@ export function Checker_getAliasForSymbolInContainer(receiver: GoPtr<Checker>, c
   }
   if (candidates.length > 0) {
     Checker_sortSymbols(receiver, candidates); // _must_ sort exports for stable results
-    return candidates[0];
+    return GoSliceLoad(candidates, 0, GoPointerValueOps<Symbol>());
   }
   return undefined;
 }
@@ -1281,7 +1283,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
   if (candidateChains.length > 0) {
     // pick first, shortest
     candidateChains.sort((a, b) => Checker_compareSymbolChainsWorker(receiver, a, b));
-    return candidateChains[0]!;
+    return GoSliceLoad(candidateChains, 0, GoSliceValueOps<GoPtr<Symbol>>())!;
   }
 
   // If there's no result and we're looking at the global symbol table, treat `globalThis` like an alias
@@ -1320,7 +1322,7 @@ export function Checker_compareSymbolChainsWorker(receiver: GoPtr<Checker>, a: G
 
   let idx = 0;
   while (idx < a.length) {
-    const comparison = Checker_compareSymbolsWorker(receiver, a[idx], b[idx]);
+    const comparison = Checker_compareSymbolsWorker(receiver, GoSliceLoad(a, idx, GoPointerValueOps<Symbol>()), GoSliceLoad(b, idx, GoPointerValueOps<Symbol>()));
     if (comparison !== 0) {
       return comparison;
     }
@@ -1338,7 +1340,7 @@ export function Checker_compareSymbolChainsWorker(receiver: GoPtr<Checker>, a: G
  * }
  */
 export function isUMDExportSymbol(symbol_: GoPtr<Symbol>): bool {
-  return symbol_ !== undefined && symbol_!.Declarations.length > 0 && symbol_!.Declarations[0] !== undefined && IsNamespaceExportDeclaration(symbol_!.Declarations[0]);
+  return symbol_ !== undefined && symbol_!.Declarations.length > 0 && GoSliceLoad(symbol_!.Declarations, 0, GoPointerValueOps<Node>()) !== undefined && IsNamespaceExportDeclaration(GoSliceLoad(symbol_!.Declarations, 0, GoPointerValueOps<Node>()));
 }
 
 /**

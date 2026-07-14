@@ -80,6 +80,8 @@ import type {
   SourceFileBoundLifecycleRequest,
 } from "./host.js";
 import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+import { GoSliceLoad } from "../go/compat.js";
+
 
 
 export interface SourceSemanticsExtensionOptions {
@@ -377,7 +379,7 @@ function recordSourceSemanticsCallMarker(
       if (!hasMarkerArgumentCount(callExpression, 1)) {
         return;
       }
-      const argument = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
+      const argument = GoSliceLoad((Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())), 0, GoPointerValueOps<Node>());
       if (argument === undefined) {
         return;
       }
@@ -388,7 +390,7 @@ function recordSourceSemanticsCallMarker(
       if (!hasMarkerArgumentCount(callExpression, 1)) {
         return;
       }
-      const argument = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
+      const argument = GoSliceLoad((Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())), 0, GoPointerValueOps<Node>());
       if (argument === undefined) {
         return;
       }
@@ -399,7 +401,7 @@ function recordSourceSemanticsCallMarker(
       if (!hasMarkerArgumentCount(callExpression, 1)) {
         return;
       }
-      const argument = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
+      const argument = GoSliceLoad((Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())), 0, GoPointerValueOps<Node>());
       if (argument === undefined) {
         return;
       }
@@ -410,7 +412,7 @@ function recordSourceSemanticsCallMarker(
       if (!hasMarkerArgumentCount(callExpression, 1)) {
         return;
       }
-      const argument = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
+      const argument = GoSliceLoad((Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())), 0, GoPointerValueOps<Node>());
       if (argument === undefined) {
         return;
       }
@@ -499,7 +501,7 @@ function recordFieldMarker(
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const fieldType = (Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
+  const fieldType = GoSliceLoad((Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())), 0, GoPointerValueOps<Node>());
   if (fieldType === undefined) {
     return;
   }
@@ -528,7 +530,7 @@ function recordStructMarker(
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const shape = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
+  const shape = GoSliceLoad((Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())), 0, GoPointerValueOps<Node>());
   const fields: FieldFact[] = [];
   if (shape?.Kind === KindObjectLiteralExpression) {
     for (const property of Node_Properties(shape) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
@@ -555,7 +557,7 @@ function recordAttributeMarker(
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const target = (Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
+  const target = GoSliceLoad((Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())), 0, GoPointerValueOps<Node>());
   if (target === undefined) {
     return;
   }
@@ -573,7 +575,7 @@ function recordDefaultValueMarker(
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const type = (Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
+  const type = GoSliceLoad((Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())), 0, GoPointerValueOps<Node>());
   if (type === undefined) {
     return;
   }
@@ -692,7 +694,7 @@ function recordSourceSemanticsTypeMarker(
     if (typeArguments.length !== 1) {
       return;
     }
-    const pointee = typeArguments[0];
+    const pointee = GoSliceLoad(typeArguments, 0, GoPointerValueOps<Node>());
     if (pointee === undefined) {
       return;
     }
@@ -708,11 +710,11 @@ function recordSourceSemanticsTypeMarker(
   if (typeArguments.length !== 2) {
     return;
   }
-  const result = typeArguments[1];
+  const result = GoSliceLoad(typeArguments, 1, GoPointerValueOps<Node>());
   if (result === undefined) {
     return;
   }
-  const parameters = getFunctionPointerParameters(typeArguments[0]);
+  const parameters = getFunctionPointerParameters(GoSliceLoad(typeArguments, 0, GoPointerValueOps<Node>()));
   const fact = {
     parameters,
     result,

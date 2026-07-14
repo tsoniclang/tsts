@@ -261,6 +261,8 @@ import {
 } from "./state.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getTextOfNode","kind":"method","status":"implemented","sigHash":"cd0f2d264a682d24757380ddd1c7607562dd147b1238459d26df2b4cc43ca6c7"}
  *
@@ -1373,7 +1375,7 @@ export function Printer_emitModifierList(receiver: GoPtr<Printer>, parentNode: G
 
     while (start < modifiers!.Nodes.length) {
       while (pos < modifiers!.Nodes.length) {
-        const lastModifier = modifiers!.Nodes[pos];
+        const lastModifier = GoSliceLoad(modifiers!.Nodes, pos, GoPointerValueOps<Node>());
         if (IsDecorator(lastModifier)) {
           mode = ModeDecorators;
         } else {
@@ -2967,7 +2969,7 @@ export function Printer_emitListItems(receiver: GoPtr<Printer>, emit: GoFunc<(p:
 
   let leadingLineTerminatorCount = 0;
   if (children.length > 0) {
-    leadingLineTerminatorCount = Printer_getLeadingLineTerminatorCount(receiver, parentNode, children[0], format);
+    leadingLineTerminatorCount = Printer_getLeadingLineTerminatorCount(receiver, parentNode, GoSliceLoad(children, 0, GoPointerValueOps<Node>()), format);
   }
   if (leadingLineTerminatorCount > 0) {
     for (let i = 0; i < leadingLineTerminatorCount; i++) {
