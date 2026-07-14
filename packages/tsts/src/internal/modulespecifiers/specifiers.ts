@@ -1,6 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { Seq2 } from "../../go/iter.js";
-import { GoAppend, GoNilSlice, GoStringKey, GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoStringKey, GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { Node_Expression, Node_Symbol, Node_Text } from "../ast/ast.js";
 import type { HasFileName, Node, SourceFile } from "../ast/ast.js";
@@ -506,7 +506,7 @@ export function getAllModulePathsWorker(info: Info, importedFileName: string, ho
     }
     if (pathsInDirectory.length > 0) {
       pathsInDirectory.sort(comparePaths_);
-      sortedPaths = GoAppend(sortedPaths, ...pathsInDirectory);
+      sortedPaths = GoAppendSlice(sortedPaths, pathsInDirectory);
     }
     const newDirectory = GetDirectoryPath(directory);
     if (newDirectory === directory) {
@@ -517,7 +517,7 @@ export function getAllModulePathsWorker(info: Info, importedFileName: string, ho
   if (allFileNames.size > 0) {
     const remainingPaths = Array.from(allFileNames.values());
     remainingPaths.sort(comparePaths_);
-    sortedPaths = GoAppend(sortedPaths, ...remainingPaths);
+    sortedPaths = GoAppendSlice(sortedPaths, remainingPaths);
   }
   return sortedPaths;
 }
@@ -667,7 +667,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
     importedFileNames = GoAppend(importedFileNames, referenceRedirect);
   }
   importedFileNames = GoAppend(importedFileNames, importedFileName);
-  importedFileNames = GoAppend(importedFileNames, ...redirects);
+  importedFileNames = GoAppendSlice(importedFileNames, redirects);
   const targets = importedFileNames.map(f => tspath.GetNormalizedAbsolutePath(f, cwd));
   let shouldFilterIgnoredPaths = !targets.every(containsIgnoredPath);
 

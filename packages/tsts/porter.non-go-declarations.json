@@ -11295,7 +11295,7 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "1ba2529bf19b7a3882046c72d1152b4b032bd57f5185eb81aef848a944f0be65",
+      "declarationHash": "bfc8b71127b0c5f218fde09084e1f8a81be60b188a8da8c00e2aaefd74e14d13",
       "file": "packages/tsts/src/go/os/exec.ts",
       "fragmentIndex": 0,
       "kind": "class",
@@ -13966,11 +13966,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "3f87385bdf48d65b90947a2617c2134fd2c2350bde3898e996b67db37a37b048",
+      "declarationHash": "cb42e96a5f05469405910bf6a18b35f01cb7ee20101d345572afd6b8fde7a5b4",
       "file": "packages/tsts/src/go/strings.ts",
       "fragmentIndex": 0,
       "kind": "variable",
-      "name": "encodeRune",
+      "name": "appendRune",
       "namespaces": [
         "value"
       ],
@@ -17294,18 +17294,6 @@
       "fragmentIndex": 0,
       "kind": "function",
       "name": "Checker_isTypeUsableAsIndexSignatureDeclaration",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "compiler-port-runtime",
-      "visibility": "direct-export"
-    },
-    {
-      "declarationHash": "89831f67c7896aa0e24aba5f9285ad0b48fec795f6002a43e94e241419999869",
-      "file": "packages/tsts/src/internal/checker/checker/symbols.ts",
-      "fragmentIndex": 0,
-      "kind": "function",
-      "name": "Checker_lateBindIndexSignature",
       "namespaces": [
         "value"
       ],

@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoAppend, GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../../go/compat.js";
+import { GoSlicePrefix } from "../../../go/slice-runtime.js";
 import * as slices from "../../../go/slices.js";
 import { Node_Name, NodeList_Pos, NodeList_End } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
@@ -961,10 +962,10 @@ export function Checker_pushActiveMapper(receiver: GoPtr<Checker>, mapper: GoPtr
  */
 export function Checker_popActiveMapper(receiver: GoPtr<Checker>): void {
   receiver!.activeMappers[receiver!.activeMappers.length - 1] = undefined;
-  receiver!.activeMappers = receiver!.activeMappers.slice(0, receiver!.activeMappers.length - 1);
+  receiver!.activeMappers = GoSlicePrefix(receiver!.activeMappers, receiver!.activeMappers.length - 1);
   const lastIndex = receiver!.activeTypeMappersCaches.length - 1;
   receiver!.activeTypeMappersCaches[lastIndex]!.clear();
-  receiver!.activeTypeMappersCaches = receiver!.activeTypeMappersCaches.slice(0, lastIndex);
+  receiver!.activeTypeMappersCaches = GoSlicePrefix(receiver!.activeTypeMappersCaches, lastIndex);
 }
 
 /**
@@ -2327,7 +2328,7 @@ export function Checker_pushInferenceContext(receiver: GoPtr<Checker>, node: GoP
 export function Checker_popInferenceContext(receiver: GoPtr<Checker>): void {
   const lastIndex = receiver!.inferenceContextInfos.length - 1;
   receiver!.inferenceContextInfos[lastIndex] = { node: undefined, context: undefined };
-  receiver!.inferenceContextInfos = receiver!.inferenceContextInfos.slice(0, lastIndex);
+  receiver!.inferenceContextInfos = GoSlicePrefix(receiver!.inferenceContextInfos, lastIndex);
 }
 
 /**

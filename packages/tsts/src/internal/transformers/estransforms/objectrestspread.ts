@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilMap, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_Name, Node_Clone, Node_SubtreeFacts } from "../../ast/spine.js";
 import type { TextRange } from "../../core/text.js";
@@ -701,7 +701,7 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
     suffix = GoAppend(suffix, ret);
   }
 
-  const combined = GoAppend(GoAppend(GoAppend(prefix, ...extras), ...newStatements), ...suffix);
+  const combined = GoAppendSlice(GoAppendSlice(GoAppendSlice(prefix, extras), newStatements), suffix);
   const newStatementList = NodeFactory_NewNodeList(astFactory, combined);
   newStatementList!.Loc = Node_StatementList(body)!.Loc;
   return NodeFactory_UpdateBlock(astFactory, AsBlock(body)!, newStatementList as unknown as GoPtr<never>, AsBlock(body)!.MultiLine);
@@ -810,7 +810,7 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
               decls = AsSyntaxList(declarations)!.Children as unknown as GoSlice<GoPtr<Node>>;
             }
             const dl = AsVariableDeclarationList(declarationList)!;
-            dl.Declarations!.Nodes = GoAppend(dl.Declarations!.Nodes, ...decls);
+            dl.Declarations!.Nodes = GoAppendSlice(dl.Declarations!.Nodes, decls);
             const statement = NewVariableStatement(astFactory, undefined, declarationList as unknown as GoPtr<never>);
             EmitContext_AddEmitFlags(emitContext, statement, EFCustomPrologue);
             results = GoAppend(results, statement);
@@ -860,7 +860,7 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
           decls = AsSyntaxList(declarations)!.Children as unknown as GoSlice<GoPtr<Node>>;
         }
         const dl = AsVariableDeclarationList(declarationList)!;
-        dl.Declarations!.Nodes = GoAppend(dl.Declarations!.Nodes, ...decls);
+        dl.Declarations!.Nodes = GoAppendSlice(dl.Declarations!.Nodes, decls);
         const statement = NewVariableStatement(astFactory, undefined, declarationList as unknown as GoPtr<never>);
         EmitContext_AddEmitFlags(emitContext, statement, EFCustomPrologue);
         results = GoAppend(results, statement);
@@ -935,7 +935,7 @@ export function objectRestSpreadTransformer_visitCatchClause(receiver: GoPtr<obj
           decls = [visitedBindings];
         }
         const newStatement = NewVariableStatement(astFactory, undefined, NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, decls) as unknown as GoPtr<never>, NodeFlagsNone) as unknown as GoPtr<never>);
-        const statements = GoAppend([newStatement], ...Node_Statements(block));
+        const statements = GoAppendSlice([newStatement], Node_Statements(block));
         const statementList = NodeFactory_NewNodeList(astFactory, statements);
         statementList!.Loc = Node_StatementList(block)!.Loc;
         block = NodeFactory_UpdateBlock(astFactory, AsBlock(block)!, statementList as unknown as GoPtr<never>, AsBlock(block)!.MultiLine);
@@ -1229,9 +1229,9 @@ export function objectRestSpreadTransformer_visitObjectLiteralExpression(receive
   }
   let objects = objectRestSpreadTransformer_chunkObjectLiteralElements(receiver, node!.Properties);
   if (objects.length > 0 && objects[0]!.Kind !== KindObjectLiteralExpression) {
-    objects = GoAppend(
+    objects = GoAppendSlice(
       [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, GoNilSlice<GoPtr<Node>>()) as unknown as GoPtr<never>, false)],
-      ...objects,
+      objects,
     );
   }
   let expression = objects[0];

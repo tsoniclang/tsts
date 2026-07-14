@@ -1,5 +1,5 @@
 import type { bool, int, long } from "../../../go/scalars.js";
-import { GoAppend, GoNilMap, GoStringKey, GoZeroMap, type GoError, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice, GoStringKey, GoZeroMap, type GoError, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
 import { Builder, IndexByte } from "../../../go/strings.js";
 import { FormatInt, ParseInt } from "../../../go/strconv.js";
 import { DecodeRuneInStringAt, StringByteAt, StringByteLen, StringByteSlice } from "../../../go/unicode/utf8.js";
@@ -1090,9 +1090,9 @@ export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPt
     // We must always emit at least one object literal before a spread attribute
     // as the JSX always factory expects a fresh object, so we need to make a copy here
     // we also avoid mutating an external reference by doing this (first expression is used as assign's target)
-    expressions = GoAppend(
+    expressions = GoAppendSlice(
       [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, []), false)],
-      ...expressions,
+      expressions,
     );
   }
 
@@ -1151,7 +1151,7 @@ export function JSXTransformer_transformJsxAttributesToProps(receiver: GoPtr<JSX
   for (const attr of attrs) {
     if (attr!.Kind === KindJsxSpreadAttribute) {
       const res = JSXTransformer_transformJsxSpreadAttributesToProps(receiver, AsJsxSpreadAttribute(attr));
-      props = GoAppend(props, ...res);
+      props = GoAppendSlice(props, res);
     } else {
       props = GoAppend(props, JSXTransformer_transformJsxAttributeToObjectLiteralElement(receiver, AsJsxAttribute(attr)));
     }
@@ -1724,7 +1724,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementCreateElement(receiver:
   let args: GoSlice<GoPtr<Node>> = [];
   args = GoAppend(args, tagName);
   args = GoAppend(args, objectProperties as unknown as GoPtr<Node>);
-  args = GoAppend(args, ...newChildren);
+  args = GoAppendSlice(args, newChildren);
 
   const result = NewCallExpression(
     astFactory,
@@ -1814,7 +1814,7 @@ export function JSXTransformer_visitJsxOpeningFragmentCreateElement(receiver: Go
   let args: GoSlice<GoPtr<Node>> = [];
   args = GoAppend(args, tagName);
   args = GoAppend(args, NewKeywordExpression(astFactory, KindNullKeyword) as unknown as GoPtr<Node>);
-  args = GoAppend(args, ...newChildren);
+  args = GoAppendSlice(args, newChildren);
 
   const result = NewCallExpression(
     astFactory,

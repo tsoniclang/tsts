@@ -2,6 +2,7 @@ import type { bool, byte, int } from "../../go/scalars.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoAppend, GoBigIntKey, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoSlicePrefix, GoSliceRange } from "../../go/slice-runtime.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, Node_End, NodeList_Pos } from "../ast/spine.js";
 import { Node_Arguments, Node_AsFlowReduceLabelData, Node_AsFlowSwitchClauseData, Node_Elements, Node_Expression, Node_Initializer, Node_Parameters, Node_PropertyNameOrName, Node_StatementList, Node_Text, Node_Type } from "../ast/ast.js";
@@ -404,7 +405,7 @@ export function Checker_getFlowTypeOfReferenceEx(receiver: GoPtr<Checker>, refer
   f!.sharedFlowStart = receiver!.sharedFlows.length;
   receiver!.flowInvocationCount++;
   const evolvedType = Checker_getTypeAtFlowNode(receiver, f, resolvedFlowNode).t;
-  receiver!.sharedFlows.length = f!.sharedFlowStart;
+  receiver!.sharedFlows = GoSlicePrefix(receiver!.sharedFlows, f!.sharedFlowStart);
   Checker_putFlowState(receiver, f);
   let resultType: GoPtr<Type>;
   if ((evolvedType!.objectFlags & ObjectFlagsEvolvingArray) !== 0 && Checker_isEvolvingArrayOperationTarget(receiver, reference)) {
@@ -581,7 +582,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
     } else if ((flags & FlowFlagsReduceLabel) !== 0) {
       f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(currentFlow!.Node));
       t = Checker_getTypeAtFlowNode(receiver, f, currentFlow!.Antecedent);
-      f!.reduceLabels = f!.reduceLabels.slice(0, f!.reduceLabels.length - 1);
+      f!.reduceLabels = GoSlicePrefix(f!.reduceLabels, f!.reduceLabels.length - 1);
     } else if ((flags & FlowFlagsStart) !== 0) {
       const container = currentFlow!.Node;
       if (
@@ -2583,7 +2584,7 @@ export function Checker_narrowTypeBySwitchOnDiscriminant(receiver: GoPtr<Checker
   if (switchTypes.length === 0) {
     return t;
   }
-  const clauseTypes = switchTypes.slice(data!.ClauseStart, data!.ClauseEnd);
+  const clauseTypes = GoSliceRange(switchTypes, data!.ClauseStart, data!.ClauseEnd);
   const hasDefaultClause = data!.ClauseStart === data!.ClauseEnd || clauseTypes.includes(receiver!.neverType);
   if ((t!.flags & TypeFlagsUnknown) && !hasDefaultClause) {
     let groundClauseTypes = GoNilSlice<GoPtr<Type>>();
@@ -2595,7 +2596,7 @@ export function Checker_narrowTypeBySwitchOnDiscriminant(receiver: GoPtr<Checker
         }
       } else if (s!.flags & TypeFlagsObject) {
         if (GoSliceIsNil(groundClauseTypes)) {
-          groundClauseTypes = clauseTypes.slice(0, i);
+          groundClauseTypes = GoSlicePrefix(clauseTypes, i);
         }
         groundClauseTypes = GoAppend(groundClauseTypes, receiver!.nonPrimitiveType);
       } else {
@@ -2680,7 +2681,7 @@ export function Checker_narrowTypeBySwitchOnTypeOf(receiver: GoPtr<Checker>, t: 
     return Checker_filterType(receiver, t, (t) => Checker_getTypeFacts(receiver, t, notEqualFacts) === notEqualFacts);
   }
   // In the non-default case we create a union of the type narrowed by each of the listed cases.
-  const clauseWitnesses = witnesses.slice(clauseStart, clauseEnd);
+  const clauseWitnesses = GoSliceRange(witnesses, clauseStart, clauseEnd);
   return Checker_getUnionType(receiver, core_Map(clauseWitnesses, (text) => {
     if (text !== "") {
       return Checker_narrowTypeByTypeName(receiver, t, text);
@@ -2814,7 +2815,7 @@ export function Checker_narrowTypeBySwitchOnDiscriminantProperty(receiver: GoPtr
   if (data!.ClauseStart < data!.ClauseEnd && t!.flags & TypeFlagsUnion) {
     const [accessedName] = Checker_getAccessedPropertyName(receiver, access);
     if (accessedName !== "" && Checker_getKeyPropertyName(receiver, t) === accessedName) {
-      const clauseTypes = Checker_getSwitchClauseTypes(receiver, data!.SwitchStatement).slice(data!.ClauseStart, data!.ClauseEnd);
+      const clauseTypes = GoSliceRange(Checker_getSwitchClauseTypes(receiver, data!.SwitchStatement), data!.ClauseStart, data!.ClauseEnd);
       const candidate = Checker_getUnionType(receiver, core_Map(clauseTypes, (s) => {
         const result = Checker_getConstituentTypeForKeyType(receiver, t, s);
         if (result !== undefined) {
@@ -2908,7 +2909,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
     // If the type at a particular antecedent path is the declared type and the
     // reference is known to always be assigned, there is no reason to process more antecedents.
     if (flowType.t === f!.declaredType && f!.declaredType === f!.initialType) {
-      receiver!.antecedentTypes.length = antecedentStart;
+      receiver!.antecedentTypes = GoSlicePrefix(receiver!.antecedentTypes, antecedentStart);
       return { t: flowType.t, incomplete: false };
     }
     if (!receiver!.antecedentTypes.slice(antecedentStart).includes(flowType.t)) {
@@ -2928,7 +2929,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
     // isn't exhaustive, process the bypass flow type.
     if (!(flowType.t!.flags & TypeFlagsNever) && !receiver!.antecedentTypes.slice(antecedentStart).includes(flowType.t) && !Checker_isExhaustiveSwitchStatement(receiver, Node_AsFlowSwitchClauseData(bypassFlow!.Node)!.SwitchStatement)) {
       if (flowType.t === f!.declaredType && f!.declaredType === f!.initialType) {
-        receiver!.antecedentTypes.length = antecedentStart;
+        receiver!.antecedentTypes = GoSlicePrefix(receiver!.antecedentTypes, antecedentStart);
         return { t: flowType.t, incomplete: false };
       }
       receiver!.antecedentTypes = GoAppend(receiver!.antecedentTypes, flowType.t);
@@ -2941,7 +2942,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
     }
   }
   const result = Checker_newFlowType(receiver, Checker_getUnionOrEvolvingArrayType(receiver, f, receiver!.antecedentTypes.slice(antecedentStart), IfElse(subtypeReduction, UnionReductionSubtype, UnionReductionLiteral)), seenIncomplete);
-  receiver!.antecedentTypes.length = antecedentStart;
+  receiver!.antecedentTypes = GoSlicePrefix(receiver!.antecedentTypes, antecedentStart);
   return result;
 }
 
@@ -3104,7 +3105,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
       receiver!.flowTypeCache = GoNilMap<GoPtr<Node>, GoPtr<Type>>();
       flowType = Checker_getTypeAtFlowNode(receiver, f, list!.Flow);
       receiver!.flowTypeCache = saveFlowTypeCache;
-      receiver!.flowLoopStack = receiver!.flowLoopStack.slice(0, receiver!.flowLoopStack.length - 1);
+      receiver!.flowLoopStack = GoSlicePrefix(receiver!.flowLoopStack, receiver!.flowLoopStack.length - 1);
       // If we see a value appear in the cache it is a sign that control flow analysis
       // was restarted and completed by checkExpressionCached. We can simply pick up
       // the resulting type and bail out.
@@ -5684,7 +5685,7 @@ export function Checker_isReachableFlowNodeWorker(receiver: GoPtr<Checker>, f: G
       receiver!.lastFlowNode = undefined;
       f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isReachableFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
-      f!.reduceLabels = f!.reduceLabels.slice(0, f!.reduceLabels.length - 1);
+      f!.reduceLabels = GoSlicePrefix(f!.reduceLabels, f!.reduceLabels.length - 1);
       return result;
     } else {
       return !(flags & FlowFlagsUnreachable);
@@ -5812,7 +5813,7 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
     } else if (flags & FlowFlagsReduceLabel) {
       f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isPostSuperFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
-      f!.reduceLabels = f!.reduceLabels.slice(0, f!.reduceLabels.length - 1);
+      f!.reduceLabels = GoSlicePrefix(f!.reduceLabels, f!.reduceLabels.length - 1);
       return result;
     } else {
       return !!(flags & FlowFlagsUnreachable);

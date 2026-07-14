@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Map as SyncMapImpl } from "../../go/sync.js";
 import { Int32 as Int32Impl } from "../../go/sync/atomic.js";
@@ -779,7 +779,7 @@ export interface jsxRuntimeImportSpecifier {
 export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: bool): processedFiles {
   const compilerOptions = ParsedCommandLine_CompilerOptions(opts.Config);
   const rootFiles = ParsedCommandLine_FileNames(opts.Config);
-  const supportedExtensions = GetSupportedExtensions(compilerOptions, []);
+  const supportedExtensions = GetSupportedExtensions(compilerOptions, GoNilSlice());
   const supportedExtensionsWithJsonIfResolveJsonModule = GetSupportedExtensionsWithJsonIfResolveJsonModule(compilerOptions, supportedExtensions);
   let maxNodeModuleJsDepth = 0;
   if (compilerOptions!.MaxNodeModuleJsDepth !== undefined) {
@@ -804,7 +804,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
     factoryMu: new Mutex(),
     factory: NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined }) as NodeFactory,
     projectReferenceFileMapper: undefined,
-    dtsDirectories: { M: new globalThis.Map() },
+    dtsDirectories: { M: GoNilMap() },
     pathForLibFileCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as unknown as SyncMap<string, GoPtr<LibFile>>,
     pathForLibFileResolutions: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as unknown as SyncMap<Path_9073472b, GoPtr<libResolution>>,
     supportedExtensions: supportedExtensions,
@@ -914,7 +914,7 @@ export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: st
       file: undefined,
       libFile,
       redirectedParseTask: undefined,
-      subTasks: [],
+      subTasks: GoNilSlice(),
       loaded: false,
       startedSubTasks: false,
       isForAutomaticTypeDirective: false as bool,
@@ -922,17 +922,17 @@ export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: st
       packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
       metadata: {} as SourceFileMetaData,
       resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
-      resolutionsTrace: [],
+      resolutionsTrace: GoNilSlice(),
       typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
-      typeResolutionsTrace: [],
-      resolutionDiagnostics: [],
-      processingDiagnostics: [],
+      typeResolutionsTrace: GoNilSlice(),
+      resolutionDiagnostics: GoNilSlice(),
+      processingDiagnostics: GoNilSlice(),
       importHelpersImportSpecifier: undefined,
       jsxRuntimeImportSpecifier: undefined,
       increaseDepth: false as bool,
       elideOnDepth: false as bool,
       loadedTask: undefined,
-      allIncludeReasons: [],
+      allIncludeReasons: GoNilSlice(),
     });
   }
 }
@@ -982,7 +982,7 @@ export function fileLoader_addRootFileTask(receiver: GoPtr<fileLoader>, fileName
     file: undefined,
     libFile,
     redirectedParseTask: undefined,
-    subTasks: [],
+    subTasks: GoNilSlice(),
     loaded: false,
     startedSubTasks: false,
     isForAutomaticTypeDirective: false as bool,
@@ -990,17 +990,17 @@ export function fileLoader_addRootFileTask(receiver: GoPtr<fileLoader>, fileName
     packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
     resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
-    resolutionsTrace: [],
+    resolutionsTrace: GoNilSlice(),
     typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
-    typeResolutionsTrace: [],
-    resolutionDiagnostics: [],
-    processingDiagnostics: [],
+    typeResolutionsTrace: GoNilSlice(),
+    resolutionDiagnostics: GoNilSlice(),
+    processingDiagnostics: GoNilSlice(),
     importHelpersImportSpecifier: undefined,
     jsxRuntimeImportSpecifier: undefined,
     increaseDepth: false as bool,
     elideOnDepth: false as bool,
     loadedTask: undefined,
-    allIncludeReasons: [],
+    allIncludeReasons: GoNilSlice(),
   };
   if (diagnostic !== undefined) {
     rootTask.normalizedFilePath = absPath;
@@ -1050,7 +1050,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
     file: undefined,
     libFile: undefined,
     redirectedParseTask: undefined,
-    subTasks: [],
+    subTasks: GoNilSlice(),
     loaded: false,
     startedSubTasks: false,
     isForAutomaticTypeDirective: true as bool,
@@ -1058,17 +1058,17 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
     packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
     resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
-    resolutionsTrace: [],
+    resolutionsTrace: GoNilSlice(),
     typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
-    typeResolutionsTrace: [],
-    resolutionDiagnostics: [],
-    processingDiagnostics: [],
+    typeResolutionsTrace: GoNilSlice(),
+    resolutionDiagnostics: GoNilSlice(),
+    processingDiagnostics: GoNilSlice(),
     importHelpersImportSpecifier: undefined,
     jsxRuntimeImportSpecifier: undefined,
     increaseDepth: false as bool,
     elideOnDepth: false as bool,
     loadedTask: undefined,
-    allIncludeReasons: [],
+    allIncludeReasons: GoNilSlice(),
   });
 }
 
@@ -1149,7 +1149,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
         traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map<string, unknown>([["directive", name], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindAutomaticTypeDirectiveFile]]), false);
       }
       typeResolutionsInFile.set({ Name: name, Mode: resolutionMode }, resolved);
-      typeResolutionsTrace = GoAppend(typeResolutionsTrace, ...trace);
+      typeResolutionsTrace = GoAppendSlice(typeResolutionsTrace, trace);
       if (ResolvedTypeReferenceDirective_IsResolved(resolved)) {
         toParse = GoAppend(toParse, {
           fileName: resolved!.ResolvedFileName,
@@ -1487,7 +1487,7 @@ export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader
       return ["", { message: diagnostics.File_0_not_found, args: [diagnosticFileName] }];
     }
     if (FileIncludeReason_isReferencedFile(includeReason) && GetCanonicalFileName(containingFile, receiver!.opts.Host!.FS()!.UseCaseSensitiveFileNames()) === canonicalFileName) {
-      return ["", { message: diagnostics.A_file_cannot_have_a_reference_to_itself, args: [] }];
+      return ["", { message: diagnostics.A_file_cannot_have_a_reference_to_itself, args: GoNilSlice() }];
     }
     return [fileName, undefined];
   }
@@ -1680,7 +1680,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
         diag: undefined,
         diagOnce: new OnceImpl(),
       };
-      typeResolutionsTrace = GoAppend(typeResolutionsTrace, ...trace);
+      typeResolutionsTrace = GoAppendSlice(typeResolutionsTrace, trace);
 
       if (ResolvedTypeReferenceDirective_IsResolved(resolved)) {
         parseTask_addSubTask(t, {
@@ -1869,11 +1869,11 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
 
     const importsStart = moduleNames.length;
 
-    const fileImports = SourceFile_Imports(file) ?? [];
+    const fileImports = SourceFile_Imports(file);
     for (const imp of fileImports) {
       moduleNames = GoAppend(moduleNames, imp);
     }
-    for (const imp of file!.ModuleAugmentations ?? []) {
+    for (const imp of file!.ModuleAugmentations) {
       if (imp!.Kind === KindStringLiteral) {
         moduleNames = GoAppend(moduleNames, imp);
       }
@@ -1897,13 +1897,13 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
 
         const mode = getModeForUsageLocation(SourceFile_FileName(file), meta, entry as unknown as GoPtr<StringLiteralLike>, optionsForFile);
         const redirectedReference = redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined;
-        let trace: GoSlice<DiagAndArgs> = [];
+        let trace: GoSlice<DiagAndArgs> = GoNilSlice();
         let resolvedModule = fileLoader_resolveProviderVirtualModule(receiver, extensionHost, moduleName, fileName, mode, entry);
         if (resolvedModule === undefined) {
           [resolvedModule, trace] = Resolver_ResolveModuleName(receiver!.resolver, moduleName, fileName, mode, redirectedReference);
         }
         resolutionsInFile.set({ Name: moduleName, Mode: mode }, resolvedModule);
-        resolutionsTrace = GoAppend(resolutionsTrace, ...trace);
+        resolutionsTrace = GoAppendSlice(resolutionsTrace, trace);
 
         if (!ResolvedModule_IsResolved(resolvedModule)) {
           continue;

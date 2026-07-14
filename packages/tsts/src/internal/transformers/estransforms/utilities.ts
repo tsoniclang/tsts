@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoAppend, GoNilSlice, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { NodeVisitor } from "../../ast/visitor.js";
 import { NodeFactory_NewNodeList, Node_Name } from "../../ast/spine.js";
@@ -373,7 +373,7 @@ export function superAccessState_substituteCallExpressionWithSuperAccess(receive
   if (call!.Arguments !== undefined) {
     const visitedArgs = NodeVisitor_VisitNodes(concreteVisitor, call!.Arguments);
     if (visitedArgs !== undefined) {
-      allArgs = GoAppend(allArgs, ...(visitedArgs!.Nodes as unknown as GoSlice<GoPtr<Node>>));
+      allArgs = GoAppendSlice(allArgs, (visitedArgs!.Nodes as unknown as GoSlice<GoPtr<Node>>));
     }
   }
 

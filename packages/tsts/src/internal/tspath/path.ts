@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
-import { GoAppend, GoNilSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import * as cmp from "../../go/cmp.js";
 import * as slices from "../../go/slices.js";
@@ -255,7 +255,7 @@ export function pathComponents(path: string, rootLength: int): GoSlice<string> {
   if (rest.length > 0 && rest[rest.length - 1] === "") {
     rest = rest.slice(0, rest.length - 1);
   }
-  return GoAppend([root], ...rest);
+  return GoAppendSlice([root], rest);
 }
 
 /**
@@ -2399,7 +2399,7 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
               const group = newGroups.get(key)!;
               const subResults = getCommonParentsWorker(group.tails, minComponents - (lastCommonIndex + 1), options);
               for (const sr of subResults) {
-                result = GoAppend(result, GoAppend(group.head, ...sr));
+                result = GoAppend(result, GoAppendSlice(group.head, sr));
               }
             }
             return result;

@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoNilSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice } from "../../go/compat.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import type { Diagnostic, DiagnosticsCollection } from "../ast/diagnostic.js";
 import type { ReferenceResolver, ReferenceResolverHooks } from "../binder/referenceresolver.js";
@@ -210,7 +210,7 @@ export function emitter_runDeclarationTransformers(receiver: GoPtr<emitter>, emi
   let sf = sourceFile;
   for (const transformer of emitter_getDeclarationTransformers(receiver, emitContext, declarationFilePath, declarationMapPath)) {
     sf = Transformer_TransformSourceFile(transformer as GoPtr<Transformer>, sf);
-    diags = GoAppend(diags, ...DeclarationTransformer_GetDiagnostics(transformer));
+    diags = GoAppendSlice(diags, DeclarationTransformer_GetDiagnostics(transformer));
   }
   if (popTrace !== undefined) {
     popTrace();
@@ -341,7 +341,7 @@ export function getModuleTransformer(opts: GoPtr<TransformOptions>): GoPtr<Trans
  * }
  */
 export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: GoInterface<EmitHost_b6591a53>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Transformer>> {
-  let tx: GoSlice<GoPtr<Transformer>> = [];
+  let tx: GoSlice<GoPtr<Transformer>> = GoNilSlice();
   const options = host!.Options();
 
   // JS files don't use reference calculations as they don't do import elision, no need to calculate it
@@ -644,6 +644,12 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
       SourceMap: IfElse(e.emitOnly !== EmitOnlyForcedDts && Tristate_IsTrue(options!.DeclarationMap), TSTrue, TSFalse),
       SourceRoot: options!.SourceRoot,
       MapRoot: options!.MapRoot,
+      CustomConditions: GoNilSlice(),
+      Lib: GoNilSlice(),
+      ModuleSuffixes: GoNilSlice(),
+      RootDirs: GoNilSlice(),
+      TypeRoots: GoNilSlice(),
+      Types: GoNilSlice(),
       // Explicitly do not pass through either inline option.
     } as CompilerOptions;
     emitter_printSourceFile(receiver, declarationFilePath, declarationMapPath, sf, p, declarationMapOptions, shouldEmitSourceMaps(declarationMapOptions, sf));
@@ -1158,7 +1164,7 @@ export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: GoIn
 
   // Otherwise, if rootDir is specified or a config file exists, we know the common source directory and can check if the file would be emitted in the same location
   if (options!.RootDir !== "" || options!.ConfigFilePath !== "") {
-    const commonDir = GetNormalizedAbsolutePath(GetCommonSourceDirectory(options, () => [], host!.GetCurrentDirectory(), host!.UseCaseSensitiveFileNames(), undefined), host!.GetCurrentDirectory());
+    const commonDir = GetNormalizedAbsolutePath(GetCommonSourceDirectory(options, () => GoNilSlice(), host!.GetCurrentDirectory(), host!.UseCaseSensitiveFileNames(), undefined), host!.GetCurrentDirectory());
     const outputPath = GetSourceFilePathInNewDirWorker(SourceFile_FileName(sourceFile), options!.OutDir, host!.GetCurrentDirectory(), commonDir, host!.UseCaseSensitiveFileNames());
     if (ComparePaths(SourceFile_FileName(sourceFile), outputPath, {
       UseCaseSensitiveFileNames: host!.UseCaseSensitiveFileNames(),
@@ -1188,7 +1194,7 @@ export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: GoIn
  * }
  */
 export function getSourceFilesToEmit(host: GoInterface<SourceFileMayBeEmittedHost>, targetSourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): GoSlice<GoPtr<SourceFile>> {
-  let sourceFiles: GoSlice<GoPtr<SourceFile>>;
+  let sourceFiles: GoSlice<GoPtr<SourceFile>> = GoNilSlice();
   if (targetSourceFile !== undefined) {
     sourceFiles = [targetSourceFile];
   } else {

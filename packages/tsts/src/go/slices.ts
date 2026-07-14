@@ -2,6 +2,7 @@ import type { bool, int } from "./scalars.js";
 import type { Seq } from "./iter.js";
 import type { GoEquality, GoFunc, GoPtr, GoSlice, GoOrdered } from "./compat.js";
 import { GoAppend, GoNilSlice, GoSliceIsNil } from "./compat.js";
+import { GoSlicePrefix } from "./slice-runtime.js";
 import { Compare as cmpCompare } from "./cmp.js";
 
 // Go: package slices (standard library).
@@ -192,13 +193,17 @@ export function Grow<T>(s: GoPtr<GoSlice<T>>, n: int): GoSlice<T> {
   if (n < 0) {
     throw new globalThis.Error("cannot be negative");
   }
-  return s ?? [];
+  const slice = s ?? GoNilSlice<T>();
+  if (n !== 0 && GoSliceIsNil(slice)) {
+    return [];
+  }
+  return slice;
 }
 
 // Clip removes unused capacity from the slice. JS arrays expose no spare
 // capacity, so Clip returns the slice unchanged.
 export function Clip<T>(s: GoPtr<GoSlice<T>>): GoSlice<T> {
-  return s ?? [];
+  return s ?? GoNilSlice<T>();
 }
 
 // ---------------------------------------------------------------------------
@@ -208,9 +213,12 @@ export function Clip<T>(s: GoPtr<GoSlice<T>>): GoSlice<T> {
 // Delete removes the elements s[i:j] from s, returning the modified slice.
 // Delete panics if j > len(s) or s[i:j] is not a valid slice of s.
 export function Delete<T>(s: GoPtr<GoSlice<T>>, i: int, j: int): GoSlice<T> {
-  const slice = s ?? [];
+  const slice = s ?? GoNilSlice<T>();
   if (i < 0 || j > slice.length || i > j) {
     throw new globalThis.Error("slices.Delete: invalid range");
+  }
+  if (i === j) {
+    return slice;
   }
   slice.splice(i, j - i);
   return slice;
@@ -219,7 +227,7 @@ export function Delete<T>(s: GoPtr<GoSlice<T>>, i: int, j: int): GoSlice<T> {
 // DeleteFunc removes any elements from s for which del returns true, returning
 // the modified slice.
 export function DeleteFunc<T>(s: GoPtr<GoSlice<T>>, del: (e: T) => bool): GoSlice<T> {
-  const slice = s ?? [];
+  const slice = s ?? GoNilSlice<T>();
   const i = IndexFunc(slice, del);
   if (i === -1) {
     return slice;
@@ -233,16 +241,21 @@ export function DeleteFunc<T>(s: GoPtr<GoSlice<T>>, del: (e: T) => bool): GoSlic
       w++;
     }
   }
-  slice.length = w;
-  return slice;
+  return GoSlicePrefix(slice, w);
 }
 
 // Insert inserts the values v... into s at index i, returning the modified
 // slice. Insert panics if i is out of range.
 export function Insert<T>(s: GoPtr<GoSlice<T>>, i: int, ...v: T[]): GoSlice<T> {
-  const slice = s ?? [];
+  const slice = s ?? GoNilSlice<T>();
   if (i < 0 || i > slice.length) {
     throw new globalThis.Error("slices.Insert: index out of range");
+  }
+  if (v.length === 0) {
+    return slice;
+  }
+  if (GoSliceIsNil(slice)) {
+    return v.slice();
   }
   slice.splice(i, 0, ...v);
   return slice;
@@ -251,9 +264,15 @@ export function Insert<T>(s: GoPtr<GoSlice<T>>, i: int, ...v: T[]): GoSlice<T> {
 // Replace replaces the elements s[i:j] by the given v, and returns the modified
 // slice. Replace panics if j > len(s) or s[i:j] is not a valid slice of s.
 export function Replace<T>(s: GoPtr<GoSlice<T>>, i: int, j: int, ...v: T[]): GoSlice<T> {
-  const slice = s ?? [];
+  const slice = s ?? GoNilSlice<T>();
   if (i < 0 || j > slice.length || i > j) {
     throw new globalThis.Error("slices.Replace: invalid range");
+  }
+  if (i === j && v.length === 0) {
+    return slice;
+  }
+  if (GoSliceIsNil(slice)) {
+    return v.slice();
   }
   slice.splice(i, j - i, ...v);
   return slice;
@@ -261,14 +280,17 @@ export function Replace<T>(s: GoPtr<GoSlice<T>>, i: int, j: int, ...v: T[]): GoS
 
 // Reverse reverses the elements of the slice in place.
 export function Reverse<T>(s: GoPtr<GoSlice<T>>): void {
-  s?.reverse();
+  if (s === undefined || s.length < 2) {
+    return;
+  }
+  s.reverse();
 }
 
 // Compact replaces consecutive runs of equal elements with a single copy. This
 // is like the uniq command found on Unix. Compact modifies the contents of the
 // slice s and returns the modified slice, which may have a smaller length.
 export function Compact<T>(s: GoPtr<GoSlice<T>>, equal: GoEquality<T>): GoSlice<T> {
-  const slice = s ?? [];
+  const slice = s ?? GoNilSlice<T>();
   if (slice.length < 2) {
     return slice;
   }
@@ -280,15 +302,14 @@ export function Compact<T>(s: GoPtr<GoSlice<T>>, equal: GoEquality<T>): GoSlice<
       w++;
     }
   }
-  slice.length = w;
-  return slice;
+  return GoSlicePrefix(slice, w);
 }
 
 // CompactFunc is like Compact but uses an equality function to compare
 // elements. For runs of elements that compare equal, CompactFunc keeps the
 // first one.
 export function CompactFunc<T>(s: GoPtr<GoSlice<T>>, eq: (a: T, b: T) => bool): GoSlice<T> {
-  const slice = s ?? [];
+  const slice = s ?? GoNilSlice<T>();
   if (slice.length < 2) {
     return slice;
   }
@@ -300,8 +321,7 @@ export function CompactFunc<T>(s: GoPtr<GoSlice<T>>, eq: (a: T, b: T) => bool): 
       w++;
     }
   }
-  slice.length = w;
-  return slice;
+  return GoSlicePrefix(slice, w);
 }
 
 // ---------------------------------------------------------------------------
@@ -311,7 +331,10 @@ export function CompactFunc<T>(s: GoPtr<GoSlice<T>>, eq: (a: T, b: T) => bool): 
 // Sort sorts a slice of any ordered type in ascending order, in place. When
 // sorting floating-point numbers, NaNs are ordered before other values.
 export function Sort<T extends GoOrdered>(x: GoPtr<GoSlice<T>>): void {
-  x?.sort((a, b) => cmpCompare(a, b));
+  if (x === undefined || x.length < 2) {
+    return;
+  }
+  x.sort((a, b) => cmpCompare(a, b));
 }
 
 // SortFunc sorts the slice x in ascending order as determined by the cmp
@@ -321,14 +344,20 @@ export function Sort<T extends GoOrdered>(x: GoPtr<GoSlice<T>>): void {
 export function SortFunc<T>(x: GoPtr<GoSlice<T>>, cmp: (a: T, b: T) => int): void {
   // Array.prototype.sort interprets the sign of the comparator result, which is
   // exactly Go's tri-state convention.
-  x?.sort((a, b) => cmp(a, b));
+  if (x === undefined || x.length < 2) {
+    return;
+  }
+  x.sort((a, b) => cmp(a, b));
 }
 
 // SortStableFunc sorts the slice x while keeping the original order of equal
 // elements, using cmp to compare elements in the same way as SortFunc.
 // JS Array.prototype.sort is guaranteed stable (ES2019+), so this matches.
 export function SortStableFunc<T>(x: GoPtr<GoSlice<T>>, cmp: (a: T, b: T) => int): void {
-  x?.sort((a, b) => cmp(a, b));
+  if (x === undefined || x.length < 2) {
+    return;
+  }
+  x.sort((a, b) => cmp(a, b));
 }
 
 // Sorted collects values from an iterator into a new slice, sorts the slice in

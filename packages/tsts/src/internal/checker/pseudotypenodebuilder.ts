@@ -1,6 +1,7 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { GoAppend, GoNilSlice } from "../../go/compat.js";
+import { GoSliceRange } from "../../go/slice-runtime.js";
 import { Node_Body, NodeFactory_NewModifier, Node_Symbol, Node_Text } from "../ast/ast.js";
 import { AsTypePredicateNode } from "../ast/generated/casts.js";
 import { NewFunctionTypeNode, NewGetAccessorDeclaration, NewKeywordExpression, NewKeywordTypeNode, NewLiteralTypeNode, NewMethodSignatureDeclaration, NewParameterDeclaration, NewPropertySignatureDeclaration, NewSetAccessorDeclaration, NewToken, NewTupleTypeNode, NewTypeLiteralNode, NewTypeOperatorNode, NewUnionTypeNode } from "../ast/generated/factory.js";
@@ -1291,7 +1292,7 @@ export function NodeBuilderImpl_pseudoParametersEquivalentToParameters(receiver:
       }
       return false;
     }
-    remainingParams = remainingParams.slice(1);
+    remainingParams = GoSliceRange(remainingParams, 1);
   } else if (targetSig!.thisParameter !== undefined) {
     if (reportErrors) {
       b.ctx!.tracker!.ReportInferenceFallback(nonParamErrorLocation);

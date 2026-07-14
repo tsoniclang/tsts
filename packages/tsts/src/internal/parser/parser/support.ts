@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoAppend, GoNilMap, GoNilSlice, GoNumberKey, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice, GoNumberKey, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { NewNodeFactory, Node_ForEachChild } from "../../ast/spine.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 // SourceFile, Pragma, CommentRange (structs) and NodeFactory_NewModifier (the
@@ -1807,7 +1807,7 @@ export function getCommentPragmas(f: GoPtr<NodeFactory>, sourceText: string): Go
   let pragmas: GoSlice<Pragma> = GoNilSlice();
   GetLeadingCommentRanges(f as NodeFactory, sourceText, 0)!((commentRange: CommentRange): bool => {
     const comment = byteSlice(sourceText, commentRange.pos, commentRange.end);
-    pragmas = GoAppend(pragmas, ...extractPragmas(commentRange, comment));
+    pragmas = GoAppendSlice(pragmas, extractPragmas(commentRange, comment));
     return true;
   });
   return pragmas;

@@ -1,5 +1,5 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
-import { GoAppend, GoEqualStrict, GoSliceIsNil, GoStringKey, GoZeroNumber, GoZeroString, type GoChan, type GoError, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoSliceIsNil, GoStringKey, GoZeroNumber, GoZeroString, type GoChan, type GoError, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Writer } from "../../../go/io.js";
 import { Builder } from "../../../go/strings.js";
 import type { Mutex } from "../../../go/sync.js";
@@ -303,7 +303,7 @@ export function BuildTask_reportDiagnostic(receiver: GoPtr<BuildTask>, err: GoPt
 export function BuildTask_report(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, configPath: Path, buildResult: GoPtr<orchestratorResult>): void {
   // <-t.prevReporter.reportDone — no-op in single-threaded
   if (receiver!.errors.length > 0) {
-    buildResult!.errors = GoAppend(buildResult!.errors, ...receiver!.errors);
+    buildResult!.errors = GoAppendSlice(buildResult!.errors, receiver!.errors);
   }
   Fprint(orchestrator!.opts.Sys!.Writer()!, receiver!.result!.builder.String());
   if (receiver!.result!.exitStatus > buildResult!.result.Status) {
@@ -325,7 +325,7 @@ export function BuildTask_report(receiver: GoPtr<BuildTask>, orchestrator: GoPtr
     default:
       break;
   }
-  buildResult!.filesToDelete = GoAppend(buildResult!.filesToDelete, ...receiver!.result!.filesToDelete);
+  buildResult!.filesToDelete = GoAppendSlice(buildResult!.filesToDelete, receiver!.result!.filesToDelete);
   receiver!.result = undefined;
   // close(t.reportDone) — no-op in single-threaded
 }

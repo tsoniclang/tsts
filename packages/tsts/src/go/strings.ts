@@ -8,7 +8,7 @@
 
 import type { bool, int, byte } from "./scalars.js";
 import type { GoError, GoRune, GoSlice } from "./compat.js";
-import { GoAppend, GoNilSlice } from "./compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice } from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
 
 const nonASCII: RegExp = /[^\x00-\x7F]/;
@@ -233,7 +233,7 @@ export class Builder {
   }
 
   Write(p: GoSlice<byte>): [int, GoError] {
-    this.buf = GoAppend(this.buf, ...p);
+    this.buf = GoAppendSlice(this.buf, p);
     return [p.length, undefined];
   }
 }
@@ -583,14 +583,14 @@ export function Lines(s: string): (yieldValue: (line: string) => bool) => void {
 // negative value are dropped.
 export function Map(mapping: (r: GoRune) => GoRune, s: string): string {
   const bytes = encode(s);
-  const out: Array<byte> = [];
+  let out: GoSlice<byte> = GoNilSlice();
   let i = 0;
   while (i < bytes.length) {
     const [r, size] = decodeRune(bytes, i);
     const adv = size === 0 ? 1 : size;
     const mapped = mapping(r);
     if (mapped >= 0) {
-      encodeRune(out, mapped);
+      out = appendRune(out, mapped);
     }
     i += adv;
   }

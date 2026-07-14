@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap, GoZeroPointer } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap, GoZeroPointer } from "../../../go/compat.js";
+import { GoSlicePrefix } from "../../../go/slice-runtime.js";
 import { recordExtensionCheckedCallMapping } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
@@ -4150,7 +4151,7 @@ export function Checker_getLongestCandidateIndex(receiver: GoPtr<Checker>, candi
 export function Checker_getTypeArgumentsFromNodes(receiver: GoPtr<Checker>, typeArgumentNodes: GoSlice<GoPtr<Node>>, typeParameters: GoSlice<GoPtr<Type>>): GoSlice<GoPtr<Type>> {
   let nodes = typeArgumentNodes;
   if ((nodes ?? []).length > (typeParameters ?? []).length) {
-    nodes = (nodes ?? []).slice(0, (typeParameters ?? []).length) as GoSlice<GoPtr<Node>>;
+    nodes = GoSlicePrefix(nodes, typeParameters.length);
   }
   const typeArguments = core.Map(nodes, (n: GoPtr<Node>) => Checker_getTypeFromTypeNode(receiver, n));
   let result: GoSlice<GoPtr<Type>> = typeArguments;
@@ -6125,7 +6126,7 @@ export function Checker_getRestType(receiver: GoPtr<Checker>, source: GoPtr<Type
   }
   if (Checker_isGenericObjectType(receiver, source) || Checker_isGenericIndexType(receiver, omitKeyType)) {
     if (unspreadableToRestKeys.length !== 0) {
-      omitKeyType = Checker_getUnionType(receiver, GoAppend([omitKeyType], ...unspreadableToRestKeys));
+      omitKeyType = Checker_getUnionType(receiver, GoAppendSlice([omitKeyType], unspreadableToRestKeys));
     }
     if ((omitKeyType!.flags & TypeFlagsNever) !== 0) {
       return source;
@@ -8632,7 +8633,7 @@ export function Checker_getTypeArguments(receiver: GoPtr<Checker>, t: GoPtr<Type
     if (node !== undefined) {
       switch (node.Kind) {
         case KindTypeReference:
-          typeArguments = GoAppend(InterfaceType_OuterTypeParameters(targetInterface), ...Checker_getEffectiveTypeArguments(receiver, node, InterfaceType_LocalTypeParameters(targetInterface)));
+          typeArguments = GoAppendSlice(InterfaceType_OuterTypeParameters(targetInterface), Checker_getEffectiveTypeArguments(receiver, node, InterfaceType_LocalTypeParameters(targetInterface)));
           break;
         case KindArrayType:
           typeArguments = [Checker_getTypeFromTypeNode(receiver, AsArrayTypeNode(node)!.ElementType)];
@@ -9393,14 +9394,14 @@ export function Checker_getOuterTypeParameters(receiver: GoPtr<Checker>, node: G
         if ((kind === KindFunctionExpression || kind === KindArrowFunction || IsObjectLiteralMethod(cur)) && Checker_isContextSensitive(receiver, cur)) {
           const signature = core.FirstOrNil(Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, cur)), SignatureKindCall), GoZeroPointer<Signature>);
           if (signature !== undefined && (signature!.typeParameters ?? []).length !== 0) {
-            return GoAppend(outerTypeParameters, ...signature!.typeParameters);
+            return GoAppendSlice(outerTypeParameters, signature!.typeParameters);
           }
         }
         if (kind === KindMappedType) {
           return GoAppend(outerTypeParameters, Checker_getDeclaredTypeOfTypeParameter(receiver, Checker_getSymbolOfDeclaration(receiver, AsMappedTypeNode(cur)!.TypeParameter)));
         }
         if (kind === KindConditionalType) {
-          return GoAppend(outerTypeParameters, ...Checker_getInferTypeParameters(receiver, cur));
+          return GoAppendSlice(outerTypeParameters, Checker_getInferTypeParameters(receiver, cur));
         }
         const outerAndOwnTypeParameters = Checker_appendTypeParameters(receiver, outerTypeParameters, Node_TypeParameters(cur) ?? []);
         let thisType: GoPtr<Type> = undefined;
@@ -9803,7 +9804,7 @@ export function Checker_expandSignatureParametersWithTupleMembers(receiver: GoPt
   const elementTypes = Checker_getTypeArguments(receiver, restTypeAsType);
   const elementInfos = Type_TargetTupleType(restTypeAsType)!.elementInfos;
   const associatedNames = Checker_getUniqAssociatedNamesFromTupleType(receiver, restType, restSymbol);
-  let expanded: GoSlice<GoPtr<Symbol>> = GoAppend([], ...signature!.parameters.slice(0, restIndex));
+  let expanded: GoSlice<GoPtr<Symbol>> = GoAppendSlice([], signature!.parameters.slice(0, restIndex));
   for (let i = 0; i < elementTypes.length; i++) {
     const type_ = elementTypes[i];
     const flags = elementInfos[i]!.flags;
@@ -10433,7 +10434,7 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
   const args = Node_Arguments(node) ?? [];
   const spreadIndex = Checker_getSpreadArgumentIndex(receiver, args);
   if (spreadIndex >= 0) {
-    let effectiveArgs = slices.Clip(args.slice(0, spreadIndex)) as GoSlice<GoPtr<Node>>;
+    let effectiveArgs = slices.Clip(GoSlicePrefix(args, spreadIndex)) as GoSlice<GoPtr<Node>>;
     for (let i = spreadIndex; i < args.length; i++) {
       const arg = args[i];
       let spreadType: GoPtr<Type>;

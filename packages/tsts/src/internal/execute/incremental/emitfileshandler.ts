@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoPtr, GoRef, GoSlice } from "../../../go/compat.js";
-import { GoAppend, GoNilSlice, GoStringKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoStringKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroString } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";
@@ -258,8 +258,8 @@ export function emitFilesHandler_updateHasEmitDiagnostics(receiver: GoPtr<emitFi
 export function emitFilesHandler_emitBuildInfo(receiver: GoPtr<emitFilesHandler>, options: EmitOptions, result: GoPtr<EmitResult>): void {
   const buildInfoResult = Program_emitBuildInfo(receiver!.program, receiver!.ctx, options);
   if (buildInfoResult !== undefined) {
-    result!.Diagnostics = GoAppend(result!.Diagnostics, ...buildInfoResult!.Diagnostics);
-    result!.EmittedFiles = GoAppend(result!.EmittedFiles, ...buildInfoResult!.EmittedFiles);
+    result!.Diagnostics = GoAppendSlice(result!.Diagnostics, buildInfoResult!.Diagnostics);
+    result!.EmittedFiles = GoAppendSlice(result!.EmittedFiles, buildInfoResult!.EmittedFiles);
   }
 }
 

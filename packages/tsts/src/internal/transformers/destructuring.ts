@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_Clone, Node_Name, Node_SubtreeFacts, NodeFactory_NewNodeList } from "../ast/spine.js";
 import { Node_Text, Node_Expression, Node_Initializer } from "../ast/ast.js";
@@ -672,7 +672,7 @@ export function flattener_flattenDestructuringBinding(receiver: GoPtr<flattener>
       EmitContext_AddVariableDeclaration(ec, temp);
       const last: pendingDecl = receiver!.declarations[receiver!.declarations.length - 1]!;
       last.pendingExpressions = GoAppend(last.pendingExpressions, NodeFactory_NewAssignmentExpression(pf, temp, last.value));
-      last.pendingExpressions = GoAppend(last.pendingExpressions, ...receiver!.expressions);
+      last.pendingExpressions = GoAppendSlice(last.pendingExpressions, receiver!.expressions);
       last.value = temp;
     }
   }

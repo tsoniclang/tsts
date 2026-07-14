@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAppend, GoEqualStrict, GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
@@ -4612,7 +4612,7 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
   let result: GoSlice<string> = [];
   for (const t of (options!.Types ?? [])) {
     if (t === "*") {
-      result = GoAppend(result, ...wildcardMatches);
+      result = GoAppendSlice(result, wildcardMatches);
     } else {
       result = GoAppend(result, t);
     }

@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoAppend, GoNilMap, GoNilSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice } from "../../../go/compat.js";
 import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
@@ -449,7 +449,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
         }
       }
     }
-    receiver!.patternAmbientModules = GoAppend(receiver!.patternAmbientModules, ...file!.PatternAmbientModules);
+    receiver!.patternAmbientModules = GoAppendSlice(receiver!.patternAmbientModules, file!.PatternAmbientModules);
     augmentations = GoAppend(augmentations, file!.ModuleAugmentations);
     if (Node_Symbol(file as GoPtr<Node>) !== undefined) {
       for (const [name, symbol_] of file!.GlobalExports) {

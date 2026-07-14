@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoNilSlice, GoSliceToZeroLength, GoZeroPointer } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceToZeroLength, GoZeroPointer } from "../../go/compat.js";
 import { TrimLeft, TrimRightFunc } from "../../go/strings.js";
 import { byteLen, hasAsciiPrefixAt, isJSDocLikeTextAt, lastNewlineBefore } from "./utilities.js";
 import { Node_End, Node_Name, Node_Pos } from "../ast/spine.js";
@@ -534,7 +534,7 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
   const comment = Parser_parseJSDocCommentWorker(receiver, start, end, fullStart, initialIndent);
   // move jsdoc diagnostics to jsdocDiagnostics -- for JS files only
   if ((receiver!.contextFlags & NodeFlagsJavaScriptFile) !== 0) {
-    receiver!.jsdocDiagnostics = GoAppend(receiver!.jsdocDiagnostics, ...receiver!.diagnostics.slice(saveDiagnosticsLength));
+    receiver!.jsdocDiagnostics = GoAppendSlice(receiver!.jsdocDiagnostics, receiver!.diagnostics.slice(saveDiagnosticsLength));
   }
   receiver!.diagnostics = receiver!.diagnostics.slice(0, saveDiagnosticsLength);
 
@@ -695,8 +695,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
             comments = removeLeadingNewlines(comments);
           }
           const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentEnd);
-          commentParts = GoAppend(commentParts, jsdocText!);
-          commentParts = GoAppend(commentParts, link!);
+          commentParts = GoAppend(commentParts, jsdocText!, link!);
           comments = GoSliceToZeroLength(comments);
           linkEnd = Scanner_TokenEnd(receiver!.scanner);
           break;

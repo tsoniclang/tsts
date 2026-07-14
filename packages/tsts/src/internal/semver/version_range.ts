@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import * as regexp from "../../go/regexp.js";
 import * as strings from "../../go/strings.js";
@@ -387,7 +387,7 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
     if (!GoSliceIsNil(hyphenMatch)) {
       const [parsedComparators, ok] = parseHyphen(hyphenMatch[1]!, hyphenMatch[2]!);
       if (ok) {
-        comparators = GoAppend(comparators, ...parsedComparators);
+        comparators = GoAppendSlice(comparators, parsedComparators);
       } else {
         return [GoNilSlice(), false];
       }
@@ -400,7 +400,7 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
 
         const [parsedComparators, ok] = parseComparator(match[1]!, match[2]!);
         if (ok) {
-          comparators = GoAppend(comparators, ...parsedComparators);
+          comparators = GoAppendSlice(comparators, parsedComparators);
         } else {
           return [GoNilSlice(), false];
         }

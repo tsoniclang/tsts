@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import { Pool, Mutex, Once } from "../../go/sync.js";
 import { Join as strings_Join } from "../../go/strings.js";
 import type { SourceFile, SourceFileMetaData } from "../ast/ast.js";
@@ -394,7 +394,7 @@ export function parseTask_redirect(receiver: GoPtr<parseTask>, loader: GoPtr<fil
     file: undefined,
     libFile: receiver!.libFile,
     redirectedParseTask: undefined,
-    subTasks: [],
+    subTasks: GoNilSlice(),
     loaded: false,
     startedSubTasks: false,
     isForAutomaticTypeDirective: false,
@@ -402,17 +402,17 @@ export function parseTask_redirect(receiver: GoPtr<parseTask>, loader: GoPtr<fil
     packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
     resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
-    resolutionsTrace: [],
+    resolutionsTrace: GoNilSlice(),
     typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
-    typeResolutionsTrace: [],
-    resolutionDiagnostics: [],
-    processingDiagnostics: [],
+    typeResolutionsTrace: GoNilSlice(),
+    resolutionDiagnostics: GoNilSlice(),
+    processingDiagnostics: GoNilSlice(),
     importHelpersImportSpecifier: undefined,
     jsxRuntimeImportSpecifier: undefined,
     increaseDepth: false,
     elideOnDepth: false,
     loadedTask: undefined,
-    allIncludeReasons: [],
+    allIncludeReasons: GoNilSlice(),
   };
   // increaseDepth and elideOnDepth are not copied to redirects
   receiver!.subTasks = [receiver!.redirectedParseTask];
@@ -440,8 +440,8 @@ export function parseTask_loadAutomaticTypeDirectives(receiver: GoPtr<parseTask>
   const [toParseTypeRefs, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics] = fileLoader_resolveAutomaticTypeDirectives(loader, receiver!.normalizedFilePath);
   receiver!.typeResolutionsInFile = typeResolutionsInFile;
   receiver!.typeResolutionsTrace = typeResolutionsTrace;
-  receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, ...pDiagnostics);
-  for (const typeResolution of toParseTypeRefs ?? []) {
+  receiver!.processingDiagnostics = GoAppendSlice(receiver!.processingDiagnostics, pDiagnostics);
+  for (const typeResolution of toParseTypeRefs) {
     parseTask_addSubTask(receiver, typeResolution, undefined);
   }
 }
@@ -491,7 +491,7 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
     file: undefined,
     libFile: libFile,
     redirectedParseTask: undefined,
-    subTasks: [],
+    subTasks: GoNilSlice(),
     loaded: false,
     startedSubTasks: false,
     isForAutomaticTypeDirective: false,
@@ -499,17 +499,17 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
     packageId: ref.packageId ?? { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
     resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
-    resolutionsTrace: [],
+    resolutionsTrace: GoNilSlice(),
     typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
-    typeResolutionsTrace: [],
-    resolutionDiagnostics: [],
-    processingDiagnostics: [],
+    typeResolutionsTrace: GoNilSlice(),
+    resolutionDiagnostics: GoNilSlice(),
+    processingDiagnostics: GoNilSlice(),
     importHelpersImportSpecifier: undefined,
     jsxRuntimeImportSpecifier: undefined,
     increaseDepth: ref.increaseDepth,
     elideOnDepth: ref.elideOnDepth,
     loadedTask: undefined,
-    allIncludeReasons: [],
+    allIncludeReasons: GoNilSlice(),
   };
   receiver!.subTasks = GoAppend(receiver!.subTasks, subTask);
 }
@@ -1004,8 +1004,8 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
 
   let missingFiles: GoSlice<string> = GoNilSlice();
   let duplicateSourceFiles: GoSlice<GoPtr<DuplicateSourceFile>> = GoNilSlice();
-  let files: GoSlice<GoPtr<SourceFile>> = GoNilSlice();
-  let libFiles: GoSlice<GoPtr<SourceFile>> = GoNilSlice();
+  let files: GoSlice<GoPtr<SourceFile>> = [];
+  let libFiles: GoSlice<GoPtr<SourceFile>> = [];
 
   const filesByPath = new globalThis.Map<Path_65a900c3, GoPtr<SourceFile>>();
   let tasksSeenByNameIgnoreCase = GoNilMap<string, GoPtr<parseTask>>();
@@ -1035,7 +1035,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
   const sourceFileMetaDatas = new globalThis.Map<Path_65a900c3, SourceFileMetaData>();
   let jsxRuntimeImportSpecifiers = GoNilMap<Path_65a900c3, GoPtr<jsxRuntimeImportSpecifier>>();
   let importHelpersImportSpecifiers = GoNilMap<Path_65a900c3, GoPtr<StringLiteralNode>>();
-  const sourceFilesFoundSearchingNodeModules: Set_collections<Path_65a900c3> = { M: new globalThis.Map<Path_65a900c3, { readonly __tsgoEmpty?: never }>() };
+  const sourceFilesFoundSearchingNodeModules: Set_collections<Path_65a900c3> = { M: GoNilMap() };
   const libFilesMap = new globalThis.Map<Path_65a900c3, GoPtr<LibFile>>();
 
   let redirectTargetsMap = GoNilMap<Path_65a900c3, GoSlice<string>>();
@@ -1155,7 +1155,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       if (task!.isForAutomaticTypeDirective) {
         typeResolutionsInFile.set(task!.path, task!.typeResolutionsInFile);
         if (task!.processingDiagnostics.length > 0) {
-          inclProcessor.processingDiagnostics = GoAppend(inclProcessor.processingDiagnostics, ...task!.processingDiagnostics);
+          inclProcessor.processingDiagnostics = GoAppendSlice(inclProcessor.processingDiagnostics, task!.processingDiagnostics);
         }
         continue;
       }
@@ -1163,7 +1163,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       const path = task!.path;
 
       if (task!.processingDiagnostics.length > 0) {
-        inclProcessor.processingDiagnostics = GoAppend(inclProcessor.processingDiagnostics, ...task!.processingDiagnostics);
+        inclProcessor.processingDiagnostics = GoAppendSlice(inclProcessor.processingDiagnostics, task!.processingDiagnostics);
       }
 
       if (file === undefined) {
@@ -1203,7 +1203,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
   collectFiles(loader!.rootTasks, new globalThis.Map<GoPtr<parseTaskData>, string>());
   fileLoader_sortLibs(loader, libFiles);
 
-  const allFiles = GoAppend(libFiles, ...files);
+  const allFiles = GoAppendSlice(libFiles, files);
   if (!GoMapIsNil(redirectFilesByPath)) {
     const redirectFilesByPathDefined = redirectFilesByPath as GoMap<Path_65a900c3, GoPtr<redirectsFile>>;
     for (const redirectFile of redirectFilesByPathDefined.values()) {

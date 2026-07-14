@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import type { ClassDeclaration, ClassExpression, GetAccessorDeclaration, MethodDeclaration, PropertyDeclaration, SetAccessorDeclaration } from "../../ast/generated/data.js";
@@ -560,9 +560,9 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
     }
     const restStart = modifiersArray.length;
     const decos = Filter(originalNodes, IsDecorator);
-    modifiersArray = GoAppend(GoAppend(modifiersArray, ...decos), ...metadata);
+    modifiersArray = GoAppendSlice(GoAppendSlice(modifiersArray, decos), metadata);
     const otherModifiers = Filter(originalNodes.slice(restStart), IsModifier);
-    modifiersArray = GoAppend(modifiersArray, ...otherModifiers);
+    modifiersArray = GoAppendSlice(modifiersArray, otherModifiers);
     const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;
@@ -631,9 +631,9 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
     }
     let modifiersArray: GoSlice<GoPtr<Node>> = GoNilSlice();
     const decos = Filter(originalNodes, IsDecorator);
-    modifiersArray = GoAppend(GoAppend(modifiersArray, ...decos), ...metadata);
+    modifiersArray = GoAppendSlice(GoAppendSlice(modifiersArray, decos), metadata);
     const modifiers = Filter(originalNodes, IsModifier);
-    modifiersArray = GoAppend(modifiersArray, ...modifiers);
+    modifiersArray = GoAppendSlice(modifiersArray, modifiers);
     const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;

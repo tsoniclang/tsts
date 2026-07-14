@@ -1,6 +1,7 @@
 import type { bool, int, short, ulong } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
+import { GoSlicePrefix } from "../../go/slice-runtime.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Pool } from "../../go/sync.js";
@@ -4622,9 +4623,9 @@ export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoSlice<
 export function GetHeritageElements(node: GoPtr<Node>, kind: Kind): GoSlice<GoPtr<Node>> {
   const clause = GetHeritageClause(node, kind);
   if (clause !== undefined) {
-    return AsHeritageClause(clause)!.Types!.Nodes ?? [];
+    return AsHeritageClause(clause)!.Types!.Nodes;
   }
-  return [];
+  return GoNilSlice();
 }
 
 /**
@@ -6057,11 +6058,11 @@ export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node
  * }
  */
 export function popAncestor(ancestors: GoSlice<GoPtr<Node>>, node: GoPtr<Node>): [GoSlice<GoPtr<Node>>, GoPtr<Node>] {
-  if ((ancestors ?? []).length === 0) {
-    return [undefined!, node!.Parent];
+  if (ancestors.length === 0) {
+    return [GoNilSlice(), node!.Parent];
   }
-  const n = ancestors!.length - 1;
-  return [ancestors!.slice(0, n), ancestors![n]];
+  const n = ancestors.length - 1;
+  return [GoSlicePrefix(ancestors, n), ancestors[n]];
 }
 
 /**
@@ -6097,7 +6098,7 @@ export const ModuleInstanceStateConstEnumOnly: ModuleInstanceState = 3 as Module
  * }
  */
 export function GetModuleInstanceState(node: GoPtr<Node>): ModuleInstanceState {
-  return getModuleInstanceState(node, undefined!, undefined!);
+  return getModuleInstanceState(node, GoNilSlice(), GoNilMap());
 }
 
 /**
@@ -9728,7 +9729,7 @@ export function GetElementsOfBindingOrAssignmentPattern(name: GoPtr<Node>): GoSl
       // `a` in `{a}`
       return Node_Properties(name)!;
   }
-  return undefined!;
+  return GoNilSlice();
 }
 
 /**
@@ -10957,10 +10958,15 @@ export function GetAllAccessorDeclarations(parentDeclarations: GoSlice<GoPtr<Nod
 
   const accessorName: string = GetPropertyNameForPropertyNameNode(Node_Name(accessor));
   const accessorStatic: bool = IsStatic(accessor);
-  const matches: GoSlice<GoPtr<Node>> = parentDeclarations.filter(member =>
-    IsAccessor(member) && IsStatic(member) === accessorStatic &&
-    GetPropertyNameForPropertyNameNode(Node_Name(member)) === accessorName
-  );
+  let matches: GoSlice<GoPtr<Node>> = GoNilSlice();
+  for (const member of parentDeclarations) {
+    if (!IsAccessor(member) || IsStatic(member) !== accessorStatic) {
+      continue;
+    }
+    if (GetPropertyNameForPropertyNameNode(Node_Name(member)) === accessorName) {
+      matches = GoAppend(matches, member);
+    }
+  }
   return GetAllAccessorDeclarationsForDeclaration(accessor, matches);
 }
 

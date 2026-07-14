@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend } from "../../go/compat.js";
+import { GoAppend, GoNilSlice } from "../../go/compat.js";
 import { DecodeRuneInStringAt, RuneSelf, StringByteAt, StringByteLen } from "../../go/unicode/utf8.js";
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
@@ -74,7 +74,7 @@ export interface positionMapEntry {
  * }
  */
 export function ComputePositionMap(text: string): GoPtr<PositionMap> {
-  let entries: GoSlice<positionMapEntry> = [];
+  let entries: GoSlice<positionMapEntry> = GoNilSlice();
   let delta: int = 0;
   let i: int = 0;
   const n: int = byteLen(text);

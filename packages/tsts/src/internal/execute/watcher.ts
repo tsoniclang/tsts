@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey, GoZeroPointer, type GoChan, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey, GoZeroPointer, type GoChan, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { Is as errors_Is } from "../../go/errors.js";
 import { Fprint, Fprintf, Fprintln } from "../../go/fmt.js";
@@ -478,7 +478,7 @@ export function Watcher_start(receiver: GoPtr<Watcher>, ctx: GoInterface<Context
   receiver!.program = ReadBuildInfoProgram(receiver!.config, NewBuildInfoReader(host), host);
 
   if (receiver!.configFileName !== "") {
-    receiver!.configFilePaths = GoAppend([receiver!.configFileName], ...ParsedCommandLine_ExtendedSourceFiles(receiver!.config));
+    receiver!.configFilePaths = GoAppendSlice([receiver!.configFileName], ParsedCommandLine_ExtendedSourceFiles(receiver!.config));
   }
 
   if (receiver!.sys!.GetEnvironmentVariable("TS_WATCH_DEBUG") !== "") {
@@ -1631,7 +1631,7 @@ export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
     receiver!.configModified = true;
   }
   receiver!.configHasErrors = false;
-  receiver!.configFilePaths = GoAppend([receiver!.configFileName], ...ParsedCommandLine_ExtendedSourceFiles(configParseResult));
+  receiver!.configFilePaths = GoAppendSlice([receiver!.configFileName], ParsedCommandLine_ExtendedSourceFiles(configParseResult));
   // reflect.DeepEqual equivalent: compare ParsedConfig by JSON equality
   if (JSON.stringify(receiver!.config!.ParsedConfig) !== JSON.stringify(configParseResult!.ParsedConfig)) {
     receiver!.configModified = true;

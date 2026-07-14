@@ -102,11 +102,15 @@ test("slices.Concat / Repeat", () => {
   assert.throws(() => Repeat([1], -1), /negative Repeat count/);
 });
 
-test("slices.Grow / Clip are identity no-ops", () => {
+test("slices.Grow / Clip preserve Go nilness and capacity observability", () => {
   const s = [1, 2, 3];
   assert.equal(Grow(s, 5), s);
   assert.equal(Clip(s), s);
   assert.throws(() => Grow(s, -1), /negative/);
+  const nilSlice = GoNilSlice<number>();
+  assert.equal(Grow(nilSlice, 0), nilSlice);
+  assert.equal(GoSliceIsNil(Grow(nilSlice, 1)), false);
+  assert.equal(Clip(nilSlice), nilSlice);
 });
 
 test("slices.Delete mutates in place and returns the slice", () => {
@@ -115,6 +119,8 @@ test("slices.Delete mutates in place and returns the slice", () => {
   assert.deepEqual(r, [1, 4, 5]);
   assert.equal(r, s);
   assert.throws(() => Delete([1, 2], 0, 5), /invalid range/);
+  const nilSlice = GoNilSlice<number>();
+  assert.equal(Delete(nilSlice, 0, 0), nilSlice);
 });
 
 test("slices.DeleteFunc removes matching elements", () => {
@@ -128,18 +134,29 @@ test("slices.Insert inserts at index", () => {
   const r = Insert(s, 1, 2, 3);
   assert.deepEqual(r, [1, 2, 3, 4, 5]);
   assert.throws(() => Insert([1], 5, 9), /out of range/);
+  const nilSlice = GoNilSlice<number>();
+  assert.equal(Insert(nilSlice, 0), nilSlice);
+  const inserted = Insert(nilSlice, 0, 1, 2);
+  assert.equal(GoSliceIsNil(inserted), false);
+  assert.deepEqual(inserted, [1, 2]);
 });
 
 test("slices.Replace replaces a range", () => {
   const s = [1, 2, 3, 4];
   const r = Replace(s, 1, 3, 9, 9, 9);
   assert.deepEqual(r, [1, 9, 9, 9, 4]);
+  const nilSlice = GoNilSlice<number>();
+  assert.equal(Replace(nilSlice, 0, 0), nilSlice);
+  const replaced = Replace(nilSlice, 0, 0, 1, 2);
+  assert.equal(GoSliceIsNil(replaced), false);
+  assert.deepEqual(replaced, [1, 2]);
 });
 
 test("slices.Reverse reverses in place", () => {
   const s = [1, 2, 3];
   Reverse(s);
   assert.deepEqual(s, [3, 2, 1]);
+  assert.doesNotThrow(() => Reverse(GoNilSlice<number>()));
 });
 
 test("slices.Compact / CompactFunc collapse consecutive equals", () => {

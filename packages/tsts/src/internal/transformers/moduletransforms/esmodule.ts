@@ -1,4 +1,4 @@
-import { GoAppend, GoNilMap, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { bool } from "../../../go/scalars.js";
 import type { HasFileName, Node, SourceFile } from "../../ast/ast.js";
 import {
@@ -260,15 +260,15 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
     const [prologue, rest0] = NodeFactory_SplitStandardPrologue(pf!, result!.Statements!.Nodes as GoSlice<GoPtr<Statement>>);
     const [custom, rest] = NodeFactory_SplitCustomPrologue(pf!, rest0);
     let statements: GoSlice<GoPtr<Node>> = [...prologue];
-    statements = GoAppend(statements, ...custom);
+    statements = GoAppendSlice(statements, custom);
     if (externalHelpersImportDeclaration !== undefined) {
       statements = GoAppend(statements, NodeVisitor_VisitNode(visitor, externalHelpersImportDeclaration));
     }
     const importRequireStmts = ESModuleTransformer_importRequireStatements(receiver);
     if (importRequireStmts !== undefined) {
-      statements = GoAppend(statements, ...importRequireStmts.statements);
+      statements = GoAppendSlice(statements, importRequireStmts.statements);
     }
-    statements = GoAppend(statements, ...rest);
+    statements = GoAppendSlice(statements, rest);
     const statementList = NodeFactory_NewNodeList(af, statements);
     statementList!.Loc = result!.Statements!.Loc;
     result = AsSourceFile(NodeFactory_UpdateSourceFile(af, result, statementList, node!.EndOfFileToken));
@@ -671,7 +671,7 @@ export function ESModuleTransformer_visitImportOrRequireCall(receiver: GoPtr<ESM
   let args: GoSlice<GoPtr<Node>> = GoNilSlice();
   args = GoAppend(args, argument as unknown as GoPtr<Node>);
   const rest = NodeVisitor_VisitSlice(visitor, node!.Arguments!.Nodes.slice(1))[0];
-  args = GoAppend(args, ...rest);
+  args = GoAppendSlice(args, rest);
 
   const argumentList = NodeFactory_NewNodeList(af, args);
   argumentList!.Loc = node!.Arguments!.Loc;

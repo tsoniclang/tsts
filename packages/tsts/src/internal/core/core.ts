@@ -2,6 +2,7 @@ import type { bool, byte, double, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import type { GoComparable, GoConstraint, GoEquality, GoError, GoMap, GoMapKeyDescriptor, GoPtr, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
 import { GoAppend, GoMapMake, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoZeroString } from "../../go/compat.js";
+import { GoSlicePrefix } from "../../go/slice-runtime.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
 import { ExtensionCjs, ExtensionCts, ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, HasTSFileExtension, IsDeclarationFileName } from "../tspath/extension.js";
@@ -1905,10 +1906,7 @@ export function DeduplicateSorted<T>(slice: GoSlice<T>, isEqual: GoFunc<(a: T, b
     return slice;
   }
   let last = slice[0]!;
-  // Go uses `slice[:1]`, which aliases the input backing array and is then
-  // grown via append. We build an equivalent fresh prefix; callers only consume
-  // the returned slice, and aliasing Go's backing array is out of scope here.
-  let deduplicated: GoSlice<T> = slice.slice(0, 1);
+  let deduplicated: GoSlice<T> = GoSlicePrefix(slice, 1);
   for (let i = 1; i < slice.length; i++) {
     const next = slice[i]!;
     if (isEqual!(last, next)) {

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import { Index } from "../../go/strings.js";
@@ -226,7 +226,7 @@ export function Checker_GetSymbolsInScope(receiver: GoPtr<Checker>, location: Go
 export function Checker_getSymbolsInScope(receiver: GoPtr<Checker>, location: GoPtr<Node>, meaning: SymbolFlags): GoSlice<GoPtr<Symbol>> {
   if ((location!.Flags & NodeFlagsInWithStatement) !== 0) {
     // We cannot answer semantic questions within a with block, do not proceed any further
-    return [];
+    return GoNilSlice();
   }
 
   const symbols: SymbolTable = new globalThis.Map();
@@ -981,7 +981,7 @@ export function Checker_GetRootSymbols(receiver: GoPtr<Checker>, symbol_: GoPtr<
   }
   let result: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   for (const root of roots) {
-    result = GoAppend(result, ...Checker_GetRootSymbols(receiver, root));
+    result = GoAppendSlice(result, Checker_GetRootSymbols(receiver, root));
   }
   return result;
 }
@@ -1069,7 +1069,7 @@ export function Checker_getImmediateRootSymbols(receiver: GoPtr<Checker>, symbol
       return [target];
     }
   }
-  return [];
+  return GoNilSlice();
 }
 
 /**
@@ -1635,16 +1635,16 @@ export function Checker_getUninstantiatedSignatures(receiver: GoPtr<Checker>, no
   case KindJsxSelfClosingElement:
   case KindJsxOpeningElement:
     if (isJsxIntrinsicTagName(Node_TagName(node))) {
-      return [];
+      return GoNilSlice();
     }
     return Checker_getSignaturesOfType(receiver, Checker_getTypeOfExpression(receiver, Node_TagName(node)), SignatureKindCall);
   case KindTaggedTemplateExpression:
     return Checker_getSignaturesOfType(receiver, Checker_getTypeOfExpression(receiver, AsTaggedTemplateExpression(node)!.Tag), SignatureKindCall);
   case KindBinaryExpression:
   case KindJsxOpeningFragment:
-    return [];
+    return GoNilSlice();
   default:
-    return [];
+    return GoNilSlice();
   }
 }
 
@@ -1912,7 +1912,7 @@ export function Checker_GetExportsAndPropertiesOfModule(receiver: GoPtr<Checker>
   if (exportEquals !== moduleSymbol) {
     const t = Checker_getTypeOfSymbol(receiver, exportEquals);
     if (Checker_shouldTreatPropertiesOfExternalModuleAsExports(receiver, t)) {
-      exports = GoAppend(exports, ...Checker_getPropertiesOfType(receiver, t));
+      exports = GoAppendSlice(exports, Checker_getPropertiesOfType(receiver, t));
     }
   }
   return exports;
@@ -1945,7 +1945,7 @@ export function Checker_getExportsOfModuleAsArray(receiver: GoPtr<Checker>, modu
 export function Checker_GetJsxIntrinsicTagNamesAt(receiver: GoPtr<Checker>, location: GoPtr<Node>): GoSlice<GoPtr<Symbol>> {
   const intrinsics = Checker_getJsxType(receiver, JsxNames.IntrinsicElements, location);
   if (intrinsics === undefined) {
-    return [];
+    return GoNilSlice();
   }
   return Checker_GetPropertiesOfType(receiver, intrinsics);
 }
@@ -2348,14 +2348,14 @@ export function Checker_GetFirstTypeArgumentFromKnownType(receiver: GoPtr<Checke
 export function Checker_GetPropertySymbolsFromContextualType(receiver: GoPtr<Checker>, node: GoPtr<Node>, contextualType: GoPtr<Type>, unionSymbolOk: bool): GoSlice<GoPtr<Symbol>> {
   const name = GetTextOfPropertyName(Node_Name(node));
   if (name === "") {
-    return [];
+    return GoNilSlice();
   }
   if ((contextualType!.flags & TypeFlagsUnion) === 0) {
     const symbol_ = Checker_getPropertyOfType(receiver, contextualType, name);
     if (symbol_ !== undefined) {
       return [symbol_];
     }
-    return [];
+    return GoNilSlice();
   }
   let filteredTypes = Type_Types(contextualType);
   if (IsObjectLiteralExpression(node!.Parent) || IsJsxAttributes(node!.Parent)) {

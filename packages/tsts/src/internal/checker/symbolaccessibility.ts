@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoDefined, GoFunc, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoBigIntKey, GoBooleanKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoBigIntKey, GoBooleanKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import { GetNodeId, GetSymbolId, GetReparsedNodeForNode } from "../ast/utilities.js";
@@ -341,8 +341,8 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
     (container!.Flags & leftMeaning) !== 0 &&
     Checker_getAccessibleSymbolChain(receiver, container, enclosingDeclaration, SymbolFlagsNamespace /*useOnlyExternalAliasing*/, false).length > 0) {
     // This order expresses a preference for the real container if it is in scope
-    let res = GoAppend([container], ...additionalContainers);
-    res = GoAppend(res, ...reexportContainers);
+    let res = GoAppendSlice([container], additionalContainers);
+    res = GoAppendSlice(res, reexportContainers);
     if (objectLiteralContainer !== undefined) {
       res = GoAppend(res, objectLiteralContainer);
     }
@@ -367,13 +367,13 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
     Checker_sortSymbols(receiver, variableMatches);
   }
 
-  let res = GoAppend(GoNilSlice<GoPtr<Symbol>>(), ...variableMatches);
-  res = GoAppend(res, ...additionalContainers);
+  let res = GoAppendSlice(GoNilSlice<GoPtr<Symbol>>(), variableMatches);
+  res = GoAppendSlice(res, additionalContainers);
   res = GoAppend(res, container);
   if (objectLiteralContainer !== undefined) {
     res = GoAppend(res, objectLiteralContainer);
   }
-  res = GoAppend(res, ...reexportContainers);
+  res = GoAppendSlice(res, reexportContainers);
   return res;
 }
 
@@ -737,9 +737,9 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       continue;
     }
     bestContainers = GoAppend(bestContainers, allAlts[0]);
-    alternativeContainers = GoAppend(alternativeContainers, ...allAlts.slice(1));
+    alternativeContainers = GoAppendSlice(alternativeContainers, allAlts.slice(1));
   }
-  return GoAppend(bestContainers, ...alternativeContainers);
+  return GoAppendSlice(bestContainers, alternativeContainers);
 }
 
 /**
@@ -1393,7 +1393,7 @@ export function Checker_getCandidateListForSymbol(receiver: GoPtr<Checker>, ctx:
   if (!Checker_canQualifySymbol(receiver, ctx, symbolFromSymbolTable, getQualifiedLeftMeaning(ctx.meaning))) {
     return GoNilSlice<GoPtr<Symbol>>();
   }
-  return GoAppend([symbolFromSymbolTable], ...accessibleSymbolsFromExports);
+  return GoAppendSlice([symbolFromSymbolTable], accessibleSymbolsFromExports);
 }
 
 /**

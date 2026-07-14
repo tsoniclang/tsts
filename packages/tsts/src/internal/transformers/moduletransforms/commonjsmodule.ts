@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoAppend, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { AsSourceFile, Node_Text, SourceFile_FileName, SourceFile_Path, Node_Elements, Node_Properties, Node_Expression, Node_Initializer } from "../../ast/ast.js";
 import type { HasFileName, SourceFile } from "../../ast/ast.js";
 import { IsAssignmentExpression, IsCommaExpression, IsDestructuringAssignment, IsEffectiveExternalModule, IsExpression, IsExternalModule, IsExternalModuleImportEqualsDeclaration, IsInJSFile, IsRequireCall, IsStringLiteralLike, IsImportCall, ShouldTransformImportCall, FindAncestor } from "../../ast/utilities.js";
@@ -832,7 +832,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
 
   // emit custom prologues from other transformations
   const [custom, rest] = NodeFactory_SplitCustomPrologue(pf, rest0);
-  statements = GoAppend(statements, ...FirstResult(...NodeVisitor_VisitSlice(topLevelVisitor, custom)));
+  statements = GoAppendSlice(statements, FirstResult(...NodeVisitor_VisitSlice(topLevelVisitor, custom)));
 
   // emits `Object.defineProperty(exports, "__esModule", { value: true });` at the top of the file
   if (CommonJSModuleTransformer_shouldEmitUnderscoreUnderscoreESModule(receiver)) {
@@ -886,7 +886,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
 
   // visit the remaining statements in the source file
   const [visitedRest] = NodeVisitor_VisitSlice(topLevelVisitor, rest);
-  statements = GoAppend(statements, ...visitedRest);
+  statements = GoAppendSlice(statements, visitedRest);
 
   // emit `module.exports = ...` if needed
   statements = CommonJSModuleTransformer_appendExportEqualsIfNeeded(receiver, statements);
@@ -904,9 +904,9 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
     const [prologue2, rest2_0] = NodeFactory_SplitStandardPrologue(pf, result!.Statements!.Nodes);
     const [custom2, rest2] = NodeFactory_SplitCustomPrologue(pf, rest2_0);
     let statements2: GoSlice<GoPtr<Node>> = [...prologue2];
-    statements2 = GoAppend(statements2, ...custom2);
+    statements2 = GoAppendSlice(statements2, custom2);
     statements2 = GoAppend(statements2, NodeVisitor_VisitNode(topLevelVisitor, externalHelpersImportDeclaration));
-    statements2 = GoAppend(statements2, ...rest2);
+    statements2 = GoAppendSlice(statements2, rest2);
     const statementList2 = NodeFactory_NewNodeList(f, statements2);
     statementList2!.Loc = result!.Statements!.Loc;
     result = AsSourceFile(NodeFactory_UpdateSourceFile(f, result, statementList2, node!.EndOfFileToken));
@@ -2535,7 +2535,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedForStatement(receiv
       const varDeclList = NodeVisitor_VisitNode(discardedValueVisitor, node!.Initializer);
       const varStatement = NewVariableStatement(f, undefined /*modifiers*/, varDeclList);
       statements = GoAppend(statements, varStatement as GoPtr<Statement>);
-      statements = GoAppend(statements, ...exportStatements);
+      statements = GoAppendSlice(statements, exportStatements);
 
       const condition = NodeVisitor_VisitNode(visitor, node!.Condition);
       const incrementor = NodeVisitor_VisitNode(discardedValueVisitor, node!.Incrementor);
@@ -2621,7 +2621,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedForInOrOfStatement(
       let body: GoPtr<Node> = EmitContext_VisitIterationBody(emitContext, node!.Statement, topLevelNestedVisitor);
       if (IsBlock(body)) {
         const block = AsBlock(body);
-        const bodyStatements = GoAppend(exportStatements, ...block!.Statements!.Nodes);
+        const bodyStatements = GoAppendSlice(exportStatements, block!.Statements!.Nodes);
         const bodyStatementList = NodeFactory_NewNodeList(f, bodyStatements);
         bodyStatementList!.Loc = block!.Statements!.Loc;
         body = NodeFactory_UpdateBlock(f, block, bodyStatementList, block!.MultiLine);
@@ -4252,7 +4252,7 @@ export function CommonJSModuleTransformer_shimOrRewriteImportOrRequireCall(recei
     }
     const [rest, restChanged] = NodeVisitor_VisitSlice(visitor, node!.Arguments!.Nodes.slice(1));
     if (firstArgumentChanged || restChanged) {
-      const argumentsNodes = GoAppend([firstArgument as GoPtr<Expression>], ...rest as GoPtr<Expression>[]);
+      const argumentsNodes = GoAppendSlice([firstArgument as GoPtr<Expression>], rest as GoPtr<Expression>[]);
       argumentsList = NodeFactory_NewNodeList(f, argumentsNodes);
       argumentsList!.Loc = node!.Arguments!.Loc;
     }

@@ -1,6 +1,7 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoValueRef, GoZeroPointer } from "../../go/compat.js";
+import { GoSlicePrefix, GoSliceRange } from "../../go/slice-runtime.js";
 import { GoStringKey, NewGoStructMap } from "../../go/compat.js";
 import { recordExtensionPostCheckAssignabilityObservation } from "../../extensions/checker-integration.js";
 import type { Node } from "../ast/spine.js";
@@ -2405,7 +2406,7 @@ export function excludeProperties(properties: GoSlice<GoPtr<Symbol>>, excludedPr
         reduced = GoAppend(reduced, prop);
       }
     } else if (!excluded) {
-      reduced = slices.Clip(sourceProperties.slice(0, i));
+      reduced = slices.Clip(GoSlicePrefix(sourceProperties, i));
       excluded = true;
     }
   }
@@ -4227,10 +4228,10 @@ export function Checker_sliceTupleType(receiver: GoPtr<Checker>, t: GoPtr<Type>,
     if (restArrayType !== undefined) {
       return restArrayType;
     }
-    return Checker_createTupleType(receiver, undefined!);
+    return Checker_createTupleType(receiver, GoNilSlice());
   }
   if (index >= endIndex) {
-    return Checker_createTupleType(receiver, undefined!);
+    return Checker_createTupleType(receiver, GoNilSlice());
   }
   return Checker_createTupleTypeEx(receiver, Checker_getTypeArguments(receiver, t)!.slice(index, endIndex), target!.elementInfos.slice(index, endIndex), false as bool);
 }
@@ -5343,7 +5344,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
         matchTexts[k] = sourceTexts[seg + k]!;
       }
       matchTexts[s - seg] = getSourceText(s).slice(0, p);
-      matchType = Checker_getTemplateLiteralType(receiver, matchTexts, sourceTypes.slice(seg, s));
+      matchType = Checker_getTemplateLiteralType(receiver, matchTexts, GoSliceRange(sourceTypes, seg, s));
     }
     matches = GoAppend(matches, matchType);
     seg = s;
@@ -6851,10 +6852,10 @@ export function Relater_recursiveTypeRelatedTo(receiver: GoPtr<Relater>, source:
   const propagatingVarianceFlags = receiver!.c!.reliabilityFlags;
   receiver!.c!.reliabilityFlags = (receiver!.c!.reliabilityFlags | saveReliabilityFlags) as RelationComparisonResult;
   if ((recursionFlags & RecursionFlagsSource) !== 0) {
-    receiver!.sourceStack = receiver!.sourceStack.slice(0, receiver!.sourceStack.length - 1);
+    receiver!.sourceStack = GoSlicePrefix(receiver!.sourceStack, receiver!.sourceStack.length - 1);
   }
   if ((recursionFlags & RecursionFlagsTarget) !== 0) {
-    receiver!.targetStack = receiver!.targetStack.slice(0, receiver!.targetStack.length - 1);
+    receiver!.targetStack = GoSlicePrefix(receiver!.targetStack, receiver!.targetStack.length - 1);
   }
   receiver!.expandingFlags = saveExpandingFlags;
   if (result !== TernaryFalse) {
@@ -6896,7 +6897,7 @@ export function Relater_resetMaybeStack(receiver: GoPtr<Relater>, maybeStart: in
       receiver!.relationCount--;
     }
   }
-  receiver!.maybeKeys.length = maybeStart;
+  receiver!.maybeKeys = GoSlicePrefix(receiver!.maybeKeys, maybeStart);
 }
 
 /**

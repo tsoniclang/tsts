@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoFunc, GoInterface, GoPtr, GoRef, GoSlice, GoMap } from "../../go/compat.js";
-import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
+import type { GoFunc, GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import type { Mutex } from "../../go/sync.js";
@@ -250,9 +250,9 @@ export function newEmitResolver(checker: GoPtr<Checker>): GoPtr<EmitResolver> {
     isValueAliasDeclaration: (node: GoPtr<Node>) => EmitResolver_isValueAliasDeclarationWorker(e, node),
     aliasMarkingVisitor: (node: GoPtr<Node>) => EmitResolver_aliasMarkingVisitorWorker(e, node),
     referenceResolver: undefined,
-    jsxLinks: { entries: new Map<GoPtr<Node>, GoRef<JSXLinks>>(), arena: { data: [] } },
-    declarationLinks: { entries: new Map<GoPtr<Node>, GoRef<DeclarationLinks>>(), arena: { data: [] } },
-    declarationFileLinks: { entries: new Map<GoPtr<Node>, GoRef<DeclarationFileLinks>>(), arena: { data: [] } },
+    jsxLinks: { entries: GoNilMap(), arena: { data: GoNilSlice() } },
+    declarationLinks: { entries: GoNilMap(), arena: { data: GoNilSlice() } },
+    declarationFileLinks: { entries: GoNilMap(), arena: { data: GoNilSlice() } },
   };
   return e;
 }
@@ -341,7 +341,7 @@ export function EmitResolver_IsOptionalParameter(receiver: GoPtr<EmitResolver>, 
  */
 export function EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   if (node === undefined) {
-    return [];
+    return GoNilSlice();
   }
 
   receiver!.checkerMu!.Lock();
@@ -349,24 +349,24 @@ export function EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver:
   const s = Checker_getSymbolOfDeclaration(receiver!.checker, node);
   if (s === undefined || s!.Parent === undefined) {
     receiver!.checkerMu!.Unlock();
-    return [];
+    return GoNilSlice();
   }
   const parentType = Checker_getDeclaredTypeOfSymbol(receiver!.checker, s!.Parent);
   if (parentType === undefined) {
     receiver!.checkerMu!.Unlock();
-    return [];
+    return GoNilSlice();
   }
   const bases = Checker_getBaseTypes(receiver!.checker, parentType);
   for (const b of bases ?? []) {
     const baseProp = Checker_getPropertyOfObjectType(receiver!.checker, b, s!.Name);
     if (baseProp !== undefined) {
       receiver!.checkerMu!.Unlock();
-      return baseProp!.Declarations ?? [];
+      return baseProp!.Declarations;
       // TODO: return base declarations from all base types if any callers actually look at the list
     }
   }
   receiver!.checkerMu!.Unlock();
-  return [];
+  return GoNilSlice();
 }
 
 /**
@@ -954,7 +954,7 @@ export function EmitResolver_IsEntityNameVisible(receiver: GoPtr<EmitResolver>, 
  */
 export function EmitResolver_isEntityNameVisible(receiver: GoPtr<EmitResolver>, entityName: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, shouldComputeAliasToMakeVisible: bool): SymbolAccessibilityResult {
   if (!IsParseTreeNode(entityName)) {
-    return { Accessibility: SymbolAccessibilityNotAccessible, AliasesToMakeVisible: [], ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
+    return { Accessibility: SymbolAccessibilityNotAccessible, AliasesToMakeVisible: GoNilSlice(), ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
   }
 
   const meaning = getMeaningOfEntityNameReference(entityName);
@@ -962,18 +962,18 @@ export function EmitResolver_isEntityNameVisible(receiver: GoPtr<EmitResolver>, 
   const symbol_ = receiver!.checker!.resolveName!(enclosingDeclaration, Node_Text(firstIdentifier) ?? "", meaning, undefined, false as bool, false as bool);
 
   if (symbol_ !== undefined && (symbol_!.Flags & SymbolFlagsTypeParameter) !== 0 && (meaning & SymbolFlagsType) !== 0) {
-    return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: [], ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
+    return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: GoNilSlice(), ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
   }
 
   if (symbol_ === undefined && IsThisIdentifier(firstIdentifier)) {
     const sym = Checker_getSymbolOfDeclaration(receiver!.checker, Checker_getThisContainer(receiver!.checker, firstIdentifier, false as bool, false as bool));
     if (EmitResolver_isSymbolAccessible(receiver, sym, enclosingDeclaration, meaning, false as bool).Accessibility === SymbolAccessibilityAccessible) {
-      return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: [], ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
+      return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: GoNilSlice(), ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
     }
   }
 
   if (symbol_ === undefined) {
-    return { Accessibility: SymbolAccessibilityNotResolved, AliasesToMakeVisible: [], ErrorSymbolName: Node_Text(firstIdentifier) ?? "", ErrorNode: firstIdentifier, ErrorModuleName: "" };
+    return { Accessibility: SymbolAccessibilityNotResolved, AliasesToMakeVisible: GoNilSlice(), ErrorSymbolName: Node_Text(firstIdentifier) ?? "", ErrorNode: firstIdentifier, ErrorModuleName: "" };
   }
 
   const visible = EmitResolver_hasVisibleDeclarations(receiver, symbol_, shouldComputeAliasToMakeVisible);
@@ -981,7 +981,7 @@ export function EmitResolver_isEntityNameVisible(receiver: GoPtr<EmitResolver>, 
     return visible!;
   }
 
-  return { Accessibility: SymbolAccessibilityNotAccessible, AliasesToMakeVisible: [], ErrorSymbolName: Node_Text(firstIdentifier) ?? "", ErrorNode: firstIdentifier, ErrorModuleName: "" };
+  return { Accessibility: SymbolAccessibilityNotAccessible, AliasesToMakeVisible: GoNilSlice(), ErrorSymbolName: Node_Text(firstIdentifier) ?? "", ErrorNode: firstIdentifier, ErrorModuleName: "" };
 }
 
 /**
@@ -2101,7 +2101,7 @@ export function EmitResolver_GetReferencedValueDeclaration(receiver: GoPtr<EmitR
  * }
  */
 export function EmitResolver_GetReferencedValueDeclarations(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> {
-  if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return []; }
+  if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return GoNilSlice(); }
   receiver!.checkerMu!.Lock();
   const result = EmitResolver_getReferenceResolver(receiver)!.GetReferencedValueDeclarations(node);
   receiver!.checkerMu!.Unlock();
@@ -2178,7 +2178,7 @@ export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: Go
 export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoInterface<SymbolTracker>): GoSlice<GoPtr<Node>> {
   const original = EmitContext_ParseNode(emitContext, signatureDeclaration);
   if (original === undefined) {
-    return [];
+    return GoNilSlice();
   }
   receiver!.checkerMu!.Lock();
   const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
@@ -2529,7 +2529,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
       }
       let node = NodeBuilder_IndexInfoToIndexSignatureDeclaration(requestNodeBuilder, info, enclosingDeclaration, flags, internalFlags, tracker);
       if (node !== undefined && isStatic) {
-        const modNodes = GoAppend([NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword)], ...(Node_ModifierNodes(node) ?? GoNilSlice()));
+        const modNodes = GoAppendSlice([NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword)], (Node_ModifierNodes(node) ?? GoNilSlice()));
         const mods = NodeFactory_NewModifierList(emitContext!.Factory!.__tsgoEmbedded0, modNodes);
         node = NodeFactory_UpdateIndexSignatureDeclaration(
           emitContext!.Factory!.__tsgoEmbedded0,

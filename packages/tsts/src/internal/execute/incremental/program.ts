@@ -1,5 +1,5 @@
 import type { bool, byte } from "../../../go/scalars.js";
-import { GoAppend, GoNilSlice, GoStringKey, GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoStringKey, GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Concat } from "../../../go/slices.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
@@ -563,8 +563,8 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: GoInterface<Context>
 
     const buildInfoResult = Program_emitBuildInfo(receiver, ctx, options);
     if (buildInfoResult !== undefined) {
-      result.Diagnostics = GoAppend(result.Diagnostics, ...buildInfoResult.Diagnostics);
-      result.EmittedFiles = GoAppend(result.EmittedFiles, ...buildInfoResult.EmittedFiles);
+      result.Diagnostics = GoAppendSlice(result.Diagnostics, buildInfoResult.Diagnostics);
+      result.EmittedFiles = GoAppendSlice(result.EmittedFiles, buildInfoResult.EmittedFiles);
     }
     return result;
   }

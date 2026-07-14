@@ -1,6 +1,6 @@
 import type { int, long, ulong, bool } from "./scalars.js";
 import type { GoInterface, GoSlice } from "./compat.js";
-import { GoAppend } from "./compat.js";
+import { GoAppend, GoAppendSlice } from "./compat.js";
 import type { Seq } from "./iter.js";
 
 // Go: package reflect
@@ -410,7 +410,7 @@ export function Append(s: Value, ...x: GoSlice<Value>): Value {
   if (!globalThis.Array.isArray(value)) {
     throw new globalThis.Error("reflect.Append: first argument is not a slice");
   }
-  return new Value(GoAppend(value, ...x.map((entry) => entry.Interface())));
+  return new Value(GoAppendSlice(value, x.map((entry) => entry.Interface())));
 }
 
 export function Zero(typ: Type): Value {

@@ -45,13 +45,27 @@ test("parseCompilerOptions recognizes every CompilerOptions field", () => {
   const missingKeys: string[] = [];
   for (const key of compilerOptionKeys()) {
     const options = {} as CompilerOptions;
-    if (!parseCompilerOptions(key, undefined, options)) {
+    if (!parseCompilerOptions(key, compilerOptionProbeValue(key), options)) {
       missingKeys.push(key);
     }
   }
 
   assert.deepEqual(missingKeys, []);
 });
+
+function compilerOptionProbeValue(key: string): GoInterface<unknown> {
+  switch (key) {
+    case "jsx":
+    case "module":
+    case "moduleDetection":
+    case "moduleResolution":
+    case "newLine":
+    case "target":
+      return 0;
+    default:
+      return undefined;
+  }
+}
 
 test("parseCompilerOptions preserves named enum identity from command-line option maps", () => {
   const options = {} as CompilerOptions;

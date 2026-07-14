@@ -1,6 +1,7 @@
 import type { int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { GoAppend } from "../../go/compat.js";
+import { GoSlicePrefix } from "../../go/slice-runtime.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/stack.go::type::Stack","kind":"type","status":"implemented","sigHash":"fb7e51fb9997ab5b2bd0f184942b2c3764b1abde5f44fe477c4e984c3a187e3a"}
@@ -51,7 +52,7 @@ export function Stack_Pop<T>(receiver: GoPtr<Stack<T>>): T {
   const item = s.data[l - 1]!;
   const zero = undefined as T;
   s.data[l - 1] = zero;
-  s.data.length = l - 1;
+  s.data = GoSlicePrefix(s.data, l - 1);
   return item;
 }
 

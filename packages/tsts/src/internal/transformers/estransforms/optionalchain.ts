@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoAppend, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Clone, Node_SubtreeFacts, NodeFactory_AsNodeFactory } from "../../ast/spine.js";
 import type { NodeFactoryCoercible } from "../../ast/spine.js";
@@ -390,7 +390,7 @@ export function flattenChain(chain: GoPtr<Node>): flattenResult {
   let links: GoSlice<GoPtr<Node>> = [chain];
   while (!IsTaggedTemplateExpression(chain) && Node_QuestionDotToken(chain) === undefined) {
     chain = SkipPartiallyEmittedExpressions(Node_Expression(chain) as unknown as GoPtr<Expression>) as unknown as GoPtr<Node>;
-    links = GoAppend([chain], ...links);
+    links = GoAppendSlice([chain], links);
   }
   return { expression: Node_Expression(chain) as unknown as GoPtr<Expression>, chain: links };
 }

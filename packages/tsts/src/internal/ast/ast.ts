@@ -3193,19 +3193,19 @@ export function IsLocalsContainer(node: GoPtr<Node>): bool {
  */
 export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Node>> {
   if ((receiver!.Flags & NodeFlagsHasJSDoc) === 0) {
-    return [];
+    return GoNilSlice();
   }
   let resolvedFile = file;
   if (resolvedFile === undefined) {
     resolvedFile = utilities.GetSourceFileOfNode(receiver);
     if (resolvedFile === undefined) {
-      return [];
+      return GoNilSlice();
     }
   }
   if (resolvedFile.hasLazyJSDoc) {
     return SourceFile_resolveJSDoc(resolvedFile, receiver);
   }
-  return (resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>) ?? [];
+  return (resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>) ?? GoNilSlice();
 }
 
 /**
@@ -3233,22 +3233,22 @@ export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSl
  */
 export function Node_EagerJSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Node>> {
   if ((receiver!.Flags & NodeFlagsHasJSDoc) === 0) {
-    return [];
+    return GoNilSlice();
   }
   let resolvedFile = file;
   if (resolvedFile === undefined) {
     resolvedFile = utilities.GetSourceFileOfNode(receiver);
     if (resolvedFile === undefined) {
-      return [];
+      return GoNilSlice();
     }
   }
   if (resolvedFile.hasLazyJSDoc) {
     resolvedFile.jsdocMu.RLock();
     const jsdocs = resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>;
     resolvedFile.jsdocMu.RUnlock();
-    return jsdocs ?? [];
+    return jsdocs ?? GoNilSlice();
   }
-  return (resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>) ?? [];
+  return (resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>) ?? GoNilSlice();
 }
 
 /**
@@ -5518,7 +5518,7 @@ export function SourceFile_as_ast_HasFileName(receiver: GoPtr<SourceFile>): HasF
  * }
  */
 export function SourceFile_Imports(receiver: GoPtr<SourceFile>): GoSlice<GoPtr<LiteralLikeNode>> {
-  return receiver!.imports ?? [];
+  return receiver!.imports;
 }
 
 /**
@@ -5668,7 +5668,7 @@ export function SourceFile_resolveJSDoc(receiver: GoPtr<SourceFile>, n: GoPtr<No
     if (receiver!.jsdocCache.has(n)) {
       return receiver!.jsdocCache.get(n)!;
     }
-    const jsdocs = parseJSDocForNode(receiver, n) ?? [];
+    const jsdocs = parseJSDocForNode(receiver, n) ?? GoNilSlice();
     if (GoMapIsNil(receiver!.jsdocCache)) {
       receiver!.jsdocCache = new Map<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
     }
@@ -6286,7 +6286,7 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
     if (name !== "") {
       let declarations = result.get(name);
       if (declarations === undefined) {
-        declarations = [];
+        declarations = GoNilSlice();
       }
       declarations = GoAppend(declarations, declaration);
       result.set(name, declarations);
@@ -6312,7 +6312,7 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
             }
           } else {
             if (declarations === undefined) {
-              declarations = [];
+              declarations = GoNilSlice();
             }
             declarations = GoAppend(declarations, node);
             result.set(declarationName, declarations);

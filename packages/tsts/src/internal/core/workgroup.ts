@@ -1,6 +1,7 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoChan, GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoAppend } from "../../go/compat.js";
+import { GoSlicePrefix } from "../../go/slice-runtime.js";
 import type { Context } from "../../go/context.js";
 import { type Group, WithContext } from "../../go/golang.org/x/sync/errgroup.js";
 import { Mutex, WaitGroup } from "../../go/sync.js";
@@ -216,7 +217,7 @@ export function singleThreadedWorkGroup_pop(receiver: GoPtr<singleThreadedWorkGr
   const end = receiver!.fns.length - 1;
   const fn = receiver!.fns[end];
   receiver!.fns[end] = undefined;
-  receiver!.fns = receiver!.fns.slice(0, end);
+  receiver!.fns = GoSlicePrefix(receiver!.fns, end);
   receiver!.fnsMu.Unlock();
   return fn;
 }

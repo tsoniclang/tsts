@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import type { GoError, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, GoZeroSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, GoZeroSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
 import { Once, Map as SyncMapMap } from "../../go/sync.js";
@@ -370,7 +370,7 @@ export function Program_GetPackageJsonInfo(receiver: GoPtr<Program>, pkgJsonPath
  * }
  */
 export function Program_GetRedirectTargets(receiver: GoPtr<Program>, path: Path): GoSlice<string> {
-  return receiver!.__tsgoEmbedded0!.redirectTargetsMap.get(path) ?? [];
+  return receiver!.__tsgoEmbedded0!.redirectTargetsMap.get(path) ?? GoNilSlice();
 }
 
 /**
@@ -684,7 +684,7 @@ export let __7d754c38_0: GoInterface<Program_e32ad451> = Program_as_checker_Prog
  */
 export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile> {
   const fileName = ResolvePath(GetDirectoryPath(SourceFile_FileName(origin)), ref!.FileName);
-  const supportedExtensionsBase = GetSupportedExtensions(Program_Options(receiver), []);
+  const supportedExtensionsBase = GetSupportedExtensions(Program_Options(receiver), GoNilSlice());
   const supportedExtensions = GetSupportedExtensionsWithJsonIfResolveJsonModule(Program_Options(receiver), supportedExtensionsBase);
   const allowNonTsExtensions = Tristate_IsTrue(Program_Options(receiver)!.AllowNonTsExtensions);
   if (HasExtension(fileName)) {
@@ -709,7 +709,7 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
       return extensionless;
     }
   }
-  for (const ext of (supportedExtensions[0] ?? [])) {
+  for (const ext of supportedExtensions[0]!) {
     const result = Program_GetSourceFileForResolvedModule(receiver, fileName + ext);
     if (result !== undefined) {
       return result;
@@ -751,17 +751,17 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
     commonSourceDirectory: "",
     commonSourceDirectoryOnce: new Once(),
     declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() } as SyncMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>,
-    programDiagnostics: [],
-    hasEmitBlockingDiagnostics: { M: new globalThis.Map<Path, { readonly __tsgoEmpty?: never }>() },
+    programDiagnostics: GoNilSlice(),
+    hasEmitBlockingDiagnostics: { M: GoNilMap() },
     sourceFilesToEmitOnce: new Once(),
-    sourceFilesToEmit: [],
+    sourceFilesToEmit: GoNilSlice(),
     unresolvedImports: { value: undefined, once: new Once(), initialized: new Bool() },
     knownSymlinks: { value: undefined, once: new Once(), initialized: new Bool() },
     packageNames: { value: undefined, once: new Once(), initialized: new Bool() },
     hasTSFileOnce: new Once(),
     hasTSFile: false as bool,
     packagesMapOnce: new Once(),
-    packagesMap: new globalThis.Map<string, bool>(),
+    packagesMap: GoNilMap(),
   };
   attachExtensionHostToProgram(opts, p);
   Program_initCheckerPool(p);
@@ -872,21 +872,21 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
     programDiagnostics: receiver!.programDiagnostics,
     hasEmitBlockingDiagnostics: receiver!.hasEmitBlockingDiagnostics,
     sourceFilesToEmitOnce: new Once(),
-    sourceFilesToEmit: [],
+    sourceFilesToEmit: GoNilSlice(),
     unresolvedImports: resultUnresolvedImports,
     knownSymlinks: resultKnownSymlinks,
     packageNames: resultPackageNames,
     hasTSFileOnce: new Once(),
     hasTSFile: false as bool,
     packagesMapOnce: new Once(),
-    packagesMap: new globalThis.Map<string, bool>(),
+    packagesMap: GoNilMap(),
   };
   lazyValue_tryReuse(resultUnresolvedImports, receiver!.unresolvedImports);
   lazyValue_tryReuse(resultKnownSymlinks, receiver!.knownSymlinks);
   lazyValue_tryReuse(resultPackageNames, receiver!.packageNames);
   Program_initCheckerPool(result);
   const index = FindIndex(resultPf.files, (file: GoPtr<SourceFile>): bool => (SourceFile_Path(file) === SourceFile_Path(newFile)) as bool);
-  resultPf.files = slices.Clone(resultPf.files) ?? [];
+  resultPf.files = slices.Clone(resultPf.files);
   resultPf.files[index] = newFile;
   resultPf.filesByPath = maps.Clone(resultPf.filesByPath, GoStringKey);
   resultPf.filesByPath.set(SourceFile_Path(newFile), newFile);
@@ -1153,7 +1153,7 @@ export function Program_GetUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Se
  * }
  */
 export function Program_extractUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Set<string>> {
-  const unresolvedSet: Set<string> = { M: new Map() };
+  const unresolvedSet: Set<string> = { M: GoNilMap() };
   for (const sourceFile of receiver!.__tsgoEmbedded0!.files) {
     const unresolvedImports = Program_extractUnresolvedImportsFromSourceFile(receiver, sourceFile);
     for (const imp of unresolvedImports) {
@@ -1386,8 +1386,8 @@ export function Program_GetResolvedModules(receiver: GoPtr<Program>): GoMap<Path
 export function Program_GetPackagesMap(receiver: GoPtr<Program>): GoMap<string, bool> {
   receiver!.packagesMapOnce.Do(() => {
     receiver!.packagesMap = new globalThis.Map<string, bool>();
-    for (const [, resolvedModulesInFile] of receiver!.__tsgoEmbedded0!.resolvedModules ?? []) {
-      for (const [, mod] of resolvedModulesInFile ?? []) {
+    for (const [, resolvedModulesInFile] of receiver!.__tsgoEmbedded0!.resolvedModules) {
+      for (const [, mod] of resolvedModulesInFile) {
         const m = mod as GoPtr<ResolvedModule>;
         if (m !== undefined && !ResolvedModule_IsProviderVirtual(m) && m!.PackageId !== undefined && m!.PackageId.Name !== "") {
           receiver!.packagesMap.set(
@@ -1417,7 +1417,7 @@ export function Program_GetPackagesMap(receiver: GoPtr<Program>): GoMap<string, 
  * }
  */
 export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, concurrent: bool, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoPtr<Diagnostic>> {
-  let result: GoSlice<GoPtr<Diagnostic>>;
+  let result: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   if (sourceFile !== undefined) {
     result = collect!(ctx, sourceFile);
   } else {
@@ -1444,7 +1444,7 @@ export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: GoInte
  * }
  */
 export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, concurrent: bool, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
-  const diagnostics: GoSlice<GoPtr<Diagnostic>>[] = new Array(sourceFiles.length);
+  const diagnostics: GoSlice<GoSlice<GoPtr<Diagnostic>>> = new Array<GoSlice<GoPtr<Diagnostic>>>(sourceFiles.length).fill(GoNilSlice<GoPtr<Diagnostic>>());
   for (let i = 0; i < sourceFiles.length; i++) {
     diagnostics[i] = collect!(ctx, sourceFiles[i]);
   }
@@ -1471,7 +1471,7 @@ export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ct
 export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoPtr<Diagnostic>> {
   if (sourceFile !== undefined) {
     if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
-      return undefined!;
+      return GoNilSlice();
     }
     const [c, done] = Program_GetTypeCheckerForFileExclusive(receiver, ctx, sourceFile);
     const result = collect!(ctx, c, sourceFile);
@@ -1510,7 +1510,7 @@ export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx:
  * }
  */
 export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
-  const diagnostics: GoSlice<GoPtr<Diagnostic>>[] = new Array(sourceFiles.length);
+  const diagnostics: GoSlice<GoSlice<GoPtr<Diagnostic>>> = new Array<GoSlice<GoPtr<Diagnostic>>>(sourceFiles.length).fill(GoNilSlice<GoPtr<Diagnostic>>());
   if (receiver!.compilerCheckerPool !== undefined) {
     checkerPool_forEachCheckerGroupDo(receiver!.compilerCheckerPool, ctx, sourceFiles, Program_SingleThreaded(receiver), (c, fileIndex, file) => {
       diagnostics[fileIndex] = collect!(ctx, c, file);
@@ -1587,7 +1587,7 @@ export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: G
  */
 export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, options: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (Tristate_IsTrue(options!.ExperimentalDecorators)) {
-    return undefined!;
+    return GoNilSlice();
   }
   let diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   const walk: Visitor = (node) => {
@@ -1595,7 +1595,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
       return false as bool;
     }
     if (node!.Kind === KindParameter && HasDecorators(node)) {
-      const decorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator, GoZeroPointer<Node>);
+      const decorator = Find(Node_ModifierNodes(node), IsDecorator, GoZeroPointer<Node>);
       if (decorator !== undefined) {
         diags = GoAppend(diags, NewDiagnostic(file, decorator!.Loc, diagnostics.Decorators_are_not_valid_here));
       }
@@ -1643,7 +1643,7 @@ export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: GoInte
  * }
  */
 export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  const diagnostics = Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSemanticDiagnosticsWithChecker.bind(undefined, receiver)) ?? [];
+  const diagnostics = Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSemanticDiagnosticsWithChecker.bind(undefined, receiver));
   const extensionDiagnostics = collectExtensionDiagnosticsForSourceFile(receiver!, sourceFile);
   if (extensionDiagnostics.length === 0) {
     return diagnostics;
@@ -1669,7 +1669,7 @@ export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: G
   const result = new globalThis.Map<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>();
   for (let i = 0; i < allDiags.length; i++) {
     const file = sourceFiles[i];
-    result.set(file, SortAndDeduplicateDiagnostics([...(allDiags[i] ?? []), ...collectExtensionDiagnosticsForSourceFile(receiver!, file)]));
+    result.set(file, SortAndDeduplicateDiagnostics(GoAppendSlice(allDiags[i]!, collectExtensionDiagnosticsForSourceFile(receiver!, file))));
   }
   return result;
 }
@@ -1718,7 +1718,7 @@ export function Program_GetProgramDiagnostics(receiver: GoPtr<Program>): GoSlice
  */
 export function Program_GetIncludeProcessorDiagnostics(receiver: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
-    return undefined!;
+    return GoNilSlice();
   }
   const [filtered] = Program_getDiagnosticsWithPrecedingDirectives(
     receiver,
@@ -2385,7 +2385,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
 
   const createRemovedOptionDiagnostic = (name: string, value: string, useInstead: string): void => {
     let message: GoPtr<Message>;
-    let args: GoInterface<unknown>[];
+    let args: GoSlice<GoInterface<unknown>> = GoNilSlice();
     if (value === "") {
       message = diagnostics.Option_0_has_been_removed_Please_remove_it_from_your_configuration;
       args = [name];
@@ -2491,7 +2491,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   Program_verifyProjectReferences(receiver);
 
   if (Tristate_IsTrue(options!.Composite)) {
-    const rootPaths: Set<Path> = { M: new globalThis.Map() };
+    const rootPaths: Set<Path> = { M: GoNilMap() };
     for (const fileName of ParsedCommandLine_FileNames(receiver!.opts.Config)) {
       Set_Add(rootPaths, Program_toPath(receiver, fileName), GoStringKey);
     }
@@ -2759,7 +2759,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   }
 
   if (!Tristate_IsTrue(options!.NoEmit) && !Tristate_IsTrue(options!.SuppressOutputPathCheck)) {
-    const emitFilesSeen: Set<string> = { M: new globalThis.Map() };
+    const emitFilesSeen: Set<string> = { M: GoNilMap() };
 
     const verifyEmitFilePath = (emitFileName: string): void => {
       if (emitFileName !== "") {
@@ -2974,12 +2974,12 @@ export function emitModuleKindIsNonNodeESM(moduleKind: ModuleKind): bool {
  */
 export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>): GoSlice<GoPtr<Diagnostic>> {
   if (receiver!.__tsgoEmbedded0!.files.length === 0) {
-    return undefined!;
+    return GoNilSlice();
   }
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_GetGlobalDiagnostics(receiver!.compilerCheckerPool);
   }
-  return undefined!;
+  return GoNilSlice();
 }
 
 /**
@@ -3073,12 +3073,12 @@ export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Progra
 export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: GoInterface<Context>, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   const compilerOptions = Program_Options(receiver);
   if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
-    return undefined!;
+    return GoNilSlice();
   }
 
   recordBoundSourceFileExtensionFacts(receiver!.opts, sourceFile);
-  let diags: GoPtr<Diagnostic>[] = slices.Clip(SourceFile_BindDiagnostics(sourceFile)) ?? [];
-  diags = GoAppend(diags, ...Checker_GetDiagnostics(fileChecker, ctx, sourceFile));
+  let diags: GoSlice<GoPtr<Diagnostic>> = slices.Clip(SourceFile_BindDiagnostics(sourceFile));
+  diags = GoAppendSlice(diags, Checker_GetDiagnostics(fileChecker, ctx, sourceFile));
 
   const isPlainJS = IsPlainJSFile(sourceFile, compilerOptions!.CheckJs);
   if (isPlainJS) {
@@ -3088,16 +3088,14 @@ export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Pr
   const isJS = sourceFile!.ScriptKind === ScriptKindJS || sourceFile!.ScriptKind === ScriptKindJSX;
   const isCheckJS = isJS && IsCheckJSEnabledForFile(sourceFile, compilerOptions);
   if (isCheckJS) {
-    diags = GoAppend(diags, ...SourceFile_JSDocDiagnostics(sourceFile));
+    diags = GoAppendSlice(diags, SourceFile_JSDocDiagnostics(sourceFile));
   }
 
   const [filtered, directivesByLine] = Program_getDiagnosticsWithPrecedingDirectives(receiver, sourceFile, diags);
   let result: GoSlice<GoPtr<Diagnostic>> = filtered;
-  if (directivesByLine !== undefined) {
-    for (const [, directive] of directivesByLine) {
-      if (directive.Kind === CommentDirectiveKindExpectError) {
-        result = GoAppend(result, NewDiagnostic(sourceFile, directive.Loc, diagnostics.Unused_ts_expect_error_directive));
-      }
+  for (const [, directive] of directivesByLine) {
+    if (directive.Kind === CommentDirectiveKindExpectError) {
+      result = GoAppend(result, NewDiagnostic(sourceFile, directive.Loc, diagnostics.Unused_ts_expect_error_directive));
     }
   }
   return result;
@@ -3143,8 +3141,8 @@ export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Pr
  * }
  */
 export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Program>, sourceFile: GoPtr<SourceFile>, diags: GoSlice<GoPtr<Diagnostic>>): [GoSlice<GoPtr<Diagnostic>>, GoMap<int, CommentDirective>] {
-  if (sourceFile!.CommentDirectives === undefined || sourceFile!.CommentDirectives.length === 0) {
-    return [diags, undefined!];
+  if (sourceFile!.CommentDirectives.length === 0) {
+    return [diags, GoNilMap()];
   }
   const directivesByLine = new globalThis.Map<int, CommentDirective>();
   const sourceFileLike: SourceFileLike = { Text: () => SourceFile_Text(sourceFile), ECMALineMap: () => SourceFile_ECMALineMap(sourceFile) };
@@ -3206,7 +3204,7 @@ export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program
   const diags = getDeclarationDiagnostics(emitHost_as_compiler_EmitHost(host), sourceFile);
   const [stored] = SyncMap_LoadOrStore(receiver!.declarationDiagnosticCache, sourceFile, diags, GoZeroSlice<GoPtr<Diagnostic>>, sourceFileKey);
   done!();
-  return stored !== undefined ? stored as GoSlice<GoPtr<Diagnostic>> : diags;
+  return stored;
 }
 
 /**
@@ -3227,10 +3225,10 @@ export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program
  */
 export function Program_getSuggestionDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: GoInterface<Context>, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
-    return undefined!;
+    return GoNilSlice();
   }
-  let diags: GoPtr<Diagnostic>[] = slices.Clip(sourceFile!.BindSuggestionDiagnostics) ?? [];
-  diags = GoAppend(diags, ...Checker_GetSuggestionDiagnostics(fileChecker, ctx, sourceFile));
+  let diags: GoSlice<GoPtr<Diagnostic>> = slices.Clip(sourceFile!.BindSuggestionDiagnostics);
+  diags = GoAppendSlice(diags, Checker_GetSuggestionDiagnostics(fileChecker, ctx, sourceFile));
   return diags;
 }
 
@@ -3268,7 +3266,7 @@ export function isCommentOrBlankLine(text: string, pos: int): bool {
  * }
  */
 export function SortAndDeduplicateDiagnostics(diagnostics: GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
-  const cloned = slices.Clone(diagnostics) ?? [];
+  const cloned = slices.Clone(diagnostics);
   cloned.sort(CompareDiagnostics);
   return compactAndMergeRelatedInfos(cloned);
 }
@@ -3309,7 +3307,7 @@ export function SortAndDeduplicateDiagnostics(diagnostics: GoSlice<GoPtr<Diagnos
  * }
  */
 export function compactAndMergeRelatedInfos(diagnostics: GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
-  if (diagnostics === undefined || diagnostics.length < 2) {
+  if (diagnostics.length < 2) {
     return diagnostics;
   }
   const result: GoPtr<Diagnostic>[] = [];
@@ -3323,7 +3321,7 @@ export function compactAndMergeRelatedInfos(diagnostics: GoSlice<GoPtr<Diagnosti
     if (n > 1) {
       let relatedInfos: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
       for (let k = 0; k < n; k++) {
-        relatedInfos = GoAppend(relatedInfos, ...Diagnostic_RelatedInformation(diagnostics[i + k]));
+        relatedInfos = GoAppendSlice(relatedInfos, Diagnostic_RelatedInformation(diagnostics[i + k]));
       }
       if (relatedInfos.length > 0) {
         relatedInfos.sort(CompareDiagnostics);
@@ -3648,10 +3646,10 @@ export function Program_CommonSourceDirectory(receiver: GoPtr<Program>): string 
     receiver!.commonSourceDirectory = GetCommonSourceDirectory(
       Program_Options(receiver),
       () => {
-        const files: string[] = [];
+        let files: GoSlice<string> = GoNilSlice();
         for (const file of receiver!.__tsgoEmbedded0!.files) {
           if (sourceFileMayBeEmitted(file, Program_as_emitter_SourceFileMayBeEmittedHost(receiver), false as bool)) {
-            files.push(SourceFile_FileName(file));
+            files = GoAppend(files, SourceFile_FileName(file));
           }
         }
         return files;
@@ -3939,10 +3937,10 @@ export function CombineEmitResults(results: GoSlice<GoPtr<EmitResult>>): GoPtr<E
     if (emitResult!.EmitSkipped) {
       result.EmitSkipped = true as bool;
     }
-    result.Diagnostics = GoAppend(result.Diagnostics, ...emitResult!.Diagnostics);
-    result.EmittedFiles = GoAppend(result.EmittedFiles, ...emitResult!.EmittedFiles);
+    result.Diagnostics = GoAppendSlice(result.Diagnostics, emitResult!.Diagnostics);
+    result.EmittedFiles = GoAppendSlice(result.EmittedFiles, emitResult!.EmittedFiles);
     if (!GoSliceIsNil(emitResult!.SourceMaps)) {
-      result.SourceMaps = GoAppend(result.SourceMaps, ...emitResult!.SourceMaps);
+      result.SourceMaps = GoAppendSlice(result.SourceMaps, emitResult!.SourceMaps);
     }
   }
   return result;
@@ -4052,8 +4050,8 @@ export function HandleNoEmitOnError(ctx: GoInterface<Context>, program: GoInterf
   return {
     Diagnostics: diags,
     EmitSkipped: true as bool,
-    EmittedFiles: [],
-    SourceMaps: [],
+    EmittedFiles: GoNilSlice(),
+    SourceMaps: GoNilSlice(),
   };
 }
 
@@ -4103,25 +4101,25 @@ export function GetDiagnosticsOfAnyProgram(ctx: GoInterface<Context>, program: G
   let allDiagnostics: GoSlice<GoPtr<Diagnostic>> = slices.Clip(program!.GetConfigFileParsingDiagnostics());
   const configFileParsingDiagnosticsLength = allDiagnostics.length;
 
-  allDiagnostics = GoAppend(allDiagnostics, ...program!.GetSyntacticDiagnostics(ctx, file));
+  allDiagnostics = GoAppendSlice(allDiagnostics, program!.GetSyntacticDiagnostics(ctx, file));
 
   // If we didn't have any syntactic errors, then also try getting the program (options),
   // global and semantic errors.
   if (allDiagnostics.length === configFileParsingDiagnosticsLength) {
-    allDiagnostics = GoAppend(allDiagnostics, ...program!.GetProgramDiagnostics());
+    allDiagnostics = GoAppendSlice(allDiagnostics, program!.GetProgramDiagnostics());
 
     getBindDiagnostics!(ctx, file);
 
     if (Tristate_IsFalseOrUnknown(program!.Options()!.ListFilesOnly)) {
-      allDiagnostics = GoAppend(allDiagnostics, ...program!.GetGlobalDiagnostics(ctx));
+      allDiagnostics = GoAppendSlice(allDiagnostics, program!.GetGlobalDiagnostics(ctx));
 
       if (allDiagnostics.length === configFileParsingDiagnosticsLength) {
-        allDiagnostics = GoAppend(allDiagnostics, ...getSemanticDiagnostics!(ctx, file));
-        allDiagnostics = GoAppend(allDiagnostics, ...program!.GetGlobalDiagnostics(ctx));
+        allDiagnostics = GoAppendSlice(allDiagnostics, getSemanticDiagnostics!(ctx, file));
+        allDiagnostics = GoAppendSlice(allDiagnostics, program!.GetGlobalDiagnostics(ctx));
       }
 
       if ((skipNoEmitCheckForDtsDiagnostics || Tristate_IsTrue(program!.Options()!.NoEmit)) && CompilerOptions_GetEmitDeclarations(program!.Options()) && allDiagnostics.length === configFileParsingDiagnosticsLength) {
-        allDiagnostics = GoAppend(allDiagnostics, ...program!.GetDeclarationDiagnostics(ctx, file));
+        allDiagnostics = GoAppendSlice(allDiagnostics, program!.GetDeclarationDiagnostics(ctx, file));
       }
     }
   }
@@ -4322,10 +4320,10 @@ export function Program_ExplainFiles(receiver: GoPtr<Program>, w: GoInterface<Wr
   const explainFile = (file: HasFileName): void => {
     writeStr(toRelativeFileName(file.FileName()) + "\n");
     const reasons = receiver!.__tsgoEmbedded0!.includeProcessor!.fileIncludeReasons.get(file.Path() as Path);
-    for (const reason of (reasons ?? [])) {
+    for (const reason of (reasons ?? GoNilSlice())) {
       writeStr("   " + Diagnostic_Localize(FileIncludeReason_toDiagnostic(reason, receiver, true as bool), locale) + "\n");
     }
-    for (const diag of (includeProcessor_explainRedirectAndImpliedFormat(receiver!.__tsgoEmbedded0!.includeProcessor!, receiver, file.Path() as Path, toRelativeFileName) ?? [])) {
+    for (const diag of includeProcessor_explainRedirectAndImpliedFormat(receiver!.__tsgoEmbedded0!.includeProcessor!, receiver, file.Path() as Path, toRelativeFileName)) {
       writeStr("   " + Diagnostic_Localize(diag, locale) + "\n");
     }
     filesExplained++;
@@ -4589,9 +4587,9 @@ export function Program_DeepImportPackageNames(receiver: GoPtr<Program>): GoPtr<
 export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<packageNamesInfo> {
   return lazyValue_getValue(receiver!.packageNames, () => {
     const packageNames: packageNamesInfo = {
-      resolved: { M: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() },
-      unresolved: { M: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() },
-      deepImportPackages: { M: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() },
+      resolved: { M: GoNilMap() },
+      unresolved: { M: GoNilMap() },
+      deepImportPackages: { M: GoNilMap() },
     };
     for (const file of receiver!.__tsgoEmbedded0!.files) {
       if (
@@ -4601,7 +4599,7 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
       ) {
         continue;
       }
-      for (const imp of (SourceFile_Imports(file) ?? [])) {
+      for (const imp of SourceFile_Imports(file)) {
         const impText = Node_Text(imp);
         if (IsExternalModuleNameRelative(impText)) {
           continue;
@@ -4774,7 +4772,7 @@ export function Program_GetSymlinkCache(receiver: GoPtr<Program>): GoPtr<KnownSy
       );
     }
 
-    const seenPackageJsons: Set<Path> = { M: new globalThis.Map<Path, { readonly __tsgoEmpty?: never }>() };
+    const seenPackageJsons: Set<Path> = { M: GoNilMap() };
     for (const [filePath, meta] of receiver!.__tsgoEmbedded0!.sourceFileMetaDatas) {
       if (
         meta.PackageJsonDirectory === "" ||

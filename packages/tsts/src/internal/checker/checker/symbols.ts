@@ -2,7 +2,8 @@ import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoInterface, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
-import { GoAppend, GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroSlice, NewGoStructMap } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroSlice, NewGoStructMap } from "../../../go/compat.js";
+import { GoSlicePrefix, GoSliceRange } from "../../../go/slice-runtime.js";
 import { Uint64 } from "../../../go/sync/atomic.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
@@ -8264,7 +8265,7 @@ export function Checker_mergeSymbol(receiver: GoPtr<Checker>, target: GoPtr<Symb
     if (source!.ValueDeclaration !== undefined) {
       SetValueDeclaration(target, source!.ValueDeclaration);
     }
-    target!.Declarations = GoAppend(target!.Declarations, ...source!.Declarations);
+    target!.Declarations = GoAppendSlice(target!.Declarations, source!.Declarations);
     if (!GoMapIsNil(source!.Members)) {
       if (GoMapIsNil(target!.Members)) {
         target!.Members = new globalThis.Map() as SymbolTable;
@@ -10441,7 +10442,7 @@ export function Checker_lateBindMember(receiver: GoPtr<Checker>, parent: GoPtr<S
       const earlySymbol = earlySymbols.get(memberName);
       if ((lateSymbol!.Flags & getExcludedSymbolFlags(symbolFlags)) !== 0) {
         const declarations = earlySymbol !== undefined
-          ? core.Concatenate(earlySymbol!.Declarations, lateSymbol!.Declarations)
+          ? Concatenate(earlySymbol!.Declarations, lateSymbol!.Declarations)
           : lateSymbol!.Declarations;
         let name = memberName;
         if ((t!.flags & TypeFlagsUniqueESSymbol) !== 0) {
@@ -12553,7 +12554,7 @@ export function Checker_resolveTypeReferenceMembers(receiver: GoPtr<Checker>, t:
   const typeArguments = Checker_getTypeArguments(receiver, t);
   let paddedTypeArguments = typeArguments;
   if (typeArguments.length === typeParameters.length - 1) {
-    paddedTypeArguments = core.Concatenate(typeArguments, [t]);
+    paddedTypeArguments = Concatenate(typeArguments, [t]);
   }
   Checker_resolveObjectTypeMembers(receiver, t, source, typeParameters, paddedTypeArguments);
 }
@@ -13358,7 +13359,7 @@ export function Checker_resolveAnonymousTypeMembers(receiver: GoPtr<Checker>, t:
     if (constructSignatures.length === 0) {
       constructSignatures = Checker_getDefaultConstructSignatures(receiver, classType);
     }
-    structured!.signatures = GoAppend(structured!.signatures, ...constructSignatures);
+    structured!.signatures = GoAppendSlice(structured!.signatures, constructSignatures);
   }
 }
 
@@ -14366,7 +14367,7 @@ export function Checker_createUnionOrIntersectionProperty(receiver: GoPtr<Checke
     } else if (prop!.ValueDeclaration !== undefined && prop!.ValueDeclaration !== firstValueDeclaration) {
       hasNonUniformValueDeclaration = true;
     }
-    declarations = GoAppend(declarations, ...(prop!.Declarations ?? GoNilSlice()));
+    declarations = GoAppendSlice(declarations, (prop!.Declarations ?? GoNilSlice()));
     const t = Checker_getTypeOfSymbol(receiver, prop);
     if (firstType === undefined) {
       firstType = t;
@@ -14391,7 +14392,7 @@ export function Checker_createUnionOrIntersectionProperty(receiver: GoPtr<Checke
     propTypes = GoAppend(propTypes, t);
     return true;
   });
-  propTypes = GoAppend(propTypes, ...indexTypes);
+  propTypes = GoAppendSlice(propTypes, indexTypes);
   const result = Checker_newSymbolEx(receiver, (propFlags | optionalFlag) as SymbolFlags, name, (checkFlags | syntheticFlag) as CheckFlags);
   result!.Declarations = declarations;
   if (!hasNonUniformValueDeclaration && firstValueDeclaration !== undefined) {
@@ -14615,8 +14616,8 @@ export function Checker_getNamedMembers(receiver: GoPtr<Checker>, members: Symbo
       result = GoAppend(result, symbol_);
     }
   }
-  const contained = result.slice(0, containedCount);
-  const inherited = result.slice(containedCount);
+  const contained = GoSlicePrefix(result, containedCount);
+  const inherited = GoSliceRange(result, containedCount);
   Checker_sortSymbols(receiver, contained);
   Checker_sortSymbols(receiver, inherited);
   result.splice(0, result.length, ...contained, ...inherited);
@@ -19086,7 +19087,7 @@ export function Checker_getAwaitedTypeNoAliasEx(receiver: GoPtr<Checker>, t: GoP
     receiver!.awaitedTypeStack = GoAppend(receiver!.awaitedTypeStack, t);
     const mapped = Checker_mapType(receiver, t, (mappedType: GoPtr<Type>): GoPtr<Type> =>
       Checker_getAwaitedTypeNoAliasEx(receiver, mappedType, errorNode, diagnosticMessage, ...args));
-    receiver!.awaitedTypeStack = receiver!.awaitedTypeStack.slice(0, receiver!.awaitedTypeStack.length - 1);
+    receiver!.awaitedTypeStack = GoSlicePrefix(receiver!.awaitedTypeStack, receiver!.awaitedTypeStack.length - 1);
     receiver!.cachedTypes.set(key, mapped);
     return mapped;
   }
@@ -19106,7 +19107,7 @@ export function Checker_getAwaitedTypeNoAliasEx(receiver: GoPtr<Checker>, t: GoP
     }
     receiver!.awaitedTypeStack = GoAppend(receiver!.awaitedTypeStack, t);
     const awaitedType = Checker_getAwaitedTypeNoAliasEx(receiver, promisedType, errorNode, diagnosticMessage, ...args);
-    receiver!.awaitedTypeStack = receiver!.awaitedTypeStack.slice(0, receiver!.awaitedTypeStack.length - 1);
+    receiver!.awaitedTypeStack = GoSlicePrefix(receiver!.awaitedTypeStack, receiver!.awaitedTypeStack.length - 1);
     if (awaitedType === undefined) {
       return undefined;
     }

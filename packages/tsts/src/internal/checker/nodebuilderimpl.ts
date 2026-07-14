@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroMap, GoZeroNumber, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoMapIsNil, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroMap, GoZeroNumber, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoSlicePrefix } from "../../go/slice-runtime.js";
 import * as maps from "../../go/maps.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList } from "../ast/spine.js";
 import type { NodeVisitor } from "../ast/visitor.js";
@@ -200,7 +201,7 @@ import { NewTextRange } from "../core/text.js";
 import type { Set } from "../collections/set.js";
 import type { MultiMap } from "../collections/multimap.js";
 import { MultiMap_Add, MultiMap_Values } from "../collections/multimap.js";
-import { CountWhere, Every, Filter, Find, FirstNonNil, FirstOrNil, IfElse, Map as CoreMap, MapIndex, Some } from "../core/core.js";
+import { Concatenate, CountWhere, Every, Filter, Find, FirstNonNil, FirstOrNil, IfElse, Map as CoreMap, MapIndex, Some } from "../core/core.js";
 import { LanguageVariantStandard } from "../core/languagevariant.js";
 import { DeclarationNameToString, IsIdentifierText } from "../scanner/utilities.js";
 import type { ResolutionMode } from "../core/compileroptions.js";
@@ -895,7 +896,7 @@ export function NodeBuilderImpl_checkTypeExpandability(receiver: GoPtr<NodeBuild
   if (!receiver!.ctx!.canIncreaseExpansionDepth) {
     NodeBuilderImpl_shouldExpandType(receiver, t, false as bool);
   }
-  receiver!.ctx!.typeStack = receiver!.ctx!.typeStack.slice(0, receiver!.ctx!.typeStack.length - 1);
+  receiver!.ctx!.typeStack = GoSlicePrefix(receiver!.ctx!.typeStack, receiver!.ctx!.typeStack.length - 1);
   if (receiver!.ctx!.canIncreaseExpansionDepth) {
     return;
   }
@@ -1025,10 +1026,10 @@ export function getAccessStack(ref: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   let ids: GoSlice<GoPtr<Node>> = [];
   while (!IsIdentifier(state)) {
     const entity = AsQualifiedName(state)!;
-    ids = GoAppend([entity.Right], ...ids);
+    ids = GoAppendSlice([entity.Right], ids);
     state = entity.Left;
   }
-  ids = GoAppend([state], ...ids);
+  ids = GoAppendSlice([state], ids);
   return ids;
 }
 
@@ -2487,8 +2488,8 @@ export function NodeBuilderImpl_getTypeParametersOfClassOrInterface(receiver: Go
   const outer = Checker_getOuterTypeParametersOfClassOrInterface(receiver!.ch, symbol_);
   const local = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver!.ch, symbol_);
   let result: GoSlice<GoPtr<Type>> = [];
-  result = GoAppend(result, ...outer);
-  result = GoAppend(result, ...local);
+  result = GoAppendSlice(result, outer);
+  result = GoAppendSlice(result, local);
   return result;
 }
 
@@ -2712,7 +2713,7 @@ export function NodeBuilderImpl_getSymbolChain(receiver: GoPtr<NodeBuilderImpl>,
             }
             nextSyms = GoAppend(nextSyms, fallback);
           }
-          accessibleSymbolChain = GoAppend(parentChain, ...nextSyms);
+          accessibleSymbolChain = GoAppendSlice(parentChain, nextSyms);
           break;
         }
       }
@@ -3749,7 +3750,7 @@ export function NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiv
     }
     return results;
   }
-  return undefined!;
+  return GoNilSlice();
 }
 
 /**
@@ -4208,7 +4209,7 @@ export function NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver: 
   let parameters: GoSlice<GoPtr<Node>> = parameterSource.map((parameter) => NodeBuilderImpl_symbolToParameterDeclaration(receiver, parameter, kind === KindConstructor));
   const thisParameter = (receiver!.ctx!.flags & FlagsOmitThisParameter) !== 0 ? undefined : NodeBuilderImpl_tryGetThisParameterDeclaration(receiver, signature);
   if (thisParameter !== undefined) {
-    parameters = GoAppend([thisParameter], ...parameters);
+    parameters = GoAppendSlice([thisParameter], parameters);
   }
   restoreFlags!();
   let returnTypeNode = NodeBuilderImpl_serializeReturnTypeForSignature(receiver, signature, true);
@@ -4423,7 +4424,7 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
         links!.v.resolvedType = (flags & ElementFlagsRest) !== 0 ? Checker_createArrayType(receiver, type_) : type_;
         return symbol_;
       });
-      return core.Concatenate(sig!.parameters.slice(0, tupleRestIndex), restParams);
+      return Concatenate(sig!.parameters.slice(0, tupleRestIndex), restParams);
     };
     if (isTupleType(restType)) {
       return [expandSignatureParametersWithTupleMembers(restType, restIndex, restSymbol)];
@@ -5653,7 +5654,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
       propertyTypeNode = NewKeywordTypeNode(receiver!.f, KindAnyKeyword);
     }
     if (propertyIsReverseMapped) {
-      receiver!.ctx!.reverseMappedStack = receiver!.ctx!.reverseMappedStack.slice(0, receiver!.ctx!.reverseMappedStack.length - 1);
+      receiver!.ctx!.reverseMappedStack = GoSlicePrefix(receiver!.ctx!.reverseMappedStack, receiver!.ctx!.reverseMappedStack.length - 1);
     }
   }
 
@@ -7359,7 +7360,7 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
     throw new globalThis.Error("Should be unreachable.");
   } finally {
     if (pushedType) {
-      receiver!.ctx!.typeStack = receiver!.ctx!.typeStack.slice(0, receiver!.ctx!.typeStack.length - 1);
+      receiver!.ctx!.typeStack = GoSlicePrefix(receiver!.ctx!.typeStack, receiver!.ctx!.typeStack.length - 1);
     }
   }
 }

@@ -410,9 +410,9 @@ export function Checker_checkJsxOpeningLikeElementOrOpeningFragment(receiver: Go
       } else {
         tagType = Checker_checkExpression(receiver, tagName);
       }
-      const diagnostics: GoSlice<GoPtr<Diagnostic>> = [];
-      if (!Checker_checkTypeRelatedToEx(receiver, tagType, elementTypeConstraint, receiver!.assignableRelation, tagName, Its_type_0_is_not_a_valid_JSX_element_type, GoValueRef(diagnostics))) {
-        Checker_addDiagnostic(receiver, NewDiagnosticChain(diagnostics[0], X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(tagName)));
+      const diagnostics = GoValueRef<GoSlice<GoPtr<Diagnostic>>>(GoNilSlice());
+      if (!Checker_checkTypeRelatedToEx(receiver, tagType, elementTypeConstraint, receiver!.assignableRelation, tagName, Its_type_0_is_not_a_valid_JSX_element_type, diagnostics)) {
+        Checker_addDiagnostic(receiver, NewDiagnosticChain(diagnostics.v[0], X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(tagName)));
       }
     } else {
       Checker_checkJsxReturnAssignableToAppropriateBound(receiver, Checker_getJsxReferenceKind(receiver, node), Checker_getReturnTypeOfSignature(receiver, sig), node);
@@ -477,12 +477,12 @@ export function Checker_checkJsxPreconditions(receiver: GoPtr<Checker>, errorNod
  * }
  */
 export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoPtr<Checker>, refKind: JsxReferenceKind, elemInstanceType: GoPtr<Type>, openingLikeElement: GoPtr<Node>): void {
-  const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
+  const diags = GoValueRef<GoSlice<GoPtr<Diagnostic>>>(GoNilSlice());
   switch (refKind) {
     case JsxReferenceKindFunction: {
       const sfcReturnConstraint = Checker_getJsxStatelessElementTypeAt(receiver, openingLikeElement);
       if (sfcReturnConstraint !== undefined) {
-        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, sfcReturnConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_return_type_0_is_not_a_valid_JSX_element, GoValueRef(diags));
+        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, sfcReturnConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_return_type_0_is_not_a_valid_JSX_element, diags);
       }
       break;
     }
@@ -490,7 +490,7 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
       const classConstraint = Checker_getJsxElementClassTypeAt(receiver, openingLikeElement);
       if (classConstraint !== undefined) {
         // Issue an error if this return type isn't assignable to JSX.ElementClass, failing that
-        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, classConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_instance_type_0_is_not_a_valid_JSX_element, GoValueRef(diags));
+        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, classConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_instance_type_0_is_not_a_valid_JSX_element, diags);
       }
       break;
     }
@@ -501,12 +501,12 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
         return;
       }
       const combined = Checker_getUnionType(receiver, [sfcReturnConstraint, classConstraint]);
-      Checker_checkTypeRelatedToEx(receiver, elemInstanceType, combined, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_element_type_0_is_not_a_valid_JSX_element, GoValueRef(diags));
+      Checker_checkTypeRelatedToEx(receiver, elemInstanceType, combined, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_element_type_0_is_not_a_valid_JSX_element, diags);
       break;
     }
   }
-  if (diags.length !== 0) {
-    Checker_addDiagnostic(receiver, NewDiagnosticChain(diags[0], X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(Node_TagName(openingLikeElement))));
+  if (diags.v.length !== 0) {
+    Checker_addDiagnostic(receiver, NewDiagnosticChain(diags.v[0], X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(Node_TagName(openingLikeElement))));
   }
 }
 
@@ -2000,7 +2000,7 @@ export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Che
     const intrinsicType = Checker_getIntrinsicAttributesTypeFromStringLiteralType(receiver, elementType, caller);
     if (intrinsicType === undefined) {
       Checker_error(receiver, caller, Property_0_does_not_exist_on_type_1, getStringLiteralValue(elementType), `JSX.${JsxNames.IntrinsicElements}`);
-      return [];
+      return GoNilSlice();
     }
     const fakeSignature = Checker_createSignatureForJSXIntrinsic(receiver, caller, intrinsicType);
     return [fakeSignature];
@@ -2784,7 +2784,7 @@ export function Checker_getJsxElementTypeTypeAt(receiver: GoPtr<Checker>, locati
   if (sym === undefined) {
     return undefined;
   }
-  const t = Checker_instantiateAliasOrInterfaceWithDefaults(receiver, sym, [], IsInJSFile(location));
+  const t = Checker_instantiateAliasOrInterfaceWithDefaults(receiver, sym, GoNilSlice(), IsInJSFile(location));
   if (t === undefined || Checker_isErrorType(receiver, t)) {
     return undefined;
   }

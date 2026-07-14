@@ -1,7 +1,8 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
+import { GoSlicePrefix } from "../../../go/slice-runtime.js";
 import { GoBigIntKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { recordExtensionContextualTargetTypeFact } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
@@ -5432,7 +5433,7 @@ export function Checker_getTypeFromBindingPattern(receiver: GoPtr<Checker>, patt
     ? Checker_getTypeFromObjectBindingPattern(receiver, pattern, includePatternInType, reportErrors)
     : Checker_getTypeFromArrayBindingPattern(receiver, pattern, includePatternInType, reportErrors);
   if (includePatternInType) {
-    receiver!.contextualBindingPatterns = receiver!.contextualBindingPatterns.slice(0, receiver!.contextualBindingPatterns.length - 1);
+    receiver!.contextualBindingPatterns = GoSlicePrefix(receiver!.contextualBindingPatterns, receiver!.contextualBindingPatterns.length - 1);
   }
   return result;
 }
@@ -6369,7 +6370,7 @@ export function Checker_popTypeResolution(receiver: GoPtr<Checker>): bool {
   const lastIndex = receiver!.typeResolutions.length - 1;
   const result = receiver!.typeResolutions[lastIndex]!.result;
   receiver!.typeResolutions[lastIndex] = {} as TypeResolution;
-  receiver!.typeResolutions.length = lastIndex;
+  receiver!.typeResolutions = GoSlicePrefix(receiver!.typeResolutions, lastIndex);
   return result;
 }
 
@@ -8839,7 +8840,7 @@ export function Checker_getTypeFromClassOrInterfaceReference(receiver: GoPtr<Che
       return Checker_createDeferredTypeReference(receiver, t, node, undefined, undefined);
     }
     const localTypeArguments = Checker_fillMissingTypeArguments(receiver, Checker_getTypeArgumentsFromNode(receiver, node), typeParameters, minTypeArgumentCount, isJs);
-    const typeArguments = GoAppend(InterfaceType_OuterTypeParameters(d), ...localTypeArguments);
+    const typeArguments = GoAppendSlice(InterfaceType_OuterTypeParameters(d), localTypeArguments);
     return Checker_createTypeReferenceEx(receiver, t, typeArguments, ObjectFlagsFromTypeNode);
   }
   if (Checker_checkNoTypeArguments(receiver, node, symbol_)) {
@@ -9103,7 +9104,7 @@ export function Checker_getElementTypes(receiver: GoPtr<Checker>, t: GoPtr<Type>
   if (typeArguments.length === arity) {
     return typeArguments;
   }
-  return typeArguments.slice(0, arity);
+  return GoSlicePrefix(typeArguments, arity);
 }
 
 /**
@@ -15615,7 +15616,7 @@ export function Checker_pushContextualType(receiver: GoPtr<Checker>, node: GoPtr
 export function Checker_popContextualType(receiver: GoPtr<Checker>): void {
   const lastIndex = receiver!.contextualInfos!.length - 1;
   receiver!.contextualInfos![lastIndex] = {} as ContextualInfo;
-  receiver!.contextualInfos!.length = lastIndex;
+  receiver!.contextualInfos = GoSlicePrefix(receiver!.contextualInfos, lastIndex);
 }
 
 /**

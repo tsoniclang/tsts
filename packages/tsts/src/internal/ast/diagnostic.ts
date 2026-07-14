@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoInterface, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Mutex } from "../../go/sync.js";
@@ -470,8 +470,8 @@ export function NewDiagnostic(file: GoPtr<SourceFile>, loc: TextRange, message: 
     message: message,
     messageKey: diagnostics.Message_Key(message),
     messageArgs: diagnostics.StringifyArgs(args),
-    messageChain: [],
-    relatedInformation: [],
+    messageChain: GoNilSlice(),
+    relatedInformation: GoNilSlice(),
     reportsUnnecessary: diagnostics.Message_ReportsUnnecessary(message),
     reportsDeprecated: diagnostics.Message_ReportsDeprecated(message),
     skippedOnNoEmit: false,
@@ -716,9 +716,9 @@ export function DiagnosticsCollection_GetDiagnostics(receiver: GoPtr<Diagnostics
   receiver!.mu.Lock();
   try {
     let diagnostics_: GoSlice<GoPtr<Diagnostic>> = [];
-    diagnostics_ = GoAppend(diagnostics_, ...receiver!.nonFileDiagnostics);
+    diagnostics_ = GoAppendSlice(diagnostics_, receiver!.nonFileDiagnostics);
     for (const diags of receiver!.fileDiagnostics.values()) {
-      diagnostics_ = GoAppend(diagnostics_, ...diags);
+      diagnostics_ = GoAppendSlice(diagnostics_, diags);
     }
     slices.SortFunc(diagnostics_, CompareDiagnostics);
     return diagnostics_;

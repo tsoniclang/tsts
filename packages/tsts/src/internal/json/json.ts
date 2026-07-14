@@ -1,5 +1,5 @@
 import type { bool, byte } from "../../go/scalars.js";
-import { GoAppend, type GoError, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, type GoError, type GoPtr, type GoSlice } from "../../go/compat.js";
 import {
   Deterministic as json_Deterministic,
   JsonFieldNames,
@@ -58,7 +58,7 @@ export let allowInvalid: GoSlice<GoInterface<Options>> = Clip([jsontext_AllowInv
  * }
  */
 export function Marshal(in_: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): [out: GoSlice<byte>, err: GoError] {
-  const resolvedOpts = opts.length === 0 ? allowInvalid : GoAppend(allowInvalid, ...opts);
+  const resolvedOpts = opts.length === 0 ? allowInvalid : GoAppendSlice(allowInvalid, opts);
   return json_Marshal(in_, ...resolvedOpts) as [GoSlice<byte>, GoError];
 }
 
@@ -76,7 +76,7 @@ export function Marshal(in_: GoInterface<unknown>, ...opts: Array<GoInterface<Op
  * }
  */
 export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
-  const resolvedOpts = opts.length === 0 ? allowInvalid : GoAppend(allowInvalid, ...opts);
+  const resolvedOpts = opts.length === 0 ? allowInvalid : GoAppendSlice(allowInvalid, opts);
   return json_MarshalEncode(out, in_, ...resolvedOpts) as GoError;
 }
 
@@ -94,7 +94,7 @@ export function MarshalEncode(out: GoPtr<Encoder_517f1597>, in_: GoInterface<unk
  * }
  */
 export function MarshalWrite(out: GoInterface<Writer>, in_: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
-  const resolvedOpts = opts.length === 0 ? allowInvalid : GoAppend(allowInvalid, ...opts);
+  const resolvedOpts = opts.length === 0 ? allowInvalid : GoAppendSlice(allowInvalid, opts);
   return json_MarshalWrite(out!, in_, ...resolvedOpts) as GoError;
 }
 

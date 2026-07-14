@@ -1,4 +1,4 @@
-import { GoAppend, GoNilSlice, GoSliceIsNil, type GoError, type GoSlice } from "../compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceIsNil, type GoError, type GoSlice } from "../compat.js";
 import * as nodeChildProcess from "node:child_process";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
@@ -12,7 +12,7 @@ export class Cmd {
 
   constructor(name: string, args: GoSlice<string>) {
     this.Path = name;
-    this.Args = GoAppend([name], ...args);
+    this.Args = GoAppendSlice([name], args);
   }
 
   Run(): GoError {

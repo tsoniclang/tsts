@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoAppend, GoEqualStrict, GoNilMap, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoFunc, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilMap, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoFunc, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { CommentRange, FileReference, SourceFile } from "../../ast/ast.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { SourceFile_Text, SourceFile_FileName, AsSourceFile, SourceFile_IsJS, Node_Symbol, Node_Initializer, Node_Type, Node_Expression, Node_Parameters, Node_ParameterList, Node_Elements, Node_IsTypeOnly, Node_ModuleSpecifier, NodeFactory_NewModifier, Node_Text, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateExpressionWithTypeArguments, Node_Arguments, NodeFactory_UpdateFunctionDeclaration, Node_StatementList, NodeFactory_UpdateSourceFile, Node_PropertyName, Node_EagerJSDoc, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateVariableDeclarationList, NodeFactory_UpdateBindingElement } from "../../ast/ast.js";
@@ -664,9 +664,9 @@ export function DeclarationTransformer_visitSourceFile(receiver: GoPtr<Declarati
  * }
  */
 export function DeclarationTransformer_collectFileReferences(receiver: GoPtr<DeclarationTransformer>, sourceFile: GoPtr<SourceFile>): void {
-  receiver!.rawReferencedFiles = GoAppend(receiver!.rawReferencedFiles, ...Map(sourceFile!.ReferencedFiles, (ref: GoPtr<FileReference>) => ({ file: sourceFile, ref: ref } as ReferencedFilePair)));
-  receiver!.rawTypeReferenceDirectives = GoAppend(receiver!.rawTypeReferenceDirectives, ...sourceFile!.TypeReferenceDirectives);
-  receiver!.rawLibReferenceDirectives = GoAppend(receiver!.rawLibReferenceDirectives, ...sourceFile!.LibReferenceDirectives);
+  receiver!.rawReferencedFiles = GoAppendSlice(receiver!.rawReferencedFiles, Map(sourceFile!.ReferencedFiles, (ref: GoPtr<FileReference>) => ({ file: sourceFile, ref: ref } as ReferencedFilePair)));
+  receiver!.rawTypeReferenceDirectives = GoAppendSlice(receiver!.rawTypeReferenceDirectives, sourceFile!.TypeReferenceDirectives);
+  receiver!.rawLibReferenceDirectives = GoAppendSlice(receiver!.rawLibReferenceDirectives, sourceFile!.LibReferenceDirectives);
 }
 
 /**
@@ -3606,7 +3606,7 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
           return GoAppend(acc, updated);
         } else {
           // Pattern - currently an error, but emit declarations for it somewhat correctly
-          return GoAppend(acc, ...DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(paramDecl!.name)!, param));
+          return GoAppendSlice(acc, DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(paramDecl!.name)!, param));
         }
       }, GoNilSlice());
       receiver!.state!.getSymbolAccessibilityDiagnostic = oldDiag;
@@ -3641,11 +3641,11 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
     if (privateIdentifier !== undefined) {
       memberNodes = GoAppend(memberNodes, privateIdentifier);
     }
-    memberNodes = GoAppend(memberNodes, ...(lateIndexes ?? GoNilSlice()));
-    memberNodes = GoAppend(memberNodes, ...parameterProperties);
-    memberNodes = GoAppend(memberNodes, ...thisPropertyAssignments);
+    memberNodes = GoAppendSlice(memberNodes, (lateIndexes ?? GoNilSlice()));
+    memberNodes = GoAppendSlice(memberNodes, parameterProperties);
+    memberNodes = GoAppendSlice(memberNodes, thisPropertyAssignments);
     if (visitResult !== undefined && visitResult!.Nodes.length > 0) {
-      memberNodes = GoAppend(memberNodes, ...visitResult!.Nodes);
+      memberNodes = GoAppendSlice(memberNodes, visitResult!.Nodes);
     }
     const members = NodeFactory_NewNodeList(astFactory, memberNodes) as GoPtr<ClassElementList>;
 
@@ -3686,7 +3686,7 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
         const retainedHeritageClauses = NodeVisitor_VisitNodes(visitor, input!.HeritageClauses);
         let heritageList: GoSlice<GoPtr<Node>> = [newHeritageClause];
         if (retainedHeritageClauses !== undefined && retainedHeritageClauses!.Nodes.length > 0) {
-          heritageList = GoAppend(heritageList, ...retainedHeritageClauses!.Nodes);
+          heritageList = GoAppendSlice(heritageList, retainedHeritageClauses!.Nodes);
         }
         const heritageClauses = NodeFactory_NewNodeList(astFactory, heritageList) as GoPtr<HeritageClauseList>;
         return NewSyntaxList(astFactory, [
@@ -3977,7 +3977,7 @@ export function DeclarationTransformer_walkBindingPattern(receiver: GoPtr<Declar
     }
     const elemName = Node_Name(elem);
     if (elemName !== undefined && IsBindingPattern(elemName)) {
-      return GoAppend(elems, ...DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(elemName)!, param));
+      return GoAppendSlice(elems, DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(elemName)!, param));
     }
     return GoAppend(elems, NewPropertyDeclaration(
       astFactory,
@@ -5247,7 +5247,7 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
           MutableNode_SetModifiers(Node_AsMutable(decl), NodeFactory_NewModifierList(astFactory, CreateModifiersFromModifierFlags(modifierFlags, (kind) => NodeFactory_NewModifier(astFactory, kind))));
         }
       }
-      receiver!.expandoMembers!.set(hostId, GoAppend(receiver!.expandoMembers!.get(hostId) ?? GoNilSlice(), ...statements));
+      receiver!.expandoMembers!.set(hostId, GoAppendSlice(receiver!.expandoMembers!.get(hostId) ?? GoNilSlice(), statements));
     } finally {
       cleanupDiagnosticContext!();
     }

@@ -1,6 +1,6 @@
 import type { int } from "../../go/scalars.js";
 import type { GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoNilSlice, GoPointerKey } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoPointerKey } from "../../go/compat.js";
 import { Diagnostic_SetMessageChain, Diagnostic_SetRelatedInfo, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import { Set_AddIfAbsent, Set_Len } from "../collections/set.js";
@@ -283,7 +283,7 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     chain = [fileReason];
   }
   if (redirectInfo.length > 0) {
-    chain = GoAppend(chain, ...redirectInfo);
+    chain = GoAppendSlice(chain, redirectInfo);
   }
 
   let result: GoPtr<Diagnostic> = undefined;

@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoInterfaceValue, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoSliceRange } from "../../go/slice-runtime.js";
 import * as core from "../core/core.js";
 import type { Checker, InferenceContext, InferenceInfo } from "./checker/state.js";
 import { Checker_instantiateType } from "./checker/types.js";
@@ -185,7 +186,7 @@ export function appendTypeMapping(mapper: GoPtr<TypeMapper>, source: GoPtr<Type>
  * }
  */
 export function Checker_newBackreferenceMapper(receiver: GoPtr<Checker>, context: GoPtr<InferenceContext>, index: int): GoPtr<TypeMapper> {
-  const forwardInferences = context!.inferences.slice(index);
+  const forwardInferences = GoSliceRange(context!.inferences, index);
   const typeParameters = core.Map(forwardInferences, (i: GoPtr<InferenceInfo>): GoPtr<Type> => {
     return i!.typeParameter;
   });

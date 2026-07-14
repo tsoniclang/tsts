@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import * as strconv from "../../go/strconv.js";
 import type { GoInterface, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoFieldRef, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoFieldRef, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint64 } from "../../go/sync/atomic.js";
 import {
@@ -856,7 +856,7 @@ export function bindSourceFile(file: GoPtr<SourceFile>): void {
     Binder_bindDeferredExpandoAssignments(b);
     file!.SymbolCount = b.symbolCount;
     file!.ClassifiableNames = b.classifiableNames;
-    file!.NestedCJSExports = b.nestedCJSExports ?? [];
+    file!.NestedCJSExports = b.nestedCJSExports;
     putBinder(b);
   });
 }
@@ -2315,7 +2315,7 @@ export function Binder_bindModuleDeclaration(receiver: GoPtr<Binder>, node: GoPt
         if (!Pattern_IsValid(pattern)) {
           Binder_errorOnFirstToken(receiver, name, Pattern_0_can_have_at_most_one_Asterisk_character, Node_Text(name));
         } else if ((pattern.StarIndex as number) >= 0) {
-          receiver!.file!.PatternAmbientModules = [...(receiver!.file!.PatternAmbientModules ?? []), { Pattern: pattern, Symbol: symbol }];
+          receiver!.file!.PatternAmbientModules = GoAppend(receiver!.file!.PatternAmbientModules, { Pattern: pattern, Symbol: symbol });
         }
       }
     }
@@ -2483,7 +2483,7 @@ export function Binder_bindExportAssignment(receiver: GoPtr<Binder>, node: GoPtr
  */
 export function Binder_trackNestedCJSExport(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
   if (!(IsSourceFile(node!.Parent) || IsExpressionStatement(node!.Parent) && IsSourceFile(node!.Parent!.Parent))) {
-    receiver!.nestedCJSExports = [...(receiver!.nestedCJSExports ?? []), node!];
+    receiver!.nestedCJSExports = GoAppend(receiver!.nestedCJSExports, node);
   }
 }
 
@@ -2554,7 +2554,7 @@ export function Binder_setExportContextFlag(receiver: GoPtr<Binder>, node: GoPtr
  * }
  */
 export function Binder_hasExportDeclarations(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
-  let statements: GoSlice<GoPtr<Node>> = [];
+  let statements: GoSlice<GoPtr<Node>> = GoNilSlice();
   switch (node!.Kind) {
     case KindSourceFile:
       statements = Node_Statements(node) ?? [];
@@ -2793,7 +2793,7 @@ export function Binder_addLateBoundAssignmentDeclarationToSymbol(receiver: GoPtr
     assignmentSymbol = Binder_newSymbol(receiver, SymbolFlagsNone, InternalSymbolNameAssignmentDeclaration);
     exports?.set(InternalSymbolNameAssignmentDeclaration, assignmentSymbol!);
   }
-  assignmentSymbol!.Declarations = [...(assignmentSymbol!.Declarations ?? []), node!];
+  assignmentSymbol!.Declarations = GoAppend(assignmentSymbol!.Declarations, node);
 }
 
 /**
@@ -2833,11 +2833,11 @@ export function Binder_bindModuleExportsAssignment(receiver: GoPtr<Binder>, node
  * }
  */
 export function Binder_bindExpandoPropertyAssignment(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  receiver!.expandoAssignments = [...(receiver!.expandoAssignments ?? []), {
+  receiver!.expandoAssignments = GoAppend(receiver!.expandoAssignments, {
     node: node!,
     container: receiver!.container!,
     blockScopeContainer: receiver!.blockScopeContainer!,
-  }];
+  });
 }
 
 /**
@@ -6632,7 +6632,7 @@ export function Binder_errorOrSuggestionOnRange(receiver: GoPtr<Binder>, isError
     Binder_addDiagnostic(receiver, diagnostic);
   } else {
     Diagnostic_SetCategory(diagnostic, CategorySuggestion);
-    receiver!.file!.BindSuggestionDiagnostics = [...(receiver!.file!.BindSuggestionDiagnostics ?? []), diagnostic!];
+    receiver!.file!.BindSuggestionDiagnostics = GoAppend(receiver!.file!.BindSuggestionDiagnostics, diagnostic);
   }
 }
 
@@ -6657,7 +6657,7 @@ export function Binder_createDiagnosticForNode(receiver: GoPtr<Binder>, node: Go
  * }
  */
 export function Binder_addDiagnostic(receiver: GoPtr<Binder>, diagnostic: GoPtr<Diagnostic>): void {
-  SourceFile_SetBindDiagnostics(receiver!.file, [...SourceFile_BindDiagnostics(receiver!.file)!, diagnostic!]);
+  SourceFile_SetBindDiagnostics(receiver!.file, GoAppend(SourceFile_BindDiagnostics(receiver!.file), diagnostic));
 }
 
 /**

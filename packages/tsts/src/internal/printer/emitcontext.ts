@@ -1,6 +1,6 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint32 } from "../../go/sync/atomic.js";
 import * as maps from "../../go/maps.js";
@@ -338,9 +338,9 @@ export function EmitContext_EndVariableEnvironment(receiver: GoPtr<EmitContext>)
     statements = GoAppend(statements, varStatement);
   }
   if (scope.initializationStatements.length > 0) {
-    statements = GoAppend(statements, ...scope.initializationStatements);
+    statements = GoAppendSlice(statements, scope.initializationStatements);
   }
-  return GoAppend(statements, ...EmitContext_EndLexicalEnvironment(receiver));
+  return GoAppendSlice(statements, EmitContext_EndLexicalEnvironment(receiver));
 }
 
 /**
@@ -2157,7 +2157,7 @@ export function EmitContext_VisitIterationBody(receiver: GoPtr<EmitContext>, bod
   if (statements.length > 0) {
     const f = c.Factory!.__tsgoEmbedded0!;
     if (IsBlock(updated)) {
-      statements = GoAppend(statements, ...Node_Statements(updated)!);
+      statements = GoAppendSlice(statements, Node_Statements(updated)!);
       const statementsList = NodeFactory_NewNodeList(f, statements as GoSlice<GoPtr<Node>>)!;
       statementsList.Loc = Node_StatementList(updated)!.Loc;
       return NodeFactory_UpdateBlock(f, AsBlock(updated)!, statementsList, AsBlock(updated)!.MultiLine) as GoPtr<Statement>;

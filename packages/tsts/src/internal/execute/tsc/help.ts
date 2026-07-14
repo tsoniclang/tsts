@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import {
-  GoAppend,
+  GoAppend, GoAppendSlice,
   GoComparableInterfaceKey,
   GoNilSlice,
   GoRequireComparableInterface,
@@ -267,7 +267,7 @@ export function printEasyHelp(sys: GoInterface<System>, locale: Locale, simpleOp
   };
 
   const msg = Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version());
-  output = GoAppend(output, ...getHeader(sys, msg));
+  output = GoAppendSlice(output, getHeader(sys, msg));
 
   output = GoAppend(output, colors_bold(clrs, Message_Localize(COMMON_COMMANDS, locale)), "\n", "\n");
 
@@ -289,10 +289,10 @@ export function printEasyHelp(sys: GoInterface<System>, locale: Locale, simpleOp
     }
   }
 
-  output = GoAppend(output, ...generateSectionOptionsOutput(sys, locale, Message_Localize(COMMAND_LINE_FLAGS, locale), cliCommands, false, undefined, undefined));
+  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(COMMAND_LINE_FLAGS, locale), cliCommands, false, undefined, undefined));
 
   const after = Message_Localize(You_can_learn_about_all_of_the_compiler_options_at_0, locale, "https://aka.ms/tsc");
-  output = GoAppend(output, ...generateSectionOptionsOutput(sys, locale, Message_Localize(COMMON_COMPILER_OPTIONS, locale), configOpts, false, undefined, GoValueRef(after)));
+  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(COMMON_COMPILER_OPTIONS, locale), configOpts, false, undefined, GoValueRef(after)));
 
   for (const chunk of output) {
     Fprint(sys!.Writer()!, chunk);
@@ -331,20 +331,20 @@ export function printEasyHelp(sys: GoInterface<System>, locale: Locale, simpleOp
 export function printAllHelp(sys: GoInterface<System>, locale: Locale, options: GoSlice<GoPtr<CommandLineOption>>): void {
   let output: GoSlice<string> = GoNilSlice();
   const msg = Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version());
-  output = GoAppend(output, ...getHeader(sys, msg));
+  output = GoAppendSlice(output, getHeader(sys, msg));
 
   // ALL COMPILER OPTIONS section
   const afterCompilerOptions = Message_Localize(You_can_learn_about_all_of_the_compiler_options_at_0, locale, "https://aka.ms/tsc");
-  output = GoAppend(output, ...generateSectionOptionsOutput(sys, locale, Message_Localize(ALL_COMPILER_OPTIONS, locale), options, true, undefined, GoValueRef(afterCompilerOptions)));
+  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(ALL_COMPILER_OPTIONS, locale), options, true, undefined, GoValueRef(afterCompilerOptions)));
 
   // WATCH OPTIONS section
   const beforeWatchOptions = Message_Localize(Including_watch_w_will_start_watching_the_current_project_for_the_file_changes_Once_set_you_can_config_watch_mode_with_Colon, locale);
-  output = GoAppend(output, ...generateSectionOptionsOutput(sys, locale, Message_Localize(WATCH_OPTIONS, locale), OptionsForWatch, false, GoValueRef(beforeWatchOptions), undefined));
+  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(WATCH_OPTIONS, locale), OptionsForWatch, false, GoValueRef(beforeWatchOptions), undefined));
 
   // BUILD OPTIONS section
   const beforeBuildOptions = Message_Localize(Using_build_b_will_make_tsc_behave_more_like_a_build_orchestrator_than_a_compiler_This_is_used_to_trigger_building_composite_projects_which_you_can_learn_more_about_at_0, locale, "https://aka.ms/tsc-composite-builds");
   const buildOptions = Filter(OptionsForBuild, (option: GoPtr<CommandLineOption>): bool => option !== TscBuildOption);
-  output = GoAppend(output, ...generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), buildOptions, false, GoValueRef(beforeBuildOptions), undefined));
+  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), buildOptions, false, GoValueRef(beforeBuildOptions), undefined));
 
   for (const chunk of output) {
     Fprint(sys!.Writer()!, chunk);
@@ -371,10 +371,10 @@ export function printAllHelp(sys: GoInterface<System>, locale: Locale, options: 
  */
 export function PrintBuildHelp(sys: GoInterface<System>, locale: Locale, buildOptions: GoSlice<GoPtr<CommandLineOption>>): void {
   let output: GoSlice<string> = GoNilSlice();
-  output = GoAppend(output, ...getHeader(sys, Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version())));
+  output = GoAppendSlice(output, getHeader(sys, Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version())));
   const before = Message_Localize(Using_build_b_will_make_tsc_behave_more_like_a_build_orchestrator_than_a_compiler_This_is_used_to_trigger_building_composite_projects_which_you_can_learn_more_about_at_0, locale, "https://aka.ms/tsc-composite-builds");
   const options = Filter(buildOptions, (option: GoPtr<CommandLineOption>): bool => option !== TscBuildOption);
-  output = GoAppend(output, ...generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), options, false, GoValueRef(before), undefined));
+  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), options, false, GoValueRef(before), undefined));
 
   for (const chunk of output) {
     Fprint(sys!.Writer()!, chunk);
@@ -438,7 +438,7 @@ export function generateSectionOptionsOutput(sys: GoInterface<System>, locale: L
     output = GoAppend(output, beforeOptionsDescription!.v, "\n", "\n");
   }
   if (!subCategory) {
-    output = GoAppend(output, ...generateGroupOptionOutput(sys, locale, options));
+    output = GoAppendSlice(output, generateGroupOptionOutput(sys, locale, options));
     if (afterOptionsDescription !== undefined) {
       output = GoAppend(output, afterOptionsDescription!.v, "\n", "\n");
     }
@@ -460,7 +460,7 @@ export function generateSectionOptionsOutput(sys: GoInterface<System>, locale: L
   for (const key of categoryOrder) {
     const value = categoryMap.get(key)!;
     output = GoAppend(output, "### ", key, "\n", "\n");
-    output = GoAppend(output, ...generateGroupOptionOutput(sys, locale, value));
+    output = GoAppendSlice(output, generateGroupOptionOutput(sys, locale, value));
   }
   if (afterOptionsDescription !== undefined) {
     output = GoAppend(output, afterOptionsDescription!.v, "\n", "\n");
@@ -518,7 +518,7 @@ export function generateGroupOptionOutput(sys: GoInterface<System>, locale: Loca
   let lines: GoSlice<string> = GoNilSlice();
   for (const option of optionsList) {
     const tmp = generateOptionOutput(sys, locale, option, rightAlignOfLeftPart, leftAlignOfRightPart);
-    lines = GoAppend(lines, ...tmp);
+    lines = GoAppendSlice(lines, tmp);
   }
 
   // make sure always a blank line in the end.
@@ -635,15 +635,15 @@ export function generateOptionOutput(sys: GoInterface<System>, locale: Locale, o
 
   if (terminalWidth >= 80) {
     const description = option!.Description !== undefined ? Message_Localize(option!.Description, locale) : "";
-    text = GoAppend(text, ...getPrettyOutput(clrs, name, description, rightAlignOfLeft, leftAlignOfRight, terminalWidth, true));
+    text = GoAppendSlice(text, getPrettyOutput(clrs, name, description, rightAlignOfLeft, leftAlignOfRight, terminalWidth, true));
     text = GoAppend(text, "\n");
     if (showAdditionalInfoOutput(valueCandidates, option)) {
       if (valueCandidates !== undefined) {
-        text = GoAppend(text, ...getPrettyOutput(clrs, valueCandidates.valueType, valueCandidates.possibleValues, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false));
+        text = GoAppendSlice(text, getPrettyOutput(clrs, valueCandidates.valueType, valueCandidates.possibleValues, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false));
         text = GoAppend(text, "\n");
       }
       if (defaultValueDescription !== "") {
-        text = GoAppend(text, ...getPrettyOutput(clrs, Message_Localize(X_default_Colon, locale), defaultValueDescription, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false));
+        text = GoAppendSlice(text, getPrettyOutput(clrs, Message_Localize(X_default_Colon, locale), defaultValueDescription, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false));
         text = GoAppend(text, "\n");
       }
     }

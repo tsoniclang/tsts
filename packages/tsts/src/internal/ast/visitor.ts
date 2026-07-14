@@ -1,6 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoSliceIsNil } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import { AsSourceFile } from "./ast.js";
 import type { SourceFile } from "./ast.js";
@@ -305,7 +305,7 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSl
         if (visited === undefined) {
           // do nothing
         } else if (visited.Kind === KindSyntaxList) {
-          updated = GoAppend(updated, ...AsSyntaxList(visited)!.Children);
+          updated = GoAppendSlice(updated, AsSyntaxList(visited)!.Children);
         } else {
           updated = GoAppend(updated, visited);
         }
@@ -321,7 +321,7 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSl
           node = nodes[i];
           visited = receiver!.Visit(node);
         } else {
-          updated = GoAppend(updated, ...nodes.slice(i));
+          updated = GoAppendSlice(updated, nodes.slice(i));
           break;
         }
       }
@@ -546,7 +546,7 @@ export function NodeVisitor_visitTopLevelStatements(receiver: GoPtr<NodeVisitor>
  * }
  */
 export function NodeVisitor_liftToBlock(receiver: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {
-  let nodes: GoSlice<GoPtr<Node>> = [];
+  let nodes: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (node !== undefined) {
     if (node.Kind === KindSyntaxList) {
       nodes = AsSyntaxList(node)!.Children;

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoInterface, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoNilSlice, GoSliceToZeroLength } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceToZeroLength } from "../../go/compat.js";
 import type { Stringer } from "../../go/fmt.js";
 import * as errors from "../../go/errors.js";
 import * as fmt from "../../go/fmt.js";
@@ -821,8 +821,8 @@ export function match(elems: GoSlice<GoInterface<element>>, input: string): bool
       let branch = GoNilSlice<GoInterface<element>>();
       for (const m of elem.value) {
         branch = GoSliceToZeroLength(branch);
-        branch = GoAppend(branch, ...m!.elems);
-        branch = GoAppend(branch, ...elems);
+        branch = GoAppendSlice(branch, m!.elems);
+        branch = GoAppendSlice(branch, elems);
         if (match(branch, input)) {
           return true;
         }

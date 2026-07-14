@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoAppend, GoMapIsNil, GoNilSlice, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilSlice, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { ModifierList, Node } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
@@ -382,11 +382,11 @@ export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>
   const constructors = NodeBuilderImpl_serializeConstructors(receiver, staticType, staticBaseType, isClass, symbol_);
   const indexSigs = NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, classType, FirstOrNil(baseTypes, GoZeroPointer<Type>));
   let allMembers: GoSlice<GoPtr<Node>> = [];
-  allMembers = GoAppend(allMembers, ...indexSigs);
-  allMembers = GoAppend(allMembers, ...staticMembers);
-  allMembers = GoAppend(allMembers, ...constructors);
-  allMembers = GoAppend(allMembers, ...instanceMembers);
-  allMembers = GoAppend(allMembers, ...privateMembers);
+  allMembers = GoAppendSlice(allMembers, indexSigs);
+  allMembers = GoAppendSlice(allMembers, staticMembers);
+  allMembers = GoAppendSlice(allMembers, constructors);
+  allMembers = GoAppendSlice(allMembers, instanceMembers);
+  allMembers = GoAppendSlice(allMembers, privateMembers);
   receiver!.ctx!.enclosingDeclaration = oldEnclosing;
   return NewClassDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, name), NodeFactory_NewNodeList(receiver!.f, typeParamDecls), NodeFactory_NewNodeList(receiver!.f, heritageClauses), NodeFactory_NewNodeList(receiver!.f, allMembers));
 }
@@ -545,7 +545,7 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
   }
   const resolved = Checker_resolveStructuredTypeMembers(receiver!.ch, interfaceType);
   let members: GoSlice<GoPtr<Node>> = GoNilSlice();
-  members = GoAppend(members, ...NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, interfaceType, baseType));
+  members = GoAppendSlice(members, NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, interfaceType, baseType));
   for (const sig of StructuredType_ConstructSignatures(resolved)) {
     if ((sig!.flags & SignatureFlagsAbstract) !== 0) {
       continue;

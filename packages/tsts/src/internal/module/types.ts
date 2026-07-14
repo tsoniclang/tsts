@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
@@ -321,13 +321,13 @@ export function extensions_Array(receiver: extensions): GoSlice<string> {
   const e = receiver;
   let result: GoSlice<string> = [];
   if ((e & extensionsTypeScript) !== 0) {
-    result = GoAppend(result, ...extension.SupportedTSImplementationExtensions);
+    result = GoAppendSlice(result, extension.SupportedTSImplementationExtensions);
   }
   if ((e & extensionsJavaScript) !== 0) {
-    result = GoAppend(result, ...extension.SupportedJSExtensionsFlat);
+    result = GoAppendSlice(result, extension.SupportedJSExtensionsFlat);
   }
   if ((e & extensionsDeclaration) !== 0) {
-    result = GoAppend(result, ...extension.SupportedDeclarationExtensions);
+    result = GoAppendSlice(result, extension.SupportedDeclarationExtensions);
   }
   if ((e & extensionsJson) !== 0) {
     result = GoAppend(result, extension.ExtensionJson);

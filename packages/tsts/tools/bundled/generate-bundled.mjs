@@ -162,7 +162,7 @@ function actualBundledArtifactInventory(config) {
 
 function renderLibsGeneratedBody(names) {
   const entries = names.map((name) => `  ${JSON.stringify(name)},`).join("\n");
-  return `export const LibNames: readonly string[] = [\n${entries}\n];\n`;
+  return `import type { GoSlice } from "../../go/compat.js";\n\nexport const LibNames: GoSlice<string> = [\n${entries}\n];\n`;
 }
 
 function renderEmbedGeneratedBody(sourceRoot, names) {

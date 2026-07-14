@@ -2882,11 +2882,11 @@ export function getMembersOfDeclaration(node: GoPtr<Node>): GoSlice<GoPtr<Node>>
     case KindClassDeclaration:
     case KindClassExpression:
     case KindTypeLiteral:
-      return Node_Members(node) ?? [];
+      return Node_Members(node);
     case KindObjectLiteralExpression:
-      return Node_Properties(node) ?? [];
+      return Node_Properties(node);
   }
-  return [];
+  return GoNilSlice();
 }
 
 /**
@@ -4311,7 +4311,7 @@ export function Checker_isJSLiteralType(receiver: GoPtr<Checker>, t: GoPtr<Type>
     return Some(Type_Types(t), (element: GoPtr<Type>): bool => Checker_isJSLiteralType(receiver, element));
   }
   if ((t!.flags & TypeFlagsInstantiable) !== 0) {
-    const constraint = Checker_getResolvedBaseConstraint(receiver, t, []);
+    const constraint = Checker_getResolvedBaseConstraint(receiver, t, GoNilSlice());
     return (constraint !== t && Checker_isJSLiteralType(receiver, constraint)) as bool;
   }
   return false as bool;
@@ -4462,7 +4462,7 @@ export function CreateModeMismatchDetails(program: GoInterface<Program>, file: G
   }
   return {
     Message: To_convert_this_file_to_an_ECMAScript_module_create_a_local_package_json_file_with_type_Colon_module,
-    Args: [],
+    Args: GoNilSlice(),
   };
 }
 

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPointerMethodSet, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoMapIsNil, GoNilSlice } from "../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilSlice } from "../../go/compat.js";
 import { Itoa } from "../../go/strconv.js";
 import type { Node, NodeFactoryCoercible, NodeList } from "../ast/spine.js";
 import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory as AstNodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone, Node_Name } from "../ast/spine.js";
@@ -907,7 +907,7 @@ export function NodeFactory_NewFunctionCallCall(receiver: GoPtr<NodeFactory>, ta
   if (thisArg === undefined) {
     throw new globalThis.Error("Attempted to construct function call call without this argument expression");
   }
-  const args: GoSlice<GoPtr<Node>> = GoAppend([thisArg], ...argumentsList);
+  const args: GoSlice<GoPtr<Node>> = GoAppendSlice([thisArg], argumentsList);
   return NodeFactory_NewMethodCall(receiver, target, NewIdentifier(f, "call"), args);
 }
 
@@ -1054,7 +1054,7 @@ export function NodeFactory_EnsureUseStrict(receiver: GoPtr<NodeFactory>, statem
     }
   }
   const useStrictPrologue = NewExpressionStatement(f, NewStringLiteral(f, "use strict", TokenFlagsNone));
-  return GoAppend([useStrictPrologue], ...statements);
+  return GoAppendSlice([useStrictPrologue], statements);
 }
 
 /**
@@ -1756,7 +1756,7 @@ export function NodeFactory_NewFunctionBindCall(receiver: GoPtr<NodeFactory>, ta
   const f = receiver!.__tsgoEmbedded0!;
   let args: GoSlice<GoPtr<Node>> = [];
   args = GoAppend(args, thisArg);
-  args = GoAppend(args, ...argumentsList);
+  args = GoAppendSlice(args, argumentsList);
   return NodeFactory_NewMethodCall(receiver, target, NewIdentifier(f, "bind"), args);
 }
 

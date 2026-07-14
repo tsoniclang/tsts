@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_Name } from "../../ast/spine.js";
 import type { BinaryExpression, BindingElement, ClassDeclaration, ClassExpression, ClassStaticBlockDeclaration, ComputedPropertyName, ExportAssignment, ParameterDeclaration, PropertyAssignment, PropertyDeclaration, ShorthandPropertyAssignment, VariableDeclaration } from "../../ast/generated/data.js";
@@ -453,9 +453,9 @@ export function injectClassNamedEvaluationHelperBlockIfMissing(emitContext: GoPt
   const leading = members.slice(0, insertionIndex) as unknown as GoPtr<Node>[];
   const trailing = members.slice(insertionIndex) as unknown as GoPtr<Node>[];
   let newMembers: GoSlice<GoPtr<Node>> = GoNilSlice();
-  newMembers = GoAppend(newMembers, ...leading);
+  newMembers = GoAppendSlice(newMembers, leading);
   newMembers = GoAppend(newMembers, namedEvaluationBlock);
-  newMembers = GoAppend(newMembers, ...trailing);
+  newMembers = GoAppendSlice(newMembers, trailing);
   const membersList = NodeFactory_NewNodeList(astFactory, newMembers);
   membersList!.Loc = Node_MemberList(node as unknown as GoPtr<Node>)!.Loc;
   const oldNode = node;

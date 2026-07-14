@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilMap, GoNilSlice, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Coalesce, Find, IfElse } from "../../core/core.js";
 import type { ModifierList, Node, NodeFactoryCoercible } from "../../ast/spine.js";
 import { Node_Clone, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_AsNode, Node_Modifiers, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
@@ -1274,7 +1274,7 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
       }
     }
     if (newMembers.length > 0) {
-      newMembers = GoAppend(newMembers, ...members!.Nodes!);
+      newMembers = GoAppendSlice(newMembers, members!.Nodes!);
       members = NodeFactory_NewNodeList(astFactory, newMembers);
       members!.Loc = node!.Members!.Loc;
     }
@@ -1326,7 +1326,7 @@ export function RuntimeSyntaxTransformer_visitClassExpression(receiver: GoPtr<Ru
       }
     }
     if (newMembers.length > 0) {
-      newMembers = GoAppend(newMembers, ...members!.Nodes!);
+      newMembers = GoAppendSlice(newMembers, members!.Nodes!);
       members = NodeFactory_NewNodeList(astFactory, newMembers);
       members!.Loc = node!.Members!.Loc;
     }
@@ -1413,11 +1413,11 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
   const superPath = FindSuperStatementIndexPath(rest, 0);
 
   if (superPath.length > 0) {
-    statements = GoAppend(statements, ...RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver, rest, superPath, parameterPropertyAssignments));
+    statements = GoAppendSlice(statements, RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver, rest, superPath, parameterPropertyAssignments));
   } else {
-    statements = GoAppend(statements, ...parameterPropertyAssignments);
+    statements = GoAppendSlice(statements, parameterPropertyAssignments);
     const [visitedRest] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), rest);
-    statements = GoAppend(statements, ...visitedRest as GoSlice<GoPtr<Statement>>);
+    statements = GoAppendSlice(statements, visitedRest as GoSlice<GoPtr<Statement>>);
   }
 
   statements = EmitContext_EndAndMergeVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statements);
@@ -1451,7 +1451,7 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
 
   // visit up to the statement containing `super`
   const [visitedBefore] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(0, superStatementIndex) as GoSlice<GoPtr<Node>>);
-  statementsOut = GoAppend(statementsOut, ...visitedBefore as GoSlice<GoPtr<Statement>>);
+  statementsOut = GoAppendSlice(statementsOut, visitedBefore as GoSlice<GoPtr<Statement>>);
 
   // if the statement containing `super` is a `try` statement, transform the body of the `try` block
   if (IsTryStatement(superStatement as unknown as GoPtr<Node>)) {
@@ -1493,15 +1493,15 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
   } else {
     // visit the statement containing `super`
     const [visitedSuper] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex, superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
-    statementsOut = GoAppend(statementsOut, ...visitedSuper as GoSlice<GoPtr<Statement>>);
+    statementsOut = GoAppendSlice(statementsOut, visitedSuper as GoSlice<GoPtr<Statement>>);
 
     // insert the initializer statements
-    statementsOut = GoAppend(statementsOut, ...initializerStatements);
+    statementsOut = GoAppendSlice(statementsOut, initializerStatements);
   }
 
   // visit the statements after `super`
   const [visitedAfter] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
-  statementsOut = GoAppend(statementsOut, ...visitedAfter as GoSlice<GoPtr<Statement>>);
+  statementsOut = GoAppendSlice(statementsOut, visitedAfter as GoSlice<GoPtr<Statement>>);
   return statementsOut;
 }
 
