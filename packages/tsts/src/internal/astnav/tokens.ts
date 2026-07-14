@@ -383,7 +383,15 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
       return nodeList;
     }
     if (nodeAfterLeft === undefined) {
-      for (const node of nodeList.Nodes) {
+      for (
+        let __goRangeSlice = nodeList.Nodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if ((node!.Flags & NodeFlagsReparsed) === 0) {
           nodeAfterLeft = node;
           break;
@@ -607,7 +615,15 @@ export function findRightmostNode(node: GoPtr<Node>): GoPtr<Node> {
  */
 export function VisitEachChildAndJSDoc(node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, visitNode: GoFunc<(arg0: GoPtr<Node>, arg1: GoPtr<NodeVisitor>) => GoPtr<Node>>, visitNodes: GoFunc<(arg0: GoPtr<NodeList>, arg1: GoPtr<NodeVisitor>) => GoPtr<NodeList>>): void {
   const visitor = getNodeVisitor(visitNode, visitNodes);
-  for (const jsdoc of Node_JSDoc(node, sourceFile)) {
+  for (
+    let __goRangeSlice = Node_JSDoc(node, sourceFile),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const jsdoc = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (visitor!.Hooks.VisitNode !== undefined) {
       visitor!.Hooks.VisitNode(jsdoc, visitor);
     } else {
@@ -1148,7 +1164,15 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
       }
       const s = GetScannerForSourceFile(sourceFile, startPos);
       let tokens = GoNilSlice<GoPtr<Node>>();
-      for (const visitedNode of rightmostVisitedNodes) {
+      for (
+        let __goRangeSlice = rightmostVisitedNodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const visitedNode = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         // Trailing tokens that occur before this node.
         while (startPos < Math.min(Node_Pos(visitedNode), position)) {
           const token = scanNavigationToken(s, n);

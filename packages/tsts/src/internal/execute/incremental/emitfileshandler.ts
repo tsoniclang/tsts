@@ -200,7 +200,15 @@ export function emitFilesHandler_emitAllAffectedFiles(receiver: GoPtr<emitFilesH
         emitFilesHandler_updateHasEmitDiagnostics(receiver, result);
         return result;
       }
-      for (const result of results) {
+      for (
+        let __goRangeSlice = results,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<EmitResult>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const result = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         emitFilesHandler_updateHasEmitDiagnostics(receiver, result);
       }
       return CombineEmitResults(results);
@@ -737,7 +745,15 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
       receiver!.program!.snapshot!.buildInfoEmitPending.Store(true as bool);
     }
     let results: GoSlice<GoPtr<EmitResult>> = GoNilSlice();
-    for (const file of incremental_Program_GetSourceFiles(receiver!.program)) {
+    for (
+      let __goRangeSlice = incremental_Program_GetSourceFiles(receiver!.program),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const [latestChangedDtsFile, ok1] = SyncMap_Load<Path, string>(
         receiver!.latestChangedDtsFiles as SyncMap<Path, string>,
         SourceFile_Path(file),

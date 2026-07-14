@@ -831,7 +831,15 @@ export function Parser_parseDeclaration(receiver: GoPtr<Parser>): GoPtr<Statemen
     // if node {
     // 	return node
     // }
-    for (const m of modifiers!.Nodes) {
+    for (
+      let __goRangeSlice = modifiers!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const m = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       m!.Flags |= NodeFlagsAmbient;
     }
     const saveContextFlags = receiver!.contextFlags;
@@ -1930,7 +1938,15 @@ export function Parser_parseClassElement(receiver: GoPtr<Parser>): GoPtr<Node> {
   ) {
     const isAmbient = modifiers !== undefined && Some(modifiers.Nodes, isDeclareModifier);
     if (isAmbient) {
-      for (const m of modifiers!.Nodes) {
+      for (
+        let __goRangeSlice = modifiers!.Nodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const m = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         m!.Flags |= NodeFlagsAmbient;
       }
       const saveContextFlags = receiver!.contextFlags;

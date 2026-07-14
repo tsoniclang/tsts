@@ -2582,7 +2582,15 @@ export function Printer_emitHelpers(receiver: GoPtr<Printer>, node: GoPtr<Node>)
   const helpers = slices.Clone(EmitContext_GetEmitHelpers(receiver!.emitContext, node));
   if (helpers.length > 0) {
     slices.SortStableFunc(helpers, compareEmitHelpers);
-    for (const helper of helpers) {
+    for (
+      let __goRangeSlice = helpers,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<EmitHelper>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const helper = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (helper === undefined) { continue; }
       if (!helper.Scoped) {
         if (shouldSkip) {
@@ -2988,7 +2996,15 @@ export function Printer_emitListItems(receiver: GoPtr<Printer>, emit: GoFunc<(p:
 
   let previousSibling: GoPtr<Node> = undefined;
   let shouldDecreaseIndentAfterEmit = false as bool;
-  for (const child of children) {
+  for (
+    let __goRangeSlice = children,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((format & LFAsteriskDelimited) !== 0) {
       Printer_writeLine(receiver);
       Printer_writeDelimiter(receiver, format);
@@ -3631,7 +3647,15 @@ export function Printer_generateAllNames(receiver: GoPtr<Printer>, nodes: GoPtr<
   if (nodes === undefined) {
     return;
   }
-  for (const node of nodes!.Nodes) {
+  for (
+    let __goRangeSlice = nodes!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     Printer_generateNames(receiver, node);
   }
 }

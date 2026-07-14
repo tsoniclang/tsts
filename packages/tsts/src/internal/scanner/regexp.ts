@@ -1146,7 +1146,15 @@ export function regExpParser_scanGroupName(receiver: GoPtr<regExpParser>, isRefe
  * }
  */
 export function regExpParser_namedCapturingGroupsContains(receiver: GoPtr<regExpParser>, name: string): bool {
-  for (const group of receiver!.namedCapturingGroups) {
+  for (
+    let __goRangeSlice = receiver!.namedCapturingGroups,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoMapValueOps<string, boolean>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const group = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (group.get(name) === true) {
       return true;
     }

@@ -5,6 +5,8 @@ import type { ModifierList, Node, NodeList } from "./spine.js";
 import type { BindingElementNode, TypeArgumentList, TypeNode } from "./generated/unions.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::type::SubtreeFacts","kind":"type","status":"implemented","sigHash":"6498a6b3e19a4606500cbe0758c0b3f1ddb5317ab94ee8a32106b0f2b37553dc"}
  *
@@ -266,7 +268,15 @@ export function propagateNodeListSubtreeFacts(children: GoPtr<NodeList>, propaga
     return SubtreeFactsNone;
   }
   let facts = SubtreeFactsNone;
-  for (const child of children.Nodes) {
+  for (
+    let __goRangeSlice = children.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     facts = (facts | propagate!(child)) >>> 0;
   }
   return facts;

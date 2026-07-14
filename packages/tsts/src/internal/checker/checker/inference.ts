@@ -244,7 +244,15 @@ export function Checker_checkInferType(receiver: GoPtr<Checker>, node: GoPtr<Nod
         GoSliceStore(__goSliceLiteral, 0, decl, GoPointerValueOps<Node>());
       }))) {
         const name = Checker_symbolToString(receiver, symbol_);
-        for (const declaration of declarations) {
+        for (
+          let __goRangeSlice = declarations,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           Checker_error(receiver, Node_Name(declaration), All_declarations_of_0_must_have_identical_constraints, name);
         }
       }
@@ -289,7 +297,15 @@ export function Checker_checkIndexConstraints(receiver: GoPtr<Checker>, t: GoPtr
   if (indexInfos.length === 0) {
     return;
   }
-  for (const prop of Checker_getPropertiesOfObjectType(receiver, t)) {
+  for (
+    let __goRangeSlice = Checker_getPropertiesOfObjectType(receiver, t),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!(isStaticIndex && (prop!.Flags & SymbolFlagsPrototype) !== 0)) {
       Checker_checkIndexConstraintForProperty(
         receiver,
@@ -302,7 +318,15 @@ export function Checker_checkIndexConstraints(receiver: GoPtr<Checker>, t: GoPtr
   }
   const typeDeclaration = symbol_!.ValueDeclaration;
   if (typeDeclaration !== undefined && IsClassLike(typeDeclaration)) {
-    for (const member of Node_Members(typeDeclaration) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Members(typeDeclaration) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsStatic(member) === isStaticIndex && !Checker_hasBindableName(receiver, member)) {
         const memberSymbol = Checker_getSymbolOfDeclaration(receiver, member);
         Checker_checkIndexConstraintForProperty(receiver, t, memberSymbol, Checker_getTypeOfExpression(receiver, Node_Expression(Node_Name(member))), Checker_getNonMissingTypeOfSymbol(receiver, memberSymbol));
@@ -924,7 +948,15 @@ export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, 
     return GoNilMap<string, GoPtr<Symbol>>();
   }
   const result: SymbolTable = new globalThis.Map();
-  for (const symbol of sourceSymbols) {
+  for (
+    let __goRangeSlice = sourceSymbols,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const symbol = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     result.set(symbol!.Name, Checker_instantiateSymbol(receiver, symbol, m));
   }
   return result;
@@ -1003,7 +1035,15 @@ export function Checker_findActiveMapper(receiver: GoPtr<Checker>, mapper: GoPtr
  * }
  */
 export function Checker_clearActiveMapperCaches(receiver: GoPtr<Checker>): void {
-  for (const cache of receiver!.activeTypeMappersCaches) {
+  for (
+    let __goRangeSlice = receiver!.activeTypeMappersCaches,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoMapValueOps<CacheHashKey, GoPtr<Type>>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const cache = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     cache.clear();
   }
 }
@@ -1981,7 +2021,15 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
     const types = Type_Types(t)!;
     let constraints: GoSlice<GoPtr<Type>> = GoSliceMake(0, 0, GoPointerValueOps<Type>());
     let different = false;
-    for (const s of types) {
+    for (
+      let __goRangeSlice = types,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const constraint = Checker_getNextBaseConstraint(receiver, s, stack);
       if (constraint !== undefined) {
         if (constraint !== s) {
@@ -2015,7 +2063,15 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
   if ((t!.flags & TypeFlagsTemplateLiteral) !== 0) {
     const types = Type_Types(t)!;
     let constraints: GoSlice<GoPtr<Type>> = GoSliceMake(0, 0, GoPointerValueOps<Type>());
-    for (const s of types) {
+    for (
+      let __goRangeSlice = types,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const constraint = Checker_getNextBaseConstraint(receiver, s, stack);
       if (constraint !== undefined) {
         constraints = GoSliceAppend(constraints, constraint, GoPointerValueOps<Type>());
@@ -2178,7 +2234,15 @@ export function Checker_getSimplifiedTypeOrConstraint(receiver: GoPtr<Checker>, 
  */
 export function Checker_getConstraintDeclaration(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Node> {
   if (t!.symbol !== undefined) {
-    for (const d of t!.symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = t!.symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsTypeParameterDeclaration(d)) {
         const constraint = AsTypeParameterDeclaration(d)!.Constraint;
         if (constraint !== undefined) {

@@ -83,6 +83,8 @@ import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { DeclarationEmitHost } from "./transform.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::needsScopeMarker","kind":"func","status":"implemented","sigHash":"7d7f40e3a8c63a70c2706f7e671f76debd787e6ecd343c7b0a1a101016f32933"}
  *
@@ -273,7 +275,15 @@ export function getBindingNameVisible(resolver: GoInterface<EmitResolver>, elem:
   }
   if (IsBindingPattern(Node_Name(elem))) {
     // If any child binding pattern element has been marked visible (usually by collect linked aliases), then this is visible
-    for (const el of Node_Elements(Node_Name(elem))!) {
+    for (
+      let __goRangeSlice = Node_Elements(Node_Name(elem))!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const el = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (getBindingNameVisible(resolver, el)) {
         return true as bool;
       }

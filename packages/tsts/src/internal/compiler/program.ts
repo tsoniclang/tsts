@@ -696,7 +696,15 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
     if (!allowNonTsExtensions) {
       const canonicalFileName = GetCanonicalFileName(fileName, Program_UseCaseSensitiveFileNames(receiver));
       let supported = false;
-      for (const group of supportedExtensions) {
+      for (
+        let __goRangeSlice = supportedExtensions,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoSliceValueOps<string>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const group = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (FileExtensionIsOneOf(canonicalFileName, group)) {
           supported = true;
           break;
@@ -714,7 +722,15 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
       return extensionless;
     }
   }
-  for (const ext of GoSliceLoad(supportedExtensions, 0, GoSliceValueOps<string>())!) {
+  for (
+    let __goRangeSlice = GoSliceLoad(supportedExtensions, 0, GoSliceValueOps<string>())!,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ext = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const result = Program_GetSourceFileForResolvedModule(receiver, fileName + ext);
     if (result !== undefined) {
       return result;
@@ -1161,7 +1177,15 @@ export function Program_extractUnresolvedImports(receiver: GoPtr<Program>): GoPt
   const unresolvedSet: Set<string> = { M: GoNilMap() };
   for (const sourceFile of receiver!.__tsgoEmbedded0!.files) {
     const unresolvedImports = Program_extractUnresolvedImportsFromSourceFile(receiver, sourceFile);
-    for (const imp of unresolvedImports) {
+    for (
+      let __goRangeSlice = unresolvedImports,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const imp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       Set_Add(unresolvedSet, imp, GoStringKey);
     }
   }
@@ -1235,7 +1259,15 @@ export function Program_SingleThreaded(receiver: GoPtr<Program>): bool {
  * }
  */
 export function Program_BindSourceFiles(receiver: GoPtr<Program>): void {
-  for (const file of receiver!.__tsgoEmbedded0!.files) {
+  for (
+    let __goRangeSlice = receiver!.__tsgoEmbedded0!.files,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!SourceFile_IsBound(file)) {
       BindSourceFile(file);
       recordBoundSourceFileExtensionFacts(receiver!.opts, file);
@@ -2497,11 +2529,27 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
 
   if (Tristate_IsTrue(options!.Composite)) {
     const rootPaths: Set<Path> = { M: GoNilMap() };
-    for (const fileName of ParsedCommandLine_FileNames(receiver!.opts.Config)) {
+    for (
+      let __goRangeSlice = ParsedCommandLine_FileNames(receiver!.opts.Config),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const fileName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       Set_Add(rootPaths, Program_toPath(receiver, fileName), GoStringKey);
     }
 
-    for (const file of receiver!.__tsgoEmbedded0!.files) {
+    for (
+      let __goRangeSlice = receiver!.__tsgoEmbedded0!.files,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (sourceFileMayBeEmitted(file, Program_as_emitter_SourceFileMayBeEmittedHost(receiver), false as bool) && !Set_Has(rootPaths, SourceFile_Path(file)!)) {
         includeProcessor_addProcessingDiagnostic(receiver!.__tsgoEmbedded0!.includeProcessor, {
           kind: processingDiagnosticKindExplainingFileInclude,
@@ -2642,7 +2690,15 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
         options!.OutFile !== "")) {
     const dir = Program_CommonSourceDirectory(receiver);
     let emittedFiles: GoSlice<string> = GoNilSlice();
-    for (const file of receiver!.__tsgoEmbedded0!.files) {
+    for (
+      let __goRangeSlice = receiver!.__tsgoEmbedded0!.files,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!file!.IsDeclarationFile && sourceFileMayBeEmitted(file, Program_as_emitter_SourceFileMayBeEmittedHost(receiver), false as bool)) {
         emittedFiles = GoSliceAppend(emittedFiles, SourceFile_FileName(file), GoStringValueOps);
       }
@@ -3157,7 +3213,15 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
   }
   const lineStarts = GetECMALineStarts(sourceFileLike);
   let filtered: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
-  for (const diagnostic of diags) {
+  for (
+    let __goRangeSlice = diags,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const diagnostic = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     let ignoreDiagnostic = false;
     for (let line = ComputeLineOfPosition(lineStarts, Diagnostic_Pos(diagnostic)) - 1; line >= 0; line--) {
       const dir = directivesByLine.get(line);
@@ -3360,7 +3424,15 @@ export function compactAndMergeRelatedInfos(diagnostics: GoSlice<GoPtr<Diagnosti
  */
 export function Program_LineCount(receiver: GoPtr<Program>): int {
   let count = 0;
-  for (const file of receiver!.__tsgoEmbedded0!.files) {
+  for (
+    let __goRangeSlice = receiver!.__tsgoEmbedded0!.files,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     count += SourceFile_ECMALineMap(file).length;
   }
   return count;
@@ -3380,7 +3452,15 @@ export function Program_LineCount(receiver: GoPtr<Program>): int {
  */
 export function Program_IdentifierCount(receiver: GoPtr<Program>): int {
   let count = 0;
-  for (const file of receiver!.__tsgoEmbedded0!.files) {
+  for (
+    let __goRangeSlice = receiver!.__tsgoEmbedded0!.files,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     count += file!.IdentifierCount;
   }
   return count;
@@ -3405,7 +3485,15 @@ export function Program_IdentifierCount(receiver: GoPtr<Program>): int {
  */
 export function Program_SymbolCount(receiver: GoPtr<Program>): int {
   let count = 0;
-  for (const file of receiver!.__tsgoEmbedded0!.files) {
+  for (
+    let __goRangeSlice = receiver!.__tsgoEmbedded0!.files,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     count += file!.SymbolCount;
   }
   Program_ForEachCheckerParallel(receiver, (_, c) => {
@@ -3652,7 +3740,15 @@ export function Program_CommonSourceDirectory(receiver: GoPtr<Program>): string 
       Program_Options(receiver),
       () => {
         let files: GoSlice<string> = GoNilSlice();
-        for (const file of receiver!.__tsgoEmbedded0!.files) {
+        for (
+          let __goRangeSlice = receiver!.__tsgoEmbedded0!.files,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (sourceFileMayBeEmitted(file, Program_as_emitter_SourceFileMayBeEmittedHost(receiver), false as bool)) {
             files = GoSliceAppend(files, SourceFile_FileName(file), GoStringValueOps);
           }
@@ -3693,7 +3789,15 @@ export function Program_CommonSourceDirectory(receiver: GoPtr<Program>): string 
  */
 export function Program_checkSourceFilesBelongToPath(receiver: GoPtr<Program>, sourceFiles: GoSlice<string>, rootDirectory: string): bool {
   let allFilesBelongToPath = true as bool;
-  for (const file of sourceFiles) {
+  for (
+    let __goRangeSlice = sourceFiles,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const absoluteSourceFilePath = GetCanonicalFileName(GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(receiver)), Program_UseCaseSensitiveFileNames(receiver));
     if (!ContainsPath(rootDirectory, file, receiver!.comparePathsOptions)) {
       includeProcessor_addProcessingDiagnostic(receiver!.__tsgoEmbedded0!.includeProcessor, {
@@ -3867,7 +3971,15 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: GoInterface<Context>
   const sourceFiles = Program_getSourceFilesToEmit(receiver, options.TargetSourceFile, options.EmitOnly === 3 /* EmitOnlyForcedDts */);
   let emitters: GoSlice<GoPtr<emitterType>> = GoNilSlice();
 
-  for (const sourceFile of sourceFiles) {
+  for (
+    let __goRangeSlice = sourceFiles,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sourceFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const e: emitterType = {
       host: undefined!,
       sourceFile,
@@ -4325,10 +4437,26 @@ export function Program_ExplainFiles(receiver: GoPtr<Program>, w: GoInterface<Wr
   const explainFile = (file: HasFileName): void => {
     writeStr(toRelativeFileName(file.FileName()) + "\n");
     const reasons = receiver!.__tsgoEmbedded0!.includeProcessor!.fileIncludeReasons.get(file.Path() as Path);
-    for (const reason of (reasons ?? GoNilSlice())) {
+    for (
+      let __goRangeSlice = (reasons ?? GoNilSlice()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<FileIncludeReason>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const reason = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       writeStr("   " + Diagnostic_Localize(FileIncludeReason_toDiagnostic(reason, receiver, true as bool), locale) + "\n");
     }
-    for (const diag of includeProcessor_explainRedirectAndImpliedFormat(receiver!.__tsgoEmbedded0!.includeProcessor!, receiver, file.Path() as Path, toRelativeFileName)) {
+    for (
+      let __goRangeSlice = includeProcessor_explainRedirectAndImpliedFormat(receiver!.__tsgoEmbedded0!.includeProcessor!, receiver, file.Path() as Path, toRelativeFileName),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const diag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       writeStr("   " + Diagnostic_Localize(diag, locale) + "\n");
     }
     filesExplained++;
@@ -4346,7 +4474,15 @@ export function Program_ExplainFiles(receiver: GoPtr<Program>, w: GoInterface<Wr
     }
   };
 
-  for (const redirectFile of redirectFiles) {
+  for (
+    let __goRangeSlice = redirectFiles,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<redirectsFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const redirectFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     explainSourceFiles(redirectFile!.index);
     explainFile(redirectFile! as unknown as HasFileName);
   }
@@ -4604,7 +4740,15 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
       ) {
         continue;
       }
-      for (const imp of SourceFile_Imports(file)) {
+      for (
+        let __goRangeSlice = SourceFile_Imports(file),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const imp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const impText = Node_Text(imp);
         if (IsExternalModuleNameRelative(impText)) {
           continue;
@@ -4702,7 +4846,15 @@ export function Program_IsLibFile(receiver: GoPtr<Program>, sourceFile: GoPtr<So
  */
 export function Program_HasTSFile(receiver: GoPtr<Program>): bool {
   receiver!.hasTSFileOnce.Do(() => {
-    for (const file of receiver!.__tsgoEmbedded0!.files) {
+    for (
+      let __goRangeSlice = receiver!.__tsgoEmbedded0!.files,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (HasImplementationTSFileExtension(SourceFile_FileName(file))) {
         receiver!.hasTSFile = true as bool;
         break;

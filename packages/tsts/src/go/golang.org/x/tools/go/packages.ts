@@ -3,6 +3,8 @@ import { GoSliceIsNil, type GoError, type GoSlice } from "../../../../compat.js"
 import * as nodeChildProcess from "node:child_process";
 import { GoSliceMake, GoStringValueOps } from "../../../../compat.js";
 import { GoEmptySlice } from "../../../../compat.js";
+import { GoSliceLoad } from "../../../../compat.js";
+
 
 
 
@@ -110,7 +112,15 @@ function envObject(env: GoSlice<string> | undefined): NodeJS.ProcessEnv | undefi
     return undefined;
   }
   const result: NodeJS.ProcessEnv = {};
-  for (const entry of env) {
+  for (
+    let __goRangeSlice = env,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const entry = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const index = entry.indexOf("=");
     if (index >= 0) {
       result[entry.slice(0, index)] = entry.slice(index + 1);

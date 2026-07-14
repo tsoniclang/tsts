@@ -336,7 +336,15 @@ export function FileIncludeReason_getReferencedLocation(receiver: GoPtr<FileIncl
       } else {
         let augIndex = imports.length;
         let specifier: GoPtr<import("../ast/ast.js").Node> = undefined;
-        for (const imp of file!.ModuleAugmentations) {
+        for (
+          let __goRangeSlice = file!.ModuleAugmentations,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const imp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (imp!.Kind === KindStringLiteral) {
             if (augIndex === ref!.index) {
               specifier = imp;

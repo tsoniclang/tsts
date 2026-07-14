@@ -230,6 +230,8 @@ import type { GoFunc } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
 import { GoSliceLoad } from "../../../go/compat.js";
 import { GoEmptySlice } from "../../../go/compat.js";
+import { GoStringValueOps } from "../../../go/compat.js";
+
 
 
 
@@ -533,7 +535,15 @@ export function Parser_validateJsonValue(receiver: GoPtr<Parser>, sourceFile: Go
       Parser_validateJsonObjectLiteral(receiver, sourceFile, AsObjectLiteralExpression(valueExpression));
       return;
     case KindArrayLiteralExpression:
-      for (const element of (Node_Elements(valueExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
+      for (
+        let __goRangeSlice = (Node_Elements(valueExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Parser_validateJsonValue(receiver, sourceFile, element);
       }
       return;
@@ -962,7 +972,15 @@ export function Parser_parseSemicolonAfterPropertyName(receiver: GoPtr<Parser>, 
  * }
  */
 export function getSpaceSuggestion(expressionText: string): string {
-  for (const keyword of viableKeywordSuggestions as GoSlice<string>) {
+  for (
+    let __goRangeSlice = viableKeywordSuggestions as GoSlice<string>,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const keyword = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (expressionText.length > keyword.length + 2 && expressionText.startsWith(keyword)) {
       return keyword + " " + expressionText.slice(keyword.length);
     }
@@ -2451,7 +2469,15 @@ export function Parser_checkJSDecoratorSyntax(receiver: GoPtr<Parser>, node: GoP
   }
 
   if (CanHaveIllegalDecorators(node)) {
-    for (const modifier of modifiers) {
+    for (
+      let __goRangeSlice = modifiers,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const modifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsDecorator(modifier)) {
         Parser_jsErrorAtRange(receiver, modifier!.Loc, Decorators_are_not_valid_here);
         break;
@@ -2699,7 +2725,15 @@ export function Parser_checkJSSyntax(receiver: GoPtr<Parser>, node: GoPtr<Node>)
     // eslint-disable-next-line no-fallthrough
     case KindVariableStatement:
     case KindPropertyDeclaration:
-      for (const modifier of (Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
+      for (
+        let __goRangeSlice = (Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const modifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if ((modifier!.Flags & NodeFlagsReparsed) === 0 && modifier!.Kind !== KindDecorator && (ModifierToFlag(modifier!.Kind) & ModifierFlagsJavaScript) === 0) {
           Parser_jsErrorAtRange(receiver, modifier!.Loc, The_0_modifier_can_only_be_used_in_TypeScript_files, TokenToString(modifier!.Kind));
         }

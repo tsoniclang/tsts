@@ -3372,7 +3372,15 @@ export function GetJSDocDeprecatedTag(node: GoPtr<Node>): GoPtr<Node> {
   for (const jsdoc of Node_JSDoc(node, undefined)) {
     const tags = AsJSDoc(jsdoc)!.Tags;
     if (tags !== undefined) {
-      for (const tag of tags!.Nodes) {
+      for (
+        let __goRangeSlice = tags!.Nodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const tag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (IsJSDocDeprecatedTag(tag)) {
           return tag;
         }
@@ -4652,7 +4660,15 @@ export function GetHeritageElements(node: GoPtr<Node>, kind: Kind): GoSlice<GoPt
 export function GetHeritageClause(node: GoPtr<Node>, kind: Kind): GoPtr<Node> {
   const clauses: GoPtr<NodeList> = getHeritageClauses(node);
   if (clauses !== undefined) {
-    for (const clause of clauses!.Nodes) {
+    for (
+      let __goRangeSlice = clauses!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const clause = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (AsHeritageClause(clause)!.Token === kind) {
         return clause;
       }
@@ -6249,7 +6265,15 @@ export function getModuleInstanceStateWorker(node: GoPtr<Node>, ancestors: GoSli
       if (decl!.ModuleSpecifier === undefined && decl!.ExportClause !== undefined && decl!.ExportClause!.Kind === KindNamedExports) {
         const stateAncestors: GoSlice<GoPtr<Node>> = pushAncestor(pushAncestor(ancestors, node), decl!.ExportClause);
         const stateBox = { value: ModuleInstanceStateNonInstantiated as ModuleInstanceState };
-        for (const specifier of Node_Elements(decl!.ExportClause)!) {
+        for (
+          let __goRangeSlice = Node_Elements(decl!.ExportClause)!,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const specifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           const specifierState: ModuleInstanceState = getModuleInstanceStateForAliasTarget(specifier, stateAncestors, visited);
           if (specifierState > stateBox.value) {
             stateBox.value = specifierState;
@@ -6341,7 +6365,15 @@ export function getModuleInstanceStateForAliasTarget(node: GoPtr<Node>, ancestor
     if (IsBlock(p) || IsModuleBlock(p) || IsSourceFile(p)) {
       const statementsAncestors: GoSlice<GoPtr<Node>> = pushAncestor(currentAncestors, p);
       const foundBox = { value: ModuleInstanceStateUnknown as ModuleInstanceState };
-      for (const statement of Node_Statements(p) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = Node_Statements(p) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (NodeHasName(statement, name)) {
           const state: ModuleInstanceState = getModuleInstanceStateCached(statement, statementsAncestors, visited);
           if (foundBox.value === ModuleInstanceStateUnknown || state > foundBox.value) {
@@ -6508,7 +6540,15 @@ export function IsParameterLike(node: GoPtr<Node>): bool {
  * }
  */
 export function GetDeclarationOfKind(symbol_: GoPtr<Symbol>, kind: Kind): GoPtr<Node> {
-  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (declaration!.Kind === kind) {
       return declaration;
     }
@@ -6530,7 +6570,15 @@ export function GetDeclarationOfKind(symbol_: GoPtr<Symbol>, kind: Kind): GoPtr<
  * }
  */
 export function FindConstructorDeclaration(node: GoPtr<ClassLikeDeclaration>): GoPtr<Node> {
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsConstructorDeclaration(member) && NodeIsPresent(Node_Body(member))) {
       return member;
     }
@@ -6910,7 +6958,15 @@ export function GetNodeAtPosition(file: GoPtr<SourceFile>, position: int, includ
   const loop = (current: GoPtr<Node>): GoPtr<Node> => {
     const jsdocChild: GoPtr<Node> = includeJSDoc ? (() => {
       const found = { value: undefined as GoPtr<Node> };
-      for (const jsdoc of Node_JSDoc(current, file)) {
+      for (
+        let __goRangeSlice = Node_JSDoc(current, file),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const jsdoc = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (nodeContainsPosition(jsdoc, position)) { found.value = jsdoc; break; }
       }
       return found.value;
@@ -10002,7 +10058,15 @@ export function ContainsObjectRestOrSpread(node: GoPtr<Node>): bool {
   if ((Node_SubtreeFacts(node) & SubtreeContainsESObjectRestOrSpread) !== 0) {
     // check for nested spread assignments, otherwise '{ x: { a, ...b } = foo } = c'
     // will not be correctly interpreted by the rest/spread transformer
-    for (const element of GetElementsOfBindingOrAssignmentPattern(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = GetElementsOfBindingOrAssignmentPattern(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const target: GoPtr<Node> = GetTargetOfBindingOrAssignmentElement(element);
       if (target !== undefined && IsAssignmentPattern(target)) {
         if ((Node_SubtreeFacts(target) & SubtreeContainsObjectRestOrSpread) !== 0) {
@@ -10564,7 +10628,15 @@ export function IsInfinityOrNaNString(name: string): bool {
  * }
  */
 export function GetFirstConstructorWithBody(node: GoPtr<Node>): GoPtr<Node> {
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsConstructorDeclaration(member) && NodeIsPresent(Node_Body(member))) {
       return member;
     }
@@ -10786,7 +10858,15 @@ export function ClassElementOrClassElementParameterIsDecorated(useLegacyDecorato
     return true as bool;
   }
   if (parameters !== undefined && parameters!.Nodes.length > 0) {
-    for (const parameter of parameters!.Nodes) {
+    for (
+      let __goRangeSlice = parameters!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsThisParameter(parameter)) {
         continue;
       }
@@ -10986,7 +11066,15 @@ export function GetAllAccessorDeclarations(parentDeclarations: GoSlice<GoPtr<Nod
   const accessorName: string = GetPropertyNameForPropertyNameNode(Node_Name(accessor));
   const accessorStatic: bool = IsStatic(accessor);
   let matches: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const member of parentDeclarations) {
+  for (
+    let __goRangeSlice = parentDeclarations,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!IsAccessor(member) || IsStatic(member) !== accessorStatic) {
       continue;
     }

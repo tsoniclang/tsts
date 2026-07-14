@@ -5934,7 +5934,15 @@ export function SourceFile_GetNameTable(receiver: GoPtr<SourceFile>): GoMap<stri
 
       Node_ForEachChild(node, walk);
       const jsdocNodes = Node_JSDoc(node, receiver);
-      for (const jsdoc of jsdocNodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = jsdocNodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const jsdoc = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Node_ForEachChild(jsdoc, walk);
       }
       return false;
@@ -6375,7 +6383,15 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
         const exportClause = casts.AsExportDeclaration(node)!.ExportClause;
         if (exportClause !== undefined) {
           if (predicates.IsNamedExports(exportClause)) {
-            for (const element of Node_Elements(exportClause) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+            for (
+              let __goRangeSlice = Node_Elements(exportClause) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoPointerValueOps<Node>(),
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               visit(element);
             }
           } else {
@@ -6395,7 +6411,15 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
             if (namedBindings.Kind === KindNamespaceImport) {
               addDeclaration(namedBindings);
             } else {
-              for (const element of Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+              for (
+                let __goRangeSlice = Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+                  __goRangeLength = __goRangeSlice.length,
+                  __goRangeValueOps = GoPointerValueOps<Node>(),
+                  __goRangeIndex = 0;
+                __goRangeIndex < __goRangeLength;
+                __goRangeIndex++
+              ) {
+                const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
                 visit(element);
               }
             }

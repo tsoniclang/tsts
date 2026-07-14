@@ -1536,7 +1536,15 @@ export function EmitContext_RequestEmitHelper(receiver: GoPtr<EmitContext>, help
     throw new globalThis.Error("Cannot request a scoped emit helper");
   }
   const deps = helper!.Dependencies;
-  for (const h of deps) {
+  for (
+    let __goRangeSlice = deps,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<EmitHelper>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const h = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     EmitContext_RequestEmitHelper(receiver, h);
   }
   OrderedSet_Add(c.emitHelpers, helper, emitHelperPointerKey);

@@ -921,7 +921,15 @@ export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecke
     return NewPseudoTypeObjectLiteral(GoNilSlice());
   }
   let results: GoSlice<GoPtr<PseudoObjectElement>> = GoNilSlice();
-  for (const e of node!.Properties!.Nodes) {
+  for (
+    let __goRangeSlice = node!.Properties!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     switch (e!.Kind) {
       case KindMethodDeclaration: {
         const optional = AsMethodDeclaration(e)!.PostfixToken !== undefined && AsMethodDeclaration(e)!.PostfixToken!.Kind === KindQuestionToken;
@@ -1084,7 +1092,15 @@ export function PseudoChecker_canGetTypeFromObjectLiteral(receiver: GoPtr<Pseudo
     return GoNilSlice();
   }
   let errorNodes: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const e of node!.Properties!.Nodes) {
+  for (
+    let __goRangeSlice = node!.Properties!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((e!.Flags & NodeFlagsThisNodeHasError) !== 0) {
       errorNodes = GoSliceAppend(errorNodes, e, GoPointerValueOps<Node>());
       continue;
@@ -1140,7 +1156,15 @@ export function PseudoChecker_typeFromArrayLiteral(receiver: GoPtr<PseudoChecker
     return NewPseudoTypeInferred(Node_AsNode(node));
   }
   let results: GoSlice<GoPtr<PseudoType>> = GoSliceMake(0, 0, GoPointerValueOps<PseudoType>());
-  for (const e of node!.Elements!.Nodes) {
+  for (
+    let __goRangeSlice = node!.Elements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     results = GoSliceAppend(results, PseudoChecker_typeFromExpression(receiver, e), GoPointerValueOps<PseudoType>());
   }
   return NewPseudoTypeTuple(results);
@@ -1168,7 +1192,15 @@ export function PseudoChecker_canGetTypeFromArrayLiteral(receiver: GoPtr<PseudoC
       GoSliceStore(__goSliceLiteral, 0, Node_AsNode(node), GoPointerValueOps<Node>());
     });
   }
-  for (const e of node!.Elements!.Nodes) {
+  for (
+    let __goRangeSlice = node!.Elements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (e!.Kind === KindSpreadElement) {
       return GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
         GoSliceStore(__goSliceLiteral, 0, e, GoPointerValueOps<Node>());
@@ -1355,7 +1387,15 @@ export function PseudoChecker_cloneTypeParameters(receiver: GoPtr<PseudoChecker>
     return GoNilSlice();
   }
   let result: GoSlice<GoPtr<TypeParameterDeclaration>> = GoSliceMake(0, 0, GoPointerValueOps<TypeParameterDeclaration>());
-  for (const e of nodes!.Nodes) {
+  for (
+    let __goRangeSlice = nodes!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     result = GoSliceAppend(result, AsTypeParameterDeclaration(e), GoPointerValueOps<TypeParameterDeclaration>());
   }
   return result;

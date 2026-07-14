@@ -5,6 +5,8 @@ import { ErrNotExist, ModeDir } from "../io/fs.js";
 import { Time } from "../time.js";
 import { GoInterfaceValueOps, GoSliceMake } from "../compat.js";
 import { GoNumberValueOps, GoSliceStore } from "../compat.js";
+import { GoSliceLoad, GoStringValueOps } from "../compat.js";
+
 
 
 
@@ -24,7 +26,15 @@ export function MapFS_as_FS(map: MapFS): FS {
 }
 
 export function TestFS(fsys: FS, ...expected: GoSlice<string>): GoError {
-  for (const path of expected) {
+  for (
+    let __goRangeSlice = expected,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const path = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const [file, err] = fsys.Open(path);
     if (err !== undefined) {
       return err;

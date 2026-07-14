@@ -407,7 +407,15 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
         return undefined;
       }
       return () => {
-        for (const name of newLocals) {
+        for (
+          let __goRangeSlice = newLocals,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoStringValueOps,
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const name = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           locals!.delete(name);
         }
         for (const record of oldLocals) {
@@ -446,7 +454,15 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
               }
             };
             const bindPattern = (p: GoPtr<Node>): void => {
-              for (const e of Node_Elements(p) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+              for (
+                let __goRangeSlice = Node_Elements(p) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+                  __goRangeLength = __goRangeSlice.length,
+                  __goRangeValueOps = GoPointerValueOps<Node>(),
+                  __goRangeIndex = 0;
+                __goRangeIndex < __goRangeLength;
+                __goRangeIndex++
+              ) {
+                const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
                 if (IsOmittedExpression(e)) {
                   return;
                 }
@@ -473,7 +489,15 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
         if (GoSliceIsNil(typeParameters)) {
           return;
         }
-        for (const typeParam of typeParameters) {
+        for (
+          let __goRangeSlice = typeParameters,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Type>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const typeParam = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (typeParam === undefined) {
             continue;
           }

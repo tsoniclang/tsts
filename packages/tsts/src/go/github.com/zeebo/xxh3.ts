@@ -1,5 +1,7 @@
 import type { byte, int } from "../../scalars.js";
 import type { GoArray, GoError, GoSlice } from "../../compat.js";
+import { GoNumberValueOps, GoSliceLoad } from "../../compat.js";
+
 
 export interface Hasher {
   Write(p: GoSlice<byte>): [int, GoError];
@@ -68,7 +70,15 @@ class hasher implements Hasher {
   }
 
   Write(p: GoSlice<byte>): [int, GoError] {
-    for (const value of p) {
+    for (
+      let __goRangeSlice = p,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoNumberValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const value = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       this.writeByte(value);
     }
     return [p.length as int, undefined];

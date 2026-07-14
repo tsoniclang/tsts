@@ -82,6 +82,8 @@ import type { PseudoBigInt } from "../jsnum/pseudobigint.js";
 import { Number_Abs, Number_IsInf, Number_IsNaN } from "../jsnum/jsnum.js";
 import { Number_String } from "../jsnum/string.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -360,7 +362,15 @@ export function EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver:
     return GoNilSlice();
   }
   const bases = Checker_getBaseTypes(receiver!.checker, parentType);
-  for (const b of bases ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())) {
+  for (
+    let __goRangeSlice = bases ?? GoSliceMake(0, 0, GoPointerValueOps<Type>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const b = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const baseProp = Checker_getPropertyOfObjectType(receiver!.checker, b, s!.Name);
     if (baseProp !== undefined) {
       receiver!.checkerMu!.Unlock();
@@ -834,7 +844,15 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
     visited.set(symId, undefined);
 
     let nextSymbol: GoPtr<Symbol> = undefined;
-    for (const declaration of exportSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = exportSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       LinkStore_Get(receiver!.declarationLinks, declaration, GoZeroDeclarationLinks, goNodePointerKey)!.v.isVisible = TSTrue;
 
       if (IsInternalModuleImportEqualsDeclaration(declaration)) {
@@ -1100,7 +1118,15 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
     addVisibleAlias = noopAddVisibleAlias;
   }
 
-  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsIdentifier(declaration)) { continue; }
 
     if (!EmitResolver_isDeclarationVisible(receiver, declaration)) {
@@ -1268,7 +1294,15 @@ export function EmitResolver_IsImportRequiredByAugmentation(receiver: GoPtr<Emit
     const merged = Checker_getMergedSymbol(receiver!.checker, s);
     if (merged !== s) {
       if (merged !== undefined && (merged!.Declarations?.length ?? 0) > 0) {
-        for (const d of merged!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = merged!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           const declFile = GetSourceFileOfNode(d);
           if (declFile === importTarget) {
             receiver!.checkerMu!.Unlock();
@@ -1559,7 +1593,15 @@ export function EmitResolver_IsLiteralConstDeclaration(receiver: GoPtr<EmitResol
 export function EmitResolver_IsExpandoFunctionDeclarationUnsafe(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
   if (!IsParseTreeNode(node)) { return false as bool; }
   const props = EmitResolver_GetPropertiesOfContainerFunction(receiver, node);
-  for (const p of props) {
+  for (
+    let __goRangeSlice = props,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsExpandoPropertyDeclaration(p!.ValueDeclaration)) { return true as bool; }
   }
   return false as bool;
@@ -2485,7 +2527,15 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
     if (infoList.length === 0) {
       continue;
     }
-    for (const info of infoList) {
+    for (
+      let __goRangeSlice = infoList,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (info!.declaration !== undefined) {
         continue;
       }

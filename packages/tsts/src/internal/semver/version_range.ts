@@ -397,7 +397,15 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
         return [GoNilSlice(), false];
       }
     } else {
-      for (const simple of whitespaceRegExp!.Split(r, -1)) {
+      for (
+        let __goRangeSlice = whitespaceRegExp!.Split(r, -1),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoStringValueOps,
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const simple = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const match: GoSlice<string> = rangeRegExp!.FindStringSubmatch(strings.TrimSpace(simple));
         if (GoSliceIsNil(match)) {
           return [GoNilSlice(), false];

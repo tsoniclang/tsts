@@ -1046,7 +1046,15 @@ export function Checker_checkSwitchStatement(receiver: GoPtr<Checker>, node: GoP
   let hasDuplicateDefaultClause = false as bool;
   const expressionType = Checker_checkExpression(receiver, Node_Expression(node));
   const caseBlock = AsSwitchStatement(node)!.CaseBlock;
-  for (const clause of AsCaseBlock(caseBlock)!.Clauses!.Nodes) {
+  for (
+    let __goRangeSlice = AsCaseBlock(caseBlock)!.Clauses!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const clause = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsDefaultClause(clause) && !hasDuplicateDefaultClause) {
       if (firstDefaultClause === undefined) {
         firstDefaultClause = clause;

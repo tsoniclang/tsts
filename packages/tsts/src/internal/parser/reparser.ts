@@ -313,7 +313,15 @@ export function Parser_reparseTags(receiver: GoPtr<Parser>, parent: GoPtr<Node>,
     if (tags === undefined) {
       continue;
     }
-    for (const tag of tags!.Nodes) {
+    for (
+      let __goRangeSlice = tags!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const tag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       Parser_reparseUnhosted(receiver, tag, parent, j);
       if (isLast) {
         Parser_reparseHosted(receiver, tag, parent, j);
@@ -751,7 +759,15 @@ export function Parser_reparseJSDocTypeLiteral(receiver: GoPtr<Parser>, t: GoPtr
     const jstypeliteral = AsJSDocTypeLiteral(t);
     const isArrayType = jstypeliteral!.IsArrayType;
     let properties = Arena_NewSlice(receiver!.nodeSliceArena, 0, GoZeroPointer) as GoSlice<GoPtr<Node>>;
-    for (const prop of jstypeliteral!.JSDocPropertyTags) {
+    for (
+      let __goRangeSlice = jstypeliteral!.JSDocPropertyTags,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (prop!.Kind !== KindJSDocPropertyTag && prop!.Kind !== KindJSDocParameterTag) {
         continue;
       }
@@ -887,7 +903,15 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
     endPos = Node_End(tag);
     const constraint = AsJSDocTemplateTag(tag)!.Constraint;
     let firstTypeParameter = true;
-    for (const tp of Node_TypeParameters(tag)!) {
+    for (
+      let __goRangeSlice = Node_TypeParameters(tag)!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const tp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       let reparse: GoPtr<Node>;
       if (constraint !== undefined && firstTypeParameter) {
         reparse = NewTypeParameterDeclaration(
@@ -1182,7 +1206,15 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
       switch (parent!.Kind) {
         case KindVariableStatement: {
           if (AsVariableStatement(parent)!.DeclarationList !== undefined) {
-            for (const declaration of AsVariableDeclarationList(AsVariableStatement(parent)!.DeclarationList)!.Declarations!.Nodes) {
+            for (
+              let __goRangeSlice = AsVariableDeclarationList(AsVariableStatement(parent)!.DeclarationList)!.Declarations!.Nodes,
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoPointerValueOps<Node>(),
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               if (Node_Type(declaration) === undefined && Node_TypeExpression(tag) !== undefined) {
                 MutableNode_SetType(Node_AsMutable(declaration), Parser_addDeepCloneReparse(receiver, Node_Type(Node_TypeExpression(tag))));
                 Parser_finishMutatedNode(receiver, declaration);
@@ -1253,7 +1285,15 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
       switch (parent!.Kind) {
         case KindVariableStatement: {
           if (AsVariableStatement(parent)!.DeclarationList !== undefined) {
-            for (const declaration of AsVariableDeclarationList(AsVariableStatement(parent)!.DeclarationList)!.Declarations!.Nodes) {
+            for (
+              let __goRangeSlice = AsVariableDeclarationList(AsVariableStatement(parent)!.DeclarationList)!.Declarations!.Nodes,
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoPointerValueOps<Node>(),
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               if (Node_Initializer(declaration) !== undefined && Node_TypeExpression(tag) !== undefined) {
                 MutableNode_SetInitializer(Node_AsMutable(declaration), Parser_makeNewCast(
                   receiver,
@@ -1571,7 +1611,15 @@ export function Parser_makeQuestionIfOptional(receiver: GoPtr<Parser>, parameter
 export function findMatchingParameter(fun: GoPtr<Node>, parameterTag: GoPtr<JSDocParameterOrPropertyTag>, jsDoc: GoPtr<Node>): [GoPtr<ParameterDeclaration>, bool] {
   let tagIndex: int = -1;
   let paramCount: int = -1;
-  for (const tag of AsJSDoc(jsDoc)!.Tags!.Nodes) {
+  for (
+    let __goRangeSlice = AsJSDoc(jsDoc)!.Tags!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const tag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (tag!.Kind === KindJSDocParameterTag) {
       paramCount++;
       if (AsJSDocParameterOrPropertyTag(tag) === parameterTag) {

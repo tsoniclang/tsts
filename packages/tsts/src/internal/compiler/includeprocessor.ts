@@ -32,6 +32,8 @@ import type { Program } from "./program.js";
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 const fileIncludeReasonKey: GoMapKeyDescriptor<GoPtr<FileIncludeReason>> = GoPointerKey<FileIncludeReason>();
@@ -129,14 +131,30 @@ export function includeProcessor_getDiagnostics(receiver: GoPtr<includeProcessor
       nonFileDiagnosticsSorted: false as bool,
     };
     receiver!.computedDiagnostics = coll;
-    for (const d of receiver!.processingDiagnostics ?? GoSliceMake(0, 0, GoPointerValueOps<processingDiagnostic>())) {
+    for (
+      let __goRangeSlice = receiver!.processingDiagnostics ?? GoSliceMake(0, 0, GoPointerValueOps<processingDiagnostic>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<processingDiagnostic>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       DiagnosticsCollection_Add(receiver!.computedDiagnostics, processingDiagnostic_toDiagnostic(d, p));
     }
     for (const [, resolutions] of p!.__tsgoEmbedded0!.resolvedModules) {
       for (const [, resolvedModule] of resolutions ?? []) {
         const rm = resolvedModule as { ResolutionDiagnostics: GoSlice<GoPtr<Diagnostic>> } | undefined;
         if (rm !== undefined) {
-          for (const diag of rm.ResolutionDiagnostics) {
+          for (
+            let __goRangeSlice = rm.ResolutionDiagnostics,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const diag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             DiagnosticsCollection_Add(receiver!.computedDiagnostics, diag);
           }
         }
@@ -146,7 +164,15 @@ export function includeProcessor_getDiagnostics(receiver: GoPtr<includeProcessor
       for (const [, resolvedTypeRef] of typeResolutions ?? []) {
         const rt = resolvedTypeRef as { ResolutionDiagnostics: GoSlice<GoPtr<Diagnostic>> } | undefined;
         if (rt !== undefined) {
-          for (const diag of rt.ResolutionDiagnostics) {
+          for (
+            let __goRangeSlice = rt.ResolutionDiagnostics,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const diag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             DiagnosticsCollection_Add(receiver!.computedDiagnostics, diag);
           }
         }

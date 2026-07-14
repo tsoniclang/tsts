@@ -275,7 +275,15 @@ export function NewDeclarationTransformer(host: GoInterface<DeclarationEmitHost>
       return;
     }
     const props = resolver!.GetPropertiesOfContainerFunction(node);
-    for (const p of props) {
+    for (
+      let __goRangeSlice = props,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<AstSymbol>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsExpandoPropertyDeclaration(p!.ValueDeclaration)) {
         let errorTarget = p!.ValueDeclaration;
         if (IsBinaryExpression(errorTarget)) {
@@ -727,11 +735,27 @@ export function DeclarationTransformer_transformSourceFile(receiver: GoPtr<Decla
           : undefined
         : undefined;
       if (exportEquals !== undefined && exportEquals!.Declarations !== undefined && exportEquals!.Declarations.length > 1) {
-        for (const decl of exportEquals!.Declarations) {
+        for (
+          let __goRangeSlice = exportEquals!.Declarations,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           SymbolTrackerSharedState_addDiagnostic(receiver!.state!, createDiagnosticForNode(decl, diagnosticMessages.Multiple_module_exports_assignments_cannot_be_serialized_for_declaration_emit));
         }
       }
-      for (const nestedExport of node!.NestedCJSExports) {
+      for (
+        let __goRangeSlice = node!.NestedCJSExports,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const nestedExport = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         SymbolTrackerSharedState_addDiagnostic(receiver!.state!, createDiagnosticForNode(nestedExport, diagnosticMessages.Nested_CommonJS_export_constructs_cannot_be_serialized_for_declaration_emit));
       }
     }
@@ -879,7 +903,15 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
     }
     if (replacement!.Kind === KindSyntaxList) {
       if (!receiver!.needsScopeFixMarker || !receiver!.resultHasExternalModuleIndicator) {
-        for (const elem of AsSyntaxList(replacement)!.Children) {
+        for (
+          let __goRangeSlice = AsSyntaxList(replacement)!.Children,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const elem = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (needsScopeMarker(elem)) {
             receiver!.needsScopeFixMarker = true;
           }
@@ -888,7 +920,15 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
           }
         }
       }
-      for (const elem of AsSyntaxList(replacement)!.Children) {
+      for (
+        let __goRangeSlice = AsSyntaxList(replacement)!.Children,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const elem = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         results = GoSliceAppend(results, elem, GoPointerValueOps<Node>());
       }
     } else {
@@ -1032,7 +1072,15 @@ export function DeclarationTransformer_getReferencedFiles(receiver: GoPtr<Declar
  */
 export function DeclarationTransformer_getLibReferences(receiver: GoPtr<DeclarationTransformer>): GoSlice<GoPtr<FileReference>> {
   let result: GoSlice<GoPtr<FileReference>> = GoNilSlice();
-  for (const ref of receiver!.rawLibReferenceDirectives) {
+  for (
+    let __goRangeSlice = receiver!.rawLibReferenceDirectives,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<FileReference>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ref = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!ref!.Preserve) {
       continue;
     }
@@ -1068,7 +1116,15 @@ export function DeclarationTransformer_getLibReferences(receiver: GoPtr<Declarat
  */
 export function DeclarationTransformer_getTypeReferences(receiver: GoPtr<DeclarationTransformer>): GoSlice<GoPtr<FileReference>> {
   let result: GoSlice<GoPtr<FileReference>> = GoNilSlice();
-  for (const ref of receiver!.rawTypeReferenceDirectives) {
+  for (
+    let __goRangeSlice = receiver!.rawTypeReferenceDirectives,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<FileReference>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ref = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!ref!.Preserve) {
       continue;
     }
@@ -1823,7 +1879,15 @@ export function DeclarationTransformer_transformCjsRequireVariableDeclaration(re
     // `const {x, y: z} = require("something")` -> `import {x, y as z} from "something"`
     const b = AsBindingPattern(Node_Name(input));
     let importSpecifiers: GoSlice<GoPtr<Node>> = GoNilSlice();
-    for (const elem of b!.Elements!.Nodes) {
+    for (
+      let __goRangeSlice = b!.Elements!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const elem = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!IsIdentifier(Node_Name(elem))) {
         continue; // nested destructuring, bail
       }
@@ -1879,7 +1943,15 @@ export function DeclarationTransformer_recreateBindingPattern(receiver: GoPtr<De
       continue;
     }
     if (result!.Kind === KindSyntaxList) {
-      for (const child of AsSyntaxList(result)!.Children) {
+      for (
+        let __goRangeSlice = AsSyntaxList(result)!.Children,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         results = GoSliceAppend(results, child, GoPointerValueOps<Node>());
       }
     } else {
@@ -3919,7 +3991,15 @@ export function isClassExtendingNull(node: GoPtr<Node>): bool {
   if (heritage!.Nodes.length > 1 || heritage!.Nodes.length === 0) {
     return false;
   }
-  for (const expA of AsHeritageClause(GoSliceLoad(heritage!.Nodes, 0, GoPointerValueOps<Node>()))!.Types!.Nodes) {
+  for (
+    let __goRangeSlice = AsHeritageClause(GoSliceLoad(heritage!.Nodes, 0, GoPointerValueOps<Node>()))!.Types!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const expA = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const expr = AsExpressionWithTypeArguments(expA)!.Expression;
     if (expr !== undefined && expr!.Kind === KindNullKeyword) {
       return true as bool;
@@ -3958,7 +4038,15 @@ export function isClassExtendingNull(node: GoPtr<Node>): bool {
 export function DeclarationTransformer_collectThisPropertyAssignments(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<ClassDeclaration>): GoSlice<GoPtr<Node>> {
   const seen: Set<GoPtr<Node>> = { M: GoNilMap() };
   // Pre-populate seen with existing direct member nodes to avoid duplicates
-  for (const member of input!.Members!.Nodes) {
+  for (
+    let __goRangeSlice = input!.Members!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Node_Name(member) !== undefined) {
       Set_Add(seen, member, nodePointerKey);
     }
@@ -3967,7 +4055,15 @@ export function DeclarationTransformer_collectThisPropertyAssignments(receiver: 
   try {
     receiver!.thisPropertyAssignmentsCollected = GoSliceMake(0, 0, GoPointerValueOps<Node>());
     try {
-      for (const n of input!.Members!.Nodes) {
+      for (
+        let __goRangeSlice = input!.Members!.Nodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const n = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Node_VisitEachChild(n, receiver!.thisPropertyVisitor);
       }
       return receiver!.thisPropertyAssignmentsCollected;
@@ -4100,7 +4196,15 @@ export function DeclarationTransformer_transformVariableStatement(receiver: GoPt
   if (receiver!.state!.currentSourceFile!.CommonJSModuleIndicator !== undefined) {
     let normalDeclarations: GoSlice<GoPtr<Node>> = GoNilSlice();
     let imports: GoSlice<GoPtr<Node>> = GoNilSlice();
-    for (const n of inputNodes) {
+    for (
+      let __goRangeSlice = inputNodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const n = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsVariableDeclarationInitializedToRequire(n)) {
         imports = GoSliceAppend(imports, n, GoPointerValueOps<Node>());
       } else {
@@ -5476,7 +5580,15 @@ export function DeclarationTransformer_createFullExpandoBlock(receiver: GoPtr<De
     let host: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (n !== undefined && n!.Kind === KindSyntaxList) {
       // find the first named syntax list element and use its' name & modifiers
-      for (const c of AsSyntaxList(n)!.Children) {
+      for (
+        let __goRangeSlice = AsSyntaxList(n)!.Children,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const c = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (Node_Name(c) !== undefined) {
           name = Node_Clone(Node_Name(c), astFactory!);
           if (Node_Modifiers(c) !== undefined) {

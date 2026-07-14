@@ -50,6 +50,8 @@ import { emitFiles } from "./emitfileshandler.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::SignatureUpdateKind","kind":"type","status":"implemented","sigHash":"b55af211c61625d503f2cc14340da8cff9e286acac2d696a37b7b1fe9aa065d0"}
@@ -432,7 +434,15 @@ export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Go
 
   let diagnostics: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   for (const f of compiler_Program_GetSourceFiles(receiver!.program)) {
-    for (const d of Program_getSemanticDiagnosticsOfFile(receiver, f)) {
+    for (
+      let __goRangeSlice = Program_getSemanticDiagnosticsOfFile(receiver, f),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       diagnostics = GoSliceAppend(diagnostics, d, GoPointerValueOps<Diagnostic>());
     }
   }
@@ -653,7 +663,15 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
       GoSliceStore(__goSliceLiteral, 0, file, GoPointerValueOps<SourceFile>());
     });
   } else {
-    for (const f of compiler_Program_GetSourceFiles(receiver!.program)) {
+    for (
+      let __goRangeSlice = compiler_Program_GetSourceFiles(receiver!.program),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const f = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
         receiver!.snapshot!.semanticDiagnosticsPerFile,
         SourceFile_Path(f),
@@ -865,7 +883,15 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: G
   let hasEmitDiagnostics = false;
   if (snapshot_canUseIncrementalState(receiver!.snapshot)) {
     const sourceFiles = compiler_Program_GetSourceFiles(program);
-    for (const file of sourceFiles) {
+    for (
+      let __goRangeSlice = sourceFiles,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
         receiver!.snapshot!.emitDiagnosticsPerFile,
         SourceFile_Path(file),

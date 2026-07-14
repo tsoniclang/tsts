@@ -667,7 +667,15 @@ export function NodeBuilderImpl_finalizeBoundary(receiver: GoPtr<NodeBuilderImpl
   if (bound!.hadError) {
     return false;
   }
-  for (const a of bound!.trackedSymbols) {
+  for (
+    let __goRangeSlice = bound!.trackedSymbols,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<TrackedSymbolArgs>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const a = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     receiver!.ctx!.tracker!.TrackSymbol(a!["symbol"], a!.enclosingDeclaration, a!.meaning);
   }
   return true;
@@ -1050,7 +1058,15 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     }
     if (IsJSDocTypeLiteral(node)) {
       let members: GoSlice<GoPtr<Node>> = GoNilSlice();
-      for (const tag of AsJSDocTypeLiteral(node)!.JSDocPropertyTags ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = AsJSDocTypeLiteral(node)!.JSDocPropertyTags ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const tag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (tag!.Kind !== KindJSDocPropertyTag && tag!.Kind !== KindJSDocParameterTag) {
           continue;
         }

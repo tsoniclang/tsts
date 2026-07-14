@@ -242,7 +242,15 @@ export function Checker_checkTypePredicate(receiver: GoPtr<Checker>, node: GoPtr
       }
     } else if (parameterName !== undefined) {
       let hasReportedError = false;
-      for (const param of Node_Parameters(parent)) {
+      for (
+        let __goRangeSlice = Node_Parameters(parent),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const param = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const name = Node_Name(param);
         if (name !== undefined && (IsArrayBindingPattern(name) || IsObjectBindingPattern(name)) &&
           Checker_checkIfTypePredicateVariableIsDeclaredInBindingPattern(receiver, name, parameterName, typePredicate!.parameterName)) {
@@ -314,7 +322,15 @@ export function Checker_getTypePredicateParent(receiver: GoPtr<Checker>, node: G
  * }
  */
 export function Checker_checkIfTypePredicateVariableIsDeclaredInBindingPattern(receiver: GoPtr<Checker>, pattern: GoPtr<Node>, predicateVariableNode: GoPtr<Node>, predicateVariableName: string): bool {
-  for (const element of Node_Elements(pattern) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Elements(pattern) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const name = Node_Name(element);
     if (name === undefined) {
       continue;

@@ -441,7 +441,15 @@ export function Glob_parseLiteral(receiver: GoPtr<Glob>, pattern: string, nested
 export function Glob_String(receiver: GoPtr<Glob>): string {
   const g = receiver!;
   const b = new strings.Builder();
-  for (const e of g.elems) {
+  for (
+    let __goRangeSlice = g.elems,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoInterfaceValueOps<Stringer>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     fmt.Fprint(b, e);
   }
   return b.String();

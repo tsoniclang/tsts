@@ -97,6 +97,8 @@ import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
 import { GoEmptySlice } from "../../go/compat.js";
+import { GoSliceValueOps } from "../../go/compat.js";
+
 
 
 
@@ -1562,7 +1564,15 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
  */
 export function convertArrayLiteralExpressionToJson(sourceFile: GoPtr<SourceFile>, elements: GoSlice<GoPtr<Expression>>, elementOption: GoPtr<CommandLineOption>, returnValue: bool): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   if (!returnValue) {
-    for (const element of elements) {
+    for (
+      let __goRangeSlice = elements,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       convertPropertyValueToJson(sourceFile, element, elementOption, returnValue, undefined);
     }
     return [undefined, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
@@ -1575,7 +1585,15 @@ export function convertArrayLiteralExpressionToJson(sourceFile: GoPtr<SourceFile
   }
   const errors: GoPtr<Diagnostic>[] = [];
   const value: unknown[] = [];
-  for (const element of elements) {
+  for (
+    let __goRangeSlice = elements,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const [convertedValue, err] = convertPropertyValueToJson(sourceFile, element, elementOption, returnValue, undefined);
     errors.push(...err);
     if (convertedValue !== undefined && convertedValue !== null) {
@@ -1750,7 +1768,15 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
     result = newMapWithSizeHint<string, unknown>(0, GoStringKey);
   }
   const errors: GoPtr<Diagnostic>[] = [];
-  for (const element of (node!.Properties!.Nodes! ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
+  for (
+    let __goRangeSlice = (node!.Properties!.Nodes! ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (element!.Kind !== KindPropertyAssignment) {
       errors.push(NewDiagnostic(sourceFile, element!.Loc, diagnostics.Property_assignment_expected));
       continue;
@@ -2243,7 +2269,15 @@ export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extende
   if (cacheEntry!.extendedResult !== undefined) {
     if (sourceFile !== undefined) {
       Set_Add(result!.extendedSourceFiles, SourceFile_FileName(cacheEntry!.extendedResult!.SourceFile), GoStringKey);
-      for (const extendedSourceFile of (cacheEntry!.extendedResult!.ExtendedSourceFiles ?? GoSliceMake(0, 0, GoStringValueOps))) {
+      for (
+        let __goRangeSlice = (cacheEntry!.extendedResult!.ExtendedSourceFiles ?? GoSliceMake(0, 0, GoStringValueOps)),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoStringValueOps,
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const extendedSourceFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Set_Add(result!.extendedSourceFiles, extendedSourceFile, GoStringKey);
       }
     }
@@ -2942,7 +2976,15 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
     }
     const projectReferences: GoPtr<ProjectReference>[] = [];
     for (const reference of (newReferencesOfRaw.sliceValue as unknown as unknown[])) {
-      for (const ref of parseProjectReference(reference)) {
+      for (
+        let __goRangeSlice = parseProjectReference(reference),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<ProjectReference>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const ref = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if ((ref!.Path ?? "") === "") {
           if (sourceFile === undefined) {
             errors.push(NewCompilerDiagnostic(diagnostics.Compiler_option_0_requires_a_value_of_type_1, "reference.path", "string"));
@@ -3294,7 +3336,15 @@ export function GetOptionsSyntaxByArrayElementValue(objectLiteral: GoPtr<ObjectL
  */
 export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralExpression>, key: string, callback: GoFunc<(property: GoPtr<PropertyAssignment>) => GoRef<T>>, ...key2: Array<string>): GoRef<T> {
   if (objectLiteral !== undefined) {
-    for (const property of (objectLiteral!.Properties!.Nodes! ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
+    for (
+      let __goRangeSlice = (objectLiteral!.Properties!.Nodes! ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const property = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!IsPropertyAssignment(property)) {
         continue;
       }
@@ -3519,7 +3569,15 @@ export function handleOptionConfigDirTemplateSubstitution(compilerOptions: GoPtr
  */
 export function hasFileWithHigherPriorityExtension(file: string, extensions: GoSlice<GoSlice<string>>, hasFile: GoFunc<(fileName: string) => bool>): bool {
   let extensionGroup: string[] = [];
-  for (const group of extensions) {
+  for (
+    let __goRangeSlice = extensions,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoSliceValueOps<string>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const group = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (FileExtensionIsOneOf(file, group)) {
       extensionGroup = extensionGroup.concat(group);
     }
@@ -3573,7 +3631,15 @@ export function hasFileWithHigherPriorityExtension(file: string, extensions: GoS
  */
 export function removeWildcardFilesWithLowerPriorityExtension(file: string, wildcardFiles: GoPtr<OrderedMap<string, string>>, extensions: GoSlice<GoSlice<string>>, keyMapper: GoFunc<(value: string) => string>): void {
   let extensionGroup: string[] = [];
-  for (const group of extensions) {
+  for (
+    let __goRangeSlice = extensions,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoSliceValueOps<string>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const group = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (FileExtensionIsOneOf(file, group)) {
       extensionGroup = extensionGroup.concat(group);
     }
@@ -3707,7 +3773,15 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
   const supportedExtensions = GetSupportedExtensions(options, extraFileExtensions);
   const supportedExtensionsWithJsonIfResolveJsonModule = GetSupportedExtensionsWithJsonIfResolveJsonModule(options, supportedExtensions);
   // Literal files are always included verbatim.
-  for (const fileName of (validatedFilesSpec ?? GoSliceMake(0, 0, GoStringValueOps))) {
+  for (
+    let __goRangeSlice = (validatedFilesSpec ?? GoSliceMake(0, 0, GoStringValueOps)),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const fileName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const file = GetNormalizedAbsolutePath(fileName, basePath);
     OrderedMap_Set(literalFileMap as GoPtr<OrderedMap<string, string>>, keyMapper(fileName), file, GoStringKey);
   }
@@ -3715,7 +3789,15 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
   let jsonOnlyIncludeMatchers: GoPtr<ReturnType<typeof NewSpecMatcher>> = undefined;
   if ((validatedIncludeSpecs ?? GoSliceMake(0, 0, GoStringValueOps)).length > 0) {
     const files = ReadDirectory(host, basePath, basePath, core.Flatten(supportedExtensionsWithJsonIfResolveJsonModule), validatedExcludeSpecs, validatedIncludeSpecs, UnlimitedDepth);
-    for (const file of files) {
+    for (
+      let __goRangeSlice = files,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (FileExtensionIs(file, ExtensionJson)) {
         if (jsonOnlyIncludeMatchers === undefined) {
           const includes = core.Filter(validatedIncludeSpecs, (include: string): bool => strings.HasSuffix(include, ExtensionJson) as bool);

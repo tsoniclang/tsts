@@ -2,6 +2,8 @@ import type { byte, int } from "../scalars.js";
 import type { GoError, GoSlice } from "../compat.js";
 import { GoNumberValueOps, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "../compat.js";
 import { GoAppend } from "../compat.js";
+import { GoSliceLoad } from "../compat.js";
+
 
 const offset64: bigint = 14695981039346656037n;
 const prime64: bigint = 1099511628211n;
@@ -18,7 +20,15 @@ class fnv64a implements Hash64 {
   private value: bigint = offset64;
 
   Write(p: GoSlice<byte>): [int, GoError] {
-    for (const byteValue of p) {
+    for (
+      let __goRangeSlice = p,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoNumberValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const byteValue = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       this.value ^= BigInt(byteValue & 0xff);
       this.value = (this.value * prime64) & mask64;
     }

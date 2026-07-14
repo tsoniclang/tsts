@@ -374,7 +374,15 @@ export function hasKeyAfterPropsSpread(node: GoPtr<Node>): bool {
     opener = AsJsxElement(node)!.OpeningElement;
   } // otherwise self-closing
   const attrs = Node_Properties(Node_Attributes(opener)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const elem of attrs) {
+  for (
+    let __goRangeSlice = attrs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const elem = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsJsxSpreadAttribute(elem) && (!IsObjectLiteralExpression(Node_Expression(elem)) || (Node_Properties(Node_Expression(elem)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).some((p) => IsSpreadAssignment(p)))) {
       spread = true;
     } else if (spread && IsJsxAttribute(elem) && IsIdentifier(Node_Name(elem)) && Node_Text(Node_Name(elem)) === "key") {
@@ -626,7 +634,15 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
         newStatements = GoSliceAppend(newStatements, s, GoPointerValueOps<Node>());
         return true;
       });
-      for (const e of newStatements) {
+      for (
+        let __goRangeSlice = newStatements,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         statements = JSXTransformer_insertStatementAfterCustomPrologue(receiver, statements, e);
       }
     } else if (IsExternalOrCommonJSModule(file)) {
@@ -635,7 +651,15 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
       OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)!((importSource, importSpecifiersMap) => {
         const sorted = getSortedSpecifiers(importSpecifiersMap);
         let asBindingElems: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-        for (const elem of sorted) {
+        for (
+          let __goRangeSlice = sorted,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const elem = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           asBindingElems = GoSliceAppend(asBindingElems, NewBindingElement(astFactory, undefined, Node_PropertyName(elem), AsImportSpecifier(elem)!.name, undefined), GoPointerValueOps<Node>());
         }
         const s = NewVariableStatement(
@@ -668,7 +692,15 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
         newStatements = GoSliceAppend(newStatements, s, GoPointerValueOps<Node>());
         return true;
       });
-      for (const e of newStatements) {
+      for (
+        let __goRangeSlice = newStatements,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         statements = JSXTransformer_insertStatementAfterCustomPrologue(receiver, statements, e);
       }
     } else {
@@ -853,7 +885,15 @@ export function JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiv
   // For multiple children in the children property array, don't set StartOnNewLine
   // on child elements — the array literal is single-line.
   let results: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const child of nonWhitespaceChildren) {
+  for (
+    let __goRangeSlice = nonWhitespaceChildren,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const res = JSXTransformer_transformJsxChildToExpression(receiver, child as unknown as GoPtr<Node>);
     if (res === undefined) {
       continue;
@@ -1074,7 +1114,15 @@ export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPt
       // as an optimization we try to flatten the first level of spread inline object
       // as if its props would be passed as JSX attributes
       if (IsObjectLiteralExpression(Node_Expression(attr)) && !hasProto(AsObjectLiteralExpression(Node_Expression(attr)))) {
-        for (const prop of Node_Properties(Node_Expression(attr)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = Node_Properties(Node_Expression(attr)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (IsSpreadAssignment(prop)) {
             [expressions, properties] = JSXTransformer_combinePropertiesIntoNewExpression(receiver, expressions, properties);
             expressions = GoSliceAppend(expressions, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(Node_Expression(prop)), GoPointerValueOps<Node>());
@@ -1159,7 +1207,15 @@ export function JSXTransformer_combinePropertiesIntoNewExpression(receiver: GoPt
  */
 export function JSXTransformer_transformJsxAttributesToProps(receiver: GoPtr<JSXTransformer>, attrs: GoSlice<GoPtr<Node>>, childrenProp: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   let props: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const attr of attrs) {
+  for (
+    let __goRangeSlice = attrs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const attr = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (attr!.Kind === KindJsxSpreadAttribute) {
       const res = JSXTransformer_transformJsxSpreadAttributesToProps(receiver, AsJsxSpreadAttribute(attr));
       props = GoSliceAppendSlice(props, res, GoPointerValueOps<Node>());
@@ -1187,7 +1243,15 @@ export function JSXTransformer_transformJsxAttributesToProps(receiver: GoPtr<JSX
  * }
  */
 export function hasProto(obj: GoPtr<ObjectLiteralExpression>): bool {
-  for (const p of obj!.Properties!.Nodes) {
+  for (
+    let __goRangeSlice = obj!.Properties!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsPropertyAssignment(p) && (IsStringLiteral(Node_Name(p)) || IsIdentifier(Node_Name(p))) && Node_Text(Node_Name(p)) === "__proto__") {
       return true;
     }
@@ -1717,7 +1781,15 @@ export function JSXTransformer_visitJsxOpeningLikeElementCreateElement(receiver:
 
   let newChildren: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (children !== undefined && children!.Nodes.length > 0) {
-    for (const c of children!.Nodes) {
+    for (
+      let __goRangeSlice = children!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const c = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const res = JSXTransformer_transformJsxChildToExpression(receiver, c as unknown as GoPtr<Node>);
       if (res !== undefined) {
         newChildren = GoSliceAppend(newChildren, res, GoPointerValueOps<Node>());
@@ -1727,7 +1799,15 @@ export function JSXTransformer_visitJsxOpeningLikeElementCreateElement(receiver:
 
   // Add StartOnNewLine flag only if there are multiple actual children (after filtering)
   if (newChildren.length > 1) {
-    for (const child of newChildren) {
+    for (
+      let __goRangeSlice = newChildren,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       EmitContext_AddEmitFlags(emitContext, child, EFStartOnNewLine);
     }
   }
@@ -1807,7 +1887,15 @@ export function JSXTransformer_visitJsxOpeningFragmentCreateElement(receiver: Go
 
   let newChildren: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (children !== undefined && children!.Nodes.length > 0) {
-    for (const c of children!.Nodes) {
+    for (
+      let __goRangeSlice = children!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const c = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const res = JSXTransformer_transformJsxChildToExpression(receiver, c as unknown as GoPtr<Node>);
       if (res !== undefined) {
         newChildren = GoSliceAppend(newChildren, res, GoPointerValueOps<Node>());
@@ -1817,7 +1905,15 @@ export function JSXTransformer_visitJsxOpeningFragmentCreateElement(receiver: Go
 
   // Add StartOnNewLine flag only if there are multiple actual children (after filtering)
   if (newChildren.length > 1) {
-    for (const child of newChildren) {
+    for (
+      let __goRangeSlice = newChildren,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       EmitContext_AddEmitFlags(emitContext, child, EFStartOnNewLine);
     }
   }

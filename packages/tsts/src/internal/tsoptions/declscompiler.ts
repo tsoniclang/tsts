@@ -23,6 +23,8 @@ import type { CommandLineOption } from "./commandlineoption.js";
 
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::OptionsDeclarations","kind":"varGroup","status":"implemented","sigHash":"912cdb64341c873c2ee0c3f3e6adf1494aa90d4e392f3fff05a19d380c3772b1"}
  *
@@ -2568,7 +2570,15 @@ export function CompilerOptionsAffectEmit(oldOptions: GoPtr<CompilerOptions>, ne
 
 function buildCompilerOptionFieldMap(): ReadonlyMap<string, GoPtr<CommandLineOption>> {
   const result = new globalThis.Map<string, GoPtr<CommandLineOption>>();
-  for (const option of OptionsDeclarations) {
+  for (
+    let __goRangeSlice = OptionsDeclarations,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<CommandLineOption>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const option = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (option !== undefined) {
       result.set(compilerOptionFieldName(option.Name), option);
     }

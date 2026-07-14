@@ -7,6 +7,8 @@ import type { CommandLineOption } from "./commandlineoption.js";
 import { OptionsDeclarations } from "./declscompiler.js";
 import { BuildOpts } from "./declsbuild.js";
 import { OptionsForWatch } from "./declswatch.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/namemap.go::varGroup::CompilerNameMap+BuildNameMap+WatchNameMap","kind":"varGroup","status":"implemented","sigHash":"cc07ed9311c52890118863da1f0683cdbf213855750b637b726e55f324b52e48"}
@@ -47,7 +49,15 @@ export let WatchNameMap: GoPtr<NameMap> = undefined;
 export function GetNameMapFromList(optDecls: GoSlice<GoPtr<CommandLineOption>>): GoPtr<NameMap> {
   const optionsNames = NewOrderedMapWithSizeHint<string, GoPtr<CommandLineOption>>(optDecls.length, GoStringKey);
   const shortOptionNames: GoMap<string, string> = new globalThis.Map<string, string>();
-  for (const option of optDecls) {
+  for (
+    let __goRangeSlice = optDecls,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<CommandLineOption>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const option = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     OrderedMap_Set(optionsNames, strings.ToLower(option!.Name), option, GoStringKey);
     if (option!.ShortName !== "") {
       shortOptionNames.set(option!.ShortName, option!.Name);

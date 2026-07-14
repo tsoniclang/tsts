@@ -564,7 +564,15 @@ export function convertBindingElementToObjectAssignmentPattern(emitContext: GoPt
   const af = emitContext!.Factory!.__tsgoEmbedded0!;
   const elementNode = element as unknown as GoPtr<Node>;
   let properties: GoSlice<GoPtr<ObjectLiteralElement>> = GoNilSlice();
-  for (const child of element!.Elements!.Nodes) {
+  for (
+    let __goRangeSlice = element!.Elements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     properties = GoSliceAppend(properties, convertBindingElementToObjectAssignmentElement(emitContext, AsBindingElement(child)), GoPointerValueOps<Node>());
   }
   const propertyList: GoPtr<NodeList> = NodeFactory_NewNodeList(af, properties as GoSlice<GoPtr<Node>>);
@@ -596,7 +604,15 @@ export function convertBindingElementToArrayAssignmentPattern(emitContext: GoPtr
   const af = emitContext!.Factory!.__tsgoEmbedded0!;
   const elementNode = element as unknown as GoPtr<Node>;
   let elements: GoSlice<GoPtr<Expression>> = GoNilSlice();
-  for (const child of element!.Elements!.Nodes) {
+  for (
+    let __goRangeSlice = element!.Elements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     elements = GoSliceAppend(elements, convertBindingElementToArrayAssignmentElement(emitContext, AsBindingElement(child)), GoPointerValueOps<Node>());
   }
   const elementList: GoPtr<NodeList> = NodeFactory_NewNodeList(af, elements as GoSlice<GoPtr<Node>>);

@@ -502,13 +502,29 @@ export function RuntimeSyntaxTransformer_recordDeclarationInScope(receiver: GoPt
       RuntimeSyntaxTransformer_recordDeclarationInScope(receiver, AsVariableStatement(node)!.DeclarationList);
       return;
     case KindVariableDeclarationList:
-      for (const decl of AsVariableDeclarationList(node)!.Declarations!.Nodes!) {
+      for (
+        let __goRangeSlice = AsVariableDeclarationList(node)!.Declarations!.Nodes!,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         RuntimeSyntaxTransformer_recordDeclarationInScope(receiver, decl);
       }
       return;
     case KindArrayBindingPattern:
     case KindObjectBindingPattern:
-      for (const element of Node_Elements(node)!) {
+      for (
+        let __goRangeSlice = Node_Elements(node)!,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         RuntimeSyntaxTransformer_recordDeclarationInScope(receiver, element);
       }
       return;
@@ -1128,7 +1144,15 @@ export function RuntimeSyntaxTransformer_visitVariableStatement(receiver: GoPtr<
   if (RuntimeSyntaxTransformer_isExportOfNamespace(receiver, Node_AsNode(node))) {
     let expressions: GoSlice<GoPtr<Expression>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
     const declList = AsVariableDeclarationList(node!.DeclarationList);
-    for (const declaration of declList!.Declarations!.Nodes!) {
+    for (
+      let __goRangeSlice = declList!.Declarations!.Nodes!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const v = AsVariableDeclaration(declaration);
       if (v!.Initializer === undefined) {
         continue;
@@ -1241,7 +1265,15 @@ export function RuntimeSyntaxTransformer_visitFunctionDeclaration(receiver: GoPt
 export function RuntimeSyntaxTransformer_getParameterProperties(receiver: GoPtr<RuntimeSyntaxTransformer>, constructor_: GoPtr<Node>): GoSlice<GoPtr<ParameterDeclaration>> {
   let parameterProperties: GoSlice<GoPtr<ParameterDeclaration>> = GoNilSlice();
   if (constructor_ !== undefined) {
-    for (const parameter of Node_Parameters(constructor_)) {
+    for (
+      let __goRangeSlice = Node_Parameters(constructor_),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsParameterPropertyDeclaration(parameter, constructor_)) {
         parameterProperties = GoSliceAppend(parameterProperties, AsParameterDeclaration(parameter), GoPointerValueOps<ParameterDeclaration>());
       }
@@ -1281,7 +1313,15 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
 
   if (parameterProperties.length > 0) {
     let newMembers: GoSlice<GoPtr<Node>> = GoNilSlice();
-    for (const parameter of parameterProperties) {
+    for (
+      let __goRangeSlice = parameterProperties,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<ParameterDeclaration>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
         const parameterProperty = NewPropertyDeclaration(
           astFactory,
@@ -1336,7 +1376,15 @@ export function RuntimeSyntaxTransformer_visitClassExpression(receiver: GoPtr<Ru
 
   if (parameterProperties.length > 0) {
     let newMembers: GoSlice<GoPtr<Node>> = GoNilSlice();
-    for (const parameter of parameterProperties) {
+    for (
+      let __goRangeSlice = parameterProperties,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<ParameterDeclaration>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
         const parameterProperty = NewPropertyDeclaration(
           astFactory,
@@ -1402,7 +1450,15 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
 
   // Transform parameters into property assignments
   let parameterPropertyAssignments: GoSlice<GoPtr<Statement>> = GoNilSlice();
-  for (const parameter of parameterProperties) {
+  for (
+    let __goRangeSlice = parameterProperties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<ParameterDeclaration>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
       const innerFactory = factory.__tsgoEmbedded0!;
       const paramName = Node_Name(Node_AsNode(parameter));

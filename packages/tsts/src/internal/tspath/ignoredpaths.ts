@@ -2,6 +2,8 @@ import type { bool } from "../../go/scalars.js";
 import type { GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -34,7 +36,15 @@ export let ignoredPaths: GoSlice<string> = GoSliceBuild(3, 3, GoStringValueOps, 
  * }
  */
 export function ContainsIgnoredPath(path: string): bool {
-  for (const pattern of ignoredPaths) {
+  for (
+    let __goRangeSlice = ignoredPaths,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const pattern = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (strings.Contains(path, pattern)) {
       return true;
     }

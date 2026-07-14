@@ -48,6 +48,8 @@ import { PseudoBigInt_String } from "../jsnum/pseudobigint.js";
 import { FromString, Number_String } from "../jsnum/string.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Result","kind":"type","status":"implemented","sigHash":"cd145909ea83e547879d8fed4cb79259fcdd3e81aa150c04e711b7e67dad21c0"}
  *
@@ -337,7 +339,15 @@ export function evaluateTemplateExpression(expr: GoPtr<Node>, location: GoPtr<No
   sb += Node_Text(templateExpression.Head);
   let resolvedOtherFiles: bool = false;
   let hasExternalReferences: bool = false;
-  for (const span of templateExpression.TemplateSpans!.Nodes) {
+  for (
+    let __goRangeSlice = templateExpression.TemplateSpans!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const span = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const templateSpan = AsTemplateSpan(span)!;
     const spanResult: Result = evaluate!(templateSpan.Expression, location);
     if (spanResult.Value === undefined) {

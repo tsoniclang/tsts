@@ -447,7 +447,15 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
       const fileLocals = Node_Locals(file as GoPtr<Node>);
       const fileGlobalThisSymbol = fileLocals.get("globalThis");
       if (fileGlobalThisSymbol !== undefined) {
-        for (const declaration of fileGlobalThisSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = fileGlobalThisSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           Checker_addDiagnostic(receiver, createDiagnosticForNode(declaration, Declaration_name_conflicts_with_built_in_global_identifier_0, "globalThis"));
         }
       }
@@ -471,7 +479,15 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
       }
     }
   }
-  for (const list of augmentations) {
+  for (
+    let __goRangeSlice = augmentations,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoSliceValueOps<GoPtr<Node>>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const list = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     for (const augmentation of list) {
       if (IsGlobalScopeAugmentation(augmentation!.Parent)) {
         Checker_mergeModuleAugmentation(receiver, augmentation);
@@ -506,10 +522,26 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
   }));
   receiver!.globalThisType = Checker_getGlobalType(receiver, "ThisType", 1, false);
   // Now merge global ambient module declarations
-  for (const symbol_ of ambientModuleSymbols) {
+  for (
+    let __goRangeSlice = ambientModuleSymbols,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const symbol_ = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     Checker_mergeGlobalSymbol(receiver, symbol_);
   }
-  for (const list of augmentations) {
+  for (
+    let __goRangeSlice = augmentations,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoSliceValueOps<GoPtr<Node>>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const list = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     for (const augmentation of list) {
       if (!IsGlobalScopeAugmentation(augmentation!.Parent)) {
         Checker_mergeModuleAugmentation(receiver, augmentation);
@@ -544,7 +576,15 @@ export function Checker_symbolReferenced(receiver: GoPtr<Checker>, symbol_: GoPt
  * }
  */
 export function Checker_checkSourceElements(receiver: GoPtr<Checker>, nodes: GoSlice<GoPtr<Node>>): void {
-  for (const node of nodes) {
+  for (
+    let __goRangeSlice = nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Checker_isCanceled(receiver)) {
       break;
     }
@@ -729,7 +769,15 @@ export function Checker_checkSourceElementWorker(receiver: GoPtr<Checker>, node:
     Checker_checkJSDocComments(receiver, jsdoc);
     const tags = AsJSDoc(jsdoc)!.Tags;
     if (tags !== undefined) {
-      for (const tag of tags.Nodes) {
+      for (
+        let __goRangeSlice = tags.Nodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const tag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Checker_checkJSDocComments(receiver, tag);
       }
     }
@@ -1036,7 +1084,15 @@ export function Checker_reportUnusedBindingElements(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checker>): void {
-  for (const node of receiver!.renamedBindingElementsInTypes) {
+  for (
+    let __goRangeSlice = receiver!.renamedBindingElementsInTypes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const links = LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node), goZeroSymbolReferenceLinks, goSymbolPointerKey)!.v;
     if ((links!.referenceKinds ?? SymbolFlagsNone) === 0) {
       const wrappingDeclaration = WalkUpBindingElementsAndPatterns(node);
@@ -1125,7 +1181,15 @@ export function Checker_checkWeakMapSetCollision(receiver: GoPtr<Checker>, node:
 export function Checker_checkReflectCollision(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   let hasCollision: bool = false;
   if (IsClassExpression(node)) {
-    for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if ((LinkStore_Get(receiver!.nodeLinks, member, goZeroNodeLinks, goNodePointerKey)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
         hasCollision = true;
         break;

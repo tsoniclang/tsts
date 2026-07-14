@@ -18,6 +18,8 @@ import { TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 import { FailBadSyntaxKind } from "../debug/debug.js";
 import type { LanguageVariant } from "../core/languagevariant.js";
 import { IsIdentifierPartEx, IsIdentifierStart, SkipTrivia, textToKeyword } from "./scanner.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `name[i:]` operate on byte offsets. We mirror that contract by
@@ -162,7 +164,15 @@ export function GetTextOfJSDocComment(comment: GoPtr<NodeList>): string {
     return "";
   }
   const b = new Builder();
-  for (const n of comment!.Nodes) {
+  for (
+    let __goRangeSlice = comment!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const n = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     switch (n!.Kind) {
       case KindJSDocText:
         b.WriteString(Node_Text(n));

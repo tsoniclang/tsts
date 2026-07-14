@@ -28,6 +28,8 @@ import type { GoFunc, GoInterface, GoPointerConstraint, GoRef } from "../../go/c
 import { GoNumberValueOps, GoRefValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
 import { GoEmptySlice } from "../../go/compat.js";
+import { GoSliceValueOps } from "../../go/compat.js";
+
 
 
 
@@ -1211,7 +1213,15 @@ export function UTF16Len(s: string): UTF16Offset {
  */
 export function Flatten<T>(array: GoSlice<GoSlice<T>>): GoSlice<T> {
   let result: GoSlice<T> = GoEmptySlice<T>();
-  for (const subArray of array) {
+  for (
+    let __goRangeSlice = array,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoSliceValueOps<T>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const subArray = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     for (const e of subArray) {
       result = GoAppend(result, e);
     }
@@ -1578,7 +1588,15 @@ export function Identity<T>(t: T): T {
  * }
  */
 export function CheckEachDefined<S>(s: GoSlice<GoRef<S>>, msg: string): GoSlice<GoRef<S>> {
-  for (const value of s) {
+  for (
+    let __goRangeSlice = s,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoRefValueOps<S>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const value = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (value === undefined) {
       throw new globalThis.Error(msg);
     }

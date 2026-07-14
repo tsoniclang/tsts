@@ -4,6 +4,8 @@ import * as strings from "../../go/strings.js";
 import * as slices from "../../go/slices.js";
 import { GetAnyExtensionFromPath, GetBaseFileName, FileExtensionIs } from "./path.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore, GoSliceValueOps, GoStringValueOps } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -202,7 +204,15 @@ export let extensionsToRemove: GoSlice<string> = GoSliceBuild(12, 12, GoStringVa
  */
 export function RemoveFileExtension(path: string): string {
   // Remove any known extension even if it has more than one dot
-  for (const ext of extensionsToRemove) {
+  for (
+    let __goRangeSlice = extensionsToRemove,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ext = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (strings.HasSuffix(path, ext)) {
       return path.slice(0, path.length - ext.length);
     }
@@ -225,7 +235,15 @@ export function RemoveFileExtension(path: string): string {
  * }
  */
 export function TryGetExtensionFromPath(p: string): string {
-  for (const ext of extensionsToRemove) {
+  for (
+    let __goRangeSlice = extensionsToRemove,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ext = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (FileExtensionIs(p, ext)) {
       return ext;
     }
@@ -259,7 +277,15 @@ export function RemoveExtension(path: string, extension: string): string {
  * }
  */
 export function FileExtensionIsOneOf(path: string, extensions: GoSlice<string>): bool {
-  for (const ext of extensions) {
+  for (
+    let __goRangeSlice = extensions,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ext = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (FileExtensionIs(path, ext)) {
       return true;
     }
@@ -281,7 +307,15 @@ export function FileExtensionIsOneOf(path: string, extensions: GoSlice<string>):
  * }
  */
 export function TryExtractTSExtension(fileName: string): string {
-  for (const ext of supportedTSExtensionsForExtractExtension) {
+  for (
+    let __goRangeSlice = supportedTSExtensionsForExtractExtension,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ext = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (FileExtensionIs(fileName, ext)) {
       return ext;
     }
@@ -383,7 +417,15 @@ export function ExtensionIsOneOf(ext: string, extensions: GoSlice<string>): bool
  */
 export function GetDeclarationFileExtension(fileName: string): string {
   const base = GetBaseFileName(fileName);
-  for (const ext of SupportedDeclarationExtensions) {
+  for (
+    let __goRangeSlice = SupportedDeclarationExtensions,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ext = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (strings.HasSuffix(base, ext)) {
       return ext;
     }

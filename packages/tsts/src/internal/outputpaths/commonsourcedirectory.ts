@@ -60,7 +60,15 @@ import { GoSliceLoad, GoStringValueOps } from "../../go/compat.js";
  */
 export function computeCommonSourceDirectoryOfFilenames(fileNames: GoSlice<string>, currentDirectory: string, useCaseSensitiveFileNames: bool): string {
   let commonPathComponents: GoSlice<string> = GoNilSlice<string>();
-  for (const sourceFile of fileNames) {
+  for (
+    let __goRangeSlice = fileNames,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sourceFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const allComponents = GetNormalizedPathComponents(sourceFile, currentDirectory);
     const sourcePathComponents = allComponents.slice(0, allComponents.length - 1);
 

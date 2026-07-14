@@ -1017,7 +1017,15 @@ export function BindingOrAssignmentElementAssignsToName(element: GoPtr<Node>, na
  */
 export function bindingOrAssignmentPatternAssignsToName(pattern: GoPtr<Node>, name: string): bool {
   const elements = GetElementsOfBindingOrAssignmentPattern(pattern);
-  for (const element of elements) {
+  for (
+    let __goRangeSlice = elements,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (BindingOrAssignmentElementAssignsToName(element, name)) {
       return true;
     }

@@ -994,7 +994,15 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
     offset = dir.length + 1;
   }
 
-  for (const dirToCreate of toCreate) {
+  for (
+    let __goRangeSlice = toCreate,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const dirToCreate = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const dirFile: MapFile = {
       Data: GoZeroSlice<byte>(),
       Mode: ModeDir | (perm & ~umask),

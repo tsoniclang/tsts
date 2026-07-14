@@ -13,6 +13,8 @@ import {
 } from "../tspath/path.js";
 import { IsImplicitGlob, NewSpecMatcher, SpecMatcher_MatchString, UsageExclude } from "../vfs/vfsmatch/vfsmatch.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -159,7 +161,15 @@ export function getWildcardDirectories(
 
     // Remove any subpaths under an existing recursively watched directory
     for (const path of [...wildcardDirectories.keys()]) {
-      for (const recursiveKey of recursiveKeys) {
+      for (
+        let __goRangeSlice = recursiveKeys,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoStringValueOps,
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const recursiveKey = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const key = toCanonicalKey(path, comparePathsOptions.UseCaseSensitiveFileNames);
         if (key !== recursiveKey && ContainsPath(recursiveKey, key, comparePathsOptions)) {
           wildcardDirectories.delete(path);

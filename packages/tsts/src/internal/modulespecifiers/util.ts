@@ -29,6 +29,8 @@ import { ModuleSpecifierEndingIndex, ModuleSpecifierEndingJsExtension, ModuleSpe
 import type { GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceStore } from "../../go/compat.js";
 import { GoNumberValueOps, GoSliceLoad } from "../../go/compat.js";
+import { GoSliceValueOps } from "../../go/compat.js";
+
 
 
 /**
@@ -122,7 +124,15 @@ export function PathIsBareSpecifier(path: string): bool {
  * }
  */
 export function IsExcludedByRegex(moduleSpecifier: string, excludes: GoSlice<string>): bool {
-  for (const pattern of excludes) {
+  for (
+    let __goRangeSlice = excludes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const pattern = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const re = stringToRegex(pattern);
     if (re === undefined) {
       continue;
@@ -436,7 +446,15 @@ export function tryGetAnyFileFromPath(host: GoInterface<ModuleSpecifierGeneratio
       } as FileExtensionInfo,
     ],
   );
-  for (const exts of extGroups) {
+  for (
+    let __goRangeSlice = extGroups,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoSliceValueOps<string>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const exts = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     for (const e of exts) {
       const fullPath = path + e;
       if (host!.FileExists(GetNormalizedAbsolutePath(fullPath, host!.GetCurrentDirectory()))) {
@@ -464,7 +482,15 @@ export function tryGetAnyFileFromPath(host: GoInterface<ModuleSpecifierGeneratio
  */
 export function getPathsRelativeToRootDirs(path: string, rootDirs: GoSlice<string>, useCaseSensitiveFileNames: bool): GoSlice<string> {
   let results = GoNilSlice<string>();
-  for (const rootDir of rootDirs) {
+  for (
+    let __goRangeSlice = rootDirs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const rootDir = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const relativePath = getRelativePathIfInSameVolume(path, rootDir, useCaseSensitiveFileNames);
     if (!isPathRelativeToParent(relativePath)) {
       results = GoSliceAppend(results, relativePath, GoStringValueOps);

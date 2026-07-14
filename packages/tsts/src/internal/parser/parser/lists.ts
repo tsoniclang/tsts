@@ -116,6 +116,8 @@ import {
 
 import type { GoFunc } from "../../../go/compat.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::isMissingNodeList","kind":"func","status":"implemented","sigHash":"ef01f56717a6fef68fa90b7c8e0d0661d60d9b4e006200f3148352792a8db128"}
@@ -175,7 +177,15 @@ export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingCont
     if (Parser_isListElement(receiver, kind, false /*inErrorRecovery*/)) {
       const elt = parseElement!(receiver, list.length);
       if (receiver!.reparseList.length !== 0) {
-        for (const e of receiver!.reparseList) {
+        for (
+          let __goRangeSlice = receiver!.reparseList,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           // Propagate @typedef type alias declarations outwards to a context that permits them.
           if ((IsJSTypeAliasDeclaration(e) || IsJSImportDeclaration(e)) && kind !== PCSourceElements && kind !== PCBlockStatements) {
             outerReparseList = GoSliceAppend(outerReparseList, e, GoPointerValueOps<Node>());

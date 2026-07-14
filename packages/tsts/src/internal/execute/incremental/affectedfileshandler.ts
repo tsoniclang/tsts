@@ -187,7 +187,15 @@ export function affectedFilesHandler_removeSemanticDiagnosticsOf(receiver: GoPtr
  */
 export function affectedFilesHandler_removeDiagnosticsOfLibraryFiles(receiver: GoPtr<affectedFilesHandler>): void {
   receiver!.cleanedDiagnosticsOfLibFiles.Do((): void => {
-    for (const file of incremental_Program_GetSourceFiles(receiver!.program)) {
+    for (
+      let __goRangeSlice = incremental_Program_GetSourceFiles(receiver!.program),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (
         compiler_Program_IsSourceFileDefaultLibrary(receiver!.program!.program, SourceFile_Path(file)) &&
         !compiler_Program_SkipTypeChecking(receiver!.program!.program, file, true as bool)
@@ -704,7 +712,15 @@ export function affectedFilesHandler_handleDtsMayChangeOfGlobalScope(receiver: G
   if (!ok || !info!.affectsGlobalScope) {
     return false as bool;
   }
-  for (const file of snapshot_getAllFilesExcludingDefaultLibraryFile(receiver!.program!.snapshot, receiver!.program!.program, undefined)) {
+  for (
+    let __goRangeSlice = snapshot_getAllFilesExcludingDefaultLibraryFile(receiver!.program!.snapshot, receiver!.program!.program, undefined),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     affectedFilesHandler_handleDtsMayChangeOf(receiver, dtsMayChange, SourceFile_Path(file), invalidateJsFiles);
   }
   affectedFilesHandler_removeDiagnosticsOfLibraryFiles(receiver);
@@ -888,7 +904,15 @@ export function collectAllAffectedFiles(ctx: GoInterface<Context>, program: GoPt
     program!.snapshot!.changedFilesSet as SyncSet<Path>,
     (file: Path): bool => {
       wg!.Queue((): void => {
-        for (const affectedFile of affectedFilesHandler_getFilesAffectedBy(handler, file)) {
+        for (
+          let __goRangeSlice = affectedFilesHandler_getFilesAffectedBy(handler, file),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const affectedFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           SyncSet_Add<GoPtr<SourceFile>>(result, affectedFile, sourceFileKey);
         }
       });

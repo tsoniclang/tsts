@@ -23,6 +23,8 @@ import { NodeFlagsPossiblyContainsDynamicImport } from "../ast/generated/flags.j
 import { TSFalse, TSTrue, TSUnknown } from "../core/tristate.js";
 import { ExclusivelyPrefixedNodeCoreModules, UnprefixedNodeCoreModules } from "../core/nodemodules.js";
 import { IsExternalModuleNameRelative } from "../tspath/path.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/references.go::func::collectExternalModuleReferences","kind":"func","status":"implemented","sigHash":"4d8d023f7e1626f55ec19bf881edfdc02e296caac96c92a0eaffc70e23fec3b7"}
@@ -43,7 +45,15 @@ import { IsExternalModuleNameRelative } from "../tspath/path.js";
  */
 export function collectExternalModuleReferences(file: GoPtr<SourceFile>): void {
   const sf = AsSourceFile(file)!;
-  for (const node of sf.Statements!.Nodes) {
+  for (
+    let __goRangeSlice = sf.Statements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     collectModuleReferences(file, node as GoPtr<Statement>, false /*inAmbientModule*/);
   }
 
@@ -152,7 +162,15 @@ export function collectModuleReferences(file: GoPtr<SourceFile>, node: GoPtr<Sta
       if (Node_Body(node) !== undefined) {
         const stmts = Node_Statements(Node_Body(node));
         if (stmts !== undefined) {
-          for (const statement of stmts) {
+          for (
+            let __goRangeSlice = stmts,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Node>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             collectModuleReferences(file, statement as GoPtr<Statement>, true /*inAmbientModule*/);
           }
         }

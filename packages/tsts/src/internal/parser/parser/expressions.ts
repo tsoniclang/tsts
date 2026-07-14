@@ -304,7 +304,15 @@ import { GoNumberValueOps, GoSliceLoad } from "../../../go/compat.js";
  * }
  */
 export function Parser_validateJsonObjectLiteral(receiver: GoPtr<Parser>, sourceFile: GoPtr<SourceFile>, node: GoPtr<ObjectLiteralExpression>): void {
-  for (const element of node!.Properties!.Nodes!) {
+  for (
+    let __goRangeSlice = node!.Properties!.Nodes!,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (element!.Kind !== KindPropertyAssignment) {
       receiver!.diagnostics = GoSliceAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, element), Property_assignment_expected), GoPointerValueOps<Diagnostic>());
       continue;
@@ -505,7 +513,15 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
   }
 
   const result = NodeFactory_NewSourceFile(receiver!.factory, SourceFile_ParseOptions(sourceFile), receiver!.sourceText, Parser_newNodeList(receiver, sourceFile!.Statements!.Loc, statements), sourceFile!.EndOfFileToken);
-  for (const s of statements) {
+  for (
+    let __goRangeSlice = statements,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     s!.Parent = result;
   }
   return result;
@@ -783,7 +799,15 @@ export function Parser_parseClassDeclarationOrExpression(receiver: GoPtr<Parser>
     if (heritageClauses !== undefined) {
       for (const clause of heritageClauses.Nodes) {
         if (AsHeritageClause(clause)!.Token === KindExtendsKeyword) {
-          for (const expr of AsHeritageClause(clause)!.Types!.Nodes) {
+          for (
+            let __goRangeSlice = AsHeritageClause(clause)!.Types!.Nodes,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Node>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const expr = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             Parser_checkJSSyntax(receiver, expr);
           }
         }

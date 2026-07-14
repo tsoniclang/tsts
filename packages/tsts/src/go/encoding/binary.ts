@@ -63,7 +63,15 @@ export function Append(buf: GoSlice<byte>, order: ByteOrder, data: int | GoSlice
     out = GoSliceAppendSlice(out, bytes, GoNumberValueOps);
     return [out, undefined];
   }
-  for (const value of data) {
+  for (
+    let __goRangeSlice = data,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoNumberValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const value = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const bytes: GoSlice<byte> = GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
       GoSliceStore(__goSliceLiteral, 0, 0 as byte, GoNumberValueOps);
       GoSliceStore(__goSliceLiteral, 1, 0 as byte, GoNumberValueOps);

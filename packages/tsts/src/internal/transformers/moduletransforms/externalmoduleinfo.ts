@@ -38,6 +38,8 @@ import { IsLocalName } from "../utilities.js";
 import { CompareStringsCaseSensitive } from "../../stringutil/compare.js";
 
 import type { GoInterface, GoMapKeyDescriptor } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 const declarationPointerKey: GoMapKeyDescriptor<GoPtr<Declaration>> = GoPointerKey<Declaration>();
 const functionDeclarationNodePointerKey: GoMapKeyDescriptor<GoPtr<FunctionDeclarationNode>> = GoPointerKey<FunctionDeclarationNode>();
@@ -335,7 +337,15 @@ export function externalModuleInfoCollector_collect(receiver: GoPtr<externalModu
       case KindVariableStatement: {
         const n = AsVariableStatement(node);
         if (HasSyntacticModifier(node, ModifierFlagsExport)) {
-          for (const decl of AsVariableDeclarationList(n!.DeclarationList)!.Declarations!.Nodes) {
+          for (
+            let __goRangeSlice = AsVariableDeclarationList(n!.DeclarationList)!.Declarations!.Nodes,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Node>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             externalModuleInfoCollector_collectExportedVariableInfo(receiver, decl);
           }
         }
@@ -472,7 +482,15 @@ export function externalModuleInfoCollector_addExportedName(receiver: GoPtr<exte
 export function externalModuleInfoCollector_addExportedNamesForExportDeclaration(receiver: GoPtr<externalModuleInfoCollector>, node: GoPtr<ExportDeclaration>): void {
   const elements = Node_Elements(node!.ExportClause);
   if (elements === undefined) return;
-  for (const specifier of elements) {
+  for (
+    let __goRangeSlice = elements,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const specifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const specifierName = Node_Name(specifier);
     const specifierNameText = Node_Text(specifierName);
     if (externalModuleInfoCollector_addUniqueExport(receiver, specifierNameText)) {
@@ -585,7 +603,15 @@ export function externalModuleInfoCollector_collectExportedVariableInfo(receiver
   if (IsBindingPattern(declName)) {
     const elements = Node_Elements(declName);
     if (elements !== undefined) {
-      for (const element of elements) {
+      for (
+        let __goRangeSlice = elements,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const e = AsBindingElement(element);
         if (e!.name !== undefined) {
           externalModuleInfoCollector_collectExportedVariableInfo(receiver, element);
@@ -696,7 +722,15 @@ export function createExternalHelpersImportDeclarationIfNeeded(emitContext: GoPt
       // When we emit as an ES module, generate an `import` declaration that uses named imports for helpers.
       // If we cannot determine the implied module kind under `module: preserve` we assume ESM.
       let helperNames: GoSlice<string> = GoNilSlice();
-      for (const helper of helpers) {
+      for (
+        let __goRangeSlice = helpers,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<EmitHelper>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const helper = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const importName = helper!.ImportName;
         if (importName.length > 0) {
           helperNames = AppendIfUnique(helperNames, importName, GoEqualStrict);
@@ -751,7 +785,15 @@ export function createExternalHelpersImportDeclarationIfNeeded(emitContext: GoPt
  */
 export function getImportedHelpers(emitContext: GoPtr<EmitContext>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<EmitHelper>> {
   let helpers: GoSlice<GoPtr<EmitHelper>> = GoNilSlice();
-  for (const helper of EmitContext_GetEmitHelpers(emitContext, Node_AsNode(sourceFile))) {
+  for (
+    let __goRangeSlice = EmitContext_GetEmitHelpers(emitContext, Node_AsNode(sourceFile)),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<EmitHelper>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const helper = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!helper!.Scoped) {
       helpers = GoSliceAppend(helpers, helper, GoPointerValueOps<EmitHelper>());
     }
@@ -884,7 +926,15 @@ export function getImportNeedsImportStarHelper(node: GoPtr<ImportDeclaration>): 
   }
   const namedImports = AsNamedImports(bindings);
   let defaultRefCount = 0;
-  for (const binding of namedImports!.Elements!.Nodes) {
+  for (
+    let __goRangeSlice = namedImports!.Elements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const binding = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (isNamedDefaultReference(binding)) {
       defaultRefCount++;
     }

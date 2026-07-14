@@ -538,7 +538,15 @@ export function Checker_GetAllPossiblePropertiesOfTypes(receiver: GoPtr<Checker>
   const props: SymbolTable = new globalThis.Map();
   for (const memberType of types) {
     const augmentedProps = Checker_getAugmentedPropertiesOfType(receiver, memberType);
-    for (const p of augmentedProps) {
+    for (
+      let __goRangeSlice = augmentedProps,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Symbol>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!props.has(p!.Name)) {
         const prop = Checker_createUnionOrIntersectionProperty(receiver, unionType, p!.Name, false /*skipObjectFunctionPropertyAugment*/);
         // May be undefined if the property is private
@@ -712,7 +720,15 @@ export function Checker_getAugmentedPropertiesOfType(receiver: GoPtr<Checker>, t
     propsByName = new globalThis.Map();
   }
   if (functionType !== undefined) {
-    for (const p of Checker_getPropertiesOfType(receiver, functionType)) {
+    for (
+      let __goRangeSlice = Checker_getPropertiesOfType(receiver, functionType),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Symbol>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!propsByName.has(p!.Name)) {
         propsByName.set(p!.Name, p);
       }
@@ -987,7 +1003,15 @@ export function Checker_GetRootSymbols(receiver: GoPtr<Checker>, symbol_: GoPtr<
     });
   }
   let result: GoSlice<GoPtr<Symbol>> = GoNilSlice();
-  for (const root of roots) {
+  for (
+    let __goRangeSlice = roots,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const root = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     result = GoSliceAppendSlice(result, Checker_GetRootSymbols(receiver, root), GoPointerValueOps<Symbol>());
   }
   return result;
@@ -1326,7 +1350,15 @@ export function Checker_IsDeclarationUsed(receiver: GoPtr<Checker>, sourceFile: 
  */
 export function Checker_IsSymbolReferencedInFile(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>, definition: GoPtr<Identifier>, symbol_: GoPtr<Symbol>): bool {
   const identifierText = definition!.Text;
-  for (const token of getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile as unknown as GoPtr<Node>)) {
+  for (
+    let __goRangeSlice = getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile as unknown as GoPtr<Node>),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const token = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!IsIdentifier(token)) {
       continue;
     }
@@ -1398,7 +1430,15 @@ export function Checker_IsSymbolReferencedInFile(receiver: GoPtr<Checker>, sourc
 export function Checker_GetReferencesToSymbolInFile(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
   const identifierText = symbol_!.Name;
   let result: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const token of getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile as unknown as GoPtr<Node>)) {
+  for (
+    let __goRangeSlice = getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile as unknown as GoPtr<Node>),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const token = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!IsIdentifier(token)) {
       continue;
     }
@@ -1683,7 +1723,15 @@ export function Checker_getUninstantiatedSignatures(receiver: GoPtr<Checker>, no
  */
 export function Checker_getTypeParameterConstraintForPositionAcrossSignatures(receiver: GoPtr<Checker>, signatures: GoSlice<GoPtr<Signature>>, position: int): GoPtr<Type> {
   let relevantConstraints: GoSlice<GoPtr<Type>> = GoNilSlice();
-  for (const signature of signatures) {
+  for (
+    let __goRangeSlice = signatures,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const signature = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (position >= signature!.typeParameters!.length) {
       continue;
     }
@@ -2110,7 +2158,15 @@ export function Checker_GetCandidateSignaturesForStringLiteralCompletions(receiv
     return inferenceCandidates;
   });
 
-  for (const candidate of otherCandidates) {
+  for (
+    let __goRangeSlice = otherCandidates,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const candidate = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (candidatesSet.has(candidate)) {
       continue;
     }
@@ -2526,7 +2582,15 @@ export function Checker_IsLibSymbolForHoverVerbosity(receiver: GoPtr<Checker>, s
   if (symbol_ === undefined) {
     return false;
   }
-  for (const decl of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const sf = GetSourceFileOfNode(decl);
     if (sf !== undefined && receiver!.program!.IsSourceFileDefaultLibrary(SourceFile_Path(sf))) {
       return true;

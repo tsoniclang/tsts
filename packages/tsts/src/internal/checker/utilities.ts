@@ -1074,7 +1074,15 @@ export function createSymbolTable(symbols: GoSlice<GoPtr<Symbol>>): SymbolTable 
     return GoNilMap<string, GoPtr<Symbol>>();
   }
   const result: SymbolTable = new globalThis.Map<string, GoPtr<Symbol>>();
-  for (const symbol of symbols) {
+  for (
+    let __goRangeSlice = symbols,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const symbol = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     result.set(symbol!.Name, symbol);
   }
   return result;

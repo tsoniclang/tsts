@@ -706,7 +706,15 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
   if (source === target && (source!.flags & TypeFlagsUnionOrIntersection) !== 0) {
     // When source and target are the same union or intersection type, just relate each constituent
     // type to itself.
-    for (const t of Type_Types(source)) {
+    for (
+      let __goRangeSlice = Type_Types(source),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       Checker_inferFromTypes(c, state, t, t);
     }
     return;
@@ -862,7 +870,15 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
     Checker_inferToMultipleTypes(c, state, source, Type_Types(target), target!.flags);
   } else if ((source!.flags & TypeFlagsUnion) !== 0) {
     // Source is a union or intersection type, infer from each constituent type
-    for (const sourceType of Type_Types(source)) {
+    for (
+      let __goRangeSlice = Type_Types(source),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const sourceType = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       Checker_inferFromTypes(c, state, sourceType, target);
     }
   } else if ((target!.flags & TypeFlagsTemplateLiteral) !== 0) {
@@ -1105,7 +1121,15 @@ export function Checker_inferFromMatchingTypes(receiver: GoPtr<Checker>, n: GoPt
   let matchedSources: GoSlice<GoPtr<Type>> = GoNilSlice();
   let matchedTargets: GoSlice<GoPtr<Type>> = GoNilSlice();
   for (const t of targets) {
-    for (const s of sources) {
+    for (
+      let __goRangeSlice = sources,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (matches!(c, s, t)) {
         Checker_inferFromTypes(c, n, s, t);
         matchedSources = core.AppendIfUnique(matchedSources, s, GoEqualStrict<GoPtr<Type>>);
@@ -1232,7 +1256,15 @@ export function Checker_inferToMultipleTypes(receiver: GoPtr<Checker>, n: GoPtr<
     // track whether inferences were made from that particular type to some target with
     // equal priority (i.e. of equal quality) to what we would infer for a naked type
     // parameter.
-    for (const t of targets) {
+    for (
+      let __goRangeSlice = targets,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (getInferenceInfoForType(state, t) !== undefined) {
         nakedTypeVariable = t;
         typeVariableCount++;
@@ -1279,7 +1311,15 @@ export function Checker_inferToMultipleTypes(receiver: GoPtr<Checker>, n: GoPtr<
     // We infer from types that are not naked type variables first so that inferences we
     // make from nested naked type variables and given slightly higher priority by virtue
     // of being first in the candidates array.
-    for (const t of targets) {
+    for (
+      let __goRangeSlice = targets,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (getInferenceInfoForType(state, t) !== undefined) {
         typeVariableCount++;
       } else {
@@ -1292,7 +1332,15 @@ export function Checker_inferToMultipleTypes(receiver: GoPtr<Checker>, n: GoPtr<
   // we want to infer string for T, not Promise<string> | string. For intersection types
   // we only infer to single naked type variables.
   if (((targetFlags & TypeFlagsIntersection) !== 0 && typeVariableCount === 1) || ((targetFlags & TypeFlagsIntersection) === 0 && typeVariableCount > 0)) {
-    for (const t of targets) {
+    for (
+      let __goRangeSlice = targets,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (getInferenceInfoForType(state, t) !== undefined) {
         Checker_inferWithPriority(c, state, source, t, InferencePriorityNakedTypeVariable);
       }
@@ -1321,7 +1369,15 @@ export function Checker_inferToMultipleTypes(receiver: GoPtr<Checker>, n: GoPtr<
  */
 export function getSingleTypeVariableFromIntersectionTypes(n: GoPtr<InferenceState>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
   let typeVariable: GoPtr<Type> = undefined;
-  for (const t of types) {
+  for (
+    let __goRangeSlice = types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((t!.flags & TypeFlagsIntersection) === 0) {
       return undefined;
     }
@@ -1540,7 +1596,15 @@ export function Checker_inferToTemplateLiteralType(receiver: GoPtr<Checker>, n: 
           const constraint = Checker_getBaseConstraintOfType(c, inferenceContext.typeParameter);
           if (constraint !== undefined && !IsTypeAny(constraint)) {
             let allTypeFlags: TypeFlags = TypeFlagsNone;
-            for (const t of Type_Distributed(constraint)) {
+            for (
+              let __goRangeSlice = Type_Distributed(constraint),
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoPointerValueOps<Type>(),
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               allTypeFlags |= t!.flags;
             }
             // If the constraint contains `string`, we don't need to look for a more preferred type
@@ -1645,7 +1709,15 @@ export function Checker_inferToTemplateLiteralType(receiver: GoPtr<Checker>, n: 
                 return left;
               };
               let matchingType: GoPtr<Type> = c.neverType;
-              for (const t of Type_Distributed(constraint)) {
+              for (
+                let __goRangeSlice = Type_Distributed(constraint),
+                  __goRangeLength = __goRangeSlice.length,
+                  __goRangeValueOps = GoPointerValueOps<Type>(),
+                  __goRangeIndex = 0;
+                __goRangeIndex < __goRangeLength;
+                __goRangeIndex++
+              ) {
+                const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
                 matchingType = choose(matchingType, t);
               }
               if ((matchingType!.flags & TypeFlagsNever) === 0) {
@@ -1980,7 +2052,15 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
 export function Checker_inferFromProperties(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>): void {
   const c = receiver!;
   const properties = Checker_getPropertiesOfObjectType(c, target);
-  for (const targetProp of properties) {
+  for (
+    let __goRangeSlice = properties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const targetProp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const sourceProp = Checker_getPropertyOfType(c, source, targetProp!.Name);
     if (sourceProp !== undefined && !core.Some(sourceProp!.Declarations, (node: GoPtr<Node>): bool => Checker_isSkipDirectInferenceNode(c, node))) {
       Checker_inferFromTypes(c, n, Checker_removeMissingType(c, Checker_getTypeOfSymbol(c, sourceProp), (sourceProp!.Flags & SymbolFlagsOptional) !== 0), Checker_removeMissingType(c, Checker_getTypeOfSymbol(c, targetProp), (targetProp!.Flags & SymbolFlagsOptional) !== 0));
@@ -2206,7 +2286,15 @@ export function Checker_inferFromIndexTypes(receiver: GoPtr<Checker>, n: GoPtr<I
   if (Checker_isObjectTypeWithInferableIndex(c, source)) {
     for (const targetInfo of indexInfos) {
       let propTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
-      for (const prop of Checker_getPropertiesOfType(c, source)) {
+      for (
+        let __goRangeSlice = Checker_getPropertiesOfType(c, source),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Symbol>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (Checker_isApplicableIndexType(c, Checker_getLiteralTypeFromProperty(c, prop, TypeFlagsStringOrNumberLiteralOrUnique, false), targetInfo!.keyType)) {
           let propType = Checker_getTypeOfSymbol(c, prop);
           if ((prop!.Flags & SymbolFlagsOptional) !== 0) {
@@ -2215,7 +2303,15 @@ export function Checker_inferFromIndexTypes(receiver: GoPtr<Checker>, n: GoPtr<I
           propTypes = GoSliceAppend(propTypes, propType, GoPointerValueOps<Type>());
         }
       }
-      for (const info of Checker_getIndexInfosOfType(c, source)) {
+      for (
+        let __goRangeSlice = Checker_getIndexInfosOfType(c, source),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (Checker_isApplicableIndexType(c, info!.keyType, targetInfo!.keyType)) {
           propTypes = GoSliceAppend(propTypes, info!.valueType, GoPointerValueOps<Type>());
         }
@@ -2225,7 +2321,15 @@ export function Checker_inferFromIndexTypes(receiver: GoPtr<Checker>, n: GoPtr<I
       }
     }
   }
-  for (const targetInfo of indexInfos) {
+  for (
+    let __goRangeSlice = indexInfos,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const targetInfo = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const sourceInfo = Checker_getApplicableIndexInfo(c, source, targetInfo!.keyType);
     if (sourceInfo !== undefined) {
       Checker_inferWithPriority(c, n, sourceInfo!.valueType, targetInfo!.valueType, priority);
@@ -2294,7 +2398,15 @@ export function Checker_inferToMappedType(receiver: GoPtr<Checker>, n: GoPtr<Inf
   const state = n!;
   if ((constraintType!.flags & TypeFlagsUnion) !== 0 || (constraintType!.flags & TypeFlagsIntersection) !== 0) {
     let result = false;
-    for (const t of Type_Types(constraintType)) {
+    for (
+      let __goRangeSlice = Type_Types(constraintType),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       result = core.OrElse(Checker_inferToMappedType(c, state, source, target, t), result, GoZeroBoolean, GoEqualStrict<bool>);
     }
     return result;
@@ -2623,7 +2735,15 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
   }
   const members: SymbolTable = new Map();
   const limitedConstraint = Checker_getLimitedConstraint(receiver, t);
-  for (const prop of Checker_getPropertiesOfType(receiver, r.source)) {
+  for (
+    let __goRangeSlice = Checker_getPropertiesOfType(receiver, r.source),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (limitedConstraint !== undefined) {
       const propertyNameType = Checker_getLiteralTypeFromProperty(receiver, prop, TypeFlagsStringOrNumberLiteralOrUnique, false);
       if (!Checker_isTypeAssignableTo(receiver, propertyNameType, limitedConstraint)) {
@@ -2881,7 +3001,15 @@ export function Checker_isTypeCloselyMatchedBy(receiver: GoPtr<Checker>, s: GoPt
 export function Checker_createEmptyObjectTypeFromStringLiteral(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
   const c = receiver!;
   const members: SymbolTable = new Map();
-  for (const t2 of Type_Distributed(t)) {
+  for (
+    let __goRangeSlice = Type_Distributed(t),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t2 = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((t2!.flags & TypeFlagsStringLiteral) === 0) {
       continue;
     }
@@ -3478,7 +3606,15 @@ export function Checker_getTypeFromInference(receiver: GoPtr<Checker>, inference
  */
 export function getInferenceInfoForType(n: GoPtr<InferenceState>, t: GoPtr<Type>): GoPtr<InferenceInfo> {
   if ((t!.flags & TypeFlagsTypeVariable) !== 0) {
-    for (const inference of n!.inferences) {
+    for (
+      let __goRangeSlice = n!.inferences,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<InferenceInfo>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const inference = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (t === inference!.typeParameter) {
         return inference;
       }
@@ -3578,7 +3714,15 @@ export function Checker_getSingleCommonSupertype(receiver: GoPtr<Checker>, types
  */
 export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, f: GoFunc<(c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool>): GoPtr<Type> {
   let candidate: GoPtr<Type> = undefined;
-  for (const t of types) {
+  for (
+    let __goRangeSlice = types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (candidate === undefined || f!(receiver, candidate, t)) {
       candidate = t;
     }
@@ -3602,7 +3746,15 @@ export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoSlic
  */
 export function Checker_getCommonSubtype(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
   let subtype: GoPtr<Type> = undefined;
-  for (const t of types) {
+  for (
+    let __goRangeSlice = types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (subtype === undefined || Checker_isTypeSubtypeOf(receiver, t, subtype)) {
       subtype = t;
     }
@@ -3628,7 +3780,15 @@ export function Checker_getCommonSubtype(receiver: GoPtr<Checker>, types: GoSlic
  */
 export function Checker_getCombinedTypeFlags(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): TypeFlags {
   let flags = TypeFlagsNone;
-  for (const t of types) {
+  for (
+    let __goRangeSlice = types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((t!.flags & TypeFlagsUnion) !== 0) {
       flags |= Checker_getCombinedTypeFlags(receiver, Type_Types(t));
     } else {
@@ -3661,7 +3821,15 @@ export function Checker_getCombinedTypeFlags(receiver: GoPtr<Checker>, types: Go
 export function Checker_literalTypesWithSameBaseType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): bool {
   const c = receiver!;
   let commonBaseType: GoPtr<Type> = undefined;
-  for (const t of types) {
+  for (
+    let __goRangeSlice = types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((t!.flags & TypeFlagsNever) === 0) {
       const baseType = Checker_getBaseTypeOfLiteralType(receiver, t);
       if (commonBaseType === undefined) {
@@ -3755,7 +3923,15 @@ export function cloneInferenceInfo(info: GoPtr<InferenceInfo>): GoPtr<InferenceI
  * }
  */
 export function clearCachedInferences(inferences: GoSlice<GoPtr<InferenceInfo>>): void {
-  for (const inference of inferences) {
+  for (
+    let __goRangeSlice = inferences,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<InferenceInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const inference = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!inference!.isFixed) {
       inference!.inferredType = undefined;
     }
@@ -3803,7 +3979,15 @@ export function hasInferenceCandidatesOrDefault(info: GoPtr<InferenceInfo>): boo
  */
 export function hasTypeParameterDefault(tp: GoPtr<Type>): bool {
   if (tp!.symbol !== undefined) {
-    for (const d of tp!.symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = tp!.symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsTypeParameterDeclaration(d) && AsTypeParameterDeclaration(d)!.DefaultType !== undefined) {
         return true;
       }

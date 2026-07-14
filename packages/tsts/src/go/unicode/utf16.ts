@@ -69,7 +69,15 @@ export function Decode(s: GoSlice<int>): GoSlice<GoRune> {
 // Encode returns the UTF-16 encoding of the Unicode code point sequence s.
 export function Encode(s: GoSlice<GoRune>): GoSlice<int> {
   let out: GoSlice<int> = GoSliceMake(0, 0, GoNumberValueOps);
-  for (const r of s) {
+  for (
+    let __goRangeSlice = s,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoNumberValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const r = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     out = AppendRune(out, r);
   }
   return out;

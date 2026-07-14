@@ -633,7 +633,15 @@ export function flattenCommaElement(node: GoPtr<Expression>, expressions: GoSlic
  */
 export function flattenCommaElements(expressions: GoSlice<GoPtr<Expression>>): GoSlice<GoPtr<Expression>> {
   let result: GoSlice<GoPtr<Expression>> = GoNilSlice();
-  for (const expression of expressions) {
+  for (
+    let __goRangeSlice = expressions,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const expression = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     result = flattenCommaElement(expression, result);
   }
   return result;
@@ -1053,7 +1061,15 @@ export function NodeFactory_RestoreOuterExpressions(receiver: GoPtr<NodeFactory>
  */
 export function NodeFactory_EnsureUseStrict(receiver: GoPtr<NodeFactory>, statements: GoSlice<GoPtr<Statement>>): GoSlice<GoPtr<Statement>> {
   const f = receiver!.__tsgoEmbedded0!;
-  for (const statement of statements) {
+  for (
+    let __goRangeSlice = statements,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsPrologueDirective(statement) && Node_Text(Node_Expression(statement)) === "use strict") {
       return statements;
     } else {

@@ -100,7 +100,15 @@ import { GoSliceLoad } from "../../go/compat.js";
  */
 export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   let jsdocParameters: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const tag of getAllJSDocTags(node)) {
+  for (
+    let __goRangeSlice = getAllJSDocTags(node),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const tag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (tag!.Kind === KindJSDocParameterTag) {
       const name = Node_Name(tag);
       if (IsIdentifier(name) && Node_Text(name).length === 0) {

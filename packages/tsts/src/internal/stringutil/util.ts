@@ -17,6 +17,8 @@ import {
 } from "../../go/unicode/utf8.js";
 import * as utf16 from "../../go/unicode/utf16.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
@@ -318,7 +320,15 @@ export function SplitLines(text: string): GoSlice<string> {
 export function GuessIndentation(lines: GoSlice<string>): int {
   const MAX_SMI_X86: int = 0x3fffffff;
   let indentation = MAX_SMI_X86;
-  for (const line of lines) {
+  for (
+    let __goRangeSlice = lines,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const line = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (byteLen(line) === 0) {
       continue;
     }

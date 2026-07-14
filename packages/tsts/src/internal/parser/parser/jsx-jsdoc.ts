@@ -118,6 +118,8 @@ import {
   Parser_parseTypeOperatorOrHigher,
   Parser_parseTypeOrTypePredicate,
 } from "./types.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.nextTokenJSDoc","kind":"method","status":"implemented","sigHash":"258c75ae1865cb820212b1ae448ff677e4d7920eb545c9ae92a5946172319604"}
@@ -459,7 +461,15 @@ export function Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver: G
           AsJsxElement(lastChild)!.OpeningElement!.Parent = newLast;
         }
         if (Node_Children(lastChild) !== undefined) {
-          for (const c of Node_Children(lastChild)!.Nodes) {
+          for (
+            let __goRangeSlice = Node_Children(lastChild)!.Nodes,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Node>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const c = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             c!.Parent = newLast;
           }
         }

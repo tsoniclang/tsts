@@ -625,7 +625,15 @@ export function Checker_getPropertiesOfContext(receiver: GoPtr<Checker>, context
     const names = new globalThis.Map<string, GoPtr<Symbol>>();
     for (const t of Checker_getSiblingsOfContext(receiver, context)) {
       if (isObjectLiteralType(t) && (t!.objectFlags & ObjectFlagsContainsSpread) === 0) {
-        for (const prop of Checker_getPropertiesOfType(receiver, t)) {
+        for (
+          let __goRangeSlice = Checker_getPropertiesOfType(receiver, t),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Symbol>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           names.set(prop!.Name, prop);
         }
       }
@@ -658,7 +666,15 @@ export function Checker_getPropertiesOfContext(receiver: GoPtr<Checker>, context
 export function Checker_getSiblingsOfContext(receiver: GoPtr<Checker>, context: GoPtr<WideningContext>): GoSlice<GoPtr<Type>> {
   if (GoSliceIsNil(context!.siblings)) {
   let siblings: GoSlice<GoPtr<Type>> = GoSliceMake(0, 0, GoPointerValueOps<Type>());
-    for (const t of Checker_getSiblingsOfContext(receiver, context!.parent)) {
+    for (
+      let __goRangeSlice = Checker_getSiblingsOfContext(receiver, context!.parent),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (isObjectLiteralType(t)) {
         const prop = Checker_getPropertyOfObjectType(receiver, t, context!.propertyName);
         if (prop !== undefined) {

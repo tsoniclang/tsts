@@ -22,6 +22,8 @@ import { referenceMap_storeReferences } from "./referencemap.js";
 import type { GoInterface } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceMake, GoStringValueOps } from "../../../go/compat.js";
 import { GoSliceLoad } from "../../../go/compat.js";
+import { GoNumberValueOps } from "../../../go/compat.js";
+
 
 
 /**
@@ -81,7 +83,15 @@ export function buildInfoToSnapshot(buildInfo: GoPtr<BuildInfo>, config: GoPtr<P
   });
   to.filePathSet = core.Map(buildInfo!.FileIdsList, (fileIdList: GoSlice<BuildInfoFileId>) => {
     const fileSet = NewSetWithSizeHint<Path>(fileIdList.length, GoStringKey);
-    for (const fileId of fileIdList) {
+    for (
+      let __goRangeSlice = fileIdList,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoNumberValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const fileId = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       fileSet!.M.set(toSnapshot_toFilePath(to, fileId), {} as { readonly __tsgoEmpty?: never });
     }
     return fileSet;
@@ -306,7 +316,15 @@ export function toSnapshot_setFileInfoAndEmitSignatures(receiver: GoPtr<toSnapsh
       SyncMap_Store(receiver!.snapshot.emitSignatures, path, { signature: info!.signature, signatureWithDifferentOptions: GoSliceMake(0, 0, GoStringValueOps) }, GoStringKey);
     }
   }
-  for (const value of receiver!.buildInfo!.EmitSignatures) {
+  for (
+    let __goRangeSlice = receiver!.buildInfo!.EmitSignatures,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<BuildInfoEmitSignature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const value = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (BuildInfoEmitSignature_noEmitSignature(value)) {
       SyncMap_Delete(receiver!.snapshot.emitSignatures, toSnapshot_toFilePath(receiver, value!.FileId), GoStringKey);
     } else {
@@ -344,7 +362,15 @@ export function toSnapshot_setReferencedMap(receiver: GoPtr<toSnapshot>): void {
  * }
  */
 export function toSnapshot_setChangeFileSet(receiver: GoPtr<toSnapshot>): void {
-  for (const fileId of receiver!.buildInfo!.ChangeFileSet) {
+  for (
+    let __goRangeSlice = receiver!.buildInfo!.ChangeFileSet,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoNumberValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const fileId = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const filePath = toSnapshot_toFilePath(receiver, fileId);
     SyncSet_Add(receiver!.snapshot.changedFilesSet as SyncSet<Path>, filePath, GoStringKey);
   }
@@ -404,7 +430,15 @@ export function toSnapshot_setSemanticDiagnostics(receiver: GoPtr<toSnapshot>): 
  * }
  */
 export function toSnapshot_setEmitDiagnostics(receiver: GoPtr<toSnapshot>): void {
-  for (const diagnostic of receiver!.buildInfo!.EmitDiagnosticsPerFile) {
+  for (
+    let __goRangeSlice = receiver!.buildInfo!.EmitDiagnosticsPerFile,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<BuildInfoDiagnosticsOfFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const diagnostic = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const filePath = toSnapshot_toFilePath(receiver, diagnostic!.FileId);
     SyncMap_Store(receiver!.snapshot.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath, toSnapshot_toDiagnosticsOrBuildInfoDiagnosticsWithFileName(receiver, diagnostic), GoStringKey);
   }

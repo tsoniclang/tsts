@@ -3219,7 +3219,15 @@ export function Checker_getTypeAtFlowArrayMutation(receiver: GoPtr<Checker>, f: 
       if (flowType.t!.objectFlags & ObjectFlagsEvolvingArray) {
         let evolvedType = flowType.t;
         if (IsCallExpression(node)) {
-          for (const arg of Node_Arguments(node)!) {
+          for (
+            let __goRangeSlice = Node_Arguments(node)!,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Node>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const arg = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             evolvedType = Checker_addEvolvingArrayElementType(receiver, evolvedType, arg);
           }
         } else {
@@ -3444,7 +3452,15 @@ export function Checker_getElementTypeOfEvolvingArrayType(receiver: GoPtr<Checke
  */
 export function isEvolvingArrayTypeList(types: GoSlice<GoPtr<Type>>): bool {
   let hasEvolvingArrayType = false;
-  for (const t of types) {
+  for (
+    let __goRangeSlice = types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!(t!.flags & TypeFlagsNever)) {
       if (!(t!.objectFlags & ObjectFlagsEvolvingArray)) {
         return false;
@@ -4273,7 +4289,15 @@ export function Checker_getReferenceRoot(receiver: GoPtr<Checker>, node: GoPtr<N
  * }
  */
 export function Checker_hasMatchingArgument(receiver: GoPtr<Checker>, expression: GoPtr<Node>, reference: GoPtr<Node>): bool {
-  for (const argument of Node_Arguments(expression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Arguments(expression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const argument = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Checker_isOrContainsMatchingReference(receiver, reference, argument) || Checker_optionalChainContainsReference(receiver, argument, reference)) {
       return true;
     }
@@ -5455,7 +5479,15 @@ export function Checker_typeMaybeAssignableTo(receiver: GoPtr<Checker>, source: 
   if (!(source!.flags & TypeFlagsUnion)) {
     return Checker_isTypeAssignableTo(receiver, source, target);
   }
-  for (const t of Type_AsUnionOrIntersectionType(source)!.types) {
+  for (
+    let __goRangeSlice = Type_AsUnionOrIntersectionType(source)!.types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Checker_isTypeAssignableTo(receiver, t, target)) { return true; }
   }
   return false;
@@ -5576,7 +5608,15 @@ export function Checker_getFlowTypeInStaticBlocks(receiver: GoPtr<Checker>, symb
   } else {
     accessName = NewIdentifier(receiver!.factory, symbol_!.Name);
   }
-  for (const staticBlock of staticBlocks) {
+  for (
+    let __goRangeSlice = staticBlocks,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const staticBlock = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const reference = NewPropertyAccessExpression(receiver!.factory, NewKeywordExpression(receiver!.factory, KindThisKeyword), undefined, accessName as unknown as GoPtr<Node>, NodeFlagsNone);
     Node_Expression(reference)!.Parent = reference;
     reference!.Parent = staticBlock;

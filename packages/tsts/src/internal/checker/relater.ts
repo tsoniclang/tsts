@@ -942,7 +942,15 @@ export function Checker_isEnumTypeRelatedTo(receiver: GoPtr<Checker>, source: Go
     return ((entry & RelationComparisonResultSucceeded) !== 0) as bool;
   }
   const targetEnumType = Checker_getTypeOfSymbol(receiver, targetSymbol);
-  for (const sourceProperty of Checker_getPropertiesOfType(receiver, Checker_getTypeOfSymbol(receiver, sourceSymbol)) ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>())) {
+  for (
+    let __goRangeSlice = Checker_getPropertiesOfType(receiver, Checker_getTypeOfSymbol(receiver, sourceSymbol)) ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sourceProperty = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((sourceProperty!.Flags & SymbolFlagsEnumMember) !== 0) {
       const targetProperty = Checker_getPropertyOfType(receiver, targetEnumType, sourceProperty!.Name);
       if (targetProperty === undefined || (targetProperty!.Flags & SymbolFlagsEnumMember) === 0) {
@@ -1366,7 +1374,15 @@ export function Checker_elaborateObjectLiteral(receiver: GoPtr<Checker>, node: G
     return false;
   }
   let reportedError = false;
-  for (const prop of Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsSpreadAssignment(prop)) {
       continue;
     }
@@ -1767,7 +1783,15 @@ export function Checker_isWeakType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bo
  * }
  */
 export function Checker_hasCommonProperties(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>, isComparingJsxAttributes: bool): bool {
-  for (const prop of Checker_getPropertiesOfType(receiver, source)) {
+  for (
+    let __goRangeSlice = Checker_getPropertiesOfType(receiver, source),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Checker_isKnownProperty(receiver, target, prop!.Name, isComparingJsxAttributes)) {
       return true;
     }
@@ -1818,7 +1842,15 @@ export function Checker_isKnownProperty(receiver: GoPtr<Checker>, targetType: Go
     return Checker_isKnownProperty(receiver, Type_AsSubstitutionType(targetType)!.baseType, name, isComparingJsxAttributes);
   }
   if ((targetType!.flags & TypeFlagsUnionOrIntersection) !== 0 && isExcessPropertyCheckTarget(targetType)) {
-    for (const t of Type_Types(targetType)!) {
+    for (
+      let __goRangeSlice = Type_Types(targetType)!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (Checker_isKnownProperty(receiver, t, name, isComparingJsxAttributes)) {
         return true;
       }
@@ -1902,7 +1934,15 @@ export function Checker_isDeeplyNestedType(receiver: GoPtr<Checker>, t: GoPtr<Ty
       cur = Checker_getMappedTargetWithSymbol(receiver, cur);
     }
     if ((cur!.flags & TypeFlagsIntersection) !== 0) {
-      for (const t2 of Type_Types(cur)!) {
+      for (
+        let __goRangeSlice = Type_Types(cur)!,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Type>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const t2 = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (Checker_isDeeplyNestedType(receiver, t2, stack, maxDepth)) {
           return true;
         }
@@ -1911,7 +1951,15 @@ export function Checker_isDeeplyNestedType(receiver: GoPtr<Checker>, t: GoPtr<Ty
     const identity = getRecursionIdentity(cur);
     let count = 0;
     let lastTypeId: TypeId = 0;
-    for (const stackT of stack) {
+    for (
+      let __goRangeSlice = stack,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const stackT = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (Checker_hasMatchingRecursionIdentity(receiver, stackT, identity)) {
         if (stackT!.id >= lastTypeId) {
           count++;
@@ -1983,7 +2031,15 @@ export function Checker_hasMatchingRecursionIdentity(receiver: GoPtr<Checker>, t
     cur = Checker_getMappedTargetWithSymbol(receiver, cur);
   }
   if ((cur!.flags & TypeFlagsIntersection) !== 0) {
-    for (const t2 of Type_Types(cur)!) {
+    for (
+      let __goRangeSlice = Type_Types(cur)!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t2 = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (Checker_hasMatchingRecursionIdentity(receiver, t2, identity)) {
         return true;
       }
@@ -2137,7 +2193,15 @@ export function Checker_getBestMatchingType(receiver: GoPtr<Checker>, source: Go
 export function Checker_findMatchingTypeReferenceOrTypeAliasReference(receiver: GoPtr<Checker>, source: GoPtr<Type>, unionTarget: GoPtr<Type>): GoPtr<Type> {
   const sourceObjectFlags = source!.objectFlags;
   if ((sourceObjectFlags & (ObjectFlagsReference | ObjectFlagsAnonymous)) !== 0 && (unionTarget!.flags & TypeFlagsUnion) !== 0) {
-    for (const target of Type_Types(unionTarget)!) {
+    for (
+      let __goRangeSlice = Type_Types(unionTarget)!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const target = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if ((target!.flags & TypeFlagsObject) !== 0) {
         const overlapObjFlags = sourceObjectFlags & target!.objectFlags;
         if ((overlapObjFlags & ObjectFlagsReference) !== 0 && Type_Target(source) === Type_Target(target)) {
@@ -2207,7 +2271,15 @@ export function Checker_findMostOverlappyType(receiver: GoPtr<Checker>, source: 
   let bestMatch: GoPtr<Type>;
   if ((source!.flags & (TypeFlagsPrimitive | TypeFlagsInstantiablePrimitive)) === 0) {
     let matchingCount = 0;
-    for (const target of Type_Types(unionTarget)!) {
+    for (
+      let __goRangeSlice = Type_Types(unionTarget)!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const target = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if ((target!.flags & (TypeFlagsPrimitive | TypeFlagsInstantiablePrimitive)) === 0) {
         const overlap = Checker_getIntersectionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
           GoSliceStore(__goSliceLiteral, 0, Checker_getIndexType(receiver, source), GoPointerValueOps<Type>());
@@ -2348,7 +2420,15 @@ export function Checker_getUnmatchedProperties(receiver: GoPtr<Checker>, source:
  */
 export function Checker_getUnmatchedPropertiesWorker(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>, requireOptionalProperties: bool, matchDiscriminantProperties: bool, propsOut: GoRef<GoSlice<GoPtr<Symbol>>>): GoPtr<Symbol> {
   const properties = Checker_getPropertiesOfType(receiver, target) ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>());
-  for (const targetProp of properties) {
+  for (
+    let __goRangeSlice = properties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const targetProp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (isStaticPrivateIdentifierProperty(targetProp)) {
       continue;
     }
@@ -2482,7 +2562,15 @@ export function TypeDiscriminator_name(receiver: GoPtr<TypeDiscriminator>, index
  */
 export function TypeDiscriminator_matches(receiver: GoPtr<TypeDiscriminator>, index: int, t: GoPtr<Type>): bool {
   const propType = Checker_getTypeOfSymbol(receiver!.c, GoSliceLoad(receiver!.props, index, GoPointerValueOps<Symbol>()));
-  for (const s of Type_Distributed(propType)) {
+  for (
+    let __goRangeSlice = Type_Distributed(propType),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (receiver!.isRelatedTo!(s, t) !== TernaryFalse) {
       return true;
     }
@@ -2548,7 +2636,15 @@ export function Checker_findMatchingDiscriminantType(receiver: GoPtr<Checker>, s
  */
 export function Checker_findDiscriminantProperties(receiver: GoPtr<Checker>, sourceProperties: GoSlice<GoPtr<Symbol>>, target: GoPtr<Type>): GoSlice<GoPtr<Symbol>> {
   let result: GoSlice<GoPtr<Symbol>> = GoNilSlice();
-  for (const sourceProperty of sourceProperties) {
+  for (
+    let __goRangeSlice = sourceProperties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sourceProperty = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Checker_isDiscriminantProperty(receiver, target, sourceProperty!.Name)) {
       result = GoSliceAppend(result, sourceProperty, GoPointerValueOps<Symbol>());
     }
@@ -2736,7 +2832,15 @@ export function isObjectOrInstantiableNonPrimitive(t: GoPtr<Type>): bool {
 export function Checker_getKeyPropertyCandidateName(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): string {
   for (const t of types) {
     if ((t!.flags & (TypeFlagsObject | TypeFlagsInstantiableNonPrimitive)) !== 0) {
-      for (const p of Checker_getPropertiesOfType(receiver, t)) {
+      for (
+        let __goRangeSlice = Checker_getPropertiesOfType(receiver, t),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Symbol>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (isUnitType(Checker_getTypeOfSymbol(receiver, p))) {
           return p!.Name;
         }
@@ -2790,7 +2894,15 @@ export function Checker_mapTypesByKeyProperty(receiver: GoPtr<Checker>, types: G
         return GoNilMap();
       }
       let duplicate = false;
-      for (const d of Type_Distributed(discriminant)) {
+      for (
+        let __goRangeSlice = Type_Distributed(discriminant),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Type>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const key = Checker_getRegularTypeOfLiteralType(receiver, d);
         const existing = typesByKey.get(key);
         if (existing === undefined) {
@@ -3296,7 +3408,15 @@ export function Checker_isMarkerType(receiver: GoPtr<Checker>, t: GoPtr<Type>): 
 export function Checker_getTypeParameterModifiers(receiver: GoPtr<Checker>, tp: GoPtr<Type>): ModifierFlags {
   let flags: ModifierFlags = 0;
   if (tp!.symbol !== undefined) {
-    for (const d of tp!.symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = tp!.symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       flags = (flags | Node_ModifierFlags(d)) as ModifierFlags;
     }
   }
@@ -4594,7 +4714,15 @@ export function Checker_getTypePredicateOfSignature(receiver: GoPtr<Checker>, si
 export function Checker_getUnionOrIntersectionTypePredicate(receiver: GoPtr<Checker>, signatures: GoSlice<GoPtr<Signature>>, isUnion: bool): GoPtr<TypePredicate> {
   let last: GoPtr<TypePredicate> = undefined;
   let types: GoSlice<GoPtr<Type>> = GoNilSlice();
-  for (const sig of (signatures ?? GoSliceMake(0, 0, GoPointerValueOps<Signature>()))) {
+  for (
+    let __goRangeSlice = (signatures ?? GoSliceMake(0, 0, GoPointerValueOps<Signature>())),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const pred = Checker_getTypePredicateOfSignature(receiver, sig);
     if (pred !== undefined) {
       if ((pred!.kind !== TypePredicateKindThis && pred!.kind !== TypePredicateKindIdentifier) || (last !== undefined && !Checker_typePredicateKindsMatch(receiver, last, pred))) {
@@ -4807,7 +4935,15 @@ export function Checker_findMatchingSignature(receiver: GoPtr<Checker>, signatur
   const compareTypes: (s: GoPtr<Type>, t: GoPtr<Type>) => Ternary = partialMatch
     ? (s: GoPtr<Type>, t: GoPtr<Type>) => Checker_compareTypesSubtypeOf(receiver, s, t)
     : (s: GoPtr<Type>, t: GoPtr<Type>) => Checker_compareTypesIdentical(receiver, s, t);
-  for (const s of (signatureList ?? GoSliceMake(0, 0, GoPointerValueOps<Signature>()))) {
+  for (
+    let __goRangeSlice = (signatureList ?? GoSliceMake(0, 0, GoPointerValueOps<Signature>())),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Checker_compareSignaturesIdentical(receiver, s, signature, partialMatch, ignoreThisTypes, ignoreReturnTypes, compareTypes) !== 0) {
       return s;
     }
@@ -5105,7 +5241,15 @@ export function Checker_compareTypePredicatesIdentical(receiver: GoPtr<Checker>,
 export function Checker_getEffectiveConstraintOfIntersection(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, targetIsUnion: bool): GoPtr<Type> {
   let constraints = GoNilSlice<GoPtr<Type>>();
   let hasDisjointDomainType = false;
-  for (const t of types ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())) {
+  for (
+    let __goRangeSlice = types ?? GoSliceMake(0, 0, GoPointerValueOps<Type>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((t!.flags & TypeFlagsInstantiable) !== 0) {
       let constraint = Checker_getConstraintOfType(receiver, t);
       while (constraint !== undefined && (constraint!.flags & (TypeFlagsTypeParameter | TypeFlagsIndex | TypeFlagsConditional)) !== 0) {
@@ -5123,7 +5267,15 @@ export function Checker_getEffectiveConstraintOfIntersection(receiver: GoPtr<Che
   }
   if (!GoSliceIsNil(constraints) && (targetIsUnion || hasDisjointDomainType)) {
     if (hasDisjointDomainType) {
-      for (const t of types ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())) {
+      for (
+        let __goRangeSlice = types ?? GoSliceMake(0, 0, GoPointerValueOps<Type>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Type>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if ((t!.flags & TypeFlagsDisjointDomains) !== 0 || Checker_IsEmptyAnonymousObjectType(receiver, t)) {
           constraints = GoSliceAppend(constraints, t, GoPointerValueOps<Type>());
         }
@@ -6089,7 +6241,15 @@ export function Relater_hasExcessProperties(receiver: GoPtr<Relater>, source: Go
     }
     checkTypes = Type_Distributed(reducedTarget);
   }
-  for (const prop of Checker_getPropertiesOfType(receiver!.c, source)) {
+  for (
+    let __goRangeSlice = Checker_getPropertiesOfType(receiver!.c, source),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (shouldCheckAsExcessProperty(prop, source!.symbol) && !isIgnoredJsxProperty(source, prop)) {
       if (!Checker_isKnownProperty(receiver!.c, reducedTarget, prop!.Name, isComparingJsxAttributes)) {
         if (reportErrors) {
@@ -6169,7 +6329,15 @@ export function Relater_hasExcessProperties(receiver: GoPtr<Relater>, source: Go
  */
 export function Checker_getTypeOfPropertyInTypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, name: string): GoPtr<Type> {
   let propTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
-  for (const t of types ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())) {
+  for (
+    let __goRangeSlice = types ?? GoSliceMake(0, 0, GoPointerValueOps<Type>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     propTypes = GoSliceAppend(propTypes, Checker_getTypeOfPropertyInType(receiver, t, name), GoPointerValueOps<Type>());
   }
   return Checker_getUnionType(receiver, propTypes);
@@ -6272,7 +6440,15 @@ export function Checker_isTypeSubsetOf(receiver: GoPtr<Checker>, source: GoPtr<T
  */
 export function Checker_isTypeSubsetOfUnion(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>): bool {
   if ((source!.flags & TypeFlagsUnion) !== 0) {
-    for (const t of Type_Types(source)!) {
+    for (
+      let __goRangeSlice = Type_Types(source)!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!containsType(Type_Types(target)!, t)) {
         return false;
       }
@@ -6621,7 +6797,15 @@ export function Relater_typeRelatedToSomeType(receiver: GoPtr<Relater>, source: 
       }
     }
   }
-  for (const t of targetTypes) {
+  for (
+    let __goRangeSlice = targetTypes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const related = Relater_isRelatedToEx(receiver, source, t, RecursionFlagsTarget, false, undefined, intersectionState);
     if (related !== TernaryFalse) {
       return related;
@@ -6656,7 +6840,15 @@ export function Relater_typeRelatedToSomeType(receiver: GoPtr<Relater>, source: 
 export function Relater_typeRelatedToEachType(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, reportErrors: bool, intersectionState: IntersectionState): Ternary {
   let result: Ternary = TernaryTrue;
   const targetTypes = Type_Types(target)!;
-  for (const targetType of targetTypes) {
+  for (
+    let __goRangeSlice = targetTypes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const targetType = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const related = Relater_isRelatedToEx(receiver, source, targetType, RecursionFlagsTarget, reportErrors, undefined, intersectionState);
     if (related === TernaryFalse) {
       return TernaryFalse;
@@ -6686,7 +6878,15 @@ export function Relater_typeRelatedToEachType(receiver: GoPtr<Relater>, source: 
 export function Relater_eachTypeRelatedToSomeType(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>): Ternary {
   let result: Ternary = TernaryTrue;
   const sourceTypes = Type_Types(source)!;
-  for (const sourceType of sourceTypes) {
+  for (
+    let __goRangeSlice = sourceTypes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sourceType = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const related = Relater_typeRelatedToSomeType(receiver, sourceType, target, false, IntersectionStateNone);
     if (related === TernaryFalse) {
       return TernaryFalse;
@@ -8563,7 +8763,15 @@ export function Relater_typeRelatedToDiscriminatedType(receiver: GoPtr<Relater>,
     return TernaryFalse;
   }
   let numCombinations: int = 1 as int;
-  for (const sourceProperty of sourcePropertiesFiltered) {
+  for (
+    let __goRangeSlice = sourcePropertiesFiltered,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sourceProperty = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     numCombinations = (numCombinations * countTypes(Checker_getNonMissingTypeOfSymbol(receiver!.c, sourceProperty))) as int;
     if (numCombinations > 25) {
       if (receiver!.c!.tracer !== undefined) {
@@ -8607,7 +8815,15 @@ export function Relater_typeRelatedToDiscriminatedType(receiver: GoPtr<Relater>,
   let matchingTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
   for (const combination of discriminantCombinations) {
     let hasMatch = false;
-    targetLoop: for (const t of Type_Types(target)) {
+    targetLoop: for (
+      let __goRangeSlice = Type_Types(target),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       for (let i = 0; i < sourcePropertiesFiltered.length; i++) {
         const sourceProperty = GoSliceLoad(sourcePropertiesFiltered, i, GoPointerValueOps<Symbol>())!;
         const targetProperty = Checker_getPropertyOfType(receiver!.c, t, sourceProperty.Name);
@@ -8640,7 +8856,15 @@ export function Relater_typeRelatedToDiscriminatedType(receiver: GoPtr<Relater>,
     }
   }
   let result: Ternary = TernaryTrue;
-  for (const t of matchingTypes) {
+  for (
+    let __goRangeSlice = matchingTypes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     result = (result & Relater_propertiesRelatedTo(receiver, source, t, false, excludedProperties, false, IntersectionStateNone)) as Ternary;
     if (result !== TernaryFalse) {
       result = (result & Relater_signaturesRelatedTo(receiver, source, t, SignatureKindCall, false, IntersectionStateNone)) as Ternary;
@@ -8963,7 +9187,15 @@ export function Relater_propertiesRelatedTo(receiver: GoPtr<Relater>, source: Go
     return TernaryFalse;
   }
   if (isObjectLiteralType(target)) {
-    for (const sourceProp of excludeProperties(Checker_getPropertiesOfType(receiver!.c, source), excludedProperties)) {
+    for (
+      let __goRangeSlice = excludeProperties(Checker_getPropertiesOfType(receiver!.c, source), excludedProperties),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Symbol>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const sourceProp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (Checker_getPropertyOfObjectType(receiver!.c, target, sourceProp!.Name) === undefined) {
         if (reportErrors) {
           Relater_reportError(receiver, Property_0_does_not_exist_on_type_1, Checker_symbolToString(receiver!.c, sourceProp), Checker_TypeToString(receiver!.c, target));
@@ -8974,7 +9206,15 @@ export function Relater_propertiesRelatedTo(receiver: GoPtr<Relater>, source: Go
   }
   const properties = Checker_getPropertiesOfType(receiver!.c, target);
   const numericNamesOnly = isTupleType(source) && isTupleType(target);
-  for (const targetProp of excludeProperties(properties, excludedProperties)) {
+  for (
+    let __goRangeSlice = excludeProperties(properties, excludedProperties),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const targetProp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const name = targetProp!.Name;
     if ((targetProp!.Flags & SymbolFlagsPrototype) === 0 && (!numericNamesOnly || isNumericLiteralName(name) || name === "length") && (!optionalsOnly || (targetProp!.Flags & SymbolFlagsOptional) !== 0)) {
       const sourceProp = Checker_getPropertyOfType(receiver!.c, source, name);
@@ -9363,7 +9603,15 @@ export function Relater_propertiesIdenticalTo(receiver: GoPtr<Relater>, source: 
     return TernaryFalse;
   }
   let result: Ternary = TernaryTrue;
-  for (const sourceProp of sourceProperties) {
+  for (
+    let __goRangeSlice = sourceProperties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sourceProp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const targetProp = Checker_getPropertyOfObjectType(receiver!.c, target, sourceProp!.Name);
     if (targetProp === undefined) {
       return TernaryFalse;
@@ -9503,7 +9751,15 @@ export function Relater_signaturesRelatedTo(receiver: GoPtr<Relater>, source: Go
     for (const t of targetSignatures) {
       const saveErrorState = Relater_getErrorState(receiver);
       let shouldElaborateErrors = reportErrors;
-      for (const s of sourceSignatures) {
+      for (
+        let __goRangeSlice = sourceSignatures,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Signature>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const related = Relater_signatureRelatedTo(receiver, s, t, true, shouldElaborateErrors, intersectionState);
         if (related !== TernaryFalse) {
           result = (result & related) as Ternary;
@@ -9694,7 +9950,15 @@ export function Relater_indexSignaturesRelatedTo(receiver: GoPtr<Relater>, sourc
   const indexInfos = Checker_getIndexInfosOfType(receiver!.c, target);
   const targetHasStringIndex = indexInfos.some((info: GoPtr<IndexInfo>) => info!.keyType === receiver!.c!.stringType);
   let result: Ternary = TernaryTrue;
-  for (const targetInfo of indexInfos) {
+  for (
+    let __goRangeSlice = indexInfos,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const targetInfo = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     let related: Ternary;
     if (receiver!.relation !== receiver!.c!.strictSubtypeRelation && !sourceIsPrimitive && targetHasStringIndex && (targetInfo!.valueType!.flags & TypeFlagsAny) !== 0) {
       related = TernaryTrue;
@@ -9830,7 +10094,15 @@ export function Relater_membersRelatedToIndexInfo(receiver: GoPtr<Relater>, sour
   let result: Ternary = TernaryTrue;
   const keyType = targetInfo!.keyType;
   const props = (source!.flags & TypeFlagsIntersection) !== 0 ? Checker_getPropertiesOfUnionOrIntersectionType(receiver!.c, source) : Checker_getPropertiesOfObjectType(receiver!.c, source);
-  for (const prop of props) {
+  for (
+    let __goRangeSlice = props,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (isIgnoredJsxProperty(source, prop)) {
       continue;
     }
@@ -9850,7 +10122,15 @@ export function Relater_membersRelatedToIndexInfo(receiver: GoPtr<Relater>, sour
       result = (result & related) as Ternary;
     }
   }
-  for (const info of Checker_getIndexInfosOfType(receiver!.c, source)) {
+  for (
+    let __goRangeSlice = Checker_getIndexInfosOfType(receiver!.c, source),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Checker_isApplicableIndexType(receiver!.c, info!.keyType, keyType)) {
       const related = Relater_indexInfoRelatedTo(receiver, info, targetInfo, reportErrors, intersectionState);
       if (related === TernaryFalse) {
@@ -9915,7 +10195,15 @@ export function Relater_indexSignaturesIdenticalTo(receiver: GoPtr<Relater>, sou
   if (sourceInfos.length !== targetInfos.length) {
     return TernaryFalse;
   }
-  for (const targetInfo of targetInfos) {
+  for (
+    let __goRangeSlice = targetInfos,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const targetInfo = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const sourceInfo = Checker_getIndexInfoOfType(receiver!.c, source, targetInfo!.keyType);
     if (!(sourceInfo !== undefined && Relater_isRelatedTo(receiver, sourceInfo!.valueType, targetInfo!.valueType, RecursionFlagsBoth, false) !== TernaryFalse && sourceInfo!.isReadonly === targetInfo!.isReadonly)) {
       return TernaryFalse;

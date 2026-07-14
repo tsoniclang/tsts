@@ -97,7 +97,15 @@ export function isClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitContext
  */
 export function classHasExplicitlyAssignedName(emitContext: GoPtr<EmitContext>, node: GoPtr<ClassLikeDeclaration>): bool {
   if (EmitContext_AssignedName(emitContext, node as unknown as GoPtr<Node>) !== undefined) {
-    for (const member of Node_Members(node as unknown as GoPtr<Node>) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Members(node as unknown as GoPtr<Node>) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (isClassNamedEvaluationHelperBlock(emitContext, member)) {
         return true;
       }

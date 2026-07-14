@@ -853,7 +853,15 @@ const explode = (s: string, n: int): GoSlice<string> => {
 // SplitSeq returns an iterator over substrings of s separated by sep.
 export function SplitSeq(s: string, sep: string): (yieldValue: (v: string) => bool) => void {
   return (yieldValue: (v: string) => bool): void => {
-    for (const part of Split(s, sep)) {
+    for (
+      let __goRangeSlice = Split(s, sep),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const part = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!yieldValue(part)) {
         return;
       }

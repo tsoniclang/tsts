@@ -191,7 +191,15 @@ export function LegacyDecoratorsTransformer_visit(receiver: GoPtr<LegacyDecorato
  */
 export function LegacyDecoratorsTransformer_visitIdentifier(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<Identifier>): GoPtr<Node> {
   const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  for (const d of receiver!.enclosingClasses) {
+  for (
+    let __goRangeSlice = receiver!.enclosingClasses,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<ClassDeclaration>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const dNode = d as unknown as GoPtr<Node>;
     if (receiver!.classAliases.has(dNode) && receiver!.referenceResolver!.GetReferencedValueDeclaration(EmitContext_MostOriginal(emitCtx, node as unknown as GoPtr<Node>) as unknown as GoPtr<IdentifierNode>) === EmitContext_MostOriginal(emitCtx, dNode)) {
       return receiver!.classAliases.get(dNode);
@@ -1101,7 +1109,15 @@ export function LegacyDecoratorsTransformer_hasInternalStaticReference(receiver:
   if (members === undefined) {
     return false as bool;
   }
-  for (const member of members!.Nodes) {
+  for (
+    let __goRangeSlice = members!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Node_ForEachChild(member, isOrContainsStaticSelfReference)) {
       return true as bool;
     }
@@ -1320,7 +1336,15 @@ export function hasClassElementWithDecoratorContainingPrivateIdentifierInExpress
   if (node!.Members === undefined || node!.Members!.Nodes.length === 0) {
     return false as bool;
   }
-  for (const member of node!.Members!.Nodes) {
+  for (
+    let __goRangeSlice = node!.Members!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!CanHaveDecorators(member)) {
       continue;
     }
@@ -1644,7 +1668,15 @@ export function LegacyDecoratorsTransformer_getClassElementDecorationStatements(
   const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
   const exprs = LegacyDecoratorsTransformer_generateClassElementDecorationExpressions(receiver, node, isStatic);
   let statements: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const expression of exprs) {
+  for (
+    let __goRangeSlice = exprs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const expression = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     statements = GoSliceAppend(statements, NewExpressionStatement(astFactory, expression as never), GoPointerValueOps<Node>());
   }
   return statements;
@@ -1684,7 +1716,15 @@ export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStati
     return GoNilSlice();
   }
   let members: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const member of node!.Members!.Nodes) {
+  for (
+    let __goRangeSlice = node!.Members!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (isDecoratedClassElement(member, isStatic, node)) {
       members = GoSliceAppend(members, member, GoPointerValueOps<Node>());
     }
@@ -1711,7 +1751,15 @@ export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStati
 export function LegacyDecoratorsTransformer_generateClassElementDecorationExpressions(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, isStatic: bool): GoSlice<GoPtr<Node>> {
   const members = getDecoratedClassElements(node, isStatic);
   let expressions: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const member of members) {
+  for (
+    let __goRangeSlice = members,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const expr = LegacyDecoratorsTransformer_generateClassElementDecorationExpression(receiver, node, member);
     if (expr !== undefined) {
       expressions = GoSliceAppend(expressions, expr, GoPointerValueOps<Node>());
@@ -1883,7 +1931,15 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
   for (let i = 0; i < parameters.length; i++) {
     const decorators = GoSliceLoad(parameters, i, GoSliceValueOps<GoPtr<Node>>());
     if (decorators !== undefined && decorators.length > 0) {
-      for (const decorator of decorators) {
+      for (
+        let __goRangeSlice = decorators,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const decorator = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const decoratorExpr = Node_Expression(decorator);
         const helper = NodeFactory_NewParamHelper(
           printerFactory,
@@ -1914,7 +1970,15 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
 export function LegacyDecoratorsTransformer_transformDecorators(receiver: GoPtr<LegacyDecoratorsTransformer>, decorators: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   let results: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const decorator of decorators) {
+  for (
+    let __goRangeSlice = decorators,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decorator = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     results = GoSliceAppend(results, NodeVisitor_VisitNode(visitor, Node_Expression(decorator)), GoPointerValueOps<Node>());
   }
   return results;

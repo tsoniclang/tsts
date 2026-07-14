@@ -39,6 +39,8 @@ import { OrderedSet_Size } from "../../collections/ordered_set.js";
 
 import type { GoFunc } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forAwaitHierarchyFacts","kind":"type","status":"implemented","sigHash":"74a7859468c019889c9ce9acb2e9dbcd44fb07f6d451f381feab8893f24a4446"}
@@ -855,7 +857,15 @@ export function forawaitTransformer_convertForOfStatementHead(receiver: GoPtr<fo
   if (IsBlock(statement)) {
     const stmts = Node_StatementList(statement);
     if (stmts !== undefined) {
-      for (const stmt of stmts!.Nodes) {
+      for (
+        let __goRangeSlice = stmts!.Nodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const stmt = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         statements = GoSliceAppend(statements, stmt, GoPointerValueOps<Node>());
       }
       statementsLocation = stmts!.Loc;
@@ -1697,7 +1707,15 @@ export function forawaitTransformer_transformAsyncGeneratorFunctionParameterList
     return EmitContext_VisitParameters(emitContext, Node_ParameterList(node), visitor);
   }
   let newParameters: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const parameter of Node_Parameters(node)) {
+  for (
+    let __goRangeSlice = Node_Parameters(node),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const param = AsParameterDeclaration(parameter as unknown as GoPtr<Node>);
     if (param!.Initializer !== undefined || param!.DotDotDotToken !== undefined) {
       break;

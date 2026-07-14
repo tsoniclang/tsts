@@ -327,14 +327,30 @@ export function GetModuleSpecifiersForFileWithInfo(importingSourceFile: GoInterf
  * }
  */
 export function tryGetModuleNameFromAmbientModule(moduleSymbol: GoPtr<Symbol>, checker: GoInterface<CheckerShape>): string {
-  for (const decl of moduleSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = moduleSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsModuleWithStringLiteralName(decl) && (!IsModuleAugmentationExternal(decl) || !PathIsRelative(Node_Text(Node_Name(decl))))) {
       return Node_Text(Node_Name(decl));
     }
   }
 
   // the module could be a namespace, which is exported through "export=" from an ambient module.
-  for (const d of moduleSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = moduleSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!IsModuleDeclaration(d)) {
       continue;
     }
@@ -890,7 +906,15 @@ export function computeModuleSpecifiers(modulePaths: GoSlice<ModulePath>, compil
   for (const modulePath of modulePaths) {
     const targetPath = ToPath(modulePath.FileName, host!.GetCurrentDirectory(), info.UseCaseSensitiveFileNames);
     let existingImport: GoPtr<Node> = undefined;
-    for (const importSpecifier of importingSourceFile!.Imports()) {
+    for (
+      let __goRangeSlice = importingSourceFile!.Imports(),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const importSpecifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const resolvedModule = host!.GetResolvedModuleFromModuleSpecifier(importingSourceFile, importSpecifier);
       if (ResolvedModule_IsResolved(resolvedModule) && ToPath(resolvedModule!.ResolvedFileName, host!.GetCurrentDirectory(), info.UseCaseSensitiveFileNames) === targetPath) {
         existingImport = importSpecifier;
@@ -1468,7 +1492,15 @@ export function tryGetModuleNameFromRootDirs(rootDirs: GoSlice<string>, moduleFi
   let shortest = "";
   let shortestSepCount = 0;
   for (const sourcePath of normalizedSourcePaths) {
-    for (const targetPath of normalizedTargetPaths) {
+    for (
+      let __goRangeSlice = normalizedTargetPaths,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const targetPath = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const candidate = ensurePathIsNonModuleName(GetRelativePathFromDirectory(sourcePath, targetPath, {
         UseCaseSensitiveFileNames: host!.UseCaseSensitiveFileNames(),
         CurrentDirectory: host!.GetCurrentDirectory(),
@@ -2267,7 +2299,15 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: string, paths: GoPt
       const [prefix, suffix, ok] = strings.Cut(pattern, "*");
 
       let candidates = GoNilSlice<specPair>();
-      for (const ending of allowedEndings) {
+      for (
+        let __goRangeSlice = allowedEndings,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoNumberValueOps,
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const ending = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const result = processEnding(
           relativeToBaseUrl,
           GoSliceBuild(1, 1, GoNumberValueOps, (__goSliceLiteral) => {

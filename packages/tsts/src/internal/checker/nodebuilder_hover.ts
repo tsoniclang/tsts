@@ -551,13 +551,29 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
   const resolved = Checker_resolveStructuredTypeMembers(receiver!.ch, interfaceType);
   let members: GoSlice<GoPtr<Node>> = GoNilSlice();
   members = GoSliceAppendSlice(members, NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, interfaceType, baseType), GoPointerValueOps<Node>());
-  for (const sig of StructuredType_ConstructSignatures(resolved)) {
+  for (
+    let __goRangeSlice = StructuredType_ConstructSignatures(resolved),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((sig!.flags & SignatureFlagsAbstract) !== 0) {
       continue;
     }
     members = GoSliceAppend(members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructSignature, undefined), GoPointerValueOps<Node>());
   }
-  for (const sig of StructuredType_CallSignatures(resolved)) {
+  for (
+    let __goRangeSlice = StructuredType_CallSignatures(resolved),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     members = GoSliceAppend(members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindCallSignature, undefined), GoPointerValueOps<Node>());
   }
   const filteredProps = NodeBuilderImpl_filterInheritedProperties(receiver, interfaceType, baseTypes, StructuredType_Properties(resolved));
@@ -596,10 +612,26 @@ export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilder
   let extendsTypes: GoSlice<GoPtr<Node>> = GoNilSlice();
   let implementsTypes: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const declaration of declarations) {
-    for (const heritageElement of GetExtendsHeritageClauseElements(declaration)) {
+    for (
+      let __goRangeSlice = GetExtendsHeritageClauseElements(declaration),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const heritageElement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       extendsTypes = GoSliceAppend(extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement), GoPointerValueOps<Node>());
     }
-    for (const heritageElement of GetImplementsHeritageClauseElements(declaration)) {
+    for (
+      let __goRangeSlice = GetImplementsHeritageClauseElements(declaration),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const heritageElement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       implementsTypes = GoSliceAppend(implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement), GoPointerValueOps<Node>());
     }
   }
@@ -737,7 +769,15 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
       }
     }
     let privateProtected: ModifierFlags = 0;
-    for (const sig of signatures) {
+    for (
+      let __goRangeSlice = signatures,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Signature>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const sig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (sig!.declaration !== undefined) {
         privateProtected |= Node_ModifierFlags(sig!.declaration) & (ModifierFlagsPrivate | ModifierFlagsProtected);
       }
@@ -751,7 +791,15 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
     return GoNilSlice();
   }
   let result: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const sig of signatures) {
+  for (
+    let __goRangeSlice = signatures,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     receiver!.ctx!.approximateLength++;
     result = GoSliceAppend(result, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructor, undefined), GoPointerValueOps<Node>());
   }
@@ -778,7 +826,15 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
  */
 export function NodeBuilderImpl_serializeIndexSignaturesOfType(receiver: GoPtr<NodeBuilderImpl>, input: GoPtr<Type>, baseType: GoPtr<Type>): GoSlice<GoPtr<Node>> {
   let result: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const info of Checker_getIndexInfosOfType(receiver!.ch, input)) {
+  for (
+    let __goRangeSlice = Checker_getIndexInfosOfType(receiver!.ch, input),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (baseType !== undefined) {
       const baseInfo = Checker_getIndexInfoOfType(receiver!.ch, baseType, info!.keyType);
       if (baseInfo !== undefined && Checker_isTypeIdenticalTo(receiver!.ch, info!.valueType, baseInfo!.valueType)) {
@@ -1069,7 +1125,15 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
     if ((resolved!.Flags & (SymbolFlagsFunction | SymbolFlagsMethod)) !== 0) {
       const t = Checker_getTypeOfSymbol(receiver!.ch, resolved);
       const sigs = Checker_getSignaturesOfType(receiver!.ch, t, SignatureKindCall);
-      for (const sig of sigs) {
+      for (
+        let __goRangeSlice = sigs,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Signature>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const sig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         receiver!.ctx!.approximateLength++;
         const decl = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindFunctionDeclaration, { modifiers: GoSliceMake(0, 0, GoPointerValueOps<Node>()), name: NewIdentifier(receiver!.f, m!.Name), questionToken: undefined });
         bodyStmts = GoAppend(bodyStmts, { node: decl, isLocal: false as bool });
@@ -1177,13 +1241,29 @@ export function NodeBuilderImpl_filterInheritedProperties(receiver: GoPtr<NodeBu
     return properties;
   }
   const propsByName = new globalThis.Map<string, GoPtr<Symbol>>();
-  for (const p of properties) {
+  for (
+    let __goRangeSlice = properties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     propsByName.set(p!.Name, p);
   }
   const inherited: GoPtr<Set<string>> = NewSetWithSizeHint<string>(0, GoStringKey);
   for (const base of baseTypes) {
     const baseWithThis = Checker_getTypeWithThisArgument(receiver!.ch, base, Type_AsInterfaceType(Checker_getTargetType(receiver!.ch, t))!.thisType, false as bool);
-    for (const prop of Checker_getPropertiesOfType(receiver!.ch, baseWithThis)) {
+    for (
+      let __goRangeSlice = Checker_getPropertiesOfType(receiver!.ch, baseWithThis),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Symbol>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const existing = propsByName.get(prop!.Name);
       if (existing !== undefined && prop!.Parent === existing!.Parent) {
         Set_Add(inherited, prop!.Name, GoStringKey);

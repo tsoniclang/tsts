@@ -246,7 +246,15 @@ export function Checker_checkInheritedPropertiesAreIdentical(receiver: GoPtr<Che
   let identical = true;
   for (const base of baseTypes) {
     const properties = Checker_getPropertiesOfType(receiver, Checker_getTypeWithThisArgument(receiver, base, Type_AsInterfaceType(t)!.thisType, false));
-    for (const prop of properties) {
+    for (
+      let __goRangeSlice = properties,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Symbol>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const existing = seen.get(prop!.Name);
       if (existing === undefined) {
         seen.set(prop!.Name, { prop: prop, containingType: base });
@@ -1389,7 +1397,15 @@ export function Checker_removeSubtypes(receiver: GoPtr<Checker>, types: GoSlice<
       if (keyProperty !== undefined) {
         keyPropertyType = Checker_getRegularTypeOfLiteralType(receiver, Checker_getTypeOfSymbol(receiver, keyProperty));
       }
-      for (const target of types) {
+      for (
+        let __goRangeSlice = types,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Type>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const target = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (source === target) {
           continue;
         }

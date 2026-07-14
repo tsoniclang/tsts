@@ -32,6 +32,8 @@ import { Cannot_access_0_from_another_file_without_qualification_when_1_is_enabl
 
 import type { GoFunc } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::type::NameResolver","kind":"type","status":"implemented","sigHash":"19eada1e576611b431560f17e42127ad5d94199b35fc81585e1e566cbe9e761c"}
@@ -993,7 +995,15 @@ export function GetLocalSymbolForExportDefault(symbol_: GoPtr<Symbol>): GoPtr<Sy
   if (!isExportDefaultSymbol(symbol_) || declarations.length === 0) {
     return undefined;
   }
-  for (const decl of declarations) {
+  for (
+    let __goRangeSlice = declarations,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const localSymbol = Node_LocalSymbol(decl);
     if (localSymbol !== undefined) {
       return localSymbol;
@@ -1072,7 +1082,15 @@ export function getIsDeferredContext(location: GoPtr<Node>, lastLocation: GoPtr<
  * }
  */
 export function isTypeParameterSymbolDeclaredInContainer(symbol_: GoPtr<Symbol>, container: GoPtr<Node>): bool {
-  for (const decl of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (decl!.Kind === KindTypeParameter) {
       const parent = decl!.Parent;
       if (parent === container) {

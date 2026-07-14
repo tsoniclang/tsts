@@ -347,7 +347,15 @@ export function Checker_checkThisInStaticClassFieldInitializerInDecoratedClass(r
  * }
  */
 export function Checker_checkSpreadPropOverrides(receiver: GoPtr<Checker>, t: GoPtr<Type>, props: SymbolTable, spread: GoPtr<Node>): void {
-  for (const right of Checker_getPropertiesOfType(receiver, t)) {
+  for (
+    let __goRangeSlice = Checker_getPropertiesOfType(receiver, t),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const right = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((right!.Flags & SymbolFlagsOptional) === 0 && (right!.CheckFlags & CheckFlagsPartial) === 0) {
       const left = props.get(right!.Name);
       if (left !== undefined) {
@@ -389,7 +397,15 @@ export function Checker_isThislessInterface(receiver: GoPtr<Checker>, symbol_: G
         return false;
       }
       const baseTypeNodes = GetExtendsHeritageClauseElements(declaration);
-      for (const node of baseTypeNodes) {
+      for (
+        let __goRangeSlice = baseTypeNodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (IsEntityNameExpression(Node_Expression(node))) {
           const baseSymbol = Checker_resolveEntityName(receiver, Node_Expression(node), SymbolFlagsType, true, false, undefined);
           if (baseSymbol === undefined || (baseSymbol!.Flags & SymbolFlagsInterface) === 0 || Type_AsInterfaceType(Checker_getDeclaredTypeOfClassOrInterface(receiver, baseSymbol))!.thisType !== undefined) {

@@ -71,6 +71,8 @@ import {
 import { OperatorPrecedenceComma } from "../../ast/precedence.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad, GoStringValueOps } from "../../../go/compat.js";
+
 // Go strings are immutable UTF-8 byte sequences; `s[i:j]` and `len(s)` operate
 // on byte offsets. Mirror that contract by operating over the UTF-8 byte view
 // (matching internal/stringutil/util.ts), converting back at the boundary.
@@ -129,7 +131,15 @@ export function Printer_writeLineRepeat(receiver: GoPtr<Printer>, count: int): v
 export function Printer_writeLines(receiver: GoPtr<Printer>, text: string): void {
   const lines = SplitLines(text);
   const indentation = GuessIndentation(lines);
-  for (const rawLine of lines) {
+  for (
+    let __goRangeSlice = lines,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const rawLine = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     // Go strings are UTF-8 byte sequences; `line[indentation:]` and `len(line)`
     // operate on byte offsets, so mirror that via the byte view.
     const lineBytes = utf8Encoder.encode(rawLine);
@@ -690,7 +700,15 @@ export function Printer_shouldEmitBlockFunctionBodyOnSingleLine(receiver: GoPtr<
   }
 
   let previousStatement: GoPtr<Node> = undefined;
-  for (const statement of body!.Statements!.Nodes) {
+  for (
+    let __goRangeSlice = body!.Statements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Printer_getSeparatingLineTerminatorCount(receiver, previousStatement, statement as GoPtr<Node>, LFPreserveLines) > 0) {
       return false as bool;
     }

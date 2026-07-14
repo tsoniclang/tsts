@@ -1109,7 +1109,15 @@ export function Checker_checkGrammarModifiers(receiver: GoPtr<Checker>, node: Go
   let sawExportBeforeDecorators = false;
   let hasLeadingDecorators = false;
   const modifiers = Node_ModifierNodes(node);
-  for (const modifier of modifiers ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = modifiers ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const modifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsDecorator(modifier)) {
       if (!NodeCanBeDecorated(receiver!.legacyDecorators, node, node!.Parent, node!.Parent!.Parent)) {
         if (node!.Kind === KindMethodDeclaration && !NodeIsPresent(Node_Body(node))) {
@@ -1829,7 +1837,15 @@ export function Checker_checkGrammarForUseStrictSimpleParameterList(receiver: Go
         return parameter!.Initializer !== undefined || IsBindingPattern(Node_Name(n)) || isRestParameter(n);
       });
       if (nonSimpleParameters.length !== 0) {
-        for (const parameter of nonSimpleParameters) {
+        for (
+          let __goRangeSlice = nonSimpleParameters,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           const err = Checker_error(receiver, parameter, This_parameter_is_not_allowed_with_use_strict_directive);
           Diagnostic_AddRelatedInfo(err, createDiagnosticForNode(useStrictDirective, X_use_strict_directive_used_here));
         }
@@ -2125,7 +2141,15 @@ export function Checker_checkGrammarHeritageClause(receiver: GoPtr<Checker>, nod
     return Checker_grammarErrorAtPos(receiver, node as unknown as GoPtr<Node>, NodeList_Pos(types), 0, X_0_list_cannot_be_empty, listType);
   }
   if (types !== undefined) {
-    for (const n of types!.Nodes) {
+    for (
+      let __goRangeSlice = types!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const n = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (Checker_checkGrammarExpressionWithTypeArguments(receiver, n)) {
         return true;
       }
@@ -2240,7 +2264,15 @@ export function Checker_checkGrammarClassDeclarationHeritageClauses(receiver: Go
             if (AsJSDoc(j)!.Tags === undefined) {
               continue;
             }
-            for (const tag of AsJSDoc(j)!.Tags!.Nodes) {
+            for (
+              let __goRangeSlice = AsJSDoc(j)!.Tags!.Nodes,
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoPointerValueOps<Node>(),
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const tag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               if (tag!.Kind === KindJSDocAugmentsTag) {
                 const target = AsExpressionWithTypeArguments(GoSliceLoad(typeNodes, 0, GoPointerValueOps<Node>()));
                 const source = AsExpressionWithTypeArguments(Node_ClassName(tag));
@@ -2304,7 +2336,15 @@ export function Checker_checkGrammarClassDeclarationHeritageClauses(receiver: Go
 export function Checker_checkGrammarInterfaceDeclaration(receiver: GoPtr<Checker>, node: GoPtr<InterfaceDeclaration>): bool {
   if (node!.HeritageClauses !== undefined) {
     let seenExtendsClause = false;
-    for (const heritageClauseNode of node!.HeritageClauses!.Nodes) {
+    for (
+      let __goRangeSlice = node!.HeritageClauses!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const heritageClauseNode = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const heritageClause = AsHeritageClause(heritageClauseNode);
       switch (heritageClause!.Token) {
         case KindExtendsKeyword:
@@ -2596,13 +2636,29 @@ export function Checker_checkGrammarObjectLiteralExpression(receiver: GoPtr<Chec
     const modifiers = Node_ModifierNodes(prop) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     if (modifiers.length !== 0) {
       if (CanHaveModifiers(prop)) {
-        for (const mod of modifiers) {
+        for (
+          let __goRangeSlice = modifiers,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const mod = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (IsModifier(mod) && (mod!.Kind !== KindAsyncKeyword || prop!.Kind !== KindMethodDeclaration)) {
             Checker_grammarErrorOnNode(receiver, mod, X_0_modifier_cannot_be_used_here, GetTextOfNode(mod));
           }
         }
       } else if (CanHaveIllegalModifiers(prop)) {
-        for (const mod of modifiers) {
+        for (
+          let __goRangeSlice = modifiers,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const mod = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (IsModifier(mod)) {
             Checker_grammarErrorOnNode(receiver, mod, X_0_modifier_cannot_be_used_here, GetTextOfNode(mod));
           }
@@ -2701,7 +2757,15 @@ export function Checker_checkGrammarJsxElement(receiver: GoPtr<Checker>, node: G
   const seen = new Set<string>();
   const attrs = Node_Attributes(node);
   const props = Node_Properties(attrs) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const attrNode of props) {
+  for (
+    let __goRangeSlice = props,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const attrNode = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (attrNode!.Kind === KindJsxSpreadAttribute) {
       continue;
     }
@@ -3588,7 +3652,15 @@ export function Checker_checkGrammarForEsModuleMarkerInBindingName(receiver: GoP
   } else {
     const elements = Node_Elements(name);
     if (elements !== undefined) {
-      for (const element of elements!) {
+      for (
+        let __goRangeSlice = elements!,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const elementName = Node_Name(element);
         if (elementName !== undefined) {
           if (Checker_checkGrammarForEsModuleMarkerInBindingName(receiver, elementName)) {
@@ -3630,7 +3702,15 @@ export function Checker_checkGrammarNameInLetOrConstDeclarations(receiver: GoPtr
   } else {
     const elements = Node_Elements(name);
     if (elements !== undefined) {
-      for (const element of elements!) {
+      for (
+        let __goRangeSlice = elements!,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const bindingElementName = Node_Name(element);
         if (bindingElementName !== undefined) {
           Checker_checkGrammarNameInLetOrConstDeclarations(receiver, bindingElementName);
@@ -4436,7 +4516,15 @@ export function Checker_checkGrammarTopLevelElementForRequiredDeclareModifier(re
 export function Checker_checkGrammarTopLevelElementsForRequiredDeclareModifier(receiver: GoPtr<Checker>, file: GoPtr<SourceFile>): bool {
   const fileAsNode = file as unknown as GoPtr<Node>;
   const statements = Node_Statements(fileAsNode);
-  for (const decl of statements!) {
+  for (
+    let __goRangeSlice = statements!,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsDeclarationNode(decl) || decl!.Kind === KindVariableStatement) {
       if (Checker_checkGrammarTopLevelElementForRequiredDeclareModifier(receiver, decl)) {
         return true;
@@ -4666,7 +4754,15 @@ export function Checker_checkGrammarImportClause(receiver: GoPtr<Checker>, node:
  */
 export function Checker_checkGrammarTypeOnlyNamedImportsOrExports(receiver: GoPtr<Checker>, namedBindings: GoPtr<Node>): bool {
   const nodeList = Node_ElementList(namedBindings);
-  for (const specifier of nodeList!.Nodes) {
+  for (
+    let __goRangeSlice = nodeList!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const specifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     let specifierIsTypeOnly: bool;
     let message: GoPtr<Message>;
     if (specifier!.Kind === KindImportSpecifier) {

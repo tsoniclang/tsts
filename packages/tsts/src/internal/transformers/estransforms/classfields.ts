@@ -447,7 +447,15 @@ export function classFieldsTransformer_classExpressionNeedsBlockScopedTemp(recei
   if (!classFieldsTransformer_requiresBlockScopedVar(receiver)) {
     return false;
   }
-  for (const member of Node_Members(receiver!.currentClassContainer) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Members(receiver!.currentClassContainer) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsPropertyDeclaration(member) && !HasStaticModifier(member) &&
       Node_Name(member) !== undefined && IsComputedPropertyName(Node_Name(member))) {
       return true;
@@ -1132,7 +1140,15 @@ export function classFieldsTransformer_visitVariableStatement(receiver: GoPtr<cl
   if (receiver!.pendingStatements.length > 0) {
     let result: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
     result = GoSliceAppend(result, visitedNode, GoPointerValueOps<Node>());
-    for (const s of receiver!.pendingStatements) {
+    for (
+      let __goRangeSlice = receiver!.pendingStatements,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       result = GoSliceAppend(result, s, GoPointerValueOps<Node>());
     }
     receiver!.pendingStatements = savedPendingStatements;
@@ -1662,7 +1678,15 @@ export function classFieldsTransformer_visitFunctionExpressionOrDeclaration(rece
   if (receiver!.currentClassElement !== undefined) {
     const original = EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node);
     if (original !== node && receiver!.currentClassContainer !== undefined) {
-      for (const member of Node_Members(receiver!.currentClassContainer) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = Node_Members(receiver!.currentClassContainer) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), member) === original && IsStatic(member)) {
           return classFieldsTransformer_visitEachChildOfNode(receiver, node);
         }
@@ -3643,7 +3667,15 @@ export function classFieldsTransformer_memberContainsConstructorReference(receiv
  * }
  */
 export function classFieldsTransformer_classContainsConstructorReference(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): bool {
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (classFieldsTransformer_memberContainsConstructorReference(receiver, member, node)) {
       return true;
     }
@@ -3741,7 +3773,15 @@ export function classFieldsTransformer_getClassFacts(receiver: GoPtr<classFields
   let containsInstancePrivateElements: bool = false;
   let containsInstanceAutoAccessors: bool = false;
 
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsStatic(member)) {
       if (Node_Name(member) !== undefined && (IsPrivateIdentifier(Node_Name(member)) || IsAutoAccessorPropertyDeclaration(member)) &&
         receiver!.shouldTransformPrivateElementsOrClassStaticBlocks) {
@@ -4490,7 +4530,15 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
     }
   } else {
     if (receiver!.pendingExpressions.length > 0) {
-      for (const expr of receiver!.pendingExpressions) {
+      for (
+        let __goRangeSlice = receiver!.pendingExpressions,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const expr = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         receiver!.pendingStatements = GoSliceAppend(receiver!.pendingStatements, NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, expr as GoPtr<Expression>), GoPointerValueOps<Node>());
       }
     }
@@ -4514,7 +4562,15 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
 
   if (expressions.length > 1) {
     EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), classExpression as GoPtr<Node>, EFIndented);
-    for (const expr of expressions) {
+    for (
+      let __goRangeSlice = expressions,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const expr = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), expr as GoPtr<Node>, EFStartOnNewLine);
     }
   }
@@ -4733,7 +4789,15 @@ export function classFieldsTransformer_transformClassMembers(receiver: GoPtr<cla
 
   // Declare private names
   if (receiver!.shouldTransformPrivateElementsOrClassStaticBlocks || receiver!.shouldTransformPrivateStaticElementsInFile) {
-    for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsPrivateIdentifierClassElementDeclaration(member)) {
         if (classFieldsTransformer_shouldTransformClassElementToWeakMap(receiver, member)) {
           classFieldsTransformer_addPrivateIdentifierToEnvironment(receiver, member);
@@ -4751,7 +4815,15 @@ export function classFieldsTransformer_transformClassMembers(receiver: GoPtr<cla
     }
 
     if (classFieldsTransformer_shouldTransformAutoAccessorsInCurrentClass(receiver)) {
-      for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (IsAutoAccessorPropertyDeclaration(member)) {
           const storageName = NodeFactory_NewGeneratedPrivateNameForNodeEx(Transformer_Factory(receiver!.__tsgoEmbedded0!), Node_Name(member)!, { Flags: 0, Prefix: "", Suffix: "_accessor_storage" });
           if (receiver!.shouldTransformPrivateElementsOrClassStaticBlocks ||
@@ -5328,7 +5400,15 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
     const body = AsBlock(constructor_!.Body);
 
     // Copy prologue
-    for (const stmt of body!.Statements!.Nodes) {
+    for (
+      let __goRangeSlice = body!.Statements!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const stmt = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsPrologueDirective(stmt)) {
         statements = GoSliceAppend(statements, stmt as unknown as GoPtr<Statement>, GoPointerValueOps<Node>());
       } else {
@@ -5428,7 +5508,15 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
  */
 export function classFieldsTransformer_addPropertyOrClassStaticBlockStatements(receiver: GoPtr<classFieldsTransformer>, statements: GoSlice<GoPtr<Node>>, properties: GoSlice<GoPtr<Node>>, receiver1: GoPtr<Expression>): GoSlice<GoPtr<Node>> {
   let out = statements;
-  for (const property of properties) {
+  for (
+    let __goRangeSlice = properties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const property = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsStatic(property) && !receiver!.shouldTransformPrivateElementsOrClassStaticBlocks) {
       continue;
     }
@@ -5550,7 +5638,15 @@ export function classFieldsTransformer_transformPropertyOrClassStaticBlock(recei
  */
 export function classFieldsTransformer_generateInitializedPropertyExpressionsOrClassStaticBlock(receiver: GoPtr<classFieldsTransformer>, propertiesOrClassStaticBlocks: GoSlice<GoPtr<Node>>, receiver1: GoPtr<Expression>): GoSlice<GoPtr<Expression>> {
   let expressions: GoSlice<GoPtr<Expression>> = GoNilSlice();
-  for (const property of propertiesOrClassStaticBlocks) {
+  for (
+    let __goRangeSlice = propertiesOrClassStaticBlocks,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const property = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     let expression: GoPtr<Expression>;
     if (IsClassStaticBlockDeclaration(property)) {
       expression = classFieldsTransformer_setCurrentClassElementAnd(receiver, property as unknown as GoPtr<ClassElement>, classFieldsTransformer_transformClassStaticBlockDeclaration, property) as unknown as GoPtr<Expression>;
@@ -7136,7 +7232,15 @@ export function isStaticPropertyDeclarationOrClassStaticBlock(node: GoPtr<Node>)
  */
 export function classFieldsTransformer_getProperties(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>, requireInitializer: bool, isStatic: bool): GoSlice<GoPtr<Node>> {
   let result: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsPropertyDeclaration(member) &&
       (!requireInitializer || Node_Initializer(member) !== undefined) &&
       (HasStaticModifier(member) === isStatic)) {
@@ -7162,7 +7266,15 @@ export function classFieldsTransformer_getProperties(receiver: GoPtr<classFields
  */
 export function classFieldsTransformer_getStaticPropertiesAndClassStaticBlock(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   let result: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsClassStaticBlockDeclaration(member) || (IsPropertyDeclaration(member) && HasStaticModifier(member))) {
       result = GoSliceAppend(result, member, GoPointerValueOps<Node>());
     }
@@ -7184,7 +7296,15 @@ export function classFieldsTransformer_getStaticPropertiesAndClassStaticBlock(re
  * }
  */
 export function classHasClassThisAssignment(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>): bool {
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (isClassThisAssignmentBlock(emitContext, member)) {
       return true;
     }

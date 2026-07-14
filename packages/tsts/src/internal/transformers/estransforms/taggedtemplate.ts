@@ -39,6 +39,8 @@ import { Transformer_NewTransformer, Transformer_Visitor, Transformer_Factory, T
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/visitor.js";
 import { GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 
 /**
@@ -272,7 +274,15 @@ export function taggedTemplateTransformer_processTaggedTemplateExpression(receiv
     const te = AsTemplateExpression(template);
     cookedStrings = GoSliceAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(te!.Head as unknown as GoPtr<Node>)), GoPointerValueOps<Node>());
     rawStrings = GoSliceAppend(rawStrings, getRawLiteral(pf, te!.Head as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
-    for (const span of te!.TemplateSpans!.Nodes) {
+    for (
+      let __goRangeSlice = te!.TemplateSpans!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const span = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const ts: GoPtr<TemplateSpan> = AsTemplateSpan(span);
       cookedStrings = GoSliceAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)), GoPointerValueOps<Node>());
       rawStrings = GoSliceAppend(rawStrings, getRawLiteral(pf, ts!.Literal as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
@@ -405,7 +415,15 @@ export function hasInvalidEscape(template: GoPtr<Node>): bool {
   if ((Node_TemplateLiteralLikeData(te!.Head as unknown as GoPtr<Node>)!.TemplateFlags & TokenFlagsContainsInvalidEscape) !== 0) {
     return true as bool;
   }
-  for (const span of te!.TemplateSpans!.Nodes) {
+  for (
+    let __goRangeSlice = te!.TemplateSpans!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const span = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const ts: GoPtr<TemplateSpan> = AsTemplateSpan(span);
     if ((Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)!.TemplateFlags & TokenFlagsContainsInvalidEscape) !== 0) {
       return true as bool;

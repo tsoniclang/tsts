@@ -178,7 +178,15 @@ export function getBasePaths(path: string, includes: GoSlice<string>, useCaseSen
     const stringComparer = ComparePathsOptions_GetComparer(comparePathsOptions);
 
     const includeBasePaths: string[] = [];
-    for (const include of includeList) {
+    for (
+      let __goRangeSlice = includeList,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const include = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       let absolute: string;
       if (IsRootedDiskPath(include)) {
         absolute = include;
@@ -352,7 +360,15 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
     components: [],
   };
 
-  for (const part of parts) {
+  for (
+    let __goRangeSlice = parts,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const part = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     p.components = GoAppend(p.components, parseComponent(part, usage !== UsageExclude));
   }
   return [p, true];
@@ -1116,13 +1132,29 @@ export function newGlobMatcher(includeSpecs: GoSlice<string>, excludeSpecs: GoSl
     excludes: [],
   };
 
-  for (const spec of includeList) {
+  for (
+    let __goRangeSlice = includeList,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const spec = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const [p, ok] = compileGlobPattern(spec, basePath, usage, caseSensitive);
     if (ok) {
       m.includes = GoAppend(m.includes, p);
     }
   }
-  for (const spec of excludeList) {
+  for (
+    let __goRangeSlice = excludeList,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const spec = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const [p, ok] = compileGlobPattern(spec, basePath, UsageExclude, caseSensitive);
     if (ok) {
       m.excludes = GoAppend(m.excludes, p);
@@ -1318,7 +1350,15 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
   const pathPrefix = ensureTrailingSlash(path);
   const absPrefix = ensureTrailingSlash(absolutePath);
 
-  for (const file of entries.Files) {
+  for (
+    let __goRangeSlice = entries.Files,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((receiver!.extensions?.length ?? 0) > 0 && !FileExtensionIsOneOf(file, receiver!.extensions)) {
       continue;
     }
@@ -1336,7 +1376,15 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
     }
   }
 
-  for (const dir of entries.Directories) {
+  for (
+    let __goRangeSlice = entries.Directories,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const dir = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!globMatcher_matchesDirectoryParts(receiver!.directoryMatcher, absPrefix, dir)) {
       continue;
     }
@@ -1412,7 +1460,15 @@ export function matchFiles(path: string, extensions: GoSlice<string>, excludes: 
     results: results,
   };
 
-  for (const basePath of getBasePaths(normalizedPath, includes, useCaseSensitiveFileNames)) {
+  for (
+    let __goRangeSlice = getBasePaths(normalizedPath, includes, useCaseSensitiveFileNames),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const basePath = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     globVisitor_visit(v, basePath, CombinePaths(normalizedCurrentDir, basePath), depth, "");
   }
 
@@ -1504,7 +1560,15 @@ export function NewSpecMatcher(specs: GoSlice<string>, basePath: string, usage: 
     return undefined;
   }
   const patterns: globPattern[] = [];
-  for (const spec of specs) {
+  for (
+    let __goRangeSlice = specs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const spec = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const [p, ok] = compileGlobPattern(spec, basePath, usage, useCaseSensitiveFileNames);
     if (ok) {
       patterns.push(p);

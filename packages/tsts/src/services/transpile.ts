@@ -26,6 +26,8 @@ import { Default as DefaultLocale } from "../internal/locale/locale.js";
 import { TSTrue } from "../internal/core/tristate.js";
 import { Time } from "../go/time.js";
 import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+import { GoSliceLoad } from "../go/compat.js";
+
 
 
 export interface TranspileOptions {
@@ -216,7 +218,15 @@ function transpileWorker(input: string, options: TranspileOptions, declaration: 
 }
 
 function appendDiagnostics(target: Diagnostic[], diagnostics: GoSlice<GoPtr<Diagnostic>>): void {
-  for (const diagnostic of diagnostics) {
+  for (
+    let __goRangeSlice = diagnostics,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const diagnostic = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (diagnostic !== undefined) {
       target.push(diagnostic);
     }

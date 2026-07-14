@@ -22,6 +22,8 @@ const fileIncludeReasonKey: GoMapKeyDescriptor<GoPtr<FileIncludeReason>> = GoPoi
 
 import type { GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnosticKind","kind":"type","status":"implemented","sigHash":"bb346ba4b5dd9c7c0d634136ea2a4939fb3cd88f82cacd0e7062c6e905c7e61e"}
@@ -269,7 +271,15 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     const reasons = includeProcessor!.fileIncludeReasons.get(diag!.file);
     includeDetails = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
     if (reasons !== undefined) {
-      for (const reason of reasons) {
+      for (
+        let __goRangeSlice = reasons,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<FileIncludeReason>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const reason = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         processInclude(reason);
       }
     }

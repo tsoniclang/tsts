@@ -474,7 +474,15 @@ export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, s
   b.impl!.ctx!.typeStack = GoSlicePrefix(b.impl!.ctx!.typeStack, b.impl!.ctx!.typeStack.length - 2);
   NodeBuilder_propagateVerbosityOut(b);
   let result: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const node of nodes) {
+  for (
+    let __goRangeSlice = nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     switch (node!.Kind) {
       case KindClassDeclaration:
         result = GoSliceAppend(result, simplifyClassDeclaration(b.impl!.f, node, symbol_), GoPointerValueOps<Node>());

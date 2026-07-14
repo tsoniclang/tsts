@@ -1148,7 +1148,15 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
     ));
     let typeResolutionsTrace: GoSlice<DiagAndArgs> = GoNilSlice();
     let pDiagnostics: GoSlice<GoPtr<processingDiagnostic>> = GoNilSlice();
-    for (const name of automaticTypeDirectiveNames) {
+    for (
+      let __goRangeSlice = automaticTypeDirectiveNames,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const name = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       // Under node16/nodenext module resolution, load `types`/ata include names as cjs resolution results by passing an `undefined` mode.
       // Under bundler module resolution, this also triggers the "import" condition to be used.
       const resolutionMode = ResolutionModeNone;
@@ -1426,7 +1434,15 @@ export function fileLoader_parseSourceFile(receiver: GoPtr<fileLoader>, t: GoPtr
  * }
  */
 export function fileLoader_isSupportedExtension(receiver: GoPtr<fileLoader>, canonicalFileName: string): bool {
-  for (const group of receiver!.supportedExtensionsWithJsonIfResolveJsonModule) {
+  for (
+    let __goRangeSlice = receiver!.supportedExtensionsWithJsonIfResolveJsonModule,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoSliceValueOps<string>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const group = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (FileExtensionIsOneOf(canonicalFileName, group)) {
       return true;
     }
@@ -1511,7 +1527,15 @@ export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader
   if (allowNonTsExtensions) {
     return ["", { message: diagnostics.File_0_not_found, args: [diagnosticFileName] }];
   }
-  for (const ext of GoSliceLoad(receiver!.supportedExtensions, 0, GoSliceValueOps<string>())!) {
+  for (
+    let __goRangeSlice = GoSliceLoad(receiver!.supportedExtensions, 0, GoSliceValueOps<string>())!,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ext = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const candidate = fileName + ext;
     if (receiver!.opts.Host!.FS()!.FileExists(candidate)) {
       return [candidate, undefined];
@@ -1884,10 +1908,26 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     const importsStart = moduleNames.length;
 
     const fileImports = SourceFile_Imports(file);
-    for (const imp of fileImports) {
+    for (
+      let __goRangeSlice = fileImports,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const imp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       moduleNames = GoSliceAppend(moduleNames, imp, GoPointerValueOps<Node>());
     }
-    for (const imp of file!.ModuleAugmentations) {
+    for (
+      let __goRangeSlice = file!.ModuleAugmentations,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const imp = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (imp!.Kind === KindStringLiteral) {
         moduleNames = GoSliceAppend(moduleNames, imp, GoPointerValueOps<Node>());
       }

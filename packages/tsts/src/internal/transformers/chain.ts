@@ -49,7 +49,15 @@ export function chainedTransformer_visit(receiver: GoPtr<chainedTransformer>, no
     throw new globalThis.Error("Chained transform passed non-sourcefile initial node");
   }
   let result = AsSourceFile(node);
-  for (const t of receiver!.components) {
+  for (
+    let __goRangeSlice = receiver!.components,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Transformer>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     result = Transformer_TransformSourceFile(t, result);
   }
   return NodeDefault_AsNode(result);

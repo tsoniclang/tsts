@@ -3582,7 +3582,15 @@ export function isUseStrictPrologueDirective(sourceFile: GoPtr<SourceFile>, node
  * }
  */
 export function FindUseStrictPrologue(sourceFile: GoPtr<SourceFile>, statements: GoSlice<GoPtr<Node>>): GoPtr<Node> {
-  for (const statement of statements) {
+  for (
+    let __goRangeSlice = statements,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsPrologueDirective(statement)) {
       if (isUseStrictPrologueDirective(sourceFile, statement)) {
         return statement;
@@ -4084,7 +4092,15 @@ export function Binder_bindContainer(receiver: GoPtr<Binder>, node: GoPtr<Node>,
     Binder_bindChildren(receiver, node);
   }
   if (IsSourceFile(node) && IsInJSFile(node)) {
-    for (const statement of (Node_Statements(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
+    for (
+      let __goRangeSlice = (Node_Statements(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsJSTypeAliasDeclaration(statement)) {
         Binder_bindBlockScopedDeclaration(receiver, statement, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes);
       }
@@ -4401,7 +4417,15 @@ export function Binder_bindEachChild(receiver: GoPtr<Binder>, node: GoPtr<Node>)
  * }
  */
 export function Binder_bindEach(receiver: GoPtr<Binder>, nodes: GoSlice<GoPtr<Node>>): void {
-  for (const node of nodes) {
+  for (
+    let __goRangeSlice = nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     Binder_bind(receiver, node);
   }
 }
@@ -4456,12 +4480,28 @@ export function Binder_bindModifiers(receiver: GoPtr<Binder>, modifiers: GoPtr<M
  * }
  */
 export function Binder_bindEachStatementFunctionsFirst(receiver: GoPtr<Binder>, statements: GoPtr<NodeList>): void {
-  for (const node of statements!.Nodes) {
+  for (
+    let __goRangeSlice = statements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (node!.Kind === KindFunctionDeclaration) {
       Binder_bind(receiver, node);
     }
   }
-  for (const node of statements!.Nodes) {
+  for (
+    let __goRangeSlice = statements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (node!.Kind !== KindFunctionDeclaration) {
       Binder_bind(receiver, node);
     }
@@ -4608,7 +4648,15 @@ export function isLogicalAssignmentExpression(node: GoPtr<Node>): bool {
 export function Binder_bindAssignmentTargetFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
   switch (node!.Kind) {
     case KindArrayLiteralExpression:
-      for (const e of Node_Elements(node)!) {
+      for (
+        let __goRangeSlice = Node_Elements(node)!,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (e!.Kind === KindSpreadElement) {
           Binder_bindAssignmentTargetFlow(receiver, Node_Expression(e)!);
         } else {
@@ -4617,7 +4665,15 @@ export function Binder_bindAssignmentTargetFlow(receiver: GoPtr<Binder>, node: G
       }
       break;
     case KindObjectLiteralExpression:
-      for (const p of Node_Properties(node)!) {
+      for (
+        let __goRangeSlice = Node_Properties(node)!,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         switch (p!.Kind) {
           case KindPropertyAssignment:
             Binder_bindDestructuringTargetFlow(receiver, Node_Initializer(p)!);
@@ -5726,7 +5782,15 @@ export function Binder_bindInitializedVariableFlow(receiver: GoPtr<Binder>, node
       break;
   }
   if (name !== undefined && IsBindingPattern(name)) {
-    for (const child of (Node_Elements(name) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
+    for (
+      let __goRangeSlice = (Node_Elements(name) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       Binder_bindInitializedVariableFlow(receiver, child);
     }
   } else {
@@ -6464,7 +6528,15 @@ export function isNarrowableReference(node: GoPtr<Node>): bool {
  */
 export function hasNarrowableArgument(expr: GoPtr<Node>): bool {
   const call = AsCallExpression(expr);
-  for (const argument of call!.Arguments!.Nodes) {
+  for (
+    let __goRangeSlice = call!.Arguments!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const argument = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (containsNarrowableReference(argument)) {
       return true as bool;
     }

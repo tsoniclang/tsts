@@ -824,7 +824,15 @@ export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPt
  */
 export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: GoPtr<Node>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): bool {
   let reportedError = false;
-  for (const prop of Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!IsJsxSpreadAttribute(prop) && !isHyphenatedJsxName(Node_Text(Node_Name(prop)))) {
       const nameType = Checker_getStringLiteralType(receiver, Node_Text(Node_Name(prop)));
       if (nameType !== undefined && (nameType!.flags & TypeFlagsNever) === 0) {
@@ -1526,7 +1534,15 @@ export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: 
       if (signaturesOfParam.length === 0) {
         continue;
       }
-      for (const paramSig of signaturesOfParam) {
+      for (
+        let __goRangeSlice = signaturesOfParam,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Signature>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const paramSig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         hasFirstParamSignatures = true;
         if (Checker_hasEffectiveRestParameter(receiver, paramSig)) {
           return true;
@@ -1541,7 +1557,15 @@ export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: 
       return true;
     }
     let absoluteMinArgCount = Number.MAX_SAFE_INTEGER as int;
-    for (const tagSig of tagCallSignatures) {
+    for (
+      let __goRangeSlice = tagCallSignatures,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Signature>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const tagSig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const tagRequiredArgCount = Checker_getMinArgumentCount(receiver, tagSig);
       if (tagRequiredArgCount < absoluteMinArgCount) {
         absoluteMinArgCount = tagRequiredArgCount;
@@ -1779,7 +1803,15 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
     attributesSymbol = Node_Symbol(attributes);
     attributeParent = attributes;
     const contextualType = Checker_getContextualType(receiver, attributes, ContextFlagsNone);
-    for (const attributeDecl of Node_Properties(attributes) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Properties(attributes) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const attributeDecl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const member = Node_Symbol(attributeDecl);
       if (IsJsxAttribute(attributeDecl)) {
         const exprType = Checker_checkJsxAttribute(receiver, attributeDecl, checkMode);
@@ -1959,7 +1991,15 @@ export function Checker_checkJsxAttribute(receiver: GoPtr<Checker>, node: GoPtr<
  */
 export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoSlice<GoPtr<Type>> {
   let childTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
-  for (const child of Node_Children(node)!.Nodes) {
+  for (
+    let __goRangeSlice = Node_Children(node)!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const child = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     // In React, JSX text that contains only whitespaces will be ignored so we don't want to type-check that
     // because then type of children property will have constituent of string type.
     if (IsJsxText(child)) {
@@ -2224,7 +2264,15 @@ export function Checker_getJsxPropsTypeForSignatureFromMember(receiver: GoPtr<Ch
     // for a union signature). It's an unfortunate quirk of looking in the output of the signature for the type we want to use for the input.
     // The default behavior of `getTypeOfFirstParameterOfSignatureWithFallback` when no `props` member name is defined is much more sane.
     let results: GoSlice<GoPtr<Type>> = GoNilSlice();
-    for (const signature of sig!.composite!.signatures) {
+    for (
+      let __goRangeSlice = sig!.composite!.signatures,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Signature>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const signature = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const instance = Checker_getReturnTypeOfSignature(receiver, signature);
       if (IsTypeAny(instance)) {
         return instance;

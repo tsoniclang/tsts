@@ -40,6 +40,8 @@ import type { Checker } from "./state.js";
 import { resolutionExtensionIsTSOrJson } from "./state.js";
 import { Checker_addDiagnostic } from "../checker.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad, GoStringValueOps } from "../../../go/compat.js";
+
 
 
 /**
@@ -182,7 +184,15 @@ export function Checker_mergeModuleAugmentation(receiver: GoPtr<Checker>, module
 export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   switch (node!.Kind) {
     case KindVariableStatement:
-      for (const decl of AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes) {
+      for (
+        let __goRangeSlice = AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Checker_checkModuleAugmentationElement(receiver, decl);
       }
       break;
@@ -204,7 +214,15 @@ export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>,
     case KindVariableDeclaration: {
       const name = Node_Name(node);
       if (IsBindingPattern(name)) {
-        for (const element of Node_Elements(name) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = Node_Elements(name) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           Checker_checkModuleAugmentationElement(receiver, element);
         }
       }
@@ -719,7 +737,15 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
         if (FindAncestor(location, IsEmittableImport) !== undefined) {
           let tsExtension = TryExtractTSExtension(moduleReference);
           if (tsExtension === "") {
-            for (const ext of SupportedTSExtensionsFlat) {
+            for (
+              let __goRangeSlice = SupportedTSExtensionsFlat,
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoStringValueOps,
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const ext = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               if (moduleReference.includes(ext)) {
                 tsExtension = ext;
                 break;

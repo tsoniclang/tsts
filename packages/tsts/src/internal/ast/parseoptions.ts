@@ -44,6 +44,8 @@ import {
 import { NodeFlagsPossiblyContainsImportMeta } from "./generated/flags.js";
 import { ScriptKindJSON } from "../core/scriptkind.js";
 import { GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 
 /**
@@ -246,7 +248,15 @@ export function getExternalModuleIndicator(file: GoPtr<SourceFile>, opts: Extern
  * }
  */
 export function isFileProbablyExternalModule(sourceFile: GoPtr<SourceFile>): GoPtr<Node> {
-  for (const statement of sourceFile!.Statements!.Nodes) {
+  for (
+    let __goRangeSlice = sourceFile!.Statements!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (isAnExternalModuleIndicatorNode(statement)) {
       return statement;
     }

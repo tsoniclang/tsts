@@ -496,7 +496,15 @@ export function toBuildInfo_toBuildInfoDiagnosticsOfFile(receiver: GoPtr<toBuild
  * }
  */
 export function toBuildInfo_collectRootFiles(receiver: GoPtr<toBuildInfo>): void {
-  for (const fileName of ParsedCommandLine_FileNames(Program_CommandLine(receiver!.program))) {
+  for (
+    let __goRangeSlice = ParsedCommandLine_FileNames(Program_CommandLine(receiver!.program)),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const fileName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     let file;
     const redirect = Program_GetParseFileRedirect(receiver!.program, fileName);
     if (redirect !== "") {
@@ -624,7 +632,15 @@ export function toBuildInfo_setRootOfIncrementalProgram(receiver: GoPtr<toBuildI
   slices.SortFunc(keys, (a: GoPtr<SourceFile>, b: GoPtr<SourceFile>) => {
     return (toBuildInfo_toFileId(receiver, SourceFile_Path(a)) as number) - (toBuildInfo_toFileId(receiver, SourceFile_Path(b)) as number);
   });
-  for (const file of keys) {
+  for (
+    let __goRangeSlice = keys,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const rootPath = receiver!.roots.get(file);
     const root = toBuildInfo_toFileId(receiver, rootPath!);
     const resolved = toBuildInfo_toFileId(receiver, SourceFile_Path(file));
@@ -756,7 +772,15 @@ export function toBuildInfo_setChangeFileSet(receiver: GoPtr<toBuildInfo>): void
  * }
  */
 export function toBuildInfo_setSemanticDiagnostics(receiver: GoPtr<toBuildInfo>): void {
-  for (const file of Program_GetSourceFiles(receiver!.program)) {
+  for (
+    let __goRangeSlice = Program_GetSourceFiles(receiver!.program),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const [value, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(receiver!.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>, GoStringKey);
     if (!ok) {
       if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as import("../../collections/syncset.js").SyncSet<Path>, SourceFile_Path(file), GoStringKey)) {
@@ -818,7 +842,15 @@ export function toBuildInfo_setAffectedFilesPendingEmit(receiver: GoPtr<toBuildI
   const files = slices.Collect(SyncMap_Keys(receiver!.snapshot!.affectedFilesPendingEmit));
   slices.Sort(files);
   const fullEmitKind = GetFileEmitKind(receiver!.snapshot!.options);
-  for (const filePath of files) {
+  for (
+    let __goRangeSlice = files,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const filePath = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const file = Program_GetSourceFileByPath(receiver!.program, filePath);
     if (file === undefined || !Program_SourceFileMayBeEmitted(receiver!.program, file, false)) {
       continue;

@@ -562,7 +562,15 @@ export function GetDocumentPositionMapper(host: GoInterface<Host>, generatedFile
     possibleMapLocations = GoSliceAppend(possibleMapLocations, mapFileName, GoStringValueOps);
   }
   possibleMapLocations = GoSliceAppend(possibleMapLocations, generatedFileName + ".map", GoStringValueOps);
-  for (const location of possibleMapLocations) {
+  for (
+    let __goRangeSlice = possibleMapLocations,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const location = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const resolvedMapFileName: string = GetNormalizedAbsolutePath(location, GetDirectoryPath(generatedFileName));
     const [mapFileContents, ok] = host!.ReadFile(resolvedMapFileName);
     if (ok) {

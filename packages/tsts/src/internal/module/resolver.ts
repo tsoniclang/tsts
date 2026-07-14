@@ -1050,7 +1050,15 @@ export function resolutionState_resolveTypeReferenceDirective(receiver: GoPtr<re
     if (receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.Resolving_with_primary_search_path_0, strings.Join(typeRoots, ", "));
     }
-    for (const typeRoot of typeRoots) {
+    for (
+      let __goRangeSlice = typeRoots,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const typeRoot = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const candidate = resolutionState_getCandidateFromTypeRoot(receiver, typeRoot);
       const directoryExists = receiver!.resolver!.host!.FS()!.DirectoryExists(typeRoot);
       if (!directoryExists) {
@@ -1169,7 +1177,15 @@ export function resolutionState_resolveFromTypeRoot(receiver: GoPtr<resolutionSt
   if (GoSliceIsNil(receiver!.compilerOptions!.TypeRoots)) {
     return undefined;
   }
-  for (const typeRoot of receiver!.compilerOptions!.TypeRoots) {
+  for (
+    let __goRangeSlice = receiver!.compilerOptions!.TypeRoots,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const typeRoot = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const candidate = resolutionState_getCandidateFromTypeRoot(receiver, typeRoot);
     const directoryExists = receiver!.resolver!.host!.FS()!.DirectoryExists(typeRoot);
     if (!directoryExists) {
@@ -2146,7 +2162,15 @@ export function resolutionState_tryLoadInputFileForPath(receiver: GoPtr<resoluti
         for (const ext of jsAndDtsExtensions) {
           if (tspath.FileExtensionIs(possibleInputBase, ext)) {
             const inputExts = tspathExtension.GetPossibleOriginalInputExtensionForExtension(possibleInputBase);
-            for (const possibleExt of inputExts) {
+            for (
+              let __goRangeSlice = inputExts,
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoStringValueOps,
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const possibleExt = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               if (!extensionIsOk(receiver!.extensions, possibleExt)) {
                 continue;
               }
@@ -2862,7 +2886,15 @@ export function resolutionState_tryLoadModuleUsingPaths(receiver: GoPtr<resoluti
     if (receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.Module_name_0_matched_pattern_1, moduleName, matchedPattern.Text);
     }
-    for (const subst of OrderedMap_GetOrZero<string, GoSlice<string>>(paths as GoPtr<OrderedMap<string, GoSlice<string>>>, matchedPattern.Text, GoZeroSlice)) {
+    for (
+      let __goRangeSlice = OrderedMap_GetOrZero<string, GoSlice<string>>(paths as GoPtr<OrderedMap<string, GoSlice<string>>>, matchedPattern.Text, GoZeroSlice),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const subst = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const path2 = strings.Replace(subst, "*", matchedStar, 1);
       const candidate = tspath.NormalizePath(tspath.CombinePaths(containingDirectory, path2));
       if (receiver!.tracer !== undefined) {
@@ -2984,7 +3016,15 @@ export function resolutionState_tryLoadModuleUsingRootDirs(receiver: GoPtr<resol
   const candidate = tspath.NormalizePath(tspath.CombinePaths(receiver!.containingDirectory, receiver!.name));
   let matchedRootDir = "";
   let matchedNormalizedPrefix = "";
-  for (const rootDir of receiver!.compilerOptions!.RootDirs) {
+  for (
+    let __goRangeSlice = receiver!.compilerOptions!.RootDirs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const rootDir = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     let normalizedRoot = tspath.NormalizePath(rootDir);
     if (!strings.HasSuffix(normalizedRoot, "/")) {
       normalizedRoot += "/";
@@ -3017,7 +3057,15 @@ export function resolutionState_tryLoadModuleUsingRootDirs(receiver: GoPtr<resol
     if (receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.Trying_other_entries_in_rootDirs);
     }
-    for (const rootDir of receiver!.compilerOptions!.RootDirs) {
+    for (
+      let __goRangeSlice = receiver!.compilerOptions!.RootDirs,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const rootDir = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (rootDir === matchedRootDir) {
         continue;
       }
@@ -3466,7 +3514,15 @@ export function resolutionState_tryFile(receiver: GoPtr<resolutionState>, fileNa
   }
   const ext = tspathExtension.TryGetExtensionFromPath(fileName);
   const fileNameNoExtension = tspathExtension.RemoveExtension(fileName, ext);
-  for (const suffix of (receiver!.compilerOptions!.ModuleSuffixes ?? GoSliceMake(0, 0, GoStringValueOps))) {
+  for (
+    let __goRangeSlice = (receiver!.compilerOptions!.ModuleSuffixes ?? GoSliceMake(0, 0, GoStringValueOps)),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const suffix = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const p = fileNameNoExtension + suffix + ext;
     if (resolutionState_tryFileLookup(receiver, p)) {
       return [p, true as bool];
@@ -4021,7 +4077,15 @@ export function resolutionState_readPackageJsonPeerDependencies(receiver: GoPtr<
   });
   slices.Sort(names);
   let builder = "";
-  for (const name of names) {
+  for (
+    let __goRangeSlice = names,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const name = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const peerPackageJson = resolutionState_getPackageJsonInfo(receiver, nodeModules + name);
     if (peerPackageJson !== undefined) {
       const version = packageJsonHeaderStringField(peerPackageJson.Contents, "Version").Value;
@@ -4596,7 +4660,15 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
   const [typeRoots] = CompilerOptions_GetEffectiveTypeRoots(options, host!.GetCurrentDirectory());
   for (const root of (typeRoots ?? GoSliceMake(0, 0, GoStringValueOps))) {
     if (host!.FS()!.DirectoryExists(root)) {
-      for (const typeDirectivePath of host!.FS()!.GetAccessibleEntries(root).Directories) {
+      for (
+        let __goRangeSlice = host!.FS()!.GetAccessibleEntries(root).Directories,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoStringValueOps,
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const typeDirectivePath = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const normalized = tspath.NormalizePath(typeDirectivePath);
         const packageJsonPath = tspath.CombinePaths(root, normalized, "package.json");
         let isNotNeededPackage = false;
@@ -4617,7 +4689,15 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
   }
 
   let result: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
-  for (const t of (options!.Types ?? GoSliceMake(0, 0, GoStringValueOps))) {
+  for (
+    let __goRangeSlice = (options!.Types ?? GoSliceMake(0, 0, GoStringValueOps)),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (t === "*") {
       result = GoSliceAppendSlice(result, wildcardMatches, GoStringValueOps);
     } else {
@@ -4823,7 +4903,15 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
       vfsmatch.UnlimitedDepth as int,
     );
     const comparePathsOptions: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.host!.FS()!.UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
-    for (const file of otherFiles) {
+    for (
+      let __goRangeSlice = otherFiles,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (resolved_isResolved(mainResolution) && tspath.ComparePaths(file, mainResolution!.path, comparePathsOptions) === 0) {
         continue;
       }
@@ -5028,7 +5116,15 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
           }),
           vfsmatch.UnlimitedDepth as int,
         );
-        for (const file of files) {
+        for (
+          let __goRangeSlice = files,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoStringValueOps,
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           const [matchedStar, ok] = resolutionState_getMatchedStarForPatternEntrypoint(receiver, file, leadingSlice, trailingSlice, caseSensitive);
           if (!ok) continue;
           const moduleSpecifier = tspath.ResolvePath(packageName, strings.Replace(subpath, "*", matchedStar, 1));
@@ -5079,7 +5175,15 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
             newIncludeConditions = NewSetWithSizeHint<string>(0, GoStringKey);
           }
           Set_Add(newIncludeConditions!, condition, GoStringKey);
-          for (const prevCondition of prevConditions) {
+          for (
+            let __goRangeSlice = prevConditions,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoStringValueOps,
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const prevCondition = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             if (newExcludeConditions === undefined) {
               newExcludeConditions = NewSetWithSizeHint<string>(0, GoStringKey);
             }

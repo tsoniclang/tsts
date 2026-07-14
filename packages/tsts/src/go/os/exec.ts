@@ -4,6 +4,8 @@ import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
 import process from "node:process";
 import { GoNumberValueOps, GoSliceMake } from "../compat.js";
+import { GoSliceLoad, GoStringValueOps } from "../compat.js";
+
 
 
 export class Cmd {
@@ -87,7 +89,15 @@ function envObject(env: GoSlice<string> | undefined): NodeJS.ProcessEnv | undefi
     return undefined;
   }
   const result: NodeJS.ProcessEnv = {};
-  for (const entry of env) {
+  for (
+    let __goRangeSlice = env,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const entry = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const index = entry.indexOf("=");
     if (index >= 0) {
       result[entry.slice(0, index)] = entry.slice(index + 1);

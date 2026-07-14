@@ -21,6 +21,8 @@ import type { NameResolver } from "./nameresolver.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceMake } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"implemented","sigHash":"23c7bfe98262f5cb06698ba14803aa4c1ecaea7af86f4da690c2c05961d68630"}
@@ -561,7 +563,15 @@ export function referenceResolver_GetReferencedValueDeclarations(receiver: GoPtr
   let symbol_ = referenceResolver_getReferencedValueSymbol(receiver, node, false);
   if (symbol_ !== undefined) {
     symbol_ = referenceResolver_getExportSymbolOfValueSymbolIfExported(receiver, symbol_);
-    for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       switch (declaration!.Kind) {
         case KindVariableDeclaration:
         case KindParameter:

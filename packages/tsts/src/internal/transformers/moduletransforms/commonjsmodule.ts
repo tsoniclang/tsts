@@ -1050,7 +1050,15 @@ export function CommonJSModuleTransformer_appendExportsOfImportDeclaration(recei
         statements = CommonJSModuleTransformer_appendExportsOfDeclaration(receiver, statements, namedBindings as GoPtr<Declaration>, seen, false /*liveBinding*/);
         break;
       case KindNamedImports:
-        for (const importBinding of Node_Elements(namedBindings)!) {
+        for (
+          let __goRangeSlice = Node_Elements(namedBindings)!,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const importBinding = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           statements = CommonJSModuleTransformer_appendExportsOfDeclaration(receiver, statements, importBinding as GoPtr<Declaration>, seen, true /*liveBinding*/);
         }
         break;
@@ -1093,7 +1101,15 @@ export function CommonJSModuleTransformer_appendExportsOfVariableDeclarationList
     return statements;
   }
 
-  for (const decl of node!.Declarations!.Nodes) {
+  for (
+    let __goRangeSlice = node!.Declarations!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     statements = CommonJSModuleTransformer_appendExportsOfBindingElement(receiver, statements, decl, isForInOrOfInitializer);
   }
 
@@ -1129,7 +1145,15 @@ export function CommonJSModuleTransformer_appendExportsOfBindingElement(receiver
   }
 
   if (IsBindingPattern(Node_Name(decl))) {
-    for (const element of Node_Elements(Node_Name(decl)!)!) {
+    for (
+      let __goRangeSlice = Node_Elements(Node_Name(decl)!)!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!IsOmittedExpression(element)) {
         statements = CommonJSModuleTransformer_appendExportsOfBindingElement(receiver, statements, element, isForInOrOfInitializer);
       }
@@ -1240,7 +1264,15 @@ export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: G
     const exportSpecifiers = MultiMap_Get(receiver!.currentModuleInfo!.exportSpecifiers, Node_Text(declName));
     if (exportSpecifiers.length > 0) {
       const exportValue = CommonJSModuleTransformer_visitExpressionIdentifier(receiver, declName as GoPtr<IdentifierNode>);
-      for (const exportSpecifier of exportSpecifiers) {
+      for (
+        let __goRangeSlice = exportSpecifiers,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<ExportSpecifier>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const exportSpecifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         statements = CommonJSModuleTransformer_appendExportStatement(receiver, statements, seen, exportSpecifier!.name, exportValue as GoPtr<Expression>, exportSpecifier!.name!.Loc /*location*/, false /*allowComments*/, liveBinding);
       }
     }
@@ -1926,7 +1958,15 @@ export function CommonJSModuleTransformer_visitTopLevelExportDeclaration(receive
     EmitContext_AssignCommentAndSourceMapRanges(emitContext, varStatement, Node_AsNode(node));
     statements = GoSliceAppend(statements, varStatement as GoPtr<Statement>, GoPointerValueOps<Node>());
 
-    for (const specifier of Node_Elements(node!.ExportClause!)!) {
+    for (
+      let __goRangeSlice = Node_Elements(node!.ExportClause!)!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const specifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const specifierName = Node_PropertyNameOrName(specifier);
       const exportNeedsImportDefault = ModuleExportNameIsDefault(specifierName);
 
@@ -2325,7 +2365,15 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
     };
 
     // If we're exporting these variables, then these just become assignments to 'exports.x'.
-    for (let variable of AsVariableDeclarationList(node!.DeclarationList)!.Declarations!.Nodes) {
+    for (
+      let __goRangeSlice = AsVariableDeclarationList(node!.DeclarationList)!.Declarations!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      let variable = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const v = AsVariableDeclaration(variable);
 
       if (IsIdentifier(Node_Name(variable)) && IsLocalName(emitContext, Node_Name(variable)!)) {
@@ -3069,7 +3117,15 @@ export function CommonJSModuleTransformer_visitAssignmentExpression(receiver: Go
     const exportedNames = CommonJSModuleTransformer_getExports(receiver, node!.Left);
     if (exportedNames.length > 0) {
       let expression: GoPtr<Node> = NodeVisitor_VisitEachChild(visitor, Node_AsNode(node));
-      for (const exportName of exportedNames) {
+      for (
+        let __goRangeSlice = exportedNames,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const exportName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         expression = CommonJSModuleTransformer_createExportExpression(receiver, exportName, expression as GoPtr<Expression>, node!.Loc /*location*/, false /*liveBinding*/);
       }
       return expression;
@@ -3168,7 +3224,15 @@ export function CommonJSModuleTransformer_visitDestructuringAssignment(receiver:
 export function CommonJSModuleTransformer_destructuringNeedsFlattening(receiver: GoPtr<CommonJSModuleTransformer>, node: GoPtr<Node>): bool {
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   if (IsObjectLiteralExpression(node)) {
-    for (const elem of Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const elem = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       switch (elem!.Kind) {
         case KindPropertyAssignment:
           if (CommonJSModuleTransformer_destructuringNeedsFlattening(receiver, Node_Initializer(elem))) {
@@ -3192,7 +3256,15 @@ export function CommonJSModuleTransformer_destructuringNeedsFlattening(receiver:
       }
     }
   } else if (IsArrayLiteralExpression(node)) {
-    for (const elem of AsArrayLiteralExpression(node)!.Elements!.Nodes) {
+    for (
+      let __goRangeSlice = AsArrayLiteralExpression(node)!.Elements!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const elem = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsSpreadElement(elem)) {
         if (CommonJSModuleTransformer_destructuringNeedsFlattening(receiver, Node_Expression(elem))) {
           return true;
@@ -3297,7 +3369,15 @@ export function CommonJSModuleTransformer_createAllExportExpressions(receiver: G
     } else {
       expression = NodeFactory_NewAssignmentExpression(pf, name, value);
     }
-    for (const exportName of exportedNames) {
+    for (
+      let __goRangeSlice = exportedNames,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const exportName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       expression = CommonJSModuleTransformer_createExportExpression(receiver, exportName, expression, location, false /*liveBinding*/);
     }
     return expression;
@@ -3643,7 +3723,15 @@ export function CommonJSModuleTransformer_visitDestructuringAssignmentTargetNoSt
     if (exportedNames.length > 0) {
       const value = NodeFactory_NewUniqueNameEx(pf, "value", { Flags: GeneratedIdentifierFlagsOptimistic, Prefix: "", Suffix: "" });
       expression = NodeFactory_NewAssignmentExpression(pf, expression as GoPtr<Expression>, value) as GoPtr<Node>;
-      for (const exportName of exportedNames) {
+      for (
+        let __goRangeSlice = exportedNames,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const exportName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         expression = CommonJSModuleTransformer_createExportExpression(receiver, exportName, expression as GoPtr<Expression>, undefined /*location*/, false /*liveBinding*/) as GoPtr<Node>;
       }
       const statement = NewExpressionStatement(f, expression as GoPtr<Expression>);
@@ -3754,7 +3842,15 @@ export function CommonJSModuleTransformer_visitPrefixUnaryExpression(receiver: G
     const exportedNames = CommonJSModuleTransformer_getExports(receiver, node!.Operand);
     if (exportedNames.length > 0) {
       let expression: GoPtr<Expression> = NodeFactory_UpdatePrefixUnaryExpression(f, node, node!.Operator, NodeVisitor_VisitNode(visitor, node!.Operand) as GoPtr<Expression>) as GoPtr<Expression>;
-      for (const exportName of exportedNames) {
+      for (
+        let __goRangeSlice = exportedNames,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const exportName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         expression = CommonJSModuleTransformer_createExportExpression(receiver, exportName, expression, undefined /*location*/, false /*liveBinding*/);
         EmitContext_AssignCommentAndSourceMapRanges(emitContext, expression, Node_AsNode(node));
       }
@@ -3857,7 +3953,15 @@ export function CommonJSModuleTransformer_visitPostfixUnaryExpression(receiver: 
       }
       expression = NodeFactory_NewCommaExpression(pf, expression, Node_Clone(node!.Operand, { AsNodeFactory: () => f }) as GoPtr<Expression>);
       EmitContext_AssignCommentAndSourceMapRanges(emitContext, expression, Node_AsNode(node));
-      for (const exportName of exportedNames) {
+      for (
+        let __goRangeSlice = exportedNames,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const exportName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         expression = CommonJSModuleTransformer_createExportExpression(receiver, exportName, expression, undefined /*location*/, false /*liveBinding*/);
         EmitContext_AssignCommentAndSourceMapRanges(emitContext, expression, Node_AsNode(node));
       }
@@ -4607,7 +4711,15 @@ export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSMod
     if (!GoSliceIsNil(declarations)) {
       for (const declaration of declarations) {
         const exportedBindings = MultiMap_Get(receiver!.currentModuleInfo!.exportedBindings, declaration);
-        for (const binding of exportedBindings) {
+        for (
+          let __goRangeSlice = exportedBindings,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const binding = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (!Set_Has(bindingsSet, binding)) {
             Set_Add(bindingsSet, binding, moduleExportNamePointerKey);
             bindings = GoSliceAppend(bindings, binding, GoPointerValueOps<Node>());
@@ -4620,7 +4732,15 @@ export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSMod
     const exportSpecifiers = MultiMap_Get(receiver!.currentModuleInfo!.exportSpecifiers, Node_Text(name));
     if (!GoSliceIsNil(exportSpecifiers)) {
       let exportedNames: GoSlice<GoPtr<ModuleExportName>> = GoNilSlice();
-      for (const exportSpecifier of exportSpecifiers) {
+      for (
+        let __goRangeSlice = exportSpecifiers,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<ExportSpecifier>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const exportSpecifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         exportedNames = GoSliceAppend(exportedNames, exportSpecifier!.name, GoPointerValueOps<Node>());
       }
       return exportedNames;

@@ -183,7 +183,15 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
     }, evidence);
     extensionHost.facts.set(symbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule, declaration), evidence);
     if (declaration.signatures === undefined || declaration.signatures.length === 0) {
-      for (const exportDeclaration of symbol.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = symbol.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const exportDeclaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (exportDeclaration === undefined) {
           continue;
         }

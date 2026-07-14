@@ -6204,7 +6204,15 @@ export function findOriginatingJSDocSatisfiesTag(sourceFile: GoPtr<SourceFile>, 
     for (const jsDoc of Node_EagerJSDoc(current, sourceFile)) {
       const tags = AsJSDoc(jsDoc)!.Tags;
       if (tags !== undefined) {
-        for (const tag of tags!.Nodes) {
+        for (
+          let __goRangeSlice = tags!.Nodes,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const tag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (!IsJSDocSatisfiesTag(tag)) {
             continue;
           }

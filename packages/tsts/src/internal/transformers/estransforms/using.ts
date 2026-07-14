@@ -335,7 +335,15 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
     topLevelStatements = topLevelStatementsRef.v;
     if (receiver!.exportBindings!.size > 0) {
       let exportSpecifiers: GoSlice<GoPtr<ExportSpecifierNode>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-      for (const name of receiver!.exportBindingNames ?? GoSliceMake(0, 0, GoStringValueOps)) {
+      for (
+        let __goRangeSlice = receiver!.exportBindingNames ?? GoSliceMake(0, 0, GoStringValueOps),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoStringValueOps,
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const name = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const specifier = receiver!.exportBindings!.get(name);
         debug.Assert((specifier !== undefined) as bool, "Missing export binding for hoisted export name");
         exportSpecifiers = GoSliceAppend(exportSpecifiers, specifier, GoPointerValueOps<Node>());
@@ -730,7 +738,15 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
       const declarationList = varStatement!.DeclarationList;
       let declarations: GoSlice<GoPtr<VariableDeclaration>> = GoNilSlice();
       let invalid = false;
-      for (const declaration of AsVariableDeclarationList(declarationList)!.Declarations!.Nodes!) {
+      for (
+        let __goRangeSlice = AsVariableDeclarationList(declarationList)!.Declarations!.Nodes!,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (!IsIdentifier(Node_Name(declaration as GoPtr<Node>))) {
           declarations = GoNilSlice();
           invalid = true;
@@ -764,7 +780,15 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
     const result = usingDeclarationTransformer_visit(receiver, statement as GoPtr<Node>);
     if (result !== undefined) {
       if (result!.Kind === KindSyntaxList) {
-        for (const node of AsSyntaxList(result)!.Children!) {
+        for (
+          let __goRangeSlice = AsSyntaxList(result)!.Children!,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           hoistOrAppendNode(node);
         }
       } else {
@@ -1066,7 +1090,15 @@ export function usingDeclarationTransformer_hoistVariableStatement(receiver: GoP
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   let expressions: GoSlice<GoPtr<Expression>> = GoNilSlice();
   const isExported = HasSyntacticModifier(node as GoPtr<Node>, ModifierFlagsExport) as bool;
-  for (const variable of AsVariableDeclarationList(node!.DeclarationList)!.Declarations!.Nodes!) {
+  for (
+    let __goRangeSlice = AsVariableDeclarationList(node!.DeclarationList)!.Declarations!.Nodes!,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const variable = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     usingDeclarationTransformer_hoistBindingElement(receiver, variable as GoPtr<Node>, isExported, variable as GoPtr<Node>);
     if ((variable as GoPtr<VariableDeclaration>)!.Initializer !== undefined) {
       expressions = GoSliceAppend(expressions, usingDeclarationTransformer_hoistInitializedVariable(receiver, AsVariableDeclaration(variable as GoPtr<Node>)), GoPointerValueOps<Node>());
@@ -1150,7 +1182,15 @@ export function usingDeclarationTransformer_hoistInitializedVariable(receiver: G
 export function usingDeclarationTransformer_hoistBindingElement(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<Node>, isExportedDeclaration: bool, original: GoPtr<Node>): void {
   const nodeName = Node_Name(node);
   if (IsBindingPattern(nodeName)) {
-    for (const element of (Node_Elements(nodeName) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
+    for (
+      let __goRangeSlice = (Node_Elements(nodeName) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (Node_Name(element) !== undefined) {
         usingDeclarationTransformer_hoistBindingElement(receiver, element, isExportedDeclaration, original);
       }
@@ -1541,7 +1581,15 @@ export function getUsingKind(statement: GoPtr<Node>): usingKind {
  */
 export function getUsingKindOfStatements(statements: GoSlice<GoPtr<Node>>): usingKind {
   let result: usingKind = usingKindNone;
-  for (const statement of statements) {
+  for (
+    let __goRangeSlice = statements,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const usingKind = getUsingKind(statement);
     if (usingKind === usingKindAsync) {
       return usingKindAsync;

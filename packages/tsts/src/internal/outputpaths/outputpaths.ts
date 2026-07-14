@@ -37,6 +37,8 @@ import type { ComparePathsOptions } from "../tspath/path.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::type::OutputPathsHost","kind":"type","status":"implemented","sigHash":"bfbed8e873d098b9f9cc0c3a1025dabea3cb6c66d64becd251d8702a56a0f73e"}
@@ -194,7 +196,15 @@ export function GetOutputPathsFor(sourceFile: GoPtr<SourceFile>, options: GoPtr<
  * }
  */
 export function ForEachEmittedFile(host: GoInterface<OutputPathsHost>, options: GoPtr<CompilerOptions>, action: GoFunc<(emitFileNames: GoPtr<OutputPaths>, sourceFile: GoPtr<SourceFile>) => bool>, sourceFiles: GoSlice<GoPtr<SourceFile>>, forceDtsEmit: bool): bool {
-  for (const sourceFile of sourceFiles) {
+  for (
+    let __goRangeSlice = sourceFiles,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sourceFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (action!(GetOutputPathsFor(sourceFile, options, host, forceDtsEmit), sourceFile)) {
       return true;
     }

@@ -243,7 +243,15 @@ function recordSourceSemanticsFacts(
     return;
   }
 
-  for (const statement of Node_Statements(sourceFile) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Statements(sourceFile) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (statement?.Kind === KindImportDeclaration) {
       const moduleIdentity = getSourceSemanticsModuleIdentity(statement, modules);
       if (moduleIdentity !== undefined) {
@@ -284,7 +292,15 @@ function recordSourceSemanticsImportClause(
   if (namedBindings.Kind !== KindNamedImports) {
     return;
   }
-  for (const importSpecifier of Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const importSpecifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (importSpecifier === undefined) {
       continue;
     }
@@ -318,7 +334,15 @@ function recordSourceSemanticsExportClause(
     return;
   }
   const declarationIsTypeOnly = AsExportDeclaration(exportDeclaration)!.IsTypeOnly;
-  for (const exportSpecifier of Node_Elements(exportClause) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Elements(exportClause) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const exportSpecifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (exportSpecifier === undefined) {
       continue;
     }
@@ -533,7 +557,15 @@ function recordStructMarker(
   const shape = GoSliceLoad((Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())), 0, GoPointerValueOps<Node>());
   const fields: FieldFact[] = [];
   if (shape?.Kind === KindObjectLiteralExpression) {
-    for (const property of Node_Properties(shape) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Properties(shape) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const property = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (property?.Kind !== KindPropertyAssignment) {
         continue;
       }
@@ -878,7 +910,15 @@ function createSourceSemanticsMarkerImportIndex(
     if (namedBindings.Kind !== KindNamedImports) {
       continue;
     }
-    for (const importSpecifier of Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const importSpecifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const localNameNode = Node_Name(importSpecifier);
       const localName = Node_Text(localNameNode);
       const exportName = Node_Text(Node_PropertyName(importSpecifier) ?? localNameNode);

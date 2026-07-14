@@ -2784,7 +2784,15 @@ export function Printer_generateAllMemberNames(receiver: GoPtr<Printer>, nodes: 
   if (nodes === undefined) {
     return;
   }
-  for (const node of nodes!.Nodes) {
+  for (
+    let __goRangeSlice = nodes!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     Printer_generateMemberNames(receiver, node);
   }
 }

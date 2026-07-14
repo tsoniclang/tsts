@@ -188,7 +188,15 @@ export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols:
 
   let hadAccessibleChain: GoPtr<Symbol> = undefined;
   let earlyModuleBail = false;
-  for (const symbol_ of symbols) {
+  for (
+    let __goRangeSlice = symbols,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const symbol_ = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     // Symbol is accessible if it by itself is accessible
     const accessibleSymbolChain = Checker_getAccessibleSymbolChain(receiver, symbol_, enclosingDeclaration, meaning /*useOnlyExternalAliasing*/, false);
     if (accessibleSymbolChain.length > 0) {
@@ -462,7 +470,15 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
   const imports = SourceFile_Imports(containingFile as unknown as GoPtr<SourceFile>);
   if (imports !== undefined && imports.length > 0) {
     // Try to make an import using an import already in the enclosing file, if possible
-    for (const importRef of imports) {
+    for (
+      let __goRangeSlice = imports,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const importRef = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (NodeIsSynthesized(importRef)) {
         // Synthetic names can't be resolved by `resolveExternalModuleName` - they'll cause a debug assert if they error
         continue;
@@ -488,7 +504,15 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
   }
   // No results from files already being imported by this file - expand search (expensive, but not location-specific, so cached)
   const otherFiles = receiver!.files;
-  for (const file of otherFiles) {
+  for (
+    let __goRangeSlice = otherFiles,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!IsExternalModule(file)) {
       continue;
     }
@@ -692,7 +716,15 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
     return Checker_getWithAlternativeContainers(receiver, container, symbol_, enclosingDeclaration, meaning);
   }
   let candidates = GoNilSlice<GoPtr<Symbol>>();
-  for (const d of symbol_!.Declarations) {
+  for (
+    let __goRangeSlice = symbol_!.Declarations,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!IsAmbientModule(d) && d!.Parent !== undefined) {
       // direct children of a module
       if (hasNonGlobalAugmentationExternalModuleSymbol(d!.Parent)) {
@@ -733,7 +765,15 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
 
   let bestContainers = GoNilSlice<GoPtr<Symbol>>();
   let alternativeContainers = GoNilSlice<GoPtr<Symbol>>();
-  for (const cont of candidates) {
+  for (
+    let __goRangeSlice = candidates,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const cont = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (Checker_getAliasForSymbolInContainer(receiver, cont, symbol_) === undefined) {
       continue;
     }
@@ -1261,7 +1301,15 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
 
   // Iterate only alias symbols from the table (cached per tableId).
   // This avoids iterating thousands of non-alias symbols in large tables like globals.
-  for (const symbolFromSymbolTable of Checker_getSymbolTableAliases(receiver, symbols, tableId)) {
+  for (
+    let __goRangeSlice = Checker_getSymbolTableAliases(receiver, symbols, tableId),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const symbolFromSymbolTable = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     // for every non-default, non-export= alias symbol in scope, check if it refers to or can chain to the target symbol
     if (symbolFromSymbolTable!.Name !== InternalSymbolNameExportEquals &&
       symbolFromSymbolTable!.Name !== InternalSymbolNameDefault &&
@@ -1596,7 +1644,15 @@ export function Checker_needsQualification(receiver: GoPtr<Checker>, symbol_: Go
  */
 export function isPropertyOrMethodDeclarationSymbol(symbol_: GoPtr<Symbol>): bool {
   if (symbol_!.Declarations.length > 0) {
-    for (const declaration of symbol_!.Declarations) {
+    for (
+      let __goRangeSlice = symbol_!.Declarations,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       switch (declaration!.Kind) {
       case KindPropertyDeclaration:
       case KindMethodDeclaration:

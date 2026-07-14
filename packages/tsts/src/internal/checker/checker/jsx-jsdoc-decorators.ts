@@ -29,6 +29,8 @@ import type { Checker, CheckMode } from "./state.js";
 
 import type { GoRef } from "../../../go/compat.js";
 import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkJSDocComments","kind":"method","status":"implemented","sigHash":"e58b196d503c8592581005e0aae4f2c48e3fff65d2a70e506e53edf7d1d4328e"}
@@ -41,7 +43,15 @@ import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
  * }
  */
 export function Checker_checkJSDocComments(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  for (const comment of Node_Comments(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Comments(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const comment = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     Checker_checkJSDocComment(receiver, comment);
   }
 }
@@ -146,7 +156,15 @@ export function Checker_checkDecorators(receiver: GoPtr<Checker>, node: GoPtr<No
     }
   }
   Checker_markLinkedReferences(receiver, node, ReferenceHintDecorator, undefined, undefined);
-  for (const modifier of Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const modifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsDecorator(modifier)) {
       Checker_checkDecorator(receiver, modifier);
     }

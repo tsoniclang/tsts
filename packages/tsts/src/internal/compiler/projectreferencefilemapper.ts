@@ -128,7 +128,15 @@ export function projectReferenceFileMapper_getResolvedProjectReferences(receiver
   if (ok) {
     const refPaths = receiver!.referencesInConfigFile.get(refs)!;
     result = GoSliceMake(0, 0, GoPointerValueOps<ParsedCommandLine>());
-    for (const refPath of refPaths) {
+    for (
+      let __goRangeSlice = refPaths,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const refPath = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const refConfig = receiver!.configToProjectReference.get(refPath);
       result = GoSliceAppend(result, refConfig, GoPointerValueOps<ParsedCommandLine>());
     }

@@ -36,6 +36,8 @@ import type { Statistics } from "./statistics.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoSliceMake } from "../../../go/compat.js";
+import { GoSliceLoad, GoStringValueOps } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::GetTraceWithWriterFromSys","kind":"func","status":"implemented","sigHash":"17a6384118d8903f7afa1b67bba22dbd81d93ed58d4f8ce909a645b6a1202124"}
@@ -321,14 +323,30 @@ export function listFiles(input: EmitInput, emitResult: GoPtr<EmitResult>): void
   try {
     const options = Program_Options(input.Program);
     if (Tristate_IsTrue(options!.ListEmittedFiles)) {
-      for (const file of emitResult!.EmittedFiles) {
+      for (
+        let __goRangeSlice = emitResult!.EmittedFiles,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoStringValueOps,
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Fprintln(input.Writer!, "TSFILE: ", GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(input.Program)));
       }
     }
     if (Tristate_IsTrue(options!.ExplainFiles)) {
       Program_ExplainFiles(input.Program, input.Writer, ParsedCommandLine_Locale(input.Config));
     } else if (Tristate_IsTrue(options!.ListFiles) || Tristate_IsTrue(options!.ListFilesOnly)) {
-      for (const file of Program_GetSourceFiles(input.Program)) {
+      for (
+        let __goRangeSlice = Program_GetSourceFiles(input.Program),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Fprintln(input.Writer!, SourceFile_FileName(file));
       }
     }

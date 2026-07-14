@@ -908,7 +908,15 @@ export function NodeBuilderImpl_checkTypeExpandability(receiver: GoPtr<NodeBuild
   // Recurse into type arguments (e.g., check Apple in Promise<Apple>).
   if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
     const typeArgs = Checker_getTypeArguments(receiver!.ch, t);
-    for (const arg of typeArgs) {
+    for (
+      let __goRangeSlice = typeArgs,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const arg = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       NodeBuilderImpl_checkTypeExpandability(receiver, arg);
       if (receiver!.ctx!.canIncreaseExpansionDepth) {
         return;
@@ -1198,7 +1206,15 @@ export function NodeBuilderImpl_mapToTypeNodes(receiver: GoPtr<NodeBuilderImpl>,
   const seenNames: GoPtr<MultiMap<string, { t: GoPtr<Type>; i: int }>> = mayHaveNameCollisions ? { M: new globalThis.Map() } : undefined;
   let result: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   let i = 0;
-  for (const t of list) {
+  for (
+    let __goRangeSlice = list,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const displayIndex = i + 1;
     if (NodeBuilderImpl_checkTruncationLength(receiver) && (displayIndex + 2 < list.length - 1)) {
       if ((receiver!.ctx!.flags & FlagsNoTruncation) !== 0) {
@@ -2073,7 +2089,15 @@ export function NodeBuilderImpl_createAccessFromSymbolChain(receiver: GoPtr<Node
   }
   if (symbolName.length === 0) {
     let name: GoPtr<Node>;
-    for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       name = GetNameOfDeclaration(declaration);
       if (name !== undefined) {
         break;
@@ -3765,14 +3789,30 @@ export function NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiv
   if ((targetSymbol!.Flags & (SymbolFlagsClass | SymbolFlagsInterface | SymbolFlagsAlias)) !== 0) {
     let results: GoSlice<GoPtr<Node>> = GoNilSlice();
     const params = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver!.ch, symbol_);
-    for (const param of params ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())) {
+    for (
+      let __goRangeSlice = params ?? GoSliceMake(0, 0, GoPointerValueOps<Type>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const param = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       results = GoSliceAppend(results, NodeBuilderImpl_typeParameterToDeclaration(receiver, param), GoPointerValueOps<Node>());
     }
     return results;
   }
   if ((targetSymbol!.Flags & SymbolFlagsFunction) !== 0) {
     let results: GoSlice<GoPtr<Node>> = GoNilSlice();
-    for (const param of Checker_getTypeParametersFromDeclaration(receiver!.ch, symbol_!.ValueDeclaration) ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())) {
+    for (
+      let __goRangeSlice = Checker_getTypeParametersFromDeclaration(receiver!.ch, symbol_!.ValueDeclaration) ?? GoSliceMake(0, 0, GoPointerValueOps<Type>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const param = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       results = GoSliceAppend(results, NodeBuilderImpl_typeParameterToDeclaration(receiver, param), GoPointerValueOps<Node>());
     }
     return results;
@@ -4220,11 +4260,27 @@ export function NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver: 
   const signatureTypeParameters = signature!.typeParameters ?? GoSliceMake(0, 0, GoPointerValueOps<Type>());
   receiver!.ctx!.approximateLength += 3;
   if ((receiver!.ctx!.flags & FlagsWriteTypeArgumentsOfSignature) !== 0 && signature!.target !== undefined && signature!.mapper !== undefined && signature!.target!.typeParameters.length !== 0) {
-    for (const parameter of signature!.target!.typeParameters) {
+    for (
+      let __goRangeSlice = signature!.target!.typeParameters,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       typeParameters = GoSliceAppend(typeParameters, NodeBuilderImpl_typeToTypeNode(receiver, Checker_instantiateType(receiver!.ch, parameter, signature!.mapper)), GoPointerValueOps<Node>());
     }
   } else {
-    for (const parameter of signatureTypeParameters) {
+    for (
+      let __goRangeSlice = signatureTypeParameters,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       typeParameters = GoSliceAppend(typeParameters, NodeBuilderImpl_typeParameterToDeclaration(receiver, parameter), GoPointerValueOps<Node>());
     }
   }
@@ -4415,7 +4471,15 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
           }
         }
         const counters = new globalThis.Map<string, int>();
-        for (const i of duplicates) {
+        for (
+          let __goRangeSlice = duplicates,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoNumberValueOps,
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const i = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           let counter = counters.get(names[i]!) ?? 1;
           let name = "";
           while (true) {
@@ -5674,7 +5738,15 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
       Checker_filterType(receiver!.ch, propertyType, (type_) => (type_!.flags & TypeFlagsUndefined) === 0),
       SignatureKindCall,
     );
-    for (const signature of signatures) {
+    for (
+      let __goRangeSlice = signatures,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Signature>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const signature = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const methodDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindMethodSignature, {
         modifiers: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
         name: propertyName,
@@ -5798,17 +5870,41 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
     }));
   }
   let typeElements: GoSlice<GoPtr<TypeElement>> = GoNilSlice();
-  for (const signature of StructuredType_CallSignatures(resolvedType)) {
+  for (
+    let __goRangeSlice = StructuredType_CallSignatures(resolvedType),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const signature = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     typeElements = GoSliceAppend(typeElements, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindCallSignature, undefined) as GoPtr<TypeElement>, GoPointerValueOps<Node>());
   }
-  for (const signature of StructuredType_ConstructSignatures(resolvedType)) {
+  for (
+    let __goRangeSlice = StructuredType_ConstructSignatures(resolvedType),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const signature = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((signature!.flags & SignatureFlagsAbstract) !== 0) {
       continue;
     }
     typeElements = GoSliceAppend(typeElements, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindConstructSignature, undefined) as GoPtr<TypeElement>, GoPointerValueOps<Node>());
   }
   const resolvedObjectFlags = (resolvedType as unknown as TypeData).AsType()!.objectFlags;
-  for (const info of resolvedType!.indexInfos) {
+  for (
+    let __goRangeSlice = resolvedType!.indexInfos,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     typeElements = slices.Concat<GoPtr<TypeElement>>(
       typeElements,
       NodeBuilderImpl_indexInfoToObjectComputedNamesOrSignatureDeclaration(receiver, info, (resolvedObjectFlags & ObjectFlagsReverseMapped) !== 0 ? NodeBuilderImpl_createElidedInformationPlaceholder(receiver) : undefined) as GoSlice<GoPtr<TypeElement>>,
@@ -5819,7 +5915,15 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
     return NodeFactory_NewNodeList(receiver!.f, typeElements);
   }
   let i = 0;
-  for (const propertySymbol of properties) {
+  for (
+    let __goRangeSlice = properties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const propertySymbol = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (isExpanding(receiver!.ctx) && (propertySymbol!.Flags & SymbolFlagsPrototype) !== 0) {
       continue;
     }
@@ -6018,7 +6122,15 @@ export function NodeBuilderImpl_shouldWriteTypeOfFunctionSymbol(receiver: GoPtr<
     if (symbol_!.Parent !== undefined) {
       isNonLocalFunctionSymbol = true;
     } else {
-      for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (declaration!.Parent!.Kind === KindSourceFile || declaration!.Parent!.Kind === KindModuleBlock) {
           isNonLocalFunctionSymbol = true;
           break;

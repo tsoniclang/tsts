@@ -382,7 +382,15 @@ export function ParsedCommandLine_CommonSourceDirectory(receiver: GoPtr<ParsedCo
 export function ParsedCommandLine_checkSourceFilesBelongToPath(receiver: GoPtr<ParsedCommandLine>, sourceFiles: GoSlice<string>, rootDirectory: string): bool {
   const p = receiver!;
   let allFilesBelongToPath = true as bool;
-  for (const file of sourceFiles) {
+  for (
+    let __goRangeSlice = sourceFiles,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const absoluteSourceFilePath = GetCanonicalFileName(GetNormalizedAbsolutePath(file, ParsedCommandLine_GetCurrentDirectory(p)), ParsedCommandLine_UseCaseSensitiveFileNames(p));
     if (!ContainsPath(rootDirectory, file, p.comparePathsOptions)) {
       p.Errors = [...(p.Errors ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())), NewCompilerDiagnostic(File_0_is_not_under_rootDir_1_rootDir_is_expected_to_contain_all_source_files, absoluteSourceFilePath, rootDirectory)];
@@ -438,7 +446,15 @@ export function ParsedCommandLine_UseCaseSensitiveFileNames(receiver: GoPtr<Pars
 export function ParsedCommandLine_getOutputDeclarationAndSourceFileNames(receiver: GoPtr<ParsedCommandLine>): Seq2<string, string> {
   const p = receiver!;
   return (yield_: GoFunc<(dtsName: string, inputName: string) => bool>): void => {
-    for (const fileName of p.ParsedConfig!.FileNames) {
+    for (
+      let __goRangeSlice = p.ParsedConfig!.FileNames,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const fileName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const outputDts = (!IsDeclarationFileName(fileName) && !FileExtensionIs(fileName, ExtensionJson))
         ? GetOutputDeclarationFileNameWorker(fileName, ParsedCommandLine_CompilerOptions(p), ParsedCommandLine_as_OutputPathsHost(p))
         : "";
@@ -498,7 +514,15 @@ export function ParsedCommandLine_getOutputDeclarationAndSourceFileNames(receive
 export function ParsedCommandLine_GetOutputFileNames(receiver: GoPtr<ParsedCommandLine>): Seq<string> {
   const p = receiver!;
   return (yield_: GoFunc<(outputName: string) => bool>): void => {
-    for (const fileName of p.ParsedConfig!.FileNames) {
+    for (
+      let __goRangeSlice = p.ParsedConfig!.FileNames,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const fileName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsDeclarationFileName(fileName)) {
         continue;
       }
@@ -755,7 +779,15 @@ export function ParsedCommandLine_FileNamesByPath(receiver: GoPtr<ParsedCommandL
   const p = receiver!;
   p.fileNamesByPathOnce.Do((): void => {
     p.fileNamesByPath = new globalThis.Map<Path, string>();
-    for (const fileName of p.ParsedConfig!.FileNames) {
+    for (
+      let __goRangeSlice = p.ParsedConfig!.FileNames,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const fileName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const path = ToPath(fileName, ParsedCommandLine_GetCurrentDirectory(p), ParsedCommandLine_UseCaseSensitiveFileNames(p));
       p.fileNamesByPath.set(path, fileName);
     }
@@ -868,7 +900,15 @@ export function ParsedCommandLine_PossiblyMatchesFileName(receiver: GoPtr<Parsed
     return true;
   }
 
-  for (const include of p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs) {
+  for (
+    let __goRangeSlice = p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const include = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!strings.ContainsAny(include, "*?") && !IsImplicitGlob(include)) {
       const includePath = ToPath(include, ParsedCommandLine_GetCurrentDirectory(p), ParsedCommandLine_UseCaseSensitiveFileNames(p));
       if (includePath === path) {
@@ -878,7 +918,15 @@ export function ParsedCommandLine_PossiblyMatchesFileName(receiver: GoPtr<Parsed
   }
   const wildcardDirectoryGlobs = ParsedCommandLine_WildcardDirectoryGlobs(p);
   if (wildcardDirectoryGlobs.length > 0) {
-    for (const glob of wildcardDirectoryGlobs) {
+    for (
+      let __goRangeSlice = wildcardDirectoryGlobs,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Glob>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const glob = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (Glob_Match(glob, fileName)) {
         return true;
       }

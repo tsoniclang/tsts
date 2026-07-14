@@ -380,7 +380,15 @@ export function BuildTask_buildProject(receiver: GoPtr<BuildTask>, orchestrator:
       BuildTask_updateDownstream(receiver, orchestrator, path);
     } else {
       if (receiver!.resolved !== undefined) {
-        for (const diagnostic of ParsedCommandLine_GetConfigFileParsingDiagnostics(receiver!.resolved) ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())) {
+        for (
+          let __goRangeSlice = ParsedCommandLine_GetConfigFileParsingDiagnostics(receiver!.resolved) ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const diagnostic = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           BuildTask_reportDiagnostic(receiver, diagnostic);
         }
       }
@@ -391,7 +399,15 @@ export function BuildTask_buildProject(receiver: GoPtr<BuildTask>, orchestrator:
   } else {
     if (receiver!.errors.length > 0) {
       BuildTask_reportUpToDateStatus(receiver, orchestrator);
-      for (const err of receiver!.errors) {
+      for (
+        let __goRangeSlice = receiver!.errors,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const err = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         receiver!.result!.diagnosticReporter!(err);
       }
     }
@@ -1025,7 +1041,15 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
 
   type TimeWithOps = Time & { IsZero(): bool; After(t: Time): bool; Before(t: Time): bool };
 
-  for (const inputFile of ParsedCommandLine_FileNames(receiver!.resolved)) {
+  for (
+    let __goRangeSlice = ParsedCommandLine_FileNames(receiver!.resolved),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const inputFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const inputTime = host_GetMTime(orchestrator!.host, inputFile);
     if ((inputTime as TimeWithOps).IsZero()) {
       return { kind: upToDateStatusTypeInputFileMissing, data: inputFile };
@@ -1069,14 +1093,30 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
   if (buildInfoRootInfoReader === undefined) {
     buildInfoRootInfoReader = BuildInfo_GetBuildInfoRootInfoReader(buildInfo, GetDirectoryPath(GetNormalizedAbsolutePath(buildInfoPath, orchestrator!.comparePathsOptions.CurrentDirectory)), orchestrator!.comparePathsOptions);
   }
-  for (const root of slicesCollect(BuildInfoRootInfoReader_Roots(buildInfoRootInfoReader))) {
+  for (
+    let __goRangeSlice = slicesCollect(BuildInfoRootInfoReader_Roots(buildInfoRootInfoReader)),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const root = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!Set_Has(seenRoots, root)) {
       return { kind: upToDateStatusTypeOutOfDateRoots, data: { input: String(root), output: buildInfoPath } as inputOutputName };
     }
   }
 
   if (!CompilerOptions_IsIncremental(resolvedCompilerOptions)) {
-    for (const outputFile of slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved))) {
+    for (
+      let __goRangeSlice = slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved)),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const outputFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const outputTime = host_GetMTime(orchestrator!.host, outputFile) as TimeWithOps;
       if (outputTime.IsZero()) {
         return { kind: upToDateStatusTypeOutputMissing, data: outputFile };
@@ -1122,7 +1162,15 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
   if (configStatus !== undefined) {
     return configStatus;
   }
-  for (const extendedConfig of ParsedCommandLine_ExtendedSourceFiles(receiver!.resolved)) {
+  for (
+    let __goRangeSlice = ParsedCommandLine_ExtendedSourceFiles(receiver!.resolved),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const extendedConfig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const extendedConfigStatus = checkInputFileTime(extendedConfig);
     if (extendedConfigStatus !== undefined) {
       return extendedConfigStatus;
@@ -1466,7 +1514,15 @@ export function BuildTask_updateTimeStamps(receiver: GoPtr<BuildTask>, orchestra
   };
 
   if (BuildTask_canUpdateJsDtsOutputTimestamps(receiver)) {
-    for (const outputFile of slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved))) {
+    for (
+      let __goRangeSlice = slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved)),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const outputFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       updateTimeStamp(outputFile);
     }
   }
@@ -1498,7 +1554,15 @@ export function BuildTask_cleanProject(receiver: GoPtr<BuildTask>, orchestrator:
     return;
   }
   const inputs: GoPtr<Set<Path>> = NewSetFromItems(GoStringKey, ...core_Map(ParsedCommandLine_FileNames(receiver!.resolved), (f: string) => Orchestrator_toPath(orchestrator, f)));
-  for (const outputFile of slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved))) {
+  for (
+    let __goRangeSlice = slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved)),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const outputFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     BuildTask_cleanProjectOutput(receiver, orchestrator, outputFile, inputs);
   }
   BuildTask_cleanProjectOutput(receiver, orchestrator, ParsedCommandLine_GetBuildInfoFileName(receiver!.resolved), inputs);
@@ -1575,7 +1639,15 @@ export function BuildTask_updateWatch(receiver: GoPtr<BuildTask>, orchestrator: 
       return host_loadOrStoreMTime(orchestrator!.host, p, oldCache, false as bool);
     });
     if (BuildTask_canUpdateJsDtsOutputTimestamps(receiver)) {
-      for (const outputFile of slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved))) {
+      for (
+        let __goRangeSlice = slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved)),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoStringValueOps,
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const outputFile = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         host_storeMTimeFromOldCache(orchestrator!.host, outputFile, oldCache);
       }
     }

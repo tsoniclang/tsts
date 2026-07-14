@@ -97,7 +97,15 @@ export function Checker_addUndefinedToGlobalsOrErrorOnRedeclaration(receiver: Go
   const name = c.undefinedSymbol!.Name;
   const targetSymbol = c.globals.get(name);
   if (targetSymbol !== undefined) {
-    for (const declaration of targetSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = targetSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!IsTypeDeclaration(declaration)) {
         Checker_addDiagnostic(receiver, createDiagnosticForNode(declaration, Declaration_name_conflicts_with_built_in_global_identifier_0, name));
       }
@@ -672,7 +680,15 @@ export function Checker_getDeprecatedSuggestionNode(receiver: GoPtr<Checker>, no
 export function Checker_reportDuplicateMemberErrors(receiver: GoPtr<Checker>, node: GoPtr<Node>, name: string, checkStatic: bool, isStatic: bool, message: GoPtr<Message>): void {
   for (const member of Node_Members(node)!) {
     if (IsConstructorDeclaration(member)) {
-      for (const param of Node_Parameters(member)) {
+      for (
+        let __goRangeSlice = Node_Parameters(member),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const param = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (IsParameterPropertyDeclaration(param, member) && !IsBindingPattern(Node_Name(param))) {
           const symbol = Checker_getSymbolOfDeclaration(receiver, param);
           if (symbol!.Name === name) {
@@ -721,7 +737,15 @@ export function Checker_reportDuplicateMemberErrors(receiver: GoPtr<Checker>, no
 export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeWithThis: GoPtr<Type>, baseWithThis: GoPtr<Type>, broadDiag: GoPtr<Message>): void {
   const c = receiver!;
   let issuedMemberError = false;
-  for (const member of Node_Members(node)!) {
+  for (
+    let __goRangeSlice = Node_Members(node)!,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsStatic(member)) {
       continue;
     }
@@ -1076,7 +1100,15 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
     const last = GoSliceLoad(s!.candidatesForArgumentError, s!.candidatesForArgumentError.length - 1, GoPointerValueOps<Signature>());
     const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
     Checker_isSignatureApplicable(receiver, s!.node, s!.args, last, c.assignableRelation, CheckModeNormal, true as bool, GoValueRef(diags));
-    for (let diagnostic of diags) {
+    for (
+      let __goRangeSlice = diags,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      let diagnostic = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (s!.candidatesForArgumentError.length > 1) {
         diagnostic = NewDiagnosticChain(diagnostic, The_last_overload_gave_the_following_error);
         diagnostic = NewDiagnosticChain(diagnostic, No_overload_matches_this_call);
@@ -1239,7 +1271,15 @@ export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: Go
   let maxBelow = Number.MIN_SAFE_INTEGER; // largest parameter count that is smaller than the number of arguments
   let minAbove = Number.MAX_SAFE_INTEGER; // smallest parameter count that is larger than the number of arguments
   let closestSignature: GoPtr<Signature> = undefined;
-  for (const sig of signatures) {
+  for (
+    let __goRangeSlice = signatures,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const minParameter = Checker_getMinArgumentCount(receiver, sig);
     const maxParameter = Checker_getParameterCount(receiver, sig);
     if (minParameter < minCount) {
@@ -1450,7 +1490,15 @@ export function Checker_getTypeArgumentArityError(receiver: GoPtr<Checker>, node
     // Overloads exist
     let belowArgCount = Number.MIN_SAFE_INTEGER;
     let aboveArgCount = Number.MAX_SAFE_INTEGER;
-    for (const sig of signatures) {
+    for (
+      let __goRangeSlice = signatures,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Signature>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const sig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters);
       const maxCount = sig!.typeParameters.length;
       if (minCount > argCount) {
@@ -1578,7 +1626,15 @@ export function Checker_invocationErrorDetails(receiver: GoPtr<Checker>, errorTa
   if ((apparentType!.flags & TypeFlagsUnion) !== 0) {
     const types = Type_Types(apparentType);
     let hasSignatures = false as bool;
-    for (const constituent of types) {
+    for (
+      let __goRangeSlice = types,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const constituent = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const signatures = Checker_getSignaturesOfType(receiver, constituent, kind);
       if (signatures.length !== 0) {
         hasSignatures = true as bool;
@@ -2070,7 +2126,15 @@ export function Checker_addDeprecatedSuggestion(receiver: GoPtr<Checker>, locati
  * }
  */
 export function Checker_addDeprecatedSuggestionWorker(receiver: GoPtr<Checker>, declarations: GoSlice<GoPtr<Node>>, diagnostic: GoPtr<Diagnostic>): GoPtr<Diagnostic> {
-  for (const declaration of declarations) {
+  for (
+    let __goRangeSlice = declarations,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const deprecatedTag = GetJSDocDeprecatedTag(declaration);
     if (deprecatedTag !== undefined) {
       Diagnostic_AddRelatedInfo(diagnostic, NewDiagnosticForNode(deprecatedTag, The_declaration_was_marked_as_deprecated_here));
@@ -2187,7 +2251,15 @@ export function Checker_reportMergeSymbolError(receiver: GoPtr<Checker>, target:
  * }
  */
 export function Checker_addDuplicateDeclarationErrorsForSymbols(receiver: GoPtr<Checker>, target: GoPtr<Symbol>, message: GoPtr<Message>, symbolName: string, source: GoPtr<Symbol>): void {
-  for (const node of target!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = target!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     Checker_addDuplicateDeclarationError(receiver, node, message, symbolName, source!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()));
   }
 }
@@ -2228,7 +2300,15 @@ export function Checker_addDuplicateDeclarationError(receiver: GoPtr<Checker>, n
     errorNode = node;
   }
   const err = Checker_lookupOrIssueError(receiver, errorNode, message, symbolName);
-  for (const relatedNode of relatedNodes) {
+  for (
+    let __goRangeSlice = relatedNodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const relatedNode = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const adjustedNode = getAdjustedNodeForError(relatedNode);
     if (adjustedNode === errorNode) {
       continue;
@@ -2540,16 +2620,40 @@ export function Checker_reportWideningErrorsInType(receiver: GoPtr<Checker>, t: 
       if (Some(Type_Types(t), (tt: GoPtr<Type>) => Checker_isEmptyObjectType(receiver, tt))) {
         errorReported = true;
       } else {
-        for (const s of Type_Types(t)) {
+        for (
+          let __goRangeSlice = Type_Types(t),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Type>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           errorReported = Checker_reportWideningErrorsInType(receiver, s) || errorReported;
         }
       }
     } else if (Checker_isArrayOrTupleType(receiver, t)) {
-      for (const s of Checker_getTypeArguments(receiver, t)) {
+      for (
+        let __goRangeSlice = Checker_getTypeArguments(receiver, t),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Type>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         errorReported = Checker_reportWideningErrorsInType(receiver, s) || errorReported;
       }
     } else if (isObjectLiteralType(t)) {
-      for (const p of Checker_getPropertiesOfObjectType(receiver, t)) {
+      for (
+        let __goRangeSlice = Checker_getPropertiesOfObjectType(receiver, t),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Symbol>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const s = Checker_getTypeOfSymbol(receiver, p);
         if ((s!.objectFlags & ObjectFlagsContainsWideningType) !== 0) {
           errorReported = Checker_reportWideningErrorsInType(receiver, s);

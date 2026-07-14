@@ -59,6 +59,8 @@ import { EncodeURI, AddUTF8ByteOrderMark } from "../stringutil/util.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+import { GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::EmitOnly","kind":"type","status":"implemented","sigHash":"0c69bbca4873981b8ee4a7bb25a2066b98a917dfd9499551f3df14e6760e7c67"}
@@ -179,7 +181,15 @@ export function emitter_runScriptTransformers(receiver: GoPtr<emitter>, emitCont
     popTrace = pop;
   }
   let sf = sourceFile;
-  for (const transformer of getScriptTransformers(emitContext, EmitHost_as_printer_EmitHost(e.host!), sf)) {
+  for (
+    let __goRangeSlice = getScriptTransformers(emitContext, EmitHost_as_printer_EmitHost(e.host!), sf),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Transformer>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const transformer = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     sf = Transformer_TransformSourceFile(transformer, sf);
   }
   if (popTrace !== undefined) {
@@ -213,7 +223,15 @@ export function emitter_runDeclarationTransformers(receiver: GoPtr<emitter>, emi
   }
   let diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   let sf = sourceFile;
-  for (const transformer of emitter_getDeclarationTransformers(receiver, emitContext, declarationFilePath, declarationMapPath)) {
+  for (
+    let __goRangeSlice = emitter_getDeclarationTransformers(receiver, emitContext, declarationFilePath, declarationMapPath),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<DeclarationTransformer>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const transformer = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     sf = Transformer_TransformSourceFile(transformer as GoPtr<Transformer>, sf);
     diags = GoSliceAppendSlice(diags, DeclarationTransformer_GetDiagnostics(transformer), GoPointerValueOps<Diagnostic>());
   }
@@ -600,7 +618,15 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
   try {
     const [sf, diags] = emitter_runDeclarationTransformers(receiver, emitContext, sourceFile, declarationFilePath, declarationMapPath);
 
-    for (const elem of diags) {
+    for (
+      let __goRangeSlice = diags,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const elem = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       // Add declaration transform diagnostics to emit diagnostics
       DiagnosticsCollection_Add(e.emitterDiagnostics, elem);
     }

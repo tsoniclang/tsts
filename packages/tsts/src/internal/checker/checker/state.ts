@@ -2729,7 +2729,15 @@ export function createFileIndexMap(files: GoSlice<GoPtr<SourceFile>>): GoMap<GoP
  */
 export function countGlobalSymbols(files: GoSlice<GoPtr<SourceFile>>): int {
   let count = 0;
-  for (const file of files) {
+  for (
+    let __goRangeSlice = files,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!IsExternalOrCommonJSModule(file)) {
       count += Node_Locals(file as unknown as GoPtr<Node>).size;
     }
@@ -2752,7 +2760,15 @@ export function countGlobalSymbols(files: GoSlice<GoPtr<SourceFile>>): int {
  * }
  */
 export function getGlobalTypeDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Declaration> {
-  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     switch (declaration!.Kind) {
       case KindClassDeclaration:
       case KindInterfaceDeclaration:
@@ -3092,7 +3108,15 @@ export function isInstantiatedModule(node: GoPtr<Node>, preserveConstEnums: bool
  * }
  */
 export function getFirstNonAmbientClassOrFunctionDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((IsClassDeclaration(declaration) || (IsFunctionDeclaration(declaration) && NodeIsPresent(Node_Body(declaration)))) && (declaration!.Flags & NodeFlagsAmbient) === 0) {
       return declaration;
     }
@@ -3323,7 +3347,15 @@ export function isSpreadIntoCallOrNew(node: GoPtr<Node>): bool {
  * }
  */
 export function someSignature(signatures: GoSlice<GoPtr<Signature>>, f: GoFunc<(s: GoPtr<Signature>) => bool>): bool {
-  for (const sig of signatures) {
+  for (
+    let __goRangeSlice = signatures,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Signature>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const sig = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((sig!.composite !== undefined && sig!.composite!.isUnion && Some(sig!.composite!.signatures, f)) || (sig!.composite === undefined && f!(sig))) {
       return true;
     }
@@ -4005,11 +4037,27 @@ export function getTemplateTypeKey(texts: GoSlice<string>, types: GoSlice<GoPtr<
   const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
   keyBuilder_writeTypes(b, types);
   keyBuilder_writeByte(b, "|".charCodeAt(0));
-  for (const s of texts) {
+  for (
+    let __goRangeSlice = texts,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     keyBuilder_writeInt(b, s.length);
   }
   keyBuilder_writeByte(b, "|".charCodeAt(0));
-  for (const s of texts) {
+  for (
+    let __goRangeSlice = texts,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     keyBuilder_writeString(b, s);
   }
   return keyBuilder_hash(b);
@@ -4097,7 +4145,15 @@ export function getRelationKey(source: GoPtr<Type>, target: GoPtr<Type>, interse
 export function getNodeListKey(nodes: GoSlice<GoPtr<Node>>): CacheHashKey {
   const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
   keyBuilder_writeInt(b, nodes !== undefined ? nodes.length : 0);
-  for (const n of nodes) {
+  for (
+    let __goRangeSlice = nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const n = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     keyBuilder_writeNode(b, n);
   }
   return keyBuilder_hash(b);
@@ -4159,7 +4215,15 @@ export function isUnconstrainedTypeParameter(tp: GoPtr<Type>): bool {
   if (target!["symbol"] === undefined) {
     return false;
   }
-  for (const d of (target!["symbol"]!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
+  for (
+    let __goRangeSlice = (target!["symbol"]!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsTypeParameterDeclaration(d) && (AsTypeParameterDeclaration(d)!.Constraint !== undefined || IsMappedTypeNode(d!.Parent) || IsInferTypeNode(d!.Parent))) {
       return false;
     }
@@ -4205,7 +4269,15 @@ export const thisAssignmentDeclarationMethod: thisAssignmentDeclarationKind = 3;
  * }
  */
 export function findIndexInfo(indexInfos: GoSlice<GoPtr<IndexInfo>>, keyType: GoPtr<Type>): GoPtr<IndexInfo> {
-  for (const info of indexInfos) {
+  for (
+    let __goRangeSlice = indexInfos,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (info!.keyType === keyType) {
       return info;
     }
@@ -5019,7 +5091,15 @@ export function getConstituentCount(t: GoPtr<Type>): int {
  */
 export function getConstituentCountOfTypes(types: GoSlice<GoPtr<Type>>): int {
   let n = 0;
-  for (const t of types) {
+  for (
+    let __goRangeSlice = types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     n += getConstituentCount(t);
   }
   return n;
@@ -5041,7 +5121,15 @@ export function getConstituentCountOfTypes(types: GoSlice<GoPtr<Type>>): int {
  */
 export function forEachType(t: GoPtr<Type>, f: GoFunc<(t: GoPtr<Type>) => void>): void {
   if (t!.flags & TypeFlagsUnion) {
-    for (const u of Type_Types(t)) {
+    for (
+      let __goRangeSlice = Type_Types(t),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const u = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       f!(u);
     }
   } else {

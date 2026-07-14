@@ -494,7 +494,15 @@ export function Printer_emitTripleSlashDirectives(receiver: GoPtr<Printer>, node
  * }
  */
 export function Printer_emitDirective(receiver: GoPtr<Printer>, kind: string, refs: GoSlice<GoPtr<FileReference>>): void {
-  for (const ref of refs) {
+  for (
+    let __goRangeSlice = refs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<FileReference>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const ref = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     let resolutionMode = "";
     if (ref!.ResolutionMode !== ResolutionModeNone) {
       resolutionMode = `resolution-mode="${IfElse(ref!.ResolutionMode === ResolutionModeESM, "import", "require")}" `;

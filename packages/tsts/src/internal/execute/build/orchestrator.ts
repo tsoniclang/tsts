@@ -310,7 +310,15 @@ export function Orchestrator_getTask(receiver: GoPtr<Orchestrator>, path: Path):
  * }
  */
 export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, oldTasks: GoPtr<SyncMap<Path, GoPtr<BuildTask>>>, configs: GoSlice<string>, wg: GoInterface<WorkGroup>): void {
-  for (const config of configs) {
+  for (
+    let __goRangeSlice = configs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const config = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     wg!.Queue((): void => {
       const path = Orchestrator_toPath(receiver, config);
       let task: GoPtr<BuildTask> = undefined;
@@ -506,7 +514,15 @@ export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTas
   const completed: Set<Path> = {} as Set<Path>;
   const analyzing: Set<Path> = {} as Set<Path>;
   const circularityStack: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
-  for (const project of projects) {
+  for (
+    let __goRangeSlice = projects,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const project = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     Orchestrator_setupBuildTask(receiver, project, undefined, false as bool, completed, analyzing, circularityStack);
   }
 }
@@ -739,7 +755,15 @@ export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): Comman
     // Circularity errors prevent any project from being built
     buildResult.result.Status = ExitStatusProjectReferenceCycle_OutputsSkipped;
     const reportDiagnostic = Orchestrator_createDiagnosticReporter(receiver, undefined);
-    for (const err of receiver!.errors) {
+    for (
+      let __goRangeSlice = receiver!.errors,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const err = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       reportDiagnostic!(err);
     }
     buildResult.errors = receiver!.errors;

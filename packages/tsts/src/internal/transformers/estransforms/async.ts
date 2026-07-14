@@ -1227,7 +1227,15 @@ export function asyncTransformer_recordDeclarationName(receiver: GoPtr<asyncTran
     Set_Add(names as GoPtr<Set<string>>, Node_Text(name), GoStringKey);
   } else if (IsBindingPattern(name)) {
     const bp = AsBindingPattern(name)!;
-    for (const element of bp.Elements!.Nodes) {
+    for (
+      let __goRangeSlice = bp.Elements!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!IsOmittedExpression(element)) {
         asyncTransformer_recordDeclarationName(receiver, element, names);
       }
@@ -1293,7 +1301,15 @@ export function asyncTransformer_isVariableDeclarationListWithCollidingName(rece
 export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(receiver: GoPtr<asyncTransformer>, node: GoPtr<VariableDeclarationList>, hasReceiver: bool): GoPtr<Node> {
   asyncTransformer_hoistVariableDeclarationList(receiver, node);
   let variables: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const decl of node!.Declarations!.Nodes) {
+  for (
+    let __goRangeSlice = node!.Declarations!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (AsVariableDeclaration(decl)!.Initializer !== undefined) {
       variables = GoSliceAppend(variables, decl, GoPointerValueOps<Node>());
     }
@@ -1312,7 +1328,15 @@ export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(
     return undefined;
   }
   let expressions: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const variable of variables) {
+  for (
+    let __goRangeSlice = variables,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const variable = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     expressions = GoSliceAppend(expressions, asyncTransformer_transformInitializedVariable(receiver, AsVariableDeclaration(variable)!) as GoPtr<Node>, GoPointerValueOps<Node>());
   }
   return NodeFactory_InlineExpressions(Transformer_Factory(receiver!.__tsgoEmbedded0!), expressions as unknown as GoSlice<GoPtr<never>>) as unknown as GoPtr<Node>;
@@ -1329,7 +1353,15 @@ export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(
  * }
  */
 export function asyncTransformer_hoistVariableDeclarationList(receiver: GoPtr<asyncTransformer>, node: GoPtr<VariableDeclarationList>): void {
-  for (const decl of node!.Declarations!.Nodes) {
+  for (
+    let __goRangeSlice = node!.Declarations!.Nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     asyncTransformer_hoistVariable(receiver, decl);
   }
 }
@@ -1363,7 +1395,15 @@ export function asyncTransformer_hoistVariable(receiver: GoPtr<asyncTransformer>
     EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), name as unknown as GoPtr<never>);
   } else if (IsBindingPattern(name)) {
     const bp = AsBindingPattern(name)!;
-    for (const element of bp.Elements!.Nodes) {
+    for (
+      let __goRangeSlice = bp.Elements!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!IsOmittedExpression(element)) {
         asyncTransformer_hoistVariable(receiver, element);
       }
@@ -1432,7 +1472,15 @@ export function asyncTransformer_collidesWithParameterName(receiver: GoPtr<async
   }
   if (IsBindingPattern(name)) {
     const bp = AsBindingPattern(name)!;
-    for (const element of bp.Elements!.Nodes) {
+    for (
+      let __goRangeSlice = bp.Elements!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!IsOmittedExpression(element) && asyncTransformer_collidesWithParameterName(receiver, element)) {
         return true;
       }
@@ -1630,7 +1678,15 @@ export function asyncTransformer_transformAsyncFunctionParameterList(receiver: G
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const factory = printerFactory!.__tsgoEmbedded0!;
   let newParameters: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const parameter of Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const param = AsParameterDeclaration(parameter)!;
     if (param.Initializer !== undefined || param.DotDotDotToken !== undefined) {
       // for an arrow function, capture the remaining arguments in a rest parameter.
@@ -1770,7 +1826,15 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
   // An async function is emit as an outer function that calls an inner generator function.
   const savedEnclosingFunctionParameterNames = receiver!.enclosingFunctionParameterNames;
   receiver!.enclosingFunctionParameterNames = NewSetWithSizeHint<string>(0, GoStringKey);
-  for (const parameter of Node_Parameters(node)) {
+  for (
+    let __goRangeSlice = Node_Parameters(node),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     asyncTransformer_recordDeclarationName(receiver, parameter as unknown as GoPtr<Node>, receiver!.enclosingFunctionParameterNames);
   }
   const hasLexicalThis = asyncTransformer_inHasLexicalThisContext(receiver);
@@ -1997,7 +2061,15 @@ export function assignmentTargetContainsSuperProperty(node: GoPtr<Node>): bool {
     case KindArrayLiteralExpression:
       return AsArrayLiteralExpression(node)!.Elements!.Nodes.some(assignmentTargetContainsSuperProperty);
     case KindObjectLiteralExpression: {
-      for (const prop of AsObjectLiteralExpression(node)!.Properties!.Nodes) {
+      for (
+        let __goRangeSlice = AsObjectLiteralExpression(node)!.Properties!.Nodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         switch (prop!.Kind) {
           case KindPropertyAssignment:
             if (assignmentTargetContainsSuperProperty(AsPropertyAssignment(prop)!.Initializer as unknown as GoPtr<Node>)) {
@@ -2087,7 +2159,15 @@ export function asyncTransformer_getOriginalIfFunctionLike(receiver: GoPtr<async
  * }
  */
 export function isSimpleParameterList(params: GoSlice<GoPtr<Node>>): bool {
-  for (const param of params ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = params ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const param = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const p = AsParameterDeclaration(param)!;
     if (p.Initializer !== undefined || !IsIdentifier(p.name)) {
       return false;

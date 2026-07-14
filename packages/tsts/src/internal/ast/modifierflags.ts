@@ -127,6 +127,8 @@ import {
 } from "./generated/kinds.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node } from "./spine.js";
+import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ModifierToFlag","kind":"func","status":"implemented","sigHash":"58cf09e20f2fc84d1f7e7ceae03afd109b00f3284f70ae0f00774dd5bfc4b878"}
@@ -193,7 +195,15 @@ export function ModifierToFlag(token: Kind): ModifierFlags {
  */
 export function ModifiersToFlags(modifiers: GoSlice<GoPtr<Node>>): ModifierFlags {
   let flags: ModifierFlags = 0;
-  for (const modifier of modifiers) {
+  for (
+    let __goRangeSlice = modifiers,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const modifier = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     flags = (flags | ModifierToFlag(modifier!.Kind)) >>> 0;
   }
   return flags;

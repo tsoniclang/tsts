@@ -95,7 +95,15 @@ export function visit(v: Visitor, node: GoPtr<Node>): bool {
  * }
  */
 export function visitNodes(v: Visitor, nodes: GoSlice<GoPtr<Node>>): bool {
-  for (const node of nodes) {
+  for (
+    let __goRangeSlice = nodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<DeclarationName>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (v!(node)) {
       return true as bool;
     }

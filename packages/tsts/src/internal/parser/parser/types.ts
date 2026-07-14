@@ -71,6 +71,8 @@ import type { Parser, jsdocScannerInfo } from "./state.js";
 
 import type { GoFunc } from "../../../go/compat.js";
 import { GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseTypeAnnotation","kind":"method","status":"implemented","sigHash":"adeb19ed0f33f094ab8118ef44389341fcde713436a0c4f851edefe8318f7b75"}
@@ -1926,7 +1928,15 @@ export function Parser_unparseExpressionWithTypeArguments(receiver: GoPtr<Parser
     expression.Parent = result;
   }
   if (typeArguments !== undefined) {
-    for (const a of typeArguments.Nodes) {
+    for (
+      let __goRangeSlice = typeArguments.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const a = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       a!.Parent = result;
     }
   }

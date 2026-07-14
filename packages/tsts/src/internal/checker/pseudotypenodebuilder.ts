@@ -142,7 +142,15 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
     if (!b.ctx!.suppressReportInferenceFallback) {
       const errorNodes = PseudoType_AsPseudoTypeInferred(t)!.ErrorNodes;
       if (errorNodes.length > 0) {
-        for (const n of errorNodes) {
+        for (
+          let __goRangeSlice = errorNodes,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const n = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           b.ctx!.tracker!.ReportInferenceFallback(n);
         }
       } else {
@@ -445,7 +453,15 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         const node = inferred.Expression;
         const errorNodes = inferred.ErrorNodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
         if (errorNodes.length > 0) {
-          for (const n of errorNodes) {
+          for (
+            let __goRangeSlice = errorNodes,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Node>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const n = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             b.ctx!.tracker!.ReportInferenceFallback(n);
           }
         } else if (IsEntityNameExpression(node) && IsDeclaration(node!.Parent)) {
@@ -500,7 +516,15 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         let res: GoSlice<GoPtr<Node>> = GoNilSlice();
         let hasElidedType = false;
         const members = PseudoType_AsPseudoTypeUnion(t)!.Types;
-        for (const member of members) {
+        for (
+          let __goRangeSlice = members,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<PseudoType>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (!b.ch!.strictNullChecks) {
             if (member!.Kind === PseudoTypeKindUndefined || member!.Kind === PseudoTypeKindNull) {
               hasElidedType = true;
@@ -566,7 +590,15 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
       case PseudoTypeKindTuple: {
         let res: GoSlice<GoPtr<Node>> = GoNilSlice();
         const elements = PseudoType_AsPseudoTypeTuple(t)!.Elements;
-        for (const element of elements) {
+        for (
+          let __goRangeSlice = elements,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<PseudoType>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const element = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           res = GoSliceAppend(res, NodeBuilderImpl_pseudoTypeToNode(b, element), GoPointerValueOps<Node>());
         }
         const result = NewTupleTypeNode(b.f, NodeFactory_NewNodeList(b.f, res) as GoPtr<never>);
@@ -729,7 +761,15 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
 export function NodeBuilderImpl_pseudoParametersToNodeList(receiver: GoPtr<NodeBuilderImpl>, params: GoSlice<GoPtr<PseudoParameter>>): GoPtr<NodeList> {
   const b = receiver!;
   let res: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const p of params) {
+  for (
+    let __goRangeSlice = params,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<PseudoParameter>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     res = GoSliceAppend(res, NodeBuilderImpl_pseudoParameterToNode(b, p), GoPointerValueOps<Node>());
   }
   return NodeFactory_NewNodeList(b.f, res);
@@ -1051,7 +1091,15 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
       const errorNodes = inferred.ErrorNodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
       if (errorNodes.length > 0) {
         if (reportErrors) {
-          for (const n of errorNodes) {
+          for (
+            let __goRangeSlice = errorNodes,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Node>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const n = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             b.ctx!.tracker!.ReportInferenceFallback(n);
           }
         }
@@ -1111,7 +1159,15 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
             if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, d.Type, propType, elementNode.Optional, false)) {
               if (reportErrors) {
                 if (d.Type!.Kind === PseudoTypeKindInferred && (PseudoType_AsPseudoTypeInferred(d.Type)!.ErrorNodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length > 0) {
-                  for (const n of PseudoType_AsPseudoTypeInferred(d.Type)!.ErrorNodes) {
+                  for (
+                    let __goRangeSlice = PseudoType_AsPseudoTypeInferred(d.Type)!.ErrorNodes,
+                      __goRangeLength = __goRangeSlice.length,
+                      __goRangeValueOps = GoPointerValueOps<Node>(),
+                      __goRangeIndex = 0;
+                    __goRangeIndex < __goRangeLength;
+                    __goRangeIndex++
+                  ) {
+                    const n = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
                     b.ctx!.tracker!.ReportInferenceFallback(n);
                   }
                 } else if (!isStructuralPseudoType(d.Type)) {
@@ -1562,7 +1618,15 @@ export function NodeBuilderImpl_pseudoTypeToType(receiver: GoPtr<NodeBuilderImpl
       let res: GoSlice<GoPtr<Type>> = GoNilSlice();
       let hasElidedType = false;
       const members = PseudoType_AsPseudoTypeUnion(t)!.Types;
-      for (const m of members) {
+      for (
+        let __goRangeSlice = members,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<PseudoType>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const m = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (!b.ch!.strictNullChecks) {
           if (m!.Kind === PseudoTypeKindUndefined || m!.Kind === PseudoTypeKindNull) {
             hasElidedType = true;

@@ -229,7 +229,15 @@ export function SymbolTrackerImpl_ReportNonlocalAugmentation(receiver: GoPtr<Sym
   const primaryDeclaration = Find(parentSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) === containingFile, GoZeroPointer<Node>);
   const augmentingDeclarations = Filter(augmentingSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) !== containingFile);
   if (primaryDeclaration !== undefined && augmentingDeclarations.length > 0) {
-    for (const augmentations of augmentingDeclarations) {
+    for (
+      let __goRangeSlice = augmentingDeclarations,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const augmentations = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const diag = createDiagnosticForNode(augmentations, diagnostics.Declaration_augments_declaration_in_another_file_This_cannot_be_serialized);
       const related = createDiagnosticForNode(primaryDeclaration, diagnostics.This_is_the_declaration_being_augmented_Consider_moving_the_augmenting_declaration_into_the_same_file);
       Diagnostic_AddRelatedInfo(diag, related);
@@ -417,7 +425,15 @@ export function SymbolTrackerImpl_TrackSymbol(receiver: GoPtr<SymbolTrackerImpl>
 export function SymbolTrackerImpl_handleSymbolAccessibilityError(receiver: GoPtr<SymbolTrackerImpl>, symbolAccessibilityResult: SymbolAccessibilityResult): bool {
   if (symbolAccessibilityResult.Accessibility === SymbolAccessibilityAccessible) {
     if (symbolAccessibilityResult.AliasesToMakeVisible.length > 0) {
-      for (const ref of symbolAccessibilityResult.AliasesToMakeVisible) {
+      for (
+        let __goRangeSlice = symbolAccessibilityResult.AliasesToMakeVisible,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const ref = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         receiver!.state!.lateMarkedStatements = AppendIfUnique(receiver!.state!.lateMarkedStatements, ref, GoEqualStrict);
       }
     }

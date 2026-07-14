@@ -274,7 +274,15 @@ export function objectRestSpreadTransformer_visitParameter(receiver: GoPtr<objec
  */
 export function objectRestSpreadTransformer_collectParametersWithPrecedingObjectRestOrSpread(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }> {
   let result = GoNilMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>();
-  for (const parameter of Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const paramNode = parameter as unknown as GoPtr<Node>;
     if (!GoMapIsNil(result)) {
       result.set(paramNode, {});
@@ -796,7 +804,15 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   let containsPrecedingObjectRestOrSpread = false;
   let results: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const parameter of Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const paramNode = parameter as unknown as GoPtr<Node>;
     if (containsPrecedingObjectRestOrSpread) {
       const paramNameNode = Node_Name(paramNode) as unknown as GoPtr<Node>;
@@ -1122,7 +1138,15 @@ export function objectRestSpreadTransformer_visitForOftatement(receiver: GoPtr<o
       }
       const stmtNode = node!.Statement as unknown as GoPtr<Node>;
       if (IsBlock(stmtNode)) {
-        for (const statement of Node_Statements(stmtNode) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = Node_Statements(stmtNode) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           const visited = NodeVisitor_VisitEachChild(visitor, statement);
           if (visited !== undefined) {
             statements = GoSliceAppend(statements, visited, GoPointerValueOps<Node>());
@@ -1306,7 +1330,15 @@ export function objectRestSpreadTransformer_chunkObjectLiteralElements(receiver:
   const elements = list!.Nodes as unknown as GoSlice<GoPtr<Node>>;
   let chunkObject: GoSlice<GoPtr<Node>> = GoNilSlice();
   let objects: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const e of elements) {
+  for (
+    let __goRangeSlice = elements,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (e!.Kind === KindSpreadAssignment) {
       if (chunkObject.length > 0) {
         objects = GoSliceAppend(objects, NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, chunkObject) as unknown as GoPtr<never>, false), GoPointerValueOps<Node>());

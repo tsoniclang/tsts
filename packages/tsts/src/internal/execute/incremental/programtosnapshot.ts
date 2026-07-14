@@ -273,7 +273,15 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
 
   const files = Program_GetSourceFiles(receiver!.program);
   const wg = NewWorkGroup(Program_SingleThreaded(receiver!.program));
-  for (const file of files) {
+  for (
+    let __goRangeSlice = files,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     wg!.Queue(() => {
       const version = snapshot_computeHash(receiver!.snapshot, SourceFile_Text(file));
       const impliedNodeFormat = Program_GetSourceFileMetaData(receiver!.program, SourceFile_Path(file)).ImpliedNodeFormat;
@@ -408,7 +416,15 @@ export function toProgramSnapshot_handleFileDelete(receiver: GoPtr<toProgramSnap
       );
       if (!ok) {
         if (oldInfo!.affectsGlobalScope) {
-          for (const file of snapshot_getAllFilesExcludingDefaultLibraryFile(receiver!.snapshot, receiver!.program, undefined)) {
+          for (
+            let __goRangeSlice = snapshot_getAllFilesExcludingDefaultLibraryFile(receiver!.snapshot, receiver!.program, undefined),
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
           }
           receiver!.globalFileRemoved = true;
@@ -455,7 +471,15 @@ export function toProgramSnapshot_handlePendingEmit(receiver: GoPtr<toProgramSna
     }
     if (pendingEmitKind !== 0) {
       // Add all files to affectedFilesPendingEmit since emit changed
-      for (const file of Program_GetSourceFiles(receiver!.program)) {
+      for (
+        let __goRangeSlice = Program_GetSourceFiles(receiver!.program),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         // Add to affectedFilesPending emit only if not changed since any changed file will do full emit
         if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(file), GoStringKey)) {
           snapshot_addFileToAffectedFilesPendingEmit(receiver!.snapshot, SourceFile_Path(file), pendingEmitKind);
@@ -549,7 +573,15 @@ export function addReferencedFilesFromSymbol(file: GoPtr<SourceFile>, referenced
   if (symbol_ === undefined) {
     return;
   }
-  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const fileOfDecl = GetSourceFileOfNode(declaration);
     if (fileOfDecl === undefined) {
       continue;
@@ -633,7 +665,15 @@ export function getReferencedFiles(program: GoPtr<Program>, file: GoPtr<SourceFi
   const referencedFiles = NewSetWithSizeHint<Path>(0, GoStringKey)!;
   const [checker, done] = Program_GetTypeCheckerForFileExclusive(program, TODO() as Context, file);
   try {
-    for (const importName of SourceFile_Imports(file)) {
+    for (
+      let __goRangeSlice = SourceFile_Imports(file),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const importName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       addReferencedFilesFromImportLiteral(file, referencedFiles, checker, importName as GoPtr<LiteralLikeNode>);
     }
     const sourceFileDirectory = GetDirectoryPath(SourceFile_FileName(file));
@@ -650,13 +690,29 @@ export function getReferencedFiles(program: GoPtr<Program>, file: GoPtr<SourceFi
         }
       }
     }
-    for (const moduleName of file!.ModuleAugmentations) {
+    for (
+      let __goRangeSlice = file!.ModuleAugmentations,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const moduleName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!IsStringLiteral(moduleName as GoPtr<Node>)) {
         continue;
       }
       addReferencedFilesFromImportLiteral(file, referencedFiles, checker, moduleName as GoPtr<LiteralLikeNode>);
     }
-    for (const ambientModule of Checker_GetAmbientModules(checker)) {
+    for (
+      let __goRangeSlice = Checker_GetAmbientModules(checker),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Symbol>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const ambientModule = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       addReferencedFilesFromSymbol(file, referencedFiles, ambientModule);
     }
   } finally {
@@ -799,7 +855,15 @@ export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic
         skippedOnNoEmit: false,
       };
       // Recursively handle nested chains
-      for (const nested of Diagnostic_MessageChain(c)) {
+      for (
+        let __goRangeSlice = Diagnostic_MessageChain(c),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const nested = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         b.messageChain = GoSliceAppend(b.messageChain, astDiagToBuildInfoDiag(nested), GoPointerValueOps<buildInfoDiagnosticWithFileName>());
       }
       result[i] = repopulateDiagnosticChain(b, p, file);
@@ -852,7 +916,15 @@ export function astDiagToBuildInfoDiag(d: GoPtr<Diagnostic>): GoPtr<buildInfoDia
     reportsDeprecated: false,
     skippedOnNoEmit: false,
   };
-  for (const nested of Diagnostic_MessageChain(d)) {
+  for (
+    let __goRangeSlice = Diagnostic_MessageChain(d),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const nested = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     b.messageChain = GoSliceAppend(b.messageChain, astDiagToBuildInfoDiag(nested), GoPointerValueOps<buildInfoDiagnosticWithFileName>());
   }
   return b;

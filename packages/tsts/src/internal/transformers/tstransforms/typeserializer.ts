@@ -581,7 +581,15 @@ export function metadataSerializer_serializeTypeNode(receiver: GoPtr<metadataSer
 export function metadataSerializer_serializeUnionOrIntersectionConstituents(receiver: GoPtr<metadataSerializer>, types: GoSlice<GoPtr<Node>>, isIntersection: bool): GoPtr<Node> {
   const f = receiver!.f!.__tsgoEmbedded0!;
   let serializedType: GoPtr<Node> = undefined;
-  for (const rawTypeNode of types) {
+  for (
+    let __goRangeSlice = types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const rawTypeNode = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const typeNode = SkipTypeParentheses(rawTypeNode)!;
     if (typeNode.Kind === KindNeverKeyword) {
       if (isIntersection) {

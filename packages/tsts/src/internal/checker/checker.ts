@@ -174,7 +174,15 @@ export function Checker_checkClassForStaticPropertyNameConflicts(receiver: GoPtr
   if (CompilerOptions_GetUseDefineForClassFields(receiver!.compilerOptions)) {
     return;
   }
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const memberNameNode = Node_Name(member);
     const isStaticMember = IsStatic(member);
     if (isStaticMember && memberNameNode !== undefined) {
@@ -235,7 +243,15 @@ export function Checker_getFirstTransformableStaticClassElement(receiver: GoPtr<
   const willTransformPrivateElementsOrClassStaticBlocks = (receiver!.languageVersion < LanguageFeatureMinimumTarget.PrivateNamesAndClassStaticBlocks || receiver!.languageVersion < LanguageFeatureMinimumTarget.ClassAndClassElementDecorators) as bool;
   const willTransformInitializers = (!receiver!.emitStandardClassFields) as bool;
   if (willTransformStaticElementsOfDecoratedClass || willTransformPrivateElementsOrClassStaticBlocks) {
-    for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (willTransformStaticElementsOfDecoratedClass && ClassElementOrClassElementParameterIsDecorated(false as bool, member, node)) {
         const firstDecorator = core.FirstOrNil(Node_Decorators(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), GoZeroPointer<Node>);
         if (firstDecorator !== undefined) {
@@ -752,7 +768,15 @@ export function Checker_checkExternalEmitHelpers(receiver: GoPtr<Checker>, locat
       if ((uncheckedHelpers & helper) === 0) {
         continue;
       }
-      for (const name of Checker_getHelperNames(receiver, helper)) {
+      for (
+        let __goRangeSlice = Checker_getHelperNames(receiver, helper),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoStringValueOps,
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const name = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const symbol_ = Checker_resolveSymbol(receiver, Checker_getSymbol(receiver, Checker_getExportsOfModule(receiver, helpersModule), name, SymbolFlagsValue));
         if (symbol_ === undefined) {
           Checker_error(receiver, location, This_syntax_requires_an_imported_helper_named_1_which_does_not_exist_in_0_Consider_upgrading_your_version_of_0, externalHelpersModuleNameText, name);

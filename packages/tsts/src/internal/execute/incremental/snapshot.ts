@@ -844,7 +844,15 @@ export function snapshot_getAllFilesExcludingDefaultLibraryFile(receiver: GoPtr<
     if (firstSourceFile !== undefined) {
       addSourceFile(firstSourceFile);
     }
-    for (const file of files) {
+    for (
+      let __goRangeSlice = files,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<SourceFile>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (file !== firstSourceFile) {
         addSourceFile(file);
       }
@@ -887,7 +895,15 @@ export function getTextHandlingSourceMapForSignature(text: string, data: GoPtr<W
 export function snapshot_computeSignatureWithDiagnostics(receiver: GoPtr<snapshot>, file: GoPtr<SourceFile>, text: string, data: GoPtr<WriteFileData>): string {
   const builder = new strings.Builder();
   builder.WriteString(getTextHandlingSourceMapForSignature(text, data));
-  for (const diag of data!.Diagnostics) {
+  for (
+    let __goRangeSlice = data!.Diagnostics,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const diag = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     diagnosticToStringBuilder(diag, file, builder);
   }
   return snapshot_computeHash(receiver, builder.String());
@@ -947,14 +963,38 @@ export function diagnosticToStringBuilder(diagnostic: GoPtr<Diagnostic>, file: G
   builder!.WriteString(Sprintf("%d: ", Diagnostic_Code(diagnostic)));
   builder!.WriteString(Diagnostic_MessageKey(diagnostic));
   builder!.WriteString("\n");
-  for (const arg of Diagnostic_MessageArgs(diagnostic)) {
+  for (
+    let __goRangeSlice = Diagnostic_MessageArgs(diagnostic),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const arg = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     builder!.WriteString(arg);
     builder!.WriteString("\n");
   }
-  for (const chain of Diagnostic_MessageChain(diagnostic)) {
+  for (
+    let __goRangeSlice = Diagnostic_MessageChain(diagnostic),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const chain = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     diagnosticToStringBuilder(chain, file, builder);
   }
-  for (const info of Diagnostic_RelatedInformation(diagnostic)) {
+  for (
+    let __goRangeSlice = Diagnostic_RelatedInformation(diagnostic),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Diagnostic>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     diagnosticToStringBuilder(info, file, builder);
   }
 }

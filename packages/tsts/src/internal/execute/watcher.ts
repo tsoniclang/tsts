@@ -72,6 +72,8 @@ import type { EmitInput } from "./tsc/emit.js";
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
 import { GoSliceLoad } from "../../go/compat.js";
+import { GoInterfaceValueOps } from "../../go/compat.js";
+
 
 
 // Local byte-code constants for path inspection in perceivedOsRootLengthForWatching,
@@ -604,7 +606,15 @@ export function Watcher_computeDesiredWatches(receiver: GoPtr<Watcher>, seenFile
   }
 
   // Config file parent directories as non-recursive watches
-  for (const cfgPath of receiver!.configFilePaths) {
+  for (
+    let __goRangeSlice = receiver!.configFilePaths,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const cfgPath = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const realPath = receiver!.sys!.FS()!.Realpath(cfgPath);
     const dir = GetDirectoryPath(realPath);
     if (!desiredDirs.has(dir)) {
@@ -614,7 +624,15 @@ export function Watcher_computeDesiredWatches(receiver: GoPtr<Watcher>, seenFile
 
   // For no-config CLI mode, also watch the CLI-specified files' directories
   if (receiver!.config!.ConfigFile === undefined) {
-    for (const fileName of ParsedCommandLine_FileNames(receiver!.config)) {
+    for (
+      let __goRangeSlice = ParsedCommandLine_FileNames(receiver!.config),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const fileName = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const absPath = GetNormalizedAbsolutePath(fileName, cwd);
       const realPath = receiver!.sys!.FS()!.Realpath(absPath);
       const dir = GetDirectoryPath(realPath);
@@ -629,7 +647,15 @@ export function Watcher_computeDesiredWatches(receiver: GoPtr<Watcher>, seenFile
   const resolvedDirs = Watcher_resolveDesiredDirs(receiver, desiredDirs);
 
   const opts = Watcher_comparePathsOptions(receiver);
-  for (const filePath of seenFilePaths) {
+  for (
+    let __goRangeSlice = seenFilePaths,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const filePath = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const dir = GetDirectoryPath(filePath);
     let covered = false;
     for (const [wdir, recursive] of resolvedDirs) {
@@ -977,7 +1003,15 @@ export function Watcher_closeAllWatches(receiver: GoPtr<Watcher>): void {
     dirs = GoAppend(dirs, wd!.closer);
     receiver!.watchedDirs.delete(dir);
   }
-  for (const c of dirs) {
+  for (
+    let __goRangeSlice = dirs,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoInterfaceValueOps<Closer>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const c = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     c!.Close();
   }
 }
@@ -1426,7 +1460,15 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
       receiver!.config = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(receiver!.config, receiver!.sys!.FS());
     }
   }
-  for (const path of receiver!.configFilePaths) {
+  for (
+    let __goRangeSlice = receiver!.configFilePaths,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const path = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     SyncSet_Add(tfs.SeenFiles, path, GoStringKey);
   }
 
@@ -1453,13 +1495,29 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   const cwd = receiver!.sys!.GetCurrentDirectory();
   const seenSlice = SyncSet_ToSlice(tfsSeenFiles);
   receiver!.seenFiles = NewSetWithSizeHint<Path>(seenSlice.length, GoStringKey);
-  for (const p of seenSlice) {
+  for (
+    let __goRangeSlice = seenSlice,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     Set_Add(receiver!.seenFiles, ToPath(p, cwd, caseSensitive), GoStringKey);
   }
 
   type FileInfoModTime = { ModTime(): Time };
   receiver!.configMtimes = new Map<string, Time>();
-  for (const cfgPath of receiver!.configFilePaths) {
+  for (
+    let __goRangeSlice = receiver!.configFilePaths,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const cfgPath = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const s = receiver!.sys!.FS()!.Stat(cfgPath);
     if (s !== undefined && s !== null) {
       receiver!.configMtimes.set(cfgPath, (s as unknown as FileInfoModTime).ModTime());
@@ -1608,7 +1666,15 @@ export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
 
   if (!receiver!.configHasErrors && receiver!.configFilePaths.length > 0) {
     let changed = false;
-    for (const path of receiver!.configFilePaths) {
+    for (
+      let __goRangeSlice = receiver!.configFilePaths,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const path = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const ok = !GoMapIsNil(receiver!.configMtimes) && receiver!.configMtimes.has(path);
       const oldMtime = ok ? receiver!.configMtimes.get(path)! : undefined;
       const s = receiver!.sys!.FS()!.Stat(path);

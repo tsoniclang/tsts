@@ -1767,7 +1767,15 @@ export function Checker_checkObjectTypeForDuplicateDeclarations(receiver: GoPtr<
   const members = Node_Members(node)!;
   for (const member of members) {
     if (IsConstructorDeclaration(member)) {
-      for (const param of Node_Parameters(member)) {
+      for (
+        let __goRangeSlice = Node_Parameters(member),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const param = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (IsParameterPropertyDeclaration(param, member) && !IsBindingPattern(Node_Name(param))) {
           checkPropertyOrAccessor(Checker_getSymbolOfDeclaration(receiver, param), 1, false as bool);
         }
@@ -2326,7 +2334,15 @@ export function Checker_checkClassLikeDeclaration(receiver: GoPtr<Checker>, node
       Checker_checkSourceElement(receiver, Node_Expression(baseTypeNode));
       if (baseTypeArguments.length !== 0) {
         Checker_checkSourceElements(receiver, baseTypeArguments);
-        for (const constructor of Checker_getConstructorsForTypeArguments(receiver, staticBaseType, baseTypeArguments, baseTypeNode)) {
+        for (
+          let __goRangeSlice = Checker_getConstructorsForTypeArguments(receiver, staticBaseType, baseTypeArguments, baseTypeNode),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Signature>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const constructor = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (!Checker_checkTypeArgumentConstraints(receiver, baseTypeNode, constructor!.typeParameters)) {
             break;
           }
@@ -2365,7 +2381,15 @@ export function Checker_checkClassLikeDeclaration(receiver: GoPtr<Checker>, node
   }
   Checker_checkMembersForOverrideModifier(receiver, node, classType, typeWithThis, staticType);
   const implementedTypeNodes = GetImplementsHeritageClauseElements(node);
-  for (const typeRefNode of implementedTypeNodes) {
+  for (
+    let __goRangeSlice = implementedTypeNodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const typeRefNode = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const expr = Node_Expression(typeRefNode);
     if (!IsEntityNameExpression(expr) || IsOptionalChain(expr)) {
       Checker_error(receiver, expr, A_class_can_only_implement_an_identifier_Slashqualified_name_with_optional_type_arguments);
@@ -2591,7 +2615,15 @@ export function Checker_checkKindsOfPropertyMemberOverrides(receiver: GoPtr<Chec
       if ((baseDeclarationFlags & ModifierFlagsAbstract) !== 0) {
         const derivedClassDecl = GetClassLikeDeclarationOfSymbol(t!.symbol);
         if (derivedClassDecl === undefined || !HasSyntacticModifier(derivedClassDecl, ModifierFlagsAbstract)) {
-          for (const otherBaseType of Checker_getBaseTypes(receiver, t)) {
+          for (
+            let __goRangeSlice = Checker_getBaseTypes(receiver, t),
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Type>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const otherBaseType = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             if (otherBaseType === baseType) {
               continue;
             }
@@ -2752,7 +2784,15 @@ export function Checker_checkMembersForOverrideModifier(receiver: GoPtr<Checker>
   for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (!HasAmbientModifier(member)) {
       if (IsConstructorDeclaration(member)) {
-        for (const param of Node_Parameters(member)) {
+        for (
+          let __goRangeSlice = Node_Parameters(member),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const param = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (IsParameterPropertyDeclaration(param, member)) {
             Checker_checkMemberForOverrideModifier(receiver, node, staticType, baseStaticType, baseWithThis, t, typeWithThis, param);
           }
@@ -2941,7 +2981,15 @@ export function Checker_checkPropertyInitialization(receiver: GoPtr<Checker>, no
     return;
   }
   const constructor_ = FindConstructorDeclaration(node);
-  for (const member of Node_Members(node)!) {
+  for (
+    let __goRangeSlice = Node_Members(node)!,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((Node_ModifierFlags(member) & ModifierFlagsAmbient) !== 0) {
       continue;
     }
@@ -2993,7 +3041,15 @@ export function Checker_isPropertyWithoutInitializer(receiver: GoPtr<Checker>, n
  * }
  */
 export function Checker_isPropertyInitializedInStaticBlocks(receiver: GoPtr<Checker>, propName: GoPtr<Node>, propType: GoPtr<Type>, staticBlocks: GoSlice<GoPtr<Node>>, startPos: int, endPos: int): bool {
-  for (const staticBlock of staticBlocks) {
+  for (
+    let __goRangeSlice = staticBlocks,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const staticBlock = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     // static block must be within the provided range as they are evaluated in document order (unlike constructors)
     if (Node_Pos(staticBlock) >= startPos && Node_Pos(staticBlock) <= endPos) {
       const reference = NewPropertyAccessExpression(receiver!.factory, NewKeywordExpression(receiver!.factory, KindThisKeyword) as unknown as GoPtr<Expression>, undefined, propName as never, NodeFlagsNone);
@@ -3069,7 +3125,15 @@ export function Checker_checkInterfaceDeclaration(receiver: GoPtr<Checker>, node
     const t = Checker_getDeclaredTypeOfSymbol(receiver, symbol_);
     const typeWithThis = Checker_getTypeWithThisArgument(receiver, t, undefined, false);
     if (Checker_checkInheritedPropertiesAreIdentical(receiver, t, Node_Name(node))) {
-      for (const baseType of Checker_getBaseTypes(receiver, t)) {
+      for (
+        let __goRangeSlice = Checker_getBaseTypes(receiver, t),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Type>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const baseType = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Checker_checkTypeAssignableTo(
           receiver,
           typeWithThis,
@@ -3082,7 +3146,15 @@ export function Checker_checkInterfaceDeclaration(receiver: GoPtr<Checker>, node
     }
   }
   Checker_checkObjectTypeForDuplicateDeclarations(receiver, node, false);
-  for (const heritageElement of GetExtendsHeritageClauseElements(node)) {
+  for (
+    let __goRangeSlice = GetExtendsHeritageClauseElements(node),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const heritageElement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const expr = Node_Expression(heritageElement);
     if (!IsEntityNameExpression(expr) || IsOptionalChain(expr)) {
       Checker_error(receiver, expr, An_interface_can_only_extend_an_identifier_Slashqualified_name_with_optional_type_arguments);
@@ -3168,14 +3240,30 @@ export function Checker_checkEnumDeclaration(receiver: GoPtr<Checker>, node: GoP
     const enumDeclarations = enumSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     if (enumDeclarations.length > 1) {
       const enumIsConst = IsEnumConst(node);
-      for (const decl of enumDeclarations) {
+      for (
+        let __goRangeSlice = enumDeclarations,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const decl = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (IsEnumDeclaration(decl) && IsEnumConst(decl) !== enumIsConst) {
           Checker_error(receiver, GetNameOfDeclaration(decl), Enum_declarations_must_all_be_const_or_non_const);
         }
       }
     }
     let seenEnumMissingInitialInitializer: bool = false;
-    for (const declaration of enumDeclarations) {
+    for (
+      let __goRangeSlice = enumDeclarations,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (declaration!.Kind !== KindEnumDeclaration) {
         continue;
       }
@@ -3379,7 +3467,15 @@ export function Checker_checkModuleDeclaration(receiver: GoPtr<Checker>, node: G
     if (IsExternalModuleAugmentation(node)) {
       const checkBody = isGlobalAugmentation || (Checker_getSymbolOfDeclaration(receiver, node)!.Flags & SymbolFlagsTransient) !== 0;
       if (checkBody && body !== undefined) {
-        for (const statement of Node_Statements(body) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = Node_Statements(body) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const statement = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           Checker_checkModuleAugmentationElement(receiver, statement);
         }
       }
@@ -3516,7 +3612,15 @@ export function Checker_checkImportDeclaration(receiver: GoPtr<Checker>, node: G
         } else {
           resolvedModule = Checker_resolveExternalModuleName(receiver, node, Node_ModuleSpecifier(node), false);
           if (resolvedModule !== undefined) {
-            for (const binding of Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+            for (
+              let __goRangeSlice = Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoPointerValueOps<Node>(),
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const binding = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               Checker_checkImportBinding(receiver, binding);
             }
           }
@@ -3620,7 +3724,15 @@ export function Checker_checkExternalImportOrExportDeclaration(receiver: GoPtr<C
     const attributes = GetImportAttributes(node);
     if (attributes !== undefined) {
       let hasError = false;
-      for (const attr of AsImportAttributes(attributes)!.Attributes!.Nodes) {
+      for (
+        let __goRangeSlice = AsImportAttributes(attributes)!.Attributes!.Nodes,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const attr = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const value = AsImportAttribute(attr)!.Value as GoPtr<Node>;
         if (!IsStringLiteral(value)) {
           hasError = true;
@@ -3792,7 +3904,15 @@ export function Checker_getTypeFromImportAttributes(receiver: GoPtr<Checker>, no
   if (links!.v.resolvedType === undefined) {
     const symbol_ = Checker_newSymbol(receiver, SymbolFlagsObjectLiteral, InternalSymbolNameImportAttributes);
     const members: SymbolTable = new globalThis.Map();
-    for (const attr of AsImportAttributes(node)!.Attributes!.Nodes) {
+    for (
+      let __goRangeSlice = AsImportAttributes(node)!.Attributes!.Nodes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const attr = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const member = Checker_newSymbol(receiver, SymbolFlagsProperty, Node_Text(Node_Name(attr)));
       LinkStore_Get(receiver!.valueSymbolLinks, member, GoZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = Checker_getRegularTypeOfLiteralType(receiver, Checker_checkExpression(receiver, AsImportAttribute(attr)!.Value as GoPtr<Node>));
       members.set(member!.Name, member);
@@ -3960,7 +4080,15 @@ export function Checker_checkExportDeclaration(receiver: GoPtr<Checker>, node: G
   Checker_checkGrammarExportDeclaration(receiver, exportDecl);
   if (exportDecl!.ModuleSpecifier === undefined || Checker_checkExternalImportOrExportDeclaration(receiver, node)) {
     if (exportDecl!.ExportClause !== undefined && !IsNamespaceExport(exportDecl!.ExportClause)) {
-      for (const binding of Node_Elements(exportDecl!.ExportClause) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = Node_Elements(exportDecl!.ExportClause) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const binding = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Checker_checkExportSpecifier(receiver, binding);
       }
       const inAmbientExternalModule = IsModuleBlock(node!.Parent) && IsAmbientModule(node!.Parent!.Parent);
@@ -4121,7 +4249,15 @@ export function Checker_checkExternalModuleExports(receiver: GoPtr<Checker>, nod
       if (exportedDeclarationsCount > 1 && !Every(declarations, (declaration: GoPtr<Node>): bool => {
         return (GetAssignmentDeclarationKind(declaration) === JSDeclarationKindExportsProperty) as bool;
       })) {
-        for (const declaration of declarations) {
+        for (
+          let __goRangeSlice = declarations,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (isNotOverload(declaration)) {
             Checker_error(receiver, declaration, Cannot_redeclare_exported_variable_0, id);
           }
@@ -5074,7 +5210,15 @@ export function Checker_checkExportsOnMergedDeclarations(receiver: GoPtr<Checker
   let exportedDeclarationSpaces = DeclarationSpacesNone;
   let nonExportedDeclarationSpaces = DeclarationSpacesNone;
   let defaultExportedDeclarationSpaces = DeclarationSpacesNone;
-  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const declarationSpaces = Checker_getDeclarationSpaces(receiver, declaration);
     const effectiveDeclarationFlags = Checker_getEffectiveDeclarationFlags(receiver, declaration, ModifierFlagsExport | ModifierFlagsDefault);
     if ((effectiveDeclarationFlags & ModifierFlagsExport) !== 0) {
@@ -5091,7 +5235,15 @@ export function Checker_checkExportsOnMergedDeclarations(receiver: GoPtr<Checker
   const commonDeclarationSpacesForExportsAndLocals = exportedDeclarationSpaces & nonExportedDeclarationSpaces;
   const commonDeclarationSpacesForDefaultAndNonDefault = defaultExportedDeclarationSpaces & nonDefaultExportedDeclarationSpaces;
   if (commonDeclarationSpacesForExportsAndLocals !== 0 || commonDeclarationSpacesForDefaultAndNonDefault !== 0) {
-    for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const declarationSpaces = Checker_getDeclarationSpaces(receiver, declaration);
       const name = GetNameOfDeclaration(declaration);
       if ((declarationSpaces & commonDeclarationSpacesForDefaultAndNonDefault) !== 0) {
@@ -5175,7 +5327,15 @@ export function Checker_getDeclarationSpaces(receiver: GoPtr<Checker>, node: GoP
       }
       let result = DeclarationSpacesNone;
       const target = Checker_resolveAlias(receiver, Checker_getSymbolOfDeclaration(receiver, node));
-      for (const declaration of target!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = target!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         result |= Checker_getDeclarationSpaces(receiver, declaration as GoPtr<Declaration>);
       }
       return result;
@@ -5185,7 +5345,15 @@ export function Checker_getDeclarationSpaces(receiver: GoPtr<Checker>, node: GoP
     case KindImportClause: {
       let result = DeclarationSpacesNone;
       const target = Checker_resolveAlias(receiver, Checker_getSymbolOfDeclaration(receiver, node));
-      for (const declaration of target!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = target!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         result |= Checker_getDeclarationSpaces(receiver, declaration as GoPtr<Declaration>);
       }
       return result;
@@ -5250,7 +5418,15 @@ export function Checker_registerForUnusedIdentifiersCheck(receiver: GoPtr<Checke
  * }
  */
 export function Checker_checkUnusedIdentifiers(receiver: GoPtr<Checker>, potentiallyUnusedIdentifiers: GoSlice<GoPtr<Node>>): void {
-  for (const node of potentiallyUnusedIdentifiers) {
+  for (
+    let __goRangeSlice = potentiallyUnusedIdentifiers,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     switch (node!.Kind) {
       case KindClassDeclaration:
       case KindClassExpression:
@@ -5353,7 +5529,15 @@ export function Checker_checkUnusedClassMembers(receiver: GoPtr<Checker>, node: 
         break;
       }
       case KindConstructor:
-        for (const parameter of Node_Parameters(member) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = Node_Parameters(member) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const parameter = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           const symbol_ = Node_Symbol(parameter);
           if (!Checker_isReferenced(receiver, symbol_) && HasSyntacticModifier(parameter, ModifierFlagsPrivate)) {
             Checker_reportUnused(
@@ -5408,7 +5592,15 @@ export function Checker_reportUnusedLocal(receiver: GoPtr<Checker>, node: GoPtr<
  * }
  */
 export function Checker_reportUnusedVariableDeclarations(receiver: GoPtr<Checker>, declarations: GoSlice<GoPtr<Node>>): void {
-  for (const declaration of declarations) {
+  for (
+    let __goRangeSlice = declarations,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const name = Node_Name(declaration);
     if (name !== undefined && !IsParameterPropertyDeclaration(declaration, declaration!.Parent) && !IsThisParameter(declaration)) {
       if (IsBindingPattern(name)) {
@@ -5513,7 +5705,15 @@ export function Checker_reportUnusedImports(receiver: GoPtr<Checker>, node: GoPt
   if (declarationCount > 1 && declarationCount === unuseds.length) {
     Checker_reportUnused(receiver, node, UnusedKindLocal, NewDiagnosticForNode(node!.Parent, All_imports_in_import_declaration_are_unused));
   } else {
-    for (const unused of unuseds) {
+    for (
+      let __goRangeSlice = unuseds,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const unused = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       Checker_reportUnusedLocal(receiver, unused, Node_Text(Node_Name(unused)));
     }
   }
@@ -5895,7 +6095,15 @@ export function Checker_checkIndexedAccessIndexType(receiver: GoPtr<Checker>, t:
  * }
  */
 export function Checker_getConstituentProperty(receiver: GoPtr<Checker>, objectType: GoPtr<Type>, propertyName: string): GoPtr<Symbol> {
-  for (const t of Type_Distributed(Checker_getApparentType(receiver, objectType))) {
+  for (
+    let __goRangeSlice = Type_Distributed(Checker_getApparentType(receiver, objectType)),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const prop = Checker_getPropertyOfType(receiver, t, propertyName);
     if (prop !== undefined) {
       return prop;
@@ -7030,7 +7238,15 @@ export function Checker_getPrivateIdentifierPropertyOfType(receiver: GoPtr<Check
 export function Checker_checkPrivateIdentifierPropertyAccess(receiver: GoPtr<Checker>, leftType: GoPtr<Type>, right: GoPtr<Node>, lexicallyScopedIdentifier: GoPtr<Symbol>): bool {
   const properties = Checker_getPropertiesOfType(receiver, leftType);
   let propertyOnType: GoPtr<Symbol> = undefined;
-  for (const symbol_ of properties) {
+  for (
+    let __goRangeSlice = properties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const symbol_ = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const declaration = symbol_!.ValueDeclaration;
     const name = declaration !== undefined ? Node_Name(declaration) : undefined;
     if (name !== undefined && IsPrivateIdentifier(name) && Node_Text(name) === Node_Text(right)) {
@@ -7141,7 +7357,15 @@ export function Checker_reportNonexistentProperty(receiver: GoPtr<Checker>, prop
   }
   let diagnostic: GoPtr<Diagnostic>;
   if (!IsPrivateIdentifier(propNode) && (containingType!.flags & TypeFlagsUnion) !== 0 && (containingType!.flags & TypeFlagsPrimitive) === 0) {
-    for (const subtype of Type_Types(containingType)) {
+    for (
+      let __goRangeSlice = Type_Types(containingType),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const subtype = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (Checker_getPropertyOfType(receiver, subtype, Node_Text(propNode)) === undefined &&
         Checker_getApplicableIndexInfoForName(receiver, subtype, Node_Text(propNode)) === undefined) {
         diagnostic = NewDiagnosticChainForNode(diagnostic, propNode, Property_0_does_not_exist_on_type_1, DeclarationNameToString(propNode), Checker_TypeToString(receiver, subtype));
@@ -7713,7 +7937,15 @@ export function Checker_forEachProperty(receiver: GoPtr<Checker>, prop: GoPtr<Sy
   if ((prop!.CheckFlags & CheckFlagsSynthetic) === 0) {
     return callback!(prop);
   }
-  for (const t of Type_Types(LinkStore_Get(receiver!.valueSymbolLinks, prop, GoZeroValueSymbolLinks, goSymbolPointerKey)!.v.containingType)) {
+  for (
+    let __goRangeSlice = Type_Types(LinkStore_Get(receiver!.valueSymbolLinks, prop, GoZeroValueSymbolLinks, goSymbolPointerKey)!.v.containingType),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const p = Checker_getPropertyOfType(receiver, t, prop!.Name);
     if (p !== undefined && Checker_forEachProperty(receiver, p, callback)) {
       return true as bool;
@@ -7870,7 +8102,15 @@ export function Checker_getIndexInfoWithReadonly(receiver: GoPtr<Checker>, info:
 export function Checker_getUnionIndexInfos(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoSlice<GoPtr<IndexInfo>> {
   const sourceInfos = Checker_getIndexInfosOfType(receiver, GoSliceLoad(types, 0, GoPointerValueOps<Type>()));
   let result = GoNilSlice<GoPtr<IndexInfo>>();
-  for (const info of sourceInfos) {
+  for (
+    let __goRangeSlice = sourceInfos,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const indexType = info!.keyType;
     if (Every(types, (t) => Checker_getIndexInfoOfType(receiver, t, indexType) !== undefined)) {
       const valueType = Checker_getUnionType(receiver, Map(types, (t) => Checker_getIndexTypeOfType(receiver, t, indexType)));
@@ -10341,7 +10581,15 @@ export function Checker_getResolvedMembersOrExportsOfSymbol(receiver: GoPtr<Chec
     links![resolutionKind] = earlySymbols;
     let lateSymbols = GoNilMap<string, GoPtr<Symbol>>();
     for (const decl of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
-      for (const member of getMembersOfDeclaration(decl)) {
+      for (
+        let __goRangeSlice = getMembersOfDeclaration(decl),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (isStatic === HasStaticModifier(member)) {
           if (Checker_hasLateBindableName(receiver, member)) {
             if (GoMapIsNil(lateSymbols)) {
@@ -10360,7 +10608,15 @@ export function Checker_getResolvedMembersOrExportsOfSymbol(receiver: GoPtr<Chec
     if (isStatic) {
       const assignmentSymbol = symbol_!.Exports.get(InternalSymbolNameAssignmentDeclaration);
       if (assignmentSymbol !== undefined) {
-        for (const member of assignmentSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = assignmentSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (Checker_hasLateBindableName(receiver, member)) {
             if (GoMapIsNil(lateSymbols)) {
               lateSymbols = new globalThis.Map<string, GoPtr<Symbol>>();
@@ -10467,7 +10723,15 @@ export function Checker_lateBindMember(receiver: GoPtr<Checker>, parent: GoPtr<S
         if ((t!.flags & TypeFlagsUniqueESSymbol) !== 0) {
           name = DeclarationNameToString(declName);
         }
-        for (const d of declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           Checker_error(receiver, OrElse(GetNameOfDeclaration(d), d, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>), Duplicate_identifier_0, name);
         }
         Checker_error(receiver, OrElse(declName, decl, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>), Duplicate_identifier_0, name);
@@ -10662,7 +10926,15 @@ export function Checker_getExportsOfModuleWorker(receiver: GoPtr<Checker>, modul
     if (exportStars !== undefined) {
       const nestedSymbols: SymbolTable = new globalThis.Map();
       const lookupTable: ExportCollisionTable = new globalThis.Map();
-      for (const node of exportStars!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = exportStars!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const resolvedModule = Checker_resolveExternalModuleName(receiver, node, Node_ModuleSpecifier(node), false);
         const exportedSymbols = visit(resolvedModule, node, isTypeOnly || Node_IsTypeOnly(node));
         Checker_extendExportSymbols(receiver, nestedSymbols, exportedSymbols, lookupTable, node);
@@ -10671,7 +10943,15 @@ export function Checker_getExportsOfModuleWorker(receiver: GoPtr<Checker>, modul
         if (id === InternalSymbolNameExportEquals || collision!.exportsWithDuplicate.length === 0 || symbols.has(id)) {
           continue;
         }
-        for (const node of collision!.exportsWithDuplicate) {
+        for (
+          let __goRangeSlice = collision!.exportsWithDuplicate,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const node = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           Checker_addDiagnostic(
             receiver,
             createDiagnosticForNode(node, Module_0_has_already_exported_a_member_named_1_Consider_explicitly_re_exporting_to_resolve_the_ambiguity, collision!.specifierText, id),
@@ -12666,7 +12946,15 @@ export function Checker_resolveObjectTypeMembers(receiver: GoPtr<Checker>, t: Go
     Checker_setStructuredTypeMembers(receiver, t, members, callSignatures, constructSignatures, indexInfos);
     const thisArgument = LastOrNil(typeArguments, GoZeroPointer<Type>);
     t!.objectFlags |= ObjectFlagsUnresolvedMembers;
-    for (const baseType of baseTypes) {
+    for (
+      let __goRangeSlice = baseTypes,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const baseType = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       let instantiatedBaseType = baseType;
       if (thisArgument !== undefined) {
         instantiatedBaseType = Checker_getTypeWithThisArgument(receiver, Checker_instantiateType(receiver, baseType, mapper), thisArgument, false);
@@ -12702,7 +12990,15 @@ export function Checker_resolveObjectTypeMembers(receiver: GoPtr<Checker>, t: Go
  */
 export function Checker_addInheritedMembers(receiver: GoPtr<Checker>, symbols: SymbolTable, baseSymbols: GoSlice<GoPtr<Symbol>>): SymbolTable {
   let result = symbols;
-  for (const base of baseSymbols ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>())) {
+  for (
+    let __goRangeSlice = baseSymbols ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const base = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (!isStaticPrivateIdentifierProperty(base)) {
       const symbol_ = result.get(base!.Name);
       if (symbol_ === undefined || (symbol_!.Flags & SymbolFlagsValue) === 0) {
@@ -12865,7 +13161,15 @@ export function Checker_getIndexInfosOfIndexSymbol(receiver: GoPtr<Checker>, ind
   let readonlyComputedNumberProperty = true;
   let readonlyComputedSymbolProperty = true;
   let propertySymbols = GoNilSlice<GoPtr<Symbol>>();
-  for (const declaration of indexSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice = indexSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsIndexSignatureDeclaration(declaration)) {
       const parameters = Node_Parameters(declaration) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
       const returnTypeNode = Node_Type(declaration);
@@ -12910,7 +13214,15 @@ export function Checker_getIndexInfosOfIndexSymbol(receiver: GoPtr<Checker>, ind
     }
   }
   if (hasComputedStringProperty || hasComputedNumberProperty || hasComputedSymbolProperty) {
-    for (const sym of siblingSymbols ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>())) {
+    for (
+      let __goRangeSlice = siblingSymbols ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Symbol>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const sym = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (sym !== indexSymbol) {
         propertySymbols = GoSliceAppend(propertySymbols, sym, GoPointerValueOps<Symbol>());
       }
@@ -12955,7 +13267,15 @@ export function Checker_getIndexInfosOfIndexSymbol(receiver: GoPtr<Checker>, ind
 export function Checker_getObjectLiteralIndexInfo(receiver: GoPtr<Checker>, isReadonly: bool, properties: GoSlice<GoPtr<Symbol>>, keyType: GoPtr<Type>): GoPtr<IndexInfo> {
   let propTypes = GoNilSlice<GoPtr<Type>>();
   let components = GoNilSlice<GoPtr<Node>>();
-  for (const prop of properties) {
+  for (
+    let __goRangeSlice = properties,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const prop = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((keyType === receiver!.stringType && !Checker_isSymbolWithSymbolName(receiver, prop)) ||
       (keyType === receiver!.numberType && Checker_isSymbolWithNumericName(receiver, prop)) ||
       (keyType === receiver!.esSymbolType && Checker_isSymbolWithSymbolName(receiver, prop))) {
@@ -13117,7 +13437,15 @@ export function Checker_isValidIndexKeyType(receiver: GoPtr<Checker>, t: GoPtr<T
  * }
  */
 export function Checker_findIndexInfo(receiver: GoPtr<Checker>, indexInfos: GoSlice<GoPtr<IndexInfo>>, keyType: GoPtr<Type>): GoPtr<IndexInfo> {
-  for (const info of indexInfos) {
+  for (
+    let __goRangeSlice = indexInfos,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (info!.keyType === keyType) {
       return info;
     }
@@ -13888,7 +14216,15 @@ export function Checker_resolveIntersectionTypeMembers(receiver: GoPtr<Checker>,
       constructSignatures = Checker_appendSignatures(receiver, constructSignatures, signatures);
     }
     callSignatures = Checker_appendSignatures(receiver, callSignatures, Checker_getSignaturesOfType(receiver, type_, SignatureKindCall));
-    for (const info of Checker_getIndexInfosOfType(receiver, type_)) {
+    for (
+      let __goRangeSlice = Checker_getIndexInfosOfType(receiver, type_),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<IndexInfo>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const info = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       indexInfos = Checker_appendIndexInfo(receiver, indexInfos, info, false);
     }
   }
@@ -14281,7 +14617,15 @@ export function Checker_createUnionOrIntersectionProperty(receiver: GoPtr<Checke
   }
   let syntheticFlag: CheckFlags = CheckFlagsSyntheticMethod;
   let mergedInstantiations = false;
-  for (const current of Type_Types(containingType)) {
+  for (
+    let __goRangeSlice = Type_Types(containingType),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const current = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const t = Checker_getApparentType(receiver, current);
     if (!Checker_isErrorType(receiver, t) && (t!.flags & TypeFlagsNever) === 0) {
       const prop = Checker_getPropertyOfTypeEx(receiver, t, name, skipObjectFunctionPropertyAugment, false);
@@ -14519,7 +14863,15 @@ export function Checker_hasCommonDeclaration(receiver: GoPtr<Checker>, symbols: 
       return false;
     }
     if (Set_Len(commonDeclarations) === 0) {
-      for (const declaration of declarations) {
+      for (
+        let __goRangeSlice = declarations,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Set_Add(commonDeclarations, declaration, goNodePointerKey);
       }
       return true;
@@ -14677,7 +15029,15 @@ export function Checker_getNamedMembers(receiver: GoPtr<Checker>, members: Symbo
 export function Checker_isDeclarationContainedBy(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, container: GoPtr<Symbol>): bool {
   const declaration = symbol_!.ValueDeclaration;
   if (declaration !== undefined) {
-    for (const d of container!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = container!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const d = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (TextRange_ContainedBy(declaration!.Loc, d!.Loc)) {
         return true;
       }
@@ -15551,7 +15911,15 @@ export function Checker_computeEnumMemberValues(receiver: GoPtr<Checker>, node: 
     nodeLinks!.v.flags |= NodeCheckFlagsEnumValuesComputed;
     let autoValue: GoRef<Number> = GoValueRef(0 as Number);
     let previous: GoPtr<Node> = undefined;
-    for (const member of Node_Members(node)!) {
+    for (
+      let __goRangeSlice = Node_Members(node)!,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const result = Checker_computeEnumMemberValue(receiver, member, autoValue, previous);
       LinkStore_Get(receiver!.enumMemberLinks, member, GoZeroEnumMemberLinks, goNodePointerKey)!.v.value = result;
       if (typeof result.Value === "number") {
@@ -16268,7 +16636,15 @@ export function Checker_mapTypeWithAlias(receiver: GoPtr<Checker>, t: GoPtr<Type
  * }
  */
 export function Checker_addNamedUnions(receiver: GoPtr<Checker>, namedUnions: GoSlice<GoPtr<Type>>, types: GoSlice<GoPtr<Type>>): GoSlice<GoPtr<Type>> {
-  for (const t of types) {
+  for (
+    let __goRangeSlice = types,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Type>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if ((t!.flags & TypeFlagsUnion) !== 0) {
       const u = Type_AsUnionType(t);
       if (t!.alias !== undefined || (u!.origin !== undefined && (u!.origin!.flags & TypeFlagsUnion) === 0)) {
@@ -16812,7 +17188,15 @@ export function Checker_getIndexedAccessTypeOrUndefined(receiver: GoPtr<Checker>
   if ((indexType!.flags & TypeFlagsUnion) !== 0 && (indexType!.flags & TypeFlagsBoolean) === 0) {
     let propTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
     let wasMissingProp = false;
-    for (const ty of Type_Types(indexType)) {
+    for (
+      let __goRangeSlice = Type_Types(indexType),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Type>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const ty = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const propType = Checker_getPropertyTypeForIndexType(receiver, objectType, apparentObjectType, ty, indexType, accessNode, (accessFlags | IfElse(wasMissingProp, AccessFlagsSuppressNoImplicitAnyError, 0)) as AccessFlags);
       if (propType !== undefined) {
         propTypes = GoSliceAppend(propTypes, propType, GoPointerValueOps<Type>());
@@ -17622,7 +18006,15 @@ export function Checker_distributeIndexOverObjectType(receiver: GoPtr<Checker>, 
  */
 export function Checker_transformTypeOfMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>, f: GoFunc<(propertyType: GoPtr<Type>) => GoPtr<Type>>): SymbolTable {
   const members: SymbolTable = new globalThis.Map();
-  for (let property of Checker_getPropertiesOfObjectType(receiver, t)) {
+  for (
+    let __goRangeSlice = Checker_getPropertiesOfObjectType(receiver, t),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Symbol>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    let property = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const original = Checker_getTypeOfSymbol(receiver, property);
     const updated = f!(original);
     if (updated !== original) {
@@ -18000,7 +18392,15 @@ export function Checker_markDecoratorAliasReferenced(receiver: GoPtr<Checker>, n
     case KindClassDeclaration: {
       const ctor = GetFirstConstructorWithBody(node);
       if (ctor !== undefined) {
-        for (const p of Node_Parameters(ctor) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = Node_Parameters(ctor) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           Checker_markDecoratorMedataDataTypeNodeAsReferenced(receiver, Checker_getParameterTypeNodeForDecoratorCheck(receiver, p));
         }
       }
@@ -18021,7 +18421,15 @@ export function Checker_markDecoratorAliasReferenced(receiver: GoPtr<Checker>, n
       break;
     }
     case KindMethodDeclaration:
-      for (const p of Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Checker_markDecoratorMedataDataTypeNodeAsReferenced(receiver, Checker_getParameterTypeNodeForDecoratorCheck(receiver, p));
       }
       Checker_markDecoratorMedataDataTypeNodeAsReferenced(receiver, Node_Type(node));
@@ -18032,7 +18440,15 @@ export function Checker_markDecoratorAliasReferenced(receiver: GoPtr<Checker>, n
     case KindParameter: {
       Checker_markDecoratorMedataDataTypeNodeAsReferenced(receiver, Checker_getParameterTypeNodeForDecoratorCheck(receiver, node));
       const containingSignature = node!.Parent;
-      for (const p of Node_Parameters(containingSignature) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = Node_Parameters(containingSignature) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const p = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         Checker_markDecoratorMedataDataTypeNodeAsReferenced(receiver, Checker_getParameterTypeNodeForDecoratorCheck(receiver, p));
       }
       Checker_markDecoratorMedataDataTypeNodeAsReferenced(receiver, Node_Type(containingSignature));
@@ -18128,7 +18544,15 @@ export function Checker_getEntityNameForDecoratorMetadata(receiver: GoPtr<Checke
  */
 export function Checker_getEntityNameForDecoratorMetadataFromTypeList(receiver: GoPtr<Checker>, typeNodes: GoSlice<GoPtr<Node>>): GoPtr<Node> {
   let commonEntityName: GoPtr<Node>;
-  for (const typeNode of typeNodes) {
+  for (
+    let __goRangeSlice = typeNodes,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const typeNode = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (typeNode!.Kind === KindNeverKeyword) {
       continue;
     }
@@ -18322,7 +18746,15 @@ export function Checker_markEntityNameOrEntityExpressionAsReference(receiver: Go
     ) {
       const diagnostic = Checker_error(receiver, typeName, A_type_referenced_in_a_decorated_signature_must_be_imported_with_import_type_or_a_namespace_import_when_isolatedModules_and_emitDecoratorMetadata_are_enabled);
       let aliasDeclaration: GoPtr<Node>;
-      for (const declaration of rootSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+      for (
+        let __goRangeSlice = rootSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Node>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const declaration = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if (IsAliasSymbolDeclaration(declaration)) {
           aliasDeclaration = declaration;
           break;
@@ -18689,7 +19121,15 @@ export function Checker_getTypeOfPropertyOfContextualTypeEx(receiver: GoPtr<Chec
       let types: GoSlice<GoPtr<Type>> = GoNilSlice();
       let indexInfoCandidates: GoSlice<GoPtr<Type>> = GoNilSlice();
       let ignoreIndexInfos = false as bool;
-      for (const constituentType of Type_Types(mappedType)) {
+      for (
+        let __goRangeSlice = Type_Types(mappedType),
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Type>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const constituentType = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         if ((constituentType!.flags & TypeFlagsObject) === 0) {
           continue;
         }
@@ -18709,7 +19149,15 @@ export function Checker_getTypeOfPropertyOfContextualTypeEx(receiver: GoPtr<Chec
         indexInfoCandidates = GoNilSlice();
         types = Checker_appendContextualPropertyTypeConstituent(receiver, types, propertyType);
       }
-      for (const candidate of indexInfoCandidates) {
+      for (
+        let __goRangeSlice = indexInfoCandidates,
+          __goRangeLength = __goRangeSlice.length,
+          __goRangeValueOps = GoPointerValueOps<Type>(),
+          __goRangeIndex = 0;
+        __goRangeIndex < __goRangeLength;
+        __goRangeIndex++
+      ) {
+        const candidate = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
         const indexInfoType = Checker_getTypeFromIndexInfosOfContextualType(receiver, candidate, name, nameType);
         types = Checker_appendContextualPropertyTypeConstituent(receiver, types, indexInfoType);
       }
@@ -19457,7 +19905,15 @@ export function Checker_getSymbolAtLocation(receiver: GoPtr<Checker>, node: GoPt
     } else if (IsJSDocParameterTag(parent) && Node_Name(parent) === node) {
       const fn = GetNodeAtPosition(GetSourceFileOfNode(node), Node_Pos(node), false);
       if (fn !== undefined && IsFunctionLike(fn)) {
-        for (const param of Node_Parameters(fn) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+        for (
+          let __goRangeSlice = Node_Parameters(fn) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const param = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           if (IsIdentifier(Node_Name(param)) && Node_Text(Node_Name(param)) === Node_Text(node)) {
             return Checker_getSymbolOfNode(receiver, param);
           }

@@ -11,6 +11,8 @@ import type { DirEntry, Entries, FileInfo } from "../vfs.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 import { GoInterfaceValueOps, GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+import { GoSliceLoad } from "../../../go/compat.js";
+
 
 // Local duck-type interfaces for calling methods on opaque facade types.
 interface FileInfoMethods {
@@ -230,7 +232,15 @@ export function Common_GetAccessibleEntries(receiver: GoPtr<Common>, path: strin
     return true;
   };
 
-  for (const entry of Common_getEntries(receiver, path)) {
+  for (
+    let __goRangeSlice = Common_getEntries(receiver, path),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoInterfaceValueOps<DirEntry>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const entry = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const entryMethods = entry as unknown as DirEntryMethods;
     const entryType = entryMethods.Type();
 

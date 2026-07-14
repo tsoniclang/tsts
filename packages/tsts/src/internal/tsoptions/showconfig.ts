@@ -240,7 +240,15 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
 
   // Build the list of all resolved files as relative paths from the config file.
   let files: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
-  for (const f of ParsedCommandLine_FileNames(configParseResult)) {
+  for (
+    let __goRangeSlice = ParsedCommandLine_FileNames(configParseResult),
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const f = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const normalizedFilePath = GetNormalizedAbsolutePath(f, ParsedCommandLine_GetCurrentDirectory(configParseResult));
     const relativePath = GetRelativePathFromFile(normalizedConfigPath, normalizedFilePath, comparePathsOptions);
     files = GoSliceAppend(files, relativePath, GoStringValueOps);
@@ -527,7 +535,15 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
           if (globalThis.Array.isArray(value)) {
             const strs = value as GoSlice<string>;
             const relPaths: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
-            for (const s of strs) {
+            for (
+              let __goRangeSlice = strs,
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoStringValueOps,
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               const absPath = GetNormalizedAbsolutePath(s, configDir);
               relPaths.push(GetRelativePathFromFile(configFilePath, absPath, comparePathsOptions));
             }
@@ -541,7 +557,15 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
           if (globalThis.Array.isArray(value)) {
             const strs = value as GoSlice<string>;
             let serialized: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
-            for (const s of strs) {
+            for (
+              let __goRangeSlice = strs,
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoStringValueOps,
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const s = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               // lib values are already stored as the d.ts filename, need to find original key
               const found = getNameOfCompilerOptionValue(s, elemMap);
               if (found !== "") {
@@ -754,7 +778,15 @@ export function addImpliedOptions(optionMap: GoPtr<OrderedMap<string, GoInterfac
  * }
  */
 export function anyDependencyProvided(dependencies: GoSlice<string>, provided: GoMap<string, bool>): bool {
-  for (const dep of dependencies) {
+  for (
+    let __goRangeSlice = dependencies,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const dep = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const depDecl = CommandLineOptionNameMap_Get(CommandLineCompilerOptionsMap, dep);
     if (depDecl !== undefined && (provided.get(depDecl.Name) ?? false)) {
       return true;

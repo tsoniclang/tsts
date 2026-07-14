@@ -1742,7 +1742,15 @@ export function GetAnyExtensionFromPath(path: string, extensions: GoSlice<string
  * }
  */
 export function getAnyExtensionFromPathWorker(path: string, extensions: GoSlice<string>, stringEqualityComparer: GoFunc<(a: string, b: string) => bool>): string {
-  for (const extension of extensions) {
+  for (
+    let __goRangeSlice = extensions,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const extension = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const result = tryGetExtensionFromPath(path, extension, stringEqualityComparer);
     if (result !== "") {
       return result;
@@ -2287,7 +2295,15 @@ export function GetCommonParents(paths: GoSlice<string>, minComponents: int, get
 
   const ignored = new globalThis.Map<string, { readonly __tsgoEmpty?: never }>();
   let pathComponents: GoSlice<GoSlice<string>> = GoSliceMake(0, 0, GoSliceValueOps<string>());
-  for (const path of paths) {
+  for (
+    let __goRangeSlice = paths,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoStringValueOps,
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const path = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     const components = reducePathComponents(getPathComponents!(path, options.CurrentDirectory));
     if (components.length < minComponents) {
       ignored.set(path, {});
@@ -2391,7 +2407,15 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
             // Not enough components, we need to fan out
             let orderedGroups: GoSlice<Path> = GoSliceMake(0, 0, GoStringValueOps);
             const newGroups = new globalThis.Map<Path, { head: GoSlice<string>; tails: GoSlice<GoSlice<string>> }>();
-            for (const g of componentGroups) {
+            for (
+              let __goRangeSlice = componentGroups,
+                __goRangeLength = __goRangeSlice.length,
+                __goRangeValueOps = GoSliceValueOps<string>(),
+                __goRangeIndex = 0;
+              __goRangeIndex < __goRangeLength;
+              __goRangeIndex++
+            ) {
+              const g = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
               const key = ToPath(g[lastCommonIndex]!, options.CurrentDirectory, options.UseCaseSensitiveFileNames);
               if (!newGroups.has(key)) {
                 orderedGroups = GoSliceAppend(orderedGroups, key, GoStringValueOps);
@@ -2408,7 +2432,15 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
             for (const key of orderedGroups) {
               const group = newGroups.get(key)!;
               const subResults = getCommonParentsWorker(group.tails, minComponents - (lastCommonIndex + 1), options);
-              for (const sr of subResults) {
+              for (
+                let __goRangeSlice = subResults,
+                  __goRangeLength = __goRangeSlice.length,
+                  __goRangeValueOps = GoSliceValueOps<string>(),
+                  __goRangeIndex = 0;
+                __goRangeIndex < __goRangeLength;
+                __goRangeIndex++
+              ) {
+                const sr = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
                 result = GoSliceAppend(result, GoSliceAppendSlice(group.head, sr, GoStringValueOps), GoSliceValueOps<string>());
               }
             }

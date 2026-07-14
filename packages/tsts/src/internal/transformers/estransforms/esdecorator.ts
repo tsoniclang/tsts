@@ -1424,7 +1424,15 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
   }
 
   const members = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const member of members) {
+  for (
+    let __goRangeSlice = members,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     if (IsMethodOrAccessor(member) && NodeOrChildIsDecorated(false, member, node, undefined)) {
       if (HasStaticModifier(member)) {
         if (ci.staticMethodExtraInitializersName === undefined) {
@@ -2020,7 +2028,15 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
 
   if (tx.pendingExpressions.length > 0) {
     tx.outerThis = undefined;
-    for (let expr of tx.pendingExpressions) {
+    for (
+      let __goRangeSlice = tx.pendingExpressions,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      let expr = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if ((Node_SubtreeFacts(expr as GoPtr<Node>) & SubtreeContainsLexicalThis) !== 0) {
         expr = NodeVisitor_VisitNode(tx.outerThisVisitor as ConcreteNodeVisitor, expr as GoPtr<Node>) as GoPtr<Expression>;
       }
@@ -2116,7 +2132,15 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
   leadingBlockStatements = GoSliceAppend(leadingBlockStatements, esDecoratorTransformer_createSymbolMetadata(tx, renamedClassThis, ci.metadataReference), GoPointerValueOps<Node>());
 
   if (ci.pendingStaticInitializers.length > 0) {
-    for (const initializer of ci.pendingStaticInitializers) {
+    for (
+      let __goRangeSlice = ci.pendingStaticInitializers,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const initializer = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const initializerStatement = NewExpressionStatement(factory, initializer as unknown as GoPtr<never>) as GoPtr<Statement>;
       EmitContext_SetSourceMapRange(ec, initializerStatement, EmitContext_SourceMapRange(ec, initializer as GoPtr<Node>));
       trailingBlockStatements = GoSliceAppend(trailingBlockStatements, initializerStatement, GoPointerValueOps<Node>());
@@ -2219,7 +2243,15 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
 
   if (shouldTransformPrivateStaticElementsInClass) {
     EmitContext_AddEmitFlags(ec, classExpression, EFTransformPrivateStaticElements);
-    for (const member of Node_Members(classExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice = Node_Members(classExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const member = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if ((IsPrivateIdentifierClassElementDeclaration(member) || IsAutoAccessorPropertyDeclaration(member)) && HasStaticModifier(member)) {
         EmitContext_AddEmitFlags(ec, member, EFTransformPrivateStaticElements);
       }
@@ -3371,7 +3403,15 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
       tx.classInfoStack.hasStaticInitializers = true;
       if ((tx.classInfoStack.pendingStaticInitializers ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length > 0) {
         let stmts: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-        for (const init of tx.classInfoStack.pendingStaticInitializers!) {
+        for (
+          let __goRangeSlice = tx.classInfoStack.pendingStaticInitializers!,
+            __goRangeLength = __goRangeSlice.length,
+            __goRangeValueOps = GoPointerValueOps<Node>(),
+            __goRangeIndex = 0;
+          __goRangeIndex < __goRangeLength;
+          __goRangeIndex++
+        ) {
+          const init = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
           const initStmt = NewExpressionStatement(factory, init as unknown as GoPtr<never>);
           EmitContext_SetSourceMapRange(ec, initStmt, EmitContext_SourceMapRange(ec, init));
           stmts = GoSliceAppend(stmts, initStmt, GoPointerValueOps<Node>());
@@ -4930,7 +4970,15 @@ export function esDecoratorTransformer_transformAllDecoratorsOfDeclaration(recei
     return GoNilSlice();
   }
   let result: GoSlice<GoPtr<Expression>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const decorator of decorators) {
+  for (
+    let __goRangeSlice = decorators,
+      __goRangeLength = __goRangeSlice.length,
+      __goRangeValueOps = GoPointerValueOps<Node>(),
+      __goRangeIndex = 0;
+    __goRangeIndex < __goRangeLength;
+    __goRangeIndex++
+  ) {
+    const decorator = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
     result = GoSliceAppend(result, esDecoratorTransformer_transformDecorator(tx, decorator), GoPointerValueOps<Node>());
   }
   return result;
