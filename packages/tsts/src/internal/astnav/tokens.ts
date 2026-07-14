@@ -21,6 +21,8 @@ import { GetScannerForSourceFile, GetTokenPosOfNode, Scanner_ReScanJsxToken, Sca
 import type { TokenFlags } from "../ast/tokenflags.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::shouldRescanLessThanLessThanToken","kind":"func","status":"implemented","sigHash":"027e136379acde7957dacce28399aee470574eaa534d282f4d10a947c386695d"}
  *
@@ -1076,7 +1078,7 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
     }
 
     let rightmostValidNode: GoPtr<Node> = undefined;
-    let rightmostVisitedNodes: GoSlice<GoPtr<Node>> = []; // Nodes after the last valid node.
+    let rightmostVisitedNodes: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>()); // Nodes after the last valid node.
     let hasChildren: bool = false as bool;
     const shouldVisitNode = (node: GoPtr<Node>): bool => {
       // Node is synthetic or out of the desired range: don't visit it.

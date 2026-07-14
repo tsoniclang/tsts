@@ -31,6 +31,8 @@ import type { includeExplainingDiagnostic } from "./processingDiagnostic.js";
 import type { Program } from "./program.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 
 const fileIncludeReasonKey: GoMapKeyDescriptor<GoPtr<FileIncludeReason>> = GoPointerKey<FileIncludeReason>();
 /**
@@ -127,7 +129,7 @@ export function includeProcessor_getDiagnostics(receiver: GoPtr<includeProcessor
       nonFileDiagnosticsSorted: false as bool,
     };
     receiver!.computedDiagnostics = coll;
-    for (const d of receiver!.processingDiagnostics ?? []) {
+    for (const d of receiver!.processingDiagnostics ?? GoSliceMake(0, 0, GoPointerValueOps<processingDiagnostic>())) {
       DiagnosticsCollection_Add(receiver!.computedDiagnostics, processingDiagnostic_toDiagnostic(d, p));
     }
     for (const [, resolutions] of p!.__tsgoEmbedded0!.resolvedModules) {

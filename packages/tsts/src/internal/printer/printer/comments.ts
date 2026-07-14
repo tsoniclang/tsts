@@ -42,6 +42,8 @@ import type { commentSeparator, commentState, detachedCommentsInfo, Printer, tok
 import { Printer_increaseIndentIf, Printer_decreaseIndentIf } from "./statements-declarations.js";
 import { Printer_writeSpace } from "./emit-core.js";
 import { Printer_emitStatement } from "./statements-declarations.js";
+import { GoNumberValueOps, GoSliceMake } from "../../../go/compat.js";
+
 
 function zeroCommentState(): commentState {
   return {
@@ -1034,7 +1036,7 @@ export function formatSynthesizedComment(comment: SynthesizedComment): string {
  */
 export function Printer_writeSynthesizedComment(receiver: GoPtr<Printer>, comment: SynthesizedComment): void {
   const text = formatSynthesizedComment(comment);
-  const lineMap: GoSlice<TextPos> = comment.Kind === KindMultiLineCommentTrivia ? ComputeECMALineStarts(text) : [];
+  const lineMap: GoSlice<TextPos> = comment.Kind === KindMultiLineCommentTrivia ? ComputeECMALineStarts(text) : GoSliceMake(0, 0, GoNumberValueOps);
   Printer_writeCommentRangeWorker(receiver, text, lineMap, comment.Kind, NewTextRange(0, byteLen(text)));
 }
 

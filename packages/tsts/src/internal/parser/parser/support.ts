@@ -227,6 +227,8 @@ import { Parser_jsErrorAtRange, Parser_parseErrorAt, Parser_parseErrorAtRange, P
 import { parserPool, viableKeywordSuggestions } from "./state.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 const byteLen: (text: string) => int = utf8.StringByteLen;
 const byteAt: (text: string, index: int) => int = utf8.StringByteAt;
 const byteSlice: (text: string, start: int, end?: int) => string = utf8.StringByteSlice;
@@ -392,7 +394,7 @@ export function Parser_parseJSONText(receiver: GoPtr<Parser>): GoPtr<SourceFile>
   let eof: GoPtr<TokenNode>;
 
   if (receiver!.token === KindEndOfFile) {
-    statements = Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), []);
+    statements = Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), GoSliceMake(0, 0, GoPointerValueOps<Node>()));
     eof = Parser_parseTokenNode(receiver);
   } else {
     // expressions holds either GoPtr<Node> (single) or GoSlice<GoPtr<Node>> (multiple)
@@ -454,12 +456,14 @@ export function Parser_parseJSONText(receiver: GoPtr<Parser>): GoPtr<SourceFile>
       finalExpression = expressions as GoPtr<Node>;
     }
     const statement = Parser_finishNode(receiver, NewExpressionStatement(receiver!.factory, finalExpression), pos);
-    statements = Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), [statement]);
+    statements = Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, statement, GoPointerValueOps<Node>());
+    }));
     eof = Parser_parseExpectedToken(receiver, KindEndOfFile);
   }
   const node = Parser_finishNode(receiver, NodeFactory_NewSourceFile(receiver!.factory, receiver!.opts, receiver!.sourceText, statements, eof), pos);
   const result = AsSourceFile(node);
-  if ((result!.Statements!.Nodes ?? []).length > 0) {
+  if ((result!.Statements!.Nodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length > 0) {
     Parser_validateJsonValue(receiver, result, Node_Expression(result!.Statements!.Nodes[0]));
   }
   Parser_finishSourceFile(receiver, result, false);
@@ -525,7 +529,7 @@ export function Parser_validateJsonValue(receiver: GoPtr<Parser>, sourceFile: Go
       Parser_validateJsonObjectLiteral(receiver, sourceFile, AsObjectLiteralExpression(valueExpression));
       return;
     case KindArrayLiteralExpression:
-      for (const element of (Node_Elements(valueExpression) ?? [])) {
+      for (const element of (Node_Elements(valueExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
         Parser_validateJsonValue(receiver, sourceFile, element);
       }
       return;
@@ -1519,7 +1523,7 @@ export function Parser_parseModifiersEx(receiver: GoPtr<Parser>, allowDecorators
   // It is illegal to have both leadingDecorators and trailingDecorators, but we will report that as a grammar check in the checker.
   // parse leading decorators
   const pos = Parser_nodePos(receiver);
-  let list: GoSlice<GoPtr<Node>> = [];
+  let list: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (;;) {
     if (allowDecorators && receiver!.token === KindAtToken && !hasTrailingModifier) {
       const decorator = Parser_parseDecorator(receiver);
@@ -2437,7 +2441,7 @@ export function Parser_parseResolutionMode(receiver: GoPtr<Parser>, mode: string
  * }
  */
 export function Parser_checkJSDecoratorSyntax(receiver: GoPtr<Parser>, node: GoPtr<Node>): void {
-  const modifiers = Node_ModifierNodes(node) ?? [];
+  const modifiers = Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   if (modifiers.length === 0) {
     return;
   }
@@ -2691,14 +2695,14 @@ export function Parser_checkJSSyntax(receiver: GoPtr<Parser>, node: GoPtr<Node>)
     // eslint-disable-next-line no-fallthrough
     case KindVariableStatement:
     case KindPropertyDeclaration:
-      for (const modifier of (Node_ModifierNodes(node) ?? [])) {
+      for (const modifier of (Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
         if ((modifier!.Flags & NodeFlagsReparsed) === 0 && modifier!.Kind !== KindDecorator && (ModifierToFlag(modifier!.Kind) & ModifierFlagsJavaScript) === 0) {
           Parser_jsErrorAtRange(receiver, modifier!.Loc, The_0_modifier_can_only_be_used_in_TypeScript_files, TokenToString(modifier!.Kind));
         }
       }
       break;
     case KindParameter:
-      if (Some(Node_ModifierNodes(node) ?? [], IsModifier)) {
+      if (Some(Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsModifier)) {
         Parser_jsErrorAtRange(receiver, Node_Modifiers(node)!.Loc, Parameter_modifiers_can_only_be_used_in_TypeScript_files);
       }
       break;

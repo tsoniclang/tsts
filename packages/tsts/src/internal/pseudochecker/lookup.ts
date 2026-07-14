@@ -177,6 +177,8 @@ import {
   PseudoTypeTrue,
   PseudoTypeUndefined,
 } from "./type.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetReturnTypeOfSignature","kind":"method","status":"implemented","sigHash":"1855ca2a41c0c7f8defa6ad836870cc5e79a17863177c8787c5fc9e383b33c67"}
@@ -1135,7 +1137,7 @@ export function PseudoChecker_typeFromArrayLiteral(receiver: GoPtr<PseudoChecker
   if (IsInConstContext(Node_AsNode(node)) && isContextuallyTyped(Node_AsNode(node))) {
     return NewPseudoTypeInferred(Node_AsNode(node));
   }
-  let results: GoSlice<GoPtr<PseudoType>> = [];
+  let results: GoSlice<GoPtr<PseudoType>> = GoSliceMake(0, 0, GoPointerValueOps<PseudoType>());
   for (const e of node!.Elements!.Nodes) {
     results = GoSliceAppend(results, PseudoChecker_typeFromExpression(receiver, e), GoPointerValueOps<PseudoType>());
   }
@@ -1160,11 +1162,15 @@ export function PseudoChecker_typeFromArrayLiteral(receiver: GoPtr<PseudoChecker
  */
 export function PseudoChecker_canGetTypeFromArrayLiteral(receiver: GoPtr<PseudoChecker>, node: GoPtr<ArrayLiteralExpression>): GoSlice<GoPtr<Node>> {
   if (!IsInConstContext(Node_AsNode(node))) {
-    return [Node_AsNode(node)];
+    return GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, Node_AsNode(node), GoPointerValueOps<Node>());
+    });
   }
   for (const e of node!.Elements!.Nodes) {
     if (e!.Kind === KindSpreadElement) {
-      return [e];
+      return GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, e, GoPointerValueOps<Node>());
+      });
     }
   }
   return GoNilSlice();
@@ -1346,7 +1352,7 @@ export function PseudoChecker_cloneTypeParameters(receiver: GoPtr<PseudoChecker>
   if (nodes!.Nodes.length === 0) {
     return GoNilSlice();
   }
-  let result: GoSlice<GoPtr<TypeParameterDeclaration>> = [];
+  let result: GoSlice<GoPtr<TypeParameterDeclaration>> = GoSliceMake(0, 0, GoPointerValueOps<TypeParameterDeclaration>());
   for (const e of nodes!.Nodes) {
     result = GoSliceAppend(result, AsTypeParameterDeclaration(e), GoPointerValueOps<TypeParameterDeclaration>());
   }
@@ -1533,7 +1539,10 @@ export function addUndefinedIfDefinitelyRequired(expr: GoPtr<PseudoType>): GoPtr
   if (couldAlreadyReferToUndefinedType(expr)) {
     return expr;
   }
-  return NewPseudoTypeUnion([expr, PseudoTypeUndefined]);
+  return NewPseudoTypeUnion(GoSliceBuild(2, 2, GoPointerValueOps<PseudoType>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, expr, GoPointerValueOps<PseudoType>());
+    GoSliceStore(__goSliceLiteral, 1, PseudoTypeUndefined, GoPointerValueOps<PseudoType>());
+  }));
 }
 
 /**
@@ -1690,7 +1699,7 @@ export function PseudoChecker_cloneParameters(receiver: GoPtr<PseudoChecker>, no
     return GoNilSlice();
   }
   const lastRequired = lastRequiredParamIndex(nodes!.Nodes);
-  let result: GoSlice<GoPtr<PseudoParameter>> = [];
+  let result: GoSlice<GoPtr<PseudoParameter>> = GoSliceMake(0, 0, GoPointerValueOps<PseudoParameter>());
   for (let i = 0; i < nodes!.Nodes.length; i++) {
     const e = nodes!.Nodes[i];
     const p = AsParameterDeclaration(e);

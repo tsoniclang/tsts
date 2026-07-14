@@ -108,6 +108,8 @@ import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
 import type { AccessorDeclaration } from "../../ast/generated/unions.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::type::GetSymbolAccessibilityDiagnostic","kind":"type","status":"implemented","sigHash":"4690a42c6a896f808be1de81243ee38276220e9254501e06249727e1731785fa"}
  *
@@ -1383,7 +1385,7 @@ export function addParentDeclarationRelatedInfo(node: GoPtr<Node>, diag: GoPtr<D
  * }
  */
 export function createAccessorTypeError(node: GoPtr<Node>): GoPtr<Diagnostic> {
-  const allDeclarations = GetAllAccessorDeclarationsForDeclaration(node as unknown as AccessorDeclaration, Node_Symbol(node)!.Declarations ?? []);
+  const allDeclarations = GetAllAccessorDeclarationsForDeclaration(node as unknown as AccessorDeclaration, Node_Symbol(node)!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()));
   const getAccessor = allDeclarations.GetAccessor;
   const setAccessor = allDeclarations.SetAccessor;
   let targetNode = node;

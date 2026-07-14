@@ -51,6 +51,8 @@ import type { buildInfoDiagnosticWithFileName, DiagnosticsOrBuildInfoDiagnostics
 import { FileEmitKindNone, GetFileEmitKind } from "./snapshot.js";
 import type { referenceMap } from "./referencemap.js";
 import { referenceMap_getPathsWithReferences, referenceMap_getReferences } from "./referencemap.js";
+import { GoNumberValueOps, GoSliceMake } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshottobuildinfo.go::func::snapshotToBuildInfo","kind":"func","status":"implemented","sigHash":"6d176d3df057485735ebe643c8b26bb4e8bdaa0ebe0bc252431ac701006b52f2"}
@@ -101,19 +103,19 @@ export function snapshotToBuildInfo(snapshot: GoPtr<snapshot>, program: GoPtr<Pr
     Version: Version(),
     Errors: false,
     CheckPending: false,
-    Root: [],
-    FileNames: [],
-    FileInfos: [],
-    FileIdsList: [],
+    Root: GoSliceMake(0, 0, GoPointerValueOps<BuildInfoRoot>()),
+    FileNames: GoSliceMake(0, 0, GoStringValueOps),
+    FileInfos: GoSliceMake(0, 0, GoPointerValueOps<BuildInfoFileInfo>()),
+    FileIdsList: GoSliceMake(0, 0, GoSliceValueOps<number>()),
     Options: undefined,
-    ReferencedMap: [],
-    SemanticDiagnosticsPerFile: [],
-    EmitDiagnosticsPerFile: [],
-    ChangeFileSet: [],
-    AffectedFilesPendingEmit: [],
+    ReferencedMap: GoSliceMake(0, 0, GoPointerValueOps<BuildInfoReferenceMapEntry>()),
+    SemanticDiagnosticsPerFile: GoSliceMake(0, 0, GoPointerValueOps<BuildInfoSemanticDiagnostic>()),
+    EmitDiagnosticsPerFile: GoSliceMake(0, 0, GoPointerValueOps<BuildInfoDiagnosticsOfFile>()),
+    ChangeFileSet: GoSliceMake(0, 0, GoNumberValueOps),
+    AffectedFilesPendingEmit: GoSliceMake(0, 0, GoPointerValueOps<BuildInfoFilePendingEmit>()),
     LatestChangedDtsFile: "",
-    EmitSignatures: [],
-    ResolvedRoot: [],
+    EmitSignatures: GoSliceMake(0, 0, GoPointerValueOps<BuildInfoEmitSignature>()),
+    ResolvedRoot: GoSliceMake(0, 0, GoPointerValueOps<BuildInfoResolvedRoot>()),
     SemanticErrors: false,
   };
   const to: toBuildInfo = {

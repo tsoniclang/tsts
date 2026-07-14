@@ -10,6 +10,8 @@ import { GetEncodedRootLength, NormalizePath, RemoveTrailingDirectorySeparator }
 import type { DirEntry, Entries, FileInfo } from "../vfs.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoInterfaceValueOps, GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 // Local duck-type interfaces for calling methods on opaque facade types.
 interface FileInfoMethods {
   IsDir(): bool;
@@ -210,7 +212,7 @@ export function Common_DirectoryExists(receiver: GoPtr<Common>, path: string): b
  * }
  */
 export function Common_GetAccessibleEntries(receiver: GoPtr<Common>, path: string): Entries {
-  const result: Entries = { Files: [], Directories: [], Symlinks: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() };
+  const result: Entries = { Files: GoSliceMake(0, 0, GoStringValueOps), Directories: GoSliceMake(0, 0, GoStringValueOps), Symlinks: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() };
 
   const addToResult = (name: string, mode: FileModeValue, isLink: bool): bool => {
     if (FileMode_IsDir(mode)) {
@@ -283,12 +285,12 @@ export function Common_GetAccessibleEntries(receiver: GoPtr<Common>, path: strin
 export function Common_getEntries(receiver: GoPtr<Common>, path: string): GoSlice<GoInterface<DirEntry>> {
   const [fsys, , rest] = Common_RootAndPath(receiver, path);
   if (fsys === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>());
   }
 
   const [entries, err] = fs_ReadDir(fsys, rest) as [GoSlice<GoInterface<DirEntry>>, GoError];
   if (err !== undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>());
   }
 
   return entries;
@@ -437,7 +439,10 @@ export function decodeUtf16(s: string, order: GoInterface<ByteOrder>): string {
 function decodeUtf16Bytes(bytes: Uint8Array, order: ByteOrder): string {
   const codeUnits: number[] = [];
   for (let offset = 0; offset + 1 < bytes.length; offset += 2) {
-    codeUnits.push(order.Uint16([bytes[offset]!, bytes[offset + 1]!] as GoSlice<number>) as number);
+    codeUnits.push(order.Uint16(GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, bytes[offset]!, GoNumberValueOps);
+      GoSliceStore(__goSliceLiteral, 1, bytes[offset + 1]!, GoNumberValueOps);
+    })) as number);
   }
   let result = "";
   const chunkSize = 8192;

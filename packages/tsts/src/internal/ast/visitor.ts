@@ -14,6 +14,8 @@ import type { ModifierList, Node, NodeList } from "./spine.js";
 import { NewNodeFactory, NodeDefault_AsNode, NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_VisitEachChild } from "./spine.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceStore } from "../../go/compat.js";
+
 // NodeVisitor
 
 /**
@@ -552,7 +554,9 @@ export function NodeVisitor_liftToBlock(receiver: GoPtr<NodeVisitor>, node: GoPt
     if (node.Kind === KindSyntaxList) {
       nodes = AsSyntaxList(node)!.Children;
     } else {
-      nodes = [node];
+      nodes = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, node, GoPointerValueOps<Node>());
+      });
     }
   }
   if (nodes.length === 1) {

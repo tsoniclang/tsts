@@ -8,6 +8,8 @@ import {
   extraValidationNone,
   newCommandLineOption,
 } from "./commandlineoption.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceStore } from "../../go/compat.js";
+
 
 
 
@@ -51,26 +53,26 @@ export let typeAcquisitionDeclaration: GoPtr<CommandLineOption> = undefined;
  * 	},
  * }
  */
-export let typeAcquisitionDecls: GoSlice<GoPtr<CommandLineOption>> = [
-  newCommandLineOption({
+export let typeAcquisitionDecls: GoSlice<GoPtr<CommandLineOption>> = GoSliceBuild(4, 4, GoPointerValueOps<CommandLineOption>(), (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, newCommandLineOption({
     Name: "enable",
     Kind: CommandLineOptionTypeBoolean,
     DefaultValueDescription: false,
-  }),
-  newCommandLineOption({
+  }), GoPointerValueOps<CommandLineOption>());
+  GoSliceStore(__goSliceLiteral, 1, newCommandLineOption({
     Name: "include",
     Kind: CommandLineOptionTypeList,
-  }),
-  newCommandLineOption({
+  }), GoPointerValueOps<CommandLineOption>());
+  GoSliceStore(__goSliceLiteral, 2, newCommandLineOption({
     Name: "exclude",
     Kind: CommandLineOptionTypeList,
-  }),
-  newCommandLineOption({
+  }), GoPointerValueOps<CommandLineOption>());
+  GoSliceStore(__goSliceLiteral, 3, newCommandLineOption({
     Name: "disableFilenameBasedTypeAcquisition",
     Kind: CommandLineOptionTypeBoolean,
     DefaultValueDescription: false,
-  }),
-];
+  }), GoPointerValueOps<CommandLineOption>());
+});
 
 // Assigned here (after typeAcquisitionDecls) to match
 // Go's dependency-ordered package-level var initialization.

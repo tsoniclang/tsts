@@ -64,6 +64,8 @@ import { CommandLineCompilerOptionsMap, convertMapToOptions, validateJsonOptionV
 import { commandLineParser_createUnknownOptionError, createDiagnosticForInvalidEnumType, getCompilerOptionValueTypeString } from "./errors.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.AlternateMode","kind":"method","status":"implemented","sigHash":"b7a4cccfda5482aa6b416c22abfac4443b53ac96e25e4fbf2233fc1d6c068ac3"}
  *
@@ -167,7 +169,7 @@ export interface commandLineParser {
  */
 export function ParseCommandLine(commandLine: GoSlice<string>, host: GoInterface<ParseConfigHost>): GoPtr<ParsedCommandLine> {
   if (GoSliceIsNil(commandLine)) {
-    commandLine = [];
+    commandLine = GoSliceMake(0, 0, GoStringValueOps);
   }
   const parser = parseCommandLineWorker(CompilerOptionsDidYouMeanDiagnostics, commandLine, host!.FS(), host!.GetCurrentDirectory());
   const optionsWithAbsolutePaths = convertToOptionsWithAbsolutePaths(OrderedMap_Clone(parser!.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, GoStringKey), CommandLineCompilerOptionsMap, host!.GetCurrentDirectory());
@@ -244,7 +246,7 @@ export function ParseCommandLine(commandLine: GoSlice<string>, host: GoInterface
  */
 export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: GoInterface<ParseConfigHost>): GoPtr<ParsedBuildCommandLine> {
   if (GoSliceIsNil(commandLine)) {
-    commandLine = [];
+    commandLine = GoSliceMake(0, 0, GoStringValueOps);
   }
   const parser = parseCommandLineWorker(buildOptionsDidYouMeanDiagnostics, commandLine, host!.FS(), host!.GetCurrentDirectory());
   const compilerOptions: CompilerOptions = {} as CompilerOptions;
@@ -270,7 +272,7 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: GoInte
       UseCaseSensitiveFileNames: host!.FS()!.UseCaseSensitiveFileNames(),
       CurrentDirectory: host!.GetCurrentDirectory(),
     },
-    resolvedProjectPaths: [],
+    resolvedProjectPaths: GoSliceMake(0, 0, GoStringValueOps),
     resolvedProjectPathsOnce: new Once(),
     locale: undefined as never,
     localeOnce: new Once(),
@@ -322,9 +324,9 @@ export function parseCommandLineWorker(parseCommandLineWithDiagnostics: GoPtr<Pa
     fs: fs,
     currentDirectory: currentDirectory,
     workerDiagnostics: parseCommandLineWithDiagnostics,
-    fileNames: [],
+    fileNames: GoSliceMake(0, 0, GoStringValueOps),
     options: newMapWithSizeHint<string, unknown>(0, GoStringKey),
-    errors: [],
+    errors: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     optionsMap: undefined,
   };
   parser.optionsMap = GetNameMapFromList(commandLineParser_OptionsDeclarations(parser));
@@ -479,7 +481,7 @@ export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineP
     return;
   }
 
-  let args: GoSlice<string> = [];
+  let args: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   const text = [...fileContents]; // split into characters (runes)
   const textLength = text.length;
   let pos = 0;
@@ -828,7 +830,7 @@ export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLin
  */
 export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string): [GoSlice<GoInterface<unknown>>, GoSlice<GoPtr<Diagnostic>>] {
   value = strings.TrimSpace(value);
-  let errors: GoSlice<GoPtr<Diagnostic>> = [];
+  let errors: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   if (strings.HasPrefix(value, "-")) {
     return [[], errors];
   }
@@ -915,5 +917,7 @@ export function convertJsonOptionOfEnumType(opt: GoPtr<CommandLineOption>, value
   if (ok) {
     return validateJsonOptionValue(opt, GoUnboxComparableInterface(val), valueExpression, sourceFile);
   }
-  return [undefined, [createDiagnosticForInvalidEnumType(opt, sourceFile, valueExpression)]];
+  return [undefined, GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, createDiagnosticForInvalidEnumType(opt, sourceFile, valueExpression), GoPointerValueOps<Diagnostic>());
+  })];
 }

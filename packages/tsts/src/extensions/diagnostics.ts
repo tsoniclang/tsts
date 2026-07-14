@@ -9,11 +9,13 @@ import { CategoryError, CategorySuggestion, CategoryWarning } from "../internal/
 import { NewDiagnosticForNode } from "../internal/checker/utilities.js";
 import { getExtensionHost } from "./host.js";
 import type { ExtensionDiagnostic, ExtensionDiagnosticSourceSpan } from "./host.js";
+import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+
 
 export function collectExtensionDiagnosticsForSourceFile(program: object, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   const extensionHost = getExtensionHost(program);
   if (extensionHost === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   const diagnostics: GoPtr<Diagnostic>[] = [];
   for (const diagnostic of extensionHost.diagnostics.all()) {

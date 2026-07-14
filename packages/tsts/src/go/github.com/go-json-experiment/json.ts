@@ -4,6 +4,8 @@ import { GoIsRef } from "../../compat.js";
 import type { Reader, Writer } from "../../io.js";
 import type { Decoder, Encoder, Option } from "./json/jsontext.js";
 import { NewDecoder, NewEncoder, writeTo } from "./json/jsontext.js";
+import { GoNumberValueOps, GoSliceMake } from "../../compat.js";
+
 
 const textEncoder: TextEncoder = new TextEncoder();
 const textDecoder: TextDecoder = new TextDecoder();
@@ -38,7 +40,7 @@ export function Marshal(value: GoInterface<unknown>, ...opts: Array<GoInterface<
   try {
     return [Array.from(textEncoder.encode(stringify(value, opts))), undefined];
   } catch (error) {
-    return [[], toError(error)];
+    return [GoSliceMake(0, 0, GoNumberValueOps), toError(error)];
   }
 }
 

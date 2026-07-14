@@ -29,6 +29,8 @@ import { parseCache_loadOrStore } from "./parseCache.js";
 import { BuildTask_loadOrStoreBuildInfo } from "./buildtask.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoSliceMake, GoStringValueOps } from "../../../go/compat.js";
+
 
 function zeroTime(): Time {
   return new TimeClass();
@@ -206,7 +208,7 @@ export function host_GetResolvedProjectReference(receiver: GoPtr<host>, fileName
     if (raw !== undefined && raw !== null) {
       const rawMap = raw as OrderedMap<string, GoInterface<unknown>>;
       if (rawMap.keys !== undefined) {
-        const wrapped: OrderedMap<string, GoInterface<unknown>> = { __tsgoBlank0: {}, keys: [], mp: new Map() };
+        const wrapped: OrderedMap<string, GoInterface<unknown>> = { __tsgoBlank0: {}, keys: GoSliceMake(0, 0, GoStringValueOps), mp: new Map() };
         OrderedMap_Set(wrapped, "compilerOptions", rawMap, GoStringKey);
         commandLineRaw = wrapped;
       }

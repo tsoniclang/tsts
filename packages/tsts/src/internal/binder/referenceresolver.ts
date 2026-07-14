@@ -20,6 +20,8 @@ import { NameResolver_Resolve } from "./nameresolver.js";
 import type { NameResolver } from "./nameresolver.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"implemented","sigHash":"23c7bfe98262f5cb06698ba14803aa4c1ecaea7af86f4da690c2c05961d68630"}
  *
@@ -365,7 +367,7 @@ export function referenceResolver_isTypeOnlyAliasDeclaration(receiver: GoPtr<ref
  * }
  */
 export function referenceResolver_getDeclarationOfAliasSymbol(receiver: GoPtr<referenceResolver>, symbol_: GoPtr<Symbol>): GoPtr<Declaration> {
-  return FindLast(symbol_!.Declarations ?? [], IsAliasSymbolDeclaration, GoZeroPointer<Declaration>);
+  return FindLast(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsAliasSymbolDeclaration, GoZeroPointer<Declaration>);
 }
 
 /**
@@ -559,7 +561,7 @@ export function referenceResolver_GetReferencedValueDeclarations(receiver: GoPtr
   let symbol_ = referenceResolver_getReferencedValueSymbol(receiver, node, false);
   if (symbol_ !== undefined) {
     symbol_ = referenceResolver_getExportSymbolOfValueSymbolIfExported(receiver, symbol_);
-    for (const declaration of symbol_!.Declarations ?? []) {
+    for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       switch (declaration!.Kind) {
         case KindVariableDeclaration:
         case KindParameter:

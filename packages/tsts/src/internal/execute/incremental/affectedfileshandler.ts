@@ -48,6 +48,8 @@ import { referenceMap_getReferencedBy } from "./referencemap.js";
 import { Program_GetSourceFiles as incremental_Program_GetSourceFiles } from "./program.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 
 const sourceFileKey: GoMapKeyDescriptor<GoPtr<SourceFile>> = GoPointerKey<SourceFile>();
 /**
@@ -332,11 +334,13 @@ export function affectedFilesHandler_updateShapeSignature(receiver: GoPtr<affect
 export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affectedFilesHandler>, path: Path): GoSlice<GoPtr<SourceFile>> {
   const file = compiler_Program_GetSourceFileByPath(receiver!.program!.program, path);
   if (file === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<SourceFile>());
   }
 
   if (!affectedFilesHandler_updateShapeSignature(receiver, file, false as bool)) {
-    return [file];
+    return GoSliceBuild(1, 1, GoPointerValueOps<SourceFile>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, file, GoPointerValueOps<SourceFile>());
+    });
   }
 
   const [info] = SyncMap_Load<Path, GoInterface<FileInfo>>(
@@ -351,7 +355,9 @@ export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affected
   }
 
   if (Tristate_IsTrue(receiver!.program!.snapshot!.options!.IsolatedModules)) {
-    return [file];
+    return GoSliceBuild(1, 1, GoPointerValueOps<SourceFile>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, file, GoPointerValueOps<SourceFile>());
+    });
   }
 
   const seenFileNamesMap = affectedFilesHandler_forEachFileReferencedBy(
@@ -572,7 +578,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfAffectedFile(receiver: 
           continue;
         }
         if ((aliased!.Flags & SymbolFlagsConstEnum) !== 0) {
-          for (const d of aliased!.Declarations ?? []) {
+          for (const d of aliased!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
             if (GetSourceFileOfNode(d) === affectedFile) {
               invalidateJsFiles = true;
               break outer;

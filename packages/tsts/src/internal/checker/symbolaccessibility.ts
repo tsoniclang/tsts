@@ -39,6 +39,8 @@ import { SymbolAccessibilityAccessible, SymbolAccessibilityNotAccessible, Symbol
 import { IsBinaryExpression } from "../ast/generated/predicates.js";
 import { AsBinaryExpression } from "../ast/generated/casts.js";
 import { Checker_symbolToString, Checker_symbolToStringEx } from "./printer.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 function zeroContainingSymbolLinks(): ContainingSymbolLinks {
   return {
@@ -206,7 +208,7 @@ export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols:
           continue;
         }
         // Any meaning of a module symbol is always accessible via an `import` type
-        return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: [], ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
+        return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: GoSliceMake(0, 0, GoPointerValueOps<Node>()), ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
       }
     }
 
@@ -224,7 +226,7 @@ export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols:
   }
 
   if (earlyModuleBail) {
-    return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: [], ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
+    return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: GoSliceMake(0, 0, GoPointerValueOps<Node>()), ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
   }
 
   if (hadAccessibleChain !== undefined) {
@@ -234,7 +236,7 @@ export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols:
     }
     return {
       Accessibility: SymbolAccessibilityNotAccessible,
-      AliasesToMakeVisible: [],
+      AliasesToMakeVisible: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
       ErrorSymbolName: Checker_symbolToStringEx(receiver, initialSymbol, enclosingDeclaration, meaning, SymbolFormatFlagsAllowAnyNodeKind),
       ErrorModuleName: moduleName,
       ErrorNode: undefined,
@@ -1237,7 +1239,9 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
   // If symbol is directly available by its name in the symbol table
   const res = symbols.get(ctx.symbol!.Name);
   if (res !== undefined && Checker_isAccessible(receiver, ctx, res /*resolvedAliasSymbol*/, undefined, ignoreQualification)) {
-    return [ctx.symbol!];
+    return GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ctx.symbol!, GoPointerValueOps<Symbol>());
+    });
   }
 
   let candidateChains = GoNilSlice<GoSlice<GoPtr<Symbol>>>();
@@ -1247,7 +1251,9 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
   // symbols are iterated).
   if (res !== undefined && res!.ExportSymbol !== undefined) {
     if (Checker_isAccessible(receiver, ctx, Checker_getMergedSymbol(receiver, res!.ExportSymbol) /*resolvedAliasSymbol*/, undefined, ignoreQualification)) {
-      candidateChains = GoSliceAppend(candidateChains, [ctx.symbol!], GoSliceValueOps<GoPtr<Symbol>>());
+      candidateChains = GoSliceAppend(candidateChains, GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ctx.symbol!, GoPointerValueOps<Symbol>());
+      }), GoSliceValueOps<GoPtr<Symbol>>());
     }
   }
 
@@ -1380,7 +1386,9 @@ export function isNamespaceReexportDeclaration(node: GoPtr<Node>): bool {
  */
 export function Checker_getCandidateListForSymbol(receiver: GoPtr<Checker>, ctx: accessibleSymbolChainContext, symbolFromSymbolTable: GoPtr<Symbol>, resolvedImportedSymbol: GoPtr<Symbol>, ignoreQualification: bool): GoSlice<GoPtr<Symbol>> {
   if (Checker_isAccessible(receiver, ctx, symbolFromSymbolTable, resolvedImportedSymbol, ignoreQualification)) {
-    return [symbolFromSymbolTable];
+    return GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, symbolFromSymbolTable, GoPointerValueOps<Symbol>());
+    });
   }
 
   // Look in the exported members, if we can find accessibleSymbolChain, symbol is accessible using this chain
@@ -1754,7 +1762,9 @@ export function Checker_IsSymbolAccessible(receiver: GoPtr<Checker>, symbol_: Go
  */
 export function Checker_isSymbolAccessibleWorker(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags, shouldComputeAliasesToMakeVisible: bool, allowModules: bool): SymbolAccessibilityResult {
   if (symbol_ !== undefined && enclosingDeclaration !== undefined) {
-    const result = Checker_IsAnySymbolAccessible(receiver, [symbol_], enclosingDeclaration, symbol_, meaning, shouldComputeAliasesToMakeVisible, allowModules);
+    const result = Checker_IsAnySymbolAccessible(receiver, GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, symbol_, GoPointerValueOps<Symbol>());
+    }), enclosingDeclaration, symbol_, meaning, shouldComputeAliasesToMakeVisible, allowModules);
     if (result !== undefined) {
       return result;
     }
@@ -1762,7 +1772,7 @@ export function Checker_isSymbolAccessibleWorker(receiver: GoPtr<Checker>, symbo
     // This could be a symbol that is not exported in the external module
     // or it could be a symbol from different external module that is not aliased and hence cannot be named
     const symbolExternalModule = FirstNonNil<GoPtr<Node>, GoPtr<Symbol>>(
-      symbol_!.Declarations ?? [],
+      symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
       (d: GoPtr<Node>) => Checker_getExternalModuleContainer(receiver, d),
       GoZeroPointer<Symbol>,
       GoEqualStrict<GoPtr<Symbol>>,
@@ -1773,7 +1783,7 @@ export function Checker_isSymbolAccessibleWorker(receiver: GoPtr<Checker>, symbo
         // name from different external module that is not visible
         return {
           Accessibility: SymbolAccessibilityCannotBeNamed,
-          AliasesToMakeVisible: [],
+          AliasesToMakeVisible: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
           ErrorSymbolName: Checker_symbolToStringEx(receiver, symbol_, enclosingDeclaration, meaning, SymbolFormatFlagsAllowAnyNodeKind),
           ErrorModuleName: Checker_symbolToString(receiver, symbolExternalModule),
           ErrorNode: IfElse(IsInJSFile(enclosingDeclaration), enclosingDeclaration, undefined),
@@ -1784,7 +1794,7 @@ export function Checker_isSymbolAccessibleWorker(receiver: GoPtr<Checker>, symbo
     // Just a local name that is not accessible
     return {
       Accessibility: SymbolAccessibilityNotAccessible,
-      AliasesToMakeVisible: [],
+      AliasesToMakeVisible: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
       ErrorSymbolName: Checker_symbolToStringEx(receiver, symbol_, enclosingDeclaration, meaning, SymbolFormatFlagsAllowAnyNodeKind),
       ErrorNode: undefined,
       ErrorModuleName: "",
@@ -1793,7 +1803,7 @@ export function Checker_isSymbolAccessibleWorker(receiver: GoPtr<Checker>, symbo
 
   return {
     Accessibility: SymbolAccessibilityAccessible,
-    AliasesToMakeVisible: [],
+    AliasesToMakeVisible: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
     ErrorSymbolName: "",
     ErrorNode: undefined,
     ErrorModuleName: "",

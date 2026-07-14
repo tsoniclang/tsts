@@ -35,6 +35,8 @@ import { statisticsFromProgram, Statistics_Report } from "./statistics.js";
 import type { Statistics } from "./statistics.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::GetTraceWithWriterFromSys","kind":"func","status":"implemented","sigHash":"17a6384118d8903f7afa1b67bba22dbd81d93ed58d4f8ce909a645b6a1202124"}
  *
@@ -216,7 +218,7 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
 export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult {
   type TimeWithSub = import("../../../go/time.js").Time & { Sub(t: import("../../../go/time.js").Time): number };
   const result: CompileAndEmitResult = {
-    Diagnostics: [],
+    Diagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     EmitResult: undefined,
     Status: ExitStatusSuccess,
     times: input.CompileTimes,

@@ -10,6 +10,8 @@ import * as unicode from "../../go/unicode.js";
 import * as stringutil from "../stringutil/compare.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 // Byte/char-code constants used for faithful byte-level path inspection.
 // Go indexes path strings by byte; this port indexes the equivalent code unit
 // via charCodeAt and compares against these constants.
@@ -605,9 +607,11 @@ export function NormalizeSlashes(path: string): string {
  */
 export function reducePathComponents(components: GoSlice<string>): GoSlice<string> {
   if (components.length === 0) {
-    return [];
+    return GoSliceMake(0, 0, GoStringValueOps);
   }
-  let reduced: GoSlice<string> = [components[0]!];
+  let reduced: GoSlice<string> = GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, components[0]!, GoStringValueOps);
+  });
   for (let i = 1; i < components.length; i++) {
     const component = components[i]!;
     if (component === "") {
@@ -738,7 +742,9 @@ export function GetNormalizedPathComponents(path: string, currentDirectory: stri
 export function getNormalizedPathComponentsFromCombined(path: string): GoSlice<string> {
   const rootLength = GetRootLength(path);
   // Always include the root component (empty string for relative paths).
-  let components: GoSlice<string> = [path.slice(0, rootLength)];
+  let components: GoSlice<string> = GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, path.slice(0, rootLength), GoStringValueOps);
+  });
 
   for (let i = rootLength; i < path.length; ) {
     // Skip directory separators (handles consecutive separators and trailing '/').
@@ -2266,19 +2272,19 @@ export function GetCommonParents(paths: GoSlice<string>, minComponents: int, get
     throw new globalThis.Error("minComponents must be at least 1");
   }
   if (paths.length === 0) {
-    return [[], new globalThis.Map<string, { readonly __tsgoEmpty?: never }>()];
+    return [GoSliceMake(0, 0, GoStringValueOps), new globalThis.Map<string, { readonly __tsgoEmpty?: never }>()];
   }
   if (paths.length === 1) {
     if (reducePathComponents(getPathComponents!(paths[0]!, options.CurrentDirectory)).length < minComponents) {
       const ignoredSingle = new globalThis.Map<string, { readonly __tsgoEmpty?: never }>();
       ignoredSingle.set(paths[0]!, {});
-      return [[], ignoredSingle];
+      return [GoSliceMake(0, 0, GoStringValueOps), ignoredSingle];
     }
     return [paths, new globalThis.Map<string, { readonly __tsgoEmpty?: never }>()];
   }
 
   const ignored = new globalThis.Map<string, { readonly __tsgoEmpty?: never }>();
-  let pathComponents: GoSlice<GoSlice<string>> = [];
+  let pathComponents: GoSlice<GoSlice<string>> = GoSliceMake(0, 0, GoSliceValueOps<string>());
   for (const path of paths) {
     const components = reducePathComponents(getPathComponents!(path, options.CurrentDirectory));
     if (components.length < minComponents) {
@@ -2359,7 +2365,7 @@ export function GetCommonParents(paths: GoSlice<string>, minComponents: int, get
  */
 export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>, minComponents: int, options: ComparePathsOptions): GoSlice<GoSlice<string>> {
   if (componentGroups.length === 0) {
-    return [];
+    return GoSliceMake(0, 0, GoSliceValueOps<string>());
   }
   // Determine the maximum depth we can consider
   let maxDepth = componentGroups[0]!.length;
@@ -2381,7 +2387,7 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
           // divergence
           if (lastCommonIndex < minComponents) {
             // Not enough components, we need to fan out
-            let orderedGroups: GoSlice<Path> = [];
+            let orderedGroups: GoSlice<Path> = GoSliceMake(0, 0, GoStringValueOps);
             const newGroups = new globalThis.Map<Path, { head: GoSlice<string>; tails: GoSlice<GoSlice<string>> }>();
             for (const g of componentGroups) {
               const key = ToPath(g[lastCommonIndex]!, options.CurrentDirectory, options.UseCaseSensitiveFileNames);
@@ -2396,7 +2402,7 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
               });
             }
             slices.Sort(orderedGroups);
-            let result: GoSlice<GoSlice<string>> = [];
+            let result: GoSlice<GoSlice<string>> = GoSliceMake(0, 0, GoSliceValueOps<string>());
             for (const key of orderedGroups) {
               const group = newGroups.get(key)!;
               const subResults = getCommonParentsWorker(group.tails, minComponents - (lastCommonIndex + 1), options);
@@ -2406,13 +2412,17 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
             }
             return result;
           }
-          return [componentGroups[0]!.slice(0, lastCommonIndex)];
+          return GoSliceBuild(1, 1, GoSliceValueOps<string>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, componentGroups[0]!.slice(0, lastCommonIndex), GoSliceValueOps<string>());
+          });
         }
       }
     }
   }
 
-  return [componentGroups[0]!.slice(0, maxDepth)];
+  return GoSliceBuild(1, 1, GoSliceValueOps<string>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, componentGroups[0]!.slice(0, maxDepth), GoSliceValueOps<string>());
+  });
 }
 
 /**

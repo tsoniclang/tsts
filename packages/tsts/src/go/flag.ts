@@ -1,5 +1,7 @@
 import type { bool, int } from "./scalars.js";
 import type { GoError, GoSlice } from "./compat.js";
+import { GoSliceMake, GoStringValueOps } from "./compat.js";
+
 
 export const ContinueOnError: int = 0 as int;
 
@@ -78,7 +80,7 @@ export function Bool(name: string, value: bool, usage: string): FlagValue<bool> 
   return CommandLine.Bool(name, value, usage);
 }
 
-export function Parse(args: GoSlice<string> = globalThis.process?.argv?.slice(2) ?? []): GoError {
+export function Parse(args: GoSlice<string> = globalThis.process?.argv?.slice(2) ?? GoSliceMake(0, 0, GoStringValueOps)): GoError {
   return CommandLine.Parse(args);
 }
 

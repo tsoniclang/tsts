@@ -20,6 +20,8 @@ import type { SyncSet } from "../../collections/syncset.js";
 import { referenceMap_storeReferences } from "./referencemap.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceMake, GoStringValueOps } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildinfotosnapshot.go::func::buildInfoToSnapshot","kind":"func","status":"implemented","sigHash":"a5b857c399f4dc273e9d03408127a705fbfa13c5abb98a71ff6e2864571a4cb1"}
  *
@@ -66,8 +68,8 @@ export function buildInfoToSnapshot(buildInfo: GoPtr<BuildInfo>, config: GoPtr<P
     buildInfo: buildInfo,
     buildInfoDirectory: buildInfoDirectory,
     snapshot: {} as snapshot,
-    filePaths: [],
-    filePathSet: [],
+    filePaths: GoSliceMake(0, 0, GoStringValueOps),
+    filePathSet: GoSliceMake(0, 0, GoPointerValueOps<Set<string>>()),
   };
   to.filePaths = core.Map(buildInfo!.FileNames, (fileName: string) => {
     if (!fileName.startsWith(".")) {
@@ -220,7 +222,7 @@ export function toSnapshot_toBuildInfoDiagnosticsWithFileName(receiver: GoPtr<to
  */
 export function toSnapshot_toDiagnosticsOrBuildInfoDiagnosticsWithFileName(receiver: GoPtr<toSnapshot>, dig: GoPtr<BuildInfoDiagnosticsOfFile>): GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName> {
   return {
-    diagnostics: [],
+    diagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     buildInfoDiagnostics: toSnapshot_toBuildInfoDiagnosticsWithFileName(receiver, dig!.Diagnostics),
   };
 }
@@ -299,7 +301,7 @@ export function toSnapshot_setFileInfoAndEmitSignatures(receiver: GoPtr<toSnapsh
     const info = BuildInfoFileInfo_GetFileInfo(buildInfoFileInfo);
     SyncMap_Store(receiver!.snapshot.fileInfos as SyncMap<Path, FileInfo>, path, info, GoStringKey);
     if (info!.signature !== "" && isComposite) {
-      SyncMap_Store(receiver!.snapshot.emitSignatures, path, { signature: info!.signature, signatureWithDifferentOptions: [] }, GoStringKey);
+      SyncMap_Store(receiver!.snapshot.emitSignatures, path, { signature: info!.signature, signatureWithDifferentOptions: GoSliceMake(0, 0, GoStringValueOps) }, GoStringKey);
     }
   }
   for (const value of receiver!.buildInfo!.EmitSignatures) {
@@ -373,7 +375,7 @@ export function toSnapshot_setSemanticDiagnostics(receiver: GoPtr<toSnapshot>): 
   SyncMap_Range(receiver!.snapshot.fileInfos as SyncMap<Path, FileInfo>, (path: Path, _info: FileInfo) => {
     // Initialize to have no diagnostics if its not changed file
     if (!SyncSet_Has(receiver!.snapshot.changedFilesSet as SyncSet<Path>, path, GoStringKey)) {
-      SyncMap_Store(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, path, { diagnostics: [], buildInfoDiagnostics: [] }, GoStringKey);
+      SyncMap_Store(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, path, { diagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()), buildInfoDiagnostics: GoSliceMake(0, 0, GoPointerValueOps<buildInfoDiagnosticWithFileName>()) }, GoStringKey);
     }
     return true;
   });

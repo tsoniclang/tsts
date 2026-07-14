@@ -29,6 +29,8 @@ import { Node_Modifiers } from "../../ast/spine.js";
 import { getDecoratorsOfParameters } from "./legacydecorators.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::constGroup::USE_NEW_TYPE_METADATA_FORMAT","kind":"constGroup","status":"implemented","sigHash":"273dcdebb539096b9ef13508c6039fa57341a018341ac680cd2d1666a81759b4"}
  *
@@ -543,7 +545,7 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
   if (metadata.length > 0) {
     let originalNodes: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (list !== undefined) {
-      originalNodes = list!.Nodes ?? [];
+      originalNodes = list!.Nodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     }
     if (originalNodes.length === 0) {
       const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, metadata);
@@ -621,7 +623,7 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
   if (metadata.length > 0) {
     let originalNodes: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (list !== undefined) {
-      originalNodes = list!.Nodes ?? [];
+      originalNodes = list!.Nodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     }
     if (originalNodes.length === 0) {
       const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, metadata);
@@ -815,7 +817,7 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
           astFactory,
           undefined,
           undefined,
-          NodeFactory_NewNodeList(astFactory, []),
+          NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())),
           undefined,
           undefined,
           NewToken(astFactory, KindEqualsGreaterThanToken),
@@ -839,7 +841,7 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
           astFactory,
           undefined,
           undefined,
-          NodeFactory_NewNodeList(astFactory, []),
+          NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())),
           undefined,
           undefined,
           NewToken(astFactory, KindEqualsGreaterThanToken),
@@ -863,7 +865,7 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
           astFactory,
           undefined,
           undefined,
-          NodeFactory_NewNodeList(astFactory, []),
+          NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())),
           undefined,
           undefined,
           NewToken(astFactory, KindEqualsGreaterThanToken),
@@ -881,7 +883,9 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
       "design:typeinfo",
       NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, properties), true),
     );
-    return [NewDecorator(astFactory, typeInfoMetadata)];
+    return GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewDecorator(astFactory, typeInfoMetadata), GoPointerValueOps<Node>());
+    });
   }
   return GoNilSlice();
 }

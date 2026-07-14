@@ -39,6 +39,8 @@ import type { FileExtensionInfo, TsConfigSourceFile } from "./tsconfigparsing.js
 import { getWildcardDirectories } from "./wildcarddirectories.js";
 
 import type { GoInterface, GoRef } from "../../go/compat.js";
+import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::constGroup::fileGlobPattern+recursiveFileGlobPattern","kind":"constGroup","status":"implemented","sigHash":"beaaec06113aca6510e27d43edae16455fb426b97ea0b4f79b8193f1ccb5d65d"}
  *
@@ -163,24 +165,24 @@ export function NewParsedCommandLine(compilerOptions: GoPtr<CompilerOptions_3bab
       WatchOptions: undefined,
       FileNames: rootFileNames,
       TypeAcquisition: undefined,
-      ProjectReferences: [],
+      ProjectReferences: GoSliceMake(0, 0, GoPointerValueOps<ProjectReference>()),
     },
     ConfigFile: undefined,
-    Errors: [],
+    Errors: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     Raw: undefined,
     CompileOnSave: undefined,
     comparePathsOptions: comparePathsOptions,
     wildcardDirectoriesOnce: new Once(),
     wildcardDirectories: new globalThis.Map<string, bool>(),
     includeGlobsOnce: new Once(),
-    includeGlobs: [],
+    includeGlobs: GoSliceMake(0, 0, GoPointerValueOps<Glob>()),
     extraFileExtensions: [],
     sourceAndOutputMapsOnce: new Once(),
     sourceToProjectReference: new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>(),
     outputDtsToProjectReference: new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>(),
     commonSourceDirectory: "",
     commonSourceDirectoryOnce: new Once(),
-    resolvedProjectReferencePaths: [],
+    resolvedProjectReferencePaths: GoSliceMake(0, 0, GoStringValueOps),
     resolvedProjectReferencePathsOnce: new Once(),
     literalFileNamesLen: 0 as int,
     fileNamesByPath: new globalThis.Map<Path, string>(),
@@ -379,7 +381,7 @@ export function ParsedCommandLine_checkSourceFilesBelongToPath(receiver: GoPtr<P
   for (const file of sourceFiles) {
     const absoluteSourceFilePath = GetCanonicalFileName(GetNormalizedAbsolutePath(file, ParsedCommandLine_GetCurrentDirectory(p)), ParsedCommandLine_UseCaseSensitiveFileNames(p));
     if (!ContainsPath(rootDirectory, file, p.comparePathsOptions)) {
-      p.Errors = [...(p.Errors ?? []), NewCompilerDiagnostic(File_0_is_not_under_rootDir_1_rootDir_is_expected_to_contain_all_source_files, absoluteSourceFilePath, rootDirectory)];
+      p.Errors = [...(p.Errors ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())), NewCompilerDiagnostic(File_0_is_not_under_rootDir_1_rootDir_is_expected_to_contain_all_source_files, absoluteSourceFilePath, rootDirectory)];
       allFilesBelongToPath = false as bool;
     }
   }
@@ -613,12 +615,12 @@ export function ParsedCommandLine_WildcardDirectoryGlobs(receiver: GoPtr<ParsedC
   const p = receiver!;
   const wildcardDirectories = ParsedCommandLine_WildcardDirectories(p);
   if (wildcardDirectories.size === 0) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Glob>());
   }
 
   p.includeGlobsOnce.Do((): void => {
     if (p.includeGlobs.length === 0) {
-      let globs: GoSlice<GoPtr<Glob>> = [];
+      let globs: GoSlice<GoPtr<Glob>> = GoSliceMake(0, 0, GoPointerValueOps<Glob>());
       for (const [dir, recursive] of wildcardDirectories) {
         const pattern = fmt.Sprintf("%s/%s", NormalizePath(dir), IfElse(recursive, recursiveFileGlobPattern, fileGlobPattern));
         const [parsed, err] = glob_Parse(pattern);
@@ -648,7 +650,7 @@ export function ParsedCommandLine_LiteralFileNames(receiver: GoPtr<ParsedCommand
   if (receiver !== undefined && receiver.ConfigFile !== undefined) {
     return ParsedCommandLine_FileNames(receiver).slice(0, receiver.literalFileNamesLen);
   }
-  return [];
+  return GoSliceMake(0, 0, GoStringValueOps);
 }
 
 /**
@@ -766,7 +768,7 @@ export function ParsedCommandLine_FileNamesByPath(receiver: GoPtr<ParsedCommandL
  * }
  */
 export function ParsedCommandLine_ProjectReferences(receiver: GoPtr<ParsedCommandLine>): GoSlice<GoPtr<ProjectReference>> {
-  return receiver!.ParsedConfig!.ProjectReferences ?? [];
+  return receiver!.ParsedConfig!.ProjectReferences ?? GoSliceMake(0, 0, GoPointerValueOps<ProjectReference>());
 }
 
 /**
@@ -801,7 +803,7 @@ export function ParsedCommandLine_ResolvedProjectReferencePaths(receiver: GoPtr<
  */
 export function ParsedCommandLine_ExtendedSourceFiles(receiver: GoPtr<ParsedCommandLine>): GoSlice<string> {
   if (receiver === undefined || receiver.ConfigFile === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoStringValueOps);
   }
   return receiver.ConfigFile.ExtendedSourceFiles;
 }
@@ -1017,7 +1019,7 @@ export function ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(receiver: G
     outputDtsToProjectReference: new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>(),
     commonSourceDirectory: "",
     commonSourceDirectoryOnce: new Once(),
-    resolvedProjectReferencePaths: [],
+    resolvedProjectReferencePaths: GoSliceMake(0, 0, GoStringValueOps),
     resolvedProjectReferencePathsOnce: new Once(),
     literalFileNamesLen: literalFileNamesLen,
     fileNamesByPath: new globalThis.Map<Path, string>(),

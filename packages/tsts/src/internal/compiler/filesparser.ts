@@ -63,6 +63,8 @@ import * as strings from "../../go/strings.js";
 import { getExtensionHost } from "../../extensions/host.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTask","kind":"type","status":"implemented","sigHash":"9037201e00d4b8ede35c542bf33697833860bf8d7e56f1f769452cde2fc18c1f"}
  *
@@ -321,7 +323,7 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
   }
 
   receiver!.file = file;
-  receiver!.subTasks = [];
+  receiver!.subTasks = GoSliceMake(0, 0, GoPointerValueOps<parseTask>());
 
   const compilerOptions2 = ParsedCommandLine_CompilerOptions(loader!.opts.Config);
   if (!Tristate_IsTrue(compilerOptions2!.NoResolve)) {
@@ -416,7 +418,9 @@ export function parseTask_redirect(receiver: GoPtr<parseTask>, loader: GoPtr<fil
     allIncludeReasons: GoNilSlice(),
   };
   // increaseDepth and elideOnDepth are not copied to redirects
-  receiver!.subTasks = [receiver!.redirectedParseTask];
+  receiver!.subTasks = GoSliceBuild(1, 1, GoPointerValueOps<parseTask>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, receiver!.redirectedParseTask, GoPointerValueOps<parseTask>());
+  });
 }
 
 /**
@@ -1005,8 +1009,8 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
 
   let missingFiles: GoSlice<string> = GoNilSlice();
   let duplicateSourceFiles: GoSlice<GoPtr<DuplicateSourceFile>> = GoNilSlice();
-  let files: GoSlice<GoPtr<SourceFile>> = [];
-  let libFiles: GoSlice<GoPtr<SourceFile>> = [];
+  let files: GoSlice<GoPtr<SourceFile>> = GoSliceMake(0, 0, GoPointerValueOps<SourceFile>());
+  let libFiles: GoSlice<GoPtr<SourceFile>> = GoSliceMake(0, 0, GoPointerValueOps<SourceFile>());
 
   const filesByPath = new globalThis.Map<Path_65a900c3, GoPtr<SourceFile>>();
   let tasksSeenByNameIgnoreCase = GoNilMap<string, GoPtr<parseTask>>();
@@ -1280,7 +1284,9 @@ export function filesParser_addIncludeReason(receiver: GoPtr<filesParser>, inclu
     if (existing !== undefined) {
       includeProcessor!.fileIncludeReasons.set(task!.path, GoSliceAppend(existing, reason, GoPointerValueOps<FileIncludeReason>()));
     } else {
-      includeProcessor!.fileIncludeReasons.set(task!.path, [reason]);
+      includeProcessor!.fileIncludeReasons.set(task!.path, GoSliceBuild(1, 1, GoPointerValueOps<FileIncludeReason>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, reason, GoPointerValueOps<FileIncludeReason>());
+      }));
     }
   }
 }

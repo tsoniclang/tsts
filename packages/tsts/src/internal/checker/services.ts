@@ -60,6 +60,8 @@ import { newTypeMapper } from "./mapper.js";
 import { IterationUseDestructuring } from "./checker/state.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 function zeroSignatureLinks(): SignatureLinks {
   return {
@@ -978,7 +980,9 @@ export function Checker_SkipAlias(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbo
 export function Checker_GetRootSymbols(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Symbol>> {
   const roots = Checker_getImmediateRootSymbols(receiver, symbol_);
   if (roots.length === 0) {
-    return [symbol_];
+    return GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, symbol_, GoPointerValueOps<Symbol>());
+    });
   }
   let result: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   for (const root of roots) {
@@ -1056,18 +1060,25 @@ export function Checker_getImmediateRootSymbols(receiver: GoPtr<Checker>, symbol
       const leftSpread = LinkStore_Get(receiver!.spreadLinks, symbol_, zeroSpreadLinks, goSymbolPointerKey)!.v.leftSpread;
       const rightSpread = LinkStore_Get(receiver!.spreadLinks, symbol_, zeroSpreadLinks, goSymbolPointerKey)!.v.rightSpread;
       if (leftSpread !== undefined) {
-        return [leftSpread, rightSpread];
+        return GoSliceBuild(2, 2, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, leftSpread, GoPointerValueOps<Symbol>());
+          GoSliceStore(__goSliceLiteral, 1, rightSpread, GoPointerValueOps<Symbol>());
+        });
       }
     }
     if (LinkStore_Has(receiver!.mappedSymbolLinks, symbol_)) {
       const syntheticOrigin = LinkStore_Get(receiver!.mappedSymbolLinks, symbol_, zeroMappedSymbolLinks, goSymbolPointerKey)!.v.syntheticOrigin;
       if (syntheticOrigin !== undefined) {
-        return [syntheticOrigin];
+        return GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, syntheticOrigin, GoPointerValueOps<Symbol>());
+        });
       }
     }
     const target = Checker_tryGetTarget(receiver, symbol_);
     if (target !== undefined) {
-      return [target];
+      return GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, target, GoPointerValueOps<Symbol>());
+      });
     }
   }
   return GoNilSlice();
@@ -1542,7 +1553,7 @@ export function getPossibleSymbolReferenceNodes(sourceFile: GoPtr<SourceFile>, s
  * }
  */
 export function getPossibleSymbolReferencePositions(sourceFile: GoPtr<SourceFile>, symbolName: string, container: GoPtr<Node>): GoSlice<int> {
-  let positions: GoSlice<int> = [];
+  let positions: GoSlice<int> = GoSliceMake(0, 0, GoNumberValueOps);
 
   // TODO: Cache symbol existence for files to save text search
   // Also, need to make this work for unicode escapes.
@@ -1763,7 +1774,7 @@ export function Checker_getTypeParameterConstraintForPositionAcrossSignatures(re
 export function Checker_getTypeArgumentConstraint(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
   let typeArgumentPosition: int = -1;
   if (HasTypeArguments(node!.Parent)) {
-    const typeArgs = Node_TypeArguments(node!.Parent) ?? [];
+    const typeArgs = Node_TypeArguments(node!.Parent) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     for (let i = 0; i < typeArgs.length; i++) {
       if (typeArgs[i] === node) {
         typeArgumentPosition = i;
@@ -1814,7 +1825,10 @@ export function Checker_getTypeArgumentConstraint(receiver: GoPtr<Checker>, node
       if ((callConstraint!.flags & TypeFlagsNever) !== 0) {
         return constructConstraint;
       }
-      return Checker_getIntersectionType(receiver, [callConstraint, constructConstraint]);
+      return Checker_getIntersectionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, callConstraint, GoPointerValueOps<Type>());
+        GoSliceStore(__goSliceLiteral, 1, constructConstraint, GoPointerValueOps<Type>());
+      }));
     }
 
     if (IsTypeReferenceType(node!.Parent)) {
@@ -1868,7 +1882,7 @@ export function Checker_getTypeArgumentConstraint(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_IsTypeInvalidDueToUnionDiscriminant(receiver: GoPtr<Checker>, contextualType: GoPtr<Type>, obj: GoPtr<Node>): bool {
-  const properties = Node_Properties(obj) ?? [];
+  const properties = Node_Properties(obj) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   return Some(properties, (property: GoPtr<Node>) => {
     let nameType: GoPtr<Type> = undefined;
     const propertyName = Node_Name(property);
@@ -2043,7 +2057,7 @@ export function Checker_GetConstantValue(receiver: GoPtr<Checker>, node: GoPtr<N
 export function Checker_getResolvedSignatureWorker(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode, argumentCount: int): [GoPtr<Signature>, GoSlice<GoPtr<Signature>>] {
   const parsedNode = EmitContext_ParseNode(NewEmitContext(), node);
   receiver!.apparentArgumentCount = GoValueRef(argumentCount);
-  const candidatesOutArray = GoValueRef<GoSlice<GoPtr<Signature>>>([]);
+  const candidatesOutArray = GoValueRef<GoSlice<GoPtr<Signature>>>(GoSliceMake(0, 0, GoPointerValueOps<Signature>()));
   let res: GoPtr<Signature> = undefined;
   if (parsedNode !== undefined) {
     res = Checker_getResolvedSignature(receiver, parsedNode, candidatesOutArray, checkMode);
@@ -2181,7 +2195,7 @@ export function Checker_GetContextualTypeForArrayLiteralAtPosition(receiver: GoP
   let firstSpreadIndex = -1;
   let lastSpreadIndex = -1;
   let elementIndex = 0;
-  const elements = Node_Elements(arrayLiteral) ?? [];
+  const elements = Node_Elements(arrayLiteral) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (let i = 0; i < elements.length; i++) {
     const elem = elements[i];
     if (Node_Pos(elem) < position) {
@@ -2354,7 +2368,9 @@ export function Checker_GetPropertySymbolsFromContextualType(receiver: GoPtr<Che
   if ((contextualType!.flags & TypeFlagsUnion) === 0) {
     const symbol_ = Checker_getPropertyOfType(receiver, contextualType, name);
     if (symbol_ !== undefined) {
-      return [symbol_];
+      return GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, symbol_, GoPointerValueOps<Symbol>());
+      });
     }
     return GoNilSlice();
   }
@@ -2370,7 +2386,9 @@ export function Checker_GetPropertySymbolsFromContextualType(receiver: GoPtr<Che
   if (unionSymbolOk && (discriminatedPropertySymbols.length === 0 || discriminatedPropertySymbols.length === Type_Types(contextualType).length)) {
     const symbol_ = Checker_getPropertyOfType(receiver, contextualType, name);
     if (symbol_ !== undefined) {
-      return [symbol_];
+      return GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, symbol_, GoPointerValueOps<Symbol>());
+      });
     }
   }
   if (filteredTypes.length === 0 && discriminatedPropertySymbols.length === 0) {
@@ -2506,7 +2524,7 @@ export function Checker_IsLibSymbolForHoverVerbosity(receiver: GoPtr<Checker>, s
   if (symbol_ === undefined) {
     return false;
   }
-  for (const decl of symbol_!.Declarations ?? []) {
+  for (const decl of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     const sf = GetSourceFileOfNode(decl);
     if (sf !== undefined && receiver!.program!.IsSourceFileDefaultLibrary(SourceFile_Path(sf))) {
       return true;

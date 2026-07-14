@@ -55,6 +55,8 @@ import { ConvertToRelativePath, PathIsAbsolute } from "../tspath/path.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoInterfaceValueOps, GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FileLike","kind":"type","status":"implemented","sigHash":"86b16b30f106734da4f4f55656622d5ddde2e7076ec0004c1b21ef5df4823e97"}
  *
@@ -868,7 +870,7 @@ export function WriteErrorSummaryText(output: GoInterface<Writer>, allDiagnostic
   if (errorSummary!.SortedFiles.length > 0) {
     firstFile = errorSummary!.SortedFiles[0];
   }
-  const firstFileName = prettyPathForFileError(firstFile as FileLike, firstFile !== undefined ? (errorSummary!.ErrorsByFile.get(firstFile) ?? []) : [], formatOpts);
+  const firstFileName = prettyPathForFileError(firstFile as FileLike, firstFile !== undefined ? (errorSummary!.ErrorsByFile.get(firstFile) ?? GoSliceMake(0, 0, GoInterfaceValueOps<Diagnostic>())) : GoSliceMake(0, 0, GoInterfaceValueOps<Diagnostic>()), formatOpts);
   const numErroringFiles = errorSummary!.ErrorsByFile.size;
 
   let message: string;
@@ -1163,10 +1165,10 @@ export function FormatDiagnosticsStatusAndTime(output: GoInterface<Writer>, time
  * 	diagnostics.File_change_detected_Starting_incremental_compilation.Code(),
  * }
  */
-export let ScreenStartingCodes: GoSlice<int> = [
-  Message_Code(Starting_compilation_in_watch_mode),
-  Message_Code(File_change_detected_Starting_incremental_compilation),
-];
+export let ScreenStartingCodes: GoSlice<int> = GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, Message_Code(Starting_compilation_in_watch_mode), GoNumberValueOps);
+  GoSliceStore(__goSliceLiteral, 1, Message_Code(File_change_detected_Starting_incremental_compilation), GoNumberValueOps);
+});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::func::TryClearScreen","kind":"func","status":"implemented","sigHash":"60beee6514b86b5739fd9eaf27ff072f8460c6bef7a5a96a5cdbda1ea79c9463"}

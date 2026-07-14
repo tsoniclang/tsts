@@ -49,6 +49,8 @@ import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 import { emitFiles } from "./emitfileshandler.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::SignatureUpdateKind","kind":"type","status":"implemented","sigHash":"b55af211c61625d503f2cc14340da8cff9e286acac2d696a37b7b1fe9aa065d0"}
  *
@@ -491,7 +493,7 @@ export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx:
   if (result !== undefined) {
     return result.Diagnostics;
   }
-  return [];
+  return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
 }
 
 /**
@@ -647,7 +649,9 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
     if (ok) {
       return;
     }
-    affectedFiles = [file];
+    affectedFiles = GoSliceBuild(1, 1, GoPointerValueOps<SourceFile>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, file, GoPointerValueOps<SourceFile>());
+    });
   } else {
     for (const f of compiler_Program_GetSourceFiles(receiver!.program)) {
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
@@ -769,17 +773,19 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: GoInterface
   if (err !== undefined) {
     return {
       EmitSkipped: true as bool,
-      Diagnostics: [],
-      EmittedFiles: [],
-      SourceMaps: [],
+      Diagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
+      EmittedFiles: GoSliceMake(0, 0, GoStringValueOps),
+      SourceMaps: GoSliceMake(0, 0, GoPointerValueOps<SourceMapEmitResult>()),
     };
   }
   receiver!.snapshot!.buildInfoEmitPending.Store(false as bool);
   return {
     EmitSkipped: false as bool,
-    Diagnostics: [],
-    EmittedFiles: [buildInfoFileName],
-    SourceMaps: [],
+    Diagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
+    EmittedFiles: GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, buildInfoFileName, GoStringValueOps);
+    }),
+    SourceMaps: GoSliceMake(0, 0, GoPointerValueOps<SourceMapEmitResult>()),
   };
 }
 
@@ -870,7 +876,7 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: G
         hasEmitDiagnostics = true;
         break;
       }
-      if (hasIncludeProcessingDiagnostics === undefined && (compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file) ?? []).length > 0) {
+      if (hasIncludeProcessingDiagnostics === undefined && (compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file) ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())).length > 0) {
         hasIncludeProcessingDiagnostics = (): bool => true as bool;
       }
     }
@@ -881,7 +887,7 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: G
     hasEmitDiagnostics = receiver!.snapshot!.hasEmitDiagnostics;
     hasIncludeProcessingDiagnostics = (): bool => {
       return compiler_Program_GetSourceFiles(program).some((file: GoPtr<SourceFile>) =>
-        (compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file) ?? []).length > 0
+        (compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file) ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())).length > 0
       ) as bool;
     };
   }

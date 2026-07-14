@@ -158,6 +158,8 @@ import {
 } from "../../diagnostics/generated/messages.js";
 import { Checker_addDiagnostic } from "../checker.js";
 import { Checker_addOptionalityEx } from "./support-queries.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 
 function zeroNodeLinks(): NodeLinks {
   return {
@@ -310,7 +312,7 @@ export function Checker_getTypePredicateParent(receiver: GoPtr<Checker>, node: G
  * }
  */
 export function Checker_checkIfTypePredicateVariableIsDeclaredInBindingPattern(receiver: GoPtr<Checker>, pattern: GoPtr<Node>, predicateVariableNode: GoPtr<Node>, predicateVariableName: string): bool {
-  for (const element of Node_Elements(pattern) ?? []) {
+  for (const element of Node_Elements(pattern) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     const name = Node_Name(element);
     if (name === undefined) {
       continue;
@@ -862,7 +864,7 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
       IsBindingElement(declaration) &&
       Node_Initializer(declaration) === undefined &&
       !hasDotDotDotToken(declaration) &&
-      (Node_Elements(declaration!.Parent) ?? []).length >= 2
+      (Node_Elements(declaration!.Parent) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length >= 2
     ) {
       const parent = declaration!.Parent!.Parent;
       const rootDeclaration = GetRootDeclaration(parent);
@@ -904,7 +906,7 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
     ) {
       const fn = declaration!.Parent;
       if (
-        (Node_Parameters(fn) ?? []).length >= 2 &&
+        (Node_Parameters(fn) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length >= 2 &&
         Checker_isContextSensitiveFunctionOrObjectLiteralMethod(receiver, fn)
       ) {
         const contextualSignature = Checker_getContextualSignature(receiver, fn);
@@ -918,10 +920,10 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
           if (
             (restType!.flags & TypeFlagsUnion) !== 0 &&
             everyType(restType, isTupleType) &&
-            !(Node_Parameters(fn) ?? []).some((param) => Checker_isSomeSymbolAssigned(receiver, param))
+            !(Node_Parameters(fn) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).some((param) => Checker_isSomeSymbolAssigned(receiver, param))
           ) {
             const narrowedType = Checker_getFlowTypeOfReferenceEx(receiver, fn, restType, restType, undefined, getFlowNodeOfNode(location));
-            const index = (Node_Parameters(fn) ?? []).indexOf(declaration) - (GetThisParameter(fn) !== undefined ? 1 : 0);
+            const index = (Node_Parameters(fn) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).indexOf(declaration) - (GetThisParameter(fn) !== undefined ? 1 : 0);
             t = Checker_getIndexedAccessType(receiver, narrowedType, Checker_getNumberLiteralType(receiver, index));
           }
         }
@@ -1107,7 +1109,10 @@ export function Checker_getConditionalFlowTypeOfType(receiver: GoPtr<Checker>, t
         if (typeParameter !== undefined) {
           const constraint = Checker_getConstraintOfTypeParameter(receiver, typeParameter);
           if (constraint !== undefined && everyType(constraint, (tt) => Checker_isArrayOrTupleType(receiver, tt))) {
-            constraints = GoSliceAppend(constraints, Checker_getUnionType(receiver, [receiver!.numberType, receiver!.numericStringType]), GoPointerValueOps<Type>());
+            constraints = GoSliceAppend(constraints, Checker_getUnionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+              GoSliceStore(__goSliceLiteral, 0, receiver!.numberType, GoPointerValueOps<Type>());
+              GoSliceStore(__goSliceLiteral, 1, receiver!.numericStringType, GoPointerValueOps<Type>());
+            })), GoPointerValueOps<Type>());
           }
         }
       }

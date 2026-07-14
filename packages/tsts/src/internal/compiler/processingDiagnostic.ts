@@ -21,6 +21,8 @@ import type { Program } from "./program.js";
 const fileIncludeReasonKey: GoMapKeyDescriptor<GoPtr<FileIncludeReason>> = GoPointerKey<FileIncludeReason>();
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnosticKind","kind":"type","status":"implemented","sigHash":"bb346ba4b5dd9c7c0d634136ea2a4939fb3cd88f82cacd0e7062c6e905c7e61e"}
  *
@@ -265,7 +267,7 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
 
   if (diag!.file !== "") {
     const reasons = includeProcessor!.fileIncludeReasons.get(diag!.file);
-    includeDetails = [];
+    includeDetails = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
     if (reasons !== undefined) {
       for (const reason of reasons) {
         processInclude(reason);
@@ -281,7 +283,9 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
   if (includeDetails.length > 0 && (preferredLocation === undefined || Set_Len(seenReasons) !== 1)) {
     const fileReason = NewCompilerDiagnostic(The_file_is_in_the_program_because_Colon);
     Diagnostic_SetMessageChain(fileReason, includeDetails);
-    chain = [fileReason];
+    chain = GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, fileReason, GoPointerValueOps<Diagnostic>());
+    });
   }
   if (redirectInfo.length > 0) {
     chain = GoSliceAppendSlice(chain, redirectInfo, GoPointerValueOps<Diagnostic>());

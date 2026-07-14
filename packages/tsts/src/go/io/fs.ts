@@ -3,6 +3,8 @@ import type { GoDefined, GoError, GoFunc, GoInterface, GoPtr, GoSlice } from "..
 import { Time } from "../time.js";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
+import { GoInterfaceValueOps, GoSliceMake } from "../compat.js";
+
 
 export type FileMode = number;
 
@@ -127,20 +129,20 @@ export function ReadFileBytes(fsys: FS, name: string): [Uint8Array, GoError] {
 export function ReadDir(fsys: FS, name: string): [GoSlice<GoInterface<DirEntry>>, GoError] {
   const [file, openErr] = fsys.Open(name);
   if (openErr !== undefined) {
-    return [[], openErr];
+    return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), openErr];
   }
   const readDirFile = file as Partial<ReadDirFile>;
   if (readDirFile.ReadDir === undefined) {
     const closeErr = file!.Close();
-    return [[], closeErr ?? ErrInvalid];
+    return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), closeErr ?? ErrInvalid];
   }
   const [entries, readErr] = readDirFile.ReadDir(-1 as int);
   const closeErr = file!.Close();
   if (readErr !== undefined) {
-    return [[], readErr];
+    return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), readErr];
   }
   if (closeErr !== undefined) {
-    return [[], closeErr];
+    return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), closeErr];
   }
   return [entries, undefined];
 }
@@ -299,7 +301,7 @@ function openNodeFile(root: string, name: string): [GoInterface<File>, GoError] 
     };
     if (stats.isDirectory()) {
       file.ReadDir = (n: int): [GoSlice<GoInterface<DirEntry>>, GoError] => {
-        if (closed) return [[], ErrClosed];
+        if (closed) return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), ErrClosed];
         try {
           directoryEntries ??= nodeFs.readdirSync(fullPath, { withFileTypes: true }).map(dirEntryFromNodeDirent);
           const end = n <= 0 ? directoryEntries.length : Math.min(directoryEntries.length, directoryOffset + n);
@@ -307,7 +309,7 @@ function openNodeFile(root: string, name: string): [GoInterface<File>, GoError] 
           directoryOffset = end;
           return [entries, undefined];
         } catch (error) {
-          return [[], normalizeFsError(error)];
+          return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), normalizeFsError(error)];
         }
       };
     }

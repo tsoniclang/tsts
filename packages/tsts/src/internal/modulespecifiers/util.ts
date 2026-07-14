@@ -27,6 +27,8 @@ import type { ModulePath, ModuleSpecifierEnding, ModuleSpecifierGenerationHost, 
 import { ModuleSpecifierEndingIndex, ModuleSpecifierEndingJsExtension, ModuleSpecifierEndingMinimal, ModuleSpecifierEndingTsExtension } from "./types.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceStore } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::type::regexPatternCacheKey","kind":"type","status":"implemented","sigHash":"63f8dffdde16d3c433e1fb857a621811381ec4edabce90ea5657ef97194fce9d"}
  *
@@ -973,7 +975,9 @@ export function ProcessEntrypointEnding(entrypoint: GoPtr<ResolvedEntrypoint>, p
       case ModuleSpecifierEndingJsExtension: {
         // Map .d.ts -> .js, .d.mts -> .mjs, .d.cts -> .cjs
         const jsExtension = GetJSExtensionForDeclarationFileExtension(dtsExtension);
-        return ChangeAnyExtension(specifier, jsExtension, [dtsExtension], false);
+        return ChangeAnyExtension(specifier, jsExtension, GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, dtsExtension, GoStringValueOps);
+        }), false);
       }
       case ModuleSpecifierEndingMinimal:
       case ModuleSpecifierEndingIndex:
@@ -987,19 +991,28 @@ export function ProcessEntrypointEnding(entrypoint: GoPtr<ResolvedEntrypoint>, p
             return specifier;
           }
           const jsExtension2 = GetJSExtensionForDeclarationFileExtension(dtsExtension);
-          return ChangeAnyExtension(specifier, jsExtension2, [dtsExtension], false);
+          return ChangeAnyExtension(specifier, jsExtension2, GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, dtsExtension, GoStringValueOps);
+          }), false);
         }
         // EndingExtensionChangeable - can only change extension, not remove it
         {
           const jsExtension3 = GetJSExtensionForDeclarationFileExtension(dtsExtension);
-          return ChangeAnyExtension(specifier, jsExtension3, [dtsExtension], false);
+          return ChangeAnyExtension(specifier, jsExtension3, GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, dtsExtension, GoStringValueOps);
+          }), false);
         }
     }
     return specifier;
   }
 
   // Handle .ts/.tsx/.mts/.cts extensions
-  if (FileExtensionIsOneOf(specifier, [ExtensionTs, ExtensionTsx, ExtensionMts, ExtensionCts])) {
+  if (FileExtensionIsOneOf(specifier, GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionTs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionTsx, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionMts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 3, ExtensionCts, GoStringValueOps);
+  }))) {
     switch (preferredEnding) {
       case ModuleSpecifierEndingTsExtension:
         return specifier;
@@ -1032,7 +1045,12 @@ export function ProcessEntrypointEnding(entrypoint: GoPtr<ResolvedEntrypoint>, p
   }
 
   // Handle .js/.jsx/.mjs/.cjs extensions
-  if (FileExtensionIsOneOf(specifier, [ExtensionJs, ExtensionJsx, ExtensionMjs, ExtensionCjs])) {
+  if (FileExtensionIsOneOf(specifier, GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionJs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionJsx, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionMjs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 3, ExtensionCjs, GoStringValueOps);
+  }))) {
     switch (preferredEnding) {
       case ModuleSpecifierEndingTsExtension:
       case ModuleSpecifierEndingJsExtension:

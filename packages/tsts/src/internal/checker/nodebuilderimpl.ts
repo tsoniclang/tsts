@@ -380,6 +380,8 @@ import { isExpanding } from "./nodebuilder_hover.js";
 import * as slices from "../../go/slices.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore, GoSliceValueOps, GoStringValueOps } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::type::CompositeSymbolIdentity","kind":"type","status":"implemented","sigHash":"34b94602045468ce4801ed8661c2bcd1d48e14cd0dd0bd5326decd357a921eff"}
  *
@@ -1024,7 +1026,7 @@ export function NodeBuilderImpl_appendReferenceToType(receiver: GoPtr<NodeBuilde
  */
 export function getAccessStack(ref: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   let state: GoPtr<Node> = AsTypeReferenceNode(ref)!.TypeName;
-  let ids: GoSlice<GoPtr<Node>> = [];
+  let ids: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   while (!IsIdentifier(state)) {
     const entity = AsQualifiedName(state)!;
     ids = GoAppendSlice([entity.Right], ids);
@@ -1175,13 +1177,15 @@ export function NodeBuilderImpl_mapToTypeNodes(receiver: GoPtr<NodeBuilderImpl>,
       const node = (receiver!.ctx!.flags & FlagsNoTruncation) !== 0
         ? EmitContext_AddSyntheticLeadingComment(receiver!.e, NewKeywordTypeNode(receiver!.f, KindAnyKeyword), KindMultiLineCommentTrivia, "elided", false)
         : NewTypeReferenceNode(receiver!.f, NewIdentifier(receiver!.f, "..."), undefined);
-      return NodeFactory_NewNodeList(receiver!.f, [node]);
+      return NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, node, GoPointerValueOps<Node>());
+      }));
     } else if (list.length > 2) {
-      const nodes: GoSlice<GoPtr<Node>> = [
-        NodeBuilderImpl_typeToTypeNode(receiver, list[0]),
-        undefined,
-        NodeBuilderImpl_typeToTypeNode(receiver, list[list.length - 1]),
-      ];
+      const nodes: GoSlice<GoPtr<Node>> = GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, NodeBuilderImpl_typeToTypeNode(receiver, list[0]), GoPointerValueOps<Node>());
+        GoSliceStore(__goSliceLiteral, 1, undefined, GoPointerValueOps<Node>());
+        GoSliceStore(__goSliceLiteral, 2, NodeBuilderImpl_typeToTypeNode(receiver, list[list.length - 1]), GoPointerValueOps<Node>());
+      });
       nodes[1] = (receiver!.ctx!.flags & FlagsNoTruncation) !== 0
         ? EmitContext_AddSyntheticLeadingComment(receiver!.e, NewKeywordTypeNode(receiver!.f, KindAnyKeyword), KindMultiLineCommentTrivia, `... ${list.length - 2} more elided ...`, false)
         : NewTypeReferenceNode(receiver!.f, NewIdentifier(receiver!.f, `... ${list.length - 2} more ...`), undefined);
@@ -1190,7 +1194,7 @@ export function NodeBuilderImpl_mapToTypeNodes(receiver: GoPtr<NodeBuilderImpl>,
   }
   const mayHaveNameCollisions = (receiver!.ctx!.flags & FlagsUseFullyQualifiedType) === 0;
   const seenNames: GoPtr<MultiMap<string, { t: GoPtr<Type>; i: int }>> = mayHaveNameCollisions ? { M: new globalThis.Map() } : undefined;
-  let result: GoSlice<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   let i = 0;
   for (const t of list) {
     const displayIndex = i + 1;
@@ -1378,14 +1382,20 @@ export function NodeBuilderImpl_tryReuseExistingTypeNode(receiver: GoPtr<NodeBui
   const clone = NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver, typeNode, effectiveT, host, undefined);
   if (clone !== undefined) {
     if (addUndefined && containsNonMissingUndefinedType(receiver!.ch, effectiveT) && !someType(NodeBuilderImpl_getTypeFromTypeNode(receiver, typeNode, false), (inner) => (inner!.flags & TypeFlagsUndefined) !== 0)) {
-      return NewUnionTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, [clone, NewKeywordTypeNode(receiver!.f, KindUndefinedKeyword)]));
+      return NewUnionTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, clone, GoPointerValueOps<Node>());
+        GoSliceStore(__goSliceLiteral, 1, NewKeywordTypeNode(receiver!.f, KindUndefinedKeyword), GoPointerValueOps<Node>());
+      })));
     }
     return clone;
   }
   if (addUndefined && originalType !== effectiveT) {
     const cloneMissingUndefined = NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver, typeNode, originalType, host, undefined);
     if (cloneMissingUndefined !== undefined) {
-      return NewUnionTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, [cloneMissingUndefined, NewKeywordTypeNode(receiver!.f, KindUndefinedKeyword)]));
+      return NewUnionTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, cloneMissingUndefined, GoPointerValueOps<Node>());
+        GoSliceStore(__goSliceLiteral, 1, NewKeywordTypeNode(receiver!.f, KindUndefinedKeyword), GoPointerValueOps<Node>());
+      })));
     }
   }
   return undefined;
@@ -1547,7 +1557,7 @@ export function NodeBuilderImpl_getResolvedTypeWithoutAbstractConstructSignature
     t!.objectTypeWithoutAbstractConstructSignatures = asType;
     return asType;
   }
-  const typeCopy = Checker_newAnonymousType(receiver!.ch, asType!.symbol, t!.members, StructuredType_CallSignatures(t), constructSignatures.length > 0 ? constructSignatures : [], t!.indexInfos);
+  const typeCopy = Checker_newAnonymousType(receiver!.ch, asType!.symbol, t!.members, StructuredType_CallSignatures(t), constructSignatures.length > 0 ? constructSignatures : GoSliceMake(0, 0, GoPointerValueOps<Signature>()), t!.indexInfos);
   t!.objectTypeWithoutAbstractConstructSignatures = typeCopy;
   Type_AsStructuredType(typeCopy)!.objectTypeWithoutAbstractConstructSignatures = typeCopy;
   return typeCopy;
@@ -1836,7 +1846,9 @@ export function NodeBuilderImpl_symbolToTypeNode(receiver: GoPtr<NodeBuilderImpl
           attributes = NewImportAttributes(
             receiver!.f,
             KindWithKeyword,
-            NodeFactory_NewNodeList(receiver!.f, [NewImportAttribute(receiver!.f, NodeBuilderImpl_newStringLiteral(receiver, "resolution-mode") as never, NodeBuilderImpl_newStringLiteral(receiver, "import") as GoPtr<Expression>)]),
+            NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+              GoSliceStore(__goSliceLiteral, 0, NewImportAttribute(receiver!.f, NodeBuilderImpl_newStringLiteral(receiver, "resolution-mode") as never, NodeBuilderImpl_newStringLiteral(receiver, "import") as GoPtr<Expression>), GoPointerValueOps<Node>());
+            })),
             false as bool,
           );
         }
@@ -1863,7 +1875,9 @@ export function NodeBuilderImpl_symbolToTypeNode(receiver: GoPtr<NodeBuilderImpl
           attributes = NewImportAttributes(
             receiver!.f,
             KindWithKeyword,
-            NodeFactory_NewNodeList(receiver!.f, [NewImportAttribute(receiver!.f, NodeBuilderImpl_newStringLiteral(receiver, "resolution-mode") as never, NodeBuilderImpl_newStringLiteral(receiver, modeStr) as GoPtr<Expression>)]),
+            NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+              GoSliceStore(__goSliceLiteral, 0, NewImportAttribute(receiver!.f, NodeBuilderImpl_newStringLiteral(receiver, "resolution-mode") as never, NodeBuilderImpl_newStringLiteral(receiver, modeStr) as GoPtr<Expression>), GoPointerValueOps<Node>());
+            })),
             false as bool,
           );
         }
@@ -2488,7 +2502,7 @@ export function NodeBuilderImpl_getNameOfSymbolAsWritten(receiver: GoPtr<NodeBui
 export function NodeBuilderImpl_getTypeParametersOfClassOrInterface(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Type>> {
   const outer = Checker_getOuterTypeParametersOfClassOrInterface(receiver!.ch, symbol_);
   const local = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver!.ch, symbol_);
-  let result: GoSlice<GoPtr<Type>> = [];
+  let result: GoSlice<GoPtr<Type>> = GoSliceMake(0, 0, GoPointerValueOps<Type>());
   result = GoSliceAppendSlice(result, outer, GoPointerValueOps<Type>());
   result = GoSliceAppendSlice(result, local, GoPointerValueOps<Type>());
   return result;
@@ -2727,7 +2741,9 @@ export function NodeBuilderImpl_getSymbolChain(receiver: GoPtr<NodeBuilderImpl>,
     if (!endOfChain && !yieldModuleSymbol && Some(symbol_!.Declarations, hasNonGlobalAugmentationExternalModuleSymbol)) {
       return GoNilSlice();
     }
-    return [symbol_];
+    return GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, symbol_, GoPointerValueOps<Symbol>());
+    });
   }
   return GoNilSlice();
 }
@@ -3020,7 +3036,7 @@ export function tryGetModuleSpecifierFromDeclarationWorker(node: GoPtr<Node>): G
 export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, overrideImportMode: ResolutionMode): string {
   let file = GetDeclarationOfKind(symbol_, KindSourceFile);
   if (file === undefined) {
-    const equivalentSymbol = FirstNonNil(symbol_!.Declarations ?? [], (d) => Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver!.ch, d, symbol_), GoZeroPointer<Symbol>, GoEqualStrict<GoPtr<Symbol>>);
+    const equivalentSymbol = FirstNonNil(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (d) => Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver!.ch, d, symbol_), GoZeroPointer<Symbol>, GoEqualStrict<GoPtr<Symbol>>);
     if (equivalentSymbol !== undefined) {
       file = GetDeclarationOfKind(equivalentSymbol as GoPtr<Symbol>, KindSourceFile);
     }
@@ -3086,7 +3102,7 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
     {
       ImportModuleSpecifierPreference: specifierPref,
       ImportModuleSpecifierEnding: endingPref,
-      AutoImportSpecifierExcludeRegexes: [],
+      AutoImportSpecifierExcludeRegexes: GoSliceMake(0, 0, GoStringValueOps),
     },
     { OverrideImportMode: overrideImportMode },
     false as bool,
@@ -3131,7 +3147,7 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
 export function NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receiver: GoPtr<NodeBuilderImpl>, typeParameter: GoPtr<Type>, constraintNode: GoPtr<TypeNode>): GoPtr<TypeParameterDeclarationNode> {
   const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
   receiver!.ctx!.flags &= ~FlagsWriteTypeParametersInQualifiedName;
-  const modifiers = CreateModifiersFromModifierFlags(Checker_getTypeParameterModifiers(receiver!.ch, typeParameter), (kind) => NodeFactory_NewModifier(receiver!.f, kind)) ?? [];
+  const modifiers = CreateModifiersFromModifierFlags(Checker_getTypeParameterModifiers(receiver!.ch, typeParameter), (kind) => NodeFactory_NewModifier(receiver!.f, kind)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const modifiersList = modifiers.length > 0 ? NodeFactory_NewModifierList(receiver!.f, modifiers) : undefined;
   const name = NodeBuilderImpl_typeParameterToName(receiver, typeParameter);
   const defaultParameter = Checker_getDefaultFromTypeParameter(receiver!.ch, typeParameter);
@@ -3517,8 +3533,14 @@ export function NodeBuilderImpl_createMappedTypeNodeFromType(receiver: GoPtr<Nod
         b.ch,
         Checker_getTemplateTypeFromMappedType(b.ch, target),
         newTypeMapper(
-          [Checker_getTypeParameterFromMappedType(b.ch, target), Checker_getModifiersTypeFromMappedType(b.ch, target)],
-          [typeParameter, newConstraintParam],
+          GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, Checker_getTypeParameterFromMappedType(b.ch, target), GoPointerValueOps<Type>());
+            GoSliceStore(__goSliceLiteral, 1, Checker_getModifiersTypeFromMappedType(b.ch, target), GoPointerValueOps<Type>());
+          }),
+          GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, typeParameter, GoPointerValueOps<Type>());
+            GoSliceStore(__goSliceLiteral, 1, newConstraintParam, GoPointerValueOps<Type>());
+          }),
         ),
       );
     }
@@ -3535,7 +3557,9 @@ export function NodeBuilderImpl_createMappedTypeNodeFromType(receiver: GoPtr<Nod
     appropriateConstraintTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, constraintType);
   }
 
-  const cleanup = NodeBuilderImpl_enterNewScope(receiver, mapped.declaration, GoNilSlice(), [typeParameter], GoNilSlice(), undefined);
+  const cleanup = NodeBuilderImpl_enterNewScope(receiver, mapped.declaration, GoNilSlice(), GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, typeParameter, GoPointerValueOps<Type>());
+  }), GoNilSlice(), undefined);
   const typeParameterDeclarationNode = NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receiver, typeParameter, appropriateConstraintTypeNode);
   const nameTypeNode = declaration.NameType !== undefined
     ? NodeBuilderImpl_typeToTypeNode(receiver, Checker_getNameTypeFromMappedType(b.ch, t))
@@ -3739,14 +3763,14 @@ export function NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiv
   if ((targetSymbol!.Flags & (SymbolFlagsClass | SymbolFlagsInterface | SymbolFlagsAlias)) !== 0) {
     let results: GoSlice<GoPtr<Node>> = GoNilSlice();
     const params = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver!.ch, symbol_);
-    for (const param of params ?? []) {
+    for (const param of params ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())) {
       results = GoSliceAppend(results, NodeBuilderImpl_typeParameterToDeclaration(receiver, param), GoPointerValueOps<Node>());
     }
     return results;
   }
   if ((targetSymbol!.Flags & SymbolFlagsFunction) !== 0) {
     let results: GoSlice<GoPtr<Node>> = GoNilSlice();
-    for (const param of Checker_getTypeParametersFromDeclaration(receiver!.ch, symbol_!.ValueDeclaration) ?? []) {
+    for (const param of Checker_getTypeParametersFromDeclaration(receiver!.ch, symbol_!.ValueDeclaration) ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())) {
       results = GoSliceAppend(results, NodeBuilderImpl_typeParameterToDeclaration(receiver, param), GoPointerValueOps<Node>());
     }
     return results;
@@ -3827,7 +3851,7 @@ export function NodeBuilderImpl_symbolToParameterDeclaration(receiver: GoPtr<Nod
   const parameterTypeNode = NodeBuilderImpl_serializeTypeForDeclaration(receiver, parameterDeclaration as GoPtr<Declaration>, parameterType, parameterSymbol, true as bool);
   let modifiers: GoPtr<NodeList>;
   if ((receiver!.ctx!.flags & FlagsOmitParameterModifiers) === 0 && preserveModifierFlags && parameterDeclaration !== undefined && CanHaveModifiers(parameterDeclaration)) {
-    const originals = Filter(Node_ModifierNodes(parameterDeclaration) ?? [], IsModifier);
+    const originals = Filter(Node_ModifierNodes(parameterDeclaration) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsModifier);
     const clones = CoreMap(originals, (node) => Node_Clone(node, receiver!.f as unknown as NodeFactoryCoercible));
     if (clones.length > 0) {
       modifiers = NodeFactory_NewModifierList(receiver!.f, clones);
@@ -4190,8 +4214,8 @@ export interface SignatureToSignatureDeclarationOptions {
 export function NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>, kind: Kind, options: GoPtr<SignatureToSignatureDeclarationOptions>): GoPtr<Node> {
   let typeParameters: GoSlice<GoPtr<Node>> = GoNilSlice();
   const [expandedParams, cleanup] = NodeBuilderImpl_enterSignatureScope(receiver, signature);
-  const signatureParameters = signature!.parameters ?? [];
-  const signatureTypeParameters = signature!.typeParameters ?? [];
+  const signatureParameters = signature!.parameters ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>());
+  const signatureTypeParameters = signature!.typeParameters ?? GoSliceMake(0, 0, GoPointerValueOps<Type>());
   receiver!.ctx!.approximateLength += 3;
   if ((receiver!.ctx!.flags & FlagsWriteTypeArgumentsOfSignature) !== 0 && signature!.target !== undefined && signature!.mapper !== undefined && signature!.target!.typeParameters.length !== 0) {
     for (const parameter of signature!.target!.typeParameters) {
@@ -4265,10 +4289,10 @@ export function NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver: 
       node = NewFunctionDeclaration(receiver!.f, modifierList as never, undefined, name as never, typeParamList as never, paramList as never, returnTypeNode, undefined, undefined);
       break;
     case KindFunctionExpression:
-      node = NewFunctionExpression(receiver!.f, modifierList as never, undefined, name as never, typeParamList as never, paramList as never, returnTypeNode, undefined, NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []), false) as never);
+      node = NewFunctionExpression(receiver!.f, modifierList as never, undefined, name as never, typeParamList as never, paramList as never, returnTypeNode, undefined, NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false) as never);
       break;
     case KindArrowFunction:
-      node = NewArrowFunction(receiver!.f, modifierList as never, typeParamList as never, paramList as never, returnTypeNode, undefined, undefined, NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []), false) as never);
+      node = NewArrowFunction(receiver!.f, modifierList as never, typeParamList as never, paramList as never, returnTypeNode, undefined, undefined, NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false) as never);
       break;
     default:
       throw new globalThis.Error("Unhandled kind in signatureToSignatureDeclarationHelper");
@@ -4379,7 +4403,7 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
         ? Type_AsTupleType(Type_Target(t))!.elementInfos.map((info, index) => Checker_getTupleElementLabel(receiver, info, tupleRestSymbol, index))
         : [];
       if (names.length > 0) {
-        let duplicates: GoSlice<int> = [];
+        let duplicates: GoSlice<int> = GoSliceMake(0, 0, GoNumberValueOps);
         const uniqueNames = new globalThis.Map<string, bool>();
         for (let i = 0; i < names.length; i++) {
           if (uniqueNames.has(names[i]!)) {
@@ -4428,13 +4452,17 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
       return Concatenate(sig!.parameters.slice(0, tupleRestIndex), restParams);
     };
     if (isTupleType(restType)) {
-      return [expandSignatureParametersWithTupleMembers(restType, restIndex, restSymbol)];
+      return GoSliceBuild(1, 1, GoSliceValueOps<GoPtr<Symbol>>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, expandSignatureParametersWithTupleMembers(restType, restIndex, restSymbol), GoSliceValueOps<GoPtr<Symbol>>());
+      });
     }
     if (!skipUnionExpanding && (restType!.flags & TypeFlagsUnion) !== 0 && Every(Type_Types(restType), isTupleType)) {
       return Type_Types(restType).map((type_) => expandSignatureParametersWithTupleMembers(type_, restIndex, restSymbol));
     }
   }
-  return [sig!.parameters];
+  return GoSliceBuild(1, 1, GoSliceValueOps<GoPtr<Symbol>>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, sig!.parameters, GoSliceValueOps<GoPtr<Symbol>>());
+  });
 }
 
 /**
@@ -4670,7 +4698,9 @@ export function NodeBuilderImpl_indexInfoToObjectComputedNamesOrSignatureDeclara
           NodeBuilderImpl_trackComputedName(receiver, Node_Expression(Node_Name(e)), receiver!.ctx!.enclosingDeclaration);
           let mods: GoPtr<ModifierList>;
           if (indexInfo!.isReadonly) {
-            mods = NodeFactory_NewModifierList(receiver!.f, [NodeFactory_NewModifier(receiver!.f, KindReadonlyKeyword)]);
+            mods = NodeFactory_NewModifierList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+              GoSliceStore(__goSliceLiteral, 0, NodeFactory_NewModifier(receiver!.f, KindReadonlyKeyword), GoPointerValueOps<Node>());
+            }));
           }
           let postfixToken: GoPtr<Node>;
           if (Node_PostfixToken(e) !== undefined) {
@@ -4701,7 +4731,9 @@ export function NodeBuilderImpl_indexInfoToObjectComputedNamesOrSignatureDeclara
       }
     }
   }
-  return [NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, indexInfo, typeNode)];
+  return GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, indexInfo, typeNode), GoPointerValueOps<Node>());
+  });
 }
 
 /**
@@ -4751,9 +4783,13 @@ export function NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(recei
   let modifiers: GoPtr<NodeList>;
   if (indexInfo!.isReadonly) {
     receiver!.ctx!.approximateLength += 9;
-    modifiers = NodeFactory_NewModifierList(receiver!.f, [NodeFactory_NewModifier(receiver!.f, KindReadonlyKeyword)]);
+    modifiers = NodeFactory_NewModifierList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NodeFactory_NewModifier(receiver!.f, KindReadonlyKeyword), GoPointerValueOps<Node>());
+    }));
   }
-  return NewIndexSignatureDeclaration(receiver!.f, modifiers as never, NodeFactory_NewNodeList(receiver!.f, [indexingParameter]), resolvedTypeNode);
+  return NewIndexSignatureDeclaration(receiver!.f, modifiers as never, NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, indexingParameter, GoPointerValueOps<Node>());
+  })), resolvedTypeNode);
 }
 
 /**
@@ -4874,7 +4910,7 @@ export function NodeBuilderImpl_serializeTypeForDeclaration(receiver: GoPtr<Node
   if (declaration === undefined && symbol_ !== undefined) {
     declaration = symbol_!.ValueDeclaration as GoPtr<Declaration>;
     if (declaration === undefined) {
-      declaration = FirstOrNil(symbol_!.Declarations ?? [], GoZeroPointer<Node>) as GoPtr<Declaration>;
+      declaration = FirstOrNil(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), GoZeroPointer<Node>) as GoPtr<Declaration>;
     }
   }
   if (symbol_ === undefined && declaration !== undefined) {
@@ -4925,7 +4961,7 @@ export function NodeBuilderImpl_serializeTypeForDeclaration(receiver: GoPtr<Node
       pt = PseudoChecker_GetTypeOfDeclaration(receiver!.pc, declaration);
     }
     if ((pt === undefined || pt!.Kind === PseudoTypeKindNoResult) && IsBinaryExpression(declaration)) {
-      const decl = Find(symbol_!.Declarations ?? [], hasTypeAnnotation, GoZeroPointer<Node>);
+      const decl = Find(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), hasTypeAnnotation, GoZeroPointer<Node>);
       if (decl !== undefined) {
         // Binary expressions have a first-in-wins type annotation system. The first one with an annotation supplies the type for the rest.
         pt = PseudoChecker_GetTypeOfDeclaration(receiver!.pc, decl as GoPtr<Declaration>);
@@ -4944,7 +4980,10 @@ export function NodeBuilderImpl_serializeTypeForDeclaration(receiver: GoPtr<Node
       let pseudoType: GoPtr<PseudoType> = pt;
       const pseudoTypeType = NodeBuilderImpl_pseudoTypeToType(receiver, pt);
       if (pseudoTypeType !== undefined && requiresAddingUndefined && containsNonMissingUndefinedType(receiver!.ch, t) && !containsNonMissingUndefinedType(receiver!.ch, pseudoTypeType)) {
-        pseudoType = NewPseudoTypeUnion([pt, PseudoTypeUndefined]);
+        pseudoType = NewPseudoTypeUnion(GoSliceBuild(2, 2, GoPointerValueOps<PseudoType>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, pt, GoPointerValueOps<PseudoType>());
+          GoSliceStore(__goSliceLiteral, 1, PseudoTypeUndefined, GoPointerValueOps<PseudoType>());
+        }));
       }
       result = NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver, pseudoType, t);
     } else if (pt !== undefined) {
@@ -4952,7 +4991,10 @@ export function NodeBuilderImpl_serializeTypeForDeclaration(receiver: GoPtr<Node
         pt!.Kind === PseudoTypeKindInferred &&
         PseudoType_AsPseudoTypeInferred(pt)!.ErrorNodes.length > 0;
       if (requiresAddingUndefined) {
-        const pseudoType = NewPseudoTypeUnion([pt, PseudoTypeUndefined]);
+        const pseudoType = NewPseudoTypeUnion(GoSliceBuild(2, 2, GoPointerValueOps<PseudoType>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, pt, GoPointerValueOps<PseudoType>());
+          GoSliceStore(__goSliceLiteral, 1, PseudoTypeUndefined, GoPointerValueOps<PseudoType>());
+        }));
         if (NodeBuilderImpl_pseudoTypeEquivalentToType(receiver, pseudoType, t, false as bool, reportErrors)) {
           result = NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver, pseudoType, t);
           reportedInferenceFallback = false;
@@ -5568,7 +5610,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
             getterSignature = Checker_instantiateSignature(receiver!.ch, getterSignature, symbolMapper);
           }
           const getter = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, getterSignature, KindGetAccessor, {
-            modifiers: [],
+            modifiers: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
             name: propertyName,
             questionToken: undefined,
           });
@@ -5582,7 +5624,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
             setterSignature = Checker_instantiateSignature(receiver!.ch, setterSignature, symbolMapper);
           }
           const setter = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, setterSignature, KindSetAccessor, {
-            modifiers: [],
+            modifiers: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
             name: propertyName,
             questionToken: undefined,
           });
@@ -5593,10 +5635,10 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
       } else if (propertySymbol!.Parent !== undefined &&
         (propertySymbol!.Parent!.Flags & SymbolFlagsClass) !== 0 &&
         propDeclaration !== undefined &&
-        Some(Node_ModifierNodes(propDeclaration) ?? [], (modifier) => modifier!.Kind === KindAccessorKeyword)) {
+        Some(Node_ModifierNodes(propDeclaration) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (modifier) => modifier!.Kind === KindAccessorKeyword)) {
         const fakeGetterSignature = Checker_newSignature(receiver!.ch, SignatureFlagsNone, undefined, GoNilSlice(), undefined, GoNilSlice(), propertyType, undefined, 0);
         const fakeGetterDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, fakeGetterSignature, KindGetAccessor, {
-          modifiers: [],
+          modifiers: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
           name: propertyName,
           questionToken: undefined,
         });
@@ -5605,9 +5647,11 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
 
         const setterParam = Checker_newSymbol(receiver!.ch, SymbolFlagsFunctionScopedVariable, "arg");
         LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks, setterParam, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = writeType;
-        const fakeSetterSignature = Checker_newSignature(receiver!.ch, SignatureFlagsNone, undefined, GoNilSlice(), undefined, [setterParam], receiver!.ch!.voidType, undefined, 0);
+        const fakeSetterSignature = Checker_newSignature(receiver!.ch, SignatureFlagsNone, undefined, GoNilSlice(), undefined, GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, setterParam, GoPointerValueOps<Symbol>());
+        }), receiver!.ch!.voidType, undefined, 0);
         const fakeSetterDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, fakeSetterSignature, KindSetAccessor, {
-          modifiers: [],
+          modifiers: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
           name: propertyName,
           questionToken: undefined,
         });
@@ -5630,7 +5674,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
     );
     for (const signature of signatures) {
       const methodDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindMethodSignature, {
-        modifiers: [],
+        modifiers: GoSliceMake(0, 0, GoPointerValueOps<Node>()),
         name: propertyName,
         questionToken: optionalToken,
       });
@@ -5661,7 +5705,9 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
 
   let modifiers: GoPtr<NodeList>;
   if (Checker_isReadonlySymbol(receiver!.ch, propertySymbol)) {
-    modifiers = NodeFactory_NewModifierList(receiver!.f, [NodeFactory_NewModifier(receiver!.f, KindReadonlyKeyword)]);
+    modifiers = NodeFactory_NewModifierList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NodeFactory_NewModifier(receiver!.f, KindReadonlyKeyword), GoPointerValueOps<Node>());
+    }));
     receiver!.ctx!.approximateLength += 9;
   }
   const propertySignature = NewPropertySignatureDeclaration(receiver!.f, modifiers as never, propertyName, optionalToken, propertyTypeNode, undefined);
@@ -5741,9 +5787,13 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
   if (NodeBuilderImpl_checkTruncationLength(receiver)) {
     if ((receiver!.ctx!.flags & FlagsNoTruncation) !== 0) {
       const elem = NewNotEmittedTypeElement(receiver!.f);
-      return NodeFactory_NewNodeList(receiver!.f, [EmitContext_AddSyntheticTrailingComment(receiver!.e, elem, KindMultiLineCommentTrivia, "elided", false) as GoPtr<TypeElement>]);
+      return NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, EmitContext_AddSyntheticTrailingComment(receiver!.e, elem, KindMultiLineCommentTrivia, "elided", false) as GoPtr<TypeElement>, GoPointerValueOps<Node>());
+      }));
     }
-    return NodeFactory_NewNodeList(receiver!.f, [NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, "..."), undefined, undefined, undefined) as GoPtr<TypeElement>]);
+    return NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, "..."), undefined, undefined, undefined) as GoPtr<TypeElement>, GoPointerValueOps<Node>());
+    }));
   }
   let typeElements: GoSlice<GoPtr<TypeElement>> = GoNilSlice();
   for (const signature of StructuredType_CallSignatures(resolvedType)) {
@@ -5872,7 +5922,7 @@ export function NodeBuilderImpl_createTypeNodeFromObjectType(receiver: GoPtr<Nod
   if (resolved!.properties.length === 0 && resolved!.indexInfos.length === 0) {
     if (callSigs.length === 0 && ctorSigs.length === 0) {
       receiver!.ctx!.approximateLength += 2;
-      const result = NewTypeLiteralNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []));
+      const result = NewTypeLiteralNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())));
       EmitContext_SetEmitFlags(receiver!.e, result, EFSingleLine);
       return result as GoPtr<TypeNode>;
     }
@@ -5966,7 +6016,7 @@ export function NodeBuilderImpl_shouldWriteTypeOfFunctionSymbol(receiver: GoPtr<
     if (symbol_!.Parent !== undefined) {
       isNonLocalFunctionSymbol = true;
     } else {
-      for (const declaration of symbol_!.Declarations ?? []) {
+      for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
         if (declaration!.Parent!.Kind === KindSourceFile || declaration!.Parent!.Kind === KindModuleBlock) {
           isNonLocalFunctionSymbol = true;
           break;
@@ -6455,7 +6505,7 @@ export function NodeBuilderImpl_getParentSymbolOfTypeParameter(receiver: GoPtr<N
  * }
  */
 export function NodeBuilderImpl_typeReferenceToTypeNode(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<Type>): GoPtr<TypeNode> {
-  let typeArguments = Checker_getTypeArguments(receiver!.ch, t) ?? [];
+  let typeArguments = Checker_getTypeArguments(receiver!.ch, t) ?? GoSliceMake(0, 0, GoPointerValueOps<Type>());
   const target = Type_Target(t);
   if (target === receiver!.ch!.globalArrayType || target === receiver!.ch!.globalReadonlyArrayType) {
     if ((receiver!.ctx!.flags & FlagsWriteArrayAsGenericType) !== 0) {
@@ -6463,7 +6513,9 @@ export function NodeBuilderImpl_typeReferenceToTypeNode(receiver: GoPtr<NodeBuil
       return NewTypeReferenceNode(
         receiver!.f,
         NodeBuilderImpl_newIdentifier(receiver, target === receiver!.ch!.globalArrayType ? "Array" : "ReadonlyArray", target!.symbol),
-        NodeFactory_NewNodeList(receiver!.f, [typeArgumentNode]) as never,
+        NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, typeArgumentNode, GoPointerValueOps<Node>());
+        })) as never,
       ) as GoPtr<TypeNode>;
     }
     const elementType = NodeBuilderImpl_typeToTypeNode(receiver, typeArguments[0]);
@@ -6512,7 +6564,7 @@ export function NodeBuilderImpl_typeReferenceToTypeNode(receiver: GoPtr<NodeBuil
       }
     }
     if (receiver!.ctx!.encounteredError || (receiver!.ctx!.flags & FlagsAllowEmptyTuple) !== 0) {
-      const tupleTypeNode = NewTupleTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []) as never);
+      const tupleTypeNode = NewTupleTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())) as never);
       EmitContext_SetEmitFlags(receiver!.e, tupleTypeNode, EFSingleLine);
       if (tupleTarget!.readonly) {
         return NewTypeOperatorNode(receiver!.f, KindReadonlyKeyword, tupleTypeNode as GoPtr<TypeNode>) as GoPtr<TypeNode>;
@@ -6699,7 +6751,7 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
     const links = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration, goZeroNodeBuilderLinks, goNodePointerKey);
     const cachedResult = links!.v.serializedTypes.get(key);
     if (cachedResult !== undefined) {
-      for (const arg of cachedResult!.trackedSymbols ?? []) {
+      for (const arg of cachedResult!.trackedSymbols ?? GoSliceMake(0, 0, GoPointerValueOps<TrackedSymbolArgs>())) {
         receiver!.ctx!.tracker!.TrackSymbol(arg!.symbol, arg!.enclosingDeclaration, arg!.meaning);
       }
       if (cachedResult!.truncating) {
@@ -6719,7 +6771,7 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   }
   Set_Add(receiver!.ctx!.visitedTypes, typeId, GoNumberKey);
   const prevTrackedSymbols = receiver!.ctx!.trackedSymbols;
-  receiver!.ctx!.trackedSymbols = [];
+  receiver!.ctx!.trackedSymbols = GoSliceMake(0, 0, GoPointerValueOps<TrackedSymbolArgs>());
   const startLength = receiver!.ctx!.approximateLength;
   const result = transform!(receiver, t);
   const addedLength = receiver!.ctx!.approximateLength - startLength;
@@ -7336,7 +7388,9 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
     }
     if ((t!.flags & TypeFlagsStringMapping) !== 0) {
       const typeNode = NodeBuilderImpl_typeToTypeNode(receiver, Type_Target(t));
-      return NodeBuilderImpl_symbolToTypeNode(receiver, t!.symbol, SymbolFlagsType, NodeFactory_NewNodeList(receiver!.f, [typeNode]));
+      return NodeBuilderImpl_symbolToTypeNode(receiver, t!.symbol, SymbolFlagsType, NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, typeNode, GoPointerValueOps<Node>());
+      })));
     }
     if ((t!.flags & TypeFlagsIndexedAccess) !== 0) {
       const objectTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, Type_AsIndexedAccessType(t)!.objectType);
@@ -7354,7 +7408,9 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
       }
       const noInferSymbol = Checker_getGlobalTypeAliasSymbol(receiver!.ch, "NoInfer", 1, false);
       if (noInferSymbol !== undefined) {
-        return NodeBuilderImpl_symbolToTypeNode(receiver, noInferSymbol, SymbolFlagsType, NodeFactory_NewNodeList(receiver!.f, [typeNode]));
+        return NodeBuilderImpl_symbolToTypeNode(receiver, noInferSymbol, SymbolFlagsType, NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, typeNode, GoPointerValueOps<Node>());
+        })));
       }
       return typeNode;
     }

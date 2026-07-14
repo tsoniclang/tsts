@@ -120,6 +120,8 @@ import { NewOrderedSetWithSizeHint, OrderedSet_Size } from "../../collections/or
 import { AsyncSuperHelper, AdvancedAsyncSuperHelper } from "../../printer/helpers.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::type::asyncContextFlags","kind":"type","status":"implemented","sigHash":"16f1660d2d95757cf8a9439ea4e2fc76f496703918b639d88719db90af30a092"}
  *
@@ -1566,7 +1568,9 @@ export function asyncTransformer_createCaptureArgumentsStatement(receiver: GoPtr
     undefined,
     NewIdentifier(factory, "arguments") as unknown as GoPtr<never>,
   );
-  const declList = NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, [variable]) as unknown as GoPtr<never>, NodeFlagsNone);
+  const declList = NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, variable, GoPointerValueOps<Node>());
+  })) as unknown as GoPtr<never>, NodeFlagsNone);
   const statement = NewVariableStatement(factory, undefined, declList as unknown as GoPtr<never>);
   EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), statement, EFStartOnNewLine | EFCustomPrologue);
   return statement;
@@ -1624,7 +1628,7 @@ export function asyncTransformer_transformAsyncFunctionParameterList(receiver: G
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const factory = printerFactory!.__tsgoEmbedded0!;
   let newParameters: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const parameter of Node_Parameters(node) ?? []) {
+  for (const parameter of Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     const param = AsParameterDeclaration(parameter)!;
     if (param.Initializer !== undefined || param.DotDotDotToken !== undefined) {
       // for an arrow function, capture the remaining arguments in a rest parameter.
@@ -1806,7 +1810,9 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
         asyncBody as unknown as GoPtr<never>,
       ) as unknown as GoPtr<never>,
     );
-    const stmtList = NodeFactory_NewNodeList(factory, [returnStmt as unknown as GoPtr<Node>]);
+    const stmtList = NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, returnStmt as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
+    }));
     const mergedStmts = EmitContext_EndAndMergeVariableEnvironmentList(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), stmtList as unknown as GoPtr<NodeList>);
     const block = NewBlock(factory, mergedStmts as unknown as GoPtr<never>, true);
     block!.Loc = Node_Body(node)!.Loc;
@@ -1835,7 +1841,9 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
         EmitContext_MergeEnvironmentList(
           Transformer_EmitContext(receiver!.__tsgoEmbedded0!),
           Node_StatementList(block) as unknown as GoPtr<NodeList>,
-          [asyncTransformer_createCaptureArgumentsStatement(receiver)],
+          GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, asyncTransformer_createCaptureArgumentsStatement(receiver), GoPointerValueOps<Node>());
+          }),
         ) as unknown as GoPtr<never>,
         blockBlock.MultiLine,
       ) as unknown as GoPtr<Node>;
@@ -1897,7 +1905,9 @@ export function asyncTransformer_transformAsyncFunctionBodyWorker(receiver: GoPt
   const visited = NodeVisitor_VisitNode(receiver!.asyncBodyVisitor as ConcreteNodeVisitor, body);
   const ret = NewReturnStatement(factory, visited as unknown as GoPtr<never>);
   ret!.Loc = body!.Loc;
-  const list = NodeFactory_NewNodeList(factory, [ret as unknown as GoPtr<Node>]);
+  const list = NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ret as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
+  }));
   list!.Loc = body!.Loc;
   const block = NewBlock(factory, list as unknown as GoPtr<never>, false);
   block!.Loc = body!.Loc;
@@ -1931,7 +1941,9 @@ export function asyncTransformer_convertToFunctionBlock(receiver: GoPtr<asyncTra
   const ret = NewReturnStatement(factory, node as unknown as GoPtr<never>);
   ret!.Loc = node!.Loc;
   EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), ret, node);
-  const list = NodeFactory_NewNodeList(factory, [ret]);
+  const list = NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ret, GoPointerValueOps<Node>());
+  }));
   list!.Loc = node!.Loc;
   const block = NewBlock(factory, list as unknown as GoPtr<never>, true);
   block!.Loc = node!.Loc;
@@ -2073,7 +2085,7 @@ export function asyncTransformer_getOriginalIfFunctionLike(receiver: GoPtr<async
  * }
  */
 export function isSimpleParameterList(params: GoSlice<GoPtr<Node>>): bool {
-  for (const param of params ?? []) {
+  for (const param of params ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     const p = AsParameterDeclaration(param)!;
     if (p.Initializer !== undefined || !IsIdentifier(p.name)) {
       return false;

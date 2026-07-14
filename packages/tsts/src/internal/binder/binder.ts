@@ -493,6 +493,8 @@ import { RemoveFileExtension } from "../tspath/extension.js";
 import { Node_AsNode, Node_BodyData, Node_DeclarationData, Node_End, Node_FlowNodeData, Node_ExportableData, Node_ForEachChild, Node_LocalsContainerData, Node_Name, Node_Modifiers, Node_Pos } from "../ast/spine.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 
 const symbolPointerKey: GoMapKeyDescriptor<GoPtr<Symbol>> = GoPointerKey<Symbol>();
 
@@ -1103,13 +1105,13 @@ export function Binder_declareSymbolEx(receiver: GoPtr<Binder>, symbolTable: Sym
           messageNeedsName = false;
         }
         let multipleDefaultExports = false;
-        if ((symbol!.Declarations ?? []).length !== 0) {
+        if ((symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length !== 0) {
           if (isDefaultExport) {
             message = A_module_cannot_have_multiple_default_exports;
             messageNeedsName = false;
             multipleDefaultExports = true;
           } else {
-            if ((symbol!.Declarations ?? []).length !== 0 && IsExportAssignment(node) && !AsExportAssignment(node)!.IsExportEquals) {
+            if ((symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length !== 0 && IsExportAssignment(node) && !AsExportAssignment(node)!.IsExportEquals) {
               message = A_module_cannot_have_multiple_default_exports;
               messageNeedsName = false;
               multipleDefaultExports = true;
@@ -1129,7 +1131,7 @@ export function Binder_declareSymbolEx(receiver: GoPtr<Binder>, symbolTable: Sym
         if (IsTypeAliasDeclaration(node) && NodeIsMissing(Node_Type(node)) && HasSyntacticModifier(node, ModifierFlagsExport) && (symbol!.Flags & (SymbolFlagsAlias | SymbolFlagsType | SymbolFlagsNamespace)) !== 0) {
           Diagnostic_AddRelatedInfo(diag!, Binder_createDiagnosticForNode(receiver, node, Did_you_mean_0, "export type { " + Node_Text(AsTypeAliasDeclaration(node)!.name as unknown as Node) + " }"));
         }
-        for (let index = 0; index < (symbol!.Declarations ?? []).length; index++) {
+        for (let index = 0; index < (symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length; index++) {
           const declaration = symbol!.Declarations![index];
           let decl: GoPtr<Node> = GetNameOfDeclaration(declaration);
           if (decl === undefined) {
@@ -2558,12 +2560,12 @@ export function Binder_hasExportDeclarations(receiver: GoPtr<Binder>, node: GoPt
   let statements: GoSlice<GoPtr<Node>> = GoNilSlice();
   switch (node!.Kind) {
     case KindSourceFile:
-      statements = Node_Statements(node) ?? [];
+      statements = Node_Statements(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
       break;
     case KindModuleDeclaration: {
       const body = Node_Body(node);
       if (body !== undefined && IsModuleBlock(body)) {
-        statements = Node_Statements(body) ?? [];
+        statements = Node_Statements(body) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
       }
       break;
     }
@@ -4080,7 +4082,7 @@ export function Binder_bindContainer(receiver: GoPtr<Binder>, node: GoPtr<Node>,
     Binder_bindChildren(receiver, node);
   }
   if (IsSourceFile(node) && IsInJSFile(node)) {
-    for (const statement of (Node_Statements(node) ?? [])) {
+    for (const statement of (Node_Statements(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
       if (IsJSTypeAliasDeclaration(statement)) {
         Binder_bindBlockScopedDeclaration(receiver, statement, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes);
       }
@@ -5198,7 +5200,7 @@ export function Binder_bindCaseBlock(receiver: GoPtr<Binder>, node: GoPtr<Node>)
   let i = 0;
   while (i < clauses.length) {
     const clauseStart = i;
-    while ((Node_Statements(clauses[i]) ?? []).length === 0 && i + 1 < clauses.length) {
+    while ((Node_Statements(clauses[i]) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length === 0 && i + 1 < clauses.length) {
       if (fallthroughFlow === receiver!.unreachableFlow) {
         receiver!.currentFlow = receiver!.preSwitchCaseFlow;
       }
@@ -5722,7 +5724,7 @@ export function Binder_bindInitializedVariableFlow(receiver: GoPtr<Binder>, node
       break;
   }
   if (name !== undefined && IsBindingPattern(name)) {
-    for (const child of (Node_Elements(name) ?? [])) {
+    for (const child of (Node_Elements(name) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
       Binder_bindInitializedVariableFlow(receiver, child);
     }
   } else {
@@ -5888,7 +5890,7 @@ export function Binder_bindOptionalChainRest(receiver: GoPtr<Binder>, node: GoPt
     case KindCallExpression:
       Binder_bind(receiver, Node_QuestionDotToken(node));
       Binder_bindNodeList(receiver, Node_TypeArgumentList(node));
-      Binder_bindEach(receiver, Node_Arguments(node) ?? []);
+      Binder_bindEach(receiver, Node_Arguments(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()));
       break;
   }
   return false;
@@ -5934,7 +5936,7 @@ export function Binder_bindCallExpressionFlow(receiver: GoPtr<Binder>, node: GoP
     const expr = SkipParentheses(call!.Expression as unknown as GoPtr<Node>);
     if (expr!.Kind === KindFunctionExpression || expr!.Kind === KindArrowFunction) {
       Binder_bindNodeList(receiver, call!.TypeArguments as unknown as GoPtr<NodeList>);
-      Binder_bindEach(receiver, call!.Arguments!.Nodes ?? []);
+      Binder_bindEach(receiver, call!.Arguments!.Nodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()));
       Binder_bind(receiver, call!.Expression as unknown as GoPtr<Node>);
     } else {
       Binder_bindEachChild(receiver, node);

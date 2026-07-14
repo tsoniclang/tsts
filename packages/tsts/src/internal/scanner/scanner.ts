@@ -216,6 +216,8 @@ import type { regExpParser, regularExpressionFlags } from "./regexp.js";
 import { tokenIsIdentifierOrKeyword } from "./utilities.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 // Go strings are UTF-8 byte sequences; the scanner tracks byte offsets (s.pos).
 // The shared utf8 string-byte view keeps those byte semantics while avoiding
 // repeated TextEncoder/TextDecoder work on hot scanner paths.
@@ -4133,7 +4135,7 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
   const startedWithBacktick = Scanner_char(s) === "`".charCodeAt(0);
   st.pos++;
   let start = st.pos;
-  let parts: GoSlice<string> = [];
+  let parts: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   let token: Kind = KindUnknown;
   for (;;) {
     Scanner_scanASCIIWhile(s, (b) => {
@@ -5500,7 +5502,7 @@ export function StringToToken(s: string): Kind {
  * }
  */
 export function GetViableKeywordSuggestions(): GoSlice<string> {
-  let result: GoSlice<string> = [];
+  let result: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   for (const text of textToKeyword.keys()) {
     if (byteLen(text) > 2) {
       result = GoSliceAppend(result, text, GoStringValueOps);

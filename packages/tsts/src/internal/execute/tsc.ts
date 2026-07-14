@@ -69,6 +69,8 @@ import type { DiagnosticReporter, DiagnosticsReporter } from "./tsc/diagnostics.
 import { GetTraceWithWriterFromSys } from "./tsc/emit.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::startTracingIfNeeded","kind":"func","status":"implemented","sigHash":"42f5eed2c85a5deb3027e6f19fe244c4decd9026a0423e345d4350618fe06017"}
  *
@@ -511,7 +513,7 @@ export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<Syste
       compileTimes.ConfigTime = (sys!.Now() as TimeWithSub).Sub(configStart) as import("../../go/time.js").Duration;
       if ((errors?.length ?? 0) !== 0) {
         // these are unrecoverable errors--exit to report them as diagnostics
-        for (const e of errors ?? []) {
+        for (const e of errors ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())) {
           reportDiagnostic!(e);
         }
         return { Status: ExitStatusDiagnosticsPresent_OutputsGenerated, Watcher: undefined };

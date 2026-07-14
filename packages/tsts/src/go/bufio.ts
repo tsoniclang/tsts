@@ -2,9 +2,11 @@ import type { byte, int } from "./scalars.js";
 import type { GoError, GoSlice } from "./compat.js";
 import type { Reader as IoReader, Writer as IoWriter } from "./io.js";
 import { EOF } from "./io.js";
+import { GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "./compat.js";
+
 
 export class Reader {
-  private readonly buffer: GoSlice<byte> = [];
+  private readonly buffer: GoSlice<byte> = GoSliceMake(0, 0, GoNumberValueOps);
 
   constructor(private readonly source: IoReader) {}
 
@@ -25,7 +27,9 @@ export class Reader {
     if (this.buffer.length > 0) {
       return [this.buffer.shift()!, undefined];
     }
-    const one: GoSlice<byte> = [0 as byte];
+    const one: GoSlice<byte> = GoSliceBuild(1, 1, GoNumberValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, 0 as byte, GoNumberValueOps);
+    });
     const [n, err] = this.source.Read(one);
     if (n > 0) {
       return [one[0]!, undefined];
@@ -34,7 +38,7 @@ export class Reader {
   }
 
   ReadBytes(delim: byte): [GoSlice<byte>, GoError] {
-    const out: GoSlice<byte> = [];
+    const out: GoSlice<byte> = GoSliceMake(0, 0, GoNumberValueOps);
     for (;;) {
       const [b, err] = this.ReadByte();
       if (err !== undefined) {
@@ -49,7 +53,7 @@ export class Reader {
 }
 
 export class Writer {
-  private readonly buffer: GoSlice<byte> = [];
+  private readonly buffer: GoSlice<byte> = GoSliceMake(0, 0, GoNumberValueOps);
 
   constructor(private readonly target: IoWriter) {}
 
@@ -81,7 +85,7 @@ export class Scanner {
   private index: number = -1;
 
   constructor(reader: IoReader) {
-    const bytes: GoSlice<byte> = [];
+    const bytes: GoSlice<byte> = GoSliceMake(0, 0, GoNumberValueOps);
     for (;;) {
       const chunk: GoSlice<byte> = new globalThis.Array(4096).fill(0) as GoSlice<byte>;
       const [n, err] = reader.Read(chunk);

@@ -19,6 +19,8 @@ import { SameMap } from "../core/core.js";
 import type { Locale } from "../locale/locale.js";
 import { loadMatchedLocaleMessages } from "./generated/loc.js";
 import { keyToMessage } from "./generated/messages.js";
+import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::type::Category","kind":"type","status":"implemented","sigHash":"9ed85a7d5c8305a2a52d73283412548b073e28ea8abb464ed426ed1cf24edfa4"}
@@ -374,7 +376,7 @@ export function Format(text: string, args: GoSlice<string>): string {
  */
 export function StringifyArgs(args: GoSlice<GoInterface<unknown>>): GoSlice<string> {
   if (args.length === 0) {
-    return [];
+    return GoSliceMake(0, 0, GoStringValueOps);
   }
 
   const result: GoSlice<string> = new globalThis.Array<string>(args.length);

@@ -30,6 +30,8 @@ import type { TypeMapper } from "./mapper.js";
 import { ValueToString } from "./utilities.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ParseFlags","kind":"type","status":"implemented","sigHash":"ec2c138c6126fd16db739ef0b467090e9d970a145b42a30cb3dfebf6b442776b"}
  *
@@ -1275,7 +1277,7 @@ export let typeFlagNames: GoArray<{ flag: TypeFlags; name: string }, "29"> = [
  * }
  */
 export function FormatTypeFlags(flags: TypeFlags): GoSlice<string> {
-  let result: GoSlice<string> = [];
+  let result: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   for (const flagName of typeFlagNames) {
     if ((flags & flagName.flag) !== 0) {
       result = GoSliceAppend(result, flagName.name, GoStringValueOps);
@@ -1844,7 +1846,9 @@ export function Type_Distributed(receiver: GoPtr<Type>): GoSlice<GoPtr<Type>> {
   if ((receiver!.flags & TypeFlagsNever) !== 0) {
     return GoNilSlice();
   }
-  return [receiver];
+  return GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, receiver, GoPointerValueOps<Type>());
+  });
 }
 
 /**

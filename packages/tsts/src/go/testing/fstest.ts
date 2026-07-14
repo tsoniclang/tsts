@@ -3,6 +3,8 @@ import type { GoDefined, GoError, GoInterface, GoMap, GoPtr, GoSlice } from "../
 import type { DirEntry, File, FileInfo, FileMode, FS, ReadDirFile } from "../io/fs.js";
 import { ErrNotExist, ModeDir } from "../io/fs.js";
 import { Time } from "../time.js";
+import { GoInterfaceValueOps, GoSliceMake } from "../compat.js";
+
 
 export interface MapFile {
   Data: GoSlice<byte>;
@@ -59,7 +61,7 @@ export function Open(map: MapFS, name: string): [GoInterface<File>, GoError] {
     },
     ReadDir(n: int): [GoSlice<GoInterface<DirEntry>>, GoError] {
       if (((mode as number) & (ModeDir as number)) === 0) {
-        return [[], ErrNotExist];
+        return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), ErrNotExist];
       }
       const entries = directoryEntries(map, normalizedName);
       return [n >= 0 ? entries.slice(0, n) : entries, undefined];

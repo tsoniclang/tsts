@@ -13,6 +13,8 @@ import type { Arena } from "../../core/arena.js";
 import type { LanguageVariant } from "../../core/languagevariant.js";
 import type { ScriptKind } from "../../core/scriptkind.js";
 import type { Scanner, ScannerState } from "../../scanner/scanner.js";
+import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::ParsingContext","kind":"type","status":"implemented","sigHash":"845a7f1c8d1b2d145b3d940ab103d6e22ec5fbcb3a99754f98a0cde4ad3acd6a"}
@@ -221,7 +223,7 @@ export let viableKeywordSuggestions: GoSlice<string> = GetViableKeywordSuggestio
  * Go source:
  * var missingListNodes = make([]*ast.Node, 0, 1)
  */
-export let missingListNodes: GoSlice<GoPtr<Node>> = [];
+export let missingListNodes: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::parserPool","kind":"varGroup","status":"implemented","sigHash":"c5af1fb0f0976582a94c76102500c6bc43e76124155e6e3f3724cc806868f371"}

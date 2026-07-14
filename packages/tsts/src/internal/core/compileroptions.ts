@@ -20,6 +20,8 @@ import {
 import type { Tristate } from "./tristate.js";
 
 import type { GoInterface, GoRef } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::CompilerOptions","kind":"type","status":"implemented","sigHash":"8a63738fb9feb6aefe951e61468ec8061d410041053b72009f7679bc32e449cd"}
  *
@@ -975,7 +977,7 @@ export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOp
     }
   }
 
-  let typeRoots: GoSlice<string> = [];
+  let typeRoots: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   void strings.Count(baseDir, "/");
   ForEachAncestorDirectory<unknown>(baseDir, (dir: string): [unknown, bool] => {
     typeRoots = GoSliceAppend(typeRoots, CombinePaths(dir, "node_modules", "@types"), GoStringValueOps);

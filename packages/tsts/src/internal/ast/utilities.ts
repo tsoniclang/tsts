@@ -571,6 +571,8 @@ import { Assert, FailBadSyntaxKind } from "../debug/debug.js";
 import { Pool as PoolValue } from "../../go/sync.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::varGroup::nextNodeId+nextSymbolId","kind":"varGroup","status":"implemented","sigHash":"fbef67155733acb7724b7c5d0c6ae3f163db49b04f971919d4f057e9ec169cfc"}
  *
@@ -6337,7 +6339,7 @@ export function getModuleInstanceStateForAliasTarget(node: GoPtr<Node>, ancestor
     if (IsBlock(p) || IsModuleBlock(p) || IsSourceFile(p)) {
       const statementsAncestors: GoSlice<GoPtr<Node>> = pushAncestor(currentAncestors, p);
       const foundBox = { value: ModuleInstanceStateUnknown as ModuleInstanceState };
-      for (const statement of Node_Statements(p) ?? []) {
+      for (const statement of Node_Statements(p) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
         if (NodeHasName(statement, name)) {
           const state: ModuleInstanceState = getModuleInstanceStateCached(statement, statementsAncestors, visited);
           if (foundBox.value === ModuleInstanceStateUnknown || state > foundBox.value) {
@@ -6504,7 +6506,7 @@ export function IsParameterLike(node: GoPtr<Node>): bool {
  * }
  */
 export function GetDeclarationOfKind(symbol_: GoPtr<Symbol>, kind: Kind): GoPtr<Node> {
-  for (const declaration of symbol_!.Declarations ?? []) {
+  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (declaration!.Kind === kind) {
       return declaration;
     }
@@ -6526,7 +6528,7 @@ export function GetDeclarationOfKind(symbol_: GoPtr<Symbol>, kind: Kind): GoPtr<
  * }
  */
 export function FindConstructorDeclaration(node: GoPtr<ClassLikeDeclaration>): GoPtr<Node> {
-  for (const member of Node_Members(node) ?? []) {
+  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (IsConstructorDeclaration(member) && NodeIsPresent(Node_Body(member))) {
       return member;
     }
@@ -6665,11 +6667,25 @@ export function IsDefaultImport(node: GoPtr<Node>): bool {
  * }
  */
 export function GetImpliedNodeFormatForFile(path: string, packageJsonType: string): ModuleKind {
-  return FileExtensionIsOneOf(path, [ExtensionDmts, ExtensionMts, ExtensionMjs])
+  return FileExtensionIsOneOf(path, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionDmts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionMts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionMjs, GoStringValueOps);
+  }))
     ? ResolutionModeESM
-    : FileExtensionIsOneOf(path, [ExtensionDcts, ExtensionCts, ExtensionCjs])
+    : FileExtensionIsOneOf(path, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ExtensionDcts, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 1, ExtensionCts, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 2, ExtensionCjs, GoStringValueOps);
+    }))
     ? ResolutionModeCommonJS
-    : FileExtensionIsOneOf(path, [ExtensionDts, ExtensionTs, ExtensionTsx, ExtensionJs, ExtensionJsx])
+    : FileExtensionIsOneOf(path, GoSliceBuild(5, 5, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ExtensionDts, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 1, ExtensionTs, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 2, ExtensionTsx, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 3, ExtensionJs, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 4, ExtensionJsx, GoStringValueOps);
+    }))
     ? IfElse(packageJsonType === "module", ResolutionModeESM, ResolutionModeCommonJS)
     : ResolutionModeNone;
 }
@@ -6721,12 +6737,18 @@ export function GetImpliedNodeFormatForEmitWorker(fileName: string, emitModuleKi
   }
   if (sourceFileMetaData.ImpliedNodeFormat === ModuleKindCommonJS &&
     (sourceFileMetaData.PackageJsonType === "commonjs" ||
-      FileExtensionIsOneOf(fileName, [ExtensionCjs, ExtensionCts]))) {
+      FileExtensionIsOneOf(fileName, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ExtensionCjs, GoStringValueOps);
+        GoSliceStore(__goSliceLiteral, 1, ExtensionCts, GoStringValueOps);
+      })))) {
     return ModuleKindCommonJS;
   }
   if (sourceFileMetaData.ImpliedNodeFormat === ModuleKindESNext &&
     (sourceFileMetaData.PackageJsonType === "module" ||
-      FileExtensionIsOneOf(fileName, [ExtensionMjs, ExtensionMts]))) {
+      FileExtensionIsOneOf(fileName, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ExtensionMjs, GoStringValueOps);
+        GoSliceStore(__goSliceLiteral, 1, ExtensionMts, GoStringValueOps);
+      })))) {
     return ModuleKindESNext;
   }
   return ModuleKindNone;
@@ -7530,7 +7552,7 @@ export function IsExclusivelyTypeOnlyImportOrExport(node: GoPtr<Node>): bool {
  * }
  */
 export function GetClassLikeDeclarationOfSymbol(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  return Find(symbol_!.Declarations ?? [], IsClassLike, GoZeroPointer<Node>);
+  return Find(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsClassLike, GoZeroPointer<Node>);
 }
 
 /**
@@ -9065,7 +9087,7 @@ export function GetSourceFileOfModule(module_: GoPtr<Symbol>): GoPtr<SourceFile>
  * }
  */
 export function GetNonAugmentationDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  return Find(symbol_!.Declarations ?? [], (d: GoPtr<Node>): bool => {
+  return Find(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (d: GoPtr<Node>): bool => {
     return (!IsExternalModuleAugmentation(d) && !IsGlobalScopeAugmentation(d)) as bool;
   }, GoZeroPointer<Node>);
 }
@@ -9978,7 +10000,7 @@ export function ContainsObjectRestOrSpread(node: GoPtr<Node>): bool {
   if ((Node_SubtreeFacts(node) & SubtreeContainsESObjectRestOrSpread) !== 0) {
     // check for nested spread assignments, otherwise '{ x: { a, ...b } = foo } = c'
     // will not be correctly interpreted by the rest/spread transformer
-    for (const element of GetElementsOfBindingOrAssignmentPattern(node) ?? []) {
+    for (const element of GetElementsOfBindingOrAssignmentPattern(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       const target: GoPtr<Node> = GetTargetOfBindingOrAssignmentElement(element);
       if (target !== undefined && IsAssignmentPattern(target)) {
         if ((Node_SubtreeFacts(target) & SubtreeContainsObjectRestOrSpread) !== 0) {
@@ -10540,7 +10562,7 @@ export function IsInfinityOrNaNString(name: string): bool {
  * }
  */
 export function GetFirstConstructorWithBody(node: GoPtr<Node>): GoPtr<Node> {
-  for (const member of Node_Members(node) ?? []) {
+  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (IsConstructorDeclaration(member) && NodeIsPresent(Node_Body(member))) {
       return member;
     }
@@ -10746,7 +10768,7 @@ export function ClassOrConstructorParameterIsDecorated(useLegacyDecorators: bool
 export function ClassElementOrClassElementParameterIsDecorated(useLegacyDecorators: bool, node: GoPtr<Node>, parent: GoPtr<Node>): bool {
   const paramsResult: [boolean, GoPtr<NodeList>] = (() => {
     if (IsAccessor(node)) {
-      const decls: AllAccessorDeclarations = GetAllAccessorDeclarations(Node_Members(parent) ?? [], node);
+      const decls: AllAccessorDeclarations = GetAllAccessorDeclarations(Node_Members(parent) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), node);
       const firstAccessorWithDecorators: GoPtr<Node> = HasDecorators(decls.FirstAccessor) ? decls.FirstAccessor
         : (decls.SecondAccessor !== undefined && HasDecorators(decls.SecondAccessor)) ? decls.SecondAccessor
         : undefined;
@@ -10823,7 +10845,7 @@ export function ChildIsDecorated(useLegacyDecorators: bool, node: GoPtr<Node>, p
   switch (node!.Kind) {
     case KindClassDeclaration:
     case KindClassExpression:
-      return Some(Node_Members(node) ?? [], (m: GoPtr<Node>): bool => {
+      return Some(Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (m: GoPtr<Node>): bool => {
         return NodeOrChildIsDecorated(useLegacyDecorators, m, node, parent);
       });
     case KindMethodDeclaration:
@@ -10914,7 +10936,7 @@ export function GetAllAccessorDeclarationsForDeclaration(accessor: GoPtr<Accesso
     : accessor!.Kind === KindGetAccessor ? KindSetAccessor
     : (() => { throw new globalThis.Error("Unexpected node kind " + KindString(accessor!.Kind)); })();
   // otherAccessor := GetDeclarationOfKind(c.getSymbolOfDeclaration(accessor), otherKind)
-  const otherAccessor: GoPtr<AccessorDeclaration> = (declarationsOfSymbol ?? []).find(d => d!.Kind === otherKind) as GoPtr<AccessorDeclaration>;
+  const otherAccessor: GoPtr<AccessorDeclaration> = (declarationsOfSymbol ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).find(d => d!.Kind === otherKind) as GoPtr<AccessorDeclaration>;
   const [firstAccessor, secondAccessor]: [GoPtr<AccessorDeclaration>, GoPtr<AccessorDeclaration>] =
     otherAccessor !== undefined && Node_Pos(otherAccessor) < Node_Pos(accessor)
       ? [otherAccessor, accessor]
@@ -10954,7 +10976,9 @@ export function GetAllAccessorDeclarationsForDeclaration(accessor: GoPtr<Accesso
 export function GetAllAccessorDeclarations(parentDeclarations: GoSlice<GoPtr<Node>>, accessor: GoPtr<AccessorDeclaration>): AllAccessorDeclarations {
   if (HasDynamicName(accessor)) {
     // dynamic names can only be match up via checker symbol lookup, just return an object with just this accessor
-    return GetAllAccessorDeclarationsForDeclaration(accessor, [accessor]);
+    return GetAllAccessorDeclarationsForDeclaration(accessor, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, accessor, GoPointerValueOps<Node>());
+    }));
   }
 
   const accessorName: string = GetPropertyNameForPropertyNameNode(Node_Name(accessor));

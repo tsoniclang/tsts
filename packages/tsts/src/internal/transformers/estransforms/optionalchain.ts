@@ -66,6 +66,8 @@ import {
   EmitContext_SetOriginal,
 } from "../../printer/emitcontext.js";
 import { EFNoComments } from "../../printer/emitflags.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::type::optionalChainTransformer","kind":"type","status":"implemented","sigHash":"10b20e1c69798f894fafbbc4c1e6f26faa1771126b608bea5b7823d5d73c2fd9"}
@@ -387,7 +389,9 @@ export function isNonNullChain(node: GoPtr<Node>): bool {
  * }
  */
 export function flattenChain(chain: GoPtr<Node>): flattenResult {
-  let links: GoSlice<GoPtr<Node>> = [chain];
+  let links: GoSlice<GoPtr<Node>> = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, chain, GoPointerValueOps<Node>());
+  });
   while (!IsTaggedTemplateExpression(chain) && Node_QuestionDotToken(chain) === undefined) {
     chain = SkipPartiallyEmittedExpressions(Node_Expression(chain) as unknown as GoPtr<Expression>) as unknown as GoPtr<Node>;
     links = GoAppendSlice([chain], links);

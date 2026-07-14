@@ -35,6 +35,8 @@ import { createTypeShapeQueries } from "./type-shape.js";
 import type { TypeShapeQueries } from "./type-shape.js";
 import { createAstReader } from "./ast-reader.js";
 import type { AstReader } from "./ast-reader.js";
+import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+
 
 export type CompilerDiagnosticKind =
   | "config"
@@ -134,7 +136,7 @@ export function createCompilerSessionFromFiles(options: InMemoryCompilerSessionO
   } satisfies CompilerHostOptions);
   const defaultOptions = {} as CompilerOptions;
   const [config, configErrors] = GetParsedCommandLineOfConfigFile(configFileName, defaultOptions, undefined, host as ParseConfigHost, undefined);
-  if ((configErrors ?? []).length !== 0) {
+  if ((configErrors ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())).length !== 0) {
     const programOptions = {
       Config: config,
       Host: host,

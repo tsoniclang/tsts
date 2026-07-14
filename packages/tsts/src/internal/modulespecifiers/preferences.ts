@@ -34,6 +34,8 @@ import {
 } from "./types.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoNumberValueOps, GoSliceBuild, GoSliceStore } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::shouldAllowImportingTsExtension","kind":"func","status":"implemented","sigHash":"80e7f8155f780a6110078841c13ffd5bab3dd60a3a2bc38f55118c02f1fc168d"}
  *
@@ -373,32 +375,71 @@ export function GetAllowedEndingsInPreferredOrder(prefs: UserPreferences, host: 
   const allowImportingTsExtension = shouldAllowImportingTsExtension(compilerOptions, importingSourceFile!.FileName());
   if (syntaxImpliedNodeFormat === ResolutionModeESM && moduleResolutionIsNodeNext) {
     if (allowImportingTsExtension) {
-      return [ModuleSpecifierEndingTsExtension, ModuleSpecifierEndingJsExtension];
+      return GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingTsExtension, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 1, ModuleSpecifierEndingJsExtension, GoNumberValueOps);
+      });
     }
-    return [ModuleSpecifierEndingJsExtension];
+    return GoSliceBuild(1, 1, GoNumberValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingJsExtension, GoNumberValueOps);
+    });
   }
   switch (preferredEnding) {
     case ModuleSpecifierEndingJsExtension:
       if (allowImportingTsExtension) {
-        return [ModuleSpecifierEndingJsExtension, ModuleSpecifierEndingTsExtension, ModuleSpecifierEndingMinimal, ModuleSpecifierEndingIndex];
+        return GoSliceBuild(4, 4, GoNumberValueOps, (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingJsExtension, GoNumberValueOps);
+          GoSliceStore(__goSliceLiteral, 1, ModuleSpecifierEndingTsExtension, GoNumberValueOps);
+          GoSliceStore(__goSliceLiteral, 2, ModuleSpecifierEndingMinimal, GoNumberValueOps);
+          GoSliceStore(__goSliceLiteral, 3, ModuleSpecifierEndingIndex, GoNumberValueOps);
+        });
       }
-      return [ModuleSpecifierEndingJsExtension, ModuleSpecifierEndingMinimal, ModuleSpecifierEndingIndex];
+      return GoSliceBuild(3, 3, GoNumberValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingJsExtension, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 1, ModuleSpecifierEndingMinimal, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 2, ModuleSpecifierEndingIndex, GoNumberValueOps);
+      });
     case ModuleSpecifierEndingTsExtension:
-      return [ModuleSpecifierEndingTsExtension, ModuleSpecifierEndingMinimal, ModuleSpecifierEndingJsExtension, ModuleSpecifierEndingIndex];
+      return GoSliceBuild(4, 4, GoNumberValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingTsExtension, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 1, ModuleSpecifierEndingMinimal, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 2, ModuleSpecifierEndingJsExtension, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 3, ModuleSpecifierEndingIndex, GoNumberValueOps);
+      });
     case ModuleSpecifierEndingIndex:
       if (allowImportingTsExtension) {
-        return [ModuleSpecifierEndingIndex, ModuleSpecifierEndingMinimal, ModuleSpecifierEndingTsExtension, ModuleSpecifierEndingJsExtension];
+        return GoSliceBuild(4, 4, GoNumberValueOps, (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingIndex, GoNumberValueOps);
+          GoSliceStore(__goSliceLiteral, 1, ModuleSpecifierEndingMinimal, GoNumberValueOps);
+          GoSliceStore(__goSliceLiteral, 2, ModuleSpecifierEndingTsExtension, GoNumberValueOps);
+          GoSliceStore(__goSliceLiteral, 3, ModuleSpecifierEndingJsExtension, GoNumberValueOps);
+        });
       }
-      return [ModuleSpecifierEndingIndex, ModuleSpecifierEndingMinimal, ModuleSpecifierEndingJsExtension];
+      return GoSliceBuild(3, 3, GoNumberValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingIndex, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 1, ModuleSpecifierEndingMinimal, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 2, ModuleSpecifierEndingJsExtension, GoNumberValueOps);
+      });
     case ModuleSpecifierEndingMinimal:
       if (allowImportingTsExtension) {
-        return [ModuleSpecifierEndingMinimal, ModuleSpecifierEndingIndex, ModuleSpecifierEndingTsExtension, ModuleSpecifierEndingJsExtension];
+        return GoSliceBuild(4, 4, GoNumberValueOps, (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingMinimal, GoNumberValueOps);
+          GoSliceStore(__goSliceLiteral, 1, ModuleSpecifierEndingIndex, GoNumberValueOps);
+          GoSliceStore(__goSliceLiteral, 2, ModuleSpecifierEndingTsExtension, GoNumberValueOps);
+          GoSliceStore(__goSliceLiteral, 3, ModuleSpecifierEndingJsExtension, GoNumberValueOps);
+        });
       }
-      return [ModuleSpecifierEndingMinimal, ModuleSpecifierEndingIndex, ModuleSpecifierEndingJsExtension];
+      return GoSliceBuild(3, 3, GoNumberValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingMinimal, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 1, ModuleSpecifierEndingIndex, GoNumberValueOps);
+        GoSliceStore(__goSliceLiteral, 2, ModuleSpecifierEndingJsExtension, GoNumberValueOps);
+      });
     default:
       AssertNever(preferredEnding);
   }
-  return [ModuleSpecifierEndingMinimal];
+  return GoSliceBuild(1, 1, GoNumberValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ModuleSpecifierEndingMinimal, GoNumberValueOps);
+  });
 }
 
 /**

@@ -115,6 +115,8 @@ import {
 } from "./state.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+import { GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::isMissingNodeList","kind":"func","status":"implemented","sigHash":"ef01f56717a6fef68fa90b7c8e0d0661d60d9b4e006200f3148352792a8db128"}
  *
@@ -360,7 +362,7 @@ export function Parser_parseBracketedList(receiver: GoPtr<Parser>, kind: Parsing
  * }
  */
 export function Parser_parseEmptyNodeList(receiver: GoPtr<Parser>): GoPtr<NodeList> {
-  return Parser_newNodeList(receiver, NewTextRange(Parser_nodePos(receiver), Parser_nodePos(receiver)), []);
+  return Parser_newNodeList(receiver, NewTextRange(Parser_nodePos(receiver), Parser_nodePos(receiver)), GoSliceMake(0, 0, GoPointerValueOps<Node>()));
 }
 
 /**

@@ -45,6 +45,8 @@ import {
   Type_Types,
 } from "../internal/checker/types.js";
 import type { Signature, Type } from "../internal/checker/types.js";
+import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+
 
 export interface TypeIndexInfo {
   readonly keyType: GoPtr<Type>;
@@ -129,7 +131,7 @@ export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: 
     getConstructSignatures: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindConstruct)) ?? [],
     getReturnTypeOfSignature: (signature, options = {}) => withChecker(program, signature, defaultOptions, options, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
     getIndexInfos: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) =>
-      (Checker_GetIndexInfosOfType(checker, type) ?? []).map((info) => ({
+      (Checker_GetIndexInfosOfType(checker, type) ?? GoSliceMake(0, 0, GoPointerValueOps<IndexInfo>())).map((info) => ({
         keyType: info?.keyType,
         valueType: info?.valueType,
         readonly: info?.isReadonly === true,

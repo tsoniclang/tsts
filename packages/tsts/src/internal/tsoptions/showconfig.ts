@@ -49,6 +49,8 @@ import {
 
 import { GoValueRef } from "../../go/compat.js";
 import type { GoFunc, GoRef } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::computeFn","kind":"func","status":"implemented","sigHash":"c976f8f36f9a23d960445aa7ff17ed76d49942d64298203a41e3adf1993b8a81"}
  *
@@ -233,7 +235,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   };
 
   // Build the list of all resolved files as relative paths from the config file.
-  let files: GoSlice<string> = [];
+  let files: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   for (const f of ParsedCommandLine_FileNames(configParseResult)) {
     const normalizedFilePath = GetNormalizedAbsolutePath(f, ParsedCommandLine_GetCurrentDirectory(configParseResult));
     const relativePath = GetRelativePathFromFile(normalizedConfigPath, normalizedFilePath, comparePathsOptions);
@@ -254,9 +256,9 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   const config: TSConfig = {
     CompilerOptions: optionMap,
     References: [],
-    Files: [],
-    Include: [],
-    Exclude: [],
+    Files: GoSliceMake(0, 0, GoStringValueOps),
+    Include: GoSliceMake(0, 0, GoStringValueOps),
+    Exclude: GoSliceMake(0, 0, GoStringValueOps),
     CompileOnSave: undefined,
   };
 
@@ -315,10 +317,10 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
  */
 export function filterSameAsDefaultInclude(specs: GoSlice<string>): GoSlice<string> {
   if (specs.length === 0) {
-    return [];
+    return GoSliceMake(0, 0, GoStringValueOps);
   }
   if (specs.length === 1 && specs[0] === defaultIncludeSpec) {
-    return [];
+    return GoSliceMake(0, 0, GoStringValueOps);
   }
   return specs;
 }
@@ -520,7 +522,7 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
           // List of file paths - make relative
           if (globalThis.Array.isArray(value)) {
             const strs = value as GoSlice<string>;
-            const relPaths: GoSlice<string> = [];
+            const relPaths: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
             for (const s of strs) {
               const absPath = GetNormalizedAbsolutePath(s, configDir);
               relPaths.push(GetRelativePathFromFile(configFilePath, absPath, comparePathsOptions));
@@ -534,7 +536,7 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
           const elemMap = CommandLineOption_EnumMap(elem)!;
           if (globalThis.Array.isArray(value)) {
             const strs = value as GoSlice<string>;
-            let serialized: GoSlice<string> = [];
+            let serialized: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
             for (const s of strs) {
               // lib values are already stored as the d.ts filename, need to find original key
               const found = getNameOfCompilerOptionValue(s, elemMap);

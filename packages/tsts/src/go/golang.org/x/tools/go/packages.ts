@@ -1,6 +1,8 @@
 import type { int } from "../../../../scalars.js";
 import { GoSliceIsNil, type GoError, type GoSlice } from "../../../../compat.js";
 import * as nodeChildProcess from "node:child_process";
+import { GoSliceMake, GoStringValueOps } from "../../../../compat.js";
+
 
 export type LoadMode = int;
 export const NeedName: LoadMode = 1 << 0 as LoadMode;
@@ -56,8 +58,8 @@ function parseGoListJson(text: string): GoSlice<Package> {
       ID: value.ImportPath ?? "",
       Name: value.Name ?? "",
       PkgPath: value.ImportPath ?? "",
-      GoFiles: value.GoFiles ?? [],
-      CompiledGoFiles: value.CompiledGoFiles ?? [],
+      GoFiles: value.GoFiles ?? GoSliceMake(0, 0, GoStringValueOps),
+      CompiledGoFiles: value.CompiledGoFiles ?? GoSliceMake(0, 0, GoStringValueOps),
       Imports: new Map(),
       Errors: value.Error?.Err ? [new globalThis.Error(value.Error.Err)] : [],
     });

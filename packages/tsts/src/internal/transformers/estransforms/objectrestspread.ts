@@ -27,6 +27,8 @@ import type { Transformer } from "../transformer.js";
 import { Transformer_NewTransformer, Transformer_EmitContext, Transformer_Factory, Transformer_Visitor } from "../transformer.js";
 import { NodeVisitor_VisitNode, NodeVisitor_VisitEachChild, NodeVisitor_VisitNodes } from "../../ast/visitor.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::objectRestSpreadTransformer","kind":"type","status":"implemented","sigHash":"90b5de35b19b85c86c591b1f38d85961c5b02bbd88058844381230313cabdf4a"}
@@ -270,7 +272,7 @@ export function objectRestSpreadTransformer_visitParameter(receiver: GoPtr<objec
  */
 export function objectRestSpreadTransformer_collectParametersWithPrecedingObjectRestOrSpread(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }> {
   let result = GoNilMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>();
-  for (const parameter of Node_Parameters(node) ?? []) {
+  for (const parameter of Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     const paramNode = parameter as unknown as GoPtr<Node>;
     if (!GoMapIsNil(result)) {
       result.set(paramNode, {});
@@ -674,13 +676,13 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
   }
 
   if (body === undefined) {
-    body = NewBlock(astFactory, NodeFactory_NewNodeList(astFactory, []) as unknown as GoPtr<never>, true);
+    body = NewBlock(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())) as unknown as GoPtr<never>, true);
   }
   let prefix: GoSlice<GoPtr<Node>> = GoNilSlice();
   let suffix: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (IsBlock(body)) {
     let custom = false;
-    const bodyStmts = Node_Statements(body) ?? [];
+    const bodyStmts = Node_Statements(body) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     for (let i = 0; i < bodyStmts.length; i++) {
       const statement = bodyStmts[i];
       if (!custom && IsPrologueDirective(statement)) {
@@ -696,7 +698,7 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
   } else {
     const ret = NewReturnStatement(astFactory, body as unknown as GoPtr<never>);
     (ret as unknown as { Loc: TextRange })!.Loc = body!.Loc;
-    const list = NodeFactory_NewNodeList(astFactory, []);
+    const list = NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>()));
     list!.Loc = body!.Loc;
     body = NewBlock(astFactory, list as unknown as GoPtr<never>, true);
     suffix = GoSliceAppend(suffix, ret, GoPointerValueOps<Node>());
@@ -792,7 +794,7 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   let containsPrecedingObjectRestOrSpread = false;
   let results: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const parameter of Node_Parameters(node) ?? []) {
+  for (const parameter of Node_Parameters(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     const paramNode = parameter as unknown as GoPtr<Node>;
     if (containsPrecedingObjectRestOrSpread) {
       const paramNameNode = Node_Name(paramNode) as unknown as GoPtr<Node>;
@@ -805,8 +807,10 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
             FlattenLevelAll, false, false,
           );
           if (declarations !== undefined) {
-            const declarationList = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, []) as unknown as GoPtr<never>, NodeFlagsNone);
-            let decls: GoSlice<GoPtr<Node>> = [declarations];
+            const declarationList = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())) as unknown as GoPtr<never>, NodeFlagsNone);
+            let decls: GoSlice<GoPtr<Node>> = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+              GoSliceStore(__goSliceLiteral, 0, declarations, GoPointerValueOps<Node>());
+            });
             if (declarations!.Kind === KindSyntaxList) {
               decls = AsSyntaxList(declarations)!.Children as unknown as GoSlice<GoPtr<Node>>;
             }
@@ -837,7 +841,9 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
         (assignment as unknown as { Loc: TextRange })!.Loc = paramNode!.Loc;
         EmitContext_AddEmitFlags(emitContext, assignment, EFNoComments);
 
-        const block = NewBlock(astFactory, NodeFactory_NewNodeList(astFactory, [NewExpressionStatement(astFactory, assignment as unknown as GoPtr<never>)]) as unknown as GoPtr<never>, false);
+        const block = NewBlock(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, NewExpressionStatement(astFactory, assignment as unknown as GoPtr<never>), GoPointerValueOps<Node>());
+        })) as unknown as GoPtr<never>, false);
         (block as unknown as { Loc: TextRange })!.Loc = paramNode!.Loc;
         EmitContext_AddEmitFlags(emitContext, block, EFSingleLine | EFNoTrailingSourceMap | EFNoTokenSourceMaps | EFNoComments);
 
@@ -855,8 +861,10 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
         FlattenLevelObjectRest, false, true,
       );
       if (declarations !== undefined) {
-        const declarationList = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, []) as unknown as GoPtr<never>, NodeFlagsNone);
-        let decls: GoSlice<GoPtr<Node>> = [declarations];
+        const declarationList = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())) as unknown as GoPtr<never>, NodeFlagsNone);
+        let decls: GoSlice<GoPtr<Node>> = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, declarations, GoPointerValueOps<Node>());
+        });
         if (declarations!.Kind === KindSyntaxList) {
           decls = AsSyntaxList(declarations)!.Children as unknown as GoSlice<GoPtr<Node>>;
         }
@@ -933,7 +941,9 @@ export function objectRestSpreadTransformer_visitCatchClause(receiver: GoPtr<obj
         if (visitedBindings!.Kind === KindSyntaxList) {
           decls = AsSyntaxList(visitedBindings)!.Children as unknown as GoSlice<GoPtr<Node>>;
         } else {
-          decls = [visitedBindings];
+          decls = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, visitedBindings, GoPointerValueOps<Node>());
+          });
         }
         const newStatement = NewVariableStatement(astFactory, undefined, NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, decls) as unknown as GoPtr<never>, NodeFlagsNone) as unknown as GoPtr<never>);
         const statements = GoAppendSlice([newStatement], Node_Statements(block));
@@ -1104,13 +1114,13 @@ export function objectRestSpreadTransformer_visitForOftatement(receiver: GoPtr<o
       const temp = NodeFactory_NewTempVariable(printerFactory);
       const bindingStmt = NodeFactory_CreateForOfBindingStatement(printerFactory, initializerWithoutParens, temp as unknown as GoPtr<Node>);
       const res = NodeVisitor_VisitNode(visitor, bindingStmt);
-      let statements: GoSlice<GoPtr<Node>> = [];
+      let statements: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
       if (res !== undefined) {
         statements = GoSliceAppend(statements, res, GoPointerValueOps<Node>());
       }
       const stmtNode = node!.Statement as unknown as GoPtr<Node>;
       if (IsBlock(stmtNode)) {
-        for (const statement of Node_Statements(stmtNode) ?? []) {
+        for (const statement of Node_Statements(stmtNode) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
           const visited = NodeVisitor_VisitEachChild(visitor, statement);
           if (visited !== undefined) {
             statements = GoSliceAppend(statements, visited, GoPointerValueOps<Node>());
@@ -1126,7 +1136,9 @@ export function objectRestSpreadTransformer_visitForOftatement(receiver: GoPtr<o
 
       const list = NewVariableDeclarationList(
         astFactory,
-        NodeFactory_NewNodeList(astFactory, [NewVariableDeclaration(astFactory, temp as unknown as GoPtr<never>, undefined, undefined, undefined)]) as unknown as GoPtr<never>,
+        NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, NewVariableDeclaration(astFactory, temp as unknown as GoPtr<never>, undefined, undefined, undefined), GoPointerValueOps<Node>());
+        })) as unknown as GoPtr<never>,
         NodeFlagsLet,
       );
       (list as unknown as { Loc: TextRange })!.Loc = initializer!.Loc;
@@ -1291,7 +1303,7 @@ export function objectRestSpreadTransformer_chunkObjectLiteralElements(receiver:
   }
   const elements = list!.Nodes as unknown as GoSlice<GoPtr<Node>>;
   let chunkObject: GoSlice<GoPtr<Node>> = GoNilSlice();
-  let objects: GoSlice<GoPtr<Node>> = [];
+  let objects: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (const e of elements) {
     if (e!.Kind === KindSpreadAssignment) {
       if (chunkObject.length > 0) {

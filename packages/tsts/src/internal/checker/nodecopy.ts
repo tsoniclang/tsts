@@ -93,6 +93,8 @@ import { getMeaningOfEntityNameReference } from "./emitresolver.js";
 import type { CompositeTypeCacheIdentity, NodeBuilderContext, NodeBuilderImpl, NodeBuilderLinks, SerializedTypeEntry, TrackedSymbolArgs } from "./nodebuilderimpl.js";
 import type { SymbolNodeLinks, Type } from "./types.js";
 import { TypeFlagsAny } from "./types.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 function goZeroSymbolNodeLinks(): SymbolNodeLinks {
   return { resolvedSymbol: undefined };
@@ -1027,16 +1029,16 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       return NewKeywordTypeNode(factory, KindAnyKeyword);
     }
     if (IsJSDocNullableType(node)) {
-      return NewUnionTypeNode(factory, NodeFactory_NewNodeList(factory, [
-        visitNode(AsJSDocNullableType(node)!.Type),
-        NewLiteralTypeNode(factory, NewKeywordExpression(factory, KindNullKeyword)),
-      ]) as GoPtr<never>);
+      return NewUnionTypeNode(factory, NodeFactory_NewNodeList(factory, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, visitNode(AsJSDocNullableType(node)!.Type), GoPointerValueOps<Node>());
+        GoSliceStore(__goSliceLiteral, 1, NewLiteralTypeNode(factory, NewKeywordExpression(factory, KindNullKeyword)), GoPointerValueOps<Node>());
+      })) as GoPtr<never>);
     }
     if (IsJSDocOptionalType(node)) {
-      return NewUnionTypeNode(factory, NodeFactory_NewNodeList(factory, [
-        visitNode(AsJSDocOptionalType(node)!.Type),
-        NewKeywordTypeNode(factory, KindUndefinedKeyword),
-      ]) as GoPtr<never>);
+      return NewUnionTypeNode(factory, NodeFactory_NewNodeList(factory, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, visitNode(AsJSDocOptionalType(node)!.Type), GoPointerValueOps<Node>());
+        GoSliceStore(__goSliceLiteral, 1, NewKeywordTypeNode(factory, KindUndefinedKeyword), GoPointerValueOps<Node>());
+      })) as GoPtr<never>);
     }
     if (IsJSDocNonNullableType(node)) {
       return visitNode(AsJSDocNonNullableType(node)!.Type);
@@ -1046,7 +1048,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     }
     if (IsJSDocTypeLiteral(node)) {
       let members: GoSlice<GoPtr<Node>> = GoNilSlice();
-      for (const tag of AsJSDocTypeLiteral(node)!.JSDocPropertyTags ?? []) {
+      for (const tag of AsJSDocTypeLiteral(node)!.JSDocPropertyTags ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
         if (tag!.Kind !== KindJSDocPropertyTag && tag!.Kind !== KindJSDocParameterTag) {
           continue;
         }
@@ -1297,7 +1299,9 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       } else if (IsConditionalTypeNode(node)) {
         typeParams = Checker_getInferTypeParameters(b!.ch, node);
       } else if (IsMappedTypeNode(node)) {
-        typeParams = [Checker_getDeclaredTypeOfTypeParameter(b!.ch, Checker_getSymbolOfDeclaration(b!.ch, AsMappedTypeNode(node)!.TypeParameter))];
+        typeParams = GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, Checker_getDeclaredTypeOfTypeParameter(b!.ch, Checker_getSymbolOfDeclaration(b!.ch, AsMappedTypeNode(node)!.TypeParameter)), GoPointerValueOps<Type>());
+        });
       }
       exit = NodeBuilderImpl_enterNewScope(b, node, params, typeParams, GoNilSlice(), undefined);
     }

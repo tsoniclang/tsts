@@ -167,6 +167,8 @@ import {
 import { EFExportName, EFHelperName, EFLocalName } from "../printer/emitflags.js";
 import type { NodeFactory } from "../printer/factory.js";
 import { NodeFactory_NewAssignmentExpression } from "../printer/factory.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsGeneratedIdentifier","kind":"func","status":"implemented","sigHash":"89b194486f69ad37d24c7661662a26d9ae8d9d5f19a36185615b0c10f61bf8c8"}
@@ -845,7 +847,7 @@ export function MoveRangePastModifiers(node: GoPtr<Node>): TextRange {
   }
   let lastModifier: GoPtr<Node> = undefined;
   if (CanHaveModifiers(node)) {
-    lastModifier = LastOrNil(Node_ModifierNodes(node) ?? [], GoZeroPointer<Node>);
+    lastModifier = LastOrNil(Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), GoZeroPointer<Node>);
   }
   if (lastModifier !== undefined && !PositionIsSynthesized(Node_End(lastModifier))) {
     return NewTextRange(Node_End(lastModifier), Node_End(node));

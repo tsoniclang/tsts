@@ -95,6 +95,8 @@ import { Checker_compareTypesIdentical, Checker_getTypePredicateOfSignature } fr
 import type { Signature, Type, TypePredicate } from "./types.js";
 import { ContextFlagsNone, ElementFlagsNonRequired, TernaryTrue, Type_TargetTupleType, TypeFlagsUnion, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindThis } from "./types.js";
 import { FlagsInObjectTypeLiteral, FlagsMultilineObjectLiterals } from "../nodebuilder/types.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNodeWithCheckerFallback","kind":"method","status":"implemented","sigHash":"b263e6e171af0b280410e550a23f770fc4628afabfb3bc7623738d6ac1ae5f18"}
@@ -439,7 +441,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
       case PseudoTypeKindInferred: {
         const inferred = PseudoType_AsPseudoTypeInferred(t)!;
         const node = inferred.Expression;
-        const errorNodes = inferred.ErrorNodes ?? [];
+        const errorNodes = inferred.ErrorNodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
         if (errorNodes.length > 0) {
           for (const n of errorNodes) {
             b.ctx!.tracker!.ReportInferenceFallback(n);
@@ -547,7 +549,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         const cleanup = NodeBuilderImpl_enterNewScope(b, d.Signature, expandedParams ?? GoNilSlice(), signature!.typeParameters, signature!.parameters, signature!.mapper);
         let typeParams: GoPtr<NodeList> = undefined;
         if (d.TypeParameters.length > 0) {
-          let res: GoSlice<GoPtr<Node>> = [];
+          let res: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
           for (const tp of d.TypeParameters) {
             res = GoSliceAppend(res, NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
           }
@@ -572,12 +574,12 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
       case PseudoTypeKindObjectLiteral: {
         const elements = PseudoType_AsPseudoTypeObjectLiteral(t)!.Elements;
         if (elements.length === 0) {
-          const result = NewTypeLiteralNode(b.f, NodeFactory_NewNodeList(b.f, []) as GoPtr<never>);
+          const result = NewTypeLiteralNode(b.f, NodeFactory_NewNodeList(b.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())) as GoPtr<never>);
           EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
           return result;
         }
         const isConst = Checker_isConstContext(b.ch, elements[0]!.Name!.Parent!.Parent);
-        let newElements: GoSlice<GoPtr<Node>> = [];
+        let newElements: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
 
         // Member types are serialized within an object type literal, so set the
         // corresponding flag to mirror createTypeNodeFromObjectType. This ensures
@@ -589,7 +591,9 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           const elementNode = element!;
           let modifiers: GoPtr<NodeList> = undefined;
           if (isConst || (elementNode.Kind === PseudoObjectElementKindPropertyAssignment && PseudoObjectElement_AsPseudoPropertyAssignment(elementNode)!.Readonly)) {
-            modifiers = NodeFactory_NewModifierList(b.f, [NodeFactory_NewModifier(b.f, KindReadonlyKeyword)]) as GoPtr<NodeList>;
+            modifiers = NodeFactory_NewModifierList(b.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+              GoSliceStore(__goSliceLiteral, 0, NodeFactory_NewModifier(b.f, KindReadonlyKeyword), GoPointerValueOps<Node>());
+            })) as GoPtr<NodeList>;
           }
           let cleanup: (() => void) | undefined = undefined;
           if (elementNode.Kind !== PseudoObjectElementKindPropertyAssignment) {
@@ -604,7 +608,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               const d = PseudoObjectElement_AsPseudoObjectMethod(elementNode)!;
               let typeParams: GoPtr<NodeList> = undefined;
               if (d.TypeParameters.length > 0) {
-                let res: GoSlice<GoPtr<Node>> = [];
+                let res: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
                 for (const tp of d.TypeParameters) {
                   res = GoSliceAppend(res, NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
                 }
@@ -656,7 +660,9 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
                 undefined,
                 NodeBuilderImpl_reuseName(b, elementNode.Name, false as bool) as GoPtr<never>,
                 undefined,
-                NodeFactory_NewNodeList(b.f, [NodeBuilderImpl_pseudoParameterToNode(b, d.Parameter)]) as GoPtr<never>,
+                NodeFactory_NewNodeList(b.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+                  GoSliceStore(__goSliceLiteral, 0, NodeBuilderImpl_pseudoParameterToNode(b, d.Parameter), GoPointerValueOps<Node>());
+                })) as GoPtr<never>,
                 undefined,
                 undefined,
                 undefined,
@@ -720,7 +726,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
  */
 export function NodeBuilderImpl_pseudoParametersToNodeList(receiver: GoPtr<NodeBuilderImpl>, params: GoSlice<GoPtr<PseudoParameter>>): GoPtr<NodeList> {
   const b = receiver!;
-  let res: GoSlice<GoPtr<Node>> = [];
+  let res: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (const p of params) {
     res = GoSliceAppend(res, NodeBuilderImpl_pseudoParameterToNode(b, p), GoPointerValueOps<Node>());
   }
@@ -1040,7 +1046,7 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
   switch (t!.Kind) {
     case PseudoTypeKindInferred: {
       const inferred = PseudoType_AsPseudoTypeInferred(t)!;
-      const errorNodes = inferred.ErrorNodes ?? [];
+      const errorNodes = inferred.ErrorNodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
       if (errorNodes.length > 0) {
         if (reportErrors) {
           for (const n of errorNodes) {
@@ -1059,7 +1065,7 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
       if (type_ === undefined) {
         return false;
       }
-      const targetProps = Checker_getPropertiesOfType(b.ch, type_) ?? [];
+      const targetProps = Checker_getPropertiesOfType(b.ch, type_) ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>());
       let targetDeclCount = 0;
       for (const prop of targetProps) {
         targetDeclCount += (prop!.Declarations ?? []).length;
@@ -1102,7 +1108,7 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
             const d = PseudoObjectElement_AsPseudoPropertyAssignment(elementNode)!;
             if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, d.Type, propType, elementNode.Optional, false)) {
               if (reportErrors) {
-                if (d.Type!.Kind === PseudoTypeKindInferred && (PseudoType_AsPseudoTypeInferred(d.Type)!.ErrorNodes ?? []).length > 0) {
+                if (d.Type!.Kind === PseudoTypeKindInferred && (PseudoType_AsPseudoTypeInferred(d.Type)!.ErrorNodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length > 0) {
                   for (const n of PseudoType_AsPseudoTypeInferred(d.Type)!.ErrorNodes) {
                     b.ctx!.tracker!.ReportInferenceFallback(n);
                   }
@@ -1191,7 +1197,7 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
         return false;
       }
       const pt = PseudoType_AsPseudoTypeSingleCallSignature(t)!;
-      const targetTypeParameters = targetSig.typeParameters ?? [];
+      const targetTypeParameters = targetSig.typeParameters ?? GoSliceMake(0, 0, GoPointerValueOps<Type>());
       if (targetTypeParameters.length !== pt.TypeParameters.length) {
         if (reportErrors) {
           b.ctx!.tracker!.ReportInferenceFallback(pt.Signature);
@@ -1300,7 +1306,7 @@ export function NodeBuilderImpl_pseudoParametersEquivalentToParameters(receiver:
     }
     return false;
   }
-  const targetParameters = targetSig!.parameters ?? [];
+  const targetParameters = targetSig!.parameters ?? GoSliceMake(0, 0, GoPointerValueOps<Symbol>());
   if (targetParameters.length !== remainingParams.length) {
     if (reportErrors) {
       b.ctx!.tracker!.ReportInferenceFallback(nonParamErrorLocation);

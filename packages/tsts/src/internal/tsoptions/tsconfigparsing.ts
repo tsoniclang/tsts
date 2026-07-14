@@ -94,6 +94,8 @@ import { NewParsedCommandLine } from "./parsedcommandline.js";
 
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::extendsResult","kind":"type","status":"implemented","sigHash":"a9a5e4be3ccd0e78727df342c62c509aaaf6cc61a508b4445c448b8a516cc80d"}
  *
@@ -179,9 +181,9 @@ export let extendsOptionDeclaration: GoPtr<CommandLineOption> = newCommandLineOp
   Name: "extends",
   Kind: CommandLineOptionTypeListOrElement,
   Category: diagnostics.File_Management,
-  ElementOptions: commandLineOptionsToMap([
-    newCommandLineOption({ Name: "extends", Kind: CommandLineOptionTypeString }),
-  ]),
+  ElementOptions: commandLineOptionsToMap(GoSliceBuild(1, 1, GoPointerValueOps<CommandLineOption>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, newCommandLineOption({ Name: "extends", Kind: CommandLineOptionTypeString }), GoPointerValueOps<CommandLineOption>());
+  })),
 });
 
 /**
@@ -310,7 +312,7 @@ export interface configFileSpecs {
  * }
  */
 export function configFileSpecs_matchesExclude(receiver: GoPtr<configFileSpecs>, fileName: string, comparePathsOptions: ComparePathsOptions): bool {
-  if ((receiver!.validatedExcludeSpecs ?? []).length === 0) {
+  if ((receiver!.validatedExcludeSpecs ?? GoSliceMake(0, 0, GoStringValueOps)).length === 0) {
     return false;
   }
   const excludeMatcher = NewSpecMatcher(receiver!.validatedExcludeSpecs, comparePathsOptions.CurrentDirectory, UsageExclude, comparePathsOptions.UseCaseSensitiveFileNames);
@@ -346,12 +348,14 @@ export function configFileSpecs_matchesExclude(receiver: GoPtr<configFileSpecs>,
  * }
  */
 export function configFileSpecs_getMatchedIncludeSpec(receiver: GoPtr<configFileSpecs>, fileName: string, comparePathsOptions: ComparePathsOptions): string {
-  if ((receiver!.validatedIncludeSpecs ?? []).length === 0) {
+  if ((receiver!.validatedIncludeSpecs ?? GoSliceMake(0, 0, GoStringValueOps)).length === 0) {
     return "";
   }
   for (let index = 0; index < receiver!.validatedIncludeSpecs.length; index++) {
     const spec = receiver!.validatedIncludeSpecs[index];
-    const includeMatcher = NewSpecMatcher([spec!], comparePathsOptions.CurrentDirectory, UsageFiles, comparePathsOptions.UseCaseSensitiveFileNames);
+    const includeMatcher = NewSpecMatcher(GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, spec!, GoStringValueOps);
+    }), comparePathsOptions.CurrentDirectory, UsageFiles, comparePathsOptions.UseCaseSensitiveFileNames);
     if (includeMatcher !== undefined && SpecMatcher_MatchString(includeMatcher, fileName)) {
       return receiver!.validatedIncludeSpecsBeforeSubstitution[index]!;
     }
@@ -377,7 +381,7 @@ export function configFileSpecs_getMatchedIncludeSpec(receiver: GoPtr<configFile
  * }
  */
 export function configFileSpecs_getMatchedFileSpec(receiver: GoPtr<configFileSpecs>, fileName: string, comparePathsOptions: ComparePathsOptions): string {
-  if ((receiver!.validatedFilesSpec ?? []).length === 0) {
+  if ((receiver!.validatedFilesSpec ?? GoSliceMake(0, 0, GoStringValueOps)).length === 0) {
     return "";
   }
   const filePath = ToPath(fileName, comparePathsOptions.CurrentDirectory, comparePathsOptions.UseCaseSensitiveFileNames);
@@ -449,7 +453,7 @@ export function ExtendedConfigCacheEntry_ExtendedFileNames(receiver: GoPtr<Exten
   if (receiver!.extendedResult !== undefined) {
     return receiver!.extendedResult.ExtendedSourceFiles;
   }
-  return [];
+  return GoSliceMake(0, 0, GoStringValueOps);
 }
 
 /**
@@ -600,12 +604,12 @@ export function parseOwnConfigOfJsonSourceFile(sourceFile: GoPtr<SourceFile>, ho
         switch (parentOption!.Name) {
           case "compilerOptions": {
             const d = ParseCompilerOptions(option!.Name, currentValue, compilerOptions);
-            parseDiagnostics.push(...(d ?? []));
+            parseDiagnostics.push(...(d ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())));
             break;
           }
           case "typeAcquisition": {
             const d = ParseTypeAcquisition(option!.Name, currentValue, typeAcquisition);
-            parseDiagnostics.push(...(d ?? []));
+            parseDiagnostics.push(...(d ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())));
             break;
           }
         }
@@ -721,7 +725,7 @@ export function tsconfigToSourceFile(tsconfigSourceFile: GoPtr<TsConfigSourceFil
 export function NewTsconfigSourceFileFromFilePath(configFileName: string, configPath: Path, configSourceText: string): GoPtr<TsConfigSourceFile> {
   const sourceFile = ParseSourceFile({ FileName: configFileName, Path: configPath } as SourceFileParseOptions, configSourceText, ScriptKindJSON);
   return {
-    ExtendedSourceFiles: [],
+    ExtendedSourceFiles: GoSliceMake(0, 0, GoStringValueOps),
     configFileSpecs: undefined,
     SourceFile: sourceFile,
   };
@@ -789,7 +793,7 @@ export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonCon
     // array is a well-formed configuration object, made into an array element by stray characters.
     if (IsArrayLiteralExpression(rootExpression)) {
       const firstObject = core.Find(
-        (Node_Elements(rootExpression) ?? []) as GoSlice<GoPtr<Node>>,
+        (Node_Elements(rootExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) as GoSlice<GoPtr<Node>>,
         (n: GoPtr<Node>): bool => IsObjectLiteralExpression(n) as bool,
         GoZeroPointer<Node>,
       );
@@ -1127,9 +1131,13 @@ export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: GoInterf
       nodeValue = propertyAssignment as unknown as GoPtr<Node>;
     }
     if (sourceFile === undefined && nodeValue === undefined) {
-      return [undefined, [NewCompilerDiagnostic(diagnostics.Option_0_can_only_be_specified_on_command_line, opt!.Name)]];
+      return [undefined, GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, NewCompilerDiagnostic(diagnostics.Option_0_can_only_be_specified_on_command_line, opt!.Name), GoPointerValueOps<Diagnostic>());
+      })];
     } else {
-      return [undefined, [CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile, nodeValue, diagnostics.Option_0_can_only_be_specified_on_command_line, opt!.Name)]];
+      return [undefined, GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile, nodeValue, diagnostics.Option_0_can_only_be_specified_on_command_line, opt!.Name), GoPointerValueOps<Diagnostic>());
+      })];
     }
   }
   if (isCompilerOptionsValue(opt, value)) {
@@ -1144,7 +1152,7 @@ export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: GoInterf
         }
       case CommandLineOptionTypeEnum:
         if (value === undefined || value === null) {
-          return [undefined, []];
+          return [undefined, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
         }
         return convertJsonOptionOfEnumType(opt, value as string, valueExpression, sourceFile);
     }
@@ -1155,7 +1163,9 @@ export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: GoInterf
       return [normalizeNonListOptionValue(opt, basePath, validatedValue), errors];
     }
   } else {
-    return [undefined, [CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile, valueExpression, diagnostics.Compiler_option_0_requires_a_value_of_type_1, opt!.Name, getCompilerOptionValueTypeString(opt))]];
+    return [undefined, GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile, valueExpression, diagnostics.Compiler_option_0_requires_a_value_of_type_1, opt!.Name, getCompilerOptionValueTypeString(opt)), GoPointerValueOps<Diagnostic>());
+    })];
   }
 }
 
@@ -1468,11 +1478,11 @@ export function convertMapToOptions<O extends optionParser>(compilerOptions: GoP
  */
 export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: CommandLineOptionNameMap, jsonOptions: GoInterface<unknown>, basePath: string, result: O): [O, GoSlice<GoPtr<Diagnostic>>] {
   if (jsonOptions === undefined || jsonOptions === null) {
-    return [result, []];
+    return [result, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
   }
   if (!isOrderedMap(jsonOptions)) {
     // !!! probably should be an error
-    return [result, []];
+    return [result, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
   }
   const jsonMap = jsonOptions as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   const errors: GoPtr<Diagnostic>[] = [];
@@ -1493,19 +1503,19 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
         const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal, strings.ToLower(value), GoZeroInterface<unknown>);
         if (ok) {
           const compilerOptionsErr = result.ParseOption(key, GoUnboxComparableInterface(val));
-          errors.push(...(compilerOptionsErr ?? []));
+          errors.push(...(compilerOptionsErr ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())));
         }
       } else {
         const [convertJson, err] = convertJsonOption(opt, value, basePath, undefined, undefined, undefined);
         errors.push(...err);
         const compilerOptionsErr = result.ParseOption(key, convertJson);
-        errors.push(...(compilerOptionsErr ?? []));
+        errors.push(...(compilerOptionsErr ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())));
       }
     } else {
       const [convertJson, err] = convertJsonOption(opt, value, basePath, undefined, undefined, undefined);
       errors.push(...err);
       const compilerOptionsErr = result.ParseOption(key, convertJson);
-      errors.push(...(compilerOptionsErr ?? []));
+      errors.push(...(compilerOptionsErr ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())));
     }
     return true;
   });
@@ -1551,13 +1561,13 @@ export function convertArrayLiteralExpressionToJson(sourceFile: GoPtr<SourceFile
     for (const element of elements) {
       convertPropertyValueToJson(sourceFile, element, elementOption, returnValue, undefined);
     }
-    return [undefined, []];
+    return [undefined, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
   }
   // Filter out invalid values
   if (elements.length === 0) {
     // Always return an empty array, even if elements is nil.
     // The parser will produce nil slices instead of allocating empty ones.
-    return [[], []];
+    return [[], GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
   }
   const errors: GoPtr<Diagnostic>[] = [];
   const value: unknown[] = [];
@@ -1608,7 +1618,9 @@ export function ParseConfigFileTextToJson(fileName: string, path: Path, jsonText
   const [config, errors] = convertConfigFileToObject(jsonSourceFile, undefined);
   const diags = SourceFile_Diagnostics(jsonSourceFile);
   if (diags.length > 0) {
-    return [config, [diags[0]]];
+    return [config, GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, diags[0], GoPointerValueOps<Diagnostic>());
+    })];
   }
   return [config, errors];
 }
@@ -1734,7 +1746,7 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
     result = newMapWithSizeHint<string, unknown>(0, GoStringKey);
   }
   const errors: GoPtr<Diagnostic>[] = [];
-  for (const element of (node!.Properties!.Nodes! ?? [])) {
+  for (const element of (node!.Properties!.Nodes! ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
     if (element!.Kind !== KindPropertyAssignment) {
       errors.push(NewDiagnostic(sourceFile, element!.Loc, diagnostics.Property_assignment_expected));
       continue;
@@ -1801,9 +1813,9 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
 export function convertToJson(sourceFile: GoPtr<SourceFile>, rootExpression: GoPtr<Expression>, returnValue: bool, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   if (rootExpression === undefined) {
     if (returnValue) {
-      return [{}, []];
+      return [{}, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
     } else {
-      return [undefined, []];
+      return [undefined, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
     }
   }
   let rootOptions: GoPtr<CommandLineOption> = undefined;
@@ -1882,24 +1894,26 @@ export function isDoubleQuotedString(node: GoPtr<Node>): bool {
 export function convertPropertyValueToJson(sourceFile: GoPtr<SourceFile>, valueExpression: GoPtr<Expression>, option: GoPtr<CommandLineOption>, returnValue: bool, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   switch (valueExpression!.Kind) {
     case KindTrueKeyword:
-      return [true, []];
+      return [true, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
     case KindFalseKeyword:
-      return [false, []];
+      return [false, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
     case KindNullKeyword: // todo: how to manage null
-      return [undefined, []];
+      return [undefined, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
     case KindStringLiteral:
       if (!isDoubleQuotedString(valueExpression)) {
-        return [Node_Text(valueExpression), [NewDiagnostic(sourceFile, valueExpression!.Loc, diagnostics.String_literal_with_double_quotes_expected)]];
+        return [Node_Text(valueExpression), GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, NewDiagnostic(sourceFile, valueExpression!.Loc, diagnostics.String_literal_with_double_quotes_expected), GoPointerValueOps<Diagnostic>());
+        })];
       }
-      return [Node_Text(valueExpression), []];
+      return [Node_Text(valueExpression), GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
     case KindNumericLiteral:
-      return [Number(JsnumFromString(Node_Text(valueExpression))), []];
+      return [Number(JsnumFromString(Node_Text(valueExpression))), GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
     case KindPrefixUnaryExpression: {
       const prefixExpr = AsPrefixUnaryExpression(valueExpression);
       if (prefixExpr!.Operator !== KindMinusToken || prefixExpr!.Operand!.Kind !== KindNumericLiteral) {
         break; // not valid JSON syntax
       }
-      return [-Number(JsnumFromString(Node_Text(prefixExpr!.Operand))), []];
+      return [-Number(JsnumFromString(Node_Text(prefixExpr!.Operand))), GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())];
     }
     case KindObjectLiteralExpression: {
       const objectLiteralExpression = AsObjectLiteralExpression(valueExpression);
@@ -1908,7 +1922,7 @@ export function convertPropertyValueToJson(sourceFile: GoPtr<SourceFile>, valueE
     case KindArrayLiteralExpression: {
       const [result, errors] = convertArrayLiteralExpressionToJson(
         sourceFile,
-        (Node_Elements(valueExpression) ?? []) as GoSlice<GoPtr<Expression>>,
+        (Node_Elements(valueExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) as GoSlice<GoPtr<Expression>>,
         option,
         returnValue,
       );
@@ -1917,9 +1931,13 @@ export function convertPropertyValueToJson(sourceFile: GoPtr<SourceFile>, valueE
   }
   // Not in expected format
   if (option !== undefined) {
-    return [undefined, [NewDiagnostic(sourceFile, valueExpression!.Loc, diagnostics.Compiler_option_0_requires_a_value_of_type_1, option!.Name, getCompilerOptionValueTypeString(option))]];
+    return [undefined, GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewDiagnostic(sourceFile, valueExpression!.Loc, diagnostics.Compiler_option_0_requires_a_value_of_type_1, option!.Name, getCompilerOptionValueTypeString(option)), GoPointerValueOps<Diagnostic>());
+    })];
   } else {
-    return [undefined, [NewDiagnostic(sourceFile, valueExpression!.Loc, diagnostics.Property_value_can_only_be_string_literal_numeric_literal_true_false_null_object_literal_or_array_literal)]];
+    return [undefined, GoSliceBuild(1, 1, GoPointerValueOps<Diagnostic>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewDiagnostic(sourceFile, valueExpression!.Loc, diagnostics.Property_value_can_only_be_string_literal_numeric_literal_true_false_null_object_literal_or_array_literal), GoPointerValueOps<Diagnostic>());
+    })];
   }
 }
 
@@ -2133,11 +2151,11 @@ export function parseOwnConfigOfJson(json: GoPtr<OrderedMap<string, GoInterface<
  * }
  */
 export function readJsonConfigFile(fileName: string, path: Path, readFile: GoFunc<(fileName: string) => [string, bool]>): [GoPtr<TsConfigSourceFile>, GoSlice<GoPtr<Diagnostic>>] {
-  const [text, diagnostic] = tryReadFile(fileName, readFile, []);
+  const [text, diagnostic] = tryReadFile(fileName, readFile, GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()));
   if (text !== "") {
     return [
       {
-        ExtendedSourceFiles: [],
+        ExtendedSourceFiles: GoSliceMake(0, 0, GoStringValueOps),
         configFileSpecs: undefined,
         SourceFile: ParseSourceFile({ FileName: fileName, Path: path } as SourceFileParseOptions, text, ScriptKindJSON),
       },
@@ -2150,7 +2168,7 @@ export function readJsonConfigFile(fileName: string, path: Path, readFile: GoFun
     const sf = AsSourceFile(sourceFileNode);
     SourceFile_SetDiagnostics(sf, diagnostic);
     const file: TsConfigSourceFile = {
-      ExtendedSourceFiles: [],
+      ExtendedSourceFiles: GoSliceMake(0, 0, GoStringValueOps),
       configFileSpecs: undefined,
       SourceFile: sf,
     };
@@ -2214,14 +2232,14 @@ export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extende
     cacheEntry = ParseExtendedConfig(extendedConfigFileName, extendedConfigPath, resolutionStack, host, extendedConfigCache);
   }
 
-  if ((cacheEntry!.errors ?? []).length > 0) {
+  if ((cacheEntry!.errors ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())).length > 0) {
     errors.push(...cacheEntry!.errors);
   }
 
   if (cacheEntry!.extendedResult !== undefined) {
     if (sourceFile !== undefined) {
       Set_Add(result!.extendedSourceFiles, SourceFile_FileName(cacheEntry!.extendedResult!.SourceFile), GoStringKey);
-      for (const extendedSourceFile of (cacheEntry!.extendedResult!.ExtendedSourceFiles ?? [])) {
+      for (const extendedSourceFile of (cacheEntry!.extendedResult!.ExtendedSourceFiles ?? GoSliceMake(0, 0, GoStringValueOps))) {
         Set_Add(result!.extendedSourceFiles, extendedSourceFile, GoStringKey);
       }
     }
@@ -2266,16 +2284,16 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
   const entry: ExtendedConfigCacheEntry = {
     extendedResult: extendedResult,
     extendedConfig: undefined,
-    errors: [],
+    errors: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
   };
 
-  if ((readErrors ?? []).length > 0) {
+  if ((readErrors ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())).length > 0) {
     entry.errors = readErrors;
     return entry;
   }
 
   const parseDiagnostics = SourceFile_Diagnostics(extendedResult!.SourceFile);
-  if ((parseDiagnostics ?? []).length > 0) {
+  if ((parseDiagnostics ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())).length > 0) {
     entry.errors = parseDiagnostics;
     return entry;
   }
@@ -3195,7 +3213,7 @@ export function ForEachTsConfigPropArray<T>(tsConfigSourceFile: GoPtr<SourceFile
 export function CreateDiagnosticAtReferenceSyntax(config: GoPtr<ParsedCommandLine>, index: int, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   const result = ForEachTsConfigPropArray<Diagnostic>(config!.ConfigFile!.SourceFile, "references", (property: GoPtr<PropertyAssignment>): GoRef<Diagnostic> => {
     if (IsArrayLiteralExpression(property!.Initializer)) {
-      const value = Node_Elements(property!.Initializer) ?? [];
+      const value = Node_Elements(property!.Initializer) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
       if (value.length > index) {
         return GoValueRef<Diagnostic>(CreateDiagnosticForNodeInSourceFile(config!.ConfigFile!.SourceFile, value[index], message, ...args)!);
       }
@@ -3224,7 +3242,7 @@ export function GetCallbackForFindingPropertyAssignmentByValue(value: string): G
   return (property: GoPtr<PropertyAssignment>): GoPtr<Node> => {
     if (IsArrayLiteralExpression(property!.Initializer)) {
       return core.Find(
-        (Node_Elements(property!.Initializer) ?? []) as GoSlice<GoPtr<Node>>,
+        (Node_Elements(property!.Initializer) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) as GoSlice<GoPtr<Node>>,
         (element: GoPtr<Node>): bool => (IsStringLiteral(element) && Node_Text(element) === value) as bool,
         GoZeroPointer<Node>,
       );
@@ -3272,7 +3290,7 @@ export function GetOptionsSyntaxByArrayElementValue(objectLiteral: GoPtr<ObjectL
  */
 export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralExpression>, key: string, callback: GoFunc<(property: GoPtr<PropertyAssignment>) => GoRef<T>>, ...key2: Array<string>): GoRef<T> {
   if (objectLiteral !== undefined) {
-    for (const property of (objectLiteral!.Properties!.Nodes! ?? [])) {
+    for (const property of (objectLiteral!.Properties!.Nodes! ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
       if (!IsPropertyAssignment(property)) {
         continue;
       }
@@ -3685,13 +3703,13 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
   const supportedExtensions = GetSupportedExtensions(options, extraFileExtensions);
   const supportedExtensionsWithJsonIfResolveJsonModule = GetSupportedExtensionsWithJsonIfResolveJsonModule(options, supportedExtensions);
   // Literal files are always included verbatim.
-  for (const fileName of (validatedFilesSpec ?? [])) {
+  for (const fileName of (validatedFilesSpec ?? GoSliceMake(0, 0, GoStringValueOps))) {
     const file = GetNormalizedAbsolutePath(fileName, basePath);
     OrderedMap_Set(literalFileMap as GoPtr<OrderedMap<string, string>>, keyMapper(fileName), file, GoStringKey);
   }
 
   let jsonOnlyIncludeMatchers: GoPtr<ReturnType<typeof NewSpecMatcher>> = undefined;
-  if ((validatedIncludeSpecs ?? []).length > 0) {
+  if ((validatedIncludeSpecs ?? GoSliceMake(0, 0, GoStringValueOps)).length > 0) {
     const files = ReadDirectory(host, basePath, basePath, core.Flatten(supportedExtensionsWithJsonIfResolveJsonModule), validatedExcludeSpecs, validatedIncludeSpecs, UnlimitedDepth);
     for (const file of files) {
       if (FileExtensionIs(file, ExtensionJson)) {
@@ -3879,7 +3897,7 @@ export function GetParsedCommandLineOfConfigFile(configFileName: string, options
  * }
  */
 export function GetParsedCommandLineOfConfigFilePath(configFileName: string, path: Path, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>>, sys: GoInterface<ParseConfigHost>, extendedConfigCache: GoInterface<ExtendedConfigCache>): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
-  const [configFileText, readErrors] = tryReadFile(configFileName, sys!.FS()!.ReadFile.bind(sys!.FS()), []);
+  const [configFileText, readErrors] = tryReadFile(configFileName, sys!.FS()!.ReadFile.bind(sys!.FS()), GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()));
   if (readErrors.length > 0) {
     return [undefined, readErrors];
   }

@@ -24,6 +24,8 @@ import { ScriptTargetES2020 } from "../../core/compileroptions.js";
 import type { ScriptTarget } from "../../core/compileroptions.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::type::metadataSerializer","kind":"type","status":"implemented","sigHash":"22b1519fdeaf3cffc9fac77e5b92464bd60d3c11862b52fe6451e6bdc94fca3f"}
  *
@@ -216,7 +218,7 @@ export function getSetAccessorTypeAnnotationNode(node: GoPtr<SetAccessorDeclarat
  * }
  */
 export function getAccessorTypeNode(node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<Node> {
-  const members = Node_Members(container) ?? [];
+  const members = Node_Members(container) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const accessors = GetAllAccessorDeclarations(members, node as GoPtr<AccessorDeclaration>);
   if (accessors.SetAccessor !== undefined) {
     return getSetAccessorTypeAnnotationNode(accessors.SetAccessor);
@@ -299,7 +301,7 @@ export function metadataSerializer_serializeParameterTypesOfNode(receiver: GoPtr
     (IsFunctionLike(node) && NodeIsPresent(Node_Body(node)) ? node : undefined);
 
   if (valueDeclaration === undefined) {
-    return NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, []), false);
+    return NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false);
   }
 
   const parameters = getParametersOfDecoratedDeclaration(valueDeclaration, container);
@@ -335,7 +337,7 @@ export function metadataSerializer_serializeParameterTypesOfNode(receiver: GoPtr
  */
 export function getParametersOfDecoratedDeclaration(node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<NodeList> {
   if (container !== undefined && node!.Kind === KindGetAccessor) {
-    const members = Node_Members(container) ?? [];
+    const members = Node_Members(container) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     const acc = GetAllAccessorDeclarations(members, node as GoPtr<AccessorDeclaration>);
     if (acc.SetAccessor !== undefined) {
       return acc.SetAccessor!.Parameters as GoPtr<NodeList>;
@@ -486,7 +488,10 @@ export function metadataSerializer_serializeTypeNode(receiver: GoPtr<metadataSer
       try {
         return metadataSerializer_serializeUnionOrIntersectionConstituents(
           receiver,
-          [AsConditionalTypeNode(skipped)!.TrueType, AsConditionalTypeNode(skipped)!.FalseType],
+          GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, AsConditionalTypeNode(skipped)!.TrueType, GoPointerValueOps<Node>());
+            GoSliceStore(__goSliceLiteral, 1, AsConditionalTypeNode(skipped)!.FalseType, GoPointerValueOps<Node>());
+          }),
           false,
         );
       } finally {

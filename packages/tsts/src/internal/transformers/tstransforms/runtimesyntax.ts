@@ -161,6 +161,8 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 import { Tristate_IsTrue } from "../../core/tristate.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::type::RuntimeSyntaxTransformer","kind":"type","status":"implemented","sigHash":"f6da722d67500e59af9792d655cb93c0162bf9294c6412407cbdc162733836ae"}
  *
@@ -740,7 +742,9 @@ export function RuntimeSyntaxTransformer_addVarForDeclaration(receiver: GoPtr<Ru
   const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0;
   const varDecl = NewVariableDeclaration(astFactory, name, undefined, undefined, undefined);
   const varFlags = IfElse(receiver!.currentScope === receiver!.currentSourceFile, NodeFlagsNone, NodeFlagsLet);
-  const varDecls = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, [varDecl]), varFlags);
+  const varDecls = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, varDecl, GoPointerValueOps<Node>());
+  })), varFlags);
   // Replicate modifierVisitor: strip decorators, TypeScript modifiers, and export when in namespace.
   const baseMask = ~(ModifierFlagsTypeScriptModifier | ModifierFlagsDecorator);
   const modifierMask = receiver!.currentNamespace !== undefined ? baseMask & ~ModifierFlagsExport : baseMask;
@@ -789,7 +793,7 @@ export function RuntimeSyntaxTransformer_visitEnumDeclaration(receiver: GoPtr<Ru
     return EmitContext_NewNotEmittedStatement(Transformer_EmitContext(receiver!.__tsgoEmbedded0), EnumDeclaration_as_nodeData(node).AsNode());
   }
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoSlice<GoPtr<Statement>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const [statementsAfterVar, varAdded] = RuntimeSyntaxTransformer_addVarForDeclaration(receiver, statements, EnumDeclaration_as_nodeData(node).AsNode() as unknown as GoPtr<Declaration>);
   statements = statementsAfterVar;
 
@@ -808,7 +812,7 @@ export function RuntimeSyntaxTransformer_visitEnumDeclaration(receiver: GoPtr<Ru
     NodeFactory_NewAssignmentExpression(
       factory,
       RuntimeSyntaxTransformer_getExportQualifiedReferenceToDeclaration(receiver, nodeAsNode as unknown as GoPtr<Declaration>),
-      NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, []), false),
+      NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false),
     ),
   );
 
@@ -823,8 +827,12 @@ export function RuntimeSyntaxTransformer_visitEnumDeclaration(receiver: GoPtr<Ru
 
   const enumParam = NewParameterDeclaration(astFactory, undefined, undefined, enumParamName, undefined, undefined, undefined);
   const enumBody = RuntimeSyntaxTransformer_transformEnumBody(receiver, node);
-  const enumFunc = NewFunctionExpression(astFactory, undefined, undefined, undefined, undefined, NodeFactory_NewNodeList(astFactory, [enumParam]), undefined, undefined, enumBody);
-  const enumCall = NewCallExpression(astFactory, NewParenthesizedExpression(astFactory, enumFunc), undefined, undefined, NodeFactory_NewNodeList(astFactory, [enumArg]), NodeFlagsNone);
+  const enumFunc = NewFunctionExpression(astFactory, undefined, undefined, undefined, undefined, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, enumParam, GoPointerValueOps<Node>());
+  })), undefined, undefined, enumBody);
+  const enumCall = NewCallExpression(astFactory, NewParenthesizedExpression(astFactory, enumFunc), undefined, undefined, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, enumArg, GoPointerValueOps<Node>());
+  })), NodeFlagsNone);
   const enumStatement = NewExpressionStatement(astFactory, enumCall);
   EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), enumStatement, nodeAsNode);
   EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), enumStatement, nodeAsNode);
@@ -852,7 +860,7 @@ export function RuntimeSyntaxTransformer_transformEnumBody(receiver: GoPtr<Runti
   const visitedNode = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), Node_AsNode(node));
   const visitedEnum = AsEnumDeclaration(visitedNode);
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoSlice<GoPtr<Statement>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (let i = 0; i < visitedEnum!.Members!.Nodes!.length; i++) {
     statements = RuntimeSyntaxTransformer_transformEnumMember(receiver, statements, visitedEnum, i);
   }
@@ -953,7 +961,7 @@ export function RuntimeSyntaxTransformer_visitModuleDeclaration(receiver: GoPtr<
     return EmitContext_NewNotEmittedStatement(Transformer_EmitContext(receiver!.__tsgoEmbedded0), ModuleDeclaration_as_nodeData(node).AsNode());
   }
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoSlice<GoPtr<Statement>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const [statementsAfterVar, varAdded] = RuntimeSyntaxTransformer_addVarForDeclaration(receiver, statements, ModuleDeclaration_as_nodeData(node).AsNode() as unknown as GoPtr<Declaration>);
   statements = statementsAfterVar;
 
@@ -974,7 +982,7 @@ export function RuntimeSyntaxTransformer_visitModuleDeclaration(receiver: GoPtr<
     NodeFactory_NewAssignmentExpression(
       factory,
       RuntimeSyntaxTransformer_getExportQualifiedReferenceToDeclaration(receiver, nodeAsNode as unknown as GoPtr<Declaration>),
-      NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, []), false),
+      NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false),
     ),
   );
 
@@ -990,8 +998,12 @@ export function RuntimeSyntaxTransformer_visitModuleDeclaration(receiver: GoPtr<
 
   const moduleParam = NewParameterDeclaration(astFactory, undefined, undefined, moduleParamName, undefined, undefined, undefined);
   const moduleBody = RuntimeSyntaxTransformer_transformModuleBody(receiver, node, RuntimeSyntaxTransformer_getNamespaceContainerName(receiver, nodeAsNode));
-  const moduleFunc = NewFunctionExpression(astFactory, undefined, undefined, undefined, undefined, NodeFactory_NewNodeList(astFactory, [moduleParam]), undefined, undefined, moduleBody);
-  const moduleCall = NewCallExpression(astFactory, NewParenthesizedExpression(astFactory, moduleFunc), undefined, undefined, NodeFactory_NewNodeList(astFactory, [moduleArg]), NodeFlagsNone);
+  const moduleFunc = NewFunctionExpression(astFactory, undefined, undefined, undefined, undefined, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, moduleParam, GoPointerValueOps<Node>());
+  })), undefined, undefined, moduleBody);
+  const moduleCall = NewCallExpression(astFactory, NewParenthesizedExpression(astFactory, moduleFunc), undefined, undefined, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, moduleArg, GoPointerValueOps<Node>());
+  })), NodeFlagsNone);
   const moduleStatement = NewExpressionStatement(astFactory, moduleCall);
   EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleStatement, nodeAsNode);
   EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleStatement, nodeAsNode);
@@ -1015,7 +1027,7 @@ export function RuntimeSyntaxTransformer_transformModuleBody(receiver: GoPtr<Run
   receiver!.currentNamespace = Node_AsNode(node) as unknown as GoPtr<ModuleDeclarationNode>;
   receiver!.currentScopeFirstDeclarationsOfName = GoNilMap<string, GoPtr<Node>>();
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoSlice<GoPtr<Statement>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   EmitContext_StartVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0));
 
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
@@ -1034,7 +1046,9 @@ export function RuntimeSyntaxTransformer_transformModuleBody(receiver: GoPtr<Run
       statementsLocation = body!.Statements!.Loc;
       blockLocation = body!.Loc;
     } else { // node.Body.Kind == KindModuleDeclaration
-      const [visitedStatements] = NodeVisitor_VisitSlice(visitor, [node!.Body]);
+      const [visitedStatements] = NodeVisitor_VisitSlice(visitor, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, node!.Body, GoPointerValueOps<Node>());
+      }));
       statements = visitedStatements as GoSlice<GoPtr<Statement>>;
       const innermostModule = getInnermostModuleDeclarationFromDottedModule(node);
       const moduleBlock = AsModuleBlock(innermostModule!.Body);
@@ -1084,7 +1098,9 @@ export function RuntimeSyntaxTransformer_visitImportEqualsDeclaration(receiver: 
     //  var ${name} = ${moduleReference};
     const varDecl = NewVariableDeclaration(astFactory, node!.name, undefined /*exclamationToken*/, undefined /*type*/, moduleReference);
     EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varDecl, nodeAsNode);
-    const varList = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, [varDecl]), NodeFlagsNone);
+    const varList = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, varDecl, GoPointerValueOps<Node>());
+    })), NodeFlagsNone);
     const varModifiers = ExtractModifiers(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_Modifiers(nodeAsNode), ModifierFlagsExport);
     const varStatement = NewVariableStatement(astFactory, varModifiers, varList);
     EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varStatement, nodeAsNode);
@@ -1108,7 +1124,7 @@ export function RuntimeSyntaxTransformer_visitImportEqualsDeclaration(receiver: 
  */
 export function RuntimeSyntaxTransformer_visitVariableStatement(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<VariableStatement>): GoPtr<Node> {
   if (RuntimeSyntaxTransformer_isExportOfNamespace(receiver, Node_AsNode(node))) {
-    let expressions: GoSlice<GoPtr<Expression>> = [];
+    let expressions: GoSlice<GoPtr<Expression>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
     const declList = AsVariableDeclarationList(node!.DeclarationList);
     for (const declaration of declList!.Declarations!.Nodes!) {
       const v = AsVariableDeclaration(declaration);
@@ -1202,7 +1218,10 @@ export function RuntimeSyntaxTransformer_visitFunctionDeclaration(receiver: GoPt
     );
     const export_ = RuntimeSyntaxTransformer_createExportStatementForDeclaration(receiver, Node_AsNode(node) as unknown as GoPtr<Declaration>);
     if (export_ !== undefined) {
-      return NewSyntaxList(factory.__tsgoEmbedded0!, [updated, export_]);
+      return NewSyntaxList(factory.__tsgoEmbedded0!, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, updated, GoPointerValueOps<Node>());
+        GoSliceStore(__goSliceLiteral, 1, export_, GoPointerValueOps<Node>());
+      }));
     }
     return updated;
   }
@@ -1285,7 +1304,10 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
   if (exported) {
     const export_ = RuntimeSyntaxTransformer_createExportStatementForDeclaration(receiver, Node_AsNode(node) as unknown as GoPtr<Declaration>);
     if (export_ !== undefined) {
-      return NewSyntaxList(astFactory, [updated, export_]);
+      return NewSyntaxList(astFactory, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, updated, GoPointerValueOps<Node>());
+        GoSliceStore(__goSliceLiteral, 1, export_, GoPointerValueOps<Node>());
+      }));
     }
   }
   return updated;

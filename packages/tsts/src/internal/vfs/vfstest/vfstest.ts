@@ -15,6 +15,8 @@ import type { RealpathFS, WritableFS } from "../iovfs/iofs.js";
 import { From } from "../iovfs/iofs.js";
 import type { FS } from "../vfs.js";
 import { GetCanonicalFileName, IsRootedDiskPath, NormalizePath, PathIsAbsolute, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
+import { GoInterfaceValueOps, GoSliceMake } from "../../../go/compat.js";
+
 
 // Internal runtime shape of a fs.FileInfo.
 interface InternalFileInfo {
@@ -1131,7 +1133,7 @@ export function readDirFile_ReadDir(receiver: GoPtr<readDirFile>, n: int): [GoSl
   const embedded = receiver!.__tsgoEmbedded0 as unknown as InternalReadDirFile;
   const [list, err] = embedded.ReadDir(n);
   if (err !== undefined) {
-    return [[], err];
+    return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), err];
   }
 
   const entries: GoSlice<GoInterface<DirEntry>> = new globalThis.Array(list.length);

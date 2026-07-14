@@ -105,6 +105,8 @@ import { Checker_resolveExternalModule } from "./checker/modules.js";
 import { Checker_error, Checker_errorSkippedOnNoEmit } from "./checker/support.js";
 import { Checker_getSourceFileLinks, MappedTypeNameTypeKindRemapping, getTypeListKey } from "./checker/state.js";
 import type { Checker, TupleNormalizer } from "./checker/state.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::constGroup::maxSerializationLevel","kind":"constGroup","status":"implemented","sigHash":"79ece3e298a870c458c2a41c1f5cf9c3a183135474351f05399564b7b82f999b"}
@@ -170,7 +172,7 @@ export function Checker_checkClassForStaticPropertyNameConflicts(receiver: GoPtr
   if (CompilerOptions_GetUseDefineForClassFields(receiver!.compilerOptions)) {
     return;
   }
-  for (const member of Node_Members(node) ?? []) {
+  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     const memberNameNode = Node_Name(member);
     const isStaticMember = IsStatic(member);
     if (isStaticMember && memberNameNode !== undefined) {
@@ -231,9 +233,9 @@ export function Checker_getFirstTransformableStaticClassElement(receiver: GoPtr<
   const willTransformPrivateElementsOrClassStaticBlocks = (receiver!.languageVersion < LanguageFeatureMinimumTarget.PrivateNamesAndClassStaticBlocks || receiver!.languageVersion < LanguageFeatureMinimumTarget.ClassAndClassElementDecorators) as bool;
   const willTransformInitializers = (!receiver!.emitStandardClassFields) as bool;
   if (willTransformStaticElementsOfDecoratedClass || willTransformPrivateElementsOrClassStaticBlocks) {
-    for (const member of Node_Members(node) ?? []) {
+    for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       if (willTransformStaticElementsOfDecoratedClass && ClassElementOrClassElementParameterIsDecorated(false as bool, member, node)) {
-        const firstDecorator = core.FirstOrNil(Node_Decorators(node) ?? [], GoZeroPointer<Node>);
+        const firstDecorator = core.FirstOrNil(Node_Decorators(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), GoZeroPointer<Node>);
         if (firstDecorator !== undefined) {
           return firstDecorator;
         }
@@ -297,7 +299,7 @@ export function Checker_checkClassExpressionExternalHelpers(receiver: GoPtr<Chec
   let location: GoPtr<Node>;
   if (willTransformESDecorators && ClassOrConstructorParameterIsDecorated(false as bool, node)) {
     location = node;
-    const firstDecorator = core.FirstOrNil(Node_Decorators(node) ?? [], GoZeroPointer<Node>);
+    const firstDecorator = core.FirstOrNil(Node_Decorators(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), GoZeroPointer<Node>);
     if (firstDecorator !== undefined) {
       location = firstDecorator;
     }
@@ -846,48 +848,92 @@ export function Checker_hasSignatureWithArityGreaterThan(receiver: GoPtr<Checker
 export function Checker_getHelperNames(receiver: GoPtr<Checker>, helper: ExternalEmitHelpers): GoSlice<string> {
   switch (helper) {
     case ExternalEmitHelpersRest:
-      return ["__rest"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__rest", GoStringValueOps);
+      });
     case ExternalEmitHelpersDecorate:
       if (receiver!.legacyDecorators) {
-        return ["__decorate"];
+        return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, "__decorate", GoStringValueOps);
+        });
       }
-      return ["__esDecorate", "__runInitializers"];
+      return GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__esDecorate", GoStringValueOps);
+        GoSliceStore(__goSliceLiteral, 1, "__runInitializers", GoStringValueOps);
+      });
     case ExternalEmitHelpersMetadata:
-      return ["__metadata"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__metadata", GoStringValueOps);
+      });
     case ExternalEmitHelpersParam:
-      return ["__param"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__param", GoStringValueOps);
+      });
     case ExternalEmitHelpersAwaiter:
-      return ["__awaiter"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__awaiter", GoStringValueOps);
+      });
     case ExternalEmitHelpersAwait:
-      return ["__await"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__await", GoStringValueOps);
+      });
     case ExternalEmitHelpersAsyncGenerator:
-      return ["__asyncGenerator"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__asyncGenerator", GoStringValueOps);
+      });
     case ExternalEmitHelpersAsyncDelegator:
-      return ["__asyncDelegator"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__asyncDelegator", GoStringValueOps);
+      });
     case ExternalEmitHelpersAsyncValues:
-      return ["__asyncValues"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__asyncValues", GoStringValueOps);
+      });
     case ExternalEmitHelpersExportStar:
-      return ["__exportStar"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__exportStar", GoStringValueOps);
+      });
     case ExternalEmitHelpersImportStar:
-      return ["__importStar"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__importStar", GoStringValueOps);
+      });
     case ExternalEmitHelpersImportDefault:
-      return ["__importDefault"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__importDefault", GoStringValueOps);
+      });
     case ExternalEmitHelpersMakeTemplateObject:
-      return ["__makeTemplateObject"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__makeTemplateObject", GoStringValueOps);
+      });
     case ExternalEmitHelpersClassPrivateFieldGet:
-      return ["__classPrivateFieldGet"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__classPrivateFieldGet", GoStringValueOps);
+      });
     case ExternalEmitHelpersClassPrivateFieldSet:
-      return ["__classPrivateFieldSet"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__classPrivateFieldSet", GoStringValueOps);
+      });
     case ExternalEmitHelpersClassPrivateFieldIn:
-      return ["__classPrivateFieldIn"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__classPrivateFieldIn", GoStringValueOps);
+      });
     case ExternalEmitHelpersSetFunctionName:
-      return ["__setFunctionName"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__setFunctionName", GoStringValueOps);
+      });
     case ExternalEmitHelpersPropKey:
-      return ["__propKey"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__propKey", GoStringValueOps);
+      });
     case ExternalEmitHelpersAddDisposableResourceAndDisposeResources:
-      return ["__addDisposableResource", "__disposeResources"];
+      return GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__addDisposableResource", GoStringValueOps);
+        GoSliceStore(__goSliceLiteral, 1, "__disposeResources", GoStringValueOps);
+      });
     case ExternalEmitHelpersRewriteRelativeImportExtension:
-      return ["__rewriteRelativeImportExtension"];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "__rewriteRelativeImportExtension", GoStringValueOps);
+      });
     default:
       throw new globalThis.Error("Unrecognized helper");
   }

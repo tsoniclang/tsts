@@ -86,6 +86,8 @@ import type { colors } from "./diagnostics.js";
 import { createColors, colors_blue, colors_bold, colors_blueBackground, colors_brightWhite } from "./diagnostics.js";
 
 import type { GoInterface, GoRef } from "../../../go/compat.js";
+import { GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::PrintVersion","kind":"func","status":"implemented","sigHash":"81f4b3a8da37e32b22c37f209f6f87ec0f65daff59fe4062f2f5a2db67408068"}
  *
@@ -183,7 +185,7 @@ export function getOptionsForHelp(commandLine: GoPtr<ParsedCommandLine>): GoSlic
  */
 export function getHeader(sys: GoInterface<System>, message: string): GoSlice<string> {
   const clrs = createColors(sys);
-  let header: GoSlice<string> = [];
+  let header: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   const terminalWidth = sys!.GetWidthOfTerminal();
   const tsIcon = "     ";
   const tsIconTS = "  TS ";
@@ -264,13 +266,28 @@ export function printEasyHelp(sys: GoInterface<System>, locale: Locale, simpleOp
 
   output = GoSliceAppendSlice(output, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_2ed3) => { GoSliceStore(__goSliceLiteral_2ed3, 0, colors_bold(clrs, Message_Localize(COMMON_COMMANDS, locale)), GoStringValueOps); GoSliceStore(__goSliceLiteral_2ed3, 1, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_2ed3, 2, "\n", GoStringValueOps); }), GoStringValueOps);
 
-  example(["tsc"], Compiles_the_current_project_tsconfig_json_in_the_working_directory);
-  example(["tsc app.ts util.ts"], Ignoring_tsconfig_json_compiles_the_specified_files_with_default_compiler_options);
-  example(["tsc -b"], Build_a_composite_project_in_the_working_directory);
-  example(["tsc --init"], Creates_a_tsconfig_json_with_the_recommended_settings_in_the_working_directory);
-  example(["tsc -p ./path/to/tsconfig.json"], Compiles_the_TypeScript_project_located_at_the_specified_path);
-  example(["tsc --help --all"], An_expanded_version_of_this_information_showing_all_possible_compiler_options);
-  example(["tsc --noEmit", "tsc --target esnext"], Compiles_the_current_project_with_additional_settings);
+  example(GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, "tsc", GoStringValueOps);
+  }), Compiles_the_current_project_tsconfig_json_in_the_working_directory);
+  example(GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, "tsc app.ts util.ts", GoStringValueOps);
+  }), Ignoring_tsconfig_json_compiles_the_specified_files_with_default_compiler_options);
+  example(GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, "tsc -b", GoStringValueOps);
+  }), Build_a_composite_project_in_the_working_directory);
+  example(GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, "tsc --init", GoStringValueOps);
+  }), Creates_a_tsconfig_json_with_the_recommended_settings_in_the_working_directory);
+  example(GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, "tsc -p ./path/to/tsconfig.json", GoStringValueOps);
+  }), Compiles_the_TypeScript_project_located_at_the_specified_path);
+  example(GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, "tsc --help --all", GoStringValueOps);
+  }), An_expanded_version_of_this_information_showing_all_possible_compiler_options);
+  example(GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, "tsc --noEmit", GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, "tsc --target esnext", GoStringValueOps);
+  }), Compiles_the_current_project_with_additional_settings);
 
   let cliCommands: GoSlice<GoPtr<CommandLineOption>> = GoNilSlice();
   let configOpts: GoSlice<GoPtr<CommandLineOption>> = GoNilSlice();
@@ -922,7 +939,7 @@ export function getPossibleValues(option: GoPtr<CommandLineOption>): string {
  * }
  */
 export function getPrettyOutput(colors: GoPtr<colors>, left: string, right: string, rightAlignOfLeft: int, leftAlignOfRight: int, terminalWidth: int, colorLeft: bool): GoSlice<string> {
-  let res: GoSlice<string> = [];
+  let res: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   let isFirstLine = true;
   let remainRight = right;
   const rightCharacterNumber = terminalWidth - leftAlignOfRight;

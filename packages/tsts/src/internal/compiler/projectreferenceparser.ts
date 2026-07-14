@@ -17,6 +17,8 @@ import { newProjectReferenceDtsFakingHost } from "./projectreferencedtsfakinghos
 import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceMake } from "../../go/compat.js";
+
 
 const projectReferenceParseTaskKey: GoMapKeyDescriptor<GoPtr<projectReferenceParseTask>> = GoPointerKey<projectReferenceParseTask>();
 /**
@@ -83,7 +85,7 @@ export function createProjectReferenceParseTasks(projectReferences: GoSlice<stri
   return projectReferences.map((configName: string): GoPtr<projectReferenceParseTask> => ({
     configName,
     resolved: undefined,
-    subTasks: [],
+    subTasks: GoSliceMake(0, 0, GoPointerValueOps<projectReferenceParseTask>()),
   }));
 }
 
@@ -233,7 +235,7 @@ export function projectReferenceParser_initMapperWorker(receiver: GoPtr<projectR
   if (tasks.length === 0) {
     return GoNilSlice();
   }
-  let results: GoSlice<Path> = [];
+  let results: GoSlice<Path> = GoSliceMake(0, 0, GoStringValueOps);
   for (const task of tasks) {
     const path = fileLoader_toPath(receiver!.loader, task!.configName);
     results = GoSliceAppend(results, path, GoStringValueOps);

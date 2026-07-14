@@ -58,6 +58,8 @@ import { getExternalModuleNameLiteral, isDeclarationNameOfEnumOrNamespace, isFil
 import { OrderedSet_Values } from "../../collections/ordered_set.js";
 
 import type { GoFunc, GoInterface, GoMapKeyDescriptor } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 
 const moduleExportNamePointerKey: GoMapKeyDescriptor<GoPtr<ModuleExportName>> = GoPointerKey<ModuleExportName>();
 /**
@@ -1427,13 +1429,13 @@ export function CommonJSModuleTransformer_createExportExpression(receiver: GoPtr
                 undefined, /*asteriskToken*/
                 undefined, /*name*/
                 undefined, /*typeParameters*/
-                NodeFactory_NewNodeList(f, [] as GoSlice<GoPtr<Node>>),
+                NodeFactory_NewNodeList(f, GoSliceMake(0, 0, GoPointerValueOps<Node>())),
                 undefined, /*type*/
                 undefined, /*fullSignature*/
                 NewBlock(f,
-                  NodeFactory_NewNodeList(f, [
-                    NewReturnStatement(f, value),
-                  ] as GoSlice<GoPtr<Node>>),
+                  NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+                    GoSliceStore(__goSliceLiteral, 0, NewReturnStatement(f, value), GoPointerValueOps<Node>());
+                  })),
                   false, /*multiLine*/
                 ),
               ),
@@ -2754,7 +2756,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedIfStatement(receive
   const expression = NodeVisitor_VisitNode(visitor, node!.Expression);
   let thenStatement = NodeVisitor_VisitEmbeddedStatement(topLevelNestedVisitor, node!.ThenStatement);
   if (thenStatement === undefined) {
-    thenStatement = NewBlock(f, NodeFactory_NewNodeList(f, []), false as bool /*multiLine*/);
+    thenStatement = NewBlock(f, NodeFactory_NewNodeList(f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false as bool /*multiLine*/);
   }
   const elseStatement = NodeVisitor_VisitEmbeddedStatement(topLevelNestedVisitor, node!.ElseStatement);
   return NodeFactory_UpdateIfStatement(f, node, expression, thenStatement, elseStatement);
@@ -3164,7 +3166,7 @@ export function CommonJSModuleTransformer_visitDestructuringAssignment(receiver:
 export function CommonJSModuleTransformer_destructuringNeedsFlattening(receiver: GoPtr<CommonJSModuleTransformer>, node: GoPtr<Node>): bool {
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   if (IsObjectLiteralExpression(node)) {
-    for (const elem of Node_Properties(node) ?? []) {
+    for (const elem of Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       switch (elem!.Kind) {
         case KindPropertyAssignment:
           if (CommonJSModuleTransformer_destructuringNeedsFlattening(receiver, Node_Initializer(elem))) {
@@ -3643,7 +3645,9 @@ export function CommonJSModuleTransformer_visitDestructuringAssignmentTargetNoSt
         expression = CommonJSModuleTransformer_createExportExpression(receiver, exportName, expression as GoPtr<Expression>, undefined /*location*/, false /*liveBinding*/) as GoPtr<Node>;
       }
       const statement = NewExpressionStatement(f, expression as GoPtr<Expression>);
-      const statementList = NodeFactory_NewNodeList(f, [statement]);
+      const statementList = NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, statement, GoPointerValueOps<Node>());
+      }));
       const param = NewParameterDeclaration(
         f,
         undefined /*modifiers*/,
@@ -3658,12 +3662,16 @@ export function CommonJSModuleTransformer_visitDestructuringAssignmentTargetNoSt
         undefined /*modifiers*/,
         NewIdentifier(f, "value"),
         undefined /*typeParameters*/,
-        NodeFactory_NewNodeList(f, [param]),
+        NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, param, GoPointerValueOps<Node>());
+        })),
         undefined /*returnType*/,
         undefined /*fullSignature*/,
         NewBlock(f, statementList, false /*multiLine*/),
       );
-      const propertyList = NodeFactory_NewNodeList(f, [valueSetter]);
+      const propertyList = NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, valueSetter, GoPointerValueOps<Node>());
+      }));
       expression = NewObjectLiteralExpression(f, propertyList, false /*multiLine*/);
       expression = NewPropertyAccessExpression(f, expression as GoPtr<Expression>, undefined /*questionDotToken*/, NewIdentifier(f, "value"), NodeFlagsNone);
     }
@@ -3989,7 +3997,7 @@ export function CommonJSModuleTransformer_visitImportCallExpression(receiver: Go
     return NodeVisitor_VisitEachChild(visitor, Node_AsNode(node));
   }
   const externalModuleName = getExternalModuleNameLiteral(pf, Node_AsNode(node), receiver!.currentSourceFile, undefined /*host*/, undefined as unknown as EmitResolver /*resolver*/, receiver!.compilerOptions);
-  const firstArgument = NodeVisitor_VisitNode(visitor, FirstOrNil(node!.Arguments?.Nodes ?? [], GoZeroPointer<Node>)) as GoPtr<Expression>;
+  const firstArgument = NodeVisitor_VisitNode(visitor, FirstOrNil(node!.Arguments?.Nodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), GoZeroPointer<Node>)) as GoPtr<Expression>;
   let argument: GoPtr<Expression>;
   if (externalModuleName !== undefined && (firstArgument === undefined || !IsStringLiteral(firstArgument) || Node_Text(firstArgument) !== Node_Text(externalModuleName))) {
     argument = externalModuleName;
@@ -4112,9 +4120,9 @@ export function CommonJSModuleTransformer_createImportCallExpressionCommonJS(rec
       NewTemplateExpression(
         f,
         NewTemplateHead(f, "", "", TokenFlagsNone),
-        NodeFactory_NewNodeList(f, [
-          NewTemplateSpan(f, arg, NewTemplateTail(f, "", "", TokenFlagsNone)),
-        ]),
+        NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, NewTemplateSpan(f, arg, NewTemplateTail(f, "", "", TokenFlagsNone)), GoPointerValueOps<Node>());
+        })),
       ) as GoPtr<Expression>,
     ];
   }
@@ -4134,9 +4142,13 @@ export function CommonJSModuleTransformer_createImportCallExpressionCommonJS(rec
   ) as GoPtr<Expression>;
   let requireArguments: GoSlice<GoPtr<Expression>> = GoNilSlice();
   if (needSyncEval) {
-    requireArguments = [NewIdentifier(f, "s") as GoPtr<Expression>];
+    requireArguments = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewIdentifier(f, "s") as GoPtr<Expression>, GoPointerValueOps<Node>());
+    });
   } else if (arg !== undefined) {
-    requireArguments = [arg];
+    requireArguments = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, arg, GoPointerValueOps<Node>());
+    });
   }
   const requireCall = NodeFactory_NewImportStarHelper(
     pf,
@@ -4184,7 +4196,9 @@ export function CommonJSModuleTransformer_createImportCallExpressionCommonJS(rec
     ) as GoPtr<Expression>,
     undefined /*questionDotToken*/,
     undefined /*typeArguments*/,
-    NodeFactory_NewNodeList(f, [func as GoPtr<Expression>]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, func as GoPtr<Expression>, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   ) as GoPtr<Expression>;
   return downleveledImport;

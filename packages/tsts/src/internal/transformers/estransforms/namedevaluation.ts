@@ -32,6 +32,8 @@ import { isClassThisAssignmentBlock } from "./classthis.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isClassNamedEvaluationHelperBlock","kind":"func","status":"implemented","sigHash":"915e1187f285d1c5273cfd1809f7b31c9ef3b7e5dc03cbc819cd0ccf0f70683f"}
  *
@@ -93,7 +95,7 @@ export function isClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitContext
  */
 export function classHasExplicitlyAssignedName(emitContext: GoPtr<EmitContext>, node: GoPtr<ClassLikeDeclaration>): bool {
   if (EmitContext_AssignedName(emitContext, node as unknown as GoPtr<Node>) !== undefined) {
-    for (const member of Node_Members(node as unknown as GoPtr<Node>) ?? []) {
+    for (const member of Node_Members(node as unknown as GoPtr<Node>) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       if (isClassNamedEvaluationHelperBlock(emitContext, member)) {
         return true;
       }
@@ -343,7 +345,9 @@ export function createClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitCon
   const actualThisExpression = thisExpression !== undefined ? thisExpression : NodeFactory_NewThisExpression(factory);
   const expression = NodeFactory_NewSetFunctionNameHelper(factory, actualThisExpression, assignedName, "");
   const statement = NewExpressionStatement(astFactory, expression);
-  const body = NewBlock(astFactory, NodeFactory_NewNodeList(astFactory, [statement]), false);
+  const body = NewBlock(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, statement, GoPointerValueOps<Node>());
+  })), false);
   const block = NewClassStaticBlockDeclaration(astFactory, undefined, body);
 
   EmitContext_SetAssignedName(emitContext, block, assignedName);
@@ -444,7 +448,7 @@ export function injectClassNamedEvaluationHelperBlockIfMissing(emitContext: GoPt
     }
   }
   // Find insertionIndex: index after last isClassThisAssignmentBlock (or 0 if none)
-  const members = Node_Members(node as unknown as GoPtr<Node>) ?? [];
+  const members = Node_Members(node as unknown as GoPtr<Node>) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   let insertionIndex = 0;
   for (let i = 0; i < members.length; i++) {
     if (isClassThisAssignmentBlock(emitContext, members[i])) {

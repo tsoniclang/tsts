@@ -253,6 +253,8 @@ import { NewPseudoBigInt, ParsePseudoBigInt } from "../../jsnum/pseudobigint.js"
 import { Checker_isSkipDirectInferenceNode } from "../inference.js";
 
 import type { GoInterface, GoRef } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 
 function zeroNodeLinks(): NodeLinks {
   return {
@@ -512,10 +514,10 @@ export function Checker_checkBlock(receiver: GoPtr<Checker>, node: GoPtr<Node>):
   }
   if (IsFunctionOrModuleBlock(node)) {
     const saveFlowAnalysisDisabled = receiver!.flowAnalysisDisabled;
-    Checker_checkSourceElements(receiver, Node_Statements(node) || []);
+    Checker_checkSourceElements(receiver, Node_Statements(node) || GoSliceMake(0, 0, GoPointerValueOps<Node>()));
     receiver!.flowAnalysisDisabled = saveFlowAnalysisDisabled;
   } else {
-    Checker_checkSourceElements(receiver, Node_Statements(node) || []);
+    Checker_checkSourceElements(receiver, Node_Statements(node) || GoSliceMake(0, 0, GoPointerValueOps<Node>()));
   }
   if ((Node_Locals(node)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, node);
@@ -1057,7 +1059,7 @@ export function Checker_checkSwitchStatement(receiver: GoPtr<Checker>, node: GoP
         Checker_checkTypeComparableTo(receiver, caseType, expressionType, Node_Expression(clause), undefined);
       }
     }
-    Checker_checkSourceElements(receiver, Node_Statements(clause) || []);
+    Checker_checkSourceElements(receiver, Node_Statements(clause) || GoSliceMake(0, 0, GoPointerValueOps<Node>()));
     if (Tristate_IsTrue(receiver!.compilerOptions!.NoFallthroughCasesInSwitch)) {
       const flowNode = (AsCaseOrDefaultClause(clause) as unknown as { FallthroughFlowNode?: GoPtr<FlowNode> }).FallthroughFlowNode;
       if (flowNode !== undefined && Checker_isReachableFlowNode(receiver, flowNode)) {
@@ -1951,7 +1953,7 @@ export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoP
     return Checker_resolveErrorCall(receiver, node);
   }
   if (IsTypeAny(expressionType)) {
-    if ((Node_TypeArguments(node) ?? []).length !== 0) {
+    if ((Node_TypeArguments(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length !== 0) {
       Checker_error(receiver, node, Untyped_function_calls_may_not_accept_type_arguments);
     }
     return Checker_resolveUntypedCall(receiver, node);
@@ -3285,7 +3287,10 @@ function Checker_checkBinaryLikeExpressionWithTypes(receiver: GoPtr<Checker>, le
         if (!receiver!.strictNullChecks) {
           t = Checker_getBaseTypeOfLiteralType(receiver, rightType);
         }
-        resultType = Checker_getUnionType(receiver, [Checker_extractDefinitelyFalsyTypes(receiver, t), rightType]);
+        resultType = Checker_getUnionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, Checker_extractDefinitelyFalsyTypes(receiver, t), GoPointerValueOps<Type>());
+          GoSliceStore(__goSliceLiteral, 1, rightType, GoPointerValueOps<Type>());
+        }));
       }
       if (operator === KindAmpersandAmpersandEqualsToken) {
         Checker_checkAssignmentOperator(receiver, left, operator, right, leftType, rightType);
@@ -3296,7 +3301,10 @@ function Checker_checkBinaryLikeExpressionWithTypes(receiver: GoPtr<Checker>, le
     case KindBarBarEqualsToken: {
       let resultType = leftType;
       if (Checker_hasTypeFacts(receiver, leftType, TypeFactsFalsy)) {
-        resultType = Checker_getUnionTypeEx(receiver, [Checker_GetNonNullableType(receiver, Checker_removeDefinitelyFalsyTypes(receiver, leftType)), rightType], UnionReductionSubtype, undefined, undefined);
+        resultType = Checker_getUnionTypeEx(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, Checker_GetNonNullableType(receiver, Checker_removeDefinitelyFalsyTypes(receiver, leftType)), GoPointerValueOps<Type>());
+          GoSliceStore(__goSliceLiteral, 1, rightType, GoPointerValueOps<Type>());
+        }), UnionReductionSubtype, undefined, undefined);
       }
       if (operator === KindBarBarEqualsToken) {
         Checker_checkAssignmentOperator(receiver, left, operator, right, leftType, rightType);
@@ -3310,7 +3318,10 @@ function Checker_checkBinaryLikeExpressionWithTypes(receiver: GoPtr<Checker>, le
       }
       let resultType = leftType;
       if (Checker_hasTypeFacts(receiver, leftType, TypeFactsEQUndefinedOrNull)) {
-        resultType = Checker_getUnionTypeEx(receiver, [Checker_GetNonNullableType(receiver, leftType), rightType], UnionReductionSubtype, undefined, undefined);
+        resultType = Checker_getUnionTypeEx(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, Checker_GetNonNullableType(receiver, leftType), GoPointerValueOps<Type>());
+          GoSliceStore(__goSliceLiteral, 1, rightType, GoPointerValueOps<Type>());
+        }), UnionReductionSubtype, undefined, undefined);
       }
       if (operator === KindQuestionQuestionEqualsToken) {
         Checker_checkAssignmentOperator(receiver, left, operator, right, leftType, rightType);

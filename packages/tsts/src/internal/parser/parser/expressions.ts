@@ -281,6 +281,8 @@ import {
   Parser_inDisallowInContext,
   Parser_inDecoratorContext,
 } from "./tokens-speculation.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.validateJsonObjectLiteral","kind":"method","status":"implemented","sigHash":"9a2873ab2733e464c67bd0659b6fb3174c463dd6472cff0473c92047219284f4"}
@@ -417,9 +419,9 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
   if (receiver!.possibleAwaitSpans.length % 2 === 1) {
     throw new globalThis.Error("possibleAwaitSpans malformed: odd number of indices, not paired into spans.");
   }
-  let statements: GoSlice<GoPtr<Node>> = [];
+  let statements: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const savedParseDiagnostics = receiver!.diagnostics;
-  receiver!.diagnostics = [];
+  receiver!.diagnostics = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
 
   let afterAwaitStatement = 0;
   for (let i = 0; i < receiver!.possibleAwaitSpans.length; i += 2) {
@@ -2023,7 +2025,9 @@ export function Parser_parseSimpleArrowFunctionExpression(receiver: GoPtr<Parser
     NewParameterDeclaration(receiver!.factory, undefined /*modifiers*/, undefined /*dotDotDotToken*/, identifier, undefined /*questionToken*/, undefined /*typeNode*/, undefined /*initializer*/),
     Node_Pos(identifier),
   );
-  const parameters = Parser_newNodeList(receiver, parameter!.Loc, [parameter]);
+  const parameters = Parser_newNodeList(receiver, parameter!.Loc, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, parameter, GoPointerValueOps<Node>());
+  }));
   const equalsGreaterThanToken = Parser_parseExpectedToken(receiver, KindEqualsGreaterThanToken);
   const body = Parser_parseArrowFunctionExpressionBody(receiver, asyncModifier !== undefined /*isAsync*/, allowReturnTypeInArrowFunction);
   const result = Parser_finishNode(receiver, NewArrowFunction(receiver!.factory, asyncModifier, undefined /*typeParameters*/, parameters, undefined /*returnType*/, undefined /*fullSignature*/, equalsGreaterThanToken, body), pos);

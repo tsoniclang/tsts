@@ -79,6 +79,8 @@ import type {
   ExtensionFactStore,
   SourceFileBoundLifecycleRequest,
 } from "./host.js";
+import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+
 
 export interface SourceSemanticsExtensionOptions {
   readonly identity: CompilerExtensionIdentity;
@@ -239,7 +241,7 @@ function recordSourceSemanticsFacts(
     return;
   }
 
-  for (const statement of Node_Statements(sourceFile) ?? []) {
+  for (const statement of Node_Statements(sourceFile) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (statement?.Kind === KindImportDeclaration) {
       const moduleIdentity = getSourceSemanticsModuleIdentity(statement, modules);
       if (moduleIdentity !== undefined) {
@@ -280,7 +282,7 @@ function recordSourceSemanticsImportClause(
   if (namedBindings.Kind !== KindNamedImports) {
     return;
   }
-  for (const importSpecifier of Node_Elements(namedBindings) ?? []) {
+  for (const importSpecifier of Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (importSpecifier === undefined) {
       continue;
     }
@@ -314,7 +316,7 @@ function recordSourceSemanticsExportClause(
     return;
   }
   const declarationIsTypeOnly = AsExportDeclaration(exportDeclaration)!.IsTypeOnly;
-  for (const exportSpecifier of Node_Elements(exportClause) ?? []) {
+  for (const exportSpecifier of Node_Elements(exportClause) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (exportSpecifier === undefined) {
       continue;
     }
@@ -375,7 +377,7 @@ function recordSourceSemanticsCallMarker(
       if (!hasMarkerArgumentCount(callExpression, 1)) {
         return;
       }
-      const argument = (Node_Arguments(callExpression) ?? [])[0];
+      const argument = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
       if (argument === undefined) {
         return;
       }
@@ -386,7 +388,7 @@ function recordSourceSemanticsCallMarker(
       if (!hasMarkerArgumentCount(callExpression, 1)) {
         return;
       }
-      const argument = (Node_Arguments(callExpression) ?? [])[0];
+      const argument = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
       if (argument === undefined) {
         return;
       }
@@ -397,7 +399,7 @@ function recordSourceSemanticsCallMarker(
       if (!hasMarkerArgumentCount(callExpression, 1)) {
         return;
       }
-      const argument = (Node_Arguments(callExpression) ?? [])[0];
+      const argument = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
       if (argument === undefined) {
         return;
       }
@@ -408,7 +410,7 @@ function recordSourceSemanticsCallMarker(
       if (!hasMarkerArgumentCount(callExpression, 1)) {
         return;
       }
-      const argument = (Node_Arguments(callExpression) ?? [])[0];
+      const argument = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
       if (argument === undefined) {
         return;
       }
@@ -443,11 +445,11 @@ function recordSourceSemanticsCallMarker(
 }
 
 function hasMarkerArgumentCount(callExpression: Node, count: number): boolean {
-  return (Node_Arguments(callExpression) ?? []).length === count;
+  return (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length === count;
 }
 
 function hasMarkerTypeArgumentCount(callExpression: Node, count: number): boolean {
-  return (Node_TypeArguments(callExpression) ?? []).length === count;
+  return (Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length === count;
 }
 
 function recordArgumentPassingMarker(
@@ -497,7 +499,7 @@ function recordFieldMarker(
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const fieldType = (Node_TypeArguments(callExpression) ?? [])[0];
+  const fieldType = (Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
   if (fieldType === undefined) {
     return;
   }
@@ -526,10 +528,10 @@ function recordStructMarker(
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const shape = (Node_Arguments(callExpression) ?? [])[0];
+  const shape = (Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
   const fields: FieldFact[] = [];
   if (shape?.Kind === KindObjectLiteralExpression) {
-    for (const property of Node_Properties(shape) ?? []) {
+    for (const property of Node_Properties(shape) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       if (property?.Kind !== KindPropertyAssignment) {
         continue;
       }
@@ -553,7 +555,7 @@ function recordAttributeMarker(
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const target = (Node_TypeArguments(callExpression) ?? [])[0];
+  const target = (Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
   if (target === undefined) {
     return;
   }
@@ -571,7 +573,7 @@ function recordDefaultValueMarker(
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const type = (Node_TypeArguments(callExpression) ?? [])[0];
+  const type = (Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0];
   if (type === undefined) {
     return;
   }
@@ -684,7 +686,7 @@ function recordSourceSemanticsTypeMarker(
   typeName: Node,
   marker: SourceTypeMarkerDeclaration,
 ): void {
-  const typeArguments = Node_TypeArguments(typeReference) ?? [];
+  const typeArguments = Node_TypeArguments(typeReference) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const evidence = createMarkerEvidence(marker.exportName);
   if (marker.marker === "ptr") {
     if (typeArguments.length !== 1) {
@@ -848,7 +850,7 @@ function createSourceSemanticsMarkerImportIndex(
   const callMarkersByLocalName = new Map<string, SourceMarkerImportBinding<SourceCallMarkerDeclaration>>();
   const typeMarkersByLocalName = new Map<string, SourceMarkerImportBinding<SourceTypeMarkerDeclaration>>();
   const namespacesByLocalName = new Map<string, SourceNamespaceImportBinding>();
-  for (const statement of Node_Statements(sourceFile) ?? []) {
+  for (const statement of Node_Statements(sourceFile) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (statement?.Kind !== KindImportDeclaration) {
       continue;
     }
@@ -874,7 +876,7 @@ function createSourceSemanticsMarkerImportIndex(
     if (namedBindings.Kind !== KindNamedImports) {
       continue;
     }
-    for (const importSpecifier of Node_Elements(namedBindings) ?? []) {
+    for (const importSpecifier of Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       const localNameNode = Node_Name(importSpecifier);
       const localName = Node_Text(localNameNode);
       const exportName = Node_Text(Node_PropertyName(importSpecifier) ?? localNameNode);

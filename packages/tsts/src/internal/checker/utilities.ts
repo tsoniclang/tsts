@@ -221,6 +221,8 @@ import {
 } from "../diagnostics/generated/messages.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::NewDiagnosticForNode","kind":"func","status":"implemented","sigHash":"38975070fc52475f953f616cda4a7d53cea35489b9bd5758651180771e977acb"}
  *
@@ -380,7 +382,7 @@ export function isStaticPrivateIdentifierProperty(s: GoPtr<Symbol>): bool {
  * }
  */
 export function isEmptyObjectLiteral(expression: GoPtr<Node>): bool {
-  return (IsObjectLiteralExpression(expression) && (Node_Properties(expression) ?? []).length === 0) as bool;
+  return (IsObjectLiteralExpression(expression) && (Node_Properties(expression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length === 0) as bool;
 }
 
 /**
@@ -517,7 +519,7 @@ export function isCompoundLikeAssignment(assignment: GoPtr<Node>): bool {
  * }
  */
 export function isConstTypeReference(node: GoPtr<Node>): bool {
-  return (IsTypeReferenceNode(node) && (Node_TypeArguments(node) ?? []).length === 0 && IsIdentifier(AsTypeReferenceNode(node)!.TypeName) && Node_Text(AsTypeReferenceNode(node)!.TypeName) === "const") as bool;
+  return (IsTypeReferenceNode(node) && (Node_TypeArguments(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length === 0 && IsIdentifier(AsTypeReferenceNode(node)!.TypeName) && Node_Text(AsTypeReferenceNode(node)!.TypeName) === "const") as bool;
 }
 
 /**
@@ -1004,7 +1006,7 @@ export function Checker_isOptionalParameter(receiver: GoPtr<Checker>, node: GoPt
  * }
  */
 export function isEmptyArrayLiteral(expression: GoPtr<Node>): bool {
-  return (IsArrayLiteralExpression(expression) && (Node_Elements(expression) ?? []).length === 0) as bool;
+  return (IsArrayLiteralExpression(expression) && (Node_Elements(expression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length === 0) as bool;
 }
 
 /**
@@ -1129,8 +1131,8 @@ export function Checker_compareSymbolsWorker(receiver: GoPtr<Checker>, s1: GoPtr
   if (s2 === undefined) {
     return -1;
   }
-  const declarations1 = s1!.Declarations ?? [];
-  const declarations2 = s2!.Declarations ?? [];
+  const declarations1 = s1!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
+  const declarations2 = s2!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   if (declarations1.length !== 0 && declarations2.length !== 0) {
     const r = Checker_compareNodes(receiver, declarations1[0], declarations2[0]);
     if (r !== 0) {
@@ -1209,8 +1211,8 @@ function compareNumbers(n1: number, n2: number): int {
 }
 
 function compareStringLists(s1: GoSlice<string>, s2: GoSlice<string>): int {
-  const a1 = s1 ?? [];
-  const a2 = s2 ?? [];
+  const a1 = s1 ?? GoSliceMake(0, 0, GoStringValueOps);
+  const a2 = s2 ?? GoSliceMake(0, 0, GoStringValueOps);
   if (a1.length !== a2.length) {
     return a1.length - a2.length;
   }
@@ -1790,8 +1792,8 @@ export function compareElementLabels(n1: GoPtr<Node>, n2: GoPtr<Node>): int {
  * }
  */
 export function compareTypeLists(s1: GoSlice<GoPtr<Type>>, s2: GoSlice<GoPtr<Type>>): int {
-  const a1 = s1 ?? [];
-  const a2 = s2 ?? [];
+  const a1 = s1 ?? GoSliceMake(0, 0, GoPointerValueOps<Type>());
+  const a2 = s2 ?? GoSliceMake(0, 0, GoPointerValueOps<Type>());
   if (a1.length !== a2.length) {
     return a1.length - a2.length;
   }
@@ -1956,10 +1958,10 @@ export function getDeclarationModifierFlagsFromSymbolEx(s: GoPtr<Symbol>, isWrit
   if (s!.ValueDeclaration !== undefined) {
     let declaration: GoPtr<Node> = undefined;
     if (isWrite) {
-      declaration = Find<GoPtr<Node>>(s!.Declarations ?? [], IsSetAccessorDeclaration, GoZeroPointer<Node>);
+      declaration = Find<GoPtr<Node>>(s!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsSetAccessorDeclaration, GoZeroPointer<Node>);
     }
     if (declaration === undefined && (s!.Flags & SymbolFlagsGetAccessor) !== 0) {
-      declaration = Find<GoPtr<Node>>(s!.Declarations ?? [], IsGetAccessorDeclaration, GoZeroPointer<Node>);
+      declaration = Find<GoPtr<Node>>(s!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsGetAccessorDeclaration, GoZeroPointer<Node>);
     }
     if (declaration === undefined) {
       declaration = s!.ValueDeclaration;
@@ -3266,7 +3268,7 @@ export function getEnclosingContainer(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function getDeclarationsOfKind(symbol_: GoPtr<Symbol>, kind: Kind): GoSlice<GoPtr<Node>> {
-  return Filter(symbol_!.Declarations ?? [], (d: GoPtr<Node>): bool => (d!.Kind === kind) as bool);
+  return Filter(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (d: GoPtr<Node>): bool => (d!.Kind === kind) as bool);
 }
 
 /**
@@ -4254,7 +4256,7 @@ export function Checker_isUncheckedJSSuggestion(receiver: GoPtr<Checker>, node: 
     if (Tristate_IsUnknown(receiver!.compilerOptions!.CheckJs) && file!.CheckJsDirective === undefined && (file!.ScriptKind === ScriptKindJS || file!.ScriptKind === ScriptKindJSX)) {
       let declarationFile: GoPtr<SourceFile> = undefined;
       if (suggestion !== undefined) {
-        const firstDeclaration = FirstOrNil<GoPtr<Node>>(suggestion!.Declarations ?? [], GoZeroPointer<Node>);
+        const firstDeclaration = FirstOrNil<GoPtr<Node>>(suggestion!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), GoZeroPointer<Node>);
         if (firstDeclaration !== undefined) {
           declarationFile = GetSourceFileOfNode(firstDeclaration);
         }

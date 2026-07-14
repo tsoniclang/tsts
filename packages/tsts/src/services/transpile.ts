@@ -25,6 +25,8 @@ import type { FS, Entries, FileInfo, WalkDirFunc } from "../internal/vfs/vfs.js"
 import { Default as DefaultLocale } from "../internal/locale/locale.js";
 import { TSTrue } from "../internal/core/tristate.js";
 import { Time } from "../go/time.js";
+import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+
 
 export interface TranspileOptions {
   compilerOptions?: TranspileCompilerOptions;
@@ -193,7 +195,7 @@ function transpileWorker(input: string, options: TranspileOptions, declaration: 
     EmitOnly: declaration ? EmitOnlyDts : EmitOnlyJs,
     WriteFile: writeFile,
   });
-  appendDiagnostics(diagnostics, emitResult?.Diagnostics ?? []);
+  appendDiagnostics(diagnostics, emitResult?.Diagnostics ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()));
 
   if (outputText === undefined) {
     // Emit can legitimately produce no output file — e.g. --isolatedDeclarations blocks

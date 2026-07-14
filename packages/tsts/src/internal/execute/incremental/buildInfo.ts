@@ -37,6 +37,8 @@ import {
   getPendingEmitKindWithOptions,
 } from "./snapshot.js";
 import type { emitSignature, FileEmitKind, FileInfo } from "./snapshot.js";
+import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+
 
 // Go's []byte(string) conversion: the UTF-8 encoding of the string.
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
@@ -622,7 +624,7 @@ export function BuildInfoDiagnosticsOfFile_UnmarshalJSON(receiver: GoPtr<BuildIn
     return Errorf("invalid fileId in BuildInfoDiagnosticsOfFile: %s", str);
   }
   receiver!.FileId = arr[0] as BuildInfoFileId;
-  receiver!.Diagnostics = (arr[1] as GoSlice<GoPtr<BuildInfoDiagnostic>>) ?? [];
+  receiver!.Diagnostics = (arr[1] as GoSlice<GoPtr<BuildInfoDiagnostic>>) ?? GoSliceMake(0, 0, GoPointerValueOps<BuildInfoDiagnostic>());
   return undefined;
 }
 
@@ -698,7 +700,7 @@ export function BuildInfoSemanticDiagnostic_UnmarshalJSON(receiver: GoPtr<BuildI
     const arr = parsed as unknown[];
     const diagnostics: BuildInfoDiagnosticsOfFile = {
       FileId: 0 as BuildInfoFileId,
-      Diagnostics: [],
+      Diagnostics: GoSliceMake(0, 0, GoPointerValueOps<BuildInfoDiagnostic>()),
     };
     const err = BuildInfoDiagnosticsOfFile_UnmarshalJSON(diagnostics, data);
     if (err !== undefined) {
@@ -885,7 +887,7 @@ export function BuildInfoEmitSignature_toEmitSignature(receiver: GoPtr<BuildInfo
   }
   return {
     signature,
-    signatureWithDifferentOptions: signatureWithDifferentOptions ?? [],
+    signatureWithDifferentOptions: signatureWithDifferentOptions ?? GoSliceMake(0, 0, GoStringValueOps),
   };
 }
 
@@ -1314,7 +1316,7 @@ export function BuildInfo_GetBuildInfoRootInfoReader(receiver: GoPtr<BuildInfo>,
   const resolvedToRoot: Map<Path, Path> = new Map<Path, Path>();
   const toPath = (fileName: string): Path => ToPath(fileName, buildInfoDirectory, comparePathOptions.UseCaseSensitiveFileNames);
 
-  for (const resolved of receiver!.ResolvedRoot ?? []) {
+  for (const resolved of receiver!.ResolvedRoot ?? GoSliceMake(0, 0, GoPointerValueOps<BuildInfoResolvedRoot>())) {
     resolvedToRoot.set(toPath(BuildInfo_fileName(receiver, resolved!.Resolved)), toPath(BuildInfo_fileName(receiver, resolved!.Root)));
   }
 
@@ -1331,7 +1333,7 @@ export function BuildInfo_GetBuildInfoRootInfoReader(receiver: GoPtr<BuildInfo>,
     }
   };
 
-  for (const root of receiver!.Root ?? []) {
+  for (const root of receiver!.Root ?? GoSliceMake(0, 0, GoPointerValueOps<BuildInfoRoot>())) {
     if (root!.NonIncremental !== "") {
       addRoot(root!.NonIncremental, undefined);
     } else if (root!.End === 0) {

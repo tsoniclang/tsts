@@ -81,6 +81,8 @@ import {
   snapshot_getAllFilesExcludingDefaultLibraryFile,
 } from "./snapshot.js";
 import { referenceMap_getReferences, referenceMap_storeReferences } from "./referencemap.js";
+import { GoSliceMake } from "../../../go/compat.js";
+
 
 function newSyncMap<K extends GoComparable, V>(): SyncMap<K, V> {
   return { __tsgoBlank0: [], __tsgoBlank1: [], m: new GoSyncMap() };
@@ -145,7 +147,7 @@ export function programToSnapshot(program: GoPtr<Program>, oldProgram: GoPtr<Pro
     hasSemanticErrors: false,
     hasSemanticErrorsFromOldState: false,
     allFilesExcludingDefaultLibraryFileOnce: new Once(),
-    allFilesExcludingDefaultLibraryFile: [],
+    allFilesExcludingDefaultLibraryFile: GoSliceMake(0, 0, GoPointerValueOps<SourceFile>()),
     hasChangedDtsFile: false,
     hasEmitDiagnostics: false,
   } as snapshot;
@@ -545,7 +547,7 @@ export function addReferencedFilesFromSymbol(file: GoPtr<SourceFile>, referenced
   if (symbol_ === undefined) {
     return;
   }
-  for (const declaration of symbol_!.Declarations ?? []) {
+  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     const fileOfDecl = GetSourceFileOfNode(declaration);
     if (fileOfDecl === undefined) {
       continue;
@@ -683,7 +685,7 @@ export function repopulateDiagnosticsOfFile(diags: GoPtr<DiagnosticsOrBuildInfoD
     if (GoSliceIsNil(repopulated)) {
       return diags;
     }
-    return { diagnostics: repopulated, buildInfoDiagnostics: [] };
+    return { diagnostics: repopulated, buildInfoDiagnostics: GoSliceMake(0, 0, GoPointerValueOps<buildInfoDiagnosticWithFileName>()) };
   }
   // buildInfoDiagnostics will be repopulated via toDiagnostic's repopulateInfo handling
   return diags;
@@ -788,8 +790,8 @@ export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic
         messageKey: Diagnostic_MessageKey(c),
         messageArgs: Diagnostic_MessageArgs(c),
         repopulateInfo: Diagnostic_RepopulateInfo(c),
-        messageChain: [],
-        relatedInformation: [],
+        messageChain: GoSliceMake(0, 0, GoPointerValueOps<buildInfoDiagnosticWithFileName>()),
+        relatedInformation: GoSliceMake(0, 0, GoPointerValueOps<buildInfoDiagnosticWithFileName>()),
         reportsUnnecessary: false,
         reportsDeprecated: false,
         skippedOnNoEmit: false,
@@ -842,8 +844,8 @@ export function astDiagToBuildInfoDiag(d: GoPtr<Diagnostic>): GoPtr<buildInfoDia
     messageKey: Diagnostic_MessageKey(d),
     messageArgs: Diagnostic_MessageArgs(d),
     repopulateInfo: Diagnostic_RepopulateInfo(d),
-    messageChain: [],
-    relatedInformation: [],
+    messageChain: GoSliceMake(0, 0, GoPointerValueOps<buildInfoDiagnosticWithFileName>()),
+    relatedInformation: GoSliceMake(0, 0, GoPointerValueOps<buildInfoDiagnosticWithFileName>()),
     reportsUnnecessary: false,
     reportsDeprecated: false,
     skippedOnNoEmit: false,

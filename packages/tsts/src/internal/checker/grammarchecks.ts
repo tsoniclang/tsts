@@ -301,6 +301,8 @@ import {
   Duplicate_identifier_0,
   Initializers_are_not_allowed_in_ambient_contexts,
 } from "../diagnostics/generated/messages.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+
 
 function GoZeroNodeLinks(): NodeLinks {
   return {
@@ -1105,7 +1107,7 @@ export function Checker_checkGrammarModifiers(receiver: GoPtr<Checker>, node: Go
   let sawExportBeforeDecorators = false;
   let hasLeadingDecorators = false;
   const modifiers = Node_ModifierNodes(node);
-  for (const modifier of modifiers ?? []) {
+  for (const modifier of modifiers ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (IsDecorator(modifier)) {
       if (!NodeCanBeDecorated(receiver!.legacyDecorators, node, node!.Parent, node!.Parent!.Parent)) {
         if (node!.Kind === KindMethodDeclaration && !NodeIsPresent(Node_Body(node))) {
@@ -1114,7 +1116,7 @@ export function Checker_checkGrammarModifiers(receiver: GoPtr<Checker>, node: Go
           return Checker_grammarErrorOnFirstToken(receiver, node, Decorators_are_not_valid_here);
         }
       } else if (receiver!.legacyDecorators && (node!.Kind === KindGetAccessor || node!.Kind === KindSetAccessor)) {
-        const accessors = GetAllAccessorDeclarationsForDeclaration(node, Checker_getSymbolOfDeclaration(receiver, node)!.Declarations ?? []);
+        const accessors = GetAllAccessorDeclarationsForDeclaration(node, Checker_getSymbolOfDeclaration(receiver, node)!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()));
         if (HasDecorators(accessors.FirstAccessor) && node === accessors.SecondAccessor) {
           return Checker_grammarErrorOnFirstToken(receiver, node, Decorators_cannot_be_applied_to_multiple_get_Slashset_accessors_of_the_same_name);
         }
@@ -1469,7 +1471,7 @@ export function Checker_reportObviousModifierErrors(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_findFirstModifierExcept(receiver: GoPtr<Checker>, node: GoPtr<Node>, allowedModifier: Kind): GoPtr<Node> {
-  const modifier = Find(Node_ModifierNodes(node) ?? [], IsModifier, GoZeroPointer<Node>);
+  const modifier = Find(Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsModifier, GoZeroPointer<Node>);
   if (modifier !== undefined && modifier!.Kind !== allowedModifier) {
     return modifier;
   }
@@ -1562,7 +1564,7 @@ export function Checker_findFirstIllegalModifier(receiver: GoPtr<Checker>, node:
     case KindShorthandPropertyAssignment:
     case KindNamespaceExportDeclaration:
     case KindMissingDeclaration:
-      return Find(Node_ModifierNodes(node) ?? [], IsModifier, GoZeroPointer<Node>);
+      return Find(Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsModifier, GoZeroPointer<Node>);
     default:
       if (node!.Parent!.Kind === KindModuleBlock || node!.Parent!.Kind === KindSourceFile) {
         return undefined;
@@ -1576,12 +1578,12 @@ export function Checker_findFirstIllegalModifier(receiver: GoPtr<Checker>, node:
         case KindClassExpression:
         case KindInterfaceDeclaration:
         case KindTypeAliasDeclaration:
-          return Find(Node_ModifierNodes(node) ?? [], IsModifier, GoZeroPointer<Node>);
+          return Find(Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsModifier, GoZeroPointer<Node>);
         case KindVariableStatement:
           if ((AsVariableStatement(node)!.DeclarationList!.Flags & NodeFlagsUsing) !== 0) {
             return Checker_findFirstModifierExcept(receiver, node, KindAwaitKeyword);
           }
-          return Find(Node_ModifierNodes(node) ?? [], IsModifier, GoZeroPointer<Node>);
+          return Find(Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsModifier, GoZeroPointer<Node>);
         case KindEnumDeclaration:
           return Checker_findFirstModifierExcept(receiver, node, KindConstKeyword);
         default:
@@ -1625,7 +1627,7 @@ export function Checker_reportObviousDecoratorErrors(receiver: GoPtr<Checker>, n
  */
 export function Checker_findFirstIllegalDecorator(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Node> {
   if (CanHaveIllegalDecorators(node)) {
-    const decorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator, GoZeroPointer<Node>);
+    const decorator = Find(Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsDecorator, GoZeroPointer<Node>);
     return decorator;
   } else {
     return undefined;
@@ -1916,7 +1918,10 @@ export function Checker_checkGrammarArrowFunction(receiver: GoPtr<Checker>, node
     const typeParamNodes = typeParameters!.Nodes;
     const hasConstraint = typeParamNodes.length > 0 && AsTypeParameterDeclaration(typeParamNodes[0])!.Constraint !== undefined;
     if (!(typeParamNodes.length > 1 || NodeList_HasTrailingComma(typeParameters) || hasConstraint)) {
-      if (FileExtensionIsOneOf(SourceFile_FileName(file), [ExtensionMts, ExtensionCts])) {
+      if (FileExtensionIsOneOf(SourceFile_FileName(file), GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ExtensionMts, GoStringValueOps);
+        GoSliceStore(__goSliceLiteral, 1, ExtensionCts, GoStringValueOps);
+      }))) {
         // TODO(danielr): should we return early here?
         Checker_grammarErrorOnNode(receiver, typeParameters!.Nodes[0], This_syntax_is_reserved_in_files_with_the_mts_or_cts_extension_Add_a_trailing_comma_or_explicit_constraint);
       }
@@ -2586,7 +2591,7 @@ export function Checker_checkGrammarObjectLiteralExpression(receiver: GoPtr<Chec
     if (name!.Kind === KindPrivateIdentifier) {
       Checker_grammarErrorOnNode(receiver, name, Private_identifiers_are_not_allowed_outside_class_bodies);
     }
-    const modifiers = Node_ModifierNodes(prop) ?? [];
+    const modifiers = Node_ModifierNodes(prop) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     if (modifiers.length !== 0) {
       if (CanHaveModifiers(prop)) {
         for (const mod of modifiers) {
@@ -2693,7 +2698,7 @@ export function Checker_checkGrammarJsxElement(receiver: GoPtr<Checker>, node: G
   Checker_checkGrammarTypeArguments(receiver, node, Node_TypeArgumentList(node));
   const seen = new Set<string>();
   const attrs = Node_Attributes(node);
-  const props = Node_Properties(attrs) ?? [];
+  const props = Node_Properties(attrs) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (const attrNode of props) {
     if (attrNode!.Kind === KindJsxSpreadAttribute) {
       continue;
@@ -4180,7 +4185,7 @@ export function Checker_checkGrammarConstructorTypeAnnotation(receiver: GoPtr<Ch
 export function Checker_checkGrammarProperty(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
   const propertyName = Node_Name(node);
   if (IsComputedPropertyName(propertyName) && IsBinaryExpression(Node_Expression(propertyName)) && AsBinaryExpression(Node_Expression(propertyName))!.OperatorToken!.Kind === KindInKeyword) {
-    return Checker_grammarErrorOnNode(receiver, (Node_Members(node!.Parent) ?? [])[0], A_mapped_type_may_not_declare_properties_or_methods);
+    return Checker_grammarErrorOnNode(receiver, (Node_Members(node!.Parent) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))[0], A_mapped_type_may_not_declare_properties_or_methods);
   }
   if (IsClassLike(node!.Parent)) {
     if (IsStringLiteral(propertyName) && Node_Text(propertyName) === "constructor") {

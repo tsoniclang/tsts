@@ -9,6 +9,8 @@ import { Mutex, WaitGroup } from "../../go/sync.js";
 import { Bool } from "../../go/sync/atomic.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::WorkGroup","kind":"type","status":"implemented","sigHash":"2f0cb3af982999597d8142aa9e1f01d02a1a46f439da5d457604af2177a6e56d"}
  *
@@ -40,7 +42,7 @@ export interface WorkGroup {
  */
 export function NewWorkGroup(singleThreaded: bool): GoInterface<WorkGroup> {
   if (singleThreaded) {
-    const state: singleThreadedWorkGroup = { done: new Bool(), fnsMu: new Mutex(), fns: [] };
+    const state: singleThreadedWorkGroup = { done: new Bool(), fnsMu: new Mutex(), fns: GoSliceMake(0, 0, GoFunctionValueOps<() => void>()) };
     return singleThreadedWorkGroup_as_WorkGroup(state);
   }
   const state: parallelWorkGroup = { done: new Bool(), wg: new WaitGroup() };

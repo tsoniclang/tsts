@@ -47,6 +47,8 @@ import { Builder } from "../../../go/strings.js";
 import type { parseCache } from "./parseCache.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"69628808be0501ab69e7a2e5cf9c349ab1129718bc63d4ddc222553efb32cabf"}
  *
@@ -324,8 +326,8 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
         task = {
           config,
           resolved: undefined,
-          upStream: [],
-          downStream: [],
+          upStream: GoSliceMake(0, 0, GoPointerValueOps<upstreamTask>()),
+          downStream: GoSliceMake(0, 0, GoPointerValueOps<BuildTask>()),
           status: undefined,
           done: {} as BuildTask["done"],
           result: undefined,
@@ -336,7 +338,7 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
           inputFiles: [],
           buildInfoEntry: buildInfo,
           buildInfoEntryMu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as BuildTask["buildInfoEntryMu"],
-          errors: [],
+          errors: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
           pending,
           isInitialCycle: oldTasks === undefined,
           downStreamUpdateMu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as BuildTask["downStreamUpdateMu"],
@@ -350,7 +352,7 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
         return;
       }
       task!.resolved = host_GetResolvedProjectReference(receiver!.host, config, path);
-      task!.upStream = [];
+      task!.upStream = GoSliceMake(0, 0, GoPointerValueOps<upstreamTask>());
       if (task!.resolved !== undefined) {
         const refPaths = ParsedCommandLine_ResolvedProjectReferencePaths(task!.resolved);
         Orchestrator_createBuildTasks(receiver, oldTasks, refPaths, wg);
@@ -466,8 +468,8 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
 export function Orchestrator_GenerateGraphReusingOldTasks(receiver: GoPtr<Orchestrator>): void {
   const tasks = receiver!.tasks;
   receiver!.tasks = newSyncMap<Path, GoPtr<BuildTask>>();
-  receiver!.order = [];
-  receiver!.errors = [];
+  receiver!.order = GoSliceMake(0, 0, GoStringValueOps);
+  receiver!.errors = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   Orchestrator_GenerateGraph(receiver, tasks);
 }
 
@@ -499,7 +501,7 @@ export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTas
 
   const completed: Set<Path> = {} as Set<Path>;
   const analyzing: Set<Path> = {} as Set<Path>;
-  const circularityStack: GoSlice<string> = [];
+  const circularityStack: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   for (const project of projects) {
     Orchestrator_setupBuildTask(receiver, project, undefined, false as bool, completed, analyzing, circularityStack);
   }
@@ -716,13 +718,13 @@ export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): Comman
   }
   const buildResult: orchestratorResult = {
     result: { Status: 0 as import("../tsc/compile.js").ExitStatus, Watcher: undefined },
-    errors: [],
+    errors: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     statistics: {
       Projects: 0,
       ProjectsBuilt: 0,
       TimestampUpdates: 0,
     } as import("../tsc/statistics.js").Statistics,
-    filesToDelete: [],
+    filesToDelete: GoSliceMake(0, 0, GoStringValueOps),
   };
   if (receiver!.errors.length === 0) {
     buildResult.statistics.Projects = Orchestrator_Order(receiver).length;
@@ -820,7 +822,7 @@ export function Orchestrator_buildOrCleanProject(receiver: GoPtr<Orchestrator>, 
     statistics: undefined,
     program: undefined,
     buildKind: 0 as import("./buildtask.js").buildKind,
-    filesToDelete: [],
+    filesToDelete: GoSliceMake(0, 0, GoStringValueOps),
   };
   task!.result.reportStatus = Orchestrator_createBuilderStatusReporter(receiver, task);
   task!.result.diagnosticReporter = Orchestrator_createDiagnosticReporter(receiver, task);
@@ -926,8 +928,8 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
     },
     host: undefined,
     tasks: newSyncMap<Path, GoPtr<BuildTask>>(),
-    order: [],
-    errors: [],
+    order: GoSliceMake(0, 0, GoStringValueOps),
+    errors: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     errorSummaryReporter: undefined,
     watchStatusReporter: undefined,
   };

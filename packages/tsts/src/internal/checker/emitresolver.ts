@@ -81,6 +81,8 @@ import type { Symbol } from "../ast/symbol.js";
 import type { PseudoBigInt } from "../jsnum/pseudobigint.js";
 import { Number_Abs, Number_IsInf, Number_IsNaN } from "../jsnum/jsnum.js";
 import { Number_String } from "../jsnum/string.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"implemented","sigHash":"b8a690f05f4e1e07abd521eeb0dff42e8ed3e1b8ee3c000e2464d886b8c9b3ba"}
@@ -358,7 +360,7 @@ export function EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver:
     return GoNilSlice();
   }
   const bases = Checker_getBaseTypes(receiver!.checker, parentType);
-  for (const b of bases ?? []) {
+  for (const b of bases ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())) {
     const baseProp = Checker_getPropertyOfObjectType(receiver!.checker, b, s!.Name);
     if (baseProp !== undefined) {
       receiver!.checkerMu!.Unlock();
@@ -832,7 +834,7 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
     visited.set(symId, undefined);
 
     let nextSymbol: GoPtr<Symbol> = undefined;
-    for (const declaration of exportSymbol!.Declarations ?? []) {
+    for (const declaration of exportSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       LinkStore_Get(receiver!.declarationLinks, declaration, GoZeroDeclarationLinks, goNodePointerKey)!.v.isVisible = TSTrue;
 
       if (IsInternalModuleImportEqualsDeclaration(declaration)) {
@@ -1098,7 +1100,7 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
     addVisibleAlias = noopAddVisibleAlias;
   }
 
-  for (const declaration of symbol_!.Declarations ?? []) {
+  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (IsIdentifier(declaration)) { continue; }
 
     if (!EmitResolver_isDeclarationVisible(receiver, declaration)) {
@@ -1266,7 +1268,7 @@ export function EmitResolver_IsImportRequiredByAugmentation(receiver: GoPtr<Emit
     const merged = Checker_getMergedSymbol(receiver!.checker, s);
     if (merged !== s) {
       if (merged !== undefined && (merged!.Declarations?.length ?? 0) > 0) {
-        for (const d of merged!.Declarations ?? []) {
+        for (const d of merged!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
           const declFile = GetSourceFileOfNode(d);
           if (declFile === importTarget) {
             receiver!.checkerMu!.Unlock();
@@ -1736,7 +1738,7 @@ export function EmitResolver_isValueAliasDeclarationWorker(receiver: GoPtr<EmitR
     case KindExportDeclaration: {
       const exportClause = AsExportDeclaration(node)!.ExportClause;
       return (exportClause !== undefined && (IsNamespaceExport(exportClause) ||
-          Some(Node_Elements(exportClause) ?? [], receiver!.isValueAliasDeclaration))) as bool;
+          Some(Node_Elements(exportClause) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), receiver!.isValueAliasDeclaration))) as bool;
     }
     case KindExportAssignment: {
       if (Node_Expression(node) !== undefined && Node_Expression(node)!.Kind === KindIdentifier) {
@@ -2510,7 +2512,9 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
               tracker!.TrackSymbol(name, enclosingDeclaration, SymbolFlagsValue);
             }
 
-            let mods: GoSlice<GoPtr<Node>> = isStatic ? [NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword)] : GoNilSlice();
+            let mods: GoSlice<GoPtr<Node>> = isStatic ? GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+              GoSliceStore(__goSliceLiteral, 0, NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword), GoPointerValueOps<Node>());
+            }) : GoNilSlice();
             if (info!.isReadonly) {
               mods = GoSliceAppend(mods, NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindReadonlyKeyword), GoPointerValueOps<Node>());
             }
@@ -2814,9 +2818,9 @@ export function EmitResolver_GetTypeReferenceSerializationKind(receiver: GoPtr<E
  * }
  */
 export function EmitResolver_GetPropertiesOfContainerFunction(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): GoSlice<GoPtr<Symbol>> {
-  if (node === undefined) { return []; }
+  if (node === undefined) { return GoSliceMake(0, 0, GoPointerValueOps<Symbol>()); }
   const s = Checker_getSymbolOfDeclaration(receiver!.checker, node);
-  if (s === undefined) { return []; }
+  if (s === undefined) { return GoSliceMake(0, 0, GoPointerValueOps<Symbol>()); }
   return Checker_getPropertiesOfType(receiver!.checker, Checker_getTypeOfSymbol(receiver!.checker, s));
 }
 

@@ -1,6 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
 import { GoNilSlice } from "../../go/compat.js";
 import type { GoFunc, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceStore } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::type::Priority","kind":"type","status":"implemented","sigHash":"2ab6d6a4dd675ef3c0c291801db9ec07f9bb7327fe479c4d9c642f66ddd4160c"}
@@ -435,7 +437,9 @@ export let asyncGeneratorHelper: GoPtr<EmitHelper> = {
   Name: "typescript:asyncGenerator",
   ImportName: "__asyncGenerator",
   Scoped: false,
-  Dependencies: [awaitHelper],
+  Dependencies: GoSliceBuild(1, 1, GoPointerValueOps<EmitHelper>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, awaitHelper, GoPointerValueOps<EmitHelper>());
+  }),
   Text: `var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _arguments, generator) {
     if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
     var g = generator.apply(thisArg, _arguments || []), i, q = [];
@@ -472,7 +476,9 @@ export let asyncDelegatorHelper: GoPtr<EmitHelper> = {
   Name: "typescript:asyncDelegator",
   ImportName: "__asyncDelegator",
   Scoped: false,
-  Dependencies: [awaitHelper],
+  Dependencies: GoSliceBuild(1, 1, GoPointerValueOps<EmitHelper>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, awaitHelper, GoPointerValueOps<EmitHelper>());
+  }),
   Text: `var __asyncDelegator = (this && this.__asyncDelegator) || function (o) {
     var i, p;
     return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
@@ -941,7 +947,10 @@ export let importStarHelper: GoPtr<EmitHelper> = {
   Name: "typescript:commonjsimportstar",
   ImportName: "__importStar",
   Scoped: false,
-  Dependencies: [createBindingHelper, setModuleDefaultHelper],
+  Dependencies: GoSliceBuild(2, 2, GoPointerValueOps<EmitHelper>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, createBindingHelper, GoPointerValueOps<EmitHelper>());
+    GoSliceStore(__goSliceLiteral, 1, setModuleDefaultHelper, GoPointerValueOps<EmitHelper>());
+  }),
   Priority: { Value: 2 },
   Text: `var __importStar = (this && this.__importStar) || (function () {
     var ownKeys = function(o) {
@@ -1007,7 +1016,9 @@ export let exportStarHelper: GoPtr<EmitHelper> = {
   Name: "typescript:export-star",
   ImportName: "__exportStar",
   Scoped: false,
-  Dependencies: [createBindingHelper],
+  Dependencies: GoSliceBuild(1, 1, GoPointerValueOps<EmitHelper>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, createBindingHelper, GoPointerValueOps<EmitHelper>());
+  }),
   Priority: { Value: 2 },
   Text: `var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);

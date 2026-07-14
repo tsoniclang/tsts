@@ -108,6 +108,8 @@ import { ExtractModifiers } from "../modifiervisitor.js";
 import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 import { getInnermostModuleDeclarationFromDottedModule } from "./runtimesyntax.js";
+import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::type::TypeEraserTransformer","kind":"type","status":"implemented","sigHash":"058402a91184c90a80f6900dde5f432284290b1838798a9284c5e90ea71e461a"}
@@ -679,7 +681,7 @@ export function TypeEraserTransformer_visit(receiver: GoPtr<TypeEraserTransforme
         }
         let body = NodeVisitor_VisitNode(visitor, n!.Body) as GoPtr<FunctionBody>;
         if (body === undefined) {
-          body = NewBlock(factory, NodeFactory_NewNodeList(factory, []), false as bool) as GoPtr<FunctionBody>;
+          body = NewBlock(factory, NodeFactory_NewNodeList(factory, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false as bool) as GoPtr<FunctionBody>;
         }
         return NodeFactory_UpdateGetAccessorDeclaration(factory, n, NodeVisitor_VisitModifiers(visitor, Node_Modifiers(node)), NodeVisitor_VisitNode(visitor, Node_Name(node)), undefined, NodeVisitor_VisitNodes(visitor, n!.Parameters) as GoPtr<ParameterList>, undefined, undefined, body);
       }
@@ -691,7 +693,7 @@ export function TypeEraserTransformer_visit(receiver: GoPtr<TypeEraserTransforme
         }
         let body = NodeVisitor_VisitNode(visitor, n!.Body) as GoPtr<FunctionBody>;
         if (body === undefined) {
-          body = NewBlock(factory, NodeFactory_NewNodeList(factory, []), false as bool) as GoPtr<FunctionBody>;
+          body = NewBlock(factory, NodeFactory_NewNodeList(factory, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false as bool) as GoPtr<FunctionBody>;
         }
         return NodeFactory_UpdateSetAccessorDeclaration(factory, n, NodeVisitor_VisitModifiers(visitor, Node_Modifiers(node)), NodeVisitor_VisitNode(visitor, Node_Name(node)), undefined, NodeVisitor_VisitNodes(visitor, n!.Parameters) as GoPtr<ParameterList>, undefined, undefined, body);
       }

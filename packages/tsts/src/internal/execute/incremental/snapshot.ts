@@ -59,6 +59,8 @@ import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
 import * as hex from "../../../go/encoding/hex.js";
 import { byteSlice } from "../../printer/utilities.js";
 import type { referenceMap } from "./referencemap.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::FileInfo","kind":"type","status":"implemented","sigHash":"390d13d57fa5c735176dd9ae95289568c53671ec69625e59937fe63aa2e289c4"}
@@ -333,7 +335,9 @@ export function emitSignature_getNewEmitSignature(receiver: GoPtr<emitSignature>
   if (GoSliceIsNil(receiver!.signatureWithDifferentOptions)) {
     return {
       signature: "",
-      signatureWithDifferentOptions: [receiver!.signature],
+      signatureWithDifferentOptions: GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, receiver!.signature, GoStringValueOps);
+      }),
     };
   } else {
     return {
@@ -445,11 +449,11 @@ export function buildInfoDiagnosticWithFileName_toDiagnostic(receiver: GoPtr<bui
   if (receiver!.repopulateInfo !== undefined) {
     return repopulateDiagnosticChain(receiver, p, fileForDiagnostic);
   }
-  let messageChain: GoSlice<GoPtr<Diagnostic>> = [];
+  let messageChain: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   for (const msg of receiver!.messageChain) {
     messageChain = GoSliceAppend(messageChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, fileForDiagnostic), GoPointerValueOps<Diagnostic>());
   }
-  let relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
+  let relatedInformation: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   for (const info of receiver!.relatedInformation) {
     relatedInformation = GoSliceAppend(relatedInformation, buildInfoDiagnosticWithFileName_toDiagnostic(info, p, fileForDiagnostic), GoPointerValueOps<Diagnostic>());
   }
@@ -527,11 +531,11 @@ export function repopulateDiagnosticChain(b: GoPtr<buildInfoDiagnosticWithFileNa
  * }
  */
 export function buildInfoDiagnosticWithFileName_toDiagnosticWithoutRepopulate(receiver: GoPtr<buildInfoDiagnosticWithFileName>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoPtr<Diagnostic> {
-  let messageChain: GoSlice<GoPtr<Diagnostic>> = [];
+  let messageChain: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   for (const msg of receiver!.messageChain) {
     messageChain = GoSliceAppend(messageChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file), GoPointerValueOps<Diagnostic>());
   }
-  let relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
+  let relatedInformation: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   for (const info of receiver!.relatedInformation) {
     relatedInformation = GoSliceAppend(relatedInformation, buildInfoDiagnosticWithFileName_toDiagnostic(info, p, file), GoPointerValueOps<Diagnostic>());
   }
@@ -586,7 +590,7 @@ export function repopulateModeMismatchChain(b: GoPtr<buildInfoDiagnosticWithFile
     return buildInfoDiagnosticWithFileName_toDiagnosticWithoutRepopulate(b, p, file);
   }
   const details = CreateModeMismatchDetails(p! as unknown as import("../../checker/checker/state.js").Program, file);
-  let nextChain: GoSlice<GoPtr<Diagnostic>> = [];
+  let nextChain: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   for (const msg of b!.messageChain) {
     nextChain = GoSliceAppend(nextChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file), GoPointerValueOps<Diagnostic>());
   }
@@ -598,7 +602,7 @@ export function repopulateModeMismatchChain(b: GoPtr<buildInfoDiagnosticWithFile
     Message_Key(details.Message),
     StringifyArgs(details.Args),
     nextChain,
-    [],
+    GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     false as bool,
     false as bool,
     false as bool,
@@ -650,7 +654,7 @@ export function repopulateModuleNotFoundChain(b: GoPtr<buildInfoDiagnosticWithFi
     packageName = info!.ModuleReference;
   }
   const details = CreateModuleNotFoundChain(p! as unknown as import("../../checker/checker/state.js").Program, file, info!.ModuleReference, info!.Mode, packageName);
-  let nextChain: GoSlice<GoPtr<Diagnostic>> = [];
+  let nextChain: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   for (const msg of b!.messageChain) {
     nextChain = GoSliceAppend(nextChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file), GoPointerValueOps<Diagnostic>());
   }
@@ -662,7 +666,7 @@ export function repopulateModuleNotFoundChain(b: GoPtr<buildInfoDiagnosticWithFi
     Message_Key(details.Message),
     StringifyArgs(details.Args),
     nextChain,
-    [],
+    GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     false as bool,
     false as bool,
     false as bool,
@@ -829,7 +833,7 @@ export function snapshot_addFileToAffectedFilesPendingEmit(receiver: GoPtr<snaps
 export function snapshot_getAllFilesExcludingDefaultLibraryFile(receiver: GoPtr<snapshot>, program: GoPtr<Program>, firstSourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<SourceFile>> {
   receiver!.allFilesExcludingDefaultLibraryFileOnce.Do(() => {
     const files = Program_GetSourceFiles(program);
-    receiver!.allFilesExcludingDefaultLibraryFile = [];
+    receiver!.allFilesExcludingDefaultLibraryFile = GoSliceMake(0, 0, GoPointerValueOps<SourceFile>());
     const addSourceFile = (file: GoPtr<SourceFile>): void => {
       if (!Program_IsSourceFileDefaultLibrary(program, SourceFile_Path(file))) {
         receiver!.allFilesExcludingDefaultLibraryFile = GoSliceAppend(receiver!.allFilesExcludingDefaultLibraryFile, file, GoPointerValueOps<SourceFile>());

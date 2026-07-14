@@ -160,6 +160,8 @@ import { getExtensionHost } from "../../extensions/host.js";
 import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderImportSliceKind, ProviderModuleResolution, ProviderRequestedExport, ProviderResolvedModule } from "../../extensions/host.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"e4d76c1ba9ccfb10d7454bc6476b0b4aba5b90252da267c2a9e78887e7354047"}
  *
@@ -288,7 +290,7 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
   }
   if (result.kind !== "resolved") {
     return {
-      ResolutionDiagnostics: [],
+      ResolutionDiagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
       ResolvedFileName: "",
       OriginalPath: "",
       Extension: "",
@@ -303,7 +305,7 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
 
 function fileLoader_createProviderVirtualResolvedModule(module: ProviderResolvedModule): GoPtr<ResolvedModule> {
   return {
-    ResolutionDiagnostics: [],
+    ResolutionDiagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     ResolvedFileName: module.resolution.virtualFileName,
     OriginalPath: "",
     Extension: ResolvedModuleExtensionProviderVirtual,
@@ -799,7 +801,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
       taskDataByPath: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as unknown as SyncMap<Path_9073472b, GoPtr<parseTaskData>>,
       maxDepth: maxNodeModuleJsDepth,
     },
-    rootTasks: [],
+    rootTasks: GoSliceMake(0, 0, GoPointerValueOps<parseTask>()),
     totalFileCount: new Int32Impl(),
     libFileCount: new Int32Impl(),
     factoryMu: new Mutex(),
@@ -1005,14 +1007,16 @@ export function fileLoader_addRootFileTask(receiver: GoPtr<fileLoader>, fileName
   };
   if (diagnostic !== undefined) {
     rootTask.normalizedFilePath = absPath;
-    rootTask.processingDiagnostics = [{
+    rootTask.processingDiagnostics = GoSliceBuild(1, 1, GoPointerValueOps<processingDiagnostic>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, {
       kind: processingDiagnosticKindExplainingFileInclude,
       data: {
         diagnosticReason: includeReason,
         message: diagnostic.message,
         args: diagnostic.args,
       } as includeExplainingDiagnostic,
-    }];
+    }, GoPointerValueOps<processingDiagnostic>());
+    });
   }
   receiver!.rootTasks = GoSliceAppend(receiver!.rootTasks, rootTask, GoPointerValueOps<parseTask>());
 }
@@ -1338,7 +1342,12 @@ export function fileLoader_loadSourceFileMetaData(receiver: GoPtr<fileLoader>, f
     const headerFields = contentsFields?.__tsgoEmbedded0;
     const [value, ok] = Expected_GetValue<string>(headerFields?.Type);
     if (ok) {
-      if (!FileExtensionIsOneOf(fileName, [".mts", ".cts", ".mjs", ".cjs"]) &&
+      if (!FileExtensionIsOneOf(fileName, GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, ".mts", GoStringValueOps);
+        GoSliceStore(__goSliceLiteral, 1, ".cts", GoStringValueOps);
+        GoSliceStore(__goSliceLiteral, 2, ".mjs", GoStringValueOps);
+        GoSliceStore(__goSliceLiteral, 3, ".cjs", GoStringValueOps);
+      })) &&
         ModuleResolutionKindNode16 <= moduleResolutionKind && moduleResolutionKind <= ModuleResolutionKindNodeNext || strings.Contains(fileName, "/node_modules/")) {
         packageJsonType = value;
       }
@@ -1838,7 +1847,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     const file = t!.file;
     const meta = t!.metadata;
 
-    let moduleNames: GoSlice<GoPtr<Node>> = [];
+    let moduleNames: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
 
     const isJavaScriptFile = IsSourceFileJS(file);
     const isExternalModuleFile = IsExternalModule(file);

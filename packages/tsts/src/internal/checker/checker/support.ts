@@ -164,6 +164,8 @@ import { Checker_getEmitSyntaxForModuleSpecifierExpression, Checker_mergeModuleA
 import { Checker_addDiagnostic, Checker_addSuggestionDiagnostic, Checker_mergeGlobalSymbol } from "../checker.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+import { GoNumberValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
+
 
 function goZeroAssertionLinks(): AssertionLinks {
   return { exprType: undefined };
@@ -311,7 +313,12 @@ export function Checker_initializeIterationResolvers(receiver: GoPtr<Checker>): 
     getGlobalIterableIteratorTypeChecked: receiver!.getGlobalIterableIteratorTypeChecked,
     getGlobalIteratorObjectType: receiver!.getGlobalIteratorObjectType,
     getGlobalGeneratorType: receiver!.getGlobalGeneratorType,
-    getGlobalBuiltinIteratorTypes: Checker_getGlobalTypesResolver(receiver, ["ArrayIterator", "MapIterator", "SetIterator", "StringIterator"], 1, false),
+    getGlobalBuiltinIteratorTypes: Checker_getGlobalTypesResolver(receiver, GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, "ArrayIterator", GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 1, "MapIterator", GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 2, "SetIterator", GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 3, "StringIterator", GoStringValueOps);
+    }), 1, false),
     resolveIterationType: (t: GoPtr<Type>, _errorNode: GoPtr<Node>): GoPtr<Type> => t,
     mustHaveANextMethodDiagnostic: An_iterator_must_have_a_next_method,
     mustBeAMethodDiagnostic: The_0_property_of_an_iterator_must_be_a_method,
@@ -326,7 +333,9 @@ export function Checker_initializeIterationResolvers(receiver: GoPtr<Checker>): 
     getGlobalIterableIteratorTypeChecked: receiver!.getGlobalAsyncIterableIteratorTypeChecked,
     getGlobalIteratorObjectType: receiver!.getGlobalAsyncIteratorObjectType,
     getGlobalGeneratorType: receiver!.getGlobalAsyncGeneratorType,
-    getGlobalBuiltinIteratorTypes: Checker_getGlobalTypesResolver(receiver, ["ReadableStreamAsyncIterator"], 1, false),
+    getGlobalBuiltinIteratorTypes: Checker_getGlobalTypesResolver(receiver, GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, "ReadableStreamAsyncIterator", GoStringValueOps);
+    }), 1, false),
     resolveIterationType: (t: GoPtr<Type>, errorNode: GoPtr<Node>): GoPtr<Type> => Checker_getAwaitedTypeEx(receiver, t, errorNode, Type_of_await_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member),
     mustHaveANextMethodDiagnostic: An_async_iterator_must_have_a_next_method,
     mustBeAMethodDiagnostic: The_0_property_of_an_async_iterator_must_be_a_method,
@@ -430,13 +439,13 @@ export function Checker_initializeIterationResolvers(receiver: GoPtr<Checker>): 
  */
 export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
   let ambientModuleSymbols: GoSlice<GoPtr<Symbol>> = GoNilSlice();
-  let augmentations: GoSlice<GoSlice<GoPtr<Node>>> = [];
+  let augmentations: GoSlice<GoSlice<GoPtr<Node>>> = GoSliceMake(0, 0, GoSliceValueOps<GoPtr<Node>>());
   for (const file of receiver!.files) {
     if (!IsExternalOrCommonJSModule(file)) {
       const fileLocals = Node_Locals(file as GoPtr<Node>);
       const fileGlobalThisSymbol = fileLocals.get("globalThis");
       if (fileGlobalThisSymbol !== undefined) {
-        for (const declaration of fileGlobalThisSymbol!.Declarations ?? []) {
+        for (const declaration of fileGlobalThisSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
           Checker_addDiagnostic(receiver, createDiagnosticForNode(declaration, Declaration_name_conflicts_with_built_in_global_identifier_0, "globalThis"));
         }
       }
@@ -490,7 +499,9 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
   if (receiver!.globalReadonlyArrayType === receiver!.emptyGenericType) {
     receiver!.globalReadonlyArrayType = receiver!.globalArrayType;
   }
-  receiver!.anyReadonlyArrayType = Checker_createTypeFromGenericGlobalType(receiver, receiver!.globalReadonlyArrayType, [receiver!.anyType]);
+  receiver!.anyReadonlyArrayType = Checker_createTypeFromGenericGlobalType(receiver, receiver!.globalReadonlyArrayType, GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, receiver!.anyType, GoPointerValueOps<Type>());
+  }));
   receiver!.globalThisType = Checker_getGlobalType(receiver, "ThisType", 1, false);
   // Now merge global ambient module declarations
   for (const symbol_ of ambientModuleSymbols) {
@@ -995,7 +1006,7 @@ export function Checker_reportUnused(receiver: GoPtr<Checker>, location: GoPtr<N
  * }
  */
 export function Checker_reportUnusedBindingElements(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  const declarations = Node_Elements(node) ?? [];
+  const declarations = Node_Elements(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   if (declarations.length > 1 && Every(declarations, (declaration) => Checker_isUnreferencedVariableDeclaration(receiver, declaration))) {
     Checker_reportUnusedVariable(receiver, node, NewDiagnosticForNode(node, All_destructured_elements_are_unused));
   } else {
@@ -1112,7 +1123,7 @@ export function Checker_checkWeakMapSetCollision(receiver: GoPtr<Checker>, node:
 export function Checker_checkReflectCollision(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   let hasCollision: bool = false;
   if (IsClassExpression(node)) {
-    for (const member of Node_Members(node) ?? []) {
+    for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       if ((LinkStore_Get(receiver!.nodeLinks, member, goZeroNodeLinks, goNodePointerKey)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
         hasCollision = true;
         break;
@@ -1482,7 +1493,9 @@ export function CacheHashKey_IsZero(receiver: CacheHashKey): bool {
  * }
  */
 export function keyBuilder_writeByte(receiver: GoPtr<keyBuilder>, c: byte): void {
-  receiver!.h.Write([c]);
+  receiver!.h.Write(GoSliceBuild(1, 1, GoNumberValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, c, GoNumberValueOps);
+  }));
 }
 
 /**
@@ -1507,7 +1520,7 @@ export function keyBuilder_writeString(receiver: GoPtr<keyBuilder>, s: string): 
  */
 export function keyBuilder_writeInt(receiver: GoPtr<keyBuilder>, value: int): void {
   let v = BigInt(globalThis.Math.trunc(value)) & ((1n << 64n) - 1n);
-  const bytes: GoSlice<byte> = [];
+  const bytes: GoSlice<byte> = GoSliceMake(0, 0, GoNumberValueOps);
   for (let index = 0; index < 8; index++) {
     bytes.push(Number(v & 0xffn) as byte);
     v >>= 8n;

@@ -63,6 +63,8 @@ import {
   upToDateStatusTypeForceBuild, upToDateStatusTypeSolution,
 } from "./uptodatestatus.js";
 import type { upToDateStatus, inputOutputName, inputOutputFileAndTime, fileAndTime, upstreamErrors as upstreamErrorsType } from "./uptodatestatus.js";
+import { GoSliceMake } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::updateKind","kind":"type","status":"implemented","sigHash":"bb679ff4d632cbca47e250b78139b0d261ac5dea6fb7c63c797f9312068c508b"}
@@ -376,7 +378,7 @@ export function BuildTask_buildProject(receiver: GoPtr<BuildTask>, orchestrator:
       BuildTask_updateDownstream(receiver, orchestrator, path);
     } else {
       if (receiver!.resolved !== undefined) {
-        for (const diagnostic of ParsedCommandLine_GetConfigFileParsingDiagnostics(receiver!.resolved) ?? []) {
+        for (const diagnostic of ParsedCommandLine_GetConfigFileParsingDiagnostics(receiver!.resolved) ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())) {
           BuildTask_reportDiagnostic(receiver, diagnostic);
         }
       }
@@ -548,7 +550,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   type DurationOps = number & { Sub(t: unknown): number };
   type TimeWithSub = import("../../../go/time.js").Time & { Sub(t: import("../../../go/time.js").Time): number };
 
-  receiver!.errors = [];
+  receiver!.errors = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   if (Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Verbose)) {
     receiver!.result!.reportStatus!(NewCompilerDiagnostic(diagnostics.Building_project_0, Orchestrator_relativeFileName(orchestrator, receiver!.config)));
   }
@@ -735,7 +737,7 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
       receiver!.status = { kind: upToDateStatusTypeUpToDate, data: undefined };
       return true;
     }
-    BuildTask_updateTimeStamps(receiver, orchestrator, [], diagnostics.Updating_output_timestamps_of_project_0);
+    BuildTask_updateTimeStamps(receiver, orchestrator, GoSliceMake(0, 0, GoStringValueOps), diagnostics.Updating_output_timestamps_of_project_0);
     receiver!.status = { kind: upToDateStatusTypeUpToDate, data: receiver!.status!.data };
     receiver!.result!.buildKind = buildKindPseudo;
     return true;
@@ -1434,7 +1436,7 @@ export function BuildTask_canUpdateJsDtsOutputTimestamps(receiver: GoPtr<BuildTa
  * }
  */
 export function BuildTask_updateTimeStamps(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, emittedFiles: GoSlice<string>, verboseMessage: GoPtr<Message>): void {
-  const emitted: GoPtr<Set<string>> = NewSetFromItems(GoStringKey, ...(emittedFiles ?? []));
+  const emitted: GoPtr<Set<string>> = NewSetFromItems(GoStringKey, ...(emittedFiles ?? GoSliceMake(0, 0, GoStringValueOps)));
   let verboseMessageReported = false;
   const buildInfoName = ParsedCommandLine_GetBuildInfoFileName(receiver!.resolved);
   const now = orchestrator!.opts.Sys!.Now();
@@ -1591,7 +1593,7 @@ export function BuildTask_updateWatch(receiver: GoPtr<BuildTask>, orchestrator: 
 export function BuildTask_resetStatus(receiver: GoPtr<BuildTask>): void {
   receiver!.status = undefined;
   receiver!.pending.Store(true as bool);
-  receiver!.errors = [];
+  receiver!.errors = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
 }
 
 /**

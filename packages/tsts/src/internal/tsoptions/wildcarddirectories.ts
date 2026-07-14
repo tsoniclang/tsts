@@ -12,6 +12,8 @@ import {
   RemoveTrailingDirectorySeparator,
 } from "../tspath/path.js";
 import { IsImplicitGlob, NewSpecMatcher, SpecMatcher_MatchString, UsageExclude } from "../vfs/vfsmatch/vfsmatch.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::func::getWildcardDirectories","kind":"func","status":"implemented","sigHash":"b28e9bda9ec15acd9b0664a3466d8c69e2ffb017497fc37e43d86c9d83e55cc2"}
@@ -123,7 +125,7 @@ export function getWildcardDirectories(
   }
   const wildCardKeyToPath: GoMap<string, string> = new globalThis.Map<string, string>();
 
-  let recursiveKeys: GoSlice<string> = [];
+  let recursiveKeys: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
 
   for (const file of include) {
     const spec = NormalizeSlashes(CombinePaths(comparePathsOptions.CurrentDirectory, file));

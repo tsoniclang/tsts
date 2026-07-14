@@ -15,6 +15,8 @@ import {
   getUintComponent,
   versionZero,
 } from "./version.js";
+import { GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::logicalOrRegExp+whitespaceRegExp","kind":"varGroup","status":"implemented","sigHash":"a22c76dc1e292b21f32ef0a7afa0ef0b6006367c61d8d203bd60341b756ecb97"}
@@ -874,7 +876,9 @@ export function parseComparator(op: string, text: string): [GoSlice<versionCompa
       case ">=": {
         const version: Version = { ...result.version };
         if (isWildcard(result.minorStr) || isWildcard(result.patchStr)) {
-          version.prerelease = ["0"];
+          version.prerelease = GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, "0", GoStringValueOps);
+          });
         }
         comparatorsResult = [{ operator: operator, operand: version }];
         break;
@@ -891,7 +895,9 @@ export function parseComparator(op: string, text: string): [GoSlice<versionCompa
           }
 
           version = Version_incrementMajor(version);
-          version.prerelease = ["0"];
+          version.prerelease = GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, "0", GoStringValueOps);
+          });
         } else if (isWildcard(result.patchStr)) {
           if (operator === rangeLessThanEqual) {
             operator = rangeLessThan;
@@ -900,7 +906,9 @@ export function parseComparator(op: string, text: string): [GoSlice<versionCompa
           }
 
           version = Version_incrementMinor(version);
-          version.prerelease = ["0"];
+          version.prerelease = GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, "0", GoStringValueOps);
+          });
         }
 
         comparatorsResult = [{ operator: operator, operand: version }];
@@ -915,7 +923,9 @@ export function parseComparator(op: string, text: string): [GoSlice<versionCompa
           const originalVersion: Version = result.version;
 
           const firstVersion: Version = { ...originalVersion };
-          firstVersion.prerelease = ["0"];
+          firstVersion.prerelease = GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, "0", GoStringValueOps);
+          });
 
           let secondVersion: Version;
           if (isWildcard(result.minorStr)) {
@@ -923,7 +933,9 @@ export function parseComparator(op: string, text: string): [GoSlice<versionCompa
           } else {
             secondVersion = Version_incrementMinor(originalVersion);
           }
-          secondVersion.prerelease = ["0"];
+          secondVersion.prerelease = GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, "0", GoStringValueOps);
+          });
 
           comparatorsResult = [
             { operator: rangeGreaterThanEqual, operand: firstVersion },

@@ -56,6 +56,8 @@ import type { NameMap } from "./namemap.js";
 
 import { GoValueRef } from "../../go/compat.js";
 import type { GoInterface, GoRef } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 // Go's `value.(*collections.OrderedMap[string, any])` type assertion: the JSON
 // parser yields OrderedMap instances, which structurally carry `keys`/`mp`.
 function asOrderedMap(value: GoInterface<unknown>): GoPtr<OrderedMap<string, GoInterface<unknown>>> {
@@ -128,9 +130,9 @@ export function ParseStringArray(value: GoInterface<unknown>): GoSlice<string> {
   if (globalThis.Array.isArray(value)) {
     const arr = value as unknown[];
     if (arr === null) {
-      return [];
+      return GoSliceMake(0, 0, GoStringValueOps);
     }
-    let result: GoSlice<string> = [];
+    let result: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
     for (const v of arr) {
       if (typeof v === "string") {
         result = GoSliceAppend(result, v, GoStringValueOps);
@@ -138,7 +140,7 @@ export function ParseStringArray(value: GoInterface<unknown>): GoSlice<string> {
     }
     return result;
   }
-  return [];
+  return GoSliceMake(0, 0, GoStringValueOps);
 }
 
 /**
@@ -238,7 +240,7 @@ export function parseNumber(value: GoInterface<unknown>): GoRef<int> {
  * }
  */
 export function parseProjectReference(json: GoInterface<unknown>): GoSlice<GoPtr<ProjectReference>> {
-  let result: GoSlice<GoPtr<ProjectReference>> = [];
+  let result: GoSlice<GoPtr<ProjectReference>> = GoSliceMake(0, 0, GoPointerValueOps<ProjectReference>());
   const v = asOrderedMap(json);
   if (v !== undefined) {
     const reference: ProjectReference = { Path: "", OriginalPath: "", Circular: false };
@@ -618,13 +620,13 @@ export function buildOptionsParser_as_optionParser(receiver: GoPtr<buildOptionsP
  */
 export function ParseCompilerOptions(key: string, value: GoInterface<unknown>, allOptions: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (value === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   if (allOptions === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   parseCompilerOptions(key, value, allOptions);
-  return [];
+  return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
 }
 
 /**
@@ -1110,7 +1112,7 @@ export function floatOrInt32ToFlag<T extends GoConstraint<"~int32"> & number>(va
  */
 export function ParseWatchOptions(key: string, value: GoInterface<unknown>, allOptions: GoPtr<WatchOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (allOptions === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   const o = allOptions;
   switch (key) {
@@ -1142,7 +1144,7 @@ export function ParseWatchOptions(key: string, value: GoInterface<unknown>, allO
       o.ExcludeFiles = ParseStringArray(value);
       break;
   }
-  return [];
+  return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
 }
 
 /**
@@ -1171,10 +1173,10 @@ export function ParseWatchOptions(key: string, value: GoInterface<unknown>, allO
  */
 export function ParseTypeAcquisition(key: string, value: GoInterface<unknown>, allOptions: GoPtr<TypeAcquisition>): GoSlice<GoPtr<Diagnostic>> {
   if (value === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   if (allOptions === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   const o = allOptions;
   switch (key) {
@@ -1191,7 +1193,7 @@ export function ParseTypeAcquisition(key: string, value: GoInterface<unknown>, a
       o.DisableFilenameBasedTypeAcquisition = ParseTristate(value);
       break;
   }
-  return [];
+  return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
 }
 
 /**
@@ -1228,10 +1230,10 @@ export function ParseTypeAcquisition(key: string, value: GoInterface<unknown>, a
  */
 export function ParseBuildOptions(key: string, value: GoInterface<unknown>, allOptions: GoPtr<BuildOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (value === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   if (allOptions === undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   const option = NameMap_Get(BuildNameMap as GoPtr<NameMap>, key);
   const k: string = option !== undefined ? option.Name : key;
@@ -1256,7 +1258,7 @@ export function ParseBuildOptions(key: string, value: GoInterface<unknown>, allO
       o.Verbose = ParseTristate(value);
       break;
   }
-  return [];
+  return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
 }
 
 /**

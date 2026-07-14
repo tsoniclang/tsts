@@ -46,6 +46,8 @@ import { GeneratedIdentifierFlags_IsNode } from "./generatedidentifierflags.js";
 import type { EmitHelper } from "./helpers.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
 const emitHelperPointerKey: GoMapKeyDescriptor<GoPtr<EmitHelper>> = GoPointerKey<EmitHelper>();
@@ -138,9 +140,9 @@ export function NewEmitContext(): GoPtr<EmitContext> {
     emitNodes: { entries: GoNilMap(), arena: { data: [] } },
     assignedName: GoNilMap(),
     classThis: GoNilMap(),
-    varScopeStack: { data: [] },
-    letScopeStack: { data: [] },
-    emitHelpers: { m: { __tsgoBlank0: {}, keys: [], mp: GoNilMap() } },
+    varScopeStack: { data: GoSliceMake(0, 0, GoPointerValueOps<varScope>()) },
+    letScopeStack: { data: GoSliceMake(0, 0, GoPointerValueOps<varScope>()) },
+    emitHelpers: { m: { __tsgoBlank0: {}, keys: GoSliceMake(0, 0, GoPointerValueOps<EmitHelper>()), mp: GoNilMap() } },
   };
   c.Factory = NewNodeFactory(c);
   return c;
@@ -201,9 +203,9 @@ export function EmitContext_Reset(receiver: GoPtr<EmitContext>): void {
   c.emitNodes = { entries: GoNilMap(), arena: { data: [] } };
   c.assignedName = GoNilMap();
   c.classThis = GoNilMap();
-  c.varScopeStack = { data: [] };
-  c.letScopeStack = { data: [] };
-  c.emitHelpers = { m: { __tsgoBlank0: {}, keys: [], mp: GoNilMap() } };
+  c.varScopeStack = { data: GoSliceMake(0, 0, GoPointerValueOps<varScope>()) };
+  c.letScopeStack = { data: GoSliceMake(0, 0, GoPointerValueOps<varScope>()) };
+  c.emitHelpers = { m: { __tsgoBlank0: {}, keys: GoSliceMake(0, 0, GoPointerValueOps<EmitHelper>()), mp: GoNilMap() } };
   c.Factory = factory;
 }
 
@@ -365,7 +367,7 @@ export function EmitContext_EndVariableEnvironment(receiver: GoPtr<EmitContext>)
  */
 export function EmitContext_EndAndMergeVariableEnvironmentList(receiver: GoPtr<EmitContext>, statements: GoPtr<StatementList>): GoPtr<StatementList> {
   const c = receiver!;
-  const nodes: GoSlice<GoPtr<Statement>> = statements !== undefined ? statements.Nodes : [];
+  const nodes: GoSlice<GoPtr<Statement>> = statements !== undefined ? statements.Nodes : GoSliceMake(0, 0, GoPointerValueOps<Node>());
 
   const [result, changed] = EmitContext_endAndMergeVariableEnvironment(receiver, nodes);
   if (changed) {
@@ -510,7 +512,7 @@ export function EmitContext_EndLexicalEnvironment(receiver: GoPtr<EmitContext>):
  */
 export function EmitContext_EndAndMergeLexicalEnvironmentList(receiver: GoPtr<EmitContext>, statements: GoPtr<StatementList>): GoPtr<StatementList> {
   const c = receiver!;
-  const nodes: GoSlice<GoPtr<Statement>> = statements !== undefined ? statements.Nodes : [];
+  const nodes: GoSlice<GoPtr<Statement>> = statements !== undefined ? statements.Nodes : GoSliceMake(0, 0, GoPointerValueOps<Node>());
 
   const [result, changed] = EmitContext_endAndMergeLexicalEnvironment(receiver, nodes);
   if (changed) {
@@ -758,7 +760,9 @@ export function EmitContext_mergeEnvironment(receiver: GoPtr<EmitContext>, state
       for (let i = rightStandardPrologueEnd - 1; i >= 0; i--) {
         const rightPrologue = declarations[i]!;
         if (!Set_Has(leftPrologues, Node_Text(rightPrologue))) {
-          left = Concatenate([rightPrologue], left);
+          left = Concatenate(GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, rightPrologue, GoPointerValueOps<Node>());
+          }), left);
           changed = true;
         }
       }
@@ -1947,13 +1951,15 @@ export function EmitContext_addDefaultValueAssignmentForBindingPattern(receiver:
     undefined,
     NewVariableDeclarationList(
       baseF,
-      NodeFactory_NewNodeList(baseF, [NewVariableDeclaration(
+      NodeFactory_NewNodeList(baseF, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, NewVariableDeclaration(
         baseF,
         Node_Name(parameter),
         undefined,
         parameter!.Type,
         initNode as GoPtr<Expression>,
-      )]),
+      ), GoPointerValueOps<Node>());
+      })),
       NodeFlagsNone,
     ),
   ));
@@ -2012,7 +2018,9 @@ export function EmitContext_addDefaultValueAssignmentForInitializer(receiver: Go
   const initAssignment = NodeFactory_NewAssignmentExpression(f, nameClone as GoPtr<Expression>, initializer as GoPtr<Expression>);
   initAssignment!.Loc = parameter!.Loc;
   EmitContext_AddEmitFlags(receiver, initAssignment, EFNoComments);
-  const initBlock = NewBlock(baseF, NodeFactory_NewNodeList(baseF, [NewExpressionStatement(baseF, initAssignment as GoPtr<Expression>)]), false as bool);
+  const initBlock = NewBlock(baseF, NodeFactory_NewNodeList(baseF, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, NewExpressionStatement(baseF, initAssignment as GoPtr<Expression>), GoPointerValueOps<Node>());
+  })), false as bool);
   initBlock!.Loc = parameter!.Loc;
   EmitContext_AddEmitFlags(receiver, initBlock, EFSingleLine | EFNoTrailingSourceMap | EFNoTokenSourceMaps | EFNoComments);
   EmitContext_AddInitializationStatement(receiver, NewIfStatement(
@@ -2100,7 +2108,9 @@ export function EmitContext_VisitFunctionBody(receiver: GoPtr<EmitContext>, node
   }
 
   if (!IsBlock(updated)) {
-    const statements = EmitContext_MergeEnvironment(receiver, [NewReturnStatement(f, updated as GoPtr<Expression>)] as GoSlice<GoPtr<Statement>>, declarations);
+    const statements = EmitContext_MergeEnvironment(receiver, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewReturnStatement(f, updated as GoPtr<Expression>), GoPointerValueOps<Node>());
+    }), declarations);
     return NewBlock(f, NodeFactory_NewNodeList(f, statements as GoSlice<GoPtr<Node>>), false as bool) as GoPtr<BlockOrExpression>;
   }
 

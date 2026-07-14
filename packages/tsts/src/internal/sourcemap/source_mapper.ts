@@ -19,6 +19,8 @@ import { JsonFieldNames } from "../json/json.js";
 import type { ECMALineInfo } from "./lineinfo.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 // Go strings are immutable UTF-8 byte sequences; `[]byte(s)` and ranging over a
 // string both operate on the UTF-8 byte / rune views. We mirror that contract by
 // operating over the encoded byte view at the boundaries.
@@ -265,8 +267,8 @@ export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap:
     sourceToSourceIndexMap.set(GetCanonicalFileName(source, useCaseSensitiveFileNames), i);
   }
 
-  let decodedMappings: GoSlice<GoPtr<MappedPosition>> = [];
-  let generatedMappings: GoSlice<GoPtr<MappedPosition>> = [];
+  let decodedMappings: GoSlice<GoPtr<MappedPosition>> = GoSliceMake(0, 0, GoPointerValueOps<MappedPosition>());
+  let generatedMappings: GoSlice<GoPtr<MappedPosition>> = GoSliceMake(0, 0, GoPointerValueOps<MappedPosition>());
   const sourceMappings: GoMap<SourceIndex, GoSlice<GoPtr<SourceMappedPosition>>> = new globalThis.Map<SourceIndex, GoSlice<GoPtr<SourceMappedPosition>>>();
 
   // getDecodedMappings()
@@ -309,7 +311,7 @@ export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap:
     return true;
   });
   if (MappingsDecoder_Error(decoder) !== undefined) {
-    decodedMappings = [];
+    decodedMappings = GoSliceMake(0, 0, GoPointerValueOps<MappedPosition>());
   }
 
   // getSourceMappings()
@@ -318,7 +320,7 @@ export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap:
       continue;
     }
     const sourceIndex: SourceIndex = mapping!.sourceIndex;
-    const list: GoSlice<GoPtr<SourceMappedPosition>> = sourceMappings.get(sourceIndex) ?? [];
+    const list: GoSlice<GoPtr<SourceMappedPosition>> = sourceMappings.get(sourceIndex) ?? GoSliceMake(0, 0, GoPointerValueOps<MappedPosition>());
     sourceMappings.set(sourceIndex, GoSliceAppend(list, {
       generatedPosition: mapping!.generatedPosition,
       sourceIndex: sourceIndex,
@@ -484,7 +486,7 @@ export function DocumentPositionMapper_GetGeneratedPosition(receiver: GoPtr<Docu
   if (sourceIndex < 0 || sourceIndex >= d.sourceMappings.size) {
     return undefined;
   }
-  const sourceMappings: GoSlice<GoPtr<SourceMappedPosition>> = d.sourceMappings.get(sourceIndex) ?? [];
+  const sourceMappings: GoSlice<GoPtr<SourceMappedPosition>> = d.sourceMappings.get(sourceIndex) ?? GoSliceMake(0, 0, GoPointerValueOps<MappedPosition>());
   const [targetIndex] = slicesBinarySearchFunc(sourceMappings, loc!.Pos, (m: GoPtr<SourceMappedPosition>, pos: int): int => {
     return m!.sourcePosition - pos;
   });
@@ -553,7 +555,7 @@ export function GetDocumentPositionMapper(host: GoInterface<Host>, generatedFile
     }
   }
 
-  let possibleMapLocations: GoSlice<string> = [];
+  let possibleMapLocations: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   if (mapFileName !== "") {
     possibleMapLocations = GoSliceAppend(possibleMapLocations, mapFileName, GoStringValueOps);
   }
@@ -624,8 +626,8 @@ export function tryParseRawSourceMap(contents: string): GoPtr<RawSourceMap> {
     Version: 0,
     File: "",
     SourceRoot: "",
-    Sources: [],
-    Names: [],
+    Sources: GoSliceMake(0, 0, GoStringValueOps),
+    Names: GoSliceMake(0, 0, GoStringValueOps),
     Mappings: "",
     SourcesContent: GoNilSlice<GoRef<string>>(),
   };

@@ -300,6 +300,8 @@ import { NodeVisitor_visitNode, NodeVisitor_visitNodes, NodeVisitor_visitToken, 
 import type { NodeVisitor } from "./visitor.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 export type { Node, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeBase } from "./spine.js";
 
 /**
@@ -5930,7 +5932,7 @@ export function SourceFile_GetNameTable(receiver: GoPtr<SourceFile>): GoMap<stri
 
       Node_ForEachChild(node, walk);
       const jsdocNodes = Node_JSDoc(node, receiver);
-      for (const jsdoc of jsdocNodes ?? []) {
+      for (const jsdoc of jsdocNodes ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
         Node_ForEachChild(jsdoc, walk);
       }
       return false;
@@ -6371,7 +6373,7 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
         const exportClause = casts.AsExportDeclaration(node)!.ExportClause;
         if (exportClause !== undefined) {
           if (predicates.IsNamedExports(exportClause)) {
-            for (const element of Node_Elements(exportClause) ?? []) {
+            for (const element of Node_Elements(exportClause) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
               visit(element);
             }
           } else {
@@ -6391,7 +6393,7 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
             if (namedBindings.Kind === KindNamespaceImport) {
               addDeclaration(namedBindings);
             } else {
-              for (const element of Node_Elements(namedBindings) ?? []) {
+              for (const element of Node_Elements(namedBindings) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
                 visit(element);
               }
             }

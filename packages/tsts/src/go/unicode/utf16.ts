@@ -5,6 +5,8 @@ import type { int } from "../scalars.js";
 import type { GoRune, GoSlice } from "../compat.js";
 import { GoNumberValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "../compat.js";
 import { GoAppend } from "../compat.js";
+import { GoSliceMake } from "../compat.js";
+
 
 // replacementChar is U+FFFD, the Unicode replacement character.
 const replacementChar: GoRune = 0xfffd;
@@ -38,7 +40,7 @@ export function AppendRune(a: GoSlice<int>, r: GoRune): GoSlice<int> {
 // Decode returns the Unicode code points represented by the UTF-16 encoding s.
 // Unpaired surrogates are decoded as the replacement character.
 export function Decode(s: GoSlice<int>): GoSlice<GoRune> {
-  let result: GoSlice<GoRune> = [];
+  let result: GoSlice<GoRune> = GoSliceMake(0, 0, GoNumberValueOps);
   let i = 0;
   const n = s.length;
   while (i < n) {
@@ -64,7 +66,7 @@ export function Decode(s: GoSlice<int>): GoSlice<GoRune> {
 
 // Encode returns the UTF-16 encoding of the Unicode code point sequence s.
 export function Encode(s: GoSlice<GoRune>): GoSlice<int> {
-  let out: GoSlice<int> = [];
+  let out: GoSlice<int> = GoSliceMake(0, 0, GoNumberValueOps);
   for (const r of s) {
     out = AppendRune(out, r);
   }

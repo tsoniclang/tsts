@@ -70,6 +70,8 @@ import { PCHeritageClauseElement, PCHeritageClauses, PCTupleElementTypes, PCType
 import type { Parser, jsdocScannerInfo } from "./state.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseTypeAnnotation","kind":"method","status":"implemented","sigHash":"adeb19ed0f33f094ab8118ef44389341fcde713436a0c4f851edefe8318f7b75"}
  *
@@ -312,7 +314,9 @@ export function Parser_parseUnionOrIntersectionType(receiver: GoPtr<Parser>, ope
     typeNode = parseConstituentType!(receiver);
   }
   if (receiver!.token === operator || hasLeadingOperator) {
-    let types: GoSlice<GoPtr<Node>> = [typeNode as GoPtr<Node>];
+    let types: GoSlice<GoPtr<Node>> = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, typeNode as GoPtr<Node>, GoPointerValueOps<Node>());
+    });
     while (Parser_parseOptional(receiver, operator)) {
       types = GoSliceAppend(types, Parser_parseFunctionOrConstructorTypeToError(receiver, isUnionType, parseConstituentType) as GoPtr<Node>, GoPointerValueOps<Node>());
     }

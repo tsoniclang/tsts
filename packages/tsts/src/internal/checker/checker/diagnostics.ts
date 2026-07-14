@@ -62,6 +62,8 @@ import { Checker_addDiagnostic, Checker_addSuggestionDiagnostic } from "../check
 import * as slices from "../../../go/slices.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 
 function zeroExportTypeLinks(): ExportTypeLinks {
   return {
@@ -93,7 +95,7 @@ export function Checker_addUndefinedToGlobalsOrErrorOnRedeclaration(receiver: Go
   const name = c.undefinedSymbol!.Name;
   const targetSymbol = c.globals.get(name);
   if (targetSymbol !== undefined) {
-    for (const declaration of targetSymbol!.Declarations ?? []) {
+    for (const declaration of targetSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       if (!IsTypeDeclaration(declaration)) {
         Checker_addDiagnostic(receiver, createDiagnosticForNode(declaration, Declaration_name_conflicts_with_built_in_global_identifier_0, name));
       }
@@ -767,7 +769,11 @@ export function Checker_reportTypeNotIterableError(receiver: GoPtr<Checker>, err
     IsForOfStatement(errorNode!.Parent) &&
     Node_Expression(errorNode!.Parent) === errorNode &&
     c.getGlobalAsyncIterableType!() !== c.emptyGenericType &&
-    Checker_isTypeAssignableTo(receiver, t, Checker_createTypeFromGenericGlobalType(receiver, c.getGlobalAsyncIterableType!(), [c.anyType, c.anyType, c.anyType])));
+    Checker_isTypeAssignableTo(receiver, t, Checker_createTypeFromGenericGlobalType(receiver, c.getGlobalAsyncIterableType!(), GoSliceBuild(3, 3, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, c.anyType, GoPointerValueOps<Type>());
+      GoSliceStore(__goSliceLiteral, 1, c.anyType, GoPointerValueOps<Type>());
+      GoSliceStore(__goSliceLiteral, 2, c.anyType, GoPointerValueOps<Type>());
+    }))));
   return Checker_errorAndMaybeSuggestAwait(receiver, errorNode, suggestAwait, message, Checker_TypeToString(receiver, t));
 }
 
@@ -982,7 +988,9 @@ export function Checker_checkDeprecatedSignature(receiver: GoPtr<Checker>, sig: 
 export function Checker_addDeprecatedSuggestionWithSignature(receiver: GoPtr<Checker>, location: GoPtr<Node>, declaration: GoPtr<Node>, deprecatedEntity: string, signatureString: string): GoPtr<Diagnostic> {
   const message = IfElse(deprecatedEntity !== "", The_signature_0_of_1_is_deprecated, X_0_is_deprecated);
   const diagnostic = NewDiagnosticForNode(location, message, signatureString, deprecatedEntity);
-  return Checker_addDeprecatedSuggestionWorker(receiver, [declaration], diagnostic);
+  return Checker_addDeprecatedSuggestionWorker(receiver, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, declaration, GoPointerValueOps<Node>());
+  }), diagnostic);
 }
 
 /**
@@ -1081,7 +1089,9 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
       Checker_addDiagnostic(receiver, diagnostic);
     }
   } else if (s!.candidateForArgumentArityError !== undefined) {
-    Checker_addDiagnostic(receiver, Checker_getArgumentArityError(receiver, s!.node, [s!.candidateForArgumentArityError], s!.args, headMessage));
+    Checker_addDiagnostic(receiver, Checker_getArgumentArityError(receiver, s!.node, GoSliceBuild(1, 1, GoPointerValueOps<Signature>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, s!.candidateForArgumentArityError, GoPointerValueOps<Signature>());
+    }), s!.args, headMessage));
   } else if (s!.candidateForTypeArgumentError !== undefined) {
     Checker_checkTypeArguments(receiver, s!.candidateForTypeArgumentError, Node_TypeArguments(s!.node) ?? GoNilSlice(), true as bool, headMessage);
   } else if (!IsJsxOpeningFragment(node)) {
@@ -2087,7 +2097,7 @@ export function Checker_addDeprecatedSuggestionWorker(receiver: GoPtr<Checker>, 
  */
 export function Checker_isDeprecatedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
   const parentSymbol = Checker_getParentOfSymbol(receiver, symbol_);
-  const declarations = symbol_!.Declarations ?? [];
+  const declarations = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   if (parentSymbol !== undefined && declarations.length > 1) {
     if ((parentSymbol!.Flags & SymbolFlagsInterface) !== 0) {
       return Some(declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration));
@@ -2175,8 +2185,8 @@ export function Checker_reportMergeSymbolError(receiver: GoPtr<Checker>, target:
  * }
  */
 export function Checker_addDuplicateDeclarationErrorsForSymbols(receiver: GoPtr<Checker>, target: GoPtr<Symbol>, message: GoPtr<Message>, symbolName: string, source: GoPtr<Symbol>): void {
-  for (const node of target!.Declarations ?? []) {
-    Checker_addDuplicateDeclarationError(receiver, node, message, symbolName, source!.Declarations ?? []);
+  for (const node of target!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    Checker_addDuplicateDeclarationError(receiver, node, message, symbolName, source!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()));
   }
 }
 
@@ -2542,7 +2552,7 @@ export function Checker_reportWideningErrorsInType(receiver: GoPtr<Checker>, t: 
         if ((s!.objectFlags & ObjectFlagsContainsWideningType) !== 0) {
           errorReported = Checker_reportWideningErrorsInType(receiver, s);
           if (!errorReported) {
-            const valueDeclaration = Find<GoPtr<Node>>(p!.Declarations ?? [], (d: GoPtr<Node>) => {
+            const valueDeclaration = Find<GoPtr<Node>>(p!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (d: GoPtr<Node>) => {
               const declarationValue = Node_Symbol(d)!.ValueDeclaration;
               return declarationValue !== undefined && declarationValue!.Parent === t!.symbol!.ValueDeclaration;
             }, GoZeroPointer<Node>);

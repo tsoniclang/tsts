@@ -81,6 +81,8 @@ import type { extensions, NodeResolutionFeatures, PackageId, ResolutionHost, Res
 import { ComparePatternKeys, InferredTypesContainingFile, IsApplicableVersionedTypesKey, MangleScopedPackageName, ParseNodeModuleFromPath, ParsePackageName, TryGetJSExtensionForFile } from "./util.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 const packageJsonNotPresentValue = (): JSONValue => ({ Type: JSONValueTypeNotPresent, Value: undefined });
 
 const packageJsonZeroExportsOrImports = (): ExportsOrImports => ({
@@ -392,12 +394,12 @@ export function newResolutionState(name: string, containingDirectory: string, is
     isConfigLookup: false,
     features: NodeResolutionFeaturesNone,
     esmMode: false,
-    conditions: [],
+    conditions: GoSliceMake(0, 0, GoStringValueOps),
     extensions: 0 as extensions,
     resolvePackageDirectoryOnly: false,
     candidateEndingIsFromConfig: false,
     resolvedPackageDirectory: false,
-    diagnostics: [],
+    diagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     parsedPatternsForPathsOnce: new Once(),
     parsedPatternsForPaths: undefined,
   };
@@ -603,13 +605,13 @@ export function Resolver_GetPackageScopeForPath(receiver: GoPtr<Resolver>, direc
     isConfigLookup: false,
     features: NodeResolutionFeaturesNone,
     esmMode: false,
-    conditions: [],
+    conditions: GoSliceMake(0, 0, GoStringValueOps),
     extensions: 0 as extensions,
     compilerOptions: receiver!.compilerOptions,
     resolvePackageDirectoryOnly: false,
     candidateEndingIsFromConfig: false,
     resolvedPackageDirectory: false,
-    diagnostics: [],
+    diagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     parsedPatternsForPathsOnce: new Once(),
     parsedPatternsForPaths: undefined,
   };
@@ -914,7 +916,7 @@ export function Resolver_tryResolveFromTypingsLocation(receiver: GoPtr<Resolver>
     return originalResult;
   }
   const result = resolutionState_createResolvedModule(state, globalResolved, true);
-  result!.ResolutionDiagnostics = [...(originalResult!.ResolutionDiagnostics ?? []), ...(result!.ResolutionDiagnostics ?? [])];
+  result!.ResolutionDiagnostics = [...(originalResult!.ResolutionDiagnostics ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>())), ...(result!.ResolutionDiagnostics ?? GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()))];
   return result;
 }
 
@@ -3460,7 +3462,7 @@ export function resolutionState_tryFile(receiver: GoPtr<resolutionState>, fileNa
   }
   const ext = tspathExtension.TryGetExtensionFromPath(fileName);
   const fileNameNoExtension = tspathExtension.RemoveExtension(fileName, ext);
-  for (const suffix of (receiver!.compilerOptions!.ModuleSuffixes ?? [])) {
+  for (const suffix of (receiver!.compilerOptions!.ModuleSuffixes ?? GoSliceMake(0, 0, GoStringValueOps))) {
     const p = fileNameNoExtension + suffix + ext;
     if (resolutionState_tryFileLookup(receiver, p)) {
       return [p, true as bool];
@@ -4008,7 +4010,7 @@ export function resolutionState_readPackageJsonPeerDependencies(receiver: GoPtr<
     return "";
   }
   const nodeModules = packageDirectory.slice(0, nodeModulesIndex + "/node_modules".length) + "/";
-  const names: GoSlice<string> = [];
+  const names: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   maps.Keys<string, string>(peerDependencies.Value!)!((key: string): bool => {
     names.push(key);
     return true as bool;
@@ -4207,7 +4209,7 @@ export function GetConditions(options: GoPtr<CompilerOptions>, resolutionMode: R
   if (resolutionMode === ModuleKindNone && moduleResolution === ModuleResolutionKindBundler) {
     resolutionMode = ModuleKindESNext;
   }
-  let conditions: GoSlice<string> = [];
+  let conditions: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   if (resolutionMode === ModuleKindESNext) {
     conditions = GoSliceAppend(conditions, "import", GoStringValueOps);
   } else {
@@ -4583,12 +4585,12 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
     if (!GoSliceIsNil(options!.Types)) {
       return options!.Types;
     }
-    return [];
+    return GoSliceMake(0, 0, GoStringValueOps);
   }
 
-  let wildcardMatches: GoSlice<string> = [];
+  let wildcardMatches: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   const [typeRoots] = CompilerOptions_GetEffectiveTypeRoots(options, host!.GetCurrentDirectory());
-  for (const root of (typeRoots ?? [])) {
+  for (const root of (typeRoots ?? GoSliceMake(0, 0, GoStringValueOps))) {
     if (host!.FS()!.DirectoryExists(root)) {
       for (const typeDirectivePath of host!.FS()!.GetAccessibleEntries(root).Directories) {
         const normalized = tspath.NormalizePath(typeDirectivePath);
@@ -4610,8 +4612,8 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
     }
   }
 
-  let result: GoSlice<string> = [];
-  for (const t of (options!.Types ?? [])) {
+  let result: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
+  for (const t of (options!.Types ?? GoSliceMake(0, 0, GoStringValueOps))) {
     if (t === "*") {
       result = GoSliceAppendSlice(result, wildcardMatches, GoStringValueOps);
     } else {
@@ -4769,10 +4771,10 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
     esmMode: false as bool,
     isConfigLookup: false as bool,
     candidateEndingIsFromConfig: false as bool,
-    conditions: [],
+    conditions: GoSliceMake(0, 0, GoStringValueOps),
     resolvePackageDirectoryOnly: false as bool,
     resolvedPackageDirectory: false as bool,
-    diagnostics: [],
+    diagnostics: GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>()),
     parsedPatternsForPaths: undefined,
     parsedPatternsForPathsOnce: new Once(),
     tracer: undefined,
@@ -4783,7 +4785,7 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
     return resolutionState_loadEntrypointsFromExportMap(state, packageJson, packageName, exportsField);
   }
 
-  let result: GoSlice<GoPtr<ResolvedEntrypoint>> = [];
+  let result: GoSlice<GoPtr<ResolvedEntrypoint>> = GoSliceMake(0, 0, GoPointerValueOps<ResolvedEntrypoint>());
   const mainResolution = resolutionState_loadNodeModuleFromDirectoryWorker(
     state,
     exts,
@@ -4808,8 +4810,12 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
       receiver!.host!.GetCurrentDirectory(),
       packageJson!.PackageDirectory,
       extensions_Array(exts),
-      ["node_modules"],
-      ["**/*"],
+      GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "node_modules", GoStringValueOps);
+      }),
+      GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "**/*", GoStringValueOps);
+      }),
       vfsmatch.UnlimitedDepth as int,
     );
     const comparePathsOptions: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.host!.FS()!.UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
@@ -4832,7 +4838,7 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
   if (result.length > 0) {
     return result;
   }
-  return [];
+  return GoSliceMake(0, 0, GoPointerValueOps<ResolvedEntrypoint>());
 }
 
 /**
@@ -4994,7 +5000,7 @@ export function Resolver_createResolvedEntrypointHandlingSymlink(receiver: GoPtr
  * }
  */
 export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<resolutionState>, packageJson: GoPtr<InfoCacheEntry>, packageName: string, exports: ExportsOrImports): GoSlice<GoPtr<ResolvedEntrypoint>> {
-  let entrypoints: GoSlice<GoPtr<ResolvedEntrypoint>> = [];
+  let entrypoints: GoSlice<GoPtr<ResolvedEntrypoint>> = GoSliceMake(0, 0, GoPointerValueOps<ResolvedEntrypoint>());
 
   const loadEntrypointsFromTargetExports = (subpath: string, includeConditions: GoPtr<Set<string>>, excludeConditions: GoPtr<Set<string>>, exp: ExportsOrImports): void => {
     const expType = exp.__tsgoEmbedded0!.Type;
@@ -5013,7 +5019,9 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
           packageJson!.PackageDirectory,
           extensions_Array(receiver!.extensions),
           GoNilSlice<string>(),
-          [tspathExtension.ChangeFullExtension(strings.Replace(expStr, "*", "**/*", 1), ".*")],
+          GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, tspathExtension.ChangeFullExtension(strings.Replace(expStr, "*", "**/*", 1), ".*"), GoStringValueOps);
+          }),
           vfsmatch.UnlimitedDepth as int,
         );
         for (const file of files) {
@@ -5052,7 +5060,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
         loadEntrypointsFromTargetExports(subpath, includeConditions, excludeConditions, element);
       }
     } else if (expType === JSONValueTypeObject) {
-      let prevConditions: GoSlice<string> = [];
+      let prevConditions: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
       OrderedMap_Entries<string, ExportsOrImports>(ExportsOrImports_AsObject(exp) as GoPtr<OrderedMap<string, ExportsOrImports>>)!((condition: string, subExport: ExportsOrImports): bool => {
         if (excludeConditions !== undefined && Set_Has(excludeConditions, condition)) {
           return true;

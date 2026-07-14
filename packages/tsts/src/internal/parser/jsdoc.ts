@@ -160,6 +160,8 @@ import { Parser_reparseTags } from "./reparser.js";
 
 import { GoValueRef } from "../../go/compat.js";
 import type { GoFunc, GoRef } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::init","kind":"func","status":"implemented","sigHash":"deadcfe2223147229491ed97a5eb1b413a0acb92061a6dd7ca510eb6614543db"}
  *
@@ -205,7 +207,7 @@ export function parseJSDocForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<Nod
     if (ranges.length === 0) {
       return GoNilSlice();
     }
-    let jsdoc: GoSlice<GoPtr<Node>> = [];
+    let jsdoc: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
     let pos = Node_Pos(node);
     for (const comment of ranges) {
       const parsed = Parser_parseJSDocComment(p, node, comment.pos, comment.end, pos);
@@ -917,7 +919,7 @@ export function Parser_skipWhitespaceOrAsterisk(receiver: GoPtr<Parser>): string
 
   let precedingLineBreak = Scanner_HasPrecedingLineBreak(receiver!.scanner);
   let seenLineBreak = false;
-  let indents: GoSlice<string> = [];
+  let indents: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   while ((precedingLineBreak && receiver!.token === KindAsteriskToken) || receiver!.token === KindWhitespaceTrivia || receiver!.token === KindNewLineTrivia) {
     indents = GoSliceAppend(indents, Scanner_TokenText(receiver!.scanner), GoStringValueOps);
     if (receiver!.token === KindNewLineTrivia) {
@@ -1920,7 +1922,7 @@ export function Parser_parseJSDocSignature(receiver: GoPtr<Parser>, start: int, 
   let returnTag: GoPtr<Node>;
   const state = Parser_mark(receiver);
   if (Parser_parseOptionalJsdoc(receiver, KindAtToken)) {
-    const tag = Parser_parseTag(receiver, [], indent);
+    const tag = Parser_parseTag(receiver, GoSliceMake(0, 0, GoPointerValueOps<Node>()), indent);
     if (tag!.Kind === KindJSDocReturnTag) {
       returnTag = tag;
     }
@@ -2059,7 +2061,7 @@ export function Parser_tryParseChildTag(receiver: GoPtr<Parser>, target: propert
   switch (Node_Text(tagName)) {
     case "type":
       if (target === propertyLikeParseProperty) {
-        return Parser_parseTypeTag(receiver, [], start, tagName, -1, "");
+        return Parser_parseTypeTag(receiver, GoSliceMake(0, 0, GoPointerValueOps<Node>()), start, tagName, -1, "");
       }
       break;
     case "prop":

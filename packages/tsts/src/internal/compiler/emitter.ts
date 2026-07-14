@@ -58,6 +58,8 @@ import { ExtensionJson } from "../tspath/extension.js";
 import { EncodeURI, AddUTF8ByteOrderMark } from "../stringutil/util.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::EmitOnly","kind":"type","status":"implemented","sigHash":"0c69bbca4873981b8ee4a7bb25a2066b98a917dfd9499551f3df14e6760e7c67"}
  *
@@ -150,7 +152,9 @@ export function emitter_emit(receiver: GoPtr<emitter>): void {
 export function emitter_getDeclarationTransformers(receiver: GoPtr<emitter>, emitContext: GoPtr<EmitContext>, declarationFilePath: string, declarationMapPath: string): GoSlice<GoPtr<DeclarationTransformer>> {
   const e = receiver!;
   const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(e.host!), emitContext, e.host!.Options(), declarationFilePath, declarationMapPath);
-  return [transform];
+  return GoSliceBuild(1, 1, GoPointerValueOps<DeclarationTransformer>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, transform, GoPointerValueOps<DeclarationTransformer>());
+  });
 }
 
 /**
@@ -1197,7 +1201,9 @@ export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: GoIn
 export function getSourceFilesToEmit(host: GoInterface<SourceFileMayBeEmittedHost>, targetSourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): GoSlice<GoPtr<SourceFile>> {
   let sourceFiles: GoSlice<GoPtr<SourceFile>> = GoNilSlice();
   if (targetSourceFile !== undefined) {
-    sourceFiles = [targetSourceFile];
+    sourceFiles = GoSliceBuild(1, 1, GoPointerValueOps<SourceFile>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, targetSourceFile, GoPointerValueOps<SourceFile>());
+    });
   } else {
     sourceFiles = host!.SourceFiles();
   }
@@ -1238,7 +1244,7 @@ export function getDeclarationDiagnostics(host: GoInterface<EmitHost>, file: GoP
   // TODO: use p.getSourceFilesToEmit cache
   const fullFiles = Filter(getSourceFilesToEmit(EmitHost_as_emitter_SourceFileMayBeEmittedHost(host!), file, false), isSourceFileNotJson);
   if (!Some(fullFiles, (f) => f === file)) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   const options = host!.Options();
   const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(host!), undefined, options, "", "");

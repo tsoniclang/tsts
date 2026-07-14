@@ -39,6 +39,8 @@ import { Checker_errorNoModuleMemberSymbol, Checker_getMergedSymbol, Checker_get
 import type { Checker } from "./state.js";
 import { resolutionExtensionIsTSOrJson } from "./state.js";
 import { Checker_addDiagnostic } from "../checker.js";
+import { GoSliceMake } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.mergeModuleAugmentation","kind":"method","status":"implemented","sigHash":"2180b8be90753b343b6f30f261b683d348387d3a1b55268c2d0ae7421d6dbeae"}
@@ -202,7 +204,7 @@ export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>,
     case KindVariableDeclaration: {
       const name = Node_Name(node);
       if (IsBindingPattern(name)) {
-        for (const element of Node_Elements(name) ?? []) {
+        for (const element of Node_Elements(name) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
           Checker_checkModuleAugmentationElement(receiver, element);
         }
       }
@@ -271,7 +273,7 @@ export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_getTargetOfModuleDefault(receiver: GoPtr<Checker>, moduleSymbol: GoPtr<Symbol>, node: GoPtr<Node>, dontResolveAlias: bool): GoPtr<Symbol> {
-  const file = Find(moduleSymbol!.Declarations ?? [], IsSourceFile, GoZeroPointer<Node>);
+  const file = Find(moduleSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsSourceFile, GoZeroPointer<Node>);
   const specifier = Checker_getModuleSpecifierForImportOrExport(receiver, node);
   let exportDefaultSymbol: GoPtr<Symbol>;
   let exportModuleDotExportsSymbol: GoPtr<Symbol>;

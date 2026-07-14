@@ -16,6 +16,8 @@ import {
   StringUtf8Bytes,
 } from "../../go/unicode/utf8.js";
 import * as utf16 from "../../go/unicode/utf16.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
 // `s[i]` is a byte, and slices like `s[i:j]` operate on byte offsets. The
@@ -247,7 +249,7 @@ export function SplitLines(text: string): GoSlice<string> {
   // capacity here; the hint has no observable effect on a JS array, but the
   // pure Count call is preserved for fidelity.
   Count(text, "\n");
-  let lines: GoSlice<string> = [];
+  let lines: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   let start = 0;
   let pos = 0;
   const textLen = text.length;

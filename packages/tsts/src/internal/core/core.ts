@@ -25,6 +25,8 @@ import type { TextPos } from "./text.js";
 import { Tristate_IsTrue } from "./tristate.js";
 
 import type { GoFunc, GoInterface, GoPointerConstraint, GoRef } from "../../go/compat.js";
+import { GoNumberValueOps, GoRefValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // byte indexing `s[i]` and slicing `s[i:j]` operate on byte offsets. We mirror
 // that contract by operating over the UTF-8 byte view and converting back to a
@@ -34,7 +36,7 @@ const byteLen: (value: string) => int = utf8.StringByteLen;
 const byteSliceFrom = (s: string, start: int): string => utf8.StringByteSlice(s, start);
 // []rune(s): decode the string into Unicode code points (runes).
 const stringToRunes = (s: string): GoSlice<GoRune> => {
-  const runes: GoSlice<GoRune> = [];
+  const runes: GoSlice<GoRune> = GoSliceMake(0, 0, GoNumberValueOps);
   for (const ch of s) {
     runes.push(ch.codePointAt(0)!);
   }
@@ -1045,7 +1047,7 @@ export type ECMALineStarts = GoSlice<TextPos>;
  * }
  */
 export function ComputeECMALineStarts(text: string): ECMALineStarts {
-  const result: GoSlice<TextPos> = [];
+  const result: GoSlice<TextPos> = GoSliceMake(0, 0, GoNumberValueOps);
   return slices.AppendSeq(result, ComputeECMALineStartsSeq(text));
 }
 
@@ -1431,7 +1433,7 @@ export interface levenshteinBuffers {
  */
 export let levenshteinBuffersPool: Pool = globalThis.Object.assign(new Pool(), {
   New: (): levenshteinBuffers => {
-    return { previous: [], current: [] };
+    return { previous: GoSliceMake(0, 0, GoNumberValueOps), current: GoSliceMake(0, 0, GoNumberValueOps) };
   },
 });
 
@@ -1629,7 +1631,9 @@ export function SingleElementSlice<T>(element: GoRef<T>): GoSlice<GoRef<T>> {
   if (element === undefined) {
     return GoNilSlice();
   }
-  return [element];
+  return GoSliceBuild(1, 1, GoRefValueOps<T>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, element, GoRefValueOps<T>());
+  });
 }
 
 /**

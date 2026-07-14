@@ -4,6 +4,8 @@ import type { Node } from "../ast/spine.js";
 import type { TypeParameterDeclaration } from "../ast/generated/data.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeKind","kind":"type","status":"implemented","sigHash":"5e0117670ed21a396d4ef334e19781bf70c372e9558cf5ee02dd9a427e6bd841"}
  *
@@ -282,7 +284,7 @@ class PseudoTypeInferredData extends PseudoTypeBaseEmbeddedData<PseudoTypeInferr
  * }
  */
 export function NewPseudoTypeInferred(expr: GoPtr<Node>): GoPtr<PseudoType> {
-  return newPseudoType(PseudoTypeKindInferred, new PseudoTypeInferredData(expr, []));
+  return newPseudoType(PseudoTypeKindInferred, new PseudoTypeInferredData(expr, GoSliceMake(0, 0, GoPointerValueOps<Node>())));
 }
 
 /**

@@ -70,6 +70,8 @@ import { Checker_sortSymbols, getDeclarationModifierFlagsFromSymbol } from "./ut
 import { NodeBuilderImpl_addPropertyToElementList, NodeBuilderImpl_checkTruncationLengthIfExpanding, NodeBuilderImpl_saveRestoreFlags, NodeBuilderImpl_signatureToSignatureDeclarationHelper, NodeBuilderImpl_symbolToNode, NodeBuilderImpl_typeParameterToDeclaration, NodeBuilderImpl_typeToTypeNode } from "./nodebuilderimpl.js";
 import type { Flags } from "../nodebuilder/types.js";
 import { FlagsInTypeAlias, FlagsWriteTypeParametersInQualifiedName } from "../nodebuilder/types.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::func::isExpanding","kind":"func","status":"implemented","sigHash":"ff5ed54d41ed742afcb7984870631435c99e3a7f3c8c9d689251ee75929f0764"}
@@ -200,7 +202,7 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
       members = GoSliceAppend(members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, last!.Name), NodeBuilderImpl_enumMemberInitializer(receiver, last)), GoPointerValueOps<Node>());
       break;
     }
-    const memberDecl = Find(p!.Declarations ?? [], IsEnumMember, GoZeroPointer<Node>);
+    const memberDecl = Find(p!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsEnumMember, GoZeroPointer<Node>);
     let initializer: GoPtr<Node>;
     if (memberDecl !== undefined && AsEnumMember(memberDecl)!.Initializer !== undefined) {
       initializer = NodeFactory_DeepCloneNode(receiver!.f, AsEnumMember(memberDecl)!.Initializer);
@@ -244,7 +246,7 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
  * }
  */
 export function NodeBuilderImpl_enumMemberInitializer(receiver: GoPtr<NodeBuilderImpl>, p: GoPtr<Symbol>): GoPtr<Node> {
-  const memberDecl = Find(p!.Declarations ?? [], IsEnumMember, GoZeroPointer<Node>);
+  const memberDecl = Find(p!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsEnumMember, GoZeroPointer<Node>);
   if (memberDecl === undefined) {
     return undefined;
   }
@@ -342,7 +344,7 @@ export function NodeBuilderImpl_enumMemberInitializer(receiver: GoPtr<NodeBuilde
 export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
   const name = SymbolName(symbol_);
   receiver!.ctx!.approximateLength += 9 + name.length;
-  const classLikeDeclarations = Filter(symbol_!.Declarations ?? [], IsClassLike);
+  const classLikeDeclarations = Filter(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsClassLike);
   const originalDecl = FirstOrNil(classLikeDeclarations, GoZeroPointer<Node>);
   const oldEnclosing = receiver!.ctx!.enclosingDeclaration;
   if (originalDecl !== undefined) {
@@ -382,7 +384,7 @@ export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>
   }
   const constructors = NodeBuilderImpl_serializeConstructors(receiver, staticType, staticBaseType, isClass, symbol_);
   const indexSigs = NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, classType, FirstOrNil(baseTypes, GoZeroPointer<Type>));
-  let allMembers: GoSlice<GoPtr<Node>> = [];
+  let allMembers: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   allMembers = GoSliceAppendSlice(allMembers, indexSigs, GoPointerValueOps<Node>());
   allMembers = GoSliceAppendSlice(allMembers, staticMembers, GoPointerValueOps<Node>());
   allMembers = GoSliceAppendSlice(allMembers, constructors, GoPointerValueOps<Node>());
@@ -536,7 +538,7 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
   const name = SymbolName(symbol_);
   receiver!.ctx!.approximateLength += 14 + name.length;
   const interfaceType = Checker_getDeclaredTypeOfClassOrInterface(receiver!.ch, symbol_);
-  const interfaceDeclarations = Filter(symbol_!.Declarations ?? [], IsInterfaceDeclaration);
+  const interfaceDeclarations = Filter(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsInterfaceDeclaration);
   const localParams = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver!.ch, symbol_);
   const typeParamDecls = Map(localParams, (p) => NodeBuilderImpl_typeParameterToDeclaration(receiver, p));
   const baseTypes = Checker_getBaseTypes(receiver!.ch, interfaceType);
@@ -710,7 +712,7 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
   if (isNonConstructable) {
     receiver!.ctx!.approximateLength += 21;
     const modifiers = CreateModifiersFromModifierFlags(ModifierFlagsPrivate, (kind) => NodeFactory_NewModifier(receiver!.f, kind));
-    return [NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, modifiers), undefined, NodeFactory_NewNodeList(receiver!.f, []), undefined, undefined, undefined)];
+    return [NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, modifiers), undefined, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), undefined, undefined, undefined)];
   }
   const signatures = Checker_getSignaturesOfType(receiver!.ch, staticType, SignatureKindConstruct);
   if (staticBaseType !== undefined) {
@@ -737,7 +739,7 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
       }
     }
     if (privateProtected !== 0) {
-      return [NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, CreateModifiersFromModifierFlags(privateProtected, (kind) => NodeFactory_NewModifier(receiver!.f, kind))), undefined, NodeFactory_NewNodeList(receiver!.f, []), undefined, undefined, undefined)];
+      return [NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, CreateModifiersFromModifierFlags(privateProtected, (kind) => NodeFactory_NewModifier(receiver!.f, kind))), undefined, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), undefined, undefined, undefined)];
     }
   } else if (Every(signatures, (sig) => (sig!.parameters.length === 0) as bool)) {
     return GoNilSlice();
@@ -832,9 +834,9 @@ export function NodeBuilderImpl_serializeNamespaceMember(receiver: GoPtr<NodeBui
       undefined,
       NewVariableDeclarationList(
         receiver!.f,
-        NodeFactory_NewNodeList(receiver!.f, [
-          NewVariableDeclaration(receiver!.f, NewIdentifier(receiver!.f, name), undefined, NodeBuilderImpl_serializeTypeForDeclaration(receiver, undefined, t, resolved, true as bool), undefined),
-        ]),
+        NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, NewVariableDeclaration(receiver!.f, NewIdentifier(receiver!.f, name), undefined, NodeBuilderImpl_serializeTypeForDeclaration(receiver, undefined, t, resolved, true as bool), undefined), GoPointerValueOps<Node>());
+        })),
         NodeFlagsLet,
       ),
     );
@@ -1028,9 +1030,9 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
               undefined,
               NewVariableDeclarationList(
                 receiver!.f,
-                NodeFactory_NewNodeList(receiver!.f, [
-                  NewVariableDeclaration(receiver!.f, NewIdentifier(receiver!.f, target!.Name), undefined, NodeBuilderImpl_serializeTypeForDeclaration(receiver, undefined, localType, target, true as bool), undefined),
-                ]),
+                NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+                  GoSliceStore(__goSliceLiteral, 0, NewVariableDeclaration(receiver!.f, NewIdentifier(receiver!.f, target!.Name), undefined, NodeBuilderImpl_serializeTypeForDeclaration(receiver, undefined, localType, target, true as bool), undefined), GoPointerValueOps<Node>());
+                })),
                 NodeFlagsLet,
               ),
             );
@@ -1047,9 +1049,9 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
           receiver!.f,
           undefined,
           false as bool,
-          NewNamedExports(receiver!.f, NodeFactory_NewNodeList(receiver!.f, [
-            NewExportSpecifier(receiver!.f, false as bool, propertyName, NewIdentifier(receiver!.f, m!.Name)),
-          ])),
+          NewNamedExports(receiver!.f, NodeFactory_NewNodeList(receiver!.f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, NewExportSpecifier(receiver!.f, false as bool, propertyName, NewIdentifier(receiver!.f, m!.Name)), GoPointerValueOps<Node>());
+          }))),
           undefined,
           undefined,
         );
@@ -1063,7 +1065,7 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
       const sigs = Checker_getSignaturesOfType(receiver!.ch, t, SignatureKindCall);
       for (const sig of sigs) {
         receiver!.ctx!.approximateLength++;
-        const decl = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindFunctionDeclaration, { modifiers: [], name: NewIdentifier(receiver!.f, m!.Name), questionToken: undefined });
+        const decl = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindFunctionDeclaration, { modifiers: GoSliceMake(0, 0, GoPointerValueOps<Node>()), name: NewIdentifier(receiver!.f, m!.Name), questionToken: undefined });
         bodyStmts = GoAppend(bodyStmts, { node: decl, isLocal: false as bool });
       }
       const merged = Checker_getMergedSymbol(receiver!.ch, resolved);

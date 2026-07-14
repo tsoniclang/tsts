@@ -13,6 +13,8 @@ import { JsonFieldNames, Marshal as jsonMarshal } from "../json/json.js";
 import type { JsonFieldNameMap } from "../json/json.js";
 import { GetRelativePathToDirectoryOrUrl } from "../tspath/path.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 
 // Go's `string([]byte)` decodes the bytes as UTF-8. We mirror that with a
 // TextDecoder over the byte view.
@@ -143,7 +145,7 @@ const decodeSourceContent = (value: unknown): GoSlice<GoRef<string>> => {
   if (!globalThis.Array.isArray(value)) {
     throw new globalThis.TypeError("sourcesContent must be a JSON array");
   }
-  const decoded: GoSlice<GoRef<string>> = [];
+  const decoded: GoSlice<GoRef<string>> = GoSliceMake(0, 0, GoRefValueOps<string>());
   for (const item of value) {
     if (item === null) {
       decoded.push(undefined);
@@ -787,11 +789,11 @@ export function Generator_RawSourceMap(receiver: GoPtr<Generator>): GoPtr<RawSou
   Generator_commitPendingMapping(gen);
   let sources = slicesClone(gen.sources);
   if (GoSliceIsNil(sources)) {
-    sources = [];
+    sources = GoSliceMake(0, 0, GoStringValueOps);
   }
   let names = slicesClone(gen.names);
   if (GoSliceIsNil(names)) {
-    names = [];
+    names = GoSliceMake(0, 0, GoStringValueOps);
   }
   const rawSourceMap: RawSourceMap & { [JsonFieldNames]: JsonFieldNameMap } = {
     [JsonFieldNames]: rawSourceMapJsonFieldNames,

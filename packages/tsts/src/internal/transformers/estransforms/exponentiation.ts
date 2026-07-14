@@ -16,6 +16,8 @@ import type { Transformer } from "../transformer.js";
 import { Transformer_NewTransformer, Transformer_Visitor, Transformer_Factory, Transformer_EmitContext } from "../transformer.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/visitor.js";
+import { GoPointerValueOps, GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::type::exponentiationTransformer","kind":"type","status":"implemented","sigHash":"2523adac1feebbc2203b099649dbe314c593b2a554179a79c9641e4a54835db1"}
@@ -174,7 +176,10 @@ export function exponentiationTransformer_visitExponentiationAssignmentExpressio
     value = left;
   }
 
-  const rhs = NodeFactory_NewGlobalMethodCall(pf, "Math", "pow", [value, right]);
+  const rhs = NodeFactory_NewGlobalMethodCall(pf, "Math", "pow", GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, value, GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 1, right, GoPointerValueOps<Node>());
+  }));
   rhs!.Loc = node!.Loc;
   const result = NodeFactory_NewAssignmentExpression(pf, target, rhs);
   result!.Loc = node!.Loc;
@@ -198,7 +203,10 @@ export function exponentiationTransformer_visitExponentiationExpression(receiver
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
   const left = NodeVisitor_VisitNode(visitor, node!.Left as unknown as GoPtr<Node>);
   const right = NodeVisitor_VisitNode(visitor, node!.Right as unknown as GoPtr<Node>);
-  const result = NodeFactory_NewGlobalMethodCall(pf, "Math", "pow", [left, right]);
+  const result = NodeFactory_NewGlobalMethodCall(pf, "Math", "pow", GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, left, GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 1, right, GoPointerValueOps<Node>());
+  }));
   result!.Loc = node!.Loc;
   return result;
 }

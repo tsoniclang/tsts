@@ -43,6 +43,8 @@ import {
 } from "./utilities.js";
 import { NodeFlagsPossiblyContainsImportMeta } from "./generated/flags.js";
 import { ScriptKindJSON } from "../core/scriptkind.js";
+import { GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::type::SourceFileParseOptions","kind":"type","status":"implemented","sigHash":"053ca2016d94420fcce03accf7a3b15427c4e250f890f4d10a0b2b28e4befd05"}
@@ -134,7 +136,12 @@ export function GetExternalModuleIndicatorOptions(fileName: string, options: GoP
  * Go source:
  * var isFileForcedToBeModuleByFormatExtensions = []string{tspath.ExtensionCjs, tspath.ExtensionCts, tspath.ExtensionMjs, tspath.ExtensionMts}
  */
-export let isFileForcedToBeModuleByFormatExtensions: GoSlice<string> = [ExtensionCjs, ExtensionCts, ExtensionMjs, ExtensionMts];
+export let isFileForcedToBeModuleByFormatExtensions: GoSlice<string> = GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, ExtensionCjs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 1, ExtensionCts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 2, ExtensionMjs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 3, ExtensionMts, GoStringValueOps);
+});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::isFileForcedToBeModuleByFormat","kind":"func","status":"implemented","sigHash":"963f93612f9d264992fd241122e4739f2dcc96a8bf53731f6ba3521376ee8870"}

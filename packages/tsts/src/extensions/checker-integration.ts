@@ -18,6 +18,8 @@ import type { ArgumentPassingFact, SelectedTargetSignatureFact, SourceSelectedMe
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
 import { recordProviderTypeFamilyReferenceFacts } from "./compiler-integration.js";
+import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+
 
 export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callExpression: GoPtr<Node>, sourceSelectedSignature?: GoPtr<Signature>, resolvedCalleeSymbol?: GoPtr<Symbol>): void {
   if (checker === undefined || callExpression === undefined) {
@@ -62,7 +64,7 @@ export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callE
     return;
   }
 
-  const arguments_ = Node_Arguments(callExpression) ?? [];
+  const arguments_ = Node_Arguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const selectedSignature = withSelectedTargetSignatureProvenance(
     recordExtensionTargetTypeArgumentMapping(extensionHost, callExpression, callee, sourceSelectedSignature, sourceSelectedMethodTypeArguments, sourceCalleeSymbol, sourceCalleeDeclaration, sourceReturnType, result.value, arguments_),
     {
@@ -293,7 +295,7 @@ export function recordExtensionTargetConstraintValidation(checker: GoPtr<Checker
 
   const targetBinding = extensionHost.facts.get(symbol, targetBindingFactKey);
   const typeParameters = targetBinding?.typeParameters ?? [];
-  const typeArguments = Node_TypeArguments(typeReference) ?? [];
+  const typeArguments = Node_TypeArguments(typeReference) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   if (targetBinding === undefined || typeParameters.length === 0 || typeArguments.length === 0) {
     return true;
   }
@@ -633,11 +635,11 @@ function getSourceSelectedMethodTypeArguments(callExpression: GoPtr<Node>, sourc
   if (sourceSelectedSignature === undefined) {
     return undefined;
   }
-  const typeParameters = sourceSelectedSignature.target?.typeParameters ?? sourceSelectedSignature.typeParameters ?? [];
+  const typeParameters = sourceSelectedSignature.target?.typeParameters ?? sourceSelectedSignature.typeParameters ?? GoSliceMake(0, 0, GoPointerValueOps<Type>());
   if (typeParameters.length === 0) {
     return undefined;
   }
-  const explicitTypeNodes = Node_TypeArguments(callExpression) ?? [];
+  const explicitTypeNodes = Node_TypeArguments(callExpression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   const selected: SourceSelectedMethodTypeArgument[] = [];
   for (let index = 0; index < typeParameters.length; index++) {
     const typeParameter = typeParameters[index];

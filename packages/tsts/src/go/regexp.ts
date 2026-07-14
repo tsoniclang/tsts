@@ -27,6 +27,8 @@
 import type { bool, int } from "./scalars.js";
 import { GoAppend, GoNilSlice, GoSliceIsNil, type GoError, type GoFunc, type GoSlice } from "./compat.js";
 import { GoSliceAppend, GoStringValueOps } from "./compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "./compat.js";
+
 
 // translatePattern rewrites a Go RE2 pattern source into an equivalent JS
 // RegExp source plus the set of JS flags required. It scans character by
@@ -225,11 +227,13 @@ export class Regexp {
     }
 
     if (this.pattern.length > 0 && s.length === 0) {
-      return [""];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "", GoStringValueOps);
+      });
     }
 
     const matches = this.findAllStringIndex(s, n);
-    let result: GoSlice<string> = [];
+    let result: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
 
     let beg = 0;
     let end = 0;

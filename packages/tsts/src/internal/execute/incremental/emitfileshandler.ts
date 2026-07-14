@@ -55,6 +55,8 @@ import type { DiagnosticsOrBuildInfoDiagnosticsWithFileName, emitSignature, File
 import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitUpdate","kind":"type","status":"implemented","sigHash":"b514029a6cc46f502243219e2a3c85568fca34dadd062aa2a02a0ca0bd34f46e"}
  *
@@ -190,8 +192,8 @@ export function emitFilesHandler_emitAllAffectedFiles(receiver: GoPtr<emitFilesH
         const result: EmitResult = {
           EmitSkipped: true as bool,
           Diagnostics: DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(diagnostics, receiver!.program!.program, options.TargetSourceFile),
-          EmittedFiles: [],
-          SourceMaps: [],
+          EmittedFiles: GoSliceMake(0, 0, GoStringValueOps),
+          SourceMaps: GoSliceMake(0, 0, GoPointerValueOps<SourceMapEmitResult>()),
         };
         emitFilesHandler_updateHasEmitDiagnostics(receiver, result);
         return result;
@@ -217,8 +219,8 @@ export function emitFilesHandler_emitAllAffectedFiles(receiver: GoPtr<emitFilesH
     const result: EmitResult = {
       EmitSkipped: true as bool,
       Diagnostics: Program_GetDeclarationDiagnostics(receiver!.program!.program, receiver!.ctx, options.TargetSourceFile),
-      EmittedFiles: [],
-      SourceMaps: [],
+      EmittedFiles: GoSliceMake(0, 0, GoStringValueOps),
+      SourceMaps: GoSliceMake(0, 0, GoPointerValueOps<SourceMapEmitResult>()),
     };
     if (result.Diagnostics.length !== 0) {
       emitFilesHandler_updateHasEmitDiagnostics(receiver, result);
@@ -347,7 +349,7 @@ export function emitFilesHandler_emitBuildInfo(receiver: GoPtr<emitFilesHandler>
 export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesHandler>, options: EmitOptions): GoSlice<GoPtr<EmitResult>> {
   collectAllAffectedFiles(receiver!.ctx, receiver!.program);
   if (receiver!.ctx!.Err() !== undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<EmitResult>());
   }
 
   const wg = NewWorkGroup(compiler_Program_SingleThreaded(receiver!.program!.program));
@@ -384,8 +386,8 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
             result = {
               EmitSkipped: true as bool,
               Diagnostics: Program_GetDeclarationDiagnostics(receiver!.program!.program, receiver!.ctx, affectedFile),
-              EmittedFiles: [],
-              SourceMaps: [],
+              EmittedFiles: GoSliceMake(0, 0, GoStringValueOps),
+              SourceMaps: GoSliceMake(0, 0, GoPointerValueOps<SourceMapEmitResult>()),
             } as EmitResult;
           }
           emitFilesHandler_updateHasEmitDiagnostics(receiver, result);
@@ -404,7 +406,7 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
   );
   wg!.RunAndWait();
   if (receiver!.ctx!.Err() !== undefined) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<EmitResult>());
   }
 
   SyncMap_Range<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
@@ -436,8 +438,8 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
             result: {
               EmitSkipped: true as bool,
               Diagnostics: DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(diagnostics, receiver!.program!.program, affectedFile),
-              EmittedFiles: [],
-              SourceMaps: [],
+              EmittedFiles: GoSliceMake(0, 0, GoStringValueOps),
+              SourceMaps: GoSliceMake(0, 0, GoPointerValueOps<SourceMapEmitResult>()),
             } as EmitResult,
             dtsErrorsFromCache: true as bool,
           },
@@ -631,7 +633,7 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
   SyncMap_Store<Path, GoPtr<emitSignature>>(
     receiver!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>,
     SourceFile_Path(file),
-    { signature: newSignature, signatureWithDifferentOptions: [] },
+    { signature: newSignature, signatureWithDifferentOptions: GoSliceMake(0, 0, GoStringValueOps) },
     GoStringKey,
   );
   return false as bool;
@@ -789,7 +791,7 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
   } else if (receiver!.hasEmitDiagnostics.Load()) {
     receiver!.program!.snapshot!.hasEmitDiagnostics = true as bool;
   }
-  return [];
+  return GoSliceMake(0, 0, GoPointerValueOps<EmitResult>());
 }
 
 /**

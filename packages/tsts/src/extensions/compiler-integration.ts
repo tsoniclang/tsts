@@ -55,6 +55,8 @@ import type {
   ProviderTypeParameterDeclaration,
   ProviderTypeExpression,
 } from "./host.js";
+import { GoPointerValueOps, GoSliceMake } from "../go/compat.js";
+
 
 export function recordBoundSourceFileExtensionFacts(program: object, file: GoPtr<SourceFile>): void {
   const extensionHost = getExtensionHost(program);
@@ -91,7 +93,7 @@ export function recordProviderTypeFamilyReferenceFacts(extensionHost: ExtensionH
   if (family === undefined) {
     return;
   }
-  const sourceTypeArgumentCount = (Node_TypeArguments(typeReference) ?? []).length;
+  const sourceTypeArgumentCount = (Node_TypeArguments(typeReference) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).length;
   const variant = family.variants.find((candidate) => candidate.sourceTypeArgumentCount === sourceTypeArgumentCount);
   if (variant === undefined) {
     return;
@@ -112,7 +114,7 @@ export function recordProviderTypeFamilyReferenceFacts(extensionHost: ExtensionH
     }
     extensionHost.facts.set(typeReference, instantiatedTargetTypeFactKey, {
       targetType: variant.targetBinding,
-      typeArguments: (Node_TypeArguments(typeReference) ?? []).filter((argument): argument is Node => argument !== undefined),
+      typeArguments: (Node_TypeArguments(typeReference) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).filter((argument): argument is Node => argument !== undefined),
     }, evidence);
   }
 }
@@ -179,7 +181,7 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
     }, evidence);
     extensionHost.facts.set(symbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule, declaration), evidence);
     if (declaration.signatures === undefined || declaration.signatures.length === 0) {
-      for (const exportDeclaration of symbol.Declarations ?? []) {
+      for (const exportDeclaration of symbol.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
         if (exportDeclaration === undefined) {
           continue;
         }
@@ -233,7 +235,7 @@ function recordProviderVirtualMemberFacts(
   declaration: ProviderExportDeclaration,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const memberNodes = (exportSymbol.Declarations ?? []).flatMap(getProviderMemberCandidateNodes);
+  const memberNodes = (exportSymbol.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).flatMap(getProviderMemberCandidateNodes);
   const usedMemberNodes = new Set<Node>();
   for (const member of declaration.members ?? []) {
     const matchingMemberNodes = memberNodes.filter((node) =>

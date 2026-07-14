@@ -60,6 +60,8 @@ import { EFAsyncFunctionBody, EFCustomPrologue, EFExportName, EFHelperName, EFLo
 import { addDisposableResourceHelper, asyncDelegatorHelper, asyncGeneratorHelper, asyncValuesHelper, awaiterHelper, awaitHelper, classPrivateFieldGetHelper, classPrivateFieldInHelper, classPrivateFieldSetHelper, decorateHelper, disposeResourcesHelper, esDecorateHelper, exportStarHelper, importDefaultHelper, importStarHelper, makeTemplateObjectHelper, metadataHelper, paramHelper, propKeyHelper, restHelper, rewriteRelativeImportExtensionsHelper, runInitializersHelper, setFunctionNameHelper } from "./helpers.js";
 import type { GeneratedIdentifierFlags } from "./generatedidentifierflags.js";
 import { GeneratedIdentifierFlagsAuto, GeneratedIdentifierFlagsKindMask, GeneratedIdentifierFlagsLoop, GeneratedIdentifierFlagsNode, GeneratedIdentifierFlagsOptimistic, GeneratedIdentifierFlagsUnique } from "./generatedidentifierflags.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::NodeFactory","kind":"type","status":"implemented","sigHash":"a712ecc9d60b4ded4861ea18bb957773602cb73b7775e87938062ca2de6cfd5f"}
@@ -792,7 +794,9 @@ export function NodeFactory_CreateForOfBindingStatement(receiver: GoPtr<NodeFact
     const updatedList = NodeFactory_UpdateVariableDeclarationList(
       f,
       AsVariableDeclarationList(node),
-      NodeFactory_NewNodeList(f, [updatedDeclaration]) as unknown as GoPtr<VariableDeclarationNodeList>,
+      NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, updatedDeclaration, GoPointerValueOps<Node>());
+      })) as unknown as GoPtr<VariableDeclarationNodeList>,
       AsVariableDeclarationList(node)!.Flags as NodeFlags,
     );
     const statement = NewVariableStatement(f, undefined, updatedList);
@@ -1409,10 +1413,10 @@ export function NodeFactory_NewMetadataHelper(receiver: GoPtr<NodeFactory>, meta
     NodeFactory_NewUnscopedHelperName(receiver, "__metadata"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [
-      NewStringLiteral(f, metadataKey, TokenFlagsNone),
-      metadataValue,
-    ]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewStringLiteral(f, metadataKey, TokenFlagsNone), GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, metadataValue, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -1442,7 +1446,10 @@ export function NodeFactory_NewParamHelper(receiver: GoPtr<NodeFactory>, express
     NodeFactory_NewUnscopedHelperName(receiver, "__param"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [NewNumericLiteral(f, Itoa(parameterOffset), TokenFlagsNone), expression]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewNumericLiteral(f, Itoa(parameterOffset), TokenFlagsNone), GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, expression, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
   helper!.Loc = location;
@@ -1472,7 +1479,11 @@ export function NodeFactory_NewAddDisposableResourceHelper(receiver: GoPtr<NodeF
     NodeFactory_NewUnscopedHelperName(receiver, "__addDisposableResource"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [envBinding, value, NewKeywordExpression(f, IfElse(async, KindTrueKeyword, KindFalseKeyword))]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, envBinding, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, value, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, NewKeywordExpression(f, IfElse(async, KindTrueKeyword, KindFalseKeyword)), GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -1500,7 +1511,9 @@ export function NodeFactory_NewDisposeResourcesHelper(receiver: GoPtr<NodeFactor
     NodeFactory_NewUnscopedHelperName(receiver, "__disposeResources"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [envBinding]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, envBinding, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -1554,8 +1567,17 @@ export function NodeFactory_NewClassPrivateFieldGetHelper(receiver: GoPtr<NodeFa
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, classPrivateFieldGetHelper);
   const args: GoSlice<GoPtr<Node>> = fn === undefined
-    ? [receiver1, state, NewStringLiteral(f, kind, TokenFlagsNone)]
-    : [receiver1, state, NewStringLiteral(f, kind, TokenFlagsNone), fn];
+    ? GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, receiver1, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, state, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, NewStringLiteral(f, kind, TokenFlagsNone), GoPointerValueOps<Node>());
+    })
+    : GoSliceBuild(4, 4, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, receiver1, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, state, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, NewStringLiteral(f, kind, TokenFlagsNone), GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 3, fn, GoPointerValueOps<Node>());
+    });
   return NewCallExpression(
     f,
     NodeFactory_NewUnscopedHelperName(receiver, "__classPrivateFieldGet"),
@@ -1591,8 +1613,19 @@ export function NodeFactory_NewClassPrivateFieldSetHelper(receiver: GoPtr<NodeFa
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, classPrivateFieldSetHelper);
   const args: GoSlice<GoPtr<Node>> = fn === undefined
-    ? [receiver1, state, value, NewStringLiteral(f, kind, TokenFlagsNone)]
-    : [receiver1, state, value, NewStringLiteral(f, kind, TokenFlagsNone), fn];
+    ? GoSliceBuild(4, 4, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, receiver1, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, state, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, value, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 3, NewStringLiteral(f, kind, TokenFlagsNone), GoPointerValueOps<Node>());
+    })
+    : GoSliceBuild(5, 5, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, receiver1, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, state, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, value, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 3, NewStringLiteral(f, kind, TokenFlagsNone), GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 4, fn, GoPointerValueOps<Node>());
+    });
   return NewCallExpression(
     f,
     NodeFactory_NewUnscopedHelperName(receiver, "__classPrivateFieldSet"),
@@ -1626,7 +1659,10 @@ export function NodeFactory_NewClassPrivateFieldInHelper(receiver: GoPtr<NodeFac
     NodeFactory_NewUnscopedHelperName(receiver, "__classPrivateFieldIn"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [state, receiver1]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, state, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, receiver1, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -1663,7 +1699,11 @@ export function NodeFactory_NewObjectDefinePropertyCall(receiver: GoPtr<NodeFact
     ),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [target, name, descriptor]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, target, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, name, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, descriptor, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -1700,7 +1740,11 @@ export function NodeFactory_NewReflectGetCall(receiver: GoPtr<NodeFactory>, targ
     ),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [target, propertyKey, receiver1]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, target, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, propertyKey, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, receiver1, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -1737,7 +1781,12 @@ export function NodeFactory_NewReflectSetCall(receiver: GoPtr<NodeFactory>, targ
     ),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [target, propertyKey, value, receiver1]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(4, 4, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, target, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, propertyKey, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, value, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 3, receiver1, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -1755,7 +1804,7 @@ export function NodeFactory_NewReflectSetCall(receiver: GoPtr<NodeFactory>, targ
  */
 export function NodeFactory_NewFunctionBindCall(receiver: GoPtr<NodeFactory>, target: GoPtr<Expression>, thisArg: GoPtr<Expression>, argumentsList: GoSlice<GoPtr<Node>>): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
-  let args: GoSlice<GoPtr<Node>> = [];
+  let args: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   args = GoSliceAppend(args, thisArg, GoPointerValueOps<Node>());
   args = GoSliceAppendSlice(args, argumentsList, GoPointerValueOps<Node>());
   return NodeFactory_NewMethodCall(receiver, target, NewIdentifier(f, "bind"), args);
@@ -1790,7 +1839,7 @@ export function NodeFactory_NewImmediatelyInvokedArrowFunction(receiver: GoPtr<N
     f,
     undefined, /*modifiers*/
     undefined, /*typeParameters*/
-    NodeFactory_NewNodeList(f, []), /*parameters*/
+    NodeFactory_NewNodeList(f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), /*parameters*/
     undefined, /*returnType*/
     undefined, /*fullSignature*/
     NewToken(f, KindEqualsGreaterThanToken), /*equalsGreaterThanToken*/
@@ -1801,7 +1850,7 @@ export function NodeFactory_NewImmediatelyInvokedArrowFunction(receiver: GoPtr<N
     NewParenthesizedExpression(f, arrow),
     undefined, /*questionDotToken*/
     undefined, /*typeArguments*/
-    NodeFactory_NewNodeList(f, []),
+    NodeFactory_NewNodeList(f, GoSliceMake(0, 0, GoPointerValueOps<Node>())),
     NodeFlagsNone,
   );
 }
@@ -1832,7 +1881,9 @@ export function NodeFactory_NewExportDefault(receiver: GoPtr<NodeFactory>, expre
 export function NodeFactory_NewExternalModuleExport(receiver: GoPtr<NodeFactory>, name: GoPtr<IdentifierNode>): GoPtr<Statement> {
   const f = receiver!.__tsgoEmbedded0!;
   const specifier = NewExportSpecifier(f, false, undefined, name);
-  const namedExports = NewNamedExports(f, NodeFactory_NewNodeList(f, [specifier]));
+  const namedExports = NewNamedExports(f, NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, specifier, GoPointerValueOps<Node>());
+  })));
   return NewExportDeclaration(f, undefined, false, namedExports, undefined, undefined);
 }
 
@@ -1930,10 +1981,10 @@ export function NodeFactory_NewRestHelper(receiver: GoPtr<NodeFactory>, value: G
     NodeFactory_NewUnscopedHelperName(receiver, "__rest"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [
-      value,
-      propNames,
-    ]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, value, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, propNames, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -1961,7 +2012,9 @@ export function NodeFactory_NewAwaitHelper(receiver: GoPtr<NodeFactory>, express
     NodeFactory_NewUnscopedHelperName(receiver, "__await"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [expression]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, expression, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2017,11 +2070,11 @@ export function NodeFactory_NewAsyncGeneratorHelper(receiver: GoPtr<NodeFactory>
     NodeFactory_NewUnscopedHelperName(receiver, "__asyncGenerator"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [
-      thisArg,
-      NewIdentifier(f, "arguments"),
-      generatorFunc,
-    ]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, thisArg, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, NewIdentifier(f, "arguments"), GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, generatorFunc, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2051,7 +2104,9 @@ export function NodeFactory_NewAsyncDelegatorHelper(receiver: GoPtr<NodeFactory>
     NodeFactory_NewUnscopedHelperName(receiver, "__asyncDelegator"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [expression]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, expression, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2079,7 +2134,9 @@ export function NodeFactory_NewAsyncValuesHelper(receiver: GoPtr<NodeFactory>, e
     NodeFactory_NewUnscopedHelperName(receiver, "__asyncValues"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [expression]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, expression, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2149,7 +2206,7 @@ export function NodeFactory_NewAwaiterHelper(receiver: GoPtr<NodeFactory>, hasLe
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, awaiterHelper);
 
-  const params: GoPtr<NodeList> = parameters !== undefined ? parameters : NodeFactory_NewNodeList(f, []);
+  const params: GoPtr<NodeList> = parameters !== undefined ? parameters : NodeFactory_NewNodeList(f, GoSliceMake(0, 0, GoPointerValueOps<Node>()));
 
   const generatorFunc = NewFunctionExpression(
     f,
@@ -2179,12 +2236,12 @@ export function NodeFactory_NewAwaiterHelper(receiver: GoPtr<NodeFactory>, hasLe
     NodeFactory_NewUnscopedHelperName(receiver, "__awaiter"),
     undefined, /*questionDotToken*/
     undefined, /*typeArguments*/
-    NodeFactory_NewNodeList(f, [
-      thisArg,
-      argsArg,
-      NodeFactory_NewVoidZeroExpression(receiver),
-      generatorFunc,
-    ]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(4, 4, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, thisArg, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, argsArg, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, NodeFactory_NewVoidZeroExpression(receiver), GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 3, generatorFunc, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2204,11 +2261,11 @@ export function NodeFactory_NewAwaiterHelper(receiver: GoPtr<NodeFactory>, hasLe
  */
 export function NodeFactory_NewESDecorateClassContextObject(receiver: GoPtr<NodeFactory>, nameExpr: GoPtr<Expression>, metadata: GoPtr<IdentifierNode>): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
-  const props: GoSlice<GoPtr<Node>> = [
-    NewPropertyAssignment(f, undefined, NewIdentifier(f, "kind"), undefined, undefined, NewStringLiteral(f, "class", 0)),
-    NewPropertyAssignment(f, undefined, NewIdentifier(f, "name"), undefined, undefined, nameExpr),
-    NewPropertyAssignment(f, undefined, NewIdentifier(f, "metadata"), undefined, undefined, metadata),
-  ];
+  const props: GoSlice<GoPtr<Node>> = GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, NewPropertyAssignment(f, undefined, NewIdentifier(f, "kind"), undefined, undefined, NewStringLiteral(f, "class", 0)), GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 1, NewPropertyAssignment(f, undefined, NewIdentifier(f, "name"), undefined, undefined, nameExpr), GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 2, NewPropertyAssignment(f, undefined, NewIdentifier(f, "metadata"), undefined, undefined, metadata), GoPointerValueOps<Node>());
+  });
   return NewObjectLiteralExpression(f, NodeFactory_NewNodeList(f, props), false);
 }
 
@@ -2251,7 +2308,9 @@ export function NodeFactory_NewESDecorateClassElementAccessGetMethod(receiver: G
   const arrow = NewArrowFunction(
     f,
     undefined, undefined,
-    NodeFactory_NewNodeList(f, [objParam]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, objParam, GoPointerValueOps<Node>());
+    })),
     undefined, undefined,
     NewToken(f, KindEqualsGreaterThanToken),
     accessor,
@@ -2301,7 +2360,9 @@ export function NodeFactory_NewESDecorateClassElementAccessSetMethod(receiver: G
 
   const assignment = NodeFactory_NewAssignmentExpression(receiver, accessor, NewIdentifier(f, "value"));
   const stmt = NewExpressionStatement(f, assignment);
-  const body = NewBlock(f, NodeFactory_NewNodeList(f, [stmt]), false);
+  const body = NewBlock(f, NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, stmt, GoPointerValueOps<Node>());
+  })), false);
 
   const objParam = NewParameterDeclaration(f, undefined, undefined, NewIdentifier(f, "obj"), undefined, undefined, undefined);
   const valueParam = NewParameterDeclaration(f, undefined, undefined, NewIdentifier(f, "value"), undefined, undefined, undefined);
@@ -2309,7 +2370,10 @@ export function NodeFactory_NewESDecorateClassElementAccessSetMethod(receiver: G
   const arrow = NewArrowFunction(
     f,
     undefined, undefined,
-    NodeFactory_NewNodeList(f, [objParam, valueParam]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, objParam, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, valueParam, GoPointerValueOps<Node>());
+    })),
     undefined, undefined,
     NewToken(f, KindEqualsGreaterThanToken),
     body,
@@ -2361,7 +2425,9 @@ export function NodeFactory_NewESDecorateClassElementAccessHasMethod(receiver: G
   const arrow = NewArrowFunction(
     f,
     undefined, undefined,
-    NodeFactory_NewNodeList(f, [objParam]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, objParam, GoPointerValueOps<Node>());
+    })),
     undefined, undefined,
     NewToken(f, KindEqualsGreaterThanToken),
     inExpr,
@@ -2486,14 +2552,14 @@ export function NodeFactory_NewESDecorateClassElementContextObject(receiver: GoP
     ? NodeFactory_NewTrueExpression(receiver)
     : NodeFactory_NewFalseExpression(receiver);
 
-  const props: GoSlice<GoPtr<Node>> = [
-    NewPropertyAssignment(f, undefined, NewIdentifier(f, "kind"), undefined, undefined, NewStringLiteral(f, kind, 0)),
-    NewPropertyAssignment(f, undefined, NewIdentifier(f, "name"), undefined, undefined, nameValue),
-    NewPropertyAssignment(f, undefined, NewIdentifier(f, "static"), undefined, undefined, staticExpr),
-    NewPropertyAssignment(f, undefined, NewIdentifier(f, "private"), undefined, undefined, privateExpr),
-    NewPropertyAssignment(f, undefined, NewIdentifier(f, "access"), undefined, undefined, accessObj),
-    NewPropertyAssignment(f, undefined, NewIdentifier(f, "metadata"), undefined, undefined, metadata),
-  ];
+  const props: GoSlice<GoPtr<Node>> = GoSliceBuild(6, 6, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, NewPropertyAssignment(f, undefined, NewIdentifier(f, "kind"), undefined, undefined, NewStringLiteral(f, kind, 0)), GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 1, NewPropertyAssignment(f, undefined, NewIdentifier(f, "name"), undefined, undefined, nameValue), GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 2, NewPropertyAssignment(f, undefined, NewIdentifier(f, "static"), undefined, undefined, staticExpr), GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 3, NewPropertyAssignment(f, undefined, NewIdentifier(f, "private"), undefined, undefined, privateExpr), GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 4, NewPropertyAssignment(f, undefined, NewIdentifier(f, "access"), undefined, undefined, accessObj), GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 5, NewPropertyAssignment(f, undefined, NewIdentifier(f, "metadata"), undefined, undefined, metadata), GoPointerValueOps<Node>());
+  });
   return NewObjectLiteralExpression(f, NodeFactory_NewNodeList(f, props), false);
 }
 
@@ -2520,7 +2586,14 @@ export function NodeFactory_NewESDecorateHelper(receiver: GoPtr<NodeFactory>, ct
     NodeFactory_NewUnscopedHelperName(receiver, "__esDecorate"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(6, 6, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ctor, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, descriptorIn, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, decorators, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 3, contextIn, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 4, initializers, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 5, extraInitializers, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2550,8 +2623,15 @@ export function NodeFactory_NewRunInitializersHelper(receiver: GoPtr<NodeFactory
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, runInitializersHelper);
   const args: GoSlice<GoPtr<Expression>> = value !== undefined
-    ? [thisArg, initializers, value]
-    : [thisArg, initializers];
+    ? GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, thisArg, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, initializers, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, value, GoPointerValueOps<Node>());
+    })
+    : GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, thisArg, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, initializers, GoPointerValueOps<Node>());
+    });
   return NewCallExpression(
     f,
     NodeFactory_NewUnscopedHelperName(receiver, "__runInitializers"),
@@ -2585,7 +2665,10 @@ export function NodeFactory_NewTemplateObjectHelper(receiver: GoPtr<NodeFactory>
     NodeFactory_NewUnscopedHelperName(receiver, "__makeTemplateObject"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [cookedArray, rawArray]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, cookedArray, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, rawArray, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2613,7 +2696,9 @@ export function NodeFactory_NewPropKeyHelper(receiver: GoPtr<NodeFactory>, expr:
     NodeFactory_NewUnscopedHelperName(receiver, "__propKey"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [expr]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, expr, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2643,8 +2728,15 @@ export function NodeFactory_NewSetFunctionNameHelper(receiver: GoPtr<NodeFactory
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, setFunctionNameHelper);
   const args: GoSlice<GoPtr<Expression>> = prefix.length > 0
-    ? [fn, name, NewStringLiteral(f, prefix, TokenFlagsNone)]
-    : [fn, name];
+    ? GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, fn, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, name, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, NewStringLiteral(f, prefix, TokenFlagsNone), GoPointerValueOps<Node>());
+    })
+    : GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, fn, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, name, GoPointerValueOps<Node>());
+    });
   return NewCallExpression(
     f,
     NodeFactory_NewUnscopedHelperName(receiver, "__setFunctionName"),
@@ -2678,7 +2770,9 @@ export function NodeFactory_NewImportDefaultHelper(receiver: GoPtr<NodeFactory>,
     NodeFactory_NewUnscopedHelperName(receiver, "__importDefault"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [expression]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, expression, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2706,7 +2800,9 @@ export function NodeFactory_NewImportStarHelper(receiver: GoPtr<NodeFactory>, ex
     NodeFactory_NewUnscopedHelperName(receiver, "__importStar"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [expression]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, expression, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2734,7 +2830,10 @@ export function NodeFactory_NewExportStarHelper(receiver: GoPtr<NodeFactory>, mo
     NodeFactory_NewUnscopedHelperName(receiver, "__exportStar"),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [moduleExpression, exportsExpression]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, moduleExpression, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, exportsExpression, GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
 }
@@ -2774,14 +2873,18 @@ export function NodeFactory_NewAssignmentTargetWrapper(receiver: GoPtr<NodeFacto
     undefined,
     NewIdentifier(f, "value"),
     undefined,
-    NodeFactory_NewNodeList(f, [
-      NewParameterDeclaration(f, undefined, undefined, paramName, undefined, undefined, undefined),
-    ]),
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewParameterDeclaration(f, undefined, undefined, paramName, undefined, undefined, undefined), GoPointerValueOps<Node>());
+    })),
     undefined,
     undefined,
-    NewBlock(f, NodeFactory_NewNodeList(f, [NewExpressionStatement(f, expression)]), false),
+    NewBlock(f, NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewExpressionStatement(f, expression), GoPointerValueOps<Node>());
+    })), false),
   );
-  const objLiteral = NewObjectLiteralExpression(f, NodeFactory_NewNodeList(f, [setAccessor]), false);
+  const objLiteral = NewObjectLiteralExpression(f, NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, setAccessor, GoPointerValueOps<Node>());
+  })), false);
   return NewPropertyAccessExpression(
     f,
     NewParenthesizedExpression(f, objLiteral),
@@ -2816,8 +2919,13 @@ export function NodeFactory_NewRewriteRelativeImportExtensionsHelper(receiver: G
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, rewriteRelativeImportExtensionsHelper);
   const args: GoSlice<GoPtr<Expression>> = preserveJsx
-    ? [firstArgument, NewToken(f, KindTrueKeyword)]
-    : [firstArgument];
+    ? GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, firstArgument, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, NewToken(f, KindTrueKeyword), GoPointerValueOps<Node>());
+    })
+    : GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, firstArgument, GoPointerValueOps<Node>());
+    });
   return NewCallExpression(
     f,
     NodeFactory_NewUnscopedHelperName(receiver, "__rewriteRelativeImportExtension"),

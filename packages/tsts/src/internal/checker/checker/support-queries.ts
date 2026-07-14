@@ -108,6 +108,8 @@ import type { CacheHashKey, CallState, Checker, IterationTypeKind, keyBuilder, R
 import { isInternalModuleImportEqualsDeclaration, isTupleType, IterationTypeKindYield, ReferenceHintDecorator, ReferenceHintExportAssignment, ReferenceHintExportImportEquals, ReferenceHintExportSpecifier, ReferenceHintIdentifier, ReferenceHintJsx, ReferenceHintProperty, ReferenceHintUnspecified, shouldMarkIdentifierAliasReferenced } from "./state.js";
 import { Checker_markExportAssignmentAliasReferenced } from "./relations.js";
 import { The_call_would_have_succeeded_against_this_implementation_but_implementation_signatures_of_overloads_are_not_externally_visible } from "../../diagnostics/generated/messages.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 
 function goZeroSymbolReferenceLinks(): SymbolReferenceLinks {
   return { referenceKinds: SymbolFlagsNone };
@@ -186,7 +188,7 @@ export function Checker_isReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Sy
  */
 export function Checker_addImplementationSuccessElaboration(receiver: GoPtr<Checker>, s: GoPtr<CallState>, failed: GoPtr<Signature>, diagnostic: GoPtr<Diagnostic>): void {
   if (failed!.declaration !== undefined && Node_Symbol(failed!.declaration) !== undefined) {
-    const declarations = Node_Symbol(failed!.declaration)!.Declarations ?? [];
+    const declarations = Node_Symbol(failed!.declaration)!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
     if (declarations.length > 1) {
       const implementation = declarations.find((declaration) =>
         IsFunctionLikeDeclaration(declaration) && NodeIsPresent(Node_Body(declaration))
@@ -195,7 +197,9 @@ export function Checker_addImplementationSuccessElaboration(receiver: GoPtr<Chec
         const candidate = Checker_getSignatureFromDeclaration(receiver, implementation);
         const localState = {
           ...s!,
-          candidates: [candidate],
+          candidates: GoSliceBuild(1, 1, GoPointerValueOps<Signature>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, candidate, GoPointerValueOps<Signature>());
+          }),
           isSingleNonGenericCandidate: candidate!.typeParameters.length === 0,
         } as CallState;
         if (Checker_chooseOverload(receiver, localState, receiver!.assignableRelation) !== undefined) {
@@ -651,7 +655,7 @@ export function Checker_getPropertiesOfContext(receiver: GoPtr<Checker>, context
  */
 export function Checker_getSiblingsOfContext(receiver: GoPtr<Checker>, context: GoPtr<WideningContext>): GoSlice<GoPtr<Type>> {
   if (GoSliceIsNil(context!.siblings)) {
-  let siblings: GoSlice<GoPtr<Type>> = [];
+  let siblings: GoSlice<GoPtr<Type>> = GoSliceMake(0, 0, GoPointerValueOps<Type>());
     for (const t of Checker_getSiblingsOfContext(receiver, context!.parent)) {
       if (isObjectLiteralType(t)) {
         const prop = Checker_getPropertyOfObjectType(receiver, t, context!.propertyName);
@@ -1055,9 +1059,9 @@ export function Checker_isContextSensitive(receiver: GoPtr<Checker>, node: GoPtr
     case KindFunctionDeclaration:
       return Checker_isContextSensitiveFunctionLikeDeclaration(receiver, node);
     case KindObjectLiteralExpression:
-      return Some(Node_Properties(node) ?? [], (n) => Checker_isContextSensitive(receiver, n));
+      return Some(Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (n) => Checker_isContextSensitive(receiver, n));
     case KindArrayLiteralExpression:
-      return Some(Node_Elements(node) ?? [], (n) => Checker_isContextSensitive(receiver, n));
+      return Some(Node_Elements(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (n) => Checker_isContextSensitive(receiver, n));
     case KindConditionalExpression:
       return (
         Checker_isContextSensitive(receiver, AsConditionalExpression(node)!.WhenTrue) ||
@@ -1076,7 +1080,7 @@ export function Checker_isContextSensitive(receiver: GoPtr<Checker>, node: GoPtr
       return Checker_isContextSensitive(receiver, Node_Expression(node));
     case KindJsxAttributes:
       return (
-        Some(Node_Properties(node) ?? [], (n) => Checker_isContextSensitive(receiver, n)) ||
+        Some(Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (n) => Checker_isContextSensitive(receiver, n)) ||
         (IsJsxOpeningElement(node!.Parent) &&
           Some(Node_Children(node!.Parent!.Parent)!.Nodes, (n) => Checker_isContextSensitive(receiver, n)))
       );

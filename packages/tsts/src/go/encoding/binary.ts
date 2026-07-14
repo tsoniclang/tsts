@@ -2,6 +2,8 @@ import type { byte, int, ushort } from "../scalars.js";
 import type { GoError, GoSlice } from "../compat.js";
 import { GoNumberValueOps, GoSliceAppendSlice } from "../compat.js";
 import { GoAppend, GoAppendSlice } from "../compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../compat.js";
+
 
 export interface ByteOrder {
   Uint16(bytes: GoSlice<byte>): ushort;
@@ -51,13 +53,19 @@ function isByteWriter(value: unknown): value is ByteWriter {
 export function Append(buf: GoSlice<byte>, order: ByteOrder, data: int | GoSlice<int>): [GoSlice<byte>, GoError] {
   let out = buf;
   if (typeof data === "number") {
-    const bytes: GoSlice<byte> = [0 as byte, 0 as byte];
+    const bytes: GoSlice<byte> = GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, 0 as byte, GoNumberValueOps);
+      GoSliceStore(__goSliceLiteral, 1, 0 as byte, GoNumberValueOps);
+    });
     order.PutUint16(bytes, data as int);
     out = GoSliceAppendSlice(out, bytes, GoNumberValueOps);
     return [out, undefined];
   }
   for (const value of data) {
-    const bytes: GoSlice<byte> = [0 as byte, 0 as byte];
+    const bytes: GoSlice<byte> = GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, 0 as byte, GoNumberValueOps);
+      GoSliceStore(__goSliceLiteral, 1, 0 as byte, GoNumberValueOps);
+    });
     order.PutUint16(bytes, value);
     out = GoSliceAppendSlice(out, bytes, GoNumberValueOps);
   }
@@ -77,7 +85,10 @@ export function Read(reader: unknown, order: ByteOrder, data: GoSlice<int>): GoE
     if (err1 !== undefined) {
       return err1;
     }
-    data[i] = order.Uint16([b0, b1]);
+    data[i] = order.Uint16(GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, b0, GoNumberValueOps);
+      GoSliceStore(__goSliceLiteral, 1, b1, GoNumberValueOps);
+    }));
   }
   return undefined;
 }
@@ -87,9 +98,12 @@ export function Write(writer: unknown, order: ByteOrder, data: int | GoSlice<int
     return new globalThis.Error("encoding/binary: writer does not implement Write");
   }
   const values = typeof data === "number" ? [data as int] : data;
-  const bytes: GoSlice<byte> = [];
+  const bytes: GoSlice<byte> = GoSliceMake(0, 0, GoNumberValueOps);
   for (const value of values) {
-    const encoded: GoSlice<byte> = [0 as byte, 0 as byte];
+    const encoded: GoSlice<byte> = GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, 0 as byte, GoNumberValueOps);
+      GoSliceStore(__goSliceLiteral, 1, 0 as byte, GoNumberValueOps);
+    });
     order.PutUint16(encoded, value);
     bytes.push(...encoded);
   }

@@ -48,6 +48,8 @@ import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
 // `s[i]` is a byte, and slices like `s[i:j]` operate on byte offsets. The
 // standard-library facades (strings/strconv/utf8) follow that contract, so we
@@ -369,9 +371,9 @@ export function hasKeyAfterPropsSpread(node: GoPtr<Node>): bool {
   if (node!.Kind === KindJsxElement) {
     opener = AsJsxElement(node)!.OpeningElement;
   } // otherwise self-closing
-  const attrs = Node_Properties(Node_Attributes(opener)) ?? [];
+  const attrs = Node_Properties(Node_Attributes(opener)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (const elem of attrs) {
-    if (IsJsxSpreadAttribute(elem) && (!IsObjectLiteralExpression(Node_Expression(elem)) || (Node_Properties(Node_Expression(elem)) ?? []).some((p) => IsSpreadAssignment(p)))) {
+    if (IsJsxSpreadAttribute(elem) && (!IsObjectLiteralExpression(Node_Expression(elem)) || (Node_Properties(Node_Expression(elem)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())).some((p) => IsSpreadAssignment(p)))) {
       spread = true;
     } else if (spread && IsJsxAttribute(elem) && IsIdentifier(Node_Name(elem)) && Node_Text(Node_Name(elem)) === "key") {
       return true;
@@ -585,7 +587,7 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
   const astFactory = factory!.__tsgoEmbedded0;
   let visited = NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as ConcreteNodeVisitor, file as unknown as GoPtr<Node>);
   EmitContext_AddEmitHelper(emitContext, visited!, ...EmitContext_ReadEmitHelpers(emitContext));
-  let statements: GoSlice<GoPtr<Node>> = Node_Statements(visited) ?? [];
+  let statements: GoSlice<GoPtr<Node>> = Node_Statements(visited) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   let statementsUpdated = false;
   if (receiver!.filenameDeclaration !== undefined) {
     statements = JSXTransformer_insertStatementAfterCustomPrologue(
@@ -596,7 +598,9 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
         undefined,
         NewVariableDeclarationList(
           astFactory,
-          NodeFactory_NewNodeList(astFactory, [receiver!.filenameDeclaration]),
+          NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, receiver!.filenameDeclaration, GoPointerValueOps<Node>());
+          })),
           NodeFlagsConst,
         ),
       ),
@@ -607,7 +611,7 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
   if (OrderedMap_Size<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>) > 0) {
     if (IsExternalModule(file)) {
       statementsUpdated = true;
-      let newStatements: GoSlice<GoPtr<Node>> = [];
+      let newStatements: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
       OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)!((importSource, importSpecifiersMap) => {
         const s = NewImportDeclaration(
           astFactory,
@@ -625,10 +629,10 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
       }
     } else if (IsExternalOrCommonJSModule(file)) {
       statementsUpdated = true;
-      let newStatements: GoSlice<GoPtr<Node>> = [];
+      let newStatements: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
       OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)!((importSource, importSpecifiersMap) => {
         const sorted = getSortedSpecifiers(importSpecifiersMap);
-        let asBindingElems: GoSlice<GoPtr<Node>> = [];
+        let asBindingElems: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
         for (const elem of sorted) {
           asBindingElems = GoSliceAppend(asBindingElems, NewBindingElement(astFactory, undefined, Node_PropertyName(elem), AsImportSpecifier(elem)!.name, undefined), GoPointerValueOps<Node>());
         }
@@ -648,7 +652,9 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
                   NewIdentifier(astFactory, "require"),
                   undefined,
                   undefined,
-                  NodeFactory_NewNodeList(astFactory, [NewStringLiteral(astFactory, importSource, TokenFlagsNone)]),
+                  NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+                    GoSliceStore(__goSliceLiteral, 0, NewStringLiteral(astFactory, importSource, TokenFlagsNone), GoPointerValueOps<Node>());
+                  })),
                   NodeFlagsNone,
                 ),
               ),
@@ -774,7 +780,9 @@ export function JSXTransformer_convertJsxChildrenToChildrenPropObject(receiver: 
   }
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  return NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, [prop]), false);
+  return NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, prop, GoPointerValueOps<Node>());
+  })), false);
 }
 
 /**
@@ -842,7 +850,7 @@ export function JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiv
   }
   // For multiple children in the children property array, don't set StartOnNewLine
   // on child elements — the array literal is single-line.
-  let results: GoSlice<GoPtr<Node>> = [];
+  let results: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (const child of nonWhitespaceChildren) {
     const res = JSXTransformer_transformJsxChildToExpression(receiver, child as unknown as GoPtr<Node>);
     if (res === undefined) {
@@ -951,7 +959,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementJSX(receiver: GoPtr<JSX
     childrenProp = JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiver, children!.Nodes as GoSlice<GoPtr<JsxChild>>);
   }
   let keyAttr: GoPtr<Node> = undefined;
-  let attrs: GoSlice<GoPtr<Node>> = Node_Properties(Node_Attributes(element)) ?? [];
+  let attrs: GoSlice<GoPtr<Node>> = Node_Properties(Node_Attributes(element)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (let i = 0; i < attrs.length; i++) {
     const p = attrs[i]!;
     if (p!.Kind === KindJsxAttribute && Node_Name(p) !== undefined && IsIdentifier(Node_Name(p)) && Node_Text(Node_Name(p)) === "key") {
@@ -964,7 +972,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementJSX(receiver: GoPtr<JSX
   if (attrs.length > 0) {
     object = JSXTransformer_transformJsxAttributesToObjectProps(receiver, attrs, childrenProp);
   } else {
-    let objectChildren: GoSlice<GoPtr<Node>> = [];
+    let objectChildren: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
     if (childrenProp !== undefined) {
       objectChildren = GoSliceAppend(objectChildren, childrenProp, GoPointerValueOps<Node>());
     }
@@ -1056,15 +1064,15 @@ export function JSXTransformer_transformJsxAttributesToObjectProps(receiver: GoP
 export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPtr<JSXTransformer>, attrs: GoSlice<GoPtr<Node>>, childrenProp: GoPtr<Node>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  let expressions: GoSlice<GoPtr<Expression>> = [];
-  let properties: GoSlice<GoPtr<ObjectLiteralElement>> = [];
+  let expressions: GoSlice<GoPtr<Expression>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
+  let properties: GoSlice<GoPtr<ObjectLiteralElement>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
 
   for (const attr of attrs) {
     if (IsJsxSpreadAttribute(attr)) {
       // as an optimization we try to flatten the first level of spread inline object
       // as if its props would be passed as JSX attributes
       if (IsObjectLiteralExpression(Node_Expression(attr)) && !hasProto(AsObjectLiteralExpression(Node_Expression(attr)))) {
-        for (const prop of Node_Properties(Node_Expression(attr)) ?? []) {
+        for (const prop of Node_Properties(Node_Expression(attr)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
           if (IsSpreadAssignment(prop)) {
             [expressions, properties] = JSXTransformer_combinePropertiesIntoNewExpression(receiver, expressions, properties);
             expressions = GoSliceAppend(expressions, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(Node_Expression(prop)), GoPointerValueOps<Node>());
@@ -1092,7 +1100,7 @@ export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPt
     // as the JSX always factory expects a fresh object, so we need to make a copy here
     // we also avoid mutating an external reference by doing this (first expression is used as assign's target)
     expressions = GoAppendSlice(
-      [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, []), false)],
+      [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false)],
       expressions,
     );
   }
@@ -1148,7 +1156,7 @@ export function JSXTransformer_combinePropertiesIntoNewExpression(receiver: GoPt
  * }
  */
 export function JSXTransformer_transformJsxAttributesToProps(receiver: GoPtr<JSXTransformer>, attrs: GoSlice<GoPtr<Node>>, childrenProp: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  let props: GoSlice<GoPtr<Node>> = [];
+  let props: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (const attr of attrs) {
     if (attr!.Kind === KindJsxSpreadAttribute) {
       const res = JSXTransformer_transformJsxSpreadAttributesToProps(receiver, AsJsxSpreadAttribute(attr));
@@ -1201,10 +1209,12 @@ export function JSXTransformer_transformJsxSpreadAttributesToProps(receiver: GoP
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   if (IsObjectLiteralExpression(node!.Expression) && !hasProto(AsObjectLiteralExpression(node!.Expression))) {
-    const [res] = NodeVisitor_VisitSlice(Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as ConcreteNodeVisitor, Node_Properties(node!.Expression) ?? []);
+    const [res] = NodeVisitor_VisitSlice(Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as ConcreteNodeVisitor, Node_Properties(node!.Expression) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()));
     return res;
   }
-  return [NewSpreadAssignment(astFactory, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(node!.Expression))];
+  return GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, NewSpreadAssignment(astFactory, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit!(node!.Expression)), GoPointerValueOps<Node>());
+  });
 }
 
 /**
@@ -1391,7 +1401,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(receiver:
   const isStaticChildren =
     nonWhitespaceChildren.length > 1 ||
     (nonWhitespaceChildren.length === 1 && IsJsxExpression(nonWhitespaceChildren[0]) && AsJsxExpression(nonWhitespaceChildren[0])!.DotDotDotToken !== undefined);
-  let args: GoSlice<GoPtr<Node>> = [];
+  let args: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   args = GoSliceAppend(args, tagName as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
   args = GoSliceAppend(args, object as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
   // function jsx(type, config, maybeKey) {}
@@ -1417,11 +1427,11 @@ export function JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(receiver:
       const [line, col] = GetECMALineAndUTF16CharacterOfPosition(AsSourceFile(originalFile) as unknown as SourceFileLike, location.pos);
       args = GoSliceAppend(args, NewObjectLiteralExpression(
           astFactory,
-          NodeFactory_NewNodeList(astFactory, [
-            NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "fileName"), undefined, undefined, JSXTransformer_getCurrentFileNameExpression(receiver) as unknown as GoPtr<Node>),
-            NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "lineNumber"), undefined, undefined, NewNumericLiteral(astFactory, FormatInt(line + 1, 10), TokenFlagsNone) as unknown as GoPtr<Node>),
-            NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "columnNumber"), undefined, undefined, NewNumericLiteral(astFactory, FormatInt(col + 1, 10), TokenFlagsNone) as unknown as GoPtr<Node>),
-          ]),
+          NodeFactory_NewNodeList(astFactory, GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "fileName"), undefined, undefined, JSXTransformer_getCurrentFileNameExpression(receiver) as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
+            GoSliceStore(__goSliceLiteral, 1, NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "lineNumber"), undefined, undefined, NewNumericLiteral(astFactory, FormatInt(line + 1, 10), TokenFlagsNone) as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
+            GoSliceStore(__goSliceLiteral, 2, NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "columnNumber"), undefined, undefined, NewNumericLiteral(astFactory, FormatInt(col + 1, 10), TokenFlagsNone) as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
+          })),
           false,
         ) as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
       // __self development flag
@@ -1474,7 +1484,7 @@ export function JSXTransformer_visitJsxOpeningFragmentJSX(receiver: GoPtr<JSXTra
     }
   }
   if (childrenProps === undefined) {
-    childrenProps = NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, []), false) as unknown as GoPtr<Expression>;
+    childrenProps = NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false) as unknown as GoPtr<Expression>;
   }
   return JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(
     receiver,
@@ -1688,7 +1698,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementCreateElement(receiver:
   const astFactory = factory!.__tsgoEmbedded0;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   const tagName = JSXTransformer_getTagName(receiver, element);
-  const attrs = Node_Properties(Node_Attributes(element)) ?? [];
+  const attrs = Node_Properties(Node_Attributes(element)) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
   let objectProperties: GoPtr<Expression>;
   if (attrs.length > 0) {
     objectProperties = JSXTransformer_transformJsxAttributesToObjectProps(receiver, attrs, undefined) as unknown as GoPtr<Expression>;
@@ -1720,7 +1730,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementCreateElement(receiver:
     }
   }
 
-  let args: GoSlice<GoPtr<Node>> = [];
+  let args: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   args = GoSliceAppend(args, tagName, GoPointerValueOps<Node>());
   args = GoSliceAppend(args, objectProperties as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
   args = GoSliceAppendSlice(args, newChildren, GoPointerValueOps<Node>());
@@ -1810,7 +1820,7 @@ export function JSXTransformer_visitJsxOpeningFragmentCreateElement(receiver: Go
     }
   }
 
-  let args: GoSlice<GoPtr<Node>> = [];
+  let args: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   args = GoSliceAppend(args, tagName, GoPointerValueOps<Node>());
   args = GoSliceAppend(args, NewKeywordExpression(astFactory, KindNullKeyword) as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
   args = GoSliceAppendSlice(args, newChildren, GoPointerValueOps<Node>());

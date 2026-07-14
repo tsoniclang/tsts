@@ -10,6 +10,8 @@ import * as io from "../../go/io.js";
 import * as strconv from "../../go/strconv.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoNumberValueOps, GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::varGroup::ErrInvalidHeader+ErrInvalidContentLength+ErrNoContentLength","kind":"varGroup","status":"implemented","sigHash":"c53c8c227eda3800874e035cc6f4f4033adde42eeaf289363c7937edd94b788b"}
  *
@@ -104,35 +106,35 @@ export function Reader_Read(receiver: GoPtr<Reader>): [GoSlice<byte>, GoError] {
     const [line, err] = receiver!.r!.ReadBytes("\n".charCodeAt(0) as byte);
     if (err !== undefined) {
       if (errors.Is(err, io.EOF)) {
-        return [[], io.EOF];
+        return [GoSliceMake(0, 0, GoNumberValueOps), io.EOF];
       }
-      return [[], fmt.Errorf("jsonrpc: read header: %w", err)];
+      return [GoSliceMake(0, 0, GoNumberValueOps), fmt.Errorf("jsonrpc: read header: %w", err)];
     }
     if (bytes.Equal(line, [13 as byte, 10 as byte])) {
       break;
     }
     const [key, value, ok] = bytes.Cut(line, [":".charCodeAt(0) as byte]);
     if (!ok) {
-      return [[], fmt.Errorf("%w: %q", ErrInvalidHeader, line)];
+      return [GoSliceMake(0, 0, GoNumberValueOps), fmt.Errorf("%w: %q", ErrInvalidHeader, line)];
     }
     if (bytes.Equal(key, Array.from(new TextEncoder().encode("Content-Length")) as GoSlice<byte>)) {
       const [parsed, parseErr] = strconv.ParseInt(new TextDecoder().decode(bytes.TrimSpace(value)), 10, 64);
       if (parseErr !== undefined) {
-        return [[], fmt.Errorf("%w: parse error: %w", ErrInvalidContentLength, parseErr)];
+        return [GoSliceMake(0, 0, GoNumberValueOps), fmt.Errorf("%w: parse error: %w", ErrInvalidContentLength, parseErr)];
       }
       if (parsed < 0) {
-        return [[], fmt.Errorf("%w: negative value %d", ErrInvalidContentLength, parsed)];
+        return [GoSliceMake(0, 0, GoNumberValueOps), fmt.Errorf("%w: negative value %d", ErrInvalidContentLength, parsed)];
       }
       contentLength = parsed;
     }
   }
   if (contentLength <= 0) {
-    return [[], ErrNoContentLength];
+    return [GoSliceMake(0, 0, GoNumberValueOps), ErrNoContentLength];
   }
   const data = new globalThis.Array(contentLength).fill(0) as GoSlice<byte>;
   const [, err] = io.ReadFull(receiver!.r!, data);
   if (err !== undefined) {
-    return [[], fmt.Errorf("jsonrpc: read content: %w", err)];
+    return [GoSliceMake(0, 0, GoNumberValueOps), fmt.Errorf("jsonrpc: read content: %w", err)];
   }
   return [data, undefined];
 }

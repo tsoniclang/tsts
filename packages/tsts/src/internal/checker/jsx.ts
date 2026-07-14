@@ -62,6 +62,8 @@ import { ContextFlagsNone, ContextFlagsIgnoreNodeInferences, SignatureKindCall, 
 import type { ContextFlags, IndexInfo, ObjectFlags, Signature, Type } from "./types.js";
 
 import type { GoRef } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 function goZeroValueSymbolLinks(): ValueSymbolLinks {
   return {
@@ -501,7 +503,10 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
       if (sfcReturnConstraint === undefined || classConstraint === undefined) {
         return;
       }
-      const combined = Checker_getUnionType(receiver, [sfcReturnConstraint, classConstraint]);
+      const combined = Checker_getUnionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, sfcReturnConstraint, GoPointerValueOps<Type>());
+        GoSliceStore(__goSliceLiteral, 1, classConstraint, GoPointerValueOps<Type>());
+      }));
       Checker_checkTypeRelatedToEx(receiver, elemInstanceType, combined, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_element_type_0_is_not_a_valid_JSX_element, diags);
       break;
     }
@@ -817,7 +822,7 @@ export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPt
  */
 export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: GoPtr<Node>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): bool {
   let reportedError = false;
-  for (const prop of Node_Properties(node) ?? []) {
+  for (const prop of Node_Properties(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (!IsJsxSpreadAttribute(prop) && !isHyphenatedJsxName(Node_Text(Node_Name(prop)))) {
       const nameType = Checker_getStringLiteralType(receiver, Node_Text(Node_Name(prop)));
       if (nameType !== undefined && (nameType!.flags & TypeFlagsNever) === 0) {
@@ -1090,7 +1095,10 @@ export function Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver: 
     }
     if (targetIndexedPropType !== undefined && (targetIndexedPropType!.flags & TypeFlagsIndexedAccess) === 0) {
       if (iterationType !== undefined) {
-        targetPropType = Checker_getUnionType(receiver, [iterationType, targetIndexedPropType]);
+        targetPropType = Checker_getUnionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, iterationType, GoPointerValueOps<Type>());
+          GoSliceStore(__goSliceLiteral, 1, targetIndexedPropType, GoPointerValueOps<Type>());
+        }));
       } else {
         targetPropType = targetIndexedPropType;
       }
@@ -1322,7 +1330,7 @@ export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, n
         undefined,
         undefined,
       );
-      const typeArguments = Node_TypeArguments(node) ?? [];
+      const typeArguments = Node_TypeArguments(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>());
       if (typeArguments.length !== 0) {
         Checker_checkSourceElements(receiver, typeArguments);
         const sourceFile = GetSourceFileOfNode(node);
@@ -1769,7 +1777,7 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
     attributesSymbol = Node_Symbol(attributes);
     attributeParent = attributes;
     const contextualType = Checker_getContextualType(receiver, attributes, ContextFlagsNone);
-    for (const attributeDecl of Node_Properties(attributes) ?? []) {
+    for (const attributeDecl of Node_Properties(attributes) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       const member = Node_Symbol(attributeDecl);
       if (IsJsxAttribute(attributeDecl)) {
         const exprType = Checker_checkJsxAttribute(receiver, attributeDecl, checkMode);
@@ -1818,7 +1826,10 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
         } else {
           Checker_error(receiver, Node_Expression(attributeDecl), Spread_types_may_only_be_created_from_object_types);
           if (typeToIntersect !== undefined) {
-            typeToIntersect = Checker_getIntersectionType(receiver, [typeToIntersect, exprType]);
+            typeToIntersect = Checker_getIntersectionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+              GoSliceStore(__goSliceLiteral, 0, typeToIntersect, GoPointerValueOps<Type>());
+              GoSliceStore(__goSliceLiteral, 1, exprType, GoPointerValueOps<Type>());
+            }));
           } else {
             typeToIntersect = exprType;
           }
@@ -1888,7 +1899,10 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
   }
   if (typeToIntersect !== undefined) {
     if (spread !== receiver!.emptyJsxObjectType) {
-      return Checker_getIntersectionType(receiver, [typeToIntersect, spread]);
+      return Checker_getIntersectionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, typeToIntersect, GoPointerValueOps<Type>());
+        GoSliceStore(__goSliceLiteral, 1, spread, GoPointerValueOps<Type>());
+      }));
     }
     return typeToIntersect;
   }
@@ -1995,7 +2009,9 @@ export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<N
  */
 export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Checker>, elementType: GoPtr<Type>, caller: GoPtr<Node>): GoSlice<GoPtr<Signature>> {
   if ((elementType!.flags & TypeFlagsString) !== 0) {
-    return [receiver!.anySignature];
+    return GoSliceBuild(1, 1, GoPointerValueOps<Signature>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, receiver!.anySignature, GoPointerValueOps<Signature>());
+    });
   }
   if ((elementType!.flags & TypeFlagsStringLiteral) !== 0) {
     const intrinsicType = Checker_getIntrinsicAttributesTypeFromStringLiteralType(receiver, elementType, caller);
@@ -2004,7 +2020,9 @@ export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Che
       return GoNilSlice();
     }
     const fakeSignature = Checker_createSignatureForJSXIntrinsic(receiver, caller, intrinsicType);
-    return [fakeSignature];
+    return GoSliceBuild(1, 1, GoPointerValueOps<Signature>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, fakeSignature, GoPointerValueOps<Signature>());
+    });
   }
   const apparentElemType = Checker_getApparentType(receiver, elementType);
   // Resolve the signatures, preferring constructor
@@ -2147,7 +2165,9 @@ export function Checker_getJsxPropsTypeFromClassType(receiver: GoPtr<Checker>, s
     let libraryManagedAttributeType: GoPtr<Type>;
     if (!GoSliceIsNil(typeParams)) {
       // apply JSX.IntrinsicClassAttributes<hostClassType, ...>
-      const inferredArgs = Checker_fillMissingTypeArguments(receiver, [hostClassType], typeParams, Checker_getMinTypeArgumentCount(receiver, typeParams), IsInJSFile(context));
+      const inferredArgs = Checker_fillMissingTypeArguments(receiver, GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, hostClassType, GoPointerValueOps<Type>());
+      }), typeParams, Checker_getMinTypeArgumentCount(receiver, typeParams), IsInJSFile(context));
       libraryManagedAttributeType = Checker_instantiateType(receiver, intrinsicClassAttribs, newTypeMapper(typeParams, inferredArgs));
     } else {
       libraryManagedAttributeType = intrinsicClassAttribs;
@@ -2243,7 +2263,10 @@ export function Checker_getJsxManagedAttributesFromLocatedAttributes(receiver: G
   const managedSym = Checker_getJsxLibraryManagedAttributes(receiver, ns);
   if (managedSym !== undefined) {
     const ctorType = Checker_getStaticTypeOfReferencedJsxConstructor(receiver, context);
-    const result = Checker_instantiateAliasOrInterfaceWithDefaults(receiver, managedSym, [ctorType, attributesType], IsInJSFile(context));
+    const result = Checker_instantiateAliasOrInterfaceWithDefaults(receiver, managedSym, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ctorType, GoPointerValueOps<Type>());
+      GoSliceStore(__goSliceLiteral, 1, attributesType, GoPointerValueOps<Type>());
+    }), IsInJSFile(context));
     if (result !== undefined) {
       return result;
     }
@@ -2281,7 +2304,7 @@ export function Checker_instantiateAliasOrInterfaceWithDefaults(receiver: GoPtr<
   if (managedSym!.Flags & SymbolFlagsTypeAlias) {
     const params = LinkStore_Get(receiver!.typeAliasLinks, managedSym, goZeroTypeAliasLinks, goSymbolPointerKey)!.v.typeParameters;
     // Go len(nil) == 0: a non-generic alias has a nil typeParameters slice.
-    if ((params ?? []).length >= typeArguments.length) {
+    if ((params ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())).length >= typeArguments.length) {
       const args = Checker_fillMissingTypeArguments(receiver, typeArguments, params, typeArguments.length, inJavaScript);
       if (args.length === 0) {
         return declaredManagedType;
@@ -2563,7 +2586,9 @@ export function Checker_createSignatureForJSXIntrinsic(receiver: GoPtr<Checker>,
   // declaration := factory.createFunctionTypeNode(...)
   const parameterSymbol = Checker_newSymbol(receiver, SymbolFlagsFunctionScopedVariable as SymbolFlags, "props");
   LinkStore_Get(receiver!.valueSymbolLinks, parameterSymbol, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = result;
-  return Checker_newSignature(receiver, SignatureFlagsNone, undefined, GoNilSlice(), undefined, [parameterSymbol], elementType, undefined, 1);
+  return Checker_newSignature(receiver, SignatureFlagsNone, undefined, GoNilSlice(), undefined, GoSliceBuild(1, 1, GoPointerValueOps<Symbol>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, parameterSymbol, GoPointerValueOps<Symbol>());
+  }), elementType, undefined, 1);
 }
 
 /**
@@ -2721,7 +2746,10 @@ export function Checker_getJsxStatelessElementTypeAt(receiver: GoPtr<Checker>, l
   if (jsxElementType === undefined) {
     return undefined;
   }
-  return Checker_getUnionType(receiver, [jsxElementType, receiver!.nullType]);
+  return Checker_getUnionType(receiver, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, jsxElementType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 1, receiver!.nullType, GoPointerValueOps<Type>());
+  }));
 }
 
 /**

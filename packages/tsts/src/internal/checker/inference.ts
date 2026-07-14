@@ -258,6 +258,8 @@ import {
 import { IsTypeAny, isObjectLiteralType, isObjectOrArrayLiteralType, isValidBigIntString, isValidNumberString, pseudoBigIntToString } from "./utilities.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 
 function goZeroTypeAliasLinks(): TypeAliasLinks {
   return {
@@ -712,7 +714,9 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
     if ((source!.flags & TypeFlagsUnion) !== 0) {
       sourceTypes = Type_Types(source);
     } else {
-      sourceTypes = [source];
+      sourceTypes = GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, source, GoPointerValueOps<Type>());
+      });
     }
     // First, infer between identically matching source and target constituents and remove the
     // matching types.
@@ -746,7 +750,9 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
       if ((source!.flags & TypeFlagsIntersection) !== 0) {
         sourceTypes2 = Type_Types(source);
       } else {
-        sourceTypes2 = [source];
+        sourceTypes2 = GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, source, GoPointerValueOps<Type>());
+        });
       }
       // Infer between identically matching source and target constituents and remove the matching types.
       const [srcRes, tgtRes] = Checker_inferFromMatchingTypes(c, state, sourceTypes2, Type_Types(target), Checker_isTypeIdenticalTo);
@@ -1214,7 +1220,9 @@ export function Checker_inferToMultipleTypes(receiver: GoPtr<Checker>, n: GoPtr<
     if ((source!.flags & TypeFlagsUnion) !== 0) {
       sources = Type_Types(source);
     } else {
-      sources = [source];
+      sources = GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, source, GoPointerValueOps<Type>());
+      });
     }
     const matched: bool[] = new Array<bool>(sources.length).fill(false);
     let inferenceCircularity = false;
@@ -1369,7 +1377,10 @@ export function Checker_inferToConditionalType(receiver: GoPtr<Checker>, n: GoPt
     Checker_inferFromTypes(c, state, Checker_getTrueTypeFromConditionalType(c, source), Checker_getTrueTypeFromConditionalType(c, target));
     Checker_inferFromTypes(c, state, Checker_getFalseTypeFromConditionalType(c, source), Checker_getFalseTypeFromConditionalType(c, target));
   } else {
-    const targetTypes: GoSlice<GoPtr<Type>> = [Checker_getTrueTypeFromConditionalType(c, target), Checker_getFalseTypeFromConditionalType(c, target)];
+    const targetTypes: GoSlice<GoPtr<Type>> = GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, Checker_getTrueTypeFromConditionalType(c, target), GoPointerValueOps<Type>());
+      GoSliceStore(__goSliceLiteral, 1, Checker_getFalseTypeFromConditionalType(c, target), GoPointerValueOps<Type>());
+    });
     Checker_inferToMultipleTypesWithPriority(c, state, source, targetTypes, target!.flags, core.IfElse<InferencePriority>(state.contravariant, InferencePriorityContravariantConditional, 0));
   }
 }
@@ -2539,7 +2550,9 @@ export function Checker_inferReverseMappedTypeWorker(receiver: GoPtr<Checker>, s
   const typeParameter = Checker_getIndexedAccessType(c, Type_AsIndexType(constraint)!.target, Checker_getTypeParameterFromMappedType(c, target));
   const templateType = Checker_getTemplateTypeFromMappedType(c, target);
   const inference = newInferenceInfo(typeParameter);
-  Checker_inferTypes(c, [inference], source, templateType, InferencePriorityNone, false);
+  Checker_inferTypes(c, GoSliceBuild(1, 1, GoPointerValueOps<InferenceInfo>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, inference, GoPointerValueOps<InferenceInfo>());
+  }), source, templateType, InferencePriorityNone, false);
   return Checker_getWidenedType(c, core.OrElse(Checker_getTypeFromInference(c, inference), c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>));
 }
 
@@ -2602,7 +2615,9 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
   const optionalMask = (modifiers & MappedTypeModifiersIncludeOptional) !== 0 ? 0 : SymbolFlagsOptional;
   let indexInfos = GoNilSlice<GoPtr<IndexInfo>>();
   if (indexInfo !== undefined) {
-    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, core.OrElse(Checker_inferReverseMappedType(receiver, indexInfo!.valueType, r.mappedType, r.constraintType), c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), readonlyMask && indexInfo!.isReadonly, undefined, GoNilSlice())];
+    indexInfos = GoSliceBuild(1, 1, GoPointerValueOps<IndexInfo>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, Checker_newIndexInfo(receiver, c.stringType, core.OrElse(Checker_inferReverseMappedType(receiver, indexInfo!.valueType, r.mappedType, r.constraintType), c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), readonlyMask && indexInfo!.isReadonly, undefined, GoNilSlice()), GoPointerValueOps<IndexInfo>());
+    });
   }
   const members: SymbolTable = new Map();
   const limitedConstraint = Checker_getLimitedConstraint(receiver, t);
@@ -2715,8 +2730,13 @@ export function Checker_getLimitedConstraint(receiver: GoPtr<Checker>, t: GoPtr<
  */
 export function Checker_replaceIndexedAccess(receiver: GoPtr<Checker>, instantiable: GoPtr<Type>, t: GoPtr<Type>, replacement: GoPtr<Type>): GoPtr<Type> {
   return Checker_instantiateType(receiver, instantiable, newTypeMapper(
-    [Type_AsIndexedAccessType(t)!.indexType, Type_AsIndexedAccessType(t)!.objectType],
-    [Checker_getNumberLiteralType(receiver, 0), Checker_createTupleType(receiver, [replacement])]
+    GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, Type_AsIndexedAccessType(t)!.indexType, GoPointerValueOps<Type>());
+      GoSliceStore(__goSliceLiteral, 1, Type_AsIndexedAccessType(t)!.objectType, GoPointerValueOps<Type>());
+    }),
+    [Checker_getNumberLiteralType(receiver, 0), Checker_createTupleType(receiver, GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, replacement, GoPointerValueOps<Type>());
+    }))]
   ));
 }
 
@@ -2871,7 +2891,9 @@ export function Checker_createEmptyObjectTypeFromStringLiteral(receiver: GoPtr<C
   }
   let indexInfos = GoNilSlice<GoPtr<IndexInfo>>();
   if ((t!.flags & TypeFlagsString) !== 0) {
-    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, c.emptyObjectType, false, undefined, GoNilSlice())];
+    indexInfos = GoSliceBuild(1, 1, GoPointerValueOps<IndexInfo>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, Checker_newIndexInfo(receiver, c.stringType, c.emptyObjectType, false, undefined, GoNilSlice()), GoPointerValueOps<IndexInfo>());
+    });
   }
   return Checker_newAnonymousType(receiver, undefined, members, GoNilSlice(), GoNilSlice(), indexInfos);
 }
@@ -3336,7 +3358,9 @@ export function Checker_unionObjectAndArrayLiteralCandidates(receiver: GoPtr<Che
     if (objectLiterals.length !== 0) {
       const literalsType = Checker_getUnionTypeEx(receiver, objectLiterals, UnionReductionSubtype, undefined, undefined);
       const nonLiteralTypes = core.Filter(candidates, (t) => !isObjectOrArrayLiteralType(t));
-      return core.Concatenate(nonLiteralTypes, [literalsType]);
+      return core.Concatenate(nonLiteralTypes, GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, literalsType, GoPointerValueOps<Type>());
+      }));
     }
   }
   return candidates;
@@ -3774,7 +3798,7 @@ export function hasInferenceCandidatesOrDefault(info: GoPtr<InferenceInfo>): boo
  */
 export function hasTypeParameterDefault(tp: GoPtr<Type>): bool {
   if (tp!.symbol !== undefined) {
-    for (const d of tp!.symbol!.Declarations ?? []) {
+    for (const d of tp!.symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       if (IsTypeParameterDeclaration(d) && AsTypeParameterDeclaration(d)!.DefaultType !== undefined) {
         return true;
       }

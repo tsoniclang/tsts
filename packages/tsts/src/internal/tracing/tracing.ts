@@ -24,6 +24,8 @@ import { CombinePaths, ToPath } from "../tspath/path.js";
 import type { FS } from "../vfs/vfs.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import { GoInterfaceValueOps, GoNumberValueOps, GoSliceMake } from "../../go/compat.js";
+
 // string([]byte) conversion, matching the established decode idiom used by the
 // other ported internal files.
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
@@ -314,7 +316,7 @@ export function StartTracing(fs: GoInterface<FS>, traceDir: string, configFilePa
     tracePath: CombinePaths(traceDir, traceFileName),
     configFilePath: configFilePath,
     legend: [],
-    tracers: [],
+    tracers: GoSliceMake(0, 0, GoPointerValueOps<typeTracer>()),
     traceContent: traceContent,
     traceStarted: traceStarted,
     threadIDs: NewGoStructMap<traceThreadKey, int>(GoStructKey(
@@ -887,7 +889,7 @@ export function Tracing_NewTypeTracer(receiver: GoPtr<Tracing>, checkerIndex: in
       fs: tr.fs,
       checkerIndex: checkerIndex,
       typesPath: typesPath,
-      types: [],
+      types: GoSliceMake(0, 0, GoInterfaceValueOps<TracedType>()),
       mu: new Mutex(),
     };
     tr.tracers = GoSliceAppend(tr.tracers, tracer, GoPointerValueOps<typeTracer>());
@@ -1481,9 +1483,9 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
     SymbolName: "",
     RecursionID: undefined,
     IsTuple: false,
-    UnionTypes: [],
-    IntersectionTypes: [],
-    AliasTypeArguments: [],
+    UnionTypes: GoSliceMake(0, 0, GoNumberValueOps),
+    IntersectionTypes: GoSliceMake(0, 0, GoNumberValueOps),
+    AliasTypeArguments: GoSliceMake(0, 0, GoNumberValueOps),
     KeyofType: undefined,
     IndexedAccessObjectType: undefined,
     IndexedAccessIndexType: undefined,
@@ -1494,7 +1496,7 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
     SubstitutionBaseType: undefined,
     ConstraintType: undefined,
     InstantiatedType: undefined,
-    TypeArguments: [],
+    TypeArguments: GoSliceMake(0, 0, GoNumberValueOps),
     ReferenceLocation: undefined,
     ReverseMappedSourceType: undefined,
     ReverseMappedMappedType: undefined,
@@ -1685,7 +1687,7 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
  */
 export function mapTypeIds(types: GoSlice<GoInterface<TracedType>>): GoSlice<uint> {
   if (types.length === 0) {
-    return [];
+    return GoSliceMake(0, 0, GoNumberValueOps);
   }
   return types.map((t) => (t !== undefined ? t.Id() : 0 as uint));
 }

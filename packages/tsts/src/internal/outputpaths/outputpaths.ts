@@ -36,6 +36,8 @@ import {
 import type { ComparePathsOptions } from "../tspath/path.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::type::OutputPathsHost","kind":"type","status":"implemented","sigHash":"bfbed8e873d098b9f9cc0c3a1025dabea3cb6c66d64becd251d8702a56a0f73e"}
  *
@@ -301,13 +303,22 @@ export function GetOutputExtension(fileName: string, jsx: JsxEmit): string {
   if (FileExtensionIs(fileName, ExtensionJson)) {
     return ExtensionJson;
   }
-  if (jsx === JsxEmitPreserve && FileExtensionIsOneOf(fileName, [ExtensionJsx, ".tsx"])) {
+  if (jsx === JsxEmitPreserve && FileExtensionIsOneOf(fileName, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionJsx, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ".tsx", GoStringValueOps);
+  }))) {
     return ExtensionJsx;
   }
-  if (FileExtensionIsOneOf(fileName, [ExtensionMts, ExtensionMjs])) {
+  if (FileExtensionIsOneOf(fileName, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionMts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionMjs, GoStringValueOps);
+  }))) {
     return ExtensionMjs;
   }
-  if (FileExtensionIsOneOf(fileName, [ExtensionCts, ExtensionCjs])) {
+  if (FileExtensionIsOneOf(fileName, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionCts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionCjs, GoStringValueOps);
+  }))) {
     return ExtensionCjs;
   }
   return ExtensionJs;

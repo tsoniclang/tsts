@@ -23,6 +23,8 @@ import { GeneratedIdentifierFlags_IsFileLevel, GeneratedIdentifierFlags_IsOptimi
 import { IsSimpleCopiableExpression } from "../utilities.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::isDeclarationNameOfEnumOrNamespace","kind":"func","status":"implemented","sigHash":"d38d773126c953f9b255a45fbb25827b9abb3c44aded0810ccd50fda275c740a"}
  *
@@ -102,7 +104,7 @@ export function createEmptyImports(factory: GoPtr<NodeFactory>): GoPtr<Statement
     f,
     undefined, /*modifiers*/
     false, /*isTypeOnly*/
-    NewNamedExports(f, NodeFactory_NewNodeList(f, [])),
+    NewNamedExports(f, NodeFactory_NewNodeList(f, GoSliceMake(0, 0, GoPointerValueOps<Node>()))),
     undefined, /*moduleSpecifier*/
     undefined, /*attributes*/
   );

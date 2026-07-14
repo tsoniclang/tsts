@@ -12,6 +12,8 @@ import type { ComparePathsOptions } from "../../tspath/path.js";
 import type { FS } from "../vfs.js";
 
 import type { GoInterface } from "../../../go/compat.js";
+import { GoNumberValueOps, GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::Usage","kind":"type","status":"implemented","sigHash":"56c72bc27d92dabb6a98e08c0218812331e176b895533580d85b7591ec37069d"}
  *
@@ -73,7 +75,10 @@ export function IsImplicitGlob(lastPathComponent: string): bool {
  * Go source:
  * var wildcardCharCodes = []rune{'*', '?'}
  */
-export let wildcardCharCodes: GoSlice<GoRune> = [0x2a, 0x3f] as GoSlice<GoRune>; // '*', '?'
+export let wildcardCharCodes: GoSlice<GoRune> = GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, 0x2a, GoNumberValueOps);
+  GoSliceStore(__goSliceLiteral, 1, 0x3f, GoNumberValueOps);
+}); // '*', '?'
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::getIncludeBasePath","kind":"func","status":"implemented","sigHash":"8d50a317ffb7fb224ecf550f5c6cee8f39ba6f9c84401ed760249cc559bd9a70"}
@@ -164,7 +169,7 @@ function findFirstWildcard(s: string): int {
  */
 export function getBasePaths(path: string, includes: GoSlice<string>, useCaseSensitiveFileNames: bool): GoSlice<string> {
   const basePaths: string[] = [path];
-  const includeList = includes ?? [];
+  const includeList = includes ?? GoSliceMake(0, 0, GoStringValueOps);
 
   if (includeList.length > 0) {
     const comparePathsOptions: ComparePathsOptions = { CurrentDirectory: path, UseCaseSensitiveFileNames: useCaseSensitiveFileNames };
@@ -1101,8 +1106,8 @@ export interface globMatcher {
  * }
  */
 export function newGlobMatcher(includeSpecs: GoSlice<string>, excludeSpecs: GoSlice<string>, basePath: string, caseSensitive: bool, usage: Usage): GoPtr<globMatcher> {
-  const includeList = includeSpecs ?? [];
-  const excludeList = excludeSpecs ?? [];
+  const includeList = includeSpecs ?? GoSliceMake(0, 0, GoStringValueOps);
+  const excludeList = excludeSpecs ?? GoSliceMake(0, 0, GoStringValueOps);
   const m: globMatcher = {
     hadIncludes: includeList.length > 0,
     includes: [],
@@ -1384,7 +1389,7 @@ export function matchFiles(path: string, extensions: GoSlice<string>, excludes: 
   const normalizedPath = NormalizePath(path);
   const normalizedCurrentDir = NormalizePath(currentDirectory);
   const absolutePath = CombinePaths(normalizedCurrentDir, normalizedPath);
-  const extensionList = extensions ?? [];
+  const extensionList = extensions ?? GoSliceMake(0, 0, GoStringValueOps);
 
   const fileMatcher = newGlobMatcher(includes, excludes, absolutePath, useCaseSensitiveFileNames, UsageFiles);
   const directoryMatcher = newGlobMatcher(includes, excludes, absolutePath, useCaseSensitiveFileNames, UsageDirectories);

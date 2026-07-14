@@ -66,6 +66,8 @@ import { createExternalHelpersImportDeclarationIfNeeded } from "./externalmodule
 import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifier } from "./utilities.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"implemented","sigHash":"604c7a0ae11037259df4b4db8955cc610f2e95f77176d6bce970398cdc41f572"}
  *
@@ -585,7 +587,10 @@ export function ESModuleTransformer_visitExportDeclaration(receiver: GoPtr<ESMod
     );
   }
   EmitContext_SetOriginal(emitContext, exportDecl, nodeAsNode);
-  return SingleOrMany([importDecl as unknown as GoPtr<Statement>, exportDecl as unknown as GoPtr<Statement>], pf!);
+  return SingleOrMany(GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, importDecl as unknown as GoPtr<Statement>, GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 1, exportDecl as unknown as GoPtr<Statement>, GoPointerValueOps<Node>());
+  }), pf!);
 }
 
 /**
@@ -811,7 +816,10 @@ export function ESModuleTransformer_createRequireCall(receiver: GoPtr<ESModuleTr
     );
     EmitContext_AddEmitFlags(emitContext, requireStatement, EFCustomPrologue);
     receiver!.importRequireStatements = {
-      statements: [importStatement as unknown as GoPtr<Statement>, requireStatement as unknown as GoPtr<Statement>],
+      statements: GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, importStatement as unknown as GoPtr<Statement>, GoPointerValueOps<Node>());
+        GoSliceStore(__goSliceLiteral, 1, requireStatement as unknown as GoPtr<Statement>, GoPointerValueOps<Node>());
+      }),
       requireHelperName: requireHelperName,
     };
   }

@@ -21,6 +21,8 @@ import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 import type { ProgramOptions } from "./program.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"implemented","sigHash":"6ba4d34374b0e8d11cb5ffc2a70018db101db1ceb8e2288f9e1c82a2d29a0864"}
  *
@@ -123,7 +125,7 @@ export function projectReferenceFileMapper_getResolvedProjectReferences(receiver
   let result = GoNilSlice<GoPtr<ParsedCommandLine>>();
   if (ok) {
     const refPaths = receiver!.referencesInConfigFile.get(refs)!;
-    result = [];
+    result = GoSliceMake(0, 0, GoPointerValueOps<ParsedCommandLine>());
     for (const refPath of refPaths) {
       const refConfig = receiver!.configToProjectReference.get(refPath);
       result = GoSliceAppend(result, refConfig, GoPointerValueOps<ParsedCommandLine>());

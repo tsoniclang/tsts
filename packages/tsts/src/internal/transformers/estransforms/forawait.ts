@@ -38,6 +38,8 @@ import { NewOrderedSetWithSizeHint } from "../../collections/ordered_set.js";
 import { OrderedSet_Size } from "../../collections/ordered_set.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forAwaitHierarchyFacts","kind":"type","status":"implemented","sigHash":"74a7859468c019889c9ce9acb2e9dbcd44fb07f6d451f381feab8893f24a4446"}
  *
@@ -842,7 +844,10 @@ export function forawaitTransformer_convertForOfStatementHead(receiver: GoPtr<fo
 
   const statement = NodeVisitor_VisitEmbeddedStatement((visitor as ConcreteNodeVisitor), node!.Statement as unknown as GoPtr<Node>);
 
-  let statements: GoSlice<GoPtr<Node>> = [iteratorValueStatement, exitNonUserCodeStatement];
+  let statements: GoSlice<GoPtr<Node>> = GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, iteratorValueStatement, GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 1, exitNonUserCodeStatement, GoPointerValueOps<Node>());
+  });
   statements = GoSliceAppend(statements, visitedBinding, GoPointerValueOps<Node>());
   let bodyLocation = { pos: 0, end: 0 };
   let statementsLocation = { pos: 0, end: 0 };
@@ -1069,41 +1074,41 @@ export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr
     NewPropertyAccessExpression(factory, iterator as unknown as GoPtr<Node>, undefined, NewIdentifier(factory, "next"), NodeFlagsNone),
     undefined,
     undefined,
-    NodeFactory_NewNodeList(factory, []),
+    NodeFactory_NewNodeList(factory, GoSliceMake(0, 0, GoPointerValueOps<Node>())),
     NodeFlagsNone,
   );
   const getDone = NewPropertyAccessExpression(factory, result as unknown as GoPtr<Node>, undefined, NewIdentifier(factory, "done"), NodeFlagsNone);
   const getValue = NewPropertyAccessExpression(factory, result as unknown as GoPtr<Node>, undefined, NewIdentifier(factory, "value"), NodeFlagsNone);
-  const callReturn = NodeFactory_NewFunctionCallCall(printerFactory, returnMethod, iterator as unknown as GoPtr<Node>, []);
+  const callReturn = NodeFactory_NewFunctionCallCall(printerFactory, returnMethod, iterator as unknown as GoPtr<Node>, GoSliceMake(0, 0, GoPointerValueOps<Node>()));
 
   EmitContext_AddVariableDeclaration(emitContext, errorRecord);
   EmitContext_AddVariableDeclaration(emitContext, returnMethod);
 
   const initializer = (ancestorFacts & forAwaitHierarchyFactsIterationContainer) !== 0
-    ? NodeFactory_InlineExpressions(printerFactory, [
-        NodeFactory_NewAssignmentExpression(printerFactory, errorRecord as unknown as GoPtr<Node>, NodeFactory_NewVoidZeroExpression(printerFactory)),
-        callValues,
-      ])
+    ? NodeFactory_InlineExpressions(printerFactory, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NodeFactory_NewAssignmentExpression(printerFactory, errorRecord as unknown as GoPtr<Node>, NodeFactory_NewVoidZeroExpression(printerFactory)), GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, callValues, GoPointerValueOps<Node>());
+    }))
     : callValues;
 
   const iteratorDecl = NewVariableDeclaration(factory, iterator as unknown as GoPtr<Node>, undefined, undefined, initializer);
   iteratorDecl!.Loc = node!.Expression!.Loc;
   const varDeclList = NewVariableDeclarationList(
     factory,
-    NodeFactory_NewNodeList(factory, [
-      NewVariableDeclaration(factory, nonUserCode as unknown as GoPtr<Node>, undefined, undefined, NewKeywordExpression(factory, KindTrueKeyword)),
-      iteratorDecl,
-      NewVariableDeclaration(factory, result as unknown as GoPtr<Node>, undefined, undefined, undefined),
-    ]),
+    NodeFactory_NewNodeList(factory, GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewVariableDeclaration(factory, nonUserCode as unknown as GoPtr<Node>, undefined, undefined, NewKeywordExpression(factory, KindTrueKeyword)), GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, iteratorDecl, GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 2, NewVariableDeclaration(factory, result as unknown as GoPtr<Node>, undefined, undefined, undefined), GoPointerValueOps<Node>());
+    })),
     NodeFlagsNone,
   );
   varDeclList!.Loc = node!.Expression!.Loc;
 
-  const condition = NodeFactory_InlineExpressions(printerFactory, [
-    NodeFactory_NewAssignmentExpression(printerFactory, result as unknown as GoPtr<Node>, forawaitTransformer_createDownlevelAwait(receiver, callNext)),
-    NodeFactory_NewAssignmentExpression(printerFactory, done as unknown as GoPtr<Node>, getDone),
-    NewPrefixUnaryExpression(factory, KindExclamationToken, done as unknown as GoPtr<Node>),
-  ]);
+  const condition = NodeFactory_InlineExpressions(printerFactory, GoSliceBuild(3, 3, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, NodeFactory_NewAssignmentExpression(printerFactory, result as unknown as GoPtr<Node>, forawaitTransformer_createDownlevelAwait(receiver, callNext)), GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 1, NodeFactory_NewAssignmentExpression(printerFactory, done as unknown as GoPtr<Node>, getDone), GoPointerValueOps<Node>());
+    GoSliceStore(__goSliceLiteral, 2, NewPrefixUnaryExpression(factory, KindExclamationToken, done as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
+  }));
 
   const incrementor = NodeFactory_NewAssignmentExpression(printerFactory, nonUserCode as unknown as GoPtr<Node>, NewKeywordExpression(factory, KindTrueKeyword));
 
@@ -1120,9 +1125,9 @@ export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr
 
   const tryBlock = NewBlock(
     factory,
-    NodeFactory_NewNodeList(factory, [
-      NodeFactory_RestoreEnclosingLabel(printerFactory, forStatement, outermostLabeledStatement),
-    ]),
+    NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NodeFactory_RestoreEnclosingLabel(printerFactory, forStatement, outermostLabeledStatement), GoPointerValueOps<Node>());
+    })),
     true,
   );
 
@@ -1136,9 +1141,9 @@ export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr
           errorRecord as unknown as GoPtr<Node>,
           NewObjectLiteralExpression(
             factory,
-            NodeFactory_NewNodeList(factory, [
-              NewPropertyAssignment(factory, undefined, NewIdentifier(factory, "error"), undefined, undefined, catchVariable as unknown as GoPtr<Node>),
-            ]),
+            NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+              GoSliceStore(__goSliceLiteral, 0, NewPropertyAssignment(factory, undefined, NewIdentifier(factory, "error"), undefined, undefined, catchVariable as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
+            })),
             false,
           ),
         ),
@@ -1180,7 +1185,9 @@ export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr
   );
   EmitContext_AddEmitFlags(emitContext, innerIfStatement, EFSingleLine);
 
-  const innerTryBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, [innerIfStatement]), false);
+  const innerTryBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, innerIfStatement, GoPointerValueOps<Node>());
+  })), false);
 
   const innerFinallyIf = NewIfStatement(
     factory,
@@ -1192,11 +1199,15 @@ export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr
     undefined,
   );
   EmitContext_AddEmitFlags(emitContext, innerFinallyIf, EFSingleLine);
-  const innerFinallyBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, [innerFinallyIf]), false);
+  const innerFinallyBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, innerFinallyIf, GoPointerValueOps<Node>());
+  })), false);
   EmitContext_AddEmitFlags(emitContext, innerFinallyBlock, EFSingleLine);
 
   const innerTryStatement = NewTryStatement(factory, innerTryBlock, undefined, innerFinallyBlock);
-  const finallyBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, [innerTryStatement]), true);
+  const finallyBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, innerTryStatement, GoPointerValueOps<Node>());
+  })), true);
 
   return NewTryStatement(factory, tryBlock, catchClause, finallyBlock);
 }
@@ -1858,7 +1869,7 @@ export function forawaitTransformer_transformAsyncGeneratorFunctionBody(receiver
     asyncBody = superAccessState_substituteSuperAccessesInBody(superState, asyncBody);
   }
 
-  const innerParams = innerParameters ?? NodeFactory_NewNodeList(factory, []) as GoPtr<NodeList>;
+  const innerParams = innerParameters ?? NodeFactory_NewNodeList(factory, GoSliceMake(0, 0, GoPointerValueOps<Node>())) as GoPtr<NodeList>;
   const name = Node_Name(node) !== undefined ? NodeFactory_NewGeneratedNameForNode(printerFactory, Node_Name(node)) : undefined;
   const generatorFunc = NewFunctionExpression(
     factory,

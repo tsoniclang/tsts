@@ -16,6 +16,8 @@ import * as locale from "../locale/locale.js";
 import type { Locale } from "../locale/locale.js";
 import { SourceFile_FileName } from "./ast.js";
 import type { SourceFile } from "./ast.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::type::RepopulateDiagnosticKind","kind":"type","status":"implemented","sigHash":"824f8b278d2c9039fd919bb01959d81e8502e97c5fb2b0d2c0fdf4648b66e8ab"}
@@ -716,7 +718,7 @@ export function DiagnosticsCollection_getDiagnosticsForFileLocked(receiver: GoPt
 export function DiagnosticsCollection_GetDiagnostics(receiver: GoPtr<DiagnosticsCollection>): GoSlice<GoPtr<Diagnostic>> {
   receiver!.mu.Lock();
   try {
-    let diagnostics_: GoSlice<GoPtr<Diagnostic>> = [];
+    let diagnostics_: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
     diagnostics_ = GoSliceAppendSlice(diagnostics_, receiver!.nonFileDiagnostics, GoPointerValueOps<Diagnostic>());
     for (const diags of receiver!.fileDiagnostics.values()) {
       diagnostics_ = GoSliceAppendSlice(diagnostics_, diags, GoPointerValueOps<Diagnostic>());

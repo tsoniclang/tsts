@@ -66,6 +66,8 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_Visitor } fro
 import type { Transformer } from "./transformer.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::FlattenLevel","kind":"type","status":"implemented","sigHash":"ccbbed42a7410b2965acabbf9c1fb86eabca1bab73508cc3377beefbd68a8797"}
  *
@@ -678,7 +680,7 @@ export function flattener_flattenDestructuringBinding(receiver: GoPtr<flattener>
     }
   }
 
-  let decls: GoSlice<GoPtr<Node>> = [];
+  let decls: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (const pending of receiver!.declarations) {
     const expr = pending.pendingExpressions.length > 0
       ? NodeFactory_InlineExpressions(pf, GoSliceAppend(pending.pendingExpressions, pending.value, GoPointerValueOps<Node>()))

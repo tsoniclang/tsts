@@ -59,6 +59,8 @@ import { SymbolFlagsInterface } from "../ast/generated/flags.js";
 import type { IndexInfo, Signature, Type, TypePredicate } from "./types.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::type::NodeBuilder","kind":"type","status":"implemented","sigHash":"124bf1d1a7a2b0f1d3e43db875844c14ec51925de9e8999b8ec1a04195cbc32b"}
  *
@@ -166,7 +168,7 @@ export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosing
     expansionTruncated: false as bool,
     enclosingDeclaration: enclosingDeclaration,
     enclosingFile: GetSourceFileOfNode(enclosingDeclaration),
-    inferTypeParameters: [],
+    inferTypeParameters: GoSliceMake(0, 0, GoPointerValueOps<Type>()),
     visitedTypes: { M: new globalThis.Map() },
     symbolDepth: NewGoStructMap(GoStructKey(
       [
@@ -176,9 +178,9 @@ export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosing
       ],
       ([isConstructorNode, symbolId, nodeId]) => ({ isConstructorNode, symbolId, nodeId }),
     )),
-    trackedSymbols: [],
+    trackedSymbols: GoSliceMake(0, 0, GoPointerValueOps<TrackedSymbolArgs>()),
     mapper: undefined,
-    reverseMappedStack: [],
+    reverseMappedStack: GoSliceMake(0, 0, GoPointerValueOps<Symbol>()),
     enclosingSymbolTypes: new globalThis.Map(),
     suppressReportInferenceFallback: false as bool,
     remappedSymbolReferences: new globalThis.Map(),
@@ -469,7 +471,7 @@ export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, s
   const nodes = NodeBuilderImpl_expandSymbolForHover(b.impl, symbol_);
   b.impl!.ctx!.typeStack = GoSlicePrefix(b.impl!.ctx!.typeStack, b.impl!.ctx!.typeStack.length - 2);
   NodeBuilder_propagateVerbosityOut(b);
-  let result: GoSlice<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   for (const node of nodes) {
     switch (node!.Kind) {
       case KindClassDeclaration:
@@ -520,7 +522,7 @@ export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, s
  * }
  */
 export function simplifyClassDeclaration(f: GoPtr<NodeFactory>, classDecl: GoPtr<Node>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  const classDeclarations = Filter(symbol_!.Declarations ?? [], IsClassLike);
+  const classDeclarations = Filter(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsClassLike);
   let originalClassDecl: GoPtr<Node>;
   if (classDeclarations.length > 0) {
     originalClassDecl = classDeclarations[0];
@@ -561,7 +563,7 @@ export function simplifyClassDeclaration(f: GoPtr<NodeFactory>, classDecl: GoPtr
  * }
  */
 export function simplifyModifiers(f: GoPtr<NodeFactory>, newDecl: GoPtr<Node>, isDeclKind: GoFunc<(arg0: GoPtr<Node>) => bool>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  const decls = Filter(symbol_!.Declarations ?? [], isDeclKind);
+  const decls = Filter(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), isDeclKind);
   let declWithModifiers: GoPtr<Node>;
   if (decls.length > 0) {
     declWithModifiers = decls[0];
@@ -730,7 +732,7 @@ export function NewNodeBuilder(ch: GoPtr<Checker>, e: GoPtr<EmitContext_3f6f588c
  */
 export function NewNodeBuilderEx(ch: GoPtr<Checker>, e: GoPtr<EmitContext_3f6f588c>, idToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>): GoPtr<NodeBuilder> {
   const impl = newNodeBuilderImpl(ch, e, idToSymbol);
-  return { impl: impl, ctxStack: [], host: ch!.program as unknown as Host, verbosity: undefined };
+  return { impl: impl, ctxStack: GoSliceMake(0, 0, GoPointerValueOps<NodeBuilderContext>()), host: ch!.program as unknown as Host, verbosity: undefined };
 }
 
 /**

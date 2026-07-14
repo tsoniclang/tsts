@@ -21,6 +21,8 @@ import { Checker_getSymbolOfDeclaration } from "./checker/symbols.js";
 import type { Signature, Type } from "./types.js";
 
 import type { GoFunc } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceMake } from "../../go/compat.js";
+
 
 function goZeroNodeBuilderLinks(): NodeBuilderLinks {
   return {
@@ -380,7 +382,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
       if (GoMapIsNil(locals)) {
         locals = new globalThis.Map<string, GoPtr<Symbol>>();
       }
-    let newLocals: GoSlice<string> = [];
+    let newLocals: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
     let oldLocals: GoSlice<localsRecord> = [];
       addAll((name: string, symbol_: GoPtr<Symbol>): void => {
         if (existingFakeScope !== undefined) {
@@ -394,7 +396,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
         locals!.set(name, symbol_);
       });
       if (existingFakeScope === undefined) {
-        const fakeScope = NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []), false);
+        const fakeScope = NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, GoSliceMake(0, 0, GoPointerValueOps<Node>())), false);
         LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, fakeScope, goZeroNodeBuilderLinks, goNodePointerKey)!.v.fakeScopeForSignatureDeclaration = GoValueRef(kind);
         const data = Node_LocalsContainerData(fakeScope);
         (data as unknown as { Locals?: SymbolTable }).Locals = locals;
@@ -442,7 +444,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
               }
             };
             const bindPattern = (p: GoPtr<Node>): void => {
-              for (const e of Node_Elements(p) ?? []) {
+              for (const e of Node_Elements(p) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
                 if (IsOmittedExpression(e)) {
                   return;
                 }

@@ -3,6 +3,8 @@ import * as nodeChildProcess from "node:child_process";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
 import process from "node:process";
+import { GoNumberValueOps, GoSliceMake } from "../compat.js";
+
 
 export class Cmd {
   Path: string;
@@ -29,7 +31,7 @@ export class Cmd {
       });
       return [Array.from(result), undefined];
     } catch (error) {
-      return [[], normalizeExecError(error)];
+      return [GoSliceMake(0, 0, GoNumberValueOps), normalizeExecError(error)];
     }
   }
 

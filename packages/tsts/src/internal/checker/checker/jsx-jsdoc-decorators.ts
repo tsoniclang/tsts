@@ -28,6 +28,8 @@ import { CheckModeNormal, ReferenceHintDecorator, signatureHasRestParameter } fr
 import type { Checker, CheckMode } from "./state.js";
 
 import type { GoRef } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkJSDocComments","kind":"method","status":"implemented","sigHash":"e58b196d503c8592581005e0aae4f2c48e3fff65d2a70e506e53edf7d1d4328e"}
  *
@@ -39,7 +41,7 @@ import type { GoRef } from "../../../go/compat.js";
  * }
  */
 export function Checker_checkJSDocComments(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  for (const comment of Node_Comments(node) ?? []) {
+  for (const comment of Node_Comments(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     Checker_checkJSDocComment(receiver, comment);
   }
 }
@@ -118,7 +120,7 @@ export function Checker_checkDecorators(receiver: GoPtr<Checker>, node: GoPtr<No
   if (!CanHaveDecorators(node) || !HasDecorators(node) || !NodeCanBeDecorated(receiver!.legacyDecorators, node, node!.Parent, node!.Parent!.Parent)) {
     return;
   }
-  const firstDecorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator, GoZeroPointer<Node>);
+  const firstDecorator = Find(Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), IsDecorator, GoZeroPointer<Node>);
   if (firstDecorator === undefined) {
     return;
   }
@@ -144,7 +146,7 @@ export function Checker_checkDecorators(receiver: GoPtr<Checker>, node: GoPtr<No
     }
   }
   Checker_markLinkedReferences(receiver, node, ReferenceHintDecorator, undefined, undefined);
-  for (const modifier of Node_ModifierNodes(node) ?? []) {
+  for (const modifier of Node_ModifierNodes(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (IsDecorator(modifier)) {
       Checker_checkDecorator(receiver, modifier);
     }

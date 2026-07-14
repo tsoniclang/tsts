@@ -38,6 +38,8 @@ import type { Transformer } from "../transformer.js";
 import { Transformer_NewTransformer, Transformer_Visitor, Transformer_Factory, Transformer_EmitContext } from "../transformer.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/visitor.js";
+import { GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/taggedtemplate.go::varGroup::newlineNormalizer","kind":"varGroup","status":"implemented","sigHash":"8f771ccd1ed2f389ba7ad380db228b60314f93be7995e1b3c0b8d394b470864a"}
@@ -257,7 +259,9 @@ export function taggedTemplateTransformer_processTaggedTemplateExpression(receiv
   }
 
   // Build up the template arguments and the raw and cooked strings for the template.
-  let templateArguments: GoSlice<GoPtr<Node>> = [undefined]; // placeholder for the template object
+  let templateArguments: GoSlice<GoPtr<Node>> = GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, undefined, GoPointerValueOps<Node>());
+  }); // placeholder for the template object
   let cookedStrings: GoSlice<GoPtr<Node>> = GoNilSlice();
   let rawStrings: GoSlice<GoPtr<Node>> = GoNilSlice();
 

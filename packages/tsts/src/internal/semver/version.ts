@@ -7,6 +7,8 @@ import * as regexp from "../../go/regexp.js";
 import * as slices from "../../go/slices.js";
 import * as strconv from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version.go::varGroup::versionRegexp","kind":"varGroup","status":"implemented","sigHash":"8d6db7c641dddc07ee01bfef3102c15654160c26e64f4097dfa73fcac7cfc275"}
@@ -92,8 +94,10 @@ export let versionZero: Version = {
   major: 0,
   minor: 0,
   patch: 0,
-  prerelease: ["0"],
-  build: [],
+  prerelease: GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, "0", GoStringValueOps);
+  }),
+  build: GoSliceMake(0, 0, GoStringValueOps),
 };
 
 /**
@@ -112,8 +116,8 @@ export function Version_incrementMajor(receiver: GoPtr<Version>): Version {
     major: v.major + 1,
     minor: 0,
     patch: 0,
-    prerelease: [],
-    build: [],
+    prerelease: GoSliceMake(0, 0, GoStringValueOps),
+    build: GoSliceMake(0, 0, GoStringValueOps),
   };
 }
 
@@ -134,8 +138,8 @@ export function Version_incrementMinor(receiver: GoPtr<Version>): Version {
     major: v.major,
     minor: v.minor + 1,
     patch: 0,
-    prerelease: [],
-    build: [],
+    prerelease: GoSliceMake(0, 0, GoStringValueOps),
+    build: GoSliceMake(0, 0, GoStringValueOps),
   };
 }
 
@@ -157,8 +161,8 @@ export function Version_incrementPatch(receiver: GoPtr<Version>): Version {
     major: v.major,
     minor: v.minor,
     patch: v.patch + 1,
-    prerelease: [],
-    build: [],
+    prerelease: GoSliceMake(0, 0, GoStringValueOps),
+    build: GoSliceMake(0, 0, GoStringValueOps),
   };
 }
 
@@ -518,8 +522,8 @@ export function TryParseVersion(text: string): [Version, GoError] {
     major: 0,
     minor: 0,
     patch: 0,
-    prerelease: [],
-    build: [],
+    prerelease: GoSliceMake(0, 0, GoStringValueOps),
+    build: GoSliceMake(0, 0, GoStringValueOps),
   };
 
   const match: GoSlice<string> = versionRegexp!.FindStringSubmatch(text);

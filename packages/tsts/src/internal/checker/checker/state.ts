@@ -93,6 +93,8 @@ import { typeofNEFacts } from "../flow.js";
 import { Mutex, Once } from "../../../go/sync.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../../go/compat.js";
+import { GoNumberValueOps, GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::CheckMode","kind":"type","status":"implemented","sigHash":"fd000c0f73136e37569f36cab9cec7e26a980eacd1124f26b93cc8ecf94fc319"}
  *
@@ -2290,7 +2292,9 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
   checker.exactOptionalPropertyTypes = checker.compilerOptions!.ExactOptionalPropertyTypes === TSTrue;
   checker.canCollectSymbolAliasAccessibilityData = Tristate_IsFalseOrUnknown(checker.compilerOptions!.VerbatimModuleSyntax);
   checker._jsxNamespace = "";
-  checker.arrayVariances = [VarianceFlagsCovariant];
+  checker.arrayVariances = GoSliceBuild(1, 1, GoNumberValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, VarianceFlagsCovariant, GoNumberValueOps);
+  });
   checker.globals = new globalThis.Map<string, GoPtr<Symbol>>();
   checker.evaluate = NewEvaluator((expr, location): Result => Checker_evaluateEntity(checker, expr, location), OEKParentheses);
   const pseudoBigIntKey = GoStructKey<PseudoBigInt, readonly [bool, string]>(
@@ -2518,7 +2522,10 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
   checker.trueType = Checker_newLiteralType(checker, TypeFlagsBooleanLiteral, true, checker.regularTrueType);
   Type_AsLiteralType(checker.regularTrueType)!.freshType = checker.trueType;
   Type_AsLiteralType(checker.trueType)!.freshType = checker.trueType;
-  checker.booleanType = Checker_getUnionType(checker, [checker.regularFalseType, checker.regularTrueType]);
+  checker.booleanType = Checker_getUnionType(checker, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, checker.regularFalseType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 1, checker.regularTrueType, GoPointerValueOps<Type>());
+  }));
   checker.esSymbolType = Checker_newIntrinsicType(checker, TypeFlagsESSymbol, "symbol");
   checker.voidType = Checker_newIntrinsicType(checker, TypeFlagsVoid, "void");
   checker.neverType = Checker_newIntrinsicType(checker, TypeFlagsNever, "never");
@@ -2526,11 +2533,33 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
   checker.implicitNeverType = Checker_newIntrinsicType(checker, TypeFlagsNever, "never");
   checker.unreachableNeverType = Checker_newIntrinsicType(checker, TypeFlagsNever, "never");
   checker.nonPrimitiveType = Checker_newIntrinsicType(checker, TypeFlagsNonPrimitive, "object");
-  checker.stringOrNumberType = Checker_getUnionType(checker, [checker.stringType, checker.numberType]);
-  checker.stringNumberSymbolType = Checker_getUnionType(checker, [checker.stringType, checker.numberType, checker.esSymbolType]);
-  checker.numberOrBigIntType = Checker_getUnionType(checker, [checker.numberType, checker.bigintType]);
-  checker.numericStringType = Checker_getTemplateLiteralType(checker, ["", ""], [checker.numberType]);
-  checker.templateConstraintType = Checker_getUnionType(checker, [checker.stringType, checker.numberType, checker.booleanType, checker.bigintType, checker.nullType, checker.undefinedType]);
+  checker.stringOrNumberType = Checker_getUnionType(checker, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, checker.stringType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 1, checker.numberType, GoPointerValueOps<Type>());
+  }));
+  checker.stringNumberSymbolType = Checker_getUnionType(checker, GoSliceBuild(3, 3, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, checker.stringType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 1, checker.numberType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 2, checker.esSymbolType, GoPointerValueOps<Type>());
+  }));
+  checker.numberOrBigIntType = Checker_getUnionType(checker, GoSliceBuild(2, 2, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, checker.numberType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 1, checker.bigintType, GoPointerValueOps<Type>());
+  }));
+  checker.numericStringType = Checker_getTemplateLiteralType(checker, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, "", GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, "", GoStringValueOps);
+  }), GoSliceBuild(1, 1, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, checker.numberType, GoPointerValueOps<Type>());
+  }));
+  checker.templateConstraintType = Checker_getUnionType(checker, GoSliceBuild(6, 6, GoPointerValueOps<Type>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, checker.stringType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 1, checker.numberType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 2, checker.booleanType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 3, checker.bigintType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 4, checker.nullType, GoPointerValueOps<Type>());
+    GoSliceStore(__goSliceLiteral, 5, checker.undefinedType, GoPointerValueOps<Type>());
+  }));
   checker.uniqueLiteralType = Checker_newIntrinsicType(checker, TypeFlagsNever, "never");
   checker.uniqueLiteralMapper = newFunctionTypeMapper((typeParameter): GoPtr<Type> => Checker_getUniqueLiteralTypeForTypeParameter(checker, typeParameter));
   checker.reportUnreliableMapper = newFunctionTypeMapper((type): GoPtr<Type> => Checker_reportUnreliableWorker(checker, type));
@@ -2719,7 +2748,7 @@ export function countGlobalSymbols(files: GoSlice<GoPtr<SourceFile>>): int {
  * }
  */
 export function getGlobalTypeDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Declaration> {
-  for (const declaration of symbol_!.Declarations ?? []) {
+  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     switch (declaration!.Kind) {
       case KindClassDeclaration:
       case KindInterfaceDeclaration:
@@ -3059,7 +3088,7 @@ export function isInstantiatedModule(node: GoPtr<Node>, preserveConstEnums: bool
  * }
  */
 export function getFirstNonAmbientClassOrFunctionDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  for (const declaration of symbol_!.Declarations ?? []) {
+  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if ((IsClassDeclaration(declaration) || (IsFunctionDeclaration(declaration) && NodeIsPresent(Node_Body(declaration)))) && (declaration!.Flags & NodeFlagsAmbient) === 0) {
       return declaration;
     }
@@ -3105,7 +3134,10 @@ export function hasTypeJsonImportAttribute(node: GoPtr<Node>): bool {
 export function getVerbatimModuleSyntaxErrorMessage(node: GoPtr<Node>): GoPtr<Message> {
   const sourceFile = GetSourceFileOfNode(node);
   const fileName = SourceFile_FileName(sourceFile);
-  if (FileExtensionIsOneOf(fileName, [ExtensionCts, ExtensionCjs])) {
+  if (FileExtensionIsOneOf(fileName, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionCts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionCjs, GoStringValueOps);
+  }))) {
     return ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax;
   }
   return ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax_Adjust_the_type_field_in_the_nearest_package_json_to_make_this_file_an_ECMAScript_module_or_adjust_your_verbatimModuleSyntax_module_and_moduleResolution_settings_in_TypeScript;
@@ -3663,12 +3695,12 @@ export function signatureHasRestParameter(sig: GoPtr<Signature>): bool {
  */
 export function hashWrite32<T extends GoConstraint<"~int32 | ~uint32"> & number>(h: GoPtr<Hasher>, value: T): void {
   const v = value as unknown as number;
-  (h as unknown as { Write(b: GoSlice<byte>): void }).Write([
-    v & 0xff,
-    (v >> 8) & 0xff,
-    (v >> 16) & 0xff,
-    (v >> 24) & 0xff,
-  ]);
+  (h as unknown as { Write(b: GoSlice<byte>): void }).Write(GoSliceBuild(4, 4, GoNumberValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, v & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 1, (v >> 8) & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 2, (v >> 16) & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 3, (v >> 24) & 0xff, GoNumberValueOps);
+  }));
 }
 
 /**
@@ -3691,16 +3723,16 @@ export function hashWrite32<T extends GoConstraint<"~int32 | ~uint32"> & number>
  */
 export function hashWrite64<T extends GoConstraint<"~int | ~uint | ~int64 | ~uint64"> & number>(h: GoPtr<Hasher>, value: T): void {
   const v = value as unknown as number;
-  (h as unknown as { Write(b: GoSlice<byte>): void }).Write([
-    v & 0xff,
-    (v >> 8) & 0xff,
-    (v >> 16) & 0xff,
-    (v >> 24) & 0xff,
-    (v >> 32) & 0xff,
-    (v >> 40) & 0xff,
-    (v >> 48) & 0xff,
-    (v >> 56) & 0xff,
-  ]);
+  (h as unknown as { Write(b: GoSlice<byte>): void }).Write(GoSliceBuild(8, 8, GoNumberValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, v & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 1, (v >> 8) & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 2, (v >> 16) & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 3, (v >> 24) & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 4, (v >> 32) & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 5, (v >> 40) & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 6, (v >> 48) & 0xff, GoNumberValueOps);
+    GoSliceStore(__goSliceLiteral, 7, (v >> 56) & 0xff, GoNumberValueOps);
+  }));
 }
 
 /**
@@ -4123,7 +4155,7 @@ export function isUnconstrainedTypeParameter(tp: GoPtr<Type>): bool {
   if (target!["symbol"] === undefined) {
     return false;
   }
-  for (const d of (target!["symbol"]!.Declarations ?? [])) {
+  for (const d of (target!["symbol"]!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()))) {
     if (IsTypeParameterDeclaration(d) && (AsTypeParameterDeclaration(d)!.Constraint !== undefined || IsMappedTypeNode(d!.Parent) || IsInferTypeNode(d!.Parent))) {
       return false;
     }
@@ -4663,7 +4695,7 @@ export function isSingleElementGenericTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isLocalTypeAlias(symbol_: GoPtr<Symbol>): bool {
-  const declaration = Find(symbol_!.Declarations ?? [], isTypeAlias, GoZeroPointer<Node>);
+  const declaration = Find(symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), isTypeAlias, GoZeroPointer<Node>);
   return declaration !== undefined && GetContainingFunction(declaration) !== undefined;
 }
 

@@ -3,6 +3,8 @@ import { GoEqualStrict, type GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import * as slices from "../../go/slices.js";
 import { GetAnyExtensionFromPath, GetBaseFileName, FileExtensionIs } from "./path.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore, GoSliceValueOps, GoStringValueOps } from "../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::constGroup::ExtensionTs+ExtensionTsx+ExtensionDts+ExtensionJs+ExtensionJsx+ExtensionJson+ExtensionTsBuildInfo+ExtensionMjs+ExtensionMts+ExtensionDmts+ExtensionCjs+ExtensionCts+ExtensionDcts","kind":"constGroup","status":"implemented","sigHash":"3eeea5de951d6dd17cc446aa8b2c9e10d53c1b73faafa66011c81acf5fee8289"}
@@ -57,26 +59,67 @@ export const ExtensionDcts: string = ".d.cts";
  * 	ExtensionsNotSupportingExtensionlessResolution = []string{ExtensionMts, ExtensionDmts, ExtensionMjs, ExtensionCts, ExtensionDcts, ExtensionCjs}
  * )
  */
-export let SupportedDeclarationExtensions: GoSlice<string> = [ExtensionDts, ExtensionDcts, ExtensionDmts];
-export let SupportedTSImplementationExtensions: GoSlice<string> = [ExtensionTs, ExtensionTsx, ExtensionMts, ExtensionCts];
-export let supportedTSExtensionsForExtractExtension: GoSlice<string> = [ExtensionDts, ExtensionDcts, ExtensionDmts, ExtensionTs, ExtensionTsx, ExtensionMts, ExtensionCts];
-export let AllSupportedExtensions: GoSlice<GoSlice<string>> = [
-  [ExtensionTs, ExtensionTsx, ExtensionDts, ExtensionJs, ExtensionJsx],
-  [ExtensionCts, ExtensionDcts, ExtensionCjs],
-  [ExtensionMts, ExtensionDmts, ExtensionMjs],
-];
-export let SupportedTSExtensions: GoSlice<GoSlice<string>> = [
-  [ExtensionTs, ExtensionTsx, ExtensionDts],
-  [ExtensionCts, ExtensionDcts],
-  [ExtensionMts, ExtensionDmts],
-];
-export let SupportedTSExtensionsFlat: GoSlice<string> = [ExtensionTs, ExtensionTsx, ExtensionDts, ExtensionCts, ExtensionDcts, ExtensionMts, ExtensionDmts];
-export let SupportedJSExtensions: GoSlice<GoSlice<string>> = [[ExtensionJs, ExtensionJsx], [ExtensionMjs], [ExtensionCjs]];
-export let SupportedJSExtensionsFlat: GoSlice<string> = [ExtensionJs, ExtensionJsx, ExtensionMjs, ExtensionCjs];
+export let SupportedDeclarationExtensions: GoSlice<string> = GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, ExtensionDts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 1, ExtensionDcts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 2, ExtensionDmts, GoStringValueOps);
+});
+export let SupportedTSImplementationExtensions: GoSlice<string> = GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, ExtensionTs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 1, ExtensionTsx, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 2, ExtensionMts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 3, ExtensionCts, GoStringValueOps);
+});
+export let supportedTSExtensionsForExtractExtension: GoSlice<string> = GoSliceBuild(7, 7, GoStringValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, ExtensionDts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 1, ExtensionDcts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 2, ExtensionDmts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 3, ExtensionTs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 4, ExtensionTsx, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 5, ExtensionMts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 6, ExtensionCts, GoStringValueOps);
+});
+export let AllSupportedExtensions: GoSlice<GoSlice<string>> = GoSliceBuild(3, 3, GoSliceValueOps<string>(), (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, [ExtensionTs, ExtensionTsx, ExtensionDts, ExtensionJs, ExtensionJsx], GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 1, [ExtensionCts, ExtensionDcts, ExtensionCjs], GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 2, [ExtensionMts, ExtensionDmts, ExtensionMjs], GoSliceValueOps<string>());
+});
+export let SupportedTSExtensions: GoSlice<GoSlice<string>> = GoSliceBuild(3, 3, GoSliceValueOps<string>(), (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, [ExtensionTs, ExtensionTsx, ExtensionDts], GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 1, [ExtensionCts, ExtensionDcts], GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 2, [ExtensionMts, ExtensionDmts], GoSliceValueOps<string>());
+});
+export let SupportedTSExtensionsFlat: GoSlice<string> = GoSliceBuild(7, 7, GoStringValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, ExtensionTs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 1, ExtensionTsx, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 2, ExtensionDts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 3, ExtensionCts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 4, ExtensionDcts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 5, ExtensionMts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 6, ExtensionDmts, GoStringValueOps);
+});
+export let SupportedJSExtensions: GoSlice<GoSlice<string>> = GoSliceBuild(3, 3, GoSliceValueOps<string>(), (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, [ExtensionJs, ExtensionJsx], GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 1, [ExtensionMjs], GoSliceValueOps<string>());
+  GoSliceStore(__goSliceLiteral, 2, [ExtensionCjs], GoSliceValueOps<string>());
+});
+export let SupportedJSExtensionsFlat: GoSlice<string> = GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, ExtensionJs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 1, ExtensionJsx, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 2, ExtensionMjs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 3, ExtensionCjs, GoStringValueOps);
+});
 export let AllSupportedExtensionsWithJson: GoSlice<GoSlice<string>> = slices.Concat<GoSlice<string>>(AllSupportedExtensions, [[ExtensionJson]]);
 export let SupportedTSExtensionsWithJson: GoSlice<GoSlice<string>> = slices.Concat<GoSlice<string>>(SupportedTSExtensions, [[ExtensionJson]]);
 export let SupportedTSExtensionsWithJsonFlat: GoSlice<string> = slices.Concat<string>(SupportedTSExtensionsFlat, [ExtensionJson]);
-export let ExtensionsNotSupportingExtensionlessResolution: GoSlice<string> = [ExtensionMts, ExtensionDmts, ExtensionMjs, ExtensionCts, ExtensionDcts, ExtensionCjs];
+export let ExtensionsNotSupportingExtensionlessResolution: GoSlice<string> = GoSliceBuild(6, 6, GoStringValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, ExtensionMts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 1, ExtensionDmts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 2, ExtensionMjs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 3, ExtensionCts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 4, ExtensionDcts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 5, ExtensionCjs, GoStringValueOps);
+});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::func::ExtensionIsTs","kind":"func","status":"implemented","sigHash":"3049c81c8f6456f7757c391bee3802bf890d1107e6df4f7dc063f58fdcaed34d"}
@@ -96,7 +139,20 @@ export function ExtensionIsTs(ext: string): bool {
  * Go source:
  * var extensionsToRemove = []string{ExtensionDts, ExtensionDmts, ExtensionDcts, ExtensionMjs, ExtensionMts, ExtensionCjs, ExtensionCts, ExtensionTs, ExtensionJs, ExtensionTsx, ExtensionJsx, ExtensionJson}
  */
-export let extensionsToRemove: GoSlice<string> = [ExtensionDts, ExtensionDmts, ExtensionDcts, ExtensionMjs, ExtensionMts, ExtensionCjs, ExtensionCts, ExtensionTs, ExtensionJs, ExtensionTsx, ExtensionJsx, ExtensionJson];
+export let extensionsToRemove: GoSlice<string> = GoSliceBuild(12, 12, GoStringValueOps, (__goSliceLiteral) => {
+  GoSliceStore(__goSliceLiteral, 0, ExtensionDts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 1, ExtensionDmts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 2, ExtensionDcts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 3, ExtensionMjs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 4, ExtensionMts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 5, ExtensionCjs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 6, ExtensionCts, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 7, ExtensionTs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 8, ExtensionJs, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 9, ExtensionTsx, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 10, ExtensionJsx, GoStringValueOps);
+  GoSliceStore(__goSliceLiteral, 11, ExtensionJson, GoStringValueOps);
+});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::func::RemoveFileExtension","kind":"func","status":"implemented","sigHash":"fed8cdfe80d8331bfc6071432f6e12a2bb014ce39de271c868f4dd34ff0c61dd"}
@@ -332,14 +388,25 @@ export function GetDeclarationFileExtension(fileName: string): string {
  * }
  */
 export function GetDeclarationEmitExtensionForPath(path: string): string {
-  if (FileExtensionIsOneOf(path, [ExtensionMjs, ExtensionMts])) {
+  if (FileExtensionIsOneOf(path, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionMjs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionMts, GoStringValueOps);
+  }))) {
     return ExtensionDmts;
-  } else if (FileExtensionIsOneOf(path, [ExtensionCjs, ExtensionCts])) {
+  } else if (FileExtensionIsOneOf(path, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionCjs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionCts, GoStringValueOps);
+  }))) {
     return ExtensionDcts;
-  } else if (FileExtensionIsOneOf(path, [ExtensionTs, ExtensionTsx, ExtensionJs, ExtensionJsx])) {
+  } else if (FileExtensionIsOneOf(path, GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionTs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionTsx, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionJs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 3, ExtensionJsx, GoStringValueOps);
+  }))) {
     return ExtensionDts;
   } else {
-    const ext = GetAnyExtensionFromPath(path, [], false);
+    const ext = GetAnyExtensionFromPath(path, GoSliceMake(0, 0, GoStringValueOps), false);
     if (ext !== "") {
       return ".d" + ext + ".ts";
     }
@@ -438,19 +505,40 @@ export function ChangeFullExtension(path: string, newExtension: string): string 
  * }
  */
 export function GetPossibleOriginalInputExtensionForExtension(path: string): GoSlice<string> {
-  if (FileExtensionIsOneOf(path, [ExtensionDmts, ExtensionMjs, ExtensionMts])) {
-    return [ExtensionMts, ExtensionMjs];
+  if (FileExtensionIsOneOf(path, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionDmts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionMjs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionMts, GoStringValueOps);
+  }))) {
+    return GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ExtensionMts, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 1, ExtensionMjs, GoStringValueOps);
+    });
   }
-  if (FileExtensionIsOneOf(path, [ExtensionDcts, ExtensionCjs, ExtensionCts])) {
-    return [ExtensionCts, ExtensionCjs];
+  if (FileExtensionIsOneOf(path, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionDcts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionCjs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionCts, GoStringValueOps);
+  }))) {
+    return GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ExtensionCts, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 1, ExtensionCjs, GoStringValueOps);
+    });
   }
   // Handle any custom .d.x.ts extension (e.g., .d.json.ts -> .json, .d.css.ts -> .css)
   {
     const ext = GetDeclarationFileExtension(path);
     if (ext !== "" && ext !== ExtensionDts) {
       const inner = ext.slice(".d.".length, ext.length - ".ts".length);
-      return ["." + inner];
+      return GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+        GoSliceStore(__goSliceLiteral, 0, "." + inner, GoStringValueOps);
+      });
     }
   }
-  return [ExtensionTsx, ExtensionTs, ExtensionJsx, ExtensionJs];
+  return GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionTsx, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionTs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionJsx, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 3, ExtensionJs, GoStringValueOps);
+  });
 }

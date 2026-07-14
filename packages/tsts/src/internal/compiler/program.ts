@@ -101,6 +101,8 @@ import { collectExtensionDiagnosticsForSourceFile } from "../../extensions/diagn
 import { attachExtensionHostToProgram } from "../../extensions/host.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 
 const sourceFileKey: GoMapKeyDescriptor<GoPtr<SourceFile>> = GoPointerKey<SourceFile>();
 /**
@@ -3152,7 +3154,7 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
     directivesByLine.set(line, directive);
   }
   const lineStarts = GetECMALineStarts(sourceFileLike);
-  let filtered: GoSlice<GoPtr<Diagnostic>> = [];
+  let filtered: GoSlice<GoPtr<Diagnostic>> = GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   for (const diagnostic of diags) {
     let ignoreDiagnostic = false;
     for (let line = ComputeLineOfPosition(lineStarts, Diagnostic_Pos(diagnostic)) - 1; line >= 0; line--) {
@@ -3195,7 +3197,7 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
  */
 export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (sourceFile!.IsDeclarationFile) {
-    return [];
+    return GoSliceMake(0, 0, GoPointerValueOps<Diagnostic>());
   }
   const [cached, ok] = SyncMap_Load(receiver!.declarationDiagnosticCache, sourceFile, GoZeroSlice<GoPtr<Diagnostic>>, sourceFileKey);
   if (ok) {

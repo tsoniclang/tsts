@@ -69,6 +69,8 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNodes, NodeVisitor_VisitNo
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import type { TextRange } from "../../core/text.js";
 import { GeneratedIdentifierFlagsNone } from "../../printer/generatedidentifierflags.js";
+import { GoSliceBuild, GoSliceMake, GoSliceStore } from "../../../go/compat.js";
+
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::func::convertClassDeclarationToClassExpression","kind":"func","status":"implemented","sigHash":"31775bc4552139bac27ccfa6417ca5c0b59581916471656fac15a401ab69d54e"}
@@ -416,7 +418,9 @@ export function superAccessState_createSuperElementAccessInAsyncMethod(receiver:
     receiver!.superIndexBinding as unknown as GoPtr<Expression>,
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [argumentExpression]) as unknown as GoPtr<NodeList>,
+    NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, argumentExpression, GoPointerValueOps<Node>());
+    })) as unknown as GoPtr<NodeList>,
     NodeFlagsNone,
   );
   if (receiver!.hasSuperPropertyAssignment) {
@@ -519,7 +523,7 @@ export function superAccessState_createSuperAccessVariableStatement(receiver: Go
       f,
       undefined,
       undefined,
-      NodeFactory_NewNodeList(f, []) as unknown as GoPtr<NodeList>,
+      NodeFactory_NewNodeList(f, GoSliceMake(0, 0, GoPointerValueOps<Node>())) as unknown as GoPtr<NodeList>,
       undefined,
       undefined,
       NewToken(f, KindEqualsGreaterThanToken),
@@ -542,7 +546,9 @@ export function superAccessState_createSuperAccessVariableStatement(receiver: Go
         f,
         undefined,
         undefined,
-        NodeFactory_NewNodeList(f, [vParam]) as unknown as GoPtr<NodeList>,
+        NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+          GoSliceStore(__goSliceLiteral, 0, vParam, GoPointerValueOps<Node>());
+        })) as unknown as GoPtr<NodeList>,
         undefined,
         undefined,
         NewToken(f, KindEqualsGreaterThanToken),
@@ -572,15 +578,17 @@ export function superAccessState_createSuperAccessVariableStatement(receiver: Go
     ) as unknown as GoPtr<Expression>,
     undefined,
     undefined,
-    NodeFactory_NewNodeList(f, [
-      NewKeywordExpression(f, KindNullKeyword),
-      descriptorsObject,
-    ]) as unknown as GoPtr<NodeList>,
+    NodeFactory_NewNodeList(f, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, NewKeywordExpression(f, KindNullKeyword), GoPointerValueOps<Node>());
+      GoSliceStore(__goSliceLiteral, 1, descriptorsObject, GoPointerValueOps<Node>());
+    })) as unknown as GoPtr<NodeList>,
     NodeFlagsNone,
   );
 
   const decl = NewVariableDeclaration(f, receiver!.superBinding as unknown as GoPtr<never>, undefined, undefined, objectCreateCall as unknown as GoPtr<Expression>);
-  const declList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, [decl]) as unknown as GoPtr<NodeList>, NodeFlagsConst);
+  const declList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, GoSliceBuild(1, 1, GoPointerValueOps<Node>(), (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, decl, GoPointerValueOps<Node>());
+  })) as unknown as GoPtr<NodeList>, NodeFlagsConst);
   return NewVariableStatement(f, undefined, declList as unknown as GoPtr<never>);
 }
 

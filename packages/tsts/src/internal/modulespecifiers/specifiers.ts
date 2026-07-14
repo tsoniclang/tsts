@@ -127,6 +127,8 @@ import {
 import type { NodeModulePathParts } from "./util.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoNumberValueOps, GoPointerValueOps, GoSliceBuild, GoSliceMake, GoSliceStore } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifiers","kind":"func","status":"implemented","sigHash":"641b2e3d5872a25627b6cdbba77e7300466b63adde2a5ec47c7c9bda998c6190"}
  *
@@ -204,14 +206,16 @@ export function GetModuleSpecifiersWithInfo(moduleSymbol: GoPtr<Symbol>, checker
   const ambient = tryGetModuleNameFromAmbientModule(moduleSymbol, checker);
   if (ambient.length > 0) {
     if (forAutoImports && IsExcludedByRegex(ambient, userPreferences.AutoImportSpecifierExcludeRegexes)) {
-      return [[], ResultKindAmbient];
+      return [GoSliceMake(0, 0, GoStringValueOps), ResultKindAmbient];
     }
-    return [[ambient], ResultKindAmbient];
+    return [GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ambient, GoStringValueOps);
+    }), ResultKindAmbient];
   }
 
   const moduleSourceFile = GetSourceFileOfModule(moduleSymbol);
   if (moduleSourceFile === undefined) {
-    return [[], ResultKindNone];
+    return [GoSliceMake(0, 0, GoStringValueOps), ResultKindNone];
   }
 
   // Use original source file name when file is from project reference output
@@ -319,14 +323,14 @@ export function GetModuleSpecifiersForFileWithInfo(importingSourceFile: GoInterf
  * }
  */
 export function tryGetModuleNameFromAmbientModule(moduleSymbol: GoPtr<Symbol>, checker: GoInterface<CheckerShape>): string {
-  for (const decl of moduleSymbol!.Declarations ?? []) {
+  for (const decl of moduleSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (IsModuleWithStringLiteralName(decl) && (!IsModuleAugmentationExternal(decl) || !PathIsRelative(Node_Text(Node_Name(decl))))) {
       return Node_Text(Node_Name(decl));
     }
   }
 
   // the module could be a namespace, which is exported through "export=" from an ambient module.
-  for (const d of moduleSymbol!.Declarations ?? []) {
+  for (const d of moduleSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (!IsModuleDeclaration(d)) {
       continue;
     }
@@ -909,7 +913,9 @@ export function computeModuleSpecifiers(modulePaths: GoSlice<ModulePath>, compil
   }
 
   if (existingSpecifier !== "") {
-    return [[existingSpecifier], ResultKindNone];
+    return [GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, existingSpecifier, GoStringValueOps);
+    }), ResultKindNone];
   }
 
   const importedFileIsInNodeModules = modulePaths.some(p => p.IsInNodeModules);
@@ -1324,7 +1330,11 @@ export function getLocalModuleSpecifier(moduleFileName: string, info: Info, comp
  * }
  */
 export function processEnding(fileName: string, allowedEndings: GoSlice<ModuleSpecifierEnding>, options: GoPtr<CompilerOptions>, host: GoInterface<ModuleSpecifierGenerationHost>): string {
-  if (FileExtensionIsOneOf(fileName, [ExtensionJson, ExtensionMjs, ExtensionCjs])) {
+  if (FileExtensionIsOneOf(fileName, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionJson, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionMjs, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 2, ExtensionCjs, GoStringValueOps);
+  }))) {
     return fileName;
   }
 
@@ -1335,18 +1345,31 @@ export function processEnding(fileName: string, allowedEndings: GoSlice<ModuleSp
 
   const jsPriority = allowedEndings.indexOf(ModuleSpecifierEndingJsExtension);
   const tsPriority = allowedEndings.indexOf(ModuleSpecifierEndingTsExtension);
-  if (FileExtensionIsOneOf(fileName, [ExtensionMts, ExtensionCts]) && tsPriority !== -1 && tsPriority < jsPriority) {
+  if (FileExtensionIsOneOf(fileName, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionMts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionCts, GoStringValueOps);
+  })) && tsPriority !== -1 && tsPriority < jsPriority) {
     return fileName;
   }
-  if (FileExtensionIsOneOf(fileName, [ExtensionDmts, ExtensionDcts])) {
+  if (FileExtensionIsOneOf(fileName, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionDmts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionDcts, GoStringValueOps);
+  }))) {
     const inputExt = GetDeclarationFileExtension(fileName);
     const ext = GetJSExtensionForDeclarationFileExtension(inputExt);
     return RemoveExtension(fileName, inputExt) + ext;
   }
-  if (FileExtensionIsOneOf(fileName, [ExtensionMts, ExtensionCts])) {
+  if (FileExtensionIsOneOf(fileName, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionMts, GoStringValueOps);
+    GoSliceStore(__goSliceLiteral, 1, ExtensionCts, GoStringValueOps);
+  }))) {
     return noExtension + getJSExtensionForFile(fileName, options);
   }
-  if (!FileExtensionIsOneOf(fileName, [ExtensionDts]) && FileExtensionIsOneOf(fileName, [ExtensionTs]) && strings.Contains(fileName, ".d.")) {
+  if (!FileExtensionIsOneOf(fileName, GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionDts, GoStringValueOps);
+  })) && FileExtensionIsOneOf(fileName, GoSliceBuild(1, 1, GoStringValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, ExtensionTs, GoStringValueOps);
+  })) && strings.Contains(fileName, ".d.")) {
     // `foo.d.json.ts` and the like - remap back to `foo.json`
     const result = TryGetRealFileNameForNonJSDeclarationFileName(fileName);
     if (result !== "") {
@@ -1804,9 +1827,17 @@ export function tryDirectoryWithPackageJson(parts: NodeModulePathParts, pathObj:
     const nodeModulesDirectoryName = packageRootPath.slice(parts.TopLevelPackageNameIndex + 1);
     const packageName = GetPackageNameFromTypesPackageName(nodeModulesDirectoryName);
 
-    if (FileExtensionIsOneOf(pathObj.FileName, [ExtensionCjs, ExtensionCts, ExtensionDcts])) {
+    if (FileExtensionIsOneOf(pathObj.FileName, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ExtensionCjs, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 1, ExtensionCts, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 2, ExtensionDcts, GoStringValueOps);
+    }))) {
       importMode = ResolutionModeCommonJS;
-    } else if (FileExtensionIsOneOf(pathObj.FileName, [ExtensionMjs, ExtensionMts, ExtensionDmts])) {
+    } else if (FileExtensionIsOneOf(pathObj.FileName, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral) => {
+      GoSliceStore(__goSliceLiteral, 0, ExtensionMjs, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 1, ExtensionMts, GoStringValueOps);
+      GoSliceStore(__goSliceLiteral, 2, ExtensionDmts, GoStringValueOps);
+    }))) {
       importMode = ResolutionModeESM;
     }
 
@@ -2235,7 +2266,9 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: string, paths: GoPt
       for (const ending of allowedEndings) {
         const result = processEnding(
           relativeToBaseUrl,
-          [ending],
+          GoSliceBuild(1, 1, GoNumberValueOps, (__goSliceLiteral) => {
+            GoSliceStore(__goSliceLiteral, 0, ending, GoNumberValueOps);
+          }),
           compilerOptions,
           host,
         );
@@ -2286,7 +2319,9 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: string, paths: GoPt
  * }
  */
 export function validateEnding(c: specPair, relativeToBaseUrl: string, compilerOptions: GoPtr<CompilerOptions>, host: GoInterface<ModuleSpecifierGenerationHost>): bool {
-  return c.ending !== ModuleSpecifierEndingMinimal || c.value === processEnding(relativeToBaseUrl, [c.ending], compilerOptions, host);
+  return c.ending !== ModuleSpecifierEndingMinimal || c.value === processEnding(relativeToBaseUrl, GoSliceBuild(1, 1, GoNumberValueOps, (__goSliceLiteral) => {
+    GoSliceStore(__goSliceLiteral, 0, c.ending, GoNumberValueOps);
+  }), compilerOptions, host);
 }
 
 /**

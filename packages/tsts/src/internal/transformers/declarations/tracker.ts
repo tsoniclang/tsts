@@ -31,6 +31,8 @@ import { createGetIsolatedDeclarationErrors, type GetSymbolAccessibilityDiagnost
 import type { DeclarationEmitHost } from "./transform.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
+import { GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"3d0b1e2bb9b95fe041f24a5d5e940015e3814938b736ed7ca2618eba6fa1b31e"}
  *
@@ -222,8 +224,8 @@ export function SymbolTrackerImpl_ReportNonSerializableProperty(receiver: GoPtr<
  * }
  */
 export function SymbolTrackerImpl_ReportNonlocalAugmentation(receiver: GoPtr<SymbolTrackerImpl>, containingFile: GoPtr<SourceFile>, parentSymbol: GoPtr<Symbol>, augmentingSymbol: GoPtr<Symbol>): void {
-  const primaryDeclaration = Find(parentSymbol!.Declarations ?? [], (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) === containingFile, GoZeroPointer<Node>);
-  const augmentingDeclarations = Filter(augmentingSymbol!.Declarations ?? [], (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) !== containingFile);
+  const primaryDeclaration = Find(parentSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) === containingFile, GoZeroPointer<Node>);
+  const augmentingDeclarations = Filter(augmentingSymbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) !== containingFile);
   if (primaryDeclaration !== undefined && augmentingDeclarations.length > 0) {
     for (const augmentations of augmentingDeclarations) {
       const diag = createDiagnosticForNode(augmentations, diagnostics.Declaration_augments_declaration_in_another_file_This_cannot_be_serialized);

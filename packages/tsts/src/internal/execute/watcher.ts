@@ -70,6 +70,8 @@ import { EmitFilesAndReportErrors } from "./tsc/emit.js";
 import type { EmitInput } from "./tsc/emit.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
+import { GoSliceMake, GoStringValueOps } from "../../go/compat.js";
+
 // Local byte-code constants for path inspection in perceivedOsRootLengthForWatching,
 // mirroring tspath/path.ts (which keeps its own private CHAR_* constants). Go indexes
 // strings as bytes (root[0], root[1], components[1][0]); we read them via charCodeAt.
@@ -386,7 +388,7 @@ export function createWatcher(sys: GoInterface<System>, configParseResult: GoPtr
     extendedConfigCache: undefined,
     configModified: false,
     configHasErrors: false,
-    configFilePaths: [],
+    configFilePaths: GoSliceMake(0, 0, GoStringValueOps),
     sourceFileCache: sourceFileCache,
     backend: undefined,
     watchedDirs: new Map<string, GoPtr<watchedDir>>(),

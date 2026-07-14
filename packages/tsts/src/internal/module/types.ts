@@ -10,6 +10,8 @@ import type { CompilerOptions, ResolutionMode } from "../core/compileroptions.js
 import type { FS } from "../vfs/vfs.js";
 
 import type { GoInterface } from "../../go/compat.js";
+import { GoSliceMake } from "../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolutionHost","kind":"type","status":"implemented","sigHash":"d2874553364b5749637eb3379154f51223483ec56c1f78e21b715135dc5f382a"}
  *
@@ -281,7 +283,7 @@ export const extensionsImplementationFiles: extensions = extensionsTypeScript | 
  */
 export function extensions_String(receiver: extensions): string {
   const e = receiver;
-  let result: GoSlice<string> = [];
+  let result: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   if ((e & extensionsTypeScript) !== 0) {
     result = GoSliceAppend(result, "TypeScript", GoStringValueOps);
   }
@@ -320,7 +322,7 @@ export function extensions_String(receiver: extensions): string {
  */
 export function extensions_Array(receiver: extensions): GoSlice<string> {
   const e = receiver;
-  let result: GoSlice<string> = [];
+  let result: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
   if ((e & extensionsTypeScript) !== 0) {
     result = GoSliceAppendSlice(result, extension.SupportedTSImplementationExtensions, GoStringValueOps);
   }

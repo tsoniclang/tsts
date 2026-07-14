@@ -54,6 +54,8 @@ import type { Checker } from "./state.js";
 import { Checker_checkClassExpressionExternalHelpers } from "../checker.js";
 
 import type { GoFunc } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceMake } from "../../../go/compat.js";
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getResolutionModeOverride","kind":"method","status":"implemented","sigHash":"7e0c42fe06d7edb996ccecf014152878148d7b5a6adaa597f78189aa937c483a"}
  *
@@ -170,7 +172,7 @@ export function Checker_checkClassExpression(receiver: GoPtr<Checker>, node: GoP
  * }
  */
 export function Checker_checkClassExpressionDeferred(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  Checker_checkSourceElements(receiver, Node_Members(node) ?? []);
+  Checker_checkSourceElements(receiver, Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()));
   Checker_registerForUnusedIdentifiersCheck(receiver, node);
 }
 
@@ -379,7 +381,7 @@ export function Checker_checkSpreadPropOverrides(receiver: GoPtr<Checker>, t: Go
  * }
  */
 export function Checker_isThislessInterface(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  for (const declaration of symbol_!.Declarations ?? []) {
+  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
     if (IsInterfaceDeclaration(declaration)) {
       if ((declaration!.Flags & NodeFlagsContainsThis) !== 0) {
         return false;
