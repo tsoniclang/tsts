@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoValueRef, GoZeroPointer } from "../../go/compat.js";
 import { GoStringKey, NewGoStructMap } from "../../go/compat.js";
 import { recordExtensionPostCheckAssignabilityObservation } from "../../extensions/checker-integration.js";
 import type { Node } from "../ast/spine.js";
@@ -5688,13 +5688,10 @@ export function Checker_putRelater(receiver: GoPtr<Checker>, r: GoPtr<Relater>):
   r!.errorNode = undefined;
   r!.errorChain = undefined;
   r!.relatedInfo = [];
-  r!.maybeKeys = savedMaybeKeys;
-  r!.maybeKeys.length = 0;
+  r!.maybeKeys = GoSliceToZeroLength(savedMaybeKeys);
   r!.maybeKeysSet = savedMaybeKeysSet;
-  r!.sourceStack = savedSourceStack;
-  r!.sourceStack.length = 0;
-  r!.targetStack = savedTargetStack;
-  r!.targetStack.length = 0;
+  r!.sourceStack = GoSliceToZeroLength(savedSourceStack);
+  r!.targetStack = GoSliceToZeroLength(savedTargetStack);
   r!.maybeCount = 0;
   r!.sourceDepth = 0;
   r!.targetDepth = 0;

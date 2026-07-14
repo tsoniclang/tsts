@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoInterface, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import { GoSliceToZeroLength } from "../../go/compat.js";
 import type { Stringer } from "../../go/fmt.js";
 import * as errors from "../../go/errors.js";
 import * as fmt from "../../go/fmt.js";
@@ -819,7 +820,7 @@ export function match(elems: GoSlice<GoInterface<element>>, input: string): bool
       // match.
       let branch: GoSlice<GoInterface<element>> = [];
       for (const m of elem.value) {
-        branch = branch.slice(0, 0);
+        branch = GoSliceToZeroLength(branch);
         branch = [...branch, ...m!.elems];
         branch = [...branch, ...elems];
         if (match(branch, input)) {

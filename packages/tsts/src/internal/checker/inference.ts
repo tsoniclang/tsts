@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoNilSlice, GoNumberKey, GoStructField, GoStructKey, GoZeroBoolean, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoNumberKey, GoSliceToZeroLength, GoStructField, GoStructKey, GoZeroBoolean, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as core from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
@@ -401,7 +401,7 @@ export function Checker_putInferenceState(receiver: GoPtr<Checker>, n: GoPtr<Inf
   const inferences = state.inferences;
   const sourceStack = state.sourceStack;
   const targetStack = state.targetStack;
-  state.inferences = inferences.slice(0, 0);
+  state.inferences = GoSliceToZeroLength(inferences);
   state.originalSource = undefined;
   state.originalTarget = undefined;
   state.priority = 0;
@@ -411,8 +411,8 @@ export function Checker_putInferenceState(receiver: GoPtr<Checker>, n: GoPtr<Inf
   state.expandingFlags = 0;
   state.propagationType = undefined;
   state.visited = visited;
-  state.sourceStack = sourceStack.slice(0, 0);
-  state.targetStack = targetStack.slice(0, 0);
+  state.sourceStack = GoSliceToZeroLength(sourceStack);
+  state.targetStack = GoSliceToZeroLength(targetStack);
   state.next = c.freeinferenceState;
   c.freeinferenceState = state;
 }

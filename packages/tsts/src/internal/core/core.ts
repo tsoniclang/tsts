@@ -1,7 +1,7 @@
 import type { bool, byte, double, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import type { GoComparable, GoConstraint, GoEquality, GoError, GoMap, GoMapKeyDescriptor, GoPtr, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
-import { GoMapMake, GoNilSlice, GoZeroString } from "../../go/compat.js";
+import { GoAppend, GoMapMake, GoNilSlice, GoSliceToZeroLength, GoZeroString } from "../../go/compat.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
 import { ExtensionCjs, ExtensionCts, ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, HasTSFileExtension, IsDeclarationFileName } from "../tspath/extension.js";
@@ -905,16 +905,16 @@ export function MinAllFunc<T>(xs: GoSlice<T>, cmp: GoFunc<(a: T, b: T) => int>):
   }
 
   let m: T = xs[0]!;
-  const mins: GoSlice<T> = [m];
+  let mins: GoSlice<T> = [m];
 
   for (const x of xs.slice(1)) {
     const c = cmp!(x, m);
     if (c < 0) {
       m = x;
-      mins.length = 0;
-      mins.push(x);
+      mins = GoSliceToZeroLength(mins);
+      mins = GoAppend(mins, x);
     } else if (c === 0) {
-      mins.push(x);
+      mins = GoAppend(mins, x);
     }
   }
 
@@ -1495,9 +1495,9 @@ export let levenshteinBuffersPool: Pool = globalThis.Object.assign(new Pool(), {
  */
 export function levenshteinWithMax(buffers: GoPtr<levenshteinBuffers>, s1: GoSlice<GoRune>, s2: GoSlice<GoRune>, maxValue: double): double {
   const bufferSize = s2.length + 1;
-  buffers!.previous = slices.Grow(buffers!.previous.slice(0, 0), bufferSize);
+  buffers!.previous = slices.Grow(GoSliceToZeroLength(buffers!.previous), bufferSize);
   buffers!.previous.length = bufferSize;
-  buffers!.current = slices.Grow(buffers!.current.slice(0, 0), bufferSize);
+  buffers!.current = slices.Grow(GoSliceToZeroLength(buffers!.current), bufferSize);
   buffers!.current.length = bufferSize;
 
   let previous = buffers!.previous;

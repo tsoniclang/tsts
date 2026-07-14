@@ -3,6 +3,7 @@ import type { Seq, Seq2 } from "../../go/iter.js";
 import {
   GoMapIsNil,
   GoMapMake,
+  GoSliceToZeroLength,
   GoStringKey,
   GoValueRef,
   type GoComparable,
@@ -419,8 +420,7 @@ export function OrderedMap_Entries<K extends GoComparable, V>(receiver: GoPtr<Or
  */
 export function OrderedMap_Clear<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): void {
   const m = receiver!;
-  m.keys.length = 0;
-  m.keys = m.keys.slice(0, 0);
+  m.keys = GoSliceToZeroLength(m.keys);
   m.mp.clear();
 }
 

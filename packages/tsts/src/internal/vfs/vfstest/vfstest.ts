@@ -1,7 +1,7 @@
 import type { bool, byte, int, long } from "../../../go/scalars.js";
 import type { Seq2 } from "../../../go/iter.js";
 import type { GoError, GoFunc, GoInterface, GoMap, GoPointerMethodSet, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoZeroInterface, GoZeroSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoSliceToZeroLength, GoZeroInterface, GoZeroSlice } from "../../../go/compat.js";
 import { AsType } from "../../../go/errors.js";
 import { Sprintf, Errorf } from "../../../go/fmt.js";
 import type { DirEntry, File, FileInfo, FileMode, FS as GoFS, ReadDirFile } from "../../../go/io/fs.js";
@@ -956,7 +956,7 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
     return undefined;
   }
 
-  const toCreate: string[] = [];
+  let toCreate = GoNilSlice<string>();
   let pVar = p;
   let offset = 0;
   for (;;) {
@@ -968,7 +968,7 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
       if (err !== (ErrNotExist as unknown as GoError) && err.message !== (ErrNotExist as unknown as { message?: string })?.message) {
         return err;
       }
-      toCreate.push(dir);
+      toCreate = GoAppend(toCreate, dir);
     } else {
       const otherFile = other!;
       if ((otherFile.Mode & ModeDir) === 0) {
@@ -978,7 +978,7 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
         // We have a symlinked parent, reset and start again.
         const sysData = otherFile.Sys as sys;
         pVar = sysData.realpath + "/" + rest;
-        toCreate.length = 0;
+        toCreate = GoSliceToZeroLength(toCreate);
         offset = 0;
         continue;
       }

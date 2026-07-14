@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
-import { GoZeroPointer } from "../../go/compat.js";
+import { GoSliceToZeroLength, GoZeroPointer } from "../../go/compat.js";
 import { TrimLeft, TrimRightFunc } from "../../go/strings.js";
 import { byteLen, hasAsciiPrefixAt, isJSDocLikeTextAt, lastNewlineBefore } from "./utilities.js";
 import { Node_End, Node_Name, Node_Pos } from "../ast/spine.js";
@@ -342,11 +342,11 @@ export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, inf
   }
 
   const ranges = GetJSDocCommentRanges(receiver!.factory, receiver!.jsdocCommentRangesSpace, node, receiver!.sourceText);
-  receiver!.jsdocCommentRangesSpace = ranges.slice(0, 0);
+  receiver!.jsdocCommentRangesSpace = GoSliceToZeroLength(ranges);
 
   // Should only be called once per node
   receiver!.hasDeprecatedTag = false;
-  const jsdoc: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, ranges.length, GoZeroPointer<Node>).slice(0, 0);
+  const jsdoc: GoSlice<GoPtr<Node>> = GoSliceToZeroLength(Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, ranges.length, GoZeroPointer<Node>));
   let pos = Node_Pos(node);
   for (const comment of ranges) {
     const parsed = Parser_parseJSDocComment(receiver, node, comment.pos, comment.end, pos);
@@ -561,13 +561,13 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
 export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: int, end: int, fullStart: int, indent: int): GoPtr<Node> {
   // Initially we can parse out a tag.  We also have seen a starting asterisk.
   // This is so that /** * @type */ doesn't parse.
-  let tags: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1, GoZeroPointer<Node>).slice(0, 0);
+  let tags: GoSlice<GoPtr<Node>> = GoSliceToZeroLength(Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1, GoZeroPointer<Node>));
   let tagsPos = -1;
   let tagsEnd = -1;
   let state: jsdocState = jsdocStateSawAsterisk;
   let backtickCount = 0;
   let inFencedCodeBlock = false;
-  let commentParts: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1, GoZeroPointer<Node>).slice(0, 0);
+  let commentParts: GoSlice<GoPtr<Node>> = GoSliceToZeroLength(Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1, GoZeroPointer<Node>));
   let comments: GoSlice<string> = receiver!.jsdocCommentsSpace;
   let commentsPos = -1;
   let linkEnd = start;
@@ -697,7 +697,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
           const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentEnd);
           commentParts.push(jsdocText!);
           commentParts.push(link!);
-          comments = comments.slice(0, 0);
+          comments = GoSliceToZeroLength(comments);
           linkEnd = Scanner_TokenEnd(receiver!.scanner);
           break;
         }
@@ -733,7 +733,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
     }
   }
 
-  receiver!.jsdocCommentsSpace = comments.slice(0, 0); // Reuse this slice for further parses
+  receiver!.jsdocCommentsSpace = GoSliceToZeroLength(comments); // Reuse this slice for further parses
   if (commentsPos === -1) {
     commentsPos = Scanner_TokenFullStart(receiver!.scanner);
   }
@@ -923,7 +923,7 @@ export function Parser_skipWhitespaceOrAsterisk(receiver: GoPtr<Parser>): string
     if (receiver!.token === KindNewLineTrivia) {
       precedingLineBreak = true;
       seenLineBreak = true;
-      indents = indents.slice(0, 0);
+      indents = GoSliceToZeroLength(indents);
     } else if (receiver!.token === KindAsteriskToken) {
       precedingLineBreak = false;
     }
@@ -1145,7 +1145,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
           const text = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), commentStart, commentEnd);
           parts.push(text!);
           parts.push(link!);
-          comments = comments.slice(0, 0);
+          comments = GoSliceToZeroLength(comments);
           linkEnd = Scanner_TokenEnd(receiver!.scanner);
         } else {
           pushComment(Scanner_TokenText(receiver!.scanner));
@@ -1210,7 +1210,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
     }
   }
 
-  receiver!.jsdocTagCommentsSpace = comments.slice(0, 0);
+  receiver!.jsdocTagCommentsSpace = GoSliceToZeroLength(comments);
 
   comments = removeLeadingNewlines(comments);
   if (comments.length > 0) {
@@ -1219,7 +1219,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
     parts.push(text!);
   }
 
-  receiver!.jsdocTagCommentsPartsSpace = parts.slice(0, 0);
+  receiver!.jsdocTagCommentsPartsSpace = GoSliceToZeroLength(parts);
 
   if (parts.length > 0) {
     return Parser_newNodeList(receiver, NewTextRange(commentsPos, Scanner_TokenEnd(receiver!.scanner)), Arena_Clone(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, parts));

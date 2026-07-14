@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBigIntKey, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoBigIntKey, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, Node_End, NodeList_Pos } from "../ast/spine.js";
 import { Node_Arguments, Node_AsFlowReduceLabelData, Node_AsFlowSwitchClauseData, Node_Elements, Node_Expression, Node_Initializer, Node_Parameters, Node_PropertyNameOrName, Node_StatementList, Node_Text, Node_Type } from "../ast/ast.js";
@@ -300,8 +300,7 @@ export function Checker_getFlowState(receiver: GoPtr<Checker>): GoPtr<FlowState>
  * }
  */
 export function Checker_putFlowState(receiver: GoPtr<Checker>, f: GoPtr<FlowState>): void {
-  const reduceLabels = f!.reduceLabels ?? [];
-  reduceLabels.length = 0;
+  const reduceLabels = GoSliceToZeroLength(f!.reduceLabels);
   f!.reference = undefined;
   f!.declaredType = undefined;
   f!.initialType = undefined;
@@ -580,8 +579,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
         continue;
       }
     } else if ((flags & FlowFlagsReduceLabel) !== 0) {
-      f!.reduceLabels ??= [];
-      f!.reduceLabels.push(Node_AsFlowReduceLabelData(currentFlow!.Node));
+      f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(currentFlow!.Node));
       t = Checker_getTypeAtFlowNode(receiver, f, currentFlow!.Antecedent);
       f!.reduceLabels.pop();
     } else if ((flags & FlowFlagsStart) !== 0) {
@@ -5684,8 +5682,7 @@ export function Checker_isReachableFlowNodeWorker(receiver: GoPtr<Checker>, f: G
       flow = flow!.Antecedent!;
     } else if (flags & FlowFlagsReduceLabel) {
       receiver!.lastFlowNode = undefined;
-      f!.reduceLabels ??= [];
-      f!.reduceLabels.push(Node_AsFlowReduceLabelData(flow!.Node)!);
+      f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isReachableFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
       f!.reduceLabels.pop();
       return result;
@@ -5813,8 +5810,7 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
     } else if (flags & FlowFlagsLoopLabel) {
       flow = flow!.Antecedents!.Flow!;
     } else if (flags & FlowFlagsReduceLabel) {
-      f!.reduceLabels ??= [];
-      f!.reduceLabels.push(Node_AsFlowReduceLabelData(flow!.Node)!);
+      f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isPostSuperFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
       f!.reduceLabels.pop();
       return result;

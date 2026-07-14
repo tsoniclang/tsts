@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
 import { GoBigIntKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { recordExtensionContextualTargetTypeFact } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
@@ -6708,7 +6708,7 @@ export function Checker_resolveBaseTypesOfInterface(receiver: GoPtr<Checker>, t:
         if (!Checker_isErrorType(receiver, baseType)) {
           if (Checker_isValidBaseType(receiver, baseType)) {
             if (t !== baseType && !Checker_hasBaseType(receiver, baseType, t)) {
-              data.resolvedBaseTypes.push(baseType);
+              data.resolvedBaseTypes = GoAppend(data.resolvedBaseTypes, baseType);
             } else {
               Checker_reportCircularBaseType(receiver, declaration, t);
             }

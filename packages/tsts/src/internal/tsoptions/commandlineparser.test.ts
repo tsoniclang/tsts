@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { bool, int } from "../../go/scalars.js";
-import { GoStringKey, GoZeroInterface, type GoInterface, type GoPtr } from "../../go/compat.js";
+import { GoSliceIsNil, GoStringKey, GoZeroInterface, type GoInterface, type GoPtr } from "../../go/compat.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -60,7 +60,7 @@ test("ParseCommandLine preserves explicit null command-line overrides through co
   assertNoDiagnostics(errors);
   assert.ok(parsed !== undefined);
   assertNoDiagnostics(parsed!.Errors);
-  assert.equal(parsed!.ParsedConfig!.CompilerOptions!.CustomConditions, undefined);
+  assert.equal(GoSliceIsNil(parsed!.ParsedConfig!.CompilerOptions!.CustomConditions), true);
 });
 
 test("ParseCommandLine mirrors boolean false and null option values", () => {
