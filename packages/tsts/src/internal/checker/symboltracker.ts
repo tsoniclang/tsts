@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoInterface, GoPtr } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -108,7 +109,7 @@ export function SymbolTrackerImpl_TrackSymbol(receiver: GoPtr<SymbolTrackerImpl>
     // Skip recording type parameters as they dont contribute to late painted statements
     if ((symbol_!.Flags & SymbolFlagsTypeParameter) === 0) {
       const arg: TrackedSymbolArgs = { "symbol": symbol_, enclosingDeclaration: enclosingDeclaration, meaning: meaning };
-      receiver!.context!.trackedSymbols = GoAppend(receiver!.context!.trackedSymbols, arg);
+      receiver!.context!.trackedSymbols = GoSliceAppend(receiver!.context!.trackedSymbols, arg, GoPointerValueOps<TrackedSymbolArgs>());
     }
   }
   return false as bool;

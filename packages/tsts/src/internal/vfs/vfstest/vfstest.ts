@@ -1,6 +1,7 @@
 import type { bool, byte, int, long } from "../../../go/scalars.js";
 import type { Seq2 } from "../../../go/iter.js";
 import type { GoError, GoFunc, GoInterface, GoMap, GoPointerMethodSet, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../../go/compat.js";
 import { GoAppend, GoMapIsNil, GoNilSlice, GoSliceToZeroLength, GoZeroInterface, GoZeroSlice } from "../../../go/compat.js";
 import { AsType } from "../../../go/errors.js";
 import { Sprintf, Errorf } from "../../../go/fmt.js";
@@ -968,7 +969,7 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
       if (err !== (ErrNotExist as unknown as GoError) && err.message !== (ErrNotExist as unknown as { message?: string })?.message) {
         return err;
       }
-      toCreate = GoAppend(toCreate, dir);
+      toCreate = GoSliceAppend(toCreate, dir, GoStringValueOps);
     } else {
       const otherFile = other!;
       if ((otherFile.Mode & ModeDir) === 0) {

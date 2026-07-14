@@ -23,6 +23,7 @@ import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mj
 import { collectExternalPackageSurfaceMismatches } from "./sig-check/external-package-declarations.mjs";
 import { collectUntrackedTypeScriptDeclarations } from "./sig-check/untracked-declarations.mjs";
 import { collectTypeStoragePolicyMismatches } from "./sig-check/type-storage-policies.mjs";
+import { collectGoValueOperationProviderMismatches } from "./sig-check/value-operation-providers.mjs";
 import { buildTypeEquivalenceRelationRegistry } from "./sig-check/type-equivalence-relations.mjs";
 import { buildAmbientReferenceRelationRegistry } from "./sig-check/ambient-reference-relations.mjs";
 import { buildDeclarationOwnershipRegistry } from "./sig-check/declaration-ownership.mjs";
@@ -169,6 +170,16 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
     })
     : { checked: 0, inventory: [], mismatches: [], ownedDeclarationIds: new Set() };
   mismatches.push(...typeStoragePolicies.mismatches);
+  const valueOperationProviders = wholeProgramAudit
+    ? collectGoValueOperationProviderMismatches({
+      api,
+      config: deps.config,
+      moduleIndex,
+      snapshot: deps.snapshot,
+      valueEnvironments,
+    })
+    : { checked: 0, inventory: [], mismatches: [], ownedDeclarationIds: new Set() };
+  mismatches.push(...valueOperationProviders.mismatches);
   const externalPackageSurface = wholeProgramAudit
     ? collectExternalPackageSurfaceMismatches({
       api,
@@ -188,6 +199,7 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
       { owner: "authored-facade", ids: authoredFacades.ownedDeclarationIds },
       { owner: "external-package", ids: externalPackageSurface.ownedDeclarationIds },
       { owner: "go-type-storage", ids: typeStoragePolicies.ownedDeclarationIds },
+      { owner: "go-value-operations", ids: valueOperationProviders.ownedDeclarationIds },
     ])
     : { ids: new Set(), inventory: [], mismatches: [] };
   mismatches.push(...declarationOwnership.mismatches);
@@ -265,6 +277,13 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
         mismatchCount: typeStoragePolicies.mismatches.length,
       })
       : wholeProgramAuditNotRun(),
+    valueOperationProviders: wholeProgramAudit
+      ? completeAudit({
+        checked: valueOperationProviders.checked,
+        inventory: valueOperationProviders.inventory,
+        mismatchCount: valueOperationProviders.mismatches.length,
+      })
+      : wholeProgramAuditNotRun(),
     externalPackageSurface: wholeProgramAudit
       ? completeAudit({
         checked: externalPackageSurface.checked,
@@ -329,6 +348,7 @@ function prerequisiteBlockedReport(idFilter, mismatches) {
     authoredFacades: skipped(),
     externalPackageSurface: skipped(),
     typeStoragePolicies: skipped(),
+    valueOperationProviders: skipped(),
     typeEquivalenceRelations: skipped(),
     ambientReferenceRelations: skipped(),
     declarationOwnership: skipped(),

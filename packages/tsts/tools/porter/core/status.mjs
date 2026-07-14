@@ -2,10 +2,9 @@ import { buildGeneratedSourcePolicyStatus } from "../generated-source.mjs";
 import { schemaPoliciesFromSourcePin } from "../source-pin.mjs";
 import { declarationAuditsNotRun } from "./declaration-audits.mjs";
 import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
-import { expectedTsPath, inactiveSourcePolicyFor, isActivePortPolicy, tsFilePolicyFor } from "./policies.mjs";
-import { countsByModule, increment, moduleNameFor, repoRoot, resolveRepo, walk } from "./runtime.mjs";
-import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
-import { validateTsgoUnitMetadata } from "./ts-units.mjs";
+import { inactiveSourcePolicyFor, isActivePortPolicy, tsFilePolicyFor } from "./policies.mjs";
+import { countsByModule, repoRoot, resolveRepo, walk } from "./runtime.mjs";
+import { buildPorterUnitOwnership } from "./unit-ownership.mjs";
 import { PORTER_STATUS_SCHEMA_VERSION, requireExactPorterStatus } from "./status-contract.mjs";
 import { validateBuildStatusInput } from "./status-input-contract.mjs";
 import { existsSync, readFileSync, statSync } from "node:fs";
@@ -168,123 +167,23 @@ export function buildStatus(input) {
       }
     }
   }
-  const goUnits = [];
-  const goByID = new Map();
-  const duplicateGoIDs = [];
-
-  for (const file of snapshot.files) {
-    const filePolicy = effectivePolicies.file(file);
-    for (const unit of file.units ?? []) {
-      const policy = effectivePolicies.unit(unit, file);
-      const record = {
-        ...unit,
-        file: {
-          path: file.path,
-          importPath: file.importPath,
-          packageName: file.packageName,
-          lineCount: file.lineCount,
-          generated: file.generated,
-          policy: filePolicy,
-        },
-        portable: isSemanticPrimaryUnitKind(unit.kind),
-        policy,
-        expectedTsPath: expectedTsPath(config, unit, largeFileSplits),
-      };
-      if (goByID.has(record.id)) duplicateGoIDs.push(record.id);
-      goByID.set(record.id, record);
-      goUnits.push(record);
-    }
-  }
-  const tsByID = new Map();
-  const duplicateTsIDs = [];
-  const invalidTsMetadata = [];
-  for (const unit of tsUnits.units) {
-    if (tsByID.has(unit.id)) duplicateTsIDs.push(unit.id);
-    tsByID.set(unit.id, unit);
-    if (unit.metadata !== undefined) {
-      for (const reason of validateTsgoUnitMetadata(unit.metadata)) {
-        invalidTsMetadata.push({ id: unit.id ?? "", path: unit.path ?? "", reason });
-      }
-    }
-  }
-
-  const rows = [];
-  const categoryCounts = new Map();
-  const moduleCounts = new Map();
-  const missing = [];
-  const stale = [];
-  const implemented = [];
-  const stubbed = [];
-  const excluded = [];
-  const splitPathMismatches = [];
-
-  for (const unit of goUnits) {
-    if (!unit.portable) continue;
-
-    const tsUnit = tsByID.get(unit.id);
-    const category = unit.policy.category;
-    const moduleName = moduleNameFor(unit.file.path);
-    increment(categoryCounts, category);
-    increment(moduleCounts, moduleName);
-
-    const row = {
-      id: unit.id,
-      kind: unit.kind,
-      goPath: unit.file.path,
-      name: unit.qualifiedName,
-      category,
-      expectedTsPath: unit.expectedTsPath,
-      status: "missing",
-      reason: unit.policy.reason,
-      sigHash: unit.sigHash,
-      tsPath: "",
-      tsStatus: "",
-    };
-
-    if (!isActivePortPolicy(unit.policy)) {
-      row.status = "excluded";
-      excluded.push(row);
-      rows.push(row);
-      continue;
-    }
-
-    if (!tsUnit) {
-      missing.push(row);
-      rows.push(row);
-      continue;
-    }
-
-    row.tsPath = tsUnit.path;
-    row.tsStatus = tsUnit.status;
-    row.kind = tsUnit.kind;
-    const plannedSplitPath = largeFileSplits.assignments?.[unit.id];
-    if (plannedSplitPath !== undefined && tsUnit.path !== plannedSplitPath) {
-      splitPathMismatches.push({
-        id: unit.id,
-        actualPath: tsUnit.path,
-        expectedPath: plannedSplitPath,
-      });
-    }
-    const sigMatches = tsUnit.sigHash === unit.sigHash;
-    if (!sigMatches) {
-      row.status = "stale";
-      row.reason = "signature metadata hash drift";
-      stale.push(row);
-    } else if (tsUnit.status === "implemented") {
-      row.status = "implemented";
-      implemented.push(row);
-    } else if (tsUnit.status === "stub") {
-      row.status = "stub";
-      stubbed.push(row);
-    } else {
-      row.status = "invalid";
-    }
-    rows.push(row);
-  }
-
-  const orphanTsUnits = tsUnits.units
-    .filter((unit) => !goByID.has(unit.id))
-    .map((unit) => ({ id: unit.id, path: unit.path, status: unit.status }));
+  const ownership = buildPorterUnitOwnership({ config, largeFileSplits, snapshot, tsUnits });
+  const {
+    categoryCounts,
+    duplicateGoIDs,
+    duplicateTsIDs,
+    excluded,
+    goByID,
+    implemented,
+    invalidTsMetadata,
+    missing,
+    moduleCounts,
+    orphanTsUnits,
+    rows,
+    splitPathMismatches,
+    stale,
+    stubbed,
+  } = ownership;
   const untrackedTsFiles = tsUnits.files
     .filter((file) => file.metadataCount === 0 && tsFilePolicyFor(config, file.path).category === "requires-tsgo-unit")
     .map((file) => ({

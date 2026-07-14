@@ -80,15 +80,37 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export type GoRef<T> = GoNilable<\{ v: T; readonly \[goRefStorage\]: true \} & GoPointerMethods<T>>;/);
   assert.match(source, /export type GoPointerConstraint<T> = GoPtr<T> \| GoRef<T>;/);
   assert.match(source, /export function GoValueRef<T>\(value: T\): NonNullable<GoRef<T>>/);
-  assert.match(source, /export function GoSliceElementRef<T>\(slice: GoSlice<T>, index: int\): NonNullable<GoRef<T>>/);
+  assert.match(source, /export function GoSliceElementRef<T>\(slice: GoSlice<T>, index: int, valueOps: GoValueOps<T>\): NonNullable<GoRef<T>>/);
   assert.match(source, /export function GoFieldRef<T>\(read: \(\) => T, write: \(value: T\) => void\): NonNullable<GoRef<T>>/);
   assert.match(source, /export function GoIsRef\(value: unknown\): value is NonNullable<GoRef<unknown>>/);
-  assert.match(source, /export type GoSlice<T> = T\[];/);
-  assert.match(source, /const goNilSlice: readonly unknown\[] = Object\.freeze\(\[]\);/);
+  assert.match(source, /class GoArrayHeader<T, Length extends string> \{/);
+  assert.match(source, /class GoSliceHeader<T> \{/);
+  assert.match(source, /private readonly backing: GoSequenceBacking<T> \| undefined/);
+  assert.match(source, /private readonly offset: int/);
+  assert.match(source, /readonly length: int/);
+  assert.match(source, /private readonly capacityValue: int/);
+  assert.match(source, /export type GoSlice<T> = GoSliceHeader<T>;/);
+  assert.match(source, /export type GoArray<T, Length extends string> = GoArrayHeader<T, Length>;/);
+  assert.doesNotMatch(source, /export type GoSlice<T> = T\[]/);
+  assert.doesNotMatch(source, /export type GoArray<T, Length extends string> = T\[]/);
+  const sequenceDeclarations = source.slice(source.indexOf("interface GoSequenceBacking<T>"), source.indexOf("export type GoMap<K, V>"));
+  assert.doesNotMatch(sequenceDeclarations, /\[index: number\]|Symbol\.iterator|ArrayLike<T>/);
+  assert.match(source, /export function GoArraySlice<T, Length extends string>\(array: GoArray<T, Length>, low: int, high: int\): GoSlice<T>/);
+  assert.match(source, /export function GoArrayValueOps<T, Length extends string>\(length: int, elementOps: GoValueOps<T>\): GoValueOps<GoArray<T, Length>>/);
   assert.doesNotMatch(source, /__tsgoGoNil/);
   assert.match(source, /export function GoNilSlice<T>\(\): GoSlice<T>/);
   assert.match(source, /export function GoSliceIsNil<T>\(slice: GoSlice<T>\): bool/);
-  assert.match(source, /export function GoSliceToZeroLength<T>\(slice: GoSlice<T>\): GoSlice<T>/);
+  assert.match(source, /export function GoSliceMake<T>\(length: int, capacity: int, valueOps: GoValueOps<T>\): GoSlice<T>/);
+  assert.match(source, /export function GoSliceReslice<T>\(slice: GoSlice<T>, low: int, high: int\): GoSlice<T>/);
+  assert.match(source, /export function GoSliceFullReslice<T>\(slice: GoSlice<T>, low: int, high: int, maximum: int\): GoSlice<T>/);
+  assert.match(source, /export function GoSliceLoad<T>\(slice: GoSlice<T>, index: int, valueOps: GoValueOps<T>\): T/);
+  assert.match(source, /export function GoSliceStore<T>\(slice: GoSlice<T>, index: int, value: T, valueOps: GoValueOps<T>\): void/);
+  assert.match(source, /export function GoSliceAppend<T>\(slice: GoSlice<T>, value: T, valueOps: GoValueOps<T>\): GoSlice<T>/);
+  assert.match(source, /export function GoSliceAppendSlice<T>\(slice: GoSlice<T>, items: GoSlice<T>, valueOps: GoValueOps<T>\): GoSlice<T>/);
+  assert.match(source, /export function GoSliceCopy<T>\(destination: GoSlice<T>, source: GoSlice<T>, valueOps: GoValueOps<T>\): int/);
+  assert.match(source, /export function GoSliceClone<T>\(slice: GoSlice<T>, valueOps: GoValueOps<T>\): GoSlice<T>/);
+  assert.match(source, /export function GoSliceClear<T>\(slice: GoSlice<T>, valueOps: GoValueOps<T>\): void/);
+  assert.doesNotMatch(source, /\bGoAppend(?:Slice)?\b|GoSliceToZeroLength/);
   assert.match(source, /export type GoMap<K, V> = Map<K, V>;/);
   assert.match(source, /export function GoNilMap<K, V>\(\): GoMap<K, V>/);
   assert.doesNotMatch(source, /__tsgo(?:Key|Value)Zero|class GoNativeMap|function NewGoMap/);
@@ -136,8 +158,12 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.doesNotMatch(source, /Nilable extends boolean/);
   assert.match(source, /MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): GoChan<T>/);
   assert.match(source, /GoMapGetExisting<K, V>\(map: NonNullable<GoMap<K, V>>/);
-  assert.match(source, /GoAppend<T>\(slice: GoSlice<T>, \.\.\.items: T\[]\): NonNullable<GoSlice<T>>/);
-  assert.match(source, /GoAppendSlice<T>\(slice: GoSlice<T>, items: GoSlice<T>\): NonNullable<GoSlice<T>>/);
+  assert.match(source, /export const GoNumberValueOps: GoValueOps<number>/);
+  assert.match(source, /export function GoSliceValueOps<T>\(\): GoValueOps<GoSlice<T>>/);
+  assert.match(source, /export const GoComplex64ValueOps: GoValueOps<GoComplex64>/);
+  assert.match(source, /export const GoComplex128ValueOps: GoValueOps<GoComplex128>/);
+  assert.match(source, /export function GoInterfaceValueOps<I>\(\): GoValueOps<GoInterface<I>>/);
+  assert.match(source, /export function GoUnsafePointerValueOps\(\): GoValueOps<GoUnsafePointer>/);
 });
 
 test("defined Go types preserve nil and unnamed-to-named assignment without becoming mutually assignable", () => {
@@ -154,8 +180,26 @@ const first: First = raw;
 const nil: First = undefined;
 // @ts-expect-error distinct defined Go types with identical underlying types are not assignable
 const second: Second = first;
+// @ts-expect-error raw arrays are not Go slice headers
+const rawSlice: GoSlice<number> = [];
+declare const opaqueSlice: GoSlice<number>;
+// @ts-expect-error raw arrays are not Go fixed-array values
+const rawArray: GoArray<number, "2"> = [1, 2];
+declare const opaqueArray: GoArray<number, "2">;
+// @ts-expect-error Go slice elements require the explicit load operation
+const rawElement = opaqueSlice[0];
+// @ts-expect-error Go fixed-array elements require the explicit load operation
+const rawArrayElement = opaqueArray[0];
+// @ts-expect-error Go slices are not JavaScript iterables
+for (const element of opaqueSlice) void element;
+// @ts-expect-error Go slices expose no JavaScript array methods
+opaqueSlice.push(1);
 void nil;
 void second;
+void rawSlice;
+void rawArray;
+void rawElement;
+void rawArrayElement;
 `;
   const options = {
     module: ts.ModuleKind.ESNext,
@@ -203,42 +247,52 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.equal(runtime.GoMapIsNil(runtime.GoZeroMap()), true);
   assert.equal(runtime.GoChanIsNil(runtime.GoZeroChannel()), true);
   assert.deepEqual(runtime.GoZeroEmptyStruct(), {});
-  assert.equal(nilSlice, sameNilSlice);
-  assert.deepEqual(nilSlice, []);
-  assert.deepEqual(Object.keys(nilSlice), []);
-  assert.equal(Object.isFrozen(nilSlice), true);
   assert.equal(runtime.GoSliceIsNil(nilSlice), true);
   assert.equal(runtime.GoSliceIsNil(sameNilSlice), true);
-  assert.equal(runtime.GoSliceIsNil([]), false);
-  assert.equal(runtime.GoSliceToZeroLength(nilSlice), nilSlice);
-  const nonNilSlice = [1, 2, 3];
-  const zeroLengthSlice = runtime.GoSliceToZeroLength(nonNilSlice);
+  assert.equal(runtime.GoSliceCapacity(nilSlice), 0);
+  const nonNilSlice = runtime.GoSliceBuild(3, 3, runtime.GoNumberValueOps, (slice) => {
+    runtime.GoSliceStore(slice, 0, 1, runtime.GoNumberValueOps);
+    runtime.GoSliceStore(slice, 1, 2, runtime.GoNumberValueOps);
+    runtime.GoSliceStore(slice, 2, 3, runtime.GoNumberValueOps);
+  });
+  const zeroLengthSlice = runtime.GoSliceReslice(nonNilSlice, 0, 0);
   assert.notEqual(zeroLengthSlice, nonNilSlice);
-  assert.deepEqual(nonNilSlice, [1, 2, 3]);
-  assert.deepEqual(zeroLengthSlice, []);
+  assert.equal(nonNilSlice.length, 3);
+  assert.equal(zeroLengthSlice.length, 0);
+  assert.equal(runtime.GoSliceCapacity(zeroLengthSlice), 3);
   assert.equal(runtime.GoSliceIsNil(zeroLengthSlice), false);
   const valueRef = runtime.GoValueRef(1);
   valueRef.v = 2;
   assert.equal(valueRef.v, 2);
-  const values = [1, 2];
-  const elementRef = runtime.GoSliceElementRef(values, 1);
+  const values = runtime.GoSliceBuild(2, 2, runtime.GoNumberValueOps, (slice) => {
+    runtime.GoSliceStore(slice, 0, 1, runtime.GoNumberValueOps);
+    runtime.GoSliceStore(slice, 1, 2, runtime.GoNumberValueOps);
+  });
+  const elementRef = runtime.GoSliceElementRef(values, 1, runtime.GoNumberValueOps);
   assert.equal(elementRef.v, 2);
   elementRef.v = 3;
-  assert.deepEqual(values, [1, 3]);
-  assert.throws(() => runtime.GoSliceElementRef(values, 2), /index out of range/);
-  assert.equal(runtime.GoAppend(nilSlice), nilSlice);
-  const appended = runtime.GoAppend(nilSlice, 1);
-  assert.deepEqual(appended, [1]);
+  assert.equal(runtime.GoSliceLoad(values, 1, runtime.GoNumberValueOps), 3);
+  assert.equal(runtime.GoSliceElementRef(values, 1, runtime.GoNumberValueOps), elementRef);
+  assert.throws(() => runtime.GoSliceElementRef(values, 2, runtime.GoNumberValueOps), /index out of range/);
+  const appended = runtime.GoSliceAppend(nilSlice, 1, runtime.GoNumberValueOps);
+  assert.equal(runtime.GoSliceLoad(appended, 0, runtime.GoNumberValueOps), 1);
   assert.notEqual(appended, nilSlice);
   assert.equal(nilSlice.length, 0);
-  assert.equal(runtime.GoAppendSlice(nilSlice, []), nilSlice);
-  const appendSource = [1, 2];
-  const appendItems = globalThis.Array.from({ length: 150_000 }, (_, index) => index + 3);
-  const appendedSlice = runtime.GoAppendSlice(appendSource, appendItems);
+  const emptySlice = runtime.GoSliceMake(0, 0, runtime.GoNumberValueOps);
+  assert.equal(runtime.GoSliceAppendSlice(nilSlice, emptySlice, runtime.GoNumberValueOps), nilSlice);
+  const appendSource = runtime.GoSliceBuild(2, 150_002, runtime.GoNumberValueOps, (slice) => {
+    runtime.GoSliceStore(slice, 0, 1, runtime.GoNumberValueOps);
+    runtime.GoSliceStore(slice, 1, 2, runtime.GoNumberValueOps);
+  });
+  const appendItems = runtime.GoSliceMake(150_000, 150_000, runtime.GoNumberValueOps);
+  for (let index = 0; index < appendItems.length; index++) {
+    runtime.GoSliceStore(appendItems, index, index + 3, runtime.GoNumberValueOps);
+  }
+  const appendedSlice = runtime.GoSliceAppendSlice(appendSource, appendItems, runtime.GoNumberValueOps);
   assert.equal(appendedSlice.length, 150_002);
-  assert.deepEqual(appendSource, [1, 2]);
-  assert.equal(appendedSlice[0], 1);
-  assert.equal(appendedSlice[150_001], 150_002);
+  assert.equal(appendSource.length, 2);
+  assert.equal(runtime.GoSliceLoad(appendedSlice, 0, runtime.GoNumberValueOps), 1);
+  assert.equal(runtime.GoSliceLoad(appendedSlice, 150_001, runtime.GoNumberValueOps), 150_002);
 
   const nilMap = runtime.GoNilMap();
   assert.equal(nilMap.size, 0);

@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoNumberValueOps, GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
@@ -981,7 +982,7 @@ export function Checker_GetRootSymbols(receiver: GoPtr<Checker>, symbol_: GoPtr<
   }
   let result: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   for (const root of roots) {
-    result = GoAppendSlice(result, Checker_GetRootSymbols(receiver, root));
+    result = GoSliceAppendSlice(result, Checker_GetRootSymbols(receiver, root), GoPointerValueOps<Symbol>());
   }
   return result;
 }
@@ -1394,20 +1395,20 @@ export function Checker_GetReferencesToSymbolInFile(receiver: GoPtr<Checker>, so
     }
     const refSymbol = Checker_GetSymbolAtLocation(receiver, token);
     if (refSymbol === symbol_) {
-      result = GoAppend(result, token);
+      result = GoSliceAppend(result, token, GoPointerValueOps<Node>());
       continue;
     }
     if (token!.Parent !== undefined && token!.Parent!.Kind === KindShorthandPropertyAssignment) {
       const shorthandSymbol = Checker_GetShorthandAssignmentValueSymbol(receiver, token!.Parent);
       if (shorthandSymbol === symbol_) {
-        result = GoAppend(result, token);
+        result = GoSliceAppend(result, token, GoPointerValueOps<Node>());
         continue;
       }
     }
     if (token!.Parent !== undefined && IsExportSpecifier(token!.Parent)) {
       const localSymbol = Checker_getLocalSymbolForExportSpecifier(receiver, AsIdentifier(token), refSymbol, AsExportSpecifier(token!.Parent));
       if (localSymbol === symbol_) {
-        result = GoAppend(result, token);
+        result = GoSliceAppend(result, token, GoPointerValueOps<Node>());
         continue;
       }
     }
@@ -1567,7 +1568,7 @@ export function getPossibleSymbolReferencePositions(sourceFile: GoPtr<SourceFile
     if ((position === 0 || !IsIdentifierPart(byteAt(text, position - 1))) &&
       (endPosition === sourceLength || !IsIdentifierPart(byteAt(text, endPosition)))) {
       // Found a real match.  Keep searching.
-      positions = GoAppend(positions, position);
+      positions = GoSliceAppend(positions, position, GoNumberValueOps);
     }
     const startIndex = position + symbolNameLength + 1;
     if (startIndex > byteLen(text)) {
@@ -1676,7 +1677,7 @@ export function Checker_getTypeParameterConstraintForPositionAcrossSignatures(re
     const relevantTypeParameter = signature!.typeParameters![position];
     const relevantConstraint = Checker_getConstraintOfTypeParameter(receiver, relevantTypeParameter);
     if (relevantConstraint !== undefined) {
-      relevantConstraints = GoAppend(relevantConstraints, relevantConstraint);
+      relevantConstraints = GoSliceAppend(relevantConstraints, relevantConstraint, GoPointerValueOps<Type>());
     }
   }
   return Checker_getUnionType(receiver, relevantConstraints);
@@ -1912,7 +1913,7 @@ export function Checker_GetExportsAndPropertiesOfModule(receiver: GoPtr<Checker>
   if (exportEquals !== moduleSymbol) {
     const t = Checker_getTypeOfSymbol(receiver, exportEquals);
     if (Checker_shouldTreatPropertiesOfExternalModuleAsExports(receiver, t)) {
-      exports = GoAppendSlice(exports, Checker_getPropertiesOfType(receiver, t));
+      exports = GoSliceAppendSlice(exports, Checker_getPropertiesOfType(receiver, t), GoPointerValueOps<Symbol>());
     }
   }
   return exports;
@@ -2097,7 +2098,7 @@ export function Checker_GetCandidateSignaturesForStringLiteralCompletions(receiv
     if (candidatesSet.has(candidate)) {
       continue;
     }
-    candidates = GoAppend(candidates, candidate);
+    candidates = GoSliceAppend(candidates, candidate, GoPointerValueOps<Signature>());
   }
 
   return candidates;

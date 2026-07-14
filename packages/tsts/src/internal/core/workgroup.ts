@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoChan, GoError, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoFunctionValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend } from "../../go/compat.js";
 import { GoSlicePrefix } from "../../go/slice-runtime.js";
 import type { Context } from "../../go/context.js";
@@ -160,7 +161,7 @@ export function singleThreadedWorkGroup_Queue(receiver: GoPtr<singleThreadedWork
     throw new globalThis.Error("Queue called after RunAndWait returned");
   }
   receiver!.fnsMu.Lock();
-  receiver!.fns = GoAppend(receiver!.fns, fn!);
+  receiver!.fns = GoSliceAppend(receiver!.fns, fn!, GoFunctionValueOps<() => void>());
   receiver!.fnsMu.Unlock();
 }
 

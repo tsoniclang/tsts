@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import { GoAppend, GoEqualStrict, GoNilSlice, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Symbol } from "../../ast/ast.js";
@@ -72,7 +73,7 @@ export function SymbolTrackerImpl_PopErrorFallbackNode(receiver: GoPtr<SymbolTra
  * }
  */
 export function SymbolTrackerImpl_PushErrorFallbackNode(receiver: GoPtr<SymbolTrackerImpl>, node: GoPtr<Node>): void {
-  receiver!.fallbackStack = GoAppend(receiver!.fallbackStack, node);
+  receiver!.fallbackStack = GoSliceAppend(receiver!.fallbackStack, node, GoPointerValueOps<Node>());
 }
 
 /**
@@ -484,7 +485,7 @@ export interface SymbolTrackerSharedState {
  * }
  */
 export function SymbolTrackerSharedState_addDiagnostic(receiver: GoPtr<SymbolTrackerSharedState>, diag: GoPtr<Diagnostic>): void {
-  receiver!.diagnostics = GoAppend(receiver!.diagnostics, diag);
+  receiver!.diagnostics = GoSliceAppend(receiver!.diagnostics, diag, GoPointerValueOps<Diagnostic>());
 }
 
 /**

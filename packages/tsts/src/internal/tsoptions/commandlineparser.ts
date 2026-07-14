@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { GoAppend, GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import { Atoi, Itoa } from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
@@ -496,7 +497,7 @@ export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineP
         pos++;
       }
       if (pos < textLength) {
-        args = GoAppend(args, text.slice(start + 1, pos).join(""));
+        args = GoSliceAppend(args, text.slice(start + 1, pos).join(""), GoStringValueOps);
         pos++;
       } else {
         p.errors = [...p.errors, NewCompilerDiagnostic(Unterminated_quoted_string_in_response_file_0, fileName)];
@@ -505,7 +506,7 @@ export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineP
       while (pos < textLength && text[pos]!.charCodeAt(0) > 32 /* ' ' */) {
         pos++;
       }
-      args = GoAppend(args, text.slice(start, pos).join(""));
+      args = GoSliceAppend(args, text.slice(start, pos).join(""), GoStringValueOps);
     }
   }
   commandLineParser_parseStrings(p, args);

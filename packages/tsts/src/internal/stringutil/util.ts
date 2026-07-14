@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend } from "../../go/compat.js";
 import * as regexp from "../../go/regexp.js";
 import { Builder, Count } from "../../go/strings.js";
@@ -254,19 +255,19 @@ export function SplitLines(text: string): GoSlice<string> {
     switch (text.charCodeAt(pos)) {
       case 0x0d /* '\r' */: {
         if (pos + 1 < textLen && text.charCodeAt(pos + 1) === 0x0a) {
-          lines = GoAppend(lines, text.slice(start, pos));
+          lines = GoSliceAppend(lines, text.slice(start, pos), GoStringValueOps);
           pos += 2;
           start = pos;
           continue;
         }
         // fallthrough
-        lines = GoAppend(lines, text.slice(start, pos));
+        lines = GoSliceAppend(lines, text.slice(start, pos), GoStringValueOps);
         pos++;
         start = pos;
         continue;
       }
       case 0x0a /* '\n' */: {
-        lines = GoAppend(lines, text.slice(start, pos));
+        lines = GoSliceAppend(lines, text.slice(start, pos), GoStringValueOps);
         pos++;
         start = pos;
         continue;
@@ -275,7 +276,7 @@ export function SplitLines(text: string): GoSlice<string> {
     pos++;
   }
   if (start < text.length) {
-    lines = GoAppend(lines, text.slice(start));
+    lines = GoSliceAppend(lines, text.slice(start), GoStringValueOps);
   }
   return lines;
 }

@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import type { Kind } from "../../ast/generated/kinds.js";
@@ -175,14 +176,14 @@ export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingCont
         for (const e of receiver!.reparseList) {
           // Propagate @typedef type alias declarations outwards to a context that permits them.
           if ((IsJSTypeAliasDeclaration(e) || IsJSImportDeclaration(e)) && kind !== PCSourceElements && kind !== PCBlockStatements) {
-            outerReparseList = GoAppend(outerReparseList, e);
+            outerReparseList = GoSliceAppend(outerReparseList, e, GoPointerValueOps<Node>());
           } else {
-            list = GoAppend(list, e);
+            list = GoSliceAppend(list, e, GoPointerValueOps<Node>());
           }
         }
         receiver!.reparseList = GoNilSlice();
       }
-      list = GoAppend(list, elt);
+      list = GoSliceAppend(list, elt, GoPointerValueOps<Node>());
       continue;
     }
     if (Parser_abortParsingListOrMoveToNextToken(receiver, kind)) {
@@ -285,7 +286,7 @@ export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: Parsing
         // Return nil to indicate parseElement failed
         return undefined;
       }
-      list = GoAppend(list, element);
+      list = GoSliceAppend(list, element, GoPointerValueOps<Node>());
       if (Parser_parseOptional(receiver, KindCommaToken)) {
         // No need to check for a zero length node since we know we parsed a comma
         continue;

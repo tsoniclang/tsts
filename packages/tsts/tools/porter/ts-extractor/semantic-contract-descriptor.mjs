@@ -65,15 +65,17 @@ export function semanticSignatureDescriptor(signature, parentContext, operations
     params.push(callableParameterDescriptor(
       uniqueName("receiver", usedNames),
       semanticContractDescriptor(signature.receiver.type, context, operations),
-      false,
     ));
   }
   let syntheticIndex = 0;
   for (const parameter of signature.parameters) {
     const baseName = parameter.name === "" ? `arg${syntheticIndex++}` : safeParamName(parameter.name);
     const name = uniqueName(baseName, usedNames);
+    if (parameter.variadic === true && !isSliceCarrier(parameter.type)) {
+      throw new Error("canonical Go variadic parameter does not retain its slice carrier");
+    }
     const type = semanticContractDescriptor(parameter.type, context, operations);
-    params.push(callableParameterDescriptor(name, parameter.variadic ? { t: "array", element: type } : type, parameter.variadic));
+    params.push(callableParameterDescriptor(name, type));
   }
   const ret = semanticResultsDescriptor(signature.results, context, operations);
   const receiverCount = signature.receiverTypeParameters.length;
@@ -177,13 +179,13 @@ function typeParameterDescriptor(reference, context) {
   return { t: "tp", depth: binding.depth, index: binding.index };
 }
 
-function callableParameterDescriptor(name, type, rest) {
+function callableParameterDescriptor(name, type) {
   return {
     name,
     role: "parameter",
     modifiers: [],
     type,
-    rest,
+    rest: false,
     optional: false,
     optionalSyntax: "required",
     question: false,
@@ -192,6 +194,10 @@ function callableParameterDescriptor(name, type, rest) {
     initializer: undefined,
     initializerIssue: undefined,
   };
+}
+
+function isSliceCarrier(contract) {
+  return contract?.kind === "carrier" && contract.carrier === "slice";
 }
 
 function defaultTypeParameterDescriptor(parameter, binding, constraint) {

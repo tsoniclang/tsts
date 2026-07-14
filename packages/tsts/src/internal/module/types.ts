@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
@@ -282,16 +283,16 @@ export function extensions_String(receiver: extensions): string {
   const e = receiver;
   let result: GoSlice<string> = [];
   if ((e & extensionsTypeScript) !== 0) {
-    result = GoAppend(result, "TypeScript");
+    result = GoSliceAppend(result, "TypeScript", GoStringValueOps);
   }
   if ((e & extensionsJavaScript) !== 0) {
-    result = GoAppend(result, "JavaScript");
+    result = GoSliceAppend(result, "JavaScript", GoStringValueOps);
   }
   if ((e & extensionsDeclaration) !== 0) {
-    result = GoAppend(result, "Declaration");
+    result = GoSliceAppend(result, "Declaration", GoStringValueOps);
   }
   if ((e & extensionsJson) !== 0) {
-    result = GoAppend(result, "JSON");
+    result = GoSliceAppend(result, "JSON", GoStringValueOps);
   }
   return strings.Join(result, ", ");
 }
@@ -321,16 +322,16 @@ export function extensions_Array(receiver: extensions): GoSlice<string> {
   const e = receiver;
   let result: GoSlice<string> = [];
   if ((e & extensionsTypeScript) !== 0) {
-    result = GoAppendSlice(result, extension.SupportedTSImplementationExtensions);
+    result = GoSliceAppendSlice(result, extension.SupportedTSImplementationExtensions, GoStringValueOps);
   }
   if ((e & extensionsJavaScript) !== 0) {
-    result = GoAppendSlice(result, extension.SupportedJSExtensionsFlat);
+    result = GoSliceAppendSlice(result, extension.SupportedJSExtensionsFlat, GoStringValueOps);
   }
   if ((e & extensionsDeclaration) !== 0) {
-    result = GoAppendSlice(result, extension.SupportedDeclarationExtensions);
+    result = GoSliceAppendSlice(result, extension.SupportedDeclarationExtensions, GoStringValueOps);
   }
   if ((e & extensionsJson) !== 0) {
-    result = GoAppend(result, extension.ExtensionJson);
+    result = GoSliceAppend(result, extension.ExtensionJson, GoStringValueOps);
   }
   return result;
 }

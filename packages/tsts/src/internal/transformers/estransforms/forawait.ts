@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoAppend, GoNilSlice, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { NodeVisitor } from "../../ast/visitor.js";
 import { NodeFactory_NewNodeList, Node_Modifiers, Node_Name } from "../../ast/spine.js";
@@ -842,7 +843,7 @@ export function forawaitTransformer_convertForOfStatementHead(receiver: GoPtr<fo
   const statement = NodeVisitor_VisitEmbeddedStatement((visitor as ConcreteNodeVisitor), node!.Statement as unknown as GoPtr<Node>);
 
   let statements: GoSlice<GoPtr<Node>> = [iteratorValueStatement, exitNonUserCodeStatement];
-  statements = GoAppend(statements, visitedBinding);
+  statements = GoSliceAppend(statements, visitedBinding, GoPointerValueOps<Node>());
   let bodyLocation = { pos: 0, end: 0 };
   let statementsLocation = { pos: 0, end: 0 };
 
@@ -850,13 +851,13 @@ export function forawaitTransformer_convertForOfStatementHead(receiver: GoPtr<fo
     const stmts = Node_StatementList(statement);
     if (stmts !== undefined) {
       for (const stmt of stmts!.Nodes) {
-        statements = GoAppend(statements, stmt);
+        statements = GoSliceAppend(statements, stmt, GoPointerValueOps<Node>());
       }
       statementsLocation = stmts!.Loc;
     }
     bodyLocation = statement!.Loc;
   } else {
-    statements = GoAppend(statements, statement);
+    statements = GoSliceAppend(statements, statement, GoPointerValueOps<Node>());
   }
 
   const stmtList = NodeFactory_NewNodeList(factory, statements);
@@ -1699,7 +1700,7 @@ export function forawaitTransformer_transformAsyncGeneratorFunctionParameterList
       undefined,
       undefined,
     );
-    newParameters = GoAppend(newParameters, newParameter);
+    newParameters = GoSliceAppend(newParameters, newParameter, GoPointerValueOps<Node>());
   }
   const newParametersArray = NodeFactory_NewNodeList(factory, newParameters);
   newParametersArray!.Loc = Node_ParameterList(node)!.Loc;

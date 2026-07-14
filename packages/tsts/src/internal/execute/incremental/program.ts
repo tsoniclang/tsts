@@ -1,5 +1,6 @@
 import type { bool, byte } from "../../../go/scalars.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, GoStringKey, GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../../go/compat.js";
 import { Concat } from "../../../go/slices.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
@@ -430,7 +431,7 @@ export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Go
   let diagnostics: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   for (const f of compiler_Program_GetSourceFiles(receiver!.program)) {
     for (const d of Program_getSemanticDiagnosticsOfFile(receiver, f)) {
-      diagnostics = GoAppend(diagnostics, d);
+      diagnostics = GoSliceAppend(diagnostics, d, GoPointerValueOps<Diagnostic>());
     }
   }
   return diagnostics;
@@ -563,8 +564,8 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: GoInterface<Context>
 
     const buildInfoResult = Program_emitBuildInfo(receiver, ctx, options);
     if (buildInfoResult !== undefined) {
-      result.Diagnostics = GoAppendSlice(result.Diagnostics, buildInfoResult.Diagnostics);
-      result.EmittedFiles = GoAppendSlice(result.EmittedFiles, buildInfoResult.EmittedFiles);
+      result.Diagnostics = GoSliceAppendSlice(result.Diagnostics, buildInfoResult.Diagnostics, GoPointerValueOps<Diagnostic>());
+      result.EmittedFiles = GoSliceAppendSlice(result.EmittedFiles, buildInfoResult.EmittedFiles, GoStringValueOps);
     }
     return result;
   }
@@ -656,7 +657,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
         GoStringKey
       );
       if (!ok) {
-        affectedFiles = GoAppend(affectedFiles, f);
+        affectedFiles = GoSliceAppend(affectedFiles, f, GoPointerValueOps<SourceFile>());
       }
     }
   }

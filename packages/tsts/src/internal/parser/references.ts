@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import { GoAppend, type GoPtr } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { AsSourceFile, Node_Body, Node_Text, SourceFile_Imports } from "../ast/ast.js";
 import type { SourceFile } from "../ast/ast.js";
 import { AsModuleDeclaration } from "../ast/generated/casts.js";
@@ -48,7 +49,7 @@ export function collectExternalModuleReferences(file: GoPtr<SourceFile>): void {
 
   if ((sf.Flags & NodeFlagsPossiblyContainsDynamicImport) !== 0 || IsInJSFile(file)) {
     ForEachDynamicImportOrRequireCall(sf, /*includeTypeSpaceImports*/ true as bool, /*requireStringLiteralLikeArgument*/ true as bool, (node: GoPtr<Node>, moduleSpecifier: GoPtr<Expression>): bool => {
-      SetImportsOfSourceFile(sf, GoAppend(SourceFile_Imports(sf), moduleSpecifier));
+      SetImportsOfSourceFile(sf, GoSliceAppend(SourceFile_Imports(sf), moduleSpecifier, GoPointerValueOps<Node>()));
       return false as bool;
     });
   }
@@ -117,7 +118,7 @@ export function collectModuleReferences(file: GoPtr<SourceFile>, node: GoPtr<Sta
     if (moduleNameExpr !== undefined && IsStringLiteral(moduleNameExpr)) {
       const moduleName = Node_Text(moduleNameExpr);
       if (moduleName !== "" && (!inAmbientModule || !IsExternalModuleNameRelative(moduleName))) {
-        SetImportsOfSourceFile(sf, GoAppend(SourceFile_Imports(sf), moduleNameExpr));
+        SetImportsOfSourceFile(sf, GoSliceAppend(SourceFile_Imports(sf), moduleNameExpr, GoPointerValueOps<Node>()));
         // !!! removed `&& p.currentNodeModulesDepth == 0`
         if (sf.UsesUriStyleNodeCoreModules !== TSTrue && !sf.IsDeclarationFile) {
           if (moduleName.startsWith("node:") && !ExclusivelyPrefixedNodeCoreModules.get(moduleName)) {
@@ -140,9 +141,9 @@ export function collectModuleReferences(file: GoPtr<SourceFile>, node: GoPtr<Sta
     // - if current file is not external module then module augmentation is an ambient module declaration with non-relative module name
     //   immediately nested in top level ambient module declaration .
     if (IsExternalModule(sf) || (inAmbientModule && !IsExternalModuleNameRelative(nameText))) {
-      sf.ModuleAugmentations = GoAppend(sf.ModuleAugmentations, AsModuleDeclaration(node)!.name);
+      sf.ModuleAugmentations = GoSliceAppend(sf.ModuleAugmentations, AsModuleDeclaration(node)!.name, GoPointerValueOps<Node>());
     } else if (!inAmbientModule) {
-      sf.AmbientModuleNames = GoAppend(sf.AmbientModuleNames, nameText);
+      sf.AmbientModuleNames = GoSliceAppend(sf.AmbientModuleNames, nameText, GoStringValueOps);
       // An AmbientExternalModuleDeclaration declares an external module.
       // This type of declaration is permitted only in the global module.
       // The StringLiteral must specify a top - level external module name.

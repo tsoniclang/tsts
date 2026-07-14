@@ -1,6 +1,7 @@
 import type { bool } from "../../go/scalars.js";
 import type { Seq2 } from "../../go/iter.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, GoStringKey, GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { Node_Expression, Node_Symbol, Node_Text } from "../ast/ast.js";
 import type { HasFileName, Node, SourceFile } from "../ast/ast.js";
@@ -664,10 +665,10 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
   const redirects = host!.GetRedirectTargets(importedPath);
   let importedFileNames = GoNilSlice<string>();
   if (referenceRedirect.length > 0) {
-    importedFileNames = GoAppend(importedFileNames, referenceRedirect);
+    importedFileNames = GoSliceAppend(importedFileNames, referenceRedirect, GoStringValueOps);
   }
-  importedFileNames = GoAppend(importedFileNames, importedFileName);
-  importedFileNames = GoAppendSlice(importedFileNames, redirects);
+  importedFileNames = GoSliceAppend(importedFileNames, importedFileName, GoStringValueOps);
+  importedFileNames = GoSliceAppendSlice(importedFileNames, redirects, GoStringValueOps);
   const targets = importedFileNames.map(f => tspath.GetNormalizedAbsolutePath(f, cwd));
   let shouldFilterIgnoredPaths = !targets.every(containsIgnoredPath);
 
@@ -929,7 +930,7 @@ export function computeModuleSpecifiers(modulePaths: GoSlice<ModulePath>, compil
       specifier = tryGetModuleNameAsNodeModule(modulePath, info, importingSourceFile, host, compilerOptions, userPreferences, /*packageNameOnly*/ false, options.OverrideImportMode);
     }
     if (specifier.length > 0 && !(forAutoImport && IsExcludedByRegex(specifier, preferences.excludeRegexes))) {
-      nodeModulesSpecifiers = GoAppend(nodeModulesSpecifiers, specifier);
+      nodeModulesSpecifiers = GoSliceAppend(nodeModulesSpecifiers, specifier, GoStringValueOps);
       if (modulePath.IsRedirect) {
         // If we got a specifier for a redirect, it was a bare package specifier (e.g. "@foo/bar",
         // not "@foo/bar/path/to/file"). No other specifier will be this good, so stop looking.
@@ -954,15 +955,15 @@ export function computeModuleSpecifiers(modulePaths: GoSlice<ModulePath>, compil
       continue;
     }
     if (modulePath.IsRedirect) {
-      redirectPathsSpecifiers = GoAppend(redirectPathsSpecifiers, local);
+      redirectPathsSpecifiers = GoSliceAppend(redirectPathsSpecifiers, local, GoStringValueOps);
     } else if (PathIsBareSpecifier(local)) {
       if (ContainsNodeModules(local)) {
-        relativeSpecifiers = GoAppend(relativeSpecifiers, local);
+        relativeSpecifiers = GoSliceAppend(relativeSpecifiers, local, GoStringValueOps);
       } else {
-        pathsSpecifiers = GoAppend(pathsSpecifiers, local);
+        pathsSpecifiers = GoSliceAppend(pathsSpecifiers, local, GoStringValueOps);
       }
     } else if (forAutoImport || !importedFileIsInNodeModules || modulePath.IsInNodeModules) {
-      relativeSpecifiers = GoAppend(relativeSpecifiers, local);
+      relativeSpecifiers = GoSliceAppend(relativeSpecifiers, local, GoStringValueOps);
     }
   }
 

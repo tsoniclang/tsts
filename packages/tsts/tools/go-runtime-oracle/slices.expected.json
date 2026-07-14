@@ -57,7 +57,16 @@
       0,
       0
     ],
-    "zeroViewWasNonNil": true
+    "zeroViewWasNonNil": true,
+    "multiOldBacking": [
+      1,
+      0
+    ],
+    "multiResult": [
+      1,
+      2,
+      3
+    ]
   },
   "fullSlice": {
     "length": 1,
@@ -92,5 +101,110 @@
   "addresses": {
     "sameElementAddress": true,
     "subsliceAddress": true
+  },
+  "array": {
+    "arrayAfterSliceWrite": [
+      1,
+      7,
+      3
+    ],
+    "copiedArray": [
+      1,
+      9,
+      3
+    ],
+    "sliceSharesAddress": true
+  },
+  "stringBytes": {
+    "appendUtf8": [
+      195,
+      169,
+      240,
+      159,
+      146,
+      154
+    ],
+    "utf8MiddleSlice": [
+      169
+    ],
+    "appendRaw": [
+      255,
+      0,
+      97,
+      195,
+      169
+    ],
+    "rawLength": 5,
+    "rawIndexes": [
+      255,
+      0,
+      97,
+      195,
+      169
+    ],
+    "rawSlice": [
+      0,
+      97,
+      195
+    ],
+    "rawAfterSourceMutation": [
+      255,
+      0,
+      97,
+      195,
+      169
+    ],
+    "rawAfterConvertedMutation": [
+      255,
+      0,
+      97,
+      195,
+      169
+    ],
+    "appendAllocateOldBacking": [
+      7,
+      0
+    ],
+    "appendAllocateResult": [
+      7,
+      255,
+      0,
+      97,
+      195,
+      169
+    ],
+    "appendReuseBacking": [
+      7,
+      255,
+      0,
+      97,
+      195,
+      169,
+      0,
+      0
+    ],
+    "appendReuseResult": [
+      7,
+      255,
+      0,
+      97,
+      195,
+      169
+    ],
+    "copyCount": 4,
+    "copyBytes": [
+      255,
+      0,
+      97,
+      195
+    ],
+    "truncatedUtf8CopyCount": 1,
+    "truncatedUtf8CopyBytes": [
+      195
+    ],
+    "emptyBytesIsNil": false,
+    "emptyBytesLength": 0,
+    "emptyBytesCapacity": 0,
+    "nilBytesStringLength": 0
   }
 }

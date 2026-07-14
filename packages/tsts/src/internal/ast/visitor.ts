@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import { AsSourceFile } from "./ast.js";
@@ -305,9 +306,9 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSl
         if (visited === undefined) {
           // do nothing
         } else if (visited.Kind === KindSyntaxList) {
-          updated = GoAppendSlice(updated, AsSyntaxList(visited)!.Children);
+          updated = GoSliceAppendSlice(updated, AsSyntaxList(visited)!.Children, GoPointerValueOps<Node>());
         } else {
-          updated = GoAppend(updated, visited);
+          updated = GoSliceAppend(updated, visited, GoPointerValueOps<Node>());
         }
 
         i++;
@@ -321,7 +322,7 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSl
           node = nodes[i];
           visited = receiver!.Visit(node);
         } else {
-          updated = GoAppendSlice(updated, nodes.slice(i));
+          updated = GoSliceAppendSlice(updated, nodes.slice(i), GoPointerValueOps<Node>());
           break;
         }
       }

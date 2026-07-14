@@ -11,6 +11,7 @@ import {
   type GoPtr,
   type GoSlice,
 } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
 import { Fprint } from "../../../go/fmt.js";
 import { SortFunc } from "../../../go/slices.js";
 import { Clone } from "../../../go/slices.js";
@@ -141,7 +142,7 @@ export function PrintHelp(sys: GoInterface<System>, locale: Locale, commandLine:
  */
 export function getOptionsForHelp(commandLine: GoPtr<ParsedCommandLine>): GoSlice<GoPtr<CommandLineOption>> {
   let opts = Clone(OptionsDeclarations);
-  opts = GoAppend(opts, TscBuildOption);
+  opts = GoSliceAppend(opts, TscBuildOption, GoPointerValueOps<CommandLineOption>());
   const compilerOptions = ParsedCommandLine_CompilerOptions(commandLine);
   if (Tristate_IsTrue(compilerOptions!.All)) {
     SortFunc(opts, (a: GoPtr<CommandLineOption>, b: GoPtr<CommandLineOption>): int =>
@@ -194,17 +195,9 @@ export function getHeader(sys: GoInterface<System>, message: string): GoSlice<st
   if (terminalWidth >= message.length + tsIconLength) {
     const rightAlign = IfElse(terminalWidth > 120, 120, terminalWidth);
     const leftAlign = rightAlign - tsIconLength;
-    header = GoAppend(
-      header,
-      `${message.padEnd(leftAlign)}`,
-      tsIconFirstLine,
-      "\n",
-      strings.Repeat(" ", leftAlign),
-      tsIconSecondLine,
-      "\n"
-    );
+    header = GoSliceAppendSlice(header, GoSliceBuild(6, 6, GoStringValueOps, (__goSliceLiteral_2099) => { GoSliceStore(__goSliceLiteral_2099, 0, `${message.padEnd(leftAlign)}`, GoStringValueOps); GoSliceStore(__goSliceLiteral_2099, 1, tsIconFirstLine, GoStringValueOps); GoSliceStore(__goSliceLiteral_2099, 2, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_2099, 3, strings.Repeat(" ", leftAlign), GoStringValueOps); GoSliceStore(__goSliceLiteral_2099, 4, tsIconSecondLine, GoStringValueOps); GoSliceStore(__goSliceLiteral_2099, 5, "\n", GoStringValueOps); }), GoStringValueOps);
   } else {
-    header = GoAppend(header, message, "\n", "\n");
+    header = GoSliceAppendSlice(header, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_2162) => { GoSliceStore(__goSliceLiteral_2162, 0, message, GoStringValueOps); GoSliceStore(__goSliceLiteral_2162, 1, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_2162, 2, "\n", GoStringValueOps); }), GoStringValueOps);
   }
   return header;
 }
@@ -261,15 +254,15 @@ export function printEasyHelp(sys: GoInterface<System>, locale: Locale, simpleOp
   let output: GoSlice<string> = GoNilSlice();
   const example = (examples: GoSlice<string>, desc: GoPtr<Message>): void => {
     for (const ex of examples) {
-      output = GoAppend(output, "  ", colors_blue(clrs, ex), "\n");
+      output = GoSliceAppendSlice(output, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_2d78) => { GoSliceStore(__goSliceLiteral_2d78, 0, "  ", GoStringValueOps); GoSliceStore(__goSliceLiteral_2d78, 1, colors_blue(clrs, ex), GoStringValueOps); GoSliceStore(__goSliceLiteral_2d78, 2, "\n", GoStringValueOps); }), GoStringValueOps);
     }
-    output = GoAppend(output, "  ", Message_Localize(desc, locale), "\n", "\n");
+    output = GoSliceAppendSlice(output, GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral_2dc0) => { GoSliceStore(__goSliceLiteral_2dc0, 0, "  ", GoStringValueOps); GoSliceStore(__goSliceLiteral_2dc0, 1, Message_Localize(desc, locale), GoStringValueOps); GoSliceStore(__goSliceLiteral_2dc0, 2, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_2dc0, 3, "\n", GoStringValueOps); }), GoStringValueOps);
   };
 
   const msg = Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version());
-  output = GoAppendSlice(output, getHeader(sys, msg));
+  output = GoSliceAppendSlice(output, getHeader(sys, msg), GoStringValueOps);
 
-  output = GoAppend(output, colors_bold(clrs, Message_Localize(COMMON_COMMANDS, locale)), "\n", "\n");
+  output = GoSliceAppendSlice(output, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_2ed3) => { GoSliceStore(__goSliceLiteral_2ed3, 0, colors_bold(clrs, Message_Localize(COMMON_COMMANDS, locale)), GoStringValueOps); GoSliceStore(__goSliceLiteral_2ed3, 1, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_2ed3, 2, "\n", GoStringValueOps); }), GoStringValueOps);
 
   example(["tsc"], Compiles_the_current_project_tsconfig_json_in_the_working_directory);
   example(["tsc app.ts util.ts"], Ignoring_tsconfig_json_compiles_the_specified_files_with_default_compiler_options);
@@ -283,16 +276,16 @@ export function printEasyHelp(sys: GoInterface<System>, locale: Locale, simpleOp
   let configOpts: GoSlice<GoPtr<CommandLineOption>> = GoNilSlice();
   for (const opt of simpleOptions) {
     if (opt!.IsCommandLineOnly || opt!.Category === Command_line_Options) {
-      cliCommands = GoAppend(cliCommands, opt);
+      cliCommands = GoSliceAppend(cliCommands, opt, GoPointerValueOps<CommandLineOption>());
     } else {
-      configOpts = GoAppend(configOpts, opt);
+      configOpts = GoSliceAppend(configOpts, opt, GoPointerValueOps<CommandLineOption>());
     }
   }
 
-  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(COMMAND_LINE_FLAGS, locale), cliCommands, false, undefined, undefined));
+  output = GoSliceAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(COMMAND_LINE_FLAGS, locale), cliCommands, false, undefined, undefined), GoStringValueOps);
 
   const after = Message_Localize(You_can_learn_about_all_of_the_compiler_options_at_0, locale, "https://aka.ms/tsc");
-  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(COMMON_COMPILER_OPTIONS, locale), configOpts, false, undefined, GoValueRef(after)));
+  output = GoSliceAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(COMMON_COMPILER_OPTIONS, locale), configOpts, false, undefined, GoValueRef(after)), GoStringValueOps);
 
   for (const chunk of output) {
     Fprint(sys!.Writer()!, chunk);
@@ -331,20 +324,20 @@ export function printEasyHelp(sys: GoInterface<System>, locale: Locale, simpleOp
 export function printAllHelp(sys: GoInterface<System>, locale: Locale, options: GoSlice<GoPtr<CommandLineOption>>): void {
   let output: GoSlice<string> = GoNilSlice();
   const msg = Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version());
-  output = GoAppendSlice(output, getHeader(sys, msg));
+  output = GoSliceAppendSlice(output, getHeader(sys, msg), GoStringValueOps);
 
   // ALL COMPILER OPTIONS section
   const afterCompilerOptions = Message_Localize(You_can_learn_about_all_of_the_compiler_options_at_0, locale, "https://aka.ms/tsc");
-  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(ALL_COMPILER_OPTIONS, locale), options, true, undefined, GoValueRef(afterCompilerOptions)));
+  output = GoSliceAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(ALL_COMPILER_OPTIONS, locale), options, true, undefined, GoValueRef(afterCompilerOptions)), GoStringValueOps);
 
   // WATCH OPTIONS section
   const beforeWatchOptions = Message_Localize(Including_watch_w_will_start_watching_the_current_project_for_the_file_changes_Once_set_you_can_config_watch_mode_with_Colon, locale);
-  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(WATCH_OPTIONS, locale), OptionsForWatch, false, GoValueRef(beforeWatchOptions), undefined));
+  output = GoSliceAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(WATCH_OPTIONS, locale), OptionsForWatch, false, GoValueRef(beforeWatchOptions), undefined), GoStringValueOps);
 
   // BUILD OPTIONS section
   const beforeBuildOptions = Message_Localize(Using_build_b_will_make_tsc_behave_more_like_a_build_orchestrator_than_a_compiler_This_is_used_to_trigger_building_composite_projects_which_you_can_learn_more_about_at_0, locale, "https://aka.ms/tsc-composite-builds");
   const buildOptions = Filter(OptionsForBuild, (option: GoPtr<CommandLineOption>): bool => option !== TscBuildOption);
-  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), buildOptions, false, GoValueRef(beforeBuildOptions), undefined));
+  output = GoSliceAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), buildOptions, false, GoValueRef(beforeBuildOptions), undefined), GoStringValueOps);
 
   for (const chunk of output) {
     Fprint(sys!.Writer()!, chunk);
@@ -371,10 +364,10 @@ export function printAllHelp(sys: GoInterface<System>, locale: Locale, options: 
  */
 export function PrintBuildHelp(sys: GoInterface<System>, locale: Locale, buildOptions: GoSlice<GoPtr<CommandLineOption>>): void {
   let output: GoSlice<string> = GoNilSlice();
-  output = GoAppendSlice(output, getHeader(sys, Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version())));
+  output = GoSliceAppendSlice(output, getHeader(sys, Message_Localize(X_tsc_Colon_The_TypeScript_Compiler, locale) + " - " + Message_Localize(Version_0, locale, Version())), GoStringValueOps);
   const before = Message_Localize(Using_build_b_will_make_tsc_behave_more_like_a_build_orchestrator_than_a_compiler_This_is_used_to_trigger_building_composite_projects_which_you_can_learn_more_about_at_0, locale, "https://aka.ms/tsc-composite-builds");
   const options = Filter(buildOptions, (option: GoPtr<CommandLineOption>): bool => option !== TscBuildOption);
-  output = GoAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), options, false, GoValueRef(before), undefined));
+  output = GoSliceAppendSlice(output, generateSectionOptionsOutput(sys, locale, Message_Localize(BUILD_OPTIONS, locale), options, false, GoValueRef(before), undefined), GoStringValueOps);
 
   for (const chunk of output) {
     Fprint(sys!.Writer()!, chunk);
@@ -432,15 +425,15 @@ export function PrintBuildHelp(sys: GoInterface<System>, locale: Locale, buildOp
  */
 export function generateSectionOptionsOutput(sys: GoInterface<System>, locale: Locale, sectionName: string, options: GoSlice<GoPtr<CommandLineOption>>, subCategory: bool, beforeOptionsDescription: GoRef<string>, afterOptionsDescription: GoRef<string>): GoSlice<string> {
   let output: GoSlice<string> = GoNilSlice();
-  output = GoAppend(output, colors_bold(createColors(sys), sectionName), "\n", "\n");
+  output = GoSliceAppendSlice(output, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_54bd) => { GoSliceStore(__goSliceLiteral_54bd, 0, colors_bold(createColors(sys), sectionName), GoStringValueOps); GoSliceStore(__goSliceLiteral_54bd, 1, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_54bd, 2, "\n", GoStringValueOps); }), GoStringValueOps);
 
   if (beforeOptionsDescription !== undefined) {
-    output = GoAppend(output, beforeOptionsDescription!.v, "\n", "\n");
+    output = GoSliceAppendSlice(output, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_5546) => { GoSliceStore(__goSliceLiteral_5546, 0, beforeOptionsDescription!.v, GoStringValueOps); GoSliceStore(__goSliceLiteral_5546, 1, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_5546, 2, "\n", GoStringValueOps); }), GoStringValueOps);
   }
   if (!subCategory) {
-    output = GoAppendSlice(output, generateGroupOptionOutput(sys, locale, options));
+    output = GoSliceAppendSlice(output, generateGroupOptionOutput(sys, locale, options), GoStringValueOps);
     if (afterOptionsDescription !== undefined) {
-      output = GoAppend(output, afterOptionsDescription!.v, "\n", "\n");
+      output = GoSliceAppendSlice(output, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_5630) => { GoSliceStore(__goSliceLiteral_5630, 0, afterOptionsDescription!.v, GoStringValueOps); GoSliceStore(__goSliceLiteral_5630, 1, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_5630, 2, "\n", GoStringValueOps); }), GoStringValueOps);
     }
     return output;
   }
@@ -452,18 +445,18 @@ export function generateSectionOptionsOutput(sys: GoInterface<System>, locale: L
     }
     const curCategory = Message_Localize(option!.Category, locale);
     if (!categoryMap.has(curCategory)) {
-      categoryOrder = GoAppend(categoryOrder, curCategory);
+      categoryOrder = GoSliceAppend(categoryOrder, curCategory, GoStringValueOps);
     }
     const existing = categoryMap.get(curCategory);
-    categoryMap.set(curCategory, GoAppend(existing ?? GoNilSlice(), option));
+    categoryMap.set(curCategory, GoSliceAppend(existing ?? GoNilSlice(), option, GoPointerValueOps<CommandLineOption>()));
   }
   for (const key of categoryOrder) {
     const value = categoryMap.get(key)!;
-    output = GoAppend(output, "### ", key, "\n", "\n");
-    output = GoAppendSlice(output, generateGroupOptionOutput(sys, locale, value));
+    output = GoSliceAppendSlice(output, GoSliceBuild(4, 4, GoStringValueOps, (__goSliceLiteral_58f9) => { GoSliceStore(__goSliceLiteral_58f9, 0, "### ", GoStringValueOps); GoSliceStore(__goSliceLiteral_58f9, 1, key, GoStringValueOps); GoSliceStore(__goSliceLiteral_58f9, 2, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_58f9, 3, "\n", GoStringValueOps); }), GoStringValueOps);
+    output = GoSliceAppendSlice(output, generateGroupOptionOutput(sys, locale, value), GoStringValueOps);
   }
   if (afterOptionsDescription !== undefined) {
-    output = GoAppend(output, afterOptionsDescription!.v, "\n", "\n");
+    output = GoSliceAppendSlice(output, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_59b7) => { GoSliceStore(__goSliceLiteral_59b7, 0, afterOptionsDescription!.v, GoStringValueOps); GoSliceStore(__goSliceLiteral_59b7, 1, "\n", GoStringValueOps); GoSliceStore(__goSliceLiteral_59b7, 2, "\n", GoStringValueOps); }), GoStringValueOps);
   }
 
   return output;
@@ -518,12 +511,12 @@ export function generateGroupOptionOutput(sys: GoInterface<System>, locale: Loca
   let lines: GoSlice<string> = GoNilSlice();
   for (const option of optionsList) {
     const tmp = generateOptionOutput(sys, locale, option, rightAlignOfLeftPart, leftAlignOfRightPart);
-    lines = GoAppendSlice(lines, tmp);
+    lines = GoSliceAppendSlice(lines, tmp, GoStringValueOps);
   }
 
   // make sure always a blank line in the end.
   if (lines.length < 2 || lines[lines.length - 2] !== "\n") {
-    lines = GoAppend(lines, "\n");
+    lines = GoSliceAppend(lines, "\n", GoStringValueOps);
   }
 
   return lines;
@@ -635,39 +628,39 @@ export function generateOptionOutput(sys: GoInterface<System>, locale: Locale, o
 
   if (terminalWidth >= 80) {
     const description = option!.Description !== undefined ? Message_Localize(option!.Description, locale) : "";
-    text = GoAppendSlice(text, getPrettyOutput(clrs, name, description, rightAlignOfLeft, leftAlignOfRight, terminalWidth, true));
-    text = GoAppend(text, "\n");
+    text = GoSliceAppendSlice(text, getPrettyOutput(clrs, name, description, rightAlignOfLeft, leftAlignOfRight, terminalWidth, true), GoStringValueOps);
+    text = GoSliceAppend(text, "\n", GoStringValueOps);
     if (showAdditionalInfoOutput(valueCandidates, option)) {
       if (valueCandidates !== undefined) {
-        text = GoAppendSlice(text, getPrettyOutput(clrs, valueCandidates.valueType, valueCandidates.possibleValues, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false));
-        text = GoAppend(text, "\n");
+        text = GoSliceAppendSlice(text, getPrettyOutput(clrs, valueCandidates.valueType, valueCandidates.possibleValues, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false), GoStringValueOps);
+        text = GoSliceAppend(text, "\n", GoStringValueOps);
       }
       if (defaultValueDescription !== "") {
-        text = GoAppendSlice(text, getPrettyOutput(clrs, Message_Localize(X_default_Colon, locale), defaultValueDescription, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false));
-        text = GoAppend(text, "\n");
+        text = GoSliceAppendSlice(text, getPrettyOutput(clrs, Message_Localize(X_default_Colon, locale), defaultValueDescription, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false), GoStringValueOps);
+        text = GoSliceAppend(text, "\n", GoStringValueOps);
       }
     }
-    text = GoAppend(text, "\n");
+    text = GoSliceAppend(text, "\n", GoStringValueOps);
   } else {
-    text = GoAppend(text, colors_blue(clrs, name), "\n");
+    text = GoSliceAppendSlice(text, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral_762d) => { GoSliceStore(__goSliceLiteral_762d, 0, colors_blue(clrs, name), GoStringValueOps); GoSliceStore(__goSliceLiteral_762d, 1, "\n", GoStringValueOps); }), GoStringValueOps);
     if (option!.Description !== undefined) {
-      text = GoAppend(text, Message_Localize(option!.Description, locale));
+      text = GoSliceAppend(text, Message_Localize(option!.Description, locale), GoStringValueOps);
     }
-    text = GoAppend(text, "\n");
+    text = GoSliceAppend(text, "\n", GoStringValueOps);
     if (showAdditionalInfoOutput(valueCandidates, option)) {
       if (valueCandidates !== undefined) {
-        text = GoAppend(text, valueCandidates.valueType, " ", valueCandidates.possibleValues);
+        text = GoSliceAppendSlice(text, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_7773) => { GoSliceStore(__goSliceLiteral_7773, 0, valueCandidates.valueType, GoStringValueOps); GoSliceStore(__goSliceLiteral_7773, 1, " ", GoStringValueOps); GoSliceStore(__goSliceLiteral_7773, 2, valueCandidates.possibleValues, GoStringValueOps); }), GoStringValueOps);
       }
       if (defaultValueDescription !== "") {
         if (valueCandidates !== undefined) {
-          text = GoAppend(text, "\n");
+          text = GoSliceAppend(text, "\n", GoStringValueOps);
         }
-        text = GoAppend(text, Message_Localize(X_default_Colon, locale), " ", defaultValueDescription);
+        text = GoSliceAppendSlice(text, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_7864) => { GoSliceStore(__goSliceLiteral_7864, 0, Message_Localize(X_default_Colon, locale), GoStringValueOps); GoSliceStore(__goSliceLiteral_7864, 1, " ", GoStringValueOps); GoSliceStore(__goSliceLiteral_7864, 2, defaultValueDescription, GoStringValueOps); }), GoStringValueOps);
       }
 
-      text = GoAppend(text, "\n");
+      text = GoSliceAppend(text, "\n", GoStringValueOps);
     }
-    text = GoAppend(text, "\n");
+    text = GoSliceAppend(text, "\n", GoStringValueOps);
   }
 
   return text;
@@ -706,7 +699,7 @@ export function formatDefaultValue(defaultValue: GoInterface<unknown>, option: G
     const enumMap = CommandLineOption_EnumMap(option);
     OrderedMap_Entries(enumMap)!((name: string, value: unknown): bool => {
       if (GoUnboxComparableInterface(value) === defaultValue) {
-        names = GoAppend(names, name);
+        names = GoSliceAppend(names, name, GoStringValueOps);
       }
       return true;
     });
@@ -890,7 +883,7 @@ export function getPossibleValues(option: GoPtr<CommandLineOption>): string {
       });
       let syns: GoSlice<string> = GoNilSlice();
       OrderedMap_Values(inverted)!((synonyms: GoSlice<string>): bool => {
-        syns = GoAppend(syns, strings.Join(synonyms, "/"));
+        syns = GoSliceAppend(syns, strings.Join(synonyms, "/"), GoStringValueOps);
         return true;
       });
       return strings.Join(syns, ", ");
@@ -948,7 +941,7 @@ export function getPrettyOutput(colors: GoPtr<colors>, left: string, right: stri
     const idx = Math.min(rightCharacterNumber, remainRight.length);
     const curRight = remainRight.slice(0, idx);
     remainRight = remainRight.slice(idx);
-    res = GoAppend(res, curLeft, curRight, "\n");
+    res = GoSliceAppendSlice(res, GoSliceBuild(3, 3, GoStringValueOps, (__goSliceLiteral_a0e8) => { GoSliceStore(__goSliceLiteral_a0e8, 0, curLeft, GoStringValueOps); GoSliceStore(__goSliceLiteral_a0e8, 1, curRight, GoStringValueOps); GoSliceStore(__goSliceLiteral_a0e8, 2, "\n", GoStringValueOps); }), GoStringValueOps);
     isFirstLine = false;
   }
   return res;

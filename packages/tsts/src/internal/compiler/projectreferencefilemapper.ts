@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { GoAppend, GoMapLookup, GoNilSlice, GoStringKey, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { SourceFile_Path } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
@@ -125,7 +126,7 @@ export function projectReferenceFileMapper_getResolvedProjectReferences(receiver
     result = [];
     for (const refPath of refPaths) {
       const refConfig = receiver!.configToProjectReference.get(refPath);
-      result = GoAppend(result, refConfig);
+      result = GoSliceAppend(result, refConfig, GoPointerValueOps<ParsedCommandLine>());
     }
   }
   return result;

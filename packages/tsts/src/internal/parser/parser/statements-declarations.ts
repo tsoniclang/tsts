@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoNumberValueOps, GoPointerValueOps, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
 import { Clone, SortFunc, Values } from "../../../go/slices.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { Kind } from "../../ast/generated/kinds.js";
@@ -475,7 +476,7 @@ export function Parser_parseSourceFileWorker(receiver: GoPtr<Parser>): GoPtr<Sou
     throw new globalThis.Error("Expected end of file token from scanner.");
   }
   if (receiver!.reparseList.length !== 0) {
-    statements = GoAppendSlice(statements, receiver!.reparseList);
+    statements = GoSliceAppendSlice(statements, receiver!.reparseList, GoPointerValueOps<Node>());
     receiver!.reparseList = GoNilSlice();
   }
   const node = Parser_finishNode(receiver, NodeFactory_NewSourceFile(receiver!.factory, receiver!.opts!, receiver!.sourceText, Parser_newNodeList(receiver, NewTextRange(pos, end), statements), eof), pos);
@@ -581,7 +582,7 @@ export function Parser_parseToplevelStatement(receiver: GoPtr<Parser>, i: int): 
   i += receiver!.reparseList.length;
   if (receiver!.statementHasAwaitIdentifier && (statement!.Flags & NodeFlagsAwaitContext) === 0) {
     if (receiver!.possibleAwaitSpans.length === 0 || receiver!.possibleAwaitSpans[receiver!.possibleAwaitSpans.length - 1] !== i) {
-      receiver!.possibleAwaitSpans = GoAppend(receiver!.possibleAwaitSpans, i, i + 1);
+      receiver!.possibleAwaitSpans = GoSliceAppendSlice(receiver!.possibleAwaitSpans, GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral_54b8) => { GoSliceStore(__goSliceLiteral_54b8, 0, i, GoNumberValueOps); GoSliceStore(__goSliceLiteral_54b8, 1, i + 1, GoNumberValueOps); }), GoNumberValueOps);
     } else {
       receiver!.possibleAwaitSpans[receiver!.possibleAwaitSpans.length - 1] = i + 1;
     }

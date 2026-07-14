@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoAppend, GoNilSlice, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import type { NodeVisitor } from "../../ast/visitor.js";
 import { Node_Text } from "../../ast/ast.js";
@@ -1290,7 +1291,7 @@ export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(
   let variables: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const decl of node!.Declarations!.Nodes) {
     if (AsVariableDeclaration(decl)!.Initializer !== undefined) {
-      variables = GoAppend(variables, decl);
+      variables = GoSliceAppend(variables, decl, GoPointerValueOps<Node>());
     }
   }
   if (variables === undefined || variables.length === 0) {
@@ -1308,7 +1309,7 @@ export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(
   }
   let expressions: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const variable of variables) {
-    expressions = GoAppend(expressions, asyncTransformer_transformInitializedVariable(receiver, AsVariableDeclaration(variable)!) as GoPtr<Node>);
+    expressions = GoSliceAppend(expressions, asyncTransformer_transformInitializedVariable(receiver, AsVariableDeclaration(variable)!) as GoPtr<Node>, GoPointerValueOps<Node>());
   }
   return NodeFactory_InlineExpressions(Transformer_Factory(receiver!.__tsgoEmbedded0!), expressions as unknown as GoSlice<GoPtr<never>>) as unknown as GoPtr<Node>;
 }
@@ -1638,7 +1639,7 @@ export function asyncTransformer_transformAsyncFunctionParameterList(receiver: G
           undefined,
           undefined,
         );
-        newParameters = GoAppend(newParameters, restParameter);
+        newParameters = GoSliceAppend(newParameters, restParameter, GoPointerValueOps<Node>());
       }
       break;
     }
@@ -1653,7 +1654,7 @@ export function asyncTransformer_transformAsyncFunctionParameterList(receiver: G
       undefined,
       undefined,
     );
-    newParameters = GoAppend(newParameters, newParameter);
+    newParameters = GoSliceAppend(newParameters, newParameter, GoPointerValueOps<Node>());
   }
   const newParametersArray = NodeFactory_NewNodeList(factory, newParameters);
   newParametersArray!.Loc = Node_ParameterList(node)!.Loc;
@@ -1750,10 +1751,10 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
         const originalParameter = AsParameterDeclaration(params[i])!;
         const outerParameter = AsParameterDeclaration(outerParameters!.Nodes[i])!;
         if (originalParameter.Initializer !== undefined || originalParameter.DotDotDotToken !== undefined) {
-          parameterBindings = GoAppend(parameterBindings, NewSpreadElement(factory, Node_Name(outerParameters!.Nodes[i]) as unknown as GoPtr<never>) as unknown as GoPtr<Node>);
+          parameterBindings = GoSliceAppend(parameterBindings, NewSpreadElement(factory, Node_Name(outerParameters!.Nodes[i]) as unknown as GoPtr<never>) as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
           break;
         }
-        parameterBindings = GoAppend(parameterBindings, Node_Name(outerParameters!.Nodes[i]) as unknown as GoPtr<Node>);
+        parameterBindings = GoSliceAppend(parameterBindings, Node_Name(outerParameters!.Nodes[i]) as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
       }
       argumentsExpression = NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, parameterBindings) as unknown as GoPtr<never>, false) as unknown as GoPtr<Node>;
     } else {

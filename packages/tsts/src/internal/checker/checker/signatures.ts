@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap, GoZeroPointer } from "../../../go/compat.js";
 import { GoSlicePrefix } from "../../../go/slice-runtime.js";
 import { recordExtensionCheckedCallMapping } from "../../../extensions/checker-integration.js";
@@ -1061,7 +1062,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
       const groups = new globalThis.Map<SourceFile, GoSlice<GoPtr<Node>>>();
       for (const overload of overloads) {
         const sourceFile = GetSourceFileOfNode(overload)!;
-        groups.set(sourceFile, GoAppend(groups.get(sourceFile) ?? GoNilSlice(), overload));
+        groups.set(sourceFile, GoSliceAppend(groups.get(sourceFile) ?? GoNilSlice(), overload, GoPointerValueOps<Node>()));
       }
       for (const overloadsInFile of groups.values()) {
         const canonicalFlagsForFile = Checker_getEffectiveDeclarationFlags(receiver, getCanonicalOverload(overloadsInFile, implementation), checkFlags);
@@ -1156,7 +1157,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
       hasNonAmbientClass = true as bool;
     }
     if (IsFunctionDeclaration(node) || IsMethodDeclaration(node) || IsMethodSignatureDeclaration(node) || IsConstructorDeclaration(node)) {
-      functionDeclarations = GoAppend(functionDeclarations, node);
+      functionDeclarations = GoSliceAppend(functionDeclarations, node, GoPointerValueOps<Node>());
       const currentNodeFlags = Checker_getEffectiveDeclarationFlags(receiver, node, flagsToCheck);
       someNodeFlags = (someNodeFlags | currentNodeFlags) as int;
       allNodeFlags = (allNodeFlags & currentNodeFlags) as int;
@@ -1205,7 +1206,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
     let relatedDiagnostics: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
     for (const declaration of declarations) {
       if (IsClassDeclaration(declaration)) {
-        relatedDiagnostics = GoAppend(relatedDiagnostics, NewDiagnosticForNode(declaration, Consider_adding_a_declare_modifier_to_this_class));
+        relatedDiagnostics = GoSliceAppend(relatedDiagnostics, NewDiagnosticForNode(declaration, Consider_adding_a_declare_modifier_to_this_class), GoPointerValueOps<Diagnostic>());
       }
     }
     for (const declaration of declarations) {
@@ -1595,7 +1596,7 @@ export function Checker_checkTypeForDuplicateIndexSignatures(receiver: GoPtr<Che
       const parameters = Node_Parameters(declaration);
       if (parameters.length === 1 && Node_Type(parameters[0]) !== undefined) {
         for (const t of Type_Distributed(Checker_getTypeFromTypeNode(receiver, Node_Type(parameters[0])))) {
-          indexSignatureMap.set(t, GoAppend(indexSignatureMap.get(t) ?? GoNilSlice(), declaration));
+          indexSignatureMap.set(t, GoSliceAppend(indexSignatureMap.get(t) ?? GoNilSlice(), declaration, GoPointerValueOps<Node>()));
         }
       }
     }
@@ -1845,7 +1846,7 @@ export function Checker_checkUnusedLocalsAndParameters(receiver: GoPtr<Checker>,
       } else if (IsImportClause(declaration) || IsImportSpecifier(declaration) || IsNamespaceImport(declaration)) {
         if (!isIdentifierThatStartsWithUnderscore(Node_Name(declaration))) {
           const importClause = importClauseFromImported(declaration);
-          importClauses.set(importClause, GoAppend(importClauses.get(importClause) ?? GoNilSlice(), declaration));
+          importClauses.set(importClause, GoSliceAppend(importClauses.get(importClause) ?? GoNilSlice(), declaration, GoPointerValueOps<Node>()));
         }
       } else if (!IsTypeParameterDeclaration(declaration) && !IsAmbientModule(declaration)) {
         Checker_reportUnusedLocal(receiver, declaration, SymbolName(local));
@@ -2148,7 +2149,7 @@ export function Checker_getOuterInferenceTypeParameters(receiver: GoPtr<Checker>
     const context = receiver!.inferenceContextInfos[i]!.context;
     if (context !== undefined) {
       for (const info of context!.inferences) {
-        result = GoAppend(result, info!.typeParameter);
+        result = GoSliceAppend(result, info!.typeParameter, GoPointerValueOps<Type>());
       }
     }
   }
@@ -2197,11 +2198,11 @@ export function Checker_getUniqueTypeParameters(receiver: GoPtr<Checker>, contex
       const symbol_ = Checker_newSymbol(receiver, SymbolFlagsTypeParameter, newName);
       const newTypeParameter = Checker_newTypeParameter(receiver, symbol_);
       Type_AsTypeParameter(newTypeParameter)!.target = tp;
-      oldTypeParameters = GoAppend(oldTypeParameters, tp);
-      newTypeParameters = GoAppend(newTypeParameters, newTypeParameter);
-      result = GoAppend(result, newTypeParameter);
+      oldTypeParameters = GoSliceAppend(oldTypeParameters, tp, GoPointerValueOps<Type>());
+      newTypeParameters = GoSliceAppend(newTypeParameters, newTypeParameter, GoPointerValueOps<Type>());
+      result = GoSliceAppend(result, newTypeParameter, GoPointerValueOps<Type>());
     } else {
-      result = GoAppend(result, tp);
+      result = GoSliceAppend(result, tp, GoPointerValueOps<Type>());
     }
   }
   if ((newTypeParameters ?? []).length !== 0) {
@@ -3273,7 +3274,7 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
       checkCandidate = candidate;
     }
     if (!Checker_isSignatureApplicable(receiver, s!.node, s!.args, checkCandidate, relation, s!.argCheckMode, false as bool, undefined)) {
-      s!.candidatesForArgumentError = GoAppend(s!.candidatesForArgumentError, checkCandidate);
+      s!.candidatesForArgumentError = GoSliceAppend(s!.candidatesForArgumentError, checkCandidate, GoPointerValueOps<Signature>());
       continue;
     }
     if (s!.argCheckMode !== 0) {
@@ -3287,7 +3288,7 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
         }
       }
       if (!Checker_isSignatureApplicable(receiver, s!.node, s!.args, checkCandidate, relation, s!.argCheckMode, false as bool, undefined)) {
-        s!.candidatesForArgumentError = GoAppend(s!.candidatesForArgumentError, checkCandidate);
+        s!.candidatesForArgumentError = GoSliceAppend(s!.candidatesForArgumentError, checkCandidate, GoPointerValueOps<Signature>());
         continue;
       }
     }
@@ -4163,7 +4164,7 @@ export function Checker_getTypeArgumentsFromNodes(receiver: GoPtr<Checker>, type
         t = receiver!.unknownType;
       }
     }
-    result = GoAppend(result, t);
+    result = GoSliceAppend(result, t, GoPointerValueOps<Type>());
   }
   return result as GoSlice<GoPtr<Type>>;
 }
@@ -4251,7 +4252,7 @@ export function Checker_createUnionOfSignaturesForOverloadFailure(receiver: GoPt
       }
       return undefined;
     }, GoZeroPointer<Symbol>, GoEqualStrict<GoPtr<Symbol>>);
-    parameters = GoAppend(parameters, Checker_createCombinedSymbolFromTypes(receiver, symbols, core.MapNonNil(candidates, (signature: GoPtr<Signature>) => Checker_tryGetTypeAtPosition(receiver, signature, index), GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>)));
+    parameters = GoSliceAppend(parameters, Checker_createCombinedSymbolFromTypes(receiver, symbols, core.MapNonNil(candidates, (signature: GoPtr<Signature>) => Checker_tryGetTypeAtPosition(receiver, signature, index), GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>)), GoPointerValueOps<Symbol>());
   }
   const restParameterSymbols = core.MapNonNil(candidates, (signature: GoPtr<Signature>) => {
     if (signatureHasRestParameter(signature)) {
@@ -4262,7 +4263,7 @@ export function Checker_createUnionOfSignaturesForOverloadFailure(receiver: GoPt
   let flags = SignatureFlagsIsSignatureCandidateForOverloadFailure;
   if (restParameterSymbols.length !== 0) {
     const restType = Checker_createArrayType(receiver, Checker_getUnionTypeEx(receiver, core.MapNonNil(candidates, (signature: GoPtr<Signature>) => Checker_tryGetRestTypeOfSignature(receiver, signature), GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), UnionReductionSubtype, undefined, undefined));
-    parameters = GoAppend(parameters, Checker_createCombinedSymbolForOverloadFailure(receiver, restParameterSymbols, restType));
+    parameters = GoSliceAppend(parameters, Checker_createCombinedSymbolForOverloadFailure(receiver, restParameterSymbols, restType), GoPointerValueOps<Symbol>());
     flags |= SignatureFlagsHasRestParameter;
   }
   if (core.Some(candidates, signatureHasLiteralTypes)) {
@@ -4491,7 +4492,7 @@ export function Checker_getContextualSignature(receiver: GoPtr<Checker>, node: G
       if (signatureList.length !== 0 && Checker_compareSignaturesIdentical(receiver, signatureList[0], signature, false, true, true, (source: GoPtr<Type>, target: GoPtr<Type>) => Checker_compareTypesIdentical(receiver, source, target)) === TernaryFalse) {
         return undefined;
       }
-      signatureList = GoAppend(signatureList, signature);
+      signatureList = GoSliceAppend(signatureList, signature, GoPointerValueOps<Signature>());
     }
   }
   switch (signatureList.length) {
@@ -5324,7 +5325,7 @@ export function Checker_lateBindIndexSignature(receiver: GoPtr<Checker>, parent:
     lateSymbols.set(InternalSymbolNameIndex, indexSymbol);
   }
   if ((indexSymbol!.Declarations?.length ?? 0) === 0 || (Node_Symbol(decl)!.Flags & SymbolFlagsReplaceableByMethod) === 0) {
-    indexSymbol!.Declarations = GoAppend(indexSymbol!.Declarations ?? GoNilSlice(), decl);
+    indexSymbol!.Declarations = GoSliceAppend(indexSymbol!.Declarations ?? GoNilSlice(), decl, GoPointerValueOps<Node>());
   }
 }
 
@@ -5925,7 +5926,7 @@ export function Checker_getInferredTypeParameterConstraint(receiver: GoPtr<Check
                 }));
                 const constraint = Checker_instantiateType(receiver, declaredConstraint, mapper);
                 if (constraint !== t) {
-                  inferences = GoAppend(inferences, constraint);
+                  inferences = GoSliceAppend(inferences, constraint, GoPointerValueOps<Type>());
                 }
               }
             }
@@ -5935,11 +5936,11 @@ export function Checker_getInferredTypeParameterConstraint(receiver: GoPtr<Check
           IsRestTypeNode(parent) ||
           (IsNamedTupleMember(parent) && AsNamedTupleMember(parent)!.DotDotDotToken !== undefined)
         ) {
-          inferences = GoAppend(inferences, Checker_createArrayType(receiver, receiver!.unknownType));
+          inferences = GoSliceAppend(inferences, Checker_createArrayType(receiver, receiver!.unknownType), GoPointerValueOps<Type>());
         } else if (IsTemplateLiteralTypeSpan(parent)) {
-          inferences = GoAppend(inferences, receiver!.stringType);
+          inferences = GoSliceAppend(inferences, receiver!.stringType, GoPointerValueOps<Type>());
         } else if (IsTypeParameterDeclaration(parent) && IsMappedTypeNode(parent!.Parent)) {
-          inferences = GoAppend(inferences, receiver!.stringNumberSymbolType);
+          inferences = GoSliceAppend(inferences, receiver!.stringNumberSymbolType, GoPointerValueOps<Type>());
         } else if (
           IsMappedTypeNode(parent) &&
           Node_Type(parent) !== undefined &&
@@ -5961,7 +5962,7 @@ export function Checker_getInferredTypeParameterConstraint(receiver: GoPtr<Check
               receiver!.stringNumberSymbolType,
             ),
           );
-          inferences = GoAppend(inferences, Checker_instantiateType(receiver, nodeType, mapper));
+          inferences = GoSliceAppend(inferences, Checker_instantiateType(receiver, nodeType, mapper), GoPointerValueOps<Type>());
         }
       }
     }
@@ -6119,9 +6120,9 @@ export function Checker_getRestType(receiver: GoPtr<Checker>, source: GoPtr<Type
       (getDeclarationModifierFlagsFromSymbol(prop) & (ModifierFlagsPrivate | ModifierFlagsProtected)) === 0 &&
       Checker_isSpreadableProperty(receiver, prop)
     ) {
-      spreadableProperties = GoAppend(spreadableProperties, prop);
+      spreadableProperties = GoSliceAppend(spreadableProperties, prop, GoPointerValueOps<Symbol>());
     } else {
-      unspreadableToRestKeys = GoAppend(unspreadableToRestKeys, literalTypeFromProperty);
+      unspreadableToRestKeys = GoSliceAppend(unspreadableToRestKeys, literalTypeFromProperty, GoPointerValueOps<Type>());
     }
   }
   if (Checker_isGenericObjectType(receiver, source) || Checker_isGenericIndexType(receiver, omitKeyType)) {
@@ -6371,7 +6372,7 @@ export function Checker_findApplicableIndexInfo(receiver: GoPtr<Checker>, indexI
     if (info!.keyType === receiver!.stringType) {
       stringIndexInfo = info;
     } else if (Checker_isApplicableIndexType(receiver, keyType, info!.keyType)) {
-      applicableInfos = GoAppend(applicableInfos, info);
+      applicableInfos = GoSliceAppend(applicableInfos, info, GoPointerValueOps<IndexInfo>());
     }
   }
   if (applicableInfos.length === 0) {
@@ -7031,7 +7032,7 @@ export function Checker_getSignaturesOfSymbol(receiver: GoPtr<Checker>, symbol_:
     if (sig === undefined) {
       sig = Checker_getSignatureFromDeclaration(receiver, decl);
     }
-    result = GoAppend(result, sig);
+    result = GoSliceAppend(result, sig, GoPointerValueOps<Signature>());
   }
   return result;
 }
@@ -7146,7 +7147,7 @@ export function Checker_getSignatureFromDeclaration(receiver: GoPtr<Checker>, de
       hasThisParameter = true;
       thisParameter = Node_Symbol(param);
     } else {
-      parameters = GoAppend(parameters, paramSymbol);
+      parameters = GoSliceAppend(parameters, paramSymbol, GoPointerValueOps<Symbol>());
     }
     if (typeNode !== undefined && typeNode!.Kind === KindLiteralType) {
       flags = (flags | SignatureFlagsHasLiteralTypes) as SignatureFlags;
@@ -8118,7 +8119,7 @@ export function Checker_getDefaultConstructSignatures(receiver: GoPtr<Checker>, 
       } else {
         sig!.flags = (sig!.flags & ~SignatureFlagsAbstract) as SignatureFlags;
       }
-      result = GoAppend(result, sig);
+      result = GoSliceAppend(result, sig, GoPointerValueOps<Signature>());
     }
   }
   return result;
@@ -8284,7 +8285,7 @@ export function Checker_getUnionSignatures(receiver: GoPtr<Checker>, signatureLi
             s = Checker_createUnionSignature(receiver, signature, unionSignatures);
             s!.thisParameter = thisParameter;
           }
-          result = GoAppend(result, s);
+          result = GoSliceAppend(result, s, GoPointerValueOps<Signature>());
         }
       }
     }
@@ -8390,7 +8391,7 @@ export function Checker_combineUnionOrIntersectionMemberSignatures(receiver: GoP
   } else {
     leftSignatures = [left];
   }
-  result!.composite = { isUnion, signatures: GoAppend(leftSignatures, right) };
+  result!.composite = { isUnion, signatures: GoSliceAppend(leftSignatures, right, GoPointerValueOps<Signature>()) };
   if (paramMapper !== undefined) {
     if (left!.composite !== undefined && left!.composite.isUnion === isUnion && left!.mapper !== undefined) {
       result!.mapper = Checker_combineTypeMappers(receiver, left!.mapper, paramMapper);
@@ -8571,7 +8572,7 @@ export function Checker_appendSignatures(receiver: GoPtr<Checker>, signatures: G
   for (const sig of newSignatures) {
     if (signatures.length === 0 || core.Every(signatures, (s: GoPtr<Signature>) =>
       Checker_compareSignaturesIdentical(receiver, s, sig, false, false, false, (source: GoPtr<Type>, target: GoPtr<Type>) => Checker_compareTypesIdentical(receiver, source, target)) === TernaryFalse)) {
-      signatures = GoAppend(signatures, sig);
+      signatures = GoSliceAppend(signatures, sig, GoPointerValueOps<Signature>());
     }
   }
   return signatures;
@@ -8633,7 +8634,7 @@ export function Checker_getTypeArguments(receiver: GoPtr<Checker>, t: GoPtr<Type
     if (node !== undefined) {
       switch (node.Kind) {
         case KindTypeReference:
-          typeArguments = GoAppendSlice(InterfaceType_OuterTypeParameters(targetInterface), Checker_getEffectiveTypeArguments(receiver, node, InterfaceType_LocalTypeParameters(targetInterface)));
+          typeArguments = GoSliceAppendSlice(InterfaceType_OuterTypeParameters(targetInterface), Checker_getEffectiveTypeArguments(receiver, node, InterfaceType_LocalTypeParameters(targetInterface)), GoPointerValueOps<Type>());
           break;
         case KindArrayType:
           typeArguments = [Checker_getTypeFromTypeNode(receiver, AsArrayTypeNode(node)!.ElementType)];
@@ -9394,14 +9395,14 @@ export function Checker_getOuterTypeParameters(receiver: GoPtr<Checker>, node: G
         if ((kind === KindFunctionExpression || kind === KindArrowFunction || IsObjectLiteralMethod(cur)) && Checker_isContextSensitive(receiver, cur)) {
           const signature = core.FirstOrNil(Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, cur)), SignatureKindCall), GoZeroPointer<Signature>);
           if (signature !== undefined && (signature!.typeParameters ?? []).length !== 0) {
-            return GoAppendSlice(outerTypeParameters, signature!.typeParameters);
+            return GoSliceAppendSlice(outerTypeParameters, signature!.typeParameters, GoPointerValueOps<Type>());
           }
         }
         if (kind === KindMappedType) {
-          return GoAppend(outerTypeParameters, Checker_getDeclaredTypeOfTypeParameter(receiver, Checker_getSymbolOfDeclaration(receiver, AsMappedTypeNode(cur)!.TypeParameter)));
+          return GoSliceAppend(outerTypeParameters, Checker_getDeclaredTypeOfTypeParameter(receiver, Checker_getSymbolOfDeclaration(receiver, AsMappedTypeNode(cur)!.TypeParameter)), GoPointerValueOps<Type>());
         }
         if (kind === KindConditionalType) {
-          return GoAppendSlice(outerTypeParameters, Checker_getInferTypeParameters(receiver, cur));
+          return GoSliceAppendSlice(outerTypeParameters, Checker_getInferTypeParameters(receiver, cur), GoPointerValueOps<Type>());
         }
         const outerAndOwnTypeParameters = Checker_appendTypeParameters(receiver, outerTypeParameters, Node_TypeParameters(cur) ?? []);
         let thisType: GoPtr<Type> = undefined;
@@ -9409,7 +9410,7 @@ export function Checker_getOuterTypeParameters(receiver: GoPtr<Checker>, node: G
           thisType = Type_AsInterfaceType(Checker_getDeclaredTypeOfClassOrInterface(receiver, Checker_getSymbolOfDeclaration(receiver, cur)))!.thisType;
         }
         if (thisType !== undefined) {
-          return GoAppend(outerAndOwnTypeParameters, thisType);
+          return GoSliceAppend(outerAndOwnTypeParameters, thisType, GoPointerValueOps<Type>());
         }
         return outerAndOwnTypeParameters;
       }
@@ -9436,7 +9437,7 @@ export function Checker_getInferTypeParameters(receiver: GoPtr<Checker>, node: G
   const locals = Node_Locals(node);
   for (const symbol_ of locals.values()) {
     if ((symbol_!.Flags & SymbolFlagsTypeParameter) !== 0) {
-      result = GoAppend(result, Checker_getDeclaredTypeOfSymbol(receiver, symbol_));
+      result = GoSliceAppend(result, Checker_getDeclaredTypeOfSymbol(receiver, symbol_), GoPointerValueOps<Type>());
     }
   }
   return result;
@@ -9821,7 +9822,7 @@ export function Checker_expandSignatureParametersWithTupleMembers(receiver: GoPt
     } else {
       links!.resolvedType = type_;
     }
-    expanded = GoAppend(expanded, symbol_);
+    expanded = GoSliceAppend(expanded, symbol_, GoPointerValueOps<Symbol>());
   }
   return expanded;
 }
@@ -10133,7 +10134,7 @@ export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: Go
     if (IsSyntheticExpression(arg) && AsSyntheticExpression(arg)!.TupleNameSource !== undefined) {
       info.labeledDeclaration = AsSyntheticExpression(arg)!.TupleNameSource;
     }
-    types = GoAppend(types, t);
+    types = GoSliceAppend(types, t, GoPointerValueOps<Type>());
     infos = GoAppend(infos, info);
   }
   return Checker_createTupleTypeEx(receiver, types, infos, inConstContext && !someType(restType, (t: GoPtr<Type>): bool => Checker_isMutableArrayLikeType(receiver, t)));
@@ -10455,10 +10456,10 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
             syntheticType = Checker_createArrayType(receiver, syntheticType);
           }
           const syntheticArg = Checker_createSyntheticExpression(receiver, arg, syntheticType, (flags & ElementFlagsVariable) !== 0, elementInfos[elementIndex]!.labeledDeclaration);
-          effectiveArgs = GoAppend(effectiveArgs, syntheticArg);
+          effectiveArgs = GoSliceAppend(effectiveArgs, syntheticArg, GoPointerValueOps<Node>());
         }
       } else {
-        effectiveArgs = GoAppend(effectiveArgs, arg);
+        effectiveArgs = GoSliceAppend(effectiveArgs, arg, GoPointerValueOps<Node>());
       }
     }
     return effectiveArgs;
@@ -11167,7 +11168,7 @@ export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: Go
       } else {
         for (const inf of (Checker_getIndexInfosOfType(receiver, t) ?? [])) {
           if (inf!.declaration !== undefined && Checker_isApplicableIndexType(receiver, keyType, inf!.keyType)) {
-            declarations = GoAppend(declarations, inf!.declaration);
+            declarations = GoSliceAppend(declarations, inf!.declaration, GoPointerValueOps<Node>());
           }
         }
       }

@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoBooleanKey, GoNilMap, GoNilSlice, GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import { GoSlicePrefix } from "../../go/slice-runtime.js";
 import type { Node } from "../ast/spine.js";
@@ -147,7 +148,7 @@ export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosing
     verbosityLevel = b.verbosity.Level;
     maxTruncationLength = b.verbosity.MaxTruncationLength;
   }
-  b.ctxStack = GoAppend(b.ctxStack, b.impl!.ctx);
+  b.ctxStack = GoSliceAppend(b.ctxStack, b.impl!.ctx, GoPointerValueOps<NodeBuilderContext>());
   b.impl!.ctx = {
     host: b.host,
     tracker: tracker,
@@ -463,8 +464,8 @@ export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, s
   const b = receiver!;
   NodeBuilder_enterContext(b, undefined, (FlagsIgnoreErrors | FlagsMultilineObjectLiterals | FlagsUseAliasDefinedOutsideCurrentScope) as Flags, 0 as InternalFlags, undefined as unknown as SymbolTracker);
   const declaredType = Checker_getDeclaredTypeOfSymbol(b.impl!.ch, symbol_);
-  b.impl!.ctx!.typeStack = GoAppend(b.impl!.ctx!.typeStack, declaredType);
-  b.impl!.ctx!.typeStack = GoAppend(b.impl!.ctx!.typeStack, undefined);
+  b.impl!.ctx!.typeStack = GoSliceAppend(b.impl!.ctx!.typeStack, declaredType, GoPointerValueOps<Type>());
+  b.impl!.ctx!.typeStack = GoSliceAppend(b.impl!.ctx!.typeStack, undefined, GoPointerValueOps<Type>());
   const nodes = NodeBuilderImpl_expandSymbolForHover(b.impl, symbol_);
   b.impl!.ctx!.typeStack = GoSlicePrefix(b.impl!.ctx!.typeStack, b.impl!.ctx!.typeStack.length - 2);
   NodeBuilder_propagateVerbosityOut(b);
@@ -472,18 +473,18 @@ export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, s
   for (const node of nodes) {
     switch (node!.Kind) {
       case KindClassDeclaration:
-        result = GoAppend(result, simplifyClassDeclaration(b.impl!.f, node, symbol_));
+        result = GoSliceAppend(result, simplifyClassDeclaration(b.impl!.f, node, symbol_), GoPointerValueOps<Node>());
         break;
       case KindEnumDeclaration:
-        result = GoAppend(result, simplifyModifiers(b.impl!.f, node, IsEnumDeclaration, symbol_));
+        result = GoSliceAppend(result, simplifyModifiers(b.impl!.f, node, IsEnumDeclaration, symbol_), GoPointerValueOps<Node>());
         break;
       case KindInterfaceDeclaration:
         if ((meaning & SymbolFlagsInterface) !== 0) {
-          result = GoAppend(result, simplifyModifiers(b.impl!.f, node, IsInterfaceDeclaration, symbol_));
+          result = GoSliceAppend(result, simplifyModifiers(b.impl!.f, node, IsInterfaceDeclaration, symbol_), GoPointerValueOps<Node>());
         }
         break;
       case KindModuleDeclaration:
-        result = GoAppend(result, simplifyModifiers(b.impl!.f, node, IsModuleDeclaration, symbol_));
+        result = GoSliceAppend(result, simplifyModifiers(b.impl!.f, node, IsModuleDeclaration, symbol_), GoPointerValueOps<Node>());
         break;
     }
   }

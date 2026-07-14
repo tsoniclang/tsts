@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { Node_Clone, Node_Name, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import type { GetAccessorDeclaration, QualifiedName, SetAccessorDeclaration, TypeReferenceNode } from "../../ast/generated/data.js";
@@ -310,9 +311,9 @@ export function metadataSerializer_serializeParameterTypesOfNode(receiver: GoPtr
       continue;
     }
     if (AsParameterDeclaration(parameter)!.DotDotDotToken !== undefined) {
-      expressions = GoAppend(expressions, metadataSerializer_serializeTypeNode(receiver, GetRestParameterElementType(Node_Type(parameter))));
+      expressions = GoSliceAppend(expressions, metadataSerializer_serializeTypeNode(receiver, GetRestParameterElementType(Node_Type(parameter))), GoPointerValueOps<Node>());
     } else {
-      expressions = GoAppend(expressions, metadataSerializer_serializeTypeOfNode(receiver, parameter, container));
+      expressions = GoSliceAppend(expressions, metadataSerializer_serializeTypeOfNode(receiver, parameter, container), GoPointerValueOps<Node>());
     }
   }
   return NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, expressions), false);

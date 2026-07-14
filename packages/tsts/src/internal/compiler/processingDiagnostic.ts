@@ -1,5 +1,6 @@
 import type { int } from "../../go/scalars.js";
 import type { GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, GoPointerKey } from "../../go/compat.js";
 import { Diagnostic_SetMessageChain, Diagnostic_SetRelatedInfo, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
@@ -247,7 +248,7 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     } else if (preferredLocation !== includeReason) {
       const info = includeProcessor_getRelatedInfo(includeProcessor, includeReason, program);
       if (info !== undefined) {
-        relatedInfo = GoAppend(relatedInfo, info);
+        relatedInfo = GoSliceAppend(relatedInfo, info, GoPointerValueOps<Diagnostic>());
       }
     }
   };
@@ -256,7 +257,7 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     if (!Set_AddIfAbsent(seenReasons, includeReason, fileIncludeReasonKey)) {
       return;
     }
-    includeDetails = GoAppend(includeDetails, FileIncludeReason_toDiagnostic(includeReason, program, false));
+    includeDetails = GoSliceAppend(includeDetails, FileIncludeReason_toDiagnostic(includeReason, program, false), GoPointerValueOps<Diagnostic>());
     processRelatedInfo(includeReason);
   };
 
@@ -283,7 +284,7 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     chain = [fileReason];
   }
   if (redirectInfo.length > 0) {
-    chain = GoAppendSlice(chain, redirectInfo);
+    chain = GoSliceAppendSlice(chain, redirectInfo, GoPointerValueOps<Diagnostic>());
   }
 
   let result: GoPtr<Diagnostic> = undefined;

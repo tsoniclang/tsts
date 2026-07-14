@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { renderCanonicalType, renderCanonicalTypeParameters } from "./core/canonical-type-renderer.mjs";
+import { renderCanonicalSignature, renderCanonicalType, renderCanonicalTypeParameters } from "./core/canonical-type-renderer.mjs";
 
 const operations = {
   basic: (name) => `basic:${name}`,
@@ -104,6 +104,33 @@ test("canonical carrier rendering uses intrinsic nilability with no synthetic bo
   assert.throws(
     () => renderCanonicalTypeParameters([], operations, { syntheticNilability: { name: "N" } }),
     /do not accept synthetic rendering options/,
+  );
+});
+
+test("canonical Go variadics render as one fixed slice parameter", () => {
+  const signature = {
+    parameters: [{
+      name: "values",
+      variadic: true,
+      type: {
+        kind: "carrier",
+        carrier: "slice",
+        arguments: [{ kind: "basic", name: "int" }],
+        metadataArguments: [],
+      },
+    }],
+    results: [],
+  };
+  assert.deepEqual(renderCanonicalSignature(signature, operations), {
+    parameters: ["values: GoSlice<basic:int>"],
+    returnType: "void",
+  });
+  assert.throws(
+    () => renderCanonicalSignature({
+      ...signature,
+      parameters: [{ name: "values", variadic: true, type: { kind: "basic", name: "int" } }],
+    }, operations),
+    /does not retain its slice carrier/,
   );
 });
 

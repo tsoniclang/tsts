@@ -1,6 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoBigIntKey, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import { GoSlicePrefix, GoSliceRange } from "../../go/slice-runtime.js";
 import type { Node, NodeList } from "../ast/spine.js";
@@ -580,7 +581,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
         continue;
       }
     } else if ((flags & FlowFlagsReduceLabel) !== 0) {
-      f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(currentFlow!.Node));
+      f!.reduceLabels = GoSliceAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(currentFlow!.Node), GoPointerValueOps<FlowReduceLabelData>());
       t = Checker_getTypeAtFlowNode(receiver, f, currentFlow!.Antecedent);
       f!.reduceLabels = GoSlicePrefix(f!.reduceLabels, f!.reduceLabels.length - 1);
     } else if ((flags & FlowFlagsStart) !== 0) {
@@ -2592,13 +2593,13 @@ export function Checker_narrowTypeBySwitchOnDiscriminant(receiver: GoPtr<Checker
       const s = clauseTypes[i];
       if (s!.flags & (TypeFlagsPrimitive | TypeFlagsNonPrimitive)) {
         if (!GoSliceIsNil(groundClauseTypes)) {
-          groundClauseTypes = GoAppend(groundClauseTypes, s);
+          groundClauseTypes = GoSliceAppend(groundClauseTypes, s, GoPointerValueOps<Type>());
         }
       } else if (s!.flags & TypeFlagsObject) {
         if (GoSliceIsNil(groundClauseTypes)) {
           groundClauseTypes = GoSlicePrefix(clauseTypes, i);
         }
-        groundClauseTypes = GoAppend(groundClauseTypes, receiver!.nonPrimitiveType);
+        groundClauseTypes = GoSliceAppend(groundClauseTypes, receiver!.nonPrimitiveType, GoPointerValueOps<Type>());
       } else {
         return t;
       }
@@ -2913,7 +2914,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
       return { t: flowType.t, incomplete: false };
     }
     if (!receiver!.antecedentTypes.slice(antecedentStart).includes(flowType.t)) {
-      receiver!.antecedentTypes = GoAppend(receiver!.antecedentTypes, flowType.t);
+      receiver!.antecedentTypes = GoSliceAppend(receiver!.antecedentTypes, flowType.t, GoPointerValueOps<Type>());
     }
     // If an antecedent type is not a subset of the declared type, we need to perform subtype reduction.
     if (!Checker_isTypeSubsetOf(receiver, flowType.t, f!.initialType)) {
@@ -2932,7 +2933,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
         receiver!.antecedentTypes = GoSlicePrefix(receiver!.antecedentTypes, antecedentStart);
         return { t: flowType.t, incomplete: false };
       }
-      receiver!.antecedentTypes = GoAppend(receiver!.antecedentTypes, flowType.t);
+      receiver!.antecedentTypes = GoSliceAppend(receiver!.antecedentTypes, flowType.t, GoPointerValueOps<Type>());
       if (!Checker_isTypeSubsetOf(receiver, flowType.t, f!.initialType)) {
         subtypeReduction = true;
       }
@@ -5683,7 +5684,7 @@ export function Checker_isReachableFlowNodeWorker(receiver: GoPtr<Checker>, f: G
       flow = flow!.Antecedent!;
     } else if (flags & FlowFlagsReduceLabel) {
       receiver!.lastFlowNode = undefined;
-      f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!);
+      f!.reduceLabels = GoSliceAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!, GoPointerValueOps<FlowReduceLabelData>());
       const result = Checker_isReachableFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
       f!.reduceLabels = GoSlicePrefix(f!.reduceLabels, f!.reduceLabels.length - 1);
       return result;
@@ -5811,7 +5812,7 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
     } else if (flags & FlowFlagsLoopLabel) {
       flow = flow!.Antecedents!.Flow!;
     } else if (flags & FlowFlagsReduceLabel) {
-      f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!);
+      f!.reduceLabels = GoSliceAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!, GoPointerValueOps<FlowReduceLabelData>());
       const result = Checker_isPostSuperFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
       f!.reduceLabels = GoSlicePrefix(f!.reduceLabels, f!.reduceLabels.length - 1);
       return result;

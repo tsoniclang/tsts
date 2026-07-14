@@ -1,5 +1,6 @@
 import type { bool, uint } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilMap, GoNilSlice, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, NodeFactory_NewModifierList, Node_Name } from "../../ast/spine.js";
@@ -308,14 +309,14 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
     const [prologue, rest] = NodeFactory_SplitStandardPrologue(printerFactory, node!.Statements!.Nodes!);
     let topLevelStatements: GoSlice<GoPtr<Statement>> = GoNilSlice();
     const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>)[0];
-    topLevelStatements = GoAppendSlice(topLevelStatements, prologueVisited as GoSlice<GoPtr<Statement>>);
+    topLevelStatements = GoSliceAppendSlice(topLevelStatements, prologueVisited as GoSlice<GoPtr<Statement>>, GoPointerValueOps<Node>());
     let pos = 0;
     while (pos < rest.length) {
       const statement = rest[pos];
       if (getUsingKind(statement as GoPtr<Node>) !== usingKindNone) {
         if (pos > 0) {
           const leadingVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), rest.slice(0, pos) as GoSlice<GoPtr<Node>>)[0];
-          topLevelStatements = GoAppendSlice(topLevelStatements, leadingVisited as GoSlice<GoPtr<Statement>>);
+          topLevelStatements = GoSliceAppendSlice(topLevelStatements, leadingVisited as GoSlice<GoPtr<Statement>>, GoPointerValueOps<Node>());
         }
         break;
       }
@@ -333,28 +334,28 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
       for (const name of receiver!.exportBindingNames ?? []) {
         const specifier = receiver!.exportBindings!.get(name);
         debug.Assert((specifier !== undefined) as bool, "Missing export binding for hoisted export name");
-        exportSpecifiers = GoAppend(exportSpecifiers, specifier);
+        exportSpecifiers = GoSliceAppend(exportSpecifiers, specifier, GoPointerValueOps<Node>());
       }
-      topLevelStatements = GoAppend(topLevelStatements, NewExportDeclaration(factory,
+      topLevelStatements = GoSliceAppend(topLevelStatements, NewExportDeclaration(factory,
         undefined, false,
         NewNamedExports(factory, NodeFactory_NewNodeList(factory, exportSpecifiers as GoSlice<GoPtr<Node>>)),
         undefined, undefined,
-      ) as GoPtr<Statement>);
+      ) as GoPtr<Statement>, GoPointerValueOps<Node>());
     }
     const envVarDecls = EmitContext_EndVariableEnvironment(emitContext);
-    topLevelStatements = GoAppendSlice(topLevelStatements, envVarDecls as GoSlice<GoPtr<Statement>>);
+    topLevelStatements = GoSliceAppendSlice(topLevelStatements, envVarDecls as GoSlice<GoPtr<Statement>>, GoPointerValueOps<Node>());
     if (receiver!.exportVars!.length > 0) {
-      topLevelStatements = GoAppend(topLevelStatements, NewVariableStatement(factory,
+      topLevelStatements = GoSliceAppend(topLevelStatements, NewVariableStatement(factory,
         NodeFactory_NewModifierList(factory, [NewToken(factory, KindExportKeyword)] as GoSlice<GoPtr<Node>>),
         NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, receiver!.exportVars! as GoSlice<GoPtr<Node>>), NodeFlagsLet),
-      ) as GoPtr<Statement>);
+      ) as GoPtr<Statement>, GoPointerValueOps<Node>());
     }
     const downlevel = usingDeclarationTransformer_createDownlevelUsingStatements(receiver, bodyStatements, envBinding, usingKind === usingKindAsync);
-    topLevelStatements = GoAppendSlice(topLevelStatements, downlevel as GoSlice<GoPtr<Statement>>);
+    topLevelStatements = GoSliceAppendSlice(topLevelStatements, downlevel as GoSlice<GoPtr<Statement>>, GoPointerValueOps<Node>());
     if (receiver!.exportEqualsBinding !== undefined) {
-      topLevelStatements = GoAppend(topLevelStatements, NewExportAssignment(factory,
+      topLevelStatements = GoSliceAppend(topLevelStatements, NewExportAssignment(factory,
         undefined, true, undefined, receiver!.exportEqualsBinding,
-      ) as GoPtr<Statement>);
+      ) as GoPtr<Statement>, GoPointerValueOps<Node>());
     }
     visited = NodeFactory_UpdateSourceFile(factory, node, NodeFactory_NewNodeList(factory, topLevelStatements as GoSlice<GoPtr<Node>>), node!.EndOfFileToken);
   } else {
@@ -402,14 +403,14 @@ export function usingDeclarationTransformer_visitBlock(receiver: GoPtr<usingDecl
     const envBinding = usingDeclarationTransformer_createEnvBinding(receiver);
     let statements: GoSlice<GoPtr<Node>> = [];
     const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>)[0];
-    statements = GoAppendSlice(statements, prologueVisited);
+    statements = GoSliceAppendSlice(statements, prologueVisited, GoPointerValueOps<Node>());
     const downlevel = usingDeclarationTransformer_createDownlevelUsingStatements(
       receiver,
       usingDeclarationTransformer_transformUsingDeclarations(receiver, rest as GoSlice<GoPtr<Statement>>, envBinding, undefined),
       envBinding,
       usingKind === usingKindAsync,
     );
-    statements = GoAppendSlice(statements, downlevel);
+    statements = GoSliceAppendSlice(statements, downlevel, GoPointerValueOps<Node>());
     const statementList = NodeFactory_NewNodeList(factory, statements);
     statementList!.Loc = node!.Statements!.Loc;
     return NodeFactory_UpdateBlock(factory, node, statementList, node!.MultiLine);
@@ -559,8 +560,8 @@ export function usingDeclarationTransformer_visitForOfStatement(receiver: GoPtr<
     if (IsBlock(node!.Statement)) {
       const stmts = Node_Statements(node!.Statement);
       let newStatements: GoSlice<GoPtr<Node>> = [];
-      newStatements = GoAppend(newStatements, usingVarStatement);
-      newStatements = GoAppendSlice(newStatements, stmts);
+      newStatements = GoSliceAppend(newStatements, usingVarStatement, GoPointerValueOps<Node>());
+      newStatements = GoSliceAppendSlice(newStatements, stmts, GoPointerValueOps<Node>());
       statement = NodeFactory_UpdateBlock(factory, AsBlock(node!.Statement), NodeFactory_NewNodeList(factory, newStatements), AsBlock(node!.Statement)!.MultiLine);
     } else {
       statement = NewBlock(factory,
@@ -707,7 +708,7 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
   const hoistOrAppendNode = (node: GoPtr<Node>): void => {
     const hoisted = hoist(node as GoPtr<Statement>);
     if (hoisted !== undefined) {
-      statements = GoAppend(statements, hoisted as GoPtr<Statement>);
+      statements = GoSliceAppend(statements, hoisted as GoPtr<Statement>, GoPointerValueOps<Node>());
     }
   };
 
@@ -732,13 +733,13 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
         if (initializer === undefined) {
           initializer = NodeFactory_NewVoidZeroExpression(printerFactory) as GoPtr<Node>;
         }
-        declarations = GoAppend(declarations, NodeFactory_UpdateVariableDeclaration(factory,
+        declarations = GoSliceAppend(declarations, NodeFactory_UpdateVariableDeclaration(factory,
           AsVariableDeclaration(decl),
           Node_Name(decl),
           undefined,
           undefined,
           NodeFactory_NewAddDisposableResourceHelper(printerFactory, envBinding as GoPtr<Expression>, initializer as GoPtr<Expression>, usingKind === usingKindAsync),
-        ) as GoPtr<VariableDeclaration>);
+        ) as GoPtr<VariableDeclaration>, GoPointerValueOps<VariableDeclaration>());
       }
       if (!invalid && declarations.length > 0) {
         const varList = NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, declarations as GoSlice<GoPtr<Node>>), NodeFlagsConst);
@@ -773,7 +774,7 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
  * }
  */
 export function usingDeclarationTransformer_hoistImportOrExportOrHoistedDeclaration(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<Statement>, topLevelStatements: GoRef<GoSlice<GoPtr<Statement>>>): void {
-  topLevelStatements!.v = GoAppend(topLevelStatements!.v, node);
+  topLevelStatements!.v = GoSliceAppend(topLevelStatements!.v, node, GoPointerValueOps<Node>());
 }
 
 /**
@@ -1057,7 +1058,7 @@ export function usingDeclarationTransformer_hoistVariableStatement(receiver: GoP
   for (const variable of AsVariableDeclarationList(node!.DeclarationList)!.Declarations!.Nodes!) {
     usingDeclarationTransformer_hoistBindingElement(receiver, variable as GoPtr<Node>, isExported, variable as GoPtr<Node>);
     if ((variable as GoPtr<VariableDeclaration>)!.Initializer !== undefined) {
-      expressions = GoAppend(expressions, usingDeclarationTransformer_hoistInitializedVariable(receiver, AsVariableDeclaration(variable as GoPtr<Node>)));
+      expressions = GoSliceAppend(expressions, usingDeclarationTransformer_hoistInitializedVariable(receiver, AsVariableDeclaration(variable as GoPtr<Node>)), GoPointerValueOps<Node>());
     }
   }
   if (expressions.length > 0) {
@@ -1206,7 +1207,7 @@ export function usingDeclarationTransformer_hoistBindingIdentifier(receiver: GoP
       if (original !== undefined) {
         EmitContext_SetOriginal(emitContext, varDecl, original);
       }
-      receiver!.exportVars = GoAppend(receiver!.exportVars, varDecl as GoPtr<VariableDeclarationNode>);
+      receiver!.exportVars = GoSliceAppend(receiver!.exportVars, varDecl as GoPtr<VariableDeclarationNode>, GoPointerValueOps<Node>());
       return;
     }
     const localName: GoPtr<IdentifierNode> = exportAlias !== undefined ? name : undefined;
@@ -1219,7 +1220,7 @@ export function usingDeclarationTransformer_hoistBindingIdentifier(receiver: GoP
       receiver!.exportBindings = new globalThis.Map<string, GoPtr<ExportSpecifierNode>>();
     }
     if (!receiver!.exportBindings!.has(Node_Text(name as GoPtr<Node>) ?? "")) {
-      receiver!.exportBindingNames = GoAppend(receiver!.exportBindingNames, Node_Text(name as GoPtr<Node>) ?? "");
+      receiver!.exportBindingNames = GoSliceAppend(receiver!.exportBindingNames, Node_Text(name as GoPtr<Node>) ?? "", GoStringValueOps);
     }
     receiver!.exportBindings!.set(Node_Text(name as GoPtr<Node>) ?? "", specifier as GoPtr<ExportSpecifierNode>);
   }
@@ -1368,7 +1369,7 @@ export function usingDeclarationTransformer_createDownlevelUsingStatements(recei
     NodeFlagsConst,
   );
   const envVarStatement = NewVariableStatement(factory, undefined, envVarList as GoPtr<Node>);
-  statements = GoAppend(statements, envVarStatement as GoPtr<Statement>);
+  statements = GoSliceAppend(statements, envVarStatement as GoPtr<Statement>, GoPointerValueOps<Node>());
 
   const tryBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, bodyStatements as GoSlice<GoPtr<Node>>), true as bool);
   const bodyCatchBinding = NodeFactory_NewUniqueName(printerFactory, "e");
@@ -1435,7 +1436,7 @@ export function usingDeclarationTransformer_createDownlevelUsingStatements(recei
       );
 
   const tryStatement = NewTryStatement(factory, tryBlock as GoPtr<Node>, catchClause as GoPtr<Node>, finallyBlock as GoPtr<Node>);
-  statements = GoAppend(statements, tryStatement as GoPtr<Statement>);
+  statements = GoSliceAppend(statements, tryStatement as GoPtr<Statement>, GoPointerValueOps<Node>());
   return statements;
 }
 

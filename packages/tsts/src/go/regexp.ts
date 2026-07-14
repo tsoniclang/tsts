@@ -26,6 +26,7 @@
 
 import type { bool, int } from "./scalars.js";
 import { GoAppend, GoNilSlice, GoSliceIsNil, type GoError, type GoFunc, type GoSlice } from "./compat.js";
+import { GoSliceAppend, GoStringValueOps } from "./compat.js";
 
 // translatePattern rewrites a Go RE2 pattern source into an equivalent JS
 // RegExp source plus the set of JS flags required. It scans character by
@@ -238,13 +239,13 @@ export class Regexp {
       }
       end = match[0];
       if (match[1] !== 0) {
-        result = GoAppend(result, s.slice(beg, end));
+        result = GoSliceAppend(result, s.slice(beg, end), GoStringValueOps);
       }
       beg = match[1];
     }
 
     if (end !== s.length) {
-      result = GoAppend(result, s.slice(beg));
+      result = GoSliceAppend(result, s.slice(beg), GoStringValueOps);
     }
 
     return result;
@@ -274,12 +275,12 @@ export class Regexp {
       const a1 = m.index + m[0]!.length;
 
       // Copy the unmatched characters before this match.
-      out = GoAppend(out, src.slice(lastMatchEnd, a0));
+      out = GoSliceAppend(out, src.slice(lastMatchEnd, a0), GoStringValueOps);
 
       // Insert the replacement, but not for an empty match immediately after a
       // previous match (avoids double replacement).
       if (a1 > lastMatchEnd || a0 === 0) {
-        out = GoAppend(out, repl!(src.slice(a0, a1)));
+        out = GoSliceAppend(out, repl!(src.slice(a0, a1)), GoStringValueOps);
       }
       lastMatchEnd = a1;
 
@@ -295,7 +296,7 @@ export class Regexp {
     }
 
     // Copy the unmatched characters after the last match.
-    out = GoAppend(out, src.slice(lastMatchEnd));
+    out = GoSliceAppend(out, src.slice(lastMatchEnd), GoStringValueOps);
     return out.join("");
   }
 }

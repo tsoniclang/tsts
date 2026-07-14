@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq, Seq2 } from "../../../go/iter.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, GoPointerKey, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "../../../go/compat.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Members, Node_Initializer, Node_Expression, Node_Text, Node_Body, Node_ParameterList, Node_MemberList, Node_Decorators, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateForStatement, NodeFactory_UpdateHeritageClause, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateTryStatement, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePartiallyEmittedExpression } from "../../ast/ast.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
@@ -1434,7 +1435,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
           } else {
             EmitContext_SetSourceMapRange(ec, initializer, MoveRangePastDecorators(node));
           }
-          ci.pendingStaticInitializers = GoAppend(ci.pendingStaticInitializers, initializer);
+          ci.pendingStaticInitializers = GoSliceAppend(ci.pendingStaticInitializers, initializer, GoPointerValueOps<Node>());
         }
       } else {
         if (ci.instanceMethodExtraInitializersName === undefined) {
@@ -1450,7 +1451,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
           } else {
             EmitContext_SetSourceMapRange(ec, initializer, MoveRangePastDecorators(node));
           }
-          ci.pendingInstanceInitializers = GoAppend(ci.pendingInstanceInitializers, initializer);
+          ci.pendingInstanceInitializers = GoSliceAppend(ci.pendingInstanceInitializers, initializer, GoPointerValueOps<Node>());
         }
       }
     }
@@ -1939,16 +1940,11 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
       NodeFactory_NewNodeList(factory, classDecorators as GoPtr<Node>[]) as unknown as GoPtr<never>,
       false,
     ) as GoPtr<Expression>;
-    classDefinitionStatements = GoAppend(classDefinitionStatements,
-      esDecoratorTransformer_createLet(tx, ci.classDecoratorsName, decoratorsArray),
-      esDecoratorTransformer_createLet(tx, ci.classDescriptorName, undefined),
-      esDecoratorTransformer_createLet(
+    classDefinitionStatements = GoSliceAppendSlice(classDefinitionStatements, GoSliceBuild(4, 4, GoPointerValueOps<Node>(), (__goSliceLiteral_16063) => { GoSliceStore(__goSliceLiteral_16063, 0, esDecoratorTransformer_createLet(tx, ci.classDecoratorsName, decoratorsArray), GoPointerValueOps<Node>()); GoSliceStore(__goSliceLiteral_16063, 1, esDecoratorTransformer_createLet(tx, ci.classDescriptorName, undefined), GoPointerValueOps<Node>()); GoSliceStore(__goSliceLiteral_16063, 2, esDecoratorTransformer_createLet(
         tx,
         ci.classExtraInitializersName,
         NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as GoPtr<Expression>,
-      ),
-      esDecoratorTransformer_createLet(tx, ci.classThis, undefined),
-    );
+      ), GoPointerValueOps<Node>()); GoSliceStore(__goSliceLiteral_16063, 3, esDecoratorTransformer_createLet(tx, ci.classThis, undefined), GoPointerValueOps<Node>()); }), GoPointerValueOps<Node>());
 
     if (ci.hasStaticPrivateClassElements) {
       shouldTransformPrivateStaticElementsInClass = true;
@@ -1985,7 +1981,7 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
         extendsExpression,
       );
     }
-    classDefinitionStatements = GoAppend(classDefinitionStatements, esDecoratorTransformer_createLet(tx, ci.classSuper, safeExtendsExpression));
+    classDefinitionStatements = GoSliceAppend(classDefinitionStatements, esDecoratorTransformer_createLet(tx, ci.classSuper, safeExtendsExpression), GoPointerValueOps<Node>());
 
     const updatedExtendsElement = NodeFactory_UpdateExpressionWithTypeArguments(
       factory,
@@ -2008,7 +2004,7 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
     : NodeFactory_NewThisExpression(f);
 
   esDecoratorTransformer_enterClass(tx, ci);
-  leadingBlockStatements = GoAppend(leadingBlockStatements, esDecoratorTransformer_createMetadata(tx, ci.metadataReference, ci.classSuper));
+  leadingBlockStatements = GoSliceAppend(leadingBlockStatements, esDecoratorTransformer_createMetadata(tx, ci.metadataReference, ci.classSuper), GoPointerValueOps<Node>());
   let members = NodeVisitor_VisitNodes(tx.nonConstructorClassElementVisitor as ConcreteNodeVisitor, Node_MemberList(node) as GoPtr<NodeList>);
   members = NodeVisitor_VisitNodes(tx.constructorClassElementVisitor as ConcreteNodeVisitor, members);
 
@@ -2018,7 +2014,7 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
       if ((Node_SubtreeFacts(expr as GoPtr<Node>) & SubtreeContainsLexicalThis) !== 0) {
         expr = NodeVisitor_VisitNode(tx.outerThisVisitor as ConcreteNodeVisitor, expr as GoPtr<Node>) as GoPtr<Expression>;
       }
-      leadingBlockStatements = GoAppend(leadingBlockStatements, NewExpressionStatement(factory, expr as unknown as GoPtr<never>) as GoPtr<Statement>);
+      leadingBlockStatements = GoSliceAppend(leadingBlockStatements, NewExpressionStatement(factory, expr as unknown as GoPtr<never>) as GoPtr<Statement>, GoPointerValueOps<Node>());
     }
     if (tx.outerThis !== undefined) {
       classDefinitionStatements = GoAppendSlice([esDecoratorTransformer_createLet(tx, tx.outerThis, NodeFactory_NewThisExpression(f))], classDefinitionStatements);
@@ -2043,39 +2039,39 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
           NodeFactory_NewNodeList(factory, [spreadArguments]) as unknown as GoPtr<never>,
           NodeFlagsNone,
         );
-        constructorStatements = GoAppend(constructorStatements, NewExpressionStatement(factory, superCall as unknown as GoPtr<never>) as GoPtr<Statement>);
+        constructorStatements = GoSliceAppend(constructorStatements, NewExpressionStatement(factory, superCall as unknown as GoPtr<never>) as GoPtr<Statement>, GoPointerValueOps<Node>());
       }
-      constructorStatements = GoAppendSlice(constructorStatements, initializerStatements);
+      constructorStatements = GoSliceAppendSlice(constructorStatements, initializerStatements, GoPointerValueOps<Node>());
       const constructorBody = NewBlock(factory, NodeFactory_NewNodeList(factory, constructorStatements) as unknown as GoPtr<never>, true);
       syntheticConstructor = NewConstructorDeclaration(factory, undefined, undefined, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, undefined, undefined, constructorBody as unknown as GoPtr<never>);
     }
   }
 
   if (ci.staticMethodExtraInitializersName !== undefined) {
-    classDefinitionStatements = GoAppend(classDefinitionStatements, esDecoratorTransformer_createLet(
+    classDefinitionStatements = GoSliceAppend(classDefinitionStatements, esDecoratorTransformer_createLet(
       tx,
       ci.staticMethodExtraInitializersName,
       NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as GoPtr<Expression>,
-    ));
+    ), GoPointerValueOps<Node>());
   }
 
   if (ci.instanceMethodExtraInitializersName !== undefined) {
-    classDefinitionStatements = GoAppend(classDefinitionStatements, esDecoratorTransformer_createLet(
+    classDefinitionStatements = GoSliceAppend(classDefinitionStatements, esDecoratorTransformer_createLet(
       tx,
       ci.instanceMethodExtraInitializersName,
       NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as GoPtr<Expression>,
-    ));
+    ), GoPointerValueOps<Node>());
   }
 
   if (OrderedMap_Size(ci.memberInfos) > 0) {
-    classDefinitionStatements = GoAppendSlice(classDefinitionStatements, esDecoratorTransformer_emitMemberInfoDeclarations(tx, ci, true));
-    classDefinitionStatements = GoAppendSlice(classDefinitionStatements, esDecoratorTransformer_emitMemberInfoDeclarations(tx, ci, false));
+    classDefinitionStatements = GoSliceAppendSlice(classDefinitionStatements, esDecoratorTransformer_emitMemberInfoDeclarations(tx, ci, true), GoPointerValueOps<Node>());
+    classDefinitionStatements = GoSliceAppendSlice(classDefinitionStatements, esDecoratorTransformer_emitMemberInfoDeclarations(tx, ci, false), GoPointerValueOps<Node>());
   }
 
-  leadingBlockStatements = GoAppendSlice(leadingBlockStatements, ci.staticNonFieldDecorationStatements);
-  leadingBlockStatements = GoAppendSlice(leadingBlockStatements, ci.nonStaticNonFieldDecorationStatements);
-  leadingBlockStatements = GoAppendSlice(leadingBlockStatements, ci.staticFieldDecorationStatements);
-  leadingBlockStatements = GoAppendSlice(leadingBlockStatements, ci.nonStaticFieldDecorationStatements);
+  leadingBlockStatements = GoSliceAppendSlice(leadingBlockStatements, ci.staticNonFieldDecorationStatements, GoPointerValueOps<Node>());
+  leadingBlockStatements = GoSliceAppendSlice(leadingBlockStatements, ci.nonStaticNonFieldDecorationStatements, GoPointerValueOps<Node>());
+  leadingBlockStatements = GoSliceAppendSlice(leadingBlockStatements, ci.staticFieldDecorationStatements, GoPointerValueOps<Node>());
+  leadingBlockStatements = GoSliceAppendSlice(leadingBlockStatements, ci.nonStaticFieldDecorationStatements, GoPointerValueOps<Node>());
 
   if (ci.classDescriptorName !== undefined && ci.classDecoratorsName !== undefined && ci.classExtraInitializersName !== undefined && ci.classThis !== undefined) {
     const valueProperty = NewPropertyAssignment(factory, undefined, NewAstIdentifier(factory, "value"), undefined, undefined, renamedClassThis);
@@ -2095,21 +2091,21 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
     );
     const esDecorateStatement = NewExpressionStatement(factory, esDecorateHelper as unknown as GoPtr<never>) as GoPtr<Statement>;
     EmitContext_SetSourceMapRange(ec, esDecorateStatement, MoveRangePastDecorators(node));
-    leadingBlockStatements = GoAppend(leadingBlockStatements, esDecorateStatement);
+    leadingBlockStatements = GoSliceAppend(leadingBlockStatements, esDecorateStatement, GoPointerValueOps<Node>());
 
     const classDescriptorValueRef = NewPropertyAccessExpression(factory, ci.classDescriptorName as GoPtr<Expression>, undefined, NewAstIdentifier(factory, "value"), NodeFlagsNone) as GoPtr<Expression>;
     const classThisAssignment = NodeFactory_NewAssignmentExpression(f, ci.classThis as GoPtr<Expression>, classDescriptorValueRef);
     const classReferenceAssignment = NodeFactory_NewAssignmentExpression(f, classReference as GoPtr<Expression>, classThisAssignment);
-    leadingBlockStatements = GoAppend(leadingBlockStatements, NewExpressionStatement(factory, classReferenceAssignment as unknown as GoPtr<never>) as GoPtr<Statement>);
+    leadingBlockStatements = GoSliceAppend(leadingBlockStatements, NewExpressionStatement(factory, classReferenceAssignment as unknown as GoPtr<never>) as GoPtr<Statement>, GoPointerValueOps<Node>());
   }
 
-  leadingBlockStatements = GoAppend(leadingBlockStatements, esDecoratorTransformer_createSymbolMetadata(tx, renamedClassThis, ci.metadataReference));
+  leadingBlockStatements = GoSliceAppend(leadingBlockStatements, esDecoratorTransformer_createSymbolMetadata(tx, renamedClassThis, ci.metadataReference), GoPointerValueOps<Node>());
 
   if (ci.pendingStaticInitializers.length > 0) {
     for (const initializer of ci.pendingStaticInitializers) {
       const initializerStatement = NewExpressionStatement(factory, initializer as unknown as GoPtr<never>) as GoPtr<Statement>;
       EmitContext_SetSourceMapRange(ec, initializerStatement, EmitContext_SourceMapRange(ec, initializer as GoPtr<Node>));
-      trailingBlockStatements = GoAppend(trailingBlockStatements, initializerStatement);
+      trailingBlockStatements = GoSliceAppend(trailingBlockStatements, initializerStatement, GoPointerValueOps<Node>());
     }
     ci.pendingStaticInitializers = GoNilSlice();
   }
@@ -2122,11 +2118,11 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
     } else {
       EmitContext_SetSourceMapRange(ec, runClassInitializersStatement, MoveRangePastDecorators(node));
     }
-    trailingBlockStatements = GoAppend(trailingBlockStatements, runClassInitializersStatement);
+    trailingBlockStatements = GoSliceAppend(trailingBlockStatements, runClassInitializersStatement, GoPointerValueOps<Node>());
   }
 
   if (leadingBlockStatements.length > 0 && trailingBlockStatements.length > 0 && !ci.hasStaticInitializers) {
-    leadingBlockStatements = GoAppendSlice(leadingBlockStatements, trailingBlockStatements);
+    leadingBlockStatements = GoSliceAppendSlice(leadingBlockStatements, trailingBlockStatements, GoPointerValueOps<Node>());
     trailingBlockStatements = GoNilSlice();
   }
 
@@ -2164,19 +2160,19 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
     }
 
     if (leadingStaticBlock !== undefined) {
-      newMembers = GoAppendSlice(newMembers, members!.Nodes.slice(0, existingNamedEvaluationHelperBlockIndex + 1));
-      newMembers = GoAppend(newMembers, leadingStaticBlock);
-      newMembers = GoAppendSlice(newMembers, members!.Nodes.slice(existingNamedEvaluationHelperBlockIndex + 1));
+      newMembers = GoSliceAppendSlice(newMembers, members!.Nodes.slice(0, existingNamedEvaluationHelperBlockIndex + 1), GoPointerValueOps<Node>());
+      newMembers = GoSliceAppend(newMembers, leadingStaticBlock, GoPointerValueOps<Node>());
+      newMembers = GoSliceAppendSlice(newMembers, members!.Nodes.slice(existingNamedEvaluationHelperBlockIndex + 1), GoPointerValueOps<Node>());
     } else {
-      newMembers = GoAppendSlice(newMembers, members!.Nodes);
+      newMembers = GoSliceAppendSlice(newMembers, members!.Nodes, GoPointerValueOps<Node>());
     }
 
     if (syntheticConstructor !== undefined) {
-      newMembers = GoAppend(newMembers, syntheticConstructor);
+      newMembers = GoSliceAppend(newMembers, syntheticConstructor, GoPointerValueOps<Node>());
     }
 
     if (trailingStaticBlock !== undefined) {
-      newMembers = GoAppend(newMembers, trailingStaticBlock);
+      newMembers = GoSliceAppend(newMembers, trailingStaticBlock, GoPointerValueOps<Node>());
     }
 
     const membersList = NodeFactory_NewNodeList(factory, newMembers);
@@ -2198,14 +2194,11 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
     const returnExpr = ci.classThis !== undefined
       ? NodeFactory_NewAssignmentExpression(f, classReference as GoPtr<Expression>, ci.classThis as GoPtr<Expression>)
       : classReference as GoPtr<Expression>;
-    classDefinitionStatements = GoAppend(classDefinitionStatements,
-      NewVariableStatement(factory, undefined, classReferenceVarDeclList as unknown as GoPtr<never>) as GoPtr<Statement>,
-      NewReturnStatement(factory, returnExpr as unknown as GoPtr<never>) as GoPtr<Statement>,
-    );
+    classDefinitionStatements = GoSliceAppendSlice(classDefinitionStatements, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral_197d9) => { GoSliceStore(__goSliceLiteral_197d9, 0, NewVariableStatement(factory, undefined, classReferenceVarDeclList as unknown as GoPtr<never>) as GoPtr<Statement>, GoPointerValueOps<Node>()); GoSliceStore(__goSliceLiteral_197d9, 1, NewReturnStatement(factory, returnExpr as unknown as GoPtr<never>) as GoPtr<Statement>, GoPointerValueOps<Node>()); }), GoPointerValueOps<Node>());
   } else {
     classExpression = NewClassExpression(factory, undefined, Node_Name(node) as GoPtr<never>, undefined, heritageClauses as GoPtr<never>, members as GoPtr<never>);
     EmitContext_SetOriginal(ec, classExpression, node);
-    classDefinitionStatements = GoAppend(classDefinitionStatements, NewReturnStatement(factory, classExpression as unknown as GoPtr<never>) as GoPtr<Statement>);
+    classDefinitionStatements = GoSliceAppend(classDefinitionStatements, NewReturnStatement(factory, classExpression as unknown as GoPtr<never>) as GoPtr<Statement>, GoPointerValueOps<Node>());
   }
 
   if (shouldTransformPrivateStaticElementsInClass) {
@@ -2256,15 +2249,15 @@ export function esDecoratorTransformer_emitMemberInfoDeclarations(receiver: GoPt
       // Go `continue`: the Seq yield returns true to keep iterating.
       return true;
     }
-    stmts = GoAppend(stmts, esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberDecoratorsName, undefined));
+    stmts = GoSliceAppend(stmts, esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberDecoratorsName, undefined), GoPointerValueOps<Node>());
     if ((mi as GoPtr<memberInfo>)!.memberInitializersName !== undefined) {
-      stmts = GoAppend(stmts, esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberInitializersName, NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as unknown as GoPtr<Expression>));
+      stmts = GoSliceAppend(stmts, esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberInitializersName, NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as unknown as GoPtr<Expression>), GoPointerValueOps<Node>());
     }
     if ((mi as GoPtr<memberInfo>)!.memberExtraInitializersName !== undefined) {
-      stmts = GoAppend(stmts, esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberExtraInitializersName, NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as unknown as GoPtr<Expression>));
+      stmts = GoSliceAppend(stmts, esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberExtraInitializersName, NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as unknown as GoPtr<Expression>), GoPointerValueOps<Node>());
     }
     if ((mi as GoPtr<memberInfo>)!.memberDescriptorName !== undefined) {
-      stmts = GoAppend(stmts, esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberDescriptorName, undefined));
+      stmts = GoSliceAppend(stmts, esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberDescriptorName, undefined), GoPointerValueOps<Node>());
     }
     // Go `for ... range` iterates every entry.
     return true;
@@ -2409,18 +2402,18 @@ export function esDecoratorTransformer_visitClassDeclaration(receiver: GoPtr<esD
         EmitContext_SetOriginal(ec, varDecl as GoPtr<Node>, classNode);
         const varDecls = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, [varDecl]) as GoPtr<never>, NodeFlagsLet);
         const varStatement = NewVariableStatement(astFactory, undefined, varDecls as GoPtr<never>);
-        statements = GoAppend(statements, varStatement as GoPtr<Statement>);
+        statements = GoSliceAppend(statements, varStatement as GoPtr<Statement>, GoPointerValueOps<Node>());
         const exportStatement = NodeFactory_NewExportDefault(f, NodeFactory_GetDeclarationName(f, classNode) as GoPtr<Expression>);
         EmitContext_SetOriginal(ec, exportStatement, classNode);
         EmitContext_AssignCommentRange(ec, exportStatement, classNode);
         EmitContext_SetSourceMapRange(ec, exportStatement, MoveRangePastDecorators(classNode));
-        statements = GoAppend(statements, exportStatement as GoPtr<Statement>);
+        statements = GoSliceAppend(statements, exportStatement as GoPtr<Statement>, GoPointerValueOps<Node>());
       } else {
         const exportStatement = NodeFactory_NewExportDefault(f, iife as GoPtr<Expression>);
         EmitContext_SetOriginal(ec, exportStatement, classNode);
         EmitContext_AssignCommentRange(ec, exportStatement, classNode);
         EmitContext_SetSourceMapRange(ec, exportStatement, MoveRangePastDecorators(classNode));
-        statements = GoAppend(statements, exportStatement as GoPtr<Statement>);
+        statements = GoSliceAppend(statements, exportStatement as GoPtr<Statement>, GoPointerValueOps<Node>());
       }
     } else {
       const iife = esDecoratorTransformer_transformClassLike(tx, classNode);
@@ -2432,11 +2425,11 @@ export function esDecoratorTransformer_visitClassDeclaration(receiver: GoPtr<esD
       const varStatement = NewVariableStatement(astFactory, modifiers as GoPtr<never>, varDecls as GoPtr<never>);
       EmitContext_SetOriginal(ec, varStatement, classNode);
       EmitContext_AssignCommentRange(ec, varStatement, classNode);
-      statements = GoAppend(statements, varStatement as GoPtr<Statement>);
+      statements = GoSliceAppend(statements, varStatement as GoPtr<Statement>, GoPointerValueOps<Node>());
       if (isExport) {
         const exportStatement = NodeFactory_NewExternalModuleExport(f, declName as GoPtr<IdentifierNode>);
         EmitContext_SetOriginal(ec, exportStatement, classNode);
-        statements = GoAppend(statements, exportStatement as GoPtr<Statement>);
+        statements = GoSliceAppend(statements, exportStatement as GoPtr<Statement>, GoPointerValueOps<Node>());
       }
     }
     return SingleOrMany(statements as GoSlice<GoPtr<Node>>, f);
@@ -2583,7 +2576,7 @@ export function esDecoratorTransformer_transformConstructorBodyWorker(receiver: 
   // Visit statements before super
   if (superStatementIndex > statementOffset) {
     for (const s of statementsIn.slice(statementOffset, superStatementIndex)) {
-      out = GoAppend(out, NodeVisitor_VisitNode(visitor, s as GoPtr<Node>) as GoPtr<Statement>);
+      out = GoSliceAppend(out, NodeVisitor_VisitNode(visitor, s as GoPtr<Node>) as GoPtr<Statement>, GoPointerValueOps<Node>());
     }
   }
   const superStatement = statementsIn[superStatementIndex]!;
@@ -2605,15 +2598,15 @@ export function esDecoratorTransformer_transformConstructorBodyWorker(receiver: 
       finallyBlock = NodeVisitor_VisitNode(visitor, tryStmt.FinallyBlock as GoPtr<Node>);
     }
     const updated = NodeFactory_UpdateTryStatement(astFactory, tryStmt, newTryBlockNode as GoPtr<never>, catchClause as GoPtr<never>, finallyBlock as GoPtr<never>);
-    out = GoAppend(out, updated as GoPtr<Statement>);
+    out = GoSliceAppend(out, updated as GoPtr<Statement>, GoPointerValueOps<Node>());
   } else {
-    out = GoAppend(out, NodeVisitor_VisitNode(visitor, superStatement as GoPtr<Node>) as GoPtr<Statement>);
-    out = GoAppendSlice(out, initializerStatements);
+    out = GoSliceAppend(out, NodeVisitor_VisitNode(visitor, superStatement as GoPtr<Node>) as GoPtr<Statement>, GoPointerValueOps<Node>());
+    out = GoSliceAppendSlice(out, initializerStatements, GoPointerValueOps<Node>());
   }
   // Visit statements after super
   if (superStatementIndex + 1 < statementsIn.length) {
     for (const s of statementsIn.slice(superStatementIndex + 1)) {
-      out = GoAppend(out, NodeVisitor_VisitNode(visitor, s as GoPtr<Node>) as GoPtr<Statement>);
+      out = GoSliceAppend(out, NodeVisitor_VisitNode(visitor, s as GoPtr<Node>) as GoPtr<Statement>, GoPointerValueOps<Node>());
     }
   }
   return out;
@@ -2677,14 +2670,14 @@ export function esDecoratorTransformer_visitConstructorDeclaration(receiver: GoP
     if (initializerStatements.length > 0) {
       let stmts: GoSlice<GoPtr<Statement>> = [];
       const [prologue, rest] = NodeFactory_SplitStandardPrologue(f, AsBlock(ctor.Body as GoPtr<Node>)!.Statements!.Nodes as GoSlice<GoPtr<Statement>>);
-      stmts = GoAppendSlice(stmts, prologue);
+      stmts = GoSliceAppendSlice(stmts, prologue, GoPointerValueOps<Node>());
       const superStatementIndices = FindSuperStatementIndexPath(rest as GoSlice<GoPtr<Node>>, 0);
       if (superStatementIndices.length > 0) {
         stmts = esDecoratorTransformer_transformConstructorBodyWorker(tx, stmts, rest as GoSlice<GoPtr<Statement>>, 0, superStatementIndices, 0, initializerStatements);
       } else {
-        stmts = GoAppendSlice(stmts, initializerStatements);
+        stmts = GoSliceAppendSlice(stmts, initializerStatements, GoPointerValueOps<Node>());
         const [visited] = NodeVisitor_VisitSlice(visitor, rest as GoSlice<GoPtr<Node>>);
-        stmts = GoAppendSlice(stmts, visited as GoSlice<GoPtr<Statement>>);
+        stmts = GoSliceAppendSlice(stmts, visited as GoSlice<GoPtr<Statement>>, GoPointerValueOps<Node>());
       }
       body = NewBlock(astFactory, NodeFactory_NewNodeList(astFactory, stmts as GoSlice<GoPtr<Node>>) as GoPtr<never>, true) as GoPtr<Node>;
       EmitContext_SetOriginal(ec, body, ctor.Body as GoPtr<Node>);
@@ -2988,7 +2981,7 @@ export function esDecoratorTransformer_partialTransformClassElement(receiver: Go
     const memberDecoratorsAssignment = NodeFactory_NewAssignmentExpression(f, memberDecoratorsName as GoPtr<Expression>, memberDecoratorsArray);
     const mi: memberInfo = { memberDecoratorsName, memberInitializersName: undefined, memberExtraInitializersName: undefined, memberDescriptorName: undefined };
     OrderedMap_Set(ci!.memberInfos, member!, mi, nodePointerKey);
-    tx.pendingExpressions = GoAppend(tx.pendingExpressions, memberDecoratorsAssignment!);
+    tx.pendingExpressions = GoSliceAppend(tx.pendingExpressions, memberDecoratorsAssignment!, GoPointerValueOps<Node>());
 
     let kind: string;
     if (IsGetAccessorDeclaration(member)) {
@@ -3121,15 +3114,15 @@ export function esDecoratorTransformer_partialTransformClassElement(receiver: Go
 export function esDecoratorTransformer_appendDecorationStatement(receiver: GoPtr<esDecoratorTransformer>, ci: GoPtr<classInfo>, member: GoPtr<Node>, stmt: GoPtr<Statement>): void {
   if (IsMethodOrAccessor(member) || IsAutoAccessorPropertyDeclaration(member)) {
     if (IsStatic(member)) {
-      ci!.staticNonFieldDecorationStatements = GoAppend(ci!.staticNonFieldDecorationStatements, stmt);
+      ci!.staticNonFieldDecorationStatements = GoSliceAppend(ci!.staticNonFieldDecorationStatements, stmt, GoPointerValueOps<Node>());
     } else {
-      ci!.nonStaticNonFieldDecorationStatements = GoAppend(ci!.nonStaticNonFieldDecorationStatements, stmt);
+      ci!.nonStaticNonFieldDecorationStatements = GoSliceAppend(ci!.nonStaticNonFieldDecorationStatements, stmt, GoPointerValueOps<Node>());
     }
   } else if (IsPropertyDeclaration(member) && !IsAutoAccessorPropertyDeclaration(member)) {
     if (IsStatic(member)) {
-      ci!.staticFieldDecorationStatements = GoAppend(ci!.staticFieldDecorationStatements, stmt);
+      ci!.staticFieldDecorationStatements = GoSliceAppend(ci!.staticFieldDecorationStatements, stmt, GoPointerValueOps<Node>());
     } else {
-      ci!.nonStaticFieldDecorationStatements = GoAppend(ci!.nonStaticFieldDecorationStatements, stmt);
+      ci!.nonStaticFieldDecorationStatements = GoSliceAppend(ci!.nonStaticFieldDecorationStatements, stmt, GoPointerValueOps<Node>());
     }
   }
 }
@@ -3348,8 +3341,8 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
       const csbd = AsClassStaticBlockDeclaration(result);
       const blockBody = AsBlock(csbd!.Body);
       let newStmts: GoSlice<GoPtr<Node>> = [];
-      newStmts = GoAppendSlice(newStmts, varStatements);
-      newStmts = GoAppendSlice(newStmts, blockBody!.Statements!.Nodes);
+      newStmts = GoSliceAppendSlice(newStmts, varStatements, GoPointerValueOps<Node>());
+      newStmts = GoSliceAppendSlice(newStmts, blockBody!.Statements!.Nodes, GoPointerValueOps<Node>());
       result = NewClassStaticBlockDeclaration(factory, undefined, NewBlock(factory, NodeFactory_NewNodeList(factory, newStmts) as unknown as GoPtr<never>, blockBody!.MultiLine) as unknown as GoPtr<never>);
     }
     if (tx.classInfoStack !== undefined) {
@@ -3359,7 +3352,7 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
         for (const init of tx.classInfoStack.pendingStaticInitializers!) {
           const initStmt = NewExpressionStatement(factory, init as unknown as GoPtr<never>);
           EmitContext_SetSourceMapRange(ec, initStmt, EmitContext_SourceMapRange(ec, init));
-          stmts = GoAppend(stmts, initStmt);
+          stmts = GoSliceAppend(stmts, initStmt, GoPointerValueOps<Node>());
         }
         const body = NewBlock(factory, NodeFactory_NewNodeList(factory, stmts) as unknown as GoPtr<never>, true);
         const staticBlock = NewClassStaticBlockDeclaration(factory, undefined, body as unknown as GoPtr<never>);
@@ -3576,18 +3569,12 @@ export function esDecoratorTransformer_visitPropertyDeclaration(receiver: GoPtr<
         } else {
           thisArg = NodeFactory_NewThisExpression(f) as GoPtr<Node>;
         }
-        tx.classInfoStack.pendingStaticInitializers = GoAppend(
-          tx.classInfoStack.pendingStaticInitializers,
-          NodeFactory_NewRunInitializersHelper(f, thisArg as GoPtr<Expression>, result.extraInitializersName, undefined) as GoPtr<Expression>,
-        );
+        tx.classInfoStack.pendingStaticInitializers = GoSliceAppend(tx.classInfoStack.pendingStaticInitializers, NodeFactory_NewRunInitializersHelper(f, thisArg as GoPtr<Expression>, result.extraInitializersName, undefined) as GoPtr<Expression>, GoPointerValueOps<Node>());
       }
     } else {
       initializer = esDecoratorTransformer_injectPendingInitializers(tx, tx.classInfoStack, false, initializer);
       if (result.extraInitializersName !== undefined) {
-        tx.classInfoStack.pendingInstanceInitializers = GoAppend(
-          tx.classInfoStack.pendingInstanceInitializers,
-          NodeFactory_NewRunInitializersHelper(f, NodeFactory_NewThisExpression(f) as GoPtr<Expression>, result.extraInitializersName, undefined) as GoPtr<Expression>,
-        );
+        tx.classInfoStack.pendingInstanceInitializers = GoSliceAppend(tx.classInfoStack.pendingInstanceInitializers, NodeFactory_NewRunInitializersHelper(f, NodeFactory_NewThisExpression(f) as GoPtr<Expression>, result.extraInitializersName, undefined) as GoPtr<Expression>, GoPointerValueOps<Node>());
       }
     }
   }
@@ -4915,7 +4902,7 @@ export function esDecoratorTransformer_transformAllDecoratorsOfDeclaration(recei
   }
   let result: GoSlice<GoPtr<Expression>> = [];
   for (const decorator of decorators) {
-    result = GoAppend(result, esDecoratorTransformer_transformDecorator(tx, decorator));
+    result = GoSliceAppend(result, esDecoratorTransformer_transformDecorator(tx, decorator), GoPointerValueOps<Node>());
   }
   return result;
 }
@@ -5586,8 +5573,8 @@ export function injectClassThisAssignmentIfMissing(ec: GoPtr<EmitContext>, f: Go
     EmitContext_SetSourceMapRange(ec, statement, nodeName!.Loc);
   }
   let newMembers: GoSlice<GoPtr<Node>> = [];
-  newMembers = GoAppend(newMembers, staticBlock);
-  newMembers = GoAppendSlice(newMembers, Node_Members(node));
+  newMembers = GoSliceAppend(newMembers, staticBlock, GoPointerValueOps<Node>());
+  newMembers = GoSliceAppendSlice(newMembers, Node_Members(node), GoPointerValueOps<Node>());
   const membersList = NodeFactory_NewNodeList(astFactory, newMembers) as GoPtr<NodeList>;
   membersList!.Loc = Node_MemberList(node)!.Loc;
   let updatedNode: GoPtr<Node>;

@@ -1,6 +1,7 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
 import type { GoFunc, GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap, GoZeroPointer } from "../../go/compat.js";
 import { Index as SliceIndex, Values as SliceValues } from "../../go/slices.js";
 import { Node_DeclarationData, Node_ForEachChild, Node_Name } from "../ast/spine.js";
@@ -1947,13 +1948,13 @@ export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<N
     // because then type of children property will have constituent of string type.
     if (IsJsxText(child)) {
       if (!AsJsxText(child)!.ContainsOnlyTriviaWhiteSpaces) {
-        childTypes = GoAppend(childTypes, receiver!.stringType);
+        childTypes = GoSliceAppend(childTypes, receiver!.stringType, GoPointerValueOps<Type>());
       }
     } else if (IsJsxExpression(child) && Node_Expression(child) === undefined) {
       // empty jsx expressions don't *really* count as present children
       continue;
     } else {
-      childTypes = GoAppend(childTypes, Checker_checkExpressionForMutableLocation(receiver, child, checkMode));
+      childTypes = GoSliceAppend(childTypes, Checker_checkExpressionForMutableLocation(receiver, child, checkMode), GoPointerValueOps<Type>());
     }
   }
   return childTypes;
@@ -2210,7 +2211,7 @@ export function Checker_getJsxPropsTypeForSignatureFromMember(receiver: GoPtr<Ch
       if (propType === undefined) {
         return undefined;
       }
-      results = GoAppend(results, propType);
+      results = GoSliceAppend(results, propType, GoPointerValueOps<Type>());
     }
     return Checker_getIntersectionType(receiver, results);
     // Same result for both union and intersection signatures

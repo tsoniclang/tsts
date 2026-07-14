@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoSliceToZeroLength, GoStructField, GoStructKey, GoZeroBoolean, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import { GoSlicePrefix } from "../../go/slice-runtime.js";
 import * as slices from "../../go/slices.js";
@@ -791,11 +792,11 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
           // i.e. only if we have not descended into a bivariant position.
           if (state.contravariant && !state.bivariant) {
             if (!slices.Contains(inference.contraCandidates, candidate, GoEqualStrict<GoPtr<Type>>)) {
-              inference.contraCandidates = GoAppend(inference.contraCandidates, candidate);
+              inference.contraCandidates = GoSliceAppend(inference.contraCandidates, candidate, GoPointerValueOps<Type>());
               clearCachedInferences(state.inferences);
             }
           } else if (!slices.Contains(inference.candidates, candidate, GoEqualStrict<GoPtr<Type>>)) {
-            inference.candidates = GoAppend(inference.candidates, candidate);
+            inference.candidates = GoSliceAppend(inference.candidates, candidate, GoPointerValueOps<Type>());
             clearCachedInferences(state.inferences);
           }
         }
@@ -1046,8 +1047,8 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
   // We stop inferring and report a circularity if we encounter duplicate recursion identities on both
   // the source side and the target side.
   const saveExpandingFlags = state.expandingFlags;
-  state.sourceStack = GoAppend(state.sourceStack, source);
-  state.targetStack = GoAppend(state.targetStack, target);
+  state.sourceStack = GoSliceAppend(state.sourceStack, source, GoPointerValueOps<Type>());
+  state.targetStack = GoSliceAppend(state.targetStack, target, GoPointerValueOps<Type>());
   if (Checker_isDeeplyNestedType(c, source, state.sourceStack, 2)) {
     state.expandingFlags |= ExpandingFlagsSource;
   }
@@ -1256,7 +1257,7 @@ export function Checker_inferToMultipleTypes(receiver: GoPtr<Checker>, n: GoPtr<
       let unmatched: GoSlice<GoPtr<Type>> = GoNilSlice();
       for (let i = 0; i < sources.length; i++) {
         if (!matched[i]) {
-          unmatched = GoAppend(unmatched, sources[i]);
+          unmatched = GoSliceAppend(unmatched, sources[i], GoPointerValueOps<Type>());
         }
       }
       if (unmatched.length !== 0) {
@@ -2198,12 +2199,12 @@ export function Checker_inferFromIndexTypes(receiver: GoPtr<Checker>, n: GoPtr<I
           if ((prop!.Flags & SymbolFlagsOptional) !== 0) {
             propType = Checker_removeMissingOrUndefinedType(c, propType);
           }
-          propTypes = GoAppend(propTypes, propType);
+          propTypes = GoSliceAppend(propTypes, propType, GoPointerValueOps<Type>());
         }
       }
       for (const info of Checker_getIndexInfosOfType(c, source)) {
         if (Checker_isApplicableIndexType(c, info!.keyType, targetInfo!.keyType)) {
-          propTypes = GoAppend(propTypes, info!.valueType);
+          propTypes = GoSliceAppend(propTypes, info!.valueType, GoPointerValueOps<Type>());
         }
       }
       if (propTypes.length !== 0) {
@@ -2501,8 +2502,8 @@ export function Checker_inferReverseMappedType(receiver: GoPtr<Checker>, source:
   if (cached !== undefined) {
     return core.OrElse(cached, c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
   }
-  c.reverseMappedSourceStack = GoAppend(c.reverseMappedSourceStack, source);
-  c.reverseMappedTargetStack = GoAppend(c.reverseMappedTargetStack, target);
+  c.reverseMappedSourceStack = GoSliceAppend(c.reverseMappedSourceStack, source, GoPointerValueOps<Type>());
+  c.reverseMappedTargetStack = GoSliceAppend(c.reverseMappedTargetStack, target, GoPointerValueOps<Type>());
   const saveExpandingFlags = c.reverseExpandingFlags;
   if (Checker_isDeeplyNestedType(receiver, source, c.reverseMappedSourceStack, 2)) {
     c.reverseExpandingFlags |= ExpandingFlagsSource;

@@ -77,11 +77,11 @@ function validateRuntimeDictionaryProjection(dictionaries, expected, actual, can
   const projected = structuredClone(actual);
   const projectedSignature = projected.signatures[0];
   const restIndices = signature.params.flatMap((parameter, index) => parameter?.rest === true ? [index] : []);
-  if (restIndices.length > 1 || (restIndices.length === 1 && restIndices[0] !== signature.params.length - 1)) {
-    issues.push("runtime dictionary projection requires the TypeScript rest parameter to be unique and last");
+  if (restIndices.length !== 0) {
+    issues.push("runtime dictionary projection does not accept TypeScript rest parameters; Go variadics must be fixed GoSlice parameters");
     return;
   }
-  const dictionaryEnd = restIndices.length === 1 ? restIndices[0] : signature.params.length;
+  const dictionaryEnd = signature.params.length;
   const firstDictionary = dictionaryEnd - dictionaries.length;
   if (firstDictionary < 0) {
     issues.push(`runtime dictionary projection expected ${dictionaries.length} dictionary parameter(s), found only ${dictionaryEnd} available slot(s)`);

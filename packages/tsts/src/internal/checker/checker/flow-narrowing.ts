@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import { GoAppend, GoNilSlice, GoValueRef } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Name } from "../../ast/spine.js";
@@ -1092,7 +1093,7 @@ export function Checker_getConditionalFlowTypeOfType(receiver: GoPtr<Checker>, t
       const conditional = AsConditionalTypeNode(parent)!;
       const constraint = Checker_getImpliedConstraint(receiver, t, conditional.CheckType, conditional.ExtendsType);
       if (constraint !== undefined) {
-        constraints = GoAppend(constraints, constraint);
+        constraints = GoSliceAppend(constraints, constraint, GoPointerValueOps<Type>());
       }
     } else if (
       (t!.flags & TypeFlagsTypeParameter) !== 0 &&
@@ -1106,7 +1107,7 @@ export function Checker_getConditionalFlowTypeOfType(receiver: GoPtr<Checker>, t
         if (typeParameter !== undefined) {
           const constraint = Checker_getConstraintOfTypeParameter(receiver, typeParameter);
           if (constraint !== undefined && everyType(constraint, (tt) => Checker_isArrayOrTupleType(receiver, tt))) {
-            constraints = GoAppend(constraints, Checker_getUnionType(receiver, [receiver!.numberType, receiver!.numericStringType]));
+            constraints = GoSliceAppend(constraints, Checker_getUnionType(receiver, [receiver!.numberType, receiver!.numericStringType]), GoPointerValueOps<Type>());
           }
         }
       }

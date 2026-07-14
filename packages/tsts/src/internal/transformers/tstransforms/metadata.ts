@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../../go/compat.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import type { ClassDeclaration, ClassExpression, GetAccessorDeclaration, MethodDeclaration, PropertyDeclaration, SetAccessorDeclaration } from "../../ast/generated/data.js";
@@ -553,16 +554,16 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
     }
     let modifiersArray: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (IsModifier(originalNodes[0]) && (originalNodes[0]!.Kind === KindDefaultKeyword || originalNodes[0]!.Kind === KindExportKeyword)) {
-      modifiersArray = GoAppend(modifiersArray, originalNodes[0]);
+      modifiersArray = GoSliceAppend(modifiersArray, originalNodes[0], GoPointerValueOps<Node>());
       if (originalNodes.length > 1 && (originalNodes[1]!.Kind === KindDefaultKeyword || originalNodes[1]!.Kind === KindExportKeyword)) {
-        modifiersArray = GoAppend(modifiersArray, originalNodes[1]);
+        modifiersArray = GoSliceAppend(modifiersArray, originalNodes[1], GoPointerValueOps<Node>());
       }
     }
     const restStart = modifiersArray.length;
     const decos = Filter(originalNodes, IsDecorator);
-    modifiersArray = GoAppendSlice(GoAppendSlice(modifiersArray, decos), metadata);
+    modifiersArray = GoSliceAppendSlice(GoSliceAppendSlice(modifiersArray, decos, GoPointerValueOps<Node>()), metadata, GoPointerValueOps<Node>());
     const otherModifiers = Filter(originalNodes.slice(restStart), IsModifier);
-    modifiersArray = GoAppendSlice(modifiersArray, otherModifiers);
+    modifiersArray = GoSliceAppendSlice(modifiersArray, otherModifiers, GoPointerValueOps<Node>());
     const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;
@@ -631,9 +632,9 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
     }
     let modifiersArray: GoSlice<GoPtr<Node>> = GoNilSlice();
     const decos = Filter(originalNodes, IsDecorator);
-    modifiersArray = GoAppendSlice(GoAppendSlice(modifiersArray, decos), metadata);
+    modifiersArray = GoSliceAppendSlice(GoSliceAppendSlice(modifiersArray, decos, GoPointerValueOps<Node>()), metadata, GoPointerValueOps<Node>());
     const modifiers = Filter(originalNodes, IsModifier);
-    modifiersArray = GoAppendSlice(modifiersArray, modifiers);
+    modifiersArray = GoSliceAppendSlice(modifiersArray, modifiers, GoPointerValueOps<Node>());
     const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;
@@ -704,7 +705,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
         container,
       ),
     );
-    decorators = GoAppend(decorators, NewDecorator(factory.__tsgoEmbedded0, typeMetadata));
+    decorators = GoSliceAppend(decorators, NewDecorator(factory.__tsgoEmbedded0, typeMetadata), GoPointerValueOps<Node>());
   }
   if (MetadataTransformer_shouldAddParamTypesMetadata(tx, node)) {
     const paramTypesMetadata = NodeFactory_NewMetadataHelper(
@@ -717,7 +718,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
         container,
       ),
     );
-    decorators = GoAppend(decorators, NewDecorator(factory.__tsgoEmbedded0, paramTypesMetadata));
+    decorators = GoSliceAppend(decorators, NewDecorator(factory.__tsgoEmbedded0, paramTypesMetadata), GoPointerValueOps<Node>());
   }
   if (MetadataTransformer_shouldAddReturnTypeMetadata(tx, node)) {
     const returnTypeMetadata = NodeFactory_NewMetadataHelper(
@@ -729,7 +730,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
         node,
       ),
     );
-    decorators = GoAppend(decorators, NewDecorator(factory.__tsgoEmbedded0, returnTypeMetadata));
+    decorators = GoSliceAppend(decorators, NewDecorator(factory.__tsgoEmbedded0, returnTypeMetadata), GoPointerValueOps<Node>());
   }
   return decorators;
 }
@@ -804,9 +805,7 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
   const factory = Transformer_Factory(tx.__tsgoEmbedded0)!;
   const astFactory = factory.__tsgoEmbedded0;
   if (MetadataTransformer_shouldAddTypeMetadata(tx, node)) {
-    properties = GoAppend(
-      properties,
-      NewPropertyAssignment(
+    properties = GoSliceAppend(properties, NewPropertyAssignment(
         astFactory,
         undefined,
         NewIdentifier(astFactory, "type"),
@@ -827,13 +826,10 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
             container,
           ),
         ),
-      ),
-    );
+      ), GoPointerValueOps<Node>());
   }
   if (MetadataTransformer_shouldAddParamTypesMetadata(tx, node)) {
-    properties = GoAppend(
-      properties,
-      NewPropertyAssignment(
+    properties = GoSliceAppend(properties, NewPropertyAssignment(
         astFactory,
         undefined,
         NewIdentifier(astFactory, "paramTypes"),
@@ -854,13 +850,10 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
             container,
           ),
         ),
-      ),
-    );
+      ), GoPointerValueOps<Node>());
   }
   if (MetadataTransformer_shouldAddReturnTypeMetadata(tx, node)) {
-    properties = GoAppend(
-      properties,
-      NewPropertyAssignment(
+    properties = GoSliceAppend(properties, NewPropertyAssignment(
         astFactory,
         undefined,
         NewIdentifier(astFactory, "returnType"),
@@ -880,8 +873,7 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
             node,
           ),
         ),
-      ),
-    );
+      ), GoPointerValueOps<Node>());
   }
   if (properties.length > 0) {
     const typeInfoMetadata = NodeFactory_NewMetadataHelper(

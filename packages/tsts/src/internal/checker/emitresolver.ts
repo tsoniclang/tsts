@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoFunc, GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
@@ -2511,7 +2512,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
 
             let mods: GoSlice<GoPtr<Node>> = isStatic ? [NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword)] : GoNilSlice();
             if (info!.isReadonly) {
-              mods = GoAppend(mods, NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindReadonlyKeyword));
+              mods = GoSliceAppend(mods, NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindReadonlyKeyword), GoPointerValueOps<Node>());
             }
 
             const decl = NewPropertyDeclaration(
@@ -2522,7 +2523,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
               NodeBuilder_TypeToTypeNode(requestNodeBuilder, Checker_getTypeOfSymbol(receiver!.checker, Node_Symbol(component)), enclosingDeclaration, flags, internalFlags, tracker),
               undefined,
             );
-            result = GoAppend(result, decl);
+            result = GoSliceAppend(result, decl, GoPointerValueOps<Node>());
           }
           continue;
         }
@@ -2540,7 +2541,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
         );
       }
       if (node !== undefined) {
-        result = GoAppend(result, node);
+        result = GoSliceAppend(result, node, GoPointerValueOps<Node>());
       }
     }
   }

@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import { GoAppend, GoEqualStrict, GoNilSlice, GoPointerKey, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import { SortFunc } from "../../../go/slices.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Elements, Node_PropertyNameOrName, Node_Text } from "../../ast/ast.js";
@@ -420,7 +421,7 @@ export function externalModuleInfoCollector_addExportedBinding(receiver: GoPtr<e
  * }
  */
 export function externalModuleInfoCollector_addExternalImport(receiver: GoPtr<externalModuleInfoCollector>, node: GoPtr<Node>): void {
-  receiver!.output!.externalImports = GoAppend(receiver!.output!.externalImports, node);
+  receiver!.output!.externalImports = GoSliceAppend(receiver!.output!.externalImports, node, GoPointerValueOps<Node>());
 }
 
 /**
@@ -432,7 +433,7 @@ export function externalModuleInfoCollector_addExternalImport(receiver: GoPtr<ex
  * }
  */
 export function externalModuleInfoCollector_addExportedName(receiver: GoPtr<externalModuleInfoCollector>, name: GoPtr<ModuleExportName>): void {
-  receiver!.output!.exportedNames = GoAppend(receiver!.output!.exportedNames, name);
+  receiver!.output!.exportedNames = GoSliceAppend(receiver!.output!.exportedNames, name, GoPointerValueOps<Node>());
 }
 
 /**
@@ -752,7 +753,7 @@ export function getImportedHelpers(emitContext: GoPtr<EmitContext>, sourceFile: 
   let helpers: GoSlice<GoPtr<EmitHelper>> = GoNilSlice();
   for (const helper of EmitContext_GetEmitHelpers(emitContext, Node_AsNode(sourceFile))) {
     if (!helper!.Scoped) {
-      helpers = GoAppend(helpers, helper);
+      helpers = GoSliceAppend(helpers, helper, GoPointerValueOps<EmitHelper>());
     }
   }
   return helpers;

@@ -8,6 +8,7 @@
 
 import type { bool, int, byte } from "./scalars.js";
 import type { GoError, GoRune, GoSlice } from "./compat.js";
+import { GoNumberValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "./compat.js";
 import { GoAppend, GoAppendSlice, GoNilSlice } from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
 
@@ -112,26 +113,15 @@ const runeLen = (r: GoRune): int => {
 const appendRune = (out: GoSlice<byte>, r: GoRune): GoSlice<byte> => {
   const cp = r < 0 || r > MaxRune || (r >= 0xd800 && r <= 0xdfff) ? RuneErrorValue : r;
   if (cp < 0x80) {
-    return GoAppend(out, cp as byte);
+    return GoSliceAppend(out, cp as byte, GoNumberValueOps);
   }
   if (cp < 0x800) {
-    return GoAppend(out, (0xc0 | (cp >> 6)) as byte, (0x80 | (cp & 0x3f)) as byte);
+    return GoSliceAppendSlice(out, GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral_d56) => { GoSliceStore(__goSliceLiteral_d56, 0, (0xc0 | (cp >> 6)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_d56, 1, (0x80 | (cp & 0x3f)) as byte, GoNumberValueOps); }), GoNumberValueOps);
   }
   if (cp < 0x10000) {
-    return GoAppend(
-      out,
-      (0xe0 | (cp >> 12)) as byte,
-      (0x80 | ((cp >> 6) & 0x3f)) as byte,
-      (0x80 | (cp & 0x3f)) as byte,
-    );
+    return GoSliceAppendSlice(out, GoSliceBuild(3, 3, GoNumberValueOps, (__goSliceLiteral_dc4) => { GoSliceStore(__goSliceLiteral_dc4, 0, (0xe0 | (cp >> 12)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_dc4, 1, (0x80 | ((cp >> 6) & 0x3f)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_dc4, 2, (0x80 | (cp & 0x3f)) as byte, GoNumberValueOps); }), GoNumberValueOps);
   }
-  return GoAppend(
-    out,
-    (0xf0 | (cp >> 18)) as byte,
-    (0x80 | ((cp >> 12) & 0x3f)) as byte,
-    (0x80 | ((cp >> 6) & 0x3f)) as byte,
-    (0x80 | (cp & 0x3f)) as byte,
-  );
+  return GoSliceAppendSlice(out, GoSliceBuild(4, 4, GoNumberValueOps, (__goSliceLiteral_e5f) => { GoSliceStore(__goSliceLiteral_e5f, 0, (0xf0 | (cp >> 18)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_e5f, 1, (0x80 | ((cp >> 12) & 0x3f)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_e5f, 2, (0x80 | ((cp >> 6) & 0x3f)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_e5f, 3, (0x80 | (cp & 0x3f)) as byte, GoNumberValueOps); }), GoNumberValueOps);
 };
 
 // runeToString converts a single rune to its UTF-8 string (Go's string(rune)).
@@ -216,13 +206,13 @@ export class Builder {
   WriteString(s: string): [int, GoError] {
     const bytes = encode(s);
     for (const b of bytes) {
-      this.buf = GoAppend(this.buf, b as byte);
+      this.buf = GoSliceAppend(this.buf, b as byte, GoNumberValueOps);
     }
     return [bytes.length, undefined];
   }
 
   WriteByte(c: byte): GoError {
-    this.buf = GoAppend(this.buf, (c & 0xff) as byte);
+    this.buf = GoSliceAppend(this.buf, (c & 0xff) as byte, GoNumberValueOps);
     return undefined;
   }
 
@@ -233,7 +223,7 @@ export class Builder {
   }
 
   Write(p: GoSlice<byte>): [int, GoError] {
-    this.buf = GoAppendSlice(this.buf, p);
+    this.buf = GoSliceAppendSlice(this.buf, p, GoNumberValueOps);
     return [p.length, undefined];
   }
 }

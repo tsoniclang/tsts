@@ -3,6 +3,7 @@ import path from "node:path";
 import { compareText } from "./deterministic-order.mjs";
 import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { parseTypeScriptModule } from "../ts-extractor/module-index.mjs";
+import { declarationName } from "../ts-extractor/declaration-metadata.mjs";
 import { loadParser } from "../ts-extractor/parser-runtime.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
 import { repoRoot, walk } from "./runtime.mjs";
@@ -45,6 +46,7 @@ export async function scanTsUnits(root, options = {}) {
       };
       if (record.override !== undefined) unit.override = record.override;
       Object.defineProperty(unit, "declarationMetadata", { value: record, enumerable: false });
+      Object.defineProperty(unit, "declarationName", { value: declarationName(api, record.statement), enumerable: false });
       units.push(unit);
       unitsById.set(unit.id, unit);
     }

@@ -1,5 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
+import { GoSliceAppendSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoSliceValueOps, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoNilSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import * as cmp from "../../go/cmp.js";
@@ -624,7 +626,7 @@ export function reducePathComponents(components: GoSlice<string>): GoSlice<strin
         continue;
       }
     }
-    reduced = GoAppend(reduced, component);
+    reduced = GoSliceAppend(reduced, component, GoStringValueOps);
   }
   return reduced;
 }
@@ -768,7 +770,7 @@ export function getNormalizedPathComponentsFromCombined(path: string): GoSlice<s
       }
     }
 
-    components = GoAppend(components, component);
+    components = GoSliceAppend(components, component, GoStringValueOps);
   }
 
   return components;
@@ -2282,7 +2284,7 @@ export function GetCommonParents(paths: GoSlice<string>, minComponents: int, get
     if (components.length < minComponents) {
       ignored.set(path, {});
     } else {
-      pathComponents = GoAppend(pathComponents, components);
+      pathComponents = GoSliceAppend(pathComponents, components, GoSliceValueOps<string>());
     }
   }
 
@@ -2384,13 +2386,13 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
             for (const g of componentGroups) {
               const key = ToPath(g[lastCommonIndex]!, options.CurrentDirectory, options.UseCaseSensitiveFileNames);
               if (!newGroups.has(key)) {
-                orderedGroups = GoAppend(orderedGroups, key);
+                orderedGroups = GoSliceAppend(orderedGroups, key, GoStringValueOps);
               }
               const existing = newGroups.get(key);
               const existingTails = existing !== undefined ? existing.tails : GoNilSlice<GoSlice<string>>();
               newGroups.set(key, {
                 head: g.slice(0, lastCommonIndex + 1),
-                tails: GoAppend(existingTails, g.slice(lastCommonIndex + 1)),
+                tails: GoSliceAppend(existingTails, g.slice(lastCommonIndex + 1), GoSliceValueOps<string>()),
               });
             }
             slices.Sort(orderedGroups);
@@ -2399,7 +2401,7 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
               const group = newGroups.get(key)!;
               const subResults = getCommonParentsWorker(group.tails, minComponents - (lastCommonIndex + 1), options);
               for (const sr of subResults) {
-                result = GoAppend(result, GoAppendSlice(group.head, sr));
+                result = GoSliceAppend(result, GoSliceAppendSlice(group.head, sr, GoStringValueOps), GoSliceValueOps<string>());
               }
             }
             return result;

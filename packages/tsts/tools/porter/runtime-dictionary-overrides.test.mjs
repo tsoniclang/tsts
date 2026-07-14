@@ -10,6 +10,7 @@ const mapKeyDescriptorId = "packages/tsts/src/go/compat.ts::GoMapKeyDescriptor";
 const identity = (value) => value;
 const keyword = (name) => ({ t: "kw", kw: name });
 const typeParameterReference = (index) => ({ t: "tp", depth: 0, index });
+const goSlice = (element) => ({ t: "ref", id: "packages/tsts/src/go/compat.ts::GoSlice", args: [element] });
 const typeParameter = (name, index) => ({
   name,
   binding: { depth: 0, index },
@@ -139,18 +140,18 @@ test("runtime dictionary override preserves declared order for multiple factorie
   ], expected, actual).issues[0].reason, /must occupy dictionary parameter/);
 });
 
-test("runtime dictionary override uses the canonical slot before a variadic rest", () => {
+test("runtime dictionary override follows a fixed Go variadic slice as an ordinary trailing suffix", () => {
   const typeParams = [typeParameter("T", 0)];
   const expected = func({
     typeParams,
-    params: [parameter("values", { t: "array", element: typeParameterReference(0) }, { rest: true })],
+    params: [parameter("values", goSlice(typeParameterReference(0)))],
     ret: typeParameterReference(0),
   });
   const actual = func({
     typeParams,
     params: [
+      parameter("values", goSlice(typeParameterReference(0))),
       zeroDictionaryParameter("zeroValue", 0),
-      parameter("values", { t: "array", element: typeParameterReference(0) }, { rest: true }),
     ],
     ret: typeParameterReference(0),
   });
@@ -159,15 +160,26 @@ test("runtime dictionary override uses the canonical slot before a variadic rest
   assert.deepEqual(issues, []);
   assert.deepEqual(compareSignatures(expected, actual, resolved), []);
 
-  const invalidRestPlacement = structuredClone(actual);
-  invalidRestPlacement.signatures[0].params.reverse();
-  assert.match(resolve([dictionary("zeroValue", "T")], expected, invalidRestPlacement).issues[0].reason, /rest parameter to be unique and last/);
+  const invalidDictionaryPlacement = structuredClone(actual);
+  invalidDictionaryPlacement.signatures[0].params.reverse();
+  assert.match(resolve([dictionary("zeroValue", "T")], expected, invalidDictionaryPlacement).issues[0].reason, /must occupy dictionary parameter/);
+
+  const invalidRestRepresentation = structuredClone(actual);
+  invalidRestRepresentation.signatures[0].params[0] = parameter(
+    "values",
+    { t: "array", element: typeParameterReference(0) },
+    { rest: true },
+  );
+  assert.match(
+    resolve([dictionary("zeroValue", "T")], expected, invalidRestRepresentation).issues[0].reason,
+    /does not accept TypeScript rest parameters/,
+  );
 
   const valueOpsActual = func({
     typeParams,
     params: [
+      parameter("values", goSlice(typeParameterReference(0))),
       valueOpsDictionaryParameter("valueOps", 0),
-      parameter("values", { t: "array", element: typeParameterReference(0) }, { rest: true }),
     ],
     ret: typeParameterReference(0),
   });
@@ -241,7 +253,7 @@ test("runtime dictionary override rejects every malformed dictionary parameter s
     ["factory arity", [parameter("key", typeParameterReference(0)), parameter("zeroValue", { t: "ref", id: zeroFactoryId, args: [] })], /exact type GoZeroFactory/],
     ["type parameter", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 0)], /exact lexical type parameter/],
     ["optional", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { optional: true, optionalSyntax: "question", question: true })], /optional must be false/],
-    ["rest", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { rest: true })], /must occupy dictionary parameter/],
+    ["rest", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { rest: true })], /does not accept TypeScript rest parameters/],
     ["initializer", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { initializerStatus: "known", initializer: { kind: "identifier", name: "factory" } })], /initializerStatus must be "missing"/],
     ["unknown descriptor field", [parameter("key", typeParameterReference(0)), unknownField], /unknown=legacy/],
     ["missing descriptor field", [parameter("key", typeParameterReference(0)), missingField], /missing=initializerIssue/],

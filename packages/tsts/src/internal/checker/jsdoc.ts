@@ -1,4 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoNilSlice, GoNumberKey, GoStringKey } from "../../go/compat.js";
 import { NewSetWithSizeHint, Set_Add, Set_Has } from "../collections/set.js";
 import { AsJSDoc, AsJSDocParameterOrPropertyTag, AsQualifiedName } from "../ast/generated/casts.js";
@@ -103,7 +104,7 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
       if (IsIdentifier(name) && Node_Text(name).length === 0) {
         continue;
       }
-      jsdocParameters = GoAppend(jsdocParameters, tag);
+      jsdocParameters = GoSliceAppend(jsdocParameters, tag, GoPointerValueOps<Node>());
     }
   }
 

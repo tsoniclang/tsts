@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Once, RWMutex } from "../../go/sync.js";
@@ -6288,7 +6289,7 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
       if (declarations === undefined) {
         declarations = GoNilSlice();
       }
-      declarations = GoAppend(declarations, declaration);
+      declarations = GoSliceAppend(declarations, declaration, GoPointerValueOps<Node>());
       result.set(name, declarations);
     }
   };
@@ -6314,7 +6315,7 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
             if (declarations === undefined) {
               declarations = GoNilSlice();
             }
-            declarations = GoAppend(declarations, node);
+            declarations = GoSliceAppend(declarations, node, GoPointerValueOps<Node>());
             result.set(declarationName, declarations);
           }
         }

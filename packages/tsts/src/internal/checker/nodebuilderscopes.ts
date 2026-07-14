@@ -1,4 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap } from "../../go/compat.js";
 import { CopyOnWriteMap_EnterScope, CopyOnWriteSet_EnterScope } from "../collections/cow.js";
 import type { Node } from "../ast/spine.js";
@@ -385,7 +386,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
         if (existingFakeScope !== undefined) {
           const oldSymbol = locals!.get(name);
           if (oldSymbol === undefined) {
-            newLocals = GoAppend(newLocals, name);
+            newLocals = GoSliceAppend(newLocals, name, GoStringValueOps);
           } else {
             oldLocals = GoAppend(oldLocals, { name, oldSymbol });
           }

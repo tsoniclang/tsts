@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoInterface, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
@@ -318,7 +319,7 @@ export function Diagnostic_SetMessageChain(receiver: GoPtr<Diagnostic>, messageC
  */
 export function Diagnostic_AddMessageChain(receiver: GoPtr<Diagnostic>, messageChain: GoPtr<Diagnostic>): GoPtr<Diagnostic> {
   if (messageChain !== undefined) {
-    receiver!.messageChain = GoAppend(receiver!.messageChain, messageChain);
+    receiver!.messageChain = GoSliceAppend(receiver!.messageChain, messageChain, GoPointerValueOps<Diagnostic>());
   }
   return receiver;
 }
@@ -350,7 +351,7 @@ export function Diagnostic_SetRelatedInfo(receiver: GoPtr<Diagnostic>, relatedIn
  */
 export function Diagnostic_AddRelatedInfo(receiver: GoPtr<Diagnostic>, relatedInformation: GoPtr<Diagnostic>): GoPtr<Diagnostic> {
   if (relatedInformation !== undefined) {
-    receiver!.relatedInformation = GoAppend(receiver!.relatedInformation, relatedInformation);
+    receiver!.relatedInformation = GoSliceAppend(receiver!.relatedInformation, relatedInformation, GoPointerValueOps<Diagnostic>());
   }
   return receiver;
 }
@@ -566,11 +567,11 @@ export function DiagnosticsCollection_Add(receiver: GoPtr<DiagnosticsCollection>
       }
       receiver!.fileDiagnostics.set(
         fileName,
-        GoAppend(receiver!.fileDiagnostics.get(fileName) ?? GoNilSlice(), diagnostic),
+        GoSliceAppend(receiver!.fileDiagnostics.get(fileName) ?? GoNilSlice(), diagnostic, GoPointerValueOps<Diagnostic>()),
       );
       collections.Set_Delete(receiver!.fileDiagnosticsSorted, fileName);
     } else {
-      receiver!.nonFileDiagnostics = GoAppend(receiver!.nonFileDiagnostics, diagnostic);
+      receiver!.nonFileDiagnostics = GoSliceAppend(receiver!.nonFileDiagnostics, diagnostic, GoPointerValueOps<Diagnostic>());
       receiver!.nonFileDiagnosticsSorted = false;
     }
   } finally {
@@ -716,9 +717,9 @@ export function DiagnosticsCollection_GetDiagnostics(receiver: GoPtr<Diagnostics
   receiver!.mu.Lock();
   try {
     let diagnostics_: GoSlice<GoPtr<Diagnostic>> = [];
-    diagnostics_ = GoAppendSlice(diagnostics_, receiver!.nonFileDiagnostics);
+    diagnostics_ = GoSliceAppendSlice(diagnostics_, receiver!.nonFileDiagnostics, GoPointerValueOps<Diagnostic>());
     for (const diags of receiver!.fileDiagnostics.values()) {
-      diagnostics_ = GoAppendSlice(diagnostics_, diags);
+      diagnostics_ = GoSliceAppendSlice(diagnostics_, diags, GoPointerValueOps<Diagnostic>());
     }
     slices.SortFunc(diagnostics_, CompareDiagnostics);
     return diagnostics_;

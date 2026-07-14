@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../ast/spine.js";
 import { Node_Modifiers, Node_FunctionLikeData, Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
@@ -234,7 +235,7 @@ export function Parser_finishMutatedNode(receiver: GoPtr<Parser>, node: GoPtr<No
 export function Parser_addDeepCloneReparse(receiver: GoPtr<Parser>, node: GoPtr<Node>): GoPtr<Node> {
   const clone = NodeFactory_DeepCloneReparse(receiver!.factory, node);
   if (clone !== undefined) {
-    receiver!.reparsedClones = GoAppend(receiver!.reparsedClones, clone);
+    receiver!.reparsedClones = GoSliceAppend(receiver!.reparsedClones, clone, GoPointerValueOps<Node>());
   }
   return clone;
 }
@@ -253,7 +254,7 @@ export function Parser_addDeepCloneReparse(receiver: GoPtr<Parser>, node: GoPtr<
 export function Parser_addTransformedReparse(receiver: GoPtr<Parser>, newNode: GoPtr<Node>, old: GoPtr<Node>): GoPtr<Node> {
   Parser_finishReparsedNode(receiver, newNode, old);
   newNode!.Flags |= NodeFlagsReparserTransformedLiteral;
-  receiver!.reparsedClones = GoAppend(receiver!.reparsedClones, newNode);
+  receiver!.reparsedClones = GoSliceAppend(receiver!.reparsedClones, newNode, GoPointerValueOps<Node>());
   return newNode;
 }
 
@@ -426,7 +427,7 @@ export function Parser_reparseUnhosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>
       receiver!.jsdocInfos = GoAppend(receiver!.jsdocInfos, { parent: typeAlias, jsDocs: [jsDoc] });
       typeAlias!.Flags |= NodeFlagsHasJSDoc;
       const result = Parser_wrapInJSDocNamespace(receiver, fullName, typeAlias, false as bool);
-      receiver!.reparseList = GoAppend(receiver!.reparseList, result);
+      receiver!.reparseList = GoSliceAppend(receiver!.reparseList, result, GoPointerValueOps<Node>());
       break;
     }
     case KindJSDocCallbackTag: {
@@ -447,7 +448,7 @@ export function Parser_reparseUnhosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>
       receiver!.jsdocInfos = GoAppend(receiver!.jsdocInfos, { parent: typeAlias, jsDocs: [jsDoc] });
       typeAlias!.Flags |= NodeFlagsHasJSDoc;
       const result = Parser_wrapInJSDocNamespace(receiver, fullName, typeAlias, false as bool);
-      receiver!.reparseList = GoAppend(receiver!.reparseList, result);
+      receiver!.reparseList = GoSliceAppend(receiver!.reparseList, result, GoPointerValueOps<Node>());
       break;
     }
     case KindJSDocImportTag: {
@@ -465,12 +466,12 @@ export function Parser_reparseUnhosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>
         Parser_addDeepCloneReparse(receiver, importTag!.Attributes),
       );
       Parser_finishReparsedNode(receiver, importDeclaration, tag);
-      receiver!.reparseList = GoAppend(receiver!.reparseList, importDeclaration);
+      receiver!.reparseList = GoSliceAppend(receiver!.reparseList, importDeclaration, GoPointerValueOps<Node>());
       break;
     }
     case KindJSDocOverloadTag: {
       if ((IsFunctionDeclaration(parent) || IsMethodDeclaration(parent) || IsConstructorDeclaration(parent)) && (receiver!.parsingContexts & (1 << PCObjectLiteralMembers)) === 0) {
-        receiver!.reparseList = GoAppend(receiver!.reparseList, Parser_reparseJSDocSignature(receiver, AsJSDocOverloadTag(tag)!.TypeExpression, parent, jsDoc, tag, Node_Modifiers(parent)));
+        receiver!.reparseList = GoSliceAppend(receiver!.reparseList, Parser_reparseJSDocSignature(receiver, AsJSDocOverloadTag(tag)!.TypeExpression, parent, jsDoc, tag, Node_Modifiers(parent)), GoPointerValueOps<Node>());
       }
       break;
     }
@@ -678,7 +679,7 @@ export function Parser_reparseJSDocSignature(receiver: GoPtr<Parser>, jsSignatur
       continue;
     }
     Parser_finishReparsedNode(receiver, parameter, param);
-    parameters = GoAppend(parameters, parameter);
+    parameters = GoSliceAppend(parameters, parameter, GoPointerValueOps<Node>());
     Parser_reparseJSDocComment(receiver, parameter, param);
   }
   Node_FunctionLikeData(signature)!.Parameters = Parser_newNodeList(receiver, AsJSDocSignature(jsSignature)!.Parameters!.Loc, parameters);
@@ -767,7 +768,7 @@ export function Parser_reparseJSDocTypeLiteral(receiver: GoPtr<Parser>, t: GoPtr
         AsPropertySignatureDeclaration(property)!.Type = Parser_reparseJSDocTypeLiteral(receiver, Node_Type(jsprop!.TypeExpression));
       }
       Parser_finishReparsedNode(receiver, property, prop);
-      properties = GoAppend(properties, property);
+      properties = GoSliceAppend(properties, property, GoPointerValueOps<Node>());
       Parser_reparseJSDocComment(receiver, property, prop);
     }
     let result: GoPtr<Node> = NewTypeLiteralNode(receiver!.factory, Parser_newNodeList(receiver, jstypeliteral!.Loc, properties));
@@ -902,7 +903,7 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
       if (GoSliceIsNil(typeParameters)) {
         typeParameters = Arena_NewSlice(receiver!.nodeSliceArena, 0, GoZeroPointer) as GoSlice<GoPtr<Node>>;
       }
-      typeParameters = GoAppend(typeParameters, reparse);
+      typeParameters = GoSliceAppend(typeParameters, reparse, GoPointerValueOps<Node>());
       firstTypeParameter = false;
     }
   }
@@ -1451,7 +1452,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
             nodes[0] = modifier;
             loc = tag!.Loc;
           } else {
-            nodes = GoAppend(Node_ModifierNodes(p)!, modifier);
+            nodes = GoSliceAppend(Node_ModifierNodes(p)!, modifier, GoPointerValueOps<Node>());
             loc = Node_Modifiers(p)!.Loc;
           }
           MutableNode_SetModifiers(Node_AsMutable(p), Parser_newModifierList(receiver, loc, nodes));
@@ -1469,7 +1470,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
         if (cls!.HeritageClauses !== undefined) {
           const implementsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindImplementsKeyword) as bool, GoZeroPointer<Node>);
           if (implementsClause !== undefined) {
-            AsHeritageClause(implementsClause)!.Types!.Nodes = GoAppend(AsHeritageClause(implementsClause)!.Types!.Nodes, Parser_addDeepCloneReparse(receiver, implementsTag!.ClassName));
+            AsHeritageClause(implementsClause)!.Types!.Nodes = GoSliceAppend(AsHeritageClause(implementsClause)!.Types!.Nodes, Parser_addDeepCloneReparse(receiver, implementsTag!.ClassName), GoPointerValueOps<Node>());
             Parser_finishMutatedNode(receiver, implementsClause);
             return;
           }
@@ -1482,7 +1483,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
         if (cls!.HeritageClauses === undefined) {
           cls!.HeritageClauses = Parser_newNodeList(receiver, implementsTag!.ClassName!.Loc, Arena_NewSlice1(receiver!.nodeSliceArena, heritageClause) as GoSlice<GoPtr<Node>>);
         } else {
-          cls!.HeritageClauses!.Nodes = GoAppend(cls!.HeritageClauses!.Nodes, heritageClause);
+          cls!.HeritageClauses!.Nodes = GoSliceAppend(cls!.HeritageClauses!.Nodes, heritageClause, GoPointerValueOps<Node>());
         }
         Parser_finishMutatedNode(receiver, parent);
       }
@@ -1825,6 +1826,6 @@ export function Parser_wrapInJSDocNamespace(receiver: GoPtr<Parser>, fullName: G
   }
   const result = NewModuleDeclaration(receiver!.factory, modifiers, KindNamespaceKeyword, Parser_addDeepCloneReparse(receiver, Node_Name(fullName)), block);
   Parser_finishReparsedNode(receiver, result, fullName);
-  receiver!.reparsedClones = GoAppend(receiver!.reparsedClones, result);
+  receiver!.reparsedClones = GoSliceAppend(receiver!.reparsedClones, result, GoPointerValueOps<Node>());
   return result;
 }

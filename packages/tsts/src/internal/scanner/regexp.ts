@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { GoAppend, type GoInterface, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../go/compat.js";
+import { GoMapValueOps, GoSliceAppend } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as math from "../../go/math.js";
 import * as strconv from "../../go/strconv.js";
@@ -447,7 +448,7 @@ export function compareDecimalStrings(a: string, b: string): int {
  */
 export function regExpParser_scanDisjunction(receiver: GoPtr<regExpParser>, isInGroup: bool): void {
   for (;;) {
-    receiver!.namedCapturingGroups = GoAppend(receiver!.namedCapturingGroups, new globalThis.Map<string, bool>());
+    receiver!.namedCapturingGroups = GoSliceAppend(receiver!.namedCapturingGroups, new globalThis.Map<string, bool>(), GoMapValueOps<string, boolean>());
     regExpParser_scanAlternative(receiver, isInGroup);
     receiver!.namedCapturingGroups = receiver!.namedCapturingGroups.slice(
       0,

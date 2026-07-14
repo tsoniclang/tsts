@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice, GoNumberKey, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import { NewNodeFactory, Node_ForEachChild } from "../../ast/spine.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 // SourceFile, Pragma, CommentRange (structs) and NodeFactory_NewModifier (the
@@ -434,7 +435,7 @@ export function Parser_parseJSONText(receiver: GoPtr<Parser>): GoPtr<SourceFile>
       // Error recovery: collect multiple top-level expressions
       if (expressions !== undefined) {
         if (Array.isArray(expressions)) {
-          expressions = GoAppend(expressions as GoSlice<GoPtr<Node>>, expression);
+          expressions = GoSliceAppend(expressions as GoSlice<GoPtr<Node>>, expression, GoPointerValueOps<Node>());
         } else {
           expressions = [expressions as GoPtr<Node>, expression];
         }
@@ -510,7 +511,7 @@ export function Parser_validateJsonValue(receiver: GoPtr<Parser>, sourceFile: Go
       return;
     case KindStringLiteral:
       if (!isDoubleQuotedString(valueExpression)) {
-        receiver!.diagnostics = GoAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), String_literal_with_double_quotes_expected));
+        receiver!.diagnostics = GoSliceAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), String_literal_with_double_quotes_expected), GoPointerValueOps<Diagnostic>());
       }
       return;
     case KindPrefixUnaryExpression: {
@@ -529,7 +530,7 @@ export function Parser_validateJsonValue(receiver: GoPtr<Parser>, sourceFile: Go
       }
       return;
   }
-  receiver!.diagnostics = GoAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), Property_value_can_only_be_string_literal_numeric_literal_true_false_null_object_literal_or_array_literal));
+  receiver!.diagnostics = GoSliceAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), Property_value_can_only_be_string_literal_numeric_literal_true_false_null_object_literal_or_array_literal), GoPointerValueOps<Diagnostic>());
 }
 
 /**
@@ -1522,7 +1523,7 @@ export function Parser_parseModifiersEx(receiver: GoPtr<Parser>, allowDecorators
   for (;;) {
     if (allowDecorators && receiver!.token === KindAtToken && !hasTrailingModifier) {
       const decorator = Parser_parseDecorator(receiver);
-      list = GoAppend(list, decorator);
+      list = GoSliceAppend(list, decorator, GoPointerValueOps<Node>());
       if (hasLeadingModifier) {
         hasTrailingDecorator = true;
       }
@@ -1534,7 +1535,7 @@ export function Parser_parseModifiersEx(receiver: GoPtr<Parser>, allowDecorators
       if (modifier!.Kind === KindStaticKeyword) {
         hasStaticModifier = true;
       }
-      list = GoAppend(list, modifier);
+      list = GoSliceAppend(list, modifier, GoPointerValueOps<Node>());
       if (hasTrailingDecorator) {
         hasTrailingModifier = true;
       } else {
@@ -2293,15 +2294,15 @@ export function Parser_processPragmasIntoFields(receiver: GoPtr<Parser>, context
           if (resolutionMode !== undefined) {
             parsed = Parser_parseResolutionMode(receiver, resolutionMode.Value, resolutionMode.pos, resolutionMode.end);
           }
-          context!.TypeReferenceDirectives = GoAppend(context!.TypeReferenceDirectives, {
+          context!.TypeReferenceDirectives = GoSliceAppend(context!.TypeReferenceDirectives, {
             pos: types.pos,
             end: types.end,
             FileName: types.Value,
             ResolutionMode: parsed,
             Preserve: preserve !== undefined && preserve.Value === "true",
-          } as unknown as GoPtr<FileReference>);
+          } as unknown as GoPtr<FileReference>, GoPointerValueOps<FileReference>());
         } else if (lib !== undefined) {
-          context!.LibReferenceDirectives = GoAppend(context!.LibReferenceDirectives, {
+          context!.LibReferenceDirectives = GoSliceAppend(context!.LibReferenceDirectives, {
             pos: lib.pos,
             end: lib.end,
             FileName: lib.Value,
@@ -2309,16 +2310,16 @@ export function Parser_processPragmasIntoFields(receiver: GoPtr<Parser>, context
             // any other value).
             ResolutionMode: 0 as ResolutionMode,
             Preserve: preserve !== undefined && preserve.Value === "true",
-          } as unknown as GoPtr<FileReference>);
+          } as unknown as GoPtr<FileReference>, GoPointerValueOps<FileReference>());
         } else if (path !== undefined) {
-          context!.ReferencedFiles = GoAppend(context!.ReferencedFiles, {
+          context!.ReferencedFiles = GoSliceAppend(context!.ReferencedFiles, {
             pos: path.pos,
             end: path.end,
             FileName: path.Value,
             // Go zero value: ResolutionModeNone.
             ResolutionMode: 0 as ResolutionMode,
             Preserve: preserve !== undefined && preserve.Value === "true",
-          } as unknown as GoPtr<FileReference>);
+          } as unknown as GoPtr<FileReference>, GoPointerValueOps<FileReference>());
         } else {
           Parser_parseErrorAtRange(receiver, pragma, Invalid_reference_directive_syntax);
         }
@@ -2478,7 +2479,7 @@ export function Parser_checkJSDecoratorSyntax(receiver: GoPtr<Parser>, node: GoP
                 NewTextRange(SkipTrivia(receiver!.sourceText, modifiers[decoratorIndex]!.Loc.pos), modifiers[decoratorIndex]!.Loc.end),
                 Decorator_used_before_export_here,
               ));
-              receiver!.jsDiagnostics = GoAppend(receiver!.jsDiagnostics, diag);
+              receiver!.jsDiagnostics = GoSliceAppend(receiver!.jsDiagnostics, diag, GoPointerValueOps<Diagnostic>());
             }
           }
         }

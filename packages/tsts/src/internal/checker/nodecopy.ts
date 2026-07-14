@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoFunc, GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoFunctionValueOps, GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoNilSlice, GoZeroMap } from "../../go/compat.js";
 import { GoSlicePrefix } from "../../go/slice-runtime.js";
 import type { Node, NodeList, ModifierList } from "../ast/spine.js";
@@ -329,7 +330,7 @@ export interface recoveryBoundary {
 export function recoveryBoundary_markError(receiver: GoPtr<recoveryBoundary>, f: GoFunc<() => void>): void {
   receiver!.hadError = true;
   if (f !== undefined) {
-    receiver!.deferredReports = GoAppend(receiver!.deferredReports, f);
+    receiver!.deferredReports = GoSliceAppend(receiver!.deferredReports, f, GoFunctionValueOps<() => void>());
   }
 }
 
@@ -550,7 +551,7 @@ export function wrappingTracker_ReportTruncationError(receiver: GoPtr<wrappingTr
  */
 export function wrappingTracker_TrackSymbol(receiver: GoPtr<wrappingTracker>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags): bool {
   const arg: TrackedSymbolArgs = { "symbol": symbol_, enclosingDeclaration: enclosingDeclaration, meaning: meaning };
-  receiver!.bound!.trackedSymbols = GoAppend(receiver!.bound!.trackedSymbols, arg);
+  receiver!.bound!.trackedSymbols = GoSliceAppend(receiver!.bound!.trackedSymbols, arg, GoPointerValueOps<TrackedSymbolArgs>());
   return false;
 }
 
@@ -1058,7 +1059,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
         const shouldBeOptional = tagData.IsBracketed || (typeExpression !== undefined && IsJSDocOptionalType(typeExpression));
         const question = shouldBeOptional ? NewToken(factory, KindQuestionToken) : undefined;
         const typeNode = visitNode(typeExpression);
-        members = GoAppend(members, NewPropertySignatureDeclaration(factory, undefined, name as GoPtr<never>, question as GoPtr<never>, typeNode as GoPtr<never>, undefined));
+        members = GoSliceAppend(members, NewPropertySignatureDeclaration(factory, undefined, name as GoPtr<never>, question as GoPtr<never>, typeNode as GoPtr<never>, undefined), GoPointerValueOps<Node>());
       }
       return NewTypeLiteralNode(factory, NodeFactory_NewNodeList(factory, members) as GoPtr<never>);
     }

@@ -1,5 +1,6 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
 import { GoAppend, GoAppendSlice, GoEqualStrict, GoSliceIsNil, GoStringKey, GoZeroNumber, GoZeroString, type GoChan, type GoError, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../../go/compat.js";
 import type { Writer } from "../../../go/io.js";
 import { Builder } from "../../../go/strings.js";
 import type { Mutex } from "../../../go/sync.js";
@@ -262,7 +263,7 @@ export function BuildTask_unblockDownstream(receiver: GoPtr<BuildTask>): void {
  * }
  */
 export function BuildTask_reportDiagnostic(receiver: GoPtr<BuildTask>, err: GoPtr<Diagnostic>): void {
-  receiver!.errors = GoAppend(receiver!.errors, err);
+  receiver!.errors = GoSliceAppend(receiver!.errors, err, GoPointerValueOps<Diagnostic>());
   receiver!.result!.diagnosticReporter!(err);
 }
 
@@ -303,7 +304,7 @@ export function BuildTask_reportDiagnostic(receiver: GoPtr<BuildTask>, err: GoPt
 export function BuildTask_report(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, configPath: Path, buildResult: GoPtr<orchestratorResult>): void {
   // <-t.prevReporter.reportDone — no-op in single-threaded
   if (receiver!.errors.length > 0) {
-    buildResult!.errors = GoAppendSlice(buildResult!.errors, receiver!.errors);
+    buildResult!.errors = GoSliceAppendSlice(buildResult!.errors, receiver!.errors, GoPointerValueOps<Diagnostic>());
   }
   Fprint(orchestrator!.opts.Sys!.Writer()!, receiver!.result!.builder.String());
   if (receiver!.result!.exitStatus > buildResult!.result.Status) {
@@ -325,7 +326,7 @@ export function BuildTask_report(receiver: GoPtr<BuildTask>, orchestrator: GoPtr
     default:
       break;
   }
-  buildResult!.filesToDelete = GoAppendSlice(buildResult!.filesToDelete, receiver!.result!.filesToDelete);
+  buildResult!.filesToDelete = GoSliceAppendSlice(buildResult!.filesToDelete, receiver!.result!.filesToDelete, GoStringValueOps);
   receiver!.result = undefined;
   // close(t.reportDone) — no-op in single-threaded
 }
@@ -1534,7 +1535,7 @@ export function BuildTask_cleanProjectOutput(receiver: GoPtr<BuildTask>, orchest
         BuildTask_reportDiagnostic(receiver, NewCompilerDiagnostic(diagnostics.Failed_to_delete_file_0, outputFile));
       }
     } else {
-      receiver!.result!.filesToDelete = GoAppend(receiver!.result!.filesToDelete, outputFile);
+      receiver!.result!.filesToDelete = GoSliceAppend(receiver!.result!.filesToDelete, outputFile, GoStringValueOps);
     }
   }
 }

@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { GoAppend, GoNilSlice, GoSliceIsNil, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoNumberValueOps, GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_End, Node_Pos, Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { BindingElement, BindingPattern, VariableDeclaration } from "../ast/generated/data.js";
@@ -560,7 +561,7 @@ export function convertBindingElementToObjectAssignmentPattern(emitContext: GoPt
   const elementNode = element as unknown as GoPtr<Node>;
   let properties: GoSlice<GoPtr<ObjectLiteralElement>> = GoNilSlice();
   for (const child of element!.Elements!.Nodes) {
-    properties = GoAppend(properties, convertBindingElementToObjectAssignmentElement(emitContext, AsBindingElement(child)));
+    properties = GoSliceAppend(properties, convertBindingElementToObjectAssignmentElement(emitContext, AsBindingElement(child)), GoPointerValueOps<Node>());
   }
   const propertyList: GoPtr<NodeList> = NodeFactory_NewNodeList(af, properties as GoSlice<GoPtr<Node>>);
   propertyList!.Loc = element!.Elements!.Loc;
@@ -592,7 +593,7 @@ export function convertBindingElementToArrayAssignmentPattern(emitContext: GoPtr
   const elementNode = element as unknown as GoPtr<Node>;
   let elements: GoSlice<GoPtr<Expression>> = GoNilSlice();
   for (const child of element!.Elements!.Nodes) {
-    elements = GoAppend(elements, convertBindingElementToArrayAssignmentElement(emitContext, AsBindingElement(child)));
+    elements = GoSliceAppend(elements, convertBindingElementToArrayAssignmentElement(emitContext, AsBindingElement(child)), GoPointerValueOps<Node>());
   }
   const elementList: GoPtr<NodeList> = NodeFactory_NewNodeList(af, elements as GoSlice<GoPtr<Node>>);
   elementList!.Loc = element!.Elements!.Loc;
@@ -779,13 +780,13 @@ export function findSuperStatementIndexPathWorker(statements: GoSlice<GoPtr<Stat
   for (let i = start; i < statements.length; i++) {
     const statement = statements[i];
     if (GetSuperCallFromStatement(statement) !== undefined) {
-      return GoAppend(indices, i);
+      return GoSliceAppend(indices, i, GoNumberValueOps);
     } else if (IsTryStatement(statement as unknown as GoPtr<Node>)) {
       const tryStmt = AsTryStatement(statement as unknown as GoPtr<Node>);
       const tryBlockStmts = Node_Statements(tryStmt!.TryBlock);
       const result = findSuperStatementIndexPathWorker(tryBlockStmts as unknown as GoSlice<GoPtr<Statement>>, 0, indices);
       if (!GoSliceIsNil(result)) {
-        return GoAppend(result, i);
+        return GoSliceAppend(result, i, GoNumberValueOps);
       }
     }
   }

@@ -1,4 +1,4 @@
-const relationKinds = new Set(["ambient-reference", "go-type-storage", "typescript-type-equivalence"]);
+const relationKinds = new Set(["ambient-reference", "go-type-storage", "go-value-ops", "typescript-type-equivalence"]);
 
 export function semanticRelationsOfKind(config, kind) {
   if (!relationKinds.has(kind)) throw new Error(`unsupported reviewed semantic relation kind '${kind}'`);

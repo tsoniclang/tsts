@@ -1,4 +1,5 @@
 import type { GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import { NewSetWithSizeHint, Set_AddIfAbsent } from "../collections/set.js";
@@ -235,7 +236,7 @@ export function projectReferenceParser_initMapperWorker(receiver: GoPtr<projectR
   let results: GoSlice<Path> = [];
   for (const task of tasks) {
     const path = fileLoader_toPath(receiver!.loader, task!.configName);
-    results = GoAppend(results, path);
+    results = GoSliceAppend(results, path, GoStringValueOps);
     // ensure we only walk each task once
     if (!Set_AddIfAbsent(seen as GoPtr<Set<GoPtr<projectReferenceParseTask>>>, task, projectReferenceParseTaskKey)) {
       continue;

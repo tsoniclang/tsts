@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoAppend, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroString, type GoComparable, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoStringValueOps } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
@@ -414,15 +415,15 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
   if (!Set_Has(completed, path)) {
     if (Set_Has(analyzing, path)) {
       if (!inCircularContext) {
-        receiver!.errors = GoAppend(receiver!.errors, NewCompilerDiagnostic(
+        receiver!.errors = GoSliceAppend(receiver!.errors, NewCompilerDiagnostic(
           diagnostics.Project_references_may_not_form_a_circular_graph_Cycle_detected_Colon_0,
           strings.Join(circularityStack, "\n"),
-        ));
+        ), GoPointerValueOps<Diagnostic>());
       }
       return undefined;
     }
     Set_Add(analyzing, path, GoStringKey);
-    circularityStack = GoAppend(circularityStack, configName);
+    circularityStack = GoSliceAppend(circularityStack, configName, GoStringValueOps);
     if (task!.resolved !== undefined) {
       const subRefs = ParsedCommandLine_ResolvedProjectReferencePaths(task!.resolved);
       const projectRefs = ParsedCommandLine_ProjectReferences(task!.resolved);
@@ -430,7 +431,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
         const subReference = subRefs[index]!;
         const upstream = Orchestrator_setupBuildTask(receiver, subReference, task, (inCircularContext || projectRefs[index]!.Circular) as bool, completed, analyzing, circularityStack);
         if (upstream !== undefined) {
-          task!.upStream = GoAppend(task!.upStream, { task: upstream, refIndex: index });
+          task!.upStream = GoSliceAppend(task!.upStream, { task: upstream, refIndex: index }, GoPointerValueOps<upstreamTask>());
         }
       }
     }
@@ -442,10 +443,10 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
       task!.prevReporter = Orchestrator_getTask(receiver, Orchestrator_toPath(receiver, prev));
     }
     task!.done = {} as BuildTask["done"];
-    receiver!.order = GoAppend(receiver!.order, configName);
+    receiver!.order = GoSliceAppend(receiver!.order, configName, GoStringValueOps);
   }
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch) && downStream !== undefined) {
-    task!.downStream = GoAppend(task!.downStream, downStream);
+    task!.downStream = GoSliceAppend(task!.downStream, downStream, GoPointerValueOps<BuildTask>());
   }
   return task;
 }

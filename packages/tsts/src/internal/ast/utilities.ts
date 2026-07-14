@@ -1,5 +1,6 @@
 import type { bool, int, short, ulong } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
 import { GoSlicePrefix } from "../../go/slice-runtime.js";
 import * as slices from "../../go/slices.js";
@@ -6042,7 +6043,7 @@ export function IsBreakOrContinueStatement(node: GoPtr<Node>): bool {
  * }
  */
 export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  return GoAppend(ancestors, parent);
+  return GoSliceAppend(ancestors, parent, GoPointerValueOps<Node>());
 }
 
 /**
@@ -8386,49 +8387,49 @@ export function GetExternalModuleImportEqualsDeclarationExpression(node: GoPtr<N
 export function CreateModifiersFromModifierFlags(flags: ModifierFlags, createModifier: GoFunc<(kind: Kind) => GoPtr<Node>>): GoSlice<GoPtr<Node>> {
   let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   if ((flags & ModifierFlagsExport) !== 0) {
-    result = GoAppend(result, createModifier!(KindExportKeyword));
+    result = GoSliceAppend(result, createModifier!(KindExportKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsAmbient) !== 0) {
-    result = GoAppend(result, createModifier!(KindDeclareKeyword));
+    result = GoSliceAppend(result, createModifier!(KindDeclareKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsDefault) !== 0) {
-    result = GoAppend(result, createModifier!(KindDefaultKeyword));
+    result = GoSliceAppend(result, createModifier!(KindDefaultKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsConst) !== 0) {
-    result = GoAppend(result, createModifier!(KindConstKeyword));
+    result = GoSliceAppend(result, createModifier!(KindConstKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsPublic) !== 0) {
-    result = GoAppend(result, createModifier!(KindPublicKeyword));
+    result = GoSliceAppend(result, createModifier!(KindPublicKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsPrivate) !== 0) {
-    result = GoAppend(result, createModifier!(KindPrivateKeyword));
+    result = GoSliceAppend(result, createModifier!(KindPrivateKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsProtected) !== 0) {
-    result = GoAppend(result, createModifier!(KindProtectedKeyword));
+    result = GoSliceAppend(result, createModifier!(KindProtectedKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsAbstract) !== 0) {
-    result = GoAppend(result, createModifier!(KindAbstractKeyword));
+    result = GoSliceAppend(result, createModifier!(KindAbstractKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsStatic) !== 0) {
-    result = GoAppend(result, createModifier!(KindStaticKeyword));
+    result = GoSliceAppend(result, createModifier!(KindStaticKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsOverride) !== 0) {
-    result = GoAppend(result, createModifier!(KindOverrideKeyword));
+    result = GoSliceAppend(result, createModifier!(KindOverrideKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsReadonly) !== 0) {
-    result = GoAppend(result, createModifier!(KindReadonlyKeyword));
+    result = GoSliceAppend(result, createModifier!(KindReadonlyKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsAccessor) !== 0) {
-    result = GoAppend(result, createModifier!(KindAccessorKeyword));
+    result = GoSliceAppend(result, createModifier!(KindAccessorKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsAsync) !== 0) {
-    result = GoAppend(result, createModifier!(KindAsyncKeyword));
+    result = GoSliceAppend(result, createModifier!(KindAsyncKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsIn) !== 0) {
-    result = GoAppend(result, createModifier!(KindInKeyword));
+    result = GoSliceAppend(result, createModifier!(KindInKeyword), GoPointerValueOps<Node>());
   }
   if ((flags & ModifierFlagsOut) !== 0) {
-    result = GoAppend(result, createModifier!(KindOutKeyword));
+    result = GoSliceAppend(result, createModifier!(KindOutKeyword), GoPointerValueOps<Node>());
   }
   return result;
 }
@@ -10964,7 +10965,7 @@ export function GetAllAccessorDeclarations(parentDeclarations: GoSlice<GoPtr<Nod
       continue;
     }
     if (GetPropertyNameForPropertyNameNode(Node_Name(member)) === accessorName) {
-      matches = GoAppend(matches, member);
+      matches = GoSliceAppend(matches, member, GoPointerValueOps<Node>());
     }
   }
   return GetAllAccessorDeclarationsForDeclaration(accessor, matches);

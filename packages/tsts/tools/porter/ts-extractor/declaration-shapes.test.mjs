@@ -124,3 +124,23 @@ const { value } = source;
     }],
   });
 });
+
+test("authored TypeScript rest parameters remain native rest parameters", async () => {
+  const api = await loadParser();
+  const moduleId = "fixture/native-rest.ts";
+  const text = "export function log(...values: string[]): void { forbiddenCallBody(values); }";
+  const sourceFile = parseSource(api, moduleId, text);
+  const context = {
+    api,
+    text,
+    imports: buildImportMap(api, sourceFile, moduleId),
+    localTypes: buildLocalTypeNames(api, sourceFile),
+    localNamespaces: new Set(),
+    moduleId,
+    valueEnvironment: new Map(),
+  };
+  const descriptor = declarationDescriptor(api, sourceFile.Statements.Nodes[0], context);
+  assert.equal(descriptor.signatures[0].params[0].rest, true);
+  assert.deepEqual(descriptor.signatures[0].params[0].type, { t: "array", element: { t: "kw", kw: "string" } });
+  assert.equal(JSON.stringify(descriptor).includes("forbiddenCallBody"), false);
+});

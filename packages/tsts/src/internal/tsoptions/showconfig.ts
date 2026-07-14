@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import { GoAppend, GoEqualStrict, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
@@ -236,7 +237,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   for (const f of ParsedCommandLine_FileNames(configParseResult)) {
     const normalizedFilePath = GetNormalizedAbsolutePath(f, ParsedCommandLine_GetCurrentDirectory(configParseResult));
     const relativePath = GetRelativePathFromFile(normalizedConfigPath, normalizedFilePath, comparePathsOptions);
-    files = GoAppend(files, relativePath);
+    files = GoSliceAppend(files, relativePath, GoStringValueOps);
   }
 
   // Serialize compiler options
@@ -538,9 +539,9 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
               // lib values are already stored as the d.ts filename, need to find original key
               const found = getNameOfCompilerOptionValue(s, elemMap);
               if (found !== "") {
-                serialized = GoAppend(serialized, found);
+                serialized = GoSliceAppend(serialized, found, GoStringValueOps);
               } else {
-                serialized = GoAppend(serialized, s);
+                serialized = GoSliceAppend(serialized, s, GoStringValueOps);
               }
             }
             OrderedMap_Set(result, name, serialized, GoStringKey);

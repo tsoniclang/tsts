@@ -40,6 +40,7 @@ export function summarizeSignatureReport(report) {
     authoredFacades: preserveSubaudit(report?.authoredFacades),
     externalPackageSurface: preserveSubaudit(report?.externalPackageSurface),
     typeStoragePolicies: preserveSubaudit(report?.typeStoragePolicies),
+    valueOperationProviders: preserveSubaudit(report?.valueOperationProviders),
     typeEquivalenceRelations: preserveSubaudit(report?.typeEquivalenceRelations),
     ambientReferenceRelations: preserveSubaudit(report?.ambientReferenceRelations),
     declarationOwnership: preserveSubaudit(report?.declarationOwnership),

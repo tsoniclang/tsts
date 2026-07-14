@@ -1,5 +1,6 @@
 import type { bool, byte, int, sbyte, uint } from "../../go/scalars.js";
 import type { GoArray, GoInterfaceValue, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
 import { GoSlicePrefix, GoSliceRange } from "../../go/slice-runtime.js";
 import { Clip } from "../../go/slices.js";
@@ -1277,11 +1278,11 @@ export function FormatTypeFlags(flags: TypeFlags): GoSlice<string> {
   let result: GoSlice<string> = [];
   for (const flagName of typeFlagNames) {
     if ((flags & flagName.flag) !== 0) {
-      result = GoAppend(result, flagName.name);
+      result = GoSliceAppend(result, flagName.name, GoStringValueOps);
     }
   }
   if (result.length === 0) {
-    result = GoAppend(result, "None");
+    result = GoSliceAppend(result, "None", GoStringValueOps);
   }
   return result;
 }

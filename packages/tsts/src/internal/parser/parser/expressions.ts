@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, GoNumberKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { ObjectLiteralExpression } from "../../ast/generated/data.js";
 import type { Expression, Statement, TypeNode } from "../../ast/generated/unions.js";
@@ -301,12 +302,12 @@ import {
 export function Parser_validateJsonObjectLiteral(receiver: GoPtr<Parser>, sourceFile: GoPtr<SourceFile>, node: GoPtr<ObjectLiteralExpression>): void {
   for (const element of node!.Properties!.Nodes!) {
     if (element!.Kind !== KindPropertyAssignment) {
-      receiver!.diagnostics = GoAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, element), Property_assignment_expected));
+      receiver!.diagnostics = GoSliceAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, element), Property_assignment_expected), GoPointerValueOps<Diagnostic>());
       continue;
     }
     const elementName = Node_Name(element);
     if (elementName !== undefined && !isDoubleQuotedString(elementName)) {
-      receiver!.diagnostics = GoAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, elementName), String_literal_with_double_quotes_expected));
+      receiver!.diagnostics = GoSliceAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, elementName), String_literal_with_double_quotes_expected), GoPointerValueOps<Diagnostic>());
     }
     Parser_validateJsonValue(receiver, sourceFile, AsPropertyAssignment(element)!.Initializer);
   }
@@ -426,7 +427,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     // append all non-await statements between afterAwaitStatement and nextAwaitStatement
     const prevStatement = sourceFile!.Statements!.Nodes[afterAwaitStatement];
     const nextStatement = sourceFile!.Statements!.Nodes[nextAwaitStatement!];
-    statements = GoAppendSlice(statements, sourceFile!.Statements!.Nodes.slice(afterAwaitStatement, nextAwaitStatement));
+    statements = GoSliceAppendSlice(statements, sourceFile!.Statements!.Nodes.slice(afterAwaitStatement, nextAwaitStatement), GoPointerValueOps<Node>());
 
     // append all diagnostics associated with the copied range
     const diagnosticStart = FindIndex(savedParseDiagnostics, (diagnostic) => {
@@ -442,9 +443,9 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     }
     if (diagnosticStart >= 0) {
       if (diagnosticEnd >= 0) {
-        receiver!.diagnostics = GoAppendSlice(receiver!.diagnostics, savedParseDiagnostics.slice(diagnosticStart, diagnosticStart + diagnosticEnd));
+        receiver!.diagnostics = GoSliceAppendSlice(receiver!.diagnostics, savedParseDiagnostics.slice(diagnosticStart, diagnosticStart + diagnosticEnd), GoPointerValueOps<Diagnostic>());
       } else {
-        receiver!.diagnostics = GoAppendSlice(receiver!.diagnostics, savedParseDiagnostics.slice(diagnosticStart));
+        receiver!.diagnostics = GoSliceAppendSlice(receiver!.diagnostics, savedParseDiagnostics.slice(diagnosticStart), GoPointerValueOps<Diagnostic>());
       }
     }
 
@@ -458,7 +459,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     while (receiver!.token !== KindEndOfFile) {
       const startPos = Scanner_TokenFullStart(receiver!.scanner);
       const statement = Parser_parseStatement(receiver);
-      statements = GoAppend(statements, statement);
+      statements = GoSliceAppend(statements, statement, GoPointerValueOps<Node>());
       if (startPos === Scanner_TokenFullStart(receiver!.scanner)) {
         Parser_nextToken(receiver);
       }
@@ -488,14 +489,14 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
   // append all statements between pos and the end of the list
   if (afterAwaitStatement < sourceFile!.Statements!.Nodes.length) {
     const prevStatement2 = sourceFile!.Statements!.Nodes[afterAwaitStatement];
-    statements = GoAppendSlice(statements, sourceFile!.Statements!.Nodes.slice(afterAwaitStatement));
+    statements = GoSliceAppendSlice(statements, sourceFile!.Statements!.Nodes.slice(afterAwaitStatement), GoPointerValueOps<Node>());
 
     // append all diagnostics associated with the copied range
     const diagnosticStart2 = FindIndex(savedParseDiagnostics, (diagnostic) => {
       return Diagnostic_Pos(diagnostic) >= Node_Pos(prevStatement2);
     });
     if (diagnosticStart2 >= 0) {
-      receiver!.diagnostics = GoAppendSlice(receiver!.diagnostics, savedParseDiagnostics.slice(diagnosticStart2));
+      receiver!.diagnostics = GoSliceAppendSlice(receiver!.diagnostics, savedParseDiagnostics.slice(diagnosticStart2), GoPointerValueOps<Diagnostic>());
     }
   }
 
@@ -3226,7 +3227,7 @@ export function Parser_parseTemplateSpans(receiver: GoPtr<Parser>, isTaggedTempl
   const pos = Parser_nodePos(receiver);
   const collect = (list: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> => {
     const span = Parser_parseTemplateSpan(receiver, isTaggedTemplate);
-    const next = GoAppend(list, span);
+    const next = GoSliceAppend(list, span, GoPointerValueOps<Node>());
     if (AsTemplateSpan(span)!.Literal!.Kind !== KindTemplateMiddle) {
       return next;
     }

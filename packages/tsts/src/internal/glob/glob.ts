@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoInterface, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceToZeroLength } from "../../go/compat.js";
 import type { Stringer } from "../../go/fmt.js";
 import * as errors from "../../go/errors.js";
@@ -588,7 +589,7 @@ export function starStar_String(receiver: starStar): string {
 export function group_String(receiver: group): string {
   let parts = GoNilSlice<string>();
   for (const g of receiver) {
-    parts = GoAppend(parts, Glob_String(g));
+    parts = GoSliceAppend(parts, Glob_String(g), GoStringValueOps);
   }
   return "{" + strings.Join(parts, ",") + "}";
 }

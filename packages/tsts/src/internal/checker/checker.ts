@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { GoAppend, GoNilSlice, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import * as core from "../core/core.js";
 import type { Node } from "../ast/spine.js";
 import { Node_ForEachChild, Node_Name } from "../ast/spine.js";
@@ -519,7 +520,7 @@ export function Checker_createNormalizedTupleTypeEx(receiver: GoPtr<Checker>, ta
     return receiver!.errorType;
   }
   if (elementTypes.length > d.elementInfos.length) {
-    n.types = GoAppend(n.types, elementTypes[d.elementInfos.length]);
+    n.types = GoSliceAppend(n.types, elementTypes[d.elementInfos.length], GoPointerValueOps<Type>());
   }
   const tupleTarget = Checker_getTupleTargetType(receiver, n.infos, d.readonly);
   if (tupleTarget === receiver!.emptyGenericType) {

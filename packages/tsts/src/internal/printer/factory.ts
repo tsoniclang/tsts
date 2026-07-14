@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPointerMethodSet, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilSlice } from "../../go/compat.js";
 import { Itoa } from "../../go/strconv.js";
 import type { Node, NodeFactoryCoercible, NodeList } from "../ast/spine.js";
@@ -609,7 +610,7 @@ export function flattenCommaElement(node: GoPtr<Expression>, expressions: GoSlic
     expressions = flattenCommaElement(AsBinaryExpression(node)!.Left, expressions);
     expressions = flattenCommaElement(AsBinaryExpression(node)!.Right, expressions);
   } else {
-    expressions = GoAppend(expressions, node);
+    expressions = GoSliceAppend(expressions, node, GoPointerValueOps<Node>());
   }
   return expressions;
 }
@@ -927,7 +928,7 @@ export function NodeFactory_NewArraySliceCall(receiver: GoPtr<NodeFactory>, arra
   const f = receiver!.__tsgoEmbedded0!;
   let args: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (start !== 0) {
-    args = GoAppend(args, NewNumericLiteral(f, Itoa(start), TokenFlagsNone));
+    args = GoSliceAppend(args, NewNumericLiteral(f, Itoa(start), TokenFlagsNone), GoPointerValueOps<Node>());
   }
   return NodeFactory_NewMethodCall(receiver, array, NewIdentifier(f, "slice"), args);
 }
@@ -1361,12 +1362,12 @@ export function NodeFactory_NewDecorateHelper(receiver: GoPtr<NodeFactory>, deco
   EmitContext_RequestEmitHelper(receiver!.emitContext, decorateHelper);
 
   let argumentsArray: GoSlice<GoPtr<Node>> = GoNilSlice();
-  argumentsArray = GoAppend(argumentsArray, NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, decoratorExpressions), true));
-  argumentsArray = GoAppend(argumentsArray, target);
+  argumentsArray = GoSliceAppend(argumentsArray, NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, decoratorExpressions), true), GoPointerValueOps<Node>());
+  argumentsArray = GoSliceAppend(argumentsArray, target, GoPointerValueOps<Node>());
   if (memberName !== undefined) {
-    argumentsArray = GoAppend(argumentsArray, memberName);
+    argumentsArray = GoSliceAppend(argumentsArray, memberName, GoPointerValueOps<Node>());
     if (descriptor !== undefined) {
-      argumentsArray = GoAppend(argumentsArray, descriptor);
+      argumentsArray = GoSliceAppend(argumentsArray, descriptor, GoPointerValueOps<Node>());
     }
   }
 
@@ -1755,8 +1756,8 @@ export function NodeFactory_NewReflectSetCall(receiver: GoPtr<NodeFactory>, targ
 export function NodeFactory_NewFunctionBindCall(receiver: GoPtr<NodeFactory>, target: GoPtr<Expression>, thisArg: GoPtr<Expression>, argumentsList: GoSlice<GoPtr<Node>>): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
   let args: GoSlice<GoPtr<Node>> = [];
-  args = GoAppend(args, thisArg);
-  args = GoAppendSlice(args, argumentsList);
+  args = GoSliceAppend(args, thisArg, GoPointerValueOps<Node>());
+  args = GoSliceAppendSlice(args, argumentsList, GoPointerValueOps<Node>());
   return NodeFactory_NewMethodCall(receiver, target, NewIdentifier(f, "bind"), args);
 }
 
@@ -1909,16 +1910,16 @@ export function NodeFactory_NewRestHelper(receiver: GoPtr<NodeFactory>, value: G
         const temp = computedTempVariables[computedTempVariableOffset];
         computedTempVariableOffset++;
         // typeof _tmp === "symbol" ? _tmp : _tmp + ""
-        propertyNames = GoAppend(propertyNames, NewConditionalExpression(
+        propertyNames = GoSliceAppend(propertyNames, NewConditionalExpression(
           f,
           NodeFactory_NewTypeCheck(receiver, temp, "symbol"),
           NewToken(f, KindQuestionToken),
           temp,
           NewToken(f, KindColonToken),
           NewBinaryExpression(f, undefined, temp, undefined, NewToken(f, KindPlusToken), NewStringLiteral(f, "", TokenFlagsNone)),
-        ));
+        ), GoPointerValueOps<Node>());
       } else {
-        propertyNames = GoAppend(propertyNames, NodeFactory_NewStringLiteralFromNode(receiver, propertyName));
+        propertyNames = GoSliceAppend(propertyNames, NodeFactory_NewStringLiteralFromNode(receiver, propertyName), GoPointerValueOps<Node>());
       }
     }
   }
@@ -2402,16 +2403,16 @@ export function NodeFactory_NewESDecorateClassElementAccessObject(receiver: GoPt
   let accessProps: GoSlice<GoPtr<Node>> = GoNilSlice();
 
   // "has" method: obj => name in obj
-  accessProps = GoAppend(accessProps, NodeFactory_NewESDecorateClassElementAccessHasMethod(receiver, nameComputed, nameExpr));
+  accessProps = GoSliceAppend(accessProps, NodeFactory_NewESDecorateClassElementAccessHasMethod(receiver, nameComputed, nameExpr), GoPointerValueOps<Node>());
 
   // "get" method: obj => obj.name or obj => obj[name]
   if (hasGet) {
-    accessProps = GoAppend(accessProps, NodeFactory_NewESDecorateClassElementAccessGetMethod(receiver, nameComputed, nameExpr));
+    accessProps = GoSliceAppend(accessProps, NodeFactory_NewESDecorateClassElementAccessGetMethod(receiver, nameComputed, nameExpr), GoPointerValueOps<Node>());
   }
 
   // "set" method: (obj, value) => { obj.name = value; } or (obj, value) => { obj[name] = value; }
   if (hasSet) {
-    accessProps = GoAppend(accessProps, NodeFactory_NewESDecorateClassElementAccessSetMethod(receiver, nameComputed, nameExpr));
+    accessProps = GoSliceAppend(accessProps, NodeFactory_NewESDecorateClassElementAccessSetMethod(receiver, nameComputed, nameExpr), GoPointerValueOps<Node>());
   }
 
   return NewObjectLiteralExpression(f, NodeFactory_NewNodeList(f, accessProps), false);

@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceToZeroLength, GoZeroPointer } from "../../go/compat.js";
 import { TrimLeft, TrimRightFunc } from "../../go/strings.js";
 import { byteLen, hasAsciiPrefixAt, isJSDocLikeTextAt, lastNewlineBefore } from "./utilities.js";
@@ -210,7 +211,7 @@ export function parseJSDocForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<Nod
       const parsed = Parser_parseJSDocComment(p, node, comment.pos, comment.end, pos);
       if (parsed !== undefined) {
         parsed!.Parent = node;
-        jsdoc = GoAppend(jsdoc, parsed);
+        jsdoc = GoSliceAppend(jsdoc, parsed, GoPointerValueOps<Node>());
         pos = Node_End(parsed);
       }
     }
@@ -352,7 +353,7 @@ export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, inf
     const parsed = Parser_parseJSDocComment(receiver, node, comment.pos, comment.end, pos);
     if (parsed !== undefined) {
       parsed!.Parent = node;
-      jsdoc = GoAppend(jsdoc, parsed);
+      jsdoc = GoSliceAppend(jsdoc, parsed, GoPointerValueOps<Node>());
       pos = Node_End(parsed);
     }
   }
@@ -534,7 +535,7 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
   const comment = Parser_parseJSDocCommentWorker(receiver, start, end, fullStart, initialIndent);
   // move jsdoc diagnostics to jsdocDiagnostics -- for JS files only
   if ((receiver!.contextFlags & NodeFlagsJavaScriptFile) !== 0) {
-    receiver!.jsdocDiagnostics = GoAppendSlice(receiver!.jsdocDiagnostics, receiver!.diagnostics.slice(saveDiagnosticsLength));
+    receiver!.jsdocDiagnostics = GoSliceAppendSlice(receiver!.jsdocDiagnostics, receiver!.diagnostics.slice(saveDiagnosticsLength), GoPointerValueOps<Diagnostic>());
   }
   receiver!.diagnostics = receiver!.diagnostics.slice(0, saveDiagnosticsLength);
 
@@ -576,7 +577,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
     if (margin === -1) {
       margin = indent;
     }
-    comments = GoAppend(comments, text);
+    comments = GoSliceAppend(comments, text, GoStringValueOps);
     indent += text.length;
   };
 
@@ -618,7 +619,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
           if (tagsPos === -1) {
             tagsPos = Node_Pos(tag);
           }
-          tags = GoAppend(tags, tag);
+          tags = GoSliceAppend(tags, tag, GoPointerValueOps<Node>());
           tagsEnd = Node_End(tag);
         }
         // NOTE: According to usejsdoc.org, a tag goes to end of line, except the last tag.
@@ -626,7 +627,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
         margin = -1;
         break;
       case KindNewLineTrivia:
-        comments = GoAppend(comments, Scanner_TokenText(receiver!.scanner));
+        comments = GoSliceAppend(comments, Scanner_TokenText(receiver!.scanner), GoStringValueOps);
         state = jsdocStateBeginningOfLine;
         indent = 0;
         break;
@@ -654,7 +655,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
           if (existingIndent < 0) {
             existingIndent = 0;
           }
-          comments = GoAppend(comments, whitespace.slice(existingIndent));
+          comments = GoSliceAppend(comments, whitespace.slice(existingIndent), GoStringValueOps);
         }
         indent += whitespace.length;
         break;
@@ -695,7 +696,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
             comments = removeLeadingNewlines(comments);
           }
           const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentEnd);
-          commentParts = GoAppend(commentParts, jsdocText!, link!);
+          commentParts = GoSliceAppendSlice(commentParts, GoSliceBuild(2, 2, GoPointerValueOps<Node>(), (__goSliceLiteral_6bd5) => { GoSliceStore(__goSliceLiteral_6bd5, 0, jsdocText!, GoPointerValueOps<Node>()); GoSliceStore(__goSliceLiteral_6bd5, 1, link!, GoPointerValueOps<Node>()); }), GoPointerValueOps<Node>());
           comments = GoSliceToZeroLength(comments);
           linkEnd = Scanner_TokenEnd(receiver!.scanner);
           break;
@@ -740,7 +741,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
   if (comments.length > 0) {
     comments[comments.length - 1] = comments[comments.length - 1]!.replace(/\s+$/, "");
     const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentsPos);
-    commentParts = GoAppend(commentParts, jsdocText!);
+    commentParts = GoSliceAppend(commentParts, jsdocText!, GoPointerValueOps<Node>());
   }
 
   let tagsNodeList: GoPtr<NodeList>;
@@ -918,7 +919,7 @@ export function Parser_skipWhitespaceOrAsterisk(receiver: GoPtr<Parser>): string
   let seenLineBreak = false;
   let indents: GoSlice<string> = [];
   while ((precedingLineBreak && receiver!.token === KindAsteriskToken) || receiver!.token === KindWhitespaceTrivia || receiver!.token === KindNewLineTrivia) {
-    indents = GoAppend(indents, Scanner_TokenText(receiver!.scanner));
+    indents = GoSliceAppend(indents, Scanner_TokenText(receiver!.scanner), GoStringValueOps);
     if (receiver!.token === KindNewLineTrivia) {
       precedingLineBreak = true;
       seenLineBreak = true;
@@ -1071,7 +1072,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
     if (margin === -1) {
       margin = indent;
     }
-    comments = GoAppend(comments, text);
+    comments = GoSliceAppend(comments, text, GoStringValueOps);
     indent += text.length;
   };
 
@@ -1097,7 +1098,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
       case KindNewLineTrivia:
         state = jsdocStateBeginningOfLine;
         // don't use pushComment here because we want to keep the margin unchanged
-        comments = GoAppend(comments, Scanner_TokenText(receiver!.scanner));
+        comments = GoSliceAppend(comments, Scanner_TokenText(receiver!.scanner), GoStringValueOps);
         indent = 0;
         break;
       case KindAtToken:
@@ -1119,7 +1120,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
         const whitespace = Scanner_TokenText(receiver!.scanner);
         // if the whitespace crosses the margin, take only the whitespace that passes the margin
         if (margin > -1 && indent + whitespace.length > margin) {
-          comments = GoAppend(comments, whitespace.slice(Math.max(margin - indent, 0)));
+          comments = GoSliceAppend(comments, whitespace.slice(Math.max(margin - indent, 0)), GoStringValueOps);
           if (inFencedCodeBlock) {
             state = jsdocStateSavingBackticks;
           } else {
@@ -1142,8 +1143,8 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
         if (link !== undefined) {
           const commentStart = linkEnd > -1 ? linkEnd : commentsPos;
           const text = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), commentStart, commentEnd);
-          parts = GoAppend(parts, text!);
-          parts = GoAppend(parts, link!);
+          parts = GoSliceAppend(parts, text!, GoPointerValueOps<Node>());
+          parts = GoSliceAppend(parts, link!, GoPointerValueOps<Node>());
           comments = GoSliceToZeroLength(comments);
           linkEnd = Scanner_TokenEnd(receiver!.scanner);
         } else {
@@ -1215,7 +1216,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
   if (comments.length > 0) {
     const commentStart = linkEnd > -1 ? linkEnd : commentsPos;
     const text = Parser_finishNode(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), commentStart);
-    parts = GoAppend(parts, text!);
+    parts = GoSliceAppend(parts, text!, GoPointerValueOps<Node>());
   }
 
   receiver!.jsdocTagCommentsPartsSpace = GoSliceToZeroLength(parts);
@@ -1271,7 +1272,7 @@ export function Parser_parseJSDocLink(receiver: GoPtr<Parser>, start: int): GoPt
   const name = Parser_parseJSDocLinkName(receiver);
   let text: GoSlice<string> = GoNilSlice();
   while (receiver!.token !== KindCloseBraceToken && receiver!.token !== KindNewLineTrivia && receiver!.token !== KindEndOfFile) {
-    text = GoAppend(text, Scanner_TokenText(receiver!.scanner));
+    text = GoSliceAppend(text, Scanner_TokenText(receiver!.scanner), GoStringValueOps);
     Parser_nextTokenJSDoc(receiver); // Couldn't this be nextTokenCommentJSDoc?
   }
   let create: GoPtr<Node>;
@@ -1531,7 +1532,7 @@ export function Parser_parseNestedTypeLiteral(receiver: GoPtr<Parser>, typeExpre
       switch (child!.Kind) {
         case KindJSDocParameterTag:
         case KindJSDocPropertyTag:
-          children = GoAppend(children, child);
+          children = GoSliceAppend(children, child, GoPointerValueOps<Node>());
           break;
         case KindJSDocTemplateTag:
           Parser_parseErrorAtRange(receiver, Node_TagName(child)!.Loc, A_JSDoc_template_tag_may_not_follow_a_typedef_callback_or_overload_tag);
@@ -1836,7 +1837,7 @@ export function Parser_parseTypedefTag(receiver: GoPtr<Parser>, start: int, tagN
           }
           break;
         default:
-          jsdocPropertyTags = GoAppend(jsdocPropertyTags, child!);
+          jsdocPropertyTags = GoSliceAppend(jsdocPropertyTags, child!, GoPointerValueOps<Node>());
           break;
       }
     }
@@ -1903,7 +1904,7 @@ export function Parser_parseCallbackTagParameters(receiver: GoPtr<Parser>, inden
     if (child.Kind === KindJSDocTemplateTag) {
       Parser_parseErrorAtRange(receiver, Node_TagName(child)!.Loc, A_JSDoc_template_tag_may_not_follow_a_typedef_callback_or_overload_tag);
     } else {
-      parameters = GoAppend(parameters, child);
+      parameters = GoSliceAppend(parameters, child, GoPointerValueOps<Node>());
     }
   }
   return Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), parameters);
@@ -2126,7 +2127,7 @@ export function Parser_parseTemplateTagTypeParameters(receiver: GoPtr<Parser>): 
     Parser_skipWhitespace(receiver);
     const node = Parser_parseTemplateTagTypeParameter(receiver);
     if (node !== undefined) {
-      nodes = GoAppend(nodes, node);
+      nodes = GoSliceAppend(nodes, node, GoPointerValueOps<Node>());
     }
     Parser_skipWhitespaceOrAsterisk(receiver);
   } while (Parser_parseOptionalJsdoc(receiver, KindCommaToken));

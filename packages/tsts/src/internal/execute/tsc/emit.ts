@@ -1,4 +1,5 @@
 import { GoAppend, GoAppendSlice, GoNilSlice, type GoPtr } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppendSlice } from "../../../go/compat.js";
 import { Background } from "../../../go/context.js";
 import type { Context } from "../../../go/context.js";
 import { Fprint, Fprintln } from "../../../go/fmt.js";
@@ -270,7 +271,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
     result.times!.emitTime = (input.Sys!.Now() as TimeWithSub).Sub(emitStart) as import("../../../go/time.js").Duration;
   }
   if (emitResult !== undefined) {
-    allDiagnostics = GoAppendSlice(allDiagnostics, emitResult!.Diagnostics);
+    allDiagnostics = GoSliceAppendSlice(allDiagnostics, emitResult!.Diagnostics, GoPointerValueOps<Diagnostic>());
   }
   if (input.Testing !== undefined) {
     input.Testing.OnEmittedFiles(emitResult, input.TestingMTimesCache);

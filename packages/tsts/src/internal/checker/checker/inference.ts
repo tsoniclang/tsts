@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoMapValueOps, GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import { GoAppend, GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../../go/compat.js";
 import { GoSlicePrefix } from "../../../go/slice-runtime.js";
 import * as slices from "../../../go/slices.js";
@@ -938,12 +939,12 @@ export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_pushActiveMapper(receiver: GoPtr<Checker>, mapper: GoPtr<TypeMapper>): void {
-  receiver!.activeMappers = GoAppend(receiver!.activeMappers, mapper);
+  receiver!.activeMappers = GoSliceAppend(receiver!.activeMappers, mapper, GoPointerValueOps<TypeMapper>());
   // In TypeScript arrays have no separate cap concept; always push a new map.
-  receiver!.activeTypeMappersCaches = GoAppend(receiver!.activeTypeMappersCaches, NewGoStructMap<CacheHashKey, GoPtr<Type>>(GoStructKey(
+  receiver!.activeTypeMappersCaches = GoSliceAppend(receiver!.activeTypeMappersCaches, NewGoStructMap<CacheHashKey, GoPtr<Type>>(GoStructKey(
     [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
     ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
-  )));
+  )), GoMapValueOps<{ Hi: bigint; Lo: bigint; } & { readonly [__goDefinedTypeBrand]?: "github.com/microsoft/typescript-go/internal/checker::type::CacheHashKey"; }, GoPtr<Type>>());
 }
 
 /**
@@ -1972,7 +1973,7 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
         if (constraint !== s) {
           different = true;
         }
-        constraints = GoAppend(constraints, constraint);
+        constraints = GoSliceAppend(constraints, constraint, GoPointerValueOps<Type>());
       } else {
         different = true;
       }
@@ -2003,7 +2004,7 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
     for (const s of types) {
       const constraint = Checker_getNextBaseConstraint(receiver, s, stack);
       if (constraint !== undefined) {
-        constraints = GoAppend(constraints, constraint);
+        constraints = GoSliceAppend(constraints, constraint, GoPointerValueOps<Type>());
       }
     }
     if (constraints.length === types.length) {
@@ -2072,7 +2073,7 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
           newElement = constraint;
         }
       }
-      newElements = GoAppend(newElements, newElement);
+      newElements = GoSliceAppend(newElements, newElement, GoPointerValueOps<Type>());
     }
     return Checker_createTupleTypeEx(receiver, newElements, elementInfos, Type_TargetTupleType(t)!.readonly);
   }

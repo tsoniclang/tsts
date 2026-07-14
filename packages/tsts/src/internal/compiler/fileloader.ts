@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Map as SyncMapImpl } from "../../go/sync.js";
@@ -908,7 +909,7 @@ export function fileLoader_toPath(receiver: GoPtr<fileLoader>, file: string): Pa
 export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: string, libFile: GoPtr<LibFile>, includeReason: GoPtr<FileIncludeReason>): void {
   const absPath = GetNormalizedAbsolutePath(fileName, receiver!.opts.Host!.GetCurrentDirectory());
   if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.opts.Config)!.AllowNonTsExtensions) || HasExtension(absPath)) {
-    receiver!.rootTasks = GoAppend(receiver!.rootTasks, {
+    receiver!.rootTasks = GoSliceAppend(receiver!.rootTasks, {
       normalizedFilePath: absPath,
       path: "" as Path_9073472b,
       file: undefined,
@@ -933,7 +934,7 @@ export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: st
       elideOnDepth: false as bool,
       loadedTask: undefined,
       allIncludeReasons: GoNilSlice(),
-    });
+    }, GoPointerValueOps<parseTask>());
   }
 }
 
@@ -1013,7 +1014,7 @@ export function fileLoader_addRootFileTask(receiver: GoPtr<fileLoader>, fileName
       } as includeExplainingDiagnostic,
     }];
   }
-  receiver!.rootTasks = GoAppend(receiver!.rootTasks, rootTask);
+  receiver!.rootTasks = GoSliceAppend(receiver!.rootTasks, rootTask, GoPointerValueOps<parseTask>());
 }
 
 /**
@@ -1044,7 +1045,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
     containingDirectory = receiver!.opts.Host!.GetCurrentDirectory();
   }
   const containingFileName = CombinePaths(containingDirectory, InferredTypesContainingFile);
-  receiver!.rootTasks = GoAppend(receiver!.rootTasks, {
+  receiver!.rootTasks = GoSliceAppend(receiver!.rootTasks, {
     normalizedFilePath: containingFileName,
     path: "" as Path_9073472b,
     file: undefined,
@@ -1069,7 +1070,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
     elideOnDepth: false as bool,
     loadedTask: undefined,
     allIncludeReasons: GoNilSlice(),
-  });
+  }, GoPointerValueOps<parseTask>());
 }
 
 /**
@@ -1166,7 +1167,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
           packageId: resolved!.PackageId,
         });
       } else {
-        pDiagnostics = GoAppend(pDiagnostics, {
+        pDiagnostics = GoSliceAppend(pDiagnostics, {
           kind: processingDiagnosticKindExplainingFileInclude,
           data: {
             diagnosticReason: {
@@ -1180,7 +1181,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
             message: diagnostics.Cannot_find_type_definition_file_for_0,
             args: [name],
           } as includeExplainingDiagnostic,
-        });
+        }, GoPointerValueOps<processingDiagnostic>());
       }
       if (traceDone !== undefined) {
         traceDone();
@@ -1691,10 +1692,10 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
           packageId: resolved!.PackageId,
         }, undefined);
       } else {
-        t!.processingDiagnostics = GoAppend(t!.processingDiagnostics, {
+        t!.processingDiagnostics = GoSliceAppend(t!.processingDiagnostics, {
           kind: processingDiagnosticKindUnknownReference,
           data: includeReason,
-        });
+        }, GoPointerValueOps<processingDiagnostic>());
       }
       if (innerTraceDone !== undefined) {
         innerTraceDone();
@@ -1850,7 +1851,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     if (isJavaScriptFile || (!file!.IsDeclarationFile && (CompilerOptions_GetIsolatedModules(optionsForFile) || isExternalModuleFile))) {
       if (Tristate_IsTrue(optionsForFile!.ImportHelpers)) {
         const specifier = fileLoader_createSyntheticImport(receiver, externalHelpersModuleNameText, file);
-        moduleNames = GoAppend(moduleNames, specifier as unknown as GoPtr<Node>);
+        moduleNames = GoSliceAppend(moduleNames, specifier as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
         t!.importHelpersImportSpecifier = specifier;
       }
     }
@@ -1859,7 +1860,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
       const jsxImport = GetJSXRuntimeImport(GetJSXImplicitImportBase(optionsForFile, file), optionsForFile);
       if (jsxImport !== "") {
         const specifier = fileLoader_createSyntheticImport(receiver, jsxImport, file);
-        moduleNames = GoAppend(moduleNames, specifier as unknown as GoPtr<Node>);
+        moduleNames = GoSliceAppend(moduleNames, specifier as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
         t!.jsxRuntimeImportSpecifier = {
           moduleReference: jsxImport,
           specifier: specifier,
@@ -1871,11 +1872,11 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
 
     const fileImports = SourceFile_Imports(file);
     for (const imp of fileImports) {
-      moduleNames = GoAppend(moduleNames, imp);
+      moduleNames = GoSliceAppend(moduleNames, imp, GoPointerValueOps<Node>());
     }
     for (const imp of file!.ModuleAugmentations) {
       if (imp!.Kind === KindStringLiteral) {
-        moduleNames = GoAppend(moduleNames, imp);
+        moduleNames = GoSliceAppend(moduleNames, imp, GoPointerValueOps<Node>());
       }
       // Do nothing if it's an Identifier; we don't need to do module resolution for `declare global`.
     }

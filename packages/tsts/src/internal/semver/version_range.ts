@@ -1,5 +1,6 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoSliceValueOps } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import * as regexp from "../../go/regexp.js";
@@ -407,7 +408,7 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
       }
     }
 
-    alternatives = GoAppend(alternatives, comparators);
+    alternatives = GoSliceAppend(alternatives, comparators, GoSliceValueOps<versionComparator>());
   }
 
   return [alternatives, true];

@@ -147,8 +147,15 @@ function renderFunction(signature, operations) {
 }
 
 function renderParameter(parameter, operations) {
+  if (parameter.variadic === true && !isSliceCarrier(parameter.type)) {
+    throw new Error("canonical Go variadic parameter does not retain its slice carrier");
+  }
   const type = renderCanonicalType(parameter.type, operations);
-  return parameter.variadic === true ? `...${safeIdentifier(parameter.name)}: ${type}[]` : `${safeIdentifier(parameter.name)}: ${type}`;
+  return `${safeIdentifier(parameter.name)}: ${type}`;
+}
+
+function isSliceCarrier(contract) {
+  return contract?.kind === "carrier" && contract.carrier === "slice";
 }
 
 function parenthesizeComposite(contract, operations) {

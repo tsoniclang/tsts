@@ -38,6 +38,8 @@ type appendReport struct {
 	AllocateShared    bool  `json:"allocateShared"`
 	ZeroAppendBacking []int `json:"zeroAppendBacking"`
 	ZeroViewWasNonNil bool  `json:"zeroViewWasNonNil"`
+	MultiOldBacking   []int `json:"multiOldBacking"`
+	MultiResult       []int `json:"multiResult"`
 }
 
 type fullSliceReport struct {
@@ -61,6 +63,35 @@ type addressReport struct {
 	SubsliceAddress    bool `json:"subsliceAddress"`
 }
 
+type arrayReport struct {
+	ArrayAfterSliceWrite []int `json:"arrayAfterSliceWrite"`
+	CopiedArray          []int `json:"copiedArray"`
+	SliceSharesAddress   bool  `json:"sliceSharesAddress"`
+}
+
+type stringByteReport struct {
+	AppendUTF8                []int `json:"appendUtf8"`
+	UTF8MiddleSlice           []int `json:"utf8MiddleSlice"`
+	AppendRaw                 []int `json:"appendRaw"`
+	RawLength                 int   `json:"rawLength"`
+	RawIndexes                []int `json:"rawIndexes"`
+	RawSlice                  []int `json:"rawSlice"`
+	RawAfterSourceMutation    []int `json:"rawAfterSourceMutation"`
+	RawAfterConvertedMutation []int `json:"rawAfterConvertedMutation"`
+	AppendAllocateOldBacking  []int `json:"appendAllocateOldBacking"`
+	AppendAllocateResult      []int `json:"appendAllocateResult"`
+	AppendReuseBacking        []int `json:"appendReuseBacking"`
+	AppendReuseResult         []int `json:"appendReuseResult"`
+	CopyCount                 int   `json:"copyCount"`
+	CopyBytes                 []int `json:"copyBytes"`
+	TruncatedUTF8CopyCount    int   `json:"truncatedUtf8CopyCount"`
+	TruncatedUTF8CopyBytes    []int `json:"truncatedUtf8CopyBytes"`
+	EmptyBytesIsNil           bool  `json:"emptyBytesIsNil"`
+	EmptyBytesLength          int   `json:"emptyBytesLength"`
+	EmptyBytesCapacity        int   `json:"emptyBytesCapacity"`
+	NilBytesStringLength      int   `json:"nilBytesStringLength"`
+}
+
 type report struct {
 	NilAndEmpty nilAndEmptyReport   `json:"nilAndEmpty"`
 	SharedSlice sharedResliceReport `json:"sharedSlice"`
@@ -68,6 +99,8 @@ type report struct {
 	FullSlice   fullSliceReport     `json:"fullSlice"`
 	CopyDelete  copyAndDeleteReport `json:"copyAndDelete"`
 	Addresses   addressReport       `json:"addresses"`
+	Array       arrayReport         `json:"array"`
+	StringBytes stringByteReport    `json:"stringBytes"`
 }
 
 func main() {
@@ -98,6 +131,11 @@ func main() {
 	zeroViewWasNonNil := zeroView != nil
 	zeroView = append(zeroView, 9)
 
+	multiBase := make([]int, 1, 2)
+	multiBase[0] = 1
+	multiOldBacking := multiBase[:cap(multiBase)]
+	multiResult := append(multiBase, 2, 3)
+
 	fullBase := make([]int, 2, 4)
 	fullBase[0], fullBase[1] = 11, 12
 	fullView := fullBase[1:2:3]
@@ -113,6 +151,45 @@ func main() {
 	firstAddress := &addressValues[1]
 	secondAddress := &addressValues[1]
 	subview := addressValues[1:]
+
+	arrayValue := [3]int{1, 2, 3}
+	arraySlice := arrayValue[1:]
+	arraySlice[0] = 7
+	arrayCopy := arrayValue
+	arrayCopy[1] = 9
+
+	utf8Value := "é💚"
+	appendUTF8 := append([]byte(nil), utf8Value...)
+	utf8MiddleSlice := []byte(utf8Value[1:2])
+	rawSource := []byte{0xff, 0, 'a', 0xc3, 0xa9}
+	rawValue := string(rawSource)
+	appendRaw := append([]byte(nil), rawValue...)
+	rawLength := len(rawValue)
+	rawIndexes := make([]int, rawLength)
+	for index := 0; index < rawLength; index++ {
+		rawIndexes[index] = int(rawValue[index])
+	}
+	rawSlice := []byte(rawValue[1:4])
+	rawSource[0] = 1
+	rawAfterSourceMutation := []byte(rawValue)
+	convertedRaw := []byte(rawValue)
+	convertedRaw[1] = 9
+	rawAfterConvertedMutation := []byte(rawValue)
+	appendAllocateBase := make([]byte, 1, 2)
+	appendAllocateBase[0] = 7
+	appendAllocateOldBacking := appendAllocateBase[:cap(appendAllocateBase)]
+	appendAllocateResult := append(appendAllocateBase, rawValue...)
+	appendReuseBase := make([]byte, 1, 8)
+	appendReuseBase[0] = 7
+	appendReuseResult := append(appendReuseBase, rawValue...)
+	appendReuseBacking := appendReuseBase[:cap(appendReuseBase)]
+	copyTarget := make([]byte, 4)
+	copyCount := copy(copyTarget, rawValue)
+	truncatedUTF8Target := make([]byte, 1)
+	truncatedUTF8CopyCount := copy(truncatedUTF8Target, "é")
+	emptyBytes := []byte("")
+	var nilBytes []byte
+	nilBytesString := string(nilBytes)
 
 	result := report{
 		NilAndEmpty: nilAndEmptyReport{
@@ -145,6 +222,8 @@ func main() {
 			AllocateShared:    allocateShared,
 			ZeroAppendBacking: append([]int(nil), zeroBase[:cap(zeroBase)]...),
 			ZeroViewWasNonNil: zeroViewWasNonNil,
+			MultiOldBacking:   append([]int(nil), multiOldBacking...),
+			MultiResult:       append([]int(nil), multiResult...),
 		},
 		FullSlice: fullSliceReport{
 			Length:   len(fullView),
@@ -164,6 +243,33 @@ func main() {
 			SameElementAddress: firstAddress == secondAddress,
 			SubsliceAddress:    firstAddress == &subview[0],
 		},
+		Array: arrayReport{
+			ArrayAfterSliceWrite: append([]int(nil), arrayValue[:]...),
+			CopiedArray:          append([]int(nil), arrayCopy[:]...),
+			SliceSharesAddress:   &arrayValue[1] == &arraySlice[0],
+		},
+		StringBytes: stringByteReport{
+			AppendUTF8:                byteInts(appendUTF8),
+			UTF8MiddleSlice:           byteInts(utf8MiddleSlice),
+			AppendRaw:                 byteInts(appendRaw),
+			RawLength:                 rawLength,
+			RawIndexes:                rawIndexes,
+			RawSlice:                  byteInts(rawSlice),
+			RawAfterSourceMutation:    byteInts(rawAfterSourceMutation),
+			RawAfterConvertedMutation: byteInts(rawAfterConvertedMutation),
+			AppendAllocateOldBacking:  byteInts(appendAllocateOldBacking),
+			AppendAllocateResult:      byteInts(appendAllocateResult),
+			AppendReuseBacking:        byteInts(appendReuseBacking),
+			AppendReuseResult:         byteInts(appendReuseResult),
+			CopyCount:                 copyCount,
+			CopyBytes:                 byteInts(copyTarget),
+			TruncatedUTF8CopyCount:    truncatedUTF8CopyCount,
+			TruncatedUTF8CopyBytes:    byteInts(truncatedUTF8Target),
+			EmptyBytesIsNil:           emptyBytes == nil,
+			EmptyBytesLength:          len(emptyBytes),
+			EmptyBytesCapacity:        cap(emptyBytes),
+			NilBytesStringLength:      len(nilBytesString),
+		},
 	}
 
 	encoder := json.NewEncoder(os.Stdout)
@@ -172,4 +278,12 @@ func main() {
 	if err := encoder.Encode(result); err != nil {
 		panic(err)
 	}
+}
+
+func byteInts(values []byte) []int {
+	result := make([]int, len(values))
+	for index, value := range values {
+		result[index] = int(value)
+	}
+	return result
 }

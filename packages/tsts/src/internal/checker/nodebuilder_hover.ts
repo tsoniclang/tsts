@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilSlice, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { ModifierList, Node } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
@@ -117,25 +118,25 @@ export function NodeBuilderImpl_expandSymbolForHover(receiver: GoPtr<NodeBuilder
   if ((symbol_!.Flags & SymbolFlagsEnum) !== 0) {
     const node = NodeBuilderImpl_expandEnumDecl(receiver, symbol_);
     if (node !== undefined) {
-      results = GoAppend(results, node);
+      results = GoSliceAppend(results, node, GoPointerValueOps<Node>());
     }
   }
   if ((symbol_!.Flags & SymbolFlagsClass) !== 0) {
     const node = NodeBuilderImpl_expandClassDecl(receiver, symbol_);
     if (node !== undefined) {
-      results = GoAppend(results, node);
+      results = GoSliceAppend(results, node, GoPointerValueOps<Node>());
     }
   }
   if ((symbol_!.Flags & (SymbolFlagsValueModule | SymbolFlagsNamespaceModule)) !== 0) {
     const node = NodeBuilderImpl_expandModuleDecl(receiver, symbol_);
     if (node !== undefined) {
-      results = GoAppend(results, node);
+      results = GoSliceAppend(results, node, GoPointerValueOps<Node>());
     }
   }
   if ((symbol_!.Flags & SymbolFlagsInterface) !== 0 && (symbol_!.Flags & SymbolFlagsClass) === 0) {
     const node = NodeBuilderImpl_expandInterfaceDecl(receiver, symbol_);
     if (node !== undefined) {
-      results = GoAppend(results, node);
+      results = GoSliceAppend(results, node, GoPointerValueOps<Node>());
     }
   }
   return results;
@@ -194,9 +195,9 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
     const p = memberProps[i];
     if (NodeBuilderImpl_checkTruncationLengthIfExpanding(receiver) && i + 3 < memberProps.length - 1) {
       receiver!.ctx!.expansionTruncated = true as bool;
-      members = GoAppend(members, NewEnumMember(receiver!.f, NewStringLiteral(receiver!.f, ` ... ${memberProps.length - i - 1} more ... `, TokenFlagsNone), undefined));
+      members = GoSliceAppend(members, NewEnumMember(receiver!.f, NewStringLiteral(receiver!.f, ` ... ${memberProps.length - i - 1} more ... `, TokenFlagsNone), undefined), GoPointerValueOps<Node>());
       const last = memberProps[memberProps.length - 1];
-      members = GoAppend(members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, last!.Name), NodeBuilderImpl_enumMemberInitializer(receiver, last)));
+      members = GoSliceAppend(members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, last!.Name), NodeBuilderImpl_enumMemberInitializer(receiver, last)), GoPointerValueOps<Node>());
       break;
     }
     const memberDecl = Find(p!.Declarations ?? [], IsEnumMember, GoZeroPointer<Node>);
@@ -210,7 +211,7 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
     if (initializer !== undefined) {
       receiver!.ctx!.approximateLength += 5;
     }
-    members = GoAppend(members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, p!.Name), initializer));
+    members = GoSliceAppend(members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, p!.Name), initializer), GoPointerValueOps<Node>());
   }
   const constModifier: ModifierFlags = isConstEnumSymbol(symbol_) ? ModifierFlagsConst : ModifierFlagsNone;
   let mods: GoPtr<ModifierList>;
@@ -382,11 +383,11 @@ export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>
   const constructors = NodeBuilderImpl_serializeConstructors(receiver, staticType, staticBaseType, isClass, symbol_);
   const indexSigs = NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, classType, FirstOrNil(baseTypes, GoZeroPointer<Type>));
   let allMembers: GoSlice<GoPtr<Node>> = [];
-  allMembers = GoAppendSlice(allMembers, indexSigs);
-  allMembers = GoAppendSlice(allMembers, staticMembers);
-  allMembers = GoAppendSlice(allMembers, constructors);
-  allMembers = GoAppendSlice(allMembers, instanceMembers);
-  allMembers = GoAppendSlice(allMembers, privateMembers);
+  allMembers = GoSliceAppendSlice(allMembers, indexSigs, GoPointerValueOps<Node>());
+  allMembers = GoSliceAppendSlice(allMembers, staticMembers, GoPointerValueOps<Node>());
+  allMembers = GoSliceAppendSlice(allMembers, constructors, GoPointerValueOps<Node>());
+  allMembers = GoSliceAppendSlice(allMembers, instanceMembers, GoPointerValueOps<Node>());
+  allMembers = GoSliceAppendSlice(allMembers, privateMembers, GoPointerValueOps<Node>());
   receiver!.ctx!.enclosingDeclaration = oldEnclosing;
   return NewClassDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, name), NodeFactory_NewNodeList(receiver!.f, typeParamDecls), NodeFactory_NewNodeList(receiver!.f, heritageClauses), NodeFactory_NewNodeList(receiver!.f, allMembers));
 }
@@ -545,15 +546,15 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
   }
   const resolved = Checker_resolveStructuredTypeMembers(receiver!.ch, interfaceType);
   let members: GoSlice<GoPtr<Node>> = GoNilSlice();
-  members = GoAppendSlice(members, NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, interfaceType, baseType));
+  members = GoSliceAppendSlice(members, NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, interfaceType, baseType), GoPointerValueOps<Node>());
   for (const sig of StructuredType_ConstructSignatures(resolved)) {
     if ((sig!.flags & SignatureFlagsAbstract) !== 0) {
       continue;
     }
-    members = GoAppend(members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructSignature, undefined));
+    members = GoSliceAppend(members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructSignature, undefined), GoPointerValueOps<Node>());
   }
   for (const sig of StructuredType_CallSignatures(resolved)) {
-    members = GoAppend(members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindCallSignature, undefined));
+    members = GoSliceAppend(members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindCallSignature, undefined), GoPointerValueOps<Node>());
   }
   const filteredProps = NodeBuilderImpl_filterInheritedProperties(receiver, interfaceType, baseTypes, StructuredType_Properties(resolved));
   members = NodeBuilderImpl_serializePropertiesWithTruncation(receiver, filteredProps, members);
@@ -592,18 +593,18 @@ export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilder
   let implementsTypes: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const declaration of declarations) {
     for (const heritageElement of GetExtendsHeritageClauseElements(declaration)) {
-      extendsTypes = GoAppend(extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement));
+      extendsTypes = GoSliceAppend(extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement), GoPointerValueOps<Node>());
     }
     for (const heritageElement of GetImplementsHeritageClauseElements(declaration)) {
-      implementsTypes = GoAppend(implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement));
+      implementsTypes = GoSliceAppend(implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement), GoPointerValueOps<Node>());
     }
   }
   let heritageClauses: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (extendsTypes.length > 0) {
-    heritageClauses = GoAppend(heritageClauses, NewHeritageClause(receiver!.f, KindExtendsKeyword, NodeFactory_NewNodeList(receiver!.f, extendsTypes)));
+    heritageClauses = GoSliceAppend(heritageClauses, NewHeritageClause(receiver!.f, KindExtendsKeyword, NodeFactory_NewNodeList(receiver!.f, extendsTypes)), GoPointerValueOps<Node>());
   }
   if (implementsTypes.length > 0) {
-    heritageClauses = GoAppend(heritageClauses, NewHeritageClause(receiver!.f, KindImplementsKeyword, NodeFactory_NewNodeList(receiver!.f, implementsTypes)));
+    heritageClauses = GoSliceAppend(heritageClauses, NewHeritageClause(receiver!.f, KindImplementsKeyword, NodeFactory_NewNodeList(receiver!.f, implementsTypes)), GoPointerValueOps<Node>());
   }
   return heritageClauses;
 }
@@ -637,7 +638,7 @@ export function NodeBuilderImpl_serializePropertiesWithTruncation(receiver: GoPt
     if (NodeBuilderImpl_checkTruncationLengthIfExpanding(receiver) && (i + 3 < filtered.length - 1)) {
       receiver!.ctx!.expansionTruncated = true as bool;
       const text = `... ${filtered.length - i - 1} more ...`;
-      result = GoAppend(result, NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, text), undefined, undefined, undefined));
+      result = GoSliceAppend(result, NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, text), undefined, undefined, undefined), GoPointerValueOps<Node>());
       result = NodeBuilderImpl_addPropertyToElementList(receiver, filtered[filtered.length - 1], result as GoSlice<GoPtr<TypeElement>>) as GoSlice<GoPtr<Node>>;
       break;
     }
@@ -744,7 +745,7 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
   let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const sig of signatures) {
     receiver!.ctx!.approximateLength++;
-    result = GoAppend(result, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructor, undefined));
+    result = GoSliceAppend(result, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructor, undefined), GoPointerValueOps<Node>());
   }
   return result;
 }
@@ -776,7 +777,7 @@ export function NodeBuilderImpl_serializeIndexSignaturesOfType(receiver: GoPtr<N
         continue;
       }
     }
-    result = GoAppend(result, NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, info, undefined));
+    result = GoSliceAppend(result, NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, info, undefined), GoPointerValueOps<Node>());
   }
   return result;
 }
@@ -991,7 +992,7 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
     if (!IsIdentifierText(sym!.Name, LanguageVariantStandard)) {
       continue;
     }
-    members = GoAppend(members, sym);
+    members = GoSliceAppend(members, sym, GoPointerValueOps<Symbol>());
   }
   Checker_sortSymbols(receiver!.ch, members);
   receiver!.ctx!.approximateLength += 14;

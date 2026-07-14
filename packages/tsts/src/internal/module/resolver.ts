@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
@@ -4208,16 +4209,16 @@ export function GetConditions(options: GoPtr<CompilerOptions>, resolutionMode: R
   }
   let conditions: GoSlice<string> = [];
   if (resolutionMode === ModuleKindESNext) {
-    conditions = GoAppend(conditions, "import");
+    conditions = GoSliceAppend(conditions, "import", GoStringValueOps);
   } else {
-    conditions = GoAppend(conditions, "require");
+    conditions = GoSliceAppend(conditions, "require", GoStringValueOps);
   }
 
   if (options!.NoDtsResolution !== TSTrue) {
-    conditions = GoAppend(conditions, "types");
+    conditions = GoSliceAppend(conditions, "types", GoStringValueOps);
   }
   if (moduleResolution !== ModuleResolutionKindBundler) {
-    conditions = GoAppend(conditions, "node");
+    conditions = GoSliceAppend(conditions, "node", GoStringValueOps);
   }
   return core.Concatenate(conditions, options!.CustomConditions);
 }
@@ -4602,7 +4603,7 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
         if (!isNotNeededPackage) {
           const baseFileName = tspath.GetBaseFileName(normalized);
           if (!strings.HasPrefix(baseFileName, ".")) {
-            wildcardMatches = GoAppend(wildcardMatches, baseFileName);
+            wildcardMatches = GoSliceAppend(wildcardMatches, baseFileName, GoStringValueOps);
           }
         }
       }
@@ -4612,9 +4613,9 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
   let result: GoSlice<string> = [];
   for (const t of (options!.Types ?? [])) {
     if (t === "*") {
-      result = GoAppendSlice(result, wildcardMatches);
+      result = GoSliceAppendSlice(result, wildcardMatches, GoStringValueOps);
     } else {
-      result = GoAppend(result, t);
+      result = GoSliceAppend(result, t, GoStringValueOps);
     }
   }
   return core.Deduplicate(result, GoEqualStrict);
@@ -4791,14 +4792,14 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
   );
 
   if (resolved_isResolved(mainResolution)) {
-    result = GoAppend(result, Resolver_createResolvedEntrypointHandlingSymlink(
+    result = GoSliceAppend(result, Resolver_createResolvedEntrypointHandlingSymlink(
       receiver,
       mainResolution!.path,
       packageName,
       undefined,
       undefined,
       EndingFixed,
-    ));
+    ), GoPointerValueOps<ResolvedEntrypoint>());
   }
 
   if (enableDirectorySearch) {
@@ -4817,14 +4818,14 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
         continue;
       }
 
-      result = GoAppend(result, Resolver_createResolvedEntrypointHandlingSymlink(
+      result = GoSliceAppend(result, Resolver_createResolvedEntrypointHandlingSymlink(
         receiver,
         file,
         tspath.ResolvePath(packageName, tspath.GetRelativePathFromDirectory(packageJson!.PackageDirectory, file, comparePathsOptions)),
         undefined,
         undefined,
         EndingChangeable,
-      ));
+      ), GoPointerValueOps<ResolvedEntrypoint>());
     }
   }
 
@@ -5019,14 +5020,14 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
           const [matchedStar, ok] = resolutionState_getMatchedStarForPatternEntrypoint(receiver, file, leadingSlice, trailingSlice, caseSensitive);
           if (!ok) continue;
           const moduleSpecifier = tspath.ResolvePath(packageName, strings.Replace(subpath, "*", matchedStar, 1));
-          entrypoints = GoAppend(entrypoints, Resolver_createResolvedEntrypointHandlingSymlink(
+          entrypoints = GoSliceAppend(entrypoints, Resolver_createResolvedEntrypointHandlingSymlink(
             receiver!.resolver,
             file,
             moduleSpecifier,
             includeConditions,
             excludeConditions,
             core.IfElse(strings.HasSuffix(expStr, "*"), EndingExtensionChangeable, EndingFixed),
-          ));
+          ), GoPointerValueOps<ResolvedEntrypoint>());
         }
       } else {
         const partsAfterFirst = tspath.GetPathComponents(expStr, "").slice(2);
@@ -5036,14 +5037,14 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
         const resolvedTarget = tspath.ResolvePath(packageJson!.PackageDirectory, expStr);
         const result = resolutionState_loadFileNameFromPackageJSONField(receiver, receiver!.extensions, resolvedTarget, expStr);
         if (resolved_isResolved(result)) {
-          entrypoints = GoAppend(entrypoints, Resolver_createResolvedEntrypointHandlingSymlink(
+          entrypoints = GoSliceAppend(entrypoints, Resolver_createResolvedEntrypointHandlingSymlink(
             receiver!.resolver,
             result!.path,
             tspath.ResolvePath(packageName, subpath),
             includeConditions,
             excludeConditions,
             core.IfElse(strings.HasSuffix(expStr, "*"), EndingExtensionChangeable, EndingFixed),
-          ));
+          ), GoPointerValueOps<ResolvedEntrypoint>());
         }
       }
     } else if (expType === JSONValueTypeArray) {
@@ -5073,7 +5074,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
             Set_Add(newExcludeConditions!, prevCondition, GoStringKey);
           }
         }
-        prevConditions = GoAppend(prevConditions, condition);
+        prevConditions = GoSliceAppend(prevConditions, condition, GoStringValueOps);
         loadEntrypointsFromTargetExports(subpath, newIncludeConditions, newExcludeConditions, subExport);
         if (conditionAlwaysMatches) {
           return false; // break

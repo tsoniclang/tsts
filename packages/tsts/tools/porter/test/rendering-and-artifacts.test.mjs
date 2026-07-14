@@ -108,7 +108,7 @@ test("renderUnitGroup emits higher-order function and inline interface signature
     [diffFunc],
     { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, diffSnapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
-  assert.match(debugText, /node: GoInterface<\{ KindString\(\): string \}>, \.\.\.message: GoInterface<unknown>\[\]/);
+  assert.match(debugText, /node: GoInterface<\{ KindString\(\): string \}>, message: GoSlice<GoInterface<unknown>>/);
   assert.match(diffText, /equalValues: GoFunc<\(a: V, b: V\) => bool>/);
   assert.match(diffText, /onAdded: GoFunc<\(key: K, value: V\) => void>/);
 });
@@ -159,7 +159,7 @@ test("renderUnitGroup resolves Go external types through generated facades", () 
   assert.match(text, /import type \{ Writer \} from "\.\.\/\.\.\/go\/io\.js";/);
   assert.match(text, /import type \{ Options \} from "\.\.\/\.\.\/go\/example\.com\/options\.js";/);
   assert.match(text, /writer: GoInterface<Writer>/);
-  assert.match(text, /\.\.\.opts: Options\[\]/);
+  assert.match(text, /opts: GoSlice<Options>/);
   assert.doesNotMatch(text, /GoExternal/);
 });
 

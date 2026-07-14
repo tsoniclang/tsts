@@ -1,6 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
 import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, type GoArray, type GoComparable, type GoConstraint, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strconv from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
@@ -4140,7 +4141,7 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
     });
     const ch = Scanner_char(s);
     if (ch < 0 || ch === "`".charCodeAt(0)) {
-      parts = GoAppend(parts, scannerByteSlice(s, start, st.pos));
+      parts = GoSliceAppend(parts, scannerByteSlice(s, start, st.pos), GoStringValueOps);
       if (ch === "`".charCodeAt(0)) {
         st.pos++;
       } else {
@@ -4151,26 +4152,26 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
       break;
     }
     if (ch === "$".charCodeAt(0) && Scanner_charAt(s, 1) === "{".charCodeAt(0)) {
-      parts = GoAppend(parts, scannerByteSlice(s, start, st.pos));
+      parts = GoSliceAppend(parts, scannerByteSlice(s, start, st.pos), GoStringValueOps);
       st.pos += 2;
       token = IfElse(startedWithBacktick, KindTemplateHead, KindTemplateMiddle);
       break;
     }
     if (ch === "\\".charCodeAt(0)) {
-      parts = GoAppend(parts, scannerByteSlice(s, start, st.pos));
-      parts = GoAppend(parts, Scanner_scanEscapeSequence(s, EscapeSequenceScanningFlagsString | IfElse(shouldEmitInvalidEscapeError, EscapeSequenceScanningFlagsReportErrors, 0)));
+      parts = GoSliceAppend(parts, scannerByteSlice(s, start, st.pos), GoStringValueOps);
+      parts = GoSliceAppend(parts, Scanner_scanEscapeSequence(s, EscapeSequenceScanningFlagsString | IfElse(shouldEmitInvalidEscapeError, EscapeSequenceScanningFlagsReportErrors, 0)), GoStringValueOps);
       start = st.pos;
       continue;
     }
     // Speculated ECMAScript 6 Spec 11.8.6.1:
     // <CR><LF> and <CR> LineTerminatorSequences are normalized to <LF> for Template Values
     if (ch === "\r".charCodeAt(0)) {
-      parts = GoAppend(parts, scannerByteSlice(s, start, st.pos));
+      parts = GoSliceAppend(parts, scannerByteSlice(s, start, st.pos), GoStringValueOps);
       st.pos++;
       if (Scanner_char(s) === "\n".charCodeAt(0)) {
         st.pos++;
       }
-      parts = GoAppend(parts, "\n");
+      parts = GoSliceAppend(parts, "\n", GoStringValueOps);
       start = st.pos;
       continue;
     }
@@ -5502,7 +5503,7 @@ export function GetViableKeywordSuggestions(): GoSlice<string> {
   let result: GoSlice<string> = [];
   for (const text of textToKeyword.keys()) {
     if (byteLen(text) > 2) {
-      result = GoAppend(result, text);
+      result = GoSliceAppend(result, text, GoStringValueOps);
     }
   }
   return result;

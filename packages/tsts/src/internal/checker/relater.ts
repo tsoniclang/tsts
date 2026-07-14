@@ -1,5 +1,6 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoValueRef, GoZeroPointer } from "../../go/compat.js";
 import { GoSlicePrefix, GoSliceRange } from "../../go/slice-runtime.js";
 import { GoStringKey, NewGoStructMap } from "../../go/compat.js";
@@ -1091,7 +1092,7 @@ export function Checker_checkTypeRelatedToEx(receiver: GoPtr<Checker>, source: G
       if (links.v.originatingImport !== undefined && !IsImportCall(links.v.originatingImport)) {
         const helpfulRetry = Checker_checkTypeRelatedTo(receiver, Checker_getTypeOfSymbol(receiver, links.v.target), target, relation, undefined);
         if (helpfulRetry) {
-          r!.relatedInfo = GoAppend(r!.relatedInfo, createDiagnosticForNode(links.v.originatingImport, Type_originates_at_this_import_A_namespace_style_import_cannot_be_called_or_constructed_and_will_cause_a_failure_at_runtime_Consider_using_a_default_import_or_import_require_here_instead));
+          r!.relatedInfo = GoSliceAppend(r!.relatedInfo, createDiagnosticForNode(links.v.originatingImport, Type_originates_at_this_import_A_namespace_style_import_cannot_be_called_or_constructed_and_will_cause_a_failure_at_runtime_Consider_using_a_default_import_or_import_require_here_instead), GoPointerValueOps<Diagnostic>());
         }
       }
     }
@@ -1150,7 +1151,7 @@ export function createDiagnosticChainFromErrorChain(chain: GoPtr<ErrorChain>, er
 export function Checker_reportDiagnostic(receiver: GoPtr<Checker>, diagnostic: GoPtr<Diagnostic>, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): void {
   if (diagnostic !== undefined) {
     if (diagnosticOutput !== undefined) {
-      diagnosticOutput.v = GoAppend(diagnosticOutput.v, diagnostic);
+      diagnosticOutput.v = GoSliceAppend(diagnosticOutput.v, diagnostic, GoPointerValueOps<Diagnostic>());
     } else {
       Checker_addDiagnostic(receiver, diagnostic);
     }
@@ -1528,9 +1529,9 @@ export function Checker_elaborateElement(receiver: GoPtr<Checker>, source: GoPtr
     specificSource = Checker_checkExpressionForMutableLocationWithContextualType(receiver, next, sourcePropType);
   }
   if (diagnosticFactory !== undefined) {
-    diags = GoAppend(diags, diagnosticFactory(prop));
+    diags = GoSliceAppend(diags, diagnosticFactory(prop), GoPointerValueOps<Diagnostic>());
   } else if (receiver!.exactOptionalPropertyTypes && Checker_isExactOptionalPropertyMismatch(receiver, specificSource, targetPropType)) {
-    diags = GoAppend(diags, createDiagnosticForNode(prop, Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target, Checker_TypeToString(receiver, specificSource), Checker_TypeToString(receiver, targetPropType)));
+    diags = GoSliceAppend(diags, createDiagnosticForNode(prop, Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target, Checker_TypeToString(receiver, specificSource), Checker_TypeToString(receiver, targetPropType)), GoPointerValueOps<Diagnostic>());
   } else {
     const propName = Checker_getPropertyNameFromIndex(receiver, nameType, undefined);
     const targetIsOptional = (OrElse(Checker_getPropertyOfType(receiver, target, propName), receiver!.unknownSymbol, GoZeroPointer<Symbol>, GoEqualStrict<GoPtr<Symbol>>)!.Flags & SymbolFlagsOptional) !== 0;
@@ -2348,7 +2349,7 @@ export function Checker_getUnmatchedPropertiesWorker(receiver: GoPtr<Checker>, s
         if (propsOut === undefined) {
           return targetProp;
         }
-        propsOut.v = GoAppend(propsOut.v, targetProp);
+        propsOut.v = GoSliceAppend(propsOut.v, targetProp, GoPointerValueOps<Symbol>());
       } else if (matchDiscriminantProperties) {
         const targetType = Checker_getTypeOfSymbol(receiver, targetProp);
         if ((targetType!.flags & TypeFlagsUnit) !== 0) {
@@ -2357,7 +2358,7 @@ export function Checker_getUnmatchedPropertiesWorker(receiver: GoPtr<Checker>, s
             if (propsOut === undefined) {
               return targetProp;
             }
-            propsOut.v = GoAppend(propsOut.v, targetProp);
+            propsOut.v = GoSliceAppend(propsOut.v, targetProp, GoPointerValueOps<Symbol>());
           }
         }
       }
@@ -2403,7 +2404,7 @@ export function excludeProperties(properties: GoSlice<GoPtr<Symbol>>, excludedPr
     const prop = sourceProperties[i]!;
     if (!Set_Has(excludedProperties, prop!.Name)) {
       if (excluded) {
-        reduced = GoAppend(reduced, prop);
+        reduced = GoSliceAppend(reduced, prop, GoPointerValueOps<Symbol>());
       }
     } else if (!excluded) {
       reduced = slices.Clip(GoSlicePrefix(sourceProperties, i));
@@ -2540,7 +2541,7 @@ export function Checker_findDiscriminantProperties(receiver: GoPtr<Checker>, sou
   let result: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   for (const sourceProperty of sourceProperties) {
     if (Checker_isDiscriminantProperty(receiver, target, sourceProperty!.Name)) {
-      result = GoAppend(result, sourceProperty);
+      result = GoSliceAppend(result, sourceProperty, GoPointerValueOps<Symbol>());
     }
   }
   return result;
@@ -2908,7 +2909,7 @@ export function Checker_discriminateTypeByDiscriminableItems(receiver: GoPtr<Che
     let filteredTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
     for (let i = 0; i < types.length; i++) {
       if (include[i] === TernaryTrue) {
-        filteredTypes = GoAppend(filteredTypes, types[i]);
+        filteredTypes = GoSliceAppend(filteredTypes, types[i], GoPointerValueOps<Type>());
       }
     }
     const filtered = Checker_getUnionTypeEx(receiver, filteredTypes, UnionReductionNone, undefined, undefined);
@@ -4591,7 +4592,7 @@ export function Checker_getUnionOrIntersectionTypePredicate(receiver: GoPtr<Chec
         return undefined;
       }
       last = pred;
-      types = GoAppend(types, pred!.t);
+      types = GoSliceAppend(types, pred!.t, GoPointerValueOps<Type>());
     } else {
       let returnType: GoPtr<Type> = undefined;
       if (isUnion) {
@@ -5100,9 +5101,9 @@ export function Checker_getEffectiveConstraintOfIntersection(receiver: GoPtr<Che
         constraint = Checker_getConstraintOfType(receiver, constraint);
       }
       if (constraint !== undefined) {
-        constraints = GoAppend(constraints, constraint);
+        constraints = GoSliceAppend(constraints, constraint, GoPointerValueOps<Type>());
         if (targetIsUnion) {
-          constraints = GoAppend(constraints, t);
+          constraints = GoSliceAppend(constraints, t, GoPointerValueOps<Type>());
         }
       }
     } else if ((t!.flags & TypeFlagsDisjointDomains) !== 0 || Checker_IsEmptyAnonymousObjectType(receiver, t)) {
@@ -5113,7 +5114,7 @@ export function Checker_getEffectiveConstraintOfIntersection(receiver: GoPtr<Che
     if (hasDisjointDomainType) {
       for (const t of types ?? []) {
         if ((t!.flags & TypeFlagsDisjointDomains) !== 0 || Checker_IsEmptyAnonymousObjectType(receiver, t)) {
-          constraints = GoAppend(constraints, t);
+          constraints = GoSliceAppend(constraints, t, GoPointerValueOps<Type>());
         }
       }
     }
@@ -5346,7 +5347,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
       matchTexts[s - seg] = getSourceText(s).slice(0, p);
       matchType = Checker_getTemplateLiteralType(receiver, matchTexts, GoSliceRange(sourceTypes, seg, s));
     }
-    matches = GoAppend(matches, matchType);
+    matches = GoSliceAppend(matches, matchType, GoPointerValueOps<Type>());
     seg = s;
     pos = p;
   };
@@ -6151,7 +6152,7 @@ export function Relater_hasExcessProperties(receiver: GoPtr<Relater>, source: Go
 export function Checker_getTypeOfPropertyInTypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, name: string): GoPtr<Type> {
   let propTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
   for (const t of types ?? []) {
-    propTypes = GoAppend(propTypes, Checker_getTypeOfPropertyInType(receiver, t, name));
+    propTypes = GoSliceAppend(propTypes, Checker_getTypeOfPropertyInType(receiver, t, name), GoPointerValueOps<Type>());
   }
   return Checker_getUnionType(receiver, propTypes);
 }
@@ -6830,13 +6831,13 @@ export function Relater_recursiveTypeRelatedTo(receiver: GoPtr<Relater>, source:
   Set_Add(receiver!.maybeKeysSet, id, cacheHashKeyDescriptor);
   const saveExpandingFlags = receiver!.expandingFlags;
   if ((recursionFlags & RecursionFlagsSource) !== 0) {
-    receiver!.sourceStack = GoAppend(receiver!.sourceStack, source);
+    receiver!.sourceStack = GoSliceAppend(receiver!.sourceStack, source, GoPointerValueOps<Type>());
     if ((receiver!.expandingFlags & ExpandingFlagsSource) === 0 && Checker_isDeeplyNestedType(receiver!.c, source, receiver!.sourceStack, 3)) {
       receiver!.expandingFlags = (receiver!.expandingFlags | ExpandingFlagsSource) as ExpandingFlags;
     }
   }
   if ((recursionFlags & RecursionFlagsTarget) !== 0) {
-    receiver!.targetStack = GoAppend(receiver!.targetStack, target);
+    receiver!.targetStack = GoSliceAppend(receiver!.targetStack, target, GoPointerValueOps<Type>());
     if ((receiver!.expandingFlags & ExpandingFlagsTarget) === 0 && Checker_isDeeplyNestedType(receiver!.c, target, receiver!.targetStack, 3)) {
       receiver!.expandingFlags = (receiver!.expandingFlags | ExpandingFlagsTarget) as ExpandingFlags;
     }
@@ -9207,7 +9208,7 @@ export function Relater_reportUnmatchedProperty(receiver: GoPtr<Relater>, source
     const propName = Checker_symbolToString(receiver!.c, unmatchedProperty);
     Relater_reportError(receiver, Property_0_is_missing_in_type_1_but_required_in_type_2, propName, sourceType, targetType);
     if ((unmatchedProperty!.Declarations?.length ?? 0) !== 0) {
-      receiver!.relatedInfo = GoAppend(receiver!.relatedInfo, createDiagnosticForNode(unmatchedProperty!.Declarations![0], X_0_is_declared_here, propName));
+      receiver!.relatedInfo = GoSliceAppend(receiver!.relatedInfo, createDiagnosticForNode(unmatchedProperty!.Declarations![0], X_0_is_declared_here, propName), GoPointerValueOps<Diagnostic>());
     }
   } else if (Relater_tryElaborateArrayLikeErrors(receiver, source, target, false)) {
     const [sourceType, targetType] = Checker_getTypeNamesForErrorDisplay(receiver!.c, source, target);
@@ -9993,7 +9994,7 @@ export function Relater_reportErrorResults(receiver: GoPtr<Relater>, originalSou
     Type_AsTypeParameter(syntheticParam)!.constraint = Checker_instantiateType(receiver!.c, target, newSimpleTypeMapper(source, syntheticParam));
     if (Checker_hasNonCircularBaseConstraint(receiver!.c, syntheticParam)) {
       const targetConstraintString = Checker_TypeToString(receiver!.c, target);
-      receiver!.relatedInfo = GoAppend(receiver!.relatedInfo, NewDiagnosticForNode(source!.symbol!.Declarations![0], This_type_parameter_might_need_an_extends_0_constraint, targetConstraintString));
+      receiver!.relatedInfo = GoSliceAppend(receiver!.relatedInfo, NewDiagnosticForNode(source!.symbol!.Declarations![0], This_type_parameter_might_need_an_extends_0_constraint, targetConstraintString), GoPointerValueOps<Diagnostic>());
     }
   }
 }

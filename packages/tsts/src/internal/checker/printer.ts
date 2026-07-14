@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoNilSlice } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { IdentifierNode, TypeNode, TypePredicateNodeNode } from "../ast/generated/unions.js";
@@ -1256,20 +1257,20 @@ export function Checker_formatUnionTypes(receiver: GoPtr<Checker>, types: GoSlic
             Checker_getRegularTypeOfLiteralType(receiver, types[i + count - 1]) ===
               Checker_getRegularTypeOfLiteralType(receiver, baseTypes[count - 1])
           ) {
-            result = GoAppend(result, baseType);
+            result = GoSliceAppend(result, baseType, GoPointerValueOps<Type>());
             i += count - 1;
             continue;
           }
         }
       }
-      result = GoAppend(result, t);
+      result = GoSliceAppend(result, t, GoPointerValueOps<Type>());
     }
   }
   if ((flags & TypeFlagsNull) !== 0) {
-    result = GoAppend(result, receiver!.nullType);
+    result = GoSliceAppend(result, receiver!.nullType, GoPointerValueOps<Type>());
   }
   if ((flags & TypeFlagsUndefined) !== 0) {
-    result = GoAppend(result, receiver!.undefinedType);
+    result = GoSliceAppend(result, receiver!.undefinedType, GoPointerValueOps<Type>());
   }
   return result;
 }

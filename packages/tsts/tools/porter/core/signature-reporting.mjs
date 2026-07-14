@@ -9,6 +9,7 @@ export function signatureAuditSummaryLines(status) {
     auditSummaryLine(signature?.authoredFacades, "Authored facade audit", () => `Authored facades checked/bound methods/unselected Go/TS-only/issues: ${metric(signature.authoredFacades.checked)}/${metric(signature.authoredFacades.methodBindingCount)}/${metric(signature.authoredFacades.unselectedGoMemberCount)}/${metric(signature.authoredFacades.tsOnlyMemberCount)}/${metric(signature.authoredFacades.mismatchCount)}`),
     auditSummaryLine(signature?.externalPackageSurface, "External package surface audit", () => `External package selections/resolved profiles/unresolved profiles/issues: ${metric(signature.externalPackageSurface.checked)}/${metric(signature.externalPackageSurface.resolvedProfileCount)}/${metric(signature.externalPackageSurface.unresolvedProfileCount)}/${metric(signature.externalPackageSurface.mismatchCount)}`),
     auditSummaryLine(signature?.typeStoragePolicies, "Reviewed type storage policy audit", () => `Reviewed type storage policies checked/issues: ${metric(signature.typeStoragePolicies.checked)}/${metric(signature.typeStoragePolicies.mismatchCount)}`),
+    auditSummaryLine(signature?.valueOperationProviders, "Reviewed Go value-operation provider audit", () => `Reviewed Go value-operation providers checked/issues: ${metric(signature.valueOperationProviders.checked)}/${metric(signature.valueOperationProviders.mismatchCount)}`),
     auditSummaryLine(signature?.typeEquivalenceRelations, "TypeScript type-equivalence relation audit", () => `TypeScript type-equivalence relations checked/issues: ${metric(signature.typeEquivalenceRelations.checked)}/${metric(signature.typeEquivalenceRelations.mismatchCount)}`),
     auditSummaryLine(signature?.ambientReferenceRelations, "Ambient reference relation audit", () => `Ambient reference relations checked/issues: ${metric(signature.ambientReferenceRelations.checked)}/${metric(signature.ambientReferenceRelations.mismatchCount)}`),
     auditSummaryLine(signature?.declarationOwnership, "Declaration ownership audit", () => `Declaration ownership entries checked/issues: ${metric(signature.declarationOwnership.checked)}/${metric(signature.declarationOwnership.mismatchCount)}`),
@@ -33,6 +34,7 @@ export function appendSignatureAuditMarkdown(lines, status) {
     appendMethodBindingInventory(lines, facades.methodBindings);
   }
   if (signature?.typeStoragePolicies?.state === "complete") appendTypeStorageInventory(lines, signature.typeStoragePolicies.inventory);
+  if (signature?.valueOperationProviders?.state === "complete") appendValueOperationProviderInventory(lines, signature.valueOperationProviders.inventory);
   if (signature?.externalPackageSurface?.state === "complete") appendExternalPackageSurfaceInventory(lines, signature.externalPackageSurface.inventory);
   if (signature?.typeEquivalenceRelations?.state === "complete") appendTypeEquivalenceInventory(lines, signature.typeEquivalenceRelations.inventory);
   if (signature?.ambientReferenceRelations?.state === "complete") appendAmbientReferenceInventory(lines, signature.ambientReferenceRelations.inventory);
@@ -134,6 +136,17 @@ function appendTypeStorageInventory(lines, rows) {
   appendTable(lines, "Reviewed Type Storage Policies", ["Go object", "TS storage", "Go declaration hash", "TS declaration hash", "Reason"], rows, (row) => [
     row.objectId,
     row.storageIdentity,
+    row.goDeclarationHash,
+    row.tsDeclarationHash,
+    row.reason,
+  ]);
+}
+
+function appendValueOperationProviderInventory(lines, rows) {
+  appendTable(lines, "Reviewed Go Value-Operation Providers", ["Go object", "TS operation", "Operation type parameters", "Go declaration hash", "TS declaration hash", "Reason"], rows, (row) => [
+    row.objectId,
+    row.operationIdentity,
+    (row.operationTypeParameterIndexes ?? []).join(", "),
     row.goDeclarationHash,
     row.tsDeclarationHash,
     row.reason,

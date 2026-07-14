@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import { Pool, Mutex, Once } from "../../go/sync.js";
 import { Join as strings_Join } from "../../go/strings.js";
@@ -280,23 +281,23 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
       const canonicalFileName = GetCanonicalFileName(receiver!.normalizedFilePath, loader!.opts.Host!.FS()!.UseCaseSensitiveFileNames());
       if (!fileLoader_isSupportedExtension(loader, canonicalFileName)) {
         if (HasJSFileExtension(canonicalFileName)) {
-          receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, {
+          receiver!.processingDiagnostics = GoSliceAppend(receiver!.processingDiagnostics, {
             kind: processingDiagnosticKindExplainingFileInclude,
             data: {
               diagnosticReason: receiver!.includeReason,
               message: File_0_is_a_JavaScript_file_Did_you_mean_to_enable_the_allowJs_option,
               args: [receiver!.normalizedFilePath],
             } as includeExplainingDiagnostic,
-          });
+          }, GoPointerValueOps<processingDiagnostic>());
         } else {
-          receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, {
+          receiver!.processingDiagnostics = GoSliceAppend(receiver!.processingDiagnostics, {
             kind: processingDiagnosticKindExplainingFileInclude,
             data: {
               diagnosticReason: receiver!.includeReason,
               message: File_0_has_an_unsupported_extension_The_only_supported_extensions_are_1,
               args: [receiver!.normalizedFilePath, "'" + strings_Join(Flatten(loader!.supportedExtensions), "', '") + "'"],
             } as includeExplainingDiagnostic,
-          });
+          }, GoPointerValueOps<processingDiagnostic>());
         }
         return;
       }
@@ -328,7 +329,7 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
       const ref = file!.ReferencedFiles[index]!;
       const [resolvedRef, pDiag] = fileLoader_resolveTripleslashPathReference(loader, ref.FileName, SourceFile_FileName(file), index);
       if (pDiag !== undefined) {
-        receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, pDiag);
+        receiver!.processingDiagnostics = GoSliceAppend(receiver!.processingDiagnostics, pDiag, GoPointerValueOps<processingDiagnostic>());
         continue;
       }
       parseTask_addSubTask(receiver, resolvedRef!, undefined);
@@ -362,10 +363,10 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
           packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
         }, libFile);
       } else {
-        receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, {
+        receiver!.processingDiagnostics = GoSliceAppend(receiver!.processingDiagnostics, {
           kind: processingDiagnosticKindUnknownReference,
           data: includeReason,
-        });
+        }, GoPointerValueOps<processingDiagnostic>());
       }
     }
   }
@@ -440,7 +441,7 @@ export function parseTask_loadAutomaticTypeDirectives(receiver: GoPtr<parseTask>
   const [toParseTypeRefs, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics] = fileLoader_resolveAutomaticTypeDirectives(loader, receiver!.normalizedFilePath);
   receiver!.typeResolutionsInFile = typeResolutionsInFile;
   receiver!.typeResolutionsTrace = typeResolutionsTrace;
-  receiver!.processingDiagnostics = GoAppendSlice(receiver!.processingDiagnostics, pDiagnostics);
+  receiver!.processingDiagnostics = GoSliceAppendSlice(receiver!.processingDiagnostics, pDiagnostics, GoPointerValueOps<processingDiagnostic>());
   for (const typeResolution of toParseTypeRefs) {
     parseTask_addSubTask(receiver, typeResolution, undefined);
   }
@@ -511,7 +512,7 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
     loadedTask: undefined,
     allIncludeReasons: GoNilSlice(),
   };
-  receiver!.subTasks = GoAppend(receiver!.subTasks, subTask);
+  receiver!.subTasks = GoSliceAppend(receiver!.subTasks, subTask, GoPointerValueOps<parseTask>());
 }
 
 /**
@@ -1069,11 +1070,11 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       const checkedName = seen.get(data);
       if (checkedName !== undefined) {
         if (task!.file !== undefined && checkedName !== task!.normalizedFilePath) {
-          duplicateSourceFiles = GoAppend(duplicateSourceFiles, {
+          duplicateSourceFiles = GoSliceAppend(duplicateSourceFiles, {
             ParseOptions: SourceFile_ParseOptions(task!.file),
             Hash: task!.file!.Hash,
             ScriptKind: task!.file!.ScriptKind,
-          });
+          }, GoPointerValueOps<DuplicateSourceFile>());
         }
         if (!Tristate_IsFalse(ParsedCommandLine_CompilerOptions(loader!.opts.Config)!.ForceConsistentCasingInFileNames)) {
           const checkedAbsolutePath = GetNormalizedAbsolutePathWithoutRoot(checkedName, loader!.comparePathsOptions.CurrentDirectory);
@@ -1111,16 +1112,16 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
         const packageIdFile = packageIdToSourceFile.get(dataPackageIdKey);
         if (packageIdFile !== undefined) {
           if (file !== undefined) {
-            duplicateSourceFiles = GoAppend(duplicateSourceFiles, {
+            duplicateSourceFiles = GoSliceAppend(duplicateSourceFiles, {
               ParseOptions: SourceFile_ParseOptions(file),
               Hash: file!.Hash,
               ScriptKind: file!.ScriptKind,
-            });
+            }, GoPointerValueOps<DuplicateSourceFile>());
           }
           const existing = redirectTargetsMap!.get(SourceFile_Path(packageIdFile));
           redirectTargetsMap!.set(
             SourceFile_Path(packageIdFile),
-            GoAppend(existing ?? GoNilSlice(), task!.normalizedFilePath),
+            GoSliceAppend(existing ?? GoNilSlice(), task!.normalizedFilePath, GoStringValueOps),
           );
           if (GoMapIsNil(redirectFilesByPath)) {
             redirectFilesByPath = new globalThis.Map<Path_65a900c3, GoPtr<redirectsFile>>();
@@ -1155,7 +1156,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       if (task!.isForAutomaticTypeDirective) {
         typeResolutionsInFile.set(task!.path, task!.typeResolutionsInFile);
         if (task!.processingDiagnostics.length > 0) {
-          inclProcessor.processingDiagnostics = GoAppendSlice(inclProcessor.processingDiagnostics, task!.processingDiagnostics);
+          inclProcessor.processingDiagnostics = GoSliceAppendSlice(inclProcessor.processingDiagnostics, task!.processingDiagnostics, GoPointerValueOps<processingDiagnostic>());
         }
         continue;
       }
@@ -1163,19 +1164,19 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       const path = task!.path;
 
       if (task!.processingDiagnostics.length > 0) {
-        inclProcessor.processingDiagnostics = GoAppendSlice(inclProcessor.processingDiagnostics, task!.processingDiagnostics);
+        inclProcessor.processingDiagnostics = GoSliceAppendSlice(inclProcessor.processingDiagnostics, task!.processingDiagnostics, GoPointerValueOps<processingDiagnostic>());
       }
 
       if (file === undefined) {
-        missingFiles = GoAppend(missingFiles, task!.normalizedFilePath);
+        missingFiles = GoSliceAppend(missingFiles, task!.normalizedFilePath, GoStringValueOps);
         continue;
       }
 
       if (task!.libFile !== undefined) {
-        libFiles = GoAppend(libFiles, file);
+        libFiles = GoSliceAppend(libFiles, file, GoPointerValueOps<SourceFile>());
         libFilesMap.set(path, task!.libFile);
       } else {
-        files = GoAppend(files, file);
+        files = GoSliceAppend(files, file, GoPointerValueOps<SourceFile>());
       }
       filesByPath.set(path, file);
       resolvedModules.set(path, task!.resolutionsInFile);
@@ -1203,7 +1204,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
   collectFiles(loader!.rootTasks, new globalThis.Map<GoPtr<parseTaskData>, string>());
   fileLoader_sortLibs(loader, libFiles);
 
-  const allFiles = GoAppendSlice(libFiles, files);
+  const allFiles = GoSliceAppendSlice(libFiles, files, GoPointerValueOps<SourceFile>());
   if (!GoMapIsNil(redirectFilesByPath)) {
     const redirectFilesByPathDefined = redirectFilesByPath as GoMap<Path_65a900c3, GoPtr<redirectsFile>>;
     for (const redirectFile of redirectFilesByPathDefined.values()) {
@@ -1277,7 +1278,7 @@ export function filesParser_addIncludeReason(receiver: GoPtr<filesParser>, inclu
   } else if (task!.loaded) {
     const existing = includeProcessor!.fileIncludeReasons.get(task!.path);
     if (existing !== undefined) {
-      includeProcessor!.fileIncludeReasons.set(task!.path, GoAppend(existing, reason));
+      includeProcessor!.fileIncludeReasons.set(task!.path, GoSliceAppend(existing, reason, GoPointerValueOps<FileIncludeReason>()));
     } else {
       includeProcessor!.fileIncludeReasons.set(task!.path, [reason]);
     }

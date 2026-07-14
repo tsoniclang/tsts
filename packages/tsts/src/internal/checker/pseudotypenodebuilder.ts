@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoNilSlice } from "../../go/compat.js";
 import { GoSliceRange } from "../../go/slice-runtime.js";
 import { Node_Body, NodeFactory_NewModifier, Node_Symbol, Node_Text } from "../ast/ast.js";
@@ -502,7 +503,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               continue;
             }
           }
-          res = GoAppend(res, NodeBuilderImpl_pseudoTypeToNode(b, member));
+          res = GoSliceAppend(res, NodeBuilderImpl_pseudoTypeToNode(b, member), GoPointerValueOps<Node>());
         }
         if (res.length === 1) {
           return res[0];
@@ -548,7 +549,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         if (d.TypeParameters.length > 0) {
           let res: GoSlice<GoPtr<Node>> = [];
           for (const tp of d.TypeParameters) {
-            res = GoAppend(res, NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
+            res = GoSliceAppend(res, NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
           }
           typeParams = NodeFactory_NewNodeList(b.f, res);
         }
@@ -562,7 +563,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         let res: GoSlice<GoPtr<Node>> = GoNilSlice();
         const elements = PseudoType_AsPseudoTypeTuple(t)!.Elements;
         for (const element of elements) {
-          res = GoAppend(res, NodeBuilderImpl_pseudoTypeToNode(b, element));
+          res = GoSliceAppend(res, NodeBuilderImpl_pseudoTypeToNode(b, element), GoPointerValueOps<Node>());
         }
         const result = NewTupleTypeNode(b.f, NodeFactory_NewNodeList(b.f, res) as GoPtr<never>);
         EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
@@ -605,7 +606,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               if (d.TypeParameters.length > 0) {
                 let res: GoSlice<GoPtr<Node>> = [];
                 for (const tp of d.TypeParameters) {
-                  res = GoAppend(res, NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
+                  res = GoSliceAppend(res, NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
                 }
                 typeParams = NodeFactory_NewNodeList(b.f, res);
               }
@@ -680,7 +681,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           if (b.ctx!.enclosingFile === GetSourceFileOfNode(elementNode.Name)) {
             EmitContext_SetCommentRange(b.e, newProp, elementNode.Name!.Parent!.Loc);
           }
-          newElements = GoAppend(newElements, newProp);
+          newElements = GoSliceAppend(newElements, newProp, GoPointerValueOps<Node>());
           if (cleanup !== undefined) {
             cleanup();
           }
@@ -721,7 +722,7 @@ export function NodeBuilderImpl_pseudoParametersToNodeList(receiver: GoPtr<NodeB
   const b = receiver!;
   let res: GoSlice<GoPtr<Node>> = [];
   for (const p of params) {
-    res = GoAppend(res, NodeBuilderImpl_pseudoParameterToNode(b, p));
+    res = GoSliceAppend(res, NodeBuilderImpl_pseudoParameterToNode(b, p), GoPointerValueOps<Node>());
   }
   return NodeFactory_NewNodeList(b.f, res);
 }
@@ -1564,7 +1565,7 @@ export function NodeBuilderImpl_pseudoTypeToType(receiver: GoPtr<NodeBuilderImpl
         if (mt === undefined) {
           return undefined; // propagate failure
         }
-        res = GoAppend(res, mt);
+        res = GoSliceAppend(res, mt, GoPointerValueOps<Type>());
       }
       if (res.length === 1) {
         return res[0];

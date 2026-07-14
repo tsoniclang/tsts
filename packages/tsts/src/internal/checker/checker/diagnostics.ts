@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoFunctionValueOps, GoSliceAppend } from "../../../go/compat.js";
 import { GoAppend, GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_TypeArguments, Node_Parameters, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
@@ -1967,7 +1968,7 @@ export function Checker_GetGlobalDiagnostics(receiver: GoPtr<Checker>): GoSlice<
 export function Checker_addDeferredDiagnostic(receiver: GoPtr<Checker>, callback: GoFunc<() => void>): void {
   const c = receiver!;
   if (c.saveDeferredDiagnostics) {
-    c.deferredDiagnosticCallbacks = GoAppend(c.deferredDiagnosticCallbacks, callback);
+    c.deferredDiagnosticCallbacks = GoSliceAppend(c.deferredDiagnosticCallbacks, callback, GoFunctionValueOps<() => void>());
   }
 }
 

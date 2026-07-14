@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoNilSlice } from "../../go/compat.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import type { Diagnostic, DiagnosticsCollection } from "../ast/diagnostic.js";
@@ -210,7 +211,7 @@ export function emitter_runDeclarationTransformers(receiver: GoPtr<emitter>, emi
   let sf = sourceFile;
   for (const transformer of emitter_getDeclarationTransformers(receiver, emitContext, declarationFilePath, declarationMapPath)) {
     sf = Transformer_TransformSourceFile(transformer as GoPtr<Transformer>, sf);
-    diags = GoAppendSlice(diags, DeclarationTransformer_GetDiagnostics(transformer));
+    diags = GoSliceAppendSlice(diags, DeclarationTransformer_GetDiagnostics(transformer), GoPointerValueOps<Diagnostic>());
   }
   if (popTrace !== undefined) {
     popTrace();
@@ -370,42 +371,42 @@ export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: GoI
   {
     // use type nodes to add metadata decorators
     if (Tristate_IsTrue(options!.EmitDecoratorMetadata)) {
-      tx = GoAppend(tx, NewMetadataTransformer(opts));
+      tx = GoSliceAppend(tx, NewMetadataTransformer(opts), GoPointerValueOps<Transformer>());
     }
 
     // erase types
-    tx = GoAppend(tx, NewTypeEraserTransformer(opts));
+    tx = GoSliceAppend(tx, NewTypeEraserTransformer(opts), GoPointerValueOps<Transformer>());
 
     // elide imports
     if (importElisionEnabled) {
-      tx = GoAppend(tx, NewImportElisionTransformer(opts));
+      tx = GoSliceAppend(tx, NewImportElisionTransformer(opts), GoPointerValueOps<Transformer>());
     }
 
     // transform `enum`, `namespace`, and parameter properties
-    tx = GoAppend(tx, NewRuntimeSyntaxTransformer(opts));
+    tx = GoSliceAppend(tx, NewRuntimeSyntaxTransformer(opts), GoPointerValueOps<Transformer>());
 
     if (Tristate_IsTrue(options!.ExperimentalDecorators)) {
-      tx = GoAppend(tx, NewLegacyDecoratorsTransformer(opts));
+      tx = GoSliceAppend(tx, NewLegacyDecoratorsTransformer(opts), GoPointerValueOps<Transformer>());
     }
   }
 
   if (jsxTransformEnabled) {
-    tx = GoAppend(tx, NewJSXTransformer(opts));
+    tx = GoSliceAppend(tx, NewJSXTransformer(opts), GoPointerValueOps<Transformer>());
   }
 
   const downleveler = GetESTransformer(opts);
   if (downleveler !== undefined) {
-    tx = GoAppend(tx, downleveler);
+    tx = GoSliceAppend(tx, downleveler, GoPointerValueOps<Transformer>());
   }
 
-  tx = GoAppend(tx, NewUseStrictTransformer(opts));
+  tx = GoSliceAppend(tx, NewUseStrictTransformer(opts), GoPointerValueOps<Transformer>());
 
   // transform module syntax
-  tx = GoAppend(tx, getModuleTransformer(opts));
+  tx = GoSliceAppend(tx, getModuleTransformer(opts), GoPointerValueOps<Transformer>());
 
   // inlining (formerly done via substitutions)
   if (!CompilerOptions_GetIsolatedModules(options)) {
-    tx = GoAppend(tx, NewConstEnumInliningTransformer(opts));
+    tx = GoSliceAppend(tx, NewConstEnumInliningTransformer(opts), GoPointerValueOps<Transformer>());
   }
   return tx;
 }
@@ -767,11 +768,11 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
   let sourceMapUrlPos = -1;
   if (sourceMapGenerator !== undefined) {
     if (Tristate_IsTrue(mapOptions!.SourceMap) || Tristate_IsTrue(mapOptions!.InlineSourceMap)) {
-      e.emitResult.SourceMaps = GoAppend(e.emitResult.SourceMaps, {
+      e.emitResult.SourceMaps = GoSliceAppend(e.emitResult.SourceMaps, {
         InputSourceFileNames: Generator_Sources(sourceMapGenerator),
         SourceMap: Generator_RawSourceMap(sourceMapGenerator),
         GeneratedFile: jsFilePath,
-      } as SourceMapEmitResult);
+      } as SourceMapEmitResult, GoPointerValueOps<SourceMapEmitResult>());
     }
 
     const sourceMappingURL = emitter_getSourceMappingURL(
@@ -799,7 +800,7 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
       if (err !== undefined) {
         DiagnosticsCollection_Add(e.emitterDiagnostics, NewCompilerDiagnostic(Could_not_write_file_0_Colon_1, jsFilePath, err.message));
       } else {
-        e.emitResult.EmittedFiles = GoAppend(e.emitResult.EmittedFiles, sourceMapFilePath);
+        e.emitResult.EmittedFiles = GoSliceAppend(e.emitResult.EmittedFiles, sourceMapFilePath, GoStringValueOps);
       }
     }
   } else {
@@ -822,7 +823,7 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
   if (err !== undefined) {
     DiagnosticsCollection_Add(e.emitterDiagnostics, NewCompilerDiagnostic(Could_not_write_file_0_Colon_1, jsFilePath, err.message));
   } else if (!skippedDtsWrite) {
-    e.emitResult.EmittedFiles = GoAppend(e.emitResult.EmittedFiles, jsFilePath);
+    e.emitResult.EmittedFiles = GoSliceAppend(e.emitResult.EmittedFiles, jsFilePath, GoStringValueOps);
   }
 
   // Reset state

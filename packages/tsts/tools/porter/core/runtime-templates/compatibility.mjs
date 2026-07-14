@@ -1,6 +1,8 @@
 import { FACADE_POINTER_METHOD_SET_SYMBOL } from "../pointer-method-facades.mjs";
 import { channelRuntime } from "./compatibility/channels.mjs";
 import { comparableInterfaceRuntime } from "./compatibility/comparable-interfaces.mjs";
+import { sliceRuntime } from "./compatibility/slices.mjs";
+import { valueOperationsRuntime } from "./compatibility/value-operations.mjs";
 
 export function renderGoCompatModule() {
   const pointerMethodSetSymbol = FACADE_POINTER_METHOD_SET_SYMBOL;
@@ -27,8 +29,7 @@ type GoPointerMethods<T> = typeof ${pointerMethodSetSymbol} extends keyof T
 export type GoPtr<T> = GoNilable<T & GoPointerMethods<T>>;
 export type GoRef<T> = GoNilable<{ v: T; readonly [goRefStorage]: true } & GoPointerMethods<T>>;
 export type GoPointerConstraint<T> = GoPtr<T> | GoRef<T>;
-export type GoSlice<T> = T[];
-export type GoArray<T, Length extends string> = T[] & { readonly [__goBrand]?: { readonly length: Length } };
+${sliceRuntime}
 export type GoMap<K, V> = Map<K, V>;
 export type GoChan<T, Direction extends string = "bidirectional"> = {
   readonly [__goBrand]?: { readonly element: T; readonly direction: Direction };
@@ -110,23 +111,18 @@ export function GoZeroChannel<T, Direction extends string = "bidirectional">(): 
   return GoNilChan();
 }
 
+export function GoZeroUnsafePointer(): GoUnsafePointer {
+  return undefined;
+}
+
 export function GoZeroEmptyStruct(): { readonly __tsgoEmpty?: never } {
   return {};
 }
 
+${valueOperationsRuntime}
+
 export function GoValueRef<T>(value: T): NonNullable<GoRef<T>> {
   return { v: value, [goRefStorage]: true } as NonNullable<GoRef<T>>;
-}
-
-export function GoSliceElementRef<T>(slice: GoSlice<T>, index: int): NonNullable<GoRef<T>> {
-  if (!Number.isSafeInteger(index) || index < 0 || index >= slice.length) {
-    throw new RangeError("index out of range");
-  }
-  return {
-    [goRefStorage]: true,
-    get v(): T { return slice[index]!; },
-    set v(value: T) { slice[index] = value; },
-  } as NonNullable<GoRef<T>>;
 }
 
 export function GoFieldRef<T>(read: () => T, write: (value: T) => void): NonNullable<GoRef<T>> {
@@ -146,23 +142,6 @@ export function GoRequireNonNilAfterSuccess<T>(value: GoPtr<T>, operation: strin
     throw new TypeError(\`\${operation} returned nil after success\`);
   }
   return value;
-}
-
-const goNilSlice: readonly unknown[] = Object.freeze([]);
-
-export function GoNilSlice<T>(): GoSlice<T> {
-  return goNilSlice as GoSlice<T>;
-}
-
-export function GoSliceIsNil<T>(slice: GoSlice<T>): bool {
-  return (slice === goNilSlice) as bool;
-}
-
-export function GoSliceToZeroLength<T>(slice: GoSlice<T>): GoSlice<T> {
-  if (GoSliceIsNil(slice)) {
-    return slice;
-  }
-  return [];
 }
 
 const goNilMap: Map<unknown, unknown> = new class extends Map<unknown, unknown> {
@@ -588,18 +567,6 @@ export function GoMapLookup<K, V>(map: GoMap<K, V>, key: K, zeroValue: GoZeroFac
     return [zeroValue(), false];
   }
   return [GoMapGetExisting(map, key), true];
-}
-
-export function GoAppend<T>(slice: GoSlice<T>, ...items: T[]): NonNullable<GoSlice<T>> {
-  return GoAppendSlice(slice, items);
-}
-
-export function GoAppendSlice<T>(slice: GoSlice<T>, items: GoSlice<T>): NonNullable<GoSlice<T>> {
-  if (items.length === 0) return slice;
-  const result = new Array<T>(slice.length + items.length);
-  for (let index = 0; index < slice.length; index++) result[index] = slice[index]!;
-  for (let index = 0; index < items.length; index++) result[slice.length + index] = items[index]!;
-  return result;
 }
 
 `;

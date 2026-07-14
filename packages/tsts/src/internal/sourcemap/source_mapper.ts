@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoRef, GoRune, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoNilSlice } from "../../go/compat.js";
 import { StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { BinarySearchFunc as slicesBinarySearchFunc, SortFunc as slicesSortFunc } from "../../go/slices.js";
@@ -299,12 +300,12 @@ export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap:
       }
     }
 
-    decodedMappings = GoAppend(decodedMappings, {
+    decodedMappings = GoSliceAppend(decodedMappings, {
       generatedPosition: generatedPosition,
       sourceIndex: mapping!.SourceIndex,
       sourcePosition: sourcePosition,
       nameIndex: mapping!.NameIndex,
-    });
+    }, GoPointerValueOps<MappedPosition>());
     return true;
   });
   if (MappingsDecoder_Error(decoder) !== undefined) {
@@ -318,12 +319,12 @@ export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap:
     }
     const sourceIndex: SourceIndex = mapping!.sourceIndex;
     const list: GoSlice<GoPtr<SourceMappedPosition>> = sourceMappings.get(sourceIndex) ?? [];
-    sourceMappings.set(sourceIndex, GoAppend(list, {
+    sourceMappings.set(sourceIndex, GoSliceAppend(list, {
       generatedPosition: mapping!.generatedPosition,
       sourceIndex: sourceIndex,
       sourcePosition: mapping!.sourcePosition,
       nameIndex: mapping!.nameIndex,
-    }));
+    }, GoPointerValueOps<MappedPosition>()));
   }
   for (const [i, list] of sourceMappings) {
     slicesSortFunc(list, (a: GoPtr<SourceMappedPosition>, b: GoPtr<SourceMappedPosition>): int => {
@@ -554,9 +555,9 @@ export function GetDocumentPositionMapper(host: GoInterface<Host>, generatedFile
 
   let possibleMapLocations: GoSlice<string> = [];
   if (mapFileName !== "") {
-    possibleMapLocations = GoAppend(possibleMapLocations, mapFileName);
+    possibleMapLocations = GoSliceAppend(possibleMapLocations, mapFileName, GoStringValueOps);
   }
-  possibleMapLocations = GoAppend(possibleMapLocations, generatedFileName + ".map");
+  possibleMapLocations = GoSliceAppend(possibleMapLocations, generatedFileName + ".map", GoStringValueOps);
   for (const location of possibleMapLocations) {
     const resolvedMapFileName: string = GetNormalizedAbsolutePath(location, GetDirectoryPath(generatedFileName));
     const [mapFileContents, ok] = host!.ReadFile(resolvedMapFileName);

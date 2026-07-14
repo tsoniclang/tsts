@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoBooleanKey, GoNilSlice, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Regexp } from "../../go/regexp.js";
 import { Compile } from "../../go/regexp.js";
@@ -462,7 +463,7 @@ export function getPathsRelativeToRootDirs(path: string, rootDirs: GoSlice<strin
   for (const rootDir of rootDirs) {
     const relativePath = getRelativePathIfInSameVolume(path, rootDir, useCaseSensitiveFileNames);
     if (!isPathRelativeToParent(relativePath)) {
-      results = GoAppend(results, relativePath);
+      results = GoSliceAppend(results, relativePath, GoStringValueOps);
     }
   }
   return results;

@@ -1,5 +1,6 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
 import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import { GoAppend, GoNilSlice, GoSliceIsNil, GoStringKey } from "../../../go/compat.js";
 import { Map as core_Map } from "../../core/core.js";
 import * as strings from "../../../go/strings.js";
@@ -446,11 +447,11 @@ export function buildInfoDiagnosticWithFileName_toDiagnostic(receiver: GoPtr<bui
   }
   let messageChain: GoSlice<GoPtr<Diagnostic>> = [];
   for (const msg of receiver!.messageChain) {
-    messageChain = GoAppend(messageChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, fileForDiagnostic));
+    messageChain = GoSliceAppend(messageChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, fileForDiagnostic), GoPointerValueOps<Diagnostic>());
   }
   let relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
   for (const info of receiver!.relatedInformation) {
-    relatedInformation = GoAppend(relatedInformation, buildInfoDiagnosticWithFileName_toDiagnostic(info, p, fileForDiagnostic));
+    relatedInformation = GoSliceAppend(relatedInformation, buildInfoDiagnosticWithFileName_toDiagnostic(info, p, fileForDiagnostic), GoPointerValueOps<Diagnostic>());
   }
   return NewDiagnosticFromSerialized(
     fileForDiagnostic,
@@ -528,11 +529,11 @@ export function repopulateDiagnosticChain(b: GoPtr<buildInfoDiagnosticWithFileNa
 export function buildInfoDiagnosticWithFileName_toDiagnosticWithoutRepopulate(receiver: GoPtr<buildInfoDiagnosticWithFileName>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoPtr<Diagnostic> {
   let messageChain: GoSlice<GoPtr<Diagnostic>> = [];
   for (const msg of receiver!.messageChain) {
-    messageChain = GoAppend(messageChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
+    messageChain = GoSliceAppend(messageChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file), GoPointerValueOps<Diagnostic>());
   }
   let relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
   for (const info of receiver!.relatedInformation) {
-    relatedInformation = GoAppend(relatedInformation, buildInfoDiagnosticWithFileName_toDiagnostic(info, p, file));
+    relatedInformation = GoSliceAppend(relatedInformation, buildInfoDiagnosticWithFileName_toDiagnostic(info, p, file), GoPointerValueOps<Diagnostic>());
   }
   return NewDiagnosticFromSerialized(
     file,
@@ -587,7 +588,7 @@ export function repopulateModeMismatchChain(b: GoPtr<buildInfoDiagnosticWithFile
   const details = CreateModeMismatchDetails(p! as unknown as import("../../checker/checker/state.js").Program, file);
   let nextChain: GoSlice<GoPtr<Diagnostic>> = [];
   for (const msg of b!.messageChain) {
-    nextChain = GoAppend(nextChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
+    nextChain = GoSliceAppend(nextChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file), GoPointerValueOps<Diagnostic>());
   }
   return NewDiagnosticFromSerialized(
     file,
@@ -651,7 +652,7 @@ export function repopulateModuleNotFoundChain(b: GoPtr<buildInfoDiagnosticWithFi
   const details = CreateModuleNotFoundChain(p! as unknown as import("../../checker/checker/state.js").Program, file, info!.ModuleReference, info!.Mode, packageName);
   let nextChain: GoSlice<GoPtr<Diagnostic>> = [];
   for (const msg of b!.messageChain) {
-    nextChain = GoAppend(nextChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
+    nextChain = GoSliceAppend(nextChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file), GoPointerValueOps<Diagnostic>());
   }
   return NewDiagnosticFromSerialized(
     file,
@@ -831,7 +832,7 @@ export function snapshot_getAllFilesExcludingDefaultLibraryFile(receiver: GoPtr<
     receiver!.allFilesExcludingDefaultLibraryFile = [];
     const addSourceFile = (file: GoPtr<SourceFile>): void => {
       if (!Program_IsSourceFileDefaultLibrary(program, SourceFile_Path(file))) {
-        receiver!.allFilesExcludingDefaultLibraryFile = GoAppend(receiver!.allFilesExcludingDefaultLibraryFile, file);
+        receiver!.allFilesExcludingDefaultLibraryFile = GoSliceAppend(receiver!.allFilesExcludingDefaultLibraryFile, file, GoPointerValueOps<SourceFile>());
       }
     };
     if (firstSourceFile !== undefined) {

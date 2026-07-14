@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import { GoAppend, GoEqualStrict, GoNilSlice, GoZeroPointer } from "../../../go/compat.js";
 import * as slices from "../../../go/slices.js";
 import { AppendIfUnique, Every, IfElse, LastOrNil, OrElse } from "../../core/core.js";
@@ -716,7 +717,7 @@ export function Checker_checkObjectLiteralDestructuringPropertyAssignment(receiv
       for (let i = 0; i < allProperties.Nodes.length; i++) {
         const otherProperty = allProperties.Nodes[i];
         if (!IsSpreadAssignment(otherProperty)) {
-          nonRestNames = GoAppend(nonRestNames, Node_Name(otherProperty));
+          nonRestNames = GoSliceAppend(nonRestNames, Node_Name(otherProperty), GoPointerValueOps<Node>());
         }
       }
     }

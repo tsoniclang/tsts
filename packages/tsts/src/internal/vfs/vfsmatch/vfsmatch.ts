@@ -1,5 +1,6 @@
 import type { bool, int, sbyte } from "../../../go/scalars.js";
 import { GoAppend, GoMapIsNil, GoStringKey, GoZeroString, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
+import { GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore, GoStringValueOps } from "../../../go/compat.js";
 import { MaxInt } from "../../../go/math.js";
 import { SortStableFunc } from "../../../go/slices.js";
 import { Every, Flatten, LastOrNil } from "../../core/core.js";
@@ -334,7 +335,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
 
   // Directories implicitly match all files: "src" -> "src/** /*"
   if (IsImplicitGlob(LastOrNil(parts, GoZeroString))) {
-    parts = GoAppend(parts, "**", "*");
+    parts = GoSliceAppendSlice(parts, GoSliceBuild(2, 2, GoStringValueOps, (__goSliceLiteral_3b10) => { GoSliceStore(__goSliceLiteral_3b10, 0, "**", GoStringValueOps); GoSliceStore(__goSliceLiteral_3b10, 1, "*", GoStringValueOps); }), GoStringValueOps);
   }
 
   const p: globPattern = {
@@ -1316,7 +1317,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
     }
     const [idx, ok] = globMatcher_matchesFileParts(receiver!.fileMatcher, absPrefix, file);
     if (ok) {
-      receiver!.results[idx] = GoAppend(receiver!.results[idx]!, pathPrefix + file);
+      receiver!.results[idx] = GoSliceAppend(receiver!.results[idx]!, pathPrefix + file, GoStringValueOps);
     }
   }
 

@@ -1,6 +1,7 @@
 import type { bool, byte, double, int, uint, ulong } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoArray, GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoBooleanKey, GoNilMap, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
 import { Errorf, Sprintf } from "../../go/fmt.js";
 import { Clone, SortFunc } from "../../go/slices.js";
@@ -889,7 +890,7 @@ export function Tracing_NewTypeTracer(receiver: GoPtr<Tracing>, checkerIndex: in
       types: [],
       mu: new Mutex(),
     };
-    tr.tracers = GoAppend(tr.tracers, tracer);
+    tr.tracers = GoSliceAppend(tr.tracers, tracer, GoPointerValueOps<typeTracer>());
     tr.legend = GoAppend(
       tr.legend,
       {

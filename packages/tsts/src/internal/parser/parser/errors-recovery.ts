@@ -1,5 +1,6 @@
 import type { int } from "../../../go/scalars.js";
 import { GoAppend, type GoInterface, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { NewDiagnostic } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
@@ -55,7 +56,7 @@ export function Parser_parseErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange
   let result: GoPtr<Diagnostic> = undefined;
   if (receiver!.diagnostics.length === 0 || Diagnostic_Pos(receiver!.diagnostics[receiver!.diagnostics.length - 1]) !== TextRange_Pos(loc)) {
     result = NewDiagnostic(undefined, loc, message, ...args);
-    receiver!.diagnostics = GoAppend(receiver!.diagnostics, result);
+    receiver!.diagnostics = GoSliceAppend(receiver!.diagnostics, result, GoPointerValueOps<Diagnostic>());
   }
   receiver!.hasParseError = true;
   return result;
@@ -94,5 +95,5 @@ export function attachFileToDiagnostics(diagnostics: GoSlice<GoPtr<Diagnostic>>,
  * }
  */
 export function Parser_jsErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
-  receiver!.jsDiagnostics = GoAppend(receiver!.jsDiagnostics, NewDiagnostic(undefined, NewTextRange(SkipTrivia(receiver!.sourceText, TextRange_Pos(loc)), TextRange_End(loc)), message, ...args));
+  receiver!.jsDiagnostics = GoSliceAppend(receiver!.jsDiagnostics, NewDiagnostic(undefined, NewTextRange(SkipTrivia(receiver!.sourceText, TextRange_Pos(loc)), TextRange_End(loc)), message, ...args), GoPointerValueOps<Diagnostic>());
 }

@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import { Every, Find, FirstOrNil, Filter, Some } from "../core/core.js";
 import type { GoComparable, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Node, NodeList } from "../ast/spine.js";
@@ -4025,7 +4026,7 @@ export function symbolsToArray(symbols: SymbolTable): GoSlice<GoPtr<Symbol>> {
   let result: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   for (const [id, symbol] of symbols) {
     if (!isReservedMemberName(id)) {
-      result = GoAppend(result, symbol);
+      result = GoSliceAppend(result, symbol, GoPointerValueOps<Symbol>());
     }
   }
   return result;

@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoDefined, GoFunc, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceValueOps } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoBigIntKey, GoBooleanKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
@@ -342,9 +343,9 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
     Checker_getAccessibleSymbolChain(receiver, container, enclosingDeclaration, SymbolFlagsNamespace /*useOnlyExternalAliasing*/, false).length > 0) {
     // This order expresses a preference for the real container if it is in scope
     let res = GoAppendSlice([container], additionalContainers);
-    res = GoAppendSlice(res, reexportContainers);
+    res = GoSliceAppendSlice(res, reexportContainers, GoPointerValueOps<Symbol>());
     if (objectLiteralContainer !== undefined) {
-      res = GoAppend(res, objectLiteralContainer);
+      res = GoSliceAppend(res, objectLiteralContainer, GoPointerValueOps<Symbol>());
     }
     return res;
   }
@@ -358,7 +359,7 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
       let found = false;
       for (const [, s] of t) {
         if ((s!.Flags & leftMeaning) !== 0 && Checker_getTypeOfSymbol(receiver, s) === Checker_getDeclaredTypeOfSymbol(receiver, container)) {
-          variableMatches = GoAppend(variableMatches, s);
+          variableMatches = GoSliceAppend(variableMatches, s, GoPointerValueOps<Symbol>());
           found = true;
         }
       }
@@ -367,13 +368,13 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
     Checker_sortSymbols(receiver, variableMatches);
   }
 
-  let res = GoAppendSlice(GoNilSlice<GoPtr<Symbol>>(), variableMatches);
-  res = GoAppendSlice(res, additionalContainers);
-  res = GoAppend(res, container);
+  let res = GoSliceAppendSlice(GoNilSlice<GoPtr<Symbol>>(), variableMatches, GoPointerValueOps<Symbol>());
+  res = GoSliceAppendSlice(res, additionalContainers, GoPointerValueOps<Symbol>());
+  res = GoSliceAppend(res, container, GoPointerValueOps<Symbol>());
   if (objectLiteralContainer !== undefined) {
-    res = GoAppend(res, objectLiteralContainer);
+    res = GoSliceAppend(res, objectLiteralContainer, GoPointerValueOps<Symbol>());
   }
-  res = GoAppendSlice(res, reexportContainers);
+  res = GoSliceAppendSlice(res, reexportContainers, GoPointerValueOps<Symbol>());
   return res;
 }
 
@@ -470,7 +471,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
       if (ref === undefined) {
         continue;
       }
-      results = GoAppend(results, resolvedModule);
+      results = GoSliceAppend(results, resolvedModule, GoPointerValueOps<Symbol>());
     }
     if (results.length > 0) {
       links.extendedContainersByFile.set(id, results);
@@ -492,7 +493,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
     if (ref === undefined) {
       continue;
     }
-    results = GoAppend(results, sym);
+    results = GoSliceAppend(results, sym, GoPointerValueOps<Symbol>());
   }
   links.extendedContainers = GoValueRef(results);
   return results;
@@ -693,7 +694,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       if (hasNonGlobalAugmentationExternalModuleSymbol(d!.Parent)) {
         const sym = Checker_getSymbolOfDeclaration(receiver, d!.Parent);
         if (sym !== undefined && !candidates.includes(sym)) {
-          candidates = GoAppend(candidates, sym);
+          candidates = GoSliceAppend(candidates, sym, GoPointerValueOps<Symbol>());
         }
         continue;
       }
@@ -701,7 +702,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       if (IsModuleBlock(d!.Parent) && d!.Parent!.Parent !== undefined && Checker_resolveExternalModuleSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, d!.Parent!.Parent), false) === symbol_) {
         const sym = Checker_getSymbolOfDeclaration(receiver, d!.Parent!.Parent);
         if (sym !== undefined && !candidates.includes(sym)) {
-          candidates = GoAppend(candidates, sym);
+          candidates = GoSliceAppend(candidates, sym, GoPointerValueOps<Symbol>());
         }
         continue;
       }
@@ -710,14 +711,14 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       if (IsModuleExportsAccessExpression(AsBinaryExpression(d!.Parent)!.Left) || IsExportsIdentifier(Node_Expression(AsBinaryExpression(d!.Parent)!.Left))) {
         const sym = Checker_getSymbolOfDeclaration(receiver, GetSourceFileOfNode(d) as unknown as GoPtr<Node>);
         if (sym !== undefined && !candidates.includes(sym)) {
-          candidates = GoAppend(candidates, sym);
+          candidates = GoSliceAppend(candidates, sym, GoPointerValueOps<Symbol>());
         }
         continue;
       }
       Checker_checkExpressionCached(receiver, Node_Expression(AsBinaryExpression(d!.Parent)!.Left));
       const sym = LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks, Node_Expression(AsBinaryExpression(d!.Parent)!.Left), zeroSymbolNodeLinks, goNodePointerKey)!.v.resolvedSymbol;
       if (sym !== undefined && !candidates.includes(sym)) {
-        candidates = GoAppend(candidates, sym);
+        candidates = GoSliceAppend(candidates, sym, GoPointerValueOps<Symbol>());
       }
       continue;
     }
@@ -736,10 +737,10 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
     if (allAlts.length === 0) {
       continue;
     }
-    bestContainers = GoAppend(bestContainers, allAlts[0]);
-    alternativeContainers = GoAppendSlice(alternativeContainers, allAlts.slice(1));
+    bestContainers = GoSliceAppend(bestContainers, allAlts[0], GoPointerValueOps<Symbol>());
+    alternativeContainers = GoSliceAppendSlice(alternativeContainers, allAlts.slice(1), GoPointerValueOps<Symbol>());
   }
-  return GoAppendSlice(bestContainers, alternativeContainers);
+  return GoSliceAppendSlice(bestContainers, alternativeContainers, GoPointerValueOps<Symbol>());
 }
 
 /**
@@ -798,7 +799,7 @@ export function Checker_getAliasForSymbolInContainer(receiver: GoPtr<Checker>, c
   let candidates = GoNilSlice<GoPtr<Symbol>>();
   for (const [, exported] of exports_) {
     if (Checker_getSymbolIfSameReference(receiver, exported, symbol_) !== undefined) {
-      candidates = GoAppend(candidates, exported);
+      candidates = GoSliceAppend(candidates, exported, GoPointerValueOps<Symbol>());
     }
   }
   if (candidates.length > 0) {
@@ -1155,7 +1156,7 @@ export function Checker_getSymbolTableAliases(receiver: GoPtr<Checker>, symbols:
   let aliases = GoNilSlice<GoPtr<Symbol>>();
   for (const [, sym] of symbols) {
     if ((sym!.Flags & SymbolFlagsAlias) !== 0) {
-      aliases = GoAppend(aliases, sym);
+      aliases = GoSliceAppend(aliases, sym, GoPointerValueOps<Symbol>());
     }
   }
   if (kind === stKindGlobals || kind === stKindExports || kind === stKindResolvedExports) {
@@ -1246,7 +1247,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
   // symbols are iterated).
   if (res !== undefined && res!.ExportSymbol !== undefined) {
     if (Checker_isAccessible(receiver, ctx, Checker_getMergedSymbol(receiver, res!.ExportSymbol) /*resolvedAliasSymbol*/, undefined, ignoreQualification)) {
-      candidateChains = GoAppend(candidateChains, [ctx.symbol!]);
+      candidateChains = GoSliceAppend(candidateChains, [ctx.symbol!], GoSliceValueOps<GoPtr<Symbol>>());
     }
   }
 
@@ -1266,7 +1267,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
       const resolvedImportedSymbol = Checker_resolveAlias(receiver, symbolFromSymbolTable);
       const candidate = Checker_getCandidateListForSymbol(receiver, ctx, symbolFromSymbolTable, resolvedImportedSymbol, ignoreQualification);
       if (candidate.length > 0) {
-        candidateChains = GoAppend(candidateChains, candidate);
+        candidateChains = GoSliceAppend(candidateChains, candidate, GoSliceValueOps<GoPtr<Symbol>>());
       }
     }
   }

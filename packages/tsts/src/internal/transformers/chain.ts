@@ -1,4 +1,5 @@
 import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import { NodeDefault_AsNode } from "../ast/spine.js";
 import { AsSourceFile } from "../ast/ast.js";
@@ -123,7 +124,7 @@ export function Chain(...transforms: Array<TransformerFactory>): TransformerFact
       // TODO: flatten nested chains?
       const result = t!(opt);
       if (result !== undefined) {
-        constructed = GoAppend(constructed, result);
+        constructed = GoSliceAppend(constructed, result, GoPointerValueOps<Transformer>());
       }
     }
     switch (constructed.length) {

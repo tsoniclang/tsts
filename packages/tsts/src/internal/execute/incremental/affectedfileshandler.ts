@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoFunc, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../../go/compat.js";
 import { GoAppend, GoNilSlice, GoPointerKey, GoStringKey, GoZeroBoolean, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl, Mutex, Once } from "../../../go/sync.js";
@@ -408,7 +409,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
 
   let queue: GoSlice<Path> = GoNilSlice();
   referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(file))!((p: Path): bool => {
-    queue = GoAppend(queue, p);
+    queue = GoSliceAppend(queue, p, GoStringValueOps);
     return true as bool;
   });
 
@@ -424,7 +425,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
       }
       if (queueForFile) {
         referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(currentFile))!((ref: Path): bool => {
-          queue = GoAppend(queue, ref);
+          queue = GoSliceAppend(queue, ref, GoStringValueOps);
           return true as bool;
         });
       }

@@ -1,6 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoError, GoMap, GoPtr, GoRef, GoRune, GoSlice } from "../../go/compat.js";
+import { GoRefValueOps, GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef } from "../../go/compat.js";
 import { NewEncoder as base64NewEncoder, StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { New as errorsNew } from "../../go/errors.js";
@@ -260,8 +261,8 @@ export function Generator_AddSource(receiver: GoPtr<Generator>, fileName: string
   let sourceIndex: SourceIndex = found ? gen.sourceToSourceIndexMap.get(source)! : 0;
   if (!found) {
     sourceIndex = gen.sources.length;
-    gen.sources = GoAppend(gen.sources, source);
-    gen.rawSources = GoAppend(gen.rawSources, fileName);
+    gen.sources = GoSliceAppend(gen.sources, source, GoStringValueOps);
+    gen.rawSources = GoSliceAppend(gen.rawSources, fileName, GoStringValueOps);
     if (GoMapIsNil(gen.sourceToSourceIndexMap)) {
       gen.sourceToSourceIndexMap = new globalThis.Map<string, SourceIndex>();
     }
@@ -292,7 +293,7 @@ export function Generator_SetSourceContent(receiver: GoPtr<Generator>, sourceInd
     return errorsNew("sourceIndex is out of range");
   }
   while (gen.sourcesContent.length <= sourceIndex) {
-    gen.sourcesContent = GoAppend(gen.sourcesContent, undefined);
+    gen.sourcesContent = GoSliceAppend(gen.sourcesContent, undefined, GoRefValueOps<string>());
   }
   gen.sourcesContent[sourceIndex] = GoValueRef(content);
   return undefined;
@@ -321,7 +322,7 @@ export function Generator_AddName(receiver: GoPtr<Generator>, name: string): Nam
   let nameIndex: NameIndex = found ? gen.nameToNameIndexMap.get(name)! : 0;
   if (!found) {
     nameIndex = gen.names.length;
-    gen.names = GoAppend(gen.names, name);
+    gen.names = GoSliceAppend(gen.names, name, GoStringValueOps);
     if (GoMapIsNil(gen.nameToNameIndexMap)) {
       gen.nameToNameIndexMap = new globalThis.Map<string, NameIndex>();
     }

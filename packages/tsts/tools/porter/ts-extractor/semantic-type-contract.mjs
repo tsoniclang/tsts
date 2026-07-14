@@ -76,7 +76,7 @@ export function lowerSemanticSignature(signature, parentContext, options = {}) {
     return {
       name: variable.name,
       variadic,
-      type: lowerValue(variadic ? variable.type.element : variable.type, context),
+      type: lowerValue(variable.type, context),
     };
   });
   if (signature.variadic === true && input.length === 0) throw new Error("canonical Go variadic signature has no final parameter");

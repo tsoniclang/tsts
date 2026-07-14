@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoAppend, GoNilMap, GoNilSlice, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import { Node_End, NodeList_End, NodeList_Pos, Node_Pos } from "../../ast/spine.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { Node_TagName, Node_Children } from "../../ast/ast.js";
@@ -553,7 +554,7 @@ export function Parser_parseJsxChildren(receiver: GoPtr<Parser>, openingTag: GoP
     if (child === undefined) {
       break;
     }
-    list = GoAppend(list, child);
+    list = GoSliceAppend(list, child, GoPointerValueOps<Node>());
     if (IsJsxOpeningElement(openingTag) && child.Kind === KindJsxElement &&
       !TagNamesAreEquivalent(Node_TagName(AsJsxElement(child)!.OpeningElement), Node_TagName(AsJsxElement(child)!.ClosingElement)) &&
       TagNamesAreEquivalent(Node_TagName(openingTag), Node_TagName(AsJsxElement(child)!.ClosingElement))) {

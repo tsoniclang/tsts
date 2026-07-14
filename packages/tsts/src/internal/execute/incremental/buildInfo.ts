@@ -2,6 +2,7 @@ import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq, Seq2 } from "../../../go/iter.js";
 import type { JsonFieldNamesForGoStructContract } from "../../json/json.js";
 import { GoAppend, GoStringKey, GoZeroPointer, GoZeroString, type GoError, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoSliceAppend, GoStringValueOps } from "../../../go/compat.js";
 import { Errorf } from "../../../go/fmt.js";
 import type { RepopulateDiagnosticKind } from "../../ast/diagnostic.js";
 import {
@@ -876,7 +877,7 @@ export function BuildInfoEmitSignature_toEmitSignature(receiver: GoPtr<BuildInfo
   if (receiver!.DiffersOnlyInDtsMap) {
     signatureWithDifferentOptions = [];
     const [info] = SyncMap_Load(emitSignatures, path, GoZeroPointer<emitSignature>, GoStringKey);
-    signatureWithDifferentOptions = GoAppend(signatureWithDifferentOptions, info!.signature);
+    signatureWithDifferentOptions = GoSliceAppend(signatureWithDifferentOptions, info!.signature, GoStringValueOps);
   } else if (receiver!.DiffersInOptions) {
     signatureWithDifferentOptions = [receiver!.Signature];
   } else {

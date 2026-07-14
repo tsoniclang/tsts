@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceValueOps } from "../../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice } from "../../../go/compat.js";
 import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
@@ -443,14 +444,14 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
         // We defer merging of global ambient module declarations since they may require other global symbols
         // and types to be resolved. See https://github.com/microsoft/typescript-go/issues/2953.
         if ((symbol_!.Flags & SymbolFlagsModule) !== 0 && IsAmbientModuleSymbolName(symbol_!.Name)) {
-          ambientModuleSymbols = GoAppend(ambientModuleSymbols, symbol_);
+          ambientModuleSymbols = GoSliceAppend(ambientModuleSymbols, symbol_, GoPointerValueOps<Symbol>());
         } else {
           Checker_mergeGlobalSymbol(receiver, symbol_);
         }
       }
     }
-    receiver!.patternAmbientModules = GoAppendSlice(receiver!.patternAmbientModules, file!.PatternAmbientModules);
-    augmentations = GoAppend(augmentations, file!.ModuleAugmentations);
+    receiver!.patternAmbientModules = GoSliceAppendSlice(receiver!.patternAmbientModules, file!.PatternAmbientModules, GoPointerValueOps<PatternAmbientModule>());
+    augmentations = GoSliceAppend(augmentations, file!.ModuleAugmentations, GoSliceValueOps<GoPtr<Node>>());
     if (Node_Symbol(file as GoPtr<Node>) !== undefined) {
       for (const [name, symbol_] of file!.GlobalExports) {
         if (!receiver!.globals.has(name)) {

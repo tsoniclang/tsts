@@ -1,5 +1,6 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
 import { GoAppend, GoAppendSlice, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint32 } from "../../go/sync/atomic.js";
@@ -335,12 +336,12 @@ export function EmitContext_EndVariableEnvironment(receiver: GoPtr<EmitContext>)
     const varDeclList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, scope.variables), NodeFlagsNone);
     const varStatement = NewVariableStatement(f, undefined, varDeclList);
     EmitContext_SetEmitFlags(receiver, varStatement, EFCustomPrologue);
-    statements = GoAppend(statements, varStatement);
+    statements = GoSliceAppend(statements, varStatement, GoPointerValueOps<Node>());
   }
   if (scope.initializationStatements.length > 0) {
-    statements = GoAppendSlice(statements, scope.initializationStatements);
+    statements = GoSliceAppendSlice(statements, scope.initializationStatements, GoPointerValueOps<Node>());
   }
-  return GoAppendSlice(statements, EmitContext_EndLexicalEnvironment(receiver));
+  return GoSliceAppendSlice(statements, EmitContext_EndLexicalEnvironment(receiver), GoPointerValueOps<Node>());
 }
 
 /**
@@ -421,7 +422,7 @@ export function EmitContext_AddVariableDeclaration(receiver: GoPtr<EmitContext>,
   const varDecl = NewVariableDeclaration(c.Factory!.__tsgoEmbedded0!, name, undefined, undefined, undefined);
   EmitContext_SetEmitFlags(receiver, varDecl, EFNoNestedSourceMaps);
   const scope = Stack_Peek(c.varScopeStack)!;
-  scope.variables = GoAppend(scope.variables, varDecl);
+  scope.variables = GoSliceAppend(scope.variables, varDecl, GoPointerValueOps<Node>());
   if ((scope.flags & environmentFlagsInParameters) !== 0) {
     scope.flags = scope.flags | environmentFlagsVariablesHoistedInParameters;
   }
@@ -441,7 +442,7 @@ export function EmitContext_AddHoistedFunctionDeclaration(receiver: GoPtr<EmitCo
   const c = receiver!;
   EmitContext_SetEmitFlags(receiver, node, EFCustomPrologue);
   const scope = Stack_Peek(c.varScopeStack)!;
-  scope.functions = GoAppend(scope.functions, node);
+  scope.functions = GoSliceAppend(scope.functions, node, GoPointerValueOps<Node>());
 }
 
 /**
@@ -483,7 +484,7 @@ export function EmitContext_EndLexicalEnvironment(receiver: GoPtr<EmitContext>):
     const varDeclList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, scope.variables), NodeFlagsLet);
     const varStatement = NewVariableStatement(f, undefined, varDeclList);
     EmitContext_SetEmitFlags(receiver, varStatement, EFCustomPrologue);
-    statements = GoAppend(statements, varStatement);
+    statements = GoSliceAppend(statements, varStatement, GoPointerValueOps<Node>());
   }
   return statements;
 }
@@ -563,7 +564,7 @@ export function EmitContext_AddLexicalDeclaration(receiver: GoPtr<EmitContext>, 
   const varDecl = NewVariableDeclaration(c.Factory!.__tsgoEmbedded0!, name, undefined, undefined, undefined);
   EmitContext_SetEmitFlags(receiver, varDecl, EFNoNestedSourceMaps);
   const scope = Stack_Peek(c.letScopeStack)!;
-  scope.variables = GoAppend(scope.variables, varDecl);
+  scope.variables = GoSliceAppend(scope.variables, varDecl, GoPointerValueOps<Node>());
 }
 
 /**
@@ -2052,7 +2053,7 @@ export function EmitContext_AddInitializationStatement(receiver: GoPtr<EmitConte
     throw new globalThis.Error("Tried to add an initialization statement without a surrounding variable scope");
   }
   EmitContext_AddEmitFlags(receiver, node, EFCustomPrologue);
-  scope!.initializationStatements = GoAppend(scope!.initializationStatements, node);
+  scope!.initializationStatements = GoSliceAppend(scope!.initializationStatements, node, GoPointerValueOps<Node>());
 }
 
 /**
@@ -2157,12 +2158,12 @@ export function EmitContext_VisitIterationBody(receiver: GoPtr<EmitContext>, bod
   if (statements.length > 0) {
     const f = c.Factory!.__tsgoEmbedded0!;
     if (IsBlock(updated)) {
-      statements = GoAppendSlice(statements, Node_Statements(updated)!);
+      statements = GoSliceAppendSlice(statements, Node_Statements(updated)!, GoPointerValueOps<Node>());
       const statementsList = NodeFactory_NewNodeList(f, statements as GoSlice<GoPtr<Node>>)!;
       statementsList.Loc = Node_StatementList(updated)!.Loc;
       return NodeFactory_UpdateBlock(f, AsBlock(updated)!, statementsList, AsBlock(updated)!.MultiLine) as GoPtr<Statement>;
     }
-    statements = GoAppend(statements, updated);
+    statements = GoSliceAppend(statements, updated, GoPointerValueOps<Node>());
     return NewBlock(f, NodeFactory_NewNodeList(f, statements as GoSlice<GoPtr<Node>>), true as bool) as GoPtr<Statement>;
   }
 

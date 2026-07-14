@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoAppend, GoNilMap, GoNilSlice, GoZeroPointer } from "../../go/compat.js";
 import { Node_IsTypeOnly, Node_Symbol, AsSourceFile } from "../ast/ast.js";
 import { Node_Name, NodeDefault_AsNode } from "../ast/spine.js";
@@ -578,7 +579,7 @@ export function referenceResolver_GetReferencedValueDeclarations(receiver: GoPtr
         case KindGetAccessor:
         case KindSetAccessor:
         case KindModuleDeclaration:
-          declarations = GoAppend(declarations, declaration);
+          declarations = GoSliceAppend(declarations, declaration, GoPointerValueOps<Node>());
           break;
       }
     }

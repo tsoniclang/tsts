@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import {
   NewArrayTypeNode,
@@ -313,7 +314,7 @@ export function Parser_parseUnionOrIntersectionType(receiver: GoPtr<Parser>, ope
   if (receiver!.token === operator || hasLeadingOperator) {
     let types: GoSlice<GoPtr<Node>> = [typeNode as GoPtr<Node>];
     while (Parser_parseOptional(receiver, operator)) {
-      types = GoAppend(types, Parser_parseFunctionOrConstructorTypeToError(receiver, isUnionType, parseConstituentType) as GoPtr<Node>);
+      types = GoSliceAppend(types, Parser_parseFunctionOrConstructorTypeToError(receiver, isUnionType, parseConstituentType) as GoPtr<Node>, GoPointerValueOps<Node>());
     }
     typeNode = Parser_finishNode(
       receiver,
@@ -1556,7 +1557,7 @@ export function Parser_parseTemplateTypeSpans(receiver: GoPtr<Parser>): GoPtr<No
   const pos = Parser_nodePos(receiver);
   const accumulate = (list: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> => {
     const span = Parser_parseTemplateTypeSpan(receiver);
-    const next = GoAppend(list, span);
+    const next = GoSliceAppend(list, span, GoPointerValueOps<Node>());
     if (AsTemplateLiteralTypeSpan(span)!.Literal!.Kind !== KindTemplateMiddle) {
       return next;
     }

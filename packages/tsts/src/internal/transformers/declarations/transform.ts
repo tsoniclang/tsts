@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import { GoAppend, GoAppendSlice, GoEqualStrict, GoNilMap, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoFunc, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../../go/compat.js";
 import type { CommentRange, FileReference, SourceFile } from "../../ast/ast.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { SourceFile_Text, SourceFile_FileName, AsSourceFile, SourceFile_IsJS, Node_Symbol, Node_Initializer, Node_Type, Node_Expression, Node_Parameters, Node_ParameterList, Node_Elements, Node_IsTypeOnly, Node_ModuleSpecifier, NodeFactory_NewModifier, Node_Text, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateExpressionWithTypeArguments, Node_Arguments, NodeFactory_UpdateFunctionDeclaration, Node_StatementList, NodeFactory_UpdateSourceFile, Node_PropertyName, Node_EagerJSDoc, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateVariableDeclarationList, NodeFactory_UpdateBindingElement } from "../../ast/ast.js";
@@ -665,8 +666,8 @@ export function DeclarationTransformer_visitSourceFile(receiver: GoPtr<Declarati
  */
 export function DeclarationTransformer_collectFileReferences(receiver: GoPtr<DeclarationTransformer>, sourceFile: GoPtr<SourceFile>): void {
   receiver!.rawReferencedFiles = GoAppendSlice(receiver!.rawReferencedFiles, Map(sourceFile!.ReferencedFiles, (ref: GoPtr<FileReference>) => ({ file: sourceFile, ref: ref } as ReferencedFilePair)));
-  receiver!.rawTypeReferenceDirectives = GoAppendSlice(receiver!.rawTypeReferenceDirectives, sourceFile!.TypeReferenceDirectives);
-  receiver!.rawLibReferenceDirectives = GoAppendSlice(receiver!.rawLibReferenceDirectives, sourceFile!.LibReferenceDirectives);
+  receiver!.rawTypeReferenceDirectives = GoSliceAppendSlice(receiver!.rawTypeReferenceDirectives, sourceFile!.TypeReferenceDirectives, GoPointerValueOps<FileReference>());
+  receiver!.rawLibReferenceDirectives = GoSliceAppendSlice(receiver!.rawLibReferenceDirectives, sourceFile!.LibReferenceDirectives, GoPointerValueOps<FileReference>());
 }
 
 /**
@@ -732,7 +733,7 @@ export function DeclarationTransformer_transformSourceFile(receiver: GoPtr<Decla
     }
     if (!receiver!.resultHasExternalModuleIndicator || (receiver!.needsScopeFixMarker && !receiver!.resultHasScopeMarker)) {
       const marker = createEmptyExports(factory!.__tsgoEmbedded0);
-      const newList = NodeFactory_NewNodeList(factory!.__tsgoEmbedded0, GoAppend(combinedStatements!.Nodes, marker));
+      const newList = NodeFactory_NewNodeList(factory!.__tsgoEmbedded0, GoSliceAppend(combinedStatements!.Nodes, marker, GoPointerValueOps<Node>()));
       newList!.Loc = combinedStatements!.Loc;
       combinedStatements = newList as GoPtr<StatementList>;
     }
@@ -859,13 +860,13 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
   let results: GoSlice<GoPtr<Node>> = [];
   for (const statement of statements!.Nodes) {
     if (!IsLateVisibilityPaintedStatement(statement)) {
-      results = GoAppend(results, statement);
+      results = GoSliceAppend(results, statement, GoPointerValueOps<Node>());
       continue;
     }
     const original = EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statement);
     const id = GetNodeId(original);
     if (!receiver!.lateStatementReplacementMap.has(id)) {
-      results = GoAppend(results, statement);
+      results = GoSliceAppend(results, statement, GoPointerValueOps<Node>());
       continue; // not replaced
     }
     const replacement = receiver!.lateStatementReplacementMap.get(id);
@@ -884,7 +885,7 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
         }
       }
       for (const elem of AsSyntaxList(replacement)!.Children) {
-        results = GoAppend(results, elem);
+        results = GoSliceAppend(results, elem, GoPointerValueOps<Node>());
       }
     } else {
       if (needsScopeMarker(replacement)) {
@@ -893,7 +894,7 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
       if (IsSourceFile(statement!.Parent) && IsExternalModuleIndicator(replacement)) {
         receiver!.resultHasExternalModuleIndicator = true;
       }
-      results = GoAppend(results, replacement);
+      results = GoSliceAppend(results, replacement, GoPointerValueOps<Node>());
     }
   }
   return NodeFactory_NewNodeList(factory!.__tsgoEmbedded0, results) as GoPtr<StatementList>;
@@ -995,12 +996,12 @@ export function DeclarationTransformer_getReferencedFiles(receiver: GoPtr<Declar
         UseCaseSensitiveFileNames: receiver!.host!.UseCaseSensitiveFileNames(),
       } as ComparePathsOptions,
     );
-    results = GoAppend(results, {
+    results = GoSliceAppend(results, {
       ...NewTextRange(-1, -1),
       FileName: fileName,
       ResolutionMode: ref!.ResolutionMode,
       Preserve: ref!.Preserve,
-    } as FileReference);
+    } as FileReference, GoPointerValueOps<FileReference>());
   }
   return results;
 }
@@ -1031,12 +1032,12 @@ export function DeclarationTransformer_getLibReferences(receiver: GoPtr<Declarat
     if (!ref!.Preserve) {
       continue;
     }
-    result = GoAppend(result, {
+    result = GoSliceAppend(result, {
       ...NewTextRange(-1, -1),
       FileName: ref!.FileName,
       ResolutionMode: ref!.ResolutionMode,
       Preserve: ref!.Preserve,
-    } as FileReference);
+    } as FileReference, GoPointerValueOps<FileReference>());
   }
   return result;
 }
@@ -1067,12 +1068,12 @@ export function DeclarationTransformer_getTypeReferences(receiver: GoPtr<Declara
     if (!ref!.Preserve) {
       continue;
     }
-    result = GoAppend(result, {
+    result = GoSliceAppend(result, {
       ...NewTextRange(-1, -1),
       FileName: ref!.FileName,
       ResolutionMode: ref!.ResolutionMode,
       Preserve: ref!.Preserve,
-    } as FileReference);
+    } as FileReference, GoPointerValueOps<FileReference>());
   }
   return result;
 }
@@ -1822,7 +1823,7 @@ export function DeclarationTransformer_transformCjsRequireVariableDeclaration(re
       if (!IsIdentifier(Node_Name(elem))) {
         continue; // nested destructuring, bail
       }
-      importSpecifiers = GoAppend(importSpecifiers, NewImportSpecifier(astFactory, false as bool, Node_PropertyName(elem), Node_Name(elem)));
+      importSpecifiers = GoSliceAppend(importSpecifiers, NewImportSpecifier(astFactory, false as bool, Node_PropertyName(elem), Node_Name(elem)), GoPointerValueOps<Node>());
     }
     return NewImportDeclaration(
       astFactory,
@@ -1875,10 +1876,10 @@ export function DeclarationTransformer_recreateBindingPattern(receiver: GoPtr<De
     }
     if (result!.Kind === KindSyntaxList) {
       for (const child of AsSyntaxList(result)!.Children) {
-        results = GoAppend(results, child);
+        results = GoSliceAppend(results, child, GoPointerValueOps<Node>());
       }
     } else {
-      results = GoAppend(results, result);
+      results = GoSliceAppend(results, result, GoPointerValueOps<Node>());
     }
   }
   if (results.length === 0) {
@@ -2181,7 +2182,7 @@ export function DeclarationTransformer_updateAccessorParamList(receiver: GoPtr<D
   if (!isPrivate) {
     const thisParam = GetThisParameter(input);
     if (thisParam !== undefined) {
-      newParams = GoAppend(newParams, DeclarationTransformer_ensureParameter(receiver, AsParameterDeclaration(thisParam)));
+      newParams = GoSliceAppend(newParams, DeclarationTransformer_ensureParameter(receiver, AsParameterDeclaration(thisParam)), GoPointerValueOps<Node>());
     }
   }
   if (IsSetAccessorDeclaration(input)) {
@@ -2200,7 +2201,7 @@ export function DeclarationTransformer_updateAccessorParamList(receiver: GoPtr<D
       const t = !isPrivate ? NewKeywordTypeNode(astFactory, KindAnyKeyword) : undefined;
       valueParam = NewParameterDeclaration(astFactory, undefined, undefined, NewIdentifier(astFactory, "value"), undefined, t, undefined);
     }
-    newParams = GoAppend(newParams, valueParam);
+    newParams = GoSliceAppend(newParams, valueParam, GoPointerValueOps<Node>());
   }
   return NodeFactory_NewNodeList(astFactory, newParams) as GoPtr<ParameterList>;
 }
@@ -3350,7 +3351,7 @@ export function DeclarationTransformer_transformModuleDeclaration(receiver: GoPt
     // 3. Some things are exported, some are not, and there's no marker - add an empty marker
     const lateStatements: GoPtr<StatementList> = (!IsGlobalScopeAugmentation(input) && !receiver!.resultHasScopeMarker && !hasScopeMarker(lateStatementsResult))
       ? (receiver!.needsScopeFixMarker
-          ? NodeFactory_NewNodeList(astFactory, GoAppend(lateStatementsResult!.Nodes, createEmptyExports(astFactory))) as GoPtr<StatementList>
+          ? NodeFactory_NewNodeList(astFactory, GoSliceAppend(lateStatementsResult!.Nodes, createEmptyExports(astFactory), GoPointerValueOps<Node>())) as GoPtr<StatementList>
           : NodeVisitor_VisitNodes(receiver!.exportStrippingVisitor, lateStatementsResult) as GoPtr<StatementList>)
       : lateStatementsResult;
     const moduleBlock = AsModuleBlock(inner)!;
@@ -3603,10 +3604,10 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
             DeclarationTransformer_ensureNoInitializer(receiver, param),
           );
           DeclarationTransformer_preserveJsDoc(receiver, updated, param);
-          return GoAppend(acc, updated);
+          return GoSliceAppend(acc, updated, GoPointerValueOps<Node>());
         } else {
           // Pattern - currently an error, but emit declarations for it somewhat correctly
-          return GoAppendSlice(acc, DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(paramDecl!.name)!, param));
+          return GoSliceAppendSlice(acc, DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(paramDecl!.name)!, param), GoPointerValueOps<Node>());
         }
       }, GoNilSlice());
       receiver!.state!.getSymbolAccessibilityDiagnostic = oldDiag;
@@ -3639,13 +3640,13 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
     const visitResult = NodeVisitor_VisitNodes(visitor, input!.Members);
     let memberNodes: GoSlice<GoPtr<Node>> = [];
     if (privateIdentifier !== undefined) {
-      memberNodes = GoAppend(memberNodes, privateIdentifier);
+      memberNodes = GoSliceAppend(memberNodes, privateIdentifier, GoPointerValueOps<Node>());
     }
-    memberNodes = GoAppendSlice(memberNodes, (lateIndexes ?? GoNilSlice()));
-    memberNodes = GoAppendSlice(memberNodes, parameterProperties);
-    memberNodes = GoAppendSlice(memberNodes, thisPropertyAssignments);
+    memberNodes = GoSliceAppendSlice(memberNodes, (lateIndexes ?? GoNilSlice()), GoPointerValueOps<Node>());
+    memberNodes = GoSliceAppendSlice(memberNodes, parameterProperties, GoPointerValueOps<Node>());
+    memberNodes = GoSliceAppendSlice(memberNodes, thisPropertyAssignments, GoPointerValueOps<Node>());
     if (visitResult !== undefined && visitResult!.Nodes.length > 0) {
-      memberNodes = GoAppendSlice(memberNodes, visitResult!.Nodes);
+      memberNodes = GoSliceAppendSlice(memberNodes, visitResult!.Nodes, GoPointerValueOps<Node>());
     }
     const members = NodeFactory_NewNodeList(astFactory, memberNodes) as GoPtr<ClassElementList>;
 
@@ -3686,7 +3687,7 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
         const retainedHeritageClauses = NodeVisitor_VisitNodes(visitor, input!.HeritageClauses);
         let heritageList: GoSlice<GoPtr<Node>> = [newHeritageClause];
         if (retainedHeritageClauses !== undefined && retainedHeritageClauses!.Nodes.length > 0) {
-          heritageList = GoAppendSlice(heritageList, retainedHeritageClauses!.Nodes);
+          heritageList = GoSliceAppendSlice(heritageList, retainedHeritageClauses!.Nodes, GoPointerValueOps<Node>());
         }
         const heritageClauses = NodeFactory_NewNodeList(astFactory, heritageList) as GoPtr<HeritageClauseList>;
         return NewSyntaxList(astFactory, [
@@ -3841,7 +3842,7 @@ export function DeclarationTransformer_visitThisPropertyAssignments(receiver: Go
       if (IsExpressionStatement(node!.Parent)) {
         DeclarationTransformer_preserveJsDoc(receiver, prop, node!.Parent);
       }
-      receiver!.thisPropertyAssignmentsCollected = GoAppend(receiver!.thisPropertyAssignmentsCollected, prop);
+      receiver!.thisPropertyAssignmentsCollected = GoSliceAppend(receiver!.thisPropertyAssignmentsCollected, prop, GoPointerValueOps<Node>());
       break;
     }
   }
@@ -3977,16 +3978,16 @@ export function DeclarationTransformer_walkBindingPattern(receiver: GoPtr<Declar
     }
     const elemName = Node_Name(elem);
     if (elemName !== undefined && IsBindingPattern(elemName)) {
-      return GoAppendSlice(elems, DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(elemName)!, param));
+      return GoSliceAppendSlice(elems, DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(elemName)!, param), GoPointerValueOps<Node>());
     }
-    return GoAppend(elems, NewPropertyDeclaration(
+    return GoSliceAppend(elems, NewPropertyDeclaration(
       astFactory,
       DeclarationTransformer_ensureModifiers(receiver, param),
       elemName,
       undefined,
       DeclarationTransformer_ensureType(receiver, elem, false),
       undefined,
-    ));
+    ), GoPointerValueOps<Node>());
   }, GoNilSlice());
 }
 
@@ -4066,9 +4067,9 @@ export function DeclarationTransformer_transformVariableStatement(receiver: GoPt
     let imports: GoSlice<GoPtr<Node>> = GoNilSlice();
     for (const n of inputNodes) {
       if (IsVariableDeclarationInitializedToRequire(n)) {
-        imports = GoAppend(imports, n);
+        imports = GoSliceAppend(imports, n, GoPointerValueOps<Node>());
       } else {
-        normalDeclarations = GoAppend(normalDeclarations, n);
+        normalDeclarations = GoSliceAppend(normalDeclarations, n, GoPointerValueOps<Node>());
       }
     }
     inputNodes = normalDeclarations;
@@ -4098,7 +4099,7 @@ export function DeclarationTransformer_transformVariableStatement(receiver: GoPt
   }
   const res = NodeFactory_UpdateVariableStatement(astFactory, input, modifiers, newDeclList as GoPtr<VariableDeclarationListNode>);
   if (extraImports.length > 0) {
-    return NewSyntaxList(astFactory, GoAppend(extraImports, res));
+    return NewSyntaxList(astFactory, GoSliceAppend(extraImports, res, GoPointerValueOps<Node>()));
   }
   return res;
 }
@@ -5237,7 +5238,7 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
         const namedExports = NewNamedExports(astFactory, NodeFactory_NewNodeList(astFactory, [
           NewExportSpecifier(astFactory, false as bool, exportName, NewIdentifier(astFactory, property)),
         ]) as GoPtr<ExportSpecifierList>);
-        statements = GoAppend(statements, NewExportDeclaration(astFactory, undefined, false as bool, namedExports, undefined, undefined));
+        statements = GoSliceAppend(statements, NewExportDeclaration(astFactory, undefined, false as bool, namedExports, undefined, undefined), GoPointerValueOps<Node>());
       }
 
       if (statements.length > 1 && !preexistingExpandoHasExport) {
@@ -5247,7 +5248,7 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
           MutableNode_SetModifiers(Node_AsMutable(decl), NodeFactory_NewModifierList(astFactory, CreateModifiersFromModifierFlags(modifierFlags, (kind) => NodeFactory_NewModifier(astFactory, kind))));
         }
       }
-      receiver!.expandoMembers!.set(hostId, GoAppendSlice(receiver!.expandoMembers!.get(hostId) ?? GoNilSlice(), statements));
+      receiver!.expandoMembers!.set(hostId, GoSliceAppendSlice(receiver!.expandoMembers!.get(hostId) ?? GoNilSlice(), statements, GoPointerValueOps<Node>()));
     } finally {
       cleanupDiagnosticContext!();
     }
@@ -5356,11 +5357,11 @@ export function DeclarationTransformer_transformExpandoHost(receiver: GoPtr<Decl
     let replacement: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (IsFunctionDeclaration(declaration)) {
       const [typeParameters, parameters, asteriskToken] = extractExpandoHostParams(declaration);
-      replacement = GoAppend(replacement, NodeFactory_UpdateFunctionDeclaration(astFactory, AsFunctionDeclaration(declaration)!, modifiers, asteriskToken, Node_Name(declaration), DeclarationTransformer_ensureTypeParams(receiver, declaration, typeParameters), DeclarationTransformer_updateParamList(receiver, declaration, parameters), DeclarationTransformer_ensureType(receiver, declaration, false), undefined, undefined));
+      replacement = GoSliceAppend(replacement, NodeFactory_UpdateFunctionDeclaration(astFactory, AsFunctionDeclaration(declaration)!, modifiers, asteriskToken, Node_Name(declaration), DeclarationTransformer_ensureTypeParams(receiver, declaration, typeParameters), DeclarationTransformer_updateParamList(receiver, declaration, parameters), DeclarationTransformer_ensureType(receiver, declaration, false), undefined, undefined), GoPointerValueOps<Node>());
     } else if (IsVariableDeclaration(declaration) && IsFunctionExpressionOrArrowFunction(Node_Initializer(declaration)!)) {
       const fn = Node_Initializer(declaration)!;
       const [typeParameters, parameters, asteriskToken] = extractExpandoHostParams(fn);
-      replacement = GoAppend(replacement, NewFunctionDeclaration(astFactory, modifiers, asteriskToken, NewIdentifier(astFactory, Node_Text(name)), DeclarationTransformer_ensureTypeParams(receiver, fn, typeParameters), DeclarationTransformer_updateParamList(receiver, fn, parameters), DeclarationTransformer_ensureType(receiver, fn, false), undefined, undefined));
+      replacement = GoSliceAppend(replacement, NewFunctionDeclaration(astFactory, modifiers, asteriskToken, NewIdentifier(astFactory, Node_Text(name)), DeclarationTransformer_ensureTypeParams(receiver, fn, typeParameters), DeclarationTransformer_updateParamList(receiver, fn, parameters), DeclarationTransformer_ensureType(receiver, fn, false), undefined, undefined), GoPointerValueOps<Node>());
     } else {
       receiver!.expandoHosts!.set(id, DeclarationTransformer_transformTopLevelDeclaration(receiver, declaration));
       return;
@@ -5373,7 +5374,7 @@ export function DeclarationTransformer_transformExpandoHost(receiver: GoPtr<Decl
         receiver!.resultHasExternalModuleIndicator = true;
       }
       receiver!.resultHasScopeMarker = true;
-      replacement = GoAppend(replacement, NewExportAssignment(astFactory, undefined, false as bool, undefined, name));
+      replacement = GoSliceAppend(replacement, NewExportAssignment(astFactory, undefined, false as bool, undefined, name), GoPointerValueOps<Node>());
     }
 
     // store host result to be added to the output when it's actually visited
@@ -5465,7 +5466,7 @@ export function DeclarationTransformer_createFullExpandoBlock(receiver: GoPtr<De
         name,
         NewModuleBlock(astFactory, NodeFactory_NewNodeList(astFactory, addOns)),
       );
-      const members = GoAppend(host, moduleDecl);
+      const members = GoSliceAppend(host, moduleDecl, GoPointerValueOps<Node>());
       return NewSyntaxList(astFactory, members);
     }
   }

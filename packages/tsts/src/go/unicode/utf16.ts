@@ -3,6 +3,7 @@
 
 import type { int } from "../scalars.js";
 import type { GoRune, GoSlice } from "../compat.js";
+import { GoNumberValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "../compat.js";
 import { GoAppend } from "../compat.js";
 
 // replacementChar is U+FFFD, the Unicode replacement character.
@@ -21,17 +22,17 @@ export function AppendRune(a: GoSlice<int>, r: GoRune): GoSlice<int> {
   if (r >= 0 && r < surrSelf) {
     if (r >= surr1 && r < surr3) {
       // Surrogate-half value: not a valid scalar; emit replacement.
-      return GoAppend(a, replacementChar);
+      return GoSliceAppend(a, replacementChar, GoNumberValueOps);
     }
-    return GoAppend(a, r);
+    return GoSliceAppend(a, r, GoNumberValueOps);
   }
   if (r >= surrSelf && r <= maxRune) {
     const v = r - surrSelf;
     const r1 = surr1 + ((v >> 10) & 0x3ff);
     const r2 = surr2 + (v & 0x3ff);
-    return GoAppend(a, r1, r2);
+    return GoSliceAppendSlice(a, GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral_482) => { GoSliceStore(__goSliceLiteral_482, 0, r1, GoNumberValueOps); GoSliceStore(__goSliceLiteral_482, 1, r2, GoNumberValueOps); }), GoNumberValueOps);
   }
-  return GoAppend(a, replacementChar);
+  return GoSliceAppend(a, replacementChar, GoNumberValueOps);
 }
 
 // Decode returns the Unicode code points represented by the UTF-16 encoding s.
@@ -44,17 +45,17 @@ export function Decode(s: GoSlice<int>): GoSlice<GoRune> {
     const r = s[i]!;
     if (r < surr1 || surr3 <= r) {
       // Normal rune (not a surrogate half).
-      result = GoAppend(result, r);
+      result = GoSliceAppend(result, r, GoNumberValueOps);
       i++;
     } else if (surr1 <= r && r < surr2 && i + 1 < n && surr2 <= s[i + 1]! && s[i + 1]! < surr3) {
       // Valid surrogate pair.
       const r2 = s[i + 1]!;
       const dec = (r - surr1) * 0x400 + (r2 - surr2) + surrSelf;
-      result = GoAppend(result, dec);
+      result = GoSliceAppend(result, dec, GoNumberValueOps);
       i += 2;
     } else {
       // Invalid surrogate sequence.
-      result = GoAppend(result, replacementChar);
+      result = GoSliceAppend(result, replacementChar, GoNumberValueOps);
       i++;
     }
   }

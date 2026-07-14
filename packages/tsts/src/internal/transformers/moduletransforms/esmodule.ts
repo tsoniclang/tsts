@@ -1,4 +1,5 @@
 import { GoAppend, GoAppendSlice, GoNilMap, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../../go/compat.js";
 import type { bool } from "../../../go/scalars.js";
 import type { HasFileName, Node, SourceFile } from "../../ast/ast.js";
 import {
@@ -260,15 +261,15 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
     const [prologue, rest0] = NodeFactory_SplitStandardPrologue(pf!, result!.Statements!.Nodes as GoSlice<GoPtr<Statement>>);
     const [custom, rest] = NodeFactory_SplitCustomPrologue(pf!, rest0);
     let statements: GoSlice<GoPtr<Node>> = [...prologue];
-    statements = GoAppendSlice(statements, custom);
+    statements = GoSliceAppendSlice(statements, custom, GoPointerValueOps<Node>());
     if (externalHelpersImportDeclaration !== undefined) {
-      statements = GoAppend(statements, NodeVisitor_VisitNode(visitor, externalHelpersImportDeclaration));
+      statements = GoSliceAppend(statements, NodeVisitor_VisitNode(visitor, externalHelpersImportDeclaration), GoPointerValueOps<Node>());
     }
     const importRequireStmts = ESModuleTransformer_importRequireStatements(receiver);
     if (importRequireStmts !== undefined) {
-      statements = GoAppendSlice(statements, importRequireStmts.statements);
+      statements = GoSliceAppendSlice(statements, importRequireStmts.statements, GoPointerValueOps<Node>());
     }
-    statements = GoAppendSlice(statements, rest);
+    statements = GoSliceAppendSlice(statements, rest, GoPointerValueOps<Node>());
     const statementList = NodeFactory_NewNodeList(af, statements);
     statementList!.Loc = result!.Statements!.Loc;
     result = AsSourceFile(NodeFactory_UpdateSourceFile(af, result, statementList, node!.EndOfFileToken));
@@ -278,7 +279,7 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
     CompilerOptions_GetEmitModuleKind(receiver!.compilerOptions) !== ModuleKindPreserve &&
     !Some(result!.Statements!.Nodes, IsExternalModuleIndicator)) {
     let statements2: GoSlice<GoPtr<Node>> = [...result!.Statements!.Nodes];
-    statements2 = GoAppend(statements2, createEmptyImports(pf!));
+    statements2 = GoSliceAppend(statements2, createEmptyImports(pf!), GoPointerValueOps<Node>());
     const statementList2 = NodeFactory_NewNodeList(af, statements2);
     statementList2!.Loc = result!.Statements!.Loc;
     result = AsSourceFile(NodeFactory_UpdateSourceFile(af, result, statementList2, node!.EndOfFileToken));
@@ -386,7 +387,7 @@ export function ESModuleTransformer_visitImportEqualsDeclaration(receiver: GoPtr
   EmitContext_AssignCommentAndSourceMapRanges(emitContext, varStatement, nodeAsNode);
 
   let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
-  statements = GoAppend(statements, varStatement as unknown as GoPtr<Statement>);
+  statements = GoSliceAppend(statements, varStatement as unknown as GoPtr<Statement>, GoPointerValueOps<Node>());
   statements = ESModuleTransformer_appendExportsOfImportEqualsDeclaration(receiver, statements, node);
   return SingleOrMany(statements, pf!);
 }
@@ -428,7 +429,7 @@ export function ESModuleTransformer_appendExportsOfImportEqualsDeclaration(recei
       undefined, /*moduleSpecifier*/
       undefined, /*attributes*/
     );
-    statements = GoAppend(statements, exportDecl as unknown as GoPtr<Statement>);
+    statements = GoSliceAppend(statements, exportDecl as unknown as GoPtr<Statement>, GoPointerValueOps<Node>());
   }
   return statements;
 }
@@ -669,9 +670,9 @@ export function ESModuleTransformer_visitImportOrRequireCall(receiver: GoPtr<ESM
   }
 
   let args: GoSlice<GoPtr<Node>> = GoNilSlice();
-  args = GoAppend(args, argument as unknown as GoPtr<Node>);
+  args = GoSliceAppend(args, argument as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
   const rest = NodeVisitor_VisitSlice(visitor, node!.Arguments!.Nodes.slice(1))[0];
-  args = GoAppendSlice(args, rest);
+  args = GoSliceAppendSlice(args, rest, GoPointerValueOps<Node>());
 
   const argumentList = NodeFactory_NewNodeList(af, args);
   argumentList!.Loc = node!.Arguments!.Loc;
@@ -733,7 +734,7 @@ export function ESModuleTransformer_createRequireCall(receiver: GoPtr<ESModuleTr
 
   let args: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (moduleName !== undefined) {
-    args = GoAppend(args, rewriteModuleSpecifier(emitContext, moduleName as unknown as GoPtr<Expression>, receiver!.compilerOptions) as unknown as GoPtr<Node>);
+    args = GoSliceAppend(args, rewriteModuleSpecifier(emitContext, moduleName as unknown as GoPtr<Expression>, receiver!.compilerOptions) as unknown as GoPtr<Node>, GoPointerValueOps<Node>());
   }
 
   if (CompilerOptions_GetEmitModuleKind(receiver!.compilerOptions) === ModuleKindPreserve) {

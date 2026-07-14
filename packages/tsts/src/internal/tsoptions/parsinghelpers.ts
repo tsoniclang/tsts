@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { GoAppend, GoAssertComparableInterface, GoStringKey, GoZeroInterface, type GoConstraint, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -132,7 +133,7 @@ export function ParseStringArray(value: GoInterface<unknown>): GoSlice<string> {
     let result: GoSlice<string> = [];
     for (const v of arr) {
       if (typeof v === "string") {
-        result = GoAppend(result, v);
+        result = GoSliceAppend(result, v, GoStringValueOps);
       }
     }
     return result;
@@ -253,7 +254,7 @@ export function parseProjectReference(json: GoInterface<unknown>): GoSlice<GoPtr
         reference.Circular = cv as bool;
       }
     }
-    result = GoAppend(result, reference);
+    result = GoSliceAppend(result, reference, GoPointerValueOps<ProjectReference>());
   }
   return result;
 }

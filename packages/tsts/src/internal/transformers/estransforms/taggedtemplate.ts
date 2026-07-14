@@ -1,6 +1,7 @@
 import type { bool } from "../../../go/scalars.js";
 import * as strings from "../../../go/strings.js";
 import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoPointerValueOps, GoSliceAppend } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_SubtreeFacts, Node_TemplateLiteralLikeData, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import { AsSourceFile, Node_Expression, NodeFactory_UpdateSourceFile } from "../../ast/ast.js";
@@ -154,9 +155,7 @@ export function taggedTemplateTransformer_visitSourceFile(receiver: GoPtr<tagged
 
   if (receiver!.taggedTemplateStringDeclarations.length > 0) {
     const visitedSourceFile = AsSourceFile(visited);
-    const statements = GoAppend(
-      visitedSourceFile!.Statements!.Nodes,
-      NewVariableStatement(
+    const statements = GoSliceAppend(visitedSourceFile!.Statements!.Nodes, NewVariableStatement(
         af,
         undefined,
         NewVariableDeclarationList(
@@ -164,8 +163,7 @@ export function taggedTemplateTransformer_visitSourceFile(receiver: GoPtr<tagged
           NodeFactory_NewNodeList(af, receiver!.taggedTemplateStringDeclarations),
           NodeFlagsNone,
         ),
-      ),
-    );
+      ), GoPointerValueOps<Node>());
     const stmtList = NodeFactory_NewNodeList(af, statements);
     stmtList!.Loc = node!.Statements!.Loc;
     visited = NodeFactory_UpdateSourceFile(af, visitedSourceFile, stmtList, visitedSourceFile!.EndOfFileToken);
@@ -264,17 +262,17 @@ export function taggedTemplateTransformer_processTaggedTemplateExpression(receiv
   let rawStrings: GoSlice<GoPtr<Node>> = GoNilSlice();
 
   if (IsNoSubstitutionTemplateLiteral(template)) {
-    cookedStrings = GoAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(template)));
-    rawStrings = GoAppend(rawStrings, getRawLiteral(pf, template));
+    cookedStrings = GoSliceAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(template)), GoPointerValueOps<Node>());
+    rawStrings = GoSliceAppend(rawStrings, getRawLiteral(pf, template), GoPointerValueOps<Node>());
   } else {
     const te = AsTemplateExpression(template);
-    cookedStrings = GoAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(te!.Head as unknown as GoPtr<Node>)));
-    rawStrings = GoAppend(rawStrings, getRawLiteral(pf, te!.Head as unknown as GoPtr<Node>));
+    cookedStrings = GoSliceAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(te!.Head as unknown as GoPtr<Node>)), GoPointerValueOps<Node>());
+    rawStrings = GoSliceAppend(rawStrings, getRawLiteral(pf, te!.Head as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
     for (const span of te!.TemplateSpans!.Nodes) {
       const ts: GoPtr<TemplateSpan> = AsTemplateSpan(span);
-      cookedStrings = GoAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)));
-      rawStrings = GoAppend(rawStrings, getRawLiteral(pf, ts!.Literal as unknown as GoPtr<Node>));
-      templateArguments = GoAppend(templateArguments, NodeVisitor_VisitNode(visitor, ts!.Expression as unknown as GoPtr<Node>));
+      cookedStrings = GoSliceAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)), GoPointerValueOps<Node>());
+      rawStrings = GoSliceAppend(rawStrings, getRawLiteral(pf, ts!.Literal as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
+      templateArguments = GoSliceAppend(templateArguments, NodeVisitor_VisitNode(visitor, ts!.Expression as unknown as GoPtr<Node>), GoPointerValueOps<Node>());
     }
   }
 
@@ -289,9 +287,7 @@ export function taggedTemplateTransformer_processTaggedTemplateExpression(receiv
   // variables from outside of the current compilation. In the future, we can revisit this behavior.
   if (IsExternalModule(receiver!.currentSourceFile)) {
     const tempVar = NodeFactory_NewUniqueName(pf, "templateObject");
-    receiver!.taggedTemplateStringDeclarations = GoAppend(receiver!.taggedTemplateStringDeclarations,
-      NewVariableDeclaration(af, tempVar as unknown as GoPtr<Node>, undefined, undefined, undefined),
-    );
+    receiver!.taggedTemplateStringDeclarations = GoSliceAppend(receiver!.taggedTemplateStringDeclarations, NewVariableDeclaration(af, tempVar as unknown as GoPtr<Node>, undefined, undefined, undefined), GoPointerValueOps<Node>());
     templateArguments[0] = NodeFactory_NewLogicalORExpression(
       pf,
       tempVar as unknown as GoPtr<Node>,
