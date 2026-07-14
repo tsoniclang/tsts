@@ -4876,33 +4876,20 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
  * 	}
  * }
  */
-const emptyResolutionCache: GoMap<Path, ModeAwareCache<unknown>> = new globalThis.Map<Path, ModeAwareCache<unknown>>();
-const emptyModeAwareCache: ModeAwareCache<unknown> = NewGoStructMap<ModeAwareCacheKey, unknown>(GoStructKey(
-  [GoStructField((value: ModeAwareCacheKey) => value.Name, GoStringKey), GoStructField((value: ModeAwareCacheKey) => value.Mode, GoNumberKey)],
-  ([Name, Mode]) => ({ Name, Mode }),
-));
-
-const goMapEntries = <K, V>(map: GoMap<K, V> | undefined, empty: GoMap<K, V>): Iterable<[K, V]> =>
-  map !== undefined ? map : empty;
-
-const resolutionCacheEntries = <T>(resolutionCache: GoMap<Path, ModeAwareCache<T>> | undefined): Iterable<[Path, ModeAwareCache<T>]> =>
-  goMapEntries(resolutionCache, emptyResolutionCache as GoMap<Path, ModeAwareCache<T>>);
-
-const modeAwareCacheEntries = <T>(modeAwareCache: ModeAwareCache<T> | undefined): Iterable<[ModeAwareCacheKey, T]> =>
-  goMapEntries(modeAwareCache, emptyModeAwareCache as ModeAwareCache<T>);
-
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::forEachResolution","kind":"func","status":"implemented","sigHash":"81ad1e76a1bc9f4c9a1cfccfabf6ff831d6183bed38698ac95e80a7c0786dead"}
  */
 export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache<T>>, callback: GoFunc<(resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void>, file: GoPtr<SourceFile>): void {
   if (file !== undefined) {
-    const resolutions = resolutionCache.get(SourceFile_Path(file));
-    for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
-      callback!(resolution, key.Name, key.Mode, SourceFile_Path(file));
+    const filePath = SourceFile_Path(file);
+    if (resolutionCache.has(filePath)) {
+      for (const [key, resolution] of resolutionCache.get(filePath)!) {
+        callback!(resolution, key.Name, key.Mode, filePath);
+      }
     }
   } else {
-    for (const [filePath, resolutions] of resolutionCacheEntries(resolutionCache)) {
-      for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
+    for (const [filePath, resolutions] of resolutionCache) {
+      for (const [key, resolution] of resolutions) {
         callback!(resolution, key.Name, key.Mode, filePath);
       }
     }

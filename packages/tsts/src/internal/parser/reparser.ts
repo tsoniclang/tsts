@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoZeroPointer } from "../../go/compat.js";
+import { GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../ast/spine.js";
 import { Node_Modifiers, Node_FunctionLikeData, Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
 import { NodeFlagsReparsed, NodeFlagsHasJSDoc, NodeFlagsReparserTransformedLiteral } from "../ast/generated/flags.js";
@@ -1327,7 +1327,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
     case KindJSDocTemplateTag: {
       const fun = getFunctionLikeHost(parent);
       if (fun !== undefined) {
-        if (Node_TypeParameters(fun) === undefined && Node_FunctionLikeData(fun)!.FullSignature === undefined) {
+        if (GoSliceIsNil(Node_TypeParameters(fun)) && Node_FunctionLikeData(fun)!.FullSignature === undefined) {
           Node_FunctionLikeData(fun)!.TypeParameters = Parser_gatherTypeParameters(receiver, jsDoc, false as bool);
           Parser_finishMutatedNode(receiver, fun);
         }

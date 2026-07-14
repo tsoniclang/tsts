@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBigIntKey, GoEqualStrict, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoBigIntKey, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, Node_End, NodeList_Pos } from "../ast/spine.js";
 import { Node_Arguments, Node_AsFlowReduceLabelData, Node_AsFlowSwitchClauseData, Node_Elements, Node_Expression, Node_Initializer, Node_Parameters, Node_PropertyNameOrName, Node_StatementList, Node_Text, Node_Type } from "../ast/ast.js";
@@ -2666,7 +2666,7 @@ export function Checker_narrowTypeBySwitchOnDiscriminant(receiver: GoPtr<Checker
  */
 export function Checker_narrowTypeBySwitchOnTypeOf(receiver: GoPtr<Checker>, t: GoPtr<Type>, data: GoPtr<FlowSwitchClauseData>): GoPtr<Type> {
   const witnesses = Checker_getSwitchClauseTypeOfWitnesses(receiver, data!.SwitchStatement);
-  if (witnesses === undefined) {
+  if (GoSliceIsNil(witnesses)) {
     return t;
   }
   const switchStmt = AsSwitchStatement(data!.SwitchStatement);
@@ -3103,7 +3103,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
       // back to the loop junction. We track these on the flow loop stack.
       receiver!.flowLoopStack.push({ key, types: antecedentTypes });
       const saveFlowTypeCache = receiver!.flowTypeCache;
-      receiver!.flowTypeCache = undefined as never;
+      receiver!.flowTypeCache = GoNilMap<GoPtr<Node>, GoPtr<Type>>();
       flowType = Checker_getTypeAtFlowNode(receiver, f, list!.Flow);
       receiver!.flowTypeCache = saveFlowTypeCache;
       receiver!.flowLoopStack.pop();
@@ -4389,7 +4389,7 @@ export function Checker_isExhaustiveSwitchStatement(receiver: GoPtr<Checker>, no
 export function Checker_computeExhaustiveSwitchStatement(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
   if (IsTypeOfExpression(Node_Expression(node))) {
     const witnesses = Checker_getSwitchClauseTypeOfWitnesses(receiver, node);
-    if (witnesses === undefined) {
+    if (GoSliceIsNil(witnesses)) {
       return false;
     }
     const operandConstraint = Checker_getBaseConstraintOrType(receiver, Checker_checkExpressionCached(receiver, Node_Expression(Node_Expression(node))));
@@ -4475,7 +4475,7 @@ export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>,
         }
       }
     }
-    links!.v.witnesses = valid ? witnesses : (undefined as never);
+    links!.v.witnesses = valid ? witnesses : GoNilSlice<string>();
     links!.v.witnessesComputed = true;
   }
   return links!.v.witnesses;

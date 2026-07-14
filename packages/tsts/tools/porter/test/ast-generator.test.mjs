@@ -487,7 +487,7 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   assert.match(data, /class ExpressionStatementNodeData implements nodeData \{[\s\S]*?VisitEachChild\(v: GoPtr<NodeVisitor>\): GoPtr<Node> \{ return ExpressionStatement_VisitEachChild\(this, v\); \}/);
   // A generated class gives the concrete Go type a static, non-enumerable
   // method set without prototype mutation or an extra interface-box object.
-  assert.match(data, /import \{ GoNilSlice \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
+  assert.match(data, /import \{ GoNilMap, GoNilSlice \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
   assert.doesNotMatch(data, /goReceiverKey/);
   assert.match(data, /export interface Identifier extends PrimaryExpressionBase, FlowNodeBase, nodeData \{/);
   assert.match(data, /__tsgoGoReceiver\(\): GoPtr<Identifier> \{ return this; \}/);
@@ -496,6 +496,7 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   assert.match(data, /interface IdentifierNodeData extends Identifier \{\}/);
   assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return receiver!;\s*\}/);
   assert.match(data, /export function createIdentifierData\(\): Identifier \{\s*return new IdentifierNodeData\(\);\s*\}/);
+  assert.match(data, /export function createForStatementData\(\): ForStatement \{\s*const data = new ForStatementNodeData\(\);\s*data\.Locals = GoNilMap\(\);\s*return data;\s*\}/);
   assert.doesNotMatch(data, /Object\.(?:create|setPrototypeOf)|ThisType</);
 });
 
@@ -528,7 +529,7 @@ test("ast-generator: raw slices use their intrinsic carrier", () => {
   assert.equal(astMemberTsType(textField), "GoSlice<string>");
 
   const data = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-slices").get("internal/ast/generated/data.ts");
-  assert.match(data, /import \{ GoNilSlice \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
+  assert.match(data, /import \{ GoNilMap, GoNilSlice \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
   assert.match(data, /let nodes: GoSlice<GoPtr<Node>> = GoNilSlice\(\);/);
   assert.doesNotMatch(data, /let nodes: GoSlice<GoPtr<Node>> = undefined;/);
   assert.doesNotMatch(data, /AsSyntaxList\(visited\)!\.Children \?\? \[\]/);

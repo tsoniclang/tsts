@@ -5418,6 +5418,7 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   data.text = text;
   data.Statements = statements;
   data.EndOfFileToken = endOfFileToken;
+  data.Locals = GoNilMap();
   data.diagnostics = GoNilSlice();
   data.jsDiagnostics = GoNilSlice();
   data.jsdocDiagnostics = GoNilSlice();

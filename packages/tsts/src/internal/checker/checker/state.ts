@@ -2560,13 +2560,13 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
   checker.markerSubTypeForCheck = Checker_newTypeParameter(checker, undefined);
   Type_AsTypeParameter(checker.markerSubTypeForCheck)!.constraint = checker.markerSuperTypeForCheck;
   checker.noTypePredicate = { kind: TypePredicateKindIdentifier, parameterIndex: 0 as int, parameterName: "<<unresolved>>", t: checker.anyType };
-  checker.anySignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, [], undefined, [], checker.anyType, undefined, 0);
-  checker.unknownSignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, [], undefined, [], checker.errorType, undefined, 0);
-  checker.resolvingSignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, [], undefined, [], checker.anyType, undefined, 0);
-  checker.silentNeverSignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, [], undefined, [], checker.silentNeverType, undefined, 0);
+  checker.anySignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, GoNilSlice(), undefined, GoNilSlice(), checker.anyType, undefined, 0);
+  checker.unknownSignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, GoNilSlice(), undefined, GoNilSlice(), checker.errorType, undefined, 0);
+  checker.resolvingSignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, GoNilSlice(), undefined, GoNilSlice(), checker.anyType, undefined, 0);
+  checker.silentNeverSignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, GoNilSlice(), undefined, GoNilSlice(), checker.silentNeverType, undefined, 0);
   checker.cachedArgumentsReferenced = new globalThis.Map();
-  checker.enumNumberIndexInfo = { keyType: checker.numberType, valueType: checker.stringType, isReadonly: true, declaration: undefined, indexSymbol: undefined, components: [] };
-  checker.anyBaseTypeIndexInfo = { keyType: checker.stringType, valueType: checker.anyType, isReadonly: false, declaration: undefined, indexSymbol: undefined, components: [] };
+  checker.enumNumberIndexInfo = { keyType: checker.numberType, valueType: checker.stringType, isReadonly: true, declaration: undefined, indexSymbol: undefined, components: GoNilSlice() };
+  checker.anyBaseTypeIndexInfo = { keyType: checker.stringType, valueType: checker.anyType, isReadonly: false, declaration: undefined, indexSymbol: undefined, components: GoNilSlice() };
   checker.patternAmbientModules = [];
   checker.patternAmbientModuleAugmentations = new globalThis.Map();
   checker.emptyStringType = Checker_getStringLiteralType(checker, "");
@@ -2792,7 +2792,7 @@ function _getPrimitiveTypeAliasSuggestionsMap(): GoMap<string, GoPtr<Symbol>> {
       { primitive: "symbol", builtin: "Symbol" },
     ];
     for (const e of pairs) {
-      const sym: Symbol = { Flags: (SymbolFlagsTypeAlias | SymbolFlagsTransient) as unknown as SymbolFlags, CheckFlags: 0, Name: e.primitive, Declarations: [], ValueDeclaration: undefined, Members: GoNilMap<string, GoPtr<Symbol>>(), Exports: GoNilMap<string, GoPtr<Symbol>>(), id: new Uint64(), Parent: undefined, ExportSymbol: undefined };
+      const sym: Symbol = { Flags: (SymbolFlagsTypeAlias | SymbolFlagsTransient) as unknown as SymbolFlags, CheckFlags: 0, Name: e.primitive, Declarations: GoNilSlice(), ValueDeclaration: undefined, Members: GoNilMap<string, GoPtr<Symbol>>(), Exports: GoNilMap<string, GoPtr<Symbol>>(), id: new Uint64(), Parent: undefined, ExportSymbol: undefined };
       result.set(e.builtin, sym);
     }
     _primitiveTypeAliasSuggestionsCache = result;

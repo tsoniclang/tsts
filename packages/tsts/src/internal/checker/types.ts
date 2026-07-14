@@ -1519,7 +1519,7 @@ export function TypeAlias_Symbol(receiver: GoPtr<TypeAlias>): GoPtr<Symbol_62f2f
  */
 export function TypeAlias_TypeArguments(receiver: GoPtr<TypeAlias>): GoSlice<GoPtr<Type>> {
   if (receiver === undefined) {
-    return [];
+    return GoNilSlice<GoPtr<Type>>();
   }
   return receiver.typeArguments;
 }

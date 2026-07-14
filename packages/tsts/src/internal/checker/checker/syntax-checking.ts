@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoEqualStrict, GoNilMap, GoNilSlice, GoZeroPointer } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoZeroInterface, GoZeroPointer } from "../../../go/compat.js";
 import { recordExtensionCheckedIterationMapping, recordExtensionCheckedOperatorKindMapping, recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
 import type { Context } from "../../../go/context.js";
 import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
@@ -345,7 +345,7 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: GoInterfa
   if (Checker_isCanceled(receiver)) {
     receiver!.wasCanceled = true as bool;
   }
-  receiver!.ctx = undefined as unknown as Context;
+  receiver!.ctx = GoZeroInterface<Context>();
 }
 
 /**
@@ -3724,7 +3724,7 @@ export function Checker_findContextualNode(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_hasContextSensitiveReturnExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  if (Node_TypeParameters(node) !== undefined || Node_Type(node) !== undefined) {
+  if (!GoSliceIsNil(Node_TypeParameters(node)) || Node_Type(node) !== undefined) {
     return false;
   }
   const body = Node_Body(node);

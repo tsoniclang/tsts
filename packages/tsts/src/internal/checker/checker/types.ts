@@ -3063,7 +3063,7 @@ export function Checker_checkFunctionExpressionOrObjectLiteralMethod(receiver: G
           return cached;
         }
         const returnType = Checker_getReturnTypeFromBody(receiver, node, checkMode);
-        const returnOnlySignature = Checker_newSignature(receiver, SignatureFlagsIsNonInferrable, undefined, [], undefined, [], returnType, undefined, 0);
+        const returnOnlySignature = Checker_newSignature(receiver, SignatureFlagsIsNonInferrable, undefined, GoNilSlice(), undefined, GoNilSlice(), returnType, undefined, 0);
         const returnOnlyType = Checker_newAnonymousType(receiver, Node_Symbol(node), GoNilMap<string, GoPtr<Symbol>>(), [returnOnlySignature], GoNilSlice<GoPtr<Signature>>(), GoNilSlice<GoPtr<IndexInfo>>());
         returnOnlyType!.objectFlags |= ObjectFlagsNonInferrableType;
         receiver!.contextFreeTypes.set(node, returnOnlyType);
@@ -3176,7 +3176,7 @@ export function Checker_contextuallyCheckFunctionExpressionOrObjectLiteralMethod
         } else {
           Checker_assignNonContextualParameterTypes(receiver, signature);
         }
-      } else if (contextualSignature !== undefined && Node_TypeParameters(node) === undefined && contextualSignature!.parameters.length > (Node_Parameters(node)?.length ?? 0)) {
+      } else if (contextualSignature !== undefined && GoSliceIsNil(Node_TypeParameters(node)) && contextualSignature!.parameters.length > (Node_Parameters(node)?.length ?? 0)) {
         const inferenceContext = Checker_getInferenceContext(receiver, node);
         if ((checkMode & CheckModeInferential) !== 0) {
           Checker_inferFromAnnotatedParametersAndReturn(receiver, signature, contextualSignature, inferenceContext);
@@ -4368,7 +4368,7 @@ export function Checker_getSpreadType(receiver: GoPtr<Checker>, left: GoPtr<Type
   const spreadIndexInfos = core.SameMap(indexInfos, (info: GoPtr<IndexInfo>): GoPtr<IndexInfo> => {
     return Checker_getIndexInfoWithReadonly(receiver, info, readonly);
   }, GoEqualStrict<GoPtr<IndexInfo>>);
-  const spread = Checker_newAnonymousType(receiver, symbol_, members, [], [], spreadIndexInfos);
+  const spread = Checker_newAnonymousType(receiver, symbol_, members, GoNilSlice(), GoNilSlice(), spreadIndexInfos);
   spread!.objectFlags |= (ObjectFlagsObjectLiteral | ObjectFlagsContainsObjectOrArrayLiteral | ObjectFlagsContainsSpread | objectFlags) as ObjectFlags;
   return spread;
 }
@@ -4499,7 +4499,7 @@ export function Checker_tryMergeUnionOfObjectTypeAndEmptyObject(receiver: GoPtr<
       members.set(prop!.Name, result);
     }
   }
-  const spread = Checker_newAnonymousType(receiver, firstType!.symbol, members, [], [], Checker_getIndexInfosOfType(receiver, firstType));
+  const spread = Checker_newAnonymousType(receiver, firstType!.symbol, members, GoNilSlice(), GoNilSlice(), Checker_getIndexInfosOfType(receiver, firstType));
   spread!.objectFlags |= (ObjectFlagsObjectLiteral | ObjectFlagsContainsObjectOrArrayLiteral) as ObjectFlags;
   return spread;
 }
@@ -4801,7 +4801,7 @@ export function Checker_padObjectLiteralType(receiver: GoPtr<Checker>, t: GoPtr<
     LinkStore_Get(receiver!.valueSymbolLinks, symbol, zeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = Checker_getTypeFromBindingElement(receiver, e, false, false);
     members.set(symbol!.Name, symbol);
   }
-  const result = Checker_newAnonymousType(receiver, t!.symbol, members, [], [], Checker_getIndexInfosOfType(receiver, t));
+  const result = Checker_newAnonymousType(receiver, t!.symbol, members, GoNilSlice(), GoNilSlice(), Checker_getIndexInfosOfType(receiver, t));
   result!.objectFlags = t!.objectFlags;
   return result;
 }
@@ -5034,7 +5034,7 @@ export function Checker_getDeclaredTypeOfClassOrInterface(receiver: GoPtr<Checke
     links!.declaredType = t;
     const outerTypeParameters = Checker_getOuterTypeParametersOfClassOrInterface(receiver, symbol_);
     const typeParameters = Checker_appendLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver, outerTypeParameters, symbol_);
-    if (typeParameters.length !== 0 || kind === ObjectFlagsClass || !Checker_isThislessInterface(receiver, symbol_)) {
+    if (!GoSliceIsNil(typeParameters) || kind === ObjectFlagsClass || !Checker_isThislessInterface(receiver, symbol_)) {
       t!.objectFlags |= ObjectFlagsReference;
       const d = Type_AsInterfaceType(t)!;
       d.thisType = Checker_newTypeParameter(receiver, symbol_);
@@ -5483,7 +5483,7 @@ export function Checker_getTypeFromObjectBindingPattern(receiver: GoPtr<Checker>
   for (const e of Node_Elements(pattern) ?? []) {
     const name = Node_PropertyNameOrName(e);
     if (hasDotDotDotToken(e)) {
-      stringIndexInfo = Checker_newIndexInfo(receiver, receiver!.stringType, receiver!.anyType, false, undefined, []);
+      stringIndexInfo = Checker_newIndexInfo(receiver, receiver!.stringType, receiver!.anyType, false, undefined, GoNilSlice());
       continue;
     }
     const exprType = Checker_getLiteralTypeFromPropertyName(receiver, name);
@@ -5497,8 +5497,8 @@ export function Checker_getTypeFromObjectBindingPattern(receiver: GoPtr<Checker>
     LinkStore_Get(receiver!.valueSymbolLinks, symbol, zeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = Checker_getTypeFromBindingElement(receiver, e, includePatternInType, reportErrors);
     members.set(symbol!.Name, symbol);
   }
-  const indexInfos = stringIndexInfo !== undefined ? [stringIndexInfo] : [];
-  const result = Checker_newAnonymousType(receiver, undefined, members, [], [], indexInfos);
+  const indexInfos = stringIndexInfo !== undefined ? [stringIndexInfo] : GoNilSlice<GoPtr<IndexInfo>>();
+  const result = Checker_newAnonymousType(receiver, undefined, members, GoNilSlice(), GoNilSlice(), indexInfos);
   result!.objectFlags = (result!.objectFlags | objectFlags) as ObjectFlags;
   if (includePatternInType) {
     receiver!.patternForType.set(result, pattern);
@@ -5977,7 +5977,7 @@ export function Checker_getWidenedTypeWithContext(receiver: GoPtr<Checker>, t: G
  */
 export function Checker_getWidenedTypeOfObjectLiteral(receiver: GoPtr<Checker>, t: GoPtr<Type>, context: GoPtr<WideningContext>): GoPtr<Type> {
   if (context !== undefined) {
-    const cached = context!.widenedTypes?.get(t);
+    const cached = context!.widenedTypes.get(t);
     if (cached !== undefined) {
       return cached;
     }
@@ -6028,7 +6028,7 @@ export function Checker_getWidenedTypeOfObjectLiteral(receiver: GoPtr<Checker>, 
  * }
  */
 export function WideningContext_getChildContext(receiver: GoPtr<WideningContext>, propertyName: string): GoPtr<WideningContext> {
-  const cached = receiver!.childContexts?.get(propertyName);
+  const cached = receiver!.childContexts.get(propertyName);
   if (cached !== undefined) {
     return cached;
   }
@@ -6406,9 +6406,9 @@ export function Checker_getPropertiesOfType(receiver: GoPtr<Checker>, t: GoPtr<T
  */
 export function Checker_getPropertiesOfObjectType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Symbol>> {
   if ((t!.flags & TypeFlagsObject) !== 0) {
-    return StructuredType_Properties(Checker_resolveStructuredTypeMembers(receiver, t)) ?? [];
+    return StructuredType_Properties(Checker_resolveStructuredTypeMembers(receiver, t));
   }
-  return [];
+  return GoNilSlice<GoPtr<Symbol>>();
 }
 
 /**
@@ -6510,7 +6510,7 @@ export function Checker_getPropertiesOfUnionOrIntersectionType(receiver: GoPtr<C
  */
 export function Checker_getBaseTypes(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Type>> {
   if ((t!.objectFlags & (ObjectFlagsClassOrInterface | ObjectFlagsReference)) === 0) {
-    return [];
+    return GoNilSlice<GoPtr<Type>>();
   }
   const data = Type_AsInterfaceType(t)!;
   if (!data.baseTypesResolved) {
@@ -9802,7 +9802,7 @@ export function Checker_getTypeFromConditionalTypeNode(receiver: GoPtr<Checker>,
       alias,
     };
     links!.resolvedType = Checker_getConditionalType(receiver, root, undefined, false, undefined);
-    if (outerTypeParameters.length !== 0) {
+    if (!GoSliceIsNil(outerTypeParameters)) {
       root.instantiations = NewGoStructMap(GoStructKey(
         [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
         ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
@@ -12991,9 +12991,9 @@ export function Checker_IsEmptyAnonymousObjectType(receiver: GoPtr<Checker>, t: 
  */
 export function Checker_isEmptyResolvedType(receiver: GoPtr<Checker>, t: GoPtr<StructuredType>): bool {
   return (t !== Type_AsStructuredType(receiver!.anyFunctionType) &&
-    (t!.properties?.length ?? 0) === 0 &&
-    (t!.signatures?.length ?? 0) === 0 &&
-    (t!.indexInfos?.length ?? 0) === 0) as bool;
+    t!.properties.length === 0 &&
+    t!.signatures.length === 0 &&
+    t!.indexInfos.length === 0) as bool;
 }
 
 /**

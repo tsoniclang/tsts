@@ -1,5 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoMapIsNil, GoNilMap, GoValueRef, GoZeroMap } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoSliceIsNil, GoValueRef, GoZeroMap } from "../../go/compat.js";
 import { CopyOnWriteMap_EnterScope, CopyOnWriteSet_EnterScope } from "../collections/cow.js";
 import type { Node } from "../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
@@ -463,9 +463,9 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
         }
       });
     }
-    if ((receiver!.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0 && typeParameters !== undefined && Some(typeParameters, (p: GoPtr<Type>) => p !== undefined)) {
+    if ((receiver!.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0 && !GoSliceIsNil(typeParameters) && Some(typeParameters, (p: GoPtr<Type>) => p !== undefined)) {
       cleanupTypeParams = pushFakeScope("typeParams", (add: (name: string, symbol_: GoPtr<Symbol>) => void): void => {
-        if (typeParameters === undefined) {
+        if (GoSliceIsNil(typeParameters)) {
           return;
         }
         for (const typeParam of typeParameters) {

@@ -14,7 +14,7 @@ export function emitData(schema) {
   const lines = [];
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   lines.push(`import type { ${dataCompatTypes(schema).join(", ")} } from "../../../go/compat.js";`);
-  lines.push(`import { GoNilSlice } from "../../../go/compat.js";`);
+  lines.push(`import { GoNilMap, GoNilSlice } from "../../../go/compat.js";`);
   lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { NodeFlags } from "./flags.js";`);
@@ -538,7 +538,13 @@ function emitAdapter(schema, node, lines) {
   lines.push(`}`);
   lines.push("");
   lines.push(`export function create${node}Data(): ${node} {`);
-  lines.push(`  return new ${adapter}();`);
+  if (schema.baseChainOf(node).includes("LocalsContainerBase")) {
+    lines.push(`  const data = new ${adapter}();`);
+    lines.push(`  data.Locals = GoNilMap();`);
+    lines.push(`  return data;`);
+  } else {
+    lines.push(`  return new ${adapter}();`);
+  }
   lines.push(`}`);
   lines.push("");
 }

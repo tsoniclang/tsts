@@ -1,6 +1,6 @@
 import type { bool, int, short, ulong } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoMapIsNil, GoZeroPointer } from "../../go/compat.js";
+import { GoEqualStrict, GoMapIsNil, GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Pool } from "../../go/sync.js";
@@ -691,8 +691,8 @@ export function GetExports(symbol_: GoPtr<Symbol>): SymbolTable {
  */
 export function GetLocals(container: GoPtr<Node>): SymbolTable {
   const data = Node_LocalsContainerData(container);
-  const holder = data as unknown as { Locals?: SymbolTable };
-  if (holder.Locals === undefined) {
+  const holder = data as unknown as { Locals: SymbolTable };
+  if (GoMapIsNil(holder.Locals)) {
     holder.Locals = new Map();
   }
   return holder.Locals;
@@ -10492,7 +10492,7 @@ export function IsImplicitlyExportedJSDocDeclaration(node: GoPtr<Node>): bool {
  */
 export function HasContextSensitiveParameters(node: GoPtr<Node>): bool {
   // Functions with type parameters are not context sensitive.
-  if (Node_TypeParameters(node) === undefined) {
+  if (GoSliceIsNil(Node_TypeParameters(node))) {
     // Functions with any parameters that lack type annotations are context sensitive.
     if (Some(Node_Parameters(node), (p: GoPtr<Node>): bool => {
       return (Node_Type(p) === undefined) as bool;

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoStringKey, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoMapLookup, GoNilSlice, GoStringKey, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { SourceFile_Path } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
@@ -115,16 +115,16 @@ export function projectReferenceFileMapper_getParseFileRedirect(receiver: GoPtr<
  */
 export function projectReferenceFileMapper_getResolvedProjectReferences(receiver: GoPtr<projectReferenceFileMapper>): GoSlice<GoPtr<ParsedCommandLine>> {
   if (receiver!.opts.Config!.ConfigFile === undefined) {
-    return [];
+    return GoNilSlice();
   }
   const refs = SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile);
-  const ok = receiver!.referencesInConfigFile?.has(refs) ?? false;
-  let result: GoSlice<GoPtr<ParsedCommandLine>> = [];
+  const ok = receiver!.referencesInConfigFile.has(refs);
+  let result = GoNilSlice<GoPtr<ParsedCommandLine>>();
   if (ok) {
     const refPaths = receiver!.referencesInConfigFile.get(refs)!;
     result = [];
     for (const refPath of refPaths) {
-      const refConfig = receiver!.configToProjectReference?.get(refPath);
+      const refConfig = receiver!.configToProjectReference.get(refPath);
       result.push(refConfig);
     }
   }
@@ -140,7 +140,7 @@ export function projectReferenceFileMapper_getResolvedProjectReferences(receiver
  * }
  */
 export function projectReferenceFileMapper_getProjectReferenceFromSource(receiver: GoPtr<projectReferenceFileMapper>, path: Path): GoPtr<SourceOutputAndProjectReference> {
-  return receiver!.sourceToProjectReference?.get(path);
+  return receiver!.sourceToProjectReference.get(path);
 }
 
 /**
@@ -152,7 +152,7 @@ export function projectReferenceFileMapper_getProjectReferenceFromSource(receive
  * }
  */
 export function projectReferenceFileMapper_getProjectReferenceFromOutputDts(receiver: GoPtr<projectReferenceFileMapper>, path: Path): GoPtr<SourceOutputAndProjectReference> {
-  return receiver!.outputDtsToProjectReference?.get(path);
+  return receiver!.outputDtsToProjectReference.get(path);
 }
 
 /**
@@ -254,8 +254,8 @@ export function projectReferenceFileMapper_getRedirectForResolution(receiver: Go
  * }
  */
 export function projectReferenceFileMapper_getResolvedReferenceFor(receiver: GoPtr<projectReferenceFileMapper>, path: Path): [GoPtr<ParsedCommandLine>, bool] {
-  const config = receiver!.configToProjectReference?.get(path);
-  const ok = receiver!.configToProjectReference?.has(path) ?? false;
+  const config = receiver!.configToProjectReference.get(path);
+  const ok = receiver!.configToProjectReference.has(path);
   return [config, ok];
 }
 
@@ -279,9 +279,9 @@ export function projectReferenceFileMapper_rangeResolvedProjectReference(receive
   if (receiver!.opts.Config!.ConfigFile === undefined) {
     return false;
   }
-  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile?.size ?? 0, GoStringKey);
+  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile.size, GoStringKey);
   Set_Add(seenRef, SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile), GoStringKey);
-  const refs = receiver!.referencesInConfigFile?.get(SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile)) ?? [];
+  const [refs] = GoMapLookup(receiver!.referencesInConfigFile, SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile), GoNilSlice<Path>);
   return projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, refs, f, receiver!.opts.Config, seenRef);
 }
 
@@ -316,11 +316,12 @@ export function projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver
     if (!Set_AddIfAbsent(seenRef as GoPtr<Set<Path>>, path, GoStringKey)) {
       continue;
     }
-    const config = receiver!.configToProjectReference?.get(path);
+    const config = receiver!.configToProjectReference.get(path);
     if (!f!(path, config, parent, index)) {
       return false;
     }
-    if (!projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, receiver!.referencesInConfigFile?.get(path) ?? [], f, config, seenRef)) {
+    const [childReferences] = GoMapLookup(receiver!.referencesInConfigFile, path, GoNilSlice<Path>);
+    if (!projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, childReferences, f, config, seenRef)) {
       return false;
     }
   }
@@ -348,9 +349,9 @@ export function projectReferenceFileMapper_rangeResolvedProjectReferenceInChildC
   if (childConfig === undefined || childConfig.ConfigFile === undefined) {
     return false;
   }
-  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile?.size ?? 0, GoStringKey);
+  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile.size, GoStringKey);
   Set_Add(seenRef, SourceFile_Path(childConfig.ConfigFile!.SourceFile), GoStringKey);
-  const refs = receiver!.referencesInConfigFile?.get(SourceFile_Path(childConfig.ConfigFile!.SourceFile)) ?? [];
+  const [refs] = GoMapLookup(receiver!.referencesInConfigFile, SourceFile_Path(childConfig.ConfigFile!.SourceFile), GoNilSlice<Path>);
   return projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, refs, f, receiver!.opts.Config, seenRef);
 }
 

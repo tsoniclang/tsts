@@ -2601,9 +2601,9 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
   const modifiers = getMappedTypeModifiers(r.mappedType);
   const readonlyMask = (modifiers & MappedTypeModifiersIncludeReadonly) === 0;
   const optionalMask = (modifiers & MappedTypeModifiersIncludeOptional) !== 0 ? 0 : SymbolFlagsOptional;
-  let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
+  let indexInfos = GoNilSlice<GoPtr<IndexInfo>>();
   if (indexInfo !== undefined) {
-    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, core.OrElse(Checker_inferReverseMappedType(receiver, indexInfo!.valueType, r.mappedType, r.constraintType), c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), readonlyMask && indexInfo!.isReadonly, undefined, [])];
+    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, core.OrElse(Checker_inferReverseMappedType(receiver, indexInfo!.valueType, r.mappedType, r.constraintType), c.unknownType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>), readonlyMask && indexInfo!.isReadonly, undefined, GoNilSlice())];
   }
   const members: SymbolTable = new Map();
   const limitedConstraint = Checker_getLimitedConstraint(receiver, t);
@@ -2632,7 +2632,7 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
     }
     members.set(prop!.Name, inferredProp);
   }
-  Checker_setStructuredTypeMembers(receiver, t, members, [], [], indexInfos);
+  Checker_setStructuredTypeMembers(receiver, t, members, GoNilSlice(), GoNilSlice(), indexInfos);
 }
 
 /**
@@ -2870,11 +2870,11 @@ export function Checker_createEmptyObjectTypeFromStringLiteral(receiver: GoPtr<C
     }
     members.set(name, literalProp);
   }
-  let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
+  let indexInfos = GoNilSlice<GoPtr<IndexInfo>>();
   if ((t!.flags & TypeFlagsString) !== 0) {
-    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, c.emptyObjectType, false, undefined, [])];
+    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, c.emptyObjectType, false, undefined, GoNilSlice())];
   }
-  return Checker_newAnonymousType(receiver, undefined, members, [], [], indexInfos);
+  return Checker_newAnonymousType(receiver, undefined, members, GoNilSlice(), GoNilSlice(), indexInfos);
 }
 
 /**

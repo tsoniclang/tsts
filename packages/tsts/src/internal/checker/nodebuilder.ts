@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBooleanKey, GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoBooleanKey, GoNilMap, GoNilSlice, GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import { KindClassDeclaration, KindEnumDeclaration, KindInterfaceDeclaration, KindModuleDeclaration } from "../ast/generated/kinds.js";
@@ -291,7 +291,7 @@ export function NodeBuilder_exitContextSlice(receiver: GoPtr<NodeBuilder>, resul
   NodeBuilder_exitContextCheck(b);
   try {
     if (b.impl!.ctx!.encounteredError) {
-      return [];
+      return GoNilSlice<GoPtr<Node>>();
     }
     return result;
   } finally {
@@ -714,7 +714,7 @@ export function NodeBuilder_TryJSTypeNodeToTypeNode(receiver: GoPtr<NodeBuilder>
  * }
  */
 export function NewNodeBuilder(ch: GoPtr<Checker>, e: GoPtr<EmitContext_3f6f588c>): GoPtr<NodeBuilder> {
-  return NewNodeBuilderEx(ch, e, new globalThis.Map() as GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>);
+  return NewNodeBuilderEx(ch, e, GoNilMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>());
 }
 
 /**
@@ -753,7 +753,7 @@ export function Checker_getNodeBuilder(receiver: GoPtr<Checker>): [GoPtr<NodeBui
   if (receiver!.typeToStringNodebuilder !== undefined) {
     return [receiver!.typeToStringNodebuilder, releaseNodes];
   }
-  receiver!.typeToStringNodebuilder = Checker_getNodeBuilderEx(receiver, new globalThis.Map() as GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>);
+  receiver!.typeToStringNodebuilder = Checker_getNodeBuilderEx(receiver, GoNilMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>());
   return [receiver!.typeToStringNodebuilder, releaseNodes];
 }
 

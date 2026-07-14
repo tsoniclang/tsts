@@ -1875,7 +1875,7 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
       spread = Checker_getSpreadType(
         receiver,
         spread,
-        Checker_newAnonymousType(receiver, attributesSymbol, childPropMap, [], [], []),
+        Checker_newAnonymousType(receiver, attributesSymbol, childPropMap, GoNilSlice<GoPtr<Signature>>(), GoNilSlice<GoPtr<Signature>>(), GoNilSlice<GoPtr<IndexInfo>>()),
         attributesSymbol,
         (objectFlags | Checker_getPropagatingFlagsOfTypes(receiver, childTypes, TypeFlagsNone)) as ObjectFlags,
         false,
@@ -2562,7 +2562,7 @@ export function Checker_createSignatureForJSXIntrinsic(receiver: GoPtr<Checker>,
   // declaration := factory.createFunctionTypeNode(...)
   const parameterSymbol = Checker_newSymbol(receiver, SymbolFlagsFunctionScopedVariable as SymbolFlags, "props");
   LinkStore_Get(receiver!.valueSymbolLinks, parameterSymbol, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = result;
-  return Checker_newSignature(receiver, SignatureFlagsNone, undefined, [], undefined, [parameterSymbol], elementType, undefined, 1);
+  return Checker_newSignature(receiver, SignatureFlagsNone, undefined, GoNilSlice(), undefined, [parameterSymbol], elementType, undefined, 1);
 }
 
 /**

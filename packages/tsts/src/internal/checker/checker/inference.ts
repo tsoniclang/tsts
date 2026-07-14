@@ -533,7 +533,7 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
             (ObjectFlagsAnonymous | ObjectFlagsInstantiationExpressionType) as int,
             Checker_newSymbol(receiver, SymbolFlagsNone, InternalSymbolNameInstantiationExpression),
           );
-          Checker_setStructuredTypeMembers(receiver, result, resolved!.members, callSignatures, constructSignatures, resolved!.indexInfos ?? []);
+          Checker_setStructuredTypeMembers(receiver, result, resolved!.members, callSignatures, constructSignatures, resolved!.indexInfos);
           Type_AsInstantiationExpressionType(result)!.node = node;
           return result;
         }
@@ -1117,10 +1117,10 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
     target = t;
   }
   let typeParameters = links!.outerTypeParameters;
-  if (typeParameters === undefined) {
+  if (GoSliceIsNil(typeParameters)) {
     typeParameters = Checker_getOuterTypeParameters(receiver, declaration, true);
     const targetTypeArgs = TypeAlias_TypeArguments(target!.alias);
-    if (targetTypeArgs === undefined || targetTypeArgs.length === 0) {
+    if (GoSliceIsNil(targetTypeArgs) || targetTypeArgs.length === 0) {
       if ((t!.objectFlags & (ObjectFlagsReference | ObjectFlagsInstantiationExpressionType)) !== 0) {
         typeParameters = Filter(typeParameters, (tp: GoPtr<Type>): bool => Checker_isTypeParameterPossiblyReferenced(receiver, tp, declaration));
       } else if ((target!.symbol!.Flags & (SymbolFlagsMethod | SymbolFlagsTypeLiteral)) !== 0) {
@@ -1129,7 +1129,7 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
         );
       }
     }
-    if (typeParameters === undefined) {
+    if (GoSliceIsNil(typeParameters)) {
       typeParameters = [];
     }
     links!.outerTypeParameters = typeParameters;

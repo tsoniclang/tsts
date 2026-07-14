@@ -1731,9 +1731,9 @@ export function Checker_elaborateArrowFunction(receiver: GoPtr<Checker>, node: G
 export function Checker_isWeakType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
   if ((t!.flags & TypeFlagsObject) !== 0) {
     const resolved = Checker_resolveStructuredTypeMembers(receiver, t);
-    const signatures = resolved!.signatures ?? [];
-    const indexInfos = resolved!.indexInfos ?? [];
-    const properties = resolved!.properties ?? [];
+    const signatures = resolved!.signatures;
+    const indexInfos = resolved!.indexInfos;
+    const properties = resolved!.properties;
     return signatures.length === 0 && indexInfos.length === 0 && properties.length > 0 && properties.every((p: GoPtr<Symbol>) => (p!.Flags & SymbolFlagsOptional) !== 0);
   }
   if ((t!.flags & TypeFlagsSubstitution) !== 0) {

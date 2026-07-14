@@ -632,7 +632,7 @@ export const noTruncationMaximumTruncationLength: int = 1_000_000;
  * }
  */
 export function newNodeBuilderImpl(ch: GoPtr<Checker>, e: GoPtr<EmitContext>, idToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>): GoPtr<NodeBuilderImpl> {
-  const resolvedIdToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>> = idToSymbol !== undefined ? idToSymbol : new globalThis.Map();
+  const resolvedIdToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>> = GoMapIsNil(idToSymbol) ? new globalThis.Map() : idToSymbol;
   const b: NodeBuilderImpl = {
     f: e!.Factory!.__tsgoEmbedded0!,
     ch,
@@ -2080,7 +2080,7 @@ export function NodeBuilderImpl_createAccessFromSymbolChain(receiver: GoPtr<Node
   receiver!.ctx!.approximateLength += symbolName.length + 1;
   if ((receiver!.ctx!.flags & FlagsForbidIndexedAccessSymbolReferences) === 0 && parent !== undefined) {
     const members = Checker_getMembersOfSymbol(receiver!.ch, parent);
-    const member = members?.get(symbol_!.Name);
+    const member = members.get(symbol_!.Name);
     if (member !== undefined && Checker_getSymbolIfSameReference(receiver!.ch, member, symbol_) !== undefined) {
       const lhs = NodeBuilderImpl_createAccessFromSymbolChain(receiver, chain, index - 1, stopper, overrideTypeArguments);
       if (IsIndexedAccessTypeNode(lhs)) {
@@ -4648,7 +4648,7 @@ export function NodeBuilderImpl_isTriviallySerializableComputedName(receiver: Go
  * }
  */
 export function NodeBuilderImpl_indexInfoToObjectComputedNamesOrSignatureDeclaration(receiver: GoPtr<NodeBuilderImpl>, indexInfo: GoPtr<IndexInfo>, typeNode: GoPtr<TypeNode>): GoSlice<GoPtr<Node>> {
-  if ((indexInfo!.components ?? []).length > 0) {
+  if (indexInfo!.components.length > 0) {
     // Index info is derived from object or class computed property names (plus explicit named members) - we can clone those instead of writing out the result computed index signature
     const allComponentComputedNamesSerializable = receiver!.ctx!.enclosingDeclaration !== undefined && Every(indexInfo!.components, (e) => NodeBuilderImpl_isTriviallySerializableComputedName(receiver, e));
     if (allComponentComputedNamesSerializable) {
@@ -5589,7 +5589,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
         (propertySymbol!.Parent!.Flags & SymbolFlagsClass) !== 0 &&
         propDeclaration !== undefined &&
         Some(Node_ModifierNodes(propDeclaration) ?? [], (modifier) => modifier!.Kind === KindAccessorKeyword)) {
-        const fakeGetterSignature = Checker_newSignature(receiver!.ch, SignatureFlagsNone, undefined, [], undefined, [], propertyType, undefined, 0);
+        const fakeGetterSignature = Checker_newSignature(receiver!.ch, SignatureFlagsNone, undefined, GoNilSlice(), undefined, GoNilSlice(), propertyType, undefined, 0);
         const fakeGetterDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, fakeGetterSignature, KindGetAccessor, {
           modifiers: [],
           name: propertyName,
@@ -5600,7 +5600,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
 
         const setterParam = Checker_newSymbol(receiver!.ch, SymbolFlagsFunctionScopedVariable, "arg");
         LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks, setterParam, goZeroValueSymbolLinks, goSymbolPointerKey)!.v.resolvedType = writeType;
-        const fakeSetterSignature = Checker_newSignature(receiver!.ch, SignatureFlagsNone, undefined, [], undefined, [setterParam], receiver!.ch!.voidType, undefined, 0);
+        const fakeSetterSignature = Checker_newSignature(receiver!.ch, SignatureFlagsNone, undefined, GoNilSlice(), undefined, [setterParam], receiver!.ch!.voidType, undefined, 0);
         const fakeSetterDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, fakeSetterSignature, KindSetAccessor, {
           modifiers: [],
           name: propertyName,
@@ -5751,13 +5751,13 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
     typeElements.push(NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindConstructSignature, undefined) as GoPtr<TypeElement>);
   }
   const resolvedObjectFlags = (resolvedType as unknown as TypeData).AsType()!.objectFlags;
-  for (const info of resolvedType!.indexInfos ?? []) {
+  for (const info of resolvedType!.indexInfos) {
     typeElements = slices.Concat<GoPtr<TypeElement>>(
       typeElements,
       NodeBuilderImpl_indexInfoToObjectComputedNamesOrSignatureDeclaration(receiver, info, (resolvedObjectFlags & ObjectFlagsReverseMapped) !== 0 ? NodeBuilderImpl_createElidedInformationPlaceholder(receiver) : undefined) as GoSlice<GoPtr<TypeElement>>,
     );
   }
-  const properties = resolvedType!.properties ?? [];
+  const properties = resolvedType!.properties;
   if (properties.length === 0) {
     return NodeFactory_NewNodeList(receiver!.f, typeElements);
   }
@@ -5864,7 +5864,7 @@ export function NodeBuilderImpl_createTypeNodeFromObjectType(receiver: GoPtr<Nod
   const resolved = Checker_resolveStructuredTypeMembers(receiver!.ch, t);
   const callSigs = StructuredType_CallSignatures(resolved);
   const ctorSigs = StructuredType_ConstructSignatures(resolved);
-  if ((resolved!.properties ?? []).length === 0 && (resolved!.indexInfos ?? []).length === 0) {
+  if (resolved!.properties.length === 0 && resolved!.indexInfos.length === 0) {
     if (callSigs.length === 0 && ctorSigs.length === 0) {
       receiver!.ctx!.approximateLength += 2;
       const result = NewTypeLiteralNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []));
@@ -5882,9 +5882,9 @@ export function NodeBuilderImpl_createTypeNodeFromObjectType(receiver: GoPtr<Nod
   if (abstractSignatures.length > 0) {
     const types = abstractSignatures.map((signature) => Checker_getOrCreateTypeFromSignature(receiver!.ch, signature));
     const propertyCount = (receiver!.ctx!.flags & FlagsWriteClassExpressionAsTypeLiteral) !== 0
-      ? (resolved!.properties ?? []).filter((property) => (property!.Flags & SymbolFlagsPrototype) === 0).length
-      : (resolved!.properties ?? []).length;
-    const typeElementCount = callSigs.length + (ctorSigs.length - abstractSignatures.length) + (resolved!.indexInfos ?? []).length + propertyCount;
+      ? resolved!.properties.filter((property) => (property!.Flags & SymbolFlagsPrototype) === 0).length
+      : resolved!.properties.length;
+    const typeElementCount = callSigs.length + (ctorSigs.length - abstractSignatures.length) + resolved!.indexInfos.length + propertyCount;
     if (typeElementCount !== 0) {
       types.push(NodeBuilderImpl_getResolvedTypeWithoutAbstractConstructSignatures(receiver, resolved));
     }

@@ -1217,10 +1217,10 @@ export function fileLoader_addProjectReferenceTasks(receiver: GoPtr<fileLoader>,
   receiver!.projectReferenceFileMapper = {
     opts: receiver!.opts,
     host: receiver!.opts.Host,
-    configToProjectReference: new globalThis.Map(),
-    referencesInConfigFile: new globalThis.Map(),
-    sourceToProjectReference: new globalThis.Map(),
-    outputDtsToProjectReference: new globalThis.Map(),
+    configToProjectReference: GoNilMap(),
+    referencesInConfigFile: GoNilMap(),
+    sourceToProjectReference: GoNilMap(),
+    outputDtsToProjectReference: GoNilMap(),
     realpathDtsToSource: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() },
   } as unknown as projectReferenceFileMapper;
   const projectReferences = ParsedCommandLine_ResolvedProjectReferencePaths(receiver!.opts.Config);
