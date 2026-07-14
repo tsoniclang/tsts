@@ -168,7 +168,17 @@ function namedOperations(contract, environment) {
   if (provider === undefined) throw new Error(`Go value operation for named type '${objectId ?? "missing"}' has no finalized provider`);
   if (provider.disposition === "intrinsic") {
     const target = renderCanonicalType(contract, environment.operations);
-    return `${runtimeValue(environment, "GoInterfaceValueOps")}<${target}>()`;
+    if (provider.intrinsicCarrier === "interface") {
+      return `${runtimeValue(environment, "GoInterfaceValueOps")}<${target}>()`;
+    }
+    const zeroes = new Map([
+      ["slice", `${runtimeValue(environment, "GoNilSlice")}()`],
+      ["map", `${runtimeValue(environment, "GoNilMap")}()`],
+      ["function", "undefined"],
+    ]);
+    const zero = zeroes.get(provider.intrinsicCarrier);
+    if (zero === undefined) throw new Error(`intrinsic Go value-operation provider '${objectId}' has no exact carrier factory`);
+    return `${runtimeValue(environment, "GoNamedValueOps")}<${target}>(() => ${zero})`;
   }
   if (contract.typeArguments.length !== provider.typeParameterCount) {
     throw new Error(`Go value-operation provider '${objectId}' expected ${provider.typeParameterCount} type arguments, got ${contract.typeArguments.length}`);

@@ -164,6 +164,7 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export const GoComplex64ValueOps: GoValueOps<GoComplex64>/);
   assert.match(source, /export const GoComplex128ValueOps: GoValueOps<GoComplex128>/);
   assert.match(source, /export function GoInterfaceValueOps<I>\(\): GoValueOps<GoInterface<I>>/);
+  assert.match(source, /export function GoNamedValueOps<T>\(zero: GoZeroFactory<T>\): GoValueOps<T>/);
   assert.match(source, /export function GoUnsafePointerValueOps\(\): GoValueOps<GoUnsafePointer>/);
 });
 
@@ -176,6 +177,9 @@ test("defined Go types preserve nil and unnamed-to-named assignment without beco
 type Underlying = (value: number) => number;
 type First = GoDefined<GoFunc<Underlying>, "first">;
 type Second = GoDefined<GoFunc<Underlying>, "second">;
+type NamedSlice = GoDefined<GoSlice<number>, "named-slice">;
+type NamedMap = GoDefined<GoMap<string, number>, "named-map">;
+type NamedFunction = GoDefined<GoFunc<Underlying>, "named-function">;
 const raw: Underlying = (value) => value;
 const first: First = raw;
 const nil: First = undefined;
@@ -187,6 +191,9 @@ declare const opaqueSlice: GoSlice<number>;
 // @ts-expect-error raw arrays are not Go fixed-array values
 const rawArray: GoArray<number, "2"> = [1, 2];
 declare const opaqueArray: GoArray<number, "2">;
+const namedSliceOps: GoValueOps<NamedSlice> = GoNamedValueOps<NamedSlice>(() => GoNilSlice());
+const namedMapOps: GoValueOps<NamedMap> = GoNamedValueOps<NamedMap>(() => GoNilMap());
+const namedFunctionOps: GoValueOps<NamedFunction> = GoNamedValueOps<NamedFunction>(() => undefined);
 // @ts-expect-error Go slice elements require the explicit load operation
 const rawElement = opaqueSlice[0];
 // @ts-expect-error Go fixed-array elements require the explicit load operation
@@ -201,6 +208,9 @@ void rawSlice;
 void rawArray;
 void rawElement;
 void rawArrayElement;
+void namedSliceOps;
+void namedMapOps;
+void namedFunctionOps;
 `;
   const options = {
     module: ts.ModuleKind.ESNext,

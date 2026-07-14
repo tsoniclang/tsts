@@ -5,9 +5,9 @@ import { safeIdentifier } from "../names.mjs";
 import { requirePorterUnitOwnership } from "../unit-ownership.mjs";
 import { requireGeneratorOwnedGoValueOperationCatalog } from "./generator-owned-providers.mjs";
 import {
-  buildIntrinsicInterfaceGoValueOperationCatalog,
-  requireIntrinsicInterfaceGoValueOperationCatalog,
-} from "./intrinsic-interface-providers.mjs";
+  buildIntrinsicGoValueOperationCatalog,
+  requireIntrinsicGoValueOperationCatalog,
+} from "./intrinsic-providers.mjs";
 import { requireReviewedGoValueOperationCatalog } from "./reviewed-providers.mjs";
 import { buildGoValueOperationCatalog } from "./shape-plan.mjs";
 import { directUnitStorageIdentity } from "./storage-identity.mjs";
@@ -81,8 +81,8 @@ export function buildGoValueOperationPlan(input) {
   requireGeneratorOwnedGoValueOperationCatalog(generatorOwnedProviders, config, snapshot);
   requireAuditedTypeStorageCatalog(auditedStorage, { config, snapshot, unitOwnership });
   requireCleanTypeOwnership(unitOwnership);
-  const intrinsicProviders = buildIntrinsicInterfaceGoValueOperationCatalog(config, snapshot, externalFacadeCatalog);
-  requireIntrinsicInterfaceGoValueOperationCatalog(intrinsicProviders, config, snapshot);
+  const intrinsicProviders = buildIntrinsicGoValueOperationCatalog(config, snapshot, externalFacadeCatalog);
+  requireIntrinsicGoValueOperationCatalog(intrinsicProviders, config, snapshot);
 
   const providers = mergeProviderRequirements(
     intrinsicProviders.requirements(config, snapshot),

@@ -52,6 +52,10 @@ export function GoInterfaceValueOps<I>(): GoValueOps<GoInterface<I>> {
   return goInterfaceValueOps;
 }
 
+export function GoNamedValueOps<T>(zero: GoZeroFactory<T>): GoValueOps<T> {
+  return Object.freeze({ zero, copy: GoCopyIdentity });
+}
+
 export function GoUnsafePointerValueOps(): GoValueOps<GoUnsafePointer> {
   return goUnsafePointerValueOps;
 }
