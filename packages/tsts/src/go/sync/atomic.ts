@@ -1,4 +1,5 @@
-import type { bool, int, long, uint, ulong } from "../scalars.js";
+import type { GoValueOps } from "../compat.js";
+import type { bool, int, long, uint } from "../scalars.js";
 
 // Authored Go sync/atomic facade — single-threaded semantics.
 //
@@ -6,8 +7,8 @@ import type { bool, int, long, uint, ulong } from "../scalars.js";
 // type is modeled as a plain mutable cell. Load/Store/Swap/CompareAndSwap/Add
 // operate directly on the cell (no memory ordering is observable without
 // goroutines). The 32-bit integer types wrap on store/swap/add to match Go's
-// fixed-width arithmetic; the 64-bit types use JavaScript numbers, which are
-// exact for the small counter values TS-Go stores in them.
+// fixed-width arithmetic. Uint64 uses bigint so every uint64 value remains
+// exact.
 
 export class Bool {
   private value: boolean = false;
@@ -30,6 +31,11 @@ export class Bool {
     return false as bool;
   }
 }
+
+export const BoolValueOps: GoValueOps<Bool> = Object.freeze({
+  zero: (): Bool => new Bool(),
+  copy: (_value: Bool): Bool => new Bool(),
+});
 
 export class Int32 {
   private value: number = 0;
@@ -55,7 +61,22 @@ export class Int32 {
     this.value = (this.value + (delta as number)) | 0;
     return this.value as int;
   }
+  And(mask: int): int {
+    const old = this.value;
+    this.value = this.value & ((mask as number) | 0);
+    return old as int;
+  }
+  Or(mask: int): int {
+    const old = this.value;
+    this.value = this.value | ((mask as number) | 0);
+    return old as int;
+  }
 }
+
+export const Int32ValueOps: GoValueOps<Int32> = Object.freeze({
+  zero: (): Int32 => new Int32(),
+  copy: (_value: Int32): Int32 => new Int32(),
+});
 
 export class Int64 {
   private value: number = 0;
@@ -110,27 +131,42 @@ export class Uint32 {
 }
 
 export class Uint64 {
-  private value: number = 0;
-  Load(): ulong {
-    return this.value as ulong;
+  private value: bigint = 0n;
+  Load(): bigint {
+    return this.value;
   }
-  Store(value: ulong): void {
-    this.value = value as number;
+  Store(value: bigint): void {
+    this.value = globalThis.BigInt.asUintN(64, value);
   }
-  Swap(newValue: ulong): ulong {
+  Swap(newValue: bigint): bigint {
     const old = this.value;
-    this.value = newValue as number;
-    return old as ulong;
+    this.value = globalThis.BigInt.asUintN(64, newValue);
+    return old;
   }
-  CompareAndSwap(oldValue: ulong, newValue: ulong): bool {
-    if (this.value === (oldValue as number)) {
-      this.value = newValue as number;
+  CompareAndSwap(oldValue: bigint, newValue: bigint): bool {
+    if (this.value === globalThis.BigInt.asUintN(64, oldValue)) {
+      this.value = globalThis.BigInt.asUintN(64, newValue);
       return true as bool;
     }
     return false as bool;
   }
-  Add(delta: ulong): ulong {
-    this.value = this.value + (delta as number);
-    return this.value as ulong;
+  Add(delta: bigint): bigint {
+    this.value = globalThis.BigInt.asUintN(64, this.value + delta);
+    return this.value;
+  }
+  And(mask: bigint): bigint {
+    const old = this.value;
+    this.value = this.value & globalThis.BigInt.asUintN(64, mask);
+    return old;
+  }
+  Or(mask: bigint): bigint {
+    const old = this.value;
+    this.value = this.value | globalThis.BigInt.asUintN(64, mask);
+    return old;
   }
 }
+
+export const Uint64ValueOps: GoValueOps<Uint64> = Object.freeze({
+  zero: (): Uint64 => new Uint64(),
+  copy: (_value: Uint64): Uint64 => new Uint64(),
+});

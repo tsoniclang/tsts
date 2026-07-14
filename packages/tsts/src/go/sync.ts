@@ -1,5 +1,5 @@
 import type { bool, int } from "./scalars.js";
-import type { GoComparableInterface, GoFunc, GoInterface, GoMap, GoPtr } from "./compat.js";
+import type { GoComparableInterface, GoFunc, GoInterface, GoMap, GoPtr, GoValueOps } from "./compat.js";
 import { GoComparableInterfaceKey, GoMapGetExisting, GoMapIsNil, GoMapMake, GoNilMap } from "./compat.js";
 
 // Go: package sync
@@ -28,6 +28,11 @@ export class Mutex {
   }
 }
 
+export const MutexValueOps: GoValueOps<Mutex> = Object.freeze({
+  zero: (): Mutex => new Mutex(),
+  copy: (_value: Mutex): Mutex => new Mutex(),
+});
+
 // RWMutex is a reader/writer mutual exclusion lock. Single-threaded: all no-ops.
 export class RWMutex {
   Lock(): void {}
@@ -45,6 +50,11 @@ export class RWMutex {
     return { Lock: () => this.RLock(), Unlock: () => this.RUnlock() };
   }
 }
+
+export const RWMutexValueOps: GoValueOps<RWMutex> = Object.freeze({
+  zero: (): RWMutex => new RWMutex(),
+  copy: (_value: RWMutex): RWMutex => new RWMutex(),
+});
 
 // Locker is implemented by Mutex and RWMutex (used by Cond).
 export interface Locker {
@@ -66,24 +76,56 @@ export class Once {
   }
 }
 
+export const OnceValueOps: GoValueOps<Once> = Object.freeze({
+  zero: (): Once => new Once(),
+  copy: (_value: Once): Once => new Once(),
+});
+
 // OnceFunc returns a function that invokes f only once. The returned function may
 // be called concurrently in Go; here it is simply memoized.
 export function OnceFunc(f: GoFunc<() => void>): GoFunc<() => void> {
   const once = new Once();
+  let valid = false;
+  let panicValue: unknown;
   return (): void => {
-    once.Do(f);
+    once.Do((): void => {
+      try {
+        f!();
+        valid = true;
+      } catch (error) {
+        panicValue = error;
+        throw error;
+      } finally {
+        f = undefined;
+      }
+    });
+    if (!valid) {
+      throw panicValue;
+    }
   };
 }
 
 // OnceValue returns a function that invokes f only once and returns the value
 // returned by f. The returned function may be called any number of times.
 export function OnceValue<T>(f: GoFunc<() => T>): GoFunc<() => T> {
-  let called = false;
+  const once = new Once();
+  let valid = false;
+  let panicValue: unknown;
   let value!: T;
   return (): T => {
-    if (!called) {
-      called = true;
-      value = f!();
+    once.Do((): void => {
+      try {
+        value = f!();
+        valid = true;
+      } catch (error) {
+        panicValue = error;
+        throw error;
+      } finally {
+        f = undefined;
+      }
+    });
+    if (!valid) {
+      throw panicValue;
     }
     return value;
   };
@@ -92,15 +134,27 @@ export function OnceValue<T>(f: GoFunc<() => T>): GoFunc<() => T> {
 // OnceValues returns a function that invokes f only once and returns the two
 // values returned by f. Modeled as a tuple return to match Go's (T1, T2).
 export function OnceValues<T1, T2>(f: GoFunc<() => [T1, T2]>): GoFunc<() => [T1, T2]> {
-  let called = false;
+  const once = new Once();
+  let valid = false;
+  let panicValue: unknown;
   let v1!: T1;
   let v2!: T2;
   return (): [T1, T2] => {
-    if (!called) {
-      called = true;
-      const result = f!();
-      v1 = result[0];
-      v2 = result[1];
+    once.Do((): void => {
+      try {
+        const result = f!();
+        v1 = result[0];
+        v2 = result[1];
+        valid = true;
+      } catch (error) {
+        panicValue = error;
+        throw error;
+      } finally {
+        f = undefined;
+      }
+    });
+    if (!valid) {
+      throw panicValue;
     }
     return [v1, v2];
   };
@@ -169,6 +223,11 @@ export class Map {
   }
 }
 
+export const MapValueOps: GoValueOps<Map> = Object.freeze({
+  zero: (): Map => new Map(),
+  copy: (_value: Map): Map => new Map(),
+});
+
 export class Pool {
   New!: GoFunc<() => GoInterface<unknown>>;
   private readonly items: Array<GoInterface<unknown>> = [];
@@ -229,7 +288,7 @@ export class WaitGroup {
 
   // Add adds delta, which may be negative, to the WaitGroup counter.
   Add(delta: int): void {
-    this.counter = this.counter + delta;
+    this.counter = (this.counter + delta) | 0;
     if (this.counter < 0) {
       throw new globalThis.Error("sync: negative WaitGroup counter");
     }
@@ -247,10 +306,12 @@ export class WaitGroup {
   // Go runs f in a new goroutine and tracks it. Single-threaded, f runs synchronously.
   Go(f: GoFunc<() => void>): void {
     this.Add(1);
-    try {
-      f!();
-    } finally {
-      this.Done();
-    }
+    f!();
+    this.Done();
   }
 }
+
+export const WaitGroupValueOps: GoValueOps<WaitGroup> = Object.freeze({
+  zero: (): WaitGroup => new WaitGroup(),
+  copy: (_value: WaitGroup): WaitGroup => new WaitGroup(),
+});
