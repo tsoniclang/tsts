@@ -4857,6 +4857,8 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
 }
 
 /**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::forEachResolution","kind":"func","status":"implemented","sigHash":"81ad1e76a1bc9f4c9a1cfccfabf6ff831d6183bed38698ac95e80a7c0786dead"}
+ *
  * Port note: upstream implementation source follows.
  *
  * Go source:
@@ -4875,9 +4877,6 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
  * 		}
  * 	}
  * }
- */
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::forEachResolution","kind":"func","status":"implemented","sigHash":"81ad1e76a1bc9f4c9a1cfccfabf6ff831d6183bed38698ac95e80a7c0786dead"}
  */
 export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache<T>>, callback: GoFunc<(resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void>, file: GoPtr<SourceFile>): void {
   if (file !== undefined) {

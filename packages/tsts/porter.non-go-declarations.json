@@ -19360,66 +19360,6 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "9b115efacb8d2658fd37b9ed834159c8cd766a2b2b9cbf562f48544100e98e1e",
-      "file": "packages/tsts/src/internal/compiler/program.ts",
-      "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "emptyModeAwareCache",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "compiler-port-runtime",
-      "visibility": "module-private"
-    },
-    {
-      "declarationHash": "acfb5578d93c991cd9f1bf87636c1156dd87ad65a29ed5d18befd7afc2d8184e",
-      "file": "packages/tsts/src/internal/compiler/program.ts",
-      "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "emptyResolutionCache",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "compiler-port-runtime",
-      "visibility": "module-private"
-    },
-    {
-      "declarationHash": "9cf530d64e7ffba922429bd922e6320d67ef16c5a9bed6203f178212b70e8714",
-      "file": "packages/tsts/src/internal/compiler/program.ts",
-      "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "goMapEntries",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "compiler-port-runtime",
-      "visibility": "module-private"
-    },
-    {
-      "declarationHash": "4f052da98dd217626c58ee22de4da072f079339b66fd549de242ddafafd7f26b",
-      "file": "packages/tsts/src/internal/compiler/program.ts",
-      "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "modeAwareCacheEntries",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "compiler-port-runtime",
-      "visibility": "module-private"
-    },
-    {
-      "declarationHash": "17c2cbfef7255049fdbd35483ca540e966a8a110fac04cc9bdc9655d1b56fdd1",
-      "file": "packages/tsts/src/internal/compiler/program.ts",
-      "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "resolutionCacheEntries",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "compiler-port-runtime",
-      "visibility": "module-private"
-    },
-    {
       "declarationHash": "024f2b1be9083914a3d7e6a258f6c1e0880cc4daabc073995943bb2a7d7f6cbd",
       "file": "packages/tsts/src/internal/compiler/program.ts",
       "fragmentIndex": 0,

@@ -469,11 +469,6 @@ export interface NodeBuilderSymbolLinks {
   specifierCache: ModeAwareCache<string>;
 }
 
-const modeAwareCacheKeyDescriptor = GoStructKey<ModeAwareCacheKey, readonly [string, ResolutionMode]>(
-  [GoStructField((value) => value.Name, GoStringKey), GoStructField((value) => value.Mode, GoNumberKey)],
-  ([Name, Mode]) => ({ Name, Mode }),
-);
-
 function goZeroValueSymbolLinks(): ValueSymbolLinks {
   return {
     resolvedType: undefined,
@@ -3048,7 +3043,10 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
   const cacheKey: ModeAwareCacheKey = { Name: String(SourceFile_Path(contextFile)), Mode: resolutionMode };
   const links = LinkStore_Get<GoPtr<Symbol>, NodeBuilderSymbolLinks>(receiver!.symbolLinks as unknown as LinkStore<GoPtr<Symbol>, NodeBuilderSymbolLinks>, symbol_, goZeroNodeBuilderSymbolLinks, goSymbolPointerKey);
   if (GoMapIsNil(links!.v.specifierCache)) {
-    links!.v.specifierCache = NewGoStructMap<ModeAwareCacheKey, string>(modeAwareCacheKeyDescriptor);
+    links!.v.specifierCache = NewGoStructMap<ModeAwareCacheKey, string>(GoStructKey<ModeAwareCacheKey, readonly [string, ResolutionMode]>(
+      [GoStructField((value) => value.Name, GoStringKey), GoStructField((value) => value.Mode, GoNumberKey)],
+      ([Name, Mode]) => ({ Name, Mode }),
+    ));
   }
   if (links!.v.specifierCache.has(cacheKey)) {
     return links!.v.specifierCache.get(cacheKey) as string;
