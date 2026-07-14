@@ -953,7 +953,7 @@ export function Checker_pushActiveMapper(receiver: GoPtr<Checker>, mapper: GoPtr
   receiver!.activeTypeMappersCaches = GoSliceAppend(receiver!.activeTypeMappersCaches, NewGoStructMap<CacheHashKey, GoPtr<Type>>(GoStructKey(
     [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
     ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
-  )), GoMapValueOps<{ Hi: bigint; Lo: bigint; } & { readonly [__goDefinedTypeBrand]?: "github.com/microsoft/typescript-go/internal/checker::type::CacheHashKey"; }, GoPtr<Type>>());
+  )), GoMapValueOps<CacheHashKey, GoPtr<Type>>());
 }
 
 /**
