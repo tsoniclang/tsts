@@ -1,6 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoFunc, GoInterface, GoPtr, GoRef, GoSlice, GoMap } from "../../go/compat.js";
-import { GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
+import * as maps from "../../go/maps.js";
+import * as slices from "../../go/slices.js";
 import type { Mutex } from "../../go/sync.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression, Node_Type, Node_Initializer, NodeFactory_NewModifier, NodeFactory_UpdateIndexSignatureDeclaration, Node_ModifierNodes, Node_ParameterList, Node_QuestionToken } from "../ast/ast.js";
@@ -1144,9 +1146,7 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
     }
   }
 
-  const aliasesToMakeVisible = GoMapIsNil(aliasesToMakeVisibleSet)
-    ? GoNilSlice<GoPtr<Node>>()
-    : Array.from(aliasesToMakeVisibleSet.values());
+  const aliasesToMakeVisible = slices.Collect(maps.Values(aliasesToMakeVisibleSet));
   return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: aliasesToMakeVisible, ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
 }
 
@@ -2467,15 +2467,15 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
   const sym = Node_Symbol(container);
   const staticInfos = Checker_getIndexInfosOfType(receiver!.checker, Checker_getTypeOfSymbol(receiver!.checker, sym));
   const instanceIndexSymbol = Checker_getIndexSymbol(receiver!.checker, sym);
-  let instanceInfos: GoSlice<GoPtr<IndexInfo>> = [];
+  let instanceInfos: GoSlice<GoPtr<IndexInfo>> = GoNilSlice();
   if (instanceIndexSymbol !== undefined) {
-    const siblingSymbols = Array.from(Checker_getMembersOfSymbol(receiver!.checker, sym).values());
+    const siblingSymbols = slices.Collect(maps.Values(Checker_getMembersOfSymbol(receiver!.checker, sym)));
     instanceInfos = Checker_getIndexInfosOfIndexSymbol(receiver!.checker, instanceIndexSymbol, siblingSymbols);
   }
 
   const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
 
-  const result: GoSlice<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let index = 0; index < 2; index++) {
     const infoList = index === 0 ? staticInfos : instanceInfos;
     const isStatic = index === 0;
@@ -2509,9 +2509,9 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
               tracker!.TrackSymbol(name, enclosingDeclaration, SymbolFlagsValue);
             }
 
-            const mods: GoSlice<GoPtr<Node>> = isStatic ? [NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword)] : [];
+            let mods: GoSlice<GoPtr<Node>> = isStatic ? [NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword)] : GoNilSlice();
             if (info!.isReadonly) {
-              mods.push(NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindReadonlyKeyword));
+              mods = GoAppend(mods, NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindReadonlyKeyword));
             }
 
             const decl = NewPropertyDeclaration(
@@ -2522,14 +2522,14 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
               NodeBuilder_TypeToTypeNode(requestNodeBuilder, Checker_getTypeOfSymbol(receiver!.checker, Node_Symbol(component)), enclosingDeclaration, flags, internalFlags, tracker),
               undefined,
             );
-            result.push(decl);
+            result = GoAppend(result, decl);
           }
           continue;
         }
       }
       let node = NodeBuilder_IndexInfoToIndexSignatureDeclaration(requestNodeBuilder, info, enclosingDeclaration, flags, internalFlags, tracker);
       if (node !== undefined && isStatic) {
-        const modNodes: GoSlice<GoPtr<Node>> = [NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword), ...(Node_ModifierNodes(node) ?? [])];
+        const modNodes = GoAppend([NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword)], ...(Node_ModifierNodes(node) ?? GoNilSlice()));
         const mods = NodeFactory_NewModifierList(emitContext!.Factory!.__tsgoEmbedded0, modNodes);
         node = NodeFactory_UpdateIndexSignatureDeclaration(
           emitContext!.Factory!.__tsgoEmbedded0,
@@ -2540,7 +2540,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
         );
       }
       if (node !== undefined) {
-        result.push(node);
+        result = GoAppend(result, node);
       }
     }
   }

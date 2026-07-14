@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoMapIsNil, GoNilMap, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Coalesce, Find, IfElse } from "../../core/core.js";
 import type { ModifierList, Node, NodeFactoryCoercible } from "../../ast/spine.js";
 import { Node_Clone, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_AsNode, Node_Modifiers, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
@@ -760,7 +760,7 @@ export function RuntimeSyntaxTransformer_addVarForDeclaration(receiver: GoPtr<Ru
   EmitContext_SetCommentRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varStatement, Node_AsNode(node)!.Loc);
   EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varStatement, EFNoTrailingComments);
 
-  return [[...statements, varStatement], true];
+  return [GoAppend(statements, varStatement), true];
 }
 
 /**
@@ -828,7 +828,7 @@ export function RuntimeSyntaxTransformer_visitEnumDeclaration(receiver: GoPtr<Ru
   EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), enumStatement, nodeAsNode);
   EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), enumStatement, nodeAsNode);
   EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), enumStatement, emitFlags);
-  return NewSyntaxList(astFactory, [...statements, enumStatement]);
+  return NewSyntaxList(astFactory, GoAppend(statements, enumStatement));
 }
 
 /**
@@ -936,7 +936,7 @@ export function RuntimeSyntaxTransformer_transformEnumMember(receiver: GoPtr<Run
 
   receiver!.currentNode = receiver!.parentNode;
   receiver!.parentNode = savedParent;
-  return [...statements, memberStatement];
+  return GoAppend(statements, memberStatement);
 }
 
 /**
@@ -995,7 +995,7 @@ export function RuntimeSyntaxTransformer_visitModuleDeclaration(receiver: GoPtr<
   EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleStatement, nodeAsNode);
   EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleStatement, nodeAsNode);
   EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleStatement, emitFlags);
-  return NewSyntaxList(astFactory, [...statements, moduleStatement]);
+  return NewSyntaxList(astFactory, GoAppend(statements, moduleStatement));
 }
 
 /**
@@ -1124,12 +1124,12 @@ export function RuntimeSyntaxTransformer_visitVariableStatement(receiver: GoPtr<
             RuntimeSyntaxTransformer_createNamespaceExportExpression(receiver, exportName, exportValue, location),
         );
         if (expression !== undefined) {
-          expressions = [...expressions, expression];
+          expressions = GoAppend(expressions, expression);
         }
       } else {
         const expression = ConvertVariableDeclarationToAssignmentExpression(Transformer_EmitContext(receiver!.__tsgoEmbedded0), v);
         if (expression !== undefined) {
-          expressions = [...expressions, expression];
+          expressions = GoAppend(expressions, expression);
         }
       }
     }
@@ -1217,12 +1217,15 @@ export function RuntimeSyntaxTransformer_visitFunctionDeclaration(receiver: GoPt
  * }
  */
 export function RuntimeSyntaxTransformer_getParameterProperties(receiver: GoPtr<RuntimeSyntaxTransformer>, constructor_: GoPtr<Node>): GoSlice<GoPtr<ParameterDeclaration>> {
-  if (constructor_ === undefined) {
-    return [];
+  let parameterProperties: GoSlice<GoPtr<ParameterDeclaration>> = GoNilSlice();
+  if (constructor_ !== undefined) {
+    for (const parameter of Node_Parameters(constructor_)) {
+      if (IsParameterPropertyDeclaration(parameter, constructor_)) {
+        parameterProperties = GoAppend(parameterProperties, AsParameterDeclaration(parameter));
+      }
+    }
   }
-  return (Node_Parameters(constructor_) ?? [])
-    .filter((parameter) => IsParameterPropertyDeclaration(parameter as unknown as GoPtr<Node>, constructor_))
-    .map((parameter) => AsParameterDeclaration(parameter as unknown as GoPtr<Node>));
+  return parameterProperties;
 }
 
 /**
@@ -1255,7 +1258,7 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
   const parameterProperties = RuntimeSyntaxTransformer_getParameterProperties(receiver, Find(node!.Members!.Nodes!, IsConstructorDeclaration, GoZeroPointer<Node>));
 
   if (parameterProperties.length > 0) {
-    let newMembers: GoSlice<GoPtr<Node>> = [];
+    let newMembers: GoSlice<GoPtr<Node>> = GoNilSlice();
     for (const parameter of parameterProperties) {
       if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
         const parameterProperty = NewPropertyDeclaration(
@@ -1267,11 +1270,11 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
           undefined /*initializer*/,
         );
         EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, Node_AsNode(parameter));
-        newMembers = [...newMembers, parameterProperty];
+        newMembers = GoAppend(newMembers, parameterProperty);
       }
     }
     if (newMembers.length > 0) {
-      newMembers = [...newMembers, ...members!.Nodes!];
+      newMembers = GoAppend(newMembers, ...members!.Nodes!);
       members = NodeFactory_NewNodeList(astFactory, newMembers);
       members!.Loc = node!.Members!.Loc;
     }
@@ -1307,7 +1310,7 @@ export function RuntimeSyntaxTransformer_visitClassExpression(receiver: GoPtr<Ru
   const parameterProperties = RuntimeSyntaxTransformer_getParameterProperties(receiver, Find(node!.Members!.Nodes!, IsConstructorDeclaration, GoZeroPointer<Node>));
 
   if (parameterProperties.length > 0) {
-    let newMembers: GoSlice<GoPtr<Node>> = [];
+    let newMembers: GoSlice<GoPtr<Node>> = GoNilSlice();
     for (const parameter of parameterProperties) {
       if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
         const parameterProperty = NewPropertyDeclaration(
@@ -1319,11 +1322,11 @@ export function RuntimeSyntaxTransformer_visitClassExpression(receiver: GoPtr<Ru
           undefined /*initializer*/,
         );
         EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, Node_AsNode(parameter));
-        newMembers = [...newMembers, parameterProperty];
+        newMembers = GoAppend(newMembers, parameterProperty);
       }
     }
     if (newMembers.length > 0) {
-      newMembers = [...newMembers, ...members!.Nodes!];
+      newMembers = GoAppend(newMembers, ...members!.Nodes!);
       members = NodeFactory_NewNodeList(astFactory, newMembers);
       members!.Loc = node!.Members!.Loc;
     }
@@ -1373,7 +1376,7 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
   let statements: GoSlice<GoPtr<Statement>> = [...prologue];
 
   // Transform parameters into property assignments
-  let parameterPropertyAssignments: GoSlice<GoPtr<Statement>> = [];
+  let parameterPropertyAssignments: GoSlice<GoPtr<Statement>> = GoNilSlice();
   for (const parameter of parameterProperties) {
     if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
       const innerFactory = factory.__tsgoEmbedded0!;
@@ -1403,18 +1406,18 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
       );
       EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, Node_AsNode(parameter));
       EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, EFStartOnNewLine);
-      parameterPropertyAssignments = [...parameterPropertyAssignments, parameterProperty];
+      parameterPropertyAssignments = GoAppend(parameterPropertyAssignments, parameterProperty);
     }
   }
 
   const superPath = FindSuperStatementIndexPath(rest, 0);
 
   if (superPath.length > 0) {
-    statements = [...statements, ...RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver, rest, superPath, parameterPropertyAssignments)];
+    statements = GoAppend(statements, ...RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver, rest, superPath, parameterPropertyAssignments));
   } else {
-    statements = [...statements, ...parameterPropertyAssignments];
+    statements = GoAppend(statements, ...parameterPropertyAssignments);
     const [visitedRest] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), rest);
-    statements = [...statements, ...visitedRest as GoSlice<GoPtr<Statement>>];
+    statements = GoAppend(statements, ...visitedRest as GoSlice<GoPtr<Statement>>);
   }
 
   statements = EmitContext_EndAndMergeVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statements);
@@ -1438,7 +1441,7 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
  * }
  */
 export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver: GoPtr<RuntimeSyntaxTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, superPath: GoSlice<int>, initializerStatements: GoSlice<GoPtr<Statement>>): GoSlice<GoPtr<Statement>> {
-  let statementsOut: GoSlice<GoPtr<Statement>> = [];
+  let statementsOut: GoSlice<GoPtr<Statement>> = GoNilSlice();
   const superStatementIndex = superPath[0]!;
   const superStatement = statementsIn[superStatementIndex];
 
@@ -1448,7 +1451,7 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
 
   // visit up to the statement containing `super`
   const [visitedBefore] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(0, superStatementIndex) as GoSlice<GoPtr<Node>>);
-  statementsOut = [...statementsOut, ...visitedBefore as GoSlice<GoPtr<Statement>>];
+  statementsOut = GoAppend(statementsOut, ...visitedBefore as GoSlice<GoPtr<Statement>>);
 
   // if the statement containing `super` is a `try` statement, transform the body of the `try` block
   if (IsTryStatement(superStatement as unknown as GoPtr<Node>)) {
@@ -1474,8 +1477,8 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
 
     const tryBlockStatementList = NodeFactory_NewNodeList(astFactory, tryBlockStatements);
     tryBlockStatementList!.Loc = tryBlock!.Statements!.Loc;
-    statementsOut = [
-      ...statementsOut,
+    statementsOut = GoAppend(
+      statementsOut,
       NodeFactory_UpdateTryStatement(
         factory.__tsgoEmbedded0!,
         tryStatement,
@@ -1483,22 +1486,22 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
         NodeVisitor_VisitNode(visitor, tryStatement!.CatchClause),
         NodeVisitor_VisitNode(visitor, tryStatement!.FinallyBlock),
       ) as unknown as GoPtr<Statement>,
-    ];
+    );
 
     // restore hierarchy as we ascend to the parent of the `try` statement
     RuntimeSyntaxTransformer_popNode(receiver, grandparentOfTryStatement);
   } else {
     // visit the statement containing `super`
     const [visitedSuper] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex, superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
-    statementsOut = [...statementsOut, ...visitedSuper as GoSlice<GoPtr<Statement>>];
+    statementsOut = GoAppend(statementsOut, ...visitedSuper as GoSlice<GoPtr<Statement>>);
 
     // insert the initializer statements
-    statementsOut = [...statementsOut, ...initializerStatements];
+    statementsOut = GoAppend(statementsOut, ...initializerStatements);
   }
 
   // visit the statements after `super`
   const [visitedAfter] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
-  statementsOut = [...statementsOut, ...visitedAfter as GoSlice<GoPtr<Statement>>];
+  statementsOut = GoAppend(statementsOut, ...visitedAfter as GoSlice<GoPtr<Statement>>);
   return statementsOut;
 }
 

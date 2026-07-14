@@ -3,6 +3,7 @@
 
 import type { int } from "../scalars.js";
 import type { GoRune, GoSlice } from "../compat.js";
+import { GoAppend } from "../compat.js";
 
 // replacementChar is U+FFFD, the Unicode replacement character.
 const replacementChar: GoRune = 0xfffd;
@@ -20,40 +21,40 @@ export function AppendRune(a: GoSlice<int>, r: GoRune): GoSlice<int> {
   if (r >= 0 && r < surrSelf) {
     if (r >= surr1 && r < surr3) {
       // Surrogate-half value: not a valid scalar; emit replacement.
-      return [...a, replacementChar];
+      return GoAppend(a, replacementChar);
     }
-    return [...a, r];
+    return GoAppend(a, r);
   }
   if (r >= surrSelf && r <= maxRune) {
     const v = r - surrSelf;
     const r1 = surr1 + ((v >> 10) & 0x3ff);
     const r2 = surr2 + (v & 0x3ff);
-    return [...a, r1, r2];
+    return GoAppend(a, r1, r2);
   }
-  return [...a, replacementChar];
+  return GoAppend(a, replacementChar);
 }
 
 // Decode returns the Unicode code points represented by the UTF-16 encoding s.
 // Unpaired surrogates are decoded as the replacement character.
 export function Decode(s: GoSlice<int>): GoSlice<GoRune> {
-  const result: Array<GoRune> = [];
+  let result: GoSlice<GoRune> = [];
   let i = 0;
   const n = s.length;
   while (i < n) {
     const r = s[i]!;
     if (r < surr1 || surr3 <= r) {
       // Normal rune (not a surrogate half).
-      result.push(r);
+      result = GoAppend(result, r);
       i++;
     } else if (surr1 <= r && r < surr2 && i + 1 < n && surr2 <= s[i + 1]! && s[i + 1]! < surr3) {
       // Valid surrogate pair.
       const r2 = s[i + 1]!;
       const dec = (r - surr1) * 0x400 + (r2 - surr2) + surrSelf;
-      result.push(dec);
+      result = GoAppend(result, dec);
       i += 2;
     } else {
       // Invalid surrogate sequence.
-      result.push(replacementChar);
+      result = GoAppend(result, replacementChar);
       i++;
     }
   }

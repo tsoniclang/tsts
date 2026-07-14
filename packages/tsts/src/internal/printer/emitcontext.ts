@@ -1,6 +1,6 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint32 } from "../../go/sync/atomic.js";
 import * as maps from "../../go/maps.js";
@@ -131,12 +131,12 @@ export interface varScope {
 export function NewEmitContext(): GoPtr<EmitContext> {
   const c: EmitContext = {
     Factory: undefined,
-    autoGenerate: new globalThis.Map(),
-    textSource: new globalThis.Map(),
-    original: new globalThis.Map(),
+    autoGenerate: GoNilMap(),
+    textSource: GoNilMap(),
+    original: GoNilMap(),
     emitNodes: { entries: GoNilMap(), arena: { data: [] } },
-    assignedName: new globalThis.Map(),
-    classThis: new globalThis.Map(),
+    assignedName: GoNilMap(),
+    classThis: GoNilMap(),
     varScopeStack: { data: [] },
     letScopeStack: { data: [] },
     emitHelpers: { m: { __tsgoBlank0: {}, keys: [], mp: GoNilMap() } },
@@ -194,12 +194,12 @@ export function GetEmitContext(): [GoPtr<EmitContext>, GoFunc<() => void>] {
 export function EmitContext_Reset(receiver: GoPtr<EmitContext>): void {
   const c = receiver!;
   const factory = c.Factory;
-  c.autoGenerate = new globalThis.Map();
-  c.textSource = new globalThis.Map();
-  c.original = new globalThis.Map();
+  c.autoGenerate = GoNilMap();
+  c.textSource = GoNilMap();
+  c.original = GoNilMap();
   c.emitNodes = { entries: GoNilMap(), arena: { data: [] } };
-  c.assignedName = new globalThis.Map();
-  c.classThis = new globalThis.Map();
+  c.assignedName = GoNilMap();
+  c.classThis = GoNilMap();
   c.varScopeStack = { data: [] };
   c.letScopeStack = { data: [] };
   c.emitHelpers = { m: { __tsgoBlank0: {}, keys: [], mp: GoNilMap() } };
@@ -296,7 +296,7 @@ export function EmitContext_NewNodeVisitor(receiver: GoPtr<EmitContext>, visit: 
  */
 export function EmitContext_StartVariableEnvironment(receiver: GoPtr<EmitContext>): void {
   const c = receiver!;
-  const scope: varScope = { variables: [], functions: [], flags: environmentFlagsNone, initializationStatements: [] };
+  const scope: varScope = { variables: GoNilSlice(), functions: GoNilSlice(), flags: environmentFlagsNone, initializationStatements: GoNilSlice() };
   Stack_Push(c.varScopeStack, scope);
   EmitContext_StartLexicalEnvironment(receiver);
 }
@@ -326,18 +326,21 @@ export function EmitContext_StartVariableEnvironment(receiver: GoPtr<EmitContext
 export function EmitContext_EndVariableEnvironment(receiver: GoPtr<EmitContext>): GoSlice<GoPtr<Statement>> {
   const c = receiver!;
   const scope = Stack_Pop(c.varScopeStack)!;
-  const baseFunctions = scope.functions.length > 0 ? slices.Clone(scope.functions)! : ([] as GoSlice<GoPtr<Statement>>);
-  const withVariables = scope.variables.length > 0 ? (() => {
+  let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
+  if (scope.functions.length > 0) {
+    statements = slices.Clone(scope.functions) as GoSlice<GoPtr<Statement>>;
+  }
+  if (scope.variables.length > 0) {
     const f = c.Factory!.__tsgoEmbedded0!;
     const varDeclList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, scope.variables), NodeFlagsNone);
     const varStatement = NewVariableStatement(f, undefined, varDeclList);
     EmitContext_SetEmitFlags(receiver, varStatement, EFCustomPrologue);
-    return [...baseFunctions, varStatement];
-  })() : baseFunctions;
-  const withInit = scope.initializationStatements.length > 0
-    ? [...withVariables, ...scope.initializationStatements]
-    : withVariables;
-  return [...withInit, ...EmitContext_EndLexicalEnvironment(receiver)];
+    statements = GoAppend(statements, varStatement);
+  }
+  if (scope.initializationStatements.length > 0) {
+    statements = GoAppend(statements, ...scope.initializationStatements);
+  }
+  return GoAppend(statements, ...EmitContext_EndLexicalEnvironment(receiver));
 }
 
 /**
@@ -418,7 +421,7 @@ export function EmitContext_AddVariableDeclaration(receiver: GoPtr<EmitContext>,
   const varDecl = NewVariableDeclaration(c.Factory!.__tsgoEmbedded0!, name, undefined, undefined, undefined);
   EmitContext_SetEmitFlags(receiver, varDecl, EFNoNestedSourceMaps);
   const scope = Stack_Peek(c.varScopeStack)!;
-  scope.variables = [...scope.variables, varDecl];
+  scope.variables = GoAppend(scope.variables, varDecl);
   if ((scope.flags & environmentFlagsInParameters) !== 0) {
     scope.flags = scope.flags | environmentFlagsVariablesHoistedInParameters;
   }
@@ -438,7 +441,7 @@ export function EmitContext_AddHoistedFunctionDeclaration(receiver: GoPtr<EmitCo
   const c = receiver!;
   EmitContext_SetEmitFlags(receiver, node, EFCustomPrologue);
   const scope = Stack_Peek(c.varScopeStack)!;
-  scope.functions = [...scope.functions, node];
+  scope.functions = GoAppend(scope.functions, node);
 }
 
 /**
@@ -451,7 +454,7 @@ export function EmitContext_AddHoistedFunctionDeclaration(receiver: GoPtr<EmitCo
  */
 export function EmitContext_StartLexicalEnvironment(receiver: GoPtr<EmitContext>): void {
   const c = receiver!;
-  const scope: varScope = { variables: [], functions: [], flags: environmentFlagsNone, initializationStatements: [] };
+  const scope: varScope = { variables: GoNilSlice(), functions: GoNilSlice(), flags: environmentFlagsNone, initializationStatements: GoNilSlice() };
   Stack_Push(c.letScopeStack, scope);
 }
 
@@ -474,12 +477,15 @@ export function EmitContext_StartLexicalEnvironment(receiver: GoPtr<EmitContext>
 export function EmitContext_EndLexicalEnvironment(receiver: GoPtr<EmitContext>): GoSlice<GoPtr<Statement>> {
   const c = receiver!;
   const scope = Stack_Pop(c.letScopeStack)!;
-  if (scope.variables.length === 0) return [];
-  const f = c.Factory!.__tsgoEmbedded0!;
-  const varDeclList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, scope.variables), NodeFlagsLet);
-  const varStatement = NewVariableStatement(f, undefined, varDeclList);
-  EmitContext_SetEmitFlags(receiver, varStatement, EFCustomPrologue);
-  return [varStatement];
+  let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
+  if (scope.variables.length > 0) {
+    const f = c.Factory!.__tsgoEmbedded0!;
+    const varDeclList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, scope.variables), NodeFlagsLet);
+    const varStatement = NewVariableStatement(f, undefined, varDeclList);
+    EmitContext_SetEmitFlags(receiver, varStatement, EFCustomPrologue);
+    statements = GoAppend(statements, varStatement);
+  }
+  return statements;
 }
 
 /**
@@ -557,7 +563,7 @@ export function EmitContext_AddLexicalDeclaration(receiver: GoPtr<EmitContext>, 
   const varDecl = NewVariableDeclaration(c.Factory!.__tsgoEmbedded0!, name, undefined, undefined, undefined);
   EmitContext_SetEmitFlags(receiver, varDecl, EFNoNestedSourceMaps);
   const scope = Stack_Peek(c.letScopeStack)!;
-  scope.variables = [...scope.variables, varDecl];
+  scope.variables = GoAppend(scope.variables, varDecl);
 }
 
 /**
@@ -1027,6 +1033,9 @@ export function EmitContext_SetOriginalEx(receiver: GoPtr<EmitContext>, node: Go
     throw new globalThis.Error("Original cannot be nil.");
   }
 
+  if (GoMapIsNil(c.original)) {
+    c.original = new globalThis.Map();
+  }
   const existing = c.original.get(node);
   const ok = c.original.has(node);
   if (!ok) {
@@ -1392,7 +1401,7 @@ export function EmitContext_AssignCommentAndSourceMapRanges(receiver: GoPtr<Emit
 export function EmitContext_TokenSourceMapRange(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, kind: Kind): [TextRange, bool] {
   const c = receiver!;
   const emitNode = LinkStore_TryGet(c.emitNodes, node);
-  if (emitNode !== undefined && emitNode.v.tokenSourceMapRanges !== undefined) {
+  if (emitNode !== undefined && !GoMapIsNil(emitNode.v.tokenSourceMapRanges)) {
     const loc = emitNode.v.tokenSourceMapRanges.get(kind);
     const ok = emitNode.v.tokenSourceMapRanges.has(kind);
     if (ok) {
@@ -1417,7 +1426,7 @@ export function EmitContext_TokenSourceMapRange(receiver: GoPtr<EmitContext>, no
 export function EmitContext_SetTokenSourceMapRange(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, kind: Kind, loc: TextRange): void {
   const c = receiver!;
   const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
-  if (emitNode.v.tokenSourceMapRanges === undefined) {
+  if (GoMapIsNil(emitNode.v.tokenSourceMapRanges)) {
     emitNode.v.tokenSourceMapRanges = new globalThis.Map<Kind, TextRange>();
   }
   emitNode.v.tokenSourceMapRanges.set(kind, loc);
@@ -1462,6 +1471,9 @@ export function EmitContext_TextSource(receiver: GoPtr<EmitContext>, node: GoPtr
  */
 export function EmitContext_SetAssignedName(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, name: GoPtr<Expression>): void {
   const c = receiver!;
+  if (GoMapIsNil(c.assignedName)) {
+    c.assignedName = new globalThis.Map();
+  }
   c.assignedName.set(node, name);
 }
 
@@ -1491,6 +1503,9 @@ export function EmitContext_ClassThis(receiver: GoPtr<EmitContext>, node: GoPtr<
  */
 export function EmitContext_SetClassThis(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, classThis: GoPtr<IdentifierNode>): void {
   const c = receiver!;
+  if (GoMapIsNil(c.classThis)) {
+    c.classThis = new globalThis.Map();
+  }
   c.classThis.set(node, classThis);
 }
 
@@ -1514,10 +1529,8 @@ export function EmitContext_RequestEmitHelper(receiver: GoPtr<EmitContext>, help
     throw new globalThis.Error("Cannot request a scoped emit helper");
   }
   const deps = helper!.Dependencies;
-  if (deps !== undefined) {
-    for (const h of deps) {
-      EmitContext_RequestEmitHelper(receiver, h);
-    }
+  for (const h of deps) {
+    EmitContext_RequestEmitHelper(receiver, h);
   }
   OrderedSet_Add(c.emitHelpers, helper, emitHelperPointerKey);
 }
@@ -1534,8 +1547,7 @@ export function EmitContext_RequestEmitHelper(receiver: GoPtr<EmitContext>, help
  */
 export function EmitContext_ReadEmitHelpers(receiver: GoPtr<EmitContext>): GoSlice<GoPtr<EmitHelper>> {
   const c = receiver!;
-  const helpers: GoSlice<GoPtr<EmitHelper>> = [];
-  OrderedSet_Values(c.emitHelpers)!((v) => { helpers.push(v); return true; });
+  const helpers = slices.Collect(OrderedSet_Values(c.emitHelpers)!);
   OrderedSet_Clear(c.emitHelpers);
   return helpers;
 }
@@ -1554,7 +1566,6 @@ export function EmitContext_ReadEmitHelpers(receiver: GoPtr<EmitContext>): GoSli
 export function EmitContext_AddEmitHelper(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, ...helper: Array<GoPtr<EmitHelper>>): void {
   const c = receiver!;
   const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
-  emitNode.v.helpers ??= [];
   for (const h of helper) {
     emitNode.v.helpers = AppendIfUnique(emitNode.v.helpers, h, GoEqualStrict<GoPtr<EmitHelper>>);
   }
@@ -1598,13 +1609,12 @@ export function EmitContext_MoveEmitHelpers(receiver: GoPtr<EmitContext>, source
   if (sourceEmitNode === undefined) {
     return;
   }
-  const sourceEmitHelpers = sourceEmitNode.v.helpers ?? [];
+  const sourceEmitHelpers = sourceEmitNode.v.helpers;
   if (sourceEmitHelpers.length === 0) {
     return;
   }
 
   const targetEmitNode = LinkStore_Get(c.emitNodes, target, zeroEmitNode, nodePointerKey)!;
-  targetEmitNode.v.helpers ??= [];
   let helpersRemoved = 0;
   for (let i = 0; i < sourceEmitHelpers.length; i++) {
     const helper = sourceEmitHelpers[i]!;
@@ -1637,9 +1647,9 @@ export function EmitContext_GetEmitHelpers(receiver: GoPtr<EmitContext>, node: G
   const c = receiver!;
   const emitNode = LinkStore_TryGet(c.emitNodes, node);
   if (emitNode !== undefined) {
-    return emitNode.v.helpers ?? [];
+    return emitNode.v.helpers;
   }
-  return [];
+  return GoNilSlice();
 }
 
 /**
@@ -1825,18 +1835,18 @@ export function EmitContext_addDefaultValueAssignmentsIfNeeded(receiver: GoPtr<E
   }
   const c = receiver!;
   const nodes = nodeList.Nodes;
-  let result: GoSlice<GoPtr<Node>> | undefined = undefined;
+  let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; i < nodes.length; i++) {
     const parameter = nodes[i]!;
     const updated = EmitContext_addDefaultValueAssignmentIfNeeded(receiver, parameter as GoPtr<ParameterDeclaration>);
     if (updated !== parameter) {
-      if (result === undefined) {
+      if (GoSliceIsNil(result)) {
         result = slices.Clone(nodes);
       }
-      result![i] = updated;
+      result[i] = updated;
     }
   }
-  if (result !== undefined) {
+  if (!GoSliceIsNil(result)) {
     const res = NodeFactory_NewNodeList(c.Factory!.__tsgoEmbedded0!, result)!;
     res.Loc = nodeList.Loc;
     return res;
@@ -2042,7 +2052,7 @@ export function EmitContext_AddInitializationStatement(receiver: GoPtr<EmitConte
     throw new globalThis.Error("Tried to add an initialization statement without a surrounding variable scope");
   }
   EmitContext_AddEmitFlags(receiver, node, EFCustomPrologue);
-  scope!.initializationStatements = [...scope!.initializationStatements, node];
+  scope!.initializationStatements = GoAppend(scope!.initializationStatements, node);
 }
 
 /**
@@ -2143,17 +2153,17 @@ export function EmitContext_VisitIterationBody(receiver: GoPtr<EmitContext>, bod
     throw new globalThis.Error("Expected visitor to return a statement.");
   }
 
-  const statements = EmitContext_EndLexicalEnvironment(receiver);
+  let statements = EmitContext_EndLexicalEnvironment(receiver);
   if (statements.length > 0) {
     const f = c.Factory!.__tsgoEmbedded0!;
     if (IsBlock(updated)) {
-      const updatedStatements = [...statements, ...Node_Statements(updated)!] as GoSlice<GoPtr<Node>>;
-      const statementsList = NodeFactory_NewNodeList(f, updatedStatements)!;
+      statements = GoAppend(statements, ...Node_Statements(updated)!);
+      const statementsList = NodeFactory_NewNodeList(f, statements as GoSlice<GoPtr<Node>>)!;
       statementsList.Loc = Node_StatementList(updated)!.Loc;
       return NodeFactory_UpdateBlock(f, AsBlock(updated)!, statementsList, AsBlock(updated)!.MultiLine) as GoPtr<Statement>;
     }
-    const combined = [...statements, updated] as GoSlice<GoPtr<Node>>;
-    return NewBlock(f, NodeFactory_NewNodeList(f, combined), true as bool) as GoPtr<Statement>;
+    statements = GoAppend(statements, updated);
+    return NewBlock(f, NodeFactory_NewNodeList(f, statements as GoSlice<GoPtr<Node>>), true as bool) as GoPtr<Statement>;
   }
 
   return updated;
@@ -2221,7 +2231,7 @@ export function EmitContext_SetSyntheticLeadingComments(receiver: GoPtr<EmitCont
 export function EmitContext_AddSyntheticLeadingComment(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, kind: Kind, text: string, hasTrailingNewLine: bool): GoPtr<Node> {
   const c = receiver!;
   const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
-  emitNode.v.leadingComments = [...(emitNode.v.leadingComments ?? []), { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text }];
+  emitNode.v.leadingComments = GoAppend(emitNode.v.leadingComments, { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text });
   return node;
 }
 
@@ -2239,9 +2249,9 @@ export function EmitContext_AddSyntheticLeadingComment(receiver: GoPtr<EmitConte
 export function EmitContext_GetSyntheticLeadingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoSlice<SynthesizedComment> {
   const c = receiver!;
   if (LinkStore_Has(c.emitNodes, node)) {
-    return LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.leadingComments ?? [];
+    return LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.leadingComments;
   }
-  return [];
+  return GoNilSlice();
 }
 
 /**
@@ -2271,7 +2281,7 @@ export function EmitContext_SetSyntheticTrailingComments(receiver: GoPtr<EmitCon
 export function EmitContext_AddSyntheticTrailingComment(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, kind: Kind, text: string, hasTrailingNewLine: bool): GoPtr<Node> {
   const c = receiver!;
   const emitNode = LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!;
-  emitNode.v.trailingComments = [...(emitNode.v.trailingComments ?? []), { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text }];
+  emitNode.v.trailingComments = GoAppend(emitNode.v.trailingComments, { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text });
   return node;
 }
 
@@ -2289,9 +2299,9 @@ export function EmitContext_AddSyntheticTrailingComment(receiver: GoPtr<EmitCont
 export function EmitContext_GetSyntheticTrailingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoSlice<SynthesizedComment> {
   const c = receiver!;
   if (LinkStore_Has(c.emitNodes, node)) {
-    return LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.trailingComments ?? [];
+    return LinkStore_Get(c.emitNodes, node, zeroEmitNode, nodePointerKey)!.v.trailingComments;
   }
-  return [];
+  return GoNilSlice();
 }
 
 /**

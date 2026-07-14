@@ -1,5 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoStringKey } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoNumberKey, GoStringKey } from "../../go/compat.js";
 import { NewSetWithSizeHint, Set_Add, Set_Has } from "../collections/set.js";
 import { AsJSDoc, AsJSDocParameterOrPropertyTag, AsQualifiedName } from "../ast/generated/casts.js";
 import type { Node } from "../ast/spine.js";
@@ -96,14 +96,14 @@ import { entityNameToString } from "./utilities.js";
  * }
  */
 export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  const jsdocParameters: GoSlice<GoPtr<Node>> = [];
+  let jsdocParameters: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const tag of getAllJSDocTags(node)) {
     if (tag!.Kind === KindJSDocParameterTag) {
       const name = Node_Name(tag);
       if (IsIdentifier(name) && Node_Text(name).length === 0) {
         continue;
       }
-      jsdocParameters.push(tag);
+      jsdocParameters = GoAppend(jsdocParameters, tag);
     }
   }
 
@@ -212,5 +212,5 @@ export function getAllJSDocTags(node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
       }
     }
   }
-  return [];
+  return GoNilSlice();
 }

@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
@@ -279,18 +280,18 @@ export const extensionsImplementationFiles: extensions = extensionsTypeScript | 
  */
 export function extensions_String(receiver: extensions): string {
   const e = receiver;
-  const result: GoSlice<string> = [];
+  let result: GoSlice<string> = [];
   if ((e & extensionsTypeScript) !== 0) {
-    result.push("TypeScript");
+    result = GoAppend(result, "TypeScript");
   }
   if ((e & extensionsJavaScript) !== 0) {
-    result.push("JavaScript");
+    result = GoAppend(result, "JavaScript");
   }
   if ((e & extensionsDeclaration) !== 0) {
-    result.push("Declaration");
+    result = GoAppend(result, "Declaration");
   }
   if ((e & extensionsJson) !== 0) {
-    result.push("JSON");
+    result = GoAppend(result, "JSON");
   }
   return strings.Join(result, ", ");
 }
@@ -318,18 +319,18 @@ export function extensions_String(receiver: extensions): string {
  */
 export function extensions_Array(receiver: extensions): GoSlice<string> {
   const e = receiver;
-  const result: GoSlice<string> = [];
+  let result: GoSlice<string> = [];
   if ((e & extensionsTypeScript) !== 0) {
-    result.push(...extension.SupportedTSImplementationExtensions);
+    result = GoAppend(result, ...extension.SupportedTSImplementationExtensions);
   }
   if ((e & extensionsJavaScript) !== 0) {
-    result.push(...extension.SupportedJSExtensionsFlat);
+    result = GoAppend(result, ...extension.SupportedJSExtensionsFlat);
   }
   if ((e & extensionsDeclaration) !== 0) {
-    result.push(...extension.SupportedDeclarationExtensions);
+    result = GoAppend(result, ...extension.SupportedDeclarationExtensions);
   }
   if ((e & extensionsJson) !== 0) {
-    result.push(extension.ExtensionJson);
+    result = GoAppend(result, extension.ExtensionJson);
   }
   return result;
 }

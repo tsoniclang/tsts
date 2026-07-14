@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoInterface, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
-import { GoSliceToZeroLength } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoSliceToZeroLength } from "../../go/compat.js";
 import type { Stringer } from "../../go/fmt.js";
 import * as errors from "../../go/errors.js";
 import * as fmt from "../../go/fmt.js";
@@ -242,12 +242,12 @@ export function Parse(pattern: string): [GoPtr<Glob>, GoError] {
  * }
  */
 export function parse(pattern: string, nested: bool): [GoPtr<Glob>, string, GoError] {
-  const g: Glob = { elems: [] };
+  const g: Glob = { elems: GoNilSlice() };
   while (pattern.length > 0) {
     switch (pattern[0]) {
       case "/": {
         pattern = pattern.slice(1);
-        g.elems = [...g.elems, newSlash()];
+        g.elems = GoAppend(g.elems, newSlash());
         break;
       }
 
@@ -257,22 +257,22 @@ export function parse(pattern: string, nested: bool): [GoPtr<Glob>, string, GoEr
             return [undefined, "", errors.New("** may only be adjacent to '/'")];
           }
           pattern = pattern.slice(2);
-          g.elems = [...g.elems, newStarStar()];
+          g.elems = GoAppend(g.elems, newStarStar());
           break;
         }
         pattern = pattern.slice(1);
-        g.elems = [...g.elems, newStar()];
+        g.elems = GoAppend(g.elems, newStar());
         break;
       }
 
       case "?": {
         pattern = pattern.slice(1);
-        g.elems = [...g.elems, newAnyChar()];
+        g.elems = GoAppend(g.elems, newAnyChar());
         break;
       }
 
       case "{": {
-        let gs: group = [];
+        let gs: group = GoNilSlice();
         while (pattern[0] !== "}") {
           pattern = pattern.slice(1);
           const [groupG, pat, err] = parse(pattern, true);
@@ -283,10 +283,10 @@ export function parse(pattern: string, nested: bool): [GoPtr<Glob>, string, GoEr
             return [undefined, "", errors.New("unmatched '{'")];
           }
           pattern = pat;
-          gs = [...gs, groupG];
+          gs = GoAppend(gs, groupG);
         }
         pattern = pattern.slice(1);
-        g.elems = [...g.elems, newGroup(gs)];
+        g.elems = GoAppend(g.elems, newGroup(gs));
         break;
       }
 
@@ -327,7 +327,7 @@ export function parse(pattern: string, nested: bool): [GoPtr<Glob>, string, GoEr
           return [undefined, "", errBadRange];
         }
         pattern = pattern.slice(1);
-        g.elems = [...g.elems, newCharRange({ negate, low, high })];
+        g.elems = GoAppend(g.elems, newCharRange({ negate, low, high }));
         break;
       }
 
@@ -419,7 +419,7 @@ export function Glob_parseLiteral(receiver: GoPtr<Glob>, pattern: string, nested
   if (end === -1) {
     end = pattern.length;
   }
-  g.elems = [...g.elems, newLiteral(pattern.slice(0, end))];
+  g.elems = GoAppend(g.elems, newLiteral(pattern.slice(0, end)));
   return pattern.slice(end);
 }
 
@@ -586,9 +586,9 @@ export function starStar_String(receiver: starStar): string {
  * }
  */
 export function group_String(receiver: group): string {
-  let parts: GoSlice<string> = [];
+  let parts = GoNilSlice<string>();
   for (const g of receiver) {
-    parts = [...parts, Glob_String(g)];
+    parts = GoAppend(parts, Glob_String(g));
   }
   return "{" + strings.Join(parts, ",") + "}";
 }
@@ -818,11 +818,11 @@ export function match(elems: GoSlice<GoInterface<element>>, input: string): bool
     } else if (isGroupCarrier(elem)) {
       // Append remaining pattern elements to each group member looking for a
       // match.
-      let branch: GoSlice<GoInterface<element>> = [];
+      let branch = GoNilSlice<GoInterface<element>>();
       for (const m of elem.value) {
         branch = GoSliceToZeroLength(branch);
-        branch = [...branch, ...m!.elems];
-        branch = [...branch, ...elems];
+        branch = GoAppend(branch, ...m!.elems);
+        branch = GoAppend(branch, ...elems);
         if (match(branch, input)) {
           return true;
         }

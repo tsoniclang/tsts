@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoStringKey, GoZeroPointer, type GoFunc, type GoInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoStringKey, GoZeroPointer, type GoFunc, type GoInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Entries, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -186,27 +186,27 @@ export interface diagnosticAndArgs {
 export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace: GoFunc<(m: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>): VersionPaths {
   receiver!.once.Do(() => {
     const typesVersions: JSONValue = receiver!.__tsgoEmbedded0?.__tsgoEmbedded1?.TypesVersions ?? { Type: JSONValueTypeNotPresent, Value: undefined };
-    receiver!.versionTraces ??= [];
+    receiver!.versionTraces ??= GoNilSlice();
     receiver!.versionPaths ??= { Version: "", pathsJSON: undefined, paths: undefined };
     if (typesVersions.Type === JSONValueTypeNotPresent) {
-      receiver!.versionTraces = [...receiver!.versionTraces, {
+      receiver!.versionTraces = GoAppend(receiver!.versionTraces, {
         message: X_package_json_does_not_have_a_0_field,
         args: ["typesVersions"],
-      }];
+      });
       return;
     }
     if (typesVersions.Type !== JSONValueTypeObject) {
-      receiver!.versionTraces = [...receiver!.versionTraces, {
+      receiver!.versionTraces = GoAppend(receiver!.versionTraces, {
         message: Expected_type_of_0_field_in_package_json_to_be_1_got_2,
         args: ["typesVersions", "object", JSONValueType_String(typesVersions.Type)],
-      }];
+      });
       return;
     }
 
-    receiver!.versionTraces = [...receiver!.versionTraces, {
+    receiver!.versionTraces = GoAppend(receiver!.versionTraces, {
       message: X_package_json_has_a_typesVersions_field_with_version_specific_path_mappings,
       args: ["typesVersions"],
-    }];
+    });
 
     const obj = JSONValue_AsObject(typesVersions);
     let done = false;
@@ -214,18 +214,18 @@ export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace:
       if (done) return false;
       const [keyRange, ok] = TryParseVersionRange(key);
       if (!ok) {
-        receiver!.versionTraces = [...receiver!.versionTraces, {
+        receiver!.versionTraces = GoAppend(receiver!.versionTraces, {
           message: X_package_json_has_a_typesVersions_entry_0_that_is_not_a_valid_semver_range,
           args: [key],
-        }];
+        });
         return false;
       }
       if (VersionRange_Test(keyRange, typeScriptVersion)) {
         if (value.Type !== JSONValueTypeObject) {
-          receiver!.versionTraces = [...receiver!.versionTraces, {
+          receiver!.versionTraces = GoAppend(receiver!.versionTraces, {
             message: Expected_type_of_0_field_in_package_json_to_be_1_got_2,
             args: ["typesVersions['" + key + "']", "object", JSONValueType_String(value.Type)],
-          }];
+          });
           done = true;
           return false;
         }
@@ -241,10 +241,10 @@ export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace:
     });
 
     if (!done) {
-      receiver!.versionTraces = [...receiver!.versionTraces, {
+      receiver!.versionTraces = GoAppend(receiver!.versionTraces, {
         message: X_package_json_does_not_have_a_typesVersions_entry_that_matches_version_0,
         args: [VersionMajorMinor()],
-      }];
+      });
     }
   });
   if (trace !== undefined) {

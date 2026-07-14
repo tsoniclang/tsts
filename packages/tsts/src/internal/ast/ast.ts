@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Once, RWMutex } from "../../go/sync.js";
 import { Bool, Uint32 } from "../../go/sync/atomic.js";
@@ -6287,9 +6287,9 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
       let declarations = result.get(name);
       if (declarations === undefined) {
         declarations = [];
-        result.set(name, declarations);
       }
-      declarations.push(declaration);
+      declarations = GoAppend(declarations, declaration);
+      result.set(name, declarations);
     }
   };
 
@@ -6313,9 +6313,9 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
           } else {
             if (declarations === undefined) {
               declarations = [];
-              result.set(declarationName, declarations);
             }
-            declarations.push(node);
+            declarations = GoAppend(declarations, node);
+            result.set(declarationName, declarations);
           }
         }
         Node_ForEachChild(node, visit);

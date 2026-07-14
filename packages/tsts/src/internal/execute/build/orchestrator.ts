@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoStringKey, GoZeroPointer, GoZeroString, type GoComparable, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroString, type GoComparable, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
@@ -115,7 +115,7 @@ export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o
   } else {
     o!.errorSummaryReporter!(receiver!.errors);
   }
-  if (receiver!.filesToDelete !== undefined && receiver!.filesToDelete !== null) {
+  if (!GoSliceIsNil(receiver!.filesToDelete)) {
     Orchestrator_createBuilderStatusReporter(o, undefined)!(
       NewCompilerDiagnostic(
         diagnostics.A_non_dry_build_would_delete_the_following_files_Colon_0,
@@ -414,7 +414,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
   if (!Set_Has(completed, path)) {
     if (Set_Has(analyzing, path)) {
       if (!inCircularContext) {
-        receiver!.errors.push(NewCompilerDiagnostic(
+        receiver!.errors = GoAppend(receiver!.errors, NewCompilerDiagnostic(
           diagnostics.Project_references_may_not_form_a_circular_graph_Cycle_detected_Colon_0,
           strings.Join(circularityStack, "\n"),
         ));
@@ -422,7 +422,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
       return undefined;
     }
     Set_Add(analyzing, path, GoStringKey);
-    circularityStack = [...circularityStack, configName];
+    circularityStack = GoAppend(circularityStack, configName);
     if (task!.resolved !== undefined) {
       const subRefs = ParsedCommandLine_ResolvedProjectReferencePaths(task!.resolved);
       const projectRefs = ParsedCommandLine_ProjectReferences(task!.resolved);
@@ -430,7 +430,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
         const subReference = subRefs[index]!;
         const upstream = Orchestrator_setupBuildTask(receiver, subReference, task, (inCircularContext || projectRefs[index]!.Circular) as bool, completed, analyzing, circularityStack);
         if (upstream !== undefined) {
-          task!.upStream.push({ task: upstream, refIndex: index });
+          task!.upStream = GoAppend(task!.upStream, { task: upstream, refIndex: index });
         }
       }
     }
@@ -442,10 +442,10 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
       task!.prevReporter = Orchestrator_getTask(receiver, Orchestrator_toPath(receiver, prev));
     }
     task!.done = {} as BuildTask["done"];
-    receiver!.order.push(configName);
+    receiver!.order = GoAppend(receiver!.order, configName);
   }
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch) && downStream !== undefined) {
-    task!.downStream.push(downStream);
+    task!.downStream = GoAppend(task!.downStream, downStream);
   }
   return task;
 }

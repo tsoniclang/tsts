@@ -1,5 +1,5 @@
 import type { int } from "../../../../scalars.js";
-import type { GoError, GoSlice } from "../../../../compat.js";
+import { GoSliceIsNil, type GoError, type GoSlice } from "../../../../compat.js";
 import * as nodeChildProcess from "node:child_process";
 
 export type LoadMode = int;
@@ -102,7 +102,7 @@ function splitConcatenatedJsonObjects(text: string): string[] {
 }
 
 function envObject(env: GoSlice<string> | undefined): NodeJS.ProcessEnv | undefined {
-  if (env === undefined) {
+  if (env === undefined || GoSliceIsNil(env)) {
     return undefined;
   }
   const result: NodeJS.ProcessEnv = {};

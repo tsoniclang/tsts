@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { NodeVisitor } from "../../ast/visitor.js";
 import { NodeFactory_NewNodeList, Node_Name } from "../../ast/spine.js";
@@ -369,11 +369,11 @@ export function superAccessState_substituteCallExpressionWithSuperAccess(receive
     NodeFlagsNone,
   );
 
-  let allArgs: GoSlice<GoPtr<Node>> = [NodeFactory_NewThisExpression(pf) as unknown as GoPtr<Node>];
+  let allArgs: GoSlice<GoPtr<Node>> = GoAppend(GoNilSlice(), NodeFactory_NewThisExpression(pf) as unknown as GoPtr<Node>);
   if (call!.Arguments !== undefined) {
     const visitedArgs = NodeVisitor_VisitNodes(concreteVisitor, call!.Arguments);
     if (visitedArgs !== undefined) {
-      allArgs = [...allArgs, ...(visitedArgs!.Nodes as unknown as GoSlice<GoPtr<Node>>)];
+      allArgs = GoAppend(allArgs, ...(visitedArgs!.Nodes as unknown as GoSlice<GoPtr<Node>>));
     }
   }
 
@@ -502,10 +502,10 @@ export function superAccessState_createSuperElementAccessInAsyncMethod(receiver:
 export function superAccessState_createSuperAccessVariableStatement(receiver: GoPtr<superAccessState>): GoPtr<Node> {
   const f = receiver!.factory!.__tsgoEmbedded0!;
   const pf = receiver!.factory!;
-  let accessors: GoSlice<GoPtr<Node>> = [];
+  let accessors: GoSlice<GoPtr<Node>> = GoNilSlice();
 
   OrderedSet_Values(receiver!.capturedSuperProperties!)!((name: string) => {
-    let descriptorProperties: GoSlice<GoPtr<Node>> = [];
+    let descriptorProperties: GoSlice<GoPtr<Node>> = GoNilSlice();
 
     const getterBody = NewPropertyAccessExpression(
       f,
@@ -525,7 +525,7 @@ export function superAccessState_createSuperAccessVariableStatement(receiver: Go
       getterBody,
     );
     const getter = NewPropertyAssignment(f, undefined, NewIdentifier(f, "get") as unknown as GoPtr<never>, undefined, undefined, getterArrow as unknown as GoPtr<Expression>);
-    descriptorProperties = [...descriptorProperties, getter];
+    descriptorProperties = GoAppend(descriptorProperties, getter);
 
     if (receiver!.hasSuperPropertyAssignment) {
       const vParam = NewParameterDeclaration(f, undefined, undefined, NewIdentifier(f, "v") as unknown as GoPtr<never>, undefined, undefined, undefined);
@@ -548,12 +548,12 @@ export function superAccessState_createSuperAccessVariableStatement(receiver: Go
         assignExpr as unknown as GoPtr<Node>,
       );
       const setter = NewPropertyAssignment(f, undefined, NewIdentifier(f, "set") as unknown as GoPtr<never>, undefined, undefined, setterArrow as unknown as GoPtr<Expression>);
-      descriptorProperties = [...descriptorProperties, setter];
+      descriptorProperties = GoAppend(descriptorProperties, setter);
     }
 
     const descriptor = NewObjectLiteralExpression(f, NodeFactory_NewNodeList(f, descriptorProperties) as unknown as GoPtr<NodeList>, false);
     const accessor = NewPropertyAssignment(f, undefined, NewIdentifier(f, name) as unknown as GoPtr<never>, undefined, undefined, descriptor as unknown as GoPtr<Expression>);
-    accessors = [...accessors, accessor];
+    accessors = GoAppend(accessors, accessor);
     // Go `for ... range` iterates every captured property.
     return true;
   });

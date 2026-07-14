@@ -1,5 +1,6 @@
 import type { bool, int, ulong } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoAppend } from "../../../go/compat.js";
 import { Fprintf, Sprint, Sprintf } from "../../../go/fmt.js";
 import type { Writer } from "../../../go/io.js";
 import type { MemStats } from "../../../go/runtime.js";
@@ -59,7 +60,7 @@ export function table_add(receiver: GoPtr<table>, name: string, value: GoInterfa
   const t = receiver!;
   // In Go: if d, ok := value.(time.Duration); ok { value = formatDuration(d) }
   // In TS: Duration = number, cannot do runtime type assertion; use Sprint for all values.
-  t.rows = [...t.rows, { name, value: Sprint(value) }];
+  t.rows = GoAppend(t.rows, { name, value: Sprint(value) });
 }
 
 /**

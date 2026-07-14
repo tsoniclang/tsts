@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
@@ -4206,18 +4206,18 @@ export function GetConditions(options: GoPtr<CompilerOptions>, resolutionMode: R
   if (resolutionMode === ModuleKindNone && moduleResolution === ModuleResolutionKindBundler) {
     resolutionMode = ModuleKindESNext;
   }
-  const conditions: GoSlice<string> = [];
+  let conditions: GoSlice<string> = [];
   if (resolutionMode === ModuleKindESNext) {
-    conditions.push("import");
+    conditions = GoAppend(conditions, "import");
   } else {
-    conditions.push("require");
+    conditions = GoAppend(conditions, "require");
   }
 
   if (options!.NoDtsResolution !== TSTrue) {
-    conditions.push("types");
+    conditions = GoAppend(conditions, "types");
   }
   if (moduleResolution !== ModuleResolutionKindBundler) {
-    conditions.push("node");
+    conditions = GoAppend(conditions, "node");
   }
   return core.Concatenate(conditions, options!.CustomConditions);
 }
@@ -4392,7 +4392,7 @@ export function TryParsePatterns(pathMappings: GoPtr<OrderedMap<string, GoSlice<
   });
   const numMatchables = OrderedMap_Size(typedMappings) - numPatterns;
 
-  const patterns: GoSlice<Pattern> = [];
+  let patterns: GoSlice<Pattern> = [];
   const matchableStringSet: Set<string> = NewSetWithSizeHint<string>(numMatchables, GoStringKey)!;
 
   OrderedMap_Keys<string, GoSlice<string>>(typedMappings)!((p: string): bool => {
@@ -4401,7 +4401,7 @@ export function TryParsePatterns(pathMappings: GoPtr<OrderedMap<string, GoSlice<
       if (pattern.StarIndex === -1) {
         Set_Add(matchableStringSet, p, GoStringKey);
       } else {
-        patterns.push(pattern);
+        patterns = GoAppend(patterns, pattern);
       }
     }
     return true;
@@ -4585,7 +4585,7 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
     return [];
   }
 
-  const wildcardMatches: GoSlice<string> = [];
+  let wildcardMatches: GoSlice<string> = [];
   const [typeRoots] = CompilerOptions_GetEffectiveTypeRoots(options, host!.GetCurrentDirectory());
   for (const root of (typeRoots ?? [])) {
     if (host!.FS()!.DirectoryExists(root)) {
@@ -4602,19 +4602,19 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
         if (!isNotNeededPackage) {
           const baseFileName = tspath.GetBaseFileName(normalized);
           if (!strings.HasPrefix(baseFileName, ".")) {
-            wildcardMatches.push(baseFileName);
+            wildcardMatches = GoAppend(wildcardMatches, baseFileName);
           }
         }
       }
     }
   }
 
-  const result: GoSlice<string> = [];
+  let result: GoSlice<string> = [];
   for (const t of (options!.Types ?? [])) {
     if (t === "*") {
-      result.push(...wildcardMatches);
+      result = GoAppend(result, ...wildcardMatches);
     } else {
-      result.push(t);
+      result = GoAppend(result, t);
     }
   }
   return core.Deduplicate(result, GoEqualStrict);
@@ -4782,7 +4782,7 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
     return resolutionState_loadEntrypointsFromExportMap(state, packageJson, packageName, exportsField);
   }
 
-  const result: GoSlice<GoPtr<ResolvedEntrypoint>> = [];
+  let result: GoSlice<GoPtr<ResolvedEntrypoint>> = [];
   const mainResolution = resolutionState_loadNodeModuleFromDirectoryWorker(
     state,
     exts,
@@ -4791,7 +4791,7 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
   );
 
   if (resolved_isResolved(mainResolution)) {
-    result.push(Resolver_createResolvedEntrypointHandlingSymlink(
+    result = GoAppend(result, Resolver_createResolvedEntrypointHandlingSymlink(
       receiver,
       mainResolution!.path,
       packageName,
@@ -4817,7 +4817,7 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
         continue;
       }
 
-      result.push(Resolver_createResolvedEntrypointHandlingSymlink(
+      result = GoAppend(result, Resolver_createResolvedEntrypointHandlingSymlink(
         receiver,
         file,
         tspath.ResolvePath(packageName, tspath.GetRelativePathFromDirectory(packageJson!.PackageDirectory, file, comparePathsOptions)),
@@ -4993,7 +4993,7 @@ export function Resolver_createResolvedEntrypointHandlingSymlink(receiver: GoPtr
  * }
  */
 export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<resolutionState>, packageJson: GoPtr<InfoCacheEntry>, packageName: string, exports: ExportsOrImports): GoSlice<GoPtr<ResolvedEntrypoint>> {
-  const entrypoints: GoSlice<GoPtr<ResolvedEntrypoint>> = [];
+  let entrypoints: GoSlice<GoPtr<ResolvedEntrypoint>> = [];
 
   const loadEntrypointsFromTargetExports = (subpath: string, includeConditions: GoPtr<Set<string>>, excludeConditions: GoPtr<Set<string>>, exp: ExportsOrImports): void => {
     const expType = exp.__tsgoEmbedded0!.Type;
@@ -5019,7 +5019,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
           const [matchedStar, ok] = resolutionState_getMatchedStarForPatternEntrypoint(receiver, file, leadingSlice, trailingSlice, caseSensitive);
           if (!ok) continue;
           const moduleSpecifier = tspath.ResolvePath(packageName, strings.Replace(subpath, "*", matchedStar, 1));
-          entrypoints.push(Resolver_createResolvedEntrypointHandlingSymlink(
+          entrypoints = GoAppend(entrypoints, Resolver_createResolvedEntrypointHandlingSymlink(
             receiver!.resolver,
             file,
             moduleSpecifier,
@@ -5036,7 +5036,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
         const resolvedTarget = tspath.ResolvePath(packageJson!.PackageDirectory, expStr);
         const result = resolutionState_loadFileNameFromPackageJSONField(receiver, receiver!.extensions, resolvedTarget, expStr);
         if (resolved_isResolved(result)) {
-          entrypoints.push(Resolver_createResolvedEntrypointHandlingSymlink(
+          entrypoints = GoAppend(entrypoints, Resolver_createResolvedEntrypointHandlingSymlink(
             receiver!.resolver,
             result!.path,
             tspath.ResolvePath(packageName, subpath),
@@ -5051,7 +5051,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
         loadEntrypointsFromTargetExports(subpath, includeConditions, excludeConditions, element);
       }
     } else if (expType === JSONValueTypeObject) {
-      const prevConditions: GoSlice<string> = [];
+      let prevConditions: GoSlice<string> = [];
       OrderedMap_Entries<string, ExportsOrImports>(ExportsOrImports_AsObject(exp) as GoPtr<OrderedMap<string, ExportsOrImports>>)!((condition: string, subExport: ExportsOrImports): bool => {
         if (excludeConditions !== undefined && Set_Has(excludeConditions, condition)) {
           return true;
@@ -5073,7 +5073,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
             Set_Add(newExcludeConditions!, prevCondition, GoStringKey);
           }
         }
-        prevConditions.push(condition);
+        prevConditions = GoAppend(prevConditions, condition);
         loadEntrypointsFromTargetExports(subpath, newIncludeConditions, newExcludeConditions, subExport);
         if (conditionAlwaysMatches) {
           return false; // break

@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend, GoSliceIsNil } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import { AsSourceFile } from "./ast.js";
 import type { SourceFile } from "./ast.js";
@@ -285,7 +286,7 @@ export function NodeVisitor_VisitModifiers(receiver: GoPtr<NodeVisitor>, nodes: 
  * }
  */
 export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): [result: GoSlice<GoPtr<Node>>, changed: bool] {
-  if (nodes === undefined || receiver!.Visit === undefined) {
+  if (GoSliceIsNil(nodes) || receiver!.Visit === undefined) {
     return [nodes, false as bool];
   }
 
@@ -304,9 +305,9 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSl
         if (visited === undefined) {
           // do nothing
         } else if (visited.Kind === KindSyntaxList) {
-          updated = [...updated, ...AsSyntaxList(visited)!.Children];
+          updated = GoAppend(updated, ...AsSyntaxList(visited)!.Children);
         } else {
-          updated = [...updated, visited];
+          updated = GoAppend(updated, visited);
         }
 
         i++;
@@ -320,7 +321,7 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSl
           node = nodes[i];
           visited = receiver!.Visit(node);
         } else {
-          updated = [...updated, ...nodes.slice(i)];
+          updated = GoAppend(updated, ...nodes.slice(i));
           break;
         }
       }

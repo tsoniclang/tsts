@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoNumberKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoNumberKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { ObjectLiteralExpression } from "../../ast/generated/data.js";
 import type { Expression, Statement, TypeNode } from "../../ast/generated/unions.js";
@@ -301,12 +301,12 @@ import {
 export function Parser_validateJsonObjectLiteral(receiver: GoPtr<Parser>, sourceFile: GoPtr<SourceFile>, node: GoPtr<ObjectLiteralExpression>): void {
   for (const element of node!.Properties!.Nodes!) {
     if (element!.Kind !== KindPropertyAssignment) {
-      receiver!.diagnostics.push(NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, element), Property_assignment_expected));
+      receiver!.diagnostics = GoAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, element), Property_assignment_expected));
       continue;
     }
     const elementName = Node_Name(element);
     if (elementName !== undefined && !isDoubleQuotedString(elementName)) {
-      receiver!.diagnostics.push(NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, elementName), String_literal_with_double_quotes_expected));
+      receiver!.diagnostics = GoAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, elementName), String_literal_with_double_quotes_expected));
     }
     Parser_validateJsonValue(receiver, sourceFile, AsPropertyAssignment(element)!.Initializer);
   }
@@ -416,7 +416,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
   if (receiver!.possibleAwaitSpans.length % 2 === 1) {
     throw new globalThis.Error("possibleAwaitSpans malformed: odd number of indices, not paired into spans.");
   }
-  const statements: GoSlice<GoPtr<Node>> = [];
+  let statements: GoSlice<GoPtr<Node>> = [];
   const savedParseDiagnostics = receiver!.diagnostics;
   receiver!.diagnostics = [];
 
@@ -426,7 +426,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     // append all non-await statements between afterAwaitStatement and nextAwaitStatement
     const prevStatement = sourceFile!.Statements!.Nodes[afterAwaitStatement];
     const nextStatement = sourceFile!.Statements!.Nodes[nextAwaitStatement!];
-    statements.push(...sourceFile!.Statements!.Nodes.slice(afterAwaitStatement, nextAwaitStatement));
+    statements = GoAppend(statements, ...sourceFile!.Statements!.Nodes.slice(afterAwaitStatement, nextAwaitStatement));
 
     // append all diagnostics associated with the copied range
     const diagnosticStart = FindIndex(savedParseDiagnostics, (diagnostic) => {
@@ -442,9 +442,9 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     }
     if (diagnosticStart >= 0) {
       if (diagnosticEnd >= 0) {
-        receiver!.diagnostics.push(...savedParseDiagnostics.slice(diagnosticStart, diagnosticStart + diagnosticEnd));
+        receiver!.diagnostics = GoAppend(receiver!.diagnostics, ...savedParseDiagnostics.slice(diagnosticStart, diagnosticStart + diagnosticEnd));
       } else {
-        receiver!.diagnostics.push(...savedParseDiagnostics.slice(diagnosticStart));
+        receiver!.diagnostics = GoAppend(receiver!.diagnostics, ...savedParseDiagnostics.slice(diagnosticStart));
       }
     }
 
@@ -458,7 +458,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     while (receiver!.token !== KindEndOfFile) {
       const startPos = Scanner_TokenFullStart(receiver!.scanner);
       const statement = Parser_parseStatement(receiver);
-      statements.push(statement);
+      statements = GoAppend(statements, statement);
       if (startPos === Scanner_TokenFullStart(receiver!.scanner)) {
         Parser_nextToken(receiver);
       }
@@ -488,14 +488,14 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
   // append all statements between pos and the end of the list
   if (afterAwaitStatement < sourceFile!.Statements!.Nodes.length) {
     const prevStatement2 = sourceFile!.Statements!.Nodes[afterAwaitStatement];
-    statements.push(...sourceFile!.Statements!.Nodes.slice(afterAwaitStatement));
+    statements = GoAppend(statements, ...sourceFile!.Statements!.Nodes.slice(afterAwaitStatement));
 
     // append all diagnostics associated with the copied range
     const diagnosticStart2 = FindIndex(savedParseDiagnostics, (diagnostic) => {
       return Diagnostic_Pos(diagnostic) >= Node_Pos(prevStatement2);
     });
     if (diagnosticStart2 >= 0) {
-      receiver!.diagnostics.push(...savedParseDiagnostics.slice(diagnosticStart2));
+      receiver!.diagnostics = GoAppend(receiver!.diagnostics, ...savedParseDiagnostics.slice(diagnosticStart2));
     }
   }
 
@@ -3226,13 +3226,13 @@ export function Parser_parseTemplateSpans(receiver: GoPtr<Parser>, isTaggedTempl
   const pos = Parser_nodePos(receiver);
   const collect = (list: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> => {
     const span = Parser_parseTemplateSpan(receiver, isTaggedTemplate);
-    const next = [...list, span];
+    const next = GoAppend(list, span);
     if (AsTemplateSpan(span)!.Literal!.Kind !== KindTemplateMiddle) {
       return next;
     }
     return collect(next);
   };
-  const list = collect([]);
+  const list = collect(GoNilSlice());
   return Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), list);
 }
 

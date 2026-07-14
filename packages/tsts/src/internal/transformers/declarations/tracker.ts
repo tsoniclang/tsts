@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoEqualStrict, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilSlice, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Symbol } from "../../ast/ast.js";
@@ -72,7 +72,7 @@ export function SymbolTrackerImpl_PopErrorFallbackNode(receiver: GoPtr<SymbolTra
  * }
  */
 export function SymbolTrackerImpl_PushErrorFallbackNode(receiver: GoPtr<SymbolTrackerImpl>, node: GoPtr<Node>): void {
-  receiver!.fallbackStack = [...receiver!.fallbackStack, node];
+  receiver!.fallbackStack = GoAppend(receiver!.fallbackStack, node);
 }
 
 /**
@@ -484,7 +484,7 @@ export interface SymbolTrackerSharedState {
  * }
  */
 export function SymbolTrackerSharedState_addDiagnostic(receiver: GoPtr<SymbolTrackerSharedState>, diag: GoPtr<Diagnostic>): void {
-  receiver!.diagnostics = [...receiver!.diagnostics, diag];
+  receiver!.diagnostics = GoAppend(receiver!.diagnostics, diag);
 }
 
 /**
@@ -501,7 +501,7 @@ export function NewSymbolTracker(host: GoInterface<DeclarationEmitHost>, resolve
     host: host,
     resolver: resolver,
     state: state,
-    fallbackStack: [],
+    fallbackStack: GoNilSlice(),
     getIsolatedDeclarationError: createGetIsolatedDeclarationErrors(resolver),
   };
   return tracker;

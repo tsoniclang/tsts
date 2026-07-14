@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, type GoConstraint, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, type GoConstraint, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Fprint, Fprintf, Sprintf } from "../../go/fmt.js";
 import type { Writer } from "../../go/io.js";
 import { Keys } from "../../go/maps.js";
@@ -443,7 +443,7 @@ export function FormatDiagnosticWithColorAndContext(output: GoInterface<Writer>,
   }
 
   const relatedInformation = diagnostic!.RelatedInformation();
-  if (relatedInformation !== undefined && relatedInformation.length > 0) {
+  if (!GoSliceIsNil(relatedInformation) && relatedInformation.length > 0) {
     for (const relatedInfo of relatedInformation) {
       const file = relatedInfo!.File();
       if (file !== undefined) {
@@ -942,8 +942,8 @@ export function WriteErrorSummaryText(output: GoInterface<Writer>, allDiagnostic
  */
 export function getErrorSummary(diags: GoSlice<GoInterface<Diagnostic>>): GoPtr<ErrorSummary> {
   let totalErrorCount = 0;
-  let globalErrors: GoSlice<GoInterface<Diagnostic>> = [];
-  let errorsByFile: GoMap<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>> | undefined = undefined;
+  let globalErrors: GoSlice<GoInterface<Diagnostic>> = GoNilSlice();
+  let errorsByFile: GoMap<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>> = GoNilMap();
 
   for (const diagnostic of diags) {
     if (diagnostic!.Category() !== CategoryError) {
@@ -952,26 +952,24 @@ export function getErrorSummary(diags: GoSlice<GoInterface<Diagnostic>>): GoPtr<
 
     totalErrorCount++;
     if (diagnostic!.File() === undefined) {
-      globalErrors = [...globalErrors, diagnostic];
+      globalErrors = GoAppend(globalErrors, diagnostic);
     } else {
-      if (errorsByFile === undefined) {
+      if (GoMapIsNil(errorsByFile)) {
         errorsByFile = new Map<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>>();
       }
-      const existing = errorsByFile.get(diagnostic!.File()) ?? [];
-      errorsByFile.set(diagnostic!.File(), [...existing, diagnostic]);
+      const existing = errorsByFile.get(diagnostic!.File()) ?? GoNilSlice();
+      errorsByFile.set(diagnostic!.File(), GoAppend(existing, diagnostic));
     }
   }
 
-  const effectiveErrorsByFile: GoMap<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>> = errorsByFile ?? new Map<GoInterface<FileLike>, GoSlice<GoInterface<Diagnostic>>>();
-
-  const sortedFiles = SortedFunc(Keys(effectiveErrorsByFile), (a: GoInterface<FileLike>, b: GoInterface<FileLike>) => {
+  const sortedFiles = SortedFunc(Keys(errorsByFile), (a: GoInterface<FileLike>, b: GoInterface<FileLike>) => {
     return Compare(a!.FileName(), b!.FileName());
   });
 
   return {
     TotalErrorCount: totalErrorCount,
     GlobalErrors: globalErrors,
-    ErrorsByFile: effectiveErrorsByFile,
+    ErrorsByFile: errorsByFile,
     SortedFiles: sortedFiles,
   };
 }

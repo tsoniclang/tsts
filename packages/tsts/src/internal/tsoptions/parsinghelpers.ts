@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoAssertComparableInterface, GoStringKey, GoZeroInterface, type GoConstraint, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoAssertComparableInterface, GoStringKey, GoZeroInterface, type GoConstraint, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -129,10 +129,10 @@ export function ParseStringArray(value: GoInterface<unknown>): GoSlice<string> {
     if (arr === null) {
       return [];
     }
-    const result: GoSlice<string> = [];
+    let result: GoSlice<string> = [];
     for (const v of arr) {
       if (typeof v === "string") {
-        result.push(v);
+        result = GoAppend(result, v);
       }
     }
     return result;
@@ -237,7 +237,7 @@ export function parseNumber(value: GoInterface<unknown>): GoRef<int> {
  * }
  */
 export function parseProjectReference(json: GoInterface<unknown>): GoSlice<GoPtr<ProjectReference>> {
-  const result: GoSlice<GoPtr<ProjectReference>> = [];
+  let result: GoSlice<GoPtr<ProjectReference>> = [];
   const v = asOrderedMap(json);
   if (v !== undefined) {
     const reference: ProjectReference = { Path: "", OriginalPath: "", Circular: false };
@@ -253,7 +253,7 @@ export function parseProjectReference(json: GoInterface<unknown>): GoSlice<GoPtr
         reference.Circular = cv as bool;
       }
     }
-    result.push(reference);
+    result = GoAppend(result, reference);
   }
   return result;
 }

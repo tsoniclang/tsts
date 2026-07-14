@@ -1,4 +1,4 @@
-import { GoStringKey, GoZeroPointer, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoStringKey, GoZeroPointer, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import * as maps from "../../../go/maps.js";
 import * as slices from "../../../go/slices.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -212,9 +212,9 @@ export function toBuildInfo_toFileId(receiver: GoPtr<toBuildInfo>, path: Path): 
   if (fileId === undefined || fileId === 0) {
     const libFile = Program_GetDefaultLibFile(receiver!.program, path);
     if (libFile !== undefined && !libFile.Replaced) {
-      receiver!.buildInfo!.FileNames.push(libFile.Name);
+      receiver!.buildInfo!.FileNames = GoAppend(receiver!.buildInfo!.FileNames, libFile.Name);
     } else {
-      receiver!.buildInfo!.FileNames.push(toBuildInfo_relativeToBuildInfo(receiver, path as string));
+      receiver!.buildInfo!.FileNames = GoAppend(receiver!.buildInfo!.FileNames, toBuildInfo_relativeToBuildInfo(receiver, path as string));
     }
     fileId = receiver!.buildInfo!.FileNames.length as BuildInfoFileId;
     receiver!.fileNameToFileId.set(path as string, fileId);
@@ -249,7 +249,7 @@ export function toBuildInfo_toFileIdListId(receiver: GoPtr<toBuildInfo>, set_: G
 
   let fileIdListId = receiver!.fileNamesToFileIdListId.get(key);
   if (fileIdListId === undefined || fileIdListId === 0) {
-    receiver!.buildInfo!.FileIdsList.push(fileIds);
+    receiver!.buildInfo!.FileIdsList = GoAppend(receiver!.buildInfo!.FileIdsList, fileIds);
     fileIdListId = receiver!.buildInfo!.FileIdsList.length as BuildInfoFileIdListId;
     receiver!.fileNamesToFileIdListId.set(key, fileIdListId);
   }
@@ -559,7 +559,7 @@ export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuild
       if (!IsJsonSourceFile(file) && Program_SourceFileMayBeEmitted(receiver!.program, file, false)) {
         const [emitSignature, loaded] = SyncMap_Load<Path, GoPtr<emitSignature>>(receiver!.snapshot!.emitSignatures, SourceFile_Path(file), GoZeroPointer<emitSignature>, GoStringKey);
         if (!loaded) {
-          receiver!.buildInfo!.EmitSignatures.push({ FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false });
+          receiver!.buildInfo!.EmitSignatures = GoAppend(receiver!.buildInfo!.EmitSignatures, { FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false });
         } else if (emitSignature!.signature !== info!.signature) {
           const incrementalEmitSignature: BuildInfoEmitSignature = { FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false };
           if (emitSignature!.signature !== "") {
@@ -570,7 +570,7 @@ export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuild
             incrementalEmitSignature.Signature = emitSignature!.signatureWithDifferentOptions[0]!;
             incrementalEmitSignature.DiffersInOptions = true;
           }
-          receiver!.buildInfo!.EmitSignatures.push(incrementalEmitSignature);
+          receiver!.buildInfo!.EmitSignatures = GoAppend(receiver!.buildInfo!.EmitSignatures, incrementalEmitSignature);
         }
       }
     }
@@ -624,7 +624,7 @@ export function toBuildInfo_setRootOfIncrementalProgram(receiver: GoPtr<toBuildI
     const root = toBuildInfo_toFileId(receiver, rootPath!);
     const resolved = toBuildInfo_toFileId(receiver, SourceFile_Path(file));
     if (receiver!.buildInfo!.Root.length === 0) {
-      receiver!.buildInfo!.Root.push({ Start: resolved, End: 0, NonIncremental: "" });
+      receiver!.buildInfo!.Root = GoAppend(receiver!.buildInfo!.Root, { Start: resolved, End: 0, NonIncremental: "" });
     } else {
       const last = receiver!.buildInfo!.Root[receiver!.buildInfo!.Root.length - 1]!;
       if (last.End === resolved - 1) {
@@ -632,11 +632,11 @@ export function toBuildInfo_setRootOfIncrementalProgram(receiver: GoPtr<toBuildI
       } else if (last.End === 0 && last.Start === resolved - 1) {
         last.End = resolved;
       } else {
-        receiver!.buildInfo!.Root.push({ Start: resolved, End: 0, NonIncremental: "" });
+        receiver!.buildInfo!.Root = GoAppend(receiver!.buildInfo!.Root, { Start: resolved, End: 0, NonIncremental: "" });
       }
     }
     if (root !== resolved) {
-      receiver!.buildInfo!.ResolvedRoot.push({ Resolved: resolved, Root: root });
+      receiver!.buildInfo!.ResolvedRoot = GoAppend(receiver!.buildInfo!.ResolvedRoot, { Resolved: resolved, Root: root });
     }
   }
 }
@@ -755,12 +755,12 @@ export function toBuildInfo_setSemanticDiagnostics(receiver: GoPtr<toBuildInfo>)
     const [value, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(receiver!.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>, GoStringKey);
     if (!ok) {
       if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as import("../../collections/syncset.js").SyncSet<Path>, SourceFile_Path(file), GoStringKey)) {
-        receiver!.buildInfo!.SemanticDiagnosticsPerFile.push({ FileId: toBuildInfo_toFileId(receiver, SourceFile_Path(file)), Diagnostics: undefined });
+        receiver!.buildInfo!.SemanticDiagnosticsPerFile = GoAppend(receiver!.buildInfo!.SemanticDiagnosticsPerFile, { FileId: toBuildInfo_toFileId(receiver, SourceFile_Path(file)), Diagnostics: undefined });
       }
     } else {
       const diagnostics = toBuildInfo_toBuildInfoDiagnosticsOfFile(receiver, SourceFile_Path(file), value);
       if (diagnostics !== undefined) {
-        receiver!.buildInfo!.SemanticDiagnosticsPerFile.push({ FileId: 0, Diagnostics: diagnostics });
+        receiver!.buildInfo!.SemanticDiagnosticsPerFile = GoAppend(receiver!.buildInfo!.SemanticDiagnosticsPerFile, { FileId: 0, Diagnostics: diagnostics });
       }
     }
   }
@@ -819,7 +819,7 @@ export function toBuildInfo_setAffectedFilesPendingEmit(receiver: GoPtr<toBuildI
       continue;
     }
     const [pendingEmit] = SyncMap_Load<Path, FileEmitKind>(receiver!.snapshot!.affectedFilesPendingEmit, filePath, (): FileEmitKind => FileEmitKindNone, GoStringKey);
-    receiver!.buildInfo!.AffectedFilesPendingEmit.push({
+    receiver!.buildInfo!.AffectedFilesPendingEmit = GoAppend(receiver!.buildInfo!.AffectedFilesPendingEmit, {
       FileId: toBuildInfo_toFileId(receiver, filePath),
       EmitKind: core.IfElse(pendingEmit === fullEmitKind, 0, pendingEmit),
     });

@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoNilMap, GoNilSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilMap, GoNilSlice } from "../../../go/compat.js";
 import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
@@ -428,8 +428,8 @@ export function Checker_initializeIterationResolvers(receiver: GoPtr<Checker>): 
  * }
  */
 export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
-  const ambientModuleSymbols: GoSlice<GoPtr<Symbol>> = [];
-  const augmentations: GoSlice<GoSlice<GoPtr<Node>>> = [];
+  let ambientModuleSymbols: GoSlice<GoPtr<Symbol>> = GoNilSlice();
+  let augmentations: GoSlice<GoSlice<GoPtr<Node>>> = [];
   for (const file of receiver!.files) {
     if (!IsExternalOrCommonJSModule(file)) {
       const fileLocals = Node_Locals(file as GoPtr<Node>);
@@ -443,14 +443,14 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
         // We defer merging of global ambient module declarations since they may require other global symbols
         // and types to be resolved. See https://github.com/microsoft/typescript-go/issues/2953.
         if ((symbol_!.Flags & SymbolFlagsModule) !== 0 && IsAmbientModuleSymbolName(symbol_!.Name)) {
-          ambientModuleSymbols.push(symbol_);
+          ambientModuleSymbols = GoAppend(ambientModuleSymbols, symbol_);
         } else {
           Checker_mergeGlobalSymbol(receiver, symbol_);
         }
       }
     }
-    receiver!.patternAmbientModules.push(...(file!.PatternAmbientModules ?? []));
-    augmentations.push(file!.ModuleAugmentations ?? []);
+    receiver!.patternAmbientModules = GoAppend(receiver!.patternAmbientModules, ...file!.PatternAmbientModules);
+    augmentations = GoAppend(augmentations, file!.ModuleAugmentations);
     if (Node_Symbol(file as GoPtr<Node>) !== undefined) {
       for (const [name, symbol_] of file!.GlobalExports) {
         if (!receiver!.globals.has(name)) {

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Map as SyncMapImpl } from "../../go/sync.js";
 import { Int32 as Int32Impl } from "../../go/sync/atomic.js";
@@ -908,7 +908,7 @@ export function fileLoader_toPath(receiver: GoPtr<fileLoader>, file: string): Pa
 export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: string, libFile: GoPtr<LibFile>, includeReason: GoPtr<FileIncludeReason>): void {
   const absPath = GetNormalizedAbsolutePath(fileName, receiver!.opts.Host!.GetCurrentDirectory());
   if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.opts.Config)!.AllowNonTsExtensions) || HasExtension(absPath)) {
-    receiver!.rootTasks.push({
+    receiver!.rootTasks = GoAppend(receiver!.rootTasks, {
       normalizedFilePath: absPath,
       path: "" as Path_9073472b,
       file: undefined,
@@ -1013,7 +1013,7 @@ export function fileLoader_addRootFileTask(receiver: GoPtr<fileLoader>, fileName
       } as includeExplainingDiagnostic,
     }];
   }
-  receiver!.rootTasks.push(rootTask);
+  receiver!.rootTasks = GoAppend(receiver!.rootTasks, rootTask);
 }
 
 /**
@@ -1044,7 +1044,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
     containingDirectory = receiver!.opts.Host!.GetCurrentDirectory();
   }
   const containingFileName = CombinePaths(containingDirectory, InferredTypesContainingFile);
-  receiver!.rootTasks.push({
+  receiver!.rootTasks = GoAppend(receiver!.rootTasks, {
     normalizedFilePath: containingFileName,
     path: "" as Path_9073472b,
     file: undefined,
@@ -1137,8 +1137,8 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
       [GoStructField((value: ModeAwareCacheKey) => value.Name, GoStringKey), GoStructField((value: ModeAwareCacheKey) => value.Mode, GoNumberKey)],
       ([Name, Mode]) => ({ Name, Mode }),
     ));
-    let typeResolutionsTrace: GoSlice<DiagAndArgs> = [];
-    let pDiagnostics: GoSlice<GoPtr<processingDiagnostic>> = [];
+    let typeResolutionsTrace: GoSlice<DiagAndArgs> = GoNilSlice();
+    let pDiagnostics: GoSlice<GoPtr<processingDiagnostic>> = GoNilSlice();
     for (const name of automaticTypeDirectiveNames) {
       // Under node16/nodenext module resolution, load `types`/ata include names as cjs resolution results by passing an `undefined` mode.
       // Under bundler module resolution, this also triggers the "import" condition to be used.
@@ -1149,9 +1149,9 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
         traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map<string, unknown>([["directive", name], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindAutomaticTypeDirectiveFile]]), false);
       }
       typeResolutionsInFile.set({ Name: name, Mode: resolutionMode }, resolved);
-      typeResolutionsTrace = [...typeResolutionsTrace, ...trace];
+      typeResolutionsTrace = GoAppend(typeResolutionsTrace, ...trace);
       if (ResolvedTypeReferenceDirective_IsResolved(resolved)) {
-        toParse = [...toParse, {
+        toParse = GoAppend(toParse, {
           fileName: resolved!.ResolvedFileName,
           increaseDepth: resolved!.IsExternalLibraryImport,
           elideOnDepth: false,
@@ -1164,9 +1164,9 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
             diagOnce: new OnceImpl(),
           },
           packageId: resolved!.PackageId,
-        }];
+        });
       } else {
-        pDiagnostics = [...pDiagnostics, {
+        pDiagnostics = GoAppend(pDiagnostics, {
           kind: processingDiagnosticKindExplainingFileInclude,
           data: {
             diagnosticReason: {
@@ -1180,7 +1180,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
             message: diagnostics.Cannot_find_type_definition_file_for_0,
             args: [name],
           } as includeExplainingDiagnostic,
-        }];
+        });
       }
       if (traceDone !== undefined) {
         traceDone();
@@ -1656,7 +1656,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
       [GoStructField((value: ModeAwareCacheKey) => value.Name, GoStringKey), GoStructField((value: ModeAwareCacheKey) => value.Mode, GoNumberKey)],
       ([Name, Mode]) => ({ Name, Mode }),
     ));
-    let typeResolutionsTrace: GoSlice<DiagAndArgs> = [];
+    let typeResolutionsTrace: GoSlice<DiagAndArgs> = GoNilSlice();
     for (let index = 0; index < file!.TypeReferenceDirectives.length; index++) {
       const ref = file!.TypeReferenceDirectives[index]!;
       const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, SourceFile_as_ast_HasFileName(file));
@@ -1680,7 +1680,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
         diag: undefined,
         diagOnce: new OnceImpl(),
       };
-      typeResolutionsTrace = [...typeResolutionsTrace, ...trace];
+      typeResolutionsTrace = GoAppend(typeResolutionsTrace, ...trace);
 
       if (ResolvedTypeReferenceDirective_IsResolved(resolved)) {
         parseTask_addSubTask(t, {
@@ -1691,10 +1691,10 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
           packageId: resolved!.PackageId,
         }, undefined);
       } else {
-        t!.processingDiagnostics = [...t!.processingDiagnostics, {
+        t!.processingDiagnostics = GoAppend(t!.processingDiagnostics, {
           kind: processingDiagnosticKindUnknownReference,
           data: includeReason,
-        }];
+        });
       }
       if (innerTraceDone !== undefined) {
         innerTraceDone();
@@ -1837,7 +1837,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     const file = t!.file;
     const meta = t!.metadata;
 
-    const moduleNames: GoSlice<GoPtr<Node>> = [];
+    let moduleNames: GoSlice<GoPtr<Node>> = [];
 
     const isJavaScriptFile = IsSourceFileJS(file);
     const isExternalModuleFile = IsExternalModule(file);
@@ -1850,7 +1850,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     if (isJavaScriptFile || (!file!.IsDeclarationFile && (CompilerOptions_GetIsolatedModules(optionsForFile) || isExternalModuleFile))) {
       if (Tristate_IsTrue(optionsForFile!.ImportHelpers)) {
         const specifier = fileLoader_createSyntheticImport(receiver, externalHelpersModuleNameText, file);
-        moduleNames.push(specifier as unknown as GoPtr<Node>);
+        moduleNames = GoAppend(moduleNames, specifier as unknown as GoPtr<Node>);
         t!.importHelpersImportSpecifier = specifier;
       }
     }
@@ -1859,7 +1859,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
       const jsxImport = GetJSXRuntimeImport(GetJSXImplicitImportBase(optionsForFile, file), optionsForFile);
       if (jsxImport !== "") {
         const specifier = fileLoader_createSyntheticImport(receiver, jsxImport, file);
-        moduleNames.push(specifier as unknown as GoPtr<Node>);
+        moduleNames = GoAppend(moduleNames, specifier as unknown as GoPtr<Node>);
         t!.jsxRuntimeImportSpecifier = {
           moduleReference: jsxImport,
           specifier: specifier,
@@ -1871,11 +1871,11 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
 
     const fileImports = SourceFile_Imports(file) ?? [];
     for (const imp of fileImports) {
-      moduleNames.push(imp);
+      moduleNames = GoAppend(moduleNames, imp);
     }
     for (const imp of file!.ModuleAugmentations ?? []) {
       if (imp!.Kind === KindStringLiteral) {
-        moduleNames.push(imp);
+        moduleNames = GoAppend(moduleNames, imp);
       }
       // Do nothing if it's an Identifier; we don't need to do module resolution for `declare global`.
     }
@@ -1885,7 +1885,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
         [GoStructField((value: ModeAwareCacheKey) => value.Name, GoStringKey), GoStructField((value: ModeAwareCacheKey) => value.Mode, GoNumberKey)],
         ([Name, Mode]) => ({ Name, Mode }),
       ));
-      let resolutionsTrace: GoSlice<DiagAndArgs> = [];
+      let resolutionsTrace: GoSlice<DiagAndArgs> = GoNilSlice();
       const extensionHost = fileLoader_getExtensionHost(receiver);
 
       for (let index = 0; index < moduleNames.length; index++) {
@@ -1903,7 +1903,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
           [resolvedModule, trace] = Resolver_ResolveModuleName(receiver!.resolver, moduleName, fileName, mode, redirectedReference);
         }
         resolutionsInFile.set({ Name: moduleName, Mode: mode }, resolvedModule);
-        resolutionsTrace = [...resolutionsTrace, ...trace];
+        resolutionsTrace = GoAppend(resolutionsTrace, ...trace);
 
         if (!ResolvedModule_IsResolved(resolvedModule)) {
           continue;

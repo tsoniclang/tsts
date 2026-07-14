@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Node_Name } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { PatternAmbientModule, SourceFile } from "../../ast/ast.js";
@@ -749,7 +749,7 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
             receiver,
             errorNode,
             This_import_uses_a_0_extension_to_resolve_to_an_input_TypeScript_file_but_will_not_be_rewritten_during_emit_because_it_is_not_a_relative_path,
-            GetAnyExtensionFromPath(moduleReference, [], false),
+            GetAnyExtensionFromPath(moduleReference, GoNilSlice(), false),
           );
         } else if (resolvedModule!.ResolvedUsingTsExtension && shouldRewrite) {
           const redirect = receiver!.program!.GetRedirectForResolution(sourceFile);
@@ -985,7 +985,7 @@ export function Checker_GetAmbientModules(receiver: GoPtr<Checker>): GoSlice<GoP
   receiver!.ambientModulesOnce.Do(() => {
     for (const [sym, global] of receiver!.globals as SymbolTable) {
       if (sym.startsWith("\"") && sym.endsWith("\"")) {
-        receiver!.ambientModules.push(global);
+        receiver!.ambientModules = GoAppend(receiver!.ambientModules, global);
       }
     }
   });

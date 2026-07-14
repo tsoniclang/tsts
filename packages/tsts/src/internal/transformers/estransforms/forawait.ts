@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { NodeVisitor } from "../../ast/visitor.js";
 import { NodeFactory_NewNodeList, Node_Modifiers, Node_Name } from "../../ast/spine.js";
@@ -841,7 +841,8 @@ export function forawaitTransformer_convertForOfStatementHead(receiver: GoPtr<fo
 
   const statement = NodeVisitor_VisitEmbeddedStatement((visitor as ConcreteNodeVisitor), node!.Statement as unknown as GoPtr<Node>);
 
-  const statements: Array<GoPtr<Node>> = [iteratorValueStatement, exitNonUserCodeStatement, visitedBinding];
+  let statements: GoSlice<GoPtr<Node>> = [iteratorValueStatement, exitNonUserCodeStatement];
+  statements = GoAppend(statements, visitedBinding);
   let bodyLocation = { pos: 0, end: 0 };
   let statementsLocation = { pos: 0, end: 0 };
 
@@ -849,13 +850,13 @@ export function forawaitTransformer_convertForOfStatementHead(receiver: GoPtr<fo
     const stmts = Node_StatementList(statement);
     if (stmts !== undefined) {
       for (const stmt of stmts!.Nodes) {
-        statements.push(stmt);
+        statements = GoAppend(statements, stmt);
       }
       statementsLocation = stmts!.Loc;
     }
     bodyLocation = statement!.Loc;
   } else {
-    statements.push(statement);
+    statements = GoAppend(statements, statement);
   }
 
   const stmtList = NodeFactory_NewNodeList(factory, statements);
@@ -1683,7 +1684,7 @@ export function forawaitTransformer_transformAsyncGeneratorFunctionParameterList
   if (isSimpleParameterList(Node_Parameters(node))) {
     return EmitContext_VisitParameters(emitContext, Node_ParameterList(node), visitor);
   }
-  const newParameters: Array<GoPtr<Node>> = [];
+  let newParameters: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const parameter of Node_Parameters(node)) {
     const param = AsParameterDeclaration(parameter as unknown as GoPtr<Node>);
     if (param!.Initializer !== undefined || param!.DotDotDotToken !== undefined) {
@@ -1698,7 +1699,7 @@ export function forawaitTransformer_transformAsyncGeneratorFunctionParameterList
       undefined,
       undefined,
     );
-    newParameters.push(newParameter);
+    newParameters = GoAppend(newParameters, newParameter);
   }
   const newParametersArray = NodeFactory_NewNodeList(factory, newParameters);
   newParametersArray!.Loc = Node_ParameterList(node)!.Loc;

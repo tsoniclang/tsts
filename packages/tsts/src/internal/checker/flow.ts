@@ -581,7 +581,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
     } else if ((flags & FlowFlagsReduceLabel) !== 0) {
       f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(currentFlow!.Node));
       t = Checker_getTypeAtFlowNode(receiver, f, currentFlow!.Antecedent);
-      f!.reduceLabels.pop();
+      f!.reduceLabels = f!.reduceLabels.slice(0, f!.reduceLabels.length - 1);
     } else if ((flags & FlowFlagsStart) !== 0) {
       const container = currentFlow!.Node;
       if (
@@ -599,7 +599,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
       t = { t: Checker_convertAutoToAny(receiver, f!.declaredType), incomplete: false };
     }
     if (sharedFlow !== undefined) {
-      receiver!.sharedFlows.push({ flow: sharedFlow, flowType: t });
+      receiver!.sharedFlows = GoAppend(receiver!.sharedFlows, { flow: sharedFlow, flowType: t });
     }
     f!.depth--;
     return t;
@@ -2591,13 +2591,13 @@ export function Checker_narrowTypeBySwitchOnDiscriminant(receiver: GoPtr<Checker
       const s = clauseTypes[i];
       if (s!.flags & (TypeFlagsPrimitive | TypeFlagsNonPrimitive)) {
         if (!GoSliceIsNil(groundClauseTypes)) {
-          groundClauseTypes = [...groundClauseTypes, s];
+          groundClauseTypes = GoAppend(groundClauseTypes, s);
         }
       } else if (s!.flags & TypeFlagsObject) {
         if (GoSliceIsNil(groundClauseTypes)) {
           groundClauseTypes = clauseTypes.slice(0, i);
         }
-        groundClauseTypes = [...groundClauseTypes, receiver!.nonPrimitiveType];
+        groundClauseTypes = GoAppend(groundClauseTypes, receiver!.nonPrimitiveType);
       } else {
         return t;
       }
@@ -2912,7 +2912,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
       return { t: flowType.t, incomplete: false };
     }
     if (!receiver!.antecedentTypes.slice(antecedentStart).includes(flowType.t)) {
-      receiver!.antecedentTypes.push(flowType.t);
+      receiver!.antecedentTypes = GoAppend(receiver!.antecedentTypes, flowType.t);
     }
     // If an antecedent type is not a subset of the declared type, we need to perform subtype reduction.
     if (!Checker_isTypeSubsetOf(receiver, flowType.t, f!.initialType)) {
@@ -2931,7 +2931,7 @@ export function Checker_getTypeAtFlowBranchLabel(receiver: GoPtr<Checker>, f: Go
         receiver!.antecedentTypes.length = antecedentStart;
         return { t: flowType.t, incomplete: false };
       }
-      receiver!.antecedentTypes.push(flowType.t);
+      receiver!.antecedentTypes = GoAppend(receiver!.antecedentTypes, flowType.t);
       if (!Checker_isTypeSubsetOf(receiver, flowType.t, f!.initialType)) {
         subtypeReduction = true;
       }
@@ -3084,7 +3084,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
     }
   }
   // Add the flow loop junction and reference to the in-process stack and analyze each antecedent code path.
-  let antecedentTypes: GoSlice<GoPtr<Type>> = [];
+  let antecedentTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
   let subtypeReduction = false;
   let firstAntecedentType: FlowType = { t: undefined, incomplete: false };
   let firstAntecedentSeen = false;
@@ -3104,7 +3104,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
       receiver!.flowTypeCache = GoNilMap<GoPtr<Node>, GoPtr<Type>>();
       flowType = Checker_getTypeAtFlowNode(receiver, f, list!.Flow);
       receiver!.flowTypeCache = saveFlowTypeCache;
-      receiver!.flowLoopStack.pop();
+      receiver!.flowLoopStack = receiver!.flowLoopStack.slice(0, receiver!.flowLoopStack.length - 1);
       // If we see a value appear in the cache it is a sign that control flow analysis
       // was restarted and completed by checkExpressionCached. We can simply pick up
       // the resulting type and bail out.
@@ -5684,7 +5684,7 @@ export function Checker_isReachableFlowNodeWorker(receiver: GoPtr<Checker>, f: G
       receiver!.lastFlowNode = undefined;
       f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isReachableFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
-      f!.reduceLabels.pop();
+      f!.reduceLabels = f!.reduceLabels.slice(0, f!.reduceLabels.length - 1);
       return result;
     } else {
       return !(flags & FlowFlagsUnreachable);
@@ -5812,7 +5812,7 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
     } else if (flags & FlowFlagsReduceLabel) {
       f!.reduceLabels = GoAppend(f!.reduceLabels, Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isPostSuperFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
-      f!.reduceLabels.pop();
+      f!.reduceLabels = f!.reduceLabels.slice(0, f!.reduceLabels.length - 1);
       return result;
     } else {
       return !!(flags & FlowFlagsUnreachable);

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_TypeArguments, Node_Parameters, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -725,7 +725,7 @@ export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node:
       const prop = Checker_getPropertyOfType(receiver, typeWithThis, declaredProp!.Name);
       const baseProp = Checker_getPropertyOfType(receiver, baseWithThis, declaredProp!.Name);
       if (prop !== undefined && baseProp !== undefined) {
-        const diags: GoSlice<GoPtr<Diagnostic>> = [];
+        const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
         if (!Checker_checkTypeAssignableToEx(receiver, Checker_getTypeOfSymbol(receiver, prop), Checker_getTypeOfSymbol(receiver, baseProp), OrElse<GoPtr<Node>>(Node_Name(member), member, GoZeroPointer<Node>, GoEqualStrict<GoPtr<Node>>), undefined, GoValueRef(diags))) {
           Checker_addDiagnostic(receiver, NewDiagnosticChain(diags[0], Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Checker_symbolToString(receiver, declaredProp), Checker_TypeToString(receiver, typeWithThis), Checker_TypeToString(receiver, baseWithThis)));
           issuedMemberError = true;
@@ -1063,7 +1063,7 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
   const c = receiver!;
   if (s!.candidatesForArgumentError.length !== 0) {
     const last = s!.candidatesForArgumentError[s!.candidatesForArgumentError.length - 1];
-    const diags: Array<GoPtr<Diagnostic>> = [];
+    const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
     Checker_isSignatureApplicable(receiver, s!.node, s!.args, last, c.assignableRelation, CheckModeNormal, true as bool, GoValueRef(diags));
     for (let diagnostic of diags) {
       if (s!.candidatesForArgumentError.length > 1) {
@@ -1082,7 +1082,7 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
   } else if (s!.candidateForArgumentArityError !== undefined) {
     Checker_addDiagnostic(receiver, Checker_getArgumentArityError(receiver, s!.node, [s!.candidateForArgumentArityError], s!.args, headMessage));
   } else if (s!.candidateForTypeArgumentError !== undefined) {
-    Checker_checkTypeArguments(receiver, s!.candidateForTypeArgumentError, Node_TypeArguments(s!.node) ?? [], true as bool, headMessage);
+    Checker_checkTypeArguments(receiver, s!.candidateForTypeArgumentError, Node_TypeArguments(s!.node) ?? GoNilSlice(), true as bool, headMessage);
   } else if (!IsJsxOpeningFragment(node)) {
     const signaturesWithCorrectTypeArgumentArity = Filter(signatures, (sig: GoPtr<Signature>) =>
       Checker_hasCorrectTypeArgumentArity(receiver, sig, s!.typeArguments));
@@ -1935,7 +1935,7 @@ export function Checker_getDiagnostics(receiver: GoPtr<Checker>, ctx: GoInterfac
     collection === c.suggestionDiagnostics) as bool;
   Checker_checkSourceFile(receiver, ctx, sourceFile, checkUnused);
   if (c.wasCanceled) {
-    return [];
+    return GoNilSlice();
   }
   return DiagnosticsCollection_GetDiagnosticsForFile(collection, SourceFile_FileName(sourceFile));
 }
@@ -1967,7 +1967,7 @@ export function Checker_GetGlobalDiagnostics(receiver: GoPtr<Checker>): GoSlice<
 export function Checker_addDeferredDiagnostic(receiver: GoPtr<Checker>, callback: GoFunc<() => void>): void {
   const c = receiver!;
   if (c.saveDeferredDiagnostics) {
-    c.deferredDiagnosticCallbacks = [...c.deferredDiagnosticCallbacks, callback];
+    c.deferredDiagnosticCallbacks = GoAppend(c.deferredDiagnosticCallbacks, callback);
   }
 }
 

@@ -1,7 +1,7 @@
 import type { bool, byte, double, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import type { GoComparable, GoConstraint, GoEquality, GoError, GoMap, GoMapKeyDescriptor, GoPtr, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
-import { GoAppend, GoMapMake, GoNilSlice, GoSliceToZeroLength, GoZeroString } from "../../go/compat.js";
+import { GoAppend, GoMapMake, GoNilSlice, GoSliceIsNil, GoSliceToZeroLength, GoZeroString } from "../../go/compat.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
 import { ExtensionCjs, ExtensionCts, ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, HasTSFileExtension, IsDeclarationFileName } from "../tspath/extension.js";
@@ -93,11 +93,11 @@ export function Filter<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => bool>): GoSl
   for (let i = 0; i < values.length; i++) {
     let value = values[i]!;
     if (!f!(value)) {
-      const result = slices.Clone(values.slice(0, i))!;
+      let result = slices.Clone(values.slice(0, i))!;
       for (i++; i < values.length; i++) {
         value = values[i]!;
         if (f!(value)) {
-          result.push(value);
+          result = GoAppend(result, value);
         }
       }
       return result;
@@ -159,11 +159,11 @@ export function FilterIndex<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int,
   for (let i = 0; i < values.length; i++) {
     let value = values[i]!;
     if (!f!(value, i, values)) {
-      const result = slices.Clone(values.slice(0, i))!;
+      let result = slices.Clone(values.slice(0, i))!;
       for (i++; i < values.length; i++) {
         value = values[i]!;
         if (f!(value, i, values)) {
-          result.push(value);
+          result = GoAppend(result, value);
         }
       }
       return result;
@@ -188,11 +188,8 @@ export function FilterIndex<T>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int,
  * }
  */
 export function Map<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>): GoSlice<U> {
-  // A Go nil slice is observationally equivalent to an empty slice in this model
-  // (same len, range, indexing, append), so the `slice == nil` early return is
-  // represented as returning an empty slice.
-  if (slice === undefined) {
-    return [];
+  if (GoSliceIsNil(slice)) {
+    return GoNilSlice<U>();
   }
   const result: GoSlice<U> = new globalThis.Array<U>(slice.length);
   for (let i = 0; i < slice.length; i++) {
@@ -253,8 +250,8 @@ export function TryMap<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => [U, GoErr
  * }
  */
 export function MapIndex<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int) => U>): GoSlice<U> {
-  if (slice === undefined) {
-    return [];
+  if (GoSliceIsNil(slice)) {
+    return GoNilSlice<U>();
   }
   const result: GoSlice<U> = new globalThis.Array<U>(slice.length);
   for (let i = 0; i < slice.length; i++) {
@@ -281,12 +278,12 @@ export function MapIndex<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T, arg1: int)
  * }
  */
 export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => U>, zeroValue: GoZeroFactory<U>, equal: GoEquality<U>): GoSlice<U> {
-  const result: GoSlice<U> = [];
+  let result: GoSlice<U> = [];
   const zero = zeroValue();
   for (const value of slice) {
     const mapped = f!(value);
     if (!equal(mapped, zero)) {
-      result.push(mapped);
+      result = GoAppend(result, mapped);
     }
   }
   return result;
@@ -309,13 +306,13 @@ export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: GoFun
  * }
  */
 export function MapFiltered<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => [U, bool]>): GoSlice<U> {
-  const result: GoSlice<U> = [];
+  let result: GoSlice<U> = [];
   for (const value of slice) {
     const [mapped, ok] = f!(value);
     if (!ok) {
       continue;
     }
-    result.push(mapped);
+    result = GoAppend(result, mapped);
   }
   return result;
 }
@@ -336,12 +333,12 @@ export function MapFiltered<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => [U, 
  * }
  */
 export function FlatMap<T, U>(slice: GoSlice<T>, f: GoFunc<(arg0: T) => GoSlice<U>>): GoSlice<U> {
-  const result: GoSlice<U> = [];
+  let result: GoSlice<U> = [];
   for (const value of slice) {
     const mapped = f!(value);
     if (mapped.length !== 0) {
       for (const e of mapped) {
-        result.push(e);
+        result = GoAppend(result, e);
       }
     }
   }
@@ -935,9 +932,9 @@ export function MinAllFunc<T>(xs: GoSlice<T>, cmp: GoFunc<(a: T, b: T) => int>):
  */
 export function AppendIfUnique<T extends GoComparable>(slice: GoSlice<T>, element: T, equal: GoEquality<T>): GoSlice<T> {
   if (slices.Contains(slice, element, equal)) {
-    return slice ?? [];
+    return slice;
   }
-  return [...(slice ?? []), element];
+  return GoAppend(slice, element);
 }
 
 /**
@@ -1206,10 +1203,10 @@ export function UTF16Len(s: string): UTF16Offset {
  * }
  */
 export function Flatten<T>(array: GoSlice<GoSlice<T>>): GoSlice<T> {
-  const result: GoSlice<T> = [];
+  let result: GoSlice<T> = [];
   for (const subArray of array) {
     for (const e of subArray) {
-      result.push(e);
+      result = GoAppend(result, e);
     }
   }
   return result;
@@ -1866,11 +1863,11 @@ export function Deduplicate<T extends GoComparable>(slice: GoSlice<T>, equal: Go
     for (let i = 0; i < slice.length; i++) {
       let value = slice[i]!;
       if (slices.Contains(slice.slice(0, i), value, equal)) {
-        const result = slices.Clone(slice.slice(0, i))!;
+        let result = slices.Clone(slice.slice(0, i))!;
         for (i++; i < slice.length; i++) {
           value = slice[i]!;
           if (!slices.Contains(result, value, equal)) {
-            result.push(value);
+            result = GoAppend(result, value);
           }
         }
         return result;
@@ -1911,14 +1908,14 @@ export function DeduplicateSorted<T>(slice: GoSlice<T>, isEqual: GoFunc<(a: T, b
   // Go uses `slice[:1]`, which aliases the input backing array and is then
   // grown via append. We build an equivalent fresh prefix; callers only consume
   // the returned slice, and aliasing Go's backing array is out of scope here.
-  const deduplicated: GoSlice<T> = slice.slice(0, 1);
+  let deduplicated: GoSlice<T> = slice.slice(0, 1);
   for (let i = 1; i < slice.length; i++) {
     const next = slice[i]!;
     if (isEqual!(last, next)) {
       continue;
     }
 
-    deduplicated.push(next);
+    deduplicated = GoAppend(deduplicated, next);
     last = next;
   }
 

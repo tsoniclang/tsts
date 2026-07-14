@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoNilMap, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilMap, GoNilSlice, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Node_End, NodeList_End, NodeList_Pos, Node_Pos } from "../../ast/spine.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { Node_TagName, Node_Children } from "../../ast/ast.js";
@@ -463,7 +463,7 @@ export function Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver: G
           }
         }
         newClosingElement!.Parent = newLast;
-        children = Parser_newNodeList(receiver, NewTextRange(NodeList_Pos(children), Node_End(newLast)), [...children!.Nodes.slice(0, children!.Nodes.length - 1), newLast]);
+        children = Parser_newNodeList(receiver, NewTextRange(NodeList_Pos(children), Node_End(newLast)), GoAppend(children!.Nodes.slice(0, children!.Nodes.length - 1), newLast));
         closingElement = AsJsxElement(lastChild)!.ClosingElement;
       } else {
         closingElement = Parser_parseJsxClosingElement(receiver, opening, inExpressionContext);
@@ -546,14 +546,14 @@ export function Parser_parseJsxChildren(receiver: GoPtr<Parser>, openingTag: GoP
   const pos: int = Parser_nodePos(receiver);
   const saveParsingContexts = p.parsingContexts;
   p.parsingContexts |= 1 << PCJsxChildren;
-  let list: Array<GoPtr<Node>> = [];
+  let list: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (;;) {
     const currentToken = Scanner_ReScanJsxToken(p.scanner, true /*allowMultilineJsxText*/);
     const child = Parser_parseJsxChild(receiver, openingTag, currentToken);
     if (child === undefined) {
       break;
     }
-    list.push(child);
+    list = GoAppend(list, child);
     if (IsJsxOpeningElement(openingTag) && child.Kind === KindJsxElement &&
       !TagNamesAreEquivalent(Node_TagName(AsJsxElement(child)!.OpeningElement), Node_TagName(AsJsxElement(child)!.ClosingElement)) &&
       TagNamesAreEquivalent(Node_TagName(openingTag), Node_TagName(AsJsxElement(child)!.ClosingElement))) {

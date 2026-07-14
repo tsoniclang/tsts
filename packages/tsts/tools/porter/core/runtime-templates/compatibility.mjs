@@ -586,7 +586,15 @@ export function GoMapLookup<K, V>(map: GoMap<K, V>, key: K, zeroValue: GoZeroFac
 }
 
 export function GoAppend<T>(slice: GoSlice<T>, ...items: T[]): NonNullable<GoSlice<T>> {
-  return items.length === 0 ? slice : [...slice, ...items];
+  return GoAppendSlice(slice, items);
+}
+
+export function GoAppendSlice<T>(slice: GoSlice<T>, items: GoSlice<T>): NonNullable<GoSlice<T>> {
+  if (items.length === 0) return slice;
+  const result = new Array<T>(slice.length + items.length);
+  for (let index = 0; index < slice.length; index++) result[index] = slice[index]!;
+  for (let index = 0; index < items.length; index++) result[slice.length + index] = items[index]!;
+  return result;
 }
 
 `;

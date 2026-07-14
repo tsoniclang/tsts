@@ -1,5 +1,5 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
-import { GoEqualStrict, GoStringKey, GoZeroNumber, GoZeroString, type GoChan, type GoError, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoSliceIsNil, GoStringKey, GoZeroNumber, GoZeroString, type GoChan, type GoError, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Writer } from "../../../go/io.js";
 import { Builder } from "../../../go/strings.js";
 import type { Mutex } from "../../../go/sync.js";
@@ -262,7 +262,7 @@ export function BuildTask_unblockDownstream(receiver: GoPtr<BuildTask>): void {
  * }
  */
 export function BuildTask_reportDiagnostic(receiver: GoPtr<BuildTask>, err: GoPtr<Diagnostic>): void {
-  receiver!.errors.push(err);
+  receiver!.errors = GoAppend(receiver!.errors, err);
   receiver!.result!.diagnosticReporter!(err);
 }
 
@@ -303,8 +303,7 @@ export function BuildTask_reportDiagnostic(receiver: GoPtr<BuildTask>, err: GoPt
 export function BuildTask_report(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, configPath: Path, buildResult: GoPtr<orchestratorResult>): void {
   // <-t.prevReporter.reportDone — no-op in single-threaded
   if (receiver!.errors.length > 0) {
-    const existing = buildResult!.errors !== undefined && buildResult!.errors !== null ? buildResult!.errors : [];
-    buildResult!.errors = [...existing, ...receiver!.errors];
+    buildResult!.errors = GoAppend(buildResult!.errors, ...receiver!.errors);
   }
   Fprint(orchestrator!.opts.Sys!.Writer()!, receiver!.result!.builder.String());
   if (receiver!.result!.exitStatus > buildResult!.result.Status) {
@@ -326,7 +325,7 @@ export function BuildTask_report(receiver: GoPtr<BuildTask>, orchestrator: GoPtr
     default:
       break;
   }
-  buildResult!.filesToDelete = [...buildResult!.filesToDelete, ...receiver!.result!.filesToDelete];
+  buildResult!.filesToDelete = GoAppend(buildResult!.filesToDelete, ...receiver!.result!.filesToDelete);
   receiver!.result = undefined;
   // close(t.reportDone) — no-op in single-threaded
 }
@@ -972,7 +971,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
   if (receiver!.resolved === undefined) {
     return { kind: upToDateStatusTypeConfigFileNotFound, data: undefined };
   }
-  if (ParsedCommandLine_FileNames(receiver!.resolved).length === 0 && ParsedCommandLine_ProjectReferences(receiver!.resolved) !== undefined) {
+  if (ParsedCommandLine_FileNames(receiver!.resolved).length === 0 && !GoSliceIsNil(ParsedCommandLine_ProjectReferences(receiver!.resolved))) {
     return { kind: upToDateStatusTypeSolution, data: undefined };
   }
   for (const upstream of receiver!.upStream) {
@@ -1001,11 +1000,11 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
     if (!BuildInfo_IsIncremental(buildInfo)) {
       return { kind: upToDateStatusTypeOutOfDateOptions, data: buildInfoPath };
     }
-    if ((CompilerOptions_GetEmitDeclarations(resolvedCompilerOptions) && buildInfo.EmitDiagnosticsPerFile !== undefined) ||
-      (!Tristate_IsTrue(resolvedCompilerOptions!.NoCheck) && (buildInfo.ChangeFileSet !== undefined || buildInfo.SemanticDiagnosticsPerFile !== undefined))) {
+    if ((CompilerOptions_GetEmitDeclarations(resolvedCompilerOptions) && !GoSliceIsNil(buildInfo.EmitDiagnosticsPerFile)) ||
+      (!Tristate_IsTrue(resolvedCompilerOptions!.NoCheck) && (!GoSliceIsNil(buildInfo.ChangeFileSet) || !GoSliceIsNil(buildInfo.SemanticDiagnosticsPerFile)))) {
       return { kind: upToDateStatusTypeOutOfDateBuildInfoWithErrors, data: buildInfoPath };
     }
-    if (!Tristate_IsTrue(resolvedCompilerOptions!.NoEmit) && (buildInfo.ChangeFileSet !== undefined || buildInfo.AffectedFilesPendingEmit !== undefined)) {
+    if (!Tristate_IsTrue(resolvedCompilerOptions!.NoEmit) && (!GoSliceIsNil(buildInfo.ChangeFileSet) || !GoSliceIsNil(buildInfo.AffectedFilesPendingEmit))) {
       return { kind: upToDateStatusTypeOutOfDateBuildInfoWithPendingEmit, data: buildInfoPath };
     }
     if (BuildInfo_IsEmitPending(buildInfo, receiver!.resolved, GetDirectoryPath(GetNormalizedAbsolutePath(buildInfoPath, orchestrator!.comparePathsOptions.CurrentDirectory)))) {
@@ -1535,7 +1534,7 @@ export function BuildTask_cleanProjectOutput(receiver: GoPtr<BuildTask>, orchest
         BuildTask_reportDiagnostic(receiver, NewCompilerDiagnostic(diagnostics.Failed_to_delete_file_0, outputFile));
       }
     } else {
-      receiver!.result!.filesToDelete.push(outputFile);
+      receiver!.result!.filesToDelete = GoAppend(receiver!.result!.filesToDelete, outputFile);
     }
   }
 }

@@ -1,6 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { Seq2 } from "../../go/iter.js";
-import { GoStringKey, GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoStringKey, GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { Node_Expression, Node_Symbol, Node_Text } from "../ast/ast.js";
 import type { HasFileName, Node, SourceFile } from "../ast/ast.js";
@@ -493,20 +493,20 @@ export function getAllModulePathsWorker(info: Info, importedFileName: string, ho
   const comparePaths_ = (a: ModulePath, b: ModulePath): number => comparePathsByRedirect(a, b, useCaseSensitiveFileNames);
 
   // Sort by paths closest to importing file Name directory
-  const sortedPaths: ModulePath[] = [];
+  let sortedPaths: GoSlice<ModulePath> = [];
   let directory = info.SourceDirectory;
   while (allFileNames.size !== 0) {
     const directoryStart = EnsureTrailingDirectorySeparator(directory);
-    const pathsInDirectory: ModulePath[] = [];
+    let pathsInDirectory = GoNilSlice<ModulePath>();
     for (const [fileName, p] of allFileNames) {
       if (strings.HasPrefix(fileName, directoryStart)) {
-        pathsInDirectory.push(p);
+        pathsInDirectory = GoAppend(pathsInDirectory, p);
         allFileNames.delete(fileName);
       }
     }
     if (pathsInDirectory.length > 0) {
       pathsInDirectory.sort(comparePaths_);
-      for (const p of pathsInDirectory) sortedPaths.push(p);
+      sortedPaths = GoAppend(sortedPaths, ...pathsInDirectory);
     }
     const newDirectory = GetDirectoryPath(directory);
     if (newDirectory === directory) {
@@ -517,7 +517,7 @@ export function getAllModulePathsWorker(info: Info, importedFileName: string, ho
   if (allFileNames.size > 0) {
     const remainingPaths = Array.from(allFileNames.values());
     remainingPaths.sort(comparePaths_);
-    for (const p of remainingPaths) sortedPaths.push(p);
+    sortedPaths = GoAppend(sortedPaths, ...remainingPaths);
   }
   return sortedPaths;
 }
@@ -662,20 +662,20 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
   }
 
   const redirects = host!.GetRedirectTargets(importedPath);
-  const importedFileNames: string[] = [];
+  let importedFileNames = GoNilSlice<string>();
   if (referenceRedirect.length > 0) {
-    importedFileNames.push(referenceRedirect);
+    importedFileNames = GoAppend(importedFileNames, referenceRedirect);
   }
-  importedFileNames.push(importedFileName);
-  for (const r of redirects) importedFileNames.push(r);
+  importedFileNames = GoAppend(importedFileNames, importedFileName);
+  importedFileNames = GoAppend(importedFileNames, ...redirects);
   const targets = importedFileNames.map(f => tspath.GetNormalizedAbsolutePath(f, cwd));
   let shouldFilterIgnoredPaths = !targets.every(containsIgnoredPath);
 
-  const results: ModulePath[] = [];
+  let results = GoNilSlice<ModulePath>();
   if (!preferSymlinks) {
     for (const p of targets) {
       if (!(shouldFilterIgnoredPaths && containsIgnoredPath(p))) {
-        results.push({
+        results = GoAppend(results, {
           FileName: p,
           IsInNodeModules: ContainsNodeModules(p),
           IsRedirect: referenceRedirect === p,
@@ -712,7 +712,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
           });
           SyncSet_Range(symlinkSet, (symlinkDirectory: string): bool => {
             const option = ResolvePath(symlinkDirectory, relative);
-            results.push({
+            results = GoAppend(results, {
               FileName: option,
               IsInNodeModules: ContainsNodeModules(option),
               IsRedirect: target === referenceRedirect,
@@ -731,7 +731,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
   if (preferSymlinks) {
     for (const p of targets) {
       if (!(shouldFilterIgnoredPaths && containsIgnoredPath(p))) {
-        results.push({
+        results = GoAppend(results, {
           FileName: p,
           IsInNodeModules: ContainsNodeModules(p),
           IsRedirect: referenceRedirect === p,
@@ -918,10 +918,10 @@ export function computeModuleSpecifiers(modulePaths: GoSlice<ModulePath>, compil
   //   2. Specifiers generated using "paths" from tsconfig
   //   3. Non-relative specifiers resulting from a path through node_modules (e.g. "@foo/bar/path/to/file")
   //   4. Relative paths
-  const pathsSpecifiers: string[] = [];
-  const redirectPathsSpecifiers: string[] = [];
-  const nodeModulesSpecifiers: string[] = [];
-  const relativeSpecifiers: string[] = [];
+  let pathsSpecifiers = GoNilSlice<string>();
+  let redirectPathsSpecifiers = GoNilSlice<string>();
+  let nodeModulesSpecifiers = GoNilSlice<string>();
+  let relativeSpecifiers = GoNilSlice<string>();
 
   for (const modulePath of modulePaths) {
     let specifier = "";
@@ -929,7 +929,7 @@ export function computeModuleSpecifiers(modulePaths: GoSlice<ModulePath>, compil
       specifier = tryGetModuleNameAsNodeModule(modulePath, info, importingSourceFile, host, compilerOptions, userPreferences, /*packageNameOnly*/ false, options.OverrideImportMode);
     }
     if (specifier.length > 0 && !(forAutoImport && IsExcludedByRegex(specifier, preferences.excludeRegexes))) {
-      nodeModulesSpecifiers.push(specifier);
+      nodeModulesSpecifiers = GoAppend(nodeModulesSpecifiers, specifier);
       if (modulePath.IsRedirect) {
         // If we got a specifier for a redirect, it was a bare package specifier (e.g. "@foo/bar",
         // not "@foo/bar/path/to/file"). No other specifier will be this good, so stop looking.
@@ -954,15 +954,15 @@ export function computeModuleSpecifiers(modulePaths: GoSlice<ModulePath>, compil
       continue;
     }
     if (modulePath.IsRedirect) {
-      redirectPathsSpecifiers.push(local);
+      redirectPathsSpecifiers = GoAppend(redirectPathsSpecifiers, local);
     } else if (PathIsBareSpecifier(local)) {
       if (ContainsNodeModules(local)) {
-        relativeSpecifiers.push(local);
+        relativeSpecifiers = GoAppend(relativeSpecifiers, local);
       } else {
-        pathsSpecifiers.push(local);
+        pathsSpecifiers = GoAppend(pathsSpecifiers, local);
       }
     } else if (forAutoImport || !importedFileIsInNodeModules || modulePath.IsInNodeModules) {
-      relativeSpecifiers.push(local);
+      relativeSpecifiers = GoAppend(relativeSpecifiers, local);
     }
   }
 
@@ -2230,7 +2230,7 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: string, paths: GoPt
       const pattern = patternRel.length > 0 ? patternRel : normalized;
       const [prefix, suffix, ok] = strings.Cut(pattern, "*");
 
-      const candidates: specPair[] = [];
+      let candidates = GoNilSlice<specPair>();
       for (const ending of allowedEndings) {
         const result = processEnding(
           relativeToBaseUrl,
@@ -2238,10 +2238,10 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: string, paths: GoPt
           compilerOptions,
           host,
         );
-        candidates.push({ ending, value: result });
+        candidates = GoAppend(candidates, { ending, value: result });
       }
       if (TryGetExtensionFromPath(pattern).length > 0) {
-        candidates.push({ ending: ModuleSpecifierEndingJsExtension, value: relativeToBaseUrl });
+        candidates = GoAppend(candidates, { ending: ModuleSpecifierEndingJsExtension, value: relativeToBaseUrl });
       }
 
       if (ok) {

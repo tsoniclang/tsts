@@ -133,6 +133,7 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): GoChan<T>/);
   assert.match(source, /GoMapGetExisting<K, V>\(map: NonNullable<GoMap<K, V>>/);
   assert.match(source, /GoAppend<T>\(slice: GoSlice<T>, \.\.\.items: T\[]\): NonNullable<GoSlice<T>>/);
+  assert.match(source, /GoAppendSlice<T>\(slice: GoSlice<T>, items: GoSlice<T>\): NonNullable<GoSlice<T>>/);
 });
 
 test("defined Go types preserve nil and unnamed-to-named assignment without becoming mutually assignable", () => {
@@ -226,6 +227,14 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.deepEqual(appended, [1]);
   assert.notEqual(appended, nilSlice);
   assert.equal(nilSlice.length, 0);
+  assert.equal(runtime.GoAppendSlice(nilSlice, []), nilSlice);
+  const appendSource = [1, 2];
+  const appendItems = globalThis.Array.from({ length: 150_000 }, (_, index) => index + 3);
+  const appendedSlice = runtime.GoAppendSlice(appendSource, appendItems);
+  assert.equal(appendedSlice.length, 150_002);
+  assert.deepEqual(appendSource, [1, 2]);
+  assert.equal(appendedSlice[0], 1);
+  assert.equal(appendedSlice[150_001], 150_002);
 
   const nilMap = runtime.GoNilMap();
   assert.equal(nilMap.size, 0);

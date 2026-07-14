@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoInterface, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Mutex } from "../../go/sync.js";
@@ -318,7 +318,7 @@ export function Diagnostic_SetMessageChain(receiver: GoPtr<Diagnostic>, messageC
  */
 export function Diagnostic_AddMessageChain(receiver: GoPtr<Diagnostic>, messageChain: GoPtr<Diagnostic>): GoPtr<Diagnostic> {
   if (messageChain !== undefined) {
-    receiver!.messageChain = [...receiver!.messageChain, messageChain];
+    receiver!.messageChain = GoAppend(receiver!.messageChain, messageChain);
   }
   return receiver;
 }
@@ -350,7 +350,7 @@ export function Diagnostic_SetRelatedInfo(receiver: GoPtr<Diagnostic>, relatedIn
  */
 export function Diagnostic_AddRelatedInfo(receiver: GoPtr<Diagnostic>, relatedInformation: GoPtr<Diagnostic>): GoPtr<Diagnostic> {
   if (relatedInformation !== undefined) {
-    receiver!.relatedInformation = [...receiver!.relatedInformation, relatedInformation];
+    receiver!.relatedInformation = GoAppend(receiver!.relatedInformation, relatedInformation);
   }
   return receiver;
 }
@@ -564,10 +564,13 @@ export function DiagnosticsCollection_Add(receiver: GoPtr<DiagnosticsCollection>
       if (GoMapIsNil(receiver!.fileDiagnostics)) {
         receiver!.fileDiagnostics = new globalThis.Map<string, GoSlice<GoPtr<Diagnostic>>>();
       }
-      receiver!.fileDiagnostics.set(fileName, [...(receiver!.fileDiagnostics.get(fileName) ?? GoNilSlice()), diagnostic]);
+      receiver!.fileDiagnostics.set(
+        fileName,
+        GoAppend(receiver!.fileDiagnostics.get(fileName) ?? GoNilSlice(), diagnostic),
+      );
       collections.Set_Delete(receiver!.fileDiagnosticsSorted, fileName);
     } else {
-      receiver!.nonFileDiagnostics = [...receiver!.nonFileDiagnostics, diagnostic];
+      receiver!.nonFileDiagnostics = GoAppend(receiver!.nonFileDiagnostics, diagnostic);
       receiver!.nonFileDiagnosticsSorted = false;
     }
   } finally {
@@ -712,10 +715,10 @@ export function DiagnosticsCollection_getDiagnosticsForFileLocked(receiver: GoPt
 export function DiagnosticsCollection_GetDiagnostics(receiver: GoPtr<DiagnosticsCollection>): GoSlice<GoPtr<Diagnostic>> {
   receiver!.mu.Lock();
   try {
-    const diagnostics_: GoSlice<GoPtr<Diagnostic>> = [];
-    diagnostics_.push(...receiver!.nonFileDiagnostics);
+    let diagnostics_: GoSlice<GoPtr<Diagnostic>> = [];
+    diagnostics_ = GoAppend(diagnostics_, ...receiver!.nonFileDiagnostics);
     for (const diags of receiver!.fileDiagnostics.values()) {
-      diagnostics_.push(...diags);
+      diagnostics_ = GoAppend(diagnostics_, ...diags);
     }
     slices.SortFunc(diagnostics_, CompareDiagnostics);
     return diagnostics_;

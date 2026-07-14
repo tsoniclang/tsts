@@ -1,5 +1,5 @@
 import type { bool, int, uint } from "../../go/scalars.js";
-import { GoNilSlice } from "../../go/compat.js";
+import { GoMapIsNil, GoNilSlice } from "../../go/compat.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import type { Node } from "../ast/spine.js";
@@ -172,7 +172,7 @@ export function Tracer_copyWithCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap
  * }
  */
 export function Tracer_temporarilyAddCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap<string, GoInterface<unknown>>): [GoMap<string, GoInterface<unknown>>, GoFunc<() => void>] {
-  if (args === undefined) {
+  if (GoMapIsNil(args)) {
     args = new globalThis.Map<string, unknown>();
   }
 

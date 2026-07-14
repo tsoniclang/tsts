@@ -1937,7 +1937,6 @@ async function materializeCase(testCase, runRoot) {
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
     await writeUnitRecords(caseDir, unitRecords, pathOptions, contentRewrites);
-    await materializeHarnessApiDeclarations(caseDir, parsed, pathOptions);
     if (!hasRootPackageJson(unitRecords.map((record) => record.filePath))) {
       await writeFile(join(caseDir, "package.json"), "{}\n");
     }
@@ -1948,6 +1947,9 @@ async function materializeCase(testCase, runRoot) {
     // config's `extends` chain (parents merged under the child) for the skip decision.
     const inheritedOptions = merged.config === undefined ? {} : await inheritedConfigCompilerOptions(join(caseDir, existingConfig), merged.config);
     const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, { ...inheritedOptions, ...compilerOptions });
+    if (skipReason === "") {
+      await materializeHarnessApiDeclarations(caseDir, parsed, pathOptions);
+    }
     return {
       caseDir,
       invocation: {
@@ -1974,14 +1976,16 @@ async function materializeCase(testCase, runRoot) {
   if (needsLibFolder) {
     compilerOptions.skipLibCheck = true;
   }
+  const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
   await writeUnitRecords(caseDir, materializedUnitWriteOrder(unitRecords, inputFiles), pathOptions, contentRewrites);
-  await materializeHarnessApiDeclarations(caseDir, parsed, pathOptions);
+  if (skipReason === "") {
+    await materializeHarnessApiDeclarations(caseDir, parsed, pathOptions);
+  }
   if (!hasRootPackageJson(unitRecords.map((record) => record.filePath))) {
     await writeFile(join(caseDir, "package.json"), "{}\n");
   }
   await materializeSymlinks(caseDir, parsed.symlinks, pathOptions);
   await materializeSyntheticCompilerOptionRoots(caseDir, compilerOptions);
-  const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
   return {
     caseDir,
     invocation: {

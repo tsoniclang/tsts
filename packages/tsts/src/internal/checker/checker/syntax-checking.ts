@@ -321,7 +321,7 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: GoInterfa
   if (!links!.typeChecked) {
     receiver!.saveDeferredDiagnostics = true as bool;
     Checker_checkGrammarSourceFile(receiver, sourceFile);
-    receiver!.renamedBindingElementsInTypes = [];
+    receiver!.renamedBindingElementsInTypes = GoNilSlice();
     Checker_checkSourceElements(receiver, sourceFile!.Statements!.Nodes);
     Checker_checkDeferredNodes(receiver, sourceFile);
     if (IsExternalOrCommonJSModule(sourceFile)) {

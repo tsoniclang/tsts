@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoValueRef } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoValueRef } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Name } from "../../ast/spine.js";
 import { Node_Body, Node_Elements, Node_Expression, Node_Initializer, Node_ModifierFlags, Node_Parameters, Node_Text, Node_Type } from "../../ast/ast.js";
@@ -230,7 +230,7 @@ export function Checker_checkTypePredicate(receiver: GoPtr<Checker>, node: GoPtr
       if (signatureHasRestParameter(signature) && typePredicate!.parameterIndex === signature!.parameters.length - 1) {
         Checker_error(receiver, parameterName, A_type_predicate_cannot_reference_a_rest_parameter);
       } else if (typePredicate!.t !== undefined) {
-        const diags: GoSlice<GoPtr<Diagnostic>> = [];
+        const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
         if (!Checker_checkTypeAssignableToEx(receiver, typePredicate!.t, Checker_getTypeOfSymbol(receiver, signature!.parameters[typePredicate!.parameterIndex]), Node_Type(node), undefined, GoValueRef(diags))) {
           Checker_addDiagnostic(receiver, NewDiagnosticChain(diags[0], A_type_predicate_s_type_must_be_assignable_to_its_parameter_s_type));
         }
@@ -1074,7 +1074,7 @@ export function Checker_isDiscriminantWithNeverType(receiver: GoPtr<Checker>, pr
  * }
  */
 export function Checker_getConditionalFlowTypeOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>, node: GoPtr<Node>): GoPtr<Type> {
-  const constraints: GoSlice<GoPtr<Type>> = [];
+  let constraints: GoSlice<GoPtr<Type>> = GoNilSlice();
   let covariant = true;
   while (node !== undefined && !IsStatement(node) && node!.Kind !== KindJSDoc) {
     const parent = node!.Parent;
@@ -1092,7 +1092,7 @@ export function Checker_getConditionalFlowTypeOfType(receiver: GoPtr<Checker>, t
       const conditional = AsConditionalTypeNode(parent)!;
       const constraint = Checker_getImpliedConstraint(receiver, t, conditional.CheckType, conditional.ExtendsType);
       if (constraint !== undefined) {
-        constraints.push(constraint);
+        constraints = GoAppend(constraints, constraint);
       }
     } else if (
       (t!.flags & TypeFlagsTypeParameter) !== 0 &&
@@ -1106,7 +1106,7 @@ export function Checker_getConditionalFlowTypeOfType(receiver: GoPtr<Checker>, t
         if (typeParameter !== undefined) {
           const constraint = Checker_getConstraintOfTypeParameter(receiver, typeParameter);
           if (constraint !== undefined && everyType(constraint, (tt) => Checker_isArrayOrTupleType(receiver, tt))) {
-            constraints.push(Checker_getUnionType(receiver, [receiver!.numberType, receiver!.numericStringType]));
+            constraints = GoAppend(constraints, Checker_getUnionType(receiver, [receiver!.numberType, receiver!.numericStringType]));
           }
         }
       }

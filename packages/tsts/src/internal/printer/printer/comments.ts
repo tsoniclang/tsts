@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice } from "../../../go/compat.js";
 // CommentRange, FileReference, SourceFile are hand-written AST struct types that are
 // not yet ported into the spine/generated split; they live in the canonical ../../ast/ast.js
 // barrel (see internal/ast/ast.go). Units whose signatures reference them remain stubs.
@@ -1119,10 +1120,10 @@ export function Printer_emitLeadingComments(receiver: GoPtr<Printer>, pos: int, 
 
   const nf = NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0);
   const text = SourceFile_Text(receiver!.currentSourceFile);
-  const comments: CommentRange[] = [];
+  let comments: GoSlice<CommentRange> = GoNilSlice();
   GetLeadingCommentRanges(nf, text, adjustedPos)!((comment) => {
     if (Printer_shouldWriteComment(receiver, comment) && Printer_shouldEmitCommentIfTripleSlash(receiver, comment, tripleSlash)) {
-      comments.push(comment);
+      comments = GoAppend(comments, comment);
     }
     return true as bool;
   });
@@ -1233,10 +1234,10 @@ export function Printer_emitTrailingComments(receiver: GoPtr<Printer>, pos: int,
 
   const nf = NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0);
   const text = SourceFile_Text(receiver!.currentSourceFile);
-  const comments: CommentRange[] = [];
+  let comments: GoSlice<CommentRange> = GoNilSlice();
   GetTrailingCommentRanges(nf, text, pos)!((comment) => {
     if (Printer_shouldWriteComment(receiver, comment)) {
-      comments.push(comment);
+      comments = GoAppend(comments, comment);
     }
     return true as bool;
   });
@@ -1304,9 +1305,9 @@ export function Printer_emitTrailingCommentsOfPosition(receiver: GoPtr<Printer>,
 
   const nf = NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0);
   const text = SourceFile_Text(receiver!.currentSourceFile);
-  const comments: CommentRange[] = [];
+  let comments: GoSlice<CommentRange> = GoNilSlice();
   GetTrailingCommentRanges(nf, text, pos)!((comment) => {
-    comments.push(comment);
+    comments = GoAppend(comments, comment);
     return true as bool;
   });
   if (comments.length === 0) {
@@ -1459,27 +1460,24 @@ export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange
   const text = SourceFile_Text(receiver!.currentSourceFile);
   const lineMap = SourceFile_ECMALineMap(receiver!.currentSourceFile);
 
-  const leadingComments: CommentRange[] = [];
+  let leadingComments: GoSlice<CommentRange> = GoNilSlice();
   if (receiver!.commentsDisabled) {
     // removeComments is true, only reserve pinned comment at the top of file
     if (TextRange_Pos(textRange) === 0) {
       GetLeadingCommentRanges(nf, text, TextRange_Pos(textRange))!((comment) => {
         if (IsPinnedComment(text, comment)) {
-          leadingComments.push(comment);
+          leadingComments = GoAppend(leadingComments, comment);
         }
         return true as bool;
       });
     }
   } else {
     // removeComments is false, just get detached as normal and bypass the process to filter comment
-    GetLeadingCommentRanges(nf, text, TextRange_Pos(textRange))!((comment) => {
-      leadingComments.push(comment);
-      return true as bool;
-    });
+    leadingComments = Collect(GetLeadingCommentRanges(nf, text, TextRange_Pos(textRange))!);
   }
 
   if (leadingComments.length > 0) {
-    const detachedComments: CommentRange[] = [];
+    let detachedComments: GoSlice<CommentRange> = GoNilSlice();
     let lastComment: CommentRange = undefined!;
     for (let i = 0; i < leadingComments.length; i++) {
       const comment = leadingComments[i]!;
@@ -1493,7 +1491,7 @@ export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange
         }
       }
 
-      detachedComments.push(comment);
+      detachedComments = GoAppend(detachedComments, comment);
       lastComment = comment;
     }
 
@@ -1508,10 +1506,10 @@ export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange
         // Valid detachedComments
 
         // Filter to only comments that should be written (e.g., JSDoc-style in declaration emit)
-        const commentsToEmit: CommentRange[] = [];
+        let commentsToEmit: GoSlice<CommentRange> = GoNilSlice();
         for (const comment of detachedComments) {
           if (Printer_shouldWriteComment(receiver, comment)) {
-            commentsToEmit.push(comment);
+            commentsToEmit = GoAppend(commentsToEmit, comment);
           }
         }
 

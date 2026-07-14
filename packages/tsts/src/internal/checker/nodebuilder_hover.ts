@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoMapIsNil, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilSlice, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { ModifierList, Node } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
@@ -113,29 +113,29 @@ export function isExpanding(ctx: GoPtr<NodeBuilderContext>): bool {
  * }
  */
 export function NodeBuilderImpl_expandSymbolForHover(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
-  let results: GoSlice<GoPtr<Node>> = [];
+  let results: GoSlice<GoPtr<Node>> = GoNilSlice();
   if ((symbol_!.Flags & SymbolFlagsEnum) !== 0) {
     const node = NodeBuilderImpl_expandEnumDecl(receiver, symbol_);
     if (node !== undefined) {
-      results = [...results, node];
+      results = GoAppend(results, node);
     }
   }
   if ((symbol_!.Flags & SymbolFlagsClass) !== 0) {
     const node = NodeBuilderImpl_expandClassDecl(receiver, symbol_);
     if (node !== undefined) {
-      results = [...results, node];
+      results = GoAppend(results, node);
     }
   }
   if ((symbol_!.Flags & (SymbolFlagsValueModule | SymbolFlagsNamespaceModule)) !== 0) {
     const node = NodeBuilderImpl_expandModuleDecl(receiver, symbol_);
     if (node !== undefined) {
-      results = [...results, node];
+      results = GoAppend(results, node);
     }
   }
   if ((symbol_!.Flags & SymbolFlagsInterface) !== 0 && (symbol_!.Flags & SymbolFlagsClass) === 0) {
     const node = NodeBuilderImpl_expandInterfaceDecl(receiver, symbol_);
     if (node !== undefined) {
-      results = [...results, node];
+      results = GoAppend(results, node);
     }
   }
   return results;
@@ -189,14 +189,14 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
   const name = SymbolName(symbol_);
   receiver!.ctx!.approximateLength += 9 + name.length;
   const memberProps = Filter(Checker_getPropertiesOfType(receiver!.ch, Checker_getTypeOfSymbol(receiver!.ch, symbol_)), (p) => ((p!.Flags & SymbolFlagsEnumMember) !== 0) as bool);
-  let members: GoSlice<GoPtr<Node>> = [];
+  let members: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; i < memberProps.length; i++) {
     const p = memberProps[i];
     if (NodeBuilderImpl_checkTruncationLengthIfExpanding(receiver) && i + 3 < memberProps.length - 1) {
       receiver!.ctx!.expansionTruncated = true as bool;
-      members = [...members, NewEnumMember(receiver!.f, NewStringLiteral(receiver!.f, ` ... ${memberProps.length - i - 1} more ... `, TokenFlagsNone), undefined)];
+      members = GoAppend(members, NewEnumMember(receiver!.f, NewStringLiteral(receiver!.f, ` ... ${memberProps.length - i - 1} more ... `, TokenFlagsNone), undefined));
       const last = memberProps[memberProps.length - 1];
-      members = [...members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, last!.Name), NodeBuilderImpl_enumMemberInitializer(receiver, last))];
+      members = GoAppend(members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, last!.Name), NodeBuilderImpl_enumMemberInitializer(receiver, last)));
       break;
     }
     const memberDecl = Find(p!.Declarations ?? [], IsEnumMember, GoZeroPointer<Node>);
@@ -210,7 +210,7 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
     if (initializer !== undefined) {
       receiver!.ctx!.approximateLength += 5;
     }
-    members = [...members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, p!.Name), initializer)];
+    members = GoAppend(members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, p!.Name), initializer));
   }
   const constModifier: ModifierFlags = isConstEnumSymbol(symbol_) ? ModifierFlagsConst : ModifierFlagsNone;
   let mods: GoPtr<ModifierList>;
@@ -365,23 +365,28 @@ export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>
   const symbolProps = NodeBuilderImpl_filterInheritedProperties(receiver, classType, baseTypes, allProps);
   const publicProps = Filter(symbolProps, (s) => !isHashPrivate(s));
   const hasPrivate = Some(symbolProps, isHashPrivate);
-  let instanceMembers: GoSlice<GoPtr<Node>> = [];
+  let instanceMembers: GoSlice<GoPtr<Node>> = GoNilSlice();
   instanceMembers = NodeBuilderImpl_serializePropertiesWithTruncation(receiver, publicProps, instanceMembers);
   instanceMembers = typeElementsToClassElements(receiver!.f, instanceMembers);
   instanceMembers = NodeBuilderImpl_addClassModifiers(receiver, instanceMembers, false as bool);
   const staticProps = Filter(Checker_getPropertiesOfType(receiver!.ch, staticType), (p) => ((p!.Flags & SymbolFlagsPrototype) === 0 && p!.Name !== "prototype" && !NodeBuilderImpl_isNamespaceMember(receiver, p)) as bool);
-  let staticMembers: GoSlice<GoPtr<Node>> = [];
+  let staticMembers: GoSlice<GoPtr<Node>> = GoNilSlice();
   staticMembers = NodeBuilderImpl_serializePropertiesWithTruncation(receiver, staticProps, staticMembers);
   staticMembers = typeElementsToClassElements(receiver!.f, staticMembers);
   staticMembers = NodeBuilderImpl_addClassModifiers(receiver, staticMembers, true as bool);
-  let privateMembers: GoSlice<GoPtr<Node>> = [];
+  let privateMembers: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (hasPrivate) {
     privateMembers = NodeBuilderImpl_serializePropertiesWithTruncation(receiver, Filter(symbolProps, isHashPrivate), privateMembers);
     privateMembers = typeElementsToClassElements(receiver!.f, privateMembers);
   }
   const constructors = NodeBuilderImpl_serializeConstructors(receiver, staticType, staticBaseType, isClass, symbol_);
   const indexSigs = NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, classType, FirstOrNil(baseTypes, GoZeroPointer<Type>));
-  const allMembers = [...indexSigs, ...staticMembers, ...constructors, ...instanceMembers, ...privateMembers];
+  let allMembers: GoSlice<GoPtr<Node>> = [];
+  allMembers = GoAppend(allMembers, ...indexSigs);
+  allMembers = GoAppend(allMembers, ...staticMembers);
+  allMembers = GoAppend(allMembers, ...constructors);
+  allMembers = GoAppend(allMembers, ...instanceMembers);
+  allMembers = GoAppend(allMembers, ...privateMembers);
   receiver!.ctx!.enclosingDeclaration = oldEnclosing;
   return NewClassDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, name), NodeFactory_NewNodeList(receiver!.f, typeParamDecls), NodeFactory_NewNodeList(receiver!.f, heritageClauses), NodeFactory_NewNodeList(receiver!.f, allMembers));
 }
@@ -418,7 +423,7 @@ export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>
  * }
  */
 export function NodeBuilderImpl_addClassModifiers(receiver: GoPtr<NodeBuilderImpl>, members: GoSlice<GoPtr<Node>>, isStatic: bool): GoSlice<GoPtr<Node>> {
-  const result = [...members];
+  const result = members;
   for (let i = 0; i < result.length; i++) {
     const m = result[i];
     let memberSymbol: GoPtr<Symbol>;
@@ -539,16 +544,16 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
     baseType = Checker_getIntersectionType(receiver!.ch, baseTypes);
   }
   const resolved = Checker_resolveStructuredTypeMembers(receiver!.ch, interfaceType);
-  let members: GoSlice<GoPtr<Node>> = [];
-  members = [...members, ...NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, interfaceType, baseType)];
+  let members: GoSlice<GoPtr<Node>> = GoNilSlice();
+  members = GoAppend(members, ...NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, interfaceType, baseType));
   for (const sig of StructuredType_ConstructSignatures(resolved)) {
     if ((sig!.flags & SignatureFlagsAbstract) !== 0) {
       continue;
     }
-    members = [...members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructSignature, undefined)];
+    members = GoAppend(members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructSignature, undefined));
   }
   for (const sig of StructuredType_CallSignatures(resolved)) {
-    members = [...members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindCallSignature, undefined)];
+    members = GoAppend(members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindCallSignature, undefined));
   }
   const filteredProps = NodeBuilderImpl_filterInheritedProperties(receiver, interfaceType, baseTypes, StructuredType_Properties(resolved));
   members = NodeBuilderImpl_serializePropertiesWithTruncation(receiver, filteredProps, members);
@@ -583,22 +588,22 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
  * }
  */
 export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilderImpl>, declarations: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
-  let extendsTypes: GoSlice<GoPtr<Node>> = [];
-  let implementsTypes: GoSlice<GoPtr<Node>> = [];
+  let extendsTypes: GoSlice<GoPtr<Node>> = GoNilSlice();
+  let implementsTypes: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const declaration of declarations) {
     for (const heritageElement of GetExtendsHeritageClauseElements(declaration)) {
-      extendsTypes = [...extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+      extendsTypes = GoAppend(extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement));
     }
     for (const heritageElement of GetImplementsHeritageClauseElements(declaration)) {
-      implementsTypes = [...implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+      implementsTypes = GoAppend(implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement));
     }
   }
-  let heritageClauses: GoSlice<GoPtr<Node>> = [];
+  let heritageClauses: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (extendsTypes.length > 0) {
-    heritageClauses = [...heritageClauses, NewHeritageClause(receiver!.f, KindExtendsKeyword, NodeFactory_NewNodeList(receiver!.f, extendsTypes))];
+    heritageClauses = GoAppend(heritageClauses, NewHeritageClause(receiver!.f, KindExtendsKeyword, NodeFactory_NewNodeList(receiver!.f, extendsTypes)));
   }
   if (implementsTypes.length > 0) {
-    heritageClauses = [...heritageClauses, NewHeritageClause(receiver!.f, KindImplementsKeyword, NodeFactory_NewNodeList(receiver!.f, implementsTypes))];
+    heritageClauses = GoAppend(heritageClauses, NewHeritageClause(receiver!.f, KindImplementsKeyword, NodeFactory_NewNodeList(receiver!.f, implementsTypes)));
   }
   return heritageClauses;
 }
@@ -626,13 +631,13 @@ export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilder
  */
 export function NodeBuilderImpl_serializePropertiesWithTruncation(receiver: GoPtr<NodeBuilderImpl>, properties: GoSlice<GoPtr<Symbol>>, elements: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
   const filtered = Filter(properties, (p) => ((p!.Flags & SymbolFlagsPrototype) === 0) as bool);
-  let result = [...elements];
+  let result = elements;
   for (let i = 0; i < filtered.length; i++) {
     const p = filtered[i];
     if (NodeBuilderImpl_checkTruncationLengthIfExpanding(receiver) && (i + 3 < filtered.length - 1)) {
       receiver!.ctx!.expansionTruncated = true as bool;
       const text = `... ${filtered.length - i - 1} more ...`;
-      result = [...result, NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, text), undefined, undefined, undefined)];
+      result = GoAppend(result, NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, text), undefined, undefined, undefined));
       result = NodeBuilderImpl_addPropertyToElementList(receiver, filtered[filtered.length - 1], result as GoSlice<GoPtr<TypeElement>>) as GoSlice<GoPtr<Node>>;
       break;
     }
@@ -710,7 +715,7 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
   if (staticBaseType !== undefined) {
     const baseSigs = Checker_getSignaturesOfType(receiver!.ch, staticBaseType, SignatureKindConstruct);
     if (baseSigs.length === 0 && Every(signatures, (sig) => (sig!.parameters.length === 0) as bool)) {
-      return [];
+      return GoNilSlice();
     }
     if (baseSigs.length === signatures.length) {
       let allMatch = true;
@@ -721,7 +726,7 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
         }
       }
       if (allMatch) {
-        return [];
+        return GoNilSlice();
       }
     }
     let privateProtected: ModifierFlags = 0;
@@ -734,12 +739,12 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
       return [NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, CreateModifiersFromModifierFlags(privateProtected, (kind) => NodeFactory_NewModifier(receiver!.f, kind))), undefined, NodeFactory_NewNodeList(receiver!.f, []), undefined, undefined, undefined)];
     }
   } else if (Every(signatures, (sig) => (sig!.parameters.length === 0) as bool)) {
-    return [];
+    return GoNilSlice();
   }
-  let result: GoSlice<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const sig of signatures) {
     receiver!.ctx!.approximateLength++;
-    result = [...result, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructor, undefined)];
+    result = GoAppend(result, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructor, undefined));
   }
   return result;
 }
@@ -763,7 +768,7 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
  * }
  */
 export function NodeBuilderImpl_serializeIndexSignaturesOfType(receiver: GoPtr<NodeBuilderImpl>, input: GoPtr<Type>, baseType: GoPtr<Type>): GoSlice<GoPtr<Node>> {
-  let result: GoSlice<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const info of Checker_getIndexInfosOfType(receiver!.ch, input)) {
     if (baseType !== undefined) {
       const baseInfo = Checker_getIndexInfoOfType(receiver!.ch, baseType, info!.keyType);
@@ -771,7 +776,7 @@ export function NodeBuilderImpl_serializeIndexSignaturesOfType(receiver: GoPtr<N
         continue;
       }
     }
-    result = [...result, NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, info, undefined)];
+    result = GoAppend(result, NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, info, undefined));
   }
   return result;
 }
@@ -978,7 +983,7 @@ export function NodeBuilderImpl_serializeNamespaceMember(receiver: GoPtr<NodeBui
  */
 export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
   const exports = Checker_getExportsOfSymbol(receiver!.ch, symbol_);
-  let members: GoSlice<GoPtr<Symbol>> = [];
+  let members: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   for (const [, sym] of exports) {
     if (!NodeBuilderImpl_isNamespaceMember(receiver, sym)) {
       continue;
@@ -986,7 +991,7 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
     if (!IsIdentifierText(sym!.Name, LanguageVariantStandard)) {
       continue;
     }
-    members = [...members, sym];
+    members = GoAppend(members, sym);
   }
   Checker_sortSymbols(receiver!.ch, members);
   receiver!.ctx!.approximateLength += 14;
@@ -999,13 +1004,13 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
     node: GoPtr<Node>;
     isLocal: bool;
   }
-  let bodyStmts: GoSlice<HoverStatement> = [];
+  let bodyStmts: GoSlice<HoverStatement> = GoNilSlice();
   const emittedLocals: GoPtr<Set<GoPtr<Symbol>>> = NewSetWithSizeHint<GoPtr<Symbol>>(0, goSymbolPointerKey);
   for (let i = 0; i < members.length; i++) {
     const m = members[i];
     if (NodeBuilderImpl_checkTruncationLengthIfExpanding(receiver) && i + 3 < members.length - 1) {
       receiver!.ctx!.expansionTruncated = true as bool;
-      bodyStmts = [...bodyStmts, { node: NewExpressionStatement(receiver!.f, NewIdentifier(receiver!.f, `... (${members.length - i - 1} more) ...`)), isLocal: false as bool }];
+      bodyStmts = GoAppend(bodyStmts, { node: NewExpressionStatement(receiver!.f, NewIdentifier(receiver!.f, `... (${members.length - i - 1} more) ...`)), isLocal: false as bool });
       i = members.length - 2;
       continue;
     }
@@ -1028,7 +1033,7 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
                 NodeFlagsLet,
               ),
             );
-            bodyStmts = [...bodyStmts, { node: localStmt, isLocal: true as bool }];
+            bodyStmts = GoAppend(bodyStmts, { node: localStmt, isLocal: true as bool });
           }
         }
         const targetName = target!.Name;
@@ -1047,7 +1052,7 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
           undefined,
           undefined,
         );
-        bodyStmts = [...bodyStmts, { node: stmt, isLocal: false as bool }];
+        bodyStmts = GoAppend(bodyStmts, { node: stmt, isLocal: false as bool });
         continue;
       }
     }
@@ -1058,18 +1063,18 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
       for (const sig of sigs) {
         receiver!.ctx!.approximateLength++;
         const decl = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindFunctionDeclaration, { modifiers: [], name: NewIdentifier(receiver!.f, m!.Name), questionToken: undefined });
-        bodyStmts = [...bodyStmts, { node: decl, isLocal: false as bool }];
+        bodyStmts = GoAppend(bodyStmts, { node: decl, isLocal: false as bool });
       }
       const merged = Checker_getMergedSymbol(receiver!.ch, resolved);
       const hasModuleExports = (merged!.Flags & (SymbolFlagsValueModule | SymbolFlagsNamespaceModule)) !== 0 && !GoMapIsNil(merged!.Exports) && merged!.Exports.size !== 0;
       if (!hasModuleExports) {
-        bodyStmts = [...bodyStmts, { node: NewModuleDeclaration(receiver!.f, undefined, KindNamespaceKeyword, NewIdentifier(receiver!.f, m!.Name), NewModuleBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []))), isLocal: false as bool }];
+        bodyStmts = GoAppend(bodyStmts, { node: NewModuleDeclaration(receiver!.f, undefined, KindNamespaceKeyword, NewIdentifier(receiver!.f, m!.Name), NewModuleBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, GoNilSlice()))), isLocal: false as bool });
       }
       continue;
     }
     const node = NodeBuilderImpl_serializeNamespaceMember(receiver, resolved, m!.Name);
     if (node !== undefined) {
-      bodyStmts = [...bodyStmts, { node, isLocal: false as bool }];
+      bodyStmts = GoAppend(bodyStmts, { node, isLocal: false as bool });
     }
   }
   // Add export modifier to exported statements
@@ -1179,7 +1184,7 @@ export function NodeBuilderImpl_filterInheritedProperties(receiver: GoPtr<NodeBu
   if (Set_Len(inherited) === 0) {
     return properties;
   }
-  return properties.filter((p) => !Set_Has(inherited, p!.Name));
+  return Filter(properties, (p) => !Set_Has(inherited, p!.Name));
 }
 
 /**

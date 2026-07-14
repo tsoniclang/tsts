@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoBooleanKey, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoBooleanKey, GoMapIsNil, GoNilMap, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_ForEachChild, Node_Modifiers, Node_Name, Node_SubtreeFacts } from "../../ast/spine.js";
 import type { ClassDeclaration, ClassExpression, ComputedPropertyName, ConstructorDeclaration, GetAccessorDeclaration, Identifier, MethodDeclaration, ParameterDeclaration, PropertyAccessExpression, PropertyDeclaration, SetAccessorDeclaration } from "../../ast/generated/data.js";
@@ -74,8 +74,8 @@ export function NewLegacyDecoratorsTransformer(opt: GoPtr<TransformOptions>): Go
     __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
     languageVersion: CompilerOptions_GetEmitScriptTarget(opt!.CompilerOptions),
     referenceResolver: opt!.Resolver!,
-    classAliases: new Map(),
-    enclosingClasses: [],
+    classAliases: GoNilMap(),
+    enclosingClasses: GoNilSlice(),
   };
   return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => LegacyDecoratorsTransformer_visit(tx, node), opt!.Context);
 }
@@ -158,11 +158,11 @@ export function LegacyDecoratorsTransformer_visit(receiver: GoPtr<LegacyDecorato
       return LegacyDecoratorsTransformer_visitParamerDeclaration(receiver, node as unknown as GoPtr<ParameterDeclaration>);
     case KindSourceFile: {
       receiver!.classAliases = new Map();
-      receiver!.enclosingClasses = [];
+      receiver!.enclosingClasses = GoNilSlice();
       const result = NodeVisitor_VisitEachChild(visitor, node);
       EmitContext_AddEmitHelper(emitCtx, result, ...EmitContext_ReadEmitHelpers(emitCtx));
-      receiver!.classAliases = new Map();
-      receiver!.enclosingClasses = [];
+      receiver!.classAliases = GoNilMap();
+      receiver!.enclosingClasses = GoNilSlice();
       return result;
     }
     default:
@@ -725,7 +725,7 @@ export function LegacyDecoratorsTransformer_transformClassDeclarationWithoutClas
   if (decorationStatements.length === 0) {
     return updated;
   }
-  return NewSyntaxList(astFactory, [updated, ...decorationStatements]);
+  return NewSyntaxList(astFactory, GoAppend([updated], ...decorationStatements));
 }
 
 /**
@@ -749,7 +749,7 @@ export function LegacyDecoratorsTransformer_popEnclosingClass(receiver: GoPtr<Le
  * }
  */
 export function LegacyDecoratorsTransformer_pushEnclosingClass(receiver: GoPtr<LegacyDecoratorsTransformer>, cls: GoPtr<ClassDeclaration>): void {
-  receiver!.enclosingClasses = [...receiver!.enclosingClasses, cls];
+  receiver!.enclosingClasses = GoAppend(receiver!.enclosingClasses, cls);
 }
 
 /**
@@ -987,13 +987,14 @@ export function LegacyDecoratorsTransformer_transformClassDeclarationWithClassDe
 
   const members: GoPtr<NodeList> = assignClassAliasInStaticBlock
     ? (() => {
-        const memberNodes: GoSlice<GoPtr<Node>> = members0 !== undefined ? [...members0!.Nodes] : [];
+        let memberNodes: GoSlice<GoPtr<Node>> = [];
         const staticBlockStmt = NodeFactory_NewNodeList(astFactory, [
           NewExpressionStatement(astFactory, NodeFactory_NewAssignmentExpression(printerFactory, classAlias as never, NewKeywordExpression(astFactory, KindThisKeyword) as never) as never),
         ]);
         const staticBlock = NewClassStaticBlockDeclaration(astFactory, undefined, NewBlock(astFactory, staticBlockStmt as never, false as bool) as never);
-        const newMemberNodes = [staticBlock, ...memberNodes];
-        const newList = NodeFactory_NewNodeList(astFactory, newMemberNodes);
+        memberNodes = GoAppend(memberNodes, staticBlock);
+        memberNodes = GoAppend(memberNodes, ...members0!.Nodes);
+        const newList = NodeFactory_NewNodeList(astFactory, memberNodes);
         newList!.Loc = members0!.Loc;
         return newList;
       })()
@@ -1028,17 +1029,15 @@ export function LegacyDecoratorsTransformer_transformClassDeclarationWithClassDe
   EmitContext_SetCommentRange(emitCtx, varStatement, nodeAsNode!.Loc);
 
   const constructorDecorationStmt = LegacyDecoratorsTransformer_getConstructorDecorationStatement(receiver, node);
-  const statements: GoSlice<GoPtr<Node>> = [
-    varStatement,
-    ...decorationStatements,
-    ...(constructorDecorationStmt !== undefined ? [constructorDecorationStmt] : []),
-  ];
+  let statements: GoSlice<GoPtr<Node>> = [varStatement];
+  statements = GoAppend(statements, ...decorationStatements);
+  statements = GoAppend(statements, constructorDecorationStmt);
 
   if (isExport) {
     const exportStatement: GoPtr<Node> = isDefault
       ? NodeFactory_NewExportDefault(printerFactory, declName as never) as unknown as GoPtr<Node>
       : NodeFactory_NewExternalModuleExport(printerFactory, NodeFactory_GetDeclarationName(printerFactory, nodeAsNode as never) as GoPtr<IdentifierNode>) as unknown as GoPtr<Node>;
-    statements.push(exportStatement);
+    statements = GoAppend(statements, exportStatement);
   }
 
   if (classAlias !== undefined) {
@@ -1222,7 +1221,7 @@ export function LegacyDecoratorsTransformer_generateConstructorDecorationExpress
   }
   const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const classAlias: GoPtr<Node> = receiver!.classAliases !== undefined ? receiver!.classAliases.get(nodeAsNode) : undefined;
+  const classAlias: GoPtr<Node> = !GoMapIsNil(receiver!.classAliases) ? receiver!.classAliases.get(nodeAsNode) : undefined;
   const localName = NodeFactory_GetDeclarationNameEx(printerFactory, nodeAsNode as never, { AllowComments: false, AllowSourceMaps: true } as NameOptions);
   const decorate = NodeFactory_NewDecorateHelper(printerFactory, decoratorExpressions, localName as unknown as GoPtr<Node>, undefined, undefined);
   const assignmentTarget: GoPtr<Node> = classAlias !== undefined
@@ -1362,10 +1361,10 @@ export interface allDecorators {
  */
 export function getAllDecoratorsOfClass(node: GoPtr<ClassDeclaration>, useLegacyDecorators: bool): GoPtr<allDecorators> {
   const nodeAsNode = node as unknown as GoPtr<Node>;
-  const decorators = Node_Decorators(nodeAsNode) ?? [];
+  const decorators = Node_Decorators(nodeAsNode) ?? GoNilSlice();
   const parameters: GoSlice<GoSlice<GoPtr<Node>>> = useLegacyDecorators
     ? getDecoratorsOfParameters(GetFirstConstructorWithBody(nodeAsNode))
-    : [];
+    : GoNilSlice();
   if (decorators.length === 0 && parameters.length === 0) {
     return undefined;
   }
@@ -1449,7 +1448,7 @@ export function getAllDecoratorsOfAccessors(accessor: GoPtr<Node>, parent: GoPtr
   if (Node_Body(accessor) === undefined) {
     return undefined;
   }
-  const memberNodes: GoSlice<GoPtr<Node>> = parent!.Members !== undefined ? parent!.Members!.Nodes : [];
+  const memberNodes = parent!.Members!.Nodes;
   const decls = GetAllAccessorDeclarations(memberNodes, accessor as unknown as GoPtr<AccessorDeclaration>);
   const firstAccessorWithDecorators: GoPtr<Node> = HasDecorators(decls.FirstAccessor as unknown as GoPtr<Node>)
     ? decls.FirstAccessor as unknown as GoPtr<Node>
@@ -1459,10 +1458,10 @@ export function getAllDecoratorsOfAccessors(accessor: GoPtr<Node>, parent: GoPtr
   if (firstAccessorWithDecorators === undefined || accessor !== firstAccessorWithDecorators) {
     return undefined;
   }
-  const decorators = Node_Decorators(firstAccessorWithDecorators) ?? [];
+  const decorators = Node_Decorators(firstAccessorWithDecorators) ?? GoNilSlice();
   const parameters: GoSlice<GoSlice<GoPtr<Node>>> = (useLegacyDecorators && decls.SetAccessor !== undefined)
     ? getDecoratorsOfParameters(decls.SetAccessor as unknown as GoPtr<Node>)
-    : [];
+    : GoNilSlice();
   if (decorators.length === 0 && parameters.length === 0) {
     return undefined;
   }
@@ -1482,11 +1481,11 @@ export function getAllDecoratorsOfAccessors(accessor: GoPtr<Node>, parent: GoPtr
  * }
  */
 export function getAllDecoratorsOfProperty(property: GoPtr<Node>): GoPtr<allDecorators> {
-  const decorators = Node_Decorators(property) ?? [];
+  const decorators = Node_Decorators(property) ?? GoNilSlice();
   if (decorators.length === 0) {
     return undefined;
   }
-  return { decorators, parameters: [] };
+  return { decorators, parameters: GoNilSlice() };
 }
 
 /**
@@ -1512,10 +1511,10 @@ export function getAllDecoratorsOfMethod(method: GoPtr<Node>, useLegacyDecorator
   if (Node_Body(method) === undefined) {
     return undefined;
   }
-  const decorators = Node_Decorators(method) ?? [];
+  const decorators = Node_Decorators(method) ?? GoNilSlice();
   const parameters: GoSlice<GoSlice<GoPtr<Node>>> = useLegacyDecorators
     ? getDecoratorsOfParameters(method)
-    : [];
+    : GoNilSlice();
   if (decorators.length === 0 && parameters.length === 0) {
     return undefined;
   }
@@ -1600,16 +1599,21 @@ export function getDecoratorsOfParameters(node: GoPtr<Node>): GoSlice<GoSlice<Go
  */
 export function LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, members: GoPtr<NodeList>): [GoPtr<NodeList>, GoSlice<GoPtr<Node>>] {
   const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
-  const decorationStatements: GoSlice<GoPtr<Node>> = [
-    ...LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver, node, false as bool),
-    ...LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver, node, true as bool),
-  ];
+  let decorationStatements: GoSlice<GoPtr<Node>> = GoNilSlice();
+  decorationStatements = GoAppend(decorationStatements, ...LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver, node, false as bool));
+  decorationStatements = GoAppend(decorationStatements, ...LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver, node, true as bool));
   if (hasClassElementWithDecoratorContainingPrivateIdentifierInExpression(node)) {
-    const memberNodes: GoSlice<GoPtr<Node>> = (members !== undefined && members!.Nodes.length > 0) ? [...members!.Nodes] : [];
+    let memberNodes: GoSlice<GoPtr<Node>> = GoNilSlice();
+    if (members !== undefined && members!.Nodes.length > 0) {
+      memberNodes = members!.Nodes;
+    }
     const stmtList = NodeFactory_NewNodeList(astFactory, decorationStatements);
     const staticBlock = NewClassStaticBlockDeclaration(astFactory, undefined, NewBlock(astFactory, stmtList as never, true as bool) as never);
-    const newMembers = NodeFactory_NewNodeList(astFactory, [...memberNodes, staticBlock]);
-    return [newMembers, []];
+    let copiedMemberNodes: GoSlice<GoPtr<Node>> = [];
+    copiedMemberNodes = GoAppend(copiedMemberNodes, ...memberNodes);
+    copiedMemberNodes = GoAppend(copiedMemberNodes, staticBlock);
+    const newMembers = NodeFactory_NewNodeList(astFactory, copiedMemberNodes);
+    return [newMembers, GoNilSlice()];
   }
   return [members, decorationStatements];
 }
@@ -1630,7 +1634,11 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(r
 export function LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, isStatic: bool): GoSlice<GoPtr<Node>> {
   const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
   const exprs = LegacyDecoratorsTransformer_generateClassElementDecorationExpressions(receiver, node, isStatic);
-  return exprs.map(e => NewExpressionStatement(astFactory, e as never));
+  let statements: GoSlice<GoPtr<Node>> = GoNilSlice();
+  for (const expression of exprs) {
+    statements = GoAppend(statements, NewExpressionStatement(astFactory, expression as never));
+  }
+  return statements;
 }
 
 /**
@@ -1664,9 +1672,15 @@ export function isDecoratedClassElement(member: GoPtr<Node>, isStaticElement: bo
  */
 export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStatic: bool): GoSlice<GoPtr<Node>> {
   if (node!.Members === undefined || node!.Members!.Nodes.length === 0) {
-    return [];
+    return GoNilSlice();
   }
-  return node!.Members!.Nodes.filter(member => isDecoratedClassElement(member, isStatic, node));
+  let members: GoSlice<GoPtr<Node>> = GoNilSlice();
+  for (const member of node!.Members!.Nodes) {
+    if (isDecoratedClassElement(member, isStatic, node)) {
+      members = GoAppend(members, member);
+    }
+  }
+  return members;
 }
 
 /**
@@ -1687,11 +1701,11 @@ export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStati
  */
 export function LegacyDecoratorsTransformer_generateClassElementDecorationExpressions(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, isStatic: bool): GoSlice<GoPtr<Node>> {
   const members = getDecoratedClassElements(node, isStatic);
-  const expressions: GoSlice<GoPtr<Node>> = [];
+  let expressions: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const member of members) {
     const expr = LegacyDecoratorsTransformer_generateClassElementDecorationExpression(receiver, node, member);
     if (expr !== undefined) {
-      expressions.push(expr);
+      expressions = GoAppend(expressions, expr);
     }
   }
   return expressions;
@@ -1818,16 +1832,16 @@ export function LegacyDecoratorsTransformer_isSyntheticMetadataDecorator(receive
  */
 export function LegacyDecoratorsTransformer_transformAllDecoratorsOfDeclaration(receiver: GoPtr<LegacyDecoratorsTransformer>, allDecorators: GoPtr<allDecorators>): GoSlice<GoPtr<Node>> {
   if (allDecorators === undefined) {
-    return [];
+    return GoNilSlice();
   }
   const mm = GroupBy(allDecorators!.decorators, (d) => LegacyDecoratorsTransformer_isSyntheticMetadataDecorator(receiver, d), GoBooleanKey);
   const metadata = MultiMap_Get(mm, true as bool);
   const decorators = MultiMap_Get(mm, false as bool);
-  return [
-    ...LegacyDecoratorsTransformer_transformDecorators(receiver, decorators),
-    ...LegacyDecoratorsTransformer_transformDecoratorsOfParameters(receiver, allDecorators!.parameters),
-    ...LegacyDecoratorsTransformer_transformDecorators(receiver, metadata),
-  ];
+  let decoratorExpressions: GoSlice<GoPtr<Node>> = GoNilSlice();
+  decoratorExpressions = GoAppend(decoratorExpressions, ...LegacyDecoratorsTransformer_transformDecorators(receiver, decorators));
+  decoratorExpressions = GoAppend(decoratorExpressions, ...LegacyDecoratorsTransformer_transformDecoratorsOfParameters(receiver, allDecorators!.parameters));
+  decoratorExpressions = GoAppend(decoratorExpressions, ...LegacyDecoratorsTransformer_transformDecorators(receiver, metadata));
+  return decoratorExpressions;
 }
 
 /**
@@ -1856,7 +1870,7 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const results: GoSlice<GoPtr<Node>> = [];
+  let results: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; i < parameters.length; i++) {
     const decorators = parameters[i];
     if (decorators !== undefined && decorators.length > 0) {
@@ -1869,7 +1883,7 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
           decoratorExpr!.Loc,
         );
         EmitContext_SetEmitFlags(emitCtx, helper as unknown as GoPtr<Node>, EFNoComments as never);
-        results.push(helper as unknown as GoPtr<Node>);
+        results = GoAppend(results, helper as unknown as GoPtr<Node>);
       }
     }
   }
@@ -1890,7 +1904,11 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
  */
 export function LegacyDecoratorsTransformer_transformDecorators(receiver: GoPtr<LegacyDecoratorsTransformer>, decorators: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
-  return decorators.map(d => NodeVisitor_VisitNode(visitor, Node_Expression(d)));
+  let results: GoSlice<GoPtr<Node>> = GoNilSlice();
+  for (const decorator of decorators) {
+    results = GoAppend(results, NodeVisitor_VisitNode(visitor, Node_Expression(decorator)));
+  }
+  return results;
 }
 
 /**

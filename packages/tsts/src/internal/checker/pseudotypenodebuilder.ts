@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice } from "../../go/compat.js";
 import { Node_Body, NodeFactory_NewModifier, Node_Symbol, Node_Text } from "../ast/ast.js";
 import { AsTypePredicateNode } from "../ast/generated/casts.js";
 import { NewFunctionTypeNode, NewGetAccessorDeclaration, NewKeywordExpression, NewKeywordTypeNode, NewLiteralTypeNode, NewMethodSignatureDeclaration, NewParameterDeclaration, NewPropertySignatureDeclaration, NewSetAccessorDeclaration, NewToken, NewTupleTypeNode, NewTypeLiteralNode, NewTypeOperatorNode, NewUnionTypeNode } from "../ast/generated/factory.js";
@@ -490,7 +491,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           : NodeBuilderImpl_pseudoTypeToNode(b, d.RegularType);
       }
       case PseudoTypeKindUnion: {
-        const res: GoPtr<Node>[] = [];
+        let res: GoSlice<GoPtr<Node>> = GoNilSlice();
         let hasElidedType = false;
         const members = PseudoType_AsPseudoTypeUnion(t)!.Types;
         for (const member of members) {
@@ -500,7 +501,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               continue;
             }
           }
-          res.push(NodeBuilderImpl_pseudoTypeToNode(b, member));
+          res = GoAppend(res, NodeBuilderImpl_pseudoTypeToNode(b, member));
         }
         if (res.length === 1) {
           return res[0];
@@ -541,12 +542,12 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         const d = PseudoType_AsPseudoTypeSingleCallSignature(t)!;
         const signature = Checker_getSignatureFromDeclaration(b.ch, d.Signature);
         const expandedParams = Checker_getExpandedParameters(b.ch, signature, true)[0];
-        const cleanup = NodeBuilderImpl_enterNewScope(b, d.Signature, expandedParams ?? [], signature!.typeParameters ?? [], signature!.parameters ?? [], signature!.mapper);
+        const cleanup = NodeBuilderImpl_enterNewScope(b, d.Signature, expandedParams ?? GoNilSlice(), signature!.typeParameters, signature!.parameters, signature!.mapper);
         let typeParams: GoPtr<NodeList> = undefined;
         if (d.TypeParameters.length > 0) {
-          const res: GoPtr<Node>[] = [];
+          let res: GoSlice<GoPtr<Node>> = [];
           for (const tp of d.TypeParameters) {
-            res.push(NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
+            res = GoAppend(res, NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
           }
           typeParams = NodeFactory_NewNodeList(b.f, res);
         }
@@ -557,10 +558,10 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         return fnResult;
       }
       case PseudoTypeKindTuple: {
-        const res: GoPtr<Node>[] = [];
+        let res: GoSlice<GoPtr<Node>> = GoNilSlice();
         const elements = PseudoType_AsPseudoTypeTuple(t)!.Elements;
         for (const element of elements) {
-          res.push(NodeBuilderImpl_pseudoTypeToNode(b, element));
+          res = GoAppend(res, NodeBuilderImpl_pseudoTypeToNode(b, element));
         }
         const result = NewTupleTypeNode(b.f, NodeFactory_NewNodeList(b.f, res) as GoPtr<never>);
         EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
@@ -574,7 +575,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           return result;
         }
         const isConst = Checker_isConstContext(b.ch, elements[0]!.Name!.Parent!.Parent);
-        const newElements: GoPtr<Node>[] = [];
+        let newElements: GoSlice<GoPtr<Node>> = [];
 
         // Member types are serialized within an object type literal, so set the
         // corresponding flag to mirror createTypeNodeFromObjectType. This ensures
@@ -593,7 +594,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
             const signatureNode = PseudoObjectElement_Signature(elementNode);
             const signature = Checker_getSignatureFromDeclaration(b.ch, signatureNode);
             const expandedParams = Checker_getExpandedParameters(b.ch, signature, true)[0];
-            cleanup = NodeBuilderImpl_enterNewScope(b, signatureNode, expandedParams ?? [], signature!.typeParameters ?? [], signature!.parameters ?? [], signature!.mapper);
+            cleanup = NodeBuilderImpl_enterNewScope(b, signatureNode, expandedParams ?? GoNilSlice(), signature!.typeParameters, signature!.parameters, signature!.mapper);
           }
           let newProp: GoPtr<Node> = undefined;
           switch (elementNode.Kind) {
@@ -601,9 +602,9 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               const d = PseudoObjectElement_AsPseudoObjectMethod(elementNode)!;
               let typeParams: GoPtr<NodeList> = undefined;
               if (d.TypeParameters.length > 0) {
-                const res: GoPtr<Node>[] = [];
+                let res: GoSlice<GoPtr<Node>> = [];
                 for (const tp of d.TypeParameters) {
-                  res.push(NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
+                  res = GoAppend(res, NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
                 }
                 typeParams = NodeFactory_NewNodeList(b.f, res);
               }
@@ -678,7 +679,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           if (b.ctx!.enclosingFile === GetSourceFileOfNode(elementNode.Name)) {
             EmitContext_SetCommentRange(b.e, newProp, elementNode.Name!.Parent!.Loc);
           }
-          newElements.push(newProp);
+          newElements = GoAppend(newElements, newProp);
           if (cleanup !== undefined) {
             cleanup();
           }
@@ -717,9 +718,9 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
  */
 export function NodeBuilderImpl_pseudoParametersToNodeList(receiver: GoPtr<NodeBuilderImpl>, params: GoSlice<GoPtr<PseudoParameter>>): GoPtr<NodeList> {
   const b = receiver!;
-  const res: GoSlice<GoPtr<Node>> = [];
+  let res: GoSlice<GoPtr<Node>> = [];
   for (const p of params) {
-    res.push(NodeBuilderImpl_pseudoParameterToNode(b, p));
+    res = GoAppend(res, NodeBuilderImpl_pseudoParameterToNode(b, p));
   }
   return NodeFactory_NewNodeList(b.f, res);
 }
@@ -1548,7 +1549,7 @@ export function NodeBuilderImpl_pseudoTypeToType(receiver: GoPtr<NodeBuilderImpl
       return NodeBuilderImpl_pseudoTypeToType(b, d.RegularType);
     }
     case PseudoTypeKindUnion: {
-      const res: GoSlice<GoPtr<Type>> = [];
+      let res: GoSlice<GoPtr<Type>> = GoNilSlice();
       let hasElidedType = false;
       const members = PseudoType_AsPseudoTypeUnion(t)!.Types;
       for (const m of members) {
@@ -1562,7 +1563,7 @@ export function NodeBuilderImpl_pseudoTypeToType(receiver: GoPtr<NodeBuilderImpl
         if (mt === undefined) {
           return undefined; // propagate failure
         }
-        res.push(mt);
+        res = GoAppend(res, mt);
       }
       if (res.length === 1) {
         return res[0];

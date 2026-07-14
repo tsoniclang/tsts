@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoMapIsNil, GoNilMap, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import { Pool, Mutex, Once } from "../../go/sync.js";
 import { Join as strings_Join } from "../../go/strings.js";
 import type { SourceFile, SourceFileMetaData } from "../ast/ast.js";
@@ -280,23 +280,23 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
       const canonicalFileName = GetCanonicalFileName(receiver!.normalizedFilePath, loader!.opts.Host!.FS()!.UseCaseSensitiveFileNames());
       if (!fileLoader_isSupportedExtension(loader, canonicalFileName)) {
         if (HasJSFileExtension(canonicalFileName)) {
-          receiver!.processingDiagnostics = [...receiver!.processingDiagnostics, {
+          receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, {
             kind: processingDiagnosticKindExplainingFileInclude,
             data: {
               diagnosticReason: receiver!.includeReason,
               message: File_0_is_a_JavaScript_file_Did_you_mean_to_enable_the_allowJs_option,
               args: [receiver!.normalizedFilePath],
             } as includeExplainingDiagnostic,
-          }];
+          });
         } else {
-          receiver!.processingDiagnostics = [...receiver!.processingDiagnostics, {
+          receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, {
             kind: processingDiagnosticKindExplainingFileInclude,
             data: {
               diagnosticReason: receiver!.includeReason,
               message: File_0_has_an_unsupported_extension_The_only_supported_extensions_are_1,
               args: [receiver!.normalizedFilePath, "'" + strings_Join(Flatten(loader!.supportedExtensions), "', '") + "'"],
             } as includeExplainingDiagnostic,
-          }];
+          });
         }
         return;
       }
@@ -328,7 +328,7 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
       const ref = file!.ReferencedFiles[index]!;
       const [resolvedRef, pDiag] = fileLoader_resolveTripleslashPathReference(loader, ref.FileName, SourceFile_FileName(file), index);
       if (pDiag !== undefined) {
-        receiver!.processingDiagnostics = [...receiver!.processingDiagnostics, pDiag];
+        receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, pDiag);
         continue;
       }
       parseTask_addSubTask(receiver, resolvedRef!, undefined);
@@ -362,10 +362,10 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
           packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
         }, libFile);
       } else {
-        receiver!.processingDiagnostics = [...receiver!.processingDiagnostics, {
+        receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, {
           kind: processingDiagnosticKindUnknownReference,
           data: includeReason,
-        }];
+        });
       }
     }
   }
@@ -440,7 +440,7 @@ export function parseTask_loadAutomaticTypeDirectives(receiver: GoPtr<parseTask>
   const [toParseTypeRefs, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics] = fileLoader_resolveAutomaticTypeDirectives(loader, receiver!.normalizedFilePath);
   receiver!.typeResolutionsInFile = typeResolutionsInFile;
   receiver!.typeResolutionsTrace = typeResolutionsTrace;
-  receiver!.processingDiagnostics = [...(receiver!.processingDiagnostics ?? []), ...(pDiagnostics ?? [])];
+  receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, ...pDiagnostics);
   for (const typeResolution of toParseTypeRefs ?? []) {
     parseTask_addSubTask(receiver, typeResolution, undefined);
   }
@@ -511,7 +511,7 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
     loadedTask: undefined,
     allIncludeReasons: [],
   };
-  receiver!.subTasks.push(subTask);
+  receiver!.subTasks = GoAppend(receiver!.subTasks, subTask);
 }
 
 /**
@@ -1002,10 +1002,10 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
   const totalFileCount = loader!.totalFileCount.Load() as number;
   const libFileCount = loader!.libFileCount.Load() as number;
 
-  let missingFiles: GoSlice<string> = [];
-  let duplicateSourceFiles: GoSlice<GoPtr<DuplicateSourceFile>> = [];
-  const files: GoSlice<GoPtr<SourceFile>> = [];
-  const libFiles: GoSlice<GoPtr<SourceFile>> = [];
+  let missingFiles: GoSlice<string> = GoNilSlice();
+  let duplicateSourceFiles: GoSlice<GoPtr<DuplicateSourceFile>> = GoNilSlice();
+  let files: GoSlice<GoPtr<SourceFile>> = GoNilSlice();
+  let libFiles: GoSlice<GoPtr<SourceFile>> = GoNilSlice();
 
   const filesByPath = new globalThis.Map<Path_65a900c3, GoPtr<SourceFile>>();
   let tasksSeenByNameIgnoreCase = GoNilMap<string, GoPtr<parseTask>>();
@@ -1015,7 +1015,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
 
   const inclProcessor: includeProcessor = {
     fileIncludeReasons: new globalThis.Map<Path_65a900c3, GoSlice<GoPtr<FileIncludeReason>>>(),
-    processingDiagnostics: [],
+    processingDiagnostics: GoNilSlice(),
     reasonToReferenceLocation: { __tsgoBlank0: [], __tsgoBlank1: [], m: new sync_Map() } as unknown as import("../collections/syncmap.js").SyncMap<GoPtr<FileIncludeReason>, GoPtr<import("./fileInclude.js").referenceFileLocation>>,
     includeReasonToRelatedInfo: { __tsgoBlank0: [], __tsgoBlank1: [], m: new sync_Map() } as unknown as import("../collections/syncmap.js").SyncMap<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>,
     redirectAndFileFormat: { __tsgoBlank0: [], __tsgoBlank1: [], m: new sync_Map() } as unknown as import("../collections/syncmap.js").SyncMap<Path_65a900c3, GoSlice<GoPtr<Diagnostic>>>,
@@ -1069,11 +1069,11 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       const checkedName = seen.get(data);
       if (checkedName !== undefined) {
         if (task!.file !== undefined && checkedName !== task!.normalizedFilePath) {
-          duplicateSourceFiles = [...duplicateSourceFiles, {
+          duplicateSourceFiles = GoAppend(duplicateSourceFiles, {
             ParseOptions: SourceFile_ParseOptions(task!.file),
             Hash: task!.file!.Hash,
             ScriptKind: task!.file!.ScriptKind,
-          }];
+          });
         }
         if (!Tristate_IsFalse(ParsedCommandLine_CompilerOptions(loader!.opts.Config)!.ForceConsistentCasingInFileNames)) {
           const checkedAbsolutePath = GetNormalizedAbsolutePathWithoutRoot(checkedName, loader!.comparePathsOptions.CurrentDirectory);
@@ -1111,14 +1111,17 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
         const packageIdFile = packageIdToSourceFile.get(dataPackageIdKey);
         if (packageIdFile !== undefined) {
           if (file !== undefined) {
-            duplicateSourceFiles = [...duplicateSourceFiles, {
+            duplicateSourceFiles = GoAppend(duplicateSourceFiles, {
               ParseOptions: SourceFile_ParseOptions(file),
               Hash: file!.Hash,
               ScriptKind: file!.ScriptKind,
-            }];
+            });
           }
           const existing = redirectTargetsMap!.get(SourceFile_Path(packageIdFile));
-          redirectTargetsMap!.set(SourceFile_Path(packageIdFile), [...(existing !== undefined ? existing : []), task!.normalizedFilePath]);
+          redirectTargetsMap!.set(
+            SourceFile_Path(packageIdFile),
+            GoAppend(existing ?? GoNilSlice(), task!.normalizedFilePath),
+          );
           if (GoMapIsNil(redirectFilesByPath)) {
             redirectFilesByPath = new globalThis.Map<Path_65a900c3, GoPtr<redirectsFile>>();
           }
@@ -1152,7 +1155,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       if (task!.isForAutomaticTypeDirective) {
         typeResolutionsInFile.set(task!.path, task!.typeResolutionsInFile);
         if (task!.processingDiagnostics.length > 0) {
-          inclProcessor.processingDiagnostics = [...inclProcessor.processingDiagnostics, ...task!.processingDiagnostics];
+          inclProcessor.processingDiagnostics = GoAppend(inclProcessor.processingDiagnostics, ...task!.processingDiagnostics);
         }
         continue;
       }
@@ -1160,19 +1163,19 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       const path = task!.path;
 
       if (task!.processingDiagnostics.length > 0) {
-        inclProcessor.processingDiagnostics = [...inclProcessor.processingDiagnostics, ...task!.processingDiagnostics];
+        inclProcessor.processingDiagnostics = GoAppend(inclProcessor.processingDiagnostics, ...task!.processingDiagnostics);
       }
 
       if (file === undefined) {
-        missingFiles = [...missingFiles, task!.normalizedFilePath];
+        missingFiles = GoAppend(missingFiles, task!.normalizedFilePath);
         continue;
       }
 
       if (task!.libFile !== undefined) {
-        libFiles.push(file);
+        libFiles = GoAppend(libFiles, file);
         libFilesMap.set(path, task!.libFile);
       } else {
-        files.push(file);
+        files = GoAppend(files, file);
       }
       filesByPath.set(path, file);
       resolvedModules.set(path, task!.resolutionsInFile);
@@ -1200,7 +1203,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
   collectFiles(loader!.rootTasks, new globalThis.Map<GoPtr<parseTaskData>, string>());
   fileLoader_sortLibs(loader, libFiles);
 
-  const allFiles = [...libFiles, ...files];
+  const allFiles = GoAppend(libFiles, ...files);
   if (!GoMapIsNil(redirectFilesByPath)) {
     const redirectFilesByPathDefined = redirectFilesByPath as GoMap<Path_65a900c3, GoPtr<redirectsFile>>;
     for (const redirectFile of redirectFilesByPathDefined.values()) {
@@ -1274,7 +1277,7 @@ export function filesParser_addIncludeReason(receiver: GoPtr<filesParser>, inclu
   } else if (task!.loaded) {
     const existing = includeProcessor!.fileIncludeReasons.get(task!.path);
     if (existing !== undefined) {
-      includeProcessor!.fileIncludeReasons.set(task!.path, [...existing, reason]);
+      includeProcessor!.fileIncludeReasons.set(task!.path, GoAppend(existing, reason));
     } else {
       includeProcessor!.fileIncludeReasons.set(task!.path, [reason]);
     }

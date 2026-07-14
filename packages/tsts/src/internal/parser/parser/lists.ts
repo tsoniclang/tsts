@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import type { Kind } from "../../ast/generated/kinds.js";
@@ -165,9 +165,9 @@ export function isMissingNodeList(list: GoPtr<NodeList>): bool {
 export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: GoFunc<(p: GoPtr<Parser>, index: int) => GoPtr<Node>>): GoSlice<GoPtr<Node>> {
   const saveParsingContexts = receiver!.parsingContexts;
   receiver!.parsingContexts |= 1 << kind;
-  const outerReparseList = receiver!.reparseList;
-  receiver!.reparseList = [];
-  let list: Array<GoPtr<Node>> = [];
+  let outerReparseList = receiver!.reparseList;
+  receiver!.reparseList = GoNilSlice();
+  let list: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; !Parser_isListTerminator(receiver, kind); i++) {
     if (Parser_isListElement(receiver, kind, false /*inErrorRecovery*/)) {
       const elt = parseElement!(receiver, list.length);
@@ -175,14 +175,14 @@ export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingCont
         for (const e of receiver!.reparseList) {
           // Propagate @typedef type alias declarations outwards to a context that permits them.
           if ((IsJSTypeAliasDeclaration(e) || IsJSImportDeclaration(e)) && kind !== PCSourceElements && kind !== PCBlockStatements) {
-            outerReparseList.push(e);
+            outerReparseList = GoAppend(outerReparseList, e);
           } else {
-            list.push(e);
+            list = GoAppend(list, e);
           }
         }
-        receiver!.reparseList = [];
+        receiver!.reparseList = GoNilSlice();
       }
-      list.push(elt);
+      list = GoAppend(list, elt);
       continue;
     }
     if (Parser_abortParsingListOrMoveToNextToken(receiver, kind)) {
@@ -275,7 +275,7 @@ export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: Parsing
   const pos = Parser_nodePos(receiver);
   const saveParsingContexts = receiver!.parsingContexts;
   receiver!.parsingContexts |= 1 << kind;
-  let list: Array<GoPtr<Node>> = [];
+  let list: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (;;) {
     if (Parser_isListElement(receiver, kind, false /*inErrorRecovery*/)) {
       const startPos = Parser_nodePos(receiver);
@@ -285,7 +285,7 @@ export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: Parsing
         // Return nil to indicate parseElement failed
         return undefined;
       }
-      list.push(element);
+      list = GoAppend(list, element);
       if (Parser_parseOptional(receiver, KindCommaToken)) {
         // No need to check for a zero length node since we know we parsed a comma
         continue;

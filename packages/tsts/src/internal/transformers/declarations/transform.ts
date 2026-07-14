@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoEqualStrict, GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer, type GoFunc, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilMap, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoFunc, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { CommentRange, FileReference, SourceFile } from "../../ast/ast.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { SourceFile_Text, SourceFile_FileName, AsSourceFile, SourceFile_IsJS, Node_Symbol, Node_Initializer, Node_Type, Node_Expression, Node_Parameters, Node_ParameterList, Node_Elements, Node_IsTypeOnly, Node_ModuleSpecifier, NodeFactory_NewModifier, Node_Text, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateExpressionWithTypeArguments, Node_Arguments, NodeFactory_UpdateFunctionDeclaration, Node_StatementList, NodeFactory_UpdateSourceFile, Node_PropertyName, Node_EagerJSDoc, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateVariableDeclarationList, NodeFactory_UpdateBindingElement } from "../../ast/ast.js";
@@ -228,8 +228,8 @@ export function NewDeclarationTransformer(host: GoInterface<DeclarationEmitHost>
     isolatedDeclarations: compilerOptions!.IsolatedDeclarations !== undefined && compilerOptions!.IsolatedDeclarations !== 0,
     stripInternal: compilerOptions!.StripInternal !== undefined && compilerOptions!.StripInternal !== 0,
     resolver: resolver,
-    lateMarkedStatements: [],
-    diagnostics: [],
+    lateMarkedStatements: GoNilSlice(),
+    diagnostics: GoNilSlice(),
     getSymbolAccessibilityDiagnostic: throwDiagnostic,
     errorNameNode: undefined,
     currentSourceFile: undefined,
@@ -252,14 +252,14 @@ export function NewDeclarationTransformer(host: GoInterface<DeclarationEmitHost>
     resultHasExternalModuleIndicator: false,
     suppressNewDiagnosticContexts: false,
     witnessedCjsExports: { M: GoNilMap() },
-    lateStatementReplacementMap: new globalThis.Map(),
-    expandoHosts: new globalThis.Map(),
-    expandoMembers: new globalThis.Map(),
+    lateStatementReplacementMap: GoNilMap(),
+    expandoHosts: GoNilMap(),
+    expandoMembers: GoNilMap(),
     seenProperties: { M: GoNilMap() },
     thisPropertyAssignmentsCollected: GoNilSlice<GoPtr<Node>>(),
-    rawReferencedFiles: [],
-    rawTypeReferenceDirectives: [],
-    rawLibReferenceDirectives: [],
+    rawReferencedFiles: GoNilSlice(),
+    rawTypeReferenceDirectives: GoNilSlice(),
+    rawLibReferenceDirectives: GoNilSlice(),
     bindingNameVisitor: undefined,
     expressionVisitor: undefined,
     exportStrippingVisitor: undefined,
@@ -391,14 +391,14 @@ export function DeclarationTransformer_isInternalDeclaration(receiver: GoPtr<Dec
       previousSibling = params!.Nodes[paramIdx - 1];
     }
     const text = SourceFile_Text(sourceFile);
-    let commentRanges: GoSlice<CommentRange> = [];
+    let commentRanges: GoSlice<CommentRange> = GoNilSlice();
     if (previousSibling !== undefined) {
       const trailingPos = SkipTriviaEx(text, Node_End(previousSibling!) + 1, { StopAfterLineBreak: false, StopAtComments: true, InJSDoc: false });
-      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)!((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return true; });
-      GetLeadingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, Node_Pos(node!))!((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return true; });
+      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)!((comment: CommentRange) => { commentRanges = GoAppend(commentRanges, comment); return true; });
+      GetLeadingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, Node_Pos(node!))!((comment: CommentRange) => { commentRanges = GoAppend(commentRanges, comment); return true; });
     } else {
       const trailingPos = SkipTriviaEx(text, Node_Pos(node!), { StopAfterLineBreak: false, StopAtComments: true, InJSDoc: false });
-      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)!((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return true; });
+      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)!((comment: CommentRange) => { commentRanges = GoAppend(commentRanges, comment); return true; });
     }
     if (commentRanges.length > 0) {
       return hasInternalAnnotation(commentRanges[commentRanges.length - 1]!, sourceFile);
@@ -664,12 +664,9 @@ export function DeclarationTransformer_visitSourceFile(receiver: GoPtr<Declarati
  * }
  */
 export function DeclarationTransformer_collectFileReferences(receiver: GoPtr<DeclarationTransformer>, sourceFile: GoPtr<SourceFile>): void {
-  receiver!.rawReferencedFiles = [
-    ...receiver!.rawReferencedFiles,
-    ...Map(sourceFile!.ReferencedFiles, (ref: GoPtr<FileReference>) => ({ file: sourceFile, ref: ref } as ReferencedFilePair)),
-  ];
-  receiver!.rawTypeReferenceDirectives = [...receiver!.rawTypeReferenceDirectives, ...sourceFile!.TypeReferenceDirectives];
-  receiver!.rawLibReferenceDirectives = [...receiver!.rawLibReferenceDirectives, ...sourceFile!.LibReferenceDirectives];
+  receiver!.rawReferencedFiles = GoAppend(receiver!.rawReferencedFiles, ...Map(sourceFile!.ReferencedFiles, (ref: GoPtr<FileReference>) => ({ file: sourceFile, ref: ref } as ReferencedFilePair)));
+  receiver!.rawTypeReferenceDirectives = GoAppend(receiver!.rawTypeReferenceDirectives, ...sourceFile!.TypeReferenceDirectives);
+  receiver!.rawLibReferenceDirectives = GoAppend(receiver!.rawLibReferenceDirectives, ...sourceFile!.LibReferenceDirectives);
 }
 
 /**
@@ -735,7 +732,7 @@ export function DeclarationTransformer_transformSourceFile(receiver: GoPtr<Decla
     }
     if (!receiver!.resultHasExternalModuleIndicator || (receiver!.needsScopeFixMarker && !receiver!.resultHasScopeMarker)) {
       const marker = createEmptyExports(factory!.__tsgoEmbedded0);
-      const newList = NodeFactory_NewNodeList(factory!.__tsgoEmbedded0, [...combinedStatements!.Nodes, marker]);
+      const newList = NodeFactory_NewNodeList(factory!.__tsgoEmbedded0, GoAppend(combinedStatements!.Nodes, marker));
       newList!.Loc = combinedStatements!.Loc;
       combinedStatements = newList as GoPtr<StatementList>;
     }
@@ -859,16 +856,16 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
     const id = GetNodeId(original);
     receiver!.lateStatementReplacementMap.set(id, result);
   }
-  const results: GoSlice<GoPtr<Node>> = [];
+  let results: GoSlice<GoPtr<Node>> = [];
   for (const statement of statements!.Nodes) {
     if (!IsLateVisibilityPaintedStatement(statement)) {
-      results.push(statement);
+      results = GoAppend(results, statement);
       continue;
     }
     const original = EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statement);
     const id = GetNodeId(original);
     if (!receiver!.lateStatementReplacementMap.has(id)) {
-      results.push(statement);
+      results = GoAppend(results, statement);
       continue; // not replaced
     }
     const replacement = receiver!.lateStatementReplacementMap.get(id);
@@ -887,7 +884,7 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
         }
       }
       for (const elem of AsSyntaxList(replacement)!.Children) {
-        results.push(elem);
+        results = GoAppend(results, elem);
       }
     } else {
       if (needsScopeMarker(replacement)) {
@@ -896,7 +893,7 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
       if (IsSourceFile(statement!.Parent) && IsExternalModuleIndicator(replacement)) {
         receiver!.resultHasExternalModuleIndicator = true;
       }
-      results.push(replacement);
+      results = GoAppend(results, replacement);
     }
   }
   return NodeFactory_NewNodeList(factory!.__tsgoEmbedded0, results) as GoPtr<StatementList>;
@@ -962,7 +959,7 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
  * }
  */
 export function DeclarationTransformer_getReferencedFiles(receiver: GoPtr<DeclarationTransformer>, outputFilePath: string): GoSlice<GoPtr<FileReference>> {
-  const results: GoSlice<GoPtr<FileReference>> = [];
+  let results: GoSlice<GoPtr<FileReference>> = GoNilSlice();
   for (const pair of receiver!.rawReferencedFiles) {
     const sourceFile = pair.file;
     const ref = pair.ref;
@@ -998,7 +995,7 @@ export function DeclarationTransformer_getReferencedFiles(receiver: GoPtr<Declar
         UseCaseSensitiveFileNames: receiver!.host!.UseCaseSensitiveFileNames(),
       } as ComparePathsOptions,
     );
-    results.push({
+    results = GoAppend(results, {
       ...NewTextRange(-1, -1),
       FileName: fileName,
       ResolutionMode: ref!.ResolutionMode,
@@ -1029,12 +1026,12 @@ export function DeclarationTransformer_getReferencedFiles(receiver: GoPtr<Declar
  * }
  */
 export function DeclarationTransformer_getLibReferences(receiver: GoPtr<DeclarationTransformer>): GoSlice<GoPtr<FileReference>> {
-  const result: GoSlice<GoPtr<FileReference>> = [];
+  let result: GoSlice<GoPtr<FileReference>> = GoNilSlice();
   for (const ref of receiver!.rawLibReferenceDirectives) {
     if (!ref!.Preserve) {
       continue;
     }
-    result.push({
+    result = GoAppend(result, {
       ...NewTextRange(-1, -1),
       FileName: ref!.FileName,
       ResolutionMode: ref!.ResolutionMode,
@@ -1065,12 +1062,12 @@ export function DeclarationTransformer_getLibReferences(receiver: GoPtr<Declarat
  * }
  */
 export function DeclarationTransformer_getTypeReferences(receiver: GoPtr<DeclarationTransformer>): GoSlice<GoPtr<FileReference>> {
-  const result: GoSlice<GoPtr<FileReference>> = [];
+  let result: GoSlice<GoPtr<FileReference>> = GoNilSlice();
   for (const ref of receiver!.rawTypeReferenceDirectives) {
     if (!ref!.Preserve) {
       continue;
     }
-    result.push({
+    result = GoAppend(result, {
       ...NewTextRange(-1, -1),
       FileName: ref!.FileName,
       ResolutionMode: ref!.ResolutionMode,
@@ -1820,12 +1817,12 @@ export function DeclarationTransformer_transformCjsRequireVariableDeclaration(re
   } else {
     // `const {x, y: z} = require("something")` -> `import {x, y as z} from "something"`
     const b = AsBindingPattern(Node_Name(input));
-    const importSpecifiers: GoSlice<GoPtr<Node>> = [];
+    let importSpecifiers: GoSlice<GoPtr<Node>> = GoNilSlice();
     for (const elem of b!.Elements!.Nodes) {
       if (!IsIdentifier(Node_Name(elem))) {
         continue; // nested destructuring, bail
       }
-      importSpecifiers.push(NewImportSpecifier(astFactory, false as bool, Node_PropertyName(elem), Node_Name(elem)));
+      importSpecifiers = GoAppend(importSpecifiers, NewImportSpecifier(astFactory, false as bool, Node_PropertyName(elem), Node_Name(elem)));
     }
     return NewImportDeclaration(
       astFactory,
@@ -1870,7 +1867,7 @@ export function DeclarationTransformer_transformCjsRequireVariableDeclaration(re
  */
 export function DeclarationTransformer_recreateBindingPattern(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<BindingPattern>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const results: GoPtr<Node>[] = [];
+  let results: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const elem of input!.Elements!.Nodes) {
     const result = DeclarationTransformer_recreateBindingElement(receiver, AsBindingElement(elem));
     if (result === undefined) {
@@ -1878,10 +1875,10 @@ export function DeclarationTransformer_recreateBindingPattern(receiver: GoPtr<De
     }
     if (result!.Kind === KindSyntaxList) {
       for (const child of AsSyntaxList(result)!.Children) {
-        results.push(child);
+        results = GoAppend(results, child);
       }
     } else {
-      results.push(result);
+      results = GoAppend(results, result);
     }
   }
   if (results.length === 0) {
@@ -2180,11 +2177,11 @@ export function DeclarationTransformer_transformGetAccesorDeclaration(receiver: 
 export function DeclarationTransformer_updateAccessorParamList(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<Node>, isPrivate: bool): GoPtr<ParameterList> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  const newParams: GoPtr<Node>[] = [];
+  let newParams: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (!isPrivate) {
     const thisParam = GetThisParameter(input);
     if (thisParam !== undefined) {
-      newParams.push(DeclarationTransformer_ensureParameter(receiver, AsParameterDeclaration(thisParam)));
+      newParams = GoAppend(newParams, DeclarationTransformer_ensureParameter(receiver, AsParameterDeclaration(thisParam)));
     }
   }
   if (IsSetAccessorDeclaration(input)) {
@@ -2203,7 +2200,7 @@ export function DeclarationTransformer_updateAccessorParamList(receiver: GoPtr<D
       const t = !isPrivate ? NewKeywordTypeNode(astFactory, KindAnyKeyword) : undefined;
       valueParam = NewParameterDeclaration(astFactory, undefined, undefined, NewIdentifier(astFactory, "value"), undefined, t, undefined);
     }
-    newParams.push(valueParam);
+    newParams = GoAppend(newParams, valueParam);
   }
   return NodeFactory_NewNodeList(astFactory, newParams) as GoPtr<ParameterList>;
 }
@@ -3353,7 +3350,7 @@ export function DeclarationTransformer_transformModuleDeclaration(receiver: GoPt
     // 3. Some things are exported, some are not, and there's no marker - add an empty marker
     const lateStatements: GoPtr<StatementList> = (!IsGlobalScopeAugmentation(input) && !receiver!.resultHasScopeMarker && !hasScopeMarker(lateStatementsResult))
       ? (receiver!.needsScopeFixMarker
-          ? NodeFactory_NewNodeList(astFactory, [...lateStatementsResult!.Nodes, createEmptyExports(astFactory)]) as GoPtr<StatementList>
+          ? NodeFactory_NewNodeList(astFactory, GoAppend(lateStatementsResult!.Nodes, createEmptyExports(astFactory))) as GoPtr<StatementList>
           : NodeVisitor_VisitNodes(receiver!.exportStrippingVisitor, lateStatementsResult) as GoPtr<StatementList>)
       : lateStatementsResult;
     const moduleBlock = AsModuleBlock(inner)!;
@@ -3587,7 +3584,7 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
     const typeParameters = DeclarationTransformer_ensureTypeParams(receiver, input, input!.TypeParameters);
     const ctor = GetFirstConstructorWithBody(input);
     const parameterProperties: GoSlice<GoPtr<Node>> = ((): GoSlice<GoPtr<Node>> => {
-      if (ctor === undefined) { return []; }
+      if (ctor === undefined) { return GoNilSlice(); }
       const oldDiag = receiver!.state!.getSymbolAccessibilityDiagnostic;
       const ctorDecl = AsConstructorDeclaration(ctor)!;
       const result = ctorDecl!.Parameters!.Nodes.reduce((acc: GoSlice<GoPtr<Node>>, param: GoPtr<Node>): GoSlice<GoPtr<Node>> => {
@@ -3606,12 +3603,12 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
             DeclarationTransformer_ensureNoInitializer(receiver, param),
           );
           DeclarationTransformer_preserveJsDoc(receiver, updated, param);
-          return [...acc, updated];
+          return GoAppend(acc, updated);
         } else {
           // Pattern - currently an error, but emit declarations for it somewhat correctly
-          return [...acc, ...DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(paramDecl!.name)!, param)];
+          return GoAppend(acc, ...DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(paramDecl!.name)!, param));
         }
-      }, []);
+      }, GoNilSlice());
       receiver!.state!.getSymbolAccessibilityDiagnostic = oldDiag;
       return result;
     })();
@@ -3625,7 +3622,7 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
       : undefined;
 
     // Collect this.x property assignments from constructors and static blocks in JS files
-    let thisPropertyAssignments: GoSlice<GoPtr<Node>> = [];
+    let thisPropertyAssignments: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (IsInJSFile(input)) {
       thisPropertyAssignments = DeclarationTransformer_collectThisPropertyAssignments(receiver, input);
     }
@@ -3640,13 +3637,16 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
     );
 
     const visitResult = NodeVisitor_VisitNodes(visitor, input!.Members);
-    const memberNodes: GoSlice<GoPtr<Node>> = [
-      ...(privateIdentifier !== undefined ? [privateIdentifier] : []),
-      ...(lateIndexes ?? []),
-      ...parameterProperties,
-      ...thisPropertyAssignments,
-      ...(visitResult !== undefined && visitResult!.Nodes.length > 0 ? visitResult!.Nodes : []),
-    ];
+    let memberNodes: GoSlice<GoPtr<Node>> = [];
+    if (privateIdentifier !== undefined) {
+      memberNodes = GoAppend(memberNodes, privateIdentifier);
+    }
+    memberNodes = GoAppend(memberNodes, ...(lateIndexes ?? GoNilSlice()));
+    memberNodes = GoAppend(memberNodes, ...parameterProperties);
+    memberNodes = GoAppend(memberNodes, ...thisPropertyAssignments);
+    if (visitResult !== undefined && visitResult!.Nodes.length > 0) {
+      memberNodes = GoAppend(memberNodes, ...visitResult!.Nodes);
+    }
     const members = NodeFactory_NewNodeList(astFactory, memberNodes) as GoPtr<ClassElementList>;
 
     const extendsClause = getEffectiveBaseTypeNode(input);
@@ -3684,10 +3684,10 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
           astFactory!.hooks,
         );
         const retainedHeritageClauses = NodeVisitor_VisitNodes(visitor, input!.HeritageClauses);
-        const heritageList: GoSlice<GoPtr<Node>> = [
-          newHeritageClause,
-          ...(retainedHeritageClauses !== undefined && retainedHeritageClauses!.Nodes.length > 0 ? retainedHeritageClauses!.Nodes : []),
-        ];
+        let heritageList: GoSlice<GoPtr<Node>> = [newHeritageClause];
+        if (retainedHeritageClauses !== undefined && retainedHeritageClauses!.Nodes.length > 0) {
+          heritageList = GoAppend(heritageList, ...retainedHeritageClauses!.Nodes);
+        }
         const heritageClauses = NodeFactory_NewNodeList(astFactory, heritageList) as GoPtr<HeritageClauseList>;
         return NewSyntaxList(astFactory, [
           statement,
@@ -3841,7 +3841,7 @@ export function DeclarationTransformer_visitThisPropertyAssignments(receiver: Go
       if (IsExpressionStatement(node!.Parent)) {
         DeclarationTransformer_preserveJsDoc(receiver, prop, node!.Parent);
       }
-      receiver!.thisPropertyAssignmentsCollected = [...receiver!.thisPropertyAssignmentsCollected, prop];
+      receiver!.thisPropertyAssignmentsCollected = GoAppend(receiver!.thisPropertyAssignmentsCollected, prop);
       break;
     }
   }
@@ -3977,17 +3977,17 @@ export function DeclarationTransformer_walkBindingPattern(receiver: GoPtr<Declar
     }
     const elemName = Node_Name(elem);
     if (elemName !== undefined && IsBindingPattern(elemName)) {
-      return [...elems, ...DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(elemName)!, param)];
+      return GoAppend(elems, ...DeclarationTransformer_walkBindingPattern(receiver, AsBindingPattern(elemName)!, param));
     }
-    return [...elems, NewPropertyDeclaration(
+    return GoAppend(elems, NewPropertyDeclaration(
       astFactory,
       DeclarationTransformer_ensureModifiers(receiver, param),
       elemName,
       undefined,
       DeclarationTransformer_ensureType(receiver, elem, false),
       undefined,
-    )];
-  }, []);
+    ));
+  }, GoNilSlice());
 }
 
 /**
@@ -4060,15 +4060,15 @@ export function DeclarationTransformer_transformVariableStatement(receiver: GoPt
     return undefined;
   }
   let inputNodes = declListData.Declarations!.Nodes;
-  let extraImports: GoSlice<GoPtr<Node>> = [];
+  let extraImports: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (receiver!.state!.currentSourceFile!.CommonJSModuleIndicator !== undefined) {
-    const normalDeclarations: GoSlice<GoPtr<Node>> = [];
-    const imports: GoSlice<GoPtr<Node>> = [];
+    let normalDeclarations: GoSlice<GoPtr<Node>> = GoNilSlice();
+    let imports: GoSlice<GoPtr<Node>> = GoNilSlice();
     for (const n of inputNodes) {
       if (IsVariableDeclarationInitializedToRequire(n)) {
-        imports.push(n);
+        imports = GoAppend(imports, n);
       } else {
-        normalDeclarations.push(n);
+        normalDeclarations = GoAppend(normalDeclarations, n);
       }
     }
     inputNodes = normalDeclarations;
@@ -4098,7 +4098,7 @@ export function DeclarationTransformer_transformVariableStatement(receiver: GoPt
   }
   const res = NodeFactory_UpdateVariableStatement(astFactory, input, modifiers, newDeclList as GoPtr<VariableDeclarationListNode>);
   if (extraImports.length > 0) {
-    return NewSyntaxList(astFactory, [...extraImports, res]);
+    return NewSyntaxList(astFactory, GoAppend(extraImports, res));
   }
   return res;
 }
@@ -4340,7 +4340,7 @@ export function DeclarationTransformer_ensureTypeParams(receiver: GoPtr<Declarat
   const typeParameters: GoPtr<TypeParameterList> = (data !== undefined && data!.FullSignature !== undefined)
     ? (() => {
         const nodes = receiver!.resolver!.CreateTypeParametersOfSignatureDeclaration(emitContext, node, receiver!.enclosingDeclaration, declarationEmitNodeBuilderFlags, declarationEmitInternalNodeBuilderFlags, tracker);
-        if (nodes !== undefined && nodes.length > 0) {
+        if (!GoSliceIsNil(nodes)) {
           return { Loc: node!.Loc, Nodes: nodes } as GoPtr<TypeParameterList>;
         }
         return undefined;
@@ -5219,7 +5219,7 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
   try {
     const [, cleanupDiagnosticContext] = DeclarationTransformer_setupDiagnosticContext(receiver, NodeDefault_AsNode(node));
     try {
-      const statements: GoSlice<GoPtr<Node>> = [
+      let statements: GoSlice<GoPtr<Node>> = [
         NewVariableStatement(
           astFactory,
           varModifiers,
@@ -5237,7 +5237,7 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
         const namedExports = NewNamedExports(astFactory, NodeFactory_NewNodeList(astFactory, [
           NewExportSpecifier(astFactory, false as bool, exportName, NewIdentifier(astFactory, property)),
         ]) as GoPtr<ExportSpecifierList>);
-        statements.push(NewExportDeclaration(astFactory, undefined, false as bool, namedExports, undefined, undefined));
+        statements = GoAppend(statements, NewExportDeclaration(astFactory, undefined, false as bool, namedExports, undefined, undefined));
       }
 
       if (statements.length > 1 && !preexistingExpandoHasExport) {
@@ -5247,7 +5247,7 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
           MutableNode_SetModifiers(Node_AsMutable(decl), NodeFactory_NewModifierList(astFactory, CreateModifiersFromModifierFlags(modifierFlags, (kind) => NodeFactory_NewModifier(astFactory, kind))));
         }
       }
-      receiver!.expandoMembers!.set(hostId, [...(receiver!.expandoMembers!.get(hostId) ?? []), ...statements]);
+      receiver!.expandoMembers!.set(hostId, GoAppend(receiver!.expandoMembers!.get(hostId) ?? GoNilSlice(), ...statements));
     } finally {
       cleanupDiagnosticContext!();
     }
@@ -5353,14 +5353,14 @@ export function DeclarationTransformer_transformExpandoHost(receiver: GoPtr<Decl
   const [, cleanupDiagnosticContext] = DeclarationTransformer_setupDiagnosticContext(receiver, declaration);
   try {
     const modifiers = NodeFactory_NewModifierList(astFactory, CreateModifiersFromModifierFlags(modifierFlags, (kind) => NodeFactory_NewModifier(astFactory, kind)));
-    let replacement: GoSlice<GoPtr<Node>> = [];
+    let replacement: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (IsFunctionDeclaration(declaration)) {
       const [typeParameters, parameters, asteriskToken] = extractExpandoHostParams(declaration);
-      replacement = [...replacement, NodeFactory_UpdateFunctionDeclaration(astFactory, AsFunctionDeclaration(declaration)!, modifiers, asteriskToken, Node_Name(declaration), DeclarationTransformer_ensureTypeParams(receiver, declaration, typeParameters), DeclarationTransformer_updateParamList(receiver, declaration, parameters), DeclarationTransformer_ensureType(receiver, declaration, false), undefined, undefined)];
+      replacement = GoAppend(replacement, NodeFactory_UpdateFunctionDeclaration(astFactory, AsFunctionDeclaration(declaration)!, modifiers, asteriskToken, Node_Name(declaration), DeclarationTransformer_ensureTypeParams(receiver, declaration, typeParameters), DeclarationTransformer_updateParamList(receiver, declaration, parameters), DeclarationTransformer_ensureType(receiver, declaration, false), undefined, undefined));
     } else if (IsVariableDeclaration(declaration) && IsFunctionExpressionOrArrowFunction(Node_Initializer(declaration)!)) {
       const fn = Node_Initializer(declaration)!;
       const [typeParameters, parameters, asteriskToken] = extractExpandoHostParams(fn);
-      replacement = [...replacement, NewFunctionDeclaration(astFactory, modifiers, asteriskToken, NewIdentifier(astFactory, Node_Text(name)), DeclarationTransformer_ensureTypeParams(receiver, fn, typeParameters), DeclarationTransformer_updateParamList(receiver, fn, parameters), DeclarationTransformer_ensureType(receiver, fn, false), undefined, undefined)];
+      replacement = GoAppend(replacement, NewFunctionDeclaration(astFactory, modifiers, asteriskToken, NewIdentifier(astFactory, Node_Text(name)), DeclarationTransformer_ensureTypeParams(receiver, fn, typeParameters), DeclarationTransformer_updateParamList(receiver, fn, parameters), DeclarationTransformer_ensureType(receiver, fn, false), undefined, undefined));
     } else {
       receiver!.expandoHosts!.set(id, DeclarationTransformer_transformTopLevelDeclaration(receiver, declaration));
       return;
@@ -5373,7 +5373,7 @@ export function DeclarationTransformer_transformExpandoHost(receiver: GoPtr<Decl
         receiver!.resultHasExternalModuleIndicator = true;
       }
       receiver!.resultHasScopeMarker = true;
-      replacement = [...replacement, NewExportAssignment(astFactory, undefined, false as bool, undefined, name)];
+      replacement = GoAppend(replacement, NewExportAssignment(astFactory, undefined, false as bool, undefined, name));
     }
 
     // store host result to be added to the output when it's actually visited
@@ -5437,7 +5437,7 @@ export function DeclarationTransformer_createFullExpandoBlock(receiver: GoPtr<De
   if (addOns !== undefined) {
     let modifiers: GoPtr<ModifierList>;
     let name: GoPtr<Node>;
-    let host: GoSlice<GoPtr<Node>> = [];
+    let host: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (n !== undefined && n!.Kind === KindSyntaxList) {
       // find the first named syntax list element and use its' name & modifiers
       for (const c of AsSyntaxList(n)!.Children) {
@@ -5465,7 +5465,7 @@ export function DeclarationTransformer_createFullExpandoBlock(receiver: GoPtr<De
         name,
         NewModuleBlock(astFactory, NodeFactory_NewNodeList(astFactory, addOns)),
       );
-      const members = [...host, moduleDecl];
+      const members = GoAppend(host, moduleDecl);
       return NewSyntaxList(astFactory, members);
     }
   }

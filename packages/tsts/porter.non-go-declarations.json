@@ -160,7 +160,7 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "e22f03762cd4700fd15f1a2e7d7c6096b695dd98e37712f2d72f467f37090a10",
+      "declarationHash": "1f54d7211de52f3f8e74f3faa165d56404fac224723c672db5da73df4401e722",
       "file": "packages/tsts/src/extensions/checker-integration.ts",
       "fragmentIndex": 0,
       "kind": "function",
@@ -17001,18 +17001,6 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "4be9e6248c8ecb50961121e01bd1044cc5dd8f0b86293158ee28b5e8e18b8c14",
-      "file": "packages/tsts/src/internal/checker/checker/signatures.ts",
-      "fragmentIndex": 0,
-      "kind": "function",
-      "name": "getMappedIndexEvidenceDeclaration",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "compiler-port-runtime",
-      "visibility": "module-private"
-    },
-    {
       "declarationHash": "e58aea629dc65c543a296dfbe2450475f367b146c13ee8017837781ef1330e25",
       "file": "packages/tsts/src/internal/checker/checker/signatures.ts",
       "fragmentIndex": 0,
@@ -17265,11 +17253,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "a0206c860bfd87ce049440f77374875925ab53df5c6f67298ca6e50a9b5a89a6",
+      "declarationHash": "b2d5a6581b5e22ed3ac6a3a150080bb71e44eb88d0bbe8a3690807f4b1c09ba0",
       "file": "packages/tsts/src/internal/checker/checker/symbols.ts",
       "fragmentIndex": 0,
       "kind": "function",
-      "name": "cacheIndexSignatureResolvedSymbol",
+      "name": "getSelectedElementAccessDeclaration",
       "namespaces": [
         "value"
       ],
@@ -23279,7 +23267,7 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "b22a8766c86d88ebc62c4ebfa173074ad78ef2ac511c32db65a181ff4b03eb7f",
+      "declarationHash": "a4894c05847f2cf300e6ded2eea53416a15d19271e78fc97f5fd141dfa2836f9",
       "file": "packages/tsts/src/internal/tsoptions/enummaps.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -23288,10 +23276,10 @@
         "value"
       ],
       "owner": "compiler-port-runtime",
-      "visibility": "module-private"
+      "visibility": "direct-export"
     },
     {
-      "declarationHash": "64d1449c7f4e87b82c24cc5b4422628cad86b5344cee42a4fc373b12e66a5210",
+      "declarationHash": "f8b14104d872f046dcc9f66f7a38c17cbc04e1a7c30bc6ea047242f1659dd5bd",
       "file": "packages/tsts/src/internal/tsoptions/enummaps.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -23300,10 +23288,10 @@
         "value"
       ],
       "owner": "compiler-port-runtime",
-      "visibility": "module-private"
+      "visibility": "direct-export"
     },
     {
-      "declarationHash": "784208ae9001fd08666c9d7922b3b60185363ed7042090c6b307d3cbfd7a38e6",
+      "declarationHash": "0d12bd61678a2f6aa21ad9bb19438bdfde42179b630a761b02cd01a0473fb21b",
       "file": "packages/tsts/src/internal/tsoptions/enummaps.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -23312,10 +23300,10 @@
         "value"
       ],
       "owner": "compiler-port-runtime",
-      "visibility": "module-private"
+      "visibility": "direct-export"
     },
     {
-      "declarationHash": "37eddafca2c0a12e7ed11e4137e616ccd73b4e011197be2d6a5e82495a609125",
+      "declarationHash": "89f596fb86f783ecc0dab9d64aec1144320b8f7186143ea8520dd5d3fa741bd4",
       "file": "packages/tsts/src/internal/tsoptions/enummaps.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -23324,10 +23312,10 @@
         "value"
       ],
       "owner": "compiler-port-runtime",
-      "visibility": "module-private"
+      "visibility": "direct-export"
     },
     {
-      "declarationHash": "b1a09dbcdfbc0fcdecc2c6e02d7f4d635904a959af54eb60c511507cd9277d1a",
+      "declarationHash": "5587b381a5d32b7cc978362ae75f977e7b254bc13ea42dc26e6fe0754acfd774",
       "file": "packages/tsts/src/internal/tsoptions/enummaps.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -23336,7 +23324,7 @@
         "value"
       ],
       "owner": "compiler-port-runtime",
-      "visibility": "module-private"
+      "visibility": "direct-export"
     },
     {
       "declarationHash": "c3d5d8bcb38f6d3e507dc869e1be1cee356a2079b5e800dbc538419dd112bb7b",
@@ -23351,7 +23339,7 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "e5273082f438c549f0b08c361fd11a47503818040ae3cb0512bbb7b0cd0a8338",
+      "declarationHash": "ae43bb17fe921774874a850a129c59ef365b895fc7cb0bd2b5f6e767cc11068d",
       "file": "packages/tsts/src/internal/tsoptions/enummaps.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -23360,7 +23348,7 @@
         "value"
       ],
       "owner": "compiler-port-runtime",
-      "visibility": "module-private"
+      "visibility": "direct-export"
     },
     {
       "declarationHash": "e056d4866d5f070d97ffc654ef117b4781dfc5cec5ce4f8b5594d0df269f7a27",

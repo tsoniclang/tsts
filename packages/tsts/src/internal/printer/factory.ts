@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPointerMethodSet, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilSlice } from "../../go/compat.js";
 import { Itoa } from "../../go/strconv.js";
 import type { Node, NodeFactoryCoercible, NodeList } from "../ast/spine.js";
 import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory as AstNodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone, Node_Name } from "../ast/spine.js";
@@ -172,7 +173,7 @@ export function NodeFactory_newGeneratedIdentifier(receiver: GoPtr<NodeFactory>,
     Suffix: options.Suffix,
     Node: node,
   };
-  if (receiver!.emitContext!.autoGenerate === undefined) {
+  if (GoMapIsNil(receiver!.emitContext!.autoGenerate)) {
     receiver!.emitContext!.autoGenerate = new globalThis.Map();
   }
   receiver!.emitContext!.autoGenerate.set(name, autoGenerate);
@@ -345,7 +346,7 @@ export function NodeFactory_newGeneratedPrivateIdentifier(receiver: GoPtr<NodeFa
     Suffix: options.Suffix,
     Node: node,
   };
-  if (receiver!.emitContext!.autoGenerate === undefined) {
+  if (GoMapIsNil(receiver!.emitContext!.autoGenerate)) {
     receiver!.emitContext!.autoGenerate = new globalThis.Map();
   }
   receiver!.emitContext!.autoGenerate.set(name, autoGenerate);
@@ -455,7 +456,7 @@ export function NodeFactory_NewStringLiteralFromNode(receiver: GoPtr<NodeFactory
       break;
   }
   const node = NewStringLiteral(receiver!.__tsgoEmbedded0!, text, TokenFlagsNone);
-  if (receiver!.emitContext!.textSource === undefined) {
+  if (GoMapIsNil(receiver!.emitContext!.textSource)) {
     receiver!.emitContext!.textSource = new globalThis.Map();
   }
   receiver!.emitContext!.textSource.set(node as unknown as GoPtr<StringLiteralNode>, textSourceNode);
@@ -608,7 +609,7 @@ export function flattenCommaElement(node: GoPtr<Expression>, expressions: GoSlic
     expressions = flattenCommaElement(AsBinaryExpression(node)!.Left, expressions);
     expressions = flattenCommaElement(AsBinaryExpression(node)!.Right, expressions);
   } else {
-    expressions = [...expressions, node];
+    expressions = GoAppend(expressions, node);
   }
   return expressions;
 }
@@ -626,7 +627,7 @@ export function flattenCommaElement(node: GoPtr<Expression>, expressions: GoSlic
  * }
  */
 export function flattenCommaElements(expressions: GoSlice<GoPtr<Expression>>): GoSlice<GoPtr<Expression>> {
-  let result: GoSlice<GoPtr<Expression>> = [];
+  let result: GoSlice<GoPtr<Expression>> = GoNilSlice();
   for (const expression of expressions) {
     result = flattenCommaElement(expression, result);
   }
@@ -906,7 +907,7 @@ export function NodeFactory_NewFunctionCallCall(receiver: GoPtr<NodeFactory>, ta
   if (thisArg === undefined) {
     throw new globalThis.Error("Attempted to construct function call call without this argument expression");
   }
-  const args: GoSlice<GoPtr<Node>> = [thisArg, ...argumentsList];
+  const args: GoSlice<GoPtr<Node>> = GoAppend([thisArg], ...argumentsList);
   return NodeFactory_NewMethodCall(receiver, target, NewIdentifier(f, "call"), args);
 }
 
@@ -924,9 +925,9 @@ export function NodeFactory_NewFunctionCallCall(receiver: GoPtr<NodeFactory>, ta
  */
 export function NodeFactory_NewArraySliceCall(receiver: GoPtr<NodeFactory>, array: GoPtr<Expression>, start: int): GoPtr<Node> {
   const f = receiver!.__tsgoEmbedded0!;
-  let args: GoSlice<GoPtr<Node>> = [];
+  let args: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (start !== 0) {
-    args = [...args, NewNumericLiteral(f, Itoa(start), TokenFlagsNone)];
+    args = GoAppend(args, NewNumericLiteral(f, Itoa(start), TokenFlagsNone));
   }
   return NodeFactory_NewMethodCall(receiver, array, NewIdentifier(f, "slice"), args);
 }
@@ -1053,7 +1054,7 @@ export function NodeFactory_EnsureUseStrict(receiver: GoPtr<NodeFactory>, statem
     }
   }
   const useStrictPrologue = NewExpressionStatement(f, NewStringLiteral(f, "use strict", TokenFlagsNone));
-  return [useStrictPrologue, ...statements];
+  return GoAppend([useStrictPrologue], ...statements);
 }
 
 /**
@@ -1075,7 +1076,7 @@ export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, 
       return [source.slice(0, i), source.slice(i)];
     }
   }
-  return [source, []];
+  return [source, GoNilSlice()];
 }
 
 /**
@@ -1097,7 +1098,7 @@ export function NodeFactory_SplitCustomPrologue(receiver: GoPtr<NodeFactory>, so
       return [source.slice(0, i), source.slice(i)];
     }
   }
-  return [[], source];
+  return [GoNilSlice(), source];
 }
 
 /**
@@ -1359,13 +1360,13 @@ export function NodeFactory_NewDecorateHelper(receiver: GoPtr<NodeFactory>, deco
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, decorateHelper);
 
-  let argumentsArray: GoSlice<GoPtr<Node>> = [];
-  argumentsArray = [...argumentsArray, NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, decoratorExpressions), true)];
-  argumentsArray = [...argumentsArray, target];
+  let argumentsArray: GoSlice<GoPtr<Node>> = GoNilSlice();
+  argumentsArray = GoAppend(argumentsArray, NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, decoratorExpressions), true));
+  argumentsArray = GoAppend(argumentsArray, target);
   if (memberName !== undefined) {
-    argumentsArray = [...argumentsArray, memberName];
+    argumentsArray = GoAppend(argumentsArray, memberName);
     if (descriptor !== undefined) {
-      argumentsArray = [...argumentsArray, descriptor];
+      argumentsArray = GoAppend(argumentsArray, descriptor);
     }
   }
 
@@ -1753,7 +1754,9 @@ export function NodeFactory_NewReflectSetCall(receiver: GoPtr<NodeFactory>, targ
  */
 export function NodeFactory_NewFunctionBindCall(receiver: GoPtr<NodeFactory>, target: GoPtr<Expression>, thisArg: GoPtr<Expression>, argumentsList: GoSlice<GoPtr<Node>>): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
-  const args: GoSlice<GoPtr<Node>> = [thisArg, ...argumentsList];
+  let args: GoSlice<GoPtr<Node>> = [];
+  args = GoAppend(args, thisArg);
+  args = GoAppend(args, ...argumentsList);
   return NodeFactory_NewMethodCall(receiver, target, NewIdentifier(f, "bind"), args);
 }
 
@@ -1893,7 +1896,7 @@ export function NodeFactory_NewAssignHelper(receiver: GoPtr<NodeFactory>, attrib
 export function NodeFactory_NewRestHelper(receiver: GoPtr<NodeFactory>, value: GoPtr<Expression>, elements: GoSlice<GoPtr<Node>>, computedTempVariables: GoSlice<GoPtr<Node>>, location: TextRange): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, restHelper);
-  let propertyNames: GoSlice<GoPtr<Node>> = [];
+  let propertyNames: GoSlice<GoPtr<Node>> = GoNilSlice();
   let computedTempVariableOffset = 0;
   for (let i = 0; i < elements.length; i++) {
     if (i === elements.length - 1) {
@@ -1906,16 +1909,16 @@ export function NodeFactory_NewRestHelper(receiver: GoPtr<NodeFactory>, value: G
         const temp = computedTempVariables[computedTempVariableOffset];
         computedTempVariableOffset++;
         // typeof _tmp === "symbol" ? _tmp : _tmp + ""
-        propertyNames = [...propertyNames, NewConditionalExpression(
+        propertyNames = GoAppend(propertyNames, NewConditionalExpression(
           f,
           NodeFactory_NewTypeCheck(receiver, temp, "symbol"),
           NewToken(f, KindQuestionToken),
           temp,
           NewToken(f, KindColonToken),
           NewBinaryExpression(f, undefined, temp, undefined, NewToken(f, KindPlusToken), NewStringLiteral(f, "", TokenFlagsNone)),
-        )];
+        ));
       } else {
-        propertyNames = [...propertyNames, NodeFactory_NewStringLiteralFromNode(receiver, propertyName)];
+        propertyNames = GoAppend(propertyNames, NodeFactory_NewStringLiteralFromNode(receiver, propertyName));
       }
     }
   }
@@ -2396,19 +2399,19 @@ export function NodeFactory_NewESDecorateClassElementAccessHasMethod(receiver: G
  */
 export function NodeFactory_NewESDecorateClassElementAccessObject(receiver: GoPtr<NodeFactory>, nameComputed: bool, nameExpr: GoPtr<Expression>, hasGet: bool, hasSet: bool): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
-  let accessProps: GoSlice<GoPtr<Node>> = [];
+  let accessProps: GoSlice<GoPtr<Node>> = GoNilSlice();
 
   // "has" method: obj => name in obj
-  accessProps = [...accessProps, NodeFactory_NewESDecorateClassElementAccessHasMethod(receiver, nameComputed, nameExpr)];
+  accessProps = GoAppend(accessProps, NodeFactory_NewESDecorateClassElementAccessHasMethod(receiver, nameComputed, nameExpr));
 
   // "get" method: obj => obj.name or obj => obj[name]
   if (hasGet) {
-    accessProps = [...accessProps, NodeFactory_NewESDecorateClassElementAccessGetMethod(receiver, nameComputed, nameExpr)];
+    accessProps = GoAppend(accessProps, NodeFactory_NewESDecorateClassElementAccessGetMethod(receiver, nameComputed, nameExpr));
   }
 
   // "set" method: (obj, value) => { obj.name = value; } or (obj, value) => { obj[name] = value; }
   if (hasSet) {
-    accessProps = [...accessProps, NodeFactory_NewESDecorateClassElementAccessSetMethod(receiver, nameComputed, nameExpr)];
+    accessProps = GoAppend(accessProps, NodeFactory_NewESDecorateClassElementAccessSetMethod(receiver, nameComputed, nameExpr));
   }
 
   return NewObjectLiteralExpression(f, NodeFactory_NewNodeList(f, accessProps), false);

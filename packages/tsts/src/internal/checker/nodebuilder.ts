@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBooleanKey, GoNilMap, GoNilSlice, GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoBooleanKey, GoNilMap, GoNilSlice, GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import { KindClassDeclaration, KindEnumDeclaration, KindInterfaceDeclaration, KindModuleDeclaration } from "../ast/generated/kinds.js";
@@ -146,7 +146,7 @@ export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosing
     verbosityLevel = b.verbosity.Level;
     maxTruncationLength = b.verbosity.MaxTruncationLength;
   }
-  b.ctxStack = [...b.ctxStack, b.impl!.ctx];
+  b.ctxStack = GoAppend(b.ctxStack, b.impl!.ctx);
   b.impl!.ctx = {
     host: b.host,
     tracker: tracker,
@@ -159,7 +159,7 @@ export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosing
     internalFlags: internalFlags,
     depth: 0,
     maxExpansionDepth: verbosityLevel,
-    typeStack: [],
+    typeStack: GoNilSlice(),
     canIncreaseExpansionDepth: false as bool,
     expansionTruncated: false as bool,
     enclosingDeclaration: enclosingDeclaration,
@@ -462,8 +462,8 @@ export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, s
   const b = receiver!;
   NodeBuilder_enterContext(b, undefined, (FlagsIgnoreErrors | FlagsMultilineObjectLiterals | FlagsUseAliasDefinedOutsideCurrentScope) as Flags, 0 as InternalFlags, undefined as unknown as SymbolTracker);
   const declaredType = Checker_getDeclaredTypeOfSymbol(b.impl!.ch, symbol_);
-  b.impl!.ctx!.typeStack = [...b.impl!.ctx!.typeStack, declaredType];
-  b.impl!.ctx!.typeStack = [...b.impl!.ctx!.typeStack, undefined];
+  b.impl!.ctx!.typeStack = GoAppend(b.impl!.ctx!.typeStack, declaredType);
+  b.impl!.ctx!.typeStack = GoAppend(b.impl!.ctx!.typeStack, undefined);
   const nodes = NodeBuilderImpl_expandSymbolForHover(b.impl, symbol_);
   b.impl!.ctx!.typeStack = b.impl!.ctx!.typeStack.slice(0, b.impl!.ctx!.typeStack.length - 2);
   NodeBuilder_propagateVerbosityOut(b);
@@ -471,18 +471,18 @@ export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, s
   for (const node of nodes) {
     switch (node!.Kind) {
       case KindClassDeclaration:
-        result = [...result, simplifyClassDeclaration(b.impl!.f, node, symbol_)];
+        result = GoAppend(result, simplifyClassDeclaration(b.impl!.f, node, symbol_));
         break;
       case KindEnumDeclaration:
-        result = [...result, simplifyModifiers(b.impl!.f, node, IsEnumDeclaration, symbol_)];
+        result = GoAppend(result, simplifyModifiers(b.impl!.f, node, IsEnumDeclaration, symbol_));
         break;
       case KindInterfaceDeclaration:
         if ((meaning & SymbolFlagsInterface) !== 0) {
-          result = [...result, simplifyModifiers(b.impl!.f, node, IsInterfaceDeclaration, symbol_)];
+          result = GoAppend(result, simplifyModifiers(b.impl!.f, node, IsInterfaceDeclaration, symbol_));
         }
         break;
       case KindModuleDeclaration:
-        result = [...result, simplifyModifiers(b.impl!.f, node, IsModuleDeclaration, symbol_)];
+        result = GoAppend(result, simplifyModifiers(b.impl!.f, node, IsModuleDeclaration, symbol_));
         break;
     }
   }

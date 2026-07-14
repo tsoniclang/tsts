@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoFunc, GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoZeroMap } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoZeroMap } from "../../go/compat.js";
 import type { Node, NodeList, ModifierList } from "../ast/spine.js";
 import type { NodeVisitor } from "../ast/visitor.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -328,7 +328,7 @@ export interface recoveryBoundary {
 export function recoveryBoundary_markError(receiver: GoPtr<recoveryBoundary>, f: GoFunc<() => void>): void {
   receiver!.hadError = true;
   if (f !== undefined) {
-    receiver!.deferredReports = [...receiver!.deferredReports, f];
+    receiver!.deferredReports = GoAppend(receiver!.deferredReports, f);
   }
 }
 
@@ -549,7 +549,7 @@ export function wrappingTracker_ReportTruncationError(receiver: GoPtr<wrappingTr
  */
 export function wrappingTracker_TrackSymbol(receiver: GoPtr<wrappingTracker>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags): bool {
   const arg: TrackedSymbolArgs = { "symbol": symbol_, enclosingDeclaration: enclosingDeclaration, meaning: meaning };
-  receiver!.bound!.trackedSymbols = [...receiver!.bound!.trackedSymbols, arg];
+  receiver!.bound!.trackedSymbols = GoAppend(receiver!.bound!.trackedSymbols, arg);
   return false;
 }
 
@@ -618,12 +618,12 @@ export function NodeBuilderImpl_createRecoveryBoundary(receiver: GoPtr<NodeBuild
     oldEncounteredError: receiver!.ctx!.encounteredError,
     oldApproximateLength: receiver!.ctx!.approximateLength,
     hadError: false,
-    deferredReports: [],
-    trackedSymbols: [],
+    deferredReports: GoNilSlice(),
+    trackedSymbols: GoNilSlice(),
   };
   const newTracker = NewSymbolTrackerImpl(receiver!.ctx, wrappingTracker_as_SymbolTracker(newWrappingTracker(receiver!.ctx!.tracker, bound)));
   receiver!.ctx!.tracker = SymbolTrackerImpl_as_SymbolTracker(newTracker);
-  receiver!.ctx!.trackedSymbols = [];
+  receiver!.ctx!.trackedSymbols = GoNilSlice();
   return bound;
 }
 
@@ -1043,7 +1043,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       return NewArrayTypeNode(factory, visitNode(AsJSDocVariadicType(node)!.Type) as GoPtr<never>);
     }
     if (IsJSDocTypeLiteral(node)) {
-      const members: GoSlice<GoPtr<Node>> = [];
+      let members: GoSlice<GoPtr<Node>> = GoNilSlice();
       for (const tag of AsJSDocTypeLiteral(node)!.JSDocPropertyTags ?? []) {
         if (tag!.Kind !== KindJSDocPropertyTag && tag!.Kind !== KindJSDocParameterTag) {
           continue;
@@ -1057,7 +1057,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
         const shouldBeOptional = tagData.IsBracketed || (typeExpression !== undefined && IsJSDocOptionalType(typeExpression));
         const question = shouldBeOptional ? NewToken(factory, KindQuestionToken) : undefined;
         const typeNode = visitNode(typeExpression);
-        members.push(NewPropertySignatureDeclaration(factory, undefined, name as GoPtr<never>, question as GoPtr<never>, typeNode as GoPtr<never>, undefined));
+        members = GoAppend(members, NewPropertySignatureDeclaration(factory, undefined, name as GoPtr<never>, question as GoPtr<never>, typeNode as GoPtr<never>, undefined));
       }
       return NewTypeLiteralNode(factory, NodeFactory_NewNodeList(factory, members) as GoPtr<never>);
     }
@@ -1246,7 +1246,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (IsConditionalTypeNode(node)) {
       const conditional = AsConditionalTypeNode(node)!;
       const checkType = visitNode(conditional.CheckType);
-      const dispose = NodeBuilderImpl_enterNewScope(b, node, [], Checker_getInferTypeParameters(b!.ch, node), [], undefined);
+      const dispose = NodeBuilderImpl_enterNewScope(b, node, GoNilSlice(), Checker_getInferTypeParameters(b!.ch, node), GoNilSlice(), undefined);
       const extendsType = visitNode(conditional.ExtendsType);
       const trueType = visitNode(conditional.TrueType);
       dispose!();
@@ -1286,18 +1286,18 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     const introducesNewScope = IsFunctionLike(node) || IsMappedTypeNode(node);
     let exit: (() => void) | undefined = undefined;
     if (introducesNewScope) {
-      let params: GoSlice<GoPtr<Symbol>> = [];
-      let typeParams: GoSlice<GoPtr<Type>> = [];
+      let params: GoSlice<GoPtr<Symbol>> = GoNilSlice();
+      let typeParams: GoSlice<GoPtr<Type>> = GoNilSlice();
       if (IsFunctionLike(node)) {
         const signature = Checker_getSignatureFromDeclaration(b!.ch, node);
-        params = signature!.parameters ?? [];
-        typeParams = signature!.typeParameters ?? [];
+        params = signature!.parameters;
+        typeParams = signature!.typeParameters;
       } else if (IsConditionalTypeNode(node)) {
         typeParams = Checker_getInferTypeParameters(b!.ch, node);
       } else if (IsMappedTypeNode(node)) {
         typeParams = [Checker_getDeclaredTypeOfTypeParameter(b!.ch, Checker_getSymbolOfDeclaration(b!.ch, AsMappedTypeNode(node)!.TypeParameter))];
       }
-      exit = NodeBuilderImpl_enterNewScope(b, node, params, typeParams, [], undefined);
+      exit = NodeBuilderImpl_enterNewScope(b, node, params, typeParams, GoNilSlice(), undefined);
     }
     let result = visitExistingNodeTreeSymbolsWorker(node);
     if (exit !== undefined) {

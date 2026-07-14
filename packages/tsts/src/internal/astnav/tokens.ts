@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoSliceToZeroLength, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../ast/spine.js";
 import { Node_AsNode, Node_End, Node_Pos, Node_VisitEachChild, NodeList_End, NodeList_Pos } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -1090,10 +1090,10 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
       if (!shouldVisitNode(node)) {
         return node;
       }
-      rightmostVisitedNodes = [...rightmostVisitedNodes, node];
+      rightmostVisitedNodes = GoAppend(rightmostVisitedNodes, node);
       if (isValidPrecedingNode(node, sourceFile)) {
         rightmostValidNode = node;
-        rightmostVisitedNodes = [];
+        rightmostVisitedNodes = GoSliceToZeroLength(rightmostVisitedNodes);
       }
       return node;
     };
@@ -1121,7 +1121,7 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
           if (!shouldVisitNode(nodeList.Nodes[i])) {
             continue;
           }
-          rightmostVisitedNodes = [...rightmostVisitedNodes, nodeList.Nodes[i]];
+          rightmostVisitedNodes = GoAppend(rightmostVisitedNodes, nodeList.Nodes[i]);
         }
       }
       return nodeList;
@@ -1142,7 +1142,7 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
         startPos = Node_Pos(n);
       }
       const s = GetScannerForSourceFile(sourceFile, startPos);
-      let tokens: GoSlice<GoPtr<Node>> = [];
+      let tokens = GoNilSlice<GoPtr<Node>>();
       for (const visitedNode of rightmostVisitedNodes) {
         // Trailing tokens that occur before this node.
         while (startPos < Math.min(Node_Pos(visitedNode), position)) {
@@ -1155,7 +1155,7 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
           const tokenEnd = Scanner_TokenEnd(s);
           startPos = tokenEnd;
           const flags: TokenFlags = Scanner_TokenFlags(s);
-          tokens = [...tokens, SourceFile_GetOrCreateToken(sourceFile, token, tokenFullStart, tokenEnd, n, flags)];
+          tokens = GoAppend(tokens, SourceFile_GetOrCreateToken(sourceFile, token, tokenFullStart, tokenEnd, n, flags));
           Scanner_Scan(s);
         }
         startPos = Node_End(visitedNode);
@@ -1173,7 +1173,7 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
         const tokenEnd = Scanner_TokenEnd(s);
         startPos = tokenEnd;
         const flags: TokenFlags = Scanner_TokenFlags(s);
-        tokens = [...tokens, SourceFile_GetOrCreateToken(sourceFile, token, tokenFullStart, tokenEnd, n, flags)];
+        tokens = GoAppend(tokens, SourceFile_GetOrCreateToken(sourceFile, token, tokenFullStart, tokenEnd, n, flags));
         Scanner_Scan(s);
       }
 

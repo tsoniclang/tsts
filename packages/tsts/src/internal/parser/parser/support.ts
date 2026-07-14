@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoNilMap, GoNumberKey, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilMap, GoNilSlice, GoNumberKey, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { NewNodeFactory, Node_ForEachChild } from "../../ast/spine.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 // SourceFile, Pragma, CommentRange (structs) and NodeFactory_NewModifier (the
@@ -434,7 +434,7 @@ export function Parser_parseJSONText(receiver: GoPtr<Parser>): GoPtr<SourceFile>
       // Error recovery: collect multiple top-level expressions
       if (expressions !== undefined) {
         if (Array.isArray(expressions)) {
-          (expressions as GoSlice<GoPtr<Node>>).push(expression);
+          expressions = GoAppend(expressions as GoSlice<GoPtr<Node>>, expression);
         } else {
           expressions = [expressions as GoPtr<Node>, expression];
         }
@@ -510,7 +510,7 @@ export function Parser_validateJsonValue(receiver: GoPtr<Parser>, sourceFile: Go
       return;
     case KindStringLiteral:
       if (!isDoubleQuotedString(valueExpression)) {
-        receiver!.diagnostics = [...receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), String_literal_with_double_quotes_expected)];
+        receiver!.diagnostics = GoAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), String_literal_with_double_quotes_expected));
       }
       return;
     case KindPrefixUnaryExpression: {
@@ -529,7 +529,7 @@ export function Parser_validateJsonValue(receiver: GoPtr<Parser>, sourceFile: Go
       }
       return;
   }
-  receiver!.diagnostics = [...receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), Property_value_can_only_be_string_literal_numeric_literal_true_false_null_object_literal_or_array_literal)];
+  receiver!.diagnostics = GoAppend(receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), Property_value_can_only_be_string_literal_numeric_literal_true_false_null_object_literal_or_array_literal));
 }
 
 /**
@@ -595,9 +595,9 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
   }
 
   receiver!.factory = NewNodeFactory({ OnCreate: undefined, OnUpdate: undefined, OnClone: undefined })!;
-  receiver!.diagnostics = [];
-  receiver!.jsDiagnostics = [];
-  receiver!.jsdocDiagnostics = [];
+  receiver!.diagnostics = GoNilSlice();
+  receiver!.jsDiagnostics = GoNilSlice();
+  receiver!.jsdocDiagnostics = GoNilSlice();
   receiver!.token = KindUnknown;
   receiver!.sourceFlags = NodeFlagsNone;
   receiver!.parsingContexts = 0 as ParsingContexts;
@@ -607,18 +607,18 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
   receiver!.identifiers = GoNilMap<string, string>();
   receiver!.identifierCount = 0 as int;
   receiver!.notParenthesizedArrow = NewSetWithSizeHint<int>(0 as int, GoNumberKey)!;
-  receiver!.nodeSliceArena = { data: [] } as Arena<GoPtr<Node>>;
-  receiver!.stringSliceArena = { data: [] } as Arena<string>;
-  receiver!.jsdocInfos = [];
-  receiver!.possibleAwaitSpans = [];
-  receiver!.jsdocCommentsSpace = [];
-  receiver!.jsdocCommentRangesSpace = [];
-  receiver!.jsdocTagCommentsSpace = [];
-  receiver!.jsdocTagCommentsPartsSpace = [];
-  receiver!.reparseList = [];
+  receiver!.nodeSliceArena = { data: GoNilSlice() } as Arena<GoPtr<Node>>;
+  receiver!.stringSliceArena = { data: GoNilSlice() } as Arena<string>;
+  receiver!.jsdocInfos = GoNilSlice();
+  receiver!.possibleAwaitSpans = GoNilSlice();
+  receiver!.jsdocCommentsSpace = GoNilSlice();
+  receiver!.jsdocCommentRangesSpace = GoNilSlice();
+  receiver!.jsdocTagCommentsSpace = GoNilSlice();
+  receiver!.jsdocTagCommentsPartsSpace = GoNilSlice();
+  receiver!.reparseList = GoNilSlice();
   receiver!.commonJSModuleIndicator = undefined;
   receiver!.currentParent = undefined;
-  receiver!.reparsedClones = [];
+  receiver!.reparsedClones = GoNilSlice();
 
   if (receiver!.scanner === undefined) {
     receiver!.scanner = NewScanner();
@@ -1518,11 +1518,11 @@ export function Parser_parseModifiersEx(receiver: GoPtr<Parser>, allowDecorators
   // It is illegal to have both leadingDecorators and trailingDecorators, but we will report that as a grammar check in the checker.
   // parse leading decorators
   const pos = Parser_nodePos(receiver);
-  const list: GoSlice<GoPtr<Node>> = [];
+  let list: GoSlice<GoPtr<Node>> = [];
   for (;;) {
     if (allowDecorators && receiver!.token === KindAtToken && !hasTrailingModifier) {
       const decorator = Parser_parseDecorator(receiver);
-      list.push(decorator);
+      list = GoAppend(list, decorator);
       if (hasLeadingModifier) {
         hasTrailingDecorator = true;
       }
@@ -1534,7 +1534,7 @@ export function Parser_parseModifiersEx(receiver: GoPtr<Parser>, allowDecorators
       if (modifier!.Kind === KindStaticKeyword) {
         hasStaticModifier = true;
       }
-      list.push(modifier);
+      list = GoAppend(list, modifier);
       if (hasTrailingDecorator) {
         hasTrailingModifier = true;
       } else {
@@ -1804,10 +1804,10 @@ export function isReservedWord(token: Kind): bool {
  * }
  */
 export function getCommentPragmas(f: GoPtr<NodeFactory>, sourceText: string): GoSlice<Pragma> {
-  let pragmas: GoSlice<Pragma> = [];
+  let pragmas: GoSlice<Pragma> = GoNilSlice();
   GetLeadingCommentRanges(f as NodeFactory, sourceText, 0)!((commentRange: CommentRange): bool => {
     const comment = byteSlice(sourceText, commentRange.pos, commentRange.end);
-    pragmas = [...pragmas, ...extractPragmas(commentRange, comment)];
+    pragmas = GoAppend(pragmas, ...extractPragmas(commentRange, comment));
     return true;
   });
   return pragmas;
@@ -1932,7 +1932,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
     if (tripleSlash && match(text, pos, "<")) {
       const tagName = extractName(text, pos + 1);
       if (tagName !== "reference") {
-        return [];
+        return GoNilSlice();
       }
       pos += 10;
       const args = new globalThis.Map<string, Pragma["Args"] extends GoMap<string, infer T> ? T : never>();
@@ -1974,7 +1974,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
       pos++;
       const pragmaName = extractName(text, pos);
       if (!(pragmaName === "ts-check" || pragmaName === "ts-nocheck")) {
-        return [];
+        return GoNilSlice();
       }
       return [{
         ...commentRange,
@@ -1985,7 +1985,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
   if (commentRange.Kind === KindMultiLineCommentTrivia) {
     const trimmed = TrimSuffix(text, "*/");
     let pos = 2;
-    let pragmas: GoSlice<Pragma> = [];
+    let pragmas: GoSlice<Pragma> = GoNilSlice();
     for (;;) {
       pos = skipTo(trimmed, pos, "@");
       if (pos < 0) {
@@ -2018,18 +2018,18 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
               Name: "factory",
               Value: byteSlice(trimmed, start, argEnd),
             });
-          pragmas = [...pragmas, {
+          pragmas = GoAppend(pragmas, {
             ...commentRange,
             Name: pragmaName,
             Args: args,
-          } as unknown as Pragma];
+          } as unknown as Pragma);
         }
       }
       pos = lineEnd;
     }
     return pragmas;
   }
-  return [];
+  return GoNilSlice();
 }
 
 /**
@@ -2274,9 +2274,9 @@ export function extractQuotedString(text: string, pos: int): [string, bool] {
  */
 export function Parser_processPragmasIntoFields(receiver: GoPtr<Parser>, context: GoPtr<SourceFile>): void {
   context!.CheckJsDirective = undefined;
-  context!.ReferencedFiles = [];
-  context!.TypeReferenceDirectives = [];
-  context!.LibReferenceDirectives = [];
+  context!.ReferencedFiles = GoNilSlice();
+  context!.TypeReferenceDirectives = GoNilSlice();
+  context!.LibReferenceDirectives = GoNilSlice();
   for (const pragma of (context!.Pragmas ?? [])) {
     switch (pragma.Name) {
       case "reference": {
@@ -2293,15 +2293,15 @@ export function Parser_processPragmasIntoFields(receiver: GoPtr<Parser>, context
           if (resolutionMode !== undefined) {
             parsed = Parser_parseResolutionMode(receiver, resolutionMode.Value, resolutionMode.pos, resolutionMode.end);
           }
-          context!.TypeReferenceDirectives = [...(context!.TypeReferenceDirectives ?? []), {
+          context!.TypeReferenceDirectives = GoAppend(context!.TypeReferenceDirectives, {
             pos: types.pos,
             end: types.end,
             FileName: types.Value,
             ResolutionMode: parsed,
             Preserve: preserve !== undefined && preserve.Value === "true",
-          } as unknown as GoPtr<FileReference>];
+          } as unknown as GoPtr<FileReference>);
         } else if (lib !== undefined) {
-          context!.LibReferenceDirectives = [...(context!.LibReferenceDirectives ?? []), {
+          context!.LibReferenceDirectives = GoAppend(context!.LibReferenceDirectives, {
             pos: lib.pos,
             end: lib.end,
             FileName: lib.Value,
@@ -2309,16 +2309,16 @@ export function Parser_processPragmasIntoFields(receiver: GoPtr<Parser>, context
             // any other value).
             ResolutionMode: 0 as ResolutionMode,
             Preserve: preserve !== undefined && preserve.Value === "true",
-          } as unknown as GoPtr<FileReference>];
+          } as unknown as GoPtr<FileReference>);
         } else if (path !== undefined) {
-          context!.ReferencedFiles = [...(context!.ReferencedFiles ?? []), {
+          context!.ReferencedFiles = GoAppend(context!.ReferencedFiles, {
             pos: path.pos,
             end: path.end,
             FileName: path.Value,
             // Go zero value: ResolutionModeNone.
             ResolutionMode: 0 as ResolutionMode,
             Preserve: preserve !== undefined && preserve.Value === "true",
-          } as unknown as GoPtr<FileReference>];
+          } as unknown as GoPtr<FileReference>);
         } else {
           Parser_parseErrorAtRange(receiver, pragma, Invalid_reference_directive_syntax);
         }
@@ -2478,7 +2478,7 @@ export function Parser_checkJSDecoratorSyntax(receiver: GoPtr<Parser>, node: GoP
                 NewTextRange(SkipTrivia(receiver!.sourceText, modifiers[decoratorIndex]!.Loc.pos), modifiers[decoratorIndex]!.Loc.end),
                 Decorator_used_before_export_here,
               ));
-              receiver!.jsDiagnostics = [...receiver!.jsDiagnostics, diag];
+              receiver!.jsDiagnostics = GoAppend(receiver!.jsDiagnostics, diag);
             }
           }
         }

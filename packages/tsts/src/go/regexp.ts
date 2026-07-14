@@ -25,7 +25,7 @@
 // Go (T, error) maps to a `[T, GoError]` tuple; Go panic maps to `throw`.
 
 import type { bool, int } from "./scalars.js";
-import { GoNilSlice, type GoError, type GoFunc, type GoSlice } from "./compat.js";
+import { GoAppend, GoNilSlice, GoSliceIsNil, type GoError, type GoFunc, type GoSlice } from "./compat.js";
 
 // translatePattern rewrites a Go RE2 pattern source into an equivalent JS
 // RegExp source plus the set of JS flags required. It scans character by
@@ -169,7 +169,7 @@ export class Regexp {
   private findAllStringIndex(s: string, n: int): GoSlice<[int, int]> {
     const limit: int = n < 0 ? s.length + 1 : n;
     const re = this.compileFlags("g");
-    const result: GoSlice<[int, int]> = [];
+    let result: GoSlice<[int, int]> = GoNilSlice();
     const end = s.length;
     let pos = 0;
     let i = 0;
@@ -200,7 +200,10 @@ export class Regexp {
       }
       prevMatchEnd = me;
       if (accept) {
-        result.push([ms, me]);
+        if (GoSliceIsNil(result)) {
+          result = [];
+        }
+        result = GoAppend(result, [ms, me]);
         i = i + 1;
       }
     }
@@ -225,7 +228,7 @@ export class Regexp {
     }
 
     const matches = this.findAllStringIndex(s, n);
-    const result: GoSlice<string> = [];
+    let result: GoSlice<string> = [];
 
     let beg = 0;
     let end = 0;
@@ -235,13 +238,13 @@ export class Regexp {
       }
       end = match[0];
       if (match[1] !== 0) {
-        result.push(s.slice(beg, end));
+        result = GoAppend(result, s.slice(beg, end));
       }
       beg = match[1];
     }
 
     if (end !== s.length) {
-      result.push(s.slice(beg));
+      result = GoAppend(result, s.slice(beg));
     }
 
     return result;
@@ -257,7 +260,7 @@ export class Regexp {
   // byte-level handling of multi-byte content.
   ReplaceAllStringFunc(src: string, repl: GoFunc<(match: string) => string>): string {
     const re = this.compileFlags("g");
-    const out: string[] = [];
+    let out: GoSlice<string> = GoNilSlice();
     const endPos = src.length;
     let lastMatchEnd = 0;
     let searchPos = 0;
@@ -271,12 +274,12 @@ export class Regexp {
       const a1 = m.index + m[0]!.length;
 
       // Copy the unmatched characters before this match.
-      out.push(src.slice(lastMatchEnd, a0));
+      out = GoAppend(out, src.slice(lastMatchEnd, a0));
 
       // Insert the replacement, but not for an empty match immediately after a
       // previous match (avoids double replacement).
       if (a1 > lastMatchEnd || a0 === 0) {
-        out.push(repl!(src.slice(a0, a1)));
+        out = GoAppend(out, repl!(src.slice(a0, a1)));
       }
       lastMatchEnd = a1;
 
@@ -292,7 +295,7 @@ export class Regexp {
     }
 
     // Copy the unmatched characters after the last match.
-    out.push(src.slice(lastMatchEnd));
+    out = GoAppend(out, src.slice(lastMatchEnd));
     return out.join("");
   }
 }

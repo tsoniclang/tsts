@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoChan, GoError, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { type Group, WithContext } from "../../go/golang.org/x/sync/errgroup.js";
 import { Mutex, WaitGroup } from "../../go/sync.js";
@@ -158,7 +159,7 @@ export function singleThreadedWorkGroup_Queue(receiver: GoPtr<singleThreadedWork
     throw new globalThis.Error("Queue called after RunAndWait returned");
   }
   receiver!.fnsMu.Lock();
-  receiver!.fns.push(fn!);
+  receiver!.fns = GoAppend(receiver!.fns, fn!);
   receiver!.fnsMu.Unlock();
 }
 
@@ -212,7 +213,10 @@ export function singleThreadedWorkGroup_pop(receiver: GoPtr<singleThreadedWorkGr
     receiver!.fnsMu.Unlock();
     return undefined;
   }
-  const fn = receiver!.fns.pop()!;
+  const end = receiver!.fns.length - 1;
+  const fn = receiver!.fns[end];
+  receiver!.fns[end] = undefined;
+  receiver!.fns = receiver!.fns.slice(0, end);
   receiver!.fnsMu.Unlock();
   return fn;
 }

@@ -1,6 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoValueRef, GoZeroPointer } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../go/compat.js";
+import * as maps from "../../go/maps.js";
+import * as slices from "../../go/slices.js";
 import { Index } from "../../go/strings.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import { SourceFile_Path, SourceFile_Text } from "../ast/ast.js";
@@ -541,7 +543,7 @@ export function Checker_GetAllPossiblePropertiesOfTypes(receiver: GoPtr<Checker>
       }
     }
   }
-  return [...props.values()];
+  return slices.Collect(maps.Values(props));
 }
 
 /**
@@ -977,9 +979,9 @@ export function Checker_GetRootSymbols(receiver: GoPtr<Checker>, symbol_: GoPtr<
   if (roots.length === 0) {
     return [symbol_];
   }
-  let result: GoSlice<GoPtr<Symbol>> = [];
+  let result: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   for (const root of roots) {
-    result = result.concat(Checker_GetRootSymbols(receiver, root));
+    result = GoAppend(result, ...Checker_GetRootSymbols(receiver, root));
   }
   return result;
 }
@@ -1381,7 +1383,7 @@ export function Checker_IsSymbolReferencedInFile(receiver: GoPtr<Checker>, sourc
  */
 export function Checker_GetReferencesToSymbolInFile(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
   const identifierText = symbol_!.Name;
-  let result: GoSlice<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const token of getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile as unknown as GoPtr<Node>)) {
     if (!IsIdentifier(token)) {
       continue;
@@ -1392,20 +1394,20 @@ export function Checker_GetReferencesToSymbolInFile(receiver: GoPtr<Checker>, so
     }
     const refSymbol = Checker_GetSymbolAtLocation(receiver, token);
     if (refSymbol === symbol_) {
-      result = [...result, token];
+      result = GoAppend(result, token);
       continue;
     }
     if (token!.Parent !== undefined && token!.Parent!.Kind === KindShorthandPropertyAssignment) {
       const shorthandSymbol = Checker_GetShorthandAssignmentValueSymbol(receiver, token!.Parent);
       if (shorthandSymbol === symbol_) {
-        result = [...result, token];
+        result = GoAppend(result, token);
         continue;
       }
     }
     if (token!.Parent !== undefined && IsExportSpecifier(token!.Parent)) {
       const localSymbol = Checker_getLocalSymbolForExportSpecifier(receiver, AsIdentifier(token), refSymbol, AsExportSpecifier(token!.Parent));
       if (localSymbol === symbol_) {
-        result = [...result, token];
+        result = GoAppend(result, token);
         continue;
       }
     }
@@ -1539,7 +1541,7 @@ export function getPossibleSymbolReferenceNodes(sourceFile: GoPtr<SourceFile>, s
  * }
  */
 export function getPossibleSymbolReferencePositions(sourceFile: GoPtr<SourceFile>, symbolName: string, container: GoPtr<Node>): GoSlice<int> {
-  const positions: int[] = [];
+  let positions: GoSlice<int> = [];
 
   // TODO: Cache symbol existence for files to save text search
   // Also, need to make this work for unicode escapes.
@@ -1565,7 +1567,7 @@ export function getPossibleSymbolReferencePositions(sourceFile: GoPtr<SourceFile
     if ((position === 0 || !IsIdentifierPart(byteAt(text, position - 1))) &&
       (endPosition === sourceLength || !IsIdentifierPart(byteAt(text, endPosition)))) {
       // Found a real match.  Keep searching.
-      positions.push(position);
+      positions = GoAppend(positions, position);
     }
     const startIndex = position + symbolNameLength + 1;
     if (startIndex > byteLen(text)) {
@@ -1666,7 +1668,7 @@ export function Checker_getUninstantiatedSignatures(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_getTypeParameterConstraintForPositionAcrossSignatures(receiver: GoPtr<Checker>, signatures: GoSlice<GoPtr<Signature>>, position: int): GoPtr<Type> {
-  let relevantConstraints: GoSlice<GoPtr<Type>> = [];
+  let relevantConstraints: GoSlice<GoPtr<Type>> = GoNilSlice();
   for (const signature of signatures) {
     if (position >= signature!.typeParameters!.length) {
       continue;
@@ -1674,7 +1676,7 @@ export function Checker_getTypeParameterConstraintForPositionAcrossSignatures(re
     const relevantTypeParameter = signature!.typeParameters![position];
     const relevantConstraint = Checker_getConstraintOfTypeParameter(receiver, relevantTypeParameter);
     if (relevantConstraint !== undefined) {
-      relevantConstraints = relevantConstraints.concat([relevantConstraint]);
+      relevantConstraints = GoAppend(relevantConstraints, relevantConstraint);
     }
   }
   return Checker_getUnionType(receiver, relevantConstraints);
@@ -1910,7 +1912,7 @@ export function Checker_GetExportsAndPropertiesOfModule(receiver: GoPtr<Checker>
   if (exportEquals !== moduleSymbol) {
     const t = Checker_getTypeOfSymbol(receiver, exportEquals);
     if (Checker_shouldTreatPropertiesOfExternalModuleAsExports(receiver, t)) {
-      exports = exports.concat(Checker_getPropertiesOfType(receiver, t));
+      exports = GoAppend(exports, ...Checker_getPropertiesOfType(receiver, t));
     }
   }
   return exports;
@@ -2095,7 +2097,7 @@ export function Checker_GetCandidateSignaturesForStringLiteralCompletions(receiv
     if (candidatesSet.has(candidate)) {
       continue;
     }
-    candidates = candidates.concat([candidate]);
+    candidates = GoAppend(candidates, candidate);
   }
 
   return candidates;

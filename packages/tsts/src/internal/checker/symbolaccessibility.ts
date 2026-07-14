@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoDefined, GoFunc, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoAppend, GoBigIntKey, GoBooleanKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoBigIntKey, GoBooleanKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import { GetNodeId, GetSymbolId, GetReparsedNodeForNode } from "../ast/utilities.js";
@@ -21,7 +21,7 @@ import { LinkStore_Get } from "../core/linkstore.js";
 import { goNodePointerKey, goSymbolPointerKey } from "./map-key-descriptors.js";
 import { canHaveLocals } from "./utilities.js";
 import { getDeclarationsOfKind } from "./utilities.js";
-import { Some, FirstNonNil, IfElse } from "../core/core.js";
+import { Some, FirstNonNil, IfElse, MapNonNil } from "../core/core.js";
 import type { Checker } from "./checker/state.js";
 import { Checker_getMergedSymbol, Checker_getSymbolOfDeclaration, Checker_getExportsOfSymbol, Checker_resolveExternalModuleName, Checker_resolveExternalModuleSymbol, Checker_resolveAlias, Checker_getSymbolFlags, Checker_getParentOfSymbol, Checker_getSymbolIfSameReference, Checker_getDeclaredTypeOfSymbol, Checker_getTypeOfSymbol } from "./checker/symbols.js";
 import { Checker_checkExpressionCached } from "./checker/syntax-checking.js";
@@ -330,10 +330,7 @@ export function getQualifiedLeftMeaning(rightMeaning: SymbolFlags): SymbolFlags 
  * }
  */
 export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, container: GoPtr<Symbol>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags): GoSlice<GoPtr<Symbol>> {
-  const additionalContainers: GoSlice<GoPtr<Symbol>> = container!.Declarations?.flatMap((d: GoPtr<Node>) => {
-    const s = Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver, d, container);
-    return s !== undefined ? [s] : [];
-  }) ?? [];
+  const additionalContainers = MapNonNil(container!.Declarations, (d: GoPtr<Node>) => Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver, d, container), GoZeroPointer<Symbol>, GoEqualStrict<GoPtr<Symbol>>);
   let reexportContainers = GoNilSlice<GoPtr<Symbol>>();
   if (enclosingDeclaration !== undefined) {
     reexportContainers = Checker_getAlternativeContainingModules(receiver, symbol_, enclosingDeclaration);
@@ -344,9 +341,10 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
     (container!.Flags & leftMeaning) !== 0 &&
     Checker_getAccessibleSymbolChain(receiver, container, enclosingDeclaration, SymbolFlagsNamespace /*useOnlyExternalAliasing*/, false).length > 0) {
     // This order expresses a preference for the real container if it is in scope
-    let res: GoSlice<GoPtr<Symbol>> = [container, ...additionalContainers, ...reexportContainers];
+    let res = GoAppend([container], ...additionalContainers);
+    res = GoAppend(res, ...reexportContainers);
     if (objectLiteralContainer !== undefined) {
-      res = [...res, objectLiteralContainer];
+      res = GoAppend(res, objectLiteralContainer);
     }
     return res;
   }
@@ -360,7 +358,7 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
       let found = false;
       for (const [, s] of t) {
         if ((s!.Flags & leftMeaning) !== 0 && Checker_getTypeOfSymbol(receiver, s) === Checker_getDeclaredTypeOfSymbol(receiver, container)) {
-          variableMatches = [...variableMatches, s];
+          variableMatches = GoAppend(variableMatches, s);
           found = true;
         }
       }
@@ -369,11 +367,13 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
     Checker_sortSymbols(receiver, variableMatches);
   }
 
-  let res: GoSlice<GoPtr<Symbol>> = [...variableMatches, ...additionalContainers, container];
+  let res = GoAppend(GoNilSlice<GoPtr<Symbol>>(), ...variableMatches);
+  res = GoAppend(res, ...additionalContainers);
+  res = GoAppend(res, container);
   if (objectLiteralContainer !== undefined) {
-    res = [...res, objectLiteralContainer];
+    res = GoAppend(res, objectLiteralContainer);
   }
-  res = [...res, ...reexportContainers];
+  res = GoAppend(res, ...reexportContainers);
   return res;
 }
 
@@ -450,7 +450,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
     links.extendedContainersByFile = new globalThis.Map<NodeId, GoSlice<GoPtr<Symbol>>>();
   }
   const existing = links.extendedContainersByFile.get(id);
-  if (existing !== undefined) {
+  if (existing !== undefined && !GoSliceIsNil(existing)) {
     return existing;
   }
   let results: GoSlice<GoPtr<Symbol>> = GoNilSlice();
@@ -470,7 +470,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
       if (ref === undefined) {
         continue;
       }
-      results = [...results, resolvedModule];
+      results = GoAppend(results, resolvedModule);
     }
     if (results.length > 0) {
       links.extendedContainersByFile.set(id, results);
@@ -492,7 +492,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
     if (ref === undefined) {
       continue;
     }
-    results = [...results, sym];
+    results = GoAppend(results, sym);
   }
   links.extendedContainers = GoValueRef(results);
   return results;
@@ -693,7 +693,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       if (hasNonGlobalAugmentationExternalModuleSymbol(d!.Parent)) {
         const sym = Checker_getSymbolOfDeclaration(receiver, d!.Parent);
         if (sym !== undefined && !candidates.includes(sym)) {
-          candidates = [...candidates, sym];
+          candidates = GoAppend(candidates, sym);
         }
         continue;
       }
@@ -701,7 +701,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       if (IsModuleBlock(d!.Parent) && d!.Parent!.Parent !== undefined && Checker_resolveExternalModuleSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, d!.Parent!.Parent), false) === symbol_) {
         const sym = Checker_getSymbolOfDeclaration(receiver, d!.Parent!.Parent);
         if (sym !== undefined && !candidates.includes(sym)) {
-          candidates = [...candidates, sym];
+          candidates = GoAppend(candidates, sym);
         }
         continue;
       }
@@ -710,14 +710,14 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       if (IsModuleExportsAccessExpression(AsBinaryExpression(d!.Parent)!.Left) || IsExportsIdentifier(Node_Expression(AsBinaryExpression(d!.Parent)!.Left))) {
         const sym = Checker_getSymbolOfDeclaration(receiver, GetSourceFileOfNode(d) as unknown as GoPtr<Node>);
         if (sym !== undefined && !candidates.includes(sym)) {
-          candidates = [...candidates, sym];
+          candidates = GoAppend(candidates, sym);
         }
         continue;
       }
       Checker_checkExpressionCached(receiver, Node_Expression(AsBinaryExpression(d!.Parent)!.Left));
       const sym = LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks, Node_Expression(AsBinaryExpression(d!.Parent)!.Left), zeroSymbolNodeLinks, goNodePointerKey)!.v.resolvedSymbol;
       if (sym !== undefined && !candidates.includes(sym)) {
-        candidates = [...candidates, sym];
+        candidates = GoAppend(candidates, sym);
       }
       continue;
     }
@@ -736,8 +736,8 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
     if (allAlts.length === 0) {
       continue;
     }
-    bestContainers = [...bestContainers, allAlts[0]];
-    alternativeContainers = [...alternativeContainers, ...allAlts.slice(1)];
+    bestContainers = GoAppend(bestContainers, allAlts[0]);
+    alternativeContainers = GoAppend(alternativeContainers, ...allAlts.slice(1));
   }
   return GoAppend(bestContainers, ...alternativeContainers);
 }
@@ -798,7 +798,7 @@ export function Checker_getAliasForSymbolInContainer(receiver: GoPtr<Checker>, c
   let candidates = GoNilSlice<GoPtr<Symbol>>();
   for (const [, exported] of exports_) {
     if (Checker_getSymbolIfSameReference(receiver, exported, symbol_) !== undefined) {
-      candidates = [...candidates, exported];
+      candidates = GoAppend(candidates, exported);
     }
   }
   if (candidates.length > 0) {
@@ -1155,7 +1155,7 @@ export function Checker_getSymbolTableAliases(receiver: GoPtr<Checker>, symbols:
   let aliases = GoNilSlice<GoPtr<Symbol>>();
   for (const [, sym] of symbols) {
     if ((sym!.Flags & SymbolFlagsAlias) !== 0) {
-      aliases = [...aliases, sym];
+      aliases = GoAppend(aliases, sym);
     }
   }
   if (kind === stKindGlobals || kind === stKindExports || kind === stKindResolvedExports) {
@@ -1246,7 +1246,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
   // symbols are iterated).
   if (res !== undefined && res!.ExportSymbol !== undefined) {
     if (Checker_isAccessible(receiver, ctx, Checker_getMergedSymbol(receiver, res!.ExportSymbol) /*resolvedAliasSymbol*/, undefined, ignoreQualification)) {
-      candidateChains = [...candidateChains, [ctx.symbol!]];
+      candidateChains = GoAppend(candidateChains, [ctx.symbol!]);
     }
   }
 
@@ -1266,7 +1266,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
       const resolvedImportedSymbol = Checker_resolveAlias(receiver, symbolFromSymbolTable);
       const candidate = Checker_getCandidateListForSymbol(receiver, ctx, symbolFromSymbolTable, resolvedImportedSymbol, ignoreQualification);
       if (candidate.length > 0) {
-        candidateChains = [...candidateChains, candidate];
+        candidateChains = GoAppend(candidateChains, candidate);
       }
     }
   }
@@ -1393,7 +1393,7 @@ export function Checker_getCandidateListForSymbol(receiver: GoPtr<Checker>, ctx:
   if (!Checker_canQualifySymbol(receiver, ctx, symbolFromSymbolTable, getQualifiedLeftMeaning(ctx.meaning))) {
     return GoNilSlice<GoPtr<Symbol>>();
   }
-  return [symbolFromSymbolTable, ...accessibleSymbolsFromExports];
+  return GoAppend([symbolFromSymbolTable], ...accessibleSymbolsFromExports);
 }
 
 /**

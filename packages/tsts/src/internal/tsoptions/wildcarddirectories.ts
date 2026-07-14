@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 import {
@@ -121,7 +122,7 @@ export function getWildcardDirectories(
   }
   const wildCardKeyToPath: GoMap<string, string> = new globalThis.Map<string, string>();
 
-  const recursiveKeys: GoSlice<string> = [];
+  let recursiveKeys: GoSlice<string> = [];
 
   for (const file of include) {
     const spec = NormalizeSlashes(CombinePaths(comparePathsOptions.CurrentDirectory, file));
@@ -148,7 +149,7 @@ export function getWildcardDirectories(
         }
 
         if (recursive) {
-          recursiveKeys.push(key);
+          recursiveKeys = GoAppend(recursiveKeys, key);
         }
       }
     }

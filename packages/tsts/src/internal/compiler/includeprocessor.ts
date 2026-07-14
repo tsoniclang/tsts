@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoValueRef, GoZeroPointer, GoZeroSlice } from "../../go/compat.js";
+import { GoAppend, GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoValueRef, GoZeroPointer, GoZeroSlice } from "../../go/compat.js";
 import { IsExternalOrCommonJSModule } from "../ast/utilities.js";
 import { SourceFile_FileName } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
@@ -162,7 +162,7 @@ export function includeProcessor_getDiagnostics(receiver: GoPtr<includeProcessor
  * }
  */
 export function includeProcessor_addProcessingDiagnostic(receiver: GoPtr<includeProcessor>, ...d: Array<GoPtr<processingDiagnostic>>): void {
-  receiver!.processingDiagnostics = [...receiver!.processingDiagnostics, ...d];
+  receiver!.processingDiagnostics = GoAppend(receiver!.processingDiagnostics, ...d);
 }
 
 /**
@@ -382,25 +382,25 @@ export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr
   } else {
     sourceFile = Program_GetSourceFileByPath(program, filePath);
     if (sourceFile === undefined) {
-      return [];
+      return GoNilSlice();
     }
     file = sourceFile as unknown as HasFileName;
   }
-  let result: GoSlice<GoPtr<Diagnostic>> = [];
+  let result: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   const source = Program_GetSourceOfProjectReferenceIfOutputIncluded(program, file!);
   if (source !== file!.FileName()) {
-    result = [...result, NewCompilerDiagnostic(
+    result = GoAppend(result, NewCompilerDiagnostic(
       File_is_output_of_project_reference_source_0,
       toFileName!(source),
-    )];
+    ));
   }
 
   if (redirectsFile !== undefined) {
     const targetFile = Program_GetSourceFileByPath(program, redirectsFile.target);
-    result = [...result, NewCompilerDiagnostic(
+    result = GoAppend(result, NewCompilerDiagnostic(
       File_redirects_to_file_0,
       toFileName!(SourceFile_FileName(targetFile)),
-    )];
+    ));
   }
 
   if (sourceFile !== undefined && IsExternalOrCommonJSModule(sourceFile)) {
@@ -408,20 +408,20 @@ export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr
     const impliedFormat = Program_GetImpliedNodeFormatForEmit(program, file!);
     if (impliedFormat === ModuleKindESNext) {
       if (metaData.PackageJsonType === "module") {
-        result = [...result, NewCompilerDiagnostic(
+        result = GoAppend(result, NewCompilerDiagnostic(
           File_is_ECMAScript_module_because_0_has_field_type_with_value_module,
           toFileName!(metaData.PackageJsonDirectory + "/package.json"),
-        )];
+        ));
       }
     } else if (impliedFormat === ModuleKindCommonJS) {
       if (metaData.PackageJsonType !== "") {
-        result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_has_field_type_whose_value_is_not_module, toFileName!(metaData.PackageJsonDirectory + "/package.json"))];
+        result = GoAppend(result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_has_field_type_whose_value_is_not_module, toFileName!(metaData.PackageJsonDirectory + "/package.json")));
       } else if (metaData.PackageJsonDirectory !== "") {
         if (metaData.PackageJsonType === "") {
-          result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_does_not_have_field_type, toFileName!(metaData.PackageJsonDirectory + "/package.json"))];
+          result = GoAppend(result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_does_not_have_field_type, toFileName!(metaData.PackageJsonDirectory + "/package.json")));
         }
       } else {
-        result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_package_json_was_not_found)];
+        result = GoAppend(result, NewCompilerDiagnostic(File_is_CommonJS_module_because_package_json_was_not_found));
       }
     }
   }

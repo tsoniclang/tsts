@@ -1,5 +1,6 @@
 import type { bool, byte } from "../../../go/scalars.js";
-import { GoStringKey, GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoStringKey, GoZeroPointer, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { Concat } from "../../../go/slices.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -414,22 +415,22 @@ export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: GoIn
 export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   Program_panicIfNoProgram(receiver, "GetSemanticDiagnostics");
   if (Tristate_IsTrue(receiver!.snapshot!.options!.NoCheck)) {
-    return [];
+    return GoNilSlice();
   }
 
   Program_collectSemanticDiagnosticsOfAffectedFiles(receiver, ctx, file);
   if (ctx!.Err() !== undefined) {
-    return [];
+    return GoNilSlice();
   }
 
   if (file !== undefined) {
     return Program_getSemanticDiagnosticsOfFile(receiver, file);
   }
 
-  const diagnostics: GoPtr<Diagnostic>[] = [];
+  let diagnostics: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   for (const f of compiler_Program_GetSourceFiles(receiver!.program)) {
     for (const d of Program_getSemanticDiagnosticsOfFile(receiver, f)) {
-      diagnostics.push(d);
+      diagnostics = GoAppend(diagnostics, d);
     }
   }
   return diagnostics;
@@ -465,7 +466,7 @@ export function Program_getSemanticDiagnosticsOfFile(receiver: GoPtr<Program>, f
     receiver!.snapshot!.options
   );
   const includeProcessorDiags = compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file);
-  return [...filtered, ...(includeProcessorDiags ?? [])];
+  return Concat(filtered, includeProcessorDiags);
 }
 
 /**
@@ -543,7 +544,12 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: GoInterface<Context>
 
   let result: GoPtr<EmitResult>;
   if (Tristate_IsTrue(receiver!.snapshot!.options!.NoEmit)) {
-    result = { EmitSkipped: true as bool, Diagnostics: [], EmittedFiles: [], SourceMaps: [] } as EmitResult;
+    result = {
+      EmitSkipped: true as bool,
+      Diagnostics: GoNilSlice(),
+      EmittedFiles: GoNilSlice(),
+      SourceMaps: GoNilSlice(),
+    } as EmitResult;
   } else {
     result = HandleNoEmitOnError(ctx, Program_as_compiler_ProgramLike(receiver), options.TargetSourceFile);
     if (ctx!.Err() !== undefined) {
@@ -557,8 +563,8 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: GoInterface<Context>
 
     const buildInfoResult = Program_emitBuildInfo(receiver, ctx, options);
     if (buildInfoResult !== undefined) {
-      result.Diagnostics = [...result.Diagnostics, ...buildInfoResult.Diagnostics];
-      result.EmittedFiles = [...result.EmittedFiles, ...buildInfoResult.EmittedFiles];
+      result.Diagnostics = GoAppend(result.Diagnostics, ...buildInfoResult.Diagnostics);
+      result.EmittedFiles = GoAppend(result.EmittedFiles, ...buildInfoResult.EmittedFiles);
     }
     return result;
   }
@@ -629,7 +635,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
     }
   }
 
-  const affectedFiles: GoPtr<SourceFile>[] = [];
+  let affectedFiles: GoSlice<GoPtr<SourceFile>> = GoNilSlice();
   if (file !== undefined) {
     const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile,
@@ -640,7 +646,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
     if (ok) {
       return;
     }
-    affectedFiles.push(file);
+    affectedFiles = [file];
   } else {
     for (const f of compiler_Program_GetSourceFiles(receiver!.program)) {
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
@@ -650,7 +656,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
         GoStringKey
       );
       if (!ok) {
-        affectedFiles.push(f);
+        affectedFiles = GoAppend(affectedFiles, f);
       }
     }
   }
@@ -664,7 +670,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
     SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
       SourceFile_Path(f),
-      { diagnostics: diagnostics, buildInfoDiagnostics: [] },
+      { diagnostics: diagnostics, buildInfoDiagnostics: GoNilSlice() },
       GoStringKey,
     );
   }

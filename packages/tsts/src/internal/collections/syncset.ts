@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import { GoZeroEmptyStruct, type GoComparable, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoZeroEmptyStruct, type GoComparable, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { SyncMap } from "./syncmap.js";
 import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from "./syncmap.js";
 
@@ -144,9 +144,9 @@ export function SyncSet_IsEmpty<T extends GoComparable>(receiver: GoPtr<SyncSet<
  * }
  */
 export function SyncSet_ToSlice<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>): GoSlice<T> {
-  const arr: GoSlice<T> = [];
+  let arr: GoSlice<T> = [];
   SyncMap_Range(receiver!.m, (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
-    arr.push(key);
+    arr = GoAppend(arr, key);
     return true;
   });
   return arr;

@@ -1,5 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoMapIsNil, GoNilMap, GoSliceIsNil, GoValueRef, GoZeroMap } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap } from "../../go/compat.js";
 import { CopyOnWriteMap_EnterScope, CopyOnWriteSet_EnterScope } from "../collections/cow.js";
 import type { Node } from "../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
@@ -138,7 +138,7 @@ export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuild
  * }
  */
 export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>): [expandedParams: GoSlice<GoPtr<Symbol>>, cleanup: GoFunc<() => void>] {
-  const expandedParams = Checker_getExpandedParameters(receiver!.ch, signature, true)[0] ?? [];
+  const expandedParams = Checker_getExpandedParameters(receiver!.ch, signature, true)[0] ?? GoNilSlice();
   const cleanup = NodeBuilderImpl_enterNewScope(receiver, signature!.declaration, expandedParams, signature!.typeParameters, signature!.parameters, signature!.mapper);
   return [expandedParams, cleanup!];
 }
@@ -379,15 +379,15 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
       if (GoMapIsNil(locals)) {
         locals = new globalThis.Map<string, GoPtr<Symbol>>();
       }
-      const newLocals: string[] = [];
-      const oldLocals: localsRecord[] = [];
+    let newLocals: GoSlice<string> = [];
+    let oldLocals: GoSlice<localsRecord> = [];
       addAll((name: string, symbol_: GoPtr<Symbol>): void => {
         if (existingFakeScope !== undefined) {
           const oldSymbol = locals!.get(name);
           if (oldSymbol === undefined) {
-            newLocals.push(name);
+            newLocals = GoAppend(newLocals, name);
           } else {
-            oldLocals.push({ name, oldSymbol });
+            oldLocals = GoAppend(oldLocals, { name, oldSymbol });
           }
         }
         locals!.set(name, symbol_);
@@ -410,20 +410,20 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
         }
       };
     };
-    if (expandedParams === undefined || !Some(expandedParams, (p: GoPtr<Symbol>) => p !== undefined)) {
+    if (GoSliceIsNil(expandedParams) || !Some(expandedParams, (p: GoPtr<Symbol>) => p !== undefined)) {
       cleanupParams = undefined;
     } else {
       cleanupParams = pushFakeScope("params", (add: (name: string, symbol_: GoPtr<Symbol>) => void): void => {
-        if (expandedParams === undefined) {
+        if (GoSliceIsNil(expandedParams)) {
           return;
         }
         for (let pIndex = 0; pIndex < expandedParams.length; pIndex++) {
           const param = expandedParams[pIndex];
           let originalParam: GoPtr<Symbol>;
-          if (pIndex < (originalParameters?.length ?? 0)) {
+          if (pIndex < originalParameters.length) {
             originalParam = originalParameters[pIndex];
           }
-          if (originalParameters !== undefined && originalParam !== param) {
+          if (!GoSliceIsNil(originalParameters) && originalParam !== param) {
             add(param!.Name, receiver!.ch!.unknownSymbol);
             if (originalParam !== undefined) {
               add(originalParam!.Name, receiver!.ch!.unknownSymbol);

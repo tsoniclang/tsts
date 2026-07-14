@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import { DeleteFunc } from "../../go/slices.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend } from "../../go/compat.js";
 import type { CommentRange } from "../ast/ast.js";
 import type { Node } from "../ast/spine.js";
 import { Node_End, Node_Pos } from "../ast/spine.js";
@@ -163,17 +164,17 @@ export function GetJSDocCommentRanges(f: GoPtr<NodeFactory>, commentRanges: GoSl
     case KindVariableDeclaration:
     case KindExportSpecifier:
       GetTrailingCommentRanges(f, text, Node_Pos(node))!((commentRange: CommentRange): bool => {
-        commentRanges.push(commentRange);
+        commentRanges = GoAppend(commentRanges, commentRange);
         return true;
       });
       GetLeadingCommentRanges(f, text, Node_Pos(node))!((commentRange: CommentRange): bool => {
-        commentRanges.push(commentRange);
+        commentRanges = GoAppend(commentRanges, commentRange);
         return true;
       });
       break;
     default:
       GetLeadingCommentRanges(f, text, Node_Pos(node))!((commentRange: CommentRange): bool => {
-        commentRanges.push(commentRange);
+        commentRanges = GoAppend(commentRanges, commentRange);
         return true;
       });
   }

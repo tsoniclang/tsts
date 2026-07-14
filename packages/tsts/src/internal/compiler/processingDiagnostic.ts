@@ -1,6 +1,6 @@
 import type { int } from "../../go/scalars.js";
 import type { GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoPointerKey } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoPointerKey } from "../../go/compat.js";
 import { Diagnostic_SetMessageChain, Diagnostic_SetRelatedInfo, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import { Set_AddIfAbsent, Set_Len } from "../collections/set.js";
@@ -230,9 +230,9 @@ export function processingDiagnostic_toDiagnostic(receiver: GoPtr<processingDiag
  */
 export function processingDiagnostic_createDiagnosticExplainingFile(receiver: GoPtr<processingDiagnostic>, program: GoPtr<Program>): GoPtr<Diagnostic> {
   const diag = processingDiagnostic_asIncludeExplainingDiagnostic(receiver);
-  let includeDetails: GoSlice<GoPtr<Diagnostic>> = [];
-  let relatedInfo: GoSlice<GoPtr<Diagnostic>> = [];
-  let redirectInfo: GoSlice<GoPtr<Diagnostic>> = [];
+  let includeDetails: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
+  let relatedInfo: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
+  let redirectInfo: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   let preferredLocation: GoPtr<FileIncludeReason> = undefined;
   const seenReasons: Set<GoPtr<FileIncludeReason>> = { M: new globalThis.Map() };
   const includeProcessor = program!.__tsgoEmbedded0!.includeProcessor;
@@ -247,7 +247,7 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     } else if (preferredLocation !== includeReason) {
       const info = includeProcessor_getRelatedInfo(includeProcessor, includeReason, program);
       if (info !== undefined) {
-        relatedInfo = [...relatedInfo, info];
+        relatedInfo = GoAppend(relatedInfo, info);
       }
     }
   };
@@ -256,7 +256,7 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     if (!Set_AddIfAbsent(seenReasons, includeReason, fileIncludeReasonKey)) {
       return;
     }
-    includeDetails = [...includeDetails, FileIncludeReason_toDiagnostic(includeReason, program, false)];
+    includeDetails = GoAppend(includeDetails, FileIncludeReason_toDiagnostic(includeReason, program, false));
     processRelatedInfo(includeReason);
   };
 
@@ -276,14 +276,14 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     processInclude(diag!.diagnosticReason);
   }
 
-  let chain: GoSlice<GoPtr<Diagnostic>> = [];
+  let chain: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   if (includeDetails.length > 0 && (preferredLocation === undefined || Set_Len(seenReasons) !== 1)) {
     const fileReason = NewCompilerDiagnostic(The_file_is_in_the_program_because_Colon);
     Diagnostic_SetMessageChain(fileReason, includeDetails);
     chain = [fileReason];
   }
   if (redirectInfo.length > 0) {
-    chain = [...chain, ...redirectInfo];
+    chain = GoAppend(chain, ...redirectInfo);
   }
 
   let result: GoPtr<Diagnostic> = undefined;

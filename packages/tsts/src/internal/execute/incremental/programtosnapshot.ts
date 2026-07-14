@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoComparable, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoComparable, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { TODO } from "../../../go/context.js";
 import { Map as GoSyncMap, Once } from "../../../go/sync.js";
@@ -515,7 +515,7 @@ export function fileAffectsGlobalScope(file: GoPtr<SourceFile>): bool {
     return false;
   }
   return file!.Statements !== undefined &&
-    file!.Statements.Nodes !== undefined &&
+    !GoSliceIsNil(file!.Statements.Nodes) &&
     core.Some(file!.Statements.Nodes, (stmt: GoPtr<Node>) => {
       return !IsModuleWithStringLiteralName(stmt);
     });
@@ -795,7 +795,7 @@ export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic
       };
       // Recursively handle nested chains
       for (const nested of Diagnostic_MessageChain(c)) {
-        b.messageChain.push(astDiagToBuildInfoDiag(nested));
+        b.messageChain = GoAppend(b.messageChain, astDiagToBuildInfoDiag(nested));
       }
       result[i] = repopulateDiagnosticChain(b, p, file);
       changed = true;
@@ -848,7 +848,7 @@ export function astDiagToBuildInfoDiag(d: GoPtr<Diagnostic>): GoPtr<buildInfoDia
     skippedOnNoEmit: false,
   };
   for (const nested of Diagnostic_MessageChain(d)) {
-    b.messageChain.push(astDiagToBuildInfoDiag(nested));
+    b.messageChain = GoAppend(b.messageChain, astDiagToBuildInfoDiag(nested));
   }
   return b;
 }

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoNilMap, GoPointerKey, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, type GoMap, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList } from "../../ast/spine.js";
 import type { NodeVisitor } from "../../ast/visitor.js";
 import { ModifierList_Clone, Node_Clone, NodeFactory_NewNodeList, NodeFactory_NewModifierList } from "../../ast/spine.js";
@@ -363,12 +363,12 @@ export function newClassFieldsTransformer(opts: GoPtr<TransformOptions>): GoPtr<
     shouldTransformThisInStaticInitializers: false,
     shouldTransformSuperInStaticInitializers: false,
     shouldTransformPrivateStaticElementsInFile: false,
-    pendingExpressions: [],
-    pendingStatements: [],
+    pendingExpressions: GoNilSlice(),
+    pendingStatements: GoNilSlice(),
     lexicalEnvironment: undefined,
     currentClassContainer: undefined,
     currentClassElement: undefined,
-    classAliases: new globalThis.Map(),
+    classAliases: GoNilMap(),
     enclosingClassDeclarations: { M: GoNilMap() },
     inIterationStatement: false,
     insideComputedPropertyName: false,
@@ -480,7 +480,7 @@ export function classFieldsTransformer_visitSourceFile(receiver: GoPtr<classFiel
   receiver!.enclosingClassDeclarations.M.clear();
   const visited = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node);
   EmitContext_AddEmitHelper(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), visited, ...EmitContext_ReadEmitHelpers(Transformer_EmitContext(receiver!.__tsgoEmbedded0!)));
-  receiver!.classAliases = new globalThis.Map();
+  receiver!.classAliases = GoNilMap();
   receiver!.enclosingClassDeclarations.M.clear();
   return visited;
 }
@@ -1120,15 +1120,15 @@ export function classFieldsTransformer_visitPropertyAssignment(receiver: GoPtr<c
  */
 export function classFieldsTransformer_visitVariableStatement(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<VariableStatement>): GoPtr<Node> {
   const savedPendingStatements = receiver!.pendingStatements;
-  receiver!.pendingStatements = [];
+  receiver!.pendingStatements = GoNilSlice();
 
   const visitedNode = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), VariableStatement_as_nodeData(node).AsNode());
 
   if (receiver!.pendingStatements.length > 0) {
-    const result: Array<GoPtr<Node>> = [];
-    result.push(visitedNode);
+    let result: GoSlice<GoPtr<Node>> = [];
+    result = GoAppend(result, visitedNode);
     for (const s of receiver!.pendingStatements) {
-      result.push(s);
+      result = GoAppend(result, s);
     }
     receiver!.pendingStatements = savedPendingStatements;
     return NewSyntaxList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, result);
@@ -1349,17 +1349,17 @@ export function classFieldsTransformer_visitExportAssignment(receiver: GoPtr<cla
 export function classFieldsTransformer_injectPendingExpressions(receiver: GoPtr<classFieldsTransformer>, expression: GoPtr<Expression>): GoPtr<Expression> {
   if (receiver!.pendingExpressions.length > 0) {
     if (IsParenthesizedExpression(expression)) {
-      receiver!.pendingExpressions = [...receiver!.pendingExpressions, Node_Expression(expression)];
+      receiver!.pendingExpressions = GoAppend(receiver!.pendingExpressions, Node_Expression(expression));
       expression = NodeFactory_UpdateParenthesizedExpression(
         Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
         AsParenthesizedExpression(expression),
         NodeFactory_InlineExpressions(Transformer_Factory(receiver!.__tsgoEmbedded0!), receiver!.pendingExpressions),
       );
     } else {
-      const exprs = [...receiver!.pendingExpressions, expression];
+      const exprs = GoAppend(receiver!.pendingExpressions, expression);
       expression = NodeFactory_InlineExpressions(Transformer_Factory(receiver!.__tsgoEmbedded0!), exprs);
     }
-    receiver!.pendingExpressions = [];
+    receiver!.pendingExpressions = GoNilSlice();
   }
   return expression;
 }
@@ -2788,7 +2788,9 @@ export function classFieldsTransformer_visitCallExpression(receiver: GoPtr<class
     const visitedTarget = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), target);
     const visitedThisArg = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), thisArg);
     const visitedArgs = NodeVisitor_VisitNodes((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Arguments);
-    const allArgs: GoPtr<Node>[] = [visitedThisArg as GoPtr<Node>, ...(visitedArgs ? visitedArgs.Nodes : [])];
+    let allArgs: GoSlice<GoPtr<Node>> = [];
+    allArgs = GoAppend(allArgs, visitedThisArg as GoPtr<Node>);
+    allArgs = GoAppend(allArgs, ...visitedArgs!.Nodes);
     if ((node!.Flags & NodeFlagsOptionalChain) !== 0) {
       return NodeFactory_UpdateCallExpression(
         Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
@@ -3247,7 +3249,7 @@ export function classFieldsTransformer_isAnonymousClassNeedingAssignedNameWorker
 export function classFieldsTransformer_visitBinaryExpression(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<BinaryExpression>, discarded: bool): GoPtr<Node> {
   if (IsDestructuringAssignment(node as unknown as GoPtr<Node>)) {
     const savedPendingExpressions = receiver!.pendingExpressions;
-    receiver!.pendingExpressions = [];
+    receiver!.pendingExpressions = GoNilSlice();
     const updated = NodeFactory_UpdateBinaryExpression(
       Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
       node,
@@ -3259,7 +3261,7 @@ export function classFieldsTransformer_visitBinaryExpression(receiver: GoPtr<cla
     );
     let result: GoPtr<Expression>;
     if (receiver!.pendingExpressions.length > 0) {
-      const exprs: GoPtr<Expression>[] = [...receiver!.pendingExpressions, updated as unknown as GoPtr<Expression>];
+      const exprs = GoAppend(receiver!.pendingExpressions, updated as unknown as GoPtr<Expression>);
       result = NodeFactory_InlineExpressions(Transformer_Factory(receiver!.__tsgoEmbedded0!), exprs);
     } else {
       result = updated as unknown as GoPtr<Expression>;
@@ -3884,7 +3886,7 @@ export function classFieldsTransformer_visitInNewClassLexicalEnvironment(receive
   const savedPendingExpressions = receiver!.pendingExpressions;
   const savedLexicalEnvironment = receiver!.lexicalEnvironment;
   receiver!.currentClassContainer = node as unknown as GoPtr<ClassLikeDeclaration>;
-  receiver!.pendingExpressions = [];
+  receiver!.pendingExpressions = GoNilSlice();
   classFieldsTransformer_startClassLexicalEnvironment(receiver);
   const original = EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node);
   Set_Add(receiver!.enclosingClassDeclarations, original, nodePointerKey);
@@ -4098,14 +4100,14 @@ export function classFieldsTransformer_visitClassDeclarationInNewClassLexicalEnv
   const heritageClauses = NodeVisitor_VisitNodes(receiver!.heritageClauseVisitor as ConcreteNodeVisitor, classDecl!.HeritageClauses);
   const [members, membersPrologue] = classFieldsTransformer_transformClassMembers(receiver, node);
 
-  let statements: GoSlice<GoPtr<Node>> = [];
+  let statements: GoSlice<GoPtr<Node>> = GoNilSlice();
 
   if (pendingClassReferenceAssignment !== undefined) {
-    receiver!.pendingExpressions = [pendingClassReferenceAssignment, ...receiver!.pendingExpressions];
+    receiver!.pendingExpressions = GoAppend([pendingClassReferenceAssignment], ...receiver!.pendingExpressions);
   }
 
   if (receiver!.pendingExpressions.length > 0) {
-    statements = [...statements, NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, NodeFactory_InlineExpressions(Transformer_Factory(receiver!.__tsgoEmbedded0!), receiver!.pendingExpressions) as GoPtr<Expression>)];
+    statements = GoAppend(statements, NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, NodeFactory_InlineExpressions(Transformer_Factory(receiver!.__tsgoEmbedded0!), receiver!.pendingExpressions) as GoPtr<Expression>));
   }
 
   let name: GoPtr<IdentifierNode> = classDecl!.name as GoPtr<IdentifierNode>;
@@ -4127,7 +4129,7 @@ export function classFieldsTransformer_visitClassDeclarationInNewClassLexicalEnv
     receiver!.modifierVisitor;  // reference to avoid lint
     const extractedModifiers = ExtractModifiers(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), modifiers, ~ModifierFlagsExportDefault);
     const exportAssignment = NewExportAssignment(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, undefined, false, undefined, NodeFactory_GetLocalName(Transformer_Factory(receiver!.__tsgoEmbedded0!), node as unknown as GoPtr<Declaration>));
-    statements = [...statements, exportAssignment];
+    statements = GoAppend(statements, exportAssignment);
     const updatedClass = NodeFactory_UpdateClassDeclaration(
       Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
       classDecl,
@@ -4137,12 +4139,12 @@ export function classFieldsTransformer_visitClassDeclarationInNewClassLexicalEnv
       heritageClauses,
       members,
     );
-    const result: GoSlice<GoPtr<Node>> = [];
+    let result: GoSlice<GoPtr<Node>> = [];
     if (membersPrologue !== undefined) {
-      result.push(NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, membersPrologue as GoPtr<Expression>));
+      result = GoAppend(result, NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, membersPrologue as GoPtr<Expression>));
     }
-    result.push(updatedClass);
-    for (const s of statements) result.push(s);
+    result = GoAppend(result, updatedClass);
+    result = GoAppend(result, ...statements);
     return NewSyntaxList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, result);
   }
 
@@ -4156,12 +4158,12 @@ export function classFieldsTransformer_visitClassDeclarationInNewClassLexicalEnv
     members,
   );
 
-  const result: GoSlice<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = [];
   if (membersPrologue !== undefined) {
-    result.push(NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, membersPrologue as GoPtr<Expression>));
+    result = GoAppend(result, NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, membersPrologue as GoPtr<Expression>));
   }
-  result.push(updatedClass);
-  for (const s of statements) result.push(s);
+  result = GoAppend(result, updatedClass);
+  result = GoAppend(result, ...statements);
   return NewSyntaxList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, result);
 }
 
@@ -4440,9 +4442,9 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
     members,
   );
 
-  let expressions: GoSlice<GoPtr<Expression>> = [];
+  let expressions: GoSlice<GoPtr<Expression>> = GoNilSlice();
   if (membersPrologue !== undefined) {
-    expressions = [...expressions, membersPrologue];
+    expressions = GoAppend(expressions, membersPrologue);
   }
 
   if (!isDecoratedClassDeclaration) {
@@ -4464,17 +4466,17 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
         }
       }
 
-      expressions = [...expressions, NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), temp, classExpression as GoPtr<Expression>)];
-      expressions = [...expressions, ...receiver!.pendingExpressions];
-      expressions = [...expressions, ...classFieldsTransformer_generateInitializedPropertyExpressionsOrClassStaticBlock(receiver, staticPropertiesOrClassStaticBlocks, temp)];
-      expressions = [...expressions, Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<Expression>];
+      expressions = GoAppend(expressions, NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), temp, classExpression as GoPtr<Expression>));
+      expressions = GoAppend(expressions, ...receiver!.pendingExpressions);
+      expressions = GoAppend(expressions, ...classFieldsTransformer_generateInitializedPropertyExpressionsOrClassStaticBlock(receiver, staticPropertiesOrClassStaticBlocks, temp));
+      expressions = GoAppend(expressions, Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<Expression>);
     } else {
-      expressions = [...expressions, classExpression as GoPtr<Expression>];
+      expressions = GoAppend(expressions, classExpression as GoPtr<Expression>);
     }
   } else {
     if (receiver!.pendingExpressions.length > 0) {
       for (const expr of receiver!.pendingExpressions) {
-        receiver!.pendingStatements = [...receiver!.pendingStatements, NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, expr as GoPtr<Expression>)];
+        receiver!.pendingStatements = GoAppend(receiver!.pendingStatements, NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, expr as GoPtr<Expression>));
       }
     }
 
@@ -4487,11 +4489,11 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
     }
 
     if (temp !== undefined) {
-      expressions = [...expressions, NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), temp, classExpression as GoPtr<Expression>)];
+      expressions = GoAppend(expressions, NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), temp, classExpression as GoPtr<Expression>));
     } else if (receiver!.shouldTransformPrivateElementsOrClassStaticBlocks && EmitContext_ClassThis(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node) !== undefined) {
-      expressions = [...expressions, NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), EmitContext_ClassThis(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node)!, classExpression as GoPtr<Expression>)];
+      expressions = GoAppend(expressions, NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), EmitContext_ClassThis(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node)!, classExpression as GoPtr<Expression>));
     } else {
-      expressions = [...expressions, classExpression as GoPtr<Expression>];
+      expressions = GoAppend(expressions, classExpression as GoPtr<Expression>);
     }
   }
 
@@ -4785,25 +4787,25 @@ export function classFieldsTransformer_transformClassMembers(receiver: GoPtr<cla
     }
     const block = NewBlock(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, NodeFactory_NewNodeList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, [statement]), false);
     syntheticStaticBlock = NewClassStaticBlockDeclaration(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, undefined, block);
-    receiver!.pendingExpressions = [];
+    receiver!.pendingExpressions = GoNilSlice();
   }
 
   // If we created a synthetic constructor or class static block, add them to the visited members
   if (syntheticConstructor !== undefined || syntheticStaticBlock !== undefined) {
     const memberNodes = members?.Nodes ?? [];
-    const membersArray: GoSlice<GoPtr<Node>> = [];
+    let membersArray: GoSlice<GoPtr<Node>> = [];
 
     const classThisIdx = memberNodes.findIndex((n: GoPtr<Node>) => isClassThisAssignmentBlock(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), n));
     const namedEvalIdx = memberNodes.findIndex((n: GoPtr<Node>) => isClassNamedEvaluationHelperBlock(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), n));
 
-    if (classThisIdx >= 0) membersArray.push(memberNodes[classThisIdx]);
-    if (namedEvalIdx >= 0) membersArray.push(memberNodes[namedEvalIdx]);
-    if (syntheticConstructor !== undefined) membersArray.push(syntheticConstructor);
-    if (syntheticStaticBlock !== undefined) membersArray.push(syntheticStaticBlock);
+    if (classThisIdx >= 0) membersArray = GoAppend(membersArray, memberNodes[classThisIdx]);
+    if (namedEvalIdx >= 0) membersArray = GoAppend(membersArray, memberNodes[namedEvalIdx]);
+    if (syntheticConstructor !== undefined) membersArray = GoAppend(membersArray, syntheticConstructor);
+    if (syntheticStaticBlock !== undefined) membersArray = GoAppend(membersArray, syntheticStaticBlock);
 
     for (let i = 0; i < memberNodes.length; i++) {
       if (i !== classThisIdx && i !== namedEvalIdx) {
-        membersArray.push(memberNodes[i]);
+        membersArray = GoAppend(membersArray, memberNodes[i]);
       }
     }
     const newMembers = NodeFactory_NewNodeList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, membersArray);
@@ -5062,7 +5064,7 @@ export function classFieldsTransformer_transformConstructorBodyWorker(receiver: 
 
   // Visit statements before super
   const [visitedBefore] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), statementsIn.slice(statementOffset, superStatementIndex) as unknown as GoSlice<GoPtr<Node>>);
-  let out: GoSlice<GoPtr<Statement>> = [...statementsOut, ...visitedBefore as unknown as GoSlice<GoPtr<Statement>>];
+  let out = GoAppend(statementsOut, ...visitedBefore as unknown as GoSlice<GoPtr<Statement>>);
   let newOffset = superStatementIndex + 1;
 
   if (IsTryStatement(superStatement as unknown as GoPtr<Node>)) {
@@ -5070,7 +5072,7 @@ export function classFieldsTransformer_transformConstructorBodyWorker(receiver: 
     const tryBlock = AsBlock(tryStmt!.TryBlock as unknown as GoPtr<Node>);
     const tryBlockStatements = classFieldsTransformer_transformConstructorBodyWorker(
       receiver,
-      [],
+      GoNilSlice(),
       tryBlock!.Statements!.Nodes as unknown as GoSlice<GoPtr<Statement>>,
       0, /*statementOffset*/
       superPath,
@@ -5097,10 +5099,10 @@ export function classFieldsTransformer_transformConstructorBodyWorker(receiver: 
       catchClause,
       finallyBlock,
     );
-    out = [...out, updated as unknown as GoPtr<Statement>];
+    out = GoAppend(out, updated as unknown as GoPtr<Statement>);
   } else {
     const [visitedSuper] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), statementsIn.slice(superStatementIndex, superStatementIndex + 1) as unknown as GoSlice<GoPtr<Node>>);
-    out = [...out, ...visitedSuper as unknown as GoSlice<GoPtr<Statement>>];
+    out = GoAppend(out, ...visitedSuper as unknown as GoSlice<GoPtr<Statement>>);
 
     // parameter-property assignments should occur immediately after the prologue and `super()`,
     // so only count the statements that immediately follow.
@@ -5114,12 +5116,12 @@ export function classFieldsTransformer_transformConstructorBodyWorker(receiver: 
       }
     }
 
-    out = [...out, ...initializerStatements];
+    out = GoAppend(out, ...initializerStatements);
   }
 
   // Visit remaining statements
   const [visited2] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), statementsIn.slice(newOffset) as unknown as GoSlice<GoPtr<Node>>);
-  out = [...out, ...visited2 as unknown as GoSlice<GoPtr<Statement>>];
+  out = GoAppend(out, ...visited2 as unknown as GoSlice<GoPtr<Statement>>);
   return out;
 }
 
@@ -5264,7 +5266,7 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
   const instanceProperties = classFieldsTransformer_getProperties(receiver, container, false /*requireInitializer*/, false /*isStatic*/);
   let properties = instanceProperties;
   if (!CompilerOptions_GetUseDefineForClassFields(receiver!.compilerOptions)) {
-    properties = properties.filter((prop) =>
+    properties = Filter(properties, (prop) =>
       Node_Initializer(prop) !== undefined || IsPrivateIdentifier(Node_Name(prop)) || HasAccessorModifier(prop)
     );
   }
@@ -5280,10 +5282,10 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
   EmitContext_StartVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0!));
 
   const needsSyntheticConstructor = constructor_ === undefined && isDerivedClass;
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
 
   // Add the property initializers.
-  let initializerStatements: GoSlice<GoPtr<Statement>> = [];
+  let initializerStatements: GoSlice<GoPtr<Statement>> = GoNilSlice();
   const receiverExpr = NodeFactory_NewThisExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!));
 
   // private methods can be called in property initializers, they should execute first
@@ -5291,10 +5293,10 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
 
   if (constructor_ !== undefined) {
     const constructorNode = constructor_ as unknown as GoPtr<Node>;
-    const parameterProperties = instanceProperties.filter((prop) =>
+    const parameterProperties = Filter(instanceProperties, (prop) =>
       IsParameterPropertyDeclaration(EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), prop), constructorNode)
     );
-    const nonParameterProperties = properties.filter((prop) =>
+    const nonParameterProperties = Filter(properties, (prop) =>
       !IsParameterPropertyDeclaration(EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), prop), constructorNode)
     );
     initializerStatements = classFieldsTransformer_addPropertyOrClassStaticBlockStatements(receiver, initializerStatements as unknown as GoSlice<GoPtr<Node>>, parameterProperties, receiverExpr) as unknown as GoSlice<GoPtr<Statement>>;
@@ -5309,7 +5311,7 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
     // Copy prologue
     for (const stmt of body!.Statements!.Nodes) {
       if (IsPrologueDirective(stmt)) {
-        statements = [...statements, stmt as unknown as GoPtr<Statement>];
+        statements = GoAppend(statements, stmt as unknown as GoPtr<Statement>);
       } else {
         break;
       }
@@ -5332,9 +5334,9 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
           break;
         }
       }
-      statements = [...statements, ...initializerStatements];
+      statements = GoAppend(statements, ...initializerStatements);
       const [visited] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), bodyNodes.slice(statementOffset) as unknown as GoSlice<GoPtr<Node>>);
-      statements = [...statements, ...visited as unknown as GoSlice<GoPtr<Statement>>];
+      statements = GoAppend(statements, ...visited as unknown as GoSlice<GoPtr<Statement>>);
     }
   } else {
     if (needsSyntheticConstructor) {
@@ -5355,9 +5357,9 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
           NodeFlagsNone,
         ),
       );
-      statements = [...statements, superCall as unknown as GoPtr<Statement>];
+      statements = GoAppend(statements, superCall as unknown as GoPtr<Statement>);
     }
-    statements = [...statements, ...initializerStatements];
+    statements = GoAppend(statements, ...initializerStatements);
   }
 
   statements = EmitContext_EndAndMergeVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), statements);
@@ -5413,7 +5415,7 @@ export function classFieldsTransformer_addPropertyOrClassStaticBlockStatements(r
     }
     const statement = classFieldsTransformer_transformPropertyOrClassStaticBlock(receiver, property, receiver1);
     if (statement !== undefined) {
-      out = [...out, statement];
+      out = GoAppend(out, statement);
     }
   }
   return out;
@@ -5528,7 +5530,7 @@ export function classFieldsTransformer_transformPropertyOrClassStaticBlock(recei
  * }
  */
 export function classFieldsTransformer_generateInitializedPropertyExpressionsOrClassStaticBlock(receiver: GoPtr<classFieldsTransformer>, propertiesOrClassStaticBlocks: GoSlice<GoPtr<Node>>, receiver1: GoPtr<Expression>): GoSlice<GoPtr<Expression>> {
-  let expressions: GoSlice<GoPtr<Expression>> = [];
+  let expressions: GoSlice<GoPtr<Expression>> = GoNilSlice();
   for (const property of propertiesOrClassStaticBlocks) {
     let expression: GoPtr<Expression>;
     if (IsClassStaticBlockDeclaration(property)) {
@@ -5541,7 +5543,7 @@ export function classFieldsTransformer_generateInitializedPropertyExpressionsOrC
     }
     EmitContext_SetOriginalEx(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), expression, property, true /*allowOverwrite*/);
     EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), expression, property);
-    expressions = [...expressions, expression];
+    expressions = GoAppend(expressions, expression);
   }
   return expressions;
 }
@@ -5837,7 +5839,7 @@ export function classFieldsTransformer_addInstanceMethodStatements(receiver: GoP
     Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
     createPrivateInstanceMethodInitializer(Transformer_Factory(receiver!.__tsgoEmbedded0!), receiver1, weakSetName),
   );
-  return [...statements, stmt as unknown as GoPtr<Statement>];
+  return GoAppend(statements, stmt as unknown as GoPtr<Statement>);
 }
 
 /**
@@ -6020,7 +6022,7 @@ export function classFieldsTransformer_getPrivateIdentifierEnvironment(receiver:
     receiver!.lexicalEnvironment!.privateEnv = {
       data: { className: undefined, weakSetName: undefined },
       members: new Map<string, GoPtr<privateIdentifierInfo>>(),
-      generatedIdentifiers: new Map<GoPtr<Node>, GoPtr<privateIdentifierInfo>>(),
+      generatedIdentifiers: GoNilMap(),
     };
   }
   return receiver!.lexicalEnvironment!.privateEnv;
@@ -6035,7 +6037,7 @@ export function classFieldsTransformer_getPrivateIdentifierEnvironment(receiver:
  * }
  */
 export function classFieldsTransformer_addPendingExpressions(receiver: GoPtr<classFieldsTransformer>, ...exprs: Array<GoPtr<Expression>>): void {
-  receiver!.pendingExpressions = [...receiver!.pendingExpressions, ...exprs];
+  receiver!.pendingExpressions = GoAppend(receiver!.pendingExpressions, ...exprs);
 }
 
 /**
@@ -6424,7 +6426,7 @@ export function classFieldsTransformer_addPrivateIdentifierToEnvironment(receive
  */
 export function classFieldsTransformer_setPrivateIdentifier(receiver: GoPtr<classFieldsTransformer>, env: GoPtr<privateEnvironment>, name: GoPtr<Node>, info: GoPtr<privateIdentifierInfo>): void {
   if (EmitContext_HasAutoGenerateInfo(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), name)) {
-    if (env!.generatedIdentifiers === undefined) {
+    if (GoMapIsNil(env!.generatedIdentifiers)) {
       env!.generatedIdentifiers = new Map<GoPtr<Node>, GoPtr<privateIdentifierInfo>>();
     }
     env!.generatedIdentifiers.set(EmitContext_GetNodeForGeneratedName(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), name), info);
@@ -6662,10 +6664,10 @@ export function classFieldsTransformer_wrapPrivateIdentifierForDestructuringTarg
       Flags: GeneratedIdentifierFlagsReservedInNestedScopes,
     } as AutoGenerateOptions);
     EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), recvTemp);
-    receiver!.pendingExpressions = [...receiver!.pendingExpressions,
+    receiver!.pendingExpressions = GoAppend(receiver!.pendingExpressions,
       NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), recvTemp as unknown as GoPtr<Expression>,
         NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), prop!.Expression as unknown as GoPtr<Node>) as unknown as GoPtr<Expression>),
-    ];
+    );
     recv = recvTemp as unknown as GoPtr<Node>;
   }
   const assignExpr = classFieldsTransformer_createPrivateIdentifierAssignment(receiver, info, recv as unknown as GoPtr<Expression>, parameter as unknown as GoPtr<Expression>, KindEqualsToken);
@@ -7108,12 +7110,12 @@ export function isStaticPropertyDeclarationOrClassStaticBlock(node: GoPtr<Node>)
  * }
  */
 export function classFieldsTransformer_getProperties(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>, requireInitializer: bool, isStatic: bool): GoSlice<GoPtr<Node>> {
-  const result: Array<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const member of Node_Members(node) ?? []) {
     if (IsPropertyDeclaration(member) &&
       (!requireInitializer || Node_Initializer(member) !== undefined) &&
       (HasStaticModifier(member) === isStatic)) {
-      result.push(member);
+      result = GoAppend(result, member);
     }
   }
   return result;
@@ -7134,10 +7136,10 @@ export function classFieldsTransformer_getProperties(receiver: GoPtr<classFields
  * }
  */
 export function classFieldsTransformer_getStaticPropertiesAndClassStaticBlock(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  const result: Array<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (const member of Node_Members(node) ?? []) {
     if (IsClassStaticBlockDeclaration(member) || (IsPropertyDeclaration(member) && HasStaticModifier(member))) {
-      result.push(member);
+      result = GoAppend(result, member);
     }
   }
   return result;

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
@@ -2515,9 +2515,9 @@ export function parseConfig(json: GoPtr<OrderedMap<string, GoInterface<unknown>>
     const result: extendsResult = {
       options: {} as CompilerOptions,
       watchOptionsCopied: false,
-      include: [],
-      exclude: [],
-      files: [],
+      include: GoNilSlice<GoInterface<unknown>>(),
+      exclude: GoNilSlice<GoInterface<unknown>>(),
+      files: GoNilSlice<GoInterface<unknown>>(),
       compileOnSave: false,
       extendedSourceFiles: { M: GoNilMap() },
     };
@@ -2529,13 +2529,13 @@ export function parseConfig(json: GoPtr<OrderedMap<string, GoInterface<unknown>>
       }
     }
     const ownRawMap = ownConfig!.raw as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
-    if (result.include !== undefined && (result.include as unknown[]).length > 0) {
+    if (!GoSliceIsNil(result.include)) {
       OrderedMap_Set(ownRawMap, "include", result.include, GoStringKey);
     }
-    if (result.exclude !== undefined && (result.exclude as unknown[]).length > 0) {
+    if (!GoSliceIsNil(result.exclude)) {
       OrderedMap_Set(ownRawMap, "exclude", result.exclude, GoStringKey);
     }
-    if (result.files !== undefined && (result.files as unknown[]).length > 0) {
+    if (!GoSliceIsNil(result.files)) {
       OrderedMap_Set(ownRawMap, "files", result.files, GoStringKey);
     }
     if (result.compileOnSave && !OrderedMap_Has(ownRawMap, "compileOnSave")) {
@@ -3783,10 +3783,10 @@ export function GetSupportedExtensions(compilerOptions: GoPtr<CompilerOptions>, 
   }
   const builtins: GoSlice<GoSlice<string>> = needJSExtensions ? AllSupportedExtensions : SupportedTSExtensions;
   const flatBuiltins = core.Flatten(builtins);
-  const result: GoSlice<string>[] = [];
+  let result: GoSlice<string>[] = [];
   for (const x of extraFileExtensions) {
     if (x.ScriptKind === ScriptKindDeferred || (needJSExtensions && (x.ScriptKind === ScriptKindJS || x.ScriptKind === ScriptKindJSX)) && !Contains(flatBuiltins, x.Extension, GoEqualStrict<string>)) {
-      result.push([x.Extension]);
+      result = GoAppend(result, [x.Extension]);
     }
   }
   const extensions = Concat(builtins, result);

@@ -1,9 +1,9 @@
 import type { bool, byte, double, int, uint, ulong } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoArray, GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBooleanKey, GoNilMap, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoBooleanKey, GoNilMap, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
 import { Errorf, Sprintf } from "../../go/fmt.js";
-import { SortFunc } from "../../go/slices.js";
+import { Clone, SortFunc } from "../../go/slices.js";
 import { Builder, Compare } from "../../go/strings.js";
 import { Itoa } from "../../go/strconv.js";
 import { Mutex } from "../../go/sync.js";
@@ -889,16 +889,16 @@ export function Tracing_NewTypeTracer(receiver: GoPtr<Tracing>, checkerIndex: in
       types: [],
       mu: new Mutex(),
     };
-    tr.tracers = [...tr.tracers, tracer];
-    tr.legend = [
-      ...tr.legend,
+    tr.tracers = GoAppend(tr.tracers, tracer);
+    tr.legend = GoAppend(
+      tr.legend,
       {
         ConfigFilePath: tr.configFilePath,
         TracePath: tr.tracePath,
         TypesPath: typesPath,
         CheckerID: checkerIndex,
       },
-    ];
+    );
     return typeTracer_as_Tracer(tracer);
   } finally {
     tr.mu.Unlock();
@@ -1139,7 +1139,7 @@ export function typeTracer_RecordType(receiver: GoPtr<typeTracer>, typ: GoInterf
   const t = receiver!;
   t.mu.Lock();
   try {
-    t.types = [...t.types, typ];
+    t.types = GoAppend(t.types, typ);
   } finally {
     t.mu.Unlock();
   }
@@ -1188,7 +1188,7 @@ export function typeTracer_DumpTypes(receiver: GoPtr<typeTracer>): GoError {
   // Copy the types slice under lock, then release so Display() calls during
   // buildTypeDescriptor don't deadlock when they create new types
   t.mu.Lock();
-  const types: GoSlice<GoInterface<TracedType>> = [...t.types];
+  const types = Clone(t.types);
   t.mu.Unlock();
 
   if (types.length === 0) {

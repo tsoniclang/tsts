@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBooleanKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoBooleanKey, GoNilSlice, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Regexp } from "../../go/regexp.js";
 import { Compile } from "../../go/regexp.js";
 import * as strings from "../../go/strings.js";
@@ -458,11 +458,11 @@ export function tryGetAnyFileFromPath(host: GoInterface<ModuleSpecifierGeneratio
  * }
  */
 export function getPathsRelativeToRootDirs(path: string, rootDirs: GoSlice<string>, useCaseSensitiveFileNames: bool): GoSlice<string> {
-  const results: string[] = [];
+  let results = GoNilSlice<string>();
   for (const rootDir of rootDirs) {
     const relativePath = getRelativePathIfInSameVolume(path, rootDir, useCaseSensitiveFileNames);
     if (!isPathRelativeToParent(relativePath)) {
-      results.push(relativePath);
+      results = GoAppend(results, relativePath);
     }
   }
   return results;

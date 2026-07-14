@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import * as strings from "../../../go/strings.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_SubtreeFacts, Node_TemplateLiteralLikeData, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import { AsSourceFile, Node_Expression, NodeFactory_UpdateSourceFile } from "../../ast/ast.js";
@@ -76,7 +76,7 @@ export function newTaggedTemplateLiftRestrictionTransformer(opts: GoPtr<Transfor
   const tx: taggedTemplateTransformer = {
     __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
     currentSourceFile: undefined,
-    taggedTemplateStringDeclarations: [],
+    taggedTemplateStringDeclarations: GoNilSlice(),
   };
   return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => taggedTemplateTransformer_visit(tx, node), opts!.Context);
 }
@@ -145,7 +145,7 @@ export function taggedTemplateTransformer_visit(receiver: GoPtr<taggedTemplateTr
  */
 export function taggedTemplateTransformer_visitSourceFile(receiver: GoPtr<taggedTemplateTransformer>, node: GoPtr<SourceFile>): GoPtr<Node> {
   receiver!.currentSourceFile = node;
-  receiver!.taggedTemplateStringDeclarations = [];
+  receiver!.taggedTemplateStringDeclarations = GoNilSlice();
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
   const af = pf.__tsgoEmbedded0!;
@@ -154,8 +154,8 @@ export function taggedTemplateTransformer_visitSourceFile(receiver: GoPtr<tagged
 
   if (receiver!.taggedTemplateStringDeclarations.length > 0) {
     const visitedSourceFile = AsSourceFile(visited);
-    const statements: GoSlice<GoPtr<Node>> = [
-      ...visitedSourceFile!.Statements!.Nodes,
+    const statements = GoAppend(
+      visitedSourceFile!.Statements!.Nodes,
       NewVariableStatement(
         af,
         undefined,
@@ -165,7 +165,7 @@ export function taggedTemplateTransformer_visitSourceFile(receiver: GoPtr<tagged
           NodeFlagsNone,
         ),
       ),
-    ];
+    );
     const stmtList = NodeFactory_NewNodeList(af, statements);
     stmtList!.Loc = node!.Statements!.Loc;
     visited = NodeFactory_UpdateSourceFile(af, visitedSourceFile, stmtList, visitedSourceFile!.EndOfFileToken);
@@ -259,22 +259,22 @@ export function taggedTemplateTransformer_processTaggedTemplateExpression(receiv
   }
 
   // Build up the template arguments and the raw and cooked strings for the template.
-  const templateArguments: GoSlice<GoPtr<Node>> = [undefined]; // placeholder for the template object
-  const cookedStrings: GoSlice<GoPtr<Node>> = [];
-  const rawStrings: GoSlice<GoPtr<Node>> = [];
+  let templateArguments: GoSlice<GoPtr<Node>> = [undefined]; // placeholder for the template object
+  let cookedStrings: GoSlice<GoPtr<Node>> = GoNilSlice();
+  let rawStrings: GoSlice<GoPtr<Node>> = GoNilSlice();
 
   if (IsNoSubstitutionTemplateLiteral(template)) {
-    cookedStrings.push(createTemplateCooked(pf, Node_TemplateLiteralLikeData(template)));
-    rawStrings.push(getRawLiteral(pf, template));
+    cookedStrings = GoAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(template)));
+    rawStrings = GoAppend(rawStrings, getRawLiteral(pf, template));
   } else {
     const te = AsTemplateExpression(template);
-    cookedStrings.push(createTemplateCooked(pf, Node_TemplateLiteralLikeData(te!.Head as unknown as GoPtr<Node>)));
-    rawStrings.push(getRawLiteral(pf, te!.Head as unknown as GoPtr<Node>));
+    cookedStrings = GoAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(te!.Head as unknown as GoPtr<Node>)));
+    rawStrings = GoAppend(rawStrings, getRawLiteral(pf, te!.Head as unknown as GoPtr<Node>));
     for (const span of te!.TemplateSpans!.Nodes) {
       const ts: GoPtr<TemplateSpan> = AsTemplateSpan(span);
-      cookedStrings.push(createTemplateCooked(pf, Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)));
-      rawStrings.push(getRawLiteral(pf, ts!.Literal as unknown as GoPtr<Node>));
-      templateArguments.push(NodeVisitor_VisitNode(visitor, ts!.Expression as unknown as GoPtr<Node>));
+      cookedStrings = GoAppend(cookedStrings, createTemplateCooked(pf, Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)));
+      rawStrings = GoAppend(rawStrings, getRawLiteral(pf, ts!.Literal as unknown as GoPtr<Node>));
+      templateArguments = GoAppend(templateArguments, NodeVisitor_VisitNode(visitor, ts!.Expression as unknown as GoPtr<Node>));
     }
   }
 
@@ -289,7 +289,7 @@ export function taggedTemplateTransformer_processTaggedTemplateExpression(receiv
   // variables from outside of the current compilation. In the future, we can revisit this behavior.
   if (IsExternalModule(receiver!.currentSourceFile)) {
     const tempVar = NodeFactory_NewUniqueName(pf, "templateObject");
-    receiver!.taggedTemplateStringDeclarations.push(
+    receiver!.taggedTemplateStringDeclarations = GoAppend(receiver!.taggedTemplateStringDeclarations,
       NewVariableDeclaration(af, tempVar as unknown as GoPtr<Node>, undefined, undefined, undefined),
     );
     templateArguments[0] = NodeFactory_NewLogicalORExpression(

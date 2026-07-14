@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import { Every, Find, FirstOrNil, Filter, Some } from "../core/core.js";
 import type { GoComparable, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
-import { GoMapIsNil, GoNilMap, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { IsTypeOrJSTypeAliasDeclaration, Node_Arguments, Node_Body, Node_Elements, Node_Expression, Node_ImportClause, Node_Initializer, Node_Members, Node_ModifierFlags, Node_Parameters, Node_Properties, Node_PropertyNameOrName, Node_Text, Node_Type, Node_TypeArguments, SourceFile_FileName, SourceFile_Path, SourceFile_Text } from "../ast/ast.js";
@@ -2278,7 +2278,7 @@ export function orderedSet_contains<T extends GoComparable>(receiver: GoPtr<orde
  * }
  */
 export function orderedSet_add<T extends GoComparable>(receiver: GoPtr<orderedSet<T>>, value: T, keyDescriptor: GoMapKeyDescriptor<T>): void {
-  receiver!.values = [...receiver!.values, value];
+  receiver!.values = GoAppend(receiver!.values, value);
   // Small sets are served by a linear scan over values; only materialize the map once the set
   // grows large enough for hashing to win.
   if (GoMapIsNil(receiver!.valuesByKey)) {
@@ -4022,10 +4022,10 @@ export function introducesArgumentsExoticObject(node: GoPtr<Node>): bool {
  * }
  */
 export function symbolsToArray(symbols: SymbolTable): GoSlice<GoPtr<Symbol>> {
-  let result: GoSlice<GoPtr<Symbol>> = [];
+  let result: GoSlice<GoPtr<Symbol>> = GoNilSlice();
   for (const [id, symbol] of symbols) {
     if (!isReservedMemberName(id)) {
-      result = [...result, symbol];
+      result = GoAppend(result, symbol);
     }
   }
   return result;

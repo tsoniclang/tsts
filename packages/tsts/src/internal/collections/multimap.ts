@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
 import type { GoComparable, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoMapIsNil, GoMapMake, GoNilMap } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoMapMake, GoNilMap } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 
@@ -99,8 +99,7 @@ export function MultiMap_Add<K extends GoComparable, V extends GoComparable>(rec
     receiver!.M = GoMapMake<K, GoSlice<V>>(keyDescriptor);
   }
   const existing = receiver!.M.get(key) ?? [];
-  existing.push(value);
-  receiver!.M.set(key, existing);
+  receiver!.M.set(key, GoAppend(existing, value));
 }
 
 /**
@@ -130,7 +129,9 @@ export function MultiMap_Remove<K extends GoComparable, V extends GoComparable>(
       if (values0.length === 1) {
         receiver!.M.delete(key);
       } else {
-        receiver!.M.set(key, values0.slice(0, i).concat(values0.slice(i + 1)));
+        let values = values0.slice(0, i);
+        values = GoAppend(values, ...values0.slice(i + 1));
+        receiver!.M.set(key, values);
       }
     }
   }

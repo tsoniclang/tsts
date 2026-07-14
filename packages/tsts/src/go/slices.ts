@@ -1,7 +1,7 @@
 import type { bool, int } from "./scalars.js";
 import type { Seq } from "./iter.js";
 import type { GoEquality, GoFunc, GoPtr, GoSlice, GoOrdered } from "./compat.js";
-import { GoNilSlice, GoSliceIsNil } from "./compat.js";
+import { GoAppend, GoNilSlice, GoSliceIsNil } from "./compat.js";
 import { Compare as cmpCompare } from "./cmp.js";
 
 // Go: package slices (standard library).
@@ -160,10 +160,10 @@ export function Clone<T>(s: GoSlice<T>): GoSlice<T> {
 
 // Concat returns a new slice concatenating the passed in slices.
 export function Concat<T>(...slices: Array<GoPtr<GoSlice<T>>>): GoSlice<T> {
-  const result: T[] = [];
+  let result: GoSlice<T> = GoNilSlice();
   for (const s of slices) {
     for (const e of s ?? []) {
-      result.push(e);
+      result = GoAppend(result, e);
     }
   }
   return result;
@@ -417,15 +417,15 @@ export function Values<T>(s: GoPtr<GoSlice<T>>): Seq<T> {
 
 // Collect collects values from seq into a new slice and returns it.
 export function Collect<T>(seq: Seq<T>): GoSlice<T> {
-  return AppendSeq([], seq);
+  return AppendSeq(GoNilSlice(), seq);
 }
 
 // AppendSeq appends the values from seq to the slice and returns the extended
 // slice.
 export function AppendSeq<T>(s: GoPtr<GoSlice<T>>, seq: Seq<T>): GoSlice<T> {
-  const slice = s ?? [];
+  let slice: GoSlice<T> = s ?? GoNilSlice<T>();
   seq!((value: T): bool => {
-    slice.push(value);
+    slice = GoAppend(slice, value);
     return true;
   });
   return slice;

@@ -1,4 +1,4 @@
-import type { GoError, GoSlice } from "../compat.js";
+import { GoAppend, GoNilSlice, GoSliceIsNil, type GoError, type GoSlice } from "../compat.js";
 import * as nodeChildProcess from "node:child_process";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
@@ -8,11 +8,11 @@ export class Cmd {
   Path: string;
   Args: GoSlice<string>;
   Dir: string = "";
-  Env: GoSlice<string> | undefined;
+  Env: GoSlice<string> = GoNilSlice();
 
   constructor(name: string, args: GoSlice<string>) {
     this.Path = name;
-    this.Args = [name, ...args];
+    this.Args = GoAppend([name], ...args);
   }
 
   Run(): GoError {
@@ -81,7 +81,7 @@ function isExecutable(file: string): boolean {
 }
 
 function envObject(env: GoSlice<string> | undefined): NodeJS.ProcessEnv | undefined {
-  if (env === undefined) {
+  if (env === undefined || GoSliceIsNil(env)) {
     return undefined;
   }
   const result: NodeJS.ProcessEnv = {};

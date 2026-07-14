@@ -1,6 +1,6 @@
 import type { bool, int, short, ulong } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoMapIsNil, GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Pool } from "../../go/sync.js";
@@ -6041,8 +6041,7 @@ export function IsBreakOrContinueStatement(node: GoPtr<Node>): bool {
  * }
  */
 export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  // Go's `append(nil, parent)` yields a new slice; a nil input slice is treated as empty.
-  return [...(ancestors ?? []), parent];
+  return GoAppend(ancestors, parent);
 }
 
 /**
@@ -6145,18 +6144,20 @@ export function getModuleInstanceState(node: GoPtr<Node>, ancestors: GoSlice<GoP
  * }
  */
 export function getModuleInstanceStateCached(node: GoPtr<Node>, ancestors: GoSlice<GoPtr<Node>>, visited: GoMap<NodeId, ModuleInstanceState>): ModuleInstanceState {
-  const visitedMap: GoMap<NodeId, ModuleInstanceState> = visited !== undefined ? visited : new globalThis.Map<NodeId, ModuleInstanceState>();
+  if (GoMapIsNil(visited)) {
+    visited = new globalThis.Map<NodeId, ModuleInstanceState>();
+  }
   const nodeId: NodeId = GetNodeId(node);
-  if (visitedMap.has(nodeId)) {
-    const cached: ModuleInstanceState = visitedMap.get(nodeId)!;
+  if (visited.has(nodeId)) {
+    const cached: ModuleInstanceState = visited.get(nodeId)!;
     if (cached !== ModuleInstanceStateUnknown) {
       return cached;
     }
     return ModuleInstanceStateNonInstantiated;
   }
-  visitedMap.set(nodeId, ModuleInstanceStateUnknown);
-  const result: ModuleInstanceState = getModuleInstanceStateWorker(node, ancestors, visitedMap);
-  visitedMap.set(nodeId, result);
+  visited.set(nodeId, ModuleInstanceStateUnknown);
+  const result: ModuleInstanceState = getModuleInstanceStateWorker(node, ancestors, visited);
+  visited.set(nodeId, result);
   return result;
 }
 
@@ -8382,51 +8383,51 @@ export function GetExternalModuleImportEqualsDeclarationExpression(node: GoPtr<N
  * }
  */
 export function CreateModifiersFromModifierFlags(flags: ModifierFlags, createModifier: GoFunc<(kind: Kind) => GoPtr<Node>>): GoSlice<GoPtr<Node>> {
-  let result: GoSlice<GoPtr<Node>> = [];
+  let result: GoSlice<GoPtr<Node>> = GoNilSlice();
   if ((flags & ModifierFlagsExport) !== 0) {
-    result = [...(result ?? []), createModifier!(KindExportKeyword)];
+    result = GoAppend(result, createModifier!(KindExportKeyword));
   }
   if ((flags & ModifierFlagsAmbient) !== 0) {
-    result = [...(result ?? []), createModifier!(KindDeclareKeyword)];
+    result = GoAppend(result, createModifier!(KindDeclareKeyword));
   }
   if ((flags & ModifierFlagsDefault) !== 0) {
-    result = [...(result ?? []), createModifier!(KindDefaultKeyword)];
+    result = GoAppend(result, createModifier!(KindDefaultKeyword));
   }
   if ((flags & ModifierFlagsConst) !== 0) {
-    result = [...(result ?? []), createModifier!(KindConstKeyword)];
+    result = GoAppend(result, createModifier!(KindConstKeyword));
   }
   if ((flags & ModifierFlagsPublic) !== 0) {
-    result = [...(result ?? []), createModifier!(KindPublicKeyword)];
+    result = GoAppend(result, createModifier!(KindPublicKeyword));
   }
   if ((flags & ModifierFlagsPrivate) !== 0) {
-    result = [...(result ?? []), createModifier!(KindPrivateKeyword)];
+    result = GoAppend(result, createModifier!(KindPrivateKeyword));
   }
   if ((flags & ModifierFlagsProtected) !== 0) {
-    result = [...(result ?? []), createModifier!(KindProtectedKeyword)];
+    result = GoAppend(result, createModifier!(KindProtectedKeyword));
   }
   if ((flags & ModifierFlagsAbstract) !== 0) {
-    result = [...(result ?? []), createModifier!(KindAbstractKeyword)];
+    result = GoAppend(result, createModifier!(KindAbstractKeyword));
   }
   if ((flags & ModifierFlagsStatic) !== 0) {
-    result = [...(result ?? []), createModifier!(KindStaticKeyword)];
+    result = GoAppend(result, createModifier!(KindStaticKeyword));
   }
   if ((flags & ModifierFlagsOverride) !== 0) {
-    result = [...(result ?? []), createModifier!(KindOverrideKeyword)];
+    result = GoAppend(result, createModifier!(KindOverrideKeyword));
   }
   if ((flags & ModifierFlagsReadonly) !== 0) {
-    result = [...(result ?? []), createModifier!(KindReadonlyKeyword)];
+    result = GoAppend(result, createModifier!(KindReadonlyKeyword));
   }
   if ((flags & ModifierFlagsAccessor) !== 0) {
-    result = [...(result ?? []), createModifier!(KindAccessorKeyword)];
+    result = GoAppend(result, createModifier!(KindAccessorKeyword));
   }
   if ((flags & ModifierFlagsAsync) !== 0) {
-    result = [...(result ?? []), createModifier!(KindAsyncKeyword)];
+    result = GoAppend(result, createModifier!(KindAsyncKeyword));
   }
   if ((flags & ModifierFlagsIn) !== 0) {
-    result = [...(result ?? []), createModifier!(KindInKeyword)];
+    result = GoAppend(result, createModifier!(KindInKeyword));
   }
   if ((flags & ModifierFlagsOut) !== 0) {
-    result = [...(result ?? []), createModifier!(KindOutKeyword)];
+    result = GoAppend(result, createModifier!(KindOutKeyword));
   }
   return result;
 }

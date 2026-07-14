@@ -1,5 +1,5 @@
 import type { bool, byte, int, sbyte } from "../../go/scalars.js";
-import { GoStringKey, GoValueRef, type GoError, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoStringKey, GoValueRef, type GoError, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { UnmarshalDecode as json_UnmarshalDecode } from "../json/json.js";
@@ -366,9 +366,13 @@ function decodeJSONValue<T>(value: unknown, elementFactory: JSONValueElementFact
     return { Type: JSONValueTypeBoolean, Value: value };
   }
   if (globalThis.Array.isArray(value)) {
+    let elements = GoNilSlice<T>();
+    for (const element of value) {
+      elements = GoAppend(elements, elementFactory(decodeJSONValue(element, elementFactory)));
+    }
     return {
       Type: JSONValueTypeArray,
-      Value: value.map(element => elementFactory(decodeJSONValue(element, elementFactory))) as GoSlice<T>,
+      Value: elements,
     };
   }
   if (typeof value === "object") {

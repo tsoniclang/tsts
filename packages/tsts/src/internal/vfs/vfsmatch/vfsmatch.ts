@@ -1,5 +1,5 @@
 import type { bool, int, sbyte } from "../../../go/scalars.js";
-import { GoStringKey, GoZeroString, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoStringKey, GoZeroString, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
 import { MaxInt } from "../../../go/math.js";
 import { SortStableFunc } from "../../../go/slices.js";
 import { Every, Flatten, LastOrNil } from "../../core/core.js";
@@ -322,7 +322,7 @@ export const segQuestion: segmentKind = 2 as segmentKind;
  * }
  */
 export function compileGlobPattern(spec: string, basePath: string, usage: Usage, caseSensitive: bool): [globPattern, bool] {
-  const parts = GetNormalizedPathComponents(spec, basePath);
+  let parts = GetNormalizedPathComponents(spec, basePath);
 
   // "src/**" without a filename matches nothing (for include patterns)
   if (usage !== UsageExclude && LastOrNil(parts, GoZeroString) === "**") {
@@ -334,7 +334,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
 
   // Directories implicitly match all files: "src" -> "src/** /*"
   if (IsImplicitGlob(LastOrNil(parts, GoZeroString))) {
-    parts.push("**", "*");
+    parts = GoAppend(parts, "**", "*");
   }
 
   const p: globPattern = {
@@ -345,7 +345,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
   };
 
   for (const part of parts) {
-    p.components.push(parseComponent(part, usage !== UsageExclude));
+    p.components = GoAppend(p.components, parseComponent(part, usage !== UsageExclude));
   }
   return [p, true];
 }
@@ -1111,13 +1111,13 @@ export function newGlobMatcher(includeSpecs: GoSlice<string>, excludeSpecs: GoSl
   for (const spec of includeList) {
     const [p, ok] = compileGlobPattern(spec, basePath, usage, caseSensitive);
     if (ok) {
-      m.includes.push(p);
+      m.includes = GoAppend(m.includes, p);
     }
   }
   for (const spec of excludeList) {
     const [p, ok] = compileGlobPattern(spec, basePath, UsageExclude, caseSensitive);
     if (ok) {
-      m.excludes.push(p);
+      m.excludes = GoAppend(m.excludes, p);
     }
   }
   return m;
@@ -1316,7 +1316,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
     }
     const [idx, ok] = globMatcher_matchesFileParts(receiver!.fileMatcher, absPrefix, file);
     if (ok) {
-      receiver!.results[idx]!.push(pathPrefix + file);
+      receiver!.results[idx] = GoAppend(receiver!.results[idx]!, pathPrefix + file);
     }
   }
 
@@ -1334,7 +1334,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
     }
     const absDir = absPrefix + dir;
     let childRealPath = "";
-    if (entries.Symlinks !== undefined) {
+    if (!GoMapIsNil(entries.Symlinks)) {
       if (!entries.Symlinks.has(dir)) {
         // Non-symlink directory: compute realpath incrementally.
         childRealPath = CombinePaths(realPath, dir);

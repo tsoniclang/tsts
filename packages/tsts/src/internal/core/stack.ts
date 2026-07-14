@@ -1,5 +1,6 @@
 import type { int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend } from "../../go/compat.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/stack.go::type::Stack","kind":"type","status":"implemented","sigHash":"fb7e51fb9997ab5b2bd0f184942b2c3764b1abde5f44fe477c4e984c3a187e3a"}
@@ -22,7 +23,7 @@ export interface Stack<T> {
  * }
  */
 export function Stack_Push<T>(receiver: GoPtr<Stack<T>>, item: T): void {
-  receiver!.data.push(item);
+  receiver!.data = GoAppend(receiver!.data, item);
 }
 
 /**

@@ -2,7 +2,7 @@ import type { bool, int, long } from "../../go/scalars.js";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { GoNilMap } from "../../go/compat.js";
+import { GoNilMap, GoNilSlice } from "../../go/compat.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import type { DirEntry, FileInfo as FileInfo_2d3efe16, FileMode } from "../../go/io/fs.js";
 import { ModeDir, ModeIrregular, ModeSymlink, SkipAll as fs_SkipAll, SkipDir as fs_SkipDir } from "../../go/io/fs.js";
@@ -255,11 +255,11 @@ export function wrappedFS_DirectoryExists(receiver: GoPtr<wrappedFS>, path: stri
 export function wrappedFS_GetAccessibleEntries(receiver: GoPtr<wrappedFS>, path: string): Entries {
   const [rest, ok] = splitPath(path);
   if (ok) {
-    const result: Entries = { Files: [], Directories: [], Symlinks: GoNilMap() };
+    const result: Entries = { Files: GoNilSlice(), Directories: GoNilSlice(), Symlinks: GoNilMap() };
     if (rest === "") {
       result.Directories = ["libs"];
     } else if (rest === "libs") {
-      result.Files = [...LibNames];
+      result.Files = LibNames;
     }
     return result;
   }

@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoAppend } from "../../../go/compat.js";
 import type { RWMutex } from "../../../go/sync.js";
 import type { Time } from "../../../go/time.js";
 import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
@@ -210,7 +211,7 @@ export function FSMock_AppendFile(receiver: GoPtr<FSMock>, path: string, data: s
   }
   const callInfo = { Path: path, Data: data };
   receiver!.lockAppendFile.Lock();
-  receiver!.calls.AppendFile.push(callInfo);
+  receiver!.calls.AppendFile = GoAppend(receiver!.calls.AppendFile, callInfo);
   receiver!.lockAppendFile.Unlock();
   return receiver!.AppendFileFunc(path, data);
 }
@@ -269,7 +270,7 @@ export function FSMock_Chtimes(receiver: GoPtr<FSMock>, path: string, aTime: Tim
   }
   const callInfo = { Path: path, ATime: aTime, MTime: mTime };
   receiver!.lockChtimes.Lock();
-  receiver!.calls.Chtimes.push(callInfo);
+  receiver!.calls.Chtimes = GoAppend(receiver!.calls.Chtimes, callInfo);
   receiver!.lockChtimes.Unlock();
   return receiver!.ChtimesFunc(path, aTime, mTime);
 }
@@ -326,7 +327,7 @@ export function FSMock_DirectoryExists(receiver: GoPtr<FSMock>, path: string): b
   }
   const callInfo = { Path: path };
   receiver!.lockDirectoryExists.Lock();
-  receiver!.calls.DirectoryExists.push(callInfo);
+  receiver!.calls.DirectoryExists = GoAppend(receiver!.calls.DirectoryExists, callInfo);
   receiver!.lockDirectoryExists.Unlock();
   return receiver!.DirectoryExistsFunc(path);
 }
@@ -379,7 +380,7 @@ export function FSMock_FileExists(receiver: GoPtr<FSMock>, path: string): bool {
   }
   const callInfo = { Path: path };
   receiver!.lockFileExists.Lock();
-  receiver!.calls.FileExists.push(callInfo);
+  receiver!.calls.FileExists = GoAppend(receiver!.calls.FileExists, callInfo);
   receiver!.lockFileExists.Unlock();
   return receiver!.FileExistsFunc(path);
 }
@@ -432,7 +433,7 @@ export function FSMock_GetAccessibleEntries(receiver: GoPtr<FSMock>, path: strin
   }
   const callInfo = { Path: path };
   receiver!.lockGetAccessibleEntries.Lock();
-  receiver!.calls.GetAccessibleEntries.push(callInfo);
+  receiver!.calls.GetAccessibleEntries = GoAppend(receiver!.calls.GetAccessibleEntries, callInfo);
   receiver!.lockGetAccessibleEntries.Unlock();
   return receiver!.GetAccessibleEntriesFunc(path);
 }
@@ -485,7 +486,7 @@ export function FSMock_ReadFile(receiver: GoPtr<FSMock>, path: string): [string,
   }
   const callInfo = { Path: path };
   receiver!.lockReadFile.Lock();
-  receiver!.calls.ReadFile.push(callInfo);
+  receiver!.calls.ReadFile = GoAppend(receiver!.calls.ReadFile, callInfo);
   receiver!.lockReadFile.Unlock();
   return receiver!.ReadFileFunc(path);
 }
@@ -538,7 +539,7 @@ export function FSMock_Realpath(receiver: GoPtr<FSMock>, path: string): string {
   }
   const callInfo = { Path: path };
   receiver!.lockRealpath.Lock();
-  receiver!.calls.Realpath.push(callInfo);
+  receiver!.calls.Realpath = GoAppend(receiver!.calls.Realpath, callInfo);
   receiver!.lockRealpath.Unlock();
   return receiver!.RealpathFunc(path);
 }
@@ -591,7 +592,7 @@ export function FSMock_Remove(receiver: GoPtr<FSMock>, path: string): GoError {
   }
   const callInfo = { Path: path };
   receiver!.lockRemove.Lock();
-  receiver!.calls.Remove.push(callInfo);
+  receiver!.calls.Remove = GoAppend(receiver!.calls.Remove, callInfo);
   receiver!.lockRemove.Unlock();
   return receiver!.RemoveFunc(path);
 }
@@ -644,7 +645,7 @@ export function FSMock_Stat(receiver: GoPtr<FSMock>, path: string): GoInterface<
   }
   const callInfo = { Path: path };
   receiver!.lockStat.Lock();
-  receiver!.calls.Stat.push(callInfo);
+  receiver!.calls.Stat = GoAppend(receiver!.calls.Stat, callInfo);
   receiver!.lockStat.Unlock();
   return receiver!.StatFunc(path);
 }
@@ -693,7 +694,7 @@ export function FSMock_UseCaseSensitiveFileNames(receiver: GoPtr<FSMock>): bool 
   }
   const callInfo = {};
   receiver!.lockUseCaseSensitiveFileNames.Lock();
-  receiver!.calls.UseCaseSensitiveFileNames.push(callInfo);
+  receiver!.calls.UseCaseSensitiveFileNames = GoAppend(receiver!.calls.UseCaseSensitiveFileNames, callInfo);
   receiver!.lockUseCaseSensitiveFileNames.Unlock();
   return receiver!.UseCaseSensitiveFileNamesFunc();
 }
@@ -744,7 +745,7 @@ export function FSMock_WalkDir(receiver: GoPtr<FSMock>, root: string, walkFn: Wa
   }
   const callInfo = { Root: root, WalkFn: walkFn };
   receiver!.lockWalkDir.Lock();
-  receiver!.calls.WalkDir.push(callInfo);
+  receiver!.calls.WalkDir = GoAppend(receiver!.calls.WalkDir, callInfo);
   receiver!.lockWalkDir.Unlock();
   return receiver!.WalkDirFunc(root, walkFn);
 }
@@ -801,7 +802,7 @@ export function FSMock_WriteFile(receiver: GoPtr<FSMock>, path: string, data: st
   }
   const callInfo = { Path: path, Data: data };
   receiver!.lockWriteFile.Lock();
-  receiver!.calls.WriteFile.push(callInfo);
+  receiver!.calls.WriteFile = GoAppend(receiver!.calls.WriteFile, callInfo);
   receiver!.lockWriteFile.Unlock();
   return receiver!.WriteFileFunc(path, data);
 }

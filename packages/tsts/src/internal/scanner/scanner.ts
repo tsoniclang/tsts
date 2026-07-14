@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import { GoMapIsNil, GoNilMap, type GoArray, type GoComparable, type GoConstraint, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, type GoArray, type GoComparable, type GoConstraint, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strconv from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
@@ -727,7 +727,7 @@ function newScannerState(): ScannerState {
     token: KindUnknown,
     tokenValue: "",
     tokenFlags: TokenFlagsNone,
-    commentDirectives: [],
+    commentDirectives: GoNilSlice(),
     skipJSDocLeadingAsterisks: 0,
   };
 }
@@ -2682,7 +2682,7 @@ export function Scanner_processCommentDirective(receiver: GoPtr<Scanner>, start:
   } else {
     return;
   }
-  st.commentDirectives.push({ Loc: NewTextRange(start, end), Kind: kind });
+  st.commentDirectives = GoAppend(st.commentDirectives, { Loc: NewTextRange(start, end), Kind: kind });
 }
 
 /**
@@ -3133,9 +3133,9 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
           mayContainStrings: false,
           numberOfCapturingGroups: 0,
           groupSpecifiers: new globalThis.Map<string, bool>(),
-          groupNameReferences: [],
-          decimalEscapes: [],
-          namedCapturingGroups: [],
+          groupNameReferences: GoNilSlice(),
+          decimalEscapes: GoNilSlice(),
+          namedCapturingGroups: GoNilSlice(),
           pendingLowSurrogate: 0,
         };
         regExpParser_run(parser);
@@ -4132,7 +4132,7 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
   const startedWithBacktick = Scanner_char(s) === "`".charCodeAt(0);
   st.pos++;
   let start = st.pos;
-  const parts: GoSlice<string> = [];
+  let parts: GoSlice<string> = [];
   let token: Kind = KindUnknown;
   for (;;) {
     Scanner_scanASCIIWhile(s, (b) => {
@@ -4140,7 +4140,7 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
     });
     const ch = Scanner_char(s);
     if (ch < 0 || ch === "`".charCodeAt(0)) {
-      parts.push(scannerByteSlice(s, start, st.pos));
+      parts = GoAppend(parts, scannerByteSlice(s, start, st.pos));
       if (ch === "`".charCodeAt(0)) {
         st.pos++;
       } else {
@@ -4151,26 +4151,26 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
       break;
     }
     if (ch === "$".charCodeAt(0) && Scanner_charAt(s, 1) === "{".charCodeAt(0)) {
-      parts.push(scannerByteSlice(s, start, st.pos));
+      parts = GoAppend(parts, scannerByteSlice(s, start, st.pos));
       st.pos += 2;
       token = IfElse(startedWithBacktick, KindTemplateHead, KindTemplateMiddle);
       break;
     }
     if (ch === "\\".charCodeAt(0)) {
-      parts.push(scannerByteSlice(s, start, st.pos));
-      parts.push(Scanner_scanEscapeSequence(s, EscapeSequenceScanningFlagsString | IfElse(shouldEmitInvalidEscapeError, EscapeSequenceScanningFlagsReportErrors, 0)));
+      parts = GoAppend(parts, scannerByteSlice(s, start, st.pos));
+      parts = GoAppend(parts, Scanner_scanEscapeSequence(s, EscapeSequenceScanningFlagsString | IfElse(shouldEmitInvalidEscapeError, EscapeSequenceScanningFlagsReportErrors, 0)));
       start = st.pos;
       continue;
     }
     // Speculated ECMAScript 6 Spec 11.8.6.1:
     // <CR><LF> and <CR> LineTerminatorSequences are normalized to <LF> for Template Values
     if (ch === "\r".charCodeAt(0)) {
-      parts.push(scannerByteSlice(s, start, st.pos));
+      parts = GoAppend(parts, scannerByteSlice(s, start, st.pos));
       st.pos++;
       if (Scanner_char(s) === "\n".charCodeAt(0)) {
         st.pos++;
       }
-      parts.push("\n");
+      parts = GoAppend(parts, "\n");
       start = st.pos;
       continue;
     }
@@ -5499,10 +5499,10 @@ export function StringToToken(s: string): Kind {
  * }
  */
 export function GetViableKeywordSuggestions(): GoSlice<string> {
-  const result: GoSlice<string> = [];
+  let result: GoSlice<string> = [];
   for (const text of textToKeyword.keys()) {
     if (byteLen(text) > 2) {
-      result.push(text);
+      result = GoAppend(result, text);
     }
   }
   return result;

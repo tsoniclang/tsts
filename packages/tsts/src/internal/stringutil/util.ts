@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import { GoAppend } from "../../go/compat.js";
 import * as regexp from "../../go/regexp.js";
 import { Builder, Count } from "../../go/strings.js";
 import { ToLower } from "../../go/unicode.js";
@@ -245,7 +246,7 @@ export function SplitLines(text: string): GoSlice<string> {
   // capacity here; the hint has no observable effect on a JS array, but the
   // pure Count call is preserved for fidelity.
   Count(text, "\n");
-  const lines: GoSlice<string> = [];
+  let lines: GoSlice<string> = [];
   let start = 0;
   let pos = 0;
   const textLen = text.length;
@@ -253,19 +254,19 @@ export function SplitLines(text: string): GoSlice<string> {
     switch (text.charCodeAt(pos)) {
       case 0x0d /* '\r' */: {
         if (pos + 1 < textLen && text.charCodeAt(pos + 1) === 0x0a) {
-          lines.push(text.slice(start, pos));
+          lines = GoAppend(lines, text.slice(start, pos));
           pos += 2;
           start = pos;
           continue;
         }
         // fallthrough
-        lines.push(text.slice(start, pos));
+        lines = GoAppend(lines, text.slice(start, pos));
         pos++;
         start = pos;
         continue;
       }
       case 0x0a /* '\n' */: {
-        lines.push(text.slice(start, pos));
+        lines = GoAppend(lines, text.slice(start, pos));
         pos++;
         start = pos;
         continue;
@@ -274,7 +275,7 @@ export function SplitLines(text: string): GoSlice<string> {
     pos++;
   }
   if (start < text.length) {
-    lines.push(text.slice(start));
+    lines = GoAppend(lines, text.slice(start));
   }
   return lines;
 }

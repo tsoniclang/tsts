@@ -1,6 +1,6 @@
 import type { bool, byte, int, sbyte, uint } from "../../go/scalars.js";
 import type { GoArray, GoInterfaceValue, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
 import { Clip } from "../../go/slices.js";
 import type { Node } from "../ast/spine.js";
 import type { EntityName } from "../ast/generated/unions.js";
@@ -1273,11 +1273,14 @@ export let typeFlagNames: GoArray<{ flag: TypeFlags; name: string }, "29"> = [
  * }
  */
 export function FormatTypeFlags(flags: TypeFlags): GoSlice<string> {
-  const result: GoSlice<string> = typeFlagNames
-    .filter((fn) => (flags & fn.flag) !== 0)
-    .map((fn) => fn.name);
+  let result: GoSlice<string> = [];
+  for (const flagName of typeFlagNames) {
+    if ((flags & flagName.flag) !== 0) {
+      result = GoAppend(result, flagName.name);
+    }
+  }
   if (result.length === 0) {
-    return ["None"];
+    result = GoAppend(result, "None");
   }
   return result;
 }
@@ -1837,7 +1840,7 @@ export function Type_Distributed(receiver: GoPtr<Type>): GoSlice<GoPtr<Type>> {
     return Type_Types(receiver);
   }
   if ((receiver!.flags & TypeFlagsNever) !== 0) {
-    return [] as GoSlice<GoPtr<Type>>;
+    return GoNilSlice();
   }
   return [receiver];
 }

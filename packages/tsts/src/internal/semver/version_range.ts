@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoSliceIsNil } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import * as regexp from "../../go/regexp.js";
 import * as strings from "../../go/strings.js";
@@ -369,49 +369,45 @@ export function TryParseVersionRange(text: string): [VersionRange, bool] {
  * }
  */
 export function parseAlternatives(text: string): [GoSlice<GoSlice<versionComparator>>, bool] {
-  const alternatives: GoSlice<GoSlice<versionComparator>> = [];
+  let alternatives: GoSlice<GoSlice<versionComparator>> = GoNilSlice();
 
   const trimmed: string = strings.TrimSpace(text);
   // Split with n=-1 returns all substrings (never nil); Go ranges over the
   // resulting slice (a nil slice would simply yield zero iterations).
-  const ranges: GoSlice<string> = logicalOrRegExp!.Split(trimmed, -1) ?? [];
+  const ranges: GoSlice<string> = logicalOrRegExp!.Split(trimmed, -1);
   for (const rRaw of ranges) {
     const r: string = strings.TrimSpace(rRaw);
     if (r === "") {
       continue;
     }
 
-    const comparators: GoSlice<versionComparator> = [];
+    let comparators: GoSlice<versionComparator> = GoNilSlice();
 
     const hyphenMatch: GoSlice<string> = hyphenRegExp!.FindStringSubmatch(r);
     if (!GoSliceIsNil(hyphenMatch)) {
       const [parsedComparators, ok] = parseHyphen(hyphenMatch[1]!, hyphenMatch[2]!);
       if (ok) {
-        for (const c of parsedComparators) {
-          comparators.push(c);
-        }
+        comparators = GoAppend(comparators, ...parsedComparators);
       } else {
-        return [[], false];
+        return [GoNilSlice(), false];
       }
     } else {
-      for (const simple of whitespaceRegExp!.Split(r, -1) ?? []) {
+      for (const simple of whitespaceRegExp!.Split(r, -1)) {
         const match: GoSlice<string> = rangeRegExp!.FindStringSubmatch(strings.TrimSpace(simple));
         if (GoSliceIsNil(match)) {
-          return [[], false];
+          return [GoNilSlice(), false];
         }
 
         const [parsedComparators, ok] = parseComparator(match[1]!, match[2]!);
         if (ok) {
-          for (const c of parsedComparators) {
-            comparators.push(c);
-          }
+          comparators = GoAppend(comparators, ...parsedComparators);
         } else {
-          return [[], false];
+          return [GoNilSlice(), false];
         }
       }
     }
 
-    alternatives.push(comparators);
+    alternatives = GoAppend(alternatives, comparators);
   }
 
   return [alternatives, true];
@@ -471,18 +467,18 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
 export function parseHyphen(left: string, right: string): [GoSlice<versionComparator>, bool] {
   const [leftResult, leftOk] = parsePartial(left);
   if (!leftOk) {
-    return [[], false];
+    return [GoNilSlice(), false];
   }
 
   const [rightResult, rightOk] = parsePartial(right);
   if (!rightOk) {
-    return [[], false];
+    return [GoNilSlice(), false];
   }
 
-  const comparators: GoSlice<versionComparator> = [];
+  let comparators: GoSlice<versionComparator> = GoNilSlice();
   if (!isWildcard(leftResult.majorStr)) {
     // `MAJOR.*.*-...` gives us `>=MAJOR.0.0 ...`
-    comparators.push({
+    comparators = GoAppend(comparators, {
       operator: rangeGreaterThanEqual,
       operand: leftResult.version,
     });
@@ -505,7 +501,7 @@ export function parseHyphen(left: string, right: string): [GoSlice<versionCompar
       operator = rangeLessThanEqual;
     }
 
-    comparators.push({
+    comparators = GoAppend(comparators, {
       operator: operator,
       operand: operand,
     });
@@ -622,8 +618,8 @@ export function parsePartial(text: string): [partialVersion, bool] {
       major: 0,
       minor: 0,
       patch: 0,
-      prerelease: [],
-      build: [],
+      prerelease: GoNilSlice(),
+      build: GoNilSlice(),
     },
     majorStr: "",
     minorStr: "",
@@ -685,12 +681,12 @@ export function parsePartial(text: string): [partialVersion, bool] {
     }
   }
 
-  let prerelease: GoSlice<string> = [];
+  let prerelease = GoNilSlice<string>();
   if (prereleaseStr !== "") {
     prerelease = strings.Split(prereleaseStr, ".");
   }
 
-  let build: GoSlice<string> = [];
+  let build = GoNilSlice<string>();
   if (buildStr !== "") {
     build = strings.Split(buildStr, ".");
   }
@@ -835,10 +831,10 @@ export function parseComparator(op: string, text: string): [GoSlice<versionCompa
 
   const [result, ok] = parsePartial(text);
   if (!ok) {
-    return [[], false];
+    return [GoNilSlice(), false];
   }
 
-  let comparatorsResult: GoSlice<versionComparator> = [];
+  let comparatorsResult = GoNilSlice<versionComparator>();
 
   if (!isWildcard(result.majorStr)) {
     switch (operator) {

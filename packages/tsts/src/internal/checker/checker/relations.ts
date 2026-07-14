@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoEqualStrict, GoNilSlice, GoZeroPointer } from "../../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilSlice, GoZeroPointer } from "../../../go/compat.js";
 import * as slices from "../../../go/slices.js";
 import { AppendIfUnique, Every, IfElse, LastOrNil, OrElse } from "../../core/core.js";
 import {
@@ -711,12 +711,12 @@ export function Checker_checkObjectLiteralDestructuringPropertyAssignment(receiv
     if (receiver!.languageVersion < LanguageFeatureMinimumTarget.ObjectSpreadRest) {
       Checker_checkExternalEmitHelpers(receiver, property, ExternalEmitHelpersRest);
     }
-    let nonRestNames: GoSlice<GoPtr<Node>> = [];
+    let nonRestNames: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (allProperties !== undefined) {
       for (let i = 0; i < allProperties.Nodes.length; i++) {
         const otherProperty = allProperties.Nodes[i];
         if (!IsSpreadAssignment(otherProperty)) {
-          nonRestNames = [...nonRestNames, Node_Name(otherProperty)];
+          nonRestNames = GoAppend(nonRestNames, Node_Name(otherProperty));
         }
       }
     }
@@ -1158,7 +1158,7 @@ export function Checker_getWidenedTypeForAssignmentDeclaration(receiver: GoPtr<C
     t = Checker_getTypeOfPropertyInBaseClass(receiver, symbol_);
   }
   if (t === undefined) {
-    let types: GoSlice<GoPtr<Type>> = [];
+    let types: GoSlice<GoPtr<Type>> = GoNilSlice();
     for (let i = 0; i < symbol_!.Declarations!.length; i++) {
       const declaration = symbol_!.Declarations![i];
       const typeNode = Node_Type(declaration);

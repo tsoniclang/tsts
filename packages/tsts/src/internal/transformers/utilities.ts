@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoSliceIsNil, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoSliceIsNil, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_End, Node_Pos, Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { BindingElement, BindingPattern, VariableDeclaration } from "../ast/generated/data.js";
@@ -558,9 +558,10 @@ export function ConvertBindingPatternToAssignmentPattern(emitContext: GoPtr<Emit
 export function convertBindingElementToObjectAssignmentPattern(emitContext: GoPtr<EmitContext>, element: GoPtr<BindingPattern>): GoPtr<Expression> {
   const af = emitContext!.Factory!.__tsgoEmbedded0!;
   const elementNode = element as unknown as GoPtr<Node>;
-  const properties: GoSlice<GoPtr<ObjectLiteralElement>> = element!.Elements!.Nodes.map(
-    (n: GoPtr<Node>): GoPtr<ObjectLiteralElement> => convertBindingElementToObjectAssignmentElement(emitContext, AsBindingElement(n))
-  );
+  let properties: GoSlice<GoPtr<ObjectLiteralElement>> = GoNilSlice();
+  for (const child of element!.Elements!.Nodes) {
+    properties = GoAppend(properties, convertBindingElementToObjectAssignmentElement(emitContext, AsBindingElement(child)));
+  }
   const propertyList: GoPtr<NodeList> = NodeFactory_NewNodeList(af, properties as GoSlice<GoPtr<Node>>);
   propertyList!.Loc = element!.Elements!.Loc;
   const object = NewObjectLiteralExpression(af, propertyList, false);
@@ -589,9 +590,10 @@ export function convertBindingElementToObjectAssignmentPattern(emitContext: GoPt
 export function convertBindingElementToArrayAssignmentPattern(emitContext: GoPtr<EmitContext>, element: GoPtr<BindingPattern>): GoPtr<Expression> {
   const af = emitContext!.Factory!.__tsgoEmbedded0!;
   const elementNode = element as unknown as GoPtr<Node>;
-  const elements: GoSlice<GoPtr<Expression>> = element!.Elements!.Nodes.map(
-    (n: GoPtr<Node>): GoPtr<Expression> => convertBindingElementToArrayAssignmentElement(emitContext, AsBindingElement(n))
-  );
+  let elements: GoSlice<GoPtr<Expression>> = GoNilSlice();
+  for (const child of element!.Elements!.Nodes) {
+    elements = GoAppend(elements, convertBindingElementToArrayAssignmentElement(emitContext, AsBindingElement(child)));
+  }
   const elementList: GoPtr<NodeList> = NodeFactory_NewNodeList(af, elements as GoSlice<GoPtr<Node>>);
   elementList!.Loc = element!.Elements!.Loc;
   const object = NewArrayLiteralExpression(af, elementList, false);
@@ -750,11 +752,9 @@ export function IsSimpleInlineableExpression(expression: GoPtr<Expression>): boo
  * }
  */
 export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>>, start: int): GoSlice<int> {
-  const indices = findSuperStatementIndexPathWorker(statements, start, []);
-  if (indices === undefined) {
-    return [];
-  }
-  return [...indices].reverse();
+  const indices = findSuperStatementIndexPathWorker(statements, start, GoNilSlice());
+  indices.reverse();
+  return indices;
 }
 
 /**
@@ -779,19 +779,17 @@ export function findSuperStatementIndexPathWorker(statements: GoSlice<GoPtr<Stat
   for (let i = start; i < statements.length; i++) {
     const statement = statements[i];
     if (GetSuperCallFromStatement(statement) !== undefined) {
-      return [...indices, i];
+      return GoAppend(indices, i);
     } else if (IsTryStatement(statement as unknown as GoPtr<Node>)) {
       const tryStmt = AsTryStatement(statement as unknown as GoPtr<Node>);
       const tryBlockStmts = Node_Statements(tryStmt!.TryBlock);
-      if (tryBlockStmts !== undefined) {
-        const result = findSuperStatementIndexPathWorker(tryBlockStmts as unknown as GoSlice<GoPtr<Statement>>, 0, indices);
-        if (result !== undefined) {
-          return [...result, i];
-        }
+      const result = findSuperStatementIndexPathWorker(tryBlockStmts as unknown as GoSlice<GoPtr<Statement>>, 0, indices);
+      if (!GoSliceIsNil(result)) {
+        return GoAppend(result, i);
       }
     }
   }
-  return undefined!;
+  return GoNilSlice();
 }
 
 /**
@@ -877,7 +875,7 @@ export function MoveRangePastDecorators(node: GoPtr<Node>): TextRange {
   let lastDecorator: GoPtr<Node> = undefined;
   if (CanHaveModifiers(node)) {
     const nodes = Node_ModifierNodes(node);
-    if (nodes !== undefined) {
+    if (!GoSliceIsNil(nodes)) {
       lastDecorator = FindLast(nodes, IsDecorator, GoZeroPointer<Node>);
     }
   }

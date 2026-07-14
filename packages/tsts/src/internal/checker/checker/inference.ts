@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../../go/compat.js";
+import { GoAppend, GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../../go/compat.js";
+import * as slices from "../../../go/slices.js";
 import { Node_Name, NodeList_Pos, NodeList_End } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Elements, Node_Expression, Node_Members, Node_TypeArgumentList, SourceFile_Text } from "../../ast/ast.js";
@@ -682,7 +683,7 @@ export function Checker_getConstraintOfType(receiver: GoPtr<Checker>, t: GoPtr<T
  * }
  */
 export function Checker_hasNonCircularBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  return Checker_getResolvedBaseConstraint(receiver, t, []) !== receiver!.circularConstraintType;
+  return Checker_getResolvedBaseConstraint(receiver, t, GoNilSlice()) !== receiver!.circularConstraintType;
 }
 
 /**
@@ -936,9 +937,9 @@ export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_pushActiveMapper(receiver: GoPtr<Checker>, mapper: GoPtr<TypeMapper>): void {
-  receiver!.activeMappers.push(mapper);
+  receiver!.activeMappers = GoAppend(receiver!.activeMappers, mapper);
   // In TypeScript arrays have no separate cap concept; always push a new map.
-  receiver!.activeTypeMappersCaches.push(NewGoStructMap<CacheHashKey, GoPtr<Type>>(GoStructKey(
+  receiver!.activeTypeMappersCaches = GoAppend(receiver!.activeTypeMappersCaches, NewGoStructMap<CacheHashKey, GoPtr<Type>>(GoStructKey(
     [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
     ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
   )));
@@ -1745,7 +1746,7 @@ export function Checker_getBaseConstraintOrType(receiver: GoPtr<Checker>, t: GoP
  */
 export function Checker_getBaseConstraintOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
   if ((t!.flags & (TypeFlagsInstantiableNonPrimitive | TypeFlagsUnionOrIntersection | TypeFlagsTemplateLiteral | TypeFlagsStringMapping | TypeFlagsIndex)) !== 0 || Checker_isGenericTupleType(receiver, t)) {
-    const constraint = Checker_getResolvedBaseConstraint(receiver, t, []);
+    const constraint = Checker_getResolvedBaseConstraint(receiver, t, GoNilSlice());
     if (constraint !== receiver!.noConstraintType && constraint !== receiver!.circularConstraintType) {
       return constraint;
     }
@@ -1815,7 +1816,7 @@ export function Checker_getResolvedBaseConstraint(receiver: GoPtr<Checker>, t: G
   let constraint: GoPtr<Type>;
   const identity = getRecursionIdentity(t);
   if (stack!.length < 10 || (stack!.length < 50 && !stack!.some(item => item.value === identity.value))) {
-    constraint = Checker_computeBaseConstraint(receiver, Checker_getSimplifiedType(receiver, t, false), [...stack!, identity]);
+    constraint = Checker_computeBaseConstraint(receiver, Checker_getSimplifiedType(receiver, t, false), GoAppend(stack, identity));
   }
   if (!Checker_popTypeResolution(receiver)) {
     if ((t!.flags & TypeFlagsTypeParameter) !== 0) {
@@ -1962,7 +1963,7 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
   }
   if ((t!.flags & TypeFlagsUnionOrIntersection) !== 0) {
     const types = Type_Types(t)!;
-    const constraints: GoSlice<GoPtr<Type>> = [];
+    let constraints: GoSlice<GoPtr<Type>> = [];
     let different = false;
     for (const s of types) {
       const constraint = Checker_getNextBaseConstraint(receiver, s, stack);
@@ -1970,7 +1971,7 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
         if (constraint !== s) {
           different = true;
         }
-        constraints.push(constraint);
+        constraints = GoAppend(constraints, constraint);
       } else {
         different = true;
       }
@@ -1997,11 +1998,11 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
   }
   if ((t!.flags & TypeFlagsTemplateLiteral) !== 0) {
     const types = Type_Types(t)!;
-    const constraints: GoSlice<GoPtr<Type>> = [];
+    let constraints: GoSlice<GoPtr<Type>> = [];
     for (const s of types) {
       const constraint = Checker_getNextBaseConstraint(receiver, s, stack);
       if (constraint !== undefined) {
-        constraints.push(constraint);
+        constraints = GoAppend(constraints, constraint);
       }
     }
     if (constraints.length === types.length) {
@@ -2060,7 +2061,7 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
   if (Checker_isGenericTupleType(receiver, t)) {
     const elementTypes = Checker_getElementTypes(receiver, t);
     const elementInfos = Type_TargetTupleType(t)!.elementInfos;
-    const newElements: GoSlice<GoPtr<Type>> = [];
+    let newElements: GoSlice<GoPtr<Type>> = [];
     for (let i = 0; i < elementTypes!.length; i++) {
       let newElement = elementTypes![i];
       const v = elementTypes![i];
@@ -2070,7 +2071,7 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
           newElement = constraint;
         }
       }
-      newElements.push(newElement);
+      newElements = GoAppend(newElements, newElement);
     }
     return Checker_createTupleTypeEx(receiver, newElements, elementInfos, Type_TargetTupleType(t)!.readonly);
   }
@@ -2248,11 +2249,11 @@ export function Checker_applyTemplateStringMapping(receiver: GoPtr<Checker>, sym
   }
   if (kind === IntrinsicTypeKindCapitalize || kind === IntrinsicTypeKindUncapitalize) {
     if (texts![0] !== "") {
-      const newTexts = [...texts!];
+      const newTexts = slices.Clone(texts);
       newTexts[0] = applyStringMapping(symbol_, newTexts[0]!);
       return [newTexts, types];
     }
-    const newTypes = [...types!];
+    const newTypes = slices.Clone(types);
     newTypes[0] = Checker_getStringMappingType(receiver, symbol_, newTypes[0]);
     return [texts, newTypes];
   }
@@ -2310,7 +2311,7 @@ export function Checker_getContextualTypeForSubstitutionExpression(receiver: GoP
  * }
  */
 export function Checker_pushInferenceContext(receiver: GoPtr<Checker>, node: GoPtr<Node>, context: GoPtr<InferenceContext>): void {
-  receiver!.inferenceContextInfos.push({ node, context });
+  receiver!.inferenceContextInfos = GoAppend(receiver!.inferenceContextInfos, { node, context });
 }
 
 /**

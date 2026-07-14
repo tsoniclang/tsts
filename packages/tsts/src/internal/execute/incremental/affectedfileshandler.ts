@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoError, GoFunc, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoPointerKey, GoStringKey, GoZeroBoolean, GoZeroPointer } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoPointerKey, GoStringKey, GoZeroBoolean, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl, Mutex, Once } from "../../../go/sync.js";
 import type { Bool as AtomicBool } from "../../../go/sync/atomic.js";
@@ -124,7 +124,7 @@ export interface affectedFilesHandler {
 export function affectedFilesHandler_getDtsMayChange(receiver: GoPtr<affectedFilesHandler>, affectedFilePath: Path, affectedFileEmitKind: FileEmitKind): dtsMayChange {
   const result: dtsMayChange = new Map<Path, FileEmitKind>();
   result.set(affectedFilePath, affectedFileEmitKind);
-  receiver!.dtsMayChange.push(result);
+  receiver!.dtsMayChange = GoAppend(receiver!.dtsMayChange, result);
   return result;
 }
 
@@ -406,15 +406,15 @@ export function affectedFilesHandler_forEachFileReferencedBy(
   const seenFileNamesMap: GoMap<Path, GoPtr<SourceFile>> = new Map<Path, GoPtr<SourceFile>>();
   seenFileNamesMap.set(SourceFile_Path(file), file);
 
-  const queue: Path[] = [];
+  let queue: GoSlice<Path> = GoNilSlice();
   referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(file))!((p: Path): bool => {
-    queue.push(p);
+    queue = GoAppend(queue, p);
     return true as bool;
   });
 
   while (queue.length > 0) {
     const currentPath = queue[queue.length - 1];
-    queue.splice(queue.length - 1, 1);
+    queue = queue.slice(0, queue.length - 1);
     if (!seenFileNamesMap.has(currentPath!)) {
       const currentFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, currentPath!);
       seenFileNamesMap.set(currentPath!, currentFile);
@@ -424,7 +424,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
       }
       if (queueForFile) {
         referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(currentFile))!((ref: Path): bool => {
-          queue.push(ref);
+          queue = GoAppend(queue, ref);
           return true as bool;
         });
       }

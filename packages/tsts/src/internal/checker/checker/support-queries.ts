@@ -1,7 +1,9 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { Filter, IfElse, Map as core_Map, OrElse, Some } from "../../core/core.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoEqualStrict, GoSliceIsNil, GoZeroPointer } from "../../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilSlice, GoSliceIsNil, GoZeroPointer } from "../../../go/compat.js";
+import * as maps from "../../../go/maps.js";
+import * as slices from "../../../go/slices.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Modifiers } from "../../ast/spine.js";
@@ -434,7 +436,7 @@ export function Checker_isSideEffectFree(receiver: GoPtr<Checker>, node: GoPtr<N
  */
 export function Checker_getExactOptionalUnassignableProperties(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>): GoSlice<GoPtr<Symbol>> {
   if (isTupleType(source) && isTupleType(target)) {
-    return [];
+    return GoNilSlice();
   }
   return Filter(Checker_getPropertiesOfType(receiver, target), (targetProp) =>
     Checker_isExactOptionalPropertyMismatch(
@@ -621,7 +623,7 @@ export function Checker_getPropertiesOfContext(receiver: GoPtr<Checker>, context
         }
       }
     }
-    context!.resolvedProperties = [...names.values()];
+    context!.resolvedProperties = slices.Collect(maps.Values(names));
   }
   return context!.resolvedProperties;
 }
@@ -648,12 +650,12 @@ export function Checker_getPropertiesOfContext(receiver: GoPtr<Checker>, context
  */
 export function Checker_getSiblingsOfContext(receiver: GoPtr<Checker>, context: GoPtr<WideningContext>): GoSlice<GoPtr<Type>> {
   if (GoSliceIsNil(context!.siblings)) {
-    const siblings: GoSlice<GoPtr<Type>> = [];
+  let siblings: GoSlice<GoPtr<Type>> = [];
     for (const t of Checker_getSiblingsOfContext(receiver, context!.parent)) {
       if (isObjectLiteralType(t)) {
         const prop = Checker_getPropertyOfObjectType(receiver, t, context!.propertyName);
         if (prop !== undefined) {
-          siblings.push(...Type_Distributed(Checker_getTypeOfSymbol(receiver, prop)));
+          siblings = GoAppend(siblings, ...Type_Distributed(Checker_getTypeOfSymbol(receiver, prop)));
         }
       }
     }

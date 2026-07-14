@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoRune, GoSlice, GoZeroFactory } from "../../go/compat.js";
+import { GoAppend, GoNilSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import * as cmp from "../../go/cmp.js";
 import * as slices from "../../go/slices.js";
@@ -254,7 +255,7 @@ export function pathComponents(path: string, rootLength: int): GoSlice<string> {
   if (rest.length > 0 && rest[rest.length - 1] === "") {
     rest = rest.slice(0, rest.length - 1);
   }
-  return [root, ...rest];
+  return GoAppend([root], ...rest);
 }
 
 /**
@@ -604,7 +605,7 @@ export function reducePathComponents(components: GoSlice<string>): GoSlice<strin
   if (components.length === 0) {
     return [];
   }
-  const reduced: GoSlice<string> = [components[0]!];
+  let reduced: GoSlice<string> = [components[0]!];
   for (let i = 1; i < components.length; i++) {
     const component = components[i]!;
     if (component === "") {
@@ -616,14 +617,14 @@ export function reducePathComponents(components: GoSlice<string>): GoSlice<strin
     if (component === "..") {
       if (reduced.length > 1) {
         if (reduced[reduced.length - 1] !== "..") {
-          reduced.pop();
+          reduced = reduced.slice(0, reduced.length - 1);
           continue;
         }
       } else if (reduced[0] !== "") {
         continue;
       }
     }
-    reduced.push(component);
+    reduced = GoAppend(reduced, component);
   }
   return reduced;
 }
@@ -735,7 +736,7 @@ export function GetNormalizedPathComponents(path: string, currentDirectory: stri
 export function getNormalizedPathComponentsFromCombined(path: string): GoSlice<string> {
   const rootLength = GetRootLength(path);
   // Always include the root component (empty string for relative paths).
-  const components: GoSlice<string> = [path.slice(0, rootLength)];
+  let components: GoSlice<string> = [path.slice(0, rootLength)];
 
   for (let i = rootLength; i < path.length; ) {
     // Skip directory separators (handles consecutive separators and trailing '/').
@@ -758,7 +759,7 @@ export function getNormalizedPathComponentsFromCombined(path: string): GoSlice<s
     if (component === "..") {
       if (components.length > 1) {
         if (components[components.length - 1] !== "..") {
-          components.pop();
+          components = components.slice(0, components.length - 1);
           continue;
         }
       } else if (components[0] !== "") {
@@ -767,7 +768,7 @@ export function getNormalizedPathComponentsFromCombined(path: string): GoSlice<s
       }
     }
 
-    components.push(component);
+    components = GoAppend(components, component);
   }
 
   return components;
@@ -2275,13 +2276,13 @@ export function GetCommonParents(paths: GoSlice<string>, minComponents: int, get
   }
 
   const ignored = new globalThis.Map<string, { readonly __tsgoEmpty?: never }>();
-  const pathComponents: GoSlice<GoSlice<string>> = [];
+  let pathComponents: GoSlice<GoSlice<string>> = [];
   for (const path of paths) {
     const components = reducePathComponents(getPathComponents!(path, options.CurrentDirectory));
     if (components.length < minComponents) {
       ignored.set(path, {});
     } else {
-      pathComponents.push(components);
+      pathComponents = GoAppend(pathComponents, components);
     }
   }
 
@@ -2378,27 +2379,27 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
           // divergence
           if (lastCommonIndex < minComponents) {
             // Not enough components, we need to fan out
-            const orderedGroups: GoSlice<Path> = [];
+            let orderedGroups: GoSlice<Path> = [];
             const newGroups = new globalThis.Map<Path, { head: GoSlice<string>; tails: GoSlice<GoSlice<string>> }>();
             for (const g of componentGroups) {
               const key = ToPath(g[lastCommonIndex]!, options.CurrentDirectory, options.UseCaseSensitiveFileNames);
               if (!newGroups.has(key)) {
-                orderedGroups.push(key);
+                orderedGroups = GoAppend(orderedGroups, key);
               }
               const existing = newGroups.get(key);
-              const existingTails = existing !== undefined ? existing.tails : [];
+              const existingTails = existing !== undefined ? existing.tails : GoNilSlice<GoSlice<string>>();
               newGroups.set(key, {
                 head: g.slice(0, lastCommonIndex + 1),
-                tails: [...existingTails, g.slice(lastCommonIndex + 1)],
+                tails: GoAppend(existingTails, g.slice(lastCommonIndex + 1)),
               });
             }
             slices.Sort(orderedGroups);
-            const result: GoSlice<GoSlice<string>> = [];
+            let result: GoSlice<GoSlice<string>> = [];
             for (const key of orderedGroups) {
               const group = newGroups.get(key)!;
               const subResults = getCommonParentsWorker(group.tails, minComponents - (lastCommonIndex + 1), options);
               for (const sr of subResults) {
-                result.push([...group.head, ...sr]);
+                result = GoAppend(result, GoAppend(group.head, ...sr));
               }
             }
             return result;

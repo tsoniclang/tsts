@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { Node_Clone, Node_Name, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import type { GetAccessorDeclaration, QualifiedName, SetAccessorDeclaration, TypeReferenceNode } from "../../ast/generated/data.js";
@@ -303,16 +303,16 @@ export function metadataSerializer_serializeParameterTypesOfNode(receiver: GoPtr
 
   const parameters = getParametersOfDecoratedDeclaration(valueDeclaration, container);
   const nodes = parameters !== undefined ? parameters!.Nodes : [];
-  const expressions: GoPtr<Node>[] = [];
+  let expressions: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; i < nodes.length; i++) {
     const parameter = nodes[i];
     if (i === 0 && IsIdentifier(Node_Name(parameter) as GoPtr<Node>) && Node_Text(Node_Name(parameter) as GoPtr<Node>) === "this") {
       continue;
     }
     if (AsParameterDeclaration(parameter)!.DotDotDotToken !== undefined) {
-      expressions.push(metadataSerializer_serializeTypeNode(receiver, GetRestParameterElementType(Node_Type(parameter))));
+      expressions = GoAppend(expressions, metadataSerializer_serializeTypeNode(receiver, GetRestParameterElementType(Node_Type(parameter))));
     } else {
-      expressions.push(metadataSerializer_serializeTypeOfNode(receiver, parameter, container));
+      expressions = GoAppend(expressions, metadataSerializer_serializeTypeOfNode(receiver, parameter, container));
     }
   }
   return NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, expressions), false);

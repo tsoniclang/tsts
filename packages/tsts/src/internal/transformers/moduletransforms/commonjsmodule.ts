@@ -1,6 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import { GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { AsSourceFile, Node_Text, SourceFile_FileName, SourceFile_Path, Node_Elements, Node_Properties, Node_Expression, Node_Initializer } from "../../ast/ast.js";
 import type { HasFileName, SourceFile } from "../../ast/ast.js";
 import { IsAssignmentExpression, IsCommaExpression, IsDestructuringAssignment, IsEffectiveExternalModule, IsExpression, IsExternalModule, IsExternalModuleImportEqualsDeclaration, IsInJSFile, IsRequireCall, IsStringLiteralLike, IsImportCall, ShouldTransformImportCall, FindAncestor } from "../../ast/utilities.js";
@@ -832,11 +832,11 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
 
   // emit custom prologues from other transformations
   const [custom, rest] = NodeFactory_SplitCustomPrologue(pf, rest0);
-  statements = [...statements, ...FirstResult(...NodeVisitor_VisitSlice(topLevelVisitor, custom))];
+  statements = GoAppend(statements, ...FirstResult(...NodeVisitor_VisitSlice(topLevelVisitor, custom)));
 
   // emits `Object.defineProperty(exports, "__esModule", { value: true });` at the top of the file
   if (CommonJSModuleTransformer_shouldEmitUnderscoreUnderscoreESModule(receiver)) {
-    statements = [...statements, CommonJSModuleTransformer_createUnderscoreUnderscoreESModule(receiver)];
+    statements = GoAppend(statements, CommonJSModuleTransformer_createUnderscoreUnderscoreESModule(receiver));
   }
 
   // initialize all exports to `undefined`, e.g.:
@@ -869,7 +869,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
       }
       const statement = NewExpressionStatement(f, right);
       EmitContext_AddEmitFlags(emitContext, statement, EFCustomPrologue);
-      statements = [...statements, statement];
+      statements = GoAppend(statements, statement);
     }
   }
 
@@ -886,7 +886,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
 
   // visit the remaining statements in the source file
   const [visitedRest] = NodeVisitor_VisitSlice(topLevelVisitor, rest);
-  statements = [...statements, ...visitedRest];
+  statements = GoAppend(statements, ...visitedRest);
 
   // emit `module.exports = ...` if needed
   statements = CommonJSModuleTransformer_appendExportEqualsIfNeeded(receiver, statements);
@@ -904,9 +904,9 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
     const [prologue2, rest2_0] = NodeFactory_SplitStandardPrologue(pf, result!.Statements!.Nodes);
     const [custom2, rest2] = NodeFactory_SplitCustomPrologue(pf, rest2_0);
     let statements2: GoSlice<GoPtr<Node>> = [...prologue2];
-    statements2 = [...statements2, ...custom2];
-    statements2 = [...statements2, NodeVisitor_VisitNode(topLevelVisitor, externalHelpersImportDeclaration)];
-    statements2 = [...statements2, ...rest2];
+    statements2 = GoAppend(statements2, ...custom2);
+    statements2 = GoAppend(statements2, NodeVisitor_VisitNode(topLevelVisitor, externalHelpersImportDeclaration));
+    statements2 = GoAppend(statements2, ...rest2);
     const statementList2 = NodeFactory_NewNodeList(f, statements2);
     statementList2!.Loc = result!.Statements!.Loc;
     result = AsSourceFile(NodeFactory_UpdateSourceFile(f, result, statementList2, node!.EndOfFileToken));
@@ -963,7 +963,7 @@ export function CommonJSModuleTransformer_appendExportEqualsIfNeeded(receiver: G
       );
       EmitContext_AssignCommentAndSourceMapRanges(emitContext, statement, Node_AsNode(receiver!.currentModuleInfo!.exportEquals));
       EmitContext_AddEmitFlags(emitContext, statement, EFNoComments);
-      return [...statements, statement];
+      return GoAppend(statements, statement);
     }
   }
   return statements;
@@ -1266,7 +1266,7 @@ export function CommonJSModuleTransformer_appendExportStatement(receiver: GoPtr<
     }
     Set_Add(seen, Node_Text(exportName), GoStringKey);
   }
-  return [...statements, CommonJSModuleTransformer_createExportStatement(receiver, exportName, expression, location, allowComments, liveBinding)];
+  return GoAppend(statements, CommonJSModuleTransformer_createExportStatement(receiver, exportName, expression, location, allowComments, liveBinding));
 }
 
 /**
@@ -1495,10 +1495,10 @@ export function CommonJSModuleTransformer_createRequireCall(receiver: GoPtr<Comm
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const f = pf!.__tsgoEmbedded0!;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
-  let args: GoSlice<GoPtr<Expression>> = [];
+  let args: GoSlice<GoPtr<Expression>> = GoNilSlice();
   const moduleName = getExternalModuleNameLiteral(pf, node, receiver!.currentSourceFile, undefined /*host*/, undefined as unknown as EmitResolver /*resolver*/, receiver!.compilerOptions);
   if (moduleName !== undefined) {
-    args = [rewriteModuleSpecifier(emitContext, moduleName, receiver!.compilerOptions)];
+    args = GoAppend(args, rewriteModuleSpecifier(emitContext, moduleName, receiver!.compilerOptions));
   }
   return NewCallExpression(f,
     NewIdentifier(f, "require"),
@@ -1633,42 +1633,42 @@ export function CommonJSModuleTransformer_visitTopLevelImportDeclaration(receive
     return statement;
   }
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
-  let variables: GoSlice<GoPtr<Node>> = [];
+  let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
+  let variables: GoSlice<GoPtr<Node>> = GoNilSlice();
   const namespaceDeclaration = GetNamespaceDeclarationNode(Node_AsNode(node));
   if (namespaceDeclaration !== undefined && !IsDefaultImport(Node_AsNode(node))) {
     // import * as n from "mod";
-    variables = [...variables,
+    variables = GoAppend(variables,
       NewVariableDeclaration(f,
         Node_Clone(Node_Name(namespaceDeclaration)!, { AsNodeFactory: () => f }),
         undefined, /*exclamationToken*/
         undefined, /*type*/
         CommonJSModuleTransformer_getHelperExpressionForImport(receiver, node, CommonJSModuleTransformer_createRequireCall(receiver, Node_AsNode(node)) as GoPtr<Expression>),
       ),
-    ];
+    );
   } else {
     // import d from "mod";
     // import { x, y } from "mod";
     // import d, { x, y } from "mod";
     // import d, * as n from "mod";
-    variables = [...variables,
+    variables = GoAppend(variables,
       NewVariableDeclaration(f,
         NodeFactory_NewGeneratedNameForNode(pf, Node_AsNode(node)),
         undefined, /*exclamationToken*/
         undefined, /*type*/
         CommonJSModuleTransformer_getHelperExpressionForImport(receiver, node, CommonJSModuleTransformer_createRequireCall(receiver, Node_AsNode(node)) as GoPtr<Expression>),
       ),
-    ];
+    );
 
     if (namespaceDeclaration !== undefined && IsDefaultImport(Node_AsNode(node))) {
-      variables = [...variables,
+      variables = GoAppend(variables,
         NewVariableDeclaration(f,
           Node_Clone(Node_Name(namespaceDeclaration)!, { AsNodeFactory: () => f }),
           undefined, /*exclamationToken*/
           undefined, /*type*/
           NodeFactory_NewGeneratedNameForNode(pf, Node_AsNode(node)),
         ),
-      ];
+      );
     }
   }
 
@@ -1682,7 +1682,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportDeclaration(receive
 
   EmitContext_SetOriginal(emitContext, varStatement, Node_AsNode(node));
   EmitContext_AssignCommentAndSourceMapRanges(emitContext, varStatement, Node_AsNode(node));
-  statements = [...statements, varStatement as GoPtr<Statement>];
+  statements = GoAppend(statements, varStatement as GoPtr<Statement>);
   statements = CommonJSModuleTransformer_appendExportsOfImportDeclaration(receiver, statements, node);
   return SingleOrMany(statements, pf);
 }
@@ -1746,7 +1746,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportEqualsDeclaration(r
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const f = pf!.__tsgoEmbedded0!;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
 
   if (HasSyntacticModifier(Node_AsNode(node), ModifierFlagsExport)) {
     // export import m = require("mod");
@@ -1761,7 +1761,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportEqualsDeclaration(r
     );
     EmitContext_SetOriginal(emitContext, statement, Node_AsNode(node));
     EmitContext_AssignCommentAndSourceMapRanges(emitContext, statement, Node_AsNode(node));
-    statements = [...statements, statement as GoPtr<Statement>];
+    statements = GoAppend(statements, statement as GoPtr<Statement>);
   } else {
     // import m = require("mod");
     const statement = NewVariableStatement(f,
@@ -1780,7 +1780,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportEqualsDeclaration(r
     );
     EmitContext_SetOriginal(emitContext, statement, Node_AsNode(node));
     EmitContext_AssignCommentAndSourceMapRanges(emitContext, statement, Node_AsNode(node));
-    statements = [...statements, statement as GoPtr<Statement>];
+    statements = GoAppend(statements, statement as GoPtr<Statement>);
   }
 
   statements = CommonJSModuleTransformer_appendExportsOfDeclaration(receiver, statements, Node_AsNode(node) as GoPtr<Declaration>, undefined /*seen*/, false /*liveBinding*/);
@@ -1908,7 +1908,7 @@ export function CommonJSModuleTransformer_visitTopLevelExportDeclaration(receive
 
   if (node!.ExportClause !== undefined && IsNamedExports(node!.ExportClause)) {
     // export { x, y } from "mod";
-    let statements: GoSlice<GoPtr<Statement>> = [];
+    let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
     const varStatement = NewVariableStatement(f,
       undefined, /*modifiers*/
       NewVariableDeclarationList(f,
@@ -1925,7 +1925,7 @@ export function CommonJSModuleTransformer_visitTopLevelExportDeclaration(receive
     );
     EmitContext_SetOriginal(emitContext, varStatement, Node_AsNode(node));
     EmitContext_AssignCommentAndSourceMapRanges(emitContext, varStatement, Node_AsNode(node));
-    statements = [...statements, varStatement as GoPtr<Statement>];
+    statements = GoAppend(statements, varStatement as GoPtr<Statement>);
 
     for (const specifier of Node_Elements(node!.ExportClause!)!) {
       const specifierName = Node_PropertyNameOrName(specifier);
@@ -1962,7 +1962,7 @@ export function CommonJSModuleTransformer_visitTopLevelExportDeclaration(receive
       );
       EmitContext_SetOriginal(emitContext, stmt, specifier);
       EmitContext_AssignCommentAndSourceMapRanges(emitContext, stmt, specifier);
-      statements = [...statements, stmt as GoPtr<Statement>];
+      statements = GoAppend(statements, stmt as GoPtr<Statement>);
     }
 
     return SingleOrMany(statements, pf);
@@ -2110,10 +2110,10 @@ export function CommonJSModuleTransformer_visitTopLevelClassDeclaration(receiver
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
 
   if (HasSyntacticModifier(Node_AsNode(node), ModifierFlagsExport)) {
-    statements = [...statements, NodeFactory_UpdateClassDeclaration(
+    statements = GoAppend(statements, NodeFactory_UpdateClassDeclaration(
       pf!.__tsgoEmbedded0!,
       node,
       NodeVisitor_VisitModifiers(visitor, ExtractModifiers(emitContext, Node_Modifiers(Node_AsNode(node)), ~ModifierFlagsExportDefault)),
@@ -2121,9 +2121,9 @@ export function CommonJSModuleTransformer_visitTopLevelClassDeclaration(receiver
       undefined, /*typeParameters*/
       NodeVisitor_VisitNodes(visitor, node!.HeritageClauses),
       NodeVisitor_VisitNodes(visitor, node!.Members),
-    ) as GoPtr<Statement>];
+    ) as GoPtr<Statement>);
   } else {
-    statements = [...statements, NodeVisitor_VisitEachChild(visitor, Node_AsNode(node)) as GoPtr<Statement>];
+    statements = GoAppend(statements, NodeVisitor_VisitEachChild(visitor, Node_AsNode(node)) as GoPtr<Statement>);
   }
 
   statements = CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclaration(receiver, statements, Node_AsNode(node) as GoPtr<Declaration>);
@@ -2276,10 +2276,10 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
 
   if (HasSyntacticModifier(Node_AsNode(node), ModifierFlagsExport)) {
     // export var a = b;
-    let variables: GoSlice<GoPtr<Node>> = [];
-    let expressions: GoSlice<GoPtr<Expression>> = [];
+    let variables: GoSlice<GoPtr<Node>> = GoNilSlice();
+    let expressions: GoSlice<GoPtr<Expression>> = GoNilSlice();
     let modifiers: GoPtr<ModifierList> = undefined;
-    let statements: GoSlice<GoPtr<Statement>> = [];
+    let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
 
     const commitPendingVariables = (): void => {
       if (variables.length > 0) {
@@ -2298,8 +2298,8 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
         if (statements.length > 0) {
           EmitContext_AddEmitFlags(emitContext, statement, EFNoComments);
         }
-        statements = [...statements, statement as GoPtr<Statement>];
-        variables = [];
+        statements = GoAppend(statements, statement as GoPtr<Statement>);
+        variables = GoNilSlice();
       }
     };
 
@@ -2310,19 +2310,19 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
         if (statements.length > 0) {
           EmitContext_AddEmitFlags(emitContext, statement, EFNoComments);
         }
-        statements = [...statements, statement as GoPtr<Statement>];
-        expressions = [];
+        statements = GoAppend(statements, statement as GoPtr<Statement>);
+        expressions = GoNilSlice();
       }
     };
 
     const pushVariable = (variable: GoPtr<Node>): void => {
       commitPendingExpressions();
-      variables = [...variables, variable];
+      variables = GoAppend(variables, variable);
     };
 
     const pushExpression = (expression: GoPtr<Expression>): void => {
       commitPendingVariables();
-      expressions = [...expressions, expression];
+      expressions = GoAppend(expressions, expression);
     };
 
     // If we're exporting these variables, then these just become assignments to 'exports.x'.
@@ -2470,8 +2470,8 @@ export function CommonJSModuleTransformer_transformInitializedVariable(receiver:
 export function CommonJSModuleTransformer_visitTopLevelNestedVariableStatement(receiver: GoPtr<CommonJSModuleTransformer>, node: GoPtr<VariableStatement>): GoPtr<Node> {
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
-  let statements: GoSlice<GoPtr<Statement>> = [];
-  statements = [...statements, NodeVisitor_VisitEachChild(visitor, Node_AsNode(node)) as GoPtr<Statement>];
+  let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
+  statements = GoAppend(statements, NodeVisitor_VisitEachChild(visitor, Node_AsNode(node)) as GoPtr<Statement>);
   statements = CommonJSModuleTransformer_appendExportsOfVariableStatement(receiver, statements, node);
   return SingleOrMany(statements, pf);
 }
@@ -2529,25 +2529,25 @@ export function CommonJSModuleTransformer_visitTopLevelNestedForStatement(receiv
   const topLevelNestedVisitor = receiver!.topLevelNestedVisitor as ConcreteNodeVisitor;
 
   if (node!.Initializer !== undefined && IsVariableDeclarationList(node!.Initializer) && (node!.Initializer!.Flags & NodeFlagsBlockScoped) === 0) {
-    const exportStatements = CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver, [], AsVariableDeclarationList(node!.Initializer), false /*isForInOrOfInitializer*/);
+    const exportStatements = CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver, GoNilSlice(), AsVariableDeclarationList(node!.Initializer), false /*isForInOrOfInitializer*/);
     if (exportStatements.length > 0) {
-      let statements: GoSlice<GoPtr<Statement>> = [];
+      let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
       const varDeclList = NodeVisitor_VisitNode(discardedValueVisitor, node!.Initializer);
       const varStatement = NewVariableStatement(f, undefined /*modifiers*/, varDeclList);
-      statements = [...statements, varStatement as GoPtr<Statement>];
-      statements = [...statements, ...exportStatements];
+      statements = GoAppend(statements, varStatement as GoPtr<Statement>);
+      statements = GoAppend(statements, ...exportStatements);
 
       const condition = NodeVisitor_VisitNode(visitor, node!.Condition);
       const incrementor = NodeVisitor_VisitNode(discardedValueVisitor, node!.Incrementor);
       const body = EmitContext_VisitIterationBody(emitContext, node!.Statement, topLevelNestedVisitor);
-      statements = [...statements, NodeFactory_UpdateForStatement(
+      statements = GoAppend(statements, NodeFactory_UpdateForStatement(
         f,
         node,
         undefined, /*initializer*/
         condition,
         incrementor,
         body,
-      ) as GoPtr<Statement>];
+      ) as GoPtr<Statement>);
       return SingleOrMany(statements, pf);
     }
   }
@@ -2614,19 +2614,19 @@ export function CommonJSModuleTransformer_visitTopLevelNestedForInOrOfStatement(
   const topLevelNestedVisitor = receiver!.topLevelNestedVisitor as ConcreteNodeVisitor;
 
   if (IsVariableDeclarationList(node!.Initializer) && (node!.Initializer!.Flags & NodeFlagsBlockScoped) === 0) {
-    const exportStatements = CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver, [], AsVariableDeclarationList(node!.Initializer), true /*isForInOrOfInitializer*/);
+    const exportStatements = CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver, GoNilSlice(), AsVariableDeclarationList(node!.Initializer), true /*isForInOrOfInitializer*/);
     if (exportStatements.length > 0) {
       const initializer = NodeVisitor_VisitNode(discardedValueVisitor, node!.Initializer);
       const expression = NodeVisitor_VisitNode(visitor, node!.Expression);
       let body: GoPtr<Node> = EmitContext_VisitIterationBody(emitContext, node!.Statement, topLevelNestedVisitor);
       if (IsBlock(body)) {
         const block = AsBlock(body);
-        const bodyStatements = [...exportStatements, ...block!.Statements!.Nodes];
+        const bodyStatements = GoAppend(exportStatements, ...block!.Statements!.Nodes);
         const bodyStatementList = NodeFactory_NewNodeList(f, bodyStatements);
         bodyStatementList!.Loc = block!.Statements!.Loc;
         body = NodeFactory_UpdateBlock(f, block, bodyStatementList, block!.MultiLine);
       } else {
-        const bodyStatements = [...exportStatements, body];
+        const bodyStatements = GoAppend(exportStatements, body);
         body = NewBlock(f, NodeFactory_NewNodeList(f, bodyStatements), true /*multiLine*/);
       }
       return NodeFactory_UpdateForInOrOfStatement(f, node, node!.AwaitModifier, initializer, expression, body);
@@ -4111,7 +4111,7 @@ export function CommonJSModuleTransformer_createImportCallExpressionCommonJS(rec
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const f = pf!.__tsgoEmbedded0!;
   const needSyncEval = arg !== undefined && !isSimpleInlineableExpression(arg);
-  let promiseResolveArguments: GoSlice<GoPtr<Expression>> = [];
+  let promiseResolveArguments: GoSlice<GoPtr<Expression>> = GoNilSlice();
   if (needSyncEval) {
     promiseResolveArguments = [
       NewTemplateExpression(
@@ -4137,7 +4137,7 @@ export function CommonJSModuleTransformer_createImportCallExpressionCommonJS(rec
     NodeFactory_NewNodeList(f, promiseResolveArguments),
     NodeFlagsNone,
   ) as GoPtr<Expression>;
-  let requireArguments: GoSlice<GoPtr<Expression>> = [];
+  let requireArguments: GoSlice<GoPtr<Expression>> = GoNilSlice();
   if (needSyncEval) {
     requireArguments = [NewIdentifier(f, "s") as GoPtr<Expression>];
   } else if (arg !== undefined) {
@@ -4154,7 +4154,7 @@ export function CommonJSModuleTransformer_createImportCallExpressionCommonJS(rec
       NodeFlagsNone,
     ) as GoPtr<Expression>,
   );
-  let parameters: GoSlice<GoPtr<Node>> = [];
+  let parameters: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (needSyncEval) {
     parameters = [
       NewParameterDeclaration(
@@ -4252,7 +4252,7 @@ export function CommonJSModuleTransformer_shimOrRewriteImportOrRequireCall(recei
     }
     const [rest, restChanged] = NodeVisitor_VisitSlice(visitor, node!.Arguments!.Nodes.slice(1));
     if (firstArgumentChanged || restChanged) {
-      const argumentsNodes = [firstArgument as GoPtr<Expression>, ...rest as GoPtr<Expression>[]];
+      const argumentsNodes = GoAppend([firstArgument as GoPtr<Expression>], ...rest as GoPtr<Expression>[]);
       argumentsList = NodeFactory_NewNodeList(f, argumentsNodes);
       argumentsList!.Loc = node!.Arguments!.Loc;
     }
@@ -4591,15 +4591,15 @@ export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSMod
       return MultiMap_Get(receiver!.currentModuleInfo!.exportedBindings, importDeclaration);
     }
     const bindingsSet = NewSetWithSizeHint<GoPtr<ModuleExportName>>(0, moduleExportNamePointerKey);
-    let bindings: GoSlice<GoPtr<ModuleExportName>> = [];
+    let bindings: GoSlice<GoPtr<ModuleExportName>> = GoNilSlice();
     const declarations = receiver!.resolver!.GetReferencedValueDeclarations(EmitContext_MostOriginal(emitContext, name));
-    if (declarations !== null && declarations !== undefined) {
+    if (!GoSliceIsNil(declarations)) {
       for (const declaration of declarations) {
         const exportedBindings = MultiMap_Get(receiver!.currentModuleInfo!.exportedBindings, declaration);
         for (const binding of exportedBindings) {
           if (!Set_Has(bindingsSet, binding)) {
             Set_Add(bindingsSet, binding, moduleExportNamePointerKey);
-            bindings = [...bindings, binding];
+            bindings = GoAppend(bindings, binding);
           }
         }
       }
@@ -4607,13 +4607,13 @@ export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSMod
     }
   } else if (isFileLevelReservedGeneratedIdentifier(emitContext, name)) {
     const exportSpecifiers = MultiMap_Get(receiver!.currentModuleInfo!.exportSpecifiers, Node_Text(name));
-    if (exportSpecifiers !== null && exportSpecifiers !== undefined && exportSpecifiers.length > 0) {
-      let exportedNames: GoSlice<GoPtr<ModuleExportName>> = [];
+    if (!GoSliceIsNil(exportSpecifiers)) {
+      let exportedNames: GoSlice<GoPtr<ModuleExportName>> = GoNilSlice();
       for (const exportSpecifier of exportSpecifiers) {
-        exportedNames = [...exportedNames, exportSpecifier!.name];
+        exportedNames = GoAppend(exportedNames, exportSpecifier!.name);
       }
       return exportedNames;
     }
   }
-  return [];
+  return GoNilSlice();
 }

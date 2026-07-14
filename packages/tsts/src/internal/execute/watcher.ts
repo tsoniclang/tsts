@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoMapIsNil, GoNilMap, GoStringKey, GoZeroPointer, type GoChan, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoMapIsNil, GoNilMap, GoNilSlice, GoStringKey, GoZeroPointer, type GoChan, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { Is as errors_Is } from "../../go/errors.js";
 import { Fprint, Fprintf, Fprintln } from "../../go/fmt.js";
@@ -127,12 +127,12 @@ export interface fswatchBackend {
  * }
  */
 export function fswatchBackend_WatchDirectory(receiver: GoPtr<fswatchBackend>, dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: GoFunc<(arg0: string) => bool>): [GoInterface<Closer>, GoError] {
-  let opts: GoSlice<fswatch.WatchOption> = [];
+  let opts: GoSlice<fswatch.WatchOption> = GoNilSlice();
   if (recursive) {
-    opts = [...opts, fswatch.WithRecursive()];
+    opts = GoAppend(opts, fswatch.WithRecursive());
   }
   if (ignore !== undefined) {
-    opts = [...opts, fswatch.WithIgnore(ignore)];
+    opts = GoAppend(opts, fswatch.WithIgnore(ignore));
   }
   return receiver!.inner!.WatchDirectory(dir, fn, ...opts);
 }
@@ -478,7 +478,7 @@ export function Watcher_start(receiver: GoPtr<Watcher>, ctx: GoInterface<Context
   receiver!.program = ReadBuildInfoProgram(receiver!.config, NewBuildInfoReader(host), host);
 
   if (receiver!.configFileName !== "") {
-    receiver!.configFilePaths = [receiver!.configFileName, ...ParsedCommandLine_ExtendedSourceFiles(receiver!.config)];
+    receiver!.configFilePaths = GoAppend([receiver!.configFileName], ...ParsedCommandLine_ExtendedSourceFiles(receiver!.config));
   }
 
   if (receiver!.sys!.GetEnvironmentVariable("TS_WATCH_DEBUG") !== "") {
@@ -968,9 +968,9 @@ export function Watcher_createDirWatch(receiver: GoPtr<Watcher>, dir: string, re
  */
 export function Watcher_closeAllWatches(receiver: GoPtr<Watcher>): void {
   // mu.Lock() / Unlock() omitted: TSTS is single-threaded
-  let dirs: GoSlice<GoInterface<Closer>> = [];
+  let dirs: GoSlice<GoInterface<Closer>> = GoNilSlice();
   for (const [dir, wd] of receiver!.watchedDirs) {
-    dirs = [...dirs, wd!.closer];
+    dirs = GoAppend(dirs, wd!.closer);
     receiver!.watchedDirs.delete(dir);
   }
   for (const c of dirs) {
@@ -1631,7 +1631,7 @@ export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
     receiver!.configModified = true;
   }
   receiver!.configHasErrors = false;
-  receiver!.configFilePaths = [receiver!.configFileName, ...ParsedCommandLine_ExtendedSourceFiles(configParseResult)];
+  receiver!.configFilePaths = GoAppend([receiver!.configFileName], ...ParsedCommandLine_ExtendedSourceFiles(configParseResult));
   // reflect.DeepEqual equivalent: compare ParsedConfig by JSON equality
   if (JSON.stringify(receiver!.config!.ParsedConfig) !== JSON.stringify(configParseResult!.ParsedConfig)) {
     receiver!.configModified = true;

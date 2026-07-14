@@ -8,6 +8,8 @@ import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
 import { Uint32, Uint64 } from "../../../go/sync/atomic.js";
 import * as strconv from "../../../go/strconv.js";
 import * as gostrings from "../../../go/strings.js";
+import * as maps from "../../../go/maps.js";
+import * as slices from "../../../go/slices.js";
 import { ToLowerJS, ToUpperJS } from "../../stringutil/js_case.js";
 import * as utf8 from "../../../go/unicode/utf8.js";
 import { NewNodeFactory, Node_End, Node_ForEachChild, Node_Name } from "../../ast/spine.js";
@@ -1996,9 +1998,6 @@ export function Checker_getSourceFileLinks(receiver: GoPtr<Checker>, sourceFile:
   if (GoMapIsNil(links!.v.deferredNodes.m.mp)) {
     links!.v.deferredNodes = NewOrderedSetWithSizeHint<GoPtr<Node>>(0 as int, goNodePointerKey)!;
   }
-  if (GoSliceIsNil(links!.v.identifierCheckNodes)) {
-    links!.v.identifierCheckNodes = [];
-  }
   return links!.v;
 }
 
@@ -2567,27 +2566,27 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
   checker.cachedArgumentsReferenced = new globalThis.Map();
   checker.enumNumberIndexInfo = { keyType: checker.numberType, valueType: checker.stringType, isReadonly: true, declaration: undefined, indexSymbol: undefined, components: GoNilSlice() };
   checker.anyBaseTypeIndexInfo = { keyType: checker.stringType, valueType: checker.anyType, isReadonly: false, declaration: undefined, indexSymbol: undefined, components: GoNilSlice() };
-  checker.patternAmbientModules = [];
-  checker.patternAmbientModuleAugmentations = new globalThis.Map();
+  checker.patternAmbientModules = GoNilSlice();
+  checker.patternAmbientModuleAugmentations = GoNilMap();
   checker.emptyStringType = Checker_getStringLiteralType(checker, "");
   checker.zeroType = Checker_getNumberLiteralType(checker, FromString("0"));
   checker.zeroBigIntType = Checker_getBigIntLiteralType(checker, { Negative: false, Base10Value: "" });
-  checker.typeofType = Checker_getUnionType(checker, globalThis.Array.from(typeofNEFacts.keys()).sort().map((factName) => Checker_getStringLiteralType(checker, factName)));
-  checker.contextualBindingPatterns = [];
-  checker.typeResolutions = [];
+  checker.typeofType = Checker_getUnionType(checker, Map(slices.Sorted(maps.Keys(typeofNEFacts)), (factName) => Checker_getStringLiteralType(checker, factName)));
+  checker.contextualBindingPatterns = GoNilSlice();
+  checker.typeResolutions = GoNilSlice();
   checker.flowLoopCache = new globalThis.Map();
-  checker.flowLoopStack = [];
+  checker.flowLoopStack = GoNilSlice();
   checker.flowTypeCache = GoNilMap<GoPtr<Node>, GoPtr<Type>>();
-  checker.sharedFlows = [];
-  checker.antecedentTypes = [];
+  checker.sharedFlows = GoNilSlice();
+  checker.antecedentTypes = GoNilSlice();
   checker.flowNodeReachable = new globalThis.Map();
   checker.flowNodePostSuper = new globalThis.Map();
-  checker.renamedBindingElementsInTypes = [];
-  checker.contextualInfos = [];
-  checker.inferenceContextInfos = [];
-  checker.awaitedTypeStack = [];
-  checker.reverseMappedSourceStack = [];
-  checker.reverseMappedTargetStack = [];
+  checker.renamedBindingElementsInTypes = GoNilSlice();
+  checker.contextualInfos = GoNilSlice();
+  checker.inferenceContextInfos = GoNilSlice();
+  checker.awaitedTypeStack = GoNilSlice();
+  checker.reverseMappedSourceStack = GoNilSlice();
+  checker.reverseMappedTargetStack = GoNilSlice();
   checker.subtypeRelation = { results: GoNilMap<CacheHashKey, RelationComparisonResult>() };
   checker.strictSubtypeRelation = { results: GoNilMap<CacheHashKey, RelationComparisonResult>() };
   checker.assignableRelation = { results: GoNilMap<CacheHashKey, RelationComparisonResult>() };
@@ -2646,14 +2645,14 @@ export function NewChecker(program: GoInterface<Program>, tracer: GoPtr<Tracer>)
   checker.getGlobalClassFieldDecoratorContextType = Checker_getGlobalTypeResolver(checker, "ClassFieldDecoratorContext", 2, true);
   checker.skipDirectInferenceNodes = newCheckerSet<GoPtr<Node>>(goNodePointerKey);
   checker.packagesMap = program!.GetPackagesMap();
-  checker.activeMappers = [];
-  checker.activeTypeMappersCaches = [];
+  checker.activeMappers = GoNilSlice();
+  checker.activeTypeMappersCaches = GoNilSlice();
   checker.emitResolverOnce = new Once();
   checker.ambientModulesOnce = new Once();
-  checker.ambientModules = [];
+  checker.ambientModules = GoNilSlice();
   checker.reportedUnreachableNodes = newCheckerSet<GoPtr<Node>>(goNodePointerKey);
   checker.nonExistentProperties = newCheckerSet<NonExistentPropertyKey>(nonExistentPropertyKeyDescriptor);
-  checker.deferredDiagnosticCallbacks = [];
+  checker.deferredDiagnosticCallbacks = GoNilSlice();
   checker.mu = new Mutex();
   Checker_initializeClosures(checker);
   Checker_initializeIterationResolvers(checker);

@@ -1,4 +1,4 @@
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilMap, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { bool } from "../../../go/scalars.js";
 import type { HasFileName, Node, SourceFile } from "../../ast/ast.js";
 import {
@@ -126,7 +126,7 @@ export function NewESModuleTransformer(opts: GoPtr<TransformOptions>): GoPtr<Tra
     getEmitModuleFormatOfFile: opts!.GetEmitModuleFormatOfFile,
     currentSourceFile: undefined,
     importRequireStatements: undefined,
-    helperNameSubstitutions: new Map(),
+    helperNameSubstitutions: GoNilMap(),
   };
   return Transformer_NewTransformer(tx.__tsgoEmbedded0!, (node) => ESModuleTransformer_visit(tx, node), opts!.Context);
 }
@@ -260,15 +260,15 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
     const [prologue, rest0] = NodeFactory_SplitStandardPrologue(pf!, result!.Statements!.Nodes as GoSlice<GoPtr<Statement>>);
     const [custom, rest] = NodeFactory_SplitCustomPrologue(pf!, rest0);
     let statements: GoSlice<GoPtr<Node>> = [...prologue];
-    statements = [...statements, ...custom];
+    statements = GoAppend(statements, ...custom);
     if (externalHelpersImportDeclaration !== undefined) {
-      statements = [...statements, NodeVisitor_VisitNode(visitor, externalHelpersImportDeclaration)];
+      statements = GoAppend(statements, NodeVisitor_VisitNode(visitor, externalHelpersImportDeclaration));
     }
     const importRequireStmts = ESModuleTransformer_importRequireStatements(receiver);
     if (importRequireStmts !== undefined) {
-      statements = [...statements, ...importRequireStmts.statements];
+      statements = GoAppend(statements, ...importRequireStmts.statements);
     }
-    statements = [...statements, ...rest];
+    statements = GoAppend(statements, ...rest);
     const statementList = NodeFactory_NewNodeList(af, statements);
     statementList!.Loc = result!.Statements!.Loc;
     result = AsSourceFile(NodeFactory_UpdateSourceFile(af, result, statementList, node!.EndOfFileToken));
@@ -278,7 +278,7 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
     CompilerOptions_GetEmitModuleKind(receiver!.compilerOptions) !== ModuleKindPreserve &&
     !Some(result!.Statements!.Nodes, IsExternalModuleIndicator)) {
     let statements2: GoSlice<GoPtr<Node>> = [...result!.Statements!.Nodes];
-    statements2 = [...statements2, createEmptyImports(pf!)];
+    statements2 = GoAppend(statements2, createEmptyImports(pf!));
     const statementList2 = NodeFactory_NewNodeList(af, statements2);
     statementList2!.Loc = result!.Statements!.Loc;
     result = AsSourceFile(NodeFactory_UpdateSourceFile(af, result, statementList2, node!.EndOfFileToken));
@@ -385,7 +385,8 @@ export function ESModuleTransformer_visitImportEqualsDeclaration(receiver: GoPtr
   EmitContext_SetOriginal(emitContext, varStatement, nodeAsNode);
   EmitContext_AssignCommentAndSourceMapRanges(emitContext, varStatement, nodeAsNode);
 
-  let statements: GoSlice<GoPtr<Statement>> = [varStatement as unknown as GoPtr<Statement>];
+  let statements: GoSlice<GoPtr<Statement>> = GoNilSlice();
+  statements = GoAppend(statements, varStatement as unknown as GoPtr<Statement>);
   statements = ESModuleTransformer_appendExportsOfImportEqualsDeclaration(receiver, statements, node);
   return SingleOrMany(statements, pf!);
 }
@@ -427,7 +428,7 @@ export function ESModuleTransformer_appendExportsOfImportEqualsDeclaration(recei
       undefined, /*moduleSpecifier*/
       undefined, /*attributes*/
     );
-    statements = [...statements, exportDecl as unknown as GoPtr<Statement>];
+    statements = GoAppend(statements, exportDecl as unknown as GoPtr<Statement>);
   }
   return statements;
 }
@@ -667,9 +668,10 @@ export function ESModuleTransformer_visitImportOrRequireCall(receiver: GoPtr<ESM
     );
   }
 
-  let args: GoSlice<GoPtr<Node>> = [argument as unknown as GoPtr<Node>];
+  let args: GoSlice<GoPtr<Node>> = GoNilSlice();
+  args = GoAppend(args, argument as unknown as GoPtr<Node>);
   const rest = NodeVisitor_VisitSlice(visitor, node!.Arguments!.Nodes.slice(1))[0];
-  args = [...args, ...rest];
+  args = GoAppend(args, ...rest);
 
   const argumentList = NodeFactory_NewNodeList(af, args);
   argumentList!.Loc = node!.Arguments!.Loc;
@@ -729,9 +731,9 @@ export function ESModuleTransformer_createRequireCall(receiver: GoPtr<ESModuleTr
 
   const moduleName = getExternalModuleNameLiteral(pf!, node, receiver!.currentSourceFile, undefined /*host*/, undefined as unknown as EmitResolver /*emitResolver*/, receiver!.compilerOptions);
 
-  let args: GoSlice<GoPtr<Node>> = [];
+  let args: GoSlice<GoPtr<Node>> = GoNilSlice();
   if (moduleName !== undefined) {
-    args = [rewriteModuleSpecifier(emitContext, moduleName as unknown as GoPtr<Expression>, receiver!.compilerOptions) as unknown as GoPtr<Node>];
+    args = GoAppend(args, rewriteModuleSpecifier(emitContext, moduleName as unknown as GoPtr<Expression>, receiver!.compilerOptions) as unknown as GoPtr<Node>);
   }
 
   if (CompilerOptions_GetEmitModuleKind(receiver!.compilerOptions) === ModuleKindPreserve) {

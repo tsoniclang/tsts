@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { IdentifierNode, TypeNode, TypePredicateNodeNode } from "../ast/generated/unions.js";
 import { type SymbolFlags, SymbolFlagsAll } from "../ast/generated/flags.js";
@@ -1234,7 +1235,7 @@ export function Checker_valueToString(receiver: GoPtr<Checker>, value: GoInterfa
  * }
  */
 export function Checker_formatUnionTypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, expandingEnum: bool): GoSlice<GoPtr<Type>> {
-  const result: GoPtr<Type>[] = [];
+  let result: GoSlice<GoPtr<Type>> = GoNilSlice();
   let flags: TypeFlags = 0;
   for (let i = 0; i < types.length; i++) {
     const t = types[i];
@@ -1255,20 +1256,20 @@ export function Checker_formatUnionTypes(receiver: GoPtr<Checker>, types: GoSlic
             Checker_getRegularTypeOfLiteralType(receiver, types[i + count - 1]) ===
               Checker_getRegularTypeOfLiteralType(receiver, baseTypes[count - 1])
           ) {
-            result.push(baseType);
+            result = GoAppend(result, baseType);
             i += count - 1;
             continue;
           }
         }
       }
-      result.push(t);
+      result = GoAppend(result, t);
     }
   }
   if ((flags & TypeFlagsNull) !== 0) {
-    result.push(receiver!.nullType);
+    result = GoAppend(result, receiver!.nullType);
   }
   if ((flags & TypeFlagsUndefined) !== 0) {
-    result.push(receiver!.undefinedType);
+    result = GoAppend(result, receiver!.undefinedType);
   }
   return result;
 }

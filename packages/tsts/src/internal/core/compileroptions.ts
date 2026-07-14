@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import { GoEqualStrict, GoNilSlice, GoSliceIsNil, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilSlice, GoSliceIsNil, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { OrderedMap_Size } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import * as slices from "../../go/slices.js";
@@ -974,10 +974,10 @@ export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOp
     }
   }
 
-  const typeRoots: GoSlice<string> = [];
+  let typeRoots: GoSlice<string> = [];
   void strings.Count(baseDir, "/");
   ForEachAncestorDirectory<unknown>(baseDir, (dir: string): [unknown, bool] => {
-    typeRoots.push(CombinePaths(dir, "node_modules", "@types"));
+    typeRoots = GoAppend(typeRoots, CombinePaths(dir, "node_modules", "@types"));
     return [undefined, false];
   }, GoZeroInterface);
   return [typeRoots, false];

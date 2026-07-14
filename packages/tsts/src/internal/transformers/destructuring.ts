@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_Clone, Node_Name, Node_SubtreeFacts, NodeFactory_NewNodeList } from "../ast/spine.js";
 import { Node_Text, Node_Expression, Node_Initializer } from "../ast/ast.js";
@@ -231,8 +231,8 @@ export function newFlattener(tx: GoPtr<Transformer>, level: FlattenLevel): GoPtr
     tx,
     level,
     createAssignmentCallback: undefined!,
-    expressions: [],
-    declarations: [],
+    expressions: GoNilSlice(),
+    declarations: GoNilSlice(),
     hasTransformedPriorElement: false,
     hoistTempVariables: false,
     emitBindingOrAssignment: undefined!,
@@ -372,16 +372,16 @@ export function flattener_createArrayBindingElement(receiver: GoPtr<flattener>, 
 export function flattener_emitBinding(receiver: GoPtr<flattener>, target: GoPtr<Node>, value: GoPtr<Node>, location: TextRange, original: GoPtr<Node>): void {
   let finalValue = value;
   if (receiver!.expressions.length > 0) {
-    finalValue = NodeFactory_InlineExpressions(Transformer_Factory(receiver!.tx)!, [...receiver!.expressions, value]);
-    receiver!.expressions = [];
+    finalValue = NodeFactory_InlineExpressions(Transformer_Factory(receiver!.tx)!, GoAppend(receiver!.expressions, value));
+    receiver!.expressions = GoNilSlice();
   }
-  receiver!.declarations = [...receiver!.declarations, {
-    pendingExpressions: [],
+  receiver!.declarations = GoAppend(receiver!.declarations, {
+    pendingExpressions: GoNilSlice(),
     name: target,
     value: finalValue,
     location,
     original,
-  }];
+  });
 }
 
 /**
@@ -393,7 +393,7 @@ export function flattener_emitBinding(receiver: GoPtr<flattener>, target: GoPtr<
  * }
  */
 export function flattener_emitExpression(receiver: GoPtr<flattener>, expr: GoPtr<Node>): void {
-  receiver!.expressions = [...receiver!.expressions, expr];
+  receiver!.expressions = GoAppend(receiver!.expressions, expr);
 }
 
 /**
@@ -580,7 +580,7 @@ export function flattener_flattenDestructuringAssignment(receiver: GoPtr<flatten
     if (receiver!.expressions.length === 0) {
       return value;
     }
-    receiver!.expressions = [...receiver!.expressions, value];
+    receiver!.expressions = GoAppend(receiver!.expressions, value);
   }
 
   const res = NodeFactory_InlineExpressions(pf, receiver!.expressions);
@@ -666,31 +666,29 @@ export function flattener_flattenDestructuringBinding(receiver: GoPtr<flattener>
     const temp = NodeFactory_NewTempVariable(pf);
     if (receiver!.hoistTempVariables) {
       const value = NodeFactory_InlineExpressions(pf, receiver!.expressions);
-      receiver!.expressions = [];
+      receiver!.expressions = GoNilSlice();
       receiver!.emitBindingOrAssignment!(receiver, temp, value, { pos: 0, end: 0 }, undefined);
     } else {
       EmitContext_AddVariableDeclaration(ec, temp);
       const last: pendingDecl = receiver!.declarations[receiver!.declarations.length - 1]!;
-      const updatedLast: pendingDecl = {
-        ...last,
-        pendingExpressions: [...last.pendingExpressions, NodeFactory_NewAssignmentExpression(pf, temp, last.value), ...receiver!.expressions],
-        value: temp,
-      };
-      receiver!.declarations = [...receiver!.declarations.slice(0, receiver!.declarations.length - 1), updatedLast];
+      last.pendingExpressions = GoAppend(last.pendingExpressions, NodeFactory_NewAssignmentExpression(pf, temp, last.value));
+      last.pendingExpressions = GoAppend(last.pendingExpressions, ...receiver!.expressions);
+      last.value = temp;
     }
   }
 
-  const decls: GoSlice<GoPtr<Node>> = receiver!.declarations.map((pending) => {
+  let decls: GoSlice<GoPtr<Node>> = [];
+  for (const pending of receiver!.declarations) {
     const expr = pending.pendingExpressions.length > 0
-      ? NodeFactory_InlineExpressions(pf, [...pending.pendingExpressions, pending.value])
+      ? NodeFactory_InlineExpressions(pf, GoAppend(pending.pendingExpressions, pending.value))
       : pending.value;
     const decl = NewVariableDeclaration(af, pending.name, undefined, undefined, expr);
     decl!.Loc = pending.location;
     if (pending.original !== undefined) {
       EmitContext_SetOriginal(ec, decl, pending.original);
     }
-    return decl;
-  });
+    decls = GoAppend(decls, decl);
+  }
 
   if (decls.length === 1) {
     return decls[0];
@@ -824,8 +822,8 @@ export function flattener_flattenObjectBindingOrAssignmentPattern(receiver: GoPt
     const reuseIdentifierExpressions = !IsDeclarationBindingElement(parent) || numElements !== 0;
     currentValue = flattener_ensureIdentifier(receiver, currentValue, reuseIdentifierExpressions, location);
   }
-  let bindingElements: GoSlice<GoPtr<Node>> = [];
-  let computedTempVariables: GoSlice<GoPtr<Node>> = [];
+  let bindingElements: GoSlice<GoPtr<Node>> = GoNilSlice();
+  let computedTempVariables: GoSlice<GoPtr<Node>> = GoNilSlice();
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (GetRestIndicatorOfBindingOrAssignmentElement(element) === undefined) {
@@ -836,22 +834,22 @@ export function flattener_flattenObjectBindingOrAssignmentPattern(receiver: GoPt
         (Node_SubtreeFacts(GetTargetOfBindingOrAssignmentElement(element)!) & (SubtreeContainsRestOrSpread | SubtreeContainsObjectRestOrSpread)) === 0 &&
         !IsComputedPropertyName(propertyName)
       ) {
-        bindingElements = [...bindingElements, NodeVisitor_VisitNode(visitor, element)];
+        bindingElements = GoAppend(bindingElements, NodeVisitor_VisitNode(visitor, element));
       } else {
         if (bindingElements.length > 0) {
           receiver!.emitBindingOrAssignment!(receiver, receiver!.createObjectBindingOrAssignmentPattern!(receiver, bindingElements), currentValue, location, pattern);
-          bindingElements = [];
+          bindingElements = GoNilSlice();
         }
         const rhsValue = flattener_createDestructuringPropertyAccess(receiver, currentValue, propertyName!);
         if (IsComputedPropertyName(propertyName)) {
-          computedTempVariables = [...computedTempVariables, AsElementAccessExpression(rhsValue)!.ArgumentExpression!];
+          computedTempVariables = GoAppend(computedTempVariables, AsElementAccessExpression(rhsValue)!.ArgumentExpression!);
         }
         flattener_flattenBindingOrAssignmentElement(receiver, element, rhsValue, element!.Loc, false);
       }
     } else if (i === numElements - 1) {
       if (bindingElements.length > 0) {
         receiver!.emitBindingOrAssignment!(receiver, receiver!.createObjectBindingOrAssignmentPattern!(receiver, bindingElements), currentValue, location, pattern);
-        bindingElements = [];
+        bindingElements = GoNilSlice();
       }
       const rhsValue = NodeFactory_NewRestHelper(pf, currentValue, elements, computedTempVariables, pattern!.Loc);
       flattener_flattenBindingOrAssignmentElement(receiver, element, rhsValue, element!.Loc, false);
@@ -932,8 +930,8 @@ export function flattener_flattenArrayBindingOrAssignmentPattern(receiver: GoPtr
     const reuseIdentifierExpressions = !IsDeclarationBindingElement(parent) || numElements !== 0;
     currentValue = flattener_ensureIdentifier(receiver, currentValue, reuseIdentifierExpressions, location);
   }
-  let bindingElements: GoSlice<GoPtr<Node>> = [];
-  let restContainingElements: GoSlice<restIdElemPair> = [];
+  let bindingElements: GoSlice<GoPtr<Node>> = GoNilSlice();
+  let restContainingElements: GoSlice<restIdElemPair> = GoNilSlice();
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (receiver!.level >= FlattenLevelObjectRest) {
@@ -943,10 +941,10 @@ export function flattener_flattenArrayBindingOrAssignmentPattern(receiver: GoPtr
         if (receiver!.hoistTempVariables) {
           EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.tx), temp);
         }
-        restContainingElements = [...restContainingElements, { id: temp, element }];
-        bindingElements = [...bindingElements, receiver!.createArrayBindingOrAssignmentElement!(receiver, temp)];
+        restContainingElements = GoAppend(restContainingElements, { id: temp, element });
+        bindingElements = GoAppend(bindingElements, receiver!.createArrayBindingOrAssignmentElement!(receiver, temp));
       } else {
-        bindingElements = [...bindingElements, element];
+        bindingElements = GoAppend(bindingElements, element);
       }
     } else if (IsOmittedExpression(element)) {
       continue;

@@ -4,6 +4,7 @@ import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
 import type { GoFunc, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import { NewCompilerDiagnostic } from "../ast/diagnostic.js";
@@ -616,12 +617,12 @@ export function ParsedCommandLine_WildcardDirectoryGlobs(receiver: GoPtr<ParsedC
 
   p.includeGlobsOnce.Do((): void => {
     if (p.includeGlobs.length === 0) {
-      const globs: GoSlice<GoPtr<Glob>> = [];
+      let globs: GoSlice<GoPtr<Glob>> = [];
       for (const [dir, recursive] of wildcardDirectories) {
         const pattern = fmt.Sprintf("%s/%s", NormalizePath(dir), IfElse(recursive, recursiveFileGlobPattern, fileGlobPattern));
         const [parsed, err] = glob_Parse(pattern);
         if (err === undefined) {
-          globs.push(parsed);
+          globs = GoAppend(globs, parsed);
         }
       }
       p.includeGlobs = globs;

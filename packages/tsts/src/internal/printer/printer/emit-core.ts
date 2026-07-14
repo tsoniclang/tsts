@@ -866,7 +866,7 @@ export function Printer_emitIdentifierText(receiver: GoPtr<Printer>, node: GoPtr
   // debug.Assert(f == nil || p.currentSourceFile == nil || f.FileName() == p.currentSourceFile.FileName())
   const text = Printer_getTextOfNode(receiver, NodeDefault_AsNode(node), false as bool);
 
-  if (receiver!.IdToSymbol !== undefined) {
+  if (!GoMapIsNil(receiver!.IdToSymbol)) {
     const symbol = receiver!.IdToSymbol.get(NodeDefault_AsNode(node));
     if (symbol !== undefined) {
       Printer_writeSymbol(receiver, text, symbol);
@@ -2577,7 +2577,7 @@ export function Printer_emitHelpers(receiver: GoPtr<Printer>, node: GoPtr<Node>)
   let helpersEmitted = false as bool;
   const sourceFile = receiver!.currentSourceFile;
   const shouldSkip = receiver!.Options.NoEmitHelpers || (sourceFile !== undefined && EmitContext_HasRecordedExternalHelpers(receiver!.emitContext, sourceFile));
-  const helpers = slices.Clone(EmitContext_GetEmitHelpers(receiver!.emitContext, node)) ?? [];
+  const helpers = slices.Clone(EmitContext_GetEmitHelpers(receiver!.emitContext, node));
   if (helpers.length > 0) {
     slices.SortStableFunc(helpers, compareEmitHelpers);
     for (const helper of helpers) {

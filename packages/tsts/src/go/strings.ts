@@ -8,6 +8,7 @@
 
 import type { bool, int, byte } from "./scalars.js";
 import type { GoError, GoRune, GoSlice } from "./compat.js";
+import { GoAppend, GoNilSlice } from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
 
 const nonASCII: RegExp = /[^\x00-\x7F]/;
@@ -107,35 +108,35 @@ const runeLen = (r: GoRune): int => {
   return -1;
 };
 
-// encodeRune writes rune r as UTF-8 into out, returning the number of bytes.
-const encodeRune = (out: Array<byte>, r: GoRune): int => {
+// appendRune appends rune r as UTF-8 to out.
+const appendRune = (out: GoSlice<byte>, r: GoRune): GoSlice<byte> => {
   const cp = r < 0 || r > MaxRune || (r >= 0xd800 && r <= 0xdfff) ? RuneErrorValue : r;
   if (cp < 0x80) {
-    out.push(cp);
-    return 1;
+    return GoAppend(out, cp as byte);
   }
   if (cp < 0x800) {
-    out.push(0xc0 | (cp >> 6));
-    out.push(0x80 | (cp & 0x3f));
-    return 2;
+    return GoAppend(out, (0xc0 | (cp >> 6)) as byte, (0x80 | (cp & 0x3f)) as byte);
   }
   if (cp < 0x10000) {
-    out.push(0xe0 | (cp >> 12));
-    out.push(0x80 | ((cp >> 6) & 0x3f));
-    out.push(0x80 | (cp & 0x3f));
-    return 3;
+    return GoAppend(
+      out,
+      (0xe0 | (cp >> 12)) as byte,
+      (0x80 | ((cp >> 6) & 0x3f)) as byte,
+      (0x80 | (cp & 0x3f)) as byte,
+    );
   }
-  out.push(0xf0 | (cp >> 18));
-  out.push(0x80 | ((cp >> 12) & 0x3f));
-  out.push(0x80 | ((cp >> 6) & 0x3f));
-  out.push(0x80 | (cp & 0x3f));
-  return 4;
+  return GoAppend(
+    out,
+    (0xf0 | (cp >> 18)) as byte,
+    (0x80 | ((cp >> 12) & 0x3f)) as byte,
+    (0x80 | ((cp >> 6) & 0x3f)) as byte,
+    (0x80 | (cp & 0x3f)) as byte,
+  );
 };
 
 // runeToString converts a single rune to its UTF-8 string (Go's string(rune)).
 const runeToString = (r: GoRune): string => {
-  const out: Array<byte> = [];
-  encodeRune(out, r);
+  const out = appendRune(GoNilSlice<byte>(), r);
   return decode(Uint8Array.from(out));
 };
 
@@ -192,7 +193,7 @@ const lastIndexOfBytes = (haystack: Uint8Array, needle: Uint8Array): int => {
 // Builder is Go's strings.Builder: a mutable accumulator of bytes that yields
 // a string via String().
 export class Builder {
-  private buf: Array<byte> = [];
+  private buf: GoSlice<byte> = GoNilSlice();
 
   String(): string {
     return decode(Uint8Array.from(this.buf));
@@ -203,7 +204,7 @@ export class Builder {
   }
 
   Reset(): void {
-    this.buf = [];
+    this.buf = GoNilSlice();
   }
 
   // Grow is a capacity hint in Go; a no-op here is faithful (it only affects
@@ -215,26 +216,24 @@ export class Builder {
   WriteString(s: string): [int, GoError] {
     const bytes = encode(s);
     for (const b of bytes) {
-      this.buf.push(b);
+      this.buf = GoAppend(this.buf, b as byte);
     }
     return [bytes.length, undefined];
   }
 
   WriteByte(c: byte): GoError {
-    this.buf.push(c & 0xff);
+    this.buf = GoAppend(this.buf, (c & 0xff) as byte);
     return undefined;
   }
 
   WriteRune(r: GoRune): [int, GoError] {
     const before = this.buf.length;
-    encodeRune(this.buf, r);
+    this.buf = appendRune(this.buf, r);
     return [this.buf.length - before, undefined];
   }
 
   Write(p: GoSlice<byte>): [int, GoError] {
-    for (const b of p) {
-      this.buf.push(b & 0xff);
-    }
+    this.buf = GoAppend(this.buf, ...p);
     return [p.length, undefined];
   }
 }
@@ -810,7 +809,7 @@ export function SplitN(s: string, sep: string, n: int): GoSlice<string> {
 
 const genSplit = (s: string, sep: string, sepSave: int, n: int): GoSlice<string> => {
   if (n === 0) {
-    return [];
+    return GoNilSlice();
   }
   if (sep === "") {
     return explode(s, n);

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import { Atoi, Itoa } from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
@@ -165,7 +165,7 @@ export interface commandLineParser {
  * }
  */
 export function ParseCommandLine(commandLine: GoSlice<string>, host: GoInterface<ParseConfigHost>): GoPtr<ParsedCommandLine> {
-  if (commandLine === undefined || commandLine === null) {
+  if (GoSliceIsNil(commandLine)) {
     commandLine = [];
   }
   const parser = parseCommandLineWorker(CompilerOptionsDidYouMeanDiagnostics, commandLine, host!.FS(), host!.GetCurrentDirectory());
@@ -242,7 +242,7 @@ export function ParseCommandLine(commandLine: GoSlice<string>, host: GoInterface
  * }
  */
 export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: GoInterface<ParseConfigHost>): GoPtr<ParsedBuildCommandLine> {
-  if (commandLine === undefined || commandLine === null) {
+  if (GoSliceIsNil(commandLine)) {
     commandLine = [];
   }
   const parser = parseCommandLineWorker(buildOptionsDidYouMeanDiagnostics, commandLine, host!.FS(), host!.GetCurrentDirectory());
@@ -478,7 +478,7 @@ export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineP
     return;
   }
 
-  const args: GoSlice<string> = [];
+  let args: GoSlice<string> = [];
   const text = [...fileContents]; // split into characters (runes)
   const textLength = text.length;
   let pos = 0;
@@ -496,7 +496,7 @@ export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineP
         pos++;
       }
       if (pos < textLength) {
-        args.push(text.slice(start + 1, pos).join(""));
+        args = GoAppend(args, text.slice(start + 1, pos).join(""));
         pos++;
       } else {
         p.errors = [...p.errors, NewCompilerDiagnostic(Unterminated_quoted_string_in_response_file_0, fileName)];
@@ -505,7 +505,7 @@ export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineP
       while (pos < textLength && text[pos]!.charCodeAt(0) > 32 /* ' ' */) {
         pos++;
       }
-      args.push(text.slice(start, pos).join(""));
+      args = GoAppend(args, text.slice(start, pos).join(""));
     }
   }
   commandLineParser_parseStrings(p, args);

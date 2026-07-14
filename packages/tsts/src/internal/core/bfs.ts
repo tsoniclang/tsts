@@ -1,5 +1,5 @@
 import type { bool, int, long } from "../../go/scalars.js";
-import { GoZeroPointer, type GoComparable, type GoEquality, type GoMapKeyDescriptor, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
+import { GoAppend, GoZeroPointer, type GoComparable, type GoEquality, type GoMapKeyDescriptor, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
 import { Map as SyncMapBacking } from "../../go/sync.js";
 import type { Int64 } from "../../go/sync/atomic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -233,10 +233,10 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
   };
 
   const createPath = (job: GoPtr<breadthFirstSearchJob<N>>): GoSlice<N> => {
-    const path: GoSlice<N> = [];
+    let path: GoSlice<N> = [];
     let cur = job;
     while (cur !== undefined) {
-      path.push(cur.node);
+      path = GoAppend(path, cur.node);
       cur = cur.parent;
     }
     return path;

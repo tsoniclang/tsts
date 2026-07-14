@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoEqualStrict, GoPointerKey, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoNilSlice, GoPointerKey, GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { SortFunc } from "../../../go/slices.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Elements, Node_PropertyNameOrName, Node_Text } from "../../ast/ast.js";
@@ -112,10 +112,10 @@ export function collectExternalModuleInfo(sourceFile: GoPtr<SourceFile>, compile
     uniqueExports: NewSetWithSizeHint<string>(0, GoStringKey)!,
     hasExportDefault: false,
     output: {
-      externalImports: [],
+      externalImports: GoNilSlice(),
       exportSpecifiers: NewMultiMapWithSizeHint<string, GoPtr<ExportSpecifier>>(0, GoStringKey)!,
       exportedBindings: NewMultiMapWithSizeHint<GoPtr<Declaration>, GoPtr<ModuleExportName>>(0, declarationPointerKey)!,
-      exportedNames: [],
+      exportedNames: GoNilSlice(),
       exportedFunctions: NewOrderedSetWithSizeHint<GoPtr<FunctionDeclarationNode>>(0, functionDeclarationNodePointerKey)!,
       exportEquals: undefined,
       hasExportStarsToExportValues: false,
@@ -420,7 +420,7 @@ export function externalModuleInfoCollector_addExportedBinding(receiver: GoPtr<e
  * }
  */
 export function externalModuleInfoCollector_addExternalImport(receiver: GoPtr<externalModuleInfoCollector>, node: GoPtr<Node>): void {
-  receiver!.output!.externalImports.push(node);
+  receiver!.output!.externalImports = GoAppend(receiver!.output!.externalImports, node);
 }
 
 /**
@@ -432,7 +432,7 @@ export function externalModuleInfoCollector_addExternalImport(receiver: GoPtr<ex
  * }
  */
 export function externalModuleInfoCollector_addExportedName(receiver: GoPtr<externalModuleInfoCollector>, name: GoPtr<ModuleExportName>): void {
-  receiver!.output!.exportedNames.push(name);
+  receiver!.output!.exportedNames = GoAppend(receiver!.output!.exportedNames, name);
 }
 
 /**
@@ -694,7 +694,7 @@ export function createExternalHelpersImportDeclarationIfNeeded(emitContext: GoPt
     } else {
       // When we emit as an ES module, generate an `import` declaration that uses named imports for helpers.
       // If we cannot determine the implied module kind under `module: preserve` we assume ESM.
-      let helperNames: GoSlice<string> = [];
+      let helperNames: GoSlice<string> = GoNilSlice();
       for (const helper of helpers) {
         const importName = helper!.ImportName;
         if (importName.length > 0) {
@@ -749,10 +749,10 @@ export function createExternalHelpersImportDeclarationIfNeeded(emitContext: GoPt
  * }
  */
 export function getImportedHelpers(emitContext: GoPtr<EmitContext>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<EmitHelper>> {
-  let helpers: GoSlice<GoPtr<EmitHelper>> = [];
+  let helpers: GoSlice<GoPtr<EmitHelper>> = GoNilSlice();
   for (const helper of EmitContext_GetEmitHelpers(emitContext, Node_AsNode(sourceFile))) {
     if (!helper!.Scoped) {
-      helpers = [...helpers, helper];
+      helpers = GoAppend(helpers, helper);
     }
   }
   return helpers;

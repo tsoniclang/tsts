@@ -1,6 +1,7 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
 import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoStringKey } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, GoSliceIsNil, GoStringKey } from "../../../go/compat.js";
+import { Map as core_Map } from "../../core/core.js";
 import * as strings from "../../../go/strings.js";
 import type { Builder } from "../../../go/strings.js";
 import { Sprintf } from "../../../go/fmt.js";
@@ -328,7 +329,7 @@ export function emitSignature_getNewEmitSignature(receiver: GoPtr<emitSignature>
   if (Tristate_IsTrue(oldOptions!.DeclarationMap) === Tristate_IsTrue(newOptions!.DeclarationMap)) {
     return receiver;
   }
-  if (receiver!.signatureWithDifferentOptions === undefined || receiver!.signatureWithDifferentOptions === null) {
+  if (GoSliceIsNil(receiver!.signatureWithDifferentOptions)) {
     return {
       signature: "",
       signatureWithDifferentOptions: [receiver!.signature],
@@ -336,7 +337,7 @@ export function emitSignature_getNewEmitSignature(receiver: GoPtr<emitSignature>
   } else {
     return {
       signature: receiver!.signatureWithDifferentOptions[0]!,
-      signatureWithDifferentOptions: [],
+      signatureWithDifferentOptions: GoNilSlice(),
     };
   }
 }
@@ -443,13 +444,13 @@ export function buildInfoDiagnosticWithFileName_toDiagnostic(receiver: GoPtr<bui
   if (receiver!.repopulateInfo !== undefined) {
     return repopulateDiagnosticChain(receiver, p, fileForDiagnostic);
   }
-  const messageChain: GoSlice<GoPtr<Diagnostic>> = [];
+  let messageChain: GoSlice<GoPtr<Diagnostic>> = [];
   for (const msg of receiver!.messageChain) {
-    messageChain.push(buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, fileForDiagnostic));
+    messageChain = GoAppend(messageChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, fileForDiagnostic));
   }
-  const relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
+  let relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
   for (const info of receiver!.relatedInformation) {
-    relatedInformation.push(buildInfoDiagnosticWithFileName_toDiagnostic(info, p, fileForDiagnostic));
+    relatedInformation = GoAppend(relatedInformation, buildInfoDiagnosticWithFileName_toDiagnostic(info, p, fileForDiagnostic));
   }
   return NewDiagnosticFromSerialized(
     fileForDiagnostic,
@@ -525,13 +526,13 @@ export function repopulateDiagnosticChain(b: GoPtr<buildInfoDiagnosticWithFileNa
  * }
  */
 export function buildInfoDiagnosticWithFileName_toDiagnosticWithoutRepopulate(receiver: GoPtr<buildInfoDiagnosticWithFileName>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoPtr<Diagnostic> {
-  const messageChain: GoSlice<GoPtr<Diagnostic>> = [];
+  let messageChain: GoSlice<GoPtr<Diagnostic>> = [];
   for (const msg of receiver!.messageChain) {
-    messageChain.push(buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
+    messageChain = GoAppend(messageChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
   }
-  const relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
+  let relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
   for (const info of receiver!.relatedInformation) {
-    relatedInformation.push(buildInfoDiagnosticWithFileName_toDiagnostic(info, p, file));
+    relatedInformation = GoAppend(relatedInformation, buildInfoDiagnosticWithFileName_toDiagnostic(info, p, file));
   }
   return NewDiagnosticFromSerialized(
     file,
@@ -584,9 +585,9 @@ export function repopulateModeMismatchChain(b: GoPtr<buildInfoDiagnosticWithFile
     return buildInfoDiagnosticWithFileName_toDiagnosticWithoutRepopulate(b, p, file);
   }
   const details = CreateModeMismatchDetails(p! as unknown as import("../../checker/checker/state.js").Program, file);
-  const nextChain: GoSlice<GoPtr<Diagnostic>> = [];
+  let nextChain: GoSlice<GoPtr<Diagnostic>> = [];
   for (const msg of b!.messageChain) {
-    nextChain.push(buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
+    nextChain = GoAppend(nextChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
   }
   return NewDiagnosticFromSerialized(
     file,
@@ -648,9 +649,9 @@ export function repopulateModuleNotFoundChain(b: GoPtr<buildInfoDiagnosticWithFi
     packageName = info!.ModuleReference;
   }
   const details = CreateModuleNotFoundChain(p! as unknown as import("../../checker/checker/state.js").Program, file, info!.ModuleReference, info!.Mode, packageName);
-  const nextChain: GoSlice<GoPtr<Diagnostic>> = [];
+  let nextChain: GoSlice<GoPtr<Diagnostic>> = [];
   for (const msg of b!.messageChain) {
-    nextChain.push(buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
+    nextChain = GoAppend(nextChain, buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
   }
   return NewDiagnosticFromSerialized(
     file,
@@ -683,11 +684,11 @@ export function repopulateModuleNotFoundChain(b: GoPtr<buildInfoDiagnosticWithFi
  * }
  */
 export function DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(receiver: GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  if (receiver!.diagnostics !== undefined && receiver!.diagnostics !== null) {
+  if (!GoSliceIsNil(receiver!.diagnostics)) {
     return receiver!.diagnostics;
   }
   // Convert and cache the diagnostics
-  receiver!.diagnostics = receiver!.buildInfoDiagnostics.map((diag: GoPtr<buildInfoDiagnosticWithFileName>) =>
+  receiver!.diagnostics = core_Map(receiver!.buildInfoDiagnostics, (diag: GoPtr<buildInfoDiagnosticWithFileName>) =>
     buildInfoDiagnosticWithFileName_toDiagnostic(diag, p, file)
   );
   return receiver!.diagnostics;
@@ -830,7 +831,7 @@ export function snapshot_getAllFilesExcludingDefaultLibraryFile(receiver: GoPtr<
     receiver!.allFilesExcludingDefaultLibraryFile = [];
     const addSourceFile = (file: GoPtr<SourceFile>): void => {
       if (!Program_IsSourceFileDefaultLibrary(program, SourceFile_Path(file))) {
-        receiver!.allFilesExcludingDefaultLibraryFile.push(file);
+        receiver!.allFilesExcludingDefaultLibraryFile = GoAppend(receiver!.allFilesExcludingDefaultLibraryFile, file);
       }
     };
     if (firstSourceFile !== undefined) {

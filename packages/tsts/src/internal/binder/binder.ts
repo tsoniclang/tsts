@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import * as strconv from "../../go/strconv.js";
 import type { GoInterface, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoFieldRef, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
+import { GoEqualStrict, GoFieldRef, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, GoSliceIsNil, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint64 } from "../../go/sync/atomic.js";
 import {
@@ -6160,7 +6160,7 @@ export function Binder_addToContainerChain(receiver: GoPtr<Binder>, next: GoPtr<
 export function Binder_addDeclarationToSymbol(receiver: GoPtr<Binder>, symbol_: GoPtr<Symbol>, node: GoPtr<Node>, symbolFlags: SymbolFlags): void {
   symbol_!.Flags = (symbol_!.Flags | symbolFlags) as SymbolFlags;
   (Node_DeclarationData(node) as unknown as { Symbol?: GoPtr<Symbol> })!.Symbol = symbol_;
-  if (symbol_!.Declarations === undefined || symbol_!.Declarations.length === 0) {
+  if (GoSliceIsNil(symbol_!.Declarations)) {
     symbol_!.Declarations = Binder_newSingleDeclaration(receiver, node);
   } else {
     symbol_!.Declarations = AppendIfUnique(symbol_!.Declarations, node, GoEqualStrict);

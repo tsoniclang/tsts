@@ -1,7 +1,7 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
 import type { GoFunc, GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap, GoZeroPointer } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef, GoZeroMap, GoZeroPointer } from "../../go/compat.js";
 import { Index as SliceIndex, Values as SliceValues } from "../../go/slices.js";
 import { Node_DeclarationData, Node_ForEachChild, Node_Name } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
@@ -25,7 +25,7 @@ import { goNodePointerKey, goSymbolPointerKey } from "./map-key-descriptors.js";
 import { GetSourceFileOfNode, GetFirstIdentifier, GetPragmaFromSourceFile, GetPragmaArgument, IsInJSFile, IsJsxAttributeLike, GetSemanticJsxChildren, GetNodeId, IsJsxOpeningLikeElement } from "../ast/utilities.js";
 import { InternalSymbolNameMissing, SymbolName } from "../ast/symbol.js";
 import { ParseIsolatedEntityName } from "../parser/parser/support.js";
-import { OrElse, IfElse, Find, Map } from "../core/core.js";
+import { OrElse, IfElse, Filter, Find, Map } from "../core/core.js";
 import { NewIdentifier, NewPropertySignatureDeclaration, NewQualifiedName } from "../ast/generated/factory.js";
 import { AsJsxElement, AsJsxExpression, AsJsxFragment, AsJsxText } from "../ast/generated/casts.js";
 import { The_global_type_JSX_0_may_not_have_more_than_one_property, This_JSX_tag_requires_the_module_path_0_to_exist_but_none_could_be_found_Make_sure_you_have_types_for_the_appropriate_package_installed, Using_JSX_fragments_requires_fragment_factory_0_to_be_in_scope_but_it_could_not_be_found, JSX_element_class_does_not_support_attributes_because_it_does_not_have_a_0_property, Cannot_use_JSX_unless_the_jsx_flag_is_provided, JSX_element_implicitly_has_type_any_because_the_global_type_JSX_Element_does_not_exist, JSX_element_implicitly_has_type_any_because_no_interface_JSX_0_exists, Property_0_does_not_exist_on_type_1, JSX_spread_child_must_be_an_array_type, The_jsxFragmentFactory_compiler_option_must_be_provided_to_use_JSX_fragments_with_the_jsxFactory_compiler_option, An_jsxFrag_pragma_is_required_when_using_an_jsx_pragma_with_JSX_fragments, This_JSX_tag_s_0_prop_expects_a_single_child_of_type_1_but_multiple_children_were_provided, This_JSX_tag_s_0_prop_expects_type_1_which_requires_multiple_children_but_only_a_single_child_was_provided, X_0_components_don_t_accept_text_as_child_elements_Text_in_JSX_has_the_type_string_but_the_expected_type_of_1_is_2, Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target, Its_type_0_is_not_a_valid_JSX_element_type, JSX_element_type_0_does_not_have_any_construct_or_call_signatures, Tag_0_expects_at_least_1_arguments_but_the_JSX_factory_2_provides_at_most_3, X_0_is_declared_here, Expected_0_type_arguments_but_got_1, Spread_types_may_only_be_created_from_object_types, X_0_are_specified_twice_The_attribute_named_0_will_be_overwritten } from "../diagnostics/generated/messages.js";
@@ -477,7 +477,7 @@ export function Checker_checkJsxPreconditions(receiver: GoPtr<Checker>, errorNod
  * }
  */
 export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoPtr<Checker>, refKind: JsxReferenceKind, elemInstanceType: GoPtr<Type>, openingLikeElement: GoPtr<Node>): void {
-  const diags: GoSlice<GoPtr<Diagnostic>> = [];
+  const diags: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
   switch (refKind) {
     case JsxReferenceKindFunction: {
       const sfcReturnConstraint = Checker_getJsxStatelessElementTypeAt(receiver, openingLikeElement);
@@ -707,7 +707,7 @@ export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPt
     return cachedDiscriminated;
   }
   const jsxChildrenPropertyName = Checker_getJsxElementChildrenPropertyName(receiver, Checker_getJsxNamespaceAt(receiver, node));
-  const discriminantProperties = (Node_Properties(node) ?? []).filter((property) => {
+  const discriminantProperties = Filter(Node_Properties(node) ?? GoNilSlice(), (property) => {
     const symbol = Node_Symbol(property);
     if (symbol === undefined || !IsJsxAttribute(property)) {
       return false;
@@ -716,7 +716,7 @@ export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPt
     return (initializer === undefined || Checker_isPossiblyDiscriminantValue(receiver, initializer)) && Checker_isDiscriminantProperty(receiver, contextualType, symbol.Name);
   });
   const jsxAttributesSymbol = Node_Symbol(node);
-  const discriminantMembers = Checker_getPropertiesOfType(receiver, contextualType).filter((symbol) => {
+  const discriminantMembers = Filter(Checker_getPropertiesOfType(receiver, contextualType), (symbol) => {
     if ((symbol!.Flags & SymbolFlagsOptional) === 0 || jsxAttributesSymbol === undefined) {
       return false;
     }
@@ -849,7 +849,7 @@ export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: G
       nonArrayLikeTargetParts = Checker_filterType(receiver, childrenTargetType, (candidate) => !Checker_isArrayOrTupleLikeType(receiver, candidate));
     }
     let invalidTextDiagnostic: GoPtr<Message>;
-    let invalidTextDiagnosticArgs: GoSlice<GoInterface<unknown>> = [];
+    let invalidTextDiagnosticArgs: GoSlice<GoInterface<unknown>> = GoNilSlice();
     const getInvalidTextualChildDiagnostic = (): [GoPtr<Message>, GoSlice<GoInterface<unknown>>] => {
       if (invalidTextDiagnostic === undefined) {
         const tagNameText = GetTextOfNode(Node_TagName(node!.Parent));
@@ -1833,7 +1833,7 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
     if (parent === undefined) {
       return false;
     }
-    let children: GoSlice<GoPtr<Node>> = [];
+    let children: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (IsJsxElement(parent)) {
       if (AsJsxElement(parent)!.OpeningElement === element) {
         children = Node_Children(parent)!.Nodes;
@@ -1941,19 +1941,19 @@ export function Checker_checkJsxAttribute(receiver: GoPtr<Checker>, node: GoPtr<
  * }
  */
 export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoSlice<GoPtr<Type>> {
-  const childTypes: GoSlice<GoPtr<Type>> = [];
+  let childTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
   for (const child of Node_Children(node)!.Nodes) {
     // In React, JSX text that contains only whitespaces will be ignored so we don't want to type-check that
     // because then type of children property will have constituent of string type.
     if (IsJsxText(child)) {
       if (!AsJsxText(child)!.ContainsOnlyTriviaWhiteSpaces) {
-        childTypes.push(receiver!.stringType);
+        childTypes = GoAppend(childTypes, receiver!.stringType);
       }
     } else if (IsJsxExpression(child) && Node_Expression(child) === undefined) {
       // empty jsx expressions don't *really* count as present children
       continue;
     } else {
-      childTypes.push(Checker_checkExpressionForMutableLocation(receiver, child, checkMode));
+      childTypes = GoAppend(childTypes, Checker_checkExpressionForMutableLocation(receiver, child, checkMode));
     }
   }
   return childTypes;
@@ -2144,7 +2144,7 @@ export function Checker_getJsxPropsTypeFromClassType(receiver: GoPtr<Checker>, s
     const typeParams = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver, intrinsicClassAttribs!.symbol);
     const hostClassType = Checker_getReturnTypeOfSignature(receiver, sig);
     let libraryManagedAttributeType: GoPtr<Type>;
-    if (typeParams !== undefined && typeParams.length > 0) {
+    if (!GoSliceIsNil(typeParams)) {
       // apply JSX.IntrinsicClassAttributes<hostClassType, ...>
       const inferredArgs = Checker_fillMissingTypeArguments(receiver, [hostClassType], typeParams, Checker_getMinTypeArgumentCount(receiver, typeParams), IsInJSFile(context));
       libraryManagedAttributeType = Checker_instantiateType(receiver, intrinsicClassAttribs, newTypeMapper(typeParams, inferredArgs));
@@ -2200,7 +2200,7 @@ export function Checker_getJsxPropsTypeForSignatureFromMember(receiver: GoPtr<Ch
     // get the type of `props` on each return type individually, and then _intersect them_, rather than union them (as would normally occur
     // for a union signature). It's an unfortunate quirk of looking in the output of the signature for the type we want to use for the input.
     // The default behavior of `getTypeOfFirstParameterOfSignatureWithFallback` when no `props` member name is defined is much more sane.
-    const results: GoPtr<Type>[] = [];
+    let results: GoSlice<GoPtr<Type>> = GoNilSlice();
     for (const signature of sig!.composite!.signatures) {
       const instance = Checker_getReturnTypeOfSignature(receiver, signature);
       if (IsTypeAny(instance)) {
@@ -2210,7 +2210,7 @@ export function Checker_getJsxPropsTypeForSignatureFromMember(receiver: GoPtr<Ch
       if (propType === undefined) {
         return undefined;
       }
-      results.push(propType);
+      results = GoAppend(results, propType);
     }
     return Checker_getIntersectionType(receiver, results);
     // Same result for both union and intersection signatures

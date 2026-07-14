@@ -1,5 +1,6 @@
 import type { int, long, ulong, bool } from "./scalars.js";
 import type { GoInterface, GoSlice } from "./compat.js";
+import { GoAppend } from "./compat.js";
 import type { Seq } from "./iter.js";
 
 // Go: package reflect
@@ -409,7 +410,7 @@ export function Append(s: Value, ...x: GoSlice<Value>): Value {
   if (!globalThis.Array.isArray(value)) {
     throw new globalThis.Error("reflect.Append: first argument is not a slice");
   }
-  return new Value([...value, ...x.map((entry) => entry.Interface())]);
+  return new Value(GoAppend(value, ...x.map((entry) => entry.Interface())));
 }
 
 export function Zero(typ: Type): Value {
@@ -417,9 +418,9 @@ export function Zero(typ: Type): Value {
 }
 
 export function VisibleFields(t: Type): GoSlice<StructField> {
-  const fields: GoSlice<StructField> = [];
+  let fields: GoSlice<StructField> = [];
   t.Fields()!((field) => {
-    fields.push(field);
+    fields = GoAppend(fields, field);
     return true;
   });
   return fields;

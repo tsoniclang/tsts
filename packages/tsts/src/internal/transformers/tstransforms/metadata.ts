@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import type { ClassDeclaration, ClassExpression, GetAccessorDeclaration, MethodDeclaration, PropertyDeclaration, SetAccessorDeclaration } from "../../ast/generated/data.js";
@@ -540,7 +540,7 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
   const factory = Transformer_Factory(tx.__tsgoEmbedded0)!;
   const metadata = MetadataTransformer_getTypeMetadata(receiver, node, node);
   if (metadata.length > 0) {
-    let originalNodes: GoSlice<GoPtr<Node>> = [];
+    let originalNodes: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (list !== undefined) {
       originalNodes = list!.Nodes ?? [];
     }
@@ -551,18 +551,18 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
       }
       return res;
     }
-    let modifiersArray: GoSlice<GoPtr<Node>> = [];
+    let modifiersArray: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (IsModifier(originalNodes[0]) && (originalNodes[0]!.Kind === KindDefaultKeyword || originalNodes[0]!.Kind === KindExportKeyword)) {
-      modifiersArray = [...modifiersArray, originalNodes[0]];
+      modifiersArray = GoAppend(modifiersArray, originalNodes[0]);
       if (originalNodes.length > 1 && (originalNodes[1]!.Kind === KindDefaultKeyword || originalNodes[1]!.Kind === KindExportKeyword)) {
-        modifiersArray = [...modifiersArray, originalNodes[1]];
+        modifiersArray = GoAppend(modifiersArray, originalNodes[1]);
       }
     }
     const restStart = modifiersArray.length;
     const decos = Filter(originalNodes, IsDecorator);
-    modifiersArray = [...modifiersArray, ...decos, ...metadata];
+    modifiersArray = GoAppend(GoAppend(modifiersArray, ...decos), ...metadata);
     const otherModifiers = Filter(originalNodes.slice(restStart), IsModifier);
-    modifiersArray = [...modifiersArray, ...otherModifiers];
+    modifiersArray = GoAppend(modifiersArray, ...otherModifiers);
     const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;
@@ -618,7 +618,7 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
   }
   const metadata = MetadataTransformer_getTypeMetadata(receiver, node, container);
   if (metadata.length > 0) {
-    let originalNodes: GoSlice<GoPtr<Node>> = [];
+    let originalNodes: GoSlice<GoPtr<Node>> = GoNilSlice();
     if (list !== undefined) {
       originalNodes = list!.Nodes ?? [];
     }
@@ -629,11 +629,11 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
       }
       return res;
     }
-    let modifiersArray: GoSlice<GoPtr<Node>> = [];
+    let modifiersArray: GoSlice<GoPtr<Node>> = GoNilSlice();
     const decos = Filter(originalNodes, IsDecorator);
-    modifiersArray = [...modifiersArray, ...decos, ...metadata];
+    modifiersArray = GoAppend(GoAppend(modifiersArray, ...decos), ...metadata);
     const modifiers = Filter(originalNodes, IsModifier);
-    modifiersArray = [...modifiersArray, ...modifiers];
+    modifiersArray = GoAppend(modifiersArray, ...modifiers);
     const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;
@@ -660,7 +660,7 @@ export function MetadataTransformer_getTypeMetadata(receiver: GoPtr<MetadataTran
   const tx = receiver!;
   // Decorator metadata is not yet supported for ES decorators.
   if (!tx.legacyDecorators) {
-    return [];
+    return GoNilSlice();
   }
   if (USE_NEW_TYPE_METADATA_FORMAT) {
     return MetadataTransformer_getNewTypeMetadata(tx, node, container);
@@ -691,7 +691,7 @@ export function MetadataTransformer_getTypeMetadata(receiver: GoPtr<MetadataTran
  */
 export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>, container: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const tx = receiver!;
-  let decorators: GoSlice<GoPtr<Node>> = [];
+  let decorators: GoSlice<GoPtr<Node>> = GoNilSlice();
   const factory = Transformer_Factory(tx.__tsgoEmbedded0)!;
   if (MetadataTransformer_shouldAddTypeMetadata(tx, node)) {
     const typeMetadata = NodeFactory_NewMetadataHelper(
@@ -704,7 +704,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
         container,
       ),
     );
-    decorators = [...decorators, NewDecorator(factory.__tsgoEmbedded0, typeMetadata)];
+    decorators = GoAppend(decorators, NewDecorator(factory.__tsgoEmbedded0, typeMetadata));
   }
   if (MetadataTransformer_shouldAddParamTypesMetadata(tx, node)) {
     const paramTypesMetadata = NodeFactory_NewMetadataHelper(
@@ -717,7 +717,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
         container,
       ),
     );
-    decorators = [...decorators, NewDecorator(factory.__tsgoEmbedded0, paramTypesMetadata)];
+    decorators = GoAppend(decorators, NewDecorator(factory.__tsgoEmbedded0, paramTypesMetadata));
   }
   if (MetadataTransformer_shouldAddReturnTypeMetadata(tx, node)) {
     const returnTypeMetadata = NodeFactory_NewMetadataHelper(
@@ -729,7 +729,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
         node,
       ),
     );
-    decorators = [...decorators, NewDecorator(factory.__tsgoEmbedded0, returnTypeMetadata)];
+    decorators = GoAppend(decorators, NewDecorator(factory.__tsgoEmbedded0, returnTypeMetadata));
   }
   return decorators;
 }
@@ -800,12 +800,12 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
  */
 export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>, container: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   const tx = receiver!;
-  let properties: GoSlice<GoPtr<Node>> = [];
+  let properties: GoSlice<GoPtr<Node>> = GoNilSlice();
   const factory = Transformer_Factory(tx.__tsgoEmbedded0)!;
   const astFactory = factory.__tsgoEmbedded0;
   if (MetadataTransformer_shouldAddTypeMetadata(tx, node)) {
-    properties = [
-      ...properties,
+    properties = GoAppend(
+      properties,
       NewPropertyAssignment(
         astFactory,
         undefined,
@@ -828,11 +828,11 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
           ),
         ),
       ),
-    ];
+    );
   }
   if (MetadataTransformer_shouldAddParamTypesMetadata(tx, node)) {
-    properties = [
-      ...properties,
+    properties = GoAppend(
+      properties,
       NewPropertyAssignment(
         astFactory,
         undefined,
@@ -855,11 +855,11 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
           ),
         ),
       ),
-    ];
+    );
   }
   if (MetadataTransformer_shouldAddReturnTypeMetadata(tx, node)) {
-    properties = [
-      ...properties,
+    properties = GoAppend(
+      properties,
       NewPropertyAssignment(
         astFactory,
         undefined,
@@ -881,7 +881,7 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
           ),
         ),
       ),
-    ];
+    );
   }
   if (properties.length > 0) {
     const typeInfoMetadata = NodeFactory_NewMetadataHelper(
@@ -891,7 +891,7 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
     );
     return [NewDecorator(astFactory, typeInfoMetadata)];
   }
-  return [];
+  return GoNilSlice();
 }
 
 /**

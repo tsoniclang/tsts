@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import {
+  GoAppend,
   GoMapIsNil,
   GoMapMake,
   GoSliceToZeroLength,
@@ -160,7 +161,7 @@ export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<Ordere
   }
 
   if (!m.mp.has(key)) {
-    m.keys.push(key);
+    m.keys = GoAppend(m.keys, key);
   }
   m.mp.set(key, value);
 }

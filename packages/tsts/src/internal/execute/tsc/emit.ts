@@ -1,4 +1,4 @@
-import type { GoPtr } from "../../../go/compat.js";
+import { GoAppend, GoNilSlice, type GoPtr } from "../../../go/compat.js";
 import { Background } from "../../../go/context.js";
 import type { Context } from "../../../go/context.js";
 import { Fprint, Fprintln } from "../../../go/fmt.js";
@@ -258,14 +258,19 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
     },
   );
 
-  let emitResult: GoPtr<EmitResult> = { EmitSkipped: true, Diagnostics: [], EmittedFiles: [], SourceMaps: [] };
+  let emitResult: GoPtr<EmitResult> = {
+    EmitSkipped: true,
+    Diagnostics: GoNilSlice(),
+    EmittedFiles: GoNilSlice(),
+    SourceMaps: GoNilSlice(),
+  };
   if (!Tristate_IsTrue(input.ProgramLike!.Options()!.ListFilesOnly)) {
     const emitStart = input.Sys!.Now();
     emitResult = input.ProgramLike!.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0 as import("../../compiler/emitter.js").EmitOnly, WriteFile: input.WriteFile });
     result.times!.emitTime = (input.Sys!.Now() as TimeWithSub).Sub(emitStart) as import("../../../go/time.js").Duration;
   }
   if (emitResult !== undefined) {
-    allDiagnostics = [...allDiagnostics, ...emitResult!.Diagnostics];
+    allDiagnostics = GoAppend(allDiagnostics, ...emitResult!.Diagnostics);
   }
   if (input.Testing !== undefined) {
     input.Testing.OnEmittedFiles(emitResult, input.TestingMTimesCache);

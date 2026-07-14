@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoRef, GoRune, GoSlice } from "../../go/compat.js";
-import { GoNilSlice } from "../../go/compat.js";
+import { GoAppend, GoNilSlice } from "../../go/compat.js";
 import { StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { BinarySearchFunc as slicesBinarySearchFunc, SortFunc as slicesSortFunc } from "../../go/slices.js";
 import { CutPrefix, EqualFold } from "../../go/strings.js";
@@ -299,7 +299,7 @@ export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap:
       }
     }
 
-    decodedMappings.push({
+    decodedMappings = GoAppend(decodedMappings, {
       generatedPosition: generatedPosition,
       sourceIndex: mapping!.SourceIndex,
       sourcePosition: sourcePosition,
@@ -318,13 +318,12 @@ export function createDocumentPositionMapper(host: GoInterface<Host>, sourceMap:
     }
     const sourceIndex: SourceIndex = mapping!.sourceIndex;
     const list: GoSlice<GoPtr<SourceMappedPosition>> = sourceMappings.get(sourceIndex) ?? [];
-    list.push({
+    sourceMappings.set(sourceIndex, GoAppend(list, {
       generatedPosition: mapping!.generatedPosition,
       sourceIndex: sourceIndex,
       sourcePosition: mapping!.sourcePosition,
       nameIndex: mapping!.nameIndex,
-    });
-    sourceMappings.set(sourceIndex, list);
+    }));
   }
   for (const [i, list] of sourceMappings) {
     slicesSortFunc(list, (a: GoPtr<SourceMappedPosition>, b: GoPtr<SourceMappedPosition>): int => {
@@ -553,11 +552,11 @@ export function GetDocumentPositionMapper(host: GoInterface<Host>, generatedFile
     }
   }
 
-  const possibleMapLocations: GoSlice<string> = [];
+  let possibleMapLocations: GoSlice<string> = [];
   if (mapFileName !== "") {
-    possibleMapLocations.push(mapFileName);
+    possibleMapLocations = GoAppend(possibleMapLocations, mapFileName);
   }
-  possibleMapLocations.push(generatedFileName + ".map");
+  possibleMapLocations = GoAppend(possibleMapLocations, generatedFileName + ".map");
   for (const location of possibleMapLocations) {
     const resolvedMapFileName: string = GetNormalizedAbsolutePath(location, GetDirectoryPath(generatedFileName));
     const [mapFileContents, ok] = host!.ReadFile(resolvedMapFileName);

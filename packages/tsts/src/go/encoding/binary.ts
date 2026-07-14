@@ -1,5 +1,6 @@
 import type { byte, int, ushort } from "../scalars.js";
 import type { GoError, GoSlice } from "../compat.js";
+import { GoAppend } from "../compat.js";
 
 export interface ByteOrder {
   Uint16(bytes: GoSlice<byte>): ushort;
@@ -47,17 +48,17 @@ function isByteWriter(value: unknown): value is ByteWriter {
 }
 
 export function Append(buf: GoSlice<byte>, order: ByteOrder, data: int | GoSlice<int>): [GoSlice<byte>, GoError] {
-  const out = buf.slice();
+  let out = buf;
   if (typeof data === "number") {
     const bytes: GoSlice<byte> = [0 as byte, 0 as byte];
     order.PutUint16(bytes, data as int);
-    out.push(...bytes);
+    out = GoAppend(out, ...bytes);
     return [out, undefined];
   }
   for (const value of data) {
     const bytes: GoSlice<byte> = [0 as byte, 0 as byte];
     order.PutUint16(bytes, value);
-    out.push(...bytes);
+    out = GoAppend(out, ...bytes);
   }
   return [out, undefined];
 }

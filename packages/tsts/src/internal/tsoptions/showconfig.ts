@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import { GoEqualStrict, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAppend, GoEqualStrict, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
@@ -232,11 +232,11 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   };
 
   // Build the list of all resolved files as relative paths from the config file.
-  const files: GoSlice<string> = [];
+  let files: GoSlice<string> = [];
   for (const f of ParsedCommandLine_FileNames(configParseResult)) {
     const normalizedFilePath = GetNormalizedAbsolutePath(f, ParsedCommandLine_GetCurrentDirectory(configParseResult));
     const relativePath = GetRelativePathFromFile(normalizedConfigPath, normalizedFilePath, comparePathsOptions);
-    files.push(relativePath);
+    files = GoAppend(files, relativePath);
   }
 
   // Serialize compiler options
@@ -262,14 +262,14 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   // Add references
   const refs = ParsedCommandLine_ProjectReferences(configParseResult);
   if (refs.length > 0) {
-    const references: GoSlice<GoInterface<unknown>> = [];
+    let references: GoSlice<GoInterface<unknown>> = [];
     for (const r of refs) {
       const ref = NewOrderedMapWithSizeHint<string, unknown>(2 as int, GoStringKey);
       OrderedMap_Set(ref, "path", r!.OriginalPath, GoStringKey);
       if (r!.Circular) {
         OrderedMap_Set(ref, "circular", true, GoStringKey);
       }
-      references.push(ref);
+      references = GoAppend(references, ref);
     }
     config.References = references;
   }
@@ -533,14 +533,14 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
           const elemMap = CommandLineOption_EnumMap(elem)!;
           if (globalThis.Array.isArray(value)) {
             const strs = value as GoSlice<string>;
-            const serialized: GoSlice<string> = [];
+            let serialized: GoSlice<string> = [];
             for (const s of strs) {
               // lib values are already stored as the d.ts filename, need to find original key
               const found = getNameOfCompilerOptionValue(s, elemMap);
               if (found !== "") {
-                serialized.push(found);
+                serialized = GoAppend(serialized, found);
               } else {
-                serialized.push(s);
+                serialized = GoAppend(serialized, s);
               }
             }
             OrderedMap_Set(result, name, serialized, GoStringKey);
