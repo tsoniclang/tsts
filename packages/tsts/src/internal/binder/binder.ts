@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import * as strconv from "../../go/strconv.js";
 import type { GoInterface, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
+import { GoEqualStrict, GoFieldRef, GoMapIsNil, GoNilMap, GoNilSlice, GoPointerKey, GoStringKey, GoZeroPointer } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint64 } from "../../go/sync/atomic.js";
 import {
@@ -367,6 +367,7 @@ import {
   GetModuleInstanceState,
   GetNameOfDeclaration,
   GetSymbolId,
+  GetSymbolTable,
   HasDynamicName,
   HasSyntacticModifier,
   IsAccessExpression,
@@ -2384,10 +2385,11 @@ export function Binder_bindNamespaceExportDeclaration(receiver: GoPtr<Binder>, n
   } else if (!AsSourceFile(node!.Parent)!.IsDeclarationFile) {
     Binder_errorOnNode(receiver, node, Global_module_exports_may_only_appear_in_declaration_files);
   } else {
-    if (receiver!.file!.GlobalExports === undefined) {
-      receiver!.file!.GlobalExports = new Map();
-    }
-    Binder_declareSymbol(receiver, receiver!.file!.GlobalExports, Node_Symbol(receiver!.file as unknown as GoPtr<Node>), node, SymbolFlagsAlias, SymbolFlagsAliasExcludes);
+    const globalExports = GetSymbolTable(GoFieldRef(
+      () => receiver!.file!.GlobalExports,
+      (value) => { receiver!.file!.GlobalExports = value; },
+    ));
+    Binder_declareSymbol(receiver, globalExports, Node_Symbol(receiver!.file as unknown as GoPtr<Node>), node, SymbolFlagsAlias, SymbolFlagsAliasExcludes);
   }
 }
 

@@ -2753,7 +2753,7 @@ export function Checker_resolveCallExpression(receiver: GoPtr<Checker>, node: Go
   const callSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindCall);
   const numConstructSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindConstruct).length;
   if (Checker_isUntypedFunctionCall(receiver, funcType, apparentType, callSignatures.length as int, numConstructSignatures as int)) {
-    if (!Checker_isErrorType(receiver, funcType) && Node_TypeArguments(node) !== undefined) {
+    if (!Checker_isErrorType(receiver, funcType) && !GoSliceIsNil(Node_TypeArguments(node))) {
       Checker_error(receiver, node, Untyped_function_calls_may_not_accept_type_arguments);
     }
     return Checker_resolveUntypedCall(receiver, node);
@@ -11181,12 +11181,6 @@ export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: Go
           }
         }
       }
-      if ((declarations ?? []).length === 0) {
-        const mappedDeclaration = getMappedIndexEvidenceDeclaration(t);
-        if (mappedDeclaration !== undefined) {
-          declarations = [mappedDeclaration] as GoSlice<GoPtr<Node>>;
-        }
-      }
       if ((declarations ?? []).length !== 0) {
         const symbol_ = Checker_newSymbol(receiver, SymbolFlagsProperty, InternalSymbolNameIndex);
         symbol_!.CheckFlags |= CheckFlagsIndexSymbol;
@@ -11198,22 +11192,6 @@ export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: Go
       }
     }
     return info!.indexSymbol;
-  }
-  return undefined;
-}
-
-function getMappedIndexEvidenceDeclaration(t: GoPtr<Type>): GoPtr<Node> {
-  if (t === undefined || (t!.flags & TypeFlagsObject) === 0) {
-    return undefined;
-  }
-  if ((t!.objectFlags & ObjectFlagsMapped) !== 0) {
-    return Type_AsMappedType(t)!.declaration;
-  }
-  if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
-    const target = Type_Target(t);
-    if (target !== undefined && (target!.objectFlags & ObjectFlagsMapped) !== 0) {
-      return Type_AsMappedType(target)!.declaration;
-    }
   }
   return undefined;
 }

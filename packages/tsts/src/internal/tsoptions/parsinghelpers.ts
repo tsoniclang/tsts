@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoStringKey, GoZeroInterface, type GoConstraint, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoAssertComparableInterface, GoStringKey, GoZeroInterface, type GoConstraint, type GoMapKeyDescriptor, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -37,6 +37,14 @@ import {
   CommandLineOptionTypeList,
 } from "./commandlineoption.js";
 import { extraKeyDiagnostics, extraKeyDidYouMeanDiagnostics } from "./errors.js";
+import {
+  jsxEmitKey,
+  moduleDetectionKindKey,
+  moduleKindKey,
+  moduleResolutionKindKey,
+  newLineKindKey,
+  scriptTargetKey,
+} from "./enummaps.js";
 import type { CommandLineOptionNameMap } from "./tsconfigparsing.js";
 import {
   CommandLineCompilerOptionsMap,
@@ -782,7 +790,7 @@ export function parseCompilerOptions(key: string, value: GoInterface<unknown>, a
       o.IsolatedDeclarations = ParseTristate(value);
       break;
     case "jsx":
-      o.Jsx = floatOrInt32ToFlag<JsxEmit>(value);
+      o.Jsx = floatOrInt32ToFlag<JsxEmit>(value, jsxEmitKey);
       break;
     case "jsxFactory":
       o.JsxFactory = ParseString(value);
@@ -819,19 +827,19 @@ export function parseCompilerOptions(key: string, value: GoInterface<unknown>, a
       o.MapRoot = ParseString(value);
       break;
     case "module":
-      o.Module = floatOrInt32ToFlag<ModuleKind>(value);
+      o.Module = floatOrInt32ToFlag<ModuleKind>(value, moduleKindKey);
       break;
     case "moduleDetectionKind":
-      o.ModuleDetection = floatOrInt32ToFlag<ModuleDetectionKind>(value);
+      o.ModuleDetection = floatOrInt32ToFlag<ModuleDetectionKind>(value, moduleDetectionKindKey);
       break;
     case "moduleResolution":
-      o.ModuleResolution = floatOrInt32ToFlag<ModuleResolutionKind>(value);
+      o.ModuleResolution = floatOrInt32ToFlag<ModuleResolutionKind>(value, moduleResolutionKindKey);
       break;
     case "moduleSuffixes":
       o.ModuleSuffixes = ParseStringArray(value);
       break;
     case "moduleDetection":
-      o.ModuleDetection = floatOrInt32ToFlag<ModuleDetectionKind>(value);
+      o.ModuleDetection = floatOrInt32ToFlag<ModuleDetectionKind>(value, moduleDetectionKindKey);
       break;
     case "noCheck":
       o.NoCheck = ParseTristate(value);
@@ -966,7 +974,7 @@ export function parseCompilerOptions(key: string, value: GoInterface<unknown>, a
       o.SuppressOutputPathCheck = ParseTristate(value);
       break;
     case "target":
-      o.Target = floatOrInt32ToFlag<ScriptTarget>(value);
+      o.Target = floatOrInt32ToFlag<ScriptTarget>(value, scriptTargetKey);
       break;
     case "traceResolution":
       o.TraceResolution = ParseTristate(value);
@@ -1023,7 +1031,7 @@ export function parseCompilerOptions(key: string, value: GoInterface<unknown>, a
       o.OutDir = ParseString(value);
       break;
     case "newLine":
-      o.NewLine = floatOrInt32ToFlag<NewLineKind>(value);
+      o.NewLine = floatOrInt32ToFlag<NewLineKind>(value, newLineKindKey);
       break;
     case "watch":
       o.Watch = ParseTristate(value);
@@ -1049,6 +1057,7 @@ export function parseCompilerOptions(key: string, value: GoInterface<unknown>, a
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::floatOrInt32ToFlag","kind":"func","status":"implemented","sigHash":"20db0255f87e7140b6f355ea9e6fd6c8eb69783915b5e9cb30fc1e919c370e3a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The erased named-int32 type assertion receives the exact static Go type descriptor for T.","runtimeDictionaries":[{"kind":"map-key","parameter":"typeDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func floatOrInt32ToFlag[T ~int32](value any) T {
@@ -1058,11 +1067,11 @@ export function parseCompilerOptions(key: string, value: GoInterface<unknown>, a
  * 	return T(value.(float64))
  * }
  */
-export function floatOrInt32ToFlag<T extends GoConstraint<"~int32"> & number>(value: GoInterface<unknown>): T {
-  // The flag types (JsxEmit, ModuleKind, ...) are all int32-backed; a number
-  // value either already is the flag (`value.(T)`) or is a float64 to convert.
-  // In both branches the dynamic value is the same number cast to the flag type.
-  return value as T;
+export function floatOrInt32ToFlag<T extends GoConstraint<"~int32"> & number>(value: GoInterface<unknown>, typeDescriptor: GoMapKeyDescriptor<T>): T {
+  if (typeof value === "number") {
+    return value as T;
+  }
+  return GoAssertComparableInterface(value, typeDescriptor, "named int32 flag");
 }
 
 /**

@@ -131,7 +131,13 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
   }), result.evidence ?? []);
 }
 
-export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checker>, elementAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>, sourceResultType?: GoPtr<Type>): void {
+export function recordExtensionCheckedElementAccessMapping(
+  checker: GoPtr<Checker>,
+  elementAccessExpression: GoPtr<Node>,
+  resolvedSelectedSymbol?: GoPtr<Symbol>,
+  sourceResultType?: GoPtr<Type>,
+  resolvedSelectedDeclaration?: GoPtr<Node>,
+): void {
   if (checker === undefined || elementAccessExpression === undefined) {
     return;
   }
@@ -147,7 +153,7 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
     return;
   }
   const sourceSelectedSymbol = selectedSourceSymbol(checker, resolvedSelectedSymbol ?? Node_Symbol(elementAccessExpression));
-  const sourceSelectedDeclaration = primarySymbolDeclaration(sourceSelectedSymbol);
+  const sourceSelectedDeclaration = primarySymbolDeclaration(sourceSelectedSymbol) ?? resolvedSelectedDeclaration;
 
   const result = extensionHost.runObservation(
     ExtensionObservationPoint.mapCheckedElementAccess,

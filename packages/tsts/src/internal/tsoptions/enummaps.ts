@@ -106,15 +106,15 @@ function newCommandLineEnumMap<K extends GoComparable>(
   return NewOrderedMapFromList(boxed, GoStringKey);
 }
 
-const moduleResolutionKindKey: GoMapKeyDescriptor<ModuleResolutionKind> = GoNamedNumberKey<ModuleResolutionKind>();
-const scriptTargetKey: GoMapKeyDescriptor<ScriptTarget> = GoNamedNumberKey<ScriptTarget>();
-const moduleKindKey: GoMapKeyDescriptor<ModuleKind> = GoNamedNumberKey<ModuleKind>();
-const moduleDetectionKindKey: GoMapKeyDescriptor<ModuleDetectionKind> = GoNamedNumberKey<ModuleDetectionKind>();
-const jsxEmitKey: GoMapKeyDescriptor<JsxEmit> = GoNamedNumberKey<JsxEmit>();
-const newLineKindKey: GoMapKeyDescriptor<NewLineKind> = GoNamedNumberKey<NewLineKind>();
-const watchFileKindKey: GoMapKeyDescriptor<WatchFileKind> = GoNamedNumberKey<WatchFileKind>();
-const watchDirectoryKindKey: GoMapKeyDescriptor<WatchDirectoryKind> = GoNamedNumberKey<WatchDirectoryKind>();
-const pollingKindKey: GoMapKeyDescriptor<PollingKind> = GoNamedNumberKey<PollingKind>();
+export const moduleResolutionKindKey: GoMapKeyDescriptor<ModuleResolutionKind> = GoNamedNumberKey<ModuleResolutionKind>();
+export const scriptTargetKey: GoMapKeyDescriptor<ScriptTarget> = GoNamedNumberKey<ScriptTarget>();
+export const moduleKindKey: GoMapKeyDescriptor<ModuleKind> = GoNamedNumberKey<ModuleKind>();
+export const moduleDetectionKindKey: GoMapKeyDescriptor<ModuleDetectionKind> = GoNamedNumberKey<ModuleDetectionKind>();
+export const jsxEmitKey: GoMapKeyDescriptor<JsxEmit> = GoNamedNumberKey<JsxEmit>();
+export const newLineKindKey: GoMapKeyDescriptor<NewLineKind> = GoNamedNumberKey<NewLineKind>();
+export const watchFileKindKey: GoMapKeyDescriptor<WatchFileKind> = GoNamedNumberKey<WatchFileKind>();
+export const watchDirectoryKindKey: GoMapKeyDescriptor<WatchDirectoryKind> = GoNamedNumberKey<WatchDirectoryKind>();
+export const pollingKindKey: GoMapKeyDescriptor<PollingKind> = GoNamedNumberKey<PollingKind>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::LibMap","kind":"varGroup","status":"implemented","sigHash":"25fe45e16d662f740f50739d4607802bd9e005dde887ea4bbe5adceb3010f438"}

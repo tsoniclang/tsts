@@ -4505,20 +4505,16 @@ function assertSelectedMemberEvidence(request: CheckedPropertyAccessMappingReque
 
 function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
   assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
   const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
-  assert.ok(selectedSymbol !== undefined);
-  assert.equal(selectedSymbol?.ValueDeclaration, selectedDeclaration);
+  assert.equal(request.sourceSelectedSymbol, undefined);
   assert.ok(selectedDeclaration !== undefined);
   assert.equal(selectedDeclaration.Kind, KindIndexSignature);
 }
 
 function assertSelectedMappedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
   assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
   const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
-  assert.ok(selectedSymbol !== undefined);
-  assert.equal(selectedSymbol?.ValueDeclaration, selectedDeclaration);
+  assert.equal(request.sourceSelectedSymbol, undefined);
   assert.ok(selectedDeclaration !== undefined);
   assert.equal(selectedDeclaration.Kind, KindMappedType);
 }

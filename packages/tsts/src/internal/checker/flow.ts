@@ -3099,7 +3099,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
     } else {
       // All but the first antecedent are the looping control flow paths that lead
       // back to the loop junction. We track these on the flow loop stack.
-      receiver!.flowLoopStack.push({ key, types: antecedentTypes });
+      receiver!.flowLoopStack = GoAppend(receiver!.flowLoopStack, { key, types: antecedentTypes });
       const saveFlowTypeCache = receiver!.flowTypeCache;
       receiver!.flowTypeCache = GoNilMap<GoPtr<Node>, GoPtr<Type>>();
       flowType = Checker_getTypeAtFlowNode(receiver, f, list!.Flow);

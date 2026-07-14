@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoMapIsNil, GoZeroPointer, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import * as slices from "../../../go/slices.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -977,7 +977,7 @@ export function Printer_getUniqueHelperName(receiver: GoPtr<Printer>, name: stri
  * }
  */
 export function Printer_emitIdentifierReference(receiver: GoPtr<Printer>, node: GoPtr<Identifier>): void {
-  if ((receiver!.externalHelpersModuleName !== undefined || receiver!.uniqueHelperNames !== undefined) &&
+  if ((receiver!.externalHelpersModuleName !== undefined || !GoMapIsNil(receiver!.uniqueHelperNames)) &&
     (EmitContext_EmitFlags(receiver!.emitContext, NodeDefault_AsNode(node)) & EFHelperName) !== 0) {
     if (receiver!.externalHelpersModuleName !== undefined) {
       const helper = NewPropertyAccessExpression(
@@ -991,7 +991,7 @@ export function Printer_emitIdentifierReference(receiver: GoPtr<Printer>, node: 
       Printer_emitPropertyAccessExpression(receiver, AsPropertyAccessExpression(helper));
       return;
     }
-    if (receiver!.uniqueHelperNames !== undefined) {
+    if (!GoMapIsNil(receiver!.uniqueHelperNames)) {
       const helperName = Printer_getUniqueHelperName(receiver, node!.Text);
       EmitContext_AssignCommentAndSourceMapRanges(receiver!.emitContext, helperName, NodeDefault_AsNode(node));
       node = AsIdentifier(helperName);
@@ -1023,7 +1023,7 @@ export function Printer_emitIdentifierReference(receiver: GoPtr<Printer>, node: 
  */
 export function Printer_emitBindingIdentifier(receiver: GoPtr<Printer>, node: GoPtr<Identifier>): void {
   let n = node;
-  if (receiver!.uniqueHelperNames !== undefined &&
+  if (!GoMapIsNil(receiver!.uniqueHelperNames) &&
     (EmitContext_EmitFlags(receiver!.emitContext, NodeDefault_AsNode(node)) & EFHelperName) !== 0) {
     // Substitute `__helper` with `__helper_1` if there is a conflict in an ES module.
     const helperName = Printer_getUniqueHelperName(receiver, node!.Text);

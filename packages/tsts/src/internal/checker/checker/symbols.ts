@@ -5587,9 +5587,7 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
   if ((node!.Flags & NodeFlagsOptionalChain) !== 0) {
     return Checker_checkElementAccessChain(receiver, node, checkMode);
   }
-  const result = Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullExpression(receiver, Node_Expression(node)), checkMode);
-  recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
-  return result;
+  return Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullExpression(receiver, Node_Expression(node)), checkMode);
 }
 
 /**
@@ -5606,7 +5604,6 @@ export function Checker_checkElementAccessChain(receiver: GoPtr<Checker>, node: 
   const exprType = Checker_checkExpression(receiver, Node_Expression(node));
   const nonOptionalType = Checker_getOptionalExpressionType(receiver, exprType, Node_Expression(node));
   const result = Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node)), checkMode);
-  recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
   return Checker_propagateOptionalTypeMarker(receiver, result, node, nonOptionalType !== exprType);
 }
 
@@ -5670,7 +5667,35 @@ export function Checker_checkElementAccessExpression(receiver: GoPtr<Checker>, n
       (assignmentTargetKind === AssignmentKindCompound ? AccessFlagsExpressionPosition : 0) |
       (Checker_isGenericObjectType(receiver, objectType) && !isThisTypeParameter(objectType) ? AccessFlagsNoIndexSignatures : 0)) as AccessFlags;
   const indexedAccessType = OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, objectType, effectiveIndexType, accessFlags, node, undefined), receiver!.errorType, GoZeroPointer<Type>, GoEqualStrict<GoPtr<Type>>);
-  return Checker_checkIndexedAccessIndexType(receiver, Checker_getFlowTypeOfAccessExpression(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), indexedAccessType, indexExpression, checkMode), node);
+  const result = Checker_checkIndexedAccessIndexType(receiver, Checker_getFlowTypeOfAccessExpression(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), indexedAccessType, indexExpression, checkMode), node);
+  recordExtensionCheckedElementAccessMapping(
+    receiver,
+    node,
+    Checker_getResolvedSymbolOrNil(receiver, node),
+    result,
+    getSelectedElementAccessDeclaration(receiver, objectType, effectiveIndexType),
+  );
+  return result;
+}
+
+function getSelectedElementAccessDeclaration(receiver: GoPtr<Checker>, objectType: GoPtr<Type>, indexType: GoPtr<Type>): GoPtr<Node> {
+  let indexInfo = Checker_getApplicableIndexInfo(receiver, objectType, indexType);
+  if (indexInfo === undefined) {
+    indexInfo = Checker_getIndexInfoOfType(receiver, objectType, receiver!.stringType);
+  }
+  if (indexInfo?.declaration !== undefined) {
+    return indexInfo.declaration;
+  }
+  if ((objectType!.objectFlags & ObjectFlagsMapped) !== 0) {
+    return Type_AsMappedType(objectType)!.declaration;
+  }
+  if ((objectType!.objectFlags & ObjectFlagsReference) !== 0) {
+    const target = Type_Target(objectType);
+    if (target !== undefined && (target!.objectFlags & ObjectFlagsMapped) !== 0) {
+      return Type_AsMappedType(target)!.declaration;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -6833,9 +6858,6 @@ export function Checker_checkPropertyAccessExpressionOrQualifiedName(receiver: G
     }
     if (indexInfo!.isReadonly && (IsAssignmentTarget(node) || isDeleteTarget(node))) {
       Checker_error(receiver, node, Index_signature_in_type_0_only_permits_reading, Checker_TypeToString(receiver, apparentType));
-    }
-    if (IsPropertyAccessExpression(node)) {
-      cacheIndexSignatureResolvedSymbol(receiver, node, apparentType, indexInfo);
     }
     propType = indexInfo!.valueType;
     if (receiver!.compilerOptions!.NoUncheckedIndexedAccess === TSTrue && getAssignmentTargetKind(node) !== AssignmentKindDefinite) {
@@ -17116,9 +17138,6 @@ export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, or
         return indexInfo!.valueType;
       }
       Checker_errorIfWritingToReadonlyIndex(receiver, indexInfo, objectType, accessExpression);
-      if ((accessFlags & AccessFlagsCacheSymbol) !== 0 && accessExpression !== undefined) {
-        cacheIndexSignatureResolvedSymbol(receiver, accessExpression, objectType, indexInfo);
-      }
       if (
         (accessFlags & AccessFlagsIncludeUndefined) !== 0 &&
         !(
@@ -17213,14 +17232,6 @@ export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, or
     return indexType;
   }
   return undefined;
-}
-
-function cacheIndexSignatureResolvedSymbol(receiver: GoPtr<Checker>, accessNode: GoPtr<Node>, objectType: GoPtr<Type>, indexInfo: GoPtr<IndexInfo>): void {
-  const indexSymbol = Checker_getApplicableIndexSymbol(receiver, objectType, indexInfo!.keyType);
-  if (indexSymbol === undefined) {
-    return;
-  }
-  LinkStore_Get(receiver!.symbolNodeLinks, accessNode, GoZeroSymbolNodeLinks, goNodePointerKey)!.v.resolvedSymbol = indexSymbol;
 }
 
 /**
