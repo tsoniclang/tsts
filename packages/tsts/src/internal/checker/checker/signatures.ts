@@ -2977,7 +2977,7 @@ export function Checker_resolveCall(receiver: GoPtr<Checker>, node: GoPtr<Node>,
     return receiver!.unknownSignature;
   }
   const args = Checker_getEffectiveCallArguments(receiver, node);
-  const isSingleNonGenericCandidate = candidates.length === 1 && (GoSliceLoad(candidates, 0, GoPointerValueOps<Signature>())!.typeParameters ?? []).length === 0;
+  const isSingleNonGenericCandidate = candidates.length === 1 && (GoSliceLoad(candidates, 0, GoPointerValueOps<Signature>())!.typeParameters ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())).length === 0;
   const argCheckMode = !isDecorator && !isSingleNonGenericCandidate && core.Some(args, (arg) => Checker_isContextSensitive(receiver, arg))
     ? CheckModeSkipContextSensitive
     : CheckModeNormal;
@@ -4079,7 +4079,7 @@ export function Checker_pickLongestCandidateSignature(receiver: GoPtr<Checker>, 
   const candidate = GoSliceLoad(candidates, bestIndex, GoPointerValueOps<Signature>());
   const typeParameters = candidate!.typeParameters;
   // Go: len(nil) == 0.
-  if ((typeParameters ?? []).length === 0) {
+  if ((typeParameters ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())).length === 0) {
     return candidate;
   }
   let typeArgumentNodes: GoSlice<GoPtr<Node>> = GoNilSlice();

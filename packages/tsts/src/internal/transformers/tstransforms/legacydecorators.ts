@@ -1574,7 +1574,7 @@ export function getDecoratorsOfParameters(node: GoPtr<Node>): GoSlice<GoSlice<Go
             decorators.push([]);
           }
         }
-        GoSliceStore(decorators, i, Node_Decorators(p) ?? [], GoSliceValueOps<GoPtr<Node>>());
+        GoSliceStore(decorators, i, Node_Decorators(p) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()), GoSliceValueOps<GoPtr<Node>>());
       }
     }
   }

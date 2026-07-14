@@ -2073,7 +2073,7 @@ export function NodeBuilderImpl_createAccessFromSymbolChain(receiver: GoPtr<Node
   }
   if (symbolName.length === 0) {
     let name: GoPtr<Node>;
-    for (const declaration of symbol_!.Declarations ?? []) {
+    for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
       name = GetNameOfDeclaration(declaration);
       if (name !== undefined) {
         break;
