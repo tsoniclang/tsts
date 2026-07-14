@@ -1,6 +1,6 @@
 // Shared TS-side signature machinery for the porter signature checker.
 //
-// Parses TypeScript with TSTS's OWN compiled parser (self-hosting), and turns a
+// Parses TypeScript with the exact pinned TS-Go parser, and turns a
 // declaration's types into a CANONICAL STRUCTURED DESCRIPTOR — never raw text —
 // so that equivalent spellings collapse:
 //   - Array<T> ≡ T[]
@@ -12,7 +12,7 @@
 // Both the actual (.ts file) side and the expected (Go-rendered) side run through
 // these same functions, so the comparison is apples-to-apples.
 
-export { assertDistFresh, loadParser, parseSource } from "./parser-runtime.mjs";
+export { loadParser, parseSource } from "./parser-runtime.mjs";
 export {
   sliceText, identText, isExported, keywordOf,
   buildImportMap, buildLocalTypeNames, resolveModuleId,

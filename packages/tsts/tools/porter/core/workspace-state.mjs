@@ -17,7 +17,7 @@ import { buildLargeFileSplitStatus } from "./large-files.mjs";
 import { buildLocalOverrideStatus } from "./local-overrides.mjs";
 import { resolveRepo } from "./runtime.mjs";
 import { buildSchemaSourceSyncStatus, buildStatus } from "./status.mjs";
-import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
+import { scanTsUnits } from "./ts-units.mjs";
 import { notRunGoValueOperationGeneratedArtifactStatus } from "./value-operations/generated-artifacts.mjs";
 
 const preparedWorkspaceStates = new WeakSet();
@@ -30,7 +30,7 @@ export async function preparePorterWorkspaceState(input) {
     throw new Error(`Porter workspace unicodeMode must be 'metadata' or 'deep'; got ${JSON.stringify(unicodeMode)}`);
   }
 
-  const tsUnits = await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
+  const tsUnits = await scanTsUnits(resolveRepo(config.tsRoot));
   const externalFacadeCatalog = await prepareExternalFacadeStorageCatalog(config, snapshot, repositoryRoot);
   const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot, externalFacadeCatalog);
   const astGeneratedArtifacts = buildAstGeneratedArtifactStatus(config, snapshot.gitRevision);

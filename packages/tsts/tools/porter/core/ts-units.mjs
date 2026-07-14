@@ -5,20 +5,12 @@ import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { parseTypeScriptModule } from "../ts-extractor/module-index.mjs";
 import { declarationName } from "../ts-extractor/declaration-metadata.mjs";
 import { loadParser } from "../ts-extractor/parser-runtime.mjs";
-import { loadProfile } from "../ts-extractor/profile.mjs";
 import { repoRoot, walk } from "./runtime.mjs";
 
-export function parserOptionsForConfig(config, root = repoRoot) {
-  const parser = loadProfile(config).parser;
-  return {
-    distRoot: path.join(root, parser.distRoot),
-    freshnessSrcDirs: parser.freshnessSrcDirs.map((directory) => path.join(root, directory)),
-  };
-}
-
 export async function scanTsUnits(root, options = {}) {
+  requireScanOptions(options);
   if (!existsSync(root)) return { fileCount: 0, files: [], units: [] };
-  const api = options.api ?? await loadParser(options.parser);
+  const api = options.api ?? await loadParser();
   const files = walk(root).filter((file) => file.endsWith(".ts")).sort(compareText);
   const fileReports = [];
   const units = [];
@@ -53,6 +45,13 @@ export async function scanTsUnits(root, options = {}) {
     fileReports.push({ path: relativeFile, metadataCount: module.metadata.length });
   }
   return { fileCount: files.length, files: fileReports, units };
+}
+
+function requireScanOptions(value) {
+  if (value === null || typeof value !== "object" || Array.isArray(value) ||
+      Object.keys(value).some((key) => key !== "api")) {
+    throw new Error("scanTsUnits options may contain only an exact parser API");
+  }
 }
 
 export function validateTsgoUnitMetadata(metadata) {

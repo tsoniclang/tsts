@@ -140,7 +140,7 @@ test("authored TypeScript rest parameters remain native rest parameters", async 
     valueEnvironment: new Map(),
   };
   const descriptor = declarationDescriptor(api, sourceFile.Statements.Nodes[0], context);
-  assert.equal(descriptor.signatures[0].params[0].rest, true);
-  assert.deepEqual(descriptor.signatures[0].params[0].type, { t: "array", element: { t: "kw", kw: "string" } });
+  assert.equal(descriptor.params[0].rest, true);
+  assert.deepEqual(descriptor.params[0].type, { t: "array", element: { t: "kw", kw: "string" } });
   assert.equal(JSON.stringify(descriptor).includes("forbiddenCallBody"), false);
 });

@@ -1,5 +1,3 @@
-import { join } from "node:path";
-
 import { buildGeneratedTypeDeclarationOwnership } from "../generated-declaration-ownership.mjs";
 import { loadParser } from "../ts-extractor/ast-signatures.mjs";
 import { loadConventions } from "../ts-extractor/conventions.mjs";
@@ -24,10 +22,7 @@ export async function prepareDeclarationAuditPrerequisites(workspaceState) {
   if (issues.length > 0) return finalize({ state: "blocked", issues, workspace });
 
   const profile = loadProfile(workspace.config);
-  const api = await loadParser({
-    distRoot: join(workspace.repositoryRoot, profile.parser.distRoot),
-    freshnessSrcDirs: profile.parser.freshnessSrcDirs.map((directory) => join(workspace.repositoryRoot, directory)),
-  });
+  const api = await loadParser();
   const moduleIndex = loadTypeScriptModuleIndex(api, workspace.repositoryRoot, workspace.config.tsRoot);
   const generatedTypeOwnership = buildGeneratedTypeDeclarationOwnership(workspace.config, workspace.snapshot, moduleIndex);
   const activeIds = new Set(workspace.status.rows

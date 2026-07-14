@@ -13,19 +13,14 @@ import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
 import { loadParser } from "../ts-extractor/ast-signatures.mjs";
 import { buildIndexedModuleValueEnvironments, extractIndexedTypeExportDescriptor } from "../ts-extractor/extract-signatures.mjs";
 import { indexTypeScriptModuleSources, parseTypeScriptModule } from "../ts-extractor/module-index.mjs";
-import { loadProfile } from "../ts-extractor/profile.mjs";
 import { assertSourceModuleId } from "../ts-extractor/source-structure.mjs";
 import { lstatSync, readFileSync, realpathSync } from "node:fs";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import { externalTypeScriptDeclarationHash } from "./external-facade-runtime-adaptation.mjs";
 import { canonicalSchemaValue } from "./semantic-variants.mjs";
 
 export async function prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot) {
-  const profile = loadProfile(config);
-  const api = await loadParser({
-    distRoot: join(repoRoot, profile.parser.distRoot),
-    freshnessSrcDirs: profile.parser.freshnessSrcDirs.map((directory) => join(repoRoot, directory)),
-  });
+  const api = await loadParser();
   const plan = buildExternalFacadeStoragePlan(config, snapshot);
   const moduleRoot = requireExactTypeScriptModuleRoot(config.tsRoot);
   const authoredSources = collectAuthoredFacadeModuleSources(config, repoRoot, moduleRoot);

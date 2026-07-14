@@ -103,11 +103,13 @@ export type Box<T extends { café: string }> = keyof T;
   assert.deepEqual(descriptor.type, { t: "operator", operator: "keyof", type: { t: "tp", depth: 0, index: 0 } });
 });
 
-test("parser instances are cached by dist root, not globally", async () => {
+test("parser identity is one pinned TS-Go contract and rejects overrides", async () => {
   const api = parser;
   assert.equal(await loadParser(), api);
+  assert.equal(api.parserIdentity.kind, "pinned-tsgo");
+  assert.match(api.parserIdentity.revision, /^[0-9a-f]{40}$/);
   await assert.rejects(
     loadParser({ distRoot: "/nonexistent/tsts-parser-root-for-cache-contract" }),
-    /TS parser dist not built/,
+    /selection is fixed by the pinned TS-Go source contract/,
   );
 });

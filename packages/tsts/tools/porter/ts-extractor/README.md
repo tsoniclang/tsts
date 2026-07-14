@@ -122,7 +122,6 @@ All Go→TS mapping knowledge is config, defaulting to the tsts profile in
   "primitives":{ "keyword": { "string": "string", "any": "unknown" }, "core": { "int": "int", "uint64": "ulong" }, "compat": { "error": "GoError" } },
   "facadeTemplate": "packages/tsts/src/go/{importPath}.ts",
   "annotation": { "tag": "@tsgo-unit", "idSeparator": "::", "methodNameJoin": "_" },
-  "parser": { "distRoot": "packages/tsts/dist/src/internal", "freshnessSrcDirs": ["…/parser", "…/ast", "…/scanner", "…/core"] },
 
   // Exact source-constraint spellings only:
   "conventions": {
@@ -136,6 +135,10 @@ All Go→TS mapping knowledge is config, defaulting to the tsts profile in
   }
 }
 ```
+
+Parser selection is deliberately not configurable. Porter parses declarations
+through the exact TS-Go revision pinned by `source-pin.json`; neither the
+current TSTS build nor a project-supplied parser is an accepted evidence source.
 
 Reviewed declaration relationships do not live in `signatureCheck`. Exact
 Go-to-TypeScript storage, duplicate TypeScript type identity, and ambient

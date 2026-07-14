@@ -197,7 +197,11 @@ export class AstSchema {
         return { kindNames: [t.slice("SyntaxKind.".length)], isTypeParameter: false };
       }
     }
-    return { kindNames: [this.syntaxKindName(nodeName)], isTypeParameter: false };
+    const declaredKind = def.kind;
+    return {
+      kindNames: Array.isArray(declaredKind) ? [...declaredKind] : [this.syntaxKindName(nodeName)],
+      isTypeParameter: false,
+    };
   }
 
   isMultiKind(nodeName) {

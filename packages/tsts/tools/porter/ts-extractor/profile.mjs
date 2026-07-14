@@ -2,23 +2,13 @@
 // stays generic and a different Go->TS port project runs by editing config only.
 // `config.signatureCheck` deep-overrides these defaults; absent => tsts behavior.
 //
-// (The one code-level extension point that is NOT config is the parser AST shape:
-// the actual side reads the TSTS Go-port AST. A project using a different TS
-// parser supplies a parser adapter. Everything else below is config.)
+// Parser selection is not project mapping knowledge. Porter always reads the
+// exact pinned TS-Go declaration AST through its checked bridge.
 
 import { loadConventions } from "./conventions.mjs";
 
 export const TSTS_PROFILE = {
   annotation: { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" },
-  parser: {
-    distRoot: "packages/tsts/dist/src/internal",
-    freshnessSrcDirs: [
-      "packages/tsts/src/internal/parser",
-      "packages/tsts/src/internal/ast",
-      "packages/tsts/src/internal/scanner",
-      "packages/tsts/src/internal/core",
-    ],
-  },
   modules: {
     core: "packages/tsts/src/go/scalars.ts",
     compat: "packages/tsts/src/go/compat.ts",
@@ -71,7 +61,6 @@ export function loadProfile(config) {
   requireKnownKeys(override, new Set(Object.keys(TSTS_PROFILE)), "signatureCheck");
   for (const [key, allowed] of [
     ["annotation", ["tag", "idSeparator", "methodNameJoin"]],
-    ["parser", ["distRoot", "freshnessSrcDirs"]],
     ["modules", ["core", "compat"]],
     ["bridge", ["nilable", "pointer", "ref", "pointerConstraint", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]],
     ["primitives", ["keyword", "core", "compat"]],
@@ -97,9 +86,6 @@ function validateProfile(profile) {
   requireStringRecord(profile.annotation, "signatureCheck.annotation", ["tag", "idSeparator", "methodNameJoin"]);
   requireStringRecord(profile.modules, "signatureCheck.modules", ["core", "compat"]);
   requireStringRecord(profile.bridge, "signatureCheck.bridge", ["nilable", "pointer", "ref", "pointerConstraint", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]);
-  requirePlainRecord(profile.parser, "signatureCheck.parser");
-  requireNonEmptyString(profile.parser.distRoot, "signatureCheck.parser.distRoot");
-  requireStringArray(profile.parser.freshnessSrcDirs, "signatureCheck.parser.freshnessSrcDirs");
   requirePlainRecord(profile.primitives, "signatureCheck.primitives");
   for (const key of ["keyword", "core", "compat"]) requireStringRecord(profile.primitives[key], `signatureCheck.primitives.${key}`);
   requirePlainRecord(profile.constantRepresentations, "signatureCheck.constantRepresentations");

@@ -9,7 +9,6 @@ import {
   scanTsUnits,
 } from "../porter.mjs";
 import { emptyCounts, testSigHash } from "./helpers.mjs";
-import { parserOptionsForConfig } from "../core/ts-units.mjs";
 
 const removedBodySemanticFields = [
   "exceptionSafeCleanup",
@@ -20,16 +19,8 @@ const removedBodySemanticFields = [
   "returnSemantics",
 ];
 
-test("scanTsUnits parser options come from the signature profile", () => {
-  const options = parserOptionsForConfig({
-    signatureCheck: {
-      parser: { distRoot: "custom/parser-dist", freshnessSrcDirs: ["custom/parser-src"] },
-    },
-  }, "/repo");
-  assert.deepEqual(options, {
-    distRoot: "/repo/custom/parser-dist",
-    freshnessSrcDirs: ["/repo/custom/parser-src"],
-  });
+test("scanTsUnits rejects parser selection overrides", async () => {
+  await assert.rejects(scanTsUnits("/nonexistent", { parser: {} }), /may contain only an exact parser API/);
 });
 
 test("scanTsUnits records declaration metadata without interpreting TypeScript bodies", async () => {
