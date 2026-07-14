@@ -6,7 +6,7 @@ import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::type::SyncSet","kind":"type","status":"implemented","sigHash":"570927ea2bf0e4da3a3ad7fdaadd4bd3b7b32ccbc5b750adb2dd0d43ce00e151"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::type::SyncSet","kind":"type","status":"implemented","sigHash":"0e2e94afb12a20e228869161c6096511665888582db035691c74d3203f2f7238"}
  *
  * Go source:
  * SyncSet[T comparable] struct {
@@ -46,7 +46,7 @@ export function SyncSet_Add<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.AddIfAbsent","kind":"method","status":"implemented","sigHash":"bb712274c5a0ac98bda050eecb8986c92464f878ee34bb7ca5c95040b0a1a1f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.AddIfAbsent","kind":"method","status":"implemented","sigHash":"6bb15d2d50caca577bcdd92d53f0e4a3576d9e842f924c037facb0b1537cda96"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic synchronized-set load-or-store receives the exact static Go map-key descriptor for backing allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
@@ -90,7 +90,7 @@ export function SyncSet_Range<T extends GoComparable>(receiver: GoPtr<SyncSet<T>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Size","kind":"method","status":"implemented","sigHash":"1dd97f7397ceec060d9f095862765d569473855c18b14f26007b992f4abc89a6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Size","kind":"method","status":"implemented","sigHash":"81924d4b4fa87f98d2e721818428f0fc625177edc28eeeead75066261199dc42"}
  *
  * Go source:
  * func (s *SyncSet[T]) Size() int {

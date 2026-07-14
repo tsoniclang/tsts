@@ -1,7 +1,7 @@
 import type { int } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scriptkind.go::type::ScriptKind","kind":"type","status":"implemented","sigHash":"6196215e249fe0b53ed41210f4585a3428de14e48e74b04eaadcbe1af1380453"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scriptkind.go::type::ScriptKind","kind":"type","status":"implemented","sigHash":"b6cd3259176326c4360a3df316c38dc5c58bc7c3cc365ee9706aa6cd6825f0fe"}
  *
  * Go source:
  * ScriptKind int32
@@ -9,7 +9,7 @@ import type { int } from "../../go/scalars.js";
 export type ScriptKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scriptkind.go::constGroup::ScriptKindUnknown+ScriptKindJS+ScriptKindJSX+ScriptKindTS+ScriptKindTSX+ScriptKindExternal+ScriptKindJSON+ScriptKindDeferred","kind":"constGroup","status":"implemented","sigHash":"5b74fa88d283f74cba8af3a029f9affb34b9e33508ed26c3d1709a6814fda68c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scriptkind.go::constGroup::ScriptKindUnknown+ScriptKindJS+ScriptKindJSX+ScriptKindTS+ScriptKindTSX+ScriptKindExternal+ScriptKindJSON+ScriptKindDeferred","kind":"constGroup","status":"implemented","sigHash":"f723d3c7e82a533974b4430b44f7741f4c7ffb03500aa621501d9854a76a691c"}
  *
  * Go source:
  * const (

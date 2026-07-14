@@ -7,7 +7,7 @@ import * as slices from "../../go/slices.js";
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::type::MultiMap","kind":"type","status":"implemented","sigHash":"955c1a2ed6ee58a00a33eb9d83a514b829e17934a40779d6671c3715322c6279"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::type::MultiMap","kind":"type","status":"implemented","sigHash":"5fa746f9ad8184af45af12e61f174c3763b0f6e232c9d3cf29c17b36e4bd2f94"}
  *
  * Go source:
  * MultiMap[K comparable, V comparable] struct {

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { bool } from "../../../go/scalars.js";
-import type { GoError } from "../../../go/compat.js";
+import type { GoError, GoInterface } from "../../../go/compat.js";
 import { FromMap } from "../vfstest/vfstest.js";
 import { Wrap } from "../vfsmock/wrapper.js";
 import {
@@ -160,7 +160,7 @@ test("Realpath and Stat are cached, while mutation and read operations pass thro
 test("WalkDir and WriteFile pass through and preserve arguments", () => {
   const underlying = createMockFS();
   const cached = From(FSMock_as_vfs_FS(underlying));
-  const walkFn: WalkDirFunc = (_path: string, _info: DirEntry, _err: GoError): GoError => undefined;
+  const walkFn: WalkDirFunc = (_path: string, _info: GoInterface<DirEntry>, _err: GoError): GoError => undefined;
 
   FS_WalkDir(cached, "/some/path", walkFn);
   FS_WalkDir(cached, "/some/path", walkFn);

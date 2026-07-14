@@ -16,7 +16,7 @@ const byteLenOf = (s: string): int => utf8Encoder.encode(s).length;
 const byteAtOf = (s: string, i: int): byte => utf8Encoder.encode(s)[i]!;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::type::Mapping","kind":"type","status":"implemented","sigHash":"bd841521f01c848dc826ea94cec7f3ffecf995df4d0214f41418f6f021b944e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::type::Mapping","kind":"type","status":"implemented","sigHash":"a4dc4d99ab173be3ab1d79b138f717b599478ebe163bc0b01b918bd4ab044eb9"}
  *
  * Go source:
  * Mapping struct {
@@ -90,7 +90,7 @@ export function Mapping_IsSourceMapping(receiver: GoPtr<Mapping>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::constGroup::MissingSource+MissingName+MissingLineOrColumn+MissingUTF16Column","kind":"constGroup","status":"implemented","sigHash":"62c89211d5982e97d9e61d4d1ecbd8604e535ef2dde3259b49e17ef62f2f11a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::constGroup::MissingSource+MissingName+MissingLineOrColumn+MissingUTF16Column","kind":"constGroup","status":"implemented","sigHash":"82675f0e59854ad01f46e2ae3b192a9e2f9257529e7c759c34b768105b41c3ff"}
  *
  * Go source:
  * const (
@@ -106,7 +106,7 @@ export const MissingLineOrColumn: int = -1;
 export const MissingUTF16Column: UTF16Offset = -1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::type::MappingsDecoder","kind":"type","status":"implemented","sigHash":"6b80851acc4c1c102e5b85dbba34bfce95f220f38579502e12509f8ab28852d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::type::MappingsDecoder","kind":"type","status":"implemented","sigHash":"ede3b585a4c58ace9bcedd3930b337ed3ffc5d9b8d4ed68cbdd1d2a6eebf56fe"}
  *
  * Go source:
  * MappingsDecoder struct {

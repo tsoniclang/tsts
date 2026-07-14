@@ -39,7 +39,7 @@ import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/visitor.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/taggedtemplate.go::varGroup::newlineNormalizer","kind":"varGroup","status":"implemented","sigHash":"dce52d704baa49e164fda5db876f7ff1b17c67dfbc8fe351b6aa931d6376d7ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/taggedtemplate.go::varGroup::newlineNormalizer","kind":"varGroup","status":"implemented","sigHash":"8f771ccd1ed2f389ba7ad380db228b60314f93be7995e1b3c0b8d394b470864a"}
  *
  * Go source:
  * var newlineNormalizer = strings.NewReplacer("\r\n", "\n", "\r", "\n")
@@ -47,7 +47,7 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/vis
 export let newlineNormalizer: GoPtr<strings.Replacer> = strings.NewReplacer("\r\n", "\n", "\r", "\n");
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/taggedtemplate.go::type::taggedTemplateTransformer","kind":"type","status":"implemented","sigHash":"033c071f62d37bfdec703b2b6c920f3c638ebc6808bef284e00b7c51ec6f0b5a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/taggedtemplate.go::type::taggedTemplateTransformer","kind":"type","status":"implemented","sigHash":"168cf1ebeee90001eec747e1dd2e39dcfc59ebdf19423f85ed3f09dc355b1c6c"}
  *
  * Go source:
  * taggedTemplateTransformer struct {

@@ -5,7 +5,7 @@ import type { TypeParameterDeclaration } from "../ast/generated/data.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeKind","kind":"type","status":"implemented","sigHash":"5f6d05dddcd7c40b06567b6639fcc9e2653dcc7ba9a670dd5bc328b039640dea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeKind","kind":"type","status":"implemented","sigHash":"5e0117670ed21a396d4ef334e19781bf70c372e9558cf5ee02dd9a427e6bd841"}
  *
  * Go source:
  * PseudoTypeKind int16
@@ -13,7 +13,7 @@ import type { GoInterface } from "../../go/compat.js";
 export type PseudoTypeKind = short;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::constGroup::PseudoTypeKindDirect+PseudoTypeKindInferred+PseudoTypeKindNoResult+PseudoTypeKindMaybeConstLocation+PseudoTypeKindUnion+PseudoTypeKindUndefined+PseudoTypeKindNull+PseudoTypeKindAny+PseudoTypeKindString+PseudoTypeKindNumber+PseudoTypeKindBigInt+PseudoTypeKindBoolean+PseudoTypeKindFalse+PseudoTypeKindTrue+PseudoTypeKindSingleCallSignature+PseudoTypeKindTuple+PseudoTypeKindObjectLiteral+PseudoTypeKindStringLiteral+PseudoTypeKindNumericLiteral+PseudoTypeKindBigIntLiteral","kind":"constGroup","status":"implemented","sigHash":"c4a11793330828765f8261ae785733cbfb1ae40dd7050d5f640d136c119af48c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::constGroup::PseudoTypeKindDirect+PseudoTypeKindInferred+PseudoTypeKindNoResult+PseudoTypeKindMaybeConstLocation+PseudoTypeKindUnion+PseudoTypeKindUndefined+PseudoTypeKindNull+PseudoTypeKindAny+PseudoTypeKindString+PseudoTypeKindNumber+PseudoTypeKindBigInt+PseudoTypeKindBoolean+PseudoTypeKindFalse+PseudoTypeKindTrue+PseudoTypeKindSingleCallSignature+PseudoTypeKindTuple+PseudoTypeKindObjectLiteral+PseudoTypeKindStringLiteral+PseudoTypeKindNumericLiteral+PseudoTypeKindBigIntLiteral","kind":"constGroup","status":"implemented","sigHash":"969a994a2af9435c20bcd90f7e7640d4f32b17053e0aca21a8ca2edaf344bd2e"}
  *
  * Go source:
  * const (
@@ -61,7 +61,7 @@ export const PseudoTypeKindNumericLiteral: PseudoTypeKind = 18 as short;
 export const PseudoTypeKindBigIntLiteral: PseudoTypeKind = 19 as short;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoType","kind":"type","status":"implemented","sigHash":"6922048c7b65ea28cab3fcfbd9735bdbb4e502e1fced0f0fa92e135f3da7c2b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoType","kind":"type","status":"implemented","sigHash":"13a346d4a802f947c3798f16bdb2c89ec651d84c7266a5cf11f3f60d95250741"}
  *
  * Go source:
  * PseudoType struct {
@@ -93,7 +93,7 @@ export function newPseudoType(kind: PseudoTypeKind, data: GoInterface<pseudoType
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::pseudoTypeData","kind":"type","status":"implemented","sigHash":"364e55fe8444f9e686ba5a9261d288f7640824100e9fbf5e34b94d2f23645c7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::pseudoTypeData","kind":"type","status":"implemented","sigHash":"1cd120020bff59dbedb7d39329bdb4a5e9092fc363e0a2c8610eed5715d98bf5"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic pseudo-type dispatch without a side table or wrapper object.","goSignatureHash":"d27167a5c55e4e50d30b7f9a84b0b554acbf7231271959e73f01c8251eecedbb","tsSignatureHash":"2a554099e6ecb17a250610734ea99e020f3cc9e6f5bb14b29ecceafaf2fb5530"}
  *
  * Go source:
@@ -106,7 +106,7 @@ export interface pseudoTypeData extends GoInterfaceValue<unknown> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeDefault","kind":"type","status":"implemented","sigHash":"971328e16f1aebc78356a48d9a86815f135e5454de8c2f6d190b284e38b01e99"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeDefault","kind":"type","status":"implemented","sigHash":"f1e63826887b8865eea3a692b0b41860923b2d80c1ae61eb96afb77b304badd8"}
  *
  * Go source:
  * PseudoTypeDefault struct {
@@ -128,7 +128,7 @@ export function PseudoTypeDefault_AsPseudoType(receiver: GoPtr<PseudoTypeDefault
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeBase","kind":"type","status":"implemented","sigHash":"af3b0db064728f381648ac63897561196295370113016748a253bcd0340f2f86"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeBase","kind":"type","status":"implemented","sigHash":"037d05f16c567001cc1e5a0589f59df9a9148716928c319fb21532e8a635fb77"}
  *
  * Go source:
  * PseudoTypeBase struct {
@@ -166,7 +166,7 @@ abstract class PseudoTypeBaseEmbeddedData<TReceiver> implements pseudoTypeData {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::varGroup::PseudoTypeUndefined+PseudoTypeNull+PseudoTypeAny+PseudoTypeString+PseudoTypeNumber+PseudoTypeBigInt+PseudoTypeBoolean+PseudoTypeFalse+PseudoTypeTrue","kind":"varGroup","status":"implemented","sigHash":"4791d024d013554a64e9e6e2f6ca43e65339de790b7773b9988cab3e870bcec9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::varGroup::PseudoTypeUndefined+PseudoTypeNull+PseudoTypeAny+PseudoTypeString+PseudoTypeNumber+PseudoTypeBigInt+PseudoTypeBoolean+PseudoTypeFalse+PseudoTypeTrue","kind":"varGroup","status":"implemented","sigHash":"8ad68a56e30a72585cf5d5fcfc296d649f3615311adf0834334867aa31902c44"}
  *
  * Go source:
  * var (
@@ -192,7 +192,7 @@ export let PseudoTypeFalse: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindFals
 export let PseudoTypeTrue: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindTrue, new PseudoTypeBaseData());
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeDirect","kind":"type","status":"implemented","sigHash":"ae16d0b37acd2e0f8a650ca2db5b12d8652bf41bcaafbaaf370846f35d6008cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeDirect","kind":"type","status":"implemented","sigHash":"1605673114a3a5119938a5becc9a84a8fe958d33a02f8bb9b24bcf17bd0c5768"}
  *
  * Go source:
  * PseudoTypeDirect struct {
@@ -242,7 +242,7 @@ export function PseudoType_AsPseudoTypeDirect(receiver: GoPtr<PseudoType>): GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeInferred","kind":"type","status":"implemented","sigHash":"37e28ee286ee7d687a0ff23130871f0e7c04c9c79e37cfa2fe90cd5032dbc1e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeInferred","kind":"type","status":"implemented","sigHash":"8f6e78e38102dc0b42e7ca8814462b9541dab0f1c4aab25d1c2644a0dca60f9b"}
  *
  * Go source:
  * PseudoTypeInferred struct {
@@ -308,7 +308,7 @@ export function PseudoType_AsPseudoTypeInferred(receiver: GoPtr<PseudoType>): Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeNoResult","kind":"type","status":"implemented","sigHash":"c51fb71c7f2b31bca6147da3668e9c473fd04b311987dc060391e61a498eb57a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeNoResult","kind":"type","status":"implemented","sigHash":"4c146bb1507b20d73703e1d589db21dd1a38aa6cc6d2e45680cc83b452cf20bc"}
  *
  * Go source:
  * PseudoTypeNoResult struct {
@@ -358,7 +358,7 @@ export function PseudoType_AsPseudoTypeNoResult(receiver: GoPtr<PseudoType>): Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeMaybeConstLocation","kind":"type","status":"implemented","sigHash":"4de0021f15c651d22f0eff636df557dffff1083155899167cb9c8d2e2c0b068d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeMaybeConstLocation","kind":"type","status":"implemented","sigHash":"64042e0ffa56ad3745214a05696d1ef7c2845c21ed3d21458f995ceb6258d637"}
  *
  * Go source:
  * PseudoTypeMaybeConstLocation struct {
@@ -418,7 +418,7 @@ export function PseudoType_AsPseudoTypeMaybeConstLocation(receiver: GoPtr<Pseudo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeUnion","kind":"type","status":"implemented","sigHash":"0cd318d18c24a1b756ef3fab59341dad85609ca775ed87ccb4263325d42ec96e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeUnion","kind":"type","status":"implemented","sigHash":"117b65c5c6e44dbd460b6d14df45e4d2781bc90eed1368443b0a2b649be0f4b4"}
  *
  * Go source:
  * PseudoTypeUnion struct {
@@ -470,7 +470,7 @@ export function PseudoType_AsPseudoTypeUnion(receiver: GoPtr<PseudoType>): GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoParameter","kind":"type","status":"implemented","sigHash":"03a272d502e0e1f4907d96573da9916a949a08d89f9e71b35210044a907c4757"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoParameter","kind":"type","status":"implemented","sigHash":"fd76f136a736b61bfa1830bfec6933cbc2b446081db26a240c619d56dfc5b54d"}
  *
  * Go source:
  * PseudoParameter struct {
@@ -505,7 +505,7 @@ export function NewPseudoParameter(isRest: bool, name: GoPtr<Node>, isOptional: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeSingleCallSignature","kind":"type","status":"implemented","sigHash":"775f2de4e29f116615fc1c1c171970c39b83da346e1616266b17f7fc4eba9d95"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeSingleCallSignature","kind":"type","status":"implemented","sigHash":"3ce2396888836fbe382731b72b91748a3ff04de62a654eea5385b50fc2f599ca"}
  *
  * Go source:
  * PseudoTypeSingleCallSignature struct {
@@ -582,7 +582,7 @@ export function PseudoType_AsPseudoTypeSingleCallSignature(receiver: GoPtr<Pseud
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeTuple","kind":"type","status":"implemented","sigHash":"bbb542b2b6b3dfd068ad4f26267478d9f3c1e2733da7853563f661c9a789ee41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeTuple","kind":"type","status":"implemented","sigHash":"90c646c52369ae3856d9f7194a347939e36f211ac782fb5e87939c28031fd27a"}
  *
  * Go source:
  * PseudoTypeTuple struct {
@@ -636,7 +636,7 @@ export function PseudoType_AsPseudoTypeTuple(receiver: GoPtr<PseudoType>): GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoObjectElement","kind":"type","status":"implemented","sigHash":"3be03c8acb395c988719460d904575ff7f8360d6055d238b42f6e692a15894fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoObjectElement","kind":"type","status":"implemented","sigHash":"4153dfadbf73362865e4678a9a46658660250a48ef649604e6963c42525076b8"}
  *
  * Go source:
  * PseudoObjectElement struct {
@@ -694,7 +694,7 @@ export function PseudoObjectElement_Signature(receiver: GoPtr<PseudoObjectElemen
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoObjectElementKind","kind":"type","status":"implemented","sigHash":"75fa05afc2d3767bfcc7613cbe93a77242d6c585729db45c13222b50689c0052"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoObjectElementKind","kind":"type","status":"implemented","sigHash":"0fa05fdb4aeebda24017a3a78b0b5205767da699aba2e87d218db8d41b02890b"}
  *
  * Go source:
  * PseudoObjectElementKind int8
@@ -702,7 +702,7 @@ export function PseudoObjectElement_Signature(receiver: GoPtr<PseudoObjectElemen
 export type PseudoObjectElementKind = sbyte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::constGroup::PseudoObjectElementKindMethod+PseudoObjectElementKindPropertyAssignment+PseudoObjectElementKindSetAccessor+PseudoObjectElementKindGetAccessor","kind":"constGroup","status":"implemented","sigHash":"11b5fed49449b1c3353cd98a149d3acb9c29087bcf3a787152ab4c66ff197323"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::constGroup::PseudoObjectElementKindMethod+PseudoObjectElementKindPropertyAssignment+PseudoObjectElementKindSetAccessor+PseudoObjectElementKindGetAccessor","kind":"constGroup","status":"implemented","sigHash":"3a27a02a6f1335180a6997400ebfda63cbe9a0183c4d1ce45b6dd83e89799754"}
  *
  * Go source:
  * const (
@@ -718,7 +718,7 @@ export const PseudoObjectElementKindSetAccessor: PseudoObjectElementKind = 2 as 
 export const PseudoObjectElementKindGetAccessor: PseudoObjectElementKind = 3 as sbyte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::pseudoObjectElementData","kind":"type","status":"implemented","sigHash":"84e8709d8b6cabad9571818ae09e4abde1d5cb6e5f91f2e02156cfbb01d1e59d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::pseudoObjectElementData","kind":"type","status":"implemented","sigHash":"229775d39ea08f6de3e31abb27d1516b249b0d4cc805c244b676526cf84cf8b3"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic pseudo-element dispatch without a side table or wrapper object.","goSignatureHash":"e55c690f70723b9e13dfafd09eff15e50e59e11b3130d686f4c10920469ed4ef","tsSignatureHash":"7c2b05b2130b39a5b696d8991c9fd732753977dd117aeb47246ec533cc53c6cc"}
  *
  * Go source:
@@ -777,7 +777,7 @@ export function newPseudoObjectElement(kind: PseudoObjectElementKind, name: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoObjectMethod","kind":"type","status":"implemented","sigHash":"d0fe35a7f1a42d882d60e8b9c18733821e8d8a5a7fadce7e10f71a2cfd912166"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoObjectMethod","kind":"type","status":"implemented","sigHash":"63ef8f7bddd89c7996cdd5aeb98a7121072de02865103788db0936b96fdf5de0"}
  *
  * Go source:
  * PseudoObjectMethod struct {
@@ -856,7 +856,7 @@ export function PseudoObjectElement_AsPseudoObjectMethod(receiver: GoPtr<PseudoO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoPropertyAssignment","kind":"type","status":"implemented","sigHash":"d0cdd2f2d04e8482935967a49d0964636327a6e29bf586079a237a732163ef2a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoPropertyAssignment","kind":"type","status":"implemented","sigHash":"0bb016d7b3a582bff44e4777e81fbf94f54b50ab5f824c1bed0a29a7d2b5a5d0"}
  *
  * Go source:
  * PseudoPropertyAssignment struct {
@@ -920,7 +920,7 @@ export function PseudoObjectElement_AsPseudoPropertyAssignment(receiver: GoPtr<P
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoSetAccessor","kind":"type","status":"implemented","sigHash":"7f3dd71422cb6536e625c46cbf64c0a616d2d7942d9e679a0b26a488d9329ba2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoSetAccessor","kind":"type","status":"implemented","sigHash":"b5f44b6e0a864c36a58e8d3ebcbcc86804c53ceb0895e782fb66c1535c584aa5"}
  *
  * Go source:
  * PseudoSetAccessor struct {
@@ -984,7 +984,7 @@ export function PseudoObjectElement_AsPseudoSetAccessor(receiver: GoPtr<PseudoOb
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoGetAccessor","kind":"type","status":"implemented","sigHash":"d4f320ef34206fcfacebead68ec7ab319c1bc26ee7f0146aca5392dce97d9805"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoGetAccessor","kind":"type","status":"implemented","sigHash":"7f0a57dcb2a4e5d3b2985ef8a5a6613426365ac7d9719541722951117ff52547"}
  *
  * Go source:
  * PseudoGetAccessor struct {
@@ -1048,7 +1048,7 @@ export function PseudoObjectElement_AsPseudoGetAccessor(receiver: GoPtr<PseudoOb
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeObjectLiteral","kind":"type","status":"implemented","sigHash":"377feff4ba5a4d2e5aa6dff27036c4793af1a5e8995e77196469ff2607e8fc66"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeObjectLiteral","kind":"type","status":"implemented","sigHash":"6957b55584177826bf7cd76ae4e2a51550593f7eb56b64c6449b757b501ab941"}
  *
  * Go source:
  * PseudoTypeObjectLiteral struct {
@@ -1102,7 +1102,7 @@ export function PseudoType_AsPseudoTypeObjectLiteral(receiver: GoPtr<PseudoType>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeLiteral","kind":"type","status":"implemented","sigHash":"1891f91bef35d921093d3b033c48712e9288733839473a73fa9018c89f91217e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeLiteral","kind":"type","status":"implemented","sigHash":"638149efffcd33a0fa9b37731f2a8ad720e3ef130762338f77470437bad3e04c"}
  *
  * Go source:
  * PseudoTypeLiteral struct {

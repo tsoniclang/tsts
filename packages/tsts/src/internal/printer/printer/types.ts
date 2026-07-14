@@ -310,7 +310,7 @@ export function Printer_emitTypeReference(receiver: GoPtr<Printer>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitReturnType","kind":"method","status":"implemented","sigHash":"3c41232fcd12d0f3b16814586afb7a709b63a1479cd395266de5cae0c030d2f6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitReturnType","kind":"method","status":"implemented","sigHash":"1f66d377c3caef84b870fa83f672487bd8922f19ea6aa7f9ccbb505bb5b9329c"}
  *
  * Go source:
  * func (p *Printer) emitReturnType(node *ast.TypeNode) {
@@ -494,7 +494,7 @@ export function Printer_emitArrayType(receiver: GoPtr<Printer>, node: GoPtr<Arra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPostfixTypeOperand","kind":"method","status":"implemented","sigHash":"6b87ec35b5240d571d72503510269e86a4da826cd7f4c87681e5d601286776e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPostfixTypeOperand","kind":"method","status":"implemented","sigHash":"d7bd1f99e50723bfbdc8ab933ddfce7c1c86c9ad241434d68c74831167848fec"}
  *
  * Go source:
  * // emitPostfixTypeOperand emits the operand of a postfix type (ArrayType, IndexedAccessType,
@@ -1095,7 +1095,7 @@ export function Printer_emitImportTypeNode(receiver: GoPtr<Printer>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTypeNodeInExtends","kind":"method","status":"implemented","sigHash":"172cb339d9695183ccf8201ff72aa68e18a2b0ddb003580baed0ee90c0f4b213"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTypeNodeInExtends","kind":"method","status":"implemented","sigHash":"02a04f800e20b948e975c5a41f87672b4dc82937c443da33cddcc2ddd84c633d"}
  *
  * Go source:
  * func (p *Printer) emitTypeNodeInExtends(node *ast.TypeNode) {
@@ -1113,7 +1113,7 @@ export function Printer_emitTypeNodeInExtends(receiver: GoPtr<Printer>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTypeNodeOutsideExtends","kind":"method","status":"implemented","sigHash":"422f54d71f88da0b8987cef4dd5c86bff142b2e350a284628d9a29f2072fb752"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTypeNodeOutsideExtends","kind":"method","status":"implemented","sigHash":"ca3c8f46a66b5d0cd616efc07854394eddb0923afd3c13a4847db9cad0dceaed"}
  *
  * Go source:
  * func (p *Printer) emitTypeNodeOutsideExtends(node *ast.TypeNode) {
@@ -1131,7 +1131,7 @@ export function Printer_emitTypeNodeOutsideExtends(receiver: GoPtr<Printer>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTypeNodePreservingExtends","kind":"method","status":"implemented","sigHash":"e0aac6309d1e55545b5b9cf41abd6c5cbeb1fdba4d868f62f2b1ca48f6529b0c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTypeNodePreservingExtends","kind":"method","status":"implemented","sigHash":"b7816a41a1624afd23a3e5afcc3c179360d7a9cfcf81118bf2948e55044a5eab"}
  *
  * Go source:
  * func (p *Printer) emitTypeNodePreservingExtends(node *ast.TypeNode, precedence ast.TypePrecedence) {

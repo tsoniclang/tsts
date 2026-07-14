@@ -66,7 +66,7 @@ import type { Transformer } from "./transformer.js";
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::FlattenLevel","kind":"type","status":"implemented","sigHash":"89f91cf9e4073d497bd63aaf8ae365eab37749b527bd5f9d8e8421342282d342"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::FlattenLevel","kind":"type","status":"implemented","sigHash":"ccbbed42a7410b2965acabbf9c1fb86eabca1bab73508cc3377beefbd68a8797"}
  *
  * Go source:
  * FlattenLevel int
@@ -74,7 +74,7 @@ import type { GoFunc } from "../../go/compat.js";
 export type FlattenLevel = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::constGroup::FlattenLevelAll+FlattenLevelObjectRest","kind":"constGroup","status":"implemented","sigHash":"9c083b589e162532eadc5017a3260a387eab7608bff2cb5f83922df0435653d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::constGroup::FlattenLevelAll+FlattenLevelObjectRest","kind":"constGroup","status":"implemented","sigHash":"1a865e48510868764be74a57dece07f440adf13642f34bca4969d976cca23128"}
  *
  * Go source:
  * const (
@@ -86,7 +86,7 @@ export const FlattenLevelAll: FlattenLevel = 0; // Fully decompose all patterns 
 export const FlattenLevelObjectRest: FlattenLevel = 1; // Only decompose patterns containing object rest elements
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::CreateAssignmentCallback","kind":"type","status":"implemented","sigHash":"bf243697cba5c726e35c99763200a48b91ba412de68360324edae70e3160f822"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::CreateAssignmentCallback","kind":"type","status":"implemented","sigHash":"b99c178cfbaee02d53ec79e2055a5ccd8555324012e98d54cba5503abe2e32fd"}
  *
  * Go source:
  * CreateAssignmentCallback func(name *ast.IdentifierNode, value *ast.Expression, location *core.TextRange) *ast.Expression
@@ -94,7 +94,7 @@ export const FlattenLevelObjectRest: FlattenLevel = 1; // Only decompose pattern
 export type CreateAssignmentCallback = GoFunc<(name: GoPtr<IdentifierNode>, value: GoPtr<Expression>, location: GoPtr<TextRange>) => GoPtr<Expression>>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::FlattenDestructuringAssignment","kind":"func","status":"implemented","sigHash":"559311f1142b906ea38fcd6e5917789a93de1f70933fd7bc622b36ec64bd8faf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::FlattenDestructuringAssignment","kind":"func","status":"implemented","sigHash":"20d01ca59f01bcbb06383206861c3a0d20b1cce5333b62bb243ee44b580f5af9"}
  *
  * Go source:
  * func FlattenDestructuringAssignment(
@@ -127,7 +127,7 @@ export function FlattenDestructuringAssignment(tx: GoPtr<Transformer>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::pendingDecl","kind":"type","status":"implemented","sigHash":"073ae1376b570dc3b7d7b38129dbcbe7a5fb2f943e6acf03914c8cbd4cb3cf4a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::pendingDecl","kind":"type","status":"implemented","sigHash":"70bab6e4d4d073cd7bc73880b5a8220e478aed3f02fcb8f6170953a79da1a58b"}
  *
  * Go source:
  * pendingDecl struct {
@@ -147,7 +147,7 @@ export interface pendingDecl {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::FlattenDestructuringBinding","kind":"func","status":"implemented","sigHash":"5fc190158b76e858499f34ca983393b1b8147dfa18a827609045047b24c56808"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::FlattenDestructuringBinding","kind":"func","status":"implemented","sigHash":"7530f0f68e861589be8e55efe9f6c21097dfa829be7792745670d7f3df9ed425"}
  *
  * Go source:
  * func FlattenDestructuringBinding(
@@ -179,7 +179,7 @@ export function FlattenDestructuringBinding(tx: GoPtr<Transformer>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::flattener","kind":"type","status":"implemented","sigHash":"d102b0a1bcc94fdcf695fb1015b0add4366ffab7c095c9b35a9ab31e4c5558e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::flattener","kind":"type","status":"implemented","sigHash":"dac4d20c8a7c52ce833b426be16922112b62b8b7e7c96bfa8d4deb97a704d74b"}
  *
  * Go source:
  * flattener struct {
@@ -863,7 +863,7 @@ export function flattener_flattenObjectBindingOrAssignmentPattern(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::restIdElemPair","kind":"type","status":"implemented","sigHash":"e42745ebf0c2f187123b09511c377710f88c72fc60800b27ef0b11b3d9b3d34c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::restIdElemPair","kind":"type","status":"implemented","sigHash":"337b5a8e53a2e61de92749c30bdb946c739926955e6b4113093cfa5f7f7abade"}
  *
  * Go source:
  * restIdElemPair struct {
@@ -969,7 +969,7 @@ export function flattener_flattenArrayBindingOrAssignmentPattern(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::BindingOrAssignmentElementAssignsToName","kind":"func","status":"implemented","sigHash":"6f73be577156b69a6faa13dc1dcbbc7d5170fc5d3377baa5891bf4d5368d50a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::BindingOrAssignmentElementAssignsToName","kind":"func","status":"implemented","sigHash":"cd4918ac78daf84fa81897c97bab575e11b6c11a54a9b638661d4d2c94d33bd4"}
  *
  * Go source:
  * func BindingOrAssignmentElementAssignsToName(element *ast.Node, name string) bool {
@@ -1023,7 +1023,7 @@ export function bindingOrAssignmentPatternAssignsToName(pattern: GoPtr<Node>, na
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::BindingOrAssignmentElementContainsNonLiteralComputedName","kind":"func","status":"implemented","sigHash":"52a3fa18f72a90e72fb754e1b9cd691b77239bd2ee19fa6e5e0001d8d6b34ae4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::BindingOrAssignmentElementContainsNonLiteralComputedName","kind":"func","status":"implemented","sigHash":"cc122e596beda44cc5c4fa9d307739ece7ca5283ad15b2b7b9ba8b421850636b"}
  *
  * Go source:
  * func BindingOrAssignmentElementContainsNonLiteralComputedName(element *ast.Node) bool {
@@ -1059,7 +1059,7 @@ export function bindingOrAssignmentPatternContainsNonLiteralComputedName(pattern
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::GetInitializerOfBindingOrAssignmentElement","kind":"func","status":"implemented","sigHash":"2fb9546edc99ea6b0b162bd752e6fdf7418d512fcd7711943eb80b110b461050"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::GetInitializerOfBindingOrAssignmentElement","kind":"func","status":"implemented","sigHash":"44207feb86cc1c275840eeda64c272a52795e5bb7811863ac64a9aa7736d5b38"}
  *
  * Go source:
  * func GetInitializerOfBindingOrAssignmentElement(bindingElement *ast.Node) *ast.Node {

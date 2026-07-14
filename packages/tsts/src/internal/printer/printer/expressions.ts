@@ -331,7 +331,7 @@ export function Printer_shouldEmitIndirectCall(receiver: GoPtr<Printer>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitLiteral","kind":"method","status":"implemented","sigHash":"dc0cab02a383a7f4f00366fded82c9c25a2041a82480a56336fa65bce9ae3fd4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitLiteral","kind":"method","status":"implemented","sigHash":"4c5338dedf748e0f76a7fcd7ef40f82ac247200e5a576f2f1eb595b650d12a20"}
  *
  * Go source:
  * func (p *Printer) emitLiteral(node *ast.LiteralLikeNode, flags getLiteralTextFlags) {
@@ -836,7 +836,7 @@ export function Printer_emitObjectLiteralExpression(receiver: GoPtr<Printer>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.mayNeedDotDotForPropertyAccess","kind":"method","status":"implemented","sigHash":"f193e9a520b5d63b30d3d7101da59d46228c5b4389fa04c2f2d6606019486012"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.mayNeedDotDotForPropertyAccess","kind":"method","status":"implemented","sigHash":"2131818bcfe7413628034ea490a77a41f2d46743ad394965abadd004a2a4ff77"}
  *
  * Go source:
  * func (p *Printer) mayNeedDotDotForPropertyAccess(expression *ast.Expression) bool {
@@ -1365,7 +1365,7 @@ export function Printer_emitPostfixUnaryExpression(receiver: GoPtr<Printer>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLiteralKindOfBinaryPlusOperand","kind":"method","status":"implemented","sigHash":"704a5db1ef12049fd0c246876c7fde89fc92a48cc8a41d25d1c8ab0b9bdfd322"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLiteralKindOfBinaryPlusOperand","kind":"method","status":"implemented","sigHash":"205ae11ece505773c0fa8221c88387724473bbe4c2e978c9b0632d36f2164ecc"}
  *
  * Go source:
  * func (p *Printer) getLiteralKindOfBinaryPlusOperand(node *ast.Expression) ast.Kind {
@@ -1990,7 +1990,7 @@ export function Printer_emitPartiallyEmittedExpression(receiver: GoPtr<Printer>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.parenthesizeExpressionForNoAsi","kind":"method","status":"implemented","sigHash":"f71dbabc7310ab330d34af2a55c0731a1c2b920d75c05644b76c025784262b0b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.parenthesizeExpressionForNoAsi","kind":"method","status":"implemented","sigHash":"08fbe1f208fe2c8f6d5d6ec85c465d902ab4614346b742756b1e9ae34b67bb4d"}
  *
  * Go source:
  * func (p *Printer) parenthesizeExpressionForNoAsi(node *ast.Expression) *ast.Expression {
@@ -2625,7 +2625,7 @@ export function Printer_emitExpressionStatement(receiver: GoPtr<Printer>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitIIFEWithParenthesizedCallee","kind":"method","status":"implemented","sigHash":"47d76dfc50cee17f81512e78c873b3d9a32ae2bc77ee0e6726133c0e056e0522"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitIIFEWithParenthesizedCallee","kind":"method","status":"implemented","sigHash":"b2eb77e173822e2231e1ad4b1e79d787ba3e7af57d67bcbd953518fc3f0cd6ed"}
  *
  * Go source:
  * func (p *Printer) emitIIFEWithParenthesizedCallee(node *ast.Expression) {

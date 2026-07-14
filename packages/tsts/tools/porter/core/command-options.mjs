@@ -16,6 +16,7 @@ const commandSchemas = Object.freeze({
   scan: schema({}),
   status: schema({}),
   verify: schema({}),
+  "reconcile-metadata": schema({ write: booleanOption, json: booleanOption }),
   "sig-check": schema({ id: valueOption, json: booleanOption, "no-gate": booleanOption }),
   scaffold: schema(
     {

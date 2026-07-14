@@ -161,7 +161,7 @@ import { Tristate_IsTrue } from "../../core/tristate.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::type::RuntimeSyntaxTransformer","kind":"type","status":"implemented","sigHash":"60ac09ddc0df66acaac125944f07657585e16fe81b3e057942787c81d8c958b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::type::RuntimeSyntaxTransformer","kind":"type","status":"implemented","sigHash":"f6da722d67500e59af9792d655cb93c0162bf9294c6412407cbdc162733836ae"}
  *
  * Go source:
  * RuntimeSyntaxTransformer struct {
@@ -223,7 +223,7 @@ export function NewRuntimeSyntaxTransformer(opt: GoPtr<TransformOptions>): GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.pushNode","kind":"method","status":"implemented","sigHash":"5e974924196196b4d1fc463e6f4eb7c540064d60e8cf4ed6279f50f71d76b4a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.pushNode","kind":"method","status":"implemented","sigHash":"a42d1dbd1ec849775e7c961d43c22afea5d90cf47a0ff4bee801f0d7a216f088"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) pushNode(node *ast.Node) (grandparentNode *ast.Node) {
@@ -241,7 +241,7 @@ export function RuntimeSyntaxTransformer_pushNode(receiver: GoPtr<RuntimeSyntaxT
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.popNode","kind":"method","status":"implemented","sigHash":"27b68af9e3e7df47b4ef3dd00a54a9fc4507c7ab1009d142064fb16b859e4c08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.popNode","kind":"method","status":"implemented","sigHash":"59917f20843ac509cda15e46695fca2db4f254c015ad37e0eb75a4c0d16d2c64"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) popNode(grandparentNode *ast.Node) {
@@ -444,7 +444,7 @@ const RuntimeSyntaxTransformer_visitInner = (receiver: GoPtr<RuntimeSyntaxTransf
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visit","kind":"method","status":"implemented","sigHash":"4a674213a6d9b575419adde9114929a4f5760db52c1cd1a8e20328590dbfa1d8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visit","kind":"method","status":"implemented","sigHash":"7bf18fa52eccdd40a0ee0367138110818eda41adce38f1382e1aeeb06b846200"}
  */
 export function RuntimeSyntaxTransformer_visit(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<Node>): GoPtr<Node> {
   const grandparentNode = RuntimeSyntaxTransformer_pushNode(receiver, node);
@@ -456,7 +456,7 @@ export function RuntimeSyntaxTransformer_visit(receiver: GoPtr<RuntimeSyntaxTran
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.recordDeclarationInScope","kind":"method","status":"implemented","sigHash":"da951f097dc3ba450eab29d7acf761a1bdc115cdfaa8f679a735c878a3b42a12"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.recordDeclarationInScope","kind":"method","status":"implemented","sigHash":"30947dc4715a3dfe0b7aa9aed9ec1b32475de378b93bc411e00132f6e949f5f4"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) recordDeclarationInScope(node *ast.Node) {
@@ -525,7 +525,7 @@ export function RuntimeSyntaxTransformer_recordDeclarationInScope(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.isFirstDeclarationInScope","kind":"method","status":"implemented","sigHash":"c71c04faa2206e1c77dba1fc7c7f42b0fbc1df8e416a7cac15c12fe99385c916"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.isFirstDeclarationInScope","kind":"method","status":"implemented","sigHash":"573ee3eb68fd84cb45753fbe3fe55bf213b809371e47bc0de4335c32049a680f"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) isFirstDeclarationInScope(node *ast.Node) bool {
@@ -568,7 +568,7 @@ export function RuntimeSyntaxTransformer_isExportOfNamespace(receiver: GoPtr<Run
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getExpressionForPropertyName","kind":"method","status":"implemented","sigHash":"41451935600ecf5749958b1064e1db8ded522d35455a9fa3beb39c499a86b27f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getExpressionForPropertyName","kind":"method","status":"implemented","sigHash":"9c5fe78e643ef23feb62b44dadf3bb7c626686db6245171cff83a5cde0253b70"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) getExpressionForPropertyName(member *ast.EnumMember) *ast.Expression {
@@ -614,7 +614,7 @@ export function RuntimeSyntaxTransformer_getExpressionForPropertyName(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getEnumQualifiedElement","kind":"method","status":"implemented","sigHash":"3d68a47b415e537ce4dccf0309e306798c22280432c56090ecad5aafd7565ebb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getEnumQualifiedElement","kind":"method","status":"implemented","sigHash":"b44b056559985c6f672160ea345b0019f21e3ae3091684683216d4de9b4b16f5"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) getEnumQualifiedElement(enum *ast.EnumDeclaration, member *ast.EnumMember) *ast.Expression {
@@ -630,7 +630,7 @@ export function RuntimeSyntaxTransformer_getEnumQualifiedElement(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getNamespaceContainerName","kind":"method","status":"implemented","sigHash":"478418459bc97c77125611b406fe3f281b88b70f1e001776e5b059bc0064dc93"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getNamespaceContainerName","kind":"method","status":"implemented","sigHash":"d51229f31f33e946c7f11273ef0f99bc70fd493bae9eb19c9b0cb4fbc0181141"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) getNamespaceContainerName(node *ast.Node) *ast.IdentifierNode {
@@ -642,7 +642,7 @@ export function RuntimeSyntaxTransformer_getNamespaceContainerName(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getNamespaceQualifiedProperty","kind":"method","status":"implemented","sigHash":"8be9f2b71224478f8c4faa5a145cdca6b268e1e5929c214f679c17e179622047"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getNamespaceQualifiedProperty","kind":"method","status":"implemented","sigHash":"504fed90eaf131e2d2083e7a33a868e136f56aa4b3c3845976dda41f22d817c8"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) getNamespaceQualifiedProperty(ns *ast.IdentifierNode, name *ast.IdentifierNode) *ast.Expression {
@@ -654,7 +654,7 @@ export function RuntimeSyntaxTransformer_getNamespaceQualifiedProperty(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getNamespaceQualifiedElement","kind":"method","status":"implemented","sigHash":"9fe8b96265d350072ba317a7024aae00e1ed9bbbfa0709e638f1fe90c3543e29"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getNamespaceQualifiedElement","kind":"method","status":"implemented","sigHash":"9c9029d3a279a2993aa1266ea0a2e7ea8626f4a594b15cd98c590a4bf7ee076a"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) getNamespaceQualifiedElement(ns *ast.IdentifierNode, expression *ast.Expression) *ast.Expression {
@@ -670,7 +670,7 @@ export function RuntimeSyntaxTransformer_getNamespaceQualifiedElement(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getExportQualifiedReferenceToDeclaration","kind":"method","status":"implemented","sigHash":"0dbbde6258f4a8411c79d8d4f8b252a33ac5541f499507cca6e8efe65bf2ed4f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.getExportQualifiedReferenceToDeclaration","kind":"method","status":"implemented","sigHash":"83ff4d2cde6a2a0e0bedcb7640f97b7369596040b2d1193c8482d2b09220a8f5"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) getExportQualifiedReferenceToDeclaration(node *ast.Declaration) *ast.Expression {
@@ -832,7 +832,7 @@ export function RuntimeSyntaxTransformer_visitEnumDeclaration(receiver: GoPtr<Ru
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumBody","kind":"method","status":"implemented","sigHash":"9fef6ae9d34c97a4043a9ffd682b3f1a94b4af5227c0ae8d211228ad7644dfd0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumBody","kind":"method","status":"implemented","sigHash":"4a6f436b0128927c9d43f273d952f39a56026ad5a1f8c2da4ce795ac09db007e"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) transformEnumBody(node *ast.EnumDeclaration) *ast.BlockNode {
@@ -865,7 +865,7 @@ export function RuntimeSyntaxTransformer_transformEnumBody(receiver: GoPtr<Runti
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumMember","kind":"method","status":"implemented","sigHash":"4fd24669997aaec2c65b694a1c2450f4c2ef8a83b517ca7cef4bcdffae1186a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumMember","kind":"method","status":"implemented","sigHash":"2afc567b97f5b0669618251befd97b9fb00a3653b4d65569c0284bc4ac7a10f3"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) transformEnumMember(statements []*ast.Statement, enum *ast.EnumDeclaration, index int) []*ast.Statement {
@@ -1154,7 +1154,7 @@ export function RuntimeSyntaxTransformer_visitVariableStatement(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.createNamespaceExportExpression","kind":"method","status":"implemented","sigHash":"800271c45d40f398b922db380c69904ab928d959a9940bae3259cc6fb3ca42c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.createNamespaceExportExpression","kind":"method","status":"implemented","sigHash":"1cebd7438828b54a162ba3d646151c3f5e4e8277e9fec381dfb1f2655b2c13fd"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) createNamespaceExportExpression(exportName *ast.IdentifierNode, exportValue *ast.Expression, location *core.TextRange) *ast.Expression {

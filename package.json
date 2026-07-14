@@ -17,6 +17,7 @@
     "porter:scan": "node packages/tsts/tools/porter/porter-cli.mjs scan",
     "porter:status": "node packages/tsts/tools/porter/porter-cli.mjs status",
     "porter:verify": "node packages/tsts/tools/porter/porter-cli.mjs verify",
+    "porter:reconcile-metadata": "node packages/tsts/tools/porter/porter-cli.mjs reconcile-metadata",
     "porter:scaffold": "node packages/tsts/tools/porter/porter-cli.mjs scaffold",
     "porter:scaffold-all": "node packages/tsts/tools/porter/porter-cli.mjs scaffold --all --write --append",
     "porter:facades": "node packages/tsts/tools/porter/porter-cli.mjs facades",

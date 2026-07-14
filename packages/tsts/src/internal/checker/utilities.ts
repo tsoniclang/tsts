@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import { Every, Find, FirstOrNil, Filter, Some } from "../core/core.js";
 import type { GoComparable, GoEquality, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
-import { GoMapIsNil, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { IsTypeOrJSTypeAliasDeclaration, Node_Arguments, Node_Body, Node_Elements, Node_Expression, Node_ImportClause, Node_Initializer, Node_Members, Node_ModifierFlags, Node_Parameters, Node_Properties, Node_PropertyNameOrName, Node_Text, Node_Type, Node_TypeArguments, SourceFile_FileName, SourceFile_Path, SourceFile_Text } from "../ast/ast.js";
@@ -383,7 +383,7 @@ export function isEmptyObjectLiteral(expression: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::AssignmentKind","kind":"type","status":"implemented","sigHash":"393c48543c1ba7e168c5568834798d90c984038a744dd5c848531dc6e8088119"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::AssignmentKind","kind":"type","status":"implemented","sigHash":"c29629770275cb80c24b6cef05fec2a76a2affa8a0e1e07d247983ae4f2a93e6"}
  *
  * Go source:
  * AssignmentKind int32
@@ -391,7 +391,7 @@ export function isEmptyObjectLiteral(expression: GoPtr<Node>): bool {
 export type AssignmentKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::constGroup::AssignmentKindNone+AssignmentKindDefinite+AssignmentKindCompound","kind":"constGroup","status":"implemented","sigHash":"2a2a8229d8b9a8a744026766183e53b3705719ccdcff135a01a4f615c05e0801"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::constGroup::AssignmentKindNone+AssignmentKindDefinite+AssignmentKindCompound","kind":"constGroup","status":"implemented","sigHash":"b7d015869906f0addb512163f575f152c047aade0e1b6692866c1ca00ea6a8c8"}
  *
  * Go source:
  * const (
@@ -405,7 +405,7 @@ export const AssignmentKindDefinite: AssignmentKind = 1;
 export const AssignmentKindCompound: AssignmentKind = 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::AssignmentTarget","kind":"type","status":"implemented","sigHash":"3c7ae8f7c4c72d97efb05684cb22333b9e47672e39349d550af85d76a9a2cd4d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::AssignmentTarget","kind":"type","status":"implemented","sigHash":"61e4fbd5fb1ec8212bb628feac8e66cde849f0d35b08aae9a26c824811dd0c54"}
  *
  * Go source:
  * AssignmentTarget = ast.Node
@@ -816,7 +816,7 @@ export function isSyntacticDefault(node: GoPtr<Node>): bool {
  * }
  */
 export function hasExportAssignmentSymbol(moduleSymbol: GoPtr<Symbol>): bool {
-  return (moduleSymbol!.Exports?.get(InternalSymbolNameExportEquals) !== undefined) as bool;
+  return (moduleSymbol!.Exports.get(InternalSymbolNameExportEquals) !== undefined) as bool;
 }
 
 /**
@@ -1066,7 +1066,7 @@ export function isTypeAssertion(node: GoPtr<Node>): bool {
  */
 export function createSymbolTable(symbols: GoSlice<GoPtr<Symbol>>): SymbolTable {
   if (symbols.length === 0) {
-    return undefined as unknown as SymbolTable;
+    return GoNilMap<string, GoPtr<Symbol>>();
   }
   const result: SymbolTable = new globalThis.Map<string, GoPtr<Symbol>>();
   for (const symbol of symbols) {
@@ -2213,7 +2213,7 @@ export function isDeclarationReadonly(declaration: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::constGroup::orderedSetMapThreshold","kind":"constGroup","status":"implemented","sigHash":"0a8e7c6dda3a0579ec52981a0cec6db48bd2bbe244db49d9552a9dc2217416af"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::constGroup::orderedSetMapThreshold","kind":"constGroup","status":"implemented","sigHash":"800345de2197812f66193e64c35a3c0a141a633a7a96e7c77fc75c999c25da3f"}
  *
  * Go source:
  * // orderedSetMapThreshold is the size at which an orderedSet materializes its dedup map.
@@ -2223,7 +2223,7 @@ export function isDeclarationReadonly(declaration: GoPtr<Node>): bool {
 export const orderedSetMapThreshold: int = 16;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::orderedSet","kind":"type","status":"implemented","sigHash":"0b8cbabe0644feba32a9e54af5d9e781c38f6cef14766411376b73b8cfa700ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::orderedSet","kind":"type","status":"implemented","sigHash":"2c7752c6016345bde032fc1f305ae9cc0aeca157c4ea70bbeea23f728cda0636"}
  *
  * Go source:
  * orderedSet[T comparable] struct {
@@ -2343,7 +2343,7 @@ export function isTypeUsableAsPropertyName(t: GoPtr<Type>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::getPropertyNameFromType","kind":"func","status":"implemented","sigHash":"44987df1d72d27523cb977b09a19944fce09d6214d9814cc0aa835dbdafa748d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::getPropertyNameFromType","kind":"func","status":"implemented","sigHash":"dd4a401068654e4b22b6c1e2ad3e1462122069b9c60fdc83093a1bccf7e9e593"}
  *
  * Go source:
  * func getPropertyNameFromType(t *Type) string {
@@ -3017,7 +3017,7 @@ export function getIndexSymbolFromSymbolTable(symbolTable: SymbolTable): GoPtr<S
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::expressionResultIsUnused","kind":"func","status":"implemented","sigHash":"f7bb46ac1562b5427fe4444607928de2a80710bfe64abc194fc4e5f2fcde811c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::expressionResultIsUnused","kind":"func","status":"implemented","sigHash":"ecfade3a5a0c5492818c2f00a000bef4ceca411d0d8a1cb3863a2eac6f7b6196"}
  *
  * Go source:
  * func expressionResultIsUnused(node *ast.Node) bool {
@@ -3328,7 +3328,7 @@ export function minAndMax<T>(slice: GoSlice<T>, getValue: GoFunc<(value: T) => i
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::FeatureMapEntry","kind":"type","status":"implemented","sigHash":"2cbbeb08175483f01878f43dfc57fdf761d2ab4ac1edfd10456b7060a079973c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::FeatureMapEntry","kind":"type","status":"implemented","sigHash":"01f0f6c6c54be96456fd41ca4b62fe63c0135fa2224ff0708d0145e074ff4f21"}
  *
  * Go source:
  * FeatureMapEntry struct {
@@ -3344,7 +3344,7 @@ export interface FeatureMapEntry {
 let featureMapValue: GoMap<string, GoSlice<FeatureMapEntry>> | undefined;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::varGroup::getFeatureMap","kind":"varGroup","status":"implemented","sigHash":"91d7ad405cbb9f158b0e038918e57e5a622b254e3ce64301f4ab9869573decd5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::varGroup::getFeatureMap","kind":"varGroup","status":"implemented","sigHash":"4b240e14a90c17c849f14411655d1567c6ad1aa563fdb906647c097057c25ef7"}
  *
  * Go source:
  * var getFeatureMap = sync.OnceValue(func() map[string][]FeatureMapEntry {
@@ -3968,7 +3968,7 @@ export function getAnyImportSyntax(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::isReservedMemberName","kind":"func","status":"implemented","sigHash":"5a505bab8633a207d0a620143ae35c1b2f565070986edcdb0f6cf8fe1d14fc58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::isReservedMemberName","kind":"func","status":"implemented","sigHash":"8eefba58600762c8c7dcc506e034319f5b0af39ca26f72786f8c5323399eddb0"}
  *
  * Go source:
  * func isReservedMemberName(name string) bool {
@@ -4050,7 +4050,7 @@ export function SkipAlias(symbol_: GoPtr<Symbol>, checker: GoPtr<Checker>): GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::IsExternalModuleSymbol","kind":"func","status":"implemented","sigHash":"a78e59a51643bf18183407391eca4129afa7d01daf9fffebb02b7c21c37517e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::IsExternalModuleSymbol","kind":"func","status":"implemented","sigHash":"ff5908a90233ceb1c19a6cbff55182d7ffe445dcda56dd07420446f09cac029d"}
  *
  * Go source:
  * func IsExternalModuleSymbol(moduleSymbol *ast.Symbol) bool {
@@ -4110,7 +4110,7 @@ export function Checker_checkNotCanceled(receiver: GoPtr<Checker>): void {
  * }
  */
 export function Checker_getPackagesMap(receiver: GoPtr<Checker>): GoMap<string, bool> {
-  if (receiver!.packagesMap === undefined) {
+  if (GoMapIsNil(receiver!.packagesMap)) {
     receiver!.packagesMap = new globalThis.Map<string, bool>();
     const resolvedModules = receiver!.program!.GetResolvedModules();
     for (const [, resolvedModulesInFile] of resolvedModules) {
@@ -4221,7 +4221,7 @@ export function nodeStartsNewLexicalEnvironment(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::method::Checker.isUncheckedJSSuggestion","kind":"method","status":"implemented","sigHash":"089d53df10059fa476d7b8268b879caccc78bb11d2a643fa0d7d3786c3688756"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::method::Checker.isUncheckedJSSuggestion","kind":"method","status":"implemented","sigHash":"ea3fa959dde891dfa33d834ac38e11381b82faadadf2ed4fd4abbb9571efaa5c"}
  *
  * Go source:
  * func (c *Checker) isUncheckedJSSuggestion(node *ast.Node, suggestion *ast.Symbol, excludeClasses bool) bool {
@@ -4272,7 +4272,7 @@ export function Checker_isUncheckedJSSuggestion(receiver: GoPtr<Checker>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::method::Checker.isJSLiteralType","kind":"method","status":"implemented","sigHash":"98ddf5f280f9feab9b007380d5ac9490e80b645605095e99847759f29d89d8c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::method::Checker.isJSLiteralType","kind":"method","status":"implemented","sigHash":"79ffe955cb4706aaab6932888947b9a0e464b8131813b55a91bd5f1a03c2fb76"}
  *
  * Go source:
  * func (c *Checker) isJSLiteralType(t *Type) bool {
@@ -4318,7 +4318,7 @@ export function Checker_isJSLiteralType(receiver: GoPtr<Checker>, t: GoPtr<Type>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::DiagnosticDetails","kind":"type","status":"implemented","sigHash":"84b28122cefd93e7dee846efe7e2c79c3da0b2ccfe1bc3bf73a655b05f9f6be7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::DiagnosticDetails","kind":"type","status":"implemented","sigHash":"564fae5f9838c9348060d9f546a192a04fb239fd0de411f2c00d7fdaae9b89af"}
  *
  * Go source:
  * DiagnosticDetails struct {
@@ -4332,7 +4332,7 @@ export interface DiagnosticDetails {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::CreateModuleNotFoundChain","kind":"func","status":"implemented","sigHash":"00d5057255e36d3ba796dc979546b43e3043cc46331b16dd607f1e1a1320186e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::CreateModuleNotFoundChain","kind":"func","status":"implemented","sigHash":"63fcf4378a55d6824bd2dea280a42d254703dad12e01f8dc1da9bd1fca828ebb"}
  *
  * Go source:
  * func CreateModuleNotFoundChain(program Program, file *ast.SourceFile, moduleReference string, mode core.ResolutionMode, packageName string) DiagnosticDetails {
@@ -4401,7 +4401,7 @@ export function CreateModuleNotFoundChain(program: GoInterface<Program>, file: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::CreateModeMismatchDetails","kind":"func","status":"implemented","sigHash":"62c0e3e8283d16b2686196528980fbdfb35a369ef161ea182628f6e6f9f9e191"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::CreateModeMismatchDetails","kind":"func","status":"implemented","sigHash":"83a607ef998d4807bfd274f13944ce0816eea11fb212aed37a02d2cce32dc153"}
  *
  * Go source:
  * func CreateModeMismatchDetails(program Program, file *ast.SourceFile) DiagnosticDetails {

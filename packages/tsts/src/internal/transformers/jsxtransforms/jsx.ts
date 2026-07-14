@@ -57,7 +57,7 @@ const byteAt: (s: string, i: int) => int = StringByteAt;
 const byteSlice: (s: string, start: int, end?: int) => string = StringByteSlice;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::type::JSXTransformer","kind":"type","status":"implemented","sigHash":"f4d543aef50805c0daf1acbda906f9cd8582889e57dcbb274d9f2ec3142daf12"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::type::JSXTransformer","kind":"type","status":"implemented","sigHash":"24ca0c04864e6acfd1ba4c73accb3e3aa06410a4ba673b1275c2b2a13b39311c"}
  *
  * Go source:
  * JSXTransformer struct {
@@ -343,7 +343,7 @@ export function JSXTransformer_visit(receiver: GoPtr<JSXTransformer>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasKeyAfterPropsSpread","kind":"func","status":"implemented","sigHash":"410dfa82121e57aa7b00154093b4c575db0069df96b273cff1976c9d3f473443"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasKeyAfterPropsSpread","kind":"func","status":"implemented","sigHash":"1b447194df86166922384640171b05c1c636e33c7cb77c0010986a65e01c2f15"}
  *
  * Go source:
  * func hasKeyAfterPropsSpread(node *ast.Node) bool {
@@ -1222,7 +1222,7 @@ export function JSXTransformer_transformJsxAttributeToObjectLiteralElement(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getAttributeName","kind":"method","status":"implemented","sigHash":"e164f6c3b366746481f32e6ec8643428d4b7b03c4e270d03d6b9014b0f5bff67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getAttributeName","kind":"method","status":"implemented","sigHash":"dfeafc28c3b83efe1ed7318e1ca1a8832240cd01b1a4fab48c1e52547ef682f2"}
  *
  * Go source:
  * func (tx *JSXTransformer) getAttributeName(node *ast.JsxAttribute) *ast.Node {
@@ -1876,7 +1876,7 @@ export function addLineOfJsxText(b: GoPtr<Builder>, trimmedLine: string, isIniti
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::fixupWhitespaceAndDecodeEntities","kind":"func","status":"implemented","sigHash":"fcb43910d27aa4159bdedd9732075c712e12d22a52f13a46ed5fc3bae9a5cdca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::fixupWhitespaceAndDecodeEntities","kind":"func","status":"implemented","sigHash":"ff924b1efcc690221995dec5d53bdb9aa379a3b197ce668f3c70f12894ad5e0f"}
  *
  * Go source:
  * func fixupWhitespaceAndDecodeEntities(text string) string {
@@ -1987,7 +1987,7 @@ export function JSXTransformer_visitJsxExpression(receiver: GoPtr<JSXTransformer
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::decodeEntities","kind":"func","status":"implemented","sigHash":"ba81d1a1c2207e3826d333a469d95b3918d58f513134444890792e50b4a023f0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::decodeEntities","kind":"func","status":"implemented","sigHash":"0d98a8b519a0d2878894b48774cc59605ea04a904496874a7cf5c2d97b0ed8ba"}
  *
  * Go source:
  * func decodeEntities(text string) string {
@@ -2182,7 +2182,7 @@ export function decodeEntity(entity: string): [GoRune, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::varGroup::entities","kind":"varGroup","status":"implemented","sigHash":"51404371608f057592af4d34bb1c92b8d1a5e5983a57acc92602ab706c0a4ca8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::varGroup::entities","kind":"varGroup","status":"implemented","sigHash":"c2cb254edb98de716a35712b469fcc6e411b14a2d32538ec09c4395637c5846f"}
  *
  * Go source:
  * var entities = map[string]rune{

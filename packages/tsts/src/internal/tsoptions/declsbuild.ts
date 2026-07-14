@@ -11,7 +11,7 @@ import { commonOptionsWithBuild } from "./declscompiler.js";
 
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::TscBuildOption","kind":"varGroup","status":"implemented","sigHash":"a7881acbbdcfcb70d05e16008e560f35eade977ffd0215c8fde3220c1ec7ddca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::TscBuildOption","kind":"varGroup","status":"implemented","sigHash":"f7d0d631fcdada6be3f24c7a1cf9c093b6f0ef11c0b6c40afdece2ace73f0da0"}
  *
  * Go source:
  * var TscBuildOption = CommandLineOption{
@@ -35,7 +35,7 @@ export let TscBuildOption: CommandLineOption = newCommandLineOption({
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::OptionsForBuild","kind":"varGroup","status":"implemented","sigHash":"b827b0f153dfedb1e94b809019da58e3c535313ef9101cd71f9fc3db03470daa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::OptionsForBuild","kind":"varGroup","status":"implemented","sigHash":"0918b24db3e3888e6db8f4f4e138d5dacec79a08404f5493d1993715efecdc2d"}
  *
  * Go source:
  * var OptionsForBuild = []*CommandLineOption{
@@ -139,7 +139,7 @@ export let OptionsForBuild: GoSlice<GoPtr<CommandLineOption>> = [
 ];
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::BuildOpts","kind":"varGroup","status":"implemented","sigHash":"538a759bcc8d807f5ae582a703e9cd4ac8c3e62c00f33865de6929274b312c8c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::BuildOpts","kind":"varGroup","status":"implemented","sigHash":"ba050040576845fb598bec7266fd2f8f40a68dd880b95234e445384541fd90ab"}
  *
  * Go source:
  * var BuildOpts = slices.Concat(commonOptionsWithBuild, OptionsForBuild)

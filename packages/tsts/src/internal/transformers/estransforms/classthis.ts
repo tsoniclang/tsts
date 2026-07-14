@@ -10,7 +10,7 @@ import type { EmitContext } from "../../printer/emitcontext.js";
 import { EmitContext_ClassThis } from "../../printer/emitcontext.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classthis.go::func::isClassThisAssignmentBlock","kind":"func","status":"implemented","sigHash":"36e6e9ea32a486cc285e12ffdec2a589da9fcec331f9b214d95e87dea5a80d8e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classthis.go::func::isClassThisAssignmentBlock","kind":"func","status":"implemented","sigHash":"4202eea0fb8990efd491e168fbdd18f1c432e56d5a4fcab99bea4b80a3979c96"}
  *
  * Go source:
  * func isClassThisAssignmentBlock(emitContext *printer.EmitContext, node *ast.Node) bool {

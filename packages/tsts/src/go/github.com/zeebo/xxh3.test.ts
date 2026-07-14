@@ -16,7 +16,8 @@ test("HashString128 preserves TSTS cache-key hash vectors", () => {
 
   for (const [input, hex, bytes] of cases) {
     const hash = HashString128(input);
-    assert.equal(hash.String(), hex);
+    assert.equal(hash.Hi, BigInt(`0x${hex.slice(0, 16)}`));
+    assert.equal(hash.Lo, BigInt(`0x${hex.slice(16)}`));
     assert.equal(hash.Bytes().join(","), bytes);
   }
 });
@@ -24,6 +25,8 @@ test("HashString128 preserves TSTS cache-key hash vectors", () => {
 test("Hasher.Write preserves byte-vector hash output", () => {
   const hash = New();
   hash.Write([0, 1, 2, 3, 255]);
-  assert.equal(hash.Sum128().String(), "36e8a8ffe5d486503379bcd0c530506a");
-  assert.equal(hash.Sum128().Bytes().join(","), "54,232,168,255,229,212,134,80,51,121,188,208,197,48,80,106");
+  const sum = hash.Sum128();
+  assert.equal(sum.Hi, 0x36e8a8ffe5d48650n);
+  assert.equal(sum.Lo, 0x3379bcd0c530506an);
+  assert.equal(sum.Bytes().join(","), "54,232,168,255,229,212,134,80,51,121,188,208,197,48,80,106");
 });

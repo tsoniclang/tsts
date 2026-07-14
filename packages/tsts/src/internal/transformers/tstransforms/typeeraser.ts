@@ -110,7 +110,7 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 import { getInnermostModuleDeclarationFromDottedModule } from "./runtimesyntax.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::type::TypeEraserTransformer","kind":"type","status":"implemented","sigHash":"bdb90c2faa90cf896efb0849699ba9fae98beb7beb98d285e9da5884a17f7648"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::type::TypeEraserTransformer","kind":"type","status":"implemented","sigHash":"058402a91184c90a80f6900dde5f432284290b1838798a9284c5e90ea71e461a"}
  *
  * Go source:
  * TypeEraserTransformer struct {
@@ -151,7 +151,7 @@ export function NewTypeEraserTransformer(opt: GoPtr<TransformOptions>): GoPtr<Tr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.pushNode","kind":"method","status":"implemented","sigHash":"66a52a570cf7e7f0e502f6dc1a0f30aaafd3e746b6a9972728c3d867453002ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.pushNode","kind":"method","status":"implemented","sigHash":"5d4be2b7872401f023e73fc972f06cc66cf7a2a5b9ef6acb076367b8e3104482"}
  *
  * Go source:
  * func (tx *TypeEraserTransformer) pushNode(node *ast.Node) (grandparentNode *ast.Node) {
@@ -169,7 +169,7 @@ export function TypeEraserTransformer_pushNode(receiver: GoPtr<TypeEraserTransfo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.popNode","kind":"method","status":"implemented","sigHash":"8a0b52123ec70589eec9709e3fe44cbc0951e4966c6d1f57af1f41746390df9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.popNode","kind":"method","status":"implemented","sigHash":"c9d7f7a9fb9156c05b974663838dd7a8e0f3f2bf10243639aeac093cb5af5a1f"}
  *
  * Go source:
  * func (tx *TypeEraserTransformer) popNode(grandparentNode *ast.Node) {

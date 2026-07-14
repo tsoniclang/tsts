@@ -8,7 +8,7 @@ import type { JSONValue } from "./jsonvalue.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::type::objectKind","kind":"type","status":"implemented","sigHash":"40af4365e00141a9986d7f8562c3d98a481e932bc1179f15412016475b1e3332"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::type::objectKind","kind":"type","status":"implemented","sigHash":"af5f381ae99a40ae4605767ec2eba91fb371454e5f002d086a3355aa124083a6"}
  *
  * Go source:
  * objectKind int8
@@ -16,7 +16,7 @@ import type { GoInterface } from "../../go/compat.js";
 export type objectKind = sbyte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::constGroup::objectKindUnknown+objectKindSubpaths+objectKindConditions+objectKindImports+objectKindInvalid","kind":"constGroup","status":"implemented","sigHash":"7f462576ae937c23770a3b384950039e01ca88a049dc484507361e9b0f75f687"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::constGroup::objectKindUnknown+objectKindSubpaths+objectKindConditions+objectKindImports+objectKindInvalid","kind":"constGroup","status":"implemented","sigHash":"72438a23c22dbbdf0732130839b8282ee746d77282e8a8ba821f6b85d64db2e8"}
  *
  * Go source:
  * const (
@@ -34,7 +34,7 @@ export const objectKindImports: objectKind = 3 as objectKind;
 export const objectKindInvalid: objectKind = 4 as objectKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::type::ExportsOrImports","kind":"type","status":"implemented","sigHash":"64a5c7a5aa91cf6469e69a5bb4d7514cd620fba7e1b96ac7bc2ed75403ab1b43"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::type::ExportsOrImports","kind":"type","status":"implemented","sigHash":"c6009288f596f324787b0edbc3e45f553475dd8ab6a8b33e9b4f95b7c8a1c200"}
  *
  * Go source:
  * ExportsOrImports struct {
@@ -48,7 +48,7 @@ export interface ExportsOrImports {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"b38d8065fb19e1d46b5122a7f39e9f0fe8cbb5ff3eee408326406d1ddfdb193b"}
  *
  * Go source:
  * var _ json.UnmarshalerFrom = (*ExportsOrImports)(nil)

@@ -931,7 +931,7 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getFlowTypeOfDestructuring","kind":"method","status":"implemented","sigHash":"58b13441bd433693174fb1238a017b0dbfa96fd7c0198dab8839918635019411"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getFlowTypeOfDestructuring","kind":"method","status":"implemented","sigHash":"b95517087ffbffa4c0e9999bbe26c18a45f3ab9692c2c572e04bcdc27e88b195"}
  *
  * Go source:
  * func (c *Checker) getFlowTypeOfDestructuring(node *ast.Node, declaredType *Type) *Type {
@@ -1186,7 +1186,7 @@ export function Checker_getDefinitelyFalsyPartOfType(receiver: GoPtr<Checker>, t
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPossiblyDiscriminantValue","kind":"method","status":"implemented","sigHash":"e9a504f885ec16cafbd9323e6d8cdbc4d961da219c9fa4b14a3d2d0bc7317caa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPossiblyDiscriminantValue","kind":"method","status":"implemented","sigHash":"25af4c433f3bd9359aeae575219f5df6deb9458b4963580f64f8b9419d7ec73e"}
  *
  * Go source:
  * func (c *Checker) isPossiblyDiscriminantValue(node *ast.Node) bool {

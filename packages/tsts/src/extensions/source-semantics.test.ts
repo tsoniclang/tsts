@@ -34,6 +34,7 @@ import {
 } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
+import { TSUnknown } from "../internal/core/tristate.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
 import {
   NewProgram,
@@ -69,6 +70,26 @@ import type { ExtendedProgram } from "./index.js";
 
 const exampleTypesModule = "@example/native/types.js";
 const exampleLangModule = "@example/native/lang.js";
+
+type ProgramOptionsOverrides = Partial<Omit<ProgramOptions, "Config" | "Host">>;
+
+function createProgramOptions(
+  config: ProgramOptions["Config"],
+  host: ProgramOptions["Host"],
+  overrides: ProgramOptionsOverrides = {},
+): ProgramOptions {
+  return {
+    Config: config,
+    Host: host,
+    UseSourceOfProjectReference: false,
+    SingleThreaded: TSUnknown,
+    CreateCheckerPool: undefined,
+    TypingsLocation: "",
+    ProjectName: "",
+    Tracing: undefined,
+    ...overrides,
+  };
+}
 
 function createExampleSourceSemanticsExtension() {
   return createSourceSemanticsExtension({
@@ -614,10 +635,7 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     extensions: [createExampleSourceSemanticsExtension()],
   });

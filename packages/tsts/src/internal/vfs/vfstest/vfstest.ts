@@ -50,7 +50,7 @@ function stringFromBytes(value: GoSlice<byte>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::MapFS","kind":"type","status":"implemented","sigHash":"6c94b2005c0abcef9d22a4886a0e069ad71049c8b5a935e0d5f83d1ada83ab57"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::MapFS","kind":"type","status":"implemented","sigHash":"bb709e825decba5b85d9b274ba5504d03603336f4c9e9d3fb42ed2bd0edee950"}
  *
  * Go source:
  * MapFS struct {
@@ -77,7 +77,7 @@ export interface MapFS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::Clock","kind":"type","status":"implemented","sigHash":"4ac06c2c3578215667c72f823065dc84e355d14e84a95b14fd5bd62839701ab9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::Clock","kind":"type","status":"implemented","sigHash":"48dc298b4bcb2e460ae834e45480fdda95621240a428c7965105d5d45fa14b03"}
  *
  * Go source:
  * Clock interface {
@@ -91,7 +91,7 @@ export interface Clock {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::clockImpl","kind":"type","status":"implemented","sigHash":"4f86d3efb63febf12658b4f015ec4117d518b308d08545c393fdb756e4e025a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::clockImpl","kind":"type","status":"implemented","sigHash":"bd5c6163824f9b56e503998c438305aad8855687d81aa8d5324712b40170abce"}
  *
  * Go source:
  * clockImpl struct {
@@ -127,7 +127,7 @@ export function clockImpl_SinceStart(receiver: GoPtr<clockImpl>): Duration {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::varGroup::_+_","kind":"varGroup","status":"implemented","sigHash":"606a448813ea549ca7a41fa67189d5c616eb07aa6693c9028679d4b9a5b43602"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::varGroup::_+_","kind":"varGroup","status":"implemented","sigHash":"18f29c5b65657f4d75713ec89953c1ee9dcdc65d21fcc021696bfd0ff957dc8f"}
  *
  * Go source:
  * var (
@@ -170,7 +170,7 @@ function MapFS_as_iovfs_FS(receiver: GoPtr<MapFS>): GoFS & RealpathFS & Writable
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::sys","kind":"type","status":"implemented","sigHash":"9643e898f78e27ee306cb9ad0c75737bc14358e54daba45c5da7585f2dc64feb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::sys","kind":"type","status":"implemented","sigHash":"272946b4766f48910da800b95c0bc83949f9b7cd9f504067f7e1c885f8038d1a"}
  *
  * Go source:
  * sys struct {
@@ -184,7 +184,7 @@ export interface sys {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::func::FromMap","kind":"func","status":"implemented","sigHash":"e6f4b7684503c04f34b5dc11874c135c0aa0829c3e5f32703750c8e20bff1705"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::func::FromMap","kind":"func","status":"implemented","sigHash":"54f3eadd3295f6535e9d392ee641e95083f943b43e9c61bc452de618dcb7033e"}
  *
  * Go source:
  * func FromMap[File any](m map[string]File, useCaseSensitiveFileNames bool) vfs.FS {
@@ -200,7 +200,7 @@ export function FromMap<File>(m: GoMap<string, File>, useCaseSensitiveFileNames:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::func::FromMapWithClock","kind":"func","status":"implemented","sigHash":"fbc52924438d85839ff9af691a2e378734168074cb9f039a54a26fcbcba459d8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::func::FromMapWithClock","kind":"func","status":"implemented","sigHash":"75b8c9624aede0733852a4f2608238b6d9d8f61548b17d84aaa9915dccb5468e"}
  *
  * Go source:
  * func FromMapWithClock[File any](m map[string]File, useCaseSensitiveFileNames bool, clock Clock) vfs.FS {
@@ -482,7 +482,7 @@ export function comparePathsByParts(a: string, b: string): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::canonicalPath","kind":"type","status":"implemented","sigHash":"61d7bc3bb35db91324774f1830bfc2fd30aacec9994763b8a905e0cdf1e69f21"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::canonicalPath","kind":"type","status":"implemented","sigHash":"cd15c3585bbafa104c0e20e7aabb8b4e16fdf3ac1b545984dab0f40ea4beae70"}
  *
  * Go source:
  * canonicalPath string
@@ -672,7 +672,7 @@ export function MapFS_getFollowingSymlinks(receiver: GoPtr<MapFS>, p: canonicalP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::brokenSymlinkError","kind":"type","status":"implemented","sigHash":"ebca66a1a5be05d7c8c0cb4edfd97b7a7be08e14bf72c368a461bea5e0c3259b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::brokenSymlinkError","kind":"type","status":"implemented","sigHash":"bb96955116781aae2db99c0f6ef55c13e9de235ffca0b9e128a72e7a76ce9d2a"}
  *
  * Go source:
  * brokenSymlinkError struct {
@@ -1003,7 +1003,7 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::fileInfo","kind":"type","status":"implemented","sigHash":"faa9b0357889cb408ff2e938cc4e7f875987a9454f9d36a1c5d4d1b821973e4c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::fileInfo","kind":"type","status":"implemented","sigHash":"2e0bfefd6c28e47790e27a51c4e10310649624cdfad9b72519288fa955c3072f"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The hidden pointer-method carrier statically exposes the Go pointer receiver set without adding value methods, reflection, prototype mutation, or a wrapper object.","goSignatureHash":"08f318a169d911e0f4993b7975b672d9971b5eee8bea8bb68fda891d4e1db29c","tsSignatureHash":"f4c27bfbcd92b3bffdaada1f39b981f71c69e1bfd30bba15117bbfe12e85bafa"}
  *
  * Go source:
@@ -1052,7 +1052,7 @@ export function fileInfo_Sys(receiver: GoPtr<fileInfo>): GoInterface<unknown> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::file","kind":"type","status":"implemented","sigHash":"daaad1169872972388df5d5272a4b8cb79e411706b30d17017d24f615b082832"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::file","kind":"type","status":"implemented","sigHash":"f297c6d65a8894f54d5ea81196bcff4176b8f09a3b869027a678cbe0b1d3286d"}
  *
  * Go source:
  * file struct {
@@ -1078,7 +1078,7 @@ export function file_Stat(receiver: GoPtr<file>): [GoInterface<FileInfo>, GoErro
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::readDirFile","kind":"type","status":"implemented","sigHash":"45fde7ad396c60accf3165338847b2cd69fb9058d7b34ec47a031ec1904238c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::readDirFile","kind":"type","status":"implemented","sigHash":"45a536f37fec0b0b53d1b7385230eaa8388c8609b507858afa1b0633fb2d55c5"}
  *
  * Go source:
  * readDirFile struct {
@@ -1331,7 +1331,7 @@ function makeFileInfo(info: FileInfo, sysValue: GoInterface<unknown>, realpath: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::constGroup::umask","kind":"constGroup","status":"implemented","sigHash":"6739de9433325eaa175a2f30d6eb401f8015e3697df32c2f0ffaf9b2f9ed814a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::constGroup::umask","kind":"constGroup","status":"implemented","sigHash":"337fe731f8efa49783275c4fb7d9074eb61b7005bc996cdd18f61d01f078eb13"}
  *
  * Go source:
  * const umask = 0o022

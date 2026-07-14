@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/isprocessalive_other.go::constGroup::processAliveSupported","kind":"constGroup","status":"implemented","sigHash":"cb51e9ea32c184706a4d2cd1cbcad16927646693ac9daad79dd8eb56c7420775"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/isprocessalive_other.go::constGroup::processAliveSupported","kind":"constGroup","status":"implemented","sigHash":"ddff720b98b47013514f2a54d78dabb81db64ab219e03fc1dd3ee9bba4228c93"}
  *
  * Go source:
  * const processAliveSupported = false

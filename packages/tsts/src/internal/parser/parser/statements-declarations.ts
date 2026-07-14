@@ -1446,7 +1446,7 @@ export function Parser_parseThrowStatement(receiver: GoPtr<Parser>): GoPtr<Node>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseTryStatement","kind":"method","status":"implemented","sigHash":"fcac15ed11ff279a7071d57aef48e54a832a8736b669dbaad9eec9765696bf90"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseTryStatement","kind":"method","status":"implemented","sigHash":"34a6f0a6116d6c59c3d3939ef56d5830fb56f9a0c666935e7c4c9a41f59bd54a"}
  *
  * Go source:
  * func (p *Parser) parseTryStatement() *ast.Node {

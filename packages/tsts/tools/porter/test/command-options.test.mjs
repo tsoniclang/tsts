@@ -14,6 +14,7 @@ test("Porter command option schemas accept only their typed options", () => {
     ["scan", [], {}],
     ["status", [], {}],
     ["verify", [], {}],
+    ["reconcile-metadata", ["--write", "--json"], { write: true, json: true }],
     ["sig-check", ["--id", "internal/**", "--json", "--no-gate"], { id: "internal/**", json: true, "no-gate": true }],
     [
       "scaffold",

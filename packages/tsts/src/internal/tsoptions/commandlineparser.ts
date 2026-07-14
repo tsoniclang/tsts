@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoZeroInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import { Atoi, Itoa } from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
@@ -116,7 +116,7 @@ export function commandLineParser_UnknownDidYouMeanDiagnostic(receiver: GoPtr<co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::type::commandLineParser","kind":"type","status":"implemented","sigHash":"79d325265cbddb5df61fab09767bd110f16ddb7661c5b27191ea9f07420c7d1d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::type::commandLineParser","kind":"type","status":"implemented","sigHash":"e7913c62fb7907f966c8f2b7799cf7a9045dfa530c035c42dc698a5aaf5fb208"}
  *
  * Go source:
  * commandLineParser struct {
@@ -727,7 +727,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
         }
         case CommandLineOptionTypeString: {
           const [val, err] = validateJsonOptionValue(opt, args[i]!, undefined, undefined);
-          if (err === undefined || err.length === 0) {
+          if (GoSliceIsNil(err)) {
             OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, val, GoStringKey);
           } else {
             p.errors = [...p.errors, ...err];
@@ -833,7 +833,7 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
   }
   if (opt!.Kind === CommandLineOptionTypeListOrElement && !strings.ContainsRune(value, ",".charCodeAt(0))) {
     const [val, err] = validateJsonOptionValue(opt, value, undefined, undefined);
-    if (err !== undefined && err.length !== 0) {
+    if (!GoSliceIsNil(err)) {
       return [[], err];
     }
     return [[val as string], errors];
@@ -847,10 +847,10 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
     case CommandLineOptionTypeString: {
       const elements = MapFiltered(values, (v: string): [unknown, bool] => {
         const [val, err] = validateJsonOptionValue(CommandLineOption_Elements(opt), v, undefined, undefined);
-        if (typeof val === "string" && (err === undefined || err.length === 0) && val !== "") {
+        if (typeof val === "string" && err.length === 0 && val !== "") {
           return [val, true];
         }
-        errors = [...errors, ...(err ?? [])];
+        errors = [...errors, ...err];
         return ["", false];
       });
       return [elements, errors];
@@ -865,10 +865,10 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
     default: {
       const result = MapFiltered(values, (v: string): [unknown, bool] => {
         const [val, err] = convertJsonOptionOfEnumType(CommandLineOption_Elements(opt), strings.TrimFunc(v, IsWhiteSpaceLike), undefined, undefined);
-        if (typeof val === "string" && (err === undefined || err.length === 0) && val !== "") {
+        if (typeof val === "string" && err.length === 0 && val !== "") {
           return [val, true];
         }
-        errors = [...errors, ...(err ?? [])];
+        errors = [...errors, ...err];
         return ["", false];
       });
       return [result, errors];
@@ -903,12 +903,12 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
  */
 export function convertJsonOptionOfEnumType(opt: GoPtr<CommandLineOption>, value: string, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   if (value === "") {
-    return [undefined, undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
+    return [undefined, GoNilSlice<GoPtr<Diagnostic>>()];
   }
   const key = strings.ToLower(value);
   const typeMap = CommandLineOption_EnumMap(opt);
   if (typeMap === undefined) {
-    return [undefined, undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
+    return [undefined, GoNilSlice<GoPtr<Diagnostic>>()];
   }
   const [val, ok] = OrderedMap_Get(typeMap, key, GoZeroInterface<unknown>);
   if (ok) {

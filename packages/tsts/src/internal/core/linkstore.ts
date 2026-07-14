@@ -6,7 +6,7 @@ import type { Arena } from "./arena.js";
 
 import type { GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/linkstore.go::type::LinkStore","kind":"type","status":"implemented","sigHash":"96af231f81cab3ea96808ae94d0dd1d2f72fe89e0cdb4c2d385abf3ee3542b3d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/linkstore.go::type::LinkStore","kind":"type","status":"implemented","sigHash":"4819b5299d93f83bc94613116fe6aa9f531f2e6c747b99539f472a65af9c96fb"}
  *
  * Go source:
  * LinkStore[K comparable, V any] struct {

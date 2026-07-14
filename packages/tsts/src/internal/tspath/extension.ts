@@ -5,7 +5,7 @@ import * as slices from "../../go/slices.js";
 import { GetAnyExtensionFromPath, GetBaseFileName, FileExtensionIs } from "./path.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::constGroup::ExtensionTs+ExtensionTsx+ExtensionDts+ExtensionJs+ExtensionJsx+ExtensionJson+ExtensionTsBuildInfo+ExtensionMjs+ExtensionMts+ExtensionDmts+ExtensionCjs+ExtensionCts+ExtensionDcts","kind":"constGroup","status":"implemented","sigHash":"cd8f4d8c8262077661ed7818cd5830cdb2877fbaf83354b93a5e246b8d066d7f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::constGroup::ExtensionTs+ExtensionTsx+ExtensionDts+ExtensionJs+ExtensionJsx+ExtensionJson+ExtensionTsBuildInfo+ExtensionMjs+ExtensionMts+ExtensionDmts+ExtensionCjs+ExtensionCts+ExtensionDcts","kind":"constGroup","status":"implemented","sigHash":"3eeea5de951d6dd17cc446aa8b2c9e10d53c1b73faafa66011c81acf5fee8289"}
  *
  * Go source:
  * const (
@@ -39,7 +39,7 @@ export const ExtensionCts: string = ".cts";
 export const ExtensionDcts: string = ".d.cts";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::varGroup::SupportedDeclarationExtensions+SupportedTSImplementationExtensions+supportedTSExtensionsForExtractExtension+AllSupportedExtensions+SupportedTSExtensions+SupportedTSExtensionsFlat+SupportedJSExtensions+SupportedJSExtensionsFlat+AllSupportedExtensionsWithJson+SupportedTSExtensionsWithJson+SupportedTSExtensionsWithJsonFlat+ExtensionsNotSupportingExtensionlessResolution","kind":"varGroup","status":"implemented","sigHash":"a402e674e6a6852421ed893015944bf98f3772cb7c012057a8bbc9aee1b99732"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::varGroup::SupportedDeclarationExtensions+SupportedTSImplementationExtensions+supportedTSExtensionsForExtractExtension+AllSupportedExtensions+SupportedTSExtensions+SupportedTSExtensionsFlat+SupportedJSExtensions+SupportedJSExtensionsFlat+AllSupportedExtensionsWithJson+SupportedTSExtensionsWithJson+SupportedTSExtensionsWithJsonFlat+ExtensionsNotSupportingExtensionlessResolution","kind":"varGroup","status":"implemented","sigHash":"e1e8def32a6477867b4a2168f9fa62ac665a60281ad55ffede39ca40c3f9484f"}
  *
  * Go source:
  * var (
@@ -91,7 +91,7 @@ export function ExtensionIsTs(ext: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::varGroup::extensionsToRemove","kind":"varGroup","status":"implemented","sigHash":"364ae8be36fb152fe8797c9667aabe35e776fd5792af4d085f55535d97a45036"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::varGroup::extensionsToRemove","kind":"varGroup","status":"implemented","sigHash":"b0133c812a668bd4ae8207039e9baf727d43f004238b9f8163503fa4ef90fc1d"}
  *
  * Go source:
  * var extensionsToRemove = []string{ExtensionDts, ExtensionDmts, ExtensionDcts, ExtensionMjs, ExtensionMts, ExtensionCjs, ExtensionCts, ExtensionTs, ExtensionJs, ExtensionTsx, ExtensionJsx, ExtensionJson}
@@ -348,7 +348,7 @@ export function GetDeclarationEmitExtensionForPath(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::func::ChangeAnyExtension","kind":"func","status":"implemented","sigHash":"bafeb754dd28635ca222be7a4e7b4bd97de05c3d2f4a29787b258fb79d314643"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::func::ChangeAnyExtension","kind":"func","status":"implemented","sigHash":"2f317e28249c13aea9ea04d80eb20e09ce5cd9b06501437ed14da8e0d3e23fc6"}
  *
  * Go source:
  * func ChangeAnyExtension(path string, ext string, extensions []string, ignoreCase bool) string {
@@ -394,7 +394,7 @@ export function ChangeExtension(path: string, newExtension: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::func::ChangeFullExtension","kind":"func","status":"implemented","sigHash":"6654d483bf83fdae9f6c8045b02e7aec8c4a9fed2666e0b7437330dbb0e570bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::func::ChangeFullExtension","kind":"func","status":"implemented","sigHash":"c6bfe4b31e124fbab6f94a059690cdd04906f02b838d36722b0bcd96648d193c"}
  *
  * Go source:
  * func ChangeFullExtension(path string, newExtension string) string {

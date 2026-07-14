@@ -5,7 +5,7 @@ import * as slices from "../../go/slices.js";
 import type { Tristate } from "./tristate.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/typeacquisition.go::type::TypeAcquisition","kind":"type","status":"implemented","sigHash":"304fe4744aa0d343ed60b1d0db76eeb9fbe805fcc96b18f512d1cfd5d8d85f08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/typeacquisition.go::type::TypeAcquisition","kind":"type","status":"implemented","sigHash":"1bd4db91345c043ae1321e838a1ce8faeabd7c15dd77d0b6f33125945cc86102"}
  *
  * Go source:
  * TypeAcquisition struct {

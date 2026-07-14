@@ -245,7 +245,7 @@ export function NodeBuilderImpl_reuseTypeNode(receiver: GoPtr<NodeBuilderImpl>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::NodeBuilderImpl.walkNodeForExpandability","kind":"method","status":"implemented","sigHash":"042f02ce100844abc395a5cd6c47c6f9cc17dd4ef114519542cd4f1a06c81080"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::NodeBuilderImpl.walkNodeForExpandability","kind":"method","status":"implemented","sigHash":"69030c49ab0a3770d7fce542c3704d547ad3df3c1350bb612b4edd08cfe7efda"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) walkNodeForExpandability(node *ast.Node) {
@@ -289,7 +289,7 @@ export function NodeBuilderImpl_walkNodeForExpandability(receiver: GoPtr<NodeBui
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::type::recoveryBoundary","kind":"type","status":"implemented","sigHash":"aad68436aa790ac9d6f7b6f40b29f65ab8c7f5efdb07a00cc46305232db29361"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::type::recoveryBoundary","kind":"type","status":"implemented","sigHash":"3c90613cf27f9ed5f28d731564e404c30b853c0f8f8f7f2d47190fec407997f4"}
  *
  * Go source:
  * recoveryBoundary struct {
@@ -333,7 +333,7 @@ export function recoveryBoundary_markError(receiver: GoPtr<recoveryBoundary>, f:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::type::originalRecoveryScopeState","kind":"type","status":"implemented","sigHash":"17868c9eb4bdb62f8e69dfcf2dc37e58285961730abbb71bb4a5d1dd30d369b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::type::originalRecoveryScopeState","kind":"type","status":"implemented","sigHash":"273bdf3eb30aa9915d831797147441a4da7a69505e0b8317f91473bd4cffe0e4"}
  *
  * Go source:
  * originalRecoveryScopeState struct {
@@ -381,7 +381,7 @@ export function recoveryBoundary_endRecoveryScope(receiver: GoPtr<recoveryBounda
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::type::wrappingTracker","kind":"type","status":"implemented","sigHash":"7268cd1c8ec3e18435be81b0f2825958c81c7068e40c22ed602676f6fc9a2cfc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::type::wrappingTracker","kind":"type","status":"implemented","sigHash":"f97b3c7689dd5f04f41b67a6aeacc15f845c3d3a7c4ad96bde331e9d17311dde"}
  *
  * Go source:
  * wrappingTracker struct {

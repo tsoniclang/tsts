@@ -45,7 +45,7 @@ import { NodeFlagsPossiblyContainsImportMeta } from "./generated/flags.js";
 import { ScriptKindJSON } from "../core/scriptkind.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::type::SourceFileParseOptions","kind":"type","status":"implemented","sigHash":"9a450bb87222c925154d70406dc08e93c64ffd27c4119d98bcb70e15e077af29"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::type::SourceFileParseOptions","kind":"type","status":"implemented","sigHash":"053ca2016d94420fcce03accf7a3b15427c4e250f890f4d10a0b2b28e4befd05"}
  *
  * Go source:
  * SourceFileParseOptions struct {
@@ -61,7 +61,7 @@ export interface SourceFileParseOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::type::ExternalModuleIndicatorOptions","kind":"type","status":"implemented","sigHash":"d6a8827054c27106b6e16cf7b5a0686882a047885e2edc345941388f710967ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::type::ExternalModuleIndicatorOptions","kind":"type","status":"implemented","sigHash":"b0d3a29337ea598fd5576128e3e0dda6aaa634799485842fd95f5aebb1c93500"}
  *
  * Go source:
  * ExternalModuleIndicatorOptions struct {
@@ -129,7 +129,7 @@ export function GetExternalModuleIndicatorOptions(fileName: string, options: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::varGroup::isFileForcedToBeModuleByFormatExtensions","kind":"varGroup","status":"implemented","sigHash":"704574fe3192786b288268ff3d3c230e4d0f95d8fc6325b76d91d730373665e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::varGroup::isFileForcedToBeModuleByFormatExtensions","kind":"varGroup","status":"implemented","sigHash":"f524cd455f750c3339d3e20bab0d2c2cdcf8df83b7f7534b86e53f137ad557b5"}
  *
  * Go source:
  * var isFileForcedToBeModuleByFormatExtensions = []string{tspath.ExtensionCjs, tspath.ExtensionCts, tspath.ExtensionMjs, tspath.ExtensionMts}
@@ -325,7 +325,7 @@ export function isFileModuleFromUsingJSXTag(file: GoPtr<SourceFile>): GoPtr<Node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::walkTreeForJSXTags","kind":"func","status":"implemented","sigHash":"19964bc6e5e18190cc0173165e74a2f16d38796c25a999b41ecc2c8d6b280b02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::walkTreeForJSXTags","kind":"func","status":"implemented","sigHash":"d0dfcef04a2d21cfbbacc01ccdf04849357733a588c5d6a7621fe450dd78a82d"}
  *
  * Go source:
  * func walkTreeForJSXTags(node *Node) *Node {

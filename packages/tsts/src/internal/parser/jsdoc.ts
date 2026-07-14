@@ -172,7 +172,7 @@ export function init(): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::parseJSDocForNode","kind":"func","status":"implemented","sigHash":"aaa76ebc73eade1cba544f6a0b246a3bb0e95f4bc627a3eff5ac4666ac433093"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::parseJSDocForNode","kind":"func","status":"implemented","sigHash":"9fdd6567e9d47623c52d1633c41d80312177c8cef165ff2dbcc8af05d63a6d9e"}
  *
  * Go source:
  * func parseJSDocForNode(sourceFile *ast.SourceFile, node *ast.Node) []*ast.Node {
@@ -221,7 +221,7 @@ export function parseJSDocForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::type::jsdocState","kind":"type","status":"implemented","sigHash":"6d3ac3a19dc9e8764433bfb10dd91e08a5b99f1df162cf75d5e18dfb0cda7779"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::type::jsdocState","kind":"type","status":"implemented","sigHash":"390d1787ac3c3cd74f6b2061bb9976cf7800cbdbcdf4f7e50480f1cb5c43d222"}
  *
  * Go source:
  * jsdocState int32
@@ -229,7 +229,7 @@ export function parseJSDocForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<Nod
 export type jsdocState = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::constGroup::jsdocStateBeginningOfLine+jsdocStateSawAsterisk+jsdocStateSavingComments+jsdocStateSavingBackticks","kind":"constGroup","status":"implemented","sigHash":"eb2f716060a6543364093d10a0357836ed1574963f648bd1996da8ec2a38b092"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::constGroup::jsdocStateBeginningOfLine+jsdocStateSawAsterisk+jsdocStateSavingComments+jsdocStateSavingBackticks","kind":"constGroup","status":"implemented","sigHash":"d8e5e7d2728f73da6a017a91f95f7f03d70eedb7f73526a70b2169137852cd05"}
  *
  * Go source:
  * const (
@@ -245,7 +245,7 @@ export const jsdocStateSavingComments: jsdocState = 2;
 export const jsdocStateSavingBackticks: jsdocState = 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::type::propertyLikeParse","kind":"type","status":"implemented","sigHash":"98f72ca32892f7f4f8800b310650468649848ede075c181f48f20018256502e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::type::propertyLikeParse","kind":"type","status":"implemented","sigHash":"c9afe9ed8f0d9da867930b487b6752957f3d7e4c8b91e01e720c2f1a256c3769"}
  *
  * Go source:
  * propertyLikeParse int32
@@ -253,7 +253,7 @@ export const jsdocStateSavingBackticks: jsdocState = 3;
 export type propertyLikeParse = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::constGroup::propertyLikeParseProperty+propertyLikeParseParameter+propertyLikeParseCallbackParameter","kind":"constGroup","status":"implemented","sigHash":"4a824230f213e3a640025d56fe9d5b08f380337d2aa53ff855c641e350e52de5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::constGroup::propertyLikeParseProperty+propertyLikeParseParameter+propertyLikeParseCallbackParameter","kind":"constGroup","status":"implemented","sigHash":"c02b7eba68870088417b496af15ebd24b9df12d8d5a0fa3175dd920558c8356e"}
  *
  * Go source:
  * const (
@@ -444,7 +444,7 @@ export function Parser_parseJSDocNameReference(receiver: GoPtr<Parser>): GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocComment","kind":"method","status":"implemented","sigHash":"f880ad6115e4280140e1ce6a6199952ac8a0553d21fc56174a701697e2792d8e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocComment","kind":"method","status":"implemented","sigHash":"345678c06506dfeee662b83c8a4a415aab6b0497649cd72f4c955330083bb86f"}
  *
  * Go source:
  * func (p *Parser) parseJSDocComment(parent *ast.Node, start int, end int, fullStart int) *ast.Node {
@@ -551,7 +551,7 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocCommentWorker","kind":"method","status":"implemented","sigHash":"582b0878c098492c9c6a9465058d854952b30789e43eb30c927c01a586bce4d8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocCommentWorker","kind":"method","status":"implemented","sigHash":"58c884abf0456864f93050c844de7516559e15c123cd4939ac5397d8e39beca5"}
  *
  * Go source:
  * func (p *Parser) parseJSDocCommentWorker(start int, end int, fullStart int, indent int) *ast.Node {
@@ -1562,7 +1562,7 @@ export function Parser_parseReturnTag(receiver: GoPtr<Parser>, previousTags: GoS
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypeTag","kind":"method","status":"implemented","sigHash":"2349d1317667067c0b7600b02473eb3e8b9dffd31b847f37bec66fd38c5bffc3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypeTag","kind":"method","status":"implemented","sigHash":"f282834acd1d44bf286b9ff3697e4dcbe5f968b2cd3f961d8c75603aceac47da"}
  *
  * Port note: (uses tagName.Text() and parseTrailingTagComments)
  */

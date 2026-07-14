@@ -119,7 +119,7 @@ export function Checker_mergeModuleAugmentation(receiver: GoPtr<Checker>, module
   }
   const originalModule = mainModule;
   mainModule = Checker_resolveExternalModuleSymbol(receiver, mainModule, false);
-  const isNamespaceCapableExportEqualsModule = originalModule.Exports?.get(InternalSymbolNameExportEquals) !== undefined &&
+  const isNamespaceCapableExportEqualsModule = originalModule.Exports.get(InternalSymbolNameExportEquals) !== undefined &&
     (mainModule!.Flags & (SymbolFlagsClass | SymbolFlagsFunction)) !== 0;
   if ((mainModule!.Flags & SymbolFlagsNamespace) === 0 && !isNamespaceCapableExportEqualsModule) {
     Checker_error(receiver, moduleName, Cannot_augment_module_0_because_it_resolves_to_a_non_module_entity, Node_Text(moduleName));
@@ -132,7 +132,7 @@ export function Checker_mergeModuleAugmentation(receiver: GoPtr<Checker>, module
     return;
   }
 
-  if (mainModule!.Exports?.get(InternalSymbolNameExportStar) !== undefined && (moduleAugmentationSymbol!.Exports?.size ?? 0) !== 0) {
+  if (mainModule!.Exports.get(InternalSymbolNameExportStar) !== undefined && moduleAugmentationSymbol!.Exports.size !== 0) {
     const resolvedExports = Checker_getResolvedMembersOrExportsOfSymbol(receiver, mainModule, MembersOrExportsResolutionKindResolvedExports);
     for (const [key, value] of moduleAugmentationSymbol!.Exports) {
       const resolvedExport = resolvedExports.get(key);

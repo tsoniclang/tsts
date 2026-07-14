@@ -18,7 +18,7 @@ import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/visitor.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::type::exponentiationTransformer","kind":"type","status":"implemented","sigHash":"ebc8b5b371fca078fe4ad9e897c21e1f94e1212d3d77cfcf3fb427b3fa484a80"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::type::exponentiationTransformer","kind":"type","status":"implemented","sigHash":"2523adac1feebbc2203b099649dbe314c593b2a554179a79c9641e4a54835db1"}
  *
  * Go source:
  * exponentiationTransformer struct {

@@ -17,6 +17,7 @@ import type { Type } from "../internal/checker/types.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { ResolutionModeESM } from "../internal/core/compileroptions.js";
+import { TSUnknown } from "../internal/core/tristate.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
 import {
   NewProgram,
@@ -36,6 +37,26 @@ import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
 import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ParameterPassingRequest, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest } from "./index.js";
+
+type ProgramOptionsOverrides = Partial<Omit<ProgramOptions, "Config" | "Host">>;
+
+function createProgramOptions(
+  config: ProgramOptions["Config"],
+  host: ProgramOptions["Host"],
+  overrides: ProgramOptionsOverrides = {},
+): ProgramOptions {
+  return {
+    Config: config,
+    Host: host,
+    UseSourceOfProjectReference: false,
+    SingleThreaded: TSUnknown,
+    CreateCheckerPool: undefined,
+    TypingsLocation: "",
+    ProjectName: "",
+    Tracing: undefined,
+    ...overrides,
+  };
+}
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -85,10 +106,7 @@ test("provider-backed virtual modules participate in normal program binding", ()
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Buffers.js")],
@@ -176,10 +194,7 @@ test("provider-backed virtual declarations expose undefined as a source type", (
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [undefinedStateProviderExtension()],
@@ -219,10 +234,7 @@ test("provider declarations preserve parameter passing metadata in target bindin
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [passingModeProviderExtension()],
@@ -284,10 +296,7 @@ test("provider-backed virtual modules support alias and namespace import forms",
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Buffers.js")],
@@ -332,10 +341,7 @@ test("provider virtual declaration facts distinguish static instance constructor
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [bufferProviderExtension()],
@@ -396,10 +402,7 @@ test("provider virtual declaration facts distinguish static and instance members
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [dualMemberProviderExtension()],
@@ -459,10 +462,7 @@ test("provider virtual module slice identities stay stable across source and pro
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [sliceProviderExtension()],
@@ -526,10 +526,7 @@ test("provider virtual module dependency slices do not hide later source-request
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [orderDependentSliceProviderExtension()],
@@ -597,10 +594,7 @@ test("provider virtual module dependency slices preserve public export identity 
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [publicProviderSliceIdentityProviderExtension()],
@@ -658,10 +652,7 @@ test("provider virtual external generic heritage uses value-capable family varia
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [externalGenericHeritageProviderExtension()],
@@ -722,10 +713,7 @@ test("provider virtual generic member chains do not leave stale unresolved prope
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerGenericMemberChainExtension()],
@@ -775,10 +763,7 @@ test("provider virtual module same-file named import slices compose before resol
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [sameModuleSliceProviderExtension(requestedSlices)],
@@ -823,10 +808,7 @@ test("provider virtual rest parameters preserve array-of-function source shapes"
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [restFunctionArrayProviderExtension()],
@@ -871,10 +853,7 @@ test("provider type families select same-name variants by source type-argument a
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [taskTypeFamilyProviderExtension()],
@@ -946,10 +925,7 @@ test("provider type families keep variant members separate", () => {
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [taskTypeFamilyProviderExtension()],
@@ -989,10 +965,7 @@ test("provider virtual declaration facts include enum members", () => {
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [enumProviderExtension()],
@@ -1051,10 +1024,7 @@ test("provider virtual declaration facts include namespace value and function me
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [namespaceProviderExtension()],
@@ -1115,10 +1085,7 @@ test("provider-backed resolution receives import slices without target-specific 
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme-native",
     extensions: [acmeProviderExtension(observedSlices)],
@@ -1177,10 +1144,7 @@ test("programs without an extension host stay on the direct TS-Go path", () => {
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const program = NewProgram(options);
   assert.ok(program !== undefined);
   const index = Program_GetSourceFile(program, "/src/index.ts");
@@ -1214,10 +1178,7 @@ test("checker records provider-owned target call facts for consumers", () => {
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Console.js", false, semanticProvider(selectedSignature))],
@@ -1265,10 +1226,7 @@ test("checker records provider-owned target type argument facts on selected call
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-generic-inference-extension", genericInferenceSemanticProvider((request) => {
@@ -1323,10 +1281,7 @@ test("checker exposes explicit selected source method type arguments on checked 
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
@@ -1385,10 +1340,7 @@ test("checker exposes inferred selected source method type arguments on checked 
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
@@ -1445,10 +1397,7 @@ test("checker exposes explicit selected source method type arguments on callback
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
@@ -1506,10 +1455,7 @@ test("checker exposes selected source member evidence on checked property access
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-property-evidence-extension", {
@@ -1578,10 +1524,7 @@ test("checker exposes selected source index-signature evidence on checked elemen
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-index-evidence-extension", {
@@ -1641,10 +1584,7 @@ test("checker exposes selected source member evidence on optional-chain property
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-optional-property-evidence-extension", {
@@ -1704,10 +1644,7 @@ test("checker exposes source element types on for-of declaration and assignment 
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-iteration-evidence-extension", {
@@ -1767,10 +1704,7 @@ test("checker maps checked unary operators through the operator observation", ()
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-unary-operator-extension", {
@@ -1825,10 +1759,7 @@ test("checker exposes selected callee member evidence on checked calls", () => {
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-callee-evidence-extension", {
@@ -1899,10 +1830,7 @@ test("checker records provider-owned contextual target facts without changing TS
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-contextual-extension", contextualSemanticProvider())],
@@ -1941,10 +1869,7 @@ test("checker allows provider contextual target observers to defer without diagn
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-deferred-contextual-extension", {
@@ -1995,10 +1920,7 @@ test("checker records provider-owned parameter mode facts from selected target s
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Console.js", false, parameterModeSemanticProvider(selectedSignature, (request) => observedParameterRequests.push(request)))],
@@ -2054,10 +1976,7 @@ test("checker records parameter mode facts per argument without collapsing them 
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Console.js", false, parameterModeSequenceSemanticProvider(selectedSignature))],
@@ -2106,10 +2025,7 @@ test("checker records provider-owned runtime carrier and argument conversion fac
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Buffers.js", false, carrierConversionSemanticProvider((request) => observedConversionRequests.push(request)))],
@@ -2180,10 +2096,7 @@ test("checker validates provider-owned flow use diagnostics from source-semantic
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "borrow",
     extensions: [
@@ -2245,10 +2158,7 @@ test("checker validates provider-owned assignability after normal TS compatibili
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "borrow",
     extensions: [
@@ -2311,10 +2221,7 @@ test("checker validates provider-owned target constraints through standard seman
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [
@@ -2375,10 +2282,7 @@ test("provider extensions can drive a realistic emitter-facing fact chain", () =
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [
@@ -2426,10 +2330,7 @@ test("checker-owned target call seam reports deferred providers without fallback
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Console.js", false, deferredSemanticProvider())],
@@ -2481,10 +2382,7 @@ test("checker records provider-owned member element and operator facts for consu
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Console.js", false, surfaceSemanticProvider())],
@@ -2540,10 +2438,7 @@ test("checker-owned member element and operator seams report deferred providers 
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Console.js", false, deferredSurfaceSemanticProvider())],
@@ -2585,10 +2480,7 @@ test("extension-owned semantic rejections surface through standard diagnostics w
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Console.js", false, rejectingCallSemanticProvider())],
@@ -2629,10 +2521,7 @@ test("extension diagnostics can use explicit source spans through the standard s
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Console.js", false, sourceSpanRejectingCallProvider())],
@@ -2672,10 +2561,7 @@ test("unsupported native surface operations are diagnostics, not fallback calls"
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     activeSurface: "native-array",
@@ -2724,10 +2610,7 @@ test("borrow owned Vec surface records provider call facts without JS array fall
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "borrow",
     activeSurface: "owned-vec",
@@ -2768,10 +2651,7 @@ test("provider-owned rejected modules do not fall back to file-system resolution
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerExtension("@example/target/Acme.Buffers.js", true)],
@@ -2805,10 +2685,7 @@ test("configured provider-owned imports diagnose missing providers and do not fa
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const extended = attachExtensionHost(options, {
     activeTarget: "demo",
     requiredProviderModules: [{

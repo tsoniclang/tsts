@@ -28,7 +28,7 @@ function statPath(path: string): { isFile(): bool; isDirectory(): bool } | undef
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::varGroup::rootPath","kind":"varGroup","status":"implemented","sigHash":"d779ea1d3c4911edb0463e1b8f631ae2a0b3806c6524016734a195df1e74e654"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::varGroup::rootPath","kind":"varGroup","status":"implemented","sigHash":"ab1b510a01ef2ba3f427a95b7446054b44a5f6f2ae8eefec0311cdc21a0657e0"}
  *
  * Go source:
  * var rootPath = sync.OnceValue(func() string {
@@ -92,7 +92,7 @@ export function RootPath(): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::varGroup::typeScriptSubmodulePath","kind":"varGroup","status":"implemented","sigHash":"91cb05fb38dd4f01e4117c39aeedd05fd5b2e602e53755707615426e93fa012e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::varGroup::typeScriptSubmodulePath","kind":"varGroup","status":"implemented","sigHash":"11ad03759064b55e74bf24f48fe8534297d38003b4eec9b0d3149d11cb3c8b17"}
  *
  * Go source:
  * var typeScriptSubmodulePath = sync.OnceValue(func() string {
@@ -116,7 +116,7 @@ export function TypeScriptSubmodulePath(): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::varGroup::testDataPath","kind":"varGroup","status":"implemented","sigHash":"e0df8ed1166ac3b7f5dd5cbeb09fd127aac6d6fb16a175f3f12d50ff29d43db9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::varGroup::testDataPath","kind":"varGroup","status":"implemented","sigHash":"f454776afe2e8db8df78a50131968743063055582a5f2f4a37d9e940c2bcd82c"}
  *
  * Go source:
  * var testDataPath = sync.OnceValue(func() string {
@@ -140,7 +140,7 @@ export function TestDataPath(): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::varGroup::typeScriptSubmoduleExists","kind":"varGroup","status":"implemented","sigHash":"cc06eaac839b13cb5cc480c5baa3c1b4cef221b53211155d9dffc93c75b43563"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::varGroup::typeScriptSubmoduleExists","kind":"varGroup","status":"implemented","sigHash":"9f94e7d9556d2f100cee78e4c22aef984c2465a02a6727814391c942c666b022"}
  *
  * Go source:
  * var typeScriptSubmoduleExists = sync.OnceValue(func() bool {
@@ -172,7 +172,7 @@ export function TypeScriptSubmoduleExists(): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::type::SkippableTest","kind":"type","status":"implemented","sigHash":"923ca98fd2e2042ae4e7c5115cc0f3fa24f09bd06599412aa46d1189da8dbdb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::type::SkippableTest","kind":"type","status":"implemented","sigHash":"8081b7b1514cf9c4e1adcb30e65159a9276fb45f61104bdcd8225cf45f467007"}
  *
  * Go source:
  * SkippableTest interface {

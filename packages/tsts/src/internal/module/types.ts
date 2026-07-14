@@ -9,7 +9,7 @@ import type { FS } from "../vfs/vfs.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolutionHost","kind":"type","status":"implemented","sigHash":"81b515a83683f73d0af1aa924c342ed79313c619154c9294468a27fa0052c0c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolutionHost","kind":"type","status":"implemented","sigHash":"d2874553364b5749637eb3379154f51223483ec56c1f78e21b715135dc5f382a"}
  *
  * Go source:
  * ResolutionHost interface {
@@ -23,7 +23,7 @@ export interface ResolutionHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ModeAwareCacheKey","kind":"type","status":"implemented","sigHash":"c140cec16d91c6a94d2fc91b902b515fb0240bb454baa44adba9966b16e99785"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ModeAwareCacheKey","kind":"type","status":"implemented","sigHash":"18323546afc354ec2e90acbc492df59a681adafe4d182c99cdc86deca3bec5ec"}
  *
  * Go source:
  * ModeAwareCacheKey struct {
@@ -37,7 +37,7 @@ export interface ModeAwareCacheKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolvedProjectReference","kind":"type","status":"implemented","sigHash":"b0981c9ea36989026df7a10de20280fcddc1d3d6c148e5ad5814dfa8c567d449"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolvedProjectReference","kind":"type","status":"implemented","sigHash":"5acc7829a1385561ed945c926c025fa983aaf2a3537f94a74133650d429ac38b"}
  *
  * Go source:
  * ResolvedProjectReference interface {
@@ -51,7 +51,7 @@ export interface ResolvedProjectReference {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::NodeResolutionFeatures","kind":"type","status":"implemented","sigHash":"837b1776a25d698fd57c22b8183f260b5ee7bbdd97e577d37b0e394eabd85b13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::NodeResolutionFeatures","kind":"type","status":"implemented","sigHash":"68d7278dbcef20613284f8f6054da00fefedf5a75744311220ec363f9c8cdac5"}
  *
  * Go source:
  * NodeResolutionFeatures int32
@@ -59,7 +59,7 @@ export interface ResolvedProjectReference {
 export type NodeResolutionFeatures = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::constGroup::NodeResolutionFeaturesImports+NodeResolutionFeaturesSelfName+NodeResolutionFeaturesExports+NodeResolutionFeaturesExportsPatternTrailers+NodeResolutionFeaturesImportsPatternRoot+NodeResolutionFeaturesNone+NodeResolutionFeaturesAll+NodeResolutionFeaturesNode16Default+NodeResolutionFeaturesNodeNextDefault+NodeResolutionFeaturesBundlerDefault","kind":"constGroup","status":"implemented","sigHash":"ac7ac108ee6d3db6c3609da81ab6a0b1fbf3f931b8e132ae6b4c14fb0eedd87b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::constGroup::NodeResolutionFeaturesImports+NodeResolutionFeaturesSelfName+NodeResolutionFeaturesExports+NodeResolutionFeaturesExportsPatternTrailers+NodeResolutionFeaturesImportsPatternRoot+NodeResolutionFeaturesNone+NodeResolutionFeaturesAll+NodeResolutionFeaturesNode16Default+NodeResolutionFeaturesNodeNextDefault+NodeResolutionFeaturesBundlerDefault","kind":"constGroup","status":"implemented","sigHash":"57e649df64f89e281606a8c1f9bcfd50181508dbfa267d11299d0a9d3ca1d893"}
  *
  * Go source:
  * const (
@@ -93,7 +93,7 @@ export const NodeResolutionFeaturesBundlerDefault: NodeResolutionFeatures =
   NodeResolutionFeaturesImports | NodeResolutionFeaturesSelfName | NodeResolutionFeaturesExports | NodeResolutionFeaturesExportsPatternTrailers | NodeResolutionFeaturesImportsPatternRoot;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::PackageId","kind":"type","status":"implemented","sigHash":"78b9c9f58ce0b81766211839a99a3cde6b50a61fb44ef3a166840a14aad93cb2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::PackageId","kind":"type","status":"implemented","sigHash":"6f2c2e5f989d5c5b609cc1155c69730a482ad1a0b3b00df3fc932a2c120d6fc9"}
  *
  * Go source:
  * PackageId struct {
@@ -152,7 +152,7 @@ export interface ResolvedModuleProviderVirtual {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolvedModule","kind":"type","status":"implemented","sigHash":"86923a570fd3708e4c78e62b1f475230e820af5a107a97dc52cada12a7c05dd2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolvedModule","kind":"type","status":"implemented","sigHash":"53e708be8a4f3098f19f5add396ef4ec4dc8314f1b210ded9411bb8baf7c40df"}
  * @tsgo-override {"category":"extension-host","allow":["signature"],"reason":"Provider virtual modules need first-class internal module-resolution identity instead of pretending to be physical .d.ts files; physical resolutions preserve the exact TS-Go fields.","goSignatureHash":"c15dcc14dc1d0d37b71c570442cf3d5042390a7483bf558ff22db55c792bdcc7","tsSignatureHash":"692ad32e81f37a5875c4779e916ed4790df9e375b774aa4b160aecc3e3ec2f2e"}
  *
  * Go source:
@@ -196,7 +196,7 @@ export function ResolvedModule_IsProviderVirtual(receiver: GoPtr<ResolvedModule>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolvedTypeReferenceDirective","kind":"type","status":"implemented","sigHash":"5ef470994bb101b4af61d7d58be3f7c1f9417e69c318d58a47bf935137ddec6a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::ResolvedTypeReferenceDirective","kind":"type","status":"implemented","sigHash":"c11fbe67219b152359d3ab637880566883cb3549f58dd690a38202f291f6f059"}
  *
  * Go source:
  * ResolvedTypeReferenceDirective struct {
@@ -230,7 +230,7 @@ export function ResolvedTypeReferenceDirective_IsResolved(receiver: GoPtr<Resolv
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::extensions","kind":"type","status":"implemented","sigHash":"38dd9e9ebf2244716efccd389d8ff09c4c63cb27c4273ab9d05f5e6d8bd42eac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::type::extensions","kind":"type","status":"implemented","sigHash":"7a1558fa8b807f24ac2f3884f126fb13e12dd24d518b740fbf6a02faa9a4dbf5"}
  *
  * Go source:
  * extensions int32
@@ -238,7 +238,7 @@ export function ResolvedTypeReferenceDirective_IsResolved(receiver: GoPtr<Resolv
 export type extensions = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::constGroup::extensionsTypeScript+extensionsJavaScript+extensionsDeclaration+extensionsJson+extensionsImplementationFiles","kind":"constGroup","status":"implemented","sigHash":"1fc1ab3f2ee5066caa15b0f0943ea1631fb606d3606b4f0c6e2cc8b4f39f418a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::constGroup::extensionsTypeScript+extensionsJavaScript+extensionsDeclaration+extensionsJson+extensionsImplementationFiles","kind":"constGroup","status":"implemented","sigHash":"84d7098806dec488c73f88abdd77f7f1b29d755c8092f48c38a1fc3a6abf74a9"}
  *
  * Go source:
  * const (

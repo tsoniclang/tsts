@@ -16,7 +16,7 @@ const byteSlice = (s: string, start: int, end: int): string => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/lineinfo.go::type::ECMALineInfo","kind":"type","status":"implemented","sigHash":"d2a68ae5db0c5c56d4ec5688c7f74a32bf9ebc42fbc8b0ab4a191e893aefed1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/lineinfo.go::type::ECMALineInfo","kind":"type","status":"implemented","sigHash":"01cd7006d538725a37e98a53e72437535db3cd37f80ff269033d3e610c904763"}
  *
  * Go source:
  * ECMALineInfo struct {

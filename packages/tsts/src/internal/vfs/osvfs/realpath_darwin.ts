@@ -20,7 +20,7 @@ import type { GoFunc } from "../../../go/compat.js";
 // to keep the buffer pointer valid until fcntl returns.
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_darwin.go::varGroup::hasFGetPath","kind":"varGroup","status":"implemented","sigHash":"f4e17646e1758a2d23a07ea132bb3f55306c277449040f55e927305c55ac339d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_darwin.go::varGroup::hasFGetPath","kind":"varGroup","status":"implemented","sigHash":"5c98195d482a244cb59e96c43eebb9f19db939a6fc85fa89cd8920f384672a62"}
  *
  * Go source:
  * var hasFGetPath = sync.OnceValue(func() bool {
@@ -64,7 +64,7 @@ export function fcntlGetPath(fd: int, buf: GoPtr<GoArray<byte, "1024">>): [int, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_darwin.go::func::fcntlGetPathPtr","kind":"func","status":"implemented","sigHash":"6f0ed32d566aee9ecfefe783c459dee2ef92415c70ef92a26ee2287c93d56894"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_darwin.go::func::fcntlGetPathPtr","kind":"func","status":"implemented","sigHash":"3da3d96fe9762f47e9030ae83c5fe450a6190d2ad22b2e51345f1350c3744bc2"}
  *
  * Go source:
  * //go:uintptrescapes

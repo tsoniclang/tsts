@@ -52,7 +52,7 @@ const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const byteLen = (s: string): int => utf8Encoder.encode(s).length as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::type::ChangeTrackerWriter","kind":"type","status":"implemented","sigHash":"c477609e074153925420febf51c26d161099f83952e89bbfdcbdcf2a14ab09c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::type::ChangeTrackerWriter","kind":"type","status":"implemented","sigHash":"8bab6fe1bad3277c97e81df28135897fde2a2931cc3c47eb1027f931ed59f99f"}
  *
  * Go source:
  * ChangeTrackerWriter struct {
@@ -70,7 +70,7 @@ export interface ChangeTrackerWriter {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::type::triviaPositionKey","kind":"type","status":"implemented","sigHash":"8afcfd37e24226d32c0303750c14c2560398126a4865a619dad6f8bad086e352"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::type::triviaPositionKey","kind":"type","status":"implemented","sigHash":"7fadf2a8a236bf530cd0ad38006657bb857a7f146c44fed3879f059326d39288"}
  *
  * Go source:
  * triviaPositionKey interface { // *astNode | *ast.NodeList

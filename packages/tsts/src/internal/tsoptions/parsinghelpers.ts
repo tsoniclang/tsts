@@ -349,7 +349,7 @@ export function parseJsonToStringKey(json: GoInterface<unknown>): GoPtr<OrderedM
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::optionParser","kind":"type","status":"implemented","sigHash":"c409b167b74b0de7c2af5d5f47c3892bfb9612c524b3037b334afec6938063d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::optionParser","kind":"type","status":"implemented","sigHash":"76bebf033feb06eb908a40f0dadd8562faf33be1877c89ab3bcb91043dd0a47e"}
  *
  * Go source:
  * optionParser interface {
@@ -365,7 +365,7 @@ export interface optionParser {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::compilerOptionsParser","kind":"type","status":"implemented","sigHash":"7546cba537de554a50bcf32a30caa0b79ed2ed6598d92cc94e563f5d75580ba3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::compilerOptionsParser","kind":"type","status":"implemented","sigHash":"31f1aea80830d374610b6c8a36cf1d579f81302c4617273ab320558d6bbe37fd"}
  *
  * Go source:
  * compilerOptionsParser struct {
@@ -422,7 +422,7 @@ export function compilerOptionsParser_as_optionParser(receiver: GoPtr<compilerOp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::watchOptionsParser","kind":"type","status":"implemented","sigHash":"717d985b9f4fbd959ea3dfa0bc4cefe234d97044ef558bdc4da4842c6f42d279"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::watchOptionsParser","kind":"type","status":"implemented","sigHash":"9e3449cfacdb4ce17607d42cf450131ed77f40afdd891dcf5455088da61fc283"}
  *
  * Go source:
  * watchOptionsParser struct {
@@ -479,7 +479,7 @@ export function watchOptionsParser_as_optionParser(receiver: GoPtr<watchOptionsP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::typeAcquisitionParser","kind":"type","status":"implemented","sigHash":"77946037483b27af0b0c4ae904e5adb40be26fb99de8e2e96d2044a0bade7d10"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::typeAcquisitionParser","kind":"type","status":"implemented","sigHash":"ccff6fccd1a6cc3ab79c03ef8f9c5f1b60c22e80d6d668fdf2d0c2db3b83ebe5"}
  *
  * Go source:
  * typeAcquisitionParser struct {
@@ -536,7 +536,7 @@ export function typeAcquisitionParser_as_optionParser(receiver: GoPtr<typeAcquis
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::buildOptionsParser","kind":"type","status":"implemented","sigHash":"2d4b139a2ed61f670d76f2f1f88010d9e88ef2137637c36959d2b404301ea721"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::buildOptionsParser","kind":"type","status":"implemented","sigHash":"175101c1fd9d6b92c236fa198b07dedeb319571032fee1e7a6362786f043c099"}
  *
  * Go source:
  * buildOptionsParser struct {
@@ -1250,7 +1250,7 @@ export function ParseBuildOptions(key: string, value: GoInterface<unknown>, allO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::mergeCompilerOptions","kind":"func","status":"implemented","sigHash":"7c402d7880eb4e1a48806b603920f87a8449e640da732a4cec56b4a1d42dfb63"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::mergeCompilerOptions","kind":"func","status":"implemented","sigHash":"d720116fe56257adf2f50630135c4fc2926434fd3e12b47db535b4a6b8d9beea"}
  *
  * Go source:
  * func mergeCompilerOptions(targetOptions, sourceOptions *core.CompilerOptions, rawSource any) *core.CompilerOptions {

@@ -14,7 +14,7 @@ import {
 } from "./ordered_map.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::type::OrderedSet","kind":"type","status":"implemented","sigHash":"9617dd085ebe37ef90f0e45fe13271567b43b253466b697708813d109638d735"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::type::OrderedSet","kind":"type","status":"implemented","sigHash":"ecc0dcaf32a40a6042cce2e143e2338b7c2801ea3b2ad6e8e600b30247470776"}
  *
  * Go source:
  * OrderedSet[T comparable] struct {
@@ -26,7 +26,7 @@ export interface OrderedSet<T extends GoComparable> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::func::NewOrderedSetWithSizeHint","kind":"func","status":"implemented","sigHash":"2bd650c681d534d4023474281ecd97208315c6b1f2ec9d49ff10a359d6391c29"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::func::NewOrderedSetWithSizeHint","kind":"func","status":"implemented","sigHash":"307322eaa1dc71ddc48d7781deadc7b6d82a1bb9458ea1727865156313d2a84d"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-set construction forwards the exact static Go map-key descriptor to its backing ordered-map allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
@@ -43,7 +43,7 @@ export function NewOrderedSetWithSizeHint<T extends GoComparable>(hint: int, key
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Add","kind":"method","status":"implemented","sigHash":"8e67ec1a0fffb976220a62deae1a24995548cba5fd22f26d594253e6fb1f44d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Add","kind":"method","status":"implemented","sigHash":"b084b21a5baa943d636c02db5355564663a2de67a660d37c17f1985b58cfee1b"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-set insertion forwards the exact static Go map-key descriptor to its backing ordered map's possible allocation path.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
@@ -57,7 +57,7 @@ export function OrderedSet_Add<T extends GoComparable>(receiver: GoPtr<OrderedSe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Has","kind":"method","status":"implemented","sigHash":"fc726e0ab3de530cff8fc45de9db94dd5de759570f2d953762ab20425aaa0c67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Has","kind":"method","status":"implemented","sigHash":"21f130ba3ede50ffe0d2ac3069718b1edccf89804c3b6fcf72cd40094ebda00a"}
  *
  * Go source:
  * func (s *OrderedSet[T]) Has(value T) bool {
@@ -70,7 +70,7 @@ export function OrderedSet_Has<T extends GoComparable>(receiver: GoPtr<OrderedSe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Delete","kind":"method","status":"implemented","sigHash":"1de758c0c30fa12a3f098df86d3f59ea146c62abf15029cc975efe870591ed42"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Delete","kind":"method","status":"implemented","sigHash":"3ffebe18a07542894dc99eb619330a58cda437663153bd8a8c45babe9ab5d215"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic ordered-set deletion forwards the exact static equality operation for its erased key type.","runtimeDictionaries":[{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
@@ -86,7 +86,7 @@ export function OrderedSet_Delete<T extends GoComparable>(receiver: GoPtr<Ordere
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Values","kind":"method","status":"implemented","sigHash":"108393af0665cf90629b8441fb4c1764f3691ff1c3db2b1599b4d87157b29991"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Values","kind":"method","status":"implemented","sigHash":"e64f2c4b54012267fa2a1440f4e982b3bb37f64a29322ff3c3b62ec8f3366bab"}
  *
  * Go source:
  * func (s *OrderedSet[T]) Values() iter.Seq[T] {
@@ -99,7 +99,7 @@ export function OrderedSet_Values<T extends GoComparable>(receiver: GoPtr<Ordere
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Clear","kind":"method","status":"implemented","sigHash":"f4d302272583e3d741a18e6551910ad9cabfb2ce5da6ccc26995e45add84a66c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Clear","kind":"method","status":"implemented","sigHash":"784a231479d080da4e5b958285c589423d5742af927ebd25b74381c3c454db96"}
  *
  * Go source:
  * func (s *OrderedSet[T]) Clear() {
@@ -112,7 +112,7 @@ export function OrderedSet_Clear<T extends GoComparable>(receiver: GoPtr<Ordered
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Size","kind":"method","status":"implemented","sigHash":"6943604c4066668ad4826edc3d8535bafae7ae5d201a1cd8919c63dceef3e31d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Size","kind":"method","status":"implemented","sigHash":"9d84b7f21cc129b5e9613ee11d0e419456f6bb22e660250ddc9a903405f30ed6"}
  *
  * Go source:
  * func (s *OrderedSet[T]) Size() int {
@@ -125,7 +125,7 @@ export function OrderedSet_Size<T extends GoComparable>(receiver: GoPtr<OrderedS
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Clone","kind":"method","status":"implemented","sigHash":"848e18191b0e69ad1571be58d996bac53dbb50dfb8f38f6ee98b97dcc556f37b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_set.go::method::OrderedSet.Clone","kind":"method","status":"implemented","sigHash":"6ff1461c2d3a89eedd4f2b7fa630f1b8785f7cb3a9a5542583d92cf562952ac1"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-set cloning forwards the exact static Go map-key descriptor to backing-map allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:

@@ -5,7 +5,7 @@ import type { FSMock } from "./mock_generated.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/wrapper.go::func::Wrap","kind":"func","status":"implemented","sigHash":"462f048fe139267a07e0cf63f1bda61dc164bb450051a3a8e807e726d4b1c98d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/wrapper.go::func::Wrap","kind":"func","status":"implemented","sigHash":"7ff4dcce0a47d3ddd9fc095574d6db28a3c4f8dcd3ec5ede71c023d52bb711cf"}
  *
  * Go source:
  * func Wrap(fs vfs.FS) *FSMock {

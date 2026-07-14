@@ -2,7 +2,7 @@ import type { int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/stack.go::type::Stack","kind":"type","status":"implemented","sigHash":"9d1be24c631f29b706bab32914ea56ae89c3d5623ac175d48d0ff6fbd5147637"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/stack.go::type::Stack","kind":"type","status":"implemented","sigHash":"fb7e51fb9997ab5b2bd0f184942b2c3764b1abde5f44fe477c4e984c3a187e3a"}
  *
  * Go source:
  * Stack[T any] struct {

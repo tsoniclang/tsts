@@ -25,7 +25,7 @@ import type { GoFunc } from "../../../go/compat.js";
 // or chroots without procfs mounted).
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::constGroup::_procSelfFD","kind":"constGroup","status":"implemented","sigHash":"91f52da369124eda157655cdefd8adf58bf3db47f012efcaa8aa27af5aa3a184"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::constGroup::_procSelfFD","kind":"constGroup","status":"implemented","sigHash":"7f0eec072225329251d433cf1b5dae173355b6621c389dad1e824cd12828f9e5"}
  *
  * Go source:
  * const _procSelfFD = "/proc/self/fd/"
@@ -33,7 +33,7 @@ import type { GoFunc } from "../../../go/compat.js";
 export const _procSelfFD: string = "/proc/self/fd/";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::varGroup::hasProcSelfFD","kind":"varGroup","status":"implemented","sigHash":"fa50ebb74a38bb74213095f710ab17ecc5bcb43fe79851afd819c0b1639a3233"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::varGroup::hasProcSelfFD","kind":"varGroup","status":"implemented","sigHash":"9753abac39ad6f9f471bb8efba82dcf0ecbf93d8ac972cabd0bf3f90be416b59"}
  *
  * Go source:
  * var hasProcSelfFD = sync.OnceValue(func() bool {

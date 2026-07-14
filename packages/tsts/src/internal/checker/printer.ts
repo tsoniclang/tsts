@@ -128,7 +128,7 @@ function semicolonRemoverWriter_as_EmitTextWriter(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithDefaults","kind":"func","status":"implemented","sigHash":"b0e99e4aac87cd803240e4fb6052e4d56ca8741de90fa3c742234c097250ef54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithDefaults","kind":"func","status":"implemented","sigHash":"d1f7b437fd0c622a486457336fe8d38afdb547d98f5a0295778c155089c58633"}
  *
  * Go source:
  * func createPrinterWithDefaults(emitContext *printer.EmitContext) *printer.Printer {
@@ -268,7 +268,7 @@ export function createPrinterWithRemoveCommentsNeverAsciiEscape(emitContext: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::type::semicolonRemoverWriter","kind":"type","status":"implemented","sigHash":"7a216135612f5869d2ce8a5907db5c91a0932ea6f7353ebf46e714c0d29d3817"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::type::semicolonRemoverWriter","kind":"type","status":"implemented","sigHash":"595a72733470815a9973d595c6c6d4f5bb13f572c45753aedc46f2c7589d22b4"}
  *
  * Go source:
  * semicolonRemoverWriter struct {
@@ -1307,7 +1307,7 @@ export function Checker_SignatureToSignatureDeclaration(receiver: GoPtr<Checker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.ExpandSymbolForHover","kind":"method","status":"implemented","sigHash":"75529e298e54666d4ca9b4b239701473f9850540d08e01fd74eada6bfae4667e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.ExpandSymbolForHover","kind":"method","status":"implemented","sigHash":"3e2e13f80e8e1e5e72698fe23a329403679a4be7535c64e69c41c597a0a67047"}
  *
  * Go source:
  * // ExpandSymbolForHover produces declaration strings for a symbol with verbosity support for expandable hover.
@@ -1370,7 +1370,7 @@ export function Checker_ExpandSymbolForHover(receiver: GoPtr<Checker>, symbol_: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeParameterToStringEx","kind":"method","status":"implemented","sigHash":"c8c226b537af1260d08bfd906d86ed141afe0aa1170be56b1d14df0824210ff7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeParameterToStringEx","kind":"method","status":"implemented","sigHash":"f40a72b0138b1ad0487a0d16042d7bbcb70f6e3a941afee8c06fb013928bfe8a"}
  *
  * Go source:
  * // TypeParameterToStringEx renders a type parameter declaration (e.g. "T extends Foo") with optional verbosity support.

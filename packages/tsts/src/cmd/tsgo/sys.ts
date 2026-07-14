@@ -15,7 +15,7 @@ import type { FS as FS_12f44eda } from "../../internal/vfs/vfs.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/sys.go::type::osSys","kind":"type","status":"implemented","sigHash":"4d75e085ec2f5c8a56d334fd32dce412d90f6a22836525e3e62f7f9189aaa0cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/sys.go::type::osSys","kind":"type","status":"implemented","sigHash":"e8ab6ded0a11312a928fb2891f9a2b5ce63f513343ec46009e53a2f8256e49ac"}
  *
  * Go source:
  * osSys struct {

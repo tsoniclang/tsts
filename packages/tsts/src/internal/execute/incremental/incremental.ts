@@ -10,7 +10,7 @@ import type { Program } from "./program.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::type::BuildInfoReader","kind":"type","status":"implemented","sigHash":"19c6bf62c57e783f64019b1642c54ad12b18d1ff63eaeac0f0351389a5a531a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::type::BuildInfoReader","kind":"type","status":"implemented","sigHash":"75a2e9874229cdbb91c0c700fe8d5a56f5bd47968c12613050be6aca3b12d9f0"}
  *
  * Go source:
  * BuildInfoReader interface {
@@ -22,7 +22,7 @@ export interface BuildInfoReader {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"f4a3d63137faa43ba2fe78bcd2782b390a9664a5f8b7cf9622dd94b56ca2815e"}
  *
  * Go source:
  * var _ BuildInfoReader = (*buildInfoReader)(nil)
@@ -36,7 +36,7 @@ export function buildInfoReader_as_incremental_BuildInfoReader(receiver: GoPtr<b
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::type::buildInfoReader","kind":"type","status":"implemented","sigHash":"dfcce53f3de3062ceba253db9672d0aa2dd5f2e4895a9996dcf6421e72c32a7d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::type::buildInfoReader","kind":"type","status":"implemented","sigHash":"ba7d35becd314c10ca258da4954fdddc73591b483af58b1f17d596b5b4455553"}
  *
  * Go source:
  * buildInfoReader struct {

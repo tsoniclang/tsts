@@ -20,7 +20,7 @@ import { FormatGeneratedName, ensureLeadingHash, removeLeadingHash, makeIdentifi
 
 import type { GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::tempFlags","kind":"type","status":"implemented","sigHash":"743dd98db6ac806ced73789710bf9f48c2924a29522016b43a75017c04ea73e8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::tempFlags","kind":"type","status":"implemented","sigHash":"e7534f272d4994a4dd9b64b24ec4e9151d79bc27fcd42db7b8f0d6680ec0e5f8"}
  *
  * Go source:
  * tempFlags int
@@ -28,7 +28,7 @@ import type { GoRef } from "../../go/compat.js";
 export type tempFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::constGroup::tempFlagsAuto+tempFlagsCountMask+tempFlags_i","kind":"constGroup","status":"implemented","sigHash":"ea9c6a0fbbd10057fb25325d8c3174bc621dc3922946aa69e0c0a047c7f75253"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::constGroup::tempFlagsAuto+tempFlagsCountMask+tempFlags_i","kind":"constGroup","status":"implemented","sigHash":"5f08c0f60b263825b5da72febf38057bc0f6d890f8b38cf92a9b6ba6871ce924"}
  *
  * Go source:
  * const (
@@ -42,7 +42,7 @@ export const tempFlagsCountMask: tempFlags = 0x0fffffff;
 export const tempFlags_i: tempFlags = 0x10000000;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::NameGenerator","kind":"type","status":"implemented","sigHash":"e129da42636dc88da2cace59d4f7c4daad8adc65022d14a494cd6b3cb09a6892"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::NameGenerator","kind":"type","status":"implemented","sigHash":"96ef89f7c2df57093e9255d0e417a2a49d2768a3d203bfb80df84f915057209b"}
  *
  * Go source:
  * NameGenerator struct {
@@ -70,7 +70,7 @@ export interface NameGenerator {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::nameGenerationScope","kind":"type","status":"implemented","sigHash":"c403fe9541a71be4524431b7099c9b193a2c0853a1b580cce16bdf5aa1b9211d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::nameGenerationScope","kind":"type","status":"implemented","sigHash":"a63daa9e8de3a5db0eab634c1c9e17b5ed62f0907762a19619f56e7c2f714ca3"}
  *
  * Go source:
  * nameGenerationScope struct {
@@ -204,7 +204,7 @@ export function NameGenerator_setTempFlags(receiver: GoPtr<NameGenerator>, priva
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getTempFlagsForFormattedName","kind":"method","status":"implemented","sigHash":"0b1cc551d0f761e7e728fca0f116696bfc0041394a017f3b9e3145e1cce33fe0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getTempFlagsForFormattedName","kind":"method","status":"implemented","sigHash":"95ca78ae0928f879d8841ad33c8cf25379ad4ff280f5ff942836b45e8e45216f"}
  *
  * Go source:
  * func (g *NameGenerator) getTempFlagsForFormattedName(privateName bool, formattedNameKey string) tempFlags {
@@ -229,7 +229,7 @@ export function NameGenerator_getTempFlagsForFormattedName(receiver: GoPtr<NameG
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.setTempFlagsForFormattedName","kind":"method","status":"implemented","sigHash":"d60f7262271b68ce91521c5acbf23f38a01eee1ba1a021884fd172663a340c4b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.setTempFlagsForFormattedName","kind":"method","status":"implemented","sigHash":"199ad84705c8fe3f2923045739bcb1f9e5cf5c60d266f30a8439a643a7c58415"}
  *
  * Go source:
  * func (g *NameGenerator) setTempFlagsForFormattedName(privateName bool, formattedNameKey string, flags tempFlags) {
@@ -291,7 +291,7 @@ export function NameGenerator_reserveName(receiver: GoPtr<NameGenerator>, name: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.GenerateName","kind":"method","status":"implemented","sigHash":"9b99478f3b7702787c5d1dbdf6016d7201df1c173e929f4164171ea99f20baeb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.GenerateName","kind":"method","status":"implemented","sigHash":"220afeed6bcbfbe22f467e73117c7e7c7b7836f6ee08e33a1be74548ae348d93"}
  *
  * Go source:
  * func (g *NameGenerator) GenerateName(name *ast.MemberName) string {
@@ -695,7 +695,7 @@ export function NameGenerator_makeName(receiver: GoPtr<NameGenerator>, name: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeTempVariableName","kind":"method","status":"implemented","sigHash":"4c6f26d750a187d717da022a3de07dba1e6acf307b64dbfe70f7b7edf53cf158"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeTempVariableName","kind":"method","status":"implemented","sigHash":"1d21beb285320124947eb35670d646c12cb3df7e4ae4fe58b8e5b23c98cf9a5b"}
  *
  * Go source:
  * func (g *NameGenerator) makeTempVariableName(flags tempFlags, reservedInNestedScopes bool, privateName bool, prefix string, suffix string) string {
@@ -799,7 +799,7 @@ export function NameGenerator_makeTempVariableName(receiver: GoPtr<NameGenerator
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeUniqueName","kind":"method","status":"implemented","sigHash":"81f2523c502eac064f1671dad0cd869a9be0a883705435d86e54f20dc48b42c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeUniqueName","kind":"method","status":"implemented","sigHash":"1ab497d7d1df168393fbc5a46aba6e3f1f87f5458e85e659481bfca1e4ebbc49"}
  *
  * Go source:
  * func (g *NameGenerator) makeUniqueName(baseName string, checkFn func(name string, privateName bool) bool, optimistic bool, scoped bool, privateName bool, prefix string, suffix string) string {

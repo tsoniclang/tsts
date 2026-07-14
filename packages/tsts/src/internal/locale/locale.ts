@@ -7,7 +7,7 @@ import { Parse as language_Parse } from "../../go/golang.org/x/text/language.js"
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/locale/locale.go::type::contextKey","kind":"type","status":"implemented","sigHash":"145a4d492e87e1caa7fa3707ee5ee0952a786a50fc5f06b34cf46263a3763f73"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/locale/locale.go::type::contextKey","kind":"type","status":"implemented","sigHash":"65e826d5aa9f95dc625b6fa2e3bfa42b2ba824bd6e62e0cc726cf5b7eca25412"}
  *
  * Go source:
  * contextKey int
@@ -15,7 +15,7 @@ import type { GoInterface } from "../../go/compat.js";
 export type contextKey = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/locale/locale.go::type::Locale","kind":"type","status":"implemented","sigHash":"331b8370bfaa9be88ef646c4032992700bf4c554fdb4c7b30a1d7e72f7bd8853"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/locale/locale.go::type::Locale","kind":"type","status":"implemented","sigHash":"c074a9d2d34d485c1752562a9728ef07b1e38efcc0f30cc55dcf36a21c4e84ca"}
  *
  * Go source:
  * Locale language.Tag
@@ -23,7 +23,7 @@ export type contextKey = int;
 export type Locale = Tag;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/locale/locale.go::varGroup::Default","kind":"varGroup","status":"implemented","sigHash":"8e17f9a6a52bc2efcad3db99e2ade86555d82bc4c760c402239e029f68023a12"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/locale/locale.go::varGroup::Default","kind":"varGroup","status":"implemented","sigHash":"94686b4c15a138fd912de4b5f5f7b00188a92c454cb2c17122e57dcec5e43a80"}
  *
  * Go source:
  * var Default Locale

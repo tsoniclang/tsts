@@ -50,7 +50,7 @@ import type { GoInterface } from "../../../go/compat.js";
 
 const sourceFileKey: GoMapKeyDescriptor<GoPtr<SourceFile>> = GoPointerKey<SourceFile>();
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::dtsMayChange","kind":"type","status":"implemented","sigHash":"161a83db43532f7d6c3498aef7567079f27b3d88380b01283197b3f6270c1465"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::dtsMayChange","kind":"type","status":"implemented","sigHash":"f687f6a1dbb7e16ef44dcc273af4b914bcfd2ce0fb20ddb880d9ec40e20ca30f"}
  *
  * Go source:
  * dtsMayChange map[tspath.Path]FileEmitKind
@@ -70,7 +70,7 @@ export function dtsMayChange_addFileToAffectedFilesPendingEmit(receiver: dtsMayC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::updatedSignature","kind":"type","status":"implemented","sigHash":"5d9dd1705a97a588213f44611880b83735dbe0fea78525cf843869b5195b25c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::updatedSignature","kind":"type","status":"implemented","sigHash":"d87702b650739f69847e8c24ebbdc85732143490b212a73924a6c58d5b75d424"}
  *
  * Go source:
  * updatedSignature struct {
@@ -86,7 +86,7 @@ export interface updatedSignature {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::affectedFilesHandler","kind":"type","status":"implemented","sigHash":"4be39f50583d43bff718a0a5d34c122692a7799c97890e3fcdaad96aab5a63d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::affectedFilesHandler","kind":"type","status":"implemented","sigHash":"e64aeb2963fa8f97b2c4d77547821721ca1cae8771e41515d2ecaea950d1e24c"}
  *
  * Go source:
  * affectedFilesHandler struct {
@@ -434,7 +434,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::method::affectedFilesHandler.handleDtsMayChangeOfAffectedFile","kind":"method","status":"implemented","sigHash":"a5c0e8df65875fc9df4b7b89abfc1b81628a2baafeecdbf120e79761625ea059"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::method::affectedFilesHandler.handleDtsMayChangeOfAffectedFile","kind":"method","status":"implemented","sigHash":"e022f8065e6f98bf5c16153c67a5c0e7ffa100e47d05500831c620a2b69347d2"}
  *
  * Go source:
  * func (h *affectedFilesHandler) handleDtsMayChangeOfAffectedFile(dtsMayChange dtsMayChange, affectedFile *ast.SourceFile) {
@@ -703,7 +703,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfGlobalScope(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::method::affectedFilesHandler.handleDtsMayChangeOf","kind":"method","status":"implemented","sigHash":"05651f99a079f94f485234aed5ec7b1f4c8ef05b64bdb62eba5220ffba6e27b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::method::affectedFilesHandler.handleDtsMayChangeOf","kind":"method","status":"implemented","sigHash":"447888bd2af53cfd95ec83b5d77e28e447f2dc0fbd70f02e38e3ae6b60a4fa18"}
  *
  * Go source:
  * func (h *affectedFilesHandler) handleDtsMayChangeOf(dtsMayChange dtsMayChange, path tspath.Path, invalidateJsFiles bool) {

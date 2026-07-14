@@ -4,7 +4,7 @@ import { Is } from "../../go/unicode.js";
 import { unicodeESNextIdentifierPart, unicodeESNextIdentifierStart } from "./generated/identifier_parts_generated.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/identifier.go::func::IsUnicodeIdentifierStart","kind":"func","status":"implemented","sigHash":"00c94e0e836886f4af4e812340e34999ab3bdc9a0b5ae9646a665a8345a997fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/identifier.go::func::IsUnicodeIdentifierStart","kind":"func","status":"implemented","sigHash":"7c0efd6d11ff15832e4b4bf8c412e9aa597f8a9c9a30f90be2f4a8a06abf980a"}
  *
  * Go source:
  * // IsUnicodeIdentifierStart reports whether ch may begin an ECMAScript
@@ -19,7 +19,7 @@ export function IsUnicodeIdentifierStart(ch: GoRune): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/identifier.go::func::IsUnicodeIdentifierPart","kind":"func","status":"implemented","sigHash":"75f99182642f3bb28d32ec63769743df9f11bfb9b95d99460997c13dc54a41b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/identifier.go::func::IsUnicodeIdentifierPart","kind":"func","status":"implemented","sigHash":"8dda05c1c34d3ddc4f7c5b7adc1a38ddc09b65ec901ee7d362408da1a9c42825"}
  *
  * Go source:
  * // IsUnicodeIdentifierPart reports whether ch may appear after the first

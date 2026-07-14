@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { byte } from "../../go/scalars.js";
+import { GoZeroInterface, GoZeroString } from "../../go/compat.js";
 import { Expected_UnmarshalJSON } from "./expected.js";
 import type { Expected } from "./expected.js";
 
@@ -20,9 +21,9 @@ test("Expected.UnmarshalJSON mirrors upstream valid/null/invalid type behavior",
   const exportsField = missingExpected<unknown>(undefined);
   const main = missingExpected("");
 
-  assert.equal(Expected_UnmarshalJSON(name, bytes(`"test"`)), undefined);
-  assert.equal(Expected_UnmarshalJSON(version, bytes(`2`)), undefined);
-  assert.equal(Expected_UnmarshalJSON(exportsField, bytes(`null`)), undefined);
+  assert.equal(Expected_UnmarshalJSON(name, bytes(`"test"`), GoZeroString), undefined);
+  assert.equal(Expected_UnmarshalJSON(version, bytes(`2`), GoZeroString), undefined);
+  assert.equal(Expected_UnmarshalJSON(exportsField, bytes(`null`), GoZeroInterface), undefined);
 
   assert.equal(name.Valid, true);
   assert.equal(name.Value, "test");

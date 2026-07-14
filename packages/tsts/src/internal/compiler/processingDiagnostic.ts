@@ -21,7 +21,7 @@ const fileIncludeReasonKey: GoMapKeyDescriptor<GoPtr<FileIncludeReason>> = GoPoi
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnosticKind","kind":"type","status":"implemented","sigHash":"206597e4b3e5492bed070fc03dfcc895035dc1bf0f57a065b6f6021deca831ee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnosticKind","kind":"type","status":"implemented","sigHash":"bb346ba4b5dd9c7c0d634136ea2a4939fb3cd88f82cacd0e7062c6e905c7e61e"}
  *
  * Go source:
  * processingDiagnosticKind int
@@ -29,7 +29,7 @@ import type { GoInterface } from "../../go/compat.js";
 export type processingDiagnosticKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::constGroup::processingDiagnosticKindUnknownReference+processingDiagnosticKindExplainingFileInclude","kind":"constGroup","status":"implemented","sigHash":"0bbaee3ac98202fdda68a622bce6be83c75296c40745866e45b6050179861b1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::constGroup::processingDiagnosticKindUnknownReference+processingDiagnosticKindExplainingFileInclude","kind":"constGroup","status":"implemented","sigHash":"37d18198977347e3a15638d47d8c1b049fb5d7238f8f317da19fe63e59cf4931"}
  *
  * Go source:
  * const (
@@ -41,7 +41,7 @@ export const processingDiagnosticKindUnknownReference: processingDiagnosticKind 
 export const processingDiagnosticKindExplainingFileInclude: processingDiagnosticKind = 1 as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnostic","kind":"type","status":"implemented","sigHash":"9ca2e25a43bc15f2b26a13d2229e98245f9edf1f09d0fb02d7f78c26fab3617c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnostic","kind":"type","status":"implemented","sigHash":"fd29f10b6c9ce54aed98ed951c87237fa96035d7ed0c6672e1f03e4264406557"}
  *
  * Go source:
  * processingDiagnostic struct {
@@ -67,7 +67,7 @@ export function processingDiagnostic_asFileIncludeReason(receiver: GoPtr<process
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::includeExplainingDiagnostic","kind":"type","status":"implemented","sigHash":"963e6cf6b3050764ff4c10bcc83418ecf4f03b53e9d45cd71fc03bb35991a4d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::includeExplainingDiagnostic","kind":"type","status":"implemented","sigHash":"c1ca20b604daa578d5ef3c558f92efb01327a665b4462feb0b1785db8cb919d9"}
  *
  * Go source:
  * includeExplainingDiagnostic struct {

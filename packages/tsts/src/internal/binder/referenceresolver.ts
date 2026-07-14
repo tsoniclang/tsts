@@ -20,7 +20,7 @@ import type { NameResolver } from "./nameresolver.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"implemented","sigHash":"116c7dbca6419fe3a56769e505765cff79fed3244bc81b4465a5b4fa4058737d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"implemented","sigHash":"23c7bfe98262f5cb06698ba14803aa4c1ecaea7af86f4da690c2c05961d68630"}
  *
  * Go source:
  * ReferenceResolver interface {
@@ -42,7 +42,7 @@ export interface ReferenceResolver {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolverHooks","kind":"type","status":"implemented","sigHash":"afa0bd5df77f55a410bd96e8f9b76de4c6af96c22d1e8eed3c0fd3c674b48f9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolverHooks","kind":"type","status":"implemented","sigHash":"efabe0e4f89da5388f36ad96fb3378825427007e2e956e76bd25f34ecfe0340f"}
  *
  * Go source:
  * ReferenceResolverHooks struct {
@@ -68,7 +68,7 @@ export interface ReferenceResolverHooks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"645d3ed2d225e95178bab249a65062461156fbc303d435c35684fceffe481a4e"}
  *
  * Go source:
  * var _ ReferenceResolver = &referenceResolver{}
@@ -76,7 +76,7 @@ export interface ReferenceResolverHooks {
 export let __e8d524b9_0: GoInterface<ReferenceResolver> = referenceResolver_as_ReferenceResolver(undefined);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::referenceResolver","kind":"type","status":"implemented","sigHash":"d9982ff89ac466401b9be499c4e336677e27f5d99e85f70e986f3c1b31e445a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::referenceResolver","kind":"type","status":"implemented","sigHash":"526b8552c7473fb06681cba007d61d87d8e29c929c14074b6f5dea4f927cbd2e"}
  *
  * Go source:
  * referenceResolver struct {

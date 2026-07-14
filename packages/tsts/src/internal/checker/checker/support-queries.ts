@@ -339,7 +339,7 @@ export function Checker_getSuggestedBooleanOperator(receiver: GoPtr<Checker>, op
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSideEffectFree","kind":"method","status":"implemented","sigHash":"c040ba7413b2ad899a9f69de6b98cc7135fa28b7bceac3fa04cce95bee749778"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSideEffectFree","kind":"method","status":"implemented","sigHash":"f151675bcfeb972908c5a5e85184e23630aaa1a5a862fa173f3a4637b5010d25"}
  *
  * Go source:
  * func (c *Checker) isSideEffectFree(node *ast.Node) bool {
@@ -730,7 +730,7 @@ export function Checker_getCombinedModifierFlagsCached(receiver: GoPtr<Checker>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTailRecursionRoot","kind":"method","status":"implemented","sigHash":"a0fe74d52afc45c7b9cfffcb7e48f271349c9c194a244b1bd721fe9ff8505501"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTailRecursionRoot","kind":"method","status":"implemented","sigHash":"80ede07d19fbe1dd467ca2a31fc99d69ab8ac37340d053b59c3e8c064e8ac1ca"}
  *
  * Go source:
  * func (c *Checker) getTailRecursionRoot(newType *Type, newMapper *TypeMapper) (*ConditionalRoot, *TypeMapper) {
@@ -1007,7 +1007,7 @@ export function Checker_getSpreadIndices(receiver: GoPtr<Checker>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isContextSensitive","kind":"method","status":"implemented","sigHash":"24fe0d73fcb505ece3b2fe654fb31801120fedd7d1deaf1bf62fb363d8b74e84"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isContextSensitive","kind":"method","status":"implemented","sigHash":"d6ab493d3198d088457569102eae93ef34e88e42450483400c273dffee44dfea"}
  *
  * Go source:
  * func (c *Checker) isContextSensitive(node *ast.Node) bool {

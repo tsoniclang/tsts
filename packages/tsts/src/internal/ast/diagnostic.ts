@@ -17,7 +17,7 @@ import { SourceFile_FileName } from "./ast.js";
 import type { SourceFile } from "./ast.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::type::RepopulateDiagnosticKind","kind":"type","status":"implemented","sigHash":"e446e2627ed7552a68f1faf1b75bec5da05f7746b8d9b63980046b95de21abaa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::type::RepopulateDiagnosticKind","kind":"type","status":"implemented","sigHash":"824f8b278d2c9039fd919bb01959d81e8502e97c5fb2b0d2c0fdf4648b66e8ab"}
  *
  * Go source:
  * RepopulateDiagnosticKind int
@@ -25,7 +25,7 @@ import type { SourceFile } from "./ast.js";
 export type RepopulateDiagnosticKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::constGroup::RepopulateModeMismatch+RepopulateModuleNotFound","kind":"constGroup","status":"implemented","sigHash":"60871857debbaad6e38790496dfd40acfc9fe5c693f3813ef677e4d4631aa6a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::constGroup::RepopulateModeMismatch+RepopulateModuleNotFound","kind":"constGroup","status":"implemented","sigHash":"f385ef01984ec953b98dd369d164eede2a5f0dc32a0131b847647a60b44b079f"}
  *
  * Go source:
  * const (
@@ -37,7 +37,7 @@ export const RepopulateModeMismatch: RepopulateDiagnosticKind = 1;
 export const RepopulateModuleNotFound: RepopulateDiagnosticKind = 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::type::RepopulateDiagnosticInfo","kind":"type","status":"implemented","sigHash":"7b46f46b9b33431e76f60166501d9eeeab67d3f6f1a0a4359683f9c381faa2b9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::type::RepopulateDiagnosticInfo","kind":"type","status":"implemented","sigHash":"199757b91f7428dc192b2f19c862e9ad52ddbabf5cb825207f0d370e83426a17"}
  *
  * Go source:
  * RepopulateDiagnosticInfo struct {
@@ -55,7 +55,7 @@ export interface RepopulateDiagnosticInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::type::Diagnostic","kind":"type","status":"implemented","sigHash":"a5b00a0f8bdac227f5ce3780ba60734fc8a87398b12243e7e9f5ba3a03f69a70"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::type::Diagnostic","kind":"type","status":"implemented","sigHash":"145ecc24e74158d3b1ca8007194e3e9af0c99f8acf5249a1685f91de746193f0"}
  *
  * Go source:
  * Diagnostic struct {
@@ -382,7 +382,7 @@ export function Diagnostic_Localize(receiver: GoPtr<Diagnostic>, locale: Locale)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::method::Diagnostic.String","kind":"method","status":"implemented","sigHash":"7420e160bfc4dad817c3d461a0db37d466d4b3bbfff64960fc2254be4984434d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::method::Diagnostic.String","kind":"method","status":"implemented","sigHash":"adf1643fd6e9c16e52216744c68ad57bc100c4e71b32c8aba7823740a2127aab"}
  *
  * Go source:
  * func (d *Diagnostic) String() string {
@@ -510,7 +510,7 @@ export function NewCompilerDiagnostic(message: GoPtr<Message>, ...args: Array<Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::type::DiagnosticsCollection","kind":"type","status":"implemented","sigHash":"6af6dc38cffd6413df4919b9db48f4d4c9e5cb3d583ae0e0b4658950969bd37d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/diagnostic.go::type::DiagnosticsCollection","kind":"type","status":"implemented","sigHash":"df743d2beea00760ad323d41282c388270b3f53ebb0f0fad1a6e44698177da8b"}
  *
  * Go source:
  * DiagnosticsCollection struct {

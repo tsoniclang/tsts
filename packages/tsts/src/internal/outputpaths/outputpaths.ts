@@ -37,7 +37,7 @@ import type { ComparePathsOptions } from "../tspath/path.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::type::OutputPathsHost","kind":"type","status":"implemented","sigHash":"1e12f35d02217e114e4083de9d178399222d522e51f79aa12010f64642b9fb88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::type::OutputPathsHost","kind":"type","status":"implemented","sigHash":"bfbed8e873d098b9f9cc0c3a1025dabea3cb6c66d64becd251d8702a56a0f73e"}
  *
  * Go source:
  * OutputPathsHost interface {
@@ -53,7 +53,7 @@ export interface OutputPathsHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::type::OutputPaths","kind":"type","status":"implemented","sigHash":"d35e924fca977a1b40eebff0ac0ec0cf47f7e439e28474912507e4195725f24d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::type::OutputPaths","kind":"type","status":"implemented","sigHash":"2576e11e659ded2d203ac3ecbe53641e3f080047013f9a0fb7181a9f25b85279"}
  *
  * Go source:
  * OutputPaths struct {
@@ -71,7 +71,7 @@ export interface OutputPaths {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::method::OutputPaths.DeclarationFilePath","kind":"method","status":"implemented","sigHash":"eddd52991e0c9705a7252109abc7370acb5a1074db37aa4b3ebb3f3933ea16ca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::method::OutputPaths.DeclarationFilePath","kind":"method","status":"implemented","sigHash":"59375ced41b63f69338df2f97eccd94e55bd0b7facd6c7cddd7b8247a262b44f"}
  *
  * Go source:
  * func (o *OutputPaths) DeclarationFilePath() string {
@@ -83,7 +83,7 @@ export function OutputPaths_DeclarationFilePath(receiver: GoPtr<OutputPaths>): s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::method::OutputPaths.JsFilePath","kind":"method","status":"implemented","sigHash":"421a6821e79c2dc6e969ef4d07a86b56964c913ae40c04d7242babb0f1ea2923"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/outputpaths.go::method::OutputPaths.JsFilePath","kind":"method","status":"implemented","sigHash":"df2f70e014e67e474bfc9ba11201c3e4748306c5c13b5116f016292e5ea5aeba"}
  *
  * Go source:
  * func (o *OutputPaths) JsFilePath() string {

@@ -152,7 +152,7 @@ export function snapshotToBuildInfo(snapshot: GoPtr<snapshot>, program: GoPtr<Pr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshottobuildinfo.go::type::toBuildInfo","kind":"type","status":"implemented","sigHash":"9cf6e7abf9c792a675cd2ed765514398c73a219d972b9a0a2c4741388eb0b13c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshottobuildinfo.go::type::toBuildInfo","kind":"type","status":"implemented","sigHash":"b959a411e0d31652c41cc1a57f691ec3d9660e7cc85fbdf886feea7d820f3a56"}
  *
  * Go source:
  * toBuildInfo struct {

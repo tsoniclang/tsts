@@ -211,7 +211,7 @@ export function Parser_parseList(receiver: GoPtr<Parser>, kind: ParsingContext, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseDelimitedList","kind":"method","status":"implemented","sigHash":"535b3a85ba41764406588faf13e3a1fd9335d6ae51b44086d6a294f9079abf54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseDelimitedList","kind":"method","status":"implemented","sigHash":"8147fdda7b996820dae3eb408ecccb0d396645a9ac7d180981b573277b879bd3"}
  *
  * Go source:
  * func (p *Parser) parseDelimitedList(kind ParsingContext, parseElement func(p *Parser) *ast.Node) *ast.NodeList {
@@ -329,7 +329,7 @@ export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: Parsing
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseBracketedList","kind":"method","status":"implemented","sigHash":"07036af7a3f3bf3b22bcc19333ef4da4b325369cbfded5339b717ab6b25c6baa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseBracketedList","kind":"method","status":"implemented","sigHash":"fbc09532fe4a3482148e053f8251b32f007fc60134cfb44001a308fed2fb166d"}
  *
  * Go source:
  * func (p *Parser) parseBracketedList(kind ParsingContext, parseElement func(p *Parser) *ast.Node, opening ast.Kind, closing ast.Kind) *ast.NodeList {
@@ -379,7 +379,7 @@ export function Parser_createMissingList(receiver: GoPtr<Parser>): GoPtr<NodeLis
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.abortParsingListOrMoveToNextToken","kind":"method","status":"implemented","sigHash":"8cadcb46e30521780f9d7774ed43145c8160d6bb30fc487b4c2ca9b4133558e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.abortParsingListOrMoveToNextToken","kind":"method","status":"implemented","sigHash":"abe4324f7b97d76ff11f197a6c8ded4d206e5b16c08cc81f08c83e0d961ed77b"}
  *
  * Go source:
  * func (p *Parser) abortParsingListOrMoveToNextToken(kind ParsingContext) bool {

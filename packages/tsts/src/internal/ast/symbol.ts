@@ -13,7 +13,7 @@ import { SymbolFlagsModule } from "./symbolflags.js";
 import { IsPrivateIdentifierClassElementDeclaration } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::type::Symbol","kind":"type","status":"implemented","sigHash":"f6832f7bb71206a127c501f5d4064938e8afd0bedacfd35c03d28bf509c5d808"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::type::Symbol","kind":"type","status":"implemented","sigHash":"634d78d7441a3106cbf21cb5830bb90f8e16c4650bdf3684c32205cdd58172c8"}
  *
  * Go source:
  * Symbol struct {
@@ -77,7 +77,7 @@ export function Symbol_IsStatic(receiver: GoPtr<Symbol>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::method::Symbol.CombinedLocalAndExportSymbolFlags","kind":"method","status":"implemented","sigHash":"394ae510187d881d10da11308090aadf6f9306c218938a4074127546f75be490"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::method::Symbol.CombinedLocalAndExportSymbolFlags","kind":"method","status":"implemented","sigHash":"df794f62303d5c4bcef12717e8555739109113d20b45a68569e329e2471d27df"}
  *
  * Go source:
  * func (s *Symbol) CombinedLocalAndExportSymbolFlags() SymbolFlags {
@@ -95,7 +95,7 @@ export function Symbol_CombinedLocalAndExportSymbolFlags(receiver: GoPtr<Symbol>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::type::SymbolTable","kind":"type","status":"implemented","sigHash":"c040ac407dabb99aefe73ff9dbbe0abc3073fe7770cc087163094b8e760160da"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::type::SymbolTable","kind":"type","status":"implemented","sigHash":"1fb610c48f1aa5cc87145401a1197cfa074f1d0323cb81047240fa1f67cdb78a"}
  *
  * Go source:
  * SymbolTable map[string]*Symbol
@@ -103,7 +103,7 @@ export function Symbol_CombinedLocalAndExportSymbolFlags(receiver: GoPtr<Symbol>
 export type SymbolTable = GoMap<string, GoPtr<Symbol>>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::constGroup::InternalSymbolNamePrefix","kind":"constGroup","status":"implemented","sigHash":"6bea7552a8f413cb4da0c4ee2dba2e66647da7fb63fb822779217c4e17971fb3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::constGroup::InternalSymbolNamePrefix","kind":"constGroup","status":"implemented","sigHash":"ca0be6cefd4c7fc7a91e727353b955bc836cb6c3f619acff801e34498c366b8f"}
  *
  * Go source:
  * const InternalSymbolNamePrefix = "\xFE"
@@ -117,7 +117,7 @@ export type SymbolTable = GoMap<string, GoPtr<Symbol>>;
 export const InternalSymbolNamePrefix: string = "\uFFFD"; // Never occurs as IdentifierName
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::constGroup::InternalSymbolNameCall+InternalSymbolNameConstructor+InternalSymbolNameNew+InternalSymbolNameIndex+InternalSymbolNameExportStar+InternalSymbolNameGlobal+InternalSymbolNameMissing+InternalSymbolNameType+InternalSymbolNameObject+InternalSymbolNameJSXAttributes+InternalSymbolNameClass+InternalSymbolNameFunction+InternalSymbolNameComputed+InternalSymbolNameAssignmentDeclaration+InternalSymbolNameInstantiationExpression+InternalSymbolNameImportAttributes+InternalSymbolNameExportEquals+InternalSymbolNameDefault+InternalSymbolNameThis+InternalSymbolNameModuleExports","kind":"constGroup","status":"implemented","sigHash":"a2c8c20c9adc58b1f356dca683a71a66f4c0de95af1cb1f778eda19473f0ae72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::constGroup::InternalSymbolNameCall+InternalSymbolNameConstructor+InternalSymbolNameNew+InternalSymbolNameIndex+InternalSymbolNameExportStar+InternalSymbolNameGlobal+InternalSymbolNameMissing+InternalSymbolNameType+InternalSymbolNameObject+InternalSymbolNameJSXAttributes+InternalSymbolNameClass+InternalSymbolNameFunction+InternalSymbolNameComputed+InternalSymbolNameAssignmentDeclaration+InternalSymbolNameInstantiationExpression+InternalSymbolNameImportAttributes+InternalSymbolNameExportEquals+InternalSymbolNameDefault+InternalSymbolNameThis+InternalSymbolNameModuleExports","kind":"constGroup","status":"implemented","sigHash":"1406e075e39b21015669f0ffe9bed9eb8223e62649bfd8523ef421911c8d804f"}
  *
  * Go source:
  * const (
@@ -183,7 +183,7 @@ export function SymbolName(symbol_: GoPtr<Symbol>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::func::EscapeAllInternalSymbolNames","kind":"func","status":"implemented","sigHash":"5a7646db1a9b0b05cf13620e7de490910f3b78250ba1270b11ce186ce75f9fd6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::func::EscapeAllInternalSymbolNames","kind":"func","status":"implemented","sigHash":"999dd82bd2994c5a3f1bc0bb16f9546d962be4caf6b3bef0a5e09d790227047e"}
  *
  * Go source:
  * func EscapeAllInternalSymbolNames(name string) string {

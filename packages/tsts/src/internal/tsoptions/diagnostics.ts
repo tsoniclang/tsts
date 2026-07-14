@@ -22,7 +22,7 @@ import { OptionsDeclarations } from "./declscompiler.js";
 import { OptionsForWatch } from "./declswatch.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::type::DidYouMeanOptionsDiagnostics","kind":"type","status":"implemented","sigHash":"dc632d6912763754c1599dd99d1c79d6a6ab027017c8f569679c41c24ba85fb8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::type::DidYouMeanOptionsDiagnostics","kind":"type","status":"implemented","sigHash":"2f0d3597b83574def9afc68e8bb6aaa07907939be3ebd4d74fe19914b7defc27"}
  *
  * Go source:
  * DidYouMeanOptionsDiagnostics struct {
@@ -40,7 +40,7 @@ export interface DidYouMeanOptionsDiagnostics {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::type::AlternateModeDiagnostics","kind":"type","status":"implemented","sigHash":"975703251e52b09ff5c6705af7d1314a37a67f7da2cbd0945bac24f993a19af3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::type::AlternateModeDiagnostics","kind":"type","status":"implemented","sigHash":"eedf346cc0ebfb5fb866b3dcb0f5b2d5b197294ef6c3a38cc2ccf531b71b2ae3"}
  *
  * Go source:
  * AlternateModeDiagnostics struct {
@@ -54,7 +54,7 @@ export interface AlternateModeDiagnostics {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::type::ParseCommandLineWorkerDiagnostics","kind":"type","status":"implemented","sigHash":"40084db6819492a2e57dd92da28b40bb2b9556cb86fbb20864296d964f4f3a29"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::type::ParseCommandLineWorkerDiagnostics","kind":"type","status":"implemented","sigHash":"972b2788d1d87ec471858cabdd155fc951652ddf1bfffcebe6e2272b51fc5b76"}
  *
  * Go source:
  * ParseCommandLineWorkerDiagnostics struct {
@@ -72,7 +72,7 @@ export interface ParseCommandLineWorkerDiagnostics {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::varGroup::CompilerOptionsDidYouMeanDiagnostics","kind":"varGroup","status":"implemented","sigHash":"dcdfbf2c1ba0f27124c2d2c9715154c65a51e3d370cd82460a8be1d633b9d777"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::varGroup::CompilerOptionsDidYouMeanDiagnostics","kind":"varGroup","status":"implemented","sigHash":"7cad4290b541a05f64cf9dce414922182e26903e502a621cbe34d2fac1ba7185"}
  *
  * Go source:
  * var CompilerOptionsDidYouMeanDiagnostics = getParseCommandLineWorkerDiagnostics(OptionsDeclarations)
@@ -119,7 +119,7 @@ export function getParseCommandLineWorkerDiagnostics(decls: GoSlice<GoPtr<Comman
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::varGroup::watchOptionsDidYouMeanDiagnostics","kind":"varGroup","status":"implemented","sigHash":"8904f04db16550d00bfc933d407974de479ec8b94304d957a3645284087191ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::varGroup::watchOptionsDidYouMeanDiagnostics","kind":"varGroup","status":"implemented","sigHash":"05f67f5dd7f62eabf8e17237993eea669c5addd558c95d38dd668589fdb59769"}
  *
  * Go source:
  * var watchOptionsDidYouMeanDiagnostics = &ParseCommandLineWorkerDiagnostics{
@@ -137,7 +137,7 @@ export function getParseCommandLineWorkerDiagnostics(decls: GoSlice<GoPtr<Comman
 export let watchOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::varGroup::buildOptionsDidYouMeanDiagnostics","kind":"varGroup","status":"implemented","sigHash":"82367338c4879fe397da04e723c5eb0818a1777fa154ea066902967579bff305"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::varGroup::buildOptionsDidYouMeanDiagnostics","kind":"varGroup","status":"implemented","sigHash":"9ab1adab98745d26795be464b96321405d45fbf134905dca12172ea6a12082c4"}
  *
  * Go source:
  * var buildOptionsDidYouMeanDiagnostics = &ParseCommandLineWorkerDiagnostics{

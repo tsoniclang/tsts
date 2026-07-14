@@ -77,7 +77,7 @@ const CHAR_COLON: int = 0x3a; // ':'
 const CHAR_DOLLAR: int = 0x24; // '$'
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::WatchBackend","kind":"type","status":"implemented","sigHash":"ad815e0a21cc8c6e319df712880e433c1539399f1e25a7f19dfce9c6e00b2bdf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::WatchBackend","kind":"type","status":"implemented","sigHash":"140f1cb5f0d22e83414406aaf8ce6533dcadc555fc9d6f0d05210ea3ebe4c5b2"}
  *
  * Go source:
  * // WatchBackend abstracts fswatch.Watcher for testing
@@ -90,7 +90,7 @@ export interface WatchBackend {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::commandLineTestingWithWatchBackend","kind":"type","status":"implemented","sigHash":"ce3fdfa6fd1041d540c36429ab7598ea110a0b34b4c41c5ee21bd06b6931b1fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::commandLineTestingWithWatchBackend","kind":"type","status":"implemented","sigHash":"137e9631fd866cfd3fd04363bb50f3deeaf3ac12e0d1fd879ec3029ae5a40690"}
  *
  * Go source:
  * commandLineTestingWithWatchBackend interface {
@@ -102,7 +102,7 @@ export interface commandLineTestingWithWatchBackend {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::fswatchBackend","kind":"type","status":"implemented","sigHash":"4c347ba74b1a9ce3606059fecb847ae6dcbcce6cc78bf0b328e1a7a807ba7bfd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::fswatchBackend","kind":"type","status":"implemented","sigHash":"69f7acc181649aac13638c79d93289d4926f9c30e2d7a8a606d37c88d9faa772"}
  *
  * Go source:
  * fswatchBackend struct{ inner fswatch.Watcher }
@@ -144,7 +144,7 @@ export function fswatchBackend_as_WatchBackend(receiver: GoPtr<fswatchBackend>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::watchedDir","kind":"type","status":"implemented","sigHash":"529c48a4a0430446c841f0076a0da86ea53a672f4c2a8b059aea84bec0285889"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::watchedDir","kind":"type","status":"implemented","sigHash":"c244ad3d279d5734f2d9a7322393c36e7d75e4e4e09087d8b04238de4f336cf9"}
  *
  * Go source:
  * watchedDir struct {
@@ -158,7 +158,7 @@ export interface watchedDir {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::cachedSourceFile","kind":"type","status":"implemented","sigHash":"09687ae4d0bc82215aab8c91746d0029f4280a603b1e1c93497af1183820b31d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::cachedSourceFile","kind":"type","status":"implemented","sigHash":"d8cbeff6207c7c328d055bc4a712ff6c00e4ab0b726cdd0ec198ed1ff9651acb"}
  *
  * Go source:
  * cachedSourceFile struct {
@@ -172,7 +172,7 @@ export interface cachedSourceFile {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::watchCompilerHost","kind":"type","status":"implemented","sigHash":"eb3c7200342a1a34fb91c95ca7076a8eda6eed0a985019ec60d54bfd7b9cc291"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::watchCompilerHost","kind":"type","status":"implemented","sigHash":"ce7346e77b8cb4af4af48914b1cf6e56cef5dd98bd01b2e97738d8dd431b7677"}
  *
  * Go source:
  * watchCompilerHost struct {
@@ -249,7 +249,7 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::Watcher","kind":"type","status":"implemented","sigHash":"3c7720db1dd07fc5ed867242203119169d9e8b287c5f9fa9070d8b37e7c6e4e8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::Watcher","kind":"type","status":"implemented","sigHash":"497dd282d091ba0ce6a0249ac41fab5af9c664fb94262abf8a55911eca695f4b"}
  *
  * Go source:
  * Watcher struct {
@@ -313,7 +313,7 @@ export interface Watcher {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"1aaddfbd8f11e780383f08dd48156b6b561e81530f23250d9e4452c6551864a5"}
  *
  * Go source:
  * var _ tsc.Watcher = (*Watcher)(nil)
@@ -391,7 +391,7 @@ export function createWatcher(sys: GoInterface<System>, configParseResult: GoPtr
     backend: undefined,
     watchedDirs: new Map<string, GoPtr<watchedDir>>(),
     seenFiles: undefined,
-    configMtimes: undefined as unknown as GoMap<string, Time>,
+    configMtimes: GoNilMap<string, Time>(),
     doCycleCh: {} as GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">,
     debugLog: undefined,
     changedMu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as Watcher["changedMu"],
@@ -1605,7 +1605,7 @@ export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
   if (!receiver!.configHasErrors && receiver!.configFilePaths.length > 0) {
     let changed = false;
     for (const path of receiver!.configFilePaths) {
-      const ok = receiver!.configMtimes !== undefined && receiver!.configMtimes.has(path);
+      const ok = !GoMapIsNil(receiver!.configMtimes) && receiver!.configMtimes.has(path);
       const oldMtime = ok ? receiver!.configMtimes.get(path)! : undefined;
       const s = receiver!.sys!.FS()!.Stat(path);
       if (!ok) {

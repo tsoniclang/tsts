@@ -2,7 +2,7 @@ import type { bool, byte } from "../../go/scalars.js";
 import type { GoError, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::type::Expected","kind":"type","status":"implemented","sigHash":"0578b81f0116b83fc7391bb752528a2a0749e2b333b2c137bdcb48192067b93b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::type::Expected","kind":"type","status":"implemented","sigHash":"41b5bba1ecb1d12dd768979039da756c40c2058df2ffd4e7cb129d45a8bfbeaf"}
  *
  * Go source:
  * Expected[T any] struct {

@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoFunc, GoInterface, GoPtr, GoRef, GoSlice, GoMap } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
 import type { Mutex } from "../../go/sync.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression, Node_Type, Node_Initializer, NodeFactory_NewModifier, NodeFactory_UpdateIndexSignatureDeclaration, Node_ModifierNodes, Node_ParameterList, Node_QuestionToken } from "../ast/ast.js";
@@ -79,7 +80,7 @@ import { Number_Abs, Number_IsInf, Number_IsNaN } from "../jsnum/jsnum.js";
 import { Number_String } from "../jsnum/string.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"implemented","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"implemented","sigHash":"b8a690f05f4e1e07abd521eeb0dff42e8ed3e1b8ee3c000e2464d886b8c9b3ba"}
  *
  * Go source:
  * JSXLinks struct {
@@ -91,7 +92,7 @@ export interface JSXLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationLinks","kind":"type","status":"implemented","sigHash":"f204cf15bed1d10379ef0b41e207ca327ce5cd16805fc59e249893eac963e39f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationLinks","kind":"type","status":"implemented","sigHash":"15b509ae1b8cfe4f823acf8bcf58e107963491e132d8fa2d178ae519414151ca"}
  *
  * Go source:
  * DeclarationLinks struct {
@@ -103,7 +104,7 @@ export interface DeclarationLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationFileLinks","kind":"type","status":"implemented","sigHash":"4b6661a892f88bfe2a8477813e21bb4b2de659e69882e5cfd0d1a59df7fcd548"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationFileLinks","kind":"type","status":"implemented","sigHash":"acbddf8e55743c63f57927cf196b4410bb8b427bf0b245ee998e9ac97fca3fa3"}
  *
  * Go source:
  * DeclarationFileLinks struct {
@@ -148,7 +149,7 @@ function GoZeroAliasSymbolLinks(): AliasSymbolLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"aa28f97bdefb2b251294f9bbc7d012089c1646af46f1fb8a64ab0574d6228e00"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"75694d31ff3949f18166efae478181368e56a6430bd72bd6ab2fd9e0264a86b1"}
  *
  * Go source:
  * EmitResolver struct {
@@ -221,7 +222,7 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"24174e72644cb892f0bed485d8d1a04c13d19e31f2f1e3e7af00556bf50f7e16"}
  *
  * Go source:
  * var _ printer.EmitResolver = (*EmitResolver)(nil)
@@ -777,7 +778,7 @@ export function EmitResolver_aliasMarkingVisitorWorker(receiver: GoPtr<EmitResol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.markLinkedAliases","kind":"method","status":"implemented","sigHash":"4e39c6dd2acfd1d1196df1191bdbca6603e0508ecd4234498bf101740dcd6d95"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.markLinkedAliases","kind":"method","status":"implemented","sigHash":"691d04c9b4f2ebf3845a8db9f7a163034614b502bc61d5cb24697d66a8fffd8d"}
  *
  * Go source:
  * func (r *EmitResolver) markLinkedAliases(node *ast.Node) {
@@ -1078,17 +1079,17 @@ export function noopAddVisibleAlias(declaration: GoPtr<Node>, aliasingStatement:
  * }
  */
 export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver>, symbol_: GoPtr<Symbol>, shouldComputeAliasToMakeVisible: bool): GoPtr<SymbolAccessibilityResult> {
-  let aliasesToMakeVisibleSet: GoPtr<Map<NodeId, GoPtr<Node>>> = undefined;
+  let aliasesToMakeVisibleSet = GoNilMap<NodeId, GoPtr<Node>>();
 
   type AddVisibleAlias = (declaration: GoPtr<Node>, aliasingStatement: GoPtr<Node>) => void;
   let addVisibleAlias: AddVisibleAlias;
   if (shouldComputeAliasToMakeVisible) {
     addVisibleAlias = (declaration: GoPtr<Node>, aliasingStatement: GoPtr<Node>) => {
       LinkStore_Get(receiver!.declarationLinks, declaration, GoZeroDeclarationLinks, goNodePointerKey)!.v.isVisible = TSTrue;
-      if (aliasesToMakeVisibleSet === undefined) {
+      if (GoMapIsNil(aliasesToMakeVisibleSet)) {
         aliasesToMakeVisibleSet = new Map<NodeId, GoPtr<Node>>();
       }
-      aliasesToMakeVisibleSet!.set(GetNodeId(declaration), aliasingStatement);
+      aliasesToMakeVisibleSet.set(GetNodeId(declaration), aliasingStatement);
     };
   } else {
     addVisibleAlias = noopAddVisibleAlias;
@@ -1143,8 +1144,9 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
     }
   }
 
-  const aliasesMap = aliasesToMakeVisibleSet as unknown as (Map<NodeId, GoPtr<Node>> | undefined);
-  const aliasesToMakeVisible: GoSlice<GoPtr<Node>> = aliasesMap !== undefined ? Array.from(aliasesMap.values()) : [];
+  const aliasesToMakeVisible = GoMapIsNil(aliasesToMakeVisibleSet)
+    ? GoNilSlice<GoPtr<Node>>()
+    : Array.from(aliasesToMakeVisibleSet.values());
   return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: aliasesToMakeVisible, ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
 }
 
@@ -2707,7 +2709,7 @@ export function EmitResolver_GetTypeReferenceSerializationKind(receiver: GoPtr<E
   let isTypeOnly = false as bool;
   if (typeName!.Kind === KindQualifiedName) {
     const rootValueSymbol = Checker_resolveEntityName(receiver!.checker, GetFirstIdentifier(typeName), SymbolFlagsValue, true as bool, true as bool, location);
-    if (rootValueSymbol !== undefined && rootValueSymbol!.Declarations !== undefined && rootValueSymbol!.Declarations.length > 0) {
+    if (rootValueSymbol !== undefined && rootValueSymbol!.Declarations.length > 0) {
       isTypeOnly = Every(rootValueSymbol!.Declarations, IsTypeOnlyImportOrExportDeclaration) as bool;
     }
   }

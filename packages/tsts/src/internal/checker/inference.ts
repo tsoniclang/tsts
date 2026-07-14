@@ -291,7 +291,7 @@ function goEqualTupleElementInfo(left: TupleElementInfo, right: TupleElementInfo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceKey","kind":"type","status":"implemented","sigHash":"b7240472cd57ef405f9a148ef9ec8af6dfa01c094e529face8ce9016e617e024"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceKey","kind":"type","status":"implemented","sigHash":"b1e72e4107bd9fcb415e0fecb516f373102ceaf03cfcd48800acace853608ffd"}
  *
  * Go source:
  * InferenceKey struct {
@@ -305,7 +305,7 @@ export interface InferenceKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceState","kind":"type","status":"implemented","sigHash":"0c17beb7f8e5459a0131259e3a6a7159d051e78b01c378567ffc87e9c9348974"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceState","kind":"type","status":"implemented","sigHash":"3ef6d6ed84b307d9141888f89100d470e9d34ef4d066accda774781214b3ae42"}
  *
  * Go source:
  * InferenceState struct {
@@ -989,7 +989,7 @@ export function Checker_inferFromContravariantTypesIfStrictFunctionTypes(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.invokeOnce","kind":"method","status":"implemented","sigHash":"c3c82f54655c62fc34057a63ee81a4b97d90d8c520a807129176b82acadbdc28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.invokeOnce","kind":"method","status":"implemented","sigHash":"d86aee11791672303dea04f0f5640e5e7928adb01890956038df73a9012dab28"}
  *
  * Go source:
  * func (c *Checker) invokeOnce(n *InferenceState, source *Type, target *Type, action func(c *Checker, n *InferenceState, source *Type, target *Type)) {
@@ -2332,7 +2332,7 @@ export function Checker_inferToMappedType(receiver: GoPtr<Checker>, n: GoPtr<Inf
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferTypeForHomomorphicMappedType","kind":"method","status":"implemented","sigHash":"4cba3f18214a186fb35344206d4e25fc75ff2b3e9c918fe408cb809b02106d47"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferTypeForHomomorphicMappedType","kind":"method","status":"implemented","sigHash":"9a1d68f09b1eaef88990c199a6e3df162dc9c999bcfa02b95c1c178df8772898"}
  *
  * Go source:
  * func (c *Checker) inferTypeForHomomorphicMappedType(source *Type, target *Type, constraint *Type) *Type {
@@ -2447,7 +2447,7 @@ export function Checker_createReverseMappedType(receiver: GoPtr<Checker>, source
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isPartiallyInferableType","kind":"method","status":"implemented","sigHash":"c4fd384722e021dce38629d9dadddae8bdf77b647f098384118f5703dabceb14"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isPartiallyInferableType","kind":"method","status":"implemented","sigHash":"f7762fe9acad962c03f7f4f7ac46f117e182405b76c364f497c8b65ea7414b25"}
  *
  * Go source:
  * func (c *Checker) isPartiallyInferableType(t *Type) bool {
@@ -2659,7 +2659,7 @@ export function Checker_getTypeOfReverseMappedSymbol(receiver: GoPtr<Checker>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getLimitedConstraint","kind":"method","status":"implemented","sigHash":"b9bbc2bc1efe51336c54da327bbdb22edac82102f8b544960e5dab5a8a8baee3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getLimitedConstraint","kind":"method","status":"implemented","sigHash":"deced7848fa3bdf484635823e0383cf0523db060d19ac12e4d225b21d0da4487"}
  *
  * Go source:
  * func (c *Checker) getLimitedConstraint(t *Type) *Type {
@@ -2829,7 +2829,7 @@ export function Checker_isTypeCloselyMatchedBy(receiver: GoPtr<Checker>, s: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createEmptyObjectTypeFromStringLiteral","kind":"method","status":"implemented","sigHash":"a68c06e1f0c604edced63aef51bbf5f7c4a1dab34699b21622d22cc95c0b3545"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createEmptyObjectTypeFromStringLiteral","kind":"method","status":"implemented","sigHash":"4c38ab005338a14e0232af6ecdc6cb4b922ed4e17ba59d371d4049c5753f9ff9"}
  *
  * Go source:
  * func (c *Checker) createEmptyObjectTypeFromStringLiteral(t *Type) *Type {
@@ -2980,7 +2980,7 @@ export function Checker_addIntraExpressionInferenceSite(receiver: GoPtr<Checker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromIntraExpressionSites","kind":"method","status":"implemented","sigHash":"fe6c9d866b17472080941654c236f9941a730b34c341eea1ec49db87349c3eb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromIntraExpressionSites","kind":"method","status":"implemented","sigHash":"c4c33d738f212beb38c6623f963543dc207c8f3f9573342d8d831ad7ee16be11"}
  *
  * Go source:
  * func (c *Checker) inferFromIntraExpressionSites(n *InferenceContext) {
@@ -3218,7 +3218,7 @@ export function Checker_getMapperFromContext(receiver: GoPtr<Checker>, n: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createOuterReturnMapper","kind":"method","status":"implemented","sigHash":"9f16c4f3842e8c70de181bc3d19443fba103fbe7a1885836c5bbed762f4d16b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createOuterReturnMapper","kind":"method","status":"implemented","sigHash":"a769a2e76b82932898035fcc7ff8342d2c3fd2c26e8c6f6bf4eaa6587ba9a7b6"}
  *
  * Go source:
  * func (c *Checker) createOuterReturnMapper(context *InferenceContext) *TypeMapper {
@@ -3559,7 +3559,7 @@ export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoSlic
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCommonSubtype","kind":"method","status":"implemented","sigHash":"78071e4485bb19dca5764c3fbe9234a4a1637b94369229b67930d65fb79258b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCommonSubtype","kind":"method","status":"implemented","sigHash":"f03637451d82ee1aa5bcd6f6442fbe64b2eb0c412283524a7db6636384536903"}
  *
  * Go source:
  * func (c *Checker) getCommonSubtype(types []*Type) *Type {

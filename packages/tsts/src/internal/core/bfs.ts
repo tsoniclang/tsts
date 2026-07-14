@@ -11,7 +11,7 @@ import { Map } from "./core.js";
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchResult","kind":"type","status":"implemented","sigHash":"983db95743f083de914f46fe0f414fcaaeedb3c83b8b8885774e02abb1a1bf77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchResult","kind":"type","status":"implemented","sigHash":"309ebf85a8e1d1c8b853258caf629d5709d4c50933b4039bb5709ae637129405"}
  *
  * Go source:
  * BreadthFirstSearchResult[N any] struct {
@@ -25,7 +25,7 @@ export interface BreadthFirstSearchResult<N> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::breadthFirstSearchJob","kind":"type","status":"implemented","sigHash":"900d3ea72d81eff4d282136ee7be57d7f3c1f0133de55c97ec34289122f2fb3f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::breadthFirstSearchJob","kind":"type","status":"implemented","sigHash":"f0da07afc98877f6240059d69dfe598fa60915bb6c289148b826d3889520963b"}
  *
  * Go source:
  * breadthFirstSearchJob[N any] struct {
@@ -39,7 +39,7 @@ export interface breadthFirstSearchJob<N> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchLevel","kind":"type","status":"implemented","sigHash":"387c8702c2c347620608b7a95eca74cf5550c85a8ec43ce5715156a2af2d3cbf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchLevel","kind":"type","status":"implemented","sigHash":"4d6020eade6f6fb22ab1a48bd8be2fa8aa4697e64652c58bafb9dbe58c8e468a"}
  *
  * Go source:
  * BreadthFirstSearchLevel[K comparable, N any] struct {
@@ -97,7 +97,7 @@ export function BreadthFirstSearchLevel_Range<K extends GoComparable, N>(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchOptions","kind":"type","status":"implemented","sigHash":"91a7347549071365c6ba2393774a4e83adc0d20fe99d1b565b4af3f2f0295cd3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchOptions","kind":"type","status":"implemented","sigHash":"3ff8bbd58687bfc87a52e65f120fefb3e4c9c85a856fc596b43b66fa0f4bd072"}
  *
  * Go source:
  * BreadthFirstSearchOptions[K comparable, N any] struct {
@@ -115,7 +115,7 @@ export interface BreadthFirstSearchOptions<K extends GoComparable, N> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallel","kind":"func","status":"implemented","sigHash":"5b479e33bd171b6ba49da3f144e952a82e69fe245d13aa2e9b148836b846669a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallel","kind":"func","status":"implemented","sigHash":"423005f075542d4d5f93435aa85f1c47fb1c56f7366277d98d07f6742e290e43"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic search forwards exact static key zero and map-key operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"N"},{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"N"}]}
  *
  * Go source:
@@ -132,7 +132,7 @@ export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, nei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallelEx","kind":"func","status":"implemented","sigHash":"89e6ce09eedbf0d5603510cbecb3482eb5e8b1ea6807e890e060d8d756668705"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallelEx","kind":"func","status":"implemented","sigHash":"646e60b8f85eaa003b6f510e6ce8bc7d07c73155141bcea23060fb6b6a9b8c9f"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic search supplies exact erased key zero and map-key operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"K"},{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
@@ -260,7 +260,7 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::updateMin","kind":"func","status":"implemented","sigHash":"a1b2637575bcb5696071184397f20fc795af9e66838483adc563139d453ac491"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::updateMin","kind":"func","status":"implemented","sigHash":"fa5e90ec4ed673c0ffe64a6da6598d6c32e70dd274ef036636e3e48938ccc983"}
  *
  * Go source:
  * func updateMin(a *atomic.Int64, candidate int64) bool {

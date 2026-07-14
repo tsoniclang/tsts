@@ -262,7 +262,7 @@ import {
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getTextOfNode","kind":"method","status":"implemented","sigHash":"5480703edd86ebe112d291bc138a414735d7c543c0c943d8a715eef70dd757d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getTextOfNode","kind":"method","status":"implemented","sigHash":"cd0f2d264a682d24757380ddd1c7607562dd147b1238459d26df2b4cc43ca6c7"}
  *
  * Go source:
  * func (p *Printer) getTextOfNode(node *ast.Node, includeTrivia bool) string {
@@ -2815,7 +2815,7 @@ export function Printer_writeDelimiter(receiver: GoPtr<Printer>, format: ListFor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitListItems","kind":"method","status":"implemented","sigHash":"fb5f38e3a182cb55c0ff097da7b81ba78a5c816bfd8bbfdae804854c4fad141c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitListItems","kind":"method","status":"implemented","sigHash":"b24ba717b0557c69b40de706fa1a6620ab4ce810fd1a3532dc1ff656e4bdabbb"}
  *
  * Go source:
  * func (p *Printer) emitListItems(
@@ -3800,7 +3800,7 @@ export function Printer_generateNames(receiver: GoPtr<Printer>, node: GoPtr<Node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.generateName","kind":"method","status":"implemented","sigHash":"5846b4004418c626ef547292194935cbebbdd11e2cbf68985adc39badfba9a6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.generateName","kind":"method","status":"implemented","sigHash":"46d9d471b49fc497deea41de401949110f81b0be56813c5ae59c93e75815b0be"}
  *
  * Go source:
  * func (p *Printer) generateName(name *ast.MemberName) {
@@ -3812,7 +3812,7 @@ export function Printer_generateName(receiver: GoPtr<Printer>, name: GoPtr<Membe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.isFileLevelUniqueNameInCurrentFile","kind":"method","status":"implemented","sigHash":"7eaa150456908423d7c42729f9358530e46125b7fec1c9b3e8a23887a3c1709a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.isFileLevelUniqueNameInCurrentFile","kind":"method","status":"implemented","sigHash":"872fe105eb910ec1e9619aad11835e6abd341007d277155867e59b3cf9b41bc7"}
  *
  * Go source:
  * func (p *Printer) isFileLevelUniqueNameInCurrentFile(name string, _ bool) bool {

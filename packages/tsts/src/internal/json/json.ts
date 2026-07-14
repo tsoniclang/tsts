@@ -37,7 +37,7 @@ export type JsonFieldNamesForGoStructContract<T, Id extends string, Fields> = T 
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::varGroup::allowInvalid","kind":"varGroup","status":"implemented","sigHash":"4ca491a9062bcfff59a0c9819d0cecd849aa6ca334c47b7dbcc5fa97d2f6b829"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::varGroup::allowInvalid","kind":"varGroup","status":"implemented","sigHash":"b6140141d1a91f771adf06c0abf86780dce568740e6d14adb060c41021588644"}
  *
  * Go source:
  * var allowInvalid []json.Options = slices.Clip([]json.Options{jsontext.AllowInvalidUTF8(true)})
@@ -221,7 +221,7 @@ export function NewDecoder(r: GoInterface<Reader>): GoPtr<Decoder_d2f8186c> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::Value","kind":"type","status":"implemented","sigHash":"6698689ff698e18001dc88d4679c888f3b375d04f67c1dc3cd77810e09db309b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::Value","kind":"type","status":"implemented","sigHash":"d51de9890262e3e5ac814750ecc0567c2ef40c3c6829e9c7069df4362ec87e17"}
  *
  * Go source:
  * Value           = jsontext.Value
@@ -229,7 +229,7 @@ export function NewDecoder(r: GoInterface<Reader>): GoPtr<Decoder_d2f8186c> {
 export type Value = Value_6b3f2abd;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::Kind","kind":"type","status":"implemented","sigHash":"e0a1b3508ac52c4d956a2d2dc62eb63795a790f2e31911c40afa3ed9ee6004e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::Kind","kind":"type","status":"implemented","sigHash":"117cbab7ee93749d15dd10cf5603e6bf413efaf3cc7e70e301ae1182a4676c01"}
  *
  * Go source:
  * Kind            = jsontext.Kind
@@ -237,7 +237,7 @@ export type Value = Value_6b3f2abd;
 export type Kind = Kind_c0fe0b38;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::UnmarshalerFrom","kind":"type","status":"implemented","sigHash":"f01f6699315633fb8688649a26dc2ccae8cf24b9de4a6ae276ec0327311a4202"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::UnmarshalerFrom","kind":"type","status":"implemented","sigHash":"635dd02a30c10b9eebef4cb8acab2194b8331ef7fc0bf4abbf08a829da8681a9"}
  *
  * Go source:
  * UnmarshalerFrom = json.UnmarshalerFrom
@@ -245,7 +245,7 @@ export type Kind = Kind_c0fe0b38;
 export type UnmarshalerFrom = UnmarshalerFrom_68b23da1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::MarshalerTo","kind":"type","status":"implemented","sigHash":"9a8bc449349aa8ab63f43069406fd09a50f7ea76206c801a11bb5418b681d6a5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::MarshalerTo","kind":"type","status":"implemented","sigHash":"7ca07b2fcd99b9db68407286f29f77449ab08a1ead2bb34cdddf8af101686204"}
  *
  * Go source:
  * MarshalerTo     = json.MarshalerTo
@@ -253,7 +253,7 @@ export type UnmarshalerFrom = UnmarshalerFrom_68b23da1;
 export type MarshalerTo = MarshalerTo_fd081708;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::Decoder","kind":"type","status":"implemented","sigHash":"dfbbb25d47bd696b560dd45cd13605536c83221e400acd19e557c44f702780a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::Decoder","kind":"type","status":"implemented","sigHash":"6506e3b23412d16f228cc92b61774a88d0ecffed6756ae1f2410cc57c7c55217"}
  *
  * Go source:
  * Decoder         = jsontext.Decoder
@@ -261,7 +261,7 @@ export type MarshalerTo = MarshalerTo_fd081708;
 export type Decoder = Decoder_d2f8186c;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::Encoder","kind":"type","status":"implemented","sigHash":"fa61b21198de3727e07287d714b3f5d7233461cbccc9a504dfe2adbf19e5f48d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::type::Encoder","kind":"type","status":"implemented","sigHash":"43bed4ee7080baaaed7a060516be905b4f2788d25d2b47924b49b953ba4dbfcb"}
  *
  * Go source:
  * Encoder         = jsontext.Encoder
@@ -269,7 +269,7 @@ export type Decoder = Decoder_d2f8186c;
 export type Encoder = Encoder_517f1597;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::varGroup::BeginObject+EndObject+Null+BeginArray+EndArray","kind":"varGroup","status":"implemented","sigHash":"fb8c55f79fbf45b5063e830ab2d30a7c7ed6f5321bb7436d3c0ecb44771cd3d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::varGroup::BeginObject+EndObject+Null+BeginArray+EndArray","kind":"varGroup","status":"implemented","sigHash":"aafa18e80426037a62fe89d5e396652119069df74f808e3c4feaf52168c84f8d"}
  *
  * Go source:
  * var (

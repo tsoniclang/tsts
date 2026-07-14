@@ -4,7 +4,7 @@ import type { CompilerHost } from "../../compiler/host.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::type::Host","kind":"type","status":"implemented","sigHash":"87dbe6f0cfe05a5aa6179f6a36adf26e7d8bf5f0f92113c8de338be891efa895"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::type::Host","kind":"type","status":"implemented","sigHash":"31c183fb6ba46cac3beda7d365db28f1eb48f85a81060c6eb4cd886a51127459"}
  *
  * Go source:
  * Host interface {
@@ -18,7 +18,7 @@ export interface Host {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::type::host","kind":"type","status":"implemented","sigHash":"4878a075c6246d276432fff1aab5b03ef485e8fc6f147876280d0e8e305a382a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::type::host","kind":"type","status":"implemented","sigHash":"d01b4ba443eea78ad6a9ae0dbc82fe36f7057d9afc16b6da4801d5c8a085498c"}
  *
  * Go source:
  * host struct {
@@ -30,7 +30,7 @@ export interface host {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"9b7ca15aedd1f4e3ec668ba19196a3324cd120c0c1842c4781db9fcc669447f2"}
  *
  * Go source:
  * var _ Host = (*host)(nil)

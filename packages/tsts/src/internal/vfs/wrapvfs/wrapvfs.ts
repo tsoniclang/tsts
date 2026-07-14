@@ -5,7 +5,7 @@ import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::type::Replacements","kind":"type","status":"implemented","sigHash":"cefb899fcad2162eeb3a014e97c0b2fea8ff4e05a236a6d42cbe1e62aea57bf7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::type::Replacements","kind":"type","status":"implemented","sigHash":"38f6b3682164b5d419adb0f02146de4e16cc857e03bb44d66a66e059c0aa3cb9"}
  *
  * Go source:
  * Replacements struct {
@@ -55,7 +55,7 @@ export function Wrap(fs: GoInterface<FS>, replacements: Replacements): GoInterfa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::type::wrappedFS","kind":"type","status":"implemented","sigHash":"c574ef0310576d4c8e7dbf20af7dc5332b6edbc4b02bcc0aedb58bf4f2aeefb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::type::wrappedFS","kind":"type","status":"implemented","sigHash":"cc3c5df3b97c93352813c694b8314865647cc6350ea3a9adf832c7d033bc82c0"}
  *
  * Go source:
  * wrappedFS struct {
@@ -69,7 +69,7 @@ export interface wrappedFS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"36a6d4224df9eceb63912b0f4bb4c2cf2350dbf5bf4105c9829dc588f27c6b66"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"30b1ef7bc0ecb432ca4d58a4058a83be47995173273bd972127e918c8400d7f9"}
  *
  * Go source:
  * func (w *wrappedFS) UseCaseSensitiveFileNames() bool {
@@ -87,7 +87,7 @@ export function wrappedFS_UseCaseSensitiveFileNames(receiver: GoPtr<wrappedFS>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.FileExists","kind":"method","status":"implemented","sigHash":"70e9465488de5481939662ccd2947380cb354e1e70e68ca5654224fb66c9989a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.FileExists","kind":"method","status":"implemented","sigHash":"d6c44db352687d51b3a2d3f929c52991681f90e358269edb409238158085fde5"}
  *
  * Go source:
  * func (w *wrappedFS) FileExists(path string) bool {
@@ -105,7 +105,7 @@ export function wrappedFS_FileExists(receiver: GoPtr<wrappedFS>, path: string): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.ReadFile","kind":"method","status":"implemented","sigHash":"f5ab4ff07601bc21a5e254d0410e13b931d2b80edc9d6a0cc378ed6afd751120"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.ReadFile","kind":"method","status":"implemented","sigHash":"d290ad08854a1d5194b33ce45827e835e5a19f18461e8186da4dbf72c62ba845"}
  *
  * Go source:
  * func (w *wrappedFS) ReadFile(path string) (contents string, ok bool) {
@@ -123,7 +123,7 @@ export function wrappedFS_ReadFile(receiver: GoPtr<wrappedFS>, path: string): [c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.WriteFile","kind":"method","status":"implemented","sigHash":"ef26456b10e18fda46bda87037ddd8d56d379bf581f5594c522c5231ffa88c4b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.WriteFile","kind":"method","status":"implemented","sigHash":"055d697530bdb36182d49f823332a0ce07448b991a9353eac8571f49187661cb"}
  *
  * Go source:
  * func (w *wrappedFS) WriteFile(path string, data string) error {
@@ -141,7 +141,7 @@ export function wrappedFS_WriteFile(receiver: GoPtr<wrappedFS>, path: string, da
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.AppendFile","kind":"method","status":"implemented","sigHash":"93cea65476ec8d884a32f0d25af6a4b3015f5402c168c2a571cba5572cc734f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.AppendFile","kind":"method","status":"implemented","sigHash":"e9986d661049321d1b498acb3b587f1a8d30d3392ca90b3359828de8f9fd3406"}
  *
  * Go source:
  * func (w *wrappedFS) AppendFile(path string, data string) error {
@@ -159,7 +159,7 @@ export function wrappedFS_AppendFile(receiver: GoPtr<wrappedFS>, path: string, d
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.Remove","kind":"method","status":"implemented","sigHash":"1e4b7f20a06d444a73ffcef4a8170439c071257c5e17202f48db6ea94ca5eb27"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.Remove","kind":"method","status":"implemented","sigHash":"0bf343da665768d0799f41e2fe023f1212af624720103e8546c8d1f2b8bd93b9"}
  *
  * Go source:
  * func (w *wrappedFS) Remove(path string) error {
@@ -177,7 +177,7 @@ export function wrappedFS_Remove(receiver: GoPtr<wrappedFS>, path: string): GoEr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.Chtimes","kind":"method","status":"implemented","sigHash":"c3314c3de39dfe9b8aed75849dac08305f208087a5a5c92a00363abc0289e0d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.Chtimes","kind":"method","status":"implemented","sigHash":"8bd275718c8f8d71d8509bbae46c8952aa8210b6458bb76c756a26d95e349fbe"}
  *
  * Go source:
  * func (w *wrappedFS) Chtimes(path string, aTime time.Time, mTime time.Time) error {
@@ -195,7 +195,7 @@ export function wrappedFS_Chtimes(receiver: GoPtr<wrappedFS>, path: string, aTim
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.DirectoryExists","kind":"method","status":"implemented","sigHash":"3db938aff540a387608e290e47a5e83f522bead9ef231d83f2ffab013d6bb99a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.DirectoryExists","kind":"method","status":"implemented","sigHash":"0052ce77f95ffb1bc42198bba6c74b02a1a8d67404981f036701a3004ade31a7"}
  *
  * Go source:
  * func (w *wrappedFS) DirectoryExists(path string) bool {
@@ -213,7 +213,7 @@ export function wrappedFS_DirectoryExists(receiver: GoPtr<wrappedFS>, path: stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"9c47b52da1a0df560dcf5d2b30c9ef822d929f8273ecf24209745f8506df3a25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"c6aeb16e5201586670d65137475922f33da53ec77cab4b3fa6c0b5b92af752e0"}
  *
  * Go source:
  * func (w *wrappedFS) GetAccessibleEntries(path string) vfs.Entries {
@@ -231,7 +231,7 @@ export function wrappedFS_GetAccessibleEntries(receiver: GoPtr<wrappedFS>, path:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.Stat","kind":"method","status":"implemented","sigHash":"5c157652effdcdd8b326af2172ec92fcf456cb2ed9c2da1ba60cd77ed53c7398"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.Stat","kind":"method","status":"implemented","sigHash":"764d53b6b07929d966b957da9b3a4315c61c13da336ac799dca257b2cde4b119"}
  *
  * Go source:
  * func (w *wrappedFS) Stat(path string) vfs.FileInfo {
@@ -249,7 +249,7 @@ export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): GoInte
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.WalkDir","kind":"method","status":"implemented","sigHash":"712990931e59a4982b158d2203881ceeabaf4470375a0db1138fc6dad19ae158"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.WalkDir","kind":"method","status":"implemented","sigHash":"8e92328a7cff6994a6965e96314300db718ac16429e2e5d3ed2851fa4159e4ac"}
  *
  * Go source:
  * func (w *wrappedFS) WalkDir(root string, walkFn vfs.WalkDirFunc) error {
@@ -267,7 +267,7 @@ export function wrappedFS_WalkDir(receiver: GoPtr<wrappedFS>, root: string, walk
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.Realpath","kind":"method","status":"implemented","sigHash":"b9d37c6acae6ba86e0f76be91834fbda4ae214358c2f78d2efd6e570ccc9500b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::method::wrappedFS.Realpath","kind":"method","status":"implemented","sigHash":"78f2b8e6348e8b9e2fdcee5765cc999b4c779128e9db12f932ee4c814a1d1884"}
  *
  * Go source:
  * func (w *wrappedFS) Realpath(path string) string {
@@ -285,7 +285,7 @@ export function wrappedFS_Realpath(receiver: GoPtr<wrappedFS>, path: string): st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"bf43051dbf5443359d945ee6f538cadaf617e6c30585a226b391502e8ff2cb44"}
  *
  * Go source:
  * var _ vfs.FS = (*wrappedFS)(nil)

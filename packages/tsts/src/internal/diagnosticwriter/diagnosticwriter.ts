@@ -56,7 +56,7 @@ import type { ComparePathsOptions } from "../tspath/path.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FileLike","kind":"type","status":"implemented","sigHash":"c1f2b442a98ac11635887fcdf632a2de167ad0e61b071cd736139c21b5ff5cf1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FileLike","kind":"type","status":"implemented","sigHash":"86b16b30f106734da4f4f55656622d5ddde2e7076ec0004c1b21ef5df4823e97"}
  *
  * Go source:
  * FileLike interface {
@@ -72,7 +72,7 @@ export interface FileLike {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::Diagnostic","kind":"type","status":"implemented","sigHash":"6400335e13c5640d5feab15f7ba799726dae7af5e3f61bc5e89f4d29d12e8257"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::Diagnostic","kind":"type","status":"implemented","sigHash":"e05d6a1014311d14a01fa12329927e138ec56fe656f3078dd1c05311f4433761"}
  *
  * Go source:
  * Diagnostic interface {
@@ -100,7 +100,7 @@ export interface Diagnostic {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::ASTDiagnostic","kind":"type","status":"implemented","sigHash":"0b1e50f77d7246247789dd1d5c744b407d8cbc250708b719b1691e3f1dbc6400"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::ASTDiagnostic","kind":"type","status":"implemented","sigHash":"7496fe12fecbdc3edadbb76dfca8316a930ef47ba03735b632f355067985fa48"}
  *
  * Go source:
  * ASTDiagnostic struct {
@@ -307,7 +307,7 @@ export function CompareASTDiagnostics(a: GoPtr<ASTDiagnostic>, b: GoPtr<ASTDiagn
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FormattingOptions","kind":"type","status":"implemented","sigHash":"8aa377d010e0e40cc5c97fb1ce83a004e64d943dc79e7cdddf138d30ee02b6c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FormattingOptions","kind":"type","status":"implemented","sigHash":"500d125b23844b9323be6f5904c3bc1c6fa0447486127d32ffe144cb4888de14"}
  *
  * Go source:
  * FormattingOptions struct {
@@ -323,7 +323,7 @@ export interface FormattingOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::constGroup::foregroundColorEscapeGrey+foregroundColorEscapeRed+foregroundColorEscapeYellow+foregroundColorEscapeBlue+foregroundColorEscapeCyan","kind":"constGroup","status":"implemented","sigHash":"f16191c793ec9b38181d47cd36c7b90d27a4f95bb4940c850b1192a378f382f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::constGroup::foregroundColorEscapeGrey+foregroundColorEscapeRed+foregroundColorEscapeYellow+foregroundColorEscapeBlue+foregroundColorEscapeCyan","kind":"constGroup","status":"implemented","sigHash":"fdff23f2f993ab125531e388efbdbbd699f988884ff39bff192ffbd2f81759ec"}
  *
  * Go source:
  * const (
@@ -341,7 +341,7 @@ export const foregroundColorEscapeBlue: string = "[94m";
 export const foregroundColorEscapeCyan: string = "[96m";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::constGroup::gutterStyleSequence+gutterSeparator+resetEscapeSequence+ellipsis","kind":"constGroup","status":"implemented","sigHash":"8b0348d0bb2c7a18e1a4f0182d24f33252e72ce9f90e41285c04a684a6507326"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::constGroup::gutterStyleSequence+gutterSeparator+resetEscapeSequence+ellipsis","kind":"constGroup","status":"implemented","sigHash":"1ee741fc36cdc4938216cfdca463ac38ce1929d05a598252f8f2ff5002b9f419"}
  *
  * Go source:
  * const (
@@ -729,7 +729,7 @@ export function getCategoryFormat(category: Category): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FormattedWriter","kind":"type","status":"implemented","sigHash":"070590be8512e1f0730458740e3eeb11268aa841f446f4474ae6d33061000d98"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FormattedWriter","kind":"type","status":"implemented","sigHash":"983556c2551514f522f1b832c22e995d1d1a40e518c66e50a922f117ace2df78"}
  *
  * Go source:
  * FormattedWriter func(output io.Writer, text string, formatStyle string)
@@ -789,7 +789,7 @@ export function WriteLocation(output: GoInterface<Writer>, file: GoInterface<Fil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::ErrorSummary","kind":"type","status":"implemented","sigHash":"bee0efb76aa62d69512e9952f325b33c1fe9a58a0c612d7afdee8ba615d056cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::ErrorSummary","kind":"type","status":"implemented","sigHash":"b64c0e2cd004715933d0c1b5ef63fafb262284183b5acd8360dfd109dca9c474"}
  *
  * Go source:
  * ErrorSummary struct {
@@ -1157,7 +1157,7 @@ export function FormatDiagnosticsStatusAndTime(output: GoInterface<Writer>, time
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::varGroup::ScreenStartingCodes","kind":"varGroup","status":"implemented","sigHash":"f85eb94df5fd9660570b421a62caf462504e63a1e661fddad1ab91d4ba3d44ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::varGroup::ScreenStartingCodes","kind":"varGroup","status":"implemented","sigHash":"df98576d06af5e88dde8bcfd13535b77235790dfa8e1749dba276eddca7b1aeb"}
  *
  * Go source:
  * var ScreenStartingCodes = []int32{

@@ -1,7 +1,7 @@
 import type { uint } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/modifierflags.go::type::ModifierFlags","kind":"type","status":"implemented","sigHash":"f45768a6df2e8703d237bb928e8fdf44b6993d5b0ebb43d6b1dec7138a080e32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/modifierflags.go::type::ModifierFlags","kind":"type","status":"implemented","sigHash":"5761566c75ca7f87cc211846287e7507067a63fd484abeffb48b077a6c99ab92"}
  *
  * Go source:
  * ModifierFlags uint32
@@ -9,7 +9,7 @@ import type { uint } from "../../go/scalars.js";
 export type ModifierFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/modifierflags.go::constGroup::ModifierFlagsNone+ModifierFlagsPublic+ModifierFlagsPrivate+ModifierFlagsProtected+ModifierFlagsReadonly+ModifierFlagsOverride+ModifierFlagsExport+ModifierFlagsAbstract+ModifierFlagsAmbient+ModifierFlagsStatic+ModifierFlagsAccessor+ModifierFlagsAsync+ModifierFlagsDefault+ModifierFlagsConst+ModifierFlagsIn+ModifierFlagsOut+ModifierFlagsDecorator+ModifierFlagsDeprecated+ModifierFlagsJSDocPublic+ModifierFlagsJSDocPrivate+ModifierFlagsJSDocProtected+ModifierFlagsJSDocReadonly+ModifierFlagsJSDocOverride+ModifierFlagsHasComputedJSDocModifiers+ModifierFlagsHasComputedFlags+ModifierFlagsSyntacticOrJSDocModifiers+ModifierFlagsSyntacticOnlyModifiers+ModifierFlagsSyntacticModifiers+ModifierFlagsJSDocCacheOnlyModifiers+ModifierFlagsJSDocOnlyModifiers+ModifierFlagsNonCacheOnlyModifiers+ModifierFlagsAccessibilityModifier+ModifierFlagsParameterPropertyModifier+ModifierFlagsNonPublicAccessibilityModifier+ModifierFlagsTypeScriptModifier+ModifierFlagsExportDefault+ModifierFlagsAll+ModifierFlagsModifier+ModifierFlagsJavaScript","kind":"constGroup","status":"implemented","sigHash":"b5a505ba3dd0e7407e276f5566422144d92cc49b78be79c1404d39826388ce01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/modifierflags.go::constGroup::ModifierFlagsNone+ModifierFlagsPublic+ModifierFlagsPrivate+ModifierFlagsProtected+ModifierFlagsReadonly+ModifierFlagsOverride+ModifierFlagsExport+ModifierFlagsAbstract+ModifierFlagsAmbient+ModifierFlagsStatic+ModifierFlagsAccessor+ModifierFlagsAsync+ModifierFlagsDefault+ModifierFlagsConst+ModifierFlagsIn+ModifierFlagsOut+ModifierFlagsDecorator+ModifierFlagsDeprecated+ModifierFlagsJSDocPublic+ModifierFlagsJSDocPrivate+ModifierFlagsJSDocProtected+ModifierFlagsJSDocReadonly+ModifierFlagsJSDocOverride+ModifierFlagsHasComputedJSDocModifiers+ModifierFlagsHasComputedFlags+ModifierFlagsSyntacticOrJSDocModifiers+ModifierFlagsSyntacticOnlyModifiers+ModifierFlagsSyntacticModifiers+ModifierFlagsJSDocCacheOnlyModifiers+ModifierFlagsJSDocOnlyModifiers+ModifierFlagsNonCacheOnlyModifiers+ModifierFlagsAccessibilityModifier+ModifierFlagsParameterPropertyModifier+ModifierFlagsNonPublicAccessibilityModifier+ModifierFlagsTypeScriptModifier+ModifierFlagsExportDefault+ModifierFlagsAll+ModifierFlagsModifier+ModifierFlagsJavaScript","kind":"constGroup","status":"implemented","sigHash":"f0903af70e78772bb6c1da70148f696961a13f6e21176c00d2a8e41ec472fbb5"}
  *
  * Go source:
  * const (

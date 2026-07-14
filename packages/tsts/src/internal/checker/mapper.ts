@@ -12,7 +12,7 @@ import type { Type } from "./types.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperKind","kind":"type","status":"implemented","sigHash":"3af927afc5f2ac6455d13aa4237799729a777fd4ef0b1bc582578d482edf0cb5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperKind","kind":"type","status":"implemented","sigHash":"93afd4209ed7acb0c7063285beb2cccdf1426ddedee7dce25c71f2770bdc60d2"}
  *
  * Go source:
  * TypeMapperKind int32
@@ -20,7 +20,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
 export type TypeMapperKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::constGroup::TypeMapperKindUnknown+TypeMapperKindSimple+TypeMapperKindArray+TypeMapperKindMerged","kind":"constGroup","status":"implemented","sigHash":"ec220be11f26d6b55aeb8a72068401049ca70779df83f9902ee20f88efb1bb9c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::constGroup::TypeMapperKindUnknown+TypeMapperKindSimple+TypeMapperKindArray+TypeMapperKindMerged","kind":"constGroup","status":"implemented","sigHash":"b34374646f8ac24f87aa82fa231b9ce44b5b209e42251c803a88b80557274ace"}
  *
  * Go source:
  * const (
@@ -36,7 +36,7 @@ export const TypeMapperKindArray: TypeMapperKind = 2;
 export const TypeMapperKindMerged: TypeMapperKind = 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapper","kind":"type","status":"implemented","sigHash":"90e4bf6fdf7c4ce34de725c79bc3543feba4982ec367da3c67e25a054e8b1256"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapper","kind":"type","status":"implemented","sigHash":"a162d490ad1296cf69f3884f0983d506dfb2e0c4dd1285dedba923a237eaea19"}
  *
  * Go source:
  * TypeMapper struct {
@@ -68,7 +68,7 @@ export function TypeMapper_Kind(receiver: GoPtr<TypeMapper>): TypeMapperKind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperData","kind":"type","status":"implemented","sigHash":"4649cb141073582297deefb530f542430d796079063ef027818276bd88663ea8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperData","kind":"type","status":"implemented","sigHash":"2eca3e0d6789f5d4a9e42697fc145fec92c7347398a63786f4f7524e6304158a"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic mapper dispatch without a side table or wrapper object.","goSignatureHash":"45284edb6f62742a1ed49c2c3a89e8acf9c04d31a593b2176200915230705598","tsSignatureHash":"eb00a8c7d277bb724833cdde86b19bd44cfbdc28004f4d006f9b3ad26a272910"}
  *
  * Go source:
@@ -173,7 +173,7 @@ export function appendTypeMapping(mapper: GoPtr<TypeMapper>, source: GoPtr<Type>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::method::Checker.newBackreferenceMapper","kind":"method","status":"implemented","sigHash":"11c1baefefb363b4b5ca1b02ccff73260bf5bd94c4c742c967e0bd836f7cf070"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::method::Checker.newBackreferenceMapper","kind":"method","status":"implemented","sigHash":"33b62ae1202b70200875cb169293ab0529294c6822ec2847ab227c369055f93e"}
  *
  * Go source:
  * func (c *Checker) newBackreferenceMapper(context *InferenceContext, index int) *TypeMapper {
@@ -193,7 +193,7 @@ export function Checker_newBackreferenceMapper(receiver: GoPtr<Checker>, context
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperBase","kind":"type","status":"implemented","sigHash":"8b504be7d37edb9902a39d0b4c68d2efc9fa732cd53914fd659b6b961e5ac1fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperBase","kind":"type","status":"implemented","sigHash":"204d6d2ba55d9a30cd266f2af45f123ab91a66d75868ae2df1d5294673b9c323"}
  *
  * Go source:
  * TypeMapperBase struct {
@@ -234,7 +234,7 @@ function newEmbeddedTypeMapper(): [TypeMapperBase, TypeMapper] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::SimpleTypeMapper","kind":"type","status":"implemented","sigHash":"18f1b0f031cf526f482f5b0052883312586c7d7bc59f979e5beddb717cc022a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::SimpleTypeMapper","kind":"type","status":"implemented","sigHash":"85cfca898955cc7df26c9dadd16046fe02020f4903f1fca381cf5edfd4f6a23d"}
  *
  * Go source:
  * SimpleTypeMapper struct {
@@ -319,7 +319,7 @@ export function SimpleTypeMapper_Kind(receiver: GoPtr<SimpleTypeMapper>): TypeMa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::ArrayTypeMapper","kind":"type","status":"implemented","sigHash":"39cee8f8a64e6e65a09d7c3ca6ca7ea371b4bca7ed91545ced3207204af66b61"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::ArrayTypeMapper","kind":"type","status":"implemented","sigHash":"79137dedbeca1f796334d3023832b77509bb8c1ee65835e69c3f4b4d72c6616e"}
  *
  * Go source:
  * ArrayTypeMapper struct {
@@ -409,7 +409,7 @@ export function ArrayTypeMapper_Kind(receiver: GoPtr<ArrayTypeMapper>): TypeMapp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::ArrayToSingleTypeMapper","kind":"type","status":"implemented","sigHash":"5870c17a5551518de83f7c7043f22bc62b3222502daa34d7c2c1027650ca5eaf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::ArrayToSingleTypeMapper","kind":"type","status":"implemented","sigHash":"9eec27fb902eaea204cc072baa25aa10245fbaf50a878689ae3a2af95a114c2e"}
  *
  * Go source:
  * ArrayToSingleTypeMapper struct {
@@ -482,7 +482,7 @@ export function ArrayToSingleTypeMapper_Map(receiver: GoPtr<ArrayToSingleTypeMap
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::DeferredTypeMapper","kind":"type","status":"implemented","sigHash":"4a2b5fa0361b3d01ba11d6dd09428acb69f8677589869eccfe9762f113c01274"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::DeferredTypeMapper","kind":"type","status":"implemented","sigHash":"a1d2c929d50ac483786ef18d6d12e6ba2021b16477aecfd6e4e3919e8d4e5e1a"}
  *
  * Go source:
  * DeferredTypeMapper struct {
@@ -560,7 +560,7 @@ export function DeferredTypeMapper_Map(receiver: GoPtr<DeferredTypeMapper>, t: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::FunctionTypeMapper","kind":"type","status":"implemented","sigHash":"637093dbf36c0e8925dbfd749c6a05d986dc6704aa648bfaa0ea06b5c60d9ccf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::FunctionTypeMapper","kind":"type","status":"implemented","sigHash":"644f899b0b29b75e7a293b5aaa166d153f3e82d85be4ef9eba7967e6c9ccabee"}
  *
  * Go source:
  * FunctionTypeMapper struct {
@@ -623,7 +623,7 @@ export function FunctionTypeMapper_Map(receiver: GoPtr<FunctionTypeMapper>, t: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::MergedTypeMapper","kind":"type","status":"implemented","sigHash":"d35eae76fd24a3e489e1eb01a2085b973dc3d43aa28c6277d4ad6be2d5ca8c84"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::MergedTypeMapper","kind":"type","status":"implemented","sigHash":"c4f341f6ed422a1320f4e2ac71bc3f8a5e7b4d8f2fb6d898ff23eb978f64ecce"}
  *
  * Go source:
  * MergedTypeMapper struct {
@@ -702,7 +702,7 @@ export function MergedTypeMapper_Kind(receiver: GoPtr<MergedTypeMapper>): TypeMa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::CompositeTypeMapper","kind":"type","status":"implemented","sigHash":"82463f3c39a528806a681a33e8a65c6fe8a7cdecacb7a8fb9c331e32fdb5f276"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::CompositeTypeMapper","kind":"type","status":"implemented","sigHash":"8aaefc4071358ab56b978cd27e76fc72292f8be60790012ebf8edcf18edce1bc"}
  *
  * Go source:
  * CompositeTypeMapper struct {
@@ -781,7 +781,7 @@ export function CompositeTypeMapper_Map(receiver: GoPtr<CompositeTypeMapper>, t:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::InferenceTypeMapper","kind":"type","status":"implemented","sigHash":"7d0a355fd9feed03a929306d9307d490b52e5851035c6cc3cc4050fe432301bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::InferenceTypeMapper","kind":"type","status":"implemented","sigHash":"c4e256cd8f6c8041b04c1a167d64caf7269ba4dcd853debcb28792db65b548e9"}
  *
  * Go source:
  * InferenceTypeMapper struct {

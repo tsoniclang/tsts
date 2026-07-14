@@ -109,7 +109,7 @@ import type { AccessorDeclaration } from "../../ast/generated/unions.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::type::GetSymbolAccessibilityDiagnostic","kind":"type","status":"implemented","sigHash":"30009a2944c1b67c2d004de1a53a6347b93993270876a094093214a1dd3b294d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::type::GetSymbolAccessibilityDiagnostic","kind":"type","status":"implemented","sigHash":"4690a42c6a896f808be1de81243ee38276220e9254501e06249727e1731785fa"}
  *
  * Go source:
  * GetSymbolAccessibilityDiagnostic = func(symbolAccessibilityResult printer.SymbolAccessibilityResult) *SymbolAccessibilityDiagnostic
@@ -117,7 +117,7 @@ import type { GoFunc, GoInterface } from "../../../go/compat.js";
 export type GetSymbolAccessibilityDiagnostic = GoFunc<(symbolAccessibilityResult: SymbolAccessibilityResult) => GoPtr<SymbolAccessibilityDiagnostic>>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::type::SymbolAccessibilityDiagnostic","kind":"type","status":"implemented","sigHash":"df75e237fca71aa20b900c85bfdd8a0fd7f6062768000d12e37abddf7dec3618"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::type::SymbolAccessibilityDiagnostic","kind":"type","status":"implemented","sigHash":"e24e261749d6da8468f88b98a67fce9e8ccf790abdbfac1d64858ec69a7dcbe9"}
  *
  * Go source:
  * SymbolAccessibilityDiagnostic struct {

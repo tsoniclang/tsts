@@ -17,7 +17,7 @@ import { IsSimpleCopiableExpression } from "../utilities.js";
 import { createNotNullCondition } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::type::nullishCoalescingTransformer","kind":"type","status":"implemented","sigHash":"3cbb08b43eaffc212fdb16daf22e8185498e1b6191c6c891ddf1dceb57555aa3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::type::nullishCoalescingTransformer","kind":"type","status":"implemented","sigHash":"f4065d25347ac4061b7af6d3bf42592df0bc8bbfec61f56c03593dbb7e4f8b62"}
  *
  * Go source:
  * nullishCoalescingTransformer struct {

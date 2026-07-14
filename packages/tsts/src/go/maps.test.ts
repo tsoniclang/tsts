@@ -2,14 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as maps from "./maps.js";
 import { Clone, Copy, DeleteFunc, Equal, EqualFunc, Keys, Values } from "./maps.js";
-import { GoMapIsNil, GoNilMap } from "./compat.js";
+import { GoEqualStrict, GoMapIsNil, GoNilMap, GoStringKey } from "./compat.js";
 
 test("maps.Clone returns a shallow copy", () => {
   const m = new globalThis.Map<string, number>([
     ["a", 1],
     ["b", 2],
   ]);
-  const c = Clone(m)!;
+  const c = Clone(m, GoStringKey)!;
   assert.notEqual(c, m);
   assert.equal(c.get("a"), 1);
   assert.equal(c.get("b"), 2);
@@ -18,7 +18,7 @@ test("maps.Clone returns a shallow copy", () => {
 });
 
 test("maps.Clone preserves a nil Go map", () => {
-  assert.equal(GoMapIsNil(Clone(GoNilMap<string, number>())), true);
+  assert.equal(GoMapIsNil(Clone(GoNilMap<string, number>(), GoStringKey)), true);
 });
 
 test("maps.Copy copies and overwrites entries", () => {
@@ -46,9 +46,9 @@ test("maps.Equal compares key/value pairs", () => {
     ["a", 1],
     ["b", 3],
   ]);
-  assert.equal(Equal(m1, m2), true);
-  assert.equal(Equal(m1, m3), false);
-  assert.equal(Equal(m1, m4), false);
+  assert.equal(Equal(m1, m2, GoEqualStrict), true);
+  assert.equal(Equal(m1, m3, GoEqualStrict), false);
+  assert.equal(Equal(m1, m4, GoEqualStrict), false);
 });
 
 test("maps.EqualFunc uses the provided comparator", () => {

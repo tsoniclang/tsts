@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { FileMode } from "../../../go/io/fs.js";
 import type { bool, byte } from "../../../go/scalars.js";
 import { MapFS_as_FS } from "../../../go/testing/fstest.js";
@@ -52,11 +52,11 @@ test("IOFS mirrors TS-Go ReadFile, existence, directory entries, walking, and re
   assert.deepEqual(fs.GetAccessibleEntries("/").Files, ["foo.ts"]);
 
   const files: string[] = [];
-  const walkFn: WalkDirFunc = (path: string, d: DirEntry, err) => {
+  const walkFn: WalkDirFunc = (path: string, d: GoInterface<DirEntry>, err) => {
     if (err !== undefined) {
       return err;
     }
-    if (!d.IsDir()) {
+    if (!d!.IsDir()) {
       files.push(path);
     }
     return undefined;
@@ -65,11 +65,11 @@ test("IOFS mirrors TS-Go ReadFile, existence, directory entries, walking, and re
   assert.deepEqual(files.sort(), ["/dir1/file1.ts", "/dir1/file2.ts", "/dir2/file1.ts", "/foo.ts"]);
 
   const skippedFiles: string[] = [];
-  const skipWalkFn: WalkDirFunc = (path: string, d: DirEntry, err) => {
+  const skipWalkFn: WalkDirFunc = (path: string, d: GoInterface<DirEntry>, err) => {
     if (err !== undefined) {
       return err;
     }
-    if (!d.IsDir()) {
+    if (!d!.IsDir()) {
       skippedFiles.push(path);
     }
     return path === "/" ? undefined : SkipDir;

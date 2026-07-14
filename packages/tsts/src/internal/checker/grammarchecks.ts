@@ -3056,7 +3056,7 @@ export function Checker_checkGrammarAccessor(receiver: GoPtr<Checker>, accessor:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.doesAccessorHaveCorrectParameterCount","kind":"method","status":"implemented","sigHash":"e5c96ffc7430da9e5c0b0d33f2df94cf71cac9f5c841eaf08a33966d49f29e8d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.doesAccessorHaveCorrectParameterCount","kind":"method","status":"implemented","sigHash":"8f5648a19eef16180f07ad5d743c730be3b076ddf5e20aa7bcd67babd476a3be"}
  *
  * Go source:
  * func (c *Checker) doesAccessorHaveCorrectParameterCount(accessor *ast.AccessorDeclaration) bool {
@@ -3197,7 +3197,7 @@ export function Checker_checkGrammarForInvalidDynamicName(receiver: GoPtr<Checke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.isNonBindableDynamicName","kind":"method","status":"implemented","sigHash":"78a08b7566c0f2c67c6735ac46f524fca42d763f9e7c69bf7fc3c1823ebce0fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.isNonBindableDynamicName","kind":"method","status":"implemented","sigHash":"3c1c6b01cc014d216b17fb62c03a8d499484297bfc0296cc2b8fa02f33c00358"}
  *
  * Go source:
  * func (c *Checker) isNonBindableDynamicName(node *ast.DeclarationName) bool {

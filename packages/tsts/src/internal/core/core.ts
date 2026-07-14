@@ -873,7 +873,7 @@ export function InsertSorted<T>(slice: GoSlice<T>, element: T, cmp: GoFunc<(arg0
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::MinAllFunc","kind":"func","status":"implemented","sigHash":"cb0e61615f21263eb4072c2f4f0884eb6d093871a998329c168c50e1c8d1d713"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::MinAllFunc","kind":"func","status":"implemented","sigHash":"087f37a414ce7257a8c7bfc27b78c7706b96f42c3a0d9c0e9d62210f1c1cf934"}
  *
  * Go source:
  * func MinAllFunc[T any](xs []T, cmp func(a, b T) int) []T {
@@ -972,7 +972,7 @@ export function Memoize<T>(create: GoFunc<() => T>, zeroValue: GoZeroFactory<T>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::IfElse","kind":"func","status":"implemented","sigHash":"a885cdcd35f5b127118071066d82fcbe47229dc9abfb02116b6392b9aab9bbc9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::IfElse","kind":"func","status":"implemented","sigHash":"8ed31905adab168d7e62b34b753ca8d9dc6e58c71bfd8be562fa98bc2bc0d2a2"}
  *
  * Go source:
  * func IfElse[T any](b bool, whenTrue T, whenFalse T) T {
@@ -990,7 +990,7 @@ export function IfElse<T>(b: bool, whenTrue: T, whenFalse: T): T {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::OrElse","kind":"func","status":"implemented","sigHash":"9673f73c97aa3a1b08241a6c2c75f525437fce5ef18c9352bce103faac12a8a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::OrElse","kind":"func","status":"implemented","sigHash":"04ed316e84d21dda511b80c386abcd4589a573b10bcfdb222529d762e97f5606"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic zero comparison receives exact static zero-value and equality operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"},{"kind":"equality","parameter":"equal","typeParameter":"T"}]}
  *
  * Go source:
@@ -1009,7 +1009,7 @@ export function OrElse<T extends GoComparable>(value: T, defaultValue: T, zeroVa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Coalesce","kind":"func","status":"implemented","sigHash":"3487e3a18f54eaba0aeed69bc66accfb683e2b5af4f624c7bbd4f428fc62a5e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Coalesce","kind":"func","status":"implemented","sigHash":"744ae18e12021d7538c18b0d0aff8400409bec580f1d0d2ec49348473d59237b"}
  *
  * Go source:
  * func Coalesce[T *U, U any](a T, b T) T {
@@ -1030,7 +1030,7 @@ export function Coalesce<T extends GoPointerConstraint<U>, U>(a: T, b: T): T {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::type::ECMALineStarts","kind":"type","status":"implemented","sigHash":"fb01d2df42e8ccb7e242320ebd8e18954ef5f02d7bc60ecf0c770975af3dae4d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::type::ECMALineStarts","kind":"type","status":"implemented","sigHash":"593ae08679195c95688abf8458f68ac4d519bae486e94f51f0632c480559168b"}
  *
  * Go source:
  * ECMALineStarts []TextPos
@@ -1141,7 +1141,7 @@ export function ComputeECMALineStartsSeq(text: string): Seq<TextPos> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::PositionToLineAndByteOffset","kind":"func","status":"implemented","sigHash":"ce41d8eb62678c0a76288e9ab3aed800153dd6fa24c29ba8a0bb6b0c52a941a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::PositionToLineAndByteOffset","kind":"func","status":"implemented","sigHash":"5072996ce7e2b0172cc9fc71b85986d77803332890f927066aecd8a5c65ef439"}
  *
  * Go source:
  * func PositionToLineAndByteOffset(position int, lineStarts []TextPos) (line int, byteOffset int) {
@@ -1162,7 +1162,7 @@ export function PositionToLineAndByteOffset(position: int, lineStarts: GoSlice<T
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::type::UTF16Offset","kind":"type","status":"implemented","sigHash":"99b2db95c9727ad37164ce05c3a6c709b3efc78152b26ed124f417200ceb77a3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::type::UTF16Offset","kind":"type","status":"implemented","sigHash":"90db5c6b3adf593e66bf8f2d2b3c216beb38406955cf0b46acbf88fe786db10f"}
  *
  * Go source:
  * UTF16Offset int
@@ -1170,7 +1170,7 @@ export function PositionToLineAndByteOffset(position: int, lineStarts: GoSlice<T
 export type UTF16Offset = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::UTF16Len","kind":"func","status":"implemented","sigHash":"08a30f04fbc495b785be284545417ab70df1fd4079f69a0b09fc73ce87fb4254"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::UTF16Len","kind":"func","status":"implemented","sigHash":"b19c3616c0d4c6b83db688db47599bc92e1d5471f12db81c793d7f6e1fce382e"}
  *
  * Go source:
  * func UTF16Len(s string) UTF16Offset {
@@ -1234,7 +1234,7 @@ export function Must<T>(v: T, err: GoError): T {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstResult","kind":"func","status":"implemented","sigHash":"297bfb4d14b2ad4139c3bfea78997f0b7cea7715da6c8a72ec5e7eff0bfee8fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstResult","kind":"func","status":"implemented","sigHash":"751dac48fe324578f79ba5f75b125084631867dbfd721807193f7e005e68f4ad"}
  *
  * Go source:
  * func FirstResult[T1 any](t1 T1, _ ...any) T1 {
@@ -1306,7 +1306,7 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::GetSpellingSuggestion","kind":"func","status":"implemented","sigHash":"971be06af4af217009a0ac68576e7d5fbb4686b6c0e82c8a9b6d7bd09ba6b162"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::GetSpellingSuggestion","kind":"func","status":"implemented","sigHash":"1b0b9726dc2969cd01ad9c72a71a3a4e6d6108febf51eb5a214b595e6d38aafd"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic suggestion selection receives the exact static zero-value constructor for its no-candidate result.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
@@ -1408,7 +1408,7 @@ export function GetSpellingSuggestionForStrings(name: string, candidates: Seq<st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::type::levenshteinBuffers","kind":"type","status":"implemented","sigHash":"309a2b2d0ce21de3b08e33935adb32ec89595c5afa10079715e09e7e5258447b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::type::levenshteinBuffers","kind":"type","status":"implemented","sigHash":"88cdf73846a8c42946ea4db3107e8349f29c6f1dc3aa5939cdf5c08246f58f26"}
  *
  * Go source:
  * levenshteinBuffers struct {
@@ -1422,7 +1422,7 @@ export interface levenshteinBuffers {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::varGroup::levenshteinBuffersPool","kind":"varGroup","status":"implemented","sigHash":"f73cd6a6740af43768f3ed3b4d193581ee5336a7de6a8a87a3b32eda65cb9133"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::varGroup::levenshteinBuffersPool","kind":"varGroup","status":"implemented","sigHash":"f62bbda612a7082a5f4bfe98fc2a2ad150523646d44c172ed3bf5b3e1a398fd3"}
  *
  * Go source:
  * var levenshteinBuffersPool = sync.Pool{
@@ -1675,7 +1675,7 @@ export function ConcatenateSeq<T>(...seqs: Array<Seq<T>>): Seq<T> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Enumerate","kind":"func","status":"implemented","sigHash":"7e05a3338cd8712bd954f423a85fa508c77646a878a01e4bf3a6b13b319f19ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Enumerate","kind":"func","status":"implemented","sigHash":"33d22847743048d43e0fd64bfb3f8892adb1a9cc1cef1f86d18627b158294d34"}
  *
  * Go source:
  * func Enumerate[T any](seq iter.Seq[T]) iter.Seq2[int, T] {
@@ -1717,7 +1717,7 @@ export function comparableValuesEqual<T extends GoComparable>(a: T, b: T, equal:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::DiffMaps","kind":"func","status":"implemented","sigHash":"705db3666dc504a1dfe1f8fde907c1e04acb85ea6aa1fa4ad8a5345267c3dee1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::DiffMaps","kind":"func","status":"implemented","sigHash":"27d83fbfc4db5a84be97004bfedccd08f21b07da749454bbe68316c98a707c2a"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased map value type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equalValues","typeParameter":"V"}]}
  *
  * Go source:
@@ -1730,7 +1730,7 @@ export function DiffMaps<K extends GoComparable, V extends GoComparable>(m1: GoM
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::DiffMapsFunc","kind":"func","status":"implemented","sigHash":"d971788535050b31bbe52adec4163cb63ec813005b5dfcaf15aa85df793e58d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::DiffMapsFunc","kind":"func","status":"implemented","sigHash":"6e5dc85ce58470c59d2381789fb4edc881700acde04ca8a0cc2c39ef3425b4ed"}
  *
  * Go source:
  * func DiffMapsFunc[K comparable, V1 any, V2 any](m1 map[K]V1, m2 map[K]V2, equalValues func(V1, V2) bool, onAdded func(K, V2), onRemoved func(K, V1), onChanged func(K, V1, V2)) {
@@ -1779,7 +1779,7 @@ export function DiffMapsFunc<K extends GoComparable, V1, V2>(m1: GoMap<K, V1>, m
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::CopyMapInto","kind":"func","status":"implemented","sigHash":"fd702b4259fea6ec44fd16663c03f9e2ba72382a6560f546b7da5bf9d476cd56"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::CopyMapInto","kind":"func","status":"implemented","sigHash":"6c06ac181bcf38497145425fd8efa61201a63468ad4449b5ca9245242feebea4"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic map cloning receives the exact static Go map-key descriptor for result allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
@@ -1800,7 +1800,7 @@ export function CopyMapInto<M1 extends GoConstraint<"~map[K]V"> & GoMap<K, V>, M
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::UnorderedEqual","kind":"func","status":"implemented","sigHash":"a4912c0012afa2fb516bd04ccdd04b7e8f552b9fa648abf3c0d14ef6162be25c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::UnorderedEqual","kind":"func","status":"implemented","sigHash":"628726f66b16bbaa5eb6b22f1ecf59b792f02e16a3d17bbc520afaf1762b3d2a"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic map construction receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
@@ -1926,7 +1926,7 @@ export function DeduplicateSorted<T>(slice: GoSlice<T>, isEqual: GoFunc<(a: T, b
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::CompareBooleans","kind":"func","status":"implemented","sigHash":"e19ab8966ffa3148416ece58a6c261723cecd152a3ac17f4f2b2171b3cec7787"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::CompareBooleans","kind":"func","status":"implemented","sigHash":"7f38a848c414971d081c502cd2de8edd17a25246bded4e2ad8a6d864fd2ccb4b"}
  *
  * Go source:
  * func CompareBooleans(a, b bool) int {

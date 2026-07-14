@@ -669,7 +669,7 @@ export function SingleOrMany(nodes: GoSlice<GoPtr<Node>>, factory: GoPtr<NodeFac
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsSimpleCopiableExpression","kind":"func","status":"implemented","sigHash":"dadb0d705d09414897911bb44f8f66e447b2b22c993dccd1d0081dc7e2fc9e58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsSimpleCopiableExpression","kind":"func","status":"implemented","sigHash":"9fd16b3e94ad67f7cd8f01daee08fbba196a52342944e4bf101d21737dbc9471"}
  *
  * Go source:
  * func IsSimpleCopiableExpression(expression *ast.Expression) bool {
@@ -728,7 +728,7 @@ export function IsOriginalNodeSingleLine(emitContext: GoPtr<EmitContext>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsSimpleInlineableExpression","kind":"func","status":"implemented","sigHash":"63052de82991e08086e0f7f61b9926ae944cef2a2aefdf41e05d4885f9d71b08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsSimpleInlineableExpression","kind":"func","status":"implemented","sigHash":"1346e7eca2a2c3f8b0566ac0d70415d15c61ab6574c6e446ffcdaaa643a268b4"}
  *
  * Go source:
  * func IsSimpleInlineableExpression(expression *ast.Expression) bool {
@@ -740,7 +740,7 @@ export function IsSimpleInlineableExpression(expression: GoPtr<Expression>): boo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::FindSuperStatementIndexPath","kind":"func","status":"implemented","sigHash":"06a1a964ffba2254943ddd89593d332359c5daba36cd696e67af086050c8f98a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::FindSuperStatementIndexPath","kind":"func","status":"implemented","sigHash":"5889445e76abc6a3dc1184f3c60cf68cc486d12cae080da9ffee1521034fd686"}
  *
  * Go source:
  * func FindSuperStatementIndexPath(statements []*ast.Statement, start int) []int {
@@ -795,7 +795,7 @@ export function findSuperStatementIndexPathWorker(statements: GoSlice<GoPtr<Stat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::GetSuperCallFromStatement","kind":"func","status":"implemented","sigHash":"251a76ee540a4a800c2ee02b12ad5a1e101d24ba7b962ba4b6a3cccb23b3ecb4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::GetSuperCallFromStatement","kind":"func","status":"implemented","sigHash":"8352ab76ea1ef4d706b45e1ee53542d3c0c067f0b5b588a8b87b40efc221c9fa"}
  *
  * Go source:
  * func GetSuperCallFromStatement(statement *ast.Statement) *ast.Node {
@@ -821,7 +821,7 @@ export function GetSuperCallFromStatement(statement: GoPtr<Statement>): GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::MoveRangePastModifiers","kind":"func","status":"implemented","sigHash":"a849b768e9f6d7159aaf524a7e9ed8937544fb7d4afda0aa942c69676e411092"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::MoveRangePastModifiers","kind":"func","status":"implemented","sigHash":"22df9b7da0fe6d4bbdfc1012bd1f1e8fea0c32e462751c7c7e940cc6a758ad18"}
  *
  * Go source:
  * func MoveRangePastModifiers(node *ast.Node) core.TextRange {
@@ -855,7 +855,7 @@ export function MoveRangePastModifiers(node: GoPtr<Node>): TextRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::MoveRangePastDecorators","kind":"func","status":"implemented","sigHash":"eb03ee113a32994745a2e378e9ef5b5aa2a8a4f81b88fa926cb2605568766fa0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::MoveRangePastDecorators","kind":"func","status":"implemented","sigHash":"448ed43bbbae6be486eddd9b1beedde2d47c0c2d65ff95260ee1ebb6b8e1bd77"}
  *
  * Go source:
  * func MoveRangePastDecorators(node *ast.Node) core.TextRange {
@@ -888,7 +888,7 @@ export function MoveRangePastDecorators(node: GoPtr<Node>): TextRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::GetNonAssignmentOperatorForCompoundAssignment","kind":"func","status":"implemented","sigHash":"b42d56ffea6071669475d40585658b1e67ae27ddbd197f85f7b094e4d4ebeb46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::GetNonAssignmentOperatorForCompoundAssignment","kind":"func","status":"implemented","sigHash":"aa8670e69c53d2106640139b5b677c368453cc416b960bdcaba0d0c0b5a2afdc"}
  *
  * Go source:
  * func GetNonAssignmentOperatorForCompoundAssignment(kind ast.Kind) ast.Kind {

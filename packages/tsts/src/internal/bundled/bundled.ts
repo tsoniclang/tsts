@@ -7,7 +7,7 @@ import { embedded, wrapFS, libPath } from "./embed.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::constGroup::Embedded","kind":"constGroup","status":"implemented","sigHash":"f83bb3a895de36d262628c2ffa89238eeb5aeda78485d347176df8c732d05e94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::constGroup::Embedded","kind":"constGroup","status":"implemented","sigHash":"cd2b62f11e29615690ed73353f565ecbfafa61b3a70c13c0d4e983f73326e844"}
  * @tsgo-override {"category":"bundled-asset-mode","allow":["initializer"],"reason":"The TypeScript runtime always ships the embedded standard-library assets, while the pinned Go source also has an exact noembed build-tag variant.","goInitializer":"[1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73,75,77,79,81,83,85,87,89,91,93]=>Embedded={\"kind\":\"boolean\",\"value\":false}|[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92]=>Embedded={\"kind\":\"boolean\",\"value\":true}","tsInitializer":"Embedded={\"kind\":\"boolean\",\"value\":true}"}
  *
  * Go source:
@@ -16,7 +16,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
 export const Embedded: bool = embedded;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::WrapFS","kind":"func","status":"implemented","sigHash":"fbf63e8f5730e4d4ad448c39a6c9dda36bacb6620125539a16dba50e8b31bd5b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::WrapFS","kind":"func","status":"implemented","sigHash":"cf1a5abdd42113e030b229a9741bd8b284780574dace3ce9ef982cddcdbc6520"}
  *
  * Go source:
  * func WrapFS(fs vfs.FS) vfs.FS {
@@ -28,7 +28,7 @@ export function WrapFS(fs: GoInterface<FS>): GoInterface<FS> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::LibPath","kind":"func","status":"implemented","sigHash":"9a8bb91147a81a624745284df1b9a8267be434906aaaaebb60cd8f93f5e43e9e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::LibPath","kind":"func","status":"implemented","sigHash":"d8ffc11bed41fe087feafd9a89324d14aa753b8efaa30ec2d21f6c51b026370f"}
  *
  * Go source:
  * func LibPath() string {
@@ -40,7 +40,7 @@ export function LibPath(): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::bundledSourceDir","kind":"varGroup","status":"implemented","sigHash":"b04d87ddb555f4f8ab4973fdb51e25a7181608b9b4ed6b381d65b9c27c293de1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::bundledSourceDir","kind":"varGroup","status":"implemented","sigHash":"e595ef7d14d43a030b76450e608a4d8710f8a79ced9a5bf7ae381f85d2058852"}
  *
  * Go source:
  * var bundledSourceDir = sync.OnceValue(func() string {
@@ -68,7 +68,7 @@ export let bundledSourceDir: GoFunc<() => string> = (() => {
 })();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::testingLibPath","kind":"varGroup","status":"implemented","sigHash":"ae9c824e9f3290815693dc17b3238b5880e487333e8412ef76295efaa320ebbe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::testingLibPath","kind":"varGroup","status":"implemented","sigHash":"51146c40b686670996e8f9021c0b0352ed6f03a87f69407c44371e00298d6b4b"}
  *
  * Go source:
  * var testingLibPath = sync.OnceValue(func() string {
@@ -87,7 +87,7 @@ export let testingLibPath: GoFunc<() => string> = (() => {
 })();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath","kind":"func","status":"implemented","sigHash":"ba7ce2ebda507afa53f7209bee1e8a78eaa40816a03b43b1e4b5aca77cea70b4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath","kind":"func","status":"implemented","sigHash":"7ff722e9f2b81a46b8f800a0654d5b3f628d2893b22a7f150b5a06d8ecf8aab9"}
  *
  * Go source:
  * func TestingLibPath() string {

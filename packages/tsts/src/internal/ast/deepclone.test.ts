@@ -18,7 +18,11 @@ import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
 // testutil/parsetestutil.ParseTypeScript
 function parseTypeScript(text: string, jsx: boolean): GoPtr<Node> {
   const fileName = jsx ? "/main.tsx" : "/main.ts";
-  const file = ParseSourceFile({ FileName: fileName, Path: fileName } satisfies SourceFileParseOptions, text, GetScriptKindFromFileName(fileName));
+  const file = ParseSourceFile({
+    FileName: fileName,
+    Path: fileName,
+    ExternalModuleIndicatorOptions: { JSX: false, Force: false },
+  } satisfies SourceFileParseOptions, text, GetScriptKindFromFileName(fileName));
   return file as unknown as GoPtr<Node>;
 }
 

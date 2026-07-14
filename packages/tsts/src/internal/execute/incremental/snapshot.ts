@@ -59,7 +59,7 @@ import { byteSlice } from "../../printer/utilities.js";
 import type { referenceMap } from "./referencemap.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::FileInfo","kind":"type","status":"implemented","sigHash":"6817a2591736e7725fa6ea6007ad198d48ce419bf0b5101bbd97abd6406732bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::FileInfo","kind":"type","status":"implemented","sigHash":"390d13d57fa5c735176dd9ae95289568c53671ec69625e59937fe63aa2e289c4"}
  *
  * Go source:
  * FileInfo struct {
@@ -139,7 +139,7 @@ export function ComputeHash(text: string, hashWithText: bool): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::FileEmitKind","kind":"type","status":"implemented","sigHash":"f884c302910dcca76f02f6de918ad7c3520497d018da280c9ebfca487db2458f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::FileEmitKind","kind":"type","status":"implemented","sigHash":"eaac78057f4aa2209df69f4c33ab85ac8c334281305a30476e159aa8ecbc7a01"}
  *
  * Go source:
  * FileEmitKind uint32
@@ -147,7 +147,7 @@ export function ComputeHash(text: string, hashWithText: bool): string {
 export type FileEmitKind = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::constGroup::FileEmitKindNone+FileEmitKindJs+FileEmitKindJsMap+FileEmitKindJsInlineMap+FileEmitKindDtsErrors+FileEmitKindDtsEmit+FileEmitKindDtsMap+FileEmitKindDts+FileEmitKindAllJs+FileEmitKindAllDtsEmit+FileEmitKindAllDts+FileEmitKindAll","kind":"constGroup","status":"implemented","sigHash":"a5fece8fe2d5c9d89e4b9a48f88c11ad4bf9e0ecaccc7f374f18aa0b0b214e76"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::constGroup::FileEmitKindNone+FileEmitKindJs+FileEmitKindJsMap+FileEmitKindJsInlineMap+FileEmitKindDtsErrors+FileEmitKindDtsEmit+FileEmitKindDtsMap+FileEmitKindDts+FileEmitKindAllJs+FileEmitKindAllDtsEmit+FileEmitKindAllDts+FileEmitKindAll","kind":"constGroup","status":"implemented","sigHash":"1627effed35321189d472cbd3694409f6707de2da0903beae317134c8d36f176"}
  *
  * Go source:
  * const (
@@ -292,7 +292,7 @@ export function getPendingEmitKind(emitKind: FileEmitKind, oldEmitKind: FileEmit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::emitSignature","kind":"type","status":"implemented","sigHash":"4ef15f1f2c7bf4cd72359988bc50d894b5533d8fce0b3d6a73e11f035299a6a9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::emitSignature","kind":"type","status":"implemented","sigHash":"da483500ad424212d208ff75b962eb41b784b1b9333ab52b6fbba1c1e4e31fb6"}
  *
  * Go source:
  * emitSignature struct {
@@ -306,7 +306,7 @@ export interface emitSignature {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::method::emitSignature.getNewEmitSignature","kind":"method","status":"implemented","sigHash":"68c623e4a838309c8165809722fd48fc0fbdf56862c7a3e8c10e77b1609a7b17"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::method::emitSignature.getNewEmitSignature","kind":"method","status":"implemented","sigHash":"57e4488ff63e342cc3dcdaec88f4169d5aefe7abac7231cfc022b939b5d44b6b"}
  *
  * Go source:
  * func (e *emitSignature) getNewEmitSignature(oldOptions *core.CompilerOptions, newOptions *core.CompilerOptions) *emitSignature {
@@ -342,7 +342,7 @@ export function emitSignature_getNewEmitSignature(receiver: GoPtr<emitSignature>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::buildInfoDiagnosticWithFileName","kind":"type","status":"implemented","sigHash":"f444af1094148757fd2d891f751dbc25d6860f82693ecd3bd3209e4b6e059e2c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::buildInfoDiagnosticWithFileName","kind":"type","status":"implemented","sigHash":"b8c53da23e43a66669ae070fe5f61c71f7bfba29091f38c9c828d2cc5e8b391a"}
  *
  * Go source:
  * buildInfoDiagnosticWithFileName struct {
@@ -381,7 +381,7 @@ export interface buildInfoDiagnosticWithFileName {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::DiagnosticsOrBuildInfoDiagnosticsWithFileName","kind":"type","status":"implemented","sigHash":"dc70a950215271445b76035ffefd479590c00e321621a5914b228f56f78da355"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::DiagnosticsOrBuildInfoDiagnosticsWithFileName","kind":"type","status":"implemented","sigHash":"3612d657c84048241ed00a1960400fa7ae940a957d011dd80f7e813422102be6"}
  *
  * Go source:
  * DiagnosticsOrBuildInfoDiagnosticsWithFileName struct {
@@ -467,7 +467,7 @@ export function buildInfoDiagnosticWithFileName_toDiagnostic(receiver: GoPtr<bui
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::func::repopulateDiagnosticChain","kind":"func","status":"implemented","sigHash":"ae96e9094867b2175a574ac81a9abe5fb192c2e569a9f9192d20590787fdd7f6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::func::repopulateDiagnosticChain","kind":"func","status":"implemented","sigHash":"a2aa0071d71225b1e74481a923ceb7e827443dda8738dfcb24da1f5d0e0a1f6b"}
  *
  * Go source:
  * func repopulateDiagnosticChain(b *buildInfoDiagnosticWithFileName, p *compiler.Program, file *ast.SourceFile) *ast.Diagnostic {
@@ -694,7 +694,7 @@ export function DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(rec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::snapshot","kind":"type","status":"implemented","sigHash":"b212cd3cc90f62b68f10e9ecb1dc99a8c26d92f32e39159057ad970f6b7eddef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::snapshot","kind":"type","status":"implemented","sigHash":"d78e0d18f33124cfe962df6ed212763f822217b2abebc3a199365bc417ed1a5e"}
  *
  * Go source:
  * snapshot struct {

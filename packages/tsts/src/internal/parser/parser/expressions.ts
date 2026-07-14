@@ -282,7 +282,7 @@ import {
 } from "./tokens-speculation.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.validateJsonObjectLiteral","kind":"method","status":"implemented","sigHash":"f01a1bda1ead0947ae5574a95580d2f2a6a265643ed170dc100ee4223f5e2bad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.validateJsonObjectLiteral","kind":"method","status":"implemented","sigHash":"9a2873ab2733e464c67bd0659b6fb3174c463dd6472cff0473c92047219284f4"}
  *
  * Go source:
  * func (p *Parser) validateJsonObjectLiteral(sourceFile *ast.SourceFile, node *ast.ObjectLiteralExpression) {
@@ -823,7 +823,7 @@ export function Parser_parseNameOfClassDeclarationOrExpression(receiver: GoPtr<P
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseEnumMember","kind":"method","status":"implemented","sigHash":"b1e025f88e33fffcecfb8e2d3765f0515a5e1e865ed6fea489a3440f9254431f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseEnumMember","kind":"method","status":"implemented","sigHash":"a76d4a5c101be379ed9941bdae7820999e703e505ddc71438094b63de86ab29e"}
  *
  * Go source:
  * func (p *Parser) parseEnumMember() *ast.Node {
@@ -1796,7 +1796,7 @@ export function Parser_parseModifiersForArrowFunction(receiver: GoPtr<Parser>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::typeHasArrowFunctionBlockingParseError","kind":"func","status":"implemented","sigHash":"da8c560201537f86b76ddaaa2e69b7bc60b1ffa2a91c80331c9c12f775e541cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::typeHasArrowFunctionBlockingParseError","kind":"func","status":"implemented","sigHash":"4bdd02185549f06ad179769d424ce8b3fc99587e9973a7a051769a90c4274f8c"}
  *
  * Go source:
  * func typeHasArrowFunctionBlockingParseError(node *ast.TypeNode) bool {

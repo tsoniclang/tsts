@@ -30,7 +30,7 @@ import { newTaggedTemplateLiftRestrictionTransformer } from "./taggedtemplate.js
 import { newUsingDeclarationTransformer } from "./using.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/definitions.go::varGroup::esDecoratorAndClassFields+NewESNextTransformer+NewES2021Transformer+NewES2020Transformer+NewES2019Transformer+NewES2018Transformer+NewES2017Transformer+NewES2016Transformer","kind":"varGroup","status":"implemented","sigHash":"4f34f45d06e8a43b258e7b3839619324bd97c56c44afbf09a16d06c8484b9efe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/definitions.go::varGroup::esDecoratorAndClassFields+NewESNextTransformer+NewES2021Transformer+NewES2020Transformer+NewES2019Transformer+NewES2018Transformer+NewES2017Transformer+NewES2016Transformer","kind":"varGroup","status":"implemented","sigHash":"552c5b8186da02e6392661f1e66e20e7d751494d1757b6d39f027e32df2a0e20"}
  *
  * Go source:
  * var (

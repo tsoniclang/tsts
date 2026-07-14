@@ -63,7 +63,7 @@ import type { GoInterface } from "../../../go/compat.js";
 
 const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::ReferencedFilePair","kind":"type","status":"implemented","sigHash":"1acae0a7e39042fd1870c208a4ed0078a626c88d9ad3c80e264bb4445390836a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::ReferencedFilePair","kind":"type","status":"implemented","sigHash":"b90a2a9433bdd7e7e02b84c509b86299da137c99482ab84ebf78404b296f3108"}
  *
  * Go source:
  * ReferencedFilePair struct {
@@ -77,7 +77,7 @@ export interface ReferencedFilePair {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::OutputPaths","kind":"type","status":"implemented","sigHash":"12dad327796b8bc7fdd5e7089ee0ae7228f4b443779f8e9ad460d1c08c905d32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::OutputPaths","kind":"type","status":"implemented","sigHash":"563b0199334cb533055845c1694f19e4fe4fe9fc06381b82e13a4ca602c31b8d"}
  *
  * Go source:
  * OutputPaths interface {
@@ -91,7 +91,7 @@ export interface OutputPaths {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::DeclarationEmitHost","kind":"type","status":"implemented","sigHash":"f906952086e862b5a37485a7bfe1d0b8e89579bd11448f1e474932c59e132858"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::DeclarationEmitHost","kind":"type","status":"implemented","sigHash":"b4046b2a7859a1e6801a4215cc01db542635f8530ba0a86bbdc839fdfe08e721"}
  *
  * Go source:
  * DeclarationEmitHost interface {
@@ -117,7 +117,7 @@ export interface DeclarationEmitHost extends ModuleSpecifierGenerationHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::DeclarationTransformer","kind":"type","status":"implemented","sigHash":"0cc4f6ffd21d0e46700910172aa1bbfe45cf16f085a73d9816adba9c5752cb37"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::type::DeclarationTransformer","kind":"type","status":"implemented","sigHash":"401a7a198b375e0bd6eaa4c6f77bf17244baabfaa377b6cc02851ed64e5e20cf"}
  *
  * Go source:
  * DeclarationTransformer struct {
@@ -182,7 +182,7 @@ export interface DeclarationTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::func::NewDeclarationTransformer","kind":"func","status":"implemented","sigHash":"86e2ffb5034dbb8eb3dbca8531bc911df6fe113bccd753377fb1e23845c11eb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::func::NewDeclarationTransformer","kind":"func","status":"implemented","sigHash":"fb707e96555244262a842677657585014d48f306738ec3b25ee9849f870cd06f"}
  *
  * Go source:
  * func NewDeclarationTransformer(host DeclarationEmitHost, context *printer.EmitContext, compilerOptions *core.CompilerOptions, declarationFilePath string, declarationMapPath string) *DeclarationTransformer {
@@ -449,7 +449,7 @@ export function hasInternalAnnotation(commentRange: CommentRange, sourceFile: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::constGroup::declarationEmitNodeBuilderFlags","kind":"constGroup","status":"implemented","sigHash":"901e9a91788a64e0edf745f92c3a90c6bf9e85039d2a894c0b1739a954f6b53a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::constGroup::declarationEmitNodeBuilderFlags","kind":"constGroup","status":"implemented","sigHash":"fa84ee1fdebbc0b31b586e15c7c0f91a62039eca3c1f6ca5ffb956e0ceecbc28"}
  *
  * Go source:
  * const declarationEmitNodeBuilderFlags = nodebuilder.FlagsMultilineObjectLiterals |
@@ -469,7 +469,7 @@ export const declarationEmitNodeBuilderFlags: Flags = (FlagsMultilineObjectLiter
   FlagsNoTruncation) as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::constGroup::declarationEmitInternalNodeBuilderFlags","kind":"constGroup","status":"implemented","sigHash":"0637a954f93408f6f62ee99a44811928b4fe8ae4cb3fa9041fa9d9f79986d670"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::constGroup::declarationEmitInternalNodeBuilderFlags","kind":"constGroup","status":"implemented","sigHash":"67e78838f819cff4f41f97e07574135a7c2bb065861d0c3e64a8a1dd93f49986"}
  *
  * Go source:
  * const declarationEmitInternalNodeBuilderFlags = nodebuilder.InternalFlagsAllowUnresolvedNames
@@ -477,7 +477,7 @@ export const declarationEmitNodeBuilderFlags: Flags = (FlagsMultilineObjectLiter
 export const declarationEmitInternalNodeBuilderFlags: InternalFlags = InternalFlagsAllowUnresolvedNames;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.visit","kind":"method","status":"implemented","sigHash":"76f128f47c9e048e0b634c96f39631818d4072cebc07c3fcfd35a1f486bb0b2d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.visit","kind":"method","status":"implemented","sigHash":"3ec0035f334872598d2eb4768826b71a9dc1671378409cd905b22064dcbdbc5e"}
  *
  * Go source:
  * func (tx *DeclarationTransformer) visit(node *ast.Node) *ast.Node {
@@ -2991,7 +2991,7 @@ export function DeclarationTransformer_checkEntityNameVisibility(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.transformTopLevelDeclaration","kind":"method","status":"implemented","sigHash":"bc0fcaec4e5c0e4b71d0d041ff2a8d8d0b1c0432f93c7b6416a959d983fade96"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.transformTopLevelDeclaration","kind":"method","status":"implemented","sigHash":"a27266a6d9cd8ef77243a2e8a148b89cd02c229b1f751023b22cf6181370d84a"}
  *
  * Go source:
  * func (tx *DeclarationTransformer) transformTopLevelDeclaration(input *ast.Node) *ast.Node {
@@ -3893,7 +3893,7 @@ export function isClassExtendingNull(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.collectThisPropertyAssignments","kind":"method","status":"implemented","sigHash":"ae153d25aa9518c5a86a2a224770ff66dc1801bc6261cfc6e5e7d5fe439758ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.collectThisPropertyAssignments","kind":"method","status":"implemented","sigHash":"47e9d20f8c103375e6e1ef9f24c0d4cf5575611f9b090bfcf2c6ecd1f54c9ce3"}
  *
  * Go source:
  * // collectThisPropertyAssignments finds `this.x = expr` assignments in constructors, methods, and static blocks

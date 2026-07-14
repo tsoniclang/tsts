@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoInterface, GoPtr } from "../../../go/compat.js";
+import { GoMapIsNil, type GoInterface, type GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { NewDiagnostic } from "../../ast/diagnostic.js";
 import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
@@ -185,7 +185,7 @@ export function Parser_jsdocScannerInfo(receiver: GoPtr<Parser>): jsdocScannerIn
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isInSomeParsingContext","kind":"method","status":"implemented","sigHash":"fd09aa97dc96ad769acc8437d53fcd4895e54b1760faea9d70d2c0e483c4fb4d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isInSomeParsingContext","kind":"method","status":"implemented","sigHash":"c352b7826e4f3a5b53428b661a78712cbd357e1870f1f39dac720eba30614d09"}
  *
  * Go source:
  * func (p *Parser) isInSomeParsingContext() bool {
@@ -1022,7 +1022,7 @@ export function Parser_createIdentifier(receiver: GoPtr<Parser>, isIdentifier: b
  */
 export function Parser_internIdentifier(receiver: GoPtr<Parser>, text: string): string {
   const identifiers = receiver!.identifiers;
-  if (identifiers !== undefined) {
+  if (!GoMapIsNil(identifiers)) {
     const cached = identifiers.get(text);
     if (cached !== undefined) {
       return cached;
@@ -1075,7 +1075,7 @@ export function Parser_nextTokenIsIdentifierOnSameLine(receiver: GoPtr<Parser>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isIdentifier","kind":"method","status":"implemented","sigHash":"380e2eaed0327fcb5c0d11d19831449e227f1bc4372129ed7df8d338f0c02d05"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isIdentifier","kind":"method","status":"implemented","sigHash":"8c58a16fc4b6d165a936e2c95102e6b40997920bef6ee654955dfb7740345d01"}
  *
  * Go source:
  * func (p *Parser) isIdentifier() bool {

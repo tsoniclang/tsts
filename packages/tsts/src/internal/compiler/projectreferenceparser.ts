@@ -19,7 +19,7 @@ import type { GoInterface } from "../../go/compat.js";
 
 const projectReferenceParseTaskKey: GoMapKeyDescriptor<GoPtr<projectReferenceParseTask>> = GoPointerKey<projectReferenceParseTask>();
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParseTask","kind":"type","status":"implemented","sigHash":"9514d364f391763c424a5d6d9a870f7696a4a0508cf83e21635c4aa906ea5617"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParseTask","kind":"type","status":"implemented","sigHash":"61316d916f103188ce2627a23ecbc6ee00c8b0b96c663aa59faec2ba5bf0bbea"}
  *
  * Go source:
  * projectReferenceParseTask struct {
@@ -87,7 +87,7 @@ export function createProjectReferenceParseTasks(projectReferences: GoSlice<stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParser","kind":"type","status":"implemented","sigHash":"c64552523723c535e1cb26bff3953c5eb82adf8f795bbdf0062ed743f83f0b5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParser","kind":"type","status":"implemented","sigHash":"531a7505b3fff5943224f1141e5a6780c43a499d36704d73d5e91cd2a86d436f"}
  *
  * Go source:
  * projectReferenceParser struct {

@@ -49,7 +49,7 @@ import {
 import { GoValueRef } from "../../go/compat.js";
 import type { GoFunc, GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::computeFn","kind":"func","status":"implemented","sigHash":"ab5b320eb71a492d12e852bdfc827bacfa2e45338162ae7f5b1598b402c04859"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::computeFn","kind":"func","status":"implemented","sigHash":"c976f8f36f9a23d960445aa7ff17ed76d49942d64298203a41e3adf1993b8a81"}
  *
  * Go source:
  * func computeFn[T any](fn func(*core.CompilerOptions) T) func(*core.CompilerOptions) any {
@@ -65,7 +65,7 @@ export function computeFn<T>(fn: GoFunc<(arg0: GoPtr<CompilerOptions>) => T>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::type::impliedOption","kind":"type","status":"implemented","sigHash":"dd02aa105566676ac6ecaba59ed1947709af5164c61589707c94b3b23cb8f54e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::type::impliedOption","kind":"type","status":"implemented","sigHash":"3c8db2ef030e8452337b43f3c37dc5bdae7ae49f0f874f06729f79126320e092"}
  *
  * Go source:
  * impliedOption struct {
@@ -84,7 +84,7 @@ export interface impliedOption {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::varGroup::impliedOptions","kind":"varGroup","status":"implemented","sigHash":"27382624f6369144c3e33f747ef7fa5fa33dcf41c475ff1596cfaeb0ba2851e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::varGroup::impliedOptions","kind":"varGroup","status":"implemented","sigHash":"0b801ed3b1323e5d1497245cdb1b97ff3366eb06c57605683b2c471b1ed078c9"}
  *
  * Go source:
  * var impliedOptions = []impliedOption{
@@ -122,7 +122,7 @@ export let impliedOptions: GoSlice<impliedOption> = [
 ];
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::type::TSConfig","kind":"type","status":"implemented","sigHash":"ab01a041699515c279b4d7a9ad597a7527f3f4e3c8709fb0988e30d1c8506bf0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::type::TSConfig","kind":"type","status":"implemented","sigHash":"fe188ede4b798e258eff0105011e7432a7682c798129f743d5906386957c3597"}
  *
  * Go source:
  * TSConfig struct {
@@ -144,7 +144,7 @@ export interface TSConfig {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::ConvertToTSConfig","kind":"func","status":"implemented","sigHash":"9f36855e511ad0f1b8807f5d66cb4528095245f4ced190f47176cc0ac39e27db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::ConvertToTSConfig","kind":"func","status":"implemented","sigHash":"bd058b0d1a3dc35159a234f0f248de4218a484c67182966bd72fe1fba7b744dd"}
  *
  * Go source:
  * func ConvertToTSConfig(configParseResult *ParsedCommandLine, configFileName string) *TSConfig {
@@ -299,7 +299,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::filterSameAsDefaultInclude","kind":"func","status":"implemented","sigHash":"edf7dc87316b17f2bed054b2fa7a2b49e79b2522bfcb7fbdd7e2a380fa092545"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::filterSameAsDefaultInclude","kind":"func","status":"implemented","sigHash":"f174cc52683f5ac387919c8998e5a1f5be1acac5adb2f34757c155943fb373a2"}
  *
  * Go source:
  * func filterSameAsDefaultInclude(specs []string) []string {
@@ -323,7 +323,7 @@ export function filterSameAsDefaultInclude(specs: GoSlice<string>): GoSlice<stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::getNameOfCompilerOptionValue","kind":"func","status":"implemented","sigHash":"940d9dfb59038fdfd207a0c9f85c3476f04573b4f32f56771b04345c8ab2668b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::getNameOfCompilerOptionValue","kind":"func","status":"implemented","sigHash":"5d69feb8ce24f95967e8861aa2557fe13ac365a20b0f03ff046b461b8bc197e9"}
  *
  * Go source:
  * func getNameOfCompilerOptionValue(value any, enumMap *collections.OrderedMap[string, any]) string {
@@ -353,7 +353,7 @@ export function getNameOfCompilerOptionValue(value: GoInterface<unknown>, enumMa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeCompilerOptions","kind":"func","status":"implemented","sigHash":"0d85c390d98ea221ce3507a7a38faac6ba61032e513b399dcfe742587a74ded6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeCompilerOptions","kind":"func","status":"implemented","sigHash":"2e320d587dba6acb0dd5916be1c653e419e2820d5a346e3b0378e08d483c761a"}
  *
  * Go source:
  * func serializeCompilerOptions(options *core.CompilerOptions, configFilePath string, comparePathsOptions tspath.ComparePathsOptions) *collections.OrderedMap[string, any] {
@@ -589,7 +589,7 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeEnumValue","kind":"func","status":"implemented","sigHash":"f8c182bb220faccfdbdac394af92c0d9de62fef019a359520704ff0b5c60b1bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeEnumValue","kind":"func","status":"implemented","sigHash":"0c6e0c10690eb3d496696d49672d8cfe2cb3217c71661737d8f82ff0dcd89048"}
  *
  * Go source:
  * func serializeEnumValue(value any, enumMap *collections.OrderedMap[string, any]) string {
@@ -628,7 +628,7 @@ export function serializeEnumValue(value: GoInterface<unknown>, enumMap: GoPtr<O
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::addImpliedOptions","kind":"func","status":"implemented","sigHash":"74256e10878657e2876ffab7f9189602bed544e24d9fc5a4510f514ff40165f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::addImpliedOptions","kind":"func","status":"implemented","sigHash":"7376986f6e67c7190e1dfe446728994e28b162e87cca0908f02fbb985cb2a514"}
  *
  * Go source:
  * func addImpliedOptions(
@@ -733,7 +733,7 @@ export function addImpliedOptions(optionMap: GoPtr<OrderedMap<string, GoInterfac
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::anyDependencyProvided","kind":"func","status":"implemented","sigHash":"0b7762ef5c7235a3183665f38c1e37550d800437e006513a858c6e8cfd642a91"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::anyDependencyProvided","kind":"func","status":"implemented","sigHash":"46765a9e28926c558372bbc60a243558f45c6b27ac9d40bbaa0b84d53d02f00b"}
  *
  * Go source:
  * func anyDependencyProvided(dependencies []string, provided map[string]bool) bool {
@@ -757,7 +757,7 @@ export function anyDependencyProvided(dependencies: GoSlice<string>, provided: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeImpliedOptionValue","kind":"func","status":"implemented","sigHash":"454fd699233371eb57b51f8de60a500f051f75414beb7620c5b1de1e01cf93a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeImpliedOptionValue","kind":"func","status":"implemented","sigHash":"53e2b562804b97bf48eb0b182a54271aee66d73a26d20417de2d026645e4493e"}
  *
  * Go source:
  * func serializeImpliedOptionValue(optionDecl *CommandLineOption, value any) any {

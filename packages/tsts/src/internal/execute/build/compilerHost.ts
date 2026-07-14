@@ -11,7 +11,7 @@ import type { host } from "./host.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/compilerHost.go::type::compilerHost","kind":"type","status":"implemented","sigHash":"982024fc2e1946fec6a927ad0cf4e28a846e3a63f8797cb85d3f4f9b52080235"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/compilerHost.go::type::compilerHost","kind":"type","status":"implemented","sigHash":"4bf4babef578ff9bdfa956d0b584af72db5fcca9f8fd79bf7ca2904620f748b9"}
  *
  * Go source:
  * compilerHost struct {
@@ -25,7 +25,7 @@ export interface compilerHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/compilerHost.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/compilerHost.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"8c5d67f3c7f9a76738bd580ea8317b0653eddd0b682e4212ef9238cf51a627f1"}
  *
  * Go source:
  * var _ compiler.CompilerHost = (*compilerHost)(nil)

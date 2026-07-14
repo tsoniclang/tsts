@@ -15,7 +15,7 @@ import { Transformer_TransformSourceFile } from "../transformer.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/impliedmodule.go::type::ImpliedModuleTransformer","kind":"type","status":"implemented","sigHash":"bba3453ca65bca4bf252bde994f7397978a8d160d66c5f665c723414bb0db34b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/impliedmodule.go::type::ImpliedModuleTransformer","kind":"type","status":"implemented","sigHash":"717522209a1370056c2685713dc1aa872b935151de204acfba7cb2a02d238a2a"}
  *
  * Go source:
  * ImpliedModuleTransformer struct {

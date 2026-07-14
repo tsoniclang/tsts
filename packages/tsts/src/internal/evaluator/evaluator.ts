@@ -49,7 +49,7 @@ import { FromString, Number_String } from "../jsnum/string.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Result","kind":"type","status":"implemented","sigHash":"a3a9d32c3240f54837956a383b258f44f9026492dadd7240384a097b26b6d6ca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Result","kind":"type","status":"implemented","sigHash":"cd145909ea83e547879d8fed4cb79259fcdd3e81aa150c04e711b7e67dad21c0"}
  *
  * Go source:
  * Result struct {
@@ -84,7 +84,7 @@ export function NewResult(value: GoInterface<unknown>, isSyntacticallyString: bo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Evaluator","kind":"type","status":"implemented","sigHash":"f594ca3f1ce7909d0008027e88ba1127240136fcb93450fbb1a39342caeeeab0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Evaluator","kind":"type","status":"implemented","sigHash":"357e603396eb62091101745635d91e01cdcefeae63247e08b328af2df4a9f916"}
  *
  * Go source:
  * Evaluator func(expr *ast.Node, location *ast.Node) Result

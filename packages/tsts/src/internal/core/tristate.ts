@@ -3,7 +3,7 @@ import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 
 import type { GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate.go::type::Tristate","kind":"type","status":"implemented","sigHash":"afc2764db09003807b774c75192ce4d8150e55a00bf72b284d91e19797999d52"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate.go::type::Tristate","kind":"type","status":"implemented","sigHash":"7bb9787ef02fc7bd59b07d8edddadec446bab331efa88f5fbd40737102585308"}
  *
  * Go source:
  * Tristate byte
@@ -11,7 +11,7 @@ import type { GoRef } from "../../go/compat.js";
 export type Tristate = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate.go::constGroup::TSUnknown+TSFalse+TSTrue","kind":"constGroup","status":"implemented","sigHash":"447b9f2dd352c5faa8755a1f78e19219fb1b0c9281c6a560301494c883f4ea9e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate.go::constGroup::TSUnknown+TSFalse+TSTrue","kind":"constGroup","status":"implemented","sigHash":"226541c665c92ae8ef7dc742d31259d66e06d26d6d8ec3343d93b7e0a3b06b0c"}
  *
  * Go source:
  * const (

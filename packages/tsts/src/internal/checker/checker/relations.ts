@@ -632,7 +632,7 @@ export function Checker_checkObjectLiteralAssignment(receiver: GoPtr<Checker>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkObjectLiteralDestructuringPropertyAssignment","kind":"method","status":"implemented","sigHash":"7df0dff78687ce98f147b42b65f0c1126808238afa4f83e990d8a77253957710"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkObjectLiteralDestructuringPropertyAssignment","kind":"method","status":"implemented","sigHash":"8c8fbce2be422f4698b46e8b2d7a28894f83ced6efe5be800871e6b0dc9ecfbf"}
  *
  * Go source:
  * func (c *Checker) checkObjectLiteralDestructuringPropertyAssignment(node *ast.Node, objectLiteralType *Type, propertyIndex int, allProperties *ast.NodeList, rightIsThis bool) *Type {
@@ -915,7 +915,7 @@ export function Checker_checkAssignmentOperator(receiver: GoPtr<Checker>, left: 
   if (IsAssignmentOperator(operator)) {
     if (IsDeclarationNode(left!.Parent) && GetAssignmentDeclarationKind(left!.Parent) === JSDeclarationKindExportsProperty) {
       const symbol_ = LinkStore_Get(receiver!.symbolNodeLinks, left, zeroSymbolNodeLinks, goNodePointerKey)!.v.resolvedSymbol;
-      if (symbol_ !== undefined && symbol_!.Declarations !== undefined && symbol_!.Declarations.length > 1 && (rightType!.flags & TypeFlagsUndefined) !== 0) {
+      if (symbol_ !== undefined && symbol_!.Declarations.length > 1 && (rightType!.flags & TypeFlagsUndefined) !== 0) {
         return;
       }
     }

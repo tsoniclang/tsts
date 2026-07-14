@@ -109,7 +109,7 @@ export function createEmptyImports(factory: GoPtr<NodeFactory>): GoPtr<Statement
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::getExternalModuleNameLiteral","kind":"func","status":"implemented","sigHash":"332f3906d02f3957621ee33167bfa1acd3c6b1bbbc072635ec7d0237090bc214"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::getExternalModuleNameLiteral","kind":"func","status":"implemented","sigHash":"daa8d247ef9626dec76849fd4de274182115ab34ec404a7f811a88140d8f87cc"}
  *
  * Go source:
  * func getExternalModuleNameLiteral(factory *printer.NodeFactory, importNode *ast.Node /*ImportDeclaration | ExportDeclaration | ImportEqualsDeclaration | ImportCall* /, sourceFile *ast.SourceFile, host any /*EmitHost* /, resolver printer.EmitResolver, compilerOptions *core.CompilerOptions) *ast.StringLiteralNode {
@@ -143,7 +143,7 @@ export function getExternalModuleNameLiteral(factory: GoPtr<NodeFactory>, import
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::tryGetModuleNameFromFile","kind":"func","status":"implemented","sigHash":"86404341709498b7d103fe061fc636a6232963da4ea6216b67634d8010b035ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::tryGetModuleNameFromFile","kind":"func","status":"implemented","sigHash":"2ab814bc45b60ad2c0ee0c86ee272ea01ebf884a9235faa49f20b4ec1fceafaa"}
  *
  * Go source:
  * func tryGetModuleNameFromFile(factory *printer.NodeFactory, file *ast.SourceFile, host any /*EmitHost* /, options *core.CompilerOptions) *ast.StringLiteralNode {
@@ -187,7 +187,7 @@ export function tryGetModuleNameFromDeclaration(declaration: GoPtr<Node>, host: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::getExternalModuleNameFromPath","kind":"func","status":"implemented","sigHash":"646f85b4bc394277b2db8834bd0c872a8136d5df8c43de50ecf1877b402cbf61"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::getExternalModuleNameFromPath","kind":"func","status":"implemented","sigHash":"36b16dcc1daa7c999a93faec9e4ba5d517bd0b3125e48a27fcc6abf8de9392c6"}
  *
  * Go source:
  * func getExternalModuleNameFromPath(host any /*ResolveModuleNameResolutionHost* /, fileName string, referencePath string) string {
@@ -201,7 +201,7 @@ export function getExternalModuleNameFromPath(host: GoInterface<unknown>, fileNa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::tryRenameExternalModule","kind":"func","status":"implemented","sigHash":"c7bae52b7c9d12be7badb5274c926f71c96ecf9ab7bb5287d40cae2bfa400abf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::tryRenameExternalModule","kind":"func","status":"implemented","sigHash":"480d121b7148f99ba87e3ebb2c3b88feac5680ce4c273a6e26562ca0c8631707"}
  *
  * Go source:
  * func tryRenameExternalModule(factory *printer.NodeFactory, moduleName *ast.LiteralExpression, sourceFile *ast.SourceFile) *ast.StringLiteralNode {
@@ -235,7 +235,7 @@ export function isFileLevelReservedGeneratedIdentifier(emitContext: GoPtr<EmitCo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::isSimpleInlineableExpression","kind":"func","status":"implemented","sigHash":"874485f092c753a5950477db5654255c3afe4154b28da97830c8e089c1fb9416"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::isSimpleInlineableExpression","kind":"func","status":"implemented","sigHash":"6755897dccef9820aeac6dc952ba5a6ade22f3c3a1add29c2a58c2f759d7ed50"}
  *
  * Go source:
  * func isSimpleInlineableExpression(expression *ast.Expression) bool {

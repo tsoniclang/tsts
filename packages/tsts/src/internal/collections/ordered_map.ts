@@ -4,6 +4,7 @@ import {
   GoMapIsNil,
   GoMapMake,
   GoStringKey,
+  GoValueRef,
   type GoComparable,
   type GoEquality,
   type GoError,
@@ -17,14 +18,14 @@ import {
 } from "../../go/compat.js";
 import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
 import type { Value } from "../../go/reflect.js";
-import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode } from "../json/json.js";
+import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode, UnmarshalDecode as json_UnmarshalDecode } from "../json/json.js";
 import type { Decoder, Encoder, MarshalerTo, UnmarshalerFrom } from "../json/json.js";
 import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
 import * as strconv from "../../go/strconv.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::OrderedMap","kind":"type","status":"implemented","sigHash":"671bcec921be98d7ca21605a749133736df54c2b4c9e9e08fe72c5ecd5265e1b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::OrderedMap","kind":"type","status":"implemented","sigHash":"bc8af819f23afd83c888135f21577068246145d683364cf6c276ac62c2caee43"}
  *
  * Go source:
  * OrderedMap[K comparable, V any] struct {
@@ -40,7 +41,7 @@ export interface OrderedMap<K extends GoComparable, V> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::noCopy","kind":"type","status":"implemented","sigHash":"b0d7fc76eb2a0820142f0a97003bd894c9dc0c9aa9a6200692eb4d77d21c2e00"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::noCopy","kind":"type","status":"implemented","sigHash":"4dcbe9a808682845cced4a8ac867060d272f873cf5c3371f5076d5b05b982b44"}
  *
  * Go source:
  * noCopy struct{}
@@ -50,7 +51,7 @@ export interface noCopy {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::noCopy.Lock","kind":"method","status":"implemented","sigHash":"a0089b65a8326a24a9d04c3ffc94c9425d54b9d2d6e4fb86812ce6293debaa5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::noCopy.Lock","kind":"method","status":"implemented","sigHash":"969d994c108e5f5bfa9da378d51b44b92df000aa82bacd7d7dcc9853f62e3d63"}
  *
  * Go source:
  * func (*noCopy) Lock()   {}
@@ -66,7 +67,7 @@ export function noCopy_Lock(receiver: GoPtr<noCopy>): void {}
 export function noCopy_Unlock(receiver: GoPtr<noCopy>): void {}
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::NewOrderedMapWithSizeHint","kind":"func","status":"implemented","sigHash":"0f4b48feb0d709268ce7bfa826eb0576bb266d7d5288af2ec386e19b94d9d96d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::NewOrderedMapWithSizeHint","kind":"func","status":"implemented","sigHash":"74e28b82afd74d0c0736ebc5eb408c58e5eca3d54b1c4c6c3df21bb8029dcb6b"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-map construction forwards the exact static Go map-key descriptor to its allocation site.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
@@ -101,7 +102,7 @@ export function newMapWithSizeHint<K extends GoComparable, V>(hint: int, keyDesc
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::MapEntry","kind":"type","status":"implemented","sigHash":"2c5396148b761558a159b207cb872400e7b671f9d217cfe2d519b82acfeb171f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::MapEntry","kind":"type","status":"implemented","sigHash":"75426caf66f3c84cab66ae441237a04cd3b68ace5333ea5ce07fbab76d6c8695"}
  *
  * Go source:
  * MapEntry[K comparable, V any] struct {
@@ -136,7 +137,7 @@ export function NewOrderedMapFromList<K extends GoComparable, V>(items: GoSlice<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Set","kind":"method","status":"implemented","sigHash":"4469e0419152708c32019c17e81db5753ad891e423fc90155f2f7530d2c865a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Set","kind":"method","status":"implemented","sigHash":"ef3933b4627438a0b50334faaff7ee823abfe1cf020ed219a425b9128919082d"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A zero-value erased generic ordered map receives the exact static Go map-key descriptor before allocating its backing map.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
@@ -164,7 +165,7 @@ export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<Ordere
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Get","kind":"method","status":"implemented","sigHash":"d32439c79fc90fa79c6ccc0d49a836f88237405347f2c6405ea0dd7bf357813b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Get","kind":"method","status":"implemented","sigHash":"6eae01600305c98b7ba35e3c063aaa995504d98f9a31e36e55e3862d23cf32bd"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic lookup receives the exact static missing-value zero operation.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
@@ -181,7 +182,7 @@ export function OrderedMap_Get<K extends GoComparable, V>(receiver: GoPtr<Ordere
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.GetOrZero","kind":"method","status":"implemented","sigHash":"8ab8a933ca7d7e86a8870543eff284236741ef6c0af43c71f73013d3561f173f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.GetOrZero","kind":"method","status":"implemented","sigHash":"ad0286b809870413e7041682c994ea67bc7451f4faa180e7ee6a073b1634bcaa"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic lookup receives the exact static missing-value zero operation.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
@@ -195,7 +196,7 @@ export function OrderedMap_GetOrZero<K extends GoComparable, V>(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.EntryAt","kind":"method","status":"implemented","sigHash":"57f46ffa42a364a35ede98eb6aecdf235862499af9603ae406ae3e4c032351cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.EntryAt","kind":"method","status":"implemented","sigHash":"e51e24f1c5c4bf2cfeb8701dc2555c65f69966d498e4fdc1934716a45bac0125"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic execution receives explicit static key and value zero dictionaries for the out-of-range result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"K"},{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
@@ -223,7 +224,7 @@ export function OrderedMap_EntryAt<K extends GoComparable, V>(receiver: GoPtr<Or
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Has","kind":"method","status":"implemented","sigHash":"2ef919354268b886d61a64faec9c30c7eb37282675c61342aa0db916221f22c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Has","kind":"method","status":"implemented","sigHash":"f0082ac1d32185d2c4b708889f67f5b8819feb1ab86ea3c5e363d2ab587b6c28"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Has(key K) bool {
@@ -238,7 +239,7 @@ export function OrderedMap_Has<K extends GoComparable, V>(receiver: GoPtr<Ordere
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Delete","kind":"method","status":"implemented","sigHash":"c9fe7cf0be22689301b59a2c908bb19938a9b00e5035ef0e6875dd4fb446786e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Delete","kind":"method","status":"implemented","sigHash":"04575ba362d6c93aed6342639520ec0d4185978196fe798b48b9c94542af8c2b"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic deletion receives the exact static missing-value zero and key equality operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"},{"kind":"equality","parameter":"equalKey","typeParameter":"K"}]}
  *
  * Go source:
@@ -292,7 +293,7 @@ export function OrderedMap_Delete<K extends GoComparable, V>(receiver: GoPtr<Ord
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Keys","kind":"method","status":"implemented","sigHash":"4bdb7d3c04f3c740e8e2997c82b8b416f84cacfbac06d72d64a20a20b6c7cf47"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Keys","kind":"method","status":"implemented","sigHash":"fa189ce4291acb82c24275a25f326850684dc9d0246b196c553bb41b2f46b868"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Keys() iter.Seq[K] {
@@ -329,7 +330,7 @@ export function OrderedMap_Keys<K extends GoComparable, V>(receiver: GoPtr<Order
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Values","kind":"method","status":"implemented","sigHash":"79aea6029cccc0c3ea1b8ea47fbf4b499ada3c4b04d1cad7d0d923e9c30116b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Values","kind":"method","status":"implemented","sigHash":"91485a43e07347b76e22d340983432cca3afc77f1fb5d21c4b75c59c1f9f0660"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Values() iter.Seq[V] {
@@ -366,7 +367,7 @@ export function OrderedMap_Values<K extends GoComparable, V>(receiver: GoPtr<Ord
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Entries","kind":"method","status":"implemented","sigHash":"63f3b193ae76adbda2f7c64a88029be982a7dc033e3d709d95698bc5c4eabdfd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Entries","kind":"method","status":"implemented","sigHash":"50c3326edc4910e974375133514ec42983fed79a8d426dc4fcda5c872417ff2a"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Entries() iter.Seq2[K, V] {
@@ -407,7 +408,7 @@ export function OrderedMap_Entries<K extends GoComparable, V>(receiver: GoPtr<Or
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Clear","kind":"method","status":"implemented","sigHash":"356a6321188af5923f1f0b98b5f24374543403611f5e501e19d9d8d6a42eb399"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Clear","kind":"method","status":"implemented","sigHash":"d3a3891613f155e18f23c7dea012eef1a3ec6ea98e329ee71f053b5b98448eb9"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Clear() {
@@ -424,7 +425,7 @@ export function OrderedMap_Clear<K extends GoComparable, V>(receiver: GoPtr<Orde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Size","kind":"method","status":"implemented","sigHash":"5baa53aabe86bcf03656ca021bef5e1282802e56efb4d6355c0db23db08476e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Size","kind":"method","status":"implemented","sigHash":"1c382ccf994cac407e50fbd44a591dd0922f5f5511418bebff08397681b58e41"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Size() int {
@@ -445,7 +446,7 @@ export function OrderedMap_Size<K extends GoComparable, V>(receiver: GoPtr<Order
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Clone","kind":"method","status":"implemented","sigHash":"79a6223338a87d9a81747f660d6a7ac8f185eb06a918681e1a8038e56b1c61be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Clone","kind":"method","status":"implemented","sigHash":"295e04a6ad7408d91f19e445fce66d24d3098475aa451dc25b98f0f4021a4b91"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic ordered-map cloning forwards the exact static Go map-key descriptor to result allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
@@ -490,7 +491,7 @@ export function OrderedMap_clone<K extends GoComparable, V>(receiver: GoPtr<Orde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"4c440776b35f8c3f89f17f14bf296d6f0af3504dd27ccf25d043a85456e8f61e"}
  *
  * Go source:
  * var _ json.MarshalerTo = (*OrderedMap[string, string])(nil)
@@ -597,7 +598,7 @@ export function resolveKeyName(k: Value): [string, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"b38d8065fb19e1d46b5122a7f39e9f0fe8cbb5ff3eee408326406d1ddfdb193b"}
  *
  * Go source:
  * var _ json.UnmarshalerFrom = (*OrderedMap[string, string])(nil)
@@ -651,10 +652,12 @@ export function OrderedMap_UnmarshalJSONFrom<K extends GoComparable, V>(receiver
   if (dec === undefined) {
     return new globalThis.Error("nil json decoder");
   }
-  const [value, err] = dec.ReadValue();
+  const valueRef = GoValueRef<unknown>(undefined);
+  const err = json_UnmarshalDecode(dec, valueRef);
   if (err !== undefined) {
     return err;
   }
+  const value = valueRef.v;
   if (value === null) {
     return undefined;
   }

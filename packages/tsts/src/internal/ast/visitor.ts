@@ -15,7 +15,7 @@ import type { GoFunc } from "../../go/compat.js";
 // NodeVisitor
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::type::NodeVisitor","kind":"type","status":"implemented","sigHash":"ed976adbc6d35f2370a3a1dab619101c9fbf1fe920031ac03ab12fbc9944648e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::type::NodeVisitor","kind":"type","status":"implemented","sigHash":"1a8b615ace67a9225de32eb2009109a62e8d8bea41e8c1cde2f95a7c88b534f3"}
  *
  * Go source:
  * NodeVisitor struct {
@@ -31,7 +31,7 @@ export interface NodeVisitor {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::type::NodeVisitorHooks","kind":"type","status":"implemented","sigHash":"8bd811ab06c9a28bed422e4dee6ef774a630cfab3d089047b32c602caa06362f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::type::NodeVisitorHooks","kind":"type","status":"implemented","sigHash":"432bb2ee3465afbee008e249a00e7f2867d526c453640ed29ca3289ad38c8de2"}
  *
  * Go source:
  * NodeVisitorHooks struct {
@@ -89,7 +89,7 @@ export function NodeVisitor_VisitSourceFile(receiver: GoPtr<NodeVisitor>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitNode","kind":"method","status":"implemented","sigHash":"ef23dd621475847a92238f3255784b3e5b5c18d8c302164af5f25474b2fec326"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitNode","kind":"method","status":"implemented","sigHash":"8675b3cc64a63faa226b3a500d7da5191decf04a03a4fc1728e00d825baaaeeb"}
  *
  * Go source:
  * func (v *NodeVisitor) VisitNode(node *Node) *Node {
@@ -139,7 +139,7 @@ export function NodeVisitor_VisitNode(receiver: GoPtr<NodeVisitor>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitEmbeddedStatement","kind":"method","status":"implemented","sigHash":"9b5afa6435f234566a29739c07a272310aa0700d4c8f61c4897cad74bd29e6f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitEmbeddedStatement","kind":"method","status":"implemented","sigHash":"0c28e2511ed5d52e86f3db9e78cd099c8722c2ea02f7ff2ef3f78d3364692e9a"}
  *
  * Go source:
  * func (v *NodeVisitor) VisitEmbeddedStatement(node *Statement) *Statement {
@@ -167,7 +167,7 @@ export function NodeVisitor_VisitEmbeddedStatement(receiver: GoPtr<NodeVisitor>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitNodes","kind":"method","status":"implemented","sigHash":"35a71c3eb51f757f524e7b3f4089a62181149641c4d18dfd78725c89b995303d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitNodes","kind":"method","status":"implemented","sigHash":"b84a1123d46bf09f1df4cf87b50f407880b389362fb871d8c341ab7a72280df3"}
  *
  * Go source:
  * func (v *NodeVisitor) VisitNodes(nodes *NodeList) *NodeList {
@@ -200,7 +200,7 @@ export function NodeVisitor_VisitNodes(receiver: GoPtr<NodeVisitor>, nodes: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitModifiers","kind":"method","status":"implemented","sigHash":"4b4a0836c943068be03db7ced7a138216d286c53d7cb8068fd88601fc69fc70b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitModifiers","kind":"method","status":"implemented","sigHash":"75a2b011a30cbccacdef917dd35aba892e97fd4454cd08f0f6fc9f6d87779555"}
  *
  * Go source:
  * func (v *NodeVisitor) VisitModifiers(nodes *ModifierList) *ModifierList {
@@ -233,7 +233,7 @@ export function NodeVisitor_VisitModifiers(receiver: GoPtr<NodeVisitor>, nodes: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitSlice","kind":"method","status":"implemented","sigHash":"7f6d7b935cad6648f8da34ba098c15309e471581a85f5794c28718db2cdaed78"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitSlice","kind":"method","status":"implemented","sigHash":"b52ffbd89f962ab15f2d4130c69f4a1b0dbabe115a48c765915d9650e5ab8145"}
  *
  * Go source:
  * func (v *NodeVisitor) VisitSlice(nodes []*Node) (result []*Node, changed bool) {
@@ -333,7 +333,7 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitEachChild","kind":"method","status":"implemented","sigHash":"95b7bd972d9c91c63bd7927c59a936873f95a82f85ac59fccf6ac16231a01beb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitEachChild","kind":"method","status":"implemented","sigHash":"46836a76cef68798a6085b0fcb90249b60c2565f15e9fcf4a15dae3db9965d75"}
  *
  * Go source:
  * func (v *NodeVisitor) VisitEachChild(node *Node) *Node {

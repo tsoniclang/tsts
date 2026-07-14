@@ -6,7 +6,7 @@ import type { Tristate } from "./tristate.js";
 
 import type { GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchOptions","kind":"type","status":"implemented","sigHash":"cb0c0f5cde73c40bd392764df9c11a6c64cdb45186a668c0f7fbc7899c3d5c07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchOptions","kind":"type","status":"implemented","sigHash":"878872bc263824b9d8ed38d79fa2fd5300d8036cdd21656a3238122d128c2e3e"}
  *
  * Go source:
  * WatchOptions struct {
@@ -30,7 +30,7 @@ export interface WatchOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchFileKind","kind":"type","status":"implemented","sigHash":"27b5bcc61523b22c128da14de2ffc6338679d8776c9c1d5ab560d0d71c6bfbb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchFileKind","kind":"type","status":"implemented","sigHash":"5671fb516878da4b72087729ceac403fec9dccefa4be16c20f523790162824c7"}
  *
  * Go source:
  * WatchFileKind int32
@@ -38,7 +38,7 @@ export interface WatchOptions {
 export type WatchFileKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::constGroup::WatchFileKindNone+WatchFileKindFixedPollingInterval+WatchFileKindPriorityPollingInterval+WatchFileKindDynamicPriorityPolling+WatchFileKindFixedChunkSizePolling+WatchFileKindUseFsEvents+WatchFileKindUseFsEventsOnParentDirectory","kind":"constGroup","status":"implemented","sigHash":"88919dbd92a1436a48f19d14e8f31070d0f6c2d87430982db8a59e1ec723cad5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::constGroup::WatchFileKindNone+WatchFileKindFixedPollingInterval+WatchFileKindPriorityPollingInterval+WatchFileKindDynamicPriorityPolling+WatchFileKindFixedChunkSizePolling+WatchFileKindUseFsEvents+WatchFileKindUseFsEventsOnParentDirectory","kind":"constGroup","status":"implemented","sigHash":"dba235ffdfde1e367f589ac2361673b83927b8725b28609683ece6f8be3f1e8e"}
  *
  * Go source:
  * const (
@@ -60,7 +60,7 @@ export const WatchFileKindUseFsEvents: WatchFileKind = 5;
 export const WatchFileKindUseFsEventsOnParentDirectory: WatchFileKind = 6;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchDirectoryKind","kind":"type","status":"implemented","sigHash":"fea8f8eafde71eb6a1807f74c4b8727ae838c4520bfff6a9eab0911ae13c3ca8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchDirectoryKind","kind":"type","status":"implemented","sigHash":"aca9bd0301be74682f2002b0e23db631c5a2f80ded7ed202511d18e862f65d70"}
  *
  * Go source:
  * WatchDirectoryKind int32
@@ -68,7 +68,7 @@ export const WatchFileKindUseFsEventsOnParentDirectory: WatchFileKind = 6;
 export type WatchDirectoryKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::constGroup::WatchDirectoryKindNone+WatchDirectoryKindUseFsEvents+WatchDirectoryKindFixedPollingInterval+WatchDirectoryKindDynamicPriorityPolling+WatchDirectoryKindFixedChunkSizePolling","kind":"constGroup","status":"implemented","sigHash":"51dc1fb98e97e2bb4137d76ca6a8ef702399ce91bf99cb7579d2d40d0e057f9a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::constGroup::WatchDirectoryKindNone+WatchDirectoryKindUseFsEvents+WatchDirectoryKindFixedPollingInterval+WatchDirectoryKindDynamicPriorityPolling+WatchDirectoryKindFixedChunkSizePolling","kind":"constGroup","status":"implemented","sigHash":"53d8de034f4ba7fc8becbd35636a76f7e4b98ce6ce9ebe3e06335d3e6bdb7c3c"}
  *
  * Go source:
  * const (
@@ -86,7 +86,7 @@ export const WatchDirectoryKindDynamicPriorityPolling: WatchDirectoryKind = 3;
 export const WatchDirectoryKindFixedChunkSizePolling: WatchDirectoryKind = 4;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::PollingKind","kind":"type","status":"implemented","sigHash":"64dd816208c93fe4e1bf05f567b47dd427911297c1f5e93c7e3d7afe358a4f77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::PollingKind","kind":"type","status":"implemented","sigHash":"36a1f69d9a2f294d0393a0c93438c39afc313a986d6f26141692da0ce32de3ec"}
  *
  * Go source:
  * PollingKind int32
@@ -94,7 +94,7 @@ export const WatchDirectoryKindFixedChunkSizePolling: WatchDirectoryKind = 4;
 export type PollingKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::constGroup::PollingKindNone+PollingKindFixedInterval+PollingKindPriorityInterval+PollingKindDynamicPriority+PollingKindFixedChunkSize","kind":"constGroup","status":"implemented","sigHash":"360d7b8b7fe466208028b79274c2e0b43ed4fe18eaf41916444b750f0ccfbd06"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::constGroup::PollingKindNone+PollingKindFixedInterval+PollingKindPriorityInterval+PollingKindDynamicPriority+PollingKindFixedChunkSize","kind":"constGroup","status":"implemented","sigHash":"c678b70bf1f44c4f75e3af24c8da1c10efe0e187be7aba1dc88021383a38a3c0"}
  *
  * Go source:
  * const (

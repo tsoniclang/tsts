@@ -99,7 +99,7 @@ export function buildInfoToSnapshot(buildInfo: GoPtr<BuildInfo>, config: GoPtr<P
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildinfotosnapshot.go::type::toSnapshot","kind":"type","status":"implemented","sigHash":"87952872505b39563a1c8966efccb244aafdb71adf51674bf1b17d4db57b868a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildinfotosnapshot.go::type::toSnapshot","kind":"type","status":"implemented","sigHash":"2543ab814bce1fdd102f1625f331af5bd6091f34bbdca7d754cda06005763683"}
  *
  * Go source:
  * toSnapshot struct {

@@ -1,5 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoValueRef, GoZeroMap } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoValueRef, GoZeroMap } from "../../go/compat.js";
 import { CopyOnWriteMap_EnterScope, CopyOnWriteSet_EnterScope } from "../collections/cow.js";
 import type { Node } from "../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
@@ -83,7 +83,7 @@ export function cloneNodeBuilderContext(context: GoPtr<NodeBuilderContext>): GoF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::type::localsRecord","kind":"type","status":"implemented","sigHash":"1dbbda6a9119188d46c1f6697fcee4075ce71e96b4da79b09a5dcd1b9e271778"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::type::localsRecord","kind":"type","status":"implemented","sigHash":"36e145be0fdba1cdbe18b39648ccaa362220912d66ff290e903c6e1b706ac5df"}
  *
  * Go source:
  * localsRecord struct {
@@ -372,11 +372,13 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
         }
       }
       Assert(existingFakeScope === undefined || IsBlock(existingFakeScope));
-      let locals: SymbolTable | undefined;
+      let locals = GoNilMap<string, GoPtr<Symbol>>();
       if (existingFakeScope !== undefined) {
         locals = GetLocals(existingFakeScope);
       }
-      locals ??= new globalThis.Map<string, GoPtr<Symbol>>();
+      if (GoMapIsNil(locals)) {
+        locals = new globalThis.Map<string, GoPtr<Symbol>>();
+      }
       const newLocals: string[] = [];
       const oldLocals: localsRecord[] = [];
       addAll((name: string, symbol_: GoPtr<Symbol>): void => {

@@ -7,7 +7,7 @@ import { Bool } from "../../go/sync/atomic.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::WorkGroup","kind":"type","status":"implemented","sigHash":"19fd930d122948ff76428da13421e7a882e8e100255044419228149409e8e1dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::WorkGroup","kind":"type","status":"implemented","sigHash":"2f0cb3af982999597d8142aa9e1f01d02a1a46f439da5d457604af2177a6e56d"}
  *
  * Go source:
  * WorkGroup interface {
@@ -45,7 +45,7 @@ export function NewWorkGroup(singleThreaded: bool): GoInterface<WorkGroup> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::parallelWorkGroup","kind":"type","status":"implemented","sigHash":"4d4500126474b71511426859cf60a2c763bbe1c17c56932c609d82ae75356958"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::parallelWorkGroup","kind":"type","status":"implemented","sigHash":"943d3288e34770aa62a99a3c142e00dc3235ad10931bad3d4a5d1b70b67197a0"}
  *
  * Go source:
  * parallelWorkGroup struct {
@@ -59,7 +59,7 @@ export interface parallelWorkGroup {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"9ac02571299d08ea398b34f1880c1d4b3c634ff423ed6c5f930c96390926ffcc"}
  *
  * Go source:
  * var _ WorkGroup = (*parallelWorkGroup)(nil)
@@ -109,7 +109,7 @@ export function parallelWorkGroup_RunAndWait(receiver: GoPtr<parallelWorkGroup>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::singleThreadedWorkGroup","kind":"type","status":"implemented","sigHash":"4377453937203ba202a5b83148e4832305e63e89c8af5439bf2dde45ac3bac20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::singleThreadedWorkGroup","kind":"type","status":"implemented","sigHash":"91bb38ea4911724fa3ad60adffff314f220601c4b722effa1cbea5ff753a2a07"}
  *
  * Go source:
  * singleThreadedWorkGroup struct {
@@ -125,7 +125,7 @@ export interface singleThreadedWorkGroup {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"9ac02571299d08ea398b34f1880c1d4b3c634ff423ed6c5f930c96390926ffcc"}
  *
  * Go source:
  * var _ WorkGroup = (*singleThreadedWorkGroup)(nil)
@@ -218,7 +218,7 @@ export function singleThreadedWorkGroup_pop(receiver: GoPtr<singleThreadedWorkGr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::ThrottleGroup","kind":"type","status":"implemented","sigHash":"c2c7f843224565b8e12137b35657230a5ba972a5af6e4ec321733dd28a251f75"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::ThrottleGroup","kind":"type","status":"implemented","sigHash":"d967d5238a014ad3f88864f018da20d67b101b09021f2af0dbac0b0c53e2eb1f"}
  *
  * Go source:
  * ThrottleGroup struct {
@@ -232,7 +232,7 @@ export interface ThrottleGroup {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::func::NewThrottleGroup","kind":"func","status":"implemented","sigHash":"32e6223810b6d3463dcfe567e22200bc40e79eccece87bd67af3d32c688b880c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::func::NewThrottleGroup","kind":"func","status":"implemented","sigHash":"e96cadc81c9cc6f99dcd985bb3e97454a15009c1e7e3268f5dffd41865623a28"}
  *
  * Go source:
  * func NewThrottleGroup(ctx context.Context, semaphore chan struct{}) *ThrottleGroup {
@@ -252,7 +252,7 @@ export function NewThrottleGroup(ctx: GoInterface<Context>, semaphore: GoChan<{ 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Go","kind":"method","status":"implemented","sigHash":"73f2fd187d8bfc7b8c568b33621ebac6f839fbfa338297906a95f3506bfeb1bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Go","kind":"method","status":"implemented","sigHash":"169f5df82fcbaa2adc619306fac7413a0bd7442564532a385fb3f564ff6b8e00"}
  *
  * Go source:
  * func (tg *ThrottleGroup) Go(fn func() error) {
@@ -276,7 +276,7 @@ export function ThrottleGroup_Go(receiver: GoPtr<ThrottleGroup>, fn: GoFunc<() =
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Wait","kind":"method","status":"implemented","sigHash":"5509c7a6b09b2bbaf9be0e054349f985b78c62a5854a16c48a0ce0e63c78fbb2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Wait","kind":"method","status":"implemented","sigHash":"01da5c1e90144c54e664d0bf51495d5fce3c01b1fb5fd027ea54c30cfdc85224"}
  *
  * Go source:
  * func (tg *ThrottleGroup) Wait() error {

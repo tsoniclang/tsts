@@ -186,7 +186,7 @@ export function toCanonicalKey(path: string, useCaseSensitiveFileNames: bool): s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::type::wildcardDirectoryMatch","kind":"type","status":"implemented","sigHash":"1f3dd5db5c192667ae73746111a4f7ee18c5e1d26b9dec2e6fbfd0dc40b2a314"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::type::wildcardDirectoryMatch","kind":"type","status":"implemented","sigHash":"9284185e9bd7682bcd9e7be33c5e2f90668fe9e890bc270ee986137029f8bcfb"}
  *
  * Go source:
  * wildcardDirectoryMatch struct {

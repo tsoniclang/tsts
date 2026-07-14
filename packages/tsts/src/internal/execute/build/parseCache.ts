@@ -6,7 +6,7 @@ import type { SyncMap } from "../../collections/syncmap.js";
 
 import type { GoFunc } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::type::parseCacheEntry","kind":"type","status":"implemented","sigHash":"b0bcf8db74b0a9edfea4d6619cfb9f126f5464766f72635ef88ace7264561f50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::type::parseCacheEntry","kind":"type","status":"implemented","sigHash":"bffde4c74d3e30fc60f0a361ec9fbba6b89a39b761860b3a1b8ca8b48e9257fd"}
  *
  * Go source:
  * parseCacheEntry[V comparable] struct {
@@ -20,7 +20,7 @@ export interface parseCacheEntry<V extends GoComparable> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::type::parseCache","kind":"type","status":"implemented","sigHash":"ea424b2730ff8a5e2aa281b88ec7b93a6a3a77d8773a274db198495d19c209a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::type::parseCache","kind":"type","status":"implemented","sigHash":"bcc7512d25280ff31130fc93df6f6adec020559c5259405d675fdf5d4d164980"}
  *
  * Go source:
  * parseCache[K comparable, V comparable] struct {

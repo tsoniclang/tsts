@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoDefined, GoFunc, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoBooleanKey, GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
+import { GoAppend, GoBigIntKey, GoBooleanKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import { GetNodeId, GetSymbolId, GetReparsedNodeForNode } from "../ast/utilities.js";
@@ -334,7 +334,7 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
     const s = Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver, d, container);
     return s !== undefined ? [s] : [];
   }) ?? [];
-  let reexportContainers: GoSlice<GoPtr<Symbol>> = [];
+  let reexportContainers = GoNilSlice<GoPtr<Symbol>>();
   if (enclosingDeclaration !== undefined) {
     reexportContainers = Checker_getAlternativeContainingModules(receiver, symbol_, enclosingDeclaration);
   }
@@ -351,7 +351,7 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
     return res;
   }
   // we potentially have a symbol which is a member of the instance side of something
-  let variableMatches: GoSlice<GoPtr<Symbol>> = [];
+  let variableMatches = GoNilSlice<GoPtr<Symbol>>();
   if ((meaning === SymbolFlagsValue &&
     (container!.Flags & leftMeaning) === 0) &&
     (container!.Flags & SymbolFlagsType) !== 0 &&
@@ -446,7 +446,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
   const containingFile = GetSourceFileOfNode(enclosingDeclaration);
   const id = GetNodeId(containingFile as unknown as GoPtr<Node>);
   const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks, symbol_, zeroContainingSymbolLinks, goSymbolPointerKey)!.v;
-  if (links.extendedContainersByFile === undefined) {
+  if (GoMapIsNil(links.extendedContainersByFile)) {
     links.extendedContainersByFile = new globalThis.Map<NodeId, GoSlice<GoPtr<Symbol>>>();
   }
   const existing = links.extendedContainersByFile.get(id);
@@ -532,7 +532,7 @@ export function Checker_getVariableDeclarationOfObjectLiteral(receiver: GoPtr<Ch
   if ((meaning & SymbolFlagsValue) === 0) {
     return undefined;
   }
-  if (symbol_!.Declarations === undefined || symbol_!.Declarations.length === 0) {
+  if (symbol_!.Declarations.length === 0) {
     return undefined;
   }
   const firstDecl = symbol_!.Declarations[0];
@@ -601,7 +601,7 @@ export function Checker_getExternalModuleContainer(receiver: GoPtr<Checker>, dec
  */
 export function Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver: GoPtr<Checker>, d: GoPtr<Node>, container: GoPtr<Symbol>): GoPtr<Symbol> {
   const fileSymbol = Checker_getExternalModuleContainer(receiver, d);
-  if (fileSymbol === undefined || fileSymbol!.Exports === undefined) {
+  if (fileSymbol === undefined || GoMapIsNil(fileSymbol!.Exports)) {
     return undefined;
   }
   const exported = fileSymbol!.Exports.get(InternalSymbolNameExportEquals);
@@ -615,7 +615,7 @@ export function Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getContainersOfSymbol","kind":"method","status":"implemented","sigHash":"d3d5199afeef6ea00c449a490b60a240a609f5d8d6a743236052752a804a0501"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getContainersOfSymbol","kind":"method","status":"implemented","sigHash":"04022586bdec36d8a7c940518845d04f5b6421a939cb54152c31a882f399b48a"}
  *
  * Go source:
  * func (c *Checker) getContainersOfSymbol(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags) []*ast.Symbol {
@@ -686,8 +686,8 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
   if (container !== undefined && (symbol_!.Flags & SymbolFlagsTypeParameter) === 0) {
     return Checker_getWithAlternativeContainers(receiver, container, symbol_, enclosingDeclaration, meaning);
   }
-  let candidates: GoSlice<GoPtr<Symbol>> = [];
-  for (const d of (symbol_!.Declarations ?? [])) {
+  let candidates = GoNilSlice<GoPtr<Symbol>>();
+  for (const d of symbol_!.Declarations) {
     if (!IsAmbientModule(d) && d!.Parent !== undefined) {
       // direct children of a module
       if (hasNonGlobalAugmentationExternalModuleSymbol(d!.Parent)) {
@@ -723,11 +723,11 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
     }
   }
   if (candidates.length === 0) {
-    return [];
+    return GoNilSlice<GoPtr<Symbol>>();
   }
 
-  let bestContainers: GoSlice<GoPtr<Symbol>> = [];
-  let alternativeContainers: GoSlice<GoPtr<Symbol>> = [];
+  let bestContainers = GoNilSlice<GoPtr<Symbol>>();
+  let alternativeContainers = GoNilSlice<GoPtr<Symbol>>();
   for (const cont of candidates) {
     if (Checker_getAliasForSymbolInContainer(receiver, cont, symbol_) === undefined) {
       continue;
@@ -739,7 +739,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
     bestContainers = [...bestContainers, allAlts[0]];
     alternativeContainers = [...alternativeContainers, ...allAlts.slice(1)];
   }
-  return [...bestContainers, ...alternativeContainers];
+  return GoAppend(bestContainers, ...alternativeContainers);
 }
 
 /**
@@ -784,19 +784,19 @@ export function Checker_getAliasForSymbolInContainer(receiver: GoPtr<Checker>, c
   }
   // Check if container is a thing with an `export=` which points directly at `symbol`, and if so, return
   // the container itself as the alias for the symbol
-  if (container!.Exports !== undefined) {
+  if (!GoMapIsNil(container!.Exports)) {
     const exportEquals = container!.Exports.get(InternalSymbolNameExportEquals);
     if (exportEquals !== undefined && Checker_getSymbolIfSameReference(receiver, exportEquals, symbol_) !== undefined) {
       return container;
     }
   }
   const exports_ = Checker_getExportsOfSymbol(receiver, container);
-  const quick = exports_?.get(symbol_!.Name);
+  const quick = exports_.get(symbol_!.Name);
   if (quick !== undefined && Checker_getSymbolIfSameReference(receiver, quick, symbol_) !== undefined) {
     return quick;
   }
-  let candidates: GoSlice<GoPtr<Symbol>> = [];
-  for (const [, exported] of exports_ ?? []) {
+  let candidates = GoNilSlice<GoPtr<Symbol>>();
+  for (const [, exported] of exports_) {
     if (Checker_getSymbolIfSameReference(receiver, exported, symbol_) !== undefined) {
       candidates = [...candidates, exported];
     }
@@ -843,7 +843,7 @@ export function Checker_GetAccessibleSymbolChain(receiver: GoPtr<Checker>, symbo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::type::accessibleSymbolChainContext","kind":"type","status":"implemented","sigHash":"3e04eabddf95b2b08160376186b51804f33d8ef7a2d2575c9939183f645f7824"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::type::accessibleSymbolChainContext","kind":"type","status":"implemented","sigHash":"9617e087602d543fb795e4df6414c0795002402cc2dc8150d045f374d6de713f"}
  *
  * Go source:
  * accessibleSymbolChainContext struct {
@@ -863,7 +863,7 @@ export interface accessibleSymbolChainContext {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::type::symbolTableID","kind":"type","status":"implemented","sigHash":"7d916951f176c6805edfce9e2d5f9dac91e7f93f5cac7779cbd82c2eebe07a68"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::type::symbolTableID","kind":"type","status":"implemented","sigHash":"e4d8f17a06214af5cbb86cf016de038b56ad098083e7441de2dd69142d2594a4"}
  * @tsgo-override {"category":"runtime-numeric-representation","allow":["signature"],"reason":"The identifier must retain all unsigned 64-bit source and kind bits, so its distinct Go type uses a lossless branded bigint carrier.","goSignatureHash":"ea2add43e05ecb2ba24fd74c2aac9d1846fce9b8da4611ef8ec8e339f05fc4da","tsSignatureHash":"2d05e9c456ce7614a377ac99a6e14f0f03e22a9da82d787a9dd1e4d2d1b9c69b"}
  *
  * Go source:
@@ -876,7 +876,7 @@ export interface accessibleSymbolChainContext {
 export type symbolTableID = GoDefined<bigint, "github.com/microsoft/typescript-go/internal/checker::type::symbolTableID">;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindShift","kind":"constGroup","status":"implemented","sigHash":"9e80cf047656cb6660929f6a71794e6653a496233ab2dc2d14d96c7ea1b9a77a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindShift","kind":"constGroup","status":"implemented","sigHash":"42fa1d954e602fbb28ad4cf20e93f1653cbb94767097c6126a44f9f4ecc3030c"}
  *
  * Go source:
  * const stKindShift = 61
@@ -884,7 +884,7 @@ export type symbolTableID = GoDefined<bigint, "github.com/microsoft/typescript-g
 export const stKindShift: int = 61;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindLocals+stKindExports+stKindMembers+stKindGlobals+stKindResolvedExports+stKindMask","kind":"constGroup","status":"implemented","sigHash":"a4f80520523042c056f35ae1b40810f46b1c772d8257f6dea77920ec3ab6d3f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindLocals+stKindExports+stKindMembers+stKindGlobals+stKindResolvedExports+stKindMask","kind":"constGroup","status":"implemented","sigHash":"e7c2492038caf7900ba15cb7d5528723601627de7e02f97a57838cbeb062d4c7"}
  *
  * Go source:
  * const (
@@ -931,7 +931,7 @@ export function symbolTableIDFromExports(sym: GoPtr<Symbol>): symbolTableID {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromResolvedExports","kind":"func","status":"implemented","sigHash":"af01f8edd325464e56b73d21f8660f40ab679a8ed518ec8aa598b692b85f7282"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromResolvedExports","kind":"func","status":"implemented","sigHash":"1a7031da9b42a06f7ebe1dd6fa1c232c9b891539884fe7d32fbb27a8f29b05b9"}
  *
  * Go source:
  * // symbolTableIDFromResolvedExports returns an ID for resolved/derived export tables
@@ -1013,10 +1013,10 @@ export function symbolTableIDFromGlobals(): symbolTableID {
  */
 export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx: accessibleSymbolChainContext): GoSlice<GoPtr<Symbol>> {
   if (ctx.symbol === undefined) {
-    return [];
+    return GoNilSlice<GoPtr<Symbol>>();
   }
   if (isPropertyOrMethodDeclarationSymbol(ctx.symbol)) {
-    return [];
+    return GoNilSlice<GoPtr<Symbol>>();
   }
   // Go from enclosingDeclaration to the first scope we check, so the cache is keyed off the scope and thus shared more
   let firstRelevantLocation: GoPtr<Node> = undefined;
@@ -1026,7 +1026,7 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
   });
   const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks, ctx.symbol, zeroContainingSymbolLinks, goSymbolPointerKey)!.v;
   const linkKey: accessibleChainCacheKey = { useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, location: firstRelevantLocation, meaning: ctx.meaning };
-  if (links.accessibleChainCache === undefined) {
+  if (GoMapIsNil(links.accessibleChainCache)) {
     links.accessibleChainCache = NewGoStructMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>(GoStructKey(
       [
         GoStructField((value: accessibleChainCacheKey) => value.useOnlyExternalAliasing, GoBooleanKey),
@@ -1041,7 +1041,7 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
     return existing;
   }
 
-  let result: GoSlice<GoPtr<Symbol>> = [];
+  let result = GoNilSlice<GoPtr<Symbol>>();
 
   Checker_someSymbolTableInScope(receiver, ctx.enclosingDeclaration, (t: SymbolTable, tableId: symbolTableID, ignoreQualification: bool, isLocalNameLookup: bool, _node: GoPtr<Node>): bool => {
     const res = Checker_getAccessibleSymbolChainFromSymbolTable(receiver, ctx, t, tableId, ignoreQualification, isLocalNameLookup);
@@ -1056,7 +1056,7 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAccessibleSymbolChainFromSymbolTable","kind":"method","status":"implemented","sigHash":"50288451713710d32338473d9fa4cac13be1b87024fe2aaec0a29e9af5be3e82"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAccessibleSymbolChainFromSymbolTable","kind":"method","status":"implemented","sigHash":"9f466dff7dd0776f6f9bc06233c3f5f40c7fe93b64cf8b908bb93e8cfd01fd12"}
  *
  * Go source:
  * func (c *Checker) getAccessibleSymbolChainFromSymbolTable(ctx accessibleSymbolChainContext, t ast.SymbolTable, tableId symbolTableID, ignoreQualification bool, isLocalNameLookup bool) []*ast.Symbol {
@@ -1099,7 +1099,7 @@ export function Checker_getAccessibleSymbolChainFromSymbolTable(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getSymbolTableAliases","kind":"method","status":"implemented","sigHash":"ebab701bc726232b245be52334ba272304034910b5683009dc8596a0c8f1099c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getSymbolTableAliases","kind":"method","status":"implemented","sigHash":"8bcbdc316ba6ff16f72cbc617cd6226fe4a6ceb30c42cb102dca868fbf670ced"}
  *
  * Go source:
  * // getSymbolTableAliases returns only the alias symbols from a symbol table,
@@ -1145,7 +1145,7 @@ export function Checker_getSymbolTableAliases(receiver: GoPtr<Checker>, symbols:
   // Cache globals and exports tables (which are large and revisited often).
   // Locals tables are small and per-scope, so they are filtered but not cached.
   if (kind === stKindGlobals || kind === stKindExports || kind === stKindResolvedExports) {
-    if (receiver!.symbolTableAliasCache !== undefined) {
+    if (!GoMapIsNil(receiver!.symbolTableAliasCache)) {
       const aliases = receiver!.symbolTableAliasCache.get(tableId);
       if (aliases !== undefined) {
         return aliases;
@@ -1159,8 +1159,8 @@ export function Checker_getSymbolTableAliases(receiver: GoPtr<Checker>, symbols:
     }
   }
   if (kind === stKindGlobals || kind === stKindExports || kind === stKindResolvedExports) {
-    if (receiver!.symbolTableAliasCache === undefined) {
-      receiver!.symbolTableAliasCache = new globalThis.Map<symbolTableID, GoSlice<GoPtr<Symbol>>>();
+    if (GoMapIsNil(receiver!.symbolTableAliasCache)) {
+      receiver!.symbolTableAliasCache = NewGoStructMap(GoBigIntKey);
     }
     receiver!.symbolTableAliasCache.set(tableId, aliases);
   }
@@ -1239,7 +1239,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
     return [ctx.symbol!];
   }
 
-  let candidateChains: GoSlice<GoSlice<GoPtr<Symbol>>> = [];
+  let candidateChains = GoNilSlice<GoSlice<GoPtr<Symbol>>>();
 
   // Check for ExportSymbol by direct name lookup rather than discovering it during
   // the alias iteration below (where it would never match, since only alias-flagged
@@ -1281,7 +1281,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
   if (isGlobals) {
     return Checker_getCandidateListForSymbol(receiver, ctx, receiver!.globalThisSymbol, receiver!.globalThisSymbol, ignoreQualification);
   }
-  return [];
+  return GoNilSlice<GoPtr<Symbol>>();
 }
 
 /**
@@ -1331,7 +1331,7 @@ export function Checker_compareSymbolChainsWorker(receiver: GoPtr<Checker>, a: G
  * }
  */
 export function isUMDExportSymbol(symbol_: GoPtr<Symbol>): bool {
-  return symbol_ !== undefined && symbol_!.Declarations !== undefined && symbol_!.Declarations.length > 0 && symbol_!.Declarations[0] !== undefined && IsNamespaceExportDeclaration(symbol_!.Declarations[0]);
+  return symbol_ !== undefined && symbol_!.Declarations.length > 0 && symbol_!.Declarations[0] !== undefined && IsNamespaceExportDeclaration(symbol_!.Declarations[0]);
 }
 
 /**
@@ -1385,16 +1385,13 @@ export function Checker_getCandidateListForSymbol(receiver: GoPtr<Checker>, ctx:
   // Look in the exported members, if we can find accessibleSymbolChain, symbol is accessible using this chain
   // but only if the symbolFromSymbolTable can be qualified
   const candidateTable = Checker_getExportsOfSymbol(receiver, resolvedImportedSymbol);
-  if (candidateTable === undefined) {
-    return [];
-  }
   const candidateTableId = symbolTableIDFromResolvedExports(resolvedImportedSymbol);
   const accessibleSymbolsFromExports = Checker_getAccessibleSymbolChainFromSymbolTable(receiver, ctx, candidateTable, candidateTableId /*ignoreQualification*/, true, false);
   if (accessibleSymbolsFromExports.length === 0) {
-    return [];
+    return GoNilSlice<GoPtr<Symbol>>();
   }
   if (!Checker_canQualifySymbol(receiver, ctx, symbolFromSymbolTable, getQualifiedLeftMeaning(ctx.meaning))) {
-    return [];
+    return GoNilSlice<GoPtr<Symbol>>();
   }
   return [symbolFromSymbolTable, ...accessibleSymbolsFromExports];
 }
@@ -1587,7 +1584,7 @@ export function Checker_needsQualification(receiver: GoPtr<Checker>, symbol_: Go
  * }
  */
 export function isPropertyOrMethodDeclarationSymbol(symbol_: GoPtr<Symbol>): bool {
-  if (symbol_!.Declarations !== undefined && symbol_!.Declarations.length > 0) {
+  if (symbol_!.Declarations.length > 0) {
     for (const declaration of symbol_!.Declarations) {
       switch (declaration!.Kind) {
       case KindPropertyDeclaration:
@@ -1681,17 +1678,17 @@ export function Checker_someSymbolTableInScope(receiver: GoPtr<Checker>, enclosi
     case KindClassExpression:
     case KindInterfaceDeclaration: {
       // Type parameters are bound into `members` lists so they can merge across declarations
-      let table: SymbolTable | undefined = undefined;
+      let table = GoNilMap<string, GoPtr<Symbol>>();
       const sym = Checker_getSymbolOfDeclaration(receiver, location);
-      for (const [key, memberSymbol] of (sym!.Members ?? [])) {
+      for (const [key, memberSymbol] of sym!.Members) {
         if ((memberSymbol!.Flags & (SymbolFlagsType & ~SymbolFlagsAssignment)) !== 0) {
-          if (table === undefined) {
+          if (GoMapIsNil(table)) {
             table = new globalThis.Map<string, GoPtr<Symbol>>();
           }
           table.set(key, memberSymbol);
         }
       }
-      if (table !== undefined && callback!(table, symbolTableIDFromMembers(sym), false, false, location)) {
+      if (!GoMapIsNil(table) && callback!(table, symbolTableIDFromMembers(sym), false, false, location)) {
         return true;
       }
       break;

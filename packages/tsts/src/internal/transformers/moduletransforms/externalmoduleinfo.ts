@@ -41,7 +41,7 @@ import type { GoInterface, GoMapKeyDescriptor } from "../../../go/compat.js";
 const declarationPointerKey: GoMapKeyDescriptor<GoPtr<Declaration>> = GoPointerKey<Declaration>();
 const functionDeclarationNodePointerKey: GoMapKeyDescriptor<GoPtr<FunctionDeclarationNode>> = GoPointerKey<FunctionDeclarationNode>();
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfo","kind":"type","status":"implemented","sigHash":"76ea936086f877ffb778dc08a937acc672aba64f64355b8fe64c36697d57f693"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfo","kind":"type","status":"implemented","sigHash":"ba8cc93d563a3451949aa7e72b149c16af3d7e7298c55e4ed95a9bfbfe60bc80"}
  *
  * Go source:
  * externalModuleInfo struct {
@@ -65,7 +65,7 @@ export interface externalModuleInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfoCollector","kind":"type","status":"implemented","sigHash":"c9a137d8bfba0f0c13f50050e30f778d45423b236f366907692de71560df2084"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfoCollector","kind":"type","status":"implemented","sigHash":"618e94804bec52bfe0a95b1632cd33640be8b593ea2269f0e03989638d118355"}
  *
  * Go source:
  * externalModuleInfoCollector struct {
@@ -603,7 +603,7 @@ export function externalModuleInfoCollector_collectExportedVariableInfo(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::constGroup::externalHelpersModuleNameText","kind":"constGroup","status":"implemented","sigHash":"42b8d30f6cec123c960fc65215bb7957d60e1e2100a713e6f60422dd65ee175e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::constGroup::externalHelpersModuleNameText","kind":"constGroup","status":"implemented","sigHash":"952360427c8066aa37cd9c63a924f7eba58391d84879c41208b7afb5805fafbc"}
  *
  * Go source:
  * const externalHelpersModuleNameText = "tslib"

@@ -1,7 +1,7 @@
 import type { int } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/tokenflags.go::type::TokenFlags","kind":"type","status":"implemented","sigHash":"5f971a4f8bf155cc8fd940637f9d354a0828e487ebf251e3c5fee6aac31e7a07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/tokenflags.go::type::TokenFlags","kind":"type","status":"implemented","sigHash":"82663d444698724fc5a6de890d248ba49b35702ba44c068f0f683a413bb80e25"}
  *
  * Go source:
  * TokenFlags int32
@@ -9,7 +9,7 @@ import type { int } from "../../go/scalars.js";
 export type TokenFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/tokenflags.go::constGroup::TokenFlagsNone+TokenFlagsPrecedingLineBreak+TokenFlagsPrecedingJSDocComment+TokenFlagsUnterminated+TokenFlagsExtendedUnicodeEscape+TokenFlagsScientific+TokenFlagsOctal+TokenFlagsHexSpecifier+TokenFlagsBinarySpecifier+TokenFlagsOctalSpecifier+TokenFlagsContainsSeparator+TokenFlagsUnicodeEscape+TokenFlagsContainsInvalidEscape+TokenFlagsHexEscape+TokenFlagsContainsLeadingZero+TokenFlagsContainsInvalidSeparator+TokenFlagsPrecedingJSDocLeadingAsterisks+TokenFlagsSingleQuote+TokenFlagsPrecedingJSDocWithDeprecated+TokenFlagsPrecedingJSDocWithSeeOrLink+TokenFlagsBinaryOrOctalSpecifier+TokenFlagsWithSpecifier+TokenFlagsStringLiteralFlags+TokenFlagsNumericLiteralFlags+TokenFlagsTemplateLiteralLikeFlags+TokenFlagsRegularExpressionLiteralFlags+TokenFlagsIsInvalid","kind":"constGroup","status":"implemented","sigHash":"d8d6f0a2ae7f681077fcffcd94f90a0891b3a8450e1ffcefe055f99105ba1d04"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/tokenflags.go::constGroup::TokenFlagsNone+TokenFlagsPrecedingLineBreak+TokenFlagsPrecedingJSDocComment+TokenFlagsUnterminated+TokenFlagsExtendedUnicodeEscape+TokenFlagsScientific+TokenFlagsOctal+TokenFlagsHexSpecifier+TokenFlagsBinarySpecifier+TokenFlagsOctalSpecifier+TokenFlagsContainsSeparator+TokenFlagsUnicodeEscape+TokenFlagsContainsInvalidEscape+TokenFlagsHexEscape+TokenFlagsContainsLeadingZero+TokenFlagsContainsInvalidSeparator+TokenFlagsPrecedingJSDocLeadingAsterisks+TokenFlagsSingleQuote+TokenFlagsPrecedingJSDocWithDeprecated+TokenFlagsPrecedingJSDocWithSeeOrLink+TokenFlagsBinaryOrOctalSpecifier+TokenFlagsWithSpecifier+TokenFlagsStringLiteralFlags+TokenFlagsNumericLiteralFlags+TokenFlagsTemplateLiteralLikeFlags+TokenFlagsRegularExpressionLiteralFlags+TokenFlagsIsInvalid","kind":"constGroup","status":"implemented","sigHash":"21c1a38d74c38dd0988ea7d2a07088d5e8384f387cea4c254de6235b63f4db3a"}
  *
  * Go source:
  * const (

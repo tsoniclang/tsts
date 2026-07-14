@@ -21,7 +21,7 @@ import type { ProgramOptions } from "./program.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"implemented","sigHash":"bd29532226153c9421c0d64a9c1657c520691d16f8be0fccc4a85fabb8130ee6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"implemented","sigHash":"6ba4d34374b0e8d11cb5ffc2a70018db101db1ceb8e2288f9e1c82a2d29a0864"}
  *
  * Go source:
  * projectReferenceFileMapper struct {

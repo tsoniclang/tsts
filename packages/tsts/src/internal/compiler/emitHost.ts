@@ -50,7 +50,7 @@ import type { Program } from "./program.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::EmitHost","kind":"type","status":"implemented","sigHash":"86d3825eb042c6035fe2cb5b2b3b1f40c7a5774c29d4ec77071e82aed8b8c86b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::EmitHost","kind":"type","status":"implemented","sigHash":"dc0f501b0419d89ed0f61f5c6ed9f3795209fe04cc433d9a41be9035ad8f5431"}
  *
  * Go source:
  * EmitHost interface {
@@ -74,7 +74,7 @@ export interface EmitHost extends EmitHost_cf9bdcc7, DeclarationEmitHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"ed22b06a2747f99e480acdcb1d0095e0c3d0f5b033f4b575a5b85a95f8923e2b"}
  *
  * Go source:
  * var _ EmitHost = (*emitHost)(nil)
@@ -187,7 +187,7 @@ export function emitHost_as_compiler_EmitHost(receiver: GoPtr<emitHost>): EmitHo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::emitHost","kind":"type","status":"implemented","sigHash":"82a8160ff4f5bebeb3e890a32bc68c27a504ee28ed1414475783e6f93c9ed5fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::emitHost","kind":"type","status":"implemented","sigHash":"ec0aedbd3cd85f7ed02a0f05dd030e3ab5e099c642013dc9e6950c43b9867c27"}
  *
  * Go source:
  * emitHost struct {

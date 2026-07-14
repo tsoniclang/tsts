@@ -1,7 +1,7 @@
 import type { uint } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/types.go::type::ParseFlags","kind":"type","status":"implemented","sigHash":"351ebf721cd2754016dc44fcbdf16dc89d33b4fc6a92eed1f9db4696eed47fcd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/types.go::type::ParseFlags","kind":"type","status":"implemented","sigHash":"ec2c138c6126fd16db739ef0b467090e9d970a145b42a30cb3dfebf6b442776b"}
  *
  * Go source:
  * ParseFlags uint32
@@ -9,7 +9,7 @@ import type { uint } from "../../go/scalars.js";
 export type ParseFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/types.go::constGroup::ParseFlagsNone+ParseFlagsYield+ParseFlagsAwait+ParseFlagsType+ParseFlagsIgnoreMissingOpenBrace+ParseFlagsJSDoc","kind":"constGroup","status":"implemented","sigHash":"c1c0a30e1330ab6084823a9cec03c70fecd0e68844959d06e1c3bb28f6b7c3c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/types.go::constGroup::ParseFlagsNone+ParseFlagsYield+ParseFlagsAwait+ParseFlagsType+ParseFlagsIgnoreMissingOpenBrace+ParseFlagsJSDoc","kind":"constGroup","status":"implemented","sigHash":"45771fba15d6b3d1189c5ed5b2cbf2b5e091c72f7397839c4b7819ac00c3a755"}
  *
  * Go source:
  * const (

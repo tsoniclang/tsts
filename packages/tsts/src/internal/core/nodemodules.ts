@@ -5,7 +5,7 @@ import { OnceValue } from "../../go/sync.js";
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::UnprefixedNodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"00dcfbd0671d494a2d849d412f7532fcef4b7342281d62da72e1cc8efb4a5388"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::UnprefixedNodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"ee6061edc2a6608372fa0143103a74b11fd585da7615748ce09d3a6b1be96db1"}
  *
  * Go source:
  * var UnprefixedNodeCoreModules = map[string]bool{
@@ -123,7 +123,7 @@ export let UnprefixedNodeCoreModules: GoMap<string, bool> = new globalThis.Map<s
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::ExclusivelyPrefixedNodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"1db47baaadc57ffe138dcb45fa85e4a84d64d3391a600e1cd44ba285fea0ea05"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::ExclusivelyPrefixedNodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"be0f09352feff0409ea3bdd58272998d52fd1fe26b6e96e26d98c494e69e0f54"}
  *
  * Go source:
  * var ExclusivelyPrefixedNodeCoreModules = map[string]bool{
@@ -143,7 +143,7 @@ export let ExclusivelyPrefixedNodeCoreModules: GoMap<string, bool> = new globalT
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::NodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"893e6ca72485f496815b62d5df8d4f69651f3576f404eca9f21e8878ac7f3118"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::NodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"94448a0710922c5d4f0ba948ccd27b2a8ad68f0475327e947ccc83f81fab525d"}
  *
  * Go source:
  * var NodeCoreModules = sync.OnceValue(func() map[string]bool {

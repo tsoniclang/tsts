@@ -340,7 +340,7 @@ export function GuessIndentation(lines: GoSlice<string>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::EncodeURI","kind":"func","status":"implemented","sigHash":"7c3effdc96b020dc9f6246a3d5d575a4f1f8baf3a4df376b8a9653693febb6fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::EncodeURI","kind":"func","status":"implemented","sigHash":"b6cd35be32d26fe88511899351ff591812d29956d7e138417d1dfbec7046c365"}
  *
  * Go source:
  * func EncodeURI(s string) string {
@@ -391,7 +391,7 @@ export function EncodeURI(s: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::constGroup::upperhex","kind":"constGroup","status":"implemented","sigHash":"bd628d0eb0bd8836a74fb87452d4db0afa4ffd395061c65111de9b708b6fa875"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::constGroup::upperhex","kind":"constGroup","status":"implemented","sigHash":"9b5a4da38e08ced9ba39d3fceac3de2723d5caf6438c0fd13b2229d90cac9684"}
  *
  * Go source:
  * const upperhex = "0123456789ABCDEF"
@@ -581,7 +581,7 @@ export function StripQuotes(name: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::varGroup::matchSlashSomething","kind":"varGroup","status":"implemented","sigHash":"d09249baa9b25762938379176b45b53dafbbf1ac14a760256a306669f079cc84"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::varGroup::matchSlashSomething","kind":"varGroup","status":"implemented","sigHash":"cbc0fffe9a7bed652985d257abc77ebfc0da1550a38629f9a402e9cd3725534c"}
  *
  * Go source:
  * var matchSlashSomething = regexp.MustCompile(`\\.`)
@@ -684,7 +684,7 @@ export function TruncateByRunes(str: string, maxLength: int): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::constGroup::SurrogateLowStart","kind":"constGroup","status":"implemented","sigHash":"75e22149f18242ba9838dcaa357782031e9f589271481653241aa9ede67bb9f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::constGroup::SurrogateLowStart","kind":"constGroup","status":"implemented","sigHash":"834c375e6a73624ce198d4c3ca75b049990daec696e6e71ac4e23cb193a7ce42"}
  *
  * Go source:
  * const (
@@ -757,7 +757,7 @@ export function CodePointToSurrogatePair(ch: GoRune): [high: GoRune, low: GoRune
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::constGroup::surrogateUTF8Lead+surrogateUTF8LeadBits+utf8ContMarker+utf8ContMax+utf8ContMask+surrogateUTF8Byte1Min+surrogateUTF8Byte1Max","kind":"constGroup","status":"implemented","sigHash":"01744899508cfb5f4c0cf35f7ef8e13aca37b4dd4eb009ad02519f22600bed91"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::constGroup::surrogateUTF8Lead+surrogateUTF8LeadBits+utf8ContMarker+utf8ContMax+utf8ContMask+surrogateUTF8Byte1Min+surrogateUTF8Byte1Max","kind":"constGroup","status":"implemented","sigHash":"61abd4456fff373a999a59d769bd5e5bbdce258d80508a5b5236acaa48f1b355"}
  *
  * Port note: const block describing the CESU-8/WTF-8 byte layout Go uses to encode a lone
  * surrogate (U+D000–U+DFFF) that valid UTF-8 cannot represent. TSTS keeps lone surrogates as
@@ -830,7 +830,7 @@ export function DecodeJSStringRune(s: string): [GoRune, int] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::CombineSurrogatePairs","kind":"func","status":"implemented","sigHash":"a1bf52fe728f2a9a9fc2f6232cd40647a20590fe3be22823a5c448bd3ddbe38f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::CombineSurrogatePairs","kind":"func","status":"implemented","sigHash":"5474f9d570e2874499bdcdbf8d3ec1e61f1e160301cb26bd7d2fc4ea3858b70d"}
  *
  * Go source:
  * func CombineSurrogatePairs(s string) string { ... merges adjacent CESU-8 high+low surrogate

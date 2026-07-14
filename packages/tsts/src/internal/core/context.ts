@@ -4,7 +4,7 @@ import { WithValue } from "../../go/context.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::type::key","kind":"type","status":"implemented","sigHash":"f26be130c67fd98788332ccdfb09f91dc509299c557e60555de3f9e4d4bde003"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::type::key","kind":"type","status":"implemented","sigHash":"457238a82b2258a6a7e6036f5fc2c0853063292070dbb6cb7df6d18806b64ef8"}
  *
  * Go source:
  * key int
@@ -12,7 +12,7 @@ import type { GoInterface } from "../../go/compat.js";
 export type key = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::constGroup::requestIDKey+checkerLifetimeKey","kind":"constGroup","status":"implemented","sigHash":"8dabc66359930c96c150b005350d4ef98911135ff2967040b3030db697a0fc22"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::constGroup::requestIDKey+checkerLifetimeKey","kind":"constGroup","status":"implemented","sigHash":"46ade8dfc212ff46267ff977ca44ab1cc29820b8aae95a320e9f26c19089ae9e"}
  *
  * Go source:
  * const (
@@ -56,7 +56,7 @@ export function GetRequestID(ctx: GoInterface<Context>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::type::CheckerLifetime","kind":"type","status":"implemented","sigHash":"1e107fbbc1f6739306a706036bf486d01be607b5dcd622d8f06030e9eaf4cd48"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::type::CheckerLifetime","kind":"type","status":"implemented","sigHash":"6a7508236021b100a003502379c8497cb12f8bb76f1a0cbc57e652f6dacd6dc2"}
  *
  * Go source:
  * CheckerLifetime int
@@ -64,7 +64,7 @@ export function GetRequestID(ctx: GoInterface<Context>): string {
 export type CheckerLifetime = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::constGroup::CheckerLifetimeTemporary+CheckerLifetimeDiagnostics+CheckerLifetimeAPI","kind":"constGroup","status":"implemented","sigHash":"447798a2d83e3a86a974ee55fa8d5ef4208c7b5fee50186bc7fcb42b11057be1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::constGroup::CheckerLifetimeTemporary+CheckerLifetimeDiagnostics+CheckerLifetimeAPI","kind":"constGroup","status":"implemented","sigHash":"41e8d6843253b5f8362c56bbb7599a3a0622af3e36c745ac792968b3fe277d6a"}
  *
  * Go source:
  * const (

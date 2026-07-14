@@ -28,7 +28,7 @@ import type { DependencyFields, Fields, HeaderFields, PathFields } from "./packa
 import type { Expected } from "./expected.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::varGroup::typeScriptVersion","kind":"varGroup","status":"implemented","sigHash":"5ea790652197b354557a923968e58da28d67b2ec3f25c5727cf388cf991ad24a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::varGroup::typeScriptVersion","kind":"varGroup","status":"implemented","sigHash":"0e8f66f0b6c72d4d6bb3e2c3d23b50c74e25a88c52a24b6dc00cf03057444c79"}
  *
  * Go source:
  * var typeScriptVersion = semver.MustParse(core.Version())
@@ -36,7 +36,7 @@ import type { Expected } from "./expected.js";
 export let typeScriptVersion: SemverVersion = MustParse(Version());
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::PackageJson","kind":"type","status":"implemented","sigHash":"ba2f011c29e742814adcc6724eca6beed3c6bfe7f05261dcfee0078b659e2c67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::PackageJson","kind":"type","status":"implemented","sigHash":"3127e2cc6082d7ea478e1d27db24b30b1db8be360c493f7d8816254a8526680c"}
  *
  * Go source:
  * PackageJson struct {
@@ -106,7 +106,7 @@ export function PackageJson_GetDependencyFields(receiver: GoPtr<PackageJson>): D
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::diagnosticAndArgs","kind":"type","status":"implemented","sigHash":"1b69212f77cd36e53ea67987f0efb1188c46861cd21dd2a160d1db91927a35f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::diagnosticAndArgs","kind":"type","status":"implemented","sigHash":"78139245855f1e92b2b07579cb7b0df51671a11a5a675166bebcb0fcc5c0ca62"}
  *
  * Go source:
  * diagnosticAndArgs struct {
@@ -256,7 +256,7 @@ export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::VersionPaths","kind":"type","status":"implemented","sigHash":"c69f7a190a61acf888723951331f6d4cbe1a46b421c3096957ca2b12d20bfd07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::VersionPaths","kind":"type","status":"implemented","sigHash":"b60c88cbe10648874147fbd651cf3cd5409b864b27347a075ca8ffb18ca2081a"}
  *
  * Go source:
  * VersionPaths struct {
@@ -341,7 +341,7 @@ export function VersionPaths_GetPaths(receiver: GoPtr<VersionPaths>): GoPtr<Orde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::InfoCacheEntry","kind":"type","status":"implemented","sigHash":"e5f1a5e45358a99540730eb23988c0b20791ebbcf7c830c9158b480cb7a51631"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::InfoCacheEntry","kind":"type","status":"implemented","sigHash":"8875c5769b9883def702a5b59d713011b951af11ef4c085c74c5d58b6393c572"}
  *
  * Go source:
  * InfoCacheEntry struct {
@@ -369,7 +369,7 @@ export function InfoCacheEntry_Exists(receiver: GoPtr<InfoCacheEntry>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::method::InfoCacheEntry.WithPackageDirectory","kind":"method","status":"implemented","sigHash":"67a7659d59de1273dd1aa7e9f4bd0f8dda9df4f8ff2fa73c1414608dfedd6671"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::method::InfoCacheEntry.WithPackageDirectory","kind":"method","status":"implemented","sigHash":"883fd0f812975da6fbba467aaa6a5932db1c66b24a28b87280cc65b62bde5115"}
  *
  * Go source:
  * // WithPackageDirectory returns an entry whose PackageDirectory matches the
@@ -443,7 +443,7 @@ export function InfoCacheEntry_GetDirectory(receiver: GoPtr<InfoCacheEntry>): st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::InfoCache","kind":"type","status":"implemented","sigHash":"b4eadebe5081b85457169340d938c2e79c93cdacd1f020baf161403d917d9934"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::InfoCache","kind":"type","status":"implemented","sigHash":"9cb3e14fd56909d1c0d73e68b83f0b44323768165d8cb226210b4f18b5dcf48a"}
  *
  * Go source:
  * InfoCache struct {

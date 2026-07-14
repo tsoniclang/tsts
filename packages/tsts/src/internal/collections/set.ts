@@ -4,7 +4,7 @@ import { GoEqualEmptyStruct, GoMapIsNil, GoMapMake, GoNilMap } from "../../go/co
 import * as maps from "../../go/maps.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::type::Set","kind":"type","status":"implemented","sigHash":"b78751182a173542a2fc40a2d7a06459ad2b7539fa753c39278377d1cbed21b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::type::Set","kind":"type","status":"implemented","sigHash":"26fea571e8a25382cc169b0b08e08a87923711113a0a52733743b8fd4d92640b"}
  *
  * Go source:
  * Set[T comparable] struct {
@@ -16,7 +16,7 @@ export interface Set<T extends GoComparable> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::func::NewSetWithSizeHint","kind":"func","status":"implemented","sigHash":"c15b107ff0d15d004f5b4a1f19dc8b9f9dea9715bd6974fed8bcb970f7af301b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::func::NewSetWithSizeHint","kind":"func","status":"implemented","sigHash":"d3f0b25c01bb878b3eb7cf2960e6548074a9a4c8cf8843df95ca0e92dcb1b337"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic set construction receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
@@ -138,7 +138,7 @@ export function Set_Clear<T extends GoComparable>(receiver: GoPtr<Set<T>>): void
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::method::Set.AddIfAbsent","kind":"method","status":"implemented","sigHash":"6ac4332c884dc335a7c9c941b408b45593b6326496ef93cf3a83aa2b1167f8e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::method::Set.AddIfAbsent","kind":"method","status":"implemented","sigHash":"ce732f5159ccea9551e176f68448de4a03c6ac2b5c9518fc1401a376ef56b6e3"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic add-if-absent forwards the exact static Go map-key descriptor to lazy set allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:

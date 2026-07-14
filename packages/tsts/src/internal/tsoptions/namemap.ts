@@ -9,7 +9,7 @@ import { BuildOpts } from "./declsbuild.js";
 import { OptionsForWatch } from "./declswatch.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/namemap.go::varGroup::CompilerNameMap+BuildNameMap+WatchNameMap","kind":"varGroup","status":"implemented","sigHash":"d36f731b41d885eadcd726db4ea35887a601a6a57421910d7c4811456e2f0cbe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/namemap.go::varGroup::CompilerNameMap+BuildNameMap+WatchNameMap","kind":"varGroup","status":"implemented","sigHash":"cc07ed9311c52890118863da1f0683cdbf213855750b637b726e55f324b52e48"}
  *
  * Go source:
  * var (
@@ -60,7 +60,7 @@ export function GetNameMapFromList(optDecls: GoSlice<GoPtr<CommandLineOption>>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/namemap.go::type::NameMap","kind":"type","status":"implemented","sigHash":"273d1c8cdf8c433e9b8b3d758094909c22f43fc97ce81e545200d853ef750f7b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/namemap.go::type::NameMap","kind":"type","status":"implemented","sigHash":"fd40b0c64a322a60d4ed386bb2f8141d4938044e39ae404452bc16b5fdb42a38"}
  *
  * Go source:
  * NameMap struct {

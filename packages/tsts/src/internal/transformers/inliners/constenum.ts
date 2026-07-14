@@ -42,7 +42,7 @@ const byteSlice = (s: string, start: int, end?: int): string => {
 const byteLen = (s: string): int => utf8Encoder.encode(s).length as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::type::ConstEnumInliningTransformer","kind":"type","status":"implemented","sigHash":"ecdbca83f63930f40db6a6ae877fa8d363d0ce5820a063479cbd7a397c1a33e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::type::ConstEnumInliningTransformer","kind":"type","status":"implemented","sigHash":"c2fccfbdedb669f62fdf04ab70fbcc081c6139452239bd1e1fc42183fda9d06c"}
  *
  * Go source:
  * ConstEnumInliningTransformer struct {

@@ -16,7 +16,7 @@ const byteSlice = (s: string, start: int, end?: int): string => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::type::Pattern","kind":"type","status":"implemented","sigHash":"dd03a266349ffcf77c90546d0a6342b073443c33b70aa03df6d2d76f28737166"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::type::Pattern","kind":"type","status":"implemented","sigHash":"8a6cd5d270914ba6830625fafc45d7664231b3bc306bbe5cb215df67fff64229"}
  *
  * Go source:
  * Pattern struct {

@@ -24,7 +24,7 @@ import type { ScriptTarget } from "../../core/compileroptions.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::type::metadataSerializer","kind":"type","status":"implemented","sigHash":"6b0daffe0469d09ea80639f2e02158cafe11021b60fa00adcef956655fdb4f9a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::type::metadataSerializer","kind":"type","status":"implemented","sigHash":"22b1519fdeaf3cffc9fac77e5b92464bd60d3c11862b52fe6451e6bdc94fca3f"}
  *
  * Go source:
  * metadataSerializer struct {
@@ -46,7 +46,7 @@ export interface metadataSerializer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::type::metadataSerializerContext","kind":"type","status":"implemented","sigHash":"d2a536bed88192bfed33433fb4ab5825ec13b00af3b54d55863c6d87f2d332c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::type::metadataSerializerContext","kind":"type","status":"implemented","sigHash":"09df82f5055e40daeebb8f5b14c7daca1032351416b5e2a560fd59ae6ff69f7b"}
  *
  * Go source:
  * metadataSerializerContext struct {
@@ -180,7 +180,7 @@ export function GetSetAccessorValueParameter(node: GoPtr<SetAccessorDeclaration>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getSetAccessorTypeAnnotationNode","kind":"func","status":"implemented","sigHash":"902ce01c43de69833b32b1ede652a733cca36e54d54ef5fedc8779587de4e3a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getSetAccessorTypeAnnotationNode","kind":"func","status":"implemented","sigHash":"226afba818f47a5a4ebee5aa052914c41c45ba24d4657ffec96a3ff643c39eec"}
  *
  * Go source:
  * func getSetAccessorTypeAnnotationNode(node *ast.SetAccessorDeclaration) *ast.Node {
@@ -227,7 +227,7 @@ export function getAccessorTypeNode(node: GoPtr<Node>, container: GoPtr<Node>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeOfNode","kind":"method","status":"implemented","sigHash":"a9da4300d57708d34ae7b10e600f50cdcc2a33415fcfe5b31d50aeb9eb6078e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeOfNode","kind":"method","status":"implemented","sigHash":"eb8997afc4781aadfbf06b17badf9deb9dfd89cb0f01cd590899dccc168ac921"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeTypeOfNode(node *ast.Node, container *ast.Node) *ast.Node {
@@ -262,7 +262,7 @@ export function metadataSerializer_serializeTypeOfNode(receiver: GoPtr<metadataS
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeParameterTypesOfNode","kind":"method","status":"implemented","sigHash":"3c7eb5e0d7fe5116e01036774773cdad65b99057fd722c2d6ade5906429630bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeParameterTypesOfNode","kind":"method","status":"implemented","sigHash":"a5e8797e1e55834ea1c8caa36280e554ba6cc3f9323550d3915de1ca48a44826"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeParameterTypesOfNode(node *ast.Node, container *ast.Node) *ast.Node {
@@ -344,7 +344,7 @@ export function getParametersOfDecoratedDeclaration(node: GoPtr<Node>, container
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeReturnTypeOfNode","kind":"method","status":"implemented","sigHash":"3920d40183f603ac630d51fcffc89ee52682efd32aeeb490fbc88e10daf7a6f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeReturnTypeOfNode","kind":"method","status":"implemented","sigHash":"dc95ca43cb3e8c48ebdcac1e64b504dd81d50adbe952bf638e7321f16804fa26"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeReturnTypeOfNode(node *ast.Node) *ast.Node {
@@ -367,7 +367,7 @@ export function metadataSerializer_serializeReturnTypeOfNode(receiver: GoPtr<met
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeNode","kind":"method","status":"implemented","sigHash":"c22b8edb90b5263f00b3659b79bcf14b1b2f56d7b1b555ed795f5f40e0a434f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeNode","kind":"method","status":"implemented","sigHash":"6688b402bbbad414b6034c647927c749df513a5e6e850f1a77b2120d59cd89b4"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeTypeNode(node *ast.Node) *ast.Node {
@@ -674,7 +674,7 @@ export function metadataSerializer_serializeLiteralOfLiteralTypeNode(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeReferenceNode","kind":"method","status":"implemented","sigHash":"c462fbc54457bd998dee59b12cbbce58758ef2a0b8701bfc80367ed3b855bbf2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeReferenceNode","kind":"method","status":"implemented","sigHash":"b22547c7f0f309d7514ba034b30360f9a03bee7057789fe3a281a3a3f6073cc5"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeTypeReferenceNode(node *ast.TypeReferenceNode) *ast.Node {
@@ -824,7 +824,7 @@ export function metadataSerializer_serializeBigIntConstructor(receiver: GoPtr<me
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpression","kind":"method","status":"implemented","sigHash":"68b5ec73d0aecd6bc13296de9c2eaf01e4ad0dac7a15636ef8e55418e44d9fff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpression","kind":"method","status":"implemented","sigHash":"5b83ba89b3ae717c6fafe466706f6dcb6d1a25122522349e4acf4858b9b83053"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeEntityNameAsExpression(node *ast.EntityName) *ast.Node {
@@ -862,7 +862,7 @@ export function metadataSerializer_serializeEntityNameAsExpression(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeQualifiedNameAsExpression","kind":"method","status":"implemented","sigHash":"b5695722ad1600583c3a200f69122ce76592a659d5c2894b80e5428ca24cc83b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeQualifiedNameAsExpression","kind":"method","status":"implemented","sigHash":"734ba5e54265c170b940582a9817e23efff6e4d73f69bede74c5271dea13c7d6"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeQualifiedNameAsExpression(node *ast.QualifiedName) *ast.Node {
@@ -881,7 +881,7 @@ export function metadataSerializer_serializeQualifiedNameAsExpression(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpressionFallback","kind":"method","status":"implemented","sigHash":"ce1eda31313239045f0f2b397895bad3a38e89c803463dff40a2d70b56350c6b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpressionFallback","kind":"method","status":"implemented","sigHash":"8d3c38dd4a18ac3bd7a25aa70f9ae5d1be6cadc8b3e6f37fd399c0fc38c50cd3"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeEntityNameAsExpressionFallback(node *ast.EntityName) *ast.Node {
@@ -939,7 +939,7 @@ export function metadataSerializer_serializeEntityNameAsExpressionFallback(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.createCheckedValue","kind":"method","status":"implemented","sigHash":"7a1eb7d35a39cf90559635667c009229962f57618b5f0ee1724e5d945d03f365"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.createCheckedValue","kind":"method","status":"implemented","sigHash":"0a29360e18783732113172c3e1af6bfa70319be0b460b924ad23bb0a46a5276f"}
  *
  * Go source:
  * func (s *metadataSerializer) createCheckedValue(left *ast.Node, right *ast.Node) *ast.Node {

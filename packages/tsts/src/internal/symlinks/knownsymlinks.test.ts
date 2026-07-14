@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { bool } from "../../go/scalars.js";
-import type { GoPtr } from "../../go/compat.js";
+import { GoStringKey, GoZeroPointer, GoZeroString, type GoFunc, type GoPtr } from "../../go/compat.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { SyncSet } from "../collections/syncset.js";
 import { SyncSet_Has, SyncSet_Size } from "../collections/syncset.js";
@@ -62,15 +62,15 @@ test("SetDirectory", () => {
   KnownSymlinks_SetDirectory(cache, "/test/symlink", symlinkPath, realDirectory);
 
   // Check that directory was stored
-  const [stored, ok] = SyncMap_Load(KnownSymlinks_Directories(cache), symlinkPath);
+  const [stored, ok] = SyncMap_Load(KnownSymlinks_Directories(cache), symlinkPath, GoZeroPointer<KnownDirectoryLink>, GoStringKey);
   assert.ok(ok, "Expected directory to be stored");
   assert.equal((stored as GoPtr<KnownDirectoryLink>)!.Real, realDirectory.Real);
   assert.equal((stored as GoPtr<KnownDirectoryLink>)!.RealPath, realDirectory.RealPath);
 
   // Check that realpath mapping was created
-  const [set, ok2] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(cache), realDirectory.RealPath);
+  const [set, ok2] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(cache), realDirectory.RealPath, GoZeroPointer<SyncSet<string>>, GoStringKey);
   assert.ok(ok2 && SyncSet_Size(set as GoPtr<SyncSet<string>>) !== 0, "Expected realpath mapping to be created");
-  assert.ok(SyncSet_Has(set as GoPtr<SyncSet<string>>, "/test/symlink"), "Expected symlink '/test/symlink' to be in set");
+  assert.ok(SyncSet_Has(set as GoPtr<SyncSet<string>>, "/test/symlink", GoStringKey), "Expected symlink '/test/symlink' to be in set");
 });
 
 test("SetFile", () => {
@@ -81,7 +81,7 @@ test("SetFile", () => {
 
   KnownSymlinks_SetFile(cache, symlink, symlinkPath, realpath);
 
-  const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath);
+  const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath, GoZeroString, GoStringKey);
   assert.ok(ok, "Expected file to be stored");
   assert.equal(stored, realpath);
 });
@@ -101,7 +101,7 @@ test("ProcessResolution", () => {
 
   // Check that file was stored
   const symlinkPath = ToPath(originalPath, "/test/dir", true as bool);
-  const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath);
+  const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath, GoZeroString, GoStringKey);
   assert.ok(ok, "Expected file to be stored");
   assert.equal(stored, resolvedPath);
 });
@@ -163,13 +163,19 @@ test("SetSymlinksFromResolutions", () => {
   ];
 
   // Mock callbacks
-  const forEachResolvedModule = (callback: (resolution: GoPtr<ResolvedModule>, moduleName: string, mode: ResolutionMode, filePath: Path) => void, _file: GoPtr<SourceFile>): void => {
+  const forEachResolvedModule: GoFunc<(
+    callback: GoFunc<(resolution: GoPtr<ResolvedModule>, moduleName: string, mode: ResolutionMode, filePath: Path) => void>,
+    file: GoPtr<SourceFile>,
+  ) => void> = (callback, _file): void => {
     for (const res of resolvedModules) {
-      callback(resolvedModule(res.originalPath, res.resolvedPath), res.moduleName, res.mode, res.filePath);
+      callback!(resolvedModule(res.originalPath, res.resolvedPath), res.moduleName, res.mode, res.filePath);
     }
   };
 
-  const forEachResolvedTypeReferenceDirective = (_callback: (resolution: GoPtr<ResolvedTypeReferenceDirective>, moduleName: string, mode: ResolutionMode, filePath: Path) => void, _file: GoPtr<SourceFile>): void => {
+  const forEachResolvedTypeReferenceDirective: GoFunc<(
+    callback: GoFunc<(resolution: GoPtr<ResolvedTypeReferenceDirective>, moduleName: string, mode: ResolutionMode, filePath: Path) => void>,
+    file: GoPtr<SourceFile>,
+  ) => void> = (_callback, _file): void => {
     // No type reference directives for this test
   };
 
@@ -178,7 +184,7 @@ test("SetSymlinksFromResolutions", () => {
   // Check that files were stored
   for (const res of resolvedModules) {
     const symlinkPath = ToPath(res.originalPath, "/test/dir", true as bool);
-    const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath);
+    const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath, GoZeroString, GoStringKey);
     assert.ok(ok, `Expected file '${res.originalPath}' to be stored`);
     assert.equal(stored, res.resolvedPath);
   }
@@ -201,7 +207,7 @@ test("KnownSymlinksThreadSafety", () => {
     KnownSymlinks_SetDirectory(cache, "/test/symlink" + suffix, symlinkPath, realDirectory);
 
     // Read back
-    const [stored, ok] = SyncMap_Load(KnownSymlinks_Directories(cache), symlinkPath);
+    const [stored, ok] = SyncMap_Load(KnownSymlinks_Directories(cache), symlinkPath, GoZeroPointer<KnownDirectoryLink>, GoStringKey);
     assert.ok(ok, `Round ${id}: Expected directory to be stored`);
     assert.equal((stored as GoPtr<KnownDirectoryLink>)!.Real, realDirectory.Real, `Round ${id}: Real`);
   }

@@ -10,6 +10,7 @@ import { Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { KindArrowFunction, KindCallExpression, KindExpressionStatement, KindIdentifier, KindPropertyAccessExpression } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
+import { TSUnknown } from "../internal/core/tristate.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
 import { NewProgram, Program_GetSemanticDiagnostics, Program_GetSourceFile } from "../internal/compiler/program.js";
 import type { Program, ProgramOptions } from "../internal/compiler/program.js";
@@ -18,6 +19,26 @@ import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { createTypeCheckerQueries } from "../index.js";
+
+type ProgramOptionsOverrides = Partial<Omit<ProgramOptions, "Config" | "Host">>;
+
+function createProgramOptions(
+  config: ProgramOptions["Config"],
+  host: ProgramOptions["Host"],
+  overrides: ProgramOptionsOverrides = {},
+): ProgramOptions {
+  return {
+    Config: config,
+    Host: host,
+    UseSourceOfProjectReference: false,
+    SingleThreaded: TSUnknown,
+    CreateCheckerPool: undefined,
+    TypingsLocation: "",
+    ProjectName: "",
+    Tracing: undefined,
+    ...overrides,
+  };
+}
 
 test("public type-checker queries expose TS-Go checker facts without emitter re-analysis", () => {
   const { program, index } = createProgram(`
@@ -127,10 +148,7 @@ function createProgram(sourceText: string): { readonly program: GoPtr<Program>; 
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
 
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
+  const options = createProgramOptions(parsed, host);
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);

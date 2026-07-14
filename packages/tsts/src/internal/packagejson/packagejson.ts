@@ -15,7 +15,7 @@ import { objectKindUnknown } from "./exportsorimports.js";
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::HeaderFields","kind":"type","status":"implemented","sigHash":"6558504c2fd9f243450ea189f22d05ceb3b0e27a987c4c06e2a16703307569ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::HeaderFields","kind":"type","status":"implemented","sigHash":"53b0a2eea4b006f3eb6b5358b44a248fb246d2ee70f900c64dd96a8aacd569ee"}
  *
  * Go source:
  * HeaderFields struct {
@@ -31,7 +31,7 @@ export interface HeaderFields {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::PathFields","kind":"type","status":"implemented","sigHash":"b6ff792acf7ce424b67cb3471cc4058a50087e75a054c4b570caeebcf09f6826"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::PathFields","kind":"type","status":"implemented","sigHash":"bb4571732db48e0078e3bb1a2e7fb90f929764c31df44dc5248ff205fe235001"}
  *
  * Go source:
  * PathFields struct {
@@ -55,7 +55,7 @@ export interface PathFields {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::DependencyFields","kind":"type","status":"implemented","sigHash":"3ef5e9d174e2b24601466fcdfce76ae5cc24cf3e77a984764fa4f4222c6766ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::DependencyFields","kind":"type","status":"implemented","sigHash":"b6f01b351f12cdbcd6b15f041f7df48778d8dac5a9fa8b5206ac232f4f194fe1"}
  *
  * Go source:
  * DependencyFields struct {
@@ -73,7 +73,7 @@ export interface DependencyFields {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::method::DependencyFields.HasDependency","kind":"method","status":"implemented","sigHash":"6ee04c0f2499ce3c35a63e9efba1454b7a2109d17d30be4edc87e38b69cc7507"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::method::DependencyFields.HasDependency","kind":"method","status":"implemented","sigHash":"24ba19024088207c9165acc440f044fdcc96e1816580af109cf8b108f5f5cc71"}
  *
  * Go source:
  * func (df *DependencyFields) HasDependency(name string) bool {
@@ -240,7 +240,7 @@ export function DependencyFields_GetRuntimeDependencyNames(receiver: GoPtr<Depen
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::Fields","kind":"type","status":"implemented","sigHash":"07b7331f58005d91aa00ef0dc8b73696c8b48b2261c6396262880ed6e41bf3de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::Fields","kind":"type","status":"implemented","sigHash":"3b407cb3d92da19d9b9f6ba909084f10a1bbc29e24c5a86304e6af6a19886035"}
  *
  * Go source:
  * Fields struct {

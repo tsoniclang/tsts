@@ -38,7 +38,7 @@ import { getWildcardDirectories } from "./wildcarddirectories.js";
 
 import type { GoInterface, GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::constGroup::fileGlobPattern+recursiveFileGlobPattern","kind":"constGroup","status":"implemented","sigHash":"b72f79c30886c1bb508333146dea617bea7fa7ea2bcd9c06e79b68e1fe236c28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::constGroup::fileGlobPattern+recursiveFileGlobPattern","kind":"constGroup","status":"implemented","sigHash":"beaaec06113aca6510e27d43edae16455fb426b97ea0b4f79b8193f1ccb5d65d"}
  *
  * Go source:
  * const (
@@ -50,7 +50,7 @@ export const fileGlobPattern: string = "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json}";
 export const recursiveFileGlobPattern: string = "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json}";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::type::ParsedCommandLine","kind":"type","status":"implemented","sigHash":"fe8a58046a678b95837026594b9593557e0041023932ee4366c6d1126b5057c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::type::ParsedCommandLine","kind":"type","status":"implemented","sigHash":"5e0562622ca0ebd4979a5b041302cb5fb3261b93ccae000f9f33884e560f86dc"}
  *
  * Go source:
  * ParsedCommandLine struct {
@@ -189,7 +189,7 @@ export function NewParsedCommandLine(compilerOptions: GoPtr<CompilerOptions_3bab
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::type::SourceOutputAndProjectReference","kind":"type","status":"implemented","sigHash":"7f8fc5d25ceb67c4e5f7feaa34d531d9c06bd770fa0088d5342bc87a910e5ea3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::type::SourceOutputAndProjectReference","kind":"type","status":"implemented","sigHash":"ebd05fc585b95fee3d84cfd551c7ae7c665d7793986935393ff235d5feb8a878"}
  *
  * Go source:
  * SourceOutputAndProjectReference struct {
@@ -205,7 +205,7 @@ export interface SourceOutputAndProjectReference {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::varGroup::_+_","kind":"varGroup","status":"implemented","sigHash":"606a448813ea549ca7a41fa67189d5c616eb07aa6693c9028679d4b9a5b43602"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::varGroup::_+_","kind":"varGroup","status":"implemented","sigHash":"8c69465263a70acc30376e43ab3dcde416d5221412c58db6a238b59b94df3f6c"}
  *
  * Go source:
  * var (
@@ -544,7 +544,7 @@ export function ParsedCommandLine_GetBuildInfoFileName(receiver: GoPtr<ParsedCom
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.WildcardDirectories","kind":"method","status":"implemented","sigHash":"bcc1c5e97bbf7b5d49ecc7493fe1f4b2f27c4bbb57e81902f6790d5471cdd1ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.WildcardDirectories","kind":"method","status":"implemented","sigHash":"c506f90ec5c375cf02c2d6a15de49fa03e1683fb3b61867f9d310151953ff12f"}
  *
  * Go source:
  * func (p *ParsedCommandLine) WildcardDirectories() map[string]bool {
@@ -632,7 +632,7 @@ export function ParsedCommandLine_WildcardDirectoryGlobs(receiver: GoPtr<ParsedC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.LiteralFileNames","kind":"method","status":"implemented","sigHash":"e347d7ea24e70da0991ac1020e89a93c637387cd6b35be1ee245d0e36676d864"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.LiteralFileNames","kind":"method","status":"implemented","sigHash":"594e2ccafcd2cf9632b61668d577c9b0222af908978b557b947511a5926f174d"}
  *
  * Go source:
  * func (p *ParsedCommandLine) LiteralFileNames() []string {
@@ -717,7 +717,7 @@ export function ParsedCommandLine_TypeAcquisition(receiver: GoPtr<ParsedCommandL
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.FileNames","kind":"method","status":"implemented","sigHash":"cd9d32c7052438a002442ec1bff08098a440b4deb99693869e1bd4de3ae2260d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.FileNames","kind":"method","status":"implemented","sigHash":"cb12a2e728917a6d5402f54ae955cecdf99a77641c042fd5036ba81e3da49a39"}
  *
  * Go source:
  * func (p *ParsedCommandLine) FileNames() []string {
@@ -826,7 +826,7 @@ export function ParsedCommandLine_GetConfigFileParsingDiagnostics(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.PossiblyMatchesFileName","kind":"method","status":"implemented","sigHash":"30f6e2c36d1ba5f2b9a620ba4cc4808ecb764b6c45f2bf9b7d31f1b93479b970"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.PossiblyMatchesFileName","kind":"method","status":"implemented","sigHash":"6a41fb1075455897c1dfde11d62ad41a695477b49862869b3b0339134c349aa5"}
  *
  * Go source:
  * func (p *ParsedCommandLine) PossiblyMatchesFileName(fileName string) bool {

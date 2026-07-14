@@ -46,7 +46,7 @@ const utf8Decoder: TextDecoder = new globalThis.TextDecoder();
 const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(globalThis.Uint8Array.from(b as number[]));
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoFileId","kind":"type","status":"implemented","sigHash":"43b939ce2e739f9570670812570b77390410c8392b6a9eea22564ef8663e9375"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoFileId","kind":"type","status":"implemented","sigHash":"0d9d45eed8c1fdbb0f6dab17363f4fa25eeb917e9ffd0f31fb91c7d00280adb6"}
  *
  * Go source:
  * BuildInfoFileId       int
@@ -54,7 +54,7 @@ const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(globalThi
 export type BuildInfoFileId = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoFileIdListId","kind":"type","status":"implemented","sigHash":"4ce98801bb49ddb565f8ab3e04790023a0fd3d2534116f9567610bbaba6418d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoFileIdListId","kind":"type","status":"implemented","sigHash":"e6c30c0cca5b10544a5c4b07e5c1c456a7222fa6acb6fb3cc9fe7009a481a061"}
  *
  * Go source:
  * BuildInfoFileIdListId int
@@ -62,7 +62,7 @@ export type BuildInfoFileId = int;
 export type BuildInfoFileIdListId = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoRoot","kind":"type","status":"implemented","sigHash":"c2c65d3d6f2fc73a23f8ef10f5ef2baff5151d28d203f9339c56f9e77f7874b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoRoot","kind":"type","status":"implemented","sigHash":"0d25d6feba367237bcbe58716ed0969ed10918d10030fcc6ce2d7a5aea9c6365"}
  *
  * Go source:
  * BuildInfoRoot struct {
@@ -166,7 +166,7 @@ export function BuildInfoRoot_UnmarshalJSON(receiver: GoPtr<BuildInfoRoot>, data
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::buildInfoFileInfoNoSignature","kind":"type","status":"implemented","sigHash":"bdc75f2ed5f6a8da118fc7e553b5e3e58a54c88d9d58803fc98db2ea0faddab1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::buildInfoFileInfoNoSignature","kind":"type","status":"implemented","sigHash":"0272a4885a788040d915270906e44a0f85250228eaefd217ae513314bacffb0f"}
  *
  * Go source:
  * buildInfoFileInfoNoSignature struct {
@@ -184,7 +184,7 @@ export interface buildInfoFileInfoNoSignature {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::buildInfoFileInfoWithSignature","kind":"type","status":"implemented","sigHash":"dd7c16998a3247d7fefc58c82f938d9c154c1a0d61e17732a1bb8a5f6520002b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::buildInfoFileInfoWithSignature","kind":"type","status":"implemented","sigHash":"896bc369792213e1afab4659e51bb107dee9f308c57de1a2447a8d7422c1da41"}
  *
  * Go source:
  * buildInfoFileInfoWithSignature struct {
@@ -202,7 +202,7 @@ export interface buildInfoFileInfoWithSignature {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoFileInfo","kind":"type","status":"implemented","sigHash":"a2ca7deb9e69021b0c381f518f57ce8b4a24d18bbae771489f3ae577b61acee5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoFileInfo","kind":"type","status":"implemented","sigHash":"b22ec3bb4237fbcf7e2f9c8363946bbb608d37339134b273a759aeee7ab5520d"}
  *
  * Go source:
  * BuildInfoFileInfo struct {
@@ -430,7 +430,7 @@ export function BuildInfoFileInfo_UnmarshalJSON(receiver: GoPtr<BuildInfoFileInf
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoReferenceMapEntry","kind":"type","status":"implemented","sigHash":"138b9440bcf3230afead2fcdd1ee91ffab9c5e31ba5b31f1c5714da8250a1c1e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoReferenceMapEntry","kind":"type","status":"implemented","sigHash":"a6d8307dde4d3c397c25247849403a7c6090486a5903a84e6cb2567d97f622c5"}
  *
  * Go source:
  * BuildInfoReferenceMapEntry struct {
@@ -489,7 +489,7 @@ export function BuildInfoReferenceMapEntry_UnmarshalJSON(receiver: GoPtr<BuildIn
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoDiagnostic","kind":"type","status":"implemented","sigHash":"f9d75c486731a00418a54c10b6452ad50d9114e06e72ec0ea66649ee02d7d8de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoDiagnostic","kind":"type","status":"implemented","sigHash":"e1120ef01a8bf630483c18ec5cace365e2121a4ca3f5c993573cbe859b7a1562"}
  *
  * Go source:
  * BuildInfoDiagnostic struct {
@@ -528,7 +528,7 @@ export interface BuildInfoDiagnostic {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoRepopulateInfo","kind":"type","status":"implemented","sigHash":"4b69c4ef4d7b11ea29cdff11e30aa97c2599ae873012e60c9a121b929e56d870"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoRepopulateInfo","kind":"type","status":"implemented","sigHash":"e44a59fcc5ba121161bddc29652fb3acfe61b3dbf0c4388dd59c7ad65f6926a6"}
  *
  * Go source:
  * BuildInfoRepopulateInfo struct {
@@ -546,7 +546,7 @@ export interface BuildInfoRepopulateInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoDiagnosticsOfFile","kind":"type","status":"implemented","sigHash":"a764df163f6be6639e204e09c2e624f2575dceb7ce56124e331a5400ff68c179"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoDiagnosticsOfFile","kind":"type","status":"implemented","sigHash":"0a7019fd6356082fe666db8dd9935f542f573e3b52187064aeae4f556c831432"}
  *
  * Go source:
  * BuildInfoDiagnosticsOfFile struct {
@@ -626,7 +626,7 @@ export function BuildInfoDiagnosticsOfFile_UnmarshalJSON(receiver: GoPtr<BuildIn
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoSemanticDiagnostic","kind":"type","status":"implemented","sigHash":"647298c9c32af58dbcbff6c100db6ce2814624f9108494a99b099764f23e544d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoSemanticDiagnostic","kind":"type","status":"implemented","sigHash":"7d7a210744268d7ef4690eec5591ac6e864a79ae909ae75ddb6677111986e04d"}
  *
  * Go source:
  * BuildInfoSemanticDiagnostic struct {
@@ -711,7 +711,7 @@ export function BuildInfoSemanticDiagnostic_UnmarshalJSON(receiver: GoPtr<BuildI
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoFilePendingEmit","kind":"type","status":"implemented","sigHash":"104c71acc3eed9f8ca13f3cca84cbfd597db35024746dc97573e61c92a523a7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoFilePendingEmit","kind":"type","status":"implemented","sigHash":"041721a272455dee4cbadd156a07fa61606b0b04c2637f3e09f5b737069d5800"}
  *
  * Go source:
  * BuildInfoFilePendingEmit struct {
@@ -818,7 +818,7 @@ export function BuildInfoFilePendingEmit_UnmarshalJSON(receiver: GoPtr<BuildInfo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoEmitSignature","kind":"type","status":"implemented","sigHash":"45cfb7e42e49f33d5cde207c6bf4e64f0d193c5755dc5d052fa1c21687df7401"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoEmitSignature","kind":"type","status":"implemented","sigHash":"3d14bb9f86cdccf302a3785ea0ca6564623ba1a0de06ec81bad51b9b06bd6507"}
  *
  * Go source:
  * BuildInfoEmitSignature struct {
@@ -1038,7 +1038,7 @@ export function BuildInfoEmitSignature_UnmarshalJSON(receiver: GoPtr<BuildInfoEm
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoResolvedRoot","kind":"type","status":"implemented","sigHash":"df3f2856e0487b3a20dd19c92a3210b03e434bf57204365d75d241f7c60db13b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoResolvedRoot","kind":"type","status":"implemented","sigHash":"9d198ab004e468bd820068f894632d0882b74026de22c643a6b4eefbe59b67c9"}
  *
  * Go source:
  * BuildInfoResolvedRoot struct {
@@ -1097,7 +1097,7 @@ export function BuildInfoResolvedRoot_UnmarshalJSON(receiver: GoPtr<BuildInfoRes
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfo","kind":"type","status":"implemented","sigHash":"3047e84be7615e3b3f127ac18cf18d6dd08664a62e46a19d7b153de078e72299"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfo","kind":"type","status":"implemented","sigHash":"2a2425430af296661daa77bd31907e2e64c681212546290417e2d9abe9699148"}
  *
  * Go source:
  * BuildInfo struct {
@@ -1349,7 +1349,7 @@ export function BuildInfo_GetBuildInfoRootInfoReader(receiver: GoPtr<BuildInfo>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoRootInfoReader","kind":"type","status":"implemented","sigHash":"ad64ba70f88796a0d1cafe928159cdb4bacfafd3ab7678042eb52d057427909e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoRootInfoReader","kind":"type","status":"implemented","sigHash":"81045cbd0106607b26c4c888758586367aca2868b354d22473c2791e65c4190f"}
  *
  * Go source:
  * BuildInfoRootInfoReader struct {

@@ -175,7 +175,7 @@ export function Checker_checkClassExpressionDeferred(receiver: GoPtr<Checker>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaringClass","kind":"method","status":"implemented","sigHash":"1019caa2db368cd6c0bc0cc7db250a478a73d05ecfc45d8a5418b61174d2e7c6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaringClass","kind":"method","status":"implemented","sigHash":"015659b276639180496b01aab0a59047b91a4f3809ae957f1450cb83250a7422"}
  *
  * Go source:
  * func (c *Checker) getDeclaringClass(prop *ast.Symbol) *Type {
@@ -193,7 +193,7 @@ export function Checker_getDeclaringClass(receiver: GoPtr<Checker>, prop: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isValidOverrideOf","kind":"method","status":"implemented","sigHash":"427f7bb664f409a417a4fb3a0b3f5c09aeef0153961bb90f3ef0709e6e4fe653"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isValidOverrideOf","kind":"method","status":"implemented","sigHash":"5abcbba5336dd09ba01607ef97598283104a2d3654075b77b1441fce9d897505"}
  *
  * Go source:
  * func (c *Checker) isValidOverrideOf(sourceProp *ast.Symbol, targetProp *ast.Symbol) bool {
@@ -284,7 +284,7 @@ export function Checker_forEachEnclosingClass(receiver: GoPtr<Checker>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isClassDerivedFromDeclaringClasses","kind":"method","status":"implemented","sigHash":"e1dab0bade28a4036019033395962abbadab5bf022cfc8e554cd9f3da902d26b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isClassDerivedFromDeclaringClasses","kind":"method","status":"implemented","sigHash":"0c504b0a20639313fa928b99aed338ca094d0b408720ebe0a9fc98e6445f7086"}
  *
  * Go source:
  * func (c *Checker) isClassDerivedFromDeclaringClasses(checkClass *Type, prop *ast.Symbol, writing bool) bool {
@@ -355,7 +355,7 @@ export function Checker_checkSpreadPropOverrides(receiver: GoPtr<Checker>, t: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isThislessInterface","kind":"method","status":"implemented","sigHash":"0183ae3f5bc64c1e1ce6818eadc2ead8a7c1dd1a454b2171222710b82181cc36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isThislessInterface","kind":"method","status":"implemented","sigHash":"a64366bfd507cd60ccd42d96ed4aea38d33d845d6c2f1bd2ab6b49d195109317"}
  *
  * Go source:
  * func (c *Checker) isThislessInterface(symbol *ast.Symbol) bool {

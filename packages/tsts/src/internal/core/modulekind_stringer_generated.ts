@@ -64,7 +64,7 @@ export function _(): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::constGroup::_ModuleKind_name_0+_ModuleKind_name_1+_ModuleKind_name_2","kind":"constGroup","status":"implemented","sigHash":"56c7707ab8862bc45ebb0154f450d1d645e43bb9961428ebbe1dcc1ffb13fd40"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::constGroup::_ModuleKind_name_0+_ModuleKind_name_1+_ModuleKind_name_2","kind":"constGroup","status":"implemented","sigHash":"f0793599610ad4575c9a5ab6fbc06297d46518afc14b01743f04fa6ca5c2e89f"}
  *
  * Go source:
  * const (
@@ -78,7 +78,7 @@ export const _ModuleKind_name_1: string = "ESNextNode16Node18Node20";
 export const _ModuleKind_name_2: string = "NodeNextPreserve";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::varGroup::_ModuleKind_index_0+_ModuleKind_index_1+_ModuleKind_index_2","kind":"varGroup","status":"implemented","sigHash":"35366ea9281031227a960aa4cea4c9efe6645aa17ef400a181490950471f184f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::varGroup::_ModuleKind_index_0+_ModuleKind_index_1+_ModuleKind_index_2","kind":"varGroup","status":"implemented","sigHash":"43f8bc1b4a3a2d4858a3c4208868f3943fbbe0ca92ece4a7376608869e6fbb7c"}
  *
  * Go source:
  * var (

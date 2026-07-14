@@ -4,7 +4,7 @@ import type { Context } from "../../go/context.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::Semaphore","kind":"type","status":"implemented","sigHash":"3af1dcc6419e253094c19a125f53a81e779ace89ff7548cc097e592a4665a73a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::Semaphore","kind":"type","status":"implemented","sigHash":"7d84dbc2c82ed139c89fa311534e96a4ac2164aa77b08627ff711bfb7909d51c"}
  *
  * Go source:
  * Semaphore interface {
@@ -18,7 +18,7 @@ export interface Semaphore {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"88b04eb223188f75c5a5d9706ccd88872a82a587d99fcdc4f6893480867b1759"}
  *
  * Go source:
  * var _ Semaphore = UnlimitedSemaphore{}
@@ -26,7 +26,7 @@ export interface Semaphore {
 export let __c5a93a22_0: GoInterface<Semaphore> = UnlimitedSemaphore_as_Semaphore({});
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::UnlimitedSemaphore","kind":"type","status":"implemented","sigHash":"eccd0e32b4c71792b14c837a176a34fde532f11d1c1de7a6bc8d6e5ecd893ad6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::UnlimitedSemaphore","kind":"type","status":"implemented","sigHash":"9a5249372744aeb917534fe31e743753d15baf0a7b9261dd414c68096c346c9a"}
  *
  * Go source:
  * UnlimitedSemaphore struct{}
@@ -67,7 +67,7 @@ export function UnlimitedSemaphore_TryAcquire(receiver: UnlimitedSemaphore, ctx:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"88b04eb223188f75c5a5d9706ccd88872a82a587d99fcdc4f6893480867b1759"}
  *
  * Go source:
  * var _ Semaphore = (*LimitedSemaphore)(nil)
@@ -75,7 +75,7 @@ export function UnlimitedSemaphore_TryAcquire(receiver: UnlimitedSemaphore, ctx:
 export let ___2_1cad8911_0: GoInterface<Semaphore> = LimitedSemaphore_as_Semaphore(undefined);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::LimitedSemaphore","kind":"type","status":"implemented","sigHash":"6f0f638a52f144421c3246c9abcfb7d73564bb66fef1678b506f56eacc4422bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::LimitedSemaphore","kind":"type","status":"implemented","sigHash":"1c887baa2361c1b7920dc8e0bf6029187c7675f621d3a761bea7670a48b7f195"}
  *
  * Go source:
  * LimitedSemaphore struct {

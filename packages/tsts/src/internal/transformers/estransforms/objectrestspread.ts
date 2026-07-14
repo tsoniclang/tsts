@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_Name, Node_Clone, Node_SubtreeFacts } from "../../ast/spine.js";
 import type { TextRange } from "../../core/text.js";
@@ -28,7 +28,7 @@ import { NodeVisitor_VisitNode, NodeVisitor_VisitEachChild, NodeVisitor_VisitNod
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::objectRestSpreadTransformer","kind":"type","status":"implemented","sigHash":"bbe05073778a62bda93186b24f160901f4fa35f78b8e08de61bd627c1c896fff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::objectRestSpreadTransformer","kind":"type","status":"implemented","sigHash":"90b5de35b19b85c86c591b1f38d85961c5b02bbd88058844381230313cabdf4a"}
  *
  * Go source:
  * objectRestSpreadTransformer struct {
@@ -105,7 +105,7 @@ export interface objectRestSpreadTransformer {
  * }
  */
 export function objectRestSpreadTransformer_visit(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  if ((Node_SubtreeFacts(node) & SubtreeContainsESObjectRestOrSpread) === 0 && receiver!.parametersWithPrecedingObjectRestOrSpread === undefined) {
+  if ((Node_SubtreeFacts(node) & SubtreeContainsESObjectRestOrSpread) === 0 && GoMapIsNil(receiver!.parametersWithPrecedingObjectRestOrSpread)) {
     return node;
   }
   const expressionResultIsUnused = receiver!.expressionResultIsUnused;
@@ -218,7 +218,7 @@ export function objectRestSpreadTransformer_visitParameter(receiver: GoPtr<objec
   const astFactory = printerFactory!.__tsgoEmbedded0!;
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   const nodeAsNode = node as unknown as GoPtr<Node>;
-  if (receiver!.parametersWithPrecedingObjectRestOrSpread !== undefined) {
+  if (!GoMapIsNil(receiver!.parametersWithPrecedingObjectRestOrSpread)) {
     if (receiver!.parametersWithPrecedingObjectRestOrSpread.has(nodeAsNode)) {
       let name = Node_Name(nodeAsNode);
       if (IsBindingPattern(name as unknown as GoPtr<Node>)) {
@@ -268,10 +268,10 @@ export function objectRestSpreadTransformer_visitParameter(receiver: GoPtr<objec
  * }
  */
 export function objectRestSpreadTransformer_collectParametersWithPrecedingObjectRestOrSpread(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }> {
-  let result: GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }> = undefined as unknown as GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>;
+  let result = GoNilMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>();
   for (const parameter of Node_Parameters(node) ?? []) {
     const paramNode = parameter as unknown as GoPtr<Node>;
-    if (result !== undefined) {
+    if (!GoMapIsNil(result)) {
       result.set(paramNode, {});
     } else if ((Node_SubtreeFacts(paramNode) & SubtreeContainsObjectRestOrSpread) !== 0) {
       result = new Map<GoPtr<Node>, { readonly __tsgoEmpty?: never }>();
@@ -281,7 +281,7 @@ export function objectRestSpreadTransformer_collectParametersWithPrecedingObject
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::oldParamScope","kind":"type","status":"implemented","sigHash":"9b4c34839620e59d8cc882160f7d7cac4ece220cfc51b56f63bf2a50cb6a75d8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::oldParamScope","kind":"type","status":"implemented","sigHash":"4136d1eac74cc0ec38c279f6295c4e910ac899d1ce6721e2ef7b90e6e3bbe21e"}
  *
  * Go source:
  * oldParamScope map[*ast.Node]struct{}
@@ -1229,7 +1229,7 @@ export function objectRestSpreadTransformer_visitObjectLiteralExpression(receive
   }
   let objects = objectRestSpreadTransformer_chunkObjectLiteralElements(receiver, node!.Properties);
   if (objects.length > 0 && objects[0]!.Kind !== KindObjectLiteralExpression) {
-    objects = [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, undefined as unknown as GoSlice<GoPtr<Node>>) as unknown as GoPtr<never>, false), ...objects];
+    objects = [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, GoNilSlice<GoPtr<Node>>()) as unknown as GoPtr<never>, false), ...objects];
   }
   let expression = objects[0];
   if (objects.length > 1) {
@@ -1328,7 +1328,7 @@ export function newObjectRestSpreadTransformer(opts: GoPtr<TransformOptions>): G
     compilerOptions: opts!.CompilerOptions,
     inExportedVariableStatement: false,
     expressionResultIsUnused: false,
-    parametersWithPrecedingObjectRestOrSpread: undefined as unknown as GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>,
+    parametersWithPrecedingObjectRestOrSpread: GoNilMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>(),
   };
   return Transformer_NewTransformer(embedded, (node) => objectRestSpreadTransformer_visit(tx, node), opts!.Context);
 }

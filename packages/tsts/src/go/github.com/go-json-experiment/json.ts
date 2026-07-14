@@ -63,7 +63,7 @@ export function MarshalWrite(writer: GoInterface<Writer>, value: GoInterface<unk
 export function Unmarshal(data: GoSlice<byte>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
   void opts;
   try {
-    assignDecoded(out, JSON.parse(textDecoder.decode(Uint8Array.from(data as Array<number>))));
+    assignDecoded(out, decodeJSONText(data));
     return undefined;
   } catch (error) {
     return toError(error);
@@ -82,13 +82,20 @@ export function UnmarshalDecode(decoder: GoPtr<Decoder>, out: GoInterface<unknow
   if (err !== undefined) {
     return err;
   }
-  assignDecoded(out, value);
-  return undefined;
+  try {
+    assignDecoded(out, decodeJSONText(value));
+    return undefined;
+  } catch (error) {
+    return toError(error);
+  }
 }
 
 export function UnmarshalRead(reader: GoInterface<Reader>, out: GoInterface<unknown>, ...opts: Array<GoInterface<Options>>): GoError {
   return UnmarshalDecode(NewDecoder(reader!), out, ...opts);
 }
+
+const decodeJSONText = (value: GoSlice<byte>): unknown =>
+  JSON.parse(textDecoder.decode(Uint8Array.from(value)));
 
 const stringify = (value: GoInterface<unknown>, opts: Array<GoInterface<Options>>): string => {
   const indent = opts.map(optionStorage).find((option) => option.name === "WithIndent")?.value;

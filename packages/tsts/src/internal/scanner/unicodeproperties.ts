@@ -3,7 +3,7 @@ import { NewSetFromItems } from "../collections/set.js";
 import type { Set } from "../collections/set.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::nonBinaryUnicodeProperties","kind":"varGroup","status":"implemented","sigHash":"5b11bb8921a496b5644a19bdebdf03711d65b16c9486cd010b8ab699ba53be5f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::nonBinaryUnicodeProperties","kind":"varGroup","status":"implemented","sigHash":"06e78b17011ce1b540055056bbcfdba9fa7f66f4010b67067638e8b433a7e64c"}
  *
  * Go source:
  * var nonBinaryUnicodeProperties = map[string]string{
@@ -25,7 +25,7 @@ export let nonBinaryUnicodeProperties: GoMap<string, string> = new Map<string, s
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::binaryUnicodeProperties","kind":"varGroup","status":"implemented","sigHash":"bb86e7b669417f64ef941e542566cf39218f5ba4f0da036611a8f92ba55ee558"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::binaryUnicodeProperties","kind":"varGroup","status":"implemented","sigHash":"64c0b022261d2ea5a60350ade6f74083a4c1453bd089a43ddd6e9f3aa9e14ac3"}
  *
  * Go source:
  * var binaryUnicodeProperties = collections.NewSetFromItems(
@@ -100,7 +100,7 @@ export let binaryUnicodeProperties: GoPtr<Set<string>> = NewSetFromItems<string>
 );
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::binaryUnicodePropertiesOfStrings","kind":"varGroup","status":"implemented","sigHash":"0516adf1efcb505a94c7418bb2b78cce189f73beb6784879829152f72970cb9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::binaryUnicodePropertiesOfStrings","kind":"varGroup","status":"implemented","sigHash":"3528b8c51519b88836e7914c1ccb01130280cbdf055f8c488c409594c41da00e"}
  *
  * Go source:
  * var binaryUnicodePropertiesOfStrings = collections.NewSetFromItems(
@@ -117,7 +117,7 @@ export let binaryUnicodePropertiesOfStrings: GoPtr<Set<string>> = NewSetFromItem
 );
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::scriptValues","kind":"varGroup","status":"implemented","sigHash":"a98be260db4bd526dc49858c20ff562d012401bc2ddf50fd0fc0c6caeac51998"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::scriptValues","kind":"varGroup","status":"implemented","sigHash":"22d6559554fa3674cc2e990c0a2f9ff2851848d06fa31601386f8aee3bb38578"}
  *
  * Go source:
  * var scriptValues = collections.NewSetFromItems(
@@ -276,7 +276,7 @@ export let scriptValues: GoPtr<Set<string>> = NewSetFromItems<string>(
 );
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::valuesOfNonBinaryUnicodeProperties","kind":"varGroup","status":"implemented","sigHash":"4a75a3b77bab206057a94b3e308fc2a66c877ad9072a6ea38d074a2d5cddce28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/unicodeproperties.go::varGroup::valuesOfNonBinaryUnicodeProperties","kind":"varGroup","status":"implemented","sigHash":"f734e9ba05bf41bc5057326ee8e5dc4c3673857fdb6906ae7454104fb6b22740"}
  *
  * Go source:
  * var valuesOfNonBinaryUnicodeProperties = map[string]*collections.Set[string]{

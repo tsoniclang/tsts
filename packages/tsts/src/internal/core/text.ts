@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/text.go::type::TextPos","kind":"type","status":"implemented","sigHash":"32169beeed0300bd857c14e2364f116101d40906268c86fd00602a0bfe522acf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/text.go::type::TextPos","kind":"type","status":"implemented","sigHash":"9ba11907f874e39d5ce16b8669b871bec3eccdaff1261066f48d23cd98b937f7"}
  *
  * Go source:
  * TextPos int32
@@ -9,7 +9,7 @@ import type { bool, int } from "../../go/scalars.js";
 export type TextPos = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/text.go::type::TextRange","kind":"type","status":"implemented","sigHash":"20df3500cfc1becdb78986bc41b0917a155bab35fb0260afe1c1ee2b814a7741"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/text.go::type::TextRange","kind":"type","status":"implemented","sigHash":"3b4a5663698cdc06ab549ca084111fee530eceece03d462868d2f82268a45a7c"}
  *
  * Go source:
  * TextRange struct {
@@ -183,7 +183,7 @@ export function TextRange_Overlaps(receiver: TextRange, t2: TextRange): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/text.go::method::TextRange.Intersects","kind":"method","status":"implemented","sigHash":"7a79448b5e75f4019be1e5ecfebaf2eec7c01d2f56c4214d064d5ec91e5d52cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/text.go::method::TextRange.Intersects","kind":"method","status":"implemented","sigHash":"1ebb5bd9c1f79a6044117448cd190c80010d56fc4163812fd4bc1c1f2c70ead4"}
  *
  * Go source:
  * func (t TextRange) Intersects(t2 TextRange) bool {

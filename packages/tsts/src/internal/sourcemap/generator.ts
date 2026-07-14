@@ -19,7 +19,7 @@ const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
 const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(Uint8Array.from(b));
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::SourceIndex","kind":"type","status":"implemented","sigHash":"3f30fda3ce8b05b5e5e9e211ffbe8fb3d5491183d629c35529fd2131d0658f4c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::SourceIndex","kind":"type","status":"implemented","sigHash":"bcdc04b218231d8992b21da3adb809fc7dd7c45fdb47a77a083bdb9986622a31"}
  *
  * Go source:
  * SourceIndex int
@@ -27,7 +27,7 @@ const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(Uint8Arra
 export type SourceIndex = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::NameIndex","kind":"type","status":"implemented","sigHash":"7d45245cdf16881c524927f8167b7f78d85d7bd4c4a5a194d5a43951dbc58909"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::NameIndex","kind":"type","status":"implemented","sigHash":"ec2d94acdf03f641d9321f908d82da9aa197f56f8ca3fa553d8b315a06024679"}
  *
  * Go source:
  * NameIndex   int
@@ -35,7 +35,7 @@ export type SourceIndex = int;
 export type NameIndex = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::constGroup::sourceIndexNotSet+nameIndexNotSet+notSet+notSetUTF16","kind":"constGroup","status":"implemented","sigHash":"1251c3416de0b5742808be9c90ae5a85c7ca97ca86f3678eb9b37e964fca4069"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::constGroup::sourceIndexNotSet+nameIndexNotSet+notSet+notSetUTF16","kind":"constGroup","status":"implemented","sigHash":"b6dae05ec25d4c72a072d3f1f53b21c71ae8be74a4038e9a6cd32ca35dea64f5"}
  *
  * Go source:
  * const (
@@ -51,7 +51,7 @@ export const notSet: int = -1;
 export const notSetUTF16: UTF16Offset = -1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::Generator","kind":"type","status":"implemented","sigHash":"610a92a8c4e5c4389263ff910a2867cc82668ceca75a12d85910dda54280fcf6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::Generator","kind":"type","status":"implemented","sigHash":"5bf3a963be1b1845dec38ef31975804319106f42873a50c435aedf8eef8ebd82"}
  *
  * Go source:
  * Generator struct {
@@ -115,7 +115,7 @@ export interface Generator {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::RawSourceMap","kind":"type","status":"implemented","sigHash":"d434ff395ac342979724943a02f02ef450750c76ddc3367d71323f60d4cce023"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::RawSourceMap","kind":"type","status":"implemented","sigHash":"d7eeacd8719eefd83b0802cd00cbb316fcbfc4020d76158135c318e27e8d7e94"}
  *
  * Go source:
  * RawSourceMap struct {
@@ -222,7 +222,7 @@ export function Generator_Sources(receiver: GoPtr<Generator>): GoSlice<string> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddSource","kind":"method","status":"implemented","sigHash":"417b5784016e1e4fcd765868206db8d328849bafbbfb2d3bbc3ac54c6103c7cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddSource","kind":"method","status":"implemented","sigHash":"4273696a037b1cea201eeb21023741cbf91e1d0008f40327a6a5afeaeac19cb4"}
  *
  * Go source:
  * func (gen *Generator) AddSource(fileName string) SourceIndex {
@@ -272,7 +272,7 @@ export function Generator_AddSource(receiver: GoPtr<Generator>, fileName: string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.SetSourceContent","kind":"method","status":"implemented","sigHash":"fffd2caf50955aa927a6b85e869fa9e47eb6d3e0092e093ee55d77654a9196f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.SetSourceContent","kind":"method","status":"implemented","sigHash":"99e2be1f3bc24fa23999e01e19d01a08bc4340cc1dcdfb96f57f39cc70468061"}
  *
  * Go source:
  * func (gen *Generator) SetSourceContent(sourceIndex SourceIndex, content string) error {
@@ -299,7 +299,7 @@ export function Generator_SetSourceContent(receiver: GoPtr<Generator>, sourceInd
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddName","kind":"method","status":"implemented","sigHash":"339f9a5627f06ea5a98956cd6e3a1bc5e54e56ff2cbf315bec53c51d425596e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddName","kind":"method","status":"implemented","sigHash":"300cc686e00adef6c61955c84f92b00029bfa7424b140b47e0286b9d37d2b972"}
  *
  * Go source:
  * func (gen *Generator) AddName(name string) NameIndex {
@@ -634,7 +634,7 @@ export function Generator_addMapping(receiver: GoPtr<Generator>, generatedLine: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddGeneratedMapping","kind":"method","status":"implemented","sigHash":"014b2bccae8aa85f405ebc9c171ec2fdd900568cbba9676f78c2e594b56c131d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddGeneratedMapping","kind":"method","status":"implemented","sigHash":"c43cb4c07b8f73dc6c2c3dddb8afeae417d67dd7c1123b2d0b2ea73d69549101"}
  *
  * Go source:
  * func (gen *Generator) AddGeneratedMapping(generatedLine int, generatedCharacter core.UTF16Offset) error {
@@ -661,7 +661,7 @@ export function Generator_AddGeneratedMapping(receiver: GoPtr<Generator>, genera
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddSourceMapping","kind":"method","status":"implemented","sigHash":"74956c99b00db571bae5520ae494b5cb1e377e85f50750937b40b53aa336200e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddSourceMapping","kind":"method","status":"implemented","sigHash":"8b1f361184496ee1c2ef738d9f993e5c2b188e54f34541c4f621fa52f6f65bac"}
  *
  * Go source:
  * func (gen *Generator) AddSourceMapping(generatedLine int, generatedCharacter core.UTF16Offset, sourceIndex SourceIndex, sourceLine int, sourceCharacter core.UTF16Offset) error {
@@ -706,7 +706,7 @@ export function Generator_AddSourceMapping(receiver: GoPtr<Generator>, generated
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddNamedSourceMapping","kind":"method","status":"implemented","sigHash":"03cf66678c21b122ef49685cf7951be97dbda1a3ae39807d7af72e384ee053a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.AddNamedSourceMapping","kind":"method","status":"implemented","sigHash":"06a06653b52508fdae919e449152299c01dfc8bdc83bf4204e9598e1932adf6f"}
  *
  * Go source:
  * func (gen *Generator) AddNamedSourceMapping(generatedLine int, generatedCharacter core.UTF16Offset, sourceIndex SourceIndex, sourceLine int, sourceCharacter core.UTF16Offset, nameIndex NameIndex) error {
@@ -757,7 +757,7 @@ export function Generator_AddNamedSourceMapping(receiver: GoPtr<Generator>, gene
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.RawSourceMap","kind":"method","status":"implemented","sigHash":"11347078b73a243c6b9d683e3a4b3f662e6bf0dc9acd1e5a89179f3889b21400"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.RawSourceMap","kind":"method","status":"implemented","sigHash":"565e6428d7acb7a42c054989235bb1a8b4c22dae0dabd3aff720e859742a0618"}
  *
  * Go source:
  * func (gen *Generator) RawSourceMap() *RawSourceMap {
@@ -827,7 +827,7 @@ export function Generator_bytes(receiver: GoPtr<Generator>): GoSlice<byte> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.String","kind":"method","status":"implemented","sigHash":"7890530d80f1a26633f9c5e35916b4e21cd2703f10ea8d65e2331f79af290a9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.String","kind":"method","status":"implemented","sigHash":"5e241e8c0b68c66ac8a6a1fdf047ac3d408c2bd00baff4d5e94ff2dc0b34ae7e"}
  *
  * Go source:
  * func (gen *Generator) String() string {

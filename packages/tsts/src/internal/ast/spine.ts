@@ -53,7 +53,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
 // Re-export the @tsgo-unit spine units below.
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Visitor","kind":"type","status":"implemented","sigHash":"dd7869ba97de380722453246fae6df0cc0fef854aefc29795374493d0e8ef23c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Visitor","kind":"type","status":"implemented","sigHash":"34315412c563b2ca587e80bf5a4db9916d69e3fc67193ad8594828a91464a464"}
  *
  * Go source:
  * type Visitor func(*Node) bool
@@ -137,7 +137,7 @@ export function visitModifiers(v: Visitor, modifiers: GoPtr<ModifierList>): bool
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeFactoryHooks","kind":"type","status":"implemented","sigHash":"c19e715861a55c48c6334471ef372544e01b33173c699f7d4c23340ef38721bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeFactoryHooks","kind":"type","status":"implemented","sigHash":"0db58aff774f90948595ba5bc9d077bba2b842c0591099c1789bc4d2cef2b4a9"}
  *
  * Go source:
  * NodeFactoryHooks struct {
@@ -153,7 +153,7 @@ export interface NodeFactoryHooks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeFactoryCoercible","kind":"type","status":"implemented","sigHash":"d5f8fe061d97cfad5cd0687354c63df9205369b805dc72b8ba7151a98cb0f88e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeFactoryCoercible","kind":"type","status":"implemented","sigHash":"14aede23310cdca6524e47252acceb75dade09ff0fa179ab34eaa2f91c53ca4b"}
  *
  * Go source:
  * NodeFactoryCoercible interface {
@@ -165,7 +165,7 @@ export interface NodeFactoryCoercible {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeList","kind":"type","status":"implemented","sigHash":"95375bfc85379bc18d3fe518dc4aeaf4354df9f076b9ac02ab2d12f001888d64"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeList","kind":"type","status":"implemented","sigHash":"c8e49635f756c63779a06db63e3f0f54e80fd180acd91a2781abc4f267a193d2"}
  *
  * Go source:
  * NodeList struct {
@@ -179,7 +179,7 @@ export interface NodeList {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::ModifierList","kind":"type","status":"implemented","sigHash":"80b250fc51b865f7edb37240022a8f9449ea9a772460fe5dde59c0046e578e80"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::ModifierList","kind":"type","status":"implemented","sigHash":"1615617419d57fd30e4d48c85a718e14c6f60fe1c19a66a9ddb54db179a28b2c"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go AST data contract exposes the embedded node list through direct structural heritage rather than reproducing Go memory layout.","goSignatureHash":"801d71ca5f81909ffecd783ac952f881eac7d7ece9963479a5c29ae4b102e117","tsSignatureHash":"e24aefcfaf9c6ea36205b7e61369ba94c3de259b4cb914dc21be41369297ce13"}
  *
  * Go source:
@@ -216,7 +216,7 @@ class ModifierListValue extends NodeListValue implements ModifierList {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Node","kind":"type","status":"implemented","sigHash":"28b387d29ec29d41da8f43c3390674924062653fc66f4da7a1b048db268c822c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Node","kind":"type","status":"implemented","sigHash":"962cd77e438108cf12139aa50d5ba340f441310f29c98c75dcacba48acb4938e"}
  *
  * Go source:
  * Node struct {
@@ -238,7 +238,7 @@ export interface Node {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::nodeData","kind":"type","status":"implemented","sigHash":"917909b9dde382933bf1d3f2d7a85eaed5809b3c52e9e455d41c7f90de91fb0f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::nodeData","kind":"type","status":"implemented","sigHash":"69bea16559e2295ce35ca04e8d779ab24e8ef282ab94a47e5e94979cfd146b60"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic interface dispatch without a side table or wrapper object.","goSignatureHash":"d1153a21cb20405e3a743104341a9037528d9489c47028a21e97feb530ceb6dd","tsSignatureHash":"adc98a3302beb31a8f20a173b7131846fc63d98a446364328bd878910dec38a7"}
  *
  * Go source:
@@ -295,7 +295,7 @@ export interface nodeData extends GoInterfaceValue<unknown> {
 export type NodeIter = Seq<GoPtr<Node>>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeDefault","kind":"type","status":"implemented","sigHash":"98473325b5fb802ab1d83d800388f663291e457c1b9fb2fd0ef00e4092d4e71b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeDefault","kind":"type","status":"implemented","sigHash":"d2c96dffc07b3667b5e93b90d403b6775b068015ee38e964384c74f8e7ff948e"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go schema exposes the embedded Node contract through structural heritage so AST fields stay schema-shaped rather than mirroring Go memory layout.","goSignatureHash":"f74264dc4d60bb2acefb05fc1a3c58cb56332e151653871bcf5e791c00d3413b","tsSignatureHash":"8009b0837041828b004aa7ce1a48fc7942cb14a32e9f9650eb594047f5125df5"}
  *
  * Go source:
@@ -307,7 +307,7 @@ export interface NodeDefault extends Node {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeBase","kind":"type","status":"implemented","sigHash":"fd0a1f2632da19f7e695534a077c4fd53616e79189f0fff8c044120d40b44ab2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeBase","kind":"type","status":"implemented","sigHash":"435e1110e9632116114ecc9aea6efa583d93407ecb6b824bf50134493352ce9f"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go schema exposes the embedded default node contract through structural heritage rather than reproducing Go memory layout.","goSignatureHash":"3f4f9b424d8be8c3a2d8e8f91596131575ad0e5d929ba0ead3ab9a5f44852800","tsSignatureHash":"d026e59c1db8ec434923caa3a9781fe2d3df8dad06ebb0e68ab8c5bf4403dffc"}
  *
  * Go source:

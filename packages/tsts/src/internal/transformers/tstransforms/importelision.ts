@@ -36,7 +36,7 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 
 import type { GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::type::ImportElisionTransformer","kind":"type","status":"implemented","sigHash":"14dbd314bb170c0be6d4a2cff3fc73755b8bdac3dc81bfb877a24bcec60ea804"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::type::ImportElisionTransformer","kind":"type","status":"implemented","sigHash":"8f403613429078b6e07765c1b176cbb4bdb3238c22b9f630d78f4eac74b994f5"}
  *
  * Go source:
  * ImportElisionTransformer struct {

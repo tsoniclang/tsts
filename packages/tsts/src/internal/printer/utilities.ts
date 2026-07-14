@@ -127,7 +127,7 @@ export const byteSlice: (text: string, start: int, end?: int) => string = String
 const decodeRuneInStringAt: (text: string, index: int) => [GoRune, int] = DecodeRuneInStringAt;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::type::getLiteralTextFlags","kind":"type","status":"implemented","sigHash":"dd5ef391e67032e911741fa2b5a893b18cdeda34ef28edcdc7be3ee3f98a83ee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::type::getLiteralTextFlags","kind":"type","status":"implemented","sigHash":"fd241e9091d827869df9118dcbbf9c87f924afcc23e8bb011f1f273eadc26aa7"}
  *
  * Go source:
  * getLiteralTextFlags int
@@ -135,7 +135,7 @@ const decodeRuneInStringAt: (text: string, index: int) => [GoRune, int] = Decode
 export type getLiteralTextFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::constGroup::getLiteralTextFlagsNone+getLiteralTextFlagsNeverAsciiEscape+getLiteralTextFlagsJsxAttributeEscape+getLiteralTextFlagsTerminateUnterminatedLiterals+getLiteralTextFlagsAllowNumericSeparator","kind":"constGroup","status":"implemented","sigHash":"159c57af9b4fb76cf394a9ff05a9c2fe39907fab3c9392f26d4141936b4f3f7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::constGroup::getLiteralTextFlagsNone+getLiteralTextFlagsNeverAsciiEscape+getLiteralTextFlagsJsxAttributeEscape+getLiteralTextFlagsTerminateUnterminatedLiterals+getLiteralTextFlagsAllowNumericSeparator","kind":"constGroup","status":"implemented","sigHash":"ac12afe5f6e1df05ba53cafca1537c399b0b0677e960cf9c32e666bb6cc45fbb"}
  *
  * Go source:
  * const (
@@ -153,7 +153,7 @@ export const getLiteralTextFlagsTerminateUnterminatedLiterals: getLiteralTextFla
 export const getLiteralTextFlagsAllowNumericSeparator: getLiteralTextFlags = 1 << 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::type::QuoteChar","kind":"type","status":"implemented","sigHash":"f7429f2bb13619055d667a61bea5a72a80aed51a0c2b5cd77a5696a380f2fa5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::type::QuoteChar","kind":"type","status":"implemented","sigHash":"14e60fd039b02997ad0f16ca5ab7fb7ed8753a7519c6cf0a680d2a64b63e1c80"}
  *
  * Go source:
  * QuoteChar rune
@@ -161,7 +161,7 @@ export const getLiteralTextFlagsAllowNumericSeparator: getLiteralTextFlags = 1 <
 export type QuoteChar = GoRune;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::constGroup::QuoteCharSingleQuote+QuoteCharDoubleQuote+QuoteCharBacktick","kind":"constGroup","status":"implemented","sigHash":"ccb54a9db37196fc86c271c06a7657b69a6e7bd437ad9d360b9efff86d10a965"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::constGroup::QuoteCharSingleQuote+QuoteCharDoubleQuote+QuoteCharBacktick","kind":"constGroup","status":"implemented","sigHash":"d27e8343bc4f6f247bc2f8bd8c39a73f9da889d93d1898fab953432ed001519c"}
  *
  * Go source:
  * const (
@@ -175,7 +175,7 @@ export const QuoteCharDoubleQuote: QuoteChar = 0x22; // '"'
 export const QuoteCharBacktick: QuoteChar = 0x60; // '`'
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::varGroup::jsxEscapedCharsMap","kind":"varGroup","status":"implemented","sigHash":"62dc9b5888913cc630fc4ac903c60e93ede3ccc04027877331039c3b9968adc7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::varGroup::jsxEscapedCharsMap","kind":"varGroup","status":"implemented","sigHash":"eed2b951187978fcd8cbdb49afe50fdd1a1023db4d6e8ac6b72f574a1285989a"}
  *
  * Go source:
  * var jsxEscapedCharsMap = map[rune]string{
@@ -189,7 +189,7 @@ export let jsxEscapedCharsMap: GoMap<GoRune, string> = new globalThis.Map<GoRune
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::varGroup::escapedCharsMap","kind":"varGroup","status":"implemented","sigHash":"ae486ec67093ca226af539dc9b1aeec0fcfc32885c9226cc17a66893169c9cbc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::varGroup::escapedCharsMap","kind":"varGroup","status":"implemented","sigHash":"26868d7237f036e9bc5ef83df7d2cae401da4e8ca7f619f66dccf655808ff922"}
  *
  * Go source:
  * var escapedCharsMap = map[rune]string{
@@ -267,7 +267,7 @@ export function encodeUtf16EscapeSequence(b: GoPtr<Builder>, charCode: GoRune): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::escapeStringWorker","kind":"func","status":"implemented","sigHash":"eb2b5c4a2b880d584c5ce2b0dde3e2aea9fe3514277db53d2c3a9b0bec5c0d15"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::escapeStringWorker","kind":"func","status":"implemented","sigHash":"ec18db2159ed7894774749feb493ef1b928a9d1634df004c47e849ae6b90d8cc"}
  *
  * Go source:
  * func escapeStringWorker(s string, quoteChar QuoteChar, flags getLiteralTextFlags, b *strings.Builder) {
@@ -1918,7 +1918,7 @@ export function matchQuotedString(text: string, pos: GoRef<int>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsRecognizedTripleSlashComment","kind":"func","status":"implemented","sigHash":"cdbfa7b5df6917ee38733aa0cf2b0e0d8ce34c1266cad81feb7bfc8be6198979"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsRecognizedTripleSlashComment","kind":"func","status":"implemented","sigHash":"c64b6209cfc2aba29047e116498caadf64154539466ce9167fe5088e82cd79e5"}
  *
  * Go source:
  * func IsRecognizedTripleSlashComment(text string, commentRange ast.CommentRange) bool {
@@ -2122,7 +2122,7 @@ export function calculateIndent(text: string, pos: int, end: int): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::type::lineCharacterCache","kind":"type","status":"implemented","sigHash":"67a43002b0c756f658d971a9fc787c0a2d05db7169b8b9910f6305254f6ef1c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::type::lineCharacterCache","kind":"type","status":"implemented","sigHash":"210459b189681b315414052e3e6ac10a270328d5856d30c89e160c5c1a401a7e"}
  *
  * Go source:
  * lineCharacterCache struct {
@@ -2166,7 +2166,7 @@ export function newLineCharacterCache(source: GoInterface<Source>): GoPtr<lineCh
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::method::lineCharacterCache.getLineAndCharacter","kind":"method","status":"implemented","sigHash":"6250c3321fe67359c2d3eb790514455a992d22b4010fc53d07d21b97964c9925"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::method::lineCharacterCache.getLineAndCharacter","kind":"method","status":"implemented","sigHash":"5dd59eb6f1509cb5e2f516c3f831104ca50a8e7dfcd10d7c42757bbb88d344db"}
  *
  * Go source:
  * func (c *lineCharacterCache) getLineAndCharacter(pos int) (line int, character core.UTF16Offset) {

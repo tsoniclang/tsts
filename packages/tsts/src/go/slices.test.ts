@@ -1,6 +1,7 @@
 import test from "node:test";
 import type { Seq } from "./iter.js";
 import assert from "node:assert/strict";
+import { GoEqualStrict, GoNilSlice, GoSliceIsNil } from "./compat.js";
 import {
   Index,
   IndexFunc,
@@ -37,10 +38,10 @@ import {
 
 test("slices.Index / Contains", () => {
   const s = ["a", "b", "c"];
-  assert.equal(Index(s, "b"), 1);
-  assert.equal(Index(s, "z"), -1);
-  assert.equal(Contains(s, "c"), true);
-  assert.equal(Contains(s, "z"), false);
+  assert.equal(Index(s, "b", GoEqualStrict), 1);
+  assert.equal(Index(s, "z", GoEqualStrict), -1);
+  assert.equal(Contains(s, "c", GoEqualStrict), true);
+  assert.equal(Contains(s, "z", GoEqualStrict), false);
 });
 
 test("slices.IndexFunc / ContainsFunc", () => {
@@ -64,9 +65,9 @@ test("slices.IndexFunc / ContainsFunc", () => {
 });
 
 test("slices.Equal / EqualFunc", () => {
-  assert.equal(Equal([1, 2, 3], [1, 2, 3]), true);
-  assert.equal(Equal([1, 2], [1, 2, 3]), false);
-  assert.equal(Equal([], []), true);
+  assert.equal(Equal([1, 2, 3], [1, 2, 3], GoEqualStrict), true);
+  assert.equal(Equal([1, 2], [1, 2, 3], GoEqualStrict), false);
+  assert.equal(Equal([], [], GoEqualStrict), true);
   assert.equal(
     EqualFunc([1, 2], ["1", "2"], (a, b) => globalThis.String(a) === b),
     true,
@@ -85,14 +86,14 @@ test("slices.Compare / CompareFunc", () => {
   );
 });
 
-test("slices.Clone is shallow and independent; Clone(undefined) is undefined", () => {
+test("slices.Clone is shallow and independent; Clone preserves a nil Go slice", () => {
   const s = [1, 2, 3];
   const c = Clone(s)!;
   assert.notEqual(c, s);
   assert.deepEqual(c, [1, 2, 3]);
   c[0] = 99;
   assert.equal(s[0], 1);
-  assert.equal(Clone<number>(undefined), undefined);
+  assert.equal(GoSliceIsNil(Clone(GoNilSlice<number>())), true);
 });
 
 test("slices.Concat / Repeat", () => {
@@ -142,7 +143,7 @@ test("slices.Reverse reverses in place", () => {
 });
 
 test("slices.Compact / CompactFunc collapse consecutive equals", () => {
-  assert.deepEqual(Compact([1, 1, 2, 2, 2, 3, 1, 1]), [1, 2, 3, 1]);
+  assert.deepEqual(Compact([1, 1, 2, 2, 2, 3, 1, 1], GoEqualStrict), [1, 2, 3, 1]);
   assert.deepEqual(
     CompactFunc([1, 3, 2, 4, 6], (a, b) => a % 2 === b % 2),
     [1, 2],

@@ -391,7 +391,7 @@ export function isPrivateMethodTypeParameter(host: GoInterface<DeclarationEmitHo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::shouldEmitFunctionProperties","kind":"func","status":"implemented","sigHash":"9f69d137b57130cdec0a098bc830b16299a5aba56531ccfc7ea955185a87eacd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::shouldEmitFunctionProperties","kind":"func","status":"implemented","sigHash":"234dd012a6f2158b73622a1a6669d27a163e41cb1aa2f31e3ea7fecd0881a886"}
  *
  * Go source:
  * func shouldEmitFunctionProperties(input *ast.FunctionDeclaration) bool {

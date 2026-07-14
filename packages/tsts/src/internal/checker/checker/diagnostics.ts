@@ -103,7 +103,7 @@ export function Checker_addUndefinedToGlobalsOrErrorOnRedeclaration(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForInvalidInitializer","kind":"method","status":"implemented","sigHash":"545bc6dc60215ddada3483404be71e382f2c6d901475546357e886af6780c1e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForInvalidInitializer","kind":"method","status":"implemented","sigHash":"5c7ec12f4fd21da399f1731fadb6c7f82e0a60c4f5a1e78392ffd4f75b7360b5"}
  *
  * Go source:
  * func (c *Checker) checkAndReportErrorForInvalidInitializer(errorLocation *ast.Node, name string, propertyWithInvalidInitializer *ast.Node, result *ast.Symbol) bool {
@@ -985,7 +985,7 @@ export function Checker_addDeprecatedSuggestionWithSignature(receiver: GoPtr<Che
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDiagnosticHeadMessageForDecoratorResolution","kind":"method","status":"implemented","sigHash":"f9aea19c43e4ec7f981b60b15dc4134284756e4103106c92da003e5ac108d94f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDiagnosticHeadMessageForDecoratorResolution","kind":"method","status":"implemented","sigHash":"76c77955a3e3dba6ce9613e29a173bf51f05be024c1d67f9b74c887db1571cef"}
  *
  * Go source:
  * func (c *Checker) getDiagnosticHeadMessageForDecoratorResolution(node *ast.Node) *diagnostics.Message {
@@ -1426,8 +1426,8 @@ export function Checker_getTypeArgumentArityError(receiver: GoPtr<Checker>, node
   if (signatures.length === 1) {
     // No overloads exist
     const sig = signatures[0];
-    const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters ?? []);
-    const maxCount = sig!.typeParameters === undefined ? 0 : sig!.typeParameters.length;
+    const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters);
+    const maxCount = sig!.typeParameters.length;
     let expected = String(minCount);
     if (minCount < maxCount) {
       expected = expected + "-" + String(maxCount);
@@ -1438,8 +1438,8 @@ export function Checker_getTypeArgumentArityError(receiver: GoPtr<Checker>, node
     let belowArgCount = Number.MIN_SAFE_INTEGER;
     let aboveArgCount = Number.MAX_SAFE_INTEGER;
     for (const sig of signatures) {
-      const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters ?? []);
-      const maxCount = sig!.typeParameters === undefined ? 0 : sig!.typeParameters.length;
+      const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters);
+      const maxCount = sig!.typeParameters.length;
       if (minCount > argCount) {
         aboveArgCount = Math.min(aboveArgCount, minCount);
       } else if (maxCount < argCount) {
@@ -2479,7 +2479,7 @@ export function Checker_shouldReportErrorsFromWideningWithContextualSignature(re
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportWideningErrorsInType","kind":"method","status":"implemented","sigHash":"c793c199893476d8d8a34047f417c69b7276a2501f33377a22dbdd23ad3170dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportWideningErrorsInType","kind":"method","status":"implemented","sigHash":"b3a27acb309dfcc206260fa47b9c8ff09e37255a16b3dbbcfaab14c4a21e7fd0"}
  *
  * Go source:
  * func (c *Checker) reportWideningErrorsInType(t *Type) bool {

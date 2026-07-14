@@ -34,7 +34,11 @@ test("", async function () {
   ;(/** @type {typeof import("a")} */ ({}))
 })
 `;
-  const file = ParseSourceFile({ FileName: "/index.js", Path: "/index.js" } satisfies SourceFileParseOptions, sourceText, ScriptKindJS);
+  const file = ParseSourceFile({
+    FileName: "/index.js",
+    Path: "/index.js",
+    ExternalModuleIndicatorOptions: { JSX: false, Force: false },
+  } satisfies SourceFileParseOptions, sourceText, ScriptKindJS);
 
   const reparsedClones = file!.ReparsedClones ?? [];
   for (let i = 1; i < reparsedClones.length; i++) {

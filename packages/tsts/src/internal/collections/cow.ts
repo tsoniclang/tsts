@@ -5,7 +5,7 @@ import * as maps from "../../go/maps.js";
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::type::CopyOnWriteMap","kind":"type","status":"implemented","sigHash":"03b1be1ac4b9a5a1409fe9912998e5fd6ae9e9c521fb413c59dfb750753eeb50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::type::CopyOnWriteMap","kind":"type","status":"implemented","sigHash":"8b79aaca4698ef01fe0843f83d39777eddcc15b867531b8d7fe3ef9356ccbc3b"}
  *
  * Go source:
  * CopyOnWriteMap[K comparable, V any] struct {
@@ -21,7 +21,7 @@ export interface CopyOnWriteMap<K extends GoComparable, V> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.Get","kind":"method","status":"implemented","sigHash":"524fff945dd4c8c999c50f30588706af0cce65c8fc0a20eb0c44639bf22c09f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.Get","kind":"method","status":"implemented","sigHash":"9569ee5ad3d4a7b603eee7142535eb6c0798304bace340ec8e688d284fe6fd49"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic map lookup receives the exact static zero-value constructor for its missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
@@ -36,7 +36,7 @@ export function CopyOnWriteMap_Get<K extends GoComparable, V>(receiver: GoPtr<Co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.Has","kind":"method","status":"implemented","sigHash":"6eaf18f414abd76a374cb9e898eb81fb5a31c208e5813f1225a9a60c1df90792"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.Has","kind":"method","status":"implemented","sigHash":"0494cab7edc9b9a2d64f484d6618632c04a698ffa230e255e689dbec507347c6"}
  *
  * Go source:
  * func (c *CopyOnWriteMap[K, V]) Has(k K) bool {
@@ -49,7 +49,7 @@ export function CopyOnWriteMap_Has<K extends GoComparable, V>(receiver: GoPtr<Co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.Set","kind":"method","status":"implemented","sigHash":"788a0a7860b47d62f6567180f5ec5bbc43a0f84224d416fa3e779ce14061cde8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.Set","kind":"method","status":"implemented","sigHash":"90318234f568e569e7ad25e317966379b6495024cd1a8854ff10c16a1ad872c8"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic copy-on-write mutation forwards the exact static Go map-key descriptor to backing-map allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
@@ -93,7 +93,7 @@ export function CopyOnWriteMap_ensureOwned<K extends GoComparable, V>(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.EnterScope","kind":"method","status":"implemented","sigHash":"0e626cc295bab1e88b5a443ca42e56195d57fdd88edc8b15de2425578f233094"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.EnterScope","kind":"method","status":"implemented","sigHash":"6e93ea40ddc85253909a1232cfa7b97ca91e8230c9ec2c790fe8c0d0b6c29972"}
  *
  * Go source:
  * func (c *CopyOnWriteMap[K, V]) EnterScope() func() {
@@ -114,7 +114,7 @@ export function CopyOnWriteMap_EnterScope<K extends GoComparable, V>(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::type::CopyOnWriteSet","kind":"type","status":"implemented","sigHash":"b0aba1abc891897fdc86efb41a2c2fcb62d6b401ebe90b7c5b91b769fb7c2924"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::type::CopyOnWriteSet","kind":"type","status":"implemented","sigHash":"bb3accac8f936695f4aa2a6788fbc246b4384623058d0c8b00c7b58099b787e9"}
  *
  * Go source:
  * CopyOnWriteSet[K comparable] struct {
@@ -126,7 +126,7 @@ export interface CopyOnWriteSet<K extends GoComparable> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteSet.Has","kind":"method","status":"implemented","sigHash":"ccd5e875100b02049c0f1acefd82bf09eb4579fbf7ba588da0f2c1dff071fc93"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteSet.Has","kind":"method","status":"implemented","sigHash":"8ad62e35c67e49569a594729230943a5399a86e69cafc2230c7304158dc5ab57"}
  *
  * Go source:
  * func (c *CopyOnWriteSet[K]) Has(k K) bool {
@@ -139,7 +139,7 @@ export function CopyOnWriteSet_Has<K extends GoComparable>(receiver: GoPtr<CopyO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteSet.Add","kind":"method","status":"implemented","sigHash":"350bee723194f4d1bd2c390f4aec3a6ac49d7272d2e35d6228e138ffb59ba1b0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteSet.Add","kind":"method","status":"implemented","sigHash":"0f27af06c9c0b86a45804f9e436c9d837aa04ca5fb00cf6519ab3f8d4c4b24fa"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic copy-on-write set mutation forwards the exact static Go map-key descriptor to backing-map allocation.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
@@ -152,7 +152,7 @@ export function CopyOnWriteSet_Add<K extends GoComparable>(receiver: GoPtr<CopyO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteSet.EnterScope","kind":"method","status":"implemented","sigHash":"8fc81561ca0fca9e2025227618daab8802ee8dfb06edb111cc823f869d159591"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteSet.EnterScope","kind":"method","status":"implemented","sigHash":"4381319ca699b0591c398fb7638c780ff9dec4766c3a391cb73575502502791c"}
  *
  * Go source:
  * func (c *CopyOnWriteSet[K]) EnterScope() func() {

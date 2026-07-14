@@ -45,7 +45,7 @@ const sourceFileParseOptionsKey: GoMapKeyDescriptor<SourceFileParseOptions> = Go
 );
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::type::host","kind":"type","status":"implemented","sigHash":"4878a075c6246d276432fff1aab5b03ef485e8fc6f147876280d0e8e305a382a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::type::host","kind":"type","status":"implemented","sigHash":"1ff7ac22f9f3d4900b11b704c7153cefb01f1d26194919c58f921f521e102a51"}
  *
  * Go source:
  * host struct {
@@ -73,7 +73,7 @@ export interface host {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::varGroup::_+_+_","kind":"varGroup","status":"implemented","sigHash":"5409f96379fff09ec0d93c04933563c7fc89b0b7eabeb5959ec3e982c6a69a9f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::varGroup::_+_+_","kind":"varGroup","status":"implemented","sigHash":"72d5f8c7ac934f7aef343dd48f8b98af72855c2aeedc1183e764535e0f06e401"}
  *
  * Go source:
  * var (

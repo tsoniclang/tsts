@@ -570,7 +570,7 @@ import { Pool as PoolValue } from "../../go/sync.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::varGroup::nextNodeId+nextSymbolId","kind":"varGroup","status":"implemented","sigHash":"023956e168736dc0e2e208f1009bb0207dce5c0c6e326fb624acc258ef9d4fd8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::varGroup::nextNodeId+nextSymbolId","kind":"varGroup","status":"implemented","sigHash":"fbef67155733acb7724b7c5d0c6ae3f163db49b04f971919d4f057e9ec169cfc"}
  *
  * Go source:
  * var (
@@ -699,7 +699,7 @@ export function GetLocals(container: GoPtr<Node>): SymbolTable {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::NodeIsMissing","kind":"func","status":"implemented","sigHash":"5894d2949936c7687648d02f3f6dda475417773e75ddde1c96b71eefacc27845"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::NodeIsMissing","kind":"func","status":"implemented","sigHash":"a68e691e7c5c9ada67c120f94791db8891b721c11bad6f3f8a8f4c7bd5e748b6"}
  *
  * Go source:
  * func NodeIsMissing(node *Node) bool {
@@ -712,7 +712,7 @@ export function NodeIsMissing(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::NodeIsPresent","kind":"func","status":"implemented","sigHash":"3aee77a61f1fa04d80d1e8320bb73ce4fefb60b05202c6d53b091e5a9994c2c2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::NodeIsPresent","kind":"func","status":"implemented","sigHash":"ecf6d87697cbba92bdfd54ce255a0efecb6972c861f57b9635998289c1e2d269"}
  *
  * Go source:
  * func NodeIsPresent(node *Node) bool {
@@ -724,7 +724,7 @@ export function NodeIsPresent(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::NodeIsSynthesized","kind":"func","status":"implemented","sigHash":"a9332b999d48ca8795cfd3ffbd16da50942b8f600898462cbe9a5a1dd1ee4a10"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::NodeIsSynthesized","kind":"func","status":"implemented","sigHash":"7cc889037055c03e8217203a9830c47d7137ea569b556fba3b089bf0529905c1"}
  *
  * Go source:
  * func NodeIsSynthesized(node *Node) bool {
@@ -748,7 +748,7 @@ export function RangeIsSynthesized(loc: TextRange): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::PositionIsSynthesized","kind":"func","status":"implemented","sigHash":"bb20abd33c3cfd69120a608ff90fee4ba3dab70c254f003ce0868341ed7b2056"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::PositionIsSynthesized","kind":"func","status":"implemented","sigHash":"c42355b1bd80def196138233ff8f7c3d665089205d5b1940ccb93a8450ee9fdb"}
  *
  * Go source:
  * func PositionIsSynthesized(pos int) bool {
@@ -979,7 +979,7 @@ export function IsForInOrOfStatement(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsAssignmentTarget","kind":"func","status":"implemented","sigHash":"e111675a61da79a53e48cdd6f62e6264b9d2fbdeacd44f44b17322f43b90fb5d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsAssignmentTarget","kind":"func","status":"implemented","sigHash":"0e70be5652df9715ef9df2daaf426312a780e508acccc51d4ce8483b131b8c82"}
  *
  * Go source:
  * func IsAssignmentTarget(node *Node) bool {
@@ -991,7 +991,7 @@ export function IsAssignmentTarget(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetAssignmentTarget","kind":"func","status":"implemented","sigHash":"dddcad230584070f0fd139de20fbdf29887aed0d986bf0d4ab898e78a25cd1e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetAssignmentTarget","kind":"func","status":"implemented","sigHash":"fdedeba29bc0da04294dea2f4e543bda97bd4d7c940111bc2b4f569970aa5eac"}
  *
  * Go source:
  * func GetAssignmentTarget(node *Node) *Node {
@@ -1247,7 +1247,7 @@ export function IsPropertyName(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsIdentifierName","kind":"func","status":"implemented","sigHash":"7a49e452b6767ff17574ff8ef38770593c0a2b6c07714827d7b118531fe36538"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsIdentifierName","kind":"func","status":"implemented","sigHash":"1c92b65e9d735fe8e5a4de6843e759606623e699d1194925c9188878ce5330eb"}
  *
  * Go source:
  * func IsIdentifierName(node *Node) bool {
@@ -1390,7 +1390,7 @@ export function IsSignedNumericLiteral(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOptionalChain","kind":"func","status":"implemented","sigHash":"7ffb752085bb1a77e681e0d222d1e7ee900cf5f25a99ba88b05ecd76539650f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOptionalChain","kind":"func","status":"implemented","sigHash":"be1831b7629cdcbd38a1e832a23a4b89b15ec475672d512b7350597ee9154663"}
  *
  * Go source:
  * func IsOptionalChain(node *Node) bool {
@@ -1432,7 +1432,7 @@ export function getQuestionDotToken(node: GoPtr<Expression>): GoPtr<TokenNode> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOptionalChainRoot","kind":"func","status":"implemented","sigHash":"e50f9b4215f33ebfb251ba36ab7dd6a8b597724889bd63cd2332bf9918f528d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOptionalChainRoot","kind":"func","status":"implemented","sigHash":"46d93e3389c258652358f318cec7fc54e8ce9b8c5197263ba88f46d0ee653cb9"}
  *
  * Go source:
  * func IsOptionalChainRoot(node *Expression) bool {
@@ -1444,7 +1444,7 @@ export function IsOptionalChainRoot(node: GoPtr<Expression>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOutermostOptionalChain","kind":"func","status":"implemented","sigHash":"983f2bc4419da36c023e83e77d072983faffd099e41a838c3738804ea016958f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOutermostOptionalChain","kind":"func","status":"implemented","sigHash":"129cba7442d920f93f4dd5fca1e7d90f2419e1ab055c8df73b18a745da04f82e"}
  *
  * Go source:
  * func IsOutermostOptionalChain(node *Expression) bool {
@@ -1462,7 +1462,7 @@ export function IsOutermostOptionalChain(node: GoPtr<Expression>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsExpressionOfOptionalChainRoot","kind":"func","status":"implemented","sigHash":"0c94fe64954e2211390fb92efea2342dae39af26b183c0afcb7c2a38a20cc6bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsExpressionOfOptionalChainRoot","kind":"func","status":"implemented","sigHash":"6527a067071efd097ffd7f37aacd4b64ebdfdfa0e5392174dc8346de09ffce4b"}
  *
  * Go source:
  * func IsExpressionOfOptionalChainRoot(node *Node) bool {
@@ -1557,7 +1557,7 @@ export function isLeftHandSideExpressionKind(kind: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsLeftHandSideExpression","kind":"func","status":"implemented","sigHash":"c1211996a6673f686253c77291112a56159391d89739ba82d42828eb682fecb5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsLeftHandSideExpression","kind":"func","status":"implemented","sigHash":"c8e8111318124864a5f9d48f6910f8812d7535bb4559478a1e9c7f134c4a837a"}
  *
  * Go source:
  * func IsLeftHandSideExpression(node *Node) bool {
@@ -1601,7 +1601,7 @@ export function isUnaryExpressionKind(kind: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsUnaryExpression","kind":"func","status":"implemented","sigHash":"e5d475a3092fa4b6dcb5a43e32e246a6c95cba30808f9062ef55cbbbec845dd2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsUnaryExpression","kind":"func","status":"implemented","sigHash":"9b1e12b091e9b7f56f1b48e1b8da1b9f89726d8bbe5e57bdc0ebcdceaa4a0190"}
  *
  * Go source:
  * func IsUnaryExpression(node *Node) bool {
@@ -1649,7 +1649,7 @@ export function isExpressionKind(kind: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsExpression","kind":"func","status":"implemented","sigHash":"fe55328b4cc31b6cde58afaa7dc6d03c97ce1bde714ad40623901c09c962c95b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsExpression","kind":"func","status":"implemented","sigHash":"ed101752d8fca243a2206f8c2c84d8af920f29bd4b914f84e3aa56bdff09b650"}
  *
  * Go source:
  * func IsExpression(node *Node) bool {
@@ -1720,7 +1720,7 @@ export function IsIterationStatement(node: GoPtr<Node>, lookInLabeledStatements:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsAccessExpression","kind":"func","status":"implemented","sigHash":"61952dcafebbcbcfb6b9c3b296f7ee1d98d8c24f1f4776b41d4d04c7c9915645"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsAccessExpression","kind":"func","status":"implemented","sigHash":"8d309043da677747394a6c08c1ae24cda8d3e84fbd2b36b2b7605d80f55f9aef"}
  *
  * Go source:
  * func IsAccessExpression(node *Node) bool {
@@ -1764,7 +1764,7 @@ export function isFunctionLikeDeclarationKind(kind: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsFunctionLikeDeclaration","kind":"func","status":"implemented","sigHash":"cbcec2950608f710d0648881af6ad664aca8c7d560f58874de862832807db575"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsFunctionLikeDeclaration","kind":"func","status":"implemented","sigHash":"6fe1401135bbef3f27d8250236b7e3192bd3a14303fe91e6faa9d64350b74655"}
  *
  * Go source:
  * func IsFunctionLikeDeclaration(node *Node) bool {
@@ -1810,7 +1810,7 @@ export function IsFunctionLikeKind(kind: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsFunctionLike","kind":"func","status":"implemented","sigHash":"6c7ead5224257132a4d8c845710a892f22066fb66f4162440e2ac42ffa95c29f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsFunctionLike","kind":"func","status":"implemented","sigHash":"d40c88721fbe9c43277ff2aeb1b693c41fa5843656f8e0747a71b4fec4e8c9c7"}
  *
  * Go source:
  * func IsFunctionLike(node *Node) bool {
@@ -2146,7 +2146,7 @@ export function isDeclarationStatementKind(kind: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeclarationStatement","kind":"func","status":"implemented","sigHash":"85b33e7d42c67478e0051808a11e5675bbeb8595d9dd731559a10817fbaca5c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeclarationStatement","kind":"func","status":"implemented","sigHash":"670bf3acd301b238695404a66c9bc0a6cb6b193ac4a869b48b2632f4ec3c2ce0"}
  *
  * Go source:
  * func IsDeclarationStatement(node *Node) bool {
@@ -2214,7 +2214,7 @@ export function isStatementKindButNotDeclarationKind(kind: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsStatementButNotDeclaration","kind":"func","status":"implemented","sigHash":"8e1b5858e82a299fb464055ade7b098559817dd0e98bb6f4ac71049c14b308ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsStatementButNotDeclaration","kind":"func","status":"implemented","sigHash":"4b2cb3d38cdd4d2b654fc90c6e0368836028690983851b586b12529cc3387ccb"}
  *
  * Go source:
  * func IsStatementButNotDeclaration(node *Node) bool {
@@ -2226,7 +2226,7 @@ export function IsStatementButNotDeclaration(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsStatement","kind":"func","status":"implemented","sigHash":"e9f83f995a5b7aab90224ead9cc537370b3e56297012a41fda0c4406abc79465"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsStatement","kind":"func","status":"implemented","sigHash":"9c775690a03cb6a9b05109280bf3d3d52bcc8cd3a35d875d62c61b038d524d31"}
  *
  * Go source:
  * func IsStatement(node *Node) bool {
@@ -2241,7 +2241,7 @@ export function IsStatement(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::isBlockStatement","kind":"func","status":"implemented","sigHash":"da26998348f7ccacee5d9b116c7a963085056db97e357f6294cc836f9ffb162f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::isBlockStatement","kind":"func","status":"implemented","sigHash":"d1e4ad74cd350a1f7265428361634781f0f2022f0597f8afbd50e7d6518113a0"}
  *
  * Go source:
  * func isBlockStatement(node *Node) bool {
@@ -2266,7 +2266,7 @@ export function isBlockStatement(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsFunctionBlock","kind":"func","status":"implemented","sigHash":"7cb626a2615c607154af44550a350c46b44a25a560027b15f390e518052c967f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsFunctionBlock","kind":"func","status":"implemented","sigHash":"23cb2c96d5b148ebc602115026a898acc5dd03917d4fa2fe942efb0465dab762"}
  *
  * Go source:
  * func IsFunctionBlock(node *Node) bool {
@@ -2419,7 +2419,7 @@ export function IsPrologueDirective(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::OuterExpressionKinds","kind":"type","status":"implemented","sigHash":"be6ac37a4b9ed0b36f3f1c1e090fa78b0a36ff9ad1989b831d1a4d5b27541f5f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::OuterExpressionKinds","kind":"type","status":"implemented","sigHash":"3dcb015ebd8d8cd234a7f4403b86e45ba8b55a4b4191a74f02f81e64663247a2"}
  *
  * Go source:
  * OuterExpressionKinds int16
@@ -2427,7 +2427,7 @@ export function IsPrologueDirective(node: GoPtr<Node>): bool {
 export type OuterExpressionKinds = short;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::OEKParentheses+OEKTypeAssertions+OEKNonNullAssertions+OEKPartiallyEmittedExpressions+OEKExpressionsWithTypeArguments+OEKSatisfies+OEKExcludeJSDocTypeAssertion+OEKAssertions+OEKAll","kind":"constGroup","status":"implemented","sigHash":"84f9676886cf84a36a3e37e3b0fba08797c926f7eae90b57b089ba15bc3e539e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::OEKParentheses+OEKTypeAssertions+OEKNonNullAssertions+OEKPartiallyEmittedExpressions+OEKExpressionsWithTypeArguments+OEKSatisfies+OEKExcludeJSDocTypeAssertion+OEKAssertions+OEKAll","kind":"constGroup","status":"implemented","sigHash":"a74a01cd14e425b90632a4cb48812a954a187cb9a6723be8fe92022c416905c1"}
  *
  * Go source:
  * const (
@@ -2453,7 +2453,7 @@ export const OEKAssertions: OuterExpressionKinds = (OEKTypeAssertions | OEKNonNu
 export const OEKAll: OuterExpressionKinds = (OEKParentheses | OEKAssertions | OEKPartiallyEmittedExpressions | OEKExpressionsWithTypeArguments) as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOuterExpression","kind":"func","status":"implemented","sigHash":"28b42343fb8505a97d8f6a58ddb129a754951cd4660b560ebc97695d5ae2808b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOuterExpression","kind":"func","status":"implemented","sigHash":"d97034216e202656d0953b686de02a18a3366f025b79b313226cbb72d368e7bb"}
  *
  * Go source:
  * func IsOuterExpression(node *Expression, kinds OuterExpressionKinds) bool {
@@ -2495,7 +2495,7 @@ export function IsOuterExpression(node: GoPtr<Expression>, kinds: OuterExpressio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::SkipOuterExpressions","kind":"func","status":"implemented","sigHash":"a8cd8291154f79b9cd6f1463229677f2fcbb04860a886c86a2fb9f89fba3c386"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::SkipOuterExpressions","kind":"func","status":"implemented","sigHash":"f7d1c938c2c48f747428f5e32b68842a9ee0dee6a6ffdb1bf97898be7e1568b3"}
  *
  * Go source:
  * func SkipOuterExpressions(node *Expression, kinds OuterExpressionKinds) *Expression {
@@ -2514,7 +2514,7 @@ export function SkipOuterExpressions(node: GoPtr<Expression>, kinds: OuterExpres
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::SkipParentheses","kind":"func","status":"implemented","sigHash":"03e90efa385138c356cb91b2e6d394dbd9a6ef633690404c10f3058a54225c41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::SkipParentheses","kind":"func","status":"implemented","sigHash":"bd5c4d1c8f1b37245ce6111e95542d24941a99cd3b0bad1f3745d8289b3f979b"}
  *
  * Go source:
  * func SkipParentheses(node *Expression) *Expression {
@@ -2557,7 +2557,7 @@ export function SkipPartiallyEmittedExpressions(node: GoPtr<Expression>): GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::WalkUpParenthesizedExpressions","kind":"func","status":"implemented","sigHash":"257313baece29940eedcbf0a8e49fca3eb1d3736e299c3227325d433e2fa5f67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::WalkUpParenthesizedExpressions","kind":"func","status":"implemented","sigHash":"ee11560e2f42c4e4e1ae7899d50b90118d35b2a336f92752b62ea02fcbc2de61"}
  *
  * Go source:
  * func WalkUpParenthesizedExpressions(node *Expression) *Node {
@@ -2576,7 +2576,7 @@ export function WalkUpParenthesizedExpressions(node: GoPtr<Expression>): GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::WalkUpParenthesizedTypes","kind":"func","status":"implemented","sigHash":"3ea8b8743d7a0e5cd653f6c959f8877bc7125fec092d05860f75b781a52bfb89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::WalkUpParenthesizedTypes","kind":"func","status":"implemented","sigHash":"de0b3d2425b20dd9ef3b6fe1b1a1b36b8fdf5dc6a147baf671e9f60199214808"}
  *
  * Go source:
  * func WalkUpParenthesizedTypes(node *TypeNode) *Node {
@@ -2595,7 +2595,7 @@ export function WalkUpParenthesizedTypes(node: GoPtr<TypeNode>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetSourceFileOfNode","kind":"func","status":"implemented","sigHash":"c08c22c988a6f37f6a16f53ec595db6a952847817c10df620b3be20a5ed3969e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetSourceFileOfNode","kind":"func","status":"implemented","sigHash":"7cf3d0d27bd204b72247e765f3bbb14799bc209cb4461b5de57912fb5b2ecc94"}
  *
  * Go source:
  * func GetSourceFileOfNode(node *Node) *SourceFile {
@@ -2618,7 +2618,7 @@ export function GetSourceFileOfNode(node: GoPtr<Node>): GoPtr<SourceFile> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::varGroup::setParentInChildrenPool","kind":"varGroup","status":"implemented","sigHash":"ae451dac263fcd49a052fbaaa91c461d227f7ab108efd244750e66b475cd12be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::varGroup::setParentInChildrenPool","kind":"varGroup","status":"implemented","sigHash":"b43bff6466e7ec9b288fe8054e6a27a7e768743c1fe0f2cf7b88ee18aafe33ff"}
  *
  * Go source:
  * var setParentInChildrenPool = sync.Pool{
@@ -2703,7 +2703,7 @@ export function SetParentInChildren(node: GoPtr<Node>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::SetImportsOfSourceFile","kind":"func","status":"implemented","sigHash":"df9759c59e9d3235cefcb1ae87da77bcc73d6ca9bd98ce6a9a29ddcd8c128afe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::SetImportsOfSourceFile","kind":"func","status":"implemented","sigHash":"df8d70254fe5bcb9f110488d05b952c95390f603ceeab057de0522c7a1a1d699"}
  *
  * Go source:
  * func SetImportsOfSourceFile(node *SourceFile, imports []*LiteralLikeNode) {
@@ -2715,7 +2715,7 @@ export function SetImportsOfSourceFile(node: GoPtr<SourceFile>, imports: GoSlice
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::FindAncestor","kind":"func","status":"implemented","sigHash":"719a8c257cc4153dd2e0b502bfb83a4eec50e15ddad63a2681df7270fa81e12b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::FindAncestor","kind":"func","status":"implemented","sigHash":"69ed34619e95e927e1b07508f14ca1efecb8ff12a1ea965665fa7421171ca737"}
  *
  * Go source:
  * func FindAncestor(node *Node, callback func(*Node) bool) *Node {
@@ -2738,7 +2738,7 @@ export function FindAncestor(node: GoPtr<Node>, callback: GoFunc<(arg0: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::FindAncestorKind","kind":"func","status":"implemented","sigHash":"2832a659a617cd5aa9b27711a72307fec4d51d6c078c75cadb1aebae481b7c39"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::FindAncestorKind","kind":"func","status":"implemented","sigHash":"db709a5c1aa9a3b1e1e136ad5df8039c1930a61423996fef53120ac3ab8a9437"}
  *
  * Go source:
  * func FindAncestorKind(node *Node, kind Kind) *Node {
@@ -2761,7 +2761,7 @@ export function FindAncestorKind(node: GoPtr<Node>, kind: Kind): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::FindAncestorResult","kind":"type","status":"implemented","sigHash":"16cc407ee3792506d820fe7e6c57d522691f65c41213cf6d4ff5c95cb276ec6a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::FindAncestorResult","kind":"type","status":"implemented","sigHash":"67d16ad2dbe7e1d6dec82ab0018aa671e37eb64afe37577a53c22d8defbbc0e5"}
  *
  * Go source:
  * FindAncestorResult int32
@@ -2769,7 +2769,7 @@ export function FindAncestorKind(node: GoPtr<Node>, kind: Kind): GoPtr<Node> {
 export type FindAncestorResult = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::FindAncestorFalse+FindAncestorTrue+FindAncestorQuit","kind":"constGroup","status":"implemented","sigHash":"0d96e037b3a4279eb665d2e3ed1e3e50c88a70b97e010c9ef3da07fa37f3a81b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::FindAncestorFalse+FindAncestorTrue+FindAncestorQuit","kind":"constGroup","status":"implemented","sigHash":"3f418359eecd91e7c15b05bb1742f8b761a2ce3077f940830d83d72254b8f7a9"}
  *
  * Go source:
  * const (
@@ -2801,7 +2801,7 @@ export function ToFindAncestorResult(b: bool): FindAncestorResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::FindAncestorOrQuit","kind":"func","status":"implemented","sigHash":"9cc5c3cf8c24b28a53c374b83e277ba73b617271765b3579f02d159d93f8f5b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::FindAncestorOrQuit","kind":"func","status":"implemented","sigHash":"ca186dc329bb1c7816c9e9c8866a8c05a361eff459e060c1134d74c27757c7cb"}
  *
  * Go source:
  * func FindAncestorOrQuit(node *Node, callback func(*Node) FindAncestorResult) *Node {
@@ -3188,7 +3188,7 @@ export function IsFunctionExpressionOrArrowFunction(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ForEachReturnStatement","kind":"func","status":"implemented","sigHash":"a9c5ba99de0d392050dc2f69611164845d06e471b1956eead01669a3798d6f8b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ForEachReturnStatement","kind":"func","status":"implemented","sigHash":"1be459456b79a23cd235a1f4b1c76ff3bcacb710ed4e8f68ad69cf396eb8bd2d"}
  *
  * Go source:
  * func ForEachReturnStatement(body *Node, visitor func(stmt *Node) bool) bool {
@@ -3321,7 +3321,7 @@ export function getNodeFlags(node: GoPtr<Node>): NodeFlags {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarAwaitUsing","kind":"func","status":"implemented","sigHash":"ded24c3687c67e03549b9af12eadee39a024d57ef6078c04f2b1b60ea30732ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarAwaitUsing","kind":"func","status":"implemented","sigHash":"3719b0886af59cc9ae29ccb7bcb7d8157b4dc83a9970ac7e4b2dbcac5878e495"}
  *
  * Go source:
  * func IsVarAwaitUsing(node *Node) bool {
@@ -3333,7 +3333,7 @@ export function IsVarAwaitUsing(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarUsing","kind":"func","status":"implemented","sigHash":"c169920ec0886dce64ca9456d45f714fae593ae77789c7cd193b09767d578183"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarUsing","kind":"func","status":"implemented","sigHash":"d006a22aadb6ca8135190e666195f1d12adeabbb8273887c323d6fb8c986b70f"}
  *
  * Go source:
  * func IsVarUsing(node *Node) bool {
@@ -3345,7 +3345,7 @@ export function IsVarUsing(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetJSDocDeprecatedTag","kind":"func","status":"implemented","sigHash":"7efb5442a269895f9910531c67d735145cf176c4162053bf9e5c3ef7cf2d5997"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetJSDocDeprecatedTag","kind":"func","status":"implemented","sigHash":"12817c870aa33bdea9fcfe929634c8095b19116ca76e60a2ae9d855ae3d31ffe"}
  *
  * Go source:
  * func GetJSDocDeprecatedTag(node *Node) *Node {
@@ -3377,7 +3377,7 @@ export function GetJSDocDeprecatedTag(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeprecatedDeclaration","kind":"func","status":"implemented","sigHash":"c11603d47f4ebf6de7929cc1355e67c89dc5ab944f89e651e3daba6b7ddd8f82"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeprecatedDeclaration","kind":"func","status":"implemented","sigHash":"4cb7fc85538768710d9135948410713007a8432192f96456cbccd6e58c47f407"}
  *
  * Go source:
  * func IsDeprecatedDeclaration(declaration *Node) bool {
@@ -3389,7 +3389,7 @@ export function IsDeprecatedDeclaration(declaration: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeprecatedDeclarationWithCachedFlags","kind":"func","status":"implemented","sigHash":"faeeb40a9d16c92a06767633e6fc613fb658a5295b94b80bd90ff51a320e6007"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeprecatedDeclarationWithCachedFlags","kind":"func","status":"implemented","sigHash":"d6911f9be94807e66ff403c7f96458f0006cb741d54fe3bb00d6120747c7a319"}
  *
  * Go source:
  * func IsDeprecatedDeclarationWithCachedFlags(declaration *Node, combinedFlags NodeFlags) bool {
@@ -3421,7 +3421,7 @@ export function IsDeprecatedDeclarationWithCachedFlags(declaration: GoPtr<Node>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarConst","kind":"func","status":"implemented","sigHash":"e8fb3ffb6e448cdd76358f8802a62fec0b0dd6a78e515e0d91deeabf9cf43ee7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarConst","kind":"func","status":"implemented","sigHash":"0370a35cc0643fbd61925d724cff672322366973e2999d4f09aa02acc0bdd888"}
  *
  * Go source:
  * func IsVarConst(node *Node) bool {
@@ -3433,7 +3433,7 @@ export function IsVarConst(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarConstLike","kind":"func","status":"implemented","sigHash":"3ed8a6dfc8d68525177cf3f038cd9a25560e90275773428c0e4484ad39897d18"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarConstLike","kind":"func","status":"implemented","sigHash":"bf634b5bb42668c534945d534c8713b2aa0191703a85ad7452407d84e3e38483"}
  *
  * Go source:
  * func IsVarConstLike(node *Node) bool {
@@ -3455,7 +3455,7 @@ export function IsVarConstLike(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarLet","kind":"func","status":"implemented","sigHash":"ee74eed6900c6c84d01fa785e6b5f262b1f1c978820337f5401f8c1ae23638a5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVarLet","kind":"func","status":"implemented","sigHash":"fe111c9dd9509f3c9cf87704f6fd98642ba2d3f1fc1cadcf23ad1f183621183f"}
  *
  * Go source:
  * func IsVarLet(node *Node) bool {
@@ -3548,7 +3548,7 @@ export function IsDeclaration(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeclarationName","kind":"func","status":"implemented","sigHash":"95f33a85c1b84ac9aa45226fcfa36fdbd215b5d82adbea87c3770c57af667783"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeclarationName","kind":"func","status":"implemented","sigHash":"c964fdfec6f43f5138c03b0b81ad9ce538c5aabb5eae6762d809558651831335"}
  *
  * Go source:
  * func IsDeclarationName(name *Node) bool {
@@ -3560,7 +3560,7 @@ export function IsDeclarationName(name: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeclarationNameOrImportPropertyName","kind":"func","status":"implemented","sigHash":"db0ef6954847331c7670020e4408b996c68044d0b494b5fe6167713f8695d2ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsDeclarationNameOrImportPropertyName","kind":"func","status":"implemented","sigHash":"c9c89dc12f9acdab1bbfdceb53e34e53ee7e3229e27be2075aa8d431c2bc05e7"}
  *
  * Go source:
  * func IsDeclarationNameOrImportPropertyName(name *Node) bool {
@@ -3817,7 +3817,7 @@ export function IsBindableStaticNameExpression(node: GoPtr<Node>, excludeThisKey
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetElementOrPropertyAccessName","kind":"func","status":"implemented","sigHash":"1dfe3eac9680681003b00a557e41ff4cff64a74f2d07a48c5bf770cf593a5ce9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetElementOrPropertyAccessName","kind":"func","status":"implemented","sigHash":"2c5b72ec7ceef9f50e09c0994d87e91225e8575ac4933dc50a783a4222bdff5b"}
  *
  * Go source:
  * func GetElementOrPropertyAccessName(node *Node) *Node {
@@ -4094,7 +4094,7 @@ export function GetAssignedName(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::JSDeclarationKind","kind":"type","status":"implemented","sigHash":"71f07fd1398e6c278acc29a5ce54eb8a36451280e0f43ba2a5337ced2c0db4b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::JSDeclarationKind","kind":"type","status":"implemented","sigHash":"3505f0f269ef4b5d2084b657eeb05f411a6f613ffb9154fc67b9ef14dfc4ad02"}
  *
  * Go source:
  * JSDeclarationKind int
@@ -4102,7 +4102,7 @@ export function GetAssignedName(node: GoPtr<Node>): GoPtr<Node> {
 export type JSDeclarationKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::JSDeclarationKindNone+JSDeclarationKindModuleExports+JSDeclarationKindExportsProperty+JSDeclarationKindThisProperty+JSDeclarationKindProperty+JSDeclarationKindObjectDefinePropertyValue+JSDeclarationKindObjectDefinePropertyExports","kind":"constGroup","status":"implemented","sigHash":"edc5782b1e5bad487b025d1b9e8686cc4f655021e6a3c3f0730dcaeee7ac94b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::JSDeclarationKindNone+JSDeclarationKindModuleExports+JSDeclarationKindExportsProperty+JSDeclarationKindThisProperty+JSDeclarationKindProperty+JSDeclarationKindObjectDefinePropertyValue+JSDeclarationKindObjectDefinePropertyExports","kind":"constGroup","status":"implemented","sigHash":"359d1d7ba230b81dc8978a69867a7736606433c527d7e5e83a25de94f8aafb9f"}
  *
  * Go source:
  * const (
@@ -4248,7 +4248,7 @@ export function IsBindableObjectDefinePropertyCall(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::HasDynamicName","kind":"func","status":"implemented","sigHash":"3a1df619360594b6d507bf501c972844ea3e156a6453dfe21a9b31954dff91a3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::HasDynamicName","kind":"func","status":"implemented","sigHash":"9a526137f998b4dda2af12e850c09b8cb9ba2de00b404b35d8e3eb970d2d54bd"}
  *
  * Go source:
  * func HasDynamicName(declaration *Node) bool {
@@ -4444,7 +4444,7 @@ export function IsExternalOrCommonJSModule(file: GoPtr<SourceFile>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsEffectiveExternalModule","kind":"func","status":"implemented","sigHash":"bc5454c2f7cc5591b6e11d000e85fffd4d294a0c441e5d9efff99b6831964205"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsEffectiveExternalModule","kind":"func","status":"implemented","sigHash":"448b0e6ccde47ef26d631aea00bfec0eab83b5f12b8e319a83126877c26025c5"}
  *
  * Go source:
  * func IsEffectiveExternalModule(node *SourceFile, compilerOptions *core.CompilerOptions) bool {
@@ -4703,7 +4703,7 @@ export function IsPartOfTypeQuery(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsPartOfParameterDeclaration","kind":"func","status":"implemented","sigHash":"3cc664798a46e3c10c6588a3791a193b0407f4db3c565955ae42df59c1c01d36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsPartOfParameterDeclaration","kind":"func","status":"implemented","sigHash":"044af048fb006c4cdc7b14e2d55c9b39c9012edcdfb09fe66764be2c94b7da72"}
  *
  * Go source:
  * func IsPartOfParameterDeclaration(node *Node) bool {
@@ -4989,7 +4989,7 @@ export function IsImportNode(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsAnyImportSyntax","kind":"func","status":"implemented","sigHash":"bb6e8e9b343f1124256d499b2f65d94706f420129039b9d340be8421463509cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsAnyImportSyntax","kind":"func","status":"implemented","sigHash":"c6e7b385839b0e6a0a66cdf12f147661467449e7eda871533a59d4daa8e05229"}
  *
  * Go source:
  * func IsAnyImportSyntax(node *Node) bool {
@@ -5802,7 +5802,7 @@ export function IsBlockScope(node: GoPtr<Node>, parentNode: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::SemanticMeaning","kind":"type","status":"implemented","sigHash":"f02b1658027cc65f660651f728f6c8ae5b4c23068e1b19f234210468af1c423f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::SemanticMeaning","kind":"type","status":"implemented","sigHash":"716d15a546a9fe4e8dfb79942a5081db4da6dfa7a2c7a987cca2be50289804d5"}
  *
  * Go source:
  * SemanticMeaning int32
@@ -5810,7 +5810,7 @@ export function IsBlockScope(node: GoPtr<Node>, parentNode: GoPtr<Node>): bool {
 export type SemanticMeaning = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::SemanticMeaningNone+SemanticMeaningValue+SemanticMeaningType+SemanticMeaningNamespace+SemanticMeaningAll","kind":"constGroup","status":"implemented","sigHash":"f46b77bfcdd6766967186ebc00a61329dcccfc442cf604653a7516e969cb54df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::SemanticMeaningNone+SemanticMeaningValue+SemanticMeaningType+SemanticMeaningNamespace+SemanticMeaningAll","kind":"constGroup","status":"implemented","sigHash":"967337f716d52304417a36d7728325b3afa55ff1ce4f00e87e2034f13559ab2f"}
  *
  * Go source:
  * const (
@@ -6033,7 +6033,7 @@ export function IsBreakOrContinueStatement(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::pushAncestor","kind":"func","status":"implemented","sigHash":"32f53e6383ca7dd23d6880ef402a50bd5dd535f7f302fe419cd0aa2f496c5518"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::pushAncestor","kind":"func","status":"implemented","sigHash":"328d5f0236dad0cc1ff3216249e2251b725c84e028143f82aff3a1c2a02d404d"}
  *
  * Go source:
  * func pushAncestor(ancestors []*Node, parent *Node) []*Node {
@@ -6046,7 +6046,7 @@ export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::popAncestor","kind":"func","status":"implemented","sigHash":"f8b75eea74d3792f67bfe8e9b42399d5ff9535d0299cdd9d7e1e985412a587fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::popAncestor","kind":"func","status":"implemented","sigHash":"035967d44a4be0bfe122a7617915c15580c191c7ed83d454c800800c961d8113"}
  *
  * Go source:
  * func popAncestor(ancestors []*Node, node *Node) ([]*Node, *Node) {
@@ -6066,7 +6066,7 @@ export function popAncestor(ancestors: GoSlice<GoPtr<Node>>, node: GoPtr<Node>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::ModuleInstanceState","kind":"type","status":"implemented","sigHash":"31c4b48c2d98be2260be57b833987ff5913272e3c7c2c5e2a8c2062fb60c30e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::ModuleInstanceState","kind":"type","status":"implemented","sigHash":"399c314d0d21ec0c7afb5a9ef2c37a021ab921eecc7807704304227c75d234e5"}
  *
  * Go source:
  * ModuleInstanceState int32
@@ -6074,7 +6074,7 @@ export function popAncestor(ancestors: GoSlice<GoPtr<Node>>, node: GoPtr<Node>):
 export type ModuleInstanceState = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::ModuleInstanceStateUnknown+ModuleInstanceStateNonInstantiated+ModuleInstanceStateInstantiated+ModuleInstanceStateConstEnumOnly","kind":"constGroup","status":"implemented","sigHash":"a9730c944df24c273ef80418dedf3abb66b6835e322b0e97e8faa76fe480d3ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::ModuleInstanceStateUnknown+ModuleInstanceStateNonInstantiated+ModuleInstanceStateInstantiated+ModuleInstanceStateConstEnumOnly","kind":"constGroup","status":"implemented","sigHash":"d0d9554ec7041ebf6a57ec80b6a668a4c41661d3caad54d72435046fea1143af"}
  *
  * Go source:
  * const (
@@ -6766,7 +6766,7 @@ export function GetDeclarationContainer(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsNonLocalAlias","kind":"func","status":"implemented","sigHash":"0e854fd8331458e8177a353cb42ee7ba64932c047879cee53f3e8d2a85aa034c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsNonLocalAlias","kind":"func","status":"implemented","sigHash":"24096fc3e78b237db2a916d0ea5315f6f55ab2b15b480b1a305e9cabdb8cdc63"}
  *
  * Go source:
  * func IsNonLocalAlias(symbol *Symbol, excludes SymbolFlags) bool {
@@ -6786,7 +6786,7 @@ export function IsNonLocalAlias(symbol_: GoPtr<Symbol>, excludes: SymbolFlags): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsAliasSymbolDeclaration","kind":"func","status":"implemented","sigHash":"95d6801c73c4728c240450eddfd9af4053a99d2a4e1a34c595237077c7eef5a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsAliasSymbolDeclaration","kind":"func","status":"implemented","sigHash":"4015a99721960827530df248b88e2b14be72b8f8f3ffed5fa4361a11761a0fff"}
  *
  * Go source:
  * func IsAliasSymbolDeclaration(node *Node) bool {
@@ -6848,7 +6848,7 @@ export function IsParseTreeNode(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetNodeAtPosition","kind":"func","status":"implemented","sigHash":"417cfe52e949168d9a571cfbd772917304bc8178217441024beabf8a414f2663"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetNodeAtPosition","kind":"func","status":"implemented","sigHash":"3e51a38449ad4158825c8fc56ac7eb9a8f7779189c5ec8b6712d9fb133986602"}
  *
  * Go source:
  * func GetNodeAtPosition(file *SourceFile, position int, includeJSDoc bool) *Node {
@@ -7058,7 +7058,7 @@ export function ForEachDynamicImportOrRequireCall(file: GoPtr<SourceFile>, inclu
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsRequireCall","kind":"func","status":"implemented","sigHash":"1ef07c58213033d789455f51fe438f46b3bf05546a2569c987f6177df7272870"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsRequireCall","kind":"func","status":"implemented","sigHash":"9fb2ebb4d11f2bbf6a822705e75c7030624b14d41dda7c3684b6ed793fe7e1bc"}
  *
  * Go source:
  * func IsRequireCall(node *Node, requireStringLiteralLikeArgument bool) bool {
@@ -7220,7 +7220,7 @@ export function GetPragmaArgument(pragma: GoPtr<Pragma>, name: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVariableDeclarationInitializedToRequire","kind":"func","status":"implemented","sigHash":"b3ace01b03b327b38aa9f45a8257efc3e830b70242866b7054e5547ba99c9e54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsVariableDeclarationInitializedToRequire","kind":"func","status":"implemented","sigHash":"c5abd6c105671f3a675b7a657c89aaf70945afa493250a3726fe1f033ebf34dd"}
  *
  * Go source:
  * func IsVariableDeclarationInitializedToRequire(node *Node) bool {
@@ -7651,7 +7651,7 @@ export function IsThisInTypeQuery(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsLet","kind":"func","status":"implemented","sigHash":"474d48c7b2ebffa02b8c28c30da68d32b9f9b43eff4d5626f92ac31e463ab3fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsLet","kind":"func","status":"implemented","sigHash":"c119e2fa5acf7d13fe3cfea40fc9867f22b2677f6b68387ae12839d599bead55"}
  *
  * Go source:
  * func IsLet(node *Node) bool {
@@ -7959,7 +7959,7 @@ export function IsTypeKeywordToken(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsJSDocSingleCommentNodeList","kind":"func","status":"implemented","sigHash":"dded63e90dadac782ff70325b9453707e9f8d736a816b37f448eb38c370dfd2f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsJSDocSingleCommentNodeList","kind":"func","status":"implemented","sigHash":"a0f3005788a75a6fbdd6cd84525ef38646f81f0f29e7e4416c167de4b098147e"}
  *
  * Go source:
  * func IsJSDocSingleCommentNodeList(nodeList *NodeList) bool {
@@ -7985,7 +7985,7 @@ export function IsJSDocSingleCommentNodeList(nodeList: GoPtr<NodeList>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsJSDocSingleCommentNodeComment","kind":"func","status":"implemented","sigHash":"98a2d8fd62fba5154596d3b4c20a5261c7cd5ef3f74933c74304626e2c777ff7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsJSDocSingleCommentNodeComment","kind":"func","status":"implemented","sigHash":"fb83a2bab104d9a2c49ef115ba3bdf4c1410059ac1ccd857b3e60920127751e7"}
  *
  * Go source:
  * func IsJSDocSingleCommentNodeComment(node *Node) bool {
@@ -8003,7 +8003,7 @@ export function IsJSDocSingleCommentNodeComment(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsJSDocSingleCommentNode","kind":"func","status":"implemented","sigHash":"dd12ed5a931c532ea8026bcd52ddbf9dccf1490aa4ee3f8284b5cc14f920f66f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsJSDocSingleCommentNode","kind":"func","status":"implemented","sigHash":"0cc95dfac183ce7138ad65ac087efb78a5279e39643b721ebd5d3a7bdda184ec"}
  *
  * Go source:
  * func IsJSDocSingleCommentNode(node *Node) bool {
@@ -9510,7 +9510,7 @@ export function IsUnterminatedLiteral(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsInitializedProperty","kind":"func","status":"implemented","sigHash":"57250611722c18865ded2d007960c7d65935bd724e34832abe10a4d8240ddb81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsInitializedProperty","kind":"func","status":"implemented","sigHash":"30da7e0a1a4e1aa51de214a72e85d308ab8642fb552c7e0a3c9760123f1e0448"}
  *
  * Go source:
  * func IsInitializedProperty(member *ClassElement) bool {
@@ -9548,7 +9548,7 @@ export function HasDecorators(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::hasFileNameImpl","kind":"type","status":"implemented","sigHash":"896872024bdb96ff93631583409f62bfc7895142cdc78dcb64d60d5060ae1921"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::hasFileNameImpl","kind":"type","status":"implemented","sigHash":"62fcee5ef611fbe841c1ee190f2e7cc9a4485c8a7af330cc36cab65419378eb5"}
  *
  * Go source:
  * hasFileNameImpl struct {
@@ -9638,7 +9638,7 @@ export function GetSemanticJsxChildren(children: GoSlice<GoPtr<JsxChild>>): GoSl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::hasComment","kind":"func","status":"implemented","sigHash":"12d284ef21dcb70266df45f9865a5c747d4078858d682edead8c0a07f140c9c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::hasComment","kind":"func","status":"implemented","sigHash":"3a7fd35573962b58b75b94062c5bcbe20e7fe19af5d057e3e20cec6ff1071d56"}
  *
  * Go source:
  * func hasComment(kind Kind) bool {
@@ -9755,7 +9755,7 @@ export function IsDeclarationBindingElement(bindingElement: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetTargetOfBindingOrAssignmentElement","kind":"func","status":"implemented","sigHash":"e659f82a700993430f7737075841549ff34750d239eef081756cf3f61aa89dd1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetTargetOfBindingOrAssignmentElement","kind":"func","status":"implemented","sigHash":"03ef8f768b03e5e3b9d6b849fd3318a1c92b539b1352e96dc71c11a888dc39fb"}
  *
  * Go source:
  * func GetTargetOfBindingOrAssignmentElement(bindingElement *Node) *Node {
@@ -9941,7 +9941,7 @@ export function TryGetPropertyNameOfBindingOrAssignmentElement(bindingElement: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ContainsObjectRestOrSpread","kind":"func","status":"implemented","sigHash":"e8063158902ee52dca48bdf2ceef99f9232d8f2e063c03f373c7b91f81950490"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ContainsObjectRestOrSpread","kind":"func","status":"implemented","sigHash":"30a65e60df835e30afa7c31b1c3ad7e82004d75d4ae629eb66981a498270b0d4"}
  *
  * Go source:
  * func ContainsObjectRestOrSpread(node *Node) bool {
@@ -10062,7 +10062,7 @@ export function IsJSDocNameReferenceContext(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetJSDocRoot","kind":"func","status":"implemented","sigHash":"51016fd99342633711eae19356b02244f19f0af0495965d27016df8ad68a4ed0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetJSDocRoot","kind":"func","status":"implemented","sigHash":"08f1af5d4a51142e39c08c78db9c511747f3df24660ed520de41c1fa6399904e"}
  *
  * Go source:
  * func GetJSDocRoot(node *Node) *Node {
@@ -10078,7 +10078,7 @@ export function GetJSDocRoot(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetJSDocHost","kind":"func","status":"implemented","sigHash":"0643a8a54af77f2012d6337f4a396968e94431f6c1b6b90e7fb9b75943dacacb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetJSDocHost","kind":"func","status":"implemented","sigHash":"8db6b8c020c0d2c7f483b86a4c8123e4823cb863807fc99a640095b9f6320b24"}
  *
  * Go source:
  * func GetJSDocHost(node *Node) *Node {
@@ -10098,7 +10098,7 @@ export function GetJSDocHost(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetHostSignatureFromJSDoc","kind":"func","status":"implemented","sigHash":"bc9585bf583fa67d5e11ce8d01b5f3a750c75d40eacdbe276459f8fbfb6b2b54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetHostSignatureFromJSDoc","kind":"func","status":"implemented","sigHash":"ef688e5a7c9efbddd452782d0883827acd78be79337ac832dc563dd626951ce7"}
  *
  * Go source:
  * func GetHostSignatureFromJSDoc(node *Node) *Node {
@@ -10132,7 +10132,7 @@ export function GetHostSignatureFromJSDoc(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetNextJSDocCommentLocation","kind":"func","status":"implemented","sigHash":"699c4ab4cfcafd1b4e36d930e951e49afacdaa4424d3ea98b3004e94937295db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetNextJSDocCommentLocation","kind":"func","status":"implemented","sigHash":"f71122eba7381a29c6108cbeff5bcebe7bcdd7c466637f86e7016a2cbe1f4c84"}
  *
  * Go source:
  * // Finds the declaration that owns the JSDoc for a function-like node.
@@ -10546,7 +10546,7 @@ export function GetFirstConstructorWithBody(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsPotentiallyExecutableNode","kind":"func","status":"implemented","sigHash":"9e4dd815d81d1ecdd71a571ab5bf1d897cd35550d8e0acf1a765a2318ffe9046"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsPotentiallyExecutableNode","kind":"func","status":"implemented","sigHash":"44cbc8ae2a7d74654f7b0d6881fc2d45d04a9c954a7c2b0243a50caa4fdc6894"}
  *
  * Go source:
  * func IsPotentiallyExecutableNode(node *Node) bool {
@@ -10835,7 +10835,7 @@ export function ChildIsDecorated(useLegacyDecorators: bool, node: GoPtr<Node>, p
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::AllAccessorDeclarations","kind":"type","status":"implemented","sigHash":"74242f0a3419c657591f2f9dead0856023ac4b1afa6588e37cf98519800eb00d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::AllAccessorDeclarations","kind":"type","status":"implemented","sigHash":"b2ec59fb7fea7b8aa5b375daebdf9b8018bc1b9fecda306d3b57aa6436201bc1"}
  *
  * Go source:
  * AllAccessorDeclarations struct {
@@ -10990,7 +10990,7 @@ export function IsAsyncFunction(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetRestParameterElementType","kind":"func","status":"implemented","sigHash":"a853dd6d5e174c3cb714fcacd5861ba7d090abd1fd8ddc90f9f004bb11911035"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetRestParameterElementType","kind":"func","status":"implemented","sigHash":"4ad2f36e69727232c55d07dbcfe8774cba34349178d6d17ed2ee1e292640d35d"}
  *
  * Go source:
  * func GetRestParameterElementType(node *ParameterDeclarationNode) *Node {
@@ -11074,7 +11074,7 @@ export function IsTagName(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::literalIsName","kind":"func","status":"implemented","sigHash":"9adbace33733341019b02281c3a8f0a6dc44756cffe2de19060b2c7b4e61afb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::literalIsName","kind":"func","status":"implemented","sigHash":"fe7a2886c98b4f3b1e5138854d5a12d1b62ef7e19ff69f9f724b478e6e436e99"}
  *
  * Go source:
  * func literalIsName(node *Node) bool {
@@ -11108,7 +11108,7 @@ export function isArgumentOfElementAccessExpression(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetReparsedNodeForNode","kind":"func","status":"implemented","sigHash":"33182eaca71399f8833fe8133c79d1c8a540f4b40952a02af9d50ebc2a535974"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetReparsedNodeForNode","kind":"func","status":"implemented","sigHash":"5892f7d546b3547991f5cab97c890ce7f6efabfbec078ce7cc97b74dd11b2e54"}
  *
  * Go source:
  * func GetReparsedNodeForNode(node *Node) *Node {
@@ -11203,7 +11203,7 @@ export function IsExpandoPropertyDeclaration(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsSuperProperty","kind":"func","status":"implemented","sigHash":"d14f0a96cb38a995f3f2aaf87ed567303bb31f319b2c7e7d2100631afb999e6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsSuperProperty","kind":"func","status":"implemented","sigHash":"dda37feb0fa94a0e37e71ef538f9321ea35ac3f35ecd9568744a41a6da1409bb"}
  *
  * Go source:
  * func IsSuperProperty(node *Node) bool {
@@ -11217,7 +11217,7 @@ export function IsSuperProperty(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsNamedEvaluationSource","kind":"func","status":"implemented","sigHash":"c2427b362f66aa78871e2b40c41162d2f6984b20bf8915782ff39586fee3e9b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsNamedEvaluationSource","kind":"func","status":"implemented","sigHash":"30d347b0668fc3d6cfcb59da8e0ae343996f5d583c1dab1cafd0f1c25bc4aa54"}
  *
  * Go source:
  * // Indicates whether a node is a potential source of an assigned name for a class, function, or arrow function.
@@ -11276,7 +11276,7 @@ export function IsNamedEvaluationSource(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsProtoSetter","kind":"func","status":"implemented","sigHash":"4ce8dc880b6c589687b11d14b24979c2b511353db79a7ee61559a9d48ed23a01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsProtoSetter","kind":"func","status":"implemented","sigHash":"80e056b69cf61165111c3546dc74738b41bdb5ae777c0656c1d916814cedd627"}
  *
  * Go source:
  * // Indicates whether a property name is the special `__proto__` property.

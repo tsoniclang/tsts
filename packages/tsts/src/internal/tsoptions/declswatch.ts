@@ -17,7 +17,7 @@ import {
 
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declswatch.go::varGroup::OptionsForWatch","kind":"varGroup","status":"implemented","sigHash":"5625736dc14613db66c37f61011e7bbf33c0df050850b85f2e36a529495bada2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declswatch.go::varGroup::OptionsForWatch","kind":"varGroup","status":"implemented","sigHash":"28364b410520abdef3e8d39d3dcec8cf683968dd3f8d22186030d1ac2d4b12d9"}
  *
  * Go source:
  * var OptionsForWatch = []*CommandLineOption{

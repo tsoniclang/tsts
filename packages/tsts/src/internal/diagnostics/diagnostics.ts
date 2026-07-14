@@ -21,7 +21,7 @@ import { loadMatchedLocaleMessages } from "./generated/loc.js";
 import { keyToMessage } from "./generated/messages.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::type::Category","kind":"type","status":"implemented","sigHash":"1960d11204bc296256417f7ea07bd7b5942396d8a42bf9cd600720f2d9d9ef89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::type::Category","kind":"type","status":"implemented","sigHash":"9ed85a7d5c8305a2a52d73283412548b073e28ea8abb464ed426ed1cf24edfa4"}
  *
  * Go source:
  * Category int32
@@ -29,7 +29,7 @@ import { keyToMessage } from "./generated/messages.js";
 export type Category = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::constGroup::CategoryWarning+CategoryError+CategorySuggestion+CategoryMessage","kind":"constGroup","status":"implemented","sigHash":"ec0a4f2f1e66c20fa5f85b843618f7d2ac22640f877a1edcea38731e629623f6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::constGroup::CategoryWarning+CategoryError+CategorySuggestion+CategoryMessage","kind":"constGroup","status":"implemented","sigHash":"e433856e19e5d8fa028332edf00f48dc1749118c30cbb187580045bc8741b7de"}
  *
  * Go source:
  * const (
@@ -77,7 +77,7 @@ export function Category_Name(receiver: Category): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::type::Key","kind":"type","status":"implemented","sigHash":"e5d0e9e9d84f816921a1a777155382a8de5e22940423814cd9fde57883114557"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::type::Key","kind":"type","status":"implemented","sigHash":"8116d70899d0f2e878924414b202f2f869a6a96178635a65ac094ce45315fe00"}
  *
  * Go source:
  * Key string
@@ -85,7 +85,7 @@ export function Category_Name(receiver: Category): string {
 export type Key = string;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::type::Message","kind":"type","status":"implemented","sigHash":"a05b801837f37f9f77d233878f4cf76702957e58f1f0d2ebead3dd26d36b5861"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::type::Message","kind":"type","status":"implemented","sigHash":"bf4f4a72d8103bd1e15ec288b5cf66c29f0278fa07ce8a0284ef88ad31a240f9"}
  *
  * Go source:
  * Message struct {
@@ -169,7 +169,7 @@ export function Message_ReportsDeprecated(receiver: GoPtr<Message>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::method::Message.String","kind":"method","status":"implemented","sigHash":"f566569c9e35234f57320d9a05a9e7d5b40d19364c13d608c004be3445cee4ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::method::Message.String","kind":"method","status":"implemented","sigHash":"3b2d34891aaf83a982589606a69863ff2018dd8e276107b3c863b35c42dc6f39"}
  *
  * Go source:
  * func (m *Message) String() string {
@@ -231,7 +231,7 @@ export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...a
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::varGroup::localizedMessagesCache","kind":"varGroup","status":"implemented","sigHash":"906df1cb73699858abcb438c57d96db64425fd2917e44637f6c0fcca821356f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::varGroup::localizedMessagesCache","kind":"varGroup","status":"implemented","sigHash":"7b859d2ffe9b554adce31140450ea5b6b042af92b5062af57a3f661163b46e71"}
  *
  * Go source:
  * var localizedMessagesCache sync.Map // map[language.Tag]map[Key]string
@@ -303,7 +303,7 @@ export function getLocalizedMessages(loc: Tag): GoMap<Key, string> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::varGroup::placeholderRegexp","kind":"varGroup","status":"implemented","sigHash":"45ce797b9a21f93a274a325edfbc7b2aa0f8edb76175afcdae943c6125cad11f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::varGroup::placeholderRegexp","kind":"varGroup","status":"implemented","sigHash":"8a1d4aa3fbc816e5c83458fa887971ec75cb880c58d6eee444e8a75fb7a7f903"}
  *
  * Go source:
  * var placeholderRegexp = regexp.MustCompile(`{(\d+)}`)

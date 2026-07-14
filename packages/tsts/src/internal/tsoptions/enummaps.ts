@@ -117,7 +117,7 @@ const watchDirectoryKindKey: GoMapKeyDescriptor<WatchDirectoryKind> = GoNamedNum
 const pollingKindKey: GoMapKeyDescriptor<PollingKind> = GoNamedNumberKey<PollingKind>();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::LibMap","kind":"varGroup","status":"implemented","sigHash":"21c746f7178dcd816b138a028a3217efb05851c01982ee0831e9921f9726c6a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::LibMap","kind":"varGroup","status":"implemented","sigHash":"25fe45e16d662f740f50739d4607802bd9e005dde887ea4bbe5adceb3010f438"}
  *
  * Go source:
  * var LibMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{
@@ -353,7 +353,7 @@ export let LibMap: GoPtr<OrderedMap<string, GoInterface<unknown>>> = newCommandL
 ], GoStringKey);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::Libs+LibFilesSet","kind":"varGroup","status":"implemented","sigHash":"7f1bb88b496484fefb9642125ab0f5889147d8de34f5b852bfca1c516b32dc76"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::Libs+LibFilesSet","kind":"varGroup","status":"implemented","sigHash":"f34f387c4210267242f23f238eae37bde89af5b03798a8e3434181fab33d25fa"}
  *
  * Go source:
  * var (
@@ -406,7 +406,7 @@ export function GetLibFileName(libName: string): [string, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleResolutionOptionMap","kind":"varGroup","status":"implemented","sigHash":"7893ed5cd93b19ebe6a5247fbb041439b6d7b0509cb26604a398a6ac4850f21b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleResolutionOptionMap","kind":"varGroup","status":"implemented","sigHash":"87bd50a730b596627e539c68e21f4a682790264e13eff26f5028e708549db89c"}
  *
  * Go source:
  * var moduleResolutionOptionMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{
@@ -428,7 +428,7 @@ export let moduleResolutionOptionMap: GoPtr<OrderedMap<string, GoInterface<unkno
 ], moduleResolutionKindKey);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::targetOptionMap","kind":"varGroup","status":"implemented","sigHash":"92a48d3d94cc5a2f462dbcfec9ae6f229dff387c261b19be382e4884767f8961"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::targetOptionMap","kind":"varGroup","status":"implemented","sigHash":"393e301b9dd4992b4370bd4eee06a2c4012a04fcc59093f667c45c1042178744"}
  *
  * Go source:
  * var targetOptionMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{
@@ -466,7 +466,7 @@ export let targetOptionMap: GoPtr<OrderedMap<string, GoInterface<unknown>>> = ne
 ], scriptTargetKey);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleOptionMap","kind":"varGroup","status":"implemented","sigHash":"d0dd550632fe1a8a4dcaae49672b36df2c1ea14aca7968e260f162565c008c60"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleOptionMap","kind":"varGroup","status":"implemented","sigHash":"3487d5a6c2db6cfafb6d157bdf2b023186bf5c469515832792fcdb5bded3bcdc"}
  *
  * Go source:
  * var moduleOptionMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{
@@ -504,7 +504,7 @@ export let moduleOptionMap: GoPtr<OrderedMap<string, GoInterface<unknown>>> = ne
 ], moduleKindKey);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleDetectionOptionMap","kind":"varGroup","status":"implemented","sigHash":"b1d7ff4c506a30641873666d457d5cfe8de0f7b3c284efc32134614edd7401f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleDetectionOptionMap","kind":"varGroup","status":"implemented","sigHash":"fad0acf17537c06b2e027fc7180d549d7886c51ce0f15f8007979be35bd91c57"}
  *
  * Go source:
  * var moduleDetectionOptionMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{
@@ -520,7 +520,7 @@ export let moduleDetectionOptionMap: GoPtr<OrderedMap<string, GoInterface<unknow
 ], moduleDetectionKindKey);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::jsxOptionMap","kind":"varGroup","status":"implemented","sigHash":"67a1927d0067927b27a294e7887e3c4828ccb4d7155d1a2c1abbab40e69b6532"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::jsxOptionMap","kind":"varGroup","status":"implemented","sigHash":"8a2f7ea7f16fec423b580691b238abecb2072c46f0f0544498173ff9c0af1517"}
  *
  * Go source:
  * var jsxOptionMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{
@@ -540,7 +540,7 @@ export let jsxOptionMap: GoPtr<OrderedMap<string, GoInterface<unknown>>> = newCo
 ], jsxEmitKey);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::newLineOptionMap","kind":"varGroup","status":"implemented","sigHash":"1bee69fa1348308e4a98214939c9257767dbb4ac18f27e9953c12fa9b0e3cefd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::newLineOptionMap","kind":"varGroup","status":"implemented","sigHash":"d22974e3bbbf10d7c9f141f4dd1581a0d89ac6c9857dc2ac950e71388c9389c3"}
  *
  * Go source:
  * var newLineOptionMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{
@@ -554,7 +554,7 @@ export let newLineOptionMap: GoPtr<OrderedMap<string, GoInterface<unknown>>> = n
 ], newLineKindKey);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::targetToLibMap","kind":"varGroup","status":"implemented","sigHash":"1ff6ecd54d75b300816a428a8de0ff6e050ae9d83afbf5df21cdb43fe2991df4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::targetToLibMap","kind":"varGroup","status":"implemented","sigHash":"2ce91543b05be99d66a31308da52da5f152980ea5efa843d79fdcc351e206c4e"}
  *
  * Go source:
  * var targetToLibMap = map[core.ScriptTarget]string{
@@ -622,7 +622,7 @@ export function GetDefaultLibFileName(options: GoPtr<CompilerOptions>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::watchFileEnumMap","kind":"varGroup","status":"implemented","sigHash":"36a7b5f54a4afeb3e3e60dcdf77c6653ee1cb85a71327edacc0604c1776ce996"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::watchFileEnumMap","kind":"varGroup","status":"implemented","sigHash":"300620585ab6c3deb7de5b87a375b7b0bd14e2a7ac2eed59bf2f8a6765ab355e"}
  *
  * Go source:
  * var watchFileEnumMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{
@@ -644,7 +644,7 @@ export let watchFileEnumMap: GoPtr<OrderedMap<string, GoInterface<unknown>>> = n
 ], watchFileKindKey);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::watchDirectoryEnumMap","kind":"varGroup","status":"implemented","sigHash":"40f83ac41ebf2272716ba8266adcb474c4fdbdd6f8518dace47766b504baef72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::watchDirectoryEnumMap","kind":"varGroup","status":"implemented","sigHash":"dbed0eeb1082a7c0300864244f41220450fc9c06345268b3ab38899473cddbaf"}
  *
  * Go source:
  * var watchDirectoryEnumMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{
@@ -662,7 +662,7 @@ export let watchDirectoryEnumMap: GoPtr<OrderedMap<string, GoInterface<unknown>>
 ], watchDirectoryKindKey);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::fallbackEnumMap","kind":"varGroup","status":"implemented","sigHash":"c031524664983e24b8bfc74381b1a808b5f6710b4dc6512b27e6bf3964cfa201"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::fallbackEnumMap","kind":"varGroup","status":"implemented","sigHash":"71515ae95b3808e5fdbd47f7d7b68331784bd75b39ec34afc23451e7d34fa867"}
  *
  * Go source:
  * var fallbackEnumMap = collections.NewOrderedMapFromList([]collections.MapEntry[string, any]{

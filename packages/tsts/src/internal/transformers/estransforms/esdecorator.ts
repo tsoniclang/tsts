@@ -278,7 +278,7 @@ import type { GoFunc } from "../../../go/compat.js";
 
 const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::lexicalEntryKind","kind":"type","status":"implemented","sigHash":"15b8208208520c37a488f4f4ecbd5583df43ca92f4096e7e3644b1e26e32ee3f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::lexicalEntryKind","kind":"type","status":"implemented","sigHash":"cb5c9ef2bdd53cb23eda7bf23bfa663a0beadca94c7ac4ad7393708c268dc92d"}
  *
  * Go source:
  * lexicalEntryKind int
@@ -286,7 +286,7 @@ const nodePointerKey: GoMapKeyDescriptor<GoPtr<Node>> = GoPointerKey<Node>();
 export type lexicalEntryKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::constGroup::lexicalEntryKindClass+lexicalEntryKindClassElement+lexicalEntryKindName+lexicalEntryKindOther","kind":"constGroup","status":"implemented","sigHash":"7c10f7e120828a806712afeb06f905b2b92998433acd6210a37c8e0db94870ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::constGroup::lexicalEntryKindClass+lexicalEntryKindClassElement+lexicalEntryKindName+lexicalEntryKindOther","kind":"constGroup","status":"implemented","sigHash":"27f16f618bc4a61d7e9bb761763cb0b3c7ed92e628d363b35db753c87ecaad68"}
  *
  * Go source:
  * const (
@@ -302,7 +302,7 @@ export const lexicalEntryKindName: lexicalEntryKind = 2;
 export const lexicalEntryKindOther: lexicalEntryKind = 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::lexicalEntry","kind":"type","status":"implemented","sigHash":"7be7b19d4b29317b33f7dc2c053a3ef94da44aedf4683bb442f359b660cb3f09"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::lexicalEntry","kind":"type","status":"implemented","sigHash":"681e1a0d04fdec1aedb3e64033039befab3e709d7d3bb55cd7385a70b985e55e"}
  *
  * Go source:
  * lexicalEntry struct {
@@ -326,7 +326,7 @@ export interface lexicalEntry {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::memberInfo","kind":"type","status":"implemented","sigHash":"28e25d39aaf825c5e90cbd17c9b44908314ffcef8c8ae46e0eaa800de7341ebc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::memberInfo","kind":"type","status":"implemented","sigHash":"709cd74b8ec1794e0802f59f8dd7a3b148215c618d913abffb5e09ed3ff1e157"}
  *
  * Go source:
  * memberInfo struct {
@@ -344,7 +344,7 @@ export interface memberInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::classInfo","kind":"type","status":"implemented","sigHash":"4826cee7287a01c420b0bd76f621f844847c227d068a52555bb70710786d39c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::classInfo","kind":"type","status":"implemented","sigHash":"18893e8f84f74beef60202e4f8d009c5820dc6b43d93275b26d2bfcde8c15315"}
  *
  * Go source:
  * classInfo struct {
@@ -392,7 +392,7 @@ export interface classInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::esDecoratorTransformer","kind":"type","status":"implemented","sigHash":"2dc39066eaadf8edb717da9c480ca2da8426d2ed0704064e39a7d2067fb1042b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::esDecoratorTransformer","kind":"type","status":"implemented","sigHash":"3c3ae45b5946c2becb5c73cb48e6e47c39354c7e273c288cf800a3a81351d7c6"}
  *
  * Go source:
  * esDecoratorTransformer struct {
@@ -2222,7 +2222,7 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.emitMemberInfoDeclarations","kind":"method","status":"implemented","sigHash":"a8e72cd9e40df1cefb53fa81befb34f539521ae4ea0b664e5b5dead9e387e98c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.emitMemberInfoDeclarations","kind":"method","status":"implemented","sigHash":"1f33494f9d97eee928a9856a06ee76ae0754bb3af09cfeb829b0dbd2d0743195"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) emitMemberInfoDeclarations(ci *classInfo, isStatic bool) []*ast.Statement {
@@ -2723,7 +2723,7 @@ export function esDecoratorTransformer_finishClassElement(receiver: GoPtr<esDeco
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::partialResult","kind":"type","status":"implemented","sigHash":"3e422d34c00b855fe4f45a15dbf0bdf8c333484d0cb1e33a7445eda343fe603c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::partialResult","kind":"type","status":"implemented","sigHash":"b1273ea36a63f2b6127ca9452ac778e2ca7b7fb21db914c213e07b30148722f3"}
  *
  * Go source:
  * partialResult struct {
@@ -2747,7 +2747,7 @@ export interface partialResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::createDescriptorFunc","kind":"type","status":"implemented","sigHash":"c983f2fcea410691ffce40d34366b148568c36f53dd378796b83ccdfe1439bb7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::type::createDescriptorFunc","kind":"type","status":"implemented","sigHash":"d58fc9f2e8b545f208c5cec76b11b3772ce13f06585f9787a1d8cc4654b880c1"}
  *
  * Go source:
  * createDescriptorFunc func(member *ast.Node, modifiers *ast.ModifierList) *ast.Expression
@@ -3097,7 +3097,7 @@ export function esDecoratorTransformer_partialTransformClassElement(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.appendDecorationStatement","kind":"method","status":"implemented","sigHash":"1173e134fa5c50f0509cbb9601baf309bdc84abe55d25637b70ba5c73f767616"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.appendDecorationStatement","kind":"method","status":"implemented","sigHash":"e8c5d021232d1560b64e630f59b3e722ab059c9537e26482250479a45eee0ff7"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) appendDecorationStatement(ci *classInfo, member *ast.Node, stmt *ast.Statement) {
@@ -3787,7 +3787,7 @@ export function esDecoratorTransformer_visitElementAccessExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitParameterDeclaration","kind":"method","status":"implemented","sigHash":"b1fb9485870e40d6c6b6afef130f00d121a5a52c9d5aacfcbe8ef46931dde28b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitParameterDeclaration","kind":"method","status":"implemented","sigHash":"aeaea04da9f18ac53e1ad0b0d97c0a1b47bb2fe3c438e4972c3ce5d119f7591c"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) visitParameterDeclaration(node *ast.ParameterDeclaration) *ast.Node {
@@ -3850,7 +3850,7 @@ export function esDecoratorTransformer_visitParameterDeclaration(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitNamedEvaluationSite","kind":"method","status":"implemented","sigHash":"22996007d81b6df749c59cfe907ea2a41fbefc0ef910ce656b1d3db827ef94b0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitNamedEvaluationSite","kind":"method","status":"implemented","sigHash":"c06eb8e19f26048327829f3e5ad6709cbccca76cdc95ab97963d44d9a0280826"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) visitNamedEvaluationSite(node *ast.Node, classExpr *ast.Node) *ast.Node {
@@ -3882,7 +3882,7 @@ export function isAnonymousClassNeedingAssignedName(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::func::canIgnoreEmptyStringLiteralInAssignedName","kind":"func","status":"implemented","sigHash":"9a19eee0a74c02b7b29de49be0094a2b822265529005824627736c9c8d2c4637"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::func::canIgnoreEmptyStringLiteralInAssignedName","kind":"func","status":"implemented","sigHash":"4bed7ae85511b7f99acb04dad88d9cab8b6cd5b65f49b0bb7b74bc62ace11e17"}
  *
  * Go source:
  * func canIgnoreEmptyStringLiteralInAssignedName(node *ast.Node) bool {
@@ -4797,7 +4797,7 @@ export function esDecoratorTransformer_visitPartiallyEmittedExpression(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.prependExpressions","kind":"method","status":"implemented","sigHash":"4b105178398cb2703a7813b9f4f5a61f75520112a7c6fc6933d62f2b364aca33"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.prependExpressions","kind":"method","status":"implemented","sigHash":"63b6bfcc23c8f362d8d3d553eff3c5e04c9b5d8cc7dfd14ef8e9c611cf46d9a6"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) prependExpressions(pending []*ast.Expression, expression *ast.Expression) *ast.Expression {
@@ -4895,7 +4895,7 @@ export function esDecoratorTransformer_injectPendingInitializers(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.transformAllDecoratorsOfDeclaration","kind":"method","status":"implemented","sigHash":"5fee98380f8d0cca3dc2f35dfb773936ee06b4e309ca8bce73ab95ab55b9f264"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.transformAllDecoratorsOfDeclaration","kind":"method","status":"implemented","sigHash":"3f9a6d62bfdcf45476d57892f54599f3c91f12bfdf96bd78cdac0b0bfd6e8cf9"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) transformAllDecoratorsOfDeclaration(decorators []*ast.Node) []*ast.Expression {
@@ -4918,7 +4918,7 @@ export function esDecoratorTransformer_transformAllDecoratorsOfDeclaration(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.transformDecorator","kind":"method","status":"implemented","sigHash":"041babbbdb49b89bed5962e9de7ec457312bf6762a56e9bd0a45b6bc25016ae0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.transformDecorator","kind":"method","status":"implemented","sigHash":"c40775edb879bfd57d802b96823fa2e4798c1178466a8be0b1e423bf32f525e9"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) transformDecorator(decorator *ast.Node) *ast.Expression {
@@ -5079,7 +5079,7 @@ export function esDecoratorTransformer_shouldBeCapturedInTempVariable(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createDescriptorMethod","kind":"method","status":"implemented","sigHash":"226c29e32c9bf2c55c93c2db00b290d6ebc50792c1bd7d052986fe23c2e2d772"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createDescriptorMethod","kind":"method","status":"implemented","sigHash":"f71b5aa70d90db79f3741fd017d7ed660842aa4798436945d9daaad1939e1caf"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) createDescriptorMethod(
@@ -5150,7 +5150,7 @@ export function esDecoratorTransformer_createDescriptorMethod(receiver: GoPtr<es
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createMethodDescriptorObject","kind":"method","status":"implemented","sigHash":"06ba01c8f90f00c1e17856834e0a637fd06135907d8626e5cd71832b19c6b2ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createMethodDescriptorObject","kind":"method","status":"implemented","sigHash":"489a619ed67959df2cb272732b7b48996094f106c7b02072dda7d2a5d4b1a98a"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) createMethodDescriptorObject(member *ast.Node, modifiers *ast.ModifierList) *ast.Expression {
@@ -5179,7 +5179,7 @@ export function esDecoratorTransformer_createMethodDescriptorObject(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createGetAccessorDescriptorObject","kind":"method","status":"implemented","sigHash":"643badf7140fbe90541a86b32088f4557693e771038e2b7ef5c31c7a3c299820"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createGetAccessorDescriptorObject","kind":"method","status":"implemented","sigHash":"4cb68db15946e95fb8422aca1662c59f92204ec06c1e61cff7c3956d956d0484"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) createGetAccessorDescriptorObject(member *ast.Node, modifiers *ast.ModifierList) *ast.Expression {
@@ -5204,7 +5204,7 @@ export function esDecoratorTransformer_createGetAccessorDescriptorObject(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createSetAccessorDescriptorObject","kind":"method","status":"implemented","sigHash":"30d48a5bae6f9e2e7011d93538a991109326e5ab051ed362484644336926952f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createSetAccessorDescriptorObject","kind":"method","status":"implemented","sigHash":"5ce613372464645c371e00eb0ae1d6e82f3c5c79e12757f0c17aebd71832096f"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) createSetAccessorDescriptorObject(member *ast.Node, modifiers *ast.ModifierList) *ast.Expression {
@@ -5231,7 +5231,7 @@ export function esDecoratorTransformer_createSetAccessorDescriptorObject(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createAccessorPropertyDescriptorObject","kind":"method","status":"implemented","sigHash":"79c03f1bae1daa2fe173a31a13e727e6839250efc1df8fdbe48a193f8779984f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createAccessorPropertyDescriptorObject","kind":"method","status":"implemented","sigHash":"2733a7d487749bbf99021df828f2916c9314d05a2ce7759d31d2d8ce6fc95884"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) createAccessorPropertyDescriptorObject(member *ast.Node, _ *ast.ModifierList) *ast.Expression {
@@ -5291,7 +5291,7 @@ export function esDecoratorTransformer_createAccessorPropertyDescriptorObject(re
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createMethodDescriptorForwarder","kind":"method","status":"implemented","sigHash":"2ba4795d38854f711cc6e9869760d67461088260b46aa683a41a963651dad05c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createMethodDescriptorForwarder","kind":"method","status":"implemented","sigHash":"622ec993ced7673036f3c3508d72a4b6d1ee57259fa3aca9d225ba95426f9b6a"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) createMethodDescriptorForwarder(modifiers *ast.ModifierList, name *ast.Node, descriptorName *ast.IdentifierNode) *ast.Node {
@@ -5324,7 +5324,7 @@ export function esDecoratorTransformer_createMethodDescriptorForwarder(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createGetAccessorDescriptorForwarder","kind":"method","status":"implemented","sigHash":"ccb82363be6c88821a6b393ed2902b364a005503527f0853aaf3cc06acacbd13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createGetAccessorDescriptorForwarder","kind":"method","status":"implemented","sigHash":"bf369ec7c75f728babff75ca21fa1d5aff252e3e6d869195bdee62de6dd0f815"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) createGetAccessorDescriptorForwarder(modifiers *ast.ModifierList, name *ast.Node, descriptorName *ast.IdentifierNode) *ast.Node {
@@ -5362,7 +5362,7 @@ export function esDecoratorTransformer_createGetAccessorDescriptorForwarder(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createSetAccessorDescriptorForwarder","kind":"method","status":"implemented","sigHash":"df3286350a344232120820005d3660f67caf22fce8e8ce52f869b4769d124597"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.createSetAccessorDescriptorForwarder","kind":"method","status":"implemented","sigHash":"4ad86f6d59931dff1d88f7aa41b6ce1f74336e6c8870d4c66f0bf22457195b74"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) createSetAccessorDescriptorForwarder(modifiers *ast.ModifierList, name *ast.Node, descriptorName *ast.IdentifierNode) *ast.Node {

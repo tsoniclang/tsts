@@ -38,7 +38,7 @@ import { OrderedSet_Size } from "../../collections/ordered_set.js";
 
 import type { GoFunc } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forAwaitHierarchyFacts","kind":"type","status":"implemented","sigHash":"89f2a13d454fc30fc2e581b3a64d8e6613f0c8304132aa4c7f38bf9964ca1d3a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forAwaitHierarchyFacts","kind":"type","status":"implemented","sigHash":"74a7859468c019889c9ce9acb2e9dbcd44fb07f6d451f381feab8893f24a4446"}
  *
  * Go source:
  * forAwaitHierarchyFacts int
@@ -46,7 +46,7 @@ import type { GoFunc } from "../../../go/compat.js";
 export type forAwaitHierarchyFacts = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::constGroup::forAwaitHierarchyFactsNone","kind":"constGroup","status":"implemented","sigHash":"743dd206be10af7169e2b2ca6b556c4257ea5790895c905342579f7cc4d2ccaa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::constGroup::forAwaitHierarchyFactsNone","kind":"constGroup","status":"implemented","sigHash":"23967ae35992baddf4ce58a879503e4fa248de026c52ee00d1b50b1d2cfeb556"}
  *
  * Go source:
  * const forAwaitHierarchyFactsNone forAwaitHierarchyFacts = 0
@@ -54,7 +54,7 @@ export type forAwaitHierarchyFacts = int;
 export const forAwaitHierarchyFactsNone: forAwaitHierarchyFacts = 0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::constGroup::forAwaitHierarchyFactsHasLexicalThis+forAwaitHierarchyFactsIterationContainer+forAwaitHierarchyFactsAncestorFactsMask+forAwaitHierarchyFactsSourceFileExcludes+forAwaitHierarchyFactsStrictModeSourceFileIncludes+forAwaitHierarchyFactsClassOrFunctionIncludes+forAwaitHierarchyFactsClassOrFunctionExcludes+forAwaitHierarchyFactsArrowFunctionIncludes+forAwaitHierarchyFactsArrowFunctionExcludes+forAwaitHierarchyFactsIterationStatementIncludes+forAwaitHierarchyFactsIterationStatementExcludes","kind":"constGroup","status":"implemented","sigHash":"e20f751ad09391b355fd7413892a212380165eb40f010565639d7fc4d3fedba0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::constGroup::forAwaitHierarchyFactsHasLexicalThis+forAwaitHierarchyFactsIterationContainer+forAwaitHierarchyFactsAncestorFactsMask+forAwaitHierarchyFactsSourceFileExcludes+forAwaitHierarchyFactsStrictModeSourceFileIncludes+forAwaitHierarchyFactsClassOrFunctionIncludes+forAwaitHierarchyFactsClassOrFunctionExcludes+forAwaitHierarchyFactsArrowFunctionIncludes+forAwaitHierarchyFactsArrowFunctionExcludes+forAwaitHierarchyFactsIterationStatementIncludes+forAwaitHierarchyFactsIterationStatementExcludes","kind":"constGroup","status":"implemented","sigHash":"da759bb543ff71eb6f454d453cc6551473d8c024dfdf6c9ad5a45241fc79ed5d"}
  *
  * Go source:
  * const (
@@ -100,7 +100,7 @@ export const forAwaitHierarchyFactsIterationStatementIncludes: forAwaitHierarchy
 export const forAwaitHierarchyFactsIterationStatementExcludes: forAwaitHierarchyFacts = forAwaitHierarchyFactsNone;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forawaitTransformer","kind":"type","status":"implemented","sigHash":"74b099c5f784cd0dc4b6903480b7f1adb0f61b2ae0834037fa6c0542fc3ba5bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forawaitTransformer","kind":"type","status":"implemented","sigHash":"85f20d7e8c3215d64829184a754d4829c59e0226dc5b95052ffded5076ef1ee0"}
  *
  * Go source:
  * forawaitTransformer struct {
@@ -183,7 +183,7 @@ export function forawaitTransformer_affectsSubtree(receiver: GoPtr<forawaitTrans
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.enterSubtree","kind":"method","status":"implemented","sigHash":"74deceb2ecc6edd54ab978004d35fe5d74ded2753cf8c26891b4dca1a2ec3af7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.enterSubtree","kind":"method","status":"implemented","sigHash":"529129cba0f8dca2cb67a6c3c3311026cdfb3ec0110830dc1474960d202194de"}
  *
  * Go source:
  * func (tx *forawaitTransformer) enterSubtree(excludeFacts forAwaitHierarchyFacts, includeFacts forAwaitHierarchyFacts) forAwaitHierarchyFacts {
@@ -199,7 +199,7 @@ export function forawaitTransformer_enterSubtree(receiver: GoPtr<forawaitTransfo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.exitSubtree","kind":"method","status":"implemented","sigHash":"24e9a4e6e8594ef2f7477e8baa982bd70b14b61cd194e38db39b8dac89393879"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.exitSubtree","kind":"method","status":"implemented","sigHash":"12ddfab2a7def0df242ab6a7bce04a3d3116252d71789b5ff8f766aed863f0da"}
  *
  * Go source:
  * func (tx *forawaitTransformer) exitSubtree(ancestorFacts forAwaitHierarchyFacts) {
@@ -704,7 +704,7 @@ export function forawaitTransformer_visitLabeledStatement(receiver: GoPtr<forawa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::func::unwrapInnermostStatementOfLabel","kind":"func","status":"implemented","sigHash":"ef81b7da32e71f60f0e66cc6482c4be2df333ef1d60df9e0c4015ec52c2601fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::func::unwrapInnermostStatementOfLabel","kind":"func","status":"implemented","sigHash":"c2e3f89fda5d86a8331ad966baac38399a5b315ea20435085287e8c24b4fa5b0"}
  *
  * Go source:
  * func unwrapInnermostStatementOfLabel(node *ast.LabeledStatement) *ast.Node {
@@ -754,7 +754,7 @@ export function forawaitTransformer_visitSourceFile(receiver: GoPtr<forawaitTran
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitForOfStatement","kind":"method","status":"implemented","sigHash":"a1398a3acc7c58354bfa198fe3be639b681d7c75a8e6a85d3f805367d00c5068"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitForOfStatement","kind":"method","status":"implemented","sigHash":"b8e42418759c33e16bbc537958cc59ef0f84aa0259425ca8ca9ac0d02647e13d"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitForOfStatement(node *ast.ForInOrOfStatement, outermostLabeledStatement *ast.LabeledStatement) *ast.Node {

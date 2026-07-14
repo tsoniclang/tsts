@@ -12,7 +12,7 @@ import {
 
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declstypeacquisition.go::varGroup::typeAcquisitionDeclaration","kind":"varGroup","status":"implemented","sigHash":"403792fd19363f2bf764316b7e9670761a5952b1c1cfaa7bafec8a00b5f5ae5c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declstypeacquisition.go::varGroup::typeAcquisitionDeclaration","kind":"varGroup","status":"implemented","sigHash":"91707cd0d85ab25bfc427d87b088e5f7ef2d799346b2da5f3d2726df4f446792"}
  *
  * Go source:
  * var typeAcquisitionDeclaration = &CommandLineOption{
@@ -27,7 +27,7 @@ import {
 export let typeAcquisitionDeclaration: GoPtr<CommandLineOption> = undefined;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declstypeacquisition.go::varGroup::typeAcquisitionDecls","kind":"varGroup","status":"implemented","sigHash":"56356b00bbf795538edacacf84cbc917ced76e422e7626daf230b8f048cbfb5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declstypeacquisition.go::varGroup::typeAcquisitionDecls","kind":"varGroup","status":"implemented","sigHash":"fc791c3a8b42b2c6eac11b7a803b847ac7561e8237d017c5c3c50993011d652b"}
  *
  * Go source:
  * var typeAcquisitionDecls = []*CommandLineOption{

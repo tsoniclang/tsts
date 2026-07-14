@@ -30,7 +30,7 @@ function* rangeRunes(s: string): Generator<GoRune> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::method::Number.String","kind":"method","status":"implemented","sigHash":"85837c5f07b57c31a06f77adb1f019dc796d72c87338cf5849ce3b4b05fb1bf0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::method::Number.String","kind":"method","status":"implemented","sigHash":"521f007690cc538fcbc87e480055c50b13c480e70332669de127237628f9f398"}
  *
  * Go source:
  * func (n Number) String() string {
@@ -81,7 +81,7 @@ export function Number_String(receiver: Number): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::FromString","kind":"func","status":"implemented","sigHash":"b9851dc3e956098f0c4483c4d0108a4bae66c5f58c33c723d074d1f162926fe5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::FromString","kind":"func","status":"implemented","sigHash":"322ee620c628d0b32993f8396c9aa028fb995973c141219ed46ea4f7593a3a80"}
  *
  * Go source:
  * func FromString(s string) Number {
@@ -257,7 +257,7 @@ export function isStrWhiteSpace(r: GoRune): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::varGroup::errUnknownPrefix","kind":"varGroup","status":"implemented","sigHash":"df22c667042dad784e643fa0ee7ec7fe4c2d764c56518bb6cee437f6f27ae2ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::varGroup::errUnknownPrefix","kind":"varGroup","status":"implemented","sigHash":"0cea8f00b292d6e40ea5de09b85bd371ee37389ec01973d2ff427766619300dc"}
  *
  * Go source:
  * var errUnknownPrefix = errors.New("unknown number prefix")

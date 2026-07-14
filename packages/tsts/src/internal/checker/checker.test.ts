@@ -55,6 +55,7 @@ foo.bar;`;
   } satisfies ProgramOptions);
   Program_BindSourceFiles(p);
   const [c, done] = Program_GetTypeChecker(p, Background());
+  assert.ok(done !== undefined);
   try {
     const file = Program_GetSourceFile(p, "/foo.ts");
     assert.ok(file !== undefined);

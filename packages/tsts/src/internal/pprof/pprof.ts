@@ -13,7 +13,7 @@ import * as time from "../../go/time.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::ProfileSession","kind":"type","status":"implemented","sigHash":"a76723aee5edb81e8c1f6267b0588ad887b2600150fd55b9359a35d02584972b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::ProfileSession","kind":"type","status":"implemented","sigHash":"9c7b63f36067a4f2f8855292fabf046b03e3b4ab7ee006c3f944514a17a2b87a"}
  *
  * Go source:
  * ProfileSession struct {
@@ -31,7 +31,7 @@ export interface ProfileSession {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::BeginProfiling","kind":"func","status":"implemented","sigHash":"a03af38b93e0ea5e9b3679a92098b32afd8ab657ebc16f01b62c318a3b301399"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::BeginProfiling","kind":"func","status":"implemented","sigHash":"5cc48d033d2af2d1a6d98e4a563cc825a7fefbdb6d112c0cbdda25d63ab64da3"}
  *
  * Go source:
  * func BeginProfiling(profileDir string, logWriter io.Writer) *ProfileSession {
@@ -130,7 +130,7 @@ export function ProfileSession_Stop(receiver: GoPtr<ProfileSession>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::CPUProfiler","kind":"type","status":"implemented","sigHash":"758f83a1a8afe5668daa84d92f1939ba14796c4820896e11c396f95e5867a988"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::CPUProfiler","kind":"type","status":"implemented","sigHash":"b5e9b96d1ab1a8a93a70fb4f4a0c812766c25cf044a928ea95adae619be3ea71"}
  *
  * Go source:
  * CPUProfiler struct {
@@ -144,7 +144,7 @@ export interface CPUProfiler {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StartCPUProfile","kind":"method","status":"implemented","sigHash":"336f17798607a75b5afc3ee6b67a7f5dd39f54e8b340ef8331e1478ba6b701ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StartCPUProfile","kind":"method","status":"implemented","sigHash":"447df6609174cd6825f7ed6c1a115139c435b95f80bf82617cba4ef277cb8b94"}
  *
  * Go source:
  * func (c *CPUProfiler) StartCPUProfile(profileDir string) error {
@@ -214,7 +214,7 @@ export function CPUProfiler_StartCPUProfile(receiver: GoPtr<CPUProfiler>, profil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StopCPUProfile","kind":"method","status":"implemented","sigHash":"265a83d69f78d31aaf7f3b1b83149ac1799609bd56f05cade4c12650bcad334f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StopCPUProfile","kind":"method","status":"implemented","sigHash":"cfe94d64dfb7f2940a5e97ab4ed89b0744f1a785ad3176577507ff7b004b77c8"}
  *
  * Go source:
  * func (c *CPUProfiler) StopCPUProfile() (string, error) {
@@ -251,7 +251,7 @@ export function CPUProfiler_StopCPUProfile(receiver: GoPtr<CPUProfiler>): [strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveHeapProfile","kind":"func","status":"implemented","sigHash":"493a044c790af1b846f6a90ad8cd166dc93081e24d57ac0c319400474bfa114e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveHeapProfile","kind":"func","status":"implemented","sigHash":"7af3ded7ec3013976c6fbb4003ea19dc8fef7a0efe28eadd219d09663f664f62"}
  *
  * Go source:
  * func SaveHeapProfile(profileDir string) (string, error) {
@@ -300,7 +300,7 @@ export function SaveHeapProfile(profileDir: string): [string, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveAllocProfile","kind":"func","status":"implemented","sigHash":"88938cc5084d6b8f0ea6ded5d38ca9c8155b861b1cd9a998bfa4733955bf1e96"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveAllocProfile","kind":"func","status":"implemented","sigHash":"fda79ee314deaedb83d7f16c12eb7db9e6a3519ff818034155d286211d99b89b"}
  *
  * Go source:
  * func SaveAllocProfile(profileDir string) (string, error) {
@@ -347,7 +347,7 @@ export function SaveAllocProfile(profileDir: string): [string, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::RunGC","kind":"func","status":"implemented","sigHash":"8f507d8d1ba55f3c46badf76e6f03b91604cc0fd40e4afc582dfec3d26dacc4c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::RunGC","kind":"func","status":"implemented","sigHash":"c87061599234ebdbddd59cee8389cfb6fbbfc62c8bbb8c4bbf3da9b5e2acaf99"}
  *
  * Go source:
  * func RunGC() {

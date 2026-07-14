@@ -10,7 +10,7 @@ import type { ParsedPatterns } from "./resolver.js";
 import type { ModeAwareCacheKey, ResolvedModule, ResolvedProjectReference, ResolvedTypeReferenceDirective } from "./types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::ModeAwareCache","kind":"type","status":"implemented","sigHash":"95650572f07c5e6811559dad8f16d68eb9e940101c53fea75e641d6adc247922"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::ModeAwareCache","kind":"type","status":"implemented","sigHash":"9da0e2070fe7cdd71de7f0349ff6566b0512111bcd2969a06d8f4889881eca5c"}
  *
  * Go source:
  * ModeAwareCache[T any] map[ModeAwareCacheKey]T
@@ -18,7 +18,7 @@ import type { ModeAwareCacheKey, ResolvedModule, ResolvedProjectReference, Resol
 export type ModeAwareCache<T> = GoMap<ModeAwareCacheKey, T>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::moduleResolutionCacheKey","kind":"type","status":"implemented","sigHash":"cbb92ff37ce938b2d50ea24f3016fb25bf89d2cbe5e703d89db31479364a79d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::moduleResolutionCacheKey","kind":"type","status":"implemented","sigHash":"0b879eef273f2fef77480606e560da154984f972a69be7ea6cd0485ade86b357"}
  *
  * Go source:
  * moduleResolutionCacheKey struct {
@@ -46,7 +46,7 @@ const moduleResolutionCacheKeyDescriptor: GoMapKeyDescriptor<moduleResolutionCac
 );
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::moduleResolutionCache","kind":"type","status":"implemented","sigHash":"66cde73c5c4cf5575efeb5988afcd9bef9987b0d9fec3c6f8a3169a97cae8170"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::moduleResolutionCache","kind":"type","status":"implemented","sigHash":"a089f5cbfc3242015cbc220a0b258aa3a703c35bc55ce0e49c37187a3750b133"}
  *
  * Go source:
  * moduleResolutionCache struct {
@@ -82,7 +82,7 @@ export function moduleResolutionCache_Set(receiver: GoPtr<moduleResolutionCache>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::typeRefDirectiveResolutionCacheKey","kind":"type","status":"implemented","sigHash":"7de5c33a9b2c3893f2185bfce2aa8734601d9fe7acbf76882973a5782eae49cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::typeRefDirectiveResolutionCacheKey","kind":"type","status":"implemented","sigHash":"dd83c762840961b60f089ed445e85512542c6b73c5ea534107b133acd9b78210"}
  *
  * Go source:
  * typeRefDirectiveResolutionCacheKey struct {
@@ -113,7 +113,7 @@ const typeRefDirectiveResolutionCacheKeyDescriptor: GoMapKeyDescriptor<typeRefDi
 );
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::typeRefDirectiveResolutionCache","kind":"type","status":"implemented","sigHash":"bef38d55f610311801f058fd12ad8fad2d28e6ea9c7f500e398707857d187dbc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::typeRefDirectiveResolutionCache","kind":"type","status":"implemented","sigHash":"4859056ea36e90266689dc6127d51c16c1963a9f4896b4c9e073762aca821f8b"}
  *
  * Go source:
  * typeRefDirectiveResolutionCache struct {
@@ -149,7 +149,7 @@ export function typeRefDirectiveResolutionCache_Set(receiver: GoPtr<typeRefDirec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::caches","kind":"type","status":"implemented","sigHash":"27790d4369371517c63e0e2f89cd63a7c51d9b758a1e5b7e71ac232832b76778"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::caches","kind":"type","status":"implemented","sigHash":"59f71250ecba387c03a8c330221baf6968563781761e3214eb1b46f0b6d1853c"}
  *
  * Go source:
  * caches struct {

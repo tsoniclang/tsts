@@ -25,7 +25,7 @@ export function _(): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/languagevariant_stringer_generated.go::constGroup::_LanguageVariant_name","kind":"constGroup","status":"implemented","sigHash":"65263c32898c725fcd8a8b9178dfae3a5d1aaa3af8950d657179b7e9934f8476"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/languagevariant_stringer_generated.go::constGroup::_LanguageVariant_name","kind":"constGroup","status":"implemented","sigHash":"f62ffd8c67372076e820b948ec56383391876894b9bb61930d8123edd118ebfe"}
  *
  * Go source:
  * const _LanguageVariant_name = "LanguageVariantStandardLanguageVariantJSX"
@@ -33,7 +33,7 @@ export function _(): void {
 export const _LanguageVariant_name: string = "LanguageVariantStandardLanguageVariantJSX";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/languagevariant_stringer_generated.go::varGroup::_LanguageVariant_index","kind":"varGroup","status":"implemented","sigHash":"4e14c483a3cce0c893193ac8e724bc697a27c0634ae7fbf1db1a1fb324a576c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/languagevariant_stringer_generated.go::varGroup::_LanguageVariant_index","kind":"varGroup","status":"implemented","sigHash":"0945bb23c8993daea2e70385b791c040fa66ffdf021af5588889844516a48c92"}
  *
  * Go source:
  * var _LanguageVariant_index = [...]uint8{0, 23, 41}

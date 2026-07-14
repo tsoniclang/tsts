@@ -91,7 +91,7 @@ const byteLen: (text: string) => int = utf8.StringByteLen;
 const stringFromRune = (r: GoRune): string => globalThis.String.fromCodePoint(r);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::regularExpressionFlags","kind":"type","status":"implemented","sigHash":"74034cff6ae3f9b069c908bda20182d140cbf4a9f73aaea9f5b51d7b4fcdea7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::regularExpressionFlags","kind":"type","status":"implemented","sigHash":"fa0afa8b415c28b398154adb24a5b19cd4a4027093347db5feb53f6dad6b6bb2"}
  *
  * Go source:
  * regularExpressionFlags int32
@@ -99,7 +99,7 @@ const stringFromRune = (r: GoRune): string => globalThis.String.fromCodePoint(r)
 export type regularExpressionFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::constGroup::regularExpressionFlagsNone+regularExpressionFlagsHasIndices+regularExpressionFlagsGlobal+regularExpressionFlagsIgnoreCase+regularExpressionFlagsMultiline+regularExpressionFlagsDotAll+regularExpressionFlagsUnicode+regularExpressionFlagsUnicodeSets+regularExpressionFlagsSticky+regularExpressionFlagsAnyUnicodeMode+regularExpressionFlagsModifiers","kind":"constGroup","status":"implemented","sigHash":"ab2cf843727ce785e6610fdbfbb1d4a06b114afef68fcdc671ce94a8d149749e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::constGroup::regularExpressionFlagsNone+regularExpressionFlagsHasIndices+regularExpressionFlagsGlobal+regularExpressionFlagsIgnoreCase+regularExpressionFlagsMultiline+regularExpressionFlagsDotAll+regularExpressionFlagsUnicode+regularExpressionFlagsUnicodeSets+regularExpressionFlagsSticky+regularExpressionFlagsAnyUnicodeMode+regularExpressionFlagsModifiers","kind":"constGroup","status":"implemented","sigHash":"32e048f761bd647c80f1d7b807e6126c0ae84b3489a681e7caac884ebab2bae3"}
  *
  * Go source:
  * const (
@@ -131,7 +131,7 @@ export const regularExpressionFlagsModifiers: regularExpressionFlags =
   regularExpressionFlagsIgnoreCase | regularExpressionFlagsMultiline | regularExpressionFlagsDotAll;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::varGroup::charCodeToRegExpFlag","kind":"varGroup","status":"implemented","sigHash":"8359cbb1adec61bf0d936dd4d464c8911bd7c478c931a6471e0ac1c1bb85931d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::varGroup::charCodeToRegExpFlag","kind":"varGroup","status":"implemented","sigHash":"5ee7360e2db0e91aa4e55ba2df089353b2d92298b990b4042a203d28f0785816"}
  *
  * Go source:
  * var charCodeToRegExpFlag = map[rune]regularExpressionFlags{
@@ -160,7 +160,7 @@ export let charCodeToRegExpFlag: GoMap<GoRune, regularExpressionFlags> = new glo
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::varGroup::regExpFlagToFirstAvailableLanguageVersion","kind":"varGroup","status":"implemented","sigHash":"40c242a13d94a669ea4a8e1b0891435297dec3276e77e12be80d747244c5c7f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::varGroup::regExpFlagToFirstAvailableLanguageVersion","kind":"varGroup","status":"implemented","sigHash":"6d4173f34427385838214d8d86ab3a89c48aa6dada8d49116cff0e1299343ebb"}
  *
  * Go source:
  * var regExpFlagToFirstAvailableLanguageVersion = map[regularExpressionFlags]core.ScriptTarget{
@@ -201,7 +201,7 @@ export function Scanner_checkRegularExpressionFlagAvailability(receiver: GoPtr<S
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::classSetExpressionType","kind":"type","status":"implemented","sigHash":"55fa6056c91ab597c32b76a6e7df25ea33fc4ab36ae8a051bbbf2a7a82d24037"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::classSetExpressionType","kind":"type","status":"implemented","sigHash":"327130feffaef09ce63259106adc7c5161ac56dbdc625cb2173c7c4e091d0950"}
  *
  * Go source:
  * classSetExpressionType int
@@ -209,7 +209,7 @@ export function Scanner_checkRegularExpressionFlagAvailability(receiver: GoPtr<S
 export type classSetExpressionType = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::constGroup::classSetExpressionTypeUnknown+classSetExpressionTypeClassUnion+classSetExpressionTypeClassIntersection+classSetExpressionTypeClassSubtraction","kind":"constGroup","status":"implemented","sigHash":"89a0d06996deb14515d637ac581a597d44523ebd90874d98ed8eee90e3e923b0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::constGroup::classSetExpressionTypeUnknown+classSetExpressionTypeClassUnion+classSetExpressionTypeClassIntersection+classSetExpressionTypeClassSubtraction","kind":"constGroup","status":"implemented","sigHash":"4f6fadba9c947e44693f1b6c3fa9128351e3d7c10b54681f92c284e8e7bf9934"}
  *
  * Go source:
  * const (
@@ -225,7 +225,7 @@ export const classSetExpressionTypeClassIntersection: classSetExpressionType = 2
 export const classSetExpressionTypeClassSubtraction: classSetExpressionType = 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::groupNameReference","kind":"type","status":"implemented","sigHash":"61cea0fe7bef177baf8b7cfe9d0610dfd15dc0450f9389afd304d0c108a636dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::groupNameReference","kind":"type","status":"implemented","sigHash":"e4e91aea40a2c7f1799ecd70ccb7052d5534e5d7b3b2d3f7104639d99ce1d970"}
  *
  * Go source:
  * groupNameReference struct {
@@ -241,7 +241,7 @@ export interface groupNameReference {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::decimalEscapeValue","kind":"type","status":"implemented","sigHash":"57bb9f713b3c9c16c150340068a58ac6fa7452f81a9241b20a9e7827247c52e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::decimalEscapeValue","kind":"type","status":"implemented","sigHash":"0380996d80e80b030340eab29aefe634ea2f58c95371bbffdae72823ca86893a"}
  *
  * Go source:
  * decimalEscapeValue struct {
@@ -257,7 +257,7 @@ export interface decimalEscapeValue {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::regExpParser","kind":"type","status":"implemented","sigHash":"bd9ab5c9e0767af1609ffca7d47cfee1d20b6d8d642415720862b85f84290698"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::type::regExpParser","kind":"type","status":"implemented","sigHash":"d7f52892e0911b7b455f63e4efdd5731328fed7a6ae9677c30bef5ab53e653e3"}
  *
  * Go source:
  * regExpParser struct {
@@ -430,7 +430,7 @@ export function compareDecimalStrings(a: string, b: string): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanDisjunction","kind":"method","status":"implemented","sigHash":"0e24999276ea4dffbf00a616761c9e0d3171d6da578e114d933d0b08a490a888"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanDisjunction","kind":"method","status":"implemented","sigHash":"7849bf2a151be479ce4cf3c8ec1b55748d062eb85cd812d506178ff4d0b5ae44"}
  *
  * Go source:
  * func (p *regExpParser) scanDisjunction(isInGroup bool) {
@@ -464,7 +464,7 @@ export function regExpParser_scanDisjunction(receiver: GoPtr<regExpParser>, isIn
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanAlternative","kind":"method","status":"implemented","sigHash":"1629c422970127df87d3a89f2daea057bdc90fc2589df4626b42ce05fb6d9e8f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanAlternative","kind":"method","status":"implemented","sigHash":"a87d907a752c4d8d2966aedd8acb78c1fe1d0afe708a12020526b73914321f0c"}
  *
  * Go source:
  * func (p *regExpParser) scanAlternative(isInGroup bool) {
@@ -883,7 +883,7 @@ export function regExpParser_scanPatternModifiers(receiver: GoPtr<regExpParser>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanAtomEscape","kind":"method","status":"implemented","sigHash":"136cda4b9ce095082a907a6cf38224320dd663b4aa1837600adf3d5789c751a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanAtomEscape","kind":"method","status":"implemented","sigHash":"c8668021ddcd392cc21813ad3b6f4f43e7e62aa0480577530e5f596ce3ced470"}
  *
  * Go source:
  * func (p *regExpParser) scanAtomEscape() {
@@ -947,7 +947,7 @@ export function regExpParser_scanAtomEscape(receiver: GoPtr<regExpParser>): void
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanDecimalEscape","kind":"method","status":"implemented","sigHash":"d762b77b903e8bc83528a4fff20977065a8b4153998e9f1c7e712b04f368b4a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanDecimalEscape","kind":"method","status":"implemented","sigHash":"2633d79933d38077f2af78bba46ca4b797fd5fe1c822ceb044dd69338ef9ce2c"}
  *
  * Go source:
  * func (p *regExpParser) scanDecimalEscape() bool {
@@ -984,7 +984,7 @@ export function regExpParser_scanDecimalEscape(receiver: GoPtr<regExpParser>): b
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanCharacterEscape","kind":"method","status":"implemented","sigHash":"3b9293684f3ea4945129fc2aa88322c75ee250e428a1af895eb24c0eea7303b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanCharacterEscape","kind":"method","status":"implemented","sigHash":"77f650f431022c2994c805b12053a64135c949412c44ac64b9e15a87c35ecd9a"}
  *
  * Go source:
  * func (p *regExpParser) scanCharacterEscape(atomEscape bool) string {
@@ -1173,7 +1173,7 @@ export function regExpParser_isClassContentExit(receiver: GoPtr<regExpParser>, c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassRanges","kind":"method","status":"implemented","sigHash":"f7bcabf986710d45aeb12c850faf420b68c5d3d4ea5c108c5ec09242de1198ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassRanges","kind":"method","status":"implemented","sigHash":"81a212a5d38b11bb0880f0ba15258ccc04176da82c489982d25fa050460afc32"}
  *
  * Go source:
  * func (p *regExpParser) scanClassRanges() {
@@ -1276,7 +1276,7 @@ export function regExpParser_scanClassRanges(receiver: GoPtr<regExpParser>): voi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassSetExpression","kind":"method","status":"implemented","sigHash":"dd5fdcc7a108cff164185462aa3735e64e2014ac82f2717e9e09b2f5d8ad25b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassSetExpression","kind":"method","status":"implemented","sigHash":"c248b9c005a586fbe36490abbb8183dd9d5c4eff7248a2510328ada7e5452694"}
  *
  * Go source:
  * func (p *regExpParser) scanClassSetExpression() {
@@ -1740,7 +1740,7 @@ export function regExpParser_scanClassSetSubExpression(receiver: GoPtr<regExpPar
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassSetOperand","kind":"method","status":"implemented","sigHash":"dee0167068649da805a5d7d9ee53d4b8e96ad6e652c01ed25e2fd5f51b65c923"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassSetOperand","kind":"method","status":"implemented","sigHash":"5f317c6c3b8220056e1f621376fc6258fe68d3746a9e35e0a5df3a9d2a68ff32"}
  *
  * Go source:
  * func (p *regExpParser) scanClassSetOperand() string {
@@ -1807,7 +1807,7 @@ export function regExpParser_scanClassSetOperand(receiver: GoPtr<regExpParser>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassStringDisjunctionContents","kind":"method","status":"implemented","sigHash":"914082b50d1bfff6e928c6b13d07535a68fa5d1c807034a8568fe2f9db9ff552"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassStringDisjunctionContents","kind":"method","status":"implemented","sigHash":"63fff81d791725bde32f349027527382e723226ce8a1f544996dfae60af6d04e"}
  *
  * Go source:
  * func (p *regExpParser) scanClassStringDisjunctionContents() {
@@ -1858,7 +1858,7 @@ export function regExpParser_scanClassStringDisjunctionContents(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassSetCharacter","kind":"method","status":"implemented","sigHash":"4a655c7ae13d346b34822f8fd6c773436d4ca775b3006a52266014a28ae7a8d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassSetCharacter","kind":"method","status":"implemented","sigHash":"07ec230887fba7e570eb25b0f97ea0597674a56fbfad2f8168ddbd4094156113"}
  *
  * Go source:
  * func (p *regExpParser) scanClassSetCharacter() string {
@@ -1977,7 +1977,7 @@ export function regExpParser_scanClassSetCharacter(receiver: GoPtr<regExpParser>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassAtom","kind":"method","status":"implemented","sigHash":"46354b236d3936a3ce51ab49d507e646bfcb48a3f9131f76d811f82ffd336504"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanClassAtom","kind":"method","status":"implemented","sigHash":"438f257e3938dcd8d1282b54e7268e02c19687edc00f351c36c0331799cdc688"}
  *
  * Go source:
  * func (p *regExpParser) scanClassAtom() string {
@@ -2024,7 +2024,7 @@ export function regExpParser_scanClassAtom(receiver: GoPtr<regExpParser>): strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanCharacterClassEscape","kind":"method","status":"implemented","sigHash":"30922b31e906b75a790d501771f479c1886823a4959594728b420fd44d1da14a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanCharacterClassEscape","kind":"method","status":"implemented","sigHash":"d4483b7367a703a9b5b7d4e32cdea4b7368f8021c421fb00e01498e456ecc7e7"}
  *
  * Go source:
  * func (p *regExpParser) scanCharacterClassEscape() bool {

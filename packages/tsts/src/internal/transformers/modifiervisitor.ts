@@ -8,7 +8,7 @@ import type { Transformer } from "./transformer.js";
 import { Transformer_NewTransformer } from "./transformer.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::type::modifierVisitor","kind":"type","status":"implemented","sigHash":"04d132d918160f7b08793e75f53c42347aae4a8358fe0344509a3c3bf6136ef1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::type::modifierVisitor","kind":"type","status":"implemented","sigHash":"cdee65c2e92c5822528c8aba69758424ed1776ee3932033aab75078bced25447"}
  *
  * Go source:
  * modifierVisitor struct {

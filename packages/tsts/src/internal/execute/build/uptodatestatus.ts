@@ -4,7 +4,7 @@ import type { Time } from "../../../go/time.js";
 
 import type { GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::upToDateStatusType","kind":"type","status":"implemented","sigHash":"ec47ccebe21a935afa38eac9d2ecc23fc07b8c2d2b395ec87e70849e9d2ff8d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::upToDateStatusType","kind":"type","status":"implemented","sigHash":"75ef290f4654b735067a28afff3ec1bac3d48350e5823448a89ad4dc1b07c289"}
  *
  * Go source:
  * upToDateStatusType uint16
@@ -12,7 +12,7 @@ import type { GoInterface } from "../../../go/compat.js";
 export type upToDateStatusType = ushort;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::constGroup::upToDateStatusTypeConfigFileNotFound+upToDateStatusTypeBuildErrors+upToDateStatusTypeUpstreamErrors+upToDateStatusTypeUpToDate+upToDateStatusTypeUpToDateWithUpstreamTypes+upToDateStatusTypeUpToDateWithInputFileText+upToDateStatusTypeInputFileMissing+upToDateStatusTypeOutputMissing+upToDateStatusTypeInputFileNewer+upToDateStatusTypeOutOfDateBuildInfoWithPendingEmit+upToDateStatusTypeOutOfDateBuildInfoWithErrors+upToDateStatusTypeOutOfDateOptions+upToDateStatusTypeOutOfDateRoots+upToDateStatusTypeTsVersionOutputOfDate+upToDateStatusTypeForceBuild+upToDateStatusTypeSolution","kind":"constGroup","status":"implemented","sigHash":"c38712ce49a620ef2a6e931c9c457f65484f3f8041532fca014556ddb803a7ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::constGroup::upToDateStatusTypeConfigFileNotFound+upToDateStatusTypeBuildErrors+upToDateStatusTypeUpstreamErrors+upToDateStatusTypeUpToDate+upToDateStatusTypeUpToDateWithUpstreamTypes+upToDateStatusTypeUpToDateWithInputFileText+upToDateStatusTypeInputFileMissing+upToDateStatusTypeOutputMissing+upToDateStatusTypeInputFileNewer+upToDateStatusTypeOutOfDateBuildInfoWithPendingEmit+upToDateStatusTypeOutOfDateBuildInfoWithErrors+upToDateStatusTypeOutOfDateOptions+upToDateStatusTypeOutOfDateRoots+upToDateStatusTypeTsVersionOutputOfDate+upToDateStatusTypeForceBuild+upToDateStatusTypeSolution","kind":"constGroup","status":"implemented","sigHash":"75c1c19a7fbc1a584e3877886c10fc73a2febc96825a7cd67e34af870802d1c8"}
  *
  * Go source:
  * const (
@@ -80,7 +80,7 @@ export const upToDateStatusTypeForceBuild: upToDateStatusType = 14 as upToDateSt
 export const upToDateStatusTypeSolution: upToDateStatusType = 15 as upToDateStatusType;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::inputOutputName","kind":"type","status":"implemented","sigHash":"8d364e0b4884f1a7f0b73f9b46792bd0dd9470fd11f6e39abefcc43d50be1695"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::inputOutputName","kind":"type","status":"implemented","sigHash":"bef4e1d2b921cbe6f82e048fbf8366e7a27e0ef7c6e241d1ccd9d31b23befae6"}
  *
  * Go source:
  * inputOutputName struct {
@@ -94,7 +94,7 @@ export interface inputOutputName {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::fileAndTime","kind":"type","status":"implemented","sigHash":"4a7c5d8776506bfb3d70475400be8066cbfd4397c99c3766c0cae64f216b7761"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::fileAndTime","kind":"type","status":"implemented","sigHash":"527070a7ff09a0a6cd8003bc7bca450309a28b3967829d419a5642cce6d4e1e5"}
  *
  * Go source:
  * fileAndTime struct {
@@ -108,7 +108,7 @@ export interface fileAndTime {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::inputOutputFileAndTime","kind":"type","status":"implemented","sigHash":"a83efb92ac7e5b141a4547f4c3f4d805089825b25bc58788123828e9c05bab1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::inputOutputFileAndTime","kind":"type","status":"implemented","sigHash":"678b561ea186205c4918f46c4fc5c798fd6561beda7f7d248002bbf602d96298"}
  *
  * Go source:
  * inputOutputFileAndTime struct {
@@ -124,7 +124,7 @@ export interface inputOutputFileAndTime {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::upstreamErrors","kind":"type","status":"implemented","sigHash":"8b2cf6be5b3929f3d38239b40d71254f587a0bc737eeb810b8fa52bc94399b0d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::upstreamErrors","kind":"type","status":"implemented","sigHash":"b8bdb0ca26d7a5eab9d64239e8d902a5f03f2395ea8a20669afa1c7f9a12ca18"}
  *
  * Go source:
  * upstreamErrors struct {
@@ -138,7 +138,7 @@ export interface upstreamErrors {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::upToDateStatus","kind":"type","status":"implemented","sigHash":"a25576a5ab116fa94068d5be4b6b36fa3daee431d03afeb04b2f1cab43dd513d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/uptodatestatus.go::type::upToDateStatus","kind":"type","status":"implemented","sigHash":"e4f8c66edc421439e4242b575bfae23bb261dc99bce9198fbb6d8f813604377e"}
  *
  * Go source:
  * upToDateStatus struct {

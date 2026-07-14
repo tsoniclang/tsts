@@ -301,7 +301,7 @@ export function Checker_resolveDecorator(receiver: GoPtr<Checker>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPotentiallyUncalledDecorator","kind":"method","status":"implemented","sigHash":"d5e6380b617064cef6327cd283cab36e1a19d9aa4cb1c9bad25881686487882d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPotentiallyUncalledDecorator","kind":"method","status":"implemented","sigHash":"301eede952322a35c27efb7a92e774b2f0f54017ef710f986e31caedb9864ccd"}
  *
  * Go source:
  * func (c *Checker) isPotentiallyUncalledDecorator(decorator *ast.Node, signatures []*Signature) bool {

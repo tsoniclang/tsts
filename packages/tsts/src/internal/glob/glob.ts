@@ -127,7 +127,7 @@ const isCharRangeCarrier = (e: element): e is charRangeCarrier => "__kind" in e 
 const isSlash = (e: element): bool => isSlashCarrier(e);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::Glob","kind":"type","status":"implemented","sigHash":"10791e4c9b895edc16ce788beec3bb982b23807076b16f5cc32c4f5ba2adb581"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::Glob","kind":"type","status":"implemented","sigHash":"42b3a6bb80d210839fc4055e5dde3f360cbc3ba41f3ebc70ddd8278a6f0247ad"}
  *
  * Go source:
  * Glob struct {
@@ -139,7 +139,7 @@ export interface Glob {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::func::Parse","kind":"func","status":"implemented","sigHash":"a87499459f66b51133a95a5ef548ec504513f9e8889d9eb89baf1462f7f7ea83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::func::Parse","kind":"func","status":"implemented","sigHash":"8cead61fd2ed0ec4228a7ff57942012bc00d4a66070229b877bf2d47dffd290f"}
  *
  * Go source:
  * func Parse(pattern string) (*Glob, error) {
@@ -340,7 +340,7 @@ export function parse(pattern: string, nested: bool): [GoPtr<Glob>, string, GoEr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::func::readRangeRune","kind":"func","status":"implemented","sigHash":"53f05a25e4f8f6a4d402ee7dbefe1a11687763a21c6d9613a53b90e7e276396e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::func::readRangeRune","kind":"func","status":"implemented","sigHash":"5540d5033f45948e90e340a3c828ef09e89e8e2cd603c30615e9f1fb1dd3393b"}
  *
  * Go source:
  * func readRangeRune(input string) (rune, int, error) {
@@ -376,7 +376,7 @@ export function readRangeRune(input: string): [GoRune, int, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::varGroup::errBadRange+errInvalidUTF8","kind":"varGroup","status":"implemented","sigHash":"eae985e9b9936fc43171c11499a8d932c96a7b2dcb92ce0ff3a394d3dd97b997"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::varGroup::errBadRange+errInvalidUTF8","kind":"varGroup","status":"implemented","sigHash":"b24a4431660412937de5b5b1e4edf1cd162a1a57ea442c3f1878a060fca22984"}
  *
  * Go source:
  * var (
@@ -444,7 +444,7 @@ export function Glob_String(receiver: GoPtr<Glob>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::element","kind":"type","status":"implemented","sigHash":"b9cec27359447bb0d51f195d1eee1fe167f6005d062a2f5fd1895f9a0b3e4d9e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::element","kind":"type","status":"implemented","sigHash":"3fd63e8938fb7bdc60b013eddf7d7dd0fc5e6a1358f4e18f9582e9e1e3a5f20f"}
  *
  * Go source:
  * element fmt.Stringer
@@ -452,7 +452,7 @@ export function Glob_String(receiver: GoPtr<Glob>): string {
 export type element = Stringer;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::slash","kind":"type","status":"implemented","sigHash":"6aad2947a34ccc6109af9476c3ae56eaf27627f44b3251d994bf31f9d04cfbff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::slash","kind":"type","status":"implemented","sigHash":"5a936718c1a52cce16f576c49991025ac27815bb769a6a39d5462eb33af00481"}
  *
  * Go source:
  * slash     struct{}
@@ -462,7 +462,7 @@ export interface slash {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::literal","kind":"type","status":"implemented","sigHash":"c66ffc3295072c0c5f3c4df38b1f76c61fc5e011dd316c2fe2afac4619cd4f32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::literal","kind":"type","status":"implemented","sigHash":"f22f9e93cd5987f0b53fb0b12094148b99596ba3e839dc7bad6838445d73f0ef"}
  *
  * Go source:
  * literal   string
@@ -470,7 +470,7 @@ export interface slash {
 export type literal = string;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::star","kind":"type","status":"implemented","sigHash":"3c353314cc89e03bc2c40d0a87f2bfcb39fcc67425c4736eb2e9d95202e89422"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::star","kind":"type","status":"implemented","sigHash":"40b1a14b024f0cec92f415ed4628eac5313a6505d7afe67df1171011a09624ed"}
  *
  * Go source:
  * star      struct{}
@@ -480,7 +480,7 @@ export interface star {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::anyChar","kind":"type","status":"implemented","sigHash":"6308e44c4fc45aabcfe0e14a7a6a2701a1e2e8d4beb1b95d0ca9b7fc85b2d2e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::anyChar","kind":"type","status":"implemented","sigHash":"c7017da0cfc82fe8343d4b8eee1bd67615975ffd8e6bd5bedab1b00f7c839877"}
  *
  * Go source:
  * anyChar   struct{}
@@ -490,7 +490,7 @@ export interface anyChar {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::starStar","kind":"type","status":"implemented","sigHash":"e6cfe09b5ee7b1d46aa5771e8d55696dee7d6114cc2b297648d29689a3ba924e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::starStar","kind":"type","status":"implemented","sigHash":"9993715426187b448d91b1c3a6589ad8e8535ac3c1dde3ee4796f20c40ad7fb8"}
  *
  * Go source:
  * starStar  struct{}
@@ -500,7 +500,7 @@ export interface starStar {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::group","kind":"type","status":"implemented","sigHash":"effe25deb1f373f451f704247b6379b57f509d7f1f48327655bf0dd86689b993"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::group","kind":"type","status":"implemented","sigHash":"140b72c9a0fda266177af30ad85fe4c546bb36ad762479153b2de3c12f813c21"}
  *
  * Go source:
  * group     []*Glob
@@ -508,7 +508,7 @@ export interface starStar {
 export type group = GoSlice<GoPtr<Glob>>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::charRange","kind":"type","status":"implemented","sigHash":"43ae796e15edb5ffbbd03d0e80385bfd45fd5c07186124107ec7286265a452b9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::type::charRange","kind":"type","status":"implemented","sigHash":"f6f8158d75e8138d46af48696e9163fb88422e48dda87ec67e198cbf739bbbd3"}
  *
  * Go source:
  * charRange struct { // [a-z] character range
@@ -605,7 +605,7 @@ export function charRange_String(receiver: charRange): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::method::Glob.Match","kind":"method","status":"implemented","sigHash":"d3e53b47f623a72c00e91431235562c76daf9dee1ba168cbf327824df0bd5c12"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::method::Glob.Match","kind":"method","status":"implemented","sigHash":"bf3fb58afa3a694d41a5a5cfb958c05226685b036ced88e3035894dea6fb603d"}
  *
  * Go source:
  * func (g *Glob) Match(input string) bool {
@@ -845,7 +845,7 @@ export function match(elems: GoSlice<GoInterface<element>>, input: string): bool
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::func::split","kind":"func","status":"implemented","sigHash":"d6c4a499bb2139bc00e6f8009bab92f16ca4450948f133a328d0bd6b3b5162c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/glob/glob.go::func::split","kind":"func","status":"implemented","sigHash":"d5e90676864cade1956534e2304b763a3f0f8a4f914a89ed2e71699b98e15c32"}
  *
  * Go source:
  * func split(input string) (first, rest string) {

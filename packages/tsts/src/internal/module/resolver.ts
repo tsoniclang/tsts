@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
@@ -136,7 +136,7 @@ const packageJsonDependencyMapField = (
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::resolved","kind":"type","status":"implemented","sigHash":"311657b76bbd117570ff3ef10140ca4f7c058399b9bfb21f60da4a7bbfd4fae4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::resolved","kind":"type","status":"implemented","sigHash":"988536547950ecf65d459f7d1b2920e811bfcc3b4c02eb4fb4c1b7a1ecaeb092"}
  *
  * Go source:
  * resolved struct {
@@ -210,7 +210,7 @@ export function unresolved(): GoPtr<resolved> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::resolutionKindSpecificLoader","kind":"type","status":"implemented","sigHash":"23eb8adf72d699d4b31312937de3a30d98ac00b03a1294fad4b403fd39343362"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::resolutionKindSpecificLoader","kind":"type","status":"implemented","sigHash":"68d9bfd26d332a31dbe5c67a32f5fa622d09997ea17d8a13df55b6d34050d7ad"}
  *
  * Go source:
  * resolutionKindSpecificLoader = func(extensions extensions, candidate string) *resolved
@@ -218,7 +218,7 @@ export function unresolved(): GoPtr<resolved> {
 export type resolutionKindSpecificLoader = GoFunc<(extensions: extensions, candidate: string) => GoPtr<resolved>>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::tracer","kind":"type","status":"implemented","sigHash":"8050404d5ebf71062a813d6730884efd1d80674c80fc98df74b43c7afe5d103f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::tracer","kind":"type","status":"implemented","sigHash":"acf39a892c6fa966aead7abd663baf6acee1ca16c85f7d948f1b2cef0eacf8b5"}
  *
  * Go source:
  * tracer struct {
@@ -230,7 +230,7 @@ export interface tracer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::DiagAndArgs","kind":"type","status":"implemented","sigHash":"92baf5f3de7e610139565ceedfec4200f7fcf3d26fecd28d94e2e976b8ff7925"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::DiagAndArgs","kind":"type","status":"implemented","sigHash":"5c2e2e818acc9f2db08625a7ba371cbd7e23459570674895c99d6fecf10537ce"}
  *
  * Go source:
  * DiagAndArgs struct {
@@ -278,7 +278,7 @@ export function tracer_getTraces(receiver: GoPtr<tracer>): GoSlice<DiagAndArgs> 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::resolutionState","kind":"type","status":"implemented","sigHash":"0c26af9a889477ee14bc4a072a45ce13a93c1552da718dabe1bba0e35b3dff75"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::resolutionState","kind":"type","status":"implemented","sigHash":"02321365e6af760b014185e3511c8fc799c27f29557b7b2b665552f3c6ce8999"}
  *
  * Go source:
  * resolutionState struct {
@@ -458,7 +458,7 @@ export function GetCompilerOptionsWithRedirect(compilerOptions: GoPtr<CompilerOp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::Resolver","kind":"type","status":"implemented","sigHash":"fa4ef46d4eb3b7404a6ed9a7a8ff9dcdbd6d1b755ae320b6b1c86e57496c2c57"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::Resolver","kind":"type","status":"implemented","sigHash":"da73f485091a3974edf9592745434180802e96f83d50909c8bfff221c9aeb781"}
  *
  * Go source:
  * Resolver struct {
@@ -479,7 +479,7 @@ export interface Resolver {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::ResolverOptions","kind":"type","status":"implemented","sigHash":"dc8b218ee96c0da513584160848a8d5c924c3b1131e03280bf213a28beb897e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::ResolverOptions","kind":"type","status":"implemented","sigHash":"0388c305cffb955734aef5183f855fa0d618b4f8b9ea6de07bbb89b4d2e3939f"}
  *
  * Go source:
  * ResolverOptions struct {
@@ -1128,7 +1128,7 @@ export function resolutionState_mangleScopedPackageName(receiver: GoPtr<resoluti
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.resolveFromTypeRoot","kind":"method","status":"implemented","sigHash":"1c666b09e165983957b899b893b7eccbdbfc01097379125310cf1d0b023f09d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.resolveFromTypeRoot","kind":"method","status":"implemented","sigHash":"17e4b670094b3a00ad6b8f05d07fb4206f5584281ea6618f8d548adb6f0f52e6"}
  *
  * Go source:
  * func (r *resolutionState) resolveFromTypeRoot() *resolved {
@@ -1159,7 +1159,7 @@ export function resolutionState_mangleScopedPackageName(receiver: GoPtr<resoluti
  * }
  */
 export function resolutionState_resolveFromTypeRoot(receiver: GoPtr<resolutionState>): GoPtr<resolved> {
-  if (receiver!.compilerOptions!.TypeRoots === undefined) {
+  if (GoSliceIsNil(receiver!.compilerOptions!.TypeRoots)) {
     return undefined;
   }
   for (const typeRoot of receiver!.compilerOptions!.TypeRoots) {
@@ -3684,7 +3684,7 @@ export function resolutionState_loadNodeModuleFromDirectoryWorker(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.loadFileNameFromPackageJSONField","kind":"method","status":"implemented","sigHash":"d15c35ea8d1f1ceec0e0cff09ca5ed96f33e6e944f8002dc3fae1158d15e41a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.loadFileNameFromPackageJSONField","kind":"method","status":"implemented","sigHash":"b23e2ef7f42008b5fcca6e69295f65c594ea8c265bd3dcd7c50296195d5e6fc9"}
  *
  * Go source:
  * func (r *resolutionState) loadFileNameFromPackageJSONField(extensions extensions, candidate string, packageJSONValue string) *resolved {
@@ -4306,7 +4306,7 @@ export function moveToNextDirectorySeparatorIfAvailable(path: string, prevSepara
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::ParsedPatterns","kind":"type","status":"implemented","sigHash":"7b099bf1880e095ce74a693d1644647fa9dc076f061682449eba2d08965b1d7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::ParsedPatterns","kind":"type","status":"implemented","sigHash":"f6a94743a61fae15f5f43c52ae960a58d95eabbeb7232aa66d066dc2c4adda08"}
  *
  * Go source:
  * ParsedPatterns struct {
@@ -4443,7 +4443,7 @@ export function MatchPatternOrExact(patterns: GoPtr<ParsedPatterns>, candidate: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::func::normalizePathForCJSResolution","kind":"func","status":"implemented","sigHash":"91e02672c2d3688447a9d98679fe489c0a037bd570eec9f29cc8c2e79a8ff9a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::func::normalizePathForCJSResolution","kind":"func","status":"implemented","sigHash":"eea65c89ca2f22274ee76876cd2a38302d0cfe66378c41fe9501e5379b261d60"}
  *
  * Go source:
  * func normalizePathForCJSResolution(containingDirectory string, moduleName string) string {
@@ -4493,7 +4493,7 @@ export function matchesPatternWithTrailer(target: string, name: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::func::extensionIsOk","kind":"func","status":"implemented","sigHash":"af3fd7a2dc2b832a72fefad5ae6c7b587e57fcb9e9e501bbc77eaada6b5907b4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::func::extensionIsOk","kind":"func","status":"implemented","sigHash":"f6a7b5dbed6214e0f858a32c70663f19c158d5d6ea05c0a99a778ad0914254f7"}
  *
  * Go source:
  * func extensionIsOk(extensions extensions, extension string) bool {
@@ -4579,7 +4579,7 @@ export function ResolveConfig(moduleName: string, containingFile: string, host: 
  */
 export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, host: GoInterface<ResolutionHost>): GoSlice<string> {
   if (!CompilerOptions_UsesWildcardTypes(options)) {
-    if (options!.Types !== undefined) {
+    if (!GoSliceIsNil(options!.Types)) {
       return options!.Types;
     }
     return [];
@@ -4621,7 +4621,7 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::Ending","kind":"type","status":"implemented","sigHash":"e82423a377d027fb64ee9127d3206ef63309b3e937a67c008fd3ed660232463b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::Ending","kind":"type","status":"implemented","sigHash":"52b95bd875395d014f7a9d283d3192e45554a5e31e16c0814be864113a0dfe02"}
  *
  * Go source:
  * Ending int
@@ -4629,7 +4629,7 @@ export function GetAutomaticTypeDirectiveNames(options: GoPtr<CompilerOptions>, 
 export type Ending = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::constGroup::EndingFixed+EndingExtensionChangeable+EndingChangeable","kind":"constGroup","status":"implemented","sigHash":"3fa2909b817e216e8312d7c689984dc5b0d9f20c9638b94b3798a369933236ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::constGroup::EndingFixed+EndingExtensionChangeable+EndingChangeable","kind":"constGroup","status":"implemented","sigHash":"6e2df816e0d75edcd1cd0858fd43e5835e121b8280544c1594542e4bb693f3e5"}
  *
  * Go source:
  * const (
@@ -4649,7 +4649,7 @@ export const EndingExtensionChangeable: Ending = 1 as Ending;
 export const EndingChangeable: Ending = 2 as Ending;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::ResolvedEntrypoint","kind":"type","status":"implemented","sigHash":"2e4388e10cb1213904d30a3875749b5f1bc409d7044146f81a1498855a73cf3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::ResolvedEntrypoint","kind":"type","status":"implemented","sigHash":"01614b1359633c5a8dbe4cf90a36de1b954b7065f9e7454c9fe66d8d7d007d64"}
  *
  * Go source:
  * ResolvedEntrypoint struct {
@@ -5011,7 +5011,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
           receiver!.resolver!.host!.GetCurrentDirectory(),
           packageJson!.PackageDirectory,
           extensions_Array(receiver!.extensions),
-          undefined as unknown as GoSlice<string>,
+          GoNilSlice<string>(),
           [tspathExtension.ChangeFullExtension(strings.Replace(expStr, "*", "**/*", 1), ".*")],
           vfsmatch.UnlimitedDepth as int,
         );

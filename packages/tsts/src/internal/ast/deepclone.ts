@@ -10,7 +10,7 @@ import type { NodeVisitor } from "./visitor.js";
 import { NewNodeVisitor, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "./visitor.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::func::getDeepCloneVisitor","kind":"func","status":"implemented","sigHash":"4bb96716323ea0bc24d6348cead293a463b42b52fd3a7bbfe9dd14416f7a0f52"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::func::getDeepCloneVisitor","kind":"func","status":"implemented","sigHash":"4a820a659ae7c6b683548df260880b21dafad1d4c70a78454cb8de414d568524"}
  *
  * Go source:
  * func getDeepCloneVisitor(f *NodeFactory, syntheticLocation bool) *NodeVisitor {

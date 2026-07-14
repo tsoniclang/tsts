@@ -59,7 +59,7 @@ export function GetTraceWithWriterFromSys(w: GoInterface<Writer>, locale: Locale
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::type::EmitInput","kind":"type","status":"implemented","sigHash":"f169a5a136b6fe87732fef4df6f4a39a9d86e89ac2e1bd7754542eddd1598642"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::type::EmitInput","kind":"type","status":"implemented","sigHash":"4f076a1f5307477c5cfd12bb558a34129ff8d11e1855b22c33d0486d04d4cbb8"}
  *
  * Go source:
  * EmitInput struct {

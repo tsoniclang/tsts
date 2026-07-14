@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
 import { ReadDir, ReadFile, Stat } from "../../../go/io/fs.js";
-import type { FileMode } from "../../../go/io/fs.js";
+import type { DirEntry, FileMode } from "../../../go/io/fs.js";
 import type { bool, byte } from "../../../go/scalars.js";
 import { TestFS } from "../../../go/testing/fstest.js";
 import type { MapFile, MapFS as FstestMapFS } from "../../../go/testing/fstest.js";
@@ -38,8 +38,8 @@ function assertErrorContains(error: unknown, expected: string): void {
   assert.ok(error.message.includes(expected), `got ${error.message}, want substring ${expected}`);
 }
 
-function dirEntriesToNames(entries: Array<{ Name(): string }>): string[] {
-  return entries.map((entry) => entry.Name());
+function dirEntriesToNames(entries: GoSlice<GoInterface<DirEntry>>): string[] {
+  return entries.map((entry) => entry!.Name());
 }
 
 function nilClock(): GoInterface<Clock> {
@@ -53,25 +53,25 @@ test("convertMapFS mirrors TS-Go case-insensitive lookup and realpath behavior",
     ["foo/bar2/baz2", mapFile(contents, 1234)],
     ["foo/bar3/baz3", mapFile(contents, 1234)],
   ]);
-  const mapFS = convertMapFS(map, false as bool, nilClock());
-  const fs = MapFS_as_io_fs_FS(mapFS);
+  const convertedMapFS = convertMapFS(map, false as bool, nilClock());
+  const fs = MapFS_as_io_fs_FS(convertedMapFS);
 
   assert.deepEqual(ReadFile(fs, "foo/bar/baz"), ["bar", undefined]);
   const [sensitiveInfo, sensitiveInfoErr] = Stat(fs, "foo/bar/baz");
   assert.equal(sensitiveInfoErr, undefined);
-  assert.equal(sensitiveInfo.Sys(), 1234);
-  assert.deepEqual(MapFS_Realpath(mapFS, "foo/bar/baz"), ["foo/bar/baz", undefined]);
+  assert.equal(sensitiveInfo!.Sys(), 1234);
+  assert.deepEqual(MapFS_Realpath(convertedMapFS, "foo/bar/baz"), ["foo/bar/baz", undefined]);
   assert.deepEqual(dirEntriesToNames(ReadDir(fs, "foo")[0]), ["bar", "bar2", "bar3"]);
   assert.equal(TestFS(fs, "foo/bar/baz"), undefined);
 
   assert.deepEqual(ReadFile(fs, "Foo/Bar/Baz"), ["bar", undefined]);
   const [insensitiveInfo, insensitiveInfoErr] = Stat(fs, "Foo/Bar/Baz");
   assert.equal(insensitiveInfoErr, undefined);
-  assert.equal(insensitiveInfo.Sys(), 1234);
-  assert.deepEqual(MapFS_Realpath(mapFS, "Foo/Bar/Baz"), ["foo/bar/baz", undefined]);
+  assert.equal(insensitiveInfo!.Sys(), 1234);
+  assert.deepEqual(MapFS_Realpath(convertedMapFS, "Foo/Bar/Baz"), ["foo/bar/baz", undefined]);
   assert.deepEqual(dirEntriesToNames(ReadDir(fs, "Foo")[0]), ["bar", "bar2", "bar3"]);
 
-  assertErrorContains(MapFS_Realpath(mapFS, "does/not/exist")[1], "file does not exist");
+  assertErrorContains(MapFS_Realpath(convertedMapFS, "does/not/exist")[1], "file does not exist");
   assertErrorContains(Stat(fs, "does/not/exist")[1], "file does not exist");
 });
 
@@ -85,7 +85,7 @@ test("convertMapFS mirrors TS-Go case-sensitive lookup behavior", () => {
   const fs = MapFS_as_io_fs_FS(convertMapFS(map, true as bool, nilClock()));
 
   assert.deepEqual(ReadFile(fs, "foo/bar/baz"), ["bar", undefined]);
-  assert.equal(Stat(fs, "foo/bar/baz")[0].Sys(), 1234);
+  assert.equal(Stat(fs, "foo/bar/baz")[0]!.Sys(), 1234);
   assert.equal(TestFS(fs, "foo/bar/baz"), undefined);
   assertErrorContains(ReadFile(fs, "Foo/Bar/Baz")[1], "file does not exist");
 });

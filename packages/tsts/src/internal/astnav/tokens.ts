@@ -616,7 +616,7 @@ export function VisitEachChildAndJSDoc(node: GoPtr<Node>, sourceFile: GoPtr<Sour
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::constGroup::comparisonLessThan+comparisonEqualTo+comparisonGreaterThan","kind":"constGroup","status":"implemented","sigHash":"0083704aec81dce43d9f8c8d04f56e165772696e6d5fea1f7ab2d14f2adf749d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::constGroup::comparisonLessThan+comparisonEqualTo+comparisonGreaterThan","kind":"constGroup","status":"implemented","sigHash":"ae74468f468536b83e7f942c6b992e14e78673b04daf910be90bcb06fc9e4a41"}
  *
  * Go source:
  * const (
@@ -630,7 +630,7 @@ export const comparisonEqualTo: int = 0;
 export const comparisonGreaterThan: int = 1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindPrecedingToken","kind":"func","status":"implemented","sigHash":"e1b82d882aaa1c83ac0b7f50920c724a86c7c2877d77a54c9af5854f46bf339e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindPrecedingToken","kind":"func","status":"implemented","sigHash":"906e4c7031610bab8ba501b73dfed1102051945256a5a8867eaed380da34da55"}
  *
  * Go source:
  * func FindPrecedingToken(sourceFile *ast.SourceFile, position int) *ast.Node {
@@ -917,7 +917,7 @@ export function GetStartOfNode(node: GoPtr<Node>, file: GoPtr<SourceFile>, inclu
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::findRightmostValidToken","kind":"func","status":"implemented","sigHash":"3c27e7e331076f224ecf02af9372f4c1141f6e13d7aaa74b6b1708de0d6099b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::findRightmostValidToken","kind":"func","status":"implemented","sigHash":"830726f16c0660f53d53e29e960a04da40afcb2a2d13d553ff1fc7a3136799df"}
  *
  * Go source:
  * func findRightmostValidToken(endPos int, sourceFile *ast.SourceFile, containingNode *ast.Node, position int, excludeJSDoc bool) *ast.Node {
@@ -1449,7 +1449,7 @@ export function shouldSkipChild(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindChildOfKind","kind":"func","status":"implemented","sigHash":"0c7cae39410c1ae972d7ba0dff3ce3c7bc14072b77b46956f4a7f39fcd5ff423"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindChildOfKind","kind":"func","status":"implemented","sigHash":"c7405d06102fc3383f1f5da52ea37c11cc53c086c8397d9759565ecaaeb61502"}
  *
  * Go source:
  * func FindChildOfKind(containingNode *ast.Node, kind ast.Kind, sourceFile *ast.SourceFile) *ast.Node {

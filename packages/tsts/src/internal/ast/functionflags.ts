@@ -7,7 +7,7 @@ import { ModifierFlagsAsync } from "./modifierflags.js";
 import { HasSyntacticModifier } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::type::FunctionFlags","kind":"type","status":"implemented","sigHash":"ad2a4b940b1e5651fc938d16a803f2cce0d2eab389ccc956b19be9af960624bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::type::FunctionFlags","kind":"type","status":"implemented","sigHash":"e25f657560858fec2beb1c2b5a90b43445f28c936d70ad4cf8d406bfc0211079"}
  *
  * Go source:
  * FunctionFlags uint32
@@ -15,7 +15,7 @@ import { HasSyntacticModifier } from "./utilities.js";
 export type FunctionFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::constGroup::FunctionFlagsNormal+FunctionFlagsGenerator+FunctionFlagsAsync+FunctionFlagsInvalid+FunctionFlagsAsyncGenerator","kind":"constGroup","status":"implemented","sigHash":"36408568466780a8965ed541ad519fce884d222c21ef20ab21dc183c408dc5e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::constGroup::FunctionFlagsNormal+FunctionFlagsGenerator+FunctionFlagsAsync+FunctionFlagsInvalid+FunctionFlagsAsyncGenerator","kind":"constGroup","status":"implemented","sigHash":"c7159048c07eb2c1e7af5bb0add5ea7b38fc828d33223a5b288e23b96c23cd6c"}
  *
  * Go source:
  * const (

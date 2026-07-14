@@ -9,7 +9,7 @@ import type { SymbolTracker } from "../nodebuilder/types.js";
 import type { NodeBuilderContext, TrackedSymbolArgs } from "./nodebuilderimpl.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"79cac9a60c2d8c8e7c95ac5947d1ee4b007d23cb1f90efc004e66780e6519534"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"27e1a5a4dd922451780ff5dccd97da42572e29cd8859ee5e60ca633255fc28f9"}
  *
  * Go source:
  * SymbolTrackerImpl struct {

@@ -57,7 +57,7 @@ import { EncodeURI, AddUTF8ByteOrderMark } from "../stringutil/util.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::EmitOnly","kind":"type","status":"implemented","sigHash":"1958d246a44daf492c65aec0fb6b1cf3442407dc6463b06769a367a0c26e08ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::EmitOnly","kind":"type","status":"implemented","sigHash":"0c69bbca4873981b8ee4a7bb25a2066b98a917dfd9499551f3df14e6760e7c67"}
  *
  * Go source:
  * EmitOnly byte
@@ -65,7 +65,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
 export type EmitOnly = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::constGroup::EmitAll+EmitOnlyJs+EmitOnlyDts+EmitOnlyForcedDts","kind":"constGroup","status":"implemented","sigHash":"af569816f62f664fc9a4574da2e01107440b04234f2882eb1b60a90f3e23bee2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::constGroup::EmitAll+EmitOnlyJs+EmitOnlyDts+EmitOnlyForcedDts","kind":"constGroup","status":"implemented","sigHash":"783ddd5b9c7d93d6030b576fb98caef0d15e11f99760914fe3f92c72aba7af75"}
  *
  * Go source:
  * const (
@@ -81,7 +81,7 @@ export const EmitOnlyDts: EmitOnly = 2;
 export const EmitOnlyForcedDts: EmitOnly = 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::emitter","kind":"type","status":"implemented","sigHash":"454673fa184afd6cc516ef23c6f14be2056fde32c5285194140584c8d2a3f1d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::emitter","kind":"type","status":"implemented","sigHash":"c0c17e1e1093155fed2b36136c3f63b4451e74b2627fb3a8d664b62615e55a2a"}
  *
  * Go source:
  * emitter struct {
@@ -1024,7 +1024,7 @@ export function emitter_getSourceMappingURL(receiver: GoPtr<emitter>, mapOptions
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::SourceFileMayBeEmittedHost","kind":"type","status":"implemented","sigHash":"3234fb95de035e8140a4c0e6bc550036b5e6dce06888b191a2973d1e57e2f02b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::SourceFileMayBeEmittedHost","kind":"type","status":"implemented","sigHash":"02eccd3d9ada9bcedde7e60d107ae713805b21eed3b1a0728307bc21227017b6"}
  *
  * Go source:
  * SourceFileMayBeEmittedHost interface {

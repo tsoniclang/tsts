@@ -144,7 +144,7 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
   extensionHost.facts.set(fileSymbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule), evidence);
 
   for (const family of getProviderTypeFamilies(virtualModule)) {
-    const familySymbol = fileSymbol.Exports?.get(family.exportName);
+    const familySymbol = fileSymbol.Exports.get(family.exportName);
     if (familySymbol === undefined) {
       continue;
     }
@@ -298,12 +298,12 @@ function findProviderMemberSymbol(exportSymbol: Symbol, member: ProviderMemberDe
   }
   const memberName = getProviderPropertyNameText(member.name);
   if (member.static === true) {
-    return exportSymbol.Exports?.get(memberName);
+    return exportSymbol.Exports.get(memberName);
   }
   if (member.static === false) {
-    return exportSymbol.Members?.get(memberName);
+    return exportSymbol.Members.get(memberName);
   }
-  return exportSymbol.Members?.get(memberName) ?? exportSymbol.Exports?.get(memberName);
+  return exportSymbol.Members.get(memberName) ?? exportSymbol.Exports.get(memberName);
 }
 
 function providerMemberMatchesNode(member: ProviderMemberDeclaration, node: Node): boolean {
@@ -379,7 +379,7 @@ function recordProviderVirtualSignatureFacts(
   evidence: readonly ExtensionEvidence[],
   member?: ProviderMemberDeclaration,
 ): void {
-  if (signatures.length === 0 || symbol.Declarations === undefined) {
+  if (signatures.length === 0 || symbol.Declarations.length === 0) {
     return;
   }
 
@@ -589,10 +589,10 @@ function getProviderSourceExportName(declaration: ProviderExportDeclaration): st
 
 function getProviderDeclarationSymbol(file: SourceFile, fileSymbol: Symbol, declaration: ProviderExportDeclaration): GoPtr<Symbol> {
   if (declaration.sourceTypeFamily !== undefined) {
-    return Node_Locals(file)?.get(getProviderTypeFamilyVariantLocalName(declaration));
+    return Node_Locals(file).get(getProviderTypeFamilyVariantLocalName(declaration));
   }
   const exportName = getProviderExportName(declaration);
-  return fileSymbol.Exports?.get(exportName) ?? fileSymbol.Exports?.get(declaration.name);
+  return fileSymbol.Exports.get(exportName) ?? fileSymbol.Exports.get(declaration.name);
 }
 
 interface ProviderTypeFamilyGroup {

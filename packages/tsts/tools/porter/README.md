@@ -419,6 +419,16 @@ npm run porter:status
 npm run porter:verify
 ```
 
+When a reviewed Porter contract change alters the normalized Go source-signature
+hash without changing the already-audited TypeScript declaration semantics, use
+`npm run porter:reconcile-metadata` for a dry-run plan and add `-- --write` only
+after reviewing it. The command first runs the complete all-active declaration
+audit and refuses to write unless stale `sigHash` metadata is the sole remaining
+verification failure. It rewrites only the exact attached `@tsgo-unit.sigHash`
+field, reparses every result, and leaves `porter:verify` as the unchanged final
+gate. It cannot bless missing units, stubs, semantic mismatches, filtered audits,
+invalid overrides, generated drift, or source-pin defects.
+
 `porter:status` reports source-pin defects but remains a diagnostic command. `porter:verify` is the gate: it proves the complete source pin, then recomputes Go source-signature hashes and canonical declaration semantics. Any TypeScript unit whose signature evidence no longer matches becomes `stale` or a signature-audit failure. The tool never overwrites implemented TypeScript. Scaffold writes are explicit and append-only unless a new file is being created.
 
 If a TS-Go update removes or renames a Go unit, the existing TypeScript `@tsgo-unit` becomes `orphan`. If the update adds the same concept under a new Go identity, that new identity is reported separately as `missing`. The tool does not guess that an orphan and a missing unit are the same change; a human must either delete the orphan, move the implementation, or update the metadata after reviewing the upstream delta.

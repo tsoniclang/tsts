@@ -66,7 +66,7 @@ function textWriter_as_EmitTextWriter(receiver: GoPtr<textWriter>): EmitTextWrit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"d040c7a502223f45c115762dcc46878eeeffe633a578c39b72bacc3b721f916c"}
  *
  * Go source:
  * var _ EmitTextWriter = &textWriter{}
@@ -84,7 +84,7 @@ export let __f8aeeddb_0: GoInterface<EmitTextWriter> = textWriter_as_EmitTextWri
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::type::textWriter","kind":"type","status":"implemented","sigHash":"4e621145b7a6bb028cfe1dec2270c1ea771a49c3b841542f1a4d96f0a3c1a725"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::type::textWriter","kind":"type","status":"implemented","sigHash":"5b7d02e461c16c75dc024540b94107eacc06421cf4b1e7215f5aebc20f8fbc3a"}
  *
  * Go source:
  * textWriter struct {
@@ -160,7 +160,7 @@ export function textWriter_DecreaseIndent(receiver: GoPtr<textWriter>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::method::textWriter.GetColumn","kind":"method","status":"implemented","sigHash":"b5027d54637756e8405fb98e314c56bd8df83e1bbfa00a0a193f76db205f2435"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::method::textWriter.GetColumn","kind":"method","status":"implemented","sigHash":"4e67f824e883975c1611f50ad7a0fa9bcc16772de6c54f8ae1c36ada94722602"}
  *
  * Go source:
  * func (w *textWriter) GetColumn() core.UTF16Offset {
@@ -368,7 +368,7 @@ export function textWriter_updateLineCountAndPosFor(receiver: GoPtr<textWriter>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::constGroup::defaultIndentSize","kind":"constGroup","status":"implemented","sigHash":"29a0fc9dbed45a121f530f681695392dc15ae85f54a80de6eb8d8d4f7981e840"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::constGroup::defaultIndentSize","kind":"constGroup","status":"implemented","sigHash":"e094dc1ba17beb4cbd118c78ba47a627fe6974def4d519b5e4a42da011a0e1cd"}
  *
  * Go source:
  * const defaultIndentSize = 4
@@ -376,7 +376,7 @@ export function textWriter_updateLineCountAndPosFor(receiver: GoPtr<textWriter>,
 export const defaultIndentSize: int = 4;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::func::GetDefaultIndentSize","kind":"func","status":"implemented","sigHash":"c731418a0dac8850bee9bcd0efb89deaaae4e412f8adf4afa1d0f466ca7b8928"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/textwriter.go::func::GetDefaultIndentSize","kind":"func","status":"implemented","sigHash":"895e1fe95b500fc4063c9a8b241718baf101cf708f7f5bc944d1256a83801532"}
  *
  * Go source:
  * func GetDefaultIndentSize() int {

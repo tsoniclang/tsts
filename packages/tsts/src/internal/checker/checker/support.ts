@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoNilMap, GoNilSlice } from "../../../go/compat.js";
 import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
@@ -432,28 +433,26 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
   for (const file of receiver!.files) {
     if (!IsExternalOrCommonJSModule(file)) {
       const fileLocals = Node_Locals(file as GoPtr<Node>);
-      const fileGlobalThisSymbol = fileLocals?.get("globalThis");
+      const fileGlobalThisSymbol = fileLocals.get("globalThis");
       if (fileGlobalThisSymbol !== undefined) {
         for (const declaration of fileGlobalThisSymbol!.Declarations ?? []) {
           Checker_addDiagnostic(receiver, createDiagnosticForNode(declaration, Declaration_name_conflicts_with_built_in_global_identifier_0, "globalThis"));
         }
       }
-      if (fileLocals !== undefined) {
-        for (const symbol_ of fileLocals.values()) {
-          // We defer merging of global ambient module declarations since they may require other global symbols
-          // and types to be resolved. See https://github.com/microsoft/typescript-go/issues/2953.
-          if ((symbol_!.Flags & SymbolFlagsModule) !== 0 && IsAmbientModuleSymbolName(symbol_!.Name)) {
-            ambientModuleSymbols.push(symbol_);
-          } else {
-            Checker_mergeGlobalSymbol(receiver, symbol_);
-          }
+      for (const symbol_ of fileLocals.values()) {
+        // We defer merging of global ambient module declarations since they may require other global symbols
+        // and types to be resolved. See https://github.com/microsoft/typescript-go/issues/2953.
+        if ((symbol_!.Flags & SymbolFlagsModule) !== 0 && IsAmbientModuleSymbolName(symbol_!.Name)) {
+          ambientModuleSymbols.push(symbol_);
+        } else {
+          Checker_mergeGlobalSymbol(receiver, symbol_);
         }
       }
     }
     receiver!.patternAmbientModules.push(...(file!.PatternAmbientModules ?? []));
     augmentations.push(file!.ModuleAugmentations ?? []);
     if (Node_Symbol(file as GoPtr<Node>) !== undefined) {
-      for (const [name, symbol_] of file!.GlobalExports ?? new globalThis.Map<string, GoPtr<Symbol>>()) {
+      for (const [name, symbol_] of file!.GlobalExports) {
         if (!receiver!.globals.has(name)) {
           receiver!.globals.set(name, symbol_);
         }
@@ -484,7 +483,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
   receiver!.anyArrayType = Checker_createArrayType(receiver, receiver!.anyType);
   receiver!.autoArrayType = Checker_createArrayType(receiver, receiver!.autoType);
   if (receiver!.autoArrayType === receiver!.emptyObjectType) {
-    receiver!.autoArrayType = Checker_newAnonymousType(receiver, undefined, undefined as unknown as SymbolTable, [], [], []);
+    receiver!.autoArrayType = Checker_newAnonymousType(receiver, undefined, GoNilMap<string, GoPtr<Symbol>>(), GoNilSlice(), GoNilSlice(), GoNilSlice());
   }
   receiver!.globalReadonlyArrayType = Checker_getGlobalType(receiver, "ReadonlyArray", 1, false);
   if (receiver!.globalReadonlyArrayType === receiver!.emptyGenericType) {
@@ -1692,7 +1691,7 @@ export function Checker_evaluateEntity(receiver: GoPtr<Checker>, expr: GoPtr<Nod
         const rootSymbol = Checker_resolveEntityName(receiver, root, SymbolFlagsValue, true as bool, false as bool, undefined);
         if (rootSymbol !== undefined && (rootSymbol!.Flags & SymbolFlagsEnum) !== 0) {
           const name = Node_Text(argumentExpression);
-          const member = rootSymbol!.Exports?.get(name);
+          const member = rootSymbol!.Exports.get(name);
           if (member !== undefined) {
             if (location !== undefined) {
               return Checker_evaluateEnumMember(receiver, expr, member, location);

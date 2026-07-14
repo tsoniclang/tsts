@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoStringKey, GoZeroPointer, type GoComparable, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoNilSlice, GoSliceIsNil, GoStringKey, GoZeroPointer, type GoComparable, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { TODO } from "../../../go/context.js";
 import { Map as GoSyncMap, Once } from "../../../go/sync.js";
@@ -165,7 +165,7 @@ export function programToSnapshot(program: GoPtr<Program>, oldProgram: GoPtr<Pro
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::type::toProgramSnapshot","kind":"type","status":"implemented","sigHash":"288bbbb1f63c00f0e50b69f03c7b7bea20799dcbbf5e6a35e1eb17506f6f6b28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::type::toProgramSnapshot","kind":"type","status":"implemented","sigHash":"a94cc436f14a4d0e19bca67e3b02ed8bb4bed161c17968556e163262abc9f2a6"}
  *
  * Go source:
  * toProgramSnapshot struct {
@@ -556,7 +556,7 @@ export function addReferencedFilesFromSymbol(file: GoPtr<SourceFile>, referenced
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::addReferencedFilesFromImportLiteral","kind":"func","status":"implemented","sigHash":"f37c52ce26686b278505e8673feaf55e9c0ce9d7d4b43cba057141eae9656b6b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::addReferencedFilesFromImportLiteral","kind":"func","status":"implemented","sigHash":"6b3a0ee82231fd3ce61e057130dfac83ea125fd5f3665b5e8754ceba9adb3a9c"}
  *
  * Go source:
  * func addReferencedFilesFromImportLiteral(file *ast.SourceFile, referencedFiles *collections.Set[tspath.Path], checker *checker.Checker, importName *ast.LiteralLikeNode) {
@@ -570,7 +570,7 @@ export function addReferencedFilesFromImportLiteral(file: GoPtr<SourceFile>, ref
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::addReferencedFileFromFileName","kind":"func","status":"implemented","sigHash":"3fa18a87f0e3e1ee9366476dd55b42fe6a19a31099ab2c7fd2dddbb025434aef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::addReferencedFileFromFileName","kind":"func","status":"implemented","sigHash":"dc407e3414bc868b7713c77c121326a0e9d50829e220bba418a1c3c4caed9cc8"}
  *
  * Go source:
  * func addReferencedFileFromFileName(program *compiler.Program, fileName string, referencedFiles *collections.Set[tspath.Path], sourceFileDirectory string) {
@@ -591,7 +591,7 @@ export function addReferencedFileFromFileName(program: GoPtr<Program>, fileName:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::getReferencedFiles","kind":"func","status":"implemented","sigHash":"8f2904079e386cc4aa59351103743658ebc7ae059ff6c50186d019bafc05fce8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::getReferencedFiles","kind":"func","status":"implemented","sigHash":"4c0dfb5d38d6b8e4b03386a8e131a04163f426712c7972040e526ee88b50b5df"}
  *
  * Go source:
  * func getReferencedFiles(program *compiler.Program, file *ast.SourceFile) *collections.Set[tspath.Path] {
@@ -661,7 +661,7 @@ export function getReferencedFiles(program: GoPtr<Program>, file: GoPtr<SourceFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticsOfFile","kind":"func","status":"implemented","sigHash":"d5067aeb7564e9073f42fef03766e9f8ca9caafeecfd1abce3de0d555b1e2af4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticsOfFile","kind":"func","status":"implemented","sigHash":"3d695b5c3375e5a4e558e719a22048ee748f680008ae9461b4ab514acfd8f9a3"}
  *
  * Go source:
  * func repopulateDiagnosticsOfFile(diags *DiagnosticsOrBuildInfoDiagnosticsWithFileName, p *compiler.Program, file *ast.SourceFile) *DiagnosticsOrBuildInfoDiagnosticsWithFileName {
@@ -677,9 +677,9 @@ export function getReferencedFiles(program: GoPtr<Program>, file: GoPtr<SourceFi
  * }
  */
 export function repopulateDiagnosticsOfFile(diags: GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName> {
-  if (diags!.diagnostics !== undefined && diags!.diagnostics !== null) {
+  if (!GoSliceIsNil(diags!.diagnostics)) {
     const repopulated = repopulateDiagnosticsList(diags!.diagnostics, p, file);
-    if (repopulated === undefined || repopulated === null) {
+    if (GoSliceIsNil(repopulated)) {
       return diags;
     }
     return { diagnostics: repopulated, buildInfoDiagnostics: [] };
@@ -689,7 +689,7 @@ export function repopulateDiagnosticsOfFile(diags: GoPtr<DiagnosticsOrBuildInfoD
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticsList","kind":"func","status":"implemented","sigHash":"99be7eb5fce8ead6933f781a010e4798280327a1c220a737374fa538c06cb91d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticsList","kind":"func","status":"implemented","sigHash":"50a7626b090c053a45a0f41ad4d3808d21436beb6b5ef5c6d9b60a83877ae582"}
  *
  * Go source:
  * func repopulateDiagnosticsList(diags []*ast.Diagnostic, p *compiler.Program, file *ast.SourceFile) []*ast.Diagnostic {
@@ -718,7 +718,7 @@ export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: 
   for (let i = 0; i < diags.length; i++) {
     const d = diags[i];
     const repopulated = repopulateDiagnosticMessageChain(Diagnostic_MessageChain(d), p, file);
-    if (repopulated !== undefined && repopulated !== null) {
+    if (!GoSliceIsNil(repopulated)) {
       const clone = Diagnostic_Clone(d);
       Diagnostic_SetMessageChain(clone, repopulated);
       result[i] = clone;
@@ -728,13 +728,13 @@ export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: 
     }
   }
   if (!changed) {
-    return undefined as unknown as GoSlice<GoPtr<Diagnostic>>;
+    return GoNilSlice<GoPtr<Diagnostic>>();
   }
   return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticMessageChain","kind":"func","status":"implemented","sigHash":"e1527c7a51b0ee2981df52918566e2fc419facbfbab3ad7960203a6cf45a001a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticMessageChain","kind":"func","status":"implemented","sigHash":"df6b87e3346b0e7479f9f68942b73641163e180539c0af72c77a2943cc70d654"}
  *
  * Go source:
  * func repopulateDiagnosticMessageChain(chain []*ast.Diagnostic, p *compiler.Program, file *ast.SourceFile) []*ast.Diagnostic {
@@ -769,7 +769,7 @@ export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: 
  */
 export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic>>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (chain.length === 0) {
-    return undefined as unknown as GoSlice<GoPtr<Diagnostic>>;
+    return GoNilSlice<GoPtr<Diagnostic>>();
   }
   let changed = false;
   const result: GoPtr<Diagnostic>[] = new Array(chain.length);
@@ -802,7 +802,7 @@ export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic
     } else {
       // Check nested chains
       const nested = repopulateDiagnosticMessageChain(Diagnostic_MessageChain(c), p, file);
-      if (nested !== undefined && nested !== null) {
+      if (!GoSliceIsNil(nested)) {
         const clone = Diagnostic_Clone(c);
         Diagnostic_SetMessageChain(clone, nested);
         result[i] = clone;
@@ -813,7 +813,7 @@ export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic
     }
   }
   if (!changed) {
-    return undefined as unknown as GoSlice<GoPtr<Diagnostic>>;
+    return GoNilSlice<GoPtr<Diagnostic>>();
   }
   return result;
 }

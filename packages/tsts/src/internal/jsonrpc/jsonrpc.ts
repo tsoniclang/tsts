@@ -17,7 +17,7 @@ const utf8Decoder: TextDecoder = new globalThis.TextDecoder();
 const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(globalThis.Uint8Array.from(b));
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::JSONRPCVersion","kind":"type","status":"implemented","sigHash":"862966cbb3a87b3378ef0da3be95168f5876f23143ed055aeb03ff5807c0075b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::JSONRPCVersion","kind":"type","status":"implemented","sigHash":"57944aa730fa3a5d0bf36879dfd621160da87adcffba194e603f65a468f2c624"}
  *
  * Go source:
  * JSONRPCVersion struct{}
@@ -27,7 +27,7 @@ export interface JSONRPCVersion {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::constGroup::jsonRPCVersion","kind":"constGroup","status":"implemented","sigHash":"6019cfecab09cf4803b7e947f7d811d15d2c91673ccf221002817e1176f64f15"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::constGroup::jsonRPCVersion","kind":"constGroup","status":"implemented","sigHash":"73beaf5aa05f79a267830cb14097626adba83da647495cab3d225d831583800c"}
  *
  * Go source:
  * const jsonRPCVersion = `"2.0"`
@@ -47,7 +47,7 @@ export function JSONRPCVersion_MarshalJSON(receiver: JSONRPCVersion): [GoSlice<b
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::varGroup::ErrInvalidJSONRPCVersion","kind":"varGroup","status":"implemented","sigHash":"9fd721a1bd0323199f24e00eed6a40a4e7328da7f362cfe65139e09abf18ed3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::varGroup::ErrInvalidJSONRPCVersion","kind":"varGroup","status":"implemented","sigHash":"ddb65661334e93c07974f3565d7f5e0dc9a00df99401e428f1469e048da5f7fc"}
  *
  * Go source:
  * var ErrInvalidJSONRPCVersion = errors.New("invalid JSON-RPC version")
@@ -73,7 +73,7 @@ export function JSONRPCVersion_UnmarshalJSON(receiver: GoPtr<JSONRPCVersion>, da
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ID","kind":"type","status":"implemented","sigHash":"3fb5aa3d6164f0282f2f474b4946382f626b3ecdb6b13b0886574e4892aca88d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ID","kind":"type","status":"implemented","sigHash":"019362e4003e5b0099fa97e4501f178df1776c0a025f6fb59afa91f9cd0efd9e"}
  *
  * Go source:
  * ID struct {
@@ -87,7 +87,7 @@ export interface ID {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::func::NewID","kind":"func","status":"implemented","sigHash":"5b4fa60531ea281646f70b64289aa0f4ffed2a098d24fdb5a075e154007d539e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::func::NewID","kind":"func","status":"implemented","sigHash":"4a91b997ce593eef0e70a6a91e071167cf4fd9ea3088d076ce380841975f1896"}
  *
  * Go source:
  * func NewID(rawValue IntegerOrString) *ID {
@@ -105,7 +105,7 @@ export function NewID(rawValue: IntegerOrString): GoPtr<ID> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::func::NewIDString","kind":"func","status":"implemented","sigHash":"5a9b195cbc88a8e1f0350842888cc34dd4e603891856af1ce9f2563df2b1cde4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::func::NewIDString","kind":"func","status":"implemented","sigHash":"dc46745ac23ca1952c01fee3ff555951c6325730fb19d077ed1998e76577b7ec"}
  *
  * Go source:
  * func NewIDString(str string) *ID {
@@ -117,7 +117,7 @@ export function NewIDString(str: string): GoPtr<ID> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::func::NewIDInt","kind":"func","status":"implemented","sigHash":"b92b83fbeeaf0f40c2fef72bef1d699c60eb2d8660820c5ab3ff5d59008f061f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::func::NewIDInt","kind":"func","status":"implemented","sigHash":"4f0c435533dad3bc8b1f092af52c5f6e4053f30e6089871aedfc789af1f0b773"}
  *
  * Go source:
  * func NewIDInt(i int32) *ID {
@@ -237,7 +237,7 @@ export function ID_MustInt(receiver: GoPtr<ID>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::IntegerOrString","kind":"type","status":"implemented","sigHash":"8d1839679e464bd8e9b0ce0a5136c109f88e1773d24a0abf77e27ee663801312"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::IntegerOrString","kind":"type","status":"implemented","sigHash":"8c5993b849f8633c2e87f09c606e01e0d774f9057e350573bfbfef08c5629728"}
  *
  * Go source:
  * IntegerOrString struct {
@@ -251,7 +251,7 @@ export interface IntegerOrString {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ResponseError","kind":"type","status":"implemented","sigHash":"dc4efbd12b7dcb1c860060cfd7e40832477d4ecfb0d951bc5bc312d315c89f4e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ResponseError","kind":"type","status":"implemented","sigHash":"512e3bbd51a2bd267981fae634b61a976b260c2ac632a60f59e75f83f816d3b8"}
  *
  * Go source:
  * ResponseError struct {
@@ -307,7 +307,7 @@ export function ResponseError_Error(receiver: GoPtr<ResponseError>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::constGroup::CodeParseError+CodeInvalidRequest+CodeMethodNotFound+CodeInvalidParams+CodeInternalError","kind":"constGroup","status":"implemented","sigHash":"887ab2b2a0ae8658fb4dd5bb206925a792e547a88fd2d870ec4d8fcd7f7e7603"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::constGroup::CodeParseError+CodeInvalidRequest+CodeMethodNotFound+CodeInvalidParams+CodeInternalError","kind":"constGroup","status":"implemented","sigHash":"81ad3d0c3b521e277644ecaff18276b08fdd8f26b82d481333f16165ee79b67e"}
  *
  * Go source:
  * const (
@@ -325,7 +325,7 @@ export const CodeInvalidParams: int = -32602;
 export const CodeInternalError: int = -32603;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::MessageKind","kind":"type","status":"implemented","sigHash":"72ff49b8dd3eeb5eab0a0efc66724caefaacef797f0eec347eb1c307dd29d571"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::MessageKind","kind":"type","status":"implemented","sigHash":"360de883f8c7cf9d47f7d2fea8d26892fe3ad442fa4f8d68ab9a49146f26416b"}
  *
  * Go source:
  * MessageKind int
@@ -333,7 +333,7 @@ export const CodeInternalError: int = -32603;
 export type MessageKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::constGroup::MessageKindNotification+MessageKindRequest+MessageKindResponse","kind":"constGroup","status":"implemented","sigHash":"9607231e573f0cd1201064ee819b46f28a3d51bbf4e002fab03ffb299c02afb8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::constGroup::MessageKindNotification+MessageKindRequest+MessageKindResponse","kind":"constGroup","status":"implemented","sigHash":"81c35a5bf4b27e366597146398bceb7744c625fbf1be7d7455ea20e8a169ffec"}
  *
  * Go source:
  * const (
@@ -347,7 +347,7 @@ export const MessageKindRequest: MessageKind = 1;
 export const MessageKindResponse: MessageKind = 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::Message","kind":"type","status":"implemented","sigHash":"a05b801837f37f9f77d233878f4cf76702957e58f1f0d2ebead3dd26d36b5861"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::Message","kind":"type","status":"implemented","sigHash":"9ba7751eedf8edc9929829adaa8f6cecc7037f14a4f631038b23d57490966cbf"}
  *
  * Go source:
  * Message struct {
@@ -369,7 +369,7 @@ export interface Message {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::Message.Kind","kind":"method","status":"implemented","sigHash":"7ec366b5e0f6537af7a9bec0edf751bd93b787380c06a4bbff48b1cb5a9217ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::Message.Kind","kind":"method","status":"implemented","sigHash":"2b03d41d367e51d94b158e1376cd6cac0bf03d67e50709af7d6e595dbcccd29b"}
  *
  * Go source:
  * func (m *Message) Kind() MessageKind {
@@ -394,7 +394,7 @@ export function Message_Kind(receiver: GoPtr<Message>): MessageKind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::Message.IsRequest","kind":"method","status":"implemented","sigHash":"f730f752f56194459abfbf2ced03e6b23335c6674378a6dd0b71aaa47c05ef67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::Message.IsRequest","kind":"method","status":"implemented","sigHash":"1a678072590d54af60ea5cf78d883ccbc6afa56ea307ad2ed395265a8d9f6f14"}
  *
  * Go source:
  * func (m *Message) IsRequest() bool {
@@ -407,7 +407,7 @@ export function Message_IsRequest(receiver: GoPtr<Message>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::Message.IsNotification","kind":"method","status":"implemented","sigHash":"0daea8f67364519eddf20240eba67a60a9c5d5e3c77971af5c212da7fdc96224"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::Message.IsNotification","kind":"method","status":"implemented","sigHash":"91d03c1ecc4d0b37383d124743d07da9aa73cf1faa45d52ae6f2c73bc11c20bd"}
  *
  * Go source:
  * func (m *Message) IsNotification() bool {
@@ -420,7 +420,7 @@ export function Message_IsNotification(receiver: GoPtr<Message>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::Message.IsResponse","kind":"method","status":"implemented","sigHash":"484a7ac987f91c8aa0f23c3ab33ca05a7fec36d4fe4616b6b94e9330e122209c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::Message.IsResponse","kind":"method","status":"implemented","sigHash":"6ba7e80bae3a98601fa9e3277068f4577c8b28cf4d18c0895eb4c5830e3c2596"}
  *
  * Go source:
  * func (m *Message) IsResponse() bool {
@@ -433,7 +433,7 @@ export function Message_IsResponse(receiver: GoPtr<Message>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::RequestMessage","kind":"type","status":"implemented","sigHash":"4a33a8eafda826cc927f37e10dc1c50997d9ddb42da8c7180ee0940715c78f9e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::RequestMessage","kind":"type","status":"implemented","sigHash":"130aebd0ccbc36b5e24eb55ef0d4fb3053ac6086e0e9841ccbb9b4ab2d4bbc04"}
  *
  * Go source:
  * RequestMessage struct {
@@ -451,7 +451,7 @@ export interface RequestMessage {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ResponseMessage","kind":"type","status":"implemented","sigHash":"549281559d9afe85a1c939a420fa85e4a588f7c1acf73aa3645931b5bf8978d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ResponseMessage","kind":"type","status":"implemented","sigHash":"e1e1ab59b79b0a01b898a6a4415a48684a158ea4151dd3562effc43cf452693c"}
  *
  * Go source:
  * ResponseMessage struct {

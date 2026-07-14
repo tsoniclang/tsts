@@ -11,7 +11,7 @@ import type { Path } from "../tspath/path.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::SourceFileForSpecifierGeneration","kind":"type","status":"implemented","sigHash":"22e224940624792a0cfee19756d39bf4642a6e5b3b4f57eb206205843770bbfa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::SourceFileForSpecifierGeneration","kind":"type","status":"implemented","sigHash":"cdfe7411646a80582f7b77fe78efbe50bcfe5e93fcf2304ca1dc25ae71d47927"}
  *
  * Go source:
  * SourceFileForSpecifierGeneration interface {
@@ -29,7 +29,7 @@ export interface SourceFileForSpecifierGeneration {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::CheckerShape","kind":"type","status":"implemented","sigHash":"c66e72683096011e09c33607e8a7a59724e06b514651dfbb04b177edee5f1d89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::CheckerShape","kind":"type","status":"implemented","sigHash":"7198368fcca43ebbed45c7de16d37883feacb39a3fb5265d35ad25d59ade4048"}
  *
  * Go source:
  * CheckerShape interface {
@@ -43,7 +43,7 @@ export interface CheckerShape {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ResultKind","kind":"type","status":"implemented","sigHash":"44d9b5a5b5c1560f4295c0b452af50ca4990d6c5c2aedc303c16ac30adbe8d40"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ResultKind","kind":"type","status":"implemented","sigHash":"bc43538d35addb3471ae6025b83f44b67ed0475f82054cc8c97724c98df18d84"}
  *
  * Go source:
  * ResultKind uint8
@@ -51,7 +51,7 @@ export interface CheckerShape {
 export type ResultKind = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::ResultKindNone+ResultKindNodeModules+ResultKindPaths+ResultKindRedirect+ResultKindRelative+ResultKindAmbient","kind":"constGroup","status":"implemented","sigHash":"c6a0ef9c3669f1b23224039ce4ce7a7a00d3778fbbc97c0f2659d8bb15029aad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::ResultKindNone+ResultKindNodeModules+ResultKindPaths+ResultKindRedirect+ResultKindRelative+ResultKindAmbient","kind":"constGroup","status":"implemented","sigHash":"0fa95ef3df7d3181841effeb1c891174df5290743d2d33b3d42e37b5efda2476"}
  *
  * Go source:
  * const (
@@ -71,7 +71,7 @@ export const ResultKindRelative: ResultKind = 4 as ResultKind;
 export const ResultKindAmbient: ResultKind = 5 as ResultKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ModulePath","kind":"type","status":"implemented","sigHash":"dd99fef1d29d5304b1ed8a57c7629ca7626d7f6ed919ad1cd77e7a4b9c4aaaba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ModulePath","kind":"type","status":"implemented","sigHash":"14690d843b586d8dee8064438d7abae1decc255f1cc83c78ad88d2bed973f6df"}
  *
  * Go source:
  * ModulePath struct {
@@ -87,7 +87,7 @@ export interface ModulePath {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ModuleSpecifierGenerationHost","kind":"type","status":"implemented","sigHash":"50f5b1f95682414caa3bb033cf960e8248910fd40b482031a2b1a4b34f49449b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ModuleSpecifierGenerationHost","kind":"type","status":"implemented","sigHash":"6c216fdede2ba863cb3501189a8d420cbbc4955b0c691623d48eb7be6d32b74a"}
  *
  * Go source:
  * ModuleSpecifierGenerationHost interface {
@@ -130,7 +130,7 @@ export interface ModuleSpecifierGenerationHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ImportModuleSpecifierPreference","kind":"type","status":"implemented","sigHash":"1e3dc3dcc050093980e02d485848635d0e33245228ccbd3999dd0ff0b6c2bf68"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ImportModuleSpecifierPreference","kind":"type","status":"implemented","sigHash":"1a27bccf942f34ec97a696b68d348710de7041ace7428fe7fe943f132f53cfc8"}
  *
  * Go source:
  * ImportModuleSpecifierPreference string
@@ -138,7 +138,7 @@ export interface ModuleSpecifierGenerationHost {
 export type ImportModuleSpecifierPreference = string;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::ImportModuleSpecifierPreferenceNone+ImportModuleSpecifierPreferenceShortest+ImportModuleSpecifierPreferenceProjectRelative+ImportModuleSpecifierPreferenceRelative+ImportModuleSpecifierPreferenceNonRelative","kind":"constGroup","status":"implemented","sigHash":"f3476272c68f4df9e63be3e8fcc202567a309efdde8b77f25fbb165105ea895c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::ImportModuleSpecifierPreferenceNone+ImportModuleSpecifierPreferenceShortest+ImportModuleSpecifierPreferenceProjectRelative+ImportModuleSpecifierPreferenceRelative+ImportModuleSpecifierPreferenceNonRelative","kind":"constGroup","status":"implemented","sigHash":"66db70a27d263c3650c4cb13b9def0e4de970c6c1d70ffa4dedf0334b2ed01dd"}
  *
  * Go source:
  * const (
@@ -156,7 +156,7 @@ export const ImportModuleSpecifierPreferenceRelative: ImportModuleSpecifierPrefe
 export const ImportModuleSpecifierPreferenceNonRelative: ImportModuleSpecifierPreference = "non-relative";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ImportModuleSpecifierEndingPreference","kind":"type","status":"implemented","sigHash":"7b3939233c240c0d9e245a6fd3e165d8406b9f62f7c74304898ee6ec9589acae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ImportModuleSpecifierEndingPreference","kind":"type","status":"implemented","sigHash":"b6494fa3677928953e46f212701c0d0e1be57b7df38dc8a71583cd55dca0668c"}
  *
  * Go source:
  * ImportModuleSpecifierEndingPreference string
@@ -164,7 +164,7 @@ export const ImportModuleSpecifierPreferenceNonRelative: ImportModuleSpecifierPr
 export type ImportModuleSpecifierEndingPreference = string;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::ImportModuleSpecifierEndingPreferenceNone+ImportModuleSpecifierEndingPreferenceAuto+ImportModuleSpecifierEndingPreferenceMinimal+ImportModuleSpecifierEndingPreferenceIndex+ImportModuleSpecifierEndingPreferenceJs","kind":"constGroup","status":"implemented","sigHash":"7e4744fd28a5524490e31630b74cefeef5776ac4ef0fcdcc4a158c80752b3b1f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::ImportModuleSpecifierEndingPreferenceNone+ImportModuleSpecifierEndingPreferenceAuto+ImportModuleSpecifierEndingPreferenceMinimal+ImportModuleSpecifierEndingPreferenceIndex+ImportModuleSpecifierEndingPreferenceJs","kind":"constGroup","status":"implemented","sigHash":"95d9af8992b76cab3c255a95342ee30274258729b3c81ca09a91f31944d77c42"}
  *
  * Go source:
  * const (
@@ -182,7 +182,7 @@ export const ImportModuleSpecifierEndingPreferenceIndex: ImportModuleSpecifierEn
 export const ImportModuleSpecifierEndingPreferenceJs: ImportModuleSpecifierEndingPreference = "js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::UserPreferences","kind":"type","status":"implemented","sigHash":"b42bed1b655ef06c9b9fd42b0edab081f2cd4190c0a311a7dd68a265a5623a4f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::UserPreferences","kind":"type","status":"implemented","sigHash":"29af29d67b3f2b12ed82a1ad9010ca06e53c8fd4632a41f41201b9669417fdfe"}
  *
  * Go source:
  * UserPreferences struct {
@@ -198,7 +198,7 @@ export interface UserPreferences {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ModuleSpecifierOptions","kind":"type","status":"implemented","sigHash":"dbf6ecb578aba301df10434c9d1fb7907514f63f24228494590c43ee7403e877"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ModuleSpecifierOptions","kind":"type","status":"implemented","sigHash":"e934d9b6fb8454d1926d59697abb7ad4771595da6cc87764472e90adaa0dec4d"}
  *
  * Go source:
  * ModuleSpecifierOptions struct {
@@ -210,7 +210,7 @@ export interface ModuleSpecifierOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::RelativePreferenceKind","kind":"type","status":"implemented","sigHash":"ada206686c7712fa6f837c9e22906b299f92e2e91597fd6022b9149469f7a7c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::RelativePreferenceKind","kind":"type","status":"implemented","sigHash":"f4433e293b20e8c512ee55acaec007bed9a9d0d569cfc2099c137cce9b43bd3d"}
  *
  * Go source:
  * RelativePreferenceKind uint8
@@ -218,7 +218,7 @@ export interface ModuleSpecifierOptions {
 export type RelativePreferenceKind = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::RelativePreferenceRelative+RelativePreferenceNonRelative+RelativePreferenceShortest+RelativePreferenceExternalNonRelative","kind":"constGroup","status":"implemented","sigHash":"b9e655ccf21382b52721b409695c99000abf15f39938f866aa0e796b824ff024"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::RelativePreferenceRelative+RelativePreferenceNonRelative+RelativePreferenceShortest+RelativePreferenceExternalNonRelative","kind":"constGroup","status":"implemented","sigHash":"d53cd862b6a31cd8e1030295eef83ccf3cff16bb9e950bc9149f2726509e339c"}
  *
  * Go source:
  * const (
@@ -234,7 +234,7 @@ export const RelativePreferenceShortest: RelativePreferenceKind = 2 as RelativeP
 export const RelativePreferenceExternalNonRelative: RelativePreferenceKind = 3 as RelativePreferenceKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ModuleSpecifierEnding","kind":"type","status":"implemented","sigHash":"eb609658423e0fd281c80c577ccc6390d7cf4916e62af1bb9b86dc885fdfb49c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::ModuleSpecifierEnding","kind":"type","status":"implemented","sigHash":"c6272ea2c1309f6ab64e451891b254cf08d89573509dd1aedc3472844f6017ca"}
  *
  * Go source:
  * ModuleSpecifierEnding uint8
@@ -242,7 +242,7 @@ export const RelativePreferenceExternalNonRelative: RelativePreferenceKind = 3 a
 export type ModuleSpecifierEnding = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::ModuleSpecifierEndingMinimal+ModuleSpecifierEndingIndex+ModuleSpecifierEndingJsExtension+ModuleSpecifierEndingTsExtension","kind":"constGroup","status":"implemented","sigHash":"caa71c9344c149dfd20bab01c9eb96978f52ce7c25d0214e986157c3b6714585"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::ModuleSpecifierEndingMinimal+ModuleSpecifierEndingIndex+ModuleSpecifierEndingJsExtension+ModuleSpecifierEndingTsExtension","kind":"constGroup","status":"implemented","sigHash":"198a853ed6694cfa26db29691c2809388ee5a0692fa488ebe455bc3ceda0d5c3"}
  *
  * Go source:
  * const (
@@ -258,7 +258,7 @@ export const ModuleSpecifierEndingJsExtension: ModuleSpecifierEnding = 2 as Modu
 export const ModuleSpecifierEndingTsExtension: ModuleSpecifierEnding = 3 as ModuleSpecifierEnding;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::MatchingMode","kind":"type","status":"implemented","sigHash":"591d0ccd909e1455b59e5f473b9d647fa55cac588c61c4c5c2b89a6b7329da83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::type::MatchingMode","kind":"type","status":"implemented","sigHash":"02446b03d3ae0964842c55ab03e2c7f8f6032173fa6e17725efe10d49f4bb577"}
  *
  * Go source:
  * MatchingMode uint8
@@ -266,7 +266,7 @@ export const ModuleSpecifierEndingTsExtension: ModuleSpecifierEnding = 3 as Modu
 export type MatchingMode = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::MatchingModeExact+MatchingModeDirectory+MatchingModePattern","kind":"constGroup","status":"implemented","sigHash":"aeff72ccc58fe336b2db3630d8e70793d5a33b14c34f38c1736d4f3f39deff6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/types.go::constGroup::MatchingModeExact+MatchingModeDirectory+MatchingModePattern","kind":"constGroup","status":"implemented","sigHash":"55cac17ad1dbd40017076994e676c7d7daf75ea2622f07ee91acb3ebb167ac40"}
  *
  * Go source:
  * const (

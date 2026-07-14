@@ -3,7 +3,7 @@ import type { GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/ignoredpaths.go::varGroup::ignoredPaths","kind":"varGroup","status":"implemented","sigHash":"cbc3fa9c91a10ef0e895e56c60144ef999ac95e79d0ab2679d0631c4b8832b18"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/ignoredpaths.go::varGroup::ignoredPaths","kind":"varGroup","status":"implemented","sigHash":"7c9207728c2eb7199e5aa5d51da935cd70befa9435473967f349ec3a24aaca49"}
  *
  * Go source:
  * var ignoredPaths = []string{

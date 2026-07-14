@@ -51,7 +51,7 @@ function singleLineStringWriter_as_EmitTextWriter(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/singlelinestringwriter.go::varGroup::singleLineStringWriterPool","kind":"varGroup","status":"implemented","sigHash":"47953f36e85fe12c52a621383c30c1494c6b401f2e5968c23fe1216b5399e5bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/singlelinestringwriter.go::varGroup::singleLineStringWriterPool","kind":"varGroup","status":"implemented","sigHash":"af56bdf2687b71e083f04083ebe9fbc207877c53d4d0774996c816dafd2ec7bc"}
  *
  * Go source:
  * var singleLineStringWriterPool sync.Pool = sync.Pool{
@@ -70,7 +70,7 @@ export let singleLineStringWriterPool: Pool = ((): Pool => {
 })();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/singlelinestringwriter.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/singlelinestringwriter.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"d040c7a502223f45c115762dcc46878eeeffe633a578c39b72bacc3b721f916c"}
  *
  * Go source:
  * var _ EmitTextWriter = &singleLineStringWriter{}
@@ -104,7 +104,7 @@ export function GetSingleLineStringWriter(): [GoInterface<EmitTextWriter>, GoFun
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/singlelinestringwriter.go::type::singleLineStringWriter","kind":"type","status":"implemented","sigHash":"658ccb8abef81471f292b93500062c96097bb5638dddf0d0578a180e923a1f18"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/singlelinestringwriter.go::type::singleLineStringWriter","kind":"type","status":"implemented","sigHash":"b101d96d14cf9138a82116c3d06c73850bc003e86d7b600839f816df6f2ff384"}
  *
  * Go source:
  * singleLineStringWriter struct {

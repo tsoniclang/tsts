@@ -5,9 +5,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { bool } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoNilMap, GoNilSlice, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { HasFileName, SourceFile, SourceFileMetaData, StringLiteralLike } from "../../ast/ast.js";
-import { SourceFile_Diagnostics, SourceFile_IsBound } from "../../ast/ast.js";
+import { Node_Text, SourceFile_Diagnostics, SourceFile_IsBound } from "../../ast/ast.js";
 import { Diagnostic_MessageKey } from "../../ast/diagnostic.js";
 import type { Node } from "../../ast/spine.js";
 import type { SourceFileParseOptions } from "../../ast/parseoptions.js";
@@ -20,6 +20,7 @@ import type { CompilerOptions, ModuleKind, ResolutionMode } from "../../core/com
 import { ModuleKindESNext, NewLineKindLF, ScriptTargetNone } from "../../core/compileroptions.js";
 import { GetScriptKindFromFileName } from "../../core/core.js";
 import { LanguageVariantJSX } from "../../core/languagevariant.js";
+import type { ModeAwareCache } from "../../module/cache.js";
 import type { PackageId, ResolvedModule } from "../../module/types.js";
 import type { InfoCacheEntry } from "../../packagejson/cache.js";
 import { ParseSourceFile } from "../../parser/parser/statements-declarations.js";
@@ -44,7 +45,7 @@ function parseTypeScript(text: string, jsx: boolean): GoPtr<SourceFile> {
 
 // testutil/parsetestutil.CheckDiagnostics
 function checkDiagnostics(file: GoPtr<SourceFile>, message: string): void {
-  const diagnostics = SourceFile_Diagnostics(file) ?? [];
+  const diagnostics = SourceFile_Diagnostics(file) ?? GoNilSlice();
   assert.equal(diagnostics.length, 0, `${message}${diagnostics.map((d) => Diagnostic_MessageKey(d)).join("\n")}`);
 }
 
@@ -83,6 +84,7 @@ interface fakeProgramOptions {
   compilerOptions: GoPtr<CompilerOptions>;
   files: Array<GoPtr<SourceFile>>;
   getEmitModuleFormatOfFile: (sourceFile: HasFileName) => ModuleKind;
+  getEmitSyntaxForUsageLocation: (sourceFile: HasFileName, usageLocation: GoPtr<StringLiteralLike>) => ResolutionMode;
   getImpliedNodeFormatForEmit: (sourceFile: HasFileName) => ModuleKind;
   getResolvedModule: (currentSourceFile: HasFileName, moduleReference: string, mode: ResolutionMode) => GoPtr<ResolvedModule>;
   getSourceFile: (fileName: string) => GoPtr<SourceFile>;
@@ -99,16 +101,12 @@ function fakeProgram(o: fakeProgramOptions): Program {
     SourceFileMayBeEmitted: (_sourceFile: GoPtr<SourceFile>, _forceDtsEmit: bool): bool => {
       throw new globalThis.Error("unimplemented");
     },
-    GetEmitSyntaxForUsageLocation: (_sourceFile: HasFileName, _usageLocation: GoPtr<StringLiteralLike>): ResolutionMode => {
-      throw new globalThis.Error("unimplemented");
-    },
+    GetEmitSyntaxForUsageLocation: (sourceFile: HasFileName, usageLocation: GoPtr<StringLiteralLike>): ResolutionMode => o.getEmitSyntaxForUsageLocation(sourceFile, usageLocation),
     CommonSourceDirectory: (): string => {
       throw new globalThis.Error("unimplemented");
     },
-    GetResolvedModuleFromModuleSpecifier: (_file: HasFileName, _moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => {
-      throw new globalThis.Error("unimplemented");
-    },
-    GetResolvedModules: (): GoMap<Path, never> => {
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => o.getResolvedModule(file, Node_Text(moduleSpecifier), o.getEmitModuleFormatOfFile(file)),
+    GetResolvedModules: (): GoMap<Path, ModeAwareCache<GoPtr<ResolvedModule>>> => {
       throw new globalThis.Error("unimplemented");
     },
     FileExists: (_path: string): bool => false,
@@ -118,11 +116,11 @@ function fakeProgram(o: fakeProgramOptions): Program {
     GetSymlinkCache: (): GoPtr<KnownSymlinks> => undefined,
     ResolveModuleName: (_moduleName: string, _containingFile: string, _resolutionMode: ResolutionMode): GoPtr<ResolvedModule> => undefined,
     GetPackageJsonInfo: (_pkgJsonPath: string): GoPtr<InfoCacheEntry> => undefined,
-    GetRedirectTargets: (_path: Path): GoSlice<string> => [],
+    GetRedirectTargets: (_path: Path): GoSlice<string> => GoNilSlice<string>(),
     GetSourceOfProjectReferenceIfOutputIncluded: (_file: HasFileName): string => "",
     GetProjectReferenceFromSource: (_path: Path): GoPtr<SourceOutputAndProjectReference> => undefined,
     IsSourceFromProjectReference: (_path: Path): bool => false,
-    GetPackagesMap: (): GoMap<string, bool> => undefined as unknown as GoMap<string, bool>,
+    GetPackagesMap: (): GoMap<string, bool> => GoNilMap<string, bool>(),
     GetProjectReferenceFromOutputDts: (_path: Path): GoPtr<SourceOutputAndProjectReference> => undefined,
     UseCaseSensitiveFileNames: (): bool => true,
     Options: (): GoPtr<CompilerOptions> => o.compilerOptions,
@@ -192,13 +190,14 @@ for (const rec of data) {
       compilerOptions: compilerOptions,
       files: files,
       getEmitModuleFormatOfFile: (_sourceFile) => ModuleKindESNext,
+      getEmitSyntaxForUsageLocation: (_sourceFile, _usageLocation) => ModuleKindESNext,
       getImpliedNodeFormatForEmit: (_sourceFile) => ModuleKindESNext,
       getSourceFile: (fileName) => (fileName === "other.ts" ? other : undefined),
       getSourceFileForResolvedModule: (fileName) => (fileName === "other.ts" ? other : undefined),
       getResolvedModule: (currentSourceFile, moduleReference, _mode) => {
         if (currentSourceFile === (file as unknown as HasFileName) && moduleReference === "other") {
           return {
-            ResolutionDiagnostics: [],
+            ResolutionDiagnostics: GoNilSlice(),
             ResolvedFileName: "other.ts",
             OriginalPath: "",
             Extension: ExtensionTs,

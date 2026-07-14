@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import { GoEqualStrict, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoSliceIsNil, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { OrderedMap_Size } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import * as slices from "../../go/slices.js";
@@ -20,7 +20,7 @@ import type { Tristate } from "./tristate.js";
 
 import type { GoInterface, GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::CompilerOptions","kind":"type","status":"implemented","sigHash":"b8f0b2cb8e9d5a13c532f0de6afb68d93e5f3809b57efedc4a582202983e7a77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::CompilerOptions","kind":"type","status":"implemented","sigHash":"8a63738fb9feb6aefe951e61468ec8061d410041053b72009f7679bc32e449cd"}
  *
  * Go source:
  * CompilerOptions struct {
@@ -303,7 +303,7 @@ export interface CompilerOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::noCopy","kind":"type","status":"implemented","sigHash":"b0d7fc76eb2a0820142f0a97003bd894c9dc0c9aa9a6200692eb4d77d21c2e00"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::noCopy","kind":"type","status":"implemented","sigHash":"4dcbe9a808682845cced4a8ac867060d272f873cf5c3371f5076d5b05b982b44"}
  *
  * Go source:
  * noCopy struct{}
@@ -313,7 +313,7 @@ export interface noCopy {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::noCopy.Lock","kind":"method","status":"implemented","sigHash":"a0089b65a8326a24a9d04c3ffc94c9425d54b9d2d6e4fb86812ce6293debaa5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::noCopy.Lock","kind":"method","status":"implemented","sigHash":"969d994c108e5f5bfa9da378d51b44b92df000aa82bacd7d7dcc9853f62e3d63"}
  *
  * Go source:
  * func (*noCopy) Lock()   {}
@@ -327,14 +327,6 @@ export function noCopy_Lock(receiver: GoPtr<noCopy>): void {}
  * func (*noCopy) Unlock() {}
  */
 export function noCopy_Unlock(receiver: GoPtr<noCopy>): void {}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::EmptyCompilerOptions","kind":"varGroup","status":"implemented","sigHash":"fe09827cedc84dc2dbf63c80902637dcd913c879e5104c0995c36820bf8e5f4c"}
- *
- * Go source:
- * var EmptyCompilerOptions = &CompilerOptions{}
- */
-export let EmptyCompilerOptions: GoPtr<CompilerOptions> = {} as CompilerOptions;
 
 const compilerOptionStringFields: readonly [
   "DeclarationDir",
@@ -600,12 +592,26 @@ export function NormalizeCompilerOptions(options: GoPtr<CompilerOptions>): GoPtr
   target.ModuleDetection ??= 0 as ModuleDetectionKind;
   target.NewLine ??= 0 as NewLineKind;
   target.Target ??= 0 as ScriptTarget;
+  target.CustomConditions ??= GoNilSlice<string>();
+  target.Lib ??= GoNilSlice<string>();
+  target.ModuleSuffixes ??= GoNilSlice<string>();
+  target.RootDirs ??= GoNilSlice<string>();
+  target.TypeRoots ??= GoNilSlice<string>();
+  target.Types ??= GoNilSlice<string>();
   target[normalizedCompilerOptionsMarker] = true;
   return options;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::optionsType","kind":"varGroup","status":"implemented","sigHash":"026b7ac8d648bc03100fb2042dd8782d6a90a7449125c3faa845d5339a4847a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::EmptyCompilerOptions","kind":"varGroup","status":"implemented","sigHash":"f417950c76bd808b3472dc5954acd94eb845f5f6d7483e3c6949a8c5449d5c61"}
+ *
+ * Go source:
+ * var EmptyCompilerOptions = &CompilerOptions{}
+ */
+export let EmptyCompilerOptions: GoPtr<CompilerOptions> = NormalizeCompilerOptions({} as CompilerOptions);
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::optionsType","kind":"varGroup","status":"implemented","sigHash":"3d184ca1e3e56cf149b7c8f536cbbb918bb8d541f4d342d703f4da50714cd6dd"}
  *
  * Go source:
  * var optionsType = reflect.TypeFor[CompilerOptions]()
@@ -613,7 +619,7 @@ export function NormalizeCompilerOptions(options: GoPtr<CompilerOptions>): GoPtr
 export let optionsType: GoInterface<Type> = TypeFor<CompilerOptions>();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::CompilerOptions.Clone","kind":"method","status":"implemented","sigHash":"f7d4a926a50c11b48bf433a036d815a2acc0c65ae5238d38c2ccf8340be890b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::CompilerOptions.Clone","kind":"method","status":"implemented","sigHash":"1bdde2d988f8a4a9d19644e5d33c4a3e67a77d9a2fa5538d7726acd0c8f41c82"}
  *
  * Go source:
  * func (options *CompilerOptions) Clone() *CompilerOptions {
@@ -952,7 +958,7 @@ export function CompilerOptions_GetStrictOptionValue(receiver: GoPtr<CompilerOpt
  */
 export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOptions>, currentDirectory: string): [result: GoSlice<string>, fromConfig: bool] {
   const options: GoPtr<CompilerOptions> = receiver;
-  if (options!.TypeRoots !== undefined) {
+  if (!GoSliceIsNil(options!.TypeRoots)) {
     return [options!.TypeRoots, true];
   }
   let baseDir: string;
@@ -978,7 +984,7 @@ export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::CompilerOptions.UsesWildcardTypes","kind":"method","status":"implemented","sigHash":"506ee53756f3be1b153e610aa1b81c45e6c73be882bcc2746d3f3ace5511319c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::CompilerOptions.UsesWildcardTypes","kind":"method","status":"implemented","sigHash":"d3e47efd7ec273aaa1a32d58f0e1088a089b495f8cebefabc7a05725244f2d0a"}
  *
  * Go source:
  * func (options *CompilerOptions) UsesWildcardTypes() bool {
@@ -1123,7 +1129,7 @@ export function CompilerOptions_GetPathsBasePath(receiver: GoPtr<CompilerOptions
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ModuleDetectionKind","kind":"type","status":"implemented","sigHash":"00fb30c22d5887c18a8f58f9196ed6170e50da40457ddd4fdfbb05e265f6a778"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ModuleDetectionKind","kind":"type","status":"implemented","sigHash":"846d3c09229f548bd1bfa0dab7c7820157465ce748a7aea7eb67114bc40dc528"}
  *
  * Go source:
  * ModuleDetectionKind int32
@@ -1131,7 +1137,7 @@ export function CompilerOptions_GetPathsBasePath(receiver: GoPtr<CompilerOptions
 export type ModuleDetectionKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ModuleDetectionKindNone+ModuleDetectionKindAuto+ModuleDetectionKindLegacy+ModuleDetectionKindForce","kind":"constGroup","status":"implemented","sigHash":"c63747caa7cef20bc1b8c3662312b1a1d1021890e3bdd9b120b13a3993238fbc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ModuleDetectionKindNone+ModuleDetectionKindAuto+ModuleDetectionKindLegacy+ModuleDetectionKindForce","kind":"constGroup","status":"implemented","sigHash":"71c26f100c08658f4e99625e51fcae43c855e35c75b861c58f4273786153a859"}
  *
  * Go source:
  * const (
@@ -1147,7 +1153,7 @@ export const ModuleDetectionKindLegacy: ModuleDetectionKind = 2;
 export const ModuleDetectionKindForce: ModuleDetectionKind = 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ModuleKind","kind":"type","status":"implemented","sigHash":"79ba91dd3303a445b09cb561cf00c3ce3fc4f2a8be7c2c08b1bb75a595b748ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ModuleKind","kind":"type","status":"implemented","sigHash":"be89d3a99b4623bbc5eff707e741c28e876b917b4587d4232f81d18127d38061"}
  *
  * Go source:
  * ModuleKind int32
@@ -1155,7 +1161,7 @@ export const ModuleDetectionKindForce: ModuleDetectionKind = 3;
 export type ModuleKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ModuleKindNone+ModuleKindCommonJS+ModuleKindAMD+ModuleKindUMD+ModuleKindSystem+ModuleKindES2015+ModuleKindES2020+ModuleKindES2022+ModuleKindESNext+ModuleKindNode16+ModuleKindNode18+ModuleKindNode20+ModuleKindNodeNext+ModuleKindPreserve","kind":"constGroup","status":"implemented","sigHash":"7380eaa8a0a504cad6a7c4b7ceb2c85dfc1d55b17d1ecbaa96d7869e963b8abe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ModuleKindNone+ModuleKindCommonJS+ModuleKindAMD+ModuleKindUMD+ModuleKindSystem+ModuleKindES2015+ModuleKindES2020+ModuleKindES2022+ModuleKindESNext+ModuleKindNode16+ModuleKindNode18+ModuleKindNode20+ModuleKindNodeNext+ModuleKindPreserve","kind":"constGroup","status":"implemented","sigHash":"9e4e1b6f4534bb7c93826bb4000721649b579b24570e1b714aa8864873530f61"}
  *
  * Go source:
  * const (
@@ -1239,7 +1245,7 @@ export function ModuleKind_SupportsImportAttributes(receiver: ModuleKind): bool 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ResolutionMode","kind":"type","status":"implemented","sigHash":"79fa19c648b9fb8dce8f7cd3c5c8ee6c5ff55b918fc1d73fabe7c981a342aa9c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ResolutionMode","kind":"type","status":"implemented","sigHash":"e3892feb33013b1b2db641842c219e361de28de2a8d52495b8385259a1a4200a"}
  *
  * Go source:
  * ResolutionMode = ModuleKind
@@ -1247,7 +1253,7 @@ export function ModuleKind_SupportsImportAttributes(receiver: ModuleKind): bool 
 export type ResolutionMode = ModuleKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ResolutionModeNone+ResolutionModeCommonJS+ResolutionModeESM","kind":"constGroup","status":"implemented","sigHash":"9d8d40f3d0bb2a581d99c610c4c68b1be231711f5abdb728404f22394081aa96"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ResolutionModeNone+ResolutionModeCommonJS+ResolutionModeESM","kind":"constGroup","status":"implemented","sigHash":"dcf71b4b7bc0545c9173334cbcf1f49d871a6c4da87fb0679ac21fba9fa7b912"}
  *
  * Go source:
  * const (
@@ -1261,7 +1267,7 @@ export const ResolutionModeCommonJS: ModuleKind = ModuleKindCommonJS;
 export const ResolutionModeESM: ModuleKind = ModuleKindESNext;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ModuleResolutionKind","kind":"type","status":"implemented","sigHash":"b5453466c4b039b8d18c8f0ecd1f34b4fdb8a8655495d9a0a3c79ac2f750d1c7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ModuleResolutionKind","kind":"type","status":"implemented","sigHash":"0fa5effbcd76e7a7b3eca5e12fb346ce5e1d096d4e36a79cdfd4f8e86b8e4306"}
  *
  * Go source:
  * ModuleResolutionKind int32
@@ -1269,7 +1275,7 @@ export const ResolutionModeESM: ModuleKind = ModuleKindESNext;
 export type ModuleResolutionKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ModuleResolutionKindUnknown+ModuleResolutionKindClassic+ModuleResolutionKindNode10+ModuleResolutionKindNode16+ModuleResolutionKindNodeNext+ModuleResolutionKindBundler","kind":"constGroup","status":"implemented","sigHash":"6b8a62b3ece841273d811d868749e35f62253cc9e2fae213a03197b7512a2aa0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ModuleResolutionKindUnknown+ModuleResolutionKindClassic+ModuleResolutionKindNode10+ModuleResolutionKindNode16+ModuleResolutionKindNodeNext+ModuleResolutionKindBundler","kind":"constGroup","status":"implemented","sigHash":"fb143d34ff062ec7a8a67e818f29829308ea515d43388a0d39e5375b08ac0a2e"}
  *
  * Go source:
  * const (
@@ -1303,7 +1309,7 @@ export const ModuleResolutionKindNodeNext: ModuleResolutionKind = 99; // Not sim
 export const ModuleResolutionKindBundler: ModuleResolutionKind = 100;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::ModuleKindToModuleResolutionKind","kind":"varGroup","status":"implemented","sigHash":"6a1e9c0e615661aae1eb2abbb606c0463115b6255e320506ef6b6bb689b71b3b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::ModuleKindToModuleResolutionKind","kind":"varGroup","status":"implemented","sigHash":"581b869f0ae7b1b8d9d00883addfc9d413d13ed3d695b2a85e5e3d65a80d0ce8"}
  *
  * Go source:
  * var ModuleKindToModuleResolutionKind = map[ModuleKind]ModuleResolutionKind{
@@ -1317,7 +1323,7 @@ export let ModuleKindToModuleResolutionKind: GoMap<ModuleKind, ModuleResolutionK
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::ModuleResolutionKind.String","kind":"method","status":"implemented","sigHash":"f7ee7fa731c70e0a2596cd0a9b68c21e6bc02bb39d39e4f1e774ecea7a03855e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::ModuleResolutionKind.String","kind":"method","status":"implemented","sigHash":"04aa60537da30b2af19d2b05325b67dc999bdf83c18ab947c721d3060772b6c0"}
  *
  * Go source:
  * func (m ModuleResolutionKind) String() string {
@@ -1360,7 +1366,7 @@ export function ModuleResolutionKind_String(receiver: ModuleResolutionKind): str
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::NewLineKind","kind":"type","status":"implemented","sigHash":"9f314f40554ca4b833e44d0ab7bf211938d7fb59eb3e77a6b6dd48422f1a74ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::NewLineKind","kind":"type","status":"implemented","sigHash":"e3443c77092a3fd2b87937cfef97ff4590d1b75f859f4f589fcc21289ccaeaad"}
  *
  * Go source:
  * NewLineKind int32
@@ -1368,7 +1374,7 @@ export function ModuleResolutionKind_String(receiver: ModuleResolutionKind): str
 export type NewLineKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::NewLineKindNone+NewLineKindCRLF+NewLineKindLF","kind":"constGroup","status":"implemented","sigHash":"c94f57dfb4cb3251557cf670d63a036e2ebe94051ad2f6cb05c44d7c39f780b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::NewLineKindNone+NewLineKindCRLF+NewLineKindLF","kind":"constGroup","status":"implemented","sigHash":"607c169c4aef5207c93a896e138b1346898c230e892c3fb06e9cd4cad3a2261a"}
  *
  * Go source:
  * const (
@@ -1431,7 +1437,7 @@ export function NewLineKind_GetNewLineCharacter(receiver: NewLineKind): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ScriptTarget","kind":"type","status":"implemented","sigHash":"a72ba3f8209059be336c432167173f42f0d2eca1aeed916bb8a07f5816a25410"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::ScriptTarget","kind":"type","status":"implemented","sigHash":"bca37d218829266940f9cad52870ac2ba6847ceedaca63f4a256272464a4ea84"}
  *
  * Go source:
  * ScriptTarget int32
@@ -1439,7 +1445,7 @@ export function NewLineKind_GetNewLineCharacter(receiver: NewLineKind): string {
 export type ScriptTarget = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ScriptTargetNone+ScriptTargetES5+ScriptTargetES2015+ScriptTargetES2016+ScriptTargetES2017+ScriptTargetES2018+ScriptTargetES2019+ScriptTargetES2020+ScriptTargetES2021+ScriptTargetES2022+ScriptTargetES2023+ScriptTargetES2024+ScriptTargetES2025+ScriptTargetESNext+ScriptTargetJSON+ScriptTargetLatest+ScriptTargetLatestStandard","kind":"constGroup","status":"implemented","sigHash":"ed77933eeaa00ef618c95492032d688e83a570b51e3dad3f2fe69bf562544060"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::ScriptTargetNone+ScriptTargetES5+ScriptTargetES2015+ScriptTargetES2016+ScriptTargetES2017+ScriptTargetES2018+ScriptTargetES2019+ScriptTargetES2020+ScriptTargetES2021+ScriptTargetES2022+ScriptTargetES2023+ScriptTargetES2024+ScriptTargetES2025+ScriptTargetESNext+ScriptTargetJSON+ScriptTargetLatest+ScriptTargetLatestStandard","kind":"constGroup","status":"implemented","sigHash":"0e107f65ba2f78d8f1e2319cd546d1ed0b4a6783238c32533ccf8c4f2fdffe45"}
  *
  * Go source:
  * const (
@@ -1483,7 +1489,7 @@ export const ScriptTargetLatest: ScriptTarget = ScriptTargetESNext;
 export const ScriptTargetLatestStandard: ScriptTarget = ScriptTargetES2025;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::JsxEmit","kind":"type","status":"implemented","sigHash":"35a7aae13bba9076d57d358b45a1aa2223d5b61e560d4696c4e1d428968a4cd5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::JsxEmit","kind":"type","status":"implemented","sigHash":"2d5c6ecace49775e98e163631f916965b29249d299ec2b847c3a97a23ac7d3ce"}
  *
  * Go source:
  * JsxEmit int32
@@ -1491,7 +1497,7 @@ export const ScriptTargetLatestStandard: ScriptTarget = ScriptTargetES2025;
 export type JsxEmit = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::JsxEmitNone+JsxEmitPreserve+JsxEmitReactNative+JsxEmitReact+JsxEmitReactJSX+JsxEmitReactJSXDev","kind":"constGroup","status":"implemented","sigHash":"7a5d2556b8744ab02f35b5975beec92884e2b1e886972ab8317c5f2f90206890"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::constGroup::JsxEmitNone+JsxEmitPreserve+JsxEmitReactNative+JsxEmitReact+JsxEmitReactJSX+JsxEmitReactJSXDev","kind":"constGroup","status":"implemented","sigHash":"97236ceb574198876ee12b73f7afd866112ec81ca3d5fa8a7a31c83950dcb2c3"}
  *
  * Go source:
  * const (

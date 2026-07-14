@@ -64,7 +64,7 @@ import {
 import type { upToDateStatus, inputOutputName, inputOutputFileAndTime, fileAndTime, upstreamErrors as upstreamErrorsType } from "./uptodatestatus.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::updateKind","kind":"type","status":"implemented","sigHash":"8c03b00054d12667434aa9865344ed51a963464cc953ccc045330af752ae7f64"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::updateKind","kind":"type","status":"implemented","sigHash":"bb679ff4d632cbca47e250b78139b0d261ac5dea6fb7c63c797f9312068c508b"}
  *
  * Go source:
  * updateKind uint
@@ -72,7 +72,7 @@ import type { upToDateStatus, inputOutputName, inputOutputFileAndTime, fileAndTi
 export type updateKind = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::constGroup::updateKindNone+updateKindConfig+updateKindUpdate","kind":"constGroup","status":"implemented","sigHash":"a5d457b54660f38232795bb983bd57b5b7bce14a61e2f316ad6620ba2b1c262b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::constGroup::updateKindNone+updateKindConfig+updateKindUpdate","kind":"constGroup","status":"implemented","sigHash":"c5e62796a5feb48b20ab5befed11180aff79c1c404bc915cdf336cbeee87e85f"}
  *
  * Go source:
  * const (
@@ -86,7 +86,7 @@ export const updateKindConfig: updateKind = 1 as updateKind;
 export const updateKindUpdate: updateKind = 2 as updateKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::buildKind","kind":"type","status":"implemented","sigHash":"344994cd5c7b5b4023a9a5209b718b11244bbabd359d09d6df83f09865209774"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::buildKind","kind":"type","status":"implemented","sigHash":"ff5be7e5f52df5284afb3fbf58630c5bc89f63dee0247bf307e20e1c5ad8d5b4"}
  *
  * Go source:
  * buildKind uint
@@ -94,7 +94,7 @@ export const updateKindUpdate: updateKind = 2 as updateKind;
 export type buildKind = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::constGroup::buildKindNone+buildKindPseudo+buildKindProgram","kind":"constGroup","status":"implemented","sigHash":"c01cdf8ee6f0dab110ef0219e4efad40a8e6dbecb19170cd7fe46629981dfa94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::constGroup::buildKindNone+buildKindPseudo+buildKindProgram","kind":"constGroup","status":"implemented","sigHash":"7913a00b1ba5ab591f7b2d7f67e287e8aad824275f28e04a0d6bbb2aa9818ed5"}
  *
  * Go source:
  * const (
@@ -108,7 +108,7 @@ export const buildKindPseudo: buildKind = 1 as buildKind;
 export const buildKindProgram: buildKind = 2 as buildKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::upstreamTask","kind":"type","status":"implemented","sigHash":"227681c3f47bb373dca94fb4d279a918b60a446fbf2501a402c14af12657eeac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::upstreamTask","kind":"type","status":"implemented","sigHash":"8ea69ca73f4ebeb538abf00c43cb66c6b73bb728438aea8361f4a215ce2c0a62"}
  *
  * Go source:
  * upstreamTask struct {
@@ -122,7 +122,7 @@ export interface upstreamTask {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::buildInfoEntry","kind":"type","status":"implemented","sigHash":"6b1d91b1a61c8b3a905f09c065f92527fdb7ffffff4590076d05cf5d3073c8a5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::buildInfoEntry","kind":"type","status":"implemented","sigHash":"bd18acdcaf6efc722395fa960730bb76d3528edf0316e01de4c69b1fc7f772fc"}
  *
  * Go source:
  * buildInfoEntry struct {
@@ -140,7 +140,7 @@ export interface buildInfoEntry {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::taskResult","kind":"type","status":"implemented","sigHash":"3baf60fd109fc43e5ff90f3be3e9e9b4ccddc36f859229075bf2b8db3f660529"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::taskResult","kind":"type","status":"implemented","sigHash":"e2750beffd04a5d3b74c19ad1c42e608e59c4a19232087aa168e234d1c4977e0"}
  *
  * Go source:
  * taskResult struct {
@@ -166,7 +166,7 @@ export interface taskResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::BuildTask","kind":"type","status":"implemented","sigHash":"8ef3499f641ea3f1a8e77d8e314ababe95b98a958114957a486eb90328ced7f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::BuildTask","kind":"type","status":"implemented","sigHash":"9dd475e2fed102340bfc05a450a05d80a6bd5bafd1641dc23a11889f2eaf04f5"}
  *
  * Go source:
  * BuildTask struct {

@@ -25,7 +25,11 @@ import { NewTypeEraserTransformer } from "./typeeraser.js";
 // testutil/parsetestutil.ParseTypeScript
 function parseTypeScript(text: string, jsx: boolean): GoPtr<SourceFile> {
   const fileName = jsx ? "/main.tsx" : "/main.ts";
-  return ParseSourceFile({ FileName: fileName, Path: fileName } satisfies SourceFileParseOptions, text, GetScriptKindFromFileName(fileName));
+  return ParseSourceFile({
+    FileName: fileName,
+    Path: fileName,
+    ExternalModuleIndicatorOptions: { JSX: false, Force: false },
+  } satisfies SourceFileParseOptions, text, GetScriptKindFromFileName(fileName));
 }
 
 // testutil/parsetestutil.CheckDiagnostics / CheckDiagnosticsMessage

@@ -32,7 +32,7 @@ import { Cannot_access_0_from_another_file_without_qualification_when_1_is_enabl
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::type::NameResolver","kind":"type","status":"implemented","sigHash":"d94405adce18614a3bbc95fd4d2e6a922712412fd7e622beb57b4a8a12dfc016"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::type::NameResolver","kind":"type","status":"implemented","sigHash":"19eada1e576611b431560f17e42127ad5d94199b35fc81585e1e566cbe9e761c"}
  *
  * Go source:
  * NameResolver struct {

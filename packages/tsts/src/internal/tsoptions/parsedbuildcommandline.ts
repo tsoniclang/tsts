@@ -14,7 +14,7 @@ import { ResolvePath } from "../tspath/path.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::type::ParsedBuildCommandLine","kind":"type","status":"implemented","sigHash":"38430521b70f19c4577653334ca223fc0270319362c20f5925094804f9baee54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::type::ParsedBuildCommandLine","kind":"type","status":"implemented","sigHash":"34d6e236b3813a9814ee5118fb03da108b503c446cfe8ee915b12fac81ab1559"}
  *
  * Go source:
  * ParsedBuildCommandLine struct {

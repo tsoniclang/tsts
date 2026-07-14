@@ -73,7 +73,7 @@ export function _(): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scripttarget_stringer_generated.go::constGroup::_ScriptTarget_name_0+_ScriptTarget_name_1","kind":"constGroup","status":"implemented","sigHash":"9791fc737dc1459c7419746611ff4c9be676d3954a4ae8fc0d7b01ef28a1992f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scripttarget_stringer_generated.go::constGroup::_ScriptTarget_name_0+_ScriptTarget_name_1","kind":"constGroup","status":"implemented","sigHash":"4d7582e97c83a8d72f86905f3345ec238b4ffb67d84a8c0efd77769302d3151f"}
  *
  * Go source:
  * const (
@@ -85,7 +85,7 @@ export const _ScriptTarget_name_0: string = "NoneES5ES2015ES2016ES2017ES2018ES20
 export const _ScriptTarget_name_1: string = "ESNextJSON";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scripttarget_stringer_generated.go::varGroup::_ScriptTarget_index_0+_ScriptTarget_index_1","kind":"varGroup","status":"implemented","sigHash":"f5e04a97b44f1dbc3169843e4b9f7b3efaf16e02e19839409e9986a027c426a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scripttarget_stringer_generated.go::varGroup::_ScriptTarget_index_0+_ScriptTarget_index_1","kind":"varGroup","status":"implemented","sigHash":"55ab4d543b42215cd09cdcf34f3c17f3ce5b5f3d29e916afd195bd30e05f0609"}
  *
  * Go source:
  * var (

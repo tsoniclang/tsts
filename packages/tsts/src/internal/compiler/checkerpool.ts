@@ -16,7 +16,7 @@ import { Program_as_checker_Program, Program_Options, Program_SingleThreaded, So
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::type::CheckerPool","kind":"type","status":"implemented","sigHash":"0ae9932ac5eea7302f43fdaded6b82addcb4d06b9f9209ed8ff2be51bb7f7d16"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::type::CheckerPool","kind":"type","status":"implemented","sigHash":"c982af3c817df71dc9ae1af140208863183d3eaa1e11d94bfdcf98a350318845"}
  *
  * Go source:
  * CheckerPool interface {
@@ -28,7 +28,7 @@ export interface CheckerPool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::type::checkerPool","kind":"type","status":"implemented","sigHash":"d37f5b7033c0ac566bfcbd9a2b4cdeda82ec5bb8ce63f72a6bfd20b94d11f46d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::type::checkerPool","kind":"type","status":"implemented","sigHash":"1586bb5506912830f0532ac797eda4f3701bf2b9daa7da79ac8f2b61ca699bbf"}
  *
  * Go source:
  * checkerPool struct {
@@ -51,7 +51,7 @@ export interface checkerPool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"4e31f2db76b3745b8a9fcd481b03ad08bf8536bf7a7377587813fadb230a8521"}
  *
  * Go source:
  * var _ CheckerPool = (*checkerPool)(nil)
@@ -124,7 +124,7 @@ export function newCheckerPoolWithTracing(program: GoPtr<Program>, tr: GoPtr<Tra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.GetChecker","kind":"method","status":"implemented","sigHash":"119c49bcd6ab8793332baa807b9cdaa84c7bf198b3c5e782244c6c15cd2751db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.GetChecker","kind":"method","status":"implemented","sigHash":"4448846b3eb3bbe78f7d5fa4190fe34e385c65d8436914d46fda95094874c80e"}
  *
  * Go source:
  * func (p *checkerPool) GetChecker(ctx context.Context, file *ast.SourceFile) (*checker.Checker, func()) {
@@ -152,7 +152,7 @@ export function checkerPool_GetChecker(receiver: GoPtr<checkerPool>, ctx: GoInte
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.getCheckerForFileNonExclusive","kind":"method","status":"implemented","sigHash":"7cdf572d19ca34636db31ffb8217b952f0ebc3482c940ac234eb1182dcef0075"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.getCheckerForFileNonExclusive","kind":"method","status":"implemented","sigHash":"dd1ce9653bbe4dc2e987bbd576c822b55735128e64e94ef9608c48618ee21c6d"}
  *
  * Go source:
  * func (p *checkerPool) getCheckerForFileNonExclusive(file *ast.SourceFile) (*checker.Checker, func()) {
@@ -190,7 +190,7 @@ export function checkerPool_getCheckerForFileExclusive(receiver: GoPtr<checkerPo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.getCheckerNonExclusive","kind":"method","status":"implemented","sigHash":"ae08dbdaed275afb2e2412654bd618522caea2db06ae92f991f32ed1d2445973"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.getCheckerNonExclusive","kind":"method","status":"implemented","sigHash":"49c1aecdd6e2ac4d217db89425016133a69dab5d2a9b115be2b2be724449248c"}
  *
  * Go source:
  * func (p *checkerPool) getCheckerNonExclusive() (*checker.Checker, func()) {
@@ -256,7 +256,7 @@ export function checkerPool_createCheckers(receiver: GoPtr<checkerPool>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.forEachCheckerParallel","kind":"method","status":"implemented","sigHash":"6d0cfadcfb89a399bd2c11f56daee7a702b3c1781d9836028967cdae9cefa936"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.forEachCheckerParallel","kind":"method","status":"implemented","sigHash":"8f8a04762abf015ba25610ac90f2714fbf38e8bba755fc7f1c43d08369e56793"}
  *
  * Go source:
  * func (p *checkerPool) forEachCheckerParallel(cb func(idx int, c *checker.Checker)) {
@@ -313,7 +313,7 @@ export function checkerPool_GetGlobalDiagnostics(receiver: GoPtr<checkerPool>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.forEachCheckerGroupDo","kind":"method","status":"implemented","sigHash":"38ea917bcaf07ccc4803e64418618de966a670835de8500ab9ce1704d0dd052f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.forEachCheckerGroupDo","kind":"method","status":"implemented","sigHash":"f97935909deaee1ef26aff7ac5bca0cc97dee7075d52169b0581ac7d8eeb5eec"}
  *
  * Go source:
  * func (p *checkerPool) forEachCheckerGroupDo(ctx context.Context, files []*ast.SourceFile, singleThreaded bool, cb func(c *checker.Checker, fileIndex int, file *ast.SourceFile)) {

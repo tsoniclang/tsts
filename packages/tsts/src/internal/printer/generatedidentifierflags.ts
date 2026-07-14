@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::type::GeneratedIdentifierFlags","kind":"type","status":"implemented","sigHash":"bee2677a88c9d3eaa01b18bbf3715991a891d97d5826e877f1c6190ba65ccfa2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::type::GeneratedIdentifierFlags","kind":"type","status":"implemented","sigHash":"eccc0436f5d9572d1d6d5cce1d5c9208beb6459fb61b7949481ce72db427cb02"}
  *
  * Go source:
  * GeneratedIdentifierFlags int
@@ -9,7 +9,7 @@ import type { bool, int } from "../../go/scalars.js";
 export type GeneratedIdentifierFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::constGroup::GeneratedIdentifierFlagsNone+GeneratedIdentifierFlagsAuto+GeneratedIdentifierFlagsLoop+GeneratedIdentifierFlagsUnique+GeneratedIdentifierFlagsNode+GeneratedIdentifierFlagsKindMask+GeneratedIdentifierFlagsReservedInNestedScopes+GeneratedIdentifierFlagsOptimistic+GeneratedIdentifierFlagsFileLevel+GeneratedIdentifierFlagsAllowNameSubstitution","kind":"constGroup","status":"implemented","sigHash":"14899bba80663a0f4ac65fbbf95bcdcc9a7d12c0047f7e3a74391461d9870777"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::constGroup::GeneratedIdentifierFlagsNone+GeneratedIdentifierFlagsAuto+GeneratedIdentifierFlagsLoop+GeneratedIdentifierFlagsUnique+GeneratedIdentifierFlagsNode+GeneratedIdentifierFlagsKindMask+GeneratedIdentifierFlagsReservedInNestedScopes+GeneratedIdentifierFlagsOptimistic+GeneratedIdentifierFlagsFileLevel+GeneratedIdentifierFlagsAllowNameSubstitution","kind":"constGroup","status":"implemented","sigHash":"2b8b2cc1070aa4df80b4de52988aebce3735178a8d70af234836f19785ffd5c5"}
  *
  * Go source:
  * const (

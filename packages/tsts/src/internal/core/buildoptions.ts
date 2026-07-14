@@ -6,7 +6,7 @@ import type { Tristate } from "./tristate.js";
 
 import type { GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/buildoptions.go::type::BuildOptions","kind":"type","status":"implemented","sigHash":"ba7b8c9b824a7fa2f401dfcf231296b22b0d81902ca437b9390ae2ea448f032c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/buildoptions.go::type::BuildOptions","kind":"type","status":"implemented","sigHash":"4b31b636b8367ddd8d25a47758fda986b8f81fd65853c592e0c308cc76808b6f"}
  *
  * Go source:
  * BuildOptions struct {

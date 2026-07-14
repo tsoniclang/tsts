@@ -395,7 +395,7 @@ export function Checker_TypeHasCallOrConstructSignatures(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.IsPropertyAccessible","kind":"method","status":"implemented","sigHash":"c07abb979a1056eb19e4d98d2d5425bcd30b315ed295688314c42bfc2c6ca4ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.IsPropertyAccessible","kind":"method","status":"implemented","sigHash":"1fe964f151ed941d95009367555042049dee34886e0b161091839c55014bf16f"}
  *
  * Go source:
  * func (c *Checker) IsPropertyAccessible(node *ast.Node, isSuper bool, isWrite bool, containingType *Type, property *ast.Symbol) bool {
@@ -647,7 +647,7 @@ export function Checker_GetResolvedSignature(receiver: GoPtr<Checker>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetTypeOfPropertyOfType","kind":"method","status":"implemented","sigHash":"bf7e579fe782f5b955442e52036c9877425786585d15d7ad8d33d73fefbf4fc3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetTypeOfPropertyOfType","kind":"method","status":"implemented","sigHash":"1cd4a178f2f64d008bedf5daff8f7e904ae3d671c3cc264f1d8c122ac5729421"}
  *
  * Go source:
  * func (c *Checker) GetTypeOfPropertyOfType(t *Type, name string) *Type {

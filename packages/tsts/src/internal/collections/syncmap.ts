@@ -6,7 +6,7 @@ import { Map } from "../../go/sync.js";
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::type::SyncMap","kind":"type","status":"implemented","sigHash":"4f6f655e995f945c3130474631c32240c46c5dd0b984a67769b1fe2ed69a7fa9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::type::SyncMap","kind":"type","status":"implemented","sigHash":"fdc45c613dbb64f7a1c093e977b4bdb29dd6477913552f974a1aa70ac112fb64"}
  *
  * Go source:
  * SyncMap[K comparable, V any] struct {
@@ -129,7 +129,7 @@ export function SyncMap_Range<K extends GoComparable, V>(receiver: GoPtr<SyncMap
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::method::SyncMap.Size","kind":"method","status":"implemented","sigHash":"2784caf4e166218ceae9487fe1139ccb4f3b47f422efcd15d6ff0eb1d8e63ce9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::method::SyncMap.Size","kind":"method","status":"implemented","sigHash":"44b32b219df93a6dd34c0602be796b41d498c2dc0b469dab59a4506555dc6d58"}
  *
  * Go source:
  * func (s *SyncMap[K, V]) Size() int {

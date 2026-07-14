@@ -5,7 +5,7 @@ import { CombinePaths, GetDirectoryPath, NormalizeSlashes } from "../tspath/path
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/noembed.go::constGroup::embedded","kind":"constGroup","status":"implemented","sigHash":"4c71f07d139be967c63073fca793530940c74775bb8902e2816a1d12ec2bd08f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/noembed.go::constGroup::embedded","kind":"constGroup","status":"implemented","sigHash":"251db7ad0106a586d61c0f795170c9ef23e3e831a67c7fa3f9d78397c9652c76"}
  *
  * Go source:
  * const embedded = false
@@ -25,7 +25,7 @@ export function wrapFS(fs: GoInterface<FS>): GoInterface<FS> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/noembed.go::varGroup::executableDir","kind":"varGroup","status":"implemented","sigHash":"aa8e3ebfca7d9cccb7ab7ee05165d0f86d20f1ef76c330b62a12e5bcba7feaf9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/noembed.go::varGroup::executableDir","kind":"varGroup","status":"implemented","sigHash":"ac01689620902aba4fdbc7bb4d0756fc145e0e2df5b15e9e7091de34da286f54"}
  *
  * Go source:
  * var executableDir = sync.OnceValue(func() string {
@@ -47,7 +47,7 @@ export let executableDir: GoFunc<() => string> = (() => {
 })();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/noembed.go::varGroup::libPath","kind":"varGroup","status":"implemented","sigHash":"ad0b589440958694bb78420c9845cb5295abbbd5d5d968a09b8ae66a4d24a2c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/noembed.go::varGroup::libPath","kind":"varGroup","status":"implemented","sigHash":"2ad6233f7b1f4194025688d16e1798bfd342d1c9117a70d18ccead8dafe1835b"}
  *
  * Go source:
  * var libPath = sync.OnceValue(func() string {

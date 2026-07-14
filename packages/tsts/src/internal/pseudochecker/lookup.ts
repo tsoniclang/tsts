@@ -372,7 +372,7 @@ export function PseudoChecker_typeFromPropertyAssignment(receiver: GoPtr<PseudoC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpandoProperty","kind":"method","status":"implemented","sigHash":"b8c9125065bb98bcc0ab9e73998e6eddc91cd8cf14c78fed5da6414817ea43ca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpandoProperty","kind":"method","status":"implemented","sigHash":"46274c0725f04a557ef01fd9aadfdb4a8a947d3b195a24a16c43204b76159129"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromExpandoProperty(node *ast.Node) *PseudoType {
@@ -621,7 +621,7 @@ export function isValueSignatureDeclaration(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.createReturnFromSignature","kind":"method","status":"implemented","sigHash":"eb9eff182475121cf128223c7cb8435014ba73ceb8792c4ad93954d410afa07a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.createReturnFromSignature","kind":"method","status":"implemented","sigHash":"e32a139efee4490fbd9313b56a00fef1345f2a971566eb41ad586bfba5d1db2b"}
  *
  * Go source:
  * func (ch *PseudoChecker) createReturnFromSignature(fn *ast.Node) *PseudoType {
@@ -747,7 +747,7 @@ export function PseudoChecker_typeFromSingleReturnExpression(receiver: GoPtr<Pse
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpression","kind":"method","status":"implemented","sigHash":"a49440e6d1d06239602276deee61a0ec5855504e6e548dfc03a060a95de1daf8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpression","kind":"method","status":"implemented","sigHash":"c8166785c48bfe2e57ebb94675663ff2d9ec8f9fb25f6faf28a763ebcddfb417"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromExpression(node *ast.Node) *PseudoType {
@@ -960,7 +960,7 @@ export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getAccessorMember","kind":"method","status":"implemented","sigHash":"27c3a56df69a565adda57a91f5f6d0d8b0c4073c905454a4a21c80444ae515ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getAccessorMember","kind":"method","status":"implemented","sigHash":"c64e0ee4a0ab45adb9d713b07d3daf918f7ece80c47834d57ea7e91cb6f5f96f"}
  *
  * Go source:
  * func (ch *PseudoChecker) getAccessorMember(accessor *ast.Node, name *ast.Node) *PseudoObjectElement {
@@ -1038,7 +1038,7 @@ export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"1226e2752992795fb28dd29b11d7a352292325d3a9b30f6a6a2b2ac098dbb865"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"0de144d693a7cc9c923f98331c5641e287a5d666cf188bcec8012750a762a701"}
  *
  * Go source:
  * func (ch *PseudoChecker) canGetTypeFromObjectLiteral(node *ast.ObjectLiteralExpression) []*ast.Node {
@@ -1141,7 +1141,7 @@ export function PseudoChecker_typeFromArrayLiteral(receiver: GoPtr<PseudoChecker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"78652ca9524c988036370168d3c17039f551f22c102d1f481746e117a6da3651"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"7cbea8a1ebf342a77c226e13c064844a345598a18d4fad576c57f82ad794bfb7"}
  *
  * Go source:
  * func (ch *PseudoChecker) canGetTypeFromArrayLiteral(node *ast.ArrayLiteralExpression) []*ast.Node {
@@ -1169,7 +1169,7 @@ export function PseudoChecker_canGetTypeFromArrayLiteral(receiver: GoPtr<PseudoC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isConstContextPropagatingKind","kind":"func","status":"implemented","sigHash":"4e32ee959c1077231186f0c53bf9aaa47b3cebb5f978fea5ec2c0653e5a772cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isConstContextPropagatingKind","kind":"func","status":"implemented","sigHash":"5fd6baf4c95f1c3dc002054c222fd6820194ec0c8644d2c4659676d03c954eaf"}
  *
  * Go source:
  * func isConstContextPropagatingKind(kind ast.Kind) bool {
@@ -1198,7 +1198,7 @@ export function isConstContextPropagatingKind(kind: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::IsInConstContext","kind":"func","status":"implemented","sigHash":"4785acdc832c3e0b6c20ce64ec94e0a15cdc8da9748bc95ef7ed5a6e057b2b49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::IsInConstContext","kind":"func","status":"implemented","sigHash":"9d0348323f12933836128cfb4d1aac67c230bfccfd33ee9447180d826f9cbea5"}
  *
  * Go source:
  * func IsInConstContext(node *ast.Node) bool {
@@ -1424,7 +1424,7 @@ export function typeNodeCouldReferToUndefined(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::couldAlreadyReferToUndefinedType","kind":"func","status":"implemented","sigHash":"762af540058e21f3aefa38758eb4dde0fac06bc9f4d775eb398125a6516f1187"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::couldAlreadyReferToUndefinedType","kind":"func","status":"implemented","sigHash":"8df4500e489eed43ef6e5c86a651d98cb38772c67233f8ba67f28402dd4d456f"}
  *
  * Go source:
  * func couldAlreadyReferToUndefinedType(t *PseudoType) bool {
@@ -1485,7 +1485,7 @@ export function isOptionalInitializedOrRestParameter(node: GoPtr<ParameterDeclar
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::lastRequiredParamIndex","kind":"func","status":"implemented","sigHash":"f984f8061c687349341f1ae62bfd902ff9ef63da0c0a816a43cbd9ab3d3e7fbd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::lastRequiredParamIndex","kind":"func","status":"implemented","sigHash":"4d20ec2b99af6300a8baf1efdda6878a42e6fbc8441211df87081a4e45ad21b8"}
  *
  * Go source:
  * // lastRequiredParamIndex returns the index just past the last required parameter

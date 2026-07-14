@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoZeroMap, GoZeroPointer, NewGoStructMap } from "../../../go/compat.js";
 import { Node_Name, NodeList_Pos, NodeList_End } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Elements, Node_Expression, Node_Members, Node_TypeArgumentList, SourceFile_Text } from "../../ast/ast.js";
@@ -890,7 +890,7 @@ export function Checker_getConstraintOfDistributiveConditionalType(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createInstantiatedSymbolTable","kind":"method","status":"implemented","sigHash":"d317a703b102fcfdc86d88892fcd28bfad810a3530b04d7906906177fe3138ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createInstantiatedSymbolTable","kind":"method","status":"implemented","sigHash":"486c2e26964946a849da0f8b1f7476d0be2b7dd56953c591ecec9c1cd890ad1d"}
  *
  * Go source:
  * func (c *Checker) createInstantiatedSymbolTable(symbols []*ast.Symbol, m *TypeMapper) ast.SymbolTable {
@@ -907,7 +907,7 @@ export function Checker_getConstraintOfDistributiveConditionalType(receiver: GoP
 export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, symbols: GoSlice<GoPtr<Symbol>>, m: GoPtr<TypeMapper>): SymbolTable {
   const sourceSymbols = symbols ?? [];
   if (sourceSymbols.length === 0) {
-    return undefined as unknown as SymbolTable;
+    return GoNilMap<string, GoPtr<Symbol>>();
   }
   const result: SymbolTable = new globalThis.Map();
   for (const symbol of sourceSymbols) {
@@ -995,7 +995,7 @@ export function Checker_clearActiveMapperCaches(receiver: GoPtr<Checker>): void 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getObjectTypeInstantiation","kind":"method","status":"implemented","sigHash":"1a498b6e89216db4d9bc28425e4e1714860d6068cbbecdd6752b2894d57ddffd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getObjectTypeInstantiation","kind":"method","status":"implemented","sigHash":"59102c042d373e908cbb9a4c074d5f02e59028bbd1799fb99fbcf856705474ca"}
  *
  * Go source:
  * func (c *Checker) getObjectTypeInstantiation(t *Type, m *TypeMapper, alias *TypeAlias) *Type {

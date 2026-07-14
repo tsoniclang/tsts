@@ -248,7 +248,7 @@ export function toUpperASCII(str: string): [string, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::isFinalSigmaContext","kind":"func","status":"implemented","sigHash":"166c32d717be37b0daadd1b44e39b6c5d384cd0d72a6bb4a9c41f382c85a3062"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::isFinalSigmaContext","kind":"func","status":"implemented","sigHash":"d5d14687144ce705a8e65c0fefa77e73a0ca812000d72513d4823b31af311689"}
  *
  * Go source:
  * func isFinalSigmaContext(casedBefore bool, str string, afterOffset int) bool {

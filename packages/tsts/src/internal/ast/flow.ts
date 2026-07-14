@@ -45,7 +45,7 @@ import type { DeclarationName } from "./generated/unions.js";
 // FlowFlags
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowFlags","kind":"type","status":"implemented","sigHash":"d09a53f6cfcd44e95af32ba2d5205770f993a6e18482a7f7070e2b9ad420f988"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowFlags","kind":"type","status":"implemented","sigHash":"bb5236c2a3e5e355ea76c5384c325fa4ff9f69b62fea58ef671b4acb32db59d8"}
  *
  * Go source:
  * FlowFlags uint32
@@ -53,7 +53,7 @@ import type { DeclarationName } from "./generated/unions.js";
 export type FlowFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::constGroup::FlowFlagsUnreachable+FlowFlagsStart+FlowFlagsBranchLabel+FlowFlagsLoopLabel+FlowFlagsAssignment+FlowFlagsTrueCondition+FlowFlagsFalseCondition+FlowFlagsSwitchClause+FlowFlagsArrayMutation+FlowFlagsCall+FlowFlagsReduceLabel+FlowFlagsReferenced+FlowFlagsShared+FlowFlagsLabel+FlowFlagsCondition","kind":"constGroup","status":"implemented","sigHash":"4527033a929b1a7f493119369ab9d9020b3f24f3b6add22e704cd478857602b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::constGroup::FlowFlagsUnreachable+FlowFlagsStart+FlowFlagsBranchLabel+FlowFlagsLoopLabel+FlowFlagsAssignment+FlowFlagsTrueCondition+FlowFlagsFalseCondition+FlowFlagsSwitchClause+FlowFlagsArrayMutation+FlowFlagsCall+FlowFlagsReduceLabel+FlowFlagsReferenced+FlowFlagsShared+FlowFlagsLabel+FlowFlagsCondition","kind":"constGroup","status":"implemented","sigHash":"558fc68c9a2ad13b590794f68d7184fadc5216dbfb33c0d40f407fbec8925200"}
  *
  * Go source:
  * const (
@@ -93,7 +93,7 @@ export const FlowFlagsCondition: FlowFlags = (FlowFlagsTrueCondition | FlowFlags
 // FlowNode
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowNode","kind":"type","status":"implemented","sigHash":"1020774d078a17b20d58203b3bbda4393da72f30962bf89c05b6de2b6fb87bc1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowNode","kind":"type","status":"implemented","sigHash":"a3352e5e238924f9e0cc86e473cf2b0aace98eec93a83ba49f7cd85c1a130344"}
  *
  * Go source:
  * FlowNode struct {
@@ -111,7 +111,7 @@ export interface FlowNode {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowList","kind":"type","status":"implemented","sigHash":"7cce7740307e71d2b15035221079c8b11d4708ad269e085d57c504b719b700a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowList","kind":"type","status":"implemented","sigHash":"b9d7ff8ac7acbdb16a894e114682f05a27d3dca3b1fe3af67215f359266bb9c7"}
  *
  * Go source:
  * FlowList struct {
@@ -125,7 +125,7 @@ export interface FlowList {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowLabel","kind":"type","status":"implemented","sigHash":"084d06c33b0e2642ffd5fba9798d4ea2858d4364899db76eb87682c3f5d3985c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowLabel","kind":"type","status":"implemented","sigHash":"0a64c4f310f3b04df0074d053a744813f08c0bf70465619256b3a0e3633a892d"}
  *
  * Go source:
  * FlowLabel = FlowNode
@@ -135,7 +135,7 @@ export type FlowLabel = FlowNode;
 // FlowSwitchClauseData (synthetic AST node for FlowFlagsSwitchClause)
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowSwitchClauseData","kind":"type","status":"implemented","sigHash":"752719aacafe9f4e1a95d1c94780bf847c0764fed0c856e5cc5e5f5c493004e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowSwitchClauseData","kind":"type","status":"implemented","sigHash":"5943a2c289bf8811af28d685b90d82eb4fc09ee137ee44ee71f6fab9d542d987"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Synthetic flow nodes follow the pinned TS-Go AST schema by flattening the embedded node base and interface operations into one schema-level object.","goSignatureHash":"ce597b88baf27a4d8fc8974b0b934dc7b147ff6c743904c061c33d254306409f","tsSignatureHash":"0b89bd3a3ec6a5cf92f845b61f06405ea50612d772f01692ffdaa4cfac1e884e"}
  *
  * Go source:
@@ -219,7 +219,7 @@ export function FlowSwitchClauseData_IsEmpty(receiver: GoPtr<FlowSwitchClauseDat
 // FlowReduceLabelData (synthetic AST node for FlowFlagsReduceLabel)
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowReduceLabelData","kind":"type","status":"implemented","sigHash":"c8600db3a6774589ea77d8cf9cadb98ea46d6a725ba6b6e5bd55bf3957c16231"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/flow.go::type::FlowReduceLabelData","kind":"type","status":"implemented","sigHash":"01923166deb816fd48b8b3a9a1b003d7206031e9cf309bc8257ab2268c48426e"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Synthetic flow nodes follow the pinned TS-Go AST schema by flattening the embedded node base and interface operations into one schema-level object.","goSignatureHash":"7e185fc376eacdb46ff8d03eeb0769dad47d119bcc08c792936fbb888cceed3c","tsSignatureHash":"94869fb15e8fb3b60ec99516267fdd9b1e3e675c6ab4421b3c76f4a29ca96d61"}
  *
  * Go source:

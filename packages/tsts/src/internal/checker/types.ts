@@ -1,5 +1,7 @@
 import type { bool, byte, int, sbyte, uint } from "../../go/scalars.js";
 import type { GoArray, GoInterfaceValue, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoNilSlice, GoSliceIsNil } from "../../go/compat.js";
+import { Clip } from "../../go/slices.js";
 import type { Node } from "../ast/spine.js";
 import type { EntityName } from "../ast/generated/unions.js";
 import type { ConditionalTypeNode, MappedTypeNode } from "../ast/generated/data.js";
@@ -27,7 +29,7 @@ import { ValueToString } from "./utilities.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ParseFlags","kind":"type","status":"implemented","sigHash":"351ebf721cd2754016dc44fcbdf16dc89d33b4fc6a92eed1f9db4696eed47fcd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ParseFlags","kind":"type","status":"implemented","sigHash":"ec2c138c6126fd16db739ef0b467090e9d970a145b42a30cb3dfebf6b442776b"}
  *
  * Go source:
  * ParseFlags uint32
@@ -35,7 +37,7 @@ import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 export type ParseFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ParseFlagsNone+ParseFlagsYield+ParseFlagsAwait+ParseFlagsType+ParseFlagsIgnoreMissingOpenBrace+ParseFlagsJSDoc","kind":"constGroup","status":"implemented","sigHash":"c1c0a30e1330ab6084823a9cec03c70fecd0e68844959d06e1c3bb28f6b7c3c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ParseFlagsNone+ParseFlagsYield+ParseFlagsAwait+ParseFlagsType+ParseFlagsIgnoreMissingOpenBrace+ParseFlagsJSDoc","kind":"constGroup","status":"implemented","sigHash":"45771fba15d6b3d1189c5ed5b2cbf2b5e091c72f7397839c4b7819ac00c3a755"}
  *
  * Go source:
  * const (
@@ -55,7 +57,7 @@ export const ParseFlagsIgnoreMissingOpenBrace: ParseFlags = 1 << 4;
 export const ParseFlagsJSDoc: ParseFlags = 1 << 5;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SignatureKind","kind":"type","status":"implemented","sigHash":"5040fe89b5d9badb5c6b3e59f963a4ddc0b654c7a24d8481500858718b820972"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SignatureKind","kind":"type","status":"implemented","sigHash":"58ced086295abddef1ae9fb80a027ba24372badaa9b7c3f85b833b22683ffc5c"}
  *
  * Go source:
  * SignatureKind int32
@@ -63,7 +65,7 @@ export const ParseFlagsJSDoc: ParseFlags = 1 << 5;
 export type SignatureKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::SignatureKindCall+SignatureKindConstruct","kind":"constGroup","status":"implemented","sigHash":"b80c561477dde1c5424bd41e83faab8d3595115fc22bf8d1b384bbfe29d72e7a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::SignatureKindCall+SignatureKindConstruct","kind":"constGroup","status":"implemented","sigHash":"05f9d66ebc7ffc8cdd8e2772bfed93fade3ef5dfec17505ef1ddf2deb7e211a0"}
  *
  * Go source:
  * const (
@@ -75,7 +77,7 @@ export const SignatureKindCall: SignatureKind = 0;
 export const SignatureKindConstruct: SignatureKind = 1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ContextFlags","kind":"type","status":"implemented","sigHash":"eb1aba7dd7b2e4341b0b259dc3706d8c910ecffef00cd0d3dba8f93f4f388b07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ContextFlags","kind":"type","status":"implemented","sigHash":"da9d50fa9efba7f8a4aaad30fecbcacd03477b39a9761ea659ea4d3a6b458a69"}
  *
  * Go source:
  * ContextFlags uint32
@@ -83,7 +85,7 @@ export const SignatureKindConstruct: SignatureKind = 1;
 export type ContextFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ContextFlagsNone+ContextFlagsSignature+ContextFlagsNoConstraints+ContextFlagsIgnoreNodeInferences+ContextFlagsSkipBindingPatterns","kind":"constGroup","status":"implemented","sigHash":"9034bbcd30a8ae567952b360d29a8bec3cdb50caed2dabab7da95435e4f2e761"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ContextFlagsNone+ContextFlagsSignature+ContextFlagsNoConstraints+ContextFlagsIgnoreNodeInferences+ContextFlagsSkipBindingPatterns","kind":"constGroup","status":"implemented","sigHash":"fa0993d79475d307b59486f24191ecf2e24d169bc48bcbd6fbc3b82676ac1072"}
  *
  * Go source:
  * const (
@@ -101,7 +103,7 @@ export const ContextFlagsIgnoreNodeInferences: ContextFlags = 1 << 2;
 export const ContextFlagsSkipBindingPatterns: ContextFlags = 1 << 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeFormatFlags","kind":"type","status":"implemented","sigHash":"61d945eb8adf5e440dd8345585630bebe48f29624432e341e1fb1d507dea6392"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeFormatFlags","kind":"type","status":"implemented","sigHash":"499d6addc486b23ceebf24a36101f8e4959ec553d00a9fc6094bef75c3cebb52"}
  *
  * Go source:
  * TypeFormatFlags uint32
@@ -109,7 +111,7 @@ export const ContextFlagsSkipBindingPatterns: ContextFlags = 1 << 3;
 export type TypeFormatFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TypeFormatFlagsNone+TypeFormatFlagsNoTruncation+TypeFormatFlagsWriteArrayAsGenericType+TypeFormatFlagsGenerateNamesForShadowedTypeParams+TypeFormatFlagsUseStructuralFallback+TypeFormatFlagsWriteTypeArgumentsOfSignature+TypeFormatFlagsUseFullyQualifiedType+TypeFormatFlagsSuppressAnyReturnType+TypeFormatFlagsMultilineObjectLiterals+TypeFormatFlagsWriteClassExpressionAsTypeLiteral+TypeFormatFlagsUseTypeOfFunction+TypeFormatFlagsOmitParameterModifiers+TypeFormatFlagsUseAliasDefinedOutsideCurrentScope+TypeFormatFlagsUseSingleQuotesForStringLiteralType+TypeFormatFlagsNoTypeReduction+TypeFormatFlagsUseInstantiationExpressions+TypeFormatFlagsOmitThisParameter+TypeFormatFlagsWriteCallStyleSignature+TypeFormatFlagsAllowUniqueESSymbolType+TypeFormatFlagsAddUndefined+TypeFormatFlagsWriteArrowStyleSignature+TypeFormatFlagsInArrayType+TypeFormatFlagsInElementType+TypeFormatFlagsInFirstTypeArgument+TypeFormatFlagsInTypeAlias","kind":"constGroup","status":"implemented","sigHash":"b7b6208447ec2e7eced952ed3b794c15a545fad5d1752b9eaf3411323dc18f9a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TypeFormatFlagsNone+TypeFormatFlagsNoTruncation+TypeFormatFlagsWriteArrayAsGenericType+TypeFormatFlagsGenerateNamesForShadowedTypeParams+TypeFormatFlagsUseStructuralFallback+TypeFormatFlagsWriteTypeArgumentsOfSignature+TypeFormatFlagsUseFullyQualifiedType+TypeFormatFlagsSuppressAnyReturnType+TypeFormatFlagsMultilineObjectLiterals+TypeFormatFlagsWriteClassExpressionAsTypeLiteral+TypeFormatFlagsUseTypeOfFunction+TypeFormatFlagsOmitParameterModifiers+TypeFormatFlagsUseAliasDefinedOutsideCurrentScope+TypeFormatFlagsUseSingleQuotesForStringLiteralType+TypeFormatFlagsNoTypeReduction+TypeFormatFlagsUseInstantiationExpressions+TypeFormatFlagsOmitThisParameter+TypeFormatFlagsWriteCallStyleSignature+TypeFormatFlagsAllowUniqueESSymbolType+TypeFormatFlagsAddUndefined+TypeFormatFlagsWriteArrowStyleSignature+TypeFormatFlagsInArrayType+TypeFormatFlagsInElementType+TypeFormatFlagsInFirstTypeArgument+TypeFormatFlagsInTypeAlias","kind":"constGroup","status":"implemented","sigHash":"25e3f249d077c3170ad1368bb906f8513c318eb19d7e68aebd3e013f1f73cfa9"}
  *
  * Go source:
  * const (
@@ -173,7 +175,7 @@ export const TypeFormatFlagsInFirstTypeArgument: TypeFormatFlags = 1 << 22;
 export const TypeFormatFlagsInTypeAlias: TypeFormatFlags = 1 << 23;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TypeFormatFlagsNodeBuilderFlagsMask","kind":"constGroup","status":"implemented","sigHash":"552fd4c502bfd3aab7d7945a722a4e3c92ddb8fccba1f57d8e8dbc36c5867e5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TypeFormatFlagsNodeBuilderFlagsMask","kind":"constGroup","status":"implemented","sigHash":"a7b1bafbae79b3a795c6e88cb4144e1ce9bf93c21bdf294f921e1c63f1634250"}
  *
  * Go source:
  * const TypeFormatFlagsNodeBuilderFlagsMask = TypeFormatFlagsNoTruncation | TypeFormatFlagsWriteArrayAsGenericType | TypeFormatFlagsGenerateNamesForShadowedTypeParams | TypeFormatFlagsUseStructuralFallback | TypeFormatFlagsWriteTypeArgumentsOfSignature |
@@ -203,7 +205,7 @@ export const TypeFormatFlagsNodeBuilderFlagsMask: TypeFormatFlags =
   TypeFormatFlagsOmitThisParameter;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SymbolFormatFlags","kind":"type","status":"implemented","sigHash":"6e0a266c281751e0f20860bb8a07d9ea817fb98f2f50c44cfce2906f55c44261"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SymbolFormatFlags","kind":"type","status":"implemented","sigHash":"635b36267f3172fac7baf6bbdf7c5e978554bc88cfd0a83960efb6f043e601e0"}
  *
  * Go source:
  * SymbolFormatFlags uint32
@@ -211,7 +213,7 @@ export const TypeFormatFlagsNodeBuilderFlagsMask: TypeFormatFlags =
 export type SymbolFormatFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::SymbolFormatFlagsNone+SymbolFormatFlagsWriteTypeParametersOrArguments+SymbolFormatFlagsUseOnlyExternalAliasing+SymbolFormatFlagsAllowAnyNodeKind+SymbolFormatFlagsUseAliasDefinedOutsideCurrentScope+SymbolFormatFlagsWriteComputedProps+SymbolFormatFlagsDoNotIncludeSymbolChain","kind":"constGroup","status":"implemented","sigHash":"2090027a4340072c37edd8e1dbdc2d55a25573a12b04b7474c4059e72540b656"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::SymbolFormatFlagsNone+SymbolFormatFlagsWriteTypeParametersOrArguments+SymbolFormatFlagsUseOnlyExternalAliasing+SymbolFormatFlagsAllowAnyNodeKind+SymbolFormatFlagsUseAliasDefinedOutsideCurrentScope+SymbolFormatFlagsWriteComputedProps+SymbolFormatFlagsDoNotIncludeSymbolChain","kind":"constGroup","status":"implemented","sigHash":"fc079c714d8adfaca9d8a41b809dc540739ab2bfd4a15f7a2b80b11faf26d984"}
  *
  * Go source:
  * const (
@@ -246,7 +248,7 @@ export const SymbolFormatFlagsWriteComputedProps: SymbolFormatFlags = 1 << 4;
 export const SymbolFormatFlagsDoNotIncludeSymbolChain: SymbolFormatFlags = 1 << 5;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ExternalEmitHelpers","kind":"type","status":"implemented","sigHash":"a349e95616e75ba22f2f785bd107cafe350b65fdc1a39eeedd12151090f11e2c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ExternalEmitHelpers","kind":"type","status":"implemented","sigHash":"3352877ba50e78da3d29f2e1a274d5d401397e7b3546c07438be80820285cccd"}
  *
  * Go source:
  * ExternalEmitHelpers uint32
@@ -254,7 +256,7 @@ export const SymbolFormatFlagsDoNotIncludeSymbolChain: SymbolFormatFlags = 1 << 
 export type ExternalEmitHelpers = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ExternalEmitHelpersRest+ExternalEmitHelpersDecorate+ExternalEmitHelpersMetadata+ExternalEmitHelpersParam+ExternalEmitHelpersAwaiter+ExternalEmitHelpersAwait+ExternalEmitHelpersAsyncGenerator+ExternalEmitHelpersAsyncDelegator+ExternalEmitHelpersAsyncValues+ExternalEmitHelpersExportStar+ExternalEmitHelpersImportStar+ExternalEmitHelpersImportDefault+ExternalEmitHelpersMakeTemplateObject+ExternalEmitHelpersClassPrivateFieldGet+ExternalEmitHelpersClassPrivateFieldSet+ExternalEmitHelpersClassPrivateFieldIn+ExternalEmitHelpersSetFunctionName+ExternalEmitHelpersPropKey+ExternalEmitHelpersAddDisposableResourceAndDisposeResources+ExternalEmitHelpersRewriteRelativeImportExtension+ExternalEmitHelpersESDecorateAndRunInitializers+ExternalEmitHelpersFirstEmitHelper+ExternalEmitHelpersLastEmitHelper+ExternalEmitHelpersForAwaitOfIncludes+ExternalEmitHelpersAsyncGeneratorIncludes+ExternalEmitHelpersAsyncDelegatorIncludes","kind":"constGroup","status":"implemented","sigHash":"b0eeb932a593bcbcf033a8873da201738a1afcc028bffc744a93165d27598941"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ExternalEmitHelpersRest+ExternalEmitHelpersDecorate+ExternalEmitHelpersMetadata+ExternalEmitHelpersParam+ExternalEmitHelpersAwaiter+ExternalEmitHelpersAwait+ExternalEmitHelpersAsyncGenerator+ExternalEmitHelpersAsyncDelegator+ExternalEmitHelpersAsyncValues+ExternalEmitHelpersExportStar+ExternalEmitHelpersImportStar+ExternalEmitHelpersImportDefault+ExternalEmitHelpersMakeTemplateObject+ExternalEmitHelpersClassPrivateFieldGet+ExternalEmitHelpersClassPrivateFieldSet+ExternalEmitHelpersClassPrivateFieldIn+ExternalEmitHelpersSetFunctionName+ExternalEmitHelpersPropKey+ExternalEmitHelpersAddDisposableResourceAndDisposeResources+ExternalEmitHelpersRewriteRelativeImportExtension+ExternalEmitHelpersESDecorateAndRunInitializers+ExternalEmitHelpersFirstEmitHelper+ExternalEmitHelpersLastEmitHelper+ExternalEmitHelpersForAwaitOfIncludes+ExternalEmitHelpersAsyncGeneratorIncludes+ExternalEmitHelpersAsyncDelegatorIncludes","kind":"constGroup","status":"implemented","sigHash":"14d891271cc1e1248b6bf08be5c7b2e05232884040f15bdf071456f3f3f21b31"}
  *
  * Go source:
  * const (
@@ -325,7 +327,7 @@ export const ExternalEmitHelpersAsyncDelegatorIncludes: ExternalEmitHelpers =
   (ExternalEmitHelpersAwait | ExternalEmitHelpersAsyncDelegator | ExternalEmitHelpersAsyncValues) >>> 0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::externalHelpersModuleNameText","kind":"constGroup","status":"implemented","sigHash":"42b8d30f6cec123c960fc65215bb7957d60e1e2100a713e6f60422dd65ee175e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::externalHelpersModuleNameText","kind":"constGroup","status":"implemented","sigHash":"952360427c8066aa37cd9c63a924f7eba58391d84879c41208b7afb5805fafbc"}
  *
  * Go source:
  * const externalHelpersModuleNameText = "tslib"
@@ -333,7 +335,7 @@ export const ExternalEmitHelpersAsyncDelegatorIncludes: ExternalEmitHelpers =
 export const externalHelpersModuleNameText: string = "tslib";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeId","kind":"type","status":"implemented","sigHash":"d668dd6b5968591e5c5613cca2d2be3143ae2409565fe3e7511b04dc47b31a91"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeId","kind":"type","status":"implemented","sigHash":"c917c67ee6facc506c65f8fca44f5f54a27d38c4388b43560967f8add59893e5"}
  *
  * Go source:
  * TypeId uint32
@@ -341,7 +343,7 @@ export const externalHelpersModuleNameText: string = "tslib";
 export type TypeId = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SymbolReferenceLinks","kind":"type","status":"implemented","sigHash":"63c0b9194c48be0467d0a3aeb8714daae75e2ec3b595bf6d37c35119744da7ee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SymbolReferenceLinks","kind":"type","status":"implemented","sigHash":"a156dfe36bcd481696448cce7ed4c06e5060977b462d5a31065b97ba9132360b"}
  *
  * Go source:
  * SymbolReferenceLinks struct {
@@ -353,7 +355,7 @@ export interface SymbolReferenceLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ValueSymbolLinks","kind":"type","status":"implemented","sigHash":"cd1e1ae881d5f54928b2653f4bba62a9f0d9eecb49c78e255ab2d6843c67046f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ValueSymbolLinks","kind":"type","status":"implemented","sigHash":"c1e008f073633224e8803434695fbe95426f80934a2995ce508c0e08fa80ae6c"}
  *
  * Go source:
  * ValueSymbolLinks struct {
@@ -377,7 +379,7 @@ export interface ValueSymbolLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MappedSymbolLinks","kind":"type","status":"implemented","sigHash":"9931466f3fccbf6d1a103006b34cc4f536347dac878180f13ba7c0386b5d06f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MappedSymbolLinks","kind":"type","status":"implemented","sigHash":"2bcf23d3cee20b22772e16832ca575ae43f28bdf22ba8caa24ed04aea4d3b4e5"}
  *
  * Go source:
  * MappedSymbolLinks struct {
@@ -391,7 +393,7 @@ export interface MappedSymbolLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::DeferredSymbolLinks","kind":"type","status":"implemented","sigHash":"72320f70c145740d6df7473148a738de974743ba2583eb1e4085113a5655e519"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::DeferredSymbolLinks","kind":"type","status":"implemented","sigHash":"ee6aea7ec756ba9c29b65cbdc24f650cd67e7c6b0527b60753310ab4b6dc625c"}
  *
  * Go source:
  * DeferredSymbolLinks struct {
@@ -407,7 +409,7 @@ export interface DeferredSymbolLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::AliasSymbolLinks","kind":"type","status":"implemented","sigHash":"2382f765aa7550658e62ca026e5ae05e6b85aeb5330acd2f4d3843d948d97bb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::AliasSymbolLinks","kind":"type","status":"implemented","sigHash":"ecf060f81daa5fe021054ef580bc5d331a54cf981bcb4019251feb63a694ffe7"}
  *
  * Go source:
  * AliasSymbolLinks struct {
@@ -425,7 +427,7 @@ export interface AliasSymbolLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ModuleSymbolLinks","kind":"type","status":"implemented","sigHash":"0562a62618d9e8ba3150e5162b811ca69dcef3c4f680f7ea4bd016e6458b58cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ModuleSymbolLinks","kind":"type","status":"implemented","sigHash":"24ef49f64325b90a24df286759fe10610c43df4ef306c32a38cd195ac5346975"}
  *
  * Go source:
  * ModuleSymbolLinks struct {
@@ -441,7 +443,7 @@ export interface ModuleSymbolLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ReverseMappedSymbolLinks","kind":"type","status":"implemented","sigHash":"9611cbf5197ab9a1026e66ed8cb861f4b7974ed8c6cc42c4e78aacd21ad8778b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ReverseMappedSymbolLinks","kind":"type","status":"implemented","sigHash":"ab568e350633b2290810518774114133aa37d500dcf945431f548f52ed02e229"}
  *
  * Go source:
  * ReverseMappedSymbolLinks struct {
@@ -457,7 +459,7 @@ export interface ReverseMappedSymbolLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::LateBoundLinks","kind":"type","status":"implemented","sigHash":"01d6c52d6793211737721909a54924cc99e595ff61279f62bbdaa4767155cd20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::LateBoundLinks","kind":"type","status":"implemented","sigHash":"f8154a54a78a340e92e023e660fc7c6b41352e3ed3525a2df642ba749171cc33"}
  *
  * Go source:
  * LateBoundLinks struct {
@@ -469,7 +471,7 @@ export interface LateBoundLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ExportTypeLinks","kind":"type","status":"implemented","sigHash":"1dcf5d66b7265b22df9b8c9d22dc8a6f85759ef6290e07b046a11afaef04db6c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ExportTypeLinks","kind":"type","status":"implemented","sigHash":"598a7b0a395c72ea0a332c0d2abb95fb823ecda0a5fa8bdd5e1b0be9003d09e2"}
  *
  * Go source:
  * ExportTypeLinks struct {
@@ -483,7 +485,7 @@ export interface ExportTypeLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeAliasLinks","kind":"type","status":"implemented","sigHash":"ab4b0620979030f322a011e203c8bc0ebf5a9258ffb933f2ed37b7c5245216e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeAliasLinks","kind":"type","status":"implemented","sigHash":"148bf920dfa7132273acf52ea1ce4ba05b784b8a15642ac3e9e9dcba346722d7"}
  *
  * Go source:
  * TypeAliasLinks struct {
@@ -501,7 +503,7 @@ export interface TypeAliasLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::DeclaredTypeLinks","kind":"type","status":"implemented","sigHash":"96aa0fe094abea887fa7483eefc3d98b540e2eb5d1e6eecdcfe66a630a78ce39"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::DeclaredTypeLinks","kind":"type","status":"implemented","sigHash":"cb71d636ce4b9cf3a9669c3153a72a5703766f08d4f3cd4845427143982f5a97"}
  *
  * Go source:
  * DeclaredTypeLinks struct {
@@ -521,7 +523,7 @@ export interface DeclaredTypeLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ExhaustiveState","kind":"type","status":"implemented","sigHash":"f14b7f271c04cf96a640bb579b581c062fc14426802790a466f3610d803f2f59"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ExhaustiveState","kind":"type","status":"implemented","sigHash":"2ed24226352508f5ed6f209cf360a90e818f712e08815dca1bde618dec385aba"}
  *
  * Go source:
  * ExhaustiveState byte
@@ -529,7 +531,7 @@ export interface DeclaredTypeLinks {
 export type ExhaustiveState = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ExhaustiveStateUnknown+ExhaustiveStateComputing+ExhaustiveStateFalse+ExhaustiveStateTrue","kind":"constGroup","status":"implemented","sigHash":"f1dec9836acfed71718429224dacd81c05322c477a25da5ee051fb8bafc9f3a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ExhaustiveStateUnknown+ExhaustiveStateComputing+ExhaustiveStateFalse+ExhaustiveStateTrue","kind":"constGroup","status":"implemented","sigHash":"46bfcc149be50c42543698d45b956627c0330d8654095bcd2aafc9079f3b4387"}
  *
  * Go source:
  * const (
@@ -545,7 +547,7 @@ export const ExhaustiveStateFalse: ExhaustiveState = 2;
 export const ExhaustiveStateTrue: ExhaustiveState = 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SwitchStatementLinks","kind":"type","status":"implemented","sigHash":"5712ff63334a4a4c3edaca3ffa03f5d82858a32157f34642cf04a9ab8aedd03a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SwitchStatementLinks","kind":"type","status":"implemented","sigHash":"1ddb1f4f2baab1210d28ba540bbf605ebac6b5b066968f28181a9cce74b86657"}
  *
  * Go source:
  * SwitchStatementLinks struct {
@@ -565,7 +567,7 @@ export interface SwitchStatementLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ArrayLiteralLinks","kind":"type","status":"implemented","sigHash":"fa3c94556cf92a171667be3e6eb78a290b02ceb1aea760a38ff89f94666f2dc3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ArrayLiteralLinks","kind":"type","status":"implemented","sigHash":"b0cf1fcbfaf6477acae6d09b3348e42c7ec277892afd88de8c9aeb2bf2ff9b3d"}
  *
  * Go source:
  * ArrayLiteralLinks struct {
@@ -581,7 +583,7 @@ export interface ArrayLiteralLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MembersOrExportsResolutionKind","kind":"type","status":"implemented","sigHash":"c73015f71a7f9de5d658e85806ddf85c8a1c36f632c66f05735d0322f4fd983b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MembersOrExportsResolutionKind","kind":"type","status":"implemented","sigHash":"c502aeb871c63e882ebaa3ab7e04ebbd9e63df01059d0451ac6457e36b970a91"}
  *
  * Go source:
  * MembersOrExportsResolutionKind int
@@ -589,7 +591,7 @@ export interface ArrayLiteralLinks {
 export type MembersOrExportsResolutionKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::MembersOrExportsResolutionKindResolvedExports+MembersOrExportsResolutionKindResolvedMembers","kind":"constGroup","status":"implemented","sigHash":"187f7e9d2011030d1eafec863e9bc4743360489acda77fe4ec55818c5e7fbeed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::MembersOrExportsResolutionKindResolvedExports+MembersOrExportsResolutionKindResolvedMembers","kind":"constGroup","status":"implemented","sigHash":"abe979fc2266d1d02bba83f921000ac848e4d26f9274a48e6e3cc488f4dea3e9"}
  *
  * Go source:
  * const (
@@ -601,7 +603,7 @@ export const MembersOrExportsResolutionKindResolvedExports: MembersOrExportsReso
 export const MembersOrExportsResolutionKindResolvedMembers: MembersOrExportsResolutionKind = 1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MembersAndExportsLinks","kind":"type","status":"implemented","sigHash":"1dd656697c25eb49748aef278b35eb24bfa01d4d3fc12f42c29adf0fa4635204"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MembersAndExportsLinks","kind":"type","status":"implemented","sigHash":"36e64e07059bfde3701ffae7c391c50104fcbb23e67928e0956c8ca1d56adeb2"}
  *
  * Go source:
  * MembersAndExportsLinks [2]ast.SymbolTable
@@ -609,7 +611,7 @@ export const MembersOrExportsResolutionKindResolvedMembers: MembersOrExportsReso
 export type MembersAndExportsLinks = GoArray<SymbolTable, "2">;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SpreadLinks","kind":"type","status":"implemented","sigHash":"1c992f97e091eeed457c350946cb8abeb7b629381d4d92bebce697bf6cc958f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SpreadLinks","kind":"type","status":"implemented","sigHash":"df876aabfe69bddd7a390567a44f88407720d8f02d818b3ccdb640aec9084a94"}
  *
  * Go source:
  * SpreadLinks struct {
@@ -623,7 +625,7 @@ export interface SpreadLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::VarianceLinks","kind":"type","status":"implemented","sigHash":"67711eb1af6828630d933ceee7f73dcba446b405b41b66df535ace87288f48e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::VarianceLinks","kind":"type","status":"implemented","sigHash":"6415f441457fef12a9da408b26f1d349dddb072385f6f06c9515ae94daebcb5e"}
  *
  * Go source:
  * VarianceLinks struct {
@@ -635,7 +637,7 @@ export interface VarianceLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::VarianceFlags","kind":"type","status":"implemented","sigHash":"e58bc9aa0312d4acaa5b9623612e2f8361a48a22f180414597249da8c1d9ab60"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::VarianceFlags","kind":"type","status":"implemented","sigHash":"dafbe2eb10b346350e8407ff15809ad3191c41a1f9dbe9f707ef779243824564"}
  *
  * Go source:
  * VarianceFlags uint32
@@ -643,7 +645,7 @@ export interface VarianceLinks {
 export type VarianceFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::VarianceFlagsInvariant+VarianceFlagsCovariant+VarianceFlagsContravariant+VarianceFlagsBivariant+VarianceFlagsIndependent+VarianceFlagsVarianceMask+VarianceFlagsUnmeasurable+VarianceFlagsUnreliable+VarianceFlagsAllowsStructuralFallback","kind":"constGroup","status":"implemented","sigHash":"6da7bd90835c94d51e05bb2a23ef313065331916fe2b77c9478d71036e644341"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::VarianceFlagsInvariant+VarianceFlagsCovariant+VarianceFlagsContravariant+VarianceFlagsBivariant+VarianceFlagsIndependent+VarianceFlagsVarianceMask+VarianceFlagsUnmeasurable+VarianceFlagsUnreliable+VarianceFlagsAllowsStructuralFallback","kind":"constGroup","status":"implemented","sigHash":"ec4f07aa3643e944c6e683bb3c46105dc6874f9c5a293779ef4672c5a418cece"}
  *
  * Go source:
  * const (
@@ -670,7 +672,7 @@ export const VarianceFlagsUnreliable: VarianceFlags = 1 << 4;
 export const VarianceFlagsAllowsStructuralFallback: VarianceFlags = VarianceFlagsUnmeasurable | VarianceFlagsUnreliable;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MarkedAssignmentSymbolLinks","kind":"type","status":"implemented","sigHash":"a1edd3b0155b4555e9e68c8e58b5045653059808fa1bedde3391c95865d93f23"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MarkedAssignmentSymbolLinks","kind":"type","status":"implemented","sigHash":"e899c4c0ef17bf177285dec0977953e6b10fff0a0146ff57ded00eda9c3a0340"}
  *
  * Go source:
  * MarkedAssignmentSymbolLinks struct {
@@ -684,7 +686,7 @@ export interface MarkedAssignmentSymbolLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::accessibleChainCacheKey","kind":"type","status":"implemented","sigHash":"1db64ba827cb1588eb0481642160db7ea0bfc5bd93c68bf27488555cdfbc4c06"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::accessibleChainCacheKey","kind":"type","status":"implemented","sigHash":"609fa96a76a3cedd29b3e24ff9f6a5cd38e0207abfb5762c192d377c55028711"}
  *
  * Go source:
  * accessibleChainCacheKey struct {
@@ -700,7 +702,7 @@ export interface accessibleChainCacheKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ContainingSymbolLinks","kind":"type","status":"implemented","sigHash":"2307451c5b8482ec31ca7f528de6b3304234e7a4a940a8c1862d4aba08d42b83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ContainingSymbolLinks","kind":"type","status":"implemented","sigHash":"3bbec2b082eb7b5b50f071917b90f4df5cccb64d07c8d3c481f02a9853289314"}
  *
  * Go source:
  * ContainingSymbolLinks struct {
@@ -716,7 +718,7 @@ export interface ContainingSymbolLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::AccessFlags","kind":"type","status":"implemented","sigHash":"802892a337a8aa44646bde08969b3813e19cb556d31fb080ff409b7990d27fb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::AccessFlags","kind":"type","status":"implemented","sigHash":"110552a5ba20ef8f5d285aa8bd9d0e1dbc0991525fa9f00183a63fc6eefb385d"}
  *
  * Go source:
  * AccessFlags uint32
@@ -724,7 +726,7 @@ export interface ContainingSymbolLinks {
 export type AccessFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::AccessFlagsNone+AccessFlagsIncludeUndefined+AccessFlagsNoIndexSignatures+AccessFlagsWriting+AccessFlagsCacheSymbol+AccessFlagsAllowMissing+AccessFlagsExpressionPosition+AccessFlagsReportDeprecated+AccessFlagsSuppressNoImplicitAnyError+AccessFlagsContextual+AccessFlagsPersistent","kind":"constGroup","status":"implemented","sigHash":"f3c32f19650778904a418e71e7c32f340f538e77a2aa6931d4a08493be68ec6b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::AccessFlagsNone+AccessFlagsIncludeUndefined+AccessFlagsNoIndexSignatures+AccessFlagsWriting+AccessFlagsCacheSymbol+AccessFlagsAllowMissing+AccessFlagsExpressionPosition+AccessFlagsReportDeprecated+AccessFlagsSuppressNoImplicitAnyError+AccessFlagsContextual+AccessFlagsPersistent","kind":"constGroup","status":"implemented","sigHash":"56346d3c308f0917d6a3e01443385f26334b0414d43eb2fad93085c4e2736407"}
  *
  * Go source:
  * const (
@@ -754,7 +756,7 @@ export const AccessFlagsContextual: AccessFlags = 1 << 8;
 export const AccessFlagsPersistent: AccessFlags = AccessFlagsIncludeUndefined;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::NodeCheckFlags","kind":"type","status":"implemented","sigHash":"5dcb5d859b3f2ff7cd70042b75620f4d13fba05fad77e32251969a2b9c772578"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::NodeCheckFlags","kind":"type","status":"implemented","sigHash":"cb5b03d852c9e5660e4ac8d12ce427684d0d6258caef622a0510ca144f2c2970"}
  *
  * Go source:
  * NodeCheckFlags uint32
@@ -762,7 +764,7 @@ export const AccessFlagsPersistent: AccessFlags = AccessFlagsIncludeUndefined;
 export type NodeCheckFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::NodeCheckFlagsNone+NodeCheckFlagsTypeChecked+NodeCheckFlagsContextChecked+NodeCheckFlagsEnumValuesComputed+NodeCheckFlagsAssignmentsMarked+NodeCheckFlagsContainsClassWithPrivateIdentifiers+NodeCheckFlagsContainsSuperPropertyInStaticInitializer+NodeCheckFlagsInCheckIdentifier+NodeCheckFlagsInitializerIsUndefined+NodeCheckFlagsInitializerIsUndefinedComputed","kind":"constGroup","status":"implemented","sigHash":"8303b8b101c6029e3359020146d3cba3ec60339a21f0e36312edb8158d08a93c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::NodeCheckFlagsNone+NodeCheckFlagsTypeChecked+NodeCheckFlagsContextChecked+NodeCheckFlagsEnumValuesComputed+NodeCheckFlagsAssignmentsMarked+NodeCheckFlagsContainsClassWithPrivateIdentifiers+NodeCheckFlagsContainsSuperPropertyInStaticInitializer+NodeCheckFlagsInCheckIdentifier+NodeCheckFlagsInitializerIsUndefined+NodeCheckFlagsInitializerIsUndefinedComputed","kind":"constGroup","status":"implemented","sigHash":"dd4b225ded9bbac7a23e1fa4ab17162e548486df091a352332176c153a812d50"}
  *
  * Go source:
  * const (
@@ -790,7 +792,7 @@ export const NodeCheckFlagsInitializerIsUndefined: NodeCheckFlags = 1 << 24;
 export const NodeCheckFlagsInitializerIsUndefinedComputed: NodeCheckFlags = 1 << 25;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::NodeLinks","kind":"type","status":"implemented","sigHash":"bd590e6f5400ae09b28e5727ed6248a2d37e091372315daced254882f1bd9068"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::NodeLinks","kind":"type","status":"implemented","sigHash":"08788a14ee25e45c247ee1775e6b02a386156142623054cb32dfd204130a0d52"}
  *
  * Go source:
  * NodeLinks struct {
@@ -806,7 +808,7 @@ export interface NodeLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SymbolNodeLinks","kind":"type","status":"implemented","sigHash":"89abee6a144d3c12d35aae2dafa85f43053a44ca076f706149c4a8a6b46bc41f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SymbolNodeLinks","kind":"type","status":"implemented","sigHash":"82833a9785bb4ea2d1422dcc835f63d02a100cd939967a4a325ac5c20d3e3285"}
  *
  * Go source:
  * SymbolNodeLinks struct {
@@ -818,7 +820,7 @@ export interface SymbolNodeLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeNodeLinks","kind":"type","status":"implemented","sigHash":"d179da5ea97af8b4e01f810926a7545f82b426592ab5165ddf4d80ecc0cd4e3d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeNodeLinks","kind":"type","status":"implemented","sigHash":"44492684400c9b1c8cf956fda62f37c844479a2c02c457107c16c9351c8c13a1"}
  *
  * Go source:
  * TypeNodeLinks struct {
@@ -832,7 +834,7 @@ export interface TypeNodeLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::EnumMemberLinks","kind":"type","status":"implemented","sigHash":"36404442f2fc2ca29651dc60685cdfa474dd7436f67a79886b11574ead3c754f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::EnumMemberLinks","kind":"type","status":"implemented","sigHash":"6edbdfe546932ef3ff188cb30f9dc076ce4fd1e078a4806760b063071b35bd5b"}
  *
  * Go source:
  * EnumMemberLinks struct {
@@ -844,7 +846,7 @@ export interface EnumMemberLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::AssertionLinks","kind":"type","status":"implemented","sigHash":"6457416d44fb811750771dd328248210271dfdd39ce371575738913d0db6e7d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::AssertionLinks","kind":"type","status":"implemented","sigHash":"484f9eef7cb0c45f3714864c21b15c0d9ea03ab45ded846a30e0d6da47c8c6b7"}
  *
  * Go source:
  * AssertionLinks struct {
@@ -856,7 +858,7 @@ export interface AssertionLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SourceFileLinks","kind":"type","status":"implemented","sigHash":"5dd853bef6c2926129d6cdcecfedb6620736cd2ed3e23a6f409d48ad43f6285b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SourceFileLinks","kind":"type","status":"implemented","sigHash":"dc37f73e751e633cde67993d45c883b3a6d979cebd26fb23c22290e30969388e"}
  *
  * Go source:
  * SourceFileLinks struct {
@@ -888,7 +890,7 @@ export interface SourceFileLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SignatureLinks","kind":"type","status":"implemented","sigHash":"a347e845fe887e23f08134d6a7c13472dcdb4602c6c632618c72b27e056bdc28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SignatureLinks","kind":"type","status":"implemented","sigHash":"c3f8d52f94cc024f0b7f7d4ee9993b45092d89246cac83a41582698c6aa75013"}
  *
  * Go source:
  * SignatureLinks struct {
@@ -904,7 +906,7 @@ export interface SignatureLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeFlags","kind":"type","status":"implemented","sigHash":"f25175c625db0f67dfd7e928ddb1b660e03ad62f59d0c4ee937cfa78968b53ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeFlags","kind":"type","status":"implemented","sigHash":"06d2339bb07513679d9db9d3361917653e5f784b5a3d9fda1db10a4184c759c9"}
  *
  * Go source:
  * TypeFlags uint32
@@ -912,7 +914,7 @@ export interface SignatureLinks {
 export type TypeFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TypeFlagsNone+TypeFlagsAny+TypeFlagsUnknown+TypeFlagsUndefined+TypeFlagsNull+TypeFlagsVoid+TypeFlagsString+TypeFlagsNumber+TypeFlagsBigInt+TypeFlagsBoolean+TypeFlagsESSymbol+TypeFlagsStringLiteral+TypeFlagsNumberLiteral+TypeFlagsBigIntLiteral+TypeFlagsBooleanLiteral+TypeFlagsUniqueESSymbol+TypeFlagsEnumLiteral+TypeFlagsEnum+TypeFlagsNonPrimitive+TypeFlagsNever+TypeFlagsTypeParameter+TypeFlagsObject+TypeFlagsIndex+TypeFlagsTemplateLiteral+TypeFlagsStringMapping+TypeFlagsSubstitution+TypeFlagsIndexedAccess+TypeFlagsConditional+TypeFlagsUnion+TypeFlagsIntersection+TypeFlagsReserved1+TypeFlagsReserved2+TypeFlagsReserved3+TypeFlagsAnyOrUnknown+TypeFlagsNullable+TypeFlagsLiteral+TypeFlagsUnit+TypeFlagsFreshable+TypeFlagsStringOrNumberLiteral+TypeFlagsStringOrNumberLiteralOrUnique+TypeFlagsDefinitelyFalsy+TypeFlagsPossiblyFalsy+TypeFlagsIntrinsic+TypeFlagsStringLike+TypeFlagsNumberLike+TypeFlagsBigIntLike+TypeFlagsBooleanLike+TypeFlagsEnumLike+TypeFlagsESSymbolLike+TypeFlagsVoidLike+TypeFlagsPrimitive+TypeFlagsDefinitelyNonNullable+TypeFlagsDisjointDomains+TypeFlagsUnionOrIntersection+TypeFlagsStructuredType+TypeFlagsTypeVariable+TypeFlagsInstantiableNonPrimitive+TypeFlagsInstantiablePrimitive+TypeFlagsInstantiable+TypeFlagsStructuredOrInstantiable+TypeFlagsObjectFlagsType+TypeFlagsSimplifiable+TypeFlagsSingleton+TypeFlagsNarrowable+TypeFlagsIncludesMask+TypeFlagsIncludesMissingType+TypeFlagsIncludesNonWideningType+TypeFlagsIncludesWildcard+TypeFlagsIncludesEmptyObject+TypeFlagsIncludesInstantiable+TypeFlagsIncludesConstrainedTypeVariable+TypeFlagsIncludesError+TypeFlagsNotPrimitiveUnion","kind":"constGroup","status":"implemented","sigHash":"79e0a5b4d4e3bfa731cbf0af0f5d78713e49dfbbfb53cbee19852ac3b59ac2e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TypeFlagsNone+TypeFlagsAny+TypeFlagsUnknown+TypeFlagsUndefined+TypeFlagsNull+TypeFlagsVoid+TypeFlagsString+TypeFlagsNumber+TypeFlagsBigInt+TypeFlagsBoolean+TypeFlagsESSymbol+TypeFlagsStringLiteral+TypeFlagsNumberLiteral+TypeFlagsBigIntLiteral+TypeFlagsBooleanLiteral+TypeFlagsUniqueESSymbol+TypeFlagsEnumLiteral+TypeFlagsEnum+TypeFlagsNonPrimitive+TypeFlagsNever+TypeFlagsTypeParameter+TypeFlagsObject+TypeFlagsIndex+TypeFlagsTemplateLiteral+TypeFlagsStringMapping+TypeFlagsSubstitution+TypeFlagsIndexedAccess+TypeFlagsConditional+TypeFlagsUnion+TypeFlagsIntersection+TypeFlagsReserved1+TypeFlagsReserved2+TypeFlagsReserved3+TypeFlagsAnyOrUnknown+TypeFlagsNullable+TypeFlagsLiteral+TypeFlagsUnit+TypeFlagsFreshable+TypeFlagsStringOrNumberLiteral+TypeFlagsStringOrNumberLiteralOrUnique+TypeFlagsDefinitelyFalsy+TypeFlagsPossiblyFalsy+TypeFlagsIntrinsic+TypeFlagsStringLike+TypeFlagsNumberLike+TypeFlagsBigIntLike+TypeFlagsBooleanLike+TypeFlagsEnumLike+TypeFlagsESSymbolLike+TypeFlagsVoidLike+TypeFlagsPrimitive+TypeFlagsDefinitelyNonNullable+TypeFlagsDisjointDomains+TypeFlagsUnionOrIntersection+TypeFlagsStructuredType+TypeFlagsTypeVariable+TypeFlagsInstantiableNonPrimitive+TypeFlagsInstantiablePrimitive+TypeFlagsInstantiable+TypeFlagsStructuredOrInstantiable+TypeFlagsObjectFlagsType+TypeFlagsSimplifiable+TypeFlagsSingleton+TypeFlagsNarrowable+TypeFlagsIncludesMask+TypeFlagsIncludesMissingType+TypeFlagsIncludesNonWideningType+TypeFlagsIncludesWildcard+TypeFlagsIncludesEmptyObject+TypeFlagsIncludesInstantiable+TypeFlagsIncludesConstrainedTypeVariable+TypeFlagsIncludesError+TypeFlagsNotPrimitiveUnion","kind":"constGroup","status":"implemented","sigHash":"aea5b7479304fc10b8a8fa323d0feb54872010f94df85867b3685332faa87f56"}
  *
  * Go source:
  * const (
@@ -1183,7 +1185,7 @@ export const TypeFlagsNotPrimitiveUnion: TypeFlags =
   0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::varGroup::typeFlagNames","kind":"varGroup","status":"implemented","sigHash":"c753024a4232d6b27b9d88418e5396ae0f39c1250d4ef3db0aebe1a1771100f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::varGroup::typeFlagNames","kind":"varGroup","status":"implemented","sigHash":"fdd7b1c4a1b8e42cf02488423d0c3be19ce9449c94813aa3b51ff12b2d120b09"}
  *
  * Go source:
  * var typeFlagNames = [...]struct {
@@ -1254,7 +1256,7 @@ export let typeFlagNames: GoArray<{ flag: TypeFlags; name: string }, "29"> = [
 ] as GoArray<{ flag: TypeFlags; name: string }, "29">;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::func::FormatTypeFlags","kind":"func","status":"implemented","sigHash":"e927368847a2a91161816e5cb84351d111911678d373a466bf7d6ec7e8f3fd10"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::func::FormatTypeFlags","kind":"func","status":"implemented","sigHash":"d0e04635c8cf50ca99dba439417ca1205268291386426614f2955a2a4cb684de"}
  *
  * Go source:
  * func FormatTypeFlags(flags TypeFlags) []string {
@@ -1281,7 +1283,7 @@ export function FormatTypeFlags(flags: TypeFlags): GoSlice<string> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TypeFlags.String","kind":"method","status":"implemented","sigHash":"bbcbeb6f8b572483c758dc290ce29cfd71f395d4a907202d81930ac6022a8067"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TypeFlags.String","kind":"method","status":"implemented","sigHash":"31c2f9e26290c2647835a1089c9b4d35ef4a700ab3c9761c1de282647b5b68d0"}
  *
  * Go source:
  * func (f TypeFlags) String() string {
@@ -1344,7 +1346,7 @@ export function VarianceFlags_String(receiver: VarianceFlags): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ObjectFlags","kind":"type","status":"implemented","sigHash":"15c7d7c74b9e4609aec26eba8dd4a99a8a5b756ad44797ddf34016a36a66864a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ObjectFlags","kind":"type","status":"implemented","sigHash":"985cc5687be0c748355864d9a03ebdf3a9faa8df90aff2b840df33c501cf09c4"}
  *
  * Go source:
  * ObjectFlags uint32
@@ -1352,7 +1354,7 @@ export function VarianceFlags_String(receiver: VarianceFlags): string {
 export type ObjectFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ObjectFlagsNone+ObjectFlagsClass+ObjectFlagsInterface+ObjectFlagsReference+ObjectFlagsTuple+ObjectFlagsAnonymous+ObjectFlagsMapped+ObjectFlagsInstantiated+ObjectFlagsObjectLiteral+ObjectFlagsEvolvingArray+ObjectFlagsObjectLiteralPatternWithComputedProperties+ObjectFlagsReverseMapped+ObjectFlagsJsxAttributes+ObjectFlagsJSLiteral+ObjectFlagsFreshLiteral+ObjectFlagsArrayLiteral+ObjectFlagsPrimitiveUnion+ObjectFlagsContainsWideningType+ObjectFlagsContainsObjectOrArrayLiteral+ObjectFlagsNonInferrableType+ObjectFlagsCouldContainTypeVariablesComputed+ObjectFlagsCouldContainTypeVariables+ObjectFlagsMembersResolved+ObjectFlagsClassOrInterface+ObjectFlagsRequiresWidening+ObjectFlagsPropagatingFlags+ObjectFlagsInstantiatedMapped+ObjectFlagsObjectTypeKindMask+ObjectFlagsContainsSpread+ObjectFlagsObjectRestType+ObjectFlagsInstantiationExpressionType+ObjectFlagsSingleSignatureType+ObjectFlagsIsClassInstanceClone+ObjectFlagsIdenticalBaseTypeCalculated+ObjectFlagsIdenticalBaseTypeExists+ObjectFlagsUnresolvedMembers+ObjectFlagsFromTypeNode+ObjectFlagsIsGenericTypeComputed+ObjectFlagsIsGenericObjectType+ObjectFlagsIsGenericIndexType+ObjectFlagsIsGenericType+ObjectFlagsContainsIntersections+ObjectFlagsIsUnknownLikeUnionComputed+ObjectFlagsIsUnknownLikeUnion+ObjectFlagsIsNeverIntersectionComputed+ObjectFlagsIsNeverIntersection+ObjectFlagsIsConstrainedTypeVariable","kind":"constGroup","status":"implemented","sigHash":"15558a9d9329127d7ec52195464550b5ede8bdf0deb9040c5fd2a2699a0e7776"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ObjectFlagsNone+ObjectFlagsClass+ObjectFlagsInterface+ObjectFlagsReference+ObjectFlagsTuple+ObjectFlagsAnonymous+ObjectFlagsMapped+ObjectFlagsInstantiated+ObjectFlagsObjectLiteral+ObjectFlagsEvolvingArray+ObjectFlagsObjectLiteralPatternWithComputedProperties+ObjectFlagsReverseMapped+ObjectFlagsJsxAttributes+ObjectFlagsJSLiteral+ObjectFlagsFreshLiteral+ObjectFlagsArrayLiteral+ObjectFlagsPrimitiveUnion+ObjectFlagsContainsWideningType+ObjectFlagsContainsObjectOrArrayLiteral+ObjectFlagsNonInferrableType+ObjectFlagsCouldContainTypeVariablesComputed+ObjectFlagsCouldContainTypeVariables+ObjectFlagsMembersResolved+ObjectFlagsClassOrInterface+ObjectFlagsRequiresWidening+ObjectFlagsPropagatingFlags+ObjectFlagsInstantiatedMapped+ObjectFlagsObjectTypeKindMask+ObjectFlagsContainsSpread+ObjectFlagsObjectRestType+ObjectFlagsInstantiationExpressionType+ObjectFlagsSingleSignatureType+ObjectFlagsIsClassInstanceClone+ObjectFlagsIdenticalBaseTypeCalculated+ObjectFlagsIdenticalBaseTypeExists+ObjectFlagsUnresolvedMembers+ObjectFlagsFromTypeNode+ObjectFlagsIsGenericTypeComputed+ObjectFlagsIsGenericObjectType+ObjectFlagsIsGenericIndexType+ObjectFlagsIsGenericType+ObjectFlagsContainsIntersections+ObjectFlagsIsUnknownLikeUnionComputed+ObjectFlagsIsUnknownLikeUnion+ObjectFlagsIsNeverIntersectionComputed+ObjectFlagsIsNeverIntersection+ObjectFlagsIsConstrainedTypeVariable","kind":"constGroup","status":"implemented","sigHash":"435d7a7f26df8826593b2b0dfd3c731db0b463e0b5c7aef6eb6057bc9721549c"}
  *
  * Go source:
  * const (
@@ -1473,7 +1475,7 @@ export const ObjectFlagsIsNeverIntersection: int = 1 << 26;
 export const ObjectFlagsIsConstrainedTypeVariable: int = 1 << 27;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeAlias","kind":"type","status":"implemented","sigHash":"ac31cd554edf60bdb87690df0da0f914d5ea5d6200e1d23f439d5e995fe23407"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeAlias","kind":"type","status":"implemented","sigHash":"6b302ee2ca3d3aa440faae4a150d6dd86dd562e71461887666ecb08303a0d335"}
  *
  * Go source:
  * TypeAlias struct {
@@ -1523,7 +1525,7 @@ export function TypeAlias_TypeArguments(receiver: GoPtr<TypeAlias>): GoSlice<GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::Type","kind":"type","status":"implemented","sigHash":"2aaaa3ca2ce668390a4deaf3dd2632b4ac0244a3c723df8f29ba82e064fc5098"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::Type","kind":"type","status":"implemented","sigHash":"dd759ee9f467265fa23f157c699db0efdd1629e4718d49d55d40b5d493db9c13"}
  *
  * Go source:
  * Type struct {
@@ -2137,7 +2139,7 @@ export function Type_IsTupleType(receiver: GoPtr<Type>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeData","kind":"type","status":"implemented","sigHash":"cb9773d76e7a0ca25b0cd133e7f903b1a70e4bb9ae7367d8248fd99da5646634"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeData","kind":"type","status":"implemented","sigHash":"0ec5506009102c9c902d214d0208a83965f94cc90c3b565daedd757c8c90926f"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The interface receiver carrier adds the static Go receiver operation required to preserve dynamic type dispatch without a side table or wrapper object.","goSignatureHash":"16843bbd579fbf691b26db94d7b60899c384a1173af409771b7976d9a9340cc9","tsSignatureHash":"fad9b10b6b6ef54ed3d2ea303897392bb535919b50ea5cb921ef2b89916ce2f5"}
  *
  * Go source:
@@ -2162,7 +2164,7 @@ export interface TypeData extends GoInterfaceValue<unknown> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeBase","kind":"type","status":"implemented","sigHash":"e46ccdcb77acb513abe916aedfd55389afe55a0be1bf46f08ae6586d680062e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeBase","kind":"type","status":"implemented","sigHash":"12e53ba07002f6261f6f37b6462a637b55f055c33d5d917e1e699a0973a8e289"}
  *
  * Go source:
  * TypeBase struct {
@@ -2244,7 +2246,7 @@ export function TypeBase_AsUnionOrIntersectionType(receiver: GoPtr<TypeBase>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IntrinsicType","kind":"type","status":"implemented","sigHash":"1bf22cd08e15779ef3bcc888dc0d4e81237413a5825c77658f6fc65868ff50d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IntrinsicType","kind":"type","status":"implemented","sigHash":"d1d1d09acd96bd166bb1096b05665542a0079a673ebf0aa0971385a8f42f9163"}
  *
  * Go source:
  * IntrinsicType struct {
@@ -2268,7 +2270,7 @@ export function IntrinsicType_IntrinsicName(receiver: GoPtr<IntrinsicType>): str
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::LiteralType","kind":"type","status":"implemented","sigHash":"a40cc0de4cfcf3b923397a37713aa7b387de1c2f8789f8f8c9ca5506d57ad83a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::LiteralType","kind":"type","status":"implemented","sigHash":"e8701dffa8b37c969d5ce68094fe1ecc90bd2362389447183709d1ca9d969be4"}
  *
  * Go source:
  * LiteralType struct {
@@ -2334,7 +2336,7 @@ export function LiteralType_String(receiver: GoPtr<LiteralType>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::UniqueESSymbolType","kind":"type","status":"implemented","sigHash":"2027d6cd4d7825e6f709f3f4248d96353f998084c3cd9b4f4f401f92aa410e52"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::UniqueESSymbolType","kind":"type","status":"implemented","sigHash":"6052753be10e596d8059b4fe678041d070ff4b414e037279363871d19cf1ed2a"}
  *
  * Go source:
  * UniqueESSymbolType struct {
@@ -2348,7 +2350,7 @@ export interface UniqueESSymbolType {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ConstrainedType","kind":"type","status":"implemented","sigHash":"ce82fbf1012be5db9a85e0bd58b4baed6d4d045779ecb0142369632905a9818a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ConstrainedType","kind":"type","status":"implemented","sigHash":"0e56d3d2cbee140c3de25d0b6769cd814bad19795908a916adcbd0b1893eab3e"}
  *
  * Go source:
  * ConstrainedType struct {
@@ -2372,7 +2374,7 @@ export function ConstrainedType_AsConstrainedType(receiver: GoPtr<ConstrainedTyp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::StructuredType","kind":"type","status":"implemented","sigHash":"41db2d621cac9009453b89086219ba06dc816be099afff985eb148fe23e70a7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::StructuredType","kind":"type","status":"implemented","sigHash":"291dea22693e23a0dc4319edb02d8ffb9856fd084b9029dbd97c8d64d4dd2ff3"}
  *
  * Go source:
  * StructuredType struct {
@@ -2415,7 +2417,10 @@ export function StructuredType_AsStructuredType(receiver: GoPtr<StructuredType>)
  * }
  */
 export function StructuredType_CallSignatures(receiver: GoPtr<StructuredType>): GoSlice<GoPtr<Signature>> {
-  return (receiver!.signatures ?? []).slice(0, receiver!.callSignatureCount ?? 0);
+  if (GoSliceIsNil(receiver!.signatures)) {
+    return GoNilSlice<GoPtr<Signature>>();
+  }
+  return Clip(receiver!.signatures.slice(0, receiver!.callSignatureCount));
 }
 
 /**
@@ -2427,7 +2432,10 @@ export function StructuredType_CallSignatures(receiver: GoPtr<StructuredType>): 
  * }
  */
 export function StructuredType_ConstructSignatures(receiver: GoPtr<StructuredType>): GoSlice<GoPtr<Signature>> {
-  return (receiver!.signatures ?? []).slice(receiver!.callSignatureCount ?? 0);
+  if (GoSliceIsNil(receiver!.signatures)) {
+    return GoNilSlice<GoPtr<Signature>>();
+  }
+  return Clip(receiver!.signatures.slice(receiver!.callSignatureCount));
 }
 
 /**
@@ -2443,7 +2451,7 @@ export function StructuredType_Properties(receiver: GoPtr<StructuredType>): GoSl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ObjectType","kind":"type","status":"implemented","sigHash":"11abaec9fce3692a4d66a221189409e1def09c52c3ef7e13ee1fe1376e073dac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ObjectType","kind":"type","status":"implemented","sigHash":"c05fb66afcd915c1a6f96e14a40e483cc9be476bd99fdc01b3089275c08ee44a"}
  *
  * Go source:
  * ObjectType struct {
@@ -2471,7 +2479,7 @@ export function ObjectType_AsObjectType(receiver: GoPtr<ObjectType>): GoPtr<Obje
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeReference","kind":"type","status":"implemented","sigHash":"ca9caf6089f505886e94e7ddbe6e0a1409410747fcd5ac2501f5759901de4639"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeReference","kind":"type","status":"implemented","sigHash":"d5ad0dde2430c89d919b5289823b2cdfbfc2eaf79209f57bd478bb8c1a641f06"}
  *
  * Go source:
  * TypeReference struct {
@@ -2497,7 +2505,7 @@ export function TypeReference_AsTypeReference(receiver: GoPtr<TypeReference>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::InterfaceType","kind":"type","status":"implemented","sigHash":"c5ea41529ab8a4f55adb1e521d551bdeffc9a653b62f9a6cbba6957c5c694ec3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::InterfaceType","kind":"type","status":"implemented","sigHash":"6dd028cf65fe7b1a5f8ac408df734d1998a581bc118c4583024c4f140212e03e"}
  *
  * Go source:
  * InterfaceType struct {
@@ -2553,9 +2561,9 @@ export function InterfaceType_AsInterfaceType(receiver: GoPtr<InterfaceType>): G
  */
 export function InterfaceType_OuterTypeParameters(receiver: GoPtr<InterfaceType>): GoSlice<GoPtr<Type>> {
   if (receiver!.allTypeParameters.length === 0) {
-    return [] as GoSlice<GoPtr<Type>>;
+    return GoNilSlice<GoPtr<Type>>();
   }
-  return receiver!.allTypeParameters.slice(0, receiver!.outerTypeParameterCount);
+  return Clip(receiver!.allTypeParameters.slice(0, receiver!.outerTypeParameterCount));
 }
 
 /**
@@ -2571,9 +2579,9 @@ export function InterfaceType_OuterTypeParameters(receiver: GoPtr<InterfaceType>
  */
 export function InterfaceType_LocalTypeParameters(receiver: GoPtr<InterfaceType>): GoSlice<GoPtr<Type>> {
   if (receiver!.allTypeParameters.length === 0) {
-    return [] as GoSlice<GoPtr<Type>>;
+    return GoNilSlice<GoPtr<Type>>();
   }
-  return receiver!.allTypeParameters.slice(receiver!.outerTypeParameterCount, receiver!.allTypeParameters.length - 1);
+  return Clip(receiver!.allTypeParameters.slice(receiver!.outerTypeParameterCount, receiver!.allTypeParameters.length - 1));
 }
 
 /**
@@ -2589,13 +2597,13 @@ export function InterfaceType_LocalTypeParameters(receiver: GoPtr<InterfaceType>
  */
 export function InterfaceType_TypeParameters(receiver: GoPtr<InterfaceType>): GoSlice<GoPtr<Type>> {
   if (receiver!.allTypeParameters.length === 0) {
-    return [] as GoSlice<GoPtr<Type>>;
+    return GoNilSlice<GoPtr<Type>>();
   }
-  return receiver!.allTypeParameters.slice(0, receiver!.allTypeParameters.length - 1);
+  return Clip(receiver!.allTypeParameters.slice(0, receiver!.allTypeParameters.length - 1));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ElementFlags","kind":"type","status":"implemented","sigHash":"8173b36778cf9799a951d9a35b3d6f48342b3aff1cf8d89e00251b4f30fc47c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ElementFlags","kind":"type","status":"implemented","sigHash":"ac082d2e1b5aec09d512610abc268b2aa3a44e61696fc5e985e0664d01e04ec2"}
  *
  * Go source:
  * ElementFlags uint32
@@ -2603,7 +2611,7 @@ export function InterfaceType_TypeParameters(receiver: GoPtr<InterfaceType>): Go
 export type ElementFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ElementFlagsNone+ElementFlagsRequired+ElementFlagsOptional+ElementFlagsRest+ElementFlagsVariadic+ElementFlagsFixed+ElementFlagsVariable+ElementFlagsNonRequired+ElementFlagsNonRest","kind":"constGroup","status":"implemented","sigHash":"0f5ddf04737bcaef8d95b4882ef0388a9b79e768877cd1639c1652d35f870793"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ElementFlagsNone+ElementFlagsRequired+ElementFlagsOptional+ElementFlagsRest+ElementFlagsVariadic+ElementFlagsFixed+ElementFlagsVariable+ElementFlagsNonRequired+ElementFlagsNonRest","kind":"constGroup","status":"implemented","sigHash":"3d0c4d2ebdcaf2f5bbd72f82e3f38b3178f133fea8b561162b6e68e5b479d53d"}
  *
  * Go source:
  * const (
@@ -2629,7 +2637,7 @@ export const ElementFlagsNonRequired: ElementFlags = (ElementFlagsOptional | Ele
 export const ElementFlagsNonRest: ElementFlags = (ElementFlagsRequired | ElementFlagsOptional | ElementFlagsVariadic) >>> 0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TupleElementInfo","kind":"type","status":"implemented","sigHash":"b0e3725aee7eb05c6512f213d449b4219ef8d185d3f0c7de27323318e7acecc1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TupleElementInfo","kind":"type","status":"implemented","sigHash":"8ed4a5028e3cdc0e45747b734e6498978906fed423918663179a1f770767f925"}
  *
  * Go source:
  * TupleElementInfo struct {
@@ -2663,7 +2671,7 @@ export function TupleElementInfo_LabeledDeclaration(receiver: GoPtr<TupleElement
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TupleType","kind":"type","status":"implemented","sigHash":"576882c2dbd6dea2abcc1ccb8d2100af1e041bddff1f6df3083ac640e4a96081"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TupleType","kind":"type","status":"implemented","sigHash":"0cc23e94d40cf8d3b62c7b6d4bf838eb759e07ff43b6c041c33921ed9299ce70"}
  *
  * Go source:
  * TupleType struct {
@@ -2731,7 +2739,7 @@ export function TupleType_ElementInfos(receiver: GoPtr<TupleType>): GoSlice<Tupl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::InstantiationExpressionType","kind":"type","status":"implemented","sigHash":"b18c75669ed789f8b02ac27b2c703829ec18afd004cd79e5dc26009268cdc185"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::InstantiationExpressionType","kind":"type","status":"implemented","sigHash":"957aa6779a36b14bdb5965364423ad84f054e4237ce2438a3d0c7b97c7e6fa64"}
  *
  * Go source:
  * InstantiationExpressionType struct {
@@ -2745,7 +2753,7 @@ export interface InstantiationExpressionType {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MappedType","kind":"type","status":"implemented","sigHash":"070097adc44f4d165e04994aa119f05f475f5fecc5720921cacbe1863e71204e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MappedType","kind":"type","status":"implemented","sigHash":"e95dd42afdb903964244c5a6d609500c63d2c8b3f4c39c73ac6a26669e0c91df"}
  *
  * Go source:
  * MappedType struct {
@@ -2773,7 +2781,7 @@ export interface MappedType {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ReverseMappedType","kind":"type","status":"implemented","sigHash":"7dae44fba3a9d4d0a6e24563d76cceded5c05625801d0b857c716d0981335134"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ReverseMappedType","kind":"type","status":"implemented","sigHash":"78f05e2e21951f0783d7303f670e0fad2b5032afaedf8a2a258affa3ebdc34cd"}
  *
  * Go source:
  * ReverseMappedType struct {
@@ -2791,7 +2799,7 @@ export interface ReverseMappedType {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::EvolvingArrayType","kind":"type","status":"implemented","sigHash":"2e2158b5cf9c05cb7c8cee88c12cd0df276a7c61fe7d258e13da06e5e4240f3f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::EvolvingArrayType","kind":"type","status":"implemented","sigHash":"54826118169c995f10b3c51b9c18d6ec5e1a956ca9c157ea702364b922fe60ef"}
  *
  * Go source:
  * EvolvingArrayType struct {
@@ -2807,7 +2815,7 @@ export interface EvolvingArrayType {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::UnionOrIntersectionType","kind":"type","status":"implemented","sigHash":"b6134fce3a624180fbb8f633c08b60268b4c23eb5b2c7fe58272cb3e0b364b58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::UnionOrIntersectionType","kind":"type","status":"implemented","sigHash":"3630b6a7a9959024244f24dc47637d781efc754ed09697edadfa42d8d195fc80"}
  *
  * Go source:
  * UnionOrIntersectionType struct {
@@ -2849,7 +2857,7 @@ export function UnionOrIntersectionType_Types(receiver: GoPtr<UnionOrIntersectio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::UnionType","kind":"type","status":"implemented","sigHash":"6034ad0b7153fbbbabc172c1f454cf32bdae4fb0adf552f7d60eda5dad8c3b81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::UnionType","kind":"type","status":"implemented","sigHash":"b66281ea8659118d8aaf76905d9776b25fdf7acdf8b772d58eda38bde944cbd6"}
  *
  * Go source:
  * UnionType struct {
@@ -2871,7 +2879,7 @@ export interface UnionType {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IntersectionType","kind":"type","status":"implemented","sigHash":"8050412a17ecac2a23a68f53f1703934ab314bfee575c2098999e92aff86081a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IntersectionType","kind":"type","status":"implemented","sigHash":"627c85007cf8fc1389f4c8a0ae633746b29684599e23b5dbcbf56164d21cd52f"}
  *
  * Go source:
  * IntersectionType struct {
@@ -2887,7 +2895,7 @@ export interface IntersectionType {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeParameter","kind":"type","status":"implemented","sigHash":"4b7d8bcd7065490042679bc4d328be62d66c4d42dff3ffb6d9654f4fb7a0209b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeParameter","kind":"type","status":"implemented","sigHash":"6ef5ab739a7f045965f98d932e8587c7c4f820a677c556529ba28a1a8b2eb1bc"}
  *
  * Go source:
  * TypeParameter struct {
@@ -2919,7 +2927,7 @@ export function TypeParameter_IsThisType(receiver: GoPtr<TypeParameter>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IndexFlags","kind":"type","status":"implemented","sigHash":"20ca46e5ca1c7ed18acc57789a84a7468d3ec64ff92e4657497f7cef63ace52a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IndexFlags","kind":"type","status":"implemented","sigHash":"b9b0cc34acee35b2c3df8e1bb230b2933ba319269c3bf7963a0f9b3b53e679e8"}
  *
  * Go source:
  * IndexFlags uint32
@@ -2927,7 +2935,7 @@ export function TypeParameter_IsThisType(receiver: GoPtr<TypeParameter>): bool {
 export type IndexFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::IndexFlagsNone+IndexFlagsStringsOnly+IndexFlagsNoIndexSignatures+IndexFlagsNoReducibleCheck","kind":"constGroup","status":"implemented","sigHash":"848a3389b1917b42dc0a810f471216e938348fca2d76c2eb23a41239ec1a1b72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::IndexFlagsNone+IndexFlagsStringsOnly+IndexFlagsNoIndexSignatures+IndexFlagsNoReducibleCheck","kind":"constGroup","status":"implemented","sigHash":"3463d5ba384a0294be300e0f0bca42f2e591680697d5e274617b55eb335a1a9c"}
  *
  * Go source:
  * const (
@@ -2943,7 +2951,7 @@ export const IndexFlagsNoIndexSignatures: IndexFlags = 1 << 1;
 export const IndexFlagsNoReducibleCheck: IndexFlags = 1 << 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IndexType","kind":"type","status":"implemented","sigHash":"0de423dcbef20d158775780bd5ad01b92c653184c977adccc739e402cf1aca77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IndexType","kind":"type","status":"implemented","sigHash":"4824d34ed908b74d4a1ce2df88d4170e00c0463a161420b4d1f8268e992ee2dc"}
  *
  * Go source:
  * IndexType struct {
@@ -2969,7 +2977,7 @@ export function IndexType_Target(receiver: GoPtr<IndexType>): GoPtr<Type> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IndexedAccessType","kind":"type","status":"implemented","sigHash":"20f66ba167735dddb85b1796950cfbcb3ff1fb0114c33c7940edb005d0e2bbdb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IndexedAccessType","kind":"type","status":"implemented","sigHash":"ba1eeab19c16f6b355de5dbbedfd26b381dbf36d140a9059f0f8574057c93183"}
  *
  * Go source:
  * IndexedAccessType struct {
@@ -3007,7 +3015,7 @@ export function IndexedAccessType_IndexType(receiver: GoPtr<IndexedAccessType>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TemplateLiteralType","kind":"type","status":"implemented","sigHash":"e8aa3d5cb34be471e462b60d8c1e18269887850610c22da8fcc0c95b750aa3c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TemplateLiteralType","kind":"type","status":"implemented","sigHash":"fd61db194b81291daf8a49d81fd35c6cdbe61eabadb285154062f8261a61a9c1"}
  *
  * Go source:
  * TemplateLiteralType struct {
@@ -3043,7 +3051,7 @@ export function TemplateLiteralType_Types(receiver: GoPtr<TemplateLiteralType>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::StringMappingType","kind":"type","status":"implemented","sigHash":"e591a7779cfff66883bd8e16f77f85aabf70296c17827a68b53b9fa8716d23b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::StringMappingType","kind":"type","status":"implemented","sigHash":"9816d4ee3843e5d51ad13889fe800ed985eec792956d32dbc698fd4baae2fa77"}
  *
  * Go source:
  * StringMappingType struct {
@@ -3067,7 +3075,7 @@ export function StringMappingType_Target(receiver: GoPtr<StringMappingType>): Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SubstitutionType","kind":"type","status":"implemented","sigHash":"f42d362720ee24221c0b5e32ca805b3de189f024856d9304d953d9604faac3ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SubstitutionType","kind":"type","status":"implemented","sigHash":"5315e5519ba2ce6114a360f79d4eba17e1c9f225ac21b4f4c55949a58386991e"}
  *
  * Go source:
  * SubstitutionType struct {
@@ -3103,7 +3111,7 @@ export function SubstitutionType_SubstConstraint(receiver: GoPtr<SubstitutionTyp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ConditionalRoot","kind":"type","status":"implemented","sigHash":"424b2c5b1128de1df0b948b7b7e4032257ff529e6a15490fed60ad1c4926a448"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ConditionalRoot","kind":"type","status":"implemented","sigHash":"10a7b0b739fe0b0606eed4560065892eef29df703c569817e6577f0baaec7de3"}
  *
  * Go source:
  * ConditionalRoot struct {
@@ -3129,7 +3137,7 @@ export interface ConditionalRoot {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ConditionalType","kind":"type","status":"implemented","sigHash":"446fe53b743912847511aa8f4bb582aff2279e3068b5ce0350facaf993244552"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ConditionalType","kind":"type","status":"implemented","sigHash":"72baaa576ba9c0a2305ed19f3b79642a12e6786398d75443e2eb3d5719ca2580"}
  *
  * Go source:
  * ConditionalType struct {
@@ -3181,7 +3189,7 @@ export function ConditionalType_ExtendsType(receiver: GoPtr<ConditionalType>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SignatureFlags","kind":"type","status":"implemented","sigHash":"ab262bf311c08da6802b32ec1be7cf8dc5eb0c54624900cf70ef7749177f0f40"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SignatureFlags","kind":"type","status":"implemented","sigHash":"df0cc8e817bb23d3d045ce768dfeb18f94209c5ef8e378bab641683555d96402"}
  *
  * Go source:
  * SignatureFlags uint32
@@ -3189,7 +3197,7 @@ export function ConditionalType_ExtendsType(receiver: GoPtr<ConditionalType>): G
 export type SignatureFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::SignatureFlagsNone+SignatureFlagsHasRestParameter+SignatureFlagsHasLiteralTypes+SignatureFlagsConstruct+SignatureFlagsAbstract+SignatureFlagsIsInnerCallChain+SignatureFlagsIsOuterCallChain+SignatureFlagsIsUntypedSignatureInJSFile+SignatureFlagsIsNonInferrable+SignatureFlagsIsSignatureCandidateForOverloadFailure+SignatureFlagsPropagatingFlags+SignatureFlagsCallChainFlags","kind":"constGroup","status":"implemented","sigHash":"114ed2f5c585c6b4e007dccfe55b1b491d244771e1047ff20f20948b5c5c8cf4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::SignatureFlagsNone+SignatureFlagsHasRestParameter+SignatureFlagsHasLiteralTypes+SignatureFlagsConstruct+SignatureFlagsAbstract+SignatureFlagsIsInnerCallChain+SignatureFlagsIsOuterCallChain+SignatureFlagsIsUntypedSignatureInJSFile+SignatureFlagsIsNonInferrable+SignatureFlagsIsSignatureCandidateForOverloadFailure+SignatureFlagsPropagatingFlags+SignatureFlagsCallChainFlags","kind":"constGroup","status":"implemented","sigHash":"eb262c586aa738cadd9907148d7e6dbc3a6eea212fd9930699fdb67a9b57bd1b"}
  *
  * Go source:
  * const (
@@ -3234,7 +3242,7 @@ export const SignatureFlagsCallChainFlags: SignatureFlags =
   (SignatureFlagsIsInnerCallChain | SignatureFlagsIsOuterCallChain) >>> 0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::Signature","kind":"type","status":"implemented","sigHash":"d3a5a81eee7b1c3e3b367d3032eca4dea84378962d4e3644796db04c13f6e1c7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::Signature","kind":"type","status":"implemented","sigHash":"2aa635e4411e9fe6132f76a0e64405f097e606ec5723eb3a6914d5e1f8a7c779"}
  *
  * Go source:
  * Signature struct {
@@ -3366,7 +3374,7 @@ export function Signature_MinArgumentCount(receiver: GoPtr<Signature>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::CompositeSignature","kind":"type","status":"implemented","sigHash":"e39032c93f95ea566e79718783a8a1210ed6c0142a0081b023a01f35211c28c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::CompositeSignature","kind":"type","status":"implemented","sigHash":"4c8c24105cb438a1c249794b97891a52b56770ae012705d4f24ef8d6c7cd32d2"}
  *
  * Go source:
  * CompositeSignature struct {
@@ -3380,7 +3388,7 @@ export interface CompositeSignature {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypePredicateKind","kind":"type","status":"implemented","sigHash":"9faa72bd03a0d91333779e1d44b4305bd26e6b840d4497024a10df4fc35f0adc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypePredicateKind","kind":"type","status":"implemented","sigHash":"219523222137bb5db02f6438c0e4bf50e2f57d34ac8f8d87b00a09583b1302b7"}
  *
  * Go source:
  * TypePredicateKind int32
@@ -3388,7 +3396,7 @@ export interface CompositeSignature {
 export type TypePredicateKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TypePredicateKindThis+TypePredicateKindIdentifier+TypePredicateKindAssertsThis+TypePredicateKindAssertsIdentifier","kind":"constGroup","status":"implemented","sigHash":"4e16e530b5a4798b60c6dc07a2c3214aa25e59ff1dd16b3fe12976631062f424"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TypePredicateKindThis+TypePredicateKindIdentifier+TypePredicateKindAssertsThis+TypePredicateKindAssertsIdentifier","kind":"constGroup","status":"implemented","sigHash":"c3f23f52bcc9ce27738ed3a98895f4fda44342b1c63b590b0cfbd406fb14de8a"}
  *
  * Go source:
  * const (
@@ -3404,7 +3412,7 @@ export const TypePredicateKindAssertsThis: TypePredicateKind = 2;
 export const TypePredicateKindAssertsIdentifier: TypePredicateKind = 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypePredicate","kind":"type","status":"implemented","sigHash":"5805ec475d0857326ab4daa2551f7bffa257f9422c5454d7f72cd471985bdb54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypePredicate","kind":"type","status":"implemented","sigHash":"a7c781d616b964b7e61d877ccbb33408e487c129862f8cce1ea7c8969058a566"}
  *
  * Go source:
  * TypePredicate struct {
@@ -3470,7 +3478,7 @@ export function TypePredicate_ParameterName(receiver: GoPtr<TypePredicate>): str
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IndexInfo","kind":"type","status":"implemented","sigHash":"206f6d34df1dc009195d4f975c81bb377c8cc22733d15ce66c2af60f8d4c861b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IndexInfo","kind":"type","status":"implemented","sigHash":"f9ace2dd15609ba770696e3e130931a6b2064df9359e718e11fdaacbb27aeda1"}
  *
  * Go source:
  * IndexInfo struct {
@@ -3540,7 +3548,7 @@ export function IndexInfo_Declaration(receiver: GoPtr<IndexInfo>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::Ternary","kind":"type","status":"implemented","sigHash":"65225a2a63509ad6ae706f708e0b8f0c092f96ab9ce48631b6d0c0fb0a553282"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::Ternary","kind":"type","status":"implemented","sigHash":"b37df4e6d3f066d222549b60141a3e22c039f7d5ddba53b7339216ec60661f91"}
  *
  * Go source:
  * Ternary int8
@@ -3548,7 +3556,7 @@ export function IndexInfo_Declaration(receiver: GoPtr<IndexInfo>): GoPtr<Node> {
 export type Ternary = sbyte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TernaryFalse+TernaryUnknown+TernaryMaybe+TernaryTrue","kind":"constGroup","status":"implemented","sigHash":"766cd03a278156f040259af49ea9051351d1431e322285e2e843a1c7974ec4b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::TernaryFalse+TernaryUnknown+TernaryMaybe+TernaryTrue","kind":"constGroup","status":"implemented","sigHash":"0989e1581c97be756f4453a73501a8990dc3015ac188b9ebe7ff90191a2b576a"}
  *
  * Go source:
  * const (
@@ -3564,7 +3572,7 @@ export const TernaryMaybe: Ternary = 3;
 export const TernaryTrue: Ternary = -1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeComparer","kind":"type","status":"implemented","sigHash":"e63b7abe915e7fcb49d662ed92de4e60ddf91a18c6d58380770eb65d1ebf71c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeComparer","kind":"type","status":"implemented","sigHash":"00c981ae5aa0dc7241fd2863141d7fc89fe52f2460240808960e493e5d9b9ec2"}
  *
  * Go source:
  * TypeComparer func(s *Type, t *Type, reportErrors bool) Ternary
@@ -3572,7 +3580,7 @@ export const TernaryTrue: Ternary = -1;
 export type TypeComparer = GoFunc<(s: GoPtr<Type>, t: GoPtr<Type>, reportErrors: bool) => Ternary>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::LanguageFeatureMinimumTargetMap","kind":"type","status":"implemented","sigHash":"09dde4006da9de6c518eb754e1b4afef60d3432668ab587704bfcdfbe99e267c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::LanguageFeatureMinimumTargetMap","kind":"type","status":"implemented","sigHash":"a4e8fbf7840067676694ece6a4929081ad3c2dcade3ca8928b034f281c87313f"}
  *
  * Go source:
  * LanguageFeatureMinimumTargetMap struct {
@@ -3622,7 +3630,7 @@ export interface LanguageFeatureMinimumTargetMap {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::varGroup::LanguageFeatureMinimumTarget","kind":"varGroup","status":"implemented","sigHash":"b7fac77e692c413c3ae50b64bcefead96068fbec1d23b66d7b93164c3233c894"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::varGroup::LanguageFeatureMinimumTarget","kind":"varGroup","status":"implemented","sigHash":"0f5f7f7056825f77a5c593ae12f810e4091d8ea53208e733375529819f3f7834"}
  *
  * Go source:
  * var LanguageFeatureMinimumTarget = LanguageFeatureMinimumTargetMap{
@@ -3672,7 +3680,7 @@ export let LanguageFeatureMinimumTarget: LanguageFeatureMinimumTargetMap = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::StringLiteralType","kind":"type","status":"implemented","sigHash":"4108fdc8fbd614a40a60fe1ed8ec922d142307644bb44059745466a24444a1fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::StringLiteralType","kind":"type","status":"implemented","sigHash":"a394c237938cf6cfaaca603244cfc23d0912642301ec74a9734fba649ab83c08"}
  *
  * Go source:
  * StringLiteralType = Type

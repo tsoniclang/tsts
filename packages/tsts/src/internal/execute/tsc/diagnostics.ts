@@ -48,7 +48,7 @@ export function getFormatOptsOfSys(sys: GoInterface<System>, locale: Locale): Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::type::DiagnosticReporter","kind":"type","status":"implemented","sigHash":"d54e3a02ed1e98174c2b252973522aa4c757fbc2775ebfb8a9775b5cdab53ad6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::type::DiagnosticReporter","kind":"type","status":"implemented","sigHash":"2b477dcdd3e55876bf09b5c3c89e67e917ac705a3a30c1cc62b7ede4abe44299"}
  *
  * Go source:
  * DiagnosticReporter = func(*ast.Diagnostic)
@@ -142,7 +142,7 @@ export function shouldBePretty(sys: GoInterface<System>, options: GoPtr<Compiler
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::type::colors","kind":"type","status":"implemented","sigHash":"7400b902549ada4f1e8257863c1b8e627954b40424c0456c9cd0158c8a38072c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::type::colors","kind":"type","status":"implemented","sigHash":"c4d5768fc6628b39d2b9487938afcb7647262510ab742d3001efe77d7116e219"}
  *
  * Go source:
  * colors struct {
@@ -300,7 +300,7 @@ export function colors_brightWhite(receiver: GoPtr<colors>, str: string): string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::type::DiagnosticsReporter","kind":"type","status":"implemented","sigHash":"91cec3fe70a52450aba483010aebb25cb7c769e63f4490efc31c695d63277f95"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::type::DiagnosticsReporter","kind":"type","status":"implemented","sigHash":"acc1d29496696cbc139f7ef284151ce1753a53050ec5b169ce8effe7c7a0c384"}
  *
  * Go source:
  * DiagnosticsReporter = func(diagnostics []*ast.Diagnostic)

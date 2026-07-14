@@ -19,7 +19,7 @@ import type { Entries, FileInfo, FS as FS_a37200a9, WalkDirFunc } from "../vfs.j
 
 import type { GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::blockingOpSema+readSema+writeSema","kind":"varGroup","status":"implemented","sigHash":"8ca24dac47eb68e250738b5a02087ad16e286c3e26827f2d686625869672031b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::blockingOpSema+readSema+writeSema","kind":"varGroup","status":"implemented","sigHash":"0c5faa8953370a50d7ec6102bec9ee2012915304da6e4181be647e240a7fae83"}
  *
  * Go source:
  * var (
@@ -36,7 +36,7 @@ export let readSema: GoPtr<LimitedSemaphore> = NewLimitedSemaphore(128 as int);
 export let writeSema: GoPtr<LimitedSemaphore> = NewLimitedSemaphore(32 as int);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::func::FS","kind":"func","status":"implemented","sigHash":"669d6932edc66d4ae7f33b93dab185415c4c4934d0a52dc971e87a956312ddc0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::func::FS","kind":"func","status":"implemented","sigHash":"df91e68c1f5edd8c68ed32c14ae401de5c838e7f516f8e209a2afe9d77ad1aa0"}
  *
  * Go source:
  * func FS() vfs.FS {
@@ -55,7 +55,7 @@ const _osFS: osFS = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::osVFS","kind":"varGroup","status":"implemented","sigHash":"e849cf504ee652ab59180aee0eaa01d7359beab126ae59d5c18f4e161ac17464"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::osVFS","kind":"varGroup","status":"implemented","sigHash":"0db9418b1a1698e977c6d2c8d21a5d6a7ea74625c1a6b644536cac0a7b98f78e"}
  *
  * Go source:
  * var osVFS vfs.FS = &osFS{
@@ -81,7 +81,7 @@ export let osVFS: GoInterface<FS_a37200a9> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::type::osFS","kind":"type","status":"implemented","sigHash":"3a82f83ca59d7882da96b6b5265cbbe6638b1f06b9033dcc292b05f511557f3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::type::osFS","kind":"type","status":"implemented","sigHash":"f1d294754444f3c78597e1f4859fe1c1fd7653733695d28c9f96cc99068accff"}
  *
  * Go source:
  * osFS struct {
@@ -93,7 +93,7 @@ export interface osFS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::isFileSystemCaseSensitive","kind":"varGroup","status":"implemented","sigHash":"1d811db1c8f7dfba5f508c6b54375fed884f4b3d8b1949fe5cb7dece3cafbfe6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::isFileSystemCaseSensitive","kind":"varGroup","status":"implemented","sigHash":"d419045f49b010152c63cdd191cd84a3906cabfe575e2b036182c44bcf5100ed"}
  *
  * Go source:
  * var isFileSystemCaseSensitive = func() bool {
@@ -129,7 +129,7 @@ export interface osFS {
 export let isFileSystemCaseSensitive: bool = (process.platform !== "win32" && process.platform !== "darwin") as bool;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::func::swapCase","kind":"func","status":"implemented","sigHash":"30c3bfea8c42cbc4344fa0f76aeb35c8940c880093af4577fb5acef5a5365aa9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::func::swapCase","kind":"func","status":"implemented","sigHash":"c2221c249631c179cca674ae987f513adaaf7a3d2d942dce0470cfca2d93f0ce"}
  *
  * Go source:
  * func swapCase(str string) string {
@@ -237,7 +237,7 @@ export function osFS_Stat(receiver: GoPtr<osFS>, path: string): GoInterface<File
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::limitedWalkDirFuncPool","kind":"varGroup","status":"implemented","sigHash":"64a6535a071e12d4a2fba9b3669975334d44ff7e548385f9cfd4591b546cb6d8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::limitedWalkDirFuncPool","kind":"varGroup","status":"implemented","sigHash":"9fcc4a6c0429cfd15f6d576c7a83ad0536e8acf7b0432f2d8118c8e6f95d59b9"}
  *
  * Go source:
  * var limitedWalkDirFuncPool = sync.Pool{
@@ -286,7 +286,7 @@ export function putLimitedWalkDirFunc(w: GoPtr<limitedWalkDirFunc>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::type::limitedWalkDirFunc","kind":"type","status":"implemented","sigHash":"bb5d5101cf5a9a2ed672d80b8ea774275b528cd7c7395c8b44ec0bc565643714"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::type::limitedWalkDirFunc","kind":"type","status":"implemented","sigHash":"78f1411d878844de94436beb425f56c11bf504c8a3e0ddcaaa576a5e82caa2f8"}
  *
  * Go source:
  * limitedWalkDirFunc struct {

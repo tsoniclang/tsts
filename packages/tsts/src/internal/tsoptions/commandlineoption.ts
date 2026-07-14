@@ -22,7 +22,7 @@ import {
 } from "./enummaps.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::CommandLineOptionKind","kind":"type","status":"implemented","sigHash":"c8f201add3454d31edf99485739310a8aedb1f1cfe566de059b461899ef7913f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::CommandLineOptionKind","kind":"type","status":"implemented","sigHash":"cac4255e78f9d18136c0af3d56004a513fbfef7ff5c62d31d38267e6c8c6ecb5"}
  *
  * Go source:
  * CommandLineOptionKind string
@@ -30,7 +30,7 @@ import {
 export type CommandLineOptionKind = string;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::constGroup::CommandLineOptionTypeString+CommandLineOptionTypeNumber+CommandLineOptionTypeBoolean+CommandLineOptionTypeObject+CommandLineOptionTypeList+CommandLineOptionTypeListOrElement+CommandLineOptionTypeEnum","kind":"constGroup","status":"implemented","sigHash":"d8ad767bae6b9baf6382e615e0866640d51278ae68f863a91a7a68926e9ca5a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::constGroup::CommandLineOptionTypeString+CommandLineOptionTypeNumber+CommandLineOptionTypeBoolean+CommandLineOptionTypeObject+CommandLineOptionTypeList+CommandLineOptionTypeListOrElement+CommandLineOptionTypeEnum","kind":"constGroup","status":"implemented","sigHash":"4525b25d2fda128bb5aa7f678b34df9f1bc5dd76ad1a8fac276345452f11d1ae"}
  *
  * Go source:
  * const (
@@ -52,7 +52,7 @@ export const CommandLineOptionTypeListOrElement: CommandLineOptionKind = "listOr
 export const CommandLineOptionTypeEnum: CommandLineOptionKind = "enum"; // map
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::CommandLineOption","kind":"type","status":"implemented","sigHash":"6d590a9acbb33fd67624c842a9ff41b0a9bc6c01548ec6e270e6a3aa10e6a34a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::CommandLineOption","kind":"type","status":"implemented","sigHash":"6da6a33dbea845804e646c962e324f14d4e90575329cc0260aec28e4601693b2"}
  *
  * Go source:
  * CommandLineOption struct {
@@ -135,7 +135,7 @@ export interface CommandLineOption {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::extraValidation","kind":"type","status":"implemented","sigHash":"2ff253eb0160e5def2d0a07bc45cf2c5f91c06c52809acf2c43286acb2391b74"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::extraValidation","kind":"type","status":"implemented","sigHash":"6465c03adf14ae2569abbc11347d791c253e62212cb76dabb5abe0dc86f3e110"}
  *
  * Go source:
  * extraValidation string
@@ -143,7 +143,7 @@ export interface CommandLineOption {
 export type extraValidation = string;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::constGroup::extraValidationNone+extraValidationSpec+extraValidationLocale","kind":"constGroup","status":"implemented","sigHash":"3ad826842f1c29f66ecd43899f2e672e473d9e1cefa44bca14a7a426a381ec67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::constGroup::extraValidationNone+extraValidationSpec+extraValidationLocale","kind":"constGroup","status":"implemented","sigHash":"44d92f1f41ad2b1d807ba4fa37d60abdcf1a8a7dcd858fed3684ba0b955acd15"}
  *
  * Go source:
  * const (
@@ -347,7 +347,7 @@ export function commandLineOptionsToMap(compilerOptions: GoSlice<GoPtr<CommandLi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionElements","kind":"varGroup","status":"implemented","sigHash":"8a8a530e9218e40f68d7544870a2cef90e2ff234717d659d40227396c4f07112"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionElements","kind":"varGroup","status":"implemented","sigHash":"a89d8917338db126a526ded5f94f6f0bc5cae876572c2d96672566145001aa3f"}
  */
 export let commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> = new globalThis.Map<string, GoPtr<CommandLineOption>>([
   ["lib", newCommandLineOption({
@@ -423,7 +423,7 @@ export let commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> = 
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionEnumMap","kind":"varGroup","status":"implemented","sigHash":"a301347231d5e418911578fe0680dcf763fce61d2945cb6b036c0a94d068f3cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionEnumMap","kind":"varGroup","status":"implemented","sigHash":"6ba360618fbd22cd79d8782cc418acf0ee38adb3ce09040dad927df8ce5688eb"}
  *
  * Go source:
  * var commandLineOptionEnumMap = map[string]*collections.OrderedMap[string, any]{
@@ -453,7 +453,7 @@ export let commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap<string, GoIn
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionDeprecated","kind":"varGroup","status":"implemented","sigHash":"e9905821905d457a4ce0cbfd522cb6c6c35d728eeadca17830af492602561c56"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionDeprecated","kind":"varGroup","status":"implemented","sigHash":"6ce500147e28c635efb0324645e44fe8053141fd71855b387a7d500b82e786dc"}
  *
  * Go source:
  * var commandLineOptionDeprecated = map[string]*collections.Set[string]{
@@ -469,7 +469,7 @@ export let commandLineOptionDeprecated: GoMap<string, GoPtr<Set<string>>> = new 
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::CompilerOptionsValue","kind":"type","status":"implemented","sigHash":"3a5cbad0e2a88d5da0eb998c39b22419c304ca55e1272d38f591f592495d1d04"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::CompilerOptionsValue","kind":"type","status":"implemented","sigHash":"77f4e718f5fa2a50e94d07ca83ad52c8889d713c71e57dd5d8df1d646355d353"}
  *
  * Go source:
  * CompilerOptionsValue any

@@ -4,7 +4,7 @@ import { CombinePaths, FileExtensionIs } from "../tspath/path.js";
 import { ExtensionJson } from "../tspath/extension.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/projectreference.go::type::ProjectReference","kind":"type","status":"implemented","sigHash":"a64ee7e7a37a15056bba4b6486d88bfaeab0a36db99a717aee8f8ce7df77f325"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/projectreference.go::type::ProjectReference","kind":"type","status":"implemented","sigHash":"aef949b889fd3d3a0dc00ecc9ce3340e7f2c4c7fc3c80d9a22a4f8487ebd5ef4"}
  *
  * Go source:
  * ProjectReference struct {

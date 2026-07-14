@@ -36,7 +36,7 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_Vis
 
 import type { GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::type::LegacyDecoratorsTransformer","kind":"type","status":"implemented","sigHash":"3e8b6000d7df99dfb03cbd1021762c270351f393bd09b326bf1c1b0c9648c6e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::type::LegacyDecoratorsTransformer","kind":"type","status":"implemented","sigHash":"b66f56e4f4d049b0ce7ef446589bacd50681f85953dddb5eda4dd31aa81e8d7f"}
  *
  * Go source:
  * LegacyDecoratorsTransformer struct {
@@ -361,7 +361,7 @@ export function LegacyDecoratorsTransformer_visitParamerDeclaration(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitPropertyNameOfClassElement","kind":"method","status":"implemented","sigHash":"927767a92fe7140c33b5a5842951a84df67cacf549de8fc925df359daaf67442"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitPropertyNameOfClassElement","kind":"method","status":"implemented","sigHash":"d393bd712dd5bc31e0c2c8159496e8082101d4ffee303d5930aa9827d702a4c7"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) visitPropertyNameOfClassElement(member *ast.Node) *ast.Node {
@@ -671,7 +671,7 @@ export function LegacyDecoratorsTransformer_visitClassDeclaration(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformClassDeclarationWithoutClassDecorators","kind":"method","status":"implemented","sigHash":"5ad776853a6033991794f5eb9095fef9385dbd6f943a7c33c99c2cc43c44b729"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformClassDeclarationWithoutClassDecorators","kind":"method","status":"implemented","sigHash":"de378336411e09aeb7e47b261ae6a5b3a18168a547239b6ff0a0eca4ac52ba57"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) transformClassDeclarationWithoutClassDecorators(node *ast.ClassDeclaration, name *ast.DeclarationName) *ast.Node {
@@ -753,7 +753,7 @@ export function LegacyDecoratorsTransformer_pushEnclosingClass(receiver: GoPtr<L
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformClassDeclarationWithClassDecorators","kind":"method","status":"implemented","sigHash":"321e9372200c04011123ce2dfdcea24a7acb8c7b5c428b5718e66fb5c866058c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformClassDeclarationWithClassDecorators","kind":"method","status":"implemented","sigHash":"0ca44645e22f5e6909df3625b4caf6f0a6a88592861cd568a5021945944395ed"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) transformClassDeclarationWithClassDecorators(node *ast.ClassDeclaration, name *ast.DeclarationName) *ast.Node {
@@ -1102,7 +1102,7 @@ export function LegacyDecoratorsTransformer_hasInternalStaticReference(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.getClassAliasIfNeeded","kind":"method","status":"implemented","sigHash":"ab5b4e7e07989080147a2e0dbccf32b4c7eb72ff851f70912002dcb0d9c06823"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.getClassAliasIfNeeded","kind":"method","status":"implemented","sigHash":"3138e61fc92f0e60d9b95bb391c9a765be8704943700b1f13bd59cb8f7cc946a"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) getClassAliasIfNeeded(node *ast.ClassDeclaration) *ast.Node {
@@ -1138,7 +1138,7 @@ export function LegacyDecoratorsTransformer_getClassAliasIfNeeded(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.getConstructorDecorationStatement","kind":"method","status":"implemented","sigHash":"02451a6860c0590c6008ec72ae90ea889c9e6bda4f00e0404017792d0aec016b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.getConstructorDecorationStatement","kind":"method","status":"implemented","sigHash":"e490102b44100cb9935fc26461e4d52c50d203327171f7bf032a20c15c5b9dad"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) getConstructorDecorationStatement(node *ast.ClassDeclaration) *ast.Node {
@@ -1164,7 +1164,7 @@ export function LegacyDecoratorsTransformer_getConstructorDecorationStatement(re
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.generateConstructorDecorationExpression","kind":"method","status":"implemented","sigHash":"cf00711fb06a148e0162149523f30a547329eb71088b409ae0d77cf65d94d005"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.generateConstructorDecorationExpression","kind":"method","status":"implemented","sigHash":"87edbab3fc574649baabe94888033196f6f6e3aed78663a48698e63d3bd81b26"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) generateConstructorDecorationExpression(node *ast.ClassDeclaration) *ast.Node {
@@ -1331,7 +1331,7 @@ export function hasClassElementWithDecoratorContainingPrivateIdentifierInExpress
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::type::allDecorators","kind":"type","status":"implemented","sigHash":"e3730293c72cf4bf32bc478a5b918cf16fc71e965e1aa3883d1ced8b856bb706"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::type::allDecorators","kind":"type","status":"implemented","sigHash":"10c7e23cf71dd315c01d6cc4fcbd7ea2a30c07e8250db341426a432bbab20e65"}
  *
  * Go source:
  * allDecorators struct {
@@ -1345,7 +1345,7 @@ export interface allDecorators {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getAllDecoratorsOfClass","kind":"func","status":"implemented","sigHash":"7ef0493a6b9e244572fff922444cdbacc645c3b88d1cabc51cc7928345189958"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getAllDecoratorsOfClass","kind":"func","status":"implemented","sigHash":"481da4c3d4c97cddadc42167f141a0651f6b5e2920bbce2651653719188f8aff"}
  *
  * Go source:
  * func getAllDecoratorsOfClass(node *ast.ClassDeclaration, useLegacyDecorators bool) *allDecorators {
@@ -1373,7 +1373,7 @@ export function getAllDecoratorsOfClass(node: GoPtr<ClassDeclaration>, useLegacy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getAllDecoratorsOfClassElement","kind":"func","status":"implemented","sigHash":"08d51b815d1c87417d2f251339df6a0a75bee0837260f3f010729e457545f90d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getAllDecoratorsOfClassElement","kind":"func","status":"implemented","sigHash":"c304f78dbbcc2155c1fe8330c35474001dd5d66e95b518c73ed2653624a0e8b1"}
  *
  * Go source:
  * func getAllDecoratorsOfClassElement(member *ast.Node, parent *ast.ClassDeclaration, useLegacyDecorators bool) *allDecorators {
@@ -1410,7 +1410,7 @@ export function getAllDecoratorsOfClassElement(member: GoPtr<Node>, parent: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getAllDecoratorsOfAccessors","kind":"func","status":"implemented","sigHash":"a7fed915fdc095ee8ab959a81b01c1f34df758e4093c524c20750375de92da9a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getAllDecoratorsOfAccessors","kind":"func","status":"implemented","sigHash":"71f53fcc17197a1f2e2b448d5a57fb1073369f2b3cdf5fb885511b70f17b69e7"}
  *
  * Go source:
  * func getAllDecoratorsOfAccessors(accessor *ast.Node, parent *ast.ClassDeclaration, useLegacyDecorators bool) *allDecorators {
@@ -1523,7 +1523,7 @@ export function getAllDecoratorsOfMethod(method: GoPtr<Node>, useLegacyDecorator
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getDecoratorsOfParameters","kind":"func","status":"implemented","sigHash":"01f06d15c4f928e90cbaaf816fe518c7e21b669d12e9621fb409992b32ed9697"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getDecoratorsOfParameters","kind":"func","status":"implemented","sigHash":"65e76213cc905177573ff8b68b30d30745969053142f6b8eafbbf6b5188d52a5"}
  *
  * Go source:
  * func getDecoratorsOfParameters(node *ast.Node) [][]*ast.Node {
@@ -1615,7 +1615,7 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(r
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.getClassElementDecorationStatements","kind":"method","status":"implemented","sigHash":"748d10c709ef99ef611aafae304d31df98a4539b2520d2e4370181309383113d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.getClassElementDecorationStatements","kind":"method","status":"implemented","sigHash":"9da6e9eb4ab201bcf1e9b66818a732a432157c83a8cc3b9144c0f5f9f5a21125"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) getClassElementDecorationStatements(node *ast.ClassDeclaration, isStatic bool) []*ast.Node {
@@ -1634,7 +1634,7 @@ export function LegacyDecoratorsTransformer_getClassElementDecorationStatements(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::isDecoratedClassElement","kind":"func","status":"implemented","sigHash":"32849ecd9c6aafb0d6195e2a0b4f056ce00c13ac8e35e6bd160997a7e3a28f1d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::isDecoratedClassElement","kind":"func","status":"implemented","sigHash":"0f2f7ab318992c6f579f9e61316754483bc9e03dcb021b417c7c6f131e83423e"}
  *
  * Go source:
  * func isDecoratedClassElement(member *ast.Node, isStaticElement bool, parent *ast.ClassDeclaration) bool {
@@ -1646,7 +1646,7 @@ export function isDecoratedClassElement(member: GoPtr<Node>, isStaticElement: bo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getDecoratedClassElements","kind":"func","status":"implemented","sigHash":"8eee5bfefeec5a3a1e091393416e149c9f485593de6b1240f1026784c7058bdd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getDecoratedClassElements","kind":"func","status":"implemented","sigHash":"1c063b045c6129b5adfa9b65cc0c96548134d8c09c1a946df6b2aa1c64ba925d"}
  *
  * Go source:
  * func getDecoratedClassElements(node *ast.ClassDeclaration, isStatic bool) []*ast.Node {
@@ -1670,7 +1670,7 @@ export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStati
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.generateClassElementDecorationExpressions","kind":"method","status":"implemented","sigHash":"a2645c9688536eb5fbcc1d70af44b0828e0b0f4755b1d9c25e4c03c1b53cccae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.generateClassElementDecorationExpressions","kind":"method","status":"implemented","sigHash":"d0020cab6a2decb3b31e25e3c6815b0f7c7682f2ea825c412ab1a1ce504e7b36"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) generateClassElementDecorationExpressions(node *ast.ClassDeclaration, isStatic bool) []*ast.Node {
@@ -1698,7 +1698,7 @@ export function LegacyDecoratorsTransformer_generateClassElementDecorationExpres
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.generateClassElementDecorationExpression","kind":"method","status":"implemented","sigHash":"afcdb82eac0d899f0d9a1c95e0b132f799f9ed3c2d66c98378e820d97157ecb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.generateClassElementDecorationExpression","kind":"method","status":"implemented","sigHash":"fcce42f914ea4649e327adbe4b156ee98b71daa1aa0220d53e54d3f3ac33558b"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) generateClassElementDecorationExpression(node *ast.ClassDeclaration, member *ast.Node) *ast.Node {
@@ -1796,7 +1796,7 @@ export function LegacyDecoratorsTransformer_isSyntheticMetadataDecorator(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformAllDecoratorsOfDeclaration","kind":"method","status":"implemented","sigHash":"c52e0b600ef1259638fa0fa02c8194fa971ee3c24557edc04f3e71a7d7ac2045"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformAllDecoratorsOfDeclaration","kind":"method","status":"implemented","sigHash":"99499ba30d7a49c73b95c62caf863330bca78922f00e84c83e8400785321e458"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) transformAllDecoratorsOfDeclaration(allDecorators *allDecorators) []*ast.Node {
@@ -1877,7 +1877,7 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformDecorators","kind":"method","status":"implemented","sigHash":"a723e488927e39ff33e0cfd39a39457255809b6a005f6fe4f2f79f8ec254a2c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformDecorators","kind":"method","status":"implemented","sigHash":"54845e9ec2667e11c0992257fb53ec46cb5d05c1a7c7fc417005d5572c2a7d7d"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) transformDecorators(decorators []*ast.Node) []*ast.Node {

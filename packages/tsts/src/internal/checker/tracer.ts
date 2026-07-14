@@ -42,7 +42,7 @@ import type { IntrinsicType, Type } from "./types.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::type::Tracer","kind":"type","status":"implemented","sigHash":"f6f6cd010e9b895165c298c7bce581689d14754cbe933633c3878896feab31c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::type::Tracer","kind":"type","status":"implemented","sigHash":"6af7bd12623c8e5aa4fceed128e77b4c5f1aff234df6e3f6ad12f3af1e37d9d1"}
  *
  * Go source:
  * Tracer struct {
@@ -58,7 +58,7 @@ export interface Tracer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::func::NewTracer","kind":"func","status":"implemented","sigHash":"5a3eaee96bfab76e74b793560aeaf801e00b8c4e807ce1c849cb31588a5ed889"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::func::NewTracer","kind":"func","status":"implemented","sigHash":"f3653763c5b6a5231046749a7e7fec43fc137231e459fefe647f268801dd5a15"}
  *
  * Go source:
  * func NewTracer(tr *tracing.Tracing, checkerIndex int) *Tracer {
@@ -190,7 +190,7 @@ export function Tracer_temporarilyAddCheckerIndex(receiver: GoPtr<Tracer>, args:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::type::tracedTypeAdapter","kind":"type","status":"implemented","sigHash":"34a478bcd924f0c355cebc624d5dc8b868aed28725c4fac42544c6f374b4b6cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::type::tracedTypeAdapter","kind":"type","status":"implemented","sigHash":"7325849dc7b72ee8721061d8e81f4ffc02b20bca841aa9230f982ef65a2cf67a"}
  *
  * Go source:
  * tracedTypeAdapter struct {
@@ -245,7 +245,7 @@ class TracedTypeAdapterValue implements tracedTypeAdapter, TracedType {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"dc91f3e384ff9ddead5883256dc67dad24e25d207fd80673f1e1d018668c6894"}
  *
  * Go source:
  * var _ tracing.TracedType = (*tracedTypeAdapter)(nil)

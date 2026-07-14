@@ -220,7 +220,7 @@ export function Parser_finishMutatedNode(receiver: GoPtr<Parser>, node: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.addDeepCloneReparse","kind":"method","status":"implemented","sigHash":"29db37e91a484a94960b9180e2184ad32f5de34e96b0609db77354b5b9919a4b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.addDeepCloneReparse","kind":"method","status":"implemented","sigHash":"e86ad75471941c78e1b7793b5099908e751a3d561ea90716a5dd9eebd7b81853"}
  *
  * Go source:
  * func (p *Parser) addDeepCloneReparse(node *ast.Node) *ast.Node {
@@ -284,7 +284,7 @@ export function Parser_checkNonIdentifierName(receiver: GoPtr<Parser>, name: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.reparseTags","kind":"method","status":"implemented","sigHash":"75b2d992a3104a44b40e0fae3d99b923c0e702cf7df7972a2bbe7eba5f3f08be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.reparseTags","kind":"method","status":"implemented","sigHash":"6074f8ff0222b0caf2b42f2c8f28e3b7cedc149b114a6f9b11b59f6364420db4"}
  *
  * Go source:
  * func (p *Parser) reparseTags(parent *ast.Node, jsDoc []*ast.Node) {
@@ -1740,7 +1740,7 @@ export function Parser_createExportModifier(receiver: GoPtr<Parser>, locationNod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.getInnermostNameOfJSDocNamespace","kind":"method","status":"implemented","sigHash":"ac1b9ba70652d045ff6c6e6f9b99e1b2cbb117e9323300ac25e0add5536bb129"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.getInnermostNameOfJSDocNamespace","kind":"method","status":"implemented","sigHash":"393e5ea8a14c38e26141db79436701a62561a6019b9fee98dea24c51c11cde7e"}
  *
  * Go source:
  * // getInnermostNameOfJSDocNamespace returns the innermost identifier from a
@@ -1776,7 +1776,7 @@ export function Parser_getInnermostNameOfJSDocNamespace(receiver: GoPtr<Parser>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.wrapInJSDocNamespace","kind":"method","status":"implemented","sigHash":"66d23f1be67c8b2184d47d435b7bc7e9e411183490c9ac6a3f118c9f44a656c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.wrapInJSDocNamespace","kind":"method","status":"implemented","sigHash":"c71d1164539b3f14bcb24f4212e3904484b21b3fc79564a28bb90e57ccafdc24"}
  *
  * Go source:
  * // wrapInJSDocNamespace wraps a statement (typically a type alias) in namespace

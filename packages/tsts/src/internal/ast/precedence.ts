@@ -150,7 +150,7 @@ import type { Expression, TypeNode } from "./generated/unions.js";
 import { IsOptionalChain } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::type::OperatorPrecedence","kind":"type","status":"implemented","sigHash":"c62f51b1c191c2059f000bd24246388dd89d39d1d9a76efdd483390616fb7880"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::type::OperatorPrecedence","kind":"type","status":"implemented","sigHash":"6c9c33d26f15ea56fe8d93924377c98642eebe6af14b975bb6b35c5b7758a728"}
  *
  * Go source:
  * OperatorPrecedence int
@@ -158,7 +158,7 @@ import { IsOptionalChain } from "./utilities.js";
 export type OperatorPrecedence = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::constGroup::OperatorPrecedenceComma+OperatorPrecedenceSpread+OperatorPrecedenceYield+OperatorPrecedenceAssignment+OperatorPrecedenceConditional+OperatorPrecedenceLogicalOR+OperatorPrecedenceLogicalAND+OperatorPrecedenceBitwiseOR+OperatorPrecedenceBitwiseXOR+OperatorPrecedenceBitwiseAND+OperatorPrecedenceEquality+OperatorPrecedenceRelational+OperatorPrecedenceShift+OperatorPrecedenceAdditive+OperatorPrecedenceMultiplicative+OperatorPrecedenceExponentiation+OperatorPrecedenceUnary+OperatorPrecedenceUpdate+OperatorPrecedenceLeftHandSide+OperatorPrecedenceOptionalChain+OperatorPrecedenceMember+OperatorPrecedencePrimary+OperatorPrecedenceParentheses+OperatorPrecedenceLowest+OperatorPrecedenceHighest+OperatorPrecedenceDisallowComma+OperatorPrecedenceCoalesce+OperatorPrecedenceInvalid","kind":"constGroup","status":"implemented","sigHash":"58bc38bc59ce42af4ba210a032bd122ba85056a29a2d16c734987b9672953dc7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::constGroup::OperatorPrecedenceComma+OperatorPrecedenceSpread+OperatorPrecedenceYield+OperatorPrecedenceAssignment+OperatorPrecedenceConditional+OperatorPrecedenceLogicalOR+OperatorPrecedenceLogicalAND+OperatorPrecedenceBitwiseOR+OperatorPrecedenceBitwiseXOR+OperatorPrecedenceBitwiseAND+OperatorPrecedenceEquality+OperatorPrecedenceRelational+OperatorPrecedenceShift+OperatorPrecedenceAdditive+OperatorPrecedenceMultiplicative+OperatorPrecedenceExponentiation+OperatorPrecedenceUnary+OperatorPrecedenceUpdate+OperatorPrecedenceLeftHandSide+OperatorPrecedenceOptionalChain+OperatorPrecedenceMember+OperatorPrecedencePrimary+OperatorPrecedenceParentheses+OperatorPrecedenceLowest+OperatorPrecedenceHighest+OperatorPrecedenceDisallowComma+OperatorPrecedenceCoalesce+OperatorPrecedenceInvalid","kind":"constGroup","status":"implemented","sigHash":"74a22dc5824a0a19733dd789e10507894778b9aa2cde1ab3bd1f3b884d99cb17"}
  *
  * Go source:
  * const (
@@ -431,7 +431,7 @@ export function getOperator(expression: GoPtr<Expression>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetExpressionPrecedence","kind":"func","status":"implemented","sigHash":"82400c78c3762cad7a37127c31c2b0149a77bd34e259ee6c6622b7feec8f4eab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetExpressionPrecedence","kind":"func","status":"implemented","sigHash":"2f759f78856f2647acfbea31411f5f19e3e59e3c30c26d562ce8f0107031d389"}
  *
  * Go source:
  * func GetExpressionPrecedence(expression *Expression) OperatorPrecedence {
@@ -458,7 +458,7 @@ export function GetExpressionPrecedence(expression: GoPtr<Expression>): Operator
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::type::OperatorPrecedenceFlags","kind":"type","status":"implemented","sigHash":"ba2617b82eece2c9bad4533259ae51870b15606758c59dc5a200767255e3dd34"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::type::OperatorPrecedenceFlags","kind":"type","status":"implemented","sigHash":"170f7c898cd1429d33f0c50455403fe667d4d5696f207d570220e81be7c29409"}
  *
  * Go source:
  * OperatorPrecedenceFlags int
@@ -466,7 +466,7 @@ export function GetExpressionPrecedence(expression: GoPtr<Expression>): Operator
 export type OperatorPrecedenceFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::constGroup::OperatorPrecedenceFlagsNone+OperatorPrecedenceFlagsNewWithoutArguments+OperatorPrecedenceFlagsOptionalChain","kind":"constGroup","status":"implemented","sigHash":"7cede0dc1980fd408f1623901b22b4bce55b692ff89fbbbec0ede98e7d71e30a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::constGroup::OperatorPrecedenceFlagsNone+OperatorPrecedenceFlagsNewWithoutArguments+OperatorPrecedenceFlagsOptionalChain","kind":"constGroup","status":"implemented","sigHash":"83d2759097458a7b2cbb48717998b40c1f68741251513e10edd4877faa4b7ebb"}
  *
  * Go source:
  * const (
@@ -480,7 +480,7 @@ export const OperatorPrecedenceFlagsNewWithoutArguments: OperatorPrecedenceFlags
 export const OperatorPrecedenceFlagsOptionalChain: OperatorPrecedenceFlags = 1 << 1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetOperatorPrecedence","kind":"func","status":"implemented","sigHash":"39e9a47a3230eaad566ce873e4c361842cd90acd8f020f3b5d269113bfb8f079"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetOperatorPrecedence","kind":"func","status":"implemented","sigHash":"0a277c01e562cc3515bf5fefe63fe663bcecbeea970e54866f010a537cde0b9e"}
  *
  * Go source:
  * func GetOperatorPrecedence(nodeKind Kind, operatorKind Kind, flags OperatorPrecedenceFlags) OperatorPrecedence {
@@ -712,7 +712,7 @@ export function GetOperatorPrecedence(nodeKind: Kind, operatorKind: Kind, flags:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetBinaryOperatorPrecedence","kind":"func","status":"implemented","sigHash":"786a2c7a0eb8fe075e778786079b714d0cf9b55c204748435b7203b672449fbe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetBinaryOperatorPrecedence","kind":"func","status":"implemented","sigHash":"ec1b24d6ce5df547b37d11d8080d903b1dae07ffdc3ddece56438f325c2d41c4"}
  *
  * Go source:
  * func GetBinaryOperatorPrecedence(operatorKind Kind) OperatorPrecedence {
@@ -797,7 +797,7 @@ export function GetBinaryOperatorPrecedence(operatorKind: Kind): OperatorPrecede
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetLeftmostExpression","kind":"func","status":"implemented","sigHash":"3a4ba1ea1fc539a837a85cd98b16dc8baec6289eae9a145c46ff92f1b1afa46d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetLeftmostExpression","kind":"func","status":"implemented","sigHash":"2886728616d90e60219bebded8b3f5e9484e801e77775452e9894c1764f8625a"}
  *
  * Go source:
  * func GetLeftmostExpression(node *Expression, stopAtCallExpressions bool) *Expression {
@@ -871,7 +871,7 @@ export function GetLeftmostExpression(node: GoPtr<Expression>, stopAtCallExpress
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::type::TypePrecedence","kind":"type","status":"implemented","sigHash":"7a514cd39f51350a2f2d329264b6b528b9bad316ef5949391622222a096dc01a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::type::TypePrecedence","kind":"type","status":"implemented","sigHash":"e7bcd80456da6c1c7486881de4390a20c954281324e176d935687ef10452281d"}
  *
  * Go source:
  * TypePrecedence int32
@@ -879,7 +879,7 @@ export function GetLeftmostExpression(node: GoPtr<Expression>, stopAtCallExpress
 export type TypePrecedence = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::constGroup::TypePrecedenceConditional+TypePrecedenceJSDoc+TypePrecedenceFunction+TypePrecedenceUnion+TypePrecedenceIntersection+TypePrecedenceTypeOperator+TypePrecedencePostfix+TypePrecedenceNonArray+TypePrecedenceLowest+TypePrecedenceHighest","kind":"constGroup","status":"implemented","sigHash":"8842df0ef03998708cba058b464cb567ac0f3f20276d6802116fcc727c700e2d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::constGroup::TypePrecedenceConditional+TypePrecedenceJSDoc+TypePrecedenceFunction+TypePrecedenceUnion+TypePrecedenceIntersection+TypePrecedenceTypeOperator+TypePrecedencePostfix+TypePrecedenceNonArray+TypePrecedenceLowest+TypePrecedenceHighest","kind":"constGroup","status":"implemented","sigHash":"318e4a17bb7d7c562aa6dfd074306cae2b87d53f85754d9d0fdadf2c43f60e3b"}
  *
  * Go source:
  * const (
@@ -1152,7 +1152,7 @@ export const TypePrecedenceLowest: TypePrecedence = TypePrecedenceConditional;
 export const TypePrecedenceHighest: TypePrecedence = TypePrecedenceNonArray;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetTypeNodePrecedence","kind":"func","status":"implemented","sigHash":"47125c65cfce820cff19d4e3df24699ba8d458939db5530e5069630ffb70e197"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/precedence.go::func::GetTypeNodePrecedence","kind":"func","status":"implemented","sigHash":"8e02a006cfe44be48b936be4d2ef350197bbddeb73193552a83c676aa3e5db3a"}
  *
  * Go source:
  * func GetTypeNodePrecedence(n *TypeNode) TypePrecedence {

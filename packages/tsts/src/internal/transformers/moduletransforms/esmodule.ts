@@ -66,7 +66,7 @@ import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifie
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"implemented","sigHash":"6c77421ab1341d88600cefbfeedc8e8c71434d5c3b8b2e093627623459e1354e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"implemented","sigHash":"604c7a0ae11037259df4b4db8955cc610f2e95f77176d6bce970398cdc41f572"}
  *
  * Go source:
  * ESModuleTransformer struct {
@@ -90,7 +90,7 @@ export interface ESModuleTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::importRequireStatements","kind":"type","status":"implemented","sigHash":"41fb7a91a9ec1916a7753b16ebf45f9c52d827c42a9f8a24f64351b8a18ae871"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::importRequireStatements","kind":"type","status":"implemented","sigHash":"f6d97b8dfeb17579411e8e57f9f5471107fa16315d7b27fdf2b9e61292eb6a5e"}
  *
  * Go source:
  * importRequireStatements struct {
@@ -132,7 +132,7 @@ export function NewESModuleTransformer(opts: GoPtr<TransformOptions>): GoPtr<Tra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visit","kind":"method","status":"implemented","sigHash":"68009ebc3d37e1c86b102a70e313c4b1445af0dfc43595caab302b07c2f66c2e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visit","kind":"method","status":"implemented","sigHash":"47d921526a21a4a32daea45cce3ea39f98d6d1372dfd588900d95c567b9efd60"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) visit(node *ast.Node) *ast.Node {

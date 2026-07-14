@@ -35,7 +35,7 @@ import {
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::shouldAllowImportingTsExtension","kind":"func","status":"implemented","sigHash":"7d4350127685ad85d1d7c869b509a1b8e4995e6ecf4b77829c7cae4a68a38b9a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::shouldAllowImportingTsExtension","kind":"func","status":"implemented","sigHash":"80e7f8155f780a6110078841c13ffd5bab3dd60a3a2bc38f55118c02f1fc168d"}
  *
  * Go source:
  * func shouldAllowImportingTsExtension(compilerOptions *core.CompilerOptions, fromFileName string) bool {
@@ -283,7 +283,7 @@ export function getPreferredEnding(prefs: UserPreferences, host: GoInterface<Mod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::type::ModuleSpecifierPreferences","kind":"type","status":"implemented","sigHash":"526c81e2bad67b3df88ec66937d4eafcccf1ec64bee02703b1fa5c83326c7130"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::type::ModuleSpecifierPreferences","kind":"type","status":"implemented","sigHash":"6b9197e979443465e5e8c4f3e9787cf800a1667e4079421e3ea1ef58bcfc6cb6"}
  *
  * Go source:
  * ModuleSpecifierPreferences struct {

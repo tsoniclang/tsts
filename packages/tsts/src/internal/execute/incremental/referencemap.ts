@@ -11,7 +11,7 @@ import type { SyncMap } from "../../collections/syncmap.js";
 import type { Path } from "../../tspath/path.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/referencemap.go::type::referenceMap","kind":"type","status":"implemented","sigHash":"c878f94c756d3d168e3dba25ee8358c82b32388a5f352eddc64d6d82c4ac91a9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/referencemap.go::type::referenceMap","kind":"type","status":"implemented","sigHash":"c96cc8b2f595fa24bd1639c5155d82ab76f05c41c15c887ed4b3169ec4407bc5"}
  *
  * Go source:
  * referenceMap struct {

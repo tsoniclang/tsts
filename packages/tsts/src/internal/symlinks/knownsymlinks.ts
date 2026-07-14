@@ -23,7 +23,7 @@ import {
 import type { Path } from "../tspath/path.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::type::KnownDirectoryLink","kind":"type","status":"implemented","sigHash":"f2a5b90e560484583eec97408c9d1fd8e015b467fded66244e0eae467c4abb4a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::type::KnownDirectoryLink","kind":"type","status":"implemented","sigHash":"3ac60ef417f03a1c1ca135f7162942c83390cf89ba91c89031c65d5ffcc26617"}
  *
  * Go source:
  * KnownDirectoryLink struct {
@@ -41,7 +41,7 @@ export interface KnownDirectoryLink {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::type::KnownSymlinks","kind":"type","status":"implemented","sigHash":"09fb15eada609e6c30cedd4319a0ab5f052dab5bff4746713576c69880a91362"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::type::KnownSymlinks","kind":"type","status":"implemented","sigHash":"bb055375d9be4012d1f3c66b77b233879fd8fe48762298adc9e15d88c34aa66d"}
  *
  * Go source:
  * KnownSymlinks struct {
@@ -77,7 +77,7 @@ export function KnownSymlinks_HasDirectory(receiver: GoPtr<KnownSymlinks>, symli
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::method::KnownSymlinks.Directories","kind":"method","status":"implemented","sigHash":"c5828b7dd0bad8cbc5fd38d12103aec1285dae9d5aef742c22b6b2d53a90e9bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::method::KnownSymlinks.Directories","kind":"method","status":"implemented","sigHash":"2a1fa9a789ef4650c54f1e2b01d8744465e9e30a725afa1434097d59cd812026"}
  *
  * Go source:
  * func (cache *KnownSymlinks) Directories() *collections.SyncMap[tspath.Path, *KnownDirectoryLink] {
@@ -101,7 +101,7 @@ export function KnownSymlinks_DirectoriesByRealpath(receiver: GoPtr<KnownSymlink
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::method::KnownSymlinks.Files","kind":"method","status":"implemented","sigHash":"45f66d6d541c210fb1c40f4c6964557abcf66051a8868b320e18b032ad417346"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::method::KnownSymlinks.Files","kind":"method","status":"implemented","sigHash":"8cdff2f7ebe2f6e24733003a8ca538c1463d5a4b412683540dda8a7483451bbf"}
  *
  * Go source:
  * func (cache *KnownSymlinks) Files() *collections.SyncMap[tspath.Path, string] {
@@ -113,7 +113,7 @@ export function KnownSymlinks_Files(receiver: GoPtr<KnownSymlinks>): GoPtr<SyncM
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::method::KnownSymlinks.FilesByRealpath","kind":"method","status":"implemented","sigHash":"ada2043b9ee6ced36e4849849da4613136759e2d5e6a618a1d0485ac921d0581"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::method::KnownSymlinks.FilesByRealpath","kind":"method","status":"implemented","sigHash":"dd573074315e3594da7b7e091227dd38693abd6c89c68048341e4894f3de11ef"}
  *
  * Go source:
  * func (cache *KnownSymlinks) FilesByRealpath() *collections.SyncMap[tspath.Path, *collections.SyncSet[string]] {

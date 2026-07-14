@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import { Pool, Mutex, Once } from "../../go/sync.js";
 import { Join as strings_Join } from "../../go/strings.js";
 import type { SourceFile, SourceFileMetaData } from "../ast/ast.js";
@@ -63,7 +63,7 @@ import { getExtensionHost } from "../../extensions/host.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTask","kind":"type","status":"implemented","sigHash":"b84c8bb585614968edfb61e882ab726f44a17b5de567af8dfc0e7ce09ac3dab5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTask","kind":"type","status":"implemented","sigHash":"9037201e00d4b8ede35c542bf33697833860bf8d7e56f1f769452cde2fc18c1f"}
  *
  * Go source:
  * parseTask struct {
@@ -401,9 +401,9 @@ export function parseTask_redirect(receiver: GoPtr<parseTask>, loader: GoPtr<fil
     includeReason: receiver!.includeReason,
     packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
-    resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+    resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
     resolutionsTrace: [],
-    typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+    typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
     typeResolutionsTrace: [],
     resolutionDiagnostics: [],
     processingDiagnostics: [],
@@ -447,7 +447,7 @@ export function parseTask_loadAutomaticTypeDirectives(receiver: GoPtr<parseTask>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::resolvedRef","kind":"type","status":"implemented","sigHash":"b745f422a6fb663c016c9c88ce4ddf26a08d1363b9d0388124d82091d751d53d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::resolvedRef","kind":"type","status":"implemented","sigHash":"d498a8ac78f30feb947e61fcf62d99074a76585ce8827e15528737c6a9c8e2fa"}
  *
  * Go source:
  * resolvedRef struct {
@@ -498,9 +498,9 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
     includeReason: ref.includeReason,
     packageId: ref.packageId ?? { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
-    resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+    resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
     resolutionsTrace: [],
-    typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+    typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
     typeResolutionsTrace: [],
     resolutionDiagnostics: [],
     processingDiagnostics: [],
@@ -515,7 +515,7 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::filesParser","kind":"type","status":"implemented","sigHash":"eeb31d9c280c841ed07aa4ae9205776d8829e5534bd5ad7204cecfd91efd4c49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::filesParser","kind":"type","status":"implemented","sigHash":"78ce5e466819582f0ecdfb097eebd983c5b6d0ef4e624a0b205376ecfda66b0f"}
  *
  * Go source:
  * filesParser struct {
@@ -531,7 +531,7 @@ export interface filesParser {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::varGroup::parseTaskDataPool","kind":"varGroup","status":"implemented","sigHash":"9a754b609fc6b864cbc22463440afff1edc12b41faa8ebcd31287a5039152ee1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::varGroup::parseTaskDataPool","kind":"varGroup","status":"implemented","sigHash":"12fdae5b67e4553b247050dd1be428559f4368a3e3b6028ab89a49fb3b049b60"}
  *
  * Go source:
  * var parseTaskDataPool = sync.Pool{
@@ -587,7 +587,7 @@ export function putParseTaskData(td: GoPtr<parseTaskData>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTaskData","kind":"type","status":"implemented","sigHash":"d7e90acd5b01b1a59e7566423ae6e309820fc4321ba2c8b7b03f137b80507667"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTaskData","kind":"type","status":"implemented","sigHash":"40fb88623f3adf4d02baaa108ddbe27d93394e1c715d4b25a0bfb4f649d414e6"}
  *
  * Go source:
  * parseTaskData struct {
@@ -1008,7 +1008,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
   const libFiles: GoSlice<GoPtr<SourceFile>> = [];
 
   const filesByPath = new globalThis.Map<Path_65a900c3, GoPtr<SourceFile>>();
-  let tasksSeenByNameIgnoreCase: GoMap<string, GoPtr<parseTask>> | undefined = undefined;
+  let tasksSeenByNameIgnoreCase = GoNilMap<string, GoPtr<parseTask>>();
   if (loader!.comparePathsOptions.UseCaseSensitiveFileNames) {
     tasksSeenByNameIgnoreCase = new globalThis.Map<string, GoPtr<parseTask>>();
   }
@@ -1025,7 +1025,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
     compilerOptionsSyntaxOnce: new Once(),
   };
 
-  let outputFileToProjectReferenceSource: GoMap<Path_65a900c3, string> | undefined = undefined;
+  let outputFileToProjectReferenceSource = GoNilMap<Path_65a900c3, string>();
   if (!(ProgramOptions_canUseProjectReferenceSource(loader!.opts))) {
     outputFileToProjectReferenceSource = new globalThis.Map<Path_65a900c3, string>();
   }
@@ -1033,14 +1033,14 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
   const resolvedModules = new globalThis.Map<Path_65a900c3, ModeAwareCache<GoPtr<ResolvedModule>>>();
   const typeResolutionsInFile = new globalThis.Map<Path_65a900c3, ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>>();
   const sourceFileMetaDatas = new globalThis.Map<Path_65a900c3, SourceFileMetaData>();
-  let jsxRuntimeImportSpecifiers: GoMap<Path_65a900c3, GoPtr<jsxRuntimeImportSpecifier>> | undefined = undefined;
-  let importHelpersImportSpecifiers: GoMap<Path_65a900c3, GoPtr<StringLiteralNode>> | undefined = undefined;
+  let jsxRuntimeImportSpecifiers = GoNilMap<Path_65a900c3, GoPtr<jsxRuntimeImportSpecifier>>();
+  let importHelpersImportSpecifiers = GoNilMap<Path_65a900c3, GoPtr<StringLiteralNode>>();
   const sourceFilesFoundSearchingNodeModules: Set_collections<Path_65a900c3> = { M: new globalThis.Map<Path_65a900c3, { readonly __tsgoEmpty?: never }>() };
   const libFilesMap = new globalThis.Map<Path_65a900c3, GoPtr<LibFile>>();
 
-  let redirectTargetsMap: GoMap<Path_65a900c3, GoSlice<string>> | undefined = undefined;
-  let redirectFilesByPath: GoMap<Path_65a900c3, GoPtr<redirectsFile>> | undefined = undefined;
-  let packageIdToSourceFile: GoMap<string, GoPtr<SourceFile>> | undefined = undefined;
+  let redirectTargetsMap = GoNilMap<Path_65a900c3, GoSlice<string>>();
+  let redirectFilesByPath = GoNilMap<Path_65a900c3, GoPtr<redirectsFile>>();
+  let packageIdToSourceFile = GoNilMap<string, GoPtr<SourceFile>>();
   if (!Tristate_IsFalse(ParsedCommandLine_CompilerOptions(loader!.opts.Config)!.DeduplicatePackages)) {
     redirectTargetsMap = new globalThis.Map<Path_65a900c3, GoSlice<string>>();
     packageIdToSourceFile = new globalThis.Map<string, GoPtr<SourceFile>>();
@@ -1087,7 +1087,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
         seen.set(data, task!.normalizedFilePath);
       }
 
-      if (tasksSeenByNameIgnoreCase !== undefined) {
+      if (!GoMapIsNil(tasksSeenByNameIgnoreCase)) {
         const pathLowerCase = ToFileNameLowerCase(task!.path as string);
         const taskByIgnoreCase = tasksSeenByNameIgnoreCase.get(pathLowerCase);
         if (taskByIgnoreCase !== undefined) {
@@ -1106,7 +1106,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
 
       let file = task!.file;
       const dataPackageId = data!.packageId ?? { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" };
-      if (packageIdToSourceFile !== undefined && dataPackageId.Name !== "") {
+      if (!GoMapIsNil(packageIdToSourceFile) && dataPackageId.Name !== "") {
         const dataPackageIdKey = PackageId_String(dataPackageId);
         const packageIdFile = packageIdToSourceFile.get(dataPackageIdKey);
         if (packageIdFile !== undefined) {
@@ -1119,7 +1119,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
           }
           const existing = redirectTargetsMap!.get(SourceFile_Path(packageIdFile));
           redirectTargetsMap!.set(SourceFile_Path(packageIdFile), [...(existing !== undefined ? existing : []), task!.normalizedFilePath]);
-          if (redirectFilesByPath === undefined) {
+          if (GoMapIsNil(redirectFilesByPath)) {
             redirectFilesByPath = new globalThis.Map<Path_65a900c3, GoPtr<redirectsFile>>();
           }
           redirectFilesByPath.set(task!.path, {
@@ -1180,13 +1180,13 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       sourceFileMetaDatas.set(path, task!.metadata);
 
       if (task!.jsxRuntimeImportSpecifier !== undefined) {
-        if (jsxRuntimeImportSpecifiers === undefined) {
+        if (GoMapIsNil(jsxRuntimeImportSpecifiers)) {
           jsxRuntimeImportSpecifiers = new globalThis.Map<Path_65a900c3, GoPtr<jsxRuntimeImportSpecifier>>();
         }
         jsxRuntimeImportSpecifiers.set(path, task!.jsxRuntimeImportSpecifier);
       }
       if (task!.importHelpersImportSpecifier !== undefined) {
-        if (importHelpersImportSpecifiers === undefined) {
+        if (GoMapIsNil(importHelpersImportSpecifiers)) {
           importHelpersImportSpecifiers = new globalThis.Map<Path_65a900c3, GoPtr<StringLiteralNode>>();
         }
         importHelpersImportSpecifiers.set(path, task!.importHelpersImportSpecifier);
@@ -1201,7 +1201,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
   fileLoader_sortLibs(loader, libFiles);
 
   const allFiles = [...libFiles, ...files];
-  if (redirectFilesByPath !== undefined) {
+  if (!GoMapIsNil(redirectFilesByPath)) {
     const redirectFilesByPathDefined = redirectFilesByPath as GoMap<Path_65a900c3, GoPtr<redirectsFile>>;
     for (const redirectFile of redirectFilesByPathDefined.values()) {
       redirectFile!.index += libFiles.length;
@@ -1240,15 +1240,15 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
     resolvedModules: resolvedModules,
     typeResolutionsInFile: typeResolutionsInFile,
     sourceFileMetaDatas: sourceFileMetaDatas,
-    jsxRuntimeImportSpecifiers: jsxRuntimeImportSpecifiers !== undefined ? jsxRuntimeImportSpecifiers : new globalThis.Map(),
-    importHelpersImportSpecifiers: importHelpersImportSpecifiers !== undefined ? importHelpersImportSpecifiers : new globalThis.Map(),
+    jsxRuntimeImportSpecifiers: jsxRuntimeImportSpecifiers,
+    importHelpersImportSpecifiers: importHelpersImportSpecifiers,
     sourceFilesFoundSearchingNodeModules: sourceFilesFoundSearchingNodeModules,
     libFiles: libFilesMap,
     missingFiles: missingFiles,
     includeProcessor: inclProcessor,
-    outputFileToProjectReferenceSource: outputFileToProjectReferenceSource !== undefined ? outputFileToProjectReferenceSource : new globalThis.Map(),
-    redirectTargetsMap: redirectTargetsMap !== undefined ? redirectTargetsMap : new globalThis.Map(),
-    redirectFilesByPath: redirectFilesByPath !== undefined ? redirectFilesByPath : new globalThis.Map(),
+    outputFileToProjectReferenceSource: outputFileToProjectReferenceSource,
+    redirectTargetsMap: redirectTargetsMap,
+    redirectFilesByPath: redirectFilesByPath,
   };
 }
 

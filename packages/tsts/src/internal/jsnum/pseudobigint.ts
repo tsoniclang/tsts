@@ -7,7 +7,7 @@ const byteLen: (s: string) => int = StringByteLen;
 const byteAt = (s: string, i: int): byte => StringByteAt(s, i) as byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/pseudobigint.go::type::PseudoBigInt","kind":"type","status":"implemented","sigHash":"2c01c32f11727dc20097bc5fac4f0bef01a1d77c02fc05f3278b26533303babe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/pseudobigint.go::type::PseudoBigInt","kind":"type","status":"implemented","sigHash":"fd1ea8a8b4d460fb78b83f70abe042b9c055b9f8b148158b95fbac7da4009f95"}
  *
  * Go source:
  * PseudoBigInt struct {

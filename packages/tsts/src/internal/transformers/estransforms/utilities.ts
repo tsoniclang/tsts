@@ -155,7 +155,7 @@ export function createNotNullCondition(emitContext: GoPtr<EmitContext>, left: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::type::superAccessState","kind":"type","status":"implemented","sigHash":"6fadfc76477c61f01e3b55f61df655444508dd7c7416614ef97d5926ddfd494e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::type::superAccessState","kind":"type","status":"implemented","sigHash":"c4a27ef9b0e250a46569963349443878fa79a18d89d5a5684586e57c0e452129"}
  *
  * Go source:
  * superAccessState struct {
@@ -197,7 +197,7 @@ export function superAccessState_initSuperAccessVisitor(receiver: GoPtr<superAcc
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.visitSuperAccessNode","kind":"method","status":"implemented","sigHash":"62f174bd1a0e83bcbae23f89c0b3a73b4c98c0c8f9030815f73615d0f296a68c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.visitSuperAccessNode","kind":"method","status":"implemented","sigHash":"88f23a5f3ddb5ed2a29fcba94f9bc661c1ce5d3f199e38af23422b0bf4a74f0b"}
  *
  * Go source:
  * func (s *superAccessState) visitSuperAccessNode(node *ast.Node) *ast.Node {
@@ -293,7 +293,7 @@ export function superAccessState_substituteSuperAccessesInBody(receiver: GoPtr<s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.substituteCallExpressionWithSuperAccess","kind":"method","status":"implemented","sigHash":"6c61e86ad615bb79acc5ac471404becf4eae89982e118234ee1ebc143f5d8a77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.substituteCallExpressionWithSuperAccess","kind":"method","status":"implemented","sigHash":"0cc747a8065235a3021a6ee61236cbd0c64f9f012aecd9d822e6f8216781fa79"}
  *
  * Go source:
  * func (s *superAccessState) substituteCallExpressionWithSuperAccess(call *ast.CallExpression, visitor *ast.NodeVisitor) *ast.Node {
@@ -390,7 +390,7 @@ export function superAccessState_substituteCallExpressionWithSuperAccess(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.createSuperElementAccessInAsyncMethod","kind":"method","status":"implemented","sigHash":"b329520bc2c6efbae35dcaec3195892b345feb50610f4285d0da9364d037b94a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.createSuperElementAccessInAsyncMethod","kind":"method","status":"implemented","sigHash":"1f2398e399637cc8af8070ad89f60d972115a3098505cdf00de77f7d5df5afc6"}
  *
  * Go source:
  * func (s *superAccessState) createSuperElementAccessInAsyncMethod(argumentExpression *ast.Node) *ast.Node {
@@ -431,7 +431,7 @@ export function superAccessState_createSuperElementAccessInAsyncMethod(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.createSuperAccessVariableStatement","kind":"method","status":"implemented","sigHash":"b49ae2df63bf057970321e86c186cd995c21300ba22befb1b6cec6900553454b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.createSuperAccessVariableStatement","kind":"method","status":"implemented","sigHash":"6651b39b5791ff2a658ffb3cd7470d05ffaec90b9c2d129c33634ba4e87f9ff9"}
  *
  * Go source:
  * func (s *superAccessState) createSuperAccessVariableStatement() *ast.Node {
@@ -584,7 +584,7 @@ export function superAccessState_createSuperAccessVariableStatement(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.trackSuperAccess","kind":"method","status":"implemented","sigHash":"d2eca200ae74a3b7a01443ea75eb1445427eb142003c9d34f19217370478d992"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::method::superAccessState.trackSuperAccess","kind":"method","status":"implemented","sigHash":"e7fc7257ade5d073b83d9ccec15b47645cea19f8c555f659552f4417dfa0f137"}
  *
  * Go source:
  * func (s *superAccessState) trackSuperAccess(node *ast.Node) {
@@ -651,7 +651,7 @@ export function superAccessState_trackSuperAccess(receiver: GoPtr<superAccessSta
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::func::createAccessorPropertyBackingField","kind":"func","status":"implemented","sigHash":"91b8110540ced658c06c7897aa208d2225d24c0fc2f08db792eb9e9d003f2abf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/utilities.go::func::createAccessorPropertyBackingField","kind":"func","status":"implemented","sigHash":"3d2f34b90c0619ec718b84297c8d9f3b660565ae911530e1f558993be0cb32d1"}
  *
  * Go source:
  * func createAccessorPropertyBackingField(f *printer.NodeFactory, node *ast.PropertyDeclaration, modifiers *ast.ModifierList, initializer *ast.Expression) *ast.Node {

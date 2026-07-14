@@ -16,7 +16,7 @@ const byteSlice = (s: string, start: int, end?: int): string => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/textchange.go::type::TextChange","kind":"type","status":"implemented","sigHash":"b049bf647ae26cab28c3e1c063c93092ba5cc5e955068c0a012594dcb316ffaf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/textchange.go::type::TextChange","kind":"type","status":"implemented","sigHash":"b4a3fce95804d6f2984d42ecc6bb1e3e94a64454b9cc9b5ed9455d288db2e5b6"}
  *
  * Go source:
  * TextChange struct {

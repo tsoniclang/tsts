@@ -9,6 +9,7 @@ import { writeExternalFacades } from "./facade-artifacts.mjs";
 import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
 import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
 import { buildDraftLargeFileSplitPlan, buildLargeFileSplitStatus, printLargeFileSplitStatus, splitPlanLabel, verifyLargeFileSplitStatus } from "./large-files.mjs";
+import { applyMetadataReconciliationPlan, buildMetadataReconciliationPlan } from "./metadata-reconciliation.mjs";
 import { printScanSummary, printStatus, renderStatusMarkdown } from "./reporting.mjs";
 import { fail, loadConfig, parseArgs, repoRoot, resolveRepo, writeJson, writeJsonSafely, writeText, writeTextSafely } from "./runtime.mjs";
 import { checkSkeletons, scaffoldMissing } from "./scaffolding.mjs";
@@ -77,6 +78,47 @@ export async function main() {
 
   if (command === "sig-check") {
     await runSigCheck(config, options);
+    return;
+  }
+
+  if (command === "reconcile-metadata") {
+    const snapshot = runScan(config);
+    const workspace = await preparePorterWorkspaceState({
+      config,
+      repositoryRoot: repoRoot,
+      snapshot,
+      unicodeMode: "deep",
+    });
+    const prerequisites = await prepareDeclarationAuditPrerequisites(workspace);
+    const signatureReport = await computeSignatureReport(prerequisites);
+    workspace.status.signatureCheck = summarizeSignatureReport(signatureReport);
+    workspace.status.jsonTagCheck = summarizeJsonTagReport(signatureReport.jsonTags);
+    const plan = buildMetadataReconciliationPlan({
+      repositoryRoot: repoRoot,
+      snapshot,
+      status: workspace.status,
+      tsUnits: workspace.tsUnits,
+    });
+    const summary = {
+      state: "complete",
+      fileCount: plan.fileCount,
+      unitCount: plan.staleUnitCount,
+      files: plan.files.map((file) => ({ path: file.path, unitCount: file.unitIds.length })),
+    };
+    if (options.json === true) console.log(JSON.stringify(summary, null, 2));
+    else console.log(`metadata reconciliation plan: ${summary.unitCount} unit(s) in ${summary.fileCount} file(s)`);
+    if (options.write !== true || plan.staleUnitCount === 0) return;
+    applyMetadataReconciliationPlan(plan);
+    const after = await preparePorterWorkspaceState({
+      config,
+      repositoryRoot: repoRoot,
+      snapshot,
+      unicodeMode: "metadata",
+    });
+    if (after.status.counts.stale !== 0 || after.status.counts.implemented !== workspace.status.counts.implemented + plan.staleUnitCount) {
+      fail(`metadata reconciliation postcondition failed: stale=${after.status.counts.stale}, implemented=${after.status.counts.implemented}`);
+    }
+    console.log(`metadata reconciliation written and reparsed: ${plan.staleUnitCount} unit(s) in ${plan.fileCount} file(s)`);
     return;
   }
 
@@ -202,5 +244,5 @@ export async function main() {
     return;
   }
 
-  fail(`unknown command '${command}'. Expected delta, delta-verify, generated-source-coverage, bundled, unicode, scan, status, verify, sig-check, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
+  fail(`unknown command '${command}'. Expected delta, delta-verify, generated-source-coverage, bundled, unicode, scan, status, verify, reconcile-metadata, sig-check, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
 }

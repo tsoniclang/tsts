@@ -11,7 +11,7 @@ import * as strconv from "../../go/strconv.js";
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::varGroup::ErrInvalidHeader+ErrInvalidContentLength+ErrNoContentLength","kind":"varGroup","status":"implemented","sigHash":"862c9b190fde8da9a1cbb69d9098659668f791284c7faf6fa5562c2b21340571"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::varGroup::ErrInvalidHeader+ErrInvalidContentLength+ErrNoContentLength","kind":"varGroup","status":"implemented","sigHash":"c53c8c227eda3800874e035cc6f4f4033adde42eeaf289363c7937edd94b788b"}
  *
  * Go source:
  * var (
@@ -25,7 +25,7 @@ export let ErrInvalidContentLength: GoError = errors.New("jsonrpc: invalid conte
 export let ErrNoContentLength: GoError = errors.New("jsonrpc: no content length");
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::type::Reader","kind":"type","status":"implemented","sigHash":"63b33221a9a2526b999143ae8173671fdbe4c32d4047c49ae6127f204a6cdda5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::type::Reader","kind":"type","status":"implemented","sigHash":"ef29dd1e525f91fab999ed8cd0845ca162d773c10d9ad73ef307052f4814dadb"}
  *
  * Go source:
  * Reader struct {
@@ -37,7 +37,7 @@ export interface Reader {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::func::NewReader","kind":"func","status":"implemented","sigHash":"f0c1873c848f48953e5b4885462d2486f57b54e7d8a84fc698ef2a1ba7203461"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::func::NewReader","kind":"func","status":"implemented","sigHash":"c93b7fcf7ca6b85732809098d00c9bb5158ca8a78d98d650679d38913d4b3fd7"}
  *
  * Go source:
  * func NewReader(r io.Reader) *Reader {
@@ -51,7 +51,7 @@ export function NewReader(r: GoInterface<Reader_9d71ca04>): GoPtr<Reader> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::method::Reader.Read","kind":"method","status":"implemented","sigHash":"998469f1a00741d46dc210bd55c703724e4d3e3dc62b437d97deee34cc3631c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::method::Reader.Read","kind":"method","status":"implemented","sigHash":"2f81c15bceb10f1727badc8b5606afcb5c150fd16664ca2b5a70da9f64689b35"}
  *
  * Go source:
  * func (r *Reader) Read() ([]byte, error) {
@@ -138,7 +138,7 @@ export function Reader_Read(receiver: GoPtr<Reader>): [GoSlice<byte>, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::type::Writer","kind":"type","status":"implemented","sigHash":"81bd5d41d446bb38be04ae104d88e84b8b878129fd197e5e9206e30544ad4040"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::type::Writer","kind":"type","status":"implemented","sigHash":"3168f07211684e3bcb45c1db02730e78415bb24be238455d126ff4664e3209b3"}
  *
  * Go source:
  * Writer struct {
@@ -150,7 +150,7 @@ export interface Writer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::func::NewWriter","kind":"func","status":"implemented","sigHash":"d244441eea35d7bbeb051234d15586506e0802f59db256be9cfff78106d54ad3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::func::NewWriter","kind":"func","status":"implemented","sigHash":"50acc16b4051fd7272129b112e131d79c4e336b07021396d5a8df0ae3aa74041"}
  *
  * Go source:
  * func NewWriter(w io.Writer) *Writer {
@@ -164,7 +164,7 @@ export function NewWriter(w: GoInterface<Writer_51cf46eb>): GoPtr<Writer> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::method::Writer.Write","kind":"method","status":"implemented","sigHash":"90cceffe1221626d3566c85e823119d6668db1a1945e86421af4b367500e0207"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::method::Writer.Write","kind":"method","status":"implemented","sigHash":"8354501c67a09930d3dd75c96cef05c1b9ee869be31ac97fe9e4f7d90a92c8af"}
  *
  * Go source:
  * func (w *Writer) Write(data []byte) error {

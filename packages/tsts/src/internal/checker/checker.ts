@@ -106,7 +106,7 @@ import { Checker_getSourceFileLinks, MappedTypeNameTypeKindRemapping, getTypeLis
 import type { Checker, TupleNormalizer } from "./checker/state.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::constGroup::maxSerializationLevel","kind":"constGroup","status":"implemented","sigHash":"4f33ed9bc67d2935ce4a292f29d806a3d388a0b9587156cde0dd07382ca83f3a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::constGroup::maxSerializationLevel","kind":"constGroup","status":"implemented","sigHash":"79ece3e298a870c458c2a41c1f5cf9c3a183135474351f05399564b7b82f999b"}
  *
  * Go source:
  * const maxSerializationLevel = 2
@@ -385,7 +385,7 @@ export function Checker_addSuggestionDiagnostic(receiver: GoPtr<Checker>, diagno
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasParentWithTypeAnnotation","kind":"method","status":"implemented","sigHash":"cc0c96f546156b3b14b18cb31c46839afc79b06a48bc55d8e359182f03925e36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasParentWithTypeAnnotation","kind":"method","status":"implemented","sigHash":"eac0e0e1cee84b5070f066b62ade99cf505bf4251f58e6a9fdc6305d685da261"}
  *
  * Go source:
  * func (c *Checker) hasParentWithTypeAnnotation(symbol *ast.Symbol) bool {

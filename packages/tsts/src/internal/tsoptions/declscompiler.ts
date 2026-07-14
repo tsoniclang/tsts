@@ -24,7 +24,7 @@ import type { CommandLineOption } from "./commandlineoption.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::OptionsDeclarations","kind":"varGroup","status":"implemented","sigHash":"13c9568bcd832d79be6deb0428dad16819ed913e5ca1740d1c9811ec04b9d830"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::OptionsDeclarations","kind":"varGroup","status":"implemented","sigHash":"912cdb64341c873c2ee0c3f3e6adf1494aa90d4e392f3fff05a19d380c3772b1"}
  *
  * Go source:
  * var OptionsDeclarations = slices.Concat(commonOptionsWithBuild, optionsForCompiler)
@@ -35,7 +35,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
 export let OptionsDeclarations: GoSlice<GoPtr<CommandLineOption>> = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::commonOptionsWithBuild","kind":"varGroup","status":"implemented","sigHash":"2c17198da8a392c5648ccb2c395f017b90231ded77bd50210550ea220477854b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::commonOptionsWithBuild","kind":"varGroup","status":"implemented","sigHash":"8758c3bd98893c06166bb6a0c312dfead236331a4e4b4b151368247d7efa74aa"}
  *
  * Go source:
  * var commonOptionsWithBuild = []*CommandLineOption{
@@ -523,7 +523,7 @@ export let commonOptionsWithBuild: GoSlice<GoPtr<CommandLineOption>> = [
 ];
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::optionsForCompiler","kind":"varGroup","status":"implemented","sigHash":"fa4bb14e8d99112772f4e0b52ac9a7c0a496523ef68f5707540008ac53356a71"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::optionsForCompiler","kind":"varGroup","status":"implemented","sigHash":"22429ebbffeed708c19f63b4a790cca73f4324964adb5d00af9d3889a1a316fe"}
  *
  * Go source:
  * var optionsForCompiler = []*CommandLineOption{
@@ -2427,7 +2427,7 @@ export let optionsForCompiler: GoSlice<GoPtr<CommandLineOption>> = [
 OptionsDeclarations = Concat(commonOptionsWithBuild, optionsForCompiler);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::optionsType","kind":"varGroup","status":"implemented","sigHash":"026b7ac8d648bc03100fb2042dd8782d6a90a7449125c3faa845d5339a4847a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::optionsType","kind":"varGroup","status":"implemented","sigHash":"3d184ca1e3e56cf149b7c8f536cbbb918bb8d541f4d342d703f4da50714cd6dd"}
  *
  * Go source:
  * var optionsType = reflect.TypeFor[core.CompilerOptions]()

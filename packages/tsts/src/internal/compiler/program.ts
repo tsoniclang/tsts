@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
 import type { GoError, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, GoZeroSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, GoZeroSlice, GoZeroString, NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
 import { Once, Map as SyncMapMap } from "../../go/sync.js";
@@ -103,7 +103,7 @@ import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 
 const sourceFileKey: GoMapKeyDescriptor<GoPtr<SourceFile>> = GoPointerKey<SourceFile>();
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"9eb7d18f0dae3f15940de7ca327de6159681203c5eb38cedc77879444adaee3f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"fd2579730de2d43c0ed258754b40e4b212195c5b2a367c70b29872aca609e055"}
  *
  * Go source:
  * ProgramOptions struct {
@@ -141,7 +141,7 @@ export function ProgramOptions_canUseProjectReferenceSource(receiver: GoPtr<Prog
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::lazyValue","kind":"type","status":"implemented","sigHash":"26023d6be91e21c7ab20729c24c040bb5e0c2f767af281019b4e6bae319804c6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::lazyValue","kind":"type","status":"implemented","sigHash":"d28e8d5d6874537a2c68d64a17214cc70da04090a3c356622024a2c49606be78"}
  *
  * Go source:
  * lazyValue[T any] struct {
@@ -199,7 +199,7 @@ export function lazyValue_tryReuse<T>(receiver: GoPtr<lazyValue<T>>, from_: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::packageNamesInfo","kind":"type","status":"implemented","sigHash":"b1133be40de190cc9ad88f29fa923d2eabb6da9c0a4536486cd5f1cd440e4c40"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::packageNamesInfo","kind":"type","status":"implemented","sigHash":"bfeaa7189f0877fc81a2ff5b75fe178c5c5a2cb2d25b4d8a16a334184e413361"}
  *
  * Go source:
  * packageNamesInfo struct {
@@ -215,7 +215,7 @@ export interface packageNamesInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::Program","kind":"type","status":"implemented","sigHash":"c60019065d3ec9810ed2446897b82620c3db486992de68fd6eea46cab24d5e45"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::Program","kind":"type","status":"implemented","sigHash":"226134a82a0b16b10bc9114dc0e1985fa956b94e77464701479ad0a96d9e4462"}
  *
  * Go source:
  * Program struct {
@@ -284,7 +284,7 @@ export interface Program {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.FileExists","kind":"method","status":"implemented","sigHash":"fc912035af474961c38b93b1b1845c470bb60819f12b82dd9aaafe4e5b4ba38c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.FileExists","kind":"method","status":"implemented","sigHash":"06802221d128d649c2bef8ac9996cbc13b65b3c8b509de4a732f3e3ce58b1a70"}
  *
  * Go source:
  * func (p *Program) FileExists(path string) bool {
@@ -296,7 +296,7 @@ export function Program_FileExists(receiver: GoPtr<Program>, path: string): bool
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetCurrentDirectory","kind":"method","status":"implemented","sigHash":"49421efcb8d09dde8f656aa85d37c9bcf5954c7e34a9270d5e0337d215a26e9a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetCurrentDirectory","kind":"method","status":"implemented","sigHash":"9933ba7a8c8ca783297c53930cb01ed2637d30ac2b83ba39f08409b198486982"}
  *
  * Go source:
  * func (p *Program) GetCurrentDirectory() string {
@@ -308,7 +308,7 @@ export function Program_GetCurrentDirectory(receiver: GoPtr<Program>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetGlobalTypingsCacheLocation","kind":"method","status":"implemented","sigHash":"96959a9eaae02a63df920de2286450b775a650152b33092cc73145621516b3b9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetGlobalTypingsCacheLocation","kind":"method","status":"implemented","sigHash":"2b6ed642f16589d675766ec5f2313d8c01e350f522a86ed6bae26e074d36a7e6"}
  *
  * Go source:
  * func (p *Program) GetGlobalTypingsCacheLocation() string {
@@ -320,7 +320,7 @@ export function Program_GetGlobalTypingsCacheLocation(receiver: GoPtr<Program>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetNearestAncestorDirectoryWithPackageJson","kind":"method","status":"implemented","sigHash":"3a507a72bd6f35c1a4d41f2ea49ac2bcfdc4af76350d933869a5566c8f3dc685"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetNearestAncestorDirectoryWithPackageJson","kind":"method","status":"implemented","sigHash":"9cf04054c178bef296af116dc72af4b773599eb2344ffb3ecea2a7341ab188c4"}
  *
  * Go source:
  * func (p *Program) GetNearestAncestorDirectoryWithPackageJson(dirname string) string {
@@ -340,7 +340,7 @@ export function Program_GetNearestAncestorDirectoryWithPackageJson(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetPackageJsonInfo","kind":"method","status":"implemented","sigHash":"b35499705a40b88298678165b7f45dd9224e167636b559449bf543dac304379e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetPackageJsonInfo","kind":"method","status":"implemented","sigHash":"2cc409b76b3eeeebad4249bfd64f73a6a78956d1eb2e36df6676603f347b0aa0"}
  *
  * Go source:
  * func (p *Program) GetPackageJsonInfo(pkgJsonPath string) *packagejson.InfoCacheEntry {
@@ -362,7 +362,7 @@ export function Program_GetPackageJsonInfo(receiver: GoPtr<Program>, pkgJsonPath
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetRedirectTargets","kind":"method","status":"implemented","sigHash":"daa3b7276bc94f309aa85376da97480b2cc006ef2f6dd9f7a1735be2e8cc3edf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetRedirectTargets","kind":"method","status":"implemented","sigHash":"896e447b25d799d46b09d54c4ae5282095d8634cbc15bf966462c8c92cb87f6e"}
  *
  * Go source:
  * func (p *Program) GetRedirectTargets(path tspath.Path) []string {
@@ -374,7 +374,7 @@ export function Program_GetRedirectTargets(receiver: GoPtr<Program>, path: Path)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSourceOfProjectReferenceIfOutputIncluded","kind":"method","status":"implemented","sigHash":"cf149aec4713f436ef479bc037332a1495ee8576d04d9b26c372fa8022241991"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSourceOfProjectReferenceIfOutputIncluded","kind":"method","status":"implemented","sigHash":"2c1a3762b13bc9a1d6e46ca3bbf28bcca04693e2050a2cf5dc708e8908eefe01"}
  *
  * Go source:
  * func (p *Program) GetSourceOfProjectReferenceIfOutputIncluded(file ast.HasFileName) string {
@@ -393,7 +393,7 @@ export function Program_GetSourceOfProjectReferenceIfOutputIncluded(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetProjectReferenceFromSource","kind":"method","status":"implemented","sigHash":"2095e9d5c9d3f9eaaa3f419e539f9bc33ecfce2cb795a859351a7e750f0e94f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetProjectReferenceFromSource","kind":"method","status":"implemented","sigHash":"37ffaa0aec7f92118bc0c096cb50b7b601fc02e86635b4e1868c0ca9261f530b"}
  *
  * Go source:
  * func (p *Program) GetProjectReferenceFromSource(path tspath.Path) *tsoptions.SourceOutputAndProjectReference {
@@ -405,7 +405,7 @@ export function Program_GetProjectReferenceFromSource(receiver: GoPtr<Program>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.IsSourceFromProjectReference","kind":"method","status":"implemented","sigHash":"30766b98273eee304899a8a66eae4a27bc46c7367c16e1601d1cf2367f4695a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.IsSourceFromProjectReference","kind":"method","status":"implemented","sigHash":"2d7b3cbe3c2f5538528d90ec92e4dd31810dd303b1ad6fa4cdbc2799e7f9289f"}
  *
  * Go source:
  * func (p *Program) IsSourceFromProjectReference(path tspath.Path) bool {
@@ -506,7 +506,7 @@ export function Program_RangeResolvedProjectReferenceInChildConfig(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"59abc6749f71dee6255755c5682f466ab593c39d9ea1b06d0864db7e4999a2e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"63753773127d6b3a321d55233c324bc33116ed6cdcabeb108d233676caf92a29"}
  *
  * Go source:
  * func (p *Program) UseCaseSensitiveFileNames() bool {
@@ -628,7 +628,7 @@ export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e3
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"5d1b7594c82fa242848aafad5d7870c306424ad13127655b4f9be12cb988e7d8"}
  *
  * Go source:
  * var _ checker.Program = (*Program)(nil)
@@ -636,7 +636,7 @@ export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e3
 export let __7d754c38_0: GoInterface<Program_e32ad451> = Program_as_checker_Program(undefined);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSourceFileFromReference","kind":"method","status":"implemented","sigHash":"d17110acc4563d1cc15b71c7c34578869a09f5420d3f57151d53da44c275e35a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSourceFileFromReference","kind":"method","status":"implemented","sigHash":"5e755f071ad78fa6833a70e5976a9655cc5f9b958ca2683419aaedf518628a28"}
  *
  * Go source:
  * func (p *Program) GetSourceFileFromReference(origin *ast.SourceFile, ref *ast.FileReference) *ast.SourceFile {
@@ -773,7 +773,7 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UpdateProgram","kind":"method","status":"implemented","sigHash":"097d85513c9c582286da9c22bc2c9f5b1879006347dc4b6bf85f79c2b301cd05"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UpdateProgram","kind":"method","status":"implemented","sigHash":"8ae617e949dfeee3c281d465da3edf3e511fd7930868ee2a4676da45c31ef9e1"}
  *
  * Go source:
  * // The returned *ast.SourceFile is the changed file as acquired through newHost; it is nil
@@ -926,7 +926,7 @@ export function Program_initCheckerPool(receiver: GoPtr<Program>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetCheckerPool","kind":"method","status":"implemented","sigHash":"366050abc6a31e95bec7998d21cc67dbc0de33075b90f132b3753745b4e78356"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetCheckerPool","kind":"method","status":"implemented","sigHash":"511948d3e12945e26be85a688360e2369ed5591c375069cbfefccf3e6a3b93b1"}
  *
  * Go source:
  * // GetCheckerPool returns the checker pool associated with this program.
@@ -1124,7 +1124,7 @@ export function Program_GetConfigFileParsingDiagnostics(receiver: GoPtr<Program>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetUnresolvedImports","kind":"method","status":"implemented","sigHash":"b5213501873a4601d4e2b5adc0da370c43e6a25707032a45d422911e790e36d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetUnresolvedImports","kind":"method","status":"implemented","sigHash":"f6b950a2c98edf9e7281a1dec04dbcee75ee58f2ac8a9f072c120656e4d6af25"}
  *
  * Go source:
  * func (p *Program) GetUnresolvedImports() *collections.Set[string] {
@@ -1239,7 +1239,7 @@ export function Program_BindSourceFiles(receiver: GoPtr<Program>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetTypeChecker","kind":"method","status":"implemented","sigHash":"7f22b10d2f692dbfc5270037934530f76bb2909dc53fc1119c05c25fbc471cd8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetTypeChecker","kind":"method","status":"implemented","sigHash":"139b24696f9cf8c43ff1cf59a71f3a884bccb1bf31a76c696f04e9dfcad80eba"}
  *
  * Go source:
  * func (p *Program) GetTypeChecker(ctx context.Context) (*checker.Checker, func()) {
@@ -1273,7 +1273,7 @@ export function Program_ForEachCheckerParallel(receiver: GoPtr<Program>, cb: GoF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetTypeCheckerForFile","kind":"method","status":"implemented","sigHash":"1e9f5cdc23ad2cc53c97af88539ba8f5c29e9faf05c932ff496ba8f901c370b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetTypeCheckerForFile","kind":"method","status":"implemented","sigHash":"9fac0487525731a24c337e8b25af604af702f021cc20a7e6747b870a7d84fbed"}
  *
  * Go source:
  * func (p *Program) GetTypeCheckerForFile(ctx context.Context, file *ast.SourceFile) (*checker.Checker, func()) {
@@ -1291,7 +1291,7 @@ export function Program_GetTypeCheckerForFile(receiver: GoPtr<Program>, ctx: GoI
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetTypeCheckerForFileExclusive","kind":"method","status":"implemented","sigHash":"e1d0b0bd38d97ea1e440c824b55c973914ec69b0657ebfe3153c18e9293790e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetTypeCheckerForFileExclusive","kind":"method","status":"implemented","sigHash":"84e3b480ddff581789188c37497ebe091e18ba1a5d588b02a8bd939e2ccaee2d"}
  *
  * Go source:
  * func (p *Program) GetTypeCheckerForFileExclusive(ctx context.Context, file *ast.SourceFile) (*checker.Checker, func()) {
@@ -1366,7 +1366,7 @@ export function Program_GetResolvedModules(receiver: GoPtr<Program>): GoMap<Path
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetPackagesMap","kind":"method","status":"implemented","sigHash":"03785ca54279e316b56cd7c042292a5a71949c299b02ad076e1fda139bc4b76c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetPackagesMap","kind":"method","status":"implemented","sigHash":"c67772d1f9679cb75bc40e0f0d1cb217808f27d70574225ee93fed3c3a9208f1"}
  *
  * Go source:
  * func (p *Program) GetPackagesMap() map[string]bool {
@@ -1402,7 +1402,7 @@ export function Program_GetPackagesMap(receiver: GoPtr<Program>): GoMap<string, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectDiagnostics","kind":"method","status":"implemented","sigHash":"124e0090ae352ee76aa7b31ad4da3be50da7c5737365b0a14c7fcff73f002e78"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectDiagnostics","kind":"method","status":"implemented","sigHash":"197a8174a6e683db6d594e98e60d7b5b462e013736d3ac14fb0803cce9b45c62"}
  *
  * Go source:
  * func (p *Program) collectDiagnostics(ctx context.Context, sourceFile *ast.SourceFile, concurrent bool, collect func(context.Context, *ast.SourceFile) []*ast.Diagnostic) []*ast.Diagnostic {
@@ -1452,7 +1452,7 @@ export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ct
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectCheckerDiagnostics","kind":"method","status":"implemented","sigHash":"51b1af4466cb4d0534fd7782470e7a60e57b6d407e86bbebb938dac174a4f05a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectCheckerDiagnostics","kind":"method","status":"implemented","sigHash":"ddf50272493cd2ec04c7f2057e26afa23ad50f8972e6e745990113c8f60fa295"}
  *
  * Go source:
  * func (p *Program) collectCheckerDiagnostics(ctx context.Context, sourceFile *ast.SourceFile, collect func(context.Context, *checker.Checker, *ast.SourceFile) []*ast.Diagnostic) []*ast.Diagnostic {
@@ -1483,7 +1483,7 @@ export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectCheckerDiagnosticsFromFiles","kind":"method","status":"implemented","sigHash":"6c8971e48d6bae50278c40718b6b259e90eb1e626abb7ae5fbbabf424eb24261"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectCheckerDiagnosticsFromFiles","kind":"method","status":"implemented","sigHash":"6878b16f563d82cfd757a29e5d8af85435a9a52745e47a6651c1bfc6dfabe29c"}
  *
  * Go source:
  * func (p *Program) collectCheckerDiagnosticsFromFiles(ctx context.Context, sourceFiles []*ast.SourceFile, collect func(context.Context, *checker.Checker, *ast.SourceFile) []*ast.Diagnostic) [][]*ast.Diagnostic {
@@ -1557,7 +1557,7 @@ export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::getAdditionalJSSyntacticDiagnostics","kind":"func","status":"implemented","sigHash":"4cc134e32ccd6eb365106c7b13be731a4c16d12b9df6e3157876d7e86a0987a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::getAdditionalJSSyntacticDiagnostics","kind":"func","status":"implemented","sigHash":"2bd2c473c9d1e582ad02725012821e4bc232f105f91b32a475b656972b17405e"}
  *
  * Go source:
  * func getAdditionalJSSyntacticDiagnostics(file *ast.SourceFile, options *core.CompilerOptions) []*ast.Diagnostic {
@@ -2603,7 +2603,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     createDiagnosticForOptionName(diagnostics.Option_0_cannot_be_specified_without_specifying_option_1_or_option_2, "declarationMap", "declaration", "composite");
   }
 
-  if (options!.Lib !== undefined && Tristate_IsTrue(options!.NoLib)) {
+  if (!GoSliceIsNil(options!.Lib) && Tristate_IsTrue(options!.NoLib)) {
     createDiagnosticForOptionName(diagnostics.Option_0_cannot_be_specified_with_option_1, "lib", "noLib");
   }
 
@@ -2733,7 +2733,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   if (Tristate_IsTrue(options!.ResolvePackageJsonImports) && !moduleResolutionSupportsPackageJsonExportsAndImports(moduleResolution)) {
     createDiagnosticForOptionName(diagnostics.Option_0_can_only_be_used_when_moduleResolution_is_set_to_node16_nodenext_or_bundler, "resolvePackageJsonImports", "");
   }
-  if (options!.CustomConditions !== undefined && !moduleResolutionSupportsPackageJsonExportsAndImports(moduleResolution)) {
+  if (!GoSliceIsNil(options!.CustomConditions) && !moduleResolutionSupportsPackageJsonExportsAndImports(moduleResolution)) {
     createDiagnosticForOptionName(diagnostics.Option_0_can_only_be_used_when_moduleResolution_is_set_to_node16_nodenext_or_bundler, "customConditions", "");
   }
 
@@ -3033,7 +3033,7 @@ export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Progra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getBindAndCheckDiagnosticsWithChecker","kind":"method","status":"implemented","sigHash":"58024f4d99ada564df7a23698f4cc8b6567aebe9250892ed517fdaae0f7ab8be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getBindAndCheckDiagnosticsWithChecker","kind":"method","status":"implemented","sigHash":"461117664273df56b99c46bb0dcb18730af3f1343ab19315fb392414c85f3adb"}
  *
  * Go source:
  * func (p *Program) getBindAndCheckDiagnosticsWithChecker(ctx context.Context, fileChecker *checker.Checker, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -3274,7 +3274,7 @@ export function SortAndDeduplicateDiagnostics(diagnostics: GoSlice<GoPtr<Diagnos
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::compactAndMergeRelatedInfos","kind":"func","status":"implemented","sigHash":"42709cae8871346e6c6a3377b0e66bcbe09454353ad492549702e97ff9075513"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::compactAndMergeRelatedInfos","kind":"func","status":"implemented","sigHash":"8e49e5f7364352749bf9b2499e6d2e31f1bfd2900eb2d0c38ef80bb7d1265c9a"}
  *
  * Go source:
  * func compactAndMergeRelatedInfos(diagnostics []*ast.Diagnostic) []*ast.Diagnostic {
@@ -3709,7 +3709,7 @@ export function Program_checkSourceFilesBelongToPath(receiver: GoPtr<Program>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::WriteFileData","kind":"type","status":"implemented","sigHash":"d02490559e7148904b3f7b5cb45b50fc74ceda7b7b8f1867e80c5e3c4fa1c2f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::WriteFileData","kind":"type","status":"implemented","sigHash":"e6fe73d2896a49d500f38236d0752b6a65a8c754fc8813de34a9afa374cfb4a3"}
  *
  * Go source:
  * WriteFileData struct {
@@ -3727,7 +3727,7 @@ export interface WriteFileData {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::WriteFile","kind":"type","status":"implemented","sigHash":"ba248e1607ef5b04f34850638b47f043fd241cbd5b280e645682cff6e5c82cda"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::WriteFile","kind":"type","status":"implemented","sigHash":"6623636b568197a088ad3a5bfae97fe3b1a313f92d8cce82e952a6b3377a3ebc"}
  *
  * Go source:
  * WriteFile func(fileName string, text string, data *WriteFileData) error
@@ -3735,7 +3735,7 @@ export interface WriteFileData {
 export type WriteFile = GoFunc<(fileName: string, text: string, data: GoPtr<WriteFileData>) => GoError>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::EmitOptions","kind":"type","status":"implemented","sigHash":"83ed49471ad2467500bc809d9a9f0d63d64794c8e634e9fce9d4baf6375d0a61"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::EmitOptions","kind":"type","status":"implemented","sigHash":"c0ee843084ad4b4fdcdace2276f8f23e7608cf627f0f083f3b1720e1f0e6a5ed"}
  *
  * Go source:
  * EmitOptions struct {
@@ -3751,7 +3751,7 @@ export interface EmitOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::EmitResult","kind":"type","status":"implemented","sigHash":"2b25aa59d895e79438eb5e11a2f176f46472bb77b9e5124546e1db4ee3fb05fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::EmitResult","kind":"type","status":"implemented","sigHash":"d4854dab5798f5964c722e2571e387dcc5b24f85f0a065274527fb0d376a05c2"}
  *
  * Go source:
  * EmitResult struct {
@@ -3769,7 +3769,7 @@ export interface EmitResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::SourceMapEmitResult","kind":"type","status":"implemented","sigHash":"7ad85d13512052f6531bc4053ced1acc97e80e662f021a4ebac5cec2388f8c36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::SourceMapEmitResult","kind":"type","status":"implemented","sigHash":"3ce216aea1e1de23b7362f955cafd58306a9035ed4f6b1ad80888a201e1faedd"}
  *
  * Go source:
  * SourceMapEmitResult struct {
@@ -3944,7 +3944,7 @@ export function CombineEmitResults(results: GoSlice<GoPtr<EmitResult>>): GoPtr<E
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramLike","kind":"type","status":"implemented","sigHash":"45c6e989acc4aaba77f0d584525ceb25ca00c5414248da6530c643ddac31b5c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramLike","kind":"type","status":"implemented","sigHash":"f4ac1b6b329fc5133cc1f242b5040885638a4bd626ec4c5c9912fec1a3613300"}
  *
  * Go source:
  * ProgramLike interface {
@@ -4236,7 +4236,7 @@ export function Program_GetSourceFiles(receiver: GoPtr<Program>): GoSlice<GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetIncludeReasons","kind":"method","status":"implemented","sigHash":"dd29fca2b6838ce96ba4bf323041fa7d981ba77a09dfc4cb5ad04ac4edbf3c89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetIncludeReasons","kind":"method","status":"implemented","sigHash":"2056bd294b55d5147d9c63c4e923d410d675b468e78241995cf2f8bba5777683"}
  *
  * Go source:
  * func (p *Program) GetIncludeReasons() map[tspath.Path][]*FileIncludeReason {
@@ -4248,7 +4248,7 @@ export function Program_GetIncludeReasons(receiver: GoPtr<Program>): GoMap<Path,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.IsMissingPath","kind":"method","status":"implemented","sigHash":"04652ace2a4230553969bc9fb5fcd0a7e115b155055a65ef94a184441f6412ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.IsMissingPath","kind":"method","status":"implemented","sigHash":"c59529a274d0a6ae1f63292a5187c5b39b038260c5ea8f6f12a6abc6ba4891c7"}
  *
  * Go source:
  * func (p *Program) IsMissingPath(path tspath.Path) bool {
@@ -4910,7 +4910,7 @@ export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::varGroup::plainJSErrors","kind":"varGroup","status":"implemented","sigHash":"f55145f3906b495bb0164c522458cdc580f30a349f9018d3b5169e2e2db37142"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::varGroup::plainJSErrors","kind":"varGroup","status":"implemented","sigHash":"de044e8b36ec21059c000812aa5dabf6b435c53ed06da39fc504a1b50153ce7c"}
  *
  * Go source:
  * var plainJSErrors = collections.NewSetFromItems(

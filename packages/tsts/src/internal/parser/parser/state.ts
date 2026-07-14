@@ -15,7 +15,7 @@ import type { ScriptKind } from "../../core/scriptkind.js";
 import type { Scanner, ScannerState } from "../../scanner/scanner.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::ParsingContext","kind":"type","status":"implemented","sigHash":"e88bdee551deb9e23eaaefdc2ad9292819b7300308c0bfd185fd7e43395a4285"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::ParsingContext","kind":"type","status":"implemented","sigHash":"845a7f1c8d1b2d145b3d940ab103d6e22ec5fbcb3a99754f98a0cde4ad3acd6a"}
  *
  * Go source:
  * ParsingContext int
@@ -23,7 +23,7 @@ import type { Scanner, ScannerState } from "../../scanner/scanner.js";
 export type ParsingContext = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::constGroup::PCSourceElements+PCBlockStatements+PCSwitchClauses+PCSwitchClauseStatements+PCTypeMembers+PCClassMembers+PCEnumMembers+PCHeritageClauseElement+PCVariableDeclarations+PCObjectBindingElements+PCArrayBindingElements+PCArgumentExpressions+PCObjectLiteralMembers+PCJsxAttributes+PCJsxChildren+PCArrayLiteralMembers+PCParameters+PCJSDocParameters+PCRestProperties+PCTypeParameters+PCTypeArguments+PCTupleElementTypes+PCHeritageClauses+PCImportOrExportSpecifiers+PCImportAttributes+PCJSDocComment+PCCount","kind":"constGroup","status":"implemented","sigHash":"900e957e72cd3984a7992b56c31999ec071760458e11fba1b36a351032dbe95c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::constGroup::PCSourceElements+PCBlockStatements+PCSwitchClauses+PCSwitchClauseStatements+PCTypeMembers+PCClassMembers+PCEnumMembers+PCHeritageClauseElement+PCVariableDeclarations+PCObjectBindingElements+PCArrayBindingElements+PCArgumentExpressions+PCObjectLiteralMembers+PCJsxAttributes+PCJsxChildren+PCArrayLiteralMembers+PCParameters+PCJSDocParameters+PCRestProperties+PCTypeParameters+PCTypeArguments+PCTupleElementTypes+PCHeritageClauses+PCImportOrExportSpecifiers+PCImportAttributes+PCJSDocComment+PCCount","kind":"constGroup","status":"implemented","sigHash":"a40d992014aca628baa919624ce1d9b2855310aed56d842397218a6b4a5420b9"}
  *
  * Go source:
  * const (
@@ -85,7 +85,7 @@ export const PCJSDocComment: ParsingContext = 25;
 export const PCCount: ParsingContext = 26;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::ParsingContexts","kind":"type","status":"implemented","sigHash":"c468153d6bb0378231a600b2e44e401e5114b196946dde4f3f83babed3dd9801"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::ParsingContexts","kind":"type","status":"implemented","sigHash":"c574d14c23b3dda30ebaa1471372035fc2d1650a1dc4409d910d9f9cdd86cf18"}
  *
  * Go source:
  * ParsingContexts int
@@ -93,7 +93,7 @@ export const PCCount: ParsingContext = 26;
 export type ParsingContexts = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::JSDocInfo","kind":"type","status":"implemented","sigHash":"b77c76f5edccfb1bc1347acde568f704c148259bc8dba3eacc5ce3746936cc32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::JSDocInfo","kind":"type","status":"implemented","sigHash":"a0f4b3a151e1949feb1bb23c8b999133cdbb1a3730b0b28415f31041d1c90d70"}
  *
  * Go source:
  * JSDocInfo struct {
@@ -107,7 +107,7 @@ export interface JSDocInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::jsdocScannerInfo","kind":"type","status":"implemented","sigHash":"4421a424d91aa770a82e0a72fa6623e2d16f44a60a53d0b1d58b69f6469c13c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::jsdocScannerInfo","kind":"type","status":"implemented","sigHash":"58afd9558905019b14087fb82ab69d2e16052ceee5b4c6ead6276e4d545162a9"}
  *
  * Go source:
  * jsdocScannerInfo uint8
@@ -115,7 +115,7 @@ export interface JSDocInfo {
 export type jsdocScannerInfo = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::constGroup::jsdocScannerInfoHasJSDoc+jsdocScannerInfoHasDeprecated+jsdocScannerInfoHasSeeOrLink","kind":"constGroup","status":"implemented","sigHash":"d14440342472ed6adc2d373a946cf2a97fee5fba89872009af0d4c1833534940"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::constGroup::jsdocScannerInfoHasJSDoc+jsdocScannerInfoHasDeprecated+jsdocScannerInfoHasSeeOrLink","kind":"constGroup","status":"implemented","sigHash":"995b43584527fe31e9db29a12b174b2d714bb5d01d478ab67c274f314cc2cf06"}
  *
  * Go source:
  * const (
@@ -129,7 +129,7 @@ export const jsdocScannerInfoHasDeprecated: jsdocScannerInfo = 2;
 export const jsdocScannerInfoHasSeeOrLink: jsdocScannerInfo = 4;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::Parser","kind":"type","status":"implemented","sigHash":"d25d17b76edf1f29b54bd46ca5698d0b96cbbc0685128f1fd874acbf41ca1522"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::Parser","kind":"type","status":"implemented","sigHash":"7e6d3838c46da994bf718f818ace10cf31a6fa6d76d03a58cbf790dc1836b378"}
  *
  * Go source:
  * Parser struct {
@@ -208,7 +208,7 @@ export interface Parser {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::viableKeywordSuggestions","kind":"varGroup","status":"implemented","sigHash":"e6cd9371f5ed1b7ffeb2afe3c4c687857686b87a2334d143781443ef765894fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::viableKeywordSuggestions","kind":"varGroup","status":"implemented","sigHash":"75312adcd50e2488a5b252d3efc4f917e863cbf6af7be9be7c045ad9dc019805"}
  *
  * Go source:
  * var viableKeywordSuggestions = scanner.GetViableKeywordSuggestions()
@@ -216,7 +216,7 @@ export interface Parser {
 export let viableKeywordSuggestions: GoSlice<string> = GetViableKeywordSuggestions();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::missingListNodes","kind":"varGroup","status":"implemented","sigHash":"d1c5395ca57bcb64c4b3e14d6d59605996440705ff57277a51696d4a8f0480be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::missingListNodes","kind":"varGroup","status":"implemented","sigHash":"054395115c5d4bbc85eb5810df53a86451315b8ded70c6372197c1540cc4449b"}
  *
  * Go source:
  * var missingListNodes = make([]*ast.Node, 0, 1)
@@ -224,7 +224,7 @@ export let viableKeywordSuggestions: GoSlice<string> = GetViableKeywordSuggestio
 export let missingListNodes: GoSlice<GoPtr<Node>> = [];
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::parserPool","kind":"varGroup","status":"implemented","sigHash":"3fdc1286c48fa725161e8fd006c829b0d622c73db48a098be9f4f16883c2048e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::parserPool","kind":"varGroup","status":"implemented","sigHash":"c5af1fb0f0976582a94c76102500c6bc43e76124155e6e3f3724cc806868f371"}
  *
  * Go source:
  * var parserPool = sync.Pool{
@@ -236,7 +236,7 @@ export let missingListNodes: GoSlice<GoPtr<Node>> = [];
 export let parserPool: Pool = new Pool();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::ParserState","kind":"type","status":"implemented","sigHash":"398a9313b037dfc819ac14636817daed6e0ee86b0e916701d82f4cc1a2715093"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::ParserState","kind":"type","status":"implemented","sigHash":"98dab43fce32aad622b8188552a07d113352b087ba76d29cfd982ebe28fee5d3"}
  *
  * Go source:
  * ParserState struct {

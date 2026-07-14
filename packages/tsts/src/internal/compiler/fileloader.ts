@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoEqualStrict, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Map as SyncMapImpl } from "../../go/sync.js";
 import { Int32 as Int32Impl } from "../../go/sync/atomic.js";
@@ -160,7 +160,7 @@ import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, Pro
 
 import type { GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"9c4a426b0d3e59256e9a7dad7aff7add3d3d2f12512bed81cac56f4e53bc747b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"e4d76c1ba9ccfb10d7454bc6476b0b4aba5b90252da267c2a9e78887e7354047"}
  *
  * Go source:
  * libResolution struct {
@@ -176,7 +176,7 @@ export interface libResolution {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::LibFile","kind":"type","status":"implemented","sigHash":"bf419babcf44aa80355bb0cbaf14de8ad8d4e1c9da9f61a05cf6fc8b198f6844"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::LibFile","kind":"type","status":"implemented","sigHash":"60fa112afbe91c85cafb531bcf5ff90d2cdf9f63f0392b95e8dce53a0af88972"}
  *
  * Go source:
  * LibFile struct {
@@ -192,7 +192,7 @@ export interface LibFile {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::sourceFileFromReferenceDiagnostic","kind":"type","status":"implemented","sigHash":"5575a945d804bbf98768f6f77ae02771b72b575c973a621c39d6190b06088cb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::sourceFileFromReferenceDiagnostic","kind":"type","status":"implemented","sigHash":"2e36564bef99b83a80be013933b919ca2b0e004d4aa2ee4b79df7d443c76f153"}
  *
  * Go source:
  * sourceFileFromReferenceDiagnostic struct {
@@ -206,7 +206,7 @@ export interface sourceFileFromReferenceDiagnostic {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::fileLoader","kind":"type","status":"implemented","sigHash":"640c2e70b10d0f41c89ddbb8e17c1450c30708c7ecfe96ea898d3b1fcc7ac018"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::fileLoader","kind":"type","status":"implemented","sigHash":"a14a3a5e54fd3daccffc78fd299c9d164b8e65f28eacb7acaa08056aceec5d48"}
  *
  * Go source:
  * fileLoader struct {
@@ -564,7 +564,7 @@ function mergeProviderImportRequestKind(left: ProviderImportRequestKind | undefi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::redirectsFile","kind":"type","status":"implemented","sigHash":"e4da8645d7c73f33b93a913cfe22055650df62d1b1e9ea134179f8e449df76a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::redirectsFile","kind":"type","status":"implemented","sigHash":"03faa7f4d427af559da94e4e3140cb3eb93a8e72c7e80ffdd7d34981c309b76e"}
  *
  * Go source:
  * redirectsFile struct {
@@ -583,7 +583,7 @@ export interface redirectsFile {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::DuplicateSourceFile","kind":"type","status":"implemented","sigHash":"577779d2362a3a20679f3e15f081a200d90667dfc939c2535bd2018a133ea1b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::DuplicateSourceFile","kind":"type","status":"implemented","sigHash":"73d081f139c902a3834edf1386eedc44b153c379106da4e9a2ba25e800e9d9e0"}
  *
  * Go source:
  * DuplicateSourceFile struct {
@@ -599,7 +599,7 @@ export interface DuplicateSourceFile {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"1a71d40e942ab250a608fc068adcf2cf3ca9a7a26d6129bbbeee837c2b974777"}
  *
  * Go source:
  * var _ ast.HasFileName = (*redirectsFile)(nil)
@@ -638,7 +638,7 @@ export function redirectsFile_Path(receiver: GoPtr<redirectsFile>): Path_9073472
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::processedFiles","kind":"type","status":"implemented","sigHash":"7943b133480b0774cf9dcb87dcbd11f23c130fb74645e79c839af3bd8c17afbe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::processedFiles","kind":"type","status":"implemented","sigHash":"cc8bfc2d42bb25fc775d0d74db74cd221d078e197d83632870b68b149875039e"}
  *
  * Go source:
  * processedFiles struct {
@@ -694,7 +694,7 @@ export interface processedFiles {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::jsxRuntimeImportSpecifier","kind":"type","status":"implemented","sigHash":"c7c3aa35d41ca2c809bfeb2f73fc39840fa20fea0020be7fd143bdcf01a8ec24"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::jsxRuntimeImportSpecifier","kind":"type","status":"implemented","sigHash":"fe53efca2d1916a5695a2d330225a63552c1ac3aac722240e4e2cefcfc96ae2d"}
  *
  * Go source:
  * jsxRuntimeImportSpecifier struct {
@@ -829,7 +829,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
       });
     }
     if (rootFiles.length > 0 && Tristate_IsFalseOrUnknown(compilerOptions!.NoLib)) {
-      if (compilerOptions!.Lib === undefined) {
+      if (GoSliceIsNil(compilerOptions!.Lib)) {
         const name = GetDefaultLibFileName(compilerOptions);
         const libFile = fileLoader_pathForLibFile(loader, name);
         fileLoader_addRootTask(loader, libFile!.path, libFile, {
@@ -921,9 +921,9 @@ export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: st
       includeReason,
       packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
       metadata: {} as SourceFileMetaData,
-      resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+      resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
       resolutionsTrace: [],
-      typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+      typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
       typeResolutionsTrace: [],
       resolutionDiagnostics: [],
       processingDiagnostics: [],
@@ -989,9 +989,9 @@ export function fileLoader_addRootFileTask(receiver: GoPtr<fileLoader>, fileName
     includeReason,
     packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
-    resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+    resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
     resolutionsTrace: [],
-    typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+    typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
     typeResolutionsTrace: [],
     resolutionDiagnostics: [],
     processingDiagnostics: [],
@@ -1057,9 +1057,9 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
     includeReason: undefined,
     packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
-    resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+    resolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(),
     resolutionsTrace: [],
-    typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+    typeResolutionsInFile: GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(),
     typeResolutionsTrace: [],
     resolutionDiagnostics: [],
     processingDiagnostics: [],
@@ -1188,7 +1188,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
     }
     return [toParse, typeResolutionsInFile as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>, typeResolutionsTrace, pDiagnostics];
   }
-  return [[], undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>, [], []];
+  return [GoNilSlice(), GoNilMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(), GoNilSlice(), GoNilSlice()];
 }
 
 /**
@@ -1711,7 +1711,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::constGroup::externalHelpersModuleNameText","kind":"constGroup","status":"implemented","sigHash":"42b8d30f6cec123c960fc65215bb7957d60e1e2100a713e6f60422dd65ee175e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::constGroup::externalHelpersModuleNameText","kind":"constGroup","status":"implemented","sigHash":"952360427c8066aa37cd9c63a924f7eba58391d84879c41208b7afb5805fafbc"}
  *
  * Go source:
  * const externalHelpersModuleNameText = "tslib"

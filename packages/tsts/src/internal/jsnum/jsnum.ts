@@ -2,7 +2,7 @@ import type { bool, double, int, uint } from "../../go/scalars.js";
 import * as math from "../../go/math.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::constGroup::MaxSafeInteger+MinSafeInteger","kind":"constGroup","status":"implemented","sigHash":"eeb6206bb04a088d45d5d8f9107fc8d2685d70335a0ccd8f8be01bf3e87013c6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::constGroup::MaxSafeInteger+MinSafeInteger","kind":"constGroup","status":"implemented","sigHash":"0b1885948707d38451046b6d3f4f92bc901aedd072178765f25c98dad74c5719"}
  *
  * Go source:
  * const (
@@ -14,7 +14,7 @@ export const MaxSafeInteger: Number = (2 ** 53 - 1) as Number;
 export const MinSafeInteger: Number = -MaxSafeInteger as Number;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::type::Number","kind":"type","status":"implemented","sigHash":"bba19200e7db1d43f3330c9d32b24112fef0d2e1d010038ec978a3513506c9ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::type::Number","kind":"type","status":"implemented","sigHash":"85a1467d656e7508c2c4423ee1e20dc12278ec2cae6295a1023c1567fe859537"}
  *
  * Go source:
  * Number float64
@@ -89,7 +89,7 @@ export function isNonFinite(x: double): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.toUint32","kind":"method","status":"implemented","sigHash":"6c220da26a4f43d20fc8f7ef9abc0c42aadbbac54cdf4f072c2f763259130e3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.toUint32","kind":"method","status":"implemented","sigHash":"c01947569414c838d9a1dd1de3918583e77ecebe6001373507ce125d019ee62c"}
  *
  * Go source:
  * func (x Number) toUint32() uint32 {
@@ -104,7 +104,7 @@ export function Number_toUint32(receiver: Number): uint {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.toInt32","kind":"method","status":"implemented","sigHash":"c2d070156e54216d0672454ee47774fe109c0947ae1d4a11010c8570443352e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.toInt32","kind":"method","status":"implemented","sigHash":"63ae566cc4bc930228090b910bb73c34bb917f9032282f14d196181da5f130f9"}
  *
  * Go source:
  * func (n Number) toInt32() int32 {
@@ -169,7 +169,7 @@ export function Number_toShiftCount(receiver: Number): uint {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.SignedRightShift","kind":"method","status":"implemented","sigHash":"40dd33bd117dd588fc3852b8bdf6839be1d0f11f573e6700553b10d9ef285d48"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.SignedRightShift","kind":"method","status":"implemented","sigHash":"cf16eeda1152f4d8ebe6cf97130333b0a7d77cb11f75614ee9543c137d25f191"}
  *
  * Go source:
  * func (x Number) SignedRightShift(y Number) Number {
@@ -181,7 +181,7 @@ export function Number_SignedRightShift(receiver: Number, y: Number): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.UnsignedRightShift","kind":"method","status":"implemented","sigHash":"fd95b63e2723a69fddc999e7b5b7d13345abaaf8d52e74b6e6ddfd5c25933d18"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.UnsignedRightShift","kind":"method","status":"implemented","sigHash":"ed8ada8d94b5620433cdb011ef2b202bbcd0a55a455a469aa664b45f7fc2c7de"}
  *
  * Go source:
  * func (x Number) UnsignedRightShift(y Number) Number {
@@ -194,7 +194,7 @@ export function Number_UnsignedRightShift(receiver: Number, y: Number): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.LeftShift","kind":"method","status":"implemented","sigHash":"fc2cd3bdea01fd3b8937f09387e73e56f69210e38e4cd84348c7984a87c9134e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.LeftShift","kind":"method","status":"implemented","sigHash":"671b95d13e96886dbe4bf8334781be91dd07f1ed8d5413a63e110667b3b36926"}
  *
  * Go source:
  * func (x Number) LeftShift(y Number) Number {
@@ -206,7 +206,7 @@ export function Number_LeftShift(receiver: Number, y: Number): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.BitwiseNOT","kind":"method","status":"implemented","sigHash":"6e9f297c27f45264bf5587701d3329e458bad04f6f9c0f08355e0ea3e829a1e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.BitwiseNOT","kind":"method","status":"implemented","sigHash":"5355c84a87802fb20c69b03d9707002b74de02baac12a8a73308648e7e49dc17"}
  *
  * Go source:
  * func (x Number) BitwiseNOT() Number {
@@ -218,7 +218,7 @@ export function Number_BitwiseNOT(receiver: Number): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.BitwiseOR","kind":"method","status":"implemented","sigHash":"69bdb8b8ebde18f045773310557b9f580bf0cefe8797cd85a44e85f088497148"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.BitwiseOR","kind":"method","status":"implemented","sigHash":"c2a16007659f730b097590c6edd11199576d6160ae05af631d711ddb452a8198"}
  *
  * Go source:
  * func (x Number) BitwiseOR(y Number) Number {
@@ -230,7 +230,7 @@ export function Number_BitwiseOR(receiver: Number, y: Number): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.BitwiseAND","kind":"method","status":"implemented","sigHash":"58ea1c23770da4ee38cec951ffbf4deb9ec409ead82bb0ec95906c0022a9596f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.BitwiseAND","kind":"method","status":"implemented","sigHash":"00dd292354f15b2f5f8591983b818427ee9eafaf76413db416b12eab8c950d1b"}
  *
  * Go source:
  * func (x Number) BitwiseAND(y Number) Number {
@@ -242,7 +242,7 @@ export function Number_BitwiseAND(receiver: Number, y: Number): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.BitwiseXOR","kind":"method","status":"implemented","sigHash":"a4bb81fc7bd5c40c8036959a4594213cea0fefdaed64190704ff297bf04e27fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.BitwiseXOR","kind":"method","status":"implemented","sigHash":"ed54fc753508762faa1129983f87ee62a9f9d7f7f0376ccc2a38a94dccd09825"}
  *
  * Go source:
  * func (x Number) BitwiseXOR(y Number) Number {
@@ -290,7 +290,7 @@ export function Number_Abs(receiver: Number): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::varGroup::negativeZero","kind":"varGroup","status":"implemented","sigHash":"24acde1b150cee3f0353907004d55424b57fed096e411ba6b2ca18b5136408dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::varGroup::negativeZero","kind":"varGroup","status":"implemented","sigHash":"c4c47f8899c8e9f322d2ec8ef381c3df22ea7e53bf1db2b9e3d3f15c64938111"}
  *
  * Go source:
  * var negativeZero = Number(math.Copysign(0, -1))
@@ -298,7 +298,7 @@ export function Number_Abs(receiver: Number): Number {
 export let negativeZero: Number = math.Copysign(0, -1) as Number;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.Remainder","kind":"method","status":"implemented","sigHash":"f9622ca1c6207c341cfd19c4568786ffbd5f8d91763bd8d71063441a4a482de6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.Remainder","kind":"method","status":"implemented","sigHash":"5db7ebfb8524209b4b5a85765f1499a751ca27f8d8b4b52546fa0755be2c1fcf"}
  *
  * Go source:
  * func (n Number) Remainder(d Number) Number {
@@ -334,7 +334,7 @@ export function Number_Remainder(receiver: Number, d: Number): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.Exponentiate","kind":"method","status":"implemented","sigHash":"a9cd4318b3af4cb04ca38cec0dd7138184f5c70de84202b4019022f6c540e014"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.Exponentiate","kind":"method","status":"implemented","sigHash":"a492e4ab60b4b7e1d410744836b03c9aa9a13f1f73da699178f77012b511b4e7"}
  *
  * Go source:
  * func (base Number) Exponentiate(exponent Number) Number {

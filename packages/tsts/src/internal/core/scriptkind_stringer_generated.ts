@@ -46,7 +46,7 @@ export function _(): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scriptkind_stringer_generated.go::constGroup::_ScriptKind_name","kind":"constGroup","status":"implemented","sigHash":"a58a082b88850a63ee878707e40d497441c9b6ab259c120f3574bceca6a652f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scriptkind_stringer_generated.go::constGroup::_ScriptKind_name","kind":"constGroup","status":"implemented","sigHash":"6076ed28a4b51e65fab8f5dde68e0d76d33aa66b16a87e1a014361e820e66460"}
  *
  * Go source:
  * const _ScriptKind_name = "ScriptKindUnknownScriptKindJSScriptKindJSXScriptKindTSScriptKindTSXScriptKindExternalScriptKindJSONScriptKindDeferred"
@@ -54,7 +54,7 @@ export function _(): void {
 export const _ScriptKind_name: string = "ScriptKindUnknownScriptKindJSScriptKindJSXScriptKindTSScriptKindTSXScriptKindExternalScriptKindJSONScriptKindDeferred";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scriptkind_stringer_generated.go::varGroup::_ScriptKind_index","kind":"varGroup","status":"implemented","sigHash":"8ee16a560d8adac512e157664a0fd3ec8e066edba6ffc70c0f92b7679b5789cc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scriptkind_stringer_generated.go::varGroup::_ScriptKind_index","kind":"varGroup","status":"implemented","sigHash":"3e93ae2e60d0e642150da8fe9b7bc6c0827f8d5fb405c630a518ce244c3cba3b"}
  *
  * Go source:
  * var _ScriptKind_index = [...]uint8{0, 17, 29, 42, 54, 67, 85, 99, 117}

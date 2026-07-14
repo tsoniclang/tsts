@@ -4,7 +4,7 @@ import type { GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
 
 import type { GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::type::Arena","kind":"type","status":"implemented","sigHash":"866dd69ab11aaa9aeee1c0e91b8a7af12f59ff5857f9a4e17d1779c0c3f973c2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::type::Arena","kind":"type","status":"implemented","sigHash":"38f2190ab841cbf54c059e3dedb3a5a315a1cd4bc80b3c78ed2d38b4c0300932"}
  *
  * Go source:
  * Arena[T any] struct {
@@ -20,7 +20,7 @@ function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.New","kind":"method","status":"implemented","sigHash":"7f61e2bb57de57610e5585534f7544ee42ef4fef68509f3a42c767cf9152e756"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.New","kind":"method","status":"implemented","sigHash":"329375f41058f34c53b1a9b17d9329a49924dcf468672e45392f6c86b18d9d8a"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic arena allocation receives the exact static zero-value constructor for its element type.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:
@@ -46,7 +46,7 @@ export function Arena_New<T>(receiver: GoPtr<Arena<T>>, zeroValue: GoZeroFactory
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice","kind":"method","status":"implemented","sigHash":"e6e68464be11603146e0ba334fce4d5628033c5389e68c2032220be0b3bef2c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice","kind":"method","status":"implemented","sigHash":"9c8f404ddcb5a3a2e6ff6f5377518e14ab696f2365c87a2f08c3c645a2ac6753"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic slice allocation receives the exact static zero-value constructor for each observable element.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"T"}]}
  *
  * Go source:

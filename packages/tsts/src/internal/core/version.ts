@@ -12,7 +12,7 @@ const byteSlice = (s: string, start: number, end?: number): string => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/version.go::varGroup::version","kind":"varGroup","status":"implemented","sigHash":"6f15dc9e15411aaf131338261dfeb142ae032283be7bc55a54627293a6bd499c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/version.go::varGroup::version","kind":"varGroup","status":"implemented","sigHash":"23e677019d3517679ed624e88b85989160877044e1e9b5c0c79260d2e70b2645"}
  *
  * Go source:
  * var version = "7.0.0-dev"
@@ -32,7 +32,7 @@ export function Version(): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/version.go::varGroup::versionMajorMinor","kind":"varGroup","status":"implemented","sigHash":"49f478012f30fa571d31ebacfa976aeb091faf6c13f2307eada0f0bcc8654bde"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/version.go::varGroup::versionMajorMinor","kind":"varGroup","status":"implemented","sigHash":"4e4907f5a8be7a9b0fd6fcf124d10d9bb3fadcd35ecc7e1d7875ed700a692c89"}
  *
  * Go source:
  * var versionMajorMinor = func() string {

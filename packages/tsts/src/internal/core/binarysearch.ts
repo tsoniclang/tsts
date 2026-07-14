@@ -3,7 +3,7 @@ import type { GoConstraint, GoSlice } from "../../go/compat.js";
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/binarysearch.go::func::BinarySearchUniqueFunc","kind":"func","status":"implemented","sigHash":"eb9aa8d5ae45b66b6740ea5a604ff6184345506ebd0c4f35d9d51c339045e8f6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/binarysearch.go::func::BinarySearchUniqueFunc","kind":"func","status":"implemented","sigHash":"48c594efaf7767f2f0492e0fc7c8ae0ea792f2f2708e6a598153301508fe4157"}
  *
  * Go source:
  * func BinarySearchUniqueFunc[S ~[]E, E any](x S, cmp func(int, E) int) (int, bool) {

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, GoNilMap, GoStringKey, GoUnboxComparableInterface, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoUnboxComparableInterface, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
@@ -95,7 +95,7 @@ import { NewParsedCommandLine } from "./parsedcommandline.js";
 
 import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::extendsResult","kind":"type","status":"implemented","sigHash":"c7aea5f73d967b08ac0528a1d8b41421b0c463f32ac68d98e843b3a3f34c9be2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::extendsResult","kind":"type","status":"implemented","sigHash":"a9a5e4be3ccd0e78727df342c62c509aaaf6cc61a508b4445c448b8a516cc80d"}
  *
  * Go source:
  * extendsResult struct {
@@ -120,7 +120,7 @@ export interface extendsResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::CommandLineCompilerOptionsMap","kind":"varGroup","status":"implemented","sigHash":"cf899e35c599db933c485788886b212911753bfeeeea1541bdd7467384c8aa13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::CommandLineCompilerOptionsMap","kind":"varGroup","status":"implemented","sigHash":"056898d73c2c456c133bd0be2af779914f7814dab38a74fa2d79418f1e1b829a"}
  *
  * Go source:
  * var CommandLineCompilerOptionsMap CommandLineOptionNameMap = commandLineOptionsToMap(OptionsDeclarations)
@@ -131,7 +131,7 @@ export interface extendsResult {
 export let CommandLineCompilerOptionsMap: CommandLineOptionNameMap = commandLineOptionsToMap(OptionsDeclarations);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::compilerOptionsDeclaration","kind":"varGroup","status":"implemented","sigHash":"83cdeb7defd8e48a13dfcfb95ca091bfe9f3e1917639978a4461d29cfea28ffd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::compilerOptionsDeclaration","kind":"varGroup","status":"implemented","sigHash":"472f4bc47dbeb4c772e4549038e22f662150f3b6a6726eb19060a8f059936017"}
  *
  * Go source:
  * var compilerOptionsDeclaration = &CommandLineOption{
@@ -147,7 +147,7 @@ export let compilerOptionsDeclaration: GoPtr<CommandLineOption> = newCommandLine
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::compileOnSaveCommandLineOption","kind":"varGroup","status":"implemented","sigHash":"1d41fc503c60533218d861b97d514292a84342a1389bb6708097592b3ca9dae0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::compileOnSaveCommandLineOption","kind":"varGroup","status":"implemented","sigHash":"544bf11bf88d8a7f64129058945a7f158d3c0d8429db8b4a70d531f16b691f27"}
  *
  * Go source:
  * var compileOnSaveCommandLineOption = &CommandLineOption{
@@ -163,7 +163,7 @@ export let compileOnSaveCommandLineOption: GoPtr<CommandLineOption> = newCommand
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::extendsOptionDeclaration","kind":"varGroup","status":"implemented","sigHash":"15f616e78ca5a06b3f16c11b34837a503f4365783ba92a720ed8cd1c3f351458"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::extendsOptionDeclaration","kind":"varGroup","status":"implemented","sigHash":"c43123a3101921bcc2eac5f7ee677a29a3e0a848428ba88272254c74db0c7562"}
  *
  * Go source:
  * var extendsOptionDeclaration = &CommandLineOption{
@@ -185,7 +185,7 @@ export let extendsOptionDeclaration: GoPtr<CommandLineOption> = newCommandLineOp
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::tsconfigRootOptionsMap","kind":"varGroup","status":"implemented","sigHash":"01f4d8133508b706dae59bd08be55aee887ffcc5419f74853bca070505f9064b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::tsconfigRootOptionsMap","kind":"varGroup","status":"implemented","sigHash":"d9d5845bda2c8c33bcaa45aab672dbcfda0156ece846da2eaaf69f0a12f51ea4"}
  *
  * Go source:
  * var tsconfigRootOptionsMap = &CommandLineOption{
@@ -257,7 +257,7 @@ export let tsconfigRootOptionsMap: GoPtr<CommandLineOption> = newCommandLineOpti
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::configFileSpecs","kind":"type","status":"implemented","sigHash":"0f3bad9971a4299dbdb2480b599c85770dc45e1f4d8b4def82fa92814736524c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::configFileSpecs","kind":"type","status":"implemented","sigHash":"8270c6e45b5a8e65327256bf03409c2bd86c5769f3a30a54afc1857b951efae6"}
  *
  * Go source:
  * configFileSpecs struct {
@@ -391,7 +391,7 @@ export function configFileSpecs_getMatchedFileSpec(receiver: GoPtr<configFileSpe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::FileExtensionInfo","kind":"type","status":"implemented","sigHash":"a5910979b7a34bd8276a9697b77103fd088b8151f7284e0276f39fea36b6988f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::FileExtensionInfo","kind":"type","status":"implemented","sigHash":"e342463c999cdc6cb5a9464306a50ffefecb68834b7bc88b723c125f605acd76"}
  *
  * Go source:
  * FileExtensionInfo struct {
@@ -407,7 +407,7 @@ export interface FileExtensionInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::ExtendedConfigCache","kind":"type","status":"implemented","sigHash":"135ba27068dc2b3d079395ded2b9b3986b49df6139fe7c2fcfc72fef9e15f0a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::ExtendedConfigCache","kind":"type","status":"implemented","sigHash":"5fbf3b6eedba08333953f5076ed836101f629e45b24bad8dc8982c04c512255e"}
  *
  * Go source:
  * ExtendedConfigCache interface {
@@ -419,7 +419,7 @@ export interface ExtendedConfigCache {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::ExtendedConfigCacheEntry","kind":"type","status":"implemented","sigHash":"a9e9705a8323ed0a5e831841abe8a604aa1dc568cd3a16c60c250bc732909f13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::ExtendedConfigCacheEntry","kind":"type","status":"implemented","sigHash":"f7771e89dad8a93129f8d53d886e1c52b8cb4521b3fb7d484ca493feb7d643c0"}
  *
  * Go source:
  * ExtendedConfigCacheEntry struct {
@@ -453,7 +453,7 @@ export function ExtendedConfigCacheEntry_ExtendedFileNames(receiver: GoPtr<Exten
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::parsedTsconfig","kind":"type","status":"implemented","sigHash":"acb3b899a024f22f1f9025ca6d31b9948a1987b5de1346bc898027b9e4ce53ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::parsedTsconfig","kind":"type","status":"implemented","sigHash":"23b529c876f89d539ebdaabf15024a74d261eba62d22d2c9bf18ae94cb899db1"}
  *
  * Go source:
  * parsedTsconfig struct {
@@ -671,7 +671,7 @@ export function parseOwnConfigOfJsonSourceFile(sourceFile: GoPtr<SourceFile>, ho
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::TsConfigSourceFile","kind":"type","status":"implemented","sigHash":"223180191c8b39a3273a26fd9a879ce720dfaa84bb395ed01b926521bb2c9f77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::TsConfigSourceFile","kind":"type","status":"implemented","sigHash":"2ab83b71f39676670d7ff710e942aba2c83c838b4c09f8f6a0f28fb931497ed3"}
  *
  * Go source:
  * TsConfigSourceFile struct {
@@ -728,7 +728,7 @@ export function NewTsconfigSourceFileFromFilePath(configFileName: string, config
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::jsonConversionNotifier","kind":"type","status":"implemented","sigHash":"650d561798cd468bb7a09a3517ba3624372f22bca5aebdf39fe9cfd16a6c1cdb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::jsonConversionNotifier","kind":"type","status":"implemented","sigHash":"09abf378deb8d66a2317a8413d3a007bb3db642c65bc551521a18ac7f0b4f833"}
  *
  * Go source:
  * jsonConversionNotifier struct {
@@ -803,7 +803,7 @@ export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonCon
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::orderedMapType","kind":"varGroup","status":"implemented","sigHash":"17cab9a1276ac342c15949905ddba707e89a6ceae0bc86104826add45c7284a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::orderedMapType","kind":"varGroup","status":"implemented","sigHash":"675e8937b2d45bbb1008b8e7d65f6f20475b848e6fb73bb60a53e14ce8df01cf"}
  *
  * Go source:
  * var orderedMapType = reflect.TypeFor[*collections.OrderedMap[string, any]]()
@@ -926,7 +926,7 @@ export function isCompilerOptionsValue(option: GoPtr<CommandLineOption>, value: 
  */
 export function validateJsonOptionValue(opt: GoPtr<CommandLineOption>, val: GoInterface<unknown>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>] {
   if (val === undefined || val === null) {
-    return [undefined, []];
+    return [undefined, GoNilSlice<GoPtr<Diagnostic>>()];
   }
   const errors: GoPtr<Diagnostic>[] = [];
   switch (opt!.extraValidation) {
@@ -948,7 +948,7 @@ export function validateJsonOptionValue(opt: GoPtr<CommandLineOption>, val: GoIn
   if (errors.length > 0) {
     return [undefined, errors];
   }
-  return [val, []];
+  return [val, GoNilSlice<GoPtr<Diagnostic>>()];
 }
 
 /**
@@ -1011,7 +1011,7 @@ export function convertJsonOptionOfListType(option: GoPtr<CommandLineOption>, va
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::constGroup::configDirTemplate","kind":"constGroup","status":"implemented","sigHash":"d084f86ea78d7aa710331d83cc930347fb11aa48f416d30734b2da9579184fef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::constGroup::configDirTemplate","kind":"constGroup","status":"implemented","sigHash":"5c606ecac4d138eaee04306fe58b10030b509d76fa1fa4b16d4751b03bbec6ab"}
  *
  * Go source:
  * const configDirTemplate = "${configDir}"
@@ -1335,7 +1335,7 @@ export function getExtendsConfigPath(extendedConfig: string, host: GoInterface<P
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::tsConfigOptions","kind":"type","status":"implemented","sigHash":"903f6329787ed9c353369c4bfae67d3b701e5414612a1e1e017e62ee753e3f72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::tsConfigOptions","kind":"type","status":"implemented","sigHash":"f0fe9eae55eca95788e0681e9309a54b54d192d0d859ac2de19cd4f295de431e"}
  *
  * Go source:
  * tsConfigOptions struct {
@@ -1351,7 +1351,7 @@ export interface tsConfigOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::CommandLineOptionNameMap","kind":"type","status":"implemented","sigHash":"9f36b6083a1ed4384410f4fc0026653f95d3ad27a5b928b04a4bb28e2288844b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::CommandLineOptionNameMap","kind":"type","status":"implemented","sigHash":"ff8784e66cdac1d320a00338a06c9021ef96c315ffa60afc13d5f606bf2193e4"}
  *
  * Go source:
  * CommandLineOptionNameMap map[string]*CommandLineOption
@@ -1588,7 +1588,7 @@ export function directoryOfCombinedPath(fileName: string, basePath: string): str
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::ParseConfigFileTextToJson","kind":"func","status":"implemented","sigHash":"110bd3ca6e2ea514ef0dcb199ac9a643fcabfb3eb164776be0a324ec0aa4e442"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::ParseConfigFileTextToJson","kind":"func","status":"implemented","sigHash":"b0cde5a191ad04c8c1f22f708681dc0792b1929d4a308e06e0bdf0e1ab83b740"}
  *
  * Go source:
  * func ParseConfigFileTextToJson(fileName string, path tspath.Path, jsonText string) (any, []*ast.Diagnostic) {
@@ -1614,7 +1614,7 @@ export function ParseConfigFileTextToJson(fileName: string, path: Path, jsonText
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::ParseConfigHost","kind":"type","status":"implemented","sigHash":"4fb26f380237f402efba75d6d19964481ccdfb196da84444bd86d9c11ad62dec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::ParseConfigHost","kind":"type","status":"implemented","sigHash":"deff8cd08f1af49448db5922281730298b762438ee4962a5ba0d6cd540ab8d31"}
  *
  * Go source:
  * ParseConfigHost interface {
@@ -1628,7 +1628,7 @@ export interface ParseConfigHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::resolverHost","kind":"type","status":"implemented","sigHash":"43a8b07719d12fb98b1d4290506499b3a3c7aa612137cf238a65c81a0f4134c6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::resolverHost","kind":"type","status":"implemented","sigHash":"4cdaf68eccadb2333734897913e93ad31ec6f056c2e23fd4f1c9f20a0b1086b9"}
  *
  * Go source:
  * resolverHost struct {
@@ -1775,7 +1775,7 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertToJson","kind":"func","status":"implemented","sigHash":"e93633981cf02a96e3d08109290f1b8e3c1c8cf11d38af3ed63856e36d2c06ca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertToJson","kind":"func","status":"implemented","sigHash":"5f932f51b4ea20ab971e19f295be24aa5345a2c285399ba5f1b923c563a68875"}
  *
  * Go source:
  * func convertToJson(
@@ -1924,7 +1924,7 @@ export function convertPropertyValueToJson(sourceFile: GoPtr<SourceFile>, valueE
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::ParseJsonConfigFileContent","kind":"func","status":"implemented","sigHash":"4ab514aceb1a0ae5dfa96518a2c9cd21d2cefd2d7296c829bc99f346a7ec8997"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::ParseJsonConfigFileContent","kind":"func","status":"implemented","sigHash":"7febbee4bb028dd331799f8504711c78772d32a6543e2b8ac2f12b250d2d5210"}
  *
  * Go source:
  * func ParseJsonConfigFileContent(json any, host ParseConfigHost, basePath string, existingOptions *core.CompilerOptions, configFileName string, resolutionStack []tspath.Path, extraFileExtensions []FileExtensionInfo, extendedConfigCache ExtendedConfigCache) *ParsedCommandLine {
@@ -1938,7 +1938,7 @@ export function ParseJsonConfigFileContent(json: GoInterface<unknown>, host: GoI
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertToObject","kind":"func","status":"implemented","sigHash":"133943d086d9936a1abde212d709a72ce0440e72b219c107caa492f01006f749"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertToObject","kind":"func","status":"implemented","sigHash":"dc791dd692a0c50e256c3d2a3a88a60e3d786149a292ded1791b219f2cbf7a2d"}
  *
  * Go source:
  * func convertToObject(sourceFile *ast.SourceFile) (any, []*ast.Diagnostic) {
@@ -2287,7 +2287,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseConfig","kind":"func","status":"implemented","sigHash":"45dfb38c07a9a7d025ff07e892e4089507cb96f59134e822a7cd4969350e0111"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseConfig","kind":"func","status":"implemented","sigHash":"9769f91219aca298f114d65d56363af1d4a4dd60c79c34056ecee455d508a442"}
  *
  * Go source:
  * func parseConfig(
@@ -2554,7 +2554,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, GoInterface<unknown>>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::constGroup::defaultIncludeSpec","kind":"constGroup","status":"implemented","sigHash":"d696a54b6be328ef2c5948b7be9495da93fa28765553ed5a765260a67880adf5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::constGroup::defaultIncludeSpec","kind":"constGroup","status":"implemented","sigHash":"1a824fe07cc41184c1e82bd559254238ea4ce4b8cfb5cf93a605ee67ea3d78c3"}
  *
  * Go source:
  * const defaultIncludeSpec = "** /*"
@@ -2562,7 +2562,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, GoInterface<unknown>>
 export const defaultIncludeSpec: string = "**/*";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::propOfRaw","kind":"type","status":"implemented","sigHash":"1fbc96d33ad87bcfd3fa6b9eb4275e196711890d1d696c5bfa620720ccdffeeb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::propOfRaw","kind":"type","status":"implemented","sigHash":"5f50ed1dda71b4b77dcfd5fba9478cb64f8397120b1d14330c38ae08deb54afc"}
  *
  * Go source:
  * propOfRaw struct {
@@ -2576,7 +2576,7 @@ export interface propOfRaw {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseJsonConfigFileContentWorker","kind":"func","status":"implemented","sigHash":"1a2442f8f361ee448256966f5838e8ae357182fb10a4e1e4ef3de627b71aa08e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseJsonConfigFileContentWorker","kind":"func","status":"implemented","sigHash":"afbae9b693d9c8b75be55d4c9c87af0b93a40e15d87b79cf805d9f0334066271"}
  *
  * Go source:
  * func parseJsonConfigFileContentWorker(
@@ -2813,18 +2813,18 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
         return { sliceValue: result as unknown[], wrongValue: "" };
       } else if (sourceFile === undefined) {
         errors.push(NewCompilerDiagnostic(diagnostics.Compiler_option_0_requires_a_value_of_type_1, prop, "Array"));
-        return { sliceValue: undefined as unknown as GoSlice<GoInterface<unknown>>, wrongValue: "not-array" };
+        return { sliceValue: GoNilSlice<GoInterface<unknown>>(), wrongValue: "not-array" };
       }
     }
-    return { sliceValue: undefined as unknown as GoSlice<GoInterface<unknown>>, wrongValue: "no-prop" };
+    return { sliceValue: GoNilSlice<GoInterface<unknown>>(), wrongValue: "no-prop" };
   };
   const referencesOfRaw = getPropFromRaw("references", (element: unknown): bool => isOrderedMap(element), "object");
   let fileSpecs = getPropFromRaw("files", (element: unknown): bool => typeof element === "string", "string");
-  if ((fileSpecs.sliceValue as unknown) !== undefined || fileSpecs.wrongValue === "") {
+  if (!GoSliceIsNil(fileSpecs.sliceValue) || fileSpecs.wrongValue === "") {
     const hasZeroOrNoReferences: bool =
-      referencesOfRaw.wrongValue === "no-prop" || referencesOfRaw.wrongValue === "not-array" || ((referencesOfRaw.sliceValue as unknown as unknown[]) ?? []).length === 0;
+      referencesOfRaw.wrongValue === "no-prop" || referencesOfRaw.wrongValue === "not-array" || referencesOfRaw.sliceValue.length === 0;
     const hasExtends = OrderedMap_GetOrZero(rawConfig, "extends", GoZeroInterface);
-    if (((fileSpecs.sliceValue as unknown as unknown[]) ?? []).length === 0 && hasZeroOrNoReferences && (hasExtends === undefined || hasExtends === null)) {
+    if (!GoSliceIsNil(fileSpecs.sliceValue) && fileSpecs.sliceValue.length === 0 && hasZeroOrNoReferences && (hasExtends === undefined || hasExtends === null)) {
       if (sourceFile !== undefined) {
         const fileName: string = configFileName !== "" ? configFileName : "tsconfig.json";
         const diagnosticMessage = diagnostics.The_files_list_in_config_file_0_is_empty;
@@ -2850,36 +2850,36 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
       excludeSpecs = { sliceValue: values, wrongValue: "" };
     }
   }
-  if ((fileSpecs.sliceValue as unknown) === undefined && (includeSpecs.sliceValue as unknown) === undefined) {
+  if (GoSliceIsNil(fileSpecs.sliceValue) && GoSliceIsNil(includeSpecs.sliceValue)) {
     includeSpecs = { sliceValue: [defaultIncludeSpec], wrongValue: "" };
     isDefaultIncludeSpec = true;
   }
-  let validatedIncludeSpecs: GoSlice<string> = [];
-  let validatedIncludeSpecsBeforeSubstitution: GoSlice<string> = [];
-  let validatedExcludeSpecs: GoSlice<string> = [];
-  let validatedFilesSpec: GoSlice<string> = [];
-  let validatedFilesSpecBeforeSubstitution: GoSlice<string> = [];
-  if ((includeSpecs.sliceValue as unknown) !== undefined) {
+  let validatedIncludeSpecs = GoNilSlice<string>();
+  let validatedIncludeSpecsBeforeSubstitution = GoNilSlice<string>();
+  let validatedExcludeSpecs = GoNilSlice<string>();
+  let validatedFilesSpec = GoNilSlice<string>();
+  let validatedFilesSpecBeforeSubstitution = GoNilSlice<string>();
+  if (!GoSliceIsNil(includeSpecs.sliceValue)) {
     const [vspecs, err] = validateSpecs(includeSpecs.sliceValue, true /*disallowTrailingRecursion*/, tsconfigToSourceFile(sourceFile), "include");
     validatedIncludeSpecsBeforeSubstitution = vspecs;
     errors.push(...err);
     const substituted = getSubstitutedStringArrayWithConfigDirTemplate(validatedIncludeSpecsBeforeSubstitution, basePathForFileNames);
-    validatedIncludeSpecs = substituted !== undefined ? substituted : validatedIncludeSpecsBeforeSubstitution;
+    validatedIncludeSpecs = GoSliceIsNil(substituted) ? validatedIncludeSpecsBeforeSubstitution : substituted;
   }
-  if ((excludeSpecs.sliceValue as unknown) !== undefined) {
+  if (!GoSliceIsNil(excludeSpecs.sliceValue)) {
     const [vspecs, err] = validateSpecs(excludeSpecs.sliceValue, false /*disallowTrailingRecursion*/, tsconfigToSourceFile(sourceFile), "exclude");
     validatedExcludeSpecs = vspecs;
     errors.push(...err);
     const validatedExcludeSpecsWithSubstitution = getSubstitutedStringArrayWithConfigDirTemplate(validatedExcludeSpecs, basePathForFileNames);
-    if (validatedExcludeSpecsWithSubstitution !== undefined) {
+    if (!GoSliceIsNil(validatedExcludeSpecsWithSubstitution)) {
       validatedExcludeSpecs = validatedExcludeSpecsWithSubstitution;
     }
   }
-  if ((fileSpecs.sliceValue as unknown) !== undefined) {
+  if (!GoSliceIsNil(fileSpecs.sliceValue)) {
     const stringFileSpecs = core.Filter(fileSpecs.sliceValue, (spec: unknown): bool => typeof spec === "string") as string[];
     validatedFilesSpecBeforeSubstitution = stringFileSpecs;
     const substituted = getSubstitutedStringArrayWithConfigDirTemplate(validatedFilesSpecBeforeSubstitution, basePathForFileNames);
-    validatedFilesSpec = substituted !== undefined ? substituted : validatedFilesSpecBeforeSubstitution;
+    validatedFilesSpec = GoSliceIsNil(substituted) ? validatedFilesSpecBeforeSubstitution : substituted;
   }
   const cfgSpecs: configFileSpecs = {
     filesSpecs: fileSpecs.sliceValue,
@@ -2902,8 +2902,8 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
   const getFileNames = (_basePath: string): [GoSlice<string>, int] => {
     const [fileNames, litLen] = getFileNamesFromConfigSpecs(cfgSpecs, _basePath, parsedConfig!.options, host!.FS(), extraFileExtensions);
     if (shouldReportNoInputFiles(fileNames, canJsonReportNoInputFiles(rawConfig), resolutionStack)) {
-      const incSpecs = cfgSpecs.includeSpecs !== undefined ? cfgSpecs.includeSpecs as unknown[] : [];
-      const excSpecs = cfgSpecs.excludeSpecs !== undefined ? cfgSpecs.excludeSpecs as unknown[] : [];
+      const incSpecs = cfgSpecs.includeSpecs === undefined ? [] : cfgSpecs.includeSpecs as unknown[];
+      const excSpecs = cfgSpecs.excludeSpecs === undefined ? [] : cfgSpecs.excludeSpecs as unknown[];
       errors.push(NewCompilerDiagnostic(
         diagnostics.No_inputs_were_found_in_config_file_0_Specified_include_paths_were_1_and_exclude_paths_were_2,
         configFileName,
@@ -2915,8 +2915,8 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
   };
   const getProjectReferences = (_basePath: string): GoSlice<GoPtr<ProjectReference>> => {
     const newReferencesOfRaw = getPropFromRaw("references", (element: unknown): bool => isOrderedMap(element), "object");
-    if ((newReferencesOfRaw.sliceValue as unknown) === undefined) {
-      return undefined as unknown as GoSlice<GoPtr<ProjectReference>>;
+    if (GoSliceIsNil(newReferencesOfRaw.sliceValue)) {
+      return GoNilSlice<GoPtr<ProjectReference>>();
     }
     const projectReferences: GoPtr<ProjectReference>[] = [];
     for (const reference of (newReferencesOfRaw.sliceValue as unknown as unknown[])) {
@@ -3346,21 +3346,20 @@ export function getSubstitutedPathWithConfigDirTemplate(value: string, basePath:
  * }
  */
 export function getSubstitutedStringArrayWithConfigDirTemplate(list: GoSlice<string>, basePath: string): GoSlice<string> {
-  let result: string[] | undefined = undefined;
-  for (let i = 0; i < (list?.length ?? 0); i++) {
-    const element = list![i];
+  let result = GoNilSlice<string>();
+  for (let i = 0; i < list.length; i++) {
+    const element = list[i]!;
     if (startsWithConfigDirTemplate(element)) {
-      if (result === undefined) {
-        result = Clone(list) as string[];
+      if (GoSliceIsNil(result)) {
+        result = Clone(list);
       }
-      result![i] = getSubstitutedPathWithConfigDirTemplate(element!, basePath);
+      result[i] = getSubstitutedPathWithConfigDirTemplate(element, basePath);
     }
   }
-  if (result !== undefined) {
+  if (!GoSliceIsNil(result)) {
     return result;
   }
-  // Return undefined (nil in Go) if no substitution happened
-  return undefined as unknown as GoSlice<string>;
+  return GoNilSlice<string>();
 }
 
 /**
@@ -3422,18 +3421,18 @@ export function handleOptionConfigDirTemplateSubstitution(compilerOptions: GoPtr
 
   OrderedMap_Entries(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>)!((k: string, v: GoSlice<string>): bool => {
     const substitution = getSubstitutedStringArrayWithConfigDirTemplate(v, basePath);
-    if (substitution !== undefined) {
+    if (!GoSliceIsNil(substitution)) {
       OrderedMap_Set(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>, k, substitution, GoStringKey);
     }
     return true;
   });
 
   const rootDirs = getSubstitutedStringArrayWithConfigDirTemplate(options.RootDirs, basePath);
-  if (rootDirs !== undefined) {
+  if (!GoSliceIsNil(rootDirs)) {
     options.RootDirs = rootDirs;
   }
   const typeRoots = getSubstitutedStringArrayWithConfigDirTemplate(compilerOptions.TypeRoots, basePath);
-  if (typeRoots !== undefined) {
+  if (!GoSliceIsNil(typeRoots)) {
     compilerOptions.TypeRoots = typeRoots;
   }
   if (startsWithConfigDirTemplate(compilerOptions.GenerateCpuProfile)) {
@@ -3463,7 +3462,7 @@ export function handleOptionConfigDirTemplateSubstitution(compilerOptions: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::hasFileWithHigherPriorityExtension","kind":"func","status":"implemented","sigHash":"4803f9d4107c4be253f309433655d046ea8e1b1166023e8c595bbab6c21def97"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::hasFileWithHigherPriorityExtension","kind":"func","status":"implemented","sigHash":"1edbea5e661f6331307f5e7974e5cd96ab78bace1aa6b1d5ad1230cf5db7c290"}
  *
  * Go source:
  * func hasFileWithHigherPriorityExtension(file string, extensions [][]string, hasFile func(fileName string) bool) bool {
@@ -3527,7 +3526,7 @@ export function hasFileWithHigherPriorityExtension(file: string, extensions: GoS
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::removeWildcardFilesWithLowerPriorityExtension","kind":"func","status":"implemented","sigHash":"61b2c047ed0c8588467094a037c8f8c509cace06e547134e5663729324ff7483"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::removeWildcardFilesWithLowerPriorityExtension","kind":"func","status":"implemented","sigHash":"6dcd116bbd0409db8a5244a61bd0a76f26cdb18d497c073ce1eaa616f723b01d"}
  *
  * Go source:
  * func removeWildcardFilesWithLowerPriorityExtension(file string, wildcardFiles *collections.OrderedMap[string, string], extensions [][]string, keyMapper func(value string) string) {
@@ -3571,7 +3570,7 @@ export function removeWildcardFilesWithLowerPriorityExtension(file: string, wild
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getFileNamesFromConfigSpecs","kind":"func","status":"implemented","sigHash":"d4f288ad5e027825ff223ec4c7ae8a981fc3e88bfa0709a548906b2541c771e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getFileNamesFromConfigSpecs","kind":"func","status":"implemented","sigHash":"b5dcc58861063fd2a29b9b88613593b1066b977235a06e2b4c58ef486d7c9456"}
  *
  * Go source:
  * func getFileNamesFromConfigSpecs(
@@ -3775,7 +3774,7 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
  */
 export function GetSupportedExtensions(compilerOptions: GoPtr<CompilerOptions>, extraFileExtensions: GoSlice<FileExtensionInfo>): GoSlice<GoSlice<string>> {
   const needJSExtensions = CompilerOptions_GetAllowJS(compilerOptions);
-  if ((extraFileExtensions ?? []).length === 0) {
+  if (extraFileExtensions.length === 0) {
     if (needJSExtensions) {
       return AllSupportedExtensions;
     } else {
@@ -3825,7 +3824,7 @@ export function GetSupportedExtensionsWithJsonIfResolveJsonModule(compilerOption
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::GetParsedCommandLineOfConfigFile","kind":"func","status":"implemented","sigHash":"65f56f01994894b906e772a362e2f208302b65df11351b74a9f68d4ff02d2191"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::GetParsedCommandLineOfConfigFile","kind":"func","status":"implemented","sigHash":"d6314a4de99a0f6cf9ab0fc5eaebc413c45ece93c3d66c1b4087e7fc1e8d3e11"}
  *
  * Go source:
  * func GetParsedCommandLineOfConfigFile(
@@ -3881,9 +3880,9 @@ export function GetParsedCommandLineOfConfigFile(configFileName: string, options
  */
 export function GetParsedCommandLineOfConfigFilePath(configFileName: string, path: Path, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>>, sys: GoInterface<ParseConfigHost>, extendedConfigCache: GoInterface<ExtendedConfigCache>): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
   const [configFileText, readErrors] = tryReadFile(configFileName, sys!.FS()!.ReadFile.bind(sys!.FS()), []);
-  if ((readErrors ?? []).length > 0) {
+  if (readErrors.length > 0) {
     return [undefined, readErrors];
   }
   const tsConfigSourceFile = NewTsconfigSourceFileFromFilePath(configFileName, path, configFileText);
-  return [ParseJsonSourceFileConfigFileContent(tsConfigSourceFile, sys, GetDirectoryPath(configFileName), options, optionsRaw as GoPtr<OrderedMap<string, GoInterface<unknown>>>, configFileName, [], undefined as unknown as GoSlice<FileExtensionInfo>, extendedConfigCache), undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
+  return [ParseJsonSourceFileConfigFileContent(tsConfigSourceFile, sys, GetDirectoryPath(configFileName), options, optionsRaw as GoPtr<OrderedMap<string, GoInterface<unknown>>>, configFileName, GoNilSlice<Path>(), GoNilSlice<FileExtensionInfo>(), extendedConfigCache), GoNilSlice<GoPtr<Diagnostic>>()];
 }

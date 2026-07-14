@@ -47,7 +47,7 @@ import type { parseCache } from "./parseCache.js";
 
 import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"ea173f48959bb5742f1a055b1561015dbc45fb79cf6ff15219753c2abb245e1f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"69628808be0501ab69e7a2e5cf9c349ab1129718bc63d4ddc222553efb32cabf"}
  *
  * Go source:
  * Options struct {
@@ -63,7 +63,7 @@ export interface Options {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::orchestratorResult","kind":"type","status":"implemented","sigHash":"8ed1815afef001927a40cb48a20d8e8330f1a075fcfae11e8581fd64a39186c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::orchestratorResult","kind":"type","status":"implemented","sigHash":"a1ed589b2a0d747bea2ec47282401deff0ac2f3a723cabe23cd94ac831dca679"}
  *
  * Go source:
  * orchestratorResult struct {
@@ -131,7 +131,7 @@ export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Orchestrator","kind":"type","status":"implemented","sigHash":"cc9f01c813767aac83bd2edb634eabe00c8a752fffaf005f38e8353e8a25796e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Orchestrator","kind":"type","status":"implemented","sigHash":"e05f5ba48f3744ecc8508f03d5b85fa7b27841fc13a92d0513c3cdfe66c8b8eb"}
  *
  * Go source:
  * Orchestrator struct {
@@ -160,7 +160,7 @@ export interface Orchestrator {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"1aaddfbd8f11e780383f08dd48156b6b561e81530f23250d9e4452c6551864a5"}
  *
  * Go source:
  * var _ tsc.Watcher = (*Orchestrator)(nil)

@@ -41,7 +41,7 @@ import { ModifierFlagsDefault } from "../../ast/modifierflags.js";
 
 import type { GoRef } from "../../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingDeclarationTransformer","kind":"type","status":"implemented","sigHash":"c11288edbfe88aa16e8c945b427708e30a077c4eb0bdebe1f153d608e1a48b4a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingDeclarationTransformer","kind":"type","status":"implemented","sigHash":"47d5d92ec15b175fe4faa8f2f3f9b3cdbd0f24a4759973c04156c2b95c3b2342"}
  *
  * Go source:
  * usingDeclarationTransformer struct {
@@ -86,7 +86,7 @@ export function newUsingDeclarationTransformer(opts: GoPtr<TransformOptions>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingKind","kind":"type","status":"implemented","sigHash":"bc3c4141be5dc6263c88473c07bd84f86ce4de8a839a9c0b7869e79c0b00cf5a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingKind","kind":"type","status":"implemented","sigHash":"2ca9ed38fce3bbf8730146254bb9d05b482256b52d07afcc0a83c1256a95a1bd"}
  *
  * Go source:
  * usingKind uint
@@ -94,7 +94,7 @@ export function newUsingDeclarationTransformer(opts: GoPtr<TransformOptions>): G
 export type usingKind = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::constGroup::usingKindNone+usingKindSync+usingKindAsync","kind":"constGroup","status":"implemented","sigHash":"1feb19b35c70f9ee8bc2bb2cf1bfd18e7b26e90064c0a87e3146844f21febc56"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::constGroup::usingKindNone+usingKindSync+usingKindAsync","kind":"constGroup","status":"implemented","sigHash":"8b84825f075c8c073f189d4e067098aad43e8a466795ebca14a39a570600a3a1"}
  *
  * Go source:
  * const (

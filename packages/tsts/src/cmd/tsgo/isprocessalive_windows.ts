@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/isprocessalive_windows.go::constGroup::processAliveSupported","kind":"constGroup","status":"implemented","sigHash":"cb51e9ea32c184706a4d2cd1cbcad16927646693ac9daad79dd8eb56c7420775"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/isprocessalive_windows.go::constGroup::processAliveSupported","kind":"constGroup","status":"implemented","sigHash":"ddff720b98b47013514f2a54d78dabb81db64ab219e03fc1dd3ee9bba4228c93"}
  *
  * Go source:
  * const processAliveSupported = true
@@ -9,7 +9,7 @@ import type { bool, int } from "../../go/scalars.js";
 export const processAliveSupported: bool = true as bool;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/isprocessalive_windows.go::func::isProcessAlive","kind":"func","status":"implemented","sigHash":"6392fe1454e58a9159c27a3c8dc29bc5813958a73d2500e11e8c399dd44bca32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/isprocessalive_windows.go::func::isProcessAlive","kind":"func","status":"implemented","sigHash":"d83dcd73cfb8598c099bef25fb8d571025714373dcb22b5c28c415df37df9719"}
  *
  * Go source:
  * // isProcessAlive checks if a process with the given PID is still running.

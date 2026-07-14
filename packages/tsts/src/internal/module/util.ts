@@ -45,7 +45,7 @@ import { ResolvedModule_IsProviderVirtual } from "./types.js";
 const CHAR_AT: int = 0x40; // '@'
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::varGroup::typeScriptVersion","kind":"varGroup","status":"implemented","sigHash":"5ea790652197b354557a923968e58da28d67b2ec3f25c5727cf388cf991ad24a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::varGroup::typeScriptVersion","kind":"varGroup","status":"implemented","sigHash":"0e8f66f0b6c72d4d6bb3e2c3d23b50c74e25a88c52a24b6dc00cf03057444c79"}
  *
  * Go source:
  * var typeScriptVersion = semver.MustParse(core.Version())
@@ -53,7 +53,7 @@ const CHAR_AT: int = 0x40; // '@'
 export let typeScriptVersion: Version = MustParse(coreVersion());
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::constGroup::InferredTypesContainingFile","kind":"constGroup","status":"implemented","sigHash":"790fc9de65ca101c9bd4211b78852b0004daadae356d0d4b52059031fe9c7794"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::constGroup::InferredTypesContainingFile","kind":"constGroup","status":"implemented","sigHash":"7cffbd3c14e6beb9de8809342bcf6cc9e387081b86fe3aaf7996c2b6c49f7413"}
  *
  * Go source:
  * const InferredTypesContainingFile = "__inferred type names__.ts"
@@ -302,7 +302,7 @@ export function ComparePatternKeys(a: string, b: string): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::func::GetResolutionDiagnostic","kind":"func","status":"implemented","sigHash":"81cbc2857ca9604da7d6e28d7de3263b92890e0a3a40c727e75e14832c72fe0b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::func::GetResolutionDiagnostic","kind":"func","status":"implemented","sigHash":"76713f7029a94db86e897f91946f9123325478cae56c6b456228094aa116ca1c"}
  *
  * Go source:
  * func GetResolutionDiagnostic(options *core.CompilerOptions, resolvedModule *ResolvedModule, file *ast.SourceFile) *diagnostics.Message {
@@ -423,7 +423,7 @@ export function GetResolutionDiagnostic(options: GoPtr<CompilerOptions>, resolve
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::func::TryGetJSExtensionForFile","kind":"func","status":"implemented","sigHash":"2024fe4ecbb4b124932ecb0451c62c4bbe11252b46a5de671d4574dea1948e24"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::func::TryGetJSExtensionForFile","kind":"func","status":"implemented","sigHash":"08ccc72863c68ab68d003474b37fca90e2e598626fe6660233a07aaa6388048e"}
  *
  * Go source:
  * func TryGetJSExtensionForFile(fileName string, options *core.CompilerOptions) string {

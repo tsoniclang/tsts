@@ -88,12 +88,12 @@ test("BreadthFirstSearchParallelEx stops before visiting deeper levels", () => {
     GoStringKey,
   );
 
-  assert.equal(SyncSet_Has(visited, "Root"), true);
-  assert.equal(SyncSet_Has(visited, "L1A"), true);
-  assert.equal(SyncSet_Has(visited, "L1B"), true);
-  assert.equal(SyncSet_Has(visited, "L2A"), true);
-  assert.equal(SyncSet_Has(visited, "L2B"), true);
-  assert.equal(SyncSet_Has(visited, "L3A"), false);
+  assert.equal(SyncSet_Has(visited, "Root", GoStringKey), true);
+  assert.equal(SyncSet_Has(visited, "L1A", GoStringKey), true);
+  assert.equal(SyncSet_Has(visited, "L1B", GoStringKey), true);
+  assert.equal(SyncSet_Has(visited, "L2A", GoStringKey), true);
+  assert.equal(SyncSet_Has(visited, "L2B", GoStringKey), true);
+  assert.equal(SyncSet_Has(visited, "L3A", GoStringKey), false);
 });
 
 test("BreadthFirstSearchParallelEx returns fallback when no stop result exists", () => {
@@ -117,9 +117,9 @@ test("BreadthFirstSearchParallelEx returns fallback when no stop result exists",
 
   assert.equal(result.Stopped, false);
   assert.deepEqual(result.Path, ["A"]);
-  assert.equal(SyncSet_Has(visited, "B"), true);
-  assert.equal(SyncSet_Has(visited, "C"), true);
-  assert.equal(SyncSet_Has(visited, "D"), true);
+  assert.equal(SyncSet_Has(visited, "B", GoStringKey), true);
+  assert.equal(SyncSet_Has(visited, "C", GoStringKey), true);
+  assert.equal(SyncSet_Has(visited, "D", GoStringKey), true);
 });
 
 test("BreadthFirstSearchParallel prefers a stop result over fallback", () => {

@@ -58,7 +58,7 @@ export function GetStringEqualityComparer(ignoreCase: bool): GoFunc<(a: string, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/compare.go::type::Comparison","kind":"type","status":"implemented","sigHash":"1ee9cefb60fd8cb12f867e0920e9a14eb3c776ce253bc2f776efbd1535ec367d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/compare.go::type::Comparison","kind":"type","status":"implemented","sigHash":"99ab707b7926c29386ab1a73e8519c4eeef59796b71aa1a1cac47ae231263f2c"}
  *
  * Go source:
  * Comparison = int
@@ -66,7 +66,7 @@ export function GetStringEqualityComparer(ignoreCase: bool): GoFunc<(a: string, 
 export type Comparison = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/compare.go::constGroup::ComparisonLessThan+ComparisonEqual+ComparisonGreaterThan","kind":"constGroup","status":"implemented","sigHash":"2fbcb79b7e8b984bba29095979085fb72a90896a429dad4983862cd935221b3b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/compare.go::constGroup::ComparisonLessThan+ComparisonEqual+ComparisonGreaterThan","kind":"constGroup","status":"implemented","sigHash":"a6832ca64750960882a237c5c99224970eacda822c6c483fbfebbb457eb37c89"}
  *
  * Go source:
  * const (
@@ -264,7 +264,7 @@ export function CompareStringsCaseInsensitiveThenSensitive(a: string, b: string)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/compare.go::func::CompareStringsCaseInsensitiveEslintCompatible","kind":"func","status":"implemented","sigHash":"012c38f98fb0864426d10fc6dc60657f740684d788847c5a15c44c7b2c34da00"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/compare.go::func::CompareStringsCaseInsensitiveEslintCompatible","kind":"func","status":"implemented","sigHash":"3b8f3f2819c14afeb23608eba63b35a59a6a63a60e17063a7b5006ecce47999f"}
  *
  * Go source:
  * func CompareStringsCaseInsensitiveEslintCompatible(a, b string) Comparison {

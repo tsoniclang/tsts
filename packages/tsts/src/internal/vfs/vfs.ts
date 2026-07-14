@@ -5,7 +5,7 @@ import { ErrInvalid as fs_ErrInvalid, ErrPermission as fs_ErrPermission, ErrExis
 import type { Time } from "../../go/time.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::FS","kind":"type","status":"implemented","sigHash":"89aa29ea0662e3b87adfcbc18b9a591e0e13783d583d2f530d6fb511e1f67835"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::FS","kind":"type","status":"implemented","sigHash":"9f61340eb4bc66d02f7244288b5e177cce4c7f226f831463f931cab632d8504c"}
  *
  * Go source:
  * FS interface {
@@ -64,7 +64,7 @@ export interface FS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::Entries","kind":"type","status":"implemented","sigHash":"697650e259811d1d518f77cfdc2e2573468ae2dc5e9b906f4fd4bece634065aa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::Entries","kind":"type","status":"implemented","sigHash":"370d83d54e45af72c9318f741d1517899e306581ae43cf20deb2bc52fab73202"}
  *
  * Go source:
  * Entries struct {
@@ -85,7 +85,7 @@ export interface Entries {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::DirEntry","kind":"type","status":"implemented","sigHash":"707ed6017614567632eef95dd0ff07a4dd549047176522f016bfce2e17fdd2fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::DirEntry","kind":"type","status":"implemented","sigHash":"1264cd7083639180f1852c94aa25982e7ea723d986d48e124b610992bc96dc84"}
  *
  * Go source:
  * DirEntry = fs.DirEntry
@@ -93,7 +93,7 @@ export interface Entries {
 export type DirEntry = DirEntry_697d4ab0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::FileInfo","kind":"type","status":"implemented","sigHash":"acd13f9330866e2a01ca698480f28444a40f52bd5791b7b7ce6d44531a23e43f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::FileInfo","kind":"type","status":"implemented","sigHash":"aa46cadfb01a433357fcb8d84cffd2cd6a73a60bd305e096a5f84eeadb312bc2"}
  *
  * Go source:
  * FileInfo = fs.FileInfo
@@ -101,7 +101,7 @@ export type DirEntry = DirEntry_697d4ab0;
 export type FileInfo = FileInfo_d0619f84;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::varGroup::ErrInvalid+ErrPermission+ErrExist+ErrNotExist+ErrClosed","kind":"varGroup","status":"implemented","sigHash":"619ab6e5324629e1538c06ace75a19a241e5f289199bc672c21c2f7ec54e913e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::varGroup::ErrInvalid+ErrPermission+ErrExist+ErrNotExist+ErrClosed","kind":"varGroup","status":"implemented","sigHash":"39885a560d7e12b831b49ea63301b4bc1b1065025377c76bfc8a5a5f878a7b80"}
  *
  * Go source:
  * var (
@@ -119,7 +119,7 @@ export let ErrNotExist: GoError = fs_ErrNotExist;
 export let ErrClosed: GoError = fs_ErrClosed;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::WalkDirFunc","kind":"type","status":"implemented","sigHash":"ca37042359f26a00fc83e50feccf63f10e2500b876459905c74a9bda2c1cfec2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::WalkDirFunc","kind":"type","status":"implemented","sigHash":"301672f78484847fa673dfaecd15ffeff4359409ae960949fe1be7b744fa8046"}
  *
  * Go source:
  * WalkDirFunc = fs.WalkDirFunc
@@ -127,7 +127,7 @@ export let ErrClosed: GoError = fs_ErrClosed;
 export type WalkDirFunc = WalkDirFunc_40040532;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::varGroup::SkipAll+SkipDir","kind":"varGroup","status":"implemented","sigHash":"bc3ace7a351bcb6cf431374ee4018465eed6be3178862ed702a0dcf643a0b86b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::varGroup::SkipAll+SkipDir","kind":"varGroup","status":"implemented","sigHash":"05e0bbcf69c858c7143117e24999e70f197b61a4029af67280fccffb43a623a6"}
  *
  * Go source:
  * var (

@@ -714,7 +714,7 @@ export function formatDefaultValue(defaultValue: GoInterface<unknown>, option: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::type::valueCandidate","kind":"type","status":"implemented","sigHash":"909e3d632acdc7c017c0b6cdcff6ebebc5061a6f1d4e972d12a0cbc0d9314281"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::type::valueCandidate","kind":"type","status":"implemented","sigHash":"3ea186d1b9261feb7d698c7de435401e5c19c1178a0f237ccf8dd6761a31cf26"}
  *
  * Go source:
  * valueCandidate struct {

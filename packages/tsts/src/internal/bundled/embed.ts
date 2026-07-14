@@ -62,7 +62,7 @@ function embeddedContentSize(rest: string): long {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::constGroup::embedded","kind":"constGroup","status":"implemented","sigHash":"4c71f07d139be967c63073fca793530940c74775bb8902e2816a1d12ec2bd08f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::constGroup::embedded","kind":"constGroup","status":"implemented","sigHash":"251db7ad0106a586d61c0f795170c9ef23e3e831a67c7fa3f9d78397c9652c76"}
  *
  * Go source:
  * const embedded = true
@@ -70,7 +70,7 @@ function embeddedContentSize(rest: string): long {
 export const embedded: bool = true;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::constGroup::scheme","kind":"constGroup","status":"implemented","sigHash":"9047b547a181961326430026263dae91a62be7a27c4e20c3eac32940617a36fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::constGroup::scheme","kind":"constGroup","status":"implemented","sigHash":"6cd9339fc752abd5347cbee1b18903d4edbd8fee469f8fd80e9e60100f7440a4"}
  *
  * Go source:
  * const scheme = "bundled:///"
@@ -116,7 +116,7 @@ export function IsBundled(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::type::wrappedFS","kind":"type","status":"implemented","sigHash":"c574ef0310576d4c8e7dbf20af7dc5332b6edbc4b02bcc0aedb58bf4f2aeefb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::type::wrappedFS","kind":"type","status":"implemented","sigHash":"a856bba3c14d2993d64916f190fd31505679a5fe2a06fb22094a2262cabb19fe"}
  *
  * Go source:
  * wrappedFS struct {
@@ -128,7 +128,7 @@ export interface wrappedFS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"bf43051dbf5443359d945ee6f538cadaf617e6c30585a226b391502e8ff2cb44"}
  *
  * Go source:
  * var _ vfs.FS = (*wrappedFS)(nil)
@@ -267,7 +267,7 @@ export function wrappedFS_GetAccessibleEntries(receiver: GoPtr<wrappedFS>, path:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::rootEntries","kind":"varGroup","status":"implemented","sigHash":"91248ebfac2d91c9488a21e76f600fafcbf25a1045742439f0ae09fa44bc7c5a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::rootEntries","kind":"varGroup","status":"implemented","sigHash":"a846e712f8a001356c36e2276f997c90097aea3ea0fd1d3c8c093214c239c6c1"}
  *
  * Go source:
  * var rootEntries = []fs.DirEntry{
@@ -520,7 +520,7 @@ export function wrappedFS_Chtimes(receiver: GoPtr<wrappedFS>, path: string, aTim
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::type::fileInfo","kind":"type","status":"implemented","sigHash":"faa9b0357889cb408ff2e938cc4e7f875987a9454f9d36a1c5d4d1b821973e4c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::type::fileInfo","kind":"type","status":"implemented","sigHash":"00e29ed3ce3b8a5cd7b8d64ba2c87468ab7bb911444ec32c649337fb8259fa70"}
  *
  * Go source:
  * fileInfo struct {
@@ -536,7 +536,7 @@ export interface fileInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::_+_","kind":"varGroup","status":"implemented","sigHash":"606a448813ea549ca7a41fa67189d5c616eb07aa6693c9028679d4b9a5b43602"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::_+_","kind":"varGroup","status":"implemented","sigHash":"1041621a877a024f1ed38b0f96f6200927c29984e8bde35bc65b94ad40325ab5"}
  *
  * Go source:
  * var (

@@ -20,7 +20,7 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 import { IsSimpleCopiableExpression } from "../utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::type::logicalAssignmentTransformer","kind":"type","status":"implemented","sigHash":"b09bb19ec1eadb5a9ace607f3a03d261b660c1f10d6f675a7b9e007e082efa21"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::type::logicalAssignmentTransformer","kind":"type","status":"implemented","sigHash":"ebd8aaa8280e61cfad975e2cc1ba9b40d3dabe297c2de9a927d9175e9ed0c717"}
  *
  * Go source:
  * logicalAssignmentTransformer struct {

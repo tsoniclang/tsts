@@ -9,7 +9,7 @@ import type { NodeFactory } from "../printer/factory.js";
 
 import type { GoFunc } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::type::Transformer","kind":"type","status":"implemented","sigHash":"5fa010274cdfe50c30d5bc0081e251425ae74f7e76e7ef1a4923c0c6df44c813"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::type::Transformer","kind":"type","status":"implemented","sigHash":"5b632586efde74a79176f2d3bd4d54e68ff683beca4b1058919178791dcdb75b"}
  *
  * Go source:
  * Transformer struct {

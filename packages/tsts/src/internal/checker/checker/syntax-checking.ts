@@ -349,7 +349,7 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: GoInterfa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNodeDeferred","kind":"method","status":"implemented","sigHash":"dd24ddc76cd890663f688034865c3792ce440b337f9b21837ac6ba89397bd81a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNodeDeferred","kind":"method","status":"implemented","sigHash":"bbc5a5aa739f18fe74cebd6ed501f4df7b8d64e3704fb646c08bc37ee234eff5"}
  *
  * Go source:
  * func (c *Checker) checkNodeDeferred(node *ast.Node) {
@@ -909,7 +909,7 @@ export function Checker_checkReturnStatement(receiver: GoPtr<Checker>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkReturnExpression","kind":"method","status":"implemented","sigHash":"99ca7a7b46a44d4ea22df1befad0471725ffc7ebecdc7fdd593a682b434d33ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkReturnExpression","kind":"method","status":"implemented","sigHash":"55815100542f98ddcc04a2e2b34935ff91425b88b8d29ea3e7c63823e26b9004"}
  *
  * Go source:
  * func (c *Checker) checkReturnExpression(container *ast.Node, unwrappedReturnType *Type, node *ast.Node, expr *ast.Node, exprType *Type, inConditionalExpression bool) {

@@ -20,7 +20,7 @@ export function _(): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/stringer_generated.go::constGroup::_Usage_name","kind":"constGroup","status":"implemented","sigHash":"59fbbd8db48a2ad3d4d1e03f6c7a4e947ec4011d02f7aa55fb61a2cfede30e01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/stringer_generated.go::constGroup::_Usage_name","kind":"constGroup","status":"implemented","sigHash":"642b6caf9eba4a61dbd3732152f657814153ab42e74dca9538a2aed065589fe3"}
  *
  * Go source:
  * const _Usage_name = "FilesDirectoriesExclude"
@@ -28,7 +28,7 @@ export function _(): void {
 export const _Usage_name: string = "FilesDirectoriesExclude";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/stringer_generated.go::varGroup::_Usage_index","kind":"varGroup","status":"implemented","sigHash":"ed1d4dd54a16bc9b1cefb6df2d6e30e476802d09913974ef0872b1c87d875516"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/stringer_generated.go::varGroup::_Usage_index","kind":"varGroup","status":"implemented","sigHash":"a2070483886e0aed5c68f543893d851855e30585103d94bc7bf4241aab9fe93f"}
  *
  * Go source:
  * var _Usage_index = [...]uint8{0, 5, 16, 23}

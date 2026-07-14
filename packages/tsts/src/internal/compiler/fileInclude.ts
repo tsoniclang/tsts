@@ -31,7 +31,7 @@ import { Program_GetSourceFileByPath, Program_GetResolvedModuleFromModuleSpecifi
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::fileIncludeKind","kind":"type","status":"implemented","sigHash":"cfb5545dcc9725e07bdb601f934351c61a7de840776fd29fa357e094c1be7445"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::fileIncludeKind","kind":"type","status":"implemented","sigHash":"6e1f1cdd7041c475e136b50ecf3fbc5d1666cc360df8db6a221b153123b1562f"}
  *
  * Go source:
  * fileIncludeKind int
@@ -39,7 +39,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
 export type fileIncludeKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::constGroup::fileIncludeKindImport+fileIncludeKindReferenceFile+fileIncludeKindTypeReferenceDirective+fileIncludeKindLibReferenceDirective+fileIncludeKindRootFile+fileIncludeKindLibFile+fileIncludeKindAutomaticTypeDirectiveFile","kind":"constGroup","status":"implemented","sigHash":"7d1710af5e33fd143d2f2f5f005731d694f260c677b41d68998348ebad1f7464"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::constGroup::fileIncludeKindImport+fileIncludeKindReferenceFile+fileIncludeKindTypeReferenceDirective+fileIncludeKindLibReferenceDirective+fileIncludeKindRootFile+fileIncludeKindLibFile+fileIncludeKindAutomaticTypeDirectiveFile","kind":"constGroup","status":"implemented","sigHash":"59bf3cb9f9010f43d02b42af91e58701603f83c217b94c67de17d8d930afa106"}
  *
  * Go source:
  * const (
@@ -63,7 +63,7 @@ export const fileIncludeKindLibFile: int = 5;
 export const fileIncludeKindAutomaticTypeDirectiveFile: int = 6;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::FileIncludeReason","kind":"type","status":"implemented","sigHash":"66267829e8a4641b7a13737e2b69f20416189d54e74f87770c9012ba349a5d2e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::FileIncludeReason","kind":"type","status":"implemented","sigHash":"1aab3467579d0853ea284cc0a512b0c989e48a34f33a0404a91639eac4111abe"}
  *
  * Go source:
  * FileIncludeReason struct {
@@ -89,7 +89,7 @@ export interface FileIncludeReason {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::referencedFileData","kind":"type","status":"implemented","sigHash":"778e4ce0bc0e4cfaf8399aacec9e4fd35023bb53fb1e138517fe73a83a24db14"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::referencedFileData","kind":"type","status":"implemented","sigHash":"29a94ead1f5309a5e04c01eccf4068564bab0bf8d297f749d849a6caab05e9e2"}
  *
  * Go source:
  * referencedFileData struct {
@@ -105,7 +105,7 @@ export interface referencedFileData {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::referenceFileLocation","kind":"type","status":"implemented","sigHash":"585b5de7c50e4449030bccb1039827aaee2ff64b843c05468133d54c73180022"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::referenceFileLocation","kind":"type","status":"implemented","sigHash":"59d2f45914c719478a0a6472a2987af8d94b018eeca8e762f32e5bf184a4f227"}
  *
  * Go source:
  * referenceFileLocation struct {
@@ -175,7 +175,7 @@ export function referenceFileLocation_diagnosticAt(receiver: GoPtr<referenceFile
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::automaticTypeDirectiveFileData","kind":"type","status":"implemented","sigHash":"25f491139d4af9f030687b293eef06c353e219be6e7d5da11dbf9541926694ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::type::automaticTypeDirectiveFileData","kind":"type","status":"implemented","sigHash":"3e7ed9a538e66579c992c99233e35edf2df2c657e576c34dfd179466fd9efbdb"}
  *
  * Go source:
  * automaticTypeDirectiveFileData struct {
