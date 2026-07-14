@@ -524,6 +524,7 @@ export function completeDeclarationAuditStatus() {
         ...inventoryAudit(), resolvedProfileCount: 0, unresolvedProfileCount: 0,
       },
       typeStoragePolicies: inventoryAudit(),
+      valueOperationProviders: inventoryAudit(),
       typeEquivalenceRelations: inventoryAudit(),
       ambientReferenceRelations: inventoryAudit(),
       declarationOwnership: inventoryAudit(),

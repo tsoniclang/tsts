@@ -112,11 +112,11 @@ function requireCompleteSignatureAudit(audit) {
   if (audit?.state === "not-run") {
     requireExactPlainObject(audit, [
       "ambientReferenceRelations", "authoredFacades", "declarationOwnership", "externalPackageSurface", "reason", "state",
-      "selection", "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript",
+      "selection", "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript", "valueOperationProviders",
     ], "Porter status.signatureCheck");
     requireNotRunReason(audit, "Porter status.signatureCheck");
     requireSignatureSelection(audit.selection);
-    for (const key of ["ambientReferenceRelations", "authoredFacades", "declarationOwnership", "externalPackageSurface", "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript"]) {
+    for (const key of ["ambientReferenceRelations", "authoredFacades", "declarationOwnership", "externalPackageSurface", "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript", "valueOperationProviders"]) {
       requireNotRunAudit(audit[key], `Porter status.signatureCheck.${key}`);
     }
     return;
@@ -124,7 +124,7 @@ function requireCompleteSignatureAudit(audit) {
   requireExactPlainObject(audit, [
     "ambientReferenceRelations", "authoredFacades", "byKind", "checked", "declarationOwnership", "descriptors",
     "externalPackageSurface", "mismatchCount", "mismatches", "overrideIssueCount", "overrideIssues", "overriddenUnits",
-    "selection", "state", "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript",
+    "selection", "state", "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript", "valueOperationProviders",
   ], "Porter status.signatureCheck");
   if (audit.state !== "complete") throw new Error("Porter status.signatureCheck.state must be 'complete'");
   requireSignatureSelection(audit.selection);
@@ -136,7 +136,7 @@ function requireCompleteSignatureAudit(audit) {
   requireByKind(audit.byKind, audit.mismatches, "Porter status.signatureCheck.byKind");
   requireAuthoredFacadeAudit(audit.authoredFacades);
   requireInventoryAudit(audit.externalPackageSurface, ["checked", "inventory", "mismatchCount", "resolvedProfileCount", "state", "unresolvedProfileCount"], "externalPackageSurface");
-  for (const key of ["typeStoragePolicies", "typeEquivalenceRelations", "ambientReferenceRelations", "declarationOwnership"]) {
+  for (const key of ["typeStoragePolicies", "valueOperationProviders", "typeEquivalenceRelations", "ambientReferenceRelations", "declarationOwnership"]) {
     requireInventoryAudit(audit[key], ["checked", "inventory", "mismatchCount", "state"], key);
   }
   requireUntrackedTypeScriptAudit(audit.untrackedTypeScript);

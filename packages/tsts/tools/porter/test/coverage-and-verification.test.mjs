@@ -382,6 +382,7 @@ test("blocked signature verification preserves the exact intended audit selectio
     authoredFacades: { ...skipped },
     externalPackageSurface: { ...skipped },
     typeStoragePolicies: { ...skipped },
+    valueOperationProviders: { ...skipped },
     typeEquivalenceRelations: { ...skipped },
     ambientReferenceRelations: { ...skipped },
     declarationOwnership: { ...skipped },
