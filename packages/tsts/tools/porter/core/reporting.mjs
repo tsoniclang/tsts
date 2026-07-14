@@ -3,6 +3,7 @@ import { collectDiagnosticsArtifactFailures } from "../diagnostics-generator.mjs
 import { escapeMd, repoRoot, resolveRepo } from "./runtime.mjs";
 import { appendSignatureAuditMarkdown, signatureAuditSummaryLines } from "./signature-reporting.mjs";
 import { collectGeneratedArtifactFailures } from "./verification.mjs";
+import { collectGoValueOperationArtifactFailures } from "./value-operations/generated-artifacts.mjs";
 import path from "node:path";
 
 export function printScanSummary(config, snapshot) {
@@ -38,6 +39,8 @@ export function printStatus(config, status) {
   console.log(`Diagnostics generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingDiagnosticsArtifacts}/${status.counts.staleDiagnosticsArtifacts}/${status.counts.orphanDiagnosticsArtifacts}/${status.counts.untrackedDiagnosticsArtifacts}/${status.counts.invalidDiagnosticsArtifacts}`);
   console.log(`Bundled generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingBundledArtifacts}/${status.counts.staleBundledArtifacts}/${status.counts.orphanBundledArtifacts}/${status.counts.untrackedBundledArtifacts}/${status.counts.invalidBundledArtifacts}`);
   console.log(`Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
+  console.log(`Go value-operation generated artifact audit: ${status.valueOperationGeneratedArtifacts.state}`);
+  console.log(`Go value-operation generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingValueOperationGeneratedArtifacts}/${status.counts.staleValueOperationGeneratedArtifacts}/${status.counts.orphanValueOperationGeneratedArtifacts}/${status.counts.untrackedValueOperationGeneratedArtifacts}/${status.counts.invalidValueOperationGeneratedArtifacts}`);
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides;
   console.log(`Local overrides inline/signature/initializer/value-order/issues: ${localOverrides.inline}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.byAllow.initializer ?? 0}/${localOverrides.byAllow["value-order"] ?? 0}/${localOverrides.failureCount}`);
@@ -79,6 +82,8 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Diagnostics generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingDiagnosticsArtifacts}/${status.counts.staleDiagnosticsArtifacts}/${status.counts.orphanDiagnosticsArtifacts}/${status.counts.untrackedDiagnosticsArtifacts}/${status.counts.invalidDiagnosticsArtifacts}`);
   lines.push(`- Bundled generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingBundledArtifacts}/${status.counts.staleBundledArtifacts}/${status.counts.orphanBundledArtifacts}/${status.counts.untrackedBundledArtifacts}/${status.counts.invalidBundledArtifacts}`);
   lines.push(`- Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
+  lines.push(`- Go value-operation generated artifact audit: ${status.valueOperationGeneratedArtifacts.state}`);
+  lines.push(`- Go value-operation generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingValueOperationGeneratedArtifacts}/${status.counts.staleValueOperationGeneratedArtifacts}/${status.counts.orphanValueOperationGeneratedArtifacts}/${status.counts.untrackedValueOperationGeneratedArtifacts}/${status.counts.invalidValueOperationGeneratedArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides;
   lines.push(`- Local overrides inline/signature/initializer/value-order/issues: ${localOverrides.inline}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.byAllow.initializer ?? 0}/${localOverrides.byAllow["value-order"] ?? 0}/${localOverrides.failureCount}`);
@@ -120,6 +125,7 @@ export function renderStatusMarkdown(status) {
   lines.push(`- TypeScript files without unit metadata: ${status.counts.untrackedTsFiles}`);
   lines.push(`- Generated artifact defects: ${status.counts.missingGeneratedArtifacts + status.counts.staleGeneratedArtifacts + status.counts.orphanGeneratedArtifacts + status.counts.untrackedGeneratedArtifacts + status.counts.invalidGeneratedArtifacts}`);
   lines.push(`- Bundled generated artifact defects: ${status.counts.missingBundledArtifacts + status.counts.staleBundledArtifacts + status.counts.orphanBundledArtifacts + status.counts.untrackedBundledArtifacts + status.counts.invalidBundledArtifacts}`);
+  lines.push(`- Go value-operation generated artifact defects: ${status.counts.missingValueOperationGeneratedArtifacts + status.counts.staleValueOperationGeneratedArtifacts + status.counts.orphanValueOperationGeneratedArtifacts + status.counts.untrackedValueOperationGeneratedArtifacts + status.counts.invalidValueOperationGeneratedArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   lines.push(`- Units outside semantic split targets: ${status.counts.splitPathMismatches}`);
   if (status.largeFileSplits.files.length > 0) {
@@ -213,6 +219,23 @@ export function renderStatusMarkdown(status) {
     }
     for (const artifact of status.generatedArtifacts.invalid.slice(0, 100)) {
       lines.push(`| invalid | ${artifact.path} | ${artifact.reason} |`);
+    }
+  }
+  const valueOperationArtifacts = status.valueOperationGeneratedArtifacts;
+  if (collectGoValueOperationArtifactFailures(valueOperationArtifacts).length > 0) {
+    lines.push("");
+    lines.push("### Go Value-Operation Generated Artifact Defects");
+    lines.push("");
+    if (valueOperationArtifacts.state !== "complete") {
+      lines.push(`- Audit not run: ${valueOperationArtifacts.reason}`);
+    } else {
+      lines.push("| Status | Path | Reason |");
+      lines.push("|---|---|---|");
+      for (const disposition of ["missing", "stale", "orphan", "untracked", "invalid"]) {
+        for (const artifact of valueOperationArtifacts[disposition].slice(0, 100)) {
+          lines.push(`| ${disposition} | ${artifact.path} | ${artifact.reason} |`);
+        }
+      }
     }
   }
   const bundledArtifacts = status.bundledGeneratedArtifacts;

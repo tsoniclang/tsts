@@ -408,12 +408,8 @@ function combineValueOperationProviderAudits(...audits) {
 
 export function requireSignatureOperationEvidence(report) {
   const evidence = signatureOperationEvidence.get(report);
-  if (evidence === undefined) throw new Error("Go value-operation planning requires one complete whole-program signature audit");
-  if (report.state !== "complete" || report.selection?.kind !== "all-active" ||
-      !Array.isArray(report.mismatches) || report.mismatches.length !== 0 ||
-      !Array.isArray(report.overrideIssues) || report.overrideIssues.length !== 0) {
-    throw new Error("Go value-operation planning requires one clean whole-program signature audit with no mismatches or override issues");
-  }
+  const issue = signatureOperationEvidenceIssue(report);
+  if (issue !== undefined) throw new Error(issue);
   const expectedKeys = ["auditedTypeStorage", "generatorOwnedProviders", "reviewedProviders", "unitOwnership"];
   const actualKeys = Object.keys(evidence).sort(compareText);
   if (actualKeys.length !== expectedKeys.length || actualKeys.some((key, index) => key !== expectedKeys[index])) {
@@ -423,6 +419,18 @@ export function requireSignatureOperationEvidence(report) {
     if (evidence[key] === undefined) throw new Error(`Go value-operation evidence '${key}' was not finalized`);
   }
   return evidence;
+}
+
+export function signatureOperationEvidenceIssue(report) {
+  if (signatureOperationEvidence.get(report) === undefined) {
+    return "Go value-operation planning requires one complete whole-program signature audit";
+  }
+  if (report.state !== "complete" || report.selection?.kind !== "all-active" ||
+      !Array.isArray(report.mismatches) || report.mismatches.length !== 0 ||
+      !Array.isArray(report.overrideIssues) || report.overrideIssues.length !== 0) {
+    return "Go value-operation planning requires one clean whole-program signature audit with no mismatches or override issues";
+  }
+  return undefined;
 }
 
 function prerequisiteBlockedReport(idFilter, mismatches) {

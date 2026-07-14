@@ -7,6 +7,7 @@ import { countsByModule, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { buildPorterUnitOwnership } from "./unit-ownership.mjs";
 import { PORTER_STATUS_SCHEMA_VERSION, requireExactPorterStatus } from "./status-contract.mjs";
 import { validateBuildStatusInput } from "./status-input-contract.mjs";
+import { requireGoValueOperationGeneratedArtifactStatus } from "./value-operations/generated-artifacts.mjs";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -143,6 +144,7 @@ export function buildStatus(input) {
     generatedSourceCoverage,
     globalGeneratedArtifacts,
     largeFileSplits,
+    valueOperationGeneratedArtifacts,
   } = input;
   const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
   const generatedSourcePolicies = buildGeneratedSourcePolicyStatus(snapshot, {
@@ -260,6 +262,11 @@ export function buildStatus(input) {
       orphanUnicodeArtifacts: unicodeGeneratedArtifacts.orphan.length,
       untrackedUnicodeArtifacts: unicodeGeneratedArtifacts.untracked.length,
       invalidUnicodeArtifacts: unicodeGeneratedArtifacts.invalid.length,
+      missingValueOperationGeneratedArtifacts: valueOperationGeneratedArtifacts.missing.length,
+      staleValueOperationGeneratedArtifacts: valueOperationGeneratedArtifacts.stale.length,
+      orphanValueOperationGeneratedArtifacts: valueOperationGeneratedArtifacts.orphan.length,
+      untrackedValueOperationGeneratedArtifacts: valueOperationGeneratedArtifacts.untracked.length,
+      invalidValueOperationGeneratedArtifacts: valueOperationGeneratedArtifacts.invalid.length,
       largeFileSplitFailures: largeFileSplits.failureCount,
       splitPathMismatches: splitPathMismatches.length,
       schemaSourceMismatches: schemaSourceSync.mismatches.length,
@@ -286,6 +293,7 @@ export function buildStatus(input) {
     diagnosticsGeneratedArtifacts,
     bundledGeneratedArtifacts,
     unicodeGeneratedArtifacts,
+    valueOperationGeneratedArtifacts,
     schemaSourceSync,
     localOverrides,
     generatedSourcePolicies,
@@ -300,5 +308,22 @@ export function buildStatus(input) {
     stale,
     excluded,
     rows,
+  });
+}
+
+export function withGoValueOperationGeneratedArtifactStatus(status, artifactStatus) {
+  requireExactPorterStatus(status);
+  requireGoValueOperationGeneratedArtifactStatus(artifactStatus);
+  return requireExactPorterStatus({
+    ...status,
+    counts: {
+      ...status.counts,
+      missingValueOperationGeneratedArtifacts: artifactStatus.missing.length,
+      staleValueOperationGeneratedArtifacts: artifactStatus.stale.length,
+      orphanValueOperationGeneratedArtifacts: artifactStatus.orphan.length,
+      untrackedValueOperationGeneratedArtifacts: artifactStatus.untracked.length,
+      invalidValueOperationGeneratedArtifacts: artifactStatus.invalid.length,
+    },
+    valueOperationGeneratedArtifacts: artifactStatus,
   });
 }

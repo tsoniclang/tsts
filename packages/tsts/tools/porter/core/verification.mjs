@@ -8,6 +8,7 @@ import { auditExecutionLabel, declarationAuditEntries } from "./declaration-audi
 import { fail } from "./runtime.mjs";
 import { collectSchemaSourceSyncFailures } from "./status.mjs";
 import { requireExactPlainObject, requireExactPorterStatus } from "./status-contract.mjs";
+import { collectGoValueOperationArtifactFailures } from "./value-operations/generated-artifacts.mjs";
 
 export function verifyStatus(status) {
   const failures = collectVerifyFailures(status);
@@ -52,6 +53,7 @@ export function collectVerifyFailures(status) {
   failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts));
   failures.push(...collectBundledArtifactFailures(status.bundledGeneratedArtifacts));
   failures.push(...collectUnicodeArtifactFailures(status.unicodeGeneratedArtifacts));
+  failures.push(...collectGoValueOperationArtifactFailures(status.valueOperationGeneratedArtifacts));
   failures.push(...collectLocalOverrideFailures(status.localOverrides));
   if (status.signatureCheck.overrideIssueCount > 0) {
     failures.push(`${status.signatureCheck.overrideIssueCount} signature override metadata issues`);

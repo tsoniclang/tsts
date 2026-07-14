@@ -24,6 +24,7 @@
     "porter:large-files": "node packages/tsts/tools/porter/porter-cli.mjs large-files",
     "porter:ast": "node packages/tsts/tools/porter/porter-cli.mjs ast",
     "porter:diagnostics": "node packages/tsts/tools/porter/porter-cli.mjs diagnostics",
+    "porter:value-operations": "node packages/tsts/tools/porter/porter-cli.mjs value-operations",
     "porter:skeleton-check": "node packages/tsts/tools/porter/porter-cli.mjs skeleton-check",
     "porter:sig-check": "node packages/tsts/tools/porter/porter-cli.mjs sig-check",
     "porter:test": "node --test packages/tsts/tools/porter/*.test.mjs",

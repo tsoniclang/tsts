@@ -32,6 +32,7 @@ test("value-operation registration rejects modules outside its exclusive root", 
 
 test("value-operation artifact failures preserve every independent disposition", () => {
   assert.deepEqual(collectGoValueOperationArtifactFailures({
+    state: "complete",
     invalid: [{}],
     missing: [{}, {}],
     orphan: [{}, {}, {}],
@@ -44,4 +45,16 @@ test("value-operation artifact failures preserve every independent disposition",
     "5 untracked Go value-operation artifacts",
     "1 invalid Go value-operation artifacts",
   ]);
+});
+
+test("value-operation artifact failures reject an unexecuted audit as non-green", () => {
+  assert.deepEqual(collectGoValueOperationArtifactFailures({
+    state: "not-run",
+    reason: "The declaration audit has not run.",
+    invalid: [],
+    missing: [],
+    orphan: [],
+    stale: [],
+    untracked: [],
+  }), ["Go value-operation generated-artifact audit must be complete (The declaration audit has not run.)"]);
 });

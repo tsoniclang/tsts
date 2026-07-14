@@ -115,7 +115,7 @@ test("renderStatusMarkdown reports every missing module from missing rows only",
   });
   const markdown = renderStatusMarkdown(status);
 
-  assert.equal(status.schemaVersion, 4);
+  assert.equal(status.schemaVersion, 5);
   assert.match(markdown, /\| internal\/parser \| 1 \|/);
   assert.doesNotMatch(markdown, /\| internal\/checker \| 1 \|/);
   assert.match(markdown, /Go\/TypeScript signature unit audit: not run/);
@@ -250,7 +250,7 @@ test("signature summaries retain audit state and every concrete inventory row", 
   ]) {
     assert.match(markdown, new RegExp(evidence));
   }
-  assert.equal(signatureAuditSummaryLines({ signatureCheck: summary, jsonTagCheck: { state: "not-run", reason: "fixture" } }).length, 9);
+  assert.equal(signatureAuditSummaryLines({ signatureCheck: summary, jsonTagCheck: { state: "not-run", reason: "fixture" } }).length, 10);
 });
 
 test("filtered signature summaries preserve every skipped whole-program subaudit", () => {

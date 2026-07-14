@@ -1,6 +1,7 @@
 import { compareText } from "./deterministic-order.mjs";
+import { requireGoValueOperationGeneratedArtifactStatus } from "./value-operations/generated-artifacts.mjs";
 
-export const PORTER_STATUS_SCHEMA_VERSION = 4;
+export const PORTER_STATUS_SCHEMA_VERSION = 5;
 
 export const porterStatusKeys = Object.freeze([
   "astGeneratedArtifacts",
@@ -38,6 +39,7 @@ export const porterStatusKeys = Object.freeze([
   "unicodeGeneratedArtifacts",
   "unitlessGoFiles",
   "untrackedTsFiles",
+  "valueOperationGeneratedArtifacts",
 ]);
 
 export const porterStatusCountKeys = Object.freeze([
@@ -55,6 +57,7 @@ export const porterStatusCountKeys = Object.freeze([
   "invalidGeneratedArtifacts",
   "invalidTsMetadata",
   "invalidUnicodeArtifacts",
+  "invalidValueOperationGeneratedArtifacts",
   "largeFileSplitFailures",
   "localOverrideIssues",
   "missing",
@@ -63,12 +66,14 @@ export const porterStatusCountKeys = Object.freeze([
   "missingDiagnosticsArtifacts",
   "missingGeneratedArtifacts",
   "missingUnicodeArtifacts",
+  "missingValueOperationGeneratedArtifacts",
   "orphan",
   "orphanAstArtifacts",
   "orphanBundledArtifacts",
   "orphanDiagnosticsArtifacts",
   "orphanGeneratedArtifacts",
   "orphanUnicodeArtifacts",
+  "orphanValueOperationGeneratedArtifacts",
   "portable",
   "schemaFilePolicyIssues",
   "schemaSourceMismatches",
@@ -81,6 +86,7 @@ export const porterStatusCountKeys = Object.freeze([
   "staleDiagnosticsArtifacts",
   "staleGeneratedArtifacts",
   "staleUnicodeArtifacts",
+  "staleValueOperationGeneratedArtifacts",
   "stubbed",
   "unitlessGoFiles",
   "untrackedAstArtifacts",
@@ -89,6 +95,7 @@ export const porterStatusCountKeys = Object.freeze([
   "untrackedGeneratedArtifacts",
   "untrackedTsFiles",
   "untrackedUnicodeArtifacts",
+  "untrackedValueOperationGeneratedArtifacts",
 ]);
 
 export function requireExactPorterStatus(status) {
@@ -112,6 +119,7 @@ export function requireExactPorterStatus(status) {
     requireCount(status.counts[key], `Porter status.counts.${key}`);
   }
   validateStatusCountEvidence(status);
+  requireGoValueOperationGeneratedArtifactStatus(status.valueOperationGeneratedArtifacts);
   return status;
 }
 
@@ -180,6 +188,7 @@ function validateStatusCountEvidence(status) {
     ["diagnosticsGeneratedArtifacts", "Diagnostics"],
     ["bundledGeneratedArtifacts", "Bundled"],
     ["unicodeGeneratedArtifacts", "Unicode"],
+    ["valueOperationGeneratedArtifacts", "ValueOperationGenerated"],
   ];
   for (const [statusKey, countInfix] of artifactStatuses) {
     for (const [evidenceKey, countPrefix] of [["missing", "missing"], ["stale", "stale"], ["orphan", "orphan"], ["untracked", "untracked"], ["invalid", "invalid"]]) {

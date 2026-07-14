@@ -133,6 +133,11 @@ export function emptyCounts() {
     orphanUnicodeArtifacts: 0,
     untrackedUnicodeArtifacts: 0,
     invalidUnicodeArtifacts: 0,
+    missingValueOperationGeneratedArtifacts: 0,
+    staleValueOperationGeneratedArtifacts: 0,
+    orphanValueOperationGeneratedArtifacts: 0,
+    untrackedValueOperationGeneratedArtifacts: 0,
+    invalidValueOperationGeneratedArtifacts: 0,
     largeFileSplitFailures: 0,
     splitPathMismatches: 0,
     schemaSourceMismatches: 0,
@@ -158,6 +163,7 @@ export function emptyVerificationEvidence() {
     diagnosticsGeneratedArtifacts: emptyGeneratedArtifacts(),
     bundledGeneratedArtifacts: emptyGeneratedArtifacts(),
     unicodeGeneratedArtifacts: emptyGeneratedArtifacts(),
+    valueOperationGeneratedArtifacts: { state: "complete", ...emptyGeneratedArtifacts() },
     schemaSourceSync: emptySchemaSourceSyncStatus(),
     localOverrides: emptyLocalOverrideStatus(),
     sourcePin: emptySourcePinStatus(),
@@ -169,7 +175,7 @@ export function emptyVerificationEvidence() {
 
 export function completeVerificationStatus(overrides = {}) {
   const status = {
-    schemaVersion: 4,
+    schemaVersion: 5,
     generatedAt: "2026-01-01T00:00:00.000Z",
     source: { root: "/source", gitRevision: "a".repeat(40), fileCount: 0, lineCount: 0, unitCount: 0 },
     ts: { root: "/source/ts", metadataUnitCount: 0, scannedFileCount: 0 },

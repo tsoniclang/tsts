@@ -16,6 +16,7 @@ const buildStatusInputKeys = Object.freeze([
   "generatedSourceCoverage",
   "globalGeneratedArtifacts",
   "largeFileSplits",
+  "valueOperationGeneratedArtifacts",
 ]);
 const buildStatusInputKeySet = new Set(buildStatusInputKeys);
 const tsUnitStatusEvidenceKeys = Object.freeze(["fileCount", "files", "units"]);

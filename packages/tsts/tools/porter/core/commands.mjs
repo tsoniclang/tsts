@@ -3,7 +3,7 @@ import { buildUnicodeGeneratedArtifactStatusDeep, collectUnicodeArtifactFailures
 import { buildAstGeneratedArtifactStatus, collectAstArtifactFailures, writeAstGenerated } from "../ast-generator.mjs";
 import { buildDiagnosticsGeneratedArtifactStatus, collectDiagnosticsArtifactFailures, writeDiagnosticsGenerated } from "../diagnostics-generator.mjs";
 import { renderGeneratedSourceCoverage } from "../generated-source.mjs";
-import { computeSignatureReport } from "../sig-check.mjs";
+import { computeSignatureReport, signatureOperationEvidenceIssue } from "../sig-check.mjs";
 import { runDelta, runDeltaVerify } from "./delta-command.mjs";
 import { writeCoreRuntimeFacades, writeExternalFacades } from "./facade-artifacts.mjs";
 import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
@@ -15,9 +15,14 @@ import { fail, loadConfig, parseArgs, repoRoot, resolveRepo, writeJson, writeJso
 import { checkSkeletons, scaffoldMissing } from "./scaffolding.mjs";
 import { runSigCheck, summarizeJsonTagReport, summarizeSignatureReport } from "./signature-command.mjs";
 import { runPinnedScan, runScan } from "./scan-runner.mjs";
-import { buildSchemaSourceSyncStatus, collectSchemaSourceSyncFailures } from "./status.mjs";
+import { buildSchemaSourceSyncStatus, collectSchemaSourceSyncFailures, withGoValueOperationGeneratedArtifactStatus } from "./status.mjs";
 import { collectGeneratedArtifactFailures, verifyStatus } from "./verification.mjs";
 import { prepareDeclarationAuditPrerequisites } from "./declaration-prerequisites.mjs";
+import { buildGoValueOperationArtifactInput, runGoValueOperations } from "./value-operation-command.mjs";
+import {
+  buildGoValueOperationGeneratedArtifactStatus,
+  notRunGoValueOperationGeneratedArtifactStatus,
+} from "./value-operations/generated-artifacts.mjs";
 import { preparePorterWorkspaceState } from "./workspace-state.mjs";
 import { buildSourcePinStatus } from "../source-pin.mjs";
 import process from "node:process";
@@ -223,6 +228,11 @@ export async function main() {
     return;
   }
 
+  if (command === "value-operations") {
+    await runGoValueOperations(config, options);
+    return;
+  }
+
   if (command === "status" || command === "verify" || command === "scaffold" || command === "skeleton-check") {
     const snapshot = command === "status" || command === "verify" ? runScan(config) : runPinnedScan(config);
     const workspace = await preparePorterWorkspaceState({
@@ -231,12 +241,21 @@ export async function main() {
       snapshot,
       unicodeMode: command === "verify" ? "deep" : "metadata",
     });
-    const { externalFacadeCatalog, status } = workspace;
+    const { externalFacadeCatalog } = workspace;
+    let { status } = workspace;
     if (command === "verify") {
       const prerequisites = await prepareDeclarationAuditPrerequisites(workspace);
       const signatureReport = await computeSignatureReport(prerequisites);
-      status.signatureCheck = summarizeSignatureReport(signatureReport);
-      status.jsonTagCheck = summarizeJsonTagReport(signatureReport.jsonTags);
+      status = {
+        ...status,
+        signatureCheck: summarizeSignatureReport(signatureReport),
+        jsonTagCheck: summarizeJsonTagReport(signatureReport.jsonTags),
+      };
+      const operationEvidenceIssue = signatureOperationEvidenceIssue(signatureReport);
+      const valueOperationGeneratedArtifacts = operationEvidenceIssue === undefined
+        ? buildGoValueOperationGeneratedArtifactStatus(buildGoValueOperationArtifactInput({ signatureReport, workspace }))
+        : notRunGoValueOperationGeneratedArtifactStatus(operationEvidenceIssue);
+      status = withGoValueOperationGeneratedArtifactStatus(status, valueOperationGeneratedArtifacts);
     }
     writeJson(resolveRepo(config.snapshotOut), snapshot);
     writeJson(resolveRepo(config.statusOut), status);
@@ -258,5 +277,5 @@ export async function main() {
     return;
   }
 
-  fail(`unknown command '${command}'. Expected delta, delta-verify, generated-source-coverage, bundled, unicode, scan, status, verify, reconcile-metadata, sig-check, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
+  fail(`unknown command '${command}'. Expected delta, delta-verify, generated-source-coverage, bundled, unicode, scan, status, verify, reconcile-metadata, sig-check, scaffold, facades, large-files, ast, diagnostics, value-operations, or skeleton-check.`);
 }

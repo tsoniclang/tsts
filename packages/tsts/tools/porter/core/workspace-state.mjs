@@ -18,6 +18,7 @@ import { buildLocalOverrideStatus } from "./local-overrides.mjs";
 import { resolveRepo } from "./runtime.mjs";
 import { buildSchemaSourceSyncStatus, buildStatus } from "./status.mjs";
 import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
+import { notRunGoValueOperationGeneratedArtifactStatus } from "./value-operations/generated-artifacts.mjs";
 
 const preparedWorkspaceStates = new WeakSet();
 const inputKeys = Object.freeze(["config", "repositoryRoot", "snapshot", "unicodeMode"]);
@@ -44,6 +45,9 @@ export async function preparePorterWorkspaceState(input) {
   const generatedSourceCoverage = buildGeneratedSourceCoverageStatus(repositoryRoot, config, snapshot);
   const globalGeneratedArtifacts = buildGlobalGeneratedArtifactStatus(repositoryRoot, config);
   const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
+  const valueOperationGeneratedArtifacts = notRunGoValueOperationGeneratedArtifactStatus(
+    "This workspace preparation stage has not run the whole-program signature audit required to derive Go value-operation artifacts.",
+  );
   const status = buildStatus({
     config,
     snapshot,
@@ -59,6 +63,7 @@ export async function preparePorterWorkspaceState(input) {
     generatedSourceCoverage,
     globalGeneratedArtifacts,
     largeFileSplits,
+    valueOperationGeneratedArtifacts,
   });
   const state = Object.freeze({
     config,
@@ -78,6 +83,7 @@ export async function preparePorterWorkspaceState(input) {
     generatedSourceCoverage,
     globalGeneratedArtifacts,
     largeFileSplits,
+    valueOperationGeneratedArtifacts,
     status,
   });
   preparedWorkspaceStates.add(state);

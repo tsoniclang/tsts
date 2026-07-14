@@ -25,6 +25,7 @@ test("Porter command option schemas accept only their typed options", () => {
     ["large-files", ["--write-draft", "--force"], { "write-draft": true, force: true }],
     ["ast", ["--write", "--force"], { write: true, force: true }],
     ["diagnostics", ["--write", "--force"], { write: true, force: true }],
+    ["value-operations", ["--write", "--force"], { write: true, force: true }],
     ["skeleton-check", ["--no-emit-temp", "--no-compile"], { "no-emit-temp": true, "no-compile": true }],
   ];
 
@@ -70,4 +71,5 @@ test("Porter command option schemas reject ignored combinations", () => {
   assert.throws(() => parseArgs("large-files", ["--force"]), /option '--force' requires '--write-draft'/);
   assert.throws(() => parseArgs("ast", ["--force"]), /option '--force' requires '--write'/);
   assert.throws(() => parseArgs("diagnostics", ["--force"]), /option '--force' requires '--write'/);
+  assert.throws(() => parseArgs("value-operations", ["--force"]), /option '--force' requires '--write'/);
 });

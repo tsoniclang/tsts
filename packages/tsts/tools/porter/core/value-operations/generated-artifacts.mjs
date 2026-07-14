@@ -61,11 +61,14 @@ export function buildGoValueOperationGeneratedArtifactStatus(input) {
       stale.push({ path: relativePath, reason: "Generated Go value-operation artifact differs from the current deterministic declaration-derived output." });
     }
   }
-  return { missing, stale, orphan, untracked, invalid };
+  return { state: "complete", missing, stale, orphan, untracked, invalid };
 }
 
 export function collectGoValueOperationArtifactFailures(status) {
-  requireArtifactStatus(status);
+  requireGoValueOperationGeneratedArtifactStatus(status);
+  if (status.state !== "complete") {
+    return [`Go value-operation generated-artifact audit must be complete (${status.reason})`];
+  }
   const failures = [];
   if (status.missing.length > 0) failures.push(`${status.missing.length} missing Go value-operation artifacts`);
   if (status.stale.length > 0) failures.push(`${status.stale.length} stale Go value-operation artifacts`);
@@ -89,18 +92,38 @@ export function writeGoValueOperationGenerated(input, options = {}) {
   return results;
 }
 
-export function emptyGoValueOperationGeneratedArtifactStatus() {
-  return { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
+export function notRunGoValueOperationGeneratedArtifactStatus(reason) {
+  if (typeof reason !== "string" || reason.trim() === "" || reason !== reason.trim()) {
+    throw new Error("Go value-operation generated-artifact not-run status requires one non-empty trimmed reason");
+  }
+  return { state: "not-run", reason, missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
 }
 
-function requireArtifactStatus(status) {
+export function requireGoValueOperationGeneratedArtifactStatus(status) {
   if (status === null || typeof status !== "object" || Array.isArray(status)) throw new Error("Go value-operation artifact status must be an object");
-  const keys = ["invalid", "missing", "orphan", "stale", "untracked"];
+  const keys = status.state === "complete"
+    ? ["invalid", "missing", "orphan", "stale", "state", "untracked"]
+    : status.state === "not-run"
+      ? ["invalid", "missing", "orphan", "reason", "stale", "state", "untracked"]
+      : [];
+  if (keys.length === 0) throw new Error("Go value-operation artifact status.state must be 'complete' or 'not-run'");
   const actual = Object.keys(status).sort(compareText);
-  if (actual.length !== keys.length || actual.some((key, index) => key !== keys[index])) {
-    throw new Error(`Go value-operation artifact status keys must be exactly ${keys.join(", ")}`);
+  const expected = [...keys].sort(compareText);
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    throw new Error(`Go value-operation artifact status keys must be exactly ${expected.join(", ")}`);
   }
-  for (const key of keys) if (!Array.isArray(status[key])) throw new Error(`Go value-operation artifact status.${key} must be an array`);
+  for (const key of ["invalid", "missing", "orphan", "stale", "untracked"]) {
+    if (!Array.isArray(status[key])) throw new Error(`Go value-operation artifact status.${key} must be an array`);
+  }
+  if (status.state === "not-run") {
+    if (typeof status.reason !== "string" || status.reason.trim() === "" || status.reason !== status.reason.trim()) {
+      throw new Error("Go value-operation artifact status.reason must be one non-empty trimmed string");
+    }
+    for (const key of ["invalid", "missing", "orphan", "stale", "untracked"]) {
+      if (status[key].length !== 0) throw new Error(`Go value-operation artifact not-run status.${key} must be empty`);
+    }
+  }
+  return status;
 }
 
 function requireExactInput(value, expectedKeys, label) {
