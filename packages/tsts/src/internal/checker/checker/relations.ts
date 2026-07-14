@@ -244,7 +244,15 @@ export function Checker_checkInheritedPropertiesAreIdentical(receiver: GoPtr<Che
     }
   }
   let identical = true;
-  for (const base of baseTypes) {
+  for (
+    let __goRangeSlice2 = baseTypes,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Type>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const base = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const properties = Checker_getPropertiesOfType(receiver, Checker_getTypeWithThisArgument(receiver, base, Type_AsInterfaceType(t)!.thisType, false));
     for (
       let __goRangeSlice = properties,

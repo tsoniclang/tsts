@@ -2260,7 +2260,15 @@ export function Checker_checkGrammarClassDeclarationHeritageClauses(receiver: Go
           return Checker_grammarErrorOnFirstToken(receiver, GoSliceLoad(typeNodes, 1, GoPointerValueOps<Node>()), Classes_can_only_extend_a_single_class);
         }
         if (typeNodes.length > 0) {
-          for (const j of Node_EagerJSDoc(node as unknown as GoPtr<Node>, file)) {
+          for (
+            let __goRangeSlice2 = Node_EagerJSDoc(node as unknown as GoPtr<Node>, file),
+              __goRangeLength2 = __goRangeSlice2.length,
+              __goRangeValueOps2 = GoPointerValueOps<Node>(),
+              __goRangeIndex2 = 0;
+            __goRangeIndex2 < __goRangeLength2;
+            __goRangeIndex2++
+          ) {
+            const j = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
             if (AsJSDoc(j)!.Tags === undefined) {
               continue;
             }

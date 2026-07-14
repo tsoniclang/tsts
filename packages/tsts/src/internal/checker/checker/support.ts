@@ -488,7 +488,15 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
     __goRangeIndex++
   ) {
     const list = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
-    for (const augmentation of list) {
+    for (
+      let __goRangeSlice = list,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const augmentation = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (IsGlobalScopeAugmentation(augmentation!.Parent)) {
         Checker_mergeModuleAugmentation(receiver, augmentation);
       }
@@ -542,7 +550,15 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
     __goRangeIndex++
   ) {
     const list = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
-    for (const augmentation of list) {
+    for (
+      let __goRangeSlice = list,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoPointerValueOps<Node>(),
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const augmentation = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       if (!IsGlobalScopeAugmentation(augmentation!.Parent)) {
         Checker_mergeModuleAugmentation(receiver, augmentation);
       }
@@ -765,7 +781,15 @@ export function Checker_checkSourceElement(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_checkSourceElementWorker(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  for (const jsdoc of Node_EagerJSDoc(node, undefined)) {
+  for (
+    let __goRangeSlice2 = Node_EagerJSDoc(node, undefined),
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const jsdoc = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     Checker_checkJSDocComments(receiver, jsdoc);
     const tags = AsJSDoc(jsdoc)!.Tags;
     if (tags !== undefined) {

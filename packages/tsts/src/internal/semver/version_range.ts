@@ -380,7 +380,15 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
   // Split with n=-1 returns all substrings (never nil); Go ranges over the
   // resulting slice (a nil slice would simply yield zero iterations).
   const ranges: GoSlice<string> = logicalOrRegExp!.Split(trimmed, -1);
-  for (const rRaw of ranges) {
+  for (
+    let __goRangeSlice2 = ranges,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoStringValueOps,
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const rRaw = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const r: string = strings.TrimSpace(rRaw);
     if (r === "") {
       continue;

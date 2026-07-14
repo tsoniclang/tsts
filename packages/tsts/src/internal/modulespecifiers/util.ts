@@ -455,7 +455,15 @@ export function tryGetAnyFileFromPath(host: GoInterface<ModuleSpecifierGeneratio
     __goRangeIndex++
   ) {
     const exts = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
-    for (const e of exts) {
+    for (
+      let __goRangeSlice = exts,
+        __goRangeLength = __goRangeSlice.length,
+        __goRangeValueOps = GoStringValueOps,
+        __goRangeIndex = 0;
+      __goRangeIndex < __goRangeLength;
+      __goRangeIndex++
+    ) {
+      const e = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
       const fullPath = path + e;
       if (host!.FileExists(GetNormalizedAbsolutePath(fullPath, host!.GetCurrentDirectory()))) {
         return true;

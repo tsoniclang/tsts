@@ -884,7 +884,15 @@ function createSourceSemanticsMarkerImportIndex(
   const callMarkersByLocalName = new Map<string, SourceMarkerImportBinding<SourceCallMarkerDeclaration>>();
   const typeMarkersByLocalName = new Map<string, SourceMarkerImportBinding<SourceTypeMarkerDeclaration>>();
   const namespacesByLocalName = new Map<string, SourceNamespaceImportBinding>();
-  for (const statement of Node_Statements(sourceFile) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice2 = Node_Statements(sourceFile) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const statement = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if (statement?.Kind !== KindImportDeclaration) {
       continue;
     }

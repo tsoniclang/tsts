@@ -307,7 +307,15 @@ export function Parser_checkNonIdentifierName(receiver: GoPtr<Parser>, name: GoP
  * }
  */
 export function Parser_reparseTags(receiver: GoPtr<Parser>, parent: GoPtr<Node>, jsDoc: GoSlice<GoPtr<Node>>): void {
-  for (const j of jsDoc) {
+  for (
+    let __goRangeSlice2 = jsDoc,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const j = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const isLast = j === GoSliceLoad(jsDoc, jsDoc.length - 1, GoPointerValueOps<Node>());
     const tags = AsJSDoc(j)!.Tags;
     if (tags === undefined) {
@@ -887,7 +895,15 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
   let pos: int = -1;
   let endPos: int = -1;
   let firstTemplate = true;
-  for (const tag of AsJSDoc(j)!.Tags!.Nodes) {
+  for (
+    let __goRangeSlice2 = AsJSDoc(j)!.Tags!.Nodes,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const tag = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     // When a JSDoc comment contains an `@typedef` or `@callback` tag, `@template` type parameter
     // declarations apply to the type being defined.
     if (!typedefOrCallback && (IsJSDocTypedefTag(tag) || IsJSDocCallbackTag(tag))) {

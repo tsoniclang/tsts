@@ -1765,7 +1765,15 @@ export function Checker_checkObjectTypeForDuplicateDeclarations(receiver: GoPtr<
     }
   };
   const members = Node_Members(node)!;
-  for (const member of members) {
+  for (
+    let __goRangeSlice2 = members,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if (IsConstructorDeclaration(member)) {
       for (
         let __goRangeSlice = Node_Parameters(member),
@@ -2600,7 +2608,15 @@ export function Checker_checkKindsOfPropertyMemberOverrides(receiver: GoPtr<Chec
   };
   const notImplementedInfo = new globalThis.Map<GoPtr<Node>, MemberInfo>();
   basePropertyCheck:
-  for (const baseProperty of Checker_getPropertiesOfType(receiver, baseType)) {
+  for (
+    let __goRangeSlice2 = Checker_getPropertiesOfType(receiver, baseType),
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Symbol>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const baseProperty = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const base = Checker_getTargetSymbol(receiver, baseProperty);
     if ((base!.Flags & SymbolFlagsPrototype) !== 0) {
       continue;
@@ -2781,7 +2797,15 @@ export function Checker_checkMembersForOverrideModifier(receiver: GoPtr<Checker>
     }
   }
   const baseStaticType = Checker_getBaseConstructorTypeOfClass(receiver, t);
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice2 = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if (!HasAmbientModifier(member)) {
       if (IsConstructorDeclaration(member)) {
         for (
@@ -5503,7 +5527,15 @@ export function Checker_checkUnusedIdentifiers(receiver: GoPtr<Checker>, potenti
  * }
  */
 export function Checker_checkUnusedClassMembers(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  for (const member of Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice2 = Node_Members(node) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     switch (member!.Kind) {
       case KindMethodDeclaration:
       case KindPropertyDeclaration:
@@ -10580,7 +10612,15 @@ export function Checker_getResolvedMembersOrExportsOfSymbol(receiver: GoPtr<Chec
     }
     links![resolutionKind] = earlySymbols;
     let lateSymbols = GoNilMap<string, GoPtr<Symbol>>();
-    for (const decl of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice2 = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength2 = __goRangeSlice2.length,
+        __goRangeValueOps2 = GoPointerValueOps<Node>(),
+        __goRangeIndex2 = 0;
+      __goRangeIndex2 < __goRangeLength2;
+      __goRangeIndex2++
+    ) {
+      const decl = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
       for (
         let __goRangeSlice = getMembersOfDeclaration(decl),
           __goRangeLength = __goRangeSlice.length,

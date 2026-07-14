@@ -1528,7 +1528,15 @@ export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: 
     }
     let hasFirstParamSignatures = false;
     let maxParamCount = 0;
-    for (const sig of callSignatures) {
+    for (
+      let __goRangeSlice2 = callSignatures,
+        __goRangeLength2 = __goRangeSlice2.length,
+        __goRangeValueOps2 = GoPointerValueOps<Signature>(),
+        __goRangeIndex2 = 0;
+      __goRangeIndex2 < __goRangeLength2;
+      __goRangeIndex2++
+    ) {
+      const sig = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
       const firstParam = Checker_getTypeAtPosition(receiver, sig, 0);
       const signaturesOfParam = Checker_getSignaturesOfType(receiver, firstParam, SignatureKindCall);
       if (signaturesOfParam.length === 0) {

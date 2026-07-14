@@ -129,7 +129,15 @@ export function getWildcardDirectories(
 
   let recursiveKeys: GoSlice<string> = GoSliceMake(0, 0, GoStringValueOps);
 
-  for (const file of include) {
+  for (
+    let __goRangeSlice2 = include,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoStringValueOps,
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const file = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const spec = NormalizeSlashes(CombinePaths(comparePathsOptions.CurrentDirectory, file));
     if (excludeMatcher !== undefined && SpecMatcher_MatchString(excludeMatcher, spec)) {
       continue;

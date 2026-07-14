@@ -11371,7 +11371,15 @@ export function Checker_getIndexSignaturesAtLocation(receiver: GoPtr<Checker>, n
   if (IsIdentifier(node) && IsPropertyAccessExpression(node!.Parent) && Node_Name(node!.Parent) === node) {
     const keyType = Checker_getLiteralTypeFromPropertyName(receiver, node);
     const objectType = Checker_getTypeOfExpression(receiver, Node_Expression(node!.Parent));
-    for (const t of (Type_Distributed(objectType) ?? GoSliceMake(0, 0, GoPointerValueOps<Type>()))) {
+    for (
+      let __goRangeSlice2 = (Type_Distributed(objectType) ?? GoSliceMake(0, 0, GoPointerValueOps<Type>())),
+        __goRangeLength2 = __goRangeSlice2.length,
+        __goRangeValueOps2 = GoPointerValueOps<Type>(),
+        __goRangeIndex2 = 0;
+      __goRangeIndex2 < __goRangeLength2;
+      __goRangeIndex2++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
       for (
         let __goRangeSlice = (Checker_getApplicableIndexInfos(receiver, t, keyType) ?? GoSliceMake(0, 0, GoPointerValueOps<IndexInfo>())),
           __goRangeLength = __goRangeSlice.length,

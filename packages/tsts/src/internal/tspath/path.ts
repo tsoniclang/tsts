@@ -2429,7 +2429,15 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
             }
             slices.Sort(orderedGroups);
             let result: GoSlice<GoSlice<string>> = GoSliceMake(0, 0, GoSliceValueOps<string>());
-            for (const key of orderedGroups) {
+            for (
+              let __goRangeSlice2 = orderedGroups,
+                __goRangeLength2 = __goRangeSlice2.length,
+                __goRangeValueOps2 = GoStringValueOps,
+                __goRangeIndex2 = 0;
+              __goRangeIndex2 < __goRangeLength2;
+              __goRangeIndex2++
+            ) {
+              const key = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
               const group = newGroups.get(key)!;
               const subResults = getCommonParentsWorker(group.tails, minComponents - (lastCommonIndex + 1), options);
               for (

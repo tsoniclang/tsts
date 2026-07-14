@@ -678,7 +678,15 @@ export function Checker_getDeprecatedSuggestionNode(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_reportDuplicateMemberErrors(receiver: GoPtr<Checker>, node: GoPtr<Node>, name: string, checkStatic: bool, isStatic: bool, message: GoPtr<Message>): void {
-  for (const member of Node_Members(node)!) {
+  for (
+    let __goRangeSlice2 = Node_Members(node)!,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const member = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if (IsConstructorDeclaration(member)) {
       for (
         let __goRangeSlice = Node_Parameters(member),

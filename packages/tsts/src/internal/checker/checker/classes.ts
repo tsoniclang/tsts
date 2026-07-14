@@ -391,7 +391,15 @@ export function Checker_checkSpreadPropOverrides(receiver: GoPtr<Checker>, t: Go
  * }
  */
 export function Checker_isThislessInterface(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice2 = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if (IsInterfaceDeclaration(declaration)) {
       if ((declaration!.Flags & NodeFlagsContainsThis) !== 0) {
         return false;

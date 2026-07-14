@@ -6676,7 +6676,15 @@ export function Checker_getPropertiesOfUnionOrIntersectionType(receiver: GoPtr<C
   if (GoSliceIsNil(d!.resolvedProperties)) {
     const checked: orderedSet<string> = { valuesByKey: new globalThis.Map(), values: GoSliceMake(0, 0, GoStringValueOps) };
     let props: GoSlice<GoPtr<Symbol>> = GoNilSlice();
-    for (const current of d!.types) {
+    for (
+      let __goRangeSlice2 = d!.types,
+        __goRangeLength2 = __goRangeSlice2.length,
+        __goRangeValueOps2 = GoPointerValueOps<Type>(),
+        __goRangeIndex2 = 0;
+      __goRangeIndex2 < __goRangeLength2;
+      __goRangeIndex2++
+    ) {
+      const current = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
       for (
         let __goRangeSlice = Checker_getPropertiesOfType(receiver, current),
           __goRangeLength = __goRangeSlice.length,
@@ -6951,7 +6959,15 @@ export function Checker_resolveBaseTypesOfClass(receiver: GoPtr<Checker>, t: GoP
  */
 export function Checker_resolveBaseTypesOfInterface(receiver: GoPtr<Checker>, t: GoPtr<Type>): void {
   const data = Type_AsInterfaceType(t)!;
-  for (const declaration of t!.symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+  for (
+    let __goRangeSlice2 = t!.symbol!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if (IsInterfaceDeclaration(declaration)) {
       for (
         let __goRangeSlice = GetExtendsHeritageClauseElements(declaration),
@@ -9638,7 +9654,15 @@ export function Checker_getDeclaredTypeOfEnum(receiver: GoPtr<Checker>, symbol_:
   const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_, zeroDeclaredTypeLinks, goSymbolPointerKey)!.v;
   if (links!.declaredType === undefined) {
     let memberTypeList: GoSlice<GoPtr<Type>> = GoNilSlice();
-    for (const declaration of symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>())) {
+    for (
+      let __goRangeSlice2 = symbol_!.Declarations ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
+        __goRangeLength2 = __goRangeSlice2.length,
+        __goRangeValueOps2 = GoPointerValueOps<Node>(),
+        __goRangeIndex2 = 0;
+      __goRangeIndex2 < __goRangeLength2;
+      __goRangeIndex2++
+    ) {
+      const declaration = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
       if (declaration!.Kind === KindEnumDeclaration) {
         for (
           let __goRangeSlice = Node_Members(declaration) ?? GoSliceMake(0, 0, GoPointerValueOps<Node>()),
@@ -12595,7 +12619,15 @@ export function Checker_removeConstrainedTypeVariables(receiver: GoPtr<Checker>,
       typeVariables = core.AppendIfUnique(typeVariables, GoSliceLoad(Type_Types(t), index, GoPointerValueOps<Type>()), GoEqualStrict<GoPtr<Type>>);
     }
   }
-  for (const typeVariable of typeVariables) {
+  for (
+    let __goRangeSlice2 = typeVariables,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Type>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const typeVariable = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     let primitives: GoSlice<GoPtr<Type>> = GoNilSlice();
     for (
       let __goRangeSlice = types,
@@ -13224,7 +13256,15 @@ export function Checker_intersectUnionsOfPrimitiveTypes(receiver: GoPtr<Checker>
   }
   let checked: GoSlice<GoPtr<Type>> = GoNilSlice();
   let result: GoSlice<GoPtr<Type>> = GoNilSlice();
-  for (const u of unionTypes) {
+  for (
+    let __goRangeSlice2 = unionTypes,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Type>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const u = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     for (
       let __goRangeSlice = Type_Types(u),
         __goRangeLength = __goRangeSlice.length,

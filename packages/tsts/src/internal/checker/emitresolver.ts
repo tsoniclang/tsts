@@ -2551,7 +2551,15 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
             EmitResolver_isEntityNameVisible(receiver, Node_Expression(name), enclosingDeclaration, false).Accessibility === SymbolAccessibilityAccessible;
         });
         if (allComponentComputedNamesSerializable) {
-          for (const component of info!.components) {
+          for (
+            let __goRangeSlice = info!.components,
+              __goRangeLength = __goRangeSlice.length,
+              __goRangeValueOps = GoPointerValueOps<Node>(),
+              __goRangeIndex = 0;
+            __goRangeIndex < __goRangeLength;
+            __goRangeIndex++
+          ) {
+            const component = GoSliceLoad(__goRangeSlice, __goRangeIndex, __goRangeValueOps);
             if (Checker_hasLateBindableName(receiver!.checker, component)) {
               continue;
             }

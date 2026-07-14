@@ -886,7 +886,15 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
     receiver!.lateStatementReplacementMap.set(id, result);
   }
   let results: GoSlice<GoPtr<Node>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
-  for (const statement of statements!.Nodes) {
+  for (
+    let __goRangeSlice2 = statements!.Nodes,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const statement = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if (!IsLateVisibilityPaintedStatement(statement)) {
       results = GoSliceAppend(results, statement, GoPointerValueOps<Node>());
       continue;
@@ -1937,7 +1945,15 @@ export function DeclarationTransformer_transformCjsRequireVariableDeclaration(re
 export function DeclarationTransformer_recreateBindingPattern(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<BindingPattern>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   let results: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const elem of input!.Elements!.Nodes) {
+  for (
+    let __goRangeSlice2 = input!.Elements!.Nodes,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const elem = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const result = DeclarationTransformer_recreateBindingElement(receiver, AsBindingElement(elem));
     if (result === undefined) {
       continue;

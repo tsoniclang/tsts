@@ -255,7 +255,15 @@ export function collectExternalModuleInfo(sourceFile: GoPtr<SourceFile>, compile
 export function externalModuleInfoCollector_collect(receiver: GoPtr<externalModuleInfoCollector>): GoPtr<externalModuleInfo> {
   let hasImportStar = false;
   let hasImportDefault = false;
-  for (const node of receiver!.sourceFile!.Statements!.Nodes) {
+  for (
+    let __goRangeSlice2 = receiver!.sourceFile!.Statements!.Nodes,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const node = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     // Look through NotEmittedStatement to find elided export= declarations
     // (e.g., `declare export = x` is elided by the type eraser but must still be collected)
     if (IsNotEmittedStatement(node)) {

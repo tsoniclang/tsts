@@ -433,7 +433,15 @@ export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Go
   }
 
   let diagnostics: GoSlice<GoPtr<Diagnostic>> = GoNilSlice();
-  for (const f of compiler_Program_GetSourceFiles(receiver!.program)) {
+  for (
+    let __goRangeSlice2 = compiler_Program_GetSourceFiles(receiver!.program),
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const f = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     for (
       let __goRangeSlice = Program_getSemanticDiagnosticsOfFile(receiver, f),
         __goRangeLength = __goRangeSlice.length,

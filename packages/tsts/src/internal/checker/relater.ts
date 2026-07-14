@@ -2830,7 +2830,15 @@ export function isObjectOrInstantiableNonPrimitive(t: GoPtr<Type>): bool {
  * }
  */
 export function Checker_getKeyPropertyCandidateName(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): string {
-  for (const t of types) {
+  for (
+    let __goRangeSlice2 = types,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Type>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if ((t!.flags & (TypeFlagsObject | TypeFlagsInstantiableNonPrimitive)) !== 0) {
       for (
         let __goRangeSlice = Checker_getPropertiesOfType(receiver, t),
@@ -2887,7 +2895,15 @@ export function Checker_getKeyPropertyCandidateName(receiver: GoPtr<Checker>, ty
 export function Checker_mapTypesByKeyProperty(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, keyPropertyName: string): GoMap<GoPtr<Type>, GoPtr<Type>> {
   const typesByKey: GoMap<GoPtr<Type>, GoPtr<Type>> = new globalThis.Map();
   let count = 0;
-  for (const t of types) {
+  for (
+    let __goRangeSlice2 = types,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Type>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if ((t!.flags & (TypeFlagsObject | TypeFlagsIntersection | TypeFlagsInstantiableNonPrimitive)) !== 0) {
       const discriminant = Checker_getTypeOfPropertyOfType(receiver, t, keyPropertyName);
       if (discriminant === undefined || !isLiteralType(discriminant)) {
@@ -9748,7 +9764,15 @@ export function Relater_signaturesRelatedTo(receiver: GoPtr<Relater>, source: Go
     result = Relater_signatureRelatedTo(receiver, GoSliceLoad(sourceSignatures, 0, GoPointerValueOps<Signature>()), GoSliceLoad(targetSignatures, 0, GoPointerValueOps<Signature>()), eraseGenerics, reportErrors, intersectionState);
   } else {
     targetLoop:
-    for (const t of targetSignatures) {
+    for (
+      let __goRangeSlice2 = targetSignatures,
+        __goRangeLength2 = __goRangeSlice2.length,
+        __goRangeValueOps2 = GoPointerValueOps<Signature>(),
+        __goRangeIndex2 = 0;
+      __goRangeIndex2 < __goRangeLength2;
+      __goRangeIndex2++
+    ) {
+      const t = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
       const saveErrorState = Relater_getErrorState(receiver);
       let shouldElaborateErrors = reportErrors;
       for (

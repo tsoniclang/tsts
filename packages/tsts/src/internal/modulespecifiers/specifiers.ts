@@ -1491,7 +1491,15 @@ export function tryGetModuleNameFromRootDirs(rootDirs: GoSlice<string>, moduleFi
   const normalizedSourcePaths = getPathsRelativeToRootDirs(sourceDirectory, rootDirs, host!.UseCaseSensitiveFileNames());
   let shortest = "";
   let shortestSepCount = 0;
-  for (const sourcePath of normalizedSourcePaths) {
+  for (
+    let __goRangeSlice2 = normalizedSourcePaths,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoStringValueOps,
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const sourcePath = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     for (
       let __goRangeSlice = normalizedTargetPaths,
         __goRangeLength = __goRangeSlice.length,

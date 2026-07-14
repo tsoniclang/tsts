@@ -4709,7 +4709,15 @@ export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSMod
     let bindings: GoSlice<GoPtr<ModuleExportName>> = GoNilSlice();
     const declarations = receiver!.resolver!.GetReferencedValueDeclarations(EmitContext_MostOriginal(emitContext, name));
     if (!GoSliceIsNil(declarations)) {
-      for (const declaration of declarations) {
+      for (
+        let __goRangeSlice2 = declarations,
+          __goRangeLength2 = __goRangeSlice2.length,
+          __goRangeValueOps2 = GoPointerValueOps<Node>(),
+          __goRangeIndex2 = 0;
+        __goRangeIndex2 < __goRangeLength2;
+        __goRangeIndex2++
+      ) {
+        const declaration = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
         const exportedBindings = MultiMap_Get(receiver!.currentModuleInfo!.exportedBindings, declaration);
         for (
           let __goRangeSlice = exportedBindings,

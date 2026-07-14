@@ -731,7 +731,15 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
     }
   };
 
-  for (const statement of statementsIn) {
+  for (
+    let __goRangeSlice2 = statementsIn,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const statement = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const usingKind = getUsingKind(statement as GoPtr<Node>);
     if (usingKind !== usingKindNone) {
       const varStatement = AsVariableStatement(statement as GoPtr<Node>);

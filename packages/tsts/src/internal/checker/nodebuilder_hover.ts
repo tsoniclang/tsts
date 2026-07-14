@@ -611,7 +611,15 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
 export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilderImpl>, declarations: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
   let extendsTypes: GoSlice<GoPtr<Node>> = GoNilSlice();
   let implementsTypes: GoSlice<GoPtr<Node>> = GoNilSlice();
-  for (const declaration of declarations) {
+  for (
+    let __goRangeSlice2 = declarations,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const declaration = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     for (
       let __goRangeSlice = GetExtendsHeritageClauseElements(declaration),
         __goRangeLength = __goRangeSlice.length,
@@ -1253,7 +1261,15 @@ export function NodeBuilderImpl_filterInheritedProperties(receiver: GoPtr<NodeBu
     propsByName.set(p!.Name, p);
   }
   const inherited: GoPtr<Set<string>> = NewSetWithSizeHint<string>(0, GoStringKey);
-  for (const base of baseTypes) {
+  for (
+    let __goRangeSlice2 = baseTypes,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Type>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const base = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const baseWithThis = Checker_getTypeWithThisArgument(receiver!.ch, base, Type_AsInterfaceType(Checker_getTargetType(receiver!.ch, t))!.thisType, false as bool);
     for (
       let __goRangeSlice = Checker_getPropertiesOfType(receiver!.ch, baseWithThis),

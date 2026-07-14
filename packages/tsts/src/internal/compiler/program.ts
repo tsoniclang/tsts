@@ -1175,7 +1175,15 @@ export function Program_GetUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Se
  */
 export function Program_extractUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Set<string>> {
   const unresolvedSet: Set<string> = { M: GoNilMap() };
-  for (const sourceFile of receiver!.__tsgoEmbedded0!.files) {
+  for (
+    let __goRangeSlice2 = receiver!.__tsgoEmbedded0!.files,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<SourceFile>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const sourceFile = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const unresolvedImports = Program_extractUnresolvedImportsFromSourceFile(receiver, sourceFile);
     for (
       let __goRangeSlice = unresolvedImports,
@@ -4732,7 +4740,15 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
       unresolved: { M: GoNilMap() },
       deepImportPackages: { M: GoNilMap() },
     };
-    for (const file of receiver!.__tsgoEmbedded0!.files) {
+    for (
+      let __goRangeSlice2 = receiver!.__tsgoEmbedded0!.files,
+        __goRangeLength2 = __goRangeSlice2.length,
+        __goRangeValueOps2 = GoPointerValueOps<SourceFile>(),
+        __goRangeIndex2 = 0;
+      __goRangeIndex2 < __goRangeLength2;
+      __goRangeIndex2++
+    ) {
+      const file = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
       if (
         Program_IsSourceFileDefaultLibrary(receiver, SourceFile_Path(file)) ||
         Program_IsSourceFileFromExternalLibrary(receiver, file) ||

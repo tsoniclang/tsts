@@ -3369,7 +3369,15 @@ export function IsVarUsing(node: GoPtr<Node>): bool {
  * }
  */
 export function GetJSDocDeprecatedTag(node: GoPtr<Node>): GoPtr<Node> {
-  for (const jsdoc of Node_JSDoc(node, undefined)) {
+  for (
+    let __goRangeSlice2 = Node_JSDoc(node, undefined),
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const jsdoc = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     const tags = AsJSDoc(jsdoc)!.Tags;
     if (tags !== undefined) {
       for (

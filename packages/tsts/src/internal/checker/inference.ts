@@ -1120,7 +1120,15 @@ export function Checker_inferFromMatchingTypes(receiver: GoPtr<Checker>, n: GoPt
   const c = receiver!;
   let matchedSources: GoSlice<GoPtr<Type>> = GoNilSlice();
   let matchedTargets: GoSlice<GoPtr<Type>> = GoNilSlice();
-  for (const t of targets) {
+  for (
+    let __goRangeSlice2 = targets,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Type>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const t = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     for (
       let __goRangeSlice = sources,
         __goRangeLength = __goRangeSlice.length,
@@ -2284,7 +2292,15 @@ export function Checker_inferFromIndexTypes(receiver: GoPtr<Checker>, n: GoPtr<I
   }
   const indexInfos = Checker_getIndexInfosOfType(c, target);
   if (Checker_isObjectTypeWithInferableIndex(c, source)) {
-    for (const targetInfo of indexInfos) {
+    for (
+      let __goRangeSlice2 = indexInfos,
+        __goRangeLength2 = __goRangeSlice2.length,
+        __goRangeValueOps2 = GoPointerValueOps<IndexInfo>(),
+        __goRangeIndex2 = 0;
+      __goRangeIndex2 < __goRangeLength2;
+      __goRangeIndex2++
+    ) {
+      const targetInfo = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
       let propTypes: GoSlice<GoPtr<Type>> = GoNilSlice();
       for (
         let __goRangeSlice = Checker_getPropertiesOfType(c, source),

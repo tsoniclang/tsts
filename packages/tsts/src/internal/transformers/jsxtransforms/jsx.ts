@@ -1109,7 +1109,15 @@ export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPt
   let expressions: GoSlice<GoPtr<Expression>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
   let properties: GoSlice<GoPtr<ObjectLiteralElement>> = GoSliceMake(0, 0, GoPointerValueOps<Node>());
 
-  for (const attr of attrs) {
+  for (
+    let __goRangeSlice2 = attrs,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Node>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const attr = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     if (IsJsxSpreadAttribute(attr)) {
       // as an optimization we try to flatten the first level of spread inline object
       // as if its props would be passed as JSX attributes

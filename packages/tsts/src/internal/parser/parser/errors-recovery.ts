@@ -79,7 +79,15 @@ export function Parser_parseErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange
  * }
  */
 export function attachFileToDiagnostics(diagnostics: GoSlice<GoPtr<Diagnostic>>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  for (const d of diagnostics) {
+  for (
+    let __goRangeSlice2 = diagnostics,
+      __goRangeLength2 = __goRangeSlice2.length,
+      __goRangeValueOps2 = GoPointerValueOps<Diagnostic>(),
+      __goRangeIndex2 = 0;
+    __goRangeIndex2 < __goRangeLength2;
+    __goRangeIndex2++
+  ) {
+    const d = GoSliceLoad(__goRangeSlice2, __goRangeIndex2, __goRangeValueOps2);
     Diagnostic_SetFile(d, file);
     for (
       let __goRangeSlice = Diagnostic_RelatedInformation(d),
