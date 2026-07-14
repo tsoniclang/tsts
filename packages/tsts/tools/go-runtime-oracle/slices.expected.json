@@ -1,0 +1,96 @@
+{
+  "nilAndEmpty": {
+    "nilIsNil": true,
+    "emptyIsNil": false,
+    "nilLength": 0,
+    "emptyLength": 0,
+    "nilCapacity": 0,
+    "emptyCapacity": 0,
+    "nilResliceNil": true,
+    "emptyResliceNil": false
+  },
+  "sharedSlice": {
+    "base": [
+      7,
+      2
+    ],
+    "view": [
+      7
+    ],
+    "viewLength": 1,
+    "viewCapacity": 4,
+    "backingShared": true,
+    "extendedValues": [
+      7,
+      2,
+      0,
+      0
+    ]
+  },
+  "append": {
+    "reuseBase": [
+      8
+    ],
+    "reuseBacking": [
+      8,
+      5,
+      0
+    ],
+    "reuseView": [
+      8,
+      5
+    ],
+    "reuseShared": true,
+    "reuseBaseLength": 1,
+    "reuseViewLength": 2,
+    "allocateBase": [
+      4
+    ],
+    "allocateView": [
+      4,
+      5
+    ],
+    "allocateShared": false,
+    "zeroAppendBacking": [
+      9,
+      2,
+      0,
+      0
+    ],
+    "zeroViewWasNonNil": true
+  },
+  "fullSlice": {
+    "length": 1,
+    "capacity": 2,
+    "value": 12
+  },
+  "copyAndDelete": {
+    "overlapCopyCount": 4,
+    "overlapValues": [
+      1,
+      1,
+      2,
+      3,
+      4
+    ],
+    "deleteSource": [
+      1,
+      4,
+      5,
+      0,
+      0
+    ],
+    "deleteResult": [
+      1,
+      4,
+      5
+    ],
+    "deleteSourceLength": 5,
+    "deleteResultLength": 3,
+    "deleteShared": true
+  },
+  "addresses": {
+    "sameElementAddress": true,
+    "subsliceAddress": true
+  }
+}

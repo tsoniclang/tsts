@@ -38,6 +38,8 @@
     "profile:utf8": "node packages/tsts/tools/profiling/utf8-bench.mjs",
     "profile:scanner": "node packages/tsts/tools/profiling/scanner-bench.mjs",
     "profile:attribute": "node packages/tsts/tools/profiling/attribute.mjs",
+    "runtime-oracle:check": "node packages/tsts/tools/go-runtime-oracle/check.mjs",
+    "runtime-oracle:write": "node packages/tsts/tools/go-runtime-oracle/check.mjs --write",
     "bundled:generate": "node packages/tsts/tools/bundled/generate-bundled.mjs --write",
     "bundled:check": "node packages/tsts/tools/bundled/generate-bundled.mjs --check",
     "unicode:generate": "node packages/tsts/tools/unicode/generate-unicode-data.mjs --write",
