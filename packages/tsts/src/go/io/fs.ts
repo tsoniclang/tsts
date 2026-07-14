@@ -1,26 +1,50 @@
 import type { bool, byte, int, long } from "../scalars.js";
-import type { GoDefined, GoError, GoFunc, GoInterface, GoPtr, GoSlice } from "../compat.js";
-import { Time } from "../time.js";
+import type { GoDefined, GoError, GoFunc, GoInterface, GoPtr, GoSlice, GoValueOps } from "../compat.js";
+import { FromDate, Time } from "../time.js";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
-import { GoInterfaceValueOps, GoSliceMake } from "../compat.js";
+import { GoInterfaceValueOps, GoSliceBuild, GoSliceMake, GoSliceReslice } from "../compat.js";
 import { GoNumberValueOps, GoSliceLoad, GoSliceStore } from "../compat.js";
 
 
 
 export type FileMode = number;
 
+export const FileModeValueOps: GoValueOps<FileMode> = Object.freeze({
+  zero: (): FileMode => 0,
+  copy: (value: FileMode): FileMode => value,
+});
+
 export const ModeDir: FileMode = 0x80000000;
+export const ModeAppend: FileMode = 0x40000000;
+export const ModeExclusive: FileMode = 0x20000000;
+export const ModeTemporary: FileMode = 0x10000000;
 export const ModeSymlink: FileMode = 0x08000000;
+export const ModeDevice: FileMode = 0x04000000;
+export const ModeNamedPipe: FileMode = 0x02000000;
+export const ModeSocket: FileMode = 0x01000000;
+export const ModeSetuid: FileMode = 0x00800000;
+export const ModeSetgid: FileMode = 0x00400000;
+export const ModeCharDevice: FileMode = 0x00200000;
+export const ModeSticky: FileMode = 0x00100000;
 export const ModeIrregular: FileMode = 0x00080000;
+export const ModeType: FileMode = (
+  ModeDir
+  | ModeSymlink
+  | ModeNamedPipe
+  | ModeSocket
+  | ModeDevice
+  | ModeCharDevice
+  | ModeIrregular
+) >>> 0;
 export const ModePerm: FileMode = 0o777;
 
 export function FileMode_IsDir(mode: FileMode): bool {
-  return (((mode as unknown as number) & (ModeDir as unknown as number)) !== 0) as bool;
+  return (mode & ModeDir) !== 0;
 }
 
 export function FileMode_IsRegular(mode: FileMode): bool {
-  return (((mode as unknown as number) & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number) | (ModeIrregular as unknown as number))) === 0) as bool;
+  return (mode & ModeType) === 0;
 }
 
 export const ErrInvalid: Error = new globalThis.Error("invalid argument");
@@ -104,7 +128,7 @@ export function ReadFileBytes(fsys: FS, name: string): [Uint8Array, GoError] {
     return [new Uint8Array(), openErr];
   }
   const chunks: byte[] = [];
-  const buffer: GoSlice<byte> = new globalThis.Array<byte>(8192).fill(0);
+  const buffer = GoSliceMake(8192, 8192, GoNumberValueOps);
   for (;;) {
     const [count, readErr] = file!.Read(buffer);
     if (readErr !== undefined) {
@@ -189,7 +213,9 @@ export function WalkDir(fsys: FS, root: string, walkFn: WalkDirFunc): GoError {
     if (readErr !== undefined) {
       return walkFn!(relativePath, entry, readErr);
     }
-    for (const child of entries) {
+    const entryValueOps = GoInterfaceValueOps<DirEntry>();
+    for (let index = 0; index < entries.length; index += 1) {
+      const child = GoSliceLoad(entries, index, entryValueOps);
       const childPath = relativePath === "." || relativePath === "" ? child!.Name() : `${relativePath}/${child!.Name()}`;
       const childErr = walkPath(childPath);
       if (childErr === SkipAll) {
@@ -305,9 +331,17 @@ function openNodeFile(root: string, name: string): [GoInterface<File>, GoError] 
       file.ReadDir = (n: int): [GoSlice<GoInterface<DirEntry>>, GoError] => {
         if (closed) return [GoSliceMake(0, 0, GoInterfaceValueOps<DirEntry>()), ErrClosed];
         try {
-          directoryEntries ??= nodeFs.readdirSync(fullPath, { withFileTypes: true }).map(dirEntryFromNodeDirent);
+          if (directoryEntries === undefined) {
+            const nodeEntries = nodeFs.readdirSync(fullPath, { withFileTypes: true });
+            const entryValueOps = GoInterfaceValueOps<DirEntry>();
+            directoryEntries = GoSliceBuild(nodeEntries.length, nodeEntries.length, entryValueOps, (entries) => {
+              for (let index = 0; index < nodeEntries.length; index += 1) {
+                GoSliceStore(entries, index, dirEntryFromNodeDirent(nodeEntries[index]!), entryValueOps);
+              }
+            });
+          }
           const end = n <= 0 ? directoryEntries.length : Math.min(directoryEntries.length, directoryOffset + n);
-          const entries = directoryEntries.slice(directoryOffset, end) as GoSlice<GoInterface<DirEntry>>;
+          const entries = GoSliceReslice(directoryEntries, directoryOffset, end);
           directoryOffset = end;
           return [entries, undefined];
         } catch (error) {
@@ -340,7 +374,7 @@ function dirEntryFromNodeDirent(dirent: nodeFs.Dirent): DirEntry {
         Name: () => dirent.name,
         Size: () => 0 as long,
         Mode: () => mode,
-        ModTime: () => new Time(0),
+        ModTime: () => new Time(),
         IsDir: () => dirent.isDirectory(),
         Sys: () => dirent,
       };
@@ -355,7 +389,7 @@ function fileInfoFromStats(name: string, stats: nodeFs.Stats): FileInfo {
     Name: () => name,
     Size: () => stats.size as long,
     Mode: () => mode,
-    ModTime: () => new Time(stats.mtime),
+    ModTime: () => FromDate(stats.mtime),
     IsDir: () => stats.isDirectory(),
     Sys: () => stats,
   };
