@@ -12,6 +12,8 @@ import {
 import { indexTypeScriptModuleSources } from "../ts-extractor/module-index.mjs";
 import { buildExpectedIndex } from "../ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
+import { finalizeGeneratedFacadeFixtureCatalog } from "../test/external-facade-fixtures.mjs";
+import { testSemanticProfile } from "../test/helpers.mjs";
 import { auditAstGoValueOperationRoutes } from "./ast-value-operation-providers.mjs";
 import { collectGoValueOperationProviderMismatches } from "./value-operation-providers.mjs";
 
@@ -51,12 +53,12 @@ export function PairValueOps<T>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> { 
 `;
   const hash = operationHash(source, "PairValueOps", "function");
   const config = fixtureConfig([reviewedRelation(hash)]);
-  const drifted = indexed(source.replace("valueOps: GoValueOps<T>", "valueOps: T"));
+  const drifted = indexed(source.replaceAll("valueOps", "operations"));
   const drift = collect(config, drifted, snapshot);
   assert.equal(drift.mismatches[0].kind, "go-value-operation-typescript-drift");
 
   const reexported = indexed(new Map([
-    [moduleId, 'export { PairValueOps } from "./implementation.js";'],
+    [moduleId, 'export interface Pair<T> { value: T; }\nexport { PairValueOps } from "./implementation.js";'],
     ["src/go/implementation.ts", source],
   ]));
   const reexport = collect(config, reexported, snapshot);
@@ -64,7 +66,7 @@ export function PairValueOps<T>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> { 
   assert.match(reexport.mismatches[0].detail, /instead of direct declaration/);
 
   const valueSource = source.replace(
-    /export function PairValueOps[\s\S]*\n\}/,
+    "export function PairValueOps<T>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> { throw new Error(); }",
     "export const PairValueOps: GoValueOps<Pair<unknown>> = undefined as never;",
   );
   const wrongKind = indexed(valueSource);
@@ -137,6 +139,7 @@ export const MarkerValueOps: GoValueOps<Marker> = undefined as never;
   ]);
   const indexedSources = indexed(sources);
   const config = {
+    goModulePath: "example.test",
     semanticRelations: [],
     signatureCheck: { modules: { compat: compatModuleId, core: "src/go/scalars.ts" } },
     tsRoot: "src",
@@ -160,12 +163,7 @@ export const MarkerValueOps: GoValueOps<Marker> = undefined as never;
       byProfile: new Map([[0, markerDeclaration]]),
     },
   });
-  const expectedIndex = buildExpectedIndex(
-    config,
-    markerSnapshot,
-    new Map([["unit-0", { path: astModuleId }]]),
-    loadProfile(config),
-  );
+  const expectedIndex = buildFixtureExpectedIndex(config, markerSnapshot, new Map([["unit-0", { path: astModuleId }]]));
   const result = auditAstGoValueOperationRoutes({
     api,
     config,
@@ -199,6 +197,7 @@ function reviewedRelation(tsDeclarationHash, id = objectId) {
 
 function fixtureConfig(semanticRelations) {
   return {
+    goModulePath: "example.test",
     semanticRelations,
     signatureCheck: { modules: { compat: moduleId, core: "src/go/scalars.ts" } },
     tsRoot: "src",
@@ -224,9 +223,16 @@ function collect(config, indexedSources, semanticEvidence) {
   return collectGoValueOperationProviderMismatches({
     api,
     config,
-    expectedIndex: buildExpectedIndex(config, semanticEvidence, tsById, loadProfile(config)),
+    expectedIndex: buildFixtureExpectedIndex(config, semanticEvidence, tsById),
     ...indexedSources,
     snapshot: semanticEvidence,
+  });
+}
+
+function buildFixtureExpectedIndex(config, semanticEvidence, tsById) {
+  const catalog = finalizeGeneratedFacadeFixtureCatalog(config, semanticEvidence);
+  return buildExpectedIndex(config, semanticEvidence, tsById, loadProfile(config), new Map(), {
+    externalFacadeStorageView: catalog.artifactFacades(config, semanticEvidence),
   });
 }
 
@@ -241,23 +247,69 @@ function semanticHash(value, id, name) {
 }
 
 function semanticSnapshot(...declarations) {
+  const goPath = "fixture/native.go";
   return {
-    files: [{ units: declarations.map((entry, index) => ({ id: `unit-${index}`, kind: "type", name: entry.type.object.name, semantic: [entry] })) }],
-    semantic: { dependencyTypeDeclarations: [], externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [] } },
+    files: [{
+      path: goPath,
+      generated: false,
+      importPath: "example.test/native",
+      units: declarations.map((entry, index) => ({
+        id: `unit-${index}`,
+        kind: "type",
+        name: entry.type.object.name,
+        metadata: { goPath },
+        semantic: [entry],
+      })),
+    }],
+    semantic: {
+      requiredFiles: [goPath],
+      excludedFiles: [],
+      dependencyTypeDeclarations: [],
+      externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
+      methodSetSignatures: [],
+      profiles: [testSemanticProfile({ coveredFiles: [goPath], packageIds: ["example.test/native"] })],
+    },
   };
 }
 
 function semanticDeclaration(id = objectId, generic = true) {
   const name = id.slice(id.lastIndexOf("::type::") + 8);
+  const packagePath = "example.test/native";
+  const object = {
+    id,
+    name,
+    packagePath,
+    exported: true,
+    type: { kind: "named", nilable: false, reference: { objectId: id, packagePath, name, typeArgs: [] } },
+  };
   const parameter = { ownerId: id, role: "type", index: 0, name: "T" };
   return {
     kind: "type",
-    packagePath: "example.test/native",
-    object: { id, name, packagePath: "example.test/native", exported: true },
+    packagePath,
+    object,
     type: {
       alias: false,
-      object: { id, name, packagePath: "example.test/native", exported: true },
-      typeParameters: generic ? [{ reference: parameter, constraint: { kind: "interface", nilable: true, interface: {} } }] : [],
+      object,
+      typeParameters: generic ? [{
+        reference: parameter,
+        constraint: {
+          kind: "interface",
+          nilable: true,
+          interface: {
+            explicitMethods: [],
+            embeddedTypes: [],
+            embeddedKinds: [],
+            completeMethods: [],
+            comparable: false,
+            implicit: false,
+            methodSetOnly: true,
+            explicitMethodOrderProvenance: "source",
+          },
+        },
+      }] : [],
+      methods: [],
+      valueMethodSet: [],
+      pointerMethodSet: [],
       rhs: generic
         ? { kind: "struct", nilable: false, struct: { fields: [{ variable: { name: "value", embedded: false, type: { kind: "typeParameter", nilable: false, typeParameter: parameter } } }] } }
         : { kind: "struct", nilable: false, struct: { fields: [{ variable: { name: "value", embedded: false, type: { kind: "basic", nilable: false, basic: { name: "int", untyped: false } } } }] } },

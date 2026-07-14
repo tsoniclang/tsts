@@ -114,6 +114,7 @@ function canonicalNode(node, context, opaque) {
       }
       value[plan.name] = canonicalValue(remoteValue, context, plan.opaqueImplementation);
     }
+    if (node instanceof RemoteSourceFile) canonicalizeSourceFileMetadata(node, value, context);
     node.forEachChild((child) => {
       value.__porterChildren.push(canonicalNode(child, context, false));
       return undefined;
@@ -122,6 +123,52 @@ function canonicalNode(node, context, opaque) {
   }
   validateNodeRange(value, context.sourceLength, index);
   return value;
+}
+
+function canonicalizeSourceFileMetadata(sourceFile, value, context) {
+  if (typeof sourceFile.fileName !== "string" || typeof sourceFile.path !== "string" ||
+      !Number.isInteger(sourceFile.languageVariant) || !Number.isInteger(sourceFile.scriptKind) ||
+      typeof sourceFile.isDeclarationFile !== "boolean") {
+    throw new Error("TS-Go decoder returned invalid hand-written SourceFile metadata");
+  }
+  value.FileName = sourceFile.fileName;
+  value.Path = sourceFile.path;
+  value.LanguageVariant = sourceFile.languageVariant;
+  value.ScriptKind = sourceFile.scriptKind;
+  value.ReferencedFiles = canonicalFileReferences(sourceFile.referencedFiles, context, "ReferencedFiles");
+  value.TypeReferenceDirectives = canonicalFileReferences(sourceFile.typeReferenceDirectives, context, "TypeReferenceDirectives");
+  value.LibReferenceDirectives = canonicalFileReferences(sourceFile.libReferenceDirectives, context, "LibReferenceDirectives");
+  value.ModuleAugmentations = sourceFile.moduleAugmentations.map((node) => canonicalNode(node, context, false));
+  if (!Array.isArray(sourceFile.ambientModuleNames) || sourceFile.ambientModuleNames.some((name) => typeof name !== "string")) {
+    throw new Error("TS-Go decoder returned invalid ambient module names");
+  }
+  value.AmbientModuleNames = [...sourceFile.ambientModuleNames];
+  const indicator = sourceFile.externalModuleIndicator;
+  if (indicator !== undefined) {
+    if (indicator !== true && !(indicator instanceof RemoteNode)) throw new Error("TS-Go decoder returned invalid external-module evidence");
+    value.ExternalModuleIndicator = indicator === true ? true : canonicalNode(indicator, context, false);
+  }
+  value.IsDeclarationFile = sourceFile.isDeclarationFile;
+}
+
+function canonicalFileReferences(references, context, label) {
+  if (!Array.isArray(references)) throw new Error(`TS-Go decoder returned invalid ${label}`);
+  return references.map((reference, index) => {
+    requirePlainObject(reference, `TS-Go ${label}[${index}]`);
+    requireExactKeys(reference, ["end", "fileName", "pos", "preserve", "resolutionMode"], `TS-Go ${label}[${index}]`);
+    validateSpan(reference.pos, reference.end, context.sourceLength, `TS-Go ${label}[${index}]`);
+    if (typeof reference.fileName !== "string" || reference.fileName === "" ||
+        !Number.isInteger(reference.resolutionMode) || typeof reference.preserve !== "boolean") {
+      throw new Error(`TS-Go decoder returned invalid ${label}[${index}]`);
+    }
+    return {
+      Pos: reference.pos,
+      End: reference.end,
+      FileName: reference.fileName,
+      ResolutionMode: reference.resolutionMode,
+      Preserve: reference.preserve,
+    };
+  });
 }
 
 function canonicalValue(value, context, opaque) {

@@ -64,3 +64,18 @@ test("parser preserves UTF-16 diagnostic and node spans", async () => {
   const declaration = source.Statements.Nodes[1];
   assert.equal(api.GetTextOfNodeFromSourceText(text, declaration, false), "export const broken = ;");
 });
+
+test("parser preserves hand-written SourceFile declaration metadata", async () => {
+  const api = await loadParser();
+  const text = `/// <reference lib="base" />
+/// <reference path="./extra.d.ts" />
+/// <reference types="node" />
+export interface Root {}
+`;
+  const source = parseSource(api, "fixture/lib.root.d.ts", text);
+  assert.deepEqual(source.LibReferenceDirectives.map((reference) => reference.FileName), ["base"]);
+  assert.deepEqual(source.ReferencedFiles.map((reference) => reference.FileName), ["./extra.d.ts"]);
+  assert.deepEqual(source.TypeReferenceDirectives.map((reference) => reference.FileName), ["node"]);
+  assert.notEqual(source.ExternalModuleIndicator, undefined);
+  assert.equal(source.IsDeclarationFile, true);
+});
