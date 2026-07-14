@@ -4,6 +4,8 @@ export const sliceRuntime = `interface GoSequenceBacking<T> {
 }
 
 class GoArrayHeader<T, Length extends string> {
+  declare private readonly lengthType: Length;
+
   private constructor(
     private readonly backing: GoSequenceBacking<T>,
     readonly length: int,
@@ -12,6 +14,15 @@ class GoArrayHeader<T, Length extends string> {
   static make<T, Length extends string>(length: int, valueOps: GoValueOps<T>): GoArrayHeader<T, Length> {
     requireGoSequenceExtent(length, "array length");
     return new GoArrayHeader<T, Length>(allocateGoSequenceBacking(length, valueOps), length);
+  }
+
+  static makeZeroLength<T>(): GoArrayHeader<T, "0"> {
+    const backing = allocateUninitializedGoSequenceBacking<T>(0);
+    Object.freeze(backing.values);
+    Object.freeze(backing);
+    const array = new GoArrayHeader<T, "0">(backing, 0 as int);
+    Object.freeze(array);
+    return array;
   }
 
   static loadRaw<T, Length extends string>(array: GoArrayHeader<T, Length>, index: int): T {
@@ -36,6 +47,11 @@ class GoArrayHeader<T, Length extends string> {
       result.backing.values[index] = valueOps.copy(array.backing.values[index]!);
     }
     return result;
+  }
+
+  static cloneZeroLength<T>(array: GoArrayHeader<T, "0">): GoArrayHeader<T, "0"> {
+    if (array.length !== 0) throw new RangeError("zero-length array value expected");
+    return GoArrayHeader.makeZeroLength<T>();
   }
 
   static slice<T, Length extends string>(
@@ -313,6 +329,13 @@ export function GoArrayValueOps<T, Length extends string>(length: int, elementOp
   return Object.freeze({
     zero: (): GoArray<T, Length> => GoArrayMake<T, Length>(length, elementOps),
     copy: (value: GoArray<T, Length>): GoArray<T, Length> => GoArrayHeader.clone(value, elementOps),
+  });
+}
+
+export function GoZeroLengthArrayValueOps<T>(): GoValueOps<GoArray<T, "0">> {
+  return Object.freeze({
+    zero: (): GoArray<T, "0"> => GoArrayHeader.makeZeroLength<T>(),
+    copy: (value: GoArray<T, "0">): GoArray<T, "0"> => GoArrayHeader.cloneZeroLength(value),
   });
 }
 

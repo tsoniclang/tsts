@@ -2,8 +2,7 @@ import { compareText } from "../deterministic-order.mjs";
 import { semanticDeclarationVariantsHash } from "../semantic-declaration-hash.mjs";
 import { canonicalSchemaValue } from "../semantic-variants.mjs";
 import { buildSemanticTypeCatalog } from "../type-storage-policies.mjs";
-import { safeIdentifier } from "../names.mjs";
-import { assertSourceModuleId } from "../../ts-extractor/source-structure.mjs";
+import { requireDirectProviderIdentity } from "./provider-identity.mjs";
 
 const registeredOwners = new Map([
   ["porter:ast", "internal/ast/generated"],
@@ -58,6 +57,7 @@ export function buildGeneratorOwnedGoValueOperationCatalog(config, snapshot, val
       "operationIdentity",
       "operationTypeParameterIndexes",
       "ownerId",
+      "storageIdentity",
       "tsDeclarationHash",
       "typeParameterCount",
     ]), label);
@@ -65,6 +65,7 @@ export function buildGeneratorOwnedGoValueOperationCatalog(config, snapshot, val
     if (relativeRoot === undefined) throw new Error(`${label}.ownerId '${value.ownerId}' is not a registered operation generator`);
     requireGoTypeIdentity(value.objectId, `${label}.objectId`);
     requireOperationIdentity(value.operationIdentity, config, relativeRoot, `${label}.operationIdentity`);
+    requireGeneratedIdentity(value.storageIdentity, config, relativeRoot, `${label}.storageIdentity`, "storage");
     requireHash(value.goDeclarationHash, `${label}.goDeclarationHash`);
     requireHash(value.tsDeclarationHash, `${label}.tsDeclarationHash`);
     requireTypeParameterCount(value.typeParameterCount, `${label}.typeParameterCount`);
@@ -88,6 +89,7 @@ export function buildGeneratorOwnedGoValueOperationCatalog(config, snapshot, val
       operationTypeParameterIndexes: Object.freeze(indexes),
       ownerId: value.ownerId,
       semantic,
+      storageIdentity: value.storageIdentity,
       tsDeclarationHash: value.tsDeclarationHash,
       typeParameterCount: value.typeParameterCount,
     });
@@ -113,25 +115,12 @@ export function requireGeneratorOwnedGoValueOperationCatalog(value, config, snap
 }
 
 function requireOperationIdentity(value, config, relativeRoot, label) {
-  if (typeof value !== "string") throw new Error(`${label} must be one exact direct generated TypeScript export identity`);
-  const separator = value.lastIndexOf("::");
-  if (separator <= 0 || separator === value.length - 2) {
-    throw new Error(`${label} must be one exact direct generated TypeScript export identity`);
-  }
-  const moduleId = value.slice(0, separator);
-  const exportName = value.slice(separator + 2);
+  requireGeneratedIdentity(value, config, relativeRoot, label, "operation");
+}
+
+function requireGeneratedIdentity(value, config, relativeRoot, label, role) {
   const root = `${config.tsRoot.replace(/\/+$/, "")}/${relativeRoot}`;
-  try {
-    assertSourceModuleId(moduleId);
-  } catch {
-    throw new Error(`${label} module must be one canonical generated .ts file directly under '${root}'`);
-  }
-  if (!moduleId.startsWith(`${root}/`)) {
-    throw new Error(`${label} module must be one canonical generated .ts file directly under '${root}'`);
-  }
-  if (exportName === "" || safeIdentifier(exportName) !== exportName) {
-    throw new Error(`${label} export must be one exact TypeScript identifier`);
-  }
+  requireDirectProviderIdentity(value, root, label, `generated ${role}`);
 }
 
 function requireInvariantStorageShape(semantic, label) {

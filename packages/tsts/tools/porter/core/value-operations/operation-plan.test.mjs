@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildPorterUnitOwnership } from "../unit-ownership.mjs";
+import { buildAuditedTypeStorageCatalog } from "../../sig-check/audited-type-storage.mjs";
 import { emptyGeneratorOwnedGoValueOperationCatalog } from "./generator-owned-providers.mjs";
 import { buildGoValueOperationPlan } from "./operation-plan.mjs";
 import { buildReviewedGoValueOperationCatalog } from "./reviewed-providers.mjs";
@@ -16,7 +17,9 @@ test("the finalized operation plan uses direct storage ownership and package-lev
     snapshot: fixture.snapshot,
     tsUnits: fixture.tsUnits,
   });
+  const auditedStorage = auditedStorageFor(fixture, unitOwnership);
   const plan = buildGoValueOperationPlan({
+    auditedStorage,
     config: fixture.config,
     generatorOwnedProviders,
     largeFileSplits: fixture.largeFileSplits,
@@ -40,6 +43,7 @@ test("the finalized operation plan uses direct storage ownership and package-lev
   });
   assert.equal(entry.semanticDeclaration, fixture.unit.semantic[0].type);
   assert.equal(entry.storageIdentity, "src/internal/sample/value.ts::Pair");
+  assert.equal(entry.storageAudit, auditedStorage.get(fixture.objectId));
   assert.equal(entry.tsPath, "src/internal/sample/value.ts");
   assert.equal(entry.typeParameters.length, 1);
   assert.equal(entry.typeParameters[0].key, `${fixture.objectId}::type::0`);
@@ -61,6 +65,7 @@ test("operation planning rejects unfinalized and stale type ownership", () => {
     tsUnits: staleTsUnits,
   });
   assert.throws(() => buildGoValueOperationPlan({
+    auditedStorage: auditedStorageFor({ ...fixture, tsUnits: staleTsUnits }, ownership),
     config: fixture.config,
     generatorOwnedProviders,
     largeFileSplits: fixture.largeFileSplits,
@@ -69,6 +74,29 @@ test("operation planning rejects unfinalized and stale type ownership", () => {
     tsUnits: staleTsUnits,
     unitOwnership: ownership,
   }), /every active type declaration to be implemented and current/);
+});
+
+test("operation planning rejects generated operations for adapted TypeScript storage", () => {
+  const fixture = planFixture();
+  const reviewedProviders = buildReviewedGoValueOperationCatalog(fixture.config, fixture.snapshot);
+  const generatorOwnedProviders = emptyGeneratorOwnedGoValueOperationCatalog(fixture.config, fixture.snapshot);
+  const unitOwnership = buildPorterUnitOwnership({
+    config: fixture.config,
+    largeFileSplits: fixture.largeFileSplits,
+    snapshot: fixture.snapshot,
+    tsUnits: fixture.tsUnits,
+  });
+  const auditedStorage = auditedStorageFor(fixture, unitOwnership, [{ kind: "extra-member" }]);
+  assert.throws(() => buildGoValueOperationPlan({
+    auditedStorage,
+    config: fixture.config,
+    generatorOwnedProviders,
+    largeFileSplits: fixture.largeFileSplits,
+    reviewedProviders,
+    snapshot: fixture.snapshot,
+    tsUnits: fixture.tsUnits,
+    unitOwnership,
+  }), /adapted TypeScript storage.*reviewed operation provider/);
 });
 
 function planFixture() {
@@ -86,7 +114,7 @@ function planFixture() {
       rhs: {
         kind: "struct",
         nilable: false,
-        struct: { fields: [{ variable: { name: "value", embedded: false, type: { kind: "typeParameter", nilable: false, typeParameter: parameter } } }] },
+        struct: { fields: [{ variable: { id: `${objectId}::rhs::field::0`, name: "value", embedded: false, type: { kind: "typeParameter", nilable: false, typeParameter: parameter } } }] },
       },
     },
     profiles: [0],
@@ -134,4 +162,37 @@ function planFixture() {
     tsUnits: { files: [{ path: tsUnit.path, metadataCount: 1 }], units: [tsUnit] },
     unit,
   };
+}
+
+function auditedStorageFor(fixture, unitOwnership, rawMismatches = []) {
+  const typeParameter = {
+    name: "T",
+    binding: { depth: 0, index: 0 },
+    modifiers: { const: false, variance: null, unsupported: [] },
+    constraint: null,
+    default: null,
+    invalidConstraint: null,
+  };
+  const descriptor = {
+    kind: "interface",
+    modifiers: ["export"],
+    typeParams: [typeParameter],
+    heritage: [],
+    members: [{ kind: "property", name: "value", modifiers: [], type: { t: "tp", depth: 0, index: 0 } }],
+  };
+  return buildAuditedTypeStorageCatalog({
+    canonicalIdentity: (identity) => identity,
+    config: fixture.config,
+    largeFileSplits: fixture.largeFileSplits,
+    records: [{
+      actual: descriptor,
+      expected: descriptor,
+      goUnit: unitOwnership.goByID.get(fixture.unit.id),
+      rawMismatches,
+      tsUnit: unitOwnership.tsByID.get(fixture.unit.id),
+    }],
+    snapshot: fixture.snapshot,
+    tsUnits: fixture.tsUnits,
+    unitOwnership,
+  });
 }

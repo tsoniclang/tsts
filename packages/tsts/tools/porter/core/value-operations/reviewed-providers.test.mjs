@@ -11,6 +11,7 @@ const relation = {
   kind: "go-value-ops",
   objectId,
   operationIdentity: "src/go/native.ts::PairValueOps",
+  storageIdentity: "src/go/native.ts::Pair",
   typeParameterCount: 1,
   operationTypeParameterIndexes: [0],
   goDeclarationHash: semanticDeclarationVariantsHash({
@@ -34,6 +35,7 @@ test("reviewed Go value-operation policies are exact, immutable requirements", (
     typeParameterCount: 1,
   });
   assert.equal(catalog.get(objectId).operationIdentity, "src/go/native.ts::PairValueOps");
+  assert.equal(catalog.get(objectId).storageIdentity, "src/go/native.ts::Pair");
   assert.throws(() => catalog.requirements({ ...config }, snapshot), /different config or snapshot/);
 });
 
@@ -55,6 +57,10 @@ test("reviewed Go value-operation policies reject ambiguity and drift", () => {
     ...valid,
     semanticRelations: [{ ...relation, goDeclarationHash: "d".repeat(64) }],
   }, snapshot), /Go declaration snapshot drifted/);
+  assert.throws(() => buildReviewedGoValueOperationCatalog({
+    ...valid,
+    semanticRelations: [{ ...relation, storageIdentity: "src/go/../escape.ts::Pair" }],
+  }, snapshot), /canonical \.ts file/);
   assert.throws(() => buildReviewedGoValueOperationCatalog({
     ...valid,
     semanticRelations: [relation, { ...relation, objectId: "builtin::type::error" }],

@@ -32,7 +32,7 @@ export function PairValueOps<T>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> {
   assert.equal(first, second, "Porter declaration evidence must not hash implementation bodies");
 
   const relation = reviewedRelation(first);
-  const config = { semanticRelations: [relation], tsRoot: "src" };
+  const config = fixtureConfig([relation]);
   const { moduleIndex, valueEnvironments } = indexed(source);
   const result = collectGoValueOperationProviderMismatches({ api, config, moduleIndex, snapshot, valueEnvironments });
   assert.equal(result.checked, 1);
@@ -47,7 +47,7 @@ export interface Pair<T> { value: T; }
 export function PairValueOps<T>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> { throw new Error(); }
 `;
   const hash = operationHash(source, "PairValueOps", "function");
-  const config = { semanticRelations: [reviewedRelation(hash)], tsRoot: "src" };
+  const config = fixtureConfig([reviewedRelation(hash)]);
   const drifted = indexed(source.replace("valueOps: GoValueOps<T>", "valueOps: T"));
   const drift = collectGoValueOperationProviderMismatches({ api, config, ...drifted, snapshot });
   assert.equal(drift.mismatches[0].kind, "go-value-operation-typescript-drift");
@@ -70,6 +70,43 @@ export function PairValueOps<T>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> { 
   assert.match(kindResult.mismatches[0].detail, /function/);
 });
 
+test("reviewed Go value-operation declarations structurally target exact storage and operation-bearing parameters", () => {
+  const source = `
+export interface GoValueOps<T> { readonly zero: () => T; readonly copy: (value: T) => T; }
+export interface Pair<T extends object> { value: T; }
+export function PairValueOps<T extends object>(valueOps: GoValueOps<T>): GoValueOps<Pair<T>> { throw new Error(); }
+`;
+  const validRelation = {
+    ...reviewedRelation(operationHash(source, "PairValueOps", "function")),
+    tsDeclarationHash: operationHash(source, "PairValueOps", "function"),
+  };
+  const validConfig = fixtureConfig([validRelation]);
+  const valid = collectGoValueOperationProviderMismatches({
+    api,
+    config: validConfig,
+    ...indexed(source),
+    snapshot,
+  });
+  assert.deepEqual(valid.mismatches, []);
+
+  for (const { prior, replacement, expected } of [
+    { prior: "GoValueOps<Pair<T>>", replacement: "GoValueOps<T>", expected: /return type differs/ },
+    { prior: "valueOps: GoValueOps<T>", replacement: "valueOps: T", expected: /parameter 0 type differs/ },
+    { prior: "T extends object>(valueOps", replacement: "T>(valueOps", expected: /type parameters differs/ },
+  ]) {
+    const changed = source.replace(prior, replacement);
+    const relation = { ...validRelation, tsDeclarationHash: operationHash(changed, "PairValueOps", "function") };
+    const result = collectGoValueOperationProviderMismatches({
+      api,
+      config: { ...validConfig, semanticRelations: [relation] },
+      ...indexed(changed),
+      snapshot,
+    });
+    assert.equal(result.mismatches[0].kind, "go-value-operation-contract-error");
+    assert.match(result.mismatches[0].detail, expected);
+  }
+});
+
 test("non-generic reviewed operations are direct const declarations", () => {
   const source = `
 export interface GoValueOps<T> { readonly zero: () => T; readonly copy: (value: T) => T; }
@@ -81,13 +118,14 @@ export const MarkerValueOps: GoValueOps<Marker> = undefined as never;
   const relation = {
     ...reviewedRelation(operationHash(source, "MarkerValueOps", "value"), markerId),
     operationIdentity: `${moduleId}::MarkerValueOps`,
+    storageIdentity: `${moduleId}::Marker`,
     operationTypeParameterIndexes: [],
     typeParameterCount: 0,
     goDeclarationHash: semanticHash(markerDeclaration, markerId, "Marker"),
   };
   const result = collectGoValueOperationProviderMismatches({
     api,
-    config: { semanticRelations: [relation], tsRoot: "src" },
+    config: fixtureConfig([relation]),
     ...indexed(source),
     snapshot: semanticSnapshot(markerDeclaration),
   });
@@ -99,11 +137,20 @@ function reviewedRelation(tsDeclarationHash, id = objectId) {
     kind: "go-value-ops",
     objectId: id,
     operationIdentity: `${moduleId}::PairValueOps`,
+    storageIdentity: `${moduleId}::Pair`,
     typeParameterCount: 1,
     operationTypeParameterIndexes: [0],
     goDeclarationHash: semanticHash(declaration, objectId, "Pair"),
     tsDeclarationHash,
     reason: "This authored value carrier requires one reviewed declaration-level operation contract.",
+  };
+}
+
+function fixtureConfig(semanticRelations) {
+  return {
+    semanticRelations,
+    signatureCheck: { modules: { compat: moduleId, core: "src/go/scalars.ts" } },
+    tsRoot: "src",
   };
 }
 

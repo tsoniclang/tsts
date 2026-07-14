@@ -25,6 +25,7 @@ test("generator-owned evidence retains only exact declaration contracts in an im
   assert.equal(entry.goDeclarationHash, evidence.goDeclarationHash);
   assert.equal(entry.operationIdentity, evidence.operationIdentity);
   assert.equal(entry.ownerId, "porter:ast");
+  assert.equal(entry.storageIdentity, "src/internal/ast/generated/pair.ts::Pair");
   assert.equal(entry.tsDeclarationHash, "b".repeat(64));
   assert.equal(entry.typeParameterCount, 1);
   assert.deepEqual(entry.operationTypeParameterIndexes, [0]);
@@ -103,17 +104,17 @@ test("generator-owned evidence rejects unregistered owners and noncanonical owne
   );
 
   const invalidIdentities = [
-    [42, /exact direct generated TypeScript export identity/],
-    ["src/internal/ast/generated/value-ops.ts", /exact direct generated TypeScript export identity/],
-    ["src/internal/ast/generated/value-ops.ts::", /exact direct generated TypeScript export identity/],
-    ["src/internal/ast/generated/../escape.ts::PairValueOps", /canonical generated \.ts file/],
-    ["src/internal/ast/generated\\value-ops.ts::PairValueOps", /canonical generated \.ts file/],
-    ["src/internal/ast/generated/value-ops.js::PairValueOps", /canonical generated \.ts file/],
-    ["src/internal/ast/generated/value-ops.ts?profile::PairValueOps", /canonical generated \.ts file/],
-    ["src/internal/ast/other/value-ops.ts::PairValueOps", /directly under 'src\/internal\/ast\/generated'/],
+    [42, /exact direct TypeScript generated operation identity/],
+    ["src/internal/ast/generated/value-ops.ts", /exact direct TypeScript generated operation identity/],
+    ["src/internal/ast/generated/value-ops.ts::", /exact direct TypeScript generated operation identity/],
+    ["src/internal/ast/generated/../escape.ts::PairValueOps", /canonical \.ts file/],
+    ["src/internal/ast/generated\\value-ops.ts::PairValueOps", /canonical \.ts file/],
+    ["src/internal/ast/generated/value-ops.js::PairValueOps", /canonical \.ts file/],
+    ["src/internal/ast/generated/value-ops.ts?profile::PairValueOps", /canonical \.ts file/],
+    ["src/internal/ast/other/value-ops.ts::PairValueOps", /under 'src\/internal\/ast\/generated'/],
     ["src/internal/ast/generated/value-ops.ts::Pair-ValueOps", /exact TypeScript identifier/],
     ["src/internal/ast/generated/value-ops.ts::class", /exact TypeScript identifier/],
-    ["src/internal/ast/generated/value-ops.ts::PairValueOps::Alias", /canonical generated \.ts file/],
+    ["src/internal/ast/generated/value-ops.ts::PairValueOps::Alias", /canonical \.ts file/],
   ];
   for (const [operationIdentity, expected] of invalidIdentities) {
     assert.throws(
@@ -122,6 +123,13 @@ test("generator-owned evidence rejects unregistered owners and noncanonical owne
       String(operationIdentity),
     );
   }
+  assert.throws(
+    () => buildGeneratorOwnedGoValueOperationCatalog(config, snapshot, [{
+      ...evidence,
+      storageIdentity: "src/internal/ast/other/pair.ts::Pair",
+    }]),
+    /under 'src\/internal\/ast\/generated'/,
+  );
 });
 
 test("generator-owned evidence rejects invalid identities and declaration hashes", () => {
@@ -248,6 +256,7 @@ function evidenceFor(snapshot, objectId, overrides = {}) {
     operationIdentity: `src/internal/ast/generated/${semantic.name.toLowerCase()}-value-ops.ts::${semantic.name}ValueOps`,
     operationTypeParameterIndexes: semantic.variants[0].declaration.type.typeParameters.length === 0 ? [] : [0],
     ownerId: "porter:ast",
+    storageIdentity: `src/internal/ast/generated/${semantic.name.toLowerCase()}.ts::${semantic.name}`,
     tsDeclarationHash: "b".repeat(64),
     typeParameterCount: semantic.variants[0].declaration.type.typeParameters.length,
     ...overrides,

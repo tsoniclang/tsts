@@ -7,15 +7,43 @@ import { renderGoCompatModule } from "./core/runtime-templates/compatibility.mjs
 
 const goOracle = JSON.parse(readFileSync(new URL("../go-runtime-oracle/slices.expected.json", import.meta.url), "utf8"));
 
-async function loadRuntime() {
-  const source = renderGoCompatModule().replace(
+function runtimeSource() {
+  return renderGoCompatModule().replace(
     /^import type \{ bool, int \} from "\.\/scalars\.js";\n\n/,
     "type bool = boolean;\ntype int = number;\n\n",
   );
-  const javascript = ts.transpileModule(source, {
+}
+
+async function loadRuntime() {
+  const javascript = ts.transpileModule(runtimeSource(), {
     compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   return import(`data:text/javascript;base64,${Buffer.from(javascript).toString("base64")}`);
+}
+
+function assertRuntimeContractCompiles(contract) {
+  const fileName = "/go-array-value-operations-contract.ts";
+  const source = `${runtimeSource()}\n${contract}`;
+  const options = {
+    module: ts.ModuleKind.ESNext,
+    noEmit: true,
+    strict: true,
+    target: ts.ScriptTarget.ES2022,
+  };
+  const host = ts.createCompilerHost(options);
+  const defaultGetSourceFile = host.getSourceFile.bind(host);
+  const defaultFileExists = host.fileExists.bind(host);
+  const defaultReadFile = host.readFile.bind(host);
+  host.getSourceFile = (path, languageVersion, onError, shouldCreateNewSourceFile) => path === fileName
+    ? ts.createSourceFile(path, source, languageVersion, true)
+    : defaultGetSourceFile(path, languageVersion, onError, shouldCreateNewSourceFile);
+  host.fileExists = (path) => path === fileName || defaultFileExists(path);
+  host.readFile = (path) => path === fileName ? source : defaultReadFile(path);
+  const diagnostics = ts.getPreEmitDiagnostics(ts.createProgram([fileName], options, host));
+  assert.deepEqual(diagnostics.map((diagnostic) => ({
+    code: diagnostic.code,
+    message: ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+  })), []);
 }
 
 function values(runtime, slice, valueOps) {
@@ -210,6 +238,64 @@ test("fixed arrays are opaque values and slices share their exact backing locati
     ],
     sliceSharesAddress: runtime.GoArrayElementRef(array, 1, numberOps) === runtime.GoSliceElementRef(slice, 0, numberOps),
   }, goOracle.array);
+});
+
+test("zero-length fixed-array operations have an exact element-operation-free contract", () => {
+  assertRuntimeContractCompiles(`
+type Box = { value: number };
+declare const boxOps: GoValueOps<Box>;
+const zeroOps: GoValueOps<GoArray<Box, "0">> = GoZeroLengthArrayValueOps<Box>();
+const zero: GoArray<Box, "0"> = zeroOps.zero();
+const copy: GoArray<Box, "0"> = zeroOps.copy(zero);
+const nonzeroOps: GoValueOps<GoArray<Box, "1">> = GoArrayValueOps<Box, "1">(1, boxOps);
+// @ts-expect-error zero-length array operations do not accept element operations
+GoZeroLengthArrayValueOps<Box>(boxOps);
+// @ts-expect-error the zero-length provider cannot operate on nonzero arrays
+zeroOps.copy(nonzeroOps.zero());
+// @ts-expect-error exact Go fixed-array lengths are not interchangeable
+const wrongLength: GoArray<Box, "1"> = zero;
+// @ts-expect-error nonzero array operations still require element operations
+GoArrayValueOps<Box, "1">(1);
+void copy;
+void wrongLength;
+`);
+});
+
+test("zero-length fixed-array operations allocate isolated non-resizable values", async () => {
+  const runtime = await loadRuntime();
+  const zeroOps = runtime.GoZeroLengthArrayValueOps();
+  const zero = zeroOps.zero();
+  const otherZero = zeroOps.zero();
+  const copy = zeroOps.copy(zero);
+
+  for (const value of [zero, otherZero, copy]) {
+    assert.equal(value.length, 0);
+    assert.equal(Array.isArray(value), false);
+    assert.equal(Object.isFrozen(value), true);
+    assert.equal(Object.isFrozen(value.backing), true);
+    assert.equal(Object.isFrozen(value.backing.values), true);
+    assert.equal(Reflect.set(value, "length", 1), false);
+    assert.equal(value.length, 0);
+  }
+  assert.notEqual(zero, otherZero);
+  assert.notEqual(zero, copy);
+  assert.notEqual(zero.backing, otherZero.backing);
+  assert.notEqual(zero.backing, copy.backing);
+  assert.notEqual(zero.backing.values, copy.backing.values);
+  assert.throws(() => zero.backing.values.push({ value: 1 }), TypeError);
+
+  const slice = runtime.GoArraySlice(zero, 0, 0);
+  assert.equal(runtime.GoSliceIsNil(slice), false);
+  assert.equal(runtime.GoSliceCapacity(slice), 0);
+  const appended = runtime.GoSliceAppend(slice, { value: 1 }, Object.freeze({
+    zero: () => ({ value: 0 }),
+    copy: (value) => ({ value: value.value }),
+  }));
+  assert.equal(appended.length, 1);
+  assert.equal(zero.length, 0);
+
+  const nonzero = runtime.GoArrayMake(1, runtime.GoNumberValueOps);
+  assert.throws(() => zeroOps.copy(nonzero), /zero-length array value expected/);
 });
 
 test("slice carrier rejects invalid construction, bounds, and overflow without fallback behavior", async () => {

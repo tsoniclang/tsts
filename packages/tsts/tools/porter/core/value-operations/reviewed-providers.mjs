@@ -1,11 +1,9 @@
-import path from "node:path";
-
 import { compareText } from "../deterministic-order.mjs";
 import { semanticDeclarationVariantsHash } from "../semantic-declaration-hash.mjs";
 import { semanticRelationsOfKind } from "../semantic-relations.mjs";
 import { canonicalSchemaValue } from "../semantic-variants.mjs";
 import { buildSemanticTypeCatalog } from "../type-storage-policies.mjs";
-import { safeIdentifier } from "../names.mjs";
+import { requireDirectProviderIdentity } from "./provider-identity.mjs";
 
 const intrinsicInterfaceObjects = new Set(["builtin::type::any", "builtin::type::error"]);
 
@@ -62,6 +60,7 @@ export function buildReviewedGoValueOperationCatalog(config, snapshot) {
       "operationIdentity",
       "operationTypeParameterIndexes",
       "reason",
+      "storageIdentity",
       "tsDeclarationHash",
       "typeParameterCount",
     ]), label);
@@ -70,6 +69,7 @@ export function buildReviewedGoValueOperationCatalog(config, snapshot) {
       throw new Error(`${label}.objectId '${value.objectId}' is an intrinsic interface value and cannot use a reviewed provider`);
     }
     requireOperationIdentity(value.operationIdentity, config, `${label}.operationIdentity`);
+    requireStorageIdentity(value.storageIdentity, config, `${label}.storageIdentity`);
     requireHash(value.goDeclarationHash, `${label}.goDeclarationHash`);
     requireHash(value.tsDeclarationHash, `${label}.tsDeclarationHash`);
     requireReason(value.reason, `${label}.reason`);
@@ -102,6 +102,7 @@ export function buildReviewedGoValueOperationCatalog(config, snapshot) {
       operationTypeParameterIndexes: Object.freeze(indexes),
       reason: value.reason.trim(),
       semantic,
+      storageIdentity: value.storageIdentity,
       tsDeclarationHash: value.tsDeclarationHash,
       typeParameterCount: value.typeParameterCount,
     });
@@ -155,18 +156,11 @@ function requireOperationIndexes(value, arity, label) {
 }
 
 function requireOperationIdentity(value, config, label) {
-  if (typeof value !== "string") throw new Error(`${label} must be one exact direct TypeScript export identity`);
-  const separator = value.lastIndexOf("::");
-  if (separator <= 0 || separator === value.length - 2) throw new Error(`${label} must be one exact direct TypeScript export identity`);
-  const moduleId = value.slice(0, separator);
-  const exportName = value.slice(separator + 2);
-  const root = config.tsRoot.replace(/\/+$/, "");
-  const relative = moduleId.startsWith(`${root}/`) ? moduleId.slice(root.length + 1) : undefined;
-  if (relative === undefined || !relative.endsWith(".ts") || relative.includes("\\") || path.posix.isAbsolute(relative) ||
-      path.posix.normalize(relative) !== relative || relative.split("/").some((segment) => segment === "" || segment === "." || segment === "..")) {
-    throw new Error(`${label} module must be one canonical .ts file directly under '${root}'`);
-  }
-  if (safeIdentifier(exportName) !== exportName) throw new Error(`${label} export must be one exact TypeScript identifier`);
+  requireDirectProviderIdentity(value, config.tsRoot, label, "operation");
+}
+
+function requireStorageIdentity(value, config, label) {
+  requireDirectProviderIdentity(value, config.tsRoot, label, "storage");
 }
 
 function requireExactObject(value, allowed, label) {

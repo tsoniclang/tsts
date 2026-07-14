@@ -10,6 +10,7 @@
 
 import { compareText } from "./core/deterministic-order.mjs";
 import { completeAudit, notRunAudit } from "./core/declaration-audits.mjs";
+import { buildPorterUnitOwnership } from "./core/unit-ownership.mjs";
 import {
   declarationPrerequisiteMismatches,
   requireDeclarationAuditPrerequisites,
@@ -24,6 +25,7 @@ import { collectExternalPackageSurfaceMismatches } from "./sig-check/external-pa
 import { collectUntrackedTypeScriptDeclarations } from "./sig-check/untracked-declarations.mjs";
 import { collectTypeStoragePolicyMismatches } from "./sig-check/type-storage-policies.mjs";
 import { collectGoValueOperationProviderMismatches } from "./sig-check/value-operation-providers.mjs";
+import { buildAuditedTypeStorageCatalog } from "./sig-check/audited-type-storage.mjs";
 import { buildTypeEquivalenceRelationRegistry } from "./sig-check/type-equivalence-relations.mjs";
 import { buildAmbientReferenceRelationRegistry } from "./sig-check/ambient-reference-relations.mjs";
 import { buildDeclarationOwnershipRegistry } from "./sig-check/declaration-ownership.mjs";
@@ -37,6 +39,7 @@ import {
 } from "./sig-check/overrides.mjs";
 
 const RENDERABLE = new Set(["func", "method", "type", "constGroup", "varGroup"]);
+const signatureOperationEvidence = new WeakMap();
 
 function globToRegExp(glob) {
   const escaped = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
@@ -73,6 +76,12 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
     ? deps.nonGoManifest ?? loadNonGoDeclarationManifest(deps.config, deps.repoRoot)
     : undefined;
   const overrideIssues = [];
+  const unitOwnership = buildPorterUnitOwnership({
+    config: deps.config,
+    largeFileSplits: workspace.largeFileSplits,
+    snapshot: deps.snapshot,
+    tsUnits: workspace.tsUnits,
+  });
 
   const goById = new Map();
   for (const file of deps.snapshot.files) {
@@ -112,6 +121,7 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
   const idPattern = idFilter === undefined ? undefined : globToRegExp(idFilter);
   const mismatches = [];
   let overriddenUnits = 0;
+  const auditedTypeRecords = [];
   const expectedIds = new Set();
   for (const [id, go] of goById) {
     if (idPattern && !idPattern.test(id)) continue;
@@ -235,7 +245,28 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
     });
     if (result.overridden) overriddenUnits++;
     mismatches.push(...result.mismatches);
+    if (go.kind === "type" && result.evidence !== undefined) {
+      const tsUnit = unitOwnership.tsByID.get(id);
+      if (tsUnit !== undefined) auditedTypeRecords.push({
+        actual: result.evidence.actual,
+        expected: result.evidence.expected,
+        goUnit: go,
+        rawMismatches: result.evidence.rawMismatches,
+        tsUnit,
+      });
+    }
   }
+  const auditedTypeStorage = wholeProgramAudit
+    ? buildAuditedTypeStorageCatalog({
+      canonicalIdentity: typeEquivalenceRegistry.forUseSite("audited-type-storage"),
+      config: deps.config,
+      largeFileSplits: workspace.largeFileSplits,
+      records: auditedTypeRecords,
+      snapshot: deps.snapshot,
+      tsUnits: workspace.tsUnits,
+      unitOwnership,
+    })
+    : undefined;
   const typeEquivalenceRelations = wholeProgramAudit
     ? typeEquivalenceRegistry.finalize()
     : { checked: 0, inventory: [], mismatches: [] };
@@ -244,7 +275,7 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
     ? ambientReferenceRegistry.finalize()
     : { checked: 0, inventory: [], mismatches: [] };
   mismatches.push(...ambientReferenceRelations.mismatches);
-  return completeAudit({
+  const report = completeAudit({
     selection: wholeProgramAudit
       ? { kind: "all-active" }
       : { kind: "id-filter", pattern: idFilter, matchedUnitCount: expectedIds.size },
@@ -333,6 +364,16 @@ export async function computeSignatureReport(preparedPrerequisites, options = {}
       })
       : wholeProgramAuditNotRun(),
   });
+  if (wholeProgramAudit) {
+    signatureOperationEvidence.set(report, Object.freeze({ auditedTypeStorage, unitOwnership }));
+  }
+  return report;
+}
+
+export function requireSignatureOperationEvidence(report) {
+  const evidence = signatureOperationEvidence.get(report);
+  if (evidence === undefined) throw new Error("Go value-operation planning requires one complete whole-program signature audit");
+  return evidence;
 }
 
 function prerequisiteBlockedReport(idFilter, mismatches) {
@@ -375,11 +416,16 @@ export function compareSignatureUnit({
     validateOverrideUse(localOverride, allMismatches, id, overrideIssues);
     const overridden = allMismatches.some((mismatch) => override.ignore.has(mismatch.kind));
     const active = allMismatches.filter((mismatch) => !override.ignore.has(mismatch.kind));
-    return {
+    const result = {
       overridden,
       mismatches: withSignatureOverrideHashes(active, expected, actual, canonicalIdentity)
         .map((mismatch) => ({ id, file, ...mismatch })),
     };
+    Object.defineProperty(result, "evidence", {
+      value: Object.freeze({ actual, expected, rawMismatches: Object.freeze(allMismatches) }),
+      enumerable: false,
+    });
+    return result;
   } catch (error) {
     return {
       overridden: false,

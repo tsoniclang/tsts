@@ -6,8 +6,11 @@ import { requirePorterUnitOwnership } from "../unit-ownership.mjs";
 import { requireGeneratorOwnedGoValueOperationCatalog } from "./generator-owned-providers.mjs";
 import { requireReviewedGoValueOperationCatalog } from "./reviewed-providers.mjs";
 import { buildGoValueOperationCatalog } from "./shape-plan.mjs";
+import { directUnitStorageIdentity } from "./storage-identity.mjs";
+import { requireAuditedTypeStorageCatalog } from "../../sig-check/audited-type-storage.mjs";
 
 const inputKeys = Object.freeze([
+  "auditedStorage",
   "config",
   "generatorOwnedProviders",
   "largeFileSplits",
@@ -67,10 +70,11 @@ export class FinalizedGoValueOperationPlan {
 
 export function buildGoValueOperationPlan(input) {
   requireExactInput(input, inputKeys, "Go value-operation plan input");
-  const { config, generatorOwnedProviders, largeFileSplits, reviewedProviders, snapshot, tsUnits, unitOwnership } = input;
+  const { auditedStorage, config, generatorOwnedProviders, largeFileSplits, reviewedProviders, snapshot, tsUnits, unitOwnership } = input;
   requirePorterUnitOwnership(unitOwnership, { config, largeFileSplits, snapshot, tsUnits });
   requireReviewedGoValueOperationCatalog(reviewedProviders, config, snapshot);
   requireGeneratorOwnedGoValueOperationCatalog(generatorOwnedProviders, config, snapshot);
+  requireAuditedTypeStorageCatalog(auditedStorage, { config, snapshot, unitOwnership });
   requireCleanTypeOwnership(unitOwnership);
 
   const providers = mergeProviderRequirements(
@@ -85,8 +89,19 @@ export function buildGoValueOperationPlan(input) {
   const entries = catalog.entries.map((entry) => {
     const ownership = ownershipByUnit.get(entry.unitId);
     if (ownership === undefined) throw new Error(`Go value operation '${entry.objectId}' has no finalized TypeScript ownership`);
-    const storageIdentity = directStorageIdentity(ownership.tsUnit, entry);
+    const storageIdentity = directUnitStorageIdentity(config, ownership.tsUnit, entry.objectId);
+    const storageAudit = auditedStorage.get(entry.objectId);
+    if (storageAudit === undefined) throw new Error(`Go value operation '${entry.objectId}' has no audited TypeScript storage declaration`);
+    if (storageAudit.storageIdentity !== storageIdentity) {
+      throw new Error(`Go value operation '${entry.objectId}' audit storage '${storageAudit.storageIdentity}' differs from direct declaration '${storageIdentity}'`);
+    }
     const provider = providerEvidence(entry.objectId, entry.disposition, reviewedProviders, generatorOwnedProviders);
+    if (provider?.storageIdentity !== undefined && provider.storageIdentity !== storageIdentity) {
+      throw new Error(`Go value operation '${entry.objectId}' provider storage '${provider.storageIdentity}' differs from direct declaration '${storageIdentity}'`);
+    }
+    if (entry.disposition === "generated" && !storageAudit.exact) {
+      throw new Error(`Go value operation '${entry.objectId}' uses adapted TypeScript storage and requires one reviewed operation provider`);
+    }
     const operationIdentity = entry.disposition === "generated"
       ? generatedOperationIdentity(config, ownership.goUnit, entry.name)
       : provider.operationIdentity;
@@ -94,6 +109,7 @@ export function buildGoValueOperationPlan(input) {
     return Object.freeze({
       ...entry,
       operationIdentity,
+      storageAudit,
       storageIdentity,
       tsPath: ownership.tsUnit.path,
       ...(provider === undefined ? {} : { provider }),
@@ -154,16 +170,6 @@ function mergeProviderRequirements(...catalogs) {
     }
   }
   return result;
-}
-
-function directStorageIdentity(tsUnit, entry) {
-  if (typeof tsUnit.declarationName !== "string" || tsUnit.declarationName === "") {
-    throw new Error(`Go type '${entry.objectId}' has no direct TypeScript declaration identity`);
-  }
-  if (safeIdentifier(tsUnit.declarationName) !== tsUnit.declarationName) {
-    throw new Error(`Go type '${entry.objectId}' resolves to invalid TypeScript declaration '${tsUnit.declarationName}'`);
-  }
-  return `${tsUnit.path}::${tsUnit.declarationName}`;
 }
 
 function generatedOperationIdentity(config, goUnit, typeName) {
