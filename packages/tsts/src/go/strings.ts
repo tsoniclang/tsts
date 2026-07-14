@@ -7,11 +7,21 @@
 // and convert back to a JavaScript string at the boundaries.
 
 import type { bool, int, byte } from "./scalars.js";
-import type { GoError, GoRune, GoSlice } from "./compat.js";
-import { GoNumberValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceBuild, GoSliceStore } from "./compat.js";
-import { GoNilSlice } from "./compat.js";
+import type { GoError, GoRune, GoSlice, GoValueOps } from "./compat.js";
+import {
+  GoNilSlice,
+  GoNumberValueOps,
+  GoSliceAppend,
+  GoSliceAppendSlice,
+  GoSliceBuild,
+  GoSliceCapacity,
+  GoSliceCopy,
+  GoSliceLoad,
+  GoSliceMake,
+  GoSliceStore,
+  GoStringValueOps,
+} from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
-import { GoSliceLoad, GoStringValueOps } from "./compat.js";
 
 
 const nonASCII: RegExp = /[^\x00-\x7F]/;
@@ -115,15 +125,15 @@ const runeLen = (r: GoRune): int => {
 const appendRune = (out: GoSlice<byte>, r: GoRune): GoSlice<byte> => {
   const cp = r < 0 || r > MaxRune || (r >= 0xd800 && r <= 0xdfff) ? RuneErrorValue : r;
   if (cp < 0x80) {
-    return GoSliceAppend(out, cp as byte, GoNumberValueOps);
+    return GoSliceAppend(out, cp, GoNumberValueOps);
   }
   if (cp < 0x800) {
-    return GoSliceAppendSlice(out, GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral_d56) => { GoSliceStore(__goSliceLiteral_d56, 0, (0xc0 | (cp >> 6)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_d56, 1, (0x80 | (cp & 0x3f)) as byte, GoNumberValueOps); }), GoNumberValueOps);
+    return GoSliceAppendSlice(out, GoSliceBuild(2, 2, GoNumberValueOps, (__goSliceLiteral_d56) => { GoSliceStore(__goSliceLiteral_d56, 0, 0xc0 | (cp >> 6), GoNumberValueOps); GoSliceStore(__goSliceLiteral_d56, 1, 0x80 | (cp & 0x3f), GoNumberValueOps); }), GoNumberValueOps);
   }
   if (cp < 0x10000) {
-    return GoSliceAppendSlice(out, GoSliceBuild(3, 3, GoNumberValueOps, (__goSliceLiteral_dc4) => { GoSliceStore(__goSliceLiteral_dc4, 0, (0xe0 | (cp >> 12)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_dc4, 1, (0x80 | ((cp >> 6) & 0x3f)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_dc4, 2, (0x80 | (cp & 0x3f)) as byte, GoNumberValueOps); }), GoNumberValueOps);
+    return GoSliceAppendSlice(out, GoSliceBuild(3, 3, GoNumberValueOps, (__goSliceLiteral_dc4) => { GoSliceStore(__goSliceLiteral_dc4, 0, 0xe0 | (cp >> 12), GoNumberValueOps); GoSliceStore(__goSliceLiteral_dc4, 1, 0x80 | ((cp >> 6) & 0x3f), GoNumberValueOps); GoSliceStore(__goSliceLiteral_dc4, 2, 0x80 | (cp & 0x3f), GoNumberValueOps); }), GoNumberValueOps);
   }
-  return GoSliceAppendSlice(out, GoSliceBuild(4, 4, GoNumberValueOps, (__goSliceLiteral_e5f) => { GoSliceStore(__goSliceLiteral_e5f, 0, (0xf0 | (cp >> 18)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_e5f, 1, (0x80 | ((cp >> 12) & 0x3f)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_e5f, 2, (0x80 | ((cp >> 6) & 0x3f)) as byte, GoNumberValueOps); GoSliceStore(__goSliceLiteral_e5f, 3, (0x80 | (cp & 0x3f)) as byte, GoNumberValueOps); }), GoNumberValueOps);
+  return GoSliceAppendSlice(out, GoSliceBuild(4, 4, GoNumberValueOps, (__goSliceLiteral_e5f) => { GoSliceStore(__goSliceLiteral_e5f, 0, 0xf0 | (cp >> 18), GoNumberValueOps); GoSliceStore(__goSliceLiteral_e5f, 1, 0x80 | ((cp >> 12) & 0x3f), GoNumberValueOps); GoSliceStore(__goSliceLiteral_e5f, 2, 0x80 | ((cp >> 6) & 0x3f), GoNumberValueOps); GoSliceStore(__goSliceLiteral_e5f, 3, 0x80 | (cp & 0x3f), GoNumberValueOps); }), GoNumberValueOps);
 };
 
 // runeToString converts a single rune to its UTF-8 string (Go's string(rune)).
@@ -185,50 +195,94 @@ const lastIndexOfBytes = (haystack: Uint8Array, needle: Uint8Array): int => {
 // Builder is Go's strings.Builder: a mutable accumulator of bytes that yields
 // a string via String().
 export class Builder {
-  private buf: GoSlice<byte> = GoNilSlice();
+  #addr: Builder | undefined;
+  #buf: GoSlice<byte> = GoNilSlice();
+
+  static copy(value: Builder): Builder {
+    const result = new Builder();
+    result.#addr = value.#addr;
+    result.#buf = value.#buf;
+    return result;
+  }
 
   String(): string {
-    return decode(Uint8Array.from(this.buf));
+    const bytes = new Uint8Array(this.#buf.length);
+    for (let index = 0; index < this.#buf.length; index++) {
+      bytes[index] = GoSliceLoad(this.#buf, index, GoNumberValueOps);
+    }
+    return decode(bytes);
   }
 
   Len(): int {
-    return this.buf.length;
+    return this.#buf.length;
+  }
+
+  Cap(): int {
+    return GoSliceCapacity(this.#buf);
   }
 
   Reset(): void {
-    this.buf = GoNilSlice();
+    this.#addr = undefined;
+    this.#buf = GoNilSlice();
   }
 
-  // Grow is a capacity hint in Go; a no-op here is faithful (it only affects
-  // allocation, never observable contents).
-  Grow(_n: int): void {
-    // no-op: capacity reservation has no observable effect
+  Grow(n: int): void {
+    this.copyCheck();
+    if (n < 0) {
+      throw new globalThis.Error("strings.Builder.Grow: negative count");
+    }
+    if (this.Cap() - this.Len() < n) {
+      this.grow(n);
+    }
   }
 
   WriteString(s: string): [int, GoError] {
+    this.copyCheck();
     const bytes = encode(s);
-    for (const b of bytes) {
-      this.buf = GoSliceAppend(this.buf, b as byte, GoNumberValueOps);
+    for (let index = 0; index < bytes.length; index++) {
+      this.#buf = GoSliceAppend(this.#buf, bytes[index]!, GoNumberValueOps);
     }
     return [bytes.length, undefined];
   }
 
   WriteByte(c: byte): GoError {
-    this.buf = GoSliceAppend(this.buf, (c & 0xff) as byte, GoNumberValueOps);
+    this.copyCheck();
+    this.#buf = GoSliceAppend(this.#buf, c, GoNumberValueOps);
     return undefined;
   }
 
   WriteRune(r: GoRune): [int, GoError] {
-    const before = this.buf.length;
-    this.buf = appendRune(this.buf, r);
-    return [this.buf.length - before, undefined];
+    this.copyCheck();
+    const before = this.#buf.length;
+    this.#buf = appendRune(this.#buf, r);
+    return [this.#buf.length - before, undefined];
   }
 
   Write(p: GoSlice<byte>): [int, GoError] {
-    this.buf = GoSliceAppendSlice(this.buf, p, GoNumberValueOps);
+    this.copyCheck();
+    this.#buf = GoSliceAppendSlice(this.#buf, p, GoNumberValueOps);
     return [p.length, undefined];
   }
+
+  private copyCheck(): void {
+    if (this.#addr === undefined) {
+      this.#addr = this;
+    } else if (this.#addr !== this) {
+      throw new globalThis.Error("strings: illegal use of non-zero Builder copied by value");
+    }
+  }
+
+  private grow(n: int): void {
+    const buffer = GoSliceMake<byte>(this.Len(), 2 * this.Cap() + n, GoNumberValueOps);
+    GoSliceCopy(buffer, this.#buf, GoNumberValueOps);
+    this.#buf = buffer;
+  }
 }
+
+export const BuilderValueOps: GoValueOps<Builder> = Object.freeze({
+  zero: (): Builder => new Builder(),
+  copy: (value: Builder): Builder => Builder.copy(value),
+});
 
 // Clone returns a copy of s. JS strings are immutable so this returns s.
 export function Clone(s: string): string {
