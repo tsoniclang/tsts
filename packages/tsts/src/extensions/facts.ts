@@ -1,5 +1,5 @@
 import { defineExtensionFactKey } from "./host.js";
-import type { ExtensionEvidence, ExtensionFactSubject } from "./host.js";
+import type { ExtensionEvidence, ExtensionFactSubject, ProviderWellKnownSymbolName } from "./host.js";
 export type { ArgumentPassingMode } from "./argument-passing.js";
 import type { ArgumentPassingMode } from "./argument-passing.js";
 
@@ -101,15 +101,20 @@ export interface ProviderDeclarationIdentity {
   readonly providerVersion?: string;
   readonly providerModuleId: string;
   readonly moduleSpecifier: string;
-  readonly virtualFileName?: string;
+  readonly artifactFileName?: string;
   readonly exportName?: string;
   readonly exportId?: string;
   readonly memberName?: string;
+  readonly memberKey?: ProviderMemberKey;
   readonly memberId?: string;
   readonly memberStatic?: boolean;
   readonly signatureId?: string;
   readonly targetIdentity?: TargetTypeRef;
 }
+
+export type ProviderMemberKey =
+  | { readonly kind: "property-key"; readonly name: string }
+  | { readonly kind: "well-known-symbol"; readonly name: ProviderWellKnownSymbolName };
 
 export type TargetTypeRef =
   | { readonly kind: "source-primitive"; readonly name: SourcePrimitiveKind }
@@ -256,10 +261,11 @@ export interface ProviderVirtualDeclarationFact {
   readonly providerVersion: string;
   readonly providerModuleId: string;
   readonly moduleSpecifier: string;
-  readonly virtualFileName: string;
+  readonly artifactFileName: string;
   readonly exportName?: string;
   readonly exportId?: string;
   readonly memberName?: string;
+  readonly memberKey?: ProviderMemberKey;
   readonly memberId?: string;
   readonly memberStatic?: boolean;
   readonly signatureId?: string;
@@ -438,10 +444,11 @@ export const providerVirtualDeclarationFactKey = defineExtensionFactKey<Provider
     && left.providerVersion === right.providerVersion
     && left.providerModuleId === right.providerModuleId
     && left.moduleSpecifier === right.moduleSpecifier
-    && left.virtualFileName === right.virtualFileName
+    && left.artifactFileName === right.artifactFileName
     && left.exportName === right.exportName
     && left.exportId === right.exportId
     && left.memberName === right.memberName
+    && optionalProviderMemberKeyEquals(left.memberKey, right.memberKey)
     && left.memberId === right.memberId
     && left.memberStatic === right.memberStatic
     && left.signatureId === right.signatureId
@@ -499,15 +506,23 @@ function optionalTargetBindingFactEquals(left: TargetBindingFact | undefined, ri
   return targetBindingFactEquals(left, right);
 }
 
+function optionalProviderMemberKeyEquals(left: ProviderMemberKey | undefined, right: ProviderMemberKey | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.kind === right.kind && left.name === right.name;
+}
+
 function providerDeclarationIdentityEquals(left: ProviderDeclarationIdentity, right: ProviderDeclarationIdentity): boolean {
   return left.providerId === right.providerId
     && left.providerVersion === right.providerVersion
     && left.providerModuleId === right.providerModuleId
     && left.moduleSpecifier === right.moduleSpecifier
-    && left.virtualFileName === right.virtualFileName
+    && left.artifactFileName === right.artifactFileName
     && left.exportName === right.exportName
     && left.exportId === right.exportId
     && left.memberName === right.memberName
+    && optionalProviderMemberKeyEquals(left.memberKey, right.memberKey)
     && left.memberId === right.memberId
     && left.memberStatic === right.memberStatic
     && left.signatureId === right.signatureId

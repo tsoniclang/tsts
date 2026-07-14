@@ -4,7 +4,7 @@ import type { ProviderExportDeclaration, ProviderMemberDeclaration, ProviderType
 import { getProviderExportContractKeyMap } from "./provider-export-contract.js";
 
 function contract(exports: readonly ProviderExportDeclaration[]): string {
-  return JSON.stringify([...getProviderExportContractKeyMap(exports)]);
+  return JSON.stringify([...getProviderExportContractKeyMap("@demo/contract.js", exports)]);
 }
 
 function richDeclaration(): ProviderExportDeclaration {

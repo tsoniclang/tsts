@@ -58,6 +58,8 @@ test("public root exposes generic extension host contracts", () => {
   const virtualDocument = {
     uri: "tsts-provider://acme/native",
     fileName: "tsts-provider://acme/native/index.ts",
+    artifactId: "provider-public:acme-native:index",
+    artifactKind: "public",
     moduleSpecifier: "@acme/native/index.js",
     providerModuleId: "acme.native",
     provider: {
@@ -66,7 +68,6 @@ test("public root exposes generic extension host contracts", () => {
       target: "acme-target",
       extensionContractVersion: TstsProviderContractVersion,
     },
-    context: {},
     declarationModel: {
       moduleSpecifier: "@acme/native/index.js",
       providerModuleId: "acme.native",
@@ -116,7 +117,17 @@ test("public embedding API drives a provider-backed program without internal imp
   assert.ok(sourceFile !== undefined);
   const diagnostics = session.getDiagnostics("all", sourceFile);
   assert.equal(diagnostics.length, 0, formatDiagnostics(diagnostics.filter((diagnostic) => diagnostic !== undefined), "/src"));
-  assert.ok(session.getSourceFiles().some((file) => session.ast.getFileName(file).startsWith("tsts-provider://acme/runtime")));
+  const enumeratedSourceFileNames = new Set(session.getSourceFiles().map((file) => session.ast.getFileName(file)));
+  const publicDocuments = session.extensionHost?.providers.getVirtualDeclarationDocuments() ?? [];
+  assert.ok(publicDocuments.length > 0);
+  assert.ok(publicDocuments.every((document) => enumeratedSourceFileNames.has(document.fileName)));
+  const canonicalOwnerFileNames = new Set(publicDocuments.flatMap((document) =>
+    [...document.sourceText.matchAll(/from "([^"]+\.tsts-export-owner-[^"]+\.d\.ts)"/g)].map((match) => match[1]!)));
+  assert.ok(canonicalOwnerFileNames.size > 0);
+  for (const ownerFileName of canonicalOwnerFileNames) {
+    assert.equal(session.getSourceFile(ownerFileName), undefined);
+    assert.equal(enumeratedSourceFileNames.has(ownerFileName), false);
+  }
   assert.ok(session.getSourceFilesToEmit().some((file) => session.ast.getFileName(file) === "/src/index.ts"));
 
   const importDeclaration = findNode(sourceFile, session.ast, (node, ast) =>
@@ -321,14 +332,17 @@ test("provider virtual subpaths with the same package name keep independent expo
   assert.equal(diagnostics.length, 0, formatDiagnostics(diagnostics.filter((diagnostic) => diagnostic !== undefined), "/src"));
   assertNoExtensionFactConflicts(session);
 
-  const virtualFileNames = session.getSourceFiles()
-    .map((file) => session.ast.getFileName(file))
-    .filter((fileName) => fileName.startsWith("tsts-provider://acme/native-"))
-    .sort();
-  assert.deepEqual(virtualFileNames, [
-    "tsts-provider://acme/native-lang",
-    "tsts-provider://acme/native-types",
+  const extensionHost = session.finalizeExtensions();
+  assert.ok(extensionHost !== undefined);
+  const virtualDocuments = extensionHost.providers.getVirtualDeclarationDocuments()
+    .filter((document) => document.moduleSpecifier.startsWith("@acme/native/"))
+    .sort((left, right) => left.moduleSpecifier < right.moduleSpecifier ? -1 : 1);
+  assert.deepEqual(virtualDocuments.map((document) => document.moduleSpecifier), [
+    "@acme/native/lang.js",
+    "@acme/native/types.js",
   ]);
+  assert.equal(new Set(virtualDocuments.map((document) => document.fileName)).size, 2);
+  assert.ok(virtualDocuments.every((document) => document.fileName.startsWith("tsts-provider://tsts-public/")));
 });
 
 test("post-check iteration observations cannot make invalid TypeScript valid", () => {
@@ -521,9 +535,6 @@ function createAcmeRuntimeBindingProvider(): TargetBindingProvider {
         }],
       };
     },
-    getTargetIdentity(symbol) {
-      return symbol.moduleSpecifier === "@acme/runtime.js" && symbol.exportName === "consume" ? consumeIdentity : undefined;
-    },
   };
 }
 
@@ -592,9 +603,6 @@ function createSharedPackageVirtualModulesBindingProvider(): TargetBindingProvid
         ],
       };
     },
-    getTargetIdentity(symbol) {
-      return symbol.moduleSpecifier === "@acme/native/lang.js" && symbol.exportName === "out" ? outIdentity : undefined;
-    },
   };
 }
 
@@ -635,9 +643,6 @@ function createNameFallbackRuntimeBindingProvider(): TargetBindingProvider {
           }],
         }],
       };
-    },
-    getTargetIdentity(symbol) {
-      return symbol.moduleSpecifier === "@acme/native/lang.js" && symbol.exportName === "out" ? outIdentity : undefined;
     },
   };
 }
