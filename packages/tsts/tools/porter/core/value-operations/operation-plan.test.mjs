@@ -5,7 +5,7 @@ import { buildPorterUnitOwnership } from "../unit-ownership.mjs";
 import { buildAuditedTypeStorageCatalog } from "../../sig-check/audited-type-storage.mjs";
 import { finalizeGeneratedFacadeFixtureCatalog } from "../../test/external-facade-fixtures.mjs";
 import { emptyGeneratorOwnedGoValueOperationCatalog } from "./generator-owned-providers.mjs";
-import { buildGoValueOperationPlan } from "./operation-plan.mjs";
+import { buildGoValueOperationPlan, FinalizedGoValueOperationPlan } from "./operation-plan.mjs";
 import { buildReviewedGoValueOperationCatalog } from "./reviewed-providers.mjs";
 
 test("the finalized operation plan uses direct storage ownership and package-level generated identity", () => {
@@ -102,6 +102,42 @@ test("operation planning rejects generated operations for adapted TypeScript sto
     tsUnits: fixture.tsUnits,
     unitOwnership,
   }), /adapted TypeScript storage.*reviewed operation provider/);
+});
+
+test("generated operation initializers follow exact transitive value dependencies", () => {
+  const config = {};
+  const snapshot = {};
+  const leaf = {
+    objectId: "example.test/compiler::type::ZLeaf",
+    disposition: "generated",
+    operationTypeParameterIndexes: [],
+    requirementShape: { kind: "scalar", name: "int" },
+  };
+  const wrapper = {
+    objectId: "example.test/runtime::type::Wrapper",
+    disposition: "reviewed",
+    operationTypeParameterIndexes: [0],
+    typeParameterCount: 1,
+  };
+  const root = {
+    objectId: "example.test/compiler::type::ARoot",
+    disposition: "generated",
+    operationTypeParameterIndexes: [],
+    requirementShape: {
+      kind: "struct",
+      fields: [{
+        name: "value",
+        blank: false,
+        shape: {
+          kind: "named",
+          objectId: wrapper.objectId,
+          typeArguments: [{ kind: "named", objectId: leaf.objectId, typeArguments: [] }],
+        },
+      }],
+    },
+  };
+  const plan = new FinalizedGoValueOperationPlan(config, snapshot, [root, leaf], [root, leaf], [wrapper]);
+  assert.deepEqual(plan.generated(config, snapshot).map((entry) => entry.objectId), [leaf.objectId, root.objectId]);
 });
 
 function planFixture() {

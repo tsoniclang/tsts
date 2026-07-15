@@ -4,6 +4,7 @@ import { safeIdentifier, safePropertyName } from "../names.mjs";
 import { canonicalStructFieldLayout } from "../struct-field-layout.mjs";
 import {
   createSemanticRendererContext,
+  importTypeName,
   importValueName,
   renderImports,
   semanticRendererOperations,
@@ -39,7 +40,6 @@ export function renderGoValueOperationArtifacts(input) {
   }
   const artifacts = new Map();
   for (const [moduleId, group] of [...groups].sort(([left], [right]) => compareText(left, right))) {
-    group.sort((left, right) => compareText(left.entry.objectId, right.entry.objectId));
     const context = createSemanticRendererContext(
       config,
       snapshot,
@@ -76,7 +76,9 @@ function renderOperationDeclaration(entry, identity, environment) {
     typeParameterRenderingOperations(operations, parameters, unit.typeParameterDetails, unit),
   );
   const targetContract = invariantSemanticDeclaredValueContract(declaration, environment.context, unit);
-  const targetType = renderCanonicalType(targetContract, operations);
+  const targetType = targetContract.kind === "carrier" && targetContract.carrier === "interface"
+    ? renderCanonicalType(targetContract, operations)
+    : renderStorageTargetType(entry, parameters, operations, environment);
   const goValueOps = useCompat(environment.context, "GoValueOps");
   const operationParameters = new Map();
   const parameterText = entry.operationTypeParameterIndexes.map((parameterIndex, position) => {
@@ -106,6 +108,21 @@ function renderOperationDeclaration(entry, identity, environment) {
     return `export const ${identity.exportName}: ${resultType} = ${expression};`;
   }
   return `export function ${identity.exportName}${typeParameters}(${parameterText.join(", ")}): ${resultType} {\n  return ${indentContinuation(expression, 2)};\n}`;
+}
+
+function renderStorageTargetType(entry, parameters, operations, environment) {
+  const identity = requireDirectProviderIdentity(
+    entry.storageIdentity,
+    environment.config.tsRoot,
+    `Go value operation '${entry.objectId}'`,
+    "storage",
+  );
+  const name = importTypeName(environment.context, identity.moduleId, identity.exportName, environment.unit);
+  const argumentsText = parameters.map((parameter) => renderCanonicalType(
+    { kind: "typeParameter", reference: parameter.reference },
+    operations,
+  ));
+  return `${name}${argumentsText.length === 0 ? "" : `<${argumentsText.join(", ")}>`}`;
 }
 
 function renderValueOperations(contract, environment, targetType = undefined, directFieldMappings = undefined) {

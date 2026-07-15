@@ -1,11 +1,12 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPointerMethodSet, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoPointerMethodSet, GoPtr, GoSlice, GoValueOps } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice } from "../../go/compat.js";
 import { GoMapIsNil, GoNilSlice } from "../../go/compat.js";
 import { Itoa } from "../../go/strconv.js";
 import type { Node, NodeFactoryCoercible, NodeList } from "../ast/spine.js";
 import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory as AstNodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone, Node_Name } from "../ast/spine.js";
 import type { NodeFactory as NodeFactory_88523d1c } from "../ast/generated/factory.js";
+import { NodeFactoryValueOps as AstNodeFactoryValueOps } from "../ast/generated/factory-storage.js";
 import type { LabeledStatement, NonNullExpression, ParenthesizedExpression, PartiallyEmittedExpression, SatisfiesExpression, AsExpression, ExpressionWithTypeArguments, VariableDeclaration, VariableDeclarationList } from "../ast/generated/data.js";
 import { GetNonAssignedNameOfDeclaration, GetNameOfDeclaration, HasSyntacticModifier, IsMemberName, IsNodeDescendantOf, IsPrologueDirective, NodeIsSynthesized, RangeIsSynthesized, GetNodeId, TryGetPropertyNameOfBindingOrAssignmentElement, IsOuterExpression, OEKAll } from "../ast/utilities.js";
 import type { OuterExpressionKinds } from "../ast/utilities.js";
@@ -83,6 +84,29 @@ export interface NodeFactory {
   }>;
 }
 
+interface NodeFactoryValue extends NodeFactory {
+  AsNodeFactory(): GoPtr<NodeFactory_88523d1c>;
+}
+
+function createPrinterNodeFactoryValue(
+  embedded: NodeFactory_88523d1c,
+  emitContext: GoPtr<EmitContext>,
+): NodeFactoryValue {
+  return {
+    __tsgoEmbedded0: embedded,
+    emitContext,
+    AsNodeFactory: (): GoPtr<NodeFactory_88523d1c> => AstNodeFactory_AsNodeFactory(embedded),
+  };
+}
+
+export const NodeFactoryValueOps: GoValueOps<NodeFactory> = Object.freeze({
+  zero: (): NodeFactory => createPrinterNodeFactoryValue(AstNodeFactoryValueOps.zero(), undefined),
+  copy: (value: NodeFactory): NodeFactory => createPrinterNodeFactoryValue(
+    AstNodeFactoryValueOps.copy(value.__tsgoEmbedded0),
+    value.emitContext,
+  ),
+});
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::func::NewNodeFactory","kind":"func","status":"implemented","sigHash":"580750f8820bc9f53e1feb77e23e6325616c0c74c53aab83bf8128ee179d8a45"}
  *
@@ -104,13 +128,7 @@ export function NewNodeFactory(context: GoPtr<EmitContext>): GoPtr<NodeFactory> 
     OnUpdate: (updated, original) => EmitContext_onUpdate(context, updated, original),
     OnClone: (updated, original) => EmitContext_onClone(context, updated, original),
   })!;
-  return {
-    // Go embeds the value `*ast.NewNodeFactory(...)`; the `*` dereference is
-    // expressed here via the non-null assertion on the returned GoPtr.
-    __tsgoEmbedded0: embedded,
-    AsNodeFactory: () => AstNodeFactory_AsNodeFactory(embedded),
-    emitContext: context,
-  };
+  return createPrinterNodeFactoryValue(embedded, context);
 }
 
 function normalizeAutoGenerateOptions(options: GoPtr<AutoGenerateOptions>): AutoGenerateOptions {

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
+import type { GoPtr, GoSlice, GoValueOps } from "../../go/compat.js";
+import { GoNilSlice, GoSliceAppend, GoSliceAppendSlice, GoStringValueOps } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
@@ -181,6 +181,45 @@ export interface ResolvedModule {
   AlternateResult: string;
   ProviderVirtual?: ResolvedModuleProviderVirtual;
 }
+
+export const ResolvedModuleValueOps: GoValueOps<ResolvedModule> = Object.freeze({
+  zero: (): ResolvedModule => ({
+    ResolutionDiagnostics: GoNilSlice(),
+    ResolvedFileName: "",
+    OriginalPath: "",
+    Extension: "",
+    ResolvedUsingTsExtension: false,
+    PackageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
+    IsExternalLibraryImport: false,
+    AlternateResult: "",
+  }),
+  copy: (value: ResolvedModule): ResolvedModule => {
+    const result: ResolvedModule = {
+      ResolutionDiagnostics: value.ResolutionDiagnostics,
+      ResolvedFileName: value.ResolvedFileName,
+      OriginalPath: value.OriginalPath,
+      Extension: value.Extension,
+      ResolvedUsingTsExtension: value.ResolvedUsingTsExtension,
+      PackageId: {
+        Name: value.PackageId.Name,
+        SubModuleName: value.PackageId.SubModuleName,
+        Version: value.PackageId.Version,
+        PeerDependencies: value.PackageId.PeerDependencies,
+      },
+      IsExternalLibraryImport: value.IsExternalLibraryImport,
+      AlternateResult: value.AlternateResult,
+    };
+    if (value.ProviderVirtual !== undefined) {
+      result.ProviderVirtual = {
+        ProviderId: value.ProviderVirtual.ProviderId,
+        ProviderTarget: value.ProviderVirtual.ProviderTarget,
+        ProviderModuleId: value.ProviderVirtual.ProviderModuleId,
+        ModuleSpecifier: value.ProviderVirtual.ModuleSpecifier,
+      };
+    }
+    return result;
+  },
+});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::method::ResolvedModule.IsResolved","kind":"method","status":"implemented","sigHash":"e902c2aac26780befbbd09abc7d82ad51bcbfb33ce82087c272c87179e971f7f"}

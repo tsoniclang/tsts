@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoDefined, GoFunc, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceValueOps } from "../../go/compat.js";
+import type { GoDefined, GoFunc, GoMap, GoPtr, GoSlice, GoValueOps } from "../../go/compat.js";
+import { GoBigIntValueOps, GoPointerValueOps, GoSliceAppend, GoSliceAppendSlice, GoSliceValueOps } from "../../go/compat.js";
 import { GoBigIntKey, GoBooleanKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
@@ -919,6 +919,8 @@ export interface accessibleSymbolChainContext {
  * scalar carrier.
  */
 export type symbolTableID = GoDefined<bigint, "github.com/microsoft/typescript-go/internal/checker::type::symbolTableID">;
+
+export const symbolTableIDValueOps: GoValueOps<symbolTableID> = GoBigIntValueOps;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindShift","kind":"constGroup","status":"implemented","sigHash":"42fa1d954e602fbb28ad4cf20e93f1653cbb94767097c6126a44f9f4ecc3030c"}

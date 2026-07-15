@@ -1,10 +1,10 @@
 import type { bool, byte, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoMap, GoPtr, GoSlice, GoValueOps } from "../../go/compat.js";
 import { GoPointerValueOps, GoSliceAppend } from "../../go/compat.js";
 import { GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
-import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
-import { Mutex, Once, RWMutex } from "../../go/sync.js";
-import { Bool, Uint32 } from "../../go/sync/atomic.js";
+import { Uint128, Uint128ValueOps } from "../../go/github.com/zeebo/xxh3.js";
+import { Mutex, MutexValueOps, Once, OnceValueOps, RWMutex, RWMutexValueOps } from "../../go/sync.js";
+import { Bool, BoolValueOps, Uint32 } from "../../go/sync/atomic.js";
 import type { Set } from "../collections/set.js";
 import { ModuleKindCommonJS, ResolutionModeESM, ResolutionModeNone } from "../core/compileroptions.js";
 import type { ResolutionMode } from "../core/compileroptions.js";
@@ -228,7 +228,7 @@ import {
 } from "./generated/kinds.js";
 import { NodeFlagsAmbient, NodeFlagsUsing, NodeFlagsHasJSDoc, NodeFlagsReparsed } from "./generated/flags.js";
 import type { NodeFlags } from "./generated/flags.js";
-import { NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_IterChildren, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_ExportableData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_End, Node_AsNode, Node_SubtreeFacts } from "./spine.js";
+import { NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_IterChildren, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_ExportableData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_End, Node_AsNode, Node_SubtreeFacts, NodeBaseValueOps } from "./spine.js";
 import type { Node, NodeBase, NodeIter, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeFactoryHooks } from "./spine.js";
 import type { NodeVisitor as NodeDataVisitor } from "./visitor.js";
 import { ModifierFlagsAmbient, ModifierFlagsAsync, ModifierFlagsNone } from "./modifierflags.js";
@@ -292,6 +292,7 @@ import type { SubtreeFacts } from "./subtreefacts.js";
 import type { Diagnostic } from "./diagnostic.js";
 import type { FlowNode, FlowReduceLabelData, FlowSwitchClauseData } from "./flow.js";
 import type { SourceFileParseOptions } from "./parseoptions.js";
+import { CompositeBaseValueOps, DeclarationBaseValueOps, LocalsContainerBaseValueOps } from "./generated/node.js";
 import { ComputePositionMap } from "./positionmap.js";
 import type { PositionMap } from "./positionmap.js";
 import type { Symbol as Symbol_4919c5f0, SymbolTable } from "./symbol.js";
@@ -5406,6 +5407,185 @@ class SourceFileData implements nodeData {
 }
 interface SourceFileData extends SourceFile {}
 
+function zeroSourceFileParseOptions(): SourceFileParseOptions {
+  return {
+    FileName: "",
+    Path: "" as Path_79c49227,
+    ExternalModuleIndicatorOptions: { JSX: false, Force: false },
+  };
+}
+
+function copySourceFileParseOptions(value: SourceFileParseOptions): SourceFileParseOptions {
+  return {
+    FileName: value.FileName,
+    Path: value.Path,
+    ExternalModuleIndicatorOptions: {
+      JSX: value.ExternalModuleIndicatorOptions.JSX,
+      Force: value.ExternalModuleIndicatorOptions.Force,
+    },
+  };
+}
+
+function assignSourceFileEmbeddedValues(target: SourceFile, source: SourceFile): void {
+  const nodeBase = NodeBaseValueOps.copy(source);
+  target.Kind = nodeBase.Kind;
+  target.Flags = nodeBase.Flags;
+  target.Loc = nodeBase.Loc;
+  target.id = nodeBase.id;
+  target.Parent = nodeBase.Parent;
+  target.data = nodeBase.data;
+
+  const declarationBase = DeclarationBaseValueOps.copy(source);
+  target.Symbol = declarationBase.Symbol;
+
+  const localsContainerBase = LocalsContainerBaseValueOps.copy(source);
+  target.Locals = localsContainerBase.Locals;
+  target.NextContainer = localsContainerBase.NextContainer;
+
+  const compositeBase = CompositeBaseValueOps.copy(source);
+  target.facts = compositeBase.facts;
+}
+
+function createSourceFileDataValue(): SourceFile {
+  const result: SourceFile = new SourceFileData();
+  const nodeBase = NodeBaseValueOps.zero();
+  result.Kind = nodeBase.Kind;
+  result.Flags = nodeBase.Flags;
+  result.Loc = nodeBase.Loc;
+  result.id = nodeBase.id;
+  result.Parent = nodeBase.Parent;
+  result.data = nodeBase.data;
+
+  const declarationBase = DeclarationBaseValueOps.zero();
+  result.Symbol = declarationBase.Symbol;
+
+  const localsContainerBase = LocalsContainerBaseValueOps.zero();
+  result.Locals = localsContainerBase.Locals;
+  result.NextContainer = localsContainerBase.NextContainer;
+
+  const compositeBase = CompositeBaseValueOps.zero();
+  result.facts = compositeBase.facts;
+
+  result.fileName = "";
+  result.parseOptions = zeroSourceFileParseOptions();
+  result.text = "";
+  result.Statements = undefined;
+  result.EndOfFileToken = undefined;
+  result.diagnostics = GoNilSlice();
+  result.jsDiagnostics = GoNilSlice();
+  result.jsdocDiagnostics = GoNilSlice();
+  result.LanguageVariant = 0 as LanguageVariant;
+  result.ScriptKind = 0 as ScriptKind;
+  result.IsDeclarationFile = false;
+  result.ContainsNonASCII = false;
+  result.UsesUriStyleNodeCoreModules = 0 as Tristate;
+  result.Identifiers = GoNilMap();
+  result.IdentifierCount = 0;
+  result.imports = GoNilSlice();
+  result.ModuleAugmentations = GoNilSlice();
+  result.AmbientModuleNames = GoNilSlice();
+  result.CommentDirectives = GoNilSlice();
+  result.jsdocCache = GoNilMap();
+  result.jsdocMu = RWMutexValueOps.zero();
+  result.hasLazyJSDoc = false;
+  result.ReparsedClones = GoNilSlice();
+  result.Pragmas = GoNilSlice();
+  result.ReferencedFiles = GoNilSlice();
+  result.TypeReferenceDirectives = GoNilSlice();
+  result.LibReferenceDirectives = GoNilSlice();
+  result.CheckJsDirective = undefined;
+  result.NodeCount = 0;
+  result.TextCount = 0;
+  result.CommonJSModuleIndicator = undefined;
+  result.ExternalModuleIndicator = undefined;
+  result.isBound = BoolValueOps.zero();
+  result.bindOnce = OnceValueOps.zero();
+  result.bindDiagnostics = GoNilSlice();
+  result.BindSuggestionDiagnostics = GoNilSlice();
+  result.EndFlowNode = undefined;
+  result.SymbolCount = 0;
+  result.ClassifiableNames = { M: GoNilMap() };
+  result.PatternAmbientModules = GoNilSlice();
+  result.NestedCJSExports = GoNilSlice();
+  result.GlobalExports = GoNilMap();
+  result.ecmaLineMapMu = RWMutexValueOps.zero();
+  result.ecmaLineMap = GoNilSlice();
+  result.Hash = Uint128ValueOps.zero();
+  result.tokenCacheMu = MutexValueOps.zero();
+  result.tokenCache = GoNilMap();
+  result.tokenFactory = undefined;
+  result.declarationMapMu = MutexValueOps.zero();
+  result.declarationMap = GoNilMap();
+  result.nameTableOnce = OnceValueOps.zero();
+  result.nameTable = GoNilMap();
+  result.positionMapOnce = OnceValueOps.zero();
+  result.positionMap = undefined;
+  return result;
+}
+
+export const SourceFileValueOps: GoValueOps<SourceFile> = Object.freeze({
+  zero: createSourceFileDataValue,
+  copy: (value: SourceFile): SourceFile => {
+    const result = createSourceFileDataValue();
+    assignSourceFileEmbeddedValues(result, value);
+    result.fileName = value.fileName;
+    result.parseOptions = copySourceFileParseOptions(value.parseOptions);
+    result.text = value.text;
+    result.Statements = value.Statements;
+    result.EndOfFileToken = value.EndOfFileToken;
+    result.diagnostics = value.diagnostics;
+    result.jsDiagnostics = value.jsDiagnostics;
+    result.jsdocDiagnostics = value.jsdocDiagnostics;
+    result.LanguageVariant = value.LanguageVariant;
+    result.ScriptKind = value.ScriptKind;
+    result.IsDeclarationFile = value.IsDeclarationFile;
+    result.ContainsNonASCII = value.ContainsNonASCII;
+    result.UsesUriStyleNodeCoreModules = value.UsesUriStyleNodeCoreModules;
+    result.Identifiers = value.Identifiers;
+    result.IdentifierCount = value.IdentifierCount;
+    result.imports = value.imports;
+    result.ModuleAugmentations = value.ModuleAugmentations;
+    result.AmbientModuleNames = value.AmbientModuleNames;
+    result.CommentDirectives = value.CommentDirectives;
+    result.jsdocCache = value.jsdocCache;
+    result.jsdocMu = RWMutexValueOps.copy(value.jsdocMu);
+    result.hasLazyJSDoc = value.hasLazyJSDoc;
+    result.ReparsedClones = value.ReparsedClones;
+    result.Pragmas = value.Pragmas;
+    result.ReferencedFiles = value.ReferencedFiles;
+    result.TypeReferenceDirectives = value.TypeReferenceDirectives;
+    result.LibReferenceDirectives = value.LibReferenceDirectives;
+    result.CheckJsDirective = value.CheckJsDirective;
+    result.NodeCount = value.NodeCount;
+    result.TextCount = value.TextCount;
+    result.CommonJSModuleIndicator = value.CommonJSModuleIndicator;
+    result.ExternalModuleIndicator = value.ExternalModuleIndicator;
+    result.isBound = BoolValueOps.copy(value.isBound);
+    result.bindOnce = OnceValueOps.copy(value.bindOnce);
+    result.bindDiagnostics = value.bindDiagnostics;
+    result.BindSuggestionDiagnostics = value.BindSuggestionDiagnostics;
+    result.EndFlowNode = value.EndFlowNode;
+    result.SymbolCount = value.SymbolCount;
+    result.ClassifiableNames = { M: value.ClassifiableNames.M };
+    result.PatternAmbientModules = value.PatternAmbientModules;
+    result.NestedCJSExports = value.NestedCJSExports;
+    result.GlobalExports = value.GlobalExports;
+    result.ecmaLineMapMu = RWMutexValueOps.copy(value.ecmaLineMapMu);
+    result.ecmaLineMap = value.ecmaLineMap;
+    result.Hash = Uint128ValueOps.copy(value.Hash);
+    result.tokenCacheMu = MutexValueOps.copy(value.tokenCacheMu);
+    result.tokenCache = value.tokenCache;
+    result.tokenFactory = value.tokenFactory;
+    result.declarationMapMu = MutexValueOps.copy(value.declarationMapMu);
+    result.declarationMap = value.declarationMap;
+    result.nameTableOnce = OnceValueOps.copy(value.nameTableOnce);
+    result.nameTable = value.nameTable;
+    result.positionMapOnce = OnceValueOps.copy(value.positionMapOnce);
+    result.positionMap = value.positionMap;
+    return result;
+  },
+});
+
 export function SourceFile_as_nodeData(receiver: GoPtr<SourceFile>): nodeData {
   return receiver!;
 }
@@ -5417,45 +5597,12 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   if (GetEncodedRootLength(opts.FileName) === 0 || opts.FileName !== NormalizePath(opts.FileName)) {
     throw new globalThis.Error("fileName should be normalized and absolute: " + opts.FileName);
   }
-  const data: SourceFile = new SourceFileData();
+  const data = createSourceFileDataValue();
   data.fileName = opts.FileName;
-  data.parseOptions = opts;
+  data.parseOptions = copySourceFileParseOptions(opts);
   data.text = text;
   data.Statements = statements;
   data.EndOfFileToken = endOfFileToken;
-  data.Locals = GoNilMap();
-  data.diagnostics = GoNilSlice();
-  data.jsDiagnostics = GoNilSlice();
-  data.jsdocDiagnostics = GoNilSlice();
-  data.Identifiers = GoNilMap();
-  data.imports = GoNilSlice();
-  data.ModuleAugmentations = GoNilSlice();
-  data.AmbientModuleNames = GoNilSlice();
-  data.CommentDirectives = GoNilSlice();
-  data.jsdocCache = GoNilMap();
-  data.ReparsedClones = GoNilSlice();
-  data.Pragmas = GoNilSlice();
-  data.ReferencedFiles = GoNilSlice();
-  data.TypeReferenceDirectives = GoNilSlice();
-  data.LibReferenceDirectives = GoNilSlice();
-  data.jsdocMu = new RWMutex();
-  data.isBound = new Bool();
-  data.bindOnce = new Once();
-  data.bindDiagnostics = GoNilSlice();
-  data.BindSuggestionDiagnostics = GoNilSlice();
-  data.ClassifiableNames = { M: GoNilMap() };
-  data.PatternAmbientModules = GoNilSlice();
-  data.NestedCJSExports = GoNilSlice();
-  data.GlobalExports = GoNilMap();
-  data.ecmaLineMap = GoNilSlice();
-  data.tokenCache = GoNilMap();
-  data.declarationMap = GoNilMap();
-  data.nameTable = GoNilMap();
-  data.ecmaLineMapMu = new RWMutex();
-  data.tokenCacheMu = new Mutex();
-  data.declarationMapMu = new Mutex();
-  data.nameTableOnce = new Once();
-  data.positionMapOnce = new Once();
   return NodeFactory_newNode(receiver, KindSourceFile, SourceFile_as_nodeData(data));
 }
 
@@ -5468,7 +5615,7 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
  * }
  */
 export function SourceFile_ParseOptions(receiver: GoPtr<SourceFile>): SourceFileParseOptions {
-  return receiver!.parseOptions;
+  return copySourceFileParseOptions(receiver!.parseOptions);
 }
 
 /**
@@ -6516,6 +6663,25 @@ export interface CommentRange extends TextRange {
   HasTrailingNewLine: bool;
 }
 
+function createCommentRangeValue(kind: Kind, pos: int, end: int, hasTrailingNewLine: bool): CommentRange {
+  return {
+    pos,
+    end,
+    Kind: kind,
+    HasTrailingNewLine: hasTrailingNewLine,
+  };
+}
+
+export const CommentRangeValueOps: GoValueOps<CommentRange> = Object.freeze({
+  zero: (): CommentRange => createCommentRangeValue(0 as Kind, 0, 0, false),
+  copy: (value: CommentRange): CommentRange => createCommentRangeValue(
+    value.Kind,
+    value.pos,
+    value.end,
+    value.HasTrailingNewLine,
+  ),
+});
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewCommentRange","kind":"method","status":"implemented","sigHash":"5b3542c99846156a532cc1d8533a381000773536be1a10a2a72592c9a9e592d3"}
  *
@@ -6529,13 +6695,7 @@ export interface CommentRange extends TextRange {
  * }
  */
 export function NodeFactory_NewCommentRange(receiver: GoPtr<NodeFactory>, kind: Kind, pos: int, end: int, hasTrailingNewLine: bool): CommentRange {
-  const range = NewTextRange(pos, end);
-  return {
-    pos: range.pos,
-    end: range.end,
-    Kind: kind,
-    HasTrailingNewLine: hasTrailingNewLine,
-  };
+  return createCommentRangeValue(kind, pos, end, hasTrailingNewLine);
 }
 
 /**
@@ -6556,6 +6716,23 @@ export interface FileReference extends TextRange {
   Preserve: bool;
 }
 
+export const FileReferenceValueOps: GoValueOps<FileReference> = Object.freeze({
+  zero: (): FileReference => ({
+    pos: 0,
+    end: 0,
+    FileName: "",
+    ResolutionMode: 0 as ResolutionMode,
+    Preserve: false,
+  }),
+  copy: (value: FileReference): FileReference => ({
+    pos: value.pos,
+    end: value.end,
+    FileName: value.FileName,
+    ResolutionMode: value.ResolutionMode,
+    Preserve: value.Preserve,
+  }),
+});
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaArgument","kind":"type","status":"implemented","sigHash":"b480ef215b7a3c0f6f0ce7a849547a8ca828f0b0eca6a14b8b60e0e916454605"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go AST data contract exposes the embedded text range through direct structural heritage rather than reproducing Go memory layout.","goSignatureHash":"da2d061bf5f360f62ced68806416fc8f364e3ca9e23dfecc92e416a60661cc72","tsSignatureHash":"8f6b87d008f36f4de16652133b5e23ae1dc4d656616c1cec8063cbe9948b9e06"}
@@ -6572,6 +6749,16 @@ export interface PragmaArgument extends TextRange {
   Value: string;
 }
 
+export const PragmaArgumentValueOps: GoValueOps<PragmaArgument> = Object.freeze({
+  zero: (): PragmaArgument => ({ pos: 0, end: 0, Name: "", Value: "" }),
+  copy: (value: PragmaArgument): PragmaArgument => ({
+    pos: value.pos,
+    end: value.end,
+    Name: value.Name,
+    Value: value.Value,
+  }),
+});
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Pragma","kind":"type","status":"implemented","sigHash":"5517b7318097a4a61ec97ebda6b34b50f42928bf5b3fce3da5a3e563fed0036b"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go AST data contract exposes the embedded comment range through direct structural heritage rather than reproducing Go memory layout.","goSignatureHash":"cd07a6dc405081f28113686f3ffea7a371925a3688bb124ba7ebe3cf95483d1a","tsSignatureHash":"ea36c20dee39eb9cc3865cfc19a6555ed1a739de7f730dd22ba25b17edba5fb9"}
@@ -6587,6 +6774,25 @@ export interface Pragma extends CommentRange {
   Name: string;
   Args: GoMap<string, PragmaArgument>;
 }
+
+export const PragmaValueOps: GoValueOps<Pragma> = Object.freeze({
+  zero: (): Pragma => ({
+    pos: 0,
+    end: 0,
+    Kind: 0 as Kind,
+    HasTrailingNewLine: false,
+    Name: "",
+    Args: GoNilMap(),
+  }),
+  copy: (value: Pragma): Pragma => ({
+    pos: value.pos,
+    end: value.end,
+    Kind: value.Kind,
+    HasTrailingNewLine: value.HasTrailingNewLine,
+    Name: value.Name,
+    Args: value.Args,
+  }),
+});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaKindFlags","kind":"type","status":"implemented","sigHash":"535c9798f46aeb5158dc1a9f60303de6a8bb4b4e1019c61ca253c26fa47c9a3d"}

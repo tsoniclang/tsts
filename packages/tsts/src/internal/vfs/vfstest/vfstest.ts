@@ -1,6 +1,6 @@
 import type { bool, byte, int, long } from "../../../go/scalars.js";
 import type { Seq2 } from "../../../go/iter.js";
-import type { GoError, GoFunc, GoInterface, GoMap, GoPointerMethodSet, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoError, GoFunc, GoInterface, GoMap, GoPointerMethodSet, GoPtr, GoSlice, GoValueOps } from "../../../go/compat.js";
 import { GoSliceAppend, GoStringValueOps } from "../../../go/compat.js";
 import { GoMapIsNil, GoNilSlice, GoZeroInterface, GoZeroSlice } from "../../../go/compat.js";
 import { AsType } from "../../../go/errors.js";
@@ -1040,6 +1040,11 @@ export interface fileInfo {
   }>;
 }
 
+export const fileInfoValueOps: GoValueOps<fileInfo> = Object.freeze({
+  zero: (): fileInfo => makeFileInfo(undefined, undefined, ""),
+  copy: (value: fileInfo): fileInfo => makeFileInfo(value.__tsgoEmbedded0, value.sys, value.realpath),
+});
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::method::fileInfo.Name","kind":"method","status":"implemented","sigHash":"d69e71b95abc2221c07d0623044cc610a96870cbd335f1136939d8529c7141bd"}
  *
@@ -1328,16 +1333,16 @@ export function convertInfo(info: GoInterface<FileInfo>): [GoPtr<fileInfo>, bool
   return [makeFileInfo(info!, typedSys.original, typedSys.realpath), true];
 }
 
-function makeFileInfo(info: FileInfo, sysValue: GoInterface<unknown>, realpath: string): NonNullable<GoPtr<fileInfo>> {
+function makeFileInfo(info: GoInterface<FileInfo>, sysValue: GoInterface<unknown>, realpath: string): NonNullable<GoPtr<fileInfo>> {
   const result: NonNullable<GoPtr<fileInfo>> = {
     __tsgoEmbedded0: info,
     sys: sysValue,
     realpath,
     Name: (): string => fileInfo_Name(result),
-    Size: (): long => info.Size(),
-    Mode: (): FileMode => info.Mode(),
-    ModTime: (): Time => info.ModTime(),
-    IsDir: (): bool => info.IsDir(),
+    Size: (): long => info!.Size(),
+    Mode: (): FileMode => info!.Mode(),
+    ModTime: (): Time => info!.ModTime(),
+    IsDir: (): bool => info!.IsDir(),
     Sys: (): GoInterface<unknown> => fileInfo_Sys(result),
   };
   return result;

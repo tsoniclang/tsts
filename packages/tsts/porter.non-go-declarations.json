@@ -16465,6 +16465,18 @@
       "visibility": "module-private"
     },
     {
+      "declarationHash": "374202a39837cd9d9c3698f81746706826f8ad8ed2dfffb996730fe382e6b1d0",
+      "file": "packages/tsts/src/internal/ast/ast.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "assignSourceFileEmbeddedValues",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "cc42c3bea987819f38d9bb94a33fb310be5ca8189dec472d6daaed9a1071b9e7",
       "file": "packages/tsts/src/internal/ast/ast.ts",
       "fragmentIndex": 0,
@@ -16475,6 +16487,42 @@
       ],
       "owner": "compiler-port-runtime",
       "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "bfd82bbff73cf7397e998679e9b620057f5ab023f8f8ca19d807318fa4c6460b",
+      "file": "packages/tsts/src/internal/ast/ast.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "copySourceFileParseOptions",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "ba535a9fb65da7b2defa910424d8f383879e67b86f0eaf0efb08ff0317b54288",
+      "file": "packages/tsts/src/internal/ast/ast.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "createCommentRangeValue",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "a2487ba03f617a4dd9a837327ccbd2846d4a4f8746bf1dd099ed2f5ceec29251",
+      "file": "packages/tsts/src/internal/ast/ast.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "createSourceFileDataValue",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
     },
     {
       "declarationHash": "eb20defa0df331a5a23196781a67e2a61355075d9beb75623d57a7288085d0dc",
@@ -17377,6 +17425,18 @@
       "visibility": "module-private"
     },
     {
+      "declarationHash": "b6aac3cf4f6e4808a562d3ebb70b0db0089af6a8ad434164576f335f0ab986e3",
+      "file": "packages/tsts/src/internal/ast/ast.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "zeroSourceFileParseOptions",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "e18a52313b6ee79c07cbdd2225c0f0e3b9d7fbf6ec3e40024fd99885159dd18b",
       "file": "packages/tsts/src/internal/ast/ast.ts",
       "fragmentIndex": 0,
@@ -17409,6 +17469,18 @@
       "name": "FlowSwitchClauseNodeData",
       "namespaces": [
         "type",
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "e37bf6bc9abcf696b0b31b8e16bda0a9e1ebe5c2ce298d3b047952ab7ca2bd45",
+      "file": "packages/tsts/src/internal/ast/flow.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "assignNodeBase",
+      "namespaces": [
         "value"
       ],
       "owner": "compiler-port-runtime",
@@ -17513,11 +17585,35 @@
       "visibility": "module-private"
     },
     {
+      "declarationHash": "24933c0af8d6878c315160f771fc344eeff690d6f42950c0a1124a2a25d92544",
+      "file": "packages/tsts/src/internal/ast/spine.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "copyNodeValue",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "1306d0910e6b3fd7f223c1153317b25d924dc3bd3c727f40198974b2a26df77a",
       "file": "packages/tsts/src/internal/ast/spine.ts",
       "fragmentIndex": 0,
       "kind": "function",
       "name": "newNodeFactory",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "091c9c45b23ab359631484ee85b74efb2bac11e77b638a8d82f24396d4bd6e27",
+      "file": "packages/tsts/src/internal/ast/spine.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "zeroNodeValue",
       "namespaces": [
         "value"
       ],
@@ -22574,6 +22670,18 @@
       "visibility": "module-private"
     },
     {
+      "declarationHash": "97e3a0ed890cadfa7abb489061021730e7685db78c4c66040a5b0b1e03fa78bf",
+      "file": "packages/tsts/src/internal/printer/factory.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "createPrinterNodeFactoryValue",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "61b9d2a5222266f7c73478770ac0b89bbce4e2c94a07c4099b10b79ad2e8d66d",
       "file": "packages/tsts/src/internal/printer/factory.ts",
       "fragmentIndex": 0,
@@ -22581,6 +22689,18 @@
       "name": "normalizeAutoGenerateOptions",
       "namespaces": [
         "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "d998acfe6d41beda616a008a146cc354e83317d71644c0f644edca80079c9152",
+      "file": "packages/tsts/src/internal/printer/factory.ts",
+      "fragmentIndex": 0,
+      "kind": "interface",
+      "name": "NodeFactoryValue",
+      "namespaces": [
+        "type"
       ],
       "owner": "compiler-port-runtime",
       "visibility": "module-private"
@@ -23143,6 +23263,18 @@
       "visibility": "module-private"
     },
     {
+      "declarationHash": "f560277f46fdc436d07a69006145a1819adb8a8a38da0f6e818aa106dc07f3b7",
+      "file": "packages/tsts/src/internal/scanner/scanner.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "copyScannerState",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "20f738423a7e47eb6444781658497ab234d21fc1fd4125c785b48c5c26672a14",
       "file": "packages/tsts/src/internal/scanner/scanner.ts",
       "fragmentIndex": 0,
@@ -23268,6 +23400,18 @@
       "fragmentIndex": 0,
       "kind": "function",
       "name": "stringByteViewIndexByteInRange",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "1f31753f09a6918c6d8197c3a3c0a5eef778ec84d50087b720d7c9ee19efdbf5",
+      "file": "packages/tsts/src/internal/scanner/scanner.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "zeroScanner",
       "namespaces": [
         "value"
       ],
@@ -24776,7 +24920,7 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "25ba0d6d43303e8effa1764642ff60f26c19931796c018518fe8878e2a224eb1",
+      "declarationHash": "d41a69e6ecf2cc165d172c198a7c31904fcdc4120a41449123edd11274f6441c",
       "file": "packages/tsts/src/internal/vfs/vfstest/vfstest.ts",
       "fragmentIndex": 0,
       "kind": "function",

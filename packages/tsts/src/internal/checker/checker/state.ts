@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import type { GoComparable, GoConstraint, GoDefined, GoEquality, GoInterface, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoConstraint, GoDefined, GoEquality, GoInterface, GoMap, GoMapKeyDescriptor, GoPtr, GoSlice, GoValueOps } from "../../../go/compat.js";
 import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoMapIsNil, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoZeroBoolean, GoZeroNumber, GoZeroPointer, GoZeroString, NewGoStructMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Hasher } from "../../../go/github.com/zeebo/xxh3.js";
@@ -3787,6 +3787,11 @@ export type CacheHashKey = GoDefined<{
   Hi: bigint;
   Lo: bigint;
 }, "github.com/microsoft/typescript-go/internal/checker::type::CacheHashKey">;
+
+export const CacheHashKeyValueOps: GoValueOps<CacheHashKey> = Object.freeze({
+  zero: (): CacheHashKey => ({ Hi: 0n, Lo: 0n }),
+  copy: (value: CacheHashKey): CacheHashKey => ({ Hi: value.Hi, Lo: value.Lo }),
+});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::keyBuilder","kind":"type","status":"implemented","sigHash":"5f8f2fd3c63315426ec051fcedddce54e8f6ef8616a62580ceb6ea75e1736712"}

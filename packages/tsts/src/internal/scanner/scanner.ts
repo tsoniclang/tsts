@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import { GoMapIsNil, GoNilMap, GoNilSlice, type GoArray, type GoComparable, type GoConstraint, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice, type GoArray, type GoComparable, type GoConstraint, type GoMap, type GoPtr, type GoRune, type GoSlice, type GoValueOps } from "../../go/compat.js";
 import { GoSliceAppend, GoStringValueOps } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strconv from "../../go/strconv.js";
@@ -707,20 +707,9 @@ export function defaultScanner(): Scanner {
   // Using a function rather than a global is intentional; this function is
   // inlined as pure code (zeroing + moves), whereas a global requires write
   // barriers since the memory is mutable.
-  return {
-    text: "",
-    end: 0,
-    languageVariant: LanguageVariantStandard,
-    scriptTarget: ScriptTargetNone,
-    onError: undefined as unknown as ErrorCallback,
-    skipTrivia: true,
-    __tsgoEmbedded0: newScannerState(),
-    containsNonASCII: false,
-    numberCache: GoNilMap<string, string>(),
-    hexNumberCache: GoNilMap<string, string>(),
-    hexDigitCache: GoNilMap<string, string>(),
-    sourceByteView: utf8.GetStringByteView(""),
-  };
+  const scanner = zeroScanner();
+  scanner.skipTrivia = true;
+  return scanner;
 }
 
 // newScannerState reproduces Go's zero-valued ScannerState struct.
@@ -736,6 +725,54 @@ function newScannerState(): ScannerState {
     skipJSDocLeadingAsterisks: 0,
   };
 }
+
+function copyScannerState(value: ScannerState): ScannerState {
+  return {
+    pos: value.pos,
+    fullStartPos: value.fullStartPos,
+    tokenStart: value.tokenStart,
+    token: value.token,
+    tokenValue: value.tokenValue,
+    tokenFlags: value.tokenFlags,
+    commentDirectives: value.commentDirectives,
+    skipJSDocLeadingAsterisks: value.skipJSDocLeadingAsterisks,
+  };
+}
+
+function zeroScanner(): Scanner {
+  return {
+    text: "",
+    end: 0,
+    languageVariant: LanguageVariantStandard,
+    scriptTarget: ScriptTargetNone,
+    onError: undefined,
+    skipTrivia: false,
+    __tsgoEmbedded0: newScannerState(),
+    containsNonASCII: false,
+    numberCache: GoNilMap(),
+    hexNumberCache: GoNilMap(),
+    hexDigitCache: GoNilMap(),
+    sourceByteView: utf8.GetStringByteView(""),
+  };
+}
+
+export const ScannerValueOps: GoValueOps<Scanner> = Object.freeze({
+  zero: zeroScanner,
+  copy: (value: Scanner): Scanner => ({
+    text: value.text,
+    end: value.end,
+    languageVariant: value.languageVariant,
+    scriptTarget: value.scriptTarget,
+    onError: value.onError,
+    skipTrivia: value.skipTrivia,
+    __tsgoEmbedded0: copyScannerState(value.__tsgoEmbedded0),
+    containsNonASCII: value.containsNonASCII,
+    numberCache: value.numberCache,
+    hexNumberCache: value.hexNumberCache,
+    hexDigitCache: value.hexDigitCache,
+    sourceByteView: utf8.GetStringByteView(value.text),
+  }),
+});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::NewScanner","kind":"func","status":"implemented","sigHash":"824b1c9d119d384513dbe8e8500292ae2b0912e2e0124cfaf3d35b98c8f0cc98"}

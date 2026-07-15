@@ -1,8 +1,8 @@
 import type { bool, int, short } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import type { GoInterfaceValue, GoPtr, GoSlice } from "../../go/compat.js";
-import { Uint32, Uint64 } from "../../go/sync/atomic.js";
-import { TextRange_End, TextRange_Pos, UndefinedTextRange } from "../core/text.js";
+import type { GoInterfaceValue, GoPtr, GoSlice, GoValueOps } from "../../go/compat.js";
+import { Uint32, Uint64, Uint64ValueOps } from "../../go/sync/atomic.js";
+import { NewTextRange, TextRange_End, TextRange_Pos, UndefinedTextRange } from "../core/text.js";
 import type { TextRange } from "../core/text.js";
 import type { Kind } from "./generated/kinds.js";
 import { KindString as Kind_String } from "./generated/kinds.js";
@@ -42,7 +42,7 @@ import {
 import { ModifierFlagsAmbient } from "./modifierflags.js";
 
 import type { GoFunc, GoInterface } from "../../go/compat.js";
-import { GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
+import { GoNilSlice, GoPointerValueOps, GoSliceLoad } from "../../go/compat.js";
 
 // ──────────────────────────────────────────────────────────────────────
 // Go interface value brand
@@ -226,6 +226,19 @@ class ModifierListValue extends NodeListValue implements ModifierList {
   }
 }
 
+export const ModifierListValueOps: GoValueOps<ModifierList> = Object.freeze({
+  zero: (): ModifierList => {
+    const result = new ModifierListValue(GoNilSlice(), 0 as ModifierFlags);
+    result.Loc = NewTextRange(0, 0);
+    return result;
+  },
+  copy: (value: ModifierList): ModifierList => {
+    const result = new ModifierListValue(value.Nodes, value.ModifierFlags);
+    result.Loc = NewTextRange(value.Loc.pos, value.Loc.end);
+    return result;
+  },
+});
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Node","kind":"type","status":"implemented","sigHash":"962cd77e438108cf12139aa50d5ba340f441310f29c98c75dcacba48acb4938e"}
  *
@@ -317,6 +330,33 @@ export type NodeIter = Seq<GoPtr<Node>>;
 export interface NodeDefault extends Node {
 }
 
+function zeroNodeValue(): Node {
+  return {
+    Kind: 0 as Kind,
+    Flags: 0 as NodeFlags,
+    Loc: NewTextRange(0, 0),
+    id: Uint64ValueOps.zero(),
+    Parent: undefined,
+    data: undefined,
+  };
+}
+
+function copyNodeValue(value: Node): Node {
+  return {
+    Kind: value.Kind,
+    Flags: value.Flags,
+    Loc: NewTextRange(value.Loc.pos, value.Loc.end),
+    id: Uint64ValueOps.copy(value.id),
+    Parent: value.Parent,
+    data: value.data,
+  };
+}
+
+export const NodeDefaultValueOps: GoValueOps<NodeDefault> = Object.freeze({
+  zero: zeroNodeValue,
+  copy: copyNodeValue,
+});
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeBase","kind":"type","status":"implemented","sigHash":"435e1110e9632116114ecc9aea6efa583d93407ecb6b824bf50134493352ce9f"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pinned TS-Go schema exposes the embedded default node contract through structural heritage rather than reproducing Go memory layout.","goSignatureHash":"3f4f9b424d8be8c3a2d8e8f91596131575ad0e5d929ba0ead3ab9a5f44852800","tsSignatureHash":"d026e59c1db8ec434923caa3a9781fe2d3df8dad06ebb0e68ab8c5bf4403dffc"}
@@ -328,6 +368,11 @@ export interface NodeDefault extends Node {
  */
 export interface NodeBase extends NodeDefault {
 }
+
+export const NodeBaseValueOps: GoValueOps<NodeBase> = Object.freeze({
+  zero: zeroNodeValue,
+  copy: copyNodeValue,
+});
 
 // ──────────────────────────────────────────────────────────────────────
 // NodeFactory machinery (hand-written ast.go; operates on the GENERATED

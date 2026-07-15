@@ -42,7 +42,7 @@ export class FinalizedGoValueOperationPlan {
       }
       this.#entries.set(provider.objectId, provider);
     }
-    this.#generated = Object.freeze([...generated]);
+    this.#generated = Object.freeze(orderGeneratedEntries(generated, this.#entries));
     this.#providers = Object.freeze([...providers]);
     Object.freeze(this);
   }
@@ -60,6 +60,61 @@ export class FinalizedGoValueOperationPlan {
     if (config !== this.#config || snapshot !== this.#snapshot) {
       throw new Error("Go value-operation plan was built from different config or snapshot objects");
     }
+  }
+}
+
+function orderGeneratedEntries(generated, entries) {
+  const generatedByObjectId = new Map(generated.map((entry) => [entry.objectId, entry]));
+  const dependencies = new Map();
+  const dependents = new Map([...generatedByObjectId.keys()].map((objectId) => [objectId, new Set()]));
+  for (const entry of generatedByObjectId.values()) {
+    const required = new Set();
+    collectGeneratedDependencies(entry.requirementShape, entries, generatedByObjectId, required);
+    dependencies.set(entry.objectId, required);
+    for (const dependency of required) dependents.get(dependency).add(entry.objectId);
+  }
+  const ready = [...generatedByObjectId.keys()]
+    .filter((objectId) => dependencies.get(objectId).size === 0)
+    .sort(compareText);
+  const ordered = [];
+  while (ready.length > 0) {
+    const objectId = ready.shift();
+    ordered.push(generatedByObjectId.get(objectId));
+    for (const dependent of [...dependents.get(objectId)].sort(compareText)) {
+      const remaining = dependencies.get(dependent);
+      remaining.delete(objectId);
+      if (remaining.size !== 0) continue;
+      ready.push(dependent);
+      ready.sort(compareText);
+    }
+  }
+  if (ordered.length !== generatedByObjectId.size) {
+    const unresolved = [...dependencies]
+      .filter(([, required]) => required.size !== 0)
+      .map(([objectId, required]) => `${objectId} -> ${[...required].sort(compareText).join(", ")}`)
+      .sort(compareText);
+    throw new Error(`Go value-operation generated initialization dependencies contain a cycle: ${unresolved.join("; ")}`);
+  }
+  return ordered;
+}
+
+function collectGeneratedDependencies(shape, entries, generated, result) {
+  if (shape.kind === "array") {
+    if (shape.length !== "0") collectGeneratedDependencies(shape.element, entries, generated, result);
+    return;
+  }
+  if (shape.kind === "struct") {
+    for (const field of shape.fields) collectGeneratedDependencies(field.shape, entries, generated, result);
+    return;
+  }
+  if (shape.kind !== "named") return;
+  const provider = entries.get(shape.objectId);
+  if (provider === undefined) throw new Error(`Go value-operation dependency '${shape.objectId}' has no finalized provider`);
+  if (generated.has(shape.objectId)) result.add(shape.objectId);
+  for (const index of provider.operationTypeParameterIndexes) {
+    const argument = shape.typeArguments[index];
+    if (argument === undefined) throw new Error(`Go value-operation dependency '${shape.objectId}' has invalid operation parameter index ${index}`);
+    collectGeneratedDependencies(argument, entries, generated, result);
   }
 }
 
@@ -106,7 +161,7 @@ export function buildGoValueOperationPlan(input) {
     if (provider?.storageIdentity !== undefined && provider.storageIdentity !== storageIdentity) {
       throw new Error(`Go value operation '${entry.objectId}' provider storage '${provider.storageIdentity}' differs from direct declaration '${storageIdentity}'`);
     }
-    if (entry.disposition === "generated" && !storageAudit.exact && entry.semanticDeclaration.rhs.kind === "struct") {
+    if (entry.disposition === "generated" && !storageAudit.exact) {
       throw new Error(`Go value operation '${entry.objectId}' uses adapted TypeScript storage and requires one reviewed operation provider`);
     }
     const operationIdentity = entry.disposition === "generated"

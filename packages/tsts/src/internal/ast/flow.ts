@@ -1,5 +1,5 @@
 import type { bool, int, uint } from "../../go/scalars.js";
-import type { GoPtr } from "../../go/compat.js";
+import type { GoPtr, GoValueOps } from "../../go/compat.js";
 import { KindUnknown } from "./generated/kinds.js";
 import {
   newNode,
@@ -24,6 +24,7 @@ import {
   NodeDefault_propagateSubtreeFacts,
   NodeDefault_setModifiers,
   NodeDefault_subtreeFactsWorker,
+  NodeBaseValueOps,
   Node_End,
   Node_Pos,
 } from "./spine.js";
@@ -180,6 +181,34 @@ class FlowSwitchClauseNodeData implements nodeData {
 }
 interface FlowSwitchClauseNodeData extends FlowSwitchClauseData {}
 
+function assignNodeBase(target: NodeBase, source: NodeBase): void {
+  target.Kind = source.Kind;
+  target.Flags = source.Flags;
+  target.Loc = source.Loc;
+  target.id = source.id;
+  target.Parent = source.Parent;
+  target.data = source.data;
+}
+
+export const FlowSwitchClauseDataValueOps: GoValueOps<FlowSwitchClauseData> = Object.freeze({
+  zero: (): FlowSwitchClauseData => {
+    const result: FlowSwitchClauseData = new FlowSwitchClauseNodeData();
+    assignNodeBase(result, NodeBaseValueOps.zero());
+    result.SwitchStatement = undefined;
+    result.ClauseStart = 0;
+    result.ClauseEnd = 0;
+    return result;
+  },
+  copy: (value: FlowSwitchClauseData): FlowSwitchClauseData => {
+    const result: FlowSwitchClauseData = new FlowSwitchClauseNodeData();
+    assignNodeBase(result, NodeBaseValueOps.copy(value));
+    result.SwitchStatement = value.SwitchStatement;
+    result.ClauseStart = value.ClauseStart;
+    result.ClauseEnd = value.ClauseEnd;
+    return result;
+  },
+});
+
 export function FlowSwitchClauseData_as_nodeData(receiver: GoPtr<FlowSwitchClauseData>): nodeData {
   return receiver!;
 }
@@ -261,6 +290,23 @@ class FlowReduceLabelNodeData implements nodeData {
   propagateSubtreeFacts(): SubtreeFacts { return NodeDefault_propagateSubtreeFacts(this); }
 }
 interface FlowReduceLabelNodeData extends FlowReduceLabelData {}
+
+export const FlowReduceLabelDataValueOps: GoValueOps<FlowReduceLabelData> = Object.freeze({
+  zero: (): FlowReduceLabelData => {
+    const result: FlowReduceLabelData = new FlowReduceLabelNodeData();
+    assignNodeBase(result, NodeBaseValueOps.zero());
+    result.Target = undefined;
+    result.Antecedents = undefined;
+    return result;
+  },
+  copy: (value: FlowReduceLabelData): FlowReduceLabelData => {
+    const result: FlowReduceLabelData = new FlowReduceLabelNodeData();
+    assignNodeBase(result, NodeBaseValueOps.copy(value));
+    result.Target = value.Target;
+    result.Antecedents = value.Antecedents;
+    return result;
+  },
+});
 
 export function FlowReduceLabelData_as_nodeData(receiver: GoPtr<FlowReduceLabelData>): nodeData {
   return receiver!;
