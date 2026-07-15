@@ -2512,6 +2512,29 @@ test("provider declaration models reject non-finite numeric literal types", () =
   }
 });
 
+test("provider declaration models reject malformed source-global references", () => {
+  const specifier = "@target/source-global-invalid.js";
+  const invalidTypes: readonly ProviderTypeExpression[] = [{
+    kind: "source-global",
+    name: "Clock.Instant",
+  }, {
+    kind: "source-global",
+    name: "",
+  }];
+  for (const [index, type] of invalidTypes.entries()) {
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider(typeFamilyBindingProvider(specifier, [{
+      id: `Invalid${index}`,
+      name: `Invalid${index}`,
+      kind: "type",
+      type,
+    }]));
+    assert.equal(host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" }).kind, "rejected");
+    assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+    assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), []);
+  }
+});
+
 test("provider declaration graph validation rejects recursive schema edges without retaining provider objects", () => {
   const specifier = "@target/recursive-model.js";
   const placements: readonly ((type: ProviderTypeExpression) => ProviderDeclarationModel["exports"])[] = [

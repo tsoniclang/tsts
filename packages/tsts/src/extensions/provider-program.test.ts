@@ -40,7 +40,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionLifecycleEvent, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionHost, ExtensionObservationContext, ParameterPassingRequest, ProviderDeclarationModel, ProviderImportSlice, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionHost, ExtensionObservationContext, ParameterPassingRequest, ProviderDeclarationModel, ProviderImportSlice, ProviderMemberDeclaration, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
 import { recordExtensionCheckedAssertionConversion, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
 import {
   getProviderVirtualArtifactForCompiler,
@@ -208,6 +208,183 @@ test("provider-backed virtual declarations expose undefined as a source type", (
 
   const providerFile = getCanonicalProviderExportOwnerFile(program, extended.extensionHost, "continueWith");
   assert.match(SourceFile_Text(providerFile), /state: object \| undefined/);
+});
+
+test("provider declarations bind exact active source-global types while retaining target carriers", () => {
+  const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
+  const callRequests: CheckedCallMappingRequest[] = [];
+  const members: readonly ProviderMemberDeclaration[] = [{
+    id: "Holder.instant",
+    name: "instant",
+    kind: "property",
+    type: {
+      kind: "target-named",
+      target: "acme",
+      id: "Acme.ClockInstant",
+      sourceShape: { kind: "source-global", name: "ClockInstant" },
+    },
+  }, {
+    id: "Holder.pending",
+    name: "pending",
+    kind: "property",
+    type: {
+      kind: "target-named",
+      target: "acme",
+      id: "Acme.Task`1",
+      typeArguments: [{ kind: "provider-ref", moduleSpecifier: "@acme/native/source-globals.js", exportName: "Value" }],
+      sourceShape: {
+        kind: "source-global",
+        name: "PromiseLikeValue",
+        typeArguments: [{ kind: "provider-ref", moduleSpecifier: "@acme/native/source-globals.js", exportName: "Value" }],
+      },
+    },
+  }];
+  const { program, index, extended } = createSourceGlobalProviderProgram({
+    profiles: [sourceGlobalProfile(`
+      interface ClockInstant { toTicks(): number; }
+      interface PromiseLikeValue<T> { then<TResult>(callback: (value: T) => TResult): PromiseLikeValue<TResult>; }
+    `)],
+    members,
+    source: `
+      import { Holder } from "@acme/native/source-globals.js";
+      declare const holder: Holder;
+      holder.instant.toTicks();
+      holder.pending.then(value => value.label);
+    `,
+    onProperty: (request) => propertyRequests.push(request),
+    onCall: (request) => callRequests.push(request),
+  });
+
+  assertCleanProgram(program, index);
+  assertCleanProviderVirtualFiles(program);
+  const providerFile = getOnlyPublicProviderSourceFile(program, extended.extensionHost, "@acme/native/source-globals.js");
+  const holderOwner = getCanonicalProviderExportOwnerDocuments(extended.extensionHost)
+    .find((document) => document.declarationModel.exports.some((declaration) => declaration.id === "Holder"));
+  assert.ok(holderOwner !== undefined);
+  assert.match(holderOwner.sourceText, /instant: globalThis\.ClockInstant;/);
+  assert.match(holderOwner.sourceText, /pending: globalThis\.PromiseLikeValue<[^>]*Value[^>]*>;/);
+
+  const instantRequest = propertyRequests.find((request) => request.propertyName === "instant");
+  const pendingRequest = propertyRequests.find((request) => request.propertyName === "pending");
+  assert.ok(instantRequest?.sourceResultType !== undefined);
+  assert.ok(pendingRequest?.sourceResultType !== undefined);
+  assert.equal(Type_Symbol(instantRequest.sourceResultType as GoPtr<Type>)?.Name, "ClockInstant");
+  assert.equal(Type_Symbol(pendingRequest.sourceResultType as GoPtr<Type>)?.Name, "PromiseLikeValue");
+  for (const request of [instantRequest, pendingRequest]) {
+    const declarations = Type_Symbol(request.sourceResultType as GoPtr<Type>)?.Declarations ?? [];
+    assert.ok(declarations.length > 0);
+    assert.ok(declarations.every((declaration) => SourceFile_FileName(GetSourceFileOfNode(declaration)) === "/src/profile-0.d.ts"));
+  }
+  assert.ok(propertyRequests.some((request) => request.propertyName === "toTicks"));
+  assert.ok(propertyRequests.some((request) => request.propertyName === "then"));
+  assert.ok(propertyRequests.some((request) => request.propertyName === "label"));
+  assert.ok(callRequests.length >= 2);
+
+  Program_BindSourceFiles(program);
+  const providerSymbol = Node_Symbol(providerFile as GoPtr<Node>);
+  const holderSymbol = providerSymbol?.Exports?.get("Holder");
+  const targetMembers = extended.extensionHost.facts.get(holderSymbol, targetBindingFactKey)?.members ?? [];
+  assert.deepEqual(targetMembers.map((member) => [member.sourceName, member.returnType]), [[
+    "instant",
+    { kind: "target-named", id: "Acme.ClockInstant" },
+  ], [
+    "pending",
+    {
+      kind: "target-named",
+      id: "Acme.Task`1",
+      typeArguments: [{ kind: "opaque", id: "@acme/native/source-globals.js::Value" }],
+    },
+  ]]);
+});
+
+test("source-global provider references fail through exact source checking when unavailable or invalid", () => {
+  const cases: readonly {
+    readonly name: string;
+    readonly profiles: readonly string[];
+    readonly sourceShape: ProviderMemberDeclaration["type"];
+    readonly expectedCode: number;
+  }[] = [{
+    name: "unselected",
+    profiles: [sourceGlobalProfile("")],
+    sourceShape: { kind: "source-global", name: "ClockInstant" },
+    expectedCode: 2694,
+  }, {
+    name: "wrong-arity",
+    profiles: [sourceGlobalProfile("interface Box<T> { value: T; }")],
+    sourceShape: { kind: "source-global", name: "Box" },
+    expectedCode: 2314,
+  }, {
+    name: "value-only",
+    profiles: [sourceGlobalProfile("declare const ClockInstant: object;")],
+    sourceShape: { kind: "source-global", name: "ClockInstant" },
+    expectedCode: 2694,
+  }, {
+    name: "duplicate",
+    profiles: [
+      sourceGlobalProfile("type ClockInstant = object;"),
+      sourceGlobalProfile("type ClockInstant = object;"),
+    ],
+    sourceShape: { kind: "source-global", name: "ClockInstant" },
+    expectedCode: 2300,
+  }];
+
+  for (const entry of cases) {
+    const { program } = createSourceGlobalProviderProgram({
+      profiles: entry.profiles,
+      members: [{
+        id: "Holder.value",
+        name: "value",
+        kind: "property",
+        type: {
+          kind: "target-named",
+          target: "acme",
+          id: "Acme.Value",
+          sourceShape: entry.sourceShape!,
+        },
+      }],
+      source: `
+        import { Holder } from "@acme/native/source-globals.js";
+        declare const holder: Holder;
+        holder.value;
+      `,
+    });
+    const diagnostics = Program_GetSemanticDiagnostics(program, Background(), undefined);
+    assert.ok(diagnostics.some((diagnostic) => Diagnostic_Code(diagnostic) === entry.expectedCode), `${entry.name}: ${diagnostics.map(Diagnostic_String).join("\n")}`);
+  }
+});
+
+test("source-global provider references cannot be captured by provider-local declarations", () => {
+  const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
+  const { program, index } = createSourceGlobalProviderProgram({
+    profiles: [sourceGlobalProfile("interface Holder { profileOnly(): number; }")],
+    members: [{
+      id: "Holder.profileHolder",
+      name: "profileHolder",
+      kind: "property",
+      type: {
+        kind: "target-named",
+        target: "acme",
+        id: "Acme.ProfileHolder",
+        sourceShape: { kind: "source-global", name: "Holder" },
+      },
+    }],
+    source: `
+      import { Holder } from "@acme/native/source-globals.js";
+      declare const holder: Holder;
+      holder.profileHolder.profileOnly();
+    `,
+    onProperty: (request) => propertyRequests.push(request),
+  });
+
+  assertCleanProgram(program, index);
+  assertCleanProviderVirtualFiles(program);
+  const selected = propertyRequests.find((request) => request.propertyName === "profileHolder");
+  assert.ok(selected?.sourceResultType !== undefined);
+  const symbol = Type_Symbol(selected.sourceResultType as GoPtr<Type>);
+  assert.equal(symbol?.Name, "Holder");
+  assert.ok((symbol?.Declarations ?? []).every((declaration) =>
+    SourceFile_FileName(GetSourceFileOfNode(declaration)) === "/src/profile-0.d.ts"));
+  assert.ok(propertyRequests.some((request) => request.propertyName === "profileOnly"));
 });
 
 test("provider declarations preserve parameter passing metadata in target binding facts", () => {
@@ -5034,6 +5211,119 @@ function undefinedStateProviderExtension(): CompilerExtension {
             }],
           }],
         }),
+      }), true);
+    },
+  };
+}
+
+function sourceGlobalProfile(declarations: string): string {
+  return `
+    interface Object {}
+    interface Function {}
+    interface CallableFunction extends Function {}
+    interface NewableFunction extends Function {}
+    interface IArguments {}
+    interface String {}
+    interface Number {}
+    interface Boolean {}
+    interface RegExp {}
+    interface Array<T> { readonly length: number; [index: number]: T; }
+    ${declarations}
+  `;
+}
+
+function createSourceGlobalProviderProgram(options: {
+  readonly profiles: readonly string[];
+  readonly members: readonly ProviderMemberDeclaration[];
+  readonly source: string;
+  readonly onProperty?: (request: CheckedPropertyAccessMappingRequest) => void;
+  readonly onCall?: (request: CheckedCallMappingRequest) => void;
+}) {
+  const profileFiles = options.profiles.map((text, index) => [`/src/profile-${index}.d.ts`, text] as const);
+  let fs = FromMap(new Map<string, string>([
+    ...profileFiles,
+    ["/src/index.ts", options.source],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+        strict: true,
+      },
+      files: [...profileFiles.map(([fileName]) => fileName.slice("/src/".length)), "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+  const programOptions = { Config: parsed, Host: host } satisfies ProgramOptions;
+  const extended = attachExtensionHost(programOptions, {
+    activeTarget: "acme",
+    extensions: [sourceGlobalProviderExtension(options)],
+  });
+  const program = NewProgram(programOptions);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  return { program, index, extended };
+}
+
+function sourceGlobalProviderExtension(options: {
+  readonly members: readonly ProviderMemberDeclaration[];
+  readonly onProperty?: (request: CheckedPropertyAccessMappingRequest) => void;
+  readonly onCall?: (request: CheckedCallMappingRequest) => void;
+}): CompilerExtension {
+  const specifier = "@acme/native/source-globals.js";
+  return {
+    identity: {
+      id: "acme-source-global-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-source-global-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-source-global-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: "tsts-provider://acme/source-globals",
+          providerModuleId: "acme.source-globals",
+        }),
+        getDeclarationModel: (resolution) => ({
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [{
+            id: "Value",
+            name: "Value",
+            kind: "class",
+            targetIdentity: { target: "acme", id: "Acme.Value" },
+            members: [{ id: "Value.label", name: "label", kind: "property", type: { kind: "string" } }],
+          }, {
+            id: "Holder",
+            name: "Holder",
+            kind: "class",
+            targetIdentity: { target: "acme", id: "Acme.Holder" },
+            members: options.members,
+          }],
+        }),
+      }), true);
+      assert.equal(context.registerTargetSemanticProvider({
+        identity: semanticProviderIdentity("acme-source-global-semantic-provider"),
+        mapCheckedPropertyAccess: (request) => {
+          options.onProperty?.(request);
+          return deferObservation;
+        },
+        mapCheckedCall: (request) => {
+          options.onCall?.(request);
+          return deferObservation;
+        },
       }), true);
     },
   };

@@ -545,6 +545,8 @@ function getTargetTypeRef(type: ProviderTypeExpression): TargetTypeRef {
       return { kind: "opaque", id: type.id };
     case "provider-ref":
       return { kind: "opaque", id: `${type.moduleSpecifier}::${type.exportName}` };
+    case "source-global":
+      return { kind: "opaque", id: `source-global::${type.name}` };
     case "string":
     case "number":
     case "any":

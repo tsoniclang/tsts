@@ -301,6 +301,7 @@ export type ProviderTypeExpression =
   | { readonly kind: "bigint" }
   | { readonly kind: "object" }
   | { readonly kind: "source-primitive"; readonly name: SourcePrimitiveKind }
+  | { readonly kind: "source-global"; readonly name: string; readonly typeArguments?: readonly ProviderTypeExpression[] }
   | { readonly kind: "type-parameter"; readonly name: string }
   | { readonly kind: "target-named"; readonly target: string; readonly id: string; readonly displayName?: string; readonly typeArguments?: readonly ProviderTypeExpression[]; readonly sourceShape?: ProviderTypeExpression }
   | { readonly kind: "array"; readonly elementType: ProviderTypeExpression }
@@ -3510,6 +3511,12 @@ function freezeProviderTypeExpression(type: ProviderTypeExpression, frozen: Weak
       }
       freezeProviderArray(type.typeArguments);
       break;
+    case "source-global":
+      for (const argument of type.typeArguments ?? []) {
+        freezeProviderTypeExpression(argument, frozen);
+      }
+      freezeProviderArray(type.typeArguments);
+      break;
     case "array":
       freezeProviderTypeExpression(type.elementType, frozen);
       break;
@@ -4047,6 +4054,11 @@ function collectProviderDeclarationReferenceUses(
         case "source-primitive":
         case "type-parameter":
         case "literal":
+          return;
+        case "source-global":
+          for (const typeArgument of type.typeArguments ?? []) {
+            visitType(typeArgument, false);
+          }
           return;
         case "target-named":
           for (const typeArgument of type.typeArguments ?? []) {
@@ -4853,6 +4865,10 @@ function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parent
       return type.kind;
     case "source-primitive":
       return renderSourcePrimitiveType(type.name);
+    case "source-global":
+      return type.typeArguments === undefined || type.typeArguments.length === 0
+        ? `globalThis.${type.name}`
+        : `globalThis.${type.name}<${type.typeArguments.map((typeArgument) => renderProviderTypeExpression(typeArgument, context)).join(", ")}>`;
     case "type-parameter":
       return type.name;
     case "target-named":
@@ -5682,6 +5698,9 @@ function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
       return true;
     case "source-primitive":
       return isKnownSourcePrimitive(value.name);
+    case "source-global":
+      return isIdentifierText(value.name)
+        && (value.typeArguments ?? []).every(isValidProviderTypeExpression);
     case "type-parameter":
       return isIdentifierText(value.name);
     case "target-named":
@@ -5856,6 +5875,8 @@ function hasValidProviderReferenceBindings(type: ProviderTypeExpression, context
     case "type-parameter":
     case "literal":
       return true;
+    case "source-global":
+      return (type.typeArguments ?? []).every((typeArgument) => hasValidProviderReferenceBindings(typeArgument, context));
     case "target-named":
       return (type.typeArguments ?? []).every((typeArgument) => hasValidProviderReferenceBindings(typeArgument, context))
         && type.sourceShape !== undefined
@@ -5996,6 +6017,8 @@ function hasValidProviderTypeExpressionScope(type: ProviderTypeExpression, scope
     case "source-primitive":
     case "literal":
       return true;
+    case "source-global":
+      return (type.typeArguments ?? []).every((typeArgument) => hasValidProviderTypeExpressionScope(typeArgument, scope));
     case "type-parameter":
       return scope.has(type.name);
     case "target-named":

@@ -79,6 +79,31 @@ test("provider model graph preserves shared array identity without treating a DA
   assert.equal(first.elementTypes, second.elementTypes);
 });
 
+test("provider model graph snapshots and canonicalizes source-global references exactly", () => {
+  const validation = requireValid(validateProviderDeclarationModelGraph(baseModel({
+    exports: [{
+      id: "AsyncValue",
+      name: "AsyncValue",
+      kind: "type",
+      type: {
+        kind: "source-global",
+        name: "PromiseLikeValue",
+        typeArguments: [{ kind: "source-global", name: "ClockInstant" }],
+      },
+    }],
+  })));
+  const snapshot = validation.model.exports[0]?.type;
+  assert.deepEqual(snapshot, {
+    kind: "source-global",
+    name: "PromiseLikeValue",
+    typeArguments: [{ kind: "source-global", name: "ClockInstant" }],
+  });
+
+  const canonical = canonicalizeProviderAbiModel(validation.model).exports[0]?.type;
+  assert.deepEqual(canonical, snapshot);
+  assert.notEqual(canonical, snapshot);
+});
+
 test("provider model graph rejects a semantic object cycle through an array edge", () => {
   const cyclic = { kind: "array" } as { kind: "array"; elementType: ProviderTypeExpression };
   cyclic.elementType = cyclic;

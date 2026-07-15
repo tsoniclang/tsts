@@ -515,6 +515,13 @@ function pushProviderTypeExpressionChildren(
       const named = type as Extract<ProviderTypeExpression, { readonly kind: "source-primitive" | "type-parameter" }>;
       return typeof readProviderModelField(reads, named, "name") === "string";
     }
+    case "source-global": {
+      const reference = type as Extract<ProviderTypeExpression, { readonly kind: "source-global" }>;
+      const name = readProviderModelField(reads, reference, "name");
+      const typeArguments = readProviderModelField(reads, reference, "typeArguments");
+      return typeof name === "string"
+        && pushProviderModelArray(reads, stack, typeArguments, "type", depth, true, path + ".typeArguments");
+    }
     case "target-named": {
       const named = type as Extract<ProviderTypeExpression, { readonly kind: "target-named" }>;
       const target = readProviderModelField(reads, named, "target");
@@ -1431,6 +1438,25 @@ function snapshotProviderTypeExpression(
       };
       break;
     }
+    case "source-global": {
+      const reference = type as Extract<ProviderTypeExpression, { readonly kind: "source-global" }>;
+      const typeArguments = readProviderModelField(context.reads, reference, "typeArguments");
+      snapshot = {
+        kind: typeKind,
+        name: readProviderModelField(context.reads, reference, "name"),
+        ...(typeArguments === undefined
+          ? {}
+          : {
+            typeArguments: snapshotProviderModelArray(
+              context,
+              typeArguments,
+              "type",
+              (argument) => snapshotProviderTypeExpression(context, argument),
+            ),
+          }),
+      };
+      break;
+    }
     case "type-parameter": {
       const typeParameter = type as Extract<ProviderTypeExpression, { readonly kind: "type-parameter" }>;
       snapshot = {
@@ -2102,6 +2128,19 @@ function canonicalizeProviderExportOwnerType(
       break;
     case "source-primitive":
       canonical = { kind: type.kind, name: type.name };
+      break;
+    case "source-global":
+      canonical = {
+        kind: type.kind,
+        name: type.name,
+        ...(type.typeArguments === undefined || type.typeArguments.length === 0
+          ? {}
+          : {
+            typeArguments: type.typeArguments.map(
+              (argument) => canonicalizeProviderExportOwnerType(context, argument),
+            ),
+          }),
+      };
       break;
     case "type-parameter":
       canonical = { kind: type.kind, name: type.name };

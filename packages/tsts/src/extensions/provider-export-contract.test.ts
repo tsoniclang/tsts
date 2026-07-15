@@ -140,6 +140,8 @@ test("provider export contracts include every provider type-expression field", (
   const pairs: readonly [string, ProviderTypeExpression, ProviderTypeExpression][] = [
     ["intrinsic kind", { kind: "any" }, { kind: "unknown" }],
     ["source primitive", { kind: "source-primitive", name: "int32" }, { kind: "source-primitive", name: "uint8" }],
+    ["source global", { kind: "source-global", name: "ClockInstant" }, { kind: "source-global", name: "CalendarInstant" }],
+    ["source global arguments", { kind: "source-global", name: "PromiseLikeValue", typeArguments: [{ kind: "string" }] }, { kind: "source-global", name: "PromiseLikeValue", typeArguments: [{ kind: "number" }] }],
     ["type parameter", { kind: "type-parameter", name: "T" }, { kind: "type-parameter", name: "U" }],
     ["target", { kind: "target-named", target: "a", id: "A", sourceShape: { kind: "string" } }, { kind: "target-named", target: "b", id: "A", sourceShape: { kind: "string" } }],
     ["target id", { kind: "target-named", target: "a", id: "A", sourceShape: { kind: "string" } }, { kind: "target-named", target: "a", id: "B", sourceShape: { kind: "string" } }],
