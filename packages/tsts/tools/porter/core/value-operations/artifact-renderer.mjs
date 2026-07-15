@@ -20,12 +20,15 @@ import {
 import { semanticTypeParameterKey } from "../../ts-extractor/semantic-type-contract.mjs";
 import { requireDirectProviderIdentity } from "./provider-identity.mjs";
 import { requireGoValueOperationPlan } from "./operation-plan.mjs";
+import {
+  requireArrayValueOperationRule,
+  requireBasicValueOperationRule,
+  requireCarrierValueOperationRule,
+  requireNamedIntrinsicValueOperationRule,
+  requirePointerValueOperationRule,
+} from "./runtime-operation-rules.mjs";
 
 const inputKeys = Object.freeze(["config", "externalFacadeCatalog", "generatedDeclarationOwners", "largeFileSplits", "plan", "snapshot"]);
-const numericBasics = new Set([
-  "byte", "float32", "float64", "int", "int8", "int16", "int32", "int64", "rune",
-  "uint", "uint8", "uint16", "uint32", "uint64", "uintptr",
-]);
 
 export function renderGoValueOperationArtifacts(input) {
   requireExactInput(input, inputKeys, "Go value-operation artifact input");
@@ -138,18 +141,17 @@ function renderValueOperations(contract, environment, targetType = undefined, di
       return operation;
     }
     case "pointer": {
-      const name = contract.representation === "aggregate" ? "GoPointerValueOps"
-        : contract.representation === "slot" ? "GoRefValueOps" : undefined;
-      if (name === undefined) throw new Error(`Go value operation cannot materialize pointer representation '${contract.representation}'`);
-      return `${runtimeValue(environment, name)}<${renderCanonicalType(contract.element, environment.operations)}>()`;
+      const rule = requirePointerValueOperationRule(contract.representation);
+      return `${runtimeValue(environment, rule.operationExport)}<${renderCanonicalType(contract.element, environment.operations)}>()`;
     }
     case "carrier":
       return carrierOperations(contract, environment);
     case "array": {
       const elementType = renderCanonicalType(contract.element, environment.operations);
-      if (contract.length === "0") return `${runtimeValue(environment, "GoZeroLengthArrayValueOps")}<${elementType}>()`;
+      const rule = requireArrayValueOperationRule(contract.length);
+      if (contract.length === "0") return `${runtimeValue(environment, rule.operationExport)}<${elementType}>()`;
       const elementOperations = renderValueOperations(contract.element, environment);
-      return `${runtimeValue(environment, "GoArrayValueOps")}<${elementType}, ${JSON.stringify(contract.length)}>(${contract.length}, ${elementOperations})`;
+      return `${runtimeValue(environment, rule.operationExport)}<${elementType}, ${JSON.stringify(contract.length)}>(${contract.length}, ${elementOperations})`;
     }
     case "struct":
       return structOperations(contract, renderedTarget, environment, directFieldMappings);
@@ -167,16 +169,8 @@ function carrierOperations(contract, environment) {
     if (metadata?.kind !== "string" || typeof metadata.value !== "string") throw new Error(`Go ${contract.carrier} value operation has invalid metadata`);
     argumentsText.push(JSON.stringify(metadata.value));
   }
-  const factories = new Map([
-    ["slice", "GoSliceValueOps"],
-    ["map", "GoMapValueOps"],
-    ["chan", "GoChannelValueOps"],
-    ["func", "GoFunctionValueOps"],
-    ["interface", "GoInterfaceValueOps"],
-  ]);
-  const factory = factories.get(contract.carrier);
-  if (factory === undefined) throw new Error(`Go value operation has no exact intrinsic carrier provider for '${contract.carrier}'`);
-  return `${runtimeValue(environment, factory)}${argumentsText.length === 0 ? "" : `<${argumentsText.join(", ")}>`}()`;
+  const rule = requireCarrierValueOperationRule(contract.carrier);
+  return `${runtimeValue(environment, rule.operationExport)}${argumentsText.length === 0 ? "" : `<${argumentsText.join(", ")}>`}()`;
 }
 
 function namedOperations(contract, environment) {
@@ -185,17 +179,12 @@ function namedOperations(contract, environment) {
   if (provider === undefined) throw new Error(`Go value operation for named type '${objectId ?? "missing"}' has no finalized provider`);
   if (provider.disposition === "intrinsic") {
     const target = renderCanonicalType(contract, environment.operations);
-    if (provider.intrinsicCarrier === "interface") {
-      return `${runtimeValue(environment, "GoInterfaceValueOps")}<${target}>()`;
+    const rule = requireNamedIntrinsicValueOperationRule(provider.intrinsicCarrier);
+    if (rule.invocation === "target-generic-factory") {
+      return `${runtimeValue(environment, rule.operationExport)}<${target}>()`;
     }
-    const zeroes = new Map([
-      ["slice", `${runtimeValue(environment, "GoNilSlice")}()`],
-      ["map", `${runtimeValue(environment, "GoNilMap")}()`],
-      ["function", "undefined"],
-    ]);
-    const zero = zeroes.get(provider.intrinsicCarrier);
-    if (zero === undefined) throw new Error(`intrinsic Go value-operation provider '${objectId}' has no exact carrier factory`);
-    return `${runtimeValue(environment, "GoNamedValueOps")}<${target}>(() => ${zero})`;
+    const zero = rule.zeroExport === null ? "undefined" : `${runtimeValue(environment, rule.zeroExport)}()`;
+    return `${runtimeValue(environment, rule.operationExport)}<${target}>(() => ${zero})`;
   }
   if (contract.typeArguments.length !== provider.typeParameterCount) {
     throw new Error(`Go value-operation provider '${objectId}' expected ${provider.typeParameterCount} type arguments, got ${contract.typeArguments.length}`);
@@ -257,13 +246,9 @@ function directStructFieldLayout(canonical, mappings, entry) {
 }
 
 function intrinsicBasicOperations(name, environment) {
-  if (name === "bool") return runtimeValue(environment, "GoBooleanValueOps");
-  if (name === "string") return runtimeValue(environment, "GoStringValueOps");
-  if (numericBasics.has(name)) return runtimeValue(environment, "GoNumberValueOps");
-  if (name === "complex64") return runtimeValue(environment, "GoComplex64ValueOps");
-  if (name === "complex128") return runtimeValue(environment, "GoComplex128ValueOps");
-  if (name === "Pointer") return `${runtimeValue(environment, "GoUnsafePointerValueOps")}()`;
-  throw new Error(`Go value operation has no exact provider for basic '${name}'`);
+  const rule = requireBasicValueOperationRule(name);
+  const operation = runtimeValue(environment, rule.operationExport);
+  return rule.invocation === "factory" ? `${operation}()` : operation;
 }
 
 function runtimeValue(environment, name) {

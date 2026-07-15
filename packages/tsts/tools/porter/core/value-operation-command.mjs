@@ -5,6 +5,7 @@ import {
   writeGoValueOperationGenerated,
 } from "./value-operations/generated-artifacts.mjs";
 import { buildGoValueOperationPlan } from "./value-operations/operation-plan.mjs";
+import { renderPortableGoValueOperationCatalog } from "./value-operations/portable-operation-catalog.mjs";
 import { prepareDeclarationAuditPrerequisites } from "./declaration-prerequisites.mjs";
 import { compareText } from "./deterministic-order.mjs";
 import { fail, repoRoot } from "./runtime.mjs";
@@ -58,6 +59,10 @@ export async function runGoValueOperations(config, options = {}) {
   const status = buildGoValueOperationGeneratedArtifactStatus(artifactInput);
   const failures = collectGoValueOperationArtifactFailures(status);
   if (failures.length > 0) fail(`Go value-operation generated artifact check failed: ${failures.join(", ")}`);
+  if (options.json === true) {
+    process.stdout.write(renderPortableGoValueOperationCatalog(artifactInput));
+    return;
+  }
   console.log(`Go value-operation generated artifact check passed (${artifactInput.plan.generatedCount} generated providers)`);
 }
 

@@ -25,7 +25,7 @@ test("Porter command option schemas accept only their typed options", () => {
     ["large-files", ["--write-draft", "--force"], { "write-draft": true, force: true }],
     ["ast", ["--write", "--force"], { write: true, force: true }],
     ["diagnostics", ["--write", "--force"], { write: true, force: true }],
-    ["value-operations", ["--write", "--force"], { write: true, force: true }],
+    ["value-operations", ["--json"], { json: true }],
     ["skeleton-check", ["--no-emit-temp", "--no-compile"], { "no-emit-temp": true, "no-compile": true }],
   ];
 
@@ -38,6 +38,7 @@ test("Porter command option schemas accept only their typed options", () => {
   assert.deepEqual(parseArgs("facades", ["--core-runtime", "--force"]), { "core-runtime": true, force: true });
   assert.deepEqual(parseArgs("large-files", []), {});
   assert.deepEqual(parseArgs("large-files", ["--write-draft"]), { "write-draft": true });
+  assert.deepEqual(parseArgs("value-operations", ["--write", "--force"]), { write: true, force: true });
 });
 
 test("Porter command option schemas reject malformed arguments", () => {
@@ -72,4 +73,5 @@ test("Porter command option schemas reject ignored combinations", () => {
   assert.throws(() => parseArgs("ast", ["--force"]), /option '--force' requires '--write'/);
   assert.throws(() => parseArgs("diagnostics", ["--force"]), /option '--force' requires '--write'/);
   assert.throws(() => parseArgs("value-operations", ["--force"]), /option '--force' requires '--write'/);
+  assert.throws(() => parseArgs("value-operations", ["--write", "--json"]), /options '--write' and '--json' cannot be used together/);
 });

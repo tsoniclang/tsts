@@ -51,8 +51,8 @@ const commandSchemas = Object.freeze({
     { requires: [["force", "write"]] },
   ),
   "value-operations": schema(
-    { write: booleanOption, force: booleanOption },
-    { requires: [["force", "write"]] },
+    { write: booleanOption, force: booleanOption, json: booleanOption },
+    { conflicts: [["write", "json"]], requires: [["force", "write"]] },
   ),
   "skeleton-check": schema({ "no-emit-temp": booleanOption, "no-compile": booleanOption }),
 });
