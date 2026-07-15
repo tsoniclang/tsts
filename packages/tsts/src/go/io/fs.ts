@@ -1,6 +1,7 @@
 import type { bool, byte, int, long } from "../scalars.js";
 import type { GoDefined, GoError, GoFunc, GoInterface, GoPtr, GoSlice, GoValueOps } from "../compat.js";
-import { FromDate, Time } from "../time.js";
+import { Time } from "../time.js";
+import { TimeFromDate } from "../../runtime-adapters/time.js";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
 import { GoInterfaceValueOps, GoSliceBuild, GoSliceMake, GoSliceReslice } from "../compat.js";
@@ -389,7 +390,7 @@ function fileInfoFromStats(name: string, stats: nodeFs.Stats): FileInfo {
     Name: () => name,
     Size: () => stats.size as long,
     Mode: () => mode,
-    ModTime: () => FromDate(stats.mtime),
+    ModTime: () => TimeFromDate(stats.mtime),
     IsDir: () => stats.isDirectory(),
     Sys: () => stats,
   };

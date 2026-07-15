@@ -6,7 +6,6 @@ import test from "node:test";
 import type { GoValueOps } from "./compat.js";
 import {
   DurationValueOps,
-  FromDate,
   Millisecond,
   Minute,
   Now,
@@ -18,6 +17,7 @@ import {
   UnixMilli,
   type Duration,
 } from "./time.js";
+import { TimeFromDate, TimeToDate } from "../runtime-adapters/time.js";
 
 interface TimeOracle {
   readonly duration: {
@@ -159,14 +159,14 @@ test("Time compares instants independently from raw location representation", ()
 
 test("Date adapters copy host values and fail outside their exact domain", () => {
   const date = new Date("2001-02-03T04:05:06.000Z");
-  const instant = FromDate(date);
+  const instant = TimeFromDate(date);
   date.setTime(0);
 
   assert.equal(instant.UnixMilli(), 981_173_106_000);
-  const converted = instant.ToDate();
+  const converted = TimeToDate(instant);
   converted.setTime(0);
   assert.equal(instant.UnixMilli(), 981_173_106_000);
-  assert.equal(new Time().ToDate().toISOString(), "0001-01-01T00:00:00.000Z");
-  assert.throws(() => FromDate(new Date(Number.NaN)), /must be a safe integer/);
+  assert.equal(TimeToDate(new Time()).toISOString(), "0001-01-01T00:00:00.000Z");
+  assert.throws(() => TimeFromDate(new Date(Number.NaN)), /must be a safe integer/);
   assert.throws(() => Unix(Number.MAX_SAFE_INTEGER + 1, 0), /must be a safe integer/);
 });

@@ -1,21 +1,20 @@
 import type { bool, long } from "./scalars.js";
-import type { GoDefined, GoValueOps } from "./compat.js";
+import type { GoValueOps } from "./compat.js";
 
-export type Duration = GoDefined<bigint, "__goDefinedType::time::type::Duration::a2b59f69065fc1762fc4d97e11e27b8eb52c2372d68658f9858161696d2f1796">;
+export type Duration = bigint;
 
-const minimumInt64 = -(1n << 63n);
-const maximumInt64 = (1n << 63n) - 1n;
-const nanosecondsPerMillisecond = 1_000_000n;
-const nanosecondsPerSecond = 1_000_000_000n;
-const nanosecondsPerMinute = 60n * nanosecondsPerSecond;
-const millisecondsPerSecond = 1_000n;
-const unixToInternal = 62_135_596_800n;
-const wallToInternal = 59_453_308_800n;
-const hasMonotonic = 1n << 63n;
-const wallSecondsMask = (1n << 33n) - 1n;
-const nanosecondsMask = (1n << 30n) - 1n;
-const nanosecondsShift = 30n;
-const maximumDateMilliseconds = 8_640_000_000_000_000n;
+const minimumInt64: bigint = -(1n << 63n);
+const maximumInt64: bigint = (1n << 63n) - 1n;
+const nanosecondsPerMillisecond: bigint = 1_000_000n;
+const nanosecondsPerSecond: bigint = 1_000_000_000n;
+const nanosecondsPerMinute: bigint = 60n * nanosecondsPerSecond;
+const millisecondsPerSecond: bigint = 1_000n;
+const unixToInternal: bigint = 62_135_596_800n;
+const wallToInternal: bigint = 59_453_308_800n;
+const hasMonotonic: bigint = 1n << 63n;
+const wallSecondsMask: bigint = (1n << 33n) - 1n;
+const nanosecondsMask: bigint = (1n << 30n) - 1n;
+const nanosecondsShift: bigint = 30n;
 
 export const Millisecond: Duration = nanosecondsPerMillisecond as Duration;
 export const Second: Duration = nanosecondsPerSecond as Duration;
@@ -34,7 +33,13 @@ interface TimeLocation {
 }
 
 const localLocation: TimeLocation = Object.freeze({ kind: "local" });
-const monotonicStartNanoseconds = process.hrtime.bigint() - 1n;
+const monotonicStartNanoseconds: bigint = process.hrtime.bigint() - 1n;
+
+let copyTime: (value: Time) => Time;
+let makeUnixTime: (seconds: bigint, nanoseconds: bigint) => Time;
+let makeUnixMillisecondsTime: (milliseconds: bigint) => Time;
+let makeNowTime: () => Time;
+let equalTimeValues: (left: Time, right: Time) => bool;
 
 export class Time {
   #wall = 0n;
@@ -43,11 +48,19 @@ export class Time {
 
   constructor() {}
 
-  static copy(value: Time): Time {
+  static {
+    copyTime = (value: Time): Time => Time.copy(value);
+    makeUnixTime = (seconds: bigint, nanoseconds: bigint): Time => Time.fromUnix(seconds, nanoseconds);
+    makeUnixMillisecondsTime = (milliseconds: bigint): Time => Time.fromUnixMilliseconds(milliseconds);
+    makeNowTime = (): Time => Time.now();
+    equalTimeValues = (left: Time, right: Time): bool => Time.valueEqual(left, right);
+  }
+
+  private static copy(value: Time): Time {
     return Time.fromStorage(value.#wall, value.#ext, value.#location);
   }
 
-  static fromUnix(seconds: bigint, nanoseconds: bigint): Time {
+  private static fromUnix(seconds: bigint, nanoseconds: bigint): Time {
     let normalizedSeconds = signedInt64(seconds);
     let normalizedNanoseconds = signedInt64(nanoseconds);
     if (normalizedNanoseconds < 0n || normalizedNanoseconds >= nanosecondsPerSecond) {
@@ -66,7 +79,7 @@ export class Time {
     );
   }
 
-  static fromUnixMilliseconds(milliseconds: bigint): Time {
+  private static fromUnixMilliseconds(milliseconds: bigint): Time {
     const value = signedInt64(milliseconds);
     return Time.fromUnix(
       value / millisecondsPerSecond,
@@ -74,7 +87,7 @@ export class Time {
     );
   }
 
-  static now(): Time {
+  private static now(): Time {
     const milliseconds = BigInt(Date.now());
     const seconds = milliseconds / millisecondsPerSecond;
     const nanoseconds = (milliseconds % millisecondsPerSecond) * nanosecondsPerMillisecond;
@@ -90,7 +103,7 @@ export class Time {
     return Time.fromStorage(nanoseconds, signedInt64(internalSeconds), localLocation);
   }
 
-  static valueEqual(left: Time, right: Time): bool {
+  private static valueEqual(left: Time, right: Time): bool {
     return left.#wall === right.#wall
       && left.#ext === right.#ext
       && left.#location === right.#location;
@@ -141,14 +154,6 @@ export class Time {
     return this.#wall === 0n && this.#ext === 0n;
   }
 
-  ToDate(): Date {
-    const milliseconds = this.unixMilliseconds();
-    if (milliseconds < -maximumDateMilliseconds || milliseconds > maximumDateMilliseconds) {
-      throw new RangeError("time.Time is outside the JavaScript Date range");
-    }
-    return new Date(Number(milliseconds));
-  }
-
   private static fromStorage(wall: bigint, ext: bigint, location: TimeLocation | undefined): Time {
     const value = new Time();
     value.#wall = wall;
@@ -185,7 +190,6 @@ export class Time {
 }
 
 const zeroTime = (): Time => new Time();
-const copyTime = (value: Time): Time => Time.copy(value);
 
 export const TimeValueOps: GoValueOps<Time> = Object.freeze({
   zero: zeroTime,
@@ -193,11 +197,7 @@ export const TimeValueOps: GoValueOps<Time> = Object.freeze({
 });
 
 export function TimeValueEqual(left: Time, right: Time): bool {
-  return Time.valueEqual(left, right);
-}
-
-export function FromDate(date: Date): Time {
-  return Time.fromUnixMilliseconds(longToInt64(date.getTime(), "Date milliseconds"));
+  return equalTimeValues(left, right);
 }
 
 export interface Timer {
@@ -269,7 +269,7 @@ export function NewTimer(duration: Duration): Timer {
 }
 
 export function Now(): Time {
-  return Time.now();
+  return makeNowTime();
 }
 
 export function Since(time: Time): Duration {
@@ -283,14 +283,14 @@ export function Sleep(duration: Duration): Promise<void> {
 }
 
 export function Unix(seconds: long, nanoseconds: long): Time {
-  return Time.fromUnix(
+  return makeUnixTime(
     longToInt64(seconds, "time.Unix seconds"),
     longToInt64(nanoseconds, "time.Unix nanoseconds"),
   );
 }
 
 export function UnixMilli(milliseconds: long): Time {
-  return Time.fromUnixMilliseconds(longToInt64(milliseconds, "time.UnixMilli milliseconds"));
+  return makeUnixMillisecondsTime(longToInt64(milliseconds, "time.UnixMilli milliseconds"));
 }
 
 function durationToMilliseconds(duration: Duration): number {

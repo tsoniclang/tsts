@@ -12,6 +12,8 @@ import {
   structType,
 } from "../../test/external-facade-fixtures.mjs";
 import { baseConfig } from "../../test/helpers.mjs";
+import { semanticDeclarationVariantsHash } from "../semantic-declaration-hash.mjs";
+import { buildSemanticTypeCatalog } from "../type-storage-policies.mjs";
 import {
   buildIntrinsicGoValueOperationCatalog,
   requireIntrinsicGoValueOperationCatalog,
@@ -66,4 +68,38 @@ test("intrinsic interface evidence is bound to its finalized config and snapshot
 
   assert.throws(() => catalog.requirements({ ...config }, snapshot), /different config or snapshot objects/);
   assert.throws(() => catalog.requirements(config, structuredClone(snapshot)), /different config or snapshot objects/);
+});
+
+test("excluded module-local named carriers receive intrinsic operations from exact storage relations", () => {
+  const watcher = externalType({
+    packagePath: "example.com/compiler/internal/fswatch",
+    name: "Watcher",
+    rhs: interfaceType(),
+  });
+  const snapshot = externalSnapshot([watcher]);
+  const semantic = buildSemanticTypeCatalog(snapshot).get(watcher.object.id);
+  assert.ok(semantic);
+  const config = {
+    ...baseConfig,
+    goModulePath: "example.com/compiler",
+    semanticRelations: [{
+      kind: "go-type-storage",
+      objectId: watcher.object.id,
+      storageIdentity: "packages/tsts/src/internal/fswatch/fswatch.ts::Watcher",
+      goDeclarationHash: semanticDeclarationVariantsHash(semantic, "test module-local watcher"),
+      tsDeclarationHash: "b".repeat(64),
+      reason: "The host-native watcher stores the excluded Go interface in one exact authored declaration.",
+    }],
+  };
+  const externalFacadeCatalog = finalizeGeneratedFacadeFixtureCatalog(config, snapshot);
+  const catalog = buildIntrinsicGoValueOperationCatalog(config, snapshot, externalFacadeCatalog);
+
+  assert.deepEqual(catalog.get(watcher.object.id), {
+    disposition: "intrinsic",
+    intrinsicCarrier: "interface",
+    objectId: watcher.object.id,
+    operationTypeParameterIndexes: [],
+    storageIdentity: "packages/tsts/src/internal/fswatch/fswatch.ts::Watcher",
+    typeParameterCount: 0,
+  });
 });

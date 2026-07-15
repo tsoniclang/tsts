@@ -106,20 +106,20 @@ export function buildGoValueOperationPlan(input) {
     if (provider?.storageIdentity !== undefined && provider.storageIdentity !== storageIdentity) {
       throw new Error(`Go value operation '${entry.objectId}' provider storage '${provider.storageIdentity}' differs from direct declaration '${storageIdentity}'`);
     }
-    if (entry.disposition === "generated" && !storageAudit.exact) {
+    if (entry.disposition === "generated" && !storageAudit.exact && entry.semanticDeclaration.rhs.kind === "struct") {
       throw new Error(`Go value operation '${entry.objectId}' uses adapted TypeScript storage and requires one reviewed operation provider`);
     }
     const operationIdentity = entry.disposition === "generated"
       ? generatedOperationIdentity(config, ownership.goUnit, entry.name)
-      : provider.operationIdentity;
-    claimOperationIdentity(operationOwners, operationIdentity, entry.objectId);
+      : entry.disposition === "intrinsic" ? undefined : provider.operationIdentity;
+    if (operationIdentity !== undefined) claimOperationIdentity(operationOwners, operationIdentity, entry.objectId);
     return Object.freeze({
       ...entry,
-      operationIdentity,
       sourceUnit: ownership.goUnit,
       storageAudit,
       storageIdentity,
       tsPath: ownership.tsUnit.path,
+      ...(operationIdentity === undefined ? {} : { operationIdentity }),
       ...(provider === undefined ? {} : { provider }),
     });
   }).sort((left, right) => compareText(left.objectId, right.objectId));
@@ -195,6 +195,7 @@ function generatedOperationIdentity(config, goUnit, typeName) {
 
 function providerEvidence(objectId, disposition, reviewed, generatorOwned) {
   if (disposition === "generated") return undefined;
+  if (disposition === "intrinsic") return undefined;
   if (disposition === "reviewed") {
     const provider = reviewed.get(objectId);
     if (provider === undefined) throw new Error(`reviewed Go value operation '${objectId}' has no reviewed evidence`);
@@ -205,7 +206,7 @@ function providerEvidence(objectId, disposition, reviewed, generatorOwned) {
     if (provider === undefined) throw new Error(`generator-owned Go value operation '${objectId}' has no generator evidence`);
     return provider;
   }
-  throw new Error(`local Go type '${objectId}' cannot use intrinsic provider disposition`);
+  throw new Error(`local Go type '${objectId}' has unsupported value-operation disposition '${disposition}'`);
 }
 
 function requireAllConfiguredProvidersUsed(catalog, used, label) {

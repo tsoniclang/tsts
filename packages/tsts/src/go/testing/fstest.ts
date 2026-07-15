@@ -6,7 +6,7 @@ import { EOF } from "../io.js";
 import { Time, TimeValueOps } from "../time.js";
 import { GoInterfaceValueOps, GoNilSlice, GoNumberValueOps, GoSliceCopy, GoSliceLoad, GoSliceMake, GoSliceReslice, GoSliceStore, GoStringValueOps } from "../compat.js";
 
-const utf8Encoder = new TextEncoder();
+const utf8Encoder: TextEncoder = new TextEncoder();
 
 export interface MapFile {
   Data: GoSlice<byte>;

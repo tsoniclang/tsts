@@ -70,6 +70,7 @@ export function buildGoValueOperationCatalog(units, options = {}) {
       objectId,
       unitId: unit.id,
       name: requireIdentity(declaration.object?.name, `Go type unit '${unit.id}' name`),
+      intrinsicCarrier: intrinsicCarrier(declaration.rhs.kind),
       semanticDeclaration: declaration,
       typeParameters: requireArray(declaration.typeParameters, `Go type unit '${unit.id}' type parameters`).map((parameter) => ({
         key: typeParameterKey(parameter.reference),
@@ -96,6 +97,11 @@ export function buildGoValueOperationCatalog(units, options = {}) {
     }
     const declaration = declarations.get(objectId);
     if (declaration === undefined) throw new Error(`Go value operation for '${objectId}' has no generated declaration or reviewed provider`);
+    if (declaration.intrinsicCarrier !== undefined) {
+      const result = new Set();
+      requirementCache.set(objectId, result);
+      return result;
+    }
     if (resolving.includes(objectId)) {
       throw new Error(`Go value-operation dependency cycle is not cut by a reference carrier: ${[...resolving, objectId].join(" -> ")}`);
     }
@@ -109,7 +115,7 @@ export function buildGoValueOperationCatalog(units, options = {}) {
 
   const entries = [...declarations.values()].map((declaration) => ({
     ...declaration,
-    disposition: providers.get(declaration.objectId)?.disposition ?? "generated",
+    disposition: providers.get(declaration.objectId)?.disposition ?? (declaration.intrinsicCarrier === undefined ? "generated" : "intrinsic"),
     operationTypeParameterIndexes: [...requirementsForDeclaration(declaration.objectId)].sort((left, right) => left - right),
   })).sort((left, right) => compareText(left.objectId, right.objectId));
   return {
@@ -117,6 +123,14 @@ export function buildGoValueOperationCatalog(units, options = {}) {
     byObjectId: new Map(entries.map((entry) => [entry.objectId, entry])),
     usedProviderObjectIds: [...usedProviderObjectIds].sort(compareText),
   };
+}
+
+function intrinsicCarrier(kind) {
+  if (kind === "interface") return "interface";
+  if (kind === "slice") return "slice";
+  if (kind === "map") return "map";
+  if (kind === "signature") return "function";
+  return undefined;
 }
 
 function requirementsForShape(shape, localTypeParameters, resolveNamed, declarations, providers) {

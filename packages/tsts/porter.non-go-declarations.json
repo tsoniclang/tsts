@@ -7130,32 +7130,6 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "6fc52cebe24e01a85a61f2851bbf12a935056faf3938f86c4702ebed679d3825",
-      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
-      "fragmentIndex": 0,
-      "kind": "class",
-      "name": "JsonDecoder",
-      "namespaces": [
-        "type",
-        "value"
-      ],
-      "owner": "go-runtime-facade",
-      "visibility": "module-private"
-    },
-    {
-      "declarationHash": "01958e2bd607c737ca069fe66eeb6dd67d76194a393c2d3e4ff5b1df6f650d96",
-      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
-      "fragmentIndex": 0,
-      "kind": "class",
-      "name": "JsonEncoder",
-      "namespaces": [
-        "type",
-        "value"
-      ],
-      "owner": "go-runtime-facade",
-      "visibility": "module-private"
-    },
-    {
       "declarationHash": "4a1f87e4d654fedf3977d898666376ca72cb696c4de92a7d3eff1d5147cdb068",
       "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
       "fragmentIndex": 0,
@@ -7180,19 +7154,7 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "7a9b4c313d6e7c4ee5348d6559dae50da59c7cedd69f8d3abed971192e2eee05",
-      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
-      "fragmentIndex": 0,
-      "kind": "function",
-      "name": "asJsonObjectFrame",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "go-runtime-facade",
-      "visibility": "module-private"
-    },
-    {
-      "declarationHash": "97e70bde69aa156bd13431a77704d00861fb8d70f1e743858c8d10e780c75180",
+      "declarationHash": "54f4113860c4749c0bfac24b4f64f78a833b169e28f014d2288fb574f91cedb6",
       "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
       "fragmentIndex": 0,
       "kind": "function",
@@ -7204,7 +7166,7 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "b658073786602eb37e9304903a4c08af1aae7ef1df672a3ff33784704946c1f9",
+      "declarationHash": "ad5252910270075e3f05e32331120114c47bd7879756d78257d7b71a9c437fcd",
       "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
       "fragmentIndex": 0,
       "kind": "function",
@@ -7240,23 +7202,11 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "51542a9f8bdc4dc9ed58f8fabd15b8ba22b4058bc2587a78335e76030c072e0b",
+      "declarationHash": "a3e41ebaa2b195b43a2f715b03433e6767fb2c289507c835b8302626042b8364",
       "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
       "fragmentIndex": 0,
       "kind": "interface",
-      "name": "JsonArrayFrame",
-      "namespaces": [
-        "type"
-      ],
-      "owner": "go-runtime-facade",
-      "visibility": "module-private"
-    },
-    {
-      "declarationHash": "535398efec0f329d344d161815c9b24be5629289b6e3cfaed6f080ec5adc80f6",
-      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
-      "fragmentIndex": 0,
-      "kind": "interface",
-      "name": "JsonObjectFrame",
+      "name": "ContainerFrame",
       "namespaces": [
         "type"
       ],
@@ -7276,11 +7226,23 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "ddc26ca717540eca79d924ea037adabea8ee57499b028a15fcf944714a36d1da",
+      "declarationHash": "3ed35621e4ddca95e2deffef98e0aa65abf18c8d2ec66f60e7ea5c540c9d12bd",
       "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
       "fragmentIndex": 0,
       "kind": "type",
-      "name": "JsonContainerFrame",
+      "name": "ContainerExpectation",
+      "namespaces": [
+        "type"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "da862bf5c81aa9d7520a789f8039481d9acd504d52d346535a716bba433e0a30",
+      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
+      "fragmentIndex": 0,
+      "kind": "type",
+      "name": "ContainerKind",
       "namespaces": [
         "type"
       ],
@@ -7312,6 +7274,42 @@
       "visibility": "direct-export"
     },
     {
+      "declarationHash": "325dd152094ff900a05408118b02e15b4f6c4bbda51559f760be85a5ff167ea3",
+      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "byteAt",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "1ab3d9a1ceb571fd3de7d35daf067a2cfc924cf21d31fc5ab82e5b782ed11258",
+      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "containerFrameValueOps",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "90fdaffdb80efeb49b0d1e557073c8d6429cd9d07358dc1f73b4fef8d2e05bbe",
+      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "decodeJsonValue",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "b5b418dba34e501cfdc72b5249ce0463f2b8c89c4c88ccbe67f4ebbc024484cd",
       "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
       "fragmentIndex": 0,
@@ -7336,11 +7334,11 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "b0b51229a10f064b4ef61f6f818cad0269441b65d000bc27476430a349f03c54",
+      "declarationHash": "589b1d943f2c780f40cf38f50a5c0aa381035855d917c6b94bf50608ecfeb7ef",
       "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
       "fragmentIndex": 0,
       "kind": "variable",
-      "name": "kindOf",
+      "name": "invalidFrame",
       "namespaces": [
         "value"
       ],
@@ -7348,11 +7346,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "a0dd632bbc6c7a5adf2212b7af0fed671120db93be1809add9bc56dfc7253be9",
+      "declarationHash": "662c2f540edc7fb1c17d63e4d159e922bfb8833c4e58eed9a95fb0cb525574bf",
       "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
       "fragmentIndex": 0,
       "kind": "variable",
-      "name": "normalizeForJson",
+      "name": "normalizeKind",
       "namespaces": [
         "value"
       ],
@@ -7372,11 +7370,35 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "b57db560c8f55511105bc0598ac981e914ddd02758e174c4536f382d59dd4a34",
+      "declarationHash": "22769713df1e663c0a2a1260ed4c2e1dc28d709d12455d6a2372a68132dd64c8",
       "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
       "fragmentIndex": 0,
       "kind": "variable",
-      "name": "parseInput",
+      "name": "scanStringEnd",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "1aaccfb53859ffe2ecff47ae708f1195558ea504971df984a4cba15a4d5967c9",
+      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "scanValueEnd",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "4f3af3f828c70b3778114f96d93e1161a3f6879f45283ce6d10b67b72d2d89c4",
+      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "skipWhitespace",
       "namespaces": [
         "value"
       ],
@@ -7413,6 +7435,18 @@
       "fragmentIndex": 0,
       "kind": "variable",
       "name": "toError",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "46c973b7a1a0054dc467d131c59da68787805d51c394f10a13a796b4a9d6afae",
+      "file": "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "topFrame",
       "namespaces": [
         "value"
       ],
@@ -7660,26 +7694,72 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "b5d07bacae4d9741b5130efec946787e335fda2bd3733d0b4dcef2e89a715f0e",
+      "declarationHash": "d9fd24b54c07f0c21d465e300abc1c236c19a2762e3989f1974c407105a907c6",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "class",
-      "name": "hasher",
+      "kind": "function",
+      "name": "accumulate",
       "namespaces": [
-        "type",
         "value"
       ],
       "owner": "go-runtime-facade",
       "visibility": "module-private"
     },
     {
-      "declarationHash": "e08ee4fd361ca0af1f4f7b829f896b0d025ae408998fa79205707f293f66f38c",
+      "declarationHash": "7d32d2c97fdf23b2b9d243f65090aefae724800cea0f8794803740dde2d4b9fc",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "class",
-      "name": "uint128",
+      "kind": "function",
+      "name": "accumulateBlock",
       "namespaces": [
-        "type",
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "b9342330dfae3cb14d969887f04e0d1b82cd1ae00e18b774e22a9f8a2e9c3369",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "accumulateStripe",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "459b27abcf4746277dcd94e01c4ae0d0ad9f7901bf1b9946762b58df0ea8e155",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "finalizeMedium128",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "67f8fc83d43e7e0409443383652aa8fc5dc64ac075b5eb3b6d9b7726a5a83030",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "hash128",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "867b6eafac975f93a6f741387756ad610ee4d19d24328e5aaa3e07452b9c9ded",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "hash64",
+      "namespaces": [
         "value"
       ],
       "owner": "go-runtime-facade",
@@ -7698,6 +7778,66 @@
       "visibility": "direct-export"
     },
     {
+      "declarationHash": "88c5dc96d5971d5570ff48277ada677305f2345d1cd65dd2bd7e926ea5963341",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "makeUint128",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "67513832b5679bb6358ddc3d92f999d8dae185551c341a7970d53bc8b20bfa56",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "merge64",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "5e38ab8bc30a52b887a6c810b89fa32447a14b22191861b74460ff9cc2fa97a1",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "mix128",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "03b796d8c9e03f9dcfeb5677014f4e2af72e1df20441e213064c6e90f3d1c5b0",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "multiply64",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "7bd5fd41e2e2ef4b9eec91ac4ad2444bf3681ca88866831a1cbff306a86bde93",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "multiplyFold64",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "95b0de19b6b6f5f1d7f4be74b28e258cbf152bf397e7463b64b290d6595bccbd",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
@@ -7710,11 +7850,11 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "13079b945fbe0bdfe014febaaf896f293472133c2d3677f85b49321dac878f34",
+      "declarationHash": "32ef5c3774920e417d5652c439d9d141afb31ad8b7a424847ec7d722a1ba5138",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
       "kind": "function",
-      "name": "uint64BigIntFromParts",
+      "name": "readSecret64",
       "namespaces": [
         "value"
       ],
@@ -7722,11 +7862,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "f57337f51996b98734938fb94d3ec8d733853fb349b50ae0ebaabbb515ba6ea5",
+      "declarationHash": "29e88b3a0ea89f379873ac47430a596e20f30f6c9387662ac0a60dde256a6d1c",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
       "kind": "function",
-      "name": "uint64Bytes",
+      "name": "readUint16",
       "namespaces": [
         "value"
       ],
@@ -7734,11 +7874,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "cece08dc873194d533253dd7944e3ba5fca408072340aab50df6f7c19090d399",
+      "declarationHash": "a8253272b8b9cb232b3098514a654c7753f2b758522117a433c05033eb8a2eee",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "encoder",
+      "kind": "function",
+      "name": "readUint32",
       "namespaces": [
         "value"
       ],
@@ -7746,11 +7886,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "a768a7d0c17a6c03fafd97f3ff15e85e0a4696ad35305ffaad412c6e3351e81a",
+      "declarationHash": "4d35e84d456fc849d1c0adf8d80ec3564060ea82f0673ecf821124cede281ec2",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "offset64",
+      "kind": "function",
+      "name": "readUint64",
       "namespaces": [
         "value"
       ],
@@ -7758,11 +7898,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "b067a86df25a0a74c5348166ea9c34c0ba9f21543789bee67aaba2940085c801",
+      "declarationHash": "661f7127484e76ca8c3c6907b52a7ddd35b88e10f6134c54d17212203704cf53",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "offset64High",
+      "kind": "function",
+      "name": "reverseBytes32",
       "namespaces": [
         "value"
       ],
@@ -7770,11 +7910,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "088fef634c8f74aa5471e3c70b3ba2a4d44d6795fae4d99c3e29cd7a77e95215",
+      "declarationHash": "a4a192b444df3bc3f0f760eae42b519bbcfceb189b5552944edb8c50605bc984",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "offset64Low",
+      "kind": "function",
+      "name": "reverseBytes64",
       "namespaces": [
         "value"
       ],
@@ -7782,11 +7922,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "e2f0fca8f89cff6514a0421ad90b781cb6a8a9922db3b419ae07a50ff00fefd8",
+      "declarationHash": "2233a147c24323e8262239528fcd4fdbd93b0e416c3d8d719890359ba2b6cfa1",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "prime64",
+      "kind": "function",
+      "name": "rotateLeft32",
       "namespaces": [
         "value"
       ],
@@ -7794,11 +7934,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "d926930ad20a3fd3334da74d7a84c733d4df09f286a2b6c6406b6e8fe110e924",
+      "declarationHash": "430b883b722b6d6ae5652211466dc39d896be17067af325093092ab6f49df0cd",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "prime64High",
+      "kind": "function",
+      "name": "rotateLeft64",
       "namespaces": [
         "value"
       ],
@@ -7806,11 +7946,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "1bb09adba3a66e655a01ce8056aaa89c63c0e974732e89c870f50ac6bf2cfc17",
+      "declarationHash": "e9615070f3facfa9d6c344e3fa6c2862c1bbd43c9bbd983dd3e4b11a19f1c9ef",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "prime64Low",
+      "kind": "function",
+      "name": "rrmxmx",
       "namespaces": [
         "value"
       ],
@@ -7818,11 +7958,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "c1b8ee89826b3fac7969885d684bb4d0c28db8c6d1e8f5e99a3816fe30dcf4d1",
+      "declarationHash": "8e3d786d4fcd42061a2589864a96e1a3590d75e0c9e6fd29c7fef3ba63bbf425",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "secondSeed",
+      "kind": "function",
+      "name": "scrambleAccumulators",
       "namespaces": [
         "value"
       ],
@@ -7830,11 +7970,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "95ed3f8c98f8bc457ef0ea5ca6e9088055122870837b6d564cc810bd5d4bce07",
+      "declarationHash": "84107671a31c6e8687ccbbd564f0d9d5035e68426a64de66e4c1eafbb1fc7d3f",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "secondSeedHigh",
+      "kind": "function",
+      "name": "uint64",
       "namespaces": [
         "value"
       ],
@@ -7842,11 +7982,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "024c0637c8daa8da2a8d8f2271a3f1e32fb98f17c9e3decd546fd34ffe0d895d",
+      "declarationHash": "2810e77dad7f2326c92844ca6cd9f2e6f040f0284707ca3bcd0ad1e17d11fcba",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "secondSeedLow",
+      "kind": "function",
+      "name": "writeUint64Bytes",
       "namespaces": [
         "value"
       ],
@@ -7854,11 +7994,251 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "ba53dd2bf0927e53eb22039b90db1f1cce7b07b20d703167bbfae737542cb080",
+      "declarationHash": "9f551a86443130223b91f03c3964f6377a880932779a168d148353a36c954caf",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "xxh3Avalanche",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "863c816420afac01c6aec39e12ba556a2fd92375d554e93e03db6c5ee8649626",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "xxh64AvalancheSmall",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "329c1761e3b5cc07278d5e58fed20c25a959e9bf2fab73bb21b30b10b3c7771b",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "xxhAvalancheSmall",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "0c40b114bd51e1a72cce8690aa599a331f2a2638809c3cc5b8210b92d16bff79",
       "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
       "fragmentIndex": 0,
       "kind": "variable",
-      "name": "uint32Base",
+      "name": "avalanchePrime",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "09fcee76ef51abc415b3e770ff1966ed975fe50a769520bfd8182640f352656b",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "blockSize",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "bda0fb21ae1c7036fddc7a9d136544d880e62f73f8af935e22518e234554b468",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "bufferSize",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "7a6522cc586c47813b9da74e5ace7e854da3d99ca7ec38be532b857a67ff72de",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "defaultSecret",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "0bfa0848383e91539479da97a72bd8312343b7157171fca5ce566de170a52b0c",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "defaultSecretWords",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "34606217d5c50d159ecbfa7fbf5040a5b7ee1d2bd7f2ceea261f72823f1fd284",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "initialAccumulators",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "77249b68e03428954f5b170349cc34d8562a9de528842b71aa289db6515b0b0e",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "prime32_1",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "c0dc5aaa5c064957de43ebb73c5d269040bf3958cba7cc90ce5a2908bc723c38",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "prime32_2",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "6936091ddef6745b6c3877ab23881975b98ac40a6bd158e21f4c7144621d97e5",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "prime32_3",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "837dfab31a96ce8c3e975cc6b7a952199f27b6dc6ad6607803f3372381142abf",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "prime64_1",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "0ba6f5392cedcee548d304a551aaf24459ec26bc32525c80d465a192a1175147",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "prime64_2",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "d841dd94983e33fa06a3b55f7b9dcd98b11590b63a44af272a3b2c1126dc1dbc",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "prime64_3",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "8e060961d9add99469bea4200e4a5739eb6e3f49f49e908ee0c1e0fc7a8c55d6",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "prime64_4",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "f67ac4043b9536d342d6168431672a5524dcdc15ab7348b5adff361b43759dc3",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "prime64_5",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "9c48b84c151dff7fd69acbd99a74fa9bd68f566ec2a0dfc04990562cbf9351e1",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "rrmxmxPrime",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "b4d2260bfe3433f5ba758e8579527bbcaa2cdd8cabe16155bfbc5f4b563e668d",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "stripeSize",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "18d84a5674cd6aa1f622d76970457af9853594f8a5465c034b37ec13dab0df4f",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "uint32Mask",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "8a2b3940df46721b92075be81851bad2d27c095b4c052c8787a9f073237826b7",
+      "file": "packages/tsts/src/go/github.com/zeebo/xxh3.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "uint64Mask",
       "namespaces": [
         "value"
       ],
@@ -8916,6 +9296,18 @@
       "fragmentIndex": 0,
       "kind": "function",
       "name": "canonicalize",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "d001e19dd7581a8b495018f23fafcda486d27a720bd9459dbdc6fbd0b6322b9d",
+      "file": "packages/tsts/src/go/golang.org/x/text/language.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "findBaseLanguage",
       "namespaces": [
         "value"
       ],
@@ -9981,11 +10373,59 @@
       "visibility": "direct-export"
     },
     {
+      "declarationHash": "5158df92bff2780aec4d1b7d31452fb402538d0d15179c3543407da77bb4f325",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeAppend",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "c52cab952eae61cfd34b7d16166a1db110d442fc34fcaaec95b3c7cd71401611",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeCharDevice",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "6c914bd6024d656496ce76c9c6d5a1a216a80db781e5895a838005cd0a7c386e",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeDevice",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
       "declarationHash": "eabc516bb0276512f8b2e2ce06d176052cd56adf8754be80a88892e893c0d469",
       "file": "packages/tsts/src/go/io/fs.ts",
       "fragmentIndex": 0,
       "kind": "variable",
       "name": "ModeDir",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "b92a083b4269ebc6509e492f0735421516e5c1945f19e45e7936c529ebb6f5bc",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeExclusive",
       "namespaces": [
         "value"
       ],
@@ -10005,6 +10445,18 @@
       "visibility": "direct-export"
     },
     {
+      "declarationHash": "864205e786b9c8e15e41ef45431f64205489d787270df522882b39540441b7b2",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeNamedPipe",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
       "declarationHash": "4fb560e696cf424b1e6148191a79aed364c061443af0f9a9d727a9bd12254dda",
       "file": "packages/tsts/src/go/io/fs.ts",
       "fragmentIndex": 0,
@@ -10017,11 +10469,83 @@
       "visibility": "direct-export"
     },
     {
+      "declarationHash": "b65355e99a85977f05c0be6448263280869958a3d6ba903cf16ad4baddfb1793",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeSetgid",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "3d328dabb901c9c7cd895e81d683975e9aab13c106ecb4998166430e99b1c9f1",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeSetuid",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "e926664b5dc881b811b6633aea2f3b52164ae9d9cf32adc5fe7c5974453b2638",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeSocket",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "bf68ed8772bbf7fad52a2588513b565b54b4fd5988f5bd0720a74317070124e6",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeSticky",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
       "declarationHash": "38e95e0cef5e41e8ae5769c63b1acecc27d807abe42ce5d13f74dd485fe4a92c",
       "file": "packages/tsts/src/go/io/fs.ts",
       "fragmentIndex": 0,
       "kind": "variable",
       "name": "ModeSymlink",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "dc7b69ba9cf9a7df075c6fa2bb3af5b0332ddba5a739774f26464e9d2dfe5034",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeTemporary",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "6a38f58b2772d978280a192b84ac40f86c187fe14adb35bac4811b7b31f20ec2",
+      "file": "packages/tsts/src/go/io/fs.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "ModeType",
       "namespaces": [
         "value"
       ],
@@ -13918,6 +14442,18 @@
       "visibility": "direct-export"
     },
     {
+      "declarationHash": "cb42e96a5f05469405910bf6a18b35f01cb7ee20101d345572afd6b8fde7a5b4",
+      "file": "packages/tsts/src/go/strings.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "appendRune",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "045aec6b873d800d689d67b21863accf7bb9be1ebc2204b0b5f0ac66b6e6de7c",
       "file": "packages/tsts/src/go/strings.ts",
       "fragmentIndex": 0,
@@ -13959,18 +14495,6 @@
       "fragmentIndex": 0,
       "kind": "variable",
       "name": "encode",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "go-runtime-facade",
-      "visibility": "module-private"
-    },
-    {
-      "declarationHash": "cb42e96a5f05469405910bf6a18b35f01cb7ee20101d345572afd6b8fde7a5b4",
-      "file": "packages/tsts/src/go/strings.ts",
-      "fragmentIndex": 0,
-      "kind": "variable",
-      "name": "appendRune",
       "namespaces": [
         "value"
       ],
@@ -14296,11 +14820,11 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "0070e36c1cdbe08922cf04851e7409363286fa9ab3907306ace518503cbc8a23",
+      "declarationHash": "81ffe66d61deb6adf34eee9bb99043264a32994a7e4d0c2b4ddaf0dd6e0ef2ed",
       "file": "packages/tsts/src/go/testing/fstest.ts",
       "fragmentIndex": 0,
       "kind": "function",
-      "name": "bytesForFile",
+      "name": "compareGoStrings",
       "namespaces": [
         "value"
       ],
@@ -14320,11 +14844,35 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "f17a8b1a7886116426967d274e27b0f4792c412f81813643f17512d4f5542f6d",
+      "declarationHash": "31500bcefe3ad85b517526a17e081b90a662cd481c5210c0b6a0cc428ce52ee7",
       "file": "packages/tsts/src/go/testing/fstest.ts",
       "fragmentIndex": 0,
       "kind": "function",
-      "name": "hasDirectory",
+      "name": "isDirectory",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "9ef3c4cc04a20c49ce95dc5110a1f293e00c296a32b5a50ee9f63dfbff2ff7ce",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "mapDirEntry",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "48398ee73f2af7ea5b7ebabb87182498e370af4c7ccc60e948b275f25841617c",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "mapFileInfo",
       "namespaces": [
         "value"
       ],
@@ -14344,18 +14892,6 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "508e443804ecba03e3ec3ea6b481379dd76b5199e0d593973e07216ce036d7c4",
-      "file": "packages/tsts/src/go/testing/fstest.ts",
-      "fragmentIndex": 0,
-      "kind": "function",
-      "name": "normalizeName",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "go-runtime-facade",
-      "visibility": "module-private"
-    },
-    {
       "declarationHash": "8f27e98d34743c8e0e8701fd282b664f2293386a9fdc97a7260741c68a622630",
       "file": "packages/tsts/src/go/testing/fstest.ts",
       "fragmentIndex": 0,
@@ -14368,7 +14904,79 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "7b3d31c9f83b93214e2030e05a130415325d85244be60743b302957dd97c15d9",
+      "declarationHash": "0dad98a15f8073b6c09c7f5665d4ce3c36a324442c1794c3cfb17395073d4be3",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "openDirectory",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "7340e2ce2b21286962c46b62b355f972822abca1fd1b6e182a6cba8062480baa",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "openRegularFile",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "cea9bca8d5604e9c7ccfc8965e3b08768e86e3d17952ded4da0e45ea19d58586",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "requireDirEntry",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "c85ca34cde1e2853984a517ad6eeda547a5c8fb4890eba2265995d013156b922",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "requireMapFile",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "2320b390c799b666194066f759d15b3ce82529714cde6f6a7dd7c3fdd2bcdc5c",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "sortDirEntries",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "f76ccf9a9889474eef4f6d22d434bee52fda6f68732afaeaee8b6c98510caaa3",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "syntheticDirectory",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "a00adc511929301dafb36cd9d0a9d976e86413e89413321c703162de95a78200",
       "file": "packages/tsts/src/go/testing/fstest.ts",
       "fragmentIndex": 0,
       "kind": "function",
@@ -14378,6 +14986,30 @@
       ],
       "owner": "go-runtime-facade",
       "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "2dadeba40e192cdae9723cbeb290c031d29c56a5a78f12cd7f30851f3800e627",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "validPath",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "33bd4439152623e6566cf4ab0ac14e3be47e40ec22d8ce63d82a8098398e18e8",
+      "file": "packages/tsts/src/go/testing/fstest.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "utf8Encoder",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
     },
     {
       "declarationHash": "1db18739c800eedc095001a612d73350abc7784ca4db03a0551fc528d1035735",
@@ -14428,6 +15060,42 @@
       "visibility": "direct-export"
     },
     {
+      "declarationHash": "f83b2fb282bc115c649cf8f793615397cb09a8fa4167acc7d19aa5331578d55a",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "durationToMilliseconds",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "99fd68f6b24f551233e34f4da5129d582b88c0084c8318902687fa4aefa40c11",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "int64ToLong",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "48f35457323a0bf37bd6d44bcf3952954d9dc2a6ce62ea14865be96a7395360d",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "longToInt64",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "90453b0b5af9e25793fdc5cee0047e9ee48748704d8979d880d63162dc94a6f3",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
@@ -14464,6 +15132,18 @@
       "visibility": "direct-export"
     },
     {
+      "declarationHash": "12a1e5f4a3dabb2a2d1e6df0ed09aa40b1c689e8760dd277ef754bb8393b710d",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "signedInt64",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "67bb6020d86e6dab4959eec7ec90def9939a5ad1a9dc869e017dfb1d382f3cbb",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
@@ -14481,6 +15161,18 @@
       "fragmentIndex": 0,
       "kind": "function",
       "name": "Sleep",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "2a5731c8f605b3b72931c2f11e86c206e79b9c10a4597ebbe951c297df76e1fe",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "TimeValueEqual",
       "namespaces": [
         "value"
       ],
@@ -14524,6 +15216,18 @@
       "visibility": "direct-export"
     },
     {
+      "declarationHash": "29f71ca6a8ea41ed7ed30fc01ffba933b8dcd49fe92d51a93d0de88f0b07d90a",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "interface",
+      "name": "TimeLocation",
+      "namespaces": [
+        "type"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
       "declarationHash": "821bb3db3526cf6de1ca16a51aaf7f778d483c4fce163df0fc4cf7cc7c62f0bf",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
@@ -14536,11 +15240,11 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "ba062eeb33e6a49c81ba39bbb30fbac739b877399c3baac5abe2c28ebbc7ad20",
+      "declarationHash": "2c3ae3018377d77ce026905e31cfdabb1e316f733e40a52904cf1c5fdef5dc8f",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
       "kind": "variable",
-      "name": "durationToMilliseconds",
+      "name": "copyDuration",
       "namespaces": [
         "value"
       ],
@@ -14548,7 +15252,103 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "86bf2d39fab30e563d2260f09a3931658a12a8dac0c18af83899630d8a684de4",
+      "declarationHash": "9d690a93f35c3a9ff7c418ea7c66d8993ded9d838b31b6ae0cee470d63deed83",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "copyTime",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "c7b7fc45ea57041612897a4acd74a9c5c6f93771c02100074cb980dbdea9a42d",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "equalTimeValues",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "46008c61019ff974da96a51884a1c6b2f0156d1b7affe28f61ff9557849ed9b2",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "hasMonotonic",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "a945eb83c576c68ecdde04863e32ae2834c89842e25a8cd1e92f9aae74cd1642",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "localLocation",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "863e2d9d74f8157eb73f18f25a7153e31c72acdf9dd39ab28d793836a9ddf76d",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "makeNowTime",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "46f8fc4bec0512c9490fd9b05b354f20abf5a3cfd76e01fe9bc22b022efe9c17",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "makeUnixMillisecondsTime",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "dc0a3f3f3c0d784f29e4b234a63f97cf2771177f2b315933ecdcba4c4d72c461",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "makeUnixTime",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "4d255d2a0f49de69857642bac0cb3716bec404d4140e22a10929ec8339095ee0",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "maximumInt64",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "f641cf3b0ace4e95b3bf9e45df7a652deb9d572c6e8220b3ecbcfdb601485a17",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -14560,7 +15360,31 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "087478e2ee6f3e8dd035cf843135c0b37ef55a7f388eedad07222bd845710566",
+      "declarationHash": "0bcda67498adb1419ca5a6d1c0d6dceb6ddb0f31224461c279e5eb49c3832fff",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "millisecondsPerSecond",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "97e7f72e5d39a2f87158465ec0b95cf876d6f373e541edcad106c66cf43dff52",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "minimumInt64",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "f99f1c09016f0a9589224d5c5e6d8832562e78717705df86395fa3281114ab93",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -14572,7 +15396,31 @@
       "visibility": "direct-export"
     },
     {
-      "declarationHash": "6da3d8bf43a4a4f3e819850948d14c9a34dc224cb67c11d2d05f5d3ed41c6cd2",
+      "declarationHash": "faf61a32359a3c035184e479d9e9d37c825815a7c10a65fc514a12305b691ec5",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "monotonicStartNanoseconds",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "0ac812555df22fe87c3e90d2287fd18e864cd9628d869d13297e8bd092ff55a7",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "nanosecondsMask",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "298c2b74aa85b626ccf357caa2cafe14c805f2ef40cc9d0ded20592c0c8ef76f",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -14584,7 +15432,7 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "4efafe413ecbd6cd1e7f2266eb16a71fdbcd9b840f90594ea6fa46432f69b750",
+      "declarationHash": "d30fa8895da4f7becf8cc7061ae3c2816194b0dda83b2b33a7ebfe4fd14bfbed",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -14596,7 +15444,7 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "4d0ddcd8a1031c0f58d9c05bd97c5478f6905aa3935128d45ee1e8cc53898204",
+      "declarationHash": "65780bfac6e2d7a9de0f65ec095eeea518b28e2d179a817ed667dd0453b8c0ea",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -14608,7 +15456,19 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "8a1db9ee7d935bd110c8e03b82a70d6d9c92619b9abf37802d1f17c71a478897",
+      "declarationHash": "02ed3c258308509514c16ab15055a6ccb3d674d7f33dc4c809b6e301945c2666",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "nanosecondsShift",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "491a988076ddfe23c1c45f99d5317c6553a7ead19d311d15e7129b51ca1d8915",
       "file": "packages/tsts/src/go/time.ts",
       "fragmentIndex": 0,
       "kind": "variable",
@@ -14618,6 +15478,66 @@
       ],
       "owner": "go-runtime-facade",
       "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "b170b1de1304b36aa33cc4dd40902a163355235b358f87018cc5ffd1cb6a2969",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "unixToInternal",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "9cd51a889dbe3fa2da4d4121b79a76da0ce8234888625818d77baf981b5ff9eb",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "wallSecondsMask",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "9d79ddd598e4405769bf6f96766194f89b4af4800246757005182691276de008",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "wallToInternal",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "bcd845f152ecb61b760fab17f4221a5da8b75f93951e4863052a0e6447f28460",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "zeroDuration",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
+    },
+    {
+      "declarationHash": "fdc8ee9b3573c30643d7a812c074ce34e9d88c9914e924454e08506d53de7b5c",
+      "file": "packages/tsts/src/go/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "zeroTime",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "go-runtime-facade",
+      "visibility": "module-private"
     },
     {
       "declarationHash": "d742086fc7d7507fe3dadf13b6e78afeb044adee7abdab39b29eaf5fa980dd6d",
@@ -17253,18 +18173,6 @@
       "visibility": "module-private"
     },
     {
-      "declarationHash": "b2d5a6581b5e22ed3ac6a3a150080bb71e44eb88d0bbe8a3690807f4b1c09ba0",
-      "file": "packages/tsts/src/internal/checker/checker/symbols.ts",
-      "fragmentIndex": 0,
-      "kind": "function",
-      "name": "getSelectedElementAccessDeclaration",
-      "namespaces": [
-        "value"
-      ],
-      "owner": "compiler-port-runtime",
-      "visibility": "module-private"
-    },
-    {
       "declarationHash": "93647aa4bdf774ee260cac9dd07f2ebb34654f0b7e9aa7503855ec77c85d8c16",
       "file": "packages/tsts/src/internal/checker/checker/symbols.ts",
       "fragmentIndex": 0,
@@ -17299,6 +18207,18 @@
       ],
       "owner": "compiler-port-runtime",
       "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "b2d5a6581b5e22ed3ac6a3a150080bb71e44eb88d0bbe8a3690807f4b1c09ba0",
+      "file": "packages/tsts/src/internal/checker/checker/symbols.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "getSelectedElementAccessDeclaration",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
     },
     {
       "declarationHash": "848e0bf03383a2519560190ece49cc3018b9d6baeff9e1025db3119d5a7ebdc1",
@@ -20151,6 +21071,18 @@
       ],
       "owner": "compiler-port-runtime",
       "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "890d0643333d0b887e171e5bb3a8bd4227178db13ff09f9262b28b58085c72b2",
+      "file": "packages/tsts/src/internal/execute/tsc/statistics.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "addDuration",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
     },
     {
       "declarationHash": "17d9e2a881efd687d50dd6e82b7aab8b600bb774b1a467de03746e5392ce13ad",
@@ -23974,6 +24906,42 @@
       ],
       "owner": "compiler-port-runtime",
       "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "419f8f11cbbf9ec42be483d0c3a975d6192676c7f09957f54c97b6cd20553427",
+      "file": "packages/tsts/src/runtime-adapters/time.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "TimeFromDate",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "95a732fd7ae8684a9dc31a572cdbf39d40bee6fca6cdfda0cb2d4af502e067ab",
+      "file": "packages/tsts/src/runtime-adapters/time.ts",
+      "fragmentIndex": 0,
+      "kind": "function",
+      "name": "TimeToDate",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "direct-export"
+    },
+    {
+      "declarationHash": "6d00a2897c83db88cd7160d29815780ad789c7c00d8f83223d838721307648a1",
+      "file": "packages/tsts/src/runtime-adapters/time.ts",
+      "fragmentIndex": 0,
+      "kind": "variable",
+      "name": "maximumDateMilliseconds",
+      "namespaces": [
+        "value"
+      ],
+      "owner": "compiler-port-runtime",
+      "visibility": "module-private"
     },
     {
       "declarationHash": "cb0a71d6863cfa9636f8622716ebcaf2be1d9a17be514778054b1aa14a5e0729",

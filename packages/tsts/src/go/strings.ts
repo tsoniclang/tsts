@@ -198,11 +198,11 @@ export class Builder {
   #addr: Builder | undefined;
   #buf: GoSlice<byte> = GoNilSlice();
 
-  static copy(value: Builder): Builder {
-    const result = new Builder();
-    result.#addr = value.#addr;
-    result.#buf = value.#buf;
-    return result;
+  constructor(value?: Builder) {
+    if (value !== undefined) {
+      this.#addr = value.#addr;
+      this.#buf = value.#buf;
+    }
   }
 
   String(): string {
@@ -281,7 +281,7 @@ export class Builder {
 
 export const BuilderValueOps: GoValueOps<Builder> = Object.freeze({
   zero: (): Builder => new Builder(),
-  copy: (value: Builder): Builder => Builder.copy(value),
+  copy: (value: Builder): Builder => new Builder(value),
 });
 
 // Clone returns a copy of s. JS strings are immutable so this returns s.

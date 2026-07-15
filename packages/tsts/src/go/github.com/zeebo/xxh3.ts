@@ -4,8 +4,15 @@ import { GoArrayMake, GoArrayStore, GoNumberValueOps, GoSliceLoad } from "../../
 import { StringUtf8Bytes } from "../../unicode/utf8.js";
 
 export class Uint128 {
-  Hi: bigint = 0n;
-  Lo: bigint = 0n;
+  declare private readonly nominalType: void;
+
+  Hi!: bigint;
+  Lo!: bigint;
+
+  constructor() {
+    this.Hi = 0n;
+    this.Lo = 0n;
+  }
 
   Bytes(): GoArray<byte, "16"> {
     const result = GoArrayMake<byte, "16">(16 as int, GoNumberValueOps);
@@ -15,22 +22,22 @@ export class Uint128 {
   }
 }
 
-const stripeSize = 64;
-const blockSize = 1024;
-const bufferSize = blockSize + stripeSize;
-const uint32Mask = 0xffffffffn;
-const uint64Mask = 0xffffffffffffffffn;
-const prime32_1 = 2654435761n;
-const prime32_2 = 2246822519n;
-const prime32_3 = 3266489917n;
-const prime64_1 = 11400714785074694791n;
-const prime64_2 = 14029467366897019727n;
-const prime64_3 = 1609587929392839161n;
-const prime64_4 = 9650029242287828579n;
-const prime64_5 = 2870177450012600261n;
-const rrmxmxPrime = 0x9fb21c651e98df25n;
-const avalanchePrime = 0x165667919e3779f9n;
-const defaultSecret = new Uint8Array([
+const stripeSize: number = 64;
+const blockSize: number = 1024;
+const bufferSize: number = blockSize + stripeSize;
+const uint32Mask: bigint = 0xffffffffn;
+const uint64Mask: bigint = 0xffffffffffffffffn;
+const prime32_1: bigint = 2654435761n;
+const prime32_2: bigint = 2246822519n;
+const prime32_3: bigint = 3266489917n;
+const prime64_1: bigint = 11400714785074694791n;
+const prime64_2: bigint = 14029467366897019727n;
+const prime64_3: bigint = 1609587929392839161n;
+const prime64_4: bigint = 9650029242287828579n;
+const prime64_5: bigint = 2870177450012600261n;
+const rrmxmxPrime: bigint = 0x9fb21c651e98df25n;
+const avalanchePrime: bigint = 0x165667919e3779f9n;
+const defaultSecret: Uint8Array = new Uint8Array([
   0xb8, 0xfe, 0x6c, 0x39, 0x23, 0xa4, 0x4b, 0xbe, 0x7c, 0x01, 0x81, 0x2c, 0xf7, 0x21, 0xad, 0x1c,
   0xde, 0xd4, 0x6d, 0xe9, 0x83, 0x90, 0x97, 0xdb, 0x72, 0x40, 0xa4, 0xa4, 0xb7, 0xb3, 0x67, 0x1f,
   0xcb, 0x79, 0xe6, 0x4e, 0xcc, 0xc0, 0xe5, 0x78, 0x82, 0x5a, 0xd0, 0x7d, 0xcc, 0xff, 0x72, 0x21,
@@ -471,14 +478,14 @@ export class Hasher {
   private initialized = false;
   private readonly buffer = new Uint8Array(bufferSize);
 
-  static copy(value: Hasher): Hasher {
-    const result = new Hasher();
-    result.accumulators = value.accumulators.slice();
-    result.blockCount = value.blockCount;
-    result.bufferLength = value.bufferLength;
-    result.initialized = value.initialized;
-    result.buffer.set(value.buffer);
-    return result;
+  constructor(value?: Hasher) {
+    if (value !== undefined) {
+      this.accumulators = value.accumulators.slice();
+      this.blockCount = value.blockCount;
+      this.bufferLength = value.bufferLength;
+      this.initialized = value.initialized;
+      this.buffer.set(value.buffer);
+    }
   }
 
   Write(p: GoSlice<byte>): [int, GoError] {
@@ -569,7 +576,7 @@ export class Hasher {
 
 export const HasherValueOps: GoValueOps<Hasher> = Object.freeze({
   zero: (): Hasher => new Hasher(),
-  copy: (value: Hasher): Hasher => Hasher.copy(value),
+  copy: (value: Hasher): Hasher => new Hasher(value),
 });
 
 export function HashString128(s: string): Uint128 {

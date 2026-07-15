@@ -94,6 +94,27 @@ test("operation requirements propagate only through by-value aggregate positions
   assert.deepEqual(catalog.byObjectId.get(wrapperId).operationTypeParameterIndexes, [0]);
 });
 
+test("local named reference carriers use intrinsic Go value operations", () => {
+  const watcherId = "example::type::Watcher";
+  const holderId = "example::type::Holder";
+  const watcher = typeUnit(watcherId, "Watcher", {
+    kind: "interface",
+    nilable: true,
+    interface: {},
+  });
+  const holder = typeUnit(holderId, "Holder", {
+    kind: "struct",
+    nilable: false,
+    struct: { fields: [field("watcher", reference(watcherId, "Watcher"))] },
+  });
+  const catalog = buildGoValueOperationCatalog([watcher, holder]);
+
+  assert.equal(catalog.byObjectId.get(watcherId).disposition, "intrinsic");
+  assert.equal(catalog.byObjectId.get(watcherId).intrinsicCarrier, "interface");
+  assert.deepEqual(catalog.byObjectId.get(watcherId).operationTypeParameterIndexes, []);
+  assert.deepEqual(catalog.byObjectId.get(holderId).operationTypeParameterIndexes, []);
+});
+
 test("operation planning fails closed for missing providers and direct value cycles", () => {
   const externalId = "external::type::Value";
   const holderId = "example::type::Holder";
