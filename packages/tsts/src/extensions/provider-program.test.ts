@@ -40,7 +40,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionLifecycleEvent, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionHost, ExtensionObservationContext, ParameterPassingRequest, ProviderDeclarationModel, ProviderExportDeclaration, ProviderImportSlice, ProviderMemberDeclaration, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionHost, ExtensionObservationContext, ParameterPassingRequest, ProviderDeclarationModel, ProviderExportDeclaration, ProviderImportSlice, ProviderMemberDeclaration, ProviderModuleContext, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
 import { recordExtensionCheckedAssertionConversion, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
 import {
   getProviderVirtualArtifactForCompiler,
@@ -505,23 +505,46 @@ test("source-global identities remain exact across disjoint same-module import s
 
   for (const names of [["First", "Second"], ["Second", "First"]] as const) {
     const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
+    const resolutionContexts: ProviderModuleContext[] = [];
     const { program, index, extended } = createSourceGlobalProviderProgram({
       profiles: [sourceGlobalProfile("interface ClockInstant { toTicks(): number; }")],
       members: [],
       additionalExports,
       source: `
         import { ${names[0]} } from "@acme/native/source-globals.js";
-        import { ${names[1]} } from "@acme/native/source-globals.js";
-        declare const first: First;
-        declare const second: Second;
+        declare const first: ${names[0]};
         first.instant.toTicks();
-        second.instant.toTicks();
       `,
+      additionalSources: [{
+        fileName: "second.ts",
+        text: `
+          import { ${names[1]} } from "@acme/native/source-globals.js";
+          declare const second: ${names[1]};
+          second.instant.toTicks();
+        `,
+      }],
       onProperty: (request) => propertyRequests.push(request),
+      onResolve: (context) => resolutionContexts.push(context),
     });
 
     assertCleanProgram(program, index);
+    const second = Program_GetSourceFile(program, "/src/second.ts");
+    assert.ok(second !== undefined);
+    assertCleanProgram(program, second);
     assertCleanProviderVirtualFiles(program);
+    const userResolutionContexts = resolutionContexts.filter((context) =>
+      context.containingFile === "/src/index.ts" || context.containingFile === "/src/second.ts");
+    assert.equal(userResolutionContexts.length, 2);
+    assert.deepEqual(userResolutionContexts.map((context) => ({
+      containingFile: context.containingFile,
+      requestedExports: context.importSlice?.requestedExports?.map((entry) => entry.exportedName),
+    })), [{
+      containingFile: "/src/index.ts",
+      requestedExports: [names[0]],
+    }, {
+      containingFile: "/src/second.ts",
+      requestedExports: [names[1]],
+    }]);
     const instantRequests = propertyRequests.filter((request) => request.propertyName === "instant");
     assert.equal(instantRequests.length, 2);
     const firstType = instantRequests[0]?.sourceResultType as GoPtr<Type>;
@@ -5389,14 +5412,18 @@ function createSourceGlobalProviderProgram(options: {
   readonly profiles: readonly string[];
   readonly members: readonly ProviderMemberDeclaration[];
   readonly additionalExports?: readonly ProviderExportDeclaration[];
+  readonly additionalSources?: readonly { readonly fileName: string; readonly text: string }[];
   readonly source: string;
   readonly onProperty?: (request: CheckedPropertyAccessMappingRequest) => void;
   readonly onCall?: (request: CheckedCallMappingRequest) => void;
+  readonly onResolve?: (context: ProviderModuleContext) => void;
 }) {
   const profileFiles = options.profiles.map((text, index) => [`/src/profile-${index}.d.ts`, text] as const);
+  const additionalSourceFiles = (options.additionalSources ?? []).map(({ fileName, text }) => [`/src/${fileName}`, text] as const);
   let fs = FromMap(new Map<string, string>([
     ...profileFiles,
     ["/src/index.ts", options.source],
+    ...additionalSourceFiles,
     ["/src/tsconfig.json", JSON.stringify({
       compilerOptions: {
         noLib: true,
@@ -5404,7 +5431,11 @@ function createSourceGlobalProviderProgram(options: {
         moduleResolution: "bundler",
         strict: true,
       },
-      files: [...profileFiles.map(([fileName]) => fileName.slice("/src/".length)), "index.ts"],
+      files: [
+        ...profileFiles.map(([fileName]) => fileName.slice("/src/".length)),
+        "index.ts",
+        ...additionalSourceFiles.map(([fileName]) => fileName.slice("/src/".length)),
+      ],
     })],
   ]), false as bool);
   fs = WrapFS(fs);
@@ -5427,6 +5458,7 @@ function sourceGlobalProviderExtension(options: {
   readonly additionalExports?: readonly ProviderExportDeclaration[];
   readonly onProperty?: (request: CheckedPropertyAccessMappingRequest) => void;
   readonly onCall?: (request: CheckedCallMappingRequest) => void;
+  readonly onResolve?: (context: ProviderModuleContext) => void;
 }): CompilerExtension {
   const specifier = "@acme/native/source-globals.js";
   return {
@@ -5445,12 +5477,15 @@ function sourceGlobalProviderExtension(options: {
           providerKind: "binding",
         },
         ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
-        resolveModule: (moduleSpecifier) => ({
-          kind: "virtual",
-          moduleSpecifier,
-          virtualFileName: "tsts-provider://acme/source-globals",
-          providerModuleId: "acme.source-globals",
-        }),
+        resolveModule: (moduleSpecifier, providerContext) => {
+          options.onResolve?.(providerContext);
+          return {
+            kind: "virtual",
+            moduleSpecifier,
+            virtualFileName: "tsts-provider://acme/source-globals",
+            providerModuleId: "acme.source-globals",
+          };
+        },
         getDeclarationModel: (resolution) => ({
           moduleSpecifier: resolution.moduleSpecifier,
           providerModuleId: resolution.providerModuleId,

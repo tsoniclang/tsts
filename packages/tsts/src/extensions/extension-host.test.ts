@@ -5831,16 +5831,22 @@ test("provider closure enforces rendered declaration source limits transactional
   const specifiers = Array.from({ length: moduleCount }, (_, index) => `@target/source-budget-${index}.js`);
   const indexBySpecifier = new Map(specifiers.map((specifier, index) => [specifier, index] as const));
   const declarationCallsBySpecifier = new Map<string, number>();
+  let leafDependencyContext: ProviderModuleContext | undefined;
   const host = new ExtensionHost({});
   host.providers.registerTargetBindingProvider({
     identity: providerIdentity("rendered-source-budget-provider", "demo", "binding"),
     ownsModule: (moduleSpecifier) => indexBySpecifier.has(moduleSpecifier) ? { kind: "owned" } : { kind: "unowned" },
-    resolveModule: (moduleSpecifier) => ({
-      kind: "virtual",
-      moduleSpecifier,
-      virtualFileName: `tsts-provider://rendered-source-budget/${indexBySpecifier.get(moduleSpecifier)!}`,
-      providerModuleId: `rendered.source.budget.${indexBySpecifier.get(moduleSpecifier)!}`,
-    }),
+    resolveModule: (moduleSpecifier, context) => {
+      if (indexBySpecifier.get(moduleSpecifier) === moduleCount - 1 && leafDependencyContext === undefined) {
+        leafDependencyContext = context;
+      }
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: `tsts-provider://rendered-source-budget/${indexBySpecifier.get(moduleSpecifier)!}`,
+        providerModuleId: `rendered.source.budget.${indexBySpecifier.get(moduleSpecifier)!}`,
+      };
+    },
     getDeclarationModel: (resolution) => {
       declarationCallsBySpecifier.set(
         resolution.moduleSpecifier,
@@ -5895,11 +5901,12 @@ test("provider closure enforces rendered declaration source limits transactional
   assert.equal(details?.limit, providerDeclarationClosureLimits.maxDeclarationSourceCodeUnits);
   assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), []);
 
-  const leafSpecifier = specifiers.at(-1)!;
-  const leaf = host.providers.resolveVirtualModule(leafSpecifier, { activeTarget: "demo" });
-  assert.equal(leaf.kind, "resolved");
-  assert.equal(declarationCallsBySpecifier.get(leafSpecifier), 2);
-  assert.ok(host.providers.getVirtualDeclarationDocuments().some((document) => document.moduleSpecifier === leafSpecifier));
+  assert.ok(leafDependencyContext !== undefined);
+  const dependencySpecifier = specifiers.at(-1)!;
+  const dependency = host.providers.resolveVirtualModule(dependencySpecifier, leafDependencyContext);
+  assert.equal(dependency.kind, "resolved");
+  assert.equal(declarationCallsBySpecifier.get(dependencySpecifier), 2);
+  assert.ok(host.providers.getVirtualDeclarationDocuments().some((document) => document.moduleSpecifier === dependencySpecifier));
 });
 
 test("recursive canonical-owner planning enforces aggregate declaration graph budgets", () => {
