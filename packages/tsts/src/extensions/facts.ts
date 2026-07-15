@@ -118,6 +118,7 @@ export type ProviderMemberKey =
 
 export type TargetTypeRef =
   | { readonly kind: "source-primitive"; readonly name: SourcePrimitiveKind }
+  | { readonly kind: "source-global"; readonly name: string; readonly typeArguments?: readonly TargetTypeRef[] }
   | { readonly kind: "target-named"; readonly id: string; readonly typeArguments?: readonly TargetTypeRef[] }
   | { readonly kind: "type-parameter"; readonly name: string }
   | { readonly kind: "array"; readonly element: TargetTypeRef; readonly rank?: number }
@@ -712,6 +713,10 @@ function targetTypeRefEquals(left: TargetTypeRef, right: TargetTypeRef): boolean
   switch (left.kind) {
     case "source-primitive":
       return right.kind === "source-primitive" && left.name === right.name;
+    case "source-global":
+      return right.kind === "source-global"
+        && left.name === right.name
+        && targetTypeRefListEquals(left.typeArguments ?? [], right.typeArguments ?? []);
     case "target-named":
       return right.kind === "target-named"
         && left.id === right.id

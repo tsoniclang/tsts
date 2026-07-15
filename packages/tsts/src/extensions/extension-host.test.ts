@@ -2535,6 +2535,21 @@ test("provider declaration models reject malformed source-global references", ()
   }
 });
 
+test("source-global references are type-position-only and reject class value heritage", () => {
+  const specifier = "@target/source-global-value-heritage.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(typeFamilyBindingProvider(specifier, [{
+    id: "Derived",
+    name: "Derived",
+    kind: "class",
+    heritage: [{ kind: "extends", type: { kind: "source-global", name: "ProfileBase" } }],
+    members: [],
+  }]));
+  assert.equal(host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" }).kind, "rejected");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+  assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), []);
+});
+
 test("provider declaration graph validation rejects recursive schema edges without retaining provider objects", () => {
   const specifier = "@target/recursive-model.js";
   const placements: readonly ((type: ProviderTypeExpression) => ProviderDeclarationModel["exports"])[] = [
@@ -2563,6 +2578,7 @@ test("provider declaration graph validation rejects recursive schema edges witho
     }],
     (type) => [{ id: "Alias", name: "Alias", kind: "type", type: { kind: "target-named", target: "demo", id: "Demo.Alias", sourceShape: type } }],
     (type) => [{ id: "Alias", name: "Alias", kind: "type", type: { kind: "opaque", id: "Demo.Alias", sourceShape: type } }],
+    (type) => [{ id: "Alias", name: "Alias", kind: "type", type: { kind: "source-global", name: "PromiseLikeValue", typeArguments: [type] } }],
     (type) => [{
       id: "Alias",
       name: "Alias",
@@ -3252,7 +3268,16 @@ test("published provider artifacts and canonical declaration state are deeply im
   const specifier = "@target/immutable-artifact.js";
   const host = new ExtensionHost({});
   host.providers.registerTargetBindingProvider(matrixBindingProvider(specifier, {
-    members: [{ id: "Value", name: "Value", kind: "property", type: { kind: "array", elementType: { kind: "number" } } }],
+    members: [{ id: "Value", name: "Value", kind: "property", type: { kind: "array", elementType: { kind: "number" } } }, {
+      id: "Pending",
+      name: "Pending",
+      kind: "property",
+      type: {
+        kind: "source-global",
+        name: "PromiseLikeValue",
+        typeArguments: [{ kind: "array", elementType: { kind: "number" } }],
+      },
+    }],
   }));
   const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
   assert.equal(resolved.kind, "resolved");
@@ -3272,6 +3297,14 @@ test("published provider artifacts and canonical declaration state are deeply im
   assert.equal(Object.isFrozen(member), true);
   assert.equal(Object.isFrozen(member.type), true);
   assert.equal(Object.isFrozen(member.type.elementType), true);
+  const pending = declaration.members?.[1];
+  assert.ok(pending?.type?.kind === "source-global");
+  assert.equal(Object.isFrozen(pending.type), true);
+  assert.equal(Object.isFrozen(pending.type.typeArguments), true);
+  const pendingArgument = pending.type.typeArguments?.[0];
+  assert.ok(pendingArgument?.kind === "array");
+  assert.equal(Object.isFrozen(pendingArgument), true);
+  assert.equal(Object.isFrozen(pendingArgument.elementType), true);
   assert.throws(() => (artifact.declarationModel.exports as ProviderExportDeclaration[]).pop(), TypeError);
   assert.throws(() => Object.defineProperty(member, "id", { value: "Changed" }), TypeError);
 });
@@ -5783,6 +5816,90 @@ test("provider closure accepts a neutral graph above one million snapshotted inp
     dependencyFirstResult.kind === "resolved" ? dependencyFirstResult.module.artifact.sourceText : undefined,
     directResult.kind === "resolved" ? directResult.module.artifact.sourceText : undefined,
   );
+});
+
+test("provider closure enforces rendered declaration source limits transactionally", () => {
+  const moduleCount = 18;
+  const exportsPerModule = 56;
+  const paddingExportNames = Array.from({ length: exportsPerModule - 1 }, (_, index) =>
+    `Padding${index}_`.padEnd(65_000, "s"));
+  const declarationScalarCodeUnits = moduleCount * paddingExportNames.reduce((total, name) => total + name.length, 0);
+  assert.ok(declarationScalarCodeUnits < providerDeclarationClosureLimits.maxSnapshottedInputScalarCodeUnits);
+  assert.ok(declarationScalarCodeUnits < providerDeclarationClosureLimits.maxExpandedSemanticScalarCodeUnits);
+  assert.ok(declarationScalarCodeUnits + paddingExportNames.reduce((total, name) => total + name.length, 0)
+    > providerDeclarationClosureLimits.maxDeclarationSourceCodeUnits);
+  const specifiers = Array.from({ length: moduleCount }, (_, index) => `@target/source-budget-${index}.js`);
+  const indexBySpecifier = new Map(specifiers.map((specifier, index) => [specifier, index] as const));
+  const declarationCallsBySpecifier = new Map<string, number>();
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("rendered-source-budget-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => indexBySpecifier.has(moduleSpecifier) ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier) => ({
+      kind: "virtual",
+      moduleSpecifier,
+      virtualFileName: `tsts-provider://rendered-source-budget/${indexBySpecifier.get(moduleSpecifier)!}`,
+      providerModuleId: `rendered.source.budget.${indexBySpecifier.get(moduleSpecifier)!}`,
+    }),
+    getDeclarationModel: (resolution) => {
+      declarationCallsBySpecifier.set(
+        resolution.moduleSpecifier,
+        (declarationCallsBySpecifier.get(resolution.moduleSpecifier) ?? 0) + 1,
+      );
+      const index = indexBySpecifier.get(resolution.moduleSpecifier)!;
+      const nextSpecifier = specifiers[index + 1];
+      return {
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        ...(nextSpecifier === undefined
+          ? {}
+          : {
+            imports: [{
+              moduleSpecifier: nextSpecifier,
+              namedImports: [{ exportedName: "Node" }],
+              typeOnly: true,
+            }],
+          }),
+        exports: ["Node", ...paddingExportNames].map((name, exportIndex) => ({
+          id: exportIndex === 0 ? `Node${index}` : `Padding${index}_${exportIndex}`,
+          name,
+          kind: "interface" as const,
+          members: exportIndex !== 0 || nextSpecifier === undefined
+            ? []
+            : [{
+              id: `Node${index}.next`,
+              name: "next",
+              kind: "property" as const,
+              type: {
+                kind: "provider-ref" as const,
+                moduleSpecifier: nextSpecifier,
+                exportName: "Node",
+              },
+            }],
+        })),
+      };
+    },
+  });
+
+  const result = host.providers.resolveVirtualModule(specifiers[0]!, { activeTarget: "demo" });
+  assert.equal(result.kind, "rejected");
+  assert.ok([...declarationCallsBySpecifier.values()].every((count) => count === 1));
+  const diagnostic = host.diagnostics.all().at(-1);
+  const details = diagnostic?.evidence?.find((evidence) => evidence.message === "Provider declaration closure budget")?.details as {
+    readonly dimension: string;
+    readonly actual: number;
+    readonly limit: number;
+  } | undefined;
+  assert.equal(details?.dimension, "provider declaration source code units");
+  assert.ok((details?.actual ?? 0) > providerDeclarationClosureLimits.maxDeclarationSourceCodeUnits);
+  assert.equal(details?.limit, providerDeclarationClosureLimits.maxDeclarationSourceCodeUnits);
+  assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), []);
+
+  const leafSpecifier = specifiers.at(-1)!;
+  const leaf = host.providers.resolveVirtualModule(leafSpecifier, { activeTarget: "demo" });
+  assert.equal(leaf.kind, "resolved");
+  assert.equal(declarationCallsBySpecifier.get(leafSpecifier), 2);
+  assert.ok(host.providers.getVirtualDeclarationDocuments().some((document) => document.moduleSpecifier === leafSpecifier));
 });
 
 test("recursive canonical-owner planning enforces aggregate declaration graph budgets", () => {
