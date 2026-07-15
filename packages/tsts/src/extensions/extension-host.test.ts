@@ -5666,11 +5666,130 @@ test("provider host resolves bounded SDK-scale declaration models above ancillar
   assert.equal(declarationCalls, 1);
 });
 
+test("canonical export owner models share declarations from one canonical candidate graph", () => {
+  const specifier = "@target/canonical-owner-views.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: providerIdentity("canonical-owner-view-provider", "demo", "binding"),
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier) => ({
+      kind: "virtual",
+      moduleSpecifier,
+      virtualFileName: "tsts-provider://canonical-owner-views/model",
+      providerModuleId: "canonical.owner.views",
+    }),
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: ["First", "Second", "Third"].map((name) => ({
+        id: name,
+        name,
+        kind: "class" as const,
+        members: [],
+      })),
+    }),
+  });
+
+  assert.equal(host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" }).kind, "resolved");
+  const publicDocument = host.providers.getVirtualDeclarationDocuments().find((document) =>
+    document.moduleSpecifier === specifier);
+  assert.ok(publicDocument !== undefined);
+  const canonicalDeclarationsById = new Map(
+    publicDocument.declarationModel.exports.map((declaration) => [declaration.id, declaration]),
+  );
+  const ownerDocuments = getCanonicalExportOwnerDocuments(host);
+  assert.equal(ownerDocuments.length, 3);
+  for (const ownerDocument of ownerDocuments) {
+    assert.equal(ownerDocument.declarationModel.exports.length, 1);
+    const declaration = ownerDocument.declarationModel.exports[0]!;
+    assert.equal(declaration, canonicalDeclarationsById.get(declaration.id));
+    assert.equal(Object.isFrozen(ownerDocument.declarationModel), true);
+    assert.equal(Object.isFrozen(ownerDocument.declarationModel.exports), true);
+  }
+});
+
+test("provider closure accepts a neutral graph above one million snapshotted input entries in either resolution order", () => {
+  const moduleCount = 18;
+  const evidenceEntriesPerModule = 60_000;
+  assert.ok(moduleCount * evidenceEntriesPerModule > 1_048_576);
+  assert.ok(moduleCount * evidenceEntriesPerModule < providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries);
+  const specifiers = Array.from({ length: moduleCount }, (_, index) => `@target/framework-scale-${index}.js`);
+  const indexBySpecifier = new Map(specifiers.map((specifier, index) => [specifier, index] as const));
+  const evidencePayload = Array.from({ length: evidenceEntriesPerModule }, () => 1);
+  const createHost = () => {
+    let declarationCalls = 0;
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider({
+      identity: providerIdentity("neutral-framework-scale-provider", "demo", "binding"),
+      ownsModule: (moduleSpecifier) => indexBySpecifier.has(moduleSpecifier) ? { kind: "owned" } : { kind: "unowned" },
+      resolveModule: (moduleSpecifier) => ({
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: `tsts-provider://neutral-framework-scale/${indexBySpecifier.get(moduleSpecifier)!}`,
+        providerModuleId: `neutral.framework.scale.${indexBySpecifier.get(moduleSpecifier)!}`,
+      }),
+      getDeclarationModel: (resolution) => {
+        declarationCalls += 1;
+        const index = indexBySpecifier.get(resolution.moduleSpecifier)!;
+        const nextSpecifier = specifiers[index + 1];
+        return {
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          evidence: [{ message: "bounded input entries", details: evidencePayload }],
+          ...(nextSpecifier === undefined
+            ? {}
+            : {
+              imports: [{
+                moduleSpecifier: nextSpecifier,
+                namedImports: [{ exportedName: "Node" }],
+                typeOnly: true,
+              }],
+            }),
+          exports: [{
+            id: `Node${index}`,
+            name: "Node",
+            kind: "interface" as const,
+            members: nextSpecifier === undefined
+              ? []
+              : [{
+                id: `Node${index}.next`,
+                name: "next",
+                kind: "property" as const,
+                type: {
+                  kind: "provider-ref" as const,
+                  moduleSpecifier: nextSpecifier,
+                  exportName: "Node",
+                },
+              }],
+          }],
+        };
+      },
+    });
+    return { host, declarationCalls: () => declarationCalls };
+  };
+
+  const direct = createHost();
+  const directResult = direct.host.providers.resolveVirtualModule(specifiers[0]!, { activeTarget: "demo" });
+  assert.equal(directResult.kind, "resolved");
+  assert.equal(direct.declarationCalls(), moduleCount);
+  assert.equal(direct.host.diagnostics.hasErrors(), false);
+
+  const dependencyFirst = createHost();
+  assert.equal(dependencyFirst.host.providers.resolveVirtualModule(specifiers.at(-1)!, { activeTarget: "demo" }).kind, "resolved");
+  const dependencyFirstResult = dependencyFirst.host.providers.resolveVirtualModule(specifiers[0]!, { activeTarget: "demo" });
+  assert.equal(dependencyFirstResult.kind, "resolved");
+  assert.equal(dependencyFirst.host.diagnostics.hasErrors(), false);
+  assert.equal(
+    dependencyFirstResult.kind === "resolved" ? dependencyFirstResult.module.artifact.sourceText : undefined,
+    directResult.kind === "resolved" ? directResult.module.artifact.sourceText : undefined,
+  );
+});
+
 test("recursive canonical-owner planning enforces aggregate declaration graph budgets", () => {
   const expandedNodeContribution = 2 ** 15 - 1;
   const expandedScalarContribution = 32 * providerAncillaryDataLimits.maxStringCodeUnits;
-  const retainedEntryContribution = Math.floor(providerAncillaryDataLimits.maxTotalEntries * 0.9);
-  const retainedScalarContribution = 16 * providerAncillaryDataLimits.maxStringCodeUnits;
+  const snapshottedInputEntryContribution = Math.floor(providerAncillaryDataLimits.maxTotalEntries * 0.9);
+  const snapshottedInputScalarContribution = 16 * providerAncillaryDataLimits.maxStringCodeUnits;
   const cases: readonly {
     readonly name: string;
     readonly moduleCount: number;
@@ -5690,21 +5809,21 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
   }, {
     name: "physical-entries",
     moduleCount: Math.floor(
-      providerDeclarationClosureLimits.maxRetainedNodeAndCollectionEntries / retainedEntryContribution,
+      providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries / snapshottedInputEntryContribution,
     ) + 2,
-    expectedDimension: "retained provider closure nodes and collection entries",
+    expectedDimension: "snapshotted provider input nodes and collection entries",
   }, {
     name: "resolution-evidence",
     moduleCount: Math.floor(
-      providerDeclarationClosureLimits.maxRetainedNodeAndCollectionEntries / retainedEntryContribution,
+      providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries / snapshottedInputEntryContribution,
     ) + 2,
-    expectedDimension: "retained provider closure nodes and collection entries",
+    expectedDimension: "snapshotted provider input nodes and collection entries",
   }, {
     name: "physical-scalars",
     moduleCount: Math.floor(
-      providerDeclarationClosureLimits.maxRetainedScalarCodeUnits / retainedScalarContribution,
+      providerDeclarationClosureLimits.maxSnapshottedInputScalarCodeUnits / snapshottedInputScalarContribution,
     ) + 2,
-    expectedDimension: "retained provider closure scalar code units",
+    expectedDimension: "snapshotted provider input scalar code units",
   }];
 
   for (const entry of cases) {
@@ -5724,7 +5843,7 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
     const sharedExpandedScalarTypes = Array.from({ length: 32 }, () => sharedScalarType);
     const sharedScalarPayload = "x".repeat(providerAncillaryDataLimits.maxStringCodeUnits);
     const sharedPhysicalEvidence = Array.from({
-      length: retainedEntryContribution,
+      length: snapshottedInputEntryContribution,
     }, () => 1);
     let declarationCalls = 0;
     const host = new ExtensionHost({});
@@ -5822,8 +5941,8 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
       : entry.name === "expanded-scalars"
         ? providerDeclarationClosureLimits.maxExpandedSemanticScalarCodeUnits
         : entry.name === "physical-entries" || entry.name === "resolution-evidence"
-          ? providerDeclarationClosureLimits.maxRetainedNodeAndCollectionEntries
-          : providerDeclarationClosureLimits.maxRetainedScalarCodeUnits;
+          ? providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries
+          : providerDeclarationClosureLimits.maxSnapshottedInputScalarCodeUnits;
     assert.equal(details?.limit, expectedLimit, entry.name);
     assert.ok((details?.actual ?? 0) > (details?.limit ?? Number.POSITIVE_INFINITY), entry.name);
     assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), [], entry.name);
@@ -5833,7 +5952,7 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
 test("failed provider closure transactions retain only the terminal root rejection", () => {
   const evidencePayloadLength = Math.floor(providerAncillaryDataLimits.maxTotalEntries * 0.9);
   const moduleCount = Math.floor(
-    providerDeclarationClosureLimits.maxRetainedNodeAndCollectionEntries / evidencePayloadLength,
+    providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries / evidencePayloadLength,
   ) + 1;
   const specifiers = Array.from({ length: moduleCount }, (_, index) => `@target/rollback-${index}.js`);
   const indexBySpecifier = new Map(specifiers.map((specifier, index) => [specifier, index] as const));
