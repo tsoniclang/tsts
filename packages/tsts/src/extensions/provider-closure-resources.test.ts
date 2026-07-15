@@ -5,10 +5,7 @@ import {
   reserveProviderClosureResources,
   type ProviderClosureResourceContribution,
 } from "./provider-closure-resources.js";
-import {
-  providerDeclarationClosureLimits,
-  providerDeclarationModelLimits,
-} from "./provider-resource-limits.js";
+import { providerDeclarationClosureLimits } from "./provider-resource-limits.js";
 
 const zeroContribution: ProviderClosureResourceContribution = Object.freeze({
   snapshottedInputNodeAndCollectionEntryCount: 0,
@@ -63,41 +60,48 @@ test("provider closure resource dimensions accept their exact limits and reject 
   }
 });
 
-test("provider closure input accounting accepts a neutral framework-scale transaction", () => {
-  const measuredInputEntries = 1_058_822;
-  const measuredInputScalarCodeUnits = 67_245_693;
+test("provider closure resource accounting accepts the complete measured framework-scale profile", () => {
+  const measuredInputEntries = 4_024_403;
+  const measuredInputScalarCodeUnits = 232_199_844;
+  const measuredExpandedEntries = 2_625_163;
+  const measuredExpandedScalarCodeUnits = 232_240_749;
   const reservation = reserveProviderClosureResources(emptyProviderClosureResourceUsage(), {
     ...zeroContribution,
     snapshottedInputNodeAndCollectionEntryCount: measuredInputEntries,
     snapshottedInputScalarCodeUnitCount: measuredInputScalarCodeUnits,
+    expandedSemanticNodeAndArrayEntryCount: measuredExpandedEntries,
+    expandedSemanticScalarCodeUnitCount: measuredExpandedScalarCodeUnits,
   });
   assert.equal(reservation.kind, "reserved");
-  assert.equal(
-    reservation.kind === "reserved"
-      ? reservation.usage.snapshottedInputNodeAndCollectionEntryCount
-      : undefined,
-    measuredInputEntries,
-  );
-  assert.equal(
-    reservation.kind === "reserved"
-      ? reservation.usage.snapshottedInputScalarCodeUnitCount
-      : undefined,
-    measuredInputScalarCodeUnits,
-  );
-});
-
-test("provider closure input envelopes preserve the per-model scalar density", () => {
-  assert.equal(
-    providerDeclarationClosureLimits.maxSnapshottedInputScalarCodeUnits
-      / providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries,
-    providerDeclarationModelLimits.maxPhysicalScalarCodeUnits
-      / providerDeclarationModelLimits.maxPhysicalNodeAndArrayEntries,
-  );
+  assert.deepEqual(reservation.kind === "reserved" ? reservation.usage : undefined, {
+    snapshottedInputNodeAndCollectionEntryCount: measuredInputEntries,
+    snapshottedInputScalarCodeUnitCount: measuredInputScalarCodeUnits,
+    expandedSemanticNodeAndArrayEntryCount: measuredExpandedEntries,
+    expandedSemanticScalarCodeUnitCount: measuredExpandedScalarCodeUnits,
+    declarationSourceCodeUnitCount: 0,
+  });
 });
 
 test("provider closure resource accounting rejects invalid internal contributions", () => {
-  assert.throws(() => reserveProviderClosureResources(emptyProviderClosureResourceUsage(), {
+  const fields = Object.keys(zeroContribution) as readonly (keyof ProviderClosureResourceContribution)[];
+  const invalidValues = [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1];
+  for (const field of fields) {
+    for (const invalidValue of invalidValues) {
+      assert.throws(() => reserveProviderClosureResources(emptyProviderClosureResourceUsage(), {
+        ...zeroContribution,
+        [field]: invalidValue,
+      }), /non-negative safe-integer accounting/, `${field}: ${invalidValue}`);
+      assert.throws(() => reserveProviderClosureResources({
+        ...emptyProviderClosureResourceUsage(),
+        [field]: invalidValue,
+      }, zeroContribution), /non-negative safe-integer accounting/, `${field}: current ${invalidValue}`);
+    }
+  }
+  assert.throws(() => reserveProviderClosureResources({
+    ...emptyProviderClosureResourceUsage(),
+    snapshottedInputNodeAndCollectionEntryCount: Number.MAX_SAFE_INTEGER,
+  }, {
     ...zeroContribution,
-    declarationSourceCodeUnitCount: -1,
+    snapshottedInputNodeAndCollectionEntryCount: 1,
   }), /non-negative safe-integer accounting/);
 });

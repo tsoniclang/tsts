@@ -20,9 +20,9 @@ export const providerDeclarationClosureLimits = Object.freeze({
   maxExports: 65_536,
   maxOwnerVisits: 65_536,
   maxReferences: 65_536,
-  maxSnapshottedInputNodeAndCollectionEntries: 2_097_152,
-  maxExpandedSemanticNodeAndArrayEntries: 1_048_576,
-  maxSnapshottedInputScalarCodeUnits: 134_217_728,
-  maxExpandedSemanticScalarCodeUnits: 67_108_864,
+  maxSnapshottedInputNodeAndCollectionEntries: 4_194_304,
+  maxExpandedSemanticNodeAndArrayEntries: 4_194_304,
+  maxSnapshottedInputScalarCodeUnits: 268_435_456,
+  maxExpandedSemanticScalarCodeUnits: 268_435_456,
   maxDeclarationSourceCodeUnits: 67_108_864,
 });

@@ -5741,34 +5741,56 @@ test("canonical export owner models share declarations from one canonical candid
   }
 });
 
-test("provider closure accepts a neutral graph above one million snapshotted input entries in either resolution order", () => {
-  const moduleCount = 18;
-  const evidenceEntriesPerModule = 60_000;
-  assert.ok(moduleCount * evidenceEntriesPerModule > 1_048_576);
-  assert.ok(moduleCount * evidenceEntriesPerModule < providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries);
-  const specifiers = Array.from({ length: moduleCount }, (_, index) => `@target/framework-scale-${index}.js`);
+function assertNeutralProviderChainResolvesInEitherOrder(options: {
+  readonly name: string;
+  readonly moduleCount: number;
+  readonly evidence?: () => readonly ExtensionEvidence[];
+  readonly payloadType?: ProviderTypeExpression;
+}): void {
+  const specifiers = Array.from({ length: options.moduleCount }, (_, index) => `@target/${options.name}-${index}.js`);
   const indexBySpecifier = new Map(specifiers.map((specifier, index) => [specifier, index] as const));
-  const evidencePayload = Array.from({ length: evidenceEntriesPerModule }, () => 1);
   const createHost = () => {
     let declarationCalls = 0;
     const host = new ExtensionHost({});
     host.providers.registerTargetBindingProvider({
-      identity: providerIdentity("neutral-framework-scale-provider", "demo", "binding"),
+      identity: providerIdentity(`neutral-${options.name}-provider`, "demo", "binding"),
       ownsModule: (moduleSpecifier) => indexBySpecifier.has(moduleSpecifier) ? { kind: "owned" } : { kind: "unowned" },
       resolveModule: (moduleSpecifier) => ({
         kind: "virtual",
         moduleSpecifier,
-        virtualFileName: `tsts-provider://neutral-framework-scale/${indexBySpecifier.get(moduleSpecifier)!}`,
-        providerModuleId: `neutral.framework.scale.${indexBySpecifier.get(moduleSpecifier)!}`,
+        virtualFileName: `tsts-provider://neutral-${options.name}/${indexBySpecifier.get(moduleSpecifier)!}`,
+        providerModuleId: `neutral.${options.name}.${indexBySpecifier.get(moduleSpecifier)!}`,
       }),
       getDeclarationModel: (resolution) => {
         declarationCalls += 1;
         const index = indexBySpecifier.get(resolution.moduleSpecifier)!;
         const nextSpecifier = specifiers[index + 1];
+        const members: ProviderMemberDeclaration[] = [
+          ...(options.payloadType === undefined
+            ? []
+            : [{
+              id: `Node${index}.payload`,
+              name: "payload",
+              kind: "property" as const,
+              type: options.payloadType,
+            }]),
+          ...(nextSpecifier === undefined
+            ? []
+            : [{
+              id: `Node${index}.next`,
+              name: "next",
+              kind: "property" as const,
+              type: {
+                kind: "provider-ref" as const,
+                moduleSpecifier: nextSpecifier,
+                exportName: "Node",
+              },
+            }]),
+        ];
         return {
           moduleSpecifier: resolution.moduleSpecifier,
           providerModuleId: resolution.providerModuleId,
-          evidence: [{ message: "bounded input entries", details: evidencePayload }],
+          ...(options.evidence === undefined ? {} : { evidence: options.evidence() }),
           ...(nextSpecifier === undefined
             ? {}
             : {
@@ -5782,18 +5804,7 @@ test("provider closure accepts a neutral graph above one million snapshotted inp
             id: `Node${index}`,
             name: "Node",
             kind: "interface" as const,
-            members: nextSpecifier === undefined
-              ? []
-              : [{
-                id: `Node${index}.next`,
-                name: "next",
-                kind: "property" as const,
-                type: {
-                  kind: "provider-ref" as const,
-                  moduleSpecifier: nextSpecifier,
-                  exportName: "Node",
-                },
-              }],
+            members,
           }],
         };
       },
@@ -5804,7 +5815,7 @@ test("provider closure accepts a neutral graph above one million snapshotted inp
   const direct = createHost();
   const directResult = direct.host.providers.resolveVirtualModule(specifiers[0]!, { activeTarget: "demo" });
   assert.equal(directResult.kind, "resolved");
-  assert.equal(direct.declarationCalls(), moduleCount);
+  assert.equal(direct.declarationCalls(), options.moduleCount);
   assert.equal(direct.host.diagnostics.hasErrors(), false);
 
   const dependencyFirst = createHost();
@@ -5816,88 +5827,78 @@ test("provider closure accepts a neutral graph above one million snapshotted inp
     dependencyFirstResult.kind === "resolved" ? dependencyFirstResult.module.artifact.sourceText : undefined,
     directResult.kind === "resolved" ? directResult.module.artifact.sourceText : undefined,
   );
+}
+
+test("provider closure accepts the complete framework-scale input-entry profile in either resolution order", () => {
+  const measuredInputEntries = 4_024_403;
+  const evidenceEntriesPerModule = 60_000;
+  const moduleCount = Math.ceil(measuredInputEntries / evidenceEntriesPerModule);
+  assert.ok(moduleCount * evidenceEntriesPerModule >= measuredInputEntries);
+  assert.ok(moduleCount * evidenceEntriesPerModule < providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries);
+  const evidencePayload = Array.from({ length: evidenceEntriesPerModule }, () => 1);
+  assertNeutralProviderChainResolvesInEitherOrder({
+    name: "input-entry-scale",
+    moduleCount,
+    evidence: () => [{ message: "bounded input entries", details: evidencePayload }],
+  });
 });
 
-test("provider closure accepts the measured framework-scale input scalar workload in either resolution order", () => {
-  const measuredInputScalarCodeUnits = 67_245_693;
+test("provider closure accepts the complete framework-scale input-scalar profile in either resolution order", () => {
+  const measuredInputScalarCodeUnits = 232_199_844;
   const scalarPayload = "s".repeat(providerAncillaryDataLimits.maxStringCodeUnits - 6);
-  const inputEvidence = {
-    message: "m",
-    details: { a: scalarPayload, b: scalarPayload, c: scalarPayload, d: scalarPayload },
-  };
   const inputScalarCodeUnitsPerModule = 1 + 4 + 4 * scalarPayload.length;
   const moduleCount = Math.ceil(measuredInputScalarCodeUnits / inputScalarCodeUnitsPerModule);
   assert.ok(moduleCount * inputScalarCodeUnitsPerModule >= measuredInputScalarCodeUnits);
   assert.ok(moduleCount * inputScalarCodeUnitsPerModule < providerDeclarationClosureLimits.maxSnapshottedInputScalarCodeUnits);
-  const specifiers = Array.from({ length: moduleCount }, (_, index) => `@target/input-scalar-scale-${index}.js`);
-  const indexBySpecifier = new Map(specifiers.map((specifier, index) => [specifier, index] as const));
-  const createHost = () => {
-    let declarationCalls = 0;
-    const host = new ExtensionHost({});
-    host.providers.registerTargetBindingProvider({
-      identity: providerIdentity("neutral-input-scalar-scale-provider", "demo", "binding"),
-      ownsModule: (moduleSpecifier) => indexBySpecifier.has(moduleSpecifier) ? { kind: "owned" } : { kind: "unowned" },
-      resolveModule: (moduleSpecifier) => ({
-        kind: "virtual",
-        moduleSpecifier,
-        virtualFileName: `tsts-provider://neutral-input-scalar-scale/${indexBySpecifier.get(moduleSpecifier)!}`,
-        providerModuleId: `neutral.input.scalar.scale.${indexBySpecifier.get(moduleSpecifier)!}`,
-      }),
-      getDeclarationModel: (resolution) => {
-        declarationCalls += 1;
-        const index = indexBySpecifier.get(resolution.moduleSpecifier)!;
-        const nextSpecifier = specifiers[index + 1];
-        return {
-          moduleSpecifier: resolution.moduleSpecifier,
-          providerModuleId: resolution.providerModuleId,
-          evidence: [inputEvidence],
-          ...(nextSpecifier === undefined
-            ? {}
-            : {
-              imports: [{
-                moduleSpecifier: nextSpecifier,
-                namedImports: [{ exportedName: "Node" }],
-                typeOnly: true,
-              }],
-            }),
-          exports: [{
-            id: `Node${index}`,
-            name: "Node",
-            kind: "interface" as const,
-            members: nextSpecifier === undefined
-              ? []
-              : [{
-                id: `Node${index}.next`,
-                name: "next",
-                kind: "property" as const,
-                type: {
-                  kind: "provider-ref" as const,
-                  moduleSpecifier: nextSpecifier,
-                  exportName: "Node",
-                },
-              }],
-          }],
-        };
-      },
-    });
-    return { host, declarationCalls: () => declarationCalls };
+  assertNeutralProviderChainResolvesInEitherOrder({
+    name: "input-scalar-scale",
+    moduleCount,
+    evidence: () => [{
+      message: "m",
+      details: { a: scalarPayload, b: scalarPayload, c: scalarPayload, d: scalarPayload },
+    }],
+  });
+});
+
+test("provider closure accepts the complete framework-scale expanded-node profile in either resolution order", () => {
+  const measuredExpandedNodes = 2_625_163;
+  let sharedExpandedType: ProviderTypeExpression = { kind: "number" };
+  const sharedDepth = 14;
+  for (let depth = 0; depth < sharedDepth; depth++) {
+    sharedExpandedType = { kind: "union", types: [sharedExpandedType, sharedExpandedType] };
+  }
+  const expandedNodesPerModule = 2 ** (sharedDepth + 1) - 1;
+  const moduleCount = Math.ceil(measuredExpandedNodes / expandedNodesPerModule);
+  assert.ok(moduleCount * expandedNodesPerModule >= measuredExpandedNodes);
+  assert.ok(moduleCount * expandedNodesPerModule < providerDeclarationClosureLimits.maxExpandedSemanticNodeAndArrayEntries);
+  assertNeutralProviderChainResolvesInEitherOrder({
+    name: "expanded-node-scale",
+    moduleCount,
+    payloadType: sharedExpandedType,
+  });
+});
+
+test("provider closure accepts the complete framework-scale expanded-scalar profile in either resolution order", () => {
+  const measuredExpandedScalarCodeUnits = 232_240_749;
+  const sharedScalarType: ProviderTypeExpression = {
+    kind: "target-named",
+    target: "neutral",
+    id: "I".repeat(providerAncillaryDataLimits.maxStringCodeUnits),
+    sourceShape: { kind: "string" },
   };
-
-  const direct = createHost();
-  const directResult = direct.host.providers.resolveVirtualModule(specifiers[0]!, { activeTarget: "demo" });
-  assert.equal(directResult.kind, "resolved");
-  assert.equal(direct.declarationCalls(), moduleCount);
-  assert.equal(direct.host.diagnostics.hasErrors(), false);
-
-  const dependencyFirst = createHost();
-  assert.equal(dependencyFirst.host.providers.resolveVirtualModule(specifiers.at(-1)!, { activeTarget: "demo" }).kind, "resolved");
-  const dependencyFirstResult = dependencyFirst.host.providers.resolveVirtualModule(specifiers[0]!, { activeTarget: "demo" });
-  assert.equal(dependencyFirstResult.kind, "resolved");
-  assert.equal(dependencyFirst.host.diagnostics.hasErrors(), false);
-  assert.equal(
-    dependencyFirstResult.kind === "resolved" ? dependencyFirstResult.module.artifact.sourceText : undefined,
-    directResult.kind === "resolved" ? directResult.module.artifact.sourceText : undefined,
-  );
+  const typesPerModule = 32;
+  const expandedScalarCodeUnitsPerModule = typesPerModule * providerAncillaryDataLimits.maxStringCodeUnits;
+  const moduleCount = Math.ceil(measuredExpandedScalarCodeUnits / expandedScalarCodeUnitsPerModule);
+  assert.ok(moduleCount * expandedScalarCodeUnitsPerModule >= measuredExpandedScalarCodeUnits);
+  assert.ok(moduleCount * expandedScalarCodeUnitsPerModule < providerDeclarationClosureLimits.maxExpandedSemanticScalarCodeUnits);
+  assertNeutralProviderChainResolvesInEitherOrder({
+    name: "expanded-scalar-scale",
+    moduleCount,
+    payloadType: {
+      kind: "tuple",
+      elementTypes: Array.from({ length: typesPerModule }, () => sharedScalarType),
+    },
+  });
 });
 
 test("provider closure enforces rendered declaration source limits transactionally", () => {
@@ -5996,15 +5997,6 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
   const expandedScalarContribution = 32 * providerAncillaryDataLimits.maxStringCodeUnits;
   const snapshottedInputEntryContribution = Math.floor(providerAncillaryDataLimits.maxTotalEntries * 0.9);
   const scalarEvidencePayload = "x".repeat(providerAncillaryDataLimits.maxStringCodeUnits - 6);
-  const scalarEvidence = {
-    message: "m",
-    details: {
-      a: scalarEvidencePayload,
-      b: scalarEvidencePayload,
-      c: scalarEvidencePayload,
-      d: scalarEvidencePayload,
-    },
-  };
   const snapshottedInputScalarContribution = 1 + 4 + 4 * scalarEvidencePayload.length;
   const cases: readonly {
     readonly name: string;
@@ -6117,7 +6109,17 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
           ...(entry.name === "physical-entries"
             ? { evidence: [{ message: "physical entries", details: sharedPhysicalEvidence }] }
             : entry.name === "physical-scalars"
-              ? { evidence: [scalarEvidence] }
+              ? {
+                evidence: [{
+                  message: "m",
+                  details: {
+                    a: scalarEvidencePayload,
+                    b: scalarEvidencePayload,
+                    c: scalarEvidencePayload,
+                    d: scalarEvidencePayload,
+                  },
+                }],
+              }
             : {}),
           ...(nextSpecifier === undefined
             ? {}

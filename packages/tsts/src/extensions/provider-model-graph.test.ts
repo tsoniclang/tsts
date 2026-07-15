@@ -79,7 +79,7 @@ test("provider model graph preserves shared array identity without treating a DA
   assert.equal(first.elementTypes, second.elementTypes);
 });
 
-test("provider model physical scalar accounting charges a shared field once", () => {
+test("provider model physical scalar accounting distinguishes identity from equality", () => {
   const sharedType: ProviderTypeExpression = {
     kind: "target-named",
     target: "neutral",
@@ -99,6 +99,20 @@ test("provider model physical scalar accounting charges a shared field once", ()
   });
   const oneUse = requireValid(validateProviderDeclarationModelGraph(modelWithUses(1)));
   const twoUses = requireValid(validateProviderDeclarationModelGraph(modelWithUses(2)));
+  const equalDistinctType: ProviderTypeExpression = {
+    kind: "target-named",
+    target: "neutral",
+    id: "SharedTargetIdentity",
+    sourceShape: { kind: "string" },
+  };
+  const equalDistinctUses = requireValid(validateProviderDeclarationModelGraph(baseModel({
+    exports: [{
+      id: "Alias",
+      name: "Alias",
+      kind: "type",
+      type: { kind: "tuple", elementTypes: [sharedType, equalDistinctType] },
+    }],
+  })));
   assert.equal(
     twoUses.metrics.physicalScalarCodeUnitCount,
     oneUse.metrics.physicalScalarCodeUnitCount,
@@ -106,6 +120,10 @@ test("provider model physical scalar accounting charges a shared field once", ()
   assert.ok(
     twoUses.metrics.expandedSemanticScalarCodeUnitCount
       > oneUse.metrics.expandedSemanticScalarCodeUnitCount,
+  );
+  assert.ok(
+    equalDistinctUses.metrics.physicalScalarCodeUnitCount
+      > twoUses.metrics.physicalScalarCodeUnitCount,
   );
 });
 
