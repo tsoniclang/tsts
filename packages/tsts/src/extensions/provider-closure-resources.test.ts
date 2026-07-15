@@ -5,7 +5,10 @@ import {
   reserveProviderClosureResources,
   type ProviderClosureResourceContribution,
 } from "./provider-closure-resources.js";
-import { providerDeclarationClosureLimits } from "./provider-resource-limits.js";
+import {
+  providerDeclarationClosureLimits,
+  providerDeclarationModelLimits,
+} from "./provider-resource-limits.js";
 
 const zeroContribution: ProviderClosureResourceContribution = Object.freeze({
   snapshottedInputNodeAndCollectionEntryCount: 0,
@@ -62,9 +65,11 @@ test("provider closure resource dimensions accept their exact limits and reject 
 
 test("provider closure input accounting accepts a neutral framework-scale transaction", () => {
   const measuredInputEntries = 1_058_822;
+  const measuredInputScalarCodeUnits = 67_245_693;
   const reservation = reserveProviderClosureResources(emptyProviderClosureResourceUsage(), {
     ...zeroContribution,
     snapshottedInputNodeAndCollectionEntryCount: measuredInputEntries,
+    snapshottedInputScalarCodeUnitCount: measuredInputScalarCodeUnits,
   });
   assert.equal(reservation.kind, "reserved");
   assert.equal(
@@ -72,6 +77,21 @@ test("provider closure input accounting accepts a neutral framework-scale transa
       ? reservation.usage.snapshottedInputNodeAndCollectionEntryCount
       : undefined,
     measuredInputEntries,
+  );
+  assert.equal(
+    reservation.kind === "reserved"
+      ? reservation.usage.snapshottedInputScalarCodeUnitCount
+      : undefined,
+    measuredInputScalarCodeUnits,
+  );
+});
+
+test("provider closure input envelopes preserve the per-model scalar density", () => {
+  assert.equal(
+    providerDeclarationClosureLimits.maxSnapshottedInputScalarCodeUnits
+      / providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries,
+    providerDeclarationModelLimits.maxPhysicalScalarCodeUnits
+      / providerDeclarationModelLimits.maxPhysicalNodeAndArrayEntries,
   );
 });
 

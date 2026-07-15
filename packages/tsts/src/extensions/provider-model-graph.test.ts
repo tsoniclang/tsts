@@ -79,6 +79,36 @@ test("provider model graph preserves shared array identity without treating a DA
   assert.equal(first.elementTypes, second.elementTypes);
 });
 
+test("provider model physical scalar accounting charges a shared field once", () => {
+  const sharedType: ProviderTypeExpression = {
+    kind: "target-named",
+    target: "neutral",
+    id: "SharedTargetIdentity",
+    sourceShape: { kind: "string" },
+  };
+  const modelWithUses = (count: number): ProviderDeclarationModel => baseModel({
+    exports: [{
+      id: "Alias",
+      name: "Alias",
+      kind: "type",
+      type: {
+        kind: "tuple",
+        elementTypes: Array.from({ length: count }, () => sharedType),
+      },
+    }],
+  });
+  const oneUse = requireValid(validateProviderDeclarationModelGraph(modelWithUses(1)));
+  const twoUses = requireValid(validateProviderDeclarationModelGraph(modelWithUses(2)));
+  assert.equal(
+    twoUses.metrics.physicalScalarCodeUnitCount,
+    oneUse.metrics.physicalScalarCodeUnitCount,
+  );
+  assert.ok(
+    twoUses.metrics.expandedSemanticScalarCodeUnitCount
+      > oneUse.metrics.expandedSemanticScalarCodeUnitCount,
+  );
+});
+
 test("provider model graph snapshots and canonicalizes source-global references exactly", () => {
   const validation = requireValid(validateProviderDeclarationModelGraph(baseModel({
     exports: [{

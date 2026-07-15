@@ -5818,6 +5818,88 @@ test("provider closure accepts a neutral graph above one million snapshotted inp
   );
 });
 
+test("provider closure accepts the measured framework-scale input scalar workload in either resolution order", () => {
+  const measuredInputScalarCodeUnits = 67_245_693;
+  const scalarPayload = "s".repeat(providerAncillaryDataLimits.maxStringCodeUnits - 6);
+  const inputEvidence = {
+    message: "m",
+    details: { a: scalarPayload, b: scalarPayload, c: scalarPayload, d: scalarPayload },
+  };
+  const inputScalarCodeUnitsPerModule = 1 + 4 + 4 * scalarPayload.length;
+  const moduleCount = Math.ceil(measuredInputScalarCodeUnits / inputScalarCodeUnitsPerModule);
+  assert.ok(moduleCount * inputScalarCodeUnitsPerModule >= measuredInputScalarCodeUnits);
+  assert.ok(moduleCount * inputScalarCodeUnitsPerModule < providerDeclarationClosureLimits.maxSnapshottedInputScalarCodeUnits);
+  const specifiers = Array.from({ length: moduleCount }, (_, index) => `@target/input-scalar-scale-${index}.js`);
+  const indexBySpecifier = new Map(specifiers.map((specifier, index) => [specifier, index] as const));
+  const createHost = () => {
+    let declarationCalls = 0;
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider({
+      identity: providerIdentity("neutral-input-scalar-scale-provider", "demo", "binding"),
+      ownsModule: (moduleSpecifier) => indexBySpecifier.has(moduleSpecifier) ? { kind: "owned" } : { kind: "unowned" },
+      resolveModule: (moduleSpecifier) => ({
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: `tsts-provider://neutral-input-scalar-scale/${indexBySpecifier.get(moduleSpecifier)!}`,
+        providerModuleId: `neutral.input.scalar.scale.${indexBySpecifier.get(moduleSpecifier)!}`,
+      }),
+      getDeclarationModel: (resolution) => {
+        declarationCalls += 1;
+        const index = indexBySpecifier.get(resolution.moduleSpecifier)!;
+        const nextSpecifier = specifiers[index + 1];
+        return {
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          evidence: [inputEvidence],
+          ...(nextSpecifier === undefined
+            ? {}
+            : {
+              imports: [{
+                moduleSpecifier: nextSpecifier,
+                namedImports: [{ exportedName: "Node" }],
+                typeOnly: true,
+              }],
+            }),
+          exports: [{
+            id: `Node${index}`,
+            name: "Node",
+            kind: "interface" as const,
+            members: nextSpecifier === undefined
+              ? []
+              : [{
+                id: `Node${index}.next`,
+                name: "next",
+                kind: "property" as const,
+                type: {
+                  kind: "provider-ref" as const,
+                  moduleSpecifier: nextSpecifier,
+                  exportName: "Node",
+                },
+              }],
+          }],
+        };
+      },
+    });
+    return { host, declarationCalls: () => declarationCalls };
+  };
+
+  const direct = createHost();
+  const directResult = direct.host.providers.resolveVirtualModule(specifiers[0]!, { activeTarget: "demo" });
+  assert.equal(directResult.kind, "resolved");
+  assert.equal(direct.declarationCalls(), moduleCount);
+  assert.equal(direct.host.diagnostics.hasErrors(), false);
+
+  const dependencyFirst = createHost();
+  assert.equal(dependencyFirst.host.providers.resolveVirtualModule(specifiers.at(-1)!, { activeTarget: "demo" }).kind, "resolved");
+  const dependencyFirstResult = dependencyFirst.host.providers.resolveVirtualModule(specifiers[0]!, { activeTarget: "demo" });
+  assert.equal(dependencyFirstResult.kind, "resolved");
+  assert.equal(dependencyFirst.host.diagnostics.hasErrors(), false);
+  assert.equal(
+    dependencyFirstResult.kind === "resolved" ? dependencyFirstResult.module.artifact.sourceText : undefined,
+    directResult.kind === "resolved" ? directResult.module.artifact.sourceText : undefined,
+  );
+});
+
 test("provider closure enforces rendered declaration source limits transactionally", () => {
   const moduleCount = 18;
   const exportsPerModule = 56;
@@ -5913,7 +5995,17 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
   const expandedNodeContribution = 2 ** 15 - 1;
   const expandedScalarContribution = 32 * providerAncillaryDataLimits.maxStringCodeUnits;
   const snapshottedInputEntryContribution = Math.floor(providerAncillaryDataLimits.maxTotalEntries * 0.9);
-  const snapshottedInputScalarContribution = 16 * providerAncillaryDataLimits.maxStringCodeUnits;
+  const scalarEvidencePayload = "x".repeat(providerAncillaryDataLimits.maxStringCodeUnits - 6);
+  const scalarEvidence = {
+    message: "m",
+    details: {
+      a: scalarEvidencePayload,
+      b: scalarEvidencePayload,
+      c: scalarEvidencePayload,
+      d: scalarEvidencePayload,
+    },
+  };
+  const snapshottedInputScalarContribution = 1 + 4 + 4 * scalarEvidencePayload.length;
   const cases: readonly {
     readonly name: string;
     readonly moduleCount: number;
@@ -5965,7 +6057,6 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
       sourceShape: { kind: "string" },
     };
     const sharedExpandedScalarTypes = Array.from({ length: 32 }, () => sharedScalarType);
-    const sharedScalarPayload = "x".repeat(providerAncillaryDataLimits.maxStringCodeUnits);
     const sharedPhysicalEvidence = Array.from({
       length: snapshottedInputEntryContribution,
     }, () => 1);
@@ -6025,6 +6116,8 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
           providerModuleId: resolution.providerModuleId,
           ...(entry.name === "physical-entries"
             ? { evidence: [{ message: "physical entries", details: sharedPhysicalEvidence }] }
+            : entry.name === "physical-scalars"
+              ? { evidence: [scalarEvidence] }
             : {}),
           ...(nextSpecifier === undefined
             ? {}
@@ -6035,15 +6128,7 @@ test("recursive canonical-owner planning enforces aggregate declaration graph bu
                 typeOnly: true,
               }],
             }),
-          exports: [{ id: `Node${index}`, name: "Node", kind: "interface", members },
-            ...(entry.name === "physical-scalars"
-              ? Array.from({ length: 16 }, (_, paddingIndex): ProviderExportDeclaration => ({
-                id: `Padding${index}_${paddingIndex}`,
-                name: `Padding${index}_${paddingIndex}`,
-                kind: "interface",
-                documentation: sharedScalarPayload,
-              }))
-              : [])],
+          exports: [{ id: `Node${index}`, name: "Node", kind: "interface", members }],
         };
       },
     });
