@@ -185,6 +185,8 @@ export type {
   RuntimeCarrierProvenance,
   SelectedTargetSignatureFact,
   SourceSelectedMethodTypeArgument,
+  SourceSelectedSignatureKind,
+  SourceSelectedSignatureParameter,
   SourcePointerMutability,
   SourcePrimitiveFact,
   SourcePrimitiveKind,
@@ -196,6 +198,7 @@ export type {
   TargetOperationFact,
   TargetOperationProvenance,
   TargetParameter,
+  TargetSignatureSelection,
   TargetTypeParameter,
   TargetTypeRef,
 } from "./facts.js";

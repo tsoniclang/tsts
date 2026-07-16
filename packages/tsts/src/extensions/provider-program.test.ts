@@ -40,7 +40,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionLifecycleEvent, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionHost, ExtensionObservationContext, ParameterPassingRequest, ProviderDeclarationModel, ProviderExportDeclaration, ProviderImportSlice, ProviderMemberDeclaration, ProviderModuleContext, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionHost, ExtensionObservationContext, ParameterPassingRequest, ProviderDeclarationModel, ProviderExportDeclaration, ProviderImportSlice, ProviderMemberDeclaration, ProviderModuleContext, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetSignatureSelection, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
 import { recordExtensionCheckedAssertionConversion, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
 import {
   getProviderVirtualArtifactForCompiler,
@@ -2618,7 +2618,6 @@ test("checker records provider-owned target type argument facts on selected call
   assert.ok(observedTargetTypeArgumentRequest?.sourceCalleeDeclaration !== undefined);
   assert.ok(observedTargetTypeArgumentRequest?.sourceReturnType !== undefined);
   assert.equal(selectedCall?.member.id, "Acme.Convert.ChangeType<T>(Acme.Int32)");
-  assert.equal(selectedCall?.typeArguments, undefined);
   assert.deepEqual(selectedCall?.targetTypeArguments, [{ kind: "source-primitive", name: "int32" }]);
 });
 
@@ -3925,7 +3924,7 @@ test("checker records provider-owned parameter mode facts from selected target s
       ...searchValuesContainsTargetMember("byref-readonly"),
       providerDeclaration,
     },
-  } satisfies SelectedTargetSignatureFact;
+  } satisfies TargetSignatureSelection;
   const observedParameterRequests: ParameterPassingRequest[] = [];
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -3984,7 +3983,7 @@ test("checker records provider-owned parameter mode facts from selected target s
 test("checker records parameter mode facts per argument without collapsing them onto the call", () => {
   const selectedSignature = {
     member: twoParameterTargetMember(),
-  } satisfies SelectedTargetSignatureFact;
+  } satisfies TargetSignatureSelection;
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
       declare function pair(first: number, second: number): void;
@@ -7380,7 +7379,7 @@ function acmeBindingProvider(observedSlices: Map<string, ProviderImportSlice | u
   };
 }
 
-function semanticProvider(selectedSignature: SelectedTargetSignatureFact): TargetSemanticProvider {
+function semanticProvider(selectedSignature: TargetSignatureSelection): TargetSemanticProvider {
   return {
     identity: {
       id: "acme-semantic-provider",
@@ -7501,7 +7500,7 @@ function deferredSemanticProvider(): TargetSemanticProvider {
   };
 }
 
-function parameterModeSemanticProvider(selectedSignature: SelectedTargetSignatureFact, onParameterPassing?: (request: ParameterPassingRequest) => void): TargetSemanticProvider {
+function parameterModeSemanticProvider(selectedSignature: TargetSignatureSelection, onParameterPassing?: (request: ParameterPassingRequest) => void): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("acme-parameter-mode-semantic-provider"),
     mapCheckedCall: () => acceptObservation({
@@ -7520,7 +7519,7 @@ function parameterModeSemanticProvider(selectedSignature: SelectedTargetSignatur
   };
 }
 
-function parameterModeSequenceSemanticProvider(selectedSignature: SelectedTargetSignatureFact): TargetSemanticProvider {
+function parameterModeSequenceSemanticProvider(selectedSignature: TargetSignatureSelection): TargetSemanticProvider {
   let parameterIndex = 0;
   return {
     identity: semanticProviderIdentity("acme-parameter-mode-sequence-semantic-provider"),
@@ -8197,7 +8196,7 @@ function visitNodes(root: GoPtr<Node>, visit: (node: GoPtr<Node>) => void): void
   });
 }
 
-function selectedSearchValuesContainsSignature(): SelectedTargetSignatureFact {
+function selectedSearchValuesContainsSignature(): TargetSignatureSelection {
   return {
     member: searchValuesContainsTargetMember(),
   };

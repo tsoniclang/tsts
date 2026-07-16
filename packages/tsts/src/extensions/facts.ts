@@ -194,18 +194,37 @@ export interface SourceSelectedMethodTypeArgument {
   readonly explicitTypeNode?: ExtensionFactSubject;
 }
 
-export interface SelectedTargetSignatureFact {
+export type SourceSelectedSignatureKind = "resolved" | "untyped" | "error" | "silent-never";
+
+export interface SourceSelectedSignatureParameter {
+  readonly parameterIndex: number;
+  readonly parameterName: string;
+  readonly parameterSymbol: ExtensionFactSubject;
+  readonly parameterDeclaration?: ExtensionFactSubject;
+  readonly selectedType: ExtensionFactSubject;
+  readonly authoredTypeNode?: ExtensionFactSubject;
+  readonly acceptsOmission: boolean;
+  readonly rest: boolean;
+}
+
+export interface TargetSignatureSelection {
   readonly member: TargetMember;
-  readonly typeArguments?: readonly ExtensionFactSubject[];
-  readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
   readonly targetTypeArguments?: readonly TargetTypeRef[];
   readonly argumentConversions?: readonly TargetTypeRef[];
+  readonly providerDeclaration?: ProviderDeclarationIdentity;
+}
+
+export interface SelectedTargetSignatureFact extends TargetSignatureSelection {
+  readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
+  readonly sourceSelectedSignatureParameters?: readonly SourceSelectedSignatureParameter[];
+  readonly sourceSelectedSignatureKind?: SourceSelectedSignatureKind;
   readonly sourceSignature?: ExtensionFactSubject;
   readonly sourceDeclaration?: ExtensionFactSubject;
   readonly sourceCalleeSymbol?: ExtensionFactSubject;
   readonly sourceCalleeDeclaration?: ExtensionFactSubject;
+  readonly sourceSelectedCalleeSymbol?: ExtensionFactSubject;
+  readonly sourceSelectedCalleeDeclaration?: ExtensionFactSubject;
   readonly sourceReturnType?: ExtensionFactSubject;
-  readonly providerDeclaration?: ProviderDeclarationIdentity;
 }
 
 export interface ContextualTargetTypeFact {
@@ -392,14 +411,17 @@ export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTar
   name: "selectedTargetSignature",
   equals: (left, right) =>
     targetMemberEquals(left.member, right.member)
-    && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
     && sourceSelectedMethodTypeArgumentArrayEquals(left.sourceSelectedMethodTypeArguments, right.sourceSelectedMethodTypeArguments)
+    && sourceSelectedSignatureParameterArrayEquals(left.sourceSelectedSignatureParameters, right.sourceSelectedSignatureParameters)
+    && left.sourceSelectedSignatureKind === right.sourceSelectedSignatureKind
     && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
     && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions)
     && left.sourceSignature === right.sourceSignature
     && left.sourceDeclaration === right.sourceDeclaration
     && left.sourceCalleeSymbol === right.sourceCalleeSymbol
     && left.sourceCalleeDeclaration === right.sourceCalleeDeclaration
+    && left.sourceSelectedCalleeSymbol === right.sourceSelectedCalleeSymbol
+    && left.sourceSelectedCalleeDeclaration === right.sourceSelectedCalleeDeclaration
     && left.sourceReturnType === right.sourceReturnType
     && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration),
 });
@@ -694,6 +716,27 @@ function sourceSelectedMethodTypeArgumentEquals(left: SourceSelectedMethodTypeAr
     && left.typeParameter === right.typeParameter
     && left.selectedType === right.selectedType
     && left.explicitTypeNode === right.explicitTypeNode;
+}
+
+function sourceSelectedSignatureParameterArrayEquals(left: readonly SourceSelectedSignatureParameter[] | undefined, right: readonly SourceSelectedSignatureParameter[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  if (left.length !== right.length) {
+    return false;
+  }
+  return left.every((parameter, index) => sourceSelectedSignatureParameterEquals(parameter, right[index]!));
+}
+
+function sourceSelectedSignatureParameterEquals(left: SourceSelectedSignatureParameter, right: SourceSelectedSignatureParameter): boolean {
+  return left.parameterIndex === right.parameterIndex
+    && left.parameterName === right.parameterName
+    && left.parameterSymbol === right.parameterSymbol
+    && left.parameterDeclaration === right.parameterDeclaration
+    && left.selectedType === right.selectedType
+    && left.authoredTypeNode === right.authoredTypeNode
+    && left.acceptsOmission === right.acceptsOmission
+    && left.rest === right.rest;
 }
 
 function optionalRuntimeCarrierProvenanceEquals(left: RuntimeCarrierProvenance | undefined, right: RuntimeCarrierProvenance | undefined): boolean {

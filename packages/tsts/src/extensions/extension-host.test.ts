@@ -48,7 +48,7 @@ import type {
   CheckedPropertyAccessMappingRequest,
   TargetConstraintValidationRequest,
   TargetTypeArgumentMappingResult,
-  SelectedTargetSignatureFact,
+  TargetSignatureSelection,
   SourceFileBoundLifecycleRequest,
   TargetBindingFact,
   TargetBindingProvider,
@@ -6862,7 +6862,7 @@ function diagnostic(extensionId: string, extensionCode: string, numericCode: num
   };
 }
 
-function selectedSignature(id: string): SelectedTargetSignatureFact {
+function selectedSignature(id: string): TargetSignatureSelection {
   return {
     member: {
       id,
