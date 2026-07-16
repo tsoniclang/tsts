@@ -26,7 +26,7 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 | `20260715-174228-provider-source-profile-type-reference` | `8b53611f4ab16b301b2b37bba618d6daf48a1a21`, `fe8063dbf8ac870c6749618c475733fe24f35ead`, `56a44d1b562731d2c107980e1fc99d46db8b460d` | Resolved | Providers can reference exact selected source-profile global types, including generic types, without activating profiles or guessing names. |
 | `20260715-174823-aspnet-provider-closure-transaction-budget` | `8699823fdc45bb2963148802f161eba3720aee60`, `fe8063dbf8ac870c6749618c475733fe24f35ead`, `56a44d1b562731d2c107980e1fc99d46db8b460d` | Resolved | Provider closure accounting separates retained physical state from expanded semantic work and remains finite, order independent, and atomic. |
 | `20260715-210925-aspnet-provider-input-scalar-budget` | `79e400b664c98a2e6b4f9305e067afe5976ecd77`, `e38b1731790214cfadac4176b2e7832a488d836b` | Resolved | Input-scalar capacity is measured once per physical snapshot, calibrated from neutral profiles, finite at every boundary, and atomically rejected beyond limits. |
-| `20260716-122903-selected-source-constructor-call-evidence` | `691ceb8006ea8e8be32cb9614879032060e4bbdb` | Resolved | Checked calls expose alias-resolved callee identity and selected parameter provenance; mapper results are target-only and finalized source evidence is checker-owned. |
+| `20260716-122903-selected-source-constructor-call-evidence` | `691ceb8006ea8e8be32cb9614879032060e4bbdb` | Resolved; accepted by focused Tsonic integration | Checked calls expose alias-resolved callee identity and selected parameter provenance; mapper results are target-only and finalized source evidence is checker-owned. |
 
 ## Complete Commit Order
 
