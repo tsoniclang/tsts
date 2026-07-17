@@ -13,16 +13,17 @@ import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Checker } from "../internal/checker/checker/state.js";
 import { signatureHasRestParameter } from "../internal/checker/checker/state.js";
 import { Type_Flags, Type_Id, Type_Symbol, TypeFlagsUniqueESSymbol } from "../internal/checker/types.js";
-import type { Signature, Type } from "../internal/checker/types.js";
+import type { CheckedCallSelectionSeed, CheckedCallSourceSelectionProvenance, ResolvedCallArgumentEvidence, ResolvedCallEvidence, ResolvedCallSourceValueEvidence, Signature, SignatureLinks, Type } from "../internal/checker/types.js";
+import { LinkStore_Get } from "../internal/core/linkstore.js";
 import { Checker_getMinArgumentCount } from "../internal/checker/relater.js";
 import { Checker_getTypeOfParameter } from "../internal/checker/checker/signatures.js";
-import { Checker_getResolvedSymbolOrNil, Checker_resolveSymbol } from "../internal/checker/checker/symbols.js";
+import { Checker_getDeclarationOfAliasSymbol, Checker_getResolvedSymbolOrNil } from "../internal/checker/checker/symbols.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedIterationMappingRequest, CheckedOperationObservationPointName, CheckedOperationReference, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ExtensionObservationResult, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetCallArgumentConversionFactKey, targetCallArgumentPassingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
 import type { SelectedSourceValueEvidence, SelectedTargetSignatureFact, SourceSelectedCallArgumentBinding, SourceSelectedMethodTypeArgument, SourceSelectedSignatureKind, SourceSelectedSignatureParameter, TargetCallArgumentConversionSlot, TargetCallArgumentPassingFact, TargetOperationFact, TargetOperationProvenance, TargetParameter, TargetTypeRef } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactSubject, ExtensionHost } from "./host.js";
-import { extensionHostGetCheckedCalleeSelectionEvidence, extensionHostGetCheckedOperationReference, extensionHostGetCheckedOperationRequest, extensionHostHasCheckedOperationOwner, extensionHostRetainCheckedCalleeSelectionEvidence, extensionHostRunCheckedOperation, getExtensionHost } from "./host.js";
+import { extensionHostGetCheckedOperationReference, extensionHostGetCheckedOperationRequest, extensionHostHasCheckedOperationOwner, extensionHostRunCheckedOperation, getExtensionHost } from "./host.js";
 import { recordProviderTypeFamilyReferenceFacts } from "./compiler-integration.js";
 import { createCheckedOperationRequestSnapshotCache, snapshotSelectedTargetSignatureFact, snapshotTargetOperationFact } from "./checked-operation-value-snapshot.js";
 import type { CheckedOperationRequestSnapshotCache } from "./checked-operation-value-snapshot.js";
@@ -31,17 +32,6 @@ import type { CheckedOperationApplyOutcome } from "./checked-operation-finalizat
 
 const checkedOperationApplied: CheckedOperationApplyOutcome = Object.freeze({ kind: "applied" });
 const checkedOperationUnavailable: CheckedOperationApplyOutcome = Object.freeze({ kind: "unavailable" });
-
-export interface CheckedSourceCallArgumentBindingInput {
-  readonly sourceArgumentIndex: number;
-  readonly effectiveArgumentIndex: number;
-  readonly sourceForm: "value" | "spread-element" | "spread-sequence";
-  readonly spreadElementIndex?: number;
-  readonly sourceParameterIndex: number;
-  readonly sourceParameterForm: "parameter" | "rest-element" | "rest-sequence";
-  readonly selectedArgumentType: GoPtr<Type>;
-  readonly selectedParameterType: GoPtr<Type>;
-}
 
 export function hasExtensionCheckedOperationHost(
   checker: GoPtr<Checker>,
@@ -61,15 +51,158 @@ function getCheckedOperationExtensionHost(
   return extensionHost?.[extensionHostHasCheckedOperationOwner](observation) === true ? extensionHost : undefined;
 }
 
+function retainCheckedCallSelectionSeed(
+  checker: Checker,
+  callExpression: Node,
+  incoming: CheckedCallSelectionSeed,
+): CheckedCallSelectionSeed {
+  const links = LinkStore_Get(checker.signatureLinks, callExpression) as SignatureLinks;
+  const existing = links.checkedCallSelectionSeed;
+  const calleeProvenance = mergeCheckedCallSourceSelectionProvenance(
+    existing?.calleeProvenance,
+    incoming.calleeProvenance,
+  );
+  const receiver = mergeResolvedCallSourceValueEvidence(existing?.receiver, incoming.receiver);
+  const inputOperationSubjects = mergeCheckedCallInputOperationSubjects(
+    existing?.inputOperationSubjects,
+    incoming.inputOperationSubjects,
+  );
+  const seed = Object.freeze({
+    ...(calleeProvenance === undefined ? {} : { calleeProvenance }),
+    ...(receiver === undefined ? {} : { receiver }),
+    ...(inputOperationSubjects === undefined ? {} : { inputOperationSubjects }),
+  });
+  links.checkedCallSelectionSeed = seed;
+  return seed;
+}
+
+function mergeCheckedCallSourceSelectionProvenance(
+  existing: CheckedCallSourceSelectionProvenance | undefined,
+  incoming: CheckedCallSourceSelectionProvenance | undefined,
+): CheckedCallSourceSelectionProvenance | undefined {
+  if (existing === undefined) {
+    return incoming === undefined ? undefined : Object.freeze({ ...incoming });
+  }
+  if (incoming === undefined) {
+    return existing;
+  }
+  return Object.freeze({
+    ...mergeCheckedCallProvenanceFields(existing, incoming, "callee"),
+  });
+}
+
+function mergeResolvedCallSourceValueEvidence(
+  existing: ResolvedCallSourceValueEvidence | undefined,
+  incoming: ResolvedCallSourceValueEvidence | undefined,
+): ResolvedCallSourceValueEvidence | undefined {
+  if (existing === undefined) {
+    return incoming === undefined ? undefined : Object.freeze({ ...incoming });
+  }
+  if (incoming === undefined) {
+    return existing;
+  }
+  if (existing.expression !== incoming.expression || existing.type !== incoming.type) {
+    throw new Error("Checked call receiver evidence conflicted before resolved-signature finalization.");
+  }
+  return Object.freeze({
+    expression: existing.expression,
+    type: existing.type,
+    ...mergeCheckedCallProvenanceFields(existing, incoming, "receiver"),
+  });
+}
+
+function mergeCheckedCallProvenanceFields(
+  existing: CheckedCallSourceSelectionProvenance,
+  incoming: CheckedCallSourceSelectionProvenance,
+  subject: "callee" | "receiver",
+): CheckedCallSourceSelectionProvenance {
+  const symbol = mergeCheckedCallIdentity(existing.symbol, incoming.symbol, subject, "symbol");
+  const declaration = mergeCheckedCallIdentity(existing.declaration, incoming.declaration, subject, "declaration");
+  const selectedSymbol = mergeCheckedCallIdentity(existing.selectedSymbol, incoming.selectedSymbol, subject, "selectedSymbol");
+  const selectedDeclaration = mergeCheckedCallIdentity(existing.selectedDeclaration, incoming.selectedDeclaration, subject, "selectedDeclaration");
+  const authoredTypeNode = mergeCheckedCallIdentity(existing.authoredTypeNode, incoming.authoredTypeNode, subject, "authoredTypeNode");
+  return Object.freeze({
+    ...(symbol === undefined ? {} : { symbol }),
+    ...(declaration === undefined ? {} : { declaration }),
+    ...(selectedSymbol === undefined ? {} : { selectedSymbol }),
+    ...(selectedDeclaration === undefined ? {} : { selectedDeclaration }),
+    ...(authoredTypeNode === undefined ? {} : { authoredTypeNode }),
+  });
+}
+
+function mergeCheckedCallIdentity<T>(
+  existing: T | undefined,
+  incoming: T | undefined,
+  subject: "callee" | "receiver",
+  field: string,
+): T | undefined {
+  if (existing !== undefined && incoming !== undefined && existing !== incoming) {
+    throw new Error(`Checked call ${subject} ${field} conflicted before resolved-signature finalization.`);
+  }
+  return existing ?? incoming;
+}
+
+function mergeCheckedCallInputOperationSubjects(
+  existing: readonly Node[] | undefined,
+  incoming: readonly Node[] | undefined,
+): readonly Node[] | undefined {
+  if (existing === undefined) {
+    return incoming === undefined ? undefined : Object.freeze([...incoming]);
+  }
+  if (incoming === undefined) {
+    return existing;
+  }
+  const merged = [...existing];
+  for (const subject of incoming) {
+    if (!merged.includes(subject)) {
+      merged.push(subject);
+    }
+  }
+  return Object.freeze(merged);
+}
+
+export function retainExtensionCheckedIdentifierCalleeSelection(
+  checker: GoPtr<Checker>,
+  identifier: GoPtr<Node>,
+  sourceSymbol: GoPtr<Symbol>,
+  sourceSelectedSymbol: GoPtr<Symbol>,
+): void {
+  if (checker === undefined || identifier === undefined) {
+    return;
+  }
+  const callExpression = checkedCallForCallee(identifier);
+  if (callExpression === undefined) {
+    return;
+  }
+  const extensionHost = getCheckedOperationExtensionHost(checker, ExtensionObservationPoint.mapCheckedCall);
+  const callee = Node_Expression(callExpression);
+  if (extensionHost === undefined || callee === undefined) {
+    return;
+  }
+  const canonicalSourceSymbol = selectedSourceSymbol(checker, sourceSymbol);
+  const canonicalSelectedSymbol = selectedSourceSymbol(checker, sourceSelectedSymbol);
+  const sourceDeclaration = canonicalSourceSymbol === undefined
+    ? undefined
+    : Checker_getDeclarationOfAliasSymbol(checker, canonicalSourceSymbol) ?? symbolValueDeclaration(canonicalSourceSymbol);
+  const sourceSelectedDeclaration = symbolValueDeclaration(canonicalSelectedSymbol);
+  const authoredTypeNode = sourceSelectedDeclaration === undefined
+    ? sourceDeclaration === undefined ? undefined : Node_Type(sourceDeclaration)
+    : Node_Type(sourceSelectedDeclaration);
+  retainCheckedCallSelectionSeed(checker, callExpression, {
+    calleeProvenance: Object.freeze({
+      ...(canonicalSourceSymbol === undefined ? {} : { symbol: canonicalSourceSymbol }),
+      ...(sourceDeclaration === undefined ? {} : { declaration: sourceDeclaration }),
+      ...(canonicalSelectedSymbol === undefined ? {} : { selectedSymbol: canonicalSelectedSymbol }),
+      ...(sourceSelectedDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedDeclaration }),
+      ...(authoredTypeNode === undefined ? {} : { authoredTypeNode }),
+    }),
+  });
+}
+
 export function recordExtensionCheckedCallMapping(
   checker: GoPtr<Checker>,
   callExpression: GoPtr<Node>,
-  sourceSelectedSignature: GoPtr<Signature>,
-  selectedSourceReturnType: GoPtr<Type>,
-  selectedSourceCalleeType: GoPtr<Type>,
-  selectedSourceArgumentTypes: readonly GoPtr<Type>[],
-  selectedSourceArgumentBindings: readonly CheckedSourceCallArgumentBindingInput[] | undefined,
-  resolvedCalleeSymbol?: GoPtr<Symbol>,
+  resolvedCallEvidence: ResolvedCallEvidence,
 ): void {
   if (checker === undefined || callExpression === undefined) {
     return;
@@ -85,26 +218,25 @@ export function recordExtensionCheckedCallMapping(
     return;
   }
   const arguments_ = Node_Arguments(callExpression) ?? [];
-  if (selectedSourceReturnType === undefined || selectedSourceCalleeType === undefined) {
-    throw new Error("Checked call mapping requires exact selected source callee and result types.");
+  const sourceSelectedSignature = resolvedCallEvidence.selectedSignature as GoPtr<Signature>;
+  const selectedSourceCallee = resolvedCallEvidence.sourceCallee;
+  const selectedSourceArguments = resolvedCallEvidence.sourceArguments;
+  const selectedSourceArgumentBindings = resolvedCallEvidence.sourceArgumentBindings;
+  if (resolvedCallEvidence.call !== callExpression
+    || (resolvedCallEvidence.outcome !== "applicable" && resolvedCallEvidence.outcome !== "untyped")
+    || resolvedCallEvidence.sourceResultType === undefined
+    || sourceSelectedSignature === undefined) {
+    throw new Error("Checked call mapping requires complete exact callee, signature, argument, topology, and result evidence from source checking.");
   }
   if (arguments_.some((argument) => argument === undefined)) {
     throw new Error("Checked call mapping encountered an absent authored argument node.");
   }
-  if (selectedSourceArgumentTypes.length !== arguments_.length || selectedSourceArgumentTypes.some((type) => type === undefined)) {
-    throw new Error("Checked call mapping requires one exact selected source type for every authored argument.");
+  if (selectedSourceArguments.length !== arguments_.length
+    || selectedSourceArguments.some((evidence, index) => evidence.expression !== arguments_[index])) {
+    throw new Error("Checked call mapping requires one exact selected source evidence record for every authored argument.");
   }
-  const sourceCalleeSelection = extensionHost[extensionHostGetCheckedCalleeSelectionEvidence](callExpression);
   const retainedRequest = extensionHost[extensionHostGetCheckedOperationRequest](ExtensionObservationPoint.mapCheckedCall, callExpression);
-  const dependencies = collectCheckedOperationDependencies(
-    extensionHost,
-    [callee, ...arguments_],
-    sourceCalleeSelection?.sourceInputOperations,
-  );
-  const sourceCalleeSymbol = selectedSourceSymbol(checker, resolvedCalleeSymbol);
-  const sourceCalleeDeclaration = symbolValueDeclaration(sourceCalleeSymbol);
-  const sourceSelectedCalleeSymbol = selectedSourceSymbol(checker, sourceCalleeSymbol === undefined ? undefined : Checker_resolveSymbol(checker, sourceCalleeSymbol));
-  const sourceSelectedCalleeDeclaration = symbolValueDeclaration(sourceSelectedCalleeSymbol);
+  const dependencies = collectResolvedCallDependencies(extensionHost, resolvedCallEvidence);
   const sourceSelectedMethodTypeArguments = preserveEquivalentSelectedMethodTypeArguments(
     retainedRequest?.sourceSelectedMethodTypeArguments,
     getSourceSelectedMethodTypeArguments(callExpression, sourceSelectedSignature),
@@ -120,27 +252,32 @@ export function recordExtensionCheckedCallMapping(
   );
   const sourceResultType = preserveEquivalentCheckedSourceType(
     retainedRequest?.sourceResult.type as GoPtr<Type>,
-    selectedSourceReturnType,
+    resolvedCallEvidence.sourceResultType,
   );
   const sourceCalleeType = preserveEquivalentCheckedSourceType(
     retainedRequest?.sourceCallee.type as GoPtr<Type>,
-    selectedSourceCalleeType,
+    selectedSourceCallee.type as Type,
   );
-  const sourceArgumentTypes = selectedSourceArgumentTypes.map((type, index) => preserveEquivalentCheckedSourceType(
+  const sourceArgumentTypes = selectedSourceArguments.map((evidence, index) => preserveEquivalentCheckedSourceType(
     retainedRequest?.sourceArguments[index]?.type as GoPtr<Type>,
-    type,
+    evidence.type as Type,
   ));
   if (sourceResultType === undefined || sourceCalleeType === undefined || sourceArgumentTypes.some((type) => type === undefined)) {
     throw new Error("Checked call mapping lost exact selected source value evidence.");
   }
-  const sourceReceiver = selectedSourceReceiverEvidenceFromCalleeSelection(sourceCalleeSelection);
-  const sourceCallee = selectedSourceValueEvidence(callee, sourceCalleeType, {
-    ...(sourceCalleeSymbol === undefined ? {} : { symbol: sourceCalleeSymbol }),
-    ...(sourceCalleeDeclaration === undefined ? {} : { declaration: sourceCalleeDeclaration }),
-    ...(sourceSelectedCalleeSymbol === undefined ? {} : { selectedSymbol: sourceSelectedCalleeSymbol }),
-    ...(sourceSelectedCalleeDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedCalleeDeclaration }),
-  });
-  const sourceArguments = arguments_.map((argument, index) => selectedSourceValueEvidence(argument!, sourceArgumentTypes[index]!));
+  const sourceReceiver = resolvedCallEvidence.sourceReceiver === undefined
+    ? undefined
+    : selectedSourceValueEvidence(
+        resolvedCallEvidence.sourceReceiver.expression,
+        resolvedCallEvidence.sourceReceiver.type,
+        selectedSourceEvidenceProvenance(resolvedCallEvidence.sourceReceiver),
+      );
+  const sourceCallee = selectedSourceValueEvidence(callee, sourceCalleeType, selectedSourceEvidenceProvenance(selectedSourceCallee));
+  const sourceArguments = selectedSourceArguments.map((evidence, index) => selectedSourceValueEvidence(
+    arguments_[index]!,
+    sourceArgumentTypes[index]!,
+    selectedSourceEvidenceProvenance(evidence),
+  ));
   const sourceResult = selectedSourceValueEvidence(callExpression!, sourceResultType);
   const request: CheckedCallMappingRequest = {
     call: callExpression,
@@ -192,6 +329,30 @@ export function recordExtensionCheckedCallMapping(
   );
 }
 
+function collectResolvedCallDependencies(
+  extensionHost: ExtensionHost,
+  evidence: ResolvedCallEvidence,
+): readonly CheckedOperationReference[] {
+  const dependencies: CheckedOperationReference[] = [];
+  const add = (reference: CheckedOperationReference | undefined): void => {
+    if (reference !== undefined && !dependencies.some((existing) => checkedOperationReferenceEquals(existing, reference))) {
+      dependencies.push(reference);
+    }
+  };
+  for (const subject of evidence.inputOperationSubjects ?? []) {
+    const reference = extensionHost[extensionHostGetCheckedOperationReference](subject);
+    if (reference === undefined) {
+      throw new Error("Resolved call evidence references a source input operation that was not retained for finalization.");
+    }
+    add(reference);
+  }
+  add(extensionHost[extensionHostGetCheckedOperationReference](SkipParentheses(evidence.sourceCallee.expression)));
+  for (const argument of evidence.sourceArguments) {
+    add(extensionHost[extensionHostGetCheckedOperationReference](SkipParentheses(argument.expression)));
+  }
+  return Object.freeze(dependencies);
+}
+
 export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Checker>, propertyAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>, sourceResultType?: GoPtr<Type>, sourceReceiverType?: GoPtr<Type>, retainCallReceiverEvidence = false): void {
   if (checker === undefined || propertyAccessExpression === undefined) {
     return;
@@ -217,9 +378,8 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
   if (retainCallReceiverEvidence && callExpression === undefined) {
     throw new Error("Checked property callee evidence has no enclosing call expression.");
   }
-  const retainedCalleeEvidence = extensionHost[extensionHostGetCheckedCalleeSelectionEvidence](callExpression);
   const canonicalSourceReceiverType = preserveEquivalentCheckedSourceType(
-    (retainedRequest?.sourceReceiver.type ?? retainedCalleeEvidence?.sourceReceiver?.type) as GoPtr<Type>,
+    retainedRequest?.sourceReceiver.type as GoPtr<Type>,
     sourceReceiverType,
   );
   const canonicalSourceResultType = preserveEquivalentCheckedSourceType(
@@ -227,8 +387,8 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
     sourceResultType,
   );
   const sourceReceiver = selectedSourceReceiverEvidence(receiver, canonicalSourceReceiverType);
-  if (canonicalSourceResultType === undefined) {
-    throw new Error("Checked property access mapping requires an exact selected source result type.");
+  if (canonicalSourceReceiverType === undefined || canonicalSourceResultType === undefined) {
+    throw new Error("Checked property access mapping requires exact selected source receiver and result types.");
   }
   const sourceResult = selectedSourceValueEvidence(propertyAccessExpression, canonicalSourceResultType, {
     ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
@@ -248,9 +408,21 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
     ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
   };
   if (callOwned) {
-    extensionHost[extensionHostRetainCheckedCalleeSelectionEvidence](callExpression!, {
-      sourceReceiver,
-      ...(sourceReceiverDependencies.length === 0 ? {} : { sourceInputOperations: sourceReceiverDependencies }),
+    const callCallee = Node_Expression(callExpression!);
+    if (callCallee === undefined) {
+      throw new Error("Checked property callee evidence lost the enclosing call callee.");
+    }
+    retainCheckedCallSelectionSeed(checker, callExpression!, {
+      calleeProvenance: Object.freeze({
+        ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
+        ...(sourceSelectedDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedDeclaration }),
+        ...(sourceResult.authoredTypeNode === undefined ? {} : { authoredTypeNode: sourceResult.authoredTypeNode as Node }),
+      }),
+      receiver: Object.freeze({
+        expression: receiver,
+        type: canonicalSourceReceiverType,
+      }),
+      ...(accessOwned ? { inputOperationSubjects: Object.freeze([propertyAccessExpression]) } : {}),
     });
   }
   if (!accessOwned) {
@@ -315,9 +487,8 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
   if (retainCallReceiverEvidence && callExpression === undefined) {
     throw new Error("Checked element callee evidence has no enclosing call expression.");
   }
-  const retainedCalleeEvidence = extensionHost[extensionHostGetCheckedCalleeSelectionEvidence](callExpression);
   const canonicalSourceReceiverType = preserveEquivalentCheckedSourceType(
-    (retainedRequest?.sourceReceiver.type ?? retainedCalleeEvidence?.sourceReceiver?.type) as GoPtr<Type>,
+    retainedRequest?.sourceReceiver.type as GoPtr<Type>,
     sourceReceiverType,
   );
   const canonicalSourceResultType = preserveEquivalentCheckedSourceType(
@@ -329,8 +500,8 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
     sourceArgumentType,
   );
   const sourceReceiver = selectedSourceReceiverEvidence(receiver, canonicalSourceReceiverType);
-  if (canonicalSourceArgumentType === undefined || canonicalSourceResultType === undefined) {
-    throw new Error("Checked element access mapping requires exact selected source argument and result types.");
+  if (canonicalSourceReceiverType === undefined || canonicalSourceArgumentType === undefined || canonicalSourceResultType === undefined) {
+    throw new Error("Checked element access mapping requires exact selected source receiver, argument, and result types.");
   }
   const sourceArgument = selectedSourceValueEvidence(argument, canonicalSourceArgumentType);
   const sourceResult = selectedSourceValueEvidence(elementAccessExpression, canonicalSourceResultType, {
@@ -353,9 +524,21 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
     ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
   };
   if (callOwned) {
-    extensionHost[extensionHostRetainCheckedCalleeSelectionEvidence](callExpression!, {
-      sourceReceiver,
-      ...(dependencies.length === 0 ? {} : { sourceInputOperations: dependencies }),
+    const callCallee = Node_Expression(callExpression!);
+    if (callCallee === undefined) {
+      throw new Error("Checked element callee evidence lost the enclosing call callee.");
+    }
+    retainCheckedCallSelectionSeed(checker, callExpression!, {
+      calleeProvenance: Object.freeze({
+        ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
+        ...(sourceSelectedDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedDeclaration }),
+        ...(sourceResult.authoredTypeNode === undefined ? {} : { authoredTypeNode: sourceResult.authoredTypeNode as Node }),
+      }),
+      receiver: Object.freeze({
+        expression: receiver,
+        type: canonicalSourceReceiverType,
+      }),
+      ...(accessOwned ? { inputOperationSubjects: Object.freeze([elementAccessExpression]) } : {}),
     });
   }
   if (!accessOwned) {
@@ -1191,6 +1374,22 @@ function selectedSourceValueEvidence(
   });
 }
 
+function selectedSourceEvidenceProvenance(evidence: SelectedSourceValueEvidence): {
+  readonly symbol?: ExtensionFactSubject;
+  readonly declaration?: ExtensionFactSubject;
+  readonly selectedSymbol?: ExtensionFactSubject;
+  readonly selectedDeclaration?: ExtensionFactSubject;
+  readonly authoredTypeNode?: ExtensionFactSubject;
+} {
+  return {
+    ...(evidence.symbol === undefined ? {} : { symbol: evidence.symbol }),
+    ...(evidence.declaration === undefined ? {} : { declaration: evidence.declaration }),
+    ...(evidence.selectedSymbol === undefined ? {} : { selectedSymbol: evidence.selectedSymbol }),
+    ...(evidence.selectedDeclaration === undefined ? {} : { selectedDeclaration: evidence.selectedDeclaration }),
+    ...(evidence.authoredTypeNode === undefined ? {} : { authoredTypeNode: evidence.authoredTypeNode }),
+  };
+}
+
 interface SelectedSourceCallProvenance {
   readonly sourceSelectedSignature: GoPtr<Signature>;
   readonly sourceSelectedDeclaration: GoPtr<Node>;
@@ -1259,12 +1458,6 @@ function selectedSourceReceiverEvidence(receiver: GoPtr<Node>, sourceReceiverTyp
     throw new Error("Checked receiver evidence requires both the source expression and its exact selected type.");
   }
   return selectedSourceValueEvidence(receiver, sourceReceiverType);
-}
-
-function selectedSourceReceiverEvidenceFromCalleeSelection(
-  evidence: { readonly sourceReceiver?: SelectedSourceValueEvidence } | undefined,
-): SelectedSourceValueEvidence | undefined {
-  return evidence?.sourceReceiver;
 }
 
 function checkedCallForCallee(callee: GoPtr<Node>): GoPtr<Node> {
@@ -1389,7 +1582,7 @@ function preserveEquivalentSelectedMethodTypeArguments(
 
 function preserveEquivalentSelectedCallArgumentBindings(
   existing: readonly SourceSelectedCallArgumentBinding[] | undefined,
-  incoming: readonly CheckedSourceCallArgumentBindingInput[] | undefined,
+  incoming: readonly (SourceSelectedCallArgumentBinding | ResolvedCallArgumentEvidence)[] | undefined,
 ): readonly SourceSelectedCallArgumentBinding[] | undefined {
   if (incoming === undefined) {
     return undefined;
@@ -1416,11 +1609,11 @@ function preserveEquivalentSelectedCallArgumentBindings(
     }
     const selectedArgumentType = preserveEquivalentCheckedSourceType(
       retained.selectedArgumentType as GoPtr<Type>,
-      binding.selectedArgumentType,
+      binding.selectedArgumentType as GoPtr<Type>,
     );
     const selectedParameterType = preserveEquivalentCheckedSourceType(
       retained.selectedParameterType as GoPtr<Type>,
-      binding.selectedParameterType,
+      binding.selectedParameterType as GoPtr<Type>,
     );
     return selectedArgumentType === retained.selectedArgumentType
       && selectedParameterType === retained.selectedParameterType

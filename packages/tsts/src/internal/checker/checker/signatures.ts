@@ -1,7 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { recordExtensionCheckedCallMapping } from "../../../extensions/checker-integration.js";
-import type { CheckedSourceCallArgumentBindingInput } from "../../../extensions/checker-integration.js";
+import { hasExtensionCheckedOperationHost } from "../../../extensions/checker-integration.js";
+import { ExtensionObservationPoint } from "../../../extensions/observations.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
 import type { Number } from "../../jsnum/jsnum.js";
@@ -27,7 +27,7 @@ import { IsTypeAny, isLateBoundName, isTypeAlias, hasDotDotDotToken, isNumericLi
 import { AccessFlagsContextual, ContextFlagsNone, ContextFlagsNoConstraints, ContextFlagsSignature, ElementFlagsOptional, ElementFlagsRequired, ElementFlagsRest, ElementFlagsVariadic, ElementFlagsVariable, InterfaceType_LocalTypeParameters, InterfaceType_OuterTypeParameters, InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsInstantiated, ObjectFlagsInterface, ObjectFlagsMapped, ObjectFlagsMembersResolved, ObjectFlagsNone, ObjectFlagsObjectRestType, ObjectFlagsReference, ObjectFlagsSingleSignatureType, SignatureFlagsAbstract, SignatureFlagsConstruct, SignatureFlagsHasLiteralTypes, SignatureFlagsHasRestParameter, SignatureFlagsIsSignatureCandidateForOverloadFailure, SignatureFlagsNone, SignatureFlagsPropagatingFlags, SignatureFlagsCallChainFlags, SignatureFlagsIsInnerCallChain, SignatureFlagsIsOuterCallChain, SignatureFlagsIsUntypedSignatureInJSFile, SignatureKindCall, SignatureKindConstruct, Signature_Declaration, StructuredType_CallSignatures, StructuredType_ConstructSignatures, TernaryFalse, TypeFlagsAny, TypeFlagsAnyOrUnknown, TypeFlagsBoolean, TypeFlagsIndex, TypeFlagsInstantiableNonPrimitive, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNullable, TypeFlagsObject, TypeFlagsPrimitive, TypeFlagsString, TypeFlagsStringLiteral, TypeFlagsStringMapping, TypeFlagsStringOrNumberLiteralOrUnique, TypeFlagsStructuredType, TypeFlagsTemplateLiteral, TypeFlagsTypeParameter, TypeFlagsTypeVariable, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsUnionOrIntersection, TypeFlagsVoid, TypePredicateKindIdentifier, Type_AsInterfaceType, Type_AsIntersectionType, Type_AsMappedType, Type_AsObjectType, Type_AsTypeParameter, Type_AsTypeReference, Type_Distributed, Type_Mapper, Type_Target, Type_TargetInterfaceType, Type_TargetTupleType, Type_Types } from "../types.js";
 import { ContextFlagsSkipBindingPatterns } from "../types.js";
 import { TypeFlagsESSymbolLike } from "../types.js";
-import type { ConstrainedType, ContextFlags, DeclaredTypeLinks, IndexInfo, ObjectFlags, Signature, SignatureFlags, SignatureKind, SignatureLinks, SymbolReferenceLinks, TupleElementInfo, Type, TypeAliasLinks, TypeComparer, TypeData, TypeFlags, TypeParameter, TypePredicate, TypeReference, ValueSymbolLinks } from "../types.js";
+import type { ConstrainedType, ContextFlags, DeclaredTypeLinks, IndexInfo, ObjectFlags, ResolvedCallArgumentEvidence, ResolvedCallEvidence, ResolvedCallSourceValueEvidence, Signature, SignatureFlags, SignatureKind, SignatureLinks, SymbolReferenceLinks, TupleElementInfo, Type, TypeAliasLinks, TypeComparer, TypeData, TypeFlags, TypeParameter, TypePredicate, TypeReference, ValueSymbolLinks } from "../types.js";
 import { CheckModeInferential, CheckModeNormal, CheckModeSkipContextSensitive, CheckModeSkipGenericFunctions, InferenceFlagsAnyDefault, InferenceFlagsNone, InferenceFlagsNoDefault, InferenceFlagsSkippedGenericFunction, InferencePriorityNone, InferencePriorityReturnType, hasRestParameter, isInstancePropertyWithInitializerOrPrivateIdentifierProperty, isRestParameter, isSpreadArgument, isTupleType, signatureHasRestParameter, signatureHasLiteralTypes, acceptsVoid, thisAssignmentDeclarationNone, thisAssignmentDeclarationTyped, thisAssignmentDeclarationConstructor, thisAssignmentDeclarationMethod, isIdentifierThatStartsWithUnderscore, getStringLiteralValue, isUnitType, hasTypeParameterByName, getUniqueTypeParameterName, SignatureKeyErased, SignatureKeyCanonical, SignatureKeyBase, SignatureKeyInner, SignatureKeyOuter, getTypeListKey, isLateBindableAST, nodeImmediatelyReferencesSuperOrThis, superCallIsRootLevelInConstructor, TypeSystemPropertyNameType, TypeSystemPropertyNameResolvedReturnType, TypeSystemPropertyNameResolvedTypeArguments, UnionReductionLiteral, UnionReductionSubtype, IterationTypeKindYield, IterationTypeKindNext, IterationUseSpread, IterationUseGeneratorReturnType, IterationUseAsyncGeneratorReturnType, UnusedKindParameter, CachedTypeKindRestrictiveTypeParameter, getThisParameterFromNodeContext, getTargetType, someType, importClauseFromImported, WideningKindFunctionReturn, WideningKindGeneratorNext, WideningKindGeneratorYield } from "./state.js";
 import { CheckModeIsForSignatureHelp } from "./state.js";
 import { getBaseTypeNodeOfClass, TypeSystemPropertyNameResolvedBaseConstructorType } from "./state.js";
@@ -59,7 +59,7 @@ import { Checker_isNodeWithinClass } from "./classes.js";
 import { Checker_GetNonNullableType, Checker_GetPromisedTypeOfPromise, Checker_addOptionalTypeMarker, Checker_assignBindingElementTypes, Checker_checkAndAggregateReturnExpressionTypes, Checker_checkAndAggregateYieldOperandTypes, Checker_checkAwaitedType, Checker_checkExpressionWithContextualType, Checker_checkIteratedTypeOrElementType, Checker_checkObjectLiteralMethod, Checker_combineUnionOrIntersectionThisParam, Checker_containsUndefinedType, Checker_createArrayType, Checker_createArrayTypeEx, Checker_createGeneratorType, Checker_createPromiseType, Checker_createTupleTypeEx, Checker_createTypeReference, Checker_filterType, Checker_getAnnotatedAccessorType, Checker_getApparentType, Checker_getApparentTypeOfContextualType, Checker_getArrayElementTypeNode, Checker_getAwaitedTypeOfPromise, Checker_getBaseTypes, Checker_getContextualIterationType, Checker_getContextualType, Checker_getContextualTypeForElementExpression, Checker_getDeclaredTypeOfClassOrInterface, Checker_getElementTypeOfArrayType, Checker_getElementTypeOfSliceOfTupleType, Checker_getElementTypes, Checker_getIntersectionType, Checker_getIterationTypesOfIterable, Checker_getIterationTypesOfIterator, Checker_getMutableArrayOrTupleType, Checker_getNullableType, Checker_getNumberLiteralType, Checker_getOptionalExpressionType, Checker_getOptionalType, Checker_getParentTypeOfClassElement, Checker_getPropertiesOfType, Checker_getReducedApparentType, Checker_getReducedType, Checker_getRegularTypeOfLiteralType, Checker_getRegularTypeOfObjectLiteral, Checker_getStringLiteralType, Checker_getTypeFromBindingPattern, Checker_getTypeFromTypeNode, Checker_getTypeFromTypeReference, Checker_getTypeOfExpression, Checker_getTypeOfNode, Checker_getTypeWithSyntheticDefaultOnly, Checker_getUnionOrIntersectionType, Checker_getUnionType, Checker_getUnionTypeEx, Checker_getWidenedLiteralLikeTypeForContextualIterationTypeIfNeeded, Checker_getWidenedLiteralLikeTypeForContextualType, Checker_getWidenedLiteralType, Checker_instantiateContextualType, Checker_instantiateType, Checker_instantiateTypes, Checker_isArrayLikeType, Checker_isConstTypeVariable, Checker_isGenericMappedType, Checker_isGenericObjectType, Checker_isMutableArrayLikeType, Checker_isReferenceToType, Checker_mapType, Checker_maybeTypeOfKind, Checker_newAnonymousType, Checker_newClassAccessorDecoratorResultType, Checker_newClassAccessorDecoratorTargetType, Checker_newClassDecoratorContextType, Checker_newClassFieldDecoratorInitializerMutatorType, Checker_newGetterFunctionType, Checker_newObjectType, Checker_newSetterFunctionType, Checker_newType, Checker_popTypeResolution, Checker_propagateOptionalTypeMarker, Checker_pushTypeResolution, Checker_removeOptionalTypeMarker, Checker_resolveTaggedTemplateExpression, Checker_typeHasProtectedAccessibleBase, Checker_unwrapAwaitedType, Checker_isContextSensitiveFunctionOrObjectLiteralMethod, Checker_getWidenedType, IterationTypes_getType, IterationTypes_hasTypes } from "./types.js";
 import { Checker_resolveExternalModuleTypeByLiteral } from "./types.js";
 import { Checker_IsArgumentsSymbol } from "../services.js";
-import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionCachedEx, Checker_checkNodeDeferred, Checker_checkSuperExpression, Checker_createSyntheticExpression, Checker_getEffectiveCheckNode, Checker_maybeAddMissingAwaitInfo, Checker_resolveInstanceofExpression, Checker_resolveNewExpression, Checker_reportUnusedVariables, Checker_checkThisExpression, Checker_skippedGenericFunction } from "./syntax-checking.js";
+import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionCachedEx, Checker_checkNodeDeferred, Checker_checkSuperExpression, Checker_createSyntheticExpression, Checker_getEffectiveCheckNode, Checker_maybeAddMissingAwaitInfo, Checker_resolveInstanceofExpression, Checker_resolveNewExpression, Checker_resolveNewExpressionWithEvidence, Checker_reportUnusedVariables, Checker_checkThisExpression, Checker_skippedGenericFunction } from "./syntax-checking.js";
 import { Checker_isGenericFunctionReturningFunction } from "./syntax-checking.js";
 import { Checker_addOptionalityEx, Checker_isCommonJSRequire, Checker_isConstContext, Checker_isContextSensitive } from "./support-queries.js";
 import { Checker_checkTypeAssignableTo, Checker_checkTypeAssignableToEx, Checker_checkTypeRelatedToAndOptionallyElaborate, Checker_checkTypeRelatedToEx, Checker_compareSignaturesIdentical, Checker_compareTypeParametersIdentical, Checker_compareTypesIdentical, Checker_createMarkerType, Checker_findMatchingSignature, Checker_findMatchingSignatures, Checker_getEffectiveRestType, Checker_getMinArgumentCount, Checker_getNonArrayRestType, Checker_getParameterCount, Checker_getParameterNameAtPosition, Checker_getRestTypeAtPosition, Checker_getTypeAtPosition, Checker_getTypeParameterModifiers, Checker_hasEffectiveRestParameter, Checker_isResolvingReturnTypeOfSignature, Checker_isSignatureAssignableTo, Checker_isTypeAssignableTo, Checker_isTypeIdenticalTo, Checker_isTypeRelatedTo, Checker_newTypePredicate, Checker_tryGetTypeAtPosition, Checker_getThisTypeOfSignature } from "../relater.js";
@@ -2279,7 +2279,6 @@ export function Checker_checkImportCallExpression(receiver: GoPtr<Checker>, node
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkCallExpression","kind":"method","status":"implemented","sigHash":"c7077a9359a5dabbb7b33b07409cf7ae319dc8d4ee9862f71076afb9296c19cc","bodyHash":"8d143d4d304de3843b2932373cebb5a3e5a974a05b6bbf1f1e0ea960bebc8d4e"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After each exact TS-Go call-expression result decision, extension-enabled programs retain the selected signature, callee, receiver, final result, and authored-argument evidence for deterministic target finalization; source checking and returned types are unchanged."}
  *
  * Go source:
  * func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type {
@@ -2332,7 +2331,6 @@ export function Checker_checkCallExpression(receiver: GoPtr<Checker>, node: GoPt
   }
   Checker_checkDeprecatedSignature(receiver, signature, node);
   if (Node_Expression(node)!.Kind === KindSuperKeyword) {
-    recordSelectedExtensionCall(receiver, node, signature, receiver!.voidType);
     return receiver!.voidType;
   }
   if (IsNewExpression(node)) {
@@ -2341,20 +2339,15 @@ export function Checker_checkCallExpression(receiver: GoPtr<Checker>, node: GoPt
       if (receiver!.noImplicitAny) {
         Checker_error(receiver, node, X_new_expression_whose_target_lacks_a_construct_signature_implicitly_has_an_any_type);
       }
-      recordSelectedExtensionCall(receiver, node, signature, receiver!.anyType);
       return receiver!.anyType;
     }
   }
   if (IsInJSFile(node) && Checker_isCommonJSRequire(receiver, node)) {
-    const result = Checker_resolveExternalModuleTypeByLiteral(receiver, (Node_Arguments(node) ?? [])[0]);
-    recordSelectedExtensionCall(receiver, node, signature, result);
-    return result;
+    return Checker_resolveExternalModuleTypeByLiteral(receiver, (Node_Arguments(node) ?? [])[0]);
   }
   const returnType = Checker_getReturnTypeOfSignature(receiver, signature);
   if ((returnType!.flags & TypeFlagsESSymbolLike) !== 0 && Checker_isSymbolOrSymbolForCall(receiver, node)) {
-    const result = Checker_getESSymbolLikeTypeForNode(receiver, WalkUpParenthesizedExpressions(node!.Parent as GoPtr<Expression>));
-    recordSelectedExtensionCall(receiver, node, signature, result);
-    return result;
+    return Checker_getESSymbolLikeTypeForNode(receiver, WalkUpParenthesizedExpressions(node!.Parent as GoPtr<Expression>));
   }
   if (IsCallExpression(node) && Node_QuestionDotToken(node) === undefined && IsExpressionStatement(node!.Parent) && (returnType!.flags & TypeFlagsVoid) !== 0 && Checker_getTypePredicateOfSignature(receiver, signature) !== undefined) {
     if (!IsDottedName(Node_Expression(node))) {
@@ -2364,109 +2357,7 @@ export function Checker_checkCallExpression(receiver: GoPtr<Checker>, node: GoPt
       Checker_getTypeOfDottedName(receiver, Node_Expression(node), diagnostic);
     }
   }
-  recordSelectedExtensionCall(receiver, node, signature, returnType);
   return returnType;
-}
-
-function recordSelectedExtensionCall(
-  receiver: GoPtr<Checker>,
-  node: GoPtr<Node>,
-  signature: GoPtr<Signature>,
-  resultType: GoPtr<Type>,
-): void {
-  const callee = Node_Expression(node);
-  const arguments_ = Node_Arguments(node) ?? [];
-  const selectedSourceArgumentTypes = arguments_.map((argument) => Checker_checkExpressionCached(receiver, argument));
-  recordExtensionCheckedCallMapping(
-    receiver,
-    node,
-    signature,
-    resultType,
-    Checker_checkExpressionCached(receiver, callee),
-    selectedSourceArgumentTypes,
-    selectedExtensionCallArgumentBindings(receiver, node, signature, arguments_, selectedSourceArgumentTypes),
-    Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(callee)),
-  );
-}
-
-function selectedExtensionCallArgumentBindings(
-  receiver: GoPtr<Checker>,
-  node: GoPtr<Node>,
-  signature: GoPtr<Signature>,
-  arguments_: readonly GoPtr<Node>[],
-  selectedSourceArgumentTypes: readonly GoPtr<Type>[],
-): readonly CheckedSourceCallArgumentBindingInput[] | undefined {
-  if (receiver === undefined || node === undefined || signature === undefined
-    || signature === receiver.anySignature
-    || signature === receiver.unknownSignature
-    || signature === receiver.silentNeverSignature) {
-    return undefined;
-  }
-  const authoredArgumentIndex = new Map<Node, number>();
-  for (let index = 0; index < arguments_.length; index++) {
-    const argument = arguments_[index];
-    if (argument === undefined) {
-      return undefined;
-    }
-    authoredArgumentIndex.set(argument, index);
-  }
-  const effectiveArguments = Checker_getEffectiveCallArguments(receiver, node) ?? [];
-  const restParameterIndex = signatureHasRestParameter(signature) ? signature.parameters.length - 1 : -1;
-  const nextSpreadElementIndex = new Map<Node, number>();
-  const bindings: CheckedSourceCallArgumentBindingInput[] = [];
-  for (let effectiveArgumentIndex = 0; effectiveArgumentIndex < effectiveArguments.length; effectiveArgumentIndex++) {
-    const effectiveArgument = effectiveArguments[effectiveArgumentIndex];
-    if (effectiveArgument === undefined) {
-      return undefined;
-    }
-    let authoredArgument: GoPtr<Node> = effectiveArgument;
-    let sourceForm: CheckedSourceCallArgumentBindingInput["sourceForm"] = "value";
-    let spreadElementIndex: number | undefined;
-    let selectedArgumentType: GoPtr<Type>;
-    if (IsSyntheticExpression(effectiveArgument)) {
-      authoredArgument = effectiveArgument.Parent;
-      if (!IsSpreadElement(authoredArgument)) {
-        return undefined;
-      }
-      spreadElementIndex = nextSpreadElementIndex.get(authoredArgument!) ?? 0;
-      nextSpreadElementIndex.set(authoredArgument!, spreadElementIndex + 1);
-      const synthetic = AsSyntheticExpression(effectiveArgument);
-      sourceForm = synthetic?.IsSpread === true ? "spread-sequence" : "spread-element";
-      selectedArgumentType = synthetic?.Type as GoPtr<Type>;
-    } else if (IsSpreadElement(effectiveArgument)) {
-      sourceForm = "spread-sequence";
-      selectedArgumentType = Checker_checkExpressionCached(receiver, Node_Expression(effectiveArgument));
-    } else {
-      const index = authoredArgumentIndex.get(effectiveArgument);
-      selectedArgumentType = index === undefined ? undefined : selectedSourceArgumentTypes[index];
-    }
-    const sourceArgumentIndex = authoredArgument === undefined ? undefined : authoredArgumentIndex.get(authoredArgument);
-    const sourceParameterIndex = restParameterIndex >= 0 && effectiveArgumentIndex >= restParameterIndex
-      ? restParameterIndex
-      : effectiveArgumentIndex;
-    const selectedParameterType = Checker_getTypeAtPosition(receiver, signature, effectiveArgumentIndex);
-    if (sourceArgumentIndex === undefined
-      || sourceParameterIndex < 0
-      || sourceParameterIndex >= signature.parameters.length
-      || selectedArgumentType === undefined
-      || selectedParameterType === undefined) {
-      return undefined;
-    }
-    const sourceParameterForm: CheckedSourceCallArgumentBindingInput["sourceParameterForm"] = sourceParameterIndex === restParameterIndex
-      ? sourceForm === "spread-sequence" ? "rest-sequence" : "rest-element"
-      : "parameter";
-    bindings.push(Object.freeze({
-      sourceArgumentIndex,
-      effectiveArgumentIndex,
-      sourceForm,
-      ...(spreadElementIndex === undefined ? {} : { spreadElementIndex }),
-      sourceParameterIndex,
-      sourceParameterForm,
-      selectedArgumentType,
-      selectedParameterType,
-    }));
-  }
-  return Object.freeze(bindings);
 }
 
 /**
@@ -2512,6 +2403,7 @@ export function Checker_isSymbolOrSymbolForCall(receiver: GoPtr<Checker>, node: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getResolvedSignature","kind":"method","status":"implemented","sigHash":"6e07804e3f703a58b1aa0928481fd12ea132aadd55c97ab134180b75f6514591","bodyHash":"74d5204a564f7e9db52bc5cb606cb05647d136732d76b5ef07aeb9e879c450c0"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"TS-Go's source-order and flow-loop signature cache arbitration is preserved exactly while immutable evidence from the same resolution attempt is committed, reused, or restored atomically with resolvedSignature."}
  *
  * Go source:
  * func (c *Checker) getResolvedSignature(node *ast.Node, candidatesOutArray *[]*Signature, checkMode CheckMode) *Signature {
@@ -2563,6 +2455,7 @@ export function Checker_isSymbolOrSymbolForCall(receiver: GoPtr<Checker>, node: 
 export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
   const links = LinkStore_Get(receiver!.signatureLinks, node) as GoPtr<SignatureLinks>;
   const cached = links!.resolvedSignature;
+  const cachedEvidence = links!.resolvedCallEvidence;
   if (cached !== undefined && cached !== receiver!.resolvingSignature && candidatesOutArray === undefined) {
     return cached;
   }
@@ -2571,23 +2464,68 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
     receiver!.resolutionStart = receiver!.typeResolutions.length;
   }
   links!.resolvedSignature = receiver!.resolvingSignature;
-  let result = Checker_resolveSignature(receiver, node, candidatesOutArray, checkMode);
+  if (IsCallOrNewExpression(node)) {
+    links!.checkedCallSelectionSeed = undefined;
+    links!.resolvedCallEvidence = undefined;
+  }
+  const localEvidence: ResolvedSignatureEvidenceOutput | undefined = IsCallOrNewExpression(node)
+      && hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall)
+    ? {}
+    : undefined;
+  let result = Checker_resolveSignatureWithEvidence(receiver, node, candidatesOutArray, checkMode, localEvidence);
+  let selectedEvidence = localEvidence?.evidence;
   receiver!.resolutionStart = saveResolutionStart;
   if (result !== receiver!.resolvingSignature) {
     if (links!.resolvedSignature !== receiver!.resolvingSignature) {
       result = links!.resolvedSignature;
+      selectedEvidence = links!.resolvedCallEvidence;
+    }
+    if (selectedEvidence !== undefined && selectedEvidence.selectedSignature !== result) {
+      throw new Error("Resolved call evidence does not belong to the source-order selected signature.");
     }
     if (receiver!.flowLoopStack.length === 0) {
       links!.resolvedSignature = result;
+      if (IsCallOrNewExpression(node)) {
+        links!.resolvedCallEvidence = selectedEvidence;
+      }
     } else {
       links!.resolvedSignature = cached;
+      links!.resolvedCallEvidence = cachedEvidence;
     }
   }
   return result;
 }
 
+export function Checker_finalizeResolvedCallEvidence(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  sourceResultType: GoPtr<Type>,
+): ResolvedCallEvidence | undefined {
+  if (receiver === undefined || node === undefined || sourceResultType === undefined || !IsCallOrNewExpression(node)) {
+    return undefined;
+  }
+  const links = LinkStore_Get(receiver.signatureLinks, node) as GoPtr<SignatureLinks>;
+  const evidence = links?.resolvedCallEvidence;
+  if (evidence === undefined) {
+    return undefined;
+  }
+  if (evidence.call !== node || evidence.selectedSignature !== links?.resolvedSignature) {
+    throw new Error("Final resolved-call evidence does not match the cached call and selected signature.");
+  }
+  if (evidence.sourceResultType !== undefined && evidence.sourceResultType !== sourceResultType) {
+    throw new Error("A checked call produced conflicting final instantiated source result types.");
+  }
+  if (evidence.sourceResultType === sourceResultType) {
+    return evidence;
+  }
+  const finalized = Object.freeze({ ...evidence, sourceResultType });
+  links.resolvedCallEvidence = finalized;
+  return finalized;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveSignature","kind":"method","status":"implemented","sigHash":"3f5f24d8b322f3d2262569dc0fad3eb979984d3500a3322bee3b45508bd47345","bodyHash":"03f051b64a78b179daad017cbd3815451b58a183c849bc42a6a4be0c48e8d1fc"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The exact TS-Go resolver dispatch is retained; call/new branches additionally return the immutable evidence produced by the same resolution attempt to the cache arbiter."}
  *
  * Go source:
  * func (c *Checker) resolveSignature(node *ast.Node, candidatesOutArray *[]*Signature, checkMode CheckMode) *Signature {
@@ -2609,11 +2547,21 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
  * }
  */
 export function Checker_resolveSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
+  return Checker_resolveSignatureWithEvidence(receiver, node, candidatesOutArray, checkMode, undefined);
+}
+
+function Checker_resolveSignatureWithEvidence(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>,
+  checkMode: CheckMode,
+  output: ResolvedSignatureEvidenceOutput | undefined,
+): GoPtr<Signature> {
   switch (node!.Kind) {
     case KindCallExpression:
-      return Checker_resolveCallExpression(receiver, node, candidatesOutArray, checkMode);
+      return Checker_resolveCallExpressionWithEvidence(receiver, node, candidatesOutArray, checkMode, output);
     case KindNewExpression:
-      return Checker_resolveNewExpression(receiver, node, candidatesOutArray, checkMode);
+      return Checker_resolveNewExpressionWithEvidence(receiver, node, candidatesOutArray, checkMode, output);
     case KindTaggedTemplateExpression:
       return Checker_resolveTaggedTemplateExpression(receiver, node, candidatesOutArray, checkMode);
     case KindDecorator:
@@ -2630,6 +2578,7 @@ export function Checker_resolveSignature(receiver: GoPtr<Checker>, node: GoPtr<N
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveCallExpression","kind":"method","status":"implemented","sigHash":"c7b5867f2eec833277bb9e32e3697824bf56540407f05569487a0dd36b4f8c44","bodyHash":"5a1375e7886d41d36ed4c383b5a85a326a5aadf24796c557259856bf618e312c"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The exact TS-Go call resolver is retained; an internal worker returns immutable evidence from the same successful overload-selection attempt for atomic resolved-signature caching."}
  *
  * Go source:
  * func (c *Checker) resolveCallExpression(node *ast.Node, candidatesOutArray *[]*Signature, checkMode CheckMode) *Signature {
@@ -2737,9 +2686,26 @@ export function Checker_resolveSignature(receiver: GoPtr<Checker>, node: GoPtr<N
  * }
  */
 export function Checker_resolveCallExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
+  return Checker_resolveCallExpressionWithEvidence(receiver, node, candidatesOutArray, checkMode, undefined);
+}
+
+interface ResolvedSignatureEvidenceOutput {
+  evidence?: ResolvedCallEvidence;
+}
+
+function Checker_resolveCallExpressionWithEvidence(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>,
+  checkMode: CheckMode,
+  output: ResolvedSignatureEvidenceOutput | undefined,
+): GoPtr<Signature> {
   if (Node_Expression(node)!.Kind === KindSuperKeyword) {
     const superType = Checker_checkSuperExpression(receiver, Node_Expression(node));
     if (IsTypeAny(superType)) {
+      if (output !== undefined) {
+        return Checker_resolveUntypedCallWithEvidence(receiver, node, superType, output);
+      }
       for (const arg of Node_Arguments(node) ?? []) {
         Checker_checkExpression(receiver, arg);
       }
@@ -2750,7 +2716,23 @@ export function Checker_resolveCallExpression(receiver: GoPtr<Checker>, node: Go
       const baseTypeNode = containingClass !== undefined ? GetExtendsHeritageClauseElement(containingClass) : undefined;
       if (baseTypeNode !== undefined) {
         const baseConstructors = Checker_getInstantiatedConstructorsForTypeArguments(receiver, superType, Node_TypeArguments(baseTypeNode) ?? [], baseTypeNode);
-        return Checker_resolveCall(receiver, node, baseConstructors, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
+        if (output === undefined) {
+          return Checker_resolveCall(receiver, node, baseConstructors, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
+        }
+        const resolved = Checker_resolveCallWithEvidence(
+          receiver,
+          node,
+          baseConstructors,
+          candidatesOutArray,
+          checkMode,
+          SignatureFlagsNone,
+          undefined,
+          superType,
+        );
+        if (resolved.evidence !== undefined) {
+          output.evidence = resolved.evidence;
+        }
+        return resolved.signature;
       }
     }
     return Checker_resolveUntypedCall(receiver, node);
@@ -2791,7 +2773,9 @@ export function Checker_resolveCallExpression(receiver: GoPtr<Checker>, node: Go
     if (!Checker_isErrorType(receiver, funcType) && Node_TypeArguments(node) !== undefined) {
       Checker_error(receiver, node, Untyped_function_calls_may_not_accept_type_arguments);
     }
-    return Checker_resolveUntypedCall(receiver, node);
+    return output === undefined
+      ? Checker_resolveUntypedCall(receiver, node)
+      : Checker_resolveUntypedCallWithEvidence(receiver, node, funcType, output);
   }
   if (callSignatures.length === 0) {
     if (numConstructSignatures !== 0) {
@@ -2813,7 +2797,23 @@ export function Checker_resolveCallExpression(receiver: GoPtr<Checker>, node: Go
     Checker_skippedGenericFunction(receiver, node, checkMode);
     return receiver!.resolvingSignature;
   }
-  return Checker_resolveCall(receiver, node, callSignatures, candidatesOutArray, checkMode, callChainFlags, undefined);
+  if (output === undefined) {
+    return Checker_resolveCall(receiver, node, callSignatures, candidatesOutArray, checkMode, callChainFlags, undefined);
+  }
+  const resolved = Checker_resolveCallWithEvidence(
+    receiver,
+    node,
+    callSignatures,
+    candidatesOutArray,
+    checkMode,
+    callChainFlags,
+    undefined,
+    funcType,
+  );
+  if (resolved.evidence !== undefined) {
+    output.evidence = resolved.evidence;
+  }
+  return resolved.signature;
 }
 
 /**
@@ -3001,6 +3001,200 @@ export function Checker_isConstructorAccessible(receiver: GoPtr<Checker>, node: 
  * }
  */
 export function Checker_resolveCall(receiver: GoPtr<Checker>, node: GoPtr<Node>, signatures: GoSlice<GoPtr<Signature>>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode, callChainFlags: SignatureFlags, headMessage: GoPtr<Message>): GoPtr<Signature> {
+  return Checker_resolveCallWithSelectedArguments(
+    receiver,
+    node,
+    signatures,
+    candidatesOutArray,
+    checkMode,
+    callChainFlags,
+    headMessage,
+    undefined,
+  );
+}
+
+export interface ResolvedCallWithEvidenceResult {
+  readonly signature: GoPtr<Signature>;
+  readonly evidence?: ResolvedCallEvidence;
+}
+
+export function Checker_resolveCallWithEvidence(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  signatures: GoSlice<GoPtr<Signature>>,
+  candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>,
+  checkMode: CheckMode,
+  callChainFlags: SignatureFlags,
+  headMessage: GoPtr<Message>,
+  sourceCalleeType: GoPtr<Type>,
+): ResolvedCallWithEvidenceResult {
+  const selectionOutput: ResolvedCallArgumentSelectionOutput = {};
+  const signature = Checker_resolveCallWithSelectedArguments(
+    receiver,
+    node,
+    signatures,
+    candidatesOutArray,
+    checkMode,
+    callChainFlags,
+    headMessage,
+    selectionOutput,
+  );
+  const evidence = buildApplicableResolvedCallEvidence(receiver, node, sourceCalleeType, selectionOutput.selection);
+  return Object.freeze({ signature, ...(evidence === undefined ? {} : { evidence }) });
+}
+
+interface ResolvedCallArgumentSelection {
+  readonly origins: readonly EffectiveCallArgumentOrigin[];
+  readonly applicability: ApplicableCallSelection;
+}
+
+interface ResolvedCallArgumentSelectionOutput {
+  selection?: ResolvedCallArgumentSelection;
+}
+
+function buildApplicableResolvedCallEvidence(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  sourceCalleeType: GoPtr<Type>,
+  selection: ResolvedCallArgumentSelection | undefined,
+): ResolvedCallEvidence | undefined {
+  if (receiver === undefined || node === undefined || sourceCalleeType === undefined || selection === undefined) {
+    return undefined;
+  }
+  const sourceArguments = Node_Arguments(node) ?? [];
+  const selectedArguments = selection.applicability.selectedArguments;
+  if (selection.origins.length !== selectedArguments.length) {
+    throw new Error("Resolved call evidence lost its exact effective-argument topology.");
+  }
+  const selectedSourceArgumentTypes: Array<Type | undefined> = new Array(sourceArguments.length);
+  const sourceArgumentBindings: ResolvedCallArgumentEvidence[] = [];
+  for (let effectiveArgumentIndex = 0; effectiveArgumentIndex < selection.origins.length; effectiveArgumentIndex++) {
+    const origin = selection.origins[effectiveArgumentIndex]!;
+    const selected = selectedArguments[effectiveArgumentIndex]!;
+    if (origin.effectiveArgument === undefined
+      || origin.sourceArgument === undefined
+      || origin.sourceArgumentIndex < 0
+      || origin.sourceArgumentIndex >= sourceArguments.length
+      || sourceArguments[origin.sourceArgumentIndex] !== origin.sourceArgument) {
+      throw new Error("Resolved call evidence no longer matches the effective arguments selected by TS-Go.");
+    }
+    const selectedSourceArgumentType = origin.sourceArgumentType ?? selected.selectedArgumentType;
+    const retainedSourceArgumentType = selectedSourceArgumentTypes[origin.sourceArgumentIndex];
+    if (retainedSourceArgumentType !== undefined && retainedSourceArgumentType !== selectedSourceArgumentType) {
+      throw new Error("One authored call argument produced conflicting exact selected source types.");
+    }
+    selectedSourceArgumentTypes[origin.sourceArgumentIndex] = selectedSourceArgumentType;
+    const sourceParameterIndex = selected.sourceParameterIndex;
+    if (sourceParameterIndex < 0 || sourceParameterIndex >= selection.applicability.signature.parameters.length) {
+      throw new Error("Resolved call evidence contains an invalid selected parameter index.");
+    }
+    const restParameterIndex = signatureHasRestParameter(selection.applicability.signature)
+      ? selection.applicability.signature.parameters.length - 1
+      : -1;
+    const sourceParameterForm: ResolvedCallArgumentEvidence["sourceParameterForm"] = sourceParameterIndex === restParameterIndex
+      ? origin.sourceForm === "spread-sequence" ? "rest-sequence" : "rest-element"
+      : "parameter";
+    sourceArgumentBindings.push(Object.freeze({
+      sourceArgumentIndex: origin.sourceArgumentIndex,
+      effectiveArgumentIndex,
+      sourceForm: origin.sourceForm,
+      ...(origin.spreadElementIndex === undefined ? {} : { spreadElementIndex: origin.spreadElementIndex }),
+      sourceParameterIndex,
+      sourceParameterForm,
+      selectedArgumentType: selected.selectedArgumentType,
+      selectedParameterType: selected.selectedParameterType,
+    }));
+  }
+  if (selectedSourceArgumentTypes.some((type) => type === undefined)) {
+    throw new Error("Resolved call evidence did not cover every authored source argument.");
+  }
+  const callee = Node_Expression(node);
+  if (callee === undefined) {
+    throw new Error("Resolved call evidence lost its callee expression.");
+  }
+  const links = LinkStore_Get(receiver.signatureLinks, node) as GoPtr<SignatureLinks>;
+  const seed = links?.checkedCallSelectionSeed;
+  const calleeProvenance = seed?.calleeProvenance;
+  const resolvedSourceArguments: ResolvedCallSourceValueEvidence[] = sourceArguments.map((argument, index) => Object.freeze({
+    expression: argument!,
+    type: selectedSourceArgumentTypes[index]!,
+  }));
+  return Object.freeze({
+    outcome: "applicable",
+    call: node,
+    selectedSignature: selection.applicability.signature,
+    sourceCallee: Object.freeze({
+      expression: callee,
+      type: sourceCalleeType,
+      ...(calleeProvenance?.symbol === undefined ? {} : { symbol: calleeProvenance.symbol }),
+      ...(calleeProvenance?.declaration === undefined ? {} : { declaration: calleeProvenance.declaration }),
+      ...(calleeProvenance?.selectedSymbol === undefined ? {} : { selectedSymbol: calleeProvenance.selectedSymbol }),
+      ...(calleeProvenance?.selectedDeclaration === undefined ? {} : { selectedDeclaration: calleeProvenance.selectedDeclaration }),
+      ...(calleeProvenance?.authoredTypeNode === undefined ? {} : { authoredTypeNode: calleeProvenance.authoredTypeNode }),
+    }),
+    sourceArguments: Object.freeze(resolvedSourceArguments),
+    sourceArgumentBindings: Object.freeze(sourceArgumentBindings),
+    ...(seed?.receiver === undefined ? {} : { sourceReceiver: seed.receiver }),
+    ...(seed?.inputOperationSubjects === undefined ? {} : { inputOperationSubjects: seed.inputOperationSubjects }),
+  });
+}
+
+function buildUntypedResolvedCallEvidence(
+  receiver: GoPtr<Checker>,
+  node: Node,
+  sourceCalleeType: Type,
+  selectedArgumentTypes: readonly Type[],
+): ResolvedCallEvidence {
+  if (receiver === undefined) {
+    throw new Error("Untyped resolved-call evidence requires its checker.");
+  }
+  const callee = Node_Expression(node);
+  const sourceArguments = Node_Arguments(node) ?? [];
+  if (callee === undefined
+    || sourceArguments.length !== selectedArgumentTypes.length
+    || sourceArguments.some((argument) => argument === undefined)) {
+    throw new Error("Untyped resolved-call evidence lost its exact callee or authored argument types.");
+  }
+  const links = LinkStore_Get(receiver.signatureLinks, node) as GoPtr<SignatureLinks>;
+  const seed = links?.checkedCallSelectionSeed;
+  const calleeProvenance = seed?.calleeProvenance;
+  const selectedSignature = receiver.anySignature;
+  if (selectedSignature === undefined) {
+    throw new Error("Untyped resolved-call evidence lost the checker any signature.");
+  }
+  return Object.freeze({
+    outcome: "untyped",
+    call: node,
+    selectedSignature,
+    sourceCallee: Object.freeze({
+      expression: callee,
+      type: sourceCalleeType,
+      ...(calleeProvenance?.symbol === undefined ? {} : { symbol: calleeProvenance.symbol }),
+      ...(calleeProvenance?.declaration === undefined ? {} : { declaration: calleeProvenance.declaration }),
+      ...(calleeProvenance?.selectedSymbol === undefined ? {} : { selectedSymbol: calleeProvenance.selectedSymbol }),
+      ...(calleeProvenance?.selectedDeclaration === undefined ? {} : { selectedDeclaration: calleeProvenance.selectedDeclaration }),
+      ...(calleeProvenance?.authoredTypeNode === undefined ? {} : { authoredTypeNode: calleeProvenance.authoredTypeNode }),
+    }),
+    sourceArguments: Object.freeze(sourceArguments.map((argument, index) => Object.freeze({
+      expression: argument!,
+      type: selectedArgumentTypes[index]!,
+    }))),
+    sourceArgumentBindings: Object.freeze([]),
+    ...(seed?.receiver === undefined ? {} : { sourceReceiver: seed.receiver }),
+    ...(seed?.inputOperationSubjects === undefined ? {} : { inputOperationSubjects: seed.inputOperationSubjects }),
+  });
+}
+
+function Checker_resolveCallWithSelectedArguments(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  signatures: GoSlice<GoPtr<Signature>>,
+  candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>,
+  checkMode: CheckMode,
+  callChainFlags: SignatureFlags,
+  headMessage: GoPtr<Message>,
+  output: ResolvedCallArgumentSelectionOutput | undefined,
+): GoPtr<Signature> {
   const isDecorator = node!.Kind === KindDecorator;
   const isInstanceof = node!.Kind === KindBinaryExpression;
   const reportErrors = !receiver!.isInferencePartiallyBlocked && candidatesOutArray === undefined;
@@ -3016,7 +3210,8 @@ export function Checker_resolveCall(receiver: GoPtr<Checker>, node: GoPtr<Node>,
   if (candidates.length === 0) {
     return receiver!.unknownSignature;
   }
-  const args = Checker_getEffectiveCallArguments(receiver, node);
+  const originOutput: EffectiveCallArgumentOriginsOutput | undefined = output === undefined ? undefined : {};
+  const args = Checker_getEffectiveCallArgumentsWithOrigins(receiver, node, originOutput);
   const isSingleNonGenericCandidate = candidates.length === 1 && (candidates[0]!.typeParameters ?? []).length === 0;
   const argCheckMode = !isDecorator && !isSingleNonGenericCandidate && core.Some(args, (arg) => Checker_isContextSensitive(receiver, arg))
     ? CheckModeSkipContextSensitive
@@ -3031,13 +3226,29 @@ export function Checker_resolveCall(receiver: GoPtr<Checker>, node: GoPtr<Node>,
     signatureHelpTrailingComma: ((checkMode & CheckModeIsForSignatureHelp) !== 0 && IsCallExpression(node) && NodeList_HasTrailingComma(Node_ArgumentList(node))) as bool,
   } as CallState;
   let result: GoPtr<Signature>;
+  let applicableSelection: ApplicableCallSelection | undefined;
   if (candidates.length > 1) {
-    result = Checker_chooseOverload(receiver, callState, receiver!.subtypeRelation);
+    const subtypeSelection: ApplicableCallSelectionOutput | undefined = output === undefined ? undefined : {};
+    result = Checker_chooseOverloadWithSelectedArguments(receiver, callState, receiver!.subtypeRelation, subtypeSelection);
+    applicableSelection = subtypeSelection?.selection;
   }
   if (result === undefined) {
-    result = Checker_chooseOverload(receiver, callState, receiver!.assignableRelation);
+    const assignableSelection: ApplicableCallSelectionOutput | undefined = output === undefined ? undefined : {};
+    result = Checker_chooseOverloadWithSelectedArguments(receiver, callState, receiver!.assignableRelation, assignableSelection);
+    applicableSelection = assignableSelection?.selection;
   }
   if (result !== undefined) {
+    if (output !== undefined) {
+      if (originOutput?.origins === undefined
+        || applicableSelection === undefined
+        || applicableSelection.signature !== result) {
+        throw new Error("Applicable call selection or effective-argument origins did not match the resolved signature.");
+      }
+      output.selection = Object.freeze({
+        origins: originOutput.origins,
+        applicability: applicableSelection,
+      });
+    }
     return result;
   }
   result = Checker_getCandidateForOverloadFailure(receiver, callState.node, callState.candidates, callState.args, candidatesOutArray !== undefined, checkMode);
@@ -3183,6 +3394,7 @@ export function Checker_getOptionalCallSignature(receiver: GoPtr<Checker>, signa
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.chooseOverload","kind":"method","status":"implemented","sigHash":"35dba3b0efe4936419b69fa992defebeee5d256f458d7f9e4380a90f01ebf523","bodyHash":"700e21c92d57c8a4855429b73ba64cf71315dc211322c7e729c564783475cdec"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After the unchanged TS-Go overload winner is established, extension-enabled programs retain the exact contextual argument types computed by that successful applicability pass; failed and preliminary passes publish no evidence."}
  *
  * Go source:
  * func (c *Checker) chooseOverload(s *CallState, relation *Relation) *Signature {
@@ -3268,6 +3480,24 @@ export function Checker_getOptionalCallSignature(receiver: GoPtr<Checker>, signa
  * }
  */
 export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallState>, relation: GoPtr<Relation>): GoPtr<Signature> {
+  return Checker_chooseOverloadWithSelectedArguments(receiver, s, relation, undefined);
+}
+
+interface ApplicableCallSelection {
+  readonly signature: Signature;
+  readonly selectedArguments: readonly SelectedEffectiveCallArgument[];
+}
+
+interface ApplicableCallSelectionOutput {
+  selection?: ApplicableCallSelection;
+}
+
+function Checker_chooseOverloadWithSelectedArguments(
+  receiver: GoPtr<Checker>,
+  s: GoPtr<CallState>,
+  relation: GoPtr<Relation>,
+  output: ApplicableCallSelectionOutput | undefined,
+): GoPtr<Signature> {
   s!.candidatesForArgumentError = [];
   s!.candidateForArgumentArityError = undefined;
   s!.candidateForTypeArgumentError = undefined;
@@ -3276,10 +3506,12 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
     if (s!.typeArguments.length !== 0 || !Checker_hasCorrectArity(receiver, s!.node, s!.args, candidate, s!.signatureHelpTrailingComma)) {
       return undefined;
     }
-    if (!Checker_isSignatureApplicable(receiver, s!.node, s!.args, candidate, relation, CheckModeNormal, false as bool, undefined)) {
+    const selectedArguments: Array<SelectedEffectiveCallArgument | undefined> | undefined = output === undefined ? undefined : [];
+    if (!Checker_isSignatureApplicableWithSelectedArgumentTypes(receiver, s!.node, s!.args, candidate, relation, CheckModeNormal, false as bool, undefined, selectedArguments)) {
       s!.candidatesForArgumentError = [candidate];
       return undefined;
     }
+    retainApplicableCallSelection(output, candidate!, selectedArguments);
     return candidate;
   }
   for (let candidateIndex = 0; candidateIndex < s!.candidates.length; candidateIndex++) {
@@ -3316,7 +3548,8 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
     } else {
       checkCandidate = candidate;
     }
-    if (!Checker_isSignatureApplicable(receiver, s!.node, s!.args, checkCandidate, relation, s!.argCheckMode, false as bool, undefined)) {
+    let selectedArguments: Array<SelectedEffectiveCallArgument | undefined> | undefined = output === undefined ? undefined : [];
+    if (!Checker_isSignatureApplicableWithSelectedArgumentTypes(receiver, s!.node, s!.args, checkCandidate, relation, s!.argCheckMode, false as bool, undefined, selectedArguments)) {
       s!.candidatesForArgumentError.push(checkCandidate);
       continue;
     }
@@ -3330,15 +3563,34 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
           continue;
         }
       }
-      if (!Checker_isSignatureApplicable(receiver, s!.node, s!.args, checkCandidate, relation, s!.argCheckMode, false as bool, undefined)) {
+      selectedArguments = output === undefined ? undefined : [];
+      if (!Checker_isSignatureApplicableWithSelectedArgumentTypes(receiver, s!.node, s!.args, checkCandidate, relation, s!.argCheckMode, false as bool, undefined, selectedArguments)) {
         s!.candidatesForArgumentError.push(checkCandidate);
         continue;
       }
     }
     s!.candidates[candidateIndex] = checkCandidate;
+    retainApplicableCallSelection(output, checkCandidate!, selectedArguments);
     return checkCandidate;
   }
   return undefined;
+}
+
+function retainApplicableCallSelection(
+  output: ApplicableCallSelectionOutput | undefined,
+  signature: Signature,
+  selectedArguments: readonly (SelectedEffectiveCallArgument | undefined)[] | undefined,
+): void {
+  if (output === undefined) {
+    return;
+  }
+  if (selectedArguments === undefined || selectedArguments.some((argument) => argument === undefined)) {
+    throw new Error("An applicable checked call lost an effective argument selection.");
+  }
+  output.selection = Object.freeze({
+    signature,
+    selectedArguments: Object.freeze(selectedArguments.slice() as SelectedEffectiveCallArgument[]),
+  });
 }
 
 /**
@@ -3647,6 +3899,7 @@ export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSignatureApplicable","kind":"method","status":"implemented","sigHash":"5707b58d565ca9504f11871fcfeff062bb8599288f1d09c6e802f1443961906e","bodyHash":"4dd2ef04c249ba264d83a86632ceb3b30973a6df168b9afe28e23359c12d439b"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The exact TS-Go applicability algorithm is retained; an internal worker additionally returns the already-computed contextual argument types for the winning checked-call evidence without rechecking expressions."}
  *
  * Go source:
  * func (c *Checker) isSignatureApplicable(node *ast.Node, args []*ast.Node, signature *Signature, relation *Relation, checkMode CheckMode, reportErrors bool, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -3724,7 +3977,41 @@ export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: 
  * 	return true
  * }
  */
+interface SelectedEffectiveCallArgument {
+  readonly sourceParameterIndex: number;
+  readonly selectedArgumentType: Type;
+  readonly selectedParameterType: Type;
+}
+
 export function Checker_isSignatureApplicable(receiver: GoPtr<Checker>, node: GoPtr<Node>, args: GoSlice<GoPtr<Node>>, signature: GoPtr<Signature>, relation: GoPtr<Relation>, checkMode: CheckMode, reportErrors: bool, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
+  return Checker_isSignatureApplicableWithSelectedArgumentTypes(
+    receiver,
+    node,
+    args,
+    signature,
+    relation,
+    checkMode,
+    reportErrors,
+    diagnosticOutput,
+    undefined,
+  );
+}
+
+function Checker_isSignatureApplicableWithSelectedArgumentTypes(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  args: GoSlice<GoPtr<Node>>,
+  signature: GoPtr<Signature>,
+  relation: GoPtr<Relation>,
+  checkMode: CheckMode,
+  reportErrors: bool,
+  diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>,
+  selectedArguments: Array<SelectedEffectiveCallArgument | undefined> | undefined,
+): bool {
+  if (selectedArguments !== undefined) {
+    selectedArguments.length = args.length;
+    selectedArguments.fill(undefined);
+  }
   if (IsJsxCallLike(node)) {
     return Checker_checkApplicableSignatureForJsxCallLikeElement(receiver, node, signature, relation, checkMode, reportErrors, diagnosticOutput);
   }
@@ -3751,6 +4038,13 @@ export function Checker_isSignatureApplicable(receiver: GoPtr<Checker>, node: Go
     if (!IsOmittedExpression(arg)) {
       const paramType = Checker_getTypeAtPosition(receiver, signature, index);
       const argType = Checker_checkExpressionWithContextualType(receiver, arg, paramType, undefined, checkMode);
+      if (selectedArguments !== undefined) {
+        selectedArguments[index] = Object.freeze({
+          sourceParameterIndex: index,
+          selectedArgumentType: argType!,
+          selectedParameterType: paramType!,
+        });
+      }
       const checkArgType = (checkMode & CheckModeSkipContextSensitive) !== 0
         ? Checker_getRegularTypeOfObjectLiteral(receiver, argType)
         : argType;
@@ -3762,7 +4056,16 @@ export function Checker_isSignatureApplicable(receiver: GoPtr<Checker>, node: Go
     }
   }
   if (restType !== undefined) {
-    const spreadType = Checker_getSpreadArgumentType(receiver, args, argCount, args.length, restType, undefined, checkMode);
+    const spreadType = Checker_getSpreadArgumentTypeWithSelectedArgumentTypes(
+      receiver,
+      args,
+      argCount,
+      args.length,
+      restType,
+      undefined,
+      checkMode,
+      selectedArguments,
+    );
     const restArgCount = args.length - argCount;
     let errorNode: GoPtr<Node>;
     if (reportErrors) {
@@ -4398,9 +4701,19 @@ export function Checker_tryGetRestTypeOfSignature(receiver: GoPtr<Checker>, sign
  * }
  */
 export function Checker_resolveUntypedCall(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Signature> {
+  return Checker_resolveUntypedCallWithEvidence(receiver, node, undefined, undefined);
+}
+
+export function Checker_resolveUntypedCallWithEvidence(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  sourceCalleeType: GoPtr<Type>,
+  output: ResolvedSignatureEvidenceOutput | undefined,
+): GoPtr<Signature> {
   if (Checker_callLikeExpressionMayHaveTypeArguments(receiver, node)) {
     Checker_checkSourceElements(receiver, Node_TypeArguments(node) ?? []);
   }
+  const selectedArgumentTypes: Type[] | undefined = output === undefined ? undefined : [];
   switch (node!.Kind) {
     case KindTaggedTemplateExpression:
       Checker_checkExpression(receiver, AsTaggedTemplateExpression(node)!.Template);
@@ -4415,9 +4728,18 @@ export function Checker_resolveUntypedCall(receiver: GoPtr<Checker>, node: GoPtr
     case KindCallExpression:
     case KindNewExpression:
       for (const argument of Node_Arguments(node) ?? []) {
-        Checker_checkExpression(receiver, argument);
+        const selectedType = Checker_checkExpression(receiver, argument);
+        if (selectedArgumentTypes !== undefined) {
+          if (selectedType === undefined) {
+            throw new Error("Untyped call checking lost an authored argument type.");
+          }
+          selectedArgumentTypes.push(selectedType);
+        }
       }
       break;
+  }
+  if (output !== undefined && sourceCalleeType !== undefined && IsCallOrNewExpression(node)) {
+    output.evidence = buildUntypedResolvedCallEvidence(receiver, node!, sourceCalleeType, selectedArgumentTypes ?? []);
   }
   return receiver!.anySignature;
 }
@@ -10046,6 +10368,7 @@ export function Checker_getContextuallyTypedParameterType(receiver: GoPtr<Checke
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSpreadArgumentType","kind":"method","status":"implemented","sigHash":"4e8f6dbb44b876df7d02f68dd625421f501897189f1a55fc170732f038c7dcc2","bodyHash":"f209cac7ead6222449a541eff70fe6b43ac12f8a56a043e0557c3c9b84f3be14"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The exact TS-Go spread/rest algorithm is retained; an internal worker additionally returns each already-computed effective argument type for checked-call evidence without rechecking expressions."}
  *
  * Go source:
  * func (c *Checker) getSpreadArgumentType(args []*ast.Node, index int, argCount int, restType *Type, context *InferenceContext, checkMode CheckMode) *Type {
@@ -10120,6 +10443,28 @@ export function Checker_getContextuallyTypedParameterType(receiver: GoPtr<Checke
  * }
  */
 export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: GoSlice<GoPtr<Node>>, index: int, argCount: int, restType: GoPtr<Type>, context: GoPtr<InferenceContext>, checkMode: CheckMode): GoPtr<Type> {
+  return Checker_getSpreadArgumentTypeWithSelectedArgumentTypes(
+    receiver,
+    args,
+    index,
+    argCount,
+    restType,
+    context,
+    checkMode,
+    undefined,
+  );
+}
+
+function Checker_getSpreadArgumentTypeWithSelectedArgumentTypes(
+  receiver: GoPtr<Checker>,
+  args: GoSlice<GoPtr<Node>>,
+  index: int,
+  argCount: int,
+  restType: GoPtr<Type>,
+  context: GoPtr<InferenceContext>,
+  checkMode: CheckMode,
+  selectedArguments: Array<SelectedEffectiveCallArgument | undefined> | undefined,
+): GoPtr<Type> {
   const inConstContext = Checker_isConstTypeVariable(receiver, restType, 0);
   if (argCount > 0 && index >= argCount - 1) {
     let arg = args[argCount - 1];
@@ -10129,6 +10474,13 @@ export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: Go
         spreadType = AsSyntheticExpression(arg)!.Type as GoPtr<Type>;
       } else {
         spreadType = Checker_checkExpressionWithContextualType(receiver, Node_Expression(arg), restType, context, checkMode);
+      }
+      if (selectedArguments !== undefined) {
+        selectedArguments[argCount - 1] = Object.freeze({
+          sourceParameterIndex: index,
+          selectedArgumentType: spreadType!,
+          selectedParameterType: restType!,
+        });
       }
       if (Checker_isArrayLikeType(receiver, spreadType)) {
         return Checker_getMutableArrayOrTupleType(receiver, spreadType);
@@ -10152,6 +10504,13 @@ export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: Go
       } else {
         spreadType = Checker_checkExpression(receiver, Node_Expression(arg));
       }
+      if (selectedArguments !== undefined) {
+        selectedArguments[argIndex] = Object.freeze({
+          sourceParameterIndex: index,
+          selectedArgumentType: spreadType!,
+          selectedParameterType: restType!,
+        });
+      }
       if (Checker_isArrayLikeType(receiver, spreadType)) {
         t = spreadType;
         info.flags = ElementFlagsVariadic;
@@ -10171,6 +10530,13 @@ export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: Go
         contextualType = Checker_getIndexedAccessTypeEx(receiver, restType, Checker_getNumberLiteralType(receiver, argIndex - index), AccessFlagsContextual, undefined, undefined);
       }
       const argType = Checker_checkExpressionWithContextualType(receiver, arg, contextualType, context, checkMode);
+      if (selectedArguments !== undefined) {
+        selectedArguments[argIndex] = Object.freeze({
+          sourceParameterIndex: index,
+          selectedArgumentType: argType!,
+          selectedParameterType: contextualType!,
+        });
+      }
       const hasPrimitiveContextualType = inConstContext || Checker_maybeTypeOfKind(receiver, contextualType, TypeFlagsPrimitive | TypeFlagsIndex | TypeFlagsTemplateLiteral | TypeFlagsStringMapping);
       if (hasPrimitiveContextualType) {
         t = Checker_getRegularTypeOfLiteralType(receiver, argType);
@@ -10382,6 +10748,7 @@ export function Checker_getContextualTypeForArgumentAtIndex(receiver: GoPtr<Chec
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getEffectiveCallArguments","kind":"method","status":"implemented","sigHash":"9572850d74760078277e606e3ca1190dd1ff030be0b6c377f9590082088ceb55","bodyHash":"d818b86f07e456fa22ba6d79ca15d5252643ffc272ca3fb8fff7073be588e37a"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"While TS-Go expands authored spreads into effective call arguments, extension-enabled programs retain the exact already-computed spread expression type by authored argument index; effective arguments and source checking are unchanged."}
  *
  * Go source:
  * func (c *Checker) getEffectiveCallArguments(node *ast.Node) []*ast.Node {
@@ -10451,13 +10818,36 @@ export function Checker_getContextualTypeForArgumentAtIndex(receiver: GoPtr<Chec
  * }
  */
 export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+  return Checker_getEffectiveCallArgumentsWithOrigins(receiver, node, undefined);
+}
+
+interface EffectiveCallArgumentOrigin {
+  readonly sourceArgument: Node;
+  readonly sourceArgumentIndex: number;
+  readonly effectiveArgument: Node;
+  readonly sourceForm: "value" | "spread-element" | "spread-sequence";
+  readonly spreadElementIndex?: number;
+  readonly sourceArgumentType?: Type;
+}
+
+interface EffectiveCallArgumentOriginsOutput {
+  origins?: readonly EffectiveCallArgumentOrigin[];
+}
+
+function Checker_getEffectiveCallArgumentsWithOrigins(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  output: EffectiveCallArgumentOriginsOutput | undefined,
+): GoSlice<GoPtr<Node>> {
   if (IsJsxOpeningFragment(node)) {
+    retainEffectiveCallArgumentOrigins(output, []);
     return [Checker_createSyntheticExpression(receiver, node, receiver!.emptyFreshJsxObjectType, false, undefined)];
   }
   if (IsTaggedTemplateExpression(node)) {
     const template = AsTaggedTemplateExpression(node)!.Template as GoPtr<Node>;
     const firstArg = Checker_createSyntheticExpression(receiver, template, receiver!.getGlobalTemplateStringsArrayType(), false, undefined);
     if (!IsTemplateExpression(template)) {
+      retainEffectiveCallArgumentOrigins(output, []);
       return [firstArg];
     }
     const spans = AsTemplateExpression(template)!.TemplateSpans!.Nodes;
@@ -10466,15 +10856,19 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
     for (let i = 0; i < spans.length; i++) {
       args[i + 1] = Node_Expression(spans[i]);
     }
+    retainEffectiveCallArgumentOrigins(output, []);
     return args;
   }
   if (IsDecorator(node)) {
+    retainEffectiveCallArgumentOrigins(output, []);
     return Checker_getEffectiveDecoratorArguments(receiver, node);
   }
   if (IsBinaryExpression(node)) {
+    retainEffectiveCallArgumentOrigins(output, []);
     return [AsBinaryExpression(node)!.Left as GoPtr<Node>];
   }
   if (IsJsxOpeningLikeElement(node)) {
+    retainEffectiveCallArgumentOrigins(output, []);
     if ((Node_Properties(Node_Attributes(node))?.length ?? 0) !== 0 || (IsJsxOpeningElement(node) && (Node_Children(node!.Parent)!.Nodes.length !== 0))) {
       return [Node_Attributes(node)];
     }
@@ -10484,6 +10878,14 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
   const spreadIndex = Checker_getSpreadArgumentIndex(receiver, args);
   if (spreadIndex >= 0) {
     const effectiveArgs = slices.Clip(args.slice(0, spreadIndex)) as GoSlice<GoPtr<Node>>;
+    const origins: EffectiveCallArgumentOrigin[] | undefined = output === undefined
+      ? undefined
+      : effectiveArgs.map((argument, sourceArgumentIndex) => Object.freeze({
+          sourceArgument: argument!,
+          sourceArgumentIndex,
+          effectiveArgument: argument!,
+          sourceForm: "value" as const,
+        }));
     for (let i = spreadIndex; i < args.length; i++) {
       const arg = args[i];
       let spreadType: GoPtr<Type>;
@@ -10505,14 +10907,49 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
           }
           const syntheticArg = Checker_createSyntheticExpression(receiver, arg, syntheticType, (flags & ElementFlagsVariable) !== 0, elementInfos[elementIndex]!.labeledDeclaration);
           effectiveArgs.push(syntheticArg);
+          origins?.push(Object.freeze({
+              sourceArgument: arg!,
+              sourceArgumentIndex: i,
+              effectiveArgument: syntheticArg!,
+              sourceForm: (flags & ElementFlagsVariable) !== 0 ? "spread-sequence" : "spread-element",
+              spreadElementIndex: elementIndex,
+              sourceArgumentType: spreadType,
+            }));
         }
       } else {
         effectiveArgs.push(arg);
+        origins?.push(Object.freeze({
+            sourceArgument: arg!,
+            sourceArgumentIndex: i,
+            effectiveArgument: arg!,
+            sourceForm: IsSpreadElement(arg) ? "spread-sequence" : "value",
+            ...(spreadType === undefined ? {} : { sourceArgumentType: spreadType }),
+          }));
       }
     }
+    retainEffectiveCallArgumentOrigins(output, origins);
     return effectiveArgs;
   }
+  retainEffectiveCallArgumentOrigins(output, output === undefined ? undefined : args.map((argument, sourceArgumentIndex) => Object.freeze({
+    sourceArgument: argument!,
+    sourceArgumentIndex,
+    effectiveArgument: argument!,
+    sourceForm: "value" as const,
+  })));
   return args;
+}
+
+function retainEffectiveCallArgumentOrigins(
+  output: EffectiveCallArgumentOriginsOutput | undefined,
+  origins: readonly EffectiveCallArgumentOrigin[] | undefined,
+): void {
+  if (output === undefined) {
+    return;
+  }
+  if (origins === undefined) {
+    throw new Error("Effective call arguments lost their exact authored origins.");
+  }
+  output.origins = Object.freeze([...origins]);
 }
 
 /**

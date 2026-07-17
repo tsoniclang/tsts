@@ -25,11 +25,6 @@ import type {
   ExtensionObservationRunOptions,
 } from "./observations.js";
 import { ExtensionObservationPoint } from "./observations.js";
-import {
-  CheckedCalleeSelectionInventory,
-  differingCheckedCalleeSelectionEvidenceFields,
-  type CheckedCalleeSelectionEvidence,
-} from "./checked-callee-selection.js";
 import { CheckedOperationInventory, type CheckedOperationApplyOutcome } from "./checked-operation-finalization.js";
 import type { CheckedOperationRequestSnapshotCache } from "./checked-operation-value-snapshot.js";
 import { differingCheckedOperationRequestFields } from "./checked-operation-request-equality.js";
@@ -124,8 +119,6 @@ export const extensionHostRunCheckedOperation: unique symbol = Symbol("tsts.exte
 export const extensionHostGetCheckedOperationRequest: unique symbol = Symbol("tsts.extensionHost.getCheckedOperationRequest");
 export const extensionHostGetCheckedOperationReference: unique symbol = Symbol("tsts.extensionHost.getCheckedOperationReference");
 export const extensionHostHasCheckedOperationOwner: unique symbol = Symbol("tsts.extensionHost.hasCheckedOperationOwner");
-export const extensionHostRetainCheckedCalleeSelectionEvidence: unique symbol = Symbol("tsts.extensionHost.retainCheckedCalleeSelectionEvidence");
-export const extensionHostGetCheckedCalleeSelectionEvidence: unique symbol = Symbol("tsts.extensionHost.getCheckedCalleeSelectionEvidence");
 
 const factStoreBeginTransaction: unique symbol = Symbol("tsts.extensionFactStore.beginTransaction");
 const factStoreAssertCanCommitTransaction: unique symbol = Symbol("tsts.extensionFactStore.assertCanCommitTransaction");
@@ -2713,7 +2706,6 @@ export class ExtensionHost {
   readonly #observationOwners = new Map<ExtensionObservationPointName, string>();
   readonly #observationHooks = new Map<ExtensionObservationPointName, RegisteredObservationHook[]>();
   readonly #lifecycleHooks = new Map<string, RegisteredLifecycleHook[]>();
-  readonly #checkedCalleeSelections: CheckedCalleeSelectionInventory;
   readonly #checkedOperations: CheckedOperationInventory;
   readonly #consumerSubjectIds = new WeakMap<object, number>();
   #program: object;
@@ -2730,22 +2722,6 @@ export class ExtensionHost {
     this.facts = new ExtensionFactStore(this.diagnostics);
     this.factResolver = new ExtensionFactResolver(this.facts, this.diagnostics);
     this.providers = new ProviderRegistry(this.diagnostics, options.requiredProviderModules ?? []);
-    this.#checkedCalleeSelections = new CheckedCalleeSelectionInventory({
-      onConflict: (call, existing, incoming) => {
-        this.diagnostics.append(createHostDiagnostic({
-          extensionCode: "CHECKED_OPERATION_REQUEST_CONFLICT",
-          numericCode: ExtensionHostDiagnosticCode.observationConflict,
-          message: "Checked call was observed with conflicting selected callee evidence.",
-          nodeOrSpan: call,
-          evidence: [{
-            message: "Conflicting checked callee selection fields",
-            details: differingCheckedCalleeSelectionEvidenceFields(existing, incoming),
-          }],
-          identity: `checked-callee-selection-conflict:${this.#getConsumerSubjectIdentity(call)}`,
-        }));
-        this.#failSemanticFinalization();
-      },
-    });
     this.#checkedOperations = new CheckedOperationInventory({
       beginAttempt: () => this.#beginFactAttempt(),
       commitAttempt: (attempt) => this.#commitFactAttempt(attempt as ExtensionFactAttempt),
@@ -3012,20 +2988,6 @@ export class ExtensionHost {
 
   [extensionHostGetCheckedOperationReference](subject: ExtensionFactSubject | undefined): CheckedOperationReference | undefined {
     return this.#checkedOperations.getReference(subject);
-  }
-
-  [extensionHostRetainCheckedCalleeSelectionEvidence](
-    call: ExtensionFactSubject,
-    evidence: CheckedCalleeSelectionEvidence,
-  ): CheckedCalleeSelectionEvidence {
-    this.#assertCheckedOperationRecordingAvailable();
-    return this.#checkedCalleeSelections.retain(call, evidence);
-  }
-
-  [extensionHostGetCheckedCalleeSelectionEvidence](
-    call: ExtensionFactSubject | undefined,
-  ): CheckedCalleeSelectionEvidence | undefined {
-    return this.#semanticFinalizationState === "failed" ? undefined : this.#checkedCalleeSelections.get(call);
   }
 
   [extensionHostHasCheckedOperationOwner](observation: CheckedOperationObservationPointName): boolean {
