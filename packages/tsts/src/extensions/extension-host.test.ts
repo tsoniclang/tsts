@@ -41,13 +41,11 @@ import type {
   ProviderTypeExpression,
   ProviderVirtualDeclarationDocument,
   CheckedCallMappingRequest,
-  CheckedCallMappingResult,
   CheckedElementAccessMappingRequest,
   CheckedOperationMappingResult,
   CheckedOperatorMappingRequest,
   CheckedPropertyAccessMappingRequest,
   TargetConstraintValidationRequest,
-  TargetTypeArgumentMappingResult,
   TargetSignatureSelection,
   SourceFileBoundLifecycleRequest,
   TargetBindingFact,
@@ -59,6 +57,7 @@ import type {
   ExtensionFlowUseValidationRequest,
   ExtensionFlowUseValidationResult,
 } from "./index.js";
+import { extensionHostRunCheckedOperation } from "./host.js";
 import {
   getProviderVirtualArtifactForCompiler,
   providerCanonicalExportOwnerMarker,
@@ -71,6 +70,8 @@ const primitiveFactKey = defineExtensionFactKey({
   extensionId: "source-primitives",
   name: "primitive",
 });
+
+const ignoreCheckedOperationAcceptance = (): void => {};
 
 function extension(id: string, options: {
   readonly dependsOn?: readonly string[];
@@ -207,6 +208,28 @@ test("observation owners are required and conflicts are reported", () => {
 
   host.registerObservationOwner(ExtensionObservationPoint.mapCheckedCall, "missing-extension");
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.unknownObservationOwner);
+});
+
+test("public runObservation rejects every checked observation point at runtime despite compile-time exclusion", () => {
+  const host = new ExtensionHost({});
+  const checkedObservationPoints = [
+    ExtensionObservationPoint.mapCheckedCall,
+    ExtensionObservationPoint.mapCheckedPropertyAccess,
+    ExtensionObservationPoint.mapCheckedElementAccess,
+    ExtensionObservationPoint.mapCheckedOperator,
+    ExtensionObservationPoint.mapCheckedIteration,
+    ExtensionObservationPoint.mapCheckedConversion,
+  ] as const;
+
+  for (const observation of checkedObservationPoints) {
+    assert.throws(
+      // @ts-expect-error Checked operation points are intentionally excluded from the public immediate-observation API.
+      () => host.runObservation(observation, {}, () => undefined),
+      (error: unknown) => error instanceof Error
+        && error.message === `Checked semantic operation '${observation}' must use the host-owned finalization inventory.`,
+      observation,
+    );
+  }
 });
 
 test("fact store supports insert, idempotent writes, conflicts, and object subjects only", () => {
@@ -347,7 +370,8 @@ test("registered diagnostic ranges reject unstable extension codes", () => {
 
 test("extensions register binding and semantic providers through initialization context", () => {
   const bindingProvider = acmeBindingProvider("@example/target/Acme.Buffers.js");
-  const parameter = {};
+  const call = {};
+  const callee = {};
   const argument = {};
   const semanticProvider: TargetSemanticProvider = {
     identity: {
@@ -357,8 +381,22 @@ test("extensions register binding and semantic providers through initialization 
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
-    resolveParameterPassing: () => acceptObservation({
-      passing: { mode: "byref-writeonly-must-init" },
+    mapCheckedCall: () => acceptObservation({
+      kind: "target",
+      selectedSignature: {
+        member: {
+          id: "Acme.TryParse",
+          sourceName: "tryParse",
+          targetName: "TryParse",
+          kind: "method",
+          parameters: [{
+            name: "result",
+            type: { kind: "source-primitive", name: "int32" },
+            passingMode: "byref-writeonly-must-init",
+          }],
+        },
+      },
+      argumentConversions: [argumentConversionSlot(0)],
     }),
   };
   const host = new ExtensionHost({}, {
@@ -375,15 +413,17 @@ test("extensions register binding and semantic providers through initialization 
   assert.equal(host.providers.hasBindingProviders, true);
   assert.equal(host.diagnostics.hasErrors(), false);
 
-  const parameterMode = host.runObservation(ExtensionObservationPoint.resolveParameterPassing, {
-    parameter,
-    argument,
+  const mapped = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
+    call,
+    callee,
+    arguments: [argument],
     target: "acme",
-  }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
+  }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
 
-  assert.equal(parameterMode.kind, "accept");
-  assert.equal(parameterMode.kind === "accept" ? parameterMode.value.passing.mode : undefined, "byref-writeonly-must-init");
-  assert.equal(parameterMode.kind === "accept" ? parameterMode.extensionId : undefined, "acme");
+  assert.equal(mapped.kind, "accept");
+  assert.equal(mapped.kind === "accept" && mapped.value.kind === "target" ? mapped.value.selectedSignature.member.parameters[0]?.passingMode : undefined, "byref-writeonly-must-init");
+  assert.deepEqual(mapped.kind === "accept" && mapped.value.kind === "target" ? mapped.value.argumentConversions : [], [argumentConversionSlot(0)]);
+  assert.equal(mapped.kind === "accept" ? mapped.extensionId : undefined, "acme");
 });
 
 test("semantic provider methods own typed observations without hook boilerplate", () => {
@@ -394,22 +434,17 @@ test("semantic provider methods own typed observations without hook boilerplate"
   const operatorExpression = {};
   const lambda = {};
   const flowUse = {};
-  const voidType = {};
   const int32Type = { kind: "source-primitive", name: "int32" } satisfies TargetTypeRef;
   const longType = {};
   const byteType = {};
   const charType = { kind: "source-primitive", name: "char" } satisfies TargetTypeRef;
   const stringType = {};
   const delegateType = {};
-  const listAdd = {};
-  const listInt32 = {};
   const consoleWriteLine = {};
   const callArgument = {};
   const spanArgument = {};
   const leftOperand = {};
   const rightOperand = {};
-  const tryParseParameter = {};
-  const tryParseArgument = {};
   const symbol = {};
   const host = new ExtensionHost({}, {
     extensions: [
@@ -426,11 +461,12 @@ test("semantic provider methods own typed observations without hook boilerplate"
             validateTargetConstraint: () => acceptObservation(true),
             observePostCheckAssignability: () => acceptObservation(undefined),
             mapCheckedCall: () => acceptObservation({
-              selectedSignature: selectedSignature("Acme.Console.WriteLine(Acme.Int32)"),
-              returnType: voidType,
-            }),
-            mapInferredSourceTypeArgumentsToTarget: () => acceptObservation({
-              targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
+              kind: "target",
+              selectedSignature: {
+                ...selectedSignature("Acme.Console.WriteLine(Acme.Int32)", true),
+                targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
+              },
+              argumentConversions: [argumentConversionSlot(0)],
             }),
             mapCheckedPropertyAccess: () => acceptObservation({
               operation: targetOperation("Acme.String.Length", "property"),
@@ -451,9 +487,6 @@ test("semantic provider methods own typed observations without hook boilerplate"
             mapCheckedConversion: () => acceptObservation({
               convertedType: { kind: "source-primitive", name: "int32" },
               operation: targetOperation("Acme.Convert.ToInt32", "method"),
-            }),
-            resolveParameterPassing: () => acceptObservation({
-              passing: { mode: "byref-readwrite" },
             }),
             resolveRuntimeCarrier: () => acceptObservation({
               carrier: { kind: "target-named", id: "Acme.Int32" },
@@ -483,45 +516,41 @@ test("semantic provider methods own typed observations without hook boilerplate"
   }, () => undefined, { requireOwner: true });
   assert.equal(assignable.kind, "accept");
 
-  const call = host.runObservation(ExtensionObservationPoint.mapCheckedCall, {
+  const call = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
     call: expression,
     callee: consoleWriteLine,
     arguments: [callArgument],
     target: "acme",
-  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
-  assert.equal(call.kind === "accept" ? call.value.selectedSignature.member.id : undefined, "Acme.Console.WriteLine(Acme.Int32)");
+  }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
+  assert.equal(call.kind === "accept" && call.value.kind === "target" ? call.value.selectedSignature.member.id : undefined, "Acme.Console.WriteLine(Acme.Int32)");
+  assert.equal(call.kind === "accept" && call.value.kind === "target" ? call.value.selectedSignature.member.typeParameters?.length : undefined, 1);
+  assert.equal(call.kind === "accept" && call.value.kind === "target" ? call.value.selectedSignature.targetTypeArguments?.length : undefined, 1);
+  assert.deepEqual(call.kind === "accept" && call.value.kind === "target" ? call.value.selectedSignature.targetTypeArguments : [], [{ kind: "source-primitive", name: "int32" }]);
+  assert.deepEqual(call.kind === "accept" && call.value.kind === "target" ? call.value.argumentConversions : [], [argumentConversionSlot(0)]);
 
-  const noInferredTypeArguments: TargetTypeArgumentMappingResult = { targetTypeArguments: [] };
-  const inferred = host.runObservation(ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget, {
-    declaration: listAdd,
-    arguments: [callArgument],
-    contextualType: listInt32,
-  }, () => noInferredTypeArguments, { requireOwner: true });
-  assert.deepEqual(inferred.kind === "accept" ? inferred.value.targetTypeArguments : [], [{ kind: "source-primitive", name: "int32" }]);
-
-  const property = host.runObservation(ExtensionObservationPoint.mapCheckedPropertyAccess, {
+  const property = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedPropertyAccess, {
     expression: propertyAccess,
     receiver: stringType,
     propertyName: "length",
     target: "acme",
-  }, () => ({ operation: targetOperation("core", "property") }), { requireOwner: true });
+  }, () => ({ operation: targetOperation("core", "property") }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(property.kind === "accept" ? property.value.operation.operationId : undefined, "Acme.String.Length");
 
-  const element = host.runObservation(ExtensionObservationPoint.mapCheckedElementAccess, {
+  const element = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedElementAccess, {
     expression: elementAccess,
     receiver: stringType,
     argument: spanArgument,
     target: "acme",
-  }, () => ({ operation: targetOperation("core", "indexer") }), { requireOwner: true });
+  }, () => ({ operation: targetOperation("core", "indexer") }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(element.kind === "accept" ? element.value.operation.operationId : undefined, "Acme.Span.GetItem");
 
-  const operator = host.runObservation(ExtensionObservationPoint.mapCheckedOperator, {
+  const operator = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedOperator, {
     expression: operatorExpression,
     operator: "+",
     left: leftOperand,
     right: rightOperand,
     target: "acme",
-  }, () => ({ operation: targetOperation("core", "operator") }), { requireOwner: true });
+  }, () => ({ operation: targetOperation("core", "operator") }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(operator.kind === "accept" ? operator.value.operation.operationId : undefined, "Acme.Int32.op_Addition");
 
   const contextual = host.runObservation(ExtensionObservationPoint.recordContextualTargetType, {
@@ -532,7 +561,7 @@ test("semantic provider methods own typed observations without hook boilerplate"
   assert.equal(contextual.kind === "accept" ? contextual.value.type : undefined, delegateType);
 
   const noConversion: CheckedConversionMappingResult = {};
-  const conversion = host.runObservation(ExtensionObservationPoint.mapCheckedConversion, {
+  const conversion = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedConversion, {
     conversionKind: "assertion",
     assertionKind: "as",
     expression: convertedExpression,
@@ -541,15 +570,8 @@ test("semantic provider methods own typed observations without hook boilerplate"
     sourceExpression: convertedExpression,
     explicitTargetTypeNode: int32Type,
     targetPlatform: "acme",
-  }, () => noConversion, { requireOwner: true });
+  }, () => noConversion, ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(conversion.kind === "accept" ? conversion.value.operation?.operationId : undefined, "Acme.Convert.ToInt32");
-
-  const parameterMode = host.runObservation(ExtensionObservationPoint.resolveParameterPassing, {
-    parameter: tryParseParameter,
-    argument: tryParseArgument,
-    target: "acme",
-  }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
-  assert.equal(parameterMode.kind === "accept" ? parameterMode.value.passing.mode : undefined, "byref-readwrite");
 
   const carrier = host.runObservation(ExtensionObservationPoint.resolveRuntimeCarrier, {
     type: int32Type,
@@ -569,35 +591,32 @@ test("semantic provider methods own typed observations without hook boilerplate"
 
 test("observation hooks receive a read-only compiler query context", () => {
   const program = {};
-  const call = {};
-  const callee = {};
+  const source = {};
+  const constraint = { kind: "implements", contract: "Acme.QueryContext" } as const;
   let observedProgram: object | undefined;
   let observedQueryFacade = false;
   const host = new ExtensionHost(program, {
     extensions: [
       extension("acme-target", {
-        observationOwners: [ExtensionObservationPoint.mapCheckedCall],
+        observationOwners: [ExtensionObservationPoint.validateTargetConstraint],
         initialize: (context) => {
-          context.registerObservation(ExtensionObservationPoint.mapCheckedCall, (_request, observationContext) => {
+          context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, (_request, observationContext) => {
             observedProgram = observationContext.compiler.program;
             observedQueryFacade = typeof observationContext.compiler.ast.kindName === "function"
               && typeof observationContext.compiler.checker.getTypeAtLocation === "function"
               && typeof observationContext.compiler.typeShape.typeToString === "function"
               && typeof observationContext.compiler.getSourceFiles === "function";
-            return acceptObservation({
-              selectedSignature: selectedSignature("acme.Native.call(i32)"),
-            });
+            return acceptObservation(true);
           });
         },
       }),
     ],
   });
 
-  const result = host.runObservation(ExtensionObservationPoint.mapCheckedCall, {
-    call,
-    callee,
-    arguments: [],
-  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+  const result = host.runObservation(ExtensionObservationPoint.validateTargetConstraint, {
+    source,
+    constraint,
+  }, () => false, { requireOwner: true });
 
   assert.equal(result.kind, "accept");
   assert.equal(observedProgram, program);
@@ -4523,7 +4542,7 @@ test("consumer query facade exposes finalized target facts without fallback infe
   const runtimeType = {};
   const host = new ExtensionHost({});
 
-  host.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("Acme.Console.WriteLine(Acme.Int32)"));
+  host.facts.set(call, selectedTargetSignatureFactKey, selectedTargetCallFact("Acme.Console.WriteLine(Acme.Int32)"));
   host.facts.set(propertyAccess, targetOperationFactKey, targetOperation("Acme.String.Length", "property"));
   host.facts.set(argument, argumentPassingFactKey, { mode: "byref-readonly" });
   host.facts.set(runtimeType, runtimeCarrierFactKey, {
@@ -4574,7 +4593,7 @@ test("strict consumer facts report diagnostics and fail closed", () => {
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.requiredFactMissing);
 
   const satisfiedHost = new ExtensionHost({});
-  satisfiedHost.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("Acme.Console.WriteLine(Acme.Int32)"));
+  satisfiedHost.facts.set(call, selectedTargetSignatureFactKey, selectedTargetCallFact("Acme.Console.WriteLine(Acme.Int32)"));
   satisfiedHost.finalizeSemantics();
   assert.equal(createExtensionConsumerQueries(satisfiedHost, "emitter").mustSelectedTargetCall(call).member.id, "Acme.Console.WriteLine(Acme.Int32)");
 });
@@ -4602,14 +4621,14 @@ test("lifecycle hook failures are diagnostics with extension identity", () => {
 });
 
 test("observation hook failures are diagnostics and do not crash the compiler host", () => {
-  const call = {};
-  const callee = {};
+  const source = {};
+  const constraint = { kind: "implements", contract: "Acme.FailingConstraint" } as const;
   const host = new ExtensionHost({}, {
     extensions: [
       extension("bad-observation-extension", {
-        observationOwners: [ExtensionObservationPoint.mapCheckedCall],
+        observationOwners: [ExtensionObservationPoint.validateTargetConstraint],
         initialize: (context) => {
-          context.registerObservation(ExtensionObservationPoint.mapCheckedCall, () => {
+          context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, () => {
             throw new Error("boom");
           });
         },
@@ -4617,11 +4636,10 @@ test("observation hook failures are diagnostics and do not crash the compiler ho
     ],
   });
 
-  const result = host.runObservation(ExtensionObservationPoint.mapCheckedCall, {
-    call,
-    callee,
-    arguments: [],
-  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+  const result = host.runObservation(ExtensionObservationPoint.validateTargetConstraint, {
+    source,
+    constraint,
+  }, () => false, { requireOwner: true });
 
   assert.equal(result.kind, "reject");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.observationHookFailed);
@@ -4702,14 +4720,12 @@ test("target constraint and post-check assignability observations use owner hook
 
 test("required extension-owned observations cannot fall back when owner is absent or deferred", () => {
   const missingOwnerHost = new ExtensionHost({});
-  const call = {};
-  const callee = {};
-  const argument = {};
-  const missing = missingOwnerHost.runObservation(ExtensionObservationPoint.mapCheckedCall, {
-    call,
-    callee,
-    arguments: [argument],
-  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+  const source = {};
+  const constraint = { kind: "implements", contract: "Acme.RequiredConstraint" } as const;
+  const missing = missingOwnerHost.runObservation(ExtensionObservationPoint.validateTargetConstraint, {
+    source,
+    constraint,
+  }, () => false, { requireOwner: true });
 
   assert.equal(missing.kind, "missing-owner");
   assert.equal(missingOwnerHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.observationOwnerMissing);
@@ -4717,58 +4733,57 @@ test("required extension-owned observations cannot fall back when owner is absen
   const deferredOwnerHost = new ExtensionHost({}, {
     extensions: [
       extension("acme", {
-        observationOwners: [ExtensionObservationPoint.mapCheckedCall],
+        observationOwners: [ExtensionObservationPoint.validateTargetConstraint],
         initialize: (context) => {
-          context.registerObservation(ExtensionObservationPoint.mapCheckedCall, () => deferObservation);
+          context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, () => deferObservation);
         },
       }),
     ],
   });
-  const deferred = deferredOwnerHost.runObservation(ExtensionObservationPoint.mapCheckedCall, {
-    call,
-    callee,
-    arguments: [argument],
-  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+  const deferred = deferredOwnerHost.runObservation(ExtensionObservationPoint.validateTargetConstraint, {
+    source,
+    constraint,
+  }, () => false, { requireOwner: true });
 
   assert.equal(deferred.kind, "owner-deferred");
   assert.equal(deferredOwnerHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.observationOwnerDeferred);
 });
 
 test("unowned multiple extension observations produce deterministic conflict", () => {
-  const call = {};
-  const callee = {};
+  const source = {};
+  const constraint = { kind: "implements", contract: "Acme.ConflictingConstraint" } as const;
   const host = new ExtensionHost({}, {
     extensions: [
       extension("a", {
-        initialize: (context) => context.registerObservation(ExtensionObservationPoint.mapCheckedCall, () => acceptObservation({ selectedSignature: selectedSignature("a") })),
+        initialize: (context) => context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, () => acceptObservation(true)),
       }),
       extension("b", {
-        initialize: (context) => context.registerObservation(ExtensionObservationPoint.mapCheckedCall, () => acceptObservation({ selectedSignature: selectedSignature("b") })),
+        initialize: (context) => context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, () => acceptObservation(false)),
       }),
     ],
   });
 
-  const result = host.runObservation(ExtensionObservationPoint.mapCheckedCall, { call, callee, arguments: [] }, () => ({ selectedSignature: selectedSignature("core") }));
+  const result = host.runObservation(ExtensionObservationPoint.validateTargetConstraint, { source, constraint }, () => false);
   assert.equal(result.kind, "conflict");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.observationConflict);
 });
 
 test("owned multiple non-deferred observations produce deterministic conflict", () => {
-  const call = {};
-  const callee = {};
+  const source = {};
+  const constraint = { kind: "implements", contract: "Acme.OwnedConflictingConstraint" } as const;
   const host = new ExtensionHost({}, {
     extensions: [
       extension("owner", {
-        observationOwners: [ExtensionObservationPoint.mapCheckedCall],
+        observationOwners: [ExtensionObservationPoint.validateTargetConstraint],
         initialize: (context) => {
-          context.registerObservation(ExtensionObservationPoint.mapCheckedCall, () => acceptObservation({ selectedSignature: selectedSignature("first") }));
-          context.registerObservation(ExtensionObservationPoint.mapCheckedCall, () => acceptObservation({ selectedSignature: selectedSignature("second") }));
+          context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, () => acceptObservation(true));
+          context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, () => acceptObservation(false));
         },
       }),
     ],
   });
 
-  const result = host.runObservation(ExtensionObservationPoint.mapCheckedCall, { call, callee, arguments: [] }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+  const result = host.runObservation(ExtensionObservationPoint.validateTargetConstraint, { source, constraint }, () => false, { requireOwner: true });
   assert.equal(result.kind, "conflict");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.observationConflict);
 });
@@ -4798,8 +4813,8 @@ test("checked call mapping records selected target signature facts", () => {
   const call = {};
   const callee = {};
   const argument = {};
-  const voidType = {};
   const writeLineInt = selectedSignature("Acme.Console.WriteLine(Acme.Int32)");
+  const argumentConversions = [argumentConversionSlot(0)] as const;
   const host = new ExtensionHost({}, {
     extensions: [
       extension("acme", {
@@ -4807,10 +4822,14 @@ test("checked call mapping records selected target signature facts", () => {
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.mapCheckedCall, (request) => {
             if (request.call === call) {
-              context.facts.set(request.call, selectedTargetSignatureFactKey, writeLineInt);
+              context.facts.set(request.call, selectedTargetSignatureFactKey, {
+                ...writeLineInt,
+                argumentConversions,
+              });
               return acceptObservation({
+                kind: "target",
                 selectedSignature: writeLineInt,
-                returnType: voidType,
+                argumentConversions,
               });
             }
             return deferObservation;
@@ -4820,12 +4839,12 @@ test("checked call mapping records selected target signature facts", () => {
     ],
   });
 
-  const result = host.runObservation(ExtensionObservationPoint.mapCheckedCall, {
+  const result = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
     call,
     callee,
     arguments: [argument],
     target: "acme",
-  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+  }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
 
   assert.equal(result.kind, "accept");
   assert.equal(host.facts.get(call, selectedTargetSignatureFactKey)?.member.id, "Acme.Console.WriteLine(Acme.Int32)");
@@ -4870,33 +4889,45 @@ test("property, element, and operator observations expose target operations", ()
     ],
   });
 
-  assert.equal(host.runObservation(ExtensionObservationPoint.mapCheckedPropertyAccess, { expression: lengthExpression, receiver: arrayType, propertyName: "Length" }, () => ({ operation: targetOperation("core", "property") }), { requireOwner: true }).kind, "accept");
-  assert.equal(host.runObservation(ExtensionObservationPoint.mapCheckedElementAccess, { expression: indexExpression, receiver: arrayType, argument: indexArgument }, () => ({ operation: targetOperation("core", "indexer") }), { requireOwner: true }).kind, "accept");
-  assert.equal(host.runObservation(ExtensionObservationPoint.mapCheckedOperator, { expression: addExpression, operator: "+", left: leftOperand, right: rightOperand }, () => ({ operation: targetOperation("core", "operator") }), { requireOwner: true }).kind, "accept");
+  assert.equal(host[extensionHostRunCheckedOperation](
+    ExtensionObservationPoint.mapCheckedPropertyAccess,
+    { expression: lengthExpression, receiver: arrayType, propertyName: "Length" },
+    () => ({ operation: targetOperation("core", "property") }),
+    ignoreCheckedOperationAcceptance,
+    { requireOwner: true },
+  ).kind, "accept");
+  assert.equal(host[extensionHostRunCheckedOperation](
+    ExtensionObservationPoint.mapCheckedElementAccess,
+    { expression: indexExpression, receiver: arrayType, argument: indexArgument },
+    () => ({ operation: targetOperation("core", "indexer") }),
+    ignoreCheckedOperationAcceptance,
+    { requireOwner: true },
+  ).kind, "accept");
+  assert.equal(host[extensionHostRunCheckedOperation](
+    ExtensionObservationPoint.mapCheckedOperator,
+    { expression: addExpression, operator: "+", left: leftOperand, right: rightOperand },
+    () => ({ operation: targetOperation("core", "operator") }),
+    ignoreCheckedOperationAcceptance,
+    { requireOwner: true },
+  ).kind, "accept");
 
   assert.equal(host.facts.get(lengthExpression, targetOperationFactKey)?.operationId, "Acme.Array.Length");
   assert.equal(host.facts.get(indexExpression, targetOperationFactKey)?.operationId, "Acme.Array.Get");
   assert.equal(host.facts.get(addExpression, targetOperationFactKey)?.operationId, "Acme.Int32.op_Addition");
 });
 
-test("contextual target type and target type argument observations preserve target facts", () => {
+test("contextual target type observations preserve target facts", () => {
   const lambda = {};
-  const listGetItem = {};
   const delegateType = {};
   const coreType = {};
-  const int32Type = {};
-  const argument = {};
   const host = new ExtensionHost({}, {
     extensions: [
       extension("target", {
-        observationOwners: [ExtensionObservationPoint.recordContextualTargetType, ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget],
+        observationOwners: [ExtensionObservationPoint.recordContextualTargetType],
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.recordContextualTargetType, (request) => acceptObservation({
             type: delegateType,
             targetType: { kind: "target-named", id: "Acme.Func`2" },
-          }));
-          context.registerObservation(ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget, () => acceptObservation({
-            targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
           }));
         },
       }),
@@ -4904,10 +4935,7 @@ test("contextual target type and target type argument observations preserve targ
   });
 
   const contextual = host.runObservation(ExtensionObservationPoint.recordContextualTargetType, { expression: lambda, context: delegateType }, () => ({ type: coreType }), { requireOwner: true });
-  assert.equal(contextual.kind === "accept" ? contextual.value.type : undefined, delegateType);
-
-  const inferred = host.runObservation(ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget, { declaration: listGetItem, arguments: [argument] }, () => ({ targetTypeArguments: [] }), { requireOwner: true });
-  assert.deepEqual(inferred.kind === "accept" ? inferred.value.targetTypeArguments : [], [{ kind: "source-primitive", name: "int32" }]);
+  assert.ok(contextual.kind === "accept" && contextual.value.type === delegateType, "Contextual target observations must retain the exact selected source type.");
 });
 
 test("flow validation supports local rejection and target compiler validation facts", () => {
@@ -5007,11 +5035,10 @@ test("provider registrations seal after first resolution observation or lifecycl
   }, {
     name: "observation",
     execute: (host) => {
-      const result = host.runObservation(ExtensionObservationPoint.mapCheckedCall, {
-        call: {},
-        callee: {},
-        arguments: [],
-      }, () => ({ selectedSignature: selectedSignature("core") }));
+      const result = host.runObservation(ExtensionObservationPoint.validateTargetConstraint, {
+        source: {},
+        constraint: { kind: "implements", contract: "Acme.RegistrationSeal" },
+      }, () => false);
       assert.equal(result.kind, "core");
     },
   }, {
@@ -5054,27 +5081,27 @@ test("provider registrations seal after first resolution observation or lifecycl
 test("hook registration during dispatch is rejected without extending live or future iteration", () => {
   let observationCalls = 0;
   let injectedObservationCalls = 0;
+  const constraint = { kind: "implements", contract: "Acme.DispatchRegistration" } as const;
   const observationHost = new ExtensionHost({}, {
     extensions: [extension("dispatch-observation-registration", {
       initialize: (context) => {
-        context.registerObservation(ExtensionObservationPoint.mapCheckedCall, () => {
+        context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, () => {
           observationCalls += 1;
-          context.registerObservation(ExtensionObservationPoint.mapCheckedCall, () => {
+          context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, () => {
             injectedObservationCalls += 1;
-            return acceptObservation({ selectedSignature: selectedSignature("injected") });
+            return acceptObservation(false);
           });
-          return acceptObservation({ selectedSignature: selectedSignature("registered") });
+          return acceptObservation(true);
         });
       },
     })],
   });
 
   for (let index = 0; index < 2; index++) {
-    const result = observationHost.runObservation(ExtensionObservationPoint.mapCheckedCall, {
-      call: {},
-      callee: {},
-      arguments: [],
-    }, () => ({ selectedSignature: selectedSignature("core") }));
+    const result = observationHost.runObservation(ExtensionObservationPoint.validateTargetConstraint, {
+      source: {},
+      constraint,
+    }, () => false);
     assert.equal(result.kind, "accept");
   }
   assert.equal(observationCalls, 2);
@@ -5228,7 +5255,11 @@ test("semantic provider identity and handlers are snapshotted before caller muta
   let replacementHandlerCalls = 0;
   const originalHandler: NonNullable<TargetSemanticProvider["mapCheckedCall"]> = () => {
     originalHandlerCalls += 1;
-    return acceptObservation({ selectedSignature: selectedSignature("original-semantic-handler") });
+    return acceptObservation({
+      kind: "target",
+      selectedSignature: selectedSignature("original-semantic-handler"),
+      argumentConversions: [],
+    });
   };
   const semanticProvider: TargetSemanticProvider = {
     identity: mutableIdentity,
@@ -5253,7 +5284,11 @@ test("semantic provider identity and handlers are snapshotted before caller muta
     configurable: true,
     value: () => {
       replacementHandlerCalls += 1;
-      return acceptObservation({ selectedSignature: selectedSignature("replacement-semantic-handler") });
+      return acceptObservation({
+        kind: "target",
+        selectedSignature: selectedSignature("replacement-semantic-handler"),
+        argumentConversions: [],
+      });
     },
   });
   assert.equal(host.providers.registerTargetSemanticProvider({
@@ -5261,13 +5296,13 @@ test("semantic provider identity and handlers are snapshotted before caller muta
   }), false);
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.duplicateProvider);
 
-  const result = host.runObservation(ExtensionObservationPoint.mapCheckedCall, {
+  const result = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
     call: {},
     callee: {},
     arguments: [],
-  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+  }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(result.kind, "accept");
-  assert.equal(result.kind === "accept" ? result.value.selectedSignature.member.id : undefined, "original-semantic-handler");
+  assert.equal(result.kind === "accept" && result.value.kind === "target" ? result.value.selectedSignature.member.id : undefined, "original-semantic-handler");
   assert.equal(originalHandlerCalls, 1);
   assert.equal(replacementHandlerCalls, 0);
   assert.equal(identityReads, 1);
@@ -5332,11 +5367,11 @@ test("semantic provider registration getters and callback envelopes fail as host
     })],
   });
   assert.doesNotThrow(() => {
-    const result = envelopeHost.runObservation(ExtensionObservationPoint.mapCheckedCall, {
+    const result = envelopeHost[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
       call: {},
       callee: {},
       arguments: [],
-    }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+    }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
     assert.equal(result.kind, "reject");
   });
   assert.equal(envelopeKindReads, 1);
@@ -6862,7 +6897,7 @@ function diagnostic(extensionId: string, extensionCode: string, numericCode: num
   };
 }
 
-function selectedSignature(id: string): TargetSignatureSelection {
+function selectedSignature(id: string, generic = false): TargetSignatureSelection {
   return {
     member: {
       id,
@@ -6874,7 +6909,24 @@ function selectedSignature(id: string): TargetSignatureSelection {
         type: { kind: "source-primitive", name: "int32" },
         passingMode: "by-value",
       }],
+      ...(generic ? { typeParameters: [{ name: "T" }] } : {}),
     },
+  };
+}
+
+function selectedTargetCallFact(id: string) {
+  return {
+    ...selectedSignature(id),
+    argumentConversions: [argumentConversionSlot(0)],
+  } as const;
+}
+
+function argumentConversionSlot(argumentIndex: number) {
+  return {
+    sourceArgumentIndex: argumentIndex,
+    sourceForm: "value" as const,
+    targetParameterIndex: argumentIndex,
+    targetForm: "parameter" as const,
   };
 }
 

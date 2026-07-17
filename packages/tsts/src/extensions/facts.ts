@@ -58,9 +58,6 @@ export interface SourcePrimitiveFact {
 export interface ArgumentPassingFact {
   readonly mode: ArgumentPassingMode;
   readonly targetExpression?: ExtensionFactSubject;
-  readonly parameterIndex?: number;
-  readonly targetParameter?: TargetParameter;
-  readonly selectedSignature?: ProviderDeclarationIdentity;
 }
 
 export interface FunctionPointerFact {
@@ -210,11 +207,19 @@ export interface SourceSelectedSignatureParameter {
 export interface TargetSignatureSelection {
   readonly member: TargetMember;
   readonly targetTypeArguments?: readonly TargetTypeRef[];
-  readonly argumentConversions?: readonly TargetTypeRef[];
   readonly providerDeclaration?: ProviderDeclarationIdentity;
 }
 
+export interface TargetCallArgumentConversionSlot {
+  readonly sourceArgumentIndex: number;
+  readonly sourceForm: "value" | "spread-element" | "spread-sequence";
+  readonly spreadElementIndex?: number;
+  readonly targetParameterIndex: number;
+  readonly targetForm: "parameter" | "params-element" | "params-sequence";
+}
+
 export interface SelectedTargetSignatureFact extends TargetSignatureSelection {
+  readonly argumentConversions: readonly TargetCallArgumentConversionSlot[];
   readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
   readonly sourceSelectedSignatureParameters?: readonly SourceSelectedSignatureParameter[];
   readonly sourceSelectedSignatureKind?: SourceSelectedSignatureKind;
@@ -225,6 +230,9 @@ export interface SelectedTargetSignatureFact extends TargetSignatureSelection {
   readonly sourceSelectedCalleeSymbol?: ExtensionFactSubject;
   readonly sourceSelectedCalleeDeclaration?: ExtensionFactSubject;
   readonly sourceReturnType?: ExtensionFactSubject;
+  readonly sourceOptionalChain?: boolean;
+  readonly sourceReceiver?: ExtensionFactSubject;
+  readonly sourceReceiverType?: ExtensionFactSubject;
 }
 
 export interface ContextualTargetTypeFact {
@@ -250,6 +258,8 @@ export interface TargetOperationProvenance {
   readonly sourceSelectedDeclaration?: ExtensionFactSubject;
   readonly sourceSelectedSignature?: ExtensionFactSubject;
   readonly sourceResultType?: ExtensionFactSubject;
+  readonly sourceReceiverType?: ExtensionFactSubject;
+  readonly sourceOptionalChain?: boolean;
 }
 
 export interface FlowStateFact {
@@ -274,6 +284,28 @@ export interface RuntimeCarrierProvenance {
 export interface TargetConversionFact {
   readonly convertedType?: TargetTypeRef;
   readonly operation?: TargetOperationFact;
+}
+
+export interface TargetCallArgumentConversionFact extends TargetConversionFact {
+  readonly slot: TargetCallArgumentConversionSlot;
+  readonly call: ExtensionFactSubject;
+  readonly sourceArgumentIndex: number;
+  readonly targetParameterIndex: number;
+  readonly sourceForm: "value" | "spread-element" | "spread-sequence";
+  readonly spreadElementIndex?: number;
+  readonly targetForm: "parameter" | "params-element" | "params-sequence";
+}
+
+export interface TargetCallArgumentPassingFact extends ArgumentPassingFact {
+  readonly slot: TargetCallArgumentConversionSlot;
+  readonly call: ExtensionFactSubject;
+  readonly sourceArgumentIndex: number;
+  readonly targetParameterIndex: number;
+  readonly sourceForm: "value" | "spread-element" | "spread-sequence";
+  readonly spreadElementIndex?: number;
+  readonly targetForm: "parameter" | "params-element" | "params-sequence";
+  readonly targetParameter: TargetParameter;
+  readonly selectedSignature?: ProviderDeclarationIdentity;
 }
 
 export interface ProviderVirtualDeclarationFact {
@@ -339,10 +371,7 @@ export const argumentPassingFactKey = defineExtensionFactKey<ArgumentPassingFact
   name: "argumentPassing",
   equals: (left, right) =>
     left.mode === right.mode
-    && left.targetExpression === right.targetExpression
-    && left.parameterIndex === right.parameterIndex
-    && optionalTargetParameterEquals(left.targetParameter, right.targetParameter)
-    && optionalProviderDeclarationIdentityEquals(left.selectedSignature, right.selectedSignature),
+    && left.targetExpression === right.targetExpression,
 });
 
 export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact>({
@@ -409,13 +438,16 @@ export const instantiatedTargetTypeFactKey = defineExtensionFactKey<Instantiated
 export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTargetSignatureFact>({
   extensionId: "tsts.target-bindings",
   name: "selectedTargetSignature",
-  equals: (left, right) =>
-    targetMemberEquals(left.member, right.member)
+  equals: selectedTargetSignatureEquals,
+});
+
+export function selectedTargetSignatureEquals(left: SelectedTargetSignatureFact, right: SelectedTargetSignatureFact): boolean {
+  return targetMemberEquals(left.member, right.member)
+    && targetCallArgumentConversionSlotArrayEquals(left.argumentConversions, right.argumentConversions)
     && sourceSelectedMethodTypeArgumentArrayEquals(left.sourceSelectedMethodTypeArguments, right.sourceSelectedMethodTypeArguments)
     && sourceSelectedSignatureParameterArrayEquals(left.sourceSelectedSignatureParameters, right.sourceSelectedSignatureParameters)
     && left.sourceSelectedSignatureKind === right.sourceSelectedSignatureKind
     && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
-    && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions)
     && left.sourceSignature === right.sourceSignature
     && left.sourceDeclaration === right.sourceDeclaration
     && left.sourceCalleeSymbol === right.sourceCalleeSymbol
@@ -423,8 +455,27 @@ export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTar
     && left.sourceSelectedCalleeSymbol === right.sourceSelectedCalleeSymbol
     && left.sourceSelectedCalleeDeclaration === right.sourceSelectedCalleeDeclaration
     && left.sourceReturnType === right.sourceReturnType
-    && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration),
-});
+    && left.sourceOptionalChain === right.sourceOptionalChain
+    && left.sourceReceiver === right.sourceReceiver
+    && left.sourceReceiverType === right.sourceReceiverType
+    && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration);
+}
+
+function targetCallArgumentConversionSlotArrayEquals(
+  left: readonly TargetCallArgumentConversionSlot[],
+  right: readonly TargetCallArgumentConversionSlot[],
+): boolean {
+  return left.length === right.length
+    && left.every((slot, index) => {
+      const other = right[index];
+      return other !== undefined
+        && slot.sourceArgumentIndex === other.sourceArgumentIndex
+        && slot.sourceForm === other.sourceForm
+        && slot.spreadElementIndex === other.spreadElementIndex
+        && slot.targetParameterIndex === other.targetParameterIndex
+        && slot.targetForm === other.targetForm;
+    });
+}
 
 export const contextualTargetTypeFactKey = defineExtensionFactKey<ContextualTargetTypeFact>({
   extensionId: "tsts.target-bindings",
@@ -457,6 +508,36 @@ export const targetConversionFactKey = defineExtensionFactKey<TargetConversionFa
   extensionId: "tsts.target-bindings",
   name: "targetConversion",
   equals: (left, right) => optionalTargetTypeRefEquals(left.convertedType, right.convertedType) && optionalTargetOperationFactEquals(left.operation, right.operation),
+});
+
+export const targetCallArgumentConversionFactKey = defineExtensionFactKey<TargetCallArgumentConversionFact>({
+  extensionId: "tsts.target-bindings",
+  name: "targetCallArgumentConversion",
+  equals: (left, right) => left.slot === right.slot
+    && left.call === right.call
+    && left.sourceArgumentIndex === right.sourceArgumentIndex
+    && left.targetParameterIndex === right.targetParameterIndex
+    && left.sourceForm === right.sourceForm
+    && left.spreadElementIndex === right.spreadElementIndex
+    && left.targetForm === right.targetForm
+    && optionalTargetTypeRefEquals(left.convertedType, right.convertedType)
+    && optionalTargetOperationFactEquals(left.operation, right.operation),
+});
+
+export const targetCallArgumentPassingFactKey = defineExtensionFactKey<TargetCallArgumentPassingFact>({
+  extensionId: "tsts.target-bindings",
+  name: "targetCallArgumentPassing",
+  equals: (left, right) => left.slot === right.slot
+    && left.mode === right.mode
+    && left.targetExpression === right.targetExpression
+    && left.call === right.call
+    && left.sourceArgumentIndex === right.sourceArgumentIndex
+    && left.targetParameterIndex === right.targetParameterIndex
+    && left.sourceForm === right.sourceForm
+    && left.spreadElementIndex === right.spreadElementIndex
+    && left.targetForm === right.targetForm
+    && targetParameterEquals(left.targetParameter, right.targetParameter)
+    && optionalProviderDeclarationIdentityEquals(left.selectedSignature, right.selectedSignature),
 });
 
 export const providerVirtualDeclarationFactKey = defineExtensionFactKey<ProviderVirtualDeclarationFact>({
@@ -608,18 +689,11 @@ function targetMemberEquals(left: TargetMember, right: TargetMember): boolean {
     && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration);
 }
 
-function optionalTargetParameterEquals(left: TargetParameter | undefined, right: TargetParameter | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return targetParameterEquals(left, right);
-}
-
 function targetParameterArrayEquals(left: readonly TargetParameter[], right: readonly TargetParameter[]): boolean {
   return left.length === right.length && left.every((value, index) => targetParameterEquals(value, right[index]!));
 }
 
-function targetParameterEquals(left: TargetParameter, right: TargetParameter): boolean {
+export function targetParameterEquals(left: TargetParameter, right: TargetParameter): boolean {
   return left.name === right.name
     && targetTypeRefEquals(left.type, right.type)
     && left.passingMode === right.passingMode
@@ -698,7 +772,9 @@ function optionalTargetOperationProvenanceEquals(left: TargetOperationProvenance
     && left.sourceSelectedSymbol === right.sourceSelectedSymbol
     && left.sourceSelectedDeclaration === right.sourceSelectedDeclaration
     && left.sourceSelectedSignature === right.sourceSelectedSignature
-    && left.sourceResultType === right.sourceResultType;
+    && left.sourceResultType === right.sourceResultType
+    && left.sourceReceiverType === right.sourceReceiverType
+    && left.sourceOptionalChain === right.sourceOptionalChain;
 }
 
 function sourceSelectedMethodTypeArgumentArrayEquals(left: readonly SourceSelectedMethodTypeArgument[] | undefined, right: readonly SourceSelectedMethodTypeArgument[] | undefined): boolean {
@@ -749,47 +825,89 @@ function optionalRuntimeCarrierProvenanceEquals(left: RuntimeCarrierProvenance |
     && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration);
 }
 
-function targetTypeRefEquals(left: TargetTypeRef, right: TargetTypeRef): boolean {
-  if (left.kind !== right.kind) {
-    return false;
-  }
-  switch (left.kind) {
-    case "source-primitive":
-      return right.kind === "source-primitive" && left.name === right.name;
-    case "source-global":
-      return right.kind === "source-global"
-        && left.name === right.name
-        && targetTypeRefListEquals(left.typeArguments ?? [], right.typeArguments ?? []);
-    case "target-named":
-      return right.kind === "target-named"
-        && left.id === right.id
-        && targetTypeRefListEquals(left.typeArguments ?? [], right.typeArguments ?? []);
-    case "type-parameter":
-      return right.kind === "type-parameter" && left.name === right.name;
-    case "array":
-      return right.kind === "array" && left.rank === right.rank && targetTypeRefEquals(left.element, right.element);
-    case "tuple":
-      return right.kind === "tuple" && targetTypeRefListEquals(left.elements, right.elements);
-    case "pointer":
-      return right.kind === "pointer" && left.mutability === right.mutability && targetTypeRefEquals(left.pointee, right.pointee);
-    case "function-pointer":
-      return right.kind === "function-pointer"
-        && targetTypeRefListEquals(left.args, right.args)
-        && targetTypeRefEquals(left.result, right.result)
-        && stringListEquals(left.abi ?? [], right.abi ?? []);
-    case "opaque":
-      return right.kind === "opaque" && left.id === right.id;
-    case "associated-type":
-      return right.kind === "associated-type" && left.name === right.name && targetTypeRefEquals(left.owner, right.owner);
-    case "lifetime":
-      return right.kind === "lifetime" && left.name === right.name;
-    case "target-specific":
-      return right.kind === "target-specific" && left.target === right.target && left.name === right.name && Object.is(left.value, right.value);
-  }
-}
+export function targetTypeRefEquals(left: TargetTypeRef, right: TargetTypeRef): boolean {
+  const pending: Array<readonly [TargetTypeRef, TargetTypeRef]> = [[left, right]];
+  const compared = new WeakMap<object, WeakSet<object>>();
+  const queueLists = (leftItems: readonly TargetTypeRef[], rightItems: readonly TargetTypeRef[]): boolean => {
+    if (leftItems.length !== rightItems.length) {
+      return false;
+    }
+    for (let index = 0; index < leftItems.length; index++) {
+      pending.push([leftItems[index]!, rightItems[index]!]);
+    }
+    return true;
+  };
 
-function targetTypeRefListEquals(left: readonly TargetTypeRef[], right: readonly TargetTypeRef[]): boolean {
-  return left.length === right.length && left.every((item, index) => targetTypeRefEquals(item, right[index]!));
+  while (pending.length !== 0) {
+    const [currentLeft, currentRight] = pending.pop()!;
+    if (currentLeft === currentRight) {
+      continue;
+    }
+    let rightComparisons = compared.get(currentLeft);
+    if (rightComparisons?.has(currentRight) === true) {
+      continue;
+    }
+    if (rightComparisons === undefined) {
+      rightComparisons = new WeakSet<object>();
+      compared.set(currentLeft, rightComparisons);
+    }
+    rightComparisons.add(currentRight);
+    if (currentLeft.kind !== currentRight.kind) {
+      return false;
+    }
+    switch (currentLeft.kind) {
+      case "source-primitive":
+        if (currentRight.kind !== "source-primitive" || currentLeft.name !== currentRight.name) return false;
+        break;
+      case "source-global":
+        if (currentRight.kind !== "source-global"
+          || currentLeft.name !== currentRight.name
+          || !queueLists(currentLeft.typeArguments ?? [], currentRight.typeArguments ?? [])) return false;
+        break;
+      case "target-named":
+        if (currentRight.kind !== "target-named"
+          || currentLeft.id !== currentRight.id
+          || !queueLists(currentLeft.typeArguments ?? [], currentRight.typeArguments ?? [])) return false;
+        break;
+      case "type-parameter":
+        if (currentRight.kind !== "type-parameter" || currentLeft.name !== currentRight.name) return false;
+        break;
+      case "array":
+        if (currentRight.kind !== "array" || currentLeft.rank !== currentRight.rank) return false;
+        pending.push([currentLeft.element, currentRight.element]);
+        break;
+      case "tuple":
+        if (currentRight.kind !== "tuple" || !queueLists(currentLeft.elements, currentRight.elements)) return false;
+        break;
+      case "pointer":
+        if (currentRight.kind !== "pointer" || currentLeft.mutability !== currentRight.mutability) return false;
+        pending.push([currentLeft.pointee, currentRight.pointee]);
+        break;
+      case "function-pointer":
+        if (currentRight.kind !== "function-pointer"
+          || !stringListEquals(currentLeft.abi ?? [], currentRight.abi ?? [])
+          || !queueLists(currentLeft.args, currentRight.args)) return false;
+        pending.push([currentLeft.result, currentRight.result]);
+        break;
+      case "opaque":
+        if (currentRight.kind !== "opaque" || currentLeft.id !== currentRight.id) return false;
+        break;
+      case "associated-type":
+        if (currentRight.kind !== "associated-type" || currentLeft.name !== currentRight.name) return false;
+        pending.push([currentLeft.owner, currentRight.owner]);
+        break;
+      case "lifetime":
+        if (currentRight.kind !== "lifetime" || currentLeft.name !== currentRight.name) return false;
+        break;
+      case "target-specific":
+        if (currentRight.kind !== "target-specific"
+          || currentLeft.target !== currentRight.target
+          || currentLeft.name !== currentRight.name
+          || !Object.is(currentLeft.value, currentRight.value)) return false;
+        break;
+    }
+  }
+  return true;
 }
 
 function stringListEquals(left: readonly string[], right: readonly string[]): boolean {

@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
-import { recordExtensionCheckedIterationMapping, recordExtensionCheckedOperatorKindMapping, recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
+import { hasExtensionCheckedOperationHost, recordExtensionCheckedIterationMapping, recordExtensionCheckedOperatorKindMapping, recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
+import { ExtensionObservationPoint } from "../../../extensions/observations.js";
 import type { Context } from "../../../go/context.js";
 import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
@@ -2448,7 +2449,7 @@ export function Checker_checkPostfixUnaryExpression(receiver: GoPtr<Checker>, no
 }
 
 function recordExtensionCheckedUnaryOperatorMapping(receiver: GoPtr<Checker>, node: GoPtr<Node>, operator: Kind, operand: GoPtr<Node>, result: GoPtr<Type>): GoPtr<Type> {
-  recordExtensionCheckedOperatorKindMapping(receiver, node, operator, operand);
+  recordExtensionCheckedOperatorKindMapping(receiver, node, operator, operand, undefined, result);
   return result;
 }
 
@@ -2776,7 +2777,7 @@ export function Checker_checkThisExpression(receiver: GoPtr<Checker>, node: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkBinaryExpression","kind":"method","status":"implemented","sigHash":"7789a2bf27bb77f18361e12bbc4e9dd02304e6f162df1c874f94945d2d4b1bcf","bodyHash":"9faf599e69844635f35db6e35e11439ef3ffa75966c09b3c8e952309b3251d42"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go binary expression checking, extension-enabled programs may record provider-selected target operator facts for consumers; no-extension programs and unowned operators remain on the exact TS-Go path."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After each exact TS-Go binary-expression decision, including every link handled by the iterative stack-safe path, extension-enabled programs retain that link's selected result evidence; state restoration and no-extension behavior remain unchanged."}
  *
  * Go source:
  * func (c *Checker) checkBinaryExpression(node *ast.Node, checkMode CheckMode) *Type {
@@ -2787,17 +2788,16 @@ export function Checker_checkThisExpression(receiver: GoPtr<Checker>, node: GoPt
 export function Checker_checkBinaryExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
   const binary = AsBinaryExpression(node);
   if (isIterativelyCheckableNonLogicalBinaryExpression(node)) {
-    const result = Checker_checkNonLogicalBinaryExpressionIterative(receiver, node, checkMode);
-    recordExtensionCheckedOperatorMapping(receiver, node, binary!.OperatorToken, binary!.Left, binary!.Right);
-    return result;
+    return Checker_checkNonLogicalBinaryExpressionIterative(receiver, node, checkMode);
   }
   const result = Checker_checkBinaryLikeExpression(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, node);
-  recordExtensionCheckedOperatorMapping(receiver, node, binary!.OperatorToken, binary!.Left, binary!.Right);
+  recordExtensionCheckedOperatorMapping(receiver, node, binary!.OperatorToken, binary!.Left, binary!.Right, result);
   return result;
 }
 
 function Checker_checkNonLogicalBinaryExpressionIterative(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
   const binaryChain: GoPtr<Node>[] = [];
+  const recordCheckedOperators = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedOperator);
   let leftEdge: GoPtr<Node> = node;
   while (isIterativelyCheckableNonLogicalBinaryExpression(leftEdge)) {
     binaryChain.push(leftEdge);
@@ -2809,7 +2809,11 @@ function Checker_checkNonLogicalBinaryExpressionIterative(receiver: GoPtr<Checke
     const binary = AsBinaryExpression(current);
     const rightType = Checker_checkExpressionEx(receiver, binary!.Right, checkMode);
     if (index === 0) {
-      return Checker_checkBinaryLikeExpressionWithTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, current, leftType, rightType);
+      const result = Checker_checkBinaryLikeExpressionWithTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, current, leftType, rightType);
+      if (recordCheckedOperators) {
+        recordExtensionCheckedOperatorMapping(receiver, current, binary!.OperatorToken, binary!.Left, binary!.Right, result);
+      }
+      return result;
     }
     const saveCurrentNode = receiver!.currentNode;
     receiver!.currentNode = current;
@@ -2820,6 +2824,9 @@ function Checker_checkNonLogicalBinaryExpressionIterative(receiver: GoPtr<Checke
       Checker_checkConstEnumAccess(receiver, current, leftType);
     }
     receiver!.currentNode = saveCurrentNode;
+    if (recordCheckedOperators) {
+      recordExtensionCheckedOperatorMapping(receiver, current, binary!.OperatorToken, binary!.Left, binary!.Right, leftType);
+    }
   }
   return leftType;
 }

@@ -1,5 +1,4 @@
 import type {
-  ArgumentPassingFact,
   ArgumentPassingMode,
   RuntimeCarrierProvenance,
   SelectedTargetSignatureFact,
@@ -11,6 +10,7 @@ import type {
   TargetOperationProvenance,
   TargetOperationFact,
   TargetParameter,
+  TargetCallArgumentConversionSlot,
   TargetTypeRef,
 } from "./facts.js";
 import type { GoPtr } from "../go/compat.js";
@@ -35,6 +35,7 @@ export type ExtensionObservationResult<T> =
 
 export interface ExtensionObservationContext<TObservation extends ExtensionObservationPointName = ExtensionObservationPointName> {
   readonly observation: TObservation;
+  readonly phase: ExtensionObservationPhase;
   readonly extensionId: string;
   readonly compiler: ExtensionCompilerQueryContext;
   readonly host: ExtensionHost;
@@ -56,19 +57,58 @@ export const ExtensionObservationPoint = {
   validateTargetConstraint: "target.validateConstraint",
   observePostCheckAssignability: "target.observePostCheckAssignability",
   mapCheckedCall: "operation.mapCheckedCall",
-  mapInferredSourceTypeArgumentsToTarget: "operation.mapInferredSourceTypeArgumentsToTarget",
   mapCheckedPropertyAccess: "operation.mapCheckedPropertyAccess",
   mapCheckedElementAccess: "operation.mapCheckedElementAccess",
   mapCheckedOperator: "operation.mapCheckedOperator",
   mapCheckedIteration: "operation.mapCheckedIteration",
   recordContextualTargetType: "type.recordContextualTargetType",
   mapCheckedConversion: "operation.mapCheckedConversion",
-  resolveParameterPassing: "parameter.resolvePassing",
   resolveRuntimeCarrier: "type.resolveRuntimeCarrier",
   validateExtensionFlowUse: "flow.validateExtensionUse",
 } as const;
 
 export type ExtensionObservationPointName = typeof ExtensionObservationPoint[keyof typeof ExtensionObservationPoint];
+
+export type ExtensionObservationPhase = "checking" | "finalization";
+
+export type CheckedOperationObservationPointName =
+  | typeof ExtensionObservationPoint.mapCheckedCall
+  | typeof ExtensionObservationPoint.mapCheckedPropertyAccess
+  | typeof ExtensionObservationPoint.mapCheckedElementAccess
+  | typeof ExtensionObservationPoint.mapCheckedOperator
+  | typeof ExtensionObservationPoint.mapCheckedIteration
+  | typeof ExtensionObservationPoint.mapCheckedConversion;
+
+export type ImmediateExtensionObservationPointName = Exclude<ExtensionObservationPointName, CheckedOperationObservationPointName>;
+
+export type CheckedOperationReference<TObservation extends CheckedOperationObservationPointName = CheckedOperationObservationPointName> =
+  TObservation extends typeof ExtensionObservationPoint.mapCheckedConversion
+    ? {
+        readonly observation: TObservation;
+        readonly subject: ExtensionFactSubject;
+        readonly conversionKind: "assertion";
+        readonly call?: never;
+        readonly slot?: never;
+        readonly sourceArgumentIndex?: never;
+        readonly targetParameterIndex?: never;
+      } | {
+        readonly observation: TObservation;
+        readonly subject: ExtensionFactSubject;
+        readonly conversionKind: "call-argument";
+        readonly call: ExtensionFactSubject;
+        readonly slot: TargetCallArgumentConversionSlot;
+        readonly sourceArgumentIndex: number;
+        readonly targetParameterIndex: number;
+      }
+    : {
+        readonly observation: TObservation;
+        readonly subject: ExtensionFactSubject;
+        readonly conversionKind?: never;
+        readonly call?: never;
+        readonly slot?: never;
+        readonly sourceArgumentIndex?: never;
+        readonly targetParameterIndex?: never;
+      };
 
 export interface ExtensionObservationRunOptions {
   readonly requireOwner?: boolean;
@@ -89,7 +129,12 @@ export interface PostCheckAssignabilityObservationRequest {
   readonly targetPlatform?: string;
 }
 
-export interface CheckedCallMappingRequest {
+export interface SelectedSourceReceiverEvidence {
+  readonly sourceReceiver?: ExtensionFactSubject;
+  readonly sourceReceiverType?: ExtensionFactSubject;
+}
+
+export interface CheckedCallMappingRequest extends SelectedSourceReceiverEvidence {
   readonly call: ExtensionFactSubject;
   readonly callee: ExtensionFactSubject;
   readonly arguments: readonly ExtensionFactSubject[];
@@ -103,37 +148,19 @@ export interface CheckedCallMappingRequest {
   readonly sourceSelectedCalleeSymbol?: ExtensionFactSubject;
   readonly sourceSelectedCalleeDeclaration?: ExtensionFactSubject;
   readonly sourceReturnType?: ExtensionFactSubject;
+  readonly optionalChain?: boolean;
   readonly target?: string;
 }
 
-export interface CheckedCallMappingResult {
-  readonly selectedSignature: TargetSignatureSelection;
-  readonly returnType?: ExtensionFactSubject;
-}
+export type CheckedCallMappingResult =
+  | { readonly kind: "source" }
+  | {
+      readonly kind: "target";
+      readonly selectedSignature: TargetSignatureSelection;
+      readonly argumentConversions: readonly TargetCallArgumentConversionSlot[];
+    };
 
-export interface TargetTypeArgumentMappingRequest {
-  readonly call?: ExtensionFactSubject;
-  readonly declaration: ExtensionFactSubject;
-  readonly arguments: readonly ExtensionFactSubject[];
-  readonly sourceSelectedSignature?: ExtensionFactSubject;
-  readonly sourceSelectedDeclaration?: ExtensionFactSubject;
-  readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
-  readonly sourceSelectedSignatureParameters?: readonly SourceSelectedSignatureParameter[];
-  readonly sourceSelectedSignatureKind?: SourceSelectedSignatureKind;
-  readonly sourceCalleeSymbol?: ExtensionFactSubject;
-  readonly sourceCalleeDeclaration?: ExtensionFactSubject;
-  readonly sourceSelectedCalleeSymbol?: ExtensionFactSubject;
-  readonly sourceSelectedCalleeDeclaration?: ExtensionFactSubject;
-  readonly sourceReturnType?: ExtensionFactSubject;
-  readonly contextualType?: ExtensionFactSubject;
-  readonly target?: string;
-}
-
-export interface TargetTypeArgumentMappingResult {
-  readonly targetTypeArguments: readonly TargetTypeRef[];
-}
-
-export interface CheckedPropertyAccessMappingRequest {
+export interface CheckedPropertyAccessMappingRequest extends SelectedSourceReceiverEvidence {
   readonly expression: ExtensionFactSubject;
   readonly receiver: ExtensionFactSubject;
   readonly propertyName: string;
@@ -144,7 +171,7 @@ export interface CheckedPropertyAccessMappingRequest {
   readonly target?: string;
 }
 
-export interface CheckedElementAccessMappingRequest {
+export interface CheckedElementAccessMappingRequest extends SelectedSourceReceiverEvidence {
   readonly expression: ExtensionFactSubject;
   readonly receiver: ExtensionFactSubject;
   readonly argument: ExtensionFactSubject;
@@ -161,6 +188,7 @@ export interface CheckedOperatorMappingRequest {
   readonly operator: string;
   readonly left: ExtensionFactSubject;
   readonly right?: ExtensionFactSubject;
+  readonly sourceResultType?: ExtensionFactSubject;
   readonly target?: string;
 }
 
@@ -184,14 +212,19 @@ export interface CheckedOperationMappingResult {
 interface CheckedConversionMappingRequestBase {
   readonly expression: ExtensionFactSubject;
   readonly source: ExtensionFactSubject;
-  readonly target: ExtensionFactSubject;
   readonly targetPlatform?: string;
 }
 
 export type CheckedConversionMappingRequest = CheckedConversionMappingRequestBase & ({
   readonly conversionKind: "call-argument";
+  readonly target: TargetTypeRef;
   readonly call: ExtensionFactSubject;
-  readonly parameterIndex: number;
+  readonly slot: TargetCallArgumentConversionSlot;
+  readonly sourceArgumentIndex: number;
+  readonly targetParameterIndex: number;
+  readonly sourceForm: "value" | "spread-element" | "spread-sequence";
+  readonly spreadElementIndex?: number;
+  readonly targetForm: "parameter" | "params-element" | "params-sequence";
   readonly targetParameter: TargetParameter;
   readonly sourceSelectedSignature?: ExtensionFactSubject;
   readonly selectedSignature: SelectedTargetSignatureFact;
@@ -203,6 +236,7 @@ export type CheckedConversionMappingRequest = CheckedConversionMappingRequestBas
   readonly explicitTargetTypeNode?: never;
 } | {
   readonly conversionKind: "assertion";
+  readonly target: ExtensionFactSubject;
   readonly assertionKind: "as" | "angle-bracket" | "jsdoc";
   readonly sourceExpression: ExtensionFactSubject;
   readonly sourceSelectedSymbol?: ExtensionFactSubject;
@@ -210,7 +244,12 @@ export type CheckedConversionMappingRequest = CheckedConversionMappingRequestBas
   readonly sourceSelectedDeclarationTypeNode?: ExtensionFactSubject;
   readonly explicitTargetTypeNode: ExtensionFactSubject;
   readonly call?: never;
-  readonly parameterIndex?: never;
+  readonly slot?: never;
+  readonly sourceArgumentIndex?: never;
+  readonly targetParameterIndex?: never;
+  readonly sourceForm?: never;
+  readonly spreadElementIndex?: never;
+  readonly targetForm?: never;
   readonly targetParameter?: never;
   readonly sourceSelectedSignature?: never;
   readonly selectedSignature?: never;
@@ -219,21 +258,6 @@ export type CheckedConversionMappingRequest = CheckedConversionMappingRequestBas
 export interface CheckedConversionMappingResult {
   readonly convertedType?: TargetTypeRef;
   readonly operation?: TargetOperationFact;
-}
-
-export interface ParameterPassingRequest {
-  readonly parameter: ExtensionFactSubject;
-  readonly argument?: ExtensionFactSubject;
-  readonly parameterIndex?: number;
-  readonly targetParameter?: TargetParameter;
-  readonly call?: ExtensionFactSubject;
-  readonly sourceSelectedSignature?: ExtensionFactSubject;
-  readonly selectedSignature?: SelectedTargetSignatureFact;
-  readonly target?: string;
-}
-
-export interface ParameterPassingResult {
-  readonly passing: ArgumentPassingFact;
 }
 
 export interface RuntimeCarrierFactRequest {
@@ -286,10 +310,6 @@ export interface ExtensionObservationMap {
     readonly request: CheckedCallMappingRequest;
     readonly result: CheckedCallMappingResult;
   };
-  readonly [ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget]: {
-    readonly request: TargetTypeArgumentMappingRequest;
-    readonly result: TargetTypeArgumentMappingResult;
-  };
   readonly [ExtensionObservationPoint.mapCheckedPropertyAccess]: {
     readonly request: CheckedPropertyAccessMappingRequest;
     readonly result: CheckedOperationMappingResult;
@@ -313,10 +333,6 @@ export interface ExtensionObservationMap {
   readonly [ExtensionObservationPoint.mapCheckedConversion]: {
     readonly request: CheckedConversionMappingRequest;
     readonly result: CheckedConversionMappingResult;
-  };
-  readonly [ExtensionObservationPoint.resolveParameterPassing]: {
-    readonly request: ParameterPassingRequest;
-    readonly result: ParameterPassingResult;
   };
   readonly [ExtensionObservationPoint.resolveRuntimeCarrier]: {
     readonly request: RuntimeCarrierFactRequest;

@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
+import { hasExtensionCheckedOperationHost, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
+import { ExtensionObservationPoint } from "../../../extensions/observations.js";
 import { NewGoStructMap } from "../../../go/compat.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
@@ -5444,7 +5445,7 @@ export function Checker_checkQualifiedName(receiver: GoPtr<Checker>, node: GoPtr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIndexedAccess","kind":"method","status":"implemented","sigHash":"32fa0a002cb05468dc7def68493137d7aedba03aeb689f7a70ba4ca9a71ad6b7","bodyHash":"889b5dc89357c094a4d04e010b1e12026e834b898e2ef917803c8abceca31716"}
- *
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After exact TS-Go indexed-access checking, extension-enabled programs retain the already-selected receiver and final result evidence; no target semantics participate in source checking."}
  * Go source:
  * func (c *Checker) checkIndexedAccess(node *ast.Node, checkMode CheckMode) *Type {
  * 	if node.Flags&ast.NodeFlagsOptionalChain != 0 {
@@ -5457,12 +5458,15 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
   if ((node!.Flags & NodeFlagsOptionalChain) !== 0) {
     return Checker_checkElementAccessChain(receiver, node, checkMode);
   }
-  return Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullExpression(receiver, Node_Expression(node)), checkMode);
+  const sourceReceiverType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
+  const result = Checker_checkElementAccessExpression(receiver, node, sourceReceiverType, checkMode);
+  recordSelectedElementAccessEvidence(receiver, node, sourceReceiverType, result);
+  return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkElementAccessChain","kind":"method","status":"implemented","sigHash":"87c91ac1dd6b496bfe2958fdb3dd1e0df6978e08f1f8ab4c9f61519478895348","bodyHash":"16ff9421739abc3918fc26481c0c7b7e280cd0bb97dbb046bbd9febfbfd2f23b"}
- *
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After TS-Go propagates the optional marker, extension-enabled programs retain the final optional-chain result together with the exact non-null receiver used for selection."}
  * Go source:
  * func (c *Checker) checkElementAccessChain(node *ast.Node, checkMode CheckMode) *Type {
  * 	exprType := c.checkExpression(node.Expression())
@@ -5473,13 +5477,15 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
 export function Checker_checkElementAccessChain(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
   const exprType = Checker_checkExpression(receiver, Node_Expression(node));
   const nonOptionalType = Checker_getOptionalExpressionType(receiver, exprType, Node_Expression(node));
-  return Checker_propagateOptionalTypeMarker(receiver, Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node)), checkMode), node, nonOptionalType !== exprType);
+  const sourceReceiverType = Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node));
+  const selectedResult = Checker_checkElementAccessExpression(receiver, node, sourceReceiverType, checkMode);
+  const result = Checker_propagateOptionalTypeMarker(receiver, selectedResult, node, nonOptionalType !== exprType);
+  recordSelectedElementAccessEvidence(receiver, node, sourceReceiverType, result);
+  return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkElementAccessExpression","kind":"method","status":"implemented","sigHash":"2f39be35c54aa297aa6da29e087ef31836844e9c96d08ac4a5d6679bc793bbda","bodyHash":"11932af46c7b11e3fd365479ad08c039f5afd3b81ae23f567ec842c2f141ef7e"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go element selection has resolved the effective receiver, selected symbol, and result type, extension-enabled programs record that exact evidence, including a fixed tuple ordinal when every selected receiver constituent proves it."}
- *
  * Go source:
  * func (c *Checker) checkElementAccessExpression(node *ast.Node, exprType *Type, checkMode CheckMode) *Type {
  * 	objectType := exprType
@@ -5520,12 +5526,10 @@ export function Checker_checkElementAccessExpression(receiver: GoPtr<Checker>, n
   const indexExpression = AsElementAccessExpression(node)!.ArgumentExpression;
   const indexType = Checker_checkExpression(receiver, indexExpression);
   if (Checker_isErrorType(receiver, objectType) || objectType === receiver!.silentNeverType) {
-    recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), objectType);
     return objectType;
   }
   if (isConstEnumObjectType(objectType) && !IsStringLiteralLike(indexExpression)) {
     Checker_error(receiver, indexExpression, A_const_enum_member_can_only_be_accessed_using_a_string_literal);
-    recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), receiver!.errorType);
     return receiver!.errorType;
   }
   let effectiveIndexType = indexType;
@@ -5539,10 +5543,33 @@ export function Checker_checkElementAccessExpression(receiver: GoPtr<Checker>, n
       (assignmentTargetKind === AssignmentKindCompound ? AccessFlagsExpressionPosition : 0) |
       (Checker_isGenericObjectType(receiver, objectType) && !isThisTypeParameter(objectType) ? AccessFlagsNoIndexSignatures : 0)) as AccessFlags;
   const indexedAccessType = OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, objectType, effectiveIndexType, accessFlags, node, undefined), receiver!.errorType);
+  return Checker_checkIndexedAccessIndexType(receiver, Checker_getFlowTypeOfAccessExpression(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), indexedAccessType, indexExpression, checkMode), node);
+}
+
+function selectedElementAccessReceiverType(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>): GoPtr<Type> {
+  return getAssignmentTargetKind(node) !== AssignmentKindNone || Checker_isMethodAccessForCall(receiver, node)
+    ? Checker_getWidenedType(receiver, sourceReceiverType)
+    : sourceReceiverType;
+}
+
+function recordSelectedElementAccessEvidence(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>, sourceResultType: GoPtr<Type>): void {
+  const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedElementAccess);
+  const retainCallReceiverEvidence = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall)
+    && Checker_isMethodAccessForCall(receiver, node);
+  if (!accessOwned && !retainCallReceiverEvidence) {
+    return;
+  }
+  const selectedReceiverType = selectedElementAccessReceiverType(receiver, node, sourceReceiverType);
   const resolvedSelectedSymbol = Checker_getResolvedSymbolOrNil(receiver, node);
-  const result = Checker_checkIndexedAccessIndexType(receiver, Checker_getFlowTypeOfAccessExpression(receiver, node, resolvedSelectedSymbol, indexedAccessType, indexExpression, checkMode), node);
-  recordExtensionCheckedElementAccessMapping(receiver, node, resolvedSelectedSymbol, result, getSelectedFixedTupleElementIndex(objectType, resolvedSelectedSymbol));
-  return result;
+  recordExtensionCheckedElementAccessMapping(
+    receiver,
+    node,
+    resolvedSelectedSymbol,
+    sourceResultType,
+    getSelectedFixedTupleElementIndex(selectedReceiverType, resolvedSelectedSymbol),
+    selectedReceiverType,
+    retainCallReceiverEvidence,
+  );
 }
 
 function getSelectedFixedTupleElementIndex(objectType: GoPtr<Type>, selectedSymbol: GoPtr<Symbol>): number | undefined {
@@ -6464,8 +6491,7 @@ export function Checker_isSameScopedBindingElement(receiver: GoPtr<Checker>, nod
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessExpression","kind":"method","status":"implemented","sigHash":"febcba979df4bee97ff9b0d6a44f3b1d8f0f4d8f43952819b5bcda4e8c2e880e","bodyHash":"82b3a1ac1890b83ce90db47cb21a1598249772e581ef1fe94cf9180ba2495e26"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go property access checking, extension-enabled programs may record provider-selected surface/target member facts for consumers; no-extension programs and unowned accesses remain on the exact TS-Go path."}
- *
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After exact TS-Go property checking, extension-enabled programs retain the selected receiver/member/final-result evidence for deterministic target finalization."}
  * Go source:
  * func (c *Checker) checkPropertyAccessExpression(node *ast.Node, checkMode CheckMode, writeOnly bool) *Type {
  * 	if node.Flags&ast.NodeFlagsOptionalChain != 0 {
@@ -6480,15 +6506,15 @@ export function Checker_checkPropertyAccessExpression(receiver: GoPtr<Checker>, 
     return Checker_checkPropertyAccessChain(receiver, node, checkMode);
   }
   const expr = Node_Expression(node);
-  const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, expr, Checker_checkNonNullExpression(receiver, expr), AsPropertyAccessExpression(node)!.name, checkMode, writeOnly);
-  recordExtensionCheckedPropertyAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
+  const sourceReceiverType = Checker_checkNonNullExpression(receiver, expr);
+  const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, expr, sourceReceiverType, AsPropertyAccessExpression(node)!.name, checkMode, writeOnly);
+  recordSelectedPropertyAccessEvidence(receiver, node, sourceReceiverType, result);
   return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessChain","kind":"method","status":"implemented","sigHash":"8fddaeae38c55291a27039fd3e34d4f23b91a1185f6450fd8a87c8ef77aeb85e","bodyHash":"8d099873c74d1d2075853d42ef27cf852f70d2462e0b439c46f9177816bb5aa8"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go optional-chain property access checking, extension-enabled programs record the same selected source evidence exposed for non-optional property access."}
- *
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After TS-Go propagates the optional marker, extension-enabled programs retain the final optional-chain result together with the exact non-null receiver used for member selection."}
  * Go source:
  * func (c *Checker) checkPropertyAccessChain(node *ast.Node, checkMode CheckMode) *Type {
  * 	leftType := c.checkExpression(node.Expression())
@@ -6499,15 +6525,41 @@ export function Checker_checkPropertyAccessExpression(receiver: GoPtr<Checker>, 
 export function Checker_checkPropertyAccessChain(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
   const leftType = Checker_checkExpression(receiver, Node_Expression(node));
   const nonOptionalType = Checker_getOptionalExpressionType(receiver, leftType, Node_Expression(node));
-  const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, Node_Expression(node), Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node)), Node_Name(node), checkMode, false);
-  recordExtensionCheckedPropertyAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
-  return Checker_propagateOptionalTypeMarker(receiver, result, node, nonOptionalType !== leftType);
+  const sourceReceiverType = Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node));
+  const selectedResult = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, Node_Expression(node), sourceReceiverType, Node_Name(node), checkMode, false);
+  const result = Checker_propagateOptionalTypeMarker(receiver, selectedResult, node, nonOptionalType !== leftType);
+  recordSelectedPropertyAccessEvidence(receiver, node, sourceReceiverType, result);
+  return result;
+}
+
+function selectedPropertyAccessReceiverType(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>): GoPtr<Type> {
+  const widenedType = getAssignmentTargetKind(node) !== AssignmentKindNone || Checker_isMethodAccessForCall(receiver, node)
+    ? Checker_getWidenedType(receiver, sourceReceiverType)
+    : sourceReceiverType;
+  return Checker_getApparentType(receiver, widenedType);
+}
+
+function recordSelectedPropertyAccessEvidence(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>, sourceResultType: GoPtr<Type>): void {
+  const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedPropertyAccess);
+  const retainCallReceiverEvidence = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall)
+    && Checker_isMethodAccessForCall(receiver, node);
+  if (!accessOwned && !retainCallReceiverEvidence) {
+    return;
+  }
+  const selectedReceiverType = selectedPropertyAccessReceiverType(receiver, node, sourceReceiverType);
+  recordExtensionCheckedPropertyAccessMapping(
+    receiver,
+    node,
+    Checker_getResolvedSymbolOrNil(receiver, node),
+    sourceResultType,
+    selectedReceiverType,
+    retainCallReceiverEvidence,
+  );
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessExpressionOrQualifiedName","kind":"method","status":"implemented","sigHash":"9215f415f7607d418e5a3a390b0bf838e9a2f44b6cd177065016f5a85a4714b1","bodyHash":"c9ee642c0561d3b1c6f6fcf3a43fb2def31c2e6dcf98504b1f6a3169813218e3"}
  * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"When TS-Go selects an index signature for property access, extension-selected evidence needs the same resolved-symbol cache that TS-Go already creates for public symbol queries."}
- *
  * Go source:
  * func (c *Checker) checkPropertyAccessExpressionOrQualifiedName(node *ast.Node, left *ast.Node, leftType *Type, right *ast.Node, checkMode CheckMode, writeOnly bool) *Type {
  * 	parentSymbol := c.getResolvedSymbolOrNil(left)

@@ -8,7 +8,6 @@ import { Node_Type, SourceFile_FileName } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { SymbolFlagsAlias } from "../internal/ast/symbolflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
-import { IsNewExpression } from "../internal/ast/generated/predicates.js";
 import { Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
@@ -41,20 +40,32 @@ import type {
   TargetBindingProvider,
   TargetSemanticProvider,
   TargetSignatureSelection,
-  TargetTypeArgumentMappingRequest,
 } from "./index.js";
 
-type TargetSignatureSelectionKeys = keyof CheckedCallMappingResult["selectedSignature"];
-type TargetSignatureSelectionAllowedKeys = "member" | "targetTypeArguments" | "argumentConversions" | "providerDeclaration";
+type TargetCallMappingResult = Extract<CheckedCallMappingResult, { readonly kind: "target" }>;
+type SourceCallMappingResult = Extract<CheckedCallMappingResult, { readonly kind: "source" }>;
+type TargetSignatureSelectionKeys = keyof TargetCallMappingResult["selectedSignature"];
+type TargetSignatureSelectionAllowedKeys = "member" | "targetTypeArguments" | "providerDeclaration";
 const targetSignatureSelectionHasExactTargetOwnedKeys: Exclude<TargetSignatureSelectionKeys, TargetSignatureSelectionAllowedKeys> extends never
   ? Exclude<TargetSignatureSelectionAllowedKeys, TargetSignatureSelectionKeys> extends never
+    ? true
+    : false
+  : false = true;
+type TargetCallMappingResultKeys = keyof TargetCallMappingResult;
+type TargetCallMappingResultAllowedKeys = "kind" | "selectedSignature" | "argumentConversions";
+const checkedCallMappingResultHasExactKeys: Exclude<TargetCallMappingResultKeys, TargetCallMappingResultAllowedKeys> extends never
+  ? Exclude<TargetCallMappingResultAllowedKeys, TargetCallMappingResultKeys> extends never
+    ? true
+    : false
+  : false = true;
+const sourceCallMappingResultHasExactKeys: Exclude<keyof SourceCallMappingResult, "kind"> extends never
+  ? Exclude<"kind", keyof SourceCallMappingResult> extends never
     ? true
     : false
   : false = true;
 
 test("checked construction exposes alias-resolved class identity across imports and re-exports", () => {
   const callRequests: CheckedCallMappingRequest[] = [];
-  const targetTypeRequests: TargetTypeArgumentMappingRequest[] = [];
   const { programOptions, extensionHost, program } = createSelectedCallProgram({
     files: {
       "profile.d.ts": sourceProfile,
@@ -84,12 +95,11 @@ test("checked construction exposes alias-resolved class identity across imports 
         export const defaultExported = new DefaultModel();
       `,
     },
-    extension: selectedCallEvidenceExtension(callRequests, targetTypeRequests),
+    extension: selectedCallEvidenceExtension(callRequests),
   });
 
   assertCleanProgram(program);
   assert.equal(callRequests.length, 7);
-  assert.equal(targetTypeRequests.length, 7);
 
   const modelRequests = callRequests.slice(0, 6);
   const canonicalSymbols = modelRequests.map((request) => request.sourceSelectedCalleeSymbol as GoPtr<Symbol>);
@@ -104,7 +114,7 @@ test("checked construction exposes alias-resolved class identity across imports 
     const syntaxDeclaration = callRequests[index_]?.sourceCalleeDeclaration as GoPtr<Node>;
     assert.ok(syntaxSymbol !== undefined && (syntaxSymbol.Flags & SymbolFlagsAlias) !== 0);
     assert.equal(SourceFile_FileName(GetSourceFileOfNode(syntaxDeclaration)), "/src/index.ts");
-    assert.notEqual(syntaxSymbol, callRequests[index_]?.sourceSelectedCalleeSymbol);
+    assert.ok(syntaxSymbol !== callRequests[index_]?.sourceSelectedCalleeSymbol, "Import syntax and selected callee symbols must remain distinct subjects.");
   }
   assert.equal((callRequests[6]?.sourceSelectedCalleeSymbol as GoPtr<Symbol>)?.Name, "default");
   assert.equal(SourceFile_FileName(GetSourceFileOfNode(callRequests[6]?.sourceSelectedCalleeDeclaration as GoPtr<Node>)), "/src/model.ts");
@@ -113,26 +123,23 @@ test("checked construction exposes alias-resolved class identity across imports 
     const request = callRequests[index_]!;
     assert.ok(request.sourceSelectedSignature !== undefined);
     assert.equal(request.sourceSelectedSignatureKind, "resolved");
-    assert.equal(request.sourceSelectedDeclaration, undefined);
-    assert.deepEqual(request.sourceSelectedSignatureParameters, []);
-    assert.equal(targetTypeRequests[index_]?.sourceSelectedCalleeSymbol, request.sourceSelectedCalleeSymbol);
-    assert.equal(targetTypeRequests[index_]?.sourceSelectedCalleeDeclaration, request.sourceSelectedCalleeDeclaration);
-    assert.equal(targetTypeRequests[index_]?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
+    assert.ok(request.sourceSelectedDeclaration === undefined, "Class construction must not fabricate a selected member declaration.");
+    assert.equal(request.sourceSelectedSignatureParameters?.length, 0);
   }
 
   assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-call-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
-    assert.equal(selected?.sourceSelectedCalleeSymbol, request.sourceSelectedCalleeSymbol);
-    assert.equal(selected?.sourceSelectedCalleeDeclaration, request.sourceSelectedCalleeDeclaration);
-    assert.equal(selected?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
+    assert.ok(selected?.sourceSelectedCalleeSymbol === request.sourceSelectedCalleeSymbol, "Selected call facts must retain the exact selected callee symbol.");
+    assert.ok(selected?.sourceSelectedCalleeDeclaration === request.sourceSelectedCalleeDeclaration, "Selected call facts must retain the exact selected callee declaration.");
+    assertPersistedSelectedParameters(selected?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
+    assert.deepEqual(selected?.argumentConversions, []);
   }
 });
 
 test("provider virtual construction exposes one canonical selected export identity", () => {
   const callRequests: CheckedCallMappingRequest[] = [];
-  const targetTypeRequests: TargetTypeArgumentMappingRequest[] = [];
   const { programOptions, extensionHost, program } = createSelectedCallProgram({
     files: {
       "profile.d.ts": sourceProfile,
@@ -144,7 +151,7 @@ test("provider virtual construction exposes one canonical selected export identi
         export const reExported = new ReExportedOptions();
       `,
     },
-    extension: selectedCallEvidenceExtension(callRequests, targetTypeRequests, optionsBindingProvider),
+    extension: selectedCallEvidenceExtension(callRequests, optionsBindingProvider),
   });
 
   assertCleanProgram(program);
@@ -153,24 +160,24 @@ test("provider virtual construction exposes one canonical selected export identi
   const reExportedSymbol = callRequests[1]?.sourceSelectedCalleeSymbol as GoPtr<Symbol>;
   const directDeclaration = callRequests[0]?.sourceSelectedCalleeDeclaration as GoPtr<Node>;
   assert.ok(directSymbol !== undefined);
-  assert.equal(reExportedSymbol, directSymbol);
-  assert.equal(callRequests[1]?.sourceSelectedCalleeDeclaration, directDeclaration);
+  assert.ok(reExportedSymbol === directSymbol, "Re-exported construction must resolve to the canonical provider symbol.");
+  assert.ok(callRequests[1]?.sourceSelectedCalleeDeclaration === directDeclaration, "Re-exported construction must resolve to the canonical provider declaration.");
   assert.ok(SourceFile_FileName(GetSourceFileOfNode(directDeclaration)).startsWith("tsts-provider://"));
-  assert.deepEqual(callRequests[0]?.sourceSelectedSignatureParameters, []);
-  assert.deepEqual(callRequests[1]?.sourceSelectedSignatureParameters, []);
+  assert.equal(callRequests[0]?.sourceSelectedSignatureParameters?.length, 0);
+  assert.equal(callRequests[1]?.sourceSelectedSignatureParameters?.length, 0);
 
   assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-provider-constructor-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
-    assert.equal(selected?.sourceSelectedCalleeSymbol, directSymbol);
-    assert.equal(selected?.sourceSelectedCalleeDeclaration, directDeclaration);
+    assert.ok(selected?.sourceSelectedCalleeSymbol === directSymbol, "Provider construction must persist the canonical selected symbol.");
+    assert.ok(selected?.sourceSelectedCalleeDeclaration === directDeclaration, "Provider construction must persist the canonical selected declaration.");
+    assert.deepEqual(selected?.argumentConversions, []);
   }
 });
 
 test("checked calls expose alias-resolved callable identity and selected parameter evidence", () => {
   const callRequests: CheckedCallMappingRequest[] = [];
-  const targetTypeRequests: TargetTypeArgumentMappingRequest[] = [];
   const { programOptions, extensionHost, program } = createSelectedCallProgram({
     files: {
       "profile.d.ts": sourceProfile,
@@ -188,14 +195,14 @@ test("checked calls expose alias-resolved callable identity and selected paramet
         export const direct = make(options);
         export const renamed = localMake(options);
         export const reExported = makeFromBarrel(options);
+        export const parenthesized = (make)(options);
       `,
     },
-    extension: selectedCallEvidenceExtension(callRequests, targetTypeRequests, optionsBindingProvider),
+    extension: selectedCallEvidenceExtension(callRequests, optionsBindingProvider),
   });
 
   assertCleanProgram(program);
-  assert.equal(callRequests.length, 3);
-  assert.equal(targetTypeRequests.length, 3);
+  assert.equal(callRequests.length, 4);
   const selectedParameterTypes = callRequests.map((request) => request.sourceSelectedSignatureParameters?.[0]?.selectedType);
   assert.ok(selectedParameterTypes.every((selectedType) => selectedType !== undefined && selectedType === selectedParameterTypes[0]));
 
@@ -205,31 +212,31 @@ test("checked calls expose alias-resolved callable identity and selected paramet
   assert.ok(canonicalSymbols.every((symbol) => symbol === canonicalSymbols[0]));
   assert.ok(canonicalDeclarations.every((declaration) => declaration !== undefined && declaration === canonicalDeclarations[0]));
   assert.equal(SourceFile_FileName(GetSourceFileOfNode(canonicalDeclarations[0])), "/src/functions.ts");
+  assert.ok(canonicalSymbols[3] === canonicalSymbols[0], "Parenthesized callees must resolve to the selected callable symbol.");
+  assert.ok(canonicalDeclarations[3] === canonicalDeclarations[0], "Parenthesized callees must resolve to the selected callable declaration.");
 
   for (let requestIndex = 0; requestIndex < callRequests.length; requestIndex++) {
     const request = callRequests[requestIndex]!;
     const syntaxSymbol = request.sourceCalleeSymbol as GoPtr<Symbol>;
     assert.ok(syntaxSymbol !== undefined && (syntaxSymbol.Flags & SymbolFlagsAlias) !== 0);
-    assert.notEqual(syntaxSymbol, request.sourceSelectedCalleeSymbol);
-    assert.equal(request.sourceSelectedDeclaration, canonicalDeclarations[requestIndex]);
+    assert.ok(syntaxSymbol !== request.sourceSelectedCalleeSymbol, "Authored aliases must remain distinct from selected callable symbols.");
+    assert.ok(request.sourceSelectedDeclaration === canonicalDeclarations[requestIndex], "Selected declarations must retain canonical callable identity.");
     assertSelectedParameterProvenance(request.sourceSelectedSignatureParameters ?? []);
-    assert.equal(targetTypeRequests[requestIndex]?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
-    assert.equal(targetTypeRequests[requestIndex]?.sourceSelectedCalleeSymbol, request.sourceSelectedCalleeSymbol);
   }
 
   assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-function-call-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
-    assert.equal(selected?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
-    assert.equal(selected?.sourceSelectedCalleeSymbol, request.sourceSelectedCalleeSymbol);
-    assert.equal(selected?.sourceSelectedCalleeDeclaration, request.sourceSelectedCalleeDeclaration);
+    assertPersistedSelectedParameters(selected?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
+    assert.ok(selected?.sourceSelectedCalleeSymbol === request.sourceSelectedCalleeSymbol, "Function call facts must retain selected callee symbol identity.");
+    assert.ok(selected?.sourceSelectedCalleeDeclaration === request.sourceSelectedCalleeDeclaration, "Function call facts must retain selected callee declaration identity.");
+    assert.deepEqual(selected?.argumentConversions, []);
   }
 });
 
 test("checked untyped calls are distinct from resolved zero-parameter signatures", () => {
   const callRequests: CheckedCallMappingRequest[] = [];
-  const targetTypeRequests: TargetTypeArgumentMappingRequest[] = [];
   const { programOptions, extensionHost, program } = createSelectedCallProgram({
     files: {
       "profile.d.ts": sourceProfile,
@@ -238,24 +245,23 @@ test("checked untyped calls are distinct from resolved zero-parameter signatures
         export const result = dynamicValue();
       `,
     },
-    extension: selectedCallEvidenceExtension(callRequests, targetTypeRequests),
+    extension: selectedCallEvidenceExtension(callRequests),
   });
 
   assertCleanProgram(program);
   assert.equal(callRequests.length, 1);
   assert.equal(callRequests[0]?.sourceSelectedSignatureKind, "untyped");
-  assert.deepEqual(callRequests[0]?.sourceSelectedSignatureParameters, []);
-  assert.equal(targetTypeRequests[0]?.sourceSelectedSignatureKind, "untyped");
+  assert.equal(callRequests[0]?.sourceSelectedSignatureParameters?.length, 0);
 
   assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const selected = createExtensionConsumerQueries(extensionHost, "selected-untyped-call-test").getSelectedTargetCall(callRequests[0]!.call);
   assert.equal(selected?.sourceSelectedSignatureKind, "untyped");
-  assert.deepEqual(selected?.sourceSelectedSignatureParameters, []);
+  assert.equal(selected?.sourceSelectedSignatureParameters?.length, 0);
+  assert.deepEqual(selected?.argumentConversions, []);
 });
 
 test("checked construction exposes selected source parameter types and authored provenance", () => {
   const callRequests: CheckedCallMappingRequest[] = [];
-  const targetTypeRequests: TargetTypeArgumentMappingRequest[] = [];
   const { programOptions, extensionHost, program } = createSelectedCallProgram({
     files: {
       "profile.d.ts": sourceProfile,
@@ -312,7 +318,7 @@ test("checked construction exposes selected source parameter types and authored 
         new VoidOptionalService();
       `,
     },
-    extension: selectedCallEvidenceExtension(callRequests, targetTypeRequests, optionsBindingProvider),
+    extension: selectedCallEvidenceExtension(callRequests, optionsBindingProvider),
   });
 
   assertCleanProgram(program);
@@ -321,14 +327,14 @@ test("checked construction exposes selected source parameter types and authored 
   const localOptionsType = callRequests[1]?.sourceSelectedSignatureParameters?.[0]?.selectedType;
   assert.ok(providerOptionsType !== undefined);
   assert.ok(localOptionsType !== undefined);
-  assert.notEqual(providerOptionsType, localOptionsType);
-  assert.equal(callRequests[2]?.sourceSelectedSignatureParameters?.[0]?.selectedType, providerOptionsType);
-  assert.equal(callRequests[3]?.sourceSelectedSignatureParameters?.[0]?.selectedType, providerOptionsType);
-  assert.equal(callRequests[4]?.sourceSelectedSignatureParameters?.[0]?.selectedType, localOptionsType);
-  assert.equal(callRequests[5]?.sourceSelectedSignatureParameters?.[0]?.selectedType, providerOptionsType);
-  assert.equal(callRequests[6]?.sourceSelectedSignatureParameters?.[0]?.selectedType, providerOptionsType);
-  assert.equal(callRequests[5]?.sourceSelectedSignatureParameters?.[1]?.selectedType, callRequests[6]?.sourceSelectedSignatureParameters?.[1]?.selectedType);
-  assert.equal(callRequests[5]?.sourceSelectedSignatureParameters?.[2]?.selectedType, callRequests[6]?.sourceSelectedSignatureParameters?.[2]?.selectedType);
+  assert.ok(providerOptionsType !== localOptionsType, "Provider and local option types must remain distinct semantic subjects.");
+  assert.ok(callRequests[2]?.sourceSelectedSignatureParameters?.[0]?.selectedType === providerOptionsType, "Renamed imports must retain provider parameter type identity.");
+  assert.ok(callRequests[3]?.sourceSelectedSignatureParameters?.[0]?.selectedType === providerOptionsType, "Re-exports must retain provider parameter type identity.");
+  assert.ok(callRequests[4]?.sourceSelectedSignatureParameters?.[0]?.selectedType === localOptionsType, "Local constructors must retain local parameter type identity.");
+  assert.ok(callRequests[5]?.sourceSelectedSignatureParameters?.[0]?.selectedType === providerOptionsType, "Optional provider parameters must retain provider type identity.");
+  assert.ok(callRequests[6]?.sourceSelectedSignatureParameters?.[0]?.selectedType === providerOptionsType, "Rest provider parameters must retain provider type identity.");
+  assert.ok(callRequests[5]?.sourceSelectedSignatureParameters?.[1]?.selectedType === callRequests[6]?.sourceSelectedSignatureParameters?.[1]?.selectedType, "Repeated selected primitive parameter types must retain identity.");
+  assert.ok(callRequests[5]?.sourceSelectedSignatureParameters?.[2]?.selectedType === callRequests[6]?.sourceSelectedSignatureParameters?.[2]?.selectedType, "Repeated selected rest element types must retain identity.");
 
   const expectedParameterNames = [
     ["options"],
@@ -348,9 +354,6 @@ test("checked construction exposes selected source parameter types and authored 
     assert.ok(parameters !== undefined);
     assert.deepEqual(parameters.map((parameter) => parameter.parameterName), expectedParameterNames[requestIndex]);
     assertSelectedParameterProvenance(parameters);
-    assert.equal(targetTypeRequests[requestIndex]?.sourceSelectedSignatureParameters, parameters);
-    assert.equal(targetTypeRequests[requestIndex]?.sourceSelectedCalleeSymbol, request.sourceSelectedCalleeSymbol);
-    assert.equal(targetTypeRequests[requestIndex]?.sourceSelectedCalleeDeclaration, request.sourceSelectedCalleeDeclaration);
   }
 
   assert.deepEqual(callRequests[5]?.sourceSelectedSignatureParameters?.map(({ acceptsOmission, rest }) => ({ acceptsOmission, rest })), [
@@ -367,23 +370,23 @@ test("checked construction exposes selected source parameter types and authored 
 
   const genericParameter = callRequests[2]?.sourceSelectedSignatureParameters?.[0];
   assert.ok(genericParameter?.authoredTypeNode !== undefined);
-  assert.notEqual(genericParameter.authoredTypeNode, genericParameter.selectedType);
-  assert.equal(callRequests[7]?.sourceSelectedDeclaration, undefined);
-  assert.deepEqual(callRequests[7]?.sourceSelectedSignatureParameters, []);
+  assert.ok(genericParameter.authoredTypeNode !== genericParameter.selectedType, "Authored type syntax and selected semantic type must remain distinct subjects.");
+  assert.ok(callRequests[7]?.sourceSelectedDeclaration === undefined, "Implicit empty construction must not fabricate a selected declaration.");
+  assert.equal(callRequests[7]?.sourceSelectedSignatureParameters?.length, 0);
 
   assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-parameter-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
-    assert.equal(selected?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
-    assert.equal(selected?.sourceSelectedCalleeSymbol, request.sourceSelectedCalleeSymbol);
-    assert.equal(selected?.sourceSelectedCalleeDeclaration, request.sourceSelectedCalleeDeclaration);
+    assertPersistedSelectedParameters(selected?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
+    assert.ok(selected?.sourceSelectedCalleeSymbol === request.sourceSelectedCalleeSymbol, "Constructor facts must retain selected callee symbol identity.");
+    assert.ok(selected?.sourceSelectedCalleeDeclaration === request.sourceSelectedCalleeDeclaration, "Constructor facts must retain selected callee declaration identity.");
+    assert.deepEqual(selected?.argumentConversions, []);
   }
 });
 
 test("checked construction keeps callee identity, signature origin, and result type distinct", () => {
   const callRequests: CheckedCallMappingRequest[] = [];
-  const targetTypeRequests: TargetTypeArgumentMappingRequest[] = [];
   const { programOptions, extensionHost, program } = createSelectedCallProgram({
     files: {
       "profile.d.ts": sourceProfile,
@@ -413,12 +416,11 @@ test("checked construction keeps callee identity, signature origin, and result t
         new ProductCtor(options);
       `,
     },
-    extension: selectedCallEvidenceExtension(callRequests, targetTypeRequests, optionsBindingProvider),
+    extension: selectedCallEvidenceExtension(callRequests, optionsBindingProvider),
   });
 
   assertCleanProgram(program);
   assert.equal(callRequests.length, 4);
-  assert.equal(targetTypeRequests.length, 4);
 
   const explicitDerived = callRequests.find((request) => (request.sourceSelectedCalleeSymbol as GoPtr<Symbol>)?.Name === "ExplicitDerivedService");
   const inherited = callRequests.find((request) => (request.sourceSelectedCalleeSymbol as GoPtr<Symbol>)?.Name === "InheritedService");
@@ -432,33 +434,35 @@ test("checked construction keeps callee identity, signature origin, and result t
   assert.ok(explicitDerived.sourceReturnType !== undefined);
   assert.ok(inherited.sourceReturnType !== undefined);
   assert.ok(structural.sourceReturnType !== undefined);
-  assert.notEqual(explicitDerived.sourceReturnType, inherited.sourceReturnType);
-  assert.notEqual(inherited.sourceReturnType, structural.sourceReturnType);
+  assert.ok(explicitDerived.sourceReturnType !== inherited.sourceReturnType, "Distinct constructed classes must retain distinct source result types.");
+  assert.ok(inherited.sourceReturnType !== structural.sourceReturnType, "Nominal and structural construction must retain distinct source result types.");
   assert.equal((inherited.sourceSelectedCalleeSymbol as GoPtr<Symbol>)?.Name, "InheritedService");
   assert.equal((inherited.sourceSelectedSignatureParameters?.[0]?.parameterSymbol as GoPtr<Symbol>)?.Name, "options");
   assert.ok(inherited.sourceSelectedDeclaration !== undefined);
-  assert.notEqual(inherited.sourceSelectedDeclaration, inherited.sourceSelectedCalleeDeclaration);
+  assert.ok(inherited.sourceSelectedDeclaration !== inherited.sourceSelectedCalleeDeclaration, "Inherited constructor origin must remain distinct from the selected class declaration.");
   assert.equal((structural.sourceSelectedCalleeSymbol as GoPtr<Symbol>)?.Name, "ProductCtor");
   assert.equal(structural.sourceSelectedSignatureParameters?.[0]?.parameterName, "options");
   assert.ok(structural.sourceSelectedDeclaration !== undefined);
-  assert.notEqual(structural.sourceSelectedDeclaration, structural.sourceSelectedCalleeDeclaration);
+  assert.ok(structural.sourceSelectedDeclaration !== structural.sourceSelectedCalleeDeclaration, "Structural constructor signature origin must remain distinct from its callee declaration.");
   assert.equal(superCall.sourceSelectedSignatureParameters?.[0]?.parameterName, "options");
 
   assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-constructor-shape-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
-    assert.equal(selected?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
-    assert.equal(selected?.sourceSelectedCalleeSymbol, request.sourceSelectedCalleeSymbol);
-    assert.equal(selected?.sourceSelectedCalleeDeclaration, request.sourceSelectedCalleeDeclaration);
-    assert.equal(selected?.sourceReturnType, request.sourceReturnType);
+    assertPersistedSelectedParameters(selected?.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
+    assert.ok(selected?.sourceDeclaration === request.sourceSelectedDeclaration, "Construction facts must retain the checker-selected signature declaration identity.");
+    assert.ok(selected?.sourceSelectedCalleeSymbol === request.sourceSelectedCalleeSymbol, "Construction facts must retain selected callee symbol identity.");
+    assert.ok(selected?.sourceSelectedCalleeDeclaration === request.sourceSelectedCalleeDeclaration, "Construction facts must retain selected callee declaration identity.");
+    assert.ok(selected?.sourceReturnType === request.sourceReturnType, "Construction facts must retain selected source result type identity.");
   }
 });
 
 test("target mappers cannot replace checker-owned selected source evidence", () => {
   assert.equal(targetSignatureSelectionHasExactTargetOwnedKeys, true);
+  assert.equal(checkedCallMappingResultHasExactKeys, true);
+  assert.equal(sourceCallMappingResultHasExactKeys, true);
   const callRequests: CheckedCallMappingRequest[] = [];
-  const targetTypeRequests: TargetTypeArgumentMappingRequest[] = [];
   const forgedSymbol = {};
   const forgedDeclaration = {};
   const forgedType = {};
@@ -496,7 +500,7 @@ test("target mappers cannot replace checker-owned selected source evidence", () 
         export const service = new Service(value);
       `,
     },
-    extension: selectedCallEvidenceExtension(callRequests, targetTypeRequests, undefined, forgedProvenance),
+    extension: selectedCallEvidenceExtension(callRequests),
   });
 
   assertCleanProgram(program);
@@ -505,20 +509,46 @@ test("target mappers cannot replace checker-owned selected source evidence", () 
   const request = callRequests[0]!;
   const selected = createExtensionConsumerQueries(extensionHost, "selected-source-authority-test").getSelectedTargetCall(request.call);
   assert.ok(selected !== undefined);
-  assert.equal(selected.sourceSignature, request.sourceSelectedSignature);
-  assert.equal(selected.sourceDeclaration, request.sourceSelectedDeclaration);
-  assert.equal(selected.sourceCalleeSymbol, request.sourceCalleeSymbol);
-  assert.equal(selected.sourceCalleeDeclaration, request.sourceCalleeDeclaration);
-  assert.equal(selected.sourceSelectedCalleeSymbol, request.sourceSelectedCalleeSymbol);
-  assert.equal(selected.sourceSelectedCalleeDeclaration, request.sourceSelectedCalleeDeclaration);
-  assert.equal(selected.sourceReturnType, request.sourceReturnType);
-  assert.equal(selected.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
+  assert.ok(selected.sourceSignature === request.sourceSelectedSignature, "Selected target evidence must retain the checker-selected signature.");
+  assert.ok(selected.sourceDeclaration === request.sourceSelectedDeclaration, "Selected target evidence must retain the checker-selected declaration.");
+  assert.ok(selected.sourceCalleeSymbol === request.sourceCalleeSymbol, "Selected target evidence must retain the authored callee symbol.");
+  assert.ok(selected.sourceCalleeDeclaration === request.sourceCalleeDeclaration, "Selected target evidence must retain the authored callee declaration.");
+  assert.ok(selected.sourceSelectedCalleeSymbol === request.sourceSelectedCalleeSymbol, "Selected target evidence must retain the alias-resolved callee symbol.");
+  assert.ok(selected.sourceSelectedCalleeDeclaration === request.sourceSelectedCalleeDeclaration, "Selected target evidence must retain the alias-resolved callee declaration.");
+  assert.ok(selected.sourceReturnType === request.sourceReturnType, "Selected target evidence must retain the selected source return type.");
+  assertPersistedSelectedParameters(selected.sourceSelectedSignatureParameters, request.sourceSelectedSignatureParameters);
   assert.equal(selected.sourceSelectedSignatureKind, request.sourceSelectedSignatureKind);
-  assert.notEqual(selected.sourceSignature, forgedSignature);
-  assert.notEqual(selected.sourceSelectedCalleeSymbol, forgedSymbol);
-  assert.notEqual(selected.sourceSelectedSignatureParameters, forgedProvenance.sourceSelectedSignatureParameters);
+  assert.ok(selected.sourceSignature !== forgedSignature, "Target-provided source signature replacement must be ignored.");
+  assert.ok(selected.sourceSelectedCalleeSymbol !== forgedSymbol, "Target-provided source symbol replacement must be ignored.");
+  assert.ok(selected.sourceSelectedSignatureParameters !== forgedProvenance.sourceSelectedSignatureParameters, "Target-provided source parameter replacement must be ignored.");
   assert.notEqual(selected.sourceSelectedSignatureKind, forgedProvenance.sourceSelectedSignatureKind);
   assert.equal(selected.sourceSelectedMethodTypeArguments, undefined);
+
+  const rejectedRequests: CheckedCallMappingRequest[] = [];
+  const rejectedProgram = createSelectedCallProgram({
+    files: {
+      "profile.d.ts": sourceProfile,
+      "index.ts": `
+        class Service {
+          constructor(value: string) {}
+        }
+        declare const value: string;
+        export const service = new Service(value);
+      `,
+    },
+    extension: selectedCallEvidenceExtension(rejectedRequests, undefined, forgedProvenance),
+  });
+  assertCleanProgram(rejectedProgram.program);
+  assert.equal(rejectedRequests.length, 1);
+  assert.ok(finalizeExtensionSemantics(rejectedProgram.programOptions) !== undefined);
+  assert.equal(
+    createExtensionConsumerQueries(rejectedProgram.extensionHost, "selected-source-injection-test").getSelectedTargetCall(rejectedRequests[0]!.call),
+    undefined,
+    "A target response containing source-owned provenance must be rejected rather than sanitized.",
+  );
+  const hookFailures = rejectedProgram.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED");
+  assert.equal(hookFailures.length, 1);
+  assert.match(String(hookFailures[0]?.evidence?.[0]?.details), /TargetSignatureSelection.*unsupported field 'sourceSelectedMethodTypeArguments'/);
 });
 
 function createSelectedCallProgram(options: {
@@ -559,7 +589,6 @@ function createSelectedCallProgram(options: {
 
 function selectedCallEvidenceExtension(
   callRequests: CheckedCallMappingRequest[],
-  targetTypeRequests: TargetTypeArgumentMappingRequest[],
   bindingProvider?: TargetBindingProvider,
   returnedSourceProvenance?: Partial<SelectedTargetSignatureFact>,
 ): CompilerExtension {
@@ -573,14 +602,13 @@ function selectedCallEvidenceExtension(
       if (bindingProvider !== undefined) {
         assert.equal(context.registerTargetBindingProvider(bindingProvider), true);
       }
-      assert.equal(context.registerTargetSemanticProvider(selectedCallSemanticProvider(callRequests, targetTypeRequests, returnedSourceProvenance)), true);
+      assert.equal(context.registerTargetSemanticProvider(selectedCallSemanticProvider(callRequests, returnedSourceProvenance)), true);
     },
   };
 }
 
 function selectedCallSemanticProvider(
   callRequests: CheckedCallMappingRequest[],
-  targetTypeRequests: TargetTypeArgumentMappingRequest[],
   returnedSourceProvenance?: Partial<SelectedTargetSignatureFact>,
 ): TargetSemanticProvider {
   return {
@@ -593,27 +621,21 @@ function selectedCallSemanticProvider(
     },
     mapCheckedCall: (request) => {
       callRequests.push(request);
-      const construct = IsNewExpression(request.call as GoPtr<Node>);
       return acceptObservation({
+        kind: "target",
         selectedSignature: {
           ...returnedSourceProvenance,
           member: {
-            id: `Acme.${construct ? "Construct" : "Call"}.${callRequests.length}`,
-            sourceName: construct ? "constructor" : "call",
-            targetName: construct ? "new" : "invoke",
-            kind: construct ? "constructor" : "method",
-            parameters: request.arguments.map((_, parameterIndex) => ({
-              name: `argument${parameterIndex}`,
-              type: { kind: "target-specific", target: "acme", name: "selected-source-parameter" },
-              passingMode: "by-value",
-            })),
+            id: `Acme.Call.${callRequests.length}`,
+            sourceName: "call",
+            targetName: "invoke",
+            kind: "method",
+            parameters: [],
           },
+          targetTypeArguments: [],
         } satisfies TargetSignatureSelection,
+        argumentConversions: [],
       });
-    },
-    mapInferredSourceTypeArgumentsToTarget: (request) => {
-      targetTypeRequests.push(request);
-      return acceptObservation({ targetTypeArguments: [] });
     },
   };
 }
@@ -663,8 +685,33 @@ function assertSelectedParameterProvenance(parameters: readonly SourceSelectedSi
     assert.ok(symbol !== undefined);
     assert.ok(parameter.selectedType !== undefined);
     assert.ok(declaration !== undefined);
-    assert.equal(declaration, symbol.ValueDeclaration);
-    assert.equal(parameter.authoredTypeNode, Node_Type(declaration));
+    assert.ok(declaration === symbol.ValueDeclaration, "Selected parameter evidence must retain the symbol's value declaration.");
+    assert.ok(parameter.authoredTypeNode === Node_Type(declaration), "Selected parameter evidence must retain the authored type node.");
+  }
+}
+
+function assertPersistedSelectedParameters(
+  persisted: readonly SourceSelectedSignatureParameter[] | undefined,
+  observed: readonly SourceSelectedSignatureParameter[] | undefined,
+): void {
+  assert.ok(persisted !== undefined);
+  assert.ok(observed !== undefined);
+  assert.ok(persisted !== observed, "Selected parameter evidence containers must cross the immutable fact snapshot boundary.");
+  assert.equal(Object.isFrozen(persisted), true);
+  assert.equal(persisted.length, observed.length);
+  for (let parameterIndex = 0; parameterIndex < observed.length; parameterIndex++) {
+    const actual: SourceSelectedSignatureParameter = persisted[parameterIndex]!;
+    const expected: SourceSelectedSignatureParameter = observed[parameterIndex]!;
+    assert.ok(actual !== expected, "Selected parameter evidence records must be snapshotted.");
+    assert.equal(Object.isFrozen(actual), true);
+    assert.equal(actual.parameterIndex, expected.parameterIndex);
+    assert.equal(actual.parameterName, expected.parameterName);
+    assert.ok(actual.parameterSymbol === expected.parameterSymbol, "Selected parameter symbol identity must be preserved exactly.");
+    assert.ok(actual.parameterDeclaration === expected.parameterDeclaration, "Selected parameter declaration identity must be preserved exactly.");
+    assert.ok(actual.selectedType === expected.selectedType, "Selected parameter semantic type identity must be preserved exactly.");
+    assert.ok(actual.authoredTypeNode === expected.authoredTypeNode, "Selected parameter authored type-node identity must be preserved exactly.");
+    assert.equal(actual.acceptsOmission, expected.acceptsOmission);
+    assert.equal(actual.rest, expected.rest);
   }
 }
 

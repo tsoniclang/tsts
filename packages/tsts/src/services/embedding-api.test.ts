@@ -650,21 +650,30 @@ function createNameFallbackRuntimeBindingProvider(): TargetBindingProvider {
 function createAcmeRuntimeSemanticProvider(): TargetSemanticProvider {
   return {
     identity: providerIdentity("acme.runtime-semantics", "semantic"),
-    mapCheckedCall: () => acceptObservation({
-      selectedSignature: {
-        member: {
-          id: "Acme.Runtime.consume(INT)",
-          sourceName: "consume",
-          targetName: "consume",
-          kind: "method",
-          parameters: [{
-            name: "value",
-            type: { kind: "source-primitive", name: "int32" },
-            passingMode: "by-value",
-          }],
+    mapCheckedCall: () => {
+      return acceptObservation({
+        kind: "target",
+        selectedSignature: {
+          member: {
+            id: "Acme.Runtime.consume(INT)",
+            sourceName: "consume",
+            targetName: "consume",
+            kind: "method",
+            parameters: [{
+              name: "value",
+              type: { kind: "source-primitive", name: "int32" },
+              passingMode: "by-value",
+            }],
+          },
         },
-      },
-    }),
+        argumentConversions: [{
+          sourceArgumentIndex: 0,
+          sourceForm: "value",
+          targetParameterIndex: 0,
+          targetForm: "parameter",
+        }],
+      });
+    },
     mapCheckedIteration: () => acceptObservation({
       operation: targetOperation("acme.foreach", "foreach"),
     }),

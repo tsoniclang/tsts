@@ -2278,7 +2278,7 @@ export function Checker_checkImportCallExpression(receiver: GoPtr<Checker>, node
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkCallExpression","kind":"method","status":"implemented","sigHash":"c7077a9359a5dabbb7b33b07409cf7ae319dc8d4ee9862f71076afb9296c19cc","bodyHash":"8d143d4d304de3843b2932373cebb5a3e5a974a05b6bbf1f1e0ea960bebc8d4e"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go call resolution, extension-enabled programs may record provider-selected target call, parameter mode, and argument conversion facts for consumers; no-extension programs and unowned calls remain on the exact TS-Go path."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After each exact TS-Go call-expression result decision, extension-enabled programs retain the selected signature, callee, receiver, final result, and authored-argument evidence for deterministic target finalization; source checking and returned types are unchanged."}
  *
  * Go source:
  * func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type {
@@ -2330,8 +2330,8 @@ export function Checker_checkCallExpression(receiver: GoPtr<Checker>, node: GoPt
     return receiver!.silentNeverType;
   }
   Checker_checkDeprecatedSignature(receiver, signature, node);
-  recordExtensionCheckedCallMapping(receiver, node, signature, Checker_getResolvedSymbolOrNil(receiver, Node_Expression(node)));
   if (Node_Expression(node)!.Kind === KindSuperKeyword) {
+    recordExtensionCheckedCallMapping(receiver, node, signature, receiver!.voidType, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
     return receiver!.voidType;
   }
   if (IsNewExpression(node)) {
@@ -2340,15 +2340,20 @@ export function Checker_checkCallExpression(receiver: GoPtr<Checker>, node: GoPt
       if (receiver!.noImplicitAny) {
         Checker_error(receiver, node, X_new_expression_whose_target_lacks_a_construct_signature_implicitly_has_an_any_type);
       }
+      recordExtensionCheckedCallMapping(receiver, node, signature, receiver!.anyType, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
       return receiver!.anyType;
     }
   }
   if (IsInJSFile(node) && Checker_isCommonJSRequire(receiver, node)) {
-    return Checker_resolveExternalModuleTypeByLiteral(receiver, (Node_Arguments(node) ?? [])[0]);
+    const result = Checker_resolveExternalModuleTypeByLiteral(receiver, (Node_Arguments(node) ?? [])[0]);
+    recordExtensionCheckedCallMapping(receiver, node, signature, result, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
+    return result;
   }
   const returnType = Checker_getReturnTypeOfSignature(receiver, signature);
   if ((returnType!.flags & TypeFlagsESSymbolLike) !== 0 && Checker_isSymbolOrSymbolForCall(receiver, node)) {
-    return Checker_getESSymbolLikeTypeForNode(receiver, WalkUpParenthesizedExpressions(node!.Parent as GoPtr<Expression>));
+    const result = Checker_getESSymbolLikeTypeForNode(receiver, WalkUpParenthesizedExpressions(node!.Parent as GoPtr<Expression>));
+    recordExtensionCheckedCallMapping(receiver, node, signature, result, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
+    return result;
   }
   if (IsCallExpression(node) && Node_QuestionDotToken(node) === undefined && IsExpressionStatement(node!.Parent) && (returnType!.flags & TypeFlagsVoid) !== 0 && Checker_getTypePredicateOfSignature(receiver, signature) !== undefined) {
     if (!IsDottedName(Node_Expression(node))) {
@@ -2358,6 +2363,7 @@ export function Checker_checkCallExpression(receiver: GoPtr<Checker>, node: GoPt
       Checker_getTypeOfDottedName(receiver, Node_Expression(node), diagnostic);
     }
   }
+  recordExtensionCheckedCallMapping(receiver, node, signature, returnType, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
   return returnType;
 }
 
