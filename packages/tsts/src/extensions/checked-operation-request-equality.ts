@@ -7,17 +7,14 @@ import type {
   CheckedOperatorMappingRequest,
   CheckedPropertyAccessMappingRequest,
   ExtensionObservationRequest,
-  SelectedSourceReceiverEvidence,
 } from "./observations.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import { selectedTargetSignatureEquals, targetParameterEquals, targetTypeRefEquals } from "./facts.js";
-import type { SourceSelectedMethodTypeArgument, SourceSelectedSignatureParameter } from "./facts.js";
+import type { SelectedSourceTypeEvidence, SelectedSourceValueEvidence, SourceSelectedCallArgumentBinding, SourceSelectedMethodTypeArgument, SourceSelectedSignatureParameter } from "./facts.js";
 
 type AllFieldsCompared<T, TCompared extends keyof T> = Exclude<keyof T, TCompared> extends never ? true : false;
 type RequireAllTrue<T extends readonly true[]> = T;
-type ReceiverEvidenceField = keyof SelectedSourceReceiverEvidence;
-type CallField = ReceiverEvidenceField
-  | "call"
+type CallField = "call"
   | "callee"
   | "arguments"
   | "sourceSelectedSignature"
@@ -25,34 +22,31 @@ type CallField = ReceiverEvidenceField
   | "sourceSelectedMethodTypeArguments"
   | "sourceSelectedSignatureParameters"
   | "sourceSelectedSignatureKind"
-  | "sourceCalleeSymbol"
-  | "sourceCalleeDeclaration"
-  | "sourceSelectedCalleeSymbol"
-  | "sourceSelectedCalleeDeclaration"
-  | "sourceReturnType"
+  | "sourceArgumentBindings"
+  | "sourceCallee"
+  | "sourceArguments"
+  | "sourceResult"
+  | "sourceReceiver"
   | "optionalChain"
   | "target";
-type PropertyField = ReceiverEvidenceField
-  | "expression"
+type PropertyField = "expression"
   | "receiver"
   | "propertyName"
-  | "sourceSelectedSymbol"
-  | "sourceSelectedDeclaration"
-  | "sourceResultType"
+  | "sourceReceiver"
+  | "sourceResult"
   | "optionalChain"
   | "target";
-type ElementField = ReceiverEvidenceField
-  | "expression"
+type ElementField = "expression"
   | "receiver"
   | "argument"
-  | "sourceSelectedSymbol"
-  | "sourceSelectedDeclaration"
+  | "sourceReceiver"
+  | "sourceArgument"
+  | "sourceResult"
   | "sourceSelectedElementIndex"
-  | "sourceResultType"
   | "optionalChain"
   | "target";
-type OperatorField = "expression" | "operator" | "left" | "right" | "sourceResultType" | "target";
-type IterationField = "statement" | "expression" | "initializer" | "kind" | "sourceElementType" | "target";
+type OperatorField = "expression" | "operator" | "left" | "right" | "sourceLeft" | "sourceRight" | "sourceResult" | "target";
+type IterationField = "statement" | "expression" | "initializer" | "kind" | "sourceIterable" | "sourceElement" | "target";
 type ConversionField = "conversionKind"
   | "expression"
   | "source"
@@ -68,11 +62,8 @@ type ConversionField = "conversionKind"
   | "targetParameter"
   | "sourceSelectedSignature"
   | "selectedSignature"
+  | "sourceBinding"
   | "assertionKind"
-  | "sourceExpression"
-  | "sourceSelectedSymbol"
-  | "sourceSelectedDeclaration"
-  | "sourceSelectedDeclarationTypeNode"
   | "explicitTargetTypeNode";
 
 export type CheckedOperationRequestFieldCoverage = RequireAllTrue<[
@@ -130,39 +121,35 @@ function compareCallRequests(left: CheckedCallMappingRequest, right: CheckedCall
   compareArray(differences, "sourceSelectedMethodTypeArguments", left.sourceSelectedMethodTypeArguments, right.sourceSelectedMethodTypeArguments, selectedMethodTypeArgumentEquals);
   compareArray(differences, "sourceSelectedSignatureParameters", left.sourceSelectedSignatureParameters, right.sourceSelectedSignatureParameters, selectedSignatureParameterEquals);
   compareIdentity(differences, "sourceSelectedSignatureKind", left.sourceSelectedSignatureKind, right.sourceSelectedSignatureKind);
-  compareIdentity(differences, "sourceCalleeSymbol", left.sourceCalleeSymbol, right.sourceCalleeSymbol);
-  compareIdentity(differences, "sourceCalleeDeclaration", left.sourceCalleeDeclaration, right.sourceCalleeDeclaration);
-  compareIdentity(differences, "sourceSelectedCalleeSymbol", left.sourceSelectedCalleeSymbol, right.sourceSelectedCalleeSymbol);
-  compareIdentity(differences, "sourceSelectedCalleeDeclaration", left.sourceSelectedCalleeDeclaration, right.sourceSelectedCalleeDeclaration);
-  compareIdentity(differences, "sourceReturnType", left.sourceReturnType, right.sourceReturnType);
+  compareArray(differences, "sourceArgumentBindings", left.sourceArgumentBindings, right.sourceArgumentBindings, selectedCallArgumentBindingEquals);
+  compareSelectedSourceValueEvidence(differences, "sourceCallee", left.sourceCallee, right.sourceCallee);
+  compareArray(differences, "sourceArguments", left.sourceArguments, right.sourceArguments, selectedSourceValueEvidenceEquals);
+  compareSelectedSourceValueEvidence(differences, "sourceResult", left.sourceResult, right.sourceResult);
+  compareOptionalSelectedSourceValueEvidence(differences, "sourceReceiver", left.sourceReceiver, right.sourceReceiver);
   compareIdentity(differences, "optionalChain", left.optionalChain, right.optionalChain);
   compareIdentity(differences, "target", left.target, right.target);
-  compareReceiverEvidence(left, right, differences);
 }
 
 function comparePropertyRequests(left: CheckedPropertyAccessMappingRequest, right: CheckedPropertyAccessMappingRequest, differences: string[]): void {
   compareIdentity(differences, "expression", left.expression, right.expression);
   compareIdentity(differences, "receiver", left.receiver, right.receiver);
   compareIdentity(differences, "propertyName", left.propertyName, right.propertyName);
-  compareIdentity(differences, "sourceSelectedSymbol", left.sourceSelectedSymbol, right.sourceSelectedSymbol);
-  compareIdentity(differences, "sourceSelectedDeclaration", left.sourceSelectedDeclaration, right.sourceSelectedDeclaration);
-  compareIdentity(differences, "sourceResultType", left.sourceResultType, right.sourceResultType);
+  compareSelectedSourceValueEvidence(differences, "sourceReceiver", left.sourceReceiver, right.sourceReceiver);
+  compareSelectedSourceValueEvidence(differences, "sourceResult", left.sourceResult, right.sourceResult);
   compareIdentity(differences, "optionalChain", left.optionalChain, right.optionalChain);
   compareIdentity(differences, "target", left.target, right.target);
-  compareReceiverEvidence(left, right, differences);
 }
 
 function compareElementRequests(left: CheckedElementAccessMappingRequest, right: CheckedElementAccessMappingRequest, differences: string[]): void {
   compareIdentity(differences, "expression", left.expression, right.expression);
   compareIdentity(differences, "receiver", left.receiver, right.receiver);
   compareIdentity(differences, "argument", left.argument, right.argument);
-  compareIdentity(differences, "sourceSelectedSymbol", left.sourceSelectedSymbol, right.sourceSelectedSymbol);
-  compareIdentity(differences, "sourceSelectedDeclaration", left.sourceSelectedDeclaration, right.sourceSelectedDeclaration);
+  compareSelectedSourceValueEvidence(differences, "sourceReceiver", left.sourceReceiver, right.sourceReceiver);
+  compareSelectedSourceValueEvidence(differences, "sourceArgument", left.sourceArgument, right.sourceArgument);
+  compareSelectedSourceValueEvidence(differences, "sourceResult", left.sourceResult, right.sourceResult);
   compareIdentity(differences, "sourceSelectedElementIndex", left.sourceSelectedElementIndex, right.sourceSelectedElementIndex);
-  compareIdentity(differences, "sourceResultType", left.sourceResultType, right.sourceResultType);
   compareIdentity(differences, "optionalChain", left.optionalChain, right.optionalChain);
   compareIdentity(differences, "target", left.target, right.target);
-  compareReceiverEvidence(left, right, differences);
 }
 
 function compareOperatorRequests(left: CheckedOperatorMappingRequest, right: CheckedOperatorMappingRequest, differences: string[]): void {
@@ -170,7 +157,9 @@ function compareOperatorRequests(left: CheckedOperatorMappingRequest, right: Che
   compareIdentity(differences, "operator", left.operator, right.operator);
   compareIdentity(differences, "left", left.left, right.left);
   compareIdentity(differences, "right", left.right, right.right);
-  compareIdentity(differences, "sourceResultType", left.sourceResultType, right.sourceResultType);
+  compareOptionalSelectedSourceValueEvidence(differences, "sourceLeft", left.sourceLeft, right.sourceLeft);
+  compareOptionalSelectedSourceValueEvidence(differences, "sourceRight", left.sourceRight, right.sourceRight);
+  compareSelectedSourceValueEvidence(differences, "sourceResult", left.sourceResult, right.sourceResult);
   compareIdentity(differences, "target", left.target, right.target);
 }
 
@@ -179,14 +168,15 @@ function compareIterationRequests(left: CheckedIterationMappingRequest, right: C
   compareIdentity(differences, "expression", left.expression, right.expression);
   compareIdentity(differences, "initializer", left.initializer, right.initializer);
   compareIdentity(differences, "kind", left.kind, right.kind);
-  compareIdentity(differences, "sourceElementType", left.sourceElementType, right.sourceElementType);
+  compareSelectedSourceValueEvidence(differences, "sourceIterable", left.sourceIterable, right.sourceIterable);
+  compareSelectedSourceTypeEvidence(differences, "sourceElement", left.sourceElement, right.sourceElement);
   compareIdentity(differences, "target", left.target, right.target);
 }
 
 function compareConversionRequests(left: CheckedConversionMappingRequest, right: CheckedConversionMappingRequest, differences: string[]): void {
   compareIdentity(differences, "conversionKind", left.conversionKind, right.conversionKind);
   compareIdentity(differences, "expression", left.expression, right.expression);
-  compareIdentity(differences, "source", left.source, right.source);
+  compareSelectedSourceValueEvidence(differences, "source", left.source, right.source);
   compareIdentity(differences, "targetPlatform", left.targetPlatform, right.targetPlatform);
   if (left.conversionKind === "call-argument" && right.conversionKind === "call-argument") {
     compareValue(differences, "target", left.target, right.target, targetTypeRefEquals);
@@ -200,22 +190,58 @@ function compareConversionRequests(left: CheckedConversionMappingRequest, right:
     compareValue(differences, "targetParameter", left.targetParameter, right.targetParameter, targetParameterEquals);
     compareIdentity(differences, "sourceSelectedSignature", left.sourceSelectedSignature, right.sourceSelectedSignature);
     compareValue(differences, "selectedSignature", left.selectedSignature, right.selectedSignature, selectedTargetSignatureEquals);
+    compareValue(differences, "sourceBinding", left.sourceBinding, right.sourceBinding, selectedCallArgumentBindingEquals);
     return;
   }
   if (left.conversionKind === "assertion" && right.conversionKind === "assertion") {
-    compareIdentity(differences, "target", left.target, right.target);
+    compareSelectedSourceTypeEvidence(differences, "target", left.target, right.target);
     compareIdentity(differences, "assertionKind", left.assertionKind, right.assertionKind);
-    compareIdentity(differences, "sourceExpression", left.sourceExpression, right.sourceExpression);
-    compareIdentity(differences, "sourceSelectedSymbol", left.sourceSelectedSymbol, right.sourceSelectedSymbol);
-    compareIdentity(differences, "sourceSelectedDeclaration", left.sourceSelectedDeclaration, right.sourceSelectedDeclaration);
-    compareIdentity(differences, "sourceSelectedDeclarationTypeNode", left.sourceSelectedDeclarationTypeNode, right.sourceSelectedDeclarationTypeNode);
     compareIdentity(differences, "explicitTargetTypeNode", left.explicitTargetTypeNode, right.explicitTargetTypeNode);
   }
 }
 
-function compareReceiverEvidence(left: SelectedSourceReceiverEvidence, right: SelectedSourceReceiverEvidence, differences: string[]): void {
-  compareIdentity(differences, "sourceReceiver", left.sourceReceiver, right.sourceReceiver);
-  compareIdentity(differences, "sourceReceiverType", left.sourceReceiverType, right.sourceReceiverType);
+function compareSelectedSourceTypeEvidence(
+  differences: string[],
+  field: string,
+  left: SelectedSourceTypeEvidence,
+  right: SelectedSourceTypeEvidence,
+): void {
+  if (!selectedSourceTypeEvidenceEquals(left, right)) {
+    differences.push(field);
+  }
+}
+
+function compareSelectedSourceValueEvidence(
+  differences: string[],
+  field: string,
+  left: SelectedSourceValueEvidence,
+  right: SelectedSourceValueEvidence,
+): void {
+  if (!selectedSourceValueEvidenceEquals(left, right)) {
+    differences.push(field);
+  }
+}
+
+function compareOptionalSelectedSourceValueEvidence(
+  differences: string[],
+  field: string,
+  left: SelectedSourceValueEvidence | undefined,
+  right: SelectedSourceValueEvidence | undefined,
+): void {
+  compareOptionalValue(differences, field, left, right, selectedSourceValueEvidenceEquals);
+}
+
+function selectedSourceTypeEvidenceEquals(left: SelectedSourceTypeEvidence, right: SelectedSourceTypeEvidence): boolean {
+  return left.type === right.type
+    && left.symbol === right.symbol
+    && left.declaration === right.declaration
+    && left.selectedSymbol === right.selectedSymbol
+    && left.selectedDeclaration === right.selectedDeclaration
+    && left.authoredTypeNode === right.authoredTypeNode;
+}
+
+function selectedSourceValueEvidenceEquals(left: SelectedSourceValueEvidence, right: SelectedSourceValueEvidence): boolean {
+  return left.expression === right.expression && selectedSourceTypeEvidenceEquals(left, right);
 }
 
 function compareIdentity(differences: string[], field: string, left: unknown, right: unknown): void {
@@ -291,4 +317,15 @@ function selectedSignatureParameterEquals(left: SourceSelectedSignatureParameter
     && left.authoredTypeNode === right.authoredTypeNode
     && left.acceptsOmission === right.acceptsOmission
     && left.rest === right.rest;
+}
+
+function selectedCallArgumentBindingEquals(left: SourceSelectedCallArgumentBinding, right: SourceSelectedCallArgumentBinding): boolean {
+  return left.sourceArgumentIndex === right.sourceArgumentIndex
+    && left.effectiveArgumentIndex === right.effectiveArgumentIndex
+    && left.sourceForm === right.sourceForm
+    && left.spreadElementIndex === right.spreadElementIndex
+    && left.sourceParameterIndex === right.sourceParameterIndex
+    && left.sourceParameterForm === right.sourceParameterForm
+    && left.selectedArgumentType === right.selectedArgumentType
+    && left.selectedParameterType === right.selectedParameterType;
 }

@@ -204,6 +204,30 @@ export interface SourceSelectedSignatureParameter {
   readonly rest: boolean;
 }
 
+export interface SourceSelectedCallArgumentBinding {
+  readonly sourceArgumentIndex: number;
+  readonly effectiveArgumentIndex: number;
+  readonly sourceForm: "value" | "spread-element" | "spread-sequence";
+  readonly spreadElementIndex?: number;
+  readonly sourceParameterIndex: number;
+  readonly sourceParameterForm: "parameter" | "rest-element" | "rest-sequence";
+  readonly selectedArgumentType: ExtensionFactSubject;
+  readonly selectedParameterType: ExtensionFactSubject;
+}
+
+export interface SelectedSourceTypeEvidence {
+  readonly type: ExtensionFactSubject;
+  readonly symbol?: ExtensionFactSubject;
+  readonly declaration?: ExtensionFactSubject;
+  readonly selectedSymbol?: ExtensionFactSubject;
+  readonly selectedDeclaration?: ExtensionFactSubject;
+  readonly authoredTypeNode?: ExtensionFactSubject;
+}
+
+export interface SelectedSourceValueEvidence extends SelectedSourceTypeEvidence {
+  readonly expression: ExtensionFactSubject;
+}
+
 export interface TargetSignatureSelection {
   readonly member: TargetMember;
   readonly targetTypeArguments?: readonly TargetTypeRef[];
@@ -220,19 +244,17 @@ export interface TargetCallArgumentConversionSlot {
 
 export interface SelectedTargetSignatureFact extends TargetSignatureSelection {
   readonly argumentConversions: readonly TargetCallArgumentConversionSlot[];
+  readonly sourceArgumentBindings: readonly SourceSelectedCallArgumentBinding[];
   readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
   readonly sourceSelectedSignatureParameters?: readonly SourceSelectedSignatureParameter[];
   readonly sourceSelectedSignatureKind?: SourceSelectedSignatureKind;
   readonly sourceSignature?: ExtensionFactSubject;
   readonly sourceDeclaration?: ExtensionFactSubject;
-  readonly sourceCalleeSymbol?: ExtensionFactSubject;
-  readonly sourceCalleeDeclaration?: ExtensionFactSubject;
-  readonly sourceSelectedCalleeSymbol?: ExtensionFactSubject;
-  readonly sourceSelectedCalleeDeclaration?: ExtensionFactSubject;
-  readonly sourceReturnType?: ExtensionFactSubject;
+  readonly sourceCallee: SelectedSourceValueEvidence;
+  readonly sourceArguments: readonly SelectedSourceValueEvidence[];
+  readonly sourceResult: SelectedSourceValueEvidence;
   readonly sourceOptionalChain?: boolean;
-  readonly sourceReceiver?: ExtensionFactSubject;
-  readonly sourceReceiverType?: ExtensionFactSubject;
+  readonly sourceReceiver?: SelectedSourceValueEvidence;
 }
 
 export interface ContextualTargetTypeFact {
@@ -294,6 +316,7 @@ export interface TargetCallArgumentConversionFact extends TargetConversionFact {
   readonly sourceForm: "value" | "spread-element" | "spread-sequence";
   readonly spreadElementIndex?: number;
   readonly targetForm: "parameter" | "params-element" | "params-sequence";
+  readonly sourceBinding: SourceSelectedCallArgumentBinding;
 }
 
 export interface TargetCallArgumentPassingFact extends ArgumentPassingFact {
@@ -304,6 +327,7 @@ export interface TargetCallArgumentPassingFact extends ArgumentPassingFact {
   readonly sourceForm: "value" | "spread-element" | "spread-sequence";
   readonly spreadElementIndex?: number;
   readonly targetForm: "parameter" | "params-element" | "params-sequence";
+  readonly sourceBinding: SourceSelectedCallArgumentBinding;
   readonly targetParameter: TargetParameter;
   readonly selectedSignature?: ProviderDeclarationIdentity;
 }
@@ -444,21 +468,68 @@ export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTar
 export function selectedTargetSignatureEquals(left: SelectedTargetSignatureFact, right: SelectedTargetSignatureFact): boolean {
   return targetMemberEquals(left.member, right.member)
     && targetCallArgumentConversionSlotArrayEquals(left.argumentConversions, right.argumentConversions)
+    && sourceSelectedCallArgumentBindingArrayEquals(left.sourceArgumentBindings, right.sourceArgumentBindings)
     && sourceSelectedMethodTypeArgumentArrayEquals(left.sourceSelectedMethodTypeArguments, right.sourceSelectedMethodTypeArguments)
     && sourceSelectedSignatureParameterArrayEquals(left.sourceSelectedSignatureParameters, right.sourceSelectedSignatureParameters)
     && left.sourceSelectedSignatureKind === right.sourceSelectedSignatureKind
     && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
     && left.sourceSignature === right.sourceSignature
     && left.sourceDeclaration === right.sourceDeclaration
-    && left.sourceCalleeSymbol === right.sourceCalleeSymbol
-    && left.sourceCalleeDeclaration === right.sourceCalleeDeclaration
-    && left.sourceSelectedCalleeSymbol === right.sourceSelectedCalleeSymbol
-    && left.sourceSelectedCalleeDeclaration === right.sourceSelectedCalleeDeclaration
-    && left.sourceReturnType === right.sourceReturnType
+    && selectedSourceValueEvidenceEquals(left.sourceCallee, right.sourceCallee)
+    && selectedSourceValueEvidenceArrayEquals(left.sourceArguments, right.sourceArguments)
+    && selectedSourceValueEvidenceEquals(left.sourceResult, right.sourceResult)
     && left.sourceOptionalChain === right.sourceOptionalChain
-    && left.sourceReceiver === right.sourceReceiver
-    && left.sourceReceiverType === right.sourceReceiverType
+    && optionalSelectedSourceValueEvidenceEquals(left.sourceReceiver, right.sourceReceiver)
     && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration);
+}
+
+function sourceSelectedCallArgumentBindingArrayEquals(
+  left: readonly SourceSelectedCallArgumentBinding[],
+  right: readonly SourceSelectedCallArgumentBinding[],
+): boolean {
+  return left.length === right.length
+    && left.every((binding, index) => {
+      const other = right[index];
+      return other !== undefined
+        && binding.sourceArgumentIndex === other.sourceArgumentIndex
+        && binding.effectiveArgumentIndex === other.effectiveArgumentIndex
+        && binding.sourceForm === other.sourceForm
+        && binding.spreadElementIndex === other.spreadElementIndex
+        && binding.sourceParameterIndex === other.sourceParameterIndex
+        && binding.sourceParameterForm === other.sourceParameterForm
+        && binding.selectedArgumentType === other.selectedArgumentType
+        && binding.selectedParameterType === other.selectedParameterType;
+    });
+}
+
+function selectedSourceTypeEvidenceEquals(left: SelectedSourceTypeEvidence, right: SelectedSourceTypeEvidence): boolean {
+  return left.type === right.type
+    && left.symbol === right.symbol
+    && left.declaration === right.declaration
+    && left.selectedSymbol === right.selectedSymbol
+    && left.selectedDeclaration === right.selectedDeclaration
+    && left.authoredTypeNode === right.authoredTypeNode;
+}
+
+function selectedSourceValueEvidenceEquals(left: SelectedSourceValueEvidence, right: SelectedSourceValueEvidence): boolean {
+  return left.expression === right.expression && selectedSourceTypeEvidenceEquals(left, right);
+}
+
+function optionalSelectedSourceValueEvidenceEquals(
+  left: SelectedSourceValueEvidence | undefined,
+  right: SelectedSourceValueEvidence | undefined,
+): boolean {
+  return left === undefined || right === undefined
+    ? left === right
+    : selectedSourceValueEvidenceEquals(left, right);
+}
+
+function selectedSourceValueEvidenceArrayEquals(
+  left: readonly SelectedSourceValueEvidence[],
+  right: readonly SelectedSourceValueEvidence[],
+): boolean {
+  return left.length === right.length
+    && left.every((evidence, index) => selectedSourceValueEvidenceEquals(evidence, right[index]!));
 }
 
 function targetCallArgumentConversionSlotArrayEquals(

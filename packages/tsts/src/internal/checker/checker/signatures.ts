@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { recordExtensionCheckedCallMapping } from "../../../extensions/checker-integration.js";
+import type { CheckedSourceCallArgumentBindingInput } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
 import type { Number } from "../../jsnum/jsnum.js";
@@ -2331,7 +2332,7 @@ export function Checker_checkCallExpression(receiver: GoPtr<Checker>, node: GoPt
   }
   Checker_checkDeprecatedSignature(receiver, signature, node);
   if (Node_Expression(node)!.Kind === KindSuperKeyword) {
-    recordExtensionCheckedCallMapping(receiver, node, signature, receiver!.voidType, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
+    recordSelectedExtensionCall(receiver, node, signature, receiver!.voidType);
     return receiver!.voidType;
   }
   if (IsNewExpression(node)) {
@@ -2340,19 +2341,19 @@ export function Checker_checkCallExpression(receiver: GoPtr<Checker>, node: GoPt
       if (receiver!.noImplicitAny) {
         Checker_error(receiver, node, X_new_expression_whose_target_lacks_a_construct_signature_implicitly_has_an_any_type);
       }
-      recordExtensionCheckedCallMapping(receiver, node, signature, receiver!.anyType, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
+      recordSelectedExtensionCall(receiver, node, signature, receiver!.anyType);
       return receiver!.anyType;
     }
   }
   if (IsInJSFile(node) && Checker_isCommonJSRequire(receiver, node)) {
     const result = Checker_resolveExternalModuleTypeByLiteral(receiver, (Node_Arguments(node) ?? [])[0]);
-    recordExtensionCheckedCallMapping(receiver, node, signature, result, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
+    recordSelectedExtensionCall(receiver, node, signature, result);
     return result;
   }
   const returnType = Checker_getReturnTypeOfSignature(receiver, signature);
   if ((returnType!.flags & TypeFlagsESSymbolLike) !== 0 && Checker_isSymbolOrSymbolForCall(receiver, node)) {
     const result = Checker_getESSymbolLikeTypeForNode(receiver, WalkUpParenthesizedExpressions(node!.Parent as GoPtr<Expression>));
-    recordExtensionCheckedCallMapping(receiver, node, signature, result, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
+    recordSelectedExtensionCall(receiver, node, signature, result);
     return result;
   }
   if (IsCallExpression(node) && Node_QuestionDotToken(node) === undefined && IsExpressionStatement(node!.Parent) && (returnType!.flags & TypeFlagsVoid) !== 0 && Checker_getTypePredicateOfSignature(receiver, signature) !== undefined) {
@@ -2363,8 +2364,109 @@ export function Checker_checkCallExpression(receiver: GoPtr<Checker>, node: GoPt
       Checker_getTypeOfDottedName(receiver, Node_Expression(node), diagnostic);
     }
   }
-  recordExtensionCheckedCallMapping(receiver, node, signature, returnType, Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(Node_Expression(node))));
+  recordSelectedExtensionCall(receiver, node, signature, returnType);
   return returnType;
+}
+
+function recordSelectedExtensionCall(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  signature: GoPtr<Signature>,
+  resultType: GoPtr<Type>,
+): void {
+  const callee = Node_Expression(node);
+  const arguments_ = Node_Arguments(node) ?? [];
+  const selectedSourceArgumentTypes = arguments_.map((argument) => Checker_checkExpressionCached(receiver, argument));
+  recordExtensionCheckedCallMapping(
+    receiver,
+    node,
+    signature,
+    resultType,
+    Checker_checkExpressionCached(receiver, callee),
+    selectedSourceArgumentTypes,
+    selectedExtensionCallArgumentBindings(receiver, node, signature, arguments_, selectedSourceArgumentTypes),
+    Checker_getResolvedSymbolOrNil(receiver, SkipParentheses(callee)),
+  );
+}
+
+function selectedExtensionCallArgumentBindings(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  signature: GoPtr<Signature>,
+  arguments_: readonly GoPtr<Node>[],
+  selectedSourceArgumentTypes: readonly GoPtr<Type>[],
+): readonly CheckedSourceCallArgumentBindingInput[] | undefined {
+  if (receiver === undefined || node === undefined || signature === undefined
+    || signature === receiver.anySignature
+    || signature === receiver.unknownSignature
+    || signature === receiver.silentNeverSignature) {
+    return undefined;
+  }
+  const authoredArgumentIndex = new Map<Node, number>();
+  for (let index = 0; index < arguments_.length; index++) {
+    const argument = arguments_[index];
+    if (argument === undefined) {
+      return undefined;
+    }
+    authoredArgumentIndex.set(argument, index);
+  }
+  const effectiveArguments = Checker_getEffectiveCallArguments(receiver, node) ?? [];
+  const restParameterIndex = signatureHasRestParameter(signature) ? signature.parameters.length - 1 : -1;
+  const nextSpreadElementIndex = new Map<Node, number>();
+  const bindings: CheckedSourceCallArgumentBindingInput[] = [];
+  for (let effectiveArgumentIndex = 0; effectiveArgumentIndex < effectiveArguments.length; effectiveArgumentIndex++) {
+    const effectiveArgument = effectiveArguments[effectiveArgumentIndex];
+    if (effectiveArgument === undefined) {
+      return undefined;
+    }
+    let authoredArgument: GoPtr<Node> = effectiveArgument;
+    let sourceForm: CheckedSourceCallArgumentBindingInput["sourceForm"] = "value";
+    let spreadElementIndex: number | undefined;
+    let selectedArgumentType: GoPtr<Type>;
+    if (IsSyntheticExpression(effectiveArgument)) {
+      authoredArgument = effectiveArgument.Parent;
+      if (!IsSpreadElement(authoredArgument)) {
+        return undefined;
+      }
+      spreadElementIndex = nextSpreadElementIndex.get(authoredArgument!) ?? 0;
+      nextSpreadElementIndex.set(authoredArgument!, spreadElementIndex + 1);
+      const synthetic = AsSyntheticExpression(effectiveArgument);
+      sourceForm = synthetic?.IsSpread === true ? "spread-sequence" : "spread-element";
+      selectedArgumentType = synthetic?.Type as GoPtr<Type>;
+    } else if (IsSpreadElement(effectiveArgument)) {
+      sourceForm = "spread-sequence";
+      selectedArgumentType = Checker_checkExpressionCached(receiver, Node_Expression(effectiveArgument));
+    } else {
+      const index = authoredArgumentIndex.get(effectiveArgument);
+      selectedArgumentType = index === undefined ? undefined : selectedSourceArgumentTypes[index];
+    }
+    const sourceArgumentIndex = authoredArgument === undefined ? undefined : authoredArgumentIndex.get(authoredArgument);
+    const sourceParameterIndex = restParameterIndex >= 0 && effectiveArgumentIndex >= restParameterIndex
+      ? restParameterIndex
+      : effectiveArgumentIndex;
+    const selectedParameterType = Checker_getTypeAtPosition(receiver, signature, effectiveArgumentIndex);
+    if (sourceArgumentIndex === undefined
+      || sourceParameterIndex < 0
+      || sourceParameterIndex >= signature.parameters.length
+      || selectedArgumentType === undefined
+      || selectedParameterType === undefined) {
+      return undefined;
+    }
+    const sourceParameterForm: CheckedSourceCallArgumentBindingInput["sourceParameterForm"] = sourceParameterIndex === restParameterIndex
+      ? sourceForm === "spread-sequence" ? "rest-sequence" : "rest-element"
+      : "parameter";
+    bindings.push(Object.freeze({
+      sourceArgumentIndex,
+      effectiveArgumentIndex,
+      sourceForm,
+      ...(spreadElementIndex === undefined ? {} : { spreadElementIndex }),
+      sourceParameterIndex,
+      sourceParameterForm,
+      selectedArgumentType,
+      selectedParameterType,
+    }));
+  }
+  return Object.freeze(bindings);
 }
 
 /**

@@ -40,7 +40,7 @@ interface CheckedOperationRecord {
   readonly request: ExtensionObservationRequest<CheckedOperationObservationPointName>;
   readonly dependencies: readonly CheckedOperationReference[];
   readonly evaluate: (phase: ExtensionObservationPhase) => AnyCheckedOperationResult;
-  readonly apply: (result: AnyCheckedOperationResult) => unknown;
+  readonly apply: (result: AnyCheckedOperationResult) => void | CheckedOperationApplyOutcome;
   result?: RetainedCheckedOperationResult;
   unresolved?: CheckedOperationReference;
   state: "evaluating" | "deferred" | "accepted" | "unavailable";
@@ -103,7 +103,7 @@ export class CheckedOperationInventory {
     apply: (
       result: ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
       request: ExtensionObservationRequest<TObservation>,
-    ) => unknown,
+    ) => void | CheckedOperationApplyOutcome,
     phase: ExtensionObservationPhase,
     requestSnapshotCache?: CheckedOperationRequestSnapshotCache,
     dependencies: readonly CheckedOperationReference[] = [],
@@ -145,7 +145,7 @@ export class CheckedOperationInventory {
       observation,
       evaluate(immutableRequest, phase),
     ) as AnyCheckedOperationResult;
-    const applyRecord = (result: AnyCheckedOperationResult): unknown => {
+    const applyRecord = (result: AnyCheckedOperationResult): void | CheckedOperationApplyOutcome => {
       return apply(result as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>, immutableRequest);
     };
     const record: CheckedOperationRecord = {
@@ -639,19 +639,49 @@ function checkedOperationResultState(
 }
 
 function normalizeCheckedOperationApplyOutcome(value: unknown): CheckedOperationApplyOutcome {
-  if (typeof value !== "object" || value === null) {
+  if (value === undefined) {
     return checkedOperationApplied;
   }
-  const kind = Object.getOwnPropertyDescriptor(value, "kind")?.value;
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("A checked-operation apply callback must return undefined or an exact CheckedOperationApplyOutcome object.");
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new Error("A checked-operation apply outcome must be a plain object.");
+  }
+  const ownKeys = Reflect.ownKeys(value);
+  if (ownKeys.some((key) => typeof key !== "string")) {
+    throw new Error("A checked-operation apply outcome cannot contain symbol fields.");
+  }
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  for (const key of ownKeys as string[]) {
+    const descriptor = descriptors[key];
+    if (descriptor === undefined || !("value" in descriptor) || descriptor.enumerable !== true) {
+      throw new Error(`A checked-operation apply outcome field '${key}' must be an enumerable own data property.`);
+    }
+  }
+  const kind = descriptors.kind?.value;
   if (kind === "applied" || kind === "unavailable") {
+    assertExactApplyOutcomeFields(ownKeys as string[], ["kind"], kind);
     return Object.freeze({ kind });
   }
   if (kind === "deferred") {
-    const unresolved = Object.getOwnPropertyDescriptor(value, "unresolved")?.value as CheckedOperationReference | undefined;
+    assertExactApplyOutcomeFields(ownKeys as string[], ["kind", "unresolved"], kind);
+    const unresolved = descriptors.unresolved?.value as CheckedOperationReference | undefined;
     if (unresolved === undefined) {
       throw new Error("A deferred checked-operation apply outcome requires an unresolved operation reference.");
     }
     return Object.freeze({ kind, unresolved });
   }
-  return checkedOperationApplied;
+  throw new Error(`Unknown checked-operation apply outcome kind '${String(kind)}'.`);
+}
+
+function assertExactApplyOutcomeFields(
+  actualFields: readonly string[],
+  expectedFields: readonly string[],
+  kind: CheckedOperationApplyOutcome["kind"],
+): void {
+  if (actualFields.length !== expectedFields.length || expectedFields.some((field) => !actualFields.includes(field))) {
+    throw new Error(`Checked-operation apply outcome '${kind}' must contain exactly: ${expectedFields.join(", ")}.`);
+  }
 }

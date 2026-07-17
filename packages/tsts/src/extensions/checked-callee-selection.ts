@@ -1,7 +1,9 @@
 import type { ExtensionFactSubject } from "./host.js";
-import type { CheckedOperationReference, SelectedSourceReceiverEvidence } from "./observations.js";
+import type { SelectedSourceValueEvidence } from "./facts.js";
+import type { CheckedOperationReference } from "./observations.js";
 
-export interface CheckedCalleeSelectionEvidence extends SelectedSourceReceiverEvidence {
+export interface CheckedCalleeSelectionEvidence {
+  readonly sourceReceiver?: SelectedSourceValueEvidence;
   readonly sourceInputOperations?: readonly CheckedOperationReference[];
 }
 
@@ -44,19 +46,29 @@ export function differingCheckedCalleeSelectionEvidenceFields(
   right: CheckedCalleeSelectionEvidence,
 ): readonly string[] {
   const differences: string[] = [];
-  compareIdentity(differences, "sourceReceiver", left.sourceReceiver, right.sourceReceiver);
-  compareIdentity(differences, "sourceReceiverType", left.sourceReceiverType, right.sourceReceiverType);
+  compareSelectedSourceValueEvidence(differences, "sourceReceiver", left.sourceReceiver, right.sourceReceiver);
   compareOperationReferences(differences, "sourceInputOperations", left.sourceInputOperations, right.sourceInputOperations);
   return Object.freeze(differences);
 }
 
 function snapshotCheckedCalleeSelectionEvidence(evidence: CheckedCalleeSelectionEvidence): CheckedCalleeSelectionEvidence {
   return Object.freeze({
-    ...(evidence.sourceReceiver === undefined ? {} : { sourceReceiver: evidence.sourceReceiver }),
-    ...(evidence.sourceReceiverType === undefined ? {} : { sourceReceiverType: evidence.sourceReceiverType }),
+    ...(evidence.sourceReceiver === undefined ? {} : { sourceReceiver: snapshotSelectedSourceValueEvidence(evidence.sourceReceiver) }),
     ...(evidence.sourceInputOperations === undefined ? {} : {
       sourceInputOperations: Object.freeze(evidence.sourceInputOperations.map(snapshotCheckedOperationReference)),
     }),
+  });
+}
+
+function snapshotSelectedSourceValueEvidence(evidence: SelectedSourceValueEvidence): SelectedSourceValueEvidence {
+  return Object.freeze({
+    expression: evidence.expression,
+    type: evidence.type,
+    ...(evidence.symbol === undefined ? {} : { symbol: evidence.symbol }),
+    ...(evidence.declaration === undefined ? {} : { declaration: evidence.declaration }),
+    ...(evidence.selectedSymbol === undefined ? {} : { selectedSymbol: evidence.selectedSymbol }),
+    ...(evidence.selectedDeclaration === undefined ? {} : { selectedDeclaration: evidence.selectedDeclaration }),
+    ...(evidence.authoredTypeNode === undefined ? {} : { authoredTypeNode: evidence.authoredTypeNode }),
   });
 }
 
@@ -76,8 +88,25 @@ function checkedCalleeSelectionEvidenceEquals(left: CheckedCalleeSelectionEviden
   return differingCheckedCalleeSelectionEvidenceFields(left, right).length === 0;
 }
 
-function compareIdentity(differences: string[], field: string, left: unknown, right: unknown): void {
-  if (left !== right) {
+function compareSelectedSourceValueEvidence(
+  differences: string[],
+  field: string,
+  left: SelectedSourceValueEvidence | undefined,
+  right: SelectedSourceValueEvidence | undefined,
+): void {
+  if (left === undefined || right === undefined) {
+    if (left !== right) {
+      differences.push(field);
+    }
+    return;
+  }
+  if (left.expression !== right.expression
+    || left.type !== right.type
+    || left.symbol !== right.symbol
+    || left.declaration !== right.declaration
+    || left.selectedSymbol !== right.selectedSymbol
+    || left.selectedDeclaration !== right.selectedDeclaration
+    || left.authoredTypeNode !== right.authoredTypeNode) {
     differences.push(field);
   }
 }

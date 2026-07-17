@@ -30,7 +30,7 @@ import {
   differingCheckedCalleeSelectionEvidenceFields,
   type CheckedCalleeSelectionEvidence,
 } from "./checked-callee-selection.js";
-import { CheckedOperationInventory } from "./checked-operation-finalization.js";
+import { CheckedOperationInventory, type CheckedOperationApplyOutcome } from "./checked-operation-finalization.js";
 import type { CheckedOperationRequestSnapshotCache } from "./checked-operation-value-snapshot.js";
 import { differingCheckedOperationRequestFields } from "./checked-operation-request-equality.js";
 import { snapshotCheckedOperationResponse } from "./checked-operation-value-snapshot.js";
@@ -2971,7 +2971,7 @@ export class ExtensionHost {
       value: ExtensionObservationResponse<TObservation>,
       evidence: readonly ExtensionEvidence[],
       request: ExtensionObservationRequest<TObservation>,
-    ) => unknown,
+    ) => void | CheckedOperationApplyOutcome,
     options: ExtensionObservationRunOptions = {},
     requestSnapshotCache?: CheckedOperationRequestSnapshotCache,
     dependencies: readonly CheckedOperationReference[] = [],
@@ -3199,16 +3199,25 @@ export class ExtensionHost {
         this.#observationHookDepth += 1;
         let returned: ExtensionObservation<ExtensionObservationResponse<TObservation>>;
         try {
-          returned = registered.hook(request, {
+          const contextBase = {
             observation,
             phase,
             extensionId: registered.extensionId,
-            compiler: this.getCompilerQueryContext(),
-            host: this,
             facts: this.facts,
             factResolver: this.factResolver,
             diagnostics: this.diagnostics,
-          }) as ExtensionObservation<ExtensionObservationResponse<TObservation>>;
+          };
+          const context = isCheckedOperationObservationPoint(observation)
+            ? Object.freeze(contextBase)
+            : Object.freeze({
+                ...contextBase,
+                compiler: this.getCompilerQueryContext(),
+                host: this,
+              });
+          returned = registered.hook(
+            request,
+            context as ExtensionObservationContext<TObservation>,
+          ) as ExtensionObservation<ExtensionObservationResponse<TObservation>>;
         } finally {
           this.#observationHookDepth -= 1;
         }

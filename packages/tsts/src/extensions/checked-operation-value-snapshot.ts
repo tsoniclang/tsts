@@ -17,7 +17,10 @@ import { ExtensionObservationPoint } from "./observations.js";
 import type {
   ProviderDeclarationIdentity,
   ProviderMemberKey,
+  SelectedSourceTypeEvidence,
+  SelectedSourceValueEvidence,
   SelectedTargetSignatureFact,
+  SourceSelectedCallArgumentBinding,
   SourceSelectedMethodTypeArgument,
   SourceSelectedSignatureParameter,
   TargetCallArgumentConversionSlot,
@@ -49,16 +52,29 @@ export type CheckedOperationSnapshotFieldCoverage = RequireAllSnapshots<[
     | "sourceSelectedMethodTypeArguments"
     | "sourceSelectedSignatureParameters"
     | "sourceSelectedSignatureKind"
+    | "sourceArgumentBindings"
     | "sourceSignature"
     | "sourceDeclaration"
-    | "sourceCalleeSymbol"
-    | "sourceCalleeDeclaration"
-    | "sourceSelectedCalleeSymbol"
-    | "sourceSelectedCalleeDeclaration"
-    | "sourceReturnType"
+    | "sourceCallee"
+    | "sourceArguments"
+    | "sourceResult"
     | "sourceOptionalChain"
-    | "sourceReceiver"
-    | "sourceReceiverType">,
+    | "sourceReceiver">,
+  AllFieldsSnapshotted<SelectedSourceTypeEvidence,
+    | "type"
+    | "symbol"
+    | "declaration"
+    | "selectedSymbol"
+    | "selectedDeclaration"
+    | "authoredTypeNode">,
+  AllFieldsSnapshotted<SelectedSourceValueEvidence,
+    | "expression"
+    | "type"
+    | "symbol"
+    | "declaration"
+    | "selectedSymbol"
+    | "selectedDeclaration"
+    | "authoredTypeNode">,
   AllFieldsSnapshotted<TargetMember,
     | "id"
     | "sourceName"
@@ -108,6 +124,15 @@ export type CheckedOperationSnapshotFieldCoverage = RequireAllSnapshots<[
     | "authoredTypeNode"
     | "acceptsOmission"
     | "rest">,
+  AllFieldsSnapshotted<SourceSelectedCallArgumentBinding,
+    | "sourceArgumentIndex"
+    | "effectiveArgumentIndex"
+    | "sourceForm"
+    | "spreadElementIndex"
+    | "sourceParameterIndex"
+    | "sourceParameterForm"
+    | "selectedArgumentType"
+    | "selectedParameterType">,
   AllFieldsSnapshotted<TargetCallArgumentConversionSlot,
     | "sourceArgumentIndex"
     | "sourceForm"
@@ -188,15 +213,15 @@ export function snapshotCheckedOperationRequest<TObservation extends CheckedOper
   const path = createSnapshotPath(`checked-operation request[${observation}]`);
   switch (observation) {
     case ExtensionObservationPoint.mapCheckedCall:
-      return snapshotCallRequest(request as CheckedCallMappingRequest) as ExtensionObservationRequest<TObservation>;
+      return snapshotCallRequest(request as CheckedCallMappingRequest, path) as ExtensionObservationRequest<TObservation>;
     case ExtensionObservationPoint.mapCheckedPropertyAccess:
-      return snapshotPropertyRequest(request as CheckedPropertyAccessMappingRequest) as ExtensionObservationRequest<TObservation>;
+      return snapshotPropertyRequest(request as CheckedPropertyAccessMappingRequest, path) as ExtensionObservationRequest<TObservation>;
     case ExtensionObservationPoint.mapCheckedElementAccess:
-      return snapshotElementRequest(request as CheckedElementAccessMappingRequest) as ExtensionObservationRequest<TObservation>;
+      return snapshotElementRequest(request as CheckedElementAccessMappingRequest, path) as ExtensionObservationRequest<TObservation>;
     case ExtensionObservationPoint.mapCheckedOperator:
-      return snapshotOperatorRequest(request as CheckedOperatorMappingRequest) as ExtensionObservationRequest<TObservation>;
+      return snapshotOperatorRequest(request as CheckedOperatorMappingRequest, path) as ExtensionObservationRequest<TObservation>;
     case ExtensionObservationPoint.mapCheckedIteration:
-      return snapshotIterationRequest(request as CheckedIterationMappingRequest) as ExtensionObservationRequest<TObservation>;
+      return snapshotIterationRequest(request as CheckedIterationMappingRequest, path) as ExtensionObservationRequest<TObservation>;
     case ExtensionObservationPoint.mapCheckedConversion:
       return snapshotConversionRequest(request as CheckedConversionMappingRequest, cache, path) as ExtensionObservationRequest<TObservation>;
   }
@@ -256,7 +281,29 @@ export function snapshotCheckedOperationResult<TObservation extends CheckedOpera
   }
 }
 
-function snapshotCallRequest(request: CheckedCallMappingRequest): CheckedCallMappingRequest {
+function snapshotCallRequest(request: CheckedCallMappingRequest, path: SnapshotPath): CheckedCallMappingRequest {
+  assertRecord(request, "CheckedCallMappingRequest", path);
+  assertExactOwnFields(request, [
+    "call",
+    "callee",
+    "arguments",
+    "sourceSelectedSignature",
+    "sourceSelectedDeclaration",
+    "sourceSelectedMethodTypeArguments",
+    "sourceSelectedSignatureParameters",
+    "sourceSelectedSignatureKind",
+    "sourceArgumentBindings",
+    "sourceCallee",
+    "sourceArguments",
+    "sourceResult",
+    "sourceReceiver",
+    "optionalChain",
+    "target",
+  ], "CheckedCallMappingRequest", path);
+  if (request.sourceArguments.length !== request.arguments.length) {
+    throw new Error(`Invalid CheckedCallMappingRequest at '${formatSnapshotPath(path)}': sourceArguments length ${request.sourceArguments.length} does not match arguments length ${request.arguments.length}.`);
+  }
+  const sourceArguments = captureArray(request.sourceArguments, "CheckedCallMappingRequest sourceArguments", childSnapshotPath(path, "sourceArguments"));
   return Object.freeze({
     call: request.call,
     callee: request.callee,
@@ -270,64 +317,87 @@ function snapshotCallRequest(request: CheckedCallMappingRequest): CheckedCallMap
       sourceSelectedSignatureParameters: snapshotSignatureParameters(request.sourceSelectedSignatureParameters),
     }),
     ...(request.sourceSelectedSignatureKind === undefined ? {} : { sourceSelectedSignatureKind: request.sourceSelectedSignatureKind }),
-    ...(request.sourceCalleeSymbol === undefined ? {} : { sourceCalleeSymbol: request.sourceCalleeSymbol }),
-    ...(request.sourceCalleeDeclaration === undefined ? {} : { sourceCalleeDeclaration: request.sourceCalleeDeclaration }),
-    ...(request.sourceSelectedCalleeSymbol === undefined ? {} : { sourceSelectedCalleeSymbol: request.sourceSelectedCalleeSymbol }),
-    ...(request.sourceSelectedCalleeDeclaration === undefined ? {} : { sourceSelectedCalleeDeclaration: request.sourceSelectedCalleeDeclaration }),
-    ...(request.sourceReturnType === undefined ? {} : { sourceReturnType: request.sourceReturnType }),
+    ...(request.sourceArgumentBindings === undefined ? {} : {
+      sourceArgumentBindings: snapshotSelectedCallArgumentBindings(
+        request.sourceArgumentBindings,
+        childSnapshotPath(path, "sourceArgumentBindings"),
+        request.arguments.length,
+        request.sourceSelectedSignatureParameters?.length,
+      ),
+    }),
+    sourceCallee: snapshotSelectedSourceValueEvidence(request.sourceCallee, childSnapshotPath(path, "sourceCallee")),
+    sourceArguments: Object.freeze(sourceArguments.map((evidence, index) => snapshotSelectedSourceValueEvidence(
+      evidence,
+      indexedSnapshotPath(childSnapshotPath(path, "sourceArguments"), index),
+    ))),
+    sourceResult: snapshotSelectedSourceValueEvidence(request.sourceResult, childSnapshotPath(path, "sourceResult")),
+    ...(request.sourceReceiver === undefined ? {} : {
+      sourceReceiver: snapshotSelectedSourceValueEvidence(request.sourceReceiver, childSnapshotPath(path, "sourceReceiver")),
+    }),
     ...(request.optionalChain === undefined ? {} : { optionalChain: request.optionalChain }),
-    ...snapshotReceiverEvidence(request),
     ...(request.target === undefined ? {} : { target: request.target }),
   });
 }
 
-function snapshotPropertyRequest(request: CheckedPropertyAccessMappingRequest): CheckedPropertyAccessMappingRequest {
+function snapshotPropertyRequest(request: CheckedPropertyAccessMappingRequest, path: SnapshotPath): CheckedPropertyAccessMappingRequest {
+  assertRecord(request, "CheckedPropertyAccessMappingRequest", path);
+  assertExactOwnFields(request, ["expression", "receiver", "propertyName", "sourceReceiver", "sourceResult", "optionalChain", "target"], "CheckedPropertyAccessMappingRequest", path);
   return Object.freeze({
     expression: request.expression,
     receiver: request.receiver,
     propertyName: request.propertyName,
-    ...(request.sourceSelectedSymbol === undefined ? {} : { sourceSelectedSymbol: request.sourceSelectedSymbol }),
-    ...(request.sourceSelectedDeclaration === undefined ? {} : { sourceSelectedDeclaration: request.sourceSelectedDeclaration }),
-    ...(request.sourceResultType === undefined ? {} : { sourceResultType: request.sourceResultType }),
+    sourceReceiver: snapshotSelectedSourceValueEvidence(request.sourceReceiver, childSnapshotPath(path, "sourceReceiver")),
+    sourceResult: snapshotSelectedSourceValueEvidence(request.sourceResult, childSnapshotPath(path, "sourceResult")),
     ...(request.optionalChain === undefined ? {} : { optionalChain: request.optionalChain }),
-    ...snapshotReceiverEvidence(request),
     ...(request.target === undefined ? {} : { target: request.target }),
   });
 }
 
-function snapshotElementRequest(request: CheckedElementAccessMappingRequest): CheckedElementAccessMappingRequest {
+function snapshotElementRequest(request: CheckedElementAccessMappingRequest, path: SnapshotPath): CheckedElementAccessMappingRequest {
+  assertRecord(request, "CheckedElementAccessMappingRequest", path);
+  assertExactOwnFields(request, ["expression", "receiver", "argument", "sourceReceiver", "sourceArgument", "sourceResult", "sourceSelectedElementIndex", "optionalChain", "target"], "CheckedElementAccessMappingRequest", path);
   return Object.freeze({
     expression: request.expression,
     receiver: request.receiver,
     argument: request.argument,
-    ...(request.sourceSelectedSymbol === undefined ? {} : { sourceSelectedSymbol: request.sourceSelectedSymbol }),
-    ...(request.sourceSelectedDeclaration === undefined ? {} : { sourceSelectedDeclaration: request.sourceSelectedDeclaration }),
+    sourceReceiver: snapshotSelectedSourceValueEvidence(request.sourceReceiver, childSnapshotPath(path, "sourceReceiver")),
+    sourceArgument: snapshotSelectedSourceValueEvidence(request.sourceArgument, childSnapshotPath(path, "sourceArgument")),
+    sourceResult: snapshotSelectedSourceValueEvidence(request.sourceResult, childSnapshotPath(path, "sourceResult")),
     ...(request.sourceSelectedElementIndex === undefined ? {} : { sourceSelectedElementIndex: request.sourceSelectedElementIndex }),
-    ...(request.sourceResultType === undefined ? {} : { sourceResultType: request.sourceResultType }),
     ...(request.optionalChain === undefined ? {} : { optionalChain: request.optionalChain }),
-    ...snapshotReceiverEvidence(request),
     ...(request.target === undefined ? {} : { target: request.target }),
   });
 }
 
-function snapshotOperatorRequest(request: CheckedOperatorMappingRequest): CheckedOperatorMappingRequest {
+function snapshotOperatorRequest(request: CheckedOperatorMappingRequest, path: SnapshotPath): CheckedOperatorMappingRequest {
+  assertRecord(request, "CheckedOperatorMappingRequest", path);
+  assertExactOwnFields(request, ["expression", "operator", "left", "right", "sourceLeft", "sourceRight", "sourceResult", "target"], "CheckedOperatorMappingRequest", path);
   return Object.freeze({
     expression: request.expression,
     operator: request.operator,
     left: request.left,
     ...(request.right === undefined ? {} : { right: request.right }),
-    ...(request.sourceResultType === undefined ? {} : { sourceResultType: request.sourceResultType }),
+    ...(request.sourceLeft === undefined ? {} : {
+      sourceLeft: snapshotSelectedSourceValueEvidence(request.sourceLeft, childSnapshotPath(path, "sourceLeft")),
+    }),
+    ...(request.sourceRight === undefined ? {} : {
+      sourceRight: snapshotSelectedSourceValueEvidence(request.sourceRight, childSnapshotPath(path, "sourceRight")),
+    }),
+    sourceResult: snapshotSelectedSourceValueEvidence(request.sourceResult, childSnapshotPath(path, "sourceResult")),
     ...(request.target === undefined ? {} : { target: request.target }),
   });
 }
 
-function snapshotIterationRequest(request: CheckedIterationMappingRequest): CheckedIterationMappingRequest {
+function snapshotIterationRequest(request: CheckedIterationMappingRequest, path: SnapshotPath): CheckedIterationMappingRequest {
+  assertRecord(request, "CheckedIterationMappingRequest", path);
+  assertExactOwnFields(request, ["statement", "expression", "initializer", "kind", "sourceIterable", "sourceElement", "target"], "CheckedIterationMappingRequest", path);
   return Object.freeze({
     statement: request.statement,
     expression: request.expression,
     ...(request.initializer === undefined ? {} : { initializer: request.initializer }),
     kind: request.kind,
-    ...(request.sourceElementType === undefined ? {} : { sourceElementType: request.sourceElementType }),
+    sourceIterable: snapshotSelectedSourceValueEvidence(request.sourceIterable, childSnapshotPath(path, "sourceIterable")),
+    sourceElement: snapshotSelectedSourceTypeEvidence(request.sourceElement, childSnapshotPath(path, "sourceElement")),
     ...(request.target === undefined ? {} : { target: request.target }),
   });
 }
@@ -337,12 +407,31 @@ function snapshotConversionRequest(
   cache: CheckedOperationRequestSnapshotCache,
   path: SnapshotPath,
 ): CheckedConversionMappingRequest {
+  assertRecord(request, "CheckedConversionMappingRequest", path);
   const base = {
     expression: request.expression,
-    source: request.source,
+    source: snapshotSelectedSourceValueEvidence(request.source, childSnapshotPath(path, "source")),
     ...(request.targetPlatform === undefined ? {} : { targetPlatform: request.targetPlatform }),
   };
   if (request.conversionKind === "call-argument") {
+    assertExactOwnFields(request, [
+      "expression",
+      "source",
+      "targetPlatform",
+      "conversionKind",
+      "target",
+      "call",
+      "slot",
+      "sourceArgumentIndex",
+      "targetParameterIndex",
+      "sourceForm",
+      "spreadElementIndex",
+      "targetForm",
+      "targetParameter",
+      "sourceSelectedSignature",
+      "selectedSignature",
+      "sourceBinding",
+    ], "call-argument CheckedConversionMappingRequest", path);
     const selectedSignature = snapshotSelectedTargetSignature(request.selectedSignature, childSnapshotPath(path, "selectedSignature"), cache);
     const slot = cache.targetCallArgumentConversionSlots.get(request.slot);
     if (slot === undefined) {
@@ -361,6 +450,21 @@ function snapshotConversionRequest(
     const canonicalTarget = request.targetForm === "params-element"
       ? (targetParameter.type as Extract<TargetTypeRef, { readonly kind: "array" }>).element
       : targetParameter.type;
+    const sourceBinding = snapshotSelectedCallArgumentBinding(request.sourceBinding, childSnapshotPath(path, "sourceBinding"));
+    const canonicalSourceBinding = selectedSignature.sourceArgumentBindings[sourceBinding.effectiveArgumentIndex];
+    if (canonicalSourceBinding === undefined || !selectedCallArgumentBindingsEqual(canonicalSourceBinding, sourceBinding)) {
+      throw new Error(`Invalid checked call-argument conversion at '${formatSnapshotPath(childSnapshotPath(path, "sourceBinding"))}': binding is not the canonical selected source argument binding at effective argument index ${sourceBinding.effectiveArgumentIndex}.`);
+    }
+    if (request.sourceArgumentIndex !== sourceBinding.sourceArgumentIndex
+      || request.sourceForm !== sourceBinding.sourceForm
+      || request.spreadElementIndex !== sourceBinding.spreadElementIndex) {
+      throw new Error(`Invalid checked call-argument conversion at '${formatSnapshotPath(path)}': conversion source slot does not match its selected source argument binding.`);
+    }
+    if (slot.sourceArgumentIndex !== sourceBinding.sourceArgumentIndex
+      || slot.sourceForm !== sourceBinding.sourceForm
+      || slot.spreadElementIndex !== sourceBinding.spreadElementIndex) {
+      throw new Error(`Invalid checked call-argument conversion at '${formatSnapshotPath(childSnapshotPath(path, "slot"))}': target conversion slot does not match its selected source argument binding.`);
+    }
     return Object.freeze({
       ...base,
       conversionKind: "call-argument",
@@ -375,19 +479,23 @@ function snapshotConversionRequest(
       targetParameter,
       ...(request.sourceSelectedSignature === undefined ? {} : { sourceSelectedSignature: request.sourceSelectedSignature }),
       selectedSignature,
+      sourceBinding: canonicalSourceBinding,
     });
   }
+  assertExactOwnFields(request, [
+    "expression",
+    "source",
+    "targetPlatform",
+    "conversionKind",
+    "target",
+    "assertionKind",
+    "explicitTargetTypeNode",
+  ], "assertion CheckedConversionMappingRequest", path);
   return Object.freeze({
     ...base,
     conversionKind: "assertion",
-    target: request.target,
+    target: snapshotSelectedSourceTypeEvidence(request.target, childSnapshotPath(path, "target")),
     assertionKind: request.assertionKind,
-    sourceExpression: request.sourceExpression,
-    ...(request.sourceSelectedSymbol === undefined ? {} : { sourceSelectedSymbol: request.sourceSelectedSymbol }),
-    ...(request.sourceSelectedDeclaration === undefined ? {} : { sourceSelectedDeclaration: request.sourceSelectedDeclaration }),
-    ...(request.sourceSelectedDeclarationTypeNode === undefined ? {} : {
-      sourceSelectedDeclarationTypeNode: request.sourceSelectedDeclarationTypeNode,
-    }),
     explicitTargetTypeNode: request.explicitTargetTypeNode,
   });
 }
@@ -518,16 +626,14 @@ function snapshotSelectedTargetSignature(
     "sourceSelectedMethodTypeArguments",
     "sourceSelectedSignatureParameters",
     "sourceSelectedSignatureKind",
+    "sourceArgumentBindings",
     "sourceSignature",
     "sourceDeclaration",
-    "sourceCalleeSymbol",
-    "sourceCalleeDeclaration",
-    "sourceSelectedCalleeSymbol",
-    "sourceSelectedCalleeDeclaration",
-    "sourceReturnType",
+    "sourceCallee",
+    "sourceArguments",
+    "sourceResult",
     "sourceOptionalChain",
     "sourceReceiver",
-    "sourceReceiverType",
   ], "SelectedTargetSignatureFact", path);
   const cached = cache.selectedTargetSignatures.get(selection);
   if (cached !== undefined) {
@@ -542,13 +648,13 @@ function snapshotSelectedTargetSignature(
   const sourceSelectedMethodTypeArguments = selection.sourceSelectedMethodTypeArguments;
   const sourceSelectedSignatureParameters = selection.sourceSelectedSignatureParameters;
   const sourceSelectedSignatureKind = selection.sourceSelectedSignatureKind;
+  const sourceArgumentBindings = selection.sourceArgumentBindings;
   const sourceSignature = selection.sourceSignature;
   const sourceDeclaration = selection.sourceDeclaration;
-  const sourceCalleeSymbol = selection.sourceCalleeSymbol;
-  const sourceCalleeDeclaration = selection.sourceCalleeDeclaration;
-  const sourceSelectedCalleeSymbol = selection.sourceSelectedCalleeSymbol;
-  const sourceSelectedCalleeDeclaration = selection.sourceSelectedCalleeDeclaration;
-  const sourceReturnType = selection.sourceReturnType;
+  const sourceCallee = selection.sourceCallee;
+  const sourceArguments = selection.sourceArguments;
+  const sourceResult = selection.sourceResult;
+  const sourceReceiver = selection.sourceReceiver;
   const sourceOptionalChain = selection.sourceOptionalChain;
   if (sourceSelectedSignatureKind !== undefined
     && sourceSelectedSignatureKind !== "resolved"
@@ -560,11 +666,6 @@ function snapshotSelectedTargetSignature(
   for (const [field, value] of [
     ["sourceSignature", sourceSignature],
     ["sourceDeclaration", sourceDeclaration],
-    ["sourceCalleeSymbol", sourceCalleeSymbol],
-    ["sourceCalleeDeclaration", sourceCalleeDeclaration],
-    ["sourceSelectedCalleeSymbol", sourceSelectedCalleeSymbol],
-    ["sourceSelectedCalleeDeclaration", sourceSelectedCalleeDeclaration],
-    ["sourceReturnType", sourceReturnType],
   ] as const) {
     if (value !== undefined) {
       assertRecord(value, `SelectedTargetSignatureFact ${field}`, childSnapshotPath(path, field));
@@ -573,7 +674,7 @@ function snapshotSelectedTargetSignature(
   if (sourceOptionalChain !== undefined) {
     assertBoolean(sourceOptionalChain, "SelectedTargetSignatureFact sourceOptionalChain", childSnapshotPath(path, "sourceOptionalChain"));
   }
-  const receiverEvidence = snapshotReceiverEvidence(selection);
+  const capturedSourceArguments = captureArray(sourceArguments, "SelectedTargetSignatureFact sourceArguments", childSnapshotPath(path, "sourceArguments"));
   const snapshot = Object.freeze({
     member: targetSelection.member,
     argumentConversions,
@@ -586,15 +687,24 @@ function snapshotSelectedTargetSignature(
       sourceSelectedSignatureParameters: snapshotSignatureParameters(sourceSelectedSignatureParameters),
     }),
     ...(sourceSelectedSignatureKind === undefined ? {} : { sourceSelectedSignatureKind }),
+    sourceArgumentBindings: snapshotSelectedCallArgumentBindings(
+      sourceArgumentBindings,
+      childSnapshotPath(path, "sourceArgumentBindings"),
+      capturedSourceArguments.length,
+      sourceSelectedSignatureParameters?.length,
+    ),
     ...(sourceSignature === undefined ? {} : { sourceSignature }),
     ...(sourceDeclaration === undefined ? {} : { sourceDeclaration }),
-    ...(sourceCalleeSymbol === undefined ? {} : { sourceCalleeSymbol }),
-    ...(sourceCalleeDeclaration === undefined ? {} : { sourceCalleeDeclaration }),
-    ...(sourceSelectedCalleeSymbol === undefined ? {} : { sourceSelectedCalleeSymbol }),
-    ...(sourceSelectedCalleeDeclaration === undefined ? {} : { sourceSelectedCalleeDeclaration }),
-    ...(sourceReturnType === undefined ? {} : { sourceReturnType }),
+    sourceCallee: snapshotSelectedSourceValueEvidence(sourceCallee, childSnapshotPath(path, "sourceCallee")),
+    sourceArguments: Object.freeze(capturedSourceArguments.map((evidence, index) => snapshotSelectedSourceValueEvidence(
+      evidence,
+      indexedSnapshotPath(childSnapshotPath(path, "sourceArguments"), index),
+    ))),
+    sourceResult: snapshotSelectedSourceValueEvidence(sourceResult, childSnapshotPath(path, "sourceResult")),
     ...(sourceOptionalChain === undefined ? {} : { sourceOptionalChain }),
-    ...receiverEvidence,
+    ...(sourceReceiver === undefined ? {} : {
+      sourceReceiver: snapshotSelectedSourceValueEvidence(sourceReceiver, childSnapshotPath(path, "sourceReceiver")),
+    }),
   });
   cache.selectedTargetSignatures.set(selection, snapshot);
   cache.selectedTargetSignatures.set(snapshot, snapshot);
@@ -1243,16 +1353,72 @@ function snapshotProviderMemberKey(key: ProviderMemberKey, path: SnapshotPath): 
   }
 }
 
-function snapshotReceiverEvidence(evidence: {
-  readonly sourceReceiver?: object;
-  readonly sourceReceiverType?: object;
-}): object {
-  const sourceReceiver = evidence.sourceReceiver;
-  const sourceReceiverType = evidence.sourceReceiverType;
-  return {
-    ...(sourceReceiver === undefined ? {} : { sourceReceiver }),
-    ...(sourceReceiverType === undefined ? {} : { sourceReceiverType }),
-  };
+function snapshotSelectedSourceTypeEvidence(
+  evidence: SelectedSourceTypeEvidence,
+  path: SnapshotPath,
+): SelectedSourceTypeEvidence {
+  assertRecord(evidence, "SelectedSourceTypeEvidence", path);
+  assertExactOwnFields(evidence, [
+    "type",
+    "symbol",
+    "declaration",
+    "selectedSymbol",
+    "selectedDeclaration",
+    "authoredTypeNode",
+  ], "SelectedSourceTypeEvidence", path);
+  return snapshotSelectedSourceTypeEvidenceFields(evidence, path);
+}
+
+function snapshotSelectedSourceTypeEvidenceFields(
+  evidence: SelectedSourceTypeEvidence,
+  path: SnapshotPath,
+): SelectedSourceTypeEvidence {
+  const type = evidence.type;
+  const symbol = evidence.symbol;
+  const declaration = evidence.declaration;
+  const selectedSymbol = evidence.selectedSymbol;
+  const selectedDeclaration = evidence.selectedDeclaration;
+  const authoredTypeNode = evidence.authoredTypeNode;
+  assertRecord(type, "SelectedSourceTypeEvidence type", childSnapshotPath(path, "type"));
+  for (const [field, value] of [
+    ["symbol", symbol],
+    ["declaration", declaration],
+    ["selectedSymbol", selectedSymbol],
+    ["selectedDeclaration", selectedDeclaration],
+    ["authoredTypeNode", authoredTypeNode],
+  ] as const) {
+    if (value !== undefined) {
+      assertRecord(value, `SelectedSourceTypeEvidence ${field}`, childSnapshotPath(path, field));
+    }
+  }
+  return Object.freeze({
+    type,
+    ...(symbol === undefined ? {} : { symbol }),
+    ...(declaration === undefined ? {} : { declaration }),
+    ...(selectedSymbol === undefined ? {} : { selectedSymbol }),
+    ...(selectedDeclaration === undefined ? {} : { selectedDeclaration }),
+    ...(authoredTypeNode === undefined ? {} : { authoredTypeNode }),
+  });
+}
+
+function snapshotSelectedSourceValueEvidence(
+  evidence: SelectedSourceValueEvidence,
+  path: SnapshotPath,
+): SelectedSourceValueEvidence {
+  assertRecord(evidence, "SelectedSourceValueEvidence", path);
+  assertExactOwnFields(evidence, [
+    "expression",
+    "type",
+    "symbol",
+    "declaration",
+    "selectedSymbol",
+    "selectedDeclaration",
+    "authoredTypeNode",
+  ], "SelectedSourceValueEvidence", path);
+  const expression = evidence.expression;
+  assertRecord(expression, "SelectedSourceValueEvidence expression", childSnapshotPath(path, "expression"));
+  const typeEvidence = snapshotSelectedSourceTypeEvidenceFields(evidence, path);
+  return Object.freeze({ expression, ...typeEvidence });
 }
 
 function snapshotMethodTypeArguments(arguments_: readonly SourceSelectedMethodTypeArgument[]): readonly SourceSelectedMethodTypeArgument[] {
@@ -1280,6 +1446,130 @@ function snapshotMethodTypeArguments(arguments_: readonly SourceSelectedMethodTy
       ...(explicitTypeNode === undefined ? {} : { explicitTypeNode }),
     });
   }));
+}
+
+function snapshotSelectedCallArgumentBindings(
+  bindings: readonly SourceSelectedCallArgumentBinding[],
+  path: SnapshotPath,
+  sourceArgumentCount?: number,
+  sourceParameterCount?: number,
+): readonly SourceSelectedCallArgumentBinding[] {
+  const captured = captureArray(bindings, "SourceSelectedCallArgumentBinding array", path);
+  if (sourceArgumentCount !== undefined) {
+    assertNonNegativeInteger(sourceArgumentCount, "source argument count", childSnapshotPath(path, "sourceArgumentCount"));
+  }
+  if (sourceParameterCount !== undefined) {
+    assertNonNegativeInteger(sourceParameterCount, "source parameter count", childSnapshotPath(path, "sourceParameterCount"));
+  }
+
+  const snapshots: SourceSelectedCallArgumentBinding[] = [];
+  let expectedSourceArgumentIndex = 0;
+  let activeSourceArgumentIndex: number | undefined;
+  let activeSourceForm: SourceSelectedCallArgumentBinding["sourceForm"] | undefined;
+  let nextSpreadElementIndex = 0;
+  let previousSourceParameterIndex = -1;
+
+  for (let index = 0; index < captured.length; index += 1) {
+    const bindingPath = indexedSnapshotPath(path, index);
+    const binding = snapshotSelectedCallArgumentBinding(captured[index]!, bindingPath);
+    if (binding.effectiveArgumentIndex !== index) {
+      throw new Error(`Invalid SourceSelectedCallArgumentBinding at '${formatSnapshotPath(bindingPath)}': effectiveArgumentIndex ${binding.effectiveArgumentIndex} must equal its canonical position ${index}.`);
+    }
+    if (binding.sourceArgumentIndex !== activeSourceArgumentIndex) {
+      if (binding.sourceArgumentIndex !== expectedSourceArgumentIndex) {
+        throw new Error(`Invalid SourceSelectedCallArgumentBinding at '${formatSnapshotPath(childSnapshotPath(bindingPath, "sourceArgumentIndex"))}': expected the next authored source argument index ${expectedSourceArgumentIndex}, received ${binding.sourceArgumentIndex}.`);
+      }
+      activeSourceArgumentIndex = binding.sourceArgumentIndex;
+      activeSourceForm = binding.sourceForm;
+      expectedSourceArgumentIndex += 1;
+      nextSpreadElementIndex = 0;
+    } else if (activeSourceForm !== "spread-element" || binding.sourceForm !== "spread-element") {
+      throw new Error(`Invalid SourceSelectedCallArgumentBinding at '${formatSnapshotPath(bindingPath)}': only a fixed tuple spread may contribute multiple effective arguments for one authored source argument.`);
+    }
+    if (binding.sourceForm === "spread-element") {
+      if (binding.spreadElementIndex !== nextSpreadElementIndex) {
+        throw new Error(`Invalid SourceSelectedCallArgumentBinding at '${formatSnapshotPath(childSnapshotPath(bindingPath, "spreadElementIndex"))}': expected contiguous tuple spread element index ${nextSpreadElementIndex}, received ${String(binding.spreadElementIndex)}.`);
+      }
+      nextSpreadElementIndex += 1;
+    }
+    if (binding.sourceParameterIndex < previousSourceParameterIndex) {
+      throw new Error(`Invalid SourceSelectedCallArgumentBinding at '${formatSnapshotPath(childSnapshotPath(bindingPath, "sourceParameterIndex"))}': selected source parameter indices must be monotonic in effective argument order.`);
+    }
+    if (sourceParameterCount !== undefined && binding.sourceParameterIndex >= sourceParameterCount) {
+      throw new Error(`Invalid SourceSelectedCallArgumentBinding at '${formatSnapshotPath(childSnapshotPath(bindingPath, "sourceParameterIndex"))}': selected source parameter index ${binding.sourceParameterIndex} is outside the ${sourceParameterCount}-parameter signature.`);
+    }
+    previousSourceParameterIndex = binding.sourceParameterIndex;
+    snapshots.push(binding);
+  }
+
+  if (sourceArgumentCount !== undefined && expectedSourceArgumentIndex !== sourceArgumentCount) {
+    throw new Error(`Invalid SourceSelectedCallArgumentBinding array at '${formatSnapshotPath(path)}': bindings cover ${expectedSourceArgumentIndex} authored source arguments, expected ${sourceArgumentCount}.`);
+  }
+  return Object.freeze(snapshots);
+}
+
+function snapshotSelectedCallArgumentBinding(
+  binding: SourceSelectedCallArgumentBinding,
+  path: SnapshotPath,
+): SourceSelectedCallArgumentBinding {
+  assertRecord(binding, "SourceSelectedCallArgumentBinding", path);
+  assertExactOwnFields(binding, [
+    "sourceArgumentIndex",
+    "effectiveArgumentIndex",
+    "sourceForm",
+    "spreadElementIndex",
+    "sourceParameterIndex",
+    "sourceParameterForm",
+    "selectedArgumentType",
+    "selectedParameterType",
+  ], "SourceSelectedCallArgumentBinding", path);
+  const sourceArgumentIndex = binding.sourceArgumentIndex;
+  const effectiveArgumentIndex = binding.effectiveArgumentIndex;
+  const sourceForm = binding.sourceForm;
+  const spreadElementIndex = binding.spreadElementIndex;
+  const sourceParameterIndex = binding.sourceParameterIndex;
+  const sourceParameterForm = binding.sourceParameterForm;
+  const selectedArgumentType = binding.selectedArgumentType;
+  const selectedParameterType = binding.selectedParameterType;
+  assertNonNegativeInteger(sourceArgumentIndex, "SourceSelectedCallArgumentBinding sourceArgumentIndex", childSnapshotPath(path, "sourceArgumentIndex"));
+  assertNonNegativeInteger(effectiveArgumentIndex, "SourceSelectedCallArgumentBinding effectiveArgumentIndex", childSnapshotPath(path, "effectiveArgumentIndex"));
+  assertCallConversionSourceForm(sourceForm, childSnapshotPath(path, "sourceForm"));
+  if (sourceForm === "spread-element") {
+    assertNonNegativeInteger(spreadElementIndex, "SourceSelectedCallArgumentBinding spreadElementIndex", childSnapshotPath(path, "spreadElementIndex"));
+  } else if (spreadElementIndex !== undefined) {
+    throw new Error(`Invalid SourceSelectedCallArgumentBinding at '${formatSnapshotPath(path)}': spreadElementIndex is valid only for spread-element source form.`);
+  }
+  assertNonNegativeInteger(sourceParameterIndex, "SourceSelectedCallArgumentBinding sourceParameterIndex", childSnapshotPath(path, "sourceParameterIndex"));
+  assertSourceCallParameterForm(sourceParameterForm, childSnapshotPath(path, "sourceParameterForm"));
+  if ((sourceForm === "spread-sequence") !== (sourceParameterForm === "rest-sequence")) {
+    throw new Error(`Invalid SourceSelectedCallArgumentBinding at '${formatSnapshotPath(path)}': spread-sequence source form and rest-sequence parameter form must occur together.`);
+  }
+  assertRecord(selectedArgumentType, "SourceSelectedCallArgumentBinding selectedArgumentType", childSnapshotPath(path, "selectedArgumentType"));
+  assertRecord(selectedParameterType, "SourceSelectedCallArgumentBinding selectedParameterType", childSnapshotPath(path, "selectedParameterType"));
+  return Object.freeze({
+    sourceArgumentIndex,
+    effectiveArgumentIndex,
+    sourceForm,
+    ...(spreadElementIndex === undefined ? {} : { spreadElementIndex }),
+    sourceParameterIndex,
+    sourceParameterForm,
+    selectedArgumentType,
+    selectedParameterType,
+  });
+}
+
+function selectedCallArgumentBindingsEqual(
+  left: SourceSelectedCallArgumentBinding,
+  right: SourceSelectedCallArgumentBinding,
+): boolean {
+  return left.sourceArgumentIndex === right.sourceArgumentIndex
+    && left.effectiveArgumentIndex === right.effectiveArgumentIndex
+    && left.sourceForm === right.sourceForm
+    && left.spreadElementIndex === right.spreadElementIndex
+    && left.sourceParameterIndex === right.sourceParameterIndex
+    && left.sourceParameterForm === right.sourceParameterForm
+    && left.selectedArgumentType === right.selectedArgumentType
+    && left.selectedParameterType === right.selectedParameterType;
 }
 
 function snapshotArgumentConversionSlots(
@@ -1527,6 +1817,15 @@ function assertCallConversionTargetForm(
 ): asserts value is "parameter" | "params-element" | "params-sequence" {
   if (value !== "parameter" && value !== "params-element" && value !== "params-sequence") {
     throw invalidEnumValueError("TargetCallArgumentConversionSlot targetForm", value, path);
+  }
+}
+
+function assertSourceCallParameterForm(
+  value: unknown,
+  path: SnapshotPath,
+): asserts value is "parameter" | "rest-element" | "rest-sequence" {
+  if (value !== "parameter" && value !== "rest-element" && value !== "rest-sequence") {
+    throw invalidEnumValueError("SourceSelectedCallArgumentBinding sourceParameterForm", value, path);
   }
 }
 

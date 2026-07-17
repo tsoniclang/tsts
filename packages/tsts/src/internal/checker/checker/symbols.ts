@@ -5459,9 +5459,9 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
     return Checker_checkElementAccessChain(receiver, node, checkMode);
   }
   const sourceReceiverType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
-  const result = Checker_checkElementAccessExpression(receiver, node, sourceReceiverType, checkMode);
-  recordSelectedElementAccessEvidence(receiver, node, sourceReceiverType, result);
-  return result;
+  const selected = checkElementAccessExpressionWithEvidence(receiver, node, sourceReceiverType, checkMode);
+  recordSelectedElementAccessEvidence(receiver, node, selected, selected.resultType);
+  return selected.resultType;
 }
 
 /**
@@ -5478,14 +5478,15 @@ export function Checker_checkElementAccessChain(receiver: GoPtr<Checker>, node: 
   const exprType = Checker_checkExpression(receiver, Node_Expression(node));
   const nonOptionalType = Checker_getOptionalExpressionType(receiver, exprType, Node_Expression(node));
   const sourceReceiverType = Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node));
-  const selectedResult = Checker_checkElementAccessExpression(receiver, node, sourceReceiverType, checkMode);
-  const result = Checker_propagateOptionalTypeMarker(receiver, selectedResult, node, nonOptionalType !== exprType);
-  recordSelectedElementAccessEvidence(receiver, node, sourceReceiverType, result);
+  const selected = checkElementAccessExpressionWithEvidence(receiver, node, sourceReceiverType, checkMode);
+  const result = Checker_propagateOptionalTypeMarker(receiver, selected.resultType, node, nonOptionalType !== exprType);
+  recordSelectedElementAccessEvidence(receiver, node, selected, result);
   return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkElementAccessExpression","kind":"method","status":"implemented","sigHash":"2f39be35c54aa297aa6da29e087ef31836844e9c96d08ac4a5d6679bc793bbda","bodyHash":"11932af46c7b11e3fd365479ad08c039f5afd3b81ae23f567ec842c2f141ef7e"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The exported TS-Go operation delegates to an exact worker that also returns already-computed selected index evidence to the extension boundary; source checking is unchanged and no expression is rechecked."}
  * Go source:
  * func (c *Checker) checkElementAccessExpression(node *ast.Node, exprType *Type, checkMode CheckMode) *Type {
  * 	objectType := exprType
@@ -5519,22 +5520,32 @@ export function Checker_checkElementAccessChain(receiver: GoPtr<Checker>, node: 
  * }
  */
 export function Checker_checkElementAccessExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, exprType: GoPtr<Type>, checkMode: CheckMode): GoPtr<Type> {
-  let objectType = exprType;
-  if (getAssignmentTargetKind(node) !== AssignmentKindNone || Checker_isMethodAccessForCall(receiver, node)) {
-    objectType = Checker_getWidenedType(receiver, objectType);
-  }
+  return checkElementAccessExpressionWithEvidence(receiver, node, exprType, checkMode).resultType;
+}
+
+interface SelectedElementAccessCheck {
+  readonly resultType: GoPtr<Type>;
+  readonly receiverType: GoPtr<Type>;
+  readonly argumentType: GoPtr<Type>;
+  readonly selectedSymbol: GoPtr<Symbol>;
+}
+
+function checkElementAccessExpressionWithEvidence(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  exprType: GoPtr<Type>,
+  checkMode: CheckMode,
+): SelectedElementAccessCheck {
+  const objectType = selectedElementAccessReceiverType(receiver, node, exprType);
   const indexExpression = AsElementAccessExpression(node)!.ArgumentExpression;
   const indexType = Checker_checkExpression(receiver, indexExpression);
+  const effectiveIndexType = selectedElementAccessArgumentType(receiver, indexExpression, indexType);
   if (Checker_isErrorType(receiver, objectType) || objectType === receiver!.silentNeverType) {
-    return objectType;
+    return Object.freeze({ resultType: objectType, receiverType: objectType, argumentType: effectiveIndexType, selectedSymbol: undefined });
   }
   if (isConstEnumObjectType(objectType) && !IsStringLiteralLike(indexExpression)) {
     Checker_error(receiver, indexExpression, A_const_enum_member_can_only_be_accessed_using_a_string_literal);
-    return receiver!.errorType;
-  }
-  let effectiveIndexType = indexType;
-  if (Checker_isForInVariableForNumericPropertyNames(receiver, indexExpression)) {
-    effectiveIndexType = receiver!.numberType;
+    return Object.freeze({ resultType: receiver!.errorType, receiverType: objectType, argumentType: effectiveIndexType, selectedSymbol: undefined });
   }
   const assignmentTargetKind = getAssignmentTargetKind(node);
   const accessFlags = assignmentTargetKind === AssignmentKindNone
@@ -5543,7 +5554,13 @@ export function Checker_checkElementAccessExpression(receiver: GoPtr<Checker>, n
       (assignmentTargetKind === AssignmentKindCompound ? AccessFlagsExpressionPosition : 0) |
       (Checker_isGenericObjectType(receiver, objectType) && !isThisTypeParameter(objectType) ? AccessFlagsNoIndexSignatures : 0)) as AccessFlags;
   const indexedAccessType = OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, objectType, effectiveIndexType, accessFlags, node, undefined), receiver!.errorType);
-  return Checker_checkIndexedAccessIndexType(receiver, Checker_getFlowTypeOfAccessExpression(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), indexedAccessType, indexExpression, checkMode), node);
+  const selectedSymbol = Checker_getResolvedSymbolOrNil(receiver, node);
+  const resultType = Checker_checkIndexedAccessIndexType(
+    receiver,
+    Checker_getFlowTypeOfAccessExpression(receiver, node, selectedSymbol, indexedAccessType, indexExpression, checkMode),
+    node,
+  );
+  return Object.freeze({ resultType, receiverType: objectType, argumentType: effectiveIndexType, selectedSymbol });
 }
 
 function selectedElementAccessReceiverType(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>): GoPtr<Type> {
@@ -5552,33 +5569,49 @@ function selectedElementAccessReceiverType(receiver: GoPtr<Checker>, node: GoPtr
     : sourceReceiverType;
 }
 
-function recordSelectedElementAccessEvidence(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>, sourceResultType: GoPtr<Type>): void {
+function recordSelectedElementAccessEvidence(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  selected: SelectedElementAccessCheck,
+  sourceResultType: GoPtr<Type>,
+): void {
   const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedElementAccess);
   const retainCallReceiverEvidence = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall)
     && Checker_isMethodAccessForCall(receiver, node);
   if (!accessOwned && !retainCallReceiverEvidence) {
     return;
   }
-  const selectedReceiverType = selectedElementAccessReceiverType(receiver, node, sourceReceiverType);
-  const resolvedSelectedSymbol = Checker_getResolvedSymbolOrNil(receiver, node);
   recordExtensionCheckedElementAccessMapping(
     receiver,
     node,
-    resolvedSelectedSymbol,
+    selected.selectedSymbol,
     sourceResultType,
-    getSelectedFixedTupleElementIndex(selectedReceiverType, resolvedSelectedSymbol),
-    selectedReceiverType,
+    getSelectedFixedTupleElementIndex(selected.receiverType, selected.argumentType),
+    selected.receiverType,
+    selected.argumentType,
     retainCallReceiverEvidence,
   );
 }
 
-function getSelectedFixedTupleElementIndex(objectType: GoPtr<Type>, selectedSymbol: GoPtr<Symbol>): number | undefined {
-  const selectedName = selectedSymbol?.Name;
-  if (selectedName === undefined || !isNumericLiteralName(selectedName)) {
+function selectedElementAccessArgumentType(receiver: GoPtr<Checker>, indexExpression: GoPtr<Node>, indexType: GoPtr<Type>): GoPtr<Type> {
+  return Checker_isForInVariableForNumericPropertyNames(receiver, indexExpression)
+    ? receiver!.numberType
+    : indexType;
+}
+
+function getSelectedFixedTupleElementIndex(objectType: GoPtr<Type>, selectedIndexType: GoPtr<Type>): number | undefined {
+  if (selectedIndexType === undefined) {
     return undefined;
   }
-  const index = FromString(selectedName);
-  if (index < 0 || index % 1 !== 0) {
+  let index: number | undefined;
+  if ((selectedIndexType.flags & TypeFlagsNumberLiteral) !== 0) {
+    const value = Type_AsLiteralType(selectedIndexType)?.value;
+    index = typeof value === "number" ? value : undefined;
+  } else if ((selectedIndexType.flags & TypeFlagsStringLiteral) !== 0) {
+    const value = Type_AsLiteralType(selectedIndexType)?.value;
+    index = typeof value === "string" && isNumericLiteralName(value) ? FromString(value) : undefined;
+  }
+  if (index === undefined || index < 0 || index % 1 !== 0) {
     return undefined;
   }
   if (!typeSelectionProvesFixedTupleIndex(objectType, index)) {
@@ -6533,10 +6566,20 @@ export function Checker_checkPropertyAccessChain(receiver: GoPtr<Checker>, node:
 }
 
 function selectedPropertyAccessReceiverType(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>): GoPtr<Type> {
+  return selectedPropertyAccessTypes(receiver, node, sourceReceiverType).apparentType;
+}
+
+function selectedPropertyAccessTypes(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>): {
+  readonly widenedType: GoPtr<Type>;
+  readonly apparentType: GoPtr<Type>;
+} {
   const widenedType = getAssignmentTargetKind(node) !== AssignmentKindNone || Checker_isMethodAccessForCall(receiver, node)
     ? Checker_getWidenedType(receiver, sourceReceiverType)
     : sourceReceiverType;
-  return Checker_getApparentType(receiver, widenedType);
+  return {
+    widenedType,
+    apparentType: Checker_getApparentType(receiver, widenedType),
+  };
 }
 
 function recordSelectedPropertyAccessEvidence(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>, sourceResultType: GoPtr<Type>): void {
@@ -6695,11 +6738,7 @@ function recordSelectedPropertyAccessEvidence(receiver: GoPtr<Checker>, node: Go
 export function Checker_checkPropertyAccessExpressionOrQualifiedName(receiver: GoPtr<Checker>, node: GoPtr<Node>, left: GoPtr<Node>, leftType: GoPtr<Type>, right: GoPtr<Node>, checkMode: CheckMode, writeOnly: bool): GoPtr<Type> {
   const parentSymbol = Checker_getResolvedSymbolOrNil(receiver, left);
   const assignmentKind = getAssignmentTargetKind(node);
-  let widenedType = leftType;
-  if (assignmentKind !== AssignmentKindNone || Checker_isMethodAccessForCall(receiver, node)) {
-    widenedType = Checker_getWidenedType(receiver, leftType);
-  }
-  const apparentType = Checker_getApparentType(receiver, widenedType);
+  const { widenedType, apparentType } = selectedPropertyAccessTypes(receiver, node, leftType);
   const isAnyLike = IsTypeAny(apparentType) || apparentType === receiver!.silentNeverType;
   let prop: GoPtr<Symbol>;
   if (IsPrivateIdentifier(right)) {
