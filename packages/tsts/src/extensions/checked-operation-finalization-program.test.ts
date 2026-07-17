@@ -86,7 +86,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
         },
         mapCheckedPropertyAccess: (request, observationContext) => {
           propertyRequests.push(request);
-          const receiverType = request.sourceReceiverType;
+          const receiverType = request.sourceReceiver.type;
           if (receiverType === undefined) {
             return deferObservation;
           }
@@ -96,12 +96,12 @@ test("normal checking finalizes generic receiver calls and property assignment f
             return deferObservation;
           }
           return acceptObservation({
-            operation: operation(`${carrier.id}.${identityId(request.sourceSelectedDeclaration, memberIds, () => nextMemberId++)}`, "property"),
+            operation: operation(`${carrier.id}.${identityId(request.sourceResult.selectedDeclaration, memberIds, () => nextMemberId++)}`, "property"),
           });
         },
         mapCheckedElementAccess: (request, observationContext) => {
           elementRequests.push(request);
-          const receiverType = request.sourceReceiverType;
+          const receiverType = request.sourceReceiver.type;
           if (receiverType === undefined) {
             return deferObservation;
           }
@@ -119,7 +119,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
           if (request.sourceReceiver === undefined) {
             return acceptObservation(callResult("Box.constructor", request));
           }
-          const receiverType = request.sourceReceiverType;
+          const receiverType = request.sourceReceiver.type;
           if (receiverType === undefined) {
             return deferObservation;
           }
@@ -149,12 +149,12 @@ test("normal checking finalizes generic receiver calls and property assignment f
 
   assertCleanProgram(program);
   assert.equal(extensionHost.diagnostics.all().length, 0, "Checking must not report extension diagnostics.");
-  const receiverCallsBeforeFinalization = callRequests.filter((request) => request.sourceReceiverType !== undefined);
+  const receiverCallsBeforeFinalization = callRequests.filter((request) => request.sourceReceiver !== undefined);
   assert.equal(receiverCallsBeforeFinalization.length, 0, "A call mapper must not run before its checked callee dependency completes.");
 
   assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   assert.equal(extensionHost.diagnostics.all().length, 0, "Finalization must not report extension diagnostics.");
-  const receiverCalls = callRequests.filter((request) => request.sourceReceiverType !== undefined);
+  const receiverCalls = callRequests.filter((request) => request.sourceReceiver !== undefined);
   const receiverCallBySubject = new Map(receiverCalls.map((request) => [request.call, request]));
   const finalizedReceiverCalls = [...receiverCallBySubject.values()];
   assert.equal(receiverCalls.length, 5);
@@ -162,7 +162,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
   assert.ok(finalizedReceiverCalls.every((request) => receiverCalls.filter((candidate) => candidate.call === request.call).length === 1));
   assert.equal(finalizedReceiverCalls.filter((request) => request.optionalChain === true).length, 1);
   assert.ok(finalizedReceiverCalls.every((request) => request.sourceReceiver !== undefined));
-  const selectedReceiverTypes = [...new Set(receiverCalls.map((request) => request.sourceReceiverType))];
+  const selectedReceiverTypes = [...new Set(receiverCalls.map((request) => request.sourceReceiver!.type))];
   assert.equal(selectedReceiverTypes.length, 2);
   assert.ok(selectedReceiverTypes[0] !== selectedReceiverTypes[1], "Distinct generic receiver instantiations must retain distinct source type subjects.");
   assert.ok(
@@ -173,8 +173,10 @@ test("normal checking finalizes generic receiver calls and property assignment f
   for (const request of finalizedReceiverCalls) {
     const selected = extensionHost.facts.get(request.call, selectedTargetSignatureFactKey);
     assert.ok(selected !== undefined);
-    assert.ok(selected.sourceReceiver === request.sourceReceiver, "Finalized call evidence must retain the exact receiver expression.");
-    assert.ok(selected.sourceReceiverType === request.sourceReceiverType, "Finalized call evidence must retain the exact instantiated receiver type.");
+    assert.ok(selected.sourceReceiver !== request.sourceReceiver, "Finalized facts must snapshot the receiver evidence envelope.");
+    assert.equal(Object.isFrozen(selected.sourceReceiver), true);
+    assert.ok(selected.sourceReceiver?.expression === request.sourceReceiver?.expression, "Finalized call evidence must retain the exact receiver expression subject.");
+    assert.ok(selected.sourceReceiver?.type === request.sourceReceiver?.type, "Finalized call evidence must retain the exact instantiated receiver type.");
     assert.equal(selected.sourceOptionalChain, request.optionalChain);
   }
   assert.ok(finalizedReceiverCalls.every((request) => {
@@ -183,11 +185,11 @@ test("normal checking finalizes generic receiver calls and property assignment f
   }), "A nongeneric selected target signature must canonicalize to no target type-argument field.");
   const assignmentRequests = operatorRequests.filter((request) => request.operator === "=");
   assert.equal(assignmentRequests.length, 3);
-  assert.ok(assignmentRequests.every((request) => request.sourceResultType !== undefined));
+  assert.ok(assignmentRequests.every((request) => request.sourceResult.type !== undefined));
   assert.ok(assignmentRequests.every((request) => extensionHost.facts.get(request.left, targetOperationFactKey) !== undefined));
   assert.ok(assignmentRequests.every((request) => extensionHost.facts.get(request.expression, targetOperationFactKey)?.operationKind === "operator"));
   assert.ok(assignmentRequests.every((request) =>
-    extensionHost.facts.get(request.expression, targetOperationFactKey)?.provenance?.sourceResultType === request.sourceResultType));
+    extensionHost.facts.get(request.expression, targetOperationFactKey)?.provenance?.sourceResultType === request.sourceResult.type));
   const nestedAssignmentRequest = assignmentRequests.find((request) => extensionHost.facts.get(request.right, targetOperationFactKey) !== undefined);
   assert.ok(nestedAssignmentRequest !== undefined);
   const nestedAssignmentFact = extensionHost.facts.get(nestedAssignmentRequest.expression, targetOperationFactKey);
@@ -200,7 +202,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
   assert.equal(extensionHost.facts.get(optionalPropertyRequest.expression, targetOperationFactKey)?.provenance?.sourceOptionalChain, true);
   const finalizedElementRequests = [...new Map(elementRequests.map((request) => [request.expression, request])).values()];
   assert.equal(finalizedElementRequests.length, 2);
-  assert.ok(finalizedElementRequests.every((request) => request.sourceReceiverType !== undefined));
+  assert.ok(finalizedElementRequests.every((request) => request.sourceReceiver.type !== undefined));
   assert.ok(finalizedElementRequests.every((request) => extensionHost.facts.get(request.expression, targetOperationFactKey)?.operationKind === "indexer"));
   const optionalElementRequest = finalizedElementRequests.find((request) => request.optionalChain === true);
   assert.ok(optionalElementRequest !== undefined);
@@ -227,7 +229,7 @@ test("a call-only provider retains exact property-callee receiver evidence witho
           providerKind: "semantic",
         },
         mapCheckedCall: (request) => {
-          if (request.sourceReceiverType !== undefined) {
+          if (request.sourceReceiver !== undefined) {
             receiverCalls.push(request);
           }
           return acceptObservation(callResult(`call-only-${receiverCalls.length}`, request));
@@ -241,7 +243,7 @@ test("a call-only provider retains exact property-callee receiver evidence witho
   finalizeExtensionSemantics(programOptions);
 
   assert.ok(receiverCalls.length > 0);
-  assert.ok(receiverCalls.every((request) => request.sourceReceiverType !== undefined));
+  assert.ok(receiverCalls.every((request) => request.sourceReceiver !== undefined));
   assert.ok(receiverCalls.every((request) => extensionHost.facts.get(request.callee, targetOperationFactKey) === undefined));
   assert.equal(extensionHost.diagnostics.all().length, 0, "Call-only mapping must not report extension diagnostics.");
 });
@@ -267,7 +269,7 @@ test("call-only mapping retains real nested callee inputs without synthesizing p
         },
         mapCheckedCall: (request, observationContext) => {
           callRequests.push(request);
-          const kind = request.sourceReceiverType === undefined ? "input" : "receiver";
+          const kind = request.sourceReceiver === undefined ? "input" : "receiver";
           observations.push(`${kind}:${observationContext.phase}`);
           if (kind === "input" && observationContext.phase === "checking") {
             return deferObservation;
@@ -297,8 +299,8 @@ test("call-only mapping retains real nested callee inputs without synthesizing p
   finalizeExtensionSemantics(programOptions);
 
   assert.equal(callRequests.length, 8);
-  const receiverCalls = callRequests.filter((request) => request.sourceReceiverType !== undefined);
-  const inputCalls = callRequests.filter((request) => request.sourceReceiverType === undefined);
+  const receiverCalls = callRequests.filter((request) => request.sourceReceiver !== undefined);
+  const inputCalls = callRequests.filter((request) => request.sourceReceiver === undefined);
   assert.equal(receiverCalls.length, 4);
   assert.equal(inputCalls.length, 4);
   assert.equal(new Set(callRequests.map((request) => request.call)).size, 6);
@@ -322,7 +324,7 @@ test("property mapper receives TS-Go member-selection receiver types", () => {
     observationOwners: [ExtensionObservationPoint.mapCheckedPropertyAccess],
     initialize(context): void {
       context.registerObservation(ExtensionObservationPoint.mapCheckedPropertyAccess, (request) => {
-        const memberSelectionType = request.sourceReceiverType as GoPtr<Type>;
+        const memberSelectionType = request.sourceReceiver.type as GoPtr<Type>;
         observedTypes.set(request.propertyName, Type_Symbol(memberSelectionType)?.Name);
         return deferObservation;
       });

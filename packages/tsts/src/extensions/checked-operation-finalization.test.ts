@@ -13,8 +13,13 @@ import {
   targetOperationFactKey,
 } from "./index.js";
 import type {
+  CheckedCallMappingRequest,
   CompilerExtension,
   ExtensionFactSubject,
+  SelectedSourceTypeEvidence,
+  SelectedSourceValueEvidence,
+  SelectedTargetSignatureFact,
+  SourceSelectedCallArgumentBinding,
   TargetCallArgumentConversionSlot,
   TargetOperationFact,
   TargetSemanticProvider,
@@ -41,7 +46,7 @@ test("checked operations replay after lifecycle in deterministic dependency orde
     property: (request, context) => {
       phases.push(`property:${context.phase}`);
       assert.equal(Object.isFrozen(request), true);
-      if (!context.facts.has(request.sourceReceiverType, receiverCarrierFactKey)) {
+      if (!context.facts.has(request.sourceReceiver.type, receiverCarrierFactKey)) {
         return deferObservation;
       }
       return acceptObservation({ operation: operation("box.value", "property") });
@@ -68,6 +73,7 @@ test("checked operations replay after lifecycle in deterministic dependency orde
       operator: "=",
       left: property,
       right: {},
+      sourceResult: sourceValue(assignment, {}),
       target: "acme",
     },
     () => {
@@ -81,19 +87,20 @@ test("checked operations replay after lifecycle in deterministic dependency orde
           conversionKind: "assertion",
           assertionKind: "as",
           expression: assignmentConversion,
-          source: assignment,
-          target: {},
-          sourceExpression: assignment,
+          source: sourceValue(assignment, {}),
+          target: sourceType({}),
           explicitTargetTypeNode: {},
           targetPlatform: "acme",
         },
         () => {
           throw new Error("owned conversion reached core");
         },
-        (conversion, conversionEvidence) => host.facts.set(assignmentConversion, targetConversionFactKey, {
-          ...(conversion.convertedType === undefined ? {} : { convertedType: conversion.convertedType }),
-          ...(conversion.operation === undefined ? {} : { operation: conversion.operation }),
-        }, conversionEvidence),
+        (conversion, conversionEvidence) => {
+          host.facts.set(assignmentConversion, targetConversionFactKey, {
+            ...(conversion.convertedType === undefined ? {} : { convertedType: conversion.convertedType }),
+            ...(conversion.operation === undefined ? {} : { operation: conversion.operation }),
+          }, conversionEvidence);
+        },
         { requireOwner: true },
         undefined,
         [{ observation: ExtensionObservationPoint.mapCheckedOperator, subject: assignment }],
@@ -109,14 +116,16 @@ test("checked operations replay after lifecycle in deterministic dependency orde
       expression: property,
       receiver,
       propertyName: "value",
-      sourceReceiver: receiver,
-      sourceReceiverType: receiverType,
+      sourceReceiver: sourceValue(receiver, receiverType),
+      sourceResult: sourceValue(property, {}),
       target: "acme",
     },
     () => {
       throw new Error("owned property reached core");
     },
-    (value, evidence) => host.facts.set(property, targetOperationFactKey, value.operation, evidence),
+    (value, evidence) => {
+      host.facts.set(property, targetOperationFactKey, value.operation, evidence);
+    },
     { requireOwner: true },
   );
 
@@ -155,10 +164,10 @@ test("retained selected receiver evidence remains distinct across generic instan
       host.facts.set(numberType, receiverCarrierFactKey, { id: "Box<number>" });
     },
     call: (request, context) => {
-      if (request.sourceReceiverType !== undefined) {
-        seenReceiverTypes.push(request.sourceReceiverType);
+      if (request.sourceReceiver !== undefined) {
+        seenReceiverTypes.push(request.sourceReceiver.type);
       }
-      const carrier = context.facts.get(request.sourceReceiverType, receiverCarrierFactKey);
+      const carrier = context.facts.get(request.sourceReceiver?.type, receiverCarrierFactKey);
       if (carrier === undefined) {
         return deferObservation;
       }
@@ -209,14 +218,16 @@ test("unresolved checked operations produce one final diagnostic and no target f
       expression,
       receiver,
       propertyName: "missing",
-      sourceReceiver: receiver,
-      sourceReceiverType: receiverType,
+      sourceReceiver: sourceValue(receiver, receiverType),
+      sourceResult: sourceValue(expression, {}),
       target: "acme",
     },
     () => {
       throw new Error("owned property reached core");
     },
-    (value, evidence) => host.facts.set(expression, targetOperationFactKey, value.operation, evidence),
+    (value, evidence) => {
+      host.facts.set(expression, targetOperationFactKey, value.operation, evidence);
+    },
     { requireOwner: true },
   );
 
@@ -242,7 +253,7 @@ test("checked conversions share the deferred finalization contract", () => {
     },
     conversion: (request, context) => {
       phases.push(context.phase);
-      if (!context.facts.has(request.source, receiverCarrierFactKey)) {
+      if (!context.facts.has(request.source.type, receiverCarrierFactKey)) {
         return deferObservation;
       }
       return acceptObservation({ convertedType: { kind: "target-named", id: "Acme.Value" } });
@@ -256,19 +267,20 @@ test("checked conversions share the deferred finalization contract", () => {
       conversionKind: "assertion",
       assertionKind: "as",
       expression,
-      source,
-      target,
-      sourceExpression: expression,
+      source: sourceValue(expression, source),
+      target: sourceType(target),
       explicitTargetTypeNode: {},
       targetPlatform: "acme",
     },
     () => {
       throw new Error("owned conversion reached core");
     },
-    (value, evidence) => host.facts.set(expression, targetConversionFactKey, {
-      ...(value.convertedType === undefined ? {} : { convertedType: value.convertedType }),
-      ...(value.operation === undefined ? {} : { operation: value.operation }),
-    }, evidence),
+    (value, evidence) => {
+      host.facts.set(expression, targetConversionFactKey, {
+        ...(value.convertedType === undefined ? {} : { convertedType: value.convertedType }),
+        ...(value.operation === undefined ? {} : { operation: value.operation }),
+      }, evidence);
+    },
     { requireOwner: true },
   );
 
@@ -291,7 +303,8 @@ test("assertion and call-argument conversions retain distinct slots for one expr
     targetParameterIndex: 0,
     targetForm: "parameter" as const,
   };
-  const selectedSignature = {
+  const selectedSourceBinding = sourceArgumentBinding(source, target, 0, 0);
+  const selectedSignature: SelectedTargetSignatureFact = {
     member: {
       id: "consume(value)",
       sourceName: "consume",
@@ -304,6 +317,10 @@ test("assertion and call-argument conversions retain distinct slots for one expr
       }],
     },
     argumentConversions: [slot],
+    sourceArgumentBindings: [selectedSourceBinding],
+    sourceCallee: sourceValue({}, {}),
+    sourceArguments: [sourceValue(expression, source)],
+    sourceResult: sourceValue(call, {}),
   };
   const observedKinds: string[] = [];
   let applied = 0;
@@ -322,9 +339,8 @@ test("assertion and call-argument conversions retain distinct slots for one expr
     conversionKind: "assertion",
     assertionKind: "as",
     expression,
-    source,
-    target,
-    sourceExpression: source,
+    source: sourceValue(expression, source),
+    target: sourceType(target),
     explicitTargetTypeNode: target,
     targetPlatform: "acme",
   }, () => {
@@ -338,7 +354,8 @@ test("assertion and call-argument conversions retain distinct slots for one expr
   host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedConversion, {
     conversionKind: "call-argument",
     expression,
-    source: expression,
+    source: selectedSignature.sourceArguments[0]!,
+    sourceBinding: selectedSourceBinding,
     target: selectedSignature.member.parameters[0]!.type,
     call,
     slot,
@@ -368,6 +385,7 @@ test("assertion and call-argument conversions retain distinct slots for one expr
         sourceForm: request.sourceForm,
         ...(request.spreadElementIndex === undefined ? {} : { spreadElementIndex: request.spreadElementIndex }),
         targetForm: request.targetForm,
+        sourceBinding: request.sourceBinding,
       }, evidence);
     }
     applied += 1;
@@ -402,7 +420,7 @@ test("checked iteration shares the deferred finalization contract", () => {
     },
     iteration: (request, context) => {
       phases.push(context.phase);
-      if (!context.facts.has(request.sourceElementType, receiverCarrierFactKey)) {
+      if (!context.facts.has(request.sourceElement.type, receiverCarrierFactKey)) {
         return deferObservation;
       }
       return acceptObservation({ operation: operation("box.iterate", "iteration") });
@@ -416,13 +434,16 @@ test("checked iteration shares the deferred finalization contract", () => {
       statement,
       expression,
       kind: "for-of",
-      sourceElementType,
+      sourceIterable: sourceValue(expression, {}),
+      sourceElement: sourceType(sourceElementType),
       target: "acme",
     },
     () => {
       throw new Error("owned iteration reached core");
     },
-    (value, evidence) => host.facts.set(statement, targetOperationFactKey, value.operation, evidence),
+    (value, evidence) => {
+      host.facts.set(statement, targetOperationFactKey, value.operation, evidence);
+    },
     { requireOwner: true },
   );
 
@@ -492,14 +513,7 @@ test("repeated checked observations are idempotent and conflicting source eviden
     },
   });
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: "acme" });
-  const request = {
-    call,
-    callee,
-    arguments: [],
-    sourceReceiver: receiver,
-    sourceReceiverType: receiverType,
-    target: "acme",
-  };
+  const request = checkedCallRequest(call, callee, receiver, receiverType);
   const apply = (): void => {
     acceptedResults += 1;
     host.facts.set(call, selectedCallFactKey, { id: "repeatable-call" });
@@ -517,7 +531,7 @@ test("repeated checked observations are idempotent and conflicting source eviden
 
   host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
     ...request,
-    sourceReceiverType: {},
+    sourceReceiver: sourceValue(receiver, {}),
   }, () => {
     throw new Error("owned call reached core");
   }, apply, { requireOwner: true });
@@ -525,7 +539,7 @@ test("repeated checked observations are idempotent and conflicting source eviden
   assert.equal(acceptedResults, 1);
   assert.equal(host.diagnostics.all().length, 1);
   assert.equal(host.diagnostics.all()[0]?.extensionCode, "CHECKED_OPERATION_REQUEST_CONFLICT");
-  assert.deepEqual(host.diagnostics.all()[0]?.evidence?.[0]?.details, ["sourceReceiverType"]);
+  assert.deepEqual(host.diagnostics.all()[0]?.evidence?.[0]?.details, ["sourceReceiver"]);
   assert.equal(host.facts.get(call, selectedCallFactKey), undefined);
   assert.equal(host.finalized, false);
   assert.throws(() => host.finalizeSemantics(), /semantic finalization previously failed/);
@@ -544,7 +558,8 @@ test("one source expression can retain distinct canonical target conversion slot
     type: { kind: "target-named" as const, id: "Acme.Second" },
     passingMode: "by-value" as const,
   };
-  const selectedSignature = {
+  const firstSourceBinding = sourceArgumentBinding(expression, firstParameter.type, 0, 0);
+  const selectedSignature: SelectedTargetSignatureFact = {
     member: {
       id: "acme.consume",
       sourceName: "consume",
@@ -566,6 +581,10 @@ test("one source expression can retain distinct canonical target conversion slot
         targetForm: "parameter" as const,
       },
     ],
+    sourceArgumentBindings: [firstSourceBinding],
+    sourceCallee: sourceValue({}, {}),
+    sourceArguments: [sourceValue(expression, expression)],
+    sourceResult: sourceValue(call, {}),
   };
   const extension = lifecycleExtension({
     conversion: () => acceptObservation({ convertedType: { kind: "target-named", id: "Acme.Converted" } }),
@@ -579,7 +598,7 @@ test("one source expression can retain distinct canonical target conversion slot
     host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedConversion, {
       conversionKind: "call-argument",
       expression,
-      source: expression,
+      source: selectedSignature.sourceArguments[0]!,
       target: targetParameter.type,
       call,
       slot,
@@ -588,6 +607,7 @@ test("one source expression can retain distinct canonical target conversion slot
       sourceForm: slot.sourceForm,
       targetForm: slot.targetForm,
       targetParameter,
+      sourceBinding: firstSourceBinding,
       selectedSignature,
       targetPlatform: "acme",
     }, () => {
@@ -607,6 +627,7 @@ test("one source expression can retain distinct canonical target conversion slot
         sourceForm: request.sourceForm,
         ...(request.spreadElementIndex === undefined ? {} : { spreadElementIndex: request.spreadElementIndex }),
         targetForm: request.targetForm,
+        sourceBinding: request.sourceBinding,
       }, evidence);
     }, { requireOwner: true });
     if (retainedSlot === undefined) {
@@ -632,6 +653,7 @@ test("one source expression can retain distinct canonical target conversion slot
 test("conflicting checked result types fail closed instead of reusing stale evidence", () => {
   const expression = {};
   const receiver = {};
+  const receiverType = {};
   const firstResultType = {};
   const secondResultType = {};
   let mapperRuns = 0;
@@ -649,13 +671,16 @@ test("conflicting checked result types fail closed instead of reusing stale evid
         expression,
         receiver,
         propertyName: "value",
-        sourceResultType,
+        sourceReceiver: sourceValue(receiver, receiverType),
+        sourceResult: sourceValue(expression, sourceResultType),
         target: "acme",
       },
       () => {
         throw new Error("owned property reached core");
       },
-      (value, evidence) => host.facts.set(expression, targetOperationFactKey, value.operation, evidence),
+      (value, evidence) => {
+        host.facts.set(expression, targetOperationFactKey, value.operation, evidence);
+      },
       { requireOwner: true },
     );
   };
@@ -666,7 +691,7 @@ test("conflicting checked result types fail closed instead of reusing stale evid
   assert.equal(mapperRuns, 1);
   assert.equal(host.diagnostics.all().length, 1);
   assert.equal(host.diagnostics.all()[0]?.extensionCode, "CHECKED_OPERATION_REQUEST_CONFLICT");
-  assert.deepEqual(host.diagnostics.all()[0]?.evidence?.[0]?.details, ["sourceResultType"]);
+  assert.deepEqual(host.diagnostics.all()[0]?.evidence?.[0]?.details, ["sourceResult"]);
   assert.equal(host.facts.get(expression, targetOperationFactKey), undefined);
   assert.equal(host.finalized, false);
   assert.throws(() => host.finalizeSemantics(), /semantic finalization previously failed/);
@@ -678,6 +703,50 @@ const selectedCallFactKey = defineExtensionFactKey<{ readonly id: string }>({
   equals: (left, right) => left.id === right.id,
 });
 
+function sourceType(type: ExtensionFactSubject): SelectedSourceTypeEvidence {
+  return Object.freeze({ type });
+}
+
+function sourceValue(expression: ExtensionFactSubject, type: ExtensionFactSubject): SelectedSourceValueEvidence {
+  return Object.freeze({ expression, type });
+}
+
+function sourceArgumentBinding(
+  selectedArgumentType: ExtensionFactSubject,
+  selectedParameterType: ExtensionFactSubject,
+  sourceArgumentIndex: number,
+  sourceParameterIndex: number,
+): SourceSelectedCallArgumentBinding {
+  return Object.freeze({
+    sourceArgumentIndex,
+    effectiveArgumentIndex: sourceArgumentIndex,
+    sourceForm: "value",
+    sourceParameterIndex,
+    sourceParameterForm: "parameter",
+    selectedArgumentType,
+    selectedParameterType,
+  });
+}
+
+function checkedCallRequest(
+  call: ExtensionFactSubject,
+  callee: ExtensionFactSubject,
+  receiver: ExtensionFactSubject,
+  receiverType: ExtensionFactSubject,
+): CheckedCallMappingRequest {
+  return Object.freeze({
+    call,
+    callee,
+    arguments: Object.freeze([]),
+    sourceArgumentBindings: Object.freeze([]),
+    sourceCallee: sourceValue(callee, {}),
+    sourceArguments: Object.freeze([]),
+    sourceResult: sourceValue(call, {}),
+    sourceReceiver: sourceValue(receiver, receiverType),
+    target: "acme",
+  });
+}
+
 function runDeferredCall(
   host: ExtensionHost,
   call: ExtensionFactSubject,
@@ -686,14 +755,7 @@ function runDeferredCall(
 ): void {
   host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedCall,
-    {
-      call,
-      callee: {},
-      arguments: [],
-      sourceReceiver: receiver,
-      sourceReceiverType: receiverType,
-      target: "acme",
-    },
+    checkedCallRequest(call, {}, receiver, receiverType),
     () => {
       throw new Error("owned call reached core");
     },

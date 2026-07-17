@@ -412,6 +412,11 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
     if (callCallee === undefined) {
       throw new Error("Checked property callee evidence lost the enclosing call callee.");
     }
+    const inputOperationSubjects = accessOwned
+      ? Object.freeze([propertyAccessExpression])
+      : sourceReceiverDependencies.length === 0
+        ? undefined
+        : Object.freeze(sourceReceiverDependencies.map((dependency) => dependency.subject as Node));
     retainCheckedCallSelectionSeed(checker, callExpression!, {
       calleeProvenance: Object.freeze({
         ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
@@ -422,7 +427,7 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
         expression: receiver,
         type: canonicalSourceReceiverType,
       }),
-      ...(accessOwned ? { inputOperationSubjects: Object.freeze([propertyAccessExpression]) } : {}),
+      ...(inputOperationSubjects === undefined ? {} : { inputOperationSubjects }),
     });
   }
   if (!accessOwned) {
@@ -528,6 +533,11 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
     if (callCallee === undefined) {
       throw new Error("Checked element callee evidence lost the enclosing call callee.");
     }
+    const inputOperationSubjects = accessOwned
+      ? Object.freeze([elementAccessExpression])
+      : dependencies.length === 0
+        ? undefined
+        : Object.freeze(dependencies.map((dependency) => dependency.subject as Node));
     retainCheckedCallSelectionSeed(checker, callExpression!, {
       calleeProvenance: Object.freeze({
         ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
@@ -538,7 +548,7 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
         expression: receiver,
         type: canonicalSourceReceiverType,
       }),
-      ...(accessOwned ? { inputOperationSubjects: Object.freeze([elementAccessExpression]) } : {}),
+      ...(inputOperationSubjects === undefined ? {} : { inputOperationSubjects }),
     });
   }
   if (!accessOwned) {

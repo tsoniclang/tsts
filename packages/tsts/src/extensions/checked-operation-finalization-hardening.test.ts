@@ -15,12 +15,14 @@ import {
 import type {
   BeforeSemanticsFinalizedLifecycleRequest,
   CheckedOperationMappingResult,
+  CheckedPropertyAccessMappingRequest,
   CompilerExtension,
   ExtensionDiagnostic,
   ExtensionDiagnosticSourceSpan,
   ExtensionFactSubject,
   ExtensionObservationPhase,
   ExtensionObservationResult,
+  SelectedSourceValueEvidence,
   SelectedTargetSignatureFact,
   TargetOperationFact,
   TargetSemanticProvider,
@@ -77,6 +79,9 @@ test("selected target signature equality handles 20k-deep shared target-type DAG
     kind: "tuple",
     elements: Array.from({ length: 4_096 }, () => rightShared),
   };
+  const sourceCall = {};
+  const sourceCallee = selectedSourceValue({}, {});
+  const sourceResult = selectedSourceValue(sourceCall, {});
   const selectedFact = (returnType: TargetTypeRef): SelectedTargetSignatureFact => ({
     member: {
       id: "acme.deep-equality",
@@ -87,6 +92,10 @@ test("selected target signature equality handles 20k-deep shared target-type DAG
       returnType,
     },
     argumentConversions: [],
+    sourceArgumentBindings: [],
+    sourceCallee,
+    sourceArguments: [],
+    sourceResult,
   });
   const host = new ExtensionHost({});
   const call = {};
@@ -129,6 +138,7 @@ test("checked-operation provenance rejects duplicate primary operations for one 
     operator: "+",
     left: {},
     right: {},
+    sourceResult: selectedSourceValue(subject, {}),
   }, () => ({ operation: operation("retained.operator", "operator") }), () => {});
 
   assert.throws(
@@ -410,12 +420,7 @@ test("an unavailable child blocks its parent without evaluating or applying the 
   const childResult = runPropertyOperation(host, child, targetId, "child", () => {
     assert.fail("The rejected child must not apply.");
   });
-  const parentResult = host[extensionHostRunCheckedOperation](propertyObservation, {
-    expression: parent,
-    receiver: child,
-    propertyName: "parent",
-    target: targetId,
-  }, () => {
+  const parentResult = host[extensionHostRunCheckedOperation](propertyObservation, checkedPropertyRequest(parent, child, "parent", targetId), () => {
     throw new Error("The blocked provider-owned parent reached core.");
   }, (accepted) => {
     parentApplications += 1;
@@ -450,11 +455,7 @@ test("a deferred hook cannot leak facts to a later accepting hook", () => {
   });
   const host = new ExtensionHost({}, { extensions: [first, second] });
 
-  const result = host[extensionHostRunCheckedOperation](propertyObservation, {
-    expression: {},
-    receiver: {},
-    propertyName: "value",
-  }, () => {
+  const result = host[extensionHostRunCheckedOperation](propertyObservation, checkedPropertyRequest({}, {}, "value"), () => {
     throw new Error("accepting observation unexpectedly reached core");
   }, () => {});
 
@@ -479,11 +480,7 @@ test("conflicting accepted hooks roll back every hook fact", () => {
   });
   const host = new ExtensionHost({}, { extensions: [first, second] });
 
-  const result = host[extensionHostRunCheckedOperation](propertyObservation, {
-    expression: {},
-    receiver: {},
-    propertyName: "value",
-  }, () => {
+  const result = host[extensionHostRunCheckedOperation](propertyObservation, checkedPropertyRequest({}, {}, "value"), () => {
     throw new Error("conflicting observation unexpectedly reached core");
   }, () => {});
 
@@ -510,11 +507,7 @@ for (const orderedFirstValue of ["first", "second"] as const) {
     const second = candidate("candidate-b", orderedFirstValue === "first" ? "second" : "first");
     const host = new ExtensionHost({}, { extensions: [first, second] });
 
-    const result = host[extensionHostRunCheckedOperation](propertyObservation, {
-      expression: {},
-      receiver: {},
-      propertyName: "value",
-    }, () => {
+    const result = host[extensionHostRunCheckedOperation](propertyObservation, checkedPropertyRequest({}, {}, "value"), () => {
       throw new Error("conflicting isolated candidates unexpectedly reached core");
     }, () => {});
 
@@ -568,11 +561,7 @@ for (const outcome of ["reject", "throw"] as const) {
       );
       const host = new ExtensionHost({}, { extensions: [failure, observer] });
 
-      const result = host[extensionHostRunCheckedOperation](propertyObservation, {
-        expression: {},
-        receiver: {},
-        propertyName: "value",
-      }, () => {
+      const result = host[extensionHostRunCheckedOperation](propertyObservation, checkedPropertyRequest({}, {}, "value"), () => {
         throw new Error("rejected observation unexpectedly reached core");
       }, () => {
         assert.fail("A rejected observation must not be applied.");
@@ -665,11 +654,7 @@ test("immediate observation apply failure rolls back hook facts, apply facts, an
   };
   const host = new ExtensionHost({}, { extensions: [extension] });
   const runChild = (): void => {
-    host[extensionHostRunCheckedOperation](propertyObservation, {
-      expression: childExpression,
-      receiver: {},
-      propertyName: "child",
-    }, () => {
+    host[extensionHostRunCheckedOperation](propertyObservation, checkedPropertyRequest(childExpression, {}, "child"), () => {
       childCoreRuns += 1;
       return { operation: operation("child.operation") };
     }, () => {});
@@ -726,6 +711,7 @@ test("duplicate primary operations fail during finalization without requiring a 
     operator: "+",
     left: {},
     right: {},
+    sourceResult: selectedSourceValue(subject, {}),
   }, () => ({ operation: operation("duplicate.operator", "operator") }), () => {});
 
   assert.throws(() => host.finalizeSemantics(), /multiple primary operations/);
@@ -1047,16 +1033,43 @@ function propertyReference(
   return { observation: propertyObservation, subject };
 }
 
+function selectedSourceValue(
+  expression: ExtensionFactSubject,
+  type: ExtensionFactSubject,
+): SelectedSourceValueEvidence {
+  return Object.freeze({ expression, type });
+}
+
+function checkedPropertyRequest(
+  expression: ExtensionFactSubject,
+  receiver: ExtensionFactSubject,
+  propertyName: string,
+  target?: string,
+): CheckedPropertyAccessMappingRequest {
+  return Object.freeze({
+    expression,
+    receiver,
+    propertyName,
+    sourceReceiver: selectedSourceValue(receiver, {}),
+    sourceResult: selectedSourceValue(expression, {}),
+    ...(target === undefined ? {} : { target }),
+  });
+}
+
 function retainPropertyOperation(
   host: ExtensionHost,
   expression: ExtensionFactSubject,
   dependency?: CheckedOperationReference,
 ): void {
-  host[extensionHostRunCheckedOperation](propertyObservation, {
-    expression,
-    receiver: dependency?.subject ?? {},
-    propertyName: "value",
-  }, () => ({ operation: operation("retained.property") }), () => {}, {}, undefined, dependency === undefined ? [] : [dependency]);
+  host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest(expression, dependency?.subject ?? {}, "value"),
+    () => ({ operation: operation("retained.property") }),
+    () => {},
+    {},
+    undefined,
+    dependency === undefined ? [] : [dependency],
+  );
 }
 
 function runPropertyOperation(
@@ -1069,12 +1082,7 @@ function runPropertyOperation(
 ): ExtensionObservationResult<CheckedOperationMappingResult> {
   return host[extensionHostRunCheckedOperation](
     propertyObservation,
-    {
-      expression,
-      receiver,
-      propertyName,
-      target,
-    },
+    checkedPropertyRequest(expression, receiver, propertyName, target),
     () => {
       throw new Error("provider-owned checked property operation reached core");
     },

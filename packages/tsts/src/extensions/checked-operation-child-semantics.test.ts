@@ -153,6 +153,7 @@ function selectedFact(
   return {
     ...selection,
     argumentConversions: [argumentConversionSlot(0, 0)],
+    sourceArgumentBindings: request.sourceArgumentBindings ?? [],
     ...(request.sourceSelectedMethodTypeArguments === undefined ? {} : {
       sourceSelectedMethodTypeArguments: request.sourceSelectedMethodTypeArguments,
     }),
@@ -164,14 +165,11 @@ function selectedFact(
     }),
     ...(request.sourceSelectedSignature === undefined ? {} : { sourceSignature: request.sourceSelectedSignature }),
     ...(request.sourceSelectedDeclaration === undefined ? {} : { sourceDeclaration: request.sourceSelectedDeclaration }),
-    ...(request.sourceCalleeSymbol === undefined ? {} : { sourceCalleeSymbol: request.sourceCalleeSymbol }),
-    ...(request.sourceCalleeDeclaration === undefined ? {} : { sourceCalleeDeclaration: request.sourceCalleeDeclaration }),
-    ...(request.sourceSelectedCalleeSymbol === undefined ? {} : { sourceSelectedCalleeSymbol: request.sourceSelectedCalleeSymbol }),
-    ...(request.sourceSelectedCalleeDeclaration === undefined ? {} : { sourceSelectedCalleeDeclaration: request.sourceSelectedCalleeDeclaration }),
-    ...(request.sourceReturnType === undefined ? {} : { sourceReturnType: request.sourceReturnType }),
+    sourceCallee: request.sourceCallee,
+    sourceArguments: request.sourceArguments,
+    sourceResult: request.sourceResult,
     ...(request.optionalChain === undefined ? {} : { sourceOptionalChain: request.optionalChain }),
     ...(request.sourceReceiver === undefined ? {} : { sourceReceiver: request.sourceReceiver }),
-    ...(request.sourceReceiverType === undefined ? {} : { sourceReceiverType: request.sourceReceiverType }),
   };
 }
 
