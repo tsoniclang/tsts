@@ -1,5 +1,7 @@
 import type {
   ArgumentPassingMode,
+  CheckedAccessMode,
+  CheckedCallKind,
   RuntimeCarrierProvenance,
   SourceSelectedCallArgumentBinding,
   SelectedTargetSignatureFact,
@@ -155,6 +157,7 @@ export interface CheckedCallMappingRequest {
   readonly call: ExtensionFactSubject;
   readonly callee: ExtensionFactSubject;
   readonly arguments: readonly ExtensionFactSubject[];
+  readonly callKind: CheckedCallKind;
   readonly sourceSelectedSignature?: ExtensionFactSubject;
   readonly sourceSelectedDeclaration?: ExtensionFactSubject;
   readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
@@ -181,6 +184,8 @@ export interface CheckedPropertyAccessMappingRequest {
   readonly expression: ExtensionFactSubject;
   readonly receiver: ExtensionFactSubject;
   readonly propertyName: string;
+  readonly accessMode: CheckedAccessMode;
+  readonly callCallee: boolean;
   readonly sourceReceiver: SelectedSourceValueEvidence;
   readonly sourceResult: SelectedSourceValueEvidence;
   readonly optionalChain?: boolean;
@@ -191,6 +196,8 @@ export interface CheckedElementAccessMappingRequest {
   readonly expression: ExtensionFactSubject;
   readonly receiver: ExtensionFactSubject;
   readonly argument: ExtensionFactSubject;
+  readonly accessMode: CheckedAccessMode;
+  readonly callCallee: boolean;
   readonly sourceReceiver: SelectedSourceValueEvidence;
   readonly sourceArgument: SelectedSourceValueEvidence;
   readonly sourceResult: SelectedSourceValueEvidence;

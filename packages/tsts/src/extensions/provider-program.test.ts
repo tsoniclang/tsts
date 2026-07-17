@@ -3000,9 +3000,13 @@ test("repeated checked property observations preserve exact source result proven
     recordExtensionCheckedPropertyAccessMapping(
       checker,
       iteratorRequest.expression as GoPtr<Node>,
-      iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-      iteratorRequest.sourceResult.type as GoPtr<Type>,
-      iteratorRequest.sourceReceiver.type as GoPtr<Type>,
+      {
+        selectedSymbol: iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
+        resultType: iteratorRequest.sourceResult.type as GoPtr<Type>,
+        receiverType: iteratorRequest.sourceReceiver.type as GoPtr<Type>,
+        accessMode: iteratorRequest.accessMode,
+        callCallee: iteratorRequest.callCallee,
+      },
     );
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
     assert.equal(observedRequests.length, mapperRequestCount);
@@ -3021,9 +3025,13 @@ test("repeated checked property observations preserve exact source result proven
     recordExtensionCheckedPropertyAccessMapping(
       checker,
       firstValueRequest.expression as GoPtr<Node>,
-      firstValueRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-      structurallyEquivalentResultType,
-      firstValueRequest.sourceReceiver.type as GoPtr<Type>,
+      {
+        selectedSymbol: firstValueRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
+        resultType: structurallyEquivalentResultType,
+        receiverType: firstValueRequest.sourceReceiver.type as GoPtr<Type>,
+        accessMode: firstValueRequest.accessMode,
+        callCallee: firstValueRequest.callCallee,
+      },
     );
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
     assert.ok(
@@ -3161,9 +3169,13 @@ test("repeated unique-symbol property results use their selected declaration ide
     recordExtensionCheckedPropertyAccessMapping(
       checker,
       iteratorRequest.expression as GoPtr<Node>,
-      iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-      repeatedSourceResultType,
-      iteratorRequest.sourceReceiver.type as GoPtr<Type>,
+      {
+        selectedSymbol: iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
+        resultType: repeatedSourceResultType,
+        receiverType: iteratorRequest.sourceReceiver.type as GoPtr<Type>,
+        accessMode: iteratorRequest.accessMode,
+        callCallee: iteratorRequest.callCallee,
+      },
     );
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
     assert.ok(
@@ -3176,9 +3188,13 @@ test("repeated unique-symbol property results use their selected declaration ide
     recordExtensionCheckedPropertyAccessMapping(
       checker,
       iteratorRequest.expression as GoPtr<Node>,
-      iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-      otherSourceResultType,
-      iteratorRequest.sourceReceiver.type as GoPtr<Type>,
+      {
+        selectedSymbol: iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
+        resultType: otherSourceResultType,
+        receiverType: iteratorRequest.sourceReceiver.type as GoPtr<Type>,
+        accessMode: iteratorRequest.accessMode,
+        callCallee: iteratorRequest.callCallee,
+      },
     );
   } finally {
     done();
@@ -3470,11 +3486,15 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
     recordExtensionCheckedElementAccessMapping(
       checker,
       firstRequest.expression as GoPtr<Node>,
-      firstRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-      firstRequest.sourceResult.type as GoPtr<Type>,
-      firstRequest.sourceSelectedElementIndex,
-      firstRequest.sourceReceiver.type as GoPtr<Type>,
-      firstRequest.sourceArgument.type as GoPtr<Type>,
+      {
+        selectedSymbol: firstRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
+        resultType: firstRequest.sourceResult.type as GoPtr<Type>,
+        ...(firstRequest.sourceSelectedElementIndex === undefined ? {} : { selectedElementIndex: firstRequest.sourceSelectedElementIndex }),
+        receiverType: firstRequest.sourceReceiver.type as GoPtr<Type>,
+        argumentType: firstRequest.sourceArgument.type as GoPtr<Type>,
+        accessMode: firstRequest.accessMode,
+        callCallee: firstRequest.callCallee,
+      },
     );
     assert.equal(observedRequests.at(-1)?.sourceSelectedElementIndex, 1);
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
@@ -3483,11 +3503,15 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
     recordExtensionCheckedElementAccessMapping(
       checker,
       firstRequest.expression as GoPtr<Node>,
-      firstRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-      firstRequest.sourceResult.type as GoPtr<Type>,
-      firstRequest.sourceSelectedElementIndex,
-      firstRequest.sourceReceiver.type as GoPtr<Type>,
-      firstRequest.sourceArgument.type as GoPtr<Type>,
+      {
+        selectedSymbol: firstRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
+        resultType: firstRequest.sourceResult.type as GoPtr<Type>,
+        ...(firstRequest.sourceSelectedElementIndex === undefined ? {} : { selectedElementIndex: firstRequest.sourceSelectedElementIndex }),
+        receiverType: firstRequest.sourceReceiver.type as GoPtr<Type>,
+        argumentType: firstRequest.sourceArgument.type as GoPtr<Type>,
+        accessMode: firstRequest.accessMode,
+        callCallee: firstRequest.callCallee,
+      },
     );
   } finally {
     done();

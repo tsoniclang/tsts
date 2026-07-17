@@ -17,6 +17,7 @@ type RequireAllTrue<T extends readonly true[]> = T;
 type CallField = "call"
   | "callee"
   | "arguments"
+  | "callKind"
   | "sourceSelectedSignature"
   | "sourceSelectedDeclaration"
   | "sourceSelectedMethodTypeArguments"
@@ -32,6 +33,8 @@ type CallField = "call"
 type PropertyField = "expression"
   | "receiver"
   | "propertyName"
+  | "accessMode"
+  | "callCallee"
   | "sourceReceiver"
   | "sourceResult"
   | "optionalChain"
@@ -39,6 +42,8 @@ type PropertyField = "expression"
 type ElementField = "expression"
   | "receiver"
   | "argument"
+  | "accessMode"
+  | "callCallee"
   | "sourceReceiver"
   | "sourceArgument"
   | "sourceResult"
@@ -116,6 +121,7 @@ function compareCallRequests(left: CheckedCallMappingRequest, right: CheckedCall
   compareIdentity(differences, "call", left.call, right.call);
   compareIdentity(differences, "callee", left.callee, right.callee);
   compareArray(differences, "arguments", left.arguments, right.arguments, Object.is);
+  compareIdentity(differences, "callKind", left.callKind, right.callKind);
   compareIdentity(differences, "sourceSelectedSignature", left.sourceSelectedSignature, right.sourceSelectedSignature);
   compareIdentity(differences, "sourceSelectedDeclaration", left.sourceSelectedDeclaration, right.sourceSelectedDeclaration);
   compareArray(differences, "sourceSelectedMethodTypeArguments", left.sourceSelectedMethodTypeArguments, right.sourceSelectedMethodTypeArguments, selectedMethodTypeArgumentEquals);
@@ -134,6 +140,8 @@ function comparePropertyRequests(left: CheckedPropertyAccessMappingRequest, righ
   compareIdentity(differences, "expression", left.expression, right.expression);
   compareIdentity(differences, "receiver", left.receiver, right.receiver);
   compareIdentity(differences, "propertyName", left.propertyName, right.propertyName);
+  compareIdentity(differences, "accessMode", left.accessMode, right.accessMode);
+  compareIdentity(differences, "callCallee", left.callCallee, right.callCallee);
   compareSelectedSourceValueEvidence(differences, "sourceReceiver", left.sourceReceiver, right.sourceReceiver);
   compareSelectedSourceValueEvidence(differences, "sourceResult", left.sourceResult, right.sourceResult);
   compareIdentity(differences, "optionalChain", left.optionalChain, right.optionalChain);
@@ -144,6 +152,8 @@ function compareElementRequests(left: CheckedElementAccessMappingRequest, right:
   compareIdentity(differences, "expression", left.expression, right.expression);
   compareIdentity(differences, "receiver", left.receiver, right.receiver);
   compareIdentity(differences, "argument", left.argument, right.argument);
+  compareIdentity(differences, "accessMode", left.accessMode, right.accessMode);
+  compareIdentity(differences, "callCallee", left.callCallee, right.callCallee);
   compareSelectedSourceValueEvidence(differences, "sourceReceiver", left.sourceReceiver, right.sourceReceiver);
   compareSelectedSourceValueEvidence(differences, "sourceArgument", left.sourceArgument, right.sourceArgument);
   compareSelectedSourceValueEvidence(differences, "sourceResult", left.sourceResult, right.sourceResult);

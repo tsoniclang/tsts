@@ -2,6 +2,7 @@ import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { hasExtensionCheckedOperationHost, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation, retainExtensionCheckedIdentifierCalleeSelection } from "../../../extensions/checker-integration.js";
 import { ExtensionObservationPoint } from "../../../extensions/observations.js";
+import type { CheckedAccessMode } from "../../../extensions/facts.js";
 import { NewGoStructMap } from "../../../go/compat.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
@@ -5576,20 +5577,25 @@ function recordSelectedElementAccessEvidence(
   sourceResultType: GoPtr<Type>,
 ): void {
   const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedElementAccess);
+  const callCallee = Checker_isMethodAccessForCall(receiver, node);
   const retainCallReceiverEvidence = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall)
-    && Checker_isMethodAccessForCall(receiver, node);
+    && callCallee;
   if (!accessOwned && !retainCallReceiverEvidence) {
     return;
   }
+  const selectedElementIndex = getSelectedFixedTupleElementIndex(selected.receiverType, selected.argumentType);
   recordExtensionCheckedElementAccessMapping(
     receiver,
     node,
-    selected.selectedSymbol,
-    sourceResultType,
-    getSelectedFixedTupleElementIndex(selected.receiverType, selected.argumentType),
-    selected.receiverType,
-    selected.argumentType,
-    retainCallReceiverEvidence,
+    {
+      selectedSymbol: selected.selectedSymbol,
+      resultType: sourceResultType,
+      ...(selectedElementIndex === undefined ? {} : { selectedElementIndex }),
+      receiverType: selected.receiverType,
+      argumentType: selected.argumentType,
+      accessMode: checkedAccessMode(node),
+      callCallee,
+    },
   );
 }
 
@@ -6585,8 +6591,9 @@ function selectedPropertyAccessTypes(receiver: GoPtr<Checker>, node: GoPtr<Node>
 
 function recordSelectedPropertyAccessEvidence(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceReceiverType: GoPtr<Type>, sourceResultType: GoPtr<Type>): void {
   const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedPropertyAccess);
+  const callCallee = Checker_isMethodAccessForCall(receiver, node);
   const retainCallReceiverEvidence = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall)
-    && Checker_isMethodAccessForCall(receiver, node);
+    && callCallee;
   if (!accessOwned && !retainCallReceiverEvidence) {
     return;
   }
@@ -6594,11 +6601,27 @@ function recordSelectedPropertyAccessEvidence(receiver: GoPtr<Checker>, node: Go
   recordExtensionCheckedPropertyAccessMapping(
     receiver,
     node,
-    Checker_getResolvedSymbolOrNil(receiver, node),
-    sourceResultType,
-    selectedReceiverType,
-    retainCallReceiverEvidence,
+    {
+      selectedSymbol: Checker_getResolvedSymbolOrNil(receiver, node),
+      resultType: sourceResultType,
+      receiverType: selectedReceiverType,
+      accessMode: checkedAccessMode(node),
+      callCallee,
+    },
   );
+}
+
+function checkedAccessMode(node: GoPtr<Node>): CheckedAccessMode {
+  switch (getAssignmentTargetKind(node)) {
+    case AssignmentKindNone:
+      return "read";
+    case AssignmentKindDefinite:
+      return "write";
+    case AssignmentKindCompound:
+      return "read-write";
+    default:
+      throw new Error("TS-Go returned an unknown checked access assignment kind.");
+  }
 }
 
 /**

@@ -13,6 +13,8 @@ import type {
   CheckedCallMappingResult,
   CheckedConversionMappingRequest,
   CheckedConversionMappingResult,
+  CheckedElementAccessMappingRequest,
+  CheckedPropertyAccessMappingRequest,
   ExtensionObservationResult,
 } from "./observations.js";
 import type {
@@ -76,6 +78,7 @@ test("retained call-argument conversion requests snapshot target values and pres
       selectedType,
     }],
     sourceSelectedSignatureParameters: [sourceParameter],
+    sourceCallKind: "call" as const,
     sourceSignature,
     sourceCallee: sourceValue(callee, {}),
     sourceArguments: [sourceValue(expression, source)],
@@ -201,6 +204,7 @@ test("retained selected-signature results are detached, deeply frozen, and idemp
     call,
     callee,
     arguments: [],
+    callKind: "call",
     sourceCallee: sourceValue(callee, {}),
     sourceArguments: [],
     sourceResult: sourceValue(call, {}),
@@ -413,6 +417,7 @@ test("structurally equal call-argument target values remain one checked request 
         },
         argumentConversions: [slot],
         sourceArgumentBindings: [sourceBinding],
+        sourceCallKind: "call",
         targetTypeArguments: [{ kind: "array", element: { kind: "source-primitive", name: "int32" } }],
         sourceSignature,
         sourceCallee: sourceValue(callee, callee),
@@ -704,6 +709,63 @@ test("checked responses reject undefined and malformed operations precisely", ()
   );
 });
 
+test("checked member request snapshots reject malformed exact use evidence", () => {
+  const expression = {};
+  const receiver = {};
+  const argument = {};
+  const callee = {};
+  const propertyRequest: CheckedPropertyAccessMappingRequest = {
+    expression,
+    receiver,
+    propertyName: "value",
+    accessMode: "read",
+    callCallee: false,
+    sourceReceiver: sourceValue(receiver, {}),
+    sourceResult: sourceValue(expression, {}),
+  };
+  const elementRequest: CheckedElementAccessMappingRequest = {
+    expression,
+    receiver,
+    argument,
+    accessMode: "read",
+    callCallee: false,
+    sourceReceiver: sourceValue(receiver, {}),
+    sourceArgument: sourceValue(argument, {}),
+    sourceResult: sourceValue(expression, {}),
+  };
+  const callRequest: CheckedCallMappingRequest = {
+    call: expression,
+    callee,
+    arguments: [],
+    callKind: "call",
+    sourceCallee: sourceValue(callee, {}),
+    sourceArguments: [],
+    sourceResult: sourceValue(expression, {}),
+  };
+
+  assert.throws(
+    () => snapshotCheckedOperationRequest(ExtensionObservationPoint.mapCheckedPropertyAccess, {
+      ...propertyRequest,
+      accessMode: "execute",
+    } as unknown as CheckedPropertyAccessMappingRequest),
+    /accessMode must be 'read', 'write', or 'read-write'/,
+  );
+  assert.throws(
+    () => snapshotCheckedOperationRequest(ExtensionObservationPoint.mapCheckedElementAccess, {
+      ...elementRequest,
+      callCallee: "yes",
+    } as unknown as CheckedElementAccessMappingRequest),
+    /callCallee.*boolean/,
+  );
+  assert.throws(
+    () => snapshotCheckedOperationRequest(ExtensionObservationPoint.mapCheckedCall, {
+      ...callRequest,
+      callKind: "invoke",
+    } as unknown as CheckedCallMappingRequest),
+    /callKind must be 'call' or 'construct'/,
+  );
+});
+
 test("call-argument request snapshots reject structurally equal non-canonical slots", () => {
   const canonicalSlot = argumentConversionSlot(0, 0);
   const nonCanonicalSlot = argumentConversionSlot(0, 0);
@@ -751,6 +813,7 @@ test("call-argument request snapshots reject structurally equal non-canonical sl
         selectedArgumentType: {},
         selectedParameterType: {},
       }],
+      sourceCallKind: "call",
       sourceCallee: sourceValue({}, {}),
       sourceArguments: [sourceValue({}, {})],
       sourceResult: sourceValue({}, {}),
@@ -991,6 +1054,7 @@ test("one request snapshot cache reuses selected signatures and their target par
       selectedArgumentType: sourceParameters[slot.sourceArgumentIndex]!.type,
       selectedParameterType: sourceParameters[slot.targetParameterIndex]!.type,
     })),
+    sourceCallKind: "call",
     sourceCallee: sourceValue({}, {}),
     sourceArguments: sourceParameters.map((parameter, index) => sourceValue({ index }, parameter.type)),
     sourceResult: sourceValue({}, {}),
@@ -1101,6 +1165,7 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
         selectedArgumentType: dependencyExpression,
         selectedParameterType: targetParameter.type,
       }],
+      sourceCallKind: "call",
       sourceCallee: sourceValue({}, {}),
       sourceArguments: [sourceValue(dependencyExpression, dependencyExpression)],
       sourceResult: sourceValue(dependencyCall, {}),

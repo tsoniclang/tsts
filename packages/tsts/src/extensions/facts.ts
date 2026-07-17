@@ -193,6 +193,10 @@ export interface SourceSelectedMethodTypeArgument {
 
 export type SourceSelectedSignatureKind = "resolved" | "untyped" | "error" | "silent-never";
 
+export type CheckedCallKind = "call" | "construct";
+
+export type CheckedAccessMode = "read" | "write" | "read-write";
+
 export interface SourceSelectedSignatureParameter {
   readonly parameterIndex: number;
   readonly parameterName: string;
@@ -248,6 +252,7 @@ export interface SelectedTargetSignatureFact extends TargetSignatureSelection {
   readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
   readonly sourceSelectedSignatureParameters?: readonly SourceSelectedSignatureParameter[];
   readonly sourceSelectedSignatureKind?: SourceSelectedSignatureKind;
+  readonly sourceCallKind: CheckedCallKind;
   readonly sourceSignature?: ExtensionFactSubject;
   readonly sourceDeclaration?: ExtensionFactSubject;
   readonly sourceCallee: SelectedSourceValueEvidence;
@@ -282,6 +287,8 @@ export interface TargetOperationProvenance {
   readonly sourceResultType?: ExtensionFactSubject;
   readonly sourceReceiverType?: ExtensionFactSubject;
   readonly sourceOptionalChain?: boolean;
+  readonly sourceAccessMode?: CheckedAccessMode;
+  readonly sourceCallCallee?: boolean;
 }
 
 export interface FlowStateFact {
@@ -472,6 +479,7 @@ export function selectedTargetSignatureEquals(left: SelectedTargetSignatureFact,
     && sourceSelectedMethodTypeArgumentArrayEquals(left.sourceSelectedMethodTypeArguments, right.sourceSelectedMethodTypeArguments)
     && sourceSelectedSignatureParameterArrayEquals(left.sourceSelectedSignatureParameters, right.sourceSelectedSignatureParameters)
     && left.sourceSelectedSignatureKind === right.sourceSelectedSignatureKind
+    && left.sourceCallKind === right.sourceCallKind
     && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
     && left.sourceSignature === right.sourceSignature
     && left.sourceDeclaration === right.sourceDeclaration
@@ -845,7 +853,9 @@ function optionalTargetOperationProvenanceEquals(left: TargetOperationProvenance
     && left.sourceSelectedSignature === right.sourceSelectedSignature
     && left.sourceResultType === right.sourceResultType
     && left.sourceReceiverType === right.sourceReceiverType
-    && left.sourceOptionalChain === right.sourceOptionalChain;
+    && left.sourceOptionalChain === right.sourceOptionalChain
+    && left.sourceAccessMode === right.sourceAccessMode
+    && left.sourceCallCallee === right.sourceCallCallee;
 }
 
 function sourceSelectedMethodTypeArgumentArrayEquals(left: readonly SourceSelectedMethodTypeArgument[] | undefined, right: readonly SourceSelectedMethodTypeArgument[] | undefined): boolean {

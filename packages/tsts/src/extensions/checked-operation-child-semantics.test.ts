@@ -163,6 +163,7 @@ function selectedFact(
     ...(request.sourceSelectedSignatureKind === undefined ? {} : {
       sourceSelectedSignatureKind: request.sourceSelectedSignatureKind,
     }),
+    sourceCallKind: request.callKind,
     ...(request.sourceSelectedSignature === undefined ? {} : { sourceSignature: request.sourceSelectedSignature }),
     ...(request.sourceSelectedDeclaration === undefined ? {} : { sourceDeclaration: request.sourceSelectedDeclaration }),
     sourceCallee: request.sourceCallee,

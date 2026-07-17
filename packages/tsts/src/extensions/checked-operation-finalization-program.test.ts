@@ -157,6 +157,9 @@ test("normal checking finalizes generic receiver calls and property assignment f
   const receiverCalls = callRequests.filter((request) => request.sourceReceiver !== undefined);
   const receiverCallBySubject = new Map(receiverCalls.map((request) => [request.call, request]));
   const finalizedReceiverCalls = [...receiverCallBySubject.values()];
+  const finalizedCalls = [...new Map(callRequests.map((request) => [request.call, request])).values()];
+  assert.equal(finalizedCalls.filter((request) => request.callKind === "construct").length, 2);
+  assert.ok(finalizedCalls.filter((request) => request.callKind === "construct").every((request) => request.sourceReceiver === undefined));
   assert.equal(receiverCalls.length, 5);
   assert.equal(finalizedReceiverCalls.length, 5);
   assert.ok(finalizedReceiverCalls.every((request) => receiverCalls.filter((candidate) => candidate.call === request.call).length === 1));
@@ -178,6 +181,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
     assert.ok(selected.sourceReceiver?.expression === request.sourceReceiver?.expression, "Finalized call evidence must retain the exact receiver expression subject.");
     assert.ok(selected.sourceReceiver?.type === request.sourceReceiver?.type, "Finalized call evidence must retain the exact instantiated receiver type.");
     assert.equal(selected.sourceOptionalChain, request.optionalChain);
+    assert.equal(selected.sourceCallKind, request.callKind);
   }
   assert.ok(finalizedReceiverCalls.every((request) => {
     const selected = extensionHost.facts.get(request.call, selectedTargetSignatureFactKey);
@@ -200,6 +204,8 @@ test("normal checking finalizes generic receiver calls and property assignment f
   const optionalPropertyRequest = propertyRequests.find((request) => request.optionalChain === true);
   assert.ok(optionalPropertyRequest !== undefined);
   assert.equal(extensionHost.facts.get(optionalPropertyRequest.expression, targetOperationFactKey)?.provenance?.sourceOptionalChain, true);
+  assert.equal(extensionHost.facts.get(optionalPropertyRequest.expression, targetOperationFactKey)?.provenance?.sourceCallCallee, true);
+  assert.equal(extensionHost.facts.get(optionalPropertyRequest.expression, targetOperationFactKey)?.provenance?.sourceAccessMode, "read");
   const finalizedElementRequests = [...new Map(elementRequests.map((request) => [request.expression, request])).values()];
   assert.equal(finalizedElementRequests.length, 2);
   assert.ok(finalizedElementRequests.every((request) => request.sourceReceiver.type !== undefined));
@@ -207,7 +213,92 @@ test("normal checking finalizes generic receiver calls and property assignment f
   const optionalElementRequest = finalizedElementRequests.find((request) => request.optionalChain === true);
   assert.ok(optionalElementRequest !== undefined);
   assert.equal(extensionHost.facts.get(optionalElementRequest.expression, targetOperationFactKey)?.provenance?.sourceOptionalChain, true);
+  assert.equal(extensionHost.facts.get(optionalElementRequest.expression, targetOperationFactKey)?.provenance?.sourceCallCallee, false);
+  assert.equal(extensionHost.facts.get(optionalElementRequest.expression, targetOperationFactKey)?.provenance?.sourceAccessMode, "read");
   assert.ok(propertyRequests.some((request) => request.propertyName === "value"));
+});
+
+test("checked member requests retain exact access use without target-side AST inspection", () => {
+  const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
+  const elementRequests: CheckedElementAccessMappingRequest[] = [];
+  const extensionId = "acme-exact-access-use-extension";
+  const extension: CompilerExtension = {
+    identity: {
+      id: extensionId,
+      version: "1.0.0",
+      capabilityNamespace: extensionId,
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetSemanticProvider({
+        identity: {
+          id: `${extensionId}-provider`,
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "semantic",
+        },
+        mapCheckedPropertyAccess: (request) => {
+          propertyRequests.push(request);
+          return acceptObservation({ operation: operation(`property.${request.propertyName}.${request.accessMode}.${request.callCallee}`, "property") });
+        },
+        mapCheckedElementAccess: (request) => {
+          elementRequests.push(request);
+          return acceptObservation({ operation: operation(`element.${request.accessMode}.${request.callCallee}`, "indexer") });
+        },
+        mapCheckedCall: () => acceptObservation({ kind: "source" }),
+        mapCheckedOperator: () => acceptObservation({ operation: operation("operator", "operator") }),
+      }), true);
+    },
+  };
+  const { program, programOptions, extensionHost } = createLifecycleProgram(extension, `
+    declare class AccessBox {
+      value: number;
+      update(): void;
+      handler: () => void;
+    }
+    declare const box: AccessBox;
+    declare const table: { [key: string]: () => void };
+    declare const numbers: { [key: string]: number };
+
+    box.value;
+    box.value = 1;
+    box.value += 1;
+    box.update();
+    const update = box.update;
+    box.handler();
+    const handler = box.handler;
+    box?.update();
+    table["go"]();
+    const indexed = table["go"];
+    numbers["x"] = 1;
+    numbers["x"] += 1;
+  `);
+
+  assertCleanProgram(program);
+  finalizeExtensionSemantics(programOptions);
+  assert.equal(extensionHost.diagnostics.all().length, 0);
+
+  assert.deepEqual(propertyRequests.map((request) => [request.propertyName, request.accessMode, request.callCallee, request.optionalChain === true]), [
+    ["value", "read", false, false],
+    ["value", "write", false, false],
+    ["value", "read-write", false, false],
+    ["update", "read", true, false],
+    ["update", "read", false, false],
+    ["handler", "read", true, false],
+    ["handler", "read", false, false],
+    ["update", "read", true, true],
+  ]);
+  assert.deepEqual(elementRequests.map((request) => [request.accessMode, request.callCallee]), [
+    ["read", true],
+    ["read", false],
+    ["write", false],
+    ["read-write", false],
+  ]);
+  for (const request of [...propertyRequests, ...elementRequests]) {
+    const provenance = extensionHost.facts.get(request.expression, targetOperationFactKey)?.provenance;
+    assert.equal(provenance?.sourceAccessMode, request.accessMode);
+    assert.equal(provenance?.sourceCallCallee, request.callCallee);
+  }
 });
 
 test("a call-only provider retains exact property-callee receiver evidence without owning all properties", () => {

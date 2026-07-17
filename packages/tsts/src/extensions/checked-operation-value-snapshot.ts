@@ -52,6 +52,7 @@ export type CheckedOperationSnapshotFieldCoverage = RequireAllSnapshots<[
     | "sourceSelectedMethodTypeArguments"
     | "sourceSelectedSignatureParameters"
     | "sourceSelectedSignatureKind"
+    | "sourceCallKind"
     | "sourceArgumentBindings"
     | "sourceSignature"
     | "sourceDeclaration"
@@ -99,7 +100,9 @@ export type CheckedOperationSnapshotFieldCoverage = RequireAllSnapshots<[
     | "sourceSelectedSignature"
     | "sourceResultType"
     | "sourceReceiverType"
-    | "sourceOptionalChain">,
+    | "sourceOptionalChain"
+    | "sourceAccessMode"
+    | "sourceCallCallee">,
   AllFieldsSnapshotted<ProviderDeclarationIdentity,
     | "providerId"
     | "providerVersion"
@@ -287,6 +290,7 @@ function snapshotCallRequest(request: CheckedCallMappingRequest, path: SnapshotP
     "call",
     "callee",
     "arguments",
+    "callKind",
     "sourceSelectedSignature",
     "sourceSelectedDeclaration",
     "sourceSelectedMethodTypeArguments",
@@ -303,11 +307,13 @@ function snapshotCallRequest(request: CheckedCallMappingRequest, path: SnapshotP
   if (request.sourceArguments.length !== request.arguments.length) {
     throw new Error(`Invalid CheckedCallMappingRequest at '${formatSnapshotPath(path)}': sourceArguments length ${request.sourceArguments.length} does not match arguments length ${request.arguments.length}.`);
   }
+  assertCheckedCallKind(request.callKind, childSnapshotPath(path, "callKind"));
   const sourceArguments = captureArray(request.sourceArguments, "CheckedCallMappingRequest sourceArguments", childSnapshotPath(path, "sourceArguments"));
   return Object.freeze({
     call: request.call,
     callee: request.callee,
     arguments: Object.freeze([...request.arguments]),
+    callKind: request.callKind,
     ...(request.sourceSelectedSignature === undefined ? {} : { sourceSelectedSignature: request.sourceSelectedSignature }),
     ...(request.sourceSelectedDeclaration === undefined ? {} : { sourceSelectedDeclaration: request.sourceSelectedDeclaration }),
     ...(request.sourceSelectedMethodTypeArguments === undefined ? {} : {
@@ -341,11 +347,15 @@ function snapshotCallRequest(request: CheckedCallMappingRequest, path: SnapshotP
 
 function snapshotPropertyRequest(request: CheckedPropertyAccessMappingRequest, path: SnapshotPath): CheckedPropertyAccessMappingRequest {
   assertRecord(request, "CheckedPropertyAccessMappingRequest", path);
-  assertExactOwnFields(request, ["expression", "receiver", "propertyName", "sourceReceiver", "sourceResult", "optionalChain", "target"], "CheckedPropertyAccessMappingRequest", path);
+  assertExactOwnFields(request, ["expression", "receiver", "propertyName", "accessMode", "callCallee", "sourceReceiver", "sourceResult", "optionalChain", "target"], "CheckedPropertyAccessMappingRequest", path);
+  assertCheckedAccessMode(request.accessMode, childSnapshotPath(path, "accessMode"));
+  assertBoolean(request.callCallee, "CheckedPropertyAccessMappingRequest callCallee", childSnapshotPath(path, "callCallee"));
   return Object.freeze({
     expression: request.expression,
     receiver: request.receiver,
     propertyName: request.propertyName,
+    accessMode: request.accessMode,
+    callCallee: request.callCallee,
     sourceReceiver: snapshotSelectedSourceValueEvidence(request.sourceReceiver, childSnapshotPath(path, "sourceReceiver")),
     sourceResult: snapshotSelectedSourceValueEvidence(request.sourceResult, childSnapshotPath(path, "sourceResult")),
     ...(request.optionalChain === undefined ? {} : { optionalChain: request.optionalChain }),
@@ -355,11 +365,15 @@ function snapshotPropertyRequest(request: CheckedPropertyAccessMappingRequest, p
 
 function snapshotElementRequest(request: CheckedElementAccessMappingRequest, path: SnapshotPath): CheckedElementAccessMappingRequest {
   assertRecord(request, "CheckedElementAccessMappingRequest", path);
-  assertExactOwnFields(request, ["expression", "receiver", "argument", "sourceReceiver", "sourceArgument", "sourceResult", "sourceSelectedElementIndex", "optionalChain", "target"], "CheckedElementAccessMappingRequest", path);
+  assertExactOwnFields(request, ["expression", "receiver", "argument", "accessMode", "callCallee", "sourceReceiver", "sourceArgument", "sourceResult", "sourceSelectedElementIndex", "optionalChain", "target"], "CheckedElementAccessMappingRequest", path);
+  assertCheckedAccessMode(request.accessMode, childSnapshotPath(path, "accessMode"));
+  assertBoolean(request.callCallee, "CheckedElementAccessMappingRequest callCallee", childSnapshotPath(path, "callCallee"));
   return Object.freeze({
     expression: request.expression,
     receiver: request.receiver,
     argument: request.argument,
+    accessMode: request.accessMode,
+    callCallee: request.callCallee,
     sourceReceiver: snapshotSelectedSourceValueEvidence(request.sourceReceiver, childSnapshotPath(path, "sourceReceiver")),
     sourceArgument: snapshotSelectedSourceValueEvidence(request.sourceArgument, childSnapshotPath(path, "sourceArgument")),
     sourceResult: snapshotSelectedSourceValueEvidence(request.sourceResult, childSnapshotPath(path, "sourceResult")),
@@ -626,6 +640,7 @@ function snapshotSelectedTargetSignature(
     "sourceSelectedMethodTypeArguments",
     "sourceSelectedSignatureParameters",
     "sourceSelectedSignatureKind",
+    "sourceCallKind",
     "sourceArgumentBindings",
     "sourceSignature",
     "sourceDeclaration",
@@ -648,6 +663,7 @@ function snapshotSelectedTargetSignature(
   const sourceSelectedMethodTypeArguments = selection.sourceSelectedMethodTypeArguments;
   const sourceSelectedSignatureParameters = selection.sourceSelectedSignatureParameters;
   const sourceSelectedSignatureKind = selection.sourceSelectedSignatureKind;
+  const sourceCallKind = selection.sourceCallKind;
   const sourceArgumentBindings = selection.sourceArgumentBindings;
   const sourceSignature = selection.sourceSignature;
   const sourceDeclaration = selection.sourceDeclaration;
@@ -663,6 +679,7 @@ function snapshotSelectedTargetSignature(
     && sourceSelectedSignatureKind !== "silent-never") {
     throw invalidEnumValueError("SelectedTargetSignatureFact sourceSelectedSignatureKind", sourceSelectedSignatureKind, childSnapshotPath(path, "sourceSelectedSignatureKind"));
   }
+  assertCheckedCallKind(sourceCallKind, childSnapshotPath(path, "sourceCallKind"));
   for (const [field, value] of [
     ["sourceSignature", sourceSignature],
     ["sourceDeclaration", sourceDeclaration],
@@ -687,6 +704,7 @@ function snapshotSelectedTargetSignature(
       sourceSelectedSignatureParameters: snapshotSignatureParameters(sourceSelectedSignatureParameters),
     }),
     ...(sourceSelectedSignatureKind === undefined ? {} : { sourceSelectedSignatureKind }),
+    sourceCallKind,
     sourceArgumentBindings: snapshotSelectedCallArgumentBindings(
       sourceArgumentBindings,
       childSnapshotPath(path, "sourceArgumentBindings"),
@@ -1233,7 +1251,7 @@ function snapshotTargetOperation(operation: TargetOperationFact, path: SnapshotP
 
 function snapshotOperationProvenance(provenance: TargetOperationProvenance, path: SnapshotPath): TargetOperationProvenance {
   assertRecord(provenance, "TargetOperationProvenance", path);
-  assertExactOwnFields(provenance, ["providerDeclaration", "sourceExpression", "sourceReceiver", "sourceCallee", "sourceSelectedSymbol", "sourceSelectedDeclaration", "sourceSelectedSignature", "sourceResultType", "sourceReceiverType", "sourceOptionalChain"], "TargetOperationProvenance", path);
+  assertExactOwnFields(provenance, ["providerDeclaration", "sourceExpression", "sourceReceiver", "sourceCallee", "sourceSelectedSymbol", "sourceSelectedDeclaration", "sourceSelectedSignature", "sourceResultType", "sourceReceiverType", "sourceOptionalChain", "sourceAccessMode", "sourceCallCallee"], "TargetOperationProvenance", path);
   const providerDeclaration = provenance.providerDeclaration;
   const sourceExpression = provenance.sourceExpression;
   const sourceReceiver = provenance.sourceReceiver;
@@ -1244,6 +1262,8 @@ function snapshotOperationProvenance(provenance: TargetOperationProvenance, path
   const sourceResultType = provenance.sourceResultType;
   const sourceReceiverType = provenance.sourceReceiverType;
   const sourceOptionalChain = provenance.sourceOptionalChain;
+  const sourceAccessMode = provenance.sourceAccessMode;
+  const sourceCallCallee = provenance.sourceCallCallee;
   for (const [field, value] of [
     ["sourceExpression", sourceExpression],
     ["sourceReceiver", sourceReceiver],
@@ -1261,6 +1281,12 @@ function snapshotOperationProvenance(provenance: TargetOperationProvenance, path
   if (sourceOptionalChain !== undefined) {
     assertBoolean(sourceOptionalChain, "TargetOperationProvenance sourceOptionalChain", childSnapshotPath(path, "sourceOptionalChain"));
   }
+  if (sourceAccessMode !== undefined) {
+    assertCheckedAccessMode(sourceAccessMode, childSnapshotPath(path, "sourceAccessMode"));
+  }
+  if (sourceCallCallee !== undefined) {
+    assertBoolean(sourceCallCallee, "TargetOperationProvenance sourceCallCallee", childSnapshotPath(path, "sourceCallCallee"));
+  }
   return Object.freeze({
     ...(providerDeclaration === undefined ? {} : {
       providerDeclaration: snapshotProviderDeclaration(providerDeclaration, childSnapshotPath(path, "providerDeclaration")),
@@ -1274,7 +1300,21 @@ function snapshotOperationProvenance(provenance: TargetOperationProvenance, path
     ...(sourceResultType === undefined ? {} : { sourceResultType }),
     ...(sourceReceiverType === undefined ? {} : { sourceReceiverType }),
     ...(sourceOptionalChain === undefined ? {} : { sourceOptionalChain }),
+    ...(sourceAccessMode === undefined ? {} : { sourceAccessMode }),
+    ...(sourceCallCallee === undefined ? {} : { sourceCallCallee }),
   });
+}
+
+function assertCheckedCallKind(value: unknown, path: SnapshotPath): asserts value is "call" | "construct" {
+  if (value !== "call" && value !== "construct") {
+    throw new Error(`Invalid CheckedCallMappingRequest at '${formatSnapshotPath(path)}': callKind must be 'call' or 'construct'.`);
+  }
+}
+
+function assertCheckedAccessMode(value: unknown, path: SnapshotPath): asserts value is "read" | "write" | "read-write" {
+  if (value !== "read" && value !== "write" && value !== "read-write") {
+    throw new Error(`Invalid checked access evidence at '${formatSnapshotPath(path)}': accessMode must be 'read', 'write', or 'read-write'.`);
+  }
 }
 
 function snapshotProviderDeclaration(declaration: ProviderDeclarationIdentity, path: SnapshotPath): ProviderDeclarationIdentity {

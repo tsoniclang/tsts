@@ -116,6 +116,8 @@ test("checked operations replay after lifecycle in deterministic dependency orde
       expression: property,
       receiver,
       propertyName: "value",
+      accessMode: "read",
+      callCallee: false,
       sourceReceiver: sourceValue(receiver, receiverType),
       sourceResult: sourceValue(property, {}),
       target: "acme",
@@ -218,6 +220,8 @@ test("unresolved checked operations produce one final diagnostic and no target f
       expression,
       receiver,
       propertyName: "missing",
+      accessMode: "read",
+      callCallee: false,
       sourceReceiver: sourceValue(receiver, receiverType),
       sourceResult: sourceValue(expression, {}),
       target: "acme",
@@ -318,6 +322,7 @@ test("assertion and call-argument conversions retain distinct slots for one expr
     },
     argumentConversions: [slot],
     sourceArgumentBindings: [selectedSourceBinding],
+    sourceCallKind: "call",
     sourceCallee: sourceValue({}, {}),
     sourceArguments: [sourceValue(expression, source)],
     sourceResult: sourceValue(call, {}),
@@ -582,6 +587,7 @@ test("one source expression can retain distinct canonical target conversion slot
       },
     ],
     sourceArgumentBindings: [firstSourceBinding],
+    sourceCallKind: "call",
     sourceCallee: sourceValue({}, {}),
     sourceArguments: [sourceValue(expression, expression)],
     sourceResult: sourceValue(call, {}),
@@ -671,6 +677,8 @@ test("conflicting checked result types fail closed instead of reusing stale evid
         expression,
         receiver,
         propertyName: "value",
+        accessMode: "read",
+        callCallee: false,
         sourceReceiver: sourceValue(receiver, receiverType),
         sourceResult: sourceValue(expression, sourceResultType),
         target: "acme",
@@ -695,6 +703,61 @@ test("conflicting checked result types fail closed instead of reusing stale evid
   assert.equal(host.facts.get(expression, targetOperationFactKey), undefined);
   assert.equal(host.finalized, false);
   assert.throws(() => host.finalizeSemantics(), /semantic finalization previously failed/);
+});
+
+test("conflicting checked member use evidence fails closed", () => {
+  const cases = [
+    {
+      field: "accessMode",
+      first: { accessMode: "read" as const, callCallee: false },
+      second: { accessMode: "write" as const, callCallee: false },
+    },
+    {
+      field: "callCallee",
+      first: { accessMode: "read" as const, callCallee: false },
+      second: { accessMode: "read" as const, callCallee: true },
+    },
+  ] as const;
+
+  for (const conflict of cases) {
+    const expression = {};
+    const receiver = {};
+    const sourceReceiver = sourceValue(receiver, {});
+    const sourceResult = sourceValue(expression, {});
+    const extension = lifecycleExtension({
+      property: () => acceptObservation({ operation: operation("box.value", "property") }),
+    });
+    const host = new ExtensionHost({}, { extensions: [extension], activeTarget: "acme" });
+    const run = (use: typeof conflict.first | typeof conflict.second): void => {
+      host[extensionHostRunCheckedOperation](
+        ExtensionObservationPoint.mapCheckedPropertyAccess,
+        {
+          expression,
+          receiver,
+          propertyName: "value",
+          ...use,
+          sourceReceiver,
+          sourceResult,
+          target: "acme",
+        },
+        () => {
+          throw new Error("owned property reached core");
+        },
+        (value, evidence) => {
+          host.facts.set(expression, targetOperationFactKey, value.operation, evidence);
+        },
+        { requireOwner: true },
+      );
+    };
+
+    run(conflict.first);
+    run(conflict.second);
+
+    assert.equal(host.facts.get(expression, targetOperationFactKey), undefined);
+    const diagnostics = host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "CHECKED_OPERATION_REQUEST_CONFLICT");
+    assert.equal(diagnostics.length, 1);
+    assert.deepEqual(diagnostics[0]?.evidence?.[0]?.details, [conflict.field]);
+  }
 });
 
 const selectedCallFactKey = defineExtensionFactKey<{ readonly id: string }>({
@@ -738,6 +801,7 @@ function checkedCallRequest(
     call,
     callee,
     arguments: Object.freeze([]),
+    callKind: "call",
     sourceArgumentBindings: Object.freeze([]),
     sourceCallee: sourceValue(callee, {}),
     sourceArguments: Object.freeze([]),

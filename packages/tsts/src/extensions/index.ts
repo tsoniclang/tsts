@@ -166,6 +166,8 @@ export type {
 export type {
   ArgumentPassingFact,
   ArgumentPassingMode,
+  CheckedAccessMode,
+  CheckedCallKind,
   AssociatedTypeFact,
   AttributeFact,
   ContextualTargetTypeFact,
