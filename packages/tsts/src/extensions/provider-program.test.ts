@@ -32,6 +32,7 @@ import {
   Program_GetTypeCheckerForFile,
 } from "../internal/compiler/program.js";
 import { Checker_GetAliasedSymbol } from "../internal/checker/checker/symbols.js";
+import { Checker_TypeToString } from "../internal/checker/printer.js";
 import { ResolvedModuleExtensionProviderVirtual, ResolvedModule_IsProviderVirtual } from "../internal/module/types.js";
 import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
@@ -317,38 +318,39 @@ test("provider declarations bind exact active source-global types while retainin
   const instantRequest = propertyRequests.find((request) => request.propertyName === "instant");
   const pendingRequest = propertyRequests.find((request) => request.propertyName === "pending");
   const profilePendingRequest = propertyRequests.find((request) => request.propertyName === "profilePending");
-  assert.ok(instantRequest?.sourceResultType !== undefined);
-  assert.ok(pendingRequest?.sourceResultType !== undefined);
-  assert.ok(profilePendingRequest?.sourceResultType !== undefined);
-  assert.equal(Type_Symbol(instantRequest.sourceResultType as GoPtr<Type>)?.Name, "ClockInstant");
-  assert.equal(Type_Symbol(pendingRequest.sourceResultType as GoPtr<Type>)?.Name, "PromiseLikeValue");
-  assert.equal(Type_Symbol(profilePendingRequest.sourceResultType as GoPtr<Type>)?.Name, "PromiseLikeValue");
+  assert.ok(instantRequest?.sourceResult.type !== undefined);
+  assert.ok(pendingRequest?.sourceResult.type !== undefined);
+  assert.ok(profilePendingRequest?.sourceResult.type !== undefined);
+  assert.equal(Type_Symbol(instantRequest.sourceResult.type as GoPtr<Type>)?.Name, "ClockInstant");
+  assert.equal(Type_Symbol(pendingRequest.sourceResult.type as GoPtr<Type>)?.Name, "PromiseLikeValue");
+  assert.equal(Type_Symbol(profilePendingRequest.sourceResult.type as GoPtr<Type>)?.Name, "PromiseLikeValue");
   for (const request of [instantRequest, pendingRequest, profilePendingRequest]) {
-    assert.ok(request.sourceSelectedSymbol !== undefined);
-    assert.ok(request.sourceSelectedDeclaration !== undefined);
-    const declarations = Type_Symbol(request.sourceResultType as GoPtr<Type>)?.Declarations ?? [];
+    assert.ok(request.sourceResult.selectedSymbol !== undefined);
+    assert.ok(request.sourceResult.selectedDeclaration !== undefined);
+    const declarations = Type_Symbol(request.sourceResult.type as GoPtr<Type>)?.Declarations ?? [];
     assert.ok(declarations.length > 0);
     assert.ok(declarations.every((declaration) => SourceFile_FileName(GetSourceFileOfNode(declaration)) === "/src/profile-0.d.ts"));
   }
   assert.equal(
-    extended.extensionHost.facts.get(instantRequest.sourceSelectedDeclaration, providerVirtualDeclarationFactKey)?.memberId,
+    extended.extensionHost.facts.get(instantRequest.sourceResult.selectedDeclaration, providerVirtualDeclarationFactKey)?.memberId,
     "Holder.instant",
   );
   assert.equal(
-    extended.extensionHost.facts.get(profilePendingRequest.sourceSelectedDeclaration, providerVirtualDeclarationFactKey)?.memberId,
+    extended.extensionHost.facts.get(profilePendingRequest.sourceResult.selectedDeclaration, providerVirtualDeclarationFactKey)?.memberId,
     "Holder.profilePending",
   );
-  assert.ok(propertyRequests.some((request) => request.propertyName === "toTicks"));
-  assert.ok(propertyRequests.some((request) => request.propertyName === "then"));
+  const selectedCallMemberNames = callRequests.map(selectedCallMemberName);
+  assert.ok(selectedCallMemberNames.includes("toTicks"), `Observed selected call members: ${JSON.stringify(selectedCallMemberNames)}`);
+  assert.ok(selectedCallMemberNames.includes("then"), `Observed selected call members: ${JSON.stringify(selectedCallMemberNames)}`);
   assert.ok(propertyRequests.some((request) => request.propertyName === "label"));
   assert.ok(callRequests.length >= 2);
-  const loadRequest = callRequests.find((request) => (request.sourceCalleeSymbol as Symbol | undefined)?.Name === "load");
+  const loadRequest = callRequests.find((request) => selectedCallMemberName(request) === "load");
   assert.ok(loadRequest?.sourceSelectedSignature !== undefined);
   assert.ok(loadRequest.sourceSelectedDeclaration !== undefined);
-  assert.ok(loadRequest.sourceCalleeDeclaration !== undefined);
-  assert.ok(loadRequest.sourceReturnType !== undefined);
-  assert.equal(Type_Symbol(loadRequest.sourceReturnType as GoPtr<Type>)?.Name, "PromiseLikeValue");
-  assert.ok((Type_Symbol(loadRequest.sourceReturnType as GoPtr<Type>)?.Declarations ?? []).every((declaration) =>
+  assert.ok(loadRequest.sourceCallee.selectedDeclaration !== undefined);
+  assert.ok(loadRequest.sourceResult.type !== undefined);
+  assert.equal(Type_Symbol(loadRequest.sourceResult.type as GoPtr<Type>)?.Name, "PromiseLikeValue");
+  assert.ok((Type_Symbol(loadRequest.sourceResult.type as GoPtr<Type>)?.Declarations ?? []).every((declaration) =>
     SourceFile_FileName(GetSourceFileOfNode(declaration)) === "/src/profile-0.d.ts"));
   assert.equal(
     extended.extensionHost.facts.get(loadRequest.sourceSelectedDeclaration, providerVirtualDeclarationFactKey)?.signatureId,
@@ -458,6 +460,7 @@ test("source-global provider references fail through exact source checking when 
 
 test("source-global provider references cannot be captured by provider-local declarations", () => {
   const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
+  const callRequests: CheckedCallMappingRequest[] = [];
   const { program, index } = createSourceGlobalProviderProgram({
     profiles: [sourceGlobalProfile("interface Holder { profileOnly(): number; }")],
     members: [{
@@ -477,17 +480,19 @@ test("source-global provider references cannot be captured by provider-local dec
       holder.profileHolder.profileOnly();
     `,
     onProperty: (request) => propertyRequests.push(request),
+    onCall: (request) => callRequests.push(request),
   });
 
   assertCleanProgram(program, index);
   assertCleanProviderVirtualFiles(program);
   const selected = propertyRequests.find((request) => request.propertyName === "profileHolder");
-  assert.ok(selected?.sourceResultType !== undefined);
-  const symbol = Type_Symbol(selected.sourceResultType as GoPtr<Type>);
+  assert.ok(selected?.sourceResult.type !== undefined);
+  const symbol = Type_Symbol(selected.sourceResult.type as GoPtr<Type>);
   assert.equal(symbol?.Name, "Holder");
   assert.ok((symbol?.Declarations ?? []).every((declaration) =>
     SourceFile_FileName(GetSourceFileOfNode(declaration)) === "/src/profile-0.d.ts"));
-  assert.ok(propertyRequests.some((request) => request.propertyName === "profileOnly"));
+  const selectedCallMemberNames = callRequests.map(selectedCallMemberName);
+  assert.ok(selectedCallMemberNames.includes("profileOnly"), `Observed selected call members: ${JSON.stringify(selectedCallMemberNames)}`);
 });
 
 test("source-global identities remain exact across disjoint same-module import slices in either order", () => {
@@ -549,8 +554,8 @@ test("source-global identities remain exact across disjoint same-module import s
     }]);
     const instantRequests = propertyRequests.filter((request) => request.propertyName === "instant");
     assert.equal(instantRequests.length, 2);
-    const firstType = instantRequests[0]?.sourceResultType as GoPtr<Type>;
-    const secondType = instantRequests[1]?.sourceResultType as GoPtr<Type>;
+    const firstType = instantRequests[0]?.sourceResult.type as GoPtr<Type>;
+    const secondType = instantRequests[1]?.sourceResult.type as GoPtr<Type>;
     assert.ok(firstType !== undefined);
     assert.ok(secondType !== undefined);
     assert.ok(Type_Symbol(firstType) === Type_Symbol(secondType), "Repeated source-profile return types must retain canonical symbol identity.");
@@ -1988,7 +1993,7 @@ test("provider virtual recursive declaration closure preserves acyclic class her
   assert.deepEqual(snapshots[0], snapshots[1]);
 });
 
-test("provider virtual generic member chains do not leave stale unresolved property diagnostics", () => {
+test("provider virtual generic member chains expose complete call evidence without checker re-entry", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
       import { List, Dictionary } from "@acme/public/collections.js";
@@ -2619,9 +2624,9 @@ test("checker records provider-owned target type argument facts on selected call
   assert.equal(observedCallRequest?.target, "acme");
   assert.ok(observedCallRequest?.sourceSelectedSignature !== undefined);
   assert.ok(observedCallRequest?.sourceSelectedDeclaration !== undefined);
-  assert.ok(observedCallRequest?.sourceCalleeSymbol !== undefined);
-  assert.ok(observedCallRequest?.sourceCalleeDeclaration !== undefined);
-  assert.ok(observedCallRequest?.sourceReturnType !== undefined);
+  assert.ok(observedCallRequest?.sourceCallee.symbol !== undefined);
+  assert.ok(observedCallRequest?.sourceCallee.declaration !== undefined);
+  assert.ok(observedCallRequest?.sourceResult.type !== undefined);
   assert.equal(selectedCall?.member.id, "Acme.Convert.ChangeType<T>(Acme.Int32)");
   assert.equal(selectedCall?.member.typeParameters?.length, 1);
   assert.equal(selectedCall?.targetTypeArguments?.length, 1);
@@ -2660,10 +2665,9 @@ test("checker exposes explicit selected source method type arguments on checked 
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
-    extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
+    extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request) => {
       observedTypeArgumentRequest = request;
       observedTypeArguments = request.sourceSelectedMethodTypeArguments;
-      observedTypeText = context.compiler.checker.typeToString(observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
     }))],
   });
 
@@ -2671,6 +2675,7 @@ test("checker exposes explicit selected source method type arguments on checked 
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
   assertCleanProgram(program, index);
+  observedTypeText = checkedTypeToString(program, index, observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Finalization must return the attached extension host.");
@@ -2682,13 +2687,13 @@ test("checker exposes explicit selected source method type arguments on checked 
   assert.ok(observedTypeArguments?.[0]?.selectedType !== undefined);
   assert.ok(observedTypeArguments?.[0]?.explicitTypeNode === (Node_TypeArguments(call) ?? [])[0], "Explicit type-argument evidence must retain the exact authored type node.");
   assert.ok(observedTypeArgumentRequest?.call === call, "Type-argument evidence must retain the exact checked call.");
-  assert.ok(observedTypeArgumentRequest?.sourceReturnType === observedTypeArguments?.[0]?.selectedType, "The checked return type must retain the selected method type-argument identity.");
+  assert.ok(observedTypeArgumentRequest?.sourceResult.type === observedTypeArguments?.[0]?.selectedType, "The checked return type must retain the selected method type-argument identity.");
   assert.equal(observedTypeText, "Result");
   assert.ok(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.selectedType === observedTypeArguments?.[0]?.selectedType, "Selected call facts must retain selected method type identity.");
   assert.ok(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode === observedTypeArguments?.[0]?.explicitTypeNode, "Selected call facts must retain explicit type-node identity.");
-  assert.ok(selectedCall?.sourceCalleeSymbol === observedTypeArgumentRequest?.sourceCalleeSymbol, "Selected call facts must retain authored callee symbol identity.");
-  assert.ok(selectedCall?.sourceCalleeDeclaration === observedTypeArgumentRequest?.sourceCalleeDeclaration, "Selected call facts must retain authored callee declaration identity.");
-  assert.ok(selectedCall?.sourceReturnType === observedTypeArgumentRequest?.sourceReturnType, "Selected call facts must retain source return type identity.");
+  assert.ok(selectedCall?.sourceCallee.symbol === observedTypeArgumentRequest?.sourceCallee.symbol, "Selected call facts must retain authored callee symbol identity.");
+  assert.ok(selectedCall?.sourceCallee.declaration === observedTypeArgumentRequest?.sourceCallee.declaration, "Selected call facts must retain authored callee declaration identity.");
+  assert.ok(selectedCall?.sourceResult.type === observedTypeArgumentRequest?.sourceResult.type, "Selected call facts must retain source return type identity.");
 });
 
 test("checker exposes inferred selected source method type arguments on checked calls", () => {
@@ -2722,9 +2727,8 @@ test("checker exposes inferred selected source method type arguments on checked 
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
-    extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
+    extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request) => {
       observedTypeArguments = request.sourceSelectedMethodTypeArguments;
-      observedTypeText = context.compiler.checker.typeToString(observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
     }))],
   });
 
@@ -2732,6 +2736,7 @@ test("checker exposes inferred selected source method type arguments on checked 
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
   assertCleanProgram(program, index);
+  observedTypeText = checkedTypeToString(program, index, observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Finalization must return the attached extension host.");
@@ -2782,9 +2787,8 @@ test("checker exposes explicit selected source method type arguments on callback
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
-    extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
+    extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request) => {
       observedTypeArguments = request.sourceSelectedMethodTypeArguments;
-      observedTypeText = context.compiler.checker.typeToString(observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
     }))],
   });
 
@@ -2792,6 +2796,7 @@ test("checker exposes explicit selected source method type arguments on callback
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
   assertCleanProgram(program, index);
+  observedTypeText = checkedTypeToString(program, index, observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Finalization must return the attached extension host.");
@@ -2864,8 +2869,8 @@ test("checker exposes selected source member evidence on checked property access
   const lengthRequest = observedRequests.find((request) => request.propertyName === "Length");
   assertSelectedMemberEvidence(splitRequest, "Split");
   assertSelectedMemberEvidence(lengthRequest, "Length");
-  assert.ok(splitRequest?.sourceResultType !== undefined);
-  assert.ok(lengthRequest?.sourceResultType !== undefined);
+  assert.ok(splitRequest?.sourceResult.type !== undefined);
+  assert.ok(lengthRequest?.sourceResult.type !== undefined);
   const lengthAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "Length");
   assert.deepEqual(extended.extensionHost.facts.get(lengthAccess, targetOperationFactKey)?.resultType, targetResultType("int32"));
 });
@@ -2968,26 +2973,26 @@ test("repeated checked property observations preserve exact source result proven
 
   const iteratorRequest = observedRequests.find((request) => request.propertyName === "iterator");
   assert.ok(iteratorRequest !== undefined);
-  assert.ok(iteratorRequest.sourceSelectedSymbol !== undefined);
-  assert.ok(iteratorRequest.sourceSelectedDeclaration !== undefined);
-  assert.ok(iteratorRequest.sourceResultType !== undefined);
+  assert.ok(iteratorRequest.sourceResult.selectedSymbol !== undefined);
+  assert.ok(iteratorRequest.sourceResult.selectedDeclaration !== undefined);
+  assert.ok(iteratorRequest.sourceResult.type !== undefined);
   const iteratorFact = extended.extensionHost.facts.get(iteratorRequest.expression, targetOperationFactKey);
   assert.ok(iteratorFact?.provenance?.sourceExpression === iteratorRequest.expression, "Property provenance must retain the exact source expression.");
   assert.ok(iteratorFact?.provenance?.sourceReceiver === iteratorRequest.receiver, "Property provenance must retain the exact source receiver.");
-  assert.ok(iteratorFact?.provenance?.sourceSelectedSymbol === iteratorRequest.sourceSelectedSymbol, "Property provenance must retain the exact selected symbol.");
-  assert.ok(iteratorFact?.provenance?.sourceSelectedDeclaration === iteratorRequest.sourceSelectedDeclaration, "Property provenance must retain the exact selected declaration.");
-  assert.ok(iteratorFact?.provenance?.sourceResultType === iteratorRequest.sourceResultType, "Property provenance must retain the exact selected result type.");
+  assert.ok(iteratorFact?.provenance?.sourceSelectedSymbol === iteratorRequest.sourceResult.selectedSymbol, "Property provenance must retain the exact selected symbol.");
+  assert.ok(iteratorFact?.provenance?.sourceSelectedDeclaration === iteratorRequest.sourceResult.selectedDeclaration, "Property provenance must retain the exact selected declaration.");
+  assert.ok(iteratorFact?.provenance?.sourceResultType === iteratorRequest.sourceResult.type, "Property provenance must retain the exact selected result type.");
 
   const valueRequests = observedRequests.filter((request) => request.propertyName === "value");
   assert.equal(valueRequests.length, 3);
   const firstValueRequest = valueRequests[0]!;
   const secondValueRequest = valueRequests[1]!;
   const incompatibleValueRequest = valueRequests[2]!;
-  assert.ok(firstValueRequest.sourceSelectedSymbol !== undefined);
-  assert.ok(firstValueRequest.sourceResultType !== undefined);
-  assert.ok(secondValueRequest.sourceResultType !== undefined);
-  assert.ok(incompatibleValueRequest.sourceResultType !== undefined);
-  assert.ok(firstValueRequest.sourceResultType !== secondValueRequest.sourceResultType, "Independently selected structural result types must remain distinct compiler subjects.");
+  assert.ok(firstValueRequest.sourceResult.selectedSymbol !== undefined);
+  assert.ok(firstValueRequest.sourceResult.type !== undefined);
+  assert.ok(secondValueRequest.sourceResult.type !== undefined);
+  assert.ok(incompatibleValueRequest.sourceResult.type !== undefined);
+  assert.ok(firstValueRequest.sourceResult.type !== secondValueRequest.sourceResult.type, "Independently selected structural result types must remain distinct compiler subjects.");
 
   const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), index);
   const mapperRequestCount = observedRequests.length;
@@ -2995,8 +3000,9 @@ test("repeated checked property observations preserve exact source result proven
     recordExtensionCheckedPropertyAccessMapping(
       checker,
       iteratorRequest.expression as GoPtr<Node>,
-      iteratorRequest.sourceSelectedSymbol as GoPtr<Symbol>,
-      iteratorRequest.sourceResultType as GoPtr<Type>,
+      iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
+      iteratorRequest.sourceResult.type as GoPtr<Type>,
+      iteratorRequest.sourceReceiver.type as GoPtr<Type>,
     );
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
     assert.equal(observedRequests.length, mapperRequestCount);
@@ -3009,14 +3015,15 @@ test("repeated checked property observations preserve exact source result proven
     assert.ok(countFact?.provenance?.sourceSelectedDeclaration !== undefined);
     assert.ok(countFact?.provenance?.sourceResultType !== undefined);
 
-    const sourceResultType = firstValueRequest.sourceResultType as GoPtr<Type>;
-    const structurallyEquivalentResultType = secondValueRequest.sourceResultType as GoPtr<Type>;
+    const sourceResultType = firstValueRequest.sourceResult.type as GoPtr<Type>;
+    const structurallyEquivalentResultType = secondValueRequest.sourceResult.type as GoPtr<Type>;
     assert.notEqual(Type_Id(sourceResultType), Type_Id(structurallyEquivalentResultType));
     recordExtensionCheckedPropertyAccessMapping(
       checker,
       firstValueRequest.expression as GoPtr<Node>,
-      firstValueRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      firstValueRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
       structurallyEquivalentResultType,
+      firstValueRequest.sourceReceiver.type as GoPtr<Type>,
     );
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
     assert.ok(
@@ -3031,7 +3038,7 @@ test("repeated checked property observations preserve exact source result proven
   assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 0);
   const requestConflicts = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "CHECKED_OPERATION_REQUEST_CONFLICT");
   assert.equal(requestConflicts.length, 1);
-  assert.deepEqual(requestConflicts[0]?.evidence?.[0]?.details, ["sourceResultType"]);
+  assert.deepEqual(requestConflicts[0]?.evidence?.[0]?.details, ["sourceResult"]);
   assert.equal(observedRequests.length, mapperRequestCount);
 
 });
@@ -3123,9 +3130,9 @@ test("repeated unique-symbol property results use their selected declaration ide
   assertCleanProgram(program, index);
 
   const iteratorRequest = observedRequests.find((request) => request.propertyName === "iterator");
-  assert.ok(iteratorRequest?.sourceSelectedSymbol !== undefined);
-  assert.ok(iteratorRequest.sourceSelectedDeclaration !== undefined);
-  const sourceResultType = iteratorRequest.sourceResultType as GoPtr<Type>;
+  assert.ok(iteratorRequest?.sourceResult.selectedSymbol !== undefined);
+  assert.ok(iteratorRequest.sourceResult.selectedDeclaration !== undefined);
+  const sourceResultType = iteratorRequest.sourceResult.type as GoPtr<Type>;
   assert.ok(sourceResultType !== undefined);
   const repeatedSourceResultType = { ...sourceResultType, id: Type_Id(sourceResultType) + 1 } satisfies Type;
   assert.ok(sourceResultType !== repeatedSourceResultType, "The test wrapper must be a distinct object.");
@@ -3139,12 +3146,12 @@ test("repeated unique-symbol property results use their selected declaration ide
   const repeatedSourceResultDeclaration = repeatedSourceResultSymbol?.ValueDeclaration ?? repeatedSourceResultSymbol?.Declarations?.find((declaration) => declaration !== undefined);
   assert.ok(sourceResultDeclaration !== undefined);
   assert.ok(sourceResultDeclaration === repeatedSourceResultDeclaration, "Repeated unique-symbol wrappers must carry the exact same declaration.");
-  assert.ok(sourceResultDeclaration === iteratorRequest.sourceSelectedDeclaration, "Unique-symbol result provenance must match the selected property declaration.");
+  assert.ok(sourceResultDeclaration === iteratorRequest.sourceResult.selectedDeclaration, "Unique-symbol result provenance must match the selected property declaration.");
   assert.notEqual(Type_Id(sourceResultType), Type_Id(repeatedSourceResultType));
 
   const otherRequest = observedRequests.find((request) => request.propertyName === "other");
-  assert.ok(otherRequest?.sourceResultType !== undefined);
-  const otherSourceResultType = otherRequest.sourceResultType as GoPtr<Type>;
+  assert.ok(otherRequest?.sourceResult.type !== undefined);
+  const otherSourceResultType = otherRequest.sourceResult.type as GoPtr<Type>;
   assert.notEqual(Type_Flags(otherSourceResultType) & TypeFlagsUniqueESSymbol, 0);
   assert.ok(Type_Symbol(otherSourceResultType) !== sourceResultSymbol, "Different unique-symbol properties must retain different nominal symbols.");
 
@@ -3154,8 +3161,9 @@ test("repeated unique-symbol property results use their selected declaration ide
     recordExtensionCheckedPropertyAccessMapping(
       checker,
       iteratorRequest.expression as GoPtr<Node>,
-      iteratorRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
       repeatedSourceResultType,
+      iteratorRequest.sourceReceiver.type as GoPtr<Type>,
     );
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
     assert.ok(
@@ -3168,8 +3176,9 @@ test("repeated unique-symbol property results use their selected declaration ide
     recordExtensionCheckedPropertyAccessMapping(
       checker,
       iteratorRequest.expression as GoPtr<Node>,
-      iteratorRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
       otherSourceResultType,
+      iteratorRequest.sourceReceiver.type as GoPtr<Type>,
     );
   } finally {
     done();
@@ -3178,7 +3187,7 @@ test("repeated unique-symbol property results use their selected declaration ide
   assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 0);
   const requestConflicts = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "CHECKED_OPERATION_REQUEST_CONFLICT");
   assert.equal(requestConflicts.length, 1);
-  assert.deepEqual(requestConflicts[0]?.evidence?.[0]?.details, ["sourceResultType"]);
+  assert.deepEqual(requestConflicts[0]?.evidence?.[0]?.details, ["sourceResult"]);
   assert.equal(observedRequests.length, mapperRequestCount);
 });
 
@@ -3254,10 +3263,10 @@ test("target operation facts compare property and element result references stru
 
   const propertyRequest = propertyRequests.find((request) => request.propertyName === "size");
   const elementRequest = elementRequests[0];
-  assert.ok(propertyRequest?.sourceSelectedSymbol !== undefined);
-  assert.ok(propertyRequest.sourceResultType !== undefined);
-  assert.ok(elementRequest?.sourceSelectedSymbol !== undefined);
-  assert.ok(elementRequest.sourceResultType !== undefined);
+  assert.ok(propertyRequest?.sourceResult.selectedSymbol !== undefined);
+  assert.ok(propertyRequest.sourceResult.type !== undefined);
+  assert.ok(elementRequest?.sourceResult.selectedSymbol !== undefined);
+  assert.ok(elementRequest.sourceResult.type !== undefined);
   assert.deepEqual(extended.extensionHost.facts.get(propertyRequest.expression, targetOperationFactKey)?.resultType, targetResultType("int32"));
   assert.deepEqual(extended.extensionHost.facts.get(elementRequest.expression, targetOperationFactKey)?.resultType, targetResultType("int32"));
 
@@ -3351,7 +3360,7 @@ test("checker exposes selected source index-signature evidence on checked elemen
   assertSelectedIndexEvidence(observedRequests[0]);
   assertSelectedIndexEvidence(observedRequests[1]);
   assertSelectedMappedIndexEvidence(observedRequests[2]);
-  assert.ok(observedRequests.every((request) => request.sourceResultType !== undefined));
+  assert.ok(observedRequests.every((request) => request.sourceResult.type !== undefined));
 });
 
 test("checker exposes only checker-selected fixed tuple element ordinals", () => {
@@ -3446,24 +3455,26 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
     observedRequests.map((request) => request.sourceSelectedElementIndex),
     [1, 1, 1, 1, 1, 1, 1, 1, 0, undefined, 1, undefined, 1, undefined, undefined, 1, 1],
   );
-  assert.ok(observedRequests.every((request) => request.sourceResultType !== undefined));
+  assert.ok(observedRequests.every((request) => request.sourceResult.type !== undefined));
 
   const canonicalRequestCount = observedRequests.length;
   assert.equal(Program_GetSemanticDiagnostics(program, Background(), indexFile).length, 0);
   assert.equal(observedRequests.length, canonicalRequestCount);
 
   const firstRequest = observedRequests[0];
-  assert.ok(firstRequest?.sourceSelectedSymbol !== undefined);
-  assert.ok(firstRequest.sourceResultType !== undefined);
+  assert.ok(firstRequest?.sourceResult.selectedSymbol !== undefined);
+  assert.ok(firstRequest.sourceResult.type !== undefined);
   const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), indexFile);
   const mapperRequestCount = observedRequests.length;
   try {
     recordExtensionCheckedElementAccessMapping(
       checker,
       firstRequest.expression as GoPtr<Node>,
-      firstRequest.sourceSelectedSymbol as GoPtr<Symbol>,
-      firstRequest.sourceResultType as GoPtr<Type>,
+      firstRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
+      firstRequest.sourceResult.type as GoPtr<Type>,
       firstRequest.sourceSelectedElementIndex,
+      firstRequest.sourceReceiver.type as GoPtr<Type>,
+      firstRequest.sourceArgument.type as GoPtr<Type>,
     );
     assert.equal(observedRequests.at(-1)?.sourceSelectedElementIndex, 1);
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
@@ -3472,9 +3483,11 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
     recordExtensionCheckedElementAccessMapping(
       checker,
       firstRequest.expression as GoPtr<Node>,
-      firstRequest.sourceSelectedSymbol as GoPtr<Symbol>,
-      firstRequest.sourceResultType as GoPtr<Type>,
+      firstRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
+      firstRequest.sourceResult.type as GoPtr<Type>,
       firstRequest.sourceSelectedElementIndex,
+      firstRequest.sourceReceiver.type as GoPtr<Type>,
+      firstRequest.sourceArgument.type as GoPtr<Type>,
     );
   } finally {
     done();
@@ -3620,6 +3633,7 @@ test("checker exposes selected source member evidence on optional-chain property
 test("checker exposes source element types on for-of declaration and assignment iterations", () => {
   const observed: Array<{ request: CheckedIterationMappingRequest; elementType: string | undefined }> = [];
   let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", sourceGlobalProfile("")],
     ["/src/index.ts", `
       const values = [1, 2, 3];
       for (const value of values) {
@@ -3632,10 +3646,11 @@ test("checker exposes source element types on for-of declaration and assignment 
     `],
     ["/src/tsconfig.json", JSON.stringify({
       compilerOptions: {
+        noLib: true,
         module: "esnext",
         moduleResolution: "bundler",
       },
-      files: ["index.ts"],
+      files: ["profile.d.ts", "index.ts"],
     })],
   ]), false as bool);
   fs = WrapFS(fs);
@@ -3652,11 +3667,8 @@ test("checker exposes source element types on for-of declaration and assignment 
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-iteration-evidence-extension", {
       identity: semanticProviderIdentity("acme-selected-iteration-evidence-provider"),
-      mapCheckedIteration: (request, context) => {
-        observed.push({
-          request,
-          elementType: request.sourceElementType === undefined ? undefined : context.compiler.checker.typeToString(request.sourceElementType as GoPtr<Type>),
-        });
+      mapCheckedIteration: (request) => {
+        observed.push({ request, elementType: undefined });
         return acceptObservation({
           operation: targetOperation("Acme.Iterate", "method", "int32"),
           resultType: targetResultType("int32"),
@@ -3669,6 +3681,10 @@ test("checker exposes source element types on for-of declaration and assignment 
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
   assertCleanProgram(program, index);
+
+  for (const entry of observed) {
+    entry.elementType = checkedTypeToString(program, index, entry.request.sourceElement.type as GoPtr<Type>);
+  }
 
   assert.equal(observed.length, 2);
   assert.deepEqual(observed.map((entry) => entry.request.kind), ["for-of", "for-of"]);
@@ -3773,9 +3789,8 @@ test("checker exposes selected callee member evidence on checked calls", () => {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-callee-evidence-extension", {
       identity: semanticProviderIdentity("acme-selected-callee-evidence-provider"),
-      mapCheckedCall: (request, context) => {
+      mapCheckedCall: (request) => {
         observedRequest = request;
-        observedReturnTypeText = context.compiler.checker.typeToString(request.sourceReturnType as GoPtr<Type>);
         return acceptObservation({
           kind: "target",
           selectedSignature: {
@@ -3795,6 +3810,7 @@ test("checker exposes selected callee member evidence on checked calls", () => {
           argumentConversions: [argumentConversionSlot(0)],
         });
       },
+      mapCheckedConversion: () => acceptObservation({}),
     })],
   });
 
@@ -3802,9 +3818,10 @@ test("checker exposes selected callee member evidence on checked calls", () => {
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
   assertCleanProgram(program, index);
+  observedReturnTypeText = checkedTypeToString(program, index, observedRequest?.sourceResult.type as GoPtr<Type>);
 
-  const selectedSymbol = observedRequest?.sourceCalleeSymbol as GoPtr<Symbol>;
-  const selectedDeclaration = observedRequest?.sourceCalleeDeclaration as GoPtr<Node>;
+  const selectedSymbol = observedRequest?.sourceCallee.symbol as GoPtr<Symbol>;
+  const selectedDeclaration = observedRequest?.sourceCallee.declaration as GoPtr<Node>;
   assert.equal(selectedSymbol?.Name, "WriteLine");
   assert.ok(selectedDeclaration !== undefined);
   assert.ok(selectedDeclaration === selectedSymbol?.ValueDeclaration, "Checked call evidence must retain the selected symbol's exact declaration.");
@@ -3816,9 +3833,9 @@ test("checker exposes selected callee member evidence on checked calls", () => {
   assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Finalization must return the attached extension host.");
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   const selectedCall = consumer.getSelectedTargetCall(call);
-  assert.ok(selectedCall?.sourceCalleeSymbol === observedRequest?.sourceCalleeSymbol, "Selected call facts must retain callee symbol identity.");
-  assert.ok(selectedCall?.sourceCalleeDeclaration === observedRequest?.sourceCalleeDeclaration, "Selected call facts must retain callee declaration identity.");
-  assert.ok(selectedCall?.sourceReturnType === observedRequest?.sourceReturnType, "Selected call facts must retain source return type identity.");
+  assert.ok(selectedCall?.sourceCallee.symbol === observedRequest?.sourceCallee.symbol, "Selected call facts must retain callee symbol identity.");
+  assert.ok(selectedCall?.sourceCallee.declaration === observedRequest?.sourceCallee.declaration, "Selected call facts must retain callee declaration identity.");
+  assert.ok(selectedCall?.sourceResult.type === observedRequest?.sourceResult.type, "Selected call facts must retain source return type identity.");
 });
 
 test("checker records provider-owned contextual target facts without changing TS contextual type", () => {
@@ -4222,28 +4239,28 @@ test("checker records selected source and target types for ordinary assertion co
   assert.ok(observedRequests.every((request) => request.call === undefined));
   assert.ok(observedRequests.every((request) => request.targetParameterIndex === undefined));
   assert.ok(observedRequests.every((request) => request.selectedSignature === undefined));
-  assert.ok(assertionRequests.every((request) => request.sourceExpression !== undefined));
+  assert.ok(assertionRequests.every((request) => request.source.expression !== undefined));
   assert.ok(assertionRequests.every((request) => request.explicitTargetTypeNode !== undefined));
-  assert.equal((assertionRequests[0]?.sourceExpression as GoPtr<Node>)?.Kind, KindIdentifier);
-  assert.ok(assertionRequests[0]?.sourceSelectedSymbol !== undefined);
-  assert.ok(assertionRequests[0]?.sourceSelectedDeclaration !== undefined);
-  assert.equal((assertionRequests[0]?.sourceSelectedDeclarationTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
+  assert.equal((assertionRequests[0]?.source.expression as GoPtr<Node>)?.Kind, KindIdentifier);
+  assert.ok(assertionRequests[0]?.source.selectedSymbol !== undefined);
+  assert.ok(assertionRequests[0]?.source.selectedDeclaration !== undefined);
+  assert.equal((assertionRequests[0]?.source.authoredTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
   assert.equal((assertionRequests[0]?.explicitTargetTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
-  assert.ok(assertionRequests.every((request) => request.sourceExpression !== request.expression));
-  assert.ok(assertionRequests.some((request) => request.sourceSelectedDeclarationTypeNode === undefined));
+  assert.ok(assertionRequests.every((request) => request.source.expression !== request.expression));
+  assert.ok(assertionRequests.some((request) => request.source.authoredTypeNode === undefined));
   assert.ok(assertionRequests.some((request) => (request.explicitTargetTypeNode as GoPtr<Node>)?.Kind === KindUnionType));
   assert.deepEqual(
-    observedRequests.map((request) => [Type_Symbol(request.source as GoPtr<Type>)?.Name, Type_Symbol(request.target as GoPtr<Type>)?.Name]),
+    observedRequests.map((request) => [Type_Symbol(request.source.type as GoPtr<Type>)?.Name, Type_Symbol(request.target.type as GoPtr<Type>)?.Name]),
     [["Animal", "Dog"], ["Animal", "Dog"], ["Animal", "Dog"], ["Dog", "Animal"], [undefined, undefined], ["Animal", "Dog"]],
   );
-  assert.ok(observedRequests[0]!.source === observedRequests[1]!.source, "Repeated assertions must retain the exact source type.");
-  assert.ok(observedRequests[0]!.target === observedRequests[1]!.target, "Repeated assertions must retain the exact target type.");
-  assert.ok(observedRequests[0]!.source === observedRequests[2]!.source, "Equivalent assertion syntax must retain the exact source type.");
-  assert.ok(observedRequests[0]!.target === observedRequests[2]!.target, "Equivalent assertion syntax must retain the exact target type.");
-  assert.ok(observedRequests[0]!.target === observedRequests[3]!.source, "Reverse conversion must use the forward target as its source.");
-  assert.ok(observedRequests[0]!.source === observedRequests[3]!.target, "Reverse conversion must use the forward source as its target.");
-  assert.ok(observedRequests[0]!.source === observedRequests[5]!.source, "Angle-bracket assertion must retain the same source type.");
-  assert.ok(observedRequests[0]!.target === observedRequests[5]!.target, "Angle-bracket assertion must retain the same target type.");
+  assert.ok(observedRequests[0]!.source.type === observedRequests[1]!.source.type, "Repeated assertions must retain the exact source type.");
+  assert.ok(observedRequests[0]!.target.type === observedRequests[1]!.target.type, "Repeated assertions must retain the exact target type.");
+  assert.ok(observedRequests[0]!.source.type === observedRequests[2]!.source.type, "Equivalent assertion syntax must retain the exact source type.");
+  assert.ok(observedRequests[0]!.target.type === observedRequests[2]!.target.type, "Equivalent assertion syntax must retain the exact target type.");
+  assert.ok(observedRequests[0]!.target.type === observedRequests[3]!.source.type, "Reverse conversion must use the forward target as its source.");
+  assert.ok(observedRequests[0]!.source.type === observedRequests[3]!.target.type, "Reverse conversion must use the forward source as its target.");
+  assert.ok(observedRequests[0]!.source.type === observedRequests[5]!.source.type, "Angle-bracket assertion must retain the same source type.");
+  assert.ok(observedRequests[0]!.target.type === observedRequests[5]!.target.type, "Angle-bracket assertion must retain the same target type.");
   assert.ok(observedRequests.every((request) => extended.extensionHost.facts.get(request.expression, targetConversionFactKey)?.convertedType?.kind === "target-named"));
   assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
   assert.equal(observedRequests.length, 6);
@@ -4256,8 +4273,8 @@ test("checker records selected source and target types for ordinary assertion co
     recordExtensionCheckedAssertionConversion(
       checker,
       firstRequest.expression as GoPtr<Node>,
-      firstRequest.source as GoPtr<Type>,
-      firstRequest.target as GoPtr<Type>,
+      firstRequest.source.type as GoPtr<Type>,
+      firstRequest.target.type as GoPtr<Type>,
       firstRequest.assertionKind,
     );
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
@@ -4266,8 +4283,8 @@ test("checker records selected source and target types for ordinary assertion co
     recordExtensionCheckedAssertionConversion(
       checker,
       firstRequest.expression as GoPtr<Node>,
-      firstRequest.source as GoPtr<Type>,
-      firstRequest.target as GoPtr<Type>,
+      firstRequest.source.type as GoPtr<Type>,
+      firstRequest.target.type as GoPtr<Type>,
       firstRequest.assertionKind,
     );
   } finally {
@@ -4352,11 +4369,11 @@ test("checker preserves source alias provenance for checked assertion conversion
           if (request.conversionKind === "assertion") {
             observed.push({
               request,
-              semanticSourcePrimitive: context.factResolver.resolve(request.source, sourcePrimitiveFactKey),
-              semanticTargetPrimitive: context.factResolver.resolve(request.target, sourcePrimitiveFactKey),
-              declaredSourcePrimitive: request.sourceSelectedDeclarationTypeNode === undefined
+              semanticSourcePrimitive: context.factResolver.resolve(request.source.type, sourcePrimitiveFactKey),
+              semanticTargetPrimitive: context.factResolver.resolve(request.target.type, sourcePrimitiveFactKey),
+              declaredSourcePrimitive: request.source.authoredTypeNode === undefined
                 ? undefined
-                : context.factResolver.resolve(request.sourceSelectedDeclarationTypeNode, sourcePrimitiveFactKey),
+                : context.factResolver.resolve(request.source.authoredTypeNode, sourcePrimitiveFactKey),
               explicitTargetPrimitive: context.factResolver.resolve(request.explicitTargetTypeNode, sourcePrimitiveFactKey),
             });
           }
@@ -4374,9 +4391,9 @@ test("checker preserves source alias provenance for checked assertion conversion
   assertCleanProgram(program, index);
 
   assert.equal(observed.length, 4);
-  const result = observed.find((candidate) => (candidate.request.sourceExpression as GoPtr<Node>)?.Kind === KindParenthesizedExpression);
+  const result = observed.find((candidate) => (candidate.request.source.expression as GoPtr<Node>)?.Kind === KindParenthesizedExpression);
   assert.ok(result !== undefined);
-  assert.equal(result.request.source, result.request.target);
+  assert.equal(result.request.source.type, result.request.target.type);
   assert.equal(result.semanticSourcePrimitive, undefined);
   assert.equal(result.semanticTargetPrimitive, undefined);
   assert.deepEqual(result.declaredSourcePrimitive, {
@@ -4391,12 +4408,12 @@ test("checker preserves source alias provenance for checked assertion conversion
     signed: false,
     width: 8,
   });
-  assert.equal((result.request.sourceExpression as GoPtr<Node>)?.Kind, KindParenthesizedExpression);
-  assert.ok(result.request.sourceSelectedSymbol !== undefined);
-  assert.ok(result.request.sourceSelectedDeclaration !== undefined);
-  assert.equal((result.request.sourceSelectedDeclarationTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
+  assert.equal((result.request.source.expression as GoPtr<Node>)?.Kind, KindParenthesizedExpression);
+  assert.ok(result.request.source.selectedSymbol !== undefined);
+  assert.ok(result.request.source.selectedDeclaration !== undefined);
+  assert.equal((result.request.source.authoredTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
   assert.equal((result.request.explicitTargetTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
-  const narrowedResult = observed.find((candidate) => (candidate.request.sourceSelectedDeclarationTypeNode as GoPtr<Node>)?.Kind === KindUnionType);
+  const narrowedResult = observed.find((candidate) => (candidate.request.source.authoredTypeNode as GoPtr<Node>)?.Kind === KindUnionType);
   assert.ok(narrowedResult !== undefined);
   assert.equal(narrowedResult.declaredSourcePrimitive, undefined);
   assert.deepEqual(narrowedResult.explicitTargetPrimitive, {
@@ -4405,15 +4422,15 @@ test("checker preserves source alias provenance for checked assertion conversion
     signed: false,
     width: 8,
   });
-  assert.equal((narrowedResult.request.sourceExpression as GoPtr<Node>)?.Kind, KindIdentifier);
-  const propertyResult = observed.find((candidate) => (candidate.request.sourceExpression as GoPtr<Node>)?.Kind === KindPropertyAccessExpression);
+  assert.equal((narrowedResult.request.source.expression as GoPtr<Node>)?.Kind, KindIdentifier);
+  const propertyResult = observed.find((candidate) => (candidate.request.source.expression as GoPtr<Node>)?.Kind === KindPropertyAccessExpression);
   assert.ok(propertyResult !== undefined);
   assert.equal(propertyResult.declaredSourcePrimitive?.kind, "int32");
-  assert.ok(propertyResult.request.sourceSelectedSymbol !== undefined);
-  assert.ok(propertyResult.request.sourceSelectedDeclaration !== undefined);
-  const callResult = observed.find((candidate) => (candidate.request.sourceExpression as GoPtr<Node>)?.Kind === KindCallExpression);
+  assert.ok(propertyResult.request.source.selectedSymbol !== undefined);
+  assert.ok(propertyResult.request.source.selectedDeclaration !== undefined);
+  const callResult = observed.find((candidate) => (candidate.request.source.expression as GoPtr<Node>)?.Kind === KindCallExpression);
   assert.ok(callResult !== undefined);
-  assert.ok(callResult.request.sourceSelectedDeclarationTypeNode === undefined, "Call conversion evidence must not fabricate a declaration type node.");
+  assert.ok(callResult.request.source.authoredTypeNode === undefined, "Call conversion evidence must not fabricate a declaration type node.");
   assert.deepEqual(callResult.explicitTargetPrimitive, {
     kind: "uint8",
     runtimeBase: "number",
@@ -4486,10 +4503,10 @@ test("checker classifies JSDoc assertions as explicit checked conversions", () =
   assert.equal(observedRequests[0]!.conversionKind, "assertion");
   assert.equal(observedRequests[0]!.assertionKind, "jsdoc");
   assert.equal((observedRequests[0]!.expression as GoPtr<Node>)?.Kind, KindAsExpression);
-  assert.equal((observedRequests[0]!.sourceExpression as GoPtr<Node>)?.Kind, KindIdentifier);
+  assert.equal((observedRequests[0]!.source.expression as GoPtr<Node>)?.Kind, KindIdentifier);
   assert.equal((observedRequests[0]!.explicitTargetTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
-  assert.equal(Type_Symbol(observedRequests[0]!.source as GoPtr<Type>)?.Name, "Animal");
-  assert.equal(Type_Symbol(observedRequests[0]!.target as GoPtr<Type>)?.Name, "Dog");
+  assert.equal(Type_Symbol(observedRequests[0]!.source.type as GoPtr<Type>)?.Name, "Animal");
+  assert.equal(Type_Symbol(observedRequests[0]!.target.type as GoPtr<Type>)?.Name, "Dog");
   assert.ok(extended.extensionHost.facts.get(observedRequests[0]!.expression, targetConversionFactKey) !== undefined);
 });
 
@@ -5568,11 +5585,13 @@ function sourceGlobalProviderExtension(options: {
         identity: semanticProviderIdentity("acme-source-global-semantic-provider"),
         mapCheckedPropertyAccess: (request) => {
           options.onProperty?.(request);
-          return deferObservation;
+          return acceptObservation({
+            operation: targetOperation(`acme.source-global.${request.propertyName}`, "property"),
+          });
         },
         mapCheckedCall: (request) => {
           options.onCall?.(request);
-          return deferObservation;
+          return acceptObservation({ kind: "source" });
         },
       }), true);
     },
@@ -6915,20 +6934,11 @@ function providerGenericMemberChainExtension(): CompilerExtension {
           extensionContractVersion: TstsProviderContractVersion,
           providerKind: "semantic",
         },
-        mapCheckedCall: (request, observationContext) => {
-          const compiler = observationContext.compiler;
-          if (compiler !== undefined) {
-            for (const argument of request.arguments) {
-              const node = argument !== null && typeof argument === "object" && "Kind" in argument
-                ? argument as GoPtr<Node>
-                : undefined;
-              if (node !== undefined) {
-                compiler.checker.getTypeAtLocation(node, { sourceFile: compiler.ast.getSourceFile(node) });
-                if (node.Kind === KindPropertyAccessExpression) {
-                  compiler.checker.getResolvedSymbol(Node_Name(node), { sourceFile: compiler.ast.getSourceFile(node) });
-                }
-              }
-            }
+        mapCheckedCall: (request) => {
+          assert.equal(request.sourceArguments.length, request.arguments.length);
+          for (let argumentIndex = 0; argumentIndex < request.arguments.length; argumentIndex += 1) {
+            assert.equal(request.sourceArguments[argumentIndex]?.expression, request.arguments[argumentIndex]);
+            assert.ok(request.sourceArguments[argumentIndex]?.type !== undefined);
           }
           return acceptObservation({
             kind: "target",
@@ -7460,6 +7470,7 @@ function semanticProvider(selectedSignature: TargetSignatureSelection): TargetSe
       selectedSignature,
       argumentConversions: request.arguments.map((_, argumentIndex) => argumentConversionSlot(argumentIndex)),
     }),
+    mapCheckedConversion: () => acceptObservation({}),
   };
 }
 
@@ -7507,10 +7518,11 @@ function genericTargetTypeArgumentSemanticProvider(onCall?: (request: CheckedCal
         argumentConversions: [argumentConversionSlot(0)],
       });
     },
+    mapCheckedConversion: () => acceptObservation({}),
   };
 }
 
-function sourceTypeArgumentSemanticProvider(onCall: (request: CheckedCallMappingRequest, context: ExtensionObservationContext<typeof ExtensionObservationPoint.mapCheckedCall>) => void): TargetSemanticProvider {
+function sourceTypeArgumentSemanticProvider(onCall: (request: CheckedCallMappingRequest) => void): TargetSemanticProvider {
   return {
     identity: {
       id: "acme-source-type-arguments-semantic-provider",
@@ -7519,8 +7531,8 @@ function sourceTypeArgumentSemanticProvider(onCall: (request: CheckedCallMapping
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
-    mapCheckedCall: (request, context) => {
-      onCall(request, context);
+    mapCheckedCall: (request) => {
+      onCall(request);
       return acceptObservation({
         kind: "target",
         selectedSignature: {
@@ -7540,10 +7552,12 @@ function sourceTypeArgumentSemanticProvider(onCall: (request: CheckedCallMapping
             typeParameters: [{ name: "T" }],
             overloadGroup: "Acme.Generic.Id",
           },
+          targetTypeArguments: [{ kind: "target-named", id: "Acme.GenericResult" }],
         },
         argumentConversions: request.arguments.map((_, argumentIndex) => argumentConversionSlot(argumentIndex)),
       });
     },
+    mapCheckedConversion: () => acceptObservation({}),
   };
 }
 
@@ -7885,8 +7899,8 @@ function semanticProviderIdentity(id: string) {
 
 function assertSelectedMemberEvidence(request: CheckedPropertyAccessMappingRequest | undefined, name: string): void {
   assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
-  const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
+  const selectedSymbol = request.sourceResult.selectedSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = request.sourceResult.selectedDeclaration as GoPtr<Node>;
   assert.equal(selectedSymbol?.Name, name);
   assert.ok(selectedDeclaration !== undefined);
   assert.ok(selectedDeclaration === selectedSymbol?.ValueDeclaration, "Selected property evidence must retain the symbol's exact value declaration.");
@@ -7895,8 +7909,8 @@ function assertSelectedMemberEvidence(request: CheckedPropertyAccessMappingReque
 
 function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
   assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
-  const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
+  const selectedSymbol = request.sourceResult.selectedSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = request.sourceResult.selectedDeclaration as GoPtr<Node>;
   assert.ok(selectedSymbol !== undefined);
   assert.ok(selectedSymbol?.ValueDeclaration === selectedDeclaration, "Selected element evidence must retain the symbol's exact value declaration.");
   assert.ok(selectedDeclaration !== undefined);
@@ -7905,12 +7919,28 @@ function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest
 
 function assertSelectedMappedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
   assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
-  const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
+  const selectedSymbol = request.sourceResult.selectedSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = request.sourceResult.selectedDeclaration as GoPtr<Node>;
   assert.ok(selectedSymbol !== undefined);
   assert.ok(selectedSymbol?.ValueDeclaration === selectedDeclaration, "Selected mapped-element evidence must retain the symbol's exact value declaration.");
   assert.ok(selectedDeclaration !== undefined);
   assert.equal(selectedDeclaration.Kind, KindMappedType);
+}
+
+function selectedCallMemberName(request: CheckedCallMappingRequest): string | undefined {
+  return (request.sourceCallee.selectedSymbol as Symbol | undefined)?.Name;
+}
+
+function checkedTypeToString(program: GoPtr<Program>, sourceFile: SourceFile, type: GoPtr<Type>): string {
+  if (program === undefined || type === undefined) {
+    throw new Error("Expected exact checked source type evidence.");
+  }
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), sourceFile);
+  try {
+    return Checker_TypeToString(checker, type);
+  } finally {
+    done();
+  }
 }
 
 function providerDeclarationIdentity(providerId: string, _providerTarget: string, providerModuleId: string, exportName: string, signatureId?: string) {

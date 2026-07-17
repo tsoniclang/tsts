@@ -417,6 +417,9 @@ test("extensions register binding and semantic providers through initialization 
     call,
     callee,
     arguments: [argument],
+    sourceCallee: sourceValue(callee, callee),
+    sourceArguments: [sourceValue(argument, argument)],
+    sourceResult: sourceValue(call, call),
     target: "acme",
   }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
 
@@ -520,6 +523,9 @@ test("semantic provider methods own typed observations without hook boilerplate"
     call: expression,
     callee: consoleWriteLine,
     arguments: [callArgument],
+    sourceCallee: sourceValue(consoleWriteLine, consoleWriteLine),
+    sourceArguments: [sourceValue(callArgument, callArgument)],
+    sourceResult: sourceValue(expression, expression),
     target: "acme",
   }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(call.kind === "accept" && call.value.kind === "target" ? call.value.selectedSignature.member.id : undefined, "Acme.Console.WriteLine(Acme.Int32)");
@@ -532,6 +538,8 @@ test("semantic provider methods own typed observations without hook boilerplate"
     expression: propertyAccess,
     receiver: stringType,
     propertyName: "length",
+    sourceReceiver: sourceValue(stringType, stringType),
+    sourceResult: sourceValue(propertyAccess, int32Type),
     target: "acme",
   }, () => ({ operation: targetOperation("core", "property") }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(property.kind === "accept" ? property.value.operation.operationId : undefined, "Acme.String.Length");
@@ -540,6 +548,9 @@ test("semantic provider methods own typed observations without hook boilerplate"
     expression: elementAccess,
     receiver: stringType,
     argument: spanArgument,
+    sourceReceiver: sourceValue(stringType, stringType),
+    sourceArgument: sourceValue(spanArgument, spanArgument),
+    sourceResult: sourceValue(elementAccess, elementAccess),
     target: "acme",
   }, () => ({ operation: targetOperation("core", "indexer") }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(element.kind === "accept" ? element.value.operation.operationId : undefined, "Acme.Span.GetItem");
@@ -549,6 +560,9 @@ test("semantic provider methods own typed observations without hook boilerplate"
     operator: "+",
     left: leftOperand,
     right: rightOperand,
+    sourceLeft: sourceValue(leftOperand, leftOperand),
+    sourceRight: sourceValue(rightOperand, rightOperand),
+    sourceResult: sourceValue(operatorExpression, operatorExpression),
     target: "acme",
   }, () => ({ operation: targetOperation("core", "operator") }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(operator.kind === "accept" ? operator.value.operation.operationId : undefined, "Acme.Int32.op_Addition");
@@ -565,9 +579,8 @@ test("semantic provider methods own typed observations without hook boilerplate"
     conversionKind: "assertion",
     assertionKind: "as",
     expression: convertedExpression,
-    source: byteType,
-    target: int32Type,
-    sourceExpression: convertedExpression,
+    source: sourceValue(convertedExpression, byteType),
+    target: sourceType(int32Type),
     explicitTargetTypeNode: int32Type,
     targetPlatform: "acme",
   }, () => noConversion, ignoreCheckedOperationAcceptance, { requireOwner: true });
@@ -4825,6 +4838,10 @@ test("checked call mapping records selected target signature facts", () => {
               context.facts.set(request.call, selectedTargetSignatureFactKey, {
                 ...writeLineInt,
                 argumentConversions,
+                sourceArgumentBindings: request.sourceArgumentBindings ?? [],
+                sourceCallee: request.sourceCallee,
+                sourceArguments: request.sourceArguments,
+                sourceResult: request.sourceResult,
               });
               return acceptObservation({
                 kind: "target",
@@ -4843,6 +4860,18 @@ test("checked call mapping records selected target signature facts", () => {
     call,
     callee,
     arguments: [argument],
+    sourceArgumentBindings: [{
+      sourceArgumentIndex: 0,
+      effectiveArgumentIndex: 0,
+      sourceForm: "value",
+      sourceParameterIndex: 0,
+      sourceParameterForm: "parameter",
+      selectedArgumentType: argument,
+      selectedParameterType: argument,
+    }],
+    sourceCallee: sourceValue(callee, callee),
+    sourceArguments: [sourceValue(argument, argument)],
+    sourceResult: sourceValue(call, call),
     target: "acme",
   }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
 
@@ -4891,21 +4920,42 @@ test("property, element, and operator observations expose target operations", ()
 
   assert.equal(host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedPropertyAccess,
-    { expression: lengthExpression, receiver: arrayType, propertyName: "Length" },
+    {
+      expression: lengthExpression,
+      receiver: arrayType,
+      propertyName: "Length",
+      sourceReceiver: sourceValue(arrayType, arrayType),
+      sourceResult: sourceValue(lengthExpression, int32Type),
+    },
     () => ({ operation: targetOperation("core", "property") }),
     ignoreCheckedOperationAcceptance,
     { requireOwner: true },
   ).kind, "accept");
   assert.equal(host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedElementAccess,
-    { expression: indexExpression, receiver: arrayType, argument: indexArgument },
+    {
+      expression: indexExpression,
+      receiver: arrayType,
+      argument: indexArgument,
+      sourceReceiver: sourceValue(arrayType, arrayType),
+      sourceArgument: sourceValue(indexArgument, indexArgument),
+      sourceResult: sourceValue(indexExpression, elementType),
+    },
     () => ({ operation: targetOperation("core", "indexer") }),
     ignoreCheckedOperationAcceptance,
     { requireOwner: true },
   ).kind, "accept");
   assert.equal(host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedOperator,
-    { expression: addExpression, operator: "+", left: leftOperand, right: rightOperand },
+    {
+      expression: addExpression,
+      operator: "+",
+      left: leftOperand,
+      right: rightOperand,
+      sourceLeft: sourceValue(leftOperand, leftOperand),
+      sourceRight: sourceValue(rightOperand, rightOperand),
+      sourceResult: sourceValue(addExpression, int32Type),
+    },
     () => ({ operation: targetOperation("core", "operator") }),
     ignoreCheckedOperationAcceptance,
     { requireOwner: true },
@@ -5296,11 +5346,13 @@ test("semantic provider identity and handlers are snapshotted before caller muta
   }), false);
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.duplicateProvider);
 
-  const result = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
-    call: {},
-    callee: {},
-    arguments: [],
-  }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
+  const result = host[extensionHostRunCheckedOperation](
+    ExtensionObservationPoint.mapCheckedCall,
+    emptyCheckedCallRequest(),
+    () => ({ kind: "source" }),
+    ignoreCheckedOperationAcceptance,
+    { requireOwner: true },
+  );
   assert.equal(result.kind, "accept");
   assert.equal(result.kind === "accept" && result.value.kind === "target" ? result.value.selectedSignature.member.id : undefined, "original-semantic-handler");
   assert.equal(originalHandlerCalls, 1);
@@ -5367,11 +5419,13 @@ test("semantic provider registration getters and callback envelopes fail as host
     })],
   });
   assert.doesNotThrow(() => {
-    const result = envelopeHost[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
-      call: {},
-      callee: {},
-      arguments: [],
-    }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
+    const result = envelopeHost[extensionHostRunCheckedOperation](
+      ExtensionObservationPoint.mapCheckedCall,
+      emptyCheckedCallRequest(),
+      () => ({ kind: "source" }),
+      ignoreCheckedOperationAcceptance,
+      { requireOwner: true },
+    );
     assert.equal(result.kind, "reject");
   });
   assert.equal(envelopeKindReads, 1);
@@ -6915,10 +6969,46 @@ function selectedSignature(id: string, generic = false): TargetSignatureSelectio
 }
 
 function selectedTargetCallFact(id: string) {
+  const call = {};
+  const callee = {};
+  const argument = {};
   return {
     ...selectedSignature(id),
     argumentConversions: [argumentConversionSlot(0)],
+    sourceArgumentBindings: [{
+      sourceArgumentIndex: 0,
+      effectiveArgumentIndex: 0,
+      sourceForm: "value" as const,
+      sourceParameterIndex: 0,
+      sourceParameterForm: "parameter" as const,
+      selectedArgumentType: argument,
+      selectedParameterType: argument,
+    }],
+    sourceCallee: sourceValue(callee, callee),
+    sourceArguments: [sourceValue(argument, argument)],
+    sourceResult: sourceValue(call, call),
   } as const;
+}
+
+function sourceType(type: object) {
+  return { type };
+}
+
+function sourceValue(expression: object, type: object) {
+  return { expression, type };
+}
+
+function emptyCheckedCallRequest(): CheckedCallMappingRequest {
+  const call = {};
+  const callee = {};
+  return {
+    call,
+    callee,
+    arguments: [],
+    sourceCallee: sourceValue(callee, callee),
+    sourceArguments: [],
+    sourceResult: sourceValue(call, call),
+  };
 }
 
 function argumentConversionSlot(argumentIndex: number) {

@@ -29,6 +29,7 @@ test("retained call-argument conversion requests snapshot target values and pres
   const expression = {};
   const source = {};
   const call = {};
+  const callee = {};
   const sourceSignature = {};
   const selectedType = {};
   const parameterSymbol = {};
@@ -49,6 +50,15 @@ test("retained call-argument conversion requests snapshot target values and pres
     rest: false,
   };
   const slot = argumentConversionSlot(0, 0);
+  const sourceBinding = {
+    sourceArgumentIndex: 0,
+    effectiveArgumentIndex: 0,
+    sourceForm: "value" as const,
+    sourceParameterIndex: 0,
+    sourceParameterForm: "parameter" as const,
+    selectedArgumentType: source,
+    selectedParameterType: selectedType,
+  };
   const selectedSignature = {
     member: {
       id: "acme.consume",
@@ -59,6 +69,7 @@ test("retained call-argument conversion requests snapshot target values and pres
       typeParameters: [{ name: "T" }],
     },
     argumentConversions: [slot],
+    sourceArgumentBindings: [sourceBinding],
     targetTypeArguments,
     sourceSelectedMethodTypeArguments: [{
       typeParameterName: "T",
@@ -66,11 +77,14 @@ test("retained call-argument conversion requests snapshot target values and pres
     }],
     sourceSelectedSignatureParameters: [sourceParameter],
     sourceSignature,
+    sourceCallee: sourceValue(callee, {}),
+    sourceArguments: [sourceValue(expression, source)],
+    sourceResult: sourceValue(call, {}),
   };
   const request: CheckedConversionMappingRequest = {
     conversionKind: "call-argument",
     expression,
-    source,
+    source: sourceValue(expression, source),
     target: targetParameter.type,
     call,
     slot,
@@ -81,6 +95,7 @@ test("retained call-argument conversion requests snapshot target values and pres
     targetParameter,
     sourceSelectedSignature: sourceSignature,
     selectedSignature,
+    sourceBinding,
     targetPlatform: "acme",
   };
   const inventory = createInventory();
@@ -120,7 +135,8 @@ test("retained call-argument conversion requests snapshot target values and pres
     throw new Error("Expected retained call-argument conversion request.");
   }
   assert.equal(finalRequest.expression, expression);
-  assert.equal(finalRequest.source, source);
+  assert.equal(finalRequest.source.expression, expression);
+  assert.equal(finalRequest.source.type, source);
   assert.equal(finalRequest.call, call);
   assert.ok(
     finalRequest.slot === finalRequest.selectedSignature.argumentConversions[0],
@@ -142,6 +158,7 @@ test("retained call-argument conversion requests snapshot target values and pres
   assert.equal(finalRequest.selectedSignature.sourceSelectedSignatureParameters?.[0]?.parameterSymbol, parameterSymbol);
   assert.equal(finalRequest.selectedSignature.sourceSignature, sourceSignature);
   assert.equal(Object.isFrozen(finalRequest), true);
+  assert.equal(Object.isFrozen(finalRequest.source), true);
   assert.equal(Object.isFrozen(finalRequest.targetParameter), true);
   assert.equal(Object.isFrozen(finalRequest.targetParameter.type), true);
   assert.equal(Object.isFrozen(finalRequest.selectedSignature), true);
@@ -180,7 +197,15 @@ test("retained selected-signature results are detached, deeply frozen, and idemp
     targetTypeArguments,
   };
   const response: CheckedCallMappingResult = { kind: "target", selectedSignature, argumentConversions: [] };
-  const request: CheckedCallMappingRequest = { call, callee, arguments: [], target: "acme" };
+  const request: CheckedCallMappingRequest = {
+    call,
+    callee,
+    arguments: [],
+    sourceCallee: sourceValue(callee, {}),
+    sourceArguments: [],
+    sourceResult: sourceValue(call, {}),
+    target: "acme",
+  };
   const inventory = createInventory();
   let applied: CheckedCallMappingResult | undefined;
   let evaluations = 0;
@@ -259,9 +284,8 @@ test("retained conversion results snapshot operations, provenance, evidence, and
     conversionKind: "assertion",
     assertionKind: "as",
     expression,
-    source,
-    target,
-    sourceExpression,
+    source: sourceValue(sourceExpression, source),
+    target: sourceType(target),
     explicitTargetTypeNode: target,
     targetPlatform: "acme",
   };
@@ -327,6 +351,8 @@ test("structurally equal call-argument target values remain one checked request 
   const sourceSignature = {};
   const opaqueValue = {};
   const slot = argumentConversionSlot(0, 0);
+  const callee = {};
+  const resultType = {};
   let conflicts = 0;
   let evaluations = 0;
   let applications = 0;
@@ -353,10 +379,19 @@ test("structurally equal call-argument target values remain one checked request 
       type: { kind: "target-specific", target: "acme", name: "payload", value: opaqueValue },
       passingMode: "by-value",
     };
+    const sourceBinding = {
+      sourceArgumentIndex: 0,
+      effectiveArgumentIndex: 0,
+      sourceForm: "value" as const,
+      sourceParameterIndex: 0,
+      sourceParameterForm: "parameter" as const,
+      selectedArgumentType: source,
+      selectedParameterType: source,
+    };
     return {
       conversionKind: "call-argument",
       expression,
-      source,
+      source: sourceValue(expression, source),
       target: targetParameter.type,
       call,
       slot,
@@ -365,6 +400,7 @@ test("structurally equal call-argument target values remain one checked request 
       sourceForm: "value",
       targetForm: "parameter",
       targetParameter,
+      sourceBinding,
       sourceSelectedSignature: sourceSignature,
       selectedSignature: {
         member: {
@@ -376,8 +412,12 @@ test("structurally equal call-argument target values remain one checked request 
           typeParameters: [{ name: "T" }],
         },
         argumentConversions: [slot],
+        sourceArgumentBindings: [sourceBinding],
         targetTypeArguments: [{ kind: "array", element: { kind: "source-primitive", name: "int32" } }],
         sourceSignature,
+        sourceCallee: sourceValue(callee, callee),
+        sourceArguments: [sourceValue(expression, source)],
+        sourceResult: sourceValue(call, resultType),
       },
       targetPlatform: "acme",
     };
@@ -469,10 +509,19 @@ test("target type and constraint snapshots reject unknown or missing kinds preci
     type: { kind: "source-primitive" as const, name: "int32" as const },
     passingMode: "by-value" as const,
   };
+  const malformedSourceBinding = {
+    sourceArgumentIndex: 0,
+    effectiveArgumentIndex: 0,
+    sourceForm: "value" as const,
+    sourceParameterIndex: 0,
+    sourceParameterForm: "parameter" as const,
+    selectedArgumentType: {},
+    selectedParameterType: {},
+  };
   const malformedConstraintRequest = {
     conversionKind: "call-argument",
     expression: {},
-    source: {},
+    source: sourceValue({}, {}),
     target: malformedTargetParameter.type,
     call: {},
     slot: malformedSlot,
@@ -481,6 +530,7 @@ test("target type and constraint snapshots reject unknown or missing kinds preci
     sourceForm: "value",
     targetForm: "parameter",
     targetParameter: malformedTargetParameter,
+    sourceBinding: malformedSourceBinding,
     selectedSignature: {
       member: {
         id: "acme.consume",
@@ -492,6 +542,10 @@ test("target type and constraint snapshots reject unknown or missing kinds preci
       },
       targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
       argumentConversions: [malformedSlot],
+      sourceArgumentBindings: [malformedSourceBinding],
+      sourceCallee: sourceValue({}, {}),
+      sourceArguments: [sourceValue({}, {})],
+      sourceResult: sourceValue({}, {}),
     },
   };
   assert.throws(
@@ -661,7 +715,7 @@ test("call-argument request snapshots reject structurally equal non-canonical sl
   const request: CheckedConversionMappingRequest = {
     conversionKind: "call-argument",
     expression: {},
-    source: {},
+    source: sourceValue({}, {}),
     target: targetParameter.type,
     call: {},
     slot: nonCanonicalSlot,
@@ -670,6 +724,15 @@ test("call-argument request snapshots reject structurally equal non-canonical sl
     sourceForm: "value",
     targetForm: "parameter",
     targetParameter,
+    sourceBinding: {
+      sourceArgumentIndex: 0,
+      effectiveArgumentIndex: 0,
+      sourceForm: "value",
+      sourceParameterIndex: 0,
+      sourceParameterForm: "parameter",
+      selectedArgumentType: {},
+      selectedParameterType: {},
+    },
     selectedSignature: {
       member: {
         id: "acme.canonical-binding",
@@ -679,6 +742,18 @@ test("call-argument request snapshots reject structurally equal non-canonical sl
         parameters: [targetParameter],
       },
       argumentConversions: [canonicalSlot],
+      sourceArgumentBindings: [{
+        sourceArgumentIndex: 0,
+        effectiveArgumentIndex: 0,
+        sourceForm: "value",
+        sourceParameterIndex: 0,
+        sourceParameterForm: "parameter",
+        selectedArgumentType: {},
+        selectedParameterType: {},
+      }],
+      sourceCallee: sourceValue({}, {}),
+      sourceArguments: [sourceValue({}, {})],
+      sourceResult: sourceValue({}, {}),
     },
   };
 
@@ -907,6 +982,18 @@ test("one request snapshot cache reuses selected signatures and their target par
       return sourceMember;
     },
     argumentConversions: slots,
+    sourceArgumentBindings: slots.map((slot) => ({
+      sourceArgumentIndex: slot.sourceArgumentIndex,
+      effectiveArgumentIndex: slot.sourceArgumentIndex,
+      sourceForm: slot.sourceForm,
+      sourceParameterIndex: slot.targetParameterIndex,
+      sourceParameterForm: "parameter",
+      selectedArgumentType: sourceParameters[slot.sourceArgumentIndex]!.type,
+      selectedParameterType: sourceParameters[slot.targetParameterIndex]!.type,
+    })),
+    sourceCallee: sourceValue({}, {}),
+    sourceArguments: sourceParameters.map((parameter, index) => sourceValue({ index }, parameter.type)),
+    sourceResult: sourceValue({}, {}),
   };
   const expression = {};
   const source = {};
@@ -914,7 +1001,7 @@ test("one request snapshot cache reuses selected signatures and their target par
   const requestFor = (targetParameterIndex: number): CheckedConversionMappingRequest => ({
     conversionKind: "call-argument",
     expression,
-    source,
+    source: sourceValue(expression, source),
     target: sourceParameters[targetParameterIndex]!.type,
     call,
     slot: slots[targetParameterIndex]!,
@@ -924,6 +1011,7 @@ test("one request snapshot cache reuses selected signatures and their target par
     targetForm: "parameter",
     targetParameter: sourceParameters[targetParameterIndex]!,
     selectedSignature,
+    sourceBinding: selectedSignature.sourceArgumentBindings[targetParameterIndex]!,
   });
   const cache = createCheckedOperationRequestSnapshotCache();
   let sharedSelectedSignature: SelectedTargetSignatureFact | undefined;
@@ -977,7 +1065,7 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
   const dependencyRequest: CheckedConversionMappingRequest = {
     conversionKind: "call-argument",
     expression: dependencyExpression,
-    source: dependencyExpression,
+    source: sourceValue(dependencyExpression, dependencyExpression),
     target: targetParameter.type,
     call: dependencyCall,
     slot: dependencySlot,
@@ -986,6 +1074,15 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
     sourceForm: "value",
     targetForm: "parameter",
     targetParameter,
+    sourceBinding: {
+      sourceArgumentIndex: 0,
+      effectiveArgumentIndex: 0,
+      sourceForm: "value",
+      sourceParameterIndex: 0,
+      sourceParameterForm: "parameter",
+      selectedArgumentType: dependencyExpression,
+      selectedParameterType: targetParameter.type,
+    },
     selectedSignature: {
       member: {
         id: "acme.consume",
@@ -995,6 +1092,18 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
         parameters: [targetParameter],
       },
       argumentConversions: [dependencySlot],
+      sourceArgumentBindings: [{
+        sourceArgumentIndex: 0,
+        effectiveArgumentIndex: 0,
+        sourceForm: "value",
+        sourceParameterIndex: 0,
+        sourceParameterForm: "parameter",
+        selectedArgumentType: dependencyExpression,
+        selectedParameterType: targetParameter.type,
+      }],
+      sourceCallee: sourceValue({}, {}),
+      sourceArguments: [sourceValue(dependencyExpression, dependencyExpression)],
+      sourceResult: sourceValue(dependencyCall, {}),
     },
   };
   const requestSnapshotCache = createCheckedOperationRequestSnapshotCache();
@@ -1020,9 +1129,8 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
     conversionKind: "assertion",
     assertionKind: "as",
     expression: parentExpression,
-    source: parentExpression,
-    target: {},
-    sourceExpression: parentExpression,
+    source: sourceValue(parentExpression, {}),
+    target: sourceType({}),
     explicitTargetTypeNode: {},
   };
   const order: string[] = [];
@@ -1063,6 +1171,14 @@ function snapshotUncheckedConversionRequest(request: unknown): unknown {
     ExtensionObservationPoint.mapCheckedConversion,
     request as CheckedConversionMappingRequest,
   );
+}
+
+function sourceType(type: object) {
+  return { type };
+}
+
+function sourceValue(expression: object, type: object) {
+  return { expression, type };
 }
 
 function argumentConversionSlot(

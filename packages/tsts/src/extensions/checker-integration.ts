@@ -419,6 +419,8 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
         : Object.freeze(sourceReceiverDependencies.map((dependency) => dependency.subject as Node));
     retainCheckedCallSelectionSeed(checker, callExpression!, {
       calleeProvenance: Object.freeze({
+        ...(sourceSelectedSymbol === undefined ? {} : { symbol: sourceSelectedSymbol }),
+        ...(sourceSelectedDeclaration === undefined ? {} : { declaration: sourceSelectedDeclaration }),
         ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
         ...(sourceSelectedDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedDeclaration }),
         ...(sourceResult.authoredTypeNode === undefined ? {} : { authoredTypeNode: sourceResult.authoredTypeNode as Node }),
@@ -540,6 +542,8 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
         : Object.freeze(dependencies.map((dependency) => dependency.subject as Node));
     retainCheckedCallSelectionSeed(checker, callExpression!, {
       calleeProvenance: Object.freeze({
+        ...(sourceSelectedSymbol === undefined ? {} : { symbol: sourceSelectedSymbol }),
+        ...(sourceSelectedDeclaration === undefined ? {} : { declaration: sourceSelectedDeclaration }),
         ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
         ...(sourceSelectedDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedDeclaration }),
         ...(sourceResult.authoredTypeNode === undefined ? {} : { authoredTypeNode: sourceResult.authoredTypeNode as Node }),
