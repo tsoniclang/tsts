@@ -364,6 +364,8 @@ test("structurally equal call-argument target values remain one checked request 
   const requestSnapshotCache = createCheckedOperationRequestSnapshotCache();
   const inventory = new CheckedOperationInventory({
     beginAttempt: () => Object.freeze({}),
+    captureAttemptEffects: () => Object.freeze({}),
+    applyAttemptEffects: () => {},
     commitAttempt: () => {},
     rollbackAttempt: () => {},
     discardAttemptPreservingDiagnostics: () => {},
@@ -1323,6 +1325,8 @@ function argumentConversionSlot(
 function createInventory(): CheckedOperationInventory {
   return new CheckedOperationInventory({
     beginAttempt: () => Object.freeze({}),
+    captureAttemptEffects: () => Object.freeze({}),
+    applyAttemptEffects: () => {},
     commitAttempt: () => {},
     rollbackAttempt: () => {},
     discardAttemptPreservingDiagnostics: () => {},

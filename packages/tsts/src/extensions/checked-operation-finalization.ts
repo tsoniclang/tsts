@@ -23,6 +23,7 @@ import {
 } from "./checked-operation-value-snapshot.js";
 
 type AnyCheckedOperationResult = ExtensionObservationResult<unknown>;
+type AcceptedCheckedOperationResult = Extract<AnyCheckedOperationResult, { readonly kind: "accept" }>;
 
 export type CheckedOperationApplyOutcome =
   | { readonly kind: "applied" }
@@ -40,10 +41,13 @@ interface CheckedOperationRecord {
   readonly reference: CheckedOperationReference;
   readonly request: ExtensionObservationRequest<CheckedOperationObservationPointName>;
   readonly dependencies: readonly CheckedOperationReference[];
-  readonly deferredDependencies: CheckedOperationReference[];
+  readonly allDependencies: CheckedOperationReference[];
+  readonly dependencyIndex: CheckedOperationReferenceIndex;
   readonly evaluate: (phase: ExtensionObservationPhase) => AnyCheckedOperationResult;
   readonly apply: (result: AnyCheckedOperationResult) => void | CheckedOperationApplyOutcome;
   result?: RetainedCheckedOperationResult;
+  pendingAcceptedResult?: AcceptedCheckedOperationResult;
+  acceptedEffects?: unknown;
   unresolved?: CheckedOperationReference;
   state: "evaluating" | "deferred" | "accepted" | "unavailable";
 }
@@ -56,6 +60,8 @@ interface CheckedOperationTraversalFrame {
 
 export interface CheckedOperationInventoryCallbacks {
   readonly beginAttempt: () => unknown;
+  readonly captureAttemptEffects: (attempt: unknown) => unknown;
+  readonly applyAttemptEffects: (attempt: unknown, effects: unknown) => void;
   readonly commitAttempt: (attempt: unknown) => void;
   readonly rollbackAttempt: (attempt: unknown) => void;
   readonly discardAttemptPreservingDiagnostics: (attempt: unknown) => void;
@@ -158,7 +164,8 @@ export class CheckedOperationInventory {
       reference: checkedOperationReference(observation, immutableRequest, subject),
       request: immutableRequest,
       dependencies: incomingDependencies,
-      deferredDependencies: [],
+      allDependencies: [...incomingDependencies],
+      dependencyIndex: createCheckedOperationReferenceIndex(incomingDependencies),
       evaluate: evaluateRecord,
       apply: applyRecord,
       state: "evaluating",
@@ -262,7 +269,7 @@ export class CheckedOperationInventory {
           }
           const dependencyReadiness = this.#dependencyReadiness(record, true);
           if (dependencyReadiness === "blocked") {
-            record.state = "unavailable";
+            markCheckedOperationUnavailable(record);
             completedDeferredRecord = true;
             continue;
           }
@@ -278,7 +285,7 @@ export class CheckedOperationInventory {
             const unresolved = record.unresolved;
             if (unresolved === undefined) {
               this.#callbacks.onUnresolved(record.observation, record.subject);
-              record.state = "unavailable";
+              markCheckedOperationUnavailable(record);
             }
           }
           completedDeferredRecord = true;
@@ -292,6 +299,18 @@ export class CheckedOperationInventory {
     } catch (error) {
       this.#fail(asError(error));
       throw error;
+    }
+  }
+
+  releaseRetainedEffects(): void {
+    if (this.#state !== "finalized") {
+      throw new Error("Checked-operation replay effects can be released only after finalization.");
+    }
+    for (const record of this.#records) {
+      if (record.pendingAcceptedResult !== undefined) {
+        throw new Error("Finalized checked operation still retains a pending accepted result.");
+      }
+      delete record.acceptedEffects;
     }
   }
 
@@ -311,13 +330,24 @@ export class CheckedOperationInventory {
     const attempt = this.#callbacks.beginAttempt();
     let attemptOpen = true;
     try {
-      const result = this.#withExecutionStage("evaluating", () => record.evaluate(phase));
+      const pendingAcceptedResult = record.pendingAcceptedResult;
+      if (pendingAcceptedResult !== undefined) {
+        if (record.acceptedEffects === undefined) {
+          throw new Error(`Checked operation '${record.observation}' lost retained accepted-observation effects.`);
+        }
+        this.#callbacks.applyAttemptEffects(attempt, record.acceptedEffects);
+      }
+      const result = pendingAcceptedResult ?? this.#withExecutionStage("evaluating", () => record.evaluate(phase));
       this.#throwIfFailed();
       if (result.kind === "accept") {
+        if (pendingAcceptedResult === undefined) {
+          record.acceptedEffects = this.#callbacks.captureAttemptEffects(attempt);
+        }
         const applyOutcome = normalizeCheckedOperationApplyOutcome(this.#withExecutionStage("applying", () => record.apply(result)));
         if (applyOutcome.kind === "applied") {
           this.#callbacks.commitAttempt(attempt);
           attemptOpen = false;
+          delete record.pendingAcceptedResult;
           delete record.unresolved;
           return result;
         }
@@ -336,21 +366,25 @@ export class CheckedOperationInventory {
           attemptOpen = false;
           const deferredDependencies = this.#callbacks.deferAttemptPreservingOperations(attempt);
           for (const dependency of [...deferredDependencies, unresolved]) {
-            if (!record.dependencies.some((existing) => checkedOperationReferenceEquals(existing, dependency))
-              && !record.deferredDependencies.some((existing) => checkedOperationReferenceEquals(existing, dependency))) {
-              record.deferredDependencies.push(dependency);
+            if (record.dependencyIndex.add(dependency)) {
+              record.allDependencies.push(dependency);
             }
           }
+          record.pendingAcceptedResult = result;
           record.unresolved = unresolved;
           return dependencyDeferredResult(record.observation);
         }
         attemptOpen = false;
         this.#callbacks.discardAttemptPreservingDiagnostics(attempt);
+        delete record.pendingAcceptedResult;
+        delete record.acceptedEffects;
         delete record.unresolved;
         return checkedOperationUnavailableResult;
       } else {
         attemptOpen = false;
         this.#callbacks.discardAttemptPreservingDiagnostics(attempt);
+        delete record.pendingAcceptedResult;
+        delete record.acceptedEffects;
       }
       return result;
     } catch (error) {
@@ -410,8 +444,22 @@ export class CheckedOperationInventory {
     for (let index = recordCount; index < this.#records.length; index += 1) {
       const record = this.#records[index]!;
       deferred.push(record.reference);
-      record.result = dependencyDeferredResult(record.observation);
-      record.state = "deferred";
+      const result = record.result;
+      if (result === undefined) {
+        throw new Error(`Checked operation '${record.observation}' has no result while preserving a deferred apply attempt.`);
+      }
+      if (result.kind === "accept") {
+        if (record.acceptedEffects === undefined) {
+          throw new Error(`Accepted checked operation '${record.observation}' lost its replay effects.`);
+        }
+        record.pendingAcceptedResult = result;
+        record.result = dependencyDeferredResult(record.observation);
+        record.state = "deferred";
+      } else if (result.kind === "owner-deferred") {
+        record.state = "deferred";
+      } else {
+        markCheckedOperationUnavailable(record);
+      }
       delete record.unresolved;
     }
     return Object.freeze(deferred);
@@ -636,14 +684,11 @@ function snapshotCheckedOperationReferences(references: readonly CheckedOperatio
     throw new Error("Checked-operation dependencies must be an array.");
   }
   const snapshots: CheckedOperationReference[] = [];
-  const snapshotsBySubject = new WeakMap<object, CheckedOperationReference[]>();
+  const index = new CheckedOperationReferenceIndex();
   for (const reference of references) {
     const snapshot = snapshotCheckedOperationReference(reference);
-    const subjectSnapshots = snapshotsBySubject.get(snapshot.subject) ?? [];
-    if (!subjectSnapshots.some((existing) => checkedOperationReferenceEquals(existing, snapshot))) {
+    if (index.add(snapshot)) {
       snapshots.push(snapshot);
-      subjectSnapshots.push(snapshot);
-      snapshotsBySubject.set(snapshot.subject, subjectSnapshots);
     }
   }
   return Object.freeze(snapshots);
@@ -747,14 +792,73 @@ function isCheckedOperationObservationPointName(value: unknown): value is Checke
 }
 
 function checkedOperationDependencies(record: CheckedOperationRecord): readonly CheckedOperationReference[] {
-  const unresolved = record.unresolved;
-  const dependencies = record.deferredDependencies.length === 0
-    ? record.dependencies
-    : [...record.dependencies, ...record.deferredDependencies];
-  if (unresolved === undefined || dependencies.some((dependency) => checkedOperationReferenceEquals(dependency, unresolved))) {
-    return dependencies;
+  return record.allDependencies;
+}
+
+interface CheckedOperationReferenceSubjectIndex {
+  readonly observations: Set<CheckedOperationObservationPointName>;
+  assertion: boolean;
+  readonly calls: WeakMap<object, WeakMap<object, Map<number, Set<number>>>>;
+}
+
+class CheckedOperationReferenceIndex {
+  readonly #subjects = new WeakMap<object, CheckedOperationReferenceSubjectIndex>();
+
+  add(reference: CheckedOperationReference): boolean {
+    let subject = this.#subjects.get(reference.subject);
+    if (subject === undefined) {
+      subject = {
+        observations: new Set(),
+        assertion: false,
+        calls: new WeakMap(),
+      };
+      this.#subjects.set(reference.subject, subject);
+    }
+    if (reference.observation !== ExtensionObservationPoint.mapCheckedConversion) {
+      if (subject.observations.has(reference.observation)) {
+        return false;
+      }
+      subject.observations.add(reference.observation);
+      return true;
+    }
+    if (reference.conversionKind === "assertion") {
+      if (subject.assertion) {
+        return false;
+      }
+      subject.assertion = true;
+      return true;
+    }
+    let slots = subject.calls.get(reference.call);
+    if (slots === undefined) {
+      slots = new WeakMap();
+      subject.calls.set(reference.call, slots);
+    }
+    let sourceIndices = slots.get(reference.slot);
+    if (sourceIndices === undefined) {
+      sourceIndices = new Map();
+      slots.set(reference.slot, sourceIndices);
+    }
+    let targetIndices = sourceIndices.get(reference.sourceArgumentIndex);
+    if (targetIndices === undefined) {
+      targetIndices = new Set();
+      sourceIndices.set(reference.sourceArgumentIndex, targetIndices);
+    }
+    if (targetIndices.has(reference.targetParameterIndex)) {
+      return false;
+    }
+    targetIndices.add(reference.targetParameterIndex);
+    return true;
   }
-  return [...dependencies, unresolved];
+}
+
+function createCheckedOperationReferenceIndex(
+  references: readonly CheckedOperationReference[],
+): CheckedOperationReferenceIndex {
+  const index = new CheckedOperationReferenceIndex();
+  for (const reference of references) {
+    index.add(reference);
+  }
+  return index;
 }
 
 function checkedOperationReferenceArraysEqual(
@@ -788,6 +892,13 @@ function checkedOperationResultState(
     return "deferred";
   }
   return "unavailable";
+}
+
+function markCheckedOperationUnavailable(record: CheckedOperationRecord): void {
+  record.state = "unavailable";
+  delete record.pendingAcceptedResult;
+  delete record.acceptedEffects;
+  delete record.unresolved;
 }
 
 function normalizeCheckedOperationApplyOutcome(value: unknown): CheckedOperationApplyOutcome {

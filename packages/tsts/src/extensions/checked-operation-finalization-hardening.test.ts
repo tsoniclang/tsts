@@ -61,6 +61,41 @@ test("a true 20,000-node forward checked-operation dependency chain finalizes it
   assert.equal(host.diagnostics.all().length, 0, "The deep dependency chain must finalize without diagnostics.");
 });
 
+test("20,000 same-subject conversion dependencies retain distinct slots without quadratic indexing", () => {
+  const host = new ExtensionHost({});
+  const dependencySubject = {};
+  const call = {};
+  const dependencies: CheckedOperationReference[] = Array.from({ length: 20_000 }, (_, index) => ({
+    observation: ExtensionObservationPoint.mapCheckedConversion,
+    subject: dependencySubject,
+    conversionKind: "call-argument",
+    call,
+    slot: {
+      sourceArgumentIndex: index,
+      sourceForm: "value",
+      targetParameterIndex: index,
+      targetForm: "parameter",
+    },
+    sourceArgumentIndex: index,
+    targetParameterIndex: index,
+  }));
+
+  const result = host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest({}, {}, "value"),
+    () => ({ operation: operation("same-subject-dependencies") }),
+    () => {
+      assert.fail("A parent with unregistered dependencies must not apply.");
+    },
+    {},
+    undefined,
+    dependencies,
+  );
+
+  assert.equal(result.kind, "owner-deferred");
+  assert.equal(host.diagnostics.all().length, 0);
+});
+
 test("selected target signature equality handles 20k-deep shared target-type DAGs iteratively", () => {
   const createDeepType = (): TargetTypeRef => {
     let current: TargetTypeRef = { kind: "source-primitive", name: "int32" };
@@ -455,6 +490,7 @@ test("apply-discovered child operations survive rollback and finalize before the
     if (request.propertyName === "deferredChild" && context.phase === "checking") {
       return deferObservation;
     }
+    context.facts.set(request.expression, transactionFactKey, { value: `hook:${request.propertyName}` });
     return acceptObservation({ operation: operation(`apply-discovered.${request.propertyName}`) });
   });
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
@@ -506,6 +542,9 @@ test("apply-discovered child operations survive rollback and finalize before the
   assert.equal(host.facts.get(acceptedChild, targetOperationFactKey), undefined);
   assert.equal(host.facts.get(deferredChild, targetOperationFactKey), undefined);
   assert.equal(host.facts.get(parent, targetOperationFactKey), undefined);
+  assert.equal(host.facts.get(parent, transactionFactKey), undefined);
+  assert.equal(host.facts.get(acceptedChild, transactionFactKey), undefined);
+  assert.equal(host.facts.get(deferredChild, transactionFactKey), undefined);
   applicationOrder.length = 0;
 
   host.finalizeSemantics();
@@ -514,7 +553,89 @@ test("apply-discovered child operations survive rollback and finalize before the
   assert.equal(host.facts.get(acceptedChild, targetOperationFactKey)?.targetOperation, "apply-discovered.acceptedChild");
   assert.equal(host.facts.get(deferredChild, targetOperationFactKey)?.targetOperation, "apply-discovered.deferredChild");
   assert.equal(host.facts.get(parent, targetOperationFactKey)?.targetOperation, "apply-discovered.parent");
+  assert.equal(host.facts.get(parent, transactionFactKey)?.value, "hook:parent");
+  assert.equal(host.facts.get(acceptedChild, transactionFactKey)?.value, "hook:acceptedChild");
+  assert.equal(host.facts.get(deferredChild, transactionFactKey)?.value, "hook:deferredChild");
   assert.equal(host.diagnostics.all().length, 0);
+  assert.equal(host.finalized, true);
+});
+
+test("an unavailable apply-discovered sibling remains unavailable and blocks its deferred parent", () => {
+  const targetId = arbitraryTargetIds[0];
+  const parent = {};
+  const unavailableChild = {};
+  const deferredChild = {};
+  let unavailableChildRuns = 0;
+  let parentApplications = 0;
+  const extension = propertyProviderExtension("apply-discovered-unavailable-child", targetId, (request, context) => {
+    if (request.propertyName === "unavailableChild") {
+      unavailableChildRuns += 1;
+      return rejectObservation({
+        extensionId: context.extensionId,
+        extensionCode: "INTENTIONAL_APPLY_CHILD_REJECTION",
+        numericCode: 9910903,
+        category: "error",
+        message: "Intentional apply-discovered child rejection.",
+        nodeOrSpan: request.expression,
+        identity: "checked-operation-finalization:apply-discovered-unavailable-child",
+      });
+    }
+    if (request.propertyName === "deferredChild" && context.phase === "checking") {
+      return deferObservation;
+    }
+    return acceptObservation({ operation: operation(`apply-discovered-unavailable.${request.propertyName}`) });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+
+  const initial = host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest(parent, {}, "parent", targetId),
+    () => {
+      throw new Error("The provider-owned parent reached core.");
+    },
+    () => {
+      parentApplications += 1;
+      host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        checkedPropertyRequest(unavailableChild, {}, "unavailableChild", targetId),
+        () => {
+          throw new Error("The provider-owned unavailable child reached core.");
+        },
+        () => {
+          assert.fail("The rejected apply-discovered child must not apply.");
+        },
+        { requireOwner: true },
+      );
+      const deferred = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        checkedPropertyRequest(deferredChild, {}, "deferredChild", targetId),
+        () => {
+          throw new Error("The provider-owned deferred child reached core.");
+        },
+        (accepted) => {
+          host.facts.set(deferredChild, targetOperationFactKey, accepted.operation);
+        },
+        { requireOwner: true },
+      );
+      if (deferred.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(deferredChild) };
+      }
+      assert.fail("The deferred child unexpectedly accepted during checking.");
+    },
+    { requireOwner: true },
+  );
+
+  assert.equal(initial.kind, "owner-deferred");
+  assert.equal(unavailableChildRuns, 1);
+  assert.equal(parentApplications, 1);
+
+  host.finalizeSemantics();
+
+  assert.equal(unavailableChildRuns, 1, "A rejected apply-discovered child must not be re-evaluated during finalization.");
+  assert.equal(parentApplications, 1, "An unavailable child must block replay of its retained parent application.");
+  assert.equal(host.facts.get(parent, targetOperationFactKey), undefined);
+  assert.equal(host.facts.get(deferredChild, targetOperationFactKey)?.targetOperation, "apply-discovered-unavailable.deferredChild");
+  assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "INTENTIONAL_APPLY_CHILD_REJECTION").length, 1);
   assert.equal(host.finalized, true);
 });
 

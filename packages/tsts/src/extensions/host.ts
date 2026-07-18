@@ -2724,6 +2724,11 @@ export class ExtensionHost {
     this.providers = new ProviderRegistry(this.diagnostics, options.requiredProviderModules ?? []);
     this.#checkedOperations = new CheckedOperationInventory({
       beginAttempt: () => this.#beginFactAttempt(),
+      captureAttemptEffects: (attempt) => this.#captureFactAttemptEffects(attempt as ExtensionFactAttempt),
+      applyAttemptEffects: (attempt, effects) => this.#applyFactAttemptEffects(
+        attempt as ExtensionFactAttempt,
+        effects as ExtensionAttemptDelta,
+      ),
       commitAttempt: (attempt) => this.#commitFactAttempt(attempt as ExtensionFactAttempt),
       rollbackAttempt: (attempt) => this.#rollbackFactAttempt(attempt as ExtensionFactAttempt),
       discardAttemptPreservingDiagnostics: (attempt) => this.#discardFactAttemptPreservingDiagnostics(attempt as ExtensionFactAttempt),
@@ -3119,6 +3124,24 @@ export class ExtensionHost {
     }
   }
 
+  #captureFactAttemptEffects(attempt: ExtensionFactAttempt): ExtensionAttemptDelta {
+    this.#assertActiveFactAttempt(attempt);
+    const facts = attempt.ownsTransaction
+      ? (() => {
+          this.facts[factStoreAssertCanCommitTransaction](attempt.transaction);
+          return Object.freeze({ insertions: Object.freeze([...attempt.transaction.insertions]) });
+        })()
+      : this.facts[factStoreCaptureSavepoint](attempt.savepoint);
+    const diagnostics = this.diagnostics[diagnosticStoreCaptureSavepoint](attempt.diagnosticSavepoint);
+    return Object.freeze({ facts, diagnostics });
+  }
+
+  #applyFactAttemptEffects(attempt: ExtensionFactAttempt, effects: ExtensionAttemptDelta): void {
+    this.#assertActiveFactAttempt(attempt);
+    this.facts[factStoreApplyDelta](effects.facts);
+    this.diagnostics[diagnosticStoreApplyDelta](effects.diagnostics);
+  }
+
   #assertActiveFactAttempt(attempt: ExtensionFactAttempt): void {
     if (!attempt.active) {
       throw new Error("Extension fact attempts must be completed exactly once by their owner.");
@@ -3348,6 +3371,7 @@ export class ExtensionHost {
       this.#checkedOperations.finalize();
       this.facts[factStoreAssertCanCommitTransaction](transaction);
       this.diagnostics[diagnosticStoreAssertCanCommitSavepoint](diagnosticSavepoint);
+      this.#checkedOperations.releaseRetainedEffects();
       this.facts[factStoreCommitTransaction](transaction);
       transaction = undefined;
       this.facts.seal();

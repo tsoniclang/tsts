@@ -38,9 +38,12 @@ import type {
   TargetSignatureSelection,
 } from "./index.js";
 
-test("an idempotent selected-call fact still finalizes call-argument child semantics", () => {
+test("selected calls retain and replay all call-argument child semantics atomically", () => {
   let checkingRequest: CheckedCallMappingRequest | undefined;
   const conversionRequests: CheckedConversionMappingRequest[] = [];
+  const conversionRuns = [0, 0];
+  const conversionPhases: string[] = [];
+  const callPhases: string[] = [];
   const selection: TargetSignatureSelection = {
     member: {
       id: "acme.consume",
@@ -48,7 +51,11 @@ test("an idempotent selected-call fact still finalizes call-argument child seman
       targetName: "consume",
       kind: "method",
       parameters: [{
-        name: "value",
+        name: "first",
+        type: { kind: "source-global", name: "String" },
+        passingMode: "by-value",
+      }, {
+        name: "second",
         type: { kind: "source-global", name: "String" },
         passingMode: "by-value",
       }],
@@ -81,6 +88,7 @@ test("an idempotent selected-call fact still finalizes call-argument child seman
           providerKind: "semantic",
         },
         mapCheckedCall: (request, observationContext) => {
+          callPhases.push(observationContext.phase);
           if (observationContext.phase === "checking") {
             checkingRequest = request;
             return deferObservation;
@@ -93,11 +101,23 @@ test("an idempotent selected-call fact still finalizes call-argument child seman
               sourceForm: "value",
               targetParameterIndex: 0,
               targetForm: "parameter",
+            }, {
+              sourceArgumentIndex: 1,
+              sourceForm: "value",
+              targetParameterIndex: 1,
+              targetForm: "parameter",
             }],
           });
         },
-        mapCheckedConversion: (request) => {
+        mapCheckedConversion: (request, context) => {
           conversionRequests.push(request);
+          if (request.conversionKind === "call-argument") {
+            conversionPhases.push(`${request.sourceArgumentIndex}:${context.phase}`);
+            conversionRuns[request.sourceArgumentIndex] = (conversionRuns[request.sourceArgumentIndex] ?? 0) + 1;
+            if (request.sourceArgumentIndex === 0 && conversionRuns[0] === 1) {
+              return deferObservation;
+            }
+          }
           return acceptObservation({
             convertedType: { kind: "source-global", name: "String" },
           });
@@ -114,8 +134,11 @@ test("an idempotent selected-call fact still finalizes call-argument child seman
   assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
 
   assert.equal(extensionHost.finalized, true);
-  assert.equal(conversionRequests.length, 1);
-  const conversion = conversionRequests[0];
+  assert.deepEqual(callPhases, ["checking", "finalization"]);
+  assert.deepEqual(conversionPhases, ["0:finalization", "1:finalization", "0:finalization"]);
+  assert.deepEqual(conversionRuns, [2, 1]);
+  assert.equal(conversionRequests.length, 3);
+  const conversion = conversionRequests.find((request) => request.conversionKind === "call-argument" && request.sourceArgumentIndex === 0);
   assert.equal(conversion?.conversionKind, "call-argument");
   if (conversion?.conversionKind !== "call-argument") {
     throw new Error("Expected a call-argument child conversion.");
@@ -143,6 +166,11 @@ test("an idempotent selected-call fact still finalizes call-argument child seman
     throw new Error("Expected a source-global call-argument conversion target.");
   }
   assert.equal(convertedType.name, "String");
+  const secondConversion = conversionRequests.find((request) => request.conversionKind === "call-argument" && request.sourceArgumentIndex === 1);
+  if (secondConversion?.conversionKind !== "call-argument") {
+    throw new Error("Expected the second call-argument child conversion.");
+  }
+  assert.equal(extensionHost.facts.get(secondConversion.slot, targetCallArgumentConversionFactKey)?.convertedType?.kind, "source-global");
   assert.equal(extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
 });
 
@@ -152,7 +180,7 @@ function selectedFact(
 ): SelectedTargetSignatureFact {
   return {
     ...selection,
-    argumentConversions: [argumentConversionSlot(0, 0)],
+    argumentConversions: [argumentConversionSlot(0, 0), argumentConversionSlot(1, 1)],
     sourceArgumentBindings: request.sourceArgumentBindings ?? [],
     ...(request.sourceSelectedMethodTypeArguments === undefined ? {} : {
       sourceSelectedMethodTypeArguments: request.sourceSelectedMethodTypeArguments,
@@ -194,8 +222,8 @@ function createProgram(extension: CompilerExtension): {
   const files = new Map<string, string>([
     ["/src/profile.d.ts", sourceProfile],
     ["/src/index.ts", `
-      declare function consume(value: string): void;
-      consume("value");
+      declare function consume(first: string, second: string): void;
+      consume("first", "second");
     `],
     ["/src/tsconfig.json", JSON.stringify({
       compilerOptions: {

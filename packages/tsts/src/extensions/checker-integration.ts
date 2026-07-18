@@ -297,6 +297,12 @@ export function recordExtensionCheckedCallMapping(
     ...(sourceReceiver === undefined ? {} : { sourceReceiver }),
     ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
   };
+  let retainedTargetApplication: {
+    readonly result: Extract<CheckedCallMappingResult, { readonly kind: "target" }>;
+    readonly selectedSignature: SelectedTargetSignatureFact;
+    readonly argumentSlots: readonly SelectedTargetArgumentSlot[];
+    readonly snapshotCache: CheckedOperationRequestSnapshotCache;
+  } | undefined;
   extensionHost[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedCall,
     request,
@@ -308,11 +314,21 @@ export function recordExtensionCheckedCallMapping(
         return;
       }
       const finalizedCall = acceptedRequest.call as Node;
-      const finalizedArguments = acceptedRequest.arguments as readonly GoPtr<Node>[];
-      const finalizedSourceProvenance = selectedSourceCallProvenanceFromRequest(acceptedRequest);
-      const snapshotCache = createCheckedOperationRequestSnapshotCache();
-      const selectedSignature = withSelectedTargetSignatureProvenance(value, finalizedSourceProvenance, snapshotCache);
-      const argumentSlots = selectTargetArgumentConversionSlots(selectedSignature, finalizedArguments);
+      if (retainedTargetApplication === undefined) {
+        const finalizedArguments = acceptedRequest.arguments as readonly GoPtr<Node>[];
+        const finalizedSourceProvenance = selectedSourceCallProvenanceFromRequest(acceptedRequest);
+        const snapshotCache = createCheckedOperationRequestSnapshotCache();
+        const selectedSignature = withSelectedTargetSignatureProvenance(value, finalizedSourceProvenance, snapshotCache);
+        retainedTargetApplication = Object.freeze({
+          result: value,
+          selectedSignature,
+          argumentSlots: selectTargetArgumentConversionSlots(selectedSignature, finalizedArguments),
+          snapshotCache,
+        });
+      } else if (retainedTargetApplication.result !== value) {
+        throw new Error("A retained checked call changed its accepted target mapping result during application replay.");
+      }
+      const { selectedSignature, argumentSlots, snapshotCache } = retainedTargetApplication;
       const conversionOutcome = recordExtensionCallArgumentConversions(extensionHost, finalizedCall, selectedSignature, argumentSlots, snapshotCache);
       if (conversionOutcome.kind !== "applied") {
         return conversionOutcome;
@@ -1250,6 +1266,7 @@ function recordExtensionCallArgumentConversions(
   slots: readonly SelectedTargetArgumentSlot[],
   snapshotCache: CheckedOperationRequestSnapshotCache,
 ): CheckedOperationApplyOutcome {
+  let unresolved: CheckedOperationReference<typeof ExtensionObservationPoint.mapCheckedConversion> | undefined;
   for (const slot of slots) {
     const sourceArgument = selectedSignature.sourceArguments[slot.sourceArgumentIndex];
     if (sourceArgument === undefined || sourceArgument.expression !== slot.argument) {
@@ -1277,14 +1294,14 @@ function recordExtensionCallArgumentConversions(
       continue;
     }
     if (result.kind === "owner-deferred") {
-      return Object.freeze({
-        kind: "deferred",
-        unresolved: checkedCallArgumentConversionReference(callExpression, slot),
-      });
+      unresolved ??= checkedCallArgumentConversionReference(callExpression, slot);
+      continue;
     }
     return checkedOperationUnavailable;
   }
-  return checkedOperationApplied;
+  return unresolved === undefined
+    ? checkedOperationApplied
+    : Object.freeze({ kind: "deferred", unresolved });
 }
 
 function recordExtensionCheckedConversion(
