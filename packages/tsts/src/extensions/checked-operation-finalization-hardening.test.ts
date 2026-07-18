@@ -19,12 +19,14 @@ import type {
   CompilerExtension,
   ExtensionDiagnostic,
   ExtensionDiagnosticSourceSpan,
+  ExtensionFactKey,
   ExtensionFactSubject,
   ExtensionObservationPhase,
   ExtensionObservationResult,
   SelectedSourceValueEvidence,
   SelectedTargetSignatureFact,
   TargetOperationFact,
+  TargetOperationProposal,
   TargetSemanticProvider,
   TargetTypeRef,
 } from "./index.js";
@@ -36,16 +38,37 @@ import {
   type CheckedOperationInventoryLimits,
 } from "./checked-operation-finalization.js";
 import {
+  extensionHostGetCheckedOperationRequest,
   extensionHostGetCheckedOperationReference,
+  extensionHostPublishSourceDecisionBatch,
   extensionHostRunCheckedOperation,
+  extensionHostSetFact,
 } from "./host.js";
+import {
+  checkedPropertySourceOperationFromRequest,
+  finalizeTargetOperationFact,
+} from "./checker-integration.js";
 
 const propertyObservation = ExtensionObservationPoint.mapCheckedPropertyAccess;
 const arbitraryTargetIds = ["hardening-target-17", "hardening-target-29"] as const;
-const transactionFactKey = defineExtensionFactKey<{ readonly value: string }>({
-  extensionId: "checked-operation-finalization-hardening",
-  name: "transaction",
-});
+type TransactionFact = { readonly value: string };
+const transactionFactKeysByExtensionId = new Map<string, ExtensionFactKey<TransactionFact>>();
+
+function transactionFactKeyFor(extensionId: string): ExtensionFactKey<TransactionFact> {
+  const existing = transactionFactKeysByExtensionId.get(extensionId);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const key = defineExtensionFactKey<TransactionFact>({
+    extensionId,
+    name: "transaction",
+    snapshot: (value) => Object.freeze({ value: value.value }),
+  });
+  transactionFactKeysByExtensionId.set(extensionId, key);
+  return key;
+}
+
+const transactionFactKey = transactionFactKeyFor("checked-operation-finalization-hardening");
 
 test("a true 20,000-node forward checked-operation dependency chain finalizes iteratively", () => {
   const host = new ExtensionHost({});
@@ -82,8 +105,6 @@ test("20,000 same-subject conversion dependencies retain distinct slots without 
       targetParameterIndex: index,
       targetForm: "parameter",
     },
-    sourceArgumentIndex: index,
-    targetParameterIndex: index,
   }));
 
   const result = host[extensionHostRunCheckedOperation](
@@ -133,17 +154,22 @@ test("selected target signature equality handles 20k-deep shared target-type DAG
       returnType,
     },
     argumentConversions: [],
-    sourceArgumentBindings: [],
     sourceCallKind: "call",
+    sourceSelection: { kind: "untyped" },
     sourceCallee,
     sourceArguments: [],
     sourceResult,
+    sourceChainRole: { kind: "ordinary", participant: "call" },
   });
   const host = new ExtensionHost({});
   const call = {};
 
-  assert.equal(host.facts.set(call, selectedTargetSignatureFactKey, selectedFact(leftReturnType)), "inserted");
-  assert.equal(host.facts.set(call, selectedTargetSignatureFactKey, selectedFact(rightReturnType)), "idempotent");
+  assert.equal(
+    host[extensionHostSetFact](call, selectedTargetSignatureFactKey, selectedFact(leftReturnType)),
+    "inserted",
+    JSON.stringify(host.diagnostics.all()),
+  );
+  assert.equal(host[extensionHostSetFact](call, selectedTargetSignatureFactKey, selectedFact(rightReturnType)), "idempotent");
   assert.equal(host.diagnostics.all().length, 0, "Equivalent deep/shared target types must not conflict.");
 });
 
@@ -476,6 +502,7 @@ test("checked-operation provenance rejects duplicate primary operations for one 
   const host = new ExtensionHost({});
   const subject = {};
   const operatorLeft = {};
+  const operatorRight = {};
   retainPropertyOperation(host, subject);
 
   const initialReference = host[extensionHostGetCheckedOperationReference](subject);
@@ -483,11 +510,14 @@ test("checked-operation provenance rejects duplicate primary operations for one 
   assert.equal(initialReference?.subject, subject);
 
   host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedOperator, {
+    sourceOperationKind: "operator",
     expression: subject,
+    operatorKind: "binary",
     operator: "+",
     left: operatorLeft,
-    right: {},
+    right: operatorRight,
     sourceLeft: selectedSourceValue(operatorLeft, {}),
+    sourceRight: selectedSourceValue(operatorRight, {}),
     sourceResult: selectedSourceValue(subject, {}),
   }, () => ({ operation: operation("retained.operator", "operator") }), () => {});
 
@@ -553,7 +583,7 @@ test("an initial accepted-operation apply failure poisons the inventory before f
   assert.throws(
     () => runPropertyOperation(host, {}, targetId, "value", () => {
       applyAttempts += 1;
-      host.facts.set(insertedSubject, transactionFactKey, { value: "must-roll-back" });
+      host[extensionHostSetFact](insertedSubject, transactionFactKey, { value: "must-roll-back" });
       throw new Error("initial checked-operation apply failed");
     }),
     /initial checked-operation apply failed/,
@@ -595,7 +625,7 @@ test("semantic finalization rolls back lifecycle and earlier operation facts whe
       context.registerLifecycleHook<BeforeSemanticsFinalizedLifecycleRequest>(
         ExtensionLifecycleEvent.beforeSemanticsFinalized,
         (_request, lifecycleContext) => {
-          lifecycleContext.host.facts.set(lifecycleSubject, transactionFactKey, { value: "lifecycle" });
+          lifecycleContext.host[extensionHostSetFact](lifecycleSubject, transactionFactKey, { value: "lifecycle" });
         },
       );
       assert.equal(context.registerTargetSemanticProvider({
@@ -625,10 +655,10 @@ test("semantic finalization rolls back lifecycle and earlier operation facts whe
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
 
   runPropertyOperation(host, firstSubject, targetId, "first", () => {
-    host.facts.set(firstSubject, transactionFactKey, { value: "first" });
+    host[extensionHostSetFact](firstSubject, transactionFactKey, { value: "first" });
   });
   runPropertyOperation(host, secondSubject, targetId, "second", () => {
-    host.facts.set(secondSubject, transactionFactKey, { value: "second" });
+    host[extensionHostSetFact](secondSubject, transactionFactKey, { value: "second" });
     throw new Error("second finalization apply failed");
   });
 
@@ -652,10 +682,11 @@ test("semantic finalization rolls back lifecycle and earlier operation facts whe
 test("deferred checked-operation attempts roll back provisional facts during checking and replay", () => {
   const targetId = arbitraryTargetIds[0];
   const provisionalSubject = {};
+  const factKey = transactionFactKeyFor("checked-operation-finalization-deferred-fact-rollback");
   let attempts = 0;
   const extension = propertyProviderExtension("deferred-fact-rollback", targetId, (_request, context) => {
     attempts += 1;
-    context.facts.set(provisionalSubject, transactionFactKey, { value: `attempt-${attempts}` });
+    context.facts.set(provisionalSubject, factKey, { value: `attempt-${attempts}` });
     return deferObservation;
   });
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
@@ -665,10 +696,10 @@ test("deferred checked-operation attempts roll back provisional facts during che
   });
 
   assert.equal(initial.kind, "owner-deferred");
-  assert.equal(host.facts.get(provisionalSubject, transactionFactKey), undefined);
+  assert.equal(host.facts.get(provisionalSubject, factKey), undefined);
   host.finalizeSemantics();
   assert.equal(attempts, 2);
-  assert.equal(host.facts.get(provisionalSubject, transactionFactKey), undefined);
+  assert.equal(host.facts.get(provisionalSubject, factKey), undefined);
   assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_OWNER_DEFERRED").length, 1);
 });
 
@@ -707,9 +738,10 @@ test("rejected and throwing checked-operation hooks roll back facts but retain d
   for (const outcome of ["reject", "throw"] as const) {
     const targetId = arbitraryTargetIds[0];
     const provisionalSubject = {};
+    const factKey = transactionFactKeyFor(`checked-operation-finalization-failed-hook-${outcome}`);
     const provisionalDiagnosticCode = `PROVISIONAL_${outcome.toUpperCase()}_DIAGNOSTIC`;
     const extension = propertyProviderExtension(`failed-hook-${outcome}`, targetId, (request, context) => {
-      context.facts.set(provisionalSubject, transactionFactKey, { value: outcome });
+      context.facts.set(provisionalSubject, factKey, { value: outcome });
       context.diagnostics.append(attemptDiagnostic(context.extensionId, provisionalDiagnosticCode));
       if (outcome === "throw") {
         throw new Error("intentional checked hook failure");
@@ -731,13 +763,18 @@ test("rejected and throwing checked-operation hooks roll back facts but retain d
     });
 
     assert.equal(result.kind, "reject");
-    assert.equal(host.facts.get(provisionalSubject, transactionFactKey), undefined);
+    assert.equal(host.facts.get(provisionalSubject, factKey), undefined);
     assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === provisionalDiagnosticCode).length, 0);
+    assert.equal(
+      host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === (outcome === "throw" ? "OBSERVATION_HOOK_FAILED" : "INTENTIONAL_CHECKED_REJECTION")).length,
+      0,
+      "A retained checked-operation rejection must not escape before semantic finalization.",
+    );
+    host.finalizeSemantics();
     assert.equal(
       host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === (outcome === "throw" ? "OBSERVATION_HOOK_FAILED" : "INTENTIONAL_CHECKED_REJECTION")).length,
       1,
     );
-    host.finalizeSemantics();
     assert.equal(host.finalized, true);
   }
 });
@@ -774,7 +811,7 @@ test("an unavailable child blocks its parent without evaluating or applying the 
     throw new Error("The blocked provider-owned parent reached core.");
   }, (accepted) => {
     parentApplications += 1;
-    host.facts.set(parent, targetOperationFactKey, accepted.operation);
+    setRetainedPropertyOperationFact(host, parent, accepted);
   }, { requireOwner: true }, undefined, [propertyReference(child)]);
 
   assert.equal(childResult.kind, "reject");
@@ -792,6 +829,7 @@ test("an unavailable child blocks its parent without evaluating or applying the 
 
 test("apply-discovered child operations survive rollback and finalize before their parent", () => {
   const targetId = arbitraryTargetIds[0];
+  const factKey = transactionFactKeyFor("checked-operation-finalization-apply-discovered-children");
   const parent = {};
   const acceptedChild = {};
   const acceptedChildReceiver = {};
@@ -804,7 +842,7 @@ test("apply-discovered child operations survive rollback and finalize before the
     if (request.propertyName === "deferredChild" && context.phase === "checking") {
       return deferObservation;
     }
-    context.facts.set(request.expression, transactionFactKey, { value: `hook:${request.propertyName}` });
+    context.facts.set(request.expression, factKey, { value: `hook:${request.propertyName}` });
     return acceptObservation({ operation: operation(`apply-discovered.${request.propertyName}`) });
   });
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
@@ -824,7 +862,7 @@ test("apply-discovered child operations survive rollback and finalize before the
         },
         (child) => {
           applicationOrder.push("acceptedChild");
-          host.facts.set(acceptedChild, targetOperationFactKey, child.operation);
+          setRetainedPropertyOperationFact(host, acceptedChild, child);
         },
         { requireOwner: true },
       );
@@ -839,7 +877,7 @@ test("apply-discovered child operations survive rollback and finalize before the
         },
         (child) => {
           applicationOrder.push("deferredChild");
-          host.facts.set(deferredChild, targetOperationFactKey, child.operation);
+          setRetainedPropertyOperationFact(host, deferredChild, child);
         },
         { requireOwner: true },
       );
@@ -847,18 +885,22 @@ test("apply-discovered child operations survive rollback and finalize before the
         return { kind: "deferred", unresolved: propertyReference(deferredChild) };
       }
       applicationOrder.push("parent");
-      host.facts.set(parent, targetOperationFactKey, accepted.operation);
+      setRetainedPropertyOperationFact(host, parent, accepted);
     },
     { requireOwner: true },
   );
 
-  assert.equal(initial.kind, "owner-deferred");
+  assert.equal(
+    initial.kind,
+    "owner-deferred",
+    host.diagnostics.all().map((diagnostic) => `${diagnostic.extensionCode}: ${diagnostic.message}`).join("\n"),
+  );
   assert.equal(host.facts.get(acceptedChild, targetOperationFactKey), undefined);
   assert.equal(host.facts.get(deferredChild, targetOperationFactKey), undefined);
   assert.equal(host.facts.get(parent, targetOperationFactKey), undefined);
-  assert.equal(host.facts.get(parent, transactionFactKey), undefined);
-  assert.equal(host.facts.get(acceptedChild, transactionFactKey), undefined);
-  assert.equal(host.facts.get(deferredChild, transactionFactKey), undefined);
+  assert.equal(host.facts.get(parent, factKey), undefined);
+  assert.equal(host.facts.get(acceptedChild, factKey), undefined);
+  assert.equal(host.facts.get(deferredChild, factKey), undefined);
   applicationOrder.length = 0;
 
   host.finalizeSemantics();
@@ -867,15 +909,16 @@ test("apply-discovered child operations survive rollback and finalize before the
   assert.equal(host.facts.get(acceptedChild, targetOperationFactKey)?.targetOperation, "apply-discovered.acceptedChild");
   assert.equal(host.facts.get(deferredChild, targetOperationFactKey)?.targetOperation, "apply-discovered.deferredChild");
   assert.equal(host.facts.get(parent, targetOperationFactKey)?.targetOperation, "apply-discovered.parent");
-  assert.equal(host.facts.get(parent, transactionFactKey)?.value, "hook:parent");
-  assert.equal(host.facts.get(acceptedChild, transactionFactKey)?.value, "hook:acceptedChild");
-  assert.equal(host.facts.get(deferredChild, transactionFactKey)?.value, "hook:deferredChild");
+  assert.equal(host.facts.get(parent, factKey)?.value, "hook:parent");
+  assert.equal(host.facts.get(acceptedChild, factKey)?.value, "hook:acceptedChild");
+  assert.equal(host.facts.get(deferredChild, factKey)?.value, "hook:deferredChild");
   assert.equal(host.diagnostics.all().length, 0);
   assert.equal(host.finalized, true);
 });
 
 test("atomically owned apply-discovered operations replay only inside their owner's transaction", () => {
   const targetId = arbitraryTargetIds[0];
+  const factKey = transactionFactKeyFor("checked-operation-finalization-atomic-apply-children");
   const parent = {};
   const acceptedChild = {};
   const deferredChild = {};
@@ -886,7 +929,7 @@ test("atomically owned apply-discovered operations replay only inside their owne
     if (request.propertyName === "deferredChild" && context.phase === "checking") {
       return deferObservation;
     }
-    context.facts.set(request.expression, transactionFactKey, { value: `hook:${request.propertyName}` });
+    context.facts.set(request.expression, factKey, { value: `hook:${request.propertyName}` });
     return acceptObservation({ operation: operation(`atomic.${request.propertyName}`) });
   });
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
@@ -909,7 +952,7 @@ test("atomically owned apply-discovered operations replay only inside their owne
         },
         (child) => {
           applicationOrder.push("acceptedChild");
-          host.facts.set(acceptedChild, targetOperationFactKey, child.operation);
+          setRetainedPropertyOperationFact(host, acceptedChild, child);
         },
         { requireOwner: true },
         undefined,
@@ -927,7 +970,7 @@ test("atomically owned apply-discovered operations replay only inside their owne
         },
         (child) => {
           applicationOrder.push("deferredChild");
-          host.facts.set(deferredChild, targetOperationFactKey, child.operation);
+          setRetainedPropertyOperationFact(host, deferredChild, child);
         },
         { requireOwner: true },
         undefined,
@@ -938,17 +981,21 @@ test("atomically owned apply-discovered operations replay only inside their owne
         return { kind: "deferred", unresolved: propertyReference(deferredChild) };
       }
       applicationOrder.push("parent");
-      host.facts.set(parent, targetOperationFactKey, accepted.operation);
+      setRetainedPropertyOperationFact(host, parent, accepted);
     },
     { requireOwner: true },
   );
 
-  assert.equal(initial.kind, "owner-deferred");
+  assert.equal(
+    initial.kind,
+    "owner-deferred",
+    host.diagnostics.all().map((diagnostic) => `${diagnostic.extensionCode}: ${diagnostic.message}`).join("\n"),
+  );
   assert.deepEqual(mapperRuns, ["parent", "acceptedChild", "deferredChild"]);
   assert.deepEqual(applicationOrder, ["acceptedChild"]);
   for (const subject of [parent, acceptedChild, deferredChild]) {
     assert.equal(host.facts.get(subject, targetOperationFactKey) === undefined, true);
-    assert.equal(host.facts.get(subject, transactionFactKey) === undefined, true);
+    assert.equal(host.facts.get(subject, factKey) === undefined, true);
   }
   applicationOrder.length = 0;
 
@@ -963,9 +1010,9 @@ test("atomically owned apply-discovered operations replay only inside their owne
   assert.equal(host.facts.get(parent, targetOperationFactKey)?.targetOperation, "atomic.parent");
   assert.equal(host.facts.get(acceptedChild, targetOperationFactKey)?.targetOperation, "atomic.acceptedChild");
   assert.equal(host.facts.get(deferredChild, targetOperationFactKey)?.targetOperation, "atomic.deferredChild");
-  assert.equal(host.facts.get(parent, transactionFactKey)?.value, "hook:parent");
-  assert.equal(host.facts.get(acceptedChild, transactionFactKey)?.value, "hook:acceptedChild");
-  assert.equal(host.facts.get(deferredChild, transactionFactKey)?.value, "hook:deferredChild");
+  assert.equal(host.facts.get(parent, factKey)?.value, "hook:parent");
+  assert.equal(host.facts.get(acceptedChild, factKey)?.value, "hook:acceptedChild");
+  assert.equal(host.facts.get(deferredChild, factKey)?.value, "hook:deferredChild");
   assert.equal(host.diagnostics.all().length, 0);
   assert.equal(host.finalized, true);
 });
@@ -1038,7 +1085,7 @@ test("nested atomic ownership finalizes in exact inner-to-outer order", () => {
             },
             (acceptedGrandchild) => {
               applicationOrder.push("grandchild");
-              host.facts.set(grandchild, targetOperationFactKey, acceptedGrandchild.operation);
+              setRetainedPropertyOperationFact(host, grandchild, acceptedGrandchild);
             },
             { requireOwner: true },
             undefined,
@@ -1049,7 +1096,7 @@ test("nested atomic ownership finalizes in exact inner-to-outer order", () => {
             return { kind: "deferred", unresolved: propertyReference(grandchild) };
           }
           applicationOrder.push("child");
-          host.facts.set(child, targetOperationFactKey, acceptedChild.operation);
+          setRetainedPropertyOperationFact(host, child, acceptedChild);
         },
         { requireOwner: true },
         undefined,
@@ -1060,7 +1107,7 @@ test("nested atomic ownership finalizes in exact inner-to-outer order", () => {
         return { kind: "deferred", unresolved: propertyReference(child) };
       }
       applicationOrder.push("parent");
-      host.facts.set(parent, targetOperationFactKey, parentResult.operation);
+      setRetainedPropertyOperationFact(host, parent, parentResult);
     },
     { requireOwner: true },
   );
@@ -1125,7 +1172,7 @@ test("a permanently deferred atomic child terminalizes its owner without retryin
       if (childResult.kind !== "accept") {
         return { kind: "deferred", unresolved: propertyReference(child) };
       }
-      host.facts.set(parent, targetOperationFactKey, accepted.operation);
+      setRetainedPropertyOperationFact(host, parent, accepted);
     },
     { requireOwner: true },
   );
@@ -1142,6 +1189,7 @@ test("a permanently deferred atomic child terminalizes its owner without retryin
 
 test("a pre-existing atomic child replays retained effects after a later parent rollback", () => {
   const targetId = arbitraryTargetIds[0];
+  const factKey = transactionFactKeyFor("checked-operation-finalization-pre-existing-child-replay");
   const blocker = {};
   const parent = {};
   const acceptedChild = {};
@@ -1160,13 +1208,13 @@ test("a pre-existing atomic child replays retained effects after a later parent 
     if (request.propertyName === "acceptedChild") {
       acceptedChildMapperRuns += 1;
     }
-    context.facts.set(request.expression, transactionFactKey, { value: `hook:${request.propertyName}` });
+    context.facts.set(request.expression, factKey, { value: `hook:${request.propertyName}` });
     return acceptObservation({ operation: operation(`pre-existing-child-replay.${request.propertyName}`) });
   });
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
 
   const blockerResult = runPropertyOperation(host, blocker, targetId, "blocker", (accepted) => {
-    host.facts.set(blocker, targetOperationFactKey, accepted.operation);
+    setRetainedPropertyOperationFact(host, blocker, accepted);
   });
   assert.equal(blockerResult.kind, "owner-deferred");
 
@@ -1188,7 +1236,7 @@ test("a pre-existing atomic child replays retained effects after a later parent 
         },
         (child) => {
           acceptedChildApplications.push("acceptedChild");
-          host.facts.set(acceptedChild, targetOperationFactKey, child.operation);
+          setRetainedPropertyOperationFact(host, acceptedChild, child);
         },
         { requireOwner: true },
         undefined,
@@ -1205,7 +1253,7 @@ test("a pre-existing atomic child replays retained effects after a later parent 
           throw new Error("The provider-owned late child reached core.");
         },
         (child) => {
-          host.facts.set(lateChild, targetOperationFactKey, child.operation);
+          setRetainedPropertyOperationFact(host, lateChild, child);
         },
         { requireOwner: true },
         undefined,
@@ -1215,7 +1263,7 @@ test("a pre-existing atomic child replays retained effects after a later parent 
       if (lateChildResult.kind !== "accept") {
         return { kind: "deferred", unresolved: propertyReference(lateChild) };
       }
-      host.facts.set(parent, targetOperationFactKey, accepted.operation);
+      setRetainedPropertyOperationFact(host, parent, accepted);
     },
     { requireOwner: true },
     undefined,
@@ -1224,7 +1272,7 @@ test("a pre-existing atomic child replays retained effects after a later parent 
   assert.equal(parentResult.kind, "owner-deferred");
 
   const lateTriggerResult = runPropertyOperation(host, lateTrigger, targetId, "lateTrigger", (accepted) => {
-    host.facts.set(lateTrigger, targetOperationFactKey, accepted.operation);
+    setRetainedPropertyOperationFact(host, lateTrigger, accepted);
   });
   assert.equal(lateTriggerResult.kind, "owner-deferred");
 
@@ -1233,7 +1281,7 @@ test("a pre-existing atomic child replays retained effects after a later parent 
   assert.equal(acceptedChildMapperRuns, 1, "The accepted mapper capsule must be retained rather than re-evaluated.");
   assert.deepEqual(acceptedChildApplications, ["acceptedChild", "acceptedChild"], "The child apply runs once in the rolled-back parent attempt and once in the committed attempt.");
   assert.equal(host.facts.get(acceptedChild, targetOperationFactKey)?.targetOperation, "pre-existing-child-replay.acceptedChild");
-  assert.equal(host.facts.get(acceptedChild, transactionFactKey)?.value, "hook:acceptedChild");
+  assert.equal(host.facts.get(acceptedChild, factKey)?.value, "hook:acceptedChild");
   assert.equal(host.facts.get(lateChild, targetOperationFactKey)?.targetOperation, "pre-existing-child-replay.lateChild");
   assert.equal(host.facts.get(parent, targetOperationFactKey)?.targetOperation, "pre-existing-child-replay.parent");
   assert.equal(host.diagnostics.all().length, 0);
@@ -1264,7 +1312,7 @@ test("a retained atomic child cannot be replayed under a different owner", () =>
         throw new Error("The provider-owned shared child reached core.");
       },
       (accepted) => {
-        host.facts.set(sharedChild, targetOperationFactKey, accepted.operation);
+        setRetainedPropertyOperationFact(host, sharedChild, accepted);
       },
       { requireOwner: true },
       undefined,
@@ -1324,6 +1372,7 @@ test("a retained atomic child cannot be replayed under a different owner", () =>
 
 test("an unavailable dependency of an atomic child makes the owner unavailable without leaking effects", () => {
   const targetId = arbitraryTargetIds[0];
+  const factKey = transactionFactKeyFor("checked-operation-finalization-blocked-atomic-child");
   const externalDependency = {};
   const parent = {};
   const child = {};
@@ -1340,7 +1389,7 @@ test("an unavailable dependency of an atomic child makes the owner unavailable w
         identity: "checked-operation-finalization:atomic-child-dependency-rejection",
       });
     }
-    context.facts.set(request.expression, transactionFactKey, { value: `hook:${request.propertyName}` });
+    context.facts.set(request.expression, factKey, { value: `hook:${request.propertyName}` });
     return acceptObservation({ operation: operation(`blocked-atomic-child.${request.propertyName}`) });
   });
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
@@ -1370,7 +1419,7 @@ test("an unavailable dependency of an atomic child makes the owner unavailable w
           throw new Error("The provider-owned child reached core.");
         },
         (acceptedChild) => {
-          host.facts.set(child, targetOperationFactKey, acceptedChild.operation);
+          setRetainedPropertyOperationFact(host, child, acceptedChild);
         },
         { requireOwner: true },
         undefined,
@@ -1380,15 +1429,15 @@ test("an unavailable dependency of an atomic child makes the owner unavailable w
       if (childResult.kind !== "accept") {
         return { kind: "deferred", unresolved: propertyReference(child) };
       }
-      host.facts.set(parent, targetOperationFactKey, acceptedParent.operation);
+      setRetainedPropertyOperationFact(host, parent, acceptedParent);
     },
     { requireOwner: true },
   ));
 
   assert.equal(host.facts.get(parent, targetOperationFactKey) === undefined, true);
   assert.equal(host.facts.get(child, targetOperationFactKey) === undefined, true);
-  assert.equal(host.facts.get(parent, transactionFactKey) === undefined, true);
-  assert.equal(host.facts.get(child, transactionFactKey) === undefined, true);
+  assert.equal(host.facts.get(parent, factKey) === undefined, true);
+  assert.equal(host.facts.get(child, factKey) === undefined, true);
   assert.doesNotThrow(() => host.finalizeSemantics());
   assert.equal(
     host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "INTENTIONAL_ATOMIC_CHILD_DEPENDENCY_REJECTION").length,
@@ -1450,7 +1499,7 @@ test("an unavailable apply-discovered sibling remains unavailable and blocks its
           throw new Error("The provider-owned deferred child reached core.");
         },
         (accepted) => {
-          host.facts.set(deferredChild, targetOperationFactKey, accepted.operation);
+          setRetainedPropertyOperationFact(host, deferredChild, accepted);
         },
         { requireOwner: true },
       );
@@ -1505,14 +1554,16 @@ test("a deferred apply outcome must name an exact retained child operation", () 
 test("a deferred hook cannot leak facts to a later accepting hook", () => {
   const provisionalSubject = {};
   const acceptedSubject = {};
+  const provisionalFactKey = transactionFactKeyFor("deferred-fact-writer");
+  const acceptedFactKey = transactionFactKeyFor("accepting-fact-reader");
   let laterHookSawProvisionalFact = false;
   const first = observationExtension("deferred-fact-writer", (request, context) => {
-    context.facts.set(provisionalSubject, transactionFactKey, { value: "provisional" });
+    context.facts.set(provisionalSubject, provisionalFactKey, { value: "provisional" });
     return deferObservation;
   });
   const second = observationExtension("accepting-fact-reader", (_request, context) => {
-    laterHookSawProvisionalFact = context.facts.has(provisionalSubject, transactionFactKey);
-    context.facts.set(acceptedSubject, transactionFactKey, { value: "accepted" });
+    laterHookSawProvisionalFact = context.facts.has(provisionalSubject, provisionalFactKey);
+    context.facts.set(acceptedSubject, acceptedFactKey, { value: "accepted" });
     return acceptObservation({ operation: operation("accepted.after-defer") });
   });
   const host = new ExtensionHost({}, { extensions: [first, second] });
@@ -1521,22 +1572,28 @@ test("a deferred hook cannot leak facts to a later accepting hook", () => {
     throw new Error("accepting observation unexpectedly reached core");
   }, () => {});
 
-  assert.equal(result.kind, "accept");
+  assert.equal(
+    result.kind,
+    "accept",
+    host.diagnostics.all().map((diagnostic) => `${diagnostic.extensionCode}: ${diagnostic.message}`).join("\n"),
+  );
   assert.equal(laterHookSawProvisionalFact, false);
-  assert.equal(host.facts.get(provisionalSubject, transactionFactKey), undefined);
-  assert.equal(host.facts.get(acceptedSubject, transactionFactKey)?.value, "accepted");
+  assert.equal(host.facts.get(provisionalSubject, provisionalFactKey), undefined);
+  assert.equal(host.facts.get(acceptedSubject, acceptedFactKey)?.value, "accepted");
 });
 
 test("conflicting accepted hooks roll back every hook fact", () => {
   const firstSubject = {};
   const secondSubject = {};
+  const firstFactKey = transactionFactKeyFor("conflicting-fact-writer-one");
+  const secondFactKey = transactionFactKeyFor("conflicting-fact-writer-two");
   const first = observationExtension("conflicting-fact-writer-one", (_request, context) => {
-    context.facts.set(firstSubject, transactionFactKey, { value: "first" });
+    context.facts.set(firstSubject, firstFactKey, { value: "first" });
     context.diagnostics.append(attemptDiagnostic(context.extensionId, "PROVISIONAL_CONFLICT_ONE"));
     return acceptObservation({ operation: operation("conflict.first") });
   });
   const second = observationExtension("conflicting-fact-writer-two", (_request, context) => {
-    context.facts.set(secondSubject, transactionFactKey, { value: "second" });
+    context.facts.set(secondSubject, secondFactKey, { value: "second" });
     context.diagnostics.append(attemptDiagnostic(context.extensionId, "PROVISIONAL_CONFLICT_TWO"));
     return acceptObservation({ operation: operation("conflict.second") });
   });
@@ -1547,8 +1604,8 @@ test("conflicting accepted hooks roll back every hook fact", () => {
   }, () => {});
 
   assert.equal(result.kind, "conflict");
-  assert.equal(host.facts.get(firstSubject, transactionFactKey), undefined);
-  assert.equal(host.facts.get(secondSubject, transactionFactKey), undefined);
+  assert.equal(host.facts.get(firstSubject, firstFactKey), undefined);
+  assert.equal(host.facts.get(secondSubject, secondFactKey), undefined);
   assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode.startsWith("PROVISIONAL_CONFLICT_")).length, 0);
   assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_CONFLICT").length, 1);
 });
@@ -1556,13 +1613,14 @@ test("conflicting accepted hooks roll back every hook fact", () => {
 for (const orderedFirstValue of ["first", "second"] as const) {
   test(`accepted observation candidates are isolated before arbitration when '${orderedFirstValue}' is ordered first`, () => {
     const sharedSubject = {};
+    const candidateFactKeys = [transactionFactKeyFor("candidate-a"), transactionFactKeyFor("candidate-b")] as const;
     let absentObservations = 0;
     const candidate = (extensionId: string, value: string): CompilerExtension => observationExtension(extensionId, (_request, context) => {
-      if (context.facts.has(sharedSubject, transactionFactKey)) {
+      if (candidateFactKeys.some((key) => context.facts.has(sharedSubject, key))) {
         return deferObservation;
       }
       absentObservations += 1;
-      context.facts.set(sharedSubject, transactionFactKey, { value });
+      context.facts.set(sharedSubject, transactionFactKeyFor(extensionId), { value });
       return acceptObservation({ operation: operation(`candidate.${value}`) });
     });
     const first = candidate("candidate-a", orderedFirstValue);
@@ -1575,7 +1633,7 @@ for (const orderedFirstValue of ["first", "second"] as const) {
 
     assert.equal(result.kind, "conflict");
     assert.equal(absentObservations, 2);
-    assert.equal(host.facts.get(sharedSubject, transactionFactKey), undefined);
+    assert.ok(candidateFactKeys.every((key) => host.facts.get(sharedSubject, key) === undefined));
     assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_CONFLICT").length, 1);
   });
 }
@@ -1589,10 +1647,13 @@ for (const outcome of ["reject", "throw"] as const) {
       let observerRuns = 0;
       let observerSawProvisionalFact = false;
       let observerSawCandidateDiagnostic = false;
+      const failureExtensionId = failingFirst ? "candidate-a-failure" : "candidate-b-failure";
+      const observerExtensionId = failingFirst ? "candidate-b-observer" : "candidate-a-observer";
+      const failureFactKey = transactionFactKeyFor(failureExtensionId);
       const failure = observationExtension(
-        failingFirst ? "candidate-a-failure" : "candidate-b-failure",
+        failureExtensionId,
         (request, context) => {
-          context.facts.set(provisionalSubject, transactionFactKey, { value: outcome });
+          context.facts.set(provisionalSubject, failureFactKey, { value: outcome });
           context.diagnostics.append(attemptDiagnostic(context.extensionId, provisionalDiagnosticCode));
           if (outcome === "throw") {
             throw new Error("intentional candidate arbitration failure");
@@ -1609,10 +1670,10 @@ for (const outcome of ["reject", "throw"] as const) {
         },
       );
       const observer = observationExtension(
-        failingFirst ? "candidate-b-observer" : "candidate-a-observer",
+        observerExtensionId,
         (_request, context) => {
           observerRuns += 1;
-          observerSawProvisionalFact = context.facts.has(provisionalSubject, transactionFactKey);
+          observerSawProvisionalFact = context.facts.has(provisionalSubject, failureFactKey);
           observerSawCandidateDiagnostic = context.diagnostics.all().some((diagnostic) =>
             diagnostic.extensionCode === provisionalDiagnosticCode
             || diagnostic.extensionCode === finalDiagnosticCode
@@ -1633,9 +1694,12 @@ for (const outcome of ["reject", "throw"] as const) {
       assert.equal(observerRuns, 1);
       assert.equal(observerSawProvisionalFact, false);
       assert.equal(observerSawCandidateDiagnostic, false);
-      assert.equal(host.facts.get(provisionalSubject, transactionFactKey), undefined);
+      assert.equal(host.facts.get(provisionalSubject, failureFactKey), undefined);
       assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === provisionalDiagnosticCode).length, 0);
+      assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === finalDiagnosticCode).length, 0);
+      host.finalizeSemantics();
       assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === finalDiagnosticCode).length, 1);
+      assert.equal(host.finalized, true);
     });
   }
 }
@@ -1644,16 +1708,17 @@ test("a failed candidate capture rolls back facts and diagnostics exactly once b
   const targetId = arbitraryTargetIds[0];
   const failedSubject = {};
   const successfulSubject = {};
+  const factKey = transactionFactKeyFor("checked-operation-finalization-failed-write-poisons-attempt");
   const provisionalDiagnosticCode = "PROVISIONAL_FAILED_CAPTURE_DIAGNOSTIC";
   let applications = 0;
   const extension = propertyProviderExtension("failed-write-poisons-attempt", targetId, (request, context) => {
     if (request.propertyName === "fail") {
-      context.facts.set(failedSubject, transactionFactKey, { value: "first" });
-      context.facts.set(failedSubject, transactionFactKey, { value: "conflict" });
+      context.facts.set(failedSubject, factKey, { value: "first" });
+      context.facts.set(failedSubject, factKey, { value: "conflict" });
       context.diagnostics.append(attemptDiagnostic(context.extensionId, provisionalDiagnosticCode));
       return acceptObservation({ operation: operation("must-not-commit") });
     }
-    context.facts.set(successfulSubject, transactionFactKey, { value: "successful" });
+    context.facts.set(successfulSubject, factKey, { value: "successful" });
     return acceptObservation({ operation: operation("commits-after-failed-capture") });
   });
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
@@ -1668,12 +1733,14 @@ test("a failed candidate capture rolls back facts and diagnostics exactly once b
   assert.equal(failed.kind, "reject");
   assert.equal(successful.kind, "accept");
   assert.equal(applications, 1);
-  assert.equal(host.facts.get(failedSubject, transactionFactKey), undefined);
-  assert.equal(host.facts.get(successfulSubject, transactionFactKey)?.value, "successful");
+  assert.equal(host.facts.get(failedSubject, factKey), undefined);
+  assert.equal(host.facts.get(successfulSubject, factKey)?.value, "successful");
   assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === provisionalDiagnosticCode).length, 0);
   assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 1);
-  assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED").length, 1);
+  assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED").length, 0);
   host.finalizeSemantics();
+  assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 1);
+  assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED").length, 1);
   assert.equal(host.finalized, true, "Exactly-once rollback must leave no active savepoint or finalization wedge.");
 });
 
@@ -1692,7 +1759,7 @@ test("an observation hook cannot seal the fact store inside an active attempt", 
 
   assert.equal(result.kind, "reject");
   assert.equal(host.facts.sealed, false);
-  assert.equal(host.facts.set(followupSubject, transactionFactKey, { value: "usable" }), "inserted");
+  assert.equal(host[extensionHostSetFact](followupSubject, transactionFactKey, { value: "usable" }), "inserted");
   host.finalizeSemantics();
   assert.equal(host.finalized, true);
   assert.equal(host.facts.get(followupSubject, transactionFactKey)?.value, "usable");
@@ -1704,12 +1771,13 @@ test("immediate observation apply failure rolls back hook facts, apply facts, an
   const childExpression = {};
   let childCoreRuns = 0;
   const extensionId = "immediate-apply-atomicity";
+  const factKey = transactionFactKeyFor(extensionId);
   const extension: CompilerExtension = {
     identity: { id: extensionId, version: "1.0.0", capabilityNamespace: extensionId },
     observationOwners: [ExtensionObservationPoint.validateTargetConstraint],
     initialize(context): void {
       context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, (_request, observationContext) => {
-        observationContext.facts.set(hookSubject, transactionFactKey, { value: "hook" });
+        observationContext.facts.set(hookSubject, factKey, { value: "hook" });
         return acceptObservation(true);
       });
     },
@@ -1728,14 +1796,14 @@ test("immediate observation apply failure rolls back hook facts, apply facts, an
     () => false,
     { requireOwner: true },
     () => {
-      host.facts.set(applySubject, transactionFactKey, { value: "apply" });
+      host[extensionHostSetFact](applySubject, factKey, { value: "apply" });
       runChild();
       throw new Error("immediate apply failed");
     },
   ), /immediate apply failed/);
 
-  assert.equal(host.facts.get(hookSubject, transactionFactKey), undefined);
-  assert.equal(host.facts.get(applySubject, transactionFactKey), undefined);
+  assert.equal(host.facts.get(hookSubject, factKey), undefined);
+  assert.equal(host.facts.get(applySubject, factKey), undefined);
   assert.equal(childCoreRuns, 1);
   runChild();
   assert.equal(childCoreRuns, 2, "The child must be evaluated again after its rolled-back record is removed.");
@@ -1768,13 +1836,17 @@ test("duplicate primary operations fail during finalization without requiring a 
   const host = new ExtensionHost({});
   const subject = {};
   const operatorLeft = {};
+  const operatorRight = {};
   retainPropertyOperation(host, subject);
   host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedOperator, {
+    sourceOperationKind: "operator",
     expression: subject,
+    operatorKind: "binary",
     operator: "+",
     left: operatorLeft,
-    right: {},
+    right: operatorRight,
     sourceLeft: selectedSourceValue(operatorLeft, {}),
+    sourceRight: selectedSourceValue(operatorRight, {}),
     sourceResult: selectedSourceValue(subject, {}),
   }, () => ({ operation: operation("duplicate.operator", "operator") }), () => {});
 
@@ -1782,20 +1854,56 @@ test("duplicate primary operations fail during finalization without requiring a 
   assert.equal(host.finalized, false);
 });
 
-test("fact resolver conflicts return no fabricated value and resolver registration seals with semantics", () => {
-  const host = new ExtensionHost({});
+test("fact resolver conflicts fail a host-owned source batch atomically without fabricating a value", () => {
+  const extensionId = "checked-operation-finalization-hardening-resolver";
+  const factKey = transactionFactKeyFor(extensionId);
   const subject = {};
-  host.factResolver.register(transactionFactKey, (resolvedSubject, context) => {
-    context.facts.set(resolvedSubject, transactionFactKey, { value: "existing" });
-    return { value: { value: "conflicting" } };
-  });
+  const extension: CompilerExtension = {
+    identity: { id: extensionId, version: "1.0.0", capabilityNamespace: extensionId },
+    initialize(context): void {
+      context.factResolver.register(factKey, (resolvedSubject, resolverContext) => {
+        resolverContext.facts.set(resolvedSubject, factKey, { value: "existing" });
+        return { value: { value: "conflicting" } };
+      });
+    },
+  };
+  const host = new ExtensionHost({}, { extensions: [extension] });
 
-  assert.equal(host.factResolver.resolve(subject, transactionFactKey), undefined);
-  assert.equal(host.facts.get(subject, transactionFactKey)?.value, "existing");
-  assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 1);
+  let resolved: TransactionFact | undefined;
+  assert.throws(
+    () => host[extensionHostPublishSourceDecisionBatch](() => {
+      resolved = host.factResolver.resolve(subject, factKey);
+    }),
+    /Cannot commit an extension fact transaction after a fact write failed/,
+  );
+  assert.equal(resolved, undefined);
+  assert.equal(host.facts.get(subject, factKey), undefined);
+  const conflicts = host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT");
+  assert.equal(conflicts.length, 1);
+  assert.equal(
+    conflicts[0]?.message,
+    `Conflicting extension fact '${extensionId}:transaction' for the same subject.`,
+  );
+  assert.equal((conflicts[0]?.evidence?.[0]?.details as TransactionFact | undefined)?.value, "existing");
+  assert.equal((conflicts[0]?.evidence?.[1]?.details as TransactionFact | undefined)?.value, "conflicting");
+  assert.equal(host.finalized, false);
+  assert.throws(() => host.finalizeSemantics(), /semantic finalization previously failed/);
+});
+
+test("fact resolver registration remains sealed after semantics", () => {
+  const extensionId = "checked-operation-finalization-hardening-resolver-sealed";
+  const factKey = transactionFactKeyFor(extensionId);
+  const extension: CompilerExtension = {
+    identity: { id: extensionId, version: "1.0.0", capabilityNamespace: extensionId },
+    initialize(context): void {
+      context.factResolver.register(factKey, () => ({ value: { value: "resolved" } }));
+    },
+  };
+  const host = new ExtensionHost({}, { extensions: [extension] });
+
   host.finalizeSemantics();
   assert.throws(
-    () => host.factResolver.register(transactionFactKey, () => ({ value: { value: "late" } })),
+    () => host.factResolver.register(factKey, () => ({ value: { value: "late" } })),
     /Cannot register an extension fact resolver after semantic finalization/,
   );
 });
@@ -1804,19 +1912,20 @@ test("accepted hook and apply facts commit as one checked-operation attempt", ()
   const targetId = arbitraryTargetIds[1];
   const hookSubject = {};
   const applySubject = {};
+  const factKey = transactionFactKeyFor("checked-operation-finalization-accepted-fact-commit");
   const extension = propertyProviderExtension("accepted-fact-commit", targetId, (_request, context) => {
-    context.facts.set(hookSubject, transactionFactKey, { value: "hook" });
+    context.facts.set(hookSubject, factKey, { value: "hook" });
     return acceptObservation({ operation: operation("accepted.fact.commit") });
   });
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
 
   const result = runPropertyOperation(host, {}, targetId, "value", () => {
-    host.facts.set(applySubject, transactionFactKey, { value: "apply" });
+    host[extensionHostSetFact](applySubject, factKey, { value: "apply" });
   });
 
   assert.equal(result.kind, "accept");
-  assert.equal(host.facts.get(hookSubject, transactionFactKey)?.value, "hook");
-  assert.equal(host.facts.get(applySubject, transactionFactKey)?.value, "apply");
+  assert.equal(host.facts.get(hookSubject, factKey)?.value, "hook");
+  assert.equal(host.facts.get(applySubject, factKey)?.value, "apply");
 });
 
 test("a failed lifecycle hook rolls back its facts before later lifecycle hooks run", () => {
@@ -1831,7 +1940,7 @@ test("a failed lifecycle hook rolls back its facts before later lifecycle hooks 
     },
     initialize(context): void {
       context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, (_request, lifecycleContext) => {
-        lifecycleContext.host.facts.set(failedSubject, transactionFactKey, { value: "failed" });
+        lifecycleContext.host[extensionHostSetFact](failedSubject, transactionFactKey, { value: "failed" });
         lifecycleContext.host.diagnostics.append(attemptDiagnostic(
           "lifecycle-fact-attempts",
           "PROVISIONAL_LIFECYCLE_DIAGNOSTIC",
@@ -1840,7 +1949,7 @@ test("a failed lifecycle hook rolls back its facts before later lifecycle hooks 
       });
       context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, (_request, lifecycleContext) => {
         laterHookSawFailedFact = lifecycleContext.host.facts.has(failedSubject, transactionFactKey);
-        lifecycleContext.host.facts.set(successfulSubject, transactionFactKey, { value: "successful" });
+        lifecycleContext.host[extensionHostSetFact](successfulSubject, transactionFactKey, { value: "successful" });
       });
     },
   };
@@ -1887,12 +1996,16 @@ test("a checked mapper cannot record any checked operation during candidate eval
   assert.equal(result.kind, "reject");
   assert.equal(mapperRuns, 1);
   assert.equal(host.finalized, false);
+  assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED").length, 0);
+  host.finalizeSemantics();
+  assert.equal(host.finalized, true, "A rejected mapper candidate must not poison otherwise valid semantic finalization.");
   const hookFailures = host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED");
   assert.equal(hookFailures.length, 1);
   const thrownValue = hookFailures[0]?.evidence?.[0]?.details;
-  assert.ok(thrownValue instanceof Error);
-  assert.equal(thrownValue.message, "Observation hooks cannot record checked operations while observation candidates are being arbitrated.");
-  assert.throws(() => host.finalizeSemantics(), /semantic finalization previously failed/);
+  assert.equal(
+    requireSnapshottedErrorMessage(thrownValue),
+    "Observation hooks cannot record checked operations while observation candidates are being arbitrated.",
+  );
 });
 
 for (const [caseName, malformedResponse] of [
@@ -1922,13 +2035,12 @@ for (const [caseName, malformedResponse] of [
 
     assert.equal(result.kind, "reject");
     assert.equal(applications, 0);
+    assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED").length, 0);
+    host.finalizeSemantics();
     const hookFailures = host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED");
     assert.equal(hookFailures.length, 1);
     const thrownValue = hookFailures[0]?.evidence?.[0]?.details;
-    assert.ok(thrownValue instanceof Error);
-    assert.match(thrownValue.message, /Invalid (TargetOperationFact|TargetTypeRef)/);
-
-    host.finalizeSemantics();
+    assert.match(requireSnapshottedErrorMessage(thrownValue), /Invalid (TargetOperationProposal|TargetTypeRef)/);
     assert.equal(host.finalized, true);
     assert.equal(applications, 0);
   });
@@ -1936,14 +2048,14 @@ for (const [caseName, malformedResponse] of [
 
 for (const [caseName, provenance, expectedFailure] of [
   [
-    "non-subject source provenance",
+    "target-supplied source provenance",
     { sourceExpression: "not-an-extension-fact-subject" },
-    /sourceExpression.*non-array object|sourceExpression.*ExtensionFactSubject/,
+    /unsupported field 'provenance'/,
   ],
   [
-    "non-boolean optional-chain provenance",
+    "target-supplied optional-chain provenance",
     { sourceOptionalChain: "true" },
-    /sourceOptionalChain.*boolean/,
+    /unsupported field 'provenance'/,
   ],
 ] as const satisfies readonly (readonly [string, unknown, RegExp])[]) {
   test(`a checked mapper rejects ${caseName} before target facts persist`, () => {
@@ -1961,17 +2073,18 @@ for (const [caseName, provenance, expectedFailure] of [
 
     const result = runPropertyOperation(host, expression, targetId, "value", (accepted) => {
       applications += 1;
-      host.facts.set(expression, targetOperationFactKey, accepted.operation);
+      setRetainedPropertyOperationFact(host, expression, accepted);
     });
 
     assert.equal(result.kind, "reject");
     assert.equal(applications, 0);
     assert.equal(host.facts.get(expression, targetOperationFactKey), undefined);
+    assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED").length, 0);
+    host.finalizeSemantics();
     const hookFailures = host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_HOOK_FAILED");
     assert.equal(hookFailures.length, 1);
     const thrownValue = hookFailures[0]?.evidence?.[0]?.details;
-    assert.ok(thrownValue instanceof Error);
-    assert.match(thrownValue.message, expectedFailure);
+    assert.match(requireSnapshottedErrorMessage(thrownValue), expectedFailure);
   });
 }
 
@@ -2009,8 +2122,7 @@ test("public lifecycle host access records finalization reentry as failure evide
   assert.equal(reentryDiagnostics.length, 1);
   assert.equal(reentryDiagnostics[0]?.evidence?.[0]?.message, "Thrown value");
   const thrownValue = reentryDiagnostics[0]?.evidence?.[0]?.details;
-  assert.ok(thrownValue instanceof Error);
-  assert.equal(thrownValue.message, "Extension semantic finalization cannot re-enter itself.");
+  assert.equal(requireSnapshottedErrorMessage(thrownValue), "Extension semantic finalization cannot re-enter itself.");
 });
 
 for (const targetId of arbitraryTargetIds) {
@@ -2082,12 +2194,10 @@ test("unresolved checked operations report exactly once at each source location"
   const unresolvedDiagnostics = host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_OWNER_DEFERRED");
   assert.equal(unresolvedDiagnostics.length, sourceSpans.length);
   for (const sourceSpan of sourceSpans) {
-    const diagnosticsAtSpan = unresolvedDiagnostics.filter((diagnostic) => diagnostic.nodeOrSpan === sourceSpan);
+    const diagnosticsAtSpan = unresolvedDiagnostics.filter((diagnostic) => sourceSpansEqual(diagnostic.nodeOrSpan, sourceSpan));
     assert.equal(diagnosticsAtSpan.length, 1);
-    assert.ok(
-      diagnosticsAtSpan[0]?.nodeOrSpan === sourceSpan,
-      "The unresolved diagnostic must retain the exact source span subject.",
-    );
+    assert.notEqual(diagnosticsAtSpan[0]?.nodeOrSpan, sourceSpan);
+    assert.equal(Object.isFrozen(diagnosticsAtSpan[0]?.nodeOrSpan), true);
   }
 });
 
@@ -2132,9 +2242,10 @@ function createTransactionalTestInventory(
         inventory.rollbackToSavepoint(savepoint);
       }
     },
-    deferAttemptPreservingOperations: (attempt) => {
-      return inventory.deferFromSavepoint(transactionalTestAttempt(attempt).savepoint);
+    rollbackAttemptPreservingOperations: (attempt) => {
+      return inventory.preserveFromSavepoint(transactionalTestAttempt(attempt).savepoint);
     },
+    publishRejectedDiagnostic: () => {},
     onRequestConflict: () => {},
     onDependencyConflict: () => {},
     onAtomicOwnerConflict: () => {},
@@ -2165,16 +2276,19 @@ function checkedPropertyRequest(
   propertyName: string,
   target?: string,
 ): CheckedPropertyAccessMappingRequest {
-  return Object.freeze({
+  const request: CheckedPropertyAccessMappingRequest = {
+    sourceOperationKind: "property-access",
     expression,
     receiver,
     propertyName,
     accessMode: "read",
-    callCallee: false,
+    use: "value",
     sourceReceiver: selectedSourceValue(receiver, {}),
-    sourceResult: selectedSourceValue(expression, {}),
+    sourceReadResult: selectedSourceValue(expression, {}),
+    chainRole: { kind: "ordinary", participant: "property-access" },
     ...(target === undefined ? {} : { target }),
-  });
+  };
+  return Object.freeze(request);
 }
 
 function retainPropertyOperation(
@@ -2193,21 +2307,53 @@ function retainPropertyOperation(
   );
 }
 
+function setRetainedPropertyOperationFact(
+  host: ExtensionHost,
+  expression: ExtensionFactSubject,
+  accepted: CheckedOperationMappingResult,
+): void {
+  const request = host[extensionHostGetCheckedOperationRequest](propertyObservation, expression);
+  if (request === undefined) {
+    throw new Error("Expected a retained checked property request before applying its target operation.");
+  }
+  host[extensionHostSetFact](
+    expression,
+    targetOperationFactKey,
+    finalizeTargetOperationFact(
+      accepted.operation,
+      accepted.resultType,
+      checkedPropertySourceOperationFromRequest(request),
+      accepted.providerDeclaration,
+    ),
+  );
+}
+
 function runPropertyOperation(
   host: ExtensionHost,
   expression: ExtensionFactSubject,
   target: string,
   propertyName: string,
-  onAccept: (result: CheckedOperationMappingResult) => void,
+  onAccept: (result: AppliedCheckedOperationMappingResult) => void,
   receiver: ExtensionFactSubject = {},
 ): ExtensionObservationResult<CheckedOperationMappingResult> {
+  const request = checkedPropertyRequest(expression, receiver, propertyName, target);
   return host[extensionHostRunCheckedOperation](
     propertyObservation,
-    checkedPropertyRequest(expression, receiver, propertyName, target),
+    request,
     () => {
       throw new Error("provider-owned checked property operation reached core");
     },
-    onAccept,
+    (accepted) => {
+      onAccept(Object.freeze({
+        ...accepted,
+        operation: finalizeTargetOperationFact(
+          accepted.operation,
+          accepted.resultType,
+          checkedPropertySourceOperationFromRequest(request),
+          accepted.providerDeclaration,
+        ),
+      }));
+    },
     { requireOwner: true },
   );
 }
@@ -2255,7 +2401,11 @@ function propertyProviderExtension(
   };
 }
 
-function operation(targetOperation: string, operationKind: TargetOperationFact["operationKind"] = "property"): TargetOperationFact {
+type AppliedCheckedOperationMappingResult = Omit<CheckedOperationMappingResult, "operation"> & {
+  readonly operation: TargetOperationFact;
+};
+
+function operation(targetOperation: string, operationKind: TargetOperationProposal["operationKind"] = "property"): TargetOperationProposal {
   return {
     operationId: targetOperation,
     operationKind,
@@ -2277,6 +2427,38 @@ function deferredInventoryProperty(): ExtensionObservationResult<CheckedOperatio
     observation: propertyObservation,
     extensionId: "checked-operation-finalization-hardening-inventory",
   };
+}
+
+function requireSnapshottedErrorMessage(value: unknown): string {
+  assert.ok(value !== null && typeof value === "object" && !Array.isArray(value));
+  assert.equal(Object.isFrozen(value), true);
+  assert.deepEqual(Reflect.ownKeys(value), ["message", "name"]);
+
+  const nameDescriptor = Object.getOwnPropertyDescriptor(value, "name");
+  const messageDescriptor = Object.getOwnPropertyDescriptor(value, "message");
+  assert.ok(nameDescriptor !== undefined && "value" in nameDescriptor);
+  assert.ok(messageDescriptor !== undefined && "value" in messageDescriptor);
+  assert.equal(nameDescriptor.value, "Error");
+  assert.equal(typeof messageDescriptor.value, "string");
+  return messageDescriptor.value;
+}
+
+function sourceSpansEqual(value: unknown, expected: ExtensionDiagnosticSourceSpan): boolean {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const sourceFile = Object.getOwnPropertyDescriptor(value, "sourceFile");
+  const pos = Object.getOwnPropertyDescriptor(value, "pos");
+  const end = Object.getOwnPropertyDescriptor(value, "end");
+  return sourceFile !== undefined
+    && "value" in sourceFile
+    && sourceFile.value === expected.sourceFile
+    && pos !== undefined
+    && "value" in pos
+    && pos.value === expected.pos
+    && end !== undefined
+    && "value" in end
+    && end.value === expected.end;
 }
 
 function attemptDiagnostic(extensionId: string, extensionCode: string): ExtensionDiagnostic {

@@ -19,11 +19,9 @@ import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import {
-  ExtensionLifecycleEvent,
   TstsProviderContractVersion,
   acceptObservation,
   attachExtensionHost,
-  deferObservation,
   finalizeExtensionSemantics,
   selectedTargetSignatureFactKey,
   targetCallArgumentConversionFactKey,
@@ -33,13 +31,11 @@ import type {
   CheckedConversionMappingRequest,
   CompilerExtension,
   ExtensionHost,
-  SelectedTargetSignatureFact,
   TargetCallArgumentConversionSlot,
   TargetSignatureSelection,
 } from "./index.js";
-
-test("selected calls retain and replay all call-argument child semantics atomically", () => {
-  let checkingRequest: CheckedCallMappingRequest | undefined;
+test("selected calls finalize all call-argument child semantics atomically after lifecycle", () => {
+  const capture: { request?: CheckedCallMappingRequest } = {};
   const conversionRequests: CheckedConversionMappingRequest[] = [];
   const conversionRuns = [0, 0];
   const conversionPhases: string[] = [];
@@ -68,17 +64,6 @@ test("selected calls retain and replay all call-argument child semantics atomica
       capabilityNamespace: "checked-operation-child-semantics",
     },
     initialize(context): void {
-      context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, (_request, lifecycleContext) => {
-        assert.ok(checkingRequest !== undefined);
-        assert.equal(
-          lifecycleContext.host.facts.set(
-            checkingRequest.call,
-            selectedTargetSignatureFactKey,
-            selectedFact(selection, checkingRequest),
-          ),
-          "inserted",
-        );
-      });
       assert.equal(context.registerTargetSemanticProvider({
         identity: {
           id: "checked-operation-child-semantics-provider",
@@ -89,10 +74,7 @@ test("selected calls retain and replay all call-argument child semantics atomica
         },
         mapCheckedCall: (request, observationContext) => {
           callPhases.push(observationContext.phase);
-          if (observationContext.phase === "checking") {
-            checkingRequest = request;
-            return deferObservation;
-          }
+          capture.request = request;
           return acceptObservation({
             kind: "target",
             selectedSignature: selection,
@@ -112,8 +94,9 @@ test("selected calls retain and replay all call-argument child semantics atomica
         mapCheckedConversion: (request, context) => {
           conversionRequests.push(request);
           if (request.conversionKind === "call-argument") {
-            conversionPhases.push(`${request.sourceArgumentIndex}:${context.phase}`);
-            conversionRuns[request.sourceArgumentIndex] = (conversionRuns[request.sourceArgumentIndex] ?? 0) + 1;
+            const sourceArgumentIndex = request.sourceBinding.sourceArgumentIndex;
+            conversionPhases.push(`${sourceArgumentIndex}:${context.phase}`);
+            conversionRuns[sourceArgumentIndex] = (conversionRuns[sourceArgumentIndex] ?? 0) + 1;
           }
           return acceptObservation({
             convertedType: { kind: "source-global", name: "String" },
@@ -125,36 +108,45 @@ test("selected calls retain and replay all call-argument child semantics atomica
   const { program, programOptions, extensionHost } = createProgram(extension);
 
   assertCleanProgram(program);
-  assert.ok(checkingRequest !== undefined);
-  assert.equal(conversionRequests.length, 0);
-
-  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
-
-  assert.equal(extensionHost.finalized, true);
-  assert.deepEqual(callPhases, ["checking", "finalization"]);
-  assert.deepEqual(conversionPhases, ["0:finalization", "1:finalization"]);
+  const checkingRequest = capture.request;
+  assert.ok(checkingRequest !== undefined, "A ready selected call must map during source checking.");
+  assert.deepEqual(callPhases, ["checking"]);
+  assert.deepEqual(conversionPhases, ["0:checking", "1:checking"]);
   assert.deepEqual(conversionRuns, [1, 1]);
   assert.equal(conversionRequests.length, 2);
-  const conversion = conversionRequests.find((request) => request.conversionKind === "call-argument" && request.sourceArgumentIndex === 0);
+
+  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
+  const finalizationRequest = capture.request;
+  assert.ok(finalizationRequest !== undefined);
+  assert.ok(finalizationRequest === checkingRequest, "Finalization must retain the exact checked request identity without replay.");
+
+  assert.equal(extensionHost.finalized, true);
+  assert.deepEqual(callPhases, ["checking"]);
+  assert.deepEqual(conversionPhases, ["0:checking", "1:checking"]);
+  assert.deepEqual(conversionRuns, [1, 1]);
+  assert.equal(conversionRequests.length, 2);
+  const conversion = conversionRequests.find((request) => request.conversionKind === "call-argument" && request.sourceBinding.sourceArgumentIndex === 0);
   assert.equal(conversion?.conversionKind, "call-argument");
   if (conversion?.conversionKind !== "call-argument") {
     throw new Error("Expected a call-argument child conversion.");
   }
-  assert.ok(conversion.call === checkingRequest.call, "conversion must retain the exact checked call subject");
-  assert.equal(conversion.sourceArgumentIndex, 0);
-  assert.equal(conversion.targetParameterIndex, 0);
+  assert.ok(conversion.call === finalizationRequest.call, "conversion must retain the exact checked call subject");
+  assert.equal(conversion.sourceBinding.sourceArgumentIndex, 0);
+  assert.equal(conversion.slot.targetParameterIndex, 0);
   assert.ok(
-    conversion.selectedSignature.sourceSelectedSignatureParameters?.[0]?.parameterSymbol
-      === checkingRequest.sourceSelectedSignatureParameters?.[0]?.parameterSymbol,
+    conversion.selectedSignature.sourceSelection.kind === "applicable"
+      && finalizationRequest.sourceSelection.kind === "applicable"
+      && conversion.selectedSignature.sourceSelection.parameters[0]?.parameterSymbol
+        === finalizationRequest.sourceSelection.parameters[0]?.parameterSymbol,
     "The conversion must retain the exact selected source parameter symbol.",
   );
-  assert.equal(conversion.sourceForm, "value");
-  assert.equal(conversion.targetForm, "parameter");
+  assert.equal(conversion.sourceBinding.sourceForm, "value");
+  assert.equal(conversion.slot.targetForm, "parameter");
   assert.ok(
     conversion.slot === conversion.selectedSignature.argumentConversions[0],
     "The child conversion must use its selected signature's canonical slot identity.",
   );
-  assert.equal(extensionHost.facts.get(checkingRequest.call, selectedTargetSignatureFactKey)?.member.id, selection.member.id);
+  assert.equal(extensionHost.facts.get(finalizationRequest.call, selectedTargetSignatureFactKey)?.member.id, selection.member.id);
   const conversionFact = extensionHost.facts.get(conversion.slot, targetCallArgumentConversionFactKey);
   assert.ok(conversionFact?.slot === conversion.slot, "The child conversion fact must be keyed by and retain the exact selected slot.");
   const convertedType = conversionFact?.convertedType;
@@ -163,41 +155,13 @@ test("selected calls retain and replay all call-argument child semantics atomica
     throw new Error("Expected a source-global call-argument conversion target.");
   }
   assert.equal(convertedType.name, "String");
-  const secondConversion = conversionRequests.find((request) => request.conversionKind === "call-argument" && request.sourceArgumentIndex === 1);
+  const secondConversion = conversionRequests.find((request) => request.conversionKind === "call-argument" && request.sourceBinding.sourceArgumentIndex === 1);
   if (secondConversion?.conversionKind !== "call-argument") {
     throw new Error("Expected the second call-argument child conversion.");
   }
   assert.equal(extensionHost.facts.get(secondConversion.slot, targetCallArgumentConversionFactKey)?.convertedType?.kind, "source-global");
   assert.equal(extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
 });
-
-function selectedFact(
-  selection: TargetSignatureSelection,
-  request: CheckedCallMappingRequest,
-): SelectedTargetSignatureFact {
-  return {
-    ...selection,
-    argumentConversions: [argumentConversionSlot(0, 0), argumentConversionSlot(1, 1)],
-    sourceArgumentBindings: request.sourceArgumentBindings ?? [],
-    ...(request.sourceSelectedMethodTypeArguments === undefined ? {} : {
-      sourceSelectedMethodTypeArguments: request.sourceSelectedMethodTypeArguments,
-    }),
-    ...(request.sourceSelectedSignatureParameters === undefined ? {} : {
-      sourceSelectedSignatureParameters: request.sourceSelectedSignatureParameters,
-    }),
-    ...(request.sourceSelectedSignatureKind === undefined ? {} : {
-      sourceSelectedSignatureKind: request.sourceSelectedSignatureKind,
-    }),
-    sourceCallKind: request.callKind,
-    ...(request.sourceSelectedSignature === undefined ? {} : { sourceSignature: request.sourceSelectedSignature }),
-    ...(request.sourceSelectedDeclaration === undefined ? {} : { sourceDeclaration: request.sourceSelectedDeclaration }),
-    sourceCallee: request.sourceCallee,
-    sourceArguments: request.sourceArguments,
-    sourceResult: request.sourceResult,
-    ...(request.optionalChain === undefined ? {} : { sourceOptionalChain: request.optionalChain }),
-    ...(request.sourceReceiver === undefined ? {} : { sourceReceiver: request.sourceReceiver }),
-  };
-}
 
 function argumentConversionSlot(
   sourceArgumentIndex: number,

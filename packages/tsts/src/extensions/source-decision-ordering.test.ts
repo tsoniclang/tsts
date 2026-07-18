@@ -56,7 +56,7 @@ import type {
   CompilerExtension,
   ExtensionFactSubject,
   ExtensionHost,
-  TargetOperationFact,
+  TargetOperationProposal,
 } from "./index.js";
 import {
   beginExtensionCheckedSourceFileDecision,
@@ -187,7 +187,8 @@ test("rejected overload candidates discard nested source decisions and the winne
   const innerRequest = setup.observations.calls.find((request) => request.call === innerCall);
   assert.ok(outerRequest !== undefined);
   assert.ok(innerRequest !== undefined);
-  assert.ok(outerRequest.sourceSelectedDeclaration === overloads[1]);
+  assert.ok(outerRequest.sourceSelection.kind === "applicable");
+  assert.ok(outerRequest.sourceSelection.declaration === overloads[1]);
 
   const queries = createTypeCheckerQueries(setup.program, { sourceFile: index });
   assert.deepEqual(
@@ -197,6 +198,10 @@ test("rejected overload candidates discard nested source decisions and the winne
   assert.equal(queries.typeToString(setup.observations.elements[0]!.sourceReceiver.type as GoPtr<Type>), "NumberBox");
   assert.equal(queries.typeToString(innerRequest.sourceResult.type as GoPtr<Type>), "number");
   for (const request of setup.observations.operators) {
+    assert.equal(request.sourceOperationKind, "operator");
+    if (!("sourceLeft" in request)) {
+      throw new Error("Expected a binary checked operator decision.");
+    }
     assert.equal(queries.typeToString(request.sourceLeft.type as GoPtr<Type>), "number");
     assert.equal(queries.typeToString(request.sourceRight?.type as GoPtr<Type>), "number");
     assert.equal(queries.typeToString(request.sourceResult.type as GoPtr<Type>), "number");
@@ -299,11 +304,14 @@ test("for-in and for-of declaration and expression forms publish once", () => {
     assert.ok(data !== undefined);
     assert.ok(request.initializer === data.Initializer);
     assert.ok(request.expression === data.Expression);
-    assert.equal(request.kind, statement.Kind === KindForInStatement ? "for-in" : "for-of");
+    assert.equal(
+      request.mechanism.kind,
+      statement.Kind === KindForInStatement ? "property-key-enumeration" : "array-like-index",
+    );
     assert.equal(setup.extensionHost.facts.get(statement, targetOperationFactKey)?.operationId, operationIds.iteration);
   }
   for (const kind of ["for-in", "for-of"] as const) {
-    const requests = setup.observations.iterations.filter((request) => request.kind === kind);
+    const requests = setup.observations.iterations.filter((request) => request.iterationKind === kind);
     assert.equal(requests.length, 2);
     assert.equal(requests.filter((request) => (request.initializer as Node).Kind === KindVariableDeclarationList).length, 1);
     assert.equal(requests.filter((request) => (request.initializer as Node).Kind === KindIdentifier).length, 1);
@@ -336,17 +344,21 @@ test("compound property assignment publishes one coherent read-write decision", 
   const propertyRequest = setup.observations.properties[0]!;
   const operatorRequest = setup.observations.operators[0]!;
   assert.equal(propertyRequest.accessMode, "read-write");
-  assert.equal(propertyRequest.callCallee, false);
+  assert.equal(propertyRequest.use, "value");
   assert.equal(operatorRequest.operator, "+=");
   assert.ok(operatorRequest.left === property);
-  assert.ok(operatorRequest.sourceLeft.type === propertyRequest.sourceResult.type);
+  assert.ok(operatorRequest.sourceLeft?.type === propertyRequest.sourceReadResult.type);
   assert.equal(queries.typeToString(propertyRequest.sourceReceiver.type as GoPtr<Type>), "Counter");
-  assert.equal(queries.typeToString(propertyRequest.sourceResult.type as GoPtr<Type>), "number");
+  assert.equal(queries.typeToString(propertyRequest.sourceReadResult.type as GoPtr<Type>), "number");
   const propertyFact = setup.extensionHost.facts.get(property, targetOperationFactKey);
   assert.equal(propertyFact?.operationId, operationIds.property);
-  assert.equal(propertyFact?.provenance?.sourceAccessMode, "read-write");
-  assert.ok(propertyFact?.provenance?.sourceExpression === property);
-  assert.ok(propertyFact?.provenance?.sourceResultType === propertyRequest.sourceResult.type);
+  assert.equal(propertyFact?.provenance.sourceOperation.sourceOperationKind, "property-access");
+  if (propertyFact?.provenance.sourceOperation.sourceOperationKind !== "property-access") {
+    throw new Error("Expected property-access operation provenance.");
+  }
+  assert.equal(propertyFact.provenance.sourceOperation.accessMode, "read-write");
+  assert.ok(propertyFact.provenance.sourceOperation.expression === property);
+  assert.ok(propertyFact.provenance.sourceOperation.sourceReadResult.type === propertyRequest.sourceReadResult.type);
   assert.equal(setup.extensionHost.facts.get(operator, targetOperationFactKey)?.operationId, operationIds.operator);
   assertExtensionDiagnosticsClean(setup.extensionHost);
 });
@@ -414,7 +426,11 @@ test("conflicting same-origin source decisions fail closed", () => {
     undefined,
   );
   assert.equal(setup.extensionHost.finalized, false);
-  assert.equal(setup.observations.properties.length, 1);
+  assert.equal(
+    setup.observations.properties.length,
+    1,
+    "The previously committed exact source decision must map once; the conflicting later decision must not run a second mapper.",
+  );
   assert.throws(
     () => finalizeExtensionSemantics(setup.programOptions),
     /previously failed and cannot be retried/,
@@ -473,18 +489,18 @@ function optionalChainObservationShape(observations: CheckedOperationObservation
   return {
     calls: observations.calls.map((request) => ({
       callKind: request.callKind,
-      optionalChain: request.optionalChain === true,
+      optionalChain: request.chainRole.kind === "optional-chain",
     })),
     properties: observations.properties.map((request) => ({
       accessMode: request.accessMode,
-      callCallee: request.callCallee,
-      optionalChain: request.optionalChain === true,
+      callCallee: request.use === "call-callee",
+      optionalChain: request.chainRole.kind === "optional-chain",
       propertyName: request.propertyName,
     })).sort((left, right) => left.propertyName < right.propertyName ? -1 : left.propertyName > right.propertyName ? 1 : 0),
     elements: observations.elements.map((request) => ({
       accessMode: request.accessMode,
-      callCallee: request.callCallee,
-      optionalChain: request.optionalChain === true,
+      callCallee: request.use === "call-callee",
+      optionalChain: request.chainRole.kind === "optional-chain",
     })),
   };
 }
@@ -594,7 +610,7 @@ const operationIds = Object.freeze({
   iteration: "neutral.source-decision.iteration",
 });
 
-function operation(kind: keyof typeof operationIds): TargetOperationFact {
+function operation(kind: keyof typeof operationIds): TargetOperationProposal {
   const operationKinds = {
     property: "property",
     element: "indexer",
@@ -650,7 +666,7 @@ function assertBasicOperationObservations(
   assertObservedOnce(setup.observations.elements, [nodes.element], (request) => request.expression);
   assertObservedOnce(setup.observations.operators, [nodes.operator], (request) => request.expression);
   assert.equal(setup.observations.iterations.length, 0);
-  assert.ok(setup.observations.calls[0]!.sourceSelectedSignature !== undefined);
+  assert.equal(setup.observations.calls[0]!.sourceSelection.kind, "applicable");
   assert.ok(setup.observations.calls[0]!.sourceResult.type !== undefined);
   assert.equal(setup.extensionHost.facts.get(nodes.property, targetOperationFactKey)?.operationId, operationIds.property);
   assert.equal(setup.extensionHost.facts.get(nodes.element, targetOperationFactKey)?.operationId, operationIds.element);
@@ -688,12 +704,17 @@ function recordPropertyDecision(
   request: CheckedPropertyAccessMappingRequest,
   accessMode: CheckedPropertyAccessMappingRequest["accessMode"],
 ): void {
+  const selected = request.accessMode === "write" ? request.sourceWriteType : request.sourceReadResult;
+  if (selected === undefined) {
+    throw new Error("Expected exact selected property source evidence.");
+  }
   recordExtensionCheckedPropertyAccessMapping(checker, property, {
-    selectedSymbol: request.sourceResult.selectedSymbol as GoPtr<Symbol>,
-    resultType: request.sourceResult.type as GoPtr<Type>,
+    selectedSymbol: selected.selectedSymbol as GoPtr<Symbol>,
+    resultType: selected.type as GoPtr<Type>,
     receiverType: request.sourceReceiver.type as GoPtr<Type>,
+    selectionMode: accessMode === "write" ? "write" : "read",
     accessMode,
-    callCallee: request.callCallee,
+    callCallee: request.use === "call-callee",
   });
 }
 

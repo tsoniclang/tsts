@@ -23,6 +23,7 @@ import type {
   SelectedTargetSignatureFact,
   TargetCallArgumentConversionSlot,
   TargetOperationFact,
+  TargetOperationProposal,
   TargetParameter,
   TargetSignatureSelection,
   TargetTypeRef,
@@ -36,11 +37,11 @@ test("retained call-argument conversion requests snapshot target values and pres
   const sourceSignature = {};
   const selectedType = {};
   const parameterSymbol = {};
-  const opaqueValue = { targetOwned: true };
+  const payloadId = "acme.payload.value";
   const targetTypeArguments: TargetTypeRef[] = [{ kind: "source-primitive", name: "int32" }];
   const targetParameter = {
     name: "value",
-    type: { kind: "target-specific" as const, target: "acme", name: "payload", value: opaqueValue },
+    type: { kind: "target-specific" as const, target: "acme", name: "payload", payloadId },
     passingMode: "by-value" as const,
   };
   const memberParameters: TargetParameter[] = [targetParameter];
@@ -72,32 +73,29 @@ test("retained call-argument conversion requests snapshot target values and pres
       typeParameters: [{ name: "T" }],
     },
     argumentConversions: [slot],
-    sourceArgumentBindings: [sourceBinding],
     targetTypeArguments,
-    sourceSelectedMethodTypeArguments: [{
-      typeParameterName: "T",
-      selectedType,
-    }],
-    sourceSelectedSignatureParameters: [sourceParameter],
     sourceCallKind: "call" as const,
-    sourceSignature,
+    sourceSelection: {
+      kind: "applicable" as const,
+      signature: sourceSignature,
+      methodTypeArguments: [{ typeParameterName: "T", selectedType }],
+      parameters: [sourceParameter],
+      argumentBindings: [sourceBinding],
+    },
     sourceCallee: sourceValue(callee, {}),
     sourceArguments: [sourceValue(expression, source)],
     sourceResult: sourceValue(call, {}),
+    sourceChainRole: { kind: "ordinary" as const, participant: "call" as const },
   };
   const request: CheckedConversionMappingRequest = {
+    sourceOperationKind: "conversion",
     conversionKind: "call-argument",
     expression,
     source: sourceValue(expression, source),
     target: targetParameter.type,
     call,
     slot,
-    sourceArgumentIndex: 0,
-    targetParameterIndex: 0,
-    sourceForm: "value",
-    targetForm: "parameter",
     targetParameter,
-    sourceSelectedSignature: sourceSignature,
     selectedSignature,
     sourceBinding,
     targetPlatform: "acme",
@@ -126,11 +124,11 @@ test("retained call-argument conversion requests snapshot target values and pres
   targetTypeArguments.push({ kind: "source-primitive", name: "uint8" });
   memberParameters.push({
     name: "other",
-    type: { kind: "target-specific", target: "acme", name: "other", value: {} },
+    type: { kind: "target-specific", target: "acme", name: "other", payloadId: "acme.payload.other" },
     passingMode: "by-value",
   });
   targetParameter.name = "mutated";
-  selectedSignature.sourceSelectedMethodTypeArguments[0]!.typeParameterName = "Mutated";
+  selectedSignature.sourceSelection.methodTypeArguments[0]!.typeParameterName = "Mutated";
   inventory.finalize();
 
   assert.notEqual(finalRequest, request);
@@ -147,20 +145,20 @@ test("retained call-argument conversion requests snapshot target values and pres
     "A retained conversion must use the canonical slot identity from its retained selected signature.",
   );
   assert.notEqual(finalRequest.slot, slot);
-  assert.equal(finalRequest.sourceArgumentIndex, 0);
-  assert.equal(finalRequest.targetParameterIndex, 0);
-  assert.equal(finalRequest.sourceForm, "value");
-  assert.equal(finalRequest.targetForm, "parameter");
-  assert.equal(finalRequest.sourceSelectedSignature, sourceSignature);
+  assert.equal(finalRequest.sourceBinding.sourceArgumentIndex, 0);
+  assert.equal(finalRequest.slot.targetParameterIndex, 0);
+  assert.equal(finalRequest.sourceBinding.sourceForm, "value");
+  assert.equal(finalRequest.slot.targetForm, "parameter");
   assert.equal(finalRequest.targetParameter.name, "value");
   assert.equal(finalRequest.targetParameter, finalRequest.selectedSignature.member.parameters[0]);
   assert.equal(finalRequest.target, finalRequest.targetParameter.type);
   assert.equal(finalRequest.selectedSignature.member.parameters.length, 1);
   assert.equal(finalRequest.selectedSignature.targetTypeArguments?.length, 1);
-  assert.equal(finalRequest.selectedSignature.sourceSelectedMethodTypeArguments?.[0]?.typeParameterName, "T");
-  assert.equal(finalRequest.selectedSignature.sourceSelectedMethodTypeArguments?.[0]?.selectedType, selectedType);
-  assert.equal(finalRequest.selectedSignature.sourceSelectedSignatureParameters?.[0]?.parameterSymbol, parameterSymbol);
-  assert.equal(finalRequest.selectedSignature.sourceSignature, sourceSignature);
+  assert.equal(finalRequest.selectedSignature.sourceSelection.kind, "applicable");
+  assert.equal(finalRequest.selectedSignature.sourceSelection.kind === "applicable" ? finalRequest.selectedSignature.sourceSelection.methodTypeArguments[0]?.typeParameterName : undefined, "T");
+  assert.equal(finalRequest.selectedSignature.sourceSelection.kind === "applicable" ? finalRequest.selectedSignature.sourceSelection.methodTypeArguments[0]?.selectedType : undefined, selectedType);
+  assert.equal(finalRequest.selectedSignature.sourceSelection.kind === "applicable" ? finalRequest.selectedSignature.sourceSelection.parameters[0]?.parameterSymbol : undefined, parameterSymbol);
+  assert.equal(finalRequest.selectedSignature.sourceSelection.kind === "applicable" ? finalRequest.selectedSignature.sourceSelection.signature : undefined, sourceSignature);
   assert.equal(Object.isFrozen(finalRequest), true);
   assert.equal(Object.isFrozen(finalRequest.source), true);
   assert.equal(Object.isFrozen(finalRequest.targetParameter), true);
@@ -175,9 +173,8 @@ test("retained call-argument conversion requests snapshot target values and pres
   if (retainedMemberType.kind !== "target-specific") {
     throw new Error("Expected retained target-specific type.");
   }
-  assert.equal(retainedMemberType.value, opaqueValue);
+  assert.equal(retainedMemberType.payloadId, payloadId);
   assert.equal(Object.isFrozen(retainedMemberType), true);
-  assert.equal(Object.isFrozen(opaqueValue), false);
 });
 
 test("retained selected-signature results are detached, deeply frozen, and idempotent", () => {
@@ -202,13 +199,16 @@ test("retained selected-signature results are detached, deeply frozen, and idemp
   };
   const response: CheckedCallMappingResult = { kind: "target", selectedSignature, argumentConversions: [] };
   const request: CheckedCallMappingRequest = {
+    sourceOperationKind: "call",
     call,
     callee,
     arguments: [],
     callKind: "call",
+    sourceSelection: { kind: "untyped" },
     sourceCallee: sourceValue(callee, {}),
     sourceArguments: [],
     sourceResult: sourceValue(call, {}),
+    chainRole: { kind: "ordinary", participant: "call" },
     target: "acme",
   };
   const inventory = createInventory();
@@ -256,36 +256,32 @@ test("retained selected-signature results are detached, deeply frozen, and idemp
   assert.equal(Object.isFrozen(applied.selectedSignature.member.parameters[0]?.type), true);
 });
 
-test("retained conversion results snapshot operations, provenance, evidence, and target types", () => {
+test("retained conversion results snapshot operation proposals, provider identity, evidence, and target types", () => {
   const expression = {};
   const source = {};
   const target = {};
   const sourceExpression = {};
-  const opaqueValue = { targetOwned: true };
-  const tupleElements: TargetTypeRef[] = [{ kind: "target-specific", target: "acme", name: "opaque", value: opaqueValue }];
-  const operationEvidence: ExtensionEvidence[] = [{ message: "selected operation", details: { opaque: true } }];
-  const operation: TargetOperationFact = {
+  const payloadId = "acme.payload.opaque";
+  const tupleElements: TargetTypeRef[] = [{ kind: "target-specific", target: "acme", name: "opaque", payloadId }];
+  const acceptedDetails = { opaque: true };
+  const operation = {
     operationId: "acme.convert",
     operationKind: "operator" as const,
     targetOperation: "convert",
-    resultType: { kind: "tuple" as const, elements: tupleElements },
-    evidence: operationEvidence,
-    provenance: {
-      sourceExpression,
-      providerDeclaration: {
-        providerId: "acme-provider",
-        providerModuleId: "acme.module",
-        moduleSpecifier: "@acme/module",
-        targetIdentity: { kind: "target-specific" as const, target: "acme", name: "identity", value: opaqueValue },
-      },
-    },
   };
   const convertedElements: TargetTypeRef[] = [{ kind: "array", element: tupleElements[0]! }];
   const response: CheckedConversionMappingResult = {
     convertedType: { kind: "tuple", elements: convertedElements },
     operation,
+    providerDeclaration: {
+      providerId: "acme-provider",
+      providerModuleId: "acme.module",
+      moduleSpecifier: "@acme/module",
+      targetIdentity: { kind: "target-specific", target: "acme", name: "identity", payloadId },
+    },
   };
   const request: CheckedConversionMappingRequest = {
+    sourceOperationKind: "conversion",
     conversionKind: "assertion",
     assertionKind: "as",
     expression,
@@ -296,6 +292,7 @@ test("retained conversion results snapshot operations, provenance, evidence, and
   };
   const inventory = createInventory();
   let applied: CheckedConversionMappingResult | undefined;
+  let appliedObservation: ExtensionObservationResult<CheckedConversionMappingResult> | undefined;
 
   inventory.run(
     ExtensionObservationPoint.mapCheckedConversion,
@@ -304,28 +301,23 @@ test("retained conversion results snapshot operations, provenance, evidence, and
       kind: "accept",
       extensionId: "acme",
       value: response,
-      evidence: [{ message: "accepted", details: opaqueValue }],
+      evidence: [{ message: "accepted", details: acceptedDetails }],
     }),
     (result) => {
       if (result.kind === "accept" || result.kind === "core") {
+        appliedObservation = result;
         applied = result.value;
       }
     },
     "checking",
   );
 
-  tupleElements.push({ kind: "target-specific", target: "acme", name: "later", value: {} });
+  tupleElements.push({ kind: "target-specific", target: "acme", name: "later", payloadId: "acme.payload.later" });
   convertedElements.push({ kind: "array", element: { kind: "target-specific", target: "acme", name: "later" } });
-  operationEvidence.push({ message: "later", details: {} });
+  acceptedDetails.opaque = false;
 
   assert.notEqual(applied, response);
-  assert.equal(applied?.operation?.resultType?.kind, "tuple");
-  if (applied?.operation?.resultType?.kind !== "tuple") {
-    throw new Error("Expected retained operation tuple result.");
-  }
-  assert.equal(applied.operation.resultType.elements.length, 1);
-  assert.equal(applied.operation.evidence?.length, 1);
-  assert.equal(applied.operation.provenance?.sourceExpression, sourceExpression);
+  assert.equal(applied?.operation?.operationId, "acme.convert");
   assert.equal(applied.convertedType?.kind, "tuple");
   if (applied.convertedType?.kind !== "tuple") {
     throw new Error("Expected retained converted tuple type.");
@@ -333,20 +325,23 @@ test("retained conversion results snapshot operations, provenance, evidence, and
   assert.equal(applied.convertedType.elements.length, 1);
   assert.equal(Object.isFrozen(applied), true);
   assert.equal(Object.isFrozen(applied.operation), true);
-  assert.equal(Object.isFrozen(applied.operation.resultType), true);
-  assert.equal(Object.isFrozen(applied.operation.resultType.elements), true);
-  assert.equal(Object.isFrozen(applied.operation.evidence), true);
-  assert.equal(Object.isFrozen(applied.operation.evidence?.[0]), true);
-  assert.equal(Object.isFrozen(applied.operation.provenance), true);
-  assert.equal(Object.isFrozen(applied.operation.provenance?.providerDeclaration), true);
-  const retainedIdentity = applied.operation.provenance?.providerDeclaration?.targetIdentity;
+  assert.equal(appliedObservation?.kind, "accept");
+  if (appliedObservation?.kind !== "accept") {
+    throw new Error("Expected an accepted retained conversion observation.");
+  }
+  assert.equal(Object.isFrozen(appliedObservation), true);
+  assert.equal(Object.isFrozen(appliedObservation?.evidence), true);
+  assert.equal(Object.isFrozen(appliedObservation?.evidence?.[0]), true);
+  assert.equal(Object.getPrototypeOf(appliedObservation.evidence?.[0]?.details), null);
+  assert.equal((appliedObservation.evidence?.[0]?.details as { readonly opaque?: unknown } | undefined)?.opaque, true);
+  assert.equal(Object.isFrozen(applied.providerDeclaration), true);
+  const retainedIdentity = applied.providerDeclaration?.targetIdentity;
   assert.equal(retainedIdentity?.kind, "target-specific");
   if (retainedIdentity?.kind !== "target-specific") {
     throw new Error("Expected retained target-specific provider identity.");
   }
-  assert.equal(retainedIdentity.value, opaqueValue);
+  assert.equal(retainedIdentity.payloadId, payloadId);
   assert.equal(Object.isFrozen(retainedIdentity), true);
-  assert.equal(Object.isFrozen(opaqueValue), false);
 });
 
 test("structurally equal call-argument target values remain one checked request after snapshotting", () => {
@@ -354,10 +349,11 @@ test("structurally equal call-argument target values remain one checked request 
   const source = {};
   const call = {};
   const sourceSignature = {};
-  const opaqueValue = {};
+  const payloadId = "acme.payload.structurally-equal";
   const slot = argumentConversionSlot(0, 0);
   const callee = {};
   const resultType = {};
+  const parameterSymbol = {};
   let conflicts = 0;
   let evaluations = 0;
   let applications = 0;
@@ -369,7 +365,8 @@ test("structurally equal call-argument target values remain one checked request 
     commitAttempt: () => {},
     rollbackAttempt: () => {},
     discardAttemptPreservingDiagnostics: () => {},
-    deferAttemptPreservingOperations: () => [],
+    rollbackAttemptPreservingOperations: () => [],
+    publishRejectedDiagnostic: () => {},
     onFatalFailure: () => undefined,
     onRequestConflict: () => {
       conflicts += 1;
@@ -387,7 +384,7 @@ test("structurally equal call-argument target values remain one checked request 
   const request = (): CheckedConversionMappingRequest => {
     const targetParameter: TargetParameter = {
       name: "value",
-      type: { kind: "target-specific", target: "acme", name: "payload", value: opaqueValue },
+      type: { kind: "target-specific", target: "acme", name: "payload", payloadId },
       passingMode: "by-value",
     };
     const sourceBinding = {
@@ -400,19 +397,15 @@ test("structurally equal call-argument target values remain one checked request 
       selectedParameterType: source,
     };
     return {
+      sourceOperationKind: "conversion",
       conversionKind: "call-argument",
       expression,
       source: sourceValue(expression, source),
       target: targetParameter.type,
       call,
       slot,
-      sourceArgumentIndex: 0,
-      targetParameterIndex: 0,
-      sourceForm: "value",
-      targetForm: "parameter",
       targetParameter,
       sourceBinding,
-      sourceSelectedSignature: sourceSignature,
       selectedSignature: {
         member: {
           id: "acme.consume",
@@ -423,13 +416,26 @@ test("structurally equal call-argument target values remain one checked request 
           typeParameters: [{ name: "T" }],
         },
         argumentConversions: [slot],
-        sourceArgumentBindings: [sourceBinding],
         sourceCallKind: "call",
         targetTypeArguments: [{ kind: "array", element: { kind: "source-primitive", name: "int32" } }],
-        sourceSignature,
+        sourceSelection: {
+          kind: "applicable",
+          signature: sourceSignature,
+          methodTypeArguments: [],
+          parameters: [{
+            parameterIndex: 0,
+            parameterName: "value",
+            parameterSymbol,
+            selectedType: source,
+            acceptsOmission: false,
+            rest: false,
+          }],
+          argumentBindings: [sourceBinding],
+        },
         sourceCallee: sourceValue(callee, callee),
         sourceArguments: [sourceValue(expression, source)],
         sourceResult: sourceValue(call, resultType),
+        sourceChainRole: { kind: "ordinary", participant: "call" },
       },
       targetPlatform: "acme",
     };
@@ -531,16 +537,13 @@ test("target type and constraint snapshots reject unknown or missing kinds preci
     selectedParameterType: {},
   };
   const malformedConstraintRequest = {
+    sourceOperationKind: "conversion",
     conversionKind: "call-argument",
     expression: {},
     source: sourceValue({}, {}),
     target: malformedTargetParameter.type,
     call: {},
     slot: malformedSlot,
-    sourceArgumentIndex: 0,
-    targetParameterIndex: 0,
-    sourceForm: "value",
-    targetForm: "parameter",
     targetParameter: malformedTargetParameter,
     sourceBinding: malformedSourceBinding,
     selectedSignature: {
@@ -554,10 +557,25 @@ test("target type and constraint snapshots reject unknown or missing kinds preci
       },
       targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
       argumentConversions: [malformedSlot],
-      sourceArgumentBindings: [malformedSourceBinding],
+      sourceCallKind: "call",
+      sourceSelection: {
+        kind: "applicable",
+        signature: {},
+        methodTypeArguments: [],
+        parameters: [{
+          parameterIndex: 0,
+          parameterName: "value",
+          parameterSymbol: {},
+          selectedType: malformedSourceBinding.selectedParameterType,
+          acceptsOmission: false,
+          rest: false,
+        }],
+        argumentBindings: [malformedSourceBinding],
+      },
       sourceCallee: sourceValue({}, {}),
       sourceArguments: [sourceValue({}, {})],
       sourceResult: sourceValue({}, {}),
+      sourceChainRole: { kind: "ordinary", participant: "call" },
     },
   };
   assert.throws(
@@ -583,12 +601,15 @@ test("checked responses reject undefined and malformed operations precisely", ()
       },
       argumentConversions: [],
     }),
-    /Invalid checked call mapping response.*kind.*expected a string/,
+    new Error(
+      "Invalid checked call mapping response at 'checked-operation response[operation.mapCheckedCall].kind': "
+      + "expected an own data property.",
+    ),
   );
   assert.throws(
     () => snapshotCheckedOperationResponse(ExtensionObservationPoint.mapCheckedPropertyAccess, {}),
     new Error(
-      "Invalid TargetOperationFact at 'checked-operation response[operation.mapCheckedPropertyAccess].operation': "
+      "Invalid TargetOperationProposal at 'checked-operation response[operation.mapCheckedPropertyAccess].operation': "
       + "expected a non-array object.",
     ),
   );
@@ -601,7 +622,7 @@ test("checked responses reject undefined and malformed operations precisely", ()
       },
     }),
     new Error(
-      "Invalid TargetOperationFact operationKind at 'checked-operation response[operation.mapCheckedPropertyAccess].operation.operationKind': "
+      "Invalid TargetOperationProposal operationKind at 'checked-operation response[operation.mapCheckedPropertyAccess].operation.operationKind': "
       + "unknown kind 'invoke'.",
     ),
   );
@@ -722,32 +743,39 @@ test("checked member request snapshots reject malformed exact use evidence", () 
   const argument = {};
   const callee = {};
   const propertyRequest: CheckedPropertyAccessMappingRequest = {
+    sourceOperationKind: "property-access",
     expression,
     receiver,
     propertyName: "value",
     accessMode: "read",
-    callCallee: false,
+    use: "value",
     sourceReceiver: sourceValue(receiver, {}),
-    sourceResult: sourceValue(expression, {}),
+    sourceReadResult: sourceValue(expression, {}),
+    chainRole: { kind: "ordinary", participant: "property-access" },
   };
   const elementRequest: CheckedElementAccessMappingRequest = {
+    sourceOperationKind: "element-access",
     expression,
     receiver,
     argument,
     accessMode: "read",
-    callCallee: false,
+    use: "value",
     sourceReceiver: sourceValue(receiver, {}),
     sourceArgument: sourceValue(argument, {}),
-    sourceResult: sourceValue(expression, {}),
+    sourceReadResult: sourceValue(expression, {}),
+    chainRole: { kind: "ordinary", participant: "element-access" },
   };
   const callRequest: CheckedCallMappingRequest = {
+    sourceOperationKind: "call",
     call: expression,
     callee,
     arguments: [],
     callKind: "call",
+    sourceSelection: { kind: "untyped" },
     sourceCallee: sourceValue(callee, {}),
     sourceArguments: [],
     sourceResult: sourceValue(expression, {}),
+    chainRole: { kind: "ordinary", participant: "call" },
   };
 
   assert.throws(
@@ -760,9 +788,9 @@ test("checked member request snapshots reject malformed exact use evidence", () 
   assert.throws(
     () => snapshotCheckedOperationRequest(ExtensionObservationPoint.mapCheckedElementAccess, {
       ...elementRequest,
-      callCallee: "yes",
+      use: "execute",
     } as unknown as CheckedElementAccessMappingRequest),
-    /callCallee.*boolean/,
+    /Invalid CheckedElementAccessMappingRequest use.*unknown value 'execute'/,
   );
   assert.throws(
     () => snapshotCheckedOperationRequest(ExtensionObservationPoint.mapCheckedCall, {
@@ -781,27 +809,25 @@ test("call-argument request snapshots reject structurally equal non-canonical sl
     type: { kind: "source-primitive", name: "int32" },
     passingMode: "by-value",
   };
+  const sourceBinding = {
+    sourceArgumentIndex: 0,
+    effectiveArgumentIndex: 0,
+    sourceForm: "value" as const,
+    sourceParameterIndex: 0,
+    sourceParameterForm: "parameter" as const,
+    selectedArgumentType: {},
+    selectedParameterType: {},
+  };
   const request: CheckedConversionMappingRequest = {
+    sourceOperationKind: "conversion",
     conversionKind: "call-argument",
     expression: {},
     source: sourceValue({}, {}),
     target: targetParameter.type,
     call: {},
     slot: nonCanonicalSlot,
-    sourceArgumentIndex: 0,
-    targetParameterIndex: 0,
-    sourceForm: "value",
-    targetForm: "parameter",
     targetParameter,
-    sourceBinding: {
-      sourceArgumentIndex: 0,
-      effectiveArgumentIndex: 0,
-      sourceForm: "value",
-      sourceParameterIndex: 0,
-      sourceParameterForm: "parameter",
-      selectedArgumentType: {},
-      selectedParameterType: {},
-    },
+    sourceBinding,
     selectedSignature: {
       member: {
         id: "acme.canonical-binding",
@@ -811,19 +837,25 @@ test("call-argument request snapshots reject structurally equal non-canonical sl
         parameters: [targetParameter],
       },
       argumentConversions: [canonicalSlot],
-      sourceArgumentBindings: [{
-        sourceArgumentIndex: 0,
-        effectiveArgumentIndex: 0,
-        sourceForm: "value",
-        sourceParameterIndex: 0,
-        sourceParameterForm: "parameter",
-        selectedArgumentType: {},
-        selectedParameterType: {},
-      }],
       sourceCallKind: "call",
+      sourceSelection: {
+        kind: "applicable",
+        signature: {},
+        methodTypeArguments: [],
+        parameters: [{
+          parameterIndex: 0,
+          parameterName: "value",
+          parameterSymbol: {},
+          selectedType: sourceBinding.selectedParameterType,
+          acceptsOmission: false,
+          rest: false,
+        }],
+        argumentBindings: [sourceBinding],
+      },
       sourceCallee: sourceValue({}, {}),
       sourceArguments: [sourceValue({}, {})],
       sourceResult: sourceValue({}, {}),
+      sourceChainRole: { kind: "ordinary", participant: "call" },
     },
   };
 
@@ -891,21 +923,24 @@ test("checked response snapshots are reused without re-copying validated target 
       operationId: "acme.length",
       operationKind: "property",
       targetOperation: "length",
-      resultType: { kind: "source-primitive", name: "int32" },
     },
+    resultType: { kind: "source-primitive", name: "int32" },
   });
   const second = snapshotCheckedOperationResponse(ExtensionObservationPoint.mapCheckedPropertyAccess, first);
 
   assert.equal(second, first);
   assert.equal(second.operation, first.operation);
-  assert.equal(second.operation.resultType, first.operation.resultType);
+  assert.equal(second.resultType, first.resultType);
   assert.throws(
     () => snapshotCheckedOperationResponse(ExtensionObservationPoint.mapCheckedCall, first),
-    /Invalid checked call mapping response.*kind.*expected a string/,
+    new Error(
+      "Invalid checked call mapping response at 'checked-operation response[operation.mapCheckedCall].kind': "
+      + "expected an own data property.",
+    ),
   );
 });
 
-test("checked response snapshots read each extension-owned target field once", () => {
+test("checked response snapshots reject extension-owned target accessors without invoking them", () => {
   const reads = new Map<string, number>();
   const readOnce = <T>(field: string, value: T): T => {
     const count = (reads.get(field) ?? 0) + 1;
@@ -944,59 +979,35 @@ test("checked response snapshots read each extension-owned target field once", (
     get targetOperation(): string {
       return readOnce("operation.targetOperation", "value");
     },
-    get resultType(): TargetTypeRef {
-      return readOnce("operation.resultType", resultType);
-    },
-  } satisfies TargetOperationFact;
+  } satisfies TargetOperationProposal;
   const response = {
-    get operation(): TargetOperationFact {
+    get operation(): TargetOperationProposal {
       return readOnce("response.operation", operation);
     },
-    get resultType(): undefined {
-      return readOnce("response.resultType", undefined);
+    get resultType(): TargetTypeRef {
+      return readOnce("response.resultType", resultType);
     },
-    get provenance(): undefined {
-      return readOnce("response.provenance", undefined);
+    get providerDeclaration(): undefined {
+      return readOnce("response.providerDeclaration", undefined);
     },
   };
 
-  const snapshot = snapshotCheckedOperationResponse(ExtensionObservationPoint.mapCheckedPropertyAccess, response);
-
-  assert.deepEqual(snapshot.operation.resultType, {
-    kind: "target-named",
-    id: "Acme.Box",
-    typeArguments: [{ kind: "source-primitive", name: "int32" }],
-  });
-  assert.deepEqual([...reads.values()], Array.from({ length: reads.size }, () => 1));
+  assert.throws(
+    () => snapshotCheckedOperationResponse(ExtensionObservationPoint.mapCheckedPropertyAccess, response),
+    /own field 'operation' must be a data property; accessors are unsupported/,
+  );
+  assert.equal(reads.size, 0);
 });
 
-test("target-specific values remain uninspected target-owned identities inside frozen snapshots", () => {
-  const opaqueTarget = { targetOwned: true };
-  const opaqueValue = new Proxy(opaqueTarget, {
-    get() {
-      throw new Error("Opaque target-owned value was inspected.");
-    },
-    getOwnPropertyDescriptor() {
-      throw new Error("Opaque target-owned value descriptor was inspected.");
-    },
-    getPrototypeOf() {
-      throw new Error("Opaque target-owned value prototype was inspected.");
-    },
-    ownKeys() {
-      throw new Error("Opaque target-owned value keys were inspected.");
-    },
-    preventExtensions() {
-      throw new Error("Opaque target-owned value was frozen.");
-    },
-  });
-
+test("target-specific payload identities remain exact native-safe values inside frozen snapshots", () => {
+  const payloadId = "acme.payload.identity";
   const result = snapshotCheckedOperationResult(ExtensionObservationPoint.mapCheckedConversion, {
     kind: "accept",
     extensionId: "acme",
     value: {
       convertedType: {
         kind: "tuple",
-        elements: [{ kind: "target-specific", target: "acme", name: "identity", value: opaqueValue }],
+        elements: [{ kind: "target-specific", target: "acme", name: "identity", payloadId }],
       },
     },
   });
@@ -1014,24 +1025,18 @@ test("target-specific values remain uninspected target-owned identities inside f
   if (retainedIdentity?.kind !== "target-specific") {
     throw new Error("Expected target-specific identity type.");
   }
-  assert.equal(retainedIdentity.value, opaqueValue);
+  assert.equal(retainedIdentity.payloadId, payloadId);
   assert.equal(Object.isFrozen(result), true);
   assert.equal(Object.isFrozen(result.value), true);
   assert.equal(Object.isFrozen(result.value.convertedType), true);
   assert.equal(Object.isFrozen(result.value.convertedType.elements), true);
   assert.equal(Object.isFrozen(retainedIdentity), true);
-  assert.equal(Object.isFrozen(opaqueTarget), false);
 });
 
 test("one request snapshot cache reuses selected signatures and their target parameters", () => {
   const parameterCount = 64;
-  let parameterNameReads = 0;
-  let selectedMemberReads = 0;
   const sourceParameters: TargetParameter[] = Array.from({ length: parameterCount }, (_, index) => ({
-    get name(): string {
-      parameterNameReads += 1;
-      return `value${index}`;
-    },
+    name: `value${index}`,
     type: { kind: "source-primitive" as const, name: "int32" as const },
     passingMode: "by-value" as const,
   }));
@@ -1046,43 +1051,52 @@ test("one request snapshot cache reuses selected signatures and their target par
     { length: parameterCount },
     (_, sourceArgumentIndex) => argumentConversionSlot(sourceArgumentIndex, sourceArgumentIndex),
   );
+  const sourceBindings = slots.map((slot) => ({
+    sourceArgumentIndex: slot.sourceArgumentIndex,
+    effectiveArgumentIndex: slot.sourceArgumentIndex,
+    sourceForm: slot.sourceForm,
+    sourceParameterIndex: slot.targetParameterIndex,
+    sourceParameterForm: "parameter" as const,
+    selectedArgumentType: sourceParameters[slot.sourceArgumentIndex]!.type,
+    selectedParameterType: sourceParameters[slot.targetParameterIndex]!.type,
+  }));
   const selectedSignature: SelectedTargetSignatureFact = {
-    get member(): TargetSignatureSelection["member"] {
-      selectedMemberReads += 1;
-      return sourceMember;
-    },
+    member: sourceMember,
     argumentConversions: slots,
-    sourceArgumentBindings: slots.map((slot) => ({
-      sourceArgumentIndex: slot.sourceArgumentIndex,
-      effectiveArgumentIndex: slot.sourceArgumentIndex,
-      sourceForm: slot.sourceForm,
-      sourceParameterIndex: slot.targetParameterIndex,
-      sourceParameterForm: "parameter",
-      selectedArgumentType: sourceParameters[slot.sourceArgumentIndex]!.type,
-      selectedParameterType: sourceParameters[slot.targetParameterIndex]!.type,
-    })),
     sourceCallKind: "call",
+    sourceSelection: {
+      kind: "applicable",
+      signature: {},
+      methodTypeArguments: [],
+      parameters: sourceParameters.map((parameter, parameterIndex) => ({
+        parameterIndex,
+        parameterName: `value${parameterIndex}`,
+        parameterSymbol: {},
+        selectedType: parameter.type,
+        acceptsOmission: false,
+        rest: false,
+      })),
+      argumentBindings: sourceBindings,
+    },
     sourceCallee: sourceValue({}, {}),
     sourceArguments: sourceParameters.map((parameter, index) => sourceValue({ index }, parameter.type)),
     sourceResult: sourceValue({}, {}),
+    sourceChainRole: { kind: "ordinary", participant: "call" },
   };
   const expression = {};
   const source = {};
   const call = {};
   const requestFor = (targetParameterIndex: number): CheckedConversionMappingRequest => ({
+    sourceOperationKind: "conversion",
     conversionKind: "call-argument",
     expression,
     source: sourceValue(expression, source),
     target: sourceParameters[targetParameterIndex]!.type,
     call,
     slot: slots[targetParameterIndex]!,
-    sourceArgumentIndex: targetParameterIndex,
-    targetParameterIndex,
-    sourceForm: "value",
-    targetForm: "parameter",
     targetParameter: sourceParameters[targetParameterIndex]!,
     selectedSignature,
-    sourceBinding: selectedSignature.sourceArgumentBindings[targetParameterIndex]!,
+    sourceBinding: sourceBindings[targetParameterIndex]!,
   });
   const cache = createCheckedOperationRequestSnapshotCache();
   let sharedSelectedSignature: SelectedTargetSignatureFact | undefined;
@@ -1104,8 +1118,6 @@ test("one request snapshot cache reuses selected signatures and their target par
     assert.equal(snapshot.targetParameter, snapshot.selectedSignature.member.parameters[parameterIndex]);
   }
 
-  assert.equal(selectedMemberReads, 1);
-  assert.equal(parameterNameReads, parameterCount);
   assert.equal(Object.isFrozen(sharedSelectedSignature), true);
   assert.equal(Object.isFrozen(sharedSelectedSignature?.member.parameters), true);
 
@@ -1119,8 +1131,6 @@ test("one request snapshot cache reuses selected signatures and their target par
   }
   assert.notEqual(isolatedSnapshot.selectedSignature, sharedSelectedSignature);
   assert.equal(isolatedSnapshot.targetParameter, isolatedSnapshot.selectedSignature.member.parameters[0]);
-  assert.equal(selectedMemberReads, 2);
-  assert.equal(parameterNameReads, parameterCount * 2);
 });
 
 test("checked-operation dependency snapshots preserve exact conversion slots", () => {
@@ -1133,27 +1143,25 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
     passingMode: "by-value",
   };
   const dependencySlot = argumentConversionSlot(0, 0);
+  const dependencySourceBinding = {
+    sourceArgumentIndex: 0,
+    effectiveArgumentIndex: 0,
+    sourceForm: "value" as const,
+    sourceParameterIndex: 0,
+    sourceParameterForm: "parameter" as const,
+    selectedArgumentType: dependencyExpression,
+    selectedParameterType: targetParameter.type,
+  };
   const dependencyRequest: CheckedConversionMappingRequest = {
+    sourceOperationKind: "conversion",
     conversionKind: "call-argument",
     expression: dependencyExpression,
     source: sourceValue(dependencyExpression, dependencyExpression),
     target: targetParameter.type,
     call: dependencyCall,
     slot: dependencySlot,
-    sourceArgumentIndex: 0,
-    targetParameterIndex: 0,
-    sourceForm: "value",
-    targetForm: "parameter",
     targetParameter,
-    sourceBinding: {
-      sourceArgumentIndex: 0,
-      effectiveArgumentIndex: 0,
-      sourceForm: "value",
-      sourceParameterIndex: 0,
-      sourceParameterForm: "parameter",
-      selectedArgumentType: dependencyExpression,
-      selectedParameterType: targetParameter.type,
-    },
+    sourceBinding: dependencySourceBinding,
     selectedSignature: {
       member: {
         id: "acme.consume",
@@ -1163,19 +1171,25 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
         parameters: [targetParameter],
       },
       argumentConversions: [dependencySlot],
-      sourceArgumentBindings: [{
-        sourceArgumentIndex: 0,
-        effectiveArgumentIndex: 0,
-        sourceForm: "value",
-        sourceParameterIndex: 0,
-        sourceParameterForm: "parameter",
-        selectedArgumentType: dependencyExpression,
-        selectedParameterType: targetParameter.type,
-      }],
       sourceCallKind: "call",
+      sourceSelection: {
+        kind: "applicable",
+        signature: {},
+        methodTypeArguments: [],
+        parameters: [{
+          parameterIndex: 0,
+          parameterName: "value",
+          parameterSymbol: {},
+          selectedType: targetParameter.type,
+          acceptsOmission: false,
+          rest: false,
+        }],
+        argumentBindings: [dependencySourceBinding],
+      },
       sourceCallee: sourceValue({}, {}),
       sourceArguments: [sourceValue(dependencyExpression, dependencyExpression)],
       sourceResult: sourceValue(dependencyCall, {}),
+      sourceChainRole: { kind: "ordinary", participant: "call" },
     },
   };
   const requestSnapshotCache = createCheckedOperationRequestSnapshotCache();
@@ -1193,11 +1207,10 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
     conversionKind: "call-argument" as const,
     call: dependencyCall,
     slot: retainedDependencyRequest.slot,
-    sourceArgumentIndex: 0,
-    targetParameterIndex: 0,
   };
   const parentExpression = {};
   const parentRequest: CheckedConversionMappingRequest = {
+    sourceOperationKind: "conversion",
     conversionKind: "assertion",
     assertionKind: "as",
     expression: parentExpression,
@@ -1231,8 +1244,7 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
     [sourceReference],
   );
 
-  sourceReference.sourceArgumentIndex = 9;
-  sourceReference.targetParameterIndex = 9;
+  sourceReference.slot = argumentConversionSlot(9, 9);
   inventory.finalize();
 
   assert.deepEqual(order, ["dependency", "parent"]);
@@ -1241,13 +1253,15 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
 test("checked-operation dependency snapshots reject malformed reference objects", () => {
   const expression = {};
   const request = {
+    sourceOperationKind: "property-access" as const,
     expression,
     receiver: {},
     propertyName: "value",
     accessMode: "read" as const,
-    callCallee: false,
+    use: "value" as const,
     sourceReceiver: sourceValue({}, {}),
-    sourceResult: sourceValue(expression, {}),
+    sourceReadResult: sourceValue(expression, {}),
+    chainRole: { kind: "ordinary" as const, participant: "property-access" as const },
   };
   const run = (reference: unknown): void => {
     createInventory().run(
@@ -1288,9 +1302,12 @@ test("checked-operation dependency snapshots reject malformed reference objects"
     subject: {},
     conversionKind: "call-argument",
     call: {},
-    slot: {},
-    sourceArgumentIndex: -1,
-    targetParameterIndex: 0,
+    slot: {
+      sourceArgumentIndex: -1,
+      sourceForm: "value",
+      targetParameterIndex: 0,
+      targetForm: "parameter",
+    },
   }), /sourceArgumentIndex.*non-negative safe integer/);
 });
 
@@ -1333,7 +1350,8 @@ function createInventory(): CheckedOperationInventory {
     commitAttempt: () => {},
     rollbackAttempt: () => {},
     discardAttemptPreservingDiagnostics: () => {},
-    deferAttemptPreservingOperations: () => [],
+    rollbackAttemptPreservingOperations: () => [],
+    publishRejectedDiagnostic: () => {},
     onFatalFailure: () => undefined,
     onRequestConflict: () => {
       throw new Error("Unexpected checked-operation request conflict.");

@@ -4,9 +4,9 @@ import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Expression, Node_Text, Node_Type, Node_TypeArguments } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
-import { GetSourceFileOfNode, IsCallOrNewExpression, IsFunctionLike, SkipParentheses } from "../internal/ast/utilities.js";
+import { GetSourceFileOfNode, IsCallOrNewExpression, IsFunctionLike, IsOptionalChainRoot, IsOutermostOptionalChain, SkipParentheses } from "../internal/ast/utilities.js";
 import { AsElementAccessExpression, AsForInOrOfStatement } from "../internal/ast/generated/casts.js";
-import { IsNewExpression, IsParenthesizedExpression, IsSpreadElement } from "../internal/ast/generated/predicates.js";
+import { IsBinaryExpression, IsNewExpression, IsParenthesizedExpression, IsPostfixUnaryExpression, IsPrefixUnaryExpression, IsSpreadElement } from "../internal/ast/generated/predicates.js";
 import { NodeFlagsOptionalChain } from "../internal/ast/generated/flags.js";
 import type { Kind } from "../internal/ast/generated/kinds.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
@@ -14,19 +14,29 @@ import type { Checker } from "../internal/checker/checker/state.js";
 import type { CheckedCallSelectionSeed, CheckedCallSourceSelectionProvenance, ResolvedCallArgumentEvidence, ResolvedCallEvidence, ResolvedCallSourceValueEvidence, Signature, SignatureLinks, Type, TypeNodeLinks } from "../internal/checker/types.js";
 import { LinkStore_Get } from "../internal/core/linkstore.js";
 import { Checker_getDeclarationOfAliasSymbol, Checker_getResolvedSymbolOrNil } from "../internal/checker/checker/symbols.js";
+import { Checker_isErrorType } from "../internal/checker/checker/diagnostics.js";
+import type {
+  ExtensionCheckedIterationSelection,
+  ExtensionForAwaitOfAtomicIterationMechanism,
+  ExtensionForAwaitOfIterationMechanism,
+  ExtensionForOfAtomicIterationMechanism,
+  ExtensionForOfIterationMechanism,
+  ExtensionSelectedIterationProtocol,
+  ExtensionSelectedIterationTypes,
+} from "../internal/checker/checker/extension-iteration-selection.js";
 import { ExtensionObservationPoint } from "./observations.js";
-import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedFlowUseMode, CheckedIterationKind, CheckedIterationMappingRequest, CheckedOperationObservationPointName, CheckedOperationReference, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ExtensionObservationResult, PostCheckAssignabilityObservationRequest } from "./observations.js";
+import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedFlowSourceUse, CheckedIterationMappingRequest, CheckedOperationObservationPointName, CheckedOperationReference, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ExtensionObservationResult, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetCallArgumentConversionFactKey, targetCallArgumentPassingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
-import type { CheckedAccessMode, CheckedCallKind, SelectedSourceValueEvidence, SelectedTargetSignatureFact, SourceSelectedCallArgumentBinding, SourceSelectedMethodTypeArgument, SourceSelectedSignatureKind, SourceSelectedSignatureParameter, TargetCallArgumentConversionSlot, TargetCallArgumentPassingFact, TargetOperationFact, TargetOperationProvenance, TargetParameter, TargetTypeRef } from "./facts.js";
+import type { CheckedBinaryOperatorToken, CheckedCallKind, CheckedConversionSourceOperation, CheckedElementAccessSourceOperation, CheckedForAwaitOfAtomicIterationMechanism, CheckedForAwaitOfIterationMechanism, CheckedForOfAtomicIterationMechanism, CheckedForOfIterationMechanism, CheckedIterationSourceOperation, CheckedOperatorSourceOperation, CheckedPrefixUnaryOperatorToken, CheckedPropertyAccessSourceOperation, CheckedSourceChainParticipant, CheckedSourceChainRole, CheckedUpdateOperatorToken, ProviderDeclarationIdentity, SelectedSourceIterationProtocolEvidence, SelectedSourceIterationTypes, SelectedSourceTypeEvidence, SelectedSourceValueEvidence, SelectedTargetSignatureFact, SourceSelectedCallArgumentBinding, SourceSelectedMethodTypeArgument, SourceSelectedSignatureParameter, TargetCallArgumentConversionSlot, TargetCallArgumentPassingFact, TargetOperationFact, TargetOperationProposal, TargetOperationProvenance, TargetParameter, TargetTypeRef } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import {
-  extensionHostEvaluateRetainedCheckedOperations,
   extensionHostGetCheckedOperationReference,
   extensionHostGetCheckedOperationRequest,
   extensionHostHasCheckedOperationOwner,
   extensionHostPublishSourceDecisionBatch,
   extensionHostRetainCheckedOperation,
   extensionHostRunCheckedOperation,
+  extensionHostSetFact,
   getExtensionHost,
 } from "./host.js";
 import {
@@ -67,6 +77,7 @@ import {
 
 const checkedOperationApplied: CheckedOperationApplyOutcome = Object.freeze({ kind: "applied" });
 const checkedOperationUnavailable: CheckedOperationApplyOutcome = Object.freeze({ kind: "unavailable" });
+type CheckedAccessMode = CheckedPropertyAccessSourceOperation["accessMode"];
 
 export function hasExtensionCheckedOperationHost(
   checker: GoPtr<Checker>,
@@ -222,19 +233,87 @@ function publishExtensionSourceDecisionBatch(
   if (extensionHost === undefined) {
     throw new Error("A prepared extension source-decision batch lost its owning extension host.");
   }
+  const propertySelections = collectCheckedPropertySelections(batch);
+  const publishedPropertySelections = new Set<Node>();
   extensionHost[extensionHostPublishSourceDecisionBatch](() => {
     for (const event of batch) {
       if (isCheckedOperationSourceDecisionEvent(event)) {
+        if (event.kind === "checked-property") {
+          if (publishedPropertySelections.has(event.origin)) {
+            continue;
+          }
+          publishedPropertySelections.add(event.origin);
+          publishExtensionCheckedPropertyAccessMapping(
+            checker,
+            extensionHost,
+            event.origin,
+            propertySelections.get(event.origin)!,
+          );
+          continue;
+        }
         publishExtensionSourceDecisionEvent(checker, extensionHost, event);
       }
     }
-    extensionHost[extensionHostEvaluateRetainedCheckedOperations]();
     for (const event of batch) {
       if (!isCheckedOperationSourceDecisionEvent(event)) {
         publishExtensionSourceDecisionEvent(checker, extensionHost, event);
       }
     }
   });
+}
+
+type CheckedPropertySourceDecisionEvent = Extract<ExtensionSourceDecisionEvent, { readonly kind: "checked-property" }>;
+
+interface CheckedPropertySourceSelections {
+  readonly read: CheckedPropertySourceDecisionEvent | undefined;
+  readonly write: CheckedPropertySourceDecisionEvent | undefined;
+}
+
+function collectCheckedPropertySelections(
+  batch: ExtensionSourceDecisionEventBatch,
+): ReadonlyMap<Node, CheckedPropertySourceSelections> {
+  const selections = new Map<Node, { read?: CheckedPropertySourceDecisionEvent; write?: CheckedPropertySourceDecisionEvent }>();
+  for (const event of batch) {
+    if (event.kind !== "checked-property") {
+      continue;
+    }
+    let selection = selections.get(event.origin);
+    if (selection === undefined) {
+      selection = {};
+      selections.set(event.origin, selection);
+    }
+    if (selection[event.selectionMode] !== undefined) {
+      throw new Error(`Checked property access has duplicate '${event.selectionMode}' source selections.`);
+    }
+    selection[event.selectionMode] = event;
+  }
+  const exact = new Map<Node, CheckedPropertySourceSelections>();
+  for (const [origin, selection] of selections) {
+    const representative = selection.read ?? selection.write;
+    if (representative === undefined) {
+      throw new Error("Checked property access has no selected source evidence.");
+    }
+    const requiresRead = representative.accessMode !== "write";
+    const requiresWrite = representative.accessMode === "write" || representative.accessMode === "read-write";
+    if ((selection.read !== undefined) !== requiresRead || (selection.write !== undefined) !== requiresWrite) {
+      throw new Error(`Checked '${representative.accessMode}' property access has incomplete selected source evidence.`);
+    }
+    for (const candidate of [selection.read, selection.write]) {
+      if (candidate === undefined) {
+        continue;
+      }
+      if (candidate.accessMode !== representative.accessMode
+        || candidate.callCallee !== representative.callCallee
+        || !checkedSourceTypesShareStableIdentity(candidate.receiverType, representative.receiverType)) {
+        throw new Error("Checked property read/write selections disagree on the source operation identity.");
+      }
+    }
+    if (representative.callCallee && (representative.accessMode !== "read" || selection.write !== undefined)) {
+      throw new Error("Only a read-only property selection can be a checked call callee.");
+    }
+    exact.set(origin, Object.freeze({ read: selection.read, write: selection.write }));
+  }
+  return exact;
 }
 
 function isCheckedOperationSourceDecisionEvent(event: ExtensionSourceDecisionEvent): boolean {
@@ -265,8 +344,7 @@ function publishExtensionSourceDecisionEvent(
       publishExtensionCheckedCallMapping(extensionHost, event.origin, event.resolvedCallEvidence);
       return;
     case "checked-property":
-      publishExtensionCheckedPropertyAccessMapping(checker, extensionHost, event.origin, event);
-      return;
+      throw new Error("Checked property events must be coalesced before publication.");
     case "checked-element":
       publishExtensionCheckedElementAccessMapping(checker, extensionHost, event.origin, {
         selectedSymbol: event.selectedSymbol,
@@ -294,9 +372,7 @@ function publishExtensionSourceDecisionEvent(
       publishExtensionCheckedIterationMapping(
         extensionHost,
         event.origin,
-        event.iterationKind,
-        event.sourceIterableType,
-        event.sourceElementType,
+        event.selection,
       );
       return;
     case "assertion-conversion":
@@ -304,6 +380,8 @@ function publishExtensionSourceDecisionEvent(
         checker,
         extensionHost,
         event.origin,
+        event.sourceExpression,
+        event.explicitTargetTypeNode,
         event.sourceType,
         event.targetType,
         event.assertionKind,
@@ -332,7 +410,7 @@ function publishExtensionSourceDecisionEvent(
       );
       return;
     case "flow-use":
-      publishExtensionFlowUseValidation(extensionHost, event.origin, event.symbol, event.mode);
+      publishExtensionFlowUseValidation(extensionHost, event.origin, event.symbol, event.sourceUse);
       return;
   }
 }
@@ -498,7 +576,7 @@ function publishExtensionCheckedCallMapping(
   if (resolvedCallEvidence.call !== callExpression
     || (resolvedCallEvidence.outcome !== "applicable" && resolvedCallEvidence.outcome !== "untyped")
     || resolvedCallEvidence.sourceResultType === undefined
-    || sourceSelectedSignature === undefined) {
+    || (resolvedCallEvidence.outcome === "applicable" && sourceSelectedSignature === undefined)) {
     throw new Error("Checked call mapping requires complete exact callee, signature, argument, topology, and result evidence from source checking.");
   }
   if (arguments_.some((argument) => argument === undefined)) {
@@ -510,17 +588,19 @@ function publishExtensionCheckedCallMapping(
   }
   const retainedRequest = extensionHost[extensionHostGetCheckedOperationRequest](ExtensionObservationPoint.mapCheckedCall, callExpression);
   const dependencies = collectResolvedCallDependencies(extensionHost, resolvedCallEvidence);
+  const retainedApplicableSelection = retainedRequest?.sourceSelection.kind === "applicable"
+    ? retainedRequest.sourceSelection
+    : undefined;
   const sourceSelectedMethodTypeArguments = preserveEquivalentSelectedMethodTypeArguments(
-    retainedRequest?.sourceSelectedMethodTypeArguments,
-    resolvedCallEvidence.sourceSelectedMethodTypeArguments,
+    retainedApplicableSelection?.methodTypeArguments,
+    resolvedCallEvidence.sourceSelectedMethodTypeArguments ?? [],
   );
   const sourceSelectedSignatureParameters = preserveEquivalentSelectedSignatureParameters(
-    retainedRequest?.sourceSelectedSignatureParameters,
+    retainedApplicableSelection?.parameters,
     resolvedCallEvidence.sourceSelectedSignatureParameters,
   );
-  const sourceSelectedSignatureKind = resolvedCallEvidence.sourceSelectedSignatureKind;
   const sourceArgumentBindings = preserveEquivalentSelectedCallArgumentBindings(
-    retainedRequest?.sourceArgumentBindings,
+    retainedApplicableSelection?.argumentBindings,
     selectedSourceArgumentBindings,
   );
   const sourceResultType = preserveEquivalentCheckedSourceType(
@@ -535,14 +615,21 @@ function publishExtensionCheckedCallMapping(
     retainedRequest?.sourceArguments[index]?.type as GoPtr<Type>,
     evidence.type as Type,
   ));
-  if (sourceResultType === undefined || sourceCalleeType === undefined || sourceArgumentTypes.some((type) => type === undefined)) {
+  const sourceReceiverType = preserveEquivalentCheckedSourceType(
+    retainedRequest?.sourceReceiver?.type as GoPtr<Type>,
+    resolvedCallEvidence.sourceReceiver?.type,
+  );
+  if (sourceResultType === undefined
+    || sourceCalleeType === undefined
+    || sourceArgumentTypes.some((type) => type === undefined)
+    || (resolvedCallEvidence.sourceReceiver !== undefined) !== (sourceReceiverType !== undefined)) {
     throw new Error("Checked call mapping lost exact selected source value evidence.");
   }
   const sourceReceiver = resolvedCallEvidence.sourceReceiver === undefined
     ? undefined
     : selectedSourceValueEvidence(
         resolvedCallEvidence.sourceReceiver.expression,
-        resolvedCallEvidence.sourceReceiver.type,
+        sourceReceiverType!,
         selectedSourceEvidenceProvenance(resolvedCallEvidence.sourceReceiver),
       );
   const sourceCallee = selectedSourceValueEvidence(callee, sourceCalleeType, selectedSourceEvidenceProvenance(selectedSourceCallee));
@@ -552,22 +639,28 @@ function publishExtensionCheckedCallMapping(
     selectedSourceEvidenceProvenance(evidence),
   ));
   const sourceResult = selectedSourceValueEvidence(callExpression!, sourceResultType);
+  const sourceSelection = resolvedCallEvidence.outcome === "untyped"
+    ? { kind: "untyped" as const }
+    : {
+        kind: "applicable" as const,
+        signature: sourceSelectedSignature!,
+        ...(sourceSelectedSignature!.declaration === undefined ? {} : { declaration: sourceSelectedSignature!.declaration }),
+        methodTypeArguments: sourceSelectedMethodTypeArguments ?? [],
+        parameters: sourceSelectedSignatureParameters ?? [],
+        argumentBindings: sourceArgumentBindings ?? [],
+      };
   const request: CheckedCallMappingRequest = {
+    sourceOperationKind: "call",
     call: callExpression,
     callee,
     arguments: definedFactSubjects(arguments_),
     callKind: checkedCallKind(callExpression),
-    ...(sourceSelectedSignature !== undefined ? { sourceSelectedSignature } : {}),
-    ...(sourceSelectedSignature?.declaration !== undefined ? { sourceSelectedDeclaration: sourceSelectedSignature.declaration } : {}),
-    ...(sourceSelectedMethodTypeArguments !== undefined ? { sourceSelectedMethodTypeArguments } : {}),
-    ...(sourceSelectedSignatureParameters !== undefined ? { sourceSelectedSignatureParameters } : {}),
-    ...(sourceSelectedSignatureKind !== undefined ? { sourceSelectedSignatureKind } : {}),
-    ...(sourceArgumentBindings === undefined ? {} : { sourceArgumentBindings }),
+    sourceSelection,
     sourceCallee,
     sourceArguments,
     sourceResult,
-    ...(((callExpression.Flags ?? 0) & NodeFlagsOptionalChain) !== 0 ? { optionalChain: true } : {}),
     ...(sourceReceiver === undefined ? {} : { sourceReceiver }),
+    chainRole: checkedSourceChainRole(callExpression, "call"),
     ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
   };
   let retainedTargetApplication: {
@@ -589,9 +682,8 @@ function publishExtensionCheckedCallMapping(
       const finalizedCall = acceptedRequest.call as Node;
       if (retainedTargetApplication === undefined) {
         const finalizedArguments = acceptedRequest.arguments as readonly GoPtr<Node>[];
-        const finalizedSourceProvenance = selectedSourceCallProvenanceFromRequest(acceptedRequest);
         const snapshotCache = createCheckedOperationRequestSnapshotCache();
-        const selectedSignature = withSelectedTargetSignatureProvenance(value, finalizedSourceProvenance, snapshotCache);
+        const selectedSignature = finalizeSelectedTargetSignatureFact(value, acceptedRequest, snapshotCache);
         retainedTargetApplication = Object.freeze({
           result: value,
           selectedSignature,
@@ -606,7 +698,7 @@ function publishExtensionCheckedCallMapping(
       if (conversionOutcome.kind !== "applied") {
         return conversionOutcome;
       }
-      const writeResult = extensionHost.facts.set(finalizedCall, selectedTargetSignatureFactKey, selectedSignature, evidence);
+      const writeResult = extensionHost[extensionHostSetFact](finalizedCall, selectedTargetSignatureFactKey, selectedSignature, evidence);
       if (writeResult !== "inserted" && writeResult !== "idempotent") {
         throw new Error(`Cannot publish selected target signature '${selectedSignature.member.id}': ${writeResult}.`);
       }
@@ -633,6 +725,7 @@ export interface CheckedPropertyAccessSourceEvidence {
   readonly selectedSymbol: GoPtr<Symbol>;
   readonly resultType: GoPtr<Type>;
   readonly receiverType: GoPtr<Type>;
+  readonly selectionMode: "read" | "write";
   readonly accessMode: CheckedAccessMode;
   readonly callCallee: boolean;
 }
@@ -664,6 +757,7 @@ export function recordExtensionCheckedPropertyAccessMapping(
     selectedSymbol: selected.selectedSymbol,
     resultType: selected.resultType,
     receiverType: selected.receiverType,
+    selectionMode: selected.selectionMode,
     accessMode: selected.accessMode,
     callCallee: selected.callCallee,
   }));
@@ -697,47 +791,107 @@ function publishExtensionCheckedPropertyAccessMapping(
   checker: Checker,
   extensionHost: ExtensionHost,
   propertyAccessExpression: Node,
-  selected: CheckedPropertyAccessSourceEvidence,
+  selected: CheckedPropertySourceSelections,
 ): void {
   const receiver = Node_Expression(propertyAccessExpression);
   const propertyName = Node_Text(Node_Name(propertyAccessExpression));
   if (receiver === undefined || propertyName === "") {
     return;
   }
-  const sourceSelectedSymbol = selectedSourceSymbol(checker, selected.selectedSymbol);
-  const sourceSelectedDeclaration = symbolValueDeclaration(sourceSelectedSymbol);
+  const representative = selected.read ?? selected.write;
+  if (representative === undefined) {
+    throw new Error("Checked property publication has no exact source selection.");
+  }
   const retainedRequest = extensionHost[extensionHostGetCheckedOperationRequest](ExtensionObservationPoint.mapCheckedPropertyAccess, propertyAccessExpression);
   const canonicalSourceReceiverType = preserveEquivalentCheckedSourceType(
     retainedRequest?.sourceReceiver.type as GoPtr<Type>,
-    selected.receiverType,
+    representative.receiverType,
   );
-  const canonicalSourceResultType = preserveEquivalentCheckedSourceType(
-    retainedRequest?.sourceResult.type as GoPtr<Type>,
-    selected.resultType,
+  const retainedReadType = retainedRequest?.accessMode === "read"
+    || retainedRequest?.accessMode === "delete"
+    || retainedRequest?.accessMode === "read-write"
+    ? retainedRequest.sourceReadResult.type as GoPtr<Type>
+    : undefined;
+  const retainedWriteType = retainedRequest?.accessMode === "write"
+    || retainedRequest?.accessMode === "read-write"
+    ? retainedRequest.sourceWriteType.type as GoPtr<Type>
+    : undefined;
+  const canonicalSourceReadType = preserveEquivalentCheckedSourceType(
+    retainedReadType,
+    selected.read?.resultType,
+  );
+  const canonicalSourceWriteType = preserveEquivalentCheckedSourceType(
+    retainedWriteType,
+    selected.write?.resultType,
   );
   const sourceReceiver = selectedSourceReceiverEvidence(receiver, canonicalSourceReceiverType);
-  if (canonicalSourceReceiverType === undefined || canonicalSourceResultType === undefined) {
-    throw new Error("Checked property access mapping requires exact selected source receiver and result types.");
+  if (canonicalSourceReceiverType === undefined
+    || (selected.read !== undefined) !== (canonicalSourceReadType !== undefined)
+    || (selected.write !== undefined) !== (canonicalSourceWriteType !== undefined)) {
+    throw new Error("Checked property access mapping requires complete exact read/write source evidence.");
   }
-  const sourceResult = selectedSourceValueEvidence(propertyAccessExpression, canonicalSourceResultType, {
-    ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
-    ...(sourceSelectedDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedDeclaration }),
-    ...(sourceSelectedDeclaration === undefined || Node_Type(sourceSelectedDeclaration) === undefined
-      ? {}
-      : { authoredTypeNode: Node_Type(sourceSelectedDeclaration)! }),
-  });
+  const sourceReadResult = selected.read === undefined
+    ? undefined
+    : selectedSourceValueEvidence(
+        propertyAccessExpression,
+        canonicalSourceReadType!,
+        selectedPropertySelectionProvenance(checker, selected.read),
+      );
+  const sourceWriteType = selected.write === undefined
+    ? undefined
+    : selectedSourceTypeEvidence(
+        canonicalSourceWriteType!,
+        selectedPropertySelectionProvenance(checker, selected.write),
+      );
   const sourceReceiverDependencies = collectCheckedOperationDependencies(extensionHost, [receiver]);
-  const request: CheckedPropertyAccessMappingRequest = {
+  const requestBase = {
+    sourceOperationKind: "property-access" as const,
     expression: propertyAccessExpression,
     receiver,
     propertyName,
-    accessMode: selected.accessMode,
-    callCallee: selected.callCallee,
     sourceReceiver,
-    sourceResult,
-    ...(((propertyAccessExpression.Flags ?? 0) & NodeFlagsOptionalChain) !== 0 ? { optionalChain: true } : {}),
     ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
   };
+  let request: CheckedPropertyAccessMappingRequest;
+  switch (representative.accessMode) {
+    case "read":
+      request = {
+        ...requestBase,
+        accessMode: "read",
+        use: representative.callCallee ? "call-callee" : "value",
+        sourceReadResult: sourceReadResult!,
+        chainRole: checkedSourceChainRole(propertyAccessExpression, "property-access"),
+      };
+      break;
+    case "delete":
+      request = {
+        ...requestBase,
+        accessMode: "delete",
+        use: "value",
+        sourceReadResult: sourceReadResult!,
+        chainRole: checkedSourceChainRole(propertyAccessExpression, "property-access"),
+      };
+      break;
+    case "write":
+      request = {
+        ...requestBase,
+        accessMode: "write",
+        use: "value",
+        sourceWriteType: sourceWriteType!,
+        chainRole: { kind: "ordinary", participant: "property-access" },
+      };
+      break;
+    case "read-write":
+      request = {
+        ...requestBase,
+        accessMode: "read-write",
+        use: "value",
+        sourceReadResult: sourceReadResult!,
+        sourceWriteType: sourceWriteType!,
+        chainRole: { kind: "ordinary", participant: "property-access" },
+      };
+      break;
+  }
   if (!extensionHost[extensionHostHasCheckedOperationOwner](ExtensionObservationPoint.mapCheckedPropertyAccess)) {
     return;
   }
@@ -749,29 +903,14 @@ function publishExtensionCheckedPropertyAccessMapping(
       throw new Error("Extension-owned checked property access mapping unexpectedly reached core fallback.");
     },
     (value, evidence, acceptedRequest) => {
-      const operationWithResult = withCheckedOperationResultType(value.operation, value.resultType);
-      const operation = value.provenance === undefined
-        ? operationWithResult
-        : withTargetOperationProvenance(operationWithResult, value.provenance);
-      const operationWithProvenance = withTargetOperationProvenance(operation, {
-        sourceExpression: acceptedRequest.expression,
-        sourceReceiver: acceptedRequest.receiver,
-        sourceReceiverType: acceptedRequest.sourceReceiver.type,
-        sourceAccessMode: acceptedRequest.accessMode,
-        sourceCallCallee: acceptedRequest.callCallee,
-        ...(acceptedRequest.sourceResult.selectedSymbol !== undefined ? { sourceSelectedSymbol: acceptedRequest.sourceResult.selectedSymbol } : {}),
-        ...(acceptedRequest.sourceResult.selectedDeclaration !== undefined ? { sourceSelectedDeclaration: acceptedRequest.sourceResult.selectedDeclaration } : {}),
-        sourceResultType: acceptedRequest.sourceResult.type,
-        ...(acceptedRequest.optionalChain === true ? { sourceOptionalChain: true } : {}),
-      });
-      extensionHost.facts.set(
+      extensionHost[extensionHostSetFact](
         acceptedRequest.expression,
         targetOperationFactKey,
-        snapshotTargetOperationFact(preserveEquivalentCheckedSourceResultType(
-          extensionHost,
-          acceptedRequest.expression,
-          operationWithProvenance,
-          acceptedRequest.sourceResult.type as GoPtr<Type>,
+        snapshotTargetOperationFact(finalizeTargetOperationFact(
+          value.operation,
+          value.resultType,
+          checkedPropertySourceOperationFromRequest(acceptedRequest),
+          value.providerDeclaration,
         )),
         evidence,
       );
@@ -780,6 +919,25 @@ function publishExtensionCheckedPropertyAccessMapping(
     undefined,
     sourceReceiverDependencies,
   );
+}
+
+function selectedPropertySelectionProvenance(
+  checker: Checker,
+  selected: CheckedPropertySourceDecisionEvent,
+): {
+  readonly selectedSymbol?: ExtensionFactSubject;
+  readonly selectedDeclaration?: ExtensionFactSubject;
+  readonly authoredTypeNode?: ExtensionFactSubject;
+} {
+  const sourceSelectedSymbol = selectedSourceSymbol(checker, selected.selectedSymbol);
+  const sourceSelectedDeclaration = symbolValueDeclaration(sourceSelectedSymbol);
+  return {
+    ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
+    ...(sourceSelectedDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedDeclaration }),
+    ...(sourceSelectedDeclaration === undefined || Node_Type(sourceSelectedDeclaration) === undefined
+      ? {}
+      : { authoredTypeNode: Node_Type(sourceSelectedDeclaration)! }),
+  };
 }
 
 export interface CheckedElementAccessSourceEvidence {
@@ -869,40 +1027,99 @@ function publishExtensionCheckedElementAccessMapping(
     retainedRequest?.sourceReceiver.type as GoPtr<Type>,
     selected.receiverType,
   );
-  const canonicalSourceResultType = preserveEquivalentCheckedSourceType(
-    retainedRequest?.sourceResult.type as GoPtr<Type>,
-    selected.resultType,
+  const retainedReadType = retainedRequest?.accessMode === "read"
+    || retainedRequest?.accessMode === "delete"
+    || retainedRequest?.accessMode === "read-write"
+    ? retainedRequest.sourceReadResult.type as GoPtr<Type>
+    : undefined;
+  const retainedWriteType = retainedRequest?.accessMode === "write"
+    || retainedRequest?.accessMode === "read-write"
+    ? retainedRequest.sourceWriteType.type as GoPtr<Type>
+    : undefined;
+  const canonicalSourceReadType = preserveEquivalentCheckedSourceType(
+    retainedReadType,
+    selected.accessMode === "write" ? undefined : selected.resultType,
+  );
+  const canonicalSourceWriteType = preserveEquivalentCheckedSourceType(
+    retainedWriteType,
+    selected.accessMode === "read" || selected.accessMode === "delete" ? undefined : selected.resultType,
   );
   const canonicalSourceArgumentType = preserveEquivalentCheckedSourceType(
     retainedRequest?.sourceArgument.type as GoPtr<Type>,
     selected.argumentType,
   );
   const sourceReceiver = selectedSourceReceiverEvidence(receiver, canonicalSourceReceiverType);
-  if (canonicalSourceReceiverType === undefined || canonicalSourceArgumentType === undefined || canonicalSourceResultType === undefined) {
-    throw new Error("Checked element access mapping requires exact selected source receiver, argument, and result types.");
+  if (canonicalSourceReceiverType === undefined
+    || canonicalSourceArgumentType === undefined
+    || (selected.accessMode !== "write") !== (canonicalSourceReadType !== undefined)
+    || (selected.accessMode === "write" || selected.accessMode === "read-write") !== (canonicalSourceWriteType !== undefined)) {
+    throw new Error("Checked element access mapping requires complete exact selected receiver, argument, and access evidence.");
   }
   const sourceArgument = selectedSourceValueEvidence(argument, canonicalSourceArgumentType);
-  const sourceResult = selectedSourceValueEvidence(elementAccessExpression, canonicalSourceResultType, {
+  const selectionProvenance = {
     ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
     ...(sourceSelectedDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedDeclaration }),
     ...(sourceSelectedDeclaration === undefined || Node_Type(sourceSelectedDeclaration) === undefined
       ? {}
       : { authoredTypeNode: Node_Type(sourceSelectedDeclaration)! }),
-  });
+  };
+  const sourceReadResult = canonicalSourceReadType === undefined
+    ? undefined
+    : selectedSourceValueEvidence(elementAccessExpression, canonicalSourceReadType, selectionProvenance);
+  const sourceWriteType = canonicalSourceWriteType === undefined
+    ? undefined
+    : selectedSourceTypeEvidence(canonicalSourceWriteType, selectionProvenance);
   const dependencies = collectCheckedOperationDependencies(extensionHost, [receiver, argument]);
-  const request: CheckedElementAccessMappingRequest = {
+  const requestBase = {
+    sourceOperationKind: "element-access" as const,
     expression: elementAccessExpression,
     receiver,
     argument,
-    accessMode: selected.accessMode,
-    callCallee: selected.callCallee,
     sourceReceiver,
     sourceArgument,
-    sourceResult,
     ...(selected.selectedElementIndex !== undefined ? { sourceSelectedElementIndex: selected.selectedElementIndex } : {}),
-    ...(((elementAccessExpression.Flags ?? 0) & NodeFlagsOptionalChain) !== 0 ? { optionalChain: true } : {}),
     ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
   };
+  let request: CheckedElementAccessMappingRequest;
+  switch (selected.accessMode) {
+    case "read":
+      request = {
+        ...requestBase,
+        accessMode: "read",
+        use: selected.callCallee ? "call-callee" : "value",
+        sourceReadResult: sourceReadResult!,
+        chainRole: checkedSourceChainRole(elementAccessExpression, "element-access"),
+      };
+      break;
+    case "delete":
+      request = {
+        ...requestBase,
+        accessMode: "delete",
+        use: "value",
+        sourceReadResult: sourceReadResult!,
+        chainRole: checkedSourceChainRole(elementAccessExpression, "element-access"),
+      };
+      break;
+    case "write":
+      request = {
+        ...requestBase,
+        accessMode: "write",
+        use: "value",
+        sourceWriteType: sourceWriteType!,
+        chainRole: { kind: "ordinary", participant: "element-access" },
+      };
+      break;
+    case "read-write":
+      request = {
+        ...requestBase,
+        accessMode: "read-write",
+        use: "value",
+        sourceReadResult: sourceReadResult!,
+        sourceWriteType: sourceWriteType!,
+        chainRole: { kind: "ordinary", participant: "element-access" },
+      };
+      break;
+  }
   if (!extensionHost[extensionHostHasCheckedOperationOwner](ExtensionObservationPoint.mapCheckedElementAccess)) {
     return;
   }
@@ -914,29 +1131,14 @@ function publishExtensionCheckedElementAccessMapping(
       throw new Error("Extension-owned checked element access mapping unexpectedly reached core fallback.");
     },
     (value, evidence, acceptedRequest) => {
-      const operationWithResult = withCheckedOperationResultType(value.operation, value.resultType);
-      const operation = value.provenance === undefined
-        ? operationWithResult
-        : withTargetOperationProvenance(operationWithResult, value.provenance);
-      const operationWithProvenance = withTargetOperationProvenance(operation, {
-        sourceExpression: acceptedRequest.expression,
-        sourceReceiver: acceptedRequest.receiver,
-        sourceReceiverType: acceptedRequest.sourceReceiver.type,
-        sourceAccessMode: acceptedRequest.accessMode,
-        sourceCallCallee: acceptedRequest.callCallee,
-        ...(acceptedRequest.sourceResult.selectedSymbol !== undefined ? { sourceSelectedSymbol: acceptedRequest.sourceResult.selectedSymbol } : {}),
-        ...(acceptedRequest.sourceResult.selectedDeclaration !== undefined ? { sourceSelectedDeclaration: acceptedRequest.sourceResult.selectedDeclaration } : {}),
-        sourceResultType: acceptedRequest.sourceResult.type,
-        ...(acceptedRequest.optionalChain === true ? { sourceOptionalChain: true } : {}),
-      });
-      extensionHost.facts.set(
+      extensionHost[extensionHostSetFact](
         acceptedRequest.expression,
         targetOperationFactKey,
-        snapshotTargetOperationFact(preserveEquivalentCheckedSourceResultType(
-          extensionHost,
-          acceptedRequest.expression,
-          operationWithProvenance,
-          acceptedRequest.sourceResult.type as GoPtr<Type>,
+        snapshotTargetOperationFact(finalizeTargetOperationFact(
+          value.operation,
+          value.resultType,
+          checkedElementSourceOperationFromRequest(acceptedRequest),
+          value.providerDeclaration,
         )),
         evidence,
       );
@@ -954,7 +1156,14 @@ export function recordExtensionCheckedAssertionConversion(checker: GoPtr<Checker
   if (getCheckedOperationExtensionHost(checker, ExtensionObservationPoint.mapCheckedConversion, assertionExpression) === undefined) {
     return;
   }
+  if (Checker_isErrorType(checker, sourceType) || Checker_isErrorType(checker, targetType)) {
+    return;
+  }
   const sourceExpression = Node_Expression(assertionExpression);
+  const explicitTargetTypeNode = Node_Type(assertionExpression);
+  if (sourceExpression === undefined || explicitTargetTypeNode === undefined) {
+    throw new Error("Checked assertion source decision requires exact source expression and authored target type nodes.");
+  }
   const sourceSelectedSymbol = sourceExpression === undefined
     ? undefined
     : selectedSourceSymbol(checker, Checker_getResolvedSymbolOrNil(checker, SkipParentheses(sourceExpression)));
@@ -963,6 +1172,8 @@ export function recordExtensionCheckedAssertionConversion(checker: GoPtr<Checker
   appendEvent(checker, Object.freeze({
     kind: "assertion-conversion",
     origin: assertionExpression,
+    sourceExpression,
+    explicitTargetTypeNode,
     sourceType,
     targetType,
     assertionKind,
@@ -976,6 +1187,8 @@ function publishExtensionCheckedAssertionConversion(
   checker: Checker,
   extensionHost: ExtensionHost,
   assertionExpression: Node,
+  sourceExpression: Node,
+  explicitTargetTypeNode: Node,
   sourceType: Type,
   targetType: Type,
   assertionKind: "as" | "angle-bracket" | "jsdoc",
@@ -983,11 +1196,6 @@ function publishExtensionCheckedAssertionConversion(
   sourceSelectedDeclaration: Node | undefined,
   sourceSelectedDeclarationTypeNode: Node | undefined,
 ): void {
-  const sourceExpression = Node_Expression(assertionExpression);
-  const explicitTargetTypeNode = Node_Type(assertionExpression);
-  if (sourceExpression === undefined || explicitTargetTypeNode === undefined) {
-    return;
-  }
   const retainedRequest = extensionHost[extensionHostGetCheckedOperationRequest](
     ExtensionObservationPoint.mapCheckedConversion,
     assertionExpression,
@@ -1004,6 +1212,7 @@ function publishExtensionCheckedAssertionConversion(
     throw new Error("Checked assertion mapping requires exact selected source and target types.");
   }
   retainExtensionCheckedConversion(extensionHost, {
+    sourceOperationKind: "conversion",
     conversionKind: "assertion",
     assertionKind,
     expression: assertionExpression,
@@ -1039,6 +1248,11 @@ export function recordExtensionCheckedOperatorKindMapping(checker: GoPtr<Checker
   if (sourceLeftType === undefined || sourceResultType === undefined || (right === undefined) !== (sourceRightType === undefined)) {
     throw new Error("Checked operator source decision requires exact selected result and operand types.");
   }
+  if (Checker_isErrorType(checker, sourceLeftType)
+    || (sourceRightType !== undefined && Checker_isErrorType(checker, sourceRightType))
+    || Checker_isErrorType(checker, sourceResultType)) {
+    return;
+  }
   appendEvent(checker, Object.freeze({
     kind: "checked-operator",
     origin: expression,
@@ -1067,12 +1281,15 @@ function publishExtensionCheckedOperatorKindMapping(
     retainedRequest?.sourceResult.type as GoPtr<Type>,
     sourceResultType,
   );
+  const retainedSourceLeftType = retainedRequest?.operatorKind === "binary"
+    ? retainedRequest.sourceLeft.type as GoPtr<Type>
+    : retainedRequest?.sourceOperand.type as GoPtr<Type>;
   const canonicalSourceLeftType = preserveEquivalentCheckedSourceType(
-    retainedRequest?.sourceLeft.type as GoPtr<Type>,
+    retainedSourceLeftType,
     sourceLeftType,
   );
   const canonicalSourceRightType = preserveEquivalentCheckedSourceType(
-    retainedRequest?.sourceRight?.type as GoPtr<Type>,
+    retainedRequest?.operatorKind === "binary" ? retainedRequest.sourceRight.type as GoPtr<Type> : undefined,
     sourceRightType,
   );
   if (canonicalSourceResultType === undefined
@@ -1085,14 +1302,17 @@ function publishExtensionCheckedOperatorKindMapping(
     ? undefined
     : selectedSourceValueEvidence(right, canonicalSourceRightType);
   const sourceResult = selectedSourceValueEvidence(expression, canonicalSourceResultType);
-  const request: CheckedOperatorMappingRequest = {
+  const sourceOperation = checkedOperatorSourceOperation(
     expression,
-    operator: TokenToString(operator),
+    operator,
     left,
-    ...(right !== undefined ? { right } : {}),
+    right,
     sourceLeft,
-    ...(sourceRight === undefined ? {} : { sourceRight }),
+    sourceRight,
     sourceResult,
+  );
+  const request: CheckedOperatorMappingRequest = {
+    ...sourceOperation,
     ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
   };
   extensionHost[extensionHostRetainCheckedOperation](
@@ -1102,22 +1322,14 @@ function publishExtensionCheckedOperatorKindMapping(
       throw new Error("Extension-owned checked operator mapping unexpectedly reached core fallback.");
     },
     (value, evidence, acceptedRequest) => {
-      const operationWithResult = withCheckedOperationResultType(value.operation, value.resultType);
-      const operation = value.provenance === undefined
-        ? operationWithResult
-        : withTargetOperationProvenance(operationWithResult, value.provenance);
-      const operationWithProvenance = withTargetOperationProvenance(operation, {
-        sourceExpression: acceptedRequest.expression,
-        sourceResultType: acceptedRequest.sourceResult.type,
-      });
-      extensionHost.facts.set(
+      extensionHost[extensionHostSetFact](
         acceptedRequest.expression,
         targetOperationFactKey,
-        snapshotTargetOperationFact(preserveEquivalentCheckedSourceResultType(
-          extensionHost,
-          acceptedRequest.expression,
-          operationWithProvenance,
-          acceptedRequest.sourceResult.type as GoPtr<Type>,
+        snapshotTargetOperationFact(finalizeTargetOperationFact(
+          value.operation,
+          value.resultType,
+          checkedOperatorSourceOperationFromRequest(acceptedRequest),
+          value.providerDeclaration,
         )),
         evidence,
       );
@@ -1128,61 +1340,133 @@ function publishExtensionCheckedOperatorKindMapping(
   );
 }
 
-export function recordExtensionCheckedIterationMapping(checker: GoPtr<Checker>, statement: GoPtr<Node>, kind: CheckedIterationKind, sourceIterableType: GoPtr<Type>, sourceElementType: GoPtr<Type>): void {
+function checkedOperatorSourceOperation(
+  expression: Node,
+  operatorKind: Kind,
+  left: Node,
+  right: Node | undefined,
+  sourceLeft: SelectedSourceValueEvidence,
+  sourceRight: SelectedSourceValueEvidence | undefined,
+  sourceResult: SelectedSourceValueEvidence,
+): CheckedOperatorSourceOperation {
+  const operator = TokenToString(operatorKind);
+  if (IsPrefixUnaryExpression(expression)) {
+    if (operator === "++" || operator === "--") {
+      return Object.freeze({
+        sourceOperationKind: "operator",
+        operatorKind: "prefix-update",
+        operator: checkedUpdateOperatorToken(operator),
+        expression,
+        operand: left,
+        sourceOperand: sourceLeft,
+        sourceResult,
+      });
+    }
+    return Object.freeze({
+      sourceOperationKind: "operator",
+      operatorKind: "prefix-unary",
+      operator: checkedPrefixUnaryOperatorToken(operator),
+      expression,
+      operand: left,
+      sourceOperand: sourceLeft,
+      sourceResult,
+    });
+  }
+  if (IsPostfixUnaryExpression(expression)) {
+    return Object.freeze({
+      sourceOperationKind: "operator",
+      operatorKind: "postfix-update",
+      operator: checkedUpdateOperatorToken(operator),
+      expression,
+      operand: left,
+      sourceOperand: sourceLeft,
+      sourceResult,
+    });
+  }
+  if (!IsBinaryExpression(expression) || right === undefined || sourceRight === undefined) {
+    throw new Error("Checked operator evidence does not match a TS-Go prefix, postfix, or binary expression.");
+  }
+  return Object.freeze({
+    sourceOperationKind: "operator",
+    operatorKind: "binary",
+    operator: checkedBinaryOperatorToken(operator),
+    expression,
+    left,
+    right,
+    sourceLeft,
+    sourceRight,
+    sourceResult,
+  });
+}
+
+function checkedPrefixUnaryOperatorToken(value: string): CheckedPrefixUnaryOperatorToken {
+  switch (value) {
+    case "+": case "-": case "~": case "!": case "typeof": case "void": case "delete":
+      return value;
+    default:
+      throw new Error(`TS-Go selected unsupported prefix unary operator '${value}'.`);
+  }
+}
+
+function checkedUpdateOperatorToken(value: string): CheckedUpdateOperatorToken {
+  if (value === "++" || value === "--") {
+    return value;
+  }
+  throw new Error(`TS-Go selected unsupported update operator '${value}'.`);
+}
+
+function checkedBinaryOperatorToken(value: string): CheckedBinaryOperatorToken {
+  switch (value) {
+    case "**": case "*": case "/": case "%": case "+": case "-":
+    case "<<": case ">>": case ">>>":
+    case "<": case ">": case "<=": case ">=": case "instanceof": case "in":
+    case "==": case "!=": case "===": case "!==":
+    case "&": case "^": case "|": case "&&": case "||": case "??":
+    case "=": case "+=": case "-=": case "*=": case "**=": case "/=": case "%=":
+    case "<<=": case ">>=": case ">>>=": case "&=": case "^=": case "|=":
+    case "&&=": case "||=": case "??=": case ",":
+      return value;
+    default:
+      throw new Error(`TS-Go selected unsupported binary operator '${value}'.`);
+  }
+}
+
+export function recordExtensionCheckedIterationMapping(
+  checker: GoPtr<Checker>,
+  statement: GoPtr<Node>,
+  selection: ExtensionCheckedIterationSelection | undefined,
+): void {
   if (checker === undefined || statement === undefined) {
     return;
   }
   if (getCheckedOperationExtensionHost(checker, ExtensionObservationPoint.mapCheckedIteration, statement) === undefined) {
     return;
   }
-  if (sourceIterableType === undefined || sourceElementType === undefined) {
-    throw new Error("Checked iteration source decision requires exact selected iterable and element types.");
+  if (selection === undefined) {
+    throw new Error("Checked iteration source decision requires an exact TS-Go-selected iteration mechanism.");
   }
   appendEvent(checker, Object.freeze({
     kind: "checked-iteration",
     origin: statement,
-    iterationKind: kind,
-    sourceIterableType,
-    sourceElementType,
+    selection,
   }));
 }
 
 function publishExtensionCheckedIterationMapping(
   extensionHost: ExtensionHost,
   statement: Node,
-  kind: CheckedIterationKind,
-  sourceIterableType: Type,
-  sourceElementType: Type,
+  selection: ExtensionCheckedIterationSelection,
 ): void {
   const data = AsForInOrOfStatement(statement);
   const expression = data?.Expression;
   if (expression === undefined) {
-    return;
+    throw new Error("Checked iteration selection is not attached to a TS-Go for-in or for-of statement.");
   }
 
   const dependencies = collectCheckedOperationDependencies(extensionHost, [expression, data?.Initializer]);
   const retainedRequest = extensionHost[extensionHostGetCheckedOperationRequest](ExtensionObservationPoint.mapCheckedIteration, statement);
-  const canonicalSourceElementType = preserveEquivalentCheckedSourceType(
-    retainedRequest?.sourceElement.type as GoPtr<Type>,
-    sourceElementType,
-  );
-  const canonicalSourceIterableType = preserveEquivalentCheckedSourceType(
-    retainedRequest?.sourceIterable.type as GoPtr<Type>,
-    sourceIterableType,
-  );
-  if (canonicalSourceElementType === undefined || canonicalSourceIterableType === undefined) {
-    return;
-  }
-  const sourceIterable = selectedSourceValueEvidence(expression, canonicalSourceIterableType);
-  const request: CheckedIterationMappingRequest = {
-    statement,
-    expression,
-    ...(data?.Initializer !== undefined ? { initializer: data.Initializer } : {}),
-    kind,
-    sourceIterable,
-    sourceElement: Object.freeze({ type: canonicalSourceElementType }),
-    ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
-  };
+  const incoming = checkedIterationMappingRequest(statement, expression, data!.Initializer, selection, extensionHost.activeTarget);
+  const request = preserveEquivalentCheckedIterationRequest(retainedRequest, incoming);
   extensionHost[extensionHostRetainCheckedOperation](
     ExtensionObservationPoint.mapCheckedIteration,
     request,
@@ -1190,19 +1474,429 @@ function publishExtensionCheckedIterationMapping(
       throw new Error("Extension-owned checked iteration mapping unexpectedly reached core fallback.");
     },
     (value, evidence, acceptedRequest) => {
-      const operationWithResult = withCheckedOperationResultType(value.operation, value.resultType);
-      const operation = value.provenance === undefined
-        ? operationWithResult
-        : withTargetOperationProvenance(operationWithResult, value.provenance);
-      extensionHost.facts.set(acceptedRequest.statement, targetOperationFactKey, snapshotTargetOperationFact(withTargetOperationProvenance(operation, {
-        sourceExpression: acceptedRequest.statement,
-        sourceReceiver: acceptedRequest.expression,
-      })), evidence);
+      const operation = finalizeTargetOperationFact(
+        value.operation,
+        value.resultType,
+        checkedIterationSourceOperation(acceptedRequest),
+        value.providerDeclaration,
+      );
+      extensionHost[extensionHostSetFact](
+        acceptedRequest.statement,
+        targetOperationFactKey,
+        snapshotTargetOperationFact(operation),
+        evidence,
+      );
     },
     { requireOwner: true },
     undefined,
     dependencies,
   );
+}
+
+function checkedIterationMappingRequest(
+  statement: Node,
+  expression: Node,
+  initializer: GoPtr<Node>,
+  selection: ExtensionCheckedIterationSelection,
+  target: string | undefined,
+): CheckedIterationMappingRequest {
+  const base = {
+    sourceOperationKind: "iteration" as const,
+    statement,
+    expression,
+    ...(initializer === undefined ? {} : { initializer }),
+    sourceIterable: selectedSourceValueEvidenceForSemanticType(expression, selection.sourceIterableType),
+    sourceElement: selectedSourceTypeEvidenceForSemanticType(selection.sourceElementType),
+    ...(target === undefined ? {} : { target }),
+  };
+  switch (selection.iterationKind) {
+    case "for-in":
+      return Object.freeze({
+        ...base,
+        iterationKind: "for-in",
+        mechanism: Object.freeze({ kind: "property-key-enumeration" }),
+      });
+    case "for-of":
+      return Object.freeze({
+        ...base,
+        iterationKind: "for-of",
+        mechanism: checkedForOfIterationMechanism(selection.mechanism),
+      });
+    case "for-await-of":
+      return Object.freeze({
+        ...base,
+        iterationKind: "for-await-of",
+        mechanism: checkedForAwaitOfIterationMechanism(selection.mechanism),
+      });
+  }
+}
+
+function selectedSourceTypeEvidenceForSemanticType(type: Type): SelectedSourceTypeEvidence {
+  const symbol = type.symbol;
+  return selectedSourceTypeEvidence(type, {
+    ...(symbol === undefined ? {} : { symbol }),
+    ...(symbol?.ValueDeclaration === undefined ? {} : { declaration: symbol.ValueDeclaration }),
+  });
+}
+
+function selectedSourceValueEvidenceForSemanticType(expression: Node, type: Type): SelectedSourceValueEvidence {
+  const symbol = type.symbol;
+  return selectedSourceValueEvidence(expression, type, {
+    ...(symbol === undefined ? {} : { symbol }),
+    ...(symbol?.ValueDeclaration === undefined ? {} : { declaration: symbol.ValueDeclaration }),
+  });
+}
+
+function checkedIterationTypes(iterationTypes: ExtensionSelectedIterationTypes): SelectedSourceIterationTypes {
+  return Object.freeze({
+    ...(iterationTypes.yieldType === undefined
+      ? {}
+      : { yieldType: selectedSourceTypeEvidenceForSemanticType(iterationTypes.yieldType) }),
+    ...(iterationTypes.returnType === undefined
+      ? {}
+      : { returnType: selectedSourceTypeEvidenceForSemanticType(iterationTypes.returnType) }),
+    ...(iterationTypes.nextType === undefined
+      ? {}
+      : { nextType: selectedSourceTypeEvidenceForSemanticType(iterationTypes.nextType) }),
+  });
+}
+
+function definedIterationDeclarations(declarations: readonly GoPtr<Node>[]): readonly ExtensionFactSubject[] {
+  return Object.freeze(declarations.filter((declaration): declaration is Node => declaration !== undefined));
+}
+
+function checkedIterationProtocol(
+  protocol: ExtensionSelectedIterationProtocol,
+): SelectedSourceIterationProtocolEvidence {
+  const iterationTypes = checkedIterationTypes(protocol.iterationTypes);
+  if (protocol.resolutionKind === "known-iterable-instantiation") {
+    return Object.freeze({
+      resolutionKind: "known-iterable-instantiation",
+      iterationTypes,
+      iterableTarget: selectedSourceTypeEvidence(protocol.iterableTargetType, {
+        ...(protocol.iterableSymbol === undefined ? {} : { symbol: protocol.iterableSymbol }),
+        ...(protocol.iterableValueDeclaration === undefined
+          ? {}
+          : { declaration: protocol.iterableValueDeclaration }),
+      }),
+      iterableDeclarations: definedIterationDeclarations(protocol.iterableDeclarations),
+    });
+  }
+  return Object.freeze({
+    resolutionKind: "selected-iterator-member",
+    iterationTypes,
+    iteratorMethod: Object.freeze({
+      symbol: protocol.iteratorMethodSymbol,
+      ...(protocol.iteratorMethodValueDeclaration === undefined
+        ? {}
+        : { valueDeclaration: protocol.iteratorMethodValueDeclaration }),
+      declarations: definedIterationDeclarations(protocol.iteratorMethodDeclarations),
+      type: protocol.iteratorMethodType,
+    }),
+    iteratorType: selectedSourceTypeEvidenceForSemanticType(protocol.iteratorType),
+  });
+}
+
+function checkedForOfAtomicIterationMechanism(
+  mechanism: ExtensionForOfAtomicIterationMechanism,
+): CheckedForOfAtomicIterationMechanism {
+  const sourceAlternative = selectedSourceTypeEvidenceForSemanticType(mechanism.sourceIterableType);
+  switch (mechanism.kind) {
+    case "synchronous-iterator-protocol":
+      return Object.freeze({
+        kind: mechanism.kind,
+        sourceAlternative,
+        protocol: checkedIterationProtocol(mechanism.protocol),
+      });
+    case "array-like-index":
+      return Object.freeze({
+        kind: mechanism.kind,
+        sourceAlternative,
+        selectedIndex: selectedSourceTypeEvidenceForSemanticType(mechanism.selectedIndexType),
+      });
+    case "string-code-unit-index":
+    case "untyped-dynamic-iteration":
+      return Object.freeze({ kind: mechanism.kind, sourceAlternative });
+  }
+}
+
+function checkedForOfIterationMechanism(
+  mechanism: ExtensionForOfIterationMechanism,
+): CheckedForOfIterationMechanism {
+  if (mechanism.kind !== "union") {
+    return checkedForOfAtomicIterationMechanism(mechanism);
+  }
+  const alternatives = mechanism.alternatives.map(checkedForOfAtomicIterationMechanism);
+  return Object.freeze({
+    kind: "union",
+    alternatives: freezeNonEmptyIterationAlternatives(alternatives, "for-of"),
+  });
+}
+
+function checkedForAwaitOfAtomicIterationMechanism(
+  mechanism: ExtensionForAwaitOfAtomicIterationMechanism,
+): CheckedForAwaitOfAtomicIterationMechanism {
+  const sourceAlternative = selectedSourceTypeEvidenceForSemanticType(mechanism.sourceIterableType);
+  switch (mechanism.kind) {
+    case "asynchronous-iterator-protocol":
+    case "synchronous-iterator-adapted-to-async":
+      return Object.freeze({
+        kind: mechanism.kind,
+        sourceAlternative,
+        protocol: checkedIterationProtocol(mechanism.protocol),
+      });
+    case "array-like-index-adapted-to-async":
+      return Object.freeze({
+        kind: mechanism.kind,
+        sourceAlternative,
+        selectedIndex: selectedSourceTypeEvidenceForSemanticType(mechanism.selectedIndexType),
+      });
+    case "string-code-unit-index-adapted-to-async":
+    case "untyped-dynamic-iteration":
+      return Object.freeze({ kind: mechanism.kind, sourceAlternative });
+  }
+}
+
+function checkedForAwaitOfIterationMechanism(
+  mechanism: ExtensionForAwaitOfIterationMechanism,
+): CheckedForAwaitOfIterationMechanism {
+  if (mechanism.kind !== "union") {
+    return checkedForAwaitOfAtomicIterationMechanism(mechanism);
+  }
+  const alternatives = mechanism.alternatives.map(checkedForAwaitOfAtomicIterationMechanism);
+  return Object.freeze({
+    kind: "union",
+    alternatives: freezeNonEmptyIterationAlternatives(alternatives, "for-await-of"),
+  });
+}
+
+function preserveEquivalentCheckedIterationRequest(
+  existing: CheckedIterationMappingRequest | undefined,
+  incoming: CheckedIterationMappingRequest,
+): CheckedIterationMappingRequest {
+  if (existing === undefined
+    || existing.iterationKind !== incoming.iterationKind
+    || existing.statement !== incoming.statement
+    || existing.expression !== incoming.expression
+    || existing.initializer !== incoming.initializer
+    || existing.target !== incoming.target) {
+    return incoming;
+  }
+  const sourceIterable = preserveEquivalentSelectedSourceValueEvidence(existing.sourceIterable, incoming.sourceIterable);
+  const sourceElement = preserveEquivalentSelectedSourceTypeEvidence(existing.sourceElement, incoming.sourceElement);
+  switch (incoming.iterationKind) {
+    case "for-in":
+      return Object.freeze({ ...incoming, sourceIterable, sourceElement });
+    case "for-of":
+      return existing.iterationKind === "for-of"
+        ? Object.freeze({
+            ...incoming,
+            sourceIterable,
+            sourceElement,
+            mechanism: preserveEquivalentForOfMechanism(existing.mechanism, incoming.mechanism),
+          })
+        : incoming;
+    case "for-await-of":
+      return existing.iterationKind === "for-await-of"
+        ? Object.freeze({
+            ...incoming,
+            sourceIterable,
+            sourceElement,
+            mechanism: preserveEquivalentForAwaitOfMechanism(existing.mechanism, incoming.mechanism),
+          })
+        : incoming;
+  }
+}
+
+function preserveEquivalentSelectedSourceTypeEvidence(
+  existing: SelectedSourceTypeEvidence,
+  incoming: SelectedSourceTypeEvidence,
+): SelectedSourceTypeEvidence {
+  const type = preserveEquivalentCheckedSourceType(existing.type as GoPtr<Type>, incoming.type as GoPtr<Type>);
+  if (type === existing.type
+    && existing.symbol === incoming.symbol
+    && existing.declaration === incoming.declaration
+    && existing.selectedSymbol === incoming.selectedSymbol
+    && existing.selectedDeclaration === incoming.selectedDeclaration
+    && existing.authoredTypeNode === incoming.authoredTypeNode) {
+    return existing;
+  }
+  return Object.freeze({ ...incoming, type: type! });
+}
+
+function preserveEquivalentSelectedSourceValueEvidence(
+  existing: SelectedSourceValueEvidence,
+  incoming: SelectedSourceValueEvidence,
+): SelectedSourceValueEvidence {
+  if (existing.expression !== incoming.expression) {
+    return incoming;
+  }
+  const evidence = preserveEquivalentSelectedSourceTypeEvidence(existing, incoming);
+  return evidence === existing ? existing : Object.freeze({ ...evidence, expression: incoming.expression });
+}
+
+function preserveEquivalentForOfMechanism(
+  existing: CheckedForOfIterationMechanism,
+  incoming: CheckedForOfIterationMechanism,
+): CheckedForOfIterationMechanism {
+  if (existing.kind !== incoming.kind) {
+    return incoming;
+  }
+  if (incoming.kind === "union") {
+    if (existing.kind !== "union" || existing.alternatives.length !== incoming.alternatives.length) {
+      return incoming;
+    }
+    const alternatives = incoming.alternatives.map((alternative, index) =>
+      preserveEquivalentForOfAtomicMechanism(existing.alternatives[index]!, alternative));
+    return Object.freeze({
+      kind: "union",
+      alternatives: freezeNonEmptyIterationAlternatives(alternatives, "for-of"),
+    });
+  }
+  return existing.kind === "union" ? incoming : preserveEquivalentForOfAtomicMechanism(existing, incoming);
+}
+
+function preserveEquivalentForOfAtomicMechanism(
+  existing: CheckedForOfAtomicIterationMechanism,
+  incoming: CheckedForOfAtomicIterationMechanism,
+): CheckedForOfAtomicIterationMechanism {
+  if (existing.kind !== incoming.kind) {
+    return incoming;
+  }
+  const sourceAlternative = preserveEquivalentSelectedSourceTypeEvidence(existing.sourceAlternative, incoming.sourceAlternative);
+  switch (incoming.kind) {
+    case "synchronous-iterator-protocol":
+      return existing.kind === "synchronous-iterator-protocol"
+        ? Object.freeze({
+            ...incoming,
+            sourceAlternative,
+            protocol: preserveEquivalentIterationProtocol(existing.protocol, incoming.protocol),
+          })
+        : incoming;
+    case "array-like-index":
+      return existing.kind === "array-like-index"
+        ? Object.freeze({
+            ...incoming,
+            sourceAlternative,
+            selectedIndex: preserveEquivalentSelectedSourceTypeEvidence(existing.selectedIndex, incoming.selectedIndex),
+          })
+        : incoming;
+    case "string-code-unit-index":
+    case "untyped-dynamic-iteration":
+      return Object.freeze({ ...incoming, sourceAlternative });
+  }
+}
+
+function preserveEquivalentForAwaitOfMechanism(
+  existing: CheckedForAwaitOfIterationMechanism,
+  incoming: CheckedForAwaitOfIterationMechanism,
+): CheckedForAwaitOfIterationMechanism {
+  if (existing.kind !== incoming.kind) {
+    return incoming;
+  }
+  if (incoming.kind === "union") {
+    if (existing.kind !== "union" || existing.alternatives.length !== incoming.alternatives.length) {
+      return incoming;
+    }
+    const alternatives = incoming.alternatives.map((alternative, index) =>
+      preserveEquivalentForAwaitOfAtomicMechanism(existing.alternatives[index]!, alternative));
+    return Object.freeze({
+      kind: "union",
+      alternatives: freezeNonEmptyIterationAlternatives(alternatives, "for-await-of"),
+    });
+  }
+  return existing.kind === "union" ? incoming : preserveEquivalentForAwaitOfAtomicMechanism(existing, incoming);
+}
+
+function freezeNonEmptyIterationAlternatives<T>(
+  alternatives: readonly T[],
+  iterationKind: "for-of" | "for-await-of",
+): readonly [T, ...T[]] {
+  const first = alternatives[0];
+  if (first === undefined) {
+    throw new Error(`TS-Go selected an empty ${iterationKind} union iteration mechanism.`);
+  }
+  return Object.freeze([first, ...alternatives.slice(1)]);
+}
+
+function preserveEquivalentForAwaitOfAtomicMechanism(
+  existing: CheckedForAwaitOfAtomicIterationMechanism,
+  incoming: CheckedForAwaitOfAtomicIterationMechanism,
+): CheckedForAwaitOfAtomicIterationMechanism {
+  if (existing.kind !== incoming.kind) {
+    return incoming;
+  }
+  const sourceAlternative = preserveEquivalentSelectedSourceTypeEvidence(existing.sourceAlternative, incoming.sourceAlternative);
+  switch (incoming.kind) {
+    case "asynchronous-iterator-protocol":
+    case "synchronous-iterator-adapted-to-async":
+      return existing.kind === incoming.kind
+        ? Object.freeze({
+            ...incoming,
+            sourceAlternative,
+            protocol: preserveEquivalentIterationProtocol(existing.protocol, incoming.protocol),
+          })
+        : incoming;
+    case "array-like-index-adapted-to-async":
+      return existing.kind === "array-like-index-adapted-to-async"
+        ? Object.freeze({
+            ...incoming,
+            sourceAlternative,
+            selectedIndex: preserveEquivalentSelectedSourceTypeEvidence(existing.selectedIndex, incoming.selectedIndex),
+          })
+        : incoming;
+    case "string-code-unit-index-adapted-to-async":
+    case "untyped-dynamic-iteration":
+      return Object.freeze({ ...incoming, sourceAlternative });
+  }
+}
+
+function preserveEquivalentIterationProtocol(
+  existing: SelectedSourceIterationProtocolEvidence,
+  incoming: SelectedSourceIterationProtocolEvidence,
+): SelectedSourceIterationProtocolEvidence {
+  if (existing.resolutionKind !== incoming.resolutionKind) {
+    return incoming;
+  }
+  const iterationTypes = Object.freeze({
+    ...(incoming.iterationTypes.yieldType === undefined
+      ? {}
+      : {
+          yieldType: existing.iterationTypes.yieldType === undefined
+            ? incoming.iterationTypes.yieldType
+            : preserveEquivalentSelectedSourceTypeEvidence(existing.iterationTypes.yieldType, incoming.iterationTypes.yieldType),
+        }),
+    ...(incoming.iterationTypes.returnType === undefined
+      ? {}
+      : {
+          returnType: existing.iterationTypes.returnType === undefined
+            ? incoming.iterationTypes.returnType
+            : preserveEquivalentSelectedSourceTypeEvidence(existing.iterationTypes.returnType, incoming.iterationTypes.returnType),
+        }),
+    ...(incoming.iterationTypes.nextType === undefined
+      ? {}
+      : {
+          nextType: existing.iterationTypes.nextType === undefined
+            ? incoming.iterationTypes.nextType
+            : preserveEquivalentSelectedSourceTypeEvidence(existing.iterationTypes.nextType, incoming.iterationTypes.nextType),
+        }),
+  });
+  if (incoming.resolutionKind === "known-iterable-instantiation") {
+    return existing.resolutionKind === "known-iterable-instantiation"
+      ? Object.freeze({
+          ...incoming,
+          iterationTypes,
+          iterableTarget: preserveEquivalentSelectedSourceTypeEvidence(existing.iterableTarget, incoming.iterableTarget),
+        })
+      : incoming;
+  }
+  return existing.resolutionKind === "selected-iterator-member"
+    ? Object.freeze({
+        ...incoming,
+        iterationTypes,
+        iteratorType: preserveEquivalentSelectedSourceTypeEvidence(existing.iteratorType, incoming.iteratorType),
+      })
+    : incoming;
 }
 
 export function recordExtensionTargetConstraintValidation(checker: GoPtr<Checker>, typeReference: GoPtr<Node>, symbol: GoPtr<Symbol>): boolean {
@@ -1315,7 +2009,7 @@ function publishExtensionRuntimeCarrierFact(
       const providerProvenance = value.provenance?.providerDeclaration === undefined
         ? {}
         : { providerDeclaration: value.provenance.providerDeclaration };
-      extensionHost.facts.set(type, runtimeCarrierFactKey, {
+      extensionHost[extensionHostSetFact](type, runtimeCarrierFactKey, {
         ...commonFact,
         provenance: {
           ...providerProvenance,
@@ -1328,7 +2022,7 @@ function publishExtensionRuntimeCarrierFact(
         if (canonicalSourceType === undefined) {
           throw new Error("Runtime-carrier recording lost the checked source type.");
         }
-        extensionHost.facts.set(typeReference, runtimeCarrierFactKey, {
+        extensionHost[extensionHostSetFact](typeReference, runtimeCarrierFactKey, {
           ...commonFact,
           provenance: {
             ...providerProvenance,
@@ -1339,7 +2033,7 @@ function publishExtensionRuntimeCarrierFact(
         }, evidence);
       }
       if (symbol !== undefined) {
-        extensionHost.facts.set(symbol, runtimeCarrierFactKey, {
+        extensionHost[extensionHostSetFact](symbol, runtimeCarrierFactKey, {
           ...commonFact,
           provenance: {
             ...providerProvenance,
@@ -1348,7 +2042,7 @@ function publishExtensionRuntimeCarrierFact(
         }, evidence);
       }
       if (type.symbol !== undefined) {
-        extensionHost.facts.set(type.symbol, runtimeCarrierFactKey, {
+        extensionHost[extensionHostSetFact](type.symbol, runtimeCarrierFactKey, {
           ...commonFact,
           provenance: {
             ...providerProvenance,
@@ -1395,7 +2089,7 @@ function publishExtensionContextualTargetTypeFact(
     }),
     {},
     (value, evidence) => {
-      extensionHost.facts.set(expression, contextualTargetTypeFactKey, {
+      extensionHost[extensionHostSetFact](expression, contextualTargetTypeFactKey, {
         type: value.type,
         ...(value.targetType !== undefined ? { targetType: value.targetType } : {}),
       }, evidence);
@@ -1460,7 +2154,7 @@ function publishExtensionPostCheckAssignabilityObservation(
   );
 }
 
-export function recordExtensionFlowUseValidation(checker: GoPtr<Checker>, useSite: GoPtr<Node>, symbol: GoPtr<Symbol>, mode: CheckedFlowUseMode): void {
+export function recordExtensionFlowUseValidation(checker: GoPtr<Checker>, useSite: GoPtr<Node>, symbol: GoPtr<Symbol>, sourceUse: CheckedFlowSourceUse): void {
   if (checker === undefined || useSite === undefined || symbol === undefined) {
     return;
   }
@@ -1474,7 +2168,7 @@ export function recordExtensionFlowUseValidation(checker: GoPtr<Checker>, useSit
     kind: "flow-use",
     origin: useSite,
     symbol,
-    mode,
+    sourceUse,
   }));
 }
 
@@ -1482,12 +2176,12 @@ function publishExtensionFlowUseValidation(
   extensionHost: ExtensionHost,
   useSite: Node,
   symbol: Symbol,
-  mode: CheckedFlowUseMode,
+  sourceUse: CheckedFlowSourceUse,
 ): void {
 
   const useSiteFlowState = extensionHost.facts.getEntry(useSite, flowStateFactKey);
   if (useSiteFlowState !== undefined) {
-    extensionHost.facts.set(symbol, flowStateFactKey, useSiteFlowState.value, useSiteFlowState.evidence);
+    extensionHost[extensionHostSetFact](symbol, flowStateFactKey, useSiteFlowState.value, useSiteFlowState.evidence);
     return;
   }
   const symbolFlowState = extensionHost.facts.get(symbol, flowStateFactKey);
@@ -1500,7 +2194,7 @@ function publishExtensionFlowUseValidation(
     {
       useSite,
       symbol,
-      mode,
+      sourceUse,
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
@@ -1509,7 +2203,7 @@ function publishExtensionFlowUseValidation(
     { requireOwner: true },
     (value, evidence) => {
       if (value.targetCompilerValidationRequired === true) {
-        extensionHost.facts.set(useSite, flowStateFactKey, {
+        extensionHost[extensionHostSetFact](useSite, flowStateFactKey, {
           state: "target-validation-required",
           ...(value.targetCompiler !== undefined ? { targetCompiler: value.targetCompiler } : {}),
         }, evidence);
@@ -1521,13 +2215,8 @@ function publishExtensionFlowUseValidation(
 interface SelectedTargetArgumentSlot {
   readonly slot: TargetCallArgumentConversionSlot;
   readonly argument: Node;
-  readonly sourceArgumentIndex: number;
   readonly targetParameter: TargetParameter;
-  readonly targetParameterIndex: number;
   readonly conversionTarget: TargetTypeRef;
-  readonly sourceForm: "value" | "spread-element" | "spread-sequence";
-  readonly spreadElementIndex?: number;
-  readonly targetForm: "parameter" | "params-element" | "params-sequence";
   readonly sourceBinding: SourceSelectedCallArgumentBinding;
 }
 
@@ -1587,7 +2276,10 @@ function selectTargetArgumentConversionSlots(
       }
     }
     for (const slot of argumentSlots) {
-      const sourceBinding = selectedSignature.sourceArgumentBindings.find((binding) =>
+      const sourceBindings = selectedSignature.sourceSelection.kind === "applicable"
+        ? selectedSignature.sourceSelection.argumentBindings
+        : [];
+      const sourceBinding = sourceBindings.find((binding) =>
         binding.sourceArgumentIndex === slot.sourceArgumentIndex
         && binding.sourceForm === slot.sourceForm
         && binding.spreadElementIndex === slot.spreadElementIndex);
@@ -1614,13 +2306,8 @@ function selectTargetArgumentConversionSlots(
       slots.push(Object.freeze({
         slot,
         argument,
-        sourceArgumentIndex,
         targetParameter,
-        targetParameterIndex: slot.targetParameterIndex,
         conversionTarget,
-        sourceForm: slot.sourceForm,
-        ...(slot.spreadElementIndex === undefined ? {} : { spreadElementIndex: slot.spreadElementIndex }),
-        targetForm: slot.targetForm,
         sourceBinding,
       }));
     }
@@ -1686,7 +2373,7 @@ function recordExtensionCallParameterModes(
   evidence: readonly ExtensionEvidence[] | undefined,
 ): void {
   for (const slot of slots) {
-    extensionHost.facts.set(
+    extensionHost[extensionHostSetFact](
       slot.slot,
       targetCallArgumentPassingFactKey,
       withArgumentPassingProvenance(selectedSignature, callExpression, slot),
@@ -1704,11 +2391,12 @@ function recordExtensionCallArgumentConversions(
 ): CheckedOperationApplyOutcome {
   let unresolved: CheckedOperationReference<typeof ExtensionObservationPoint.mapCheckedConversion> | undefined;
   for (const slot of slots) {
-    const sourceArgument = selectedSignature.sourceArguments[slot.sourceArgumentIndex];
+    const sourceArgument = selectedSignature.sourceArguments[slot.slot.sourceArgumentIndex];
     if (sourceArgument === undefined || sourceArgument.expression !== slot.argument) {
-      throw new Error(`Selected call '${selectedSignature.member.id}' lost source argument evidence at index ${slot.sourceArgumentIndex}.`);
+      throw new Error(`Selected call '${selectedSignature.member.id}' lost source argument evidence at index ${slot.slot.sourceArgumentIndex}.`);
     }
     const result = recordExtensionCheckedConversion(extensionHost, {
+      sourceOperationKind: "conversion",
       conversionKind: "call-argument",
       expression: slot.argument,
       source: sourceArgument,
@@ -1716,13 +2404,7 @@ function recordExtensionCallArgumentConversions(
       target: slot.conversionTarget,
       call: callExpression,
       slot: slot.slot,
-      sourceArgumentIndex: slot.sourceArgumentIndex,
-      targetParameterIndex: slot.targetParameterIndex,
-      sourceForm: slot.sourceForm,
-      ...(slot.spreadElementIndex === undefined ? {} : { spreadElementIndex: slot.spreadElementIndex }),
-      targetForm: slot.targetForm,
       targetParameter: slot.targetParameter,
-      ...(selectedSignature.sourceSignature !== undefined ? { sourceSelectedSignature: selectedSignature.sourceSignature } : {}),
       selectedSignature,
       ...(extensionHost.activeTarget !== undefined ? { targetPlatform: extensionHost.activeTarget } : {}),
     }, snapshotCache);
@@ -1791,7 +2473,7 @@ function retainExtensionCheckedConversion(
   );
 }
 
-function applyExtensionCheckedConversion(
+export function applyExtensionCheckedConversion(
   extensionHost: ExtensionHost,
   value: CheckedConversionMappingResult,
   evidence: readonly ExtensionEvidence[],
@@ -1804,22 +2486,25 @@ function applyExtensionCheckedConversion(
   }
   const conversion = Object.freeze({
     ...(value.convertedType !== undefined ? { convertedType: value.convertedType } : {}),
-    ...(value.operation !== undefined ? { operation: value.operation } : {}),
+    ...(value.operation !== undefined ? {
+      operation: finalizeTargetOperationFact(
+        value.operation,
+        value.convertedType,
+        checkedConversionSourceOperation(acceptedRequest),
+        value.providerDeclaration,
+      ),
+    } : {}),
   });
   if (acceptedRequest.conversionKind === "call-argument") {
-    extensionHost.facts.set(acceptedRequest.slot, targetCallArgumentConversionFactKey, Object.freeze({
+    const slot = acceptedRequest.slot;
+    extensionHost[extensionHostSetFact](acceptedRequest.slot, targetCallArgumentConversionFactKey, Object.freeze({
       ...conversion,
-      slot: acceptedRequest.slot,
+      slot,
       call: acceptedRequest.call,
-      sourceArgumentIndex: acceptedRequest.sourceArgumentIndex,
-      targetParameterIndex: acceptedRequest.targetParameterIndex,
-      sourceForm: acceptedRequest.sourceForm,
-      ...(acceptedRequest.spreadElementIndex === undefined ? {} : { spreadElementIndex: acceptedRequest.spreadElementIndex }),
-      targetForm: acceptedRequest.targetForm,
       sourceBinding: acceptedRequest.sourceBinding,
     }), evidence);
   } else {
-    extensionHost.facts.set(acceptedRequest.expression, targetConversionFactKey, conversion, evidence);
+    extensionHost[extensionHostSetFact](acceptedRequest.expression, targetConversionFactKey, conversion, evidence);
   }
 }
 
@@ -1833,8 +2518,6 @@ function checkedCallArgumentConversionReference(
     conversionKind: "call-argument",
     call: callExpression,
     slot: slot.slot,
-    sourceArgumentIndex: slot.sourceArgumentIndex,
-    targetParameterIndex: slot.targetParameterIndex,
   });
 }
 
@@ -1893,16 +2576,32 @@ function symbolValueDeclaration(symbol: GoPtr<Symbol>): GoPtr<Node> {
   return symbol?.ValueDeclaration;
 }
 
+interface SelectedSourceEvidenceFields {
+  readonly symbol?: ExtensionFactSubject;
+  readonly declaration?: ExtensionFactSubject;
+  readonly selectedSymbol?: ExtensionFactSubject;
+  readonly selectedDeclaration?: ExtensionFactSubject;
+  readonly authoredTypeNode?: ExtensionFactSubject;
+}
+
+function selectedSourceTypeEvidence(
+  type: ExtensionFactSubject,
+  selection: SelectedSourceEvidenceFields = {},
+): SelectedSourceTypeEvidence {
+  return Object.freeze({
+    type,
+    ...(selection.symbol === undefined ? {} : { symbol: selection.symbol }),
+    ...(selection.declaration === undefined ? {} : { declaration: selection.declaration }),
+    ...(selection.selectedSymbol === undefined ? {} : { selectedSymbol: selection.selectedSymbol }),
+    ...(selection.selectedDeclaration === undefined ? {} : { selectedDeclaration: selection.selectedDeclaration }),
+    ...(selection.authoredTypeNode === undefined ? {} : { authoredTypeNode: selection.authoredTypeNode }),
+  });
+}
+
 function selectedSourceValueEvidence(
   expression: ExtensionFactSubject,
   type: ExtensionFactSubject,
-  selection: {
-    readonly symbol?: ExtensionFactSubject;
-    readonly declaration?: ExtensionFactSubject;
-    readonly selectedSymbol?: ExtensionFactSubject;
-    readonly selectedDeclaration?: ExtensionFactSubject;
-    readonly authoredTypeNode?: ExtensionFactSubject;
-  } = {},
+  selection: SelectedSourceEvidenceFields = {},
 ): SelectedSourceValueEvidence {
   return Object.freeze({
     expression,
@@ -1912,6 +2611,21 @@ function selectedSourceValueEvidence(
     ...(selection.selectedSymbol === undefined ? {} : { selectedSymbol: selection.selectedSymbol }),
     ...(selection.selectedDeclaration === undefined ? {} : { selectedDeclaration: selection.selectedDeclaration }),
     ...(selection.authoredTypeNode === undefined ? {} : { authoredTypeNode: selection.authoredTypeNode }),
+  });
+}
+
+function checkedSourceChainRole<TParticipant extends CheckedSourceChainParticipant>(
+  expression: Node,
+  participant: TParticipant,
+): CheckedSourceChainRole<TParticipant> {
+  if ((expression.Flags & NodeFlagsOptionalChain) === 0) {
+    return Object.freeze({ kind: "ordinary", participant });
+  }
+  return Object.freeze({
+    kind: "optional-chain",
+    participant,
+    position: IsOptionalChainRoot(expression) ? "root" : "continuation",
+    boundary: IsOutermostOptionalChain(expression) ? "outermost" : "nested",
   });
 }
 
@@ -1931,68 +2645,29 @@ function selectedSourceEvidenceProvenance(evidence: SelectedSourceValueEvidence)
   };
 }
 
-interface SelectedSourceCallProvenance {
-  readonly sourceSelectedSignature: GoPtr<Signature>;
-  readonly sourceSelectedDeclaration: GoPtr<Node>;
-  readonly sourceSelectedMethodTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined;
-  readonly sourceSelectedSignatureParameters: readonly SourceSelectedSignatureParameter[] | undefined;
-  readonly sourceSelectedSignatureKind: SourceSelectedSignatureKind | undefined;
-  readonly sourceCallKind: CheckedCallKind;
-  readonly sourceArgumentBindings: readonly SourceSelectedCallArgumentBinding[] | undefined;
-  readonly sourceCallee: SelectedSourceValueEvidence;
-  readonly sourceArguments: readonly SelectedSourceValueEvidence[];
-  readonly sourceResult: SelectedSourceValueEvidence;
-  readonly sourceReceiver: SelectedSourceValueEvidence | undefined;
-  readonly sourceOptionalChain: boolean | undefined;
-}
-
-function selectedSourceCallProvenanceFromRequest(request: CheckedCallMappingRequest): SelectedSourceCallProvenance {
-  return {
-    sourceSelectedSignature: request.sourceSelectedSignature as GoPtr<Signature>,
-    sourceSelectedDeclaration: request.sourceSelectedDeclaration as GoPtr<Node>,
-    sourceSelectedMethodTypeArguments: request.sourceSelectedMethodTypeArguments,
-    sourceSelectedSignatureParameters: request.sourceSelectedSignatureParameters,
-    sourceSelectedSignatureKind: request.sourceSelectedSignatureKind,
-    sourceCallKind: request.callKind,
-    sourceArgumentBindings: request.sourceArgumentBindings,
-    sourceCallee: request.sourceCallee,
-    sourceArguments: request.sourceArguments,
-    sourceResult: request.sourceResult,
-    sourceReceiver: request.sourceReceiver,
-    sourceOptionalChain: request.optionalChain,
-  };
-}
-
-function withSelectedTargetSignatureProvenance(
+export function finalizeSelectedTargetSignatureFact(
   callResult: Extract<CheckedCallMappingResult, { readonly kind: "target" }>,
-  provenance: SelectedSourceCallProvenance,
+  sourceOperation: CheckedCallMappingRequest,
   snapshotCache: CheckedOperationRequestSnapshotCache,
 ): SelectedTargetSignatureFact {
   const signature = callResult.selectedSignature;
-  const sourceSelectedSignature = provenance.sourceSelectedSignature;
-  const sourceSelectedMethodTypeArguments = provenance.sourceSelectedMethodTypeArguments;
-  const sourceSelectedSignatureParameters = provenance.sourceSelectedSignatureParameters;
-  const sourceArgumentBindings = provenance.sourceArgumentBindings;
-  if (sourceArgumentBindings === undefined) {
+  if (sourceOperation.sourceSelection.kind === "applicable"
+    && sourceOperation.sourceSelection.argumentBindings.length === 0
+    && sourceOperation.arguments.length !== 0) {
     throw new Error(`Target call selection '${signature.member.id}' requires complete checker-selected source argument topology.`);
   }
   const providerDeclaration = signature.providerDeclaration ?? signature.member.providerDeclaration;
   return snapshotSelectedTargetSignatureFact({
     member: signature.member,
     argumentConversions: callResult.argumentConversions,
-    sourceArgumentBindings,
     ...(signature.targetTypeArguments !== undefined ? { targetTypeArguments: signature.targetTypeArguments } : {}),
-    ...(sourceSelectedMethodTypeArguments !== undefined ? { sourceSelectedMethodTypeArguments } : {}),
-    ...(sourceSelectedSignatureParameters !== undefined ? { sourceSelectedSignatureParameters } : {}),
-    ...(provenance.sourceSelectedSignatureKind !== undefined ? { sourceSelectedSignatureKind: provenance.sourceSelectedSignatureKind } : {}),
-    sourceCallKind: provenance.sourceCallKind,
-    ...(sourceSelectedSignature !== undefined ? { sourceSignature: sourceSelectedSignature } : {}),
-    ...(provenance.sourceSelectedDeclaration !== undefined ? { sourceDeclaration: provenance.sourceSelectedDeclaration } : {}),
-    sourceCallee: provenance.sourceCallee,
-    sourceArguments: provenance.sourceArguments,
-    sourceResult: provenance.sourceResult,
-    ...(provenance.sourceOptionalChain !== undefined ? { sourceOptionalChain: provenance.sourceOptionalChain } : {}),
-    ...(provenance.sourceReceiver !== undefined ? { sourceReceiver: provenance.sourceReceiver } : {}),
+    sourceCallKind: sourceOperation.callKind,
+    sourceSelection: sourceOperation.sourceSelection,
+    sourceCallee: sourceOperation.sourceCallee,
+    sourceArguments: sourceOperation.sourceArguments,
+    sourceResult: sourceOperation.sourceResult,
+    ...(sourceOperation.sourceReceiver !== undefined ? { sourceReceiver: sourceOperation.sourceReceiver } : {}),
+    sourceChainRole: sourceOperation.chainRole,
     ...(providerDeclaration !== undefined ? { providerDeclaration } : {}),
   }, snapshotCache);
 }
@@ -2127,49 +2802,199 @@ function preserveEquivalentSelectedSignatureParameters(
   });
 }
 
-function withTargetOperationProvenance(operation: TargetOperationFact, provenance: TargetOperationProvenance): TargetOperationFact {
+export function finalizeTargetOperationFact(
+  operation: TargetOperationProposal,
+  resultType: TargetTypeRef | undefined,
+  sourceOperation: TargetOperationProvenance["sourceOperation"],
+  providerDeclaration: ProviderDeclarationIdentity | undefined,
+): TargetOperationFact {
   return Object.freeze({
     ...operation,
+    ...(resultType === undefined ? {} : { resultType }),
     provenance: Object.freeze({
-      ...(operation.provenance !== undefined ? operation.provenance : {}),
-      ...provenance,
+      ...(providerDeclaration === undefined ? {} : { providerDeclaration }),
+      sourceOperation,
     }),
   });
 }
 
-function preserveEquivalentCheckedSourceResultType(
-  extensionHost: ExtensionHost,
-  subject: ExtensionFactSubject,
-  incoming: TargetOperationFact,
-  incomingSourceResultType: GoPtr<Type>,
-): TargetOperationFact {
-  if (incomingSourceResultType === undefined) {
-    return incoming;
+export function checkedPropertySourceOperationFromRequest(
+  request: CheckedPropertyAccessMappingRequest,
+): CheckedPropertyAccessSourceOperation {
+  const common = {
+    sourceOperationKind: "property-access" as const,
+    expression: request.expression,
+    receiver: request.receiver,
+    propertyName: request.propertyName,
+    sourceReceiver: request.sourceReceiver,
+  };
+  switch (request.accessMode) {
+    case "read": return Object.freeze({
+      ...common,
+      accessMode: "read",
+      use: request.use,
+      sourceReadResult: request.sourceReadResult,
+      chainRole: request.chainRole,
+    });
+    case "delete": return Object.freeze({
+      ...common,
+      accessMode: "delete",
+      use: "value",
+      sourceReadResult: request.sourceReadResult,
+      chainRole: request.chainRole,
+    });
+    case "write": return Object.freeze({
+      ...common,
+      accessMode: "write",
+      use: "value",
+      sourceWriteType: request.sourceWriteType,
+      chainRole: request.chainRole,
+    });
+    case "read-write": return Object.freeze({
+      ...common,
+      accessMode: "read-write",
+      use: "value",
+      sourceReadResult: request.sourceReadResult,
+      sourceWriteType: request.sourceWriteType,
+      chainRole: request.chainRole,
+    });
   }
-  const existing = extensionHost.facts.get(subject, targetOperationFactKey);
-  const existingSourceResultType = existing?.provenance?.sourceResultType as GoPtr<Type>;
-  if (existing === undefined || existingSourceResultType === undefined || existingSourceResultType === incomingSourceResultType) {
-    return incoming;
-  }
-  const withExistingSourceResultType = withTargetOperationProvenance(incoming, {
-    sourceResultType: existingSourceResultType,
-  });
-  if (!targetOperationFactKey.equals(existing, withExistingSourceResultType)) {
-    return incoming;
-  }
-  return checkedSourceTypesShareStableIdentity(existingSourceResultType, incomingSourceResultType)
-    ? withExistingSourceResultType
-    : incoming;
 }
 
-function withCheckedOperationResultType(operation: TargetOperationFact, resultType: TargetTypeRef | undefined): TargetOperationFact {
-  if (operation.resultType !== undefined || resultType === undefined) {
-    return operation;
+export function checkedElementSourceOperationFromRequest(
+  request: CheckedElementAccessMappingRequest,
+): CheckedElementAccessSourceOperation {
+  const common = {
+    sourceOperationKind: "element-access" as const,
+    expression: request.expression,
+    receiver: request.receiver,
+    argument: request.argument,
+    sourceReceiver: request.sourceReceiver,
+    sourceArgument: request.sourceArgument,
+    ...(request.sourceSelectedElementIndex === undefined ? {} : { sourceSelectedElementIndex: request.sourceSelectedElementIndex }),
+  };
+  switch (request.accessMode) {
+    case "read": return Object.freeze({
+      ...common,
+      accessMode: "read",
+      use: request.use,
+      sourceReadResult: request.sourceReadResult,
+      chainRole: request.chainRole,
+    });
+    case "delete": return Object.freeze({
+      ...common,
+      accessMode: "delete",
+      use: "value",
+      sourceReadResult: request.sourceReadResult,
+      chainRole: request.chainRole,
+    });
+    case "write": return Object.freeze({
+      ...common,
+      accessMode: "write",
+      use: "value",
+      sourceWriteType: request.sourceWriteType,
+      chainRole: request.chainRole,
+    });
+    case "read-write": return Object.freeze({
+      ...common,
+      accessMode: "read-write",
+      use: "value",
+      sourceReadResult: request.sourceReadResult,
+      sourceWriteType: request.sourceWriteType,
+      chainRole: request.chainRole,
+    });
+  }
+}
+
+export function checkedOperatorSourceOperationFromRequest(
+  request: CheckedOperatorMappingRequest,
+): CheckedOperatorSourceOperation {
+  switch (request.operatorKind) {
+    case "prefix-unary": return Object.freeze({
+      sourceOperationKind: "operator",
+      operatorKind: "prefix-unary",
+      operator: request.operator,
+      expression: request.expression,
+      operand: request.operand,
+      sourceOperand: request.sourceOperand,
+      sourceResult: request.sourceResult,
+    });
+    case "prefix-update": return Object.freeze({
+      sourceOperationKind: "operator",
+      operatorKind: "prefix-update",
+      operator: request.operator,
+      expression: request.expression,
+      operand: request.operand,
+      sourceOperand: request.sourceOperand,
+      sourceResult: request.sourceResult,
+    });
+    case "postfix-update": return Object.freeze({
+      sourceOperationKind: "operator",
+      operatorKind: "postfix-update",
+      operator: request.operator,
+      expression: request.expression,
+      operand: request.operand,
+      sourceOperand: request.sourceOperand,
+      sourceResult: request.sourceResult,
+    });
+    case "binary": return Object.freeze({
+      sourceOperationKind: "operator",
+      operatorKind: "binary",
+      operator: request.operator,
+      expression: request.expression,
+      left: request.left,
+      right: request.right,
+      sourceLeft: request.sourceLeft,
+      sourceRight: request.sourceRight,
+      sourceResult: request.sourceResult,
+    });
+  }
+}
+
+export function checkedConversionSourceOperation(
+  request: CheckedConversionMappingRequest,
+): CheckedConversionSourceOperation {
+  if (request.conversionKind === "assertion") {
+    return Object.freeze({
+      sourceOperationKind: "conversion",
+      conversionKind: "assertion",
+      expression: request.expression,
+      source: request.source,
+      target: request.target,
+      assertionKind: request.assertionKind,
+      explicitTargetTypeNode: request.explicitTargetTypeNode,
+    });
   }
   return Object.freeze({
-    ...operation,
-    resultType,
+    sourceOperationKind: "conversion",
+    conversionKind: "call-argument",
+    expression: request.expression,
+    source: request.source,
+    call: request.call,
+    slot: request.slot,
+    sourceBinding: request.sourceBinding,
   });
+}
+
+export function checkedIterationSourceOperation(
+  request: CheckedIterationMappingRequest,
+): CheckedIterationSourceOperation {
+  const base = {
+    sourceOperationKind: "iteration" as const,
+    statement: request.statement,
+    expression: request.expression,
+    ...(request.initializer === undefined ? {} : { initializer: request.initializer }),
+    sourceIterable: request.sourceIterable,
+    sourceElement: request.sourceElement,
+  };
+  switch (request.iterationKind) {
+    case "for-in":
+      return Object.freeze({ ...base, iterationKind: "for-in", mechanism: request.mechanism });
+    case "for-of":
+      return Object.freeze({ ...base, iterationKind: "for-of", mechanism: request.mechanism });
+    case "for-await-of":
+      return Object.freeze({ ...base, iterationKind: "for-await-of", mechanism: request.mechanism });
+  }
 }
 
 function withArgumentPassingProvenance(
@@ -2182,11 +3007,6 @@ function withArgumentPassingProvenance(
     mode: slot.targetParameter.passingMode,
     targetExpression: slot.argument,
     call,
-    sourceArgumentIndex: slot.sourceArgumentIndex,
-    targetParameterIndex: slot.targetParameterIndex,
-    sourceForm: slot.sourceForm,
-    ...(slot.spreadElementIndex === undefined ? {} : { spreadElementIndex: slot.spreadElementIndex }),
-    targetForm: slot.targetForm,
     sourceBinding: slot.sourceBinding,
     targetParameter: slot.targetParameter,
     ...(selectedSignature.providerDeclaration !== undefined

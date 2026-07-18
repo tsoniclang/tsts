@@ -60,11 +60,20 @@ import type {
   ExtensionHost,
   TargetBindingProvider,
   TargetOperationFact,
+  TargetOperationProposal,
   TargetOperationProvenance,
   TargetSemanticProvider,
   TargetTypeRef,
 } from "./index.js";
 import { getProviderVirtualArtifactForCompiler } from "./provider-virtual-internal.js";
+import {
+  checkedConversionSourceOperation,
+  checkedElementSourceOperationFromRequest,
+  checkedIterationSourceOperation,
+  checkedOperatorSourceOperationFromRequest,
+  checkedPropertySourceOperationFromRequest,
+} from "./checker-integration.js";
+import { targetOperationFactEquals } from "./facts.js";
 
 const regressionTarget = "neutral-regression";
 const providerModuleSpecifier = "@neutral/runtime-values.js";
@@ -203,17 +212,21 @@ test("implementation expressions publish every checked-operation kind with exact
   assert.ok(callRequest.sourceCallee.expression === callRequest.callee);
   assert.ok(callRequest.sourceResult.expression === call);
   assertSelectedDeclarationFrom(callRequest.sourceCallee.selectedSymbol, callRequest.sourceCallee.selectedDeclaration, declarations);
-  assert.ok(callRequest.sourceSelectedDeclaration === callRequest.sourceCallee.selectedDeclaration);
+  assert.equal(callRequest.sourceSelection.kind, "applicable");
+  if (callRequest.sourceSelection.kind !== "applicable") {
+    throw new Error("Expected applicable selected call evidence.");
+  }
+  assert.ok(callRequest.sourceSelection.declaration === callRequest.sourceCallee.selectedDeclaration);
 
   assert.ok(propertyRequest.expression === property);
   assert.ok(propertyRequest.receiver === Node_Expression(property));
   assert.equal(propertyRequest.propertyName, "property");
   assert.equal(propertyRequest.accessMode, "read");
-  assert.equal(propertyRequest.callCallee, false);
+  assert.equal(propertyRequest.use, "value");
   assert.equal(propertyRequest.target, regressionTarget);
   assert.ok(propertyRequest.sourceReceiver.expression === propertyRequest.receiver);
-  assert.ok(propertyRequest.sourceResult.expression === property);
-  assertSelectedDeclarationFrom(propertyRequest.sourceResult.selectedSymbol, propertyRequest.sourceResult.selectedDeclaration, declarations);
+  assert.ok(propertyRequest.sourceReadResult.expression === property);
+  assertSelectedDeclarationFrom(propertyRequest.sourceReadResult.selectedSymbol, propertyRequest.sourceReadResult.selectedDeclaration, declarations);
 
   const elementData = AsElementAccessExpression(element);
   assert.ok(elementData !== undefined);
@@ -221,12 +234,12 @@ test("implementation expressions publish every checked-operation kind with exact
   assert.ok(elementRequest.receiver === elementData.Expression);
   assert.ok(elementRequest.argument === elementData.ArgumentExpression);
   assert.equal(elementRequest.accessMode, "read");
-  assert.equal(elementRequest.callCallee, false);
+  assert.equal(elementRequest.use, "value");
   assert.equal(elementRequest.target, regressionTarget);
   assert.ok(elementRequest.sourceReceiver.expression === elementRequest.receiver);
   assert.ok(elementRequest.sourceArgument.expression === elementRequest.argument);
-  assert.ok(elementRequest.sourceResult.expression === element);
-  assertSelectedDeclarationFrom(elementRequest.sourceResult.selectedSymbol, elementRequest.sourceResult.selectedDeclaration, declarations, KindIndexSignature);
+  assert.ok(elementRequest.sourceReadResult.expression === element);
+  assertSelectedDeclarationFrom(elementRequest.sourceReadResult.selectedSymbol, elementRequest.sourceReadResult.selectedDeclaration, declarations, KindIndexSignature);
 
   const binaryData = AsBinaryExpression(operator);
   assert.ok(binaryData !== undefined);
@@ -244,7 +257,12 @@ test("implementation expressions publish every checked-operation kind with exact
   assert.ok(iterationRequest.statement === iteration);
   assert.ok(iterationRequest.expression === iterationData.Expression);
   assert.ok(iterationRequest.initializer === iterationData.Initializer);
-  assert.equal(iterationRequest.kind, "for-of");
+  assert.equal(iterationRequest.mechanism.kind, "array-like-index");
+  if (iterationRequest.mechanism.kind !== "array-like-index") {
+    assert.fail("The selected noLib Array source profile must retain array-like index evidence.");
+  }
+  assert.ok(iterationRequest.mechanism.sourceAlternative.type === iterationRequest.sourceIterable.type);
+  assert.ok(iterationRequest.mechanism.selectedIndex.type === iterationRequest.sourceElement.type);
   assert.equal(iterationRequest.target, regressionTarget);
   assert.ok(iterationRequest.sourceIterable.expression === iterationRequest.expression);
   assert.ok(iterationRequest.sourceIterable.type !== undefined);
@@ -269,45 +287,18 @@ test("implementation expressions publish every checked-operation kind with exact
   assert.ok(selectedCall?.sourceCallee.selectedSymbol === callRequest.sourceCallee.selectedSymbol);
   assert.ok(selectedCall?.sourceCallee.selectedDeclaration === callRequest.sourceCallee.selectedDeclaration);
   assert.ok(selectedCall?.sourceResult.type === callRequest.sourceResult.type);
-  assert.ok(selectedCall?.sourceDeclaration === callRequest.sourceSelectedDeclaration);
+  assert.ok(selectedCall?.sourceSelection.kind === "applicable");
+  assert.ok(selectedCall?.sourceSelection.kind === "applicable" && selectedCall.sourceSelection.declaration === callRequest.sourceSelection.declaration);
   assert.deepEqual(selectedCall?.argumentConversions, []);
 
-  assertOperationProvenance(consumer.getSelectedTargetProperty(property), operationIds.property, {
-    sourceExpression: propertyRequest.expression,
-    sourceReceiver: propertyRequest.receiver,
-    ...(propertyRequest.sourceResult.selectedSymbol === undefined ? {} : { sourceSelectedSymbol: propertyRequest.sourceResult.selectedSymbol }),
-    ...(propertyRequest.sourceResult.selectedDeclaration === undefined ? {} : { sourceSelectedDeclaration: propertyRequest.sourceResult.selectedDeclaration }),
-    sourceResultType: propertyRequest.sourceResult.type,
-    sourceReceiverType: propertyRequest.sourceReceiver.type,
-    sourceAccessMode: propertyRequest.accessMode,
-    sourceCallCallee: propertyRequest.callCallee,
-  });
-  assertOperationProvenance(consumer.getSelectedTargetElementAccess(element), operationIds.element, {
-    sourceExpression: elementRequest.expression,
-    sourceReceiver: elementRequest.receiver,
-    ...(elementRequest.sourceResult.selectedSymbol === undefined ? {} : { sourceSelectedSymbol: elementRequest.sourceResult.selectedSymbol }),
-    ...(elementRequest.sourceResult.selectedDeclaration === undefined ? {} : { sourceSelectedDeclaration: elementRequest.sourceResult.selectedDeclaration }),
-    sourceResultType: elementRequest.sourceResult.type,
-    sourceReceiverType: elementRequest.sourceReceiver.type,
-    sourceAccessMode: elementRequest.accessMode,
-    sourceCallCallee: elementRequest.callCallee,
-  });
-  assertOperationProvenance(consumer.getSelectedTargetOperator(operator), operationIds.operator, {
-    sourceExpression: operatorRequest.expression,
-    sourceResultType: operatorRequest.sourceResult.type,
-  });
-  assertOperationProvenance(consumer.getSelectedTargetIteration(iteration), operationIds.iteration, {
-    sourceExpression: iterationRequest.statement,
-    sourceReceiver: iterationRequest.expression,
-  });
+  assertOperationProvenance(consumer.getSelectedTargetProperty(property), operationIds.property, checkedPropertySourceOperationFromRequest(propertyRequest));
+  assertOperationProvenance(consumer.getSelectedTargetElementAccess(element), operationIds.element, checkedElementSourceOperationFromRequest(elementRequest));
+  assertOperationProvenance(consumer.getSelectedTargetOperator(operator), operationIds.operator, checkedOperatorSourceOperationFromRequest(operatorRequest));
+  assertOperationProvenance(consumer.getSelectedTargetIteration(iteration), operationIds.iteration, checkedIterationSourceOperation(iterationRequest));
 
   const conversionFact = consumer.getTargetConversionFact(conversion);
   assert.deepEqual(conversionFact?.convertedType, numberTargetType);
-  assertOperationProvenance(conversionFact?.operation, operationIds.conversion, {
-    sourceExpression: conversionRequest.expression,
-    sourceReceiver: conversionRequest.source.expression,
-    sourceResultType: conversionRequest.target.type,
-  });
+  assertOperationProvenance(conversionFact?.operation, operationIds.conversion, checkedConversionSourceOperation(conversionRequest));
   assert.equal(setup.extensionHost.diagnostics.all().length, 0);
 });
 
@@ -344,10 +335,10 @@ test("provider virtual declaration slices suppress computed-name observations wh
   assertImplementationOwner(implementation, elementRequest.expression);
   assertImplementationOwner(implementation, callRequest.call);
   assert.equal(propertyRequest.propertyName, "iterator");
-  assert.equal(elementRequest.callCallee, true);
+  assert.equal(elementRequest.use, "call-callee");
   assert.ok(callRequest.callee === element);
 
-  const selectedDeclaration = elementRequest.sourceResult.selectedDeclaration as GoPtr<Node>;
+  const selectedDeclaration = elementRequest.sourceReadResult.selectedDeclaration as GoPtr<Node>;
   assert.ok(selectedDeclaration !== undefined);
   assert.ok(callRequest.sourceCallee.selectedDeclaration === selectedDeclaration);
   const declarationOwner = GetSourceFileOfNode(selectedDeclaration);
@@ -379,29 +370,11 @@ test("provider virtual declaration slices suppress computed-name observations wh
   assert.equal(getProviderVirtualArtifactForCompiler(setup.extensionHost.providers, SourceFile_FileName(publicSlice))?.kind, "public");
 
   const consumer = createExtensionConsumerQueries(setup.extensionHost, "provider-declaration-operation-publication-regression");
-  assertOperationProvenance(consumer.getSelectedTargetProperty(property), operationIds.property, {
-    sourceExpression: propertyRequest.expression,
-    sourceReceiver: propertyRequest.receiver,
-    ...(propertyRequest.sourceResult.selectedSymbol === undefined ? {} : { sourceSelectedSymbol: propertyRequest.sourceResult.selectedSymbol }),
-    ...(propertyRequest.sourceResult.selectedDeclaration === undefined ? {} : { sourceSelectedDeclaration: propertyRequest.sourceResult.selectedDeclaration }),
-    sourceResultType: propertyRequest.sourceResult.type,
-    sourceReceiverType: propertyRequest.sourceReceiver.type,
-    sourceAccessMode: propertyRequest.accessMode,
-    sourceCallCallee: propertyRequest.callCallee,
-  });
-  assertOperationProvenance(consumer.getSelectedTargetElementAccess(element), operationIds.element, {
-    sourceExpression: elementRequest.expression,
-    sourceReceiver: elementRequest.receiver,
-    ...(elementRequest.sourceResult.selectedSymbol === undefined ? {} : { sourceSelectedSymbol: elementRequest.sourceResult.selectedSymbol }),
-    sourceSelectedDeclaration: selectedDeclaration,
-    sourceResultType: elementRequest.sourceResult.type,
-    sourceReceiverType: elementRequest.sourceReceiver.type,
-    sourceAccessMode: elementRequest.accessMode,
-    sourceCallCallee: elementRequest.callCallee,
-  });
+  assertOperationProvenance(consumer.getSelectedTargetProperty(property), operationIds.property, checkedPropertySourceOperationFromRequest(propertyRequest));
+  assertOperationProvenance(consumer.getSelectedTargetElementAccess(element), operationIds.element, checkedElementSourceOperationFromRequest(elementRequest));
   const selectedCall = consumer.getSelectedTargetCall(call);
   assert.equal(selectedCall?.member.id, operationIds.call);
-  assert.ok(selectedCall?.sourceCallee.selectedSymbol === elementRequest.sourceResult.selectedSymbol);
+  assert.ok(selectedCall?.sourceCallee.selectedSymbol === elementRequest.sourceReadResult.selectedSymbol);
   assert.ok(selectedCall?.sourceCallee.selectedDeclaration === selectedDeclaration);
   assert.ok(selectedCall?.sourceResult.type === callRequest.sourceResult.type);
   assert.equal(setup.extensionHost.diagnostics.all().length, 0);
@@ -487,25 +460,25 @@ function runtimeSemanticProvider(id: string, observations: CheckedOperationObser
       observations.properties.push(request);
       return isDeclarationOwned(request.expression)
         ? deferObservation
-        : acceptObservation({ operation: targetOperation(operationIds.property, "property") });
+        : acceptObservation({ operation: targetOperation(operationIds.property, "property"), resultType: numberTargetType });
     },
     mapCheckedElementAccess: (request) => {
       observations.elements.push(request);
       return isDeclarationOwned(request.expression)
         ? deferObservation
-        : acceptObservation({ operation: targetOperation(operationIds.element, "indexer") });
+        : acceptObservation({ operation: targetOperation(operationIds.element, "indexer"), resultType: numberTargetType });
     },
     mapCheckedOperator: (request) => {
       observations.operators.push(request);
       return isDeclarationOwned(request.expression)
         ? deferObservation
-        : acceptObservation({ operation: targetOperation(operationIds.operator, "operator") });
+        : acceptObservation({ operation: targetOperation(operationIds.operator, "operator"), resultType: numberTargetType });
     },
     mapCheckedIteration: (request) => {
       observations.iterations.push(request);
       return isDeclarationOwned(request.statement)
         ? deferObservation
-        : acceptObservation({ operation: targetOperation(operationIds.iteration, "iteration") });
+        : acceptObservation({ operation: targetOperation(operationIds.iteration, "iteration"), resultType: numberTargetType });
     },
     mapCheckedConversion: (request) => {
       observations.conversions.push(request);
@@ -514,11 +487,7 @@ function runtimeSemanticProvider(id: string, observations: CheckedOperationObser
       }
       return acceptObservation({
         convertedType: numberTargetType,
-        operation: targetOperation(operationIds.conversion, "operator", {
-          sourceExpression: request.expression,
-          sourceReceiver: request.source.expression,
-          sourceResultType: request.conversionKind === "assertion" ? request.target.type : request.source.type,
-        }),
+        operation: targetOperation(operationIds.conversion, "operator"),
       });
     },
   };
@@ -588,15 +557,12 @@ function providerBindingProvider(): TargetBindingProvider {
 
 function targetOperation(
   operationId: string,
-  operationKind: TargetOperationFact["operationKind"],
-  provenance?: TargetOperationProvenance,
-): TargetOperationFact {
+  operationKind: TargetOperationProposal["operationKind"],
+): TargetOperationProposal {
   return {
     operationId,
     operationKind,
     targetOperation: operationId,
-    resultType: numberTargetType,
-    ...(provenance === undefined ? {} : { provenance }),
   };
 }
 
@@ -695,15 +661,16 @@ function assertSelectedDeclarationFrom(
 function assertOperationProvenance(
   operation: TargetOperationFact | undefined,
   operationId: string,
-  provenance: TargetOperationProvenance,
+  sourceOperation: TargetOperationProvenance["sourceOperation"],
 ): void {
-  assert.equal(operation?.operationId, operationId);
-  assert.equal(operation?.targetOperation, operationId);
-  assert.deepEqual(operation?.resultType, numberTargetType);
-  assert.deepEqual(Object.keys(operation?.provenance ?? {}).sort(), Object.keys(provenance).sort());
-  for (const [key, value] of Object.entries(provenance) as Array<[keyof TargetOperationProvenance, ExtensionFactSubject | boolean | string | undefined]>) {
-    assert.ok(operation?.provenance?.[key] === value, `Operation provenance '${key}' must retain the exact selected evidence.`);
-  }
+  assert.ok(operation !== undefined);
+  assert.equal(targetOperationFactEquals(operation, {
+    operationId,
+    operationKind: operation.operationKind,
+    targetOperation: operationId,
+    resultType: numberTargetType,
+    provenance: { sourceOperation },
+  }), true, "Operation facts must retain the exact checker-selected source operation.");
 }
 
 function requireSourceFile(program: GoPtr<Program>, fileName: string): SourceFile {

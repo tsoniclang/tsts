@@ -36,11 +36,13 @@ import type {
   CompilerExtension,
   ExtensionHost,
   TargetOperationFact,
+  TargetOperationProposal,
 } from "./index.js";
 
 test("semantic finalization discovers every implementation file exactly once without publishing declaration operations", () => {
   const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
-  const extension = semanticExtension(propertyRequests);
+  const propertyPhases: string[] = [];
+  const extension = semanticExtension(propertyRequests, propertyPhases);
   const setup = createProgram(extension);
   const profile = requireSourceFile(setup.program, "/src/profile.d.ts");
   const first = requireSourceFile(setup.program, "/src/first.ts");
@@ -57,14 +59,16 @@ test("semantic finalization discovers every implementation file exactly once wit
   assertCleanSyntax(setup.program, second);
   assertCleanSemantics(setup.program, profile);
   assertCleanSemantics(setup.program, first);
-  assert.equal(propertyRequests.length, 0, "Checked-operation mappers must wait for semantic finalization.");
-  assert.equal(setup.extensionHost.facts.get(firstAccess, targetOperationFactKey), undefined);
+  assert.equal(propertyRequests.length, 1, "The implementation file checked by the compiler must publish its ready operation during checking.");
+  assert.deepEqual(propertyPhases, ["checking"]);
+  assertOperation(setup.extensionHost.facts.get(firstAccess, targetOperationFactKey), "/src/first.ts");
   assert.equal(setup.extensionHost.facts.get(secondAccess, targetOperationFactKey), undefined);
   assert.equal(setup.extensionHost.facts.get(declarationAccess, targetOperationFactKey), undefined);
 
   assert.ok(finalizeExtensionSemantics(setup.programOptions) === setup.extensionHost);
 
   assert.equal(propertyRequests.length, 2);
+  assert.deepEqual(propertyPhases, ["checking", "checking"], "Finalization-triggered source discovery still runs the discovered file through its exact checking phase.");
   assert.deepEqual(
     propertyRequests.map((request) => SourceFile_FileName(requireOwner(request.expression as GoPtr<Node>))).sort(),
     ["/src/first.ts", "/src/second.ts"],
@@ -72,7 +76,10 @@ test("semantic finalization discovers every implementation file exactly once wit
   assert.equal(propertyRequests.filter((request) => request.expression === firstAccess).length, 1);
   assert.equal(propertyRequests.filter((request) => request.expression === secondAccess).length, 1);
   assert.ok(propertyRequests.every((request) => {
-    const selectedDeclaration = request.sourceResult.selectedDeclaration as GoPtr<Node>;
+    if (request.accessMode === "write") {
+      return false;
+    }
+    const selectedDeclaration = request.sourceReadResult.selectedDeclaration as GoPtr<Node>;
     return selectedDeclaration !== undefined && GetSourceFileOfNode(selectedDeclaration) === profile;
   }), "Implementation operations must retain declaration-file selected evidence without publishing declaration execution.");
   assertOperation(setup.extensionHost.facts.get(firstAccess, targetOperationFactKey), "/src/first.ts");
@@ -92,12 +99,13 @@ test("semantic finalization discovers every implementation file exactly once wit
   const secondOperation = setup.extensionHost.facts.get(secondAccess, targetOperationFactKey);
   assert.ok(finalizeExtensionSemantics(setup.programOptions) === setup.extensionHost);
   assert.equal(propertyRequests.length, 2, "Repeated finalization must not replay completed operations.");
+  assert.deepEqual(propertyPhases, ["checking", "checking"]);
   assert.ok(setup.extensionHost.facts.get(firstAccess, targetOperationFactKey) === firstOperation);
   assert.ok(setup.extensionHost.facts.get(secondAccess, targetOperationFactKey) === secondOperation);
   assert.equal(setup.extensionHost.diagnostics.all().length, 0);
 });
 
-function semanticExtension(propertyRequests: CheckedPropertyAccessMappingRequest[]): CompilerExtension {
+function semanticExtension(propertyRequests: CheckedPropertyAccessMappingRequest[], propertyPhases: string[]): CompilerExtension {
   return {
     identity: {
       id: "compiler-semantic-discovery-regression",
@@ -113,8 +121,9 @@ function semanticExtension(propertyRequests: CheckedPropertyAccessMappingRequest
           extensionContractVersion: TstsProviderContractVersion,
           providerKind: "semantic",
         },
-        mapCheckedPropertyAccess: (request) => {
+        mapCheckedPropertyAccess: (request, observationContext) => {
           propertyRequests.push(request);
+          propertyPhases.push(observationContext.phase);
           const owner = requireOwner(request.expression as GoPtr<Node>);
           return acceptObservation({ operation: operation(SourceFile_FileName(owner)) });
         },
@@ -123,7 +132,7 @@ function semanticExtension(propertyRequests: CheckedPropertyAccessMappingRequest
   };
 }
 
-function operation(ownerFileName: string): TargetOperationFact {
+function operation(ownerFileName: string): TargetOperationProposal {
   const operationId = `neutral.property:${ownerFileName}`;
   return {
     operationId,

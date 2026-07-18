@@ -40,7 +40,8 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHost, ExtensionHostDiagnosticCode, ExtensionLifecycleEvent, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetCallArgumentConversionFactKey, targetCallArgumentPassingFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderDeclarationModel, ProviderExportDeclaration, ProviderImportSlice, ProviderMemberDeclaration, ProviderModuleContext, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SourceSelectedMethodTypeArgument, TargetCallArgumentConversionSlot, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetSignatureSelection, TargetTypeRef } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderDeclarationModel, ProviderExportDeclaration, ProviderImportSlice, ProviderMemberDeclaration, ProviderModuleContext, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SelectedSourceTypeEvidence, SelectedSourceValueEvidence, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SourceSelectedMethodTypeArgument, TargetCallArgumentConversionSlot, TargetConstraintValidationRequest, TargetOperationProposal, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetSignatureSelection, TargetTypeRef } from "./index.js";
+import { extensionHostSetFact } from "./host.js";
 import { preserveEquivalentCheckedSourceType, recordExtensionCheckedAssertionConversion, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
 import {
   getProviderVirtualArtifactForCompiler,
@@ -318,25 +319,26 @@ test("provider declarations bind exact active source-global types while retainin
   const instantRequest = propertyRequests.find((request) => request.propertyName === "instant");
   const pendingRequest = propertyRequests.find((request) => request.propertyName === "pending");
   const profilePendingRequest = propertyRequests.find((request) => request.propertyName === "profilePending");
-  assert.ok(instantRequest?.sourceResult.type !== undefined);
-  assert.ok(pendingRequest?.sourceResult.type !== undefined);
-  assert.ok(profilePendingRequest?.sourceResult.type !== undefined);
-  assert.equal(Type_Symbol(instantRequest.sourceResult.type as GoPtr<Type>)?.Name, "ClockInstant");
-  assert.equal(Type_Symbol(pendingRequest.sourceResult.type as GoPtr<Type>)?.Name, "PromiseLikeValue");
-  assert.equal(Type_Symbol(profilePendingRequest.sourceResult.type as GoPtr<Type>)?.Name, "PromiseLikeValue");
+  const instantResult = requireReadAccessResult(instantRequest);
+  const pendingResult = requireReadAccessResult(pendingRequest);
+  const profilePendingResult = requireReadAccessResult(profilePendingRequest);
+  assert.equal(Type_Symbol(instantResult.type as GoPtr<Type>)?.Name, "ClockInstant");
+  assert.equal(Type_Symbol(pendingResult.type as GoPtr<Type>)?.Name, "PromiseLikeValue");
+  assert.equal(Type_Symbol(profilePendingResult.type as GoPtr<Type>)?.Name, "PromiseLikeValue");
   for (const request of [instantRequest, pendingRequest, profilePendingRequest]) {
-    assert.ok(request.sourceResult.selectedSymbol !== undefined);
-    assert.ok(request.sourceResult.selectedDeclaration !== undefined);
-    const declarations = Type_Symbol(request.sourceResult.type as GoPtr<Type>)?.Declarations ?? [];
+    const sourceResult = requireReadAccessResult(request);
+    assert.ok(sourceResult.selectedSymbol !== undefined);
+    assert.ok(sourceResult.selectedDeclaration !== undefined);
+    const declarations = Type_Symbol(sourceResult.type as GoPtr<Type>)?.Declarations ?? [];
     assert.ok(declarations.length > 0);
     assert.ok(declarations.every((declaration) => SourceFile_FileName(GetSourceFileOfNode(declaration)) === "/src/profile-0.d.ts"));
   }
   assert.equal(
-    extended.extensionHost.facts.get(instantRequest.sourceResult.selectedDeclaration, providerVirtualDeclarationFactKey)?.memberId,
+    extended.extensionHost.facts.get(instantResult.selectedDeclaration, providerVirtualDeclarationFactKey)?.memberId,
     "Holder.instant",
   );
   assert.equal(
-    extended.extensionHost.facts.get(profilePendingRequest.sourceResult.selectedDeclaration, providerVirtualDeclarationFactKey)?.memberId,
+    extended.extensionHost.facts.get(profilePendingResult.selectedDeclaration, providerVirtualDeclarationFactKey)?.memberId,
     "Holder.profilePending",
   );
   const selectedCallMemberNames = callRequests.map(selectedCallMemberName);
@@ -345,15 +347,17 @@ test("provider declarations bind exact active source-global types while retainin
   assert.ok(propertyRequests.some((request) => request.propertyName === "label"));
   assert.ok(callRequests.length >= 2);
   const loadRequest = callRequests.find((request) => selectedCallMemberName(request) === "load");
-  assert.ok(loadRequest?.sourceSelectedSignature !== undefined);
-  assert.ok(loadRequest.sourceSelectedDeclaration !== undefined);
+  assert.ok(loadRequest !== undefined);
+  const loadSelection = applicableCallSelection(loadRequest);
+  assert.ok(loadSelection.signature !== undefined);
+  assert.ok(loadSelection.declaration !== undefined);
   assert.ok(loadRequest.sourceCallee.selectedDeclaration !== undefined);
   assert.ok(loadRequest.sourceResult.type !== undefined);
   assert.equal(Type_Symbol(loadRequest.sourceResult.type as GoPtr<Type>)?.Name, "PromiseLikeValue");
   assert.ok((Type_Symbol(loadRequest.sourceResult.type as GoPtr<Type>)?.Declarations ?? []).every((declaration) =>
     SourceFile_FileName(GetSourceFileOfNode(declaration)) === "/src/profile-0.d.ts"));
   assert.equal(
-    extended.extensionHost.facts.get(loadRequest.sourceSelectedDeclaration, providerVirtualDeclarationFactKey)?.signatureId,
+    extended.extensionHost.facts.get(loadSelection.declaration, providerVirtualDeclarationFactKey)?.signatureId,
     "Holder.load()",
   );
 
@@ -486,8 +490,8 @@ test("source-global provider references cannot be captured by provider-local dec
   assertCleanProgram(program, index, programOptions);
   assertCleanProviderVirtualFiles(program);
   const selected = propertyRequests.find((request) => request.propertyName === "profileHolder");
-  assert.ok(selected?.sourceResult.type !== undefined);
-  const symbol = Type_Symbol(selected.sourceResult.type as GoPtr<Type>);
+  const selectedResult = requireReadAccessResult(selected);
+  const symbol = Type_Symbol(selectedResult.type as GoPtr<Type>);
   assert.equal(symbol?.Name, "Holder");
   assert.ok((symbol?.Declarations ?? []).every((declaration) =>
     SourceFile_FileName(GetSourceFileOfNode(declaration)) === "/src/profile-0.d.ts"));
@@ -554,8 +558,8 @@ test("source-global identities remain exact across disjoint same-module import s
     }]);
     const instantRequests = propertyRequests.filter((request) => request.propertyName === "instant");
     assert.equal(instantRequests.length, 2);
-    const firstType = instantRequests[0]?.sourceResult.type as GoPtr<Type>;
-    const secondType = instantRequests[1]?.sourceResult.type as GoPtr<Type>;
+    const firstType = requireReadAccessResult(instantRequests[0]).type as GoPtr<Type>;
+    const secondType = requireReadAccessResult(instantRequests[1]).type as GoPtr<Type>;
     assert.ok(firstType !== undefined);
     assert.ok(secondType !== undefined);
     assert.ok(Type_Symbol(firstType) === Type_Symbol(secondType), "Repeated source-profile return types must retain canonical symbol identity.");
@@ -2569,8 +2573,9 @@ test("checker records provider-owned target call facts for consumers", () => {
   assert.equal(selected?.member.id, "Contains(T)");
   assert.equal(selected?.member.parameters[0]?.type.kind, "type-parameter");
   assert.equal(selected?.member.returnType?.kind, "source-primitive");
-  assert.ok(selected?.sourceSignature !== undefined);
-  assert.ok(selected?.sourceDeclaration !== undefined);
+  assert.equal(selected?.sourceSelection.kind, "applicable");
+  assert.ok(selected?.sourceSelection.kind === "applicable" && selected.sourceSelection.signature !== undefined);
+  assert.ok(selected?.sourceSelection.kind === "applicable" && selected.sourceSelection.declaration !== undefined);
   assert.deepEqual(selected?.argumentConversions, [argumentConversionSlot(0)]);
 
   assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Finalization must return the attached extension host.");
@@ -2622,8 +2627,9 @@ test("checker records provider-owned target type argument facts on selected call
   const selectedCall = consumer.getSelectedTargetCall(call);
   assert.ok(observedCallRequest?.call === call, "Target type arguments must be selected for the exact checked call.");
   assert.equal(observedCallRequest?.target, "acme");
-  assert.ok(observedCallRequest?.sourceSelectedSignature !== undefined);
-  assert.ok(observedCallRequest?.sourceSelectedDeclaration !== undefined);
+  assert.equal(observedCallRequest?.sourceSelection.kind, "applicable");
+  assert.ok(observedCallRequest?.sourceSelection.kind === "applicable" && observedCallRequest.sourceSelection.signature !== undefined);
+  assert.ok(observedCallRequest?.sourceSelection.kind === "applicable" && observedCallRequest.sourceSelection.declaration !== undefined);
   assert.ok(observedCallRequest?.sourceCallee.symbol !== undefined);
   assert.ok(observedCallRequest?.sourceCallee.declaration !== undefined);
   assert.ok(observedCallRequest?.sourceResult.type !== undefined);
@@ -2667,7 +2673,7 @@ test("checker exposes explicit selected source method type arguments on checked 
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request) => {
       observedTypeArgumentRequest = request;
-      observedTypeArguments = request.sourceSelectedMethodTypeArguments;
+      observedTypeArguments = applicableCallSelection(request).methodTypeArguments;
     }))],
   });
 
@@ -2689,8 +2695,8 @@ test("checker exposes explicit selected source method type arguments on checked 
   assert.ok(observedTypeArgumentRequest?.call === call, "Type-argument evidence must retain the exact checked call.");
   assert.ok(observedTypeArgumentRequest?.sourceResult.type === observedTypeArguments?.[0]?.selectedType, "The checked return type must retain the selected method type-argument identity.");
   assert.equal(observedTypeText, "Result");
-  assert.ok(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.selectedType === observedTypeArguments?.[0]?.selectedType, "Selected call facts must retain selected method type identity.");
-  assert.ok(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode === observedTypeArguments?.[0]?.explicitTypeNode, "Selected call facts must retain explicit type-node identity.");
+  assert.ok(selectedCall?.sourceSelection.kind === "applicable" && selectedCall.sourceSelection.methodTypeArguments[0]?.selectedType === observedTypeArguments?.[0]?.selectedType, "Selected call facts must retain selected method type identity.");
+  assert.ok(selectedCall?.sourceSelection.kind === "applicable" && selectedCall.sourceSelection.methodTypeArguments[0]?.explicitTypeNode === observedTypeArguments?.[0]?.explicitTypeNode, "Selected call facts must retain explicit type-node identity.");
   assert.ok(selectedCall?.sourceCallee.symbol === observedTypeArgumentRequest?.sourceCallee.symbol, "Selected call facts must retain authored callee symbol identity.");
   assert.ok(selectedCall?.sourceCallee.declaration === observedTypeArgumentRequest?.sourceCallee.declaration, "Selected call facts must retain authored callee declaration identity.");
   assert.ok(selectedCall?.sourceResult.type === observedTypeArgumentRequest?.sourceResult.type, "Selected call facts must retain source return type identity.");
@@ -2728,7 +2734,7 @@ test("checker exposes inferred selected source method type arguments on checked 
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request) => {
-      observedTypeArguments = request.sourceSelectedMethodTypeArguments;
+      observedTypeArguments = applicableCallSelection(request).methodTypeArguments;
     }))],
   });
 
@@ -2748,8 +2754,8 @@ test("checker exposes inferred selected source method type arguments on checked 
   assert.ok(observedTypeArguments?.[0]?.selectedType !== undefined);
   assert.ok(observedTypeArguments?.[0]?.explicitTypeNode === undefined, "Inferred type arguments must not fabricate authored type nodes.");
   assert.equal(observedTypeText, "Result");
-  assert.ok(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.selectedType === observedTypeArguments?.[0]?.selectedType, "Persisted inferred type arguments must retain selected type identity.");
-  assert.ok(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode === undefined, "Persisted inferred type arguments must not fabricate authored type nodes.");
+  assert.ok(selectedCall?.sourceSelection.kind === "applicable" && selectedCall.sourceSelection.methodTypeArguments[0]?.selectedType === observedTypeArguments?.[0]?.selectedType, "Persisted inferred type arguments must retain selected type identity.");
+  assert.ok(selectedCall?.sourceSelection.kind === "applicable" && selectedCall.sourceSelection.methodTypeArguments[0]?.explicitTypeNode === undefined, "Persisted inferred type arguments must not fabricate authored type nodes.");
 });
 
 test("checker exposes explicit selected source method type arguments on callback-shaped generic methods", () => {
@@ -2788,7 +2794,7 @@ test("checker exposes explicit selected source method type arguments on callback
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request) => {
-      observedTypeArguments = request.sourceSelectedMethodTypeArguments;
+      observedTypeArguments = applicableCallSelection(request).methodTypeArguments;
     }))],
   });
 
@@ -2808,8 +2814,8 @@ test("checker exposes explicit selected source method type arguments on callback
   assert.ok(observedTypeArguments?.[0]?.selectedType !== undefined);
   assert.ok(observedTypeArguments?.[0]?.explicitTypeNode === (Node_TypeArguments(call) ?? [])[0], "Callback type-argument evidence must retain the exact authored type node.");
   assert.equal(observedTypeText, "Task<string>");
-  assert.ok(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.selectedType === observedTypeArguments?.[0]?.selectedType, "Callback call facts must retain selected method type identity.");
-  assert.ok(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode === observedTypeArguments?.[0]?.explicitTypeNode, "Callback call facts must retain explicit type-node identity.");
+  assert.ok(selectedCall?.sourceSelection.kind === "applicable" && selectedCall.sourceSelection.methodTypeArguments[0]?.selectedType === observedTypeArguments?.[0]?.selectedType, "Callback call facts must retain selected method type identity.");
+  assert.ok(selectedCall?.sourceSelection.kind === "applicable" && selectedCall.sourceSelection.methodTypeArguments[0]?.explicitTypeNode === observedTypeArguments?.[0]?.explicitTypeNode, "Callback call facts must retain explicit type-node identity.");
 });
 
 test("checker exposes selected source member evidence on checked property access", () => {
@@ -2853,7 +2859,7 @@ test("checker exposes selected source member evidence on checked property access
       mapCheckedPropertyAccess: (request) => {
         observedRequests.push(request);
         return acceptObservation({
-          operation: targetOperation(`Acme.${request.propertyName}`, "property", "int32"),
+          operation: targetOperation(`Acme.${request.propertyName}`, "property"),
           resultType: targetResultType("int32"),
         });
       },
@@ -2869,8 +2875,8 @@ test("checker exposes selected source member evidence on checked property access
   const lengthRequest = observedRequests.find((request) => request.propertyName === "Length");
   assertSelectedMemberEvidence(splitRequest, "Split");
   assertSelectedMemberEvidence(lengthRequest, "Length");
-  assert.ok(splitRequest?.sourceResult.type !== undefined);
-  assert.ok(lengthRequest?.sourceResult.type !== undefined);
+  assert.ok(requireReadAccessResult(splitRequest).type !== undefined);
+  assert.ok(requireReadAccessResult(lengthRequest).type !== undefined);
   const lengthAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "Length");
   assert.deepEqual(extended.extensionHost.facts.get(lengthAccess, targetOperationFactKey)?.resultType, targetResultType("int32"));
 });
@@ -2960,7 +2966,7 @@ test("repeated checked property observations preserve exact source result proven
       mapCheckedPropertyAccess: (request) => {
         observedRequests.push(request);
         return acceptObservation({
-          operation: targetOperation("Acme.DeclarationOnly.Property", "property", "int32"),
+          operation: targetOperation("Acme.DeclarationOnly.Property", "property"),
           resultType: targetResultType("int32"),
         });
       },
@@ -2974,37 +2980,57 @@ test("repeated checked property observations preserve exact source result proven
 
   const iteratorRequest = observedRequests.find((request) => request.propertyName === "iterator");
   assert.ok(iteratorRequest !== undefined);
-  assert.ok(iteratorRequest.sourceResult.selectedSymbol !== undefined);
-  assert.ok(iteratorRequest.sourceResult.selectedDeclaration !== undefined);
-  assert.ok(iteratorRequest.sourceResult.type !== undefined);
+  const iteratorResult = requireReadAccessResult(iteratorRequest);
+  assert.ok(iteratorResult.selectedSymbol !== undefined);
+  assert.ok(iteratorResult.selectedDeclaration !== undefined);
+  assert.ok(iteratorResult.type !== undefined);
   const iteratorFact = extended.extensionHost.facts.get(iteratorRequest.expression, targetOperationFactKey);
-  assert.ok(iteratorFact?.provenance?.sourceExpression === iteratorRequest.expression, "Property provenance must retain the exact source expression.");
-  assert.ok(iteratorFact?.provenance?.sourceReceiver === iteratorRequest.receiver, "Property provenance must retain the exact source receiver.");
-  assert.ok(iteratorFact?.provenance?.sourceSelectedSymbol === iteratorRequest.sourceResult.selectedSymbol, "Property provenance must retain the exact selected symbol.");
-  assert.ok(iteratorFact?.provenance?.sourceSelectedDeclaration === iteratorRequest.sourceResult.selectedDeclaration, "Property provenance must retain the exact selected declaration.");
-  assert.ok(iteratorFact?.provenance?.sourceResultType === iteratorRequest.sourceResult.type, "Property provenance must retain the exact selected result type.");
+  const iteratorSourceOperation = iteratorFact?.provenance.sourceOperation;
+  assert.equal(iteratorSourceOperation?.sourceOperationKind, "property-access");
+  if (iteratorSourceOperation?.sourceOperationKind !== "property-access") {
+    throw new Error("Expected property-access operation provenance.");
+  }
+  if (iteratorSourceOperation.accessMode === "write") {
+    throw new Error("Expected read property provenance for Symbol.iterator.");
+  }
+  assert.ok(iteratorSourceOperation.expression === iteratorRequest.expression, "Property provenance must retain the exact source expression.");
+  assert.ok(iteratorSourceOperation.receiver === iteratorRequest.receiver, "Property provenance must retain the exact source receiver.");
+  assert.ok(iteratorSourceOperation.sourceReadResult.selectedSymbol === iteratorResult.selectedSymbol, "Property provenance must retain the exact selected symbol.");
+  assert.ok(iteratorSourceOperation.sourceReadResult.selectedDeclaration === iteratorResult.selectedDeclaration, "Property provenance must retain the exact selected declaration.");
+  assert.ok(iteratorSourceOperation.sourceReadResult.type === iteratorResult.type, "Property provenance must retain the exact selected result type.");
 
   const valueRequests = observedRequests.filter((request) => request.propertyName === "value");
   assert.equal(valueRequests.length, 3);
   const firstValueRequest = valueRequests[0]!;
   const secondValueRequest = valueRequests[1]!;
   const incompatibleValueRequest = valueRequests[2]!;
-  assert.ok(firstValueRequest.sourceResult.selectedSymbol !== undefined);
-  assert.ok(firstValueRequest.sourceResult.type !== undefined);
-  assert.ok(secondValueRequest.sourceResult.type !== undefined);
-  assert.ok(incompatibleValueRequest.sourceResult.type !== undefined);
-  assert.ok(firstValueRequest.sourceResult.type !== secondValueRequest.sourceResult.type, "Independently selected structural result types must remain distinct compiler subjects.");
+  const firstValueResult = requireReadAccessResult(firstValueRequest);
+  const secondValueResult = requireReadAccessResult(secondValueRequest);
+  const incompatibleValueResult = requireReadAccessResult(incompatibleValueRequest);
+  assert.ok(firstValueResult.selectedSymbol !== undefined);
+  assert.ok(firstValueResult.type !== undefined);
+  assert.ok(secondValueResult.type !== undefined);
+  assert.ok(incompatibleValueResult.type !== undefined);
+  assert.ok(firstValueResult.type !== secondValueResult.type, "Independently selected structural result types must remain distinct compiler subjects.");
 
   const mapperRequestCount = observedRequests.length;
   const countAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "count");
   const countFact = extended.extensionHost.facts.get(countAccess, targetOperationFactKey);
-  assert.ok(countFact?.provenance?.sourceExpression === countAccess, "Nested property provenance must retain its exact source expression.");
-  assert.ok(countFact?.provenance?.sourceReceiver !== undefined);
-  assert.ok(countFact?.provenance?.sourceSelectedSymbol !== undefined);
-  assert.ok(countFact?.provenance?.sourceSelectedDeclaration !== undefined);
-  assert.ok(countFact?.provenance?.sourceResultType !== undefined);
-  const sourceResultType = firstValueRequest.sourceResult.type as GoPtr<Type>;
-  const structurallyEquivalentResultType = secondValueRequest.sourceResult.type as GoPtr<Type>;
+  const countSourceOperation = countFact?.provenance.sourceOperation;
+  assert.equal(countSourceOperation?.sourceOperationKind, "property-access");
+  if (countSourceOperation?.sourceOperationKind !== "property-access") {
+    throw new Error("Expected nested property-access operation provenance.");
+  }
+  if (countSourceOperation.accessMode === "write") {
+    throw new Error("Expected read property provenance for the nested count access.");
+  }
+  assert.ok(countSourceOperation.expression === countAccess, "Nested property provenance must retain its exact source expression.");
+  assert.ok(countSourceOperation.receiver !== undefined);
+  assert.ok(countSourceOperation.sourceReadResult.selectedSymbol !== undefined);
+  assert.ok(countSourceOperation.sourceReadResult.selectedDeclaration !== undefined);
+  assert.ok(countSourceOperation.sourceReadResult.type !== undefined);
+  const sourceResultType = firstValueResult.type as GoPtr<Type>;
+  const structurallyEquivalentResultType = secondValueResult.type as GoPtr<Type>;
   assert.notEqual(Type_Id(sourceResultType), Type_Id(structurallyEquivalentResultType));
   assert.equal(
     preserveEquivalentCheckedSourceType(sourceResultType, structurallyEquivalentResultType),
@@ -3092,7 +3118,7 @@ test("repeated unique-symbol property results use their selected declaration ide
       mapCheckedPropertyAccess: (request) => {
         observedRequests.push(request);
         return acceptObservation({
-          operation: targetOperation("Acme.DeclarationOnly.Property", "property", undefined),
+          operation: targetOperation("Acme.DeclarationOnly.Property", "property"),
           resultType: targetResultType("int32"),
         });
       },
@@ -3105,9 +3131,10 @@ test("repeated unique-symbol property results use their selected declaration ide
   assertCleanProgram(program, index, options);
 
   const iteratorRequest = observedRequests.find((request) => request.propertyName === "iterator");
-  assert.ok(iteratorRequest?.sourceResult.selectedSymbol !== undefined);
-  assert.ok(iteratorRequest.sourceResult.selectedDeclaration !== undefined);
-  const sourceResultType = iteratorRequest.sourceResult.type as GoPtr<Type>;
+  const iteratorResult = requireReadAccessResult(iteratorRequest);
+  assert.ok(iteratorResult.selectedSymbol !== undefined);
+  assert.ok(iteratorResult.selectedDeclaration !== undefined);
+  const sourceResultType = iteratorResult.type as GoPtr<Type>;
   assert.ok(sourceResultType !== undefined);
   const repeatedSourceResultType = { ...sourceResultType, id: Type_Id(sourceResultType) + 1 } satisfies Type;
   assert.ok(sourceResultType !== repeatedSourceResultType, "The test wrapper must be a distinct object.");
@@ -3121,12 +3148,13 @@ test("repeated unique-symbol property results use their selected declaration ide
   const repeatedSourceResultDeclaration = repeatedSourceResultSymbol?.ValueDeclaration ?? repeatedSourceResultSymbol?.Declarations?.find((declaration) => declaration !== undefined);
   assert.ok(sourceResultDeclaration !== undefined);
   assert.ok(sourceResultDeclaration === repeatedSourceResultDeclaration, "Repeated unique-symbol wrappers must carry the exact same declaration.");
-  assert.ok(sourceResultDeclaration === iteratorRequest.sourceResult.selectedDeclaration, "Unique-symbol result provenance must match the selected property declaration.");
+  assert.ok(sourceResultDeclaration === iteratorResult.selectedDeclaration, "Unique-symbol result provenance must match the selected property declaration.");
   assert.notEqual(Type_Id(sourceResultType), Type_Id(repeatedSourceResultType));
 
   const otherRequest = observedRequests.find((request) => request.propertyName === "other");
-  assert.ok(otherRequest?.sourceResult.type !== undefined);
-  const otherSourceResultType = otherRequest.sourceResult.type as GoPtr<Type>;
+  const otherResult = requireReadAccessResult(otherRequest);
+  assert.ok(otherResult.type !== undefined);
+  const otherSourceResultType = otherResult.type as GoPtr<Type>;
   assert.notEqual(Type_Flags(otherSourceResultType) & TypeFlagsUniqueESSymbol, 0);
   assert.ok(Type_Symbol(otherSourceResultType) !== sourceResultSymbol, "Different unique-symbol properties must retain different nominal symbols.");
 
@@ -3197,7 +3225,7 @@ test("target operation facts compare property and element result references stru
         propertyRequests.push(request);
         const resultType = targetResultType("int32");
         return acceptObservation({
-          operation: targetOperation("Acme.Collection.Size", "property", undefined),
+          operation: targetOperation("Acme.Collection.Size", "property"),
           resultType,
         });
       },
@@ -3205,7 +3233,7 @@ test("target operation facts compare property and element result references stru
         elementRequests.push(request);
         const resultType = targetResultType("int32");
         return acceptObservation({
-          operation: targetOperation("Acme.Collection.Get", "indexer", undefined),
+          operation: targetOperation("Acme.Collection.Get", "indexer"),
           resultType,
         });
       },
@@ -3219,10 +3247,14 @@ test("target operation facts compare property and element result references stru
 
   const propertyRequest = propertyRequests.find((request) => request.propertyName === "size");
   const elementRequest = elementRequests[0];
-  assert.ok(propertyRequest?.sourceResult.selectedSymbol !== undefined);
-  assert.ok(propertyRequest.sourceResult.type !== undefined);
-  assert.ok(elementRequest?.sourceResult.selectedSymbol !== undefined);
-  assert.ok(elementRequest.sourceResult.type !== undefined);
+  const propertyResult = requireReadAccessResult(propertyRequest);
+  const elementResult = requireReadAccessResult(elementRequest);
+  assert.ok(propertyResult.selectedSymbol !== undefined);
+  assert.ok(propertyResult.type !== undefined);
+  assert.ok(elementResult.selectedSymbol !== undefined);
+  assert.ok(elementResult.type !== undefined);
+  assert.ok(propertyRequest !== undefined);
+  assert.ok(elementRequest !== undefined);
   assert.deepEqual(extended.extensionHost.facts.get(propertyRequest.expression, targetOperationFactKey)?.resultType, targetResultType("int32"));
   assert.deepEqual(extended.extensionHost.facts.get(elementRequest.expression, targetOperationFactKey)?.resultType, targetResultType("int32"));
 
@@ -3231,21 +3263,21 @@ test("target operation facts compare property and element result references stru
   assert.ok(propertyFact !== undefined);
   assert.ok(elementFact !== undefined);
   const structuralFactHost = new ExtensionHost({});
-  assert.equal(structuralFactHost.facts.set(propertyRequest.expression, targetOperationFactKey, propertyFact), "inserted");
-  assert.equal(structuralFactHost.facts.set(propertyRequest.expression, targetOperationFactKey, {
+  assert.equal(structuralFactHost[extensionHostSetFact](propertyRequest.expression, targetOperationFactKey, propertyFact), "inserted");
+  assert.equal(structuralFactHost[extensionHostSetFact](propertyRequest.expression, targetOperationFactKey, {
     ...propertyFact,
     resultType: targetResultType("int32"),
   }), "idempotent");
-  assert.equal(structuralFactHost.facts.set(elementRequest.expression, targetOperationFactKey, elementFact), "inserted");
-  assert.equal(structuralFactHost.facts.set(elementRequest.expression, targetOperationFactKey, {
+  assert.equal(structuralFactHost[extensionHostSetFact](elementRequest.expression, targetOperationFactKey, elementFact), "inserted");
+  assert.equal(structuralFactHost[extensionHostSetFact](elementRequest.expression, targetOperationFactKey, {
     ...elementFact,
     resultType: targetResultType("int32"),
   }), "idempotent");
-  assert.equal(structuralFactHost.facts.set(propertyRequest.expression, targetOperationFactKey, {
+  assert.equal(structuralFactHost[extensionHostSetFact](propertyRequest.expression, targetOperationFactKey, {
     ...propertyFact,
     resultType: targetResultType("char"),
   }), "conflict");
-  assert.equal(structuralFactHost.facts.set(elementRequest.expression, targetOperationFactKey, {
+  assert.equal(structuralFactHost[extensionHostSetFact](elementRequest.expression, targetOperationFactKey, {
     ...elementFact,
     resultType: targetResultType("char"),
   }), "conflict");
@@ -3303,7 +3335,7 @@ test("checker exposes selected source index-signature evidence on checked elemen
       mapCheckedElementAccess: (request) => {
         observedRequests.push(request);
         return acceptObservation({
-          operation: targetOperation("Acme.Index", "property", "int32"),
+          operation: targetOperation("Acme.Index", "property"),
           resultType: targetResultType("int32"),
         });
       },
@@ -3319,7 +3351,7 @@ test("checker exposes selected source index-signature evidence on checked elemen
   assertSelectedIndexEvidence(observedRequests[0]);
   assertSelectedIndexEvidence(observedRequests[1]);
   assertSelectedMappedIndexEvidence(observedRequests[2]);
-  assert.ok(observedRequests.every((request) => request.sourceResult.type !== undefined));
+  assert.ok(observedRequests.every((request) => selectedAccessTypeEvidence(request).type !== undefined));
 });
 
 test("checker exposes only checker-selected fixed tuple element ordinals", () => {
@@ -3399,7 +3431,8 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
       mapCheckedElementAccess: (request) => {
         observedRequests.push(request);
         return acceptObservation({
-          operation: targetOperation(operationId, "indexer", "int32"),
+          operation: targetOperation(operationId, "indexer"),
+          resultType: targetResultType("int32"),
         });
       },
     })],
@@ -3414,15 +3447,17 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
     observedRequests.map((request) => request.sourceSelectedElementIndex),
     [1, 1, 1, 1, 1, 1, 1, 1, 0, undefined, 1, undefined, 1, undefined, undefined, 1, 1],
   );
-  assert.ok(observedRequests.every((request) => request.sourceResult.type !== undefined));
+  assert.ok(observedRequests.every((request) => selectedAccessTypeEvidence(request).type !== undefined));
 
   const canonicalRequestCount = observedRequests.length;
   assert.equal(Program_GetSemanticDiagnostics(program, Background(), indexFile).length, 0);
   assert.equal(observedRequests.length, canonicalRequestCount);
 
   const firstRequest = observedRequests[0];
-  assert.ok(firstRequest?.sourceResult.selectedSymbol !== undefined);
-  assert.ok(firstRequest.sourceResult.type !== undefined);
+  const firstResult = requireReadAccessResult(firstRequest);
+  assert.ok(firstResult.selectedSymbol !== undefined);
+  assert.ok(firstResult.type !== undefined);
+  assert.ok(firstRequest !== undefined);
   const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), indexFile);
   const mapperRequestCount = observedRequests.length;
   try {
@@ -3430,13 +3465,13 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
       checker,
       firstRequest.expression as GoPtr<Node>,
       {
-        selectedSymbol: firstRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-        resultType: firstRequest.sourceResult.type as GoPtr<Type>,
+        selectedSymbol: firstResult.selectedSymbol as GoPtr<Symbol>,
+        resultType: firstResult.type as GoPtr<Type>,
         ...(firstRequest.sourceSelectedElementIndex === undefined ? {} : { selectedElementIndex: firstRequest.sourceSelectedElementIndex }),
         receiverType: firstRequest.sourceReceiver.type as GoPtr<Type>,
         argumentType: firstRequest.sourceArgument.type as GoPtr<Type>,
         accessMode: firstRequest.accessMode,
-        callCallee: firstRequest.callCallee,
+        callCallee: firstRequest.use === "call-callee",
       },
     );
     assert.equal(observedRequests.at(-1)?.sourceSelectedElementIndex, 1);
@@ -3447,13 +3482,13 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
       checker,
       firstRequest.expression as GoPtr<Node>,
       {
-        selectedSymbol: firstRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-        resultType: firstRequest.sourceResult.type as GoPtr<Type>,
+        selectedSymbol: firstResult.selectedSymbol as GoPtr<Symbol>,
+        resultType: firstResult.type as GoPtr<Type>,
         ...(firstRequest.sourceSelectedElementIndex === undefined ? {} : { selectedElementIndex: firstRequest.sourceSelectedElementIndex }),
         receiverType: firstRequest.sourceReceiver.type as GoPtr<Type>,
         argumentType: firstRequest.sourceArgument.type as GoPtr<Type>,
         accessMode: firstRequest.accessMode,
-        callCallee: firstRequest.callCallee,
+        callCallee: firstRequest.use === "call-callee",
       },
     );
   } finally {
@@ -3512,7 +3547,8 @@ test("invalid tuple indexes never expose a selected fixed ordinal or bypass Type
       mapCheckedElementAccess: (request) => {
         observedRequests.push(request);
         return acceptObservation({
-          operation: targetOperation("Acme.Tuple.Get", "indexer", "int32"),
+          operation: targetOperation("Acme.Tuple.Get", "indexer"),
+          resultType: targetResultType("int32"),
         });
       },
     })],
@@ -3573,7 +3609,7 @@ test("checker exposes selected source member evidence on optional-chain property
       mapCheckedPropertyAccess: (request) => {
         observedRequests.push(request);
         return acceptObservation({
-          operation: targetOperation(`Acme.${request.propertyName}`, "property", "int32"),
+          operation: targetOperation(`Acme.${request.propertyName}`, "property"),
           resultType: targetResultType("int32"),
         });
       },
@@ -3595,7 +3631,7 @@ test("checker exposes selected source member evidence on optional-chain property
   for (const request of lengthRequests) {
     assertSelectedMemberEvidence(request, "length");
   }
-  assert.equal(nameRequests.some((request) => request.optionalChain === true), true);
+  assert.equal(nameRequests.some((request) => request.chainRole.kind === "optional-chain"), true);
 });
 
 test("checker exposes source element types on for-of declaration and assignment iterations", () => {
@@ -3638,7 +3674,7 @@ test("checker exposes source element types on for-of declaration and assignment 
       mapCheckedIteration: (request) => {
         observed.push({ request, elementType: undefined });
         return acceptObservation({
-          operation: targetOperation("Acme.Iterate", "method", "int32"),
+          operation: targetOperation("Acme.Iterate", "method"),
           resultType: targetResultType("int32"),
         });
       },
@@ -3655,7 +3691,7 @@ test("checker exposes source element types on for-of declaration and assignment 
   }
 
   assert.equal(observed.length, 2);
-  assert.deepEqual(observed.map((entry) => entry.request.kind), ["for-of", "for-of"]);
+  assert.deepEqual(observed.map((entry) => entry.request.iterationKind), ["for-of", "for-of"]);
   assert.deepEqual(observed.map((entry) => entry.elementType), ["number", "number"]);
 });
 
@@ -3691,7 +3727,7 @@ test("iteration evidence does not recheck a malformed empty for-of declaration",
       mapCheckedIteration: () => {
         observationCount += 1;
         return acceptObservation({
-          operation: targetOperation("Acme.Iterate", "method", "int32"),
+          operation: targetOperation("Acme.Iterate", "method"),
           resultType: targetResultType("int32"),
         });
       },
@@ -3749,7 +3785,7 @@ test("checker maps checked unary operators through the operator observation", ()
       mapCheckedOperator: (request) => {
         observedRequests.push(request);
         return acceptObservation({
-          operation: targetOperation(`Acme.Operator.${request.operator}`, "operator", request.operator === "!" ? "boolean" : "number"),
+          operation: targetOperation(`Acme.Operator.${request.operator}`, "operator"),
           resultType: targetResultType(request.operator === "!" ? "boolean" : "number"),
         });
       },
@@ -3841,7 +3877,8 @@ test("checker exposes selected callee member evidence on checked calls", () => {
   assert.ok(selectedDeclaration !== undefined);
   assert.ok(selectedDeclaration === selectedSymbol?.ValueDeclaration, "Checked call evidence must retain the selected symbol's exact declaration.");
   assert.equal(Node_Text(Node_Name(selectedDeclaration)), "WriteLine");
-  assert.ok(observedRequest?.sourceSelectedDeclaration === selectedDeclaration, "Checked call evidence must retain the exact selected member declaration.");
+  assert.ok(observedRequest !== undefined);
+  assert.ok(applicableCallSelection(observedRequest).declaration === selectedDeclaration, "Checked call evidence must retain the exact selected member declaration.");
   assert.equal(observedReturnTypeText, "void");
 
   const call = findFirstNodeByKind(index, KindCallExpression);
@@ -3992,10 +4029,16 @@ test("checker records provider-owned parameter mode facts from selected target s
   assert.equal(extended.extensionHost.facts.get(argument, targetCallArgumentPassingFactKey), undefined);
   assert.ok(argumentPassing?.slot === argumentSlot, "Argument-passing facts must be keyed by the canonical selected call conversion slot.");
   assert.ok(argumentPassing?.call === call, "Target argument-passing evidence must retain the exact checked call subject.");
-  assert.equal(argumentPassing?.sourceArgumentIndex, 0);
+  assert.equal(argumentPassing?.slot.sourceArgumentIndex, 0);
+  assert.equal(argumentPassing?.sourceBinding.sourceArgumentIndex, 0);
+  assert.equal(argumentPassing?.sourceBinding.effectiveArgumentIndex, 0);
   assert.equal(argumentPassing?.mode, "byref-readonly");
-  assert.equal(argumentPassing?.targetParameterIndex, 0);
-  assert.equal(argumentPassing?.sourceForm, "value");
+  assert.equal(argumentPassing?.slot.targetParameterIndex, 0);
+  assert.equal(argumentPassing?.slot.sourceForm, "value");
+  assert.equal(argumentPassing?.slot.targetForm, "parameter");
+  assert.equal(argumentPassing?.sourceBinding.sourceForm, "value");
+  assert.equal(argumentPassing?.sourceBinding.sourceParameterIndex, 0);
+  assert.equal(argumentPassing?.sourceBinding.sourceParameterForm, "parameter");
   assert.equal(argumentPassing?.targetParameter?.name, "value");
   assert.ok(argumentPassing?.targetExpression === argument, "Target passing facts must retain the exact bound argument expression.");
   assert.equal(argumentPassing?.selectedSignature?.providerId, providerDeclaration.providerId);
@@ -4064,14 +4107,24 @@ test("checker records parameter mode facts per argument without collapsing them 
   const firstPassing = extended.extensionHost.facts.get(argumentSlots[0], targetCallArgumentPassingFactKey);
   const secondPassing = extended.extensionHost.facts.get(argumentSlots[1], targetCallArgumentPassingFactKey);
   assert.equal(firstPassing?.mode, "by-value");
-  assert.equal(firstPassing?.sourceArgumentIndex, 0);
-  assert.equal(firstPassing?.targetParameterIndex, 0);
-  assert.equal(firstPassing?.sourceForm, "value");
+  assert.equal(firstPassing?.slot.sourceArgumentIndex, 0);
+  assert.equal(firstPassing?.slot.targetParameterIndex, 0);
+  assert.equal(firstPassing?.slot.sourceForm, "value");
+  assert.equal(firstPassing?.slot.targetForm, "parameter");
+  assert.equal(firstPassing?.sourceBinding.sourceArgumentIndex, 0);
+  assert.equal(firstPassing?.sourceBinding.effectiveArgumentIndex, 0);
+  assert.equal(firstPassing?.sourceBinding.sourceParameterIndex, 0);
+  assert.equal(firstPassing?.sourceBinding.sourceParameterForm, "parameter");
   assert.ok(firstPassing?.targetExpression === first, "The first passing fact must retain its exact bound argument.");
   assert.equal(secondPassing?.mode, "byref-readonly");
-  assert.equal(secondPassing?.sourceArgumentIndex, 1);
-  assert.equal(secondPassing?.targetParameterIndex, 1);
-  assert.equal(secondPassing?.sourceForm, "value");
+  assert.equal(secondPassing?.slot.sourceArgumentIndex, 1);
+  assert.equal(secondPassing?.slot.targetParameterIndex, 1);
+  assert.equal(secondPassing?.slot.sourceForm, "value");
+  assert.equal(secondPassing?.slot.targetForm, "parameter");
+  assert.equal(secondPassing?.sourceBinding.sourceArgumentIndex, 1);
+  assert.equal(secondPassing?.sourceBinding.effectiveArgumentIndex, 1);
+  assert.equal(secondPassing?.sourceBinding.sourceParameterIndex, 1);
+  assert.equal(secondPassing?.sourceBinding.sourceParameterForm, "parameter");
   assert.ok(secondPassing?.targetExpression === second, "The second passing fact must retain its exact bound argument.");
   assert.equal(extended.extensionHost.facts.get(call, argumentPassingFactKey), undefined);
   assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
@@ -4146,24 +4199,40 @@ test("checker records provider-owned runtime carrier and argument conversion fac
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const argument = getFirstCallArgument(call);
-  assert.equal(observedConversionRequests[0]?.conversionKind, "call-argument");
-  assert.ok(observedConversionRequests[0]?.call === call, "conversion request must retain the exact call node");
-  assert.equal(observedConversionRequests[0]?.sourceArgumentIndex, 0);
-  assert.equal(observedConversionRequests[0]?.targetParameterIndex, 0);
-  assert.equal(observedConversionRequests[0]?.sourceForm, "value");
-  assert.equal(observedConversionRequests[0]?.targetParameter?.name, "value");
-  assert.equal(observedConversionRequests[0]?.selectedSignature?.member.id, "ToByte(Acme.Int32)");
+  const observedConversionRequest = observedConversionRequests[0];
+  assert.equal(observedConversionRequest?.conversionKind, "call-argument");
+  if (observedConversionRequest?.conversionKind !== "call-argument") {
+    assert.fail("Expected one checked call-argument conversion request.");
+  }
+  assert.ok(observedConversionRequest.call === call, "conversion request must retain the exact call node");
+  assert.equal(observedConversionRequest.slot.sourceArgumentIndex, 0);
+  assert.equal(observedConversionRequest.slot.targetParameterIndex, 0);
+  assert.equal(observedConversionRequest.slot.sourceForm, "value");
+  assert.equal(observedConversionRequest.slot.targetForm, "parameter");
+  assert.equal(observedConversionRequest.sourceBinding.sourceArgumentIndex, 0);
+  assert.equal(observedConversionRequest.sourceBinding.effectiveArgumentIndex, 0);
+  assert.equal(observedConversionRequest.sourceBinding.sourceForm, "value");
+  assert.equal(observedConversionRequest.sourceBinding.sourceParameterIndex, 0);
+  assert.equal(observedConversionRequest.sourceBinding.sourceParameterForm, "parameter");
+  assert.equal(observedConversionRequest.targetParameter?.name, "value");
+  assert.equal(observedConversionRequest.selectedSignature?.member.id, "ToByte(Acme.Int32)");
   const argumentSlot = extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey)?.argumentConversions[0];
   const argumentConversion = extended.extensionHost.facts.get(argumentSlot, targetCallArgumentConversionFactKey);
   assert.equal(extended.extensionHost.facts.get(argument, targetCallArgumentConversionFactKey), undefined);
-  assert.ok(observedConversionRequests[0]?.slot === argumentSlot, "Call-argument conversion requests must retain the canonical selected call conversion slot.");
+  assert.ok(observedConversionRequest.slot === argumentSlot, "Call-argument conversion requests must retain the canonical selected call conversion slot.");
   assert.ok(argumentConversion?.slot === argumentSlot, "Call-argument conversion facts must be keyed by the canonical selected call conversion slot.");
   assert.equal(argumentConversion?.convertedType?.kind, "target-named");
   assert.equal(argumentConversion?.operation?.operationId, "Acme.Convert.ToByte");
   assert.ok(argumentConversion?.call === call, "Target conversion facts must retain the exact checked call.");
-  assert.equal(argumentConversion?.sourceArgumentIndex, 0);
-  assert.equal(argumentConversion?.targetParameterIndex, 0);
-  assert.equal(argumentConversion?.sourceForm, "value");
+  assert.equal(argumentConversion?.slot.sourceArgumentIndex, 0);
+  assert.equal(argumentConversion?.slot.targetParameterIndex, 0);
+  assert.equal(argumentConversion?.slot.sourceForm, "value");
+  assert.equal(argumentConversion?.slot.targetForm, "parameter");
+  assert.equal(argumentConversion?.sourceBinding.sourceArgumentIndex, 0);
+  assert.equal(argumentConversion?.sourceBinding.effectiveArgumentIndex, 0);
+  assert.equal(argumentConversion?.sourceBinding.sourceForm, "value");
+  assert.equal(argumentConversion?.sourceBinding.sourceParameterIndex, 0);
+  assert.equal(argumentConversion?.sourceBinding.sourceParameterForm, "parameter");
   assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 0);
 
   assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "semantic finalization must return the attached host");
@@ -4252,7 +4321,7 @@ test("checker records selected source and target types for ordinary assertion co
   assert.equal(observedRequests.filter((request) => (request.expression as GoPtr<Node>)?.Kind === KindTypeAssertionExpression).length, 1);
   assert.ok(observedRequests.every((request) => request.targetPlatform === "acme"));
   assert.ok(observedRequests.every((request) => request.call === undefined));
-  assert.ok(observedRequests.every((request) => request.targetParameterIndex === undefined));
+  assert.ok(observedRequests.every((request) => request.targetParameter === undefined));
   assert.ok(observedRequests.every((request) => request.selectedSignature === undefined));
   assert.ok(assertionRequests.every((request) => request.source.expression !== undefined));
   assert.ok(assertionRequests.every((request) => request.explicitTargetTypeNode !== undefined));
@@ -5028,8 +5097,10 @@ test("checker records provider-owned member element and operator facts for consu
   assert.equal(extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey)?.operationId, "Acme.String.Length");
   assert.equal(extended.extensionHost.facts.get(elementAccess, targetOperationFactKey)?.operationId, "Acme.ReadOnlySpan.GetItem");
   assert.equal(extended.extensionHost.facts.get(binaryExpression, targetOperationFactKey)?.operationId, "Acme.Int32.op_Addition");
-  assert.equal(extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey)?.provenance?.sourceExpression, propertyAccess);
-  assert.ok(extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey)?.provenance?.sourceReceiver !== undefined);
+  const propertySourceOperation = extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey)?.provenance.sourceOperation;
+  assert.equal(propertySourceOperation?.sourceOperationKind, "property-access");
+  assert.equal(propertySourceOperation?.expression, propertyAccess);
+  assert.ok(propertySourceOperation?.sourceOperationKind === "property-access" && propertySourceOperation.receiver !== undefined);
   assert.equal(extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey)?.provenance?.providerDeclaration?.providerId, "acme-property-provider");
 
   assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Finalization must return the attached extension host.");
@@ -5240,7 +5311,7 @@ test("unsupported native surface operations are diagnostics, not fallback calls"
 
   const nativeSurfaceDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "ACME_NATIVE_ARRAY_PUSH");
   assert.equal(nativeSurfaceDiagnostics.length, 1);
-  assert.equal(nativeSurfaceDiagnostics[0]?.extensionId, "acme-native-array-surface-provider");
+  assert.equal(nativeSurfaceDiagnostics[0]?.extensionId, "acme-provider-extension");
   assert.match(nativeSurfaceDiagnostics[0]?.evidence?.[0]?.message ?? "", /Surface capability/);
   assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
   assert.equal(extended.extensionHost.facts.get(call, targetOperationFactKey), undefined);
@@ -7640,7 +7711,7 @@ function carrierConversionSemanticProvider(
       onConversion?.(request);
       return acceptObservation({
         convertedType: { kind: "target-named", id: "Acme.Byte" },
-        operation: targetOperation("Acme.Convert.ToByte", "method", "number"),
+        operation: targetOperation("Acme.Convert.ToByte", "method"),
       });
     },
     resolveRuntimeCarrier: (request) => {
@@ -7676,7 +7747,7 @@ function compositeAcmeProvider(): TargetSemanticProvider {
     }),
     mapCheckedConversion: () => acceptObservation({
       convertedType: { kind: "target-named", id: "Acme.Int32" },
-      operation: targetOperation("Acme.Int32.Identity", "method", "int32"),
+      operation: targetOperation("Acme.Int32.Identity", "method"),
     }),
     resolveRuntimeCarrier: () => acceptObservation({
       carrier: {
@@ -7751,18 +7822,16 @@ function surfaceSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("acme-surface-semantic-provider"),
     mapCheckedPropertyAccess: () => acceptObservation({
-      operation: targetOperation("Acme.String.Length", "property", "int32"),
+      operation: targetOperation("Acme.String.Length", "property"),
       resultType: targetResultType("int32"),
-      provenance: {
-        providerDeclaration: providerDeclarationIdentity("acme-property-provider", "acme-native", "acme.string", "length"),
-      },
+      providerDeclaration: providerDeclarationIdentity("acme-property-provider", "acme-native", "acme.string", "length"),
     }),
     mapCheckedElementAccess: () => acceptObservation({
-      operation: targetOperation("Acme.ReadOnlySpan.GetItem", "indexer", "char"),
+      operation: targetOperation("Acme.ReadOnlySpan.GetItem", "indexer"),
       resultType: targetResultType("char"),
     }),
     mapCheckedOperator: () => acceptObservation({
-      operation: targetOperation("Acme.Int32.op_Addition", "operator", "int32"),
+      operation: targetOperation("Acme.Int32.op_Addition", "operator"),
       resultType: targetResultType("int32"),
     }),
   };
@@ -7780,10 +7849,10 @@ function deferredSurfaceSemanticProvider(): TargetSemanticProvider {
 function rejectingCallSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("acme-rejecting-call-semantic-provider"),
-    mapCheckedCall: (request: CheckedCallMappingRequest) => ({
+    mapCheckedCall: (request: CheckedCallMappingRequest, context) => ({
       kind: "reject",
       diagnostic: {
-        extensionId: "acme-rejecting-call-semantic-provider",
+        extensionId: context.extensionId,
         extensionCode: "ACME_BYTE_RANGE",
         numericCode: 9910125,
         publicCode: "ACME0125",
@@ -7800,10 +7869,10 @@ function rejectingCallSemanticProvider(): TargetSemanticProvider {
 function sourceSpanRejectingCallProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("acme-source-span-rejecting-call-provider"),
-    mapCheckedCall: (request: CheckedCallMappingRequest) => {
+    mapCheckedCall: (request: CheckedCallMappingRequest, context) => {
       const call = request.call as GoPtr<Node>;
       return rejectObservation({
-        extensionId: "acme-source-span-rejecting-call-provider",
+        extensionId: context.extensionId,
         extensionCode: "ACME_PIN_REQUIRES_FIXED",
         numericCode: 9910126,
         publicCode: "ACME0126",
@@ -7824,8 +7893,8 @@ function sourceSpanRejectingCallProvider(): TargetSemanticProvider {
 function rejectingNativeArrayPushProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("acme-native-array-surface-provider"),
-    mapCheckedCall: (request: CheckedCallMappingRequest) => rejectObservation({
-      extensionId: "acme-native-array-surface-provider",
+    mapCheckedCall: (request: CheckedCallMappingRequest, context) => rejectObservation({
+      extensionId: context.extensionId,
       extensionCode: "ACME_NATIVE_ARRAY_PUSH",
       numericCode: 9910301,
       publicCode: "ACME0301",
@@ -7937,9 +8006,9 @@ function semanticProviderIdentity(id: string) {
 }
 
 function assertSelectedMemberEvidence(request: CheckedPropertyAccessMappingRequest | undefined, name: string): void {
-  assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceResult.selectedSymbol as GoPtr<Symbol>;
-  const selectedDeclaration = request.sourceResult.selectedDeclaration as GoPtr<Node>;
+  const sourceResult = requireReadAccessResult(request);
+  const selectedSymbol = sourceResult.selectedSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = sourceResult.selectedDeclaration as GoPtr<Node>;
   assert.equal(selectedSymbol?.Name, name);
   assert.ok(selectedDeclaration !== undefined);
   assert.ok(selectedDeclaration === selectedSymbol?.ValueDeclaration, "Selected property evidence must retain the symbol's exact value declaration.");
@@ -7947,9 +8016,9 @@ function assertSelectedMemberEvidence(request: CheckedPropertyAccessMappingReque
 }
 
 function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
-  assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceResult.selectedSymbol as GoPtr<Symbol>;
-  const selectedDeclaration = request.sourceResult.selectedDeclaration as GoPtr<Node>;
+  const sourceResult = requireReadAccessResult(request);
+  const selectedSymbol = sourceResult.selectedSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = sourceResult.selectedDeclaration as GoPtr<Node>;
   assert.ok(selectedSymbol !== undefined);
   assert.ok(selectedSymbol?.ValueDeclaration === selectedDeclaration, "Selected element evidence must retain the symbol's exact value declaration.");
   assert.ok(selectedDeclaration !== undefined);
@@ -7957,9 +8026,9 @@ function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest
 }
 
 function assertSelectedMappedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
-  assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceResult.selectedSymbol as GoPtr<Symbol>;
-  const selectedDeclaration = request.sourceResult.selectedDeclaration as GoPtr<Node>;
+  const sourceResult = requireReadAccessResult(request);
+  const selectedSymbol = sourceResult.selectedSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = sourceResult.selectedDeclaration as GoPtr<Node>;
   assert.ok(selectedSymbol !== undefined);
   assert.ok(selectedSymbol?.ValueDeclaration === selectedDeclaration, "Selected mapped-element evidence must retain the symbol's exact value declaration.");
   assert.ok(selectedDeclaration !== undefined);
@@ -7968,6 +8037,31 @@ function assertSelectedMappedIndexEvidence(request: CheckedElementAccessMappingR
 
 function selectedCallMemberName(request: CheckedCallMappingRequest): string | undefined {
   return (request.sourceCallee.selectedSymbol as Symbol | undefined)?.Name;
+}
+
+function requireReadAccessResult(
+  request: CheckedPropertyAccessMappingRequest | CheckedElementAccessMappingRequest | undefined,
+): SelectedSourceValueEvidence {
+  assert.ok(request !== undefined);
+  assert.notEqual(request.accessMode, "write");
+  if (request.accessMode === "write") {
+    throw new Error("Expected checked read evidence, received a write-only access.");
+  }
+  return request.sourceReadResult;
+}
+
+function selectedAccessTypeEvidence(
+  request: CheckedPropertyAccessMappingRequest | CheckedElementAccessMappingRequest,
+): SelectedSourceTypeEvidence {
+  return request.accessMode === "write" ? request.sourceWriteType : request.sourceReadResult;
+}
+
+function applicableCallSelection(request: CheckedCallMappingRequest) {
+  assert.equal(request.sourceSelection.kind, "applicable");
+  if (request.sourceSelection.kind !== "applicable") {
+    throw new Error("Expected checker-selected applicable call evidence.");
+  }
+  return request.sourceSelection;
 }
 
 function checkedTypeToString(program: GoPtr<Program>, sourceFile: SourceFile, type: GoPtr<Type>): string {
@@ -7992,12 +8086,11 @@ function providerDeclarationIdentity(providerId: string, _providerTarget: string
   };
 }
 
-function targetOperation(operationId: string, operationKind: TargetOperationFact["operationKind"], resultType?: string | TargetOperationFact["resultType"]): TargetOperationFact {
+function targetOperation(operationId: string, operationKind: TargetOperationProposal["operationKind"]): TargetOperationProposal {
   return {
     operationId,
     operationKind,
     targetOperation: operationId,
-    ...(resultType !== undefined ? { resultType: typeof resultType === "string" ? targetResultType(resultType) : resultType } : {}),
   };
 }
 

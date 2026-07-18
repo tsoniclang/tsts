@@ -46,6 +46,88 @@ test("provider model graph reports immutable transaction metrics", () => {
   assert.ok(Object.isFrozen(validation.metrics));
 });
 
+test("provider model graph captures own enumerable record accessors exactly once and rejects non-schema shape", () => {
+  let getterCalls = 0;
+  const accessorModel = Object.defineProperty({
+    moduleSpecifier: "@acme/model.js",
+    providerModuleId: "acme:model",
+  }, "exports", {
+    enumerable: true,
+    get: () => {
+      getterCalls++;
+      return [];
+    },
+  });
+  const accessorValidation = requireValid(validateProviderDeclarationModelGraph(accessorModel));
+  assert.equal(getterCalls, 1);
+  assert.deepEqual(accessorValidation.model.exports, []);
+  assert.ok(Object.isFrozen(accessorValidation.model.exports));
+
+  const inheritedModel = Object.assign(Object.create({ inherited: true }), baseModel());
+  requireInvalid(validateProviderDeclarationModelGraph(inheritedModel), "shape");
+
+  const hiddenFieldModel = { ...baseModel(), unsupported: "hidden" };
+  requireInvalid(validateProviderDeclarationModelGraph(hiddenFieldModel), "shape");
+
+  const nonEnumerableFieldModel = baseModel() as ProviderDeclarationModel & { unsupported?: string };
+  Object.defineProperty(nonEnumerableFieldModel, "unsupported", { value: "hidden" });
+  requireInvalid(validateProviderDeclarationModelGraph(nonEnumerableFieldModel), "shape");
+
+  const symbolFieldModel = baseModel() as ProviderDeclarationModel & { [key: symbol]: string };
+  symbolFieldModel[Symbol("hidden")] = "hidden";
+  requireInvalid(validateProviderDeclarationModelGraph(symbolFieldModel), "shape");
+});
+
+test("provider model graph accepts only dense intrinsic arrays with own data entries", () => {
+  let elementReads = 0;
+  const accessorExports = [] as ProviderExportDeclaration[];
+  Object.defineProperty(accessorExports, "0", {
+    enumerable: true,
+    get: () => {
+      elementReads++;
+      return { id: "Token", name: "Token", kind: "class" };
+    },
+  });
+  accessorExports.length = 1;
+  requireInvalid(validateProviderDeclarationModelGraph(baseModel({ exports: accessorExports })), "shape");
+  assert.equal(elementReads, 0);
+
+  const sparseExports = new Array<ProviderExportDeclaration>(1);
+  requireInvalid(validateProviderDeclarationModelGraph(baseModel({ exports: sparseExports })), "shape");
+
+  const decoratedExports: ProviderExportDeclaration[] = [{ id: "Token", name: "Token", kind: "class" }];
+  Object.defineProperty(decoratedExports, "extra", { enumerable: true, value: true });
+  requireInvalid(validateProviderDeclarationModelGraph(baseModel({ exports: decoratedExports })), "shape");
+
+  const frozenLengthExports: ProviderExportDeclaration[] = [{ id: "Token", name: "Token", kind: "class" }];
+  Object.defineProperty(frozenLengthExports, "length", { writable: false });
+  requireInvalid(validateProviderDeclarationModelGraph(baseModel({ exports: frozenLengthExports })), "shape");
+});
+
+test("provider model graph snapshots exact provider records before publication", () => {
+  const member: { id: string; name: string; kind: "property"; type: { kind: "string" } } = {
+    id: "Token.Value",
+    name: "Value",
+    kind: "property",
+    type: { kind: "string" },
+  };
+  const declaration: ProviderExportDeclaration = {
+    id: "Token",
+    name: "Token",
+    kind: "class",
+    members: [member],
+  };
+  const model = baseModel({ exports: [declaration] });
+  const validation = requireValid(validateProviderDeclarationModelGraph(model));
+  (declaration as { name: string }).name = "Changed";
+  member.name = "Other";
+  assert.equal(validation.model.exports[0]?.name, "Token");
+  assert.equal(validation.model.exports[0]?.members?.[0]?.name, "Value");
+  assert.ok(Object.isFrozen(validation.model));
+  assert.ok(Object.isFrozen(validation.model.exports));
+  assert.ok(Object.isFrozen(validation.model.exports[0]));
+});
+
 test("provider model graph rejects a shared-array expansion bomb with bounded work", () => {
   const sharedElement: ProviderTypeExpression = { kind: "string" };
   const sharedElements = new Array<ProviderTypeExpression>(32_700).fill(sharedElement);

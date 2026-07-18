@@ -43,11 +43,14 @@ import type {
   ExtensionHost,
   TargetCallArgumentConversionSlot,
   TargetOperationFact,
+  TargetOperationProposal,
 } from "./index.js";
+import { extensionHostSetFact } from "./host.js";
 
 const lifecycleReadyFactKey = defineExtensionFactKey<{ readonly ready: true }>({
   extensionId: "acme.lifecycle-program-test",
   name: "lifecycleReady",
+  snapshot: () => Object.freeze({ ready: true as const }),
   equals: (left, right) => left.ready === right.ready,
 });
 
@@ -68,7 +71,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
     },
     initialize(context): void {
       context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, (_request, lifecycleContext) => {
-        lifecycleContext.host.facts.set(lifecycleSubject, lifecycleReadyFactKey, { ready: true });
+        lifecycleContext.host[extensionHostSetFact](lifecycleSubject, lifecycleReadyFactKey, Object.freeze({ ready: true as const }));
       });
       assert.equal(context.registerTargetSemanticProvider({
         identity: {
@@ -89,8 +92,9 @@ test("normal checking finalizes generic receiver calls and property assignment f
           }
           const carrierId = carrierIds.get(receiverType) ?? `Box<${carrierIds.size + 1}>`;
           carrierIds.set(receiverType, carrierId);
+          const selectedMember = request.accessMode === "write" ? request.sourceWriteType : request.sourceReadResult;
           return acceptObservation({
-            operation: operation(`${carrierId}.${identityId(request.sourceResult.selectedDeclaration, memberIds, () => nextMemberId++)}`, "property"),
+            operation: operation(`${carrierId}.${identityId(selectedMember.selectedDeclaration, memberIds, () => nextMemberId++)}`, "property"),
           });
         },
         mapCheckedElementAccess: (request, observationContext) => {
@@ -158,7 +162,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
   assert.equal(receiverCalls.length, 5);
   assert.equal(finalizedReceiverCalls.length, 5);
   assert.ok(finalizedReceiverCalls.every((request) => receiverCalls.filter((candidate) => candidate.call === request.call).length === 1));
-  assert.equal(finalizedReceiverCalls.filter((request) => request.optionalChain === true).length, 1);
+  assert.equal(finalizedReceiverCalls.filter((request) => request.chainRole.kind === "optional-chain").length, 1);
   assert.ok(finalizedReceiverCalls.every((request) => request.sourceReceiver !== undefined));
   const selectedReceiverTypes = [...new Set(receiverCalls.map((request) => request.sourceReceiver!.type))];
   assert.equal(selectedReceiverTypes.length, 2);
@@ -175,7 +179,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
     assert.equal(Object.isFrozen(selected.sourceReceiver), true);
     assert.ok(selected.sourceReceiver?.expression === request.sourceReceiver?.expression, "Finalized call evidence must retain the exact receiver expression subject.");
     assert.ok(selected.sourceReceiver?.type === request.sourceReceiver?.type, "Finalized call evidence must retain the exact instantiated receiver type.");
-    assert.equal(selected.sourceOptionalChain, request.optionalChain);
+    assert.deepEqual(selected.sourceChainRole, request.chainRole);
     assert.equal(selected.sourceCallKind, request.callKind);
   }
   assert.ok(finalizedReceiverCalls.every((request) => {
@@ -187,8 +191,10 @@ test("normal checking finalizes generic receiver calls and property assignment f
   assert.ok(assignmentRequests.every((request) => request.sourceResult.type !== undefined));
   assert.ok(assignmentRequests.every((request) => extensionHost.facts.get(request.left, targetOperationFactKey) !== undefined));
   assert.ok(assignmentRequests.every((request) => extensionHost.facts.get(request.expression, targetOperationFactKey)?.operationKind === "operator"));
-  assert.ok(assignmentRequests.every((request) =>
-    extensionHost.facts.get(request.expression, targetOperationFactKey)?.provenance?.sourceResultType === request.sourceResult.type));
+  assert.ok(assignmentRequests.every((request) => {
+    const sourceOperation = extensionHost.facts.get(request.expression, targetOperationFactKey)?.provenance.sourceOperation;
+    return sourceOperation?.sourceOperationKind === "operator" && sourceOperation.sourceResult.type === request.sourceResult.type;
+  }));
   const nestedAssignmentRequest = assignmentRequests.find((request) => extensionHost.facts.get(request.right, targetOperationFactKey) !== undefined);
   assert.ok(nestedAssignmentRequest !== undefined);
   const nestedAssignmentFact = extensionHost.facts.get(nestedAssignmentRequest.expression, targetOperationFactKey);
@@ -196,20 +202,30 @@ test("normal checking finalizes generic receiver calls and property assignment f
   assert.equal(nestedAssignmentFact?.operationKind, "operator");
   assert.ok(nestedRightFact !== undefined);
   assert.ok(nestedAssignmentFact?.targetOperation.endsWith(`.${nestedRightFact.targetOperation}`));
-  const optionalPropertyRequest = propertyRequests.find((request) => request.optionalChain === true);
+  const optionalPropertyRequest = propertyRequests.find((request) => request.chainRole.kind === "optional-chain");
   assert.ok(optionalPropertyRequest !== undefined);
-  assert.equal(extensionHost.facts.get(optionalPropertyRequest.expression, targetOperationFactKey)?.provenance?.sourceOptionalChain, true);
-  assert.equal(extensionHost.facts.get(optionalPropertyRequest.expression, targetOperationFactKey)?.provenance?.sourceCallCallee, true);
-  assert.equal(extensionHost.facts.get(optionalPropertyRequest.expression, targetOperationFactKey)?.provenance?.sourceAccessMode, "read");
+  const optionalPropertySource = extensionHost.facts.get(optionalPropertyRequest.expression, targetOperationFactKey)?.provenance.sourceOperation;
+  assert.equal(optionalPropertySource?.sourceOperationKind, "property-access");
+  if (optionalPropertySource?.sourceOperationKind !== "property-access") {
+    throw new Error("Expected property-access source operation provenance.");
+  }
+  assert.equal(optionalPropertySource.chainRole.kind, "optional-chain");
+  assert.equal(optionalPropertySource.use, "call-callee");
+  assert.equal(optionalPropertySource.accessMode, "read");
   const finalizedElementRequests = [...new Map(elementRequests.map((request) => [request.expression, request])).values()];
   assert.equal(finalizedElementRequests.length, 2);
   assert.ok(finalizedElementRequests.every((request) => request.sourceReceiver.type !== undefined));
   assert.ok(finalizedElementRequests.every((request) => extensionHost.facts.get(request.expression, targetOperationFactKey)?.operationKind === "indexer"));
-  const optionalElementRequest = finalizedElementRequests.find((request) => request.optionalChain === true);
+  const optionalElementRequest = finalizedElementRequests.find((request) => request.chainRole.kind === "optional-chain");
   assert.ok(optionalElementRequest !== undefined);
-  assert.equal(extensionHost.facts.get(optionalElementRequest.expression, targetOperationFactKey)?.provenance?.sourceOptionalChain, true);
-  assert.equal(extensionHost.facts.get(optionalElementRequest.expression, targetOperationFactKey)?.provenance?.sourceCallCallee, false);
-  assert.equal(extensionHost.facts.get(optionalElementRequest.expression, targetOperationFactKey)?.provenance?.sourceAccessMode, "read");
+  const optionalElementSource = extensionHost.facts.get(optionalElementRequest.expression, targetOperationFactKey)?.provenance.sourceOperation;
+  assert.equal(optionalElementSource?.sourceOperationKind, "element-access");
+  if (optionalElementSource?.sourceOperationKind !== "element-access") {
+    throw new Error("Expected element-access source operation provenance.");
+  }
+  assert.equal(optionalElementSource.chainRole.kind, "optional-chain");
+  assert.equal(optionalElementSource.use, "value");
+  assert.equal(optionalElementSource.accessMode, "read");
   assert.ok(propertyRequests.some((request) => request.propertyName === "value"));
 });
 
@@ -234,11 +250,11 @@ test("checked member requests retain exact access use without target-side AST in
         },
         mapCheckedPropertyAccess: (request) => {
           propertyRequests.push(request);
-          return acceptObservation({ operation: operation(`property.${request.propertyName}.${request.accessMode}.${request.callCallee}`, "property") });
+          return acceptObservation({ operation: operation(`property.${request.propertyName}.${request.accessMode}.${request.use}`, "property") });
         },
         mapCheckedElementAccess: (request) => {
           elementRequests.push(request);
-          return acceptObservation({ operation: operation(`element.${request.accessMode}.${request.callCallee}`, "indexer") });
+          return acceptObservation({ operation: operation(`element.${request.accessMode}.${request.use}`, "indexer") });
         },
         mapCheckedCall: () => acceptObservation({ kind: "source" }),
         mapCheckedOperator: () => acceptObservation({ operation: operation("operator", "operator") }),
@@ -279,7 +295,7 @@ test("checked member requests retain exact access use without target-side AST in
   finalizeExtensionSemantics(programOptions);
   assert.equal(extensionHost.diagnostics.all().length, 0);
 
-  assert.deepEqual(propertyRequests.map((request) => [request.propertyName, request.accessMode, request.callCallee, request.optionalChain === true]), [
+  assert.deepEqual(propertyRequests.map((request) => [request.propertyName, request.accessMode, request.use === "call-callee", request.chainRole.kind === "optional-chain"]), [
     ["value", "read", false, false],
     ["value", "write", false, false],
     ["value", "read-write", false, false],
@@ -291,7 +307,7 @@ test("checked member requests retain exact access use without target-side AST in
     ["handler", "read", false, false],
     ["update", "read", true, true],
   ]);
-  assert.deepEqual(elementRequests.map((request) => [request.accessMode, request.callCallee]), [
+  assert.deepEqual(elementRequests.map((request) => [request.accessMode, request.use === "call-callee"]), [
     ["read", true],
     ["read", false],
     ["write", false],
@@ -300,9 +316,10 @@ test("checked member requests retain exact access use without target-side AST in
     ["delete", false],
   ]);
   for (const request of [...propertyRequests, ...elementRequests]) {
-    const provenance = extensionHost.facts.get(request.expression, targetOperationFactKey)?.provenance;
-    assert.equal(provenance?.sourceAccessMode, request.accessMode);
-    assert.equal(provenance?.sourceCallCallee, request.callCallee);
+    const sourceOperation = extensionHost.facts.get(request.expression, targetOperationFactKey)?.provenance.sourceOperation;
+    assert.ok(sourceOperation?.sourceOperationKind === "property-access" || sourceOperation?.sourceOperationKind === "element-access");
+    assert.equal(sourceOperation.accessMode, request.accessMode);
+    assert.equal(sourceOperation.use, request.use);
   }
 });
 
@@ -389,20 +406,23 @@ test("call-only mapping retains real nested callee inputs without synthesizing p
   `);
 
   assertCleanProgram(program);
-  assert.equal(callRequests.length, 0, "Checked call mappers must not run during source checking.");
-  assert.equal(observations.length, 0);
+  assert.equal(callRequests.length, 4, "Source checking must evaluate ready calls and retain unavailable input-dependent calls.");
+  assert.equal(observations.filter((entry) => entry === "input:checking").length, 2);
+  assert.equal(observations.filter((entry) => entry === "receiver:checking").length, 2);
   finalizeExtensionSemantics(programOptions);
 
-  assert.equal(callRequests.length, 6);
+  assert.equal(callRequests.length, 8, "Finalization must replay only the two deferred inputs and their two blocked dependents.");
   const receiverCalls = callRequests.filter((request) => request.sourceReceiver !== undefined);
   const inputCalls = callRequests.filter((request) => request.sourceReceiver === undefined);
   assert.equal(receiverCalls.length, 4);
-  assert.equal(inputCalls.length, 2);
+  assert.equal(inputCalls.length, 4);
   assert.equal(new Set(callRequests.map((request) => request.call)).size, 6);
-  assert.equal(receiverCalls.filter((request) => request.optionalChain === true).length, 1);
+  assert.equal(receiverCalls.filter((request) => request.chainRole.kind === "optional-chain").length, 1);
   assert.ok(receiverCalls.every((request) => extensionHost.facts.get(request.callee, targetOperationFactKey) === undefined));
+  assert.equal(observations.filter((entry) => entry === "input:checking").length, 2);
+  assert.equal(observations.filter((entry) => entry === "receiver:checking").length, 2);
   assert.equal(observations.filter((entry) => entry === "input:finalization").length, 2);
-  assert.equal(observations.filter((entry) => entry === "receiver:finalization").length, 4);
+  assert.equal(observations.filter((entry) => entry === "receiver:finalization").length, 2);
   assert.ok([...new Set(callRequests.map((request) => request.call))]
     .every((call) => extensionHost.facts.get(call, selectedTargetSignatureFactKey) !== undefined));
   assert.equal(extensionHost.diagnostics.all().length, 0, "Nested call finalization must not report extension diagnostics.");
@@ -429,14 +449,16 @@ test("property mapper receives TS-Go member-selection receiver types", () => {
 
   assertCleanProgram(program);
   assert.equal(extensionHost.diagnostics.all().length, 0, "Member-selection checking must not report extension diagnostics.");
-  assert.equal(observedTypes.size, 0, "Property mappers must wait for semantic finalization.");
+  assert.equal(observedTypes.size, 2, "Ready member selections must expose their exact receiver types during source checking.");
+  const checkingTypes = new Map(observedTypes);
   finalizeExtensionSemantics(programOptions);
+  assert.deepEqual(observedTypes, checkingTypes, "Finalization must not replay already committed member selections.");
   assert.equal(observedTypes.size, 2);
   assert.equal(observedTypes.get("genericMember"), "MemberConstraint");
   assert.equal(observedTypes.get("primitiveMember"), "String");
 });
 
-function operation(targetOperation: string, operationKind: TargetOperationFact["operationKind"]): TargetOperationFact {
+function operation(targetOperation: string, operationKind: TargetOperationFact["operationKind"]): TargetOperationProposal {
   return {
     operationId: targetOperation,
     operationKind,

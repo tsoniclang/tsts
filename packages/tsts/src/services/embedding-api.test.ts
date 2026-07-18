@@ -36,7 +36,7 @@ import type {
   TargetBindingProvider,
   TargetConversionFact,
   TargetIdentity,
-  TargetOperationFact,
+  TargetOperationProposal,
   TargetSemanticProvider,
 } from "../index.js";
 
@@ -694,7 +694,7 @@ function providerIdentity(id: string, providerKind: "binding" | "semantic") {
   };
 }
 
-function targetOperation(operationId: string, targetOperation: string): TargetOperationFact {
+function targetOperation(operationId: string, targetOperation: string): TargetOperationProposal {
   return {
     operationId,
     operationKind: "iteration",

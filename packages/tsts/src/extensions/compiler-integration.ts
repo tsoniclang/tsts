@@ -48,7 +48,7 @@ import type {
   TargetTypeParameter,
   TargetTypeRef,
 } from "./facts.js";
-import { ExtensionLifecycleEvent, getExtensionHost } from "./host.js";
+import { ExtensionLifecycleEvent, extensionHostSetFact, getExtensionHost } from "./host.js";
 import type {
   ExtensionEvidence,
   ExtensionHost,
@@ -115,13 +115,13 @@ export function recordProviderTypeFamilyReferenceFacts(extensionHost: ExtensionH
       exportId: variant.declaration.exportId,
     },
   }];
-  extensionHost.facts.set(typeReference, providerVirtualDeclarationFactKey, variant.declaration, evidence);
+  extensionHost[extensionHostSetFact](typeReference, providerVirtualDeclarationFactKey, variant.declaration, evidence);
   if (variant.targetBinding !== undefined) {
-    extensionHost.facts.set(typeReference, targetBindingFactKey, variant.targetBinding, evidence);
+    extensionHost[extensionHostSetFact](typeReference, targetBindingFactKey, variant.targetBinding, evidence);
     if (type !== undefined) {
-      extensionHost.facts.set(type, targetBindingFactKey, variant.targetBinding, evidence);
+      extensionHost[extensionHostSetFact](type, targetBindingFactKey, variant.targetBinding, evidence);
     }
-    extensionHost.facts.set(typeReference, instantiatedTargetTypeFactKey, {
+    extensionHost[extensionHostSetFact](typeReference, instantiatedTargetTypeFactKey, {
       targetType: variant.targetBinding,
       typeArguments: (Node_TypeArguments(typeReference) ?? []).filter((argument): argument is Node => argument !== undefined),
     }, evidence);
@@ -130,21 +130,21 @@ export function recordProviderTypeFamilyReferenceFacts(extensionHost: ExtensionH
 
 function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: SourceFile, virtualModule: ProviderVirtualModuleArtifact): void {
   const evidence = getProviderVirtualModuleEvidence(virtualModule);
-  extensionHost.facts.set(file, canonicalIdentityFactKey, {
+  extensionHost[extensionHostSetFact](file, canonicalIdentityFactKey, {
     kind: "module",
     id: virtualModule.declarationModel.providerModuleId,
     ...(virtualModule.packageName !== undefined ? { packageName: virtualModule.packageName } : {}),
     ...(virtualModule.packageVersion !== undefined ? { packageVersion: virtualModule.packageVersion } : {}),
     subpath: virtualModule.moduleSpecifier,
   }, evidence);
-  extensionHost.facts.set(file, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule), evidence);
+  extensionHost[extensionHostSetFact](file, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule), evidence);
 
   const fileSymbol = Node_Symbol(file as GoPtr<Node>);
   if (fileSymbol === undefined) {
     return;
   }
 
-  extensionHost.facts.set(fileSymbol, canonicalIdentityFactKey, {
+  extensionHost[extensionHostSetFact](fileSymbol, canonicalIdentityFactKey, {
     kind: "module",
     id: virtualModule.declarationModel.providerModuleId,
     ...(virtualModule.packageName !== undefined ? { packageName: virtualModule.packageName } : {}),
@@ -152,14 +152,14 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
     subpath: virtualModule.moduleSpecifier,
     canonicalSymbolId: getSymbolFactId(fileSymbol),
   }, evidence);
-  extensionHost.facts.set(fileSymbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule), evidence);
+  extensionHost[extensionHostSetFact](fileSymbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule), evidence);
 
   for (const family of getProviderTypeFamilies(virtualModule)) {
     const familySymbol = fileSymbol.Exports?.get(family.exportName);
     if (familySymbol === undefined) {
       continue;
     }
-    extensionHost.facts.set(familySymbol, canonicalIdentityFactKey, {
+    extensionHost[extensionHostSetFact](familySymbol, canonicalIdentityFactKey, {
       kind: "export",
       id: `${virtualModule.declarationModel.providerModuleId}::${family.exportName}`,
       ...(virtualModule.packageName !== undefined ? { packageName: virtualModule.packageName } : {}),
@@ -168,7 +168,7 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
       exportName: family.exportName,
       canonicalSymbolId: getSymbolFactId(familySymbol),
     }, evidence);
-    extensionHost.facts.set(familySymbol, providerTypeFamilyFactKey, getProviderTypeFamilyFact(virtualModule, family), evidence);
+    extensionHost[extensionHostSetFact](familySymbol, providerTypeFamilyFactKey, getProviderTypeFamilyFact(virtualModule, family), evidence);
   }
 
   for (const declaration of virtualModule.declarationModel.exports) {
@@ -177,7 +177,7 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
     if (symbol === undefined) {
       continue;
     }
-    extensionHost.facts.set(symbol, canonicalIdentityFactKey, {
+    extensionHost[extensionHostSetFact](symbol, canonicalIdentityFactKey, {
       kind: "export",
       id: declaration.sourceTypeFamily === undefined
         ? `${virtualModule.declarationModel.providerModuleId}::${exportName}`
@@ -188,13 +188,13 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
       exportName,
       canonicalSymbolId: getSymbolFactId(symbol),
     }, evidence);
-    extensionHost.facts.set(symbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule, declaration), evidence);
+    extensionHost[extensionHostSetFact](symbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule, declaration), evidence);
     if (declaration.signatures === undefined || declaration.signatures.length === 0) {
       for (const exportDeclaration of symbol.Declarations ?? []) {
         if (exportDeclaration === undefined) {
           continue;
         }
-        extensionHost.facts.set(
+        extensionHost[extensionHostSetFact](
           exportDeclaration,
           providerVirtualDeclarationFactKey,
           getProviderVirtualDeclarationFact(virtualModule, declaration),
@@ -205,7 +205,7 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
 
     const targetBinding = getTargetBindingFact(virtualModule, declaration);
     if (targetBinding !== undefined) {
-      extensionHost.facts.set(symbol, targetBindingFactKey, targetBinding, evidence);
+      extensionHost[extensionHostSetFact](symbol, targetBindingFactKey, targetBinding, evidence);
     }
 
     if (declaration.signatures !== undefined && declaration.signatures.length > 0) {
@@ -268,7 +268,7 @@ function recordProviderVirtualMemberFacts(
       }
       usedMemberNodes.add(memberNode);
       const signature = member.signatures?.[index] ?? member.signatures?.[0];
-      extensionHost.facts.set(
+      extensionHost[extensionHostSetFact](
         memberNode,
         providerVirtualDeclarationFactKey,
         getProviderVirtualDeclarationFact(virtualModule, declaration, member, signature),
@@ -297,7 +297,7 @@ function setProviderVirtualDeclarationSymbolFact(
   if (existing !== undefined && !providerVirtualDeclarationFactKey.equals(existing, fact)) {
     return;
   }
-  extensionHost.facts.set(symbol, providerVirtualDeclarationFactKey, fact, evidence);
+  extensionHost[extensionHostSetFact](symbol, providerVirtualDeclarationFactKey, fact, evidence);
 }
 
 function findProviderMemberSymbol(exportSymbol: Symbol, member: ProviderMemberDeclaration, matchingMemberNodes: readonly GoPtr<Node>[]): GoPtr<Symbol> {
@@ -418,7 +418,7 @@ function recordProviderVirtualSignatureFacts(
     if (signatureDeclaration === undefined) {
       continue;
     }
-    extensionHost.facts.set(
+    extensionHost[extensionHostSetFact](
       signatureDeclaration,
       providerVirtualDeclarationFactKey,
       getProviderVirtualDeclarationFact(virtualModule, declaration, member, signatures[index]),

@@ -1,10 +1,19 @@
 import type { SourceFile } from "../internal/ast/ast.js";
 import type { Node } from "../internal/ast/spine.js";
 import type { Kind } from "../internal/ast/generated/kinds.js";
-import type { CheckedFlowUseMode } from "./observations.js";
+import type { CheckedFlowSourceUse } from "./observations.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import type { Checker } from "../internal/checker/checker/state.js";
+import type {
+  ExtensionCheckedIterationSelection,
+  ExtensionForAwaitOfAtomicIterationMechanism,
+  ExtensionForAwaitOfIterationMechanism,
+  ExtensionForOfAtomicIterationMechanism,
+  ExtensionForOfIterationMechanism,
+  ExtensionSelectedIterationProtocol,
+  ExtensionSelectedIterationTypes,
+} from "../internal/checker/checker/extension-iteration-selection.js";
 import type { ResolvedCallEvidence, SignatureLinks, Type, TypeNodeLinks } from "../internal/checker/types.js";
 import { checkedSourceTypesShareStableIdentity } from "./checked-source-type-identity.js";
 import { isRuntimeCheckedSourceExecution } from "./source-execution-role.js";
@@ -21,6 +30,7 @@ export type ExtensionSourceDecisionEvent =
       readonly selectedSymbol: Symbol | undefined;
       readonly resultType: Type;
       readonly receiverType: Type;
+      readonly selectionMode: "read" | "write";
       readonly accessMode: "read" | "write" | "read-write" | "delete";
       readonly callCallee: boolean;
     }
@@ -48,13 +58,13 @@ export type ExtensionSourceDecisionEvent =
   | {
       readonly kind: "checked-iteration";
       readonly origin: Node;
-      readonly iterationKind: "for-in" | "for-of" | "for-await-of";
-      readonly sourceIterableType: Type;
-      readonly sourceElementType: Type;
+      readonly selection: ExtensionCheckedIterationSelection;
     }
   | {
       readonly kind: "assertion-conversion";
       readonly origin: Node;
+      readonly sourceExpression: Node;
+      readonly explicitTargetTypeNode: Node;
       readonly sourceType: Type;
       readonly targetType: Type;
       readonly assertionKind: "as" | "angle-bracket" | "jsdoc";
@@ -91,7 +101,7 @@ export type ExtensionSourceDecisionEvent =
       readonly kind: "flow-use";
       readonly origin: Node;
       readonly symbol: Symbol;
-      readonly mode: CheckedFlowUseMode;
+      readonly sourceUse: CheckedFlowSourceUse;
     };
 
 export type ExtensionSourceDecisionPhase = "idle" | "source" | "publishing" | "failed";
@@ -441,7 +451,9 @@ export function appendEvent(checker: Checker, event: ExtensionSourceDecisionEven
       return;
     }
   }
-  if (existing.length !== 0 && event.kind !== "post-assignability") {
+  if (existing.length !== 0
+    && event.kind !== "post-assignability"
+    && !isComplementaryCheckedPropertySelection(existing, event)) {
     failClosed(state, `conflicting '${event.kind}' events were recorded for one source decision`);
   }
   if (!Number.isSafeInteger(state.events.length) || state.events.length >= eventBudget) {
@@ -451,6 +463,23 @@ export function appendEvent(checker: Checker, event: ExtensionSourceDecisionEven
   state.events.push(snapshot);
   existing.push(snapshot);
   currentFrame(state).eventInsertions.push(snapshot);
+}
+
+function isComplementaryCheckedPropertySelection(
+  existing: readonly ExtensionSourceDecisionEvent[],
+  event: ExtensionSourceDecisionEvent,
+): boolean {
+  if (event.kind !== "checked-property"
+    || event.accessMode !== "read-write"
+    || event.callCallee
+    || existing.length !== 1) {
+    return false;
+  }
+  const candidate = existing[0];
+  return candidate?.kind === "checked-property"
+    && candidate.accessMode === "read-write"
+    && !candidate.callCallee
+    && candidate.selectionMode !== event.selectionMode;
 }
 
 export function sourceDecisionRecordingActive(checker: Checker): boolean {
@@ -793,6 +822,7 @@ function sourceDecisionEventsEquivalent(
         && left.selectedSymbol === right.selectedSymbol
         && checkedSourceTypesShareStableIdentity(left.resultType, right.resultType)
         && checkedSourceTypesShareStableIdentity(left.receiverType, right.receiverType)
+        && left.selectionMode === right.selectionMode
         && left.accessMode === right.accessMode
         && left.callCallee === right.callCallee;
     case "checked-element":
@@ -814,11 +844,11 @@ function sourceDecisionEventsEquivalent(
         && checkedSourceTypesShareStableIdentity(left.sourceResultType, right.sourceResultType);
     case "checked-iteration":
       return right.kind === left.kind
-        && left.iterationKind === right.iterationKind
-        && checkedSourceTypesShareStableIdentity(left.sourceIterableType, right.sourceIterableType)
-        && checkedSourceTypesShareStableIdentity(left.sourceElementType, right.sourceElementType);
+        && extensionCheckedIterationSelectionsEquivalent(left.selection, right.selection);
     case "assertion-conversion":
       return right.kind === left.kind
+        && left.sourceExpression === right.sourceExpression
+        && left.explicitTargetTypeNode === right.explicitTargetTypeNode
         && checkedSourceTypesShareStableIdentity(left.sourceType, right.sourceType)
         && checkedSourceTypesShareStableIdentity(left.targetType, right.targetType)
         && left.assertionKind === right.assertionKind
@@ -842,7 +872,11 @@ function sourceDecisionEventsEquivalent(
         && left.expression === right.expression
         && left.relation === right.relation;
     case "flow-use":
-      return right.kind === left.kind && left.symbol === right.symbol && left.mode === right.mode;
+      return right.kind === left.kind
+        && left.symbol === right.symbol
+        && left.sourceUse.kind === right.sourceUse.kind
+        && (left.sourceUse.kind !== "ordinary"
+          || right.sourceUse.kind === "ordinary" && left.sourceUse.access === right.sourceUse.access);
   }
 }
 
@@ -850,6 +884,142 @@ function optionalSourceTypesEquivalent(left: Type | undefined, right: Type | und
   return left === undefined || right === undefined
     ? left === right
     : checkedSourceTypesShareStableIdentity(left, right);
+}
+
+function extensionCheckedIterationSelectionsEquivalent(
+  left: ExtensionCheckedIterationSelection,
+  right: ExtensionCheckedIterationSelection,
+): boolean {
+  if (left.iterationKind !== right.iterationKind
+    || !checkedSourceTypesShareStableIdentity(left.sourceIterableType, right.sourceIterableType)
+    || !checkedSourceTypesShareStableIdentity(left.sourceElementType, right.sourceElementType)) {
+    return false;
+  }
+  switch (left.iterationKind) {
+    case "for-in":
+      return right.iterationKind === "for-in" && left.mechanism.kind === right.mechanism.kind;
+    case "for-of":
+      return right.iterationKind === "for-of"
+        && extensionForOfMechanismsEquivalent(left.mechanism, right.mechanism);
+    case "for-await-of":
+      return right.iterationKind === "for-await-of"
+        && extensionForAwaitOfMechanismsEquivalent(left.mechanism, right.mechanism);
+  }
+}
+
+function extensionForOfMechanismsEquivalent(
+  left: ExtensionForOfIterationMechanism,
+  right: ExtensionForOfIterationMechanism,
+): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+  if (left.kind === "union") {
+    return right.kind === "union"
+      && left.alternatives.length === right.alternatives.length
+      && left.alternatives.every((alternative, index) =>
+        extensionForOfAtomicMechanismsEquivalent(alternative, right.alternatives[index]!));
+  }
+  return right.kind !== "union" && extensionForOfAtomicMechanismsEquivalent(left, right);
+}
+
+function extensionForOfAtomicMechanismsEquivalent(
+  left: ExtensionForOfAtomicIterationMechanism,
+  right: ExtensionForOfAtomicIterationMechanism,
+): boolean {
+  if (left.kind !== right.kind
+    || !checkedSourceTypesShareStableIdentity(left.sourceIterableType, right.sourceIterableType)) {
+    return false;
+  }
+  switch (left.kind) {
+    case "synchronous-iterator-protocol":
+      return right.kind === "synchronous-iterator-protocol"
+        && extensionIterationProtocolsEquivalent(left.protocol, right.protocol);
+    case "array-like-index":
+      return right.kind === "array-like-index"
+        && checkedSourceTypesShareStableIdentity(left.selectedIndexType, right.selectedIndexType);
+    case "string-code-unit-index":
+    case "untyped-dynamic-iteration":
+      return true;
+  }
+}
+
+function extensionForAwaitOfMechanismsEquivalent(
+  left: ExtensionForAwaitOfIterationMechanism,
+  right: ExtensionForAwaitOfIterationMechanism,
+): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+  if (left.kind === "union") {
+    return right.kind === "union"
+      && left.alternatives.length === right.alternatives.length
+      && left.alternatives.every((alternative, index) =>
+        extensionForAwaitOfAtomicMechanismsEquivalent(alternative, right.alternatives[index]!));
+  }
+  return right.kind !== "union" && extensionForAwaitOfAtomicMechanismsEquivalent(left, right);
+}
+
+function extensionForAwaitOfAtomicMechanismsEquivalent(
+  left: ExtensionForAwaitOfAtomicIterationMechanism,
+  right: ExtensionForAwaitOfAtomicIterationMechanism,
+): boolean {
+  if (left.kind !== right.kind
+    || !checkedSourceTypesShareStableIdentity(left.sourceIterableType, right.sourceIterableType)) {
+    return false;
+  }
+  switch (left.kind) {
+    case "asynchronous-iterator-protocol":
+    case "synchronous-iterator-adapted-to-async":
+      return right.kind === left.kind
+        && extensionIterationProtocolsEquivalent(left.protocol, right.protocol);
+    case "array-like-index-adapted-to-async":
+      return right.kind === "array-like-index-adapted-to-async"
+        && checkedSourceTypesShareStableIdentity(left.selectedIndexType, right.selectedIndexType);
+    case "string-code-unit-index-adapted-to-async":
+    case "untyped-dynamic-iteration":
+      return true;
+  }
+}
+
+function extensionIterationProtocolsEquivalent(
+  left: ExtensionSelectedIterationProtocol,
+  right: ExtensionSelectedIterationProtocol,
+): boolean {
+  if (left.resolutionKind !== right.resolutionKind
+    || !checkedSourceTypesShareStableIdentity(left.sourceIterableType, right.sourceIterableType)
+    || !extensionIterationTypesEquivalent(left.iterationTypes, right.iterationTypes)) {
+    return false;
+  }
+  if (left.resolutionKind === "known-iterable-instantiation") {
+    return right.resolutionKind === "known-iterable-instantiation"
+      && checkedSourceTypesShareStableIdentity(left.iterableTargetType, right.iterableTargetType)
+      && left.iterableSymbol === right.iterableSymbol
+      && left.iterableValueDeclaration === right.iterableValueDeclaration
+      && extensionSubjectArraysEquivalent(left.iterableDeclarations, right.iterableDeclarations);
+  }
+  return right.resolutionKind === "selected-iterator-member"
+    && left.iteratorMethodSymbol === right.iteratorMethodSymbol
+    && left.iteratorMethodValueDeclaration === right.iteratorMethodValueDeclaration
+    && extensionSubjectArraysEquivalent(left.iteratorMethodDeclarations, right.iteratorMethodDeclarations)
+    && checkedSourceTypesShareStableIdentity(left.iteratorMethodType, right.iteratorMethodType)
+    && checkedSourceTypesShareStableIdentity(left.iteratorType, right.iteratorType);
+}
+
+function extensionIterationTypesEquivalent(
+  left: ExtensionSelectedIterationTypes,
+  right: ExtensionSelectedIterationTypes,
+): boolean {
+  return optionalSourceTypesEquivalent(left.yieldType, right.yieldType)
+    && optionalSourceTypesEquivalent(left.returnType, right.returnType)
+    && optionalSourceTypesEquivalent(left.nextType, right.nextType);
+}
+
+function extensionSubjectArraysEquivalent(
+  left: readonly (Node | Symbol | undefined)[],
+  right: readonly (Node | Symbol | undefined)[],
+): boolean {
+  return left.length === right.length && left.every((subject, index) => subject === right[index]);
 }
 
 function resolvedCallEvidenceEquivalent(left: ResolvedCallEvidence, right: ResolvedCallEvidence): boolean {

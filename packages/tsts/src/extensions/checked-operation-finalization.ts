@@ -15,15 +15,19 @@ import type {
 import { ExtensionObservationPoint } from "./observations.js";
 import type { ExtensionFactSubject } from "./host.js";
 import type { TargetCallArgumentConversionSlot } from "./facts.js";
+import { targetCallArgumentConversionSlotEquals } from "./fact-value-equality.js";
 import { checkedOperationRequestEquals } from "./checked-operation-request-equality.js";
+import { encodeIdentityTuple } from "./identity-tuple.js";
 import {
   type CheckedOperationRequestSnapshotCache,
   snapshotCheckedOperationRequest,
   snapshotCheckedOperationResult,
+  snapshotTargetCallArgumentConversionSlot,
 } from "./checked-operation-value-snapshot.js";
 
 type AnyCheckedOperationResult = ExtensionObservationResult<unknown>;
 type AcceptedCheckedOperationResult = Extract<AnyCheckedOperationResult, { readonly kind: "accept" }>;
+type RejectedCheckedOperationResult = Extract<AnyCheckedOperationResult, { readonly kind: "reject" }>;
 
 export type CheckedOperationApplyOutcome =
   | { readonly kind: "applied" }
@@ -51,6 +55,7 @@ interface CheckedOperationRecord {
   acceptedEffects?: unknown;
   unresolved?: CheckedOperationReference;
   unresolvedReported: boolean;
+  rejectionPublished: boolean;
   checkingAttempted: boolean;
   finalizationAttempts: number;
   state: "evaluating" | "deferred" | "accepted" | "unavailable";
@@ -66,6 +71,7 @@ interface CheckedOperationRecordSnapshot {
   readonly hasUnresolved: boolean;
   readonly unresolved: CheckedOperationReference | undefined;
   readonly unresolvedReported: boolean;
+  readonly rejectionPublished: boolean;
   readonly checkingAttempted: boolean;
   readonly finalizationAttempts: number;
   readonly state: CheckedOperationRecord["state"];
@@ -106,7 +112,8 @@ export interface CheckedOperationInventoryCallbacks {
   readonly commitAttempt: (attempt: unknown) => void;
   readonly rollbackAttempt: (attempt: unknown) => void;
   readonly discardAttemptPreservingDiagnostics: (attempt: unknown) => void;
-  readonly deferAttemptPreservingOperations: (attempt: unknown) => readonly CheckedOperationReference[];
+  readonly rollbackAttemptPreservingOperations: (attempt: unknown) => readonly CheckedOperationReference[];
+  readonly publishRejectedDiagnostic: (result: RejectedCheckedOperationResult) => void;
   readonly onRequestConflict: (
     observation: CheckedOperationObservationPointName,
     subject: ExtensionFactSubject,
@@ -388,6 +395,7 @@ export class CheckedOperationInventory {
       evaluate: evaluateRecord,
       apply: applyRecord,
       unresolvedReported: false,
+      rejectionPublished: false,
       checkingAttempted: false,
       finalizationAttempts: 0,
       state: "deferred",
@@ -572,6 +580,14 @@ export class CheckedOperationInventory {
       if (this.#savepoints[this.#savepoints.length - 1] !== outerSavepoint) {
         throw new Error("Checked-operation finalization left an attempt transaction unsettled.");
       }
+      for (const record of this.#records) {
+        if (record.result?.kind !== "reject" || record.rejectionPublished) {
+          continue;
+        }
+        this.#journalRecord(record);
+        this.#callbacks.publishRejectedDiagnostic(record.result);
+        record.rejectionPublished = true;
+      }
       this.#validateOwnedOperationStates();
       this.#validatePrimaryOperationUniqueness();
       for (const record of this.#records) {
@@ -684,6 +700,10 @@ export class CheckedOperationInventory {
       }
       const result = pendingAcceptedResult ?? this.#withExecutionFrame("evaluating", record, () => record.evaluate(phase));
       this.#throwIfFailed();
+      if (result.kind === "reject" && phase === "finalization") {
+        this.#callbacks.publishRejectedDiagnostic(result);
+        record.rejectionPublished = true;
+      }
       if (result.kind === "accept") {
         if (pendingAcceptedResult === undefined) {
           record.acceptedEffects = this.#callbacks.captureAttemptEffects(attempt);
@@ -711,7 +731,7 @@ export class CheckedOperationInventory {
           }
           if (unresolvedRecord.state === "unavailable") {
             attemptOpen = false;
-            this.#callbacks.discardAttemptPreservingDiagnostics(attempt);
+            this.#callbacks.rollbackAttemptPreservingOperations(attempt);
             delete record.pendingAcceptedResult;
             delete record.acceptedEffects;
             delete record.unresolved;
@@ -721,7 +741,7 @@ export class CheckedOperationInventory {
             throw new Error(`Checked operation '${record.observation}' deferred on operation '${unresolved.observation}' in state '${unresolvedRecord.state}'.`);
           }
           attemptOpen = false;
-          const deferredDependencies = this.#callbacks.deferAttemptPreservingOperations(attempt);
+          const deferredDependencies = this.#callbacks.rollbackAttemptPreservingOperations(attempt);
           record.acceptedEffects = retainedAcceptedEffects;
           this.#retainDeferredDependencies(record, [...deferredDependencies, unresolved]);
           record.pendingAcceptedResult = result;
@@ -729,7 +749,7 @@ export class CheckedOperationInventory {
           return dependencyDeferredResult(record.observation);
         }
         attemptOpen = false;
-        this.#callbacks.discardAttemptPreservingDiagnostics(attempt);
+        this.#callbacks.rollbackAttemptPreservingOperations(attempt);
         delete record.pendingAcceptedResult;
         delete record.acceptedEffects;
         delete record.unresolved;
@@ -871,10 +891,10 @@ export class CheckedOperationInventory {
     }
   }
 
-  deferFromSavepoint(savepoint: CheckedOperationSavepoint): readonly CheckedOperationReference[] {
+  preserveFromSavepoint(savepoint: CheckedOperationSavepoint): readonly CheckedOperationReference[] {
     this.#requireCurrentSavepoint(savepoint);
     try {
-      return this.#deferFromSavepoint(savepoint);
+      return this.#preserveFromSavepoint(savepoint);
     } catch (error) {
       if (savepoint.active && this.#savepoints[this.#savepoints.length - 1] === savepoint) {
         this.rollbackToSavepoint(savepoint);
@@ -884,9 +904,9 @@ export class CheckedOperationInventory {
     }
   }
 
-  #deferFromSavepoint(savepoint: CheckedOperationSavepoint): readonly CheckedOperationReference[] {
+  #preserveFromSavepoint(savepoint: CheckedOperationSavepoint): readonly CheckedOperationReference[] {
     if (savepoint.owner === undefined) {
-      throw new Error("Only a checked-operation attempt transaction can preserve deferred operations.");
+      throw new Error("Only a checked-operation attempt transaction can preserve nested operations.");
     }
     const newRecordCount = this.#records.length - savepoint.recordCount;
     const changedRecordCount = savepoint.snapshots.size + newRecordCount;
@@ -970,6 +990,7 @@ export class CheckedOperationInventory {
       delete record.unresolved;
     }
     record.unresolvedReported = snapshot.unresolvedReported;
+    record.rejectionPublished = snapshot.rejectionPublished;
     record.checkingAttempted = snapshot.checkingAttempted;
     record.finalizationAttempts = snapshot.finalizationAttempts;
     record.state = snapshot.state;
@@ -1482,6 +1503,7 @@ function snapshotCheckedOperationRecord(record: CheckedOperationRecord): Checked
     hasUnresolved: Object.hasOwn(record, "unresolved"),
     unresolved: record.unresolved,
     unresolvedReported: record.unresolvedReported,
+    rejectionPublished: record.rejectionPublished,
     checkingAttempted: record.checkingAttempted,
     finalizationAttempts: record.finalizationAttempts,
     state: record.state,
@@ -1573,8 +1595,6 @@ function checkedOperationReference<TObservation extends CheckedOperationObservat
             conversionKind: "call-argument",
             call: conversion.call,
             slot: conversion.slot,
-            sourceArgumentIndex: conversion.sourceArgumentIndex,
-            targetParameterIndex: conversion.targetParameterIndex,
           });
     }
   }
@@ -1595,7 +1615,10 @@ function checkedOperationSlotEquals<TObservation extends CheckedOperationObserva
   }
   return leftConversion.conversionKind === "assertion"
     || (leftConversion.call === (rightConversion as Extract<CheckedConversionMappingRequest, { readonly conversionKind: "call-argument" }>).call
-      && leftConversion.slot === (rightConversion as Extract<CheckedConversionMappingRequest, { readonly conversionKind: "call-argument" }>).slot);
+      && targetCallArgumentConversionSlotEquals(
+        leftConversion.slot,
+        (rightConversion as Extract<CheckedConversionMappingRequest, { readonly conversionKind: "call-argument" }>).slot,
+      ));
 }
 
 function checkedOperationReferenceEquals(left: CheckedOperationReference, right: CheckedOperationReference): boolean {
@@ -1603,9 +1626,9 @@ function checkedOperationReferenceEquals(left: CheckedOperationReference, right:
     && left.subject === right.subject
     && left.conversionKind === right.conversionKind
     && left.call === right.call
-    && left.slot === right.slot
-    && left.sourceArgumentIndex === right.sourceArgumentIndex
-    && left.targetParameterIndex === right.targetParameterIndex;
+    && (left.slot === undefined || right.slot === undefined
+      ? left.slot === right.slot
+      : targetCallArgumentConversionSlotEquals(left.slot, right.slot));
 }
 
 function optionalCheckedOperationReferenceEquals(
@@ -1661,21 +1684,17 @@ function snapshotCheckedOperationReference(reference: CheckedOperationReference)
     "conversionKind",
     "call",
     "slot",
-    "sourceArgumentIndex",
-    "targetParameterIndex",
   ]);
   const call = requireReferenceSubject(fields.call, "call");
-  const slot = requireReferenceSubject(fields.slot, "slot") as TargetCallArgumentConversionSlot;
-  const sourceArgumentIndex = requireReferenceIndex(fields.sourceArgumentIndex, "sourceArgumentIndex");
-  const targetParameterIndex = requireReferenceIndex(fields.targetParameterIndex, "targetParameterIndex");
+  const slot = snapshotTargetCallArgumentConversionSlot(
+    requireReferenceSubject(fields.slot, "slot") as TargetCallArgumentConversionSlot,
+  );
   return Object.freeze({
     observation,
     subject,
     conversionKind,
     call,
     slot,
-    sourceArgumentIndex,
-    targetParameterIndex,
   });
 }
 
@@ -1717,13 +1736,6 @@ function requireReferenceSubject(value: unknown, field: string): ExtensionFactSu
   return value;
 }
 
-function requireReferenceIndex(value: unknown, field: string): number {
-  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
-    throw new Error(`Checked-operation reference '${field}' must be a non-negative safe integer.`);
-  }
-  return value;
-}
-
 function isCheckedOperationObservationPointName(value: unknown): value is CheckedOperationObservationPointName {
   return value === ExtensionObservationPoint.mapCheckedCall
     || value === ExtensionObservationPoint.mapCheckedPropertyAccess
@@ -1740,7 +1752,7 @@ function checkedOperationDependencies(record: CheckedOperationRecord): readonly 
 interface CheckedOperationReferenceSubjectIndex {
   readonly observations: Set<CheckedOperationObservationPointName>;
   assertion: boolean;
-  readonly calls: WeakMap<object, WeakMap<object, Map<number, Set<number>>>>;
+  readonly calls: WeakMap<object, Set<string>>;
 }
 
 export class CheckedOperationReferenceIndex {
@@ -1772,25 +1784,26 @@ export class CheckedOperationReferenceIndex {
     }
     let slots = subject.calls.get(reference.call);
     if (slots === undefined) {
-      slots = new WeakMap();
+      slots = new Set();
       subject.calls.set(reference.call, slots);
     }
-    let sourceIndices = slots.get(reference.slot);
-    if (sourceIndices === undefined) {
-      sourceIndices = new Map();
-      slots.set(reference.slot, sourceIndices);
-    }
-    let targetIndices = sourceIndices.get(reference.sourceArgumentIndex);
-    if (targetIndices === undefined) {
-      targetIndices = new Set();
-      sourceIndices.set(reference.sourceArgumentIndex, targetIndices);
-    }
-    if (targetIndices.has(reference.targetParameterIndex)) {
+    const slotIdentity = targetCallArgumentConversionSlotIdentity(reference.slot);
+    if (slots.has(slotIdentity)) {
       return false;
     }
-    targetIndices.add(reference.targetParameterIndex);
+    slots.add(slotIdentity);
     return true;
   }
+}
+
+function targetCallArgumentConversionSlotIdentity(slot: TargetCallArgumentConversionSlot): string {
+  return encodeIdentityTuple([
+    slot.sourceArgumentIndex,
+    slot.sourceForm,
+    slot.spreadElementIndex,
+    slot.targetParameterIndex,
+    slot.targetForm,
+  ]);
 }
 
 function createCheckedOperationReferenceIndex(

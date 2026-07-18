@@ -52,12 +52,26 @@ import type {
   TargetBindingProvider,
   TargetIdentity,
   TargetOperationFact,
+  TargetOperationProposal,
+  SelectedTargetSignatureFact,
   TargetSemanticProvider,
   TargetTypeRef,
   ExtensionFlowUseValidationRequest,
   ExtensionFlowUseValidationResult,
 } from "./index.js";
-import { extensionHostRunCheckedOperation } from "./host.js";
+import {
+  extensionHostPublishSourceDecisionBatch,
+  extensionHostRunCheckedOperation,
+  extensionHostSetFact,
+} from "./host.js";
+import {
+  checkedElementSourceOperationFromRequest,
+  checkedOperatorSourceOperationFromRequest,
+  checkedPropertySourceOperationFromRequest,
+  finalizeSelectedTargetSignatureFact,
+  finalizeTargetOperationFact,
+} from "./checker-integration.js";
+import { createCheckedOperationRequestSnapshotCache } from "./checked-operation-value-snapshot.js";
 import {
   getProviderVirtualArtifactForCompiler,
   providerCanonicalExportOwnerMarker,
@@ -66,9 +80,13 @@ import {
 } from "./provider-virtual-internal.js";
 import { providerAncillaryDataLimits, providerDeclarationClosureLimits } from "./provider-resource-limits.js";
 
-const primitiveFactKey = defineExtensionFactKey({
+const primitiveFactKey = defineExtensionFactKey<string>({
   extensionId: "source-primitives",
   name: "primitive",
+  snapshot: (value) => {
+    assert.equal(typeof value, "string");
+    return value;
+  },
 });
 
 const ignoreCheckedOperationAcceptance = (): void => {};
@@ -206,8 +224,10 @@ test("observation owners are required and conflicts are reported", () => {
   assert.equal(host.requireObservationOwner(ExtensionObservationPoint.mapCheckedCall), undefined);
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.observationOwnerMissing);
 
-  host.registerObservationOwner(ExtensionObservationPoint.mapCheckedCall, "missing-extension");
-  assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.unknownObservationOwner);
+  assert.throws(
+    () => host.registerObservationOwner(ExtensionObservationPoint.mapCheckedCall, "missing-extension"),
+    /Host-owned extension registration is required to register observation owner state/,
+  );
 });
 
 test("public runObservation rejects every checked observation point at runtime despite compile-time exclusion", () => {
@@ -237,16 +257,16 @@ test("fact store supports insert, idempotent writes, conflicts, and object subje
   const subject = {};
   const canonicalSubject = {};
 
-  assert.equal(host.facts.set(subject, primitiveFactKey, "int32"), "inserted");
-  assert.equal(host.facts.set(subject, primitiveFactKey, "int32"), "idempotent");
+  assert.equal(host[extensionHostSetFact](subject, primitiveFactKey, "int32"), "inserted");
+  assert.equal(host[extensionHostSetFact](subject, primitiveFactKey, "int32"), "idempotent");
   assert.equal(host.facts.get(subject, primitiveFactKey), "int32");
-  assert.equal(host.facts.set(subject, primitiveFactKey, "int64"), "conflict");
+  assert.equal(host[extensionHostSetFact](subject, primitiveFactKey, "int64"), "conflict");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.factConflict);
 
-  assert.equal(host.facts.set(canonicalSubject, primitiveFactKey, "int32"), "inserted");
+  assert.equal(host[extensionHostSetFact](canonicalSubject, primitiveFactKey, "int32"), "inserted");
   assert.equal(host.facts.get(canonicalSubject, primitiveFactKey), "int32");
 
-  assert.equal(Reflect.apply(host.facts.set, host.facts, [null, primitiveFactKey, "int32"]), "invalid-subject");
+  assert.equal(Reflect.apply(host[extensionHostSetFact], host, [null, primitiveFactKey, "int32"]), "invalid-subject");
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.invalidFactSubject);
 });
 
@@ -255,60 +275,81 @@ test("fact conflict diagnostics are keyed per object subject", () => {
   const firstSubject = {};
   const secondSubject = {};
 
-  host.facts.set(firstSubject, primitiveFactKey, "int32");
-  host.facts.set(firstSubject, primitiveFactKey, "int64");
-  host.facts.set(secondSubject, primitiveFactKey, "int32");
-  host.facts.set(secondSubject, primitiveFactKey, "int64");
+  host[extensionHostSetFact](firstSubject, primitiveFactKey, "int32");
+  host[extensionHostSetFact](firstSubject, primitiveFactKey, "int64");
+  host[extensionHostSetFact](secondSubject, primitiveFactKey, "int32");
+  host[extensionHostSetFact](secondSubject, primitiveFactKey, "int64");
 
   const conflicts = host.diagnostics.all().filter((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.factConflict);
   assert.equal(conflicts.length, 2);
 });
 
 test("fact resolver computes lazily and caches through the fact store", () => {
-  const host = new ExtensionHost({});
   const canonical = {};
   const alias = {};
   let resolveCount = 0;
-
-  host.facts.set(canonical, primitiveFactKey, "int32");
-  host.factResolver.register(primitiveFactKey, (subject, context) => {
-    if (subject !== alias) {
-      return undefined;
-    }
-    resolveCount += 1;
-    const value = context.facts.get(canonical, primitiveFactKey);
-    return value === undefined ? undefined : {
-      value,
-      evidence: [{ message: "alias resolved to canonical primitive" }],
-    };
+  const host = new ExtensionHost({}, {
+    extensions: [extension("source-primitives", {
+      initialize(context): void {
+        context.factResolver.register(primitiveFactKey, (subject, resolverContext) => {
+          if (subject !== alias) {
+            return undefined;
+          }
+          resolveCount += 1;
+          const value = resolverContext.facts.get(canonical, primitiveFactKey);
+          return value === undefined ? undefined : {
+            value,
+            evidence: [{ message: "alias resolved to canonical primitive" }],
+          };
+        });
+      },
+    })],
   });
 
-  assert.equal(host.factResolver.resolve(alias, primitiveFactKey), "int32");
-  assert.equal(host.factResolver.resolve(alias, primitiveFactKey), "int32");
+  assert.equal(host[extensionHostSetFact](canonical, primitiveFactKey, "int32"), "inserted");
+  assert.equal(host.facts.get(canonical, primitiveFactKey), "int32");
+  assert.equal(host.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "EXTENSION_INITIALIZE_FAILED"), false);
+  let firstResolution: string | undefined;
+  let secondResolution: string | undefined;
+  host[extensionHostPublishSourceDecisionBatch](() => {
+    firstResolution = host.factResolver.resolve(alias, primitiveFactKey);
+    secondResolution = host.factResolver.resolve(alias, primitiveFactKey);
+  });
   assert.equal(resolveCount, 1);
+  assert.equal(firstResolution, "int32");
+  assert.equal(secondResolution, "int32");
   assert.equal(host.facts.getEntry(alias, primitiveFactKey)?.evidence[0]?.message, "alias resolved to canonical primitive");
 });
 
-test("fact resolver can lazily cache finalized facts without sealed-store diagnostics", () => {
-  const host = new ExtensionHost({});
+test("fact resolver can cache facts during finalization without sealed-store diagnostics", () => {
   const canonical = {};
   const alias = {};
-
-  host.facts.set(canonical, primitiveFactKey, "int32");
-  host.factResolver.register(primitiveFactKey, (subject, context) => {
-    if (subject !== alias) {
-      return undefined;
-    }
-    const value = context.facts.get(canonical, primitiveFactKey);
-    return value === undefined ? undefined : {
-      value,
-      evidence: [{ message: "post-finalization alias resolved to canonical primitive" }],
-    };
+  let resolvedDuringFinalization: string | undefined;
+  const host = new ExtensionHost({}, {
+    extensions: [extension("source-primitives", {
+      initialize(context): void {
+        context.factResolver.register(primitiveFactKey, (subject, resolverContext) => {
+          if (subject !== alias) {
+            return undefined;
+          }
+          const value = resolverContext.facts.get(canonical, primitiveFactKey);
+          return value === undefined ? undefined : {
+            value,
+            evidence: [{ message: "finalization alias resolved to canonical primitive" }],
+          };
+        });
+        context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, () => {
+          resolvedDuringFinalization = context.factResolver.resolve(alias, primitiveFactKey);
+        });
+      },
+    })],
   });
 
+  host[extensionHostSetFact](canonical, primitiveFactKey, "int32");
   host.finalizeSemantics();
+  assert.equal(resolvedDuringFinalization, "int32");
   assert.equal(host.getFactForConsumer("emitter", alias, primitiveFactKey), "int32");
-  assert.equal(host.facts.getEntry(alias, primitiveFactKey)?.evidence[0]?.message, "post-finalization alias resolved to canonical primitive");
+  assert.equal(host.facts.getEntry(alias, primitiveFactKey)?.evidence[0]?.message, "finalization alias resolved to canonical primitive");
   assert.equal(host.diagnostics.all().some((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.factStoreSealed), false);
 });
 
@@ -414,13 +455,16 @@ test("extensions register binding and semantic providers through initialization 
   assert.equal(host.diagnostics.hasErrors(), false);
 
   const mapped = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
+    sourceOperationKind: "call",
     call,
     callee,
     arguments: [argument],
     callKind: "call",
+    sourceSelection: { kind: "untyped" },
     sourceCallee: sourceValue(callee, callee),
     sourceArguments: [sourceValue(argument, argument)],
     sourceResult: sourceValue(call, call),
+    chainRole: { kind: "ordinary", participant: "call" },
     target: "acme",
   }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
 
@@ -521,13 +565,16 @@ test("semantic provider methods own typed observations without hook boilerplate"
   assert.equal(assignable.kind, "accept");
 
   const call = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
+    sourceOperationKind: "call",
     call: expression,
     callee: consoleWriteLine,
     arguments: [callArgument],
     callKind: "call",
+    sourceSelection: { kind: "untyped" },
     sourceCallee: sourceValue(consoleWriteLine, consoleWriteLine),
     sourceArguments: [sourceValue(callArgument, callArgument)],
     sourceResult: sourceValue(expression, expression),
+    chainRole: { kind: "ordinary", participant: "call" },
     target: "acme",
   }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(call.kind === "accept" && call.value.kind === "target" ? call.value.selectedSignature.member.id : undefined, "Acme.Console.WriteLine(Acme.Int32)");
@@ -537,31 +584,37 @@ test("semantic provider methods own typed observations without hook boilerplate"
   assert.deepEqual(call.kind === "accept" && call.value.kind === "target" ? call.value.argumentConversions : [], [argumentConversionSlot(0)]);
 
   const property = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedPropertyAccess, {
+    sourceOperationKind: "property-access",
     expression: propertyAccess,
     receiver: stringType,
     propertyName: "length",
     accessMode: "read",
-    callCallee: false,
+    use: "value",
     sourceReceiver: sourceValue(stringType, stringType),
-    sourceResult: sourceValue(propertyAccess, int32Type),
+    sourceReadResult: sourceValue(propertyAccess, int32Type),
+    chainRole: { kind: "ordinary", participant: "property-access" },
     target: "acme",
   }, () => ({ operation: targetOperation("core", "property") }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(property.kind === "accept" ? property.value.operation.operationId : undefined, "Acme.String.Length");
 
   const element = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedElementAccess, {
+    sourceOperationKind: "element-access",
     expression: elementAccess,
     receiver: stringType,
     argument: spanArgument,
     accessMode: "read",
-    callCallee: false,
+    use: "value",
     sourceReceiver: sourceValue(stringType, stringType),
     sourceArgument: sourceValue(spanArgument, spanArgument),
-    sourceResult: sourceValue(elementAccess, elementAccess),
+    sourceReadResult: sourceValue(elementAccess, elementAccess),
+    chainRole: { kind: "ordinary", participant: "element-access" },
     target: "acme",
   }, () => ({ operation: targetOperation("core", "indexer") }), ignoreCheckedOperationAcceptance, { requireOwner: true });
   assert.equal(element.kind === "accept" ? element.value.operation.operationId : undefined, "Acme.Span.GetItem");
 
   const operator = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedOperator, {
+    sourceOperationKind: "operator",
+    operatorKind: "binary",
     expression: operatorExpression,
     operator: "+",
     left: leftOperand,
@@ -582,6 +635,7 @@ test("semantic provider methods own typed observations without hook boilerplate"
 
   const noConversion: CheckedConversionMappingResult = {};
   const conversion = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedConversion, {
+    sourceOperationKind: "conversion",
     conversionKind: "assertion",
     assertionKind: "as",
     expression: convertedExpression,
@@ -601,7 +655,7 @@ test("semantic provider methods own typed observations without hook boilerplate"
   const flow = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, {
     useSite: flowUse,
     symbol,
-    mode: "read",
+    sourceUse: { kind: "ordinary", access: "read" },
     target: "acme",
   }, () => ({ valid: false }), { requireOwner: true });
   assert.equal(flow.kind === "accept" ? flow.value.valid : false, true);
@@ -4419,7 +4473,7 @@ test("semantic finalization seals facts and gates consumer reads", () => {
   const host = new ExtensionHost({});
   const subject = {};
 
-  host.facts.set(subject, primitiveFactKey, "int32");
+  host[extensionHostSetFact](subject, primitiveFactKey, "int32");
   assert.equal(host.getFactForConsumer("emitter", subject, primitiveFactKey), undefined);
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.consumerBeforeFinalization);
 
@@ -4428,7 +4482,7 @@ test("semantic finalization seals facts and gates consumer reads", () => {
   assert.equal(host.getFactForConsumer("emitter", subject, primitiveFactKey), "int32");
   assert.equal(host.getFactsForConsumer("emitter", subject).length, 1);
 
-  assert.equal(host.facts.set({}, primitiveFactKey, "int64"), "sealed");
+  assert.equal(host[extensionHostSetFact]({}, primitiveFactKey, "int64"), "sealed");
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.factStoreSealed);
 });
 
@@ -4440,7 +4494,7 @@ test("lifecycle hooks run before semantic finalization seals facts", () => {
   let lifecycleQueryFacade = false;
   const host = new ExtensionHost({}, {
     extensions: [
-      extension("source-semantics", {
+      extension("source-primitives", {
         initialize: (context) => {
           context.registerLifecycleHook<SourceFileBoundLifecycleRequest>(ExtensionLifecycleEvent.afterSourceFileBound, (request) => {
             if (request.sourceFile === sourceFile && request.fileName === "/src/index.ts") {
@@ -4470,7 +4524,7 @@ test("lifecycle hooks run before semantic finalization seals facts", () => {
   assert.equal(host.facts.get(finalizationMarker, primitiveFactKey), "int64");
   assert.equal(lifecycleCompilerProgram, host.program);
   assert.equal(lifecycleQueryFacade, true);
-  assert.equal(host.facts.set(afterFinalize, primitiveFactKey, "uint32"), "sealed");
+  assert.equal(host[extensionHostSetFact](afterFinalize, primitiveFactKey, "uint32"), "sealed");
 });
 
 test("lifecycle hooks share one host-owned immutable request snapshot", () => {
@@ -4539,7 +4593,7 @@ test("canonical identity facts are consumer-queryable after finalization", () =>
   const host = new ExtensionHost({});
   const localAlias = {};
 
-  host.facts.set(localAlias, canonicalIdentityFactKey, {
+  host[extensionHostSetFact](localAlias, canonicalIdentityFactKey, {
     kind: "export",
     id: "@example/native/types.js::int",
     packageName: "@example/native",
@@ -4561,10 +4615,10 @@ test("consumer query facade exposes finalized target facts without fallback infe
   const runtimeType = {};
   const host = new ExtensionHost({});
 
-  host.facts.set(call, selectedTargetSignatureFactKey, selectedTargetCallFact("Acme.Console.WriteLine(Acme.Int32)"));
-  host.facts.set(propertyAccess, targetOperationFactKey, targetOperation("Acme.String.Length", "property"));
-  host.facts.set(argument, argumentPassingFactKey, { mode: "byref-readonly" });
-  host.facts.set(runtimeType, runtimeCarrierFactKey, {
+  host[extensionHostSetFact](call, selectedTargetSignatureFactKey, selectedTargetCallFact("Acme.Console.WriteLine(Acme.Int32)"));
+  host[extensionHostSetFact](propertyAccess, targetOperationFactKey, targetPropertyOperationFact(propertyAccess, "Acme.String.Length"));
+  host[extensionHostSetFact](argument, argumentPassingFactKey, { mode: "byref-readonly" });
+  host[extensionHostSetFact](runtimeType, runtimeCarrierFactKey, {
     carrier: { kind: "target-named", id: "Acme.Int32" },
     requiresAllocation: false,
   });
@@ -4612,7 +4666,7 @@ test("strict consumer facts report diagnostics and fail closed", () => {
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.requiredFactMissing);
 
   const satisfiedHost = new ExtensionHost({});
-  satisfiedHost.facts.set(call, selectedTargetSignatureFactKey, selectedTargetCallFact("Acme.Console.WriteLine(Acme.Int32)"));
+  satisfiedHost[extensionHostSetFact](call, selectedTargetSignatureFactKey, selectedTargetCallFact("Acme.Console.WriteLine(Acme.Int32)"));
   satisfiedHost.finalizeSemantics();
   assert.equal(createExtensionConsumerQueries(satisfiedHost, "emitter").mustSelectedTargetCall(call).member.id, "Acme.Console.WriteLine(Acme.Int32)");
 });
@@ -4841,15 +4895,6 @@ test("checked call mapping records selected target signature facts", () => {
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.mapCheckedCall, (request) => {
             if (request.call === call) {
-              context.facts.set(request.call, selectedTargetSignatureFactKey, {
-                ...writeLineInt,
-                argumentConversions,
-                sourceArgumentBindings: request.sourceArgumentBindings ?? [],
-                sourceCallKind: request.callKind,
-                sourceCallee: request.sourceCallee,
-                sourceArguments: request.sourceArguments,
-                sourceResult: request.sourceResult,
-              });
               return acceptObservation({
                 kind: "target",
                 selectedSignature: writeLineInt,
@@ -4864,24 +4909,52 @@ test("checked call mapping records selected target signature facts", () => {
   });
 
   const result = host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, {
+    sourceOperationKind: "call",
     call,
     callee,
     arguments: [argument],
     callKind: "call",
-    sourceArgumentBindings: [{
-      sourceArgumentIndex: 0,
-      effectiveArgumentIndex: 0,
-      sourceForm: "value",
-      sourceParameterIndex: 0,
-      sourceParameterForm: "parameter",
-      selectedArgumentType: argument,
-      selectedParameterType: argument,
-    }],
+    sourceSelection: {
+      kind: "applicable",
+      signature: callee,
+      methodTypeArguments: [],
+      parameters: [{
+        parameterIndex: 0,
+        parameterName: "value",
+        parameterSymbol: {},
+        selectedType: argument,
+        acceptsOmission: false,
+        rest: false,
+      }],
+      argumentBindings: [{
+        sourceArgumentIndex: 0,
+        effectiveArgumentIndex: 0,
+        sourceForm: "value",
+        sourceParameterIndex: 0,
+        sourceParameterForm: "parameter",
+        selectedArgumentType: argument,
+        selectedParameterType: argument,
+      }],
+    },
     sourceCallee: sourceValue(callee, callee),
     sourceArguments: [sourceValue(argument, argument)],
     sourceResult: sourceValue(call, call),
+    chainRole: { kind: "ordinary", participant: "call" },
     target: "acme",
-  }, () => ({ kind: "source" }), ignoreCheckedOperationAcceptance, { requireOwner: true });
+  }, () => ({ kind: "source" }), (value, evidence, acceptedRequest) => {
+    if (value.kind !== "target") {
+      throw new Error("The checked-call acceptance regression requires a target selection.");
+    }
+    const fact = finalizeSelectedTargetSignatureFact(
+      value,
+      acceptedRequest,
+      createCheckedOperationRequestSnapshotCache(),
+    );
+    const writeResult = host[extensionHostSetFact](acceptedRequest.call, selectedTargetSignatureFactKey, fact, evidence);
+    if (writeResult !== "inserted" && writeResult !== "idempotent") {
+      throw new Error(`Cannot publish selected target signature '${fact.member.id}': ${writeResult}.`);
+    }
+  }, { requireOwner: true });
 
   assert.equal(result.kind, "accept");
   assert.equal(host.facts.get(call, selectedTargetSignatureFactKey)?.member.id, "Acme.Console.WriteLine(Acme.Int32)");
@@ -4906,19 +4979,16 @@ test("property, element, and operator observations expose target operations", ()
           ExtensionObservationPoint.mapCheckedOperator,
         ],
         initialize: (context) => {
-          context.registerObservation(ExtensionObservationPoint.mapCheckedPropertyAccess, (request) => {
+          context.registerObservation(ExtensionObservationPoint.mapCheckedPropertyAccess, () => {
             const operation = targetOperation("Acme.Array.Length", "property");
-            context.facts.set(request.expression, targetOperationFactKey, operation);
             return acceptObservation({ operation, resultType: int32Type });
           });
-          context.registerObservation(ExtensionObservationPoint.mapCheckedElementAccess, (request) => {
+          context.registerObservation(ExtensionObservationPoint.mapCheckedElementAccess, () => {
             const operation = targetOperation("Acme.Array.Get", "indexer");
-            context.facts.set(request.expression, targetOperationFactKey, operation);
             return acceptObservation({ operation, resultType: elementType });
           });
-          context.registerObservation(ExtensionObservationPoint.mapCheckedOperator, (request) => {
+          context.registerObservation(ExtensionObservationPoint.mapCheckedOperator, () => {
             const operation = targetOperation("Acme.Int32.op_Addition", "operator");
-            context.facts.set(request.expression, targetOperationFactKey, operation);
             return acceptObservation({ operation, resultType: int32Type });
           });
         },
@@ -4929,37 +4999,65 @@ test("property, element, and operator observations expose target operations", ()
   assert.equal(host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedPropertyAccess,
     {
+      sourceOperationKind: "property-access",
       expression: lengthExpression,
       receiver: arrayType,
       propertyName: "Length",
       accessMode: "read",
-      callCallee: false,
+      use: "value",
       sourceReceiver: sourceValue(arrayType, arrayType),
-      sourceResult: sourceValue(lengthExpression, int32Type),
+      sourceReadResult: sourceValue(lengthExpression, int32Type),
+      chainRole: { kind: "ordinary", participant: "property-access" },
     },
     () => ({ operation: targetOperation("core", "property") }),
-    ignoreCheckedOperationAcceptance,
+    (value, evidence, acceptedRequest) => {
+      const fact = finalizeTargetOperationFact(
+        value.operation,
+        value.resultType,
+        checkedPropertySourceOperationFromRequest(acceptedRequest),
+        value.providerDeclaration,
+      );
+      const writeResult = host[extensionHostSetFact](acceptedRequest.expression, targetOperationFactKey, fact, evidence);
+      if (writeResult !== "inserted" && writeResult !== "idempotent") {
+        throw new Error(`Cannot publish target operation '${fact.operationId}': ${writeResult}.`);
+      }
+    },
     { requireOwner: true },
   ).kind, "accept");
   assert.equal(host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedElementAccess,
     {
+      sourceOperationKind: "element-access",
       expression: indexExpression,
       receiver: arrayType,
       argument: indexArgument,
       accessMode: "read",
-      callCallee: false,
+      use: "value",
       sourceReceiver: sourceValue(arrayType, arrayType),
       sourceArgument: sourceValue(indexArgument, indexArgument),
-      sourceResult: sourceValue(indexExpression, elementType),
+      sourceReadResult: sourceValue(indexExpression, elementType),
+      chainRole: { kind: "ordinary", participant: "element-access" },
     },
     () => ({ operation: targetOperation("core", "indexer") }),
-    ignoreCheckedOperationAcceptance,
+    (value, evidence, acceptedRequest) => {
+      const fact = finalizeTargetOperationFact(
+        value.operation,
+        value.resultType,
+        checkedElementSourceOperationFromRequest(acceptedRequest),
+        value.providerDeclaration,
+      );
+      const writeResult = host[extensionHostSetFact](acceptedRequest.expression, targetOperationFactKey, fact, evidence);
+      if (writeResult !== "inserted" && writeResult !== "idempotent") {
+        throw new Error(`Cannot publish target operation '${fact.operationId}': ${writeResult}.`);
+      }
+    },
     { requireOwner: true },
   ).kind, "accept");
   assert.equal(host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedOperator,
     {
+      sourceOperationKind: "operator",
+      operatorKind: "binary",
       expression: addExpression,
       operator: "+",
       left: leftOperand,
@@ -4969,7 +5067,18 @@ test("property, element, and operator observations expose target operations", ()
       sourceResult: sourceValue(addExpression, int32Type),
     },
     () => ({ operation: targetOperation("core", "operator") }),
-    ignoreCheckedOperationAcceptance,
+    (value, evidence, acceptedRequest) => {
+      const fact = finalizeTargetOperationFact(
+        value.operation,
+        value.resultType,
+        checkedOperatorSourceOperationFromRequest(acceptedRequest),
+        value.providerDeclaration,
+      );
+      const writeResult = host[extensionHostSetFact](acceptedRequest.expression, targetOperationFactKey, fact, evidence);
+      if (writeResult !== "inserted" && writeResult !== "idempotent") {
+        throw new Error(`Cannot publish target operation '${fact.operationId}': ${writeResult}.`);
+      }
+    },
     { requireOwner: true },
   ).kind, "accept");
 
@@ -5005,6 +5114,16 @@ test("flow validation rolls back rejected candidate facts and commits accepted t
   const returnedBorrow = {};
   const movedSymbol = {};
   const borrowSymbol = {};
+  const candidateFlowFactKey = defineExtensionFactKey<string>({
+    extensionId: "borrow",
+    name: "candidate-flow-state",
+    snapshot: (value) => {
+      if (typeof value !== "string") {
+        throw new Error("Candidate flow state must be a string.");
+      }
+      return value;
+    },
+  });
   const host = new ExtensionHost({}, {
     extensions: [
       extension("borrow", {
@@ -5012,14 +5131,11 @@ test("flow validation rolls back rejected candidate facts and commits accepted t
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.validateExtensionFlowUse, (request) => {
             if (request.useSite === movedUse) {
-              context.facts.set(request.useSite, flowStateFactKey, { state: "moved" });
+              context.facts.set(request.useSite, candidateFlowFactKey, "moved-candidate");
               return rejectObservation(diagnostic("borrow", "VALUE_WAS_MOVED", 9100101, "value was moved and cannot be used here"));
             }
             if (request.useSite === returnedBorrow) {
-              context.facts.set(request.useSite, flowStateFactKey, {
-                state: "target-validation-required",
-                targetCompiler: "acme-checker",
-              });
+              context.facts.set(request.useSite, candidateFlowFactKey, "accepted-candidate");
               return acceptObservation({
                 valid: true,
                 targetCompilerValidationRequired: true,
@@ -5033,15 +5149,38 @@ test("flow validation rolls back rejected candidate facts and commits accepted t
     ],
   });
 
-  const rejected = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, { useSite: movedUse, symbol: movedSymbol, mode: "read", target: "borrow" }, () => ({ valid: true }), { requireOwner: true });
+  const rejected = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, {
+    useSite: movedUse,
+    symbol: movedSymbol,
+    sourceUse: { kind: "ordinary", access: "read" },
+    target: "borrow",
+  }, () => ({ valid: true }), { requireOwner: true });
   assert.equal(rejected.kind, "reject");
+  assert.equal(host.facts.get(movedUse, candidateFlowFactKey), undefined);
   assert.equal(host.facts.get(movedUse, flowStateFactKey), undefined);
   const rejectionDiagnostics = host.diagnostics.all().filter((item) => item.extensionCode === "VALUE_WAS_MOVED");
   assert.equal(rejectionDiagnostics.length, 1);
   assert.equal(rejectionDiagnostics[0]?.message, "value was moved and cannot be used here");
 
-  const accepted = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, { useSite: returnedBorrow, symbol: borrowSymbol, mode: "read", target: "borrow" }, () => ({ valid: false }), { requireOwner: true });
+  const accepted = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, {
+    useSite: returnedBorrow,
+    symbol: borrowSymbol,
+    sourceUse: { kind: "ordinary", access: "read" },
+    target: "borrow",
+  }, () => ({ valid: false }), { requireOwner: true }, (value, evidence, request) => {
+    if (value.targetCompilerValidationRequired !== true) {
+      return;
+    }
+    const writeResult = host[extensionHostSetFact](request.useSite, flowStateFactKey, {
+      state: "target-validation-required",
+      ...(value.targetCompiler === undefined ? {} : { targetCompiler: value.targetCompiler }),
+    }, evidence);
+    if (writeResult !== "inserted" && writeResult !== "idempotent") {
+      throw new Error(`Cannot publish target flow validation: ${writeResult}.`);
+    }
+  });
   assert.equal(accepted.kind === "accept" ? accepted.value.targetCompiler : undefined, "acme-checker");
+  assert.equal(host.facts.get(returnedBorrow, candidateFlowFactKey), "accepted-candidate");
   assert.equal(host.facts.get(returnedBorrow, flowStateFactKey)?.targetCompiler, "acme-checker");
 });
 
@@ -5051,12 +5190,12 @@ test("advanced associated-type and const-generic facts are first-class", () => {
   const fixedBytesType = {};
   const host = new ExtensionHost({});
 
-  assert.equal(host.facts.set(iteratorType, associatedTypeFactKey, {
+  assert.equal(host[extensionHostSetFact](iteratorType, associatedTypeFactKey, {
     owner: iteratorType,
     name: "Item",
     value: itemType,
   }), "inserted");
-  assert.equal(host.facts.set(fixedBytesType, constGenericFactKey, {
+  assert.equal(host[extensionHostSetFact](fixedBytesType, constGenericFactKey, {
     name: "N",
     value: 32,
   }), "inserted");
@@ -5084,7 +5223,7 @@ test("target binding facts preserve provider identity and constraints", () => {
   };
   const host = new ExtensionHost({});
 
-  assert.equal(host.facts.set(searchValues, targetBindingFactKey, fact), "inserted");
+  assert.equal(host[extensionHostSetFact](searchValues, targetBindingFactKey, fact), "inserted");
   assert.equal(host.facts.get(searchValues, targetBindingFactKey)?.typeParameters?.[0]?.constraints?.[0]?.kind, "implements");
 });
 
@@ -5117,24 +5256,14 @@ test("provider registrations seal after first resolution observation or lifecycl
   }];
 
   for (const execution of executions) {
-    let registerBinding!: (provider: TargetBindingProvider) => boolean;
-    let registerSemantic!: (provider: TargetSemanticProvider) => boolean;
-    const extensionId = `registration-seal-${execution.name}`;
-    const host = new ExtensionHost({}, {
-      extensions: [extension(extensionId, {
-        initialize: (context) => {
-          registerBinding = context.registerTargetBindingProvider;
-          registerSemantic = context.registerTargetSemanticProvider;
-        },
-      })],
-    });
+    const host = new ExtensionHost({});
 
     execution.execute(host);
 
-    assert.equal(registerBinding(acmeBindingProvider(`@target/late-${execution.name}.js`, {
+    assert.equal(host.providers.registerTargetBindingProvider(acmeBindingProvider(`@target/late-${execution.name}.js`, {
       id: `late-binding-${execution.name}`,
     })), false, execution.name);
-    assert.equal(registerSemantic({
+    assert.equal(host.providers.registerTargetSemanticProvider({
       identity: providerIdentity(`late-semantic-${execution.name}`, "demo", "semantic"),
     }), false, execution.name);
     const closed = host.diagnostics.all().filter((item) => item.numericCode === ExtensionHostDiagnosticCode.registrationClosed);
@@ -5444,6 +5573,8 @@ test("semantic provider registration getters and callback envelopes fail as host
     assert.equal(result.kind, "reject");
   });
   assert.equal(envelopeKindReads, 1);
+  assert.equal(envelopeHost.diagnostics.all().length, 0, "Checked-operation callback failures must remain retained until finalization.");
+  envelopeHost.finalizeSemantics();
   assert.equal(envelopeHost.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.observationHookFailed);
   assert.equal(envelopeHost.diagnostics.all().at(-1)?.extensionId, "tsts.extension-host");
 });
@@ -6983,27 +7114,44 @@ function selectedSignature(id: string, generic = false): TargetSignatureSelectio
   };
 }
 
-function selectedTargetCallFact(id: string) {
+function selectedTargetCallFact(id: string): SelectedTargetSignatureFact {
   const call = {};
   const callee = {};
   const argument = {};
+  const parameterSymbol = {};
+  const sourceBinding = {
+    sourceArgumentIndex: 0,
+    effectiveArgumentIndex: 0,
+    sourceForm: "value" as const,
+    sourceParameterIndex: 0,
+    sourceParameterForm: "parameter" as const,
+    selectedArgumentType: argument,
+    selectedParameterType: argument,
+  };
+  const selection = selectedSignature(id);
   return {
-    ...selectedSignature(id),
+    member: selection.member,
     argumentConversions: [argumentConversionSlot(0)],
-    sourceArgumentBindings: [{
-      sourceArgumentIndex: 0,
-      effectiveArgumentIndex: 0,
-      sourceForm: "value" as const,
-      sourceParameterIndex: 0,
-      sourceParameterForm: "parameter" as const,
-      selectedArgumentType: argument,
-      selectedParameterType: argument,
-    }],
     sourceCallKind: "call",
+    sourceSelection: {
+      kind: "applicable",
+      signature: callee,
+      methodTypeArguments: [],
+      parameters: [{
+        parameterIndex: 0,
+        parameterName: "value",
+        parameterSymbol,
+        selectedType: argument,
+        acceptsOmission: false,
+        rest: false,
+      }],
+      argumentBindings: [sourceBinding],
+    },
     sourceCallee: sourceValue(callee, callee),
     sourceArguments: [sourceValue(argument, argument)],
     sourceResult: sourceValue(call, call),
-  } as const;
+    sourceChainRole: { kind: "ordinary", participant: "call" },
+  };
 }
 
 function sourceType(type: object) {
@@ -7018,13 +7166,16 @@ function emptyCheckedCallRequest(): CheckedCallMappingRequest {
   const call = {};
   const callee = {};
   return {
+    sourceOperationKind: "call",
     call,
     callee,
     arguments: [],
     callKind: "call",
+    sourceSelection: { kind: "untyped" },
     sourceCallee: sourceValue(callee, callee),
     sourceArguments: [],
     sourceResult: sourceValue(call, call),
+    chainRole: { kind: "ordinary", participant: "call" },
   };
 }
 
@@ -7037,10 +7188,31 @@ function argumentConversionSlot(argumentIndex: number) {
   };
 }
 
-function targetOperation(operationId: string, operationKind: TargetOperationFact["operationKind"]): TargetOperationFact {
+function targetOperation(operationId: string, operationKind: TargetOperationFact["operationKind"]): TargetOperationProposal {
   return {
     operationId,
     operationKind,
     targetOperation: operationId,
+  };
+}
+
+function targetPropertyOperationFact(expression: object, operationId: string): TargetOperationFact {
+  const receiver = {};
+  const sourceType = {};
+  return {
+    ...targetOperation(operationId, "property"),
+    provenance: {
+      sourceOperation: {
+        sourceOperationKind: "property-access",
+        expression,
+        receiver,
+        propertyName: "value",
+        accessMode: "read",
+        use: "value",
+        sourceReceiver: sourceValue(receiver, sourceType),
+        sourceReadResult: sourceValue(expression, sourceType),
+        chainRole: { kind: "ordinary", participant: "property-access" },
+      },
+    },
   };
 }

@@ -30,13 +30,13 @@ type CompleteConversionSlot = TargetCallArgumentConversionSlot & {
 };
 
 type CompleteConversionFact = TargetCallArgumentConversionFact & {
-  readonly spreadElementIndex: number;
+  readonly slot: CompleteConversionSlot;
   readonly convertedType: TargetTypeRef;
   readonly operation: TargetOperationFact;
 };
 
 type CompletePassingFact = TargetCallArgumentPassingFact & {
-  readonly spreadElementIndex: number;
+  readonly slot: CompleteConversionSlot;
   readonly targetExpression: ExtensionFactSubject;
   readonly selectedSignature: ProviderDeclarationIdentity;
 };
@@ -64,6 +64,9 @@ function targetType(id: string): TargetTypeRef {
 }
 
 function targetOperation(operationId: string): TargetOperationFact {
+  const expression = subject("conversion-expression");
+  const sourceType = subject("conversion-source-type");
+  const targetTypeSubject = subject("conversion-target-type");
   return Object.freeze({
     operationId,
     operationKind: "method",
@@ -72,6 +75,17 @@ function targetOperation(operationId: string): TargetOperationFact {
     evidence: Object.freeze([
       Object.freeze({ message: "selected target conversion" }),
     ]),
+    provenance: Object.freeze({
+      sourceOperation: Object.freeze({
+        sourceOperationKind: "conversion" as const,
+        conversionKind: "assertion" as const,
+        expression,
+        source: Object.freeze({ expression, type: sourceType }),
+        target: Object.freeze({ type: targetTypeSubject }),
+        assertionKind: "as" as const,
+        explicitTargetTypeNode: targetTypeSubject,
+      }),
+    }),
   });
 }
 
@@ -200,26 +214,19 @@ test("target call-argument conversion fact equality includes every source bindin
   const complete: CompleteConversionFact = Object.freeze({
     slot,
     call,
-    sourceArgumentIndex: 1,
-    targetParameterIndex: 4,
-    sourceForm: "spread-element",
-    spreadElementIndex: 2,
-    targetForm: "params-element",
     sourceBinding: sourceBindings.complete,
     convertedType: targetType("Acme.ConvertedArgument"),
     operation: targetOperation("convert-argument"),
   });
   const structurallyEqual: CompleteConversionFact = Object.freeze({
-    slot,
+    slot: conversionSlot(),
     call,
-    sourceArgumentIndex: 1,
-    targetParameterIndex: 4,
-    sourceForm: "spread-element",
-    spreadElementIndex: 2,
-    targetForm: "params-element",
     sourceBinding: sourceBindings.structurallyEqual,
     convertedType: targetType("Acme.ConvertedArgument"),
-    operation: targetOperation("convert-argument"),
+    operation: Object.freeze({
+      ...complete.operation,
+      resultType: targetType("Acme.ConvertedArgument"),
+    }),
   });
 
   assert.notEqual(structurallyEqual, complete);
@@ -242,36 +249,41 @@ test("target call-argument conversion fact equality includes every source bindin
   }
 
   const withoutSpreadElementIndex: TargetCallArgumentConversionFact = Object.freeze({
-    slot: complete.slot,
+    slot: Object.freeze({
+      sourceArgumentIndex: complete.slot.sourceArgumentIndex,
+      sourceForm: complete.slot.sourceForm,
+      targetParameterIndex: complete.slot.targetParameterIndex,
+      targetForm: complete.slot.targetForm,
+    }),
     call: complete.call,
-    sourceArgumentIndex: complete.sourceArgumentIndex,
-    targetParameterIndex: complete.targetParameterIndex,
-    sourceForm: complete.sourceForm,
-    targetForm: complete.targetForm,
     sourceBinding: complete.sourceBinding,
     convertedType: complete.convertedType,
     operation: complete.operation,
   });
   const outerDifferences = [
     {
-      name: "slot identity",
-      value: Object.freeze({ ...complete, slot: conversionSlot() }),
-    },
-    {
       name: "call identity",
       value: Object.freeze({ ...complete, call: subject("call") }),
     },
     {
       name: "sourceArgumentIndex",
-      value: Object.freeze({ ...complete, sourceArgumentIndex: 2 }),
+      value: Object.freeze({ ...complete, slot: Object.freeze({ ...complete.slot, sourceArgumentIndex: 2 }) }),
     },
     {
       name: "targetParameterIndex",
-      value: Object.freeze({ ...complete, targetParameterIndex: 5 }),
+      value: Object.freeze({ ...complete, slot: Object.freeze({ ...complete.slot, targetParameterIndex: 5 }) }),
     },
     {
       name: "sourceForm",
-      value: Object.freeze({ ...complete, sourceForm: "spread-sequence" }),
+      value: Object.freeze({
+        ...complete,
+        slot: Object.freeze({
+          sourceArgumentIndex: complete.slot.sourceArgumentIndex,
+          sourceForm: "spread-sequence" as const,
+          targetParameterIndex: complete.slot.targetParameterIndex,
+          targetForm: complete.slot.targetForm,
+        }),
+      }),
     },
     {
       name: "spreadElementIndex presence",
@@ -279,11 +291,11 @@ test("target call-argument conversion fact equality includes every source bindin
     },
     {
       name: "spreadElementIndex value",
-      value: Object.freeze({ ...complete, spreadElementIndex: 3 }),
+      value: Object.freeze({ ...complete, slot: Object.freeze({ ...complete.slot, spreadElementIndex: 3 }) }),
     },
     {
       name: "targetForm",
-      value: Object.freeze({ ...complete, targetForm: "params-sequence" }),
+      value: Object.freeze({ ...complete, slot: Object.freeze({ ...complete.slot, targetForm: "params-sequence" }) }),
     },
     {
       name: "convertedType",
@@ -314,25 +326,15 @@ test("target call-argument passing fact equality includes every source binding a
     mode: "byref-readonly",
     targetExpression,
     call,
-    sourceArgumentIndex: 1,
-    targetParameterIndex: 4,
-    sourceForm: "spread-element",
-    spreadElementIndex: 2,
-    targetForm: "params-element",
     sourceBinding: sourceBindings.complete,
     targetParameter: targetParameter("items"),
     selectedSignature: selectedSignature("convert-signature"),
   });
   const structurallyEqual: CompletePassingFact = Object.freeze({
-    slot,
+    slot: conversionSlot(),
     mode: "byref-readonly",
     targetExpression,
     call,
-    sourceArgumentIndex: 1,
-    targetParameterIndex: 4,
-    sourceForm: "spread-element",
-    spreadElementIndex: 2,
-    targetForm: "params-element",
     sourceBinding: sourceBindings.structurallyEqual,
     targetParameter: targetParameter("items"),
     selectedSignature: selectedSignature("convert-signature"),
@@ -358,23 +360,20 @@ test("target call-argument passing fact equality includes every source binding a
   }
 
   const withoutSpreadElementIndex: TargetCallArgumentPassingFact = Object.freeze({
-    slot: complete.slot,
+    slot: Object.freeze({
+      sourceArgumentIndex: complete.slot.sourceArgumentIndex,
+      sourceForm: complete.slot.sourceForm,
+      targetParameterIndex: complete.slot.targetParameterIndex,
+      targetForm: complete.slot.targetForm,
+    }),
     mode: complete.mode,
     targetExpression: complete.targetExpression,
     call: complete.call,
-    sourceArgumentIndex: complete.sourceArgumentIndex,
-    targetParameterIndex: complete.targetParameterIndex,
-    sourceForm: complete.sourceForm,
-    targetForm: complete.targetForm,
     sourceBinding: complete.sourceBinding,
     targetParameter: complete.targetParameter,
     selectedSignature: complete.selectedSignature,
   });
   const outerDifferences = [
-    {
-      name: "slot identity",
-      value: Object.freeze({ ...complete, slot: conversionSlot() }),
-    },
     {
       name: "mode",
       value: Object.freeze({ ...complete, mode: "move" }),
@@ -389,15 +388,23 @@ test("target call-argument passing fact equality includes every source binding a
     },
     {
       name: "sourceArgumentIndex",
-      value: Object.freeze({ ...complete, sourceArgumentIndex: 2 }),
+      value: Object.freeze({ ...complete, slot: Object.freeze({ ...complete.slot, sourceArgumentIndex: 2 }) }),
     },
     {
       name: "targetParameterIndex",
-      value: Object.freeze({ ...complete, targetParameterIndex: 5 }),
+      value: Object.freeze({ ...complete, slot: Object.freeze({ ...complete.slot, targetParameterIndex: 5 }) }),
     },
     {
       name: "sourceForm",
-      value: Object.freeze({ ...complete, sourceForm: "spread-sequence" }),
+      value: Object.freeze({
+        ...complete,
+        slot: Object.freeze({
+          sourceArgumentIndex: complete.slot.sourceArgumentIndex,
+          sourceForm: "spread-sequence" as const,
+          targetParameterIndex: complete.slot.targetParameterIndex,
+          targetForm: complete.slot.targetForm,
+        }),
+      }),
     },
     {
       name: "spreadElementIndex presence",
@@ -405,11 +412,11 @@ test("target call-argument passing fact equality includes every source binding a
     },
     {
       name: "spreadElementIndex value",
-      value: Object.freeze({ ...complete, spreadElementIndex: 3 }),
+      value: Object.freeze({ ...complete, slot: Object.freeze({ ...complete.slot, spreadElementIndex: 3 }) }),
     },
     {
       name: "targetForm",
-      value: Object.freeze({ ...complete, targetForm: "params-sequence" }),
+      value: Object.freeze({ ...complete, slot: Object.freeze({ ...complete.slot, targetForm: "params-sequence" }) }),
     },
     {
       name: "targetParameter",

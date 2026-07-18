@@ -4,7 +4,7 @@ import type { bool } from "../go/scalars.js";
 import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node } from "../internal/ast/ast.js";
-import { Node_Text } from "../internal/ast/ast.js";
+import { Node_Arguments, Node_Text } from "../internal/ast/ast.js";
 import { IsSpreadElement } from "../internal/ast/generated/predicates.js";
 import { Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
@@ -28,7 +28,7 @@ import {
   argumentPassingFactKey,
   attachExtensionHost,
   createExtensionConsumerQueries,
-  deferObservation,
+  createSourceSemanticsExtension,
   defineExtensionFactKey,
   finalizeExtensionSemantics,
   rejectObservation,
@@ -50,14 +50,10 @@ import type {
   TargetSignatureSelection,
   TargetTypeRef,
 } from "./index.js";
+import { extensionHostSetFact } from "./host.js";
 
 const int32TargetType = { kind: "source-primitive", name: "int32" } as const satisfies TargetTypeRef;
 const int32ArrayTargetType = { kind: "array", element: int32TargetType } as const satisfies TargetTypeRef;
-const atomicConversionMapperFactKey = defineExtensionFactKey<{ readonly value: string }>({
-  extensionId: "checked-operation-argument-slots",
-  name: "atomic-conversion-mapper",
-});
-
 test("params-array calls retain every conversion slot and distinguish params elements from sequences", () => {
   const callRequests: CheckedCallMappingRequest[] = [];
   const conversionRequests: CheckedConversionMappingRequest[] = [];
@@ -84,17 +80,18 @@ test("params-array calls retain every conversion slot and distinguish params ele
   `);
 
   assertCleanProgram(program);
-  assert.equal(callRequests.length, 2);
+  assert.equal(callRequests.length, 2, "Ready checked calls must map during source checking.");
   assert.equal(
     conversionRequests.length,
     4,
-    "Call-argument conversions must execute inside the selected call's atomic checking transaction.",
+    "Ready child conversions must complete inside their selected call's atomic checking transaction.",
   );
 
   assert.ok(finalizeExtensionSemantics(programOptions) === extensionHost, "Finalization must return the attached host.");
-  assert.equal(conversionRequests.length, 4, "Finalization must not replay already committed call conversions.");
+  assert.equal(callRequests.length, 2, "Finalization must not replay an already committed checked call.");
+  assert.equal(conversionRequests.length, 4, "Finalization must not replay already committed child conversions.");
   assert.deepEqual(conversionRequests.map((request) => request.conversionKind === "call-argument"
-    ? [request.sourceArgumentIndex, request.targetParameterIndex, request.sourceForm, request.targetForm]
+    ? [request.slot.sourceArgumentIndex, request.slot.targetParameterIndex, request.slot.sourceForm, request.slot.targetForm]
     : ["assertion"]), [
     [0, 0, "value", "params-element"],
     [1, 0, "value", "params-element"],
@@ -113,18 +110,18 @@ test("params-array calls retain every conversion slot and distinguish params ele
     const conversion: TargetCallArgumentConversionFact | undefined = extensionHost.facts.get(conversionRequest.slot, targetCallArgumentConversionFactKey);
     assert.ok(conversion?.slot === conversionRequest.slot, "Each conversion fact must retain its exact request slot subject.");
     assert.ok(conversion?.call === firstCall.call, "Each conversion fact must retain its exact call subject.");
-    assert.equal(conversion?.sourceArgumentIndex, argumentIndex);
-    assert.equal(conversion?.targetParameterIndex, 0);
-    assert.equal(conversion?.sourceForm, "value");
-    assert.equal(conversion?.targetForm, "params-element");
+    assert.equal(conversion?.slot.sourceArgumentIndex, argumentIndex);
+    assert.equal(conversion?.slot.targetParameterIndex, 0);
+    assert.equal(conversion?.slot.sourceForm, "value");
+    assert.equal(conversion?.slot.targetForm, "params-element");
     assert.deepEqual(conversion?.convertedType, int32TargetType);
     const callSlot = requireArgumentConversionSlot(extensionHost, firstCall.call, argumentIndex, 0);
     const passing: TargetCallArgumentPassingFact | undefined = extensionHost.facts.get(callSlot, targetCallArgumentPassingFactKey);
     assert.ok(passing?.slot === callSlot, "Each passing fact must retain its exact selected-call slot subject.");
     assert.ok(passing?.call === firstCall.call, "Each passing fact must retain its exact call subject.");
-    assert.equal(passing?.sourceArgumentIndex, argumentIndex);
-    assert.equal(passing?.targetParameterIndex, 0);
-    assert.equal(passing?.targetForm, "params-element");
+    assert.equal(passing?.slot.sourceArgumentIndex, argumentIndex);
+    assert.equal(passing?.slot.targetParameterIndex, 0);
+    assert.equal(passing?.slot.targetForm, "params-element");
   }
   const spreadArgument = spreadCall.arguments[0];
   assert.ok(spreadArgument !== undefined);
@@ -132,18 +129,18 @@ test("params-array calls retain every conversion slot and distinguish params ele
   const spreadConversion = extensionHost.facts.get(spreadConversionRequest.slot, targetCallArgumentConversionFactKey);
   assert.ok(spreadConversion?.slot === spreadConversionRequest.slot, "Spread conversion evidence must retain its exact request slot subject.");
   assert.ok(spreadConversion?.call === spreadCall.call, "Spread conversion evidence must retain its exact call subject.");
-  assert.equal(spreadConversion?.sourceArgumentIndex, 0);
-  assert.equal(spreadConversion?.targetParameterIndex, 0);
-  assert.equal(spreadConversion?.sourceForm, "spread-sequence");
-  assert.equal(spreadConversion?.targetForm, "params-sequence");
+  assert.equal(spreadConversion?.slot.sourceArgumentIndex, 0);
+  assert.equal(spreadConversion?.slot.targetParameterIndex, 0);
+  assert.equal(spreadConversion?.slot.sourceForm, "spread-sequence");
+  assert.equal(spreadConversion?.slot.targetForm, "params-sequence");
   assert.deepEqual(spreadConversion?.convertedType, int32ArrayTargetType);
   const spreadCallSlot = requireArgumentConversionSlot(extensionHost, spreadCall.call, 0, 0);
   const spreadPassing = extensionHost.facts.get(spreadCallSlot, targetCallArgumentPassingFactKey);
   assert.ok(spreadPassing?.slot === spreadCallSlot, "Spread passing evidence must retain its exact selected-call slot subject.");
   assert.ok(spreadPassing?.call === spreadCall.call, "Spread passing evidence must retain its exact call subject.");
-  assert.equal(spreadPassing?.sourceArgumentIndex, 0);
-  assert.equal(spreadPassing?.targetParameterIndex, 0);
-  assert.equal(spreadPassing?.targetForm, "params-sequence");
+  assert.equal(spreadPassing?.slot.sourceArgumentIndex, 0);
+  assert.equal(spreadPassing?.slot.targetParameterIndex, 0);
+  assert.equal(spreadPassing?.slot.targetForm, "params-sequence");
   const consumer = createExtensionConsumerQueries(extensionHost, "checked-operation-argument-slot-test");
   assert.equal(consumer.getTargetCallArgumentConversionFact(spreadConversionRequest.slot), spreadConversion);
   assert.equal(consumer.getTargetCallArgumentPassingFact(spreadCallSlot), spreadPassing);
@@ -160,32 +157,60 @@ test("source argument-passing markers coexist with exact target call-slot passin
   const selectedSignature = singleArgumentTargetSignature("consume", "byref-readonly");
   let callRequest: CheckedCallMappingRequest | undefined;
   const extension = semanticExtension("passing-fact-domains", {
-    mapCheckedCall: (request, context) => {
+    mapCheckedCall: (request) => {
+      const name = Node_Text(request.callee as GoPtr<Node>);
+      if (name === "inref") {
+        return acceptObservation({
+          kind: "target",
+          selectedSignature: singleArgumentTargetSignature("inref"),
+          argumentConversions: [argumentConversionSlot(0, 0)],
+        });
+      }
+      assert.equal(name, "consume");
       callRequest = request;
-      const argument = request.arguments[0];
-      assert.ok(argument !== undefined);
-      context.facts.set(argument, argumentPassingFactKey, {
-        mode: "byref-readonly",
-        targetExpression: argument,
-      });
       return acceptObservation({
         kind: "target",
         selectedSignature,
-        argumentConversions: [{
-          sourceArgumentIndex: 0,
-          sourceForm: "value",
-          targetParameterIndex: 0,
-          targetForm: "parameter",
-        }],
+        argumentConversions: [argumentConversionSlot(0, 0)],
       });
     },
     mapCheckedConversion: () => acceptObservation({}),
   });
+  const sourceSemantics = createSourceSemanticsExtension({
+    identity: {
+      id: "checked-operation-argument-slot-source-semantics",
+      version: "1.0.0",
+      capabilityNamespace: "checked-operation-argument-slot-source-semantics",
+    },
+    modules: [{
+      moduleSpecifier: "@example/native/lang.js",
+      packageName: "@example/native",
+      subpath: "lang.js",
+      exports: [{ kind: "call-marker", exportName: "inref", marker: "inref" }],
+    }],
+  });
   const { program, programOptions, extensionHost } = createProgram(extension, `
+    import { inref } from "@example/native/lang.js";
     declare function consume(value: number): void;
     declare let value: number;
-    consume(value);
-  `);
+    consume(inref(value));
+  `, {
+    additionalExtensions: [sourceSemantics],
+    extraFiles: new Map([
+      ["/src/node_modules/@example/native/package.json", JSON.stringify({
+        name: "@example/native",
+        version: "1.0.0",
+        type: "module",
+        exports: {
+          "./lang.js": {
+            types: "./lang.d.ts",
+            default: "./lang.js",
+          },
+        },
+      })],
+      ["/src/node_modules/@example/native/lang.d.ts", "export declare function inref<T>(value: T): T;"],
+    ]),
+  });
 
   assertCleanProgram(program);
   assert.ok(finalizeExtensionSemantics(programOptions) === extensionHost, "Finalization must return the attached host.");
@@ -193,16 +218,18 @@ test("source argument-passing markers coexist with exact target call-slot passin
   const argument = callRequest.arguments[0];
   assert.ok(argument !== undefined);
   const sourcePassing = extensionHost.facts.get(argument, argumentPassingFactKey);
+  const markerArguments = Node_Arguments(argument as GoPtr<Node>) ?? [];
   const slot = requireArgumentConversionSlot(extensionHost, callRequest.call, 0, 0);
   const targetPassing = extensionHost.facts.get(slot, targetCallArgumentPassingFactKey);
   assert.equal(sourcePassing?.mode, "byref-readonly");
-  assert.ok(sourcePassing?.targetExpression === argument, "Source marker evidence must retain its authored storage subject.");
+  assert.equal(markerArguments.length, 1);
+  assert.ok(sourcePassing?.targetExpression === markerArguments[0], "Source marker evidence must retain its authored storage subject inside the marker call.");
   assert.equal(targetPassing?.mode, "byref-readonly");
   assert.ok(targetPassing?.slot === slot, "Target passing evidence must retain the exact conversion slot.");
   assert.ok(targetPassing?.call === callRequest.call, "Target passing evidence must retain its exact call.");
-  assert.equal(targetPassing?.sourceArgumentIndex, 0);
-  assert.equal(targetPassing?.targetParameterIndex, 0);
-  assert.equal(targetPassing?.targetForm, "parameter");
+  assert.equal(targetPassing?.slot.sourceArgumentIndex, 0);
+  assert.equal(targetPassing?.slot.targetParameterIndex, 0);
+  assert.equal(targetPassing?.slot.targetForm, "parameter");
   assert.equal(extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
 });
 
@@ -243,7 +270,7 @@ test("params arguments retain one element conversion slot per source argument", 
   assertCleanProgram(program);
   finalizeExtensionSemantics(programOptions);
   assert.deepEqual(conversionRequests.map((request) => request.conversionKind === "call-argument"
-    ? [request.sourceArgumentIndex, request.targetParameterIndex, request.targetForm]
+    ? [request.slot.sourceArgumentIndex, request.slot.targetParameterIndex, request.slot.targetForm]
     : ["assertion"]), [
     [0, 0, "parameter"],
     [1, 1, "params-element"],
@@ -293,12 +320,13 @@ test("tuple spreads bind explicit fixed elements to distinct target parameters",
   assert.equal(second.targetForm, "parameter");
   const firstRequest = requireCallArgumentConversionRequest(conversionRequests, callRequest.call, 0, 0);
   const secondRequest = requireCallArgumentConversionRequest(conversionRequests, callRequest.call, 0, 1);
-  assert.equal(extensionHost.facts.get(firstRequest.slot, targetCallArgumentConversionFactKey)?.spreadElementIndex, 0);
-  assert.equal(extensionHost.facts.get(secondRequest.slot, targetCallArgumentConversionFactKey)?.spreadElementIndex, 1);
+  assert.equal(extensionHost.facts.get(firstRequest.slot, targetCallArgumentConversionFactKey)?.slot.spreadElementIndex, 0);
+  assert.equal(extensionHost.facts.get(secondRequest.slot, targetCallArgumentConversionFactKey)?.slot.spreadElementIndex, 1);
   assert.equal(extensionHost.diagnostics.all().length, 0, "Fixed spread slots must finalize without diagnostics.");
 });
 
 test("malformed params-array target signatures fail before target argument facts can escape", () => {
+  let observedCall: ExtensionFactSubject | undefined;
   const malformedSignature: TargetSignatureSelection = {
     member: {
       id: "collect(malformed params)",
@@ -314,14 +342,17 @@ test("malformed params-array target signatures fail before target argument facts
     },
   };
   const extension = semanticExtension("malformed-params-array", {
-    mapCheckedCall: () => acceptObservation({
-      kind: "target",
-      selectedSignature: malformedSignature,
-      argumentConversions: [argumentConversionSlot(0, 0, "value", "params-element")],
-    }),
+    mapCheckedCall: (request) => {
+      observedCall = request.call;
+      return acceptObservation({
+        kind: "target",
+        selectedSignature: malformedSignature,
+        argumentConversions: [argumentConversionSlot(0, 0, "value", "params-element")],
+      });
+    },
   });
 
-  const { program } = createProgram(extension, `
+  const { program, programOptions, extensionHost } = createProgram(extension, `
     declare function collect(...values: number[]): void;
     collect(1);
   `);
@@ -330,21 +361,28 @@ test("malformed params-array target signatures fail before target argument facts
     () => assertCleanProgram(program),
     /marks parameter 0 as a params array without an array target type/,
   );
+  assert.ok(observedCall !== undefined);
+  assert.equal(extensionHost.facts.get(observedCall, selectedTargetSignatureFactKey), undefined, "Malformed target signatures must not publish facts.");
+  assert.throws(() => finalizeExtensionSemantics(programOptions), /Extension source-decision transaction is permanently failed/);
 });
 
 test("selected target signatures missing an actual argument parameter fail closed", () => {
+  let observedCall: ExtensionFactSubject | undefined;
   const extension = semanticExtension("missing-target-parameter", {
-    mapCheckedCall: () => acceptObservation({
-      kind: "target",
-      selectedSignature: singleArgumentTargetSignature("pair"),
-      argumentConversions: [
-        argumentConversionSlot(0, 0),
-        argumentConversionSlot(1, 1),
-      ],
-    }),
+    mapCheckedCall: (request) => {
+      observedCall = request.call;
+      return acceptObservation({
+        kind: "target",
+        selectedSignature: singleArgumentTargetSignature("pair"),
+        argumentConversions: [
+          argumentConversionSlot(0, 0),
+          argumentConversionSlot(1, 1),
+        ],
+      });
+    },
   });
 
-  const { program } = createProgram(extension, `
+  const { program, programOptions, extensionHost } = createProgram(extension, `
     declare function pair(first: number, second: number): void;
     pair(1, 2);
   `);
@@ -353,21 +391,28 @@ test("selected target signatures missing an actual argument parameter fail close
     () => assertCleanProgram(program),
     /requests conversion to missing target parameter 1/,
   );
+  assert.ok(observedCall !== undefined);
+  assert.equal(extensionHost.facts.get(observedCall, selectedTargetSignatureFactKey), undefined, "An invalid target parameter must not publish facts.");
+  assert.throws(() => finalizeExtensionSemantics(programOptions), /Extension source-decision transaction is permanently failed/);
 });
 
 test("multiple source arguments cannot collapse into one non-params target parameter", () => {
+  let observedCall: ExtensionFactSubject | undefined;
   const extension = semanticExtension("duplicate-non-params-target", {
-    mapCheckedCall: () => acceptObservation({
-      kind: "target",
-      selectedSignature: singleArgumentTargetSignature("pair"),
-      argumentConversions: [
-        argumentConversionSlot(0, 0),
-        argumentConversionSlot(1, 0),
-      ],
-    }),
+    mapCheckedCall: (request) => {
+      observedCall = request.call;
+      return acceptObservation({
+        kind: "target",
+        selectedSignature: singleArgumentTargetSignature("pair"),
+        argumentConversions: [
+          argumentConversionSlot(0, 0),
+          argumentConversionSlot(1, 0),
+        ],
+      });
+    },
   });
 
-  const { program } = createProgram(extension, `
+  const { program, programOptions, extensionHost } = createProgram(extension, `
     declare function pair(first: number, second: number): void;
     pair(1, 2);
   `);
@@ -376,6 +421,9 @@ test("multiple source arguments cannot collapse into one non-params target param
     () => assertCleanProgram(program),
     /requests multiple conversions to non-params target parameter 0/,
   );
+  assert.ok(observedCall !== undefined);
+  assert.equal(extensionHost.facts.get(observedCall, selectedTargetSignatureFactKey), undefined, "Collapsed non-params arguments must not publish facts.");
+  assert.throws(() => finalizeExtensionSemantics(programOptions), /Extension source-decision transaction is permanently failed/);
 });
 
 test("explicit conversion slots preserve target reordering without positional inference", () => {
@@ -429,9 +477,9 @@ test("explicit conversion slots preserve target reordering without positional in
   const secondConversion = extensionHost.facts.get(secondRequest.slot, targetCallArgumentConversionFactKey);
   assert.equal(firstSlot.sourceArgumentIndex, 0);
   assert.equal(secondSlot.sourceArgumentIndex, 1);
-  assert.equal(firstConversion?.targetParameterIndex, 1);
+  assert.equal(firstConversion?.slot.targetParameterIndex, 1);
   assert.deepEqual(firstConversion?.convertedType, { kind: "target-named", id: "Acme.Second" });
-  assert.equal(secondConversion?.targetParameterIndex, 0);
+  assert.equal(secondConversion?.slot.targetParameterIndex, 0);
   assert.deepEqual(secondConversion?.convertedType, { kind: "target-named", id: "Acme.First" });
   assert.equal(extensionHost.facts.get(firstSlot, targetCallArgumentPassingFactKey)?.mode, "byref-readonly");
   assert.equal(extensionHost.facts.get(secondSlot, targetCallArgumentPassingFactKey)?.mode, "move");
@@ -502,10 +550,10 @@ test("generic target parameters are instantiated before checked argument convers
 });
 
 test("invalid conversion slots are atomic while empty conversion plans remain valid", () => {
-  let readRejectedFact: (() => unknown) | undefined;
+  const rejectedCapture: { readFact?: () => unknown } = {};
   const rejectedExtension = semanticExtension("invalid-conversion-slot", {
     mapCheckedCall: (request, context) => {
-      readRejectedFact = () => context.facts.get(request.call, selectedTargetSignatureFactKey);
+      rejectedCapture.readFact = () => context.facts.get(request.call, selectedTargetSignatureFactKey);
       return acceptObservation({
         kind: "target",
         selectedSignature: singleArgumentTargetSignature("consume"),
@@ -514,7 +562,7 @@ test("invalid conversion slots are atomic while empty conversion plans remain va
     },
   });
 
-  const { program: rejectedProgram } = createProgram(rejectedExtension, `
+  const { program: rejectedProgram, programOptions: rejectedProgramOptions } = createProgram(rejectedExtension, `
     declare function consume(value: number): void;
     consume(1);
   `);
@@ -523,8 +571,10 @@ test("invalid conversion slots are atomic while empty conversion plans remain va
     () => assertCleanProgram(rejectedProgram),
     /requests conversion to missing target parameter 1/,
   );
+  const readRejectedFact = rejectedCapture.readFact;
   assert.ok(readRejectedFact !== undefined, "The invalid-slot mapper must have been observed.");
   assert.equal(readRejectedFact(), undefined, "An invalid conversion slot must not publish a selected call.");
+  assert.throws(() => finalizeExtensionSemantics(rejectedProgramOptions), /Extension source-decision transaction is permanently failed/);
 
   const acceptedCalls: CheckedCallMappingRequest[] = [];
   const acceptedExtension = semanticExtension("empty-conversion-slots", {
@@ -537,21 +587,28 @@ test("invalid conversion slots are atomic while empty conversion plans remain va
       });
     },
   });
-  const { program, extensionHost } = createProgram(acceptedExtension, `
+  const { program, programOptions, extensionHost } = createProgram(acceptedExtension, `
     declare function consume(value: number): void;
     consume(1);
   `);
 
   assertCleanProgram(program);
-  assert.equal(acceptedCalls.length, 1);
+  assert.equal(acceptedCalls.length, 1, "A ready target-owned call must map during source checking.");
   assert.ok(acceptedCalls.every((request) => extensionHost.facts.get(request.call, selectedTargetSignatureFactKey) !== undefined));
+  finalizeExtensionSemantics(programOptions);
+  assert.equal(acceptedCalls.length, 1, "Finalization must not replay an already committed empty conversion plan.");
   assert.equal(extensionHost.diagnostics.all().length, 0, "Target-owned inputs may omit conversion slots.");
 });
 
-test("a deferred or rejected argument conversion leaves the entire selected call transaction unpublished", () => {
+test("a rejected argument conversion leaves the entire selected call transaction unpublished", () => {
   const callNames: string[] = [];
   const conversionRequests: Extract<CheckedConversionMappingRequest, { readonly conversionKind: "call-argument" }>[] = [];
-  let innerCall: CheckedCallMappingRequest | undefined;
+  const capture: { innerCall?: CheckedCallMappingRequest } = {};
+  const atomicConversionMapperFactKey = defineExtensionFactKey<{ readonly value: string }>({
+    extensionId: "checked-operation-atomic-call-conversion-failure",
+    name: "atomic-conversion-mapper",
+    snapshot: (value) => Object.freeze({ value: value.value }),
+  });
   const extension = semanticExtension("atomic-call-conversion-failure", {
     mapCheckedCall: (request) => {
       const name = Node_Text(request.callee as GoPtr<Node>);
@@ -559,7 +616,7 @@ test("a deferred or rejected argument conversion leaves the entire selected call
       if (name !== "inner") {
         throw new Error(`The outer call must remain blocked by its unavailable inner dependency, but '${name}' was mapped.`);
       }
-      innerCall = request;
+      capture.innerCall = request;
       return acceptObservation({
         kind: "target",
         selectedSignature: twoArgumentTargetSignature("inner"),
@@ -571,12 +628,9 @@ test("a deferred or rejected argument conversion leaves the entire selected call
         return acceptObservation({});
       }
       conversionRequests.push(request);
-      if (request.sourceArgumentIndex === 0) {
+      if (request.slot.sourceArgumentIndex === 0) {
         context.facts.set(request.slot, atomicConversionMapperFactKey, { value: "accepted-slot" });
         return acceptObservation({ convertedType: int32TargetType });
-      }
-      if (context.phase === "checking") {
-        return deferObservation;
       }
       return rejectObservation({
         extensionId: context.extensionId,
@@ -596,28 +650,11 @@ test("a deferred or rejected argument conversion leaves the entire selected call
   `);
 
   assertCleanProgram(program);
-  assert.deepEqual(callNames, ["inner"]);
+  assert.deepEqual(callNames, ["inner"], "The unavailable inner call must block its outer dependency.");
+  const innerCall = capture.innerCall;
   assert.ok(innerCall !== undefined);
-  assert.deepEqual(conversionRequests.map((request) => request.sourceArgumentIndex), [0, 1]);
-  assert.equal(
-    extensionHost.facts.get(innerCall.call, selectedTargetSignatureFactKey) === undefined,
-    true,
-    "A deferred selected call must not publish its target signature.",
-  );
-  for (const request of conversionRequests) {
-    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentConversionFactKey) === undefined, true);
-    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentPassingFactKey) === undefined, true);
-    assert.equal(extensionHost.facts.get(request.slot, atomicConversionMapperFactKey) === undefined, true);
-  }
-  assert.equal(extensionHost.diagnostics.all().length, 0, "A checking-phase deferral must remain diagnostic-free.");
-
-  finalizeExtensionSemantics(programOptions);
-  assert.deepEqual(callNames, ["inner"], "An accepted selected-call mapping must be retained rather than re-running its mapper.");
-  assert.deepEqual(
-    conversionRequests.map((request) => request.sourceArgumentIndex),
-    [0, 1, 1],
-    "Only the deferred conversion slot may re-run; an accepted sibling slot must replay its retained result.",
-  );
+  assert.deepEqual(conversionRequests.map((request) => request.slot.sourceArgumentIndex), [0, 1]);
+  assert.equal(extensionHost.diagnostics.all().length, 0, "Checked-operation rejection diagnostics must remain unpublished before finalization.");
   assert.equal(
     extensionHost.facts.get(innerCall.call, selectedTargetSignatureFactKey) === undefined,
     true,
@@ -628,6 +665,9 @@ test("a deferred or rejected argument conversion leaves the entire selected call
     assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentPassingFactKey) === undefined, true);
     assert.equal(extensionHost.facts.get(request.slot, atomicConversionMapperFactKey) === undefined, true);
   }
+  finalizeExtensionSemantics(programOptions);
+  assert.deepEqual(callNames, ["inner"], "A retained checking rejection must publish without replaying the failed mapper transaction.");
+  assert.deepEqual(conversionRequests.map((request) => request.slot.sourceArgumentIndex), [0, 1]);
   const diagnostics = extensionHost.diagnostics.all();
   assert.equal(diagnostics.filter((diagnostic) => diagnostic.extensionCode === "INTENTIONAL_ARGUMENT_CONVERSION_REJECTION").length, 1);
   assert.equal(diagnostics.filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_OWNER_DEFERRED").length, 0);
@@ -636,14 +676,16 @@ test("a deferred or rejected argument conversion leaves the entire selected call
 test("assertion and call-argument conversions coexist for one checked source expression", () => {
   const selectedSignature = singleArgumentTargetSignature("consume");
   const conversionRequests: CheckedConversionMappingRequest[] = [];
+  const conversionPhases: string[] = [];
   const extension = semanticExtension("conversion-slots", {
     mapCheckedCall: () => acceptObservation({
       kind: "target",
       selectedSignature,
       argumentConversions: [argumentConversionSlot(0, 0)],
     }),
-    mapCheckedConversion: (request) => {
+    mapCheckedConversion: (request, context) => {
       conversionRequests.push(request);
+      conversionPhases.push(`${request.conversionKind}:${context.phase}`);
       return acceptObservation({
         convertedType: request.conversionKind === "assertion"
           ? { kind: "target-named", id: "Acme.AssertedInt32" }
@@ -659,8 +701,13 @@ test("assertion and call-argument conversions coexist for one checked source exp
   `);
 
   assertCleanProgram(program);
-  assert.equal(conversionRequests.filter((request) => request.conversionKind === "assertion").length, 1);
+  assert.equal(conversionRequests.length, 1, "The ready authored assertion must map during source checking.");
+  assert.equal(conversionRequests[0]?.conversionKind, "assertion");
+  assert.deepEqual(conversionPhases, ["assertion:checking"]);
   assert.ok(finalizeExtensionSemantics(programOptions) === extensionHost, "Finalization must return the attached host.");
+  assert.equal(conversionRequests.length, 2, "Finalization must add only the call conversion that depended on retained assertion evidence.");
+  assert.deepEqual(conversionPhases, ["assertion:checking", "call-argument:finalization"]);
+  assert.equal(conversionRequests.filter((request) => request.conversionKind === "assertion").length, 1);
   assert.equal(conversionRequests.filter((request) => request.conversionKind === "call-argument").length, 1);
   const callRequest = findSingleCallRequest(extensionHost, conversionRequests);
   const expression = callRequest.expression;
@@ -671,9 +718,9 @@ test("assertion and call-argument conversions coexist for one checked source exp
   const callConversion = extensionHost.facts.get(callRequest.slot, targetCallArgumentConversionFactKey);
   assert.ok(callRequest.slot === callRequest.selectedSignature.argumentConversions[0]);
   assert.ok(callConversion?.call === callRequest.call, "Call conversion must retain the exact enclosing call.");
-  assert.equal(callConversion?.sourceArgumentIndex, 0);
-  assert.equal(callConversion?.targetParameterIndex, 0);
-  assert.equal(callConversion?.targetForm, "parameter");
+  assert.equal(callConversion?.slot.sourceArgumentIndex, 0);
+  assert.equal(callConversion?.slot.targetParameterIndex, 0);
+  assert.equal(callConversion?.slot.targetForm, "parameter");
   assert.deepEqual(callConversion?.convertedType, int32TargetType);
   assert.equal(extensionHost.diagnostics.all().length, 0, "Distinct conversion slots must not conflict.");
 });
@@ -712,10 +759,10 @@ test("accepted no-op call conversions publish slot completion while no-op assert
   assert.ok(callConversion !== undefined, "An accepted call slot must publish explicit completion even when no conversion is needed.");
   assert.ok(callConversion.slot === callRequest.slot);
   assert.ok(callConversion.call === callRequest.call);
-  assert.equal(callConversion.sourceArgumentIndex, 0);
-  assert.equal(callConversion.targetParameterIndex, 0);
-  assert.equal(callConversion.sourceForm, "value");
-  assert.equal(callConversion.targetForm, "parameter");
+  assert.equal(callConversion.slot.sourceArgumentIndex, 0);
+  assert.equal(callConversion.slot.targetParameterIndex, 0);
+  assert.equal(callConversion.slot.sourceForm, "value");
+  assert.equal(callConversion.slot.targetForm, "parameter");
   assert.equal(callConversion.convertedType, undefined);
   assert.equal(callConversion.operation, undefined);
   assert.equal(extensionHost.diagnostics.all().length, 0);
@@ -727,9 +774,6 @@ test("nested calls behind object and conditional wrappers finalize in determinis
     mapCheckedCall: (request, context) => {
       const name = Node_Text(request.callee as GoPtr<Node>);
       observations.push({ name, phase: context.phase });
-      if ((name === "boxLeft" || name === "boxRight") && context.phase === "checking") {
-        return deferObservation;
-      }
       return acceptObservation({
         kind: "target",
         selectedSignature: singleArgumentTargetSignature(name),
@@ -746,18 +790,14 @@ test("nested calls behind object and conditional wrappers finalize in determinis
   `);
 
   assertCleanProgram(program);
-  assert.deepEqual(observations, [
+  const checkingObservations = [
     { name: "boxLeft", phase: "checking" },
     { name: "boxRight", phase: "checking" },
-  ]);
+    { name: "consume", phase: "checking" },
+  ] as const;
+  assert.deepEqual(observations, checkingObservations);
   finalizeExtensionSemantics(programOptions);
-  assert.deepEqual(observations, [
-    { name: "boxLeft", phase: "checking" },
-    { name: "boxRight", phase: "checking" },
-    { name: "boxLeft", phase: "finalization" },
-    { name: "boxRight", phase: "finalization" },
-    { name: "consume", phase: "finalization" },
-  ]);
+  assert.deepEqual(observations, checkingObservations, "Finalization must not replay a completed postorder dependency chain.");
   assert.equal(extensionHost.diagnostics.all().length, 0, "Wrapped dependencies must finalize without diagnostics.");
 });
 
@@ -767,9 +807,6 @@ test("operations inside a callback body do not block the enclosing call", () => 
     mapCheckedCall: (request, context) => {
       const name = Node_Text(request.callee as GoPtr<Node>);
       observations.push({ name, phase: context.phase });
-      if (name === "box" && context.phase === "checking") {
-        return deferObservation;
-      }
       return acceptObservation({
         kind: "target",
         selectedSignature: singleArgumentTargetSignature(name),
@@ -785,16 +822,13 @@ test("operations inside a callback body do not block the enclosing call", () => 
   `);
 
   assertCleanProgram(program);
-  assert.deepEqual(observations, [
+  const checkingObservations = [
     { name: "box", phase: "checking" },
     { name: "consumeCallback", phase: "checking" },
-  ]);
+  ] as const;
+  assert.deepEqual(observations, checkingObservations);
   finalizeExtensionSemantics(programOptions);
-  assert.deepEqual(observations, [
-    { name: "box", phase: "checking" },
-    { name: "consumeCallback", phase: "checking" },
-    { name: "box", phase: "finalization" },
-  ]);
+  assert.deepEqual(observations, checkingObservations, "Finalization must not replay operations across a completed callback boundary.");
   assert.equal(extensionHost.diagnostics.all().length, 0, "Callback boundaries must not create false dependencies.");
 });
 
@@ -905,7 +939,10 @@ function requireArgumentConversionSlot(
     candidate.sourceArgumentIndex === sourceArgumentIndex
     && candidate.targetParameterIndex === targetParameterIndex);
   if (slot === undefined) {
-    throw new Error(`Missing retained argument conversion slot ${sourceArgumentIndex}:${targetParameterIndex}.`);
+    const diagnostics = extensionHost.diagnostics.all()
+      .map((diagnostic) => `${diagnostic.extensionCode}: ${diagnostic.message}`)
+      .join("\n");
+    throw new Error(`Missing retained argument conversion slot ${sourceArgumentIndex}:${targetParameterIndex}.${diagnostics === "" ? "" : `\n${diagnostics}`}`);
   }
   return slot;
 }
@@ -920,8 +957,8 @@ function requireCallArgumentConversionRequest(
     readonly conversionKind: "call-argument";
   }> => candidate.conversionKind === "call-argument"
     && candidate.call === call
-    && candidate.sourceArgumentIndex === sourceArgumentIndex
-    && candidate.targetParameterIndex === targetParameterIndex);
+    && candidate.slot.sourceArgumentIndex === sourceArgumentIndex
+    && candidate.slot.targetParameterIndex === targetParameterIndex);
   if (request === undefined) {
     throw new Error(`Missing call-argument conversion request ${sourceArgumentIndex}:${targetParameterIndex}.`);
   }
@@ -944,7 +981,12 @@ function findSingleCallRequest(
   return request;
 }
 
-function createProgram(extension: CompilerExtension, sourceText: string): {
+interface CreateProgramOptions {
+  readonly additionalExtensions?: readonly CompilerExtension[];
+  readonly extraFiles?: ReadonlyMap<string, string>;
+}
+
+function createProgram(extension: CompilerExtension, sourceText: string, options: CreateProgramOptions = {}): {
   readonly program: GoPtr<Program>;
   readonly programOptions: ProgramOptions;
   readonly extensionHost: ReturnType<typeof attachExtensionHost>["extensionHost"];
@@ -961,6 +1003,7 @@ function createProgram(extension: CompilerExtension, sourceText: string): {
       },
       files: ["profile.d.ts", "index.ts"],
     })],
+    ...(options.extraFiles ?? []),
   ]);
   let fs = FromMap(files, false as bool);
   fs = WrapFS(fs);
@@ -968,7 +1011,10 @@ function createProgram(extension: CompilerExtension, sourceText: string): {
   const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
   assert.equal((configErrors ?? []).length, 0);
   const baseOptions = { Config: parsed, Host: host } satisfies ProgramOptions;
-  const extended = attachExtensionHost(baseOptions, { activeTarget: "acme", extensions: [extension] });
+  const extended = attachExtensionHost(baseOptions, {
+    activeTarget: "acme",
+    extensions: [...(options.additionalExtensions ?? []), extension],
+  });
   return {
     program: NewProgram(extended.program),
     programOptions: extended.program,

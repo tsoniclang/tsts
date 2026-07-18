@@ -1,19 +1,18 @@
 import type {
   ArgumentPassingMode,
-  CheckedAccessMode,
-  CheckedCallKind,
+  CheckedAssertionConversionSourceOperation,
+  CheckedCallSourceOperation,
+  CheckedCallArgumentConversionSourceOperation,
+  CheckedElementAccessSourceOperation,
+  CheckedIterationSourceOperation,
+  CheckedOperatorSourceOperation,
+  CheckedPropertyAccessSourceOperation,
+  ProviderDeclarationIdentity,
   RuntimeCarrierProvenance,
-  SourceSelectedCallArgumentBinding,
   SelectedTargetSignatureFact,
-  SelectedSourceTypeEvidence,
-  SelectedSourceValueEvidence,
-  SourceSelectedMethodTypeArgument,
-  SourceSelectedSignatureKind,
-  SourceSelectedSignatureParameter,
   TargetSignatureSelection,
   TargetConstraint,
-  TargetOperationProvenance,
-  TargetOperationFact,
+  TargetOperationProposal,
   TargetParameter,
   TargetCallArgumentConversionSlot,
   TargetTypeRef,
@@ -113,16 +112,12 @@ export type CheckedOperationReference<TObservation extends CheckedOperationObser
         readonly conversionKind: "assertion";
         readonly call?: never;
         readonly slot?: never;
-        readonly sourceArgumentIndex?: never;
-        readonly targetParameterIndex?: never;
       } | {
         readonly observation: TObservation;
         readonly subject: ExtensionFactSubject;
         readonly conversionKind: "call-argument";
         readonly call: ExtensionFactSubject;
         readonly slot: TargetCallArgumentConversionSlot;
-        readonly sourceArgumentIndex: number;
-        readonly targetParameterIndex: number;
       }
     : {
         readonly observation: TObservation;
@@ -130,8 +125,6 @@ export type CheckedOperationReference<TObservation extends CheckedOperationObser
         readonly conversionKind?: never;
         readonly call?: never;
         readonly slot?: never;
-        readonly sourceArgumentIndex?: never;
-        readonly targetParameterIndex?: never;
       };
 
 export interface ExtensionObservationRunOptions {
@@ -153,24 +146,9 @@ export interface PostCheckAssignabilityObservationRequest {
   readonly targetPlatform?: string;
 }
 
-export interface CheckedCallMappingRequest {
-  readonly call: ExtensionFactSubject;
-  readonly callee: ExtensionFactSubject;
-  readonly arguments: readonly ExtensionFactSubject[];
-  readonly callKind: CheckedCallKind;
-  readonly sourceSelectedSignature?: ExtensionFactSubject;
-  readonly sourceSelectedDeclaration?: ExtensionFactSubject;
-  readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
-  readonly sourceSelectedSignatureParameters?: readonly SourceSelectedSignatureParameter[];
-  readonly sourceSelectedSignatureKind?: SourceSelectedSignatureKind;
-  readonly sourceArgumentBindings?: readonly SourceSelectedCallArgumentBinding[];
-  readonly sourceCallee: SelectedSourceValueEvidence;
-  readonly sourceArguments: readonly SelectedSourceValueEvidence[];
-  readonly sourceResult: SelectedSourceValueEvidence;
-  readonly sourceReceiver?: SelectedSourceValueEvidence;
-  readonly optionalChain?: boolean;
+export type CheckedCallMappingRequest = CheckedCallSourceOperation & {
   readonly target?: string;
-}
+};
 
 export type CheckedCallMappingResult =
   | { readonly kind: "source" }
@@ -180,104 +158,45 @@ export type CheckedCallMappingResult =
       readonly argumentConversions: readonly TargetCallArgumentConversionSlot[];
     };
 
-export interface CheckedPropertyAccessMappingRequest {
-  readonly expression: ExtensionFactSubject;
-  readonly receiver: ExtensionFactSubject;
-  readonly propertyName: string;
-  readonly accessMode: CheckedAccessMode;
-  readonly callCallee: boolean;
-  readonly sourceReceiver: SelectedSourceValueEvidence;
-  readonly sourceResult: SelectedSourceValueEvidence;
-  readonly optionalChain?: boolean;
+export type CheckedPropertyAccessMappingRequest = CheckedPropertyAccessSourceOperation & {
   readonly target?: string;
-}
+};
 
-export interface CheckedElementAccessMappingRequest {
-  readonly expression: ExtensionFactSubject;
-  readonly receiver: ExtensionFactSubject;
-  readonly argument: ExtensionFactSubject;
-  readonly accessMode: CheckedAccessMode;
-  readonly callCallee: boolean;
-  readonly sourceReceiver: SelectedSourceValueEvidence;
-  readonly sourceArgument: SelectedSourceValueEvidence;
-  readonly sourceResult: SelectedSourceValueEvidence;
-  readonly sourceSelectedElementIndex?: number;
-  readonly optionalChain?: boolean;
+export type CheckedElementAccessMappingRequest = CheckedElementAccessSourceOperation & {
   readonly target?: string;
-}
+};
 
-export interface CheckedOperatorMappingRequest {
-  readonly expression: ExtensionFactSubject;
-  readonly operator: string;
-  readonly left: ExtensionFactSubject;
-  readonly right?: ExtensionFactSubject;
-  readonly sourceLeft: SelectedSourceValueEvidence;
-  readonly sourceRight?: SelectedSourceValueEvidence;
-  readonly sourceResult: SelectedSourceValueEvidence;
+export type CheckedOperatorMappingRequest = CheckedOperatorSourceOperation & {
   readonly target?: string;
-}
+};
 
-export type CheckedIterationKind = "for-in" | "for-of" | "for-await-of";
-
-export interface CheckedIterationMappingRequest {
-  readonly statement: ExtensionFactSubject;
-  readonly expression: ExtensionFactSubject;
-  readonly initializer?: ExtensionFactSubject;
-  readonly kind: CheckedIterationKind;
-  readonly sourceIterable: SelectedSourceValueEvidence;
-  readonly sourceElement: SelectedSourceTypeEvidence;
+export type CheckedIterationMappingRequest = CheckedIterationSourceOperation & {
   readonly target?: string;
-}
+};
 
 export interface CheckedOperationMappingResult {
-  readonly operation: TargetOperationFact;
+  readonly operation: TargetOperationProposal;
   readonly resultType?: TargetTypeRef;
-  readonly provenance?: TargetOperationProvenance;
+  readonly providerDeclaration?: ProviderDeclarationIdentity;
 }
 
-interface CheckedConversionMappingRequestBase {
-  readonly expression: ExtensionFactSubject;
-  readonly source: SelectedSourceValueEvidence;
-  readonly targetPlatform?: string;
-}
-
-export type CheckedConversionMappingRequest = CheckedConversionMappingRequestBase & ({
-  readonly conversionKind: "call-argument";
-  readonly target: TargetTypeRef;
-  readonly call: ExtensionFactSubject;
-  readonly slot: TargetCallArgumentConversionSlot;
-  readonly sourceArgumentIndex: number;
-  readonly targetParameterIndex: number;
-  readonly sourceForm: "value" | "spread-element" | "spread-sequence";
-  readonly spreadElementIndex?: number;
-  readonly targetForm: "parameter" | "params-element" | "params-sequence";
-  readonly targetParameter: TargetParameter;
-  readonly sourceSelectedSignature?: ExtensionFactSubject;
-  readonly selectedSignature: SelectedTargetSignatureFact;
-  readonly sourceBinding: SourceSelectedCallArgumentBinding;
-  readonly assertionKind?: never;
-  readonly explicitTargetTypeNode?: never;
-} | {
-  readonly conversionKind: "assertion";
-  readonly target: SelectedSourceTypeEvidence;
-  readonly assertionKind: "as" | "angle-bracket" | "jsdoc";
-  readonly explicitTargetTypeNode: ExtensionFactSubject;
-  readonly call?: never;
-  readonly slot?: never;
-  readonly sourceArgumentIndex?: never;
-  readonly targetParameterIndex?: never;
-  readonly sourceForm?: never;
-  readonly spreadElementIndex?: never;
-  readonly targetForm?: never;
-  readonly targetParameter?: never;
-  readonly sourceSelectedSignature?: never;
-  readonly selectedSignature?: never;
-  readonly sourceBinding?: never;
-});
+export type CheckedConversionMappingRequest =
+  | CheckedCallArgumentConversionSourceOperation & {
+      readonly targetPlatform?: string;
+      readonly target: TargetTypeRef;
+      readonly targetParameter: TargetParameter;
+      readonly selectedSignature: SelectedTargetSignatureFact;
+    }
+  | CheckedAssertionConversionSourceOperation & {
+      readonly targetPlatform?: string;
+      readonly targetParameter?: never;
+      readonly selectedSignature?: never;
+    };
 
 export interface CheckedConversionMappingResult {
   readonly convertedType?: TargetTypeRef;
-  readonly operation?: TargetOperationFact;
+  readonly operation?: TargetOperationProposal;
+  readonly providerDeclaration?: ProviderDeclarationIdentity;
 }
 
 export interface RuntimeCarrierFactRequest {
@@ -304,12 +223,21 @@ export interface ContextualTargetTypeResult {
   readonly targetType?: TargetTypeRef;
 }
 
-export type CheckedFlowUseMode = "read" | "write" | "read-write" | "call";
+export type CheckedFlowSourceUse =
+  | {
+      readonly kind: "ordinary";
+      readonly access: "read" | "write" | "read-write";
+    }
+  | { readonly kind: "call"; readonly access?: never }
+  | { readonly kind: "construct"; readonly access?: never }
+  | { readonly kind: "tagged-template"; readonly access?: never }
+  | { readonly kind: "decorator"; readonly access?: never }
+  | { readonly kind: "jsx-element"; readonly access?: never };
 
 export interface ExtensionFlowUseValidationRequest {
   readonly useSite: ExtensionFactSubject;
   readonly symbol: ExtensionFactSubject;
-  readonly mode: CheckedFlowUseMode;
+  readonly sourceUse: CheckedFlowSourceUse;
   readonly target?: string;
 }
 

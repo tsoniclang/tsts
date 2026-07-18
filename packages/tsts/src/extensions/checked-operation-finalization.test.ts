@@ -14,7 +14,13 @@ import {
 } from "./index.js";
 import type {
   CheckedCallMappingRequest,
+  CheckedConversionMappingRequest,
+  CheckedIterationMappingRequest,
+  CheckedOperationMappingResult,
+  CheckedOperatorMappingRequest,
+  CheckedPropertyAccessMappingRequest,
   CompilerExtension,
+  ExtensionEvidence,
   ExtensionFactSubject,
   SelectedSourceTypeEvidence,
   SelectedSourceValueEvidence,
@@ -22,13 +28,22 @@ import type {
   SourceSelectedCallArgumentBinding,
   TargetCallArgumentConversionSlot,
   TargetOperationFact,
+  TargetOperationProposal,
   TargetSemanticProvider,
 } from "./index.js";
-import { extensionHostGetCheckedOperationReference, extensionHostRunCheckedOperation } from "./host.js";
+import { extensionHostGetCheckedOperationReference, extensionHostRunCheckedOperation, extensionHostSetFact } from "./host.js";
+import {
+  applyExtensionCheckedConversion,
+  checkedIterationSourceOperation,
+  checkedOperatorSourceOperationFromRequest,
+  checkedPropertySourceOperationFromRequest,
+  finalizeTargetOperationFact,
+} from "./checker-integration.js";
 
 const receiverCarrierFactKey = defineExtensionFactKey<{ readonly id: string }>({
   extensionId: "acme.lifecycle-test",
   name: "receiverCarrier",
+  snapshot: (value) => Object.freeze({ id: value.id }),
   equals: (left, right) => left.id === right.id,
 });
 
@@ -37,11 +52,12 @@ test("checked operations replay after lifecycle in deterministic dependency orde
   const receiverType = {};
   const property = {};
   const assignment = {};
+  const assignmentRight = {};
   const assignmentConversion = {};
   const phases: string[] = [];
   const extension = lifecycleExtension({
     beforeFinalization: (host) => {
-      host.facts.set(receiverType, receiverCarrierFactKey, { id: "Box<string>" });
+      host[extensionHostSetFact](receiverType, receiverCarrierFactKey, { id: "Box<string>" });
     },
     property: (request, context) => {
       phases.push(`property:${context.phase}`);
@@ -69,22 +85,26 @@ test("checked operations replay after lifecycle in deterministic dependency orde
   const operatorResult = host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedOperator,
     {
+      sourceOperationKind: "operator",
       expression: assignment,
+      operatorKind: "binary",
       operator: "=",
       left: property,
-      right: {},
+      right: assignmentRight,
       sourceLeft: sourceValue(property, {}),
+      sourceRight: sourceValue(assignmentRight, {}),
       sourceResult: sourceValue(assignment, {}),
       target: "acme",
     },
     () => {
       throw new Error("owned operator reached core");
     },
-    (value, evidence) => {
-      host.facts.set(assignment, targetOperationFactKey, value.operation, evidence);
+    (value, evidence, request) => {
+      applyTargetOperationFact(host, request, value, evidence);
       host[extensionHostRunCheckedOperation](
         ExtensionObservationPoint.mapCheckedConversion,
         {
+          sourceOperationKind: "conversion",
           conversionKind: "assertion",
           assertionKind: "as",
           expression: assignmentConversion,
@@ -96,11 +116,8 @@ test("checked operations replay after lifecycle in deterministic dependency orde
         () => {
           throw new Error("owned conversion reached core");
         },
-        (conversion, conversionEvidence) => {
-          host.facts.set(assignmentConversion, targetConversionFactKey, {
-            ...(conversion.convertedType === undefined ? {} : { convertedType: conversion.convertedType }),
-            ...(conversion.operation === undefined ? {} : { operation: conversion.operation }),
-          }, conversionEvidence);
+        (conversion, conversionEvidence, conversionRequest) => {
+          applyExtensionCheckedConversion(host, conversion, conversionEvidence, conversionRequest);
         },
         { requireOwner: true },
         undefined,
@@ -114,20 +131,22 @@ test("checked operations replay after lifecycle in deterministic dependency orde
   const propertyResult = host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedPropertyAccess,
     {
+      sourceOperationKind: "property-access",
       expression: property,
       receiver,
       propertyName: "value",
       accessMode: "read",
-      callCallee: false,
+      use: "value",
       sourceReceiver: sourceValue(receiver, receiverType),
-      sourceResult: sourceValue(property, {}),
+      sourceReadResult: sourceValue(property, {}),
+      chainRole: { kind: "ordinary", participant: "property-access" },
       target: "acme",
     },
     () => {
       throw new Error("owned property reached core");
     },
-    (value, evidence) => {
-      host.facts.set(property, targetOperationFactKey, value.operation, evidence);
+    (value, evidence, request) => {
+      applyTargetOperationFact(host, request, value, evidence);
     },
     { requireOwner: true },
   );
@@ -163,8 +182,8 @@ test("retained selected receiver evidence remains distinct across generic instan
   const seenReceiverTypes: ExtensionFactSubject[] = [];
   const extension = lifecycleExtension({
     beforeFinalization: (host) => {
-      host.facts.set(stringType, receiverCarrierFactKey, { id: "Box<string>" });
-      host.facts.set(numberType, receiverCarrierFactKey, { id: "Box<number>" });
+      host[extensionHostSetFact](stringType, receiverCarrierFactKey, { id: "Box<string>" });
+      host[extensionHostSetFact](numberType, receiverCarrierFactKey, { id: "Box<number>" });
     },
     call: (request, context) => {
       if (request.sourceReceiver !== undefined) {
@@ -218,20 +237,22 @@ test("unresolved checked operations produce one final diagnostic and no target f
   host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedPropertyAccess,
     {
+      sourceOperationKind: "property-access",
       expression,
       receiver,
       propertyName: "missing",
       accessMode: "read",
-      callCallee: false,
+      use: "value",
       sourceReceiver: sourceValue(receiver, receiverType),
-      sourceResult: sourceValue(expression, {}),
+      sourceReadResult: sourceValue(expression, {}),
+      chainRole: { kind: "ordinary", participant: "property-access" },
       target: "acme",
     },
     () => {
       throw new Error("owned property reached core");
     },
-    (value, evidence) => {
-      host.facts.set(expression, targetOperationFactKey, value.operation, evidence);
+    (value, evidence, request) => {
+      applyTargetOperationFact(host, request, value, evidence);
     },
     { requireOwner: true },
   );
@@ -254,7 +275,7 @@ test("checked conversions share the deferred finalization contract", () => {
   const phases: string[] = [];
   const extension = lifecycleExtension({
     beforeFinalization: (host) => {
-      host.facts.set(source, receiverCarrierFactKey, { id: "source-ready" });
+      host[extensionHostSetFact](source, receiverCarrierFactKey, { id: "source-ready" });
     },
     conversion: (request, context) => {
       phases.push(context.phase);
@@ -269,6 +290,7 @@ test("checked conversions share the deferred finalization contract", () => {
   const result = host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedConversion,
     {
+      sourceOperationKind: "conversion",
       conversionKind: "assertion",
       assertionKind: "as",
       expression,
@@ -280,11 +302,8 @@ test("checked conversions share the deferred finalization contract", () => {
     () => {
       throw new Error("owned conversion reached core");
     },
-    (value, evidence) => {
-      host.facts.set(expression, targetConversionFactKey, {
-        ...(value.convertedType === undefined ? {} : { convertedType: value.convertedType }),
-        ...(value.operation === undefined ? {} : { operation: value.operation }),
-      }, evidence);
+    (value, evidence, request) => {
+      applyExtensionCheckedConversion(host, value, evidence, request);
     },
     { requireOwner: true },
   );
@@ -309,6 +328,14 @@ test("assertion and call-argument conversions retain distinct slots for one expr
     targetForm: "parameter" as const,
   };
   const selectedSourceBinding = sourceArgumentBinding(source, target, 0, 0);
+  const selectedSourceParameter = Object.freeze({
+    parameterIndex: 0,
+    parameterName: "value",
+    parameterSymbol: {},
+    selectedType: target,
+    acceptsOmission: false,
+    rest: false,
+  });
   const selectedSignature: SelectedTargetSignatureFact = {
     member: {
       id: "consume(value)",
@@ -322,11 +349,18 @@ test("assertion and call-argument conversions retain distinct slots for one expr
       }],
     },
     argumentConversions: [slot],
-    sourceArgumentBindings: [selectedSourceBinding],
     sourceCallKind: "call",
+    sourceSelection: {
+      kind: "applicable",
+      signature: {},
+      methodTypeArguments: [],
+      parameters: [selectedSourceParameter],
+      argumentBindings: [selectedSourceBinding],
+    },
     sourceCallee: sourceValue({}, {}),
     sourceArguments: [sourceValue(expression, source)],
     sourceResult: sourceValue(call, {}),
+    sourceChainRole: { kind: "ordinary", participant: "call" },
   };
   const observedKinds: string[] = [];
   let applied = 0;
@@ -342,6 +376,7 @@ test("assertion and call-argument conversions retain distinct slots for one expr
   const host = new ExtensionHost({}, { extensions: [extension], activeTarget: "acme" });
 
   host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedConversion, {
+    sourceOperationKind: "conversion",
     conversionKind: "assertion",
     assertionKind: "as",
     expression,
@@ -353,11 +388,12 @@ test("assertion and call-argument conversions retain distinct slots for one expr
     throw new Error("owned assertion conversion reached core");
   }, (value, evidence, request) => {
     assert.equal(request.conversionKind, "assertion");
-    host.facts.set(request.expression, targetConversionFactKey, value, evidence);
+    applyExtensionCheckedConversion(host, value, evidence, request);
     applied += 1;
   }, { requireOwner: true });
 
   host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedConversion, {
+    sourceOperationKind: "conversion",
     conversionKind: "call-argument",
     expression,
     source: selectedSignature.sourceArguments[0]!,
@@ -365,10 +401,6 @@ test("assertion and call-argument conversions retain distinct slots for one expr
     target: selectedSignature.member.parameters[0]!.type,
     call,
     slot,
-    sourceArgumentIndex: 0,
-    targetParameterIndex: 0,
-    sourceForm: "value",
-    targetForm: "parameter",
     targetParameter: selectedSignature.member.parameters[0]!,
     selectedSignature,
     targetPlatform: "acme",
@@ -382,17 +414,7 @@ test("assertion and call-argument conversions retain distinct slots for one expr
         "The conversion request must retain its selected signature's canonical slot.",
       );
       retainedSlot = request.slot;
-      host.facts.set(request.slot, targetCallArgumentConversionFactKey, {
-        ...value,
-        slot: request.slot,
-        call: request.call,
-        sourceArgumentIndex: request.sourceArgumentIndex,
-        targetParameterIndex: request.targetParameterIndex,
-        sourceForm: request.sourceForm,
-        ...(request.spreadElementIndex === undefined ? {} : { spreadElementIndex: request.spreadElementIndex }),
-        targetForm: request.targetForm,
-        sourceBinding: request.sourceBinding,
-      }, evidence);
+      applyExtensionCheckedConversion(host, value, evidence, request);
     }
     applied += 1;
   }, { requireOwner: true });
@@ -408,8 +430,8 @@ test("assertion and call-argument conversions retain distinct slots for one expr
     host.facts.get(retainedSlot, targetCallArgumentConversionFactKey)?.call === call,
     "Call-argument conversion evidence must retain the exact call subject.",
   );
-  assert.equal(host.facts.get(retainedSlot, targetCallArgumentConversionFactKey)?.sourceArgumentIndex, 0);
-  assert.equal(host.facts.get(retainedSlot, targetCallArgumentConversionFactKey)?.targetParameterIndex, 0);
+  assert.equal(host.facts.get(retainedSlot, targetCallArgumentConversionFactKey)?.sourceBinding.sourceArgumentIndex, 0);
+  assert.equal(host.facts.get(retainedSlot, targetCallArgumentConversionFactKey)?.slot.targetParameterIndex, 0);
   host.finalizeSemantics();
   assert.equal(host.finalized, true);
   assert.equal(host.diagnostics.all().length, 0, "Distinct conversion slots must not report extension diagnostics.");
@@ -422,7 +444,7 @@ test("checked iteration shares the deferred finalization contract", () => {
   const phases: string[] = [];
   const extension = lifecycleExtension({
     beforeFinalization: (host) => {
-      host.facts.set(sourceElementType, receiverCarrierFactKey, { id: "element-ready" });
+      host[extensionHostSetFact](sourceElementType, receiverCarrierFactKey, { id: "element-ready" });
     },
     iteration: (request, context) => {
       phases.push(context.phase);
@@ -437,9 +459,15 @@ test("checked iteration shares the deferred finalization contract", () => {
   const result = host[extensionHostRunCheckedOperation](
     ExtensionObservationPoint.mapCheckedIteration,
     {
+      sourceOperationKind: "iteration",
       statement,
       expression,
-      kind: "for-of",
+      iterationKind: "for-of",
+      mechanism: {
+        kind: "array-like-index",
+        sourceAlternative: sourceType({}),
+        selectedIndex: sourceType(sourceElementType),
+      },
       sourceIterable: sourceValue(expression, {}),
       sourceElement: sourceType(sourceElementType),
       target: "acme",
@@ -447,8 +475,8 @@ test("checked iteration shares the deferred finalization contract", () => {
     () => {
       throw new Error("owned iteration reached core");
     },
-    (value, evidence) => {
-      host.facts.set(statement, targetOperationFactKey, value.operation, evidence);
+    (value, evidence, request) => {
+      applyTargetOperationFact(host, request, value, evidence);
     },
     { requireOwner: true },
   );
@@ -522,7 +550,7 @@ test("repeated checked observations are idempotent and conflicting source eviden
   const request = checkedCallRequest(call, callee, receiver, receiverType);
   const apply = (): void => {
     acceptedResults += 1;
-    host.facts.set(call, selectedCallFactKey, { id: "repeatable-call" });
+    host[extensionHostSetFact](call, selectedCallFactKey, { id: "repeatable-call" });
   };
 
   host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedCall, request, () => {
@@ -545,7 +573,7 @@ test("repeated checked observations are idempotent and conflicting source eviden
   assert.equal(acceptedResults, 1);
   assert.equal(host.diagnostics.all().length, 1);
   assert.equal(host.diagnostics.all()[0]?.extensionCode, "CHECKED_OPERATION_REQUEST_CONFLICT");
-  assert.deepEqual(host.diagnostics.all()[0]?.evidence?.[0]?.details, ["sourceReceiver"]);
+  assert.deepEqual(host.diagnostics.all()[0]?.evidence?.[0]?.details, ["sourceOperation"]);
   assert.equal(host.facts.get(call, selectedCallFactKey), undefined);
   assert.equal(host.finalized, false);
   assert.throws(() => host.finalizeSemantics(), /semantic finalization previously failed/);
@@ -565,6 +593,14 @@ test("one source expression can retain distinct canonical target conversion slot
     passingMode: "by-value" as const,
   };
   const firstSourceBinding = sourceArgumentBinding(expression, firstParameter.type, 0, 0);
+  const firstSourceParameter = Object.freeze({
+    parameterIndex: 0,
+    parameterName: "value",
+    parameterSymbol: {},
+    selectedType: firstParameter.type,
+    acceptsOmission: false,
+    rest: false,
+  });
   const selectedSignature: SelectedTargetSignatureFact = {
     member: {
       id: "acme.consume",
@@ -587,11 +623,18 @@ test("one source expression can retain distinct canonical target conversion slot
         targetForm: "parameter" as const,
       },
     ],
-    sourceArgumentBindings: [firstSourceBinding],
     sourceCallKind: "call",
+    sourceSelection: {
+      kind: "applicable",
+      signature: {},
+      methodTypeArguments: [],
+      parameters: [firstSourceParameter],
+      argumentBindings: [firstSourceBinding],
+    },
     sourceCallee: sourceValue({}, {}),
     sourceArguments: [sourceValue(expression, expression)],
     sourceResult: sourceValue(call, {}),
+    sourceChainRole: { kind: "ordinary", participant: "call" },
   };
   const extension = lifecycleExtension({
     conversion: () => acceptObservation({ convertedType: { kind: "target-named", id: "Acme.Converted" } }),
@@ -603,16 +646,13 @@ test("one source expression can retain distinct canonical target conversion slot
   ): TargetCallArgumentConversionSlot => {
     let retainedSlot: TargetCallArgumentConversionSlot | undefined;
     host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedConversion, {
+      sourceOperationKind: "conversion",
       conversionKind: "call-argument",
       expression,
       source: selectedSignature.sourceArguments[0]!,
       target: targetParameter.type,
       call,
       slot,
-      sourceArgumentIndex: slot.sourceArgumentIndex,
-      targetParameterIndex: slot.targetParameterIndex,
-      sourceForm: slot.sourceForm,
-      targetForm: slot.targetForm,
       targetParameter,
       sourceBinding: firstSourceBinding,
       selectedSignature,
@@ -623,19 +663,9 @@ test("one source expression can retain distinct canonical target conversion slot
       if (request.conversionKind !== "call-argument") {
         throw new Error("Expected a call-argument conversion request.");
       }
-      assert.ok(request.slot === request.selectedSignature.argumentConversions[request.targetParameterIndex]);
+      assert.ok(request.slot === request.selectedSignature.argumentConversions[request.slot.targetParameterIndex]);
       retainedSlot = request.slot;
-      host.facts.set(request.slot, targetCallArgumentConversionFactKey, {
-        ...value,
-        slot: request.slot,
-        call: request.call,
-        sourceArgumentIndex: request.sourceArgumentIndex,
-        targetParameterIndex: request.targetParameterIndex,
-        sourceForm: request.sourceForm,
-        ...(request.spreadElementIndex === undefined ? {} : { spreadElementIndex: request.spreadElementIndex }),
-        targetForm: request.targetForm,
-        sourceBinding: request.sourceBinding,
-      }, evidence);
+      applyExtensionCheckedConversion(host, value, evidence, request);
     }, { requireOwner: true });
     if (retainedSlot === undefined) {
       throw new Error("Expected the call-argument conversion to apply synchronously.");
@@ -674,21 +704,12 @@ test("conflicting checked result types fail closed instead of reusing stale evid
   const run = (sourceResultType: ExtensionFactSubject): void => {
     host[extensionHostRunCheckedOperation](
       ExtensionObservationPoint.mapCheckedPropertyAccess,
-      {
-        expression,
-        receiver,
-        propertyName: "value",
-        accessMode: "read",
-        callCallee: false,
-        sourceReceiver: sourceValue(receiver, receiverType),
-        sourceResult: sourceValue(expression, sourceResultType),
-        target: "acme",
-      },
+      checkedPropertyRequest(expression, receiver, receiverType, sourceResultType, "read", "value", "acme"),
       () => {
         throw new Error("owned property reached core");
       },
-      (value, evidence) => {
-        host.facts.set(expression, targetOperationFactKey, value.operation, evidence);
+      (value, evidence, request) => {
+        applyTargetOperationFact(host, request, value, evidence);
       },
       { requireOwner: true },
     );
@@ -700,7 +721,7 @@ test("conflicting checked result types fail closed instead of reusing stale evid
   assert.equal(mapperRuns, 1);
   assert.equal(host.diagnostics.all().length, 1);
   assert.equal(host.diagnostics.all()[0]?.extensionCode, "CHECKED_OPERATION_REQUEST_CONFLICT");
-  assert.deepEqual(host.diagnostics.all()[0]?.evidence?.[0]?.details, ["sourceResult"]);
+  assert.deepEqual(host.diagnostics.all()[0]?.evidence?.[0]?.details, ["sourceOperation"]);
   assert.equal(host.facts.get(expression, targetOperationFactKey), undefined);
   assert.equal(host.finalized, false);
   assert.throws(() => host.finalizeSemantics(), /semantic finalization previously failed/);
@@ -710,21 +731,21 @@ test("conflicting checked member use evidence fails closed", () => {
   const cases = [
     {
       field: "accessMode",
-      first: { accessMode: "read" as const, callCallee: false },
-      second: { accessMode: "write" as const, callCallee: false },
+      first: { accessMode: "read" as const, use: "value" as const },
+      second: { accessMode: "write" as const, use: "value" as const },
     },
     {
-      field: "callCallee",
-      first: { accessMode: "read" as const, callCallee: false },
-      second: { accessMode: "read" as const, callCallee: true },
+      field: "use",
+      first: { accessMode: "read" as const, use: "value" as const },
+      second: { accessMode: "read" as const, use: "call-callee" as const },
     },
   ] as const;
 
   for (const conflict of cases) {
     const expression = {};
     const receiver = {};
-    const sourceReceiver = sourceValue(receiver, {});
-    const sourceResult = sourceValue(expression, {});
+    const receiverType = {};
+    const resultType = {};
     const extension = lifecycleExtension({
       property: () => acceptObservation({ operation: operation("box.value", "property") }),
     });
@@ -732,20 +753,12 @@ test("conflicting checked member use evidence fails closed", () => {
     const run = (use: typeof conflict.first | typeof conflict.second): void => {
       host[extensionHostRunCheckedOperation](
         ExtensionObservationPoint.mapCheckedPropertyAccess,
-        {
-          expression,
-          receiver,
-          propertyName: "value",
-          ...use,
-          sourceReceiver,
-          sourceResult,
-          target: "acme",
-        },
+        checkedPropertyRequest(expression, receiver, receiverType, resultType, use.accessMode, use.use, "acme"),
         () => {
           throw new Error("owned property reached core");
         },
-        (value, evidence) => {
-          host.facts.set(expression, targetOperationFactKey, value.operation, evidence);
+        (value, evidence, request) => {
+          applyTargetOperationFact(host, request, value, evidence);
         },
         { requireOwner: true },
       );
@@ -757,13 +770,14 @@ test("conflicting checked member use evidence fails closed", () => {
     assert.equal(host.facts.get(expression, targetOperationFactKey), undefined);
     const diagnostics = host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "CHECKED_OPERATION_REQUEST_CONFLICT");
     assert.equal(diagnostics.length, 1);
-    assert.deepEqual(diagnostics[0]?.evidence?.[0]?.details, [conflict.field]);
+    assert.deepEqual(diagnostics[0]?.evidence?.[0]?.details, ["sourceOperation"]);
   }
 });
 
 const selectedCallFactKey = defineExtensionFactKey<{ readonly id: string }>({
   extensionId: "acme.lifecycle-test",
   name: "selectedCall",
+  snapshot: (value) => Object.freeze({ id: value.id }),
   equals: (left, right) => left.id === right.id,
 });
 
@@ -792,24 +806,79 @@ function sourceArgumentBinding(
   });
 }
 
+function checkedPropertyRequest(
+  expression: ExtensionFactSubject,
+  receiver: ExtensionFactSubject,
+  receiverType: ExtensionFactSubject,
+  resultType: ExtensionFactSubject,
+  accessMode: CheckedPropertyAccessMappingRequest["accessMode"],
+  use: "value" | "call-callee",
+  target?: string,
+): CheckedPropertyAccessMappingRequest {
+  const common = {
+    sourceOperationKind: "property-access" as const,
+    expression,
+    receiver,
+    propertyName: "value",
+    sourceReceiver: sourceValue(receiver, receiverType),
+    chainRole: { kind: "ordinary" as const, participant: "property-access" as const },
+    ...(target === undefined ? {} : { target }),
+  };
+  switch (accessMode) {
+    case "read": return Object.freeze({ ...common, accessMode, use, sourceReadResult: sourceValue(expression, resultType) });
+    case "delete": return Object.freeze({ ...common, accessMode, use: "value", sourceReadResult: sourceValue(expression, resultType) });
+    case "write": return Object.freeze({ ...common, accessMode, use: "value", sourceWriteType: sourceType(resultType) });
+    case "read-write": return Object.freeze({
+      ...common,
+      accessMode,
+      use: "value",
+      sourceReadResult: sourceValue(expression, resultType),
+      sourceWriteType: sourceType(resultType),
+    });
+  }
+}
+
 function checkedCallRequest(
   call: ExtensionFactSubject,
   callee: ExtensionFactSubject,
   receiver: ExtensionFactSubject,
   receiverType: ExtensionFactSubject,
 ): CheckedCallMappingRequest {
-  return Object.freeze({
+  const request: CheckedCallMappingRequest = {
+    sourceOperationKind: "call",
     call,
     callee,
     arguments: Object.freeze([]),
     callKind: "call",
-    sourceArgumentBindings: Object.freeze([]),
+    sourceSelection: { kind: "untyped" as const },
     sourceCallee: sourceValue(callee, {}),
     sourceArguments: Object.freeze([]),
     sourceResult: sourceValue(call, {}),
     sourceReceiver: sourceValue(receiver, receiverType),
+    chainRole: { kind: "ordinary", participant: "call" },
     target: "acme",
-  });
+  };
+  return Object.freeze(request);
+}
+
+function applyTargetOperationFact(
+  host: ExtensionHost,
+  request: CheckedPropertyAccessMappingRequest | CheckedOperatorMappingRequest | CheckedIterationMappingRequest,
+  value: CheckedOperationMappingResult,
+  evidence: readonly ExtensionEvidence[],
+): void {
+  const sourceOperation = request.sourceOperationKind === "property-access"
+    ? checkedPropertySourceOperationFromRequest(request)
+    : request.sourceOperationKind === "operator"
+      ? checkedOperatorSourceOperationFromRequest(request)
+      : checkedIterationSourceOperation(request);
+  const subject = request.sourceOperationKind === "iteration" ? request.statement : request.expression;
+  host[extensionHostSetFact](
+    subject,
+    targetOperationFactKey,
+    finalizeTargetOperationFact(value.operation, value.resultType, sourceOperation, value.providerDeclaration),
+    evidence,
+  );
 }
 
 function runDeferredCall(
@@ -828,7 +897,7 @@ function runDeferredCall(
       if (value.kind !== "target") {
         throw new Error("Expected a retained target call mapping.");
       }
-      host.facts.set(call, selectedCallFactKey, { id: value.selectedSignature.member.id }, evidence);
+      host[extensionHostSetFact](call, selectedCallFactKey, { id: value.selectedSignature.member.id }, evidence);
     },
     { requireOwner: true },
   );
@@ -870,7 +939,7 @@ function lifecycleExtension(options: {
   };
 }
 
-function operation(targetOperation: string, operationKind: TargetOperationFact["operationKind"]): TargetOperationFact {
+function operation(targetOperation: string, operationKind: TargetOperationProposal["operationKind"]): TargetOperationProposal {
   return {
     operationId: targetOperation,
     operationKind,
