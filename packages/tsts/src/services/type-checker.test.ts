@@ -140,17 +140,35 @@ test("assertion flow does not create false initializer circularity", () => {
   assertCleanSemanticDiagnostics(program, index);
 });
 
-function createProgram(sourceText: string, settings: { readonly noLib?: boolean } = {}): { readonly program: GoPtr<Program>; readonly index: GoPtr<SourceFile> } {
+test("write-only JavaScript property inference does not query the circular read type", () => {
+  const { program, index } = createProgram(`
+    class Values {
+      constructor() {
+        this.items = [3];
+        this.items = [this.items[0] * 2];
+      }
+    }
+  `, { noLib: false, fileName: "index.js", checkJs: true });
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+function createProgram(
+  sourceText: string,
+  settings: { readonly noLib?: boolean; readonly fileName?: "index.ts" | "index.js"; readonly checkJs?: boolean } = {},
+): { readonly program: GoPtr<Program>; readonly index: GoPtr<SourceFile> } {
+  const fileName = settings.fileName ?? "index.ts";
+  const sourcePath = `/src/${fileName}`;
   let fs = FromMap(new Map<string, string>([
-    ["/src/index.ts", sourceText],
+    [sourcePath, sourceText],
     ["/src/tsconfig.json", JSON.stringify({
       compilerOptions: {
         noLib: settings.noLib ?? true,
         module: "esnext",
         moduleResolution: "bundler",
         strict: true,
+        ...(settings.checkJs === true ? { allowJs: true, checkJs: true, noEmit: true } : {}),
       },
-      files: ["index.ts"],
+      files: [fileName],
     })],
   ]), false as bool);
   fs = WrapFS(fs);
@@ -164,7 +182,7 @@ function createProgram(sourceText: string, settings: { readonly noLib?: boolean 
     Host: host,
   } satisfies ProgramOptions;
   const program = NewProgram(options);
-  const index = Program_GetSourceFile(program, "/src/index.ts");
+  const index = Program_GetSourceFile(program, sourcePath);
   assert.ok(index !== undefined);
   return { program, index };
 }

@@ -6675,7 +6675,6 @@ function selectedPropertyAccessTypes(receiver: GoPtr<Checker>, node: GoPtr<Node>
 interface SelectedPropertyAccessCheck {
   selected: boolean;
   selectionMode: "read" | "write";
-  resultType: GoPtr<Type>;
   readType: GoPtr<Type>;
   writeType: GoPtr<Type>;
   receiverType: GoPtr<Type>;
@@ -6728,7 +6727,6 @@ function selectedPropertyAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Nod
     ? {
         selected: false,
         selectionMode: "read",
-        resultType: undefined,
         readType: undefined,
         writeType: undefined,
         receiverType: undefined,
@@ -6967,6 +6965,8 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
     prop = Checker_getPropertyOfTypeEx(receiver, apparentType, Node_Text(right), isConstEnumObjectType(apparentType), node!.Kind === KindQualifiedName);
   }
   Checker_markLinkedReferences(receiver, node, ReferenceHintProperty, prop, leftType);
+  const selectionMode = writeOnly || IsWriteOnlyAccess(node) ? "write" : "read";
+  const retainComplementaryType = selected !== undefined && checkedAccessMode(node) === "read-write";
   let propType: GoPtr<Type>;
   let selectedReadType: GoPtr<Type>;
   let selectedWriteType: GoPtr<Type>;
@@ -7001,11 +7001,15 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
       cacheIndexSignatureResolvedSymbol(receiver, node, apparentType, indexInfo);
     }
     propType = indexInfo!.valueType;
-    selectedWriteType = indexInfo!.valueType;
+    if (selected !== undefined) {
+      selectedWriteType = indexInfo!.valueType;
+    }
     if (receiver!.compilerOptions!.NoUncheckedIndexedAccess === TSTrue && getAssignmentTargetKind(node) !== AssignmentKindDefinite) {
       propType = Checker_getUnionType(receiver, [propType, receiver!.missingType]);
     }
-    selectedReadType = propType;
+    if (selected !== undefined) {
+      selectedReadType = propType;
+    }
     if (receiver!.compilerOptions!.NoPropertyAccessFromIndexSignature === TSTrue && IsPropertyAccessExpression(node)) {
       Checker_error(receiver, right, Property_0_comes_from_an_index_signature_so_it_must_be_accessed_with_0, Node_Text(right));
     }
@@ -7025,21 +7029,25 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
       Checker_error(receiver, right, Cannot_assign_to_0_because_it_is_a_read_only_property, Node_Text(right));
       return receiver!.errorType;
     }
-    selectedReadType = Checker_getTypeOfSymbol(receiver, prop);
-    selectedWriteType = Checker_getWriteTypeOfSymbol(receiver, prop);
     if (Checker_isThisPropertyAccessInConstructor(receiver, node, prop)) {
       propType = receiver!.autoType;
-    } else if (writeOnly || IsWriteOnlyAccess(node)) {
-      propType = selectedWriteType;
+    } else if (selectionMode === "write") {
+      propType = Checker_getWriteTypeOfSymbol(receiver, prop);
     } else {
-      propType = selectedReadType;
+      propType = Checker_getTypeOfSymbol(receiver, prop);
+    }
+    if (retainComplementaryType) {
+      if (selectionMode === "read") {
+        selectedWriteType = Checker_getWriteTypeOfSymbol(receiver, prop);
+      } else {
+        selectedReadType = Checker_getTypeOfSymbol(receiver, prop);
+      }
     }
   }
   const resultType = Checker_getFlowTypeOfAccessExpression(receiver, node, prop, propType, right, checkMode);
   if (selected !== undefined && !Checker_isErrorType(receiver, resultType) && resultType !== receiver!.silentNeverType) {
     selected.selected = true;
-    selected.selectionMode = writeOnly || IsWriteOnlyAccess(node) ? "write" : "read";
-    selected.resultType = resultType;
+    selected.selectionMode = selectionMode;
     selected.readType = selectedReadType;
     selected.writeType = selectedWriteType;
     selected.receiverType = apparentType;
