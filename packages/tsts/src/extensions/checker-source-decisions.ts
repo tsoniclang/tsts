@@ -13,7 +13,7 @@ import type {
   ExtensionForOfIterationMechanism,
   ExtensionSelectedIterationProtocol,
   ExtensionSelectedIterationTypes,
-} from "../internal/checker/checker/extension-iteration-selection.js";
+} from "./checker-iteration-selection.js";
 import type { ResolvedCallEvidence, SignatureLinks, Type, TypeNodeLinks } from "../internal/checker/types.js";
 import { checkedSourceTypesShareStableIdentity } from "./checked-source-type-identity.js";
 import { isRuntimeCheckedSourceExecution } from "./source-execution-role.js";

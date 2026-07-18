@@ -1681,6 +1681,31 @@ test("buildLocalOverrideStatus accepts local signature overrides with snapshots"
   assert.deepEqual(collectLocalOverrideFailures(status), []);
 });
 
+test("buildLocalOverrideStatus accepts exact signature hash snapshots and rejects mixed modes", () => {
+  const base = {
+    category: "extension-host",
+    allow: ["signature"],
+    reason: "Bound an exact structurally large signature override.",
+    goSignatureHash: `sha256:${"a".repeat(64)}`,
+    tsSignatureHash: `sha256:${"b".repeat(64)}`,
+  };
+  const accepted = buildLocalOverrideStatus({}, {
+    units: [{ id: "large", path: "large.ts", override: base }],
+  });
+  assert.equal(accepted.failureCount, 0);
+  assert.equal(accepted.byAllow.signature, 1);
+
+  const mixed = buildLocalOverrideStatus({}, {
+    units: [{
+      id: "mixed",
+      path: "mixed.ts",
+      override: { ...base, goSignature: "interface{}", tsSignature: "interface{}" },
+    }],
+  });
+  assert.equal(mixed.failureCount, 1);
+  assert.match(mixed.invalidInline[0]?.reason ?? "", /never both/);
+});
+
 test("buildLocalOverrideStatus rejects central implementationOverrides", () => {
   const status = buildLocalOverrideStatus(
     { implementationOverrides: [{ match: "github.com/microsoft/typescript-go::internal/scanner/**" }] },

@@ -1,9 +1,9 @@
-import type { GoPtr } from "../../../go/compat.js";
-import type { Node } from "../../ast/spine.js";
-import type { Symbol } from "../../ast/symbol.js";
-import type { Type } from "../types.js";
-import { Type_Target, TypeFlagsNever } from "../types.js";
-import type { IterationTypes } from "./state.js";
+import type { GoPtr } from "../go/compat.js";
+import type { Node } from "../internal/ast/spine.js";
+import type { Symbol } from "../internal/ast/symbol.js";
+import type { Type } from "../internal/checker/types.js";
+import { Type_Target, TypeFlagsNever } from "../internal/checker/types.js";
+import type { IterationTypes } from "../internal/checker/checker/state.js";
 
 export const extensionIterationSelectionLimits = Object.freeze({
   maxUnionAlternatives: 4_096,

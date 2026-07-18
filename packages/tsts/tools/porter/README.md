@@ -81,6 +81,14 @@ The signature checker recomputes these snapshots from the pinned Go source and
 the actual TypeScript declaration. Any upstream Go drift or local TS signature
 drift invalidates the override and fails `porter:verify`.
 
+Structurally huge signatures (at least 4,096 normalized characters) may use
+`goSignatureHash` and `tsSignatureHash` instead. Each value is
+`sha256:<64 lowercase hex characters>` over the same normalized snapshot. Hash
+mode remains exact and drift-checked, is rejected for smaller declarations, and
+cannot be mixed with full snapshots. The source-local reason must still explain
+the semantic exception; hashes only prevent enormous generated metadata from
+obscuring the declaration under review.
+
 ## Out-of-Scope Language-Service Surface
 
 The standalone compiler porter excludes the language-service/editor surface completely:

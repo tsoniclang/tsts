@@ -720,11 +720,25 @@ function validateOverrideShape(value) {
     issues.push("allow must be a non-empty array containing only 'body' or 'signature'");
   }
   if (Array.isArray(value.allow) && value.allow.includes("signature")) {
-    if (typeof value.goSignature !== "string" || value.goSignature.trim() === "") {
-      issues.push("signature overrides require goSignature");
-    }
-    if (typeof value.tsSignature !== "string" || value.tsSignature.trim() === "") {
-      issues.push("signature overrides require tsSignature");
+    const hasFullSnapshots = value.goSignature !== undefined || value.tsSignature !== undefined;
+    const hasHashSnapshots = value.goSignatureHash !== undefined || value.tsSignatureHash !== undefined;
+    if (hasFullSnapshots && hasHashSnapshots) {
+      issues.push("signature overrides must use either full snapshots or hash snapshots, never both");
+    } else if (hasHashSnapshots) {
+      const hashPattern = /^sha256:[0-9a-f]{64}$/;
+      if (typeof value.goSignatureHash !== "string" || !hashPattern.test(value.goSignatureHash)) {
+        issues.push("hashed signature overrides require an exact sha256 goSignatureHash");
+      }
+      if (typeof value.tsSignatureHash !== "string" || !hashPattern.test(value.tsSignatureHash)) {
+        issues.push("hashed signature overrides require an exact sha256 tsSignatureHash");
+      }
+    } else {
+      if (typeof value.goSignature !== "string" || value.goSignature.trim() === "") {
+        issues.push("signature overrides require goSignature");
+      }
+      if (typeof value.tsSignature !== "string" || value.tsSignature.trim() === "") {
+        issues.push("signature overrides require tsSignature");
+      }
     }
   }
   return issues;

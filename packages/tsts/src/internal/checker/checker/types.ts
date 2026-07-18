@@ -6,7 +6,7 @@ import type {
   ExtensionCheckedIterationResult,
   ExtensionCheckedIterationSelection,
   ExtensionIterationProtocolSelectionCapture,
-} from "./extension-iteration-selection.js";
+} from "../../../extensions/checker-iteration-selection.js";
 import {
   captureExtensionArrayOrStringIteration,
   captureKnownIterableInstantiation,
@@ -19,7 +19,7 @@ import {
   isForAwaitOfIterationMechanism,
   isForOfIterationMechanism,
   setExtensionProtocolMechanismKind,
-} from "./extension-iteration-selection.js";
+} from "../../../extensions/checker-iteration-selection.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
 import { MaxInt } from "../../../go/math.js";
