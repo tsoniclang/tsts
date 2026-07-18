@@ -253,16 +253,20 @@ test("checked member requests retain exact access use without target-side AST in
   const { program, programOptions, extensionHost } = createLifecycleProgram(extension, `
     declare class AccessBox {
       value: number;
+      optional?: number;
       update(): void;
       handler: () => void;
     }
     declare const box: AccessBox;
     declare const table: { [key: string]: () => void };
     declare const numbers: { [key: string]: number };
+    declare const optionalNumbers: { [key: string]: number | undefined };
 
     box.value;
     box.value = 1;
     box.value += 1;
+    box.value++;
+    delete box.optional;
     box.update();
     const update = box.update;
     box.handler();
@@ -272,6 +276,8 @@ test("checked member requests retain exact access use without target-side AST in
     const indexed = table["go"];
     numbers["x"] = 1;
     numbers["x"] += 1;
+    numbers["x"]++;
+    delete optionalNumbers["x"];
   `);
 
   assertCleanProgram(program);
@@ -282,6 +288,8 @@ test("checked member requests retain exact access use without target-side AST in
     ["value", "read", false, false],
     ["value", "write", false, false],
     ["value", "read-write", false, false],
+    ["value", "read-write", false, false],
+    ["optional", "delete", false, false],
     ["update", "read", true, false],
     ["update", "read", false, false],
     ["handler", "read", true, false],
@@ -293,6 +301,8 @@ test("checked member requests retain exact access use without target-side AST in
     ["read", false],
     ["write", false],
     ["read-write", false],
+    ["read-write", false],
+    ["delete", false],
   ]);
   for (const request of [...propertyRequests, ...elementRequests]) {
     const provenance = extensionHost.facts.get(request.expression, targetOperationFactKey)?.provenance;

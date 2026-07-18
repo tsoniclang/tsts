@@ -14,6 +14,7 @@ import type {
 } from "./observations.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import type { ExtensionFactSubject } from "./host.js";
+import type { TargetCallArgumentConversionSlot } from "./facts.js";
 import { checkedOperationRequestEquals } from "./checked-operation-request-equality.js";
 import {
   type CheckedOperationRequestSnapshotCache,
@@ -39,6 +40,7 @@ interface CheckedOperationRecord {
   readonly reference: CheckedOperationReference;
   readonly request: ExtensionObservationRequest<CheckedOperationObservationPointName>;
   readonly dependencies: readonly CheckedOperationReference[];
+  readonly deferredDependencies: CheckedOperationReference[];
   readonly evaluate: (phase: ExtensionObservationPhase) => AnyCheckedOperationResult;
   readonly apply: (result: AnyCheckedOperationResult) => void | CheckedOperationApplyOutcome;
   result?: RetainedCheckedOperationResult;
@@ -48,6 +50,7 @@ interface CheckedOperationRecord {
 
 interface CheckedOperationTraversalFrame {
   readonly record: CheckedOperationRecord;
+  readonly dependencies: readonly CheckedOperationReference[];
   nextDependencyIndex: number;
 }
 
@@ -56,6 +59,7 @@ export interface CheckedOperationInventoryCallbacks {
   readonly commitAttempt: (attempt: unknown) => void;
   readonly rollbackAttempt: (attempt: unknown) => void;
   readonly discardAttemptPreservingDiagnostics: (attempt: unknown) => void;
+  readonly deferAttemptPreservingOperations: (attempt: unknown) => readonly CheckedOperationReference[];
   readonly onRequestConflict: (
     observation: CheckedOperationObservationPointName,
     subject: ExtensionFactSubject,
@@ -154,6 +158,7 @@ export class CheckedOperationInventory {
       reference: checkedOperationReference(observation, immutableRequest, subject),
       request: immutableRequest,
       dependencies: incomingDependencies,
+      deferredDependencies: [],
       evaluate: evaluateRecord,
       apply: applyRecord,
       state: "evaluating",
@@ -271,8 +276,10 @@ export class CheckedOperationInventory {
           record.state = checkedOperationResultState(result);
           if (record.state === "deferred") {
             const unresolved = record.unresolved;
-            this.#callbacks.onUnresolved(unresolved?.observation ?? record.observation, unresolved?.subject ?? record.subject);
-            record.state = "unavailable";
+            if (unresolved === undefined) {
+              this.#callbacks.onUnresolved(record.observation, record.subject);
+              record.state = "unavailable";
+            }
           }
           completedDeferredRecord = true;
         }
@@ -314,12 +321,31 @@ export class CheckedOperationInventory {
           delete record.unresolved;
           return result;
         }
-        attemptOpen = false;
-        this.#callbacks.discardAttemptPreservingDiagnostics(attempt);
         if (applyOutcome.kind === "deferred") {
-          record.unresolved = applyOutcome.unresolved;
+          const unresolved = snapshotCheckedOperationReference(applyOutcome.unresolved);
+          const unresolvedRecord = this.#findRecordForReference(unresolved);
+          if (unresolvedRecord === undefined) {
+            throw new Error(`Checked operation '${record.observation}' deferred on an operation that was not retained.`);
+          }
+          if (unresolvedRecord === record) {
+            throw new Error(`Checked operation '${record.observation}' cannot defer on itself.`);
+          }
+          if (unresolvedRecord.state !== "deferred") {
+            throw new Error(`Checked operation '${record.observation}' deferred on operation '${unresolved.observation}' in state '${unresolvedRecord.state}'.`);
+          }
+          attemptOpen = false;
+          const deferredDependencies = this.#callbacks.deferAttemptPreservingOperations(attempt);
+          for (const dependency of [...deferredDependencies, unresolved]) {
+            if (!record.dependencies.some((existing) => checkedOperationReferenceEquals(existing, dependency))
+              && !record.deferredDependencies.some((existing) => checkedOperationReferenceEquals(existing, dependency))) {
+              record.deferredDependencies.push(dependency);
+            }
+          }
+          record.unresolved = unresolved;
           return dependencyDeferredResult(record.observation);
         }
+        attemptOpen = false;
+        this.#callbacks.discardAttemptPreservingDiagnostics(attempt);
         delete record.unresolved;
         return checkedOperationUnavailableResult;
       } else {
@@ -376,6 +402,21 @@ export class CheckedOperationInventory {
     }
   }
 
+  deferFromSavepoint(recordCount: number): readonly CheckedOperationReference[] {
+    if (!Number.isSafeInteger(recordCount) || recordCount < 0 || recordCount > this.#records.length) {
+      throw new Error("Invalid checked-operation inventory savepoint.");
+    }
+    const deferred: CheckedOperationReference[] = [];
+    for (let index = recordCount; index < this.#records.length; index += 1) {
+      const record = this.#records[index]!;
+      deferred.push(record.reference);
+      record.result = dependencyDeferredResult(record.observation);
+      record.state = "deferred";
+      delete record.unresolved;
+    }
+    return Object.freeze(deferred);
+  }
+
   #findRecordForRequest<TObservation extends CheckedOperationObservationPointName>(
     observation: TObservation,
     subject: ExtensionFactSubject,
@@ -394,7 +435,7 @@ export class CheckedOperationInventory {
     record: CheckedOperationRecord,
     requirePresent: boolean,
   ): "ready" | "waiting" | "blocked" {
-    for (const dependency of record.dependencies) {
+    for (const dependency of checkedOperationDependencies(record)) {
       const dependencyRecord = this.#findRecordForReference(dependency);
       if (dependencyRecord === undefined) {
         if (requirePresent) {
@@ -464,11 +505,15 @@ export class CheckedOperationInventory {
       if (visited.has(root)) {
         continue;
       }
-      const stack: CheckedOperationTraversalFrame[] = [{ record: root, nextDependencyIndex: 0 }];
+      const stack: CheckedOperationTraversalFrame[] = [{
+        record: root,
+        dependencies: checkedOperationDependencies(root),
+        nextDependencyIndex: 0,
+      }];
       visiting.add(root);
       while (stack.length !== 0) {
         const frame = stack[stack.length - 1]!;
-        const dependency = frame.record.dependencies[frame.nextDependencyIndex];
+        const dependency = frame.dependencies[frame.nextDependencyIndex];
         if (dependency !== undefined) {
           frame.nextDependencyIndex += 1;
           const dependencyRecord = this.#findRecordForReference(dependency);
@@ -482,7 +527,11 @@ export class CheckedOperationInventory {
             continue;
           }
           visiting.add(dependencyRecord);
-          stack.push({ record: dependencyRecord, nextDependencyIndex: 0 });
+          stack.push({
+            record: dependencyRecord,
+            dependencies: checkedOperationDependencies(dependencyRecord),
+            nextDependencyIndex: 0,
+          });
           continue;
         }
         stack.pop();
@@ -583,26 +632,129 @@ function asError(value: unknown): Error {
 }
 
 function snapshotCheckedOperationReferences(references: readonly CheckedOperationReference[]): readonly CheckedOperationReference[] {
+  if (!Array.isArray(references)) {
+    throw new Error("Checked-operation dependencies must be an array.");
+  }
   const snapshots: CheckedOperationReference[] = [];
   const snapshotsBySubject = new WeakMap<object, CheckedOperationReference[]>();
   for (const reference of references) {
-    const snapshot = Object.freeze({
-      observation: reference.observation,
-      subject: reference.subject,
-      ...(reference.conversionKind === undefined ? {} : { conversionKind: reference.conversionKind }),
-      ...(reference.call === undefined ? {} : { call: reference.call }),
-      ...(reference.slot === undefined ? {} : { slot: reference.slot }),
-      ...(reference.sourceArgumentIndex === undefined ? {} : { sourceArgumentIndex: reference.sourceArgumentIndex }),
-      ...(reference.targetParameterIndex === undefined ? {} : { targetParameterIndex: reference.targetParameterIndex }),
-    }) as CheckedOperationReference;
-    const subjectSnapshots = snapshotsBySubject.get(reference.subject) ?? [];
+    const snapshot = snapshotCheckedOperationReference(reference);
+    const subjectSnapshots = snapshotsBySubject.get(snapshot.subject) ?? [];
     if (!subjectSnapshots.some((existing) => checkedOperationReferenceEquals(existing, snapshot))) {
       snapshots.push(snapshot);
       subjectSnapshots.push(snapshot);
-      snapshotsBySubject.set(reference.subject, subjectSnapshots);
+      snapshotsBySubject.set(snapshot.subject, subjectSnapshots);
     }
   }
   return Object.freeze(snapshots);
+}
+
+function snapshotCheckedOperationReference(reference: CheckedOperationReference): CheckedOperationReference {
+  const fields = readExactDataFields(reference, "checked-operation reference");
+  const observation = fields.observation;
+  if (!isCheckedOperationObservationPointName(observation)) {
+    throw new Error(`Unknown checked-operation reference observation '${String(observation)}'.`);
+  }
+  const subject = requireReferenceSubject(fields.subject, "subject");
+  if (observation !== ExtensionObservationPoint.mapCheckedConversion) {
+    assertExactReferenceFields(fields, ["observation", "subject"]);
+    return Object.freeze({ observation, subject }) as CheckedOperationReference;
+  }
+  const conversionKind = fields.conversionKind;
+  if (conversionKind === "assertion") {
+    assertExactReferenceFields(fields, ["observation", "subject", "conversionKind"]);
+    return Object.freeze({ observation, subject, conversionKind });
+  }
+  if (conversionKind !== "call-argument") {
+    throw new Error(`Unknown checked-operation conversion reference kind '${String(conversionKind)}'.`);
+  }
+  assertExactReferenceFields(fields, [
+    "observation",
+    "subject",
+    "conversionKind",
+    "call",
+    "slot",
+    "sourceArgumentIndex",
+    "targetParameterIndex",
+  ]);
+  const call = requireReferenceSubject(fields.call, "call");
+  const slot = requireReferenceSubject(fields.slot, "slot") as TargetCallArgumentConversionSlot;
+  const sourceArgumentIndex = requireReferenceIndex(fields.sourceArgumentIndex, "sourceArgumentIndex");
+  const targetParameterIndex = requireReferenceIndex(fields.targetParameterIndex, "targetParameterIndex");
+  return Object.freeze({
+    observation,
+    subject,
+    conversionKind,
+    call,
+    slot,
+    sourceArgumentIndex,
+    targetParameterIndex,
+  });
+}
+
+function readExactDataFields(value: unknown, valueName: string): Readonly<Record<string, unknown>> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`A ${valueName} must be a non-array object.`);
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new Error(`A ${valueName} must be a plain object.`);
+  }
+  const ownKeys = Reflect.ownKeys(value);
+  if (ownKeys.some((key) => typeof key !== "string")) {
+    throw new Error(`A ${valueName} cannot contain symbol fields.`);
+  }
+  const fields: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  for (const key of ownKeys as string[]) {
+    const descriptor = descriptors[key];
+    if (descriptor === undefined || !("value" in descriptor) || descriptor.enumerable !== true) {
+      throw new Error(`A ${valueName} field '${key}' must be an enumerable own data property.`);
+    }
+    fields[key] = descriptor.value;
+  }
+  return Object.freeze(fields);
+}
+
+function assertExactReferenceFields(fields: Readonly<Record<string, unknown>>, expected: readonly string[]): void {
+  const actual = Object.keys(fields);
+  if (actual.length !== expected.length || expected.some((field) => !Object.hasOwn(fields, field))) {
+    throw new Error(`A checked-operation reference must contain exactly: ${expected.join(", ")}.`);
+  }
+}
+
+function requireReferenceSubject(value: unknown, field: string): ExtensionFactSubject {
+  if (typeof value !== "object" || value === null) {
+    throw new Error(`Checked-operation reference '${field}' must be an object identity.`);
+  }
+  return value;
+}
+
+function requireReferenceIndex(value: unknown, field: string): number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
+    throw new Error(`Checked-operation reference '${field}' must be a non-negative safe integer.`);
+  }
+  return value;
+}
+
+function isCheckedOperationObservationPointName(value: unknown): value is CheckedOperationObservationPointName {
+  return value === ExtensionObservationPoint.mapCheckedCall
+    || value === ExtensionObservationPoint.mapCheckedPropertyAccess
+    || value === ExtensionObservationPoint.mapCheckedElementAccess
+    || value === ExtensionObservationPoint.mapCheckedOperator
+    || value === ExtensionObservationPoint.mapCheckedIteration
+    || value === ExtensionObservationPoint.mapCheckedConversion;
+}
+
+function checkedOperationDependencies(record: CheckedOperationRecord): readonly CheckedOperationReference[] {
+  const unresolved = record.unresolved;
+  const dependencies = record.deferredDependencies.length === 0
+    ? record.dependencies
+    : [...record.dependencies, ...record.deferredDependencies];
+  if (unresolved === undefined || dependencies.some((dependency) => checkedOperationReferenceEquals(dependency, unresolved))) {
+    return dependencies;
+  }
+  return [...dependencies, unresolved];
 }
 
 function checkedOperationReferenceArraysEqual(

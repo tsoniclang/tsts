@@ -195,7 +195,7 @@ export type SourceSelectedSignatureKind = "resolved" | "untyped" | "error" | "si
 
 export type CheckedCallKind = "call" | "construct";
 
-export type CheckedAccessMode = "read" | "write" | "read-write";
+export type CheckedAccessMode = "read" | "write" | "read-write" | "delete";
 
 export interface SourceSelectedSignatureParameter {
   readonly parameterIndex: number;

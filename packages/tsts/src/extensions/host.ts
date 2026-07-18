@@ -2727,6 +2727,7 @@ export class ExtensionHost {
       commitAttempt: (attempt) => this.#commitFactAttempt(attempt as ExtensionFactAttempt),
       rollbackAttempt: (attempt) => this.#rollbackFactAttempt(attempt as ExtensionFactAttempt),
       discardAttemptPreservingDiagnostics: (attempt) => this.#discardFactAttemptPreservingDiagnostics(attempt as ExtensionFactAttempt),
+      deferAttemptPreservingOperations: (attempt) => this.#deferFactAttemptPreservingOperations(attempt as ExtensionFactAttempt),
       onRequestConflict: (observation, subject, existing, incoming) => {
         this.diagnostics.append(createHostDiagnostic({
           extensionCode: "CHECKED_OPERATION_REQUEST_CONFLICT",
@@ -3060,21 +3061,33 @@ export class ExtensionHost {
     this.#completeRolledBackFactAttempt(attempt, true);
   }
 
-  #completeRolledBackFactAttempt(attempt: ExtensionFactAttempt, preserveDiagnostics: boolean): void {
+  #deferFactAttemptPreservingOperations(attempt: ExtensionFactAttempt): readonly CheckedOperationReference[] {
+    return this.#completeRolledBackFactAttempt(attempt, true, true);
+  }
+
+  #completeRolledBackFactAttempt(
+    attempt: ExtensionFactAttempt,
+    preserveDiagnostics: boolean,
+    preserveCheckedOperations = false,
+  ): readonly CheckedOperationReference[] {
     this.#assertActiveFactAttempt(attempt);
     attempt.active = false;
+    let deferredOperations: readonly CheckedOperationReference[] = Object.freeze([]);
     try {
-      if (!this.facts[factStoreTransactionActive]() && this.#semanticFinalizationState === "failed") {
-        return;
+      if (this.facts[factStoreTransactionActive]() || this.#semanticFinalizationState !== "failed") {
+        if (attempt.ownsTransaction) {
+          this.facts[factStoreRollbackTransaction](attempt.transaction);
+        } else {
+          this.facts[factStoreRollbackToSavepoint](attempt.savepoint);
+        }
       }
-      if (attempt.ownsTransaction) {
-        this.facts[factStoreRollbackTransaction](attempt.transaction);
-        return;
-      }
-      this.facts[factStoreRollbackToSavepoint](attempt.savepoint);
     } finally {
       try {
-        this.#checkedOperations.rollbackToSavepoint(attempt.checkedOperationSavepoint);
+        if (preserveCheckedOperations) {
+          deferredOperations = this.#checkedOperations.deferFromSavepoint(attempt.checkedOperationSavepoint);
+        } else {
+          this.#checkedOperations.rollbackToSavepoint(attempt.checkedOperationSavepoint);
+        }
       } finally {
         if (attempt.diagnosticSavepoint.active) {
           if (preserveDiagnostics) {
@@ -3085,6 +3098,7 @@ export class ExtensionHost {
         }
       }
     }
+    return deferredOperations;
   }
 
   #captureAndRollbackFactAttempt(attempt: ExtensionFactAttempt): ExtensionAttemptDelta {

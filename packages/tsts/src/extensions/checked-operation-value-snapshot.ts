@@ -1311,9 +1311,9 @@ function assertCheckedCallKind(value: unknown, path: SnapshotPath): asserts valu
   }
 }
 
-function assertCheckedAccessMode(value: unknown, path: SnapshotPath): asserts value is "read" | "write" | "read-write" {
-  if (value !== "read" && value !== "write" && value !== "read-write") {
-    throw new Error(`Invalid checked access evidence at '${formatSnapshotPath(path)}': accessMode must be 'read', 'write', or 'read-write'.`);
+function assertCheckedAccessMode(value: unknown, path: SnapshotPath): asserts value is "read" | "write" | "read-write" | "delete" {
+  if (value !== "read" && value !== "write" && value !== "read-write" && value !== "delete") {
+    throw new Error(`Invalid checked access evidence at '${formatSnapshotPath(path)}': accessMode must be 'read', 'write', 'read-write', or 'delete'.`);
   }
 }
 

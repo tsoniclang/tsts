@@ -6612,6 +6612,9 @@ function recordSelectedPropertyAccessEvidence(receiver: GoPtr<Checker>, node: Go
 }
 
 function checkedAccessMode(node: GoPtr<Node>): CheckedAccessMode {
+  if (isDeleteTarget(node)) {
+    return "delete";
+  }
   switch (getAssignmentTargetKind(node)) {
     case AssignmentKindNone:
       return "read";

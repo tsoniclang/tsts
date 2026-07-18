@@ -457,26 +457,31 @@ export function recordExtensionCheckedPropertyAccessMapping(
     () => {
       throw new Error("Extension-owned checked property access mapping unexpectedly reached core fallback.");
     },
-    (value, evidence) => {
+    (value, evidence, acceptedRequest) => {
       const operationWithResult = withCheckedOperationResultType(value.operation, value.resultType);
       const operation = value.provenance === undefined
         ? operationWithResult
         : withTargetOperationProvenance(operationWithResult, value.provenance);
       const operationWithProvenance = withTargetOperationProvenance(operation, {
-        sourceExpression: propertyAccessExpression,
-        sourceReceiver: receiver,
-        sourceReceiverType: sourceReceiver.type,
-        sourceAccessMode: selected.accessMode,
-        sourceCallCallee: selected.callCallee,
-        ...(sourceResult.selectedSymbol !== undefined ? { sourceSelectedSymbol: sourceResult.selectedSymbol } : {}),
-        ...(sourceResult.selectedDeclaration !== undefined ? { sourceSelectedDeclaration: sourceResult.selectedDeclaration } : {}),
-        sourceResultType: sourceResult.type,
-        ...(((propertyAccessExpression.Flags ?? 0) & NodeFlagsOptionalChain) !== 0 ? { sourceOptionalChain: true } : {}),
+        sourceExpression: acceptedRequest.expression,
+        sourceReceiver: acceptedRequest.receiver,
+        sourceReceiverType: acceptedRequest.sourceReceiver.type,
+        sourceAccessMode: acceptedRequest.accessMode,
+        sourceCallCallee: acceptedRequest.callCallee,
+        ...(acceptedRequest.sourceResult.selectedSymbol !== undefined ? { sourceSelectedSymbol: acceptedRequest.sourceResult.selectedSymbol } : {}),
+        ...(acceptedRequest.sourceResult.selectedDeclaration !== undefined ? { sourceSelectedDeclaration: acceptedRequest.sourceResult.selectedDeclaration } : {}),
+        sourceResultType: acceptedRequest.sourceResult.type,
+        ...(acceptedRequest.optionalChain === true ? { sourceOptionalChain: true } : {}),
       });
       extensionHost.facts.set(
-        propertyAccessExpression,
+        acceptedRequest.expression,
         targetOperationFactKey,
-        snapshotTargetOperationFact(preserveEquivalentCheckedSourceResultType(extensionHost, propertyAccessExpression, operationWithProvenance, canonicalSourceResultType)),
+        snapshotTargetOperationFact(preserveEquivalentCheckedSourceResultType(
+          extensionHost,
+          acceptedRequest.expression,
+          operationWithProvenance,
+          acceptedRequest.sourceResult.type as GoPtr<Type>,
+        )),
         evidence,
       );
     },
@@ -598,26 +603,31 @@ export function recordExtensionCheckedElementAccessMapping(
     () => {
       throw new Error("Extension-owned checked element access mapping unexpectedly reached core fallback.");
     },
-    (value, evidence) => {
+    (value, evidence, acceptedRequest) => {
       const operationWithResult = withCheckedOperationResultType(value.operation, value.resultType);
       const operation = value.provenance === undefined
         ? operationWithResult
         : withTargetOperationProvenance(operationWithResult, value.provenance);
       const operationWithProvenance = withTargetOperationProvenance(operation, {
-        sourceExpression: elementAccessExpression,
-        sourceReceiver: receiver,
-        sourceReceiverType: sourceReceiver.type,
-        sourceAccessMode: selected.accessMode,
-        sourceCallCallee: selected.callCallee,
-        ...(sourceResult.selectedSymbol !== undefined ? { sourceSelectedSymbol: sourceResult.selectedSymbol } : {}),
-        ...(sourceResult.selectedDeclaration !== undefined ? { sourceSelectedDeclaration: sourceResult.selectedDeclaration } : {}),
-        sourceResultType: sourceResult.type,
-        ...(((elementAccessExpression.Flags ?? 0) & NodeFlagsOptionalChain) !== 0 ? { sourceOptionalChain: true } : {}),
+        sourceExpression: acceptedRequest.expression,
+        sourceReceiver: acceptedRequest.receiver,
+        sourceReceiverType: acceptedRequest.sourceReceiver.type,
+        sourceAccessMode: acceptedRequest.accessMode,
+        sourceCallCallee: acceptedRequest.callCallee,
+        ...(acceptedRequest.sourceResult.selectedSymbol !== undefined ? { sourceSelectedSymbol: acceptedRequest.sourceResult.selectedSymbol } : {}),
+        ...(acceptedRequest.sourceResult.selectedDeclaration !== undefined ? { sourceSelectedDeclaration: acceptedRequest.sourceResult.selectedDeclaration } : {}),
+        sourceResultType: acceptedRequest.sourceResult.type,
+        ...(acceptedRequest.optionalChain === true ? { sourceOptionalChain: true } : {}),
       });
       extensionHost.facts.set(
-        elementAccessExpression,
+        acceptedRequest.expression,
         targetOperationFactKey,
-        snapshotTargetOperationFact(preserveEquivalentCheckedSourceResultType(extensionHost, elementAccessExpression, operationWithProvenance, canonicalSourceResultType)),
+        snapshotTargetOperationFact(preserveEquivalentCheckedSourceResultType(
+          extensionHost,
+          acceptedRequest.expression,
+          operationWithProvenance,
+          acceptedRequest.sourceResult.type as GoPtr<Type>,
+        )),
         evidence,
       );
     },
@@ -732,19 +742,24 @@ export function recordExtensionCheckedOperatorKindMapping(checker: GoPtr<Checker
     () => {
       throw new Error("Extension-owned checked operator mapping unexpectedly reached core fallback.");
     },
-    (value, evidence) => {
+    (value, evidence, acceptedRequest) => {
       const operationWithResult = withCheckedOperationResultType(value.operation, value.resultType);
       const operation = value.provenance === undefined
         ? operationWithResult
         : withTargetOperationProvenance(operationWithResult, value.provenance);
       const operationWithProvenance = withTargetOperationProvenance(operation, {
-        sourceExpression: expression,
-        sourceResultType: sourceResult.type,
+        sourceExpression: acceptedRequest.expression,
+        sourceResultType: acceptedRequest.sourceResult.type,
       });
       extensionHost.facts.set(
-        expression,
+        acceptedRequest.expression,
         targetOperationFactKey,
-        snapshotTargetOperationFact(preserveEquivalentCheckedSourceResultType(extensionHost, expression, operationWithProvenance, canonicalSourceResultType)),
+        snapshotTargetOperationFact(preserveEquivalentCheckedSourceResultType(
+          extensionHost,
+          acceptedRequest.expression,
+          operationWithProvenance,
+          acceptedRequest.sourceResult.type as GoPtr<Type>,
+        )),
         evidence,
       );
     },
@@ -798,14 +813,14 @@ export function recordExtensionCheckedIterationMapping(checker: GoPtr<Checker>, 
     () => {
       throw new Error("Extension-owned checked iteration mapping unexpectedly reached core fallback.");
     },
-    (value, evidence) => {
+    (value, evidence, acceptedRequest) => {
       const operationWithResult = withCheckedOperationResultType(value.operation, value.resultType);
       const operation = value.provenance === undefined
         ? operationWithResult
         : withTargetOperationProvenance(operationWithResult, value.provenance);
-      extensionHost.facts.set(statement, targetOperationFactKey, snapshotTargetOperationFact(withTargetOperationProvenance(operation, {
-        sourceExpression: statement,
-        sourceReceiver: expression,
+      extensionHost.facts.set(acceptedRequest.statement, targetOperationFactKey, snapshotTargetOperationFact(withTargetOperationProvenance(operation, {
+        sourceExpression: acceptedRequest.statement,
+        sourceReceiver: acceptedRequest.expression,
       })), evidence);
     },
     { requireOwner: true },

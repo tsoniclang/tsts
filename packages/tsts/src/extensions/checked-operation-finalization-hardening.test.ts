@@ -441,6 +441,109 @@ test("an unavailable child blocks its parent without evaluating or applying the 
   assert.equal(host.finalized, true);
 });
 
+test("apply-discovered child operations survive rollback and finalize before their parent", () => {
+  const targetId = arbitraryTargetIds[0];
+  const parent = {};
+  const acceptedChild = {};
+  const acceptedChildReceiver = {};
+  const deferredChild = {};
+  const deferredChildReceiver = {};
+  const acceptedChildRequest = checkedPropertyRequest(acceptedChild, acceptedChildReceiver, "acceptedChild", targetId);
+  const deferredChildRequest = checkedPropertyRequest(deferredChild, deferredChildReceiver, "deferredChild", targetId);
+  const applicationOrder: string[] = [];
+  const extension = propertyProviderExtension("apply-discovered-children", targetId, (request, context) => {
+    if (request.propertyName === "deferredChild" && context.phase === "checking") {
+      return deferObservation;
+    }
+    return acceptObservation({ operation: operation(`apply-discovered.${request.propertyName}`) });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+
+  const initial = host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest(parent, {}, "parent", targetId),
+    () => {
+      throw new Error("The provider-owned parent reached core.");
+    },
+    (accepted) => {
+      const acceptedChildResult = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        acceptedChildRequest,
+        () => {
+          throw new Error("The provider-owned accepted child reached core.");
+        },
+        (child) => {
+          applicationOrder.push("acceptedChild");
+          host.facts.set(acceptedChild, targetOperationFactKey, child.operation);
+        },
+        { requireOwner: true },
+      );
+      if (acceptedChildResult.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(acceptedChild) };
+      }
+      const deferredChildResult = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        deferredChildRequest,
+        () => {
+          throw new Error("The provider-owned deferred child reached core.");
+        },
+        (child) => {
+          applicationOrder.push("deferredChild");
+          host.facts.set(deferredChild, targetOperationFactKey, child.operation);
+        },
+        { requireOwner: true },
+      );
+      if (deferredChildResult.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(deferredChild) };
+      }
+      applicationOrder.push("parent");
+      host.facts.set(parent, targetOperationFactKey, accepted.operation);
+    },
+    { requireOwner: true },
+  );
+
+  assert.equal(initial.kind, "owner-deferred");
+  assert.equal(host.facts.get(acceptedChild, targetOperationFactKey), undefined);
+  assert.equal(host.facts.get(deferredChild, targetOperationFactKey), undefined);
+  assert.equal(host.facts.get(parent, targetOperationFactKey), undefined);
+  applicationOrder.length = 0;
+
+  host.finalizeSemantics();
+
+  assert.deepEqual(applicationOrder, ["acceptedChild", "deferredChild", "parent"]);
+  assert.equal(host.facts.get(acceptedChild, targetOperationFactKey)?.targetOperation, "apply-discovered.acceptedChild");
+  assert.equal(host.facts.get(deferredChild, targetOperationFactKey)?.targetOperation, "apply-discovered.deferredChild");
+  assert.equal(host.facts.get(parent, targetOperationFactKey)?.targetOperation, "apply-discovered.parent");
+  assert.equal(host.diagnostics.all().length, 0);
+  assert.equal(host.finalized, true);
+});
+
+test("a deferred apply outcome must name an exact retained child operation", () => {
+  const targetId = arbitraryTargetIds[0];
+  const parent = {};
+  const missingChild = {};
+  const extension = propertyProviderExtension("missing-apply-child", targetId, () => {
+    return acceptObservation({ operation: operation("missing-apply-child.parent") });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+
+  assert.throws(
+    () => host[extensionHostRunCheckedOperation](
+      propertyObservation,
+      checkedPropertyRequest(parent, {}, "parent", targetId),
+      () => {
+        throw new Error("The provider-owned parent reached core.");
+      },
+      () => ({ kind: "deferred", unresolved: propertyReference(missingChild) }),
+      { requireOwner: true },
+    ),
+    /deferred on an operation that was not retained/,
+  );
+  assert.equal(host.facts.get(parent, targetOperationFactKey), undefined);
+  assert.throws(() => host.finalizeSemantics(), /previously failed/);
+  assert.equal(host.finalized, false);
+});
+
 test("a deferred hook cannot leak facts to a later accepting hook", () => {
   const provisionalSubject = {};
   const acceptedSubject = {};

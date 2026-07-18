@@ -14,6 +14,7 @@ import type {
   CheckedConversionMappingRequest,
   CheckedConversionMappingResult,
   CheckedElementAccessMappingRequest,
+  CheckedOperationReference,
   CheckedPropertyAccessMappingRequest,
   ExtensionObservationResult,
 } from "./observations.js";
@@ -366,6 +367,7 @@ test("structurally equal call-argument target values remain one checked request 
     commitAttempt: () => {},
     rollbackAttempt: () => {},
     discardAttemptPreservingDiagnostics: () => {},
+    deferAttemptPreservingOperations: () => [],
     onFatalFailure: () => undefined,
     onRequestConflict: () => {
       conflicts += 1;
@@ -748,7 +750,7 @@ test("checked member request snapshots reject malformed exact use evidence", () 
       ...propertyRequest,
       accessMode: "execute",
     } as unknown as CheckedPropertyAccessMappingRequest),
-    /accessMode must be 'read', 'write', or 'read-write'/,
+    /accessMode must be 'read', 'write', 'read-write', or 'delete'/,
   );
   assert.throws(
     () => snapshotCheckedOperationRequest(ExtensionObservationPoint.mapCheckedElementAccess, {
@@ -1231,6 +1233,62 @@ test("checked-operation dependency snapshots preserve exact conversion slots", (
   assert.deepEqual(order, ["dependency", "parent"]);
 });
 
+test("checked-operation dependency snapshots reject malformed reference objects", () => {
+  const expression = {};
+  const request = {
+    expression,
+    receiver: {},
+    propertyName: "value",
+    accessMode: "read" as const,
+    callCallee: false,
+    sourceReceiver: sourceValue({}, {}),
+    sourceResult: sourceValue(expression, {}),
+  };
+  const run = (reference: unknown): void => {
+    createInventory().run(
+      ExtensionObservationPoint.mapCheckedPropertyAccess,
+      request,
+      () => ({
+        kind: "accept",
+        extensionId: "acme",
+        value: {
+          operation: {
+            operationId: "acme.value",
+            operationKind: "operator",
+            targetOperation: "value",
+          },
+        },
+      }),
+      () => {},
+      "checking",
+      undefined,
+      [reference as CheckedOperationReference],
+    );
+  };
+  const accessorReference = Object.defineProperty({}, "observation", {
+    enumerable: true,
+    get: () => ExtensionObservationPoint.mapCheckedPropertyAccess,
+  });
+  Object.defineProperty(accessorReference, "subject", { enumerable: true, value: {} });
+
+  assert.throws(() => run(accessorReference), /enumerable own data property/);
+  assert.throws(() => run({
+    observation: ExtensionObservationPoint.mapCheckedPropertyAccess,
+    subject: {},
+    extra: true,
+  }), /must contain exactly/);
+  assert.throws(() => run({ observation: "operation.unknown", subject: {} }), /Unknown checked-operation reference observation/);
+  assert.throws(() => run({
+    observation: ExtensionObservationPoint.mapCheckedConversion,
+    subject: {},
+    conversionKind: "call-argument",
+    call: {},
+    slot: {},
+    sourceArgumentIndex: -1,
+    targetParameterIndex: 0,
+  }), /sourceArgumentIndex.*non-negative safe integer/);
+});
+
 function snapshotUncheckedConversionRequest(request: unknown): unknown {
   return snapshotCheckedOperationRequest(
     ExtensionObservationPoint.mapCheckedConversion,
@@ -1268,6 +1326,7 @@ function createInventory(): CheckedOperationInventory {
     commitAttempt: () => {},
     rollbackAttempt: () => {},
     discardAttemptPreservingDiagnostics: () => {},
+    deferAttemptPreservingOperations: () => [],
     onFatalFailure: () => undefined,
     onRequestConflict: () => {
       throw new Error("Unexpected checked-operation request conflict.");
