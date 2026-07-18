@@ -696,8 +696,6 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkForOfStatement","kind":"method","status":"implemented","sigHash":"e566e597fa7d439638d7e79f7f6a58beadd26a29858a11cc0387de04ffb22181","bodyHash":"f6328f542ab5a70b49442a84232412dc6cab6f7c4c95af06a08d922482124273"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go for-of checking, extension-enabled programs record the selected source element type for both declaration and assignment initializers; no-extension programs remain on the exact TS-Go path."}
- *
  * Go source:
  * func (c *Checker) checkForOfStatement(node *ast.Node) {
  * 	data := node.AsForInOrOfStatement()
@@ -762,13 +760,11 @@ export function Checker_checkForOfStatement(receiver: GoPtr<Checker>, node: GoPt
       }
     }
   }
-  let iteratedType: GoPtr<Type> = undefined;
   if (IsVariableDeclarationList(data!.Initializer)) {
     Checker_checkVariableDeclarationList(receiver, data!.Initializer);
-    iteratedType = Checker_checkRightHandSideOfForOf(receiver, node);
   } else {
     const varExpr = data!.Initializer;
-    iteratedType = Checker_checkRightHandSideOfForOf(receiver, node);
+    const iteratedType = Checker_checkRightHandSideOfForOf(receiver, node);
     if (IsArrayLiteralExpression(varExpr) || IsObjectLiteralExpression(varExpr)) {
       Checker_checkDestructuringAssignment(receiver, varExpr, OrElse(iteratedType, receiver!.errorType), CheckModeNormal, false as bool);
     } else {
@@ -779,13 +775,6 @@ export function Checker_checkForOfStatement(receiver: GoPtr<Checker>, node: GoPt
       }
     }
   }
-  recordExtensionCheckedIterationMapping(
-    receiver,
-    node,
-    data!.AwaitModifier !== undefined ? "for-await-of" : "for-of",
-    Checker_checkNonNullExpression(receiver, data!.Expression),
-    iteratedType,
-  );
   Checker_checkSourceElement(receiver, data!.Statement);
   if ((Node_Locals(node)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, node);
@@ -3680,6 +3669,7 @@ export function keyBuilder_writeNode(receiver: GoPtr<keyBuilder>, node: GoPtr<No
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkRightHandSideOfForOf","kind":"method","status":"implemented","sigHash":"8f637629abb9bf55eaefc556e625a4b954704968fe8ecb31d25cd20e0826efea","bodyHash":"11f693ac4c38b91e7e3354961c906131c2d080dc4c2794be4908a41c6ef3c94f"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Records exact iterable and element evidence at the single normal TS-Go right-hand-side check; it neither re-enters checking nor changes the no-extension semantic result."}
  *
  * Go source:
  * func (c *Checker) checkRightHandSideOfForOf(statement *ast.Node) *Type {
@@ -3689,7 +3679,16 @@ export function keyBuilder_writeNode(receiver: GoPtr<keyBuilder>, node: GoPtr<No
  */
 export function Checker_checkRightHandSideOfForOf(receiver: GoPtr<Checker>, statement: GoPtr<Node>): GoPtr<Type> {
   const use = IfElse(AsForInOrOfStatement(statement)!.AwaitModifier !== undefined, IterationUseForAwaitOf, IterationUseForOf);
-  return Checker_checkIteratedTypeOrElementType(receiver, use, Checker_checkNonNullExpression(receiver, Node_Expression(statement)), receiver!.undefinedType, Node_Expression(statement));
+  const sourceIterableType = Checker_checkNonNullExpression(receiver, Node_Expression(statement));
+  const sourceElementType = Checker_checkIteratedTypeOrElementType(receiver, use, sourceIterableType, receiver!.undefinedType, Node_Expression(statement));
+  recordExtensionCheckedIterationMapping(
+    receiver,
+    statement,
+    AsForInOrOfStatement(statement)!.AwaitModifier !== undefined ? "for-await-of" : "for-of",
+    sourceIterableType,
+    sourceElementType,
+  );
+  return sourceElementType;
 }
 
 /**

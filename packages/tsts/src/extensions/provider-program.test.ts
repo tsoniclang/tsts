@@ -3715,6 +3715,53 @@ test("checker exposes source element types on for-of declaration and assignment 
   assert.deepEqual(observed.map((entry) => entry.elementType), ["number", "number"]);
 });
 
+test("iteration evidence does not recheck a malformed empty for-of declaration", () => {
+  let observationCount = 0;
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", sourceGlobalProfile("")],
+    ["/src/index.ts", "for (var of Missing) {}"],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+        target: "es2015",
+      },
+      files: ["profile.d.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-malformed-iteration-extension", {
+      identity: semanticProviderIdentity("acme-malformed-iteration-provider"),
+      mapCheckedIteration: () => {
+        observationCount += 1;
+        return acceptObservation({
+          operation: targetOperation("Acme.Iterate", "method", "int32"),
+          resultType: targetResultType("int32"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assert.deepEqual(Program_GetSyntacticDiagnostics(program, Background(), index).map(Diagnostic_Code), []);
+  assert.deepEqual(Program_GetSemanticDiagnostics(program, Background(), index).map(Diagnostic_Code), [1123]);
+  assert.equal(observationCount, 0);
+});
+
 test("checker maps checked unary operators through the operator observation", () => {
   const observedRequests: CheckedOperatorMappingRequest[] = [];
   let fs = FromMap(new Map<string, string>([
