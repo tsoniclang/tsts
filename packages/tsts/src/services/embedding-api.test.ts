@@ -11,6 +11,7 @@ import {
   createExtensionConsumerQueries,
   createSourceSemanticsExtension,
   defaultValueFactKey,
+  deferObservation,
   fieldFactKey,
   formatDiagnostics,
   sourcePrimitive,
@@ -674,6 +675,9 @@ function createAcmeRuntimeSemanticProvider(): TargetSemanticProvider {
         }],
       });
     },
+    mapCheckedConversion: (request) => request.conversionKind === "call-argument"
+      ? acceptObservation({ convertedType: request.target })
+      : deferObservation,
     mapCheckedIteration: () => acceptObservation({
       operation: targetOperation("acme.foreach", "foreach"),
     }),

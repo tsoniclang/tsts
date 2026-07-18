@@ -5000,7 +5000,7 @@ test("contextual target type observations preserve target facts", () => {
   assert.ok(contextual.kind === "accept" && contextual.value.type === delegateType, "Contextual target observations must retain the exact selected source type.");
 });
 
-test("flow validation supports local rejection and target compiler validation facts", () => {
+test("flow validation rolls back rejected candidate facts and commits accepted target validation facts", () => {
   const movedUse = {};
   const returnedBorrow = {};
   const movedSymbol = {};
@@ -5035,7 +5035,10 @@ test("flow validation supports local rejection and target compiler validation fa
 
   const rejected = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, { useSite: movedUse, symbol: movedSymbol, mode: "read", target: "borrow" }, () => ({ valid: true }), { requireOwner: true });
   assert.equal(rejected.kind, "reject");
-  assert.equal(host.facts.get(movedUse, flowStateFactKey)?.state, "moved");
+  assert.equal(host.facts.get(movedUse, flowStateFactKey), undefined);
+  const rejectionDiagnostics = host.diagnostics.all().filter((item) => item.extensionCode === "VALUE_WAS_MOVED");
+  assert.equal(rejectionDiagnostics.length, 1);
+  assert.equal(rejectionDiagnostics[0]?.message, "value was moved and cannot be used here");
 
   const accepted = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, { useSite: returnedBorrow, symbol: borrowSymbol, mode: "read", target: "borrow" }, () => ({ valid: false }), { requireOwner: true });
   assert.equal(accepted.kind === "accept" ? accepted.value.targetCompiler : undefined, "acme-checker");

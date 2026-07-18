@@ -4923,11 +4923,16 @@ test("provider extensions can drive a realistic emitter-facing fact chain", () =
   assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "semantic finalization must return the attached host");
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "Contains(T)");
-  assert.deepEqual(consumer.getSelectedTargetCall(call)?.targetTypeArguments, [{ kind: "source-primitive", name: "int32" }]);
+  assert.equal(consumer.getSelectedTargetCall(call)?.targetTypeArguments, undefined);
+  assert.deepEqual(consumer.getSelectedTargetCall(call)?.member.parameters[0]?.type, { kind: "source-primitive", name: "int32" });
   const argumentSlot = consumer.getSelectedTargetCall(call)?.argumentConversions[0];
   assert.equal(consumer.getTargetCallArgumentPassingFact(argumentSlot)?.mode, "byref-readonly");
   assert.equal(consumer.getTargetCallArgumentConversionFact(argumentSlot)?.convertedType?.kind, "target-named");
-  assert.equal(consumer.getRuntimeCarrierFact(searchValuesTypeReference)?.carrier.kind, "target-named");
+  assert.deepEqual(consumer.getRuntimeCarrierFact(searchValuesTypeReference)?.carrier, {
+    kind: "target-named",
+    id: "Acme.Buffers.SearchValues`1",
+    typeArguments: [{ kind: "source-primitive", name: "int32" }],
+  });
 });
 
 test("checker-owned target call seam reports deferred providers without fallback facts", () => {
@@ -7661,8 +7666,14 @@ function compositeAcmeProvider(): TargetSemanticProvider {
     mapCheckedCall: (request) => acceptObservation({
       kind: "target",
       selectedSignature: {
-        ...selectedSearchValuesContainsSignature(),
-        targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
+        member: {
+          ...selectedSearchValuesContainsSignature().member,
+          parameters: [{
+            name: "value",
+            type: { kind: "source-primitive", name: "int32" },
+            passingMode: "byref-readonly",
+          }],
+        },
       },
       argumentConversions: [argumentConversionSlot(0)],
     }),
@@ -7671,7 +7682,11 @@ function compositeAcmeProvider(): TargetSemanticProvider {
       operation: targetOperation("Acme.Int32.Identity", "method", "int32"),
     }),
     resolveRuntimeCarrier: () => acceptObservation({
-      carrier: { kind: "target-named", id: "Acme.Buffers.SearchValues`1" },
+      carrier: {
+        kind: "target-named",
+        id: "Acme.Buffers.SearchValues`1",
+        typeArguments: [{ kind: "source-primitive", name: "int32" }],
+      },
       requiresAllocation: false,
     }),
   };
@@ -7853,6 +7868,9 @@ function borrowVecSurfaceProvider(): TargetSemanticProvider {
       },
       argumentConversions: [argumentConversionSlot(0)],
     }),
+    mapCheckedConversion: (request) => request.conversionKind === "call-argument"
+      ? acceptObservation({ convertedType: request.target })
+      : deferObservation,
   };
 }
 
