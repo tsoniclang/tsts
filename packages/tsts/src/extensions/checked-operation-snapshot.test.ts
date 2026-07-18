@@ -377,6 +377,9 @@ test("structurally equal call-argument target values remain one checked request 
     onDependencyConflict: () => {
       conflicts += 1;
     },
+    onAtomicOwnerConflict: () => {
+      conflicts += 1;
+    },
     onUnresolved: () => {
       throw new Error("Unexpected unresolved checked operation.");
     },
@@ -1337,6 +1340,9 @@ function createInventory(): CheckedOperationInventory {
     },
     onDependencyConflict: () => {
       throw new Error("Unexpected checked-operation dependency conflict.");
+    },
+    onAtomicOwnerConflict: () => {
+      throw new Error("Unexpected checked-operation atomic-owner conflict.");
     },
     onUnresolved: () => {
       throw new Error("Unexpected unresolved checked operation.");

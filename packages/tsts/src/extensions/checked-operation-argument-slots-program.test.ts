@@ -29,6 +29,7 @@ import {
   attachExtensionHost,
   createExtensionConsumerQueries,
   deferObservation,
+  defineExtensionFactKey,
   finalizeExtensionSemantics,
   rejectObservation,
   selectedTargetSignatureFactKey,
@@ -52,6 +53,10 @@ import type {
 
 const int32TargetType = { kind: "source-primitive", name: "int32" } as const satisfies TargetTypeRef;
 const int32ArrayTargetType = { kind: "array", element: int32TargetType } as const satisfies TargetTypeRef;
+const atomicConversionMapperFactKey = defineExtensionFactKey<{ readonly value: string }>({
+  extensionId: "checked-operation-argument-slots",
+  name: "atomic-conversion-mapper",
+});
 
 test("params-array calls retain every conversion slot and distinguish params elements from sequences", () => {
   const callRequests: CheckedCallMappingRequest[] = [];
@@ -567,6 +572,7 @@ test("a deferred or rejected argument conversion leaves the entire selected call
       }
       conversionRequests.push(request);
       if (request.sourceArgumentIndex === 0) {
+        context.facts.set(request.slot, atomicConversionMapperFactKey, { value: "accepted-slot" });
         return acceptObservation({ convertedType: int32TargetType });
       }
       if (context.phase === "checking") {
@@ -593,20 +599,34 @@ test("a deferred or rejected argument conversion leaves the entire selected call
   assert.deepEqual(callNames, ["inner"]);
   assert.ok(innerCall !== undefined);
   assert.deepEqual(conversionRequests.map((request) => request.sourceArgumentIndex), [0, 1]);
-  assert.equal(extensionHost.facts.get(innerCall.call, selectedTargetSignatureFactKey), undefined);
+  assert.equal(
+    extensionHost.facts.get(innerCall.call, selectedTargetSignatureFactKey) === undefined,
+    true,
+    "A deferred selected call must not publish its target signature.",
+  );
   for (const request of conversionRequests) {
-    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentConversionFactKey), undefined);
-    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentPassingFactKey), undefined);
+    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentConversionFactKey) === undefined, true);
+    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentPassingFactKey) === undefined, true);
+    assert.equal(extensionHost.facts.get(request.slot, atomicConversionMapperFactKey) === undefined, true);
   }
   assert.equal(extensionHost.diagnostics.all().length, 0, "A checking-phase deferral must remain diagnostic-free.");
 
   finalizeExtensionSemantics(programOptions);
-  assert.deepEqual(callNames, ["inner", "inner"]);
-  assert.deepEqual(conversionRequests.map((request) => request.sourceArgumentIndex), [0, 1, 0, 1]);
-  assert.equal(extensionHost.facts.get(innerCall.call, selectedTargetSignatureFactKey), undefined);
+  assert.deepEqual(callNames, ["inner"], "An accepted selected-call mapping must be retained rather than re-running its mapper.");
+  assert.deepEqual(
+    conversionRequests.map((request) => request.sourceArgumentIndex),
+    [0, 1, 1],
+    "Only the deferred conversion slot may re-run; an accepted sibling slot must replay its retained result.",
+  );
+  assert.equal(
+    extensionHost.facts.get(innerCall.call, selectedTargetSignatureFactKey) === undefined,
+    true,
+    "A rejected selected call must not publish its target signature.",
+  );
   for (const request of conversionRequests) {
-    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentConversionFactKey), undefined);
-    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentPassingFactKey), undefined);
+    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentConversionFactKey) === undefined, true);
+    assert.equal(extensionHost.facts.get(request.slot, targetCallArgumentPassingFactKey) === undefined, true);
+    assert.equal(extensionHost.facts.get(request.slot, atomicConversionMapperFactKey) === undefined, true);
   }
   const diagnostics = extensionHost.diagnostics.all();
   assert.equal(diagnostics.filter((diagnostic) => diagnostic.extensionCode === "INTENTIONAL_ARGUMENT_CONVERSION_REJECTION").length, 1);

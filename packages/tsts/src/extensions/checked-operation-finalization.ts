@@ -41,6 +41,7 @@ interface CheckedOperationRecord {
   readonly reference: CheckedOperationReference;
   readonly request: ExtensionObservationRequest<CheckedOperationObservationPointName>;
   readonly dependencies: readonly CheckedOperationReference[];
+  readonly atomicOwner?: CheckedOperationReference;
   readonly allDependencies: CheckedOperationReference[];
   readonly dependencyIndex: CheckedOperationReferenceIndex;
   readonly evaluate: (phase: ExtensionObservationPhase) => AnyCheckedOperationResult;
@@ -50,6 +51,11 @@ interface CheckedOperationRecord {
   acceptedEffects?: unknown;
   unresolved?: CheckedOperationReference;
   state: "evaluating" | "deferred" | "accepted" | "unavailable";
+}
+
+interface CheckedOperationExecutionFrame {
+  readonly stage: "evaluating" | "applying";
+  readonly record: CheckedOperationRecord;
 }
 
 interface CheckedOperationTraversalFrame {
@@ -76,6 +82,10 @@ export interface CheckedOperationInventoryCallbacks {
     observation: CheckedOperationObservationPointName,
     subject: ExtensionFactSubject,
   ) => void;
+  readonly onAtomicOwnerConflict: (
+    observation: CheckedOperationObservationPointName,
+    subject: ExtensionFactSubject,
+  ) => void;
   readonly onUnresolved: (
     observation: CheckedOperationObservationPointName,
     subject: ExtensionFactSubject,
@@ -94,8 +104,9 @@ const checkedPrimaryOperationObservationOrder: readonly CheckedOperationObservat
 export class CheckedOperationInventory {
   readonly #records: CheckedOperationRecord[] = [];
   readonly #recordsBySubject = new WeakMap<object, Map<CheckedOperationObservationPointName, CheckedOperationRecord[]>>();
+  readonly #ownedRecordsByOwnerSubject = new WeakMap<object, CheckedOperationRecord[]>();
   readonly #callbacks: CheckedOperationInventoryCallbacks;
-  readonly #executionStages: Array<"evaluating" | "applying"> = [];
+  readonly #executionFrames: CheckedOperationExecutionFrame[] = [];
   #failure: Error | undefined;
   #state: "open" | "finalizing" | "finalized" | "failed" = "open";
 
@@ -117,15 +128,18 @@ export class CheckedOperationInventory {
     phase: ExtensionObservationPhase,
     requestSnapshotCache?: CheckedOperationRequestSnapshotCache,
     dependencies: readonly CheckedOperationReference[] = [],
+    atomicOwner?: CheckedOperationReference,
   ): ExtensionObservationResult<ExtensionObservationResponse<TObservation>> {
     this.#assertRecordingAvailable("record");
-    if (this.#executionStages[this.#executionStages.length - 1] === "evaluating") {
+    const executionFrame = this.#executionFrames[this.#executionFrames.length - 1];
+    if (executionFrame?.stage === "evaluating") {
       const error = new Error("A checked-operation mapper cannot record another checked operation while it is being evaluated.");
       this.#fail(error);
       throw error;
     }
     const incomingRequest = snapshotCheckedOperationRequest(observation, request, requestSnapshotCache);
     const incomingDependencies = snapshotCheckedOperationReferences(dependencies);
+    const incomingAtomicOwner = atomicOwner === undefined ? undefined : snapshotCheckedOperationReference(atomicOwner);
     const incomingSubject = checkedOperationSubject(observation, incomingRequest);
     const existing = this.#findRecordForRequest(observation, incomingSubject, incomingRequest);
     if (existing !== undefined && !checkedOperationRequestEquals(observation, existing.request, incomingRequest)) {
@@ -138,6 +152,18 @@ export class CheckedOperationInventory {
       this.#fail(new Error(`Checked operation '${observation}' was observed with conflicting operation dependencies.`));
       return Object.freeze({ kind: "conflict", observation });
     }
+    if (existing !== undefined && !optionalCheckedOperationReferenceEquals(existing.atomicOwner, incomingAtomicOwner)) {
+      this.#callbacks.onAtomicOwnerConflict(observation, incomingSubject);
+      this.#fail(new Error(`Checked operation '${observation}' was observed with a conflicting atomic owner.`));
+      return Object.freeze({ kind: "conflict", observation });
+    }
+    if (incomingAtomicOwner !== undefined
+      && (executionFrame?.stage !== "applying"
+        || !checkedOperationReferenceEquals(executionFrame.record.reference, incomingAtomicOwner))) {
+      const error = new Error(`Atomically owned checked operation '${observation}' must be recorded while its exact owner is applying.`);
+      this.#fail(error);
+      throw error;
+    }
     if (existing !== undefined) {
       if (existing.state === "evaluating") {
         const error = new Error(`Checked operation '${observation}' re-entered while its selected mapping was being evaluated.`);
@@ -146,6 +172,20 @@ export class CheckedOperationInventory {
       }
       if (existing.result === undefined) {
         throw new Error("Active checked operation has no observation result.");
+      }
+      if (existing.atomicOwner !== undefined && existing.state === "deferred") {
+        const dependencyReadiness = this.#dependencyReadiness(existing, false);
+        if (dependencyReadiness === "blocked") {
+          markCheckedOperationUnavailable(existing);
+          this.#settleOwnedRecords(existing);
+        } else if (dependencyReadiness === "ready") {
+          existing.state = "evaluating";
+          const resumedResult = this.#runAttempt(existing, phase);
+          this.#throwIfFailed();
+          existing.result = resumedResult;
+          existing.state = checkedOperationResultState(resumedResult);
+          this.#settleOwnedRecords(existing);
+        }
       }
       return existing.result as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
     }
@@ -164,12 +204,18 @@ export class CheckedOperationInventory {
       reference: checkedOperationReference(observation, immutableRequest, subject),
       request: immutableRequest,
       dependencies: incomingDependencies,
+      ...(incomingAtomicOwner === undefined ? {} : { atomicOwner: incomingAtomicOwner }),
       allDependencies: [...incomingDependencies],
       dependencyIndex: createCheckedOperationReferenceIndex(incomingDependencies),
       evaluate: evaluateRecord,
       apply: applyRecord,
       state: "evaluating",
     };
+    if (incomingAtomicOwner !== undefined && checkedOperationReferenceEquals(record.reference, incomingAtomicOwner)) {
+      const error = new Error(`Checked operation '${observation}' cannot atomically own itself.`);
+      this.#fail(error);
+      throw error;
+    }
     this.#addRecord(record);
     try {
       const dependencyReadiness = this.#dependencyReadiness(record, false);
@@ -183,6 +229,7 @@ export class CheckedOperationInventory {
       this.#throwIfFailed();
       record.result = initialResult;
       record.state = checkedOperationResultState(initialResult);
+      this.#settleOwnedRecords(record);
       return initialResult as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
     } catch (error) {
       this.#fail(asError(error));
@@ -261,15 +308,16 @@ export class CheckedOperationInventory {
     this.#state = "finalizing";
     try {
       this.#validatePrimaryOperationUniqueness();
-      while (this.#records.some((record) => record.state === "deferred")) {
+      while (this.#records.some((record) => record.atomicOwner === undefined && record.state === "deferred")) {
         let completedDeferredRecord = false;
         for (const record of this.#dependencyOrderedRecords()) {
-          if (record.state !== "deferred") {
+          if (record.atomicOwner !== undefined || record.state !== "deferred") {
             continue;
           }
           const dependencyReadiness = this.#dependencyReadiness(record, true);
           if (dependencyReadiness === "blocked") {
             markCheckedOperationUnavailable(record);
+            this.#settleOwnedRecords(record);
             completedDeferredRecord = true;
             continue;
           }
@@ -281,6 +329,7 @@ export class CheckedOperationInventory {
           this.#throwIfFailed();
           record.result = result;
           record.state = checkedOperationResultState(result);
+          this.#settleOwnedRecords(record);
           if (record.state === "deferred") {
             const unresolved = record.unresolved;
             if (unresolved === undefined) {
@@ -294,6 +343,7 @@ export class CheckedOperationInventory {
           throw new Error("Checked-operation finalization made no progress while deferred operations remained.");
         }
       }
+      this.#validateOwnedOperationStates();
       this.#validatePrimaryOperationUniqueness();
       this.#state = "finalized";
     } catch (error) {
@@ -321,7 +371,7 @@ export class CheckedOperationInventory {
     if (this.#state === "finalized") {
       throw new Error(`Cannot ${action} a checked operation after semantic finalization.`);
     }
-    if (this.#state === "finalizing" && this.#executionStages[this.#executionStages.length - 1] !== "applying") {
+    if (this.#state === "finalizing" && this.#executionFrames[this.#executionFrames.length - 1]?.stage !== "applying") {
       throw new Error(`Cannot ${action} a checked operation outside checked-operation result application during finalization.`);
     }
   }
@@ -337,13 +387,13 @@ export class CheckedOperationInventory {
         }
         this.#callbacks.applyAttemptEffects(attempt, record.acceptedEffects);
       }
-      const result = pendingAcceptedResult ?? this.#withExecutionStage("evaluating", () => record.evaluate(phase));
+      const result = pendingAcceptedResult ?? this.#withExecutionFrame("evaluating", record, () => record.evaluate(phase));
       this.#throwIfFailed();
       if (result.kind === "accept") {
         if (pendingAcceptedResult === undefined) {
           record.acceptedEffects = this.#callbacks.captureAttemptEffects(attempt);
         }
-        const applyOutcome = normalizeCheckedOperationApplyOutcome(this.#withExecutionStage("applying", () => record.apply(result)));
+        const applyOutcome = normalizeCheckedOperationApplyOutcome(this.#withExecutionFrame("applying", record, () => record.apply(result)));
         if (applyOutcome.kind === "applied") {
           this.#callbacks.commitAttempt(attempt);
           attemptOpen = false;
@@ -360,16 +410,20 @@ export class CheckedOperationInventory {
           if (unresolvedRecord === record) {
             throw new Error(`Checked operation '${record.observation}' cannot defer on itself.`);
           }
+          if (unresolvedRecord.state === "unavailable") {
+            attemptOpen = false;
+            this.#callbacks.discardAttemptPreservingDiagnostics(attempt);
+            delete record.pendingAcceptedResult;
+            delete record.acceptedEffects;
+            delete record.unresolved;
+            return checkedOperationUnavailableResult;
+          }
           if (unresolvedRecord.state !== "deferred") {
             throw new Error(`Checked operation '${record.observation}' deferred on operation '${unresolved.observation}' in state '${unresolvedRecord.state}'.`);
           }
           attemptOpen = false;
           const deferredDependencies = this.#callbacks.deferAttemptPreservingOperations(attempt);
-          for (const dependency of [...deferredDependencies, unresolved]) {
-            if (record.dependencyIndex.add(dependency)) {
-              record.allDependencies.push(dependency);
-            }
-          }
+          this.#retainDeferredDependencies(record, [...deferredDependencies, unresolved]);
           record.pendingAcceptedResult = result;
           record.unresolved = unresolved;
           return dependencyDeferredResult(record.observation);
@@ -409,6 +463,14 @@ export class CheckedOperationInventory {
     } else {
       recordsForObservation.push(record);
     }
+    if (record.atomicOwner !== undefined) {
+      const ownedRecords = this.#ownedRecordsByOwnerSubject.get(record.atomicOwner.subject);
+      if (ownedRecords === undefined) {
+        this.#ownedRecordsByOwnerSubject.set(record.atomicOwner.subject, [record]);
+      } else {
+        ownedRecords.push(record);
+      }
+    }
   }
 
   createSavepoint(): number {
@@ -432,6 +494,16 @@ export class CheckedOperationInventory {
       }
       if (recordsForSubject!.size === 0) {
         this.#recordsBySubject.delete(record.subject);
+      }
+      if (record.atomicOwner !== undefined) {
+        const ownedRecords = this.#ownedRecordsByOwnerSubject.get(record.atomicOwner.subject);
+        if (ownedRecords === undefined || ownedRecords[ownedRecords.length - 1] !== record) {
+          throw new Error("Checked-operation inventory rollback encountered inconsistent atomic-owner ordering.");
+        }
+        ownedRecords.pop();
+        if (ownedRecords.length === 0) {
+          this.#ownedRecordsByOwnerSubject.delete(record.atomicOwner.subject);
+        }
       }
     }
   }
@@ -463,6 +535,101 @@ export class CheckedOperationInventory {
       delete record.unresolved;
     }
     return Object.freeze(deferred);
+  }
+
+  #retainDeferredDependencies(
+    owner: CheckedOperationRecord,
+    references: readonly CheckedOperationReference[],
+  ): void {
+    const pending = [...references];
+    let nextReferenceIndex = 0;
+    const expandedOwnedRecords = new Set<CheckedOperationRecord>();
+    while (nextReferenceIndex < pending.length) {
+      const reference = pending[nextReferenceIndex++]!;
+      const dependency = this.#findRecordForReference(reference);
+      if (dependency === undefined) {
+        throw new Error(`Checked operation '${owner.observation}' deferred on an operation that was not retained.`);
+      }
+      if (dependency === owner) {
+        throw new Error(`Checked operation '${owner.observation}' cannot defer on itself.`);
+      }
+      if (this.#isAtomicallyOwnedBy(dependency, owner)) {
+        if (expandedOwnedRecords.has(dependency)) {
+          continue;
+        }
+        expandedOwnedRecords.add(dependency);
+        pending.push(...checkedOperationDependencies(dependency));
+        continue;
+      }
+      if (owner.dependencyIndex.add(reference)) {
+        owner.allDependencies.push(reference);
+      }
+    }
+  }
+
+  #isAtomicallyOwnedBy(candidate: CheckedOperationRecord, owner: CheckedOperationRecord): boolean {
+    let ownerReference = candidate.atomicOwner;
+    const visited = new Set<CheckedOperationRecord>();
+    while (ownerReference !== undefined) {
+      const ownerRecord = this.#findRecordForReference(ownerReference);
+      if (ownerRecord === undefined) {
+        throw new Error(`Atomically owned checked operation '${candidate.observation}' references a missing owner.`);
+      }
+      if (ownerRecord === owner) {
+        return true;
+      }
+      if (visited.has(ownerRecord)) {
+        throw new Error("Checked-operation atomic ownership contains a cycle.");
+      }
+      visited.add(ownerRecord);
+      ownerReference = ownerRecord.atomicOwner;
+    }
+    return false;
+  }
+
+  #directlyOwnedRecords(owner: CheckedOperationRecord): readonly CheckedOperationRecord[] {
+    return (this.#ownedRecordsByOwnerSubject.get(owner.reference.subject) ?? [])
+      .filter((record) => record.atomicOwner !== undefined
+        && checkedOperationReferenceEquals(record.atomicOwner, owner.reference));
+  }
+
+  #settleOwnedRecords(owner: CheckedOperationRecord): void {
+    if (owner.state === "deferred" || owner.state === "evaluating") {
+      return;
+    }
+    const pending = [...this.#directlyOwnedRecords(owner)];
+    while (pending.length !== 0) {
+      const record = pending.pop()!;
+      if (owner.state === "accepted") {
+        if (record.state !== "accepted") {
+          throw new Error(`Accepted checked operation '${owner.observation}' has atomically owned operation '${record.observation}' in state '${record.state}'.`);
+        }
+      } else {
+        markCheckedOperationUnavailable(record);
+      }
+      pending.push(...this.#directlyOwnedRecords(record));
+    }
+  }
+
+  #validateOwnedOperationStates(): void {
+    for (const record of this.#records) {
+      if (record.atomicOwner === undefined) {
+        continue;
+      }
+      const owner = this.#findRecordForReference(record.atomicOwner);
+      if (owner === undefined) {
+        throw new Error(`Atomically owned checked operation '${record.observation}' references a missing owner.`);
+      }
+      if (owner.state === "accepted" && record.state !== "accepted") {
+        throw new Error(`Accepted checked operation '${owner.observation}' has unaccepted atomic child '${record.observation}'.`);
+      }
+      if (owner.state === "unavailable" && record.state !== "unavailable") {
+        throw new Error(`Unavailable checked operation '${owner.observation}' has a published atomic child '${record.observation}'.`);
+      }
+      if (record.state === "deferred") {
+        throw new Error(`Atomically owned checked operation '${record.observation}' remained deferred after finalization.`);
+      }
+    }
   }
 
   #findRecordForRequest<TObservation extends CheckedOperationObservationPointName>(
@@ -519,13 +686,18 @@ export class CheckedOperationInventory {
     }
   }
 
-  #withExecutionStage<T>(stage: "evaluating" | "applying", callback: () => T): T {
-    this.#executionStages.push(stage);
+  #withExecutionFrame<T>(
+    stage: "evaluating" | "applying",
+    record: CheckedOperationRecord,
+    callback: () => T,
+  ): T {
+    const frame: CheckedOperationExecutionFrame = { stage, record };
+    this.#executionFrames.push(frame);
     try {
       return callback();
     } finally {
-      const completed = this.#executionStages.pop();
-      if (completed !== stage) {
+      const completed = this.#executionFrames.pop();
+      if (completed !== frame) {
         throw new Error("Checked-operation execution stage stack is inconsistent.");
       }
     }
@@ -675,6 +847,15 @@ function checkedOperationReferenceEquals(left: CheckedOperationReference, right:
     && left.targetParameterIndex === right.targetParameterIndex;
 }
 
+function optionalCheckedOperationReferenceEquals(
+  left: CheckedOperationReference | undefined,
+  right: CheckedOperationReference | undefined,
+): boolean {
+  return left === undefined || right === undefined
+    ? left === right
+    : checkedOperationReferenceEquals(left, right);
+}
+
 function asError(value: unknown): Error {
   return value instanceof Error ? value : new Error(String(value));
 }
@@ -801,7 +982,7 @@ interface CheckedOperationReferenceSubjectIndex {
   readonly calls: WeakMap<object, WeakMap<object, Map<number, Set<number>>>>;
 }
 
-class CheckedOperationReferenceIndex {
+export class CheckedOperationReferenceIndex {
   readonly #subjects = new WeakMap<object, CheckedOperationReferenceSubjectIndex>();
 
   add(reference: CheckedOperationReference): boolean {

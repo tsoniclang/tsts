@@ -3899,7 +3899,7 @@ export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSignatureApplicable","kind":"method","status":"implemented","sigHash":"5707b58d565ca9504f11871fcfeff062bb8599288f1d09c6e802f1443961906e","bodyHash":"4dd2ef04c249ba264d83a86632ceb3b30973a6df168b9afe28e23359c12d439b"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The exact TS-Go applicability algorithm is retained; an internal worker additionally returns the already-computed contextual argument types for the winning checked-call evidence without rechecking expressions."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The exact TS-Go applicability algorithm is retained; an internal worker additionally returns the already-computed contextual argument types and exact declared parameter identities for winning checked-call evidence without rechecking expressions, with every expanded rest argument bound to the signature's sole rest parameter."}
  *
  * Go source:
  * func (c *Checker) isSignatureApplicable(node *ast.Node, args []*ast.Node, signature *Signature, relation *Relation, checkMode CheckMode, reportErrors bool, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -4033,6 +4033,7 @@ function Checker_isSignatureApplicableWithSelectedArgumentTypes(
   const headMessage = Argument_of_type_0_is_not_assignable_to_parameter_of_type_1;
   const restType = Checker_getNonArrayRestType(receiver, signature);
   const argCount = restType !== undefined ? globalThis.Math.min(Checker_getParameterCount(receiver, signature) - 1, args.length) : args.length;
+  const restParameterIndex = signatureHasRestParameter(signature) ? signature!.parameters.length - 1 : -1;
   for (let index = 0; index < argCount; index++) {
     const arg = args[index];
     if (!IsOmittedExpression(arg)) {
@@ -4040,7 +4041,7 @@ function Checker_isSignatureApplicableWithSelectedArgumentTypes(
       const argType = Checker_checkExpressionWithContextualType(receiver, arg, paramType, undefined, checkMode);
       if (selectedArguments !== undefined) {
         selectedArguments[index] = Object.freeze({
-          sourceParameterIndex: index,
+          sourceParameterIndex: restParameterIndex >= 0 && index >= restParameterIndex ? restParameterIndex : index,
           selectedArgumentType: argType!,
           selectedParameterType: paramType!,
         });

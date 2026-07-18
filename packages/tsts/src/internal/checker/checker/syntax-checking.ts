@@ -29,7 +29,7 @@ import type { ResolvedCallEvidence, Signature, Type, TypeFlags } from "../types.
 import { SignatureFlagsAbstract, SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../types.js";
 import { Checker_isIteratorResult } from "./support-queries.js";
 import {
-  CheckModeInferential, CheckModeIsForSignatureHelp, CheckModeNormal, CheckModeSkipContextSensitive, InferenceFlagsSkippedGenericFunction, IterationTypeKindReturn, IterationTypeKindYield,
+  CheckModeInferential, CheckModeIsForSignatureHelp, CheckModeNormal, CheckModeSkipContextSensitive, CheckModeSkipGenericFunctions, InferenceFlagsSkippedGenericFunction, IterationTypeKindReturn, IterationTypeKindYield,
   IterationTypeKindNext, IterationUseForOf, IterationUseForAwaitOf, IterationUseSpread,
   IterationUseYieldStar, IterationUseAsyncYieldStar,
   TypeFactsIsUndefined, TypeFactsTruthy, TypeFactsFalsy, UnusedKindLocal, UnusedKindParameter,
@@ -1392,7 +1392,7 @@ export function Checker_checkExpression(receiver: GoPtr<Checker>, node: GoPtr<No
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkExpressionEx","kind":"method","status":"implemented","sigHash":"31bd9e3fc117abfabc0575cde0857843657e3214d7e55490b82e7e0476269dc5","bodyHash":"6d15ed64bbe48c3b4af70c5311044f49e9dd3fe52bf5c7d9312b1bdca9e97804"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After TS-Go has produced the final instantiated expression type, non-provisional call/new checks publish their already-retained exact selected evidence for deterministic checked-operation finalization."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After TS-Go has produced an instantiated call/new result backed by source-order cached signature evidence in an actual source-checking mode, publish that immutable evidence immediately so contextual inner calls are retained before their enclosing calls without checker re-entry; provisional, query-only, and transient-flow checks remain observation-free."}
  *
  * Go source:
  * func (c *Checker) checkExpressionEx(node *ast.Node, checkMode CheckMode) *Type {
@@ -1420,7 +1420,7 @@ export function Checker_checkExpressionEx(receiver: GoPtr<Checker>, node: GoPtr<
   if (isConstEnumObjectType(t)) {
     Checker_checkConstEnumAccess(receiver, node, t);
   }
-  if (IsCallOrNewExpression(node) && checkMode === CheckModeNormal) {
+  if (IsCallOrNewExpression(node) && Checker_shouldPublishResolvedCallEvidence(receiver, checkMode)) {
     const resolvedCallEvidence = Checker_finalizeResolvedCallEvidence(receiver, node, t);
     if (resolvedCallEvidence !== undefined) {
       recordExtensionCheckedCallMapping(receiver, node, resolvedCallEvidence);
@@ -1428,6 +1428,14 @@ export function Checker_checkExpressionEx(receiver: GoPtr<Checker>, node: GoPtr<
   }
   receiver!.currentNode = saveCurrentNode;
   return t;
+}
+
+function Checker_shouldPublishResolvedCallEvidence(receiver: GoPtr<Checker>, checkMode: CheckMode): boolean {
+  const nonSemanticCheckModes = CheckModeSkipContextSensitive
+    | CheckModeSkipGenericFunctions
+    | CheckModeIsForSignatureHelp
+    | CheckModeTypeOnly;
+  return receiver!.flowLoopStack.length === 0 && (checkMode & nonSemanticCheckModes) === 0;
 }
 
 /**

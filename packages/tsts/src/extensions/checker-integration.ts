@@ -28,7 +28,10 @@ import { recordProviderTypeFamilyReferenceFacts } from "./compiler-integration.j
 import { createCheckedOperationRequestSnapshotCache, snapshotSelectedTargetSignatureFact, snapshotTargetOperationFact } from "./checked-operation-value-snapshot.js";
 import type { CheckedOperationRequestSnapshotCache } from "./checked-operation-value-snapshot.js";
 import { substituteTargetParameter } from "./target-type-ref-substitution.js";
-import type { CheckedOperationApplyOutcome } from "./checked-operation-finalization.js";
+import {
+  CheckedOperationReferenceIndex,
+  type CheckedOperationApplyOutcome,
+} from "./checked-operation-finalization.js";
 
 const checkedOperationApplied: CheckedOperationApplyOutcome = Object.freeze({ kind: "applied" });
 const checkedOperationUnavailable: CheckedOperationApplyOutcome = Object.freeze({ kind: "unavailable" });
@@ -350,24 +353,19 @@ function collectResolvedCallDependencies(
   extensionHost: ExtensionHost,
   evidence: ResolvedCallEvidence,
 ): readonly CheckedOperationReference[] {
-  const dependencies: CheckedOperationReference[] = [];
-  const add = (reference: CheckedOperationReference | undefined): void => {
-    if (reference !== undefined && !dependencies.some((existing) => checkedOperationReferenceEquals(existing, reference))) {
-      dependencies.push(reference);
-    }
-  };
+  const selectedDependencies: CheckedOperationReference[] = [];
   for (const subject of evidence.inputOperationSubjects ?? []) {
     const reference = extensionHost[extensionHostGetCheckedOperationReference](subject);
     if (reference === undefined) {
       throw new Error("Resolved call evidence references a source input operation that was not retained for finalization.");
     }
-    add(reference);
+    selectedDependencies.push(reference);
   }
-  add(extensionHost[extensionHostGetCheckedOperationReference](SkipParentheses(evidence.sourceCallee.expression)));
-  for (const argument of evidence.sourceArguments) {
-    add(extensionHost[extensionHostGetCheckedOperationReference](SkipParentheses(argument.expression)));
-  }
-  return Object.freeze(dependencies);
+  return collectCheckedOperationDependencies(
+    extensionHost,
+    [evidence.sourceCallee.expression, ...evidence.sourceArguments.map((argument) => argument.expression)],
+    selectedDependencies,
+  );
 }
 
 export interface CheckedPropertyAccessSourceEvidence {
@@ -1347,6 +1345,9 @@ function recordExtensionCheckedConversion(
     { requireOwner: true },
     requestSnapshotCache,
     dependencies,
+    request.conversionKind === "call-argument"
+      ? Object.freeze({ observation: ExtensionObservationPoint.mapCheckedCall, subject: request.call })
+      : undefined,
   );
 }
 
@@ -1375,14 +1376,11 @@ function collectCheckedOperationDependencies(
   additional: readonly CheckedOperationReference[] = [],
 ): readonly CheckedOperationReference[] {
   const dependencies: CheckedOperationReference[] = [];
-  const dependenciesBySubject = new WeakMap<object, CheckedOperationReference[]>();
+  const dependencyIndex = new CheckedOperationReferenceIndex();
   const visited = new WeakSet<object>();
   const add = (reference: CheckedOperationReference): void => {
-    const subjectDependencies = dependenciesBySubject.get(reference.subject) ?? [];
-    if (!subjectDependencies.some((existing) => checkedOperationReferenceEquals(existing, reference))) {
+    if (dependencyIndex.add(reference)) {
       dependencies.push(reference);
-      subjectDependencies.push(reference);
-      dependenciesBySubject.set(reference.subject, subjectDependencies);
     }
   };
   for (const reference of additional) {
@@ -1413,16 +1411,6 @@ function collectCheckedOperationDependencies(
     }
   }
   return Object.freeze(dependencies);
-}
-
-function checkedOperationReferenceEquals(left: CheckedOperationReference, right: CheckedOperationReference): boolean {
-  return left.observation === right.observation
-    && left.subject === right.subject
-    && left.conversionKind === right.conversionKind
-    && left.call === right.call
-    && left.slot === right.slot
-    && left.sourceArgumentIndex === right.sourceArgumentIndex
-    && left.targetParameterIndex === right.targetParameterIndex;
 }
 
 function selectedSourceSymbol(checker: GoPtr<Checker>, symbol: GoPtr<Symbol>): GoPtr<Symbol> {
@@ -1836,6 +1824,7 @@ function withArgumentPassingProvenance(
   return Object.freeze({
     slot: slot.slot,
     mode: slot.targetParameter.passingMode,
+    targetExpression: slot.argument,
     call,
     sourceArgumentIndex: slot.sourceArgumentIndex,
     targetParameterIndex: slot.targetParameterIndex,

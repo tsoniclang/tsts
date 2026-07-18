@@ -2755,6 +2755,15 @@ export class ExtensionHost {
           identity: `checked-operation-dependency-conflict:${observation}:${this.#getConsumerSubjectIdentity(subject)}`,
         }));
       },
+      onAtomicOwnerConflict: (observation, subject) => {
+        this.diagnostics.append(createHostDiagnostic({
+          extensionCode: "CHECKED_OPERATION_ATOMIC_OWNER_CONFLICT",
+          numericCode: ExtensionHostDiagnosticCode.observationConflict,
+          message: `Checked semantic operation '${observation}' was observed with conflicting atomic transaction ownership.`,
+          nodeOrSpan: subject,
+          identity: `checked-operation-atomic-owner-conflict:${observation}:${this.#getConsumerSubjectIdentity(subject)}`,
+        }));
+      },
       onUnresolved: (observation, subject) => {
         const owner = this.getObservationOwner(observation);
         this.diagnostics.append(createHostDiagnostic({
@@ -2957,6 +2966,7 @@ export class ExtensionHost {
     options: ExtensionObservationRunOptions = {},
     requestSnapshotCache?: CheckedOperationRequestSnapshotCache,
     dependencies: readonly CheckedOperationReference[] = [],
+    atomicOwner?: CheckedOperationReference,
   ): ExtensionObservationResult<ExtensionObservationResponse<TObservation>> {
     this.#assertCheckedOperationRecordingAvailable();
     if (this.#observationHookDepth !== 0) {
@@ -2977,6 +2987,7 @@ export class ExtensionHost {
         this.#observationPhase,
         requestSnapshotCache,
         dependencies,
+        atomicOwner,
       );
     } catch (error) {
       this.#failSemanticFinalization();

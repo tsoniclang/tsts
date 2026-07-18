@@ -29,6 +29,7 @@ import type {
   TargetTypeRef,
 } from "./index.js";
 import type { CheckedOperationReference } from "./observations.js";
+import type { CheckedOperationApplyOutcome } from "./checked-operation-finalization.js";
 import {
   extensionHostGetCheckedOperationReference,
   extensionHostRunCheckedOperation,
@@ -557,6 +558,372 @@ test("apply-discovered child operations survive rollback and finalize before the
   assert.equal(host.facts.get(acceptedChild, transactionFactKey)?.value, "hook:acceptedChild");
   assert.equal(host.facts.get(deferredChild, transactionFactKey)?.value, "hook:deferredChild");
   assert.equal(host.diagnostics.all().length, 0);
+  assert.equal(host.finalized, true);
+});
+
+test("atomically owned apply-discovered operations replay only inside their owner's transaction", () => {
+  const targetId = arbitraryTargetIds[0];
+  const parent = {};
+  const acceptedChild = {};
+  const deferredChild = {};
+  const mapperRuns: string[] = [];
+  const applicationOrder: string[] = [];
+  const extension = propertyProviderExtension("atomic-apply-children", targetId, (request, context) => {
+    mapperRuns.push(request.propertyName);
+    if (request.propertyName === "deferredChild" && context.phase === "checking") {
+      return deferObservation;
+    }
+    context.facts.set(request.expression, transactionFactKey, { value: `hook:${request.propertyName}` });
+    return acceptObservation({ operation: operation(`atomic.${request.propertyName}`) });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+  const owner = propertyReference(parent);
+  const acceptedChildRequest = checkedPropertyRequest(acceptedChild, {}, "acceptedChild", targetId);
+  const deferredChildRequest = checkedPropertyRequest(deferredChild, {}, "deferredChild", targetId);
+
+  const initial = host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest(parent, {}, "parent", targetId),
+    () => {
+      throw new Error("The provider-owned parent reached core.");
+    },
+    (accepted) => {
+      const acceptedResult = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        acceptedChildRequest,
+        () => {
+          throw new Error("The provider-owned accepted child reached core.");
+        },
+        (child) => {
+          applicationOrder.push("acceptedChild");
+          host.facts.set(acceptedChild, targetOperationFactKey, child.operation);
+        },
+        { requireOwner: true },
+        undefined,
+        [],
+        owner,
+      );
+      if (acceptedResult.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(acceptedChild) };
+      }
+      const deferredResult = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        deferredChildRequest,
+        () => {
+          throw new Error("The provider-owned deferred child reached core.");
+        },
+        (child) => {
+          applicationOrder.push("deferredChild");
+          host.facts.set(deferredChild, targetOperationFactKey, child.operation);
+        },
+        { requireOwner: true },
+        undefined,
+        [],
+        owner,
+      );
+      if (deferredResult.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(deferredChild) };
+      }
+      applicationOrder.push("parent");
+      host.facts.set(parent, targetOperationFactKey, accepted.operation);
+    },
+    { requireOwner: true },
+  );
+
+  assert.equal(initial.kind, "owner-deferred");
+  assert.deepEqual(mapperRuns, ["parent", "acceptedChild", "deferredChild"]);
+  assert.deepEqual(applicationOrder, ["acceptedChild"]);
+  for (const subject of [parent, acceptedChild, deferredChild]) {
+    assert.equal(host.facts.get(subject, targetOperationFactKey) === undefined, true);
+    assert.equal(host.facts.get(subject, transactionFactKey) === undefined, true);
+  }
+  applicationOrder.length = 0;
+
+  host.finalizeSemantics();
+
+  assert.deepEqual(
+    mapperRuns,
+    ["parent", "acceptedChild", "deferredChild", "deferredChild"],
+    "Accepted parent and child mappers must retain their exact results; only the deferred child mapper may run again.",
+  );
+  assert.deepEqual(applicationOrder, ["acceptedChild", "deferredChild", "parent"]);
+  assert.equal(host.facts.get(parent, targetOperationFactKey)?.targetOperation, "atomic.parent");
+  assert.equal(host.facts.get(acceptedChild, targetOperationFactKey)?.targetOperation, "atomic.acceptedChild");
+  assert.equal(host.facts.get(deferredChild, targetOperationFactKey)?.targetOperation, "atomic.deferredChild");
+  assert.equal(host.facts.get(parent, transactionFactKey)?.value, "hook:parent");
+  assert.equal(host.facts.get(acceptedChild, transactionFactKey)?.value, "hook:acceptedChild");
+  assert.equal(host.facts.get(deferredChild, transactionFactKey)?.value, "hook:deferredChild");
+  assert.equal(host.diagnostics.all().length, 0);
+  assert.equal(host.finalized, true);
+});
+
+test("an atomically owned operation requires its exact owner to be applying", () => {
+  const targetId = arbitraryTargetIds[0];
+  const child = {};
+  const owner = {};
+  const extension = propertyProviderExtension("atomic-owner-context", targetId, () => {
+    return acceptObservation({ operation: operation("atomic-owner-context.child") });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+
+  assert.throws(
+    () => host[extensionHostRunCheckedOperation](
+      propertyObservation,
+      checkedPropertyRequest(child, {}, "child", targetId),
+      () => {
+        throw new Error("The provider-owned child reached core.");
+      },
+      () => {},
+      { requireOwner: true },
+      undefined,
+      [],
+      propertyReference(owner),
+    ),
+    /must be recorded while its exact owner is applying/,
+  );
+  assert.throws(() => host.finalizeSemantics(), /previously failed/);
+  assert.equal(host.finalized, false);
+});
+
+test("nested atomic ownership finalizes in exact inner-to-outer order", () => {
+  const targetId = arbitraryTargetIds[0];
+  const parent = {};
+  const child = {};
+  const grandchild = {};
+  const mapperRuns: string[] = [];
+  const applicationOrder: string[] = [];
+  const extension = propertyProviderExtension("nested-atomic-ownership", targetId, (request, context) => {
+    mapperRuns.push(request.propertyName);
+    if (request.propertyName === "grandchild" && context.phase === "checking") {
+      return deferObservation;
+    }
+    return acceptObservation({ operation: operation(`nested-atomic.${request.propertyName}`) });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+  const childRequest = checkedPropertyRequest(child, {}, "child", targetId);
+  const grandchildRequest = checkedPropertyRequest(grandchild, {}, "grandchild", targetId);
+
+  const initial = host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest(parent, {}, "parent", targetId),
+    () => {
+      throw new Error("The provider-owned parent reached core.");
+    },
+    (parentResult) => {
+      const childResult = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        childRequest,
+        () => {
+          throw new Error("The provider-owned child reached core.");
+        },
+        (acceptedChild) => {
+          const grandchildResult = host[extensionHostRunCheckedOperation](
+            propertyObservation,
+            grandchildRequest,
+            () => {
+              throw new Error("The provider-owned grandchild reached core.");
+            },
+            (acceptedGrandchild) => {
+              applicationOrder.push("grandchild");
+              host.facts.set(grandchild, targetOperationFactKey, acceptedGrandchild.operation);
+            },
+            { requireOwner: true },
+            undefined,
+            [],
+            propertyReference(child),
+          );
+          if (grandchildResult.kind !== "accept") {
+            return { kind: "deferred", unresolved: propertyReference(grandchild) };
+          }
+          applicationOrder.push("child");
+          host.facts.set(child, targetOperationFactKey, acceptedChild.operation);
+        },
+        { requireOwner: true },
+        undefined,
+        [],
+        propertyReference(parent),
+      );
+      if (childResult.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(child) };
+      }
+      applicationOrder.push("parent");
+      host.facts.set(parent, targetOperationFactKey, parentResult.operation);
+    },
+    { requireOwner: true },
+  );
+
+  assert.equal(initial.kind, "owner-deferred");
+  assert.deepEqual(mapperRuns, ["parent", "child", "grandchild"]);
+  assert.deepEqual(applicationOrder, []);
+  for (const subject of [parent, child, grandchild]) {
+    assert.equal(host.facts.get(subject, targetOperationFactKey) === undefined, true);
+  }
+
+  host.finalizeSemantics();
+
+  assert.deepEqual(mapperRuns, ["parent", "child", "grandchild", "grandchild"]);
+  assert.deepEqual(applicationOrder, ["grandchild", "child", "parent"]);
+  assert.equal(host.facts.get(parent, targetOperationFactKey)?.targetOperation, "nested-atomic.parent");
+  assert.equal(host.facts.get(child, targetOperationFactKey)?.targetOperation, "nested-atomic.child");
+  assert.equal(host.facts.get(grandchild, targetOperationFactKey)?.targetOperation, "nested-atomic.grandchild");
+  assert.equal(host.diagnostics.all().length, 0);
+  assert.equal(host.finalized, true);
+});
+
+test("a retained atomic child cannot be replayed under a different owner", () => {
+  const targetId = arbitraryTargetIds[0];
+  const firstParent = {};
+  const secondParent = {};
+  const sharedChild = {};
+  const blocker = {};
+  const sharedChildRequest = checkedPropertyRequest(sharedChild, {}, "sharedChild", targetId);
+  const blockerRequest = checkedPropertyRequest(blocker, {}, "blocker", targetId);
+  const extension = propertyProviderExtension("atomic-owner-conflict", targetId, (request, context) => {
+    if (request.propertyName === "blocker" && context.phase === "checking") {
+      return deferObservation;
+    }
+    return acceptObservation({ operation: operation(`atomic-owner-conflict.${request.propertyName}`) });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+  const applyChildren = (ownerSubject: ExtensionFactSubject): CheckedOperationApplyOutcome => {
+    const owner = propertyReference(ownerSubject);
+    const sharedResult = host[extensionHostRunCheckedOperation](
+      propertyObservation,
+      sharedChildRequest,
+      () => {
+        throw new Error("The provider-owned shared child reached core.");
+      },
+      (accepted) => {
+        host.facts.set(sharedChild, targetOperationFactKey, accepted.operation);
+      },
+      { requireOwner: true },
+      undefined,
+      [],
+      owner,
+    );
+    if (sharedResult.kind !== "accept") {
+      return { kind: "unavailable" };
+    }
+    const blockerResult = host[extensionHostRunCheckedOperation](
+      propertyObservation,
+      blockerRequest,
+      () => {
+        throw new Error("The provider-owned blocker reached core.");
+      },
+      () => {},
+      { requireOwner: true },
+      undefined,
+      [],
+      owner,
+    );
+    return blockerResult.kind === "accept"
+      ? { kind: "applied" }
+      : { kind: "deferred", unresolved: propertyReference(blocker) };
+  };
+
+  const first = host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest(firstParent, {}, "firstParent", targetId),
+    () => {
+      throw new Error("The provider-owned first parent reached core.");
+    },
+    () => applyChildren(firstParent),
+    { requireOwner: true },
+  );
+  assert.equal(first.kind, "owner-deferred");
+
+  assert.throws(
+    () => host[extensionHostRunCheckedOperation](
+      propertyObservation,
+      checkedPropertyRequest(secondParent, {}, "secondParent", targetId),
+      () => {
+        throw new Error("The provider-owned second parent reached core.");
+      },
+      () => applyChildren(secondParent),
+      { requireOwner: true },
+    ),
+    /conflicting atomic owner/,
+  );
+  assert.equal(
+    host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "CHECKED_OPERATION_ATOMIC_OWNER_CONFLICT").length,
+    1,
+  );
+  assert.equal(host.facts.get(sharedChild, targetOperationFactKey) === undefined, true);
+  assert.equal(host.finalized, false);
+});
+
+test("an unavailable dependency of an atomic child makes the owner unavailable without leaking effects", () => {
+  const targetId = arbitraryTargetIds[0];
+  const externalDependency = {};
+  const parent = {};
+  const child = {};
+  const childRequest = checkedPropertyRequest(child, {}, "child", targetId);
+  const extension = propertyProviderExtension("blocked-atomic-child", targetId, (request, context) => {
+    if (request.propertyName === "externalDependency") {
+      return rejectObservation({
+        extensionId: context.extensionId,
+        extensionCode: "INTENTIONAL_ATOMIC_CHILD_DEPENDENCY_REJECTION",
+        numericCode: 9910904,
+        category: "error",
+        message: "Intentional atomic-child dependency rejection.",
+        nodeOrSpan: request.expression,
+        identity: "checked-operation-finalization:atomic-child-dependency-rejection",
+      });
+    }
+    context.facts.set(request.expression, transactionFactKey, { value: `hook:${request.propertyName}` });
+    return acceptObservation({ operation: operation(`blocked-atomic-child.${request.propertyName}`) });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+
+  const dependencyResult = runPropertyOperation(
+    host,
+    externalDependency,
+    targetId,
+    "externalDependency",
+    () => {
+      assert.fail("The rejected external dependency must not apply.");
+    },
+  );
+  assert.equal(dependencyResult.kind, "reject");
+
+  assert.doesNotThrow(() => host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest(parent, {}, "parent", targetId),
+    () => {
+      throw new Error("The provider-owned parent reached core.");
+    },
+    (acceptedParent) => {
+      const childResult = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        childRequest,
+        () => {
+          throw new Error("The provider-owned child reached core.");
+        },
+        (acceptedChild) => {
+          host.facts.set(child, targetOperationFactKey, acceptedChild.operation);
+        },
+        { requireOwner: true },
+        undefined,
+        [propertyReference(externalDependency)],
+        propertyReference(parent),
+      );
+      if (childResult.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(child) };
+      }
+      host.facts.set(parent, targetOperationFactKey, acceptedParent.operation);
+    },
+    { requireOwner: true },
+  ));
+
+  assert.equal(host.facts.get(parent, targetOperationFactKey) === undefined, true);
+  assert.equal(host.facts.get(child, targetOperationFactKey) === undefined, true);
+  assert.equal(host.facts.get(parent, transactionFactKey) === undefined, true);
+  assert.equal(host.facts.get(child, transactionFactKey) === undefined, true);
+  assert.doesNotThrow(() => host.finalizeSemantics());
+  assert.equal(
+    host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "INTENTIONAL_ATOMIC_CHILD_DEPENDENCY_REJECTION").length,
+    1,
+  );
   assert.equal(host.finalized, true);
 });
 
