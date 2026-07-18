@@ -15,6 +15,23 @@ This directory is the mechanical-port backbone for TSTS. The tooling reads the r
 - `npm run porter:large-files -- --write-draft` writes a draft semantic split plan from the current TS-Go declaration inventory. Existing differing plans are never overwritten unless `-- --force` is also supplied. Treat this as a bootstrap command, not the normal update path for a reviewed plan.
 - `npm run porter:skeleton-check` renders the complete missing-unit skeleton corpus into `.temp/porter/skeleton` and runs `tsc --noEmit` against it.
 
+## Module Ownership
+
+`porter.mjs` is only the stable executable/API barrel. Implementation lives in
+small modules under `porter/`, grouped by one responsibility: common I/O and
+configuration, source scanning/status, policy, large-file plans, scaffold
+generation, unit rendering, external-facade modeling/rendering, generated
+artifact status, and reporting. AST generation is similarly split under
+`ast-generator/`; expected Go signatures separate type/index construction from
+value/member inference under `ts-extractor/`; the Go extractor is a normal
+multi-file package grouped by model, scanning, type inference, AST analysis, and
+source metadata.
+
+Every regular file under `tools/porter` must remain at or below 600 lines. The
+Porter test suite enforces this mechanically. Add a semantically named module
+when a responsibility grows; do not reintroduce a monolith, line-chunk files,
+compatibility barrels with alternate behavior, or duplicate implementations.
+
 ## Embedded Metadata
 
 Each ported unit carries one JSON metadata line:

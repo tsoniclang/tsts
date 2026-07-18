@@ -22,7 +22,7 @@
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
-import { hashText, resolveRepo, writeTextSafely } from "./porter.mjs";
+import { hashText, resolveRepo, writeTextSafely } from "./porter/common.mjs";
 
 const GENERATOR = "porter:diagnostics";
 const GENERATED_KIND = "diagnostics-generated";
