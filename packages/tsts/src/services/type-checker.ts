@@ -5,7 +5,7 @@ import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
-import { Program_GetSourceFiles, Program_GetTypeCheckerForFile } from "../internal/compiler/program.js";
+import { Program_GetSemanticDiagnostics, Program_GetSourceFiles, Program_GetTypeCheckerForFile } from "../internal/compiler/program.js";
 import type { Program } from "../internal/compiler/program.js";
 import {
   Checker_GetPropertyOfType,
@@ -129,7 +129,7 @@ function getDiagnosticFreeResolvedSymbol(checker: GoPtr<Checker>, node: GoPtr<No
   const resolved = Checker_getResolvedSymbolOrNil(checker, node);
   return resolved !== undefined && resolved !== checker?.unknownSymbol
     ? resolved
-    : Checker_GetSymbolAtLocation(checker, node);
+    : undefined;
 }
 
 function withCheckerForNode<T>(
@@ -182,7 +182,9 @@ function withChecker<T>(
   if (program === undefined || sourceFile === undefined) {
     return undefined;
   }
-  const [checker, done] = Program_GetTypeCheckerForFile(program, options.context ?? defaultOptions.context ?? Background(), sourceFile);
+  const context = options.context ?? defaultOptions.context ?? Background();
+  Program_GetSemanticDiagnostics(program, context, sourceFile);
+  const [checker, done] = Program_GetTypeCheckerForFile(program, context, sourceFile);
   try {
     return callback(checker);
   } finally {

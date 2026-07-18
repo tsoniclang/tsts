@@ -481,7 +481,7 @@ test("target mappers cannot replace checker-owned selected source evidence", () 
   const forgedProvenance: Partial<SelectedTargetSignatureFact> = {
     sourceSelectedMethodTypeArguments: [{ typeParameterName: "Forged", selectedType: forgedType }],
     sourceSelectedSignatureParameters: [forgedParameter],
-    sourceSelectedSignatureKind: "error",
+    sourceSelectedSignatureKind: "untyped",
     sourceSignature: forgedSignature,
     sourceDeclaration: forgedDeclaration,
     sourceArgumentBindings: [],

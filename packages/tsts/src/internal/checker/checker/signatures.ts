@@ -3,7 +3,10 @@ import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import {
   beginExtensionCheckedSourceCandidateDecision,
   beginExtensionCheckedSourceDiscardDecision,
+  beginExtensionCheckedSourceSignatureDecision,
   commitExtensionCheckedSourceCandidateDecision,
+  commitExtensionCheckedSourceSignatureDecision,
+  extensionCheckedSourceDecisionOwner,
   hasExtensionCheckedOperationHost,
   journalExtensionCheckedCallEvidence,
   rollbackExtensionCheckedSourceDecision,
@@ -2463,27 +2466,38 @@ export function Checker_isSymbolOrSymbolForCall(receiver: GoPtr<Checker>, node: 
 export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
   const links = LinkStore_Get(receiver!.signatureLinks, node) as GoPtr<SignatureLinks>;
   const cached = links!.resolvedSignature;
+  const cachedSeed = links!.checkedCallSelectionSeed;
   const cachedSelectionEvidence = links!.resolvedCallSelectionEvidence;
   const cachedEvidence = links!.resolvedCallEvidence;
+  const cachedSourceDecisionOwner = links!.extensionSourceDecisionOwner;
+  const sourceDecisionOwner = extensionCheckedSourceDecisionOwner(receiver);
+  const sourceFile = GetSourceFileOfNode(node);
   const requiresExactSourceSelection = IsCallOrNewExpression(node)
+    && sourceDecisionOwner !== undefined
+    && sourceFile === sourceDecisionOwner
     && hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall, node);
   const refreshExactSourceSelection = requiresExactSourceSelection
     && cached !== undefined
     && cached !== receiver!.resolvingSignature
-    && cachedSelectionEvidence === undefined;
+    && cachedSourceDecisionOwner !== sourceDecisionOwner;
   if (cached !== undefined
     && cached !== receiver!.resolvingSignature
     && candidatesOutArray === undefined
     && !refreshExactSourceSelection) {
     return cached;
   }
+  const signatureDecision = beginExtensionCheckedSourceSignatureDecision(receiver);
+  let signatureDecisionCompleted = false;
+  try {
   const saveResolutionStart = receiver!.resolutionStart;
   if (cached === undefined || refreshExactSourceSelection) {
     receiver!.resolutionStart = receiver!.typeResolutions.length;
   }
-  links!.resolvedSignature = receiver!.resolvingSignature;
   if (IsCallOrNewExpression(node)) {
     journalExtensionCheckedCallEvidence(receiver, links!);
+  }
+  links!.resolvedSignature = receiver!.resolvingSignature;
+  if (IsCallOrNewExpression(node)) {
     links!.checkedCallSelectionSeed = undefined;
     links!.resolvedCallSelectionEvidence = undefined;
     links!.resolvedCallEvidence = undefined;
@@ -2507,14 +2521,27 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
       if (IsCallOrNewExpression(node)) {
         links!.resolvedCallSelectionEvidence = selectedEvidence;
         links!.resolvedCallEvidence = undefined;
+        links!.extensionSourceDecisionOwner = selectedEvidence === undefined
+          ? undefined
+          : sourceDecisionOwner;
       }
     } else {
       links!.resolvedSignature = cached;
+      links!.checkedCallSelectionSeed = cachedSeed;
       links!.resolvedCallSelectionEvidence = cachedSelectionEvidence;
       links!.resolvedCallEvidence = cachedEvidence;
+      links!.extensionSourceDecisionOwner = cachedSourceDecisionOwner;
     }
   }
-  return result;
+    signatureDecisionCompleted = true;
+    return result;
+  } finally {
+    if (signatureDecisionCompleted) {
+      commitExtensionCheckedSourceSignatureDecision(receiver, signatureDecision);
+    } else {
+      rollbackExtensionCheckedSourceDecision(receiver, signatureDecision);
+    }
+  }
 }
 
 export function Checker_finalizeResolvedCallEvidence(
@@ -3143,8 +3170,8 @@ function buildApplicableResolvedCallEvidence(
     type: selectedSourceArgumentTypes[index]!,
   }));
   const selectedSignature = selection.applicability.signature;
-  const sourceSelectedMethodTypeArguments = buildResolvedCallSelectedMethodTypeArguments(node, selectedSignature);
-  const sourceSelectedSignatureParameters = buildResolvedCallSelectedSignatureParameters(receiver, selectedSignature);
+  const sourceSelectedMethodTypeArguments = selection.applicability.sourceSelectedMethodTypeArguments;
+  const sourceSelectedSignatureParameters = selection.applicability.sourceSelectedSignatureParameters;
   return Object.freeze({
     outcome: "applicable",
     call: node,
@@ -3341,15 +3368,22 @@ function Checker_resolveCallWithSelectedArguments(
     }
     return result;
   }
-  result = Checker_getCandidateForOverloadFailure(receiver, callState.node, callState.candidates, callState.args, candidatesOutArray !== undefined, checkMode);
-  (LinkStore_Get(receiver!.signatureLinks, node) as GoPtr<SignatureLinks>)!.resolvedSignature = result;
-  if (reportErrors) {
-    const resolvedHeadMessage = headMessage === undefined && isInstanceof
-      ? The_left_hand_side_of_an_instanceof_expression_must_be_assignable_to_the_first_argument_of_the_right_hand_side_s_Symbol_hasInstance_method
-      : headMessage;
-    Checker_reportCallResolutionErrors(receiver, node, callState, signatures, resolvedHeadMessage);
+  const failureDecision = beginExtensionCheckedSourceDiscardDecision(receiver);
+  try {
+    result = Checker_getCandidateForOverloadFailure(receiver, callState.node, callState.candidates, callState.args, candidatesOutArray !== undefined, checkMode);
+    (LinkStore_Get(receiver!.signatureLinks, node) as GoPtr<SignatureLinks>)!.resolvedSignature = result;
+    if (reportErrors) {
+      const resolvedHeadMessage = headMessage === undefined && isInstanceof
+        ? The_left_hand_side_of_an_instanceof_expression_must_be_assignable_to_the_first_argument_of_the_right_hand_side_s_Symbol_hasInstance_method
+        : headMessage;
+      Checker_reportCallResolutionErrors(receiver, node, callState, signatures, resolvedHeadMessage);
+    }
+    return result;
+  } finally {
+    if (failureDecision !== undefined) {
+      rollbackExtensionCheckedSourceDiscardDecision(receiver, failureDecision);
+    }
   }
-  return result;
 }
 
 /**
@@ -3576,6 +3610,8 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
 interface ApplicableCallSelection {
   readonly signature: Signature;
   readonly selectedArguments: readonly SelectedEffectiveCallArgument[];
+  readonly sourceSelectedMethodTypeArguments?: readonly ResolvedCallSelectedMethodTypeArgumentEvidence[];
+  readonly sourceSelectedSignatureParameters: readonly ResolvedCallSelectedSignatureParameterEvidence[];
 }
 
 interface ApplicableCallSelectionOutput {
@@ -3604,7 +3640,7 @@ function Checker_chooseOverloadWithSelectedArguments(
         s!.candidatesForArgumentError = [candidate];
         return undefined;
       }
-      retainApplicableCallSelection(output, candidate!, selectedArguments);
+      retainApplicableCallSelection(receiver!, s!.node!, output, candidate!, selectedArguments);
       evidenceAccepted = true;
       return candidate;
     } finally {
@@ -3697,7 +3733,7 @@ function Checker_chooseOverloadWithSelectedArguments(
         }
       }
       s!.candidates[candidateIndex] = checkCandidate;
-      retainApplicableCallSelection(output, checkCandidate!, selectedArguments);
+      retainApplicableCallSelection(receiver!, s!.node!, output, checkCandidate!, selectedArguments);
       evidenceAccepted = true;
       return checkCandidate;
     } finally {
@@ -3712,6 +3748,8 @@ function Checker_chooseOverloadWithSelectedArguments(
 }
 
 function retainApplicableCallSelection(
+  receiver: Checker,
+  node: Node,
   output: ApplicableCallSelectionOutput | undefined,
   signature: Signature,
   selectedArguments: readonly (SelectedEffectiveCallArgument | undefined)[] | undefined,
@@ -3722,9 +3760,12 @@ function retainApplicableCallSelection(
   if (selectedArguments === undefined || selectedArguments.some((argument) => argument === undefined)) {
     throw new Error("An applicable checked call lost an effective argument selection.");
   }
+  const sourceSelectedMethodTypeArguments = buildResolvedCallSelectedMethodTypeArguments(node, signature);
   output.selection = Object.freeze({
     signature,
     selectedArguments: Object.freeze(selectedArguments.slice() as SelectedEffectiveCallArgument[]),
+    ...(sourceSelectedMethodTypeArguments === undefined ? {} : { sourceSelectedMethodTypeArguments }),
+    sourceSelectedSignatureParameters: buildResolvedCallSelectedSignatureParameters(receiver, signature),
   });
 }
 
@@ -11782,37 +11823,46 @@ export function Checker_getApplicableIndexInfos(receiver: GoPtr<Checker>, t: GoP
  */
 export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: GoPtr<Type>, keyType: GoPtr<Type>): GoPtr<Symbol> {
   const info = Checker_getApplicableIndexInfo(receiver, t, keyType);
-  if (info !== undefined && info !== receiver!.anyBaseTypeIndexInfo) {
-    if (info!.indexSymbol === undefined) {
-      let declarations: GoSlice<GoPtr<Node>> = [];
-      if (info!.declaration !== undefined) {
-        declarations = [info!.declaration] as GoSlice<GoPtr<Node>>;
-      } else {
-        for (const inf of (Checker_getIndexInfosOfType(receiver, t) ?? [])) {
-          if (inf!.declaration !== undefined && Checker_isApplicableIndexType(receiver, keyType, inf!.keyType)) {
-            declarations = [...(declarations ?? []), inf!.declaration] as GoSlice<GoPtr<Node>>;
-          }
+  return Checker_getIndexSymbolForSelectedInfo(receiver, t, info, keyType);
+}
+
+export function Checker_getIndexSymbolForSelectedInfo(
+  receiver: GoPtr<Checker>,
+  t: GoPtr<Type>,
+  info: GoPtr<IndexInfo>,
+  selectedKeyType: GoPtr<Type> = info?.keyType,
+): GoPtr<Symbol> {
+  if (info === undefined || info === receiver!.anyBaseTypeIndexInfo) {
+    return undefined;
+  }
+  if (info!.indexSymbol === undefined) {
+    let declarations: GoSlice<GoPtr<Node>> = [];
+    if (info!.declaration !== undefined) {
+      declarations = [info!.declaration] as GoSlice<GoPtr<Node>>;
+    } else {
+      for (const candidate of (Checker_getIndexInfosOfType(receiver, t) ?? [])) {
+        if (candidate!.declaration !== undefined && Checker_isApplicableIndexType(receiver, selectedKeyType, candidate!.keyType)) {
+          declarations = [...(declarations ?? []), candidate!.declaration] as GoSlice<GoPtr<Node>>;
         }
-      }
-      if ((declarations ?? []).length === 0) {
-        const mappedDeclaration = getMappedIndexEvidenceDeclaration(t);
-        if (mappedDeclaration !== undefined) {
-          declarations = [mappedDeclaration] as GoSlice<GoPtr<Node>>;
-        }
-      }
-      if ((declarations ?? []).length !== 0) {
-        const symbol_ = Checker_newSymbol(receiver, SymbolFlagsProperty, InternalSymbolNameIndex);
-        symbol_!.CheckFlags |= CheckFlagsIndexSymbol;
-        symbol_!.Declarations = declarations;
-        symbol_!.ValueDeclaration = declarations![0];
-        symbol_!.Parent = t!["symbol"];
-        (LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!.resolvedType = info!.valueType;
-        info!.indexSymbol = symbol_;
       }
     }
-    return info!.indexSymbol;
+    if ((declarations ?? []).length === 0) {
+      const mappedDeclaration = getMappedIndexEvidenceDeclaration(t);
+      if (mappedDeclaration !== undefined) {
+        declarations = [mappedDeclaration] as GoSlice<GoPtr<Node>>;
+      }
+    }
+    if ((declarations ?? []).length !== 0) {
+      const symbol_ = Checker_newSymbol(receiver, SymbolFlagsProperty, InternalSymbolNameIndex);
+      symbol_!.CheckFlags |= CheckFlagsIndexSymbol;
+      symbol_!.Declarations = declarations;
+      symbol_!.ValueDeclaration = declarations![0];
+      symbol_!.Parent = t!["symbol"];
+      (LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!.resolvedType = info!.valueType;
+      info!.indexSymbol = symbol_;
+    }
   }
-  return undefined;
+  return info!.indexSymbol;
 }
 
 function getMappedIndexEvidenceDeclaration(t: GoPtr<Type>): GoPtr<Node> {

@@ -117,6 +117,7 @@ export const TstsProviderContractVersion = "tsts.provider.2";
 
 export const extensionHostRunCheckedOperation: unique symbol = Symbol("tsts.extensionHost.runCheckedOperation");
 export const extensionHostRetainCheckedOperation: unique symbol = Symbol("tsts.extensionHost.retainCheckedOperation");
+export const extensionHostEvaluateRetainedCheckedOperations: unique symbol = Symbol("tsts.extensionHost.evaluateRetainedCheckedOperations");
 export const extensionHostPublishSourceDecisionBatch: unique symbol = Symbol("tsts.extensionHost.publishSourceDecisionBatch");
 export const extensionHostGetCheckedOperationRequest: unique symbol = Symbol("tsts.extensionHost.getCheckedOperationRequest");
 export const extensionHostGetCheckedOperationReference: unique symbol = Symbol("tsts.extensionHost.getCheckedOperationReference");
@@ -3031,6 +3032,26 @@ export class ExtensionHost {
         requestSnapshotCache,
         dependencies,
       );
+    } catch (error) {
+      this.#failSemanticFinalization();
+      throw error;
+    }
+  }
+
+  [extensionHostEvaluateRetainedCheckedOperations](): void {
+    this.#assertCheckedOperationRecordingAvailable();
+    if (this.#observationPhase !== "checking") {
+      const error = new Error("Retained checked operations can be evaluated only during source checking.");
+      this.#failSemanticFinalization();
+      throw error;
+    }
+    if (this.#observationHookDepth !== 0) {
+      const error = new Error("Observation hooks cannot evaluate retained checked operations while candidates are being arbitrated.");
+      this.#failSemanticFinalization();
+      throw error;
+    }
+    try {
+      this.#checkedOperations.evaluateRetainedChecking();
     } catch (error) {
       this.#failSemanticFinalization();
       throw error;

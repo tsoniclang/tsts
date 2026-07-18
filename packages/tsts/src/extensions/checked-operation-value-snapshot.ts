@@ -672,9 +672,7 @@ function snapshotSelectedTargetSignature(
   const sourceOptionalChain = selection.sourceOptionalChain;
   if (sourceSelectedSignatureKind !== undefined
     && sourceSelectedSignatureKind !== "resolved"
-    && sourceSelectedSignatureKind !== "untyped"
-    && sourceSelectedSignatureKind !== "error"
-    && sourceSelectedSignatureKind !== "silent-never") {
+    && sourceSelectedSignatureKind !== "untyped") {
     throw invalidEnumValueError("SelectedTargetSignatureFact sourceSelectedSignatureKind", sourceSelectedSignatureKind, childSnapshotPath(path, "sourceSelectedSignatureKind"));
   }
   assertCheckedCallKind(sourceCallKind, childSnapshotPath(path, "sourceCallKind"));

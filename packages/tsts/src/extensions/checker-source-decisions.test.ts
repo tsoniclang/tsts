@@ -85,17 +85,17 @@ test("nested commit merges SignatureLinks rollback ownership into the parent", (
   const selectedSeed = {} as NonNullable<SignatureLinks["checkedCallSelectionSeed"]>;
   const selectedSelection = {} as NonNullable<SignatureLinks["resolvedCallSelectionEvidence"]>;
   const selectedEvidence = {} as NonNullable<SignatureLinks["resolvedCallEvidence"]>;
-  const root = beginFrame(checker, "source-file");
+  const root = beginFrame(checker, "source-file", implementation);
 
-  appendEvent(checker, contextualTargetEvent(implementation, createType()));
+  appendEvent(checker, contextualTargetEvent(ownedNode(implementation), createType()));
   const child = beginFrame(checker, "signature-resolution");
   journalSignatureLinks(checker, links);
   links.checkedCallSelectionSeed = selectedSeed;
   links.resolvedCallSelectionEvidence = selectedSelection;
   links.resolvedCallEvidence = selectedEvidence;
-  appendEvent(checker, contextualTargetEvent(implementation, createType()));
+  appendEvent(checker, contextualTargetEvent(ownedNode(implementation), createType()));
   assert.equal(commitSourceDecisionFrame(checker, child), undefined);
-  appendEvent(checker, contextualTargetEvent(implementation, createType()));
+  appendEvent(checker, contextualTargetEvent(ownedNode(implementation), createType()));
 
   rollbackSourceDecisionFrame(checker, root);
 
@@ -141,13 +141,13 @@ test("nested commits retain events in deterministic source order", () => {
   const firstType = createType();
   const secondType = createType();
   const thirdType = createType();
-  const root = beginFrame(checker, "source-file");
+  const root = beginFrame(checker, "source-file", implementation);
 
-  appendEvent(checker, contextualTargetEvent(implementation, firstType));
+  appendEvent(checker, contextualTargetEvent(ownedNode(implementation), firstType));
   const child = beginFrame(checker, "overload-candidate");
-  appendEvent(checker, contextualTargetEvent(implementation, secondType));
+  appendEvent(checker, contextualTargetEvent(ownedNode(implementation), secondType));
   assert.equal(commitSourceDecisionFrame(checker, child), undefined);
-  appendEvent(checker, contextualTargetEvent(implementation, thirdType));
+  appendEvent(checker, contextualTargetEvent(ownedNode(implementation), thirdType));
 
   const batch = prepareAndCommitRoot(checker, root);
   assert.deepEqual(batch.map((event) => requireContextualTarget(event).contextualType), [
@@ -198,16 +198,16 @@ test("discard frames publish no events and restore their SignatureLinks mutation
   const beforeType = createType();
   const discardedType = createType();
   const afterType = createType();
-  const root = beginFrame(checker, "source-file");
+  const root = beginFrame(checker, "source-file", implementation);
 
-  appendEvent(checker, contextualTargetEvent(implementation, beforeType));
+  appendEvent(checker, contextualTargetEvent(ownedNode(implementation), beforeType));
   const discard = beginFrame(checker, "discard");
   journalSignatureLinks(checker, links);
   links.checkedCallSelectionSeed = discardedSeed;
   links.resolvedCallEvidence = discardedEvidence;
-  appendEvent(checker, contextualTargetEvent(implementation, discardedType));
+  appendEvent(checker, contextualTargetEvent(ownedNode(implementation), discardedType));
   rollbackDiscardSourceDecisionFrame(checker, discard);
-  appendEvent(checker, contextualTargetEvent(implementation, afterType));
+  appendEvent(checker, contextualTargetEvent(ownedNode(implementation), afterType));
 
   const batch = prepareAndCommitRoot(checker, root);
 
@@ -239,25 +239,41 @@ test("frame kind-specific settlement APIs fail closed when interchanged", () => 
   assert.equal(requireState(candidateChecker).phase, "failed");
 });
 
-test("declaration files suppress runtime operation events but retain semantic companion events", () => {
+test("declaration files suppress runtime operation events but retain their own semantic decisions", () => {
   const checker = createChecker();
   const declarations = parseSourceFile("/src/profile.d.ts");
   const implementation = parseSourceFile("/src/index.ts");
   const declarationType = createType();
   const implementationType = createType();
-  const root = beginFrame(checker, "source-file");
+  const declarationRoot = beginFrame(checker, "source-file", declarations);
 
   assert.equal(declarations.IsDeclarationFile, true);
   assert.equal(implementation.IsDeclarationFile, false);
   appendEvent(checker, checkedOperatorEvent(declarations, declarationType));
   appendEvent(checker, contextualTargetEvent(declarations, declarationType));
+  const declarationBatch = prepareAndCommitRoot(checker, declarationRoot);
+
+  assert.equal(declarationBatch.length, 1);
+  assert.equal(requireContextualTarget(declarationBatch[0]).contextualType, declarationType);
+
+  const implementationRoot = beginFrame(checker, "source-file", implementation);
   appendEvent(checker, contextualTargetEvent(implementation, implementationType));
+  const implementationBatch = prepareAndCommitRoot(checker, implementationRoot);
+  assert.equal(implementationBatch.length, 1);
+  assert.equal(requireContextualTarget(implementationBatch[0]).contextualType, implementationType);
+});
 
-  const batch = prepareAndCommitRoot(checker, root);
+test("source-decision roots reject events owned by another source file", () => {
+  const checker = createChecker();
+  const owner = parseSourceFile("/src/owner.ts");
+  const foreign = parseSourceFile("/src/foreign.ts");
+  beginFrame(checker, "source-file", owner);
 
-  assert.equal(batch.length, 2);
-  assert.equal(requireContextualTarget(batch[0]).contextualType, declarationType);
-  assert.equal(requireContextualTarget(batch[1]).contextualType, implementationType);
+  assert.throws(
+    () => appendEvent(checker, contextualTargetEvent(foreign, createType())),
+    /active source-file owner/,
+  );
+  assert.equal(requireState(checker).phase, "failed");
 });
 
 test("an event origin without a source file fails closed", () => {
@@ -290,7 +306,7 @@ test("committed event batches contain immutable snapshots of event envelopes", (
     origin: implementation,
     contextualType: originalType,
   };
-  const root = beginFrame(checker, "source-file");
+  const root = beginFrame(checker, "source-file", implementation);
 
   appendEvent(checker, mutableEvent);
   mutableEvent.contextualType = replacementType;
@@ -306,15 +322,37 @@ test("committed event batches contain immutable snapshots of event envelopes", (
   );
 });
 
+test("equivalent repeated decisions are idempotent and conflicting decisions fail closed", () => {
+  const checker = createChecker();
+  const implementation = parseSourceFile("/src/index.ts");
+  const expression = ownedNode(implementation);
+  const firstType = createType();
+  const conflictingType = createType();
+  const root = beginFrame(checker, "source-file", implementation);
+
+  appendEvent(checker, contextualTargetEvent(expression, firstType));
+  appendEvent(checker, contextualTargetEvent(expression, firstType));
+  assert.equal(requireState(checker).events.length, 1);
+  assert.throws(
+    () => appendEvent(checker, contextualTargetEvent(expression, conflictingType)),
+    /conflicting 'contextual-target' events/,
+  );
+  assert.equal(requireState(checker).phase, "failed");
+  assert.throws(() => prepareSourceDecisionFrame(checker, root), /permanently failed/);
+});
+
 test("source-decision event and frame budgets fail closed at their exact finite bounds", () => {
   const eventChecker = createChecker();
   const implementation = parseSourceFile("/src/index.ts");
-  const event = contextualTargetEvent(implementation, createType());
-  beginFrame(eventChecker, "source-file");
+  const type = createType();
+  beginFrame(eventChecker, "source-file", implementation);
   for (let index = 0; index < 65_536; index++) {
-    appendEvent(eventChecker, event);
+    appendEvent(eventChecker, contextualTargetEvent(ownedNode(implementation), type));
   }
-  assert.throws(() => appendEvent(eventChecker, event), /event budget exceeded/);
+  assert.throws(
+    () => appendEvent(eventChecker, contextualTargetEvent(ownedNode(implementation), type)),
+    /event budget exceeded/,
+  );
   assert.equal(requireState(eventChecker).phase, "failed");
 
   const frameChecker = createChecker();
@@ -370,10 +408,15 @@ function createChecker(
 function beginFrame(
   checker: Checker,
   kind: ExtensionSourceDecisionFrameKind,
+  ownerSourceFile: SourceFile = parseSourceFile("/src/owner.ts"),
 ): ExtensionSourceDecisionFrame {
-  const frame = beginSourceDecisionFrame(checker, kind);
+  const frame = beginSourceDecisionFrame(checker, kind, kind === "source-file" ? ownerSourceFile : undefined);
   assert.ok(frame !== undefined);
   return frame;
+}
+
+function ownedNode(sourceFile: SourceFile): Node {
+  return { Kind: KindIdentifier, Parent: sourceFile } as unknown as Node;
 }
 
 function prepareAndCommitRoot(
@@ -443,5 +486,6 @@ function createSignatureLinks(): SignatureLinks {
     checkedCallSelectionSeed: {} as NonNullable<SignatureLinks["checkedCallSelectionSeed"]>,
     resolvedCallSelectionEvidence: {} as NonNullable<SignatureLinks["resolvedCallSelectionEvidence"]>,
     resolvedCallEvidence: {} as NonNullable<SignatureLinks["resolvedCallEvidence"]>,
+    extensionSourceDecisionOwner: undefined,
   };
 }

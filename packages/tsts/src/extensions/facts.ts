@@ -191,7 +191,7 @@ export interface SourceSelectedMethodTypeArgument {
   readonly explicitTypeNode?: ExtensionFactSubject;
 }
 
-export type SourceSelectedSignatureKind = "resolved" | "untyped" | "error" | "silent-never";
+export type SourceSelectedSignatureKind = "resolved" | "untyped";
 
 export type CheckedCallKind = "call" | "construct";
 

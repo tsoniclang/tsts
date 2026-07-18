@@ -1,6 +1,6 @@
 import type { bool } from "../go/scalars.js";
 import type { GoPtr } from "../go/compat.js";
-import type { Node } from "../internal/ast/ast.js";
+import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Expression, Node_Text, Node_Type, Node_TypeArguments } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
@@ -11,16 +11,16 @@ import { NodeFlagsOptionalChain } from "../internal/ast/generated/flags.js";
 import type { Kind } from "../internal/ast/generated/kinds.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Checker } from "../internal/checker/checker/state.js";
-import { Type_Flags, Type_Id, Type_Symbol, TypeFlagsUniqueESSymbol } from "../internal/checker/types.js";
-import type { CheckedCallSelectionSeed, CheckedCallSourceSelectionProvenance, ResolvedCallArgumentEvidence, ResolvedCallEvidence, ResolvedCallSourceValueEvidence, Signature, SignatureLinks, Type } from "../internal/checker/types.js";
+import type { CheckedCallSelectionSeed, CheckedCallSourceSelectionProvenance, ResolvedCallArgumentEvidence, ResolvedCallEvidence, ResolvedCallSourceValueEvidence, Signature, SignatureLinks, Type, TypeNodeLinks } from "../internal/checker/types.js";
 import { LinkStore_Get } from "../internal/core/linkstore.js";
 import { Checker_getDeclarationOfAliasSymbol, Checker_getResolvedSymbolOrNil } from "../internal/checker/checker/symbols.js";
 import { ExtensionObservationPoint } from "./observations.js";
-import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedIterationMappingRequest, CheckedOperationObservationPointName, CheckedOperationReference, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ExtensionObservationResult, PostCheckAssignabilityObservationRequest } from "./observations.js";
+import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedFlowUseMode, CheckedIterationKind, CheckedIterationMappingRequest, CheckedOperationObservationPointName, CheckedOperationReference, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ExtensionObservationResult, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetCallArgumentConversionFactKey, targetCallArgumentPassingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
 import type { CheckedAccessMode, CheckedCallKind, SelectedSourceValueEvidence, SelectedTargetSignatureFact, SourceSelectedCallArgumentBinding, SourceSelectedMethodTypeArgument, SourceSelectedSignatureKind, SourceSelectedSignatureParameter, TargetCallArgumentConversionSlot, TargetCallArgumentPassingFact, TargetOperationFact, TargetOperationProvenance, TargetParameter, TargetTypeRef } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import {
+  extensionHostEvaluateRetainedCheckedOperations,
   extensionHostGetCheckedOperationReference,
   extensionHostGetCheckedOperationRequest,
   extensionHostHasCheckedOperationOwner,
@@ -36,11 +36,14 @@ import {
   commitSourceDecisionFrame,
   disableSourceDecisionRecording,
   journalSignatureLinks,
+  journalTypeNodeLinks,
   prepareSourceDecisionFrame,
   rollbackDiscardSourceDecisionFrame,
   rollbackPreparedSourceDecision,
   rollbackSourceDecisionFrame,
   sourceDecisionRecordingActive,
+  sourceDecisionDiscardActive,
+  sourceDecisionOwner,
 } from "./checker-source-decisions.js";
 import type {
   ExtensionSourceDecisionEvent,
@@ -51,10 +54,16 @@ import { recordProviderTypeFamilyReferenceFacts } from "./compiler-integration.j
 import { createCheckedOperationRequestSnapshotCache, snapshotSelectedTargetSignatureFact, snapshotTargetOperationFact } from "./checked-operation-value-snapshot.js";
 import type { CheckedOperationRequestSnapshotCache } from "./checked-operation-value-snapshot.js";
 import { substituteTargetParameter } from "./target-type-ref-substitution.js";
+import { isRuntimeCheckedSourceExecution } from "./source-execution-role.js";
 import {
   CheckedOperationReferenceIndex,
   type CheckedOperationApplyOutcome,
 } from "./checked-operation-finalization.js";
+export { preserveEquivalentCheckedSourceType } from "./checked-source-type-identity.js";
+import {
+  checkedSourceTypesShareStableIdentity,
+  preserveEquivalentCheckedSourceType,
+} from "./checked-source-type-identity.js";
 
 const checkedOperationApplied: CheckedOperationApplyOutcome = Object.freeze({ kind: "applied" });
 const checkedOperationUnavailable: CheckedOperationApplyOutcome = Object.freeze({ kind: "unavailable" });
@@ -67,8 +76,11 @@ export function hasExtensionCheckedOperationHost(
   return getCheckedOperationExtensionHost(checker, observation, executionSite) !== undefined;
 }
 
-export function beginExtensionCheckedSourceFileDecision(checker: GoPtr<Checker>): ExtensionSourceDecisionFrame | undefined {
-  if (checker === undefined) {
+export function beginExtensionCheckedSourceFileDecision(
+  checker: GoPtr<Checker>,
+  sourceFile: GoPtr<SourceFile>,
+): ExtensionSourceDecisionFrame | undefined {
+  if (checker === undefined || sourceFile === undefined) {
     return undefined;
   }
   const host = getExtensionHost(checker.program);
@@ -76,7 +88,7 @@ export function beginExtensionCheckedSourceFileDecision(checker: GoPtr<Checker>)
     disableSourceDecisionRecording(checker);
     return undefined;
   }
-  return beginSourceDecisionFrame(checker, "source-file");
+  return beginSourceDecisionFrame(checker, "source-file", sourceFile);
 }
 
 export function beginExtensionCheckedSourceCandidateDecision(checker: GoPtr<Checker>): ExtensionSourceDecisionFrame | undefined {
@@ -89,6 +101,13 @@ export function beginExtensionCheckedSourceCandidateDecision(checker: GoPtr<Chec
   return beginSourceDecisionFrame(checker, "overload-candidate");
 }
 
+export function beginExtensionCheckedSourceSignatureDecision(checker: GoPtr<Checker>): ExtensionSourceDecisionFrame | undefined {
+  if (checker === undefined || !sourceDecisionRecordingActive(checker)) {
+    return undefined;
+  }
+  return beginSourceDecisionFrame(checker, "signature-resolution");
+}
+
 export function beginExtensionCheckedSourceDiscardDecision(checker: GoPtr<Checker>): ExtensionSourceDecisionFrame | undefined {
   if (checker === undefined || !sourceDecisionRecordingActive(checker)) {
     return undefined;
@@ -97,6 +116,15 @@ export function beginExtensionCheckedSourceDiscardDecision(checker: GoPtr<Checke
 }
 
 export function commitExtensionCheckedSourceCandidateDecision(
+  checker: GoPtr<Checker>,
+  frame: ExtensionSourceDecisionFrame | undefined,
+): void {
+  if (checker !== undefined) {
+    commitSourceDecisionFrame(checker, frame);
+  }
+}
+
+export function commitExtensionCheckedSourceSignatureDecision(
   checker: GoPtr<Checker>,
   frame: ExtensionSourceDecisionFrame | undefined,
 ): void {
@@ -147,6 +175,23 @@ export function journalExtensionCheckedCallEvidence(checker: GoPtr<Checker>, lin
   journalSignatureLinks(checker, links);
 }
 
+export function extensionCheckedSourceDecisionOwner(checker: GoPtr<Checker>): GoPtr<SourceFile> {
+  return checker === undefined ? undefined : sourceDecisionOwner(checker);
+}
+
+export function extensionCheckedSourceDecisionDiscardActive(checker: GoPtr<Checker>): boolean {
+  return checker !== undefined && sourceDecisionDiscardActive(checker);
+}
+
+export function journalExtensionCheckedExpressionCache(
+  checker: GoPtr<Checker>,
+  links: TypeNodeLinks,
+): void {
+  if (checker !== undefined) {
+    journalTypeNodeLinks(checker, links);
+  }
+}
+
 function getCheckedOperationExtensionHost(
   checker: GoPtr<Checker>,
   observation: CheckedOperationObservationPointName,
@@ -163,11 +208,7 @@ function getCheckedOperationExtensionHost(
 }
 
 function isRuntimeCheckedOperationExecutionSite(executionSite: Node): boolean {
-  const sourceFile = GetSourceFileOfNode(executionSite);
-  if (sourceFile === undefined) {
-    throw new Error("Checked-operation execution evidence requires a source-file-owned AST node.");
-  }
-  return !sourceFile.IsDeclarationFile;
+  return isRuntimeCheckedSourceExecution(executionSite);
 }
 
 function publishExtensionSourceDecisionBatch(
@@ -183,9 +224,35 @@ function publishExtensionSourceDecisionBatch(
   }
   extensionHost[extensionHostPublishSourceDecisionBatch](() => {
     for (const event of batch) {
-      publishExtensionSourceDecisionEvent(checker, extensionHost, event);
+      if (isCheckedOperationSourceDecisionEvent(event)) {
+        publishExtensionSourceDecisionEvent(checker, extensionHost, event);
+      }
+    }
+    extensionHost[extensionHostEvaluateRetainedCheckedOperations]();
+    for (const event of batch) {
+      if (!isCheckedOperationSourceDecisionEvent(event)) {
+        publishExtensionSourceDecisionEvent(checker, extensionHost, event);
+      }
     }
   });
+}
+
+function isCheckedOperationSourceDecisionEvent(event: ExtensionSourceDecisionEvent): boolean {
+  switch (event.kind) {
+    case "checked-call":
+    case "checked-property":
+    case "checked-element":
+    case "checked-operator":
+    case "checked-iteration":
+    case "assertion-conversion":
+      return true;
+    case "target-constraint":
+    case "runtime-carrier":
+    case "contextual-target":
+    case "post-assignability":
+    case "flow-use":
+      return false;
+  }
 }
 
 function publishExtensionSourceDecisionEvent(
@@ -240,6 +307,9 @@ function publishExtensionSourceDecisionEvent(
         event.sourceType,
         event.targetType,
         event.assertionKind,
+        event.sourceSelectedSymbol,
+        event.sourceSelectedDeclaration,
+        event.sourceSelectedDeclarationTypeNode,
       );
       return;
     case "target-constraint":
@@ -262,7 +332,7 @@ function publishExtensionSourceDecisionEvent(
       );
       return;
     case "flow-use":
-      publishExtensionFlowUseValidation(extensionHost, event.origin, event.symbol);
+      publishExtensionFlowUseValidation(extensionHost, event.origin, event.symbol, event.mode);
       return;
   }
 }
@@ -884,12 +954,21 @@ export function recordExtensionCheckedAssertionConversion(checker: GoPtr<Checker
   if (getCheckedOperationExtensionHost(checker, ExtensionObservationPoint.mapCheckedConversion, assertionExpression) === undefined) {
     return;
   }
+  const sourceExpression = Node_Expression(assertionExpression);
+  const sourceSelectedSymbol = sourceExpression === undefined
+    ? undefined
+    : selectedSourceSymbol(checker, Checker_getResolvedSymbolOrNil(checker, SkipParentheses(sourceExpression)));
+  const sourceSelectedDeclaration = symbolValueDeclaration(sourceSelectedSymbol);
+  const sourceSelectedDeclarationTypeNode = sourceSelectedDeclaration === undefined ? undefined : Node_Type(sourceSelectedDeclaration);
   appendEvent(checker, Object.freeze({
     kind: "assertion-conversion",
     origin: assertionExpression,
     sourceType,
     targetType,
     assertionKind,
+    ...(sourceSelectedSymbol === undefined ? {} : { sourceSelectedSymbol }),
+    ...(sourceSelectedDeclaration === undefined ? {} : { sourceSelectedDeclaration }),
+    ...(sourceSelectedDeclarationTypeNode === undefined ? {} : { sourceSelectedDeclarationTypeNode }),
   }));
 }
 
@@ -900,6 +979,9 @@ function publishExtensionCheckedAssertionConversion(
   sourceType: Type,
   targetType: Type,
   assertionKind: "as" | "angle-bracket" | "jsdoc",
+  sourceSelectedSymbol: Symbol | undefined,
+  sourceSelectedDeclaration: Node | undefined,
+  sourceSelectedDeclarationTypeNode: Node | undefined,
 ): void {
   const sourceExpression = Node_Expression(assertionExpression);
   const explicitTargetTypeNode = Node_Type(assertionExpression);
@@ -918,9 +1000,6 @@ function publishExtensionCheckedAssertionConversion(
   const retainedAssertion = retainedRequest?.conversionKind === "assertion" ? retainedRequest : undefined;
   const canonicalSourceType = preserveEquivalentCheckedSourceType(retainedAssertion?.source.type as GoPtr<Type>, sourceType);
   const canonicalTargetType = preserveEquivalentCheckedSourceType(retainedAssertion?.target.type as GoPtr<Type>, targetType);
-  const sourceSelectedSymbol = selectedSourceSymbol(checker, Checker_getResolvedSymbolOrNil(checker, SkipParentheses(sourceExpression)));
-  const sourceSelectedDeclaration = symbolValueDeclaration(sourceSelectedSymbol);
-  const sourceSelectedDeclarationTypeNode = sourceSelectedDeclaration === undefined ? undefined : Node_Type(sourceSelectedDeclaration);
   if (canonicalSourceType === undefined || canonicalTargetType === undefined) {
     throw new Error("Checked assertion mapping requires exact selected source and target types.");
   }
@@ -1381,7 +1460,7 @@ function publishExtensionPostCheckAssignabilityObservation(
   );
 }
 
-export function recordExtensionFlowUseValidation(checker: GoPtr<Checker>, useSite: GoPtr<Node>, symbol: GoPtr<Symbol>): void {
+export function recordExtensionFlowUseValidation(checker: GoPtr<Checker>, useSite: GoPtr<Node>, symbol: GoPtr<Symbol>, mode: CheckedFlowUseMode): void {
   if (checker === undefined || useSite === undefined || symbol === undefined) {
     return;
   }
@@ -1395,6 +1474,7 @@ export function recordExtensionFlowUseValidation(checker: GoPtr<Checker>, useSit
     kind: "flow-use",
     origin: useSite,
     symbol,
+    mode,
   }));
 }
 
@@ -1402,6 +1482,7 @@ function publishExtensionFlowUseValidation(
   extensionHost: ExtensionHost,
   useSite: Node,
   symbol: Symbol,
+  mode: CheckedFlowUseMode,
 ): void {
 
   const useSiteFlowState = extensionHost.facts.getEntry(useSite, flowStateFactKey);
@@ -1419,7 +1500,7 @@ function publishExtensionFlowUseValidation(
     {
       useSite,
       symbol,
-      mode: "read",
+      mode,
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
@@ -2056,19 +2137,6 @@ function withTargetOperationProvenance(operation: TargetOperationFact, provenanc
   });
 }
 
-export function preserveEquivalentCheckedSourceType(
-  existing: GoPtr<Type>,
-  incoming: GoPtr<Type>,
-): GoPtr<Type> {
-  if (incoming === undefined) {
-    return undefined;
-  }
-  if (existing === undefined || existing === incoming) {
-    return incoming;
-  }
-  return checkedSourceTypesShareStableIdentity(existing, incoming) ? existing : incoming;
-}
-
 function preserveEquivalentCheckedSourceResultType(
   extensionHost: ExtensionHost,
   subject: ExtensionFactSubject,
@@ -2092,30 +2160,6 @@ function preserveEquivalentCheckedSourceResultType(
   return checkedSourceTypesShareStableIdentity(existingSourceResultType, incomingSourceResultType)
     ? withExistingSourceResultType
     : incoming;
-}
-
-function checkedSourceTypesShareStableIdentity(left: GoPtr<Type>, right: GoPtr<Type>): boolean {
-  if (left === right) {
-    return true;
-  }
-  if (left?.checker !== undefined && left.checker === right?.checker && Type_Id(left) === Type_Id(right)) {
-    return true;
-  }
-  const leftIsUniqueSymbol = (Type_Flags(left) & TypeFlagsUniqueESSymbol) !== 0;
-  const rightIsUniqueSymbol = (Type_Flags(right) & TypeFlagsUniqueESSymbol) !== 0;
-  if (leftIsUniqueSymbol || rightIsUniqueSymbol) {
-    if (!leftIsUniqueSymbol || !rightIsUniqueSymbol) {
-      return false;
-    }
-    const leftSymbol = Type_Symbol(left);
-    const rightSymbol = Type_Symbol(right);
-    if (leftSymbol === undefined || leftSymbol !== rightSymbol) {
-      return false;
-    }
-    const declaration = symbolValueDeclaration(leftSymbol);
-    return declaration !== undefined && declaration === symbolValueDeclaration(rightSymbol);
-  }
-  return false;
 }
 
 function withCheckedOperationResultType(operation: TargetOperationFact, resultType: TargetTypeRef | undefined): TargetOperationFact {

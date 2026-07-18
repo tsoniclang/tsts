@@ -114,9 +114,6 @@ test("selected calls retain and replay all call-argument child semantics atomica
           if (request.conversionKind === "call-argument") {
             conversionPhases.push(`${request.sourceArgumentIndex}:${context.phase}`);
             conversionRuns[request.sourceArgumentIndex] = (conversionRuns[request.sourceArgumentIndex] ?? 0) + 1;
-            if (request.sourceArgumentIndex === 0 && conversionRuns[0] === 1) {
-              return deferObservation;
-            }
           }
           return acceptObservation({
             convertedType: { kind: "source-global", name: "String" },
@@ -135,9 +132,9 @@ test("selected calls retain and replay all call-argument child semantics atomica
 
   assert.equal(extensionHost.finalized, true);
   assert.deepEqual(callPhases, ["checking", "finalization"]);
-  assert.deepEqual(conversionPhases, ["0:finalization", "1:finalization", "0:finalization"]);
-  assert.deepEqual(conversionRuns, [2, 1]);
-  assert.equal(conversionRequests.length, 3);
+  assert.deepEqual(conversionPhases, ["0:finalization", "1:finalization"]);
+  assert.deepEqual(conversionRuns, [1, 1]);
+  assert.equal(conversionRequests.length, 2);
   const conversion = conversionRequests.find((request) => request.conversionKind === "call-argument" && request.sourceArgumentIndex === 0);
   assert.equal(conversion?.conversionKind, "call-argument");
   if (conversion?.conversionKind !== "call-argument") {

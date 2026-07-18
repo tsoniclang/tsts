@@ -1,6 +1,7 @@
 import type { bool, byte, int, sbyte, uint } from "../../go/scalars.js";
 import type { GoArray, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { GoInterfaceValue, Node } from "../ast/spine.js";
+import type { SourceFile } from "../ast/ast.js";
 import { goReceiverKey } from "../ast/spine.js";
 import type { EntityName } from "../ast/generated/unions.js";
 import type { ConditionalTypeNode, MappedTypeNode } from "../ast/generated/data.js";
@@ -819,6 +820,7 @@ export interface SymbolNodeLinks {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeNodeLinks","kind":"type","status":"implemented","sigHash":"d179da5ea97af8b4e01f810926a7545f82b426592ab5165ddf4d80ecc0cd4e3d","bodyHash":"63f2e3ade12086f877faba2842deb70032ef48351c0a8a14043706ec94966b6a"}
+ * @tsgo-override {"category":"extension-host","allow":["signature"],"reason":"Record the exact source file whose authoritative semantic check captured the operation decisions associated with a cached expression type; query-created caches remain explicitly non-authoritative and are recomputed by source checking.","goSignature":"interface{outerTypeParameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;resolvedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}","tsSignature":"interface{extensionSourceDecisionOwner:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::SourceFile>;outerTypeParameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;resolvedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}"}
  *
  * Go source:
  * TypeNodeLinks struct {
@@ -829,6 +831,7 @@ export interface SymbolNodeLinks {
 export interface TypeNodeLinks {
   resolvedType: GoPtr<Type>;
   outerTypeParameters: GoSlice<GoPtr<Type>>;
+  extensionSourceDecisionOwner: GoPtr<SourceFile>;
 }
 
 /**
@@ -953,7 +956,7 @@ export interface ResolvedCallEvidence extends ResolvedCallSelectionEvidence {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SignatureLinks","kind":"type","status":"implemented","sigHash":"a347e845fe887e23f08134d6a7c13472dcdb4602c6c632618c72b27e056bdc28","bodyHash":"4bf2baf0e113cf93bff152edafa4b1d395e4fdfca289065c748d902c87e78b3e"}
- * @tsgo-override {"category":"extension-host","allow":["signature"],"reason":"Cache the immutable winning call-selection evidence and its finalized result beside TS-Go's resolvedSignature so source-order cache arbitration and source-decision rollback remain atomic.","goSignature":"interface{decoratorSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>;effectsSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>;resolvedSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>}","tsSignature":"interface{checkedCallSelectionSeed:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::CheckedCallSelectionSeed>;decoratorSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>;effectsSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>;resolvedCallEvidence:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::ResolvedCallEvidence>;resolvedCallSelectionEvidence:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::ResolvedCallSelectionEvidence>;resolvedSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>}"}
+ * @tsgo-override {"category":"extension-host","allow":["signature"],"reason":"Cache the immutable winning call-selection evidence, finalized result, and exact authoritative source owner beside TS-Go's resolvedSignature so source-order cache arbitration and source-decision rollback remain atomic.","goSignature":"interface{decoratorSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>;effectsSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>;resolvedSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>}","tsSignature":"interface{checkedCallSelectionSeed:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::CheckedCallSelectionSeed>;decoratorSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>;effectsSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>;extensionSourceDecisionOwner:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::SourceFile>;resolvedCallEvidence:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::ResolvedCallEvidence>;resolvedCallSelectionEvidence:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::ResolvedCallSelectionEvidence>;resolvedSignature:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>}"}
  *
  * Go source:
  * SignatureLinks struct {
@@ -969,6 +972,7 @@ export interface SignatureLinks {
   checkedCallSelectionSeed: GoPtr<CheckedCallSelectionSeed>;
   resolvedCallSelectionEvidence: GoPtr<ResolvedCallSelectionEvidence>;
   resolvedCallEvidence: GoPtr<ResolvedCallEvidence>;
+  extensionSourceDecisionOwner: GoPtr<SourceFile>;
 }
 
 /**

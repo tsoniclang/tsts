@@ -131,6 +131,27 @@ test("legal declaration call/property/element/operator/conversion expressions ar
   assert.equal(setup.extensionHost.diagnostics.all().length, 0);
 });
 
+test("ambient and type-only expressions in implementation files never publish runtime checked operations", () => {
+  const observations = checkedOperationObservations();
+  const setup = createRegressionProgram([
+    { fileName: "ambient-expressions.ts", sourceText: ambientImplementationProfile },
+  ], [semanticExtension("ambient-source-owner-regression", runtimeSemanticProvider("ambient-source-owner-provider", observations))]);
+  const source = requireSourceFile(setup.program, "/src/ambient-expressions.ts");
+
+  assert.equal(source.IsDeclarationFile, false);
+  assert.ok(collectNodesByKind(source, KindCallExpression).length >= 1);
+  assert.ok(collectNodesByKind(source, KindPropertyAccessExpression).length >= 2);
+  assert.ok(collectNodesByKind(source, KindElementAccessExpression).length >= 1);
+  assert.ok(collectNodesByKind(source, KindBinaryExpression).length >= 1);
+  assert.ok(collectNodesByKind(source, KindAsExpression).length >= 1);
+
+  assertCleanProgram(setup.program);
+  assert.ok(finalizeExtensionSemantics(setup.programOptions) === setup.extensionHost);
+  assertNoObservationOwnerDeferred(setup.extensionHost);
+  assert.deepEqual(observationCounts(observations), emptyObservationCounts);
+  assert.equal(setup.extensionHost.diagnostics.all().length, 0);
+});
+
 test("implementation expressions publish every checked-operation kind with exact declaration-selected evidence", () => {
   const observations = checkedOperationObservations();
   const setup = createRegressionProgram([
@@ -762,6 +783,22 @@ const symbolIteratorProfile = `
 
 const ambientExpressionProfile = `
   ${baseNoLibProfile}
+  type Constructor = new () => object;
+  declare const Base: Constructor;
+  declare const maybeBase: Constructor | undefined;
+  declare function selectBase(base: Constructor): Constructor;
+  declare const baseNamespace: { readonly selected: Constructor };
+  declare const baseTable: { readonly [index: number]: Constructor };
+
+  declare class FromCall extends selectBase(Base) {}
+  declare class FromProperty extends baseNamespace.selected {}
+  declare class FromElement extends baseTable[0] {}
+  declare class FromOperator extends (maybeBase ?? Base) {}
+  declare class FromConversion extends (Base as Constructor) {}
+`;
+
+const ambientImplementationProfile = `
+  ${symbolIteratorProfile}
   type Constructor = new () => object;
   declare const Base: Constructor;
   declare const maybeBase: Constructor | undefined;

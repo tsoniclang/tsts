@@ -1,9 +1,13 @@
+import type { SourceFile } from "../internal/ast/ast.js";
 import type { Node } from "../internal/ast/spine.js";
 import type { Kind } from "../internal/ast/generated/kinds.js";
+import type { CheckedFlowUseMode } from "./observations.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import type { Checker } from "../internal/checker/checker/state.js";
-import type { ResolvedCallEvidence, SignatureLinks, Type } from "../internal/checker/types.js";
+import type { ResolvedCallEvidence, SignatureLinks, Type, TypeNodeLinks } from "../internal/checker/types.js";
+import { checkedSourceTypesShareStableIdentity } from "./checked-source-type-identity.js";
+import { isRuntimeCheckedSourceExecution } from "./source-execution-role.js";
 
 export type ExtensionSourceDecisionEvent =
   | {
@@ -54,6 +58,9 @@ export type ExtensionSourceDecisionEvent =
       readonly sourceType: Type;
       readonly targetType: Type;
       readonly assertionKind: "as" | "angle-bracket" | "jsdoc";
+      readonly sourceSelectedSymbol?: Symbol;
+      readonly sourceSelectedDeclaration?: Node;
+      readonly sourceSelectedDeclarationTypeNode?: Node;
     }
   | {
       readonly kind: "target-constraint";
@@ -84,6 +91,7 @@ export type ExtensionSourceDecisionEvent =
       readonly kind: "flow-use";
       readonly origin: Node;
       readonly symbol: Symbol;
+      readonly mode: CheckedFlowUseMode;
     };
 
 export type ExtensionSourceDecisionPhase = "idle" | "source" | "publishing" | "failed";
@@ -98,6 +106,7 @@ export interface ExtensionSourceDecisionFrame {
   readonly kind: ExtensionSourceDecisionFrameKind;
   readonly eventMark: number;
   readonly depth: number;
+  readonly ownerSourceFile: SourceFile;
 }
 
 export interface PreparedExtensionSourceDecision {
@@ -111,27 +120,39 @@ interface SignatureLinksSnapshot {
   readonly checkedCallSelectionSeed: SignatureLinks["checkedCallSelectionSeed"];
   readonly resolvedCallSelectionEvidence: SignatureLinks["resolvedCallSelectionEvidence"];
   readonly resolvedCallEvidence: SignatureLinks["resolvedCallEvidence"];
+  readonly extensionSourceDecisionOwner: SignatureLinks["extensionSourceDecisionOwner"];
+}
+
+interface TypeNodeLinksSnapshot {
+  readonly links: TypeNodeLinks;
+  readonly extensionSourceDecisionOwner: TypeNodeLinks["extensionSourceDecisionOwner"];
 }
 
 interface ExtensionSourceDecisionFrameRecord extends ExtensionSourceDecisionFrame {
   settled: boolean;
+  readonly eventInsertions: ExtensionSourceDecisionEvent[];
   readonly signatureLinksSnapshots: SignatureLinksSnapshot[];
+  readonly typeNodeLinksSnapshots: TypeNodeLinksSnapshot[];
 }
 
 export interface ExtensionSourceDecisionState {
   phase: ExtensionSourceDecisionPhase;
   readonly events: ExtensionSourceDecisionEvent[];
   readonly frames: ExtensionSourceDecisionFrameRecord[];
+  readonly eventsByOrigin: Map<Node, Map<ExtensionSourceDecisionEvent["kind"], ExtensionSourceDecisionEvent[]>>;
   signatureLinksSnapshotCount: number;
+  typeNodeLinksSnapshotCount: number;
 }
 
 const eventBudget = 65_536;
 const frameBudget = 1_024;
 const signatureLinksSnapshotBudget = 65_536;
+const typeNodeLinksSnapshotBudget = 65_536;
 
 export function beginSourceDecisionFrame(
   checker: Checker,
   kind: ExtensionSourceDecisionFrameKind,
+  ownerSourceFile?: SourceFile,
 ): ExtensionSourceDecisionFrame | undefined {
   const existing = checker.extensionSourceDecisionState;
   if (existing === false) {
@@ -153,12 +174,28 @@ export function beginSourceDecisionFrame(
     if (kind !== "source-file") {
       return failClosed(state, "the root frame must be a source-file frame");
     }
-    if (state.events.length !== 0 || state.frames.length !== 0 || state.signatureLinksSnapshotCount !== 0) {
+    if (ownerSourceFile === undefined) {
+      return failClosed(state, "the root source-file frame requires an exact owner");
+    }
+    if (state.events.length !== 0
+      || state.frames.length !== 0
+      || state.eventsByOrigin.size !== 0
+      || state.signatureLinksSnapshotCount !== 0
+      || state.typeNodeLinksSnapshotCount !== 0) {
       return failClosed(state, "idle state retained transaction data");
     }
     state.phase = "source";
   } else if (kind === "source-file") {
     return failClosed(state, "a source-file frame cannot be nested");
+  } else {
+    const root = state.frames[0];
+    if (root === undefined) {
+      return failClosed(state, "a nested frame has no root source-file owner");
+    }
+    if (ownerSourceFile !== undefined && ownerSourceFile !== root.ownerSourceFile) {
+      return failClosed(state, "a nested frame cannot change the root source-file owner");
+    }
+    ownerSourceFile = root.ownerSourceFile;
   }
 
   if (!Number.isSafeInteger(state.frames.length) || state.frames.length >= frameBudget) {
@@ -172,8 +209,11 @@ export function beginSourceDecisionFrame(
     kind,
     eventMark: state.events.length,
     depth: state.frames.length,
+    ownerSourceFile: ownerSourceFile!,
     settled: false,
+    eventInsertions: [],
     signatureLinksSnapshots: [],
+    typeNodeLinksSnapshots: [],
   };
   state.frames.push(frame);
   return frame;
@@ -221,6 +261,9 @@ export function prepareSourceDecisionFrame(
   if (state.signatureLinksSnapshotCount !== record.signatureLinksSnapshots.length) {
     return failClosed(state, "root SignatureLinks journal is inconsistent");
   }
+  if (state.typeNodeLinksSnapshotCount !== record.typeNodeLinksSnapshots.length) {
+    return failClosed(state, "root TypeNodeLinks journal is inconsistent");
+  }
 
   state.phase = "publishing";
   return {
@@ -240,8 +283,12 @@ export function commitPreparedSourceDecision(
   const state = preparedState(checker, prepared);
   const frame = prepared.frame as ExtensionSourceDecisionFrameRecord;
   frame.signatureLinksSnapshots.length = 0;
+  frame.typeNodeLinksSnapshots.length = 0;
+  frame.eventInsertions.length = 0;
   state.signatureLinksSnapshotCount = 0;
+  state.typeNodeLinksSnapshotCount = 0;
   state.events.length = 0;
+  state.eventsByOrigin.clear();
   settleTopFrame(state, frame);
   prepared.active = false;
   state.phase = "idle";
@@ -256,13 +303,16 @@ export function rollbackPreparedSourceDecision(
   }
   const state = preparedState(checker, prepared);
   const frame = prepared.frame as ExtensionSourceDecisionFrameRecord;
-  restoreSignatureLinksSnapshots(frame.signatureLinksSnapshots);
   frame.signatureLinksSnapshots.length = 0;
+  frame.typeNodeLinksSnapshots.length = 0;
+  frame.eventInsertions.length = 0;
   state.signatureLinksSnapshotCount = 0;
+  state.typeNodeLinksSnapshotCount = 0;
   state.events.length = 0;
+  state.eventsByOrigin.clear();
   settleTopFrame(state, frame);
   prepared.active = false;
-  state.phase = "idle";
+  state.phase = "failed";
 }
 
 export function rollbackSourceDecisionFrame(
@@ -323,8 +373,39 @@ export function journalSignatureLinks(checker: Checker, links: SignatureLinks): 
     checkedCallSelectionSeed: links.checkedCallSelectionSeed,
     resolvedCallSelectionEvidence: links.resolvedCallSelectionEvidence,
     resolvedCallEvidence: links.resolvedCallEvidence,
+    extensionSourceDecisionOwner: links.extensionSourceDecisionOwner,
   });
   state.signatureLinksSnapshotCount++;
+}
+
+export function journalTypeNodeLinks(checker: Checker, links: TypeNodeLinks): void {
+  const state = checker.extensionSourceDecisionState;
+  if (state === undefined || state === false || state.phase === "idle") {
+    return;
+  }
+  if (state.phase === "failed") {
+    throw failedStateError();
+  }
+  if (state.phase !== "source") {
+    failClosed(state, "cannot journal TypeNodeLinks outside the source phase");
+  }
+
+  const frame = currentFrame(state);
+  for (const snapshot of frame.typeNodeLinksSnapshots) {
+    if (snapshot.links === links) {
+      return;
+    }
+  }
+  if (!Number.isSafeInteger(state.typeNodeLinksSnapshotCount)
+    || state.typeNodeLinksSnapshotCount >= typeNodeLinksSnapshotBudget) {
+    failClosed(state, "TypeNodeLinks snapshot budget exceeded");
+  }
+
+  frame.typeNodeLinksSnapshots.push({
+    links,
+    extensionSourceDecisionOwner: links.extensionSourceDecisionOwner,
+  });
+  state.typeNodeLinksSnapshotCount++;
 }
 
 export function appendEvent(checker: Checker, event: ExtensionSourceDecisionEvent): void {
@@ -347,18 +428,50 @@ export function appendEvent(checker: Checker, event: ExtensionSourceDecisionEven
   if (sourceFile === undefined) {
     failClosed(state, "an event origin has no source file");
   }
-  if (sourceFile.IsDeclarationFile && isRuntimeCheckedOperationEvent(event)) {
+  const root = state.frames[0];
+  if (root === undefined || sourceFile !== root.ownerSourceFile) {
+    failClosed(state, "an event origin does not belong to the active source-file owner");
+  }
+  if (isRuntimeCheckedOperationEvent(event) && !isRuntimeCheckedSourceExecution(event.origin)) {
     return;
+  }
+  const existing = eventsForIdentity(state, event);
+  for (const candidate of existing) {
+    if (sourceDecisionEventsEquivalent(candidate, event)) {
+      return;
+    }
+  }
+  if (existing.length !== 0 && event.kind !== "post-assignability") {
+    failClosed(state, `conflicting '${event.kind}' events were recorded for one source decision`);
   }
   if (!Number.isSafeInteger(state.events.length) || state.events.length >= eventBudget) {
     failClosed(state, "event budget exceeded");
   }
-  state.events.push(Object.freeze({ ...event }) as ExtensionSourceDecisionEvent);
+  const snapshot = Object.freeze({ ...event }) as ExtensionSourceDecisionEvent;
+  state.events.push(snapshot);
+  existing.push(snapshot);
+  currentFrame(state).eventInsertions.push(snapshot);
 }
 
 export function sourceDecisionRecordingActive(checker: Checker): boolean {
   const state = checker.extensionSourceDecisionState;
   return state !== undefined && state !== false && state.phase === "source";
+}
+
+export function sourceDecisionOwner(checker: Checker): SourceFile | undefined {
+  const state = checker.extensionSourceDecisionState;
+  if (state === undefined || state === false || state.phase !== "source") {
+    return undefined;
+  }
+  return state.frames[0]?.ownerSourceFile;
+}
+
+export function sourceDecisionDiscardActive(checker: Checker): boolean {
+  const state = checker.extensionSourceDecisionState;
+  return state !== undefined
+    && state !== false
+    && state.phase === "source"
+    && state.frames.some((frame) => frame.kind === "discard");
 }
 
 export function disableSourceDecisionRecording(checker: Checker): void {
@@ -374,7 +487,9 @@ function createState(): ExtensionSourceDecisionState {
     phase: "idle",
     events: [],
     frames: [],
+    eventsByOrigin: new Map(),
     signatureLinksSnapshotCount: 0,
+    typeNodeLinksSnapshotCount: 0,
   };
 }
 
@@ -436,12 +551,12 @@ function isRuntimeCheckedOperationEvent(event: ExtensionSourceDecisionEvent): bo
     case "checked-operator":
     case "checked-iteration":
     case "assertion-conversion":
+    case "flow-use":
       return true;
     case "target-constraint":
     case "runtime-carrier":
     case "contextual-target":
     case "post-assignability":
-    case "flow-use":
       return false;
   }
 }
@@ -477,14 +592,23 @@ function rollbackTopFrame(
   restoreSignatureLinksSnapshots(frame.signatureLinksSnapshots);
   removeSignatureLinksSnapshots(state, frame.signatureLinksSnapshots.length);
   frame.signatureLinksSnapshots.length = 0;
+  restoreTypeNodeLinksSnapshots(frame.typeNodeLinksSnapshots);
+  removeTypeNodeLinksSnapshots(state, frame.typeNodeLinksSnapshots.length);
+  frame.typeNodeLinksSnapshots.length = 0;
+  removeEventInsertions(state, frame.eventInsertions);
+  frame.eventInsertions.length = 0;
   state.events.length = frame.eventMark;
   settleTopFrame(state, frame);
 
   if (frame.depth === 0) {
-    if (frame.kind !== "source-file" || state.frames.length !== 0 || state.signatureLinksSnapshotCount !== 0) {
+    if (frame.kind !== "source-file"
+      || state.frames.length !== 0
+      || state.signatureLinksSnapshotCount !== 0
+      || state.typeNodeLinksSnapshotCount !== 0) {
       failClosed(state, "root rollback did not empty the transaction");
     }
     state.events.length = 0;
+    state.eventsByOrigin.clear();
     state.phase = "idle";
   }
 }
@@ -520,6 +644,31 @@ function mergeSignatureLinksSnapshots(
     }
   }
   child.signatureLinksSnapshots.length = 0;
+  mergeTypeNodeLinksSnapshots(state, parent, child);
+  parent.eventInsertions.push(...child.eventInsertions);
+  child.eventInsertions.length = 0;
+}
+
+function mergeTypeNodeLinksSnapshots(
+  state: ExtensionSourceDecisionState,
+  parent: ExtensionSourceDecisionFrameRecord,
+  child: ExtensionSourceDecisionFrameRecord,
+): void {
+  for (const childSnapshot of child.typeNodeLinksSnapshots) {
+    let alreadyJournaled = false;
+    for (const parentSnapshot of parent.typeNodeLinksSnapshots) {
+      if (parentSnapshot.links === childSnapshot.links) {
+        alreadyJournaled = true;
+        break;
+      }
+    }
+    if (alreadyJournaled) {
+      removeTypeNodeLinksSnapshots(state, 1);
+    } else {
+      parent.typeNodeLinksSnapshots.push(childSnapshot);
+    }
+  }
+  child.typeNodeLinksSnapshots.length = 0;
 }
 
 function removeSignatureLinksSnapshots(state: ExtensionSourceDecisionState, count: number): void {
@@ -532,6 +681,16 @@ function removeSignatureLinksSnapshots(state: ExtensionSourceDecisionState, coun
   state.signatureLinksSnapshotCount -= count;
 }
 
+function removeTypeNodeLinksSnapshots(state: ExtensionSourceDecisionState, count: number): void {
+  if (!Number.isSafeInteger(count)
+    || count < 0
+    || !Number.isSafeInteger(state.typeNodeLinksSnapshotCount)
+    || count > state.typeNodeLinksSnapshotCount) {
+    failClosed(state, "TypeNodeLinks snapshot count is inconsistent");
+  }
+  state.typeNodeLinksSnapshotCount -= count;
+}
+
 function restoreSignatureLinksSnapshots(snapshots: readonly SignatureLinksSnapshot[]): void {
   for (let index = snapshots.length - 1; index >= 0; index--) {
     const snapshot = snapshots[index];
@@ -541,6 +700,17 @@ function restoreSignatureLinksSnapshots(snapshots: readonly SignatureLinksSnapsh
     snapshot.links.checkedCallSelectionSeed = snapshot.checkedCallSelectionSeed;
     snapshot.links.resolvedCallSelectionEvidence = snapshot.resolvedCallSelectionEvidence;
     snapshot.links.resolvedCallEvidence = snapshot.resolvedCallEvidence;
+    snapshot.links.extensionSourceDecisionOwner = snapshot.extensionSourceDecisionOwner;
+  }
+}
+
+function restoreTypeNodeLinksSnapshots(snapshots: readonly TypeNodeLinksSnapshot[]): void {
+  for (let index = snapshots.length - 1; index >= 0; index--) {
+    const snapshot = snapshots[index];
+    if (snapshot === undefined) {
+      throw new Error("Extension source-decision TypeNodeLinks journal is sparse.");
+    }
+    snapshot.links.extensionSourceDecisionOwner = snapshot.extensionSourceDecisionOwner;
   }
 }
 
@@ -551,13 +721,229 @@ function failClosed(state: ExtensionSourceDecisionState, reason: string): never 
     if (frame !== undefined) {
       restoreSignatureLinksSnapshots(frame.signatureLinksSnapshots);
       frame.signatureLinksSnapshots.length = 0;
+      restoreTypeNodeLinksSnapshots(frame.typeNodeLinksSnapshots);
+      frame.typeNodeLinksSnapshots.length = 0;
       frame.settled = true;
     }
   }
   state.events.length = 0;
+  state.eventsByOrigin.clear();
   state.frames.length = 0;
   state.signatureLinksSnapshotCount = 0;
+  state.typeNodeLinksSnapshotCount = 0;
   throw new Error(`Extension source-decision transaction failed closed: ${reason}.`);
+}
+
+function eventsForIdentity(
+  state: ExtensionSourceDecisionState,
+  event: ExtensionSourceDecisionEvent,
+): ExtensionSourceDecisionEvent[] {
+  let byKind = state.eventsByOrigin.get(event.origin);
+  if (byKind === undefined) {
+    byKind = new Map();
+    state.eventsByOrigin.set(event.origin, byKind);
+  }
+  let events = byKind.get(event.kind);
+  if (events === undefined) {
+    events = [];
+    byKind.set(event.kind, events);
+  }
+  return events;
+}
+
+function removeEventInsertions(
+  state: ExtensionSourceDecisionState,
+  insertions: readonly ExtensionSourceDecisionEvent[],
+): void {
+  for (let index = insertions.length - 1; index >= 0; index--) {
+    const event = insertions[index];
+    if (event === undefined) {
+      failClosed(state, "event insertion journal is sparse");
+    }
+    const byKind = state.eventsByOrigin.get(event.origin);
+    const events = byKind?.get(event.kind);
+    if (events === undefined || events[events.length - 1] !== event) {
+      failClosed(state, "event insertion journal is inconsistent");
+    }
+    events.pop();
+    if (events.length === 0) {
+      byKind!.delete(event.kind);
+    }
+    if (byKind!.size === 0) {
+      state.eventsByOrigin.delete(event.origin);
+    }
+  }
+}
+
+function sourceDecisionEventsEquivalent(
+  left: ExtensionSourceDecisionEvent,
+  right: ExtensionSourceDecisionEvent,
+): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (left.kind !== right.kind || left.origin !== right.origin) {
+    return false;
+  }
+  switch (left.kind) {
+    case "checked-call":
+      return right.kind === left.kind && resolvedCallEvidenceEquivalent(left.resolvedCallEvidence, right.resolvedCallEvidence);
+    case "checked-property":
+      return right.kind === left.kind
+        && left.selectedSymbol === right.selectedSymbol
+        && checkedSourceTypesShareStableIdentity(left.resultType, right.resultType)
+        && checkedSourceTypesShareStableIdentity(left.receiverType, right.receiverType)
+        && left.accessMode === right.accessMode
+        && left.callCallee === right.callCallee;
+    case "checked-element":
+      return right.kind === left.kind
+        && left.selectedSymbol === right.selectedSymbol
+        && checkedSourceTypesShareStableIdentity(left.resultType, right.resultType)
+        && left.selectedElementIndex === right.selectedElementIndex
+        && checkedSourceTypesShareStableIdentity(left.receiverType, right.receiverType)
+        && checkedSourceTypesShareStableIdentity(left.argumentType, right.argumentType)
+        && left.accessMode === right.accessMode
+        && left.callCallee === right.callCallee;
+    case "checked-operator":
+      return right.kind === left.kind
+        && left.operator === right.operator
+        && left.left === right.left
+        && left.right === right.right
+        && checkedSourceTypesShareStableIdentity(left.sourceLeftType, right.sourceLeftType)
+        && optionalSourceTypesEquivalent(left.sourceRightType, right.sourceRightType)
+        && checkedSourceTypesShareStableIdentity(left.sourceResultType, right.sourceResultType);
+    case "checked-iteration":
+      return right.kind === left.kind
+        && left.iterationKind === right.iterationKind
+        && checkedSourceTypesShareStableIdentity(left.sourceIterableType, right.sourceIterableType)
+        && checkedSourceTypesShareStableIdentity(left.sourceElementType, right.sourceElementType);
+    case "assertion-conversion":
+      return right.kind === left.kind
+        && checkedSourceTypesShareStableIdentity(left.sourceType, right.sourceType)
+        && checkedSourceTypesShareStableIdentity(left.targetType, right.targetType)
+        && left.assertionKind === right.assertionKind
+        && left.sourceSelectedSymbol === right.sourceSelectedSymbol
+        && left.sourceSelectedDeclaration === right.sourceSelectedDeclaration
+        && left.sourceSelectedDeclarationTypeNode === right.sourceSelectedDeclarationTypeNode;
+    case "target-constraint":
+      return right.kind === left.kind && left.symbol === right.symbol;
+    case "runtime-carrier":
+      return right.kind === left.kind
+        && checkedSourceTypesShareStableIdentity(left.type, right.type)
+        && left.symbol === right.symbol;
+    case "contextual-target":
+      return right.kind === left.kind
+        && checkedSourceTypesShareStableIdentity(left.contextualType, right.contextualType);
+    case "post-assignability":
+      return right.kind === left.kind
+        && checkedSourceTypesShareStableIdentity(left.source, right.source)
+        && checkedSourceTypesShareStableIdentity(left.target, right.target)
+        && left.errorNode === right.errorNode
+        && left.expression === right.expression
+        && left.relation === right.relation;
+    case "flow-use":
+      return right.kind === left.kind && left.symbol === right.symbol && left.mode === right.mode;
+  }
+}
+
+function optionalSourceTypesEquivalent(left: Type | undefined, right: Type | undefined): boolean {
+  return left === undefined || right === undefined
+    ? left === right
+    : checkedSourceTypesShareStableIdentity(left, right);
+}
+
+function resolvedCallEvidenceEquivalent(left: ResolvedCallEvidence, right: ResolvedCallEvidence): boolean {
+  return left.outcome === right.outcome
+    && left.call === right.call
+    && left.selectedSignature === right.selectedSignature
+    && left.sourceSelectedSignatureKind === right.sourceSelectedSignatureKind
+    && optionalMethodTypeArgumentsEquivalent(left.sourceSelectedMethodTypeArguments, right.sourceSelectedMethodTypeArguments)
+    && signatureParametersEquivalent(left.sourceSelectedSignatureParameters, right.sourceSelectedSignatureParameters)
+    && sourceValuesEquivalent(left.sourceCallee, right.sourceCallee)
+    && sourceValueListsEquivalent(left.sourceArguments, right.sourceArguments)
+    && argumentBindingsEquivalent(left.sourceArgumentBindings, right.sourceArgumentBindings)
+    && optionalSourceValuesEquivalent(left.sourceReceiver, right.sourceReceiver)
+    && checkedSourceTypesShareStableIdentity(left.sourceResultType, right.sourceResultType);
+}
+
+function sourceValuesEquivalent(
+  left: ResolvedCallEvidence["sourceCallee"],
+  right: ResolvedCallEvidence["sourceCallee"],
+): boolean {
+  return left.expression === right.expression
+    && checkedSourceTypesShareStableIdentity(left.type, right.type)
+    && left.symbol === right.symbol
+    && left.declaration === right.declaration
+    && left.selectedSymbol === right.selectedSymbol
+    && left.selectedDeclaration === right.selectedDeclaration
+    && left.authoredTypeNode === right.authoredTypeNode;
+}
+
+function optionalSourceValuesEquivalent(
+  left: ResolvedCallEvidence["sourceReceiver"],
+  right: ResolvedCallEvidence["sourceReceiver"],
+): boolean {
+  return left === undefined || right === undefined ? left === right : sourceValuesEquivalent(left, right);
+}
+
+function sourceValueListsEquivalent(
+  left: ResolvedCallEvidence["sourceArguments"],
+  right: ResolvedCallEvidence["sourceArguments"],
+): boolean {
+  return sameLengthAndEvery(left, right, sourceValuesEquivalent);
+}
+
+function optionalMethodTypeArgumentsEquivalent(
+  left: ResolvedCallEvidence["sourceSelectedMethodTypeArguments"],
+  right: ResolvedCallEvidence["sourceSelectedMethodTypeArguments"],
+): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return sameLengthAndEvery(left, right, (leftArgument, rightArgument) =>
+    leftArgument.typeParameterName === rightArgument.typeParameterName
+    && checkedSourceTypesShareStableIdentity(leftArgument.typeParameter, rightArgument.typeParameter)
+    && checkedSourceTypesShareStableIdentity(leftArgument.selectedType, rightArgument.selectedType)
+    && leftArgument.explicitTypeNode === rightArgument.explicitTypeNode);
+}
+
+function signatureParametersEquivalent(
+  left: ResolvedCallEvidence["sourceSelectedSignatureParameters"],
+  right: ResolvedCallEvidence["sourceSelectedSignatureParameters"],
+): boolean {
+  return sameLengthAndEvery(left, right, (leftParameter, rightParameter) =>
+    leftParameter.parameterIndex === rightParameter.parameterIndex
+    && leftParameter.parameterName === rightParameter.parameterName
+    && leftParameter.parameterSymbol === rightParameter.parameterSymbol
+    && leftParameter.parameterDeclaration === rightParameter.parameterDeclaration
+    && checkedSourceTypesShareStableIdentity(leftParameter.selectedType, rightParameter.selectedType)
+    && leftParameter.authoredTypeNode === rightParameter.authoredTypeNode
+    && leftParameter.acceptsOmission === rightParameter.acceptsOmission
+    && leftParameter.rest === rightParameter.rest);
+}
+
+function argumentBindingsEquivalent(
+  left: ResolvedCallEvidence["sourceArgumentBindings"],
+  right: ResolvedCallEvidence["sourceArgumentBindings"],
+): boolean {
+  return sameLengthAndEvery(left, right, (leftBinding, rightBinding) =>
+    leftBinding.sourceArgumentIndex === rightBinding.sourceArgumentIndex
+    && leftBinding.effectiveArgumentIndex === rightBinding.effectiveArgumentIndex
+    && leftBinding.sourceForm === rightBinding.sourceForm
+    && leftBinding.spreadElementIndex === rightBinding.spreadElementIndex
+    && leftBinding.sourceParameterIndex === rightBinding.sourceParameterIndex
+    && leftBinding.sourceParameterForm === rightBinding.sourceParameterForm
+    && checkedSourceTypesShareStableIdentity(leftBinding.selectedArgumentType, rightBinding.selectedArgumentType)
+    && checkedSourceTypesShareStableIdentity(leftBinding.selectedParameterType, rightBinding.selectedParameterType));
+}
+
+function sameLengthAndEvery<Left, Right>(
+  left: readonly Left[],
+  right: readonly Right[],
+  equivalent: (leftValue: Left, rightValue: Right) => boolean,
+): boolean {
+  return left.length === right.length
+    && left.every((leftValue, index) => equivalent(leftValue, right[index]!));
 }
 
 function failedStateError(): Error {

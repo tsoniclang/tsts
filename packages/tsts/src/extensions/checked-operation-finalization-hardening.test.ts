@@ -29,7 +29,12 @@ import type {
   TargetTypeRef,
 } from "./index.js";
 import type { CheckedOperationReference } from "./observations.js";
-import type { CheckedOperationApplyOutcome } from "./checked-operation-finalization.js";
+import {
+  CheckedOperationInventory,
+  type CheckedOperationApplyOutcome,
+  type CheckedOperationInventoryCallbacks,
+  type CheckedOperationInventoryLimits,
+} from "./checked-operation-finalization.js";
 import {
   extensionHostGetCheckedOperationReference,
   extensionHostRunCheckedOperation,
@@ -155,10 +160,316 @@ test("checked-operation finalization rejects a dependency cycle", () => {
   const first = {};
   const second = {};
   retainPropertyOperation(host, first, propertyReference(second));
-  retainPropertyOperation(host, second, propertyReference(first));
-
-  assert.throws(() => host.finalizeSemantics(), /dependency cycle/);
+  assert.throws(
+    () => retainPropertyOperation(host, second, propertyReference(first)),
+    /dependency cycle/,
+  );
+  assert.throws(() => host.finalizeSemantics(), /previously failed/);
   assert.equal(host.finalized, false);
+});
+
+test("checked-operation retention rejects a self wait edge before publication", () => {
+  const host = new ExtensionHost({});
+  const subject = {};
+
+  assert.throws(
+    () => retainPropertyOperation(host, subject, propertyReference(subject)),
+    /cannot depend on itself/,
+  );
+  assert.equal(host.finalized, false);
+});
+
+test("prepared checked operations remain rollback-capable until the outer transaction commits", () => {
+  const { inventory } = createTransactionalTestInventory();
+  const subject = {};
+  let applications = 0;
+  inventory.retain(
+    propertyObservation,
+    checkedPropertyRequest(subject, {}, "value"),
+    () => acceptedInventoryProperty("prepared-transaction.value"),
+    () => {
+      applications += 1;
+    },
+  );
+  const outerTransaction = inventory.createSavepoint();
+
+  inventory.prepareFinalization();
+  inventory.commitSavepoint(outerTransaction);
+
+  assert.equal(outerTransaction.active, true, "Preparation must not make inventory state durable before its outer transaction.");
+  inventory.rollbackToSavepoint(outerTransaction);
+  assert.equal(outerTransaction.active, false);
+  assert.equal(applications, 1, "The provisional apply ran exactly once before its outer transaction rolled back.");
+  assert.throws(
+    () => inventory.commitFinalization(),
+    /only after successful preparation/,
+  );
+});
+
+test("retained checking evaluation is idempotent and rolls back with its exact inventory savepoint", () => {
+  const { inventory } = createTransactionalTestInventory();
+  let evaluations = 0;
+  const subject = {};
+  inventory.retain(
+    propertyObservation,
+    checkedPropertyRequest(subject, {}, "value"),
+    () => {
+      evaluations += 1;
+      return acceptedInventoryProperty("retained-checking.value");
+    },
+    () => {},
+  );
+
+  const savepoint = inventory.createSavepoint();
+  inventory.evaluateRetainedChecking();
+  inventory.evaluateRetainedChecking();
+  assert.equal(evaluations, 1);
+  inventory.rollbackToSavepoint(savepoint);
+
+  inventory.evaluateRetainedChecking();
+  inventory.evaluateRetainedChecking();
+  assert.equal(evaluations, 2);
+  inventory.finalize();
+  assert.equal(evaluations, 2);
+});
+
+test("committing prepared checked operations settles the exact staged outer transaction once", () => {
+  const { inventory } = createTransactionalTestInventory();
+  const subject = {};
+  let applications = 0;
+  inventory.retain(
+    propertyObservation,
+    checkedPropertyRequest(subject, {}, "value"),
+    () => acceptedInventoryProperty("prepared-commit.value"),
+    () => {
+      applications += 1;
+    },
+  );
+  const outerTransaction = inventory.createSavepoint();
+
+  inventory.prepareFinalization();
+  inventory.commitSavepoint(outerTransaction);
+  inventory.commitFinalization();
+
+  assert.equal(outerTransaction.active, false);
+  assert.equal(applications, 1);
+  assert.doesNotThrow(() => inventory.finalize());
+  assert.equal(applications, 1, "Committed finalization must be idempotent.");
+});
+
+test("parent deferral preserves a pre-existing child's accepted mapper capsule", () => {
+  const { inventory } = createTransactionalTestInventory();
+  const child = {};
+  const blocker = {};
+  const parent = {};
+  let childEvaluations = 0;
+  let childApplications = 0;
+  let blockerApplied = false;
+  let parentApplications = 0;
+  const childRequest = checkedPropertyRequest(child, {}, "child");
+  inventory.retain(
+    propertyObservation,
+    childRequest,
+    () => {
+      childEvaluations += 1;
+      return acceptedInventoryProperty("pre-existing-capsule.child");
+    },
+    () => {
+      childApplications += 1;
+    },
+  );
+  inventory.retain(
+    propertyObservation,
+    checkedPropertyRequest(blocker, {}, "blocker"),
+    () => acceptedInventoryProperty("pre-existing-capsule.blocker"),
+    () => {
+      blockerApplied = true;
+    },
+  );
+
+  const initial = inventory.run(
+    propertyObservation,
+    checkedPropertyRequest(parent, {}, "parent"),
+    () => acceptedInventoryProperty("pre-existing-capsule.parent"),
+    () => {
+      parentApplications += 1;
+      const childResult = inventory.run(
+        propertyObservation,
+        childRequest,
+        () => {
+          assert.fail("The retained child must use its original mapper callback.");
+        },
+        () => {
+          childApplications += 1;
+        },
+        "checking",
+      );
+      assert.equal(childResult.kind, "accept");
+      return blockerApplied
+        ? { kind: "applied" }
+        : { kind: "deferred", unresolved: propertyReference(blocker) };
+    },
+    "checking",
+  );
+
+  assert.equal(initial.kind, "owner-deferred");
+  assert.equal(childEvaluations, 1);
+  assert.equal(childApplications, 1);
+
+  inventory.finalize();
+
+  assert.equal(childEvaluations, 1, "The accepted mapper result must survive the parent's transaction rollback.");
+  assert.equal(childApplications, 2, "The child apply must run once provisionally and once in the committed transaction.");
+  assert.equal(parentApplications, 2);
+});
+
+test("retained dependency references and arrays are immutable snapshots", () => {
+  const { inventory } = createTransactionalTestInventory();
+  const parent = {};
+  const selectedDependency = {};
+  const laterMutation = {};
+  const mutableReference: { observation: typeof propertyObservation; subject: ExtensionFactSubject } = {
+    observation: propertyObservation,
+    subject: selectedDependency,
+  };
+  const mutableDependencies: CheckedOperationReference[] = [mutableReference];
+  const applicationOrder: string[] = [];
+  inventory.retain(
+    propertyObservation,
+    checkedPropertyRequest(parent, {}, "parent"),
+    () => acceptedInventoryProperty("immutable-dependency.parent"),
+    () => {
+      applicationOrder.push("parent");
+    },
+    undefined,
+    mutableDependencies,
+  );
+
+  mutableReference.subject = laterMutation;
+  mutableDependencies.length = 0;
+  mutableDependencies.push(propertyReference(laterMutation));
+
+  inventory.retain(
+    propertyObservation,
+    checkedPropertyRequest(selectedDependency, {}, "selectedDependency"),
+    () => acceptedInventoryProperty("immutable-dependency.selected"),
+    () => {
+      applicationOrder.push("selectedDependency");
+    },
+  );
+  inventory.retain(
+    propertyObservation,
+    checkedPropertyRequest(laterMutation, {}, "laterMutation"),
+    () => deferredInventoryProperty(),
+    () => {
+      assert.fail("The permanently deferred mutation target must not apply.");
+    },
+  );
+
+  inventory.finalize();
+
+  assert.deepEqual(applicationOrder, ["selectedDependency", "parent"]);
+});
+
+test("permanent finalization deferral is evaluated and reported exactly once", () => {
+  let evaluations = 0;
+  let unresolvedReports = 0;
+  const { inventory } = createTransactionalTestInventory({}, {
+    onUnresolved: () => {
+      unresolvedReports += 1;
+    },
+  });
+  inventory.retain(
+    propertyObservation,
+    checkedPropertyRequest({}, {}, "value"),
+    () => {
+      evaluations += 1;
+      return deferredInventoryProperty();
+    },
+    () => {
+      assert.fail("A permanently deferred operation must not apply.");
+    },
+  );
+
+  inventory.finalize();
+  inventory.finalize();
+
+  assert.equal(evaluations, 1);
+  assert.equal(unresolvedReports, 1);
+});
+
+test("checked-operation inventory limits fail before unbounded record, edge, snapshot, or work growth", () => {
+  const recordLimited = createTransactionalTestInventory({ records: 1 }).inventory;
+  recordLimited.retain(
+    propertyObservation,
+    checkedPropertyRequest({}, {}, "first"),
+    () => deferredInventoryProperty(),
+    () => {},
+  );
+  assert.throws(
+    () => recordLimited.retain(
+      propertyObservation,
+      checkedPropertyRequest({}, {}, "second"),
+      () => deferredInventoryProperty(),
+      () => {},
+    ),
+    /1-record session limit/,
+  );
+
+  const edgeLimited = createTransactionalTestInventory({ edges: 0 }).inventory;
+  assert.throws(
+    () => edgeLimited.retain(
+      propertyObservation,
+      checkedPropertyRequest({}, {}, "edge"),
+      () => deferredInventoryProperty(),
+      () => {},
+      undefined,
+      [propertyReference({})],
+    ),
+    /0-entry session limit/,
+  );
+
+  const snapshotLimited = createTransactionalTestInventory({ snapshotWork: 0 }).inventory;
+  assert.throws(
+    () => snapshotLimited.retain(
+      propertyObservation,
+      checkedPropertyRequest({}, {}, "snapshot"),
+      () => deferredInventoryProperty(),
+      () => {},
+    ),
+    /0-unit snapshot-work session limit/,
+  );
+
+  const savepointLimited = createTransactionalTestInventory({ savepointDepth: 1 }).inventory;
+  savepointLimited.createSavepoint();
+  assert.throws(
+    () => savepointLimited.createSavepoint(),
+    /1-savepoint nesting limit/,
+  );
+
+  const activeSnapshotLimited = createTransactionalTestInventory({ activeSnapshots: 0 }).inventory;
+  activeSnapshotLimited.retain(
+    propertyObservation,
+    checkedPropertyRequest({}, {}, "activeSnapshot"),
+    () => deferredInventoryProperty(),
+    () => {},
+  );
+  assert.throws(
+    () => activeSnapshotLimited.finalize(),
+    /0-snapshot transaction limit/,
+  );
+
+  const workLimited = createTransactionalTestInventory({ finalizationWork: 0 }).inventory;
+  workLimited.retain(
+    propertyObservation,
+    checkedPropertyRequest({}, {}, "work"),
+    () => deferredInventoryProperty(),
+    () => {},
+  );
+  assert.throws(
+    () => workLimited.finalize(),
+    /0-unit work limit/,
+  );
 });
 
 test("checked-operation provenance rejects duplicate primary operations for one subject", () => {
@@ -1786,6 +2097,61 @@ function propertyReference(
   return { observation: propertyObservation, subject };
 }
 
+type TransactionalTestSavepoint = ReturnType<CheckedOperationInventory["createSavepoint"]>;
+
+interface TransactionalTestAttempt {
+  readonly savepoint: TransactionalTestSavepoint;
+}
+
+interface TransactionalTestCallbackOverrides {
+  readonly onUnresolved?: CheckedOperationInventoryCallbacks["onUnresolved"];
+  readonly onFatalFailure?: CheckedOperationInventoryCallbacks["onFatalFailure"];
+}
+
+function createTransactionalTestInventory(
+  limits: Partial<CheckedOperationInventoryLimits> = {},
+  overrides: TransactionalTestCallbackOverrides = {},
+): { readonly inventory: CheckedOperationInventory } {
+  let inventory: CheckedOperationInventory;
+  const callbacks: CheckedOperationInventoryCallbacks = {
+    beginAttempt: () => Object.freeze({ savepoint: inventory.createSavepoint() }),
+    captureAttemptEffects: () => Object.freeze({ kind: "test-attempt-effects" }),
+    applyAttemptEffects: () => {},
+    commitAttempt: (attempt) => {
+      inventory.commitSavepoint(transactionalTestAttempt(attempt).savepoint);
+    },
+    rollbackAttempt: (attempt) => {
+      const savepoint = transactionalTestAttempt(attempt).savepoint;
+      if (savepoint.active) {
+        inventory.rollbackToSavepoint(savepoint);
+      }
+    },
+    discardAttemptPreservingDiagnostics: (attempt) => {
+      const savepoint = transactionalTestAttempt(attempt).savepoint;
+      if (savepoint.active) {
+        inventory.rollbackToSavepoint(savepoint);
+      }
+    },
+    deferAttemptPreservingOperations: (attempt) => {
+      return inventory.deferFromSavepoint(transactionalTestAttempt(attempt).savepoint);
+    },
+    onRequestConflict: () => {},
+    onDependencyConflict: () => {},
+    onAtomicOwnerConflict: () => {},
+    onUnresolved: overrides.onUnresolved ?? (() => {}),
+    onFatalFailure: overrides.onFatalFailure ?? (() => {}),
+  };
+  inventory = new CheckedOperationInventory(callbacks, limits);
+  return Object.freeze({ inventory });
+}
+
+function transactionalTestAttempt(value: unknown): TransactionalTestAttempt {
+  if (typeof value !== "object" || value === null || !("savepoint" in value)) {
+    throw new Error("Expected a transactional checked-operation test attempt.");
+  }
+  return value as TransactionalTestAttempt;
+}
+
 function selectedSourceValue(
   expression: ExtensionFactSubject,
   type: ExtensionFactSubject,
@@ -1894,6 +2260,22 @@ function operation(targetOperation: string, operationKind: TargetOperationFact["
     operationId: targetOperation,
     operationKind,
     targetOperation,
+  };
+}
+
+function acceptedInventoryProperty(targetOperation: string): ExtensionObservationResult<CheckedOperationMappingResult> {
+  return {
+    kind: "accept",
+    value: { operation: operation(targetOperation) },
+    extensionId: "checked-operation-finalization-hardening-inventory",
+  };
+}
+
+function deferredInventoryProperty(): ExtensionObservationResult<CheckedOperationMappingResult> {
+  return {
+    kind: "owner-deferred",
+    observation: propertyObservation,
+    extensionId: "checked-operation-finalization-hardening-inventory",
   };
 }
 

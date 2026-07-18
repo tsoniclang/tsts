@@ -2,12 +2,18 @@ import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
 import {
   beginExtensionCheckedSourceFileDecision,
+  beginExtensionCheckedSourceDiscardDecision,
   commitExtensionCheckedSourceFileDecision,
+  extensionCheckedSourceDecisionDiscardActive,
+  extensionCheckedSourceDecisionOwner,
   hasExtensionCheckedOperationHost,
   recordExtensionCheckedCallMapping,
   recordExtensionCheckedIterationMapping,
   recordExtensionCheckedOperatorKindMapping,
   recordExtensionCheckedOperatorMapping,
+  journalExtensionCheckedExpressionCache,
+  preserveEquivalentCheckedSourceType,
+  rollbackExtensionCheckedSourceDiscardDecision,
   rollbackExtensionCheckedSourceDecision,
 } from "../../../extensions/checker-integration.js";
 import { ExtensionObservationPoint } from "../../../extensions/observations.js";
@@ -307,7 +313,7 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: Context, 
   receiver!.ctx = ctx;
   const links = Checker_getSourceFileLinks(receiver, sourceFile);
   if (!links!.typeChecked) {
-    const checkedSourceDecision = beginExtensionCheckedSourceFileDecision(receiver);
+    const checkedSourceDecision = beginExtensionCheckedSourceFileDecision(receiver, sourceFile);
     let checkedSourceCompleted = false;
     try {
       receiver!.saveDeferredDiagnostics = true as bool;
@@ -325,11 +331,16 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: Context, 
       receiver!.saveDeferredDiagnostics = false as bool;
       Checker_produceDeferredDiagnostics(receiver);
       Set_Clear(receiver!.reportedUnreachableNodes);
-      checkedSourceCompleted = true;
+      checkedSourceCompleted = !Checker_isCanceled(receiver);
     } finally {
       if (checkedSourceCompleted) {
-        commitExtensionCheckedSourceFileDecision(receiver, checkedSourceDecision);
         links!.typeChecked = true as bool;
+        try {
+          commitExtensionCheckedSourceFileDecision(receiver, checkedSourceDecision);
+        } catch (error) {
+          links!.typeChecked = false as bool;
+          throw error;
+        }
       } else {
         rollbackExtensionCheckedSourceDecision(receiver, checkedSourceDecision);
       }
@@ -1390,14 +1401,39 @@ export function Checker_checkExpressionCachedEx(receiver: GoPtr<Checker>, node: 
     return Checker_checkExpressionEx(receiver, node, checkMode);
   }
   const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
-  if (links!.resolvedType === undefined) {
+  const ownerSourceFile = extensionCheckedSourceDecisionOwner(receiver);
+  const nodeSourceFile = GetSourceFileOfNode(node);
+  const authoritativeSourceCheck = ownerSourceFile !== undefined && nodeSourceFile === ownerSourceFile;
+  const requiresAuthoritativeRecheck = authoritativeSourceCheck
+    && links!.resolvedType !== undefined
+    && links!.extensionSourceDecisionOwner !== ownerSourceFile;
+  if (links!.resolvedType === undefined || requiresAuthoritativeRecheck) {
+    const existingResolvedType = links!.resolvedType;
     const saveFlowLoopStack = receiver!.flowLoopStack;
     const saveFlowTypeCache = receiver!.flowTypeCache;
-    receiver!.flowLoopStack = [];
-    receiver!.flowTypeCache = undefined as unknown as GoMap<GoPtr<Node>, GoPtr<Type>>;
-    links!.resolvedType = Checker_checkExpressionEx(receiver, node, checkMode);
-    receiver!.flowTypeCache = saveFlowTypeCache;
-    receiver!.flowLoopStack = saveFlowLoopStack;
+    const foreignSourceDiscard = ownerSourceFile !== undefined
+        && nodeSourceFile !== ownerSourceFile
+        && !extensionCheckedSourceDecisionDiscardActive(receiver)
+      ? beginExtensionCheckedSourceDiscardDecision(receiver)
+      : undefined;
+    try {
+      receiver!.flowLoopStack = [];
+      receiver!.flowTypeCache = undefined as unknown as GoMap<GoPtr<Node>, GoPtr<Type>>;
+      const resolvedType = Checker_checkExpressionEx(receiver, node, checkMode);
+      if (authoritativeSourceCheck) {
+        journalExtensionCheckedExpressionCache(receiver, links!);
+        links!.resolvedType = preserveEquivalentCheckedSourceType(existingResolvedType, resolvedType);
+        links!.extensionSourceDecisionOwner = ownerSourceFile;
+      } else {
+        links!.resolvedType = resolvedType;
+      }
+    } finally {
+      receiver!.flowTypeCache = saveFlowTypeCache;
+      receiver!.flowLoopStack = saveFlowLoopStack;
+      if (foreignSourceDiscard !== undefined) {
+        rollbackExtensionCheckedSourceDiscardDecision(receiver, foreignSourceDiscard);
+      }
+    }
   }
   return links!.resolvedType;
 }

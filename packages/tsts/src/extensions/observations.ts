@@ -304,10 +304,12 @@ export interface ContextualTargetTypeResult {
   readonly targetType?: TargetTypeRef;
 }
 
+export type CheckedFlowUseMode = "read" | "write" | "read-write" | "call";
+
 export interface ExtensionFlowUseValidationRequest {
   readonly useSite: ExtensionFactSubject;
   readonly symbol: ExtensionFactSubject;
-  readonly mode?: ArgumentPassingMode | "read" | "write" | "call";
+  readonly mode: CheckedFlowUseMode;
   readonly target?: string;
 }
 

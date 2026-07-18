@@ -782,6 +782,8 @@ export function Checker_GetContextualType(receiver: GoPtr<Checker>, node: GoPtr<
  * }
  */
 export function runWithInferenceBlockedFromSourceNode<T>(c: GoPtr<Checker>, node: GoPtr<Node>, fn: () => T): T {
+  const previousInferencePartiallyBlocked = c!.isInferencePartiallyBlocked;
+  const previousSkipDirectInferenceNodes = new globalThis.Map(c!.skipDirectInferenceNodes!.M);
   const containingCall = FindAncestor(node, IsCallLikeExpression);
   if (containingCall !== undefined) {
     let toMarkSkip: GoPtr<Node> = node;
@@ -795,11 +797,15 @@ export function runWithInferenceBlockedFromSourceNode<T>(c: GoPtr<Checker>, node
   }
 
   c!.isInferencePartiallyBlocked = true;
-  const result = runWithoutResolvedSignatureCaching(c, node, fn);
-  c!.isInferencePartiallyBlocked = false;
-
-  Set_Clear(c!.skipDirectInferenceNodes);
-  return result;
+  try {
+    return runWithoutResolvedSignatureCaching(c, node, fn);
+  } finally {
+    c!.isInferencePartiallyBlocked = previousInferencePartiallyBlocked;
+    Set_Clear(c!.skipDirectInferenceNodes);
+    for (const [skipNode, value] of previousSkipDirectInferenceNodes) {
+      c!.skipDirectInferenceNodes!.M.set(skipNode, value);
+    }
+  }
 }
 
 /**
@@ -860,15 +866,33 @@ export function GetResolvedSignatureForSignatureHelp(node: GoPtr<Node>, argument
  * }
  */
 export function runWithoutResolvedSignatureCaching<T>(c: GoPtr<Checker>, node: GoPtr<Node>, fn: () => T): T {
+  const discardDecision = beginExtensionCheckedSourceDiscardDecision(c);
   let ancestorNode = FindAncestor(node, IsCallLikeOrFunctionLikeExpression);
-  if (ancestorNode !== undefined) {
-    const cachedResolvedSignatures: Map<SignatureLinks, GoPtr<Signature>> = new globalThis.Map();
-    const cachedTypes: Map<ValueSymbolLinks, GoPtr<Type>> = new globalThis.Map();
+  const cachedResolvedSignatures: Map<SignatureLinks, {
+    readonly resolvedSignature: GoPtr<Signature>;
+    readonly checkedCallSelectionSeed: SignatureLinks["checkedCallSelectionSeed"];
+    readonly resolvedCallSelectionEvidence: SignatureLinks["resolvedCallSelectionEvidence"];
+    readonly resolvedCallEvidence: SignatureLinks["resolvedCallEvidence"];
+    readonly extensionSourceDecisionOwner: SignatureLinks["extensionSourceDecisionOwner"];
+  }> = new globalThis.Map();
+  const cachedTypes: Map<ValueSymbolLinks, GoPtr<Type>> = new globalThis.Map();
+  try {
+    if (ancestorNode !== undefined) {
     let current: GoPtr<Node> = ancestorNode;
     while (current !== undefined) {
       const signatureLinks = LinkStore_Get<GoPtr<Node>, SignatureLinks>(c!.signatureLinks as unknown as LinkStore<GoPtr<Node>, SignatureLinks>, current)!;
-      cachedResolvedSignatures.set(signatureLinks, signatureLinks.resolvedSignature);
+      cachedResolvedSignatures.set(signatureLinks, {
+        resolvedSignature: signatureLinks.resolvedSignature,
+        checkedCallSelectionSeed: signatureLinks.checkedCallSelectionSeed,
+        resolvedCallSelectionEvidence: signatureLinks.resolvedCallSelectionEvidence,
+        resolvedCallEvidence: signatureLinks.resolvedCallEvidence,
+        extensionSourceDecisionOwner: signatureLinks.extensionSourceDecisionOwner,
+      });
       signatureLinks.resolvedSignature = undefined;
+      signatureLinks.checkedCallSelectionSeed = undefined;
+      signatureLinks.resolvedCallSelectionEvidence = undefined;
+      signatureLinks.resolvedCallEvidence = undefined;
+      signatureLinks.extensionSourceDecisionOwner = undefined;
       if (IsFunctionExpressionOrArrowFunction(current)) {
         const symbolLinks = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(c!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, Checker_getSymbolOfDeclaration(c, current))!;
         const resolvedType = symbolLinks.resolvedType;
@@ -877,16 +901,23 @@ export function runWithoutResolvedSignatureCaching<T>(c: GoPtr<Checker>, node: G
       }
       current = FindAncestor(current!.Parent, IsCallLikeOrFunctionLikeExpression);
     }
-    const result = fn();
-    for (const [signatureLinks, resolvedSignature] of cachedResolvedSignatures) {
-      signatureLinks.resolvedSignature = resolvedSignature;
+    }
+    return fn();
+  } finally {
+    for (const [signatureLinks, snapshot] of cachedResolvedSignatures) {
+      signatureLinks.resolvedSignature = snapshot.resolvedSignature;
+      signatureLinks.checkedCallSelectionSeed = snapshot.checkedCallSelectionSeed;
+      signatureLinks.resolvedCallSelectionEvidence = snapshot.resolvedCallSelectionEvidence;
+      signatureLinks.resolvedCallEvidence = snapshot.resolvedCallEvidence;
+      signatureLinks.extensionSourceDecisionOwner = snapshot.extensionSourceDecisionOwner;
     }
     for (const [symbolLinks, resolvedType] of cachedTypes) {
       symbolLinks.resolvedType = resolvedType;
     }
-    return result;
+    if (discardDecision !== undefined) {
+      rollbackExtensionCheckedSourceDiscardDecision(c, discardDecision);
+    }
   }
-  return fn();
 }
 
 /**
