@@ -108,12 +108,44 @@ test("public type-checker queries expose flow-narrowed receiver member access", 
   assertCleanSemanticDiagnostics(program, index);
 });
 
-function createProgram(sourceText: string): { readonly program: GoPtr<Program>; readonly index: GoPtr<SourceFile> } {
+test("assertion flow does not create false initializer circularity", () => {
+  const { program, index } = createProgram(`
+    interface RequestedExport {
+      readonly exportedName: string;
+      readonly localName?: string | undefined;
+    }
+
+    declare function assertBoundaryString(value: unknown): asserts value is string;
+    declare function countString(value: string): void;
+
+    export function snapshot(requestedExports: readonly RequestedExport[] | undefined): readonly string[] {
+      const entries: string[] = [];
+      if (requestedExports !== undefined) {
+        for (let index = 0; index < requestedExports.length; index++) {
+          const request = requestedExports[index];
+          const exportedName = request.exportedName;
+          const localName = request.localName;
+          assertBoundaryString(exportedName);
+          countString(exportedName);
+          if (localName !== undefined) {
+            assertBoundaryString(localName);
+            countString(localName);
+          }
+          entries.push(localName === undefined ? exportedName : localName);
+        }
+      }
+      return entries;
+    }
+  `, { noLib: false });
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+function createProgram(sourceText: string, settings: { readonly noLib?: boolean } = {}): { readonly program: GoPtr<Program>; readonly index: GoPtr<SourceFile> } {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", sourceText],
     ["/src/tsconfig.json", JSON.stringify({
       compilerOptions: {
-        noLib: true,
+        noLib: settings.noLib ?? true,
         module: "esnext",
         moduleResolution: "bundler",
         strict: true,
