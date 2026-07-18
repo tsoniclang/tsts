@@ -45,10 +45,10 @@ import type {
   TargetOperationFact,
 } from "./index.js";
 
-const receiverCarrierFactKey = defineExtensionFactKey<{ readonly id: string }>({
+const lifecycleReadyFactKey = defineExtensionFactKey<{ readonly ready: true }>({
   extensionId: "acme.lifecycle-program-test",
-  name: "receiverCarrier",
-  equals: (left, right) => left.id === right.id,
+  name: "lifecycleReady",
+  equals: (left, right) => left.ready === right.ready,
 });
 
 test("normal checking finalizes generic receiver calls and property assignment from retained evidence", () => {
@@ -56,7 +56,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
   const elementRequests: CheckedElementAccessMappingRequest[] = [];
   const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
   const operatorRequests: CheckedOperatorMappingRequest[] = [];
-  const receiverTypes = new Set<ExtensionFactSubject>();
+  const lifecycleSubject = Object.freeze({});
   const carrierIds = new Map<ExtensionFactSubject, string>();
   const memberIds = new WeakMap<object, string>();
   let nextMemberId = 1;
@@ -68,13 +68,7 @@ test("normal checking finalizes generic receiver calls and property assignment f
     },
     initialize(context): void {
       context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, (_request, lifecycleContext) => {
-        let carrierIndex = 1;
-        for (const receiverType of receiverTypes) {
-          const carrierId = `Box<${carrierIndex}>`;
-          carrierIndex += 1;
-          carrierIds.set(receiverType, carrierId);
-          lifecycleContext.host.facts.set(receiverType, receiverCarrierFactKey, { id: carrierId });
-        }
+        lifecycleContext.host.facts.set(lifecycleSubject, lifecycleReadyFactKey, { ready: true });
       });
       assert.equal(context.registerTargetSemanticProvider({
         identity: {
@@ -90,13 +84,13 @@ test("normal checking finalizes generic receiver calls and property assignment f
           if (receiverType === undefined) {
             return deferObservation;
           }
-          receiverTypes.add(receiverType);
-          const carrier = observationContext.facts.get(receiverType, receiverCarrierFactKey);
-          if (carrier === undefined) {
+          if (observationContext.facts.get(lifecycleSubject, lifecycleReadyFactKey) === undefined) {
             return deferObservation;
           }
+          const carrierId = carrierIds.get(receiverType) ?? `Box<${carrierIds.size + 1}>`;
+          carrierIds.set(receiverType, carrierId);
           return acceptObservation({
-            operation: operation(`${carrier.id}.${identityId(request.sourceResult.selectedDeclaration, memberIds, () => nextMemberId++)}`, "property"),
+            operation: operation(`${carrierId}.${identityId(request.sourceResult.selectedDeclaration, memberIds, () => nextMemberId++)}`, "property"),
           });
         },
         mapCheckedElementAccess: (request, observationContext) => {
@@ -105,13 +99,13 @@ test("normal checking finalizes generic receiver calls and property assignment f
           if (receiverType === undefined) {
             return deferObservation;
           }
-          receiverTypes.add(receiverType);
-          const carrier = observationContext.facts.get(receiverType, receiverCarrierFactKey);
-          if (carrier === undefined) {
+          if (observationContext.facts.get(lifecycleSubject, lifecycleReadyFactKey) === undefined) {
             return deferObservation;
           }
+          const carrierId = carrierIds.get(receiverType) ?? `Box<${carrierIds.size + 1}>`;
+          carrierIds.set(receiverType, carrierId);
           return acceptObservation({
-            operation: operation(`${carrier.id}.element`, "indexer"),
+            operation: operation(`${carrierId}.element`, "indexer"),
           });
         },
         mapCheckedCall: (request, observationContext) => {
@@ -123,13 +117,14 @@ test("normal checking finalizes generic receiver calls and property assignment f
           if (receiverType === undefined) {
             return deferObservation;
           }
-          receiverTypes.add(receiverType);
-          const carrier = observationContext.facts.get(receiverType, receiverCarrierFactKey);
+          const ready = observationContext.facts.get(lifecycleSubject, lifecycleReadyFactKey);
           const calleeOperation = observationContext.facts.get(request.callee, targetOperationFactKey);
-          if (carrier === undefined || calleeOperation === undefined) {
+          if (ready === undefined || calleeOperation === undefined) {
             return deferObservation;
           }
-          return acceptObservation(callResult(`${carrier.id}.${calleeOperation.targetOperation}`, request));
+          const carrierId = carrierIds.get(receiverType) ?? `Box<${carrierIds.size + 1}>`;
+          carrierIds.set(receiverType, carrierId);
+          return acceptObservation(callResult(`${carrierId}.${calleeOperation.targetOperation}`, request));
         },
         mapCheckedOperator: (request, observationContext) => {
           operatorRequests.push(request);
@@ -394,21 +389,20 @@ test("call-only mapping retains real nested callee inputs without synthesizing p
   `);
 
   assertCleanProgram(program);
-  assert.equal(callRequests.length, 4);
-  assert.equal(observations.filter((entry) => entry === "input:checking").length, 2);
-  assert.equal(observations.filter((entry) => entry === "receiver:checking").length, 2);
+  assert.equal(callRequests.length, 0, "Checked call mappers must not run during source checking.");
+  assert.equal(observations.length, 0);
   finalizeExtensionSemantics(programOptions);
 
-  assert.equal(callRequests.length, 8);
+  assert.equal(callRequests.length, 6);
   const receiverCalls = callRequests.filter((request) => request.sourceReceiver !== undefined);
   const inputCalls = callRequests.filter((request) => request.sourceReceiver === undefined);
   assert.equal(receiverCalls.length, 4);
-  assert.equal(inputCalls.length, 4);
+  assert.equal(inputCalls.length, 2);
   assert.equal(new Set(callRequests.map((request) => request.call)).size, 6);
   assert.equal(receiverCalls.filter((request) => request.optionalChain === true).length, 1);
   assert.ok(receiverCalls.every((request) => extensionHost.facts.get(request.callee, targetOperationFactKey) === undefined));
   assert.equal(observations.filter((entry) => entry === "input:finalization").length, 2);
-  assert.equal(observations.filter((entry) => entry === "receiver:finalization").length, 2);
+  assert.equal(observations.filter((entry) => entry === "receiver:finalization").length, 4);
   assert.ok([...new Set(callRequests.map((request) => request.call))]
     .every((call) => extensionHost.facts.get(call, selectedTargetSignatureFactKey) !== undefined));
   assert.equal(extensionHost.diagnostics.all().length, 0, "Nested call finalization must not report extension diagnostics.");
@@ -427,14 +421,16 @@ test("property mapper receives TS-Go member-selection receiver types", () => {
       context.registerObservation(ExtensionObservationPoint.mapCheckedPropertyAccess, (request) => {
         const memberSelectionType = request.sourceReceiver.type as GoPtr<Type>;
         observedTypes.set(request.propertyName, Type_Symbol(memberSelectionType)?.Name);
-        return deferObservation;
+        return acceptObservation({ operation: operation(`member.${request.propertyName}`, "property") });
       });
     },
   };
-  const { program, extensionHost } = createMemberSelectionProgram(extension);
+  const { program, programOptions, extensionHost } = createMemberSelectionProgram(extension);
 
   assertCleanProgram(program);
   assert.equal(extensionHost.diagnostics.all().length, 0, "Member-selection checking must not report extension diagnostics.");
+  assert.equal(observedTypes.size, 0, "Property mappers must wait for semantic finalization.");
+  finalizeExtensionSemantics(programOptions);
   assert.equal(observedTypes.size, 2);
   assert.equal(observedTypes.get("genericMember"), "MemberConstraint");
   assert.equal(observedTypes.get("primitiveMember"), "String");
@@ -541,6 +537,7 @@ function createLifecycleProgram(extension: CompilerExtension, sourceText?: strin
 
 function createMemberSelectionProgram(extension: CompilerExtension): {
   readonly program: GoPtr<Program>;
+  readonly programOptions: ProgramOptions;
   readonly extensionHost: ExtensionHost;
 } {
   const files = new Map<string, string>([
@@ -578,7 +575,7 @@ function createMemberSelectionProgram(extension: CompilerExtension): {
   const programOptions = { Config: parsed, Host: host } satisfies ProgramOptions;
   const extended = attachExtensionHost(programOptions, { extensions: [extension] });
   const program = NewProgram(extended.program);
-  return { program, extensionHost: extended.extensionHost };
+  return { program, programOptions: extended.program, extensionHost: extended.extensionHost };
 }
 
 function assertCleanProgram(program: GoPtr<Program>): void {

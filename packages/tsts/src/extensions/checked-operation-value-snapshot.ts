@@ -391,9 +391,7 @@ function snapshotOperatorRequest(request: CheckedOperatorMappingRequest, path: S
     operator: request.operator,
     left: request.left,
     ...(request.right === undefined ? {} : { right: request.right }),
-    ...(request.sourceLeft === undefined ? {} : {
-      sourceLeft: snapshotSelectedSourceValueEvidence(request.sourceLeft, childSnapshotPath(path, "sourceLeft")),
-    }),
+    sourceLeft: snapshotSelectedSourceValueEvidence(request.sourceLeft, childSnapshotPath(path, "sourceLeft")),
     ...(request.sourceRight === undefined ? {} : {
       sourceRight: snapshotSelectedSourceValueEvidence(request.sourceRight, childSnapshotPath(path, "sourceRight")),
     }),

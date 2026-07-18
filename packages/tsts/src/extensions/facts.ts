@@ -496,18 +496,22 @@ function sourceSelectedCallArgumentBindingArrayEquals(
   right: readonly SourceSelectedCallArgumentBinding[],
 ): boolean {
   return left.length === right.length
-    && left.every((binding, index) => {
-      const other = right[index];
-      return other !== undefined
-        && binding.sourceArgumentIndex === other.sourceArgumentIndex
-        && binding.effectiveArgumentIndex === other.effectiveArgumentIndex
-        && binding.sourceForm === other.sourceForm
-        && binding.spreadElementIndex === other.spreadElementIndex
-        && binding.sourceParameterIndex === other.sourceParameterIndex
-        && binding.sourceParameterForm === other.sourceParameterForm
-        && binding.selectedArgumentType === other.selectedArgumentType
-        && binding.selectedParameterType === other.selectedParameterType;
-    });
+    && left.every((binding, index) => right[index] !== undefined
+      && sourceSelectedCallArgumentBindingEquals(binding, right[index]!));
+}
+
+function sourceSelectedCallArgumentBindingEquals(
+  left: SourceSelectedCallArgumentBinding,
+  right: SourceSelectedCallArgumentBinding,
+): boolean {
+  return left.sourceArgumentIndex === right.sourceArgumentIndex
+    && left.effectiveArgumentIndex === right.effectiveArgumentIndex
+    && left.sourceForm === right.sourceForm
+    && left.spreadElementIndex === right.spreadElementIndex
+    && left.sourceParameterIndex === right.sourceParameterIndex
+    && left.sourceParameterForm === right.sourceParameterForm
+    && left.selectedArgumentType === right.selectedArgumentType
+    && left.selectedParameterType === right.selectedParameterType;
 }
 
 function selectedSourceTypeEvidenceEquals(left: SelectedSourceTypeEvidence, right: SelectedSourceTypeEvidence): boolean {
@@ -599,6 +603,7 @@ export const targetCallArgumentConversionFactKey = defineExtensionFactKey<Target
     && left.sourceForm === right.sourceForm
     && left.spreadElementIndex === right.spreadElementIndex
     && left.targetForm === right.targetForm
+    && sourceSelectedCallArgumentBindingEquals(left.sourceBinding, right.sourceBinding)
     && optionalTargetTypeRefEquals(left.convertedType, right.convertedType)
     && optionalTargetOperationFactEquals(left.operation, right.operation),
 });
@@ -615,6 +620,7 @@ export const targetCallArgumentPassingFactKey = defineExtensionFactKey<TargetCal
     && left.sourceForm === right.sourceForm
     && left.spreadElementIndex === right.spreadElementIndex
     && left.targetForm === right.targetForm
+    && sourceSelectedCallArgumentBindingEquals(left.sourceBinding, right.sourceBinding)
     && targetParameterEquals(left.targetParameter, right.targetParameter)
     && optionalProviderDeclarationIdentityEquals(left.selectedSignature, right.selectedSignature),
 });

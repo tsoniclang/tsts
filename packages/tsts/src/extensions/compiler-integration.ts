@@ -1,9 +1,12 @@
 import type { GoPtr } from "../go/compat.js";
+import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { Node_Body, Node_Expression, Node_Locals, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text, Node_TypeArguments, SourceFile_FileName } from "../internal/ast/ast.js";
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import type { Type } from "../internal/checker/types.js";
+import type { Program } from "../internal/compiler/program.js";
+import { Program_GetSemanticDiagnostics } from "../internal/compiler/program.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSymbolId } from "../internal/ast/utilities.js";
 import {
@@ -86,6 +89,7 @@ export function finalizeExtensionSemantics(program: object): ExtensionHost | und
   if (extensionHost === undefined) {
     return undefined;
   }
+  Program_GetSemanticDiagnostics(extensionHost.program as GoPtr<Program>, Background(), undefined);
   extensionHost.finalizeSemantics();
   return extensionHost;
 }

@@ -164,6 +164,7 @@ test("checked-operation finalization rejects a dependency cycle", () => {
 test("checked-operation provenance rejects duplicate primary operations for one subject", () => {
   const host = new ExtensionHost({});
   const subject = {};
+  const operatorLeft = {};
   retainPropertyOperation(host, subject);
 
   const initialReference = host[extensionHostGetCheckedOperationReference](subject);
@@ -173,8 +174,9 @@ test("checked-operation provenance rejects duplicate primary operations for one 
   host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedOperator, {
     expression: subject,
     operator: "+",
-    left: {},
+    left: operatorLeft,
     right: {},
+    sourceLeft: selectedSourceValue(operatorLeft, {}),
     sourceResult: selectedSourceValue(subject, {}),
   }, () => ({ operation: operation("retained.operator", "operator") }), () => {});
 
@@ -770,6 +772,163 @@ test("nested atomic ownership finalizes in exact inner-to-outer order", () => {
   assert.equal(host.finalized, true);
 });
 
+test("a permanently deferred atomic child terminalizes its owner without retrying an unchanged graph", () => {
+  const targetId = arbitraryTargetIds[0];
+  const parent = {};
+  const child = {};
+  const owner = propertyReference(parent);
+  const childRequest = checkedPropertyRequest(child, {}, "child", targetId);
+  let childMapperRuns = 0;
+  let parentApplications = 0;
+  const extension = propertyProviderExtension("permanent-atomic-deferral", targetId, (request) => {
+    if (request.propertyName === "child") {
+      childMapperRuns += 1;
+      return deferObservation;
+    }
+    return acceptObservation({ operation: operation("permanent-atomic-deferral.parent") });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+
+  const initial = host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest(parent, {}, "parent", targetId),
+    () => {
+      throw new Error("The provider-owned parent reached core.");
+    },
+    (accepted) => {
+      parentApplications += 1;
+      const childResult = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        childRequest,
+        () => {
+          throw new Error("The provider-owned child reached core.");
+        },
+        () => {
+          assert.fail("A permanently deferred child must never apply.");
+        },
+        { requireOwner: true },
+        undefined,
+        [],
+        owner,
+      );
+      if (childResult.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(child) };
+      }
+      host.facts.set(parent, targetOperationFactKey, accepted.operation);
+    },
+    { requireOwner: true },
+  );
+
+  assert.equal(initial.kind, "owner-deferred");
+  host.finalizeSemantics();
+  assert.equal(childMapperRuns, 2, "The child is checked once initially and once at finalization, never polled indefinitely.");
+  assert.equal(parentApplications, 2);
+  assert.equal(host.facts.get(parent, targetOperationFactKey), undefined);
+  assert.equal(host.facts.get(child, targetOperationFactKey), undefined);
+  assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "OBSERVATION_OWNER_DEFERRED").length, 1);
+  assert.equal(host.finalized, true);
+});
+
+test("a pre-existing atomic child replays retained effects after a later parent rollback", () => {
+  const targetId = arbitraryTargetIds[0];
+  const blocker = {};
+  const parent = {};
+  const acceptedChild = {};
+  const lateChild = {};
+  const lateTrigger = {};
+  const parentOwner = propertyReference(parent);
+  const acceptedChildRequest = checkedPropertyRequest(acceptedChild, {}, "acceptedChild", targetId);
+  const lateChildRequest = checkedPropertyRequest(lateChild, {}, "lateChild", targetId);
+  const acceptedChildApplications: string[] = [];
+  let acceptedChildMapperRuns = 0;
+  const extension = propertyProviderExtension("pre-existing-child-replay", targetId, (request, context) => {
+    if ((request.propertyName === "blocker" || request.propertyName === "lateTrigger")
+      && context.phase === "checking") {
+      return deferObservation;
+    }
+    if (request.propertyName === "acceptedChild") {
+      acceptedChildMapperRuns += 1;
+    }
+    context.facts.set(request.expression, transactionFactKey, { value: `hook:${request.propertyName}` });
+    return acceptObservation({ operation: operation(`pre-existing-child-replay.${request.propertyName}`) });
+  });
+  const host = new ExtensionHost({}, { extensions: [extension], activeTarget: targetId });
+
+  const blockerResult = runPropertyOperation(host, blocker, targetId, "blocker", (accepted) => {
+    host.facts.set(blocker, targetOperationFactKey, accepted.operation);
+  });
+  assert.equal(blockerResult.kind, "owner-deferred");
+
+  const parentResult = host[extensionHostRunCheckedOperation](
+    propertyObservation,
+    checkedPropertyRequest(parent, {}, "parent", targetId),
+    () => {
+      throw new Error("The provider-owned parent reached core.");
+    },
+    (accepted) => {
+      if (host.facts.get(blocker, targetOperationFactKey) === undefined) {
+        return { kind: "deferred", unresolved: propertyReference(blocker) };
+      }
+      const acceptedChildResult = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        acceptedChildRequest,
+        () => {
+          throw new Error("The provider-owned accepted child reached core.");
+        },
+        (child) => {
+          acceptedChildApplications.push("acceptedChild");
+          host.facts.set(acceptedChild, targetOperationFactKey, child.operation);
+        },
+        { requireOwner: true },
+        undefined,
+        [],
+        parentOwner,
+      );
+      if (acceptedChildResult.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(acceptedChild) };
+      }
+      const lateChildResult = host[extensionHostRunCheckedOperation](
+        propertyObservation,
+        lateChildRequest,
+        () => {
+          throw new Error("The provider-owned late child reached core.");
+        },
+        (child) => {
+          host.facts.set(lateChild, targetOperationFactKey, child.operation);
+        },
+        { requireOwner: true },
+        undefined,
+        [propertyReference(lateTrigger)],
+        parentOwner,
+      );
+      if (lateChildResult.kind !== "accept") {
+        return { kind: "deferred", unresolved: propertyReference(lateChild) };
+      }
+      host.facts.set(parent, targetOperationFactKey, accepted.operation);
+    },
+    { requireOwner: true },
+    undefined,
+    [propertyReference(blocker)],
+  );
+  assert.equal(parentResult.kind, "owner-deferred");
+
+  const lateTriggerResult = runPropertyOperation(host, lateTrigger, targetId, "lateTrigger", (accepted) => {
+    host.facts.set(lateTrigger, targetOperationFactKey, accepted.operation);
+  });
+  assert.equal(lateTriggerResult.kind, "owner-deferred");
+
+  host.finalizeSemantics();
+
+  assert.equal(acceptedChildMapperRuns, 1, "The accepted mapper capsule must be retained rather than re-evaluated.");
+  assert.deepEqual(acceptedChildApplications, ["acceptedChild", "acceptedChild"], "The child apply runs once in the rolled-back parent attempt and once in the committed attempt.");
+  assert.equal(host.facts.get(acceptedChild, targetOperationFactKey)?.targetOperation, "pre-existing-child-replay.acceptedChild");
+  assert.equal(host.facts.get(acceptedChild, transactionFactKey)?.value, "hook:acceptedChild");
+  assert.equal(host.facts.get(lateChild, targetOperationFactKey)?.targetOperation, "pre-existing-child-replay.lateChild");
+  assert.equal(host.facts.get(parent, targetOperationFactKey)?.targetOperation, "pre-existing-child-replay.parent");
+  assert.equal(host.diagnostics.all().length, 0);
+  assert.equal(host.finalized, true);
+});
+
 test("a retained atomic child cannot be replayed under a different owner", () => {
   const targetId = arbitraryTargetIds[0];
   const firstParent = {};
@@ -1297,12 +1456,14 @@ test("a throwing lifecycle hook rolls back checked operations created by that ho
 test("duplicate primary operations fail during finalization without requiring a provenance query", () => {
   const host = new ExtensionHost({});
   const subject = {};
+  const operatorLeft = {};
   retainPropertyOperation(host, subject);
   host[extensionHostRunCheckedOperation](ExtensionObservationPoint.mapCheckedOperator, {
     expression: subject,
     operator: "+",
-    left: {},
+    left: operatorLeft,
     right: {},
+    sourceLeft: selectedSourceValue(operatorLeft, {}),
     sourceResult: selectedSourceValue(subject, {}),
   }, () => ({ operation: operation("duplicate.operator", "operator") }), () => {});
 

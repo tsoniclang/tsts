@@ -116,6 +116,8 @@ export const ExtensionHostDiagnosticCode = {
 export const TstsProviderContractVersion = "tsts.provider.2";
 
 export const extensionHostRunCheckedOperation: unique symbol = Symbol("tsts.extensionHost.runCheckedOperation");
+export const extensionHostRetainCheckedOperation: unique symbol = Symbol("tsts.extensionHost.retainCheckedOperation");
+export const extensionHostPublishSourceDecisionBatch: unique symbol = Symbol("tsts.extensionHost.publishSourceDecisionBatch");
 export const extensionHostGetCheckedOperationRequest: unique symbol = Symbol("tsts.extensionHost.getCheckedOperationRequest");
 export const extensionHostGetCheckedOperationReference: unique symbol = Symbol("tsts.extensionHost.getCheckedOperationReference");
 export const extensionHostHasCheckedOperationOwner: unique symbol = Symbol("tsts.extensionHost.hasCheckedOperationOwner");
@@ -148,14 +150,14 @@ type ExtensionFactAttempt =
   | {
       readonly ownsTransaction: true;
       readonly transaction: ExtensionFactTransaction;
-      readonly checkedOperationSavepoint: number;
+      readonly checkedOperationSavepoint: CheckedOperationSavepoint;
       readonly diagnosticSavepoint: ExtensionDiagnosticSavepoint;
       active: boolean;
     }
   | {
       readonly ownsTransaction: false;
       readonly savepoint: ExtensionFactSavepoint;
-      readonly checkedOperationSavepoint: number;
+      readonly checkedOperationSavepoint: CheckedOperationSavepoint;
       readonly diagnosticSavepoint: ExtensionDiagnosticSavepoint;
       active: boolean;
     };
@@ -194,6 +196,8 @@ interface ExtensionAttemptDelta {
   readonly facts: ExtensionFactDelta;
   readonly diagnostics: readonly ExtensionDiagnostic[];
 }
+
+type CheckedOperationSavepoint = ReturnType<CheckedOperationInventory["createSavepoint"]>;
 
 export interface CompilerExtensionIdentity {
   readonly id: string;
@@ -2995,6 +2999,61 @@ export class ExtensionHost {
     }
   }
 
+  [extensionHostRetainCheckedOperation]<TObservation extends CheckedOperationObservationPointName>(
+    observation: TObservation,
+    request: ExtensionObservationRequest<TObservation>,
+    core: () => ExtensionObservationResponse<TObservation>,
+    onAccept: (
+      value: ExtensionObservationResponse<TObservation>,
+      evidence: readonly ExtensionEvidence[],
+      request: ExtensionObservationRequest<TObservation>,
+    ) => void | CheckedOperationApplyOutcome,
+    options: ExtensionObservationRunOptions = {},
+    requestSnapshotCache?: CheckedOperationRequestSnapshotCache,
+    dependencies: readonly CheckedOperationReference[] = [],
+  ): CheckedOperationReference<TObservation> {
+    this.#assertCheckedOperationRecordingAvailable();
+    if (this.#observationHookDepth !== 0) {
+      const error = new Error("Observation hooks cannot retain checked operations while observation candidates are being arbitrated.");
+      this.#failSemanticFinalization();
+      throw error;
+    }
+    try {
+      return this.#checkedOperations.retain(
+        observation,
+        request,
+        (immutableRequest, phase) => this.#runObservation(observation, immutableRequest, core, options, phase, false),
+        (accepted, immutableRequest) => {
+          if (accepted.kind === "accept") {
+            return onAccept(accepted.value, accepted.evidence ?? [], immutableRequest);
+          }
+        },
+        requestSnapshotCache,
+        dependencies,
+      );
+    } catch (error) {
+      this.#failSemanticFinalization();
+      throw error;
+    }
+  }
+
+  [extensionHostPublishSourceDecisionBatch](publish: () => void): void {
+    this.#assertCheckedOperationRecordingAvailable();
+    const attempt = this.#beginFactAttempt();
+    let attemptOpen = true;
+    try {
+      publish();
+      this.#commitFactAttempt(attempt);
+      attemptOpen = false;
+    } catch (error) {
+      if (attemptOpen) {
+        this.#rollbackFactAttempt(attempt);
+      }
+      this.#failSemanticFinalization();
+      throw error;
+    }
+  }
+
   [extensionHostGetCheckedOperationRequest]<TObservation extends CheckedOperationObservationPointName>(
     observation: TObservation,
     subject: ExtensionFactSubject | undefined,
@@ -3060,6 +3119,7 @@ export class ExtensionHost {
       this.facts[factStoreAssertCanCommitSavepoint](attempt.savepoint);
     }
     this.diagnostics[diagnosticStoreAssertCanCommitSavepoint](attempt.diagnosticSavepoint);
+    this.#checkedOperations.commitSavepoint(attempt.checkedOperationSavepoint);
     if (attempt.ownsTransaction) {
       this.facts[factStoreCommitTransaction](attempt.transaction);
     } else {
@@ -3379,12 +3439,13 @@ export class ExtensionHost {
       this.#semanticFinalizationState = "finalizing";
       this.#observationPhase = "finalization";
       this.runLifecycle<BeforeSemanticsFinalizedLifecycleRequest>(ExtensionLifecycleEvent.beforeSemanticsFinalized, { host: this });
-      this.#checkedOperations.finalize();
+      this.#checkedOperations.prepareFinalization();
       this.facts[factStoreAssertCanCommitTransaction](transaction);
       this.diagnostics[diagnosticStoreAssertCanCommitSavepoint](diagnosticSavepoint);
-      this.#checkedOperations.releaseRetainedEffects();
+      this.#checkedOperations.commitSavepoint(checkedOperationSavepoint);
       this.facts[factStoreCommitTransaction](transaction);
       transaction = undefined;
+      this.#checkedOperations.commitFinalization();
       this.facts.seal();
       this.#semanticFinalizationState = "finalized";
       this.diagnostics[diagnosticStoreCommitSavepoint](diagnosticSavepoint);
@@ -3392,7 +3453,9 @@ export class ExtensionHost {
       if (transaction !== undefined && transaction.active) {
         this.facts[factStoreRollbackTransaction](transaction);
       }
-      this.#checkedOperations.rollbackToSavepoint(checkedOperationSavepoint);
+      if (checkedOperationSavepoint.active) {
+        this.#checkedOperations.rollbackToSavepoint(checkedOperationSavepoint);
+      }
       if (diagnosticSavepoint.active) {
         this.diagnostics[diagnosticStoreRollbackToSavepoint](diagnosticSavepoint);
       }

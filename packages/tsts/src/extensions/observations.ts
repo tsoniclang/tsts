@@ -211,7 +211,7 @@ export interface CheckedOperatorMappingRequest {
   readonly operator: string;
   readonly left: ExtensionFactSubject;
   readonly right?: ExtensionFactSubject;
-  readonly sourceLeft?: SelectedSourceValueEvidence;
+  readonly sourceLeft: SelectedSourceValueEvidence;
   readonly sourceRight?: SelectedSourceValueEvidence;
   readonly sourceResult: SelectedSourceValueEvidence;
   readonly target?: string;

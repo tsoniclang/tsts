@@ -167,7 +167,9 @@ function compareOperatorRequests(left: CheckedOperatorMappingRequest, right: Che
   compareIdentity(differences, "operator", left.operator, right.operator);
   compareIdentity(differences, "left", left.left, right.left);
   compareIdentity(differences, "right", left.right, right.right);
-  compareOptionalSelectedSourceValueEvidence(differences, "sourceLeft", left.sourceLeft, right.sourceLeft);
+  if (!selectedSourceValueEvidenceEquals(left.sourceLeft, right.sourceLeft)) {
+    differences.push("sourceLeft");
+  }
   compareOptionalSelectedSourceValueEvidence(differences, "sourceRight", left.sourceRight, right.sourceRight);
   compareSelectedSourceValueEvidence(differences, "sourceResult", left.sourceResult, right.sourceResult);
   compareIdentity(differences, "target", left.target, right.target);

@@ -73,6 +73,7 @@ test("checked operations replay after lifecycle in deterministic dependency orde
       operator: "=",
       left: property,
       right: {},
+      sourceLeft: sourceValue(property, {}),
       sourceResult: sourceValue(assignment, {}),
       target: "acme",
     },

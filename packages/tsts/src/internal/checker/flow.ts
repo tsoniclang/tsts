@@ -1,4 +1,5 @@
 import type { bool, byte, int } from "../../go/scalars.js";
+import { beginExtensionCheckedSourceDiscardDecision, rollbackExtensionCheckedSourceDiscardDecision } from "../../extensions/checker-integration.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewGoStructMap } from "../../go/compat.js";
@@ -4909,6 +4910,7 @@ export function Checker_getInitialType(receiver: GoPtr<Checker>, node: GoPtr<Nod
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getInitialTypeOfVariableDeclaration","kind":"method","status":"implemented","sigHash":"58522122623ee1628f836e8444e32f3520fb7177e95199d416e438c42a0576c8","bodyHash":"fd1ffe956d0b057dc0941c4863ed80ff08ef0fa065a7a8ac06ec9a09ff787a67"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Flow analysis may query a for-of source element while an implementation-source decision is active; the exact TS-Go query runs inside a discard frame so it cannot publish a duplicate runtime operation."}
  *
  * Go source:
  * func (c *Checker) getInitialTypeOfVariableDeclaration(node *ast.Node) *Type {
@@ -4936,7 +4938,13 @@ export function Checker_getInitialTypeOfVariableDeclaration(receiver: GoPtr<Chec
     return receiver!.stringType;
   }
   if (IsForOfStatement(node!.Parent!.Parent)) {
-    const t = Checker_checkRightHandSideOfForOf(receiver, node!.Parent!.Parent);
+    const discardDecision = beginExtensionCheckedSourceDiscardDecision(receiver);
+    let t: GoPtr<Type>;
+    try {
+      t = Checker_checkRightHandSideOfForOf(receiver, node!.Parent!.Parent);
+    } finally {
+      rollbackExtensionCheckedSourceDiscardDecision(receiver, discardDecision);
+    }
     if (t !== undefined) { return t; }
   }
   return receiver!.errorType;
@@ -5002,6 +5010,7 @@ export function Checker_getInitialTypeOfBindingElement(receiver: GoPtr<Checker>,
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getAssignedType","kind":"method","status":"implemented","sigHash":"6b5c4c672db1e5da27c6cf34f7a909efafd11dcf4608ccbe825fa86c406db920","bodyHash":"a462e9d28e093c0023dbbb714f5610cbe279b2b52dfaa3eb27c58ce27d1b9010"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Flow assignment analysis may query a for-of source element while an implementation-source decision is active; the exact TS-Go query runs inside a discard frame so it cannot publish a duplicate runtime operation."}
  *
  * Go source:
  * func (c *Checker) getAssignedType(node *ast.Node) *Type {
@@ -5036,7 +5045,13 @@ export function Checker_getAssignedType(receiver: GoPtr<Checker>, node: GoPtr<No
     case KindForInStatement:
       return receiver!.stringType;
     case KindForOfStatement: {
-      const t = Checker_checkRightHandSideOfForOf(receiver, parent);
+      const discardDecision = beginExtensionCheckedSourceDiscardDecision(receiver);
+      let t: GoPtr<Type>;
+      try {
+        t = Checker_checkRightHandSideOfForOf(receiver, parent);
+      } finally {
+        rollbackExtensionCheckedSourceDiscardDecision(receiver, discardDecision);
+      }
       if (t !== undefined) { return t; }
       break;
     }

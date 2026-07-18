@@ -38,10 +38,10 @@ import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionLifecycleEvent, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetCallArgumentConversionFactKey, targetCallArgumentPassingFactKey, targetConversionFactKey } from "./index.js";
+import { TstsProviderContractVersion, ExtensionHost, ExtensionHostDiagnosticCode, ExtensionLifecycleEvent, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetCallArgumentConversionFactKey, targetCallArgumentPassingFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionHost, ExtensionObservationContext, ProviderDeclarationModel, ProviderExportDeclaration, ProviderImportSlice, ProviderMemberDeclaration, ProviderModuleContext, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SourceSelectedMethodTypeArgument, TargetCallArgumentConversionSlot, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetSignatureSelection, TargetTypeRef } from "./index.js";
-import { recordExtensionCheckedAssertionConversion, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderDeclarationModel, ProviderExportDeclaration, ProviderImportSlice, ProviderMemberDeclaration, ProviderModuleContext, ProviderVirtualDeclarationDocument, RuntimeCarrierFactRequest, SourceFileBoundLifecycleRequest, SourcePrimitiveFact, SourceSelectedMethodTypeArgument, TargetCallArgumentConversionSlot, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetSignatureSelection, TargetTypeRef } from "./index.js";
+import { preserveEquivalentCheckedSourceType, recordExtensionCheckedAssertionConversion, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
 import {
   getProviderVirtualArtifactForCompiler,
   providerCanonicalExportOwnerMarker,
@@ -282,7 +282,7 @@ test("provider declarations bind exact active source-global types while retainin
       typeArguments: [{ kind: "number" }],
     },
   }];
-  const { program, index, extended } = createSourceGlobalProviderProgram({
+  const { program, index, extended, programOptions } = createSourceGlobalProviderProgram({
     profiles: [sourceGlobalProfile(`
       interface ClockInstant { toTicks(): number; }
       interface PromiseLikeValue<T> { then<TResult>(callback: (value: T) => TResult): PromiseLikeValue<TResult>; }
@@ -302,7 +302,7 @@ test("provider declarations bind exact active source-global types while retainin
     onCall: (request) => callRequests.push(request),
   });
 
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, programOptions);
   assertCleanProviderVirtualFiles(program);
   const providerFile = getOnlyPublicProviderSourceFile(program, extended.extensionHost, "@acme/native/source-globals.js");
   const holderOwner = getCanonicalProviderExportOwnerDocuments(extended.extensionHost)
@@ -461,7 +461,7 @@ test("source-global provider references fail through exact source checking when 
 test("source-global provider references cannot be captured by provider-local declarations", () => {
   const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
   const callRequests: CheckedCallMappingRequest[] = [];
-  const { program, index } = createSourceGlobalProviderProgram({
+  const { program, index, programOptions } = createSourceGlobalProviderProgram({
     profiles: [sourceGlobalProfile("interface Holder { profileOnly(): number; }")],
     members: [{
       id: "Holder.profileHolder",
@@ -483,7 +483,7 @@ test("source-global provider references cannot be captured by provider-local dec
     onCall: (request) => callRequests.push(request),
   });
 
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, programOptions);
   assertCleanProviderVirtualFiles(program);
   const selected = propertyRequests.find((request) => request.propertyName === "profileHolder");
   assert.ok(selected?.sourceResult.type !== undefined);
@@ -513,7 +513,7 @@ test("source-global identities remain exact across disjoint same-module import s
   for (const names of [["First", "Second"], ["Second", "First"]] as const) {
     const propertyRequests: CheckedPropertyAccessMappingRequest[] = [];
     const resolutionContexts: ProviderModuleContext[] = [];
-    const { program, index, extended } = createSourceGlobalProviderProgram({
+    const { program, index, extended, programOptions } = createSourceGlobalProviderProgram({
       profiles: [sourceGlobalProfile("interface ClockInstant { toTicks(): number; }")],
       members: [],
       additionalExports,
@@ -534,7 +534,7 @@ test("source-global identities remain exact across disjoint same-module import s
       onResolve: (context) => resolutionContexts.push(context),
     });
 
-    assertCleanProgram(program, index);
+    assertCleanProgram(program, index, programOptions);
     const second = Program_GetSourceFile(program, "/src/second.ts");
     assert.ok(second !== undefined);
     assertCleanProgram(program, second);
@@ -2562,7 +2562,7 @@ test("checker records provider-owned target call facts for consumers", () => {
   assert.ok(getExtensionHost(program) === extended.extensionHost, "The program must retain its exact extension host.");
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const selected = extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey);
@@ -2674,7 +2674,7 @@ test("checker exposes explicit selected source method type arguments on checked 
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
   observedTypeText = checkedTypeToString(program, index, observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
@@ -2735,7 +2735,7 @@ test("checker exposes inferred selected source method type arguments on checked 
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
   observedTypeText = checkedTypeToString(program, index, observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
@@ -2795,7 +2795,7 @@ test("checker exposes explicit selected source method type arguments on callback
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
   observedTypeText = checkedTypeToString(program, index, observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
@@ -2863,7 +2863,7 @@ test("checker exposes selected source member evidence on checked property access
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const splitRequest = observedRequests.find((request) => request.propertyName === "Split");
   const lengthRequest = observedRequests.find((request) => request.propertyName === "Length");
@@ -2925,6 +2925,7 @@ test("repeated checked property observations preserve exact source result proven
       declare const leftBox: LeftBox;
       declare const rightBox: RightBox;
       declare const otherBox: OtherBox;
+      const iterator = Symbol.iterator;
       const leftValue = leftBox.value;
       const rightValue = rightBox.value;
       const otherValue = otherBox.value;
@@ -2969,7 +2970,7 @@ test("repeated checked property observations preserve exact source result proven
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const iteratorRequest = observedRequests.find((request) => request.propertyName === "iterator");
   assert.ok(iteratorRequest !== undefined);
@@ -2994,59 +2995,24 @@ test("repeated checked property observations preserve exact source result proven
   assert.ok(incompatibleValueRequest.sourceResult.type !== undefined);
   assert.ok(firstValueRequest.sourceResult.type !== secondValueRequest.sourceResult.type, "Independently selected structural result types must remain distinct compiler subjects.");
 
-  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), index);
   const mapperRequestCount = observedRequests.length;
-  try {
-    recordExtensionCheckedPropertyAccessMapping(
-      checker,
-      iteratorRequest.expression as GoPtr<Node>,
-      {
-        selectedSymbol: iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-        resultType: iteratorRequest.sourceResult.type as GoPtr<Type>,
-        receiverType: iteratorRequest.sourceReceiver.type as GoPtr<Type>,
-        accessMode: iteratorRequest.accessMode,
-        callCallee: iteratorRequest.callCallee,
-      },
-    );
-    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
-    assert.equal(observedRequests.length, mapperRequestCount);
-
-    const countAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "count");
-    const countFact = extended.extensionHost.facts.get(countAccess, targetOperationFactKey);
-    assert.ok(countFact?.provenance?.sourceExpression === countAccess, "Nested property provenance must retain its exact source expression.");
-    assert.ok(countFact?.provenance?.sourceReceiver !== undefined);
-    assert.ok(countFact?.provenance?.sourceSelectedSymbol !== undefined);
-    assert.ok(countFact?.provenance?.sourceSelectedDeclaration !== undefined);
-    assert.ok(countFact?.provenance?.sourceResultType !== undefined);
-
-    const sourceResultType = firstValueRequest.sourceResult.type as GoPtr<Type>;
-    const structurallyEquivalentResultType = secondValueRequest.sourceResult.type as GoPtr<Type>;
-    assert.notEqual(Type_Id(sourceResultType), Type_Id(structurallyEquivalentResultType));
-    recordExtensionCheckedPropertyAccessMapping(
-      checker,
-      firstValueRequest.expression as GoPtr<Node>,
-      {
-        selectedSymbol: firstValueRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-        resultType: structurallyEquivalentResultType,
-        receiverType: firstValueRequest.sourceReceiver.type as GoPtr<Type>,
-        accessMode: firstValueRequest.accessMode,
-        callCallee: firstValueRequest.callCallee,
-      },
-    );
-    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
-    assert.ok(
-      extended.extensionHost.facts.get(firstValueRequest.expression, targetOperationFactKey) === undefined,
-      "A conflicting repeated request must invalidate target facts rather than retain a partially trusted semantic state.",
-    );
-    assert.equal(observedRequests.length, mapperRequestCount);
-  } finally {
-    done();
-  }
-
+  const countAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "count");
+  const countFact = extended.extensionHost.facts.get(countAccess, targetOperationFactKey);
+  assert.ok(countFact?.provenance?.sourceExpression === countAccess, "Nested property provenance must retain its exact source expression.");
+  assert.ok(countFact?.provenance?.sourceReceiver !== undefined);
+  assert.ok(countFact?.provenance?.sourceSelectedSymbol !== undefined);
+  assert.ok(countFact?.provenance?.sourceSelectedDeclaration !== undefined);
+  assert.ok(countFact?.provenance?.sourceResultType !== undefined);
+  const sourceResultType = firstValueRequest.sourceResult.type as GoPtr<Type>;
+  const structurallyEquivalentResultType = secondValueRequest.sourceResult.type as GoPtr<Type>;
+  assert.notEqual(Type_Id(sourceResultType), Type_Id(structurallyEquivalentResultType));
+  assert.equal(
+    preserveEquivalentCheckedSourceType(sourceResultType, structurallyEquivalentResultType),
+    structurallyEquivalentResultType,
+    "Structurally similar anonymous types must remain distinct selected compiler subjects.",
+  );
+  assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Repeated semantic finalization must be idempotent.");
   assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 0);
-  const requestConflicts = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "CHECKED_OPERATION_REQUEST_CONFLICT");
-  assert.equal(requestConflicts.length, 1);
-  assert.deepEqual(requestConflicts[0]?.evidence?.[0]?.details, ["sourceResult"]);
   assert.equal(observedRequests.length, mapperRequestCount);
 
 });
@@ -3093,6 +3059,7 @@ test("repeated unique-symbol property results use their selected declaration ide
     ["/src/index.ts", `
       type Fn = (input: { count: number }) => number;
       type Args = Parameters<Fn>;
+      const iterator = Symbol.iterator;
       const other = OtherSymbol.other;
 
       export function read([input]: Args): number {
@@ -3135,7 +3102,7 @@ test("repeated unique-symbol property results use their selected declaration ide
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const iteratorRequest = observedRequests.find((request) => request.propertyName === "iterator");
   assert.ok(iteratorRequest?.sourceResult.selectedSymbol !== undefined);
@@ -3163,47 +3130,20 @@ test("repeated unique-symbol property results use their selected declaration ide
   assert.notEqual(Type_Flags(otherSourceResultType) & TypeFlagsUniqueESSymbol, 0);
   assert.ok(Type_Symbol(otherSourceResultType) !== sourceResultSymbol, "Different unique-symbol properties must retain different nominal symbols.");
 
-  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), index);
   const mapperRequestCount = observedRequests.length;
-  try {
-    recordExtensionCheckedPropertyAccessMapping(
-      checker,
-      iteratorRequest.expression as GoPtr<Node>,
-      {
-        selectedSymbol: iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-        resultType: repeatedSourceResultType,
-        receiverType: iteratorRequest.sourceReceiver.type as GoPtr<Type>,
-        accessMode: iteratorRequest.accessMode,
-        callCallee: iteratorRequest.callCallee,
-      },
-    );
-    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
-    assert.ok(
-      extended.extensionHost.facts.get(iteratorRequest.expression, targetOperationFactKey)?.provenance?.sourceResultType === sourceResultType,
-      "A repeated unique-symbol wrapper must preserve the original selected result type subject.",
-    );
-    assert.equal(observedRequests.length, mapperRequestCount);
-
-    assert.notEqual(Type_Id(sourceResultType), Type_Id(otherSourceResultType));
-    recordExtensionCheckedPropertyAccessMapping(
-      checker,
-      iteratorRequest.expression as GoPtr<Node>,
-      {
-        selectedSymbol: iteratorRequest.sourceResult.selectedSymbol as GoPtr<Symbol>,
-        resultType: otherSourceResultType,
-        receiverType: iteratorRequest.sourceReceiver.type as GoPtr<Type>,
-        accessMode: iteratorRequest.accessMode,
-        callCallee: iteratorRequest.callCallee,
-      },
-    );
-  } finally {
-    done();
-  }
-
+  assert.equal(
+    preserveEquivalentCheckedSourceType(sourceResultType, repeatedSourceResultType),
+    sourceResultType,
+    "Repeated unique-symbol wrappers must canonicalize to their exact selected declaration identity.",
+  );
+  assert.notEqual(Type_Id(sourceResultType), Type_Id(otherSourceResultType));
+  assert.equal(
+    preserveEquivalentCheckedSourceType(sourceResultType, otherSourceResultType),
+    otherSourceResultType,
+    "Different unique-symbol declarations must remain distinct selected compiler subjects.",
+  );
+  assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Repeated semantic finalization must be idempotent.");
   assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 0);
-  const requestConflicts = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "CHECKED_OPERATION_REQUEST_CONFLICT");
-  assert.equal(requestConflicts.length, 1);
-  assert.deepEqual(requestConflicts[0]?.evidence?.[0]?.details, ["sourceResult"]);
   assert.equal(observedRequests.length, mapperRequestCount);
 });
 
@@ -3275,7 +3215,7 @@ test("target operation facts compare property and element result references stru
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const propertyRequest = propertyRequests.find((request) => request.propertyName === "size");
   const elementRequest = elementRequests[0];
@@ -3290,24 +3230,27 @@ test("target operation facts compare property and element result references stru
   const elementFact = extended.extensionHost.facts.get(elementRequest.expression, targetOperationFactKey);
   assert.ok(propertyFact !== undefined);
   assert.ok(elementFact !== undefined);
-  assert.equal(extended.extensionHost.facts.set(propertyRequest.expression, targetOperationFactKey, {
+  const structuralFactHost = new ExtensionHost({});
+  assert.equal(structuralFactHost.facts.set(propertyRequest.expression, targetOperationFactKey, propertyFact), "inserted");
+  assert.equal(structuralFactHost.facts.set(propertyRequest.expression, targetOperationFactKey, {
     ...propertyFact,
     resultType: targetResultType("int32"),
   }), "idempotent");
-  assert.equal(extended.extensionHost.facts.set(elementRequest.expression, targetOperationFactKey, {
+  assert.equal(structuralFactHost.facts.set(elementRequest.expression, targetOperationFactKey, elementFact), "inserted");
+  assert.equal(structuralFactHost.facts.set(elementRequest.expression, targetOperationFactKey, {
     ...elementFact,
     resultType: targetResultType("int32"),
   }), "idempotent");
-  assert.equal(extended.extensionHost.facts.set(propertyRequest.expression, targetOperationFactKey, {
+  assert.equal(structuralFactHost.facts.set(propertyRequest.expression, targetOperationFactKey, {
     ...propertyFact,
     resultType: targetResultType("char"),
   }), "conflict");
-  assert.equal(extended.extensionHost.facts.set(elementRequest.expression, targetOperationFactKey, {
+  assert.equal(structuralFactHost.facts.set(elementRequest.expression, targetOperationFactKey, {
     ...elementFact,
     resultType: targetResultType("char"),
   }), "conflict");
 
-  assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 2);
+  assert.equal(structuralFactHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 2);
 });
 
 test("checker exposes selected source index-signature evidence on checked element access", () => {
@@ -3370,7 +3313,7 @@ test("checker exposes selected source index-signature evidence on checked elemen
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   assert.equal(observedRequests.length, 3);
   assertSelectedIndexEvidence(observedRequests[0]);
@@ -3465,7 +3408,7 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
   const program = NewProgram(options);
   const indexFile = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(indexFile !== undefined);
-  assertCleanProgram(program, indexFile);
+  assertCleanProgram(program, indexFile, options);
 
   assert.deepEqual(
     observedRequests.map((request) => request.sourceSelectedElementIndex),
@@ -3581,6 +3524,7 @@ test("invalid tuple indexes never expose a selected fixed ordinal or bypass Type
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), indexFile);
   assert.equal(diagnostics.length, 3);
   assert.ok(diagnostics.every((diagnostic) => Diagnostic_Code(diagnostic) < 9000000));
+  assert.ok(finalizeExtensionSemantics(options) === getExtensionHost(options), "Semantic finalization must return the attached extension host.");
   assert.equal(observedRequests.length, 3);
   assert.ok(observedRequests.every((request) => request.sourceSelectedElementIndex === undefined));
 });
@@ -3639,7 +3583,7 @@ test("checker exposes selected source member evidence on optional-chain property
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const nameRequests = observedRequests.filter((request) => request.propertyName === "name");
   const lengthRequests = observedRequests.filter((request) => request.propertyName === "length");
@@ -3704,7 +3648,7 @@ test("checker exposes source element types on for-of declaration and assignment 
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   for (const entry of observed) {
     entry.elementType = checkedTypeToString(program, index, entry.request.sourceElement.type as GoPtr<Type>);
@@ -3815,7 +3759,7 @@ test("checker maps checked unary operators through the operator observation", ()
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   assert.deepEqual(observedRequests.map((request) => request.operator), ["!", "-", "++", "--"]);
   for (const request of observedRequests) {
@@ -3888,7 +3832,7 @@ test("checker exposes selected callee member evidence on checked calls", () => {
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
   observedReturnTypeText = checkedTypeToString(program, index, observedRequest?.sourceResult.type as GoPtr<Type>);
 
   const selectedSymbol = observedRequest?.sourceCallee.symbol as GoPtr<Symbol>;
@@ -4036,7 +3980,7 @@ test("checker records provider-owned parameter mode facts from selected target s
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   if (call === undefined) {
@@ -4108,7 +4052,7 @@ test("checker records parameter mode facts per argument without collapsing them 
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const arguments_ = Node_Arguments(call) ?? [];
@@ -4175,7 +4119,7 @@ test("checker records provider-owned runtime carrier and argument conversion fac
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const searchValuesTypeReference = findFirstNodeByKind(index, KindTypeReference);
   assert.equal(observedRuntimeCarrierRequests.length, 1);
@@ -4296,7 +4240,7 @@ test("checker records selected source and target types for ordinary assertion co
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   assert.equal(observedRequests.length, 6);
   assert.ok(observedRequests.every((request) => request.conversionKind === "assertion"));
@@ -4459,7 +4403,7 @@ test("checker preserves source alias provenance for checked assertion conversion
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   assert.equal(observed.length, 4);
   const result = observed.find((candidate) => (candidate.request.source.expression as GoPtr<Node>)?.Kind === KindParenthesizedExpression);
@@ -4569,7 +4513,7 @@ test("checker classifies JSDoc assertions as explicit checked conversions", () =
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.js");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
   assert.equal(observedRequests.length, 1);
   assert.equal(observedRequests[0]!.conversionKind, "assertion");
   assert.equal(observedRequests[0]!.assertionKind, "jsdoc");
@@ -4702,6 +4646,8 @@ test("rejected assertion conversions surface deterministic extension diagnostics
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Semantic finalization must return the attached extension host.");
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
   assert.equal(diagnostics.length, 1);
   assert.equal(Diagnostic_Code(diagnostics[0]), 9910451);
@@ -4763,7 +4709,6 @@ test("checker validates provider-owned flow use diagnostics from source-semantic
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
   assert.equal(diagnostics.length, 1);
   assert.equal(Diagnostic_Code(diagnostics[0]), 9920301);
@@ -5074,7 +5019,7 @@ test("checker records provider-owned member element and operator facts for consu
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assertCleanProgram(program, index);
+  assertCleanProgram(program, index, options);
 
   const propertyAccess = findFirstNodeByKind(index, KindPropertyAccessExpression);
   const elementAccess = findFirstNodeByKind(index, KindElementAccessExpression);
@@ -5190,7 +5135,8 @@ test("extension-owned semantic rejections surface through standard diagnostics w
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Semantic finalization must return the attached extension host.");
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
   assert.equal(diagnostics.length, 1);
   assert.equal(Diagnostic_Code(diagnostics[0]), 9910125);
@@ -5235,7 +5181,10 @@ test("extension diagnostics can use explicit source spans through the standard s
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
   const call = findFirstNodeByKind(index, KindCallExpression);
-
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  const extensionHost = getExtensionHost(options);
+  assert.ok(extensionHost !== undefined);
+  assert.ok(finalizeExtensionSemantics(options) === extensionHost, "Semantic finalization must return the attached extension host.");
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
   assert.equal(diagnostics.length, 1);
   assert.equal(Diagnostic_Code(diagnostics[0]), 9910126);
@@ -5279,7 +5228,8 @@ test("unsupported native surface operations are diagnostics, not fallback calls"
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
   const call = findFirstNodeByKind(index, KindCallExpression);
-
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Semantic finalization must return the attached extension host.");
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
   assert.equal(diagnostics.length, 1);
   assert.equal(Diagnostic_Code(diagnostics[0]), 9910301);
@@ -5603,7 +5553,7 @@ function createSourceGlobalProviderProgram(options: {
   const program = NewProgram(programOptions);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  return { program, index, extended };
+  return { program, index, extended, programOptions };
 }
 
 function sourceGlobalProviderExtension(options: {
@@ -8137,13 +8087,22 @@ function acmeProvider(specifier: string, reject: boolean): TargetBindingProvider
   };
 }
 
-function assertCleanProgram(program: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): void {
+function assertCleanProgram(
+  program: GoPtr<Program>,
+  sourceFile: GoPtr<SourceFile>,
+  options?: ProgramOptions,
+): void {
   const programDiagnostics = Program_GetProgramDiagnostics(program);
   const syntacticDiagnostics = Program_GetSyntacticDiagnostics(program, Background(), sourceFile);
   const semanticDiagnostics = Program_GetSemanticDiagnostics(program, Background(), sourceFile);
   assert.equal(programDiagnostics.length, 0, programDiagnostics.map(Diagnostic_String).join("\n"));
   assert.equal(syntacticDiagnostics.length, 0, syntacticDiagnostics.map(Diagnostic_String).join("\n"));
   assert.equal(semanticDiagnostics.length, 0, semanticDiagnostics.map(Diagnostic_String).join("\n"));
+  if (options !== undefined) {
+    const extensionHost = getExtensionHost(options);
+    assert.ok(extensionHost !== undefined, "A program finalized by this helper must have an extension host.");
+    assert.ok(finalizeExtensionSemantics(options) === extensionHost, "Semantic finalization must return the attached extension host.");
+  }
 }
 
 function assertCleanProviderVirtualFiles(program: GoPtr<Program>): void {

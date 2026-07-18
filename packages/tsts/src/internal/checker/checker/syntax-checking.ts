@@ -1,6 +1,15 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
-import { hasExtensionCheckedOperationHost, recordExtensionCheckedCallMapping, recordExtensionCheckedIterationMapping, recordExtensionCheckedOperatorKindMapping, recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
+import {
+  beginExtensionCheckedSourceFileDecision,
+  commitExtensionCheckedSourceFileDecision,
+  hasExtensionCheckedOperationHost,
+  recordExtensionCheckedCallMapping,
+  recordExtensionCheckedIterationMapping,
+  recordExtensionCheckedOperatorKindMapping,
+  recordExtensionCheckedOperatorMapping,
+  rollbackExtensionCheckedSourceDecision,
+} from "../../../extensions/checker-integration.js";
 import { ExtensionObservationPoint } from "../../../extensions/observations.js";
 import type { Context } from "../../../go/context.js";
 import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
@@ -25,7 +34,7 @@ import type { SourceFile } from "../../ast/ast.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Relation } from "../relater.js";
-import type { ResolvedCallEvidence, Signature, Type, TypeFlags } from "../types.js";
+import type { ResolvedCallEvidence, ResolvedCallSelectionEvidence, Signature, Type, TypeFlags } from "../types.js";
 import { SignatureFlagsAbstract, SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../types.js";
 import { Checker_isIteratorResult } from "./support-queries.js";
 import {
@@ -253,6 +262,7 @@ import { Checker_isSkipDirectInferenceNode } from "../inference.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceFile","kind":"method","status":"implemented","sigHash":"73742795303ebe59bb331756ff6743713f7b9c4fbd309e3a8507a615e2dbf18f","bodyHash":"65678dd5c6e1f4ffa700bb65eee57bc088bcc84456cf8a0948d39f486e967a22"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-enabled source checking retains checked-operation evidence in one source-file transaction; successful source checking commits the retained evidence, while exceptional checking discards it. The no-extension source-checking decisions remain unchanged."}
  *
  * Go source:
  * func (c *Checker) checkSourceFile(ctx context.Context, sourceFile *ast.SourceFile, checkUnused bool) {
@@ -297,22 +307,33 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: Context, 
   receiver!.ctx = ctx;
   const links = Checker_getSourceFileLinks(receiver, sourceFile);
   if (!links!.typeChecked) {
-    receiver!.saveDeferredDiagnostics = true as bool;
-    Checker_checkGrammarSourceFile(receiver, sourceFile);
-    receiver!.renamedBindingElementsInTypes = [];
-    Checker_checkSourceElements(receiver, sourceFile!.Statements!.Nodes);
-    Checker_checkDeferredNodes(receiver, sourceFile);
-    if (IsExternalOrCommonJSModule(sourceFile)) {
-      Checker_checkExternalModuleExports(receiver, Node_AsNode(sourceFile));
-      Checker_registerForUnusedIdentifiersCheck(receiver, Node_AsNode(sourceFile));
+    const checkedSourceDecision = beginExtensionCheckedSourceFileDecision(receiver);
+    let checkedSourceCompleted = false;
+    try {
+      receiver!.saveDeferredDiagnostics = true as bool;
+      Checker_checkGrammarSourceFile(receiver, sourceFile);
+      receiver!.renamedBindingElementsInTypes = [];
+      Checker_checkSourceElements(receiver, sourceFile!.Statements!.Nodes);
+      Checker_checkDeferredNodes(receiver, sourceFile);
+      if (IsExternalOrCommonJSModule(sourceFile)) {
+        Checker_checkExternalModuleExports(receiver, Node_AsNode(sourceFile));
+        Checker_registerForUnusedIdentifiersCheck(receiver, Node_AsNode(sourceFile));
+      }
+      if (!sourceFile!.IsDeclarationFile && !Checker_isCanceled(receiver)) {
+        Checker_checkUnusedRenamedBindingElements(receiver);
+      }
+      receiver!.saveDeferredDiagnostics = false as bool;
+      Checker_produceDeferredDiagnostics(receiver);
+      Set_Clear(receiver!.reportedUnreachableNodes);
+      checkedSourceCompleted = true;
+    } finally {
+      if (checkedSourceCompleted) {
+        commitExtensionCheckedSourceFileDecision(receiver, checkedSourceDecision);
+        links!.typeChecked = true as bool;
+      } else {
+        rollbackExtensionCheckedSourceDecision(receiver, checkedSourceDecision);
+      }
     }
-    if (!sourceFile!.IsDeclarationFile && !Checker_isCanceled(receiver)) {
-      Checker_checkUnusedRenamedBindingElements(receiver);
-    }
-    receiver!.saveDeferredDiagnostics = false as bool;
-    Checker_produceDeferredDiagnostics(receiver);
-    Set_Clear(receiver!.reportedUnreachableNodes);
-    links!.typeChecked = true as bool;
   }
   if (checkUnused && !links!.unusedChecked) {
     if (!sourceFile!.IsDeclarationFile && !Checker_isCanceled(receiver)) {
@@ -619,6 +640,7 @@ export function Checker_checkForStatement(receiver: GoPtr<Checker>, node: GoPtr<
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkForInStatement","kind":"method","status":"implemented","sigHash":"1036d4dbf8b354145c0c0f92c80d29e05c2b482399bc67dce4e9ceaa19178e59","bodyHash":"519095d2acdf211f9d06a09c73c2cb2a7432e446dc023031d85188a83b4ce9a8"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The exact TS-Go checks remain unchanged; extension-enabled checking additionally retains the already-selected for-in iterable and assignment element types for target-neutral deferred operation mapping."}
  *
  * Go source:
  * func (c *Checker) checkForInStatement(node *ast.Node) {
@@ -667,18 +689,29 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
   const data = AsForInOrOfStatement(node);
   Checker_checkGrammarForInOrForOfStatement(receiver, data);
   const rightType = Checker_getNonNullableTypeIfNeeded(receiver, Checker_checkExpression(receiver, data!.Expression));
+  const iterationOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedIteration, node);
+  let sourceElementType: GoPtr<Type>;
   if (IsVariableDeclarationList(data!.Initializer)) {
     const declarations = AsVariableDeclarationList(data!.Initializer)!.Declarations!.Nodes;
-    if (declarations.length !== 0 && IsBindingPattern(Node_Name(declarations[0]))) {
-      Checker_error(receiver, Node_Name(declarations[0]), The_left_hand_side_of_a_for_in_statement_cannot_be_a_destructuring_pattern);
+    const declaration = declarations[0];
+    if (declaration !== undefined && IsBindingPattern(Node_Name(declaration))) {
+      Checker_error(receiver, Node_Name(declaration), The_left_hand_side_of_a_for_in_statement_cannot_be_a_destructuring_pattern);
     }
     Checker_checkVariableDeclarationList(receiver, data!.Initializer);
+    if (iterationOwned && declaration !== undefined) {
+      const declarationSymbol = Checker_getSymbolOfDeclaration(receiver, declaration);
+      sourceElementType = declarationSymbol === undefined
+        ? undefined
+        : Checker_getTypeOfSymbol(receiver, declarationSymbol);
+    }
   } else {
     const varExpr = data!.Initializer;
     const leftType = Checker_checkExpression(receiver, varExpr);
+    const selectedIndexType = Checker_getIndexTypeOrString(receiver, rightType);
+    sourceElementType = selectedIndexType;
     if (IsArrayLiteralExpression(varExpr) || IsObjectLiteralExpression(varExpr)) {
       Checker_error(receiver, varExpr, The_left_hand_side_of_a_for_in_statement_cannot_be_a_destructuring_pattern);
-    } else if (!Checker_isTypeAssignableTo(receiver, Checker_getIndexTypeOrString(receiver, rightType), leftType)) {
+    } else if (!Checker_isTypeAssignableTo(receiver, selectedIndexType, leftType)) {
       Checker_error(receiver, varExpr, The_left_hand_side_of_a_for_in_statement_must_be_of_type_string_or_any);
     } else {
       Checker_checkReferenceExpression(receiver, varExpr, The_left_hand_side_of_a_for_in_statement_must_be_a_variable_or_a_property_access, The_left_hand_side_of_a_for_in_statement_may_not_be_an_optional_property_access);
@@ -687,7 +720,9 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
   if (rightType === receiver!.neverType || !Checker_isTypeAssignableToKind(receiver, rightType, (TypeFlagsNonPrimitive | TypeFlagsInstantiableNonPrimitive) as int)) {
     Checker_error(receiver, data!.Expression, The_right_hand_side_of_a_for_in_statement_must_be_of_type_any_an_object_type_or_a_type_parameter_but_here_has_type_0, Checker_TypeToString(receiver, rightType));
   }
-  recordExtensionCheckedIterationMapping(receiver, node, "for-in", rightType, Checker_getIndexTypeOrString(receiver, rightType));
+  if (iterationOwned && sourceElementType !== undefined) {
+    recordExtensionCheckedIterationMapping(receiver, node, "for-in", rightType, sourceElementType);
+  }
   Checker_checkSourceElement(receiver, data!.Statement);
   if ((Node_Locals(node)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, node);
@@ -1938,7 +1973,7 @@ export function Checker_resolveNewExpressionWithEvidence(
   node: GoPtr<Node>,
   candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>,
   checkMode: CheckMode,
-  output: { evidence?: ResolvedCallEvidence } | undefined,
+  output: { evidence?: ResolvedCallSelectionEvidence } | undefined,
 ): GoPtr<Signature> {
   let expressionType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
   if (expressionType === receiver!.silentNeverType) {
@@ -2829,22 +2864,25 @@ export function Checker_checkBinaryExpression(receiver: GoPtr<Checker>, node: Go
     return Checker_checkNonLogicalBinaryExpressionIterative(receiver, node, checkMode);
   }
   const selected = Checker_checkBinaryLikeExpressionWithSelectedTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, node);
-  recordExtensionCheckedOperatorMapping(
-    receiver,
-    node,
-    binary!.OperatorToken,
-    binary!.Left,
-    binary!.Right,
-    selected.leftType,
-    selected.rightType,
-    selected.result,
-  );
+  if (!(binary!.OperatorToken!.Kind === KindEqualsToken
+    && (binary!.Left!.Kind === KindObjectLiteralExpression || binary!.Left!.Kind === KindArrayLiteralExpression))) {
+    recordExtensionCheckedOperatorMapping(
+      receiver,
+      node,
+      binary!.OperatorToken,
+      binary!.Left,
+      binary!.Right,
+      selected.leftType,
+      selected.rightType,
+      selected.result,
+    );
+  }
   return selected.result;
 }
 
 function Checker_checkNonLogicalBinaryExpressionIterative(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
   const binaryChain: GoPtr<Node>[] = [];
-  const recordCheckedOperators = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedOperator);
+  const recordCheckedOperators = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedOperator, node);
   let leftEdge: GoPtr<Node> = node;
   while (isIterativelyCheckableNonLogicalBinaryExpression(leftEdge)) {
     binaryChain.push(leftEdge);

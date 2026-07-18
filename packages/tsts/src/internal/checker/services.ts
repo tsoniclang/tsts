@@ -1,4 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
+import { beginExtensionCheckedSourceDiscardDecision, rollbackExtensionCheckedSourceDiscardDecision } from "../../extensions/checker-integration.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Index } from "../../go/strings.js";
 import type { Node, SourceFile } from "../ast/ast.js";
@@ -2356,6 +2357,7 @@ export function Checker_GetPropertySymbolOfDestructuringAssignment(receiver: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/services.go::method::Checker.getTypeOfAssignmentPattern","kind":"method","status":"implemented","sigHash":"2529d6a29263410934acc184582d341c589621207b599f48715e02e8489f006d","bodyHash":"5ef48e94a19a1ad96fbf829854c373f64741f7ea677009fe8da927c12a262198"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Assignment-pattern services may query a for-of source element during implementation checking; the exact TS-Go query runs inside a discard frame so only the owning statement publishes the runtime iteration decision."}
  *
  * Go source:
  * func (c *Checker) getTypeOfAssignmentPattern(expr *ast.Node) *Type {
@@ -2393,7 +2395,13 @@ export function Checker_getTypeOfAssignmentPattern(receiver: GoPtr<Checker>, exp
   //     for ( { a } of elems) {
   //     }
   if (IsForOfStatement(expr!.Parent)) {
-    const iteratedType = Checker_checkRightHandSideOfForOf(receiver, expr!.Parent);
+    const discardDecision = beginExtensionCheckedSourceDiscardDecision(receiver);
+    let iteratedType: GoPtr<Type>;
+    try {
+      iteratedType = Checker_checkRightHandSideOfForOf(receiver, expr!.Parent);
+    } finally {
+      rollbackExtensionCheckedSourceDiscardDecision(receiver, discardDecision);
+    }
     return Checker_checkDestructuringAssignment(receiver, expr, OrElse(iteratedType, receiver!.errorType), CheckModeNormal, false);
   }
   // If this is from "for" initializer

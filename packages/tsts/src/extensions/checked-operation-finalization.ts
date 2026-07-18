@@ -42,8 +42,8 @@ interface CheckedOperationRecord {
   readonly request: ExtensionObservationRequest<CheckedOperationObservationPointName>;
   readonly dependencies: readonly CheckedOperationReference[];
   readonly atomicOwner?: CheckedOperationReference;
-  readonly allDependencies: CheckedOperationReference[];
-  readonly dependencyIndex: CheckedOperationReferenceIndex;
+  allDependencies: CheckedOperationReference[];
+  dependencyIndex: CheckedOperationReferenceIndex;
   readonly evaluate: (phase: ExtensionObservationPhase) => AnyCheckedOperationResult;
   readonly apply: (result: AnyCheckedOperationResult) => void | CheckedOperationApplyOutcome;
   result?: RetainedCheckedOperationResult;
@@ -51,6 +51,26 @@ interface CheckedOperationRecord {
   acceptedEffects?: unknown;
   unresolved?: CheckedOperationReference;
   state: "evaluating" | "deferred" | "accepted" | "unavailable";
+}
+
+interface CheckedOperationRecordSnapshot {
+  readonly hasResult: boolean;
+  readonly result: RetainedCheckedOperationResult | undefined;
+  readonly hasPendingAcceptedResult: boolean;
+  readonly pendingAcceptedResult: AcceptedCheckedOperationResult | undefined;
+  readonly hasAcceptedEffects: boolean;
+  readonly acceptedEffects: unknown;
+  readonly hasUnresolved: boolean;
+  readonly unresolved: CheckedOperationReference | undefined;
+  readonly state: CheckedOperationRecord["state"];
+  readonly allDependencies: readonly CheckedOperationReference[];
+}
+
+interface CheckedOperationSavepoint {
+  readonly recordCount: number;
+  readonly snapshots: Map<CheckedOperationRecord, CheckedOperationRecordSnapshot>;
+  readonly edgeCount: number;
+  active: boolean;
 }
 
 interface CheckedOperationExecutionFrame {
@@ -62,6 +82,12 @@ interface CheckedOperationTraversalFrame {
   readonly record: CheckedOperationRecord;
   readonly dependencies: readonly CheckedOperationReference[];
   nextDependencyIndex: number;
+}
+
+interface PreparedCheckedOperationRecord {
+  readonly record?: CheckedOperationRecord;
+  readonly created: boolean;
+  readonly conflict?: AnyCheckedOperationResult;
 }
 
 export interface CheckedOperationInventoryCallbacks {
@@ -101,14 +127,21 @@ const checkedPrimaryOperationObservationOrder: readonly CheckedOperationObservat
   ExtensionObservationPoint.mapCheckedIteration,
 ]);
 
+const maxCheckedOperationRecords = 1_048_576;
+const maxCheckedOperationEdges = 4_194_304;
+const maxCheckedOperationSavepointDepth = 4_096;
+
 export class CheckedOperationInventory {
   readonly #records: CheckedOperationRecord[] = [];
+  readonly #recordPositions = new WeakMap<CheckedOperationRecord, number>();
   readonly #recordsBySubject = new WeakMap<object, Map<CheckedOperationObservationPointName, CheckedOperationRecord[]>>();
   readonly #ownedRecordsByOwnerSubject = new WeakMap<object, CheckedOperationRecord[]>();
   readonly #callbacks: CheckedOperationInventoryCallbacks;
   readonly #executionFrames: CheckedOperationExecutionFrame[] = [];
+  readonly #savepoints: CheckedOperationSavepoint[] = [];
+  #edgeCount = 0;
   #failure: Error | undefined;
-  #state: "open" | "finalizing" | "finalized" | "failed" = "open";
+  #state: "open" | "finalizing" | "prepared" | "finalized" | "failed" = "open";
 
   constructor(callbacks: CheckedOperationInventoryCallbacks) {
     this.#callbacks = callbacks;
@@ -130,6 +163,123 @@ export class CheckedOperationInventory {
     dependencies: readonly CheckedOperationReference[] = [],
     atomicOwner?: CheckedOperationReference,
   ): ExtensionObservationResult<ExtensionObservationResponse<TObservation>> {
+    const prepared = this.#prepareRecord(
+      observation,
+      request,
+      evaluate,
+      apply,
+      requestSnapshotCache,
+      dependencies,
+      atomicOwner,
+    );
+    if (prepared.conflict !== undefined) {
+      return prepared.conflict as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
+    }
+    const record = prepared.record!;
+    if (!prepared.created) {
+      if (record.state === "evaluating") {
+        const error = new Error(`Checked operation '${observation}' re-entered while its selected mapping was being evaluated.`);
+        this.#fail(error);
+        throw error;
+      }
+      if (record.result === undefined) {
+        throw new Error("Active checked operation has no observation result.");
+      }
+      if (record.atomicOwner !== undefined && record.state === "deferred") {
+        const dependencyReadiness = this.#dependencyReadiness(record, false);
+        if (dependencyReadiness === "blocked") {
+          this.#markUnavailable(record);
+          this.#settleOwnedRecords(record);
+        } else if (dependencyReadiness === "ready") {
+          this.#journalRecord(record);
+          record.state = "evaluating";
+          const resumedResult = this.#runAttempt(record, phase);
+          this.#throwIfFailed();
+          record.result = resumedResult;
+          this.#setResultState(record, resumedResult);
+          this.#terminalizeFinalizationMapperDeferral(record, resumedResult, phase);
+          this.#settleOwnedRecords(record);
+        }
+      }
+      return record.result as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
+    }
+    this.#journalRecord(record);
+    record.state = "evaluating";
+    try {
+      const dependencyReadiness = this.#dependencyReadiness(record, false);
+      if (dependencyReadiness !== "ready") {
+        const deferred = dependencyDeferredResult(observation);
+        record.result = deferred;
+        if (dependencyReadiness === "blocked") {
+          this.#markUnavailable(record);
+        } else {
+          record.state = "deferred";
+        }
+        return deferred as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
+      }
+      const initialResult = this.#runAttempt(record, phase);
+      this.#throwIfFailed();
+      record.result = initialResult;
+      this.#setResultState(record, initialResult);
+      this.#terminalizeFinalizationMapperDeferral(record, initialResult, phase);
+      this.#settleOwnedRecords(record);
+      return initialResult as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
+    } catch (error) {
+      this.#fail(asError(error));
+      throw error;
+    }
+  }
+
+  retain<TObservation extends CheckedOperationObservationPointName>(
+    observation: TObservation,
+    request: ExtensionObservationRequest<TObservation>,
+    evaluate: (
+      request: ExtensionObservationRequest<TObservation>,
+      phase: ExtensionObservationPhase,
+    ) => ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
+    apply: (
+      result: ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
+      request: ExtensionObservationRequest<TObservation>,
+    ) => void | CheckedOperationApplyOutcome,
+    requestSnapshotCache?: CheckedOperationRequestSnapshotCache,
+    dependencies: readonly CheckedOperationReference[] = [],
+  ): CheckedOperationReference<TObservation> {
+    const prepared = this.#prepareRecord(
+      observation,
+      request,
+      evaluate,
+      apply,
+      requestSnapshotCache,
+      dependencies,
+      undefined,
+    );
+    if (prepared.conflict !== undefined) {
+      throw new Error(`Checked operation '${observation}' could not be retained because its selected source evidence conflicts.`);
+    }
+    const record = prepared.record!;
+    if (prepared.created) {
+      this.#journalRecord(record);
+      record.result = dependencyDeferredResult(observation);
+      record.state = "deferred";
+    }
+    return record.reference as CheckedOperationReference<TObservation>;
+  }
+
+  #prepareRecord<TObservation extends CheckedOperationObservationPointName>(
+    observation: TObservation,
+    request: ExtensionObservationRequest<TObservation>,
+    evaluate: (
+      request: ExtensionObservationRequest<TObservation>,
+      phase: ExtensionObservationPhase,
+    ) => ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
+    apply: (
+      result: ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
+      request: ExtensionObservationRequest<TObservation>,
+    ) => void | CheckedOperationApplyOutcome,
+    requestSnapshotCache: CheckedOperationRequestSnapshotCache | undefined,
+    dependencies: readonly CheckedOperationReference[],
+    atomicOwner: CheckedOperationReference | undefined,
+  ): PreparedCheckedOperationRecord {
     this.#assertRecordingAvailable("record");
     const executionFrame = this.#executionFrames[this.#executionFrames.length - 1];
     if (executionFrame?.stage === "evaluating") {
@@ -145,17 +295,17 @@ export class CheckedOperationInventory {
     if (existing !== undefined && !checkedOperationRequestEquals(observation, existing.request, incomingRequest)) {
       this.#callbacks.onRequestConflict(observation, incomingSubject, existing.request, incomingRequest);
       this.#fail(new Error(`Checked operation '${observation}' was observed with conflicting selected source evidence.`));
-      return Object.freeze({ kind: "conflict", observation });
+      return { created: false, conflict: Object.freeze({ kind: "conflict", observation }) };
     }
     if (existing !== undefined && !checkedOperationReferenceArraysEqual(existing.dependencies, incomingDependencies)) {
       this.#callbacks.onDependencyConflict(observation, incomingSubject);
       this.#fail(new Error(`Checked operation '${observation}' was observed with conflicting operation dependencies.`));
-      return Object.freeze({ kind: "conflict", observation });
+      return { created: false, conflict: Object.freeze({ kind: "conflict", observation }) };
     }
     if (existing !== undefined && !optionalCheckedOperationReferenceEquals(existing.atomicOwner, incomingAtomicOwner)) {
       this.#callbacks.onAtomicOwnerConflict(observation, incomingSubject);
       this.#fail(new Error(`Checked operation '${observation}' was observed with a conflicting atomic owner.`));
-      return Object.freeze({ kind: "conflict", observation });
+      return { created: false, conflict: Object.freeze({ kind: "conflict", observation }) };
     }
     if (incomingAtomicOwner !== undefined
       && (executionFrame?.stage !== "applying"
@@ -165,29 +315,7 @@ export class CheckedOperationInventory {
       throw error;
     }
     if (existing !== undefined) {
-      if (existing.state === "evaluating") {
-        const error = new Error(`Checked operation '${observation}' re-entered while its selected mapping was being evaluated.`);
-        this.#fail(error);
-        throw error;
-      }
-      if (existing.result === undefined) {
-        throw new Error("Active checked operation has no observation result.");
-      }
-      if (existing.atomicOwner !== undefined && existing.state === "deferred") {
-        const dependencyReadiness = this.#dependencyReadiness(existing, false);
-        if (dependencyReadiness === "blocked") {
-          markCheckedOperationUnavailable(existing);
-          this.#settleOwnedRecords(existing);
-        } else if (dependencyReadiness === "ready") {
-          existing.state = "evaluating";
-          const resumedResult = this.#runAttempt(existing, phase);
-          this.#throwIfFailed();
-          existing.result = resumedResult;
-          existing.state = checkedOperationResultState(resumedResult);
-          this.#settleOwnedRecords(existing);
-        }
-      }
-      return existing.result as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
+      return { record: existing, created: false };
     }
     const immutableRequest = incomingRequest;
     const subject = checkedOperationSubject(observation, immutableRequest);
@@ -209,7 +337,7 @@ export class CheckedOperationInventory {
       dependencyIndex: createCheckedOperationReferenceIndex(incomingDependencies),
       evaluate: evaluateRecord,
       apply: applyRecord,
-      state: "evaluating",
+      state: "deferred",
     };
     if (incomingAtomicOwner !== undefined && checkedOperationReferenceEquals(record.reference, incomingAtomicOwner)) {
       const error = new Error(`Checked operation '${observation}' cannot atomically own itself.`);
@@ -217,24 +345,7 @@ export class CheckedOperationInventory {
       throw error;
     }
     this.#addRecord(record);
-    try {
-      const dependencyReadiness = this.#dependencyReadiness(record, false);
-      if (dependencyReadiness !== "ready") {
-        const deferred = dependencyDeferredResult(observation);
-        record.result = deferred;
-        record.state = dependencyReadiness === "blocked" ? "unavailable" : "deferred";
-        return deferred as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
-      }
-      const initialResult = this.#runAttempt(record, phase);
-      this.#throwIfFailed();
-      record.result = initialResult;
-      record.state = checkedOperationResultState(initialResult);
-      this.#settleOwnedRecords(record);
-      return initialResult as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
-    } catch (error) {
-      this.#fail(asError(error));
-      throw error;
-    }
+    return { record, created: true };
   }
 
   getRequest<TObservation extends CheckedOperationObservationPointName>(
@@ -296,7 +407,15 @@ export class CheckedOperationInventory {
   }
 
   finalize(): void {
+    this.prepareFinalization();
+    this.commitFinalization();
+  }
+
+  prepareFinalization(): void {
     if (this.#state === "finalized") {
+      return;
+    }
+    if (this.#state === "prepared") {
       return;
     }
     if (this.#state === "finalizing") {
@@ -316,7 +435,7 @@ export class CheckedOperationInventory {
           }
           const dependencyReadiness = this.#dependencyReadiness(record, true);
           if (dependencyReadiness === "blocked") {
-            markCheckedOperationUnavailable(record);
+            this.#markUnavailable(record);
             this.#settleOwnedRecords(record);
             completedDeferredRecord = true;
             continue;
@@ -324,19 +443,14 @@ export class CheckedOperationInventory {
           if (dependencyReadiness !== "ready") {
             continue;
           }
+          this.#journalRecord(record);
           record.state = "evaluating";
           const result = this.#runAttempt(record, "finalization");
           this.#throwIfFailed();
           record.result = result;
-          record.state = checkedOperationResultState(result);
+          this.#setResultState(record, result);
+          this.#terminalizeFinalizationMapperDeferral(record, result, "finalization");
           this.#settleOwnedRecords(record);
-          if (record.state === "deferred") {
-            const unresolved = record.unresolved;
-            if (unresolved === undefined) {
-              this.#callbacks.onUnresolved(record.observation, record.subject);
-              markCheckedOperationUnavailable(record);
-            }
-          }
           completedDeferredRecord = true;
         }
         if (!completedDeferredRecord) {
@@ -345,23 +459,32 @@ export class CheckedOperationInventory {
       }
       this.#validateOwnedOperationStates();
       this.#validatePrimaryOperationUniqueness();
-      this.#state = "finalized";
+      for (const record of this.#records) {
+        if (record.pendingAcceptedResult !== undefined) {
+          throw new Error("Prepared checked operation still retains a pending accepted result.");
+        }
+        if (record.state === "evaluating" || record.state === "deferred") {
+          throw new Error(`Prepared checked operation '${record.observation}' remained in non-terminal state '${record.state}'.`);
+        }
+      }
+      this.#state = "prepared";
     } catch (error) {
       this.#fail(asError(error));
       throw error;
     }
   }
 
-  releaseRetainedEffects(): void {
-    if (this.#state !== "finalized") {
-      throw new Error("Checked-operation replay effects can be released only after finalization.");
+  commitFinalization(): void {
+    if (this.#state === "finalized") {
+      return;
+    }
+    if (this.#state !== "prepared") {
+      throw new Error("Checked-operation finalization can commit only after successful preparation.");
     }
     for (const record of this.#records) {
-      if (record.pendingAcceptedResult !== undefined) {
-        throw new Error("Finalized checked operation still retains a pending accepted result.");
-      }
       delete record.acceptedEffects;
     }
+    this.#state = "finalized";
   }
 
   #assertRecordingAvailable(action: "record"): void {
@@ -371,6 +494,9 @@ export class CheckedOperationInventory {
     if (this.#state === "finalized") {
       throw new Error(`Cannot ${action} a checked operation after semantic finalization.`);
     }
+    if (this.#state === "prepared") {
+      throw new Error(`Cannot ${action} a checked operation after semantic finalization was prepared.`);
+    }
     if (this.#state === "finalizing" && this.#executionFrames[this.#executionFrames.length - 1]?.stage !== "applying") {
       throw new Error(`Cannot ${action} a checked operation outside checked-operation result application during finalization.`);
     }
@@ -378,6 +504,7 @@ export class CheckedOperationInventory {
 
   #runAttempt(record: CheckedOperationRecord, phase: ExtensionObservationPhase): RetainedCheckedOperationResult {
     const attempt = this.#callbacks.beginAttempt();
+    this.#journalRecord(record);
     let attemptOpen = true;
     try {
       const pendingAcceptedResult = record.pendingAcceptedResult;
@@ -393,6 +520,10 @@ export class CheckedOperationInventory {
         if (pendingAcceptedResult === undefined) {
           record.acceptedEffects = this.#callbacks.captureAttemptEffects(attempt);
         }
+        if (!Object.hasOwn(record, "acceptedEffects")) {
+          throw new Error(`Checked operation '${record.observation}' did not retain its accepted-observation effects.`);
+        }
+        const retainedAcceptedEffects = record.acceptedEffects;
         const applyOutcome = normalizeCheckedOperationApplyOutcome(this.#withExecutionFrame("applying", record, () => record.apply(result)));
         if (applyOutcome.kind === "applied") {
           this.#callbacks.commitAttempt(attempt);
@@ -423,6 +554,7 @@ export class CheckedOperationInventory {
           }
           attemptOpen = false;
           const deferredDependencies = this.#callbacks.deferAttemptPreservingOperations(attempt);
+          record.acceptedEffects = retainedAcceptedEffects;
           this.#retainDeferredDependencies(record, [...deferredDependencies, unresolved]);
           record.pendingAcceptedResult = result;
           record.unresolved = unresolved;
@@ -451,6 +583,13 @@ export class CheckedOperationInventory {
   }
 
   #addRecord(record: CheckedOperationRecord): void {
+    if (this.#records.length >= maxCheckedOperationRecords) {
+      const error = new Error(`Checked-operation inventory exceeds its ${maxCheckedOperationRecords}-record session limit.`);
+      this.#fail(error);
+      throw error;
+    }
+    this.#reserveEdges(record.allDependencies.length + (record.atomicOwner === undefined ? 0 : 1));
+    this.#recordPositions.set(record, this.#records.length);
     this.#records.push(record);
     let recordsForSubject = this.#recordsBySubject.get(record.subject);
     if (recordsForSubject === undefined) {
@@ -473,16 +612,37 @@ export class CheckedOperationInventory {
     }
   }
 
-  createSavepoint(): number {
-    return this.#records.length;
+  createSavepoint(): CheckedOperationSavepoint {
+    if (this.#savepoints.length >= maxCheckedOperationSavepointDepth) {
+      const error = new Error(`Checked-operation inventory exceeds its ${maxCheckedOperationSavepointDepth}-savepoint nesting limit.`);
+      this.#fail(error);
+      throw error;
+    }
+    const savepoint: CheckedOperationSavepoint = {
+      recordCount: this.#records.length,
+      snapshots: new Map(),
+      edgeCount: this.#edgeCount,
+      active: true,
+    };
+    this.#savepoints.push(savepoint);
+    return savepoint;
   }
 
-  rollbackToSavepoint(recordCount: number): void {
-    if (!Number.isSafeInteger(recordCount) || recordCount < 0 || recordCount > this.#records.length) {
-      throw new Error("Invalid checked-operation inventory savepoint.");
-    }
-    while (this.#records.length > recordCount) {
+  commitSavepoint(savepoint: CheckedOperationSavepoint): readonly CheckedOperationReference[] {
+    this.#requireCurrentSavepoint(savepoint);
+    const retained = Object.freeze(this.#records
+      .slice(savepoint.recordCount)
+      .map((record) => record.reference));
+    this.#savepoints.pop();
+    savepoint.active = false;
+    return retained;
+  }
+
+  rollbackToSavepoint(savepoint: CheckedOperationSavepoint): void {
+    this.#requireCurrentSavepoint(savepoint);
+    while (this.#records.length > savepoint.recordCount) {
       const record = this.#records.pop()!;
+      this.#recordPositions.delete(record);
       const recordsForSubject = this.#recordsBySubject.get(record.subject);
       const recordsForObservation = recordsForSubject?.get(record.observation);
       if (recordsForObservation === undefined || recordsForObservation[recordsForObservation.length - 1] !== record) {
@@ -506,14 +666,22 @@ export class CheckedOperationInventory {
         }
       }
     }
+    this.#restoreSavepointSnapshots(savepoint);
+    this.#edgeCount = savepoint.edgeCount;
+    this.#savepoints.pop();
+    savepoint.active = false;
   }
 
-  deferFromSavepoint(recordCount: number): readonly CheckedOperationReference[] {
-    if (!Number.isSafeInteger(recordCount) || recordCount < 0 || recordCount > this.#records.length) {
-      throw new Error("Invalid checked-operation inventory savepoint.");
-    }
+  deferFromSavepoint(savepoint: CheckedOperationSavepoint): readonly CheckedOperationReference[] {
+    this.#requireCurrentSavepoint(savepoint);
     const deferred: CheckedOperationReference[] = [];
-    for (let index = recordCount; index < this.#records.length; index += 1) {
+    const retainedRecords = this.#records.slice(savepoint.recordCount);
+    const retainedEdgeCount = retainedRecords.reduce(
+      (count, record) => count + record.allDependencies.length + (record.atomicOwner === undefined ? 0 : 1),
+      0,
+    );
+    this.#restoreSavepointSnapshots(savepoint);
+    for (let index = savepoint.recordCount; index < this.#records.length; index += 1) {
       const record = this.#records[index]!;
       deferred.push(record.reference);
       const result = record.result;
@@ -534,13 +702,89 @@ export class CheckedOperationInventory {
       }
       delete record.unresolved;
     }
+    this.#savepoints.pop();
+    savepoint.active = false;
+    this.#edgeCount = savepoint.edgeCount + retainedEdgeCount;
     return Object.freeze(deferred);
+  }
+
+  #journalRecord(record: CheckedOperationRecord): void {
+    const position = this.#recordPositions.get(record);
+    if (position === undefined) {
+      throw new Error("Checked-operation state journal received an unregistered record.");
+    }
+    for (const savepoint of this.#savepoints) {
+      if (position >= savepoint.recordCount || savepoint.snapshots.has(record)) {
+        continue;
+      }
+      savepoint.snapshots.set(record, {
+        hasResult: Object.hasOwn(record, "result"),
+        result: record.result,
+        hasPendingAcceptedResult: Object.hasOwn(record, "pendingAcceptedResult"),
+        pendingAcceptedResult: record.pendingAcceptedResult,
+        hasAcceptedEffects: Object.hasOwn(record, "acceptedEffects"),
+        acceptedEffects: record.acceptedEffects,
+        hasUnresolved: Object.hasOwn(record, "unresolved"),
+        unresolved: record.unresolved,
+        state: record.state,
+        allDependencies: Object.freeze([...record.allDependencies]),
+      });
+    }
+  }
+
+  #restoreSavepointSnapshots(savepoint: CheckedOperationSavepoint): void {
+    for (const [record, snapshot] of savepoint.snapshots) {
+      if (snapshot.hasResult) {
+        record.result = snapshot.result!;
+      } else {
+        delete record.result;
+      }
+      if (snapshot.hasPendingAcceptedResult) {
+        record.pendingAcceptedResult = snapshot.pendingAcceptedResult!;
+      } else {
+        delete record.pendingAcceptedResult;
+      }
+      if (snapshot.hasAcceptedEffects) {
+        record.acceptedEffects = snapshot.acceptedEffects;
+      } else {
+        delete record.acceptedEffects;
+      }
+      if (snapshot.hasUnresolved) {
+        record.unresolved = snapshot.unresolved!;
+      } else {
+        delete record.unresolved;
+      }
+      record.state = snapshot.state;
+      record.allDependencies = [...snapshot.allDependencies];
+      record.dependencyIndex = createCheckedOperationReferenceIndex(record.allDependencies);
+    }
+  }
+
+  #requireCurrentSavepoint(savepoint: CheckedOperationSavepoint): void {
+    if (!savepoint.active || this.#savepoints[this.#savepoints.length - 1] !== savepoint) {
+      throw new Error("Checked-operation inventory savepoints must settle exactly once in strict stack order.");
+    }
+    if (!Number.isSafeInteger(savepoint.recordCount)
+      || savepoint.recordCount < 0
+      || savepoint.recordCount > this.#records.length) {
+      throw new Error("Invalid checked-operation inventory savepoint.");
+    }
+  }
+
+  #reserveEdges(count: number): void {
+    if (!Number.isSafeInteger(count) || count < 0 || this.#edgeCount > maxCheckedOperationEdges - count) {
+      const error = new Error(`Checked-operation inventory exceeds its ${maxCheckedOperationEdges}-edge session limit.`);
+      this.#fail(error);
+      throw error;
+    }
+    this.#edgeCount += count;
   }
 
   #retainDeferredDependencies(
     owner: CheckedOperationRecord,
     references: readonly CheckedOperationReference[],
   ): void {
+    this.#journalRecord(owner);
     const pending = [...references];
     let nextReferenceIndex = 0;
     const expandedOwnedRecords = new Set<CheckedOperationRecord>();
@@ -562,6 +806,7 @@ export class CheckedOperationInventory {
         continue;
       }
       if (owner.dependencyIndex.add(reference)) {
+        this.#reserveEdges(1);
         owner.allDependencies.push(reference);
       }
     }
@@ -605,7 +850,7 @@ export class CheckedOperationInventory {
           throw new Error(`Accepted checked operation '${owner.observation}' has atomically owned operation '${record.observation}' in state '${record.state}'.`);
         }
       } else {
-        markCheckedOperationUnavailable(record);
+        this.#markUnavailable(record);
       }
       pending.push(...this.#directlyOwnedRecords(record));
     }
@@ -630,6 +875,29 @@ export class CheckedOperationInventory {
         throw new Error(`Atomically owned checked operation '${record.observation}' remained deferred after finalization.`);
       }
     }
+  }
+
+  #markUnavailable(record: CheckedOperationRecord): void {
+    this.#journalRecord(record);
+    markCheckedOperationUnavailable(record);
+  }
+
+  #setResultState(record: CheckedOperationRecord, result: RetainedCheckedOperationResult): void {
+    record.state = checkedOperationResultState(result);
+  }
+
+  #terminalizeFinalizationMapperDeferral(
+    record: CheckedOperationRecord,
+    result: RetainedCheckedOperationResult,
+    phase: ExtensionObservationPhase,
+  ): void {
+    if (phase !== "finalization"
+      || result.kind !== "owner-deferred"
+      || record.unresolved !== undefined) {
+      return;
+    }
+    this.#callbacks.onUnresolved(record.observation, record.subject);
+    this.#markUnavailable(record);
   }
 
   #findRecordForRequest<TObservation extends CheckedOperationObservationPointName>(

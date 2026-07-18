@@ -99,6 +99,7 @@ test("checked construction exposes alias-resolved class identity across imports 
   });
 
   assertCleanProgram(program);
+  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   assert.equal(callRequests.length, 7);
 
   const modelRequests = callRequests.slice(0, 6);
@@ -128,7 +129,6 @@ test("checked construction exposes alias-resolved class identity across imports 
     assert.equal(request.sourceSelectedSignatureParameters?.length, 0);
   }
 
-  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-call-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
@@ -156,6 +156,7 @@ test("provider virtual construction exposes one canonical selected export identi
   });
 
   assertCleanProgram(program);
+  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   assert.equal(callRequests.length, 2);
   const directSymbol = callRequests[0]?.sourceCallee.selectedSymbol as GoPtr<Symbol>;
   const reExportedSymbol = callRequests[1]?.sourceCallee.selectedSymbol as GoPtr<Symbol>;
@@ -167,7 +168,6 @@ test("provider virtual construction exposes one canonical selected export identi
   assert.equal(callRequests[0]?.sourceSelectedSignatureParameters?.length, 0);
   assert.equal(callRequests[1]?.sourceSelectedSignatureParameters?.length, 0);
 
-  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-provider-constructor-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
@@ -203,6 +203,7 @@ test("checked calls expose alias-resolved callable identity and selected paramet
   });
 
   assertCleanProgram(program);
+  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   assert.equal(callRequests.length, 4);
   const selectedParameterTypes = callRequests.map((request) => request.sourceSelectedSignatureParameters?.[0]?.selectedType);
   assert.ok(selectedParameterTypes.every((selectedType) => selectedType !== undefined && selectedType === selectedParameterTypes[0]));
@@ -225,7 +226,6 @@ test("checked calls expose alias-resolved callable identity and selected paramet
     assertSelectedParameterProvenance(request.sourceSelectedSignatureParameters ?? []);
   }
 
-  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-function-call-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
@@ -250,11 +250,11 @@ test("checked untyped calls are distinct from resolved zero-parameter signatures
   });
 
   assertCleanProgram(program);
+  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   assert.equal(callRequests.length, 1);
   assert.equal(callRequests[0]?.sourceSelectedSignatureKind, "untyped");
   assert.equal(callRequests[0]?.sourceSelectedSignatureParameters?.length, 0);
 
-  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const selected = createExtensionConsumerQueries(extensionHost, "selected-untyped-call-test").getSelectedTargetCall(callRequests[0]!.call);
   assert.equal(selected?.sourceSelectedSignatureKind, "untyped");
   assert.equal(selected?.sourceSelectedSignatureParameters?.length, 0);
@@ -323,6 +323,7 @@ test("checked construction exposes selected source parameter types and authored 
   });
 
   assertCleanProgram(program);
+  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   assert.equal(callRequests.length, 10);
   const providerOptionsType = callRequests[0]?.sourceSelectedSignatureParameters?.[0]?.selectedType;
   const localOptionsType = callRequests[1]?.sourceSelectedSignatureParameters?.[0]?.selectedType;
@@ -375,7 +376,6 @@ test("checked construction exposes selected source parameter types and authored 
   assert.ok(callRequests[7]?.sourceSelectedDeclaration === undefined, "Implicit empty construction must not fabricate a selected declaration.");
   assert.equal(callRequests[7]?.sourceSelectedSignatureParameters?.length, 0);
 
-  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-parameter-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
@@ -421,6 +421,7 @@ test("checked construction keeps callee identity, signature origin, and result t
   });
 
   assertCleanProgram(program);
+  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   assert.equal(callRequests.length, 4);
 
   const explicitDerived = callRequests.find((request) => (request.sourceCallee.selectedSymbol as GoPtr<Symbol>)?.Name === "ExplicitDerivedService");
@@ -447,7 +448,6 @@ test("checked construction keeps callee identity, signature origin, and result t
   assert.ok(structural.sourceSelectedDeclaration !== structural.sourceCallee.selectedDeclaration, "Structural constructor signature origin must remain distinct from its callee declaration.");
   assert.equal(superCall.sourceSelectedSignatureParameters?.[0]?.parameterName, "options");
 
-  assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
   const consumer = createExtensionConsumerQueries(extensionHost, "selected-constructor-shape-test");
   for (const request of callRequests) {
     const selected = consumer.getSelectedTargetCall(request.call);
@@ -514,8 +514,8 @@ test("target mappers cannot replace checker-owned selected source evidence", () 
   });
 
   assertCleanProgram(program);
-  assert.equal(callRequests.length, 1);
   assert.ok(finalizeExtensionSemantics(programOptions) !== undefined);
+  assert.equal(callRequests.length, 1);
   const request = callRequests[0]!;
   const selected = createExtensionConsumerQueries(extensionHost, "selected-source-authority-test").getSelectedTargetCall(request.call);
   assert.ok(selected !== undefined);
@@ -549,8 +549,8 @@ test("target mappers cannot replace checker-owned selected source evidence", () 
     extension: selectedCallEvidenceExtension(rejectedRequests, undefined, forgedProvenance),
   });
   assertCleanProgram(rejectedProgram.program);
-  assert.equal(rejectedRequests.length, 1);
   assert.ok(finalizeExtensionSemantics(rejectedProgram.programOptions) !== undefined);
+  assert.equal(rejectedRequests.length, 1);
   assert.equal(
     createExtensionConsumerQueries(rejectedProgram.extensionHost, "selected-source-injection-test").getSelectedTargetCall(rejectedRequests[0]!.call),
     undefined,
