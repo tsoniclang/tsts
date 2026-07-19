@@ -37,6 +37,7 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 | `20260719-115106-post-finalization-checker-query` | `44928afc` | Resolved | Public checker and diagnostic queries retain canonical semantic discovery while extension semantics are open, then become read-only consumers of already-checked state once finalization begins; they cannot reopen lifecycle hooks, checked operations, facts, provider artifacts, or extension diagnostics. |
 | `20260719-135458-provider-type-family-runtime-carrier-shared-symbol-conflict` | `3407b2f8` | Resolved | Instantiated runtime carriers are published only to exact checked type-use and semantic-type subjects; declaration symbols remain provenance/target-binding subjects and cannot acquire one concrete carrier for multiple generic instantiations or provider-family arities. |
 | `20260719-165020-built-package-omits-bundled-default-libraries` | `4720657c` | Resolved | The build packages exactly the generated bundled-library index, and package validation installs the real tarball in isolation and checks a default-lib program through the public API. |
+| `20260719-162753-provider-family-finalization-instantiated-symbol-target` | `1f22d689` | Resolved | Extension semantic queries execute through the checker that owns the selected source evidence; opaque checker-local types and instantiated symbols never fall back to an unrelated first-file checker. |
 
 ## Complete Commit Order
 
@@ -81,6 +82,7 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 39. `44928afc`
 40. `3407b2f8`
 41. `4720657c`
+42. `1f22d689`
 
 ## Complete Validation At Implementation `3407b2f8`
 
