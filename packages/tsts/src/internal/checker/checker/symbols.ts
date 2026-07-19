@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import { hasExtensionCheckedOperationHost, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation, retainExtensionCheckedIdentifierCalleeSelection } from "../../../extensions/checker-integration.js";
+import { hasExtensionCheckedCallCalleeEvidenceInterest, hasExtensionCheckedOperationHost, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation, retainExtensionCheckedIdentifierCalleeSelection } from "../../../extensions/checker-integration.js";
 import { ExtensionObservationPoint } from "../../../extensions/observations.js";
 import type { CheckedPropertyAccessSourceOperation } from "../../../extensions/facts.js";
 import type { CheckedFlowSourceUse } from "../../../extensions/observations.js";
@@ -5623,9 +5623,8 @@ function recordSelectedElementAccessEvidence(
     return;
   }
   const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedElementAccess, node);
-  const callCallee = Checker_isMethodAccessForCall(receiver, node);
-  const retainCallReceiverEvidence = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall, node)
-    && callCallee;
+  const retainCallReceiverEvidence = hasExtensionCheckedCallCalleeEvidenceInterest(receiver, node);
+  const callCallee = retainCallReceiverEvidence || Checker_isMethodAccessForCall(receiver, node);
   if (!accessOwned && !retainCallReceiverEvidence) {
     return;
   }
@@ -5649,8 +5648,7 @@ function recordSelectedElementAccessEvidence(
 
 function selectedElementAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Node>): SelectedElementAccessCheck | undefined {
   const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedElementAccess, node);
-  const callOwned = Checker_isMethodAccessForCall(receiver, node)
-    && hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall, node);
+  const callOwned = hasExtensionCheckedCallCalleeEvidenceInterest(receiver, node);
   return accessOwned || callOwned
     ? {
         selected: false,
@@ -6810,8 +6808,7 @@ function recordSelectedPropertyAccessEvidence(
 
 function selectedPropertyAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Node>): SelectedPropertyAccessCheck | undefined {
   const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedPropertyAccess, node);
-  const callOwned = Checker_isMethodAccessForCall(receiver, node)
-    && hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall, node);
+  const callOwned = hasExtensionCheckedCallCalleeEvidenceInterest(receiver, node);
   return accessOwned || callOwned
     ? {
         selected: false,

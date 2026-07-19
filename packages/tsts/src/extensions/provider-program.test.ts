@@ -53,6 +53,7 @@ import {
   providerVirtualInternalRoot,
   providerVirtualPublicRoot,
 } from "./provider-virtual-internal.js";
+import { renderProviderFunctionSignatureMarker } from "./provider-callable-signatures.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -159,6 +160,13 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, canonicalIdentityFactKey)?.exportName, "SearchValues");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, providerVirtualDeclarationFactKey)?.exportName, "SearchValues");
   assert.equal(extended.extensionHost.facts.get(canonicalSearchValuesSymbol, providerVirtualDeclarationFactKey)?.exportName, "SearchValues");
+  const publicSearchValuesFact = extended.extensionHost.facts.get(searchValuesSymbol, providerVirtualDeclarationFactKey);
+  const canonicalSearchValuesFact = extended.extensionHost.facts.get(canonicalSearchValuesSymbol, providerVirtualDeclarationFactKey);
+  assert.equal(publicSearchValuesFact?.providerModuleId, canonicalSearchValuesFact?.providerModuleId);
+  assert.equal(publicSearchValuesFact?.exportId, canonicalSearchValuesFact?.exportId);
+  assert.deepEqual(publicSearchValuesFact?.targetIdentity, canonicalSearchValuesFact?.targetIdentity);
+  assert.equal(publicSearchValuesFact?.artifactFileName, SourceFile_FileName(virtualFile));
+  assert.notEqual(publicSearchValuesFact?.artifactFileName, canonicalSearchValuesFact?.artifactFileName);
   assert.equal(extended.extensionHost.facts.get(containsSymbol, providerVirtualDeclarationFactKey)?.memberName, "Contains");
   const containsDeclaration = containsSymbol.Declarations?.[0];
   assert.ok(containsDeclaration !== undefined);
@@ -173,6 +181,23 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.members?.[0]?.id, "Contains(T)");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.members?.[0]?.parameters[0]?.type.kind, "type-parameter");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.members?.[0]?.returnType?.kind, "source-primitive");
+  assert.equal(
+    extended.extensionHost.facts.get(canonicalSearchValuesSymbol, targetBindingFactKey)?.id,
+    extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.id,
+  );
+  assert.deepEqual(
+    extended.extensionHost.facts.get(canonicalSearchValuesSymbol, targetBindingFactKey)?.members?.map((member) => member.id),
+    extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.members?.map((member) => member.id),
+  );
+  assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, runtimeCarrierFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(canonicalSearchValuesSymbol, runtimeCarrierFactKey), undefined);
+  for (const aliasDeclaration of searchValuesSymbol.Declarations ?? []) {
+    assert.equal(
+      extended.extensionHost.facts.get(aliasDeclaration, providerVirtualDeclarationFactKey),
+      undefined,
+      "Canonical re-export declarations must not claim ownership of provider declaration AST facts.",
+    );
+  }
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   assert.ok(
@@ -2181,7 +2206,9 @@ test("provider virtual rest parameters preserve array-of-function source shapes"
   assertCleanProgram(program, sourceFile);
 
   const virtualFile = getCanonicalProviderExportOwnerFile(program, extended.extensionHost, "Parallel");
-  assert.ok(SourceFile_Text(virtualFile).includes("...actions: (() => void)[]"));
+  assert.ok(SourceFile_Text(virtualFile).includes(
+    `...actions: ((${renderProviderFunctionSignatureMarker(0)}() => void))[]`,
+  ));
   assert.ok(!SourceFile_Text(virtualFile).includes("...actions: () => void[]"));
 });
 

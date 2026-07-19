@@ -7,6 +7,7 @@ import type { Node, SourceFile } from "../internal/ast/ast.js";
 import {
   Node_Arguments,
   Node_Body,
+  Node_Expression,
   Node_Initializer,
   Node_Text,
   Node_TypeArguments,
@@ -24,6 +25,8 @@ import {
 import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import type { SignatureLinks, Type } from "../internal/checker/types.js";
 import { Type_Symbol } from "../internal/checker/types.js";
+import { Checker_getResolvedSignature } from "../internal/checker/checker/signatures.js";
+import { CheckModeNormal } from "../internal/checker/checker/state.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
@@ -63,6 +66,8 @@ import type {
   CheckedSourceCallProducer,
   CheckedSourceCallProducerContext,
   CheckedSourceCallProviderSelector,
+  CheckedSourceInlineFunctionEvidence,
+  CheckedSourceInlineOperation,
   CompilerExtension,
   ExtensionDiagnostic,
   ExtensionFactSubject,
@@ -345,6 +350,30 @@ function inlineFunctionArgument(operation: CheckedSourceCallOperation, index = 0
   return composition?.kind === "inline-function" ? composition.function : undefined;
 }
 
+function inlineOperationSubject(operation: CheckedSourceInlineOperation): ExtensionFactSubject {
+  switch (operation.sourceOperationKind) {
+    case "call":
+      return operation.call;
+    case "iteration":
+      return operation.statement;
+    case "property-access":
+    case "element-access":
+    case "operator":
+    case "conversion":
+      return operation.expression;
+  }
+}
+
+function inlineReturnOperation(
+  inlineFunction: CheckedSourceInlineFunctionEvidence,
+  returnIndex = 0,
+): CheckedSourceInlineOperation | undefined {
+  const returned = inlineFunction.returns[returnIndex];
+  return returned === undefined
+    ? undefined
+    : inlineFunction.operations.find((operation) => inlineOperationSubject(operation) === returned.expression);
+}
+
 test("provider-selected source producers preserve exact fluent-call evidence without a target mapper", () => {
   const invocations: ProducerInvocation[] = [];
   const registrationResults: boolean[] = [];
@@ -527,9 +556,12 @@ test("provider-selected source producers preserve exact fluent-call evidence wit
     if (selectorFunction === undefined || selectorFunction.returns.length !== 1) {
       throw new Error("Expected exact inline selector function evidence.");
     }
-    const selectedMember = selectorFunction.returns[0]?.selectedProperty;
-    if (selectedMember === undefined) {
+    const selectedMember = inlineReturnOperation(selectorFunction);
+    if (selectedMember?.sourceOperationKind !== "property-access") {
       throw new Error("Expected exact selected property evidence for the selector result.");
+    }
+    if (selectedMember.accessMode !== "read") {
+      throw new Error("Expected the callback selector result to be an exact property read.");
     }
     assert.ok(selectedMember.expression === Node_Body(selectorArgument.expression as GoPtr<Node>), `${terminalLabel}: selected callback member must be the direct body expression.`);
     assert.equal(Node_Text(selectedMember.receiver as GoPtr<Node>), "owner");
@@ -537,12 +569,12 @@ test("provider-selected source producers preserve exact fluent-call evidence wit
     assert.ok(selectedMember.sourceReceiver.symbol === selectorFunction.parameters[0]?.symbol);
     const memberSymbol = ownerSymbol?.Members?.get("member");
     assert.ok(memberSymbol !== undefined);
-    assert.ok(selectedMember.sourceResult.selectedSymbol === memberSymbol, `${terminalLabel}: callback result must retain the checker-selected member symbol.`);
-    assert.ok(selectedMember.sourceResult.selectedDeclaration === memberSymbol.ValueDeclaration, `${terminalLabel}: callback result must retain the checker-selected member declaration.`);
-    assert.equal((selectedMember.sourceResult.selectedDeclaration as GoPtr<Node>)?.Kind, KindPropertySignature);
-    assert.equal(Node_Text(Node_Name(selectedMember.sourceResult.selectedDeclaration as GoPtr<Node>)), "member");
+    assert.ok(selectedMember.sourceReadResult.selectedSymbol === memberSymbol, `${terminalLabel}: callback result must retain the checker-selected member symbol.`);
+    assert.ok(selectedMember.sourceReadResult.selectedDeclaration === memberSymbol.ValueDeclaration, `${terminalLabel}: callback result must retain the checker-selected member declaration.`);
+    assert.equal((selectedMember.sourceReadResult.selectedDeclaration as GoPtr<Node>)?.Kind, KindPropertySignature);
+    assert.equal(Node_Text(Node_Name(selectedMember.sourceReadResult.selectedDeclaration as GoPtr<Node>)), "member");
     assert.equal(
-      SourceFile_FileName(GetSourceFileOfNode(selectedMember.sourceResult.selectedDeclaration as GoPtr<Node>)),
+      SourceFile_FileName(GetSourceFileOfNode(selectedMember.sourceReadResult.selectedDeclaration as GoPtr<Node>)),
       expectedOwner.fileName,
     );
 
@@ -605,7 +637,7 @@ test("source-owned fluent facts compose inner-before-outer and reach the indepen
       const selection = requireApplicableSelection(operation);
       const ownerType = selection.methodTypeArguments[0]?.selectedType;
       assert.ok(ownerType !== undefined);
-      assert.equal(context.facts.set(operation.call, fluentChainFactKey, {
+      assert.equal(context.facts.set(fluentChainFactKey, {
         kind: "root",
         ownerType,
       }), "inserted");
@@ -622,12 +654,17 @@ test("source-owned fluent facts compose inner-before-outer and reach the indepen
         throw new Error("The selected source protocol lost its exact root predecessor fact.");
       }
       const inlineFunction = inlineFunctionArgument(operation);
-      const selectedProperty = inlineFunction?.returns[0]?.selectedProperty;
+      const selectedProperty = inlineFunction === undefined ? undefined : inlineReturnOperation(inlineFunction);
       const parameterSymbol = inlineFunction?.parameters[0]?.symbol;
-      assert.ok(selectedProperty?.sourceReceiver.symbol === parameterSymbol);
-      const selectedMember = selectedProperty?.sourceResult.selectedDeclaration;
+      assert.ok(selectedProperty?.sourceOperationKind === "property-access");
+      assert.equal(selectedProperty.accessMode, "read");
+      if (selectedProperty.accessMode !== "read") {
+        throw new Error("Expected the callback selector result to be an exact property read.");
+      }
+      assert.ok(selectedProperty.sourceReceiver.symbol === parameterSymbol);
+      const selectedMember = selectedProperty.sourceReadResult.selectedDeclaration;
       assert.ok(selectedMember !== undefined);
-      assert.equal(context.facts.set(operation.call, fluentChainFactKey, {
+      assert.equal(context.facts.set(fluentChainFactKey, {
         kind: "selection",
         ownerType: predecessor.ownerType,
         selectedMember,
@@ -646,7 +683,7 @@ test("source-owned fluent facts compose inner-before-outer and reach the indepen
       }
       const argument = operation.sourceArguments[0]?.expression;
       assert.ok(argument !== undefined);
-      assert.equal(context.facts.set(operation.call, fluentChainFactKey, {
+      assert.equal(context.facts.set(fluentChainFactKey, {
         kind: "terminal",
         ownerType: predecessor.ownerType,
         selectedMember: predecessor.selectedMember,
@@ -750,13 +787,45 @@ test("source producer argument composition exposes exact authored literals and i
     .map((invocation) => invocation.operation.sourceArguments[0]!);
   assert.equal(selectorArguments.length, 12);
   assert.ok(selectorArguments.every((argument) => argument.composition?.kind === "inline-function"));
-  assert.deepEqual(selectorArguments.map((argument) =>
-    argument.composition?.kind === "inline-function"
-    && argument.composition.function.returns[0]?.selectedProperty !== undefined),
-  [true, true, true, true, true, false, false, false, true, true, true, true]);
+  assert.deepEqual(selectorArguments.map((argument) => {
+    assert.equal(argument.composition?.kind, "inline-function");
+    return argument.composition?.kind === "inline-function"
+      ? inlineReturnOperation(argument.composition.function)?.sourceOperationKind
+      : undefined;
+  }), [
+    "property-access",
+    "property-access",
+    "property-access",
+    "property-access",
+    "property-access",
+    "call",
+    "element-access",
+    "conversion",
+    "property-access",
+    "property-access",
+    "property-access",
+    "property-access",
+  ]);
+  const callFunction = selectorArguments[5]!.composition;
+  assert.equal(callFunction?.kind, "inline-function");
+  assert.deepEqual(callFunction?.kind === "inline-function"
+    ? callFunction.function.operations.map((operation) => operation.sourceOperationKind)
+    : [], ["property-access", "call"]);
+  const assertedFunction = selectorArguments[7]!.composition;
+  assert.equal(assertedFunction?.kind, "inline-function");
+  assert.deepEqual(assertedFunction?.kind === "inline-function"
+    ? assertedFunction.function.operations.map((operation) => operation.sourceOperationKind)
+    : [], ["property-access", "conversion"]);
 
   assert.equal(finalizeExtensionSemantics(setup.programOptions), setup.extensionHost);
-  assert.equal(setup.extensionHost.diagnostics.all().length, 0);
+  assert.equal(
+    setup.extensionHost.diagnostics.all().length,
+    0,
+    JSON.stringify(setup.extensionHost.diagnostics.all().map((diagnostic) => ({
+      extensionCode: diagnostic.extensionCode,
+      message: diagnostic.message,
+    }))),
+  );
 });
 
 test("inline callback evidence preserves lexical returns and distinguishes the parameter receiver", () => {
@@ -793,14 +862,27 @@ test("inline callback evidence preserves lexical returns and distinguishes the p
   const lexical = inlineFunctionArgument(invocations[0]!.operation);
   assert.ok(lexical !== undefined);
   assert.equal(lexical.returns.length, 2, "Nested function returns must not enter the enclosing callback evidence.");
-  assert.ok(lexical.returns.every((returned) =>
-    returned.selectedProperty?.sourceReceiver.symbol === lexical.parameters[0]?.symbol));
+  assert.ok(lexical.returns.every((_returned, index) => {
+    const operation = inlineReturnOperation(lexical, index);
+    return operation?.sourceOperationKind === "property-access"
+      && operation.sourceReceiver.symbol === lexical.parameters[0]?.symbol;
+  }));
+  assert.equal(
+    lexical.operations.filter((operation) => operation.sourceOperationKind === "property-access").length,
+    3,
+    "Nested function operations must not enter the enclosing callback evidence.",
+  );
+  assert.ok(lexical.operations
+    .filter((operation) => operation.sourceOperationKind === "property-access")
+    .every((operation) => operation.sourceReceiver.symbol === lexical.parameters[0]?.symbol));
   const external = inlineFunctionArgument(invocations[1]!.operation);
   assert.ok(external !== undefined);
   assert.equal(external.returns.length, 1);
-  assert.ok(external.returns[0]?.selectedProperty !== undefined);
+  const externalSelection = inlineReturnOperation(external);
+  assert.equal(externalSelection?.sourceOperationKind, "property-access");
+  assert.ok(externalSelection?.sourceOperationKind === "property-access");
   assert.notEqual(
-    external.returns[0]?.selectedProperty?.sourceReceiver.symbol,
+    externalSelection.sourceReceiver.symbol,
     external.parameters[0]?.symbol,
     "A source producer must be able to reject a callback that selects from an external receiver.",
   );
@@ -894,6 +976,66 @@ test("callable provider values and properties preserve exact signature identity 
     ],
   });
 
+  const queryFirstNames = [
+    "direct",
+    "alias",
+    "namespace",
+    "reexport",
+    "property",
+    "namespaceProperty",
+    "reexportProperty",
+    "staticProperty",
+    "reexportStaticProperty",
+    "namespaceMember",
+    "indexed",
+  ] as const;
+  const queryFirstFile = getSourceFile(setup.program, "/src/index.ts");
+  const queryFirstSignatures = new Map<string, SignatureLinks["resolvedSignature"]>();
+  const queryFirstReceiverCalls = new Set<string>([
+    "namespace",
+    "property",
+    "namespaceProperty",
+    "reexportProperty",
+    "staticProperty",
+    "reexportStaticProperty",
+    "namespaceMember",
+    "indexed",
+  ]);
+  const [queryChecker, releaseQueryChecker] = Program_GetTypeCheckerForFile(
+    setup.program,
+    Background(),
+    queryFirstFile,
+  );
+  try {
+    assert.ok(queryChecker !== undefined);
+    for (const name of queryFirstNames) {
+      const call = getVariableInitializer(queryFirstFile, name);
+      Checker_getResolvedSignature(queryChecker, call, undefined, CheckModeNormal);
+      const links = LinkStore_Get(queryChecker.signatureLinks, call) as SignatureLinks;
+      assert.ok(links.resolvedSignature !== undefined, `${name}: query must populate the ordinary TS-Go signature cache.`);
+      assert.ok(links.resolvedCallSelectionEvidence !== undefined, `${name}: selected evidence must accompany a query-populated signature cache.`);
+      assert.ok(links.resolvedCallSelectionEvidence.selectedSignature === links.resolvedSignature, `${name}: query evidence must belong to the cached signature.`);
+      const callee = Node_Expression(call);
+      const expectedReceiver = queryFirstReceiverCalls.has(name)
+        ? Node_Expression(callee)
+        : undefined;
+      assert.equal(
+        links.resolvedCallSelectionEvidence.sourceReceiver === undefined,
+        expectedReceiver === undefined,
+        `${name}: query evidence must preserve exactly the selected receiver topology.`,
+      );
+      assert.ok(
+        links.resolvedCallSelectionEvidence.sourceReceiver?.expression === expectedReceiver,
+        `${name}: query evidence must preserve the exact selected receiver expression subject.`,
+      );
+      queryFirstSignatures.set(name, links.resolvedSignature);
+    }
+  } finally {
+    releaseQueryChecker();
+  }
+  assert.equal(valueCalls.length + propertyCalls.length + staticPropertyCalls.length
+    + namespaceMemberCalls.length + indexedCalls.length, 0, "Checker queries must not publish source operations.");
+
   assertCleanProgram(setup.program);
   assert.equal(valueCalls.length, 4);
   assert.equal(propertyCalls.length, 3);
@@ -912,6 +1054,22 @@ test("callable provider values and properties preserve exact signature identity 
   assert.ok(namespaceMemberCalls.every((operation) => operation.sourceReceiver !== undefined));
   assert.equal(indexedCalls[0]?.sourceReceiver === undefined, false);
   assert.equal(indexedCalls[0] === undefined ? undefined : authoredStringArgument(indexedCalls[0]), "indexed");
+  const [verifiedChecker, releaseVerifiedChecker] = Program_GetTypeCheckerForFile(
+    setup.program,
+    Background(),
+    queryFirstFile,
+  );
+  try {
+    assert.ok(verifiedChecker !== undefined);
+    for (const name of queryFirstNames) {
+      const call = getVariableInitializer(queryFirstFile, name);
+      const links = LinkStore_Get(verifiedChecker.signatureLinks, call) as SignatureLinks;
+      assert.ok(links.resolvedSignature === queryFirstSignatures.get(name), `${name}: source checking must reuse the exact TS-Go cached signature.`);
+      assert.ok(links.resolvedCallSelectionEvidence?.selectedSignature === links.resolvedSignature, `${name}: source checking must retain evidence for the reused signature.`);
+    }
+  } finally {
+    releaseVerifiedChecker();
+  }
   assert.equal(finalizeExtensionSemantics(setup.programOptions), setup.extensionHost);
   assert.equal(setup.extensionHost.diagnostics.all().length, 0);
 });
@@ -1212,7 +1370,7 @@ test("deferred source production rolls back and replays once with identical reta
         recordInvocation("terminal", terminalSelector, operation, context, invocations);
         terminalAttempt += 1;
         terminalFactsBeforeWrite.push(context.facts.get(operation.call, producedCallFactKey));
-        assert.equal(context.facts.set<ProducedCallFact>(operation.call, producedCallFactKey, {
+        assert.equal(context.facts.set<ProducedCallFact>(producedCallFactKey, {
           role: "terminal",
           phase: context.phase,
           attempt: terminalAttempt,
@@ -1269,7 +1427,7 @@ test("source rejection rolls back its staged source-owned fact", () => {
       produce: (operation, context) => {
         recordInvocation("terminal", terminalSelector, operation, context, invocations);
         rejectedCall = operation;
-        assert.equal(context.facts.set<TransactionProbeFact>(operation.call, transactionProbeFactKey, {
+        assert.equal(context.facts.set<TransactionProbeFact>(transactionProbeFactKey, {
           stage: "source-rejection",
           phase: context.phase,
         }), "inserted");
@@ -1324,7 +1482,7 @@ test("target rejection rolls back the source-owned fact visible to its mapper", 
       produce: (operation, context) => {
         recordInvocation("terminal", terminalSelector, operation, context, invocations);
         rejectedOperation = operation;
-        assert.equal(context.facts.set<TransactionProbeFact>(operation.call, transactionProbeFactKey, {
+        assert.equal(context.facts.set<TransactionProbeFact>(transactionProbeFactKey, {
           stage: "target-rejection",
           phase: context.phase,
         }), "inserted");
@@ -1434,7 +1592,7 @@ function completeFactProducer(
     selector,
     produce: (operation, context) => {
       recordInvocation(role, selector, operation, context, invocations);
-      assert.equal(context.facts.set(operation.call, producedCallFactKey, {
+      assert.equal(context.facts.set(producedCallFactKey, {
         role,
         phase: context.phase,
         attempt: 1,

@@ -873,7 +873,6 @@ export function runWithoutResolvedSignatureCaching<T>(c: GoPtr<Checker>, node: G
     readonly checkedCallSelectionSeed: SignatureLinks["checkedCallSelectionSeed"];
     readonly resolvedCallSelectionEvidence: SignatureLinks["resolvedCallSelectionEvidence"];
     readonly resolvedCallEvidence: SignatureLinks["resolvedCallEvidence"];
-    readonly extensionSourceDecisionOwner: SignatureLinks["extensionSourceDecisionOwner"];
   }> = new globalThis.Map();
   const cachedTypes: Map<ValueSymbolLinks, GoPtr<Type>> = new globalThis.Map();
   try {
@@ -886,13 +885,11 @@ export function runWithoutResolvedSignatureCaching<T>(c: GoPtr<Checker>, node: G
         checkedCallSelectionSeed: signatureLinks.checkedCallSelectionSeed,
         resolvedCallSelectionEvidence: signatureLinks.resolvedCallSelectionEvidence,
         resolvedCallEvidence: signatureLinks.resolvedCallEvidence,
-        extensionSourceDecisionOwner: signatureLinks.extensionSourceDecisionOwner,
       });
       signatureLinks.resolvedSignature = undefined;
       signatureLinks.checkedCallSelectionSeed = undefined;
       signatureLinks.resolvedCallSelectionEvidence = undefined;
       signatureLinks.resolvedCallEvidence = undefined;
-      signatureLinks.extensionSourceDecisionOwner = undefined;
       if (IsFunctionExpressionOrArrowFunction(current)) {
         const symbolLinks = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(c!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, Checker_getSymbolOfDeclaration(c, current))!;
         const resolvedType = symbolLinks.resolvedType;
@@ -909,7 +906,6 @@ export function runWithoutResolvedSignatureCaching<T>(c: GoPtr<Checker>, node: G
       signatureLinks.checkedCallSelectionSeed = snapshot.checkedCallSelectionSeed;
       signatureLinks.resolvedCallSelectionEvidence = snapshot.resolvedCallSelectionEvidence;
       signatureLinks.resolvedCallEvidence = snapshot.resolvedCallEvidence;
-      signatureLinks.extensionSourceDecisionOwner = snapshot.extensionSourceDecisionOwner;
     }
     for (const [symbolLinks, resolvedType] of cachedTypes) {
       symbolLinks.resolvedType = resolvedType;

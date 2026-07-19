@@ -79,6 +79,7 @@ import {
   providerVirtualInternalRoot,
 } from "./provider-virtual-internal.js";
 import { providerAncillaryDataLimits, providerDeclarationClosureLimits } from "./provider-resource-limits.js";
+import { renderProviderFunctionSignatureMarker } from "./provider-callable-signatures.js";
 
 const primitiveFactKey = defineExtensionFactKey<string>({
   extensionId: "source-primitives",
@@ -417,7 +418,7 @@ test("provider registry rejects unsupported extension contract versions", () => 
   }
 });
 
-test("registered diagnostic ranges reject unstable extension codes", () => {
+test("registered diagnostic ranges reject unstable extension codes atomically", () => {
   const host = new ExtensionHost({}, {
     extensions: [
       extension("a-range-checked-extension", {
@@ -436,10 +437,16 @@ test("registered diagnostic ranges reject unstable extension codes", () => {
     ],
   });
 
-  assert.equal(host.diagnostics.all().some((item) => item.extensionCode === "IN_RANGE"), true);
+  assert.equal(host.diagnostics.all().some((item) => item.extensionCode === "IN_RANGE"), false);
   assert.equal(host.diagnostics.all().some((item) => item.extensionCode === "OUT_OF_RANGE"), false);
   assert.equal(host.diagnostics.all().some((item) => item.numericCode === ExtensionHostDiagnosticCode.diagnosticCodeOutOfRange), true);
-  assert.equal(host.diagnostics.all().filter((item) => item.numericCode === ExtensionHostDiagnosticCode.diagnosticRangeInvalid).length, 2);
+  assert.equal(host.diagnostics.all().some((item) => item.numericCode === ExtensionHostDiagnosticCode.initializationFailed), true);
+  assert.equal(host.diagnostics.all().filter((item) => item.numericCode === ExtensionHostDiagnosticCode.diagnosticRangeInvalid).length, 1);
+  assert.deepEqual(
+    host.extensions.map((item) => item.identity.id),
+    ["z-overlapping-range-extension"],
+    "The failed extension's diagnostic range must roll back before the next extension initializes.",
+  );
 });
 
 test("extensions register binding and semantic providers through initialization context", () => {
@@ -982,7 +989,9 @@ test("provider declaration models render the supported export member and type ma
   assert.match(source, /\[index: number\]: string;/);
   assert.match(source, /export interface Writer/);
   assert.match(source, /write\(text\?: string, \.\.\.chunks: string\[\]\): number;/);
-  assert.match(source, /continueWith\(callback: \(\) => object, state: object \| undefined\): object;/);
+  assert.ok(source.includes(
+    `continueWith(callback: (${renderProviderFunctionSignatureMarker(0)}() => object), state: object | undefined): object;`,
+  ));
   assert.match(source, /export declare function tryParse<T extends number>\(text\?: string, \.\.\.values: number\[\]\): boolean;/);
   assert.match(source, /export type Pair = \[number, string\];/);
   assert.match(source, /export declare const DefaultSize: number;/);
@@ -1267,7 +1276,7 @@ test("provider declaration models reject target types without explicit source sh
       kind: "target-named",
       target: "demo",
       id: "Demo.NativeInt",
-    },
+    } as never,
   }));
 
   const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });

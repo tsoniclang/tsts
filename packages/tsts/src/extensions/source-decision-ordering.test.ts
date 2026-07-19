@@ -238,6 +238,42 @@ test("rejected overload candidates discard nested source decisions and the winne
   assertExtensionDiagnosticsClean(setup.extensionHost);
 });
 
+test("a cached winning overload retains its exact element call-callee operation", () => {
+  const setup = createSourceDecisionProgram("overload-element-callee-isolation", [
+    {
+      fileName: "profile.d.ts",
+      sourceText: `
+        ${baseNoLibProfile}
+        interface CallableTable { readonly [index: number]: () => number; }
+        declare function chooseIndexed(callback: (value: CallableTable) => string): "text";
+        declare function chooseIndexed(callback: (value: CallableTable) => number): "number";
+      `,
+    },
+    {
+      fileName: "index.ts",
+      sourceText: `
+        export const selected = chooseIndexed((value: CallableTable) => value[0]());
+      `,
+    },
+  ]);
+  const index = requireSourceFile(setup.program, "/src/index.ts");
+  const calls = collectNodesByKind(index, KindCallExpression);
+  const elements = collectNodesByKind(index, KindElementAccessExpression);
+
+  assert.equal(calls.length, 2);
+  assert.equal(elements.length, 1);
+  assertProgramAndSyntaxClean(setup.program);
+  assertAllSemanticsClean(setup.program);
+  finalizeClean(setup);
+
+  assertObservedOnce(setup.observations.calls, calls, (request) => request.call);
+  assertObservedOnce(setup.observations.elements, elements, (request) => request.expression);
+  assert.equal(setup.observations.elements[0]?.accessMode, "read");
+  assert.equal(setup.observations.elements[0]?.use, "call-callee");
+  assert.equal(setup.extensionHost.facts.get(elements[0], targetOperationFactKey)?.operationId, operationIds.element);
+  assertExtensionDiagnosticsClean(setup.extensionHost);
+});
+
 test("declaration-source queries suppress runtime operation decisions", () => {
   const setup = createSourceDecisionProgram("declaration-runtime-suppression", [
     { fileName: "ambient.d.ts", sourceText: ambientOperationProfile },
@@ -735,9 +771,13 @@ function recordPropertyDecision(
   }
   recordExtensionCheckedPropertyAccessMapping(checker, property, {
     sourceSymbol: selected.symbol as GoPtr<Symbol>,
+    sourceDeclaration: selected.declaration as GoPtr<Node>,
     selectedSymbol: selected.selectedSymbol as GoPtr<Symbol>,
+    selectedDeclaration: selected.selectedDeclaration as GoPtr<Node>,
     resultType: selected.type as GoPtr<Type>,
     receiverType: request.sourceReceiver.type as GoPtr<Type>,
+    receiverSymbol: request.sourceReceiver.symbol as GoPtr<Symbol>,
+    receiverDeclaration: request.sourceReceiver.declaration as GoPtr<Node>,
     selectionMode: accessMode === "write" ? "write" : "read",
     accessMode,
     callCallee: request.use === "call-callee",

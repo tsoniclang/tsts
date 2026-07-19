@@ -6,7 +6,7 @@ import type { Node } from "../internal/ast/spine.js";
 import { KindIdentifier } from "../internal/ast/generated/kinds.js";
 import { ScriptKindTS } from "../internal/core/scriptkind.js";
 import type { Checker } from "../internal/checker/checker/state.js";
-import type { SignatureLinks, Type } from "../internal/checker/types.js";
+import type { Signature, SignatureLinks, Type } from "../internal/checker/types.js";
 import { ParseSourceFile } from "../internal/parser/parser/statements-declarations.js";
 import {
   appendEvent,
@@ -105,6 +105,50 @@ test("nested commit merges SignatureLinks rollback ownership into the parent", (
   assert.equal(requireState(checker).phase, "idle");
   assert.equal(requireState(checker).events.length, 0);
   assert.equal(requireState(checker).signatureLinksSnapshotCount, 0);
+});
+
+test("rollback preserves exact extension evidence created with a newly cached TS-Go signature", () => {
+  const checker = createChecker();
+  const links = createSignatureLinks();
+  const selectedSignature = {} as Signature;
+  const selectedSeed = {} as NonNullable<SignatureLinks["checkedCallSelectionSeed"]>;
+  const selectedSelection = {
+    selectedSignature,
+  } as NonNullable<SignatureLinks["resolvedCallSelectionEvidence"]>;
+  const selectedEvidence = {
+    selectedSignature,
+  } as NonNullable<SignatureLinks["resolvedCallEvidence"]>;
+  const root = beginFrame(checker, "source-file");
+
+  journalSignatureLinks(checker, links);
+  links.resolvedSignature = selectedSignature;
+  links.checkedCallSelectionSeed = selectedSeed;
+  links.resolvedCallSelectionEvidence = selectedSelection;
+  links.resolvedCallEvidence = selectedEvidence;
+
+  rollbackSourceDecisionFrame(checker, root);
+
+  assert.equal(links.resolvedSignature, selectedSignature);
+  assert.equal(links.checkedCallSelectionSeed, selectedSeed);
+  assert.equal(links.resolvedCallSelectionEvidence, selectedSelection);
+  assert.equal(links.resolvedCallEvidence, selectedEvidence);
+});
+
+test("rollback clears stale extension evidence when TS-Go installs a different cached signature", () => {
+  const checker = createChecker();
+  const links = createSignatureLinks();
+  const selectedSignature = {} as Signature;
+  const root = beginFrame(checker, "source-file");
+
+  journalSignatureLinks(checker, links);
+  links.resolvedSignature = selectedSignature;
+
+  rollbackSourceDecisionFrame(checker, root);
+
+  assert.equal(links.resolvedSignature, selectedSignature);
+  assert.equal(links.checkedCallSelectionSeed, undefined);
+  assert.equal(links.resolvedCallSelectionEvidence, undefined);
+  assert.equal(links.resolvedCallEvidence, undefined);
 });
 
 test("nested commit keeps the parent's earliest SignatureLinks snapshot when both frames journal the same links", () => {
@@ -486,6 +530,5 @@ function createSignatureLinks(): SignatureLinks {
     checkedCallSelectionSeed: {} as NonNullable<SignatureLinks["checkedCallSelectionSeed"]>,
     resolvedCallSelectionEvidence: {} as NonNullable<SignatureLinks["resolvedCallSelectionEvidence"]>,
     resolvedCallEvidence: {} as NonNullable<SignatureLinks["resolvedCallEvidence"]>,
-    extensionSourceDecisionOwner: undefined,
   };
 }

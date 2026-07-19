@@ -1,6 +1,12 @@
 import type {
+  CheckedAccessSourceEvidence,
+  CheckedAssertionConversionSourceOperation,
   CheckedCallSourceOperation,
-  CheckedSourceChainRole,
+  CheckedElementAccessSourceOperation,
+  CheckedIterationSourceOperation,
+  CheckedOperatorSourceOperation,
+  SelectedSourceIterationProtocolEvidence,
+  SelectedSourceTypeEvidence,
   SelectedSourceValueEvidence,
 } from "./facts.js";
 import type {
@@ -38,27 +44,42 @@ export interface CheckedSourceInlineFunctionParameterEvidence {
 
 export interface CheckedSourceInlineFunctionReturnEvidence {
   readonly expression: ExtensionFactSubject;
-  readonly selectedProperty?: CheckedSourceInlineSelectedPropertyEvidence;
 }
 
 /**
- * Exact checker-selected property result from an inline source callback.
- * The selected symbol/declaration live in sourceResult. Source spelling is
- * deliberately absent so a producer cannot substitute name matching for
- * selected identity.
+ * Exact checker-selected property operation from an inline source function.
+ * Property spelling is deliberately absent: source extensions must validate
+ * selected symbol/declaration identity, not reconstruct semantics from names.
  */
-export interface CheckedSourceInlineSelectedPropertyEvidence {
+interface CheckedSourceInlinePropertyOperationBase {
+  readonly sourceOperationKind: "property-access";
   readonly expression: ExtensionFactSubject;
   readonly receiver: ExtensionFactSubject;
   readonly sourceReceiver: SelectedSourceValueEvidence;
-  readonly sourceResult: SelectedSourceValueEvidence;
-  readonly chainRole: CheckedSourceChainRole<"property-access">;
 }
+
+export type CheckedSourceInlinePropertyOperation = CheckedSourceInlinePropertyOperationBase
+  & CheckedAccessSourceEvidence<"property-access">;
+
+/**
+ * Flat immutable inventory of checked operations lexically owned by one
+ * inline function. The source extension validates its own protocol by exact
+ * subject and selected declaration identity; TSTS does not encode a fluent
+ * protocol grammar or target semantics here.
+ */
+export type CheckedSourceInlineOperation =
+  | CheckedCallSourceOperation
+  | CheckedSourceInlinePropertyOperation
+  | CheckedElementAccessSourceOperation
+  | CheckedOperatorSourceOperation
+  | CheckedIterationSourceOperation
+  | CheckedAssertionConversionSourceOperation;
 
 export interface CheckedSourceInlineFunctionEvidence {
   readonly expression: ExtensionFactSubject;
   readonly parameters: readonly CheckedSourceInlineFunctionParameterEvidence[];
   readonly returns: readonly CheckedSourceInlineFunctionReturnEvidence[];
+  readonly operations: readonly CheckedSourceInlineOperation[];
 }
 
 export type CheckedSourceCallArgumentCompositionEvidence =
@@ -99,7 +120,7 @@ export interface CheckedSourceCallOperation extends Omit<CheckedCallSourceOperat
 }
 
 /** Host-only subject boundary for one retained source operation. */
-export function checkedSourceCallOperationSubjects(
+export function checkedSourceCallReadableSubjects(
   operation: CheckedSourceCallOperation,
 ): ReadonlySet<ExtensionFactSubject> {
   const subjects = new Set<ExtensionFactSubject>();
@@ -108,7 +129,7 @@ export function checkedSourceCallOperationSubjects(
       subjects.add(subject);
     }
   };
-  const addType = (evidence: import("./facts.js").SelectedSourceTypeEvidence): void => {
+  const addType = (evidence: SelectedSourceTypeEvidence): void => {
     add(evidence.type);
     add(evidence.symbol);
     add(evidence.declaration);
@@ -120,42 +141,144 @@ export function checkedSourceCallOperationSubjects(
     add(evidence.expression);
     addType(evidence);
   };
-  const addProperty = (property: CheckedSourceInlineSelectedPropertyEvidence): void => {
-    add(property.expression);
-    add(property.receiver);
-    addValue(property.sourceReceiver);
-    addValue(property.sourceResult);
-  };
-
-  add(operation.call);
-  add(operation.callee);
-  operation.arguments.forEach(add);
-  if (operation.sourceSelection.kind === "applicable") {
-    add(operation.sourceSelection.signature);
-    add(operation.sourceSelection.declaration);
-    for (const argument of operation.sourceSelection.methodTypeArguments) {
+  const addSelection = (sourceOperation: CheckedCallSourceOperation): void => {
+    if (sourceOperation.sourceSelection.kind !== "applicable") {
+      return;
+    }
+    add(sourceOperation.sourceSelection.signature);
+    add(sourceOperation.sourceSelection.declaration);
+    for (const argument of sourceOperation.sourceSelection.methodTypeArguments) {
       add(argument.typeParameter);
       add(argument.selectedType);
       add(argument.explicitTypeNode);
     }
-    for (const parameter of operation.sourceSelection.parameters) {
+    for (const parameter of sourceOperation.sourceSelection.parameters) {
       add(parameter.parameterSymbol);
       add(parameter.parameterDeclaration);
       add(parameter.selectedType);
       add(parameter.authoredTypeNode);
     }
-    for (const binding of operation.sourceSelection.argumentBindings) {
+    for (const binding of sourceOperation.sourceSelection.argumentBindings) {
       add(binding.selectedArgumentType);
       add(binding.selectedParameterType);
     }
-  }
-  addValue(operation.sourceCallee);
-  addValue(operation.sourceResult);
-  if (operation.sourceReceiver !== undefined) {
-    addValue(operation.sourceReceiver);
-  }
+  };
+  const addCall = (sourceOperation: CheckedCallSourceOperation): void => {
+    add(sourceOperation.call);
+    add(sourceOperation.callee);
+    sourceOperation.arguments.forEach(add);
+    addSelection(sourceOperation);
+    addValue(sourceOperation.sourceCallee);
+    sourceOperation.sourceArguments.forEach(addValue);
+    addValue(sourceOperation.sourceResult);
+    if (sourceOperation.sourceReceiver !== undefined) {
+      addValue(sourceOperation.sourceReceiver);
+    }
+  };
+  const addAccess = (
+    sourceOperation: CheckedSourceInlinePropertyOperation | CheckedElementAccessSourceOperation,
+  ): void => {
+    add(sourceOperation.expression);
+    add(sourceOperation.receiver);
+    addValue(sourceOperation.sourceReceiver);
+    if (sourceOperation.accessMode !== "write") {
+      addValue(sourceOperation.sourceReadResult);
+    }
+    if (sourceOperation.accessMode === "write" || sourceOperation.accessMode === "read-write") {
+      addType(sourceOperation.sourceWriteType);
+    }
+    if (sourceOperation.sourceOperationKind === "element-access") {
+      add(sourceOperation.argument);
+      addValue(sourceOperation.sourceArgument);
+    }
+  };
+  const addIterationProtocol = (protocol: SelectedSourceIterationProtocolEvidence): void => {
+    addTypeIfPresent(protocol.iterationTypes.yieldType);
+    addTypeIfPresent(protocol.iterationTypes.returnType);
+    addTypeIfPresent(protocol.iterationTypes.nextType);
+    if (protocol.resolutionKind === "known-iterable-instantiation") {
+      addType(protocol.iterableTarget);
+      protocol.iterableDeclarations.forEach(add);
+      return;
+    }
+    add(protocol.iteratorMethod.symbol);
+    add(protocol.iteratorMethod.valueDeclaration);
+    protocol.iteratorMethod.declarations.forEach(add);
+    add(protocol.iteratorMethod.type);
+    addType(protocol.iteratorType);
+  };
+  const addTypeIfPresent = (evidence: SelectedSourceTypeEvidence | undefined): void => {
+    if (evidence !== undefined) {
+      addType(evidence);
+    }
+  };
+  const addIterationMechanism = (
+    mechanism: Exclude<CheckedIterationSourceOperation, { readonly iterationKind: "for-in" }>["mechanism"],
+  ): void => {
+    if (mechanism.kind === "union") {
+      mechanism.alternatives.forEach(addIterationMechanism);
+      return;
+    }
+    addType(mechanism.sourceAlternative);
+    switch (mechanism.kind) {
+      case "synchronous-iterator-protocol":
+      case "asynchronous-iterator-protocol":
+      case "synchronous-iterator-adapted-to-async":
+        addIterationProtocol(mechanism.protocol);
+        return;
+      case "array-like-index":
+      case "array-like-index-adapted-to-async":
+        addType(mechanism.selectedIndex);
+        return;
+      case "string-code-unit-index":
+      case "string-code-unit-index-adapted-to-async":
+      case "untyped-dynamic-iteration":
+        return;
+    }
+  };
+  const addInlineOperation = (sourceOperation: CheckedSourceInlineOperation): void => {
+    switch (sourceOperation.sourceOperationKind) {
+      case "call":
+        addCall(sourceOperation);
+        return;
+      case "property-access":
+      case "element-access":
+        addAccess(sourceOperation);
+        return;
+      case "operator":
+        add(sourceOperation.expression);
+        addValue(sourceOperation.sourceResult);
+        if (sourceOperation.operatorKind === "binary") {
+          add(sourceOperation.left);
+          add(sourceOperation.right);
+          addValue(sourceOperation.sourceLeft);
+          addValue(sourceOperation.sourceRight);
+        } else {
+          add(sourceOperation.operand);
+          addValue(sourceOperation.sourceOperand);
+        }
+        return;
+      case "iteration":
+        add(sourceOperation.statement);
+        add(sourceOperation.expression);
+        add(sourceOperation.initializer);
+        addValue(sourceOperation.sourceIterable);
+        addType(sourceOperation.sourceElement);
+        if (sourceOperation.iterationKind !== "for-in") {
+          addIterationMechanism(sourceOperation.mechanism);
+        }
+        return;
+      case "conversion":
+        add(sourceOperation.expression);
+        addValue(sourceOperation.source);
+        addType(sourceOperation.target);
+        add(sourceOperation.explicitTargetTypeNode);
+        return;
+    }
+  };
+
+  addCall(operation);
   for (const argument of operation.sourceArguments) {
-    addValue(argument);
     if (argument.composition?.kind !== "inline-function") {
       continue;
     }
@@ -167,10 +290,8 @@ export function checkedSourceCallOperationSubjects(
     }
     for (const returned of inlineFunction.returns) {
       add(returned.expression);
-      if (returned.selectedProperty !== undefined) {
-        addProperty(returned.selectedProperty);
-      }
     }
+    inlineFunction.operations.forEach(addInlineOperation);
   }
   return subjects;
 }
@@ -199,7 +320,6 @@ export type CheckedSourceCallProviderSelector =
 /** Callback-scoped source fact capability. It exposes no global fact enumeration. */
 export interface CheckedSourceCallFactCapability {
   readonly set: <T>(
-    subject: ExtensionFactSubject,
     key: ExtensionFactKey<T>,
     value: T,
     evidence?: readonly import("./host.js").ExtensionEvidence[],

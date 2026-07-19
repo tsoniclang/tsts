@@ -249,5 +249,6 @@ export type {
   CheckedSourceInlineFunctionEvidence,
   CheckedSourceInlineFunctionParameterEvidence,
   CheckedSourceInlineFunctionReturnEvidence,
-  CheckedSourceInlineSelectedPropertyEvidence,
+  CheckedSourceInlineOperation,
+  CheckedSourceInlinePropertyOperation,
 } from "./source-operation-producer.js";

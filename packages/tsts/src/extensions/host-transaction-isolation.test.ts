@@ -202,6 +202,50 @@ test("deferred nested hook effects roll back while pre-existing facts remain exa
   assert.equal(host.diagnostics.all().some((item) => item.extensionCode === "DISCARDED"), false);
 });
 
+test("an invalid diagnostic write poisons every ordinary observation attempt even when ignored", () => {
+  const extensionId = "isolation.invalid-diagnostic-poisons-attempt";
+  const factKey = defineExtensionFactKey<string>({
+    extensionId,
+    name: "must-roll-back",
+    snapshot: snapshotText,
+  });
+  const subject = {};
+  const host = new ExtensionHost({}, {
+    extensions: [extension(extensionId, (context) => {
+      context.diagnostics.registerDiagnosticRange(extensionId, { start: 9211500, end: 9211599 });
+      context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, (_request, observationContext) => {
+        assert.equal(observationContext.facts.set(subject, factKey, "provisional"), "inserted");
+        assert.equal(
+          observationContext.diagnostics.append(diagnostic(
+            extensionId,
+            "OUT_OF_RANGE",
+            9211600,
+            "must not commit",
+          )),
+          false,
+        );
+        return acceptObservation(true);
+      });
+    }, [ExtensionObservationPoint.validateTargetConstraint])],
+  });
+
+  const result = host.runObservation(
+    ExtensionObservationPoint.validateTargetConstraint,
+    request(),
+    () => false,
+    { requireOwner: true },
+  );
+
+  assert.equal(result.kind, "reject");
+  assert.equal(host.facts.get(subject, factKey), undefined);
+  assert.equal(host.diagnostics.all().some((item) => item.extensionCode === "OUT_OF_RANGE"), false);
+  assert.equal(
+    host.diagnostics.all().filter((item) =>
+      item.numericCode === ExtensionHostDiagnosticCode.diagnosticCodeOutOfRange).length,
+    1,
+  );
+});
+
 test("throwing initialization rolls back resolver, range, provider-facing hook, and owner registrations", () => {
   const extensionId = "isolation.initialize-rollback";
   const succeedingExtensionId = "isolation.initialize-success";

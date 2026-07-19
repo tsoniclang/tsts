@@ -643,7 +643,7 @@ function pushProviderTypeExpressionChildren(
         && typeof id === "string"
         && isOptionalString(displayName)
         && pushProviderModelArray(reads, stack, typeArguments, "type", depth, true, path + ".typeArguments")
-        && pushOptionalProviderModelNode(stack, sourceShape, "type", depth, true, path + ".sourceShape");
+        && pushOptionalProviderModelNode(stack, sourceShape, "type", depth, false, path + ".sourceShape");
     }
     case "array": {
       const arrayType = type as Extract<ProviderTypeExpression, { readonly kind: "array" }>;
@@ -730,7 +730,7 @@ function pushProviderTypeExpressionChildren(
       const sourceShape = readProviderModelField(reads, opaque, "sourceShape");
       return typeof id === "string"
         && isOptionalString(displayName)
-        && pushOptionalProviderModelNode(stack, sourceShape, "type", depth, true, path + ".sourceShape");
+        && pushOptionalProviderModelNode(stack, sourceShape, "type", depth, false, path + ".sourceShape");
     }
     default:
       return false;
@@ -1741,9 +1741,7 @@ function snapshotProviderTypeExpression(
               (argument) => snapshotProviderTypeExpression(context, argument),
             ),
           }),
-        ...(sourceShape === undefined
-          ? {}
-          : { sourceShape: snapshotProviderTypeExpression(context, sourceShape) }),
+        sourceShape: snapshotProviderTypeExpression(context, sourceShape),
       };
       break;
     }
@@ -1857,9 +1855,7 @@ function snapshotProviderTypeExpression(
         kind: typeKind,
         id,
         ...(displayName === undefined ? {} : { displayName }),
-        ...(sourceShape === undefined
-          ? {}
-          : { sourceShape: snapshotProviderTypeExpression(context, sourceShape) }),
+        sourceShape: snapshotProviderTypeExpression(context, sourceShape),
       };
       break;
     }
@@ -2420,9 +2416,7 @@ function canonicalizeProviderExportOwnerType(
               (argument) => canonicalizeProviderExportOwnerType(context, argument),
             ),
           }),
-        ...(type.sourceShape === undefined
-          ? {}
-          : { sourceShape: canonicalizeProviderExportOwnerType(context, type.sourceShape) }),
+        sourceShape: canonicalizeProviderExportOwnerType(context, type.sourceShape),
       };
       break;
     case "array":
@@ -2498,9 +2492,7 @@ function canonicalizeProviderExportOwnerType(
         kind: type.kind,
         id: type.id,
         ...(type.displayName === undefined ? {} : { displayName: type.displayName }),
-        ...(type.sourceShape === undefined
-          ? {}
-          : { sourceShape: canonicalizeProviderExportOwnerType(context, type.sourceShape) }),
+        sourceShape: canonicalizeProviderExportOwnerType(context, type.sourceShape),
       };
       break;
   }

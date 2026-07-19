@@ -179,9 +179,9 @@ function collectProviderTypeCallableIdentities(
         && collectProviderTypeCallableIdentities(type.returnType, identities);
     case "target-named":
       return (type.typeArguments ?? []).every((argument) => collectProviderTypeCallableIdentities(argument, identities))
-        && collectProviderTypeCallableIdentities(type.sourceShape!, identities);
+        && collectProviderTypeCallableIdentities(type.sourceShape, identities);
     case "opaque":
-      return collectProviderTypeCallableIdentities(type.sourceShape!, identities);
+      return collectProviderTypeCallableIdentities(type.sourceShape, identities);
     case "source-global":
     case "provider-ref":
       return (type.typeArguments ?? []).every((argument) => collectProviderTypeCallableIdentities(argument, identities));

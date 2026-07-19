@@ -6,10 +6,9 @@ import {
   beginExtensionCheckedSourceSignatureDecision,
   commitExtensionCheckedSourceCandidateDecision,
   commitExtensionCheckedSourceSignatureDecision,
-  extensionCheckedSourceDecisionOwner,
   hasExtensionCheckedCallEvidenceInterest,
-  hasExtensionCheckedCallSelectionInterest,
   journalExtensionCheckedCallEvidence,
+  shouldRetainExtensionCheckedCallEvidence,
   rollbackExtensionCheckedSourceDecision,
   rollbackExtensionCheckedSourceDiscardDecision,
 } from "../../../extensions/checker-integration.js";
@@ -2469,28 +2468,16 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
   const cachedSeed = links!.checkedCallSelectionSeed;
   const cachedSelectionEvidence = links!.resolvedCallSelectionEvidence;
   const cachedEvidence = links!.resolvedCallEvidence;
-  const cachedSourceDecisionOwner = links!.extensionSourceDecisionOwner;
-  const sourceDecisionOwner = extensionCheckedSourceDecisionOwner(receiver);
-  const sourceFile = GetSourceFileOfNode(node);
-  const requiresExactSourceSelection = IsCallOrNewExpression(node)
-    && sourceDecisionOwner !== undefined
-    && sourceFile === sourceDecisionOwner
-    && hasExtensionCheckedCallSelectionInterest(receiver, node);
-  const refreshExactSourceSelection = requiresExactSourceSelection
-    && cached !== undefined
-    && cached !== receiver!.resolvingSignature
-    && cachedSourceDecisionOwner !== sourceDecisionOwner;
   if (cached !== undefined
     && cached !== receiver!.resolvingSignature
-    && candidatesOutArray === undefined
-    && !refreshExactSourceSelection) {
+    && candidatesOutArray === undefined) {
     return cached;
   }
   const signatureDecision = beginExtensionCheckedSourceSignatureDecision(receiver);
   let signatureDecisionCompleted = false;
   try {
   const saveResolutionStart = receiver!.resolutionStart;
-  if (cached === undefined || refreshExactSourceSelection) {
+  if (cached === undefined) {
     receiver!.resolutionStart = receiver!.typeResolutions.length;
   }
   if (IsCallOrNewExpression(node)) {
@@ -2502,7 +2489,8 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
     links!.resolvedCallSelectionEvidence = undefined;
     links!.resolvedCallEvidence = undefined;
   }
-  const localEvidence: ResolvedSignatureEvidenceOutput | undefined = requiresExactSourceSelection
+  const localEvidence: ResolvedSignatureEvidenceOutput | undefined = IsCallOrNewExpression(node)
+    && hasExtensionCheckedCallEvidenceInterest(receiver, node)
     ? {}
     : undefined;
   let result = Checker_resolveSignatureWithEvidence(receiver, node, candidatesOutArray, checkMode, localEvidence);
@@ -2516,21 +2504,21 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
     if (selectedEvidence !== undefined && selectedEvidence.selectedSignature !== result) {
       throw new Error("Resolved call evidence does not belong to the source-order selected signature.");
     }
+    if (selectedEvidence !== undefined
+      && !shouldRetainExtensionCheckedCallEvidence(receiver, selectedEvidence)) {
+      selectedEvidence = undefined;
+    }
     if (receiver!.flowLoopStack.length === 0) {
       links!.resolvedSignature = result;
       if (IsCallOrNewExpression(node)) {
         links!.resolvedCallSelectionEvidence = selectedEvidence;
         links!.resolvedCallEvidence = undefined;
-        links!.extensionSourceDecisionOwner = requiresExactSourceSelection
-          ? sourceDecisionOwner
-          : undefined;
       }
     } else {
       links!.resolvedSignature = cached;
       links!.checkedCallSelectionSeed = cachedSeed;
       links!.resolvedCallSelectionEvidence = cachedSelectionEvidence;
       links!.resolvedCallEvidence = cachedEvidence;
-      links!.extensionSourceDecisionOwner = cachedSourceDecisionOwner;
     }
   }
     signatureDecisionCompleted = true;
@@ -3197,6 +3185,7 @@ function buildApplicableResolvedCallEvidence(
     sourceArguments: Object.freeze(resolvedSourceArguments),
     sourceArgumentBindings: Object.freeze(sourceArgumentBindings),
     ...(seed?.receiver === undefined ? {} : { sourceReceiver: seed.receiver }),
+    ...(seed?.calleeAccess === undefined ? {} : { sourceCalleeAccess: seed.calleeAccess }),
   });
 }
 
@@ -3244,6 +3233,7 @@ function buildUntypedResolvedCallEvidence(
     }))),
     sourceArgumentBindings: Object.freeze([]),
     ...(seed?.receiver === undefined ? {} : { sourceReceiver: seed.receiver }),
+    ...(seed?.calleeAccess === undefined ? {} : { sourceCalleeAccess: seed.calleeAccess }),
   });
 }
 

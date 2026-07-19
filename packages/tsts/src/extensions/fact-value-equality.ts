@@ -31,7 +31,8 @@ import type {
 import type {
   CheckedSourceCallArgumentCompositionEvidence,
   CheckedSourceCallCompositionEvidence,
-  CheckedSourceInlineSelectedPropertyEvidence,
+  CheckedSourceInlineOperation,
+  CheckedSourceInlinePropertyOperation,
 } from "./source-operation-producer.js";
 import type { ExtensionFactSubject } from "./host.js";
 
@@ -176,27 +177,50 @@ export function checkedSourceCallArgumentCompositionEvidenceEquals(
       parameter.declaration === right.function.parameters[index]?.declaration
       && parameter.symbol === right.function.parameters[index]?.symbol)
     && left.function.returns.length === right.function.returns.length
-    && left.function.returns.every((returned, index) => {
-      const other = right.function.returns[index];
-      return other !== undefined
-        && returned.expression === other.expression
-        && (returned.selectedProperty === undefined || other.selectedProperty === undefined
-          ? returned.selectedProperty === other.selectedProperty
-          : checkedSourceInlineSelectedPropertyEvidenceEquals(
-              returned.selectedProperty,
-              other.selectedProperty,
-            ));
-    });
+    && left.function.returns.every((returned, index) =>
+      returned.expression === right.function.returns[index]?.expression)
+    && left.function.operations.length === right.function.operations.length
+    && left.function.operations.every((operation, index) =>
+      checkedSourceInlineOperationEquals(operation, right.function.operations[index]!));
 }
 
-export function checkedSourceInlineSelectedPropertyEvidenceEquals(
-  left: CheckedSourceInlineSelectedPropertyEvidence,
-  right: CheckedSourceInlineSelectedPropertyEvidence,
+export function checkedSourceInlineOperationEquals(
+  left: CheckedSourceInlineOperation,
+  right: CheckedSourceInlineOperation,
+): boolean {
+  if (left.sourceOperationKind !== right.sourceOperationKind) {
+    return false;
+  }
+  switch (left.sourceOperationKind) {
+    case "call":
+      return right.sourceOperationKind === "call" && checkedCallSourceOperationEquals(left, right);
+    case "property-access":
+      return right.sourceOperationKind === "property-access"
+        && checkedSourceInlinePropertyOperationEquals(left, right);
+    case "element-access":
+      return right.sourceOperationKind === "element-access"
+        && checkedElementAccessSourceOperationEquals(left, right);
+    case "operator":
+      return right.sourceOperationKind === "operator"
+        && checkedOperatorSourceOperationEquals(left, right);
+    case "iteration":
+      return right.sourceOperationKind === "iteration"
+        && checkedIterationSourceOperationEquals(left, right);
+    case "conversion":
+      return right.sourceOperationKind === "conversion"
+        && checkedConversionSourceOperationEquals(left, right);
+  }
+}
+
+function checkedSourceInlinePropertyOperationEquals(
+  left: CheckedSourceInlinePropertyOperation,
+  right: CheckedSourceInlinePropertyOperation,
 ): boolean {
   return left.expression === right.expression
     && left.receiver === right.receiver
+    && left.use === right.use
     && selectedSourceValueEvidenceEquals(left.sourceReceiver, right.sourceReceiver)
-    && selectedSourceValueEvidenceEquals(left.sourceResult, right.sourceResult)
+    && checkedAccessSourceEvidenceEquals(left, right)
     && checkedSourceChainRoleEquals(left.chainRole, right.chainRole);
 }
 

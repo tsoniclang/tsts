@@ -54,7 +54,7 @@ import type {
   RetainedCheckedOperationRequest,
   RetainedCheckedSourceCallMappingRequest,
 } from "./source-operation-producer.js";
-import { checkedSourceCallOperationSubjects } from "./source-operation-producer.js";
+import { checkedSourceCallReadableSubjects } from "./source-operation-producer.js";
 import {
   checkedOperationRuntimeCarrierDemands,
   type CheckedOperationRuntimeCarrierDemand,
@@ -560,7 +560,7 @@ export type ProviderTypeExpression =
   | { readonly kind: "source-primitive"; readonly name: SourcePrimitiveKind }
   | { readonly kind: "source-global"; readonly name: string; readonly typeArguments?: readonly ProviderTypeExpression[] }
   | { readonly kind: "type-parameter"; readonly name: string }
-  | { readonly kind: "target-named"; readonly target: string; readonly id: string; readonly displayName?: string; readonly typeArguments?: readonly ProviderTypeExpression[]; readonly sourceShape?: ProviderTypeExpression }
+  | { readonly kind: "target-named"; readonly target: string; readonly id: string; readonly displayName?: string; readonly typeArguments?: readonly ProviderTypeExpression[]; readonly sourceShape: ProviderTypeExpression }
   | { readonly kind: "array"; readonly elementType: ProviderTypeExpression }
   | { readonly kind: "tuple"; readonly elementTypes: readonly ProviderTypeExpression[] }
   | { readonly kind: "union"; readonly types: readonly ProviderTypeExpression[] }
@@ -574,7 +574,7 @@ export type ProviderTypeExpression =
     }
   | { readonly kind: "literal"; readonly value: string | number | boolean | null }
   | { readonly kind: "provider-ref"; readonly moduleSpecifier: string; readonly exportName: string; readonly localName?: string; readonly namespaceImport?: string; readonly typeArguments?: readonly ProviderTypeExpression[] }
-  | { readonly kind: "opaque"; readonly id: string; readonly displayName?: string; readonly sourceShape?: ProviderTypeExpression };
+  | { readonly kind: "opaque"; readonly id: string; readonly displayName?: string; readonly sourceShape: ProviderTypeExpression };
 
 export interface ProviderParameterDeclaration {
   readonly name: string;
@@ -1072,7 +1072,7 @@ export class ExtensionDiagnosticStore {
     const range = this.#state.diagnosticRanges.get(immutableDiagnostic.extensionId);
     if (range !== undefined && !isDiagnosticCodeInRange(immutableDiagnostic.numericCode, range)) {
       this.#recordAttemptFailure();
-      return this.#appendUnchecked(createHostDiagnostic({
+      this.#appendUnchecked(createHostDiagnostic({
         extensionCode: "DIAGNOSTIC_CODE_OUT_OF_RANGE",
         numericCode: ExtensionHostDiagnosticCode.diagnosticCodeOutOfRange,
         message: `Extension '${immutableDiagnostic.extensionId}' emitted diagnostic code ${immutableDiagnostic.numericCode}, outside its registered range ${range.start}-${range.end}.`,
@@ -1082,6 +1082,7 @@ export class ExtensionDiagnosticStore {
         ],
         identity: encodeIdentityTuple(["diagnostic-code-out-of-range", immutableDiagnostic.extensionId, immutableDiagnostic.numericCode, range.start, range.end]),
       }));
+      return false;
     }
     return this.#appendSnapshot(immutableDiagnostic, hostOwned);
   }
@@ -4544,18 +4545,21 @@ export class ExtensionHost {
       return false;
     }
     const declaration = this.facts.get(selectedDeclaration, providerVirtualDeclarationFactKey);
-    if (declaration !== undefined && declaration.exportId !== undefined) {
+    if (declaration !== undefined) {
       assertCoherentCheckedSourceProviderDeclaration(declaration);
-      return this.#checkedSourceCallProducerDeclarationCounts.has(
+      return declaration.exportId !== undefined && this.#checkedSourceCallProducerDeclarationCounts.has(
         checkedSourceCallProviderDeclarationOwnerKey(declaration),
       );
     }
     const family = this.facts.get(selectedDeclaration, providerTypeFamilyFactKey);
-    return family?.variants.some((variant) =>
-      variant.declaration.exportId !== undefined
-      && this.#checkedSourceCallProducerDeclarationCounts.has(
-        checkedSourceCallProviderDeclarationOwnerKey(variant.declaration),
-      )) === true;
+    if (family !== undefined) {
+      return family.variants.some((variant) =>
+        variant.declaration.exportId !== undefined
+        && this.#checkedSourceCallProducerDeclarationCounts.has(
+          checkedSourceCallProviderDeclarationOwnerKey(variant.declaration),
+        ));
+    }
+    return false;
   }
 
   #runCheckedOperationObservation<TObservation extends CheckedOperationObservationPointName>(
@@ -4635,7 +4639,7 @@ export class ExtensionHost {
       this.#observationHookDepth += 1;
       this.#checkedSourceCallProducerDepth += 1;
       this.#checkedSourceCallProducerInvocation = invocation;
-      const operationSubjects = checkedSourceCallOperationSubjects(operation);
+      const operationSubjects = checkedSourceCallReadableSubjects(operation);
       this.facts[factStoreSetSourceProducerAccessGuard](
         (subject, key, access) => {
           this.#assertCheckedSourceCallProducerOperationSubject(registered.extensionId, operationSubjects, subject);
@@ -5659,7 +5663,7 @@ export class ExtensionHost {
     readonly diagnostics: CheckedSourceCallDiagnosticCapability;
   } {
     const owner = this.#getOwnerCapabilities(extensionId);
-    const operationSubjects = checkedSourceCallOperationSubjects(operation);
+    const operationSubjects = checkedSourceCallReadableSubjects(operation);
     const assertActive = (): void => {
       if (this.#checkedSourceCallProducerInvocation !== invocation
         || this.#ownerAuthority.stack[this.#ownerAuthority.stack.length - 1] !== extensionId) {
@@ -5675,14 +5679,12 @@ export class ExtensionHost {
     };
     const facts: CheckedSourceCallFactCapability = Object.freeze({
       set: <T>(
-        subject: ExtensionFactSubject,
         key: ExtensionFactKey<T>,
         value: T,
         evidence: readonly ExtensionEvidence[] = [],
       ): ExtensionFactWriteResult => {
         assertActive();
-        assertOperationSubject(subject);
-        return owner.facts.set(subject, key, value, evidence);
+        return owner.facts.set(operation.call, key, value, evidence);
       },
       get: <T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): T | undefined => {
         assertOperationSubject(subject);
@@ -6760,9 +6762,7 @@ function freezeProviderTypeExpression(type: ProviderTypeExpression, frozen: Weak
       for (const argument of type.typeArguments ?? []) {
         freezeProviderTypeExpression(argument, frozen);
       }
-      if (type.sourceShape !== undefined) {
-        freezeProviderTypeExpression(type.sourceShape, frozen);
-      }
+      freezeProviderTypeExpression(type.sourceShape, frozen);
       freezeProviderArray(type.typeArguments);
       break;
     case "source-global":
@@ -6805,9 +6805,7 @@ function freezeProviderTypeExpression(type: ProviderTypeExpression, frozen: Weak
       freezeProviderArray(type.typeArguments);
       break;
     case "opaque":
-      if (type.sourceShape !== undefined) {
-        freezeProviderTypeExpression(type.sourceShape, frozen);
-      }
+      freezeProviderTypeExpression(type.sourceShape, frozen);
       break;
     default:
       break;
@@ -7585,14 +7583,10 @@ function collectProviderDeclarationReferenceUses(
           for (const typeArgument of type.typeArguments ?? []) {
             visitType(typeArgument, false);
           }
-          if (type.sourceShape !== undefined) {
-            visitType(type.sourceShape, valueHeritage);
-          }
+          visitType(type.sourceShape, valueHeritage);
           return;
         case "opaque":
-          if (type.sourceShape !== undefined) {
-            visitType(type.sourceShape, valueHeritage);
-          }
+          visitType(type.sourceShape, valueHeritage);
           return;
         case "array":
           visitType(type.elementType, false);
@@ -7795,7 +7789,7 @@ function getProviderValueHeritageReference(
   type: ProviderTypeExpression,
 ): Extract<ProviderTypeExpression, { readonly kind: "provider-ref" }> | undefined {
   if (type.kind === "target-named" || type.kind === "opaque") {
-    return type.sourceShape === undefined ? undefined : getProviderValueHeritageReference(type.sourceShape);
+    return getProviderValueHeritageReference(type.sourceShape);
   }
   return type.kind === "provider-ref" ? type : undefined;
 }
@@ -8469,7 +8463,7 @@ function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parent
       return type.name;
     case "target-named":
     case "opaque":
-      return renderProviderTypeExpressionWorker(type.sourceShape!, parentPrecedence, context, options);
+      return renderProviderTypeExpressionWorker(type.sourceShape, parentPrecedence, context, options);
     case "array":
       return `${renderProviderTypeExpressionWorker(type.elementType, providerTypePrecedencePostfix, context, options)}[]`;
     case "tuple":

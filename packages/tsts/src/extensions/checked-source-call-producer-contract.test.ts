@@ -45,7 +45,7 @@ import type { CheckedOperationReference } from "./observations.js";
 import type {
   CheckedCallMappingRequest as PublicCheckedCallMappingRequest,
   CheckedSourceCallProducerContext as PublicCheckedSourceCallProducerContext,
-  CheckedSourceInlineSelectedPropertyEvidence as PublicCheckedSourceInlineSelectedPropertyEvidence,
+  CheckedSourceInlinePropertyOperation as PublicCheckedSourceInlinePropertyOperation,
 } from "../index.js";
 
 type RequireTrue<T extends true> = T;
@@ -56,7 +56,11 @@ type PublicCheckedSourceCallProducerCapabilityCoverage = RequireTrue<
 > & RequireTrue<
   "sourceComposition" extends keyof PublicCheckedCallMappingRequest ? false : true
 > & RequireTrue<
-  "propertyName" extends keyof PublicCheckedSourceInlineSelectedPropertyEvidence ? false : true
+  "propertyName" extends keyof PublicCheckedSourceInlinePropertyOperation ? false : true
+> & RequireTrue<
+  Parameters<PublicCheckedSourceCallProducerContext["facts"]["set"]>[0] extends ExtensionFactKey<unknown>
+    ? true
+    : false
 >;
 const publicCheckedSourceCallProducerCapabilityCoverage: PublicCheckedSourceCallProducerCapabilityCoverage = true;
 
@@ -838,7 +842,7 @@ test("retained source-producer capabilities cannot mutate host state after callb
   const capturedFacts = retainedFacts;
   assert.ok(capturedFacts !== undefined);
   assert.throws(
-    () => capturedFacts.set(fixture.call, factKey, "late-write"),
+    () => capturedFacts.set(factKey, "late-write"),
     /valid only during their exact host-owned callback/,
   );
   assert.equal(host.facts.get(fixture.call, factKey), undefined);
@@ -854,7 +858,7 @@ test("re-observing a source-produced call with changed composition evidence fail
     extensions: [producerExtension(extensionId, [{
       selector: exportSelector(),
       produce: (operation, context) => {
-        assert.equal(context.facts.set(operation.call, factKey, "retained"), "inserted");
+        assert.equal(context.facts.set(factKey, "retained"), "inserted");
         return completeCheckedSourceCallProduction;
       },
     }])],
@@ -897,11 +901,11 @@ test("a checked source-call producer can write only its own fact keys", () => {
     extensions: [producerExtension(extensionId, [{
       selector: exportSelector(),
       produce: (operation, context) => {
-        ownWriteResults.push(context.facts.set(operation.call, ownFactKey, "source-owned"));
+        ownWriteResults.push(context.facts.set(ownFactKey, "source-owned"));
         if (operation.call === acceptedFixture.call) {
           return completeCheckedSourceCallProduction;
         }
-        foreignWriteResults.push(context.facts.set(operation.call, foreignFactKey, "foreign-owned"));
+        foreignWriteResults.push(context.facts.set(foreignFactKey, "foreign-owned"));
         return rejectCheckedSourceCallProduction(diagnostic(
           extensionId,
           "FOREIGN_FACT_WRITE_REJECTED",
@@ -956,7 +960,7 @@ test("checked source-call producers read only host source facts and declared sou
           assert.equal(context.facts.has(fixture.call, dependencyFactKey), true);
           assert.equal(context.factResolver.resolve(fixture.call, dependencyFactKey), "dependency");
           assert.equal(context.facts.get(operation.call, producerFactKey), undefined);
-          assert.equal(context.facts.set(operation.call, producerFactKey, "producer"), "inserted");
+          assert.equal(context.facts.set(producerFactKey, "producer"), "inserted");
           for (const read of [
             () => context.facts.get(fixture.call, targetFactKey),
             () => context.facts.getEntry(fixture.call, targetFactKey),
@@ -988,7 +992,7 @@ test("checked source-call producers read only host source facts and declared sou
   assert.equal(host.diagnostics.all().length, 0);
 });
 
-test("checked source-call producer fact capabilities are confined to retained operation subjects", () => {
+test("checked source-call producer reads are confined to retained subjects and writes are operation-owned", () => {
   const extensionId = "checked-source-call.subject-boundary";
   const factKey = stringFactKey(extensionId, "operation-subject");
   const fixture = createCheckedCallFixture();
@@ -1002,13 +1006,12 @@ test("checked source-call producer fact capabilities are confined to retained op
           () => context.facts.getEntry(unrelatedSubject, factKey),
           () => context.facts.has(unrelatedSubject, factKey),
           () => context.factResolver.resolve(unrelatedSubject, factKey),
-          () => context.facts.set(unrelatedSubject, factKey, "unrelated"),
           () => host.facts.get(unrelatedSubject, factKey),
           () => host.facts.set(unrelatedSubject, factKey, "captured-global-store"),
         ]) {
           assert.throws(access, /only on subjects retained by its exact checked operation/);
         }
-        assert.equal(context.facts.set(operation.call, factKey, "retained"), "inserted");
+        assert.equal(context.facts.set(factKey, "retained"), "inserted");
         return completeCheckedSourceCallProduction;
       },
     }])],
@@ -1018,6 +1021,57 @@ test("checked source-call producer fact capabilities are confined to retained op
   assert.equal(runCheckedCall(host, fixture).kind, "accept");
   assert.equal(host.facts.get(fixture.call, factKey), "retained");
   assert.equal(host.facts.get(unrelatedSubject, factKey), undefined);
+});
+
+test("source producer facts stay isolated per call when selected declarations and signatures are shared", () => {
+  const extensionId = "checked-source-call.operation-owned-facts";
+  const factKey = stringFactKey(extensionId, "per-call-value");
+  const first = createCheckedCallFixture();
+  const independentSecond = createCheckedCallFixture();
+  const second: CheckedCallFixture = {
+    ...independentSecond,
+    declaration: first.declaration,
+    request: {
+      ...independentSecond.request,
+      sourceSelection: first.request.sourceSelection,
+    },
+    providerDeclaration: first.providerDeclaration,
+  };
+  const values = new Map<ExtensionFactSubject, string>([
+    [first.call, "first"],
+    [second.call, "second"],
+  ]);
+  const host = new ExtensionHost({}, {
+    extensions: [producerExtension(extensionId, [{
+      selector: exportSelector(),
+      produce: (operation, context) => {
+        const value = values.get(operation.call);
+        assert.ok(value !== undefined);
+        assert.equal(context.facts.set(factKey, value), "inserted");
+        return completeCheckedSourceCallProduction;
+      },
+    }])],
+  });
+  publishProviderDeclaration(host, first);
+
+  assert.equal(runCheckedCall(host, first).kind, "accept");
+  assert.equal(runCheckedCall(host, second).kind, "accept");
+  assert.equal(host.facts.get(first.call, factKey), "first");
+  assert.equal(host.facts.get(second.call, factKey), "second");
+  assert.equal(host.facts.get(first.declaration, factKey), undefined);
+  assert.equal(host.facts.get(second.declaration, factKey), undefined);
+  assert.equal(
+    host.facts.get(first.request.sourceSelection.kind === "applicable"
+      ? first.request.sourceSelection.signature
+      : undefined, factKey),
+    undefined,
+  );
+  assert.equal(
+    host.facts.get(second.request.sourceSelection.kind === "applicable"
+      ? second.request.sourceSelection.signature
+      : undefined, factKey),
+    undefined,
+  );
 });
 
 test("fact resolver callbacks read through their own declared source-dependency authority", () => {
@@ -1053,7 +1107,7 @@ test("fact resolver callbacks read through their own declared source-dependency 
             context.factResolver.resolve(operation.call, resolvedFactKey),
             "leaf:resolved",
           );
-          assert.equal(context.facts.set(operation.call, producedFactKey, "complete"), "inserted");
+          assert.equal(context.facts.set(producedFactKey, "complete"), "inserted");
           return completeCheckedSourceCallProduction;
         },
       }], [resolverExtensionId]),
@@ -1148,7 +1202,7 @@ test("an invalid diagnostic append poisons the producer attempt even when its re
     extensions: [producerExtension(extensionId, [{
       selector: exportSelector(),
       produce: (operation, context) => {
-        assert.equal(context.facts.set(operation.call, factKey, "provisional"), "inserted");
+        assert.equal(context.facts.set(factKey, "provisional"), "inserted");
         assert.equal(context.diagnostics.append({
           extensionId,
           extensionCode: "INVALID_NUMERIC_CODE",
@@ -1344,7 +1398,7 @@ test("failed source fact attempts reject before every producer outcome can commi
       extensions: [producerExtension(extensionId, [{
         selector: exportSelector(),
         produce: (operation, context) => {
-          assert.equal(context.facts.set(operation.call, invalidFactKey, "invalid"), "conflict");
+          assert.equal(context.facts.set(invalidFactKey, "invalid"), "conflict");
           return outcome === "complete"
             ? completeCheckedSourceCallProduction
             : outcome === "defer"
@@ -1390,7 +1444,7 @@ test("failed target fact attempts cannot be hidden by defer or reject and roll b
         producerExtension(sourceExtensionId, [{
           selector: exportSelector(),
           produce: (operation, context) => {
-            assert.equal(context.facts.set(operation.call, sourceFactKey, "must-roll-back"), "inserted");
+            assert.equal(context.facts.set(sourceFactKey, "must-roll-back"), "inserted");
             return completeCheckedSourceCallProduction;
           },
         }]),
@@ -1429,7 +1483,7 @@ test("one exact checked source-call selector has one global source owner", () =>
         selector: exportSelector(),
           produce: (operation, context) => {
             calls.push(`${context.phase}:${context.extensionId}`);
-            assert.equal(context.facts.set(operation.call, firstFactKey, "first"), "inserted");
+            assert.equal(context.facts.set(firstFactKey, "first"), "inserted");
             return completeCheckedSourceCallProduction;
           },
         }]),
@@ -1478,7 +1532,7 @@ for (const targetOutcome of ["defer", "reject"] as const) {
           selector: exportSelector(),
           produce: (operation, context) => {
             sourceCalls += 1;
-            assert.equal(context.facts.set(operation.call, sourceFactKey, "must-roll-back"), "inserted");
+            assert.equal(context.facts.set(sourceFactKey, "must-roll-back"), "inserted");
             return completeCheckedSourceCallProduction;
           },
         }]),
@@ -1525,7 +1579,7 @@ test("deferred target replay reuses one immutable source operation and one targe
         selector: exportSelector(),
         produce: (operation, context) => {
           sourceOperations.push(operation);
-          assert.equal(context.facts.set(operation.call, sourceFactKey, "stable"), "inserted");
+          assert.equal(context.facts.set(sourceFactKey, "stable"), "inserted");
           return completeCheckedSourceCallProduction;
         },
       }]),
@@ -1574,7 +1628,7 @@ test("source producer facts are visible to an accepting target mapper", () => {
       producerExtension(sourceExtensionId, [{
         selector: exportSelector(),
         produce: (operation, context) => {
-          assert.equal(context.facts.set(operation.call, sourceFactKey, "visible-before-target"), "inserted");
+          assert.equal(context.facts.set(sourceFactKey, "visible-before-target"), "inserted");
           return completeCheckedSourceCallProduction;
         },
       }]),
@@ -1625,7 +1679,7 @@ test("accepted source effects replay idempotently without re-running the produce
         selector: exportSelector(),
         produce: (operation, context) => {
           producerCalls += 1;
-          sourceWriteResults.push(context.facts.set(operation.call, sourceFactKey, "retained-source-effect"));
+          sourceWriteResults.push(context.facts.set(sourceFactKey, "retained-source-effect"));
           return completeCheckedSourceCallProduction;
         },
       }]),

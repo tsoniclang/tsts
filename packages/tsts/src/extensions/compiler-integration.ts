@@ -189,7 +189,8 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
   }
 
   for (const declaration of virtualModule.declarationModel.exports) {
-    if (!directDeclarationIds.has(declaration.id)) {
+    const isDirectDeclaration = directDeclarationIds.has(declaration.id);
+    if (declaration.sourceTypeFamily !== undefined && !isDirectDeclaration) {
       continue;
     }
     const exportName = getProviderSourceExportName(declaration);
@@ -209,6 +210,15 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
       canonicalSymbolId: getSymbolFactId(symbol),
     }, evidence);
     extensionHost[extensionHostSetFact](symbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule, declaration), evidence);
+    const targetBinding = getTargetBindingFact(virtualModule, declaration);
+    if (targetBinding !== undefined) {
+      extensionHost[extensionHostSetFact](symbol, targetBindingFactKey, targetBinding, evidence);
+    }
+
+    if (!isDirectDeclaration) {
+      continue;
+    }
+
     if (declaration.signatures === undefined || declaration.signatures.length === 0) {
       for (const exportDeclaration of symbol.Declarations ?? []) {
         if (exportDeclaration === undefined) {
@@ -221,11 +231,6 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
           evidence,
         );
       }
-    }
-
-    const targetBinding = getTargetBindingFact(virtualModule, declaration);
-    if (targetBinding !== undefined) {
-      extensionHost[extensionHostSetFact](symbol, targetBindingFactKey, targetBinding, evidence);
     }
 
     if (declaration.signatures !== undefined && declaration.signatures.length > 0) {
@@ -252,6 +257,9 @@ function recordProviderVirtualFunctionSignatureFacts(
   renderedFunctionSignatures: readonly import("./provider-callable-signatures.js").ProviderRenderedFunctionSignature[],
   evidence: readonly ExtensionEvidence[],
 ): void {
+  if (renderedFunctionSignatures.length === 0) {
+    return;
+  }
   const functionTypeNodes: Node[] = [];
   collectProviderFunctionTypeNodes(file as Node, functionTypeNodes);
   if (functionTypeNodes.length !== renderedFunctionSignatures.length) {
