@@ -87,7 +87,7 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 - Full TypeScript corpus: 15,626 total; 12,820 pass, zero fail, 2,806 explicit pinned-runner policy skips; 43,218 exact comparable artifacts and zero mismatches.
 - Real-world AST parity: 1,274/1,274 files pass.
 - Generated data: 108 bundled libraries current; Unicode 15.1.0 data current.
-- Performance gates completed under a 5 GiB memory ceiling: self-compile wall median 16.72s and maxRSS 1,487.29 MiB for 653 files/552,011 lines; UTF-8/source-text speedups 87.3x–11,388.8x over legacy equivalents; scanner checksum-stable medians 4.39ms ASCII, 2.63ms mixed Unicode, and 1.63ms JSX.
+- Performance gates completed under a 5 GiB memory ceiling: mandatory self-compile wall median 16.72s and maxRSS 1,487.29 MiB for 653 files/552,011 lines; pinned native TS-Go cross-check wall 1.04s versus TSTS 17.30s and `tsc` 6.61s; UTF-8/source-text speedups 87.3x–11,388.8x over legacy equivalents; scanner checksum-stable medians 4.39ms ASCII, 2.63ms mixed Unicode, and 1.63ms JSX.
 
 ## Future Fix Procedure
 
