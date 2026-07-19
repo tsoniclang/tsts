@@ -270,6 +270,29 @@ test("fact store supports insert, idempotent writes, conflicts, and object subje
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.invalidFactSubject);
 });
 
+test("runtime carriers remain idempotent per exact subject and conflicting across incompatible exact writes", () => {
+  const host = new ExtensionHost({});
+  const exactTypeUse = {};
+  const declarationSymbol = {};
+  const first = {
+    carrier: { kind: "target-named" as const, id: "Acme.Family0" },
+  };
+  const incompatible = {
+    carrier: {
+      kind: "target-named" as const,
+      id: "Acme.Family1`1",
+      typeArguments: [{ kind: "source-primitive" as const, name: "float64" as const }],
+    },
+  };
+
+  assert.equal(host[extensionHostSetFact](exactTypeUse, runtimeCarrierFactKey, first), "inserted");
+  assert.equal(host[extensionHostSetFact](exactTypeUse, runtimeCarrierFactKey, first), "idempotent");
+  assert.equal(host[extensionHostSetFact](exactTypeUse, runtimeCarrierFactKey, incompatible), "conflict");
+  assert.deepEqual(host.facts.get(exactTypeUse, runtimeCarrierFactKey)?.carrier, first.carrier);
+  assert.equal(host.facts.get(declarationSymbol, runtimeCarrierFactKey), undefined);
+  assert.equal(host.diagnostics.all().filter((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.factConflict).length, 1);
+});
+
 test("fact conflict diagnostics are keyed per object subject", () => {
   const host = new ExtensionHost({});
   const firstSubject = {};

@@ -2287,6 +2287,83 @@ test("provider type families select same-name variants by source type-argument a
   }
 });
 
+test("provider type-family runtime carriers remain owned by exact type uses in either resolution order", () => {
+  for (const declarations of [
+    ["declare const plain: Task;", "declare const closed: Task<number>;"],
+    ["declare const closed: Task<number>;", "declare const plain: Task;"],
+  ] as const) {
+    const observedRequests: RuntimeCarrierFactRequest[] = [];
+    let fs = FromMap(new Map<string, string>([
+      ["/src/index.ts", `
+        import type { Task } from "@acme/native/tasks.js";
+
+        ${declarations.join("\n")}
+        plain;
+        closed;
+      `],
+      ["/src/tsconfig.json", JSON.stringify({
+        compilerOptions: {
+          noLib: true,
+          module: "esnext",
+          moduleResolution: "bundler",
+        },
+        files: ["index.ts"],
+      })],
+    ]), false as bool);
+    fs = WrapFS(fs);
+
+    const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+    const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+    assert.equal((configErrors ?? []).length, 0);
+    const options = { Config: parsed, Host: host } satisfies ProgramOptions;
+    const extended = attachExtensionHost(options, {
+      activeTarget: "acme",
+      extensions: [taskTypeFamilyProviderExtension((request) => observedRequests.push(request))],
+    });
+    const program = NewProgram(options);
+    const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+    assert.ok(sourceFile !== undefined);
+    assertCleanProgram(program, sourceFile, options);
+    assertCleanProviderVirtualFiles(program);
+
+    const plainReference = findTypeReferenceByNameAndArity(sourceFile, "Task", 0);
+    const closedReference = findTypeReferenceByNameAndArity(sourceFile, "Task", 1);
+    const requestByReference = new Map(observedRequests.map((request) => [request.sourceTypeReference, request]));
+    const plainRequest = requestByReference.get(plainReference);
+    const closedRequest = requestByReference.get(closedReference);
+    assert.ok(plainRequest !== undefined);
+    assert.ok(closedRequest !== undefined);
+    assert.notEqual(plainRequest.type, closedRequest.type, "Distinct family variants must retain distinct instantiated semantic types.");
+    assert.ok(plainRequest.sourceSymbol === closedRequest.sourceSymbol, "Both arities must retain the same public family symbol as provenance.");
+    assert.deepEqual(extended.extensionHost.facts.get(plainReference, runtimeCarrierFactKey)?.carrier, {
+      kind: "target-named",
+      id: "Acme.Threading.Tasks.Task",
+    });
+    assert.deepEqual(extended.extensionHost.facts.get(closedReference, runtimeCarrierFactKey)?.carrier, {
+      kind: "target-named",
+      id: "Acme.Threading.Tasks.Task`1",
+      typeArguments: [{ kind: "source-primitive", name: "float64" }],
+    });
+    assert.deepEqual(extended.extensionHost.facts.get(plainRequest.type, runtimeCarrierFactKey)?.carrier,
+      extended.extensionHost.facts.get(plainReference, runtimeCarrierFactKey)?.carrier);
+    assert.deepEqual(extended.extensionHost.facts.get(closedRequest.type, runtimeCarrierFactKey)?.carrier,
+      extended.extensionHost.facts.get(closedReference, runtimeCarrierFactKey)?.carrier);
+    assert.ok(extended.extensionHost.facts.get(plainRequest.sourceSymbol, providerTypeFamilyFactKey) !== undefined);
+    assert.equal(extended.extensionHost.facts.get(plainRequest.sourceSymbol, runtimeCarrierFactKey), undefined);
+    assert.equal(extended.extensionHost.facts.get(Type_Symbol(plainRequest.type as Type), runtimeCarrierFactKey), undefined);
+    assert.equal(extended.extensionHost.facts.get(Type_Symbol(closedRequest.type as Type), runtimeCarrierFactKey), undefined);
+    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
+
+    const retainedFacts = [
+      extended.extensionHost.facts.get(plainReference, runtimeCarrierFactKey),
+      extended.extensionHost.facts.get(closedReference, runtimeCarrierFactKey),
+    ];
+    assert.equal(Program_GetSemanticDiagnostics(program, Background(), sourceFile).length, 0);
+    assert.ok(extended.extensionHost.facts.get(plainReference, runtimeCarrierFactKey) === retainedFacts[0]);
+    assert.ok(extended.extensionHost.facts.get(closedReference, runtimeCarrierFactKey) === retainedFacts[1]);
+  }
+});
+
 test("provider type families keep variant members separate", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -4221,10 +4298,9 @@ test("checker records provider-owned runtime carrier and argument conversion fac
   const sourceTypeCarrierFact = extended.extensionHost.facts.get(runtimeCarrierSourceType, runtimeCarrierFactKey);
   assert.ok(sourceTypeCarrierFact?.provenance?.sourceType === runtimeCarrierSourceType, "type-subject provenance must retain its exact checked type");
   assert.ok(sourceTypeCarrierFact?.provenance?.sourceTypeReference === undefined, "Type-subject provenance must not fabricate a type-reference subject.");
-  const sourceSymbolCarrierFact = extended.extensionHost.facts.get(runtimeCarrierSourceSymbol, runtimeCarrierFactKey);
-  assert.ok(sourceSymbolCarrierFact?.provenance?.sourceSymbol === runtimeCarrierSourceSymbol, "symbol-subject provenance must retain its exact symbol");
-  assert.ok(sourceSymbolCarrierFact?.provenance?.sourceType === undefined, "Symbol-subject provenance must not fabricate a source-type subject.");
-  assert.ok(sourceSymbolCarrierFact?.provenance?.sourceTypeReference === undefined, "Symbol-subject provenance must not fabricate a type-reference subject.");
+  assert.ok(runtimeCarrierFact?.provenance?.sourceSymbol === runtimeCarrierSourceSymbol, "Exact type-use provenance must retain its selected source symbol.");
+  assert.equal(extended.extensionHost.facts.get(runtimeCarrierSourceSymbol, runtimeCarrierFactKey), undefined, "Declaration symbols must not own instantiated runtime carriers.");
+  assert.equal(extended.extensionHost.facts.get(Type_Symbol(runtimeCarrierSourceType as Type), runtimeCarrierFactKey), undefined, "Semantic type symbols must not own instantiated runtime carriers.");
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const argument = getFirstCallArgument(call);
@@ -7316,7 +7392,7 @@ function restFunctionArrayProviderExtension(): CompilerExtension {
   };
 }
 
-function taskTypeFamilyProviderExtension(): CompilerExtension {
+function taskTypeFamilyProviderExtension(onRuntimeCarrier?: (request: RuntimeCarrierFactRequest) => void): CompilerExtension {
   return {
     identity: {
       id: "acme-task-type-family-provider-extension",
@@ -7419,6 +7495,27 @@ function taskTypeFamilyProviderExtension(): CompilerExtension {
           }],
         }),
       }), true);
+      if (onRuntimeCarrier !== undefined) {
+        assert.equal(context.registerTargetSemanticProvider({
+          identity: semanticProviderIdentity("acme-task-type-family-semantic-provider"),
+          resolveRuntimeCarrier: (request, observationContext) => {
+            onRuntimeCarrier(request);
+            const targetBinding = request.sourceTypeReference === undefined
+              ? undefined
+              : observationContext.facts.get(request.sourceTypeReference, targetBindingFactKey);
+            assert.ok(targetBinding !== undefined, "A selected provider-family reference must expose its exact target binding before carrier resolution.");
+            return acceptObservation({
+              carrier: targetBinding.typeParameters?.length === 1
+                ? {
+                    kind: "target-named",
+                    id: targetBinding.id,
+                    typeArguments: [{ kind: "source-primitive", name: "float64" }],
+                  }
+                : { kind: "target-named", id: targetBinding.id },
+            });
+          },
+        }), true);
+      }
     },
   };
 }
