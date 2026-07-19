@@ -3251,7 +3251,8 @@ test("target operation facts compare property and element result references stru
   const elementResult = requireReadAccessResult(elementRequest);
   assert.ok(propertyResult.selectedSymbol !== undefined);
   assert.ok(propertyResult.type !== undefined);
-  assert.ok(elementResult.selectedSymbol !== undefined);
+  assert.equal(elementResult.selectedSymbol, undefined, "Index-signature evidence must not synthesize a checker-visible symbol absent from TS-Go.");
+  assert.equal((elementResult.selectedDeclaration as GoPtr<Node>)?.Kind, KindIndexSignature);
   assert.ok(elementResult.type !== undefined);
   assert.ok(propertyRequest !== undefined);
   assert.ok(elementRequest !== undefined);
@@ -8019,8 +8020,7 @@ function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest
   const sourceResult = requireReadAccessResult(request);
   const selectedSymbol = sourceResult.selectedSymbol as GoPtr<Symbol>;
   const selectedDeclaration = sourceResult.selectedDeclaration as GoPtr<Node>;
-  assert.ok(selectedSymbol !== undefined);
-  assert.ok(selectedSymbol?.ValueDeclaration === selectedDeclaration, "Selected element evidence must retain the symbol's exact value declaration.");
+  assert.equal(selectedSymbol, undefined, "Index-signature selection must not synthesize a checker-visible symbol absent from TS-Go.");
   assert.ok(selectedDeclaration !== undefined);
   assert.equal(selectedDeclaration.Kind, KindIndexSignature);
 }
@@ -8029,8 +8029,7 @@ function assertSelectedMappedIndexEvidence(request: CheckedElementAccessMappingR
   const sourceResult = requireReadAccessResult(request);
   const selectedSymbol = sourceResult.selectedSymbol as GoPtr<Symbol>;
   const selectedDeclaration = sourceResult.selectedDeclaration as GoPtr<Node>;
-  assert.ok(selectedSymbol !== undefined);
-  assert.ok(selectedSymbol?.ValueDeclaration === selectedDeclaration, "Selected mapped-element evidence must retain the symbol's exact value declaration.");
+  assert.equal(selectedSymbol, undefined, "Mapped-index selection must not synthesize a checker-visible symbol absent from TS-Go.");
   assert.ok(selectedDeclaration !== undefined);
   assert.equal(selectedDeclaration.Kind, KindMappedType);
 }

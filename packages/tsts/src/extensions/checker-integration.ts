@@ -348,6 +348,7 @@ function publishExtensionSourceDecisionEvent(
     case "checked-element":
       publishExtensionCheckedElementAccessMapping(checker, extensionHost, event.origin, {
         selectedSymbol: event.selectedSymbol,
+        selectedDeclaration: event.selectedDeclaration,
         resultType: event.resultType,
         ...(event.selectedElementIndex === undefined ? {} : { selectedElementIndex: event.selectedElementIndex }),
         receiverType: event.receiverType,
@@ -723,6 +724,7 @@ function collectResolvedCallDependencies(
 
 export interface CheckedPropertyAccessSourceEvidence {
   readonly selectedSymbol: GoPtr<Symbol>;
+  readonly selectedDeclaration?: GoPtr<Node>;
   readonly resultType: GoPtr<Type>;
   readonly receiverType: GoPtr<Type>;
   readonly selectionMode: "read" | "write";
@@ -755,6 +757,7 @@ export function recordExtensionCheckedPropertyAccessMapping(
     kind: "checked-property",
     origin: propertyAccessExpression,
     selectedSymbol: selected.selectedSymbol,
+    selectedDeclaration: selected.selectedDeclaration,
     resultType: selected.resultType,
     receiverType: selected.receiverType,
     selectionMode: selected.selectionMode,
@@ -771,7 +774,8 @@ export function recordExtensionCheckedPropertyAccessMapping(
     throw new Error("Checked property callee evidence has no exact receiver or enclosing call expression.");
   }
   const sourceSelectedSymbol = selectedSourceSymbol(checker, selected.selectedSymbol);
-  const sourceSelectedDeclaration = symbolValueDeclaration(sourceSelectedSymbol);
+  const sourceSelectedDeclaration = selected.selectedDeclaration
+    ?? symbolValueDeclaration(sourceSelectedSymbol);
   retainCheckedCallSelectionSeed(checker, callExpression, {
     calleeProvenance: Object.freeze({
       ...(sourceSelectedSymbol === undefined ? {} : { symbol: sourceSelectedSymbol, selectedSymbol: sourceSelectedSymbol }),
@@ -930,7 +934,8 @@ function selectedPropertySelectionProvenance(
   readonly authoredTypeNode?: ExtensionFactSubject;
 } {
   const sourceSelectedSymbol = selectedSourceSymbol(checker, selected.selectedSymbol);
-  const sourceSelectedDeclaration = symbolValueDeclaration(sourceSelectedSymbol);
+  const sourceSelectedDeclaration = selected.selectedDeclaration
+    ?? symbolValueDeclaration(sourceSelectedSymbol);
   return {
     ...(sourceSelectedSymbol === undefined ? {} : { selectedSymbol: sourceSelectedSymbol }),
     ...(sourceSelectedDeclaration === undefined ? {} : { selectedDeclaration: sourceSelectedDeclaration }),
@@ -942,6 +947,7 @@ function selectedPropertySelectionProvenance(
 
 export interface CheckedElementAccessSourceEvidence {
   readonly selectedSymbol: GoPtr<Symbol>;
+  readonly selectedDeclaration?: GoPtr<Node>;
   readonly resultType: GoPtr<Type>;
   readonly selectedElementIndex?: number;
   readonly receiverType: GoPtr<Type>;
@@ -975,6 +981,7 @@ export function recordExtensionCheckedElementAccessMapping(
     kind: "checked-element",
     origin: elementAccessExpression,
     selectedSymbol: selected.selectedSymbol,
+    selectedDeclaration: selected.selectedDeclaration,
     resultType: selected.resultType,
     selectedElementIndex: selected.selectedElementIndex,
     receiverType: selected.receiverType,
@@ -993,7 +1000,8 @@ export function recordExtensionCheckedElementAccessMapping(
     throw new Error("Checked element callee evidence has no exact receiver, argument, or enclosing call expression.");
   }
   const sourceSelectedSymbol = selectedSourceSymbol(checker, selected.selectedSymbol);
-  const sourceSelectedDeclaration = symbolValueDeclaration(sourceSelectedSymbol);
+  const sourceSelectedDeclaration = selected.selectedDeclaration
+    ?? symbolValueDeclaration(sourceSelectedSymbol);
   retainCheckedCallSelectionSeed(checker, callExpression, {
     calleeProvenance: Object.freeze({
       ...(sourceSelectedSymbol === undefined ? {} : { symbol: sourceSelectedSymbol, selectedSymbol: sourceSelectedSymbol }),
@@ -1021,7 +1029,8 @@ function publishExtensionCheckedElementAccessMapping(
     return;
   }
   const sourceSelectedSymbol = selectedSourceSymbol(checker, selected.selectedSymbol);
-  const sourceSelectedDeclaration = symbolValueDeclaration(sourceSelectedSymbol);
+  const sourceSelectedDeclaration = selected.selectedDeclaration
+    ?? symbolValueDeclaration(sourceSelectedSymbol);
   const retainedRequest = extensionHost[extensionHostGetCheckedOperationRequest](ExtensionObservationPoint.mapCheckedElementAccess, elementAccessExpression);
   const canonicalSourceReceiverType = preserveEquivalentCheckedSourceType(
     retainedRequest?.sourceReceiver.type as GoPtr<Type>,

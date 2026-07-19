@@ -28,6 +28,7 @@ export type ExtensionSourceDecisionEvent =
       readonly kind: "checked-property";
       readonly origin: Node;
       readonly selectedSymbol: Symbol | undefined;
+      readonly selectedDeclaration: Node | undefined;
       readonly resultType: Type;
       readonly receiverType: Type;
       readonly selectionMode: "read" | "write";
@@ -38,6 +39,7 @@ export type ExtensionSourceDecisionEvent =
       readonly kind: "checked-element";
       readonly origin: Node;
       readonly selectedSymbol: Symbol | undefined;
+      readonly selectedDeclaration: Node | undefined;
       readonly resultType: Type;
       readonly selectedElementIndex: number | undefined;
       readonly receiverType: Type;
@@ -820,6 +822,7 @@ function sourceDecisionEventsEquivalent(
     case "checked-property":
       return right.kind === left.kind
         && left.selectedSymbol === right.selectedSymbol
+        && left.selectedDeclaration === right.selectedDeclaration
         && checkedSourceTypesShareStableIdentity(left.resultType, right.resultType)
         && checkedSourceTypesShareStableIdentity(left.receiverType, right.receiverType)
         && left.selectionMode === right.selectionMode
@@ -828,6 +831,7 @@ function sourceDecisionEventsEquivalent(
     case "checked-element":
       return right.kind === left.kind
         && left.selectedSymbol === right.selectedSymbol
+        && left.selectedDeclaration === right.selectedDeclaration
         && checkedSourceTypesShareStableIdentity(left.resultType, right.resultType)
         && left.selectedElementIndex === right.selectedElementIndex
         && checkedSourceTypesShareStableIdentity(left.receiverType, right.receiverType)

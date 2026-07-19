@@ -239,7 +239,7 @@ test("implementation expressions publish every checked-operation kind with exact
   assert.ok(elementRequest.sourceReceiver.expression === elementRequest.receiver);
   assert.ok(elementRequest.sourceArgument.expression === elementRequest.argument);
   assert.ok(elementRequest.sourceReadResult.expression === element);
-  assertSelectedDeclarationFrom(elementRequest.sourceReadResult.selectedSymbol, elementRequest.sourceReadResult.selectedDeclaration, declarations, KindIndexSignature);
+  assertSelectedIndexDeclarationFrom(elementRequest.sourceReadResult.selectedSymbol, elementRequest.sourceReadResult.selectedDeclaration, declarations);
 
   const binaryData = AsBinaryExpression(operator);
   assert.ok(binaryData !== undefined);
@@ -656,6 +656,19 @@ function assertSelectedDeclarationFrom(
   if (expectedKind !== undefined) {
     assert.equal(selectedDeclaration.Kind, expectedKind);
   }
+}
+
+function assertSelectedIndexDeclarationFrom(
+  selectedSymbolSubject: ExtensionFactSubject | undefined,
+  selectedDeclarationSubject: ExtensionFactSubject | undefined,
+  expectedOwner: SourceFile,
+): void {
+  const selectedDeclaration = selectedDeclarationSubject as GoPtr<Node>;
+  assert.equal(selectedSymbolSubject, undefined, "Index-signature evidence must not synthesize a checker-visible symbol absent from TS-Go.");
+  assert.ok(selectedDeclaration !== undefined);
+  assert.ok(GetSourceFileOfNode(selectedDeclaration) === expectedOwner);
+  assert.equal(expectedOwner.IsDeclarationFile, true);
+  assert.equal(selectedDeclaration.Kind, KindIndexSignature);
 }
 
 function assertOperationProvenance(

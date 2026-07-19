@@ -11789,8 +11789,6 @@ export function Checker_getApplicableIndexInfos(receiver: GoPtr<Checker>, t: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getApplicableIndexSymbol","kind":"method","status":"implemented","sigHash":"a40817fe1af41ea59c2da8e72d9850088ef890ade45f2e789374df947fa9e7c5","bodyHash":"74ac15ed3ed74c01b2426c8687027941d736cb99a64e2c0fab87abd42939938d"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-selected element-access evidence needs a stable synthetic symbol for mapped index signatures, whose TS-Go index infos have no concrete IndexSignatureDeclaration; normal index-type selection and diagnostics remain unchanged."}
- *
  * Go source:
  * func (c *Checker) getApplicableIndexSymbol(t *Type, keyType *Type) *ast.Symbol {
  * 	if info := c.getApplicableIndexInfo(t, keyType); info != nil && info != c.anyBaseTypeIndexInfo {
@@ -11823,15 +11821,6 @@ export function Checker_getApplicableIndexInfos(receiver: GoPtr<Checker>, t: GoP
  */
 export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: GoPtr<Type>, keyType: GoPtr<Type>): GoPtr<Symbol> {
   const info = Checker_getApplicableIndexInfo(receiver, t, keyType);
-  return Checker_getIndexSymbolForSelectedInfo(receiver, t, info, keyType);
-}
-
-export function Checker_getIndexSymbolForSelectedInfo(
-  receiver: GoPtr<Checker>,
-  t: GoPtr<Type>,
-  info: GoPtr<IndexInfo>,
-  selectedKeyType: GoPtr<Type> = info?.keyType,
-): GoPtr<Symbol> {
   if (info === undefined || info === receiver!.anyBaseTypeIndexInfo) {
     return undefined;
   }
@@ -11841,15 +11830,9 @@ export function Checker_getIndexSymbolForSelectedInfo(
       declarations = [info!.declaration] as GoSlice<GoPtr<Node>>;
     } else {
       for (const candidate of (Checker_getIndexInfosOfType(receiver, t) ?? [])) {
-        if (candidate!.declaration !== undefined && Checker_isApplicableIndexType(receiver, selectedKeyType, candidate!.keyType)) {
+        if (candidate!.declaration !== undefined && Checker_isApplicableIndexType(receiver, keyType, candidate!.keyType)) {
           declarations = [...(declarations ?? []), candidate!.declaration] as GoSlice<GoPtr<Node>>;
         }
-      }
-    }
-    if ((declarations ?? []).length === 0) {
-      const mappedDeclaration = getMappedIndexEvidenceDeclaration(t);
-      if (mappedDeclaration !== undefined) {
-        declarations = [mappedDeclaration] as GoSlice<GoPtr<Node>>;
       }
     }
     if ((declarations ?? []).length !== 0) {
@@ -11863,22 +11846,6 @@ export function Checker_getIndexSymbolForSelectedInfo(
     }
   }
   return info!.indexSymbol;
-}
-
-function getMappedIndexEvidenceDeclaration(t: GoPtr<Type>): GoPtr<Node> {
-  if (t === undefined || (t!.flags & TypeFlagsObject) === 0) {
-    return undefined;
-  }
-  if ((t!.objectFlags & ObjectFlagsMapped) !== 0) {
-    return Type_AsMappedType(t)!.declaration;
-  }
-  if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
-    const target = Type_Target(t);
-    if (target !== undefined && (target!.objectFlags & ObjectFlagsMapped) !== 0) {
-      return Type_AsMappedType(target)!.declaration;
-    }
-  }
-  return undefined;
 }
 
 /**

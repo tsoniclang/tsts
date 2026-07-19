@@ -134,7 +134,6 @@ import { Class_0_defines_instance_member_accessor_1_but_extended_class_2_defines
 import { X_0_is_defined_as_an_accessor_in_class_1_but_is_overridden_here_in_2_as_an_instance_property, X_0_is_defined_as_a_property_in_class_1_but_is_overridden_here_in_2_as_an_accessor } from "../../diagnostics/generated/messages.js";
 import { Checker_getApplicableIndexInfo, Checker_getApplicableIndexInfoForName, Checker_getApplicableIndexSymbol, Checker_getBaseConstructorTypeOfClass, Checker_checkTypeArgumentConstraints, Checker_getTypeParametersForTypeReferenceOrImport, Checker_checkFunctionOrConstructorSymbol, Checker_getContextualCallSignature, Checker_getSignatureFromDeclaration, Checker_getReturnTypeOfSignature, Checker_getReturnTypeFromAnnotation, Checker_checkSignatureDeclaration, Checker_isPropertyInitializedInConstructor, Checker_getTypeArgumentsForAliasSymbol, Checker_getDeclaredTypeOfTypeParameter, Checker_getTypeParameterFromMappedType, Checker_getTypeFromRestTypeNode, Checker_getRestTypeOfTupleType, Checker_getTypeArguments, Checker_getSignaturesOfSymbol, Checker_getSignaturesOfType, Checker_instantiateSignatures, Checker_findApplicableIndexInfo, Checker_checkUnusedLocalsAndParameters, Checker_checkUnusedTypeParameters, Checker_checkUnusedInferTypeParameter, Checker_isApplicableIndexType, Checker_getSuggestionForNonexistentIndexSignature, Checker_isThisPropertyAccessInConstructor, Checker_getTypeReferenceArity, Checker_isMethodAccessForCall, Checker_getMinTypeArgumentCount, Checker_getTypeArgumentsFromNode, Checker_checkNoTypeArguments, Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias, Checker_getBuiltinIteratorReturnType, Checker_getTypeOfVariableOrParameterOrProperty, Checker_getArrayMemberCallSignatures, Checker_getUnionSignatures, Checker_getContextuallyTypedParameterType, Checker_getAccessorThisParameter, Checker_getContextualThisParameterType, Checker_getParameterTypeOfFullSignature, Checker_isGlobalSymbolConstructor, Checker_getDefaultConstructSignatures, Checker_getConstructorsForTypeArguments, Checker_getInstantiatedConstructorsForTypeArguments, Checker_getTypeWithoutSignatures, Checker_isMixinConstructorType, Checker_appendSignatures, Checker_cloneSignature, Checker_forEachMappedTypePropertyKeyTypeAndIndexSignatureKeyType, Checker_getParameterTypeNodeForDecoratorCheck, Checker_getTypeFromThisTypeNode } from "./signatures.js";
 import { Checker_getSingleCallSignature, Checker_getTypeOfFirstParameterOfSignature } from "./signatures.js";
-import { Checker_getIndexSymbolForSelectedInfo } from "./signatures.js";
 import { Checker_checkTypeParameters, Checker_checkTypeParameterListsIdentical, Checker_checkClassOrInterfaceForDuplicateIndexSignatures, Checker_getTypeWithThisArgument } from "./signatures.js";
 import { Checker_getConstraintOfTypeParameter, Checker_getEnclosingClassFromThisParameter } from "./signatures.js";
 import { Checker_checkGrammarModifiers, Checker_checkGrammarProperty, Checker_checkGrammarComputedPropertyName, Checker_checkGrammarMethod, Checker_checkGrammarFunctionLikeDeclaration, Checker_checkGrammarAccessor, Checker_grammarErrorOnNode, Checker_checkGrammarForGenerator, Checker_checkGrammarVariableDeclaration, Checker_checkGrammarPrivateIdentifierExpression, Checker_grammarErrorOnFirstToken, Checker_isNonBindableDynamicName, Checker_checkGrammarModuleElementContext, Checker_checkGrammarExportDeclaration, Checker_checkGrammarClassLikeDeclaration, Checker_checkGrammarImportClause } from "../grammarchecks.js";
@@ -5538,7 +5537,14 @@ interface SelectedElementAccessCheck {
   receiverType: GoPtr<Type>;
   argumentType: GoPtr<Type>;
   selectedSymbol: GoPtr<Symbol>;
+  selectedDeclaration: GoPtr<Node>;
+  indexSelections: SelectedIndexAccessSelection[];
   selectedElementIndex?: number;
+}
+
+interface SelectedIndexAccessSelection {
+  readonly objectType: GoPtr<Type>;
+  readonly indexInfo: GoPtr<IndexInfo>;
 }
 
 function checkElementAccessExpressionWithEvidence(
@@ -5565,7 +5571,7 @@ function checkElementAccessExpressionWithEvidence(
     : (AccessFlagsWriting |
       (assignmentTargetKind === AssignmentKindCompound ? AccessFlagsExpressionPosition : 0) |
       (Checker_isGenericObjectType(receiver, objectType) && !isThisTypeParameter(objectType) ? AccessFlagsNoIndexSignatures : 0)) as AccessFlags;
-  const indexedAccessType = OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, objectType, effectiveIndexType, accessFlags, node, undefined), receiver!.errorType);
+  const indexedAccessType = OrElse(getIndexedAccessTypeOrUndefinedWithEvidence(receiver, objectType, effectiveIndexType, accessFlags, node, undefined, selected), receiver!.errorType);
   const selectedSymbol = (LinkStore_Get(receiver!.symbolNodeLinks, node) as GoPtr<SymbolNodeLinks>)!.resolvedSymbol;
   const resultType = Checker_checkIndexedAccessIndexType(
     receiver,
@@ -5578,6 +5584,8 @@ function checkElementAccessExpressionWithEvidence(
     selected.receiverType = objectType;
     selected.argumentType = effectiveIndexType;
     selected.selectedSymbol = selectedSymbol;
+    selected.selectedDeclaration = selectedSymbol?.ValueDeclaration
+      ?? selectedIndexAccessDeclaration(selected.indexSelections);
     const selectedElementIndex = getSelectedFixedTupleElementIndex(objectType, effectiveIndexType);
     if (selectedElementIndex !== undefined) {
       selected.selectedElementIndex = selectedElementIndex;
@@ -5613,6 +5621,7 @@ function recordSelectedElementAccessEvidence(
     node,
     {
       selectedSymbol: selected.selectedSymbol,
+      selectedDeclaration: selected.selectedDeclaration,
       resultType: sourceResultType,
       ...(selected.selectedElementIndex === undefined ? {} : { selectedElementIndex: selected.selectedElementIndex }),
       receiverType: selected.receiverType,
@@ -5628,8 +5637,61 @@ function selectedElementAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Node
   const callOwned = Checker_isMethodAccessForCall(receiver, node)
     && hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall, node);
   return accessOwned || callOwned
-    ? { selected: false, resultType: undefined, receiverType: undefined, argumentType: undefined, selectedSymbol: undefined }
+    ? {
+        selected: false,
+        resultType: undefined,
+        receiverType: undefined,
+        argumentType: undefined,
+        selectedSymbol: undefined,
+        selectedDeclaration: undefined,
+        indexSelections: [],
+      }
     : undefined;
+}
+
+function retainSelectedIndexAccess(
+  selected: SelectedElementAccessCheck | undefined,
+  objectType: GoPtr<Type>,
+  indexInfo: GoPtr<IndexInfo>,
+): void {
+  if (selected === undefined || objectType === undefined || indexInfo === undefined) {
+    return;
+  }
+  if (!selected.indexSelections.some((selection) => selection.objectType === objectType && selection.indexInfo === indexInfo)) {
+    selected.indexSelections.push({ objectType, indexInfo });
+  }
+}
+
+function selectedIndexAccessDeclaration(selections: readonly SelectedIndexAccessSelection[]): GoPtr<Node> {
+  let selectedDeclaration: GoPtr<Node>;
+  for (const selection of selections) {
+    const declaration = selection.indexInfo?.declaration
+      ?? mappedIndexEvidenceDeclaration(selection.objectType);
+    if (declaration === undefined) {
+      return undefined;
+    }
+    if (selectedDeclaration !== undefined && selectedDeclaration !== declaration) {
+      return undefined;
+    }
+    selectedDeclaration = declaration;
+  }
+  return selectedDeclaration;
+}
+
+function mappedIndexEvidenceDeclaration(type: GoPtr<Type>): GoPtr<Node> {
+  if (type === undefined || (type.flags & TypeFlagsObject) === 0) {
+    return undefined;
+  }
+  if ((type.objectFlags & ObjectFlagsMapped) !== 0) {
+    return Type_AsMappedType(type)!.declaration;
+  }
+  if ((type.objectFlags & ObjectFlagsReference) !== 0) {
+    const target = Type_Target(type);
+    if (target !== undefined && (target.objectFlags & ObjectFlagsMapped) !== 0) {
+      return Type_AsMappedType(target)!.declaration;
+    }
+  }
+  return undefined;
 }
 
 function selectedElementAccessArgumentType(receiver: GoPtr<Checker>, indexExpression: GoPtr<Node>, indexType: GoPtr<Type>): GoPtr<Type> {
@@ -6679,6 +6741,7 @@ interface SelectedPropertyAccessCheck {
   writeType: GoPtr<Type>;
   receiverType: GoPtr<Type>;
   selectedSymbol: GoPtr<Symbol>;
+  selectedDeclaration: GoPtr<Node>;
 }
 
 function recordSelectedPropertyAccessEvidence(
@@ -6701,6 +6764,7 @@ function recordSelectedPropertyAccessEvidence(
     node,
     {
       selectedSymbol: selected.selectedSymbol,
+      selectedDeclaration: selected.selectedDeclaration,
       resultType,
       receiverType: selected.receiverType,
       accessMode,
@@ -6731,6 +6795,7 @@ function selectedPropertyAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Nod
         writeType: undefined,
         receiverType: undefined,
         selectedSymbol: undefined,
+        selectedDeclaration: undefined,
       }
     : undefined;
 }
@@ -6753,7 +6818,7 @@ function checkedAccessMode(node: GoPtr<Node>): CheckedPropertyAccessSourceOperat
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessExpressionOrQualifiedName","kind":"method","status":"implemented","sigHash":"9215f415f7607d418e5a3a390b0bf838e9a2f44b6cd177065016f5a85a4714b1","bodyHash":"c9ee642c0561d3b1c6f6fcf3a43fb2def31c2e6dcf98504b1f6a3169813218e3"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"When TS-Go selects an index signature for property access, extension-selected evidence needs the same resolved-symbol cache that TS-Go already creates for public symbol queries."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The exact checker path additionally retains the selected index declaration for extension evidence without synthesizing a checker-visible symbol or mutating TS-Go core symbol caches."}
  * Go source:
  * func (c *Checker) checkPropertyAccessExpressionOrQualifiedName(node *ast.Node, left *ast.Node, leftType *Type, right *ast.Node, checkMode CheckMode, writeOnly bool) *Type {
  * 	parentSymbol := c.getResolvedSymbolOrNil(left)
@@ -6970,6 +7035,7 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
   let propType: GoPtr<Type>;
   let selectedReadType: GoPtr<Type>;
   let selectedWriteType: GoPtr<Type>;
+  let selectedDeclaration: GoPtr<Node>;
   if (prop === undefined) {
     let indexInfo: GoPtr<IndexInfo>;
     if (!IsPrivateIdentifier(right) && (assignmentKind === AssignmentKindNone || !Checker_isGenericObjectType(receiver, leftType) || isThisTypeParameter(leftType))) {
@@ -6997,12 +7063,11 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
     if (indexInfo!.isReadonly && (IsAssignmentTarget(node) || isDeleteTarget(node))) {
       Checker_error(receiver, node, Index_signature_in_type_0_only_permits_reading, Checker_TypeToString(receiver, apparentType));
     }
-    if (IsPropertyAccessExpression(node)) {
-      cacheIndexSignatureResolvedSymbol(receiver, node, apparentType, indexInfo);
-    }
     propType = indexInfo!.valueType;
     if (selected !== undefined) {
       selectedWriteType = indexInfo!.valueType;
+      selectedDeclaration = indexInfo!.declaration
+        ?? mappedIndexEvidenceDeclaration(apparentType);
     }
     if (receiver!.compilerOptions!.NoUncheckedIndexedAccess === TSTrue && getAssignmentTargetKind(node) !== AssignmentKindDefinite) {
       propType = Checker_getUnionType(receiver, [propType, receiver!.missingType]);
@@ -7053,6 +7118,8 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
     selected.receiverType = apparentType;
     selected.selectedSymbol = prop
       ?? (LinkStore_Get(receiver!.symbolNodeLinks, node) as GoPtr<SymbolNodeLinks>)!.resolvedSymbol;
+    selected.selectedDeclaration = selected.selectedSymbol?.ValueDeclaration
+      ?? selectedDeclaration;
   }
   return resultType;
 }
@@ -16850,6 +16917,7 @@ export function Checker_getIndexedAccessTypeEx(receiver: GoPtr<Checker>, objectT
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIndexedAccessTypeOrUndefined","kind":"method","status":"implemented","sigHash":"d3713965735851a9deab87bfb2f9295d6712e67d34c160acab1e88fc8a1a0112","bodyHash":"67cdcb10f24bb41623761bc86627a1638cf3dc86c0448b17d465669ebc7aa244"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The public TS-Go operation delegates to an exact worker that can additionally retain the index infos selected by the same check for extension evidence; the ordinary path supplies no collector and source checking is unchanged."}
  *
  * Go source:
  * func (c *Checker) getIndexedAccessTypeOrUndefined(objectType *Type, indexType *Type, accessFlags AccessFlags, accessNode *ast.Node, alias *TypeAlias) *Type {
@@ -16919,6 +16987,18 @@ export function Checker_getIndexedAccessTypeEx(receiver: GoPtr<Checker>, objectT
  * }
  */
 export function Checker_getIndexedAccessTypeOrUndefined(receiver: GoPtr<Checker>, objectType: GoPtr<Type>, indexType: GoPtr<Type>, accessFlags: AccessFlags, accessNode: GoPtr<Node>, alias: GoPtr<TypeAlias>): GoPtr<Type> {
+  return getIndexedAccessTypeOrUndefinedWithEvidence(receiver, objectType, indexType, accessFlags, accessNode, alias);
+}
+
+function getIndexedAccessTypeOrUndefinedWithEvidence(
+  receiver: GoPtr<Checker>,
+  objectType: GoPtr<Type>,
+  indexType: GoPtr<Type>,
+  accessFlags: AccessFlags,
+  accessNode: GoPtr<Node>,
+  alias: GoPtr<TypeAlias>,
+  selected?: SelectedElementAccessCheck,
+): GoPtr<Type> {
   if (objectType === receiver!.wildcardType || indexType === receiver!.wildcardType) {
     return receiver!.wildcardType;
   }
@@ -16948,7 +17028,7 @@ export function Checker_getIndexedAccessTypeOrUndefined(receiver: GoPtr<Checker>
     const propTypes: Array<GoPtr<Type>> = [];
     let wasMissingProp = false;
     for (const ty of Type_Types(indexType)) {
-      const propType = Checker_getPropertyTypeForIndexType(receiver, objectType, apparentObjectType, ty, indexType, accessNode, (accessFlags | IfElse(wasMissingProp, AccessFlagsSuppressNoImplicitAnyError, 0)) as AccessFlags);
+      const propType = getPropertyTypeForIndexTypeWithEvidence(receiver, objectType, apparentObjectType, ty, indexType, accessNode, (accessFlags | IfElse(wasMissingProp, AccessFlagsSuppressNoImplicitAnyError, 0)) as AccessFlags, selected);
       if (propType !== undefined) {
         propTypes.push(propType);
       } else if (accessNode === undefined) {
@@ -16965,12 +17045,12 @@ export function Checker_getIndexedAccessTypeOrUndefined(receiver: GoPtr<Checker>
     }
     return Checker_getUnionTypeEx(receiver, propTypes, UnionReductionLiteral, alias, undefined);
   }
-  return Checker_getPropertyTypeForIndexType(receiver, objectType, apparentObjectType, indexType, indexType, accessNode, (accessFlags | AccessFlagsCacheSymbol | AccessFlagsReportDeprecated) as AccessFlags);
+  return getPropertyTypeForIndexTypeWithEvidence(receiver, objectType, apparentObjectType, indexType, indexType, accessNode, (accessFlags | AccessFlagsCacheSymbol | AccessFlagsReportDeprecated) as AccessFlags, selected);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getPropertyTypeForIndexType","kind":"method","status":"implemented","sigHash":"b165e26df1bd4167798c456fec8881582ad4a6c35f9d23dd470b4c9da80f6f58","bodyHash":"78ac5563270df952a0013017c2c289f27c217028281aef86cf17062c9ee47126"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"When TS-Go selects an index signature for element access, extension-selected evidence needs the same resolved-symbol cache that TS-Go already creates for public symbol queries."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"The public TS-Go operation delegates to an exact worker that records the already-selected index info only when an extension evidence collector is supplied; core symbol caches and ordinary checking remain identical to TS-Go."}
  *
  * Go source:
  * func (c *Checker) getPropertyTypeForIndexType(originalObjectType *Type, objectType *Type, indexType *Type, fullIndexType *Type, accessNode *ast.Node, accessFlags AccessFlags) *Type {
@@ -17188,6 +17268,19 @@ export function Checker_getIndexedAccessTypeOrUndefined(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, originalObjectType: GoPtr<Type>, objectType: GoPtr<Type>, indexType: GoPtr<Type>, fullIndexType: GoPtr<Type>, accessNode: GoPtr<Node>, accessFlags: AccessFlags): GoPtr<Type> {
+  return getPropertyTypeForIndexTypeWithEvidence(receiver, originalObjectType, objectType, indexType, fullIndexType, accessNode, accessFlags);
+}
+
+function getPropertyTypeForIndexTypeWithEvidence(
+  receiver: GoPtr<Checker>,
+  originalObjectType: GoPtr<Type>,
+  objectType: GoPtr<Type>,
+  indexType: GoPtr<Type>,
+  fullIndexType: GoPtr<Type>,
+  accessNode: GoPtr<Node>,
+  accessFlags: AccessFlags,
+  selected?: SelectedElementAccessCheck,
+): GoPtr<Type> {
   let accessExpression: GoPtr<Node> = undefined;
   if (accessNode !== undefined && accessNode!.Kind === KindElementAccessExpression) {
     accessExpression = accessNode;
@@ -17279,6 +17372,7 @@ export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, or
       indexInfo = Checker_getIndexInfoOfType(receiver, objectType, receiver!.stringType);
     }
     if (indexInfo !== undefined) {
+      retainSelectedIndexAccess(selected, objectType, indexInfo);
       if ((accessFlags & AccessFlagsNoIndexSignatures) !== 0 && indexInfo!.keyType !== receiver!.numberType) {
         if (accessExpression !== undefined) {
           if ((accessFlags & AccessFlagsWriting) !== 0) {
@@ -17298,9 +17392,6 @@ export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, or
         return indexInfo!.valueType;
       }
       Checker_errorIfWritingToReadonlyIndex(receiver, indexInfo, objectType, accessExpression);
-      if ((accessFlags & AccessFlagsCacheSymbol) !== 0 && accessExpression !== undefined) {
-        cacheIndexSignatureResolvedSymbol(receiver, accessExpression, objectType, indexInfo);
-      }
       if (
         (accessFlags & AccessFlagsIncludeUndefined) !== 0 &&
         !(
@@ -17395,14 +17486,6 @@ export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, or
     return indexType;
   }
   return undefined;
-}
-
-function cacheIndexSignatureResolvedSymbol(receiver: GoPtr<Checker>, accessNode: GoPtr<Node>, objectType: GoPtr<Type>, indexInfo: GoPtr<IndexInfo>): void {
-  const indexSymbol = Checker_getIndexSymbolForSelectedInfo(receiver, objectType, indexInfo);
-  if (indexSymbol === undefined) {
-    return;
-  }
-  LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, accessNode!)!.resolvedSymbol = indexSymbol;
 }
 
 /**
