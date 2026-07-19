@@ -1,12 +1,13 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 
 const toolDir = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(toolDir, "..", "..");
 const packageJsonPath = join(packageRoot, "package.json");
 const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+const workspaceTempRoot = join(packageRoot, "..", "..", ".temp");
 
 const failures = [];
 
@@ -57,10 +58,33 @@ if (!existsSync(join(packageRoot, "dist", "src", "cli", "index.js"))) {
   fail("missing built CLI entry: dist/src/cli/index.js");
 }
 
+const bundledIndexPath = join(packageRoot, "dist", "src", "internal", "bundled", "libs_generated.js");
+const bundledLibraryRoot = join(packageRoot, "dist", "src", "internal", "bundled", "libs");
+let bundledLibraryNames = [];
+if (!existsSync(bundledIndexPath)) {
+  fail("missing built bundled-library index: dist/src/internal/bundled/libs_generated.js");
+} else {
+  const generated = await import(pathToFileURL(bundledIndexPath).href);
+  bundledLibraryNames = [...generated.LibNames];
+}
+if (!existsSync(bundledLibraryRoot)) {
+  fail("missing built bundled-library directory: dist/src/internal/bundled/libs");
+} else {
+  const physicalNames = readdirSync(bundledLibraryRoot)
+    .filter((name) => name.endsWith(".d.ts"))
+    .sort((left, right) => left.localeCompare(right));
+  if (physicalNames.length !== bundledLibraryNames.length
+    || physicalNames.some((name, index) => name !== bundledLibraryNames[index])) {
+    fail("built bundled-library resources do not exactly match the generated LibNames index");
+  }
+}
+
 const npmCommand = process.env.npm_execpath ? process.execPath : "npm";
+mkdirSync(workspaceTempRoot, { recursive: true });
+const isolatedRoot = mkdtempSync(join(workspaceTempRoot, "package-check-"));
 const npmArgs = process.env.npm_execpath
-  ? [process.env.npm_execpath, "pack", "--dry-run", "--json", "--ignore-scripts"]
-  : ["pack", "--dry-run", "--json", "--ignore-scripts"];
+  ? [process.env.npm_execpath, "pack", "--json", "--ignore-scripts", "--pack-destination", isolatedRoot]
+  : ["pack", "--json", "--ignore-scripts", "--pack-destination", isolatedRoot];
 const pack = spawnSync(npmCommand, npmArgs, {
   cwd: packageRoot,
   encoding: "utf8",
@@ -76,9 +100,25 @@ if (pack.status !== 0 || pack.signal !== null) {
       fail(`package includes source-only artifact: ${file}`);
     }
   }
-  for (const requiredFile of ["dist/src/index.js", "dist/src/index.d.ts", "dist/src/cli/index.js", "package.json"]) {
+  for (const requiredFile of [
+    "dist/src/index.js",
+    "dist/src/index.d.ts",
+    "dist/src/cli/index.js",
+    "dist/src/internal/bundled/libs_generated.js",
+    ...bundledLibraryNames.map((name) => `dist/src/internal/bundled/libs/${name}`),
+    "package.json",
+  ]) {
     if (!files.includes(requiredFile)) {
-      fail(`package dry-run is missing required file: ${requiredFile}`);
+      fail(`packed artifact is missing required file: ${requiredFile}`);
+    }
+  }
+
+  if (failures.length === 0) {
+    const tarballName = output[0]?.filename;
+    if (typeof tarballName !== "string" || !existsSync(join(isolatedRoot, tarballName))) {
+      fail("npm pack did not produce the reported tarball");
+    } else {
+      verifyInstalledPackage(isolatedRoot, join(isolatedRoot, tarballName));
     }
   }
 }
@@ -92,3 +132,47 @@ if (failures.length > 0) {
 }
 
 console.log(`Built package contract OK for ${relative(process.cwd(), packageRoot) || "."}`);
+
+function verifyInstalledPackage(root, tarballPath) {
+  writeFileSync(join(root, "package.json"), JSON.stringify({ private: true, type: "module" }));
+  const installArgs = process.env.npm_execpath
+    ? [process.env.npm_execpath, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--no-package-lock", tarballPath]
+    : ["install", "--ignore-scripts", "--no-audit", "--no-fund", "--no-package-lock", tarballPath];
+  const install = spawnSync(npmCommand, installArgs, { cwd: root, encoding: "utf8" });
+  if (install.status !== 0 || install.signal !== null) {
+    fail(`isolated packed-package install failed${install.signal === null ? "" : ` with ${install.signal}`}:\n${install.stderr || install.stdout}`);
+    return;
+  }
+
+  const proofPath = join(root, "default-library-proof.mjs");
+  writeFileSync(proofPath, `
+import { createCompilerSessionFromFiles, formatDiagnostics } from "@tsonic/tsts";
+
+const session = createCompilerSessionFromFiles({
+  currentDirectory: "/project",
+  files: {
+    "/project/index.ts": "export const values = [1, 2, 3]; export const first: number = values[0]!; export const count: number = values.length;",
+  },
+  rootFiles: ["/project/index.ts"],
+  compilerOptions: {
+    module: "esnext",
+    moduleResolution: "bundler",
+    target: "es2025",
+    strict: true,
+  },
+});
+session.ensureBound();
+const diagnostics = session.getDiagnostics("all").filter((diagnostic) => diagnostic !== undefined);
+if (diagnostics.length !== 0) {
+  throw new Error(formatDiagnostics(diagnostics, "/project"));
+}
+if (!session.getSourceFiles().some((sourceFile) => session.ast.getFileName(sourceFile) === "bundled:///libs/lib.es5.d.ts")) {
+  throw new Error("The isolated packed compiler did not load its bundled default library.");
+}
+console.log("isolated packed default-library proof passed");
+`);
+  const proof = spawnSync(process.execPath, [proofPath], { cwd: root, encoding: "utf8" });
+  if (proof.status !== 0 || proof.signal !== null) {
+    fail(`isolated packed-package default-library proof failed${proof.signal === null ? "" : ` with ${proof.signal}`}:\n${proof.stderr || proof.stdout}`);
+  }
+}
