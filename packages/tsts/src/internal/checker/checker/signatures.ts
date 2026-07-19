@@ -7,12 +7,12 @@ import {
   commitExtensionCheckedSourceCandidateDecision,
   commitExtensionCheckedSourceSignatureDecision,
   extensionCheckedSourceDecisionOwner,
-  hasExtensionCheckedOperationHost,
+  hasExtensionCheckedCallEvidenceInterest,
+  hasExtensionCheckedCallSelectionInterest,
   journalExtensionCheckedCallEvidence,
   rollbackExtensionCheckedSourceDecision,
   rollbackExtensionCheckedSourceDiscardDecision,
 } from "../../../extensions/checker-integration.js";
-import { ExtensionObservationPoint } from "../../../extensions/observations.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
 import type { Number } from "../../jsnum/jsnum.js";
@@ -2475,7 +2475,7 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
   const requiresExactSourceSelection = IsCallOrNewExpression(node)
     && sourceDecisionOwner !== undefined
     && sourceFile === sourceDecisionOwner
-    && hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall, node);
+    && hasExtensionCheckedCallSelectionInterest(receiver, node);
   const refreshExactSourceSelection = requiresExactSourceSelection
     && cached !== undefined
     && cached !== receiver!.resolvingSignature
@@ -2521,9 +2521,9 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
       if (IsCallOrNewExpression(node)) {
         links!.resolvedCallSelectionEvidence = selectedEvidence;
         links!.resolvedCallEvidence = undefined;
-        links!.extensionSourceDecisionOwner = selectedEvidence === undefined
-          ? undefined
-          : sourceDecisionOwner;
+        links!.extensionSourceDecisionOwner = requiresExactSourceSelection
+          ? sourceDecisionOwner
+          : undefined;
       }
     } else {
       links!.resolvedSignature = cached;
@@ -2752,9 +2752,12 @@ function Checker_resolveCallExpressionWithEvidence(
 ): GoPtr<Signature> {
   if (Node_Expression(node)!.Kind === KindSuperKeyword) {
     const superType = Checker_checkSuperExpression(receiver, Node_Expression(node));
+    const selectedOutput = output !== undefined && hasExtensionCheckedCallEvidenceInterest(receiver, node)
+      ? output
+      : undefined;
     if (IsTypeAny(superType)) {
-      if (output !== undefined) {
-        return Checker_resolveUntypedCallWithEvidence(receiver, node, superType, output);
+      if (selectedOutput !== undefined) {
+        return Checker_resolveUntypedCallWithEvidence(receiver, node, superType, selectedOutput);
       }
       for (const arg of Node_Arguments(node) ?? []) {
         Checker_checkExpression(receiver, arg);
@@ -2766,7 +2769,7 @@ function Checker_resolveCallExpressionWithEvidence(
       const baseTypeNode = containingClass !== undefined ? GetExtendsHeritageClauseElement(containingClass) : undefined;
       if (baseTypeNode !== undefined) {
         const baseConstructors = Checker_getInstantiatedConstructorsForTypeArguments(receiver, superType, Node_TypeArguments(baseTypeNode) ?? [], baseTypeNode);
-        if (output === undefined) {
+        if (selectedOutput === undefined) {
           return Checker_resolveCall(receiver, node, baseConstructors, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
         }
         const resolved = Checker_resolveCallWithEvidence(
@@ -2780,7 +2783,7 @@ function Checker_resolveCallExpressionWithEvidence(
           superType,
         );
         if (resolved.evidence !== undefined) {
-          output.evidence = resolved.evidence;
+          selectedOutput.evidence = resolved.evidence;
         }
         return resolved.signature;
       }
@@ -2792,6 +2795,9 @@ function Checker_resolveCallExpressionWithEvidence(
   }
   let callChainFlags: SignatureFlags;
   let funcType = Checker_checkExpression(receiver, Node_Expression(node));
+  const selectedOutput = output !== undefined && hasExtensionCheckedCallEvidenceInterest(receiver, node)
+    ? output
+    : undefined;
   if (IsOptionalChain(node)) {
     const nonOptionalType = Checker_getOptionalExpressionType(receiver, funcType, Node_Expression(node));
     switch (true) {
@@ -2823,9 +2829,9 @@ function Checker_resolveCallExpressionWithEvidence(
     if (!Checker_isErrorType(receiver, funcType) && Node_TypeArguments(node) !== undefined) {
       Checker_error(receiver, node, Untyped_function_calls_may_not_accept_type_arguments);
     }
-    return output === undefined
+    return selectedOutput === undefined
       ? Checker_resolveUntypedCall(receiver, node)
-      : Checker_resolveUntypedCallWithEvidence(receiver, node, funcType, output);
+      : Checker_resolveUntypedCallWithEvidence(receiver, node, funcType, selectedOutput);
   }
   if (callSignatures.length === 0) {
     if (numConstructSignatures !== 0) {
@@ -2847,7 +2853,7 @@ function Checker_resolveCallExpressionWithEvidence(
     Checker_skippedGenericFunction(receiver, node, checkMode);
     return receiver!.resolvingSignature;
   }
-  if (output === undefined) {
+  if (selectedOutput === undefined) {
     return Checker_resolveCall(receiver, node, callSignatures, candidatesOutArray, checkMode, callChainFlags, undefined);
   }
   const resolved = Checker_resolveCallWithEvidence(
@@ -2861,7 +2867,7 @@ function Checker_resolveCallExpressionWithEvidence(
     funcType,
   );
   if (resolved.evidence !== undefined) {
-    output.evidence = resolved.evidence;
+    selectedOutput.evidence = resolved.evidence;
   }
   return resolved.signature;
 }

@@ -734,6 +734,7 @@ function recordPropertyDecision(
     throw new Error("Expected exact selected property source evidence.");
   }
   recordExtensionCheckedPropertyAccessMapping(checker, property, {
+    sourceSymbol: selected.symbol as GoPtr<Symbol>,
     selectedSymbol: selected.selectedSymbol as GoPtr<Symbol>,
     resultType: selected.type as GoPtr<Type>,
     receiverType: request.sourceReceiver.type as GoPtr<Type>,

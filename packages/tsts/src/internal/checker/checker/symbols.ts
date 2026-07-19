@@ -5536,6 +5536,8 @@ interface SelectedElementAccessCheck {
   resultType: GoPtr<Type>;
   receiverType: GoPtr<Type>;
   argumentType: GoPtr<Type>;
+  sourceSymbol: GoPtr<Symbol>;
+  sourceDeclaration: GoPtr<Node>;
   selectedSymbol: GoPtr<Symbol>;
   selectedDeclaration: GoPtr<Node>;
   indexSelections: SelectedIndexAccessSelection[];
@@ -5583,8 +5585,19 @@ function checkElementAccessExpressionWithEvidence(
     selected.resultType = resultType;
     selected.receiverType = objectType;
     selected.argumentType = effectiveIndexType;
-    selected.selectedSymbol = selectedSymbol;
-    selected.selectedDeclaration = selectedSymbol?.ValueDeclaration
+    const targetSelectedSymbol = selectedSymbol !== undefined && (selectedSymbol.Flags & SymbolFlagsAlias) !== 0
+      ? (LinkStore_Get(receiver!.aliasSymbolLinks, selectedSymbol) as GoPtr<AliasSymbolLinks>)?.aliasTarget
+      : selectedSymbol;
+    if (selectedSymbol !== undefined
+      && (selectedSymbol.Flags & SymbolFlagsAlias) !== 0
+      && targetSelectedSymbol === undefined) {
+      throw new Error("Checked element access lost the alias target selected during TS-Go checking.");
+    }
+    selected.sourceSymbol = selectedSymbol;
+    selected.sourceDeclaration = selectedSymbol?.ValueDeclaration
+      ?? selectedIndexAccessDeclaration(selected.indexSelections);
+    selected.selectedSymbol = targetSelectedSymbol;
+    selected.selectedDeclaration = targetSelectedSymbol?.ValueDeclaration
       ?? selectedIndexAccessDeclaration(selected.indexSelections);
     const selectedElementIndex = getSelectedFixedTupleElementIndex(objectType, effectiveIndexType);
     if (selectedElementIndex !== undefined) {
@@ -5622,6 +5635,8 @@ function recordSelectedElementAccessEvidence(
     {
       selectedSymbol: selected.selectedSymbol,
       selectedDeclaration: selected.selectedDeclaration,
+      sourceSymbol: selected.sourceSymbol,
+      sourceDeclaration: selected.sourceDeclaration,
       resultType: sourceResultType,
       ...(selected.selectedElementIndex === undefined ? {} : { selectedElementIndex: selected.selectedElementIndex }),
       receiverType: selected.receiverType,
@@ -5642,6 +5657,8 @@ function selectedElementAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Node
         resultType: undefined,
         receiverType: undefined,
         argumentType: undefined,
+        sourceSymbol: undefined,
+        sourceDeclaration: undefined,
         selectedSymbol: undefined,
         selectedDeclaration: undefined,
         indexSelections: [],
@@ -6740,6 +6757,10 @@ interface SelectedPropertyAccessCheck {
   readType: GoPtr<Type>;
   writeType: GoPtr<Type>;
   receiverType: GoPtr<Type>;
+  receiverSymbol: GoPtr<Symbol>;
+  receiverDeclaration: GoPtr<Node>;
+  sourceSymbol: GoPtr<Symbol>;
+  sourceDeclaration: GoPtr<Node>;
   selectedSymbol: GoPtr<Symbol>;
   selectedDeclaration: GoPtr<Node>;
 }
@@ -6765,8 +6786,12 @@ function recordSelectedPropertyAccessEvidence(
     {
       selectedSymbol: selected.selectedSymbol,
       selectedDeclaration: selected.selectedDeclaration,
+      sourceSymbol: selected.sourceSymbol,
+      sourceDeclaration: selected.sourceDeclaration,
       resultType,
       receiverType: selected.receiverType,
+      receiverSymbol: selected.receiverSymbol,
+      receiverDeclaration: selected.receiverDeclaration,
       accessMode,
       selectionMode,
       callCallee: Checker_isMethodAccessForCall(receiver, node),
@@ -6794,6 +6819,10 @@ function selectedPropertyAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Nod
         readType: undefined,
         writeType: undefined,
         receiverType: undefined,
+        receiverSymbol: undefined,
+        receiverDeclaration: undefined,
+        sourceSymbol: undefined,
+        sourceDeclaration: undefined,
         selectedSymbol: undefined,
         selectedDeclaration: undefined,
       }
@@ -7108,6 +7137,12 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
         selectedReadType = Checker_getTypeOfSymbol(receiver, prop);
       }
     }
+    if (selected !== undefined) {
+      selected.sourceSymbol = prop;
+      selected.sourceDeclaration = prop?.ValueDeclaration;
+      selected.selectedSymbol = targetPropSymbol;
+      selected.selectedDeclaration = targetPropSymbol?.ValueDeclaration;
+    }
   }
   const resultType = Checker_getFlowTypeOfAccessExpression(receiver, node, prop, propType, right, checkMode);
   if (selected !== undefined && !Checker_isErrorType(receiver, resultType) && resultType !== receiver!.silentNeverType) {
@@ -7116,10 +7151,14 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
     selected.readType = selectedReadType;
     selected.writeType = selectedWriteType;
     selected.receiverType = apparentType;
-    selected.selectedSymbol = prop
+    selected.receiverSymbol = parentSymbol;
+    selected.receiverDeclaration = parentSymbol?.ValueDeclaration;
+    const resolvedSymbol = prop
       ?? (LinkStore_Get(receiver!.symbolNodeLinks, node) as GoPtr<SymbolNodeLinks>)!.resolvedSymbol;
-    selected.selectedDeclaration = selected.selectedSymbol?.ValueDeclaration
-      ?? selectedDeclaration;
+    selected.sourceSymbol ??= resolvedSymbol;
+    selected.sourceDeclaration ??= selected.sourceSymbol?.ValueDeclaration ?? selectedDeclaration;
+    selected.selectedSymbol ??= resolvedSymbol;
+    selected.selectedDeclaration ??= selected.selectedSymbol?.ValueDeclaration ?? selectedDeclaration;
   }
   return resultType;
 }

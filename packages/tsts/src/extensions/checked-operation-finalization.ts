@@ -8,7 +8,6 @@ import type {
   CheckedOperatorMappingRequest,
   CheckedPropertyAccessMappingRequest,
   ExtensionObservationPhase,
-  ExtensionObservationRequest,
   ExtensionObservationResponse,
   ExtensionObservationResult,
 } from "./observations.js";
@@ -18,9 +17,13 @@ import type { TargetCallArgumentConversionSlot } from "./facts.js";
 import { targetCallArgumentConversionSlotEquals } from "./fact-value-equality.js";
 import { checkedOperationRequestEquals } from "./checked-operation-request-equality.js";
 import { encodeIdentityTuple } from "./identity-tuple.js";
+import type {
+  RetainedCheckedOperationRequest,
+} from "./source-operation-producer.js";
 import {
   type CheckedOperationRequestSnapshotCache,
-  snapshotCheckedOperationRequest,
+  type CheckedOperationRequestSnapshotMetrics,
+  snapshotCheckedOperationRequestWithMetrics,
   snapshotCheckedOperationResult,
   snapshotTargetCallArgumentConversionSlot,
 } from "./checked-operation-value-snapshot.js";
@@ -43,7 +46,9 @@ interface CheckedOperationRecord {
   readonly observation: CheckedOperationObservationPointName;
   readonly subject: ExtensionFactSubject;
   readonly reference: CheckedOperationReference;
-  readonly request: ExtensionObservationRequest<CheckedOperationObservationPointName>;
+  readonly request: RetainedCheckedOperationRequest<CheckedOperationObservationPointName>;
+  readonly retainedSnapshotUnits: number;
+  readonly retainedScalarCodeUnits: number;
   readonly dependencies: readonly CheckedOperationReference[];
   readonly atomicOwner?: CheckedOperationReference;
   allDependencies: readonly CheckedOperationReference[];
@@ -83,6 +88,8 @@ interface CheckedOperationSavepoint {
   readonly snapshots: Map<CheckedOperationRecord, CheckedOperationRecordSnapshot>;
   readonly edgeCount: number;
   readonly checkingRecordCursor: number;
+  readonly retainedSnapshotUnits: number;
+  readonly retainedScalarCodeUnits: number;
   readonly owner?: CheckedOperationRecord;
   commitRequested: boolean;
   active: boolean;
@@ -117,8 +124,8 @@ export interface CheckedOperationInventoryCallbacks {
   readonly onRequestConflict: (
     observation: CheckedOperationObservationPointName,
     subject: ExtensionFactSubject,
-    existing: ExtensionObservationRequest<CheckedOperationObservationPointName>,
-    incoming: ExtensionObservationRequest<CheckedOperationObservationPointName>,
+    existing: RetainedCheckedOperationRequest<CheckedOperationObservationPointName>,
+    incoming: RetainedCheckedOperationRequest<CheckedOperationObservationPointName>,
   ) => void;
   readonly onDependencyConflict: (
     observation: CheckedOperationObservationPointName,
@@ -131,6 +138,7 @@ export interface CheckedOperationInventoryCallbacks {
   readonly onUnresolved: (
     observation: CheckedOperationObservationPointName,
     subject: ExtensionFactSubject,
+    extensionId: string,
   ) => void;
   readonly onFatalFailure: (error: Error) => void;
 }
@@ -141,6 +149,8 @@ export interface CheckedOperationInventoryLimits {
   readonly savepointDepth: number;
   readonly activeSnapshots: number;
   readonly snapshotWork: number;
+  readonly retainedSnapshotUnits: number;
+  readonly retainedScalarCodeUnits: number;
   readonly finalizationWork: number;
 }
 
@@ -157,7 +167,9 @@ const defaultCheckedOperationInventoryLimits: CheckedOperationInventoryLimits = 
   edges: 4_194_304,
   savepointDepth: 4_096,
   activeSnapshots: 4_194_304,
-  snapshotWork: 16_777_216,
+  snapshotWork: 268_435_456,
+  retainedSnapshotUnits: 67_108_864,
+  retainedScalarCodeUnits: 67_108_864,
   finalizationWork: 67_108_864,
 });
 
@@ -174,6 +186,8 @@ export class CheckedOperationInventory {
   #checkingRecordCursor = 0;
   #activeSnapshotCount = 0;
   #snapshotWork = 0;
+  #retainedSnapshotUnits = 0;
+  #retainedScalarCodeUnits = 0;
   #finalizationWork = 0;
   #openingAttemptFor: CheckedOperationRecord | undefined;
   #preparedSavepoint: CheckedOperationSavepoint | undefined;
@@ -190,14 +204,14 @@ export class CheckedOperationInventory {
 
   run<TObservation extends CheckedOperationObservationPointName>(
     observation: TObservation,
-    request: ExtensionObservationRequest<TObservation>,
+    request: RetainedCheckedOperationRequest<TObservation>,
     evaluate: (
-      request: ExtensionObservationRequest<TObservation>,
+      request: RetainedCheckedOperationRequest<TObservation>,
       phase: ExtensionObservationPhase,
     ) => ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
     apply: (
       result: ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
-      request: ExtensionObservationRequest<TObservation>,
+      request: RetainedCheckedOperationRequest<TObservation>,
     ) => void | CheckedOperationApplyOutcome,
     phase: ExtensionObservationPhase,
     requestSnapshotCache?: CheckedOperationRequestSnapshotCache,
@@ -275,14 +289,14 @@ export class CheckedOperationInventory {
 
   retain<TObservation extends CheckedOperationObservationPointName>(
     observation: TObservation,
-    request: ExtensionObservationRequest<TObservation>,
+    request: RetainedCheckedOperationRequest<TObservation>,
     evaluate: (
-      request: ExtensionObservationRequest<TObservation>,
+      request: RetainedCheckedOperationRequest<TObservation>,
       phase: ExtensionObservationPhase,
     ) => ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
     apply: (
       result: ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
-      request: ExtensionObservationRequest<TObservation>,
+      request: RetainedCheckedOperationRequest<TObservation>,
     ) => void | CheckedOperationApplyOutcome,
     requestSnapshotCache?: CheckedOperationRequestSnapshotCache,
     dependencies: readonly CheckedOperationReference[] = [],
@@ -310,14 +324,14 @@ export class CheckedOperationInventory {
 
   #prepareRecord<TObservation extends CheckedOperationObservationPointName>(
     observation: TObservation,
-    request: ExtensionObservationRequest<TObservation>,
+    request: RetainedCheckedOperationRequest<TObservation>,
     evaluate: (
-      request: ExtensionObservationRequest<TObservation>,
+      request: RetainedCheckedOperationRequest<TObservation>,
       phase: ExtensionObservationPhase,
     ) => ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
     apply: (
       result: ExtensionObservationResult<ExtensionObservationResponse<TObservation>>,
-      request: ExtensionObservationRequest<TObservation>,
+      request: RetainedCheckedOperationRequest<TObservation>,
     ) => void | CheckedOperationApplyOutcome,
     requestSnapshotCache: CheckedOperationRequestSnapshotCache | undefined,
     dependencies: readonly CheckedOperationReference[],
@@ -334,9 +348,14 @@ export class CheckedOperationInventory {
       throw new Error("Checked-operation dependencies must be an array.");
     }
     this.#assertReferenceInputWithinBudget(dependencies.length + (atomicOwner === undefined ? 0 : 1));
-    this.#reserveSnapshotWork(1 + dependencies.length + (atomicOwner === undefined ? 0 : 1));
-    const incomingRequest = snapshotCheckedOperationRequest(observation, request, requestSnapshotCache);
+    const incomingSnapshot = snapshotCheckedOperationRequestWithMetrics(observation, request, requestSnapshotCache);
+    this.#reserveSnapshotWork(incomingSnapshot.metrics.workUnits);
+    const incomingRequest = incomingSnapshot.request;
+    const referenceInputCount = dependencies.length + (atomicOwner === undefined ? 0 : 1);
+    this.#assertReferenceInputWithinBudget(referenceInputCount);
+    this.#reserveSnapshotWork(referenceInputCount);
     const incomingDependencies = snapshotCheckedOperationReferences(dependencies);
+    this.#assertReferenceInputWithinBudget(incomingDependencies.length + (atomicOwner === undefined ? 0 : 1));
     const incomingAtomicOwner = atomicOwner === undefined ? undefined : snapshotCheckedOperationReference(atomicOwner);
     const incomingSubject = checkedOperationSubject(observation, incomingRequest);
     const existing = this.#findRecordForRequest(observation, incomingSubject, incomingRequest);
@@ -388,6 +407,8 @@ export class CheckedOperationInventory {
       subject,
       reference: checkedOperationReference(observation, immutableRequest, subject),
       request: immutableRequest,
+      retainedSnapshotUnits: checkedOperationRetainedSnapshotUnits(incomingSnapshot.metrics),
+      retainedScalarCodeUnits: incomingSnapshot.metrics.scalarCodeUnits,
       dependencies: incomingDependencies,
       ...(incomingAtomicOwner === undefined ? {} : { atomicOwner: incomingAtomicOwner }),
       allDependencies: incomingDependencies,
@@ -414,7 +435,7 @@ export class CheckedOperationInventory {
     observation: TObservation,
     subject: ExtensionFactSubject | undefined,
     reference?: CheckedOperationReference<TObservation>,
-  ): ExtensionObservationRequest<TObservation> | undefined {
+  ): RetainedCheckedOperationRequest<TObservation> | undefined {
     if (subject === undefined) {
       return undefined;
     }
@@ -428,7 +449,7 @@ export class CheckedOperationInventory {
       this.#fail(error);
       throw error;
     }
-    return records[0]?.request as ExtensionObservationRequest<TObservation> | undefined;
+    return records[0]?.request as RetainedCheckedOperationRequest<TObservation> | undefined;
   }
 
   getReference(subject: ExtensionFactSubject | undefined): CheckedOperationReference | undefined {
@@ -778,7 +799,10 @@ export class CheckedOperationInventory {
       throw error;
     }
     this.#assertRecordDependenciesAcyclic(record);
+    this.#assertRetainedSnapshotCapacity(record.retainedSnapshotUnits, record.retainedScalarCodeUnits);
     this.#reserveEdges(record.allDependencies.length + (record.atomicOwner === undefined ? 0 : 1));
+    this.#retainedSnapshotUnits += record.retainedSnapshotUnits;
+    this.#retainedScalarCodeUnits += record.retainedScalarCodeUnits;
     this.#recordPositions.set(record, this.#records.length);
     this.#records.push(record);
     let recordsForSubject = this.#recordsBySubject.get(record.subject);
@@ -817,6 +841,8 @@ export class CheckedOperationInventory {
       snapshots: new Map(),
       edgeCount: this.#edgeCount,
       checkingRecordCursor: this.#checkingRecordCursor,
+      retainedSnapshotUnits: this.#retainedSnapshotUnits,
+      retainedScalarCodeUnits: this.#retainedScalarCodeUnits,
       ...(this.#openingAttemptFor === undefined ? {} : { owner: this.#openingAttemptFor }),
       commitRequested: false,
       active: true,
@@ -879,6 +905,8 @@ export class CheckedOperationInventory {
     this.#restoreSavepointSnapshots(savepoint);
     this.#edgeCount = savepoint.edgeCount;
     this.#checkingRecordCursor = savepoint.checkingRecordCursor;
+    this.#retainedSnapshotUnits = savepoint.retainedSnapshotUnits;
+    this.#retainedScalarCodeUnits = savepoint.retainedScalarCodeUnits;
     this.#savepoints.pop();
     this.#releaseSavepointSnapshots(savepoint);
     savepoint.active = false;
@@ -932,6 +960,7 @@ export class CheckedOperationInventory {
         deferred.push(record.reference);
       }
     }
+    this.#reserveSnapshotWork(this.#records.length);
     const retainedEdgeCount = this.#countCurrentEdges();
     this.#savepoints.pop();
     this.#releaseSavepointSnapshots(savepoint);
@@ -1076,6 +1105,23 @@ export class CheckedOperationInventory {
       throw error;
     }
     this.#activeSnapshotCount += count;
+  }
+
+  #assertRetainedSnapshotCapacity(units: number, scalarCodeUnits: number): void {
+    if (!Number.isSafeInteger(units)
+      || units < 0
+      || this.#retainedSnapshotUnits > this.#limits.retainedSnapshotUnits - units) {
+      const error = new Error(`Checked-operation inventory exceeds its ${this.#limits.retainedSnapshotUnits}-unit retained-snapshot session limit.`);
+      this.#fail(error);
+      throw error;
+    }
+    if (!Number.isSafeInteger(scalarCodeUnits)
+      || scalarCodeUnits < 0
+      || this.#retainedScalarCodeUnits > this.#limits.retainedScalarCodeUnits - scalarCodeUnits) {
+      const error = new Error(`Checked-operation inventory exceeds its ${this.#limits.retainedScalarCodeUnits}-code-unit retained-scalar session limit.`);
+      this.#fail(error);
+      throw error;
+    }
   }
 
   #releaseSavepointSnapshots(savepoint: CheckedOperationSavepoint): void {
@@ -1336,7 +1382,7 @@ export class CheckedOperationInventory {
     this.#journalRecord(record);
     if (!record.unresolvedReported) {
       record.unresolvedReported = true;
-      this.#callbacks.onUnresolved(record.observation, record.subject);
+      this.#callbacks.onUnresolved(record.observation, record.subject, result.extensionId);
     }
     this.#markUnavailable(record);
   }
@@ -1344,7 +1390,7 @@ export class CheckedOperationInventory {
   #findRecordForRequest<TObservation extends CheckedOperationObservationPointName>(
     observation: TObservation,
     subject: ExtensionFactSubject,
-    request: ExtensionObservationRequest<TObservation>,
+    request: RetainedCheckedOperationRequest<TObservation>,
   ): CheckedOperationRecord | undefined {
     return (this.#recordsBySubject.get(subject)?.get(observation) ?? [])
       .find((record) => checkedOperationSlotEquals(observation, record.request, request));
@@ -1511,6 +1557,23 @@ function snapshotCheckedOperationRecord(record: CheckedOperationRecord): Checked
   });
 }
 
+function checkedOperationRetainedSnapshotUnits(metrics: CheckedOperationRequestSnapshotMetrics): number {
+  const counts = [
+    metrics.objectCount,
+    metrics.targetTypeRefObjectCount,
+    metrics.arrayElementCount,
+    metrics.ownFieldCount,
+  ];
+  let total = 0;
+  for (const count of counts) {
+    if (!Number.isSafeInteger(count) || count < 0 || total > Number.MAX_SAFE_INTEGER - count) {
+      throw new Error("Checked-operation request snapshot reported invalid retained-resource metrics.");
+    }
+    total += count;
+  }
+  return total;
+}
+
 function snapshotCheckedOperationInventoryLimits(
   limits: Partial<CheckedOperationInventoryLimits>,
 ): CheckedOperationInventoryLimits {
@@ -1532,6 +1595,16 @@ function snapshotCheckedOperationInventoryLimits(
       defaultCheckedOperationInventoryLimits.snapshotWork,
       "snapshotWork",
     ),
+    retainedSnapshotUnits: checkedOperationLimit(
+      limits.retainedSnapshotUnits,
+      defaultCheckedOperationInventoryLimits.retainedSnapshotUnits,
+      "retainedSnapshotUnits",
+    ),
+    retainedScalarCodeUnits: checkedOperationLimit(
+      limits.retainedScalarCodeUnits,
+      defaultCheckedOperationInventoryLimits.retainedScalarCodeUnits,
+      "retainedScalarCodeUnits",
+    ),
     finalizationWork: checkedOperationLimit(
       limits.finalizationWork,
       defaultCheckedOperationInventoryLimits.finalizationWork,
@@ -1551,7 +1624,7 @@ function checkedOperationLimit(value: number | undefined, fallback: number, name
 
 function checkedOperationSubject<TObservation extends CheckedOperationObservationPointName>(
   observation: TObservation,
-  request: ExtensionObservationRequest<TObservation>,
+  request: RetainedCheckedOperationRequest<TObservation>,
 ): ExtensionFactSubject {
   switch (observation) {
     case ExtensionObservationPoint.mapCheckedCall:
@@ -1571,7 +1644,7 @@ function checkedOperationSubject<TObservation extends CheckedOperationObservatio
 
 function checkedOperationReference<TObservation extends CheckedOperationObservationPointName>(
   observation: TObservation,
-  request: ExtensionObservationRequest<TObservation>,
+  request: RetainedCheckedOperationRequest<TObservation>,
   subject: ExtensionFactSubject,
 ): CheckedOperationReference {
   switch (observation) {
@@ -1602,8 +1675,8 @@ function checkedOperationReference<TObservation extends CheckedOperationObservat
 
 function checkedOperationSlotEquals<TObservation extends CheckedOperationObservationPointName>(
   observation: TObservation,
-  left: ExtensionObservationRequest<CheckedOperationObservationPointName>,
-  right: ExtensionObservationRequest<TObservation>,
+  left: RetainedCheckedOperationRequest<CheckedOperationObservationPointName>,
+  right: RetainedCheckedOperationRequest<TObservation>,
 ): boolean {
   if (observation !== ExtensionObservationPoint.mapCheckedConversion) {
     return true;

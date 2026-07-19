@@ -17,6 +17,7 @@ export interface ExtensionFactKeyOptions<T> {
 
 const extensionFactKeyIdentities = new WeakMap<object, object>();
 const extensionFactKeysByOwner = new Map<string, Map<string, ExtensionFactKey<unknown>>>();
+const hostSourceReadableFactKeyIdentities = new WeakSet<object>();
 
 export function defineExtensionFactKey<T>(options: ExtensionFactKeyOptions<T>): ExtensionFactKey<T> {
   if (typeof options.extensionId !== "string" || options.extensionId.length === 0) {
@@ -65,4 +66,14 @@ export function getExtensionFactKeyIdentity<T>(key: ExtensionFactKey<T>): object
     throw new Error("Extension fact keys must be created by defineExtensionFactKey.");
   }
   return identity;
+}
+
+/** Marks a host-owned invariant/source fact as readable by checked source-operation producers. */
+export function markHostSourceReadableFactKey<T>(key: ExtensionFactKey<T>): ExtensionFactKey<T> {
+  hostSourceReadableFactKeyIdentities.add(getExtensionFactKeyIdentity(key));
+  return key;
+}
+
+export function isHostSourceReadableFactKey<T>(key: ExtensionFactKey<T>): boolean {
+  return hostSourceReadableFactKeyIdentities.has(getExtensionFactKeyIdentity(key));
 }

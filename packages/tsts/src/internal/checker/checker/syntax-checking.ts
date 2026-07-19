@@ -6,6 +6,7 @@ import {
   commitExtensionCheckedSourceFileDecision,
   extensionCheckedSourceDecisionDiscardActive,
   extensionCheckedSourceDecisionOwner,
+  hasExtensionCheckedCallEvidenceInterest,
   hasExtensionCheckedOperationHost,
   recordExtensionCheckedCallMapping,
   recordExtensionCheckedIterationMapping,
@@ -2019,6 +2020,9 @@ export function Checker_resolveNewExpressionWithEvidence(
   output: { evidence?: ResolvedCallSelectionEvidence } | undefined,
 ): GoPtr<Signature> {
   let expressionType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
+  const selectedOutput = output !== undefined && hasExtensionCheckedCallEvidenceInterest(receiver, node)
+    ? output
+    : undefined;
   if (expressionType === receiver!.silentNeverType) {
     return receiver!.silentNeverSignature;
   }
@@ -2031,9 +2035,9 @@ export function Checker_resolveNewExpressionWithEvidence(
     if ((Node_TypeArguments(node) ?? []).length !== 0) {
       Checker_error(receiver, node, Untyped_function_calls_may_not_accept_type_arguments);
     }
-    return output === undefined
+    return selectedOutput === undefined
       ? Checker_resolveUntypedCall(receiver, node)
-      : Checker_resolveUntypedCallWithEvidence(receiver, node, sourceCalleeType, output);
+      : Checker_resolveUntypedCallWithEvidence(receiver, node, sourceCalleeType, selectedOutput);
   }
   const constructSignatures = Checker_getSignaturesOfType(receiver, expressionType, SignatureKindConstruct);
   if (constructSignatures.length !== 0) {
@@ -2051,25 +2055,25 @@ export function Checker_resolveNewExpressionWithEvidence(
         return Checker_resolveErrorCall(receiver, node);
       }
     }
-    if (output === undefined) {
+    if (selectedOutput === undefined) {
       return Checker_resolveCall(receiver, node, constructSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
     }
     const resolved = Checker_resolveCallWithEvidence(receiver, node, constructSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined, sourceCalleeType);
     if (resolved.evidence !== undefined) {
-      output.evidence = resolved.evidence;
+      selectedOutput.evidence = resolved.evidence;
     }
     return resolved.signature;
   }
   const callSignatures = Checker_getSignaturesOfType(receiver, expressionType, SignatureKindCall);
   if (callSignatures.length !== 0) {
     let signature: GoPtr<Signature>;
-    if (output === undefined) {
+    if (selectedOutput === undefined) {
       signature = Checker_resolveCall(receiver, node, callSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
     } else {
       const resolved = Checker_resolveCallWithEvidence(receiver, node, callSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined, sourceCalleeType);
       signature = resolved.signature;
       if (resolved.evidence !== undefined) {
-        output.evidence = resolved.evidence;
+        selectedOutput.evidence = resolved.evidence;
       }
     }
     if (!receiver!.noImplicitAny) {

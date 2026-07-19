@@ -23,6 +23,7 @@ import {
 import { Checker_GetConstantValue } from "../internal/checker/services.js";
 import { Checker_TypeToString } from "../internal/checker/printer.js";
 import type { Checker } from "../internal/checker/checker/state.js";
+import { extensionHostAllowsCompilerQuery, lookupAttachedExtensionHost } from "../extensions/host-attachment.js";
 import {
   ObjectFlagsReference,
   ObjectFlagsTuple,
@@ -180,6 +181,10 @@ function withChecker<T>(
 ): T | undefined {
   if (program === undefined || subject === undefined) {
     return undefined;
+  }
+  const extensionHost = lookupAttachedExtensionHost(program);
+  if (extensionHost !== undefined && !extensionHost[extensionHostAllowsCompilerQuery]()) {
+    throw new Error("Compiler type-shape queries are unavailable inside checked source-call producers.");
   }
   const sourceFile = options.sourceFile
     ?? defaultOptions.sourceFile

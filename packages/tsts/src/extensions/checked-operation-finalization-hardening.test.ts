@@ -48,6 +48,7 @@ import {
   checkedPropertySourceOperationFromRequest,
   finalizeTargetOperationFact,
 } from "./checker-integration.js";
+import { snapshotCheckedOperationRequestWithMetrics } from "./checked-operation-value-snapshot.js";
 
 const propertyObservation = ExtensionObservationPoint.mapCheckedPropertyAccess;
 const arbitraryTargetIds = ["hardening-target-17", "hardening-target-29"] as const;
@@ -466,6 +467,28 @@ test("checked-operation inventory limits fail before unbounded record, edge, sna
     /0-unit snapshot-work session limit/,
   );
 
+  const retainedSnapshotLimited = createTransactionalTestInventory({ retainedSnapshotUnits: 0 }).inventory;
+  assert.throws(
+    () => retainedSnapshotLimited.retain(
+      propertyObservation,
+      checkedPropertyRequest({}, {}, "retainedSnapshot"),
+      () => deferredInventoryProperty(),
+      () => {},
+    ),
+    /0-unit retained-snapshot session limit/,
+  );
+
+  const retainedScalarLimited = createTransactionalTestInventory({ retainedScalarCodeUnits: 0 }).inventory;
+  assert.throws(
+    () => retainedScalarLimited.retain(
+      propertyObservation,
+      checkedPropertyRequest({}, {}, "retainedScalar"),
+      () => deferredInventoryProperty(),
+      () => {},
+    ),
+    /0-code-unit retained-scalar session limit/,
+  );
+
   const savepointLimited = createTransactionalTestInventory({ savepointDepth: 1 }).inventory;
   savepointLimited.createSavepoint();
   assert.throws(
@@ -495,6 +518,34 @@ test("checked-operation inventory limits fail before unbounded record, edge, sna
   assert.throws(
     () => workLimited.finalize(),
     /0-unit work limit/,
+  );
+});
+
+test("checked-operation rollback releases exact retained request resources", () => {
+  const firstRequest = checkedPropertyRequest({}, {}, "sameName");
+  const measured = snapshotCheckedOperationRequestWithMetrics(propertyObservation, firstRequest).metrics;
+  const retainedSnapshotUnits = measured.objectCount
+    + measured.targetTypeRefObjectCount
+    + measured.arrayElementCount
+    + measured.ownFieldCount;
+  const inventory = createTransactionalTestInventory({
+    retainedSnapshotUnits,
+    retainedScalarCodeUnits: measured.scalarCodeUnits,
+  }).inventory;
+  const savepoint = inventory.createSavepoint();
+  inventory.retain(
+    propertyObservation,
+    firstRequest,
+    () => deferredInventoryProperty(),
+    () => {},
+  );
+  inventory.rollbackToSavepoint(savepoint);
+
+  inventory.retain(
+    propertyObservation,
+    checkedPropertyRequest({}, {}, "sameName"),
+    () => deferredInventoryProperty(),
+    () => {},
   );
 });
 

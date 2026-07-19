@@ -31,6 +31,11 @@ export {
   rejectObservation,
 } from "./observations.js";
 export {
+  completeCheckedSourceCallProduction,
+  deferCheckedSourceCallProduction,
+  rejectCheckedSourceCallProduction,
+} from "./source-operation-producer.js";
+export {
   argumentPassingFactKey,
   associatedTypeFactKey,
   attributeFactKey,
@@ -139,6 +144,7 @@ export type {
   CheckedOperationMappingResult,
   CheckedOperationObservationContext,
   CheckedOperationObservationPointName,
+  CheckedOperationReference,
   CheckedOperatorMappingRequest,
   CheckedPropertyAccessMappingRequest,
   ContextualTargetTypeRequest,
@@ -228,3 +234,19 @@ export type {
   TargetTypeParameter,
   TargetTypeRef,
 } from "./facts.js";
+export type {
+  CheckedSourceAuthoredLiteralEvidence,
+  CheckedSourceCallArgumentCompositionEvidence,
+  CheckedSourceCallArgumentEvidence,
+  CheckedSourceCallDiagnosticCapability,
+  CheckedSourceCallFactCapability,
+  CheckedSourceCallFactResolverCapability,
+  CheckedSourceCallOperation,
+  CheckedSourceCallProducer,
+  CheckedSourceCallProducerContext,
+  CheckedSourceCallProduction,
+  CheckedSourceCallProviderSelector,
+  CheckedSourceInlineFunctionEvidence,
+  CheckedSourceInlineFunctionParameterEvidence,
+  CheckedSourceInlineFunctionReturnEvidence,
+} from "./source-operation-producer.js";

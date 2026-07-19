@@ -173,7 +173,7 @@ const providerModelShapeFields = {
   arrayType: providerModelFields("kind", "elementType"),
   tupleType: providerModelFields("kind", "elementTypes"),
   compositeType: providerModelFields("kind", "types"),
-  functionType: providerModelFields("kind", "parameters", "returnType", "typeParameters"),
+  functionType: providerModelFields("kind", "id", "parameters", "returnType", "typeParameters"),
   providerRefType: providerModelFields("kind", "moduleSpecifier", "exportName", "localName", "namespaceImport", "typeArguments"),
   opaqueType: providerModelFields("kind", "id", "displayName", "sourceShape"),
   anyType: providerModelFields(
@@ -695,10 +695,12 @@ function pushProviderTypeExpressionChildren(
       if (!captureExactProviderModelRecord(reads, functionType, providerModelShapeFields.functionType, path, depth)) {
         return false;
       }
+      const id = readProviderModelField(reads, functionType, "id");
       const parameters = readProviderModelField(reads, functionType, "parameters");
       const returnType = readProviderModelField(reads, functionType, "returnType");
       const typeParameters = readProviderModelField(reads, functionType, "typeParameters");
-      return pushProviderModelArray(reads, stack, parameters, "parameter", depth, false, path + ".parameters")
+      return typeof id === "string"
+        && pushProviderModelArray(reads, stack, parameters, "parameter", depth, false, path + ".parameters")
         && pushOptionalProviderModelNode(stack, returnType, "type", depth, false, path + ".returnType")
         && pushProviderModelArray(reads, stack, typeParameters, "type-parameter", depth, true, path + ".typeParameters");
     }
@@ -1785,11 +1787,13 @@ function snapshotProviderTypeExpression(
     }
     case "function": {
       const functionType = type as Extract<ProviderTypeExpression, { readonly kind: "function" }>;
+      const id = readProviderModelField(context.reads, functionType, "id");
       const parameters = readProviderModelField(context.reads, functionType, "parameters");
       const returnType = readProviderModelField(context.reads, functionType, "returnType");
       const typeParameters = readProviderModelField(context.reads, functionType, "typeParameters");
       snapshot = {
         kind: typeKind,
+        id,
         parameters: snapshotProviderModelArray(
           context,
           parameters,
@@ -2447,6 +2451,7 @@ function canonicalizeProviderExportOwnerType(
     case "function":
       canonical = {
         kind: type.kind,
+        id: type.id,
         parameters: type.parameters.map(
           (parameter) => canonicalizeProviderExportOwnerParameter(context, parameter),
         ),

@@ -6,7 +6,6 @@ import type {
   CheckedOperationObservationPointName,
   CheckedOperatorMappingRequest,
   CheckedPropertyAccessMappingRequest,
-  ExtensionObservationRequest,
 } from "./observations.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import {
@@ -16,6 +15,7 @@ import {
   checkedIterationSourceOperationEquals,
   checkedOperatorSourceOperationEquals,
   checkedPropertyAccessSourceOperationEquals,
+  optionalCheckedSourceCallCompositionEvidenceEquals,
   selectedTargetSignatureEquals,
   targetParameterEquals,
   targetTypeRefEquals,
@@ -29,6 +29,10 @@ import type {
   CheckedOperatorSourceOperation,
   CheckedPropertyAccessSourceOperation,
 } from "./facts.js";
+import type {
+  RetainedCheckedOperationRequest,
+  RetainedCheckedSourceCallMappingRequest,
+} from "./source-operation-producer.js";
 
 type ExactEnvelopeFields<TRequest, TSource, TFields extends PropertyKey> =
   Exclude<keyof TRequest, keyof TSource> extends TFields
@@ -40,6 +44,7 @@ type CallArgumentConversionRequest = Extract<CheckedConversionMappingRequest, { 
 
 export type CheckedOperationRequestFieldCoverage = RequireAllTrue<[
   ExactEnvelopeFields<CheckedCallMappingRequest, CheckedCallSourceOperation, "target">,
+  ExactEnvelopeFields<RetainedCheckedSourceCallMappingRequest, CheckedCallMappingRequest, "sourceComposition">,
   ExactEnvelopeFields<CheckedPropertyAccessMappingRequest, CheckedPropertyAccessSourceOperation, "target">,
   ExactEnvelopeFields<CheckedElementAccessMappingRequest, CheckedElementAccessSourceOperation, "target">,
   ExactEnvelopeFields<CheckedOperatorMappingRequest, CheckedOperatorSourceOperation, "target">,
@@ -58,16 +63,16 @@ export type CheckedOperationRequestFieldCoverage = RequireAllTrue<[
 
 export function checkedOperationRequestEquals<TObservation extends CheckedOperationObservationPointName>(
   observation: TObservation,
-  left: ExtensionObservationRequest<TObservation>,
-  right: ExtensionObservationRequest<TObservation>,
+  left: RetainedCheckedOperationRequest<TObservation>,
+  right: RetainedCheckedOperationRequest<TObservation>,
 ): boolean {
   return differingCheckedOperationRequestFields(observation, left, right).length === 0;
 }
 
 export function differingCheckedOperationRequestFields<TObservation extends CheckedOperationObservationPointName>(
   observation: TObservation,
-  left: ExtensionObservationRequest<TObservation>,
-  right: ExtensionObservationRequest<TObservation>,
+  left: RetainedCheckedOperationRequest<TObservation>,
+  right: RetainedCheckedOperationRequest<TObservation>,
 ): readonly string[] {
   const differences: string[] = [];
   switch (observation) {
@@ -75,9 +80,16 @@ export function differingCheckedOperationRequestFields<TObservation extends Chec
       compareSourceOperation(
         differences,
         checkedCallSourceOperationEquals(
-          left as CheckedCallMappingRequest,
-          right as CheckedCallMappingRequest,
+          left as RetainedCheckedSourceCallMappingRequest,
+          right as RetainedCheckedSourceCallMappingRequest,
         ),
+      );
+      compareValue(
+        differences,
+        "sourceComposition",
+        (left as RetainedCheckedSourceCallMappingRequest).sourceComposition,
+        (right as RetainedCheckedSourceCallMappingRequest).sourceComposition,
+        optionalCheckedSourceCallCompositionEvidenceEquals,
       );
       compareIdentity(differences, "target", (left as CheckedCallMappingRequest).target, (right as CheckedCallMappingRequest).target);
       break;

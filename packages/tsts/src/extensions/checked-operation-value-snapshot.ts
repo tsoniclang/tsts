@@ -15,6 +15,7 @@ import type {
 } from "./observations.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import { selectedTargetSignatureEquals, targetParameterEquals } from "./fact-value-equality.js";
+import { isHostOwnedExtensionDiagnostic, markHostOwnedExtensionDiagnostic } from "./diagnostic-ownership.js";
 import type {
   ArgumentPassingFact,
   AssociatedTypeFact,
@@ -79,9 +80,19 @@ import type {
   TargetTypeRef,
 } from "./facts.js";
 import type {
+  CheckedSourceAuthoredLiteralEvidence,
+  CheckedSourceCallArgumentCompositionEvidence,
+  CheckedSourceCallCompositionEvidence,
+  CheckedSourceInlineFunctionEvidence,
+  CheckedSourceInlineFunctionReturnEvidence,
+  RetainedCheckedOperationRequest,
+  RetainedCheckedSourceCallMappingRequest,
+} from "./source-operation-producer.js";
+import type {
   ExtensionDiagnostic,
   ExtensionDiagnosticSourceSpan,
   ExtensionEvidence,
+  ExtensionFactSubject,
   ProviderWellKnownSymbolName,
 } from "./host.js";
 
@@ -153,6 +164,9 @@ export type CheckedOperationSnapshotFieldCoverage = RequireAllSnapshots<[
     | "sourceReceiver"
     | "chainRole"
     | "target">,
+  AllFieldsSnapshotted<RetainedCheckedSourceCallMappingRequest,
+    | keyof CheckedCallMappingRequest
+    | "sourceComposition">,
   AllFieldsSnapshotted<CheckedCallSourceOperation,
     | "sourceOperationKind"
     | "call"
@@ -331,6 +345,13 @@ export type CheckedOperationSnapshotFieldCoverage = RequireAllSnapshots<[
     | "selectedSymbol"
     | "selectedDeclaration"
     | "authoredTypeNode">,
+  AllFieldsSnapshotted<CheckedSourceCallCompositionEvidence, "argumentEvidence">,
+  AllFieldsSnapshotted<Extract<CheckedSourceCallArgumentCompositionEvidence, { readonly kind: "authored-literal" }>, "kind" | "literal">,
+  AllFieldsSnapshotted<Extract<CheckedSourceCallArgumentCompositionEvidence, { readonly kind: "inline-function" }>, "kind" | "function">,
+  AllFieldsSnapshotted<Extract<CheckedSourceAuthoredLiteralEvidence, { readonly kind: "string" | "number" | "bigint" | "boolean" }>, "kind" | "value">,
+  AllFieldsSnapshotted<Extract<CheckedSourceAuthoredLiteralEvidence, { readonly kind: "null" }>, "kind">,
+  AllFieldsSnapshotted<CheckedSourceInlineFunctionEvidence, "expression" | "parameters" | "returns">,
+  AllFieldsSnapshotted<CheckedSourceInlineFunctionReturnEvidence, "expression" | "selectedPropertyAccess">,
   AllFieldsSnapshotted<TargetMember,
     | "id"
     | "sourceName"
@@ -443,6 +464,7 @@ interface CheckedOperationRequestSnapshotCacheState {
 
 interface TransactionalSnapshotCacheMap<TKey extends object, TValue extends object> {
   readonly view: SnapshotCacheMap<TKey, TValue>;
+  assertCanCommit(): void;
   commit(): void;
 }
 
@@ -460,6 +482,20 @@ interface SnapshotBudget {
   readonly chargedObjects: WeakSet<object>;
   readonly chargedTargetTypeRefObjects: WeakSet<object>;
   readonly chargedOpaqueSubjects: WeakSet<object>;
+}
+
+export interface CheckedOperationRequestSnapshotMetrics {
+  readonly objectCount: number;
+  readonly targetTypeRefObjectCount: number;
+  readonly arrayElementCount: number;
+  readonly ownFieldCount: number;
+  readonly scalarCodeUnits: number;
+  readonly workUnits: number;
+}
+
+export interface CheckedOperationRequestSnapshot<TObservation extends CheckedOperationObservationPointName> {
+  readonly request: RetainedCheckedOperationRequest<TObservation>;
+  readonly metrics: CheckedOperationRequestSnapshotMetrics;
 }
 
 interface SnapshotPath {
@@ -532,6 +568,9 @@ function createCheckedOperationRequestSnapshotCacheTransaction(
       if (committed) {
         throw new Error("Checked-operation snapshot cache transaction was committed more than once.");
       }
+      selectedTargetSignatures.assertCanCommit();
+      targetParameters.assertCanCommit();
+      targetCallArgumentConversionSlots.assertCanCommit();
       selectedTargetSignatures.commit();
       targetParameters.commit();
       targetCallArgumentConversionSlots.commit();
@@ -568,8 +607,20 @@ function createTransactionalSnapshotCacheMap<TKey extends object, TValue extends
         entries.push([key, value]);
       },
     },
+    assertCanCommit() {
+      for (const [key, value] of entries) {
+        const existing = base.get(key);
+        if (existing !== undefined && existing !== value) {
+          throw new Error("Checked-operation snapshot cache transaction conflicted with a nested committed snapshot.");
+        }
+      }
+    },
     commit() {
       for (const [key, value] of entries) {
+        const existing = base.get(key);
+        if (existing !== undefined && existing !== value) {
+          throw new Error("Checked-operation snapshot cache transaction conflicted with a nested committed snapshot.");
+        }
         base.set(key, value);
       }
     },
@@ -578,36 +629,58 @@ function createTransactionalSnapshotCacheMap<TKey extends object, TValue extends
 
 export function snapshotCheckedOperationRequest<TObservation extends CheckedOperationObservationPointName>(
   observation: TObservation,
-  request: ExtensionObservationRequest<TObservation>,
+  request: RetainedCheckedOperationRequest<TObservation>,
   cache: CheckedOperationRequestSnapshotCache = createCheckedOperationRequestSnapshotCache(),
-): ExtensionObservationRequest<TObservation> {
+): RetainedCheckedOperationRequest<TObservation> {
+  return snapshotCheckedOperationRequestWithMetrics(observation, request, cache).request;
+}
+
+export function snapshotCheckedOperationRequestWithMetrics<TObservation extends CheckedOperationObservationPointName>(
+  observation: TObservation,
+  request: RetainedCheckedOperationRequest<TObservation>,
+  cache: CheckedOperationRequestSnapshotCache = createCheckedOperationRequestSnapshotCache(),
+): CheckedOperationRequestSnapshot<TObservation> {
   const path = createSnapshotPath(`checked-operation request[${observation}]`);
   const cacheTransaction = createCheckedOperationRequestSnapshotCacheTransaction(cache, path);
-  let snapshot: ExtensionObservationRequest<TObservation>;
+  let snapshot: RetainedCheckedOperationRequest<TObservation>;
   switch (observation) {
     case ExtensionObservationPoint.mapCheckedCall:
-      snapshot = snapshotCallRequest(request as CheckedCallMappingRequest, path) as ExtensionObservationRequest<TObservation>;
+      snapshot = snapshotCallRequest(request as RetainedCheckedSourceCallMappingRequest, path) as RetainedCheckedOperationRequest<TObservation>;
       break;
     case ExtensionObservationPoint.mapCheckedPropertyAccess:
-      snapshot = snapshotPropertyRequest(request as CheckedPropertyAccessMappingRequest, path) as ExtensionObservationRequest<TObservation>;
+      snapshot = snapshotPropertyRequest(request as CheckedPropertyAccessMappingRequest, path) as RetainedCheckedOperationRequest<TObservation>;
       break;
     case ExtensionObservationPoint.mapCheckedElementAccess:
-      snapshot = snapshotElementRequest(request as CheckedElementAccessMappingRequest, path) as ExtensionObservationRequest<TObservation>;
+      snapshot = snapshotElementRequest(request as CheckedElementAccessMappingRequest, path) as RetainedCheckedOperationRequest<TObservation>;
       break;
     case ExtensionObservationPoint.mapCheckedOperator:
-      snapshot = snapshotOperatorRequest(request as CheckedOperatorMappingRequest, path) as ExtensionObservationRequest<TObservation>;
+      snapshot = snapshotOperatorRequest(request as CheckedOperatorMappingRequest, path) as RetainedCheckedOperationRequest<TObservation>;
       break;
     case ExtensionObservationPoint.mapCheckedIteration:
-      snapshot = snapshotIterationRequest(request as CheckedIterationMappingRequest, path) as ExtensionObservationRequest<TObservation>;
+      snapshot = snapshotIterationRequest(request as CheckedIterationMappingRequest, path) as RetainedCheckedOperationRequest<TObservation>;
       break;
     case ExtensionObservationPoint.mapCheckedConversion:
-      snapshot = snapshotConversionRequest(request as CheckedConversionMappingRequest, cacheTransaction.access, path) as ExtensionObservationRequest<TObservation>;
+      snapshot = snapshotConversionRequest(request as CheckedConversionMappingRequest, cacheTransaction.access, path) as RetainedCheckedOperationRequest<TObservation>;
       break;
     default:
       throw new Error(`Unsupported checked-operation observation '${String(observation)}'.`);
   }
   cacheTransaction.commit();
-  return snapshot;
+  return Object.freeze({
+    request: snapshot,
+    metrics: snapshotRequestMetrics(path.budget),
+  });
+}
+
+function snapshotRequestMetrics(budget: SnapshotBudget): CheckedOperationRequestSnapshotMetrics {
+  return Object.freeze({
+    objectCount: budget.objectCount,
+    targetTypeRefObjectCount: budget.targetTypeRefObjectCount,
+    arrayElementCount: budget.arrayElementCount,
+    ownFieldCount: budget.ownFieldCount,
+    scalarCodeUnits: budget.scalarCodeUnits,
+    workUnits: budget.workUnits,
+  });
 }
 
 export function snapshotCheckedOperationResult<TObservation extends CheckedOperationObservationPointName>(
@@ -677,7 +750,11 @@ export function snapshotCheckedOperationResult<TObservation extends CheckedOpera
   }
 }
 
-function snapshotCallRequest(request: CheckedCallMappingRequest, path: SnapshotPath, includeTarget = true): CheckedCallMappingRequest {
+function snapshotCallRequest(
+  request: RetainedCheckedSourceCallMappingRequest,
+  path: SnapshotPath,
+  includeTarget = true,
+): RetainedCheckedSourceCallMappingRequest {
   assertRecord(request, "CheckedCallMappingRequest", path);
   request = captureExactOwnFields(request, [
     "sourceOperationKind",
@@ -690,6 +767,7 @@ function snapshotCallRequest(request: CheckedCallMappingRequest, path: SnapshotP
     "sourceArguments",
     "sourceResult",
     "sourceReceiver",
+    "sourceComposition",
     "chainRole",
     ...(includeTarget ? ["target"] : []),
   ], "CheckedCallMappingRequest", path);
@@ -727,6 +805,13 @@ function snapshotCallRequest(request: CheckedCallMappingRequest, path: SnapshotP
     sourceResult: snapshotSelectedSourceValueEvidence(request.sourceResult, childSnapshotPath(path, "sourceResult")),
     ...(request.sourceReceiver === undefined ? {} : {
       sourceReceiver: snapshotSelectedSourceValueEvidence(request.sourceReceiver, childSnapshotPath(path, "sourceReceiver")),
+    }),
+    ...(request.sourceComposition === undefined ? {} : {
+      sourceComposition: snapshotCheckedSourceCallCompositionEvidence(
+        request.sourceComposition,
+        arguments_.length,
+        childSnapshotPath(path, "sourceComposition"),
+      ),
     }),
     chainRole: snapshotSourceChainRole(request.chainRole, "call", childSnapshotPath(path, "chainRole")),
     ...(includeTarget && request.target !== undefined ? { target: request.target } : {}),
@@ -3044,7 +3129,169 @@ function snapshotSelectedSourceValueEvidence(
   const expression = evidence.expression;
   assertOpaqueIdentitySubject(expression, "SelectedSourceValueEvidence expression", childSnapshotPath(path, "expression"));
   const typeEvidence = snapshotSelectedSourceTypeEvidenceFields(evidence, path);
-  return Object.freeze({ expression, ...typeEvidence });
+  return Object.freeze({
+    expression,
+    ...typeEvidence,
+  });
+}
+
+function snapshotCheckedSourceCallCompositionEvidence(
+  evidence: CheckedSourceCallCompositionEvidence,
+  argumentCount: number,
+  path: SnapshotPath,
+): CheckedSourceCallCompositionEvidence {
+  assertRecord(evidence, "CheckedSourceCallCompositionEvidence", path);
+  const captured = captureExactOwnFields(evidence, ["argumentEvidence"], "CheckedSourceCallCompositionEvidence", path);
+  const argumentEvidence = captureArray(captured.argumentEvidence, "CheckedSourceCallArgumentCompositionEvidence array", childSnapshotPath(path, "argumentEvidence"));
+  if (argumentEvidence.length !== argumentCount) {
+    throw new Error(`Invalid CheckedSourceCallCompositionEvidence at '${formatSnapshotPath(path)}': argumentEvidence length ${argumentEvidence.length} does not match call argument length ${argumentCount}.`);
+  }
+  return Object.freeze({
+    argumentEvidence: Object.freeze(argumentEvidence.map((argument, index) => snapshotCheckedSourceCallArgumentCompositionEvidence(
+      argument,
+      indexedSnapshotPath(childSnapshotPath(path, "argumentEvidence"), index),
+    ))),
+  });
+}
+
+function snapshotCheckedSourceCallArgumentCompositionEvidence(
+  evidence: CheckedSourceCallArgumentCompositionEvidence | undefined,
+  path: SnapshotPath,
+): CheckedSourceCallArgumentCompositionEvidence | undefined {
+  if (evidence === undefined) {
+    return undefined;
+  }
+  assertRecord(evidence, "CheckedSourceCallArgumentCompositionEvidence", path);
+  const kindDescriptor = Object.getOwnPropertyDescriptor(evidence, "kind");
+  if (kindDescriptor === undefined || !("value" in kindDescriptor)) {
+    throw new Error(`Invalid CheckedSourceCallArgumentCompositionEvidence at '${formatSnapshotPath(path)}': kind must be an own data property.`);
+  }
+  if (kindDescriptor.value === "authored-literal") {
+    const captured = captureExactOwnFields(
+      evidence as Extract<CheckedSourceCallArgumentCompositionEvidence, { readonly kind: "authored-literal" }>,
+      ["kind", "literal"],
+      "CheckedSourceCallArgumentCompositionEvidence",
+      path,
+    );
+    return Object.freeze({
+      kind: "authored-literal",
+      literal: snapshotCheckedSourceAuthoredLiteralEvidence(
+        captured.literal as CheckedSourceAuthoredLiteralEvidence,
+        childSnapshotPath(path, "literal"),
+      ),
+    });
+  }
+  if (kindDescriptor.value === "inline-function") {
+    const captured = captureExactOwnFields(
+      evidence as Extract<CheckedSourceCallArgumentCompositionEvidence, { readonly kind: "inline-function" }>,
+      ["kind", "function"],
+      "CheckedSourceCallArgumentCompositionEvidence",
+      path,
+    );
+    return Object.freeze({
+      kind: "inline-function",
+      function: snapshotCheckedSourceInlineFunctionEvidence(
+        captured.function as CheckedSourceInlineFunctionEvidence,
+        childSnapshotPath(path, "function"),
+      ),
+    });
+  }
+  throw new Error(`Invalid CheckedSourceCallArgumentCompositionEvidence at '${formatSnapshotPath(path)}': unknown kind '${String(kindDescriptor.value)}'.`);
+}
+
+function snapshotCheckedSourceAuthoredLiteralEvidence(
+  literal: CheckedSourceAuthoredLiteralEvidence,
+  path: SnapshotPath,
+): CheckedSourceAuthoredLiteralEvidence {
+  assertRecord(literal, "CheckedSourceAuthoredLiteralEvidence", path);
+  const kindDescriptor = Object.getOwnPropertyDescriptor(literal, "kind");
+  if (kindDescriptor === undefined || !("value" in kindDescriptor)) {
+    throw new Error(`Invalid CheckedSourceAuthoredLiteralEvidence at '${formatSnapshotPath(path)}': kind must be an own data property.`);
+  }
+  const kind = kindDescriptor.value;
+  if (kind === "null") {
+    captureExactOwnFields(
+      literal as Extract<CheckedSourceAuthoredLiteralEvidence, { readonly kind: "null" }>,
+      ["kind"],
+      "CheckedSourceAuthoredLiteralEvidence",
+      path,
+    );
+    return Object.freeze({ kind });
+  }
+  if (kind !== "string" && kind !== "number" && kind !== "bigint" && kind !== "boolean") {
+    throw new Error(`Invalid CheckedSourceAuthoredLiteralEvidence at '${formatSnapshotPath(path)}': unknown kind '${String(kind)}'.`);
+  }
+  const captured = captureExactOwnFields(
+    literal as Exclude<CheckedSourceAuthoredLiteralEvidence, { readonly kind: "null" }>,
+    ["kind", "value"],
+    "CheckedSourceAuthoredLiteralEvidence",
+    path,
+  );
+  if (kind === "boolean") {
+    if (typeof captured.value !== "boolean") {
+      throw new Error(`Invalid CheckedSourceAuthoredLiteralEvidence at '${formatSnapshotPath(path)}': boolean value is required.`);
+    }
+    return Object.freeze({ kind, value: captured.value });
+  }
+  assertString(captured.value, `CheckedSourceAuthoredLiteralEvidence ${kind} value`, childSnapshotPath(path, "value"));
+  return Object.freeze({ kind, value: captured.value });
+}
+
+function snapshotCheckedSourceInlineFunctionEvidence(
+  evidence: CheckedSourceInlineFunctionEvidence,
+  path: SnapshotPath,
+): CheckedSourceInlineFunctionEvidence {
+  assertRecord(evidence, "CheckedSourceInlineFunctionEvidence", path);
+  const captured = captureExactOwnFields(
+    evidence,
+    ["expression", "parameters", "returns"],
+    "CheckedSourceInlineFunctionEvidence",
+    path,
+  );
+  assertOpaqueIdentitySubject(captured.expression, "CheckedSourceInlineFunctionEvidence expression", childSnapshotPath(path, "expression"));
+  const parameters = captureArray(captured.parameters, "CheckedSourceInlineFunctionParameterEvidence array", childSnapshotPath(path, "parameters"));
+  const returns = captureArray(captured.returns, "CheckedSourceInlineFunctionReturnEvidence array", childSnapshotPath(path, "returns"));
+  return Object.freeze({
+    expression: captured.expression,
+    parameters: Object.freeze(parameters.map((parameter, index) => {
+      const parameterPath = indexedSnapshotPath(childSnapshotPath(path, "parameters"), index);
+      assertRecord(parameter, "CheckedSourceInlineFunctionParameterEvidence", parameterPath);
+      const fields = captureExactOwnFields(parameter, ["declaration", "symbol"], "CheckedSourceInlineFunctionParameterEvidence", parameterPath);
+      assertOpaqueIdentitySubject(fields.declaration, "CheckedSourceInlineFunctionParameterEvidence declaration", childSnapshotPath(parameterPath, "declaration"));
+      assertOpaqueIdentitySubject(fields.symbol, "CheckedSourceInlineFunctionParameterEvidence symbol", childSnapshotPath(parameterPath, "symbol"));
+      return Object.freeze({ declaration: fields.declaration, symbol: fields.symbol });
+    })),
+    returns: Object.freeze(returns.map((returned, index) => snapshotCheckedSourceInlineFunctionReturnEvidence(
+      returned as CheckedSourceInlineFunctionReturnEvidence,
+      indexedSnapshotPath(childSnapshotPath(path, "returns"), index),
+    ))),
+  });
+}
+
+function snapshotCheckedSourceInlineFunctionReturnEvidence(
+  returned: CheckedSourceInlineFunctionReturnEvidence,
+  path: SnapshotPath,
+): CheckedSourceInlineFunctionReturnEvidence {
+  assertRecord(returned, "CheckedSourceInlineFunctionReturnEvidence", path);
+  const captured = captureExactOwnFields(
+    returned,
+    ["expression", "selectedPropertyAccess"],
+    "CheckedSourceInlineFunctionReturnEvidence",
+    path,
+  );
+  assertOpaqueIdentitySubject(captured.expression, "CheckedSourceInlineFunctionReturnEvidence expression", childSnapshotPath(path, "expression"));
+  return Object.freeze({
+    expression: captured.expression,
+    ...(captured.selectedPropertyAccess === undefined
+      ? {}
+      : {
+          selectedPropertyAccess: snapshotPropertyRequest(
+            captured.selectedPropertyAccess as CheckedPropertyAccessMappingRequest,
+            childSnapshotPath(path, "selectedPropertyAccess"),
+            false,
+          ) as CheckedPropertyAccessSourceOperation,
+        }),
+  });
 }
 
 function snapshotMethodTypeArguments(
@@ -3413,6 +3660,7 @@ function snapshotImmutableData(
 }
 
 function snapshotDiagnostic(diagnostic: ExtensionDiagnostic, path: SnapshotPath): ExtensionDiagnostic {
+  const hostOwned = isHostOwnedExtensionDiagnostic(diagnostic);
   assertRecord(diagnostic, "ExtensionDiagnostic", path);
   diagnostic = captureExactOwnFields(diagnostic, ["extensionId", "extensionCode", "numericCode", "publicCode", "category", "message", "nodeOrSpan", "evidence", "identity"], "ExtensionDiagnostic", path);
   const extensionId = diagnostic.extensionId;
@@ -3440,7 +3688,7 @@ function snapshotDiagnostic(diagnostic: ExtensionDiagnostic, path: SnapshotPath)
   if (identity !== undefined) {
     assertString(identity, "ExtensionDiagnostic identity", childSnapshotPath(path, "identity"));
   }
-  return Object.freeze({
+  const snapshot = Object.freeze({
     extensionId,
     extensionCode,
     numericCode,
@@ -3453,6 +3701,7 @@ function snapshotDiagnostic(diagnostic: ExtensionDiagnostic, path: SnapshotPath)
     }),
     ...(identity === undefined ? {} : { identity }),
   });
+  return hostOwned ? markHostOwnedExtensionDiagnostic(snapshot) : snapshot;
 }
 
 function snapshotDiagnosticNodeOrSpan(value: unknown, path: SnapshotPath): object {

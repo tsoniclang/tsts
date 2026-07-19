@@ -27,10 +27,14 @@ export type ExtensionSourceDecisionEvent =
   | {
       readonly kind: "checked-property";
       readonly origin: Node;
+      readonly sourceSymbol: Symbol | undefined;
+      readonly sourceDeclaration: Node | undefined;
       readonly selectedSymbol: Symbol | undefined;
       readonly selectedDeclaration: Node | undefined;
       readonly resultType: Type;
       readonly receiverType: Type;
+      readonly receiverSymbol: Symbol | undefined;
+      readonly receiverDeclaration: Node | undefined;
       readonly selectionMode: "read" | "write";
       readonly accessMode: "read" | "write" | "read-write" | "delete";
       readonly callCallee: boolean;
@@ -38,6 +42,8 @@ export type ExtensionSourceDecisionEvent =
   | {
       readonly kind: "checked-element";
       readonly origin: Node;
+      readonly sourceSymbol: Symbol | undefined;
+      readonly sourceDeclaration: Node | undefined;
       readonly selectedSymbol: Symbol | undefined;
       readonly selectedDeclaration: Node | undefined;
       readonly resultType: Type;
@@ -821,6 +827,8 @@ function sourceDecisionEventsEquivalent(
       return right.kind === left.kind && resolvedCallEvidenceEquivalent(left.resolvedCallEvidence, right.resolvedCallEvidence);
     case "checked-property":
       return right.kind === left.kind
+        && left.sourceSymbol === right.sourceSymbol
+        && left.sourceDeclaration === right.sourceDeclaration
         && left.selectedSymbol === right.selectedSymbol
         && left.selectedDeclaration === right.selectedDeclaration
         && checkedSourceTypesShareStableIdentity(left.resultType, right.resultType)
@@ -830,6 +838,8 @@ function sourceDecisionEventsEquivalent(
         && left.callCallee === right.callCallee;
     case "checked-element":
       return right.kind === left.kind
+        && left.sourceSymbol === right.sourceSymbol
+        && left.sourceDeclaration === right.sourceDeclaration
         && left.selectedSymbol === right.selectedSymbol
         && left.selectedDeclaration === right.selectedDeclaration
         && checkedSourceTypesShareStableIdentity(left.resultType, right.resultType)

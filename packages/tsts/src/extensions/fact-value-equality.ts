@@ -28,6 +28,10 @@ import type {
   TargetTypeParameter,
   TargetTypeRef,
 } from "./facts.js";
+import type {
+  CheckedSourceCallArgumentCompositionEvidence,
+  CheckedSourceCallCompositionEvidence,
+} from "./source-operation-producer.js";
 import type { ExtensionFactSubject } from "./host.js";
 
 export function selectedTargetSignatureEquals(
@@ -126,7 +130,81 @@ export function selectedSourceValueEvidenceEquals(
   left: SelectedSourceValueEvidence,
   right: SelectedSourceValueEvidence,
 ): boolean {
-  return left.expression === right.expression && selectedSourceTypeEvidenceEquals(left, right);
+  return left.expression === right.expression
+    && selectedSourceTypeEvidenceEquals(left, right);
+}
+
+export function optionalCheckedSourceCallCompositionEvidenceEquals(
+  left: CheckedSourceCallCompositionEvidence | undefined,
+  right: CheckedSourceCallCompositionEvidence | undefined,
+): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.argumentEvidence.length === right.argumentEvidence.length
+    && left.argumentEvidence.every((evidence, index) => optionalCheckedSourceCallArgumentCompositionEvidenceEquals(
+      evidence,
+      right.argumentEvidence[index],
+    ));
+}
+
+function optionalCheckedSourceCallArgumentCompositionEvidenceEquals(
+  left: CheckedSourceCallArgumentCompositionEvidence | undefined,
+  right: CheckedSourceCallArgumentCompositionEvidence | undefined,
+): boolean {
+  return left === undefined || right === undefined
+    ? left === right
+    : checkedSourceCallArgumentCompositionEvidenceEquals(left, right);
+}
+
+export function checkedSourceCallArgumentCompositionEvidenceEquals(
+  left: CheckedSourceCallArgumentCompositionEvidence,
+  right: CheckedSourceCallArgumentCompositionEvidence,
+): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+  if (left.kind === "authored-literal") {
+    return right.kind === "authored-literal"
+      && checkedSourceAuthoredLiteralEvidenceEquals(left.literal, right.literal);
+  }
+  return right.kind === "inline-function"
+    && left.function.expression === right.function.expression
+    && left.function.parameters.length === right.function.parameters.length
+    && left.function.parameters.every((parameter, index) =>
+      parameter.declaration === right.function.parameters[index]?.declaration
+      && parameter.symbol === right.function.parameters[index]?.symbol)
+    && left.function.returns.length === right.function.returns.length
+    && left.function.returns.every((returned, index) => {
+      const other = right.function.returns[index];
+      return other !== undefined
+        && returned.expression === other.expression
+        && (returned.selectedPropertyAccess === undefined || other.selectedPropertyAccess === undefined
+          ? returned.selectedPropertyAccess === other.selectedPropertyAccess
+          : checkedPropertyAccessSourceOperationEquals(
+              returned.selectedPropertyAccess,
+              other.selectedPropertyAccess,
+            ));
+    });
+}
+
+function checkedSourceAuthoredLiteralEvidenceEquals(
+  left: Extract<CheckedSourceCallArgumentCompositionEvidence, { readonly kind: "authored-literal" }>["literal"],
+  right: Extract<CheckedSourceCallArgumentCompositionEvidence, { readonly kind: "authored-literal" }>["literal"],
+): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+  switch (left.kind) {
+    case "string":
+    case "number":
+    case "bigint":
+      return right.kind === left.kind && left.value === right.value;
+    case "boolean":
+      return right.kind === "boolean" && left.value === right.value;
+    case "null":
+      return right.kind === "null";
+  }
 }
 
 export function optionalSelectedSourceValueEvidenceEquals(

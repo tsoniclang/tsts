@@ -396,15 +396,25 @@ test("provider registry requires explicit provider identity and rejects duplicat
 });
 
 test("provider registry rejects unsupported extension contract versions", () => {
-  const host = new ExtensionHost({});
-  const provider = acmeBindingProvider("@example/target/Acme.Buffers.js", {
-    extensionContractVersion: "unsupported.contract.0",
-  });
+  for (const extensionContractVersion of ["unsupported.contract.0", "tsts.provider.2"] as const) {
+    const host = new ExtensionHost({});
+    const provider = acmeBindingProvider("@example/target/Acme.Buffers.js", {
+      extensionContractVersion,
+    });
 
-  assert.equal(host.providers.registerTargetBindingProvider(provider), false);
-  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerContractMismatch);
-  assert.match(host.diagnostics.all()[0]?.message ?? "", /unsupported extension contract/);
-  assert.equal(host.providers.resolveVirtualModule("@example/target/Acme.Buffers.js").kind, "unowned");
+    assert.equal(host.providers.registerTargetBindingProvider(provider), false, extensionContractVersion);
+    assert.equal(
+      host.diagnostics.all()[0]?.numericCode,
+      ExtensionHostDiagnosticCode.providerContractMismatch,
+      extensionContractVersion,
+    );
+    assert.match(host.diagnostics.all()[0]?.message ?? "", /unsupported extension contract/, extensionContractVersion);
+    assert.equal(
+      host.providers.resolveVirtualModule("@example/target/Acme.Buffers.js").kind,
+      "unowned",
+      extensionContractVersion,
+    );
+  }
 });
 
 test("registered diagnostic ranges reject unstable extension codes", () => {
@@ -1040,6 +1050,213 @@ test("provider declaration models reject incomplete member declarations instead 
   const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
   assert.equal(resolved.kind, "rejected");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+});
+
+test("provider declaration models reject schema fields their declaration kind cannot render", () => {
+  const signature = {
+    id: "call()",
+    parameters: [],
+    returnType: { kind: "void" as const },
+  };
+  const cases: readonly ProviderExportDeclaration[] = [{
+    id: "FunctionWithOuterTypeParameters",
+    name: "FunctionWithOuterTypeParameters",
+    kind: "function",
+    typeParameters: [{ name: "Ignored" }],
+    signatures: [signature],
+  }, {
+    id: "TypeWithMembers",
+    name: "TypeWithMembers",
+    kind: "type",
+    type: { kind: "number" },
+    members: [{ id: "ignored", name: "ignored", kind: "property", type: { kind: "number" } }],
+  }, {
+    id: "ValueWithSignatures",
+    name: "ValueWithSignatures",
+    kind: "value",
+    type: { kind: "number" },
+    signatures: [signature],
+  }, {
+    id: "EnumWithType",
+    name: "EnumWithType",
+    kind: "enum",
+    type: { kind: "number" },
+    members: [],
+  }, {
+    id: "OpaqueWithMembers",
+    name: "OpaqueWithMembers",
+    kind: "opaque",
+    members: [{ id: "ignored", name: "ignored", kind: "property", type: { kind: "number" } }],
+  }, {
+    id: "ClassWithType",
+    name: "ClassWithType",
+    kind: "class",
+    type: { kind: "number" },
+    members: [],
+  }, {
+    id: "InterfaceWithSignatures",
+    name: "InterfaceWithSignatures",
+    kind: "interface",
+    signatures: [signature],
+    members: [],
+  }, {
+    id: "NamespaceWithTypeParameters",
+    name: "NamespaceWithTypeParameters",
+    kind: "namespace",
+    typeParameters: [{ name: "Ignored" }],
+    members: [],
+  }];
+
+  for (const declaration of cases) {
+    const specifier = `@target/unrendered-${declaration.id}.js`;
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider(typeFamilyBindingProvider(specifier, [declaration]));
+    assert.equal(host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" }).kind, "rejected", declaration.id);
+    assert.equal(
+      host.diagnostics.all()[0]?.numericCode,
+      ExtensionHostDiagnosticCode.invalidProviderDeclaration,
+      declaration.id,
+    );
+    assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), [], declaration.id);
+  }
+});
+
+test("provider callable identities are mandatory and unique within their exact export or member owner", () => {
+  const validSpecifier = "@target/provider-callable-identity-valid.js";
+  const callableType = (id: string): ProviderTypeExpression => ({
+    kind: "function",
+    id,
+    parameters: [],
+    returnType: { kind: "void" },
+  });
+  const validHost = new ExtensionHost({});
+  validHost.providers.registerTargetBindingProvider(typeFamilyBindingProvider(validSpecifier, [{
+    id: "Callbacks",
+    name: "Callbacks",
+    kind: "interface",
+    members: [{
+      id: "Callbacks.first",
+      name: "first",
+      kind: "property",
+      type: callableType("invoke"),
+    }, {
+      id: "Callbacks.second",
+      name: "second",
+      kind: "property",
+      type: callableType("invoke"),
+    }, {
+      id: "Callbacks.overloaded",
+      name: "overloaded",
+      kind: "method",
+      signatures: [{
+        id: "Callbacks.overloaded(string)",
+        parameters: [{ name: "value", type: { kind: "string" } }],
+        returnType: { kind: "string" },
+      }, {
+        id: "Callbacks.overloaded(number)",
+        parameters: [{ name: "value", type: { kind: "number" } }],
+        returnType: { kind: "number" },
+      }],
+    }],
+  }, {
+    id: "Dual",
+    name: "Dual",
+    kind: "class",
+    members: [{
+      id: "Dual.invoke#instance",
+      name: "invoke",
+      kind: "property",
+      static: false,
+      type: callableType("Dual.invoke#instance()"),
+    }, {
+      id: "Dual.invoke#static",
+      name: "invoke",
+      kind: "property",
+      static: true,
+      type: callableType("Dual.invoke#static()"),
+    }],
+  }]));
+  assert.equal(
+    validHost.providers.resolveVirtualModule(validSpecifier, { activeTarget: "demo" }).kind,
+    "resolved",
+    "The member identity qualifies a callable signature identity, so separate members may use the same local signature id.",
+  );
+
+  const invalidSpecifier = "@target/provider-callable-identity-invalid.js";
+  const invalidExports: readonly ProviderDeclarationModel["exports"][] = [[{
+    id: "missing",
+    name: "missing",
+    kind: "value",
+    type: { kind: "function", parameters: [], returnType: { kind: "void" } } as never,
+  }], [{
+    id: "empty",
+    name: "empty",
+    kind: "value",
+    type: callableType(""),
+  }], [{
+    id: "duplicate",
+    name: "duplicate",
+    kind: "value",
+    type: {
+      kind: "intersection",
+      types: [callableType("same"), callableType("same")],
+    },
+  }], [{
+    id: "call",
+    name: "call",
+    kind: "function",
+    signatures: [{
+      id: "call-signature",
+      parameters: [{ name: "callback", type: callableType("call-signature") }],
+      returnType: { kind: "void" },
+    }],
+  }], [{
+    id: "Container",
+    name: "Container",
+    kind: "interface",
+    members: [{
+      id: "Container.call",
+      name: "call",
+      kind: "method",
+      signatures: [{
+        id: "member-signature",
+        parameters: [{ name: "callback", type: callableType("member-signature") }],
+        returnType: { kind: "void" },
+      }],
+    }],
+  }], [{
+    id: "DuplicateSurface",
+    name: "DuplicateSurface",
+    kind: "interface",
+    members: [{
+      id: "DuplicateSurface.first",
+      name: "same",
+      kind: "method",
+      signatures: [{ id: "DuplicateSurface.first()", parameters: [], returnType: { kind: "void" } }],
+    }, {
+      id: "DuplicateSurface.second",
+      name: "same",
+      kind: "method",
+      static: false,
+      signatures: [{ id: "DuplicateSurface.second()", parameters: [], returnType: { kind: "void" } }],
+    }],
+  }]];
+
+  for (const [index, exports] of invalidExports.entries()) {
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider(typeFamilyBindingProvider(invalidSpecifier, exports));
+    assert.equal(
+      host.providers.resolveVirtualModule(invalidSpecifier, { activeTarget: "demo" }).kind,
+      "rejected",
+      `invalid callable identity model ${index}`,
+    );
+    assert.equal(
+      host.diagnostics.all()[0]?.numericCode,
+      ExtensionHostDiagnosticCode.invalidProviderDeclaration,
+      `invalid callable identity model ${index}`,
+    );
+    assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), []);
+  }
 });
 
 test("provider declaration models reject target types without explicit source shape", () => {
@@ -6641,6 +6858,7 @@ function matrixBindingProvider(
               name: "callback",
               type: {
                 kind: "function",
+                id: "Box.continueWith.callback",
                 parameters: [],
                 returnType: { kind: "object" },
               },
@@ -6690,10 +6908,6 @@ function matrixBindingProvider(
         id: "tryParse",
         name: "tryParse",
         kind: "function",
-        typeParameters: [{
-          name: "T",
-          constraints: [{ kind: "source-primitive", name: "int32" }],
-        }],
         signatures: [{
           id: "tryParse",
           typeParameters: [{

@@ -1,4 +1,4 @@
-import { defineExtensionFactKey } from "./fact-key.js";
+import { defineExtensionFactKey, markHostSourceReadableFactKey } from "./fact-key.js";
 import type { ExtensionEvidence, ExtensionFactSubject, ProviderWellKnownSymbolName } from "./host.js";
 import {
   snapshotArgumentPassingFact,
@@ -753,7 +753,7 @@ export interface ConstGenericFact {
   readonly value: string | number | bigint | boolean;
 }
 
-export const canonicalIdentityFactKey = defineExtensionFactKey<ExtensionCanonicalIdentity>({
+export const canonicalIdentityFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<ExtensionCanonicalIdentity>({
   extensionId: "tsts.identity",
   name: "canonicalIdentity",
   snapshot: snapshotCanonicalIdentityFact,
@@ -766,25 +766,25 @@ export const canonicalIdentityFactKey = defineExtensionFactKey<ExtensionCanonica
     && left.exportName === right.exportName
     && left.importKind === right.importKind
     && left.canonicalSymbolId === right.canonicalSymbolId,
-});
+}));
 
-export const sourcePrimitiveFactKey = defineExtensionFactKey<SourcePrimitiveFact>({
+export const sourcePrimitiveFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<SourcePrimitiveFact>({
   extensionId: "tsts.source-semantics",
   name: "sourcePrimitive",
   snapshot: snapshotSourcePrimitiveFact,
   equals: (left, right) => left.kind === right.kind && left.width === right.width && left.signed === right.signed && left.runtimeBase === right.runtimeBase,
-});
+}));
 
-export const argumentPassingFactKey = defineExtensionFactKey<ArgumentPassingFact>({
+export const argumentPassingFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<ArgumentPassingFact>({
   extensionId: "tsts.source-semantics",
   name: "argumentPassing",
   snapshot: snapshotArgumentPassingFact,
   equals: (left, right) =>
     left.mode === right.mode
     && left.targetExpression === right.targetExpression,
-});
+}));
 
-export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact>({
+export const functionPointerFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<FunctionPointerFact>({
   extensionId: "tsts.source-semantics",
   name: "functionPointer",
   snapshot: snapshotFunctionPointerFact,
@@ -794,32 +794,32 @@ export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact
     && left.parameters.every((parameter, index) => parameter === right.parameters[index])
     && left.abi.length === right.abi.length
     && left.abi.every((abi, index) => abi === right.abi[index]),
-});
+}));
 
-export const pointerFactKey = defineExtensionFactKey<PointerFact>({
+export const pointerFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<PointerFact>({
   extensionId: "tsts.source-semantics",
   name: "pointer",
   snapshot: snapshotPointerFact,
   equals: (left, right) => left.pointee === right.pointee && left.mutability === right.mutability && left.unsafeRequired === right.unsafeRequired,
-});
+}));
 
-export const structFactKey = defineExtensionFactKey<StructFact>({
+export const structFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<StructFact>({
   extensionId: "tsts.source-semantics",
   name: "struct",
   snapshot: snapshotStructFact,
   equals: (left, right) =>
     left.valueType === right.valueType
     && fieldFactArrayEquals(left.fields, right.fields),
-});
+}));
 
-export const fieldFactKey = defineExtensionFactKey<FieldFact>({
+export const fieldFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<FieldFact>({
   extensionId: "tsts.source-semantics",
   name: "field",
   snapshot: snapshotFieldFactValue,
   equals: (left, right) => left.name === right.name && left.type === right.type && left.readonly === right.readonly,
-});
+}));
 
-export const attributeFactKey = defineExtensionFactKey<AttributeFact>({
+export const attributeFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<AttributeFact>({
   extensionId: "tsts.source-semantics",
   name: "attribute",
   snapshot: snapshotAttributeFact,
@@ -827,14 +827,14 @@ export const attributeFactKey = defineExtensionFactKey<AttributeFact>({
     left.target === right.target
     && left.attributeName === right.attributeName
     && factSubjectArrayEquals(left.arguments, right.arguments),
-});
+}));
 
-export const defaultValueFactKey = defineExtensionFactKey<DefaultValueFact>({
+export const defaultValueFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<DefaultValueFact>({
   extensionId: "tsts.source-semantics",
   name: "defaultValue",
   snapshot: snapshotDefaultValueFact,
   equals: (left, right) => left.type === right.type,
-});
+}));
 
 export const targetBindingFactKey = defineExtensionFactKey<TargetBindingFact>({
   extensionId: "tsts.target-bindings",

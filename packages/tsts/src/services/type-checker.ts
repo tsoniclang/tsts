@@ -32,6 +32,7 @@ import { Checker_TypeToString } from "../internal/checker/printer.js";
 import type { ContextFlags, Signature, Type } from "../internal/checker/types.js";
 import { ContextFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../internal/checker/types.js";
 import {
+  extensionHostAllowsCompilerQuery,
   extensionHostAllowsSemanticQueryPreflight,
   lookupAttachedExtensionHost,
 } from "../extensions/host-attachment.js";
@@ -190,6 +191,9 @@ function withChecker<T>(
   }
   const context = options.context ?? defaultOptions.context ?? Background();
   const extensionHost = lookupAttachedExtensionHost(program);
+  if (extensionHost !== undefined && !extensionHost[extensionHostAllowsCompilerQuery]()) {
+    throw new Error("Compiler queries are unavailable inside checked source-call producers.");
+  }
   if (extensionHost === undefined || extensionHost[extensionHostAllowsSemanticQueryPreflight]()) {
     Program_GetSemanticDiagnostics(program, context, sourceFile);
   }

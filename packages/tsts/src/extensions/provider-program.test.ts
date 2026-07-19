@@ -3597,6 +3597,7 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
       checker,
       firstRequest.expression as GoPtr<Node>,
       {
+        sourceSymbol: firstResult.selectedSymbol as GoPtr<Symbol>,
         selectedSymbol: firstResult.selectedSymbol as GoPtr<Symbol>,
         resultType: firstResult.type as GoPtr<Type>,
         ...(firstRequest.sourceSelectedElementIndex === undefined ? {} : { selectedElementIndex: firstRequest.sourceSelectedElementIndex }),
@@ -3614,6 +3615,7 @@ test("checker exposes only checker-selected fixed tuple element ordinals", () =>
       checker,
       firstRequest.expression as GoPtr<Node>,
       {
+        sourceSymbol: firstResult.selectedSymbol as GoPtr<Symbol>,
         selectedSymbol: firstResult.selectedSymbol as GoPtr<Symbol>,
         resultType: firstResult.type as GoPtr<Type>,
         ...(firstRequest.sourceSelectedElementIndex === undefined ? {} : { selectedElementIndex: firstRequest.sourceSelectedElementIndex }),
@@ -5678,6 +5680,7 @@ function undefinedStateProviderExtension(): CompilerExtension {
                 name: "callback",
                 type: {
                   kind: "function",
+                  id: "continueWith.callback",
                   parameters: [],
                   returnType: { kind: "object" },
                 },
@@ -7403,6 +7406,7 @@ function restFunctionArrayProviderExtension(): CompilerExtension {
                     kind: "array",
                     elementType: {
                       kind: "function",
+                      id: "Parallel.Invoke.action",
                       parameters: [],
                       returnType: { kind: "void" },
                     },

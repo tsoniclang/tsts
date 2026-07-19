@@ -901,6 +901,7 @@ export interface CheckedCallSourceSelectionProvenance {
 export interface CheckedCallSelectionSeed {
   readonly calleeProvenance?: CheckedCallSourceSelectionProvenance;
   readonly receiver?: ResolvedCallSourceValueEvidence;
+  readonly sourceProducerCandidate?: true;
 }
 
 export interface ResolvedCallSourceValueEvidence extends CheckedCallSourceSelectionProvenance {
