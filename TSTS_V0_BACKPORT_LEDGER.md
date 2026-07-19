@@ -27,6 +27,13 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 | `20260715-174823-aspnet-provider-closure-transaction-budget` | `8699823fdc45bb2963148802f161eba3720aee60`, `fe8063dbf8ac870c6749618c475733fe24f35ead`, `56a44d1b562731d2c107980e1fc99d46db8b460d` | Resolved | Provider closure accounting separates retained physical state from expanded semantic work and remains finite, order independent, and atomic. |
 | `20260715-210925-aspnet-provider-input-scalar-budget` | `79e400b664c98a2e6b4f9305e067afe5976ecd77`, `e38b1731790214cfadac4176b2e7832a488d836b` | Resolved | Input-scalar capacity is measured once per physical snapshot, calibrated from neutral profiles, finite at every boundary, and atomically rejected beyond limits. |
 | `20260716-122903-selected-source-constructor-call-evidence` | `691ceb8006ea8e8be32cb9614879032060e4bbdb` | Resolved; accepted by focused Tsonic integration | Checked calls expose alias-resolved callee identity and selected parameter provenance; mapper results are target-only and finalized source evidence is checker-owned. |
+| `20260717-082846-selected-receiver-and-deferred-operation-finalization` | `97a0c550bfa61586ab90c36cade31e41d085eefd` through `43194d24c747a0500c84c5dbea16a26ed8007da0` | Resolved | Checked calls, members, operators, conversions, and iteration retain immutable checker-selected source evidence and finalize through one bounded, deterministic, dependency-ordered, atomic operation graph after lifecycle facts become available. |
+| `20260718-declaration-only-checked-operations` | `90cf4005209f2fefdafd495b76362e6d31cdce6c`, `f63828ce5188ad33d9d11e28d6511ed40e041ffc`, `bf89f7700457a269e1ed11f444ce5432df882b49` | Resolved | Runtime checked operations are published only for executable implementation syntax; declarations and ambient/type-only syntax remain semantic inputs, while implementation operations retain declaration-selected evidence. |
+| `20260718-retained-operation-transaction-audit` | `90cf4005209f2fefdafd495b76362e6d31cdce6c`, `f63828ce5188ad33d9d11e28d6511ed40e041ffc`, `bf89f7700457a269e1ed11f444ce5432df882b49` | Resolved | Retained operations, dependencies, mapper effects, diagnostics, and facts settle or roll back with their exact atomic owner; replay is bounded, idempotent, conflict-diagnosed, and cannot migrate children between owners. |
+| `20260718-source-decision-authority-audit` | `695c2f92b9f8a0a4503233de1988f5278175e23a`, `ab66f3943c070340ce30f2da3a0eb86dc4aa2aa7`, `f63828ce5188ad33d9d11e28d6511ed40e041ffc`, `bf89f7700457a269e1ed11f444ce5432df882b49`, `84af473b0de29e570320dc9a20c0592b1e271086` | Resolved | Exact source decisions are captured only on authoritative checker branches, speculative/query work cannot publish, for-of evidence follows the normal TS-Go check path, and property selection preserves TS-Go's lazy chosen branch. |
+| `20260718-post-lifecycle-deep-audit` | `90cf4005209f2fefdafd495b76362e6d31cdce6c` through `84af473b0de29e570320dc9a20c0592b1e271086` | Resolved | The complete post-check lifecycle has one source-decision authority, one retained-operation settlement model, exact bounded codecs, immutable provenance, and no target-specific or legacy recovery path. |
+| `porter-extension-boundary-and-semantic-decomposition` | `17c4d250cb75d16528118b4286c4556278ae9db7`, `df9bdccebb0531ae38db3ec823a778569563425a` | Resolved maintenance contract | Extension-only helpers are excluded explicitly from mechanical TS-Go unit parity, local overrides remain verifier-checked, and Porter implementation files are split by semantic ownership without changing extracted signature scope. |
+| `20260719-full-corpus-index-evidence-and-harness` | `61f2a765b7a820639a734e94177665860ffd4283` | Resolved | Index-signature provenance is extension-only exact declaration evidence: ordinary TS-Go symbol caches are unchanged and no synthetic `__index` symbol is fabricated. The TypeScript corpus harness also applies static pinned-runner skips before materialization and models the complete TypeScript API declaration alias family. |
 
 ## Complete Commit Order
 
@@ -47,6 +54,40 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 15. `79e400b664c98a2e6b4f9305e067afe5976ecd77`
 16. `e38b1731790214cfadac4176b2e7832a488d836b`
 17. `691ceb8006ea8e8be32cb9614879032060e4bbdb`
+18. `7961f2c443fe131ee5c5c5fafa9fc19815f86df4`
+19. `85d12a8cccce1aefdd034e3ee7dba179f78de2e6`
+20. `97a0c550bfa61586ab90c36cade31e41d085eefd`
+21. `21bdbc7cc68faf5127308c69151aade5553586c5`
+22. `64518ee72531e8673950bf8ce0a4bf18d60a2569`
+23. `dc950407bc0762ae479d55794fe0fd953612a91d`
+24. `0eabacfd79062f89c0a49be7b9b8b37538be674d`
+25. `942c944cdcdf2c6ec02d4a161a5d469583fa8a29`
+26. `8b2b82db2235fa45e9d1ecd6701bba347e251624`
+27. `1ac7bbb50fc930a82b486eddf6ac5c78d5cba65b`
+28. `dc1152fee27ac319c0f647e3bd15fbe2c30e6f4c`
+29. `43194d24c747a0500c84c5dbea16a26ed8007da0`
+30. `695c2f92b9f8a0a4503233de1988f5278175e23a`
+31. `ab66f3943c070340ce30f2da3a0eb86dc4aa2aa7`
+32. `90cf4005209f2fefdafd495b76362e6d31cdce6c`
+33. `f63828ce5188ad33d9d11e28d6511ed40e041ffc`
+34. `bf89f7700457a269e1ed11f444ce5432df882b49`
+35. `17c4d250cb75d16528118b4286c4556278ae9db7`
+36. `84af473b0de29e570320dc9a20c0592b1e271086`
+37. `df9bdccebb0531ae38db3ec823a778569563425a`
+38. `61f2a765b7a820639a734e94177665860ffd4283`
+
+## Final Validation At `61f2a765`
+
+- Build and built-package contract: pass.
+- Complete source suite: 2,073/2,073 pass; zero failed, skipped, or todo.
+- Porter tests: 83/83 pass.
+- Strict Porter verification: 9,385/9,385 portable units implemented; zero missing, stale, orphan, generated-artifact, schema-sync, large-file-plan, or override issues.
+- TS-Go suite harness tests: 85/85 pass.
+- Current pinned TS-Go corpus: 313 pass, zero fail, four explicit policy skips; 925 exact comparable artifacts and zero mismatches.
+- Full TypeScript corpus: 15,626 total; 12,820 pass, zero fail, 2,806 explicit pinned-runner policy skips; 43,218 exact comparable artifacts and zero mismatches.
+- Real-world AST parity: 1,274/1,274 files pass.
+- Generated data: 108 bundled libraries current; Unicode 15.1.0 data current.
+- Performance gates completed under a 5 GiB memory ceiling: self-compile wall median 16.72s and maxRSS 1,487.29 MiB for 653 files/552,011 lines; UTF-8/source-text speedups 87.3x–11,388.8x over legacy equivalents; scanner checksum-stable medians 4.39ms ASCII, 2.63ms mixed Unicode, and 1.63ms JSX.
 
 ## Future Fix Procedure
 
