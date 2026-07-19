@@ -35,6 +35,7 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 | `porter-extension-boundary-and-semantic-decomposition` | `17c4d250cb75d16528118b4286c4556278ae9db7`, `df9bdccebb0531ae38db3ec823a778569563425a` | Resolved maintenance contract | Extension-only helpers are excluded explicitly from mechanical TS-Go unit parity, local overrides remain verifier-checked, and Porter implementation files are split by semantic ownership without changing extracted signature scope. |
 | `20260719-full-corpus-index-evidence-and-harness` | `61f2a765b7a820639a734e94177665860ffd4283` | Resolved | Index-signature provenance is extension-only exact declaration evidence: ordinary TS-Go symbol caches are unchanged and no synthetic `__index` symbol is fabricated. The TypeScript corpus harness also applies static pinned-runner skips before materialization and models the complete TypeScript API declaration alias family. |
 | `20260719-115106-post-finalization-checker-query` | `44928afc` | Resolved | Public checker and diagnostic queries retain canonical semantic discovery while extension semantics are open, then become read-only consumers of already-checked state once finalization begins; they cannot reopen lifecycle hooks, checked operations, facts, provider artifacts, or extension diagnostics. |
+| `20260719-135458-provider-type-family-runtime-carrier-shared-symbol-conflict` | `3407b2f8` | Resolved | Instantiated runtime carriers are published only to exact checked type-use and semantic-type subjects; declaration symbols remain provenance/target-binding subjects and cannot acquire one concrete carrier for multiple generic instantiations or provider-family arities. |
 
 ## Complete Commit Order
 
@@ -77,11 +78,12 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 37. `df9bdccebb0531ae38db3ec823a778569563425a`
 38. `61f2a765b7a820639a734e94177665860ffd4283`
 39. `44928afc`
+40. `3407b2f8`
 
-## Complete Validation At Implementation `44928afc`
+## Complete Validation At Implementation `3407b2f8`
 
 - Build and built-package contract: pass.
-- Complete source suite: 2,073/2,073 pass; zero failed, skipped, or todo.
+- Complete source suite: 2,075/2,075 pass; zero failed, skipped, or todo.
 - Porter tests: 83/83 pass.
 - Strict Porter verification: 9,385/9,385 portable units implemented; zero missing, stale, orphan, generated-artifact, schema-sync, large-file-plan, or override issues.
 - TS-Go suite harness tests: 85/85 pass.
@@ -89,8 +91,8 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 - Full TypeScript corpus: 15,626 total; 12,820 pass, zero fail, 2,806 explicit pinned-runner policy skips; 43,218 exact comparable artifacts and zero mismatches.
 - Real-world AST parity: 1,274/1,274 files pass.
 - Generated data: 108 bundled libraries current; Unicode 15.1.0 data current.
-- Reproducible built artifact: 1,808 files; two independent builds produced aggregate sorted-manifest SHA-256 `b233c07154a850ce112449f3dbde37cc4ff0afd2373cb50d34cf27f6fb150d21`.
-- Performance gates completed under a 5 GiB memory ceiling: mandatory self-compile wall median 14.52s and maxRSS 1,406.88 MiB for 654 files/552,048 lines; pinned native TS-Go cross-check wall 0.80s versus TSTS 14.38s and `tsc` 5.87s; UTF-8/source-text speedups 71.3x–20,178.1x over legacy equivalents; scanner checksum-stable medians 4.19ms ASCII, 2.53ms mixed Unicode, and 1.36ms JSX.
+- Reproducible built artifact: 1,808 files; two independent builds produced aggregate sorted-manifest SHA-256 `c15f97ff87d121116b1de115c3f2f98ffc4bbc87e549fd605a7b9f6fd5e7e9a3`.
+- Performance gates completed under a 5 GiB memory ceiling: mandatory self-compile wall median 15.76s and maxRSS 1,446.07 MiB for 654 files/552,030 lines; pinned native TS-Go cross-check wall 0.79s versus TSTS 14.30s and `tsc` 5.84s; UTF-8/source-text speedups 79.8x–19,277.6x over legacy equivalents; scanner checksum-stable medians 4.25ms ASCII, 2.50ms mixed Unicode, and 1.57ms JSX.
 
 ## Future Fix Procedure
 
