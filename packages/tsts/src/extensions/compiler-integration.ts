@@ -62,10 +62,14 @@ import type {
   ProviderVirtualModuleArtifact,
 } from "./host.js";
 import { getProviderVirtualArtifactForCompiler } from "./provider-virtual-internal.js";
+import { extensionHostAllowsSemanticQueryPreflight } from "./host-attachment.js";
 
 export function recordBoundSourceFileExtensionFacts(program: object, file: GoPtr<SourceFile>): void {
   const extensionHost = getExtensionHost(program);
   if (extensionHost === undefined || file === undefined) {
+    return;
+  }
+  if (!extensionHost[extensionHostAllowsSemanticQueryPreflight]()) {
     return;
   }
 

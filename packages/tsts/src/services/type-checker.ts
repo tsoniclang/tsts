@@ -31,6 +31,10 @@ import { Checker_GetConstantValue, Checker_GetExportsOfModule } from "../interna
 import { Checker_TypeToString } from "../internal/checker/printer.js";
 import type { ContextFlags, Signature, Type } from "../internal/checker/types.js";
 import { ContextFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../internal/checker/types.js";
+import {
+  extensionHostAllowsSemanticQueryPreflight,
+  lookupAttachedExtensionHost,
+} from "../extensions/host-attachment.js";
 
 export interface TypeCheckerQueryOptions {
   readonly context?: Context;
@@ -183,7 +187,10 @@ function withChecker<T>(
     return undefined;
   }
   const context = options.context ?? defaultOptions.context ?? Background();
-  Program_GetSemanticDiagnostics(program, context, sourceFile);
+  const extensionHost = lookupAttachedExtensionHost(program);
+  if (extensionHost === undefined || extensionHost[extensionHostAllowsSemanticQueryPreflight]()) {
+    Program_GetSemanticDiagnostics(program, context, sourceFile);
+  }
   const [checker, done] = Program_GetTypeCheckerForFile(program, context, sourceFile);
   try {
     return callback(checker);

@@ -4,7 +4,7 @@ import type { bool } from "../go/scalars.js";
 import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
-import { Node_Arguments, Node_Text } from "../internal/ast/ast.js";
+import { Node_Arguments, Node_Expression, Node_Text } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import { AsForInOrOfStatement } from "../internal/ast/generated/casts.js";
@@ -17,6 +17,7 @@ import {
   KindForOfStatement,
   KindFunctionDeclaration,
   KindIdentifier,
+  KindNumberKeyword,
   KindPropertyAccessExpression,
   KindVariableDeclarationList,
 } from "../internal/ast/generated/kinds.js";
@@ -28,6 +29,7 @@ import { NewCompilerHost } from "../internal/compiler/host.js";
 import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import {
   NewProgram,
+  Program_GetBindDiagnostics,
   Program_GetProgramDiagnostics,
   Program_GetSemanticDiagnostics,
   Program_GetSourceFile,
@@ -38,8 +40,9 @@ import {
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { createTypeCheckerQueries } from "../index.js";
+import { createTypeCheckerQueries, createTypeShapeQueries } from "../index.js";
 import {
+  ExtensionLifecycleEvent,
   ExtensionObservationPoint,
   TstsProviderContractVersion,
   acceptObservation,
@@ -56,6 +59,7 @@ import type {
   CompilerExtension,
   ExtensionFactSubject,
   ExtensionHost,
+  SourceFileBoundLifecycleRequest,
   TargetOperationProposal,
 } from "./index.js";
 import {
@@ -80,6 +84,7 @@ interface SourceDecisionProgram {
   readonly programOptions: ProgramOptions;
   readonly extensionHost: ExtensionHost;
   readonly observations: CheckedOperationObservations;
+  readonly boundFileNames: string[];
 }
 
 test("checker queries force canonical diagnostics and publish each checked source operation once", () => {
@@ -111,11 +116,14 @@ test("checker queries force canonical diagnostics and publish each checked sourc
 test("checker queries after canonical checking are idempotent", () => {
   const setup = createBasicOperationProgram("query-after-checking");
   const index = requireSourceFile(setup.program, "/src/index.ts");
+  const profile = requireSourceFile(setup.program, "/src/profile.d.ts");
   const call = onlyNodeByKind(index, KindCallExpression);
   const property = onlyNodeByKind(index, KindPropertyAccessExpression);
   const element = onlyNodeByKind(index, KindElementAccessExpression);
   const operator = onlyNodeByKind(index, KindBinaryExpression);
   const expressions = [call, property, element, operator];
+  const numberTypeNode = collectNodesByKind(profile, KindNumberKeyword)[0];
+  assert.ok(numberTypeNode !== undefined);
 
   assertProgramAndSyntaxClean(setup.program);
   assertAllSemanticsClean(setup.program);
@@ -135,15 +143,27 @@ test("checker queries after canonical checking are idempotent", () => {
   const retainedFacts = expressions.slice(1).map((expression) =>
     setup.extensionHost.facts.get(expression, targetOperationFactKey));
   const retainedCounts = observationCounts(setup.observations);
+  const retainedBoundFileNames = [...setup.boundFileNames];
+  const retainedDiagnostics = setup.extensionHost.diagnostics.all();
+  const typeShape = createTypeShapeQueries(setup.program, { sourceFile: index });
 
   for (let repetition = 0; repetition < 2; repetition++) {
     assert.ok(queries.getResolvedSignature(call) !== undefined);
+    assert.ok(queries.getSymbolAtLocation(Node_Name(property)) !== undefined);
+    assert.ok(queries.getResolvedSymbol(Node_Expression(call)) !== undefined);
+    assert.ok(queries.getTypeFromTypeNode(numberTypeNode, { sourceFile: profile }) !== undefined);
     for (const expression of expressions) {
       assert.ok(queries.getTypeAtLocation(expression) !== undefined);
     }
+    assert.equal(typeShape.isNumberLike(typeShape.getTypeFromTypeNode(numberTypeNode, { sourceFile: profile })), true);
+    assert.equal(Program_GetBindDiagnostics(setup.program, Background(), index).length, 0);
+    assert.equal(Program_GetSemanticDiagnostics(setup.program, Background(), index).length, 0);
+    assert.equal(queries.getTypeAtLocation(undefined), undefined);
   }
 
   assert.deepEqual(observationCounts(setup.observations), retainedCounts);
+  assert.deepEqual(setup.boundFileNames, retainedBoundFileNames);
+  assert.deepEqual(setup.extensionHost.diagnostics.all(), retainedDiagnostics);
   assert.ok(setup.extensionHost.facts.get(property, targetOperationFactKey) === retainedFacts[0]);
   assert.ok(setup.extensionHost.facts.get(element, targetOperationFactKey) === retainedFacts[1]);
   assert.ok(setup.extensionHost.facts.get(operator, targetOperationFactKey) === retainedFacts[2]);
@@ -524,6 +544,7 @@ function createSourceDecisionProgram(
   files: readonly { readonly fileName: string; readonly sourceText: string }[],
 ): SourceDecisionProgram {
   const observations = checkedOperationObservations();
+  const boundFileNames: string[] = [];
   const sourceEntries = files.map(({ fileName, sourceText }) => [`/src/${fileName}`, sourceText] as const);
   let fs = FromMap(new Map<string, string>([
     ...sourceEntries,
@@ -552,17 +573,18 @@ function createSourceDecisionProgram(
   const programOptions = { Config: parsed, Host: compilerHost } satisfies ProgramOptions;
   const attached = attachExtensionHost(programOptions, {
     activeTarget: neutralTarget,
-    extensions: [sourceDecisionExtension(id, observations)],
+    extensions: [sourceDecisionExtension(id, observations, boundFileNames)],
   });
   return {
     program: NewProgram(attached.program),
     programOptions: attached.program,
     extensionHost: attached.extensionHost,
     observations,
+    boundFileNames,
   };
 }
 
-function sourceDecisionExtension(id: string, observations: CheckedOperationObservations): CompilerExtension {
+function sourceDecisionExtension(id: string, observations: CheckedOperationObservations, boundFileNames: string[]): CompilerExtension {
   return {
     identity: {
       id: `source-decision-${id}`,
@@ -570,6 +592,9 @@ function sourceDecisionExtension(id: string, observations: CheckedOperationObser
       capabilityNamespace: `source-decision-${id}`,
     },
     initialize(context): void {
+      context.registerLifecycleHook<SourceFileBoundLifecycleRequest>(ExtensionLifecycleEvent.afterSourceFileBound, (request) => {
+        boundFileNames.push(request.fileName);
+      });
       assert.equal(context.registerTargetSemanticProvider({
         identity: {
           id: `source-decision-provider-${id}`,

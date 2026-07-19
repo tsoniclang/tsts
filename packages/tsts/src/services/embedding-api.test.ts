@@ -166,6 +166,10 @@ test("public embedding API drives a provider-backed program without internal imp
   assert.equal(session.checker.typeToString(session.checker.getReturnTypeOfSignature(callSignature)), "void");
 
   const boxedValue = findNode(sourceFile, session.ast, (node, ast) => ast.is.IsPropertyAccessExpression(node) && ast.text(ast.name(node)) === "value");
+  const boxedIdentifier = findNode(sourceFile, session.ast, (node, ast) =>
+    ast.is.IsIdentifier(node)
+    && ast.text(node) === "boxed"
+    && ast.is.IsPropertyAccessExpression(ast.parent(node)));
   const boxedValueType = session.checker.getTypeAtLocation(boxedValue);
   assert.equal(session.types.isNumberLike(boxedValueType), true);
   assert.equal(session.types.typeToString(boxedValueType), "number");
@@ -183,6 +187,22 @@ test("public embedding API drives a provider-backed program without internal imp
   const extensionHost = session.finalizeExtensions();
   assert.equal(session.isFinalized(), true);
   assert.ok(extensionHost !== undefined);
+  const retainedProviderDocuments = extensionHost.providers.getVirtualDeclarationDocuments();
+  const retainedSourceFiles = [...session.getSourceFiles()];
+  const retainedExtensionDiagnostics = extensionHost.diagnostics.all();
+  const retainedSemanticDiagnostics = session.getDiagnostics("semantic", sourceFile);
+  assert.equal(session.checker.getSymbolAtLocation(consumeIdentifier), consumeAlias);
+  assert.equal(session.checker.getResolvedSymbol(boxedIdentifier)?.Name, "boxed");
+  assert.equal(session.checker.getAliasedSymbol(consumeAlias)?.Name, "consume");
+  assert.equal(session.checker.getConstantValue(writeMember), 2);
+  assert.equal(session.checker.getResolvedSignature(call), callSignature);
+  assert.equal(session.checker.typeToString(session.checker.getReturnTypeOfSignature(callSignature)), "void");
+  assert.equal(session.checker.getTypeAtLocation(boxedValue), boxedValueType);
+  assert.equal(session.types.isTuple(session.checker.getTypeFromTypeNode(findTypeAliasType(sourceFile, session.ast, "Pair"))), true);
+  assert.deepEqual(session.getDiagnostics("semantic", sourceFile), retainedSemanticDiagnostics);
+  assert.deepEqual(session.getSourceFiles(), retainedSourceFiles);
+  assert.deepEqual(extensionHost.providers.getVirtualDeclarationDocuments(), retainedProviderDocuments);
+  assert.deepEqual(extensionHost.diagnostics.all(), retainedExtensionDiagnostics);
   const consumer = createExtensionConsumerQueries(extensionHost, "embedding-test");
   assert.equal(consumer.getSelectedTargetIteration(forOfStatement)?.operationKind, "iteration");
   assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "Acme.Runtime.consume(INT)");

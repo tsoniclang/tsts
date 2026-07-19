@@ -33,6 +33,7 @@ import {
 } from "../internal/compiler/program.js";
 import { Checker_GetAliasedSymbol } from "../internal/checker/checker/symbols.js";
 import { Checker_TypeToString } from "../internal/checker/printer.js";
+import { createTypeCheckerQueries } from "../services/type-checker.js";
 import { ResolvedModuleExtensionProviderVirtual, ResolvedModule_IsProviderVirtual } from "../internal/module/types.js";
 import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
@@ -78,6 +79,19 @@ function createExampleSourceSemanticsExtension(): CompilerExtension {
 }
 
 test("provider-backed virtual modules participate in normal program binding", () => {
+  const boundFileNames: string[] = [];
+  const lifecycleObserver: CompilerExtension = {
+    identity: {
+      id: "acme-provider-post-final-query-lifecycle",
+      version: "1.0.0",
+      capabilityNamespace: "acme-provider-post-final-query-lifecycle",
+    },
+    initialize(context): void {
+      context.registerLifecycleHook<SourceFileBoundLifecycleRequest>(ExtensionLifecycleEvent.afterSourceFileBound, (request) => {
+        boundFileNames.push(request.fileName);
+      });
+    },
+  };
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
       import { SearchValues } from "@example/target/Acme.Buffers.js";
@@ -106,7 +120,7 @@ test("provider-backed virtual modules participate in normal program binding", ()
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
-    extensions: [providerExtension("@example/target/Acme.Buffers.js")],
+    extensions: [providerExtension("@example/target/Acme.Buffers.js"), lifecycleObserver],
   });
 
   const program = NewProgram(options);
@@ -165,6 +179,20 @@ test("provider-backed virtual modules participate in normal program binding", ()
   );
 
   assert.ok(finalizeExtensionSemantics(options) === extended.extensionHost, "Finalization must return the attached extension host.");
+  const retainedBoundFileNames = [...boundFileNames];
+  const retainedDocuments = extended.extensionHost.providers.getVirtualDeclarationDocuments();
+  const retainedSourceFiles = [...Program_GetSourceFiles(program)];
+  const retainedDiagnostics = extended.extensionHost.diagnostics.all();
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const propertyAccess = findFirstNodeByKind(index, KindPropertyAccessExpression);
+  assert.ok(queries.getResolvedSignature(call) !== undefined);
+  assert.ok(queries.getTypeAtLocation(call) !== undefined);
+  assert.ok(queries.getSymbolAtLocation(Node_Name(propertyAccess)) !== undefined);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  assert.deepEqual(boundFileNames, retainedBoundFileNames);
+  assert.deepEqual(extended.extensionHost.providers.getVirtualDeclarationDocuments(), retainedDocuments);
+  assert.deepEqual(Program_GetSourceFiles(program), retainedSourceFiles);
+  assert.deepEqual(extended.extensionHost.diagnostics.all(), retainedDiagnostics);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   assert.equal(consumer.getVirtualDeclaration(virtualFile)?.providerModuleId, "Acme.Buffers");
   assert.equal(consumer.getVirtualDeclaration(searchValuesSymbol)?.exportName, "SearchValues");
