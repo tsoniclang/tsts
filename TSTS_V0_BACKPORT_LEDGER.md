@@ -36,6 +36,7 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 | `20260719-full-corpus-index-evidence-and-harness` | `61f2a765b7a820639a734e94177665860ffd4283` | Resolved | Index-signature provenance is extension-only exact declaration evidence: ordinary TS-Go symbol caches are unchanged and no synthetic `__index` symbol is fabricated. The TypeScript corpus harness also applies static pinned-runner skips before materialization and models the complete TypeScript API declaration alias family. |
 | `20260719-115106-post-finalization-checker-query` | `44928afc` | Resolved | Public checker and diagnostic queries retain canonical semantic discovery while extension semantics are open, then become read-only consumers of already-checked state once finalization begins; they cannot reopen lifecycle hooks, checked operations, facts, provider artifacts, or extension diagnostics. |
 | `20260719-135458-provider-type-family-runtime-carrier-shared-symbol-conflict` | `3407b2f8` | Resolved | Instantiated runtime carriers are published only to exact checked type-use and semantic-type subjects; declaration symbols remain provenance/target-binding subjects and cannot acquire one concrete carrier for multiple generic instantiations or provider-family arities. |
+| `20260719-165020-built-package-omits-bundled-default-libraries` | `4720657c` | Resolved | The build packages exactly the generated bundled-library index, and package validation installs the real tarball in isolation and checks a default-lib program through the public API. |
 
 ## Complete Commit Order
 
@@ -79,6 +80,7 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 38. `61f2a765b7a820639a734e94177665860ffd4283`
 39. `44928afc`
 40. `3407b2f8`
+41. `4720657c`
 
 ## Complete Validation At Implementation `3407b2f8`
 
