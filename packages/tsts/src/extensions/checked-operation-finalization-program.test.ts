@@ -30,6 +30,8 @@ import {
   defineExtensionFactKey,
   deferObservation,
   finalizeExtensionSemantics,
+  rejectObservation,
+  runtimeCarrierFactKey,
   selectedTargetSignatureFactKey,
   targetOperationFactKey,
 } from "./index.js";
@@ -227,6 +229,199 @@ test("normal checking finalizes generic receiver calls and property assignment f
   assert.equal(optionalElementSource.use, "value");
   assert.equal(optionalElementSource.accessMode, "read");
   assert.ok(propertyRequests.some((request) => request.propertyName === "value"));
+});
+
+test("retained operations demand exact structural runtime carriers without eager type scanning", () => {
+  const extensionId = "acme.structural-carrier-extension";
+  const requestedByMappers = new Set<ExtensionFactSubject>();
+  const runtimeRequests: Array<{ readonly type: ExtensionFactSubject; readonly phase: "checking" | "finalization" }> = [];
+  const acceptedTypes = new Set<ExtensionFactSubject>();
+  const unretainedType = Object.freeze({});
+  let unusedIndexType: ExtensionFactSubject | undefined;
+  let elementReceiverType: ExtensionFactSubject | undefined;
+  let rejectedReceiverType: ExtensionFactSubject | undefined;
+  const carrierIds = new WeakMap<object, number>();
+  let nextCarrierId = 1;
+  const carrierFor = (type: ExtensionFactSubject) => {
+    let id = carrierIds.get(type);
+    if (id === undefined) {
+      id = nextCarrierId++;
+      carrierIds.set(type, id);
+    }
+    return { kind: "opaque" as const, id: `acme.structural.${id}` };
+  };
+  const carrierExtension: CompilerExtension = {
+    identity: {
+      id: "acme.structural-carrier-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-structural-carrier-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetSemanticProvider({
+        identity: {
+          id: "acme.structural-carrier-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "semantic",
+        },
+        resolveRuntimeCarrier: (request, observationContext) => {
+          assert.equal(requestedByMappers.has(request.type), true, "Runtime carriers must be demand-driven by an active exact mapper request.");
+          runtimeRequests.push({ type: request.type, phase: observationContext.phase });
+          if (observationContext.phase === "checking") {
+            return deferObservation;
+          }
+          acceptedTypes.add(request.type);
+          return acceptObservation({ carrier: carrierFor(request.type) });
+        },
+      }), true);
+    },
+  };
+  const extension: CompilerExtension = {
+    identity: {
+      id: extensionId,
+      version: "1.0.0",
+      capabilityNamespace: "acme-structural-carrier",
+      diagnosticRange: { start: 9_120_000, end: 9_120_099 },
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetSemanticProvider({
+        identity: {
+          id: "acme.structural-operation-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "semantic",
+        },
+        mapCheckedCall: (request, observationContext) => {
+          if (request.sourceReceiver === undefined) {
+            return deferObservation;
+          }
+          requestedByMappers.add(request.sourceReceiver.type);
+          const carrier = observationContext.factResolver.resolve(request.sourceReceiver.type, runtimeCarrierFactKey);
+          return carrier === undefined
+            ? deferObservation
+            : acceptObservation(callResult("acme.structural.call", request));
+        },
+        mapCheckedPropertyAccess: (request, observationContext) => {
+          requestedByMappers.add(request.sourceReceiver.type);
+          const carrier = observationContext.factResolver.resolve(request.sourceReceiver.type, runtimeCarrierFactKey);
+          if (carrier === undefined) {
+            return deferObservation;
+          }
+          if (request.propertyName === "denied") {
+            rejectedReceiverType = request.sourceReceiver.type;
+            return rejectObservation({
+              extensionId,
+              extensionCode: "ACME_STRUCTURAL_DENIED",
+              numericCode: 9_120_001,
+              category: "error",
+              message: "The neutral rollback lane rejects after resolving its exact carrier.",
+              nodeOrSpan: request.expression,
+            });
+          }
+          return acceptObservation({ operation: operation("acme.structural.property", "property") });
+        },
+        mapCheckedElementAccess: (request, observationContext) => {
+          assert.equal(observationContext.factResolver.resolve(unretainedType, runtimeCarrierFactKey), undefined);
+          unusedIndexType = request.sourceArgument.type;
+          elementReceiverType = request.sourceReceiver.type;
+          requestedByMappers.add(request.sourceReceiver.type);
+          const carrier = observationContext.factResolver.resolve(request.sourceReceiver.type, runtimeCarrierFactKey);
+          const repeatedCarrier = observationContext.factResolver.resolve(request.sourceReceiver.type, runtimeCarrierFactKey);
+          assert.equal(repeatedCarrier, carrier, "Repeated exact demand in one mapper attempt must be bounded and idempotent.");
+          return carrier === undefined
+            ? deferObservation
+            : acceptObservation({ operation: operation("acme.structural.element", "indexer") });
+        },
+        mapCheckedOperator: (request, observationContext) => {
+          const operandType = request.operatorKind === "binary" ? request.sourceLeft.type : request.sourceOperand.type;
+          requestedByMappers.add(operandType);
+          const carrier = observationContext.factResolver.resolve(operandType, runtimeCarrierFactKey);
+          return carrier === undefined
+            ? deferObservation
+            : acceptObservation({ operation: operation("acme.structural.operator", "operator") });
+        },
+        mapCheckedConversion: (request, observationContext) => {
+          requestedByMappers.add(request.source.type);
+          const sourceCarrier = observationContext.factResolver.resolve(request.source.type, runtimeCarrierFactKey);
+          const targetType = request.conversionKind === "assertion"
+            ? request.target.type
+            : request.sourceBinding.selectedParameterType;
+          requestedByMappers.add(targetType);
+          const targetCarrier = observationContext.factResolver.resolve(targetType, runtimeCarrierFactKey);
+          return sourceCarrier === undefined || targetCarrier === undefined
+            ? deferObservation
+            : acceptObservation({ convertedType: targetCarrier.carrier });
+        },
+        mapCheckedIteration: (request, observationContext) => {
+          requestedByMappers.add(request.sourceIterable.type);
+          const carrier = observationContext.factResolver.resolve(request.sourceIterable.type, runtimeCarrierFactKey);
+          return carrier === undefined
+            ? deferObservation
+            : acceptObservation({ operation: operation("acme.structural.iterate", "iteration") });
+        },
+      }), true);
+    },
+  };
+  const { program, programOptions, extensionHost } = createLifecycleProgram([carrierExtension, extension], `
+    const one: 1 = 1;
+    declare class Box<T> { clear(): void; }
+
+    export function call(box: Box<string>): void {
+      box.clear();
+    }
+
+    export function tuple(pair: [number, string]): string {
+      return pair[one];
+    }
+
+    export function property(point: { value: number }): number {
+      return point.value;
+    }
+
+    export function operator(value: number): number {
+      return -value;
+    }
+
+    export function conversion(value: unknown): { value: number } {
+      return value as { value: number };
+    }
+
+    export function iteration(values: number[]): number {
+      for (const value of values) {
+        return value;
+      }
+      return 0;
+    }
+
+    export function rejected(value: { denied: number }): number {
+      return value.denied;
+    }
+  `);
+
+  assertCleanProgram(program);
+  assert.ok(runtimeRequests.length > 0);
+  assert.ok(runtimeRequests.every((request) => request.phase === "checking"));
+  assert.ok([...requestedByMappers].every((type) => extensionHost.facts.get(type, runtimeCarrierFactKey) === undefined));
+
+  finalizeExtensionSemantics(programOptions);
+
+  assert.ok(runtimeRequests.some((request) => request.phase === "finalization"));
+  assert.ok(acceptedTypes.size >= 5, "Every mapper-requested structural family must finalize independently.");
+  for (const type of acceptedTypes) {
+    if (type !== rejectedReceiverType) {
+      assert.ok(extensionHost.facts.get(type, runtimeCarrierFactKey) !== undefined);
+    }
+  }
+  assert.ok(rejectedReceiverType !== undefined);
+  assert.equal(extensionHost.facts.get(rejectedReceiverType, runtimeCarrierFactKey), undefined, "Rejected operation effects must roll back their demanded carrier.");
+  assert.ok(unusedIndexType !== undefined);
+  assert.equal(runtimeRequests.some((request) => request.type === unusedIndexType), false, "Retained evidence that no mapper requests must not trigger eager carrier resolution.");
+  assert.ok(elementReceiverType !== undefined);
+  assert.equal(runtimeRequests.filter((request) => request.type === elementReceiverType && request.phase === "checking").length, 1);
+  assert.equal(runtimeRequests.filter((request) => request.type === elementReceiverType && request.phase === "finalization").length, 1);
+  assert.equal(extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "ACME_STRUCTURAL_DENIED").length, 1);
 });
 
 test("checked member requests retain exact access use without target-side AST inspection", () => {
@@ -503,7 +698,7 @@ function identityId(subject: ExtensionFactSubject | undefined, ids: WeakMap<obje
   return created;
 }
 
-function createLifecycleProgram(extension: CompilerExtension, sourceText?: string): {
+function createLifecycleProgram(extension: CompilerExtension | readonly CompilerExtension[], sourceText?: string): {
   readonly program: GoPtr<Program>;
   readonly programOptions: ProgramOptions;
   readonly extensionHost: ExtensionHost;
@@ -551,7 +746,7 @@ function createLifecycleProgram(extension: CompilerExtension, sourceText?: strin
   const baseOptions = { Config: parsed, Host: host } satisfies ProgramOptions;
   const extended = attachExtensionHost(baseOptions, {
     activeTarget: "acme",
-    extensions: [extension],
+    extensions: Array.isArray(extension) ? [...extension] : [extension as CompilerExtension],
   });
   const program = NewProgram(extended.program);
   return { program, programOptions: extended.program, extensionHost: extended.extensionHost };

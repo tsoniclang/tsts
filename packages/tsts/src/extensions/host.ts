@@ -24,6 +24,7 @@ import type {
   ExtensionObservationResponse,
   ExtensionObservationResult,
   ExtensionObservationRunOptions,
+  RuntimeCarrierFactRequest,
 } from "./observations.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import { CheckedOperationInventory, type CheckedOperationApplyOutcome } from "./checked-operation-finalization.js";
@@ -32,7 +33,15 @@ import { differingCheckedOperationRequestFields } from "./checked-operation-requ
 import { snapshotCheckedOperationResponse } from "./checked-operation-value-snapshot.js";
 import type { ArgumentPassingMode } from "./argument-passing.js";
 import { isArgumentPassingMode } from "./argument-passing.js";
-import type { SourcePrimitiveKind } from "./facts.js";
+import {
+  runtimeCarrierFactKey,
+  type RuntimeCarrierFact,
+  type SourcePrimitiveKind,
+} from "./facts.js";
+import {
+  checkedOperationRuntimeCarrierDemands,
+  type CheckedOperationRuntimeCarrierDemand,
+} from "./runtime-carrier-demand.js";
 import {
   defineExtensionFactKey,
   formatExtensionFactKeyForDisplay,
@@ -251,6 +260,14 @@ interface ExtensionFactResolverSavepoint {
 interface ExtensionFactResolverSavepointState {
   readonly registrationIndex: number;
   active: boolean;
+}
+
+interface RuntimeCarrierDemandScope {
+  readonly phase: ExtensionObservationPhase;
+  readonly observation: CheckedOperationObservationPointName;
+  readonly request: ExtensionObservationRequest<CheckedOperationObservationPointName>;
+  readonly attempted: Set<ExtensionFactSubject>;
+  demands?: ReadonlyMap<ExtensionFactSubject, CheckedOperationRuntimeCarrierDemand>;
 }
 
 interface ProviderRegistrationSavepoint {
@@ -3684,6 +3701,7 @@ export class ExtensionHost {
   readonly #hostRegistrySavepoints: HostRegistrySavepoint[] = [];
   readonly #hostRegistrySavepointStates = new WeakMap<HostRegistrySavepoint, HostRegistrySavepointState>();
   readonly #ownerAuthority: ExtensionOwnerAuthority;
+  readonly #runtimeCarrierDemandScopes: RuntimeCarrierDemandScope[] = [];
   #program: object;
   #compilerContext: ExtensionCompilerQueryContext | undefined;
   #compilerContextsBySourceFile = new WeakMap<object, ExtensionCompilerQueryContext>();
@@ -3719,6 +3737,8 @@ export class ExtensionHost {
     this.#ownerAuthority = getDiagnosticStoreOwnerAuthority(this.diagnostics);
     this.facts = new ExtensionFactStore(this.diagnostics);
     this.factResolver = new ExtensionFactResolver(this.facts, this.diagnostics);
+    this.factResolver[factResolverRegisterForHost](runtimeCarrierFactKey, (subject, context) =>
+      this.#resolveDemandedRuntimeCarrier(subject, context));
     this.providers = new ProviderRegistry(this.diagnostics, options.requiredProviderModules ?? []);
     this.#checkedOperations = new CheckedOperationInventory({
       beginAttempt: () => this.#beginFactAttempt(),
@@ -4522,6 +4542,7 @@ export class ExtensionHost {
     options: ExtensionObservationRunOptions,
     phase: ExtensionObservationPhase,
     reportDeferred: boolean,
+    compilerSourceFile?: GoPtr<SourceFile>,
   ): ExtensionObservationResult<ExtensionObservationResponse<TObservation>> {
     this.#hookRegistrationsSealed = true;
     const owner = this.getObservationOwner(observation);
@@ -4577,17 +4598,27 @@ export class ExtensionHost {
             ? Object.freeze(contextBase)
             : Object.freeze({
                 ...contextBase,
-                compiler: this.getCompilerQueryContext(observationCompilerSourceFile(observation, request)),
+                compiler: this.getCompilerQueryContext(compilerSourceFile ?? observationCompilerSourceFile(observation, request)),
                 host: this,
               });
-          returned = runWithExtensionOwnerAuthority(
-            this.#ownerAuthority,
-            registered.extensionId,
-            () => registered.hook(
-              request,
-              context as ExtensionObservationContext<TObservation>,
-            ),
-          ) as ExtensionObservation<ExtensionObservationResponse<TObservation>>;
+          const invoke = (): ExtensionObservation<ExtensionObservationResponse<TObservation>> =>
+            runWithExtensionOwnerAuthority(
+              this.#ownerAuthority,
+              registered.extensionId,
+              () => registered.hook(
+                request,
+                context as ExtensionObservationContext<TObservation>,
+              ),
+            ) as ExtensionObservation<ExtensionObservationResponse<TObservation>>;
+          returned = isCheckedOperationObservationPoint(observation)
+            && this.getObservationOwner(ExtensionObservationPoint.resolveRuntimeCarrier) !== undefined
+            ? this.#withRuntimeCarrierDemandScope(
+                observation,
+                request as ExtensionObservationRequest<CheckedOperationObservationPointName>,
+                phase,
+                invoke,
+              )
+            : invoke();
         } finally {
           this.#observationHookDepth -= 1;
         }
@@ -4698,6 +4729,101 @@ export class ExtensionHost {
       }
     }
     return selected.result;
+  }
+
+  #withRuntimeCarrierDemandScope<TResult>(
+    observation: CheckedOperationObservationPointName,
+    request: ExtensionObservationRequest<CheckedOperationObservationPointName>,
+    phase: ExtensionObservationPhase,
+    callback: () => TResult,
+  ): TResult {
+    const scope: RuntimeCarrierDemandScope = {
+      phase,
+      observation,
+      request,
+      attempted: new Set(),
+    };
+    this.#runtimeCarrierDemandScopes.push(scope);
+    try {
+      return callback();
+    } finally {
+      if (this.#runtimeCarrierDemandScopes.pop() !== scope) {
+        throw new Error("Runtime-carrier demand scopes must complete in strict LIFO order.");
+      }
+    }
+  }
+
+  #resolveDemandedRuntimeCarrier(
+    subject: ExtensionFactSubject,
+    context: ExtensionFactResolverContext,
+  ): ExtensionFactResolution<RuntimeCarrierFact> | undefined {
+    const scope = this.#runtimeCarrierDemandScopes[this.#runtimeCarrierDemandScopes.length - 1];
+    if (scope === undefined
+      || scope.attempted.has(subject)
+      || this.getObservationOwner(ExtensionObservationPoint.resolveRuntimeCarrier) === undefined) {
+      return undefined;
+    }
+    scope.demands ??= new Map(
+      checkedOperationRuntimeCarrierDemands(scope.observation, scope.request)
+        .map((demand) => [demand.type, demand]),
+    );
+    const demand = scope.demands.get(subject);
+    if (demand === undefined) {
+      return undefined;
+    }
+    scope.attempted.add(subject);
+    const request: RuntimeCarrierFactRequest = {
+      type: demand.type,
+      ...(demand.sourceTypeReference === undefined ? {} : { sourceTypeReference: demand.sourceTypeReference }),
+      ...(demand.sourceSymbol === undefined ? {} : { sourceSymbol: demand.sourceSymbol }),
+      ...(this.activeTarget === undefined ? {} : { target: this.activeTarget }),
+    };
+    const compilerSourceFile = GetSourceFileOfNode(demand.sourceOrigin as Node);
+    const result = runWithoutAllExtensionOwnerAuthority(this.#ownerAuthority, () => this.#runObservation(
+      ExtensionObservationPoint.resolveRuntimeCarrier,
+      request,
+      () => {
+        throw new Error("Target-owned runtime-carrier resolution unexpectedly reached core fallback.");
+      },
+      { requireOwner: true },
+      scope.phase,
+      false,
+      compilerSourceFile,
+    ));
+    if (result.kind !== "accept") {
+      return undefined;
+    }
+    const common = {
+      carrier: result.value.carrier,
+      ...(result.value.requiresAllocation === undefined ? {} : { requiresAllocation: result.value.requiresAllocation }),
+    };
+    const providerProvenance = result.value.provenance?.providerDeclaration === undefined
+      ? {}
+      : { providerDeclaration: result.value.provenance.providerDeclaration };
+    if (demand.sourceTypeReference !== undefined) {
+      const referenceWrite = context.facts.set(demand.sourceTypeReference, runtimeCarrierFactKey, {
+        ...common,
+        provenance: {
+          ...providerProvenance,
+          sourceType: demand.type,
+          sourceTypeReference: demand.sourceTypeReference,
+          ...(demand.sourceSymbol === undefined ? {} : { sourceSymbol: demand.sourceSymbol }),
+        },
+      }, result.evidence ?? []);
+      if (referenceWrite !== "inserted" && referenceWrite !== "idempotent") {
+        return undefined;
+      }
+    }
+    return {
+      value: {
+        ...common,
+        provenance: {
+          ...providerProvenance,
+          sourceType: demand.type,
+        },
+      },
+      ...(result.evidence === undefined ? {} : { evidence: result.evidence }),
+    };
   }
 
   runLifecycle<TRequest extends object>(event: string, request: TRequest, compilerSourceFile?: GoPtr<SourceFile>): void {
@@ -5255,6 +5381,19 @@ function runWithoutExtensionOwnerAuthority<T>(
     }
     authority.stack.push(owner);
   }
+}
+
+function runWithoutAllExtensionOwnerAuthority<T>(
+  authority: ExtensionOwnerAuthority,
+  callback: () => T,
+): T {
+  if (authority.stack.length === 0) {
+    return callback();
+  }
+  return runWithoutExtensionOwnerAuthority(
+    authority,
+    () => runWithoutAllExtensionOwnerAuthority(authority, callback),
+  );
 }
 
 function createHostDiagnostic(input: {
