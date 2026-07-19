@@ -2,7 +2,7 @@ import type { GoPtr } from "../go/compat.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import type { Program } from "../internal/compiler/program.js";
-import { Program_GetSourceFiles, Program_GetTypeCheckerForFile } from "../internal/compiler/program.js";
+import { Program_GetTypeCheckerForFile } from "../internal/compiler/program.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import type { Context } from "../go/context.js";
 import { Background } from "../go/context.js";
@@ -181,7 +181,9 @@ function withChecker<T>(
   if (program === undefined || subject === undefined) {
     return undefined;
   }
-  const sourceFile = options.sourceFile ?? defaultOptions.sourceFile ?? (isNode(subject) ? GetSourceFileOfNode(subject) : undefined) ?? Program_GetSourceFiles(program)?.[0];
+  const sourceFile = options.sourceFile
+    ?? defaultOptions.sourceFile
+    ?? (isNode(subject) ? GetSourceFileOfNode(subject) : undefined);
   if (sourceFile === undefined) {
     return undefined;
   }

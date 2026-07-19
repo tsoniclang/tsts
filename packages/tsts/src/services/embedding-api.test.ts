@@ -116,6 +116,7 @@ test("public embedding API drives a provider-backed program without internal imp
 
   const sourceFile = session.getSourceFile("/src/index.ts");
   assert.ok(sourceFile !== undefined);
+  const queryOptions = { sourceFile };
   const diagnostics = session.getDiagnostics("all", sourceFile);
   assert.equal(diagnostics.length, 0, formatDiagnostics(diagnostics.filter((diagnostic) => diagnostic !== undefined), "/src"));
   const enumeratedSourceFileNames = new Set(session.getSourceFiles().map((file) => session.ast.getFileName(file)));
@@ -163,7 +164,10 @@ test("public embedding API drives a provider-backed program without internal imp
 
   const call = findNode(sourceFile, session.ast, (node, ast) => ast.is.IsCallExpression(node));
   const callSignature = session.checker.getResolvedSignature(call);
-  assert.equal(session.checker.typeToString(session.checker.getReturnTypeOfSignature(callSignature)), "void");
+  assert.equal(session.checker.typeToString(
+    session.checker.getReturnTypeOfSignature(callSignature, queryOptions),
+    queryOptions,
+  ), "void");
 
   const boxedValue = findNode(sourceFile, session.ast, (node, ast) => ast.is.IsPropertyAccessExpression(node) && ast.text(ast.name(node)) === "value");
   const boxedIdentifier = findNode(sourceFile, session.ast, (node, ast) =>
@@ -172,11 +176,11 @@ test("public embedding API drives a provider-backed program without internal imp
     && ast.is.IsPropertyAccessExpression(ast.parent(node)));
   const boxedValueType = session.checker.getTypeAtLocation(boxedValue);
   assert.equal(session.types.isNumberLike(boxedValueType), true);
-  assert.equal(session.types.typeToString(boxedValueType), "number");
+  assert.equal(session.types.typeToString(boxedValueType, queryOptions), "number");
 
   const pairType = session.checker.getTypeFromTypeNode(findTypeAliasType(sourceFile, session.ast, "Pair"));
   assert.equal(session.types.isTuple(pairType), true);
-  assert.equal(session.types.getTupleElementTypes(pairType).length, 2);
+  assert.equal(session.types.getTupleElementTypes(pairType, queryOptions).length, 2);
 
   const maybeType = session.checker.getTypeFromTypeNode(findTypeAliasType(sourceFile, session.ast, "Maybe"));
   assert.equal(session.types.isUnion(maybeType), true);
@@ -196,7 +200,10 @@ test("public embedding API drives a provider-backed program without internal imp
   assert.equal(session.checker.getAliasedSymbol(consumeAlias)?.Name, "consume");
   assert.equal(session.checker.getConstantValue(writeMember), 2);
   assert.equal(session.checker.getResolvedSignature(call), callSignature);
-  assert.equal(session.checker.typeToString(session.checker.getReturnTypeOfSignature(callSignature)), "void");
+  assert.equal(session.checker.typeToString(
+    session.checker.getReturnTypeOfSignature(callSignature, queryOptions),
+    queryOptions,
+  ), "void");
   assert.equal(session.checker.getTypeAtLocation(boxedValue), boxedValueType);
   assert.equal(session.types.isTuple(session.checker.getTypeFromTypeNode(findTypeAliasType(sourceFile, session.ast, "Pair"))), true);
   assert.deepEqual(session.getDiagnostics("semantic", sourceFile), retainedSemanticDiagnostics);
@@ -416,7 +423,7 @@ test("lifecycle hooks receive public read-only compiler queries before fact fina
             const valueUse = findNode(sourceFile, lifecycleContext.compiler.ast, (node, ast) =>
               ast.is.IsIdentifier(node) && ast.text(node) === "value");
             const valueType = lifecycleContext.compiler.checker.getTypeAtLocation(valueUse);
-            observedTypeName = lifecycleContext.compiler.checker.typeToString(valueType);
+            observedTypeName = lifecycleContext.compiler.checker.typeToString(valueType, { sourceFile });
             observedNumberShape = lifecycleContext.compiler.typeShape.isNumberLike(valueType);
           });
         },

@@ -34,7 +34,7 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const narrowedValue = findIdentifierByText(index, "value", (node) => node?.Parent?.Kind === KindExpressionStatement);
   const narrowedType = queries.getTypeAtLocation(narrowedValue);
   assert.equal((narrowedType?.flags ?? 0) & TypeFlagsString, TypeFlagsString);
@@ -74,7 +74,7 @@ test("public type-checker queries expose instantiated generic member types", () 
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const finalValueAccess = findPropertyAccessByName(index, "value", (node) => node?.Parent?.Kind === KindExpressionStatement);
   const finalValueType = queries.getTypeAtLocation(finalValueAccess);
   assert.equal((finalValueType?.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
@@ -96,7 +96,7 @@ test("public type-checker queries expose flow-narrowed receiver member access", 
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const narrowedCurrent = findIdentifierByText(index, "current", (node) => node?.Parent?.Kind === KindExpressionStatement);
   const narrowedCurrentType = queries.getTypeAtLocation(narrowedCurrent);
   assert.equal(queries.getSymbolName(queries.getTypeSymbol(narrowedCurrentType)), "PageValue");

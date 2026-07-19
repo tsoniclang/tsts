@@ -3,7 +3,8 @@ export type ExtensionDiagnosticCategory = "error" | "warning" | "suggestion";
 export type ExtensionFactSubject = object;
 
 import type { GoPtr } from "../go/compat.js";
-import { SourceFile_FileName } from "../internal/ast/ast.js";
+import { SourceFile_FileName, type Node, type SourceFile } from "../internal/ast/ast.js";
+import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import type { Program } from "../internal/compiler/program.js";
 import { Program_GetSourceFile, Program_GetSourceFiles } from "../internal/compiler/program.js";
 import { createAstReader } from "../services/ast-reader.js";
@@ -3685,6 +3686,7 @@ export class ExtensionHost {
   readonly #ownerAuthority: ExtensionOwnerAuthority;
   #program: object;
   #compilerContext: ExtensionCompilerQueryContext | undefined;
+  #compilerContextsBySourceFile = new WeakMap<object, ExtensionCompilerQueryContext>();
   #observationPhase: ExtensionObservationPhase = "checking";
   #semanticFinalizationState: "open" | "finalizing" | "finalized" | "failed" = "open";
   #nextConsumerSubjectId = 1;
@@ -3884,6 +3886,7 @@ export class ExtensionHost {
     }
     this.#program = program;
     this.#compilerContext = undefined;
+    this.#compilerContextsBySourceFile = new WeakMap();
   }
 
   registerObservationOwner(observation: ExtensionObservationPointName, extensionId: string): void {
@@ -4574,7 +4577,7 @@ export class ExtensionHost {
             ? Object.freeze(contextBase)
             : Object.freeze({
                 ...contextBase,
-                compiler: this.getCompilerQueryContext(),
+                compiler: this.getCompilerQueryContext(observationCompilerSourceFile(observation, request)),
                 host: this,
               });
           returned = runWithExtensionOwnerAuthority(
@@ -4697,7 +4700,7 @@ export class ExtensionHost {
     return selected.result;
   }
 
-  runLifecycle<TRequest extends object>(event: string, request: TRequest): void {
+  runLifecycle<TRequest extends object>(event: string, request: TRequest, compilerSourceFile?: GoPtr<SourceFile>): void {
     this.#hookRegistrationsSealed = true;
     this.providers[sealProviderRegistrations]();
     const registeredHooks = this.#lifecycleHooks.get(event);
@@ -4713,7 +4716,7 @@ export class ExtensionHost {
           registered.hook(immutableRequest, {
             event,
             extensionId: registered.extensionId,
-            compiler: this.getCompilerQueryContext(),
+            compiler: this.getCompilerQueryContext(compilerSourceFile),
             host: this,
           });
         });
@@ -4773,26 +4776,35 @@ export class ExtensionHost {
     return this.#semanticFinalizationState === "finalized";
   }
 
-  getCompilerQueryContext(): ExtensionCompilerQueryContext {
-    if (this.#compilerContext === undefined) {
-      const program = this.program as GoPtr<Program>;
-      this.#compilerContext = {
-        program: this.program,
-        ast: createAstReader(),
-        checker: createTypeCheckerQueries(program),
-        typeShape: createTypeShapeQueries(program),
-        getSourceFiles: () => (Program_GetSourceFiles(program) ?? [])
-          .filter((file) => getProviderVirtualArtifactForCompiler(this.providers, SourceFile_FileName(file))?.kind !== "canonical-export-owner"),
-        getSourceFile: (fileName) => {
-          const file = Program_GetSourceFile(program, fileName);
-          return file !== undefined
-            && getProviderVirtualArtifactForCompiler(this.providers, SourceFile_FileName(file))?.kind === "canonical-export-owner"
-            ? undefined
-            : file;
-        },
-      };
+  getCompilerQueryContext(sourceFile?: GoPtr<SourceFile>): ExtensionCompilerQueryContext {
+    const retained = sourceFile === undefined
+      ? this.#compilerContext
+      : this.#compilerContextsBySourceFile.get(sourceFile);
+    if (retained !== undefined) {
+      return retained;
     }
-    return this.#compilerContext;
+    const program = this.program as GoPtr<Program>;
+    const created = {
+      program: this.program,
+      ast: createAstReader(),
+      checker: createTypeCheckerQueries(program, sourceFile === undefined ? {} : { sourceFile }),
+      typeShape: createTypeShapeQueries(program, sourceFile === undefined ? {} : { sourceFile }),
+      getSourceFiles: () => (Program_GetSourceFiles(program) ?? [])
+        .filter((file) => getProviderVirtualArtifactForCompiler(this.providers, SourceFile_FileName(file))?.kind !== "canonical-export-owner"),
+      getSourceFile: (fileName) => {
+        const file = Program_GetSourceFile(program, fileName);
+        return file !== undefined
+          && getProviderVirtualArtifactForCompiler(this.providers, SourceFile_FileName(file))?.kind === "canonical-export-owner"
+          ? undefined
+          : file;
+      },
+    } satisfies ExtensionCompilerQueryContext;
+    if (sourceFile === undefined) {
+      this.#compilerContext = created;
+    } else {
+      this.#compilerContextsBySourceFile.set(sourceFile, created);
+    }
+    return created;
   }
 
   assertFinalizedForConsumer(consumer: string): boolean {
@@ -5142,6 +5154,35 @@ function isCheckedOperationObservationPoint(observation: ExtensionObservationPoi
     default:
       return false;
   }
+}
+
+function observationCompilerSourceFile<TObservation extends ExtensionObservationPointName>(
+  observation: TObservation,
+  request: ExtensionObservationRequest<TObservation>,
+): GoPtr<SourceFile> {
+  let origin: ExtensionFactSubject | undefined;
+  switch (observation) {
+    case ExtensionObservationPoint.validateTargetConstraint:
+      origin = (request as ExtensionObservationRequest<typeof ExtensionObservationPoint.validateTargetConstraint>).source;
+      break;
+    case ExtensionObservationPoint.observePostCheckAssignability: {
+      const assignability = request as ExtensionObservationRequest<typeof ExtensionObservationPoint.observePostCheckAssignability>;
+      origin = assignability.expression ?? assignability.errorNode;
+      break;
+    }
+    case ExtensionObservationPoint.recordContextualTargetType:
+      origin = (request as ExtensionObservationRequest<typeof ExtensionObservationPoint.recordContextualTargetType>).expression;
+      break;
+    case ExtensionObservationPoint.resolveRuntimeCarrier:
+      origin = (request as ExtensionObservationRequest<typeof ExtensionObservationPoint.resolveRuntimeCarrier>).sourceTypeReference;
+      break;
+    case ExtensionObservationPoint.validateExtensionFlowUse:
+      origin = (request as ExtensionObservationRequest<typeof ExtensionObservationPoint.validateExtensionFlowUse>).useSite;
+      break;
+    default:
+      return undefined;
+  }
+  return origin === undefined ? undefined : GetSourceFileOfNode(origin as Node);
 }
 
 function getDiagnosticStoreOwnerAuthority(diagnostics: ExtensionDiagnosticStore): ExtensionOwnerAuthority {

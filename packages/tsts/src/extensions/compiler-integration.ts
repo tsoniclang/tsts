@@ -85,7 +85,7 @@ export function recordBoundSourceFileExtensionFacts(program: object, file: GoPtr
     sourceFile: file,
     fileName,
     ...(virtualArtifact !== undefined ? { providerVirtualArtifact: virtualArtifact } : {}),
-  });
+  }, file);
 }
 
 export function finalizeExtensionSemantics(program: object): ExtensionHost | undefined {

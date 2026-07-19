@@ -7,6 +7,7 @@ import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName, SourceFile_Text, SourceFile_as_ast_HasFileName } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Locals, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
+import { CheckFlagsInstantiated } from "../internal/ast/checkflags.js";
 import { Node_End, Node_ForEachChild, Node_Name, Node_Pos } from "../internal/ast/spine.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { SymbolFlagsAlias } from "../internal/ast/symbolflags.js";
@@ -33,6 +34,7 @@ import {
 } from "../internal/compiler/program.js";
 import { Checker_GetAliasedSymbol } from "../internal/checker/checker/symbols.js";
 import { Checker_TypeToString } from "../internal/checker/printer.js";
+import { LinkStore_Has } from "../internal/core/linkstore.js";
 import { createTypeCheckerQueries } from "../services/type-checker.js";
 import { ResolvedModuleExtensionProviderVirtual, ResolvedModule_IsProviderVirtual } from "../internal/module/types.js";
 import type { Program, ProgramOptions } from "../internal/compiler/program.js";
@@ -2293,7 +2295,9 @@ test("provider type-family runtime carriers remain owned by exact type uses in e
     ["declare const closed: Task<number>;", "declare const plain: Task;"],
   ] as const) {
     const observedRequests: RuntimeCarrierFactRequest[] = [];
+    const observedMembersByType = new WeakMap<object, readonly Symbol[]>();
     let fs = FromMap(new Map<string, string>([
+      ["/src/anchor.ts", "export const anchor = 1;"],
       ["/src/index.ts", `
         import type { Task } from "@acme/native/tasks.js";
 
@@ -2306,8 +2310,9 @@ test("provider type-family runtime carriers remain owned by exact type uses in e
           noLib: true,
           module: "esnext",
           moduleResolution: "bundler",
+          checkers: 2,
         },
-        files: ["index.ts"],
+        files: ["anchor.ts", "index.ts"],
       })],
     ]), false as bool);
     fs = WrapFS(fs);
@@ -2318,7 +2323,10 @@ test("provider type-family runtime carriers remain owned by exact type uses in e
     const options = { Config: parsed, Host: host } satisfies ProgramOptions;
     const extended = attachExtensionHost(options, {
       activeTarget: "acme",
-      extensions: [taskTypeFamilyProviderExtension((request) => observedRequests.push(request))],
+      extensions: [taskTypeFamilyProviderExtension((request, members) => {
+        observedRequests.push(request);
+        observedMembersByType.set(request.type, members);
+      })],
     });
     const program = NewProgram(options);
     const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
@@ -2353,6 +2361,24 @@ test("provider type-family runtime carriers remain owned by exact type uses in e
     assert.equal(extended.extensionHost.facts.get(Type_Symbol(plainRequest.type as Type), runtimeCarrierFactKey), undefined);
     assert.equal(extended.extensionHost.facts.get(Type_Symbol(closedRequest.type as Type), runtimeCarrierFactKey), undefined);
     assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
+
+    const anchorFile = Program_GetSourceFile(program, "/src/anchor.ts");
+    assert.ok(anchorFile !== undefined);
+    const [sourceChecker, releaseSourceChecker] = Program_GetTypeCheckerForFile(program, Background(), sourceFile);
+    const [anchorChecker, releaseAnchorChecker] = Program_GetTypeCheckerForFile(program, Background(), anchorFile);
+    try {
+      assert.notEqual(sourceChecker, anchorChecker, "The regression requires distinct checker ownership for the selected Type and the first program file.");
+      const instantiatedMembers = (observedMembersByType.get(closedRequest.type) ?? [])
+        .filter((symbol) => (symbol?.CheckFlags & CheckFlagsInstantiated) !== 0);
+      assert.ok(instantiatedMembers.length > 0, "The closed family variant must expose checker-local instantiated member symbols.");
+      for (const member of instantiatedMembers) {
+        assert.equal(LinkStore_Has(sourceChecker?.valueSymbolLinks, member), true, "Instantiated members must belong to the checker that produced the selected Type.");
+        assert.equal(LinkStore_Has(anchorChecker?.valueSymbolLinks, member), false, "Instantiated members must not be created in the checker for an unrelated first source file.");
+      }
+    } finally {
+      releaseAnchorChecker();
+      releaseSourceChecker();
+    }
 
     const retainedFacts = [
       extended.extensionHost.facts.get(plainReference, runtimeCarrierFactKey),
@@ -7392,7 +7418,7 @@ function restFunctionArrayProviderExtension(): CompilerExtension {
   };
 }
 
-function taskTypeFamilyProviderExtension(onRuntimeCarrier?: (request: RuntimeCarrierFactRequest) => void): CompilerExtension {
+function taskTypeFamilyProviderExtension(onRuntimeCarrier?: (request: RuntimeCarrierFactRequest, members: readonly Symbol[]) => void): CompilerExtension {
   return {
     identity: {
       id: "acme-task-type-family-provider-extension",
@@ -7499,7 +7525,11 @@ function taskTypeFamilyProviderExtension(onRuntimeCarrier?: (request: RuntimeCar
         assert.equal(context.registerTargetSemanticProvider({
           identity: semanticProviderIdentity("acme-task-type-family-semantic-provider"),
           resolveRuntimeCarrier: (request, observationContext) => {
-            onRuntimeCarrier(request);
+            const selectedMembers = observationContext.compiler.typeShape.getProperties(request.type as Type);
+            onRuntimeCarrier(request, selectedMembers as readonly Symbol[]);
+            const selectedMemberNames = selectedMembers
+              .map((symbol) => observationContext.compiler.checker.getSymbolName(symbol));
+            assert.ok(selectedMemberNames.includes("Wait"), "Runtime-carrier type-shape queries must use the checker that owns the selected semantic Type.");
             const targetBinding = request.sourceTypeReference === undefined
               ? undefined
               : observationContext.facts.get(request.sourceTypeReference, targetBindingFactKey);
