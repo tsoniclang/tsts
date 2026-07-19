@@ -45,6 +45,7 @@ import type { CheckedOperationReference } from "./observations.js";
 import type {
   CheckedCallMappingRequest as PublicCheckedCallMappingRequest,
   CheckedSourceCallProducerContext as PublicCheckedSourceCallProducerContext,
+  CheckedSourceInlineSelectedPropertyEvidence as PublicCheckedSourceInlineSelectedPropertyEvidence,
 } from "../index.js";
 
 type RequireTrue<T extends true> = T;
@@ -54,6 +55,8 @@ type PublicCheckedSourceCallProducerCapabilityCoverage = RequireTrue<
   "all" extends keyof PublicCheckedSourceCallProducerContext["diagnostics"] ? false : true
 > & RequireTrue<
   "sourceComposition" extends keyof PublicCheckedCallMappingRequest ? false : true
+> & RequireTrue<
+  "propertyName" extends keyof PublicCheckedSourceInlineSelectedPropertyEvidence ? false : true
 >;
 const publicCheckedSourceCallProducerCapabilityCoverage: PublicCheckedSourceCallProducerCapabilityCoverage = true;
 
@@ -936,30 +939,29 @@ test("checked source-call producers read only host source facts and declared sou
   const dependencyFactKey = stringFactKey(dependencyExtensionId, "dependency-value");
   const producerFactKey = stringFactKey(producerExtensionId, "producer-value");
   const targetFactKey = stringFactKey(targetExtensionId, "target-value");
-  const sharedSubject = {};
   const fixture = createCheckedCallFixture();
   const host = new ExtensionHost({}, {
     extensions: [
       compilerExtension(dependencyExtensionId, {
         composition: { kind: "source" },
         initialize: (context) => {
-          assert.equal(context.facts.set(sharedSubject, dependencyFactKey, "dependency"), "inserted");
+          assert.equal(context.facts.set(fixture.call, dependencyFactKey, "dependency"), "inserted");
         },
       }),
       producerExtension(producerExtensionId, [{
         selector: exportSelector(),
         produce: (operation, context) => {
-          assert.equal(context.facts.get(sharedSubject, dependencyFactKey), "dependency");
-          assert.equal(context.facts.getEntry(sharedSubject, dependencyFactKey)?.value, "dependency");
-          assert.equal(context.facts.has(sharedSubject, dependencyFactKey), true);
-          assert.equal(context.factResolver.resolve(sharedSubject, dependencyFactKey), "dependency");
+          assert.equal(context.facts.get(fixture.call, dependencyFactKey), "dependency");
+          assert.equal(context.facts.getEntry(fixture.call, dependencyFactKey)?.value, "dependency");
+          assert.equal(context.facts.has(fixture.call, dependencyFactKey), true);
+          assert.equal(context.factResolver.resolve(fixture.call, dependencyFactKey), "dependency");
           assert.equal(context.facts.get(operation.call, producerFactKey), undefined);
           assert.equal(context.facts.set(operation.call, producerFactKey, "producer"), "inserted");
           for (const read of [
-            () => context.facts.get(sharedSubject, targetFactKey),
-            () => context.facts.getEntry(sharedSubject, targetFactKey),
-            () => context.facts.has(sharedSubject, targetFactKey),
-            () => context.factResolver.resolve(sharedSubject, targetFactKey),
+            () => context.facts.get(fixture.call, targetFactKey),
+            () => context.facts.getEntry(fixture.call, targetFactKey),
+            () => context.facts.has(fixture.call, targetFactKey),
+            () => context.factResolver.resolve(fixture.call, targetFactKey),
             () => context.facts.get(fixture.declaration, providerVirtualDeclarationFactKey),
             () => context.facts.getEntry(fixture.declaration, providerVirtualDeclarationFactKey),
             () => context.facts.has(fixture.declaration, providerVirtualDeclarationFactKey),
@@ -973,7 +975,7 @@ test("checked source-call producers read only host source facts and declared sou
       compilerExtension(targetExtensionId, {
         composition: { kind: "target", target: contractTarget },
         initialize: (context) => {
-          assert.equal(context.facts.set(sharedSubject, targetFactKey, "target"), "inserted");
+          assert.equal(context.facts.set(fixture.call, targetFactKey, "target"), "inserted");
         },
       }),
     ],
@@ -982,11 +984,89 @@ test("checked source-call producers read only host source facts and declared sou
 
   assert.equal(runCheckedCall(host, fixture).kind, "accept");
   assert.equal(host.facts.get(fixture.call, producerFactKey), "producer");
-  assert.equal(host.facts.get(sharedSubject, targetFactKey), "target");
+  assert.equal(host.facts.get(fixture.call, targetFactKey), "target");
   assert.equal(host.diagnostics.all().length, 0);
 });
 
-test("source extensions cannot depend on target extensions", () => {
+test("checked source-call producer fact capabilities are confined to retained operation subjects", () => {
+  const extensionId = "checked-source-call.subject-boundary";
+  const factKey = stringFactKey(extensionId, "operation-subject");
+  const fixture = createCheckedCallFixture();
+  const unrelatedSubject = {};
+  const host = new ExtensionHost({}, {
+    extensions: [producerExtension(extensionId, [{
+      selector: exportSelector(),
+      produce: (operation, context) => {
+        for (const access of [
+          () => context.facts.get(unrelatedSubject, factKey),
+          () => context.facts.getEntry(unrelatedSubject, factKey),
+          () => context.facts.has(unrelatedSubject, factKey),
+          () => context.factResolver.resolve(unrelatedSubject, factKey),
+          () => context.facts.set(unrelatedSubject, factKey, "unrelated"),
+          () => host.facts.get(unrelatedSubject, factKey),
+          () => host.facts.set(unrelatedSubject, factKey, "captured-global-store"),
+        ]) {
+          assert.throws(access, /only on subjects retained by its exact checked operation/);
+        }
+        assert.equal(context.facts.set(operation.call, factKey, "retained"), "inserted");
+        return completeCheckedSourceCallProduction;
+      },
+    }])],
+  });
+  publishProviderDeclaration(host, fixture);
+
+  assert.equal(runCheckedCall(host, fixture).kind, "accept");
+  assert.equal(host.facts.get(fixture.call, factKey), "retained");
+  assert.equal(host.facts.get(unrelatedSubject, factKey), undefined);
+});
+
+test("fact resolver callbacks read through their own declared source-dependency authority", () => {
+  const leafExtensionId = "checked-source-call.resolver-authority.leaf";
+  const resolverExtensionId = "checked-source-call.resolver-authority.resolver";
+  const producerExtensionId = "checked-source-call.resolver-authority.producer";
+  const leafFactKey = stringFactKey(leafExtensionId, "leaf");
+  const resolvedFactKey = stringFactKey(resolverExtensionId, "resolved");
+  const producedFactKey = stringFactKey(producerExtensionId, "produced");
+  const fixture = createCheckedCallFixture();
+  const host = new ExtensionHost({}, {
+    extensions: [
+      compilerExtension(leafExtensionId, {
+        composition: { kind: "source" },
+        initialize: (context) => {
+          assert.equal(context.facts.set(fixture.call, leafFactKey, "leaf"), "inserted");
+        },
+      }),
+      compilerExtension(resolverExtensionId, {
+        composition: { kind: "source" },
+        dependsOn: [leafExtensionId],
+        initialize: (context) => {
+          context.factResolver.register(resolvedFactKey, (subject, resolverContext) => {
+            const leaf = resolverContext.facts.get(subject, leafFactKey);
+            return leaf === undefined ? undefined : { value: `${leaf}:resolved` };
+          });
+        },
+      }),
+      producerExtension(producerExtensionId, [{
+        selector: exportSelector(),
+        produce: (operation, context) => {
+          assert.equal(
+            context.factResolver.resolve(operation.call, resolvedFactKey),
+            "leaf:resolved",
+          );
+          assert.equal(context.facts.set(operation.call, producedFactKey, "complete"), "inserted");
+          return completeCheckedSourceCallProduction;
+        },
+      }], [resolverExtensionId]),
+    ],
+  });
+  publishProviderDeclaration(host, fixture);
+
+  assert.equal(runCheckedCall(host, fixture).kind, "accept");
+  assert.equal(host.facts.get(fixture.call, resolvedFactKey), "leaf:resolved");
+  assert.equal(host.facts.get(fixture.call, producedFactKey), "complete");
+});
+
+test("source extensions cannot depend on non-source extensions", () => {
   const sourceExtensionId = "checked-source-call.invalid-dependency.source";
   const targetExtensionId = "checked-source-call.invalid-dependency.target";
   let sourceInitialized = false;
@@ -1012,8 +1092,85 @@ test("source extensions cannot depend on target extensions", () => {
   assert.equal(diagnostics.length, 1);
   assert.equal(
     diagnostics[0]?.message,
-    `Source extension '${sourceExtensionId}' cannot depend on target extension '${targetExtensionId}'.`,
+    `Source extension '${sourceExtensionId}' can depend only on another source extension; '${targetExtensionId}' is 'target'.`,
   );
+});
+
+test("source dependency direction rejects every non-source composition kind", () => {
+  const dependencyKinds: readonly (CompilerExtensionKind | undefined)[] = [
+    "target",
+    "surface",
+    "consumer",
+    "tooling",
+    undefined,
+  ];
+  for (const dependencyKind of dependencyKinds) {
+    const suffix = dependencyKind ?? "unclassified";
+    const dependencyId = `checked-source-call.invalid-source-dependency.${suffix}`;
+    const sourceExtensionId = `checked-source-call.invalid-source-dependent.${suffix}`;
+    let sourceInitialized = false;
+    const dependency = compilerExtension(dependencyId, dependencyKind === undefined
+      ? {}
+      : {
+          composition: dependencyKind === "target"
+            ? { kind: "target", target: contractTarget }
+            : { kind: dependencyKind },
+        });
+    const host = new ExtensionHost({}, {
+      extensions: [
+        dependency,
+        compilerExtension(sourceExtensionId, {
+          composition: { kind: "source" },
+          dependsOn: [dependencyId],
+          initialize: () => {
+            sourceInitialized = true;
+          },
+        }),
+      ],
+    });
+
+    assert.equal(sourceInitialized, false, suffix);
+    assert.equal(host.extensions.some((extension) => extension.identity.id === sourceExtensionId), false, suffix);
+    assert.equal(
+      host.diagnostics.all().filter((item) =>
+        item.numericCode === ExtensionHostDiagnosticCode.invalidDependencyDirection).length,
+      1,
+      suffix,
+    );
+  }
+});
+
+test("an invalid diagnostic append poisons the producer attempt even when its return value is ignored", () => {
+  const extensionId = "checked-source-call.invalid-diagnostic-attempt";
+  const factKey = stringFactKey(extensionId, "must-roll-back");
+  const fixture = createCheckedCallFixture();
+  const host = new ExtensionHost({}, {
+    extensions: [producerExtension(extensionId, [{
+      selector: exportSelector(),
+      produce: (operation, context) => {
+        assert.equal(context.facts.set(operation.call, factKey, "provisional"), "inserted");
+        assert.equal(context.diagnostics.append({
+          extensionId,
+          extensionCode: "INVALID_NUMERIC_CODE",
+          numericCode: Number.NaN,
+          category: "error",
+          message: "This diagnostic cannot cross the immutable boundary.",
+        }), false);
+        return completeCheckedSourceCallProduction;
+      },
+    }])],
+  });
+  publishProviderDeclaration(host, fixture);
+
+  const result = runCheckedCall(host, fixture);
+  assert.equal(result.kind, "reject");
+  assert.equal(
+    result.kind === "reject" ? result.diagnostic.numericCode : undefined,
+    ExtensionHostDiagnosticCode.sourceOperationProducerFailed,
+  );
+  assert.equal(host.facts.get(fixture.call, factKey), undefined);
+  assert.equal(host.diagnostics.all().some((item) =>
+    item.numericCode === ExtensionHostDiagnosticCode.invalidDiagnosticSnapshot), true);
 });
 
 test("checked source-call producers cannot escape their callback-scoped host capabilities", () => {

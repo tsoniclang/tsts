@@ -85,6 +85,7 @@ import type {
   CheckedSourceCallCompositionEvidence,
   CheckedSourceInlineFunctionEvidence,
   CheckedSourceInlineFunctionReturnEvidence,
+  CheckedSourceInlineSelectedPropertyEvidence,
   RetainedCheckedOperationRequest,
   RetainedCheckedSourceCallMappingRequest,
 } from "./source-operation-producer.js";
@@ -351,7 +352,8 @@ export type CheckedOperationSnapshotFieldCoverage = RequireAllSnapshots<[
   AllFieldsSnapshotted<Extract<CheckedSourceAuthoredLiteralEvidence, { readonly kind: "string" | "number" | "bigint" | "boolean" }>, "kind" | "value">,
   AllFieldsSnapshotted<Extract<CheckedSourceAuthoredLiteralEvidence, { readonly kind: "null" }>, "kind">,
   AllFieldsSnapshotted<CheckedSourceInlineFunctionEvidence, "expression" | "parameters" | "returns">,
-  AllFieldsSnapshotted<CheckedSourceInlineFunctionReturnEvidence, "expression" | "selectedPropertyAccess">,
+  AllFieldsSnapshotted<CheckedSourceInlineFunctionReturnEvidence, "expression" | "selectedProperty">,
+  AllFieldsSnapshotted<CheckedSourceInlineSelectedPropertyEvidence, "expression" | "receiver" | "sourceReceiver" | "sourceResult" | "chainRole">,
   AllFieldsSnapshotted<TargetMember,
     | "id"
     | "sourceName"
@@ -3275,22 +3277,43 @@ function snapshotCheckedSourceInlineFunctionReturnEvidence(
   assertRecord(returned, "CheckedSourceInlineFunctionReturnEvidence", path);
   const captured = captureExactOwnFields(
     returned,
-    ["expression", "selectedPropertyAccess"],
+    ["expression", "selectedProperty"],
     "CheckedSourceInlineFunctionReturnEvidence",
     path,
   );
   assertOpaqueIdentitySubject(captured.expression, "CheckedSourceInlineFunctionReturnEvidence expression", childSnapshotPath(path, "expression"));
   return Object.freeze({
     expression: captured.expression,
-    ...(captured.selectedPropertyAccess === undefined
+    ...(captured.selectedProperty === undefined
       ? {}
       : {
-          selectedPropertyAccess: snapshotPropertyRequest(
-            captured.selectedPropertyAccess as CheckedPropertyAccessMappingRequest,
-            childSnapshotPath(path, "selectedPropertyAccess"),
-            false,
-          ) as CheckedPropertyAccessSourceOperation,
+          selectedProperty: snapshotCheckedSourceInlineSelectedPropertyEvidence(
+            captured.selectedProperty as CheckedSourceInlineSelectedPropertyEvidence,
+            childSnapshotPath(path, "selectedProperty"),
+          ),
         }),
+  });
+}
+
+function snapshotCheckedSourceInlineSelectedPropertyEvidence(
+  evidence: CheckedSourceInlineSelectedPropertyEvidence,
+  path: SnapshotPath,
+): CheckedSourceInlineSelectedPropertyEvidence {
+  assertRecord(evidence, "CheckedSourceInlineSelectedPropertyEvidence", path);
+  const captured = captureExactOwnFields(
+    evidence,
+    ["expression", "receiver", "sourceReceiver", "sourceResult", "chainRole"],
+    "CheckedSourceInlineSelectedPropertyEvidence",
+    path,
+  );
+  assertOpaqueIdentitySubject(captured.expression, "CheckedSourceInlineSelectedPropertyEvidence expression", childSnapshotPath(path, "expression"));
+  assertOpaqueIdentitySubject(captured.receiver, "CheckedSourceInlineSelectedPropertyEvidence receiver", childSnapshotPath(path, "receiver"));
+  return Object.freeze({
+    expression: captured.expression,
+    receiver: captured.receiver,
+    sourceReceiver: snapshotSelectedSourceValueEvidence(captured.sourceReceiver, childSnapshotPath(path, "sourceReceiver")),
+    sourceResult: snapshotSelectedSourceValueEvidence(captured.sourceResult, childSnapshotPath(path, "sourceResult")),
+    chainRole: snapshotSourceChainRole(captured.chainRole, "property-access", childSnapshotPath(path, "chainRole")),
   });
 }
 

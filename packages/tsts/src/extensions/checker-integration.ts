@@ -25,7 +25,7 @@ import type {
   ExtensionSelectedIterationTypes,
 } from "./checker-iteration-selection.js";
 import { ExtensionObservationPoint } from "./observations.js";
-import { checkedPropertyAccessSourceOperationEquals, checkedSourceCallArgumentCompositionEvidenceEquals } from "./fact-value-equality.js";
+import { checkedPropertyAccessSourceOperationEquals, checkedSourceCallArgumentCompositionEvidenceEquals, checkedSourceInlineSelectedPropertyEvidenceEquals } from "./fact-value-equality.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedFlowSourceUse, CheckedIterationMappingRequest, CheckedOperationObservationPointName, CheckedOperationReference, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ExtensionObservationResult, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetCallArgumentConversionFactKey, targetCallArgumentPassingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
 import type { CheckedBinaryOperatorToken, CheckedCallKind, CheckedConversionSourceOperation, CheckedElementAccessSourceOperation, CheckedForAwaitOfAtomicIterationMechanism, CheckedForAwaitOfIterationMechanism, CheckedForOfAtomicIterationMechanism, CheckedForOfIterationMechanism, CheckedIterationSourceOperation, CheckedOperatorSourceOperation, CheckedPrefixUnaryOperatorToken, CheckedPropertyAccessSourceOperation, CheckedSourceChainParticipant, CheckedSourceChainRole, CheckedUpdateOperatorToken, ProviderDeclarationIdentity, SelectedSourceIterationProtocolEvidence, SelectedSourceIterationTypes, SelectedSourceTypeEvidence, SelectedSourceValueEvidence, SelectedTargetSignatureFact, SourceSelectedCallArgumentBinding, SourceSelectedMethodTypeArgument, SourceSelectedSignatureParameter, TargetCallArgumentConversionSlot, TargetCallArgumentPassingFact, TargetOperationFact, TargetOperationProposal, TargetOperationProvenance, TargetParameter, TargetTypeRef } from "./facts.js";
@@ -35,6 +35,7 @@ import type {
   CheckedSourceCallCompositionEvidence,
   CheckedSourceInlineFunctionEvidence,
   CheckedSourceInlineFunctionReturnEvidence,
+  CheckedSourceInlineSelectedPropertyEvidence,
   RetainedCheckedSourceCallMappingRequest,
 } from "./source-operation-producer.js";
 import type { ExtensionEvidence, ExtensionFactSubject, ExtensionHost } from "./host.js";
@@ -2905,18 +2906,18 @@ function checkedSourceInlineFunctionEvidence(
     if (retainedReturn !== undefined && retainedReturn.expression !== returnExpression) {
       throw new Error("A retained checked source inline function return changed expression identity.");
     }
-    const selectedPropertyAccess = checkedSourceSelectedPropertyAccess(
+    const selectedProperty = checkedSourceSelectedProperty(
       checker,
       returnExpression,
       propertySelections,
-      retainedReturn?.selectedPropertyAccess,
+      retainedReturn?.selectedProperty,
     );
-    if (retainedReturn?.selectedPropertyAccess !== undefined && selectedPropertyAccess === undefined) {
+    if (retainedReturn?.selectedProperty !== undefined && selectedProperty === undefined) {
       throw new Error("A retained checked source inline function return lost its selected property access.");
     }
     return retainedReturn ?? Object.freeze({
       expression: returnExpression,
-      ...(selectedPropertyAccess === undefined ? {} : { selectedPropertyAccess }),
+      ...(selectedProperty === undefined ? {} : { selectedProperty }),
     });
   });
   if (retained !== undefined
@@ -2969,12 +2970,12 @@ function checkedSourceInlineFunctionReturnExpressions(
   return Object.freeze(returns);
 }
 
-function checkedSourceSelectedPropertyAccess(
+function checkedSourceSelectedProperty(
   checker: Checker,
   expression: Node,
   propertySelections: ReadonlyMap<Node, CheckedPropertySourceSelections>,
-  retained: CheckedPropertyAccessSourceOperation | undefined,
-): CheckedPropertyAccessSourceOperation | undefined {
+  retained: CheckedSourceInlineSelectedPropertyEvidence | undefined,
+): CheckedSourceInlineSelectedPropertyEvidence | undefined {
   const resultExpression = SkipParentheses(expression);
   if (resultExpression === undefined) {
     return undefined;
@@ -2987,17 +2988,12 @@ function checkedSourceSelectedPropertyAccess(
     throw new Error("A checked source callback member selection must be an exact read operation.");
   }
   const receiver = Node_Expression(resultExpression);
-  const propertyName = Node_Text(Node_Name(resultExpression));
-  if (receiver === undefined || propertyName === "") {
-    throw new Error("A selected checked source callback property has no exact receiver or property identity.");
+  if (receiver === undefined) {
+    throw new Error("A selected checked source callback property has no exact receiver identity.");
   }
   if (retained !== undefined
-    && (retained.sourceOperationKind !== "property-access"
-      || retained.accessMode !== "read"
-      || retained.use !== "value"
-      || retained.expression !== resultExpression
-      || retained.receiver !== receiver
-      || retained.propertyName !== propertyName)) {
+    && (retained.expression !== resultExpression
+      || retained.receiver !== receiver)) {
     throw new Error("A retained checked source callback property changed semantic identity.");
   }
   const receiverType = preserveEquivalentCheckedSourceType(
@@ -3005,24 +3001,20 @@ function checkedSourceSelectedPropertyAccess(
     propertySelection.receiverType,
   );
   const resultType = preserveEquivalentCheckedSourceType(
-    retained?.accessMode === "read" ? retained.sourceReadResult.type as GoPtr<Type> : undefined,
+    retained?.sourceResult.type as GoPtr<Type>,
     propertySelection.resultType,
   );
   if (receiverType === undefined || resultType === undefined) {
     throw new Error("A checked source callback member selection lost its exact receiver or result type.");
   }
-  const operation: CheckedPropertyAccessSourceOperation = Object.freeze({
-    sourceOperationKind: "property-access",
+  const operation: CheckedSourceInlineSelectedPropertyEvidence = Object.freeze({
     expression: resultExpression,
     receiver,
-    propertyName,
     sourceReceiver: selectedSourceReceiverEvidence(receiver, receiverType, {
       ...(propertySelection.receiverSymbol === undefined ? {} : { symbol: propertySelection.receiverSymbol }),
       ...(propertySelection.receiverDeclaration === undefined ? {} : { declaration: propertySelection.receiverDeclaration }),
     }),
-    accessMode: "read",
-    use: "value",
-    sourceReadResult: selectedSourceValueEvidence(
+    sourceResult: selectedSourceValueEvidence(
       resultExpression,
       resultType,
       selectedPropertySelectionProvenance(checker, propertySelection),
@@ -3030,7 +3022,7 @@ function checkedSourceSelectedPropertyAccess(
     chainRole: checkedSourceChainRole(resultExpression, "property-access"),
   });
   if (retained !== undefined
-    && !checkedPropertyAccessSourceOperationEquals(retained, operation)) {
+    && !checkedSourceInlineSelectedPropertyEvidenceEquals(retained, operation)) {
     throw new Error("A retained checked source callback property changed selected source evidence.");
   }
   return retained ?? operation;

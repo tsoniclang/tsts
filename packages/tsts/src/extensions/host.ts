@@ -54,6 +54,7 @@ import type {
   RetainedCheckedOperationRequest,
   RetainedCheckedSourceCallMappingRequest,
 } from "./source-operation-producer.js";
+import { checkedSourceCallOperationSubjects } from "./source-operation-producer.js";
 import {
   checkedOperationRuntimeCarrierDemands,
   type CheckedOperationRuntimeCarrierDemand,
@@ -214,7 +215,7 @@ const factStoreTransactionActive: unique symbol = Symbol("tsts.extensionFactStor
 const factStoreInvalidate: unique symbol = Symbol("tsts.extensionFactStore.invalidate");
 const factStoreForOwner: unique symbol = Symbol("tsts.extensionFactStore.forOwner");
 const factStoreSetForHost: unique symbol = Symbol("tsts.extensionFactStore.setForHost");
-const factStoreSetSourceProducerReadGuard: unique symbol = Symbol("tsts.extensionFactStore.setSourceProducerReadGuard");
+const factStoreSetSourceProducerAccessGuard: unique symbol = Symbol("tsts.extensionFactStore.setSourceProducerAccessGuard");
 const diagnosticStoreCreateSavepoint: unique symbol = Symbol("tsts.extensionDiagnosticStore.createSavepoint");
 const diagnosticStoreAssertCanCommitSavepoint: unique symbol = Symbol("tsts.extensionDiagnosticStore.assertCanCommitSavepoint");
 const diagnosticStoreCommitSavepoint: unique symbol = Symbol("tsts.extensionDiagnosticStore.commitSavepoint");
@@ -297,6 +298,7 @@ interface ExtensionDiagnosticSavepointState {
   readonly diagnosticIndex: number;
   readonly diagnosticRanges: ReadonlyMap<string, ExtensionDiagnosticRange>;
   active: boolean;
+  failed: boolean;
 }
 
 interface ExtensionFactResolverSavepoint {
@@ -997,6 +999,7 @@ export class ExtensionDiagnosticStore {
     const hostOwned = isHostOwnedExtensionDiagnostic(diagnostic);
     const ownerId = this.#effectiveOwnerId();
     if (!hostOwned && (!this.#boundWriterIsActive() || ownerId === undefined)) {
+      this.#recordAttemptFailure();
       this.#appendHostDiagnostic(createHostDiagnostic({
         extensionCode: "DIAGNOSTIC_WRITER_OWNERSHIP_VIOLATION",
         numericCode: ExtensionHostDiagnosticCode.diagnosticOwnershipViolation,
@@ -1009,6 +1012,7 @@ export class ExtensionDiagnosticStore {
     }
     const snapshot = snapshotExtensionDiagnostic(diagnostic);
     if (snapshot.kind === "invalid") {
+      this.#recordAttemptFailure();
       this.#appendHostDiagnostic(createHostDiagnostic({
         extensionCode: "INVALID_EXTENSION_DIAGNOSTIC",
         numericCode: ExtensionHostDiagnosticCode.invalidDiagnosticSnapshot,
@@ -1020,6 +1024,7 @@ export class ExtensionDiagnosticStore {
     }
     const immutableDiagnostic = snapshot.diagnostic;
     if (!hostOwned && immutableDiagnostic.extensionId !== ownerId) {
+      this.#recordAttemptFailure();
       this.#appendHostDiagnostic(createHostDiagnostic({
         extensionCode: "DIAGNOSTIC_WRITER_OWNERSHIP_VIOLATION",
         numericCode: ExtensionHostDiagnosticCode.diagnosticOwnershipViolation,
@@ -1066,6 +1071,7 @@ export class ExtensionDiagnosticStore {
   #appendValidatedSnapshot(immutableDiagnostic: ExtensionDiagnostic, hostOwned: boolean): boolean {
     const range = this.#state.diagnosticRanges.get(immutableDiagnostic.extensionId);
     if (range !== undefined && !isDiagnosticCodeInRange(immutableDiagnostic.numericCode, range)) {
+      this.#recordAttemptFailure();
       return this.#appendUnchecked(createHostDiagnostic({
         extensionCode: "DIAGNOSTIC_CODE_OUT_OF_RANGE",
         numericCode: ExtensionHostDiagnosticCode.diagnosticCodeOutOfRange,
@@ -1098,6 +1104,7 @@ export class ExtensionDiagnosticStore {
     if (existing !== undefined) {
       if (!extensionDiagnosticSnapshotsEqual(existing.diagnostic, diagnostic)
         || existing.hostOwned !== hostOwned) {
+        this.#recordAttemptFailure();
         throw new Error(`Extension diagnostic identity '${identity}' resolved to conflicting immutable diagnostics.`);
       }
       return false;
@@ -1130,6 +1137,7 @@ export class ExtensionDiagnosticStore {
       diagnosticIndex: this.#state.records.length,
       diagnosticRanges: new Map(this.#state.diagnosticRanges),
       active: true,
+      failed: false,
     });
     this.#state.savepoints.push(savepoint);
     return savepoint;
@@ -1143,6 +1151,9 @@ export class ExtensionDiagnosticStore {
 
   [diagnosticStoreAssertCanCommitSavepoint](savepoint: ExtensionDiagnosticSavepoint): void {
     this.#assertActiveSavepoint(savepoint);
+    if (this.#requireSavepointState(savepoint).failed) {
+      throw new Error("Cannot commit an extension diagnostic savepoint after a diagnostic write failed.");
+    }
   }
 
   [diagnosticStoreRollbackToSavepoint](savepoint: ExtensionDiagnosticSavepoint): void {
@@ -1207,6 +1218,13 @@ export class ExtensionDiagnosticStore {
     return state;
   }
 
+  #recordAttemptFailure(): void {
+    const savepoint = this.#state.savepoints[this.#state.savepoints.length - 1];
+    if (savepoint !== undefined) {
+      this.#requireSavepointState(savepoint).failed = true;
+    }
+  }
+
   #effectiveOwnerId(): string | undefined {
     return this.#ownerId ?? this.#state.ownerAuthority.stack[this.#state.ownerAuthority.stack.length - 1];
   }
@@ -1223,7 +1241,11 @@ interface ExtensionFactStoreState {
   readonly transactionStates: WeakMap<ExtensionFactTransaction, ExtensionFactTransactionState>;
   readonly savepointStates: WeakMap<ExtensionFactSavepoint, ExtensionFactSavepointState>;
   readonly ownerAuthority: ExtensionOwnerAuthority;
-  sourceProducerReadGuard: ((key: ExtensionFactKey<unknown>) => void) | undefined;
+  sourceProducerAccessGuard: ((
+    subject: ExtensionFactSubject | undefined,
+    key: ExtensionFactKey<unknown>,
+    access: "read" | "write",
+  ) => void) | undefined;
   sourceProducerEnumerationGuard: (() => void) | undefined;
   activeTransaction: ExtensionFactTransaction | undefined;
   nextObjectSubjectId: number;
@@ -1249,7 +1271,7 @@ export class ExtensionFactStore {
         transactionStates: new WeakMap(),
         savepointStates: new WeakMap(),
         ownerAuthority: getDiagnosticStoreOwnerAuthority(diagnostics),
-        sourceProducerReadGuard: undefined,
+        sourceProducerAccessGuard: undefined,
         sourceProducerEnumerationGuard: undefined,
         activeTransaction: undefined,
         nextObjectSubjectId: 1,
@@ -1275,15 +1297,20 @@ export class ExtensionFactStore {
     });
   }
 
-  [factStoreSetSourceProducerReadGuard](
-    readGuard: ((key: ExtensionFactKey<unknown>) => void) | undefined,
+  [factStoreSetSourceProducerAccessGuard](
+    accessGuard: ((
+      subject: ExtensionFactSubject | undefined,
+      key: ExtensionFactKey<unknown>,
+      access: "read" | "write",
+    ) => void) | undefined,
     enumerationGuard: (() => void) | undefined,
   ): void {
-    this.#state.sourceProducerReadGuard = readGuard;
+    this.#state.sourceProducerAccessGuard = accessGuard;
     this.#state.sourceProducerEnumerationGuard = enumerationGuard;
   }
 
   set<T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>, value: T, evidence: readonly ExtensionEvidence[] = []): ExtensionFactWriteResult {
+    this.#state.sourceProducerAccessGuard?.(subject, key as ExtensionFactKey<unknown>, "write");
     getExtensionFactKeyIdentity(key);
     const ownerId = this.#effectiveOwnerId();
     if (this.#state.hostWriteDepth === 0 && (!this.#boundWriterIsActive() || ownerId === undefined)) {
@@ -1388,7 +1415,7 @@ export class ExtensionFactStore {
   }
 
   getEntry<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): ExtensionFactEntry<T> | undefined {
-    this.#state.sourceProducerReadGuard?.(key as ExtensionFactKey<unknown>);
+    this.#state.sourceProducerAccessGuard?.(subject, key as ExtensionFactKey<unknown>, "read");
     if (subject === undefined) {
       return undefined;
     }
@@ -4509,7 +4536,7 @@ export class ExtensionHost {
   }
 
   [extensionHostHasMatchingCheckedSourceCallProducer](selectedDeclaration: ExtensionFactSubject | undefined): boolean {
-    return this.#matchingCheckedSourceCallProducers(selectedDeclaration).length !== 0;
+    return this.#matchingCheckedSourceCallProducer(selectedDeclaration) !== undefined;
   }
 
   [extensionHostHasCheckedSourceCallProducerCandidate](selectedDeclaration: ExtensionFactSubject | undefined): boolean {
@@ -4545,9 +4572,9 @@ export class ExtensionHost {
     const selectedDeclaration = callRequest.sourceSelection.kind === "applicable"
       ? callRequest.sourceSelection.declaration
       : undefined;
-    const producers = this.#matchingCheckedSourceCallProducers(selectedDeclaration);
-    const views = this.#getCheckedSourceCallViews(callRequest, producers[0]?.selector);
-    const sourceResult = this.#runCheckedSourceCallProducers(callRequest, views.operation, phase, producers);
+    const producer = this.#matchingCheckedSourceCallProducer(selectedDeclaration);
+    const views = this.#getCheckedSourceCallViews(callRequest, producer?.selector);
+    const sourceResult = this.#runCheckedSourceCallProducer(callRequest, views.operation, phase, producer);
     if (sourceResult.kind === "reject") {
       return sourceResult as ExtensionObservationResult<ExtensionObservationResponse<TObservation>>;
     }
@@ -4586,103 +4613,105 @@ export class ExtensionHost {
     return { kind: "core", value: core() };
   }
 
-  #runCheckedSourceCallProducers(
+  #runCheckedSourceCallProducer(
     request: RetainedCheckedSourceCallMappingRequest,
     operation: CheckedSourceCallOperation | undefined,
     phase: ExtensionObservationPhase,
-    producers: readonly RegisteredCheckedSourceCallProducer[],
+    registered: RegisteredCheckedSourceCallProducer | undefined,
   ): CheckedSourceCallProducerStageResult {
-    if (producers.length === 0) {
+    if (registered === undefined) {
       return sourceCallProducerStageUnmatched;
     }
     if (operation === undefined) {
       throw new Error("A matched checked source-call producer requires an immutable retained source-operation view.");
     }
-    const stageAttempt = this.#beginFactAttempt();
+    let production: CheckedSourceCallProduction;
+    const producerAttempt = this.#beginFactAttempt();
     try {
-      for (const registered of producers) {
-        let production: CheckedSourceCallProduction;
-        const producerAttempt = this.#beginFactAttempt();
-        try {
-          if (this.#checkedSourceCallProducerInvocation !== undefined) {
-            throw new Error("Checked source-call producer execution cannot re-enter itself.");
-          }
-          const invocation = Object.freeze({});
-          this.#observationHookDepth += 1;
-          this.#checkedSourceCallProducerDepth += 1;
-          this.#checkedSourceCallProducerInvocation = invocation;
-          this.facts[factStoreSetSourceProducerReadGuard](
-            (key) => this.#assertCheckedSourceCallProducerFactReadable(registered.extensionId, key),
-            () => {
-              throw new Error("Checked source-call producers cannot enumerate the global extension fact store.");
-            },
-          );
-          this.diagnostics[diagnosticStoreSetSourceProducerReadGuard](() => {
-            throw new Error("Checked source-call producers cannot inspect the global extension diagnostic store.");
-          });
-          this.providers[providerRegistrySetSourceProducerReadBlocked](true);
-          try {
-            const capabilities = this.#getCheckedSourceCallProducerCapabilities(
-              registered.extensionId,
-              invocation,
-            );
-            const context: CheckedSourceCallProducerContext = Object.freeze({
-              phase,
-              extensionId: registered.extensionId,
-              facts: capabilities.facts,
-              factResolver: capabilities.factResolver,
-              diagnostics: capabilities.diagnostics,
-            });
-            production = runWithExtensionOwnerAuthority(
-              this.#ownerAuthority,
-              registered.extensionId,
-              () => registered.produce(operation, context),
-            );
-          } finally {
-            this.providers[providerRegistrySetSourceProducerReadBlocked](false);
-            this.diagnostics[diagnosticStoreSetSourceProducerReadGuard](undefined);
-            this.facts[factStoreSetSourceProducerReadGuard](undefined, undefined);
-            this.#checkedSourceCallProducerInvocation = undefined;
-            this.#checkedSourceCallProducerDepth -= 1;
-            this.#observationHookDepth -= 1;
-          }
-          production = snapshotCheckedSourceCallProduction(production, registered.extensionId);
-          this.#assertFactAttemptCanCommit(producerAttempt);
-          if (production.kind === "complete") {
-            const effects = this.#captureAndRollbackFactAttempt(producerAttempt);
-            this.#applyFactAttemptEffects(stageAttempt, effects);
-            continue;
-          }
-          this.#rollbackFactAttempt(producerAttempt);
-          this.#rollbackFactAttempt(stageAttempt);
-          return production.kind === "defer"
-            ? { kind: "defer", extensionId: registered.extensionId }
-            : {
-                kind: "reject",
-                diagnostic: production.diagnostic,
-                extensionId: registered.extensionId,
-              };
-        } catch (error) {
-          const settledError = this.#rollbackFactAttemptsAfterFailure(error, producerAttempt, stageAttempt);
-          const diagnostic = createHostDiagnostic({
-            extensionCode: "CHECKED_SOURCE_CALL_PRODUCER_FAILED",
-            numericCode: ExtensionHostDiagnosticCode.sourceOperationProducerFailed,
-            message: `Extension '${registered.extensionId}' failed while producing checked source-call semantics.`,
-            nodeOrSpan: request.call,
-            evidence: [{ message: "Thrown value", details: settledError }],
-            identity: encodeIdentityTuple([
-              "checked-source-call-producer-failed",
-              registered.extensionId,
-              this.#getConsumerSubjectIdentity(request.call),
-            ]),
-          });
-          return { kind: "reject", diagnostic, extensionId: diagnostic.extensionId };
-        }
+      if (this.#checkedSourceCallProducerInvocation !== undefined) {
+        throw new Error("Checked source-call producer execution cannot re-enter itself.");
       }
-      const effects = this.#captureAndRollbackFactAttempt(stageAttempt);
-      return { kind: "complete", extensionId: producers[0]!.extensionId, effects };
+      const invocation = Object.freeze({});
+      this.#observationHookDepth += 1;
+      this.#checkedSourceCallProducerDepth += 1;
+      this.#checkedSourceCallProducerInvocation = invocation;
+      const operationSubjects = checkedSourceCallOperationSubjects(operation);
+      this.facts[factStoreSetSourceProducerAccessGuard](
+        (subject, key, access) => {
+          this.#assertCheckedSourceCallProducerOperationSubject(registered.extensionId, operationSubjects, subject);
+          if (access === "read") {
+            this.#assertCheckedSourceCallProducerFactReadable(
+              this.#ownerAuthority.stack[this.#ownerAuthority.stack.length - 1] ?? registered.extensionId,
+              key,
+            );
+          }
+        },
+        () => {
+          throw new Error("Checked source-call producers cannot enumerate the global extension fact store.");
+        },
+      );
+      this.diagnostics[diagnosticStoreSetSourceProducerReadGuard](() => {
+        throw new Error("Checked source-call producers cannot inspect the global extension diagnostic store.");
+      });
+      this.providers[providerRegistrySetSourceProducerReadBlocked](true);
+      try {
+        const capabilities = this.#getCheckedSourceCallProducerCapabilities(
+          registered.extensionId,
+          invocation,
+          operation,
+        );
+        const context: CheckedSourceCallProducerContext = Object.freeze({
+          phase,
+          extensionId: registered.extensionId,
+          facts: capabilities.facts,
+          factResolver: capabilities.factResolver,
+          diagnostics: capabilities.diagnostics,
+        });
+        production = runWithExtensionOwnerAuthority(
+          this.#ownerAuthority,
+          registered.extensionId,
+          () => registered.produce(operation, context),
+        );
+      } finally {
+        this.providers[providerRegistrySetSourceProducerReadBlocked](false);
+        this.diagnostics[diagnosticStoreSetSourceProducerReadGuard](undefined);
+        this.facts[factStoreSetSourceProducerAccessGuard](undefined, undefined);
+        this.#checkedSourceCallProducerInvocation = undefined;
+        this.#checkedSourceCallProducerDepth -= 1;
+        this.#observationHookDepth -= 1;
+      }
+      production = snapshotCheckedSourceCallProduction(production, registered.extensionId);
+      this.#assertFactAttemptCanCommit(producerAttempt);
+      if (production.kind === "complete") {
+        return {
+          kind: "complete",
+          extensionId: registered.extensionId,
+          effects: this.#captureAndRollbackFactAttempt(producerAttempt),
+        };
+      }
+      this.#rollbackFactAttempt(producerAttempt);
+      return production.kind === "defer"
+        ? { kind: "defer", extensionId: registered.extensionId }
+        : {
+            kind: "reject",
+            diagnostic: production.diagnostic,
+            extensionId: registered.extensionId,
+          };
     } catch (error) {
-      throw this.#rollbackFactAttemptsAfterFailure(error, stageAttempt);
+      const settledError = this.#rollbackFactAttemptsAfterFailure(error, producerAttempt);
+      const diagnostic = createHostDiagnostic({
+        extensionCode: "CHECKED_SOURCE_CALL_PRODUCER_FAILED",
+        numericCode: ExtensionHostDiagnosticCode.sourceOperationProducerFailed,
+        message: `Extension '${registered.extensionId}' failed while producing checked source-call semantics.`,
+        nodeOrSpan: request.call,
+        evidence: [{ message: "Thrown value", details: settledError }],
+        identity: encodeIdentityTuple([
+          "checked-source-call-producer-failed",
+          registered.extensionId,
+          this.#getConsumerSubjectIdentity(request.call),
+        ]),
+      });
+      return { kind: "reject", diagnostic, extensionId: diagnostic.extensionId };
     }
   }
 
@@ -4709,18 +4738,17 @@ export class ExtensionHost {
     return created;
   }
 
-  #matchingCheckedSourceCallProducers(
+  #matchingCheckedSourceCallProducer(
     selectedDeclaration: ExtensionFactSubject | undefined,
-  ): readonly RegisteredCheckedSourceCallProducer[] {
+  ): RegisteredCheckedSourceCallProducer | undefined {
     if (!this[extensionHostHasCheckedSourceCallProducers]() || selectedDeclaration === undefined) {
-      return Object.freeze([]);
+      return undefined;
     }
     const declaration = selectedCheckedSourceProviderDeclaration(this.facts, selectedDeclaration);
     if (declaration === undefined) {
-      return Object.freeze([]);
+      return undefined;
     }
-    const producer = this.#checkedSourceCallProducersBySelector.get(checkedSourceCallProviderDeclarationKey(declaration));
-    return producer === undefined ? Object.freeze([]) : Object.freeze([producer]);
+    return this.#checkedSourceCallProducersBySelector.get(checkedSourceCallProviderDeclarationKey(declaration));
   }
 
   #assertCheckedOperationRecordingAvailable(): void {
@@ -5624,12 +5652,14 @@ export class ExtensionHost {
   #getCheckedSourceCallProducerCapabilities(
     extensionId: string,
     invocation: object,
+    operation: CheckedSourceCallOperation,
   ): {
     readonly facts: CheckedSourceCallFactCapability;
     readonly factResolver: CheckedSourceCallFactResolverCapability;
     readonly diagnostics: CheckedSourceCallDiagnosticCapability;
   } {
     const owner = this.#getOwnerCapabilities(extensionId);
+    const operationSubjects = checkedSourceCallOperationSubjects(operation);
     const assertActive = (): void => {
       if (this.#checkedSourceCallProducerInvocation !== invocation
         || this.#ownerAuthority.stack[this.#ownerAuthority.stack.length - 1] !== extensionId) {
@@ -5640,6 +5670,9 @@ export class ExtensionHost {
       assertActive();
       this.#assertCheckedSourceCallProducerFactReadable(extensionId, key);
     };
+    const assertOperationSubject = (subject: ExtensionFactSubject | undefined): void => {
+      this.#assertCheckedSourceCallProducerOperationSubject(extensionId, operationSubjects, subject);
+    };
     const facts: CheckedSourceCallFactCapability = Object.freeze({
       set: <T>(
         subject: ExtensionFactSubject,
@@ -5648,9 +5681,11 @@ export class ExtensionHost {
         evidence: readonly ExtensionEvidence[] = [],
       ): ExtensionFactWriteResult => {
         assertActive();
+        assertOperationSubject(subject);
         return owner.facts.set(subject, key, value, evidence);
       },
       get: <T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): T | undefined => {
+        assertOperationSubject(subject);
         assertReadable(key);
         return owner.facts.get(subject, key);
       },
@@ -5658,16 +5693,19 @@ export class ExtensionHost {
         subject: ExtensionFactSubject | undefined,
         key: ExtensionFactKey<T>,
       ): ExtensionFactEntry<T> | undefined => {
+        assertOperationSubject(subject);
         assertReadable(key);
         return owner.facts.getEntry(subject, key);
       },
       has: <T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): boolean => {
+        assertOperationSubject(subject);
         assertReadable(key);
         return owner.facts.has(subject, key);
       },
     });
     const factResolver: CheckedSourceCallFactResolverCapability = Object.freeze({
       resolve: <T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>): T | undefined => {
+        assertOperationSubject(subject);
         assertReadable(key);
         return owner.factResolver.resolve(subject, key);
       },
@@ -5697,6 +5735,18 @@ export class ExtensionHost {
     throw new Error(
       `Source extension '${extensionId}' cannot read or resolve fact key '${formatExtensionFactKeyForDisplay(key)}'; source producers may read only host source facts, their own facts, and facts from explicitly declared source dependencies.`,
     );
+  }
+
+  #assertCheckedSourceCallProducerOperationSubject(
+    extensionId: string,
+    operationSubjects: ReadonlySet<ExtensionFactSubject>,
+    subject: ExtensionFactSubject | undefined,
+  ): void {
+    if (subject !== undefined && !operationSubjects.has(subject)) {
+      throw new Error(
+        `Checked source-call producer '${extensionId}' can access facts only on subjects retained by its exact checked operation.`,
+      );
+    }
   }
 
   #assertRegistrationOwner(extensionId: string, registrationKind: string): void {
@@ -5819,12 +5869,17 @@ function orderExtensions(extensions: readonly CompilerExtension[], diagnostics: 
         invalidExtensionIds.add(extensionId);
         continue;
       }
-      if (extension.composition?.kind === "source" && dependency.composition?.kind === "target") {
+      if (extension.composition?.kind === "source" && dependency.composition?.kind !== "source") {
         diagnostics.append(createHostDiagnostic({
           extensionCode: "INVALID_EXTENSION_DEPENDENCY_DIRECTION",
           numericCode: ExtensionHostDiagnosticCode.invalidDependencyDirection,
-          message: `Source extension '${extensionId}' cannot depend on target extension '${dependencyId}'.`,
-          identity: encodeIdentityTuple(["invalid-extension-dependency-direction", extensionId, dependencyId]),
+          message: `Source extension '${extensionId}' can depend only on another source extension; '${dependencyId}' is '${dependency.composition?.kind ?? "unclassified"}'.`,
+          identity: encodeIdentityTuple([
+            "invalid-extension-dependency-direction",
+            extensionId,
+            dependencyId,
+            dependency.composition?.kind,
+          ]),
         }));
         invalidExtensionIds.add(extensionId);
         continue;

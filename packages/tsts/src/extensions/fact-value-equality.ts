@@ -31,6 +31,7 @@ import type {
 import type {
   CheckedSourceCallArgumentCompositionEvidence,
   CheckedSourceCallCompositionEvidence,
+  CheckedSourceInlineSelectedPropertyEvidence,
 } from "./source-operation-producer.js";
 import type { ExtensionFactSubject } from "./host.js";
 
@@ -179,13 +180,24 @@ export function checkedSourceCallArgumentCompositionEvidenceEquals(
       const other = right.function.returns[index];
       return other !== undefined
         && returned.expression === other.expression
-        && (returned.selectedPropertyAccess === undefined || other.selectedPropertyAccess === undefined
-          ? returned.selectedPropertyAccess === other.selectedPropertyAccess
-          : checkedPropertyAccessSourceOperationEquals(
-              returned.selectedPropertyAccess,
-              other.selectedPropertyAccess,
+        && (returned.selectedProperty === undefined || other.selectedProperty === undefined
+          ? returned.selectedProperty === other.selectedProperty
+          : checkedSourceInlineSelectedPropertyEvidenceEquals(
+              returned.selectedProperty,
+              other.selectedProperty,
             ));
     });
+}
+
+export function checkedSourceInlineSelectedPropertyEvidenceEquals(
+  left: CheckedSourceInlineSelectedPropertyEvidence,
+  right: CheckedSourceInlineSelectedPropertyEvidence,
+): boolean {
+  return left.expression === right.expression
+    && left.receiver === right.receiver
+    && selectedSourceValueEvidenceEquals(left.sourceReceiver, right.sourceReceiver)
+    && selectedSourceValueEvidenceEquals(left.sourceResult, right.sourceResult)
+    && checkedSourceChainRoleEquals(left.chainRole, right.chainRole);
 }
 
 function checkedSourceAuthoredLiteralEvidenceEquals(

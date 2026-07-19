@@ -65,6 +65,7 @@ import type {
   CheckedSourceCallProviderSelector,
   CompilerExtension,
   ExtensionDiagnostic,
+  ExtensionFactSubject,
   ExtensionHost,
   ExtensionObservationPhase,
   ProviderDeclarationModel,
@@ -88,7 +89,7 @@ const selectMemberId = "fluent.Marked.select";
 const selectSignatureId = "fluent.Marked.select<Value>((Owner) => Value)";
 const selectedExportId = "fluent.Selected";
 const terminalMemberId = "fluent.Selected.terminal";
-const terminalSignatureId = "fluent.Selected.terminal(string)";
+const terminalSignatureId = "fluent.Selected.terminal(unknown)";
 const callableValueExportId = "fluent.markValue";
 const callableValueSignatureId = "fluent.markValue.call<Owner>()";
 const overloadedValueExportId = "fluent.overloadedValue";
@@ -131,6 +132,23 @@ interface TransactionProbeFact {
   readonly phase: ExtensionObservationPhase;
 }
 
+type FluentChainFact =
+  | {
+      readonly kind: "root";
+      readonly ownerType: ExtensionFactSubject;
+    }
+  | {
+      readonly kind: "selection";
+      readonly ownerType: ExtensionFactSubject;
+      readonly selectedMember: ExtensionFactSubject;
+    }
+  | {
+      readonly kind: "terminal";
+      readonly ownerType: ExtensionFactSubject;
+      readonly selectedMember: ExtensionFactSubject;
+      readonly argument: ExtensionFactSubject;
+    };
+
 const producedCallFactKey = defineExtensionFactKey<ProducedCallFact>({
   extensionId: sourceProducerExtensionId,
   name: "produced-call",
@@ -152,6 +170,20 @@ const transactionProbeFactKey = defineExtensionFactKey<TransactionProbeFact>({
     phase: value.phase,
   }),
   equals: (left, right) => left.stage === right.stage && left.phase === right.phase,
+});
+
+const fluentChainFactKey = defineExtensionFactKey<FluentChainFact>({
+  extensionId: sourceProducerExtensionId,
+  name: "fluent-chain",
+  snapshot: (value) => Object.freeze({ ...value }),
+  equals: (left, right) => left.kind === right.kind
+    && left.ownerType === right.ownerType
+    && (left.kind === "root" || right.kind === "root"
+      ? left.kind === right.kind
+      : left.selectedMember === right.selectedMember
+        && (left.kind === "selection" || right.kind === "selection"
+          ? left.kind === right.kind
+          : left.argument === right.argument)),
 });
 
 const markSelector = Object.freeze({
@@ -495,13 +527,9 @@ test("provider-selected source producers preserve exact fluent-call evidence wit
     if (selectorFunction === undefined || selectorFunction.returns.length !== 1) {
       throw new Error("Expected exact inline selector function evidence.");
     }
-    const selectedMember = selectorFunction.returns[0]?.selectedPropertyAccess;
+    const selectedMember = selectorFunction.returns[0]?.selectedProperty;
     if (selectedMember === undefined) {
       throw new Error("Expected exact selected property evidence for the selector result.");
-    }
-    assert.equal(selectedMember.sourceOperationKind, "property-access");
-    if (selectedMember.accessMode !== "read") {
-      throw new Error("Expected a direct read result for the selector callback.");
     }
     assert.ok(selectedMember.expression === Node_Body(selectorArgument.expression as GoPtr<Node>), `${terminalLabel}: selected callback member must be the direct body expression.`);
     assert.equal(Node_Text(selectedMember.receiver as GoPtr<Node>), "owner");
@@ -509,12 +537,12 @@ test("provider-selected source producers preserve exact fluent-call evidence wit
     assert.ok(selectedMember.sourceReceiver.symbol === selectorFunction.parameters[0]?.symbol);
     const memberSymbol = ownerSymbol?.Members?.get("member");
     assert.ok(memberSymbol !== undefined);
-    assert.ok(selectedMember.sourceReadResult.selectedSymbol === memberSymbol, `${terminalLabel}: callback result must retain the checker-selected member symbol.`);
-    assert.ok(selectedMember.sourceReadResult.selectedDeclaration === memberSymbol.ValueDeclaration, `${terminalLabel}: callback result must retain the checker-selected member declaration.`);
-    assert.equal((selectedMember.sourceReadResult.selectedDeclaration as GoPtr<Node>)?.Kind, KindPropertySignature);
-    assert.equal(Node_Text(Node_Name(selectedMember.sourceReadResult.selectedDeclaration as GoPtr<Node>)), "member");
+    assert.ok(selectedMember.sourceResult.selectedSymbol === memberSymbol, `${terminalLabel}: callback result must retain the checker-selected member symbol.`);
+    assert.ok(selectedMember.sourceResult.selectedDeclaration === memberSymbol.ValueDeclaration, `${terminalLabel}: callback result must retain the checker-selected member declaration.`);
+    assert.equal((selectedMember.sourceResult.selectedDeclaration as GoPtr<Node>)?.Kind, KindPropertySignature);
+    assert.equal(Node_Text(Node_Name(selectedMember.sourceResult.selectedDeclaration as GoPtr<Node>)), "member");
     assert.equal(
-      SourceFile_FileName(GetSourceFileOfNode(selectedMember.sourceReadResult.selectedDeclaration as GoPtr<Node>)),
+      SourceFile_FileName(GetSourceFileOfNode(selectedMember.sourceResult.selectedDeclaration as GoPtr<Node>)),
       expectedOwner.fileName,
     );
 
@@ -569,6 +597,93 @@ test("provider-selected source producers preserve exact fluent-call evidence wit
   assert.equal(setup.extensionHost.diagnostics.all().length, 0);
 });
 
+test("source-owned fluent facts compose inner-before-outer and reach the independent target mapper", () => {
+  const targetFacts: FluentChainFact[] = [];
+  const registrations: readonly ProducerRegistration[] = [{
+    selector: markSelector,
+    produce: (operation, context) => {
+      const selection = requireApplicableSelection(operation);
+      const ownerType = selection.methodTypeArguments[0]?.selectedType;
+      assert.ok(ownerType !== undefined);
+      assert.equal(context.facts.set(operation.call, fluentChainFactKey, {
+        kind: "root",
+        ownerType,
+      }), "inserted");
+      return completeCheckedSourceCallProduction;
+    },
+  }, {
+    selector: selectSelector,
+    produce: (operation, context) => {
+      const receiver = operation.sourceReceiver?.expression;
+      assert.ok(receiver !== undefined);
+      const predecessor = context.facts.get(receiver, fluentChainFactKey);
+      assert.equal(predecessor?.kind, "root");
+      if (predecessor?.kind !== "root") {
+        throw new Error("The selected source protocol lost its exact root predecessor fact.");
+      }
+      const inlineFunction = inlineFunctionArgument(operation);
+      const selectedProperty = inlineFunction?.returns[0]?.selectedProperty;
+      const parameterSymbol = inlineFunction?.parameters[0]?.symbol;
+      assert.ok(selectedProperty?.sourceReceiver.symbol === parameterSymbol);
+      const selectedMember = selectedProperty?.sourceResult.selectedDeclaration;
+      assert.ok(selectedMember !== undefined);
+      assert.equal(context.facts.set(operation.call, fluentChainFactKey, {
+        kind: "selection",
+        ownerType: predecessor.ownerType,
+        selectedMember,
+      }), "inserted");
+      return completeCheckedSourceCallProduction;
+    },
+  }, {
+    selector: terminalSelector,
+    produce: (operation, context) => {
+      const receiver = operation.sourceReceiver?.expression;
+      assert.ok(receiver !== undefined);
+      const predecessor = context.facts.get(receiver, fluentChainFactKey);
+      assert.equal(predecessor?.kind, "selection");
+      if (predecessor?.kind !== "selection") {
+        throw new Error("The selected source protocol lost its exact selected-member predecessor fact.");
+      }
+      const argument = operation.sourceArguments[0]?.expression;
+      assert.ok(argument !== undefined);
+      assert.equal(context.facts.set(operation.call, fluentChainFactKey, {
+        kind: "terminal",
+        ownerType: predecessor.ownerType,
+        selectedMember: predecessor.selectedMember,
+        argument,
+      }), "inserted");
+      return completeCheckedSourceCallProduction;
+    },
+  }];
+  const semanticProvider: TargetSemanticProvider = {
+    identity: semanticProviderIdentity("checked-source-call-test.fluent-chain-target"),
+    mapCheckedCall: (request, context) => {
+      const fact = context.facts.get(request.call, fluentChainFactKey);
+      assert.ok(fact !== undefined, "The target mapper must observe each source-owned protocol fact atomically.");
+      targetFacts.push(fact);
+      return acceptObservation({ kind: "source" });
+    },
+  };
+  const setup = createSingleChainProgram({
+    registrations,
+    targetSemanticProvider: semanticProvider,
+    terminalLabel: "metadata",
+  });
+
+  assertCleanProgram(setup.program);
+  assert.deepEqual(targetFacts.map((fact) => fact.kind), ["root", "selection", "terminal"]);
+  const terminal = targetFacts[2];
+  assert.equal(terminal?.kind, "terminal");
+  if (terminal?.kind !== "terminal") {
+    throw new Error("Expected the terminal source-owned protocol fact.");
+  }
+  assert.equal(Node_Text(Node_Name(terminal.selectedMember as GoPtr<Node>)), "member");
+  assert.equal(Node_Text(terminal.argument as GoPtr<Node>), "metadata");
+  assert.equal(finalizeExtensionSemantics(setup.programOptions), setup.extensionHost);
+  assert.equal(targetFacts.length, 3, "Completed protocol operations must not replay after finalization.");
+  assert.equal(setup.extensionHost.diagnostics.all().length, 0);
+});
+
 test("source producer argument composition exposes exact authored literals and inline-function return selections", () => {
   const invocations: ProducerInvocation[] = [];
   const setup = createProgram({
@@ -589,6 +704,10 @@ test("source producer argument composition exposes exact authored literals and i
         export const call = mark<Owner>().select(owner => identity(owner.member)).terminal("call");
         export const element = mark<Owner>().select(owner => owner["member"]).terminal("element");
         export const asserted = mark<Owner>().select(owner => owner.member as string).terminal("asserted");
+        export const numberLiteral = mark<Owner>().select(owner => owner.member).terminal(1_024);
+        export const bigintLiteral = mark<Owner>().select(owner => owner.member).terminal(123n);
+        export const booleanLiteral = mark<Owner>().select(owner => owner.member).terminal(true);
+        export const nullLiteral = mark<Owner>().select(owner => owner.member).terminal(null);
       `,
     },
     extensions: [
@@ -612,23 +731,81 @@ test("source producer argument composition exposes exact authored literals and i
         ? composition.literal.value
         : undefined;
     }),
-    ["parenthesized", "template", undefined, undefined, "block", "call", "element", "asserted"],
+    ["parenthesized", "template", undefined, undefined, "block", "call", "element", "asserted", undefined, undefined, undefined, undefined],
+  );
+  assert.deepEqual(
+    terminalArguments.slice(8).map((argument) =>
+      argument.composition?.kind === "authored-literal" ? argument.composition.literal : undefined),
+    [
+      { kind: "number", value: "1024" },
+      { kind: "bigint", value: "123" },
+      { kind: "boolean", value: true },
+      { kind: "null" },
+    ],
   );
   assert.ok(terminalArguments.every((argument) => argument.composition?.kind !== "inline-function"));
 
   const selectorArguments = invocations
     .filter((invocation) => invocation.role === "select")
     .map((invocation) => invocation.operation.sourceArguments[0]!);
-  assert.equal(selectorArguments.length, 8);
+  assert.equal(selectorArguments.length, 12);
   assert.ok(selectorArguments.every((argument) => argument.composition?.kind === "inline-function"));
-  assert.ok(selectorArguments.slice(0, 5).every((argument) =>
+  assert.deepEqual(selectorArguments.map((argument) =>
     argument.composition?.kind === "inline-function"
-    && argument.composition.function.returns[0]?.selectedPropertyAccess?.sourceOperationKind === "property-access"));
-  assert.ok(selectorArguments.slice(5).every((argument) =>
-    argument.composition?.kind === "inline-function"
-    && argument.composition.function.returns[0]?.selectedPropertyAccess === undefined));
+    && argument.composition.function.returns[0]?.selectedProperty !== undefined),
+  [true, true, true, true, true, false, false, false, true, true, true, true]);
 
   assert.equal(finalizeExtensionSemantics(setup.programOptions), setup.extensionHost);
+  assert.equal(setup.extensionHost.diagnostics.all().length, 0);
+});
+
+test("inline callback evidence preserves lexical returns and distinguishes the parameter receiver", () => {
+  const invocations: ProducerInvocation[] = [];
+  const setup = createProgram({
+    sourceFiles: {
+      "index.ts": `
+        import { mark } from "${fakeProviderModuleSpecifier}";
+
+        interface Owner { readonly member: string; }
+        declare const externalOwner: Owner;
+
+        export const lexical = mark<Owner>().select(owner => {
+          if (owner.member) return owner.member;
+          const nested = () => externalOwner.member;
+          nested;
+          return owner.member;
+        }).terminal("lexical");
+        export const external = mark<Owner>()
+          .select(owner => externalOwner.member)
+          .terminal("external");
+      `,
+    },
+    extensions: [
+      sourceProducerExtension([
+        completeFactProducer("select", selectSelector, invocations),
+      ]),
+      fakeTargetExtension(),
+    ],
+  });
+
+  assertCleanProgram(setup.program);
+  assert.equal(invocations.length, 2);
+  const lexical = inlineFunctionArgument(invocations[0]!.operation);
+  assert.ok(lexical !== undefined);
+  assert.equal(lexical.returns.length, 2, "Nested function returns must not enter the enclosing callback evidence.");
+  assert.ok(lexical.returns.every((returned) =>
+    returned.selectedProperty?.sourceReceiver.symbol === lexical.parameters[0]?.symbol));
+  const external = inlineFunctionArgument(invocations[1]!.operation);
+  assert.ok(external !== undefined);
+  assert.equal(external.returns.length, 1);
+  assert.ok(external.returns[0]?.selectedProperty !== undefined);
+  assert.notEqual(
+    external.returns[0]?.selectedProperty?.sourceReceiver.symbol,
+    external.parameters[0]?.symbol,
+    "A source producer must be able to reject a callback that selects from an external receiver.",
+  );
+  assert.equal(finalizeExtensionSemantics(setup.programOptions), setup.extensionHost);
+  assert.equal(invocations.length, 2);
   assert.equal(setup.extensionHost.diagnostics.all().length, 0);
 });
 
@@ -1442,7 +1619,7 @@ function fakeBindingProvider(): TargetBindingProvider {
           kind: "method",
           signatures: [{
             id: terminalSignatureId,
-            parameters: [{ name: "label", type: { kind: "string" } }],
+            parameters: [{ name: "value", type: { kind: "unknown" } }],
             returnType: { kind: "type-parameter", name: "Owner" },
           }],
         }],

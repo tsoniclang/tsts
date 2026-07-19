@@ -1,6 +1,6 @@
 import type {
   CheckedCallSourceOperation,
-  CheckedPropertyAccessSourceOperation,
+  CheckedSourceChainRole,
   SelectedSourceValueEvidence,
 } from "./facts.js";
 import type {
@@ -21,7 +21,8 @@ import { ExtensionObservationPoint } from "./observations.js";
 /**
  * Positive checker-owned source evidence for one authored call argument.
  * An absent argument composition means that the argument does not have one of
- * these exact supported forms; no raw syntax fallback is exposed to source extensions.
+ * these exact supported forms. Raw syntax and source spelling are not part of
+ * this selector evidence contract.
  */
 export type CheckedSourceAuthoredLiteralEvidence =
   | { readonly kind: "string"; readonly value: string }
@@ -37,7 +38,21 @@ export interface CheckedSourceInlineFunctionParameterEvidence {
 
 export interface CheckedSourceInlineFunctionReturnEvidence {
   readonly expression: ExtensionFactSubject;
-  readonly selectedPropertyAccess?: CheckedPropertyAccessSourceOperation;
+  readonly selectedProperty?: CheckedSourceInlineSelectedPropertyEvidence;
+}
+
+/**
+ * Exact checker-selected property result from an inline source callback.
+ * The selected symbol/declaration live in sourceResult. Source spelling is
+ * deliberately absent so a producer cannot substitute name matching for
+ * selected identity.
+ */
+export interface CheckedSourceInlineSelectedPropertyEvidence {
+  readonly expression: ExtensionFactSubject;
+  readonly receiver: ExtensionFactSubject;
+  readonly sourceReceiver: SelectedSourceValueEvidence;
+  readonly sourceResult: SelectedSourceValueEvidence;
+  readonly chainRole: CheckedSourceChainRole<"property-access">;
 }
 
 export interface CheckedSourceInlineFunctionEvidence {
@@ -81,6 +96,83 @@ export interface CheckedSourceCallOperation extends Omit<CheckedCallSourceOperat
   /** Exact source-side provider callable selected by the checker and matched by the host. */
   readonly sourceProviderSelection: CheckedSourceCallProviderSelector;
   readonly sourceArguments: readonly CheckedSourceCallArgumentEvidence[];
+}
+
+/** Host-only subject boundary for one retained source operation. */
+export function checkedSourceCallOperationSubjects(
+  operation: CheckedSourceCallOperation,
+): ReadonlySet<ExtensionFactSubject> {
+  const subjects = new Set<ExtensionFactSubject>();
+  const add = (subject: ExtensionFactSubject | undefined): void => {
+    if (subject !== undefined) {
+      subjects.add(subject);
+    }
+  };
+  const addType = (evidence: import("./facts.js").SelectedSourceTypeEvidence): void => {
+    add(evidence.type);
+    add(evidence.symbol);
+    add(evidence.declaration);
+    add(evidence.selectedSymbol);
+    add(evidence.selectedDeclaration);
+    add(evidence.authoredTypeNode);
+  };
+  const addValue = (evidence: SelectedSourceValueEvidence): void => {
+    add(evidence.expression);
+    addType(evidence);
+  };
+  const addProperty = (property: CheckedSourceInlineSelectedPropertyEvidence): void => {
+    add(property.expression);
+    add(property.receiver);
+    addValue(property.sourceReceiver);
+    addValue(property.sourceResult);
+  };
+
+  add(operation.call);
+  add(operation.callee);
+  operation.arguments.forEach(add);
+  if (operation.sourceSelection.kind === "applicable") {
+    add(operation.sourceSelection.signature);
+    add(operation.sourceSelection.declaration);
+    for (const argument of operation.sourceSelection.methodTypeArguments) {
+      add(argument.typeParameter);
+      add(argument.selectedType);
+      add(argument.explicitTypeNode);
+    }
+    for (const parameter of operation.sourceSelection.parameters) {
+      add(parameter.parameterSymbol);
+      add(parameter.parameterDeclaration);
+      add(parameter.selectedType);
+      add(parameter.authoredTypeNode);
+    }
+    for (const binding of operation.sourceSelection.argumentBindings) {
+      add(binding.selectedArgumentType);
+      add(binding.selectedParameterType);
+    }
+  }
+  addValue(operation.sourceCallee);
+  addValue(operation.sourceResult);
+  if (operation.sourceReceiver !== undefined) {
+    addValue(operation.sourceReceiver);
+  }
+  for (const argument of operation.sourceArguments) {
+    addValue(argument);
+    if (argument.composition?.kind !== "inline-function") {
+      continue;
+    }
+    const inlineFunction = argument.composition.function;
+    add(inlineFunction.expression);
+    for (const parameter of inlineFunction.parameters) {
+      add(parameter.declaration);
+      add(parameter.symbol);
+    }
+    for (const returned of inlineFunction.returns) {
+      add(returned.expression);
+      if (returned.selectedProperty !== undefined) {
+        addProperty(returned.selectedProperty);
+      }
+    }
+  }
+  return subjects;
 }
 
 /** Exact checker-selected provider declaration identity used only to select a source producer. */
