@@ -39,6 +39,7 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 | `20260719-165020-built-package-omits-bundled-default-libraries` | `4720657c` | Resolved | The build packages exactly the generated bundled-library index, and package validation installs the real tarball in isolation and checks a default-lib program through the public API. |
 | `20260719-162753-provider-family-finalization-instantiated-symbol-target` | `1f22d689` | Resolved | Extension semantic queries execute through the checker that owns the selected source evidence; opaque checker-local types and instantiated symbols never fall back to an unrelated first-file checker. |
 | `20260719-175255-selected-structural-receiver-carrier-not-finalized` | `1eb66c4f` | Resolved | Checked mappers may demand runtime carriers only for exact source types in their retained immutable request; demand is bounded, lazy, checker-context-bound, dependency-replayed, and atomic with the operation attempt. |
+| `20260719-175256-source-core-attribute-builder-fact-ownership` | `e61011ffebf684f80584f72eb0e88ed5f54d7e7f`, `f9564a574fd41650434e699f4bddd5c229c780f4`, `7c354dba3ac13be560d5330e29718c124dbbfa6d` | Resolved | Source-composition extensions register exact provider-identity-selected checked-call producers; each producer sees an immutable, bounded inventory of checker-selected source evidence, can read only retained source subjects, writes only its own fact key on the current call, and composes atomically before the independent target mapper without source spelling, AST scanning, checker re-entry, or cross-owner writes. |
 
 ## Complete Commit Order
 
@@ -85,11 +86,14 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 41. `4720657c`
 42. `1f22d689`
 43. `1eb66c4f`
+44. `e61011ffebf684f80584f72eb0e88ed5f54d7e7f`
+45. `f9564a574fd41650434e699f4bddd5c229c780f4`
+46. `7c354dba3ac13be560d5330e29718c124dbbfa6d`
 
-## Complete Validation At Implementation `3407b2f8`
+## Complete Validation At Implementation `7c354dba`
 
 - Build and built-package contract: pass.
-- Complete source suite: 2,075/2,075 pass; zero failed, skipped, or todo.
+- Complete source suite: 2,135/2,135 pass; zero failed, skipped, or todo.
 - Porter tests: 83/83 pass.
 - Strict Porter verification: 9,385/9,385 portable units implemented; zero missing, stale, orphan, generated-artifact, schema-sync, large-file-plan, or override issues.
 - TS-Go suite harness tests: 85/85 pass.
@@ -97,8 +101,8 @@ This branch is an isolated cumulative fix line for Tsonic consumers while the ne
 - Full TypeScript corpus: 15,626 total; 12,820 pass, zero fail, 2,806 explicit pinned-runner policy skips; 43,218 exact comparable artifacts and zero mismatches.
 - Real-world AST parity: 1,274/1,274 files pass.
 - Generated data: 108 bundled libraries current; Unicode 15.1.0 data current.
-- Reproducible built artifact: 1,808 files; two independent builds produced aggregate sorted-manifest SHA-256 `c15f97ff87d121116b1de115c3f2f98ffc4bbc87e549fd605a7b9f6fd5e7e9a3`.
-- Performance gates completed under a 5 GiB memory ceiling: mandatory self-compile wall median 15.76s and maxRSS 1,446.07 MiB for 654 files/552,030 lines; pinned native TS-Go cross-check wall 0.79s versus TSTS 14.30s and `tsc` 5.84s; UTF-8/source-text speedups 79.8x–19,277.6x over legacy equivalents; scanner checksum-stable medians 4.25ms ASCII, 2.50ms mixed Unicode, and 1.57ms JSX.
+- Reproducible built artifact: 1,932 files; two independent builds produced aggregate sorted-manifest SHA-256 `b3ef0492bfab20db6af329cd3bb1a70ea87b045bdd943ad8b566c2977cae0b12`.
+- Performance gates completed under a 5 GiB memory ceiling: mandatory self-compile wall median 13.53s and maxRSS 1,345.42 MiB for 658 files/556,071 lines; pinned native TS-Go cross-check wall 0.80s versus TSTS 13.61s and `tsc` 5.55s; UTF-8/source-text speedups 107.3x–22,273.0x over legacy equivalents; scanner checksum-stable medians 3.45ms ASCII, 2.31ms mixed Unicode, and 1.32ms JSX.
 
 ## Future Fix Procedure
 
