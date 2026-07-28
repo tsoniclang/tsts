@@ -93,6 +93,44 @@ export function sourceProviderExtension(
   };
 }
 
+export function sourceProviderCompilerExtension(
+  provider: SourceDeclarationProvider,
+  extensionId = `${provider.identity.id}.extension`,
+): CompilerExtension {
+  return {
+    identity: {
+      id: extensionId,
+      version: "1.0.0",
+      capabilityNamespace: extensionId,
+    },
+    composition: { kind: "source" },
+    initialize(context): void {
+      context.registerSourceDeclarationProvider(provider);
+    },
+  };
+}
+
+export function testProviderIdentity(id: string) {
+  return {
+    id,
+    version: "1.0.0",
+    extensionContractVersion: TstsSourceProviderContractVersion,
+  } as const;
+}
+
+export function testProviderModel(
+  moduleSpecifier: string,
+  providerModuleId: string,
+  exports: ProviderDeclarationModel["exports"] = [{
+    id: "Value",
+    name: "Value",
+    kind: "value",
+    type: { kind: "number" },
+  }],
+): ProviderDeclarationModel {
+  return { moduleSpecifier, providerModuleId, exports };
+}
+
 export function findNodes(
   root: GoPtr<Node>,
   children: (node: GoPtr<Node>) => readonly GoPtr<Node>[],
