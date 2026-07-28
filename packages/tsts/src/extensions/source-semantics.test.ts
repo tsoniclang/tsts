@@ -524,6 +524,41 @@ test("source-semantics records struct field attribute and default facts from can
   assert.equal(consumer.getDefaultValueFact(zeroSymbol)?.type, defaultValueFact?.type);
 });
 
+test("source-semantics records field markers only for exact class and object field owners", () => {
+  const { extended, program, index } = createProgram(`
+    import type { int } from "@example/native/types.js";
+    import { field, struct } from "@example/native/lang.js";
+
+    class Counter {
+      value = field<int>();
+    }
+    const Shape = struct({ enabled: field<int>() });
+    const orphan = field<int>();
+  `);
+
+  assertCleanProgram(program, index);
+  finalizeSourceSemantics(extended);
+
+  assert.equal(
+    extended.extensionHost.facts.get(getCallExpression(index, "field", 0), fieldFactKey)?.name,
+    "value",
+  );
+  assert.equal(
+    extended.extensionHost.facts.get(getCallExpression(index, "field", 1), fieldFactKey)?.name,
+    "enabled",
+  );
+  assert.equal(
+    extended.extensionHost.facts.get(getCallExpression(index, "field", 2), fieldFactKey),
+    undefined,
+  );
+  assert.deepEqual(
+    extended.extensionHost.facts
+      .get(getCallExpression(index, "struct", 0), structFactKey)
+      ?.fields?.map((field) => field.name),
+    ["enabled"],
+  );
+});
+
 test("source-semantics ignores non-field marker positions without lifecycle failures", () => {
   const { extended, program, index } = createProgram(`
     import type { int } from "@example/native/types.js";

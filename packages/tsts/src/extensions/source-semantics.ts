@@ -520,11 +520,16 @@ function recordFieldMarker(
   if (fieldType === undefined) {
     return;
   }
-  const propertyAssignment = callExpression?.Parent?.Kind === KindPropertyAssignment ? callExpression.Parent : undefined;
-  if (propertyAssignment === undefined) {
+  const fieldOwner = callExpression?.Parent;
+  if (
+    fieldOwner === undefined ||
+    (fieldOwner.Kind !== KindPropertyAssignment &&
+      fieldOwner.Kind !== KindPropertyDeclaration) ||
+    Node_Initializer(fieldOwner) !== callExpression
+  ) {
     return;
   }
-  const nameNode = Node_Name(propertyAssignment) ?? Node_PropertyName(propertyAssignment);
+  const nameNode = Node_Name(fieldOwner) ?? Node_PropertyName(fieldOwner);
   const name = getStaticSourceSemanticsNameText(nameNode);
   if (name === undefined) {
     return;
@@ -534,7 +539,7 @@ function recordFieldMarker(
     type: fieldType,
   } satisfies FieldFact;
   facts.set(callExpression, fieldFactKey, fact, evidence);
-  facts.set(propertyAssignment, fieldFactKey, fact, evidence);
+  facts.set(fieldOwner, fieldFactKey, fact, evidence);
   if (nameNode !== undefined) {
     facts.set(nameNode, fieldFactKey, fact, evidence);
   }
