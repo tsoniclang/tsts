@@ -21,6 +21,7 @@ import {
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import { AsExportDeclaration, AsExportSpecifier, AsImportClause, AsNamespaceImport, AsPropertyAccessExpression, AsQualifiedName, AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import {
+  KindArrayBindingPattern,
   KindCallExpression,
   KindExportDeclaration,
   KindIdentifier,
@@ -30,6 +31,7 @@ import {
   KindNamespaceImport,
   KindNumericLiteral,
   KindObjectLiteralExpression,
+  KindObjectBindingPattern,
   KindPropertyAccessExpression,
   KindPropertyAssignment,
   KindPropertyDeclaration,
@@ -1032,7 +1034,22 @@ function isImportBindingShadowed(node: GoPtr<Node>, localName: string): boolean 
 }
 
 function declarationListContainsName(declarations: readonly GoPtr<Node>[], localName: string): boolean {
-  return declarations.some((declaration) => Node_Text(Node_Name(declaration)) === localName);
+  return declarations.some((declaration) =>
+    bindingNameContainsName(Node_Name(declaration), localName));
+}
+
+function bindingNameContainsName(name: GoPtr<Node>, localName: string): boolean {
+  if (name === undefined) {
+    return false;
+  }
+  if (name.Kind === KindIdentifier) {
+    return Node_Text(name) === localName;
+  }
+  if (name.Kind !== KindArrayBindingPattern && name.Kind !== KindObjectBindingPattern) {
+    return false;
+  }
+  return (Node_Elements(name) ?? []).some((element) =>
+    bindingNameContainsName(Node_Name(element), localName));
 }
 
 function getIdentifierText(node: GoPtr<Node>): string | undefined {

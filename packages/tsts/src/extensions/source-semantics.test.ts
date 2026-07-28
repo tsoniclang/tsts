@@ -559,6 +559,21 @@ test("source-semantics records field markers only for exact class and object fie
   );
 });
 
+test("source-semantics handles primitive references inside destructured parameters", () => {
+  const { extended, program, index } = createProgram(`
+    import type { int } from "@example/native/types.js";
+
+    function sum([first, second]: [int, int]): int {
+      return first + second;
+    }
+
+    const result = sum([1, 2]);
+  `);
+
+  assertCleanProgram(program, index);
+  assert.doesNotThrow(() => finalizeSourceSemantics(extended));
+});
+
 test("source-semantics ignores non-field marker positions without lifecycle failures", () => {
   const { extended, program, index } = createProgram(`
     import type { int } from "@example/native/types.js";
