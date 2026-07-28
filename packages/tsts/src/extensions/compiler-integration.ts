@@ -50,7 +50,12 @@ import type {
   TargetTypeParameter,
   TargetTypeRef,
 } from "./facts.js";
-import { ExtensionLifecycleEvent, extensionHostSetFact, getExtensionHost } from "./host.js";
+import {
+  ExtensionLifecycleEvent,
+  extensionHostRunSourceAnalysis,
+  extensionHostSetFact,
+  getExtensionHost,
+} from "./host.js";
 import type {
   ExtensionEvidence,
   ExtensionHost,
@@ -101,6 +106,7 @@ export function finalizeExtensionSemantics(program: object): ExtensionHost | und
     return undefined;
   }
   Program_GetSemanticDiagnostics(extensionHost.program as GoPtr<Program>, Background(), undefined);
+  extensionHost[extensionHostRunSourceAnalysis]();
   extensionHost.finalizeSemantics();
   return extensionHost;
 }

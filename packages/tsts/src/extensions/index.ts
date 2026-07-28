@@ -85,6 +85,7 @@ export type {
   ExtensionFactWriteResult,
   ExtensionHostOptions,
   ExtensionInitializeContext,
+  SourceAnalysisContext,
   ExtensionLifecycleContext,
   ExtensionLifecycleHook,
   ProviderDeclarationKind,

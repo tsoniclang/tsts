@@ -45,6 +45,7 @@ import type { ResolvedCallEvidence, ResolvedCallSelectionEvidence, Signature, Ty
 import { SignatureFlagsAbstract, SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../types.js";
 import { Checker_isIteratorResult } from "./support-queries.js";
 import { createExtensionForInIterationSelection } from "../../../extensions/checker-iteration-selection.js";
+import type { ExtensionCheckedIterationSelection } from "../../../extensions/checker-iteration-selection.js";
 import {
   CheckModeInferential, CheckModeIsForSignatureHelp, CheckModeNormal, CheckModeSkipContextSensitive, CheckModeSkipGenericFunctions, InferenceFlagsSkippedGenericFunction, IterationTypeKindReturn, IterationTypeKindYield,
   IterationTypeKindNext, IterationUseForOf, IterationUseForAwaitOf, IterationUseSpread,
@@ -181,6 +182,7 @@ import {
   KindMetaProperty, KindDeleteExpression, KindAwaitExpression, KindPrefixUnaryExpression,
   KindPostfixUnaryExpression, KindConditionalExpression, KindSpreadElement, KindOmittedExpression,
   KindYieldExpression, KindSyntheticExpression, KindJsxExpression, KindJsxFragment, KindJsxAttributes,
+  KindForInStatement, KindForOfStatement,
 } from "../../ast/generated/kinds.js";
 import { KindAmpersandAmpersandEqualsToken, KindAmpersandAmpersandToken, KindAmpersandEqualsToken, KindAmpersandToken, KindAsteriskAsteriskEqualsToken, KindAsteriskAsteriskToken, KindAsteriskEqualsToken, KindAsteriskToken, KindBarBarEqualsToken, KindBarBarToken, KindBarEqualsToken, KindBarToken, KindCaretEqualsToken, KindCaretToken, KindCommaToken, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindGreaterThanEqualsToken, KindGreaterThanGreaterThanEqualsToken, KindGreaterThanGreaterThanGreaterThanEqualsToken, KindGreaterThanGreaterThanGreaterThanToken, KindGreaterThanGreaterThanToken, KindGreaterThanToken, KindInKeyword, KindInstanceOfKeyword, KindLessThanEqualsToken, KindLessThanLessThanEqualsToken, KindLessThanLessThanToken, KindLessThanToken, KindMinusEqualsToken, KindPercentEqualsToken, KindPercentToken, KindPlusEqualsToken, KindQuestionQuestionEqualsToken, KindQuestionQuestionToken, KindSlashEqualsToken, KindSlashToken, KindUnknown } from "../../ast/generated/kinds.js";
 import { SkipTrivia, TokenToString } from "../../scanner/scanner.js";
@@ -3797,6 +3799,56 @@ export function Checker_checkRightHandSideOfForOf(receiver: GoPtr<Checker>, stat
     recordExtensionCheckedIterationMapping(receiver, statement, selected.selection);
   }
   return selected.elementType;
+}
+
+export function Checker_getResolvedSourceIterationInfo(
+  receiver: GoPtr<Checker>,
+  statement: GoPtr<Node>,
+): ExtensionCheckedIterationSelection | undefined {
+  if (receiver === undefined || statement === undefined) {
+    return undefined;
+  }
+  if (statement.Kind === KindForInStatement) {
+    const data = AsForInOrOfStatement(statement);
+    const sourceIterableType = Checker_getNonNullableTypeIfNeeded(
+      receiver,
+      Checker_checkExpression(receiver, data?.Expression),
+    );
+    if (sourceIterableType === undefined) {
+      return undefined;
+    }
+    let sourceElementType: GoPtr<Type>;
+    if (IsVariableDeclarationList(data?.Initializer)) {
+      const declaration = AsVariableDeclarationList(data?.Initializer)?.Declarations?.Nodes[0];
+      const declarationSymbol = declaration === undefined
+        ? undefined
+        : Checker_getSymbolOfDeclaration(receiver, declaration);
+      sourceElementType = declarationSymbol === undefined
+        ? undefined
+        : Checker_getTypeOfSymbol(receiver, declarationSymbol);
+    } else {
+      sourceElementType = Checker_getIndexTypeOrString(receiver, sourceIterableType);
+    }
+    return sourceElementType === undefined
+      ? undefined
+      : createExtensionForInIterationSelection(sourceIterableType, sourceElementType);
+  }
+  if (statement.Kind !== KindForOfStatement) {
+    return undefined;
+  }
+  const data = AsForInOrOfStatement(statement);
+  const sourceIterableType = Checker_checkNonNullExpression(receiver, data?.Expression);
+  if (sourceIterableType === undefined) {
+    return undefined;
+  }
+  const iterationKind = data?.AwaitModifier === undefined ? "for-of" : "for-await-of";
+  return Checker_checkForOfIterationWithExtensionSelection(
+    receiver,
+    iterationKind,
+    sourceIterableType,
+    receiver.undefinedType,
+    data?.Expression,
+  ).selection;
 }
 
 /**

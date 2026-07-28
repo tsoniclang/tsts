@@ -1,0 +1,134 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import type { GoPtr } from "../go/compat.js";
+import type { Node } from "../internal/ast/ast.js";
+import {
+  createCompilerSessionFromFiles,
+  defineExtensionFactKey,
+  type CompilerExtension,
+  type SourceAnalysisContext,
+} from "../index.js";
+
+const sourceAnalysisExtensionId = "test.source-analysis";
+const selectedCallFactKey = defineExtensionFactKey<string>({
+  extensionId: sourceAnalysisExtensionId,
+  name: "selectedCall",
+  snapshot: (value) => value,
+});
+
+test("source analysis consumes the fully checked program once through direct source queries", () => {
+  let analysisCount = 0;
+  let selectedCall: GoPtr<Node>;
+  const extension: CompilerExtension = {
+    identity: {
+      id: sourceAnalysisExtensionId,
+      version: "1.0.0",
+      capabilityNamespace: sourceAnalysisExtensionId,
+    },
+    composition: { kind: "source" },
+    analyzeSource(context): void {
+      analysisCount += 1;
+      assert.equal(Object.isFrozen(context), true);
+      assert.equal(Object.isFrozen(context.sourceFiles), true);
+      const sourceFile = context.getSourceFile("/src/index.ts");
+      const call = findFirstCall(context, sourceFile);
+      assert.ok(call !== undefined);
+      const selected = context.checker.getResolvedCallInfo(call);
+      assert.equal(selected?.outcome, "applicable");
+      assert.equal(selected?.call, call);
+      assert.equal(selected?.sourceSelectedMethodTypeArguments?.length, 1);
+      assert.equal(context.facts.set(call, selectedCallFactKey, "identity<int32>"), "inserted");
+      selectedCall = call;
+    },
+  };
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/index.ts"],
+    files: {
+      "/src/index.ts": [
+        "function identity<T>(value: T): T { return value; }",
+        "const result = identity<number>(1);",
+      ].join("\n"),
+    },
+    extensionHostOptions: { extensions: [extension] },
+  });
+
+  assert.equal(session.ensureChecked().length, 0);
+  assert.equal(analysisCount, 0);
+  assert.equal(session.finalizeExtensions(), session.extensionHost);
+  assert.equal(analysisCount, 1);
+  assert.equal(session.extensionHost?.facts.get(selectedCall, selectedCallFactKey), "identity<int32>");
+  assert.equal(session.finalizeExtensions(), session.extensionHost);
+  assert.equal(analysisCount, 1);
+});
+
+test("source analysis is dependency ordered and globally fail closed", () => {
+  const firstExtensionId = "test.source-analysis.first";
+  const secondExtensionId = "test.source-analysis.second";
+  const firstFactKey = defineExtensionFactKey<string>({
+    extensionId: firstExtensionId,
+    name: "first",
+    snapshot: (value) => value,
+  });
+  const order: string[] = [];
+  let subject: GoPtr<Node>;
+  const first: CompilerExtension = {
+    identity: {
+      id: firstExtensionId,
+      version: "1.0.0",
+      capabilityNamespace: firstExtensionId,
+    },
+    composition: { kind: "source" },
+    analyzeSource(context): void {
+      order.push("first");
+      subject = context.getSourceFile("/src/index.ts");
+      assert.ok(subject !== undefined);
+      assert.equal(context.facts.set(subject, firstFactKey, "provisional"), "inserted");
+    },
+  };
+  const second: CompilerExtension = {
+    identity: {
+      id: secondExtensionId,
+      version: "1.0.0",
+      capabilityNamespace: secondExtensionId,
+    },
+    dependencies: { dependsOn: [firstExtensionId] },
+    composition: { kind: "source" },
+    analyzeSource(): void {
+      order.push("second");
+      throw new Error("source analysis failed");
+    },
+  };
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/index.ts"],
+    files: { "/src/index.ts": "export const value = 1;" },
+    extensionHostOptions: { extensions: [second, first] },
+  });
+
+  assert.throws(() => session.finalizeExtensions(), /source analysis failed/);
+  assert.deepEqual(order, ["first", "second"]);
+  assert.equal(session.extensionHost?.facts.get(subject, firstFactKey), undefined);
+  assert.equal(
+    session.extensionHost?.diagnostics.all().filter((diagnostic) =>
+      diagnostic.extensionCode === "SOURCE_ANALYSIS_FAILED").length,
+    1,
+  );
+  assert.throws(() => session.finalizeExtensions(), /previously failed/);
+});
+
+function findFirstCall(context: SourceAnalysisContext, root: GoPtr<Node>): GoPtr<Node> {
+  if (root === undefined) {
+    return undefined;
+  }
+  if (context.ast.is.IsCallExpression(root)) {
+    return root;
+  }
+  for (const child of context.ast.children(root)) {
+    const found = findFirstCall(context, child);
+    if (found !== undefined) {
+      return found;
+    }
+  }
+  return undefined;
+}

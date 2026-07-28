@@ -37,7 +37,6 @@ import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
 import {
   NewProgram,
-  Program_BindSourceFiles,
   Program_GetProgramDiagnostics,
   Program_GetSemanticDiagnostics,
   Program_GetSourceFile,
@@ -113,6 +112,10 @@ function createExampleSourceSemanticsExtension() {
   });
 }
 
+function finalizeSourceSemantics(extended: ExtendedProgram): void {
+  assert.equal(finalizeExtensionSemantics(extended.program), extended.extensionHost);
+}
+
 test("source-semantics records configured primitive facts from canonical named imports", () => {
   const { extended, program, index } = createProgram(`
     import type { int as i32, long } from "@example/native/types.js";
@@ -122,7 +125,7 @@ test("source-semantics records configured primitive facts from canonical named i
   `);
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   const i32Specifier = getNamedImportSpecifier(index, "i32");
   const i32Symbol = Node_Symbol(i32Specifier);
@@ -160,7 +163,7 @@ test("source-semantics primitive spelling is entirely consumer configured", () =
   `);
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   for (const exportName of ["INT", "I32", "SystemInt32"]) {
     const importSpecifier = getNamedImportSpecifier(index, exportName);
@@ -184,7 +187,7 @@ test("source-semantics does not guess primitives from local names or unrelated m
   ]));
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   const unrelatedImport = getNamedImportSpecifier(index, "int");
   const unrelatedImportSymbol = Node_Symbol(unrelatedImport);
@@ -206,7 +209,7 @@ test("source-semantics records namespace import identity without manufacturing p
   `);
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   const namespaceImport = getNamespaceImport(index, exampleTypesModule);
   const namespaceSymbol = Node_Symbol(namespaceImport);
@@ -227,7 +230,7 @@ test("source-semantics records primitive facts on type references from explicit 
   `);
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   const directReference = getTypeAliasType(index, "Direct");
   assert.equal(directReference?.Kind, KindTypeReference);
@@ -251,7 +254,7 @@ test("source-semantics fact resolver returns primitive type-reference facts from
   `);
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   const directReference = getTypeAliasType(index, "Direct");
   assert.equal(directReference?.Kind, KindTypeReference);
@@ -266,7 +269,7 @@ test("source-semantics records primitive facts on canonical named re-exports", (
   `);
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   const i32Specifier = getNamedExportSpecifier(index, "i32");
   const i32Symbol = Node_Symbol(i32Specifier);
@@ -300,11 +303,12 @@ test("source-semantics records out ref inref borrow move call-site facts without
     ["/src/local.ts", "export function out<T>(value: T): T { return value; }"],
   ]));
 
-  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  finalizeSourceSemantics(extended);
+  const diagnostics = extended.extensionHost.diagnostics.all();
   assert.equal(diagnostics.length, 1);
-  assert.equal(Diagnostic_Code(diagnostics[0]), 9901101);
-  assert.match(Diagnostic_String(diagnostics[0]), /out\(\.\.\.\) requires a storage expression/);
-  Program_BindSourceFiles(program);
+  assert.equal(diagnostics[0]?.numericCode, 9901101);
+  assert.match(diagnostics[0]?.message ?? "", /out\(\.\.\.\) requires a storage expression/);
 
   const outCall = getCallExpression(index, "out", 0);
   const refCall = getCallExpression(index, "refArg", 0);
@@ -364,7 +368,7 @@ test("source-semantics does not record marker facts for invalid marker arity", (
   assert.match(diagnosticText, /Expected 0 arguments?, but got 1/);
   assert.match(diagnosticText, /Generic type 'ptr' requires 1 type argument/);
   assert.match(diagnosticText, /Generic type 'fnptr' requires 2 type argument/);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "out", 0), argumentPassingFactKey), undefined);
   assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "out", 1), argumentPassingFactKey), undefined);
@@ -401,7 +405,7 @@ test("source-semantics marker imports are alias and shadow safe", () => {
   `);
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   const shadowedOutCall = getCallExpression(index, "out", 0);
   const shadowedNamespaceCall = getCallExpression(index, "out", 1);
@@ -424,7 +428,7 @@ test("source-semantics records ptr and fnptr type facts from canonical type mark
   ]));
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   const pointerReference = getTypeAliasType(index, "Pointer");
   const functionPointerReference = getTypeAliasType(index, "FunctionPointer");
@@ -474,7 +478,7 @@ test("source-semantics records struct field attribute and default facts from can
   ]));
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   const pointDeclaration = getVariableDeclaration(index, "Point");
   const pointSymbol = Node_Symbol(pointDeclaration);
@@ -537,7 +541,7 @@ test("source-semantics ignores non-field marker positions without lifecycle fail
   ]));
 
   assertCleanProgram(program, index);
-  Program_BindSourceFiles(program);
+  finalizeSourceSemantics(extended);
 
   assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "LIFECYCLE_HOOK_FAILED"), false);
 

@@ -6,9 +6,7 @@ import {
   beginExtensionCheckedSourceSignatureDecision,
   commitExtensionCheckedSourceCandidateDecision,
   commitExtensionCheckedSourceSignatureDecision,
-  hasExtensionCheckedCallEvidenceInterest,
   journalExtensionCheckedCallEvidence,
-  shouldRetainExtensionCheckedCallEvidence,
   rollbackExtensionCheckedSourceDecision,
   rollbackExtensionCheckedSourceDiscardDecision,
 } from "../../../extensions/checker-integration.js";
@@ -2490,7 +2488,6 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
     links!.resolvedCallEvidence = undefined;
   }
   const localEvidence: ResolvedSignatureEvidenceOutput | undefined = IsCallOrNewExpression(node)
-    && hasExtensionCheckedCallEvidenceInterest(receiver, node)
     ? {}
     : undefined;
   let result = Checker_resolveSignatureWithEvidence(receiver, node, candidatesOutArray, checkMode, localEvidence);
@@ -2503,10 +2500,6 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
     }
     if (selectedEvidence !== undefined && selectedEvidence.selectedSignature !== result) {
       throw new Error("Resolved call evidence does not belong to the source-order selected signature.");
-    }
-    if (selectedEvidence !== undefined
-      && !shouldRetainExtensionCheckedCallEvidence(receiver, selectedEvidence)) {
-      selectedEvidence = undefined;
     }
     if (receiver!.flowLoopStack.length === 0) {
       links!.resolvedSignature = result;
@@ -2740,9 +2733,7 @@ function Checker_resolveCallExpressionWithEvidence(
 ): GoPtr<Signature> {
   if (Node_Expression(node)!.Kind === KindSuperKeyword) {
     const superType = Checker_checkSuperExpression(receiver, Node_Expression(node));
-    const selectedOutput = output !== undefined && hasExtensionCheckedCallEvidenceInterest(receiver, node)
-      ? output
-      : undefined;
+    const selectedOutput = output;
     if (IsTypeAny(superType)) {
       if (selectedOutput !== undefined) {
         return Checker_resolveUntypedCallWithEvidence(receiver, node, superType, selectedOutput);
@@ -2783,9 +2774,7 @@ function Checker_resolveCallExpressionWithEvidence(
   }
   let callChainFlags: SignatureFlags;
   let funcType = Checker_checkExpression(receiver, Node_Expression(node));
-  const selectedOutput = output !== undefined && hasExtensionCheckedCallEvidenceInterest(receiver, node)
-    ? output
-    : undefined;
+  const selectedOutput = output;
   if (IsOptionalChain(node)) {
     const nonOptionalType = Checker_getOptionalExpressionType(receiver, funcType, Node_Expression(node));
     switch (true) {

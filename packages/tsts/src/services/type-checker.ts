@@ -14,22 +14,37 @@ import {
   Checker_GetTypeFromTypeNode,
   Checker_GetTypeOfPropertyOfType,
 } from "../internal/checker/exports.js";
-import { Checker_getResolvedSignature } from "../internal/checker/checker/signatures.js";
+import {
+  Checker_finalizeResolvedCallEvidence,
+  Checker_getResolvedSignature,
+} from "../internal/checker/checker/signatures.js";
 import { CheckModeNormal } from "../internal/checker/checker/state.js";
 import type { Checker } from "../internal/checker/checker/state.js";
 import {
   Checker_GetAliasedSymbol,
+  Checker_getResolvedSourceElementAccessInfo,
   Checker_GetSymbolAtLocation,
   Checker_getDeclaredTypeOfSymbol,
   Checker_getResolvedSymbolOrNil,
   Checker_getTypeOfSymbol,
+  Checker_getWriteTypeOfSymbol,
   Checker_resolveExternalModuleName,
   Checker_resolveExternalModuleSymbol,
 } from "../internal/checker/checker/symbols.js";
+import type {
+  ResolvedSourceElementAccessInfo as CheckerResolvedSourceElementAccessInfo,
+} from "../internal/checker/checker/symbols.js";
 import { Checker_getContextualType, Checker_GetTypeAtLocation } from "../internal/checker/checker/types.js";
+import { Checker_getResolvedSourceIterationInfo } from "../internal/checker/checker/syntax-checking.js";
+import type { ExtensionCheckedIterationSelection } from "../extensions/checker-iteration-selection.js";
 import { Checker_GetConstantValue, Checker_GetExportsOfModule } from "../internal/checker/services.js";
 import { Checker_TypeToString } from "../internal/checker/printer.js";
-import type { ContextFlags, Signature, Type } from "../internal/checker/types.js";
+import type {
+  ContextFlags,
+  ResolvedCallEvidence,
+  Signature,
+  Type,
+} from "../internal/checker/types.js";
 import { ContextFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../internal/checker/types.js";
 import {
   extensionHostAllowsCompilerQuery,
@@ -37,10 +52,18 @@ import {
   lookupAttachedExtensionHost,
 } from "../extensions/host-attachment.js";
 
+const semanticPreflightedSourceFilesByProgram = new WeakMap<object, WeakSet<object>>();
+const resolvedElementAccessInfoByProgram = new WeakMap<object, WeakMap<object, CheckerResolvedSourceElementAccessInfo>>();
+const resolvedIterationInfoByProgram = new WeakMap<object, WeakMap<object, ExtensionCheckedIterationSelection>>();
+
 export interface TypeCheckerQueryOptions {
   readonly context?: Context;
   readonly sourceFile?: GoPtr<SourceFile>;
 }
+
+export type ResolvedSourceCallInfo = ResolvedCallEvidence;
+export type ResolvedSourceElementAccessInfo = CheckerResolvedSourceElementAccessInfo;
+export type ResolvedSourceIterationInfo = ExtensionCheckedIterationSelection;
 
 export interface TypeCheckerQueries {
   readonly getTypeAtLocation: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
@@ -51,8 +74,12 @@ export interface TypeCheckerQueries {
   readonly getResolvedSymbolOrNil: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Symbol>;
   readonly getAliasedSymbol: (symbol: GoPtr<Symbol>, options?: TypeCheckerQueryOptions) => GoPtr<Symbol>;
   readonly getTypeOfSymbol: (symbol: GoPtr<Symbol>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
+  readonly getWriteTypeOfSymbol: (symbol: GoPtr<Symbol>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getDeclaredTypeOfSymbol: (symbol: GoPtr<Symbol>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getResolvedSignature: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Signature>;
+  readonly getResolvedCallInfo: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<ResolvedSourceCallInfo>;
+  readonly getResolvedElementAccessInfo: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<ResolvedSourceElementAccessInfo>;
+  readonly getResolvedIterationInfo: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<ResolvedSourceIterationInfo>;
   readonly getReturnTypeOfSignature: (signature: GoPtr<Signature>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getCallSignaturesOfType: (type: GoPtr<Type>, options?: TypeCheckerQueryOptions) => readonly GoPtr<Signature>[];
   readonly getConstructSignaturesOfType: (type: GoPtr<Type>, options?: TypeCheckerQueryOptions) => readonly GoPtr<Signature>[];
@@ -93,10 +120,23 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
       withCheckerForSymbol(program, symbol, defaultOptions, options, (checker) => Checker_GetAliasedSymbol(checker, symbol)),
     getTypeOfSymbol: (symbol, options = {}) =>
       withCheckerForSymbol(program, symbol, defaultOptions, options, (checker) => Checker_getTypeOfSymbol(checker, symbol)),
+    getWriteTypeOfSymbol: (symbol, options = {}) =>
+      withCheckerForSymbol(program, symbol, defaultOptions, options, (checker) => Checker_getWriteTypeOfSymbol(checker, symbol)),
     getDeclaredTypeOfSymbol: (symbol, options = {}) =>
       withCheckerForSymbol(program, symbol, defaultOptions, options, (checker) => Checker_getDeclaredTypeOfSymbol(checker, symbol)),
     getResolvedSignature: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_getResolvedSignature(checker, node, undefined, CheckModeNormal)),
+    getResolvedCallInfo: (node, options = {}) =>
+      withCheckerForNode(program, node, defaultOptions, options, (checker) => {
+        const sourceResultType = Checker_GetTypeAtLocation(checker, node);
+        return Checker_finalizeResolvedCallEvidence(checker, node, sourceResultType);
+      }),
+    getResolvedElementAccessInfo: (node, options = {}) =>
+      withCheckerForNode(program, node, defaultOptions, options, (checker) =>
+        getMemoizedResolvedElementAccessInfo(program, checker, node)),
+    getResolvedIterationInfo: (node, options = {}) =>
+      withCheckerForNode(program, node, defaultOptions, options, (checker) =>
+        getMemoizedResolvedIterationInfo(program, checker, node)),
     getReturnTypeOfSignature: (signature, options = {}) =>
       withCheckerForSubject(program, signature, defaultOptions, options, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
     getCallSignaturesOfType: (type, options = {}) =>
@@ -194,8 +234,11 @@ function withChecker<T>(
   if (extensionHost !== undefined && !extensionHost[extensionHostAllowsCompilerQuery]()) {
     throw new Error("Compiler queries are unavailable inside checked source-call producers.");
   }
-  if (extensionHost === undefined || extensionHost[extensionHostAllowsSemanticQueryPreflight]()) {
+  const preflightedSourceFiles = semanticPreflightedSourceFiles(program);
+  if (!preflightedSourceFiles.has(sourceFile)
+    && (extensionHost === undefined || extensionHost[extensionHostAllowsSemanticQueryPreflight]())) {
     Program_GetSemanticDiagnostics(program, context, sourceFile);
+    preflightedSourceFiles.add(sourceFile);
   }
   const [checker, done] = Program_GetTypeCheckerForFile(program, context, sourceFile);
   try {
@@ -203,6 +246,63 @@ function withChecker<T>(
   } finally {
     done();
   }
+}
+
+function semanticPreflightedSourceFiles(program: object): WeakSet<object> {
+  let sourceFiles = semanticPreflightedSourceFilesByProgram.get(program);
+  if (sourceFiles === undefined) {
+    sourceFiles = new WeakSet();
+    semanticPreflightedSourceFilesByProgram.set(program, sourceFiles);
+  }
+  return sourceFiles;
+}
+
+function getMemoizedResolvedElementAccessInfo(
+  program: GoPtr<Program>,
+  checker: GoPtr<Checker>,
+  node: GoPtr<Node>,
+): GoPtr<ResolvedSourceElementAccessInfo> {
+  if (program === undefined || checker === undefined || node === undefined) {
+    return undefined;
+  }
+  let entries = resolvedElementAccessInfoByProgram.get(program);
+  if (entries === undefined) {
+    entries = new WeakMap();
+    resolvedElementAccessInfoByProgram.set(program, entries);
+  }
+  const existing = entries.get(node);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const resolved = Checker_getResolvedSourceElementAccessInfo(checker, node);
+  if (resolved !== undefined) {
+    entries.set(node, resolved);
+  }
+  return resolved;
+}
+
+function getMemoizedResolvedIterationInfo(
+  program: GoPtr<Program>,
+  checker: GoPtr<Checker>,
+  node: GoPtr<Node>,
+): GoPtr<ResolvedSourceIterationInfo> {
+  if (program === undefined || checker === undefined || node === undefined) {
+    return undefined;
+  }
+  let entries = resolvedIterationInfoByProgram.get(program);
+  if (entries === undefined) {
+    entries = new WeakMap();
+    resolvedIterationInfoByProgram.set(program, entries);
+  }
+  const existing = entries.get(node);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const resolved = Checker_getResolvedSourceIterationInfo(checker, node);
+  if (resolved !== undefined) {
+    entries.set(node, resolved);
+  }
+  return resolved;
 }
 
 function getSymbolSourceFile(symbol: GoPtr<Symbol>): GoPtr<SourceFile> {

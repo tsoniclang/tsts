@@ -7,7 +7,7 @@ import { Node_Expression, Node_Text } from "../internal/ast/ast.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import { Diagnostic_String } from "../internal/ast/diagnostic.js";
-import { KindArrowFunction, KindCallExpression, KindExpressionStatement, KindIdentifier, KindPropertyAccessExpression } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindCallExpression, KindElementAccessExpression, KindExpressionStatement, KindForOfStatement, KindIdentifier, KindPropertyAccessExpression } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
@@ -64,6 +64,57 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
   assertCleanSemanticDiagnostics(program, index);
 });
 
+test("resolved call info exposes one canonical checker-owned selected decision", () => {
+  const { program, index } = createProgram(`
+    class Box<T> {
+      run<U>(value: U, ...rest: U[]): U {
+        return value;
+      }
+    }
+
+    declare const box: Box<string>;
+    box.run<number>(1, 2);
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const call = findFirstNodeByKind(index, KindCallExpression);
+
+  const queryFirst = queries.getResolvedCallInfo(call);
+  assert.equal(queryFirst?.outcome, "applicable");
+  assert.equal(queryFirst?.call, call);
+  assert.equal(queryFirst?.selectedSignature, queries.getResolvedSignature(call));
+  assert.equal(queryFirst?.sourceSelectedMethodTypeArguments?.length, 1);
+  assert.equal(
+    (queryFirst?.sourceSelectedMethodTypeArguments?.[0]?.selectedType.flags ?? 0) & TypeFlagsNumber,
+    TypeFlagsNumber,
+  );
+  assert.ok(queryFirst?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode !== undefined);
+  assert.deepEqual(
+    queryFirst?.sourceSelectedSignatureParameters.map((parameter) => [
+      parameter.parameterIndex,
+      parameter.parameterName,
+      parameter.acceptsOmission,
+      parameter.rest,
+    ]),
+    [
+      [0, "value", false, false],
+      [1, "rest", true, true],
+    ],
+  );
+  assert.equal(queryFirst?.sourceArguments.length, 2);
+  assert.equal(queryFirst?.sourceArgumentBindings.length, 2);
+  assert.equal(queryFirst?.sourceArgumentBindings[1]?.sourceParameterForm, "rest-element");
+  assert.ok(queryFirst?.sourceReceiver !== undefined);
+  assert.equal(queryFirst?.sourceCalleeAccess?.kind, "property");
+  assert.ok(queryFirst?.sourceCalleeAccess?.selectedDeclaration !== undefined);
+  assert.equal((queryFirst?.sourceResultType.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+
+  assertCleanSemanticDiagnostics(program, index);
+  const repeated = queries.getResolvedCallInfo(call);
+  assert.equal(repeated, queryFirst);
+  assert.equal(repeated?.selectedSignature, queryFirst?.selectedSignature);
+  assert.equal(repeated?.sourceResultType, queryFirst?.sourceResultType);
+});
+
 test("public type-checker queries expose instantiated generic member types", () => {
   const { program, index } = createProgram(`
     type int = number;
@@ -82,6 +133,91 @@ test("public type-checker queries expose instantiated generic member types", () 
   const finalValueSymbol = queries.getSymbolAtLocation(Node_Name(finalValueAccess));
   assert.equal(finalValueSymbol?.Name, "value");
   assertCleanSemanticDiagnostics(program, index);
+});
+
+test("property selection uses the selected symbol with distinct read and write types", () => {
+  const { program, index } = createProgram(`
+    class Model {
+      get value(): string {
+        return "";
+      }
+
+      set value(next: number) {}
+    }
+
+    declare const model: Model;
+    const read = model.value;
+    model.value = 1;
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const readAccess = findPropertyAccessByName(index, "value", (node) => node?.Parent?.Kind !== KindCallExpression);
+  const selectedSymbol = queries.getSymbolAtLocation(Node_Name(readAccess));
+
+  assert.equal(queries.getSymbolName(selectedSymbol), "value");
+  assert.equal((queries.getTypeOfSymbol(selectedSymbol)?.flags ?? 0) & TypeFlagsString, TypeFlagsString);
+  assert.equal((queries.getWriteTypeOfSymbol(selectedSymbol)?.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+test("element access info preserves mapped declarations and proven tuple ordinals", () => {
+  const { program, index } = createProgram(`
+    type Dictionary<Key extends string, Value> = {
+      [Property in Key]: Value;
+    };
+
+    declare const dictionary: Dictionary<string, number>;
+    declare const key: string;
+    dictionary[key];
+
+    declare const pair: readonly [string, number];
+    const one = 1 as const;
+    pair[one];
+  `, { noLib: false });
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const accesses = findNodesByKind(index, KindElementAccessExpression);
+  assert.equal(accesses.length, 2);
+
+  const mapped = queries.getResolvedElementAccessInfo(accesses[0]);
+  assert.equal(mapped?.selectedSymbol, undefined);
+  assert.ok(mapped?.selectedDeclaration !== undefined);
+  assert.equal(mapped?.selectedElementIndex, undefined);
+  assert.equal((mapped?.sourceResultType.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+
+  const tuple = queries.getResolvedElementAccessInfo(accesses[1]);
+  assert.equal(tuple?.selectedElementIndex, 1);
+  assert.equal((tuple?.sourceResultType.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+
+  assertCleanSemanticDiagnostics(program, index);
+  assert.equal(queries.getResolvedElementAccessInfo(accesses[0]), mapped);
+  assert.equal(queries.getResolvedElementAccessInfo(accesses[1]), tuple);
+});
+
+test("iteration info preserves declaration and assignment element selection", () => {
+  const { program, index } = createProgram(`
+    declare const values: readonly number[];
+    let existing = 0;
+
+    for (const value of values) {
+      value;
+    }
+
+    for (existing of values) {
+      existing;
+    }
+  `, { noLib: false });
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const statements = findNodesByKind(index, KindForOfStatement);
+  assert.equal(statements.length, 2);
+
+  const declaration = queries.getResolvedIterationInfo(statements[0]);
+  const assignment = queries.getResolvedIterationInfo(statements[1]);
+  assert.equal(declaration?.iterationKind, "for-of");
+  assert.equal(assignment?.iterationKind, "for-of");
+  assert.equal((declaration?.sourceElementType.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+  assert.equal(assignment?.sourceElementType, declaration?.sourceElementType);
+  assertCleanSemanticDiagnostics(program, index);
+  assert.equal(queries.getResolvedIterationInfo(statements[0]), declaration);
+  assert.equal(queries.getResolvedIterationInfo(statements[1]), assignment);
 });
 
 test("public type-checker queries expose flow-narrowed receiver member access", () => {
@@ -211,6 +347,16 @@ function findFirstNodeByKind(root: GoPtr<Node>, kind: number): GoPtr<Node> {
     }
   });
   assert.ok(found !== undefined);
+  return found;
+}
+
+function findNodesByKind(root: GoPtr<Node>, kind: number): readonly Node[] {
+  const found: Node[] = [];
+  visitNodes(root, (node) => {
+    if (node?.Kind === kind) {
+      found.push(node);
+    }
+  });
   return found;
 }
 

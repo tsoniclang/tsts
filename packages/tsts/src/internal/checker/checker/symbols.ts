@@ -5480,16 +5480,25 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_checkElementAccessChain(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
-  const exprType = Checker_checkExpression(receiver, Node_Expression(node));
-  const nonOptionalType = Checker_getOptionalExpressionType(receiver, exprType, Node_Expression(node));
-  const sourceReceiverType = Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node));
   const selected = selectedElementAccessCapture(receiver, node);
-  const selectedResult = checkElementAccessExpressionWithEvidence(receiver, node, sourceReceiverType, checkMode, selected);
-  const result = Checker_propagateOptionalTypeMarker(receiver, selectedResult, node, nonOptionalType !== exprType);
+  const result = checkElementAccessChainWithEvidence(receiver, node, checkMode, selected);
   if (selected !== undefined) {
     recordSelectedElementAccessEvidence(receiver, node, selected, result);
   }
   return result;
+}
+
+function checkElementAccessChainWithEvidence(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+  checkMode: CheckMode,
+  selected: SelectedElementAccessCheck | undefined,
+): GoPtr<Type> {
+  const exprType = Checker_checkExpression(receiver, Node_Expression(node));
+  const nonOptionalType = Checker_getOptionalExpressionType(receiver, exprType, Node_Expression(node));
+  const sourceReceiverType = Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node));
+  const selectedResult = checkElementAccessExpressionWithEvidence(receiver, node, sourceReceiverType, checkMode, selected);
+  return Checker_propagateOptionalTypeMarker(receiver, selectedResult, node, nonOptionalType !== exprType);
 }
 
 /**
@@ -5547,6 +5556,76 @@ interface SelectedElementAccessCheck {
 interface SelectedIndexAccessSelection {
   readonly objectType: GoPtr<Type>;
   readonly indexInfo: GoPtr<IndexInfo>;
+}
+
+export interface ResolvedSourceElementAccessInfo {
+  readonly expression: Node;
+  readonly receiver: {
+    readonly expression: Node;
+    readonly type: Type;
+  };
+  readonly argument: {
+    readonly expression: Node;
+    readonly type: Type;
+  };
+  readonly sourceSymbol?: Symbol;
+  readonly sourceDeclaration?: Node;
+  readonly selectedSymbol?: Symbol;
+  readonly selectedDeclaration?: Node;
+  readonly sourceResultType: Type;
+  readonly selectedElementIndex?: number;
+  readonly accessMode: "read" | "write" | "read-write" | "delete";
+  readonly optionalChain: boolean;
+  readonly callCallee: boolean;
+}
+
+export function Checker_getResolvedSourceElementAccessInfo(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+): ResolvedSourceElementAccessInfo | undefined {
+  if (receiver === undefined || node === undefined || node.Kind !== KindElementAccessExpression) {
+    return undefined;
+  }
+  const selected = createSelectedElementAccessCheck();
+  let sourceResultType: GoPtr<Type>;
+  if ((node.Flags & NodeFlagsOptionalChain) !== 0) {
+    sourceResultType = checkElementAccessChainWithEvidence(receiver, node, CheckModeNormal, selected);
+  } else {
+    const sourceReceiverType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
+    sourceResultType = checkElementAccessExpressionWithEvidence(receiver, node, sourceReceiverType, CheckModeNormal, selected);
+  }
+  const receiverExpression = Node_Expression(node);
+  const argumentExpression = AsElementAccessExpression(node)?.ArgumentExpression;
+  if (!selected.selected
+    || receiverExpression === undefined
+    || argumentExpression === undefined
+    || selected.receiverType === undefined
+    || selected.argumentType === undefined
+    || sourceResultType === undefined
+    || Checker_isErrorType(receiver, sourceResultType)
+    || sourceResultType === receiver.silentNeverType) {
+    return undefined;
+  }
+  return Object.freeze({
+    expression: node,
+    receiver: Object.freeze({
+      expression: receiverExpression,
+      type: selected.receiverType,
+    }),
+    argument: Object.freeze({
+      expression: argumentExpression,
+      type: selected.argumentType,
+    }),
+    ...(selected.sourceSymbol === undefined ? {} : { sourceSymbol: selected.sourceSymbol }),
+    ...(selected.sourceDeclaration === undefined ? {} : { sourceDeclaration: selected.sourceDeclaration }),
+    ...(selected.selectedSymbol === undefined ? {} : { selectedSymbol: selected.selectedSymbol }),
+    ...(selected.selectedDeclaration === undefined ? {} : { selectedDeclaration: selected.selectedDeclaration }),
+    sourceResultType,
+    ...(selected.selectedElementIndex === undefined ? {} : { selectedElementIndex: selected.selectedElementIndex }),
+    accessMode: checkedAccessMode(node),
+    optionalChain: IsOptionalChain(node),
+    callCallee: Checker_isMethodAccessForCall(receiver, node),
+  });
 }
 
 function checkElementAccessExpressionWithEvidence(
@@ -5649,19 +5728,21 @@ function recordSelectedElementAccessEvidence(
 function selectedElementAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Node>): SelectedElementAccessCheck | undefined {
   const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedElementAccess, node);
   const callOwned = hasExtensionCheckedCallCalleeEvidenceInterest(receiver, node);
-  return accessOwned || callOwned
-    ? {
-        selected: false,
-        resultType: undefined,
-        receiverType: undefined,
-        argumentType: undefined,
-        sourceSymbol: undefined,
-        sourceDeclaration: undefined,
-        selectedSymbol: undefined,
-        selectedDeclaration: undefined,
-        indexSelections: [],
-      }
-    : undefined;
+  return accessOwned || callOwned ? createSelectedElementAccessCheck() : undefined;
+}
+
+function createSelectedElementAccessCheck(): SelectedElementAccessCheck {
+  return {
+    selected: false,
+    resultType: undefined,
+    receiverType: undefined,
+    argumentType: undefined,
+    sourceSymbol: undefined,
+    sourceDeclaration: undefined,
+    selectedSymbol: undefined,
+    selectedDeclaration: undefined,
+    indexSelections: [],
+  };
 }
 
 function retainSelectedIndexAccess(

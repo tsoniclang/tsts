@@ -68,7 +68,6 @@ import type {
   StructFact,
 } from "./facts.js";
 import {
-  ExtensionLifecycleEvent,
   extensionHostRegisterFactResolver,
   extensionHostSetFact,
 } from "./host.js";
@@ -82,7 +81,6 @@ import type {
   ExtensionFactSubject,
   ExtensionFactStore,
   ExtensionHost,
-  SourceFileBoundLifecycleRequest,
 } from "./host.js";
 
 type SourceSemanticsFactAccess = Pick<ExtensionFactStore, "get" | "set">;
@@ -216,6 +214,7 @@ function createSourceSemanticsModules(modules: readonly SourceSemanticsModule[])
 
 export function createSourceSemanticsExtension(options: SourceSemanticsExtensionOptions): CompilerExtension {
   const modules = createSourceSemanticsModules(options.modules);
+  let facts: SourceSemanticsFactAccess | undefined;
   return {
     identity: options.identity,
     composition: {
@@ -233,24 +232,28 @@ export function createSourceSemanticsExtension(options: SourceSemanticsExtension
       ],
     },
     initialize(context): void {
-      const facts = createSourceSemanticsFactAccess(context.host);
+      facts = createSourceSemanticsFactAccess(context.host);
       context.host[extensionHostRegisterFactResolver](sourcePrimitiveFactKey, (subject, resolverContext) =>
         resolveSourcePrimitiveFact(subject, resolverContext, modules));
-      context.registerLifecycleHook<SourceFileBoundLifecycleRequest>(ExtensionLifecycleEvent.afterSourceFileBound, (request) => {
-        recordSourceSemanticsFacts(request, facts, context.diagnostics, options.identity.id, modules);
-      });
+    },
+    analyzeSource(context): void {
+      if (facts === undefined) {
+        throw new Error("Source-semantics analysis cannot run before extension initialization.");
+      }
+      for (const sourceFile of context.sourceFiles) {
+        recordSourceSemanticsFacts(sourceFile, facts, context.diagnostics, options.identity.id, modules);
+      }
     },
   };
 }
 
 function recordSourceSemanticsFacts(
-  request: SourceFileBoundLifecycleRequest,
+  sourceFile: GoPtr<SourceFile>,
   facts: SourceSemanticsFactAccess,
   diagnostics: ExtensionDiagnosticStore,
   extensionId: string,
   modules: readonly SourceSemanticsModuleRuntime[],
 ): void {
-  const sourceFile = getLifecycleSourceFile(request);
   if (sourceFile === undefined) {
     return;
   }
@@ -1260,11 +1263,4 @@ export function sourcePrimitive(
 
 function getSymbolFactId(symbol: Symbol): string {
   return `${symbol.Name}:${String(GetSymbolId(symbol))}`;
-}
-
-function getLifecycleSourceFile(request: SourceFileBoundLifecycleRequest): GoPtr<SourceFile> {
-  if (typeof request.sourceFile !== "object" || request.sourceFile === null) {
-    return undefined;
-  }
-  return request.sourceFile as SourceFile;
 }

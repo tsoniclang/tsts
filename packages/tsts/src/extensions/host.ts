@@ -185,6 +185,7 @@ export const ExtensionHostDiagnosticCode = {
   invalidSourceOperationProducer: 9000035,
   sourceOperationProducerFailed: 9000036,
   invalidDependencyDirection: 9000037,
+  sourceAnalysisFailed: 9000038,
 } as const;
 
 export const TstsProviderContractVersion = "tsts.provider.3";
@@ -398,6 +399,17 @@ export interface CompilerExtension {
   readonly composition?: ExtensionCompositionSpec;
   readonly observationOwners?: readonly ExtensionObservationPointName[];
   readonly initialize?: (context: ExtensionInitializeContext) => void;
+  readonly analyzeSource?: (context: SourceAnalysisContext) => void;
+}
+
+export interface SourceAnalysisContext {
+  readonly ast: ExtensionCompilerQueryContext["ast"];
+  readonly checker: ExtensionCompilerQueryContext["checker"];
+  readonly sourceFiles: readonly GoPtr<SourceFile>[];
+  readonly getSourceFile: ExtensionCompilerQueryContext["getSourceFile"];
+  readonly facts: ExtensionFactStore;
+  readonly factResolver: ExtensionFactResolver;
+  readonly diagnostics: ExtensionDiagnosticStore;
 }
 
 export interface ExtensionInitializeContext {
@@ -827,6 +839,7 @@ export interface ExtendedProgram<TProgram extends object = object> {
 
 export const extensionHostSetFact: unique symbol = Symbol("tsts.extensionHost.setFact");
 export const extensionHostRegisterFactResolver: unique symbol = Symbol("tsts.extensionHost.registerFactResolver");
+export const extensionHostRunSourceAnalysis: unique symbol = Symbol("tsts.extensionHost.runSourceAnalysis");
 
 export interface AttachExtensionHostToProgramOptions {
   readonly bindCompilerProgram?: boolean;
@@ -3907,6 +3920,7 @@ export class ExtensionHost {
   #program: object;
   #compilerContext: ExtensionCompilerQueryContext | undefined;
   #compilerContextsBySourceFile = new WeakMap<object, ExtensionCompilerQueryContext>();
+  #sourceAnalysisState: "pending" | "running" | "completed" | "failed" = "pending";
   #observationPhase: ExtensionObservationPhase = "checking";
   #semanticFinalizationState: "open" | "finalizing" | "finalized" | "failed" = "open";
   #nextConsumerSubjectId = 1;
@@ -5468,6 +5482,73 @@ export class ExtensionHost {
     }
   }
 
+  [extensionHostRunSourceAnalysis](): void {
+    this.#assertCheckedSourceCallProducerCapabilityBoundary("analyze checked source");
+    if (this.#sourceAnalysisState === "completed") {
+      return;
+    }
+    if (this.#sourceAnalysisState === "running") {
+      throw new Error("Extension source analysis cannot re-enter itself.");
+    }
+    if (this.#sourceAnalysisState === "failed") {
+      throw new Error("Extension source analysis previously failed and cannot be retried.");
+    }
+    if (this.#semanticFinalizationState !== "open") {
+      throw new Error("Extension source analysis must complete before semantic finalization begins.");
+    }
+    const activeOwner = this.#ownerAuthority.stack[this.#ownerAuthority.stack.length - 1];
+    if (activeOwner !== undefined) {
+      throw new Error(`Extension '${activeOwner}' cannot start source analysis from inside an extension callback.`);
+    }
+    if (this.#mutationAttemptStack.length !== 0) {
+      throw new Error("Extension source analysis cannot begin during an active host mutation transaction.");
+    }
+
+    this.providers[sealProviderRegistrations]();
+    this.#sourceAnalysisState = "running";
+    const compiler = this.getCompilerQueryContext();
+    const sourceFiles = Object.freeze([...compiler.getSourceFiles()]);
+    try {
+      for (const extension of this.#extensions) {
+        const analyzeSource = extension.analyzeSource;
+        if (analyzeSource === undefined) {
+          continue;
+        }
+        const attempt = this.#beginFactAttempt();
+        try {
+          const capabilities = this.#getOwnerCapabilities(extension.identity.id);
+          runWithExtensionOwnerAuthority(this.#ownerAuthority, extension.identity.id, () => {
+            analyzeSource(Object.freeze({
+              ast: compiler.ast,
+              checker: compiler.checker,
+              sourceFiles,
+              getSourceFile: compiler.getSourceFile,
+              facts: capabilities.facts,
+              factResolver: capabilities.factResolver,
+              diagnostics: capabilities.diagnostics,
+            }));
+          });
+          this.#commitFactAttempt(attempt);
+        } catch (error) {
+          const settledError = this.#rollbackFactAttemptsAfterFailure(error, attempt);
+          this.diagnostics.append(createHostDiagnostic({
+            extensionCode: "SOURCE_ANALYSIS_FAILED",
+            numericCode: ExtensionHostDiagnosticCode.sourceAnalysisFailed,
+            message: `Extension '${extension.identity.id}' failed while analyzing checked source.`,
+            evidence: [{ message: "Thrown value", details: settledError }],
+            identity: encodeIdentityTuple(["source-analysis-failed", extension.identity.id]),
+          }));
+          throw settledError;
+        }
+      }
+      this.#sourceAnalysisState = "completed";
+    } catch (error) {
+      this.#sourceAnalysisState = "failed";
+      this.#failSemanticFinalization();
+      throw error;
+    }
+  }
+
   finalizeSemantics(): void {
     this.#assertCheckedSourceCallProducerCapabilityBoundary("finalize host semantics");
     if (this.#semanticFinalizationState === "finalized") {
@@ -5485,6 +5566,13 @@ export class ExtensionHost {
     }
     if (this.#mutationAttemptStack.length !== 0) {
       throw new Error("Extension semantic finalization cannot begin during an active host mutation transaction.");
+    }
+    if (this.#sourceAnalysisState === "pending"
+      && this.#extensions.some((extension) => extension.analyzeSource !== undefined)) {
+      throw new Error("Extension source analysis must complete before semantic finalization.");
+    }
+    if (this.#sourceAnalysisState === "failed") {
+      throw new Error("Extension source analysis failed and semantic finalization cannot continue.");
     }
     let attempt: HostMutationAttempt | undefined;
     try {
