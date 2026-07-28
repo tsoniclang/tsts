@@ -1,9 +1,11 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import { hasExtensionCheckedCallCalleeEvidenceInterest, hasExtensionCheckedOperationHost, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation, retainExtensionCheckedIdentifierCalleeSelection } from "../../../extensions/checker-integration.js";
-import { ExtensionObservationPoint } from "../../../extensions/observations.js";
-import type { CheckedPropertyAccessSourceOperation } from "../../../extensions/facts.js";
-import type { CheckedFlowSourceUse } from "../../../extensions/observations.js";
+import {
+  callEvidenceWantedForCallee,
+  retainElementCallCalleeEvidence,
+  retainIdentifierCallCalleeEvidence,
+  retainPropertyCallCalleeEvidence,
+} from "./call-evidence.js";
 import { NewGoStructMap } from "../../../go/compat.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
@@ -1520,8 +1522,6 @@ export function Checker_checkTypeReferenceOrImport(receiver: GoPtr<Checker>, nod
     }
     const symbol_ = Checker_getResolvedSymbolOrNil(receiver, node);
     if (symbol_ !== undefined) {
-      recordExtensionTargetConstraintValidation(receiver, node, symbol_);
-      recordExtensionRuntimeCarrierFact(receiver, node, t, symbol_);
       if (Some(symbol_!.Declarations as GoSlice<GoPtr<Node>>, (d) => (IsTypeDeclaration(d) && Checker_IsDeprecatedDeclaration(receiver, d)) as boolean)) {
         Checker_addDeprecatedSuggestion(receiver, Checker_getDeprecatedSuggestionNode(receiver, node), symbol_!.Declarations as GoSlice<GoPtr<Node>>, symbol_!.Name);
       }
@@ -5701,16 +5701,12 @@ function recordSelectedElementAccessEvidence(
   if (!selected.selected) {
     return;
   }
-  const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedElementAccess, node);
-  const retainCallReceiverEvidence = hasExtensionCheckedCallCalleeEvidenceInterest(receiver, node);
+  const retainCallReceiverEvidence = callEvidenceWantedForCallee(node);
   const callCallee = retainCallReceiverEvidence || Checker_isMethodAccessForCall(receiver, node);
-  if (!accessOwned && !retainCallReceiverEvidence) {
+  if (!retainCallReceiverEvidence) {
     return;
   }
-  recordExtensionCheckedElementAccessMapping(
-    receiver,
-    node,
-    {
+  const evidence = {
       selectedSymbol: selected.selectedSymbol,
       selectedDeclaration: selected.selectedDeclaration,
       sourceSymbol: selected.sourceSymbol,
@@ -5721,14 +5717,15 @@ function recordSelectedElementAccessEvidence(
       argumentType: selected.argumentType,
       accessMode: checkedAccessMode(node),
       callCallee,
-    },
-  );
+  } as const;
+  if (retainCallReceiverEvidence) {
+    retainElementCallCalleeEvidence(receiver, node, evidence);
+  }
 }
 
 function selectedElementAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Node>): SelectedElementAccessCheck | undefined {
-  const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedElementAccess, node);
-  const callOwned = hasExtensionCheckedCallCalleeEvidenceInterest(receiver, node);
-  return accessOwned || callOwned ? createSelectedElementAccessCheck() : undefined;
+  const callOwned = callEvidenceWantedForCallee(node);
+  return callOwned ? createSelectedElementAccessCheck() : undefined;
 }
 
 function createSelectedElementAccessCheck(): SelectedElementAccessCheck {
@@ -6604,8 +6601,7 @@ export function Checker_checkIdentifier(receiver: GoPtr<Checker>, node: GoPtr<No
     }
   }
   if (targetSymbol !== receiver!.unknownSymbol) {
-    retainExtensionCheckedIdentifierCalleeSelection(receiver, node, localOrExportSymbol, targetSymbol);
-    recordExtensionFlowUseValidation(receiver, node, localOrExportSymbol, checkedIdentifierFlowSourceUse(node));
+    retainIdentifierCallCalleeEvidence(receiver, node, localOrExportSymbol, targetSymbol);
   }
   const isAlias = (localOrExportSymbol!.Flags & SymbolFlagsAlias) !== 0;
   if ((localOrExportSymbol!.Flags & SymbolFlagsVariable) !== 0) {
@@ -6700,34 +6696,6 @@ export function Checker_checkIdentifier(receiver: GoPtr<Checker>, node: GoPtr<No
     return Checker_getBaseTypeOfLiteralType(receiver, flowType);
   }
   return flowType;
-}
-
-function checkedIdentifierFlowSourceUse(node: GoPtr<Node>): CheckedFlowSourceUse {
-  const assignmentKind = getAssignmentTargetKind(node);
-  if (assignmentKind === AssignmentKindDefinite) {
-    return Object.freeze({ kind: "ordinary", access: "write" });
-  }
-  if (assignmentKind === AssignmentKindCompound) {
-    return Object.freeze({ kind: "ordinary", access: "read-write" });
-  }
-  if (IsJsxTagName(node)) {
-    return Object.freeze({ kind: "jsx-element" });
-  }
-  let callee = node;
-  while (callee?.Parent !== undefined && IsParenthesizedExpression(callee.Parent)) {
-    callee = callee.Parent;
-  }
-  const parent = callee?.Parent;
-  if (IsCallOrNewExpression(parent) && Node_Expression(parent) === callee) {
-    return Object.freeze({ kind: IsNewExpression(parent) ? "construct" : "call" });
-  }
-  if (IsTaggedTemplateExpression(parent) && AsTaggedTemplateExpression(parent)!.Tag === callee) {
-    return Object.freeze({ kind: "tagged-template" });
-  }
-  if (IsDecorator(parent) && Node_Expression(parent) === callee) {
-    return Object.freeze({ kind: "decorator" });
-  }
-  return Object.freeze({ kind: "ordinary", access: "read" });
 }
 
 /**
@@ -6844,6 +6812,125 @@ interface SelectedPropertyAccessCheck {
   selectedDeclaration: GoPtr<Node>;
 }
 
+export interface ResolvedSourcePropertyAccessInfo {
+  readonly expression: Node;
+  readonly receiver: {
+    readonly expression: Node;
+    readonly type: Type;
+    readonly symbol?: Symbol;
+    readonly declaration?: Node;
+  };
+  readonly sourceSymbol?: Symbol;
+  readonly sourceDeclaration?: Node;
+  readonly selectedSymbol?: Symbol;
+  readonly selectedDeclaration?: Node;
+  readonly sourceReadType?: Type;
+  readonly sourceWriteType?: Type;
+  readonly accessMode: "read" | "write" | "read-write" | "delete";
+  readonly optionalChain: boolean;
+  readonly callCallee: boolean;
+}
+
+export function Checker_getResolvedSourcePropertyAccessInfo(
+  receiver: GoPtr<Checker>,
+  node: GoPtr<Node>,
+): ResolvedSourcePropertyAccessInfo | undefined {
+  if (receiver === undefined || node === undefined || node.Kind !== KindPropertyAccessExpression) {
+    return undefined;
+  }
+  const selected: SelectedPropertyAccessCheck = {
+    selected: false,
+    selectionMode: "read",
+    readType: undefined,
+    writeType: undefined,
+    receiverType: undefined,
+    receiverSymbol: undefined,
+    receiverDeclaration: undefined,
+    sourceSymbol: undefined,
+    sourceDeclaration: undefined,
+    selectedSymbol: undefined,
+    selectedDeclaration: undefined,
+  };
+  let sourceResultType: GoPtr<Type>;
+  if ((node.Flags & NodeFlagsOptionalChain) !== 0) {
+    const leftType = Checker_checkExpression(receiver, Node_Expression(node));
+    const nonOptionalType = Checker_getOptionalExpressionType(receiver, leftType, Node_Expression(node));
+    const sourceReceiverType = Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node));
+    const selectedResult = checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
+      receiver,
+      node,
+      Node_Expression(node),
+      sourceReceiverType,
+      Node_Name(node),
+      CheckModeNormal,
+      false,
+      selected,
+    );
+    sourceResultType = Checker_propagateOptionalTypeMarker(
+      receiver,
+      selectedResult,
+      node,
+      nonOptionalType !== leftType,
+    );
+  } else {
+    const sourceReceiverType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
+    sourceResultType = checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
+      receiver,
+      node,
+      Node_Expression(node),
+      sourceReceiverType,
+      Node_Name(node),
+      CheckModeNormal,
+      false,
+      selected,
+    );
+  }
+  const receiverExpression = Node_Expression(node);
+  if (!selected.selected
+    || receiverExpression === undefined
+    || selected.receiverType === undefined
+    || sourceResultType === undefined
+    || Checker_isErrorType(receiver, sourceResultType)
+    || sourceResultType === receiver.silentNeverType) {
+    return undefined;
+  }
+  const accessMode = checkedAccessMode(node);
+  const sourceReadType = selected.selectionMode === "read"
+    ? sourceResultType
+    : accessMode === "read-write"
+      ? selected.readType
+      : undefined;
+  const sourceWriteType = selected.selectionMode === "write"
+    ? sourceResultType
+    : accessMode === "read-write"
+      ? selected.writeType
+      : undefined;
+  if ((accessMode === "read" || accessMode === "delete" || accessMode === "read-write")
+      !== (sourceReadType !== undefined)
+    || (accessMode === "write" || accessMode === "read-write")
+      !== (sourceWriteType !== undefined)) {
+    throw new Error("Resolved property access lost exact read or write type evidence.");
+  }
+  return Object.freeze({
+    expression: node,
+    receiver: Object.freeze({
+      expression: receiverExpression,
+      type: selected.receiverType,
+      ...(selected.receiverSymbol === undefined ? {} : { symbol: selected.receiverSymbol }),
+      ...(selected.receiverDeclaration === undefined ? {} : { declaration: selected.receiverDeclaration }),
+    }),
+    ...(selected.sourceSymbol === undefined ? {} : { sourceSymbol: selected.sourceSymbol }),
+    ...(selected.sourceDeclaration === undefined ? {} : { sourceDeclaration: selected.sourceDeclaration }),
+    ...(selected.selectedSymbol === undefined ? {} : { selectedSymbol: selected.selectedSymbol }),
+    ...(selected.selectedDeclaration === undefined ? {} : { selectedDeclaration: selected.selectedDeclaration }),
+    ...(sourceReadType === undefined ? {} : { sourceReadType }),
+    ...(sourceWriteType === undefined ? {} : { sourceWriteType }),
+    accessMode,
+    optionalChain: IsOptionalChain(node),
+    callCallee: Checker_isMethodAccessForCall(receiver, node),
+  });
+}
+
 function recordSelectedPropertyAccessEvidence(
   receiver: GoPtr<Checker>,
   node: GoPtr<Node>,
@@ -6859,10 +6946,8 @@ function recordSelectedPropertyAccessEvidence(
   const record = (
     selectionMode: "read" | "write",
     resultType: GoPtr<Type>,
-  ): void => recordExtensionCheckedPropertyAccessMapping(
-    receiver,
-    node,
-    {
+  ): void => {
+    const evidence = {
       selectedSymbol: selected.selectedSymbol,
       selectedDeclaration: selected.selectedDeclaration,
       sourceSymbol: selected.sourceSymbol,
@@ -6874,8 +6959,11 @@ function recordSelectedPropertyAccessEvidence(
       accessMode,
       selectionMode,
       callCallee: Checker_isMethodAccessForCall(receiver, node),
-    },
-  );
+    } as const;
+    if (evidence.callCallee) {
+      retainPropertyCallCalleeEvidence(receiver, node, evidence);
+    }
+  };
   record(selected.selectionMode, sourceResultType);
   if (accessMode === "read-write") {
     const complementaryMode = selected.selectionMode === "read" ? "write" : "read";
@@ -6888,9 +6976,8 @@ function recordSelectedPropertyAccessEvidence(
 }
 
 function selectedPropertyAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Node>): SelectedPropertyAccessCheck | undefined {
-  const accessOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedPropertyAccess, node);
-  const callOwned = hasExtensionCheckedCallCalleeEvidenceInterest(receiver, node);
-  return accessOwned || callOwned
+  const callOwned = callEvidenceWantedForCallee(node);
+  return callOwned
     ? {
         selected: false,
         selectionMode: "read",
@@ -6907,7 +6994,7 @@ function selectedPropertyAccessCapture(receiver: GoPtr<Checker>, node: GoPtr<Nod
     : undefined;
 }
 
-function checkedAccessMode(node: GoPtr<Node>): CheckedPropertyAccessSourceOperation["accessMode"] {
+function checkedAccessMode(node: GoPtr<Node>): "read" | "write" | "read-write" | "delete" {
   if (isDeleteTarget(node)) {
     return "delete";
   }

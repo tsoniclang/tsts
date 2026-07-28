@@ -12,7 +12,7 @@ export type { ParsedCommandLine } from "./internal/tsoptions/parsedcommandline.j
 export { barebonesLibContent, formatDiagnostics, transpile, transpileDeclaration, transpileModule } from "./services/transpile.js";
 export type { TranspileCompilerOptions, TranspileCompilerOptionValue, TranspileOptions, TranspileOutput } from "./services/transpile.js";
 export { createTypeCheckerQueries } from "./services/type-checker.js";
-export type { ResolvedSourceCallInfo, ResolvedSourceElementAccessInfo, ResolvedSourceIterationInfo, TypeCheckerQueries, TypeCheckerQueryOptions } from "./services/type-checker.js";
+export type { ResolvedSourceCallInfo, ResolvedSourceElementAccessInfo, ResolvedSourceIterationInfo, ResolvedSourcePropertyAccessInfo, TypeCheckerQueries, TypeCheckerQueryOptions } from "./services/type-checker.js";
 export { createCompilerHost, createInMemoryFileSystem, getBundledLibraryPath, withBundledLibraries } from "./services/embedding-host.js";
 export type { CompilerFileSystem, CompilerHostOptions, CompilerTraceCallback, InMemoryFileSystemOptions } from "./services/embedding-host.js";
 export { createAstReader } from "./services/ast-reader.js";

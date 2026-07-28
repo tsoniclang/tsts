@@ -115,6 +115,35 @@ test("resolved call info exposes one canonical checker-owned selected decision",
   assert.equal(repeated?.sourceResultType, queryFirst?.sourceResultType);
 });
 
+test("resolved call info retains only the winning overload candidate", () => {
+  const { program, index } = createProgram(`
+    class Box {
+      run(value: string): string;
+      run(value: number): number;
+      run(value: string | number): string | number {
+        return value;
+      }
+    }
+
+    declare const box: Box;
+    box.run(1);
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const call = findFirstNodeByKind(index, KindCallExpression);
+
+  const selected = queries.getResolvedCallInfo(call);
+  assert.equal(selected?.outcome, "applicable");
+  assert.equal(selected?.sourceSelectedSignatureParameters.length, 1);
+  assert.equal(
+    (selected?.sourceSelectedSignatureParameters[0]?.selectedType.flags ?? 0) & TypeFlagsNumber,
+    TypeFlagsNumber,
+  );
+  assert.equal((selected?.sourceResultType.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+
+  assertCleanSemanticDiagnostics(program, index);
+  assert.equal(queries.getResolvedCallInfo(call), selected);
+});
+
 test("public type-checker queries expose instantiated generic member types", () => {
   const { program, index } = createProgram(`
     type int = number;
@@ -150,12 +179,53 @@ test("property selection uses the selected symbol with distinct read and write t
     model.value = 1;
   `);
   const queries = createTypeCheckerQueries(program, { sourceFile: index });
-  const readAccess = findPropertyAccessByName(index, "value", (node) => node?.Parent?.Kind !== KindCallExpression);
+  const valueAccesses = findNodesByKind(index, KindPropertyAccessExpression)
+    .filter((node) => Node_Text(Node_Name(node)) === "value");
+  assert.equal(valueAccesses.length, 2);
+  const readAccess = valueAccesses[0];
+  const writeAccess = valueAccesses[1];
   const selectedSymbol = queries.getSymbolAtLocation(Node_Name(readAccess));
+  const readInfo = queries.getResolvedPropertyAccessInfo(readAccess);
+  const writeInfo = queries.getResolvedPropertyAccessInfo(writeAccess);
 
   assert.equal(queries.getSymbolName(selectedSymbol), "value");
   assert.equal((queries.getTypeOfSymbol(selectedSymbol)?.flags ?? 0) & TypeFlagsString, TypeFlagsString);
   assert.equal((queries.getWriteTypeOfSymbol(selectedSymbol)?.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+  assert.equal(readInfo?.accessMode, "read");
+  assert.equal((readInfo?.sourceReadType?.flags ?? 0) & TypeFlagsString, TypeFlagsString);
+  assert.equal(readInfo?.sourceWriteType, undefined);
+  assert.equal(writeInfo?.accessMode, "write");
+  assert.equal(writeInfo?.sourceReadType, undefined);
+  assert.equal((writeInfo?.sourceWriteType?.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+  assert.equal(readInfo?.selectedSymbol, writeInfo?.selectedSymbol);
+  assert.equal(queries.getResolvedPropertyAccessInfo(readAccess), readInfo);
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+test("property access info preserves compound read-write and optional-chain roles", () => {
+  const { program, index } = createProgram(`
+    class Counter {
+      value = 0;
+      advance(): void {}
+    }
+
+    declare const counter: Counter;
+    declare const optionalCounter: Counter | undefined;
+    counter.value += 1;
+    optionalCounter?.advance();
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const valueAccess = findPropertyAccessByName(index, "value", () => true);
+  const advanceAccess = findPropertyAccessByName(index, "advance", () => true);
+  const valueInfo = queries.getResolvedPropertyAccessInfo(valueAccess);
+  const advanceInfo = queries.getResolvedPropertyAccessInfo(advanceAccess);
+
+  assert.equal(valueInfo?.accessMode, "read-write");
+  assert.equal((valueInfo?.sourceReadType?.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+  assert.equal((valueInfo?.sourceWriteType?.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+  assert.equal(valueInfo?.optionalChain, false);
+  assert.equal(advanceInfo?.optionalChain, true);
+  assert.equal(advanceInfo?.callCallee, true);
   assertCleanSemanticDiagnostics(program, index);
 });
 

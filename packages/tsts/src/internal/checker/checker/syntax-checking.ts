@@ -1,23 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
-import {
-  beginExtensionCheckedSourceFileDecision,
-  beginExtensionCheckedSourceDiscardDecision,
-  commitExtensionCheckedSourceFileDecision,
-  extensionCheckedSourceDecisionDiscardActive,
-  extensionCheckedSourceDecisionOwner,
-  hasExtensionCheckedCallEvidenceInterest,
-  hasExtensionCheckedOperationHost,
-  recordExtensionCheckedCallMapping,
-  recordExtensionCheckedIterationMapping,
-  recordExtensionCheckedOperatorKindMapping,
-  recordExtensionCheckedOperatorMapping,
-  journalExtensionCheckedExpressionCache,
-  preserveEquivalentCheckedSourceType,
-  rollbackExtensionCheckedSourceDiscardDecision,
-  rollbackExtensionCheckedSourceDecision,
-} from "../../../extensions/checker-integration.js";
-import { ExtensionObservationPoint } from "../../../extensions/observations.js";
 import type { Context } from "../../../go/context.js";
 import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
@@ -41,14 +23,14 @@ import type { SourceFile } from "../../ast/ast.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Relation } from "../relater.js";
-import type { ResolvedCallEvidence, ResolvedCallSelectionEvidence, Signature, Type, TypeFlags } from "../types.js";
+import type { ResolvedCallSelectionEvidence, Signature, Type, TypeFlags } from "../types.js";
 import { SignatureFlagsAbstract, SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../types.js";
 import { Checker_isIteratorResult } from "./support-queries.js";
 import {
   createExtensionForInIterationSelection,
   freezeExtensionCheckedIterationSelection,
-} from "../../../extensions/checker-iteration-selection.js";
-import type { ExtensionCheckedIterationSelection } from "../../../extensions/checker-iteration-selection.js";
+} from "./iteration-evidence.js";
+import type { ExtensionCheckedIterationSelection } from "./iteration-evidence.js";
 import {
   CheckModeInferential, CheckModeIsForSignatureHelp, CheckModeNormal, CheckModeSkipContextSensitive, CheckModeSkipGenericFunctions, InferenceFlagsSkippedGenericFunction, IterationTypeKindReturn, IterationTypeKindYield,
   IterationTypeKindNext, IterationUseForOf, IterationUseForAwaitOf, IterationUseSpread,
@@ -146,7 +128,7 @@ import { Checker_TypeToString } from "../printer.js";
 import { Checker_checkClassExpression, Checker_checkClassExpressionDeferred, Checker_checkThisInStaticClassFieldInitializerInDecoratedClass } from "./classes.js";
 import {
   Checker_checkTypeParameterDeferred, Checker_resolveUntypedCall, Checker_resolveUntypedCallWithEvidence,
-  Checker_finalizeResolvedCallEvidence, Checker_getResolvedSignature, Checker_getSignatureFromDeclaration, Checker_getReturnTypeOfSignature,
+  Checker_getResolvedSignature, Checker_getSignatureFromDeclaration, Checker_getReturnTypeOfSignature,
   Checker_getReturnTypeFromAnnotation, Checker_unwrapReturnType,
   Checker_isUnwrappedReturnTypeUndefinedVoidOrAny, Checker_isIndirectCall, Checker_instantiateTypeWithSingleGenericCallSignature,
   Checker_checkGeneratorInstantiationAssignabilityToReturnType, Checker_getIterationTypesOfGeneratorFunctionReturnType,
@@ -320,38 +302,22 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: Context, 
   receiver!.ctx = ctx;
   const links = Checker_getSourceFileLinks(receiver, sourceFile);
   if (!links!.typeChecked) {
-    const checkedSourceDecision = beginExtensionCheckedSourceFileDecision(receiver, sourceFile);
-    let checkedSourceCompleted = false;
-    try {
-      receiver!.saveDeferredDiagnostics = true as bool;
-      Checker_checkGrammarSourceFile(receiver, sourceFile);
-      receiver!.renamedBindingElementsInTypes = [];
-      Checker_checkSourceElements(receiver, sourceFile!.Statements!.Nodes);
-      Checker_checkDeferredNodes(receiver, sourceFile);
-      if (IsExternalOrCommonJSModule(sourceFile)) {
-        Checker_checkExternalModuleExports(receiver, Node_AsNode(sourceFile));
-        Checker_registerForUnusedIdentifiersCheck(receiver, Node_AsNode(sourceFile));
-      }
-      if (!sourceFile!.IsDeclarationFile && !Checker_isCanceled(receiver)) {
-        Checker_checkUnusedRenamedBindingElements(receiver);
-      }
-      receiver!.saveDeferredDiagnostics = false as bool;
-      Checker_produceDeferredDiagnostics(receiver);
-      Set_Clear(receiver!.reportedUnreachableNodes);
-      checkedSourceCompleted = !Checker_isCanceled(receiver);
-    } finally {
-      if (checkedSourceCompleted) {
-        links!.typeChecked = true as bool;
-        try {
-          commitExtensionCheckedSourceFileDecision(receiver, checkedSourceDecision);
-        } catch (error) {
-          links!.typeChecked = false as bool;
-          throw error;
-        }
-      } else {
-        rollbackExtensionCheckedSourceDecision(receiver, checkedSourceDecision);
-      }
+    receiver!.saveDeferredDiagnostics = true as bool;
+    Checker_checkGrammarSourceFile(receiver, sourceFile);
+    receiver!.renamedBindingElementsInTypes = [];
+    Checker_checkSourceElements(receiver, sourceFile!.Statements!.Nodes);
+    Checker_checkDeferredNodes(receiver, sourceFile);
+    if (IsExternalOrCommonJSModule(sourceFile)) {
+      Checker_checkExternalModuleExports(receiver, Node_AsNode(sourceFile));
+      Checker_registerForUnusedIdentifiersCheck(receiver, Node_AsNode(sourceFile));
     }
+    if (!sourceFile!.IsDeclarationFile && !Checker_isCanceled(receiver)) {
+      Checker_checkUnusedRenamedBindingElements(receiver);
+    }
+    receiver!.saveDeferredDiagnostics = false as bool;
+    Checker_produceDeferredDiagnostics(receiver);
+    Set_Clear(receiver!.reportedUnreachableNodes);
+    links!.typeChecked = true as bool;
   }
   if (checkUnused && !links!.unusedChecked) {
     if (!sourceFile!.IsDeclarationFile && !Checker_isCanceled(receiver)) {
@@ -707,8 +673,6 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
   const data = AsForInOrOfStatement(node);
   Checker_checkGrammarForInOrForOfStatement(receiver, data);
   const rightType = Checker_getNonNullableTypeIfNeeded(receiver, Checker_checkExpression(receiver, data!.Expression));
-  const iterationOwned = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedIteration, node);
-  let sourceElementType: GoPtr<Type>;
   if (IsVariableDeclarationList(data!.Initializer)) {
     const declarations = AsVariableDeclarationList(data!.Initializer)!.Declarations!.Nodes;
     const declaration = declarations[0];
@@ -716,17 +680,10 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
       Checker_error(receiver, Node_Name(declaration), The_left_hand_side_of_a_for_in_statement_cannot_be_a_destructuring_pattern);
     }
     Checker_checkVariableDeclarationList(receiver, data!.Initializer);
-    if (iterationOwned && declaration !== undefined) {
-      const declarationSymbol = Checker_getSymbolOfDeclaration(receiver, declaration);
-      sourceElementType = declarationSymbol === undefined
-        ? undefined
-        : Checker_getTypeOfSymbol(receiver, declarationSymbol);
-    }
   } else {
     const varExpr = data!.Initializer;
     const leftType = Checker_checkExpression(receiver, varExpr);
     const selectedIndexType = Checker_getIndexTypeOrString(receiver, rightType);
-    sourceElementType = selectedIndexType;
     if (IsArrayLiteralExpression(varExpr) || IsObjectLiteralExpression(varExpr)) {
       Checker_error(receiver, varExpr, The_left_hand_side_of_a_for_in_statement_cannot_be_a_destructuring_pattern);
     } else if (!Checker_isTypeAssignableTo(receiver, selectedIndexType, leftType)) {
@@ -737,13 +694,6 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
   }
   if (rightType === receiver!.neverType || !Checker_isTypeAssignableToKind(receiver, rightType, (TypeFlagsNonPrimitive | TypeFlagsInstantiableNonPrimitive) as int)) {
     Checker_error(receiver, data!.Expression, The_right_hand_side_of_a_for_in_statement_must_be_of_type_any_an_object_type_or_a_type_parameter_but_here_has_type_0, Checker_TypeToString(receiver, rightType));
-  }
-  if (iterationOwned && rightType !== undefined && sourceElementType !== undefined) {
-    recordExtensionCheckedIterationMapping(
-      receiver,
-      node,
-      createExtensionForInIterationSelection(rightType, sourceElementType),
-    );
   }
   Checker_checkSourceElement(receiver, data!.Statement);
   if ((Node_Locals(node)?.size ?? 0) !== 0) {
@@ -1412,39 +1362,14 @@ export function Checker_checkExpressionCachedEx(receiver: GoPtr<Checker>, node: 
     return Checker_checkExpressionEx(receiver, node, checkMode);
   }
   const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
-  const ownerSourceFile = extensionCheckedSourceDecisionOwner(receiver);
-  const nodeSourceFile = GetSourceFileOfNode(node);
-  const authoritativeSourceCheck = ownerSourceFile !== undefined && nodeSourceFile === ownerSourceFile;
-  const requiresAuthoritativeRecheck = authoritativeSourceCheck
-    && links!.resolvedType !== undefined
-    && links!.extensionSourceDecisionOwner !== ownerSourceFile;
-  if (links!.resolvedType === undefined || requiresAuthoritativeRecheck) {
-    const existingResolvedType = links!.resolvedType;
+  if (links!.resolvedType === undefined) {
     const saveFlowLoopStack = receiver!.flowLoopStack;
     const saveFlowTypeCache = receiver!.flowTypeCache;
-    const foreignSourceDiscard = ownerSourceFile !== undefined
-        && nodeSourceFile !== ownerSourceFile
-        && !extensionCheckedSourceDecisionDiscardActive(receiver)
-      ? beginExtensionCheckedSourceDiscardDecision(receiver)
-      : undefined;
-    try {
-      receiver!.flowLoopStack = [];
-      receiver!.flowTypeCache = undefined as unknown as GoMap<GoPtr<Node>, GoPtr<Type>>;
-      const resolvedType = Checker_checkExpressionEx(receiver, node, checkMode);
-      if (authoritativeSourceCheck) {
-        journalExtensionCheckedExpressionCache(receiver, links!);
-        links!.resolvedType = preserveEquivalentCheckedSourceType(existingResolvedType, resolvedType);
-        links!.extensionSourceDecisionOwner = ownerSourceFile;
-      } else {
-        links!.resolvedType = resolvedType;
-      }
-    } finally {
-      receiver!.flowTypeCache = saveFlowTypeCache;
-      receiver!.flowLoopStack = saveFlowLoopStack;
-      if (foreignSourceDiscard !== undefined) {
-        rollbackExtensionCheckedSourceDiscardDecision(receiver, foreignSourceDiscard);
-      }
-    }
+    receiver!.flowLoopStack = [];
+    receiver!.flowTypeCache = undefined as unknown as GoMap<GoPtr<Node>, GoPtr<Type>>;
+    links!.resolvedType = Checker_checkExpressionEx(receiver, node, checkMode);
+    receiver!.flowTypeCache = saveFlowTypeCache;
+    receiver!.flowLoopStack = saveFlowLoopStack;
   }
   return links!.resolvedType;
 }
@@ -1491,24 +1416,8 @@ export function Checker_checkExpressionEx(receiver: GoPtr<Checker>, node: GoPtr<
   if (isConstEnumObjectType(t)) {
     Checker_checkConstEnumAccess(receiver, node, t);
   }
-  if (IsCallOrNewExpression(node)
-    && hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedCall, node)
-    && Checker_shouldPublishResolvedCallEvidence(receiver, checkMode)) {
-    const resolvedCallEvidence = Checker_finalizeResolvedCallEvidence(receiver, node, t);
-    if (resolvedCallEvidence !== undefined) {
-      recordExtensionCheckedCallMapping(receiver, node, resolvedCallEvidence);
-    }
-  }
   receiver!.currentNode = saveCurrentNode;
   return t;
-}
-
-function Checker_shouldPublishResolvedCallEvidence(receiver: GoPtr<Checker>, checkMode: CheckMode): boolean {
-  const nonSemanticCheckModes = CheckModeSkipContextSensitive
-    | CheckModeSkipGenericFunctions
-    | CheckModeIsForSignatureHelp
-    | CheckModeTypeOnly;
-  return receiver!.flowLoopStack.length === 0 && (checkMode & nonSemanticCheckModes) === 0;
 }
 
 /**
@@ -2025,9 +1934,7 @@ export function Checker_resolveNewExpressionWithEvidence(
   output: { evidence?: ResolvedCallSelectionEvidence } | undefined,
 ): GoPtr<Signature> {
   let expressionType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
-  const selectedOutput = output !== undefined && hasExtensionCheckedCallEvidenceInterest(receiver, node)
-    ? output
-    : undefined;
+  const selectedOutput = output;
   if (expressionType === receiver!.silentNeverType) {
     return receiver!.silentNeverSignature;
   }
@@ -2469,14 +2376,14 @@ export function Checker_checkPrefixUnaryExpression(receiver: GoPtr<Checker>, nod
     case KindNumericLiteral:
       switch (expr.Operator) {
         case KindMinusToken:
-          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, -FromString(Node_Text(expr.Operand)) as Number)));
+          return Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, -FromString(Node_Text(expr.Operand)) as Number));
         case KindPlusToken:
-          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, +FromString(Node_Text(expr.Operand)) as Number)));
+          return Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, +FromString(Node_Text(expr.Operand)) as Number));
       }
       break;
     case KindBigIntLiteral:
       if (expr.Operator === KindMinusToken) {
-        return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, Checker_getFreshTypeOfLiteralType(receiver, Checker_getBigIntLiteralType(receiver, NewPseudoBigInt(ParsePseudoBigInt(Node_Text(expr.Operand)), true))));
+        return Checker_getFreshTypeOfLiteralType(receiver, Checker_getBigIntLiteralType(receiver, NewPseudoBigInt(ParsePseudoBigInt(Node_Text(expr.Operand)), true)));
       }
       break;
   }
@@ -2492,19 +2399,19 @@ export function Checker_checkPrefixUnaryExpression(receiver: GoPtr<Checker>, nod
         if (Checker_maybeTypeOfKindConsideringBaseConstraint(receiver, operandType, TypeFlagsBigIntLike)) {
           Checker_error(receiver, expr.Operand, Operator_0_cannot_be_applied_to_type_1, TokenToString(expr.Operator), Checker_TypeToString(receiver, Checker_getBaseTypeOfLiteralType(receiver, operandType)));
         }
-        return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, receiver!.numberType);
+        return receiver!.numberType;
       }
-      return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, Checker_getUnaryResultType(receiver, operandType));
+      return Checker_getUnaryResultType(receiver, operandType);
     case KindExclamationToken: {
       Checker_checkTruthinessOfType(receiver, operandType, expr.Operand);
       const facts = Checker_getTypeFacts(receiver, operandType, TypeFactsTruthy | TypeFactsFalsy);
       switch (facts) {
         case TypeFactsTruthy:
-          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, receiver!.falseType);
+          return receiver!.falseType;
         case TypeFactsFalsy:
-          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, receiver!.trueType);
+          return receiver!.trueType;
         default:
-          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, receiver!.booleanType);
+          return receiver!.booleanType;
       }
     }
     case KindPlusPlusToken:
@@ -2524,7 +2431,7 @@ export function Checker_checkPrefixUnaryExpression(receiver: GoPtr<Checker>, nod
           The_operand_of_an_increment_or_decrement_operator_may_not_be_an_optional_property_access,
         );
       }
-      return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, Checker_getUnaryResultType(receiver, operandType));
+      return Checker_getUnaryResultType(receiver, operandType);
     }
   }
   return receiver!.errorType;
@@ -2570,14 +2477,7 @@ export function Checker_checkPostfixUnaryExpression(receiver: GoPtr<Checker>, no
       The_operand_of_an_increment_or_decrement_operator_may_not_be_an_optional_property_access,
     );
   }
-  return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, operandType, Checker_getUnaryResultType(receiver, operandType));
-}
-
-function recordExtensionCheckedUnaryOperatorMapping(receiver: GoPtr<Checker>, node: GoPtr<Node>, operator: Kind, operand: GoPtr<Node>, operandType: GoPtr<Type>, result: GoPtr<Type>): GoPtr<Type> {
-  if (!Checker_isErrorType(receiver, operandType) && !Checker_isErrorType(receiver, result)) {
-    recordExtensionCheckedOperatorKindMapping(receiver, node, operator, operand, undefined, operandType, undefined, result);
-  }
-  return result;
+  return Checker_getUnaryResultType(receiver, operandType);
 }
 
 /**
@@ -2917,29 +2817,11 @@ export function Checker_checkBinaryExpression(receiver: GoPtr<Checker>, node: Go
   if (isIterativelyCheckableNonLogicalBinaryExpression(node)) {
     return Checker_checkNonLogicalBinaryExpressionIterative(receiver, node, checkMode);
   }
-  if (!hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedOperator, node)) {
-    return Checker_checkBinaryLikeExpression(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, node);
-  }
-  const selected = Checker_checkBinaryLikeExpressionWithSelectedTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, node);
-  if (!(binary!.OperatorToken!.Kind === KindEqualsToken
-    && (binary!.Left!.Kind === KindObjectLiteralExpression || binary!.Left!.Kind === KindArrayLiteralExpression))) {
-    recordExtensionCheckedOperatorMapping(
-      receiver,
-      node,
-      binary!.OperatorToken,
-      binary!.Left,
-      binary!.Right,
-      selected.leftType,
-      selected.rightType,
-      selected.result,
-    );
-  }
-  return selected.result;
+  return Checker_checkBinaryLikeExpression(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, node);
 }
 
 function Checker_checkNonLogicalBinaryExpressionIterative(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
   const binaryChain: GoPtr<Node>[] = [];
-  const recordCheckedOperators = hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedOperator, node);
   let leftEdge: GoPtr<Node> = node;
   while (isIterativelyCheckableNonLogicalBinaryExpression(leftEdge)) {
     binaryChain.push(leftEdge);
@@ -2951,25 +2833,17 @@ function Checker_checkNonLogicalBinaryExpressionIterative(receiver: GoPtr<Checke
     const binary = AsBinaryExpression(current);
     const rightType = Checker_checkExpressionEx(receiver, binary!.Right, checkMode);
     if (index === 0) {
-      const result = Checker_checkBinaryLikeExpressionWithTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, current, leftType, rightType);
-      if (recordCheckedOperators) {
-        recordExtensionCheckedOperatorMapping(receiver, current, binary!.OperatorToken, binary!.Left, binary!.Right, leftType, rightType, result);
-      }
-      return result;
+      return Checker_checkBinaryLikeExpressionWithTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, current, leftType, rightType);
     }
     const saveCurrentNode = receiver!.currentNode;
     receiver!.currentNode = current;
     receiver!.instantiationCount = 0;
-    const sourceLeftType = leftType;
-    const uninstantiatedType = Checker_checkBinaryLikeExpressionWithTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, current, sourceLeftType, rightType);
+    const uninstantiatedType = Checker_checkBinaryLikeExpressionWithTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, current, leftType, rightType);
     leftType = Checker_instantiateTypeWithSingleGenericCallSignature(receiver, current, uninstantiatedType, checkMode);
     if (isConstEnumObjectType(leftType)) {
       Checker_checkConstEnumAccess(receiver, current, leftType);
     }
     receiver!.currentNode = saveCurrentNode;
-    if (recordCheckedOperators) {
-      recordExtensionCheckedOperatorMapping(receiver, current, binary!.OperatorToken, binary!.Left, binary!.Right, sourceLeftType, rightType, leftType);
-    }
   }
   return leftType;
 }
@@ -3786,22 +3660,13 @@ export function keyBuilder_writeNode(receiver: GoPtr<keyBuilder>, node: GoPtr<No
  */
 export function Checker_checkRightHandSideOfForOf(receiver: GoPtr<Checker>, statement: GoPtr<Node>): GoPtr<Type> {
   const use = IfElse(AsForInOrOfStatement(statement)!.AwaitModifier !== undefined, IterationUseForAwaitOf, IterationUseForOf);
-  const sourceIterableType = Checker_checkNonNullExpression(receiver, Node_Expression(statement));
-  if (!hasExtensionCheckedOperationHost(receiver, ExtensionObservationPoint.mapCheckedIteration, statement)) {
-    return Checker_checkIteratedTypeOrElementType(receiver, use, sourceIterableType, receiver!.undefinedType, Node_Expression(statement));
-  }
-  const iterationKind = AsForInOrOfStatement(statement)!.AwaitModifier !== undefined ? "for-await-of" : "for-of";
-  const selected = Checker_checkForOfIterationWithExtensionSelection(
+  return Checker_checkIteratedTypeOrElementType(
     receiver,
-    iterationKind,
-    sourceIterableType,
+    use,
+    Checker_checkNonNullExpression(receiver, Node_Expression(statement)),
     receiver!.undefinedType,
     Node_Expression(statement),
   );
-  if (selected.selection !== undefined) {
-    recordExtensionCheckedIterationMapping(receiver, statement, selected.selection);
-  }
-  return selected.elementType;
 }
 
 export function Checker_getResolvedSourceIterationInfo(

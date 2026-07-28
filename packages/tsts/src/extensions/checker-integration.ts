@@ -23,7 +23,7 @@ import type {
   ExtensionForOfIterationMechanism,
   ExtensionSelectedIterationProtocol,
   ExtensionSelectedIterationTypes,
-} from "./checker-iteration-selection.js";
+} from "../internal/checker/checker/iteration-evidence.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import { checkedSourceCallArgumentCompositionEvidenceEquals, checkedSourceInlineOperationEquals } from "./fact-value-equality.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedFlowSourceUse, CheckedIterationMappingRequest, CheckedOperationObservationPointName, CheckedOperationReference, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ExtensionObservationResult, PostCheckAssignabilityObservationRequest } from "./observations.js";

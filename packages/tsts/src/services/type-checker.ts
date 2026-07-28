@@ -23,6 +23,7 @@ import type { Checker } from "../internal/checker/checker/state.js";
 import {
   Checker_GetAliasedSymbol,
   Checker_getResolvedSourceElementAccessInfo,
+  Checker_getResolvedSourcePropertyAccessInfo,
   Checker_GetSymbolAtLocation,
   Checker_getDeclaredTypeOfSymbol,
   Checker_getResolvedSymbolOrNil,
@@ -33,10 +34,11 @@ import {
 } from "../internal/checker/checker/symbols.js";
 import type {
   ResolvedSourceElementAccessInfo as CheckerResolvedSourceElementAccessInfo,
+  ResolvedSourcePropertyAccessInfo as CheckerResolvedSourcePropertyAccessInfo,
 } from "../internal/checker/checker/symbols.js";
 import { Checker_getContextualType, Checker_GetTypeAtLocation } from "../internal/checker/checker/types.js";
 import { Checker_getResolvedSourceIterationInfo } from "../internal/checker/checker/syntax-checking.js";
-import type { ExtensionCheckedIterationSelection } from "../extensions/checker-iteration-selection.js";
+import type { ExtensionCheckedIterationSelection } from "../internal/checker/checker/iteration-evidence.js";
 import { Checker_GetConstantValue, Checker_GetExportsOfModule } from "../internal/checker/services.js";
 import { Checker_TypeToString } from "../internal/checker/printer.js";
 import type {
@@ -53,6 +55,7 @@ import {
 } from "../extensions/host-attachment.js";
 
 const semanticPreflightedSourceFilesByProgram = new WeakMap<object, WeakSet<object>>();
+const resolvedPropertyAccessInfoByProgram = new WeakMap<object, WeakMap<object, CheckerResolvedSourcePropertyAccessInfo>>();
 const resolvedElementAccessInfoByProgram = new WeakMap<object, WeakMap<object, CheckerResolvedSourceElementAccessInfo>>();
 const resolvedIterationInfoByProgram = new WeakMap<object, WeakMap<object, ExtensionCheckedIterationSelection>>();
 
@@ -62,6 +65,7 @@ export interface TypeCheckerQueryOptions {
 }
 
 export type ResolvedSourceCallInfo = ResolvedCallEvidence;
+export type ResolvedSourcePropertyAccessInfo = CheckerResolvedSourcePropertyAccessInfo;
 export type ResolvedSourceElementAccessInfo = CheckerResolvedSourceElementAccessInfo;
 export type ResolvedSourceIterationInfo = ExtensionCheckedIterationSelection;
 
@@ -78,6 +82,7 @@ export interface TypeCheckerQueries {
   readonly getDeclaredTypeOfSymbol: (symbol: GoPtr<Symbol>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getResolvedSignature: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Signature>;
   readonly getResolvedCallInfo: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<ResolvedSourceCallInfo>;
+  readonly getResolvedPropertyAccessInfo: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<ResolvedSourcePropertyAccessInfo>;
   readonly getResolvedElementAccessInfo: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<ResolvedSourceElementAccessInfo>;
   readonly getResolvedIterationInfo: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<ResolvedSourceIterationInfo>;
   readonly getReturnTypeOfSignature: (signature: GoPtr<Signature>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
@@ -131,6 +136,9 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
         const sourceResultType = Checker_GetTypeAtLocation(checker, node);
         return Checker_finalizeResolvedCallEvidence(checker, node, sourceResultType);
       }),
+    getResolvedPropertyAccessInfo: (node, options = {}) =>
+      withCheckerForNode(program, node, defaultOptions, options, (checker) =>
+        getMemoizedResolvedPropertyAccessInfo(program, checker, node)),
     getResolvedElementAccessInfo: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) =>
         getMemoizedResolvedElementAccessInfo(program, checker, node)),
@@ -275,6 +283,30 @@ function getMemoizedResolvedElementAccessInfo(
     return existing;
   }
   const resolved = Checker_getResolvedSourceElementAccessInfo(checker, node);
+  if (resolved !== undefined) {
+    entries.set(node, resolved);
+  }
+  return resolved;
+}
+
+function getMemoizedResolvedPropertyAccessInfo(
+  program: GoPtr<Program>,
+  checker: GoPtr<Checker>,
+  node: GoPtr<Node>,
+): GoPtr<ResolvedSourcePropertyAccessInfo> {
+  if (program === undefined || checker === undefined || node === undefined) {
+    return undefined;
+  }
+  let entries = resolvedPropertyAccessInfoByProgram.get(program);
+  if (entries === undefined) {
+    entries = new WeakMap();
+    resolvedPropertyAccessInfoByProgram.set(program, entries);
+  }
+  const existing = entries.get(node);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const resolved = Checker_getResolvedSourcePropertyAccessInfo(checker, node);
   if (resolved !== undefined) {
     entries.set(node, resolved);
   }

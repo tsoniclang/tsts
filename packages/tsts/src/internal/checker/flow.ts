@@ -1,5 +1,4 @@
 import type { bool, byte, int } from "../../go/scalars.js";
-import { beginExtensionCheckedSourceDiscardDecision, rollbackExtensionCheckedSourceDiscardDecision } from "../../extensions/checker-integration.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewGoStructMap } from "../../go/compat.js";
@@ -4938,13 +4937,7 @@ export function Checker_getInitialTypeOfVariableDeclaration(receiver: GoPtr<Chec
     return receiver!.stringType;
   }
   if (IsForOfStatement(node!.Parent!.Parent)) {
-    const discardDecision = beginExtensionCheckedSourceDiscardDecision(receiver);
-    let t: GoPtr<Type>;
-    try {
-      t = Checker_checkRightHandSideOfForOf(receiver, node!.Parent!.Parent);
-    } finally {
-      rollbackExtensionCheckedSourceDiscardDecision(receiver, discardDecision);
-    }
+    const t = Checker_checkRightHandSideOfForOf(receiver, node!.Parent!.Parent);
     if (t !== undefined) { return t; }
   }
   return receiver!.errorType;
@@ -5045,13 +5038,7 @@ export function Checker_getAssignedType(receiver: GoPtr<Checker>, node: GoPtr<No
     case KindForInStatement:
       return receiver!.stringType;
     case KindForOfStatement: {
-      const discardDecision = beginExtensionCheckedSourceDiscardDecision(receiver);
-      let t: GoPtr<Type>;
-      try {
-        t = Checker_checkRightHandSideOfForOf(receiver, parent);
-      } finally {
-        rollbackExtensionCheckedSourceDiscardDecision(receiver, discardDecision);
-      }
+      const t = Checker_checkRightHandSideOfForOf(receiver, parent);
       if (t !== undefined) { return t; }
       break;
     }

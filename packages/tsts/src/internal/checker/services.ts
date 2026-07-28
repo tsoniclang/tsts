@@ -1,5 +1,4 @@
 import type { bool, int } from "../../go/scalars.js";
-import { beginExtensionCheckedSourceDiscardDecision, rollbackExtensionCheckedSourceDiscardDecision } from "../../extensions/checker-integration.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Index } from "../../go/strings.js";
 import type { Node, SourceFile } from "../ast/ast.js";
@@ -866,7 +865,6 @@ export function GetResolvedSignatureForSignatureHelp(node: GoPtr<Node>, argument
  * }
  */
 export function runWithoutResolvedSignatureCaching<T>(c: GoPtr<Checker>, node: GoPtr<Node>, fn: () => T): T {
-  const discardDecision = beginExtensionCheckedSourceDiscardDecision(c);
   let ancestorNode = FindAncestor(node, IsCallLikeOrFunctionLikeExpression);
   const cachedResolvedSignatures: Map<SignatureLinks, {
     readonly resolvedSignature: GoPtr<Signature>;
@@ -909,9 +907,6 @@ export function runWithoutResolvedSignatureCaching<T>(c: GoPtr<Checker>, node: G
     }
     for (const [symbolLinks, resolvedType] of cachedTypes) {
       symbolLinks.resolvedType = resolvedType;
-    }
-    if (discardDecision !== undefined) {
-      rollbackExtensionCheckedSourceDiscardDecision(c, discardDecision);
     }
   }
 }
@@ -2422,13 +2417,7 @@ export function Checker_getTypeOfAssignmentPattern(receiver: GoPtr<Checker>, exp
   //     for ( { a } of elems) {
   //     }
   if (IsForOfStatement(expr!.Parent)) {
-    const discardDecision = beginExtensionCheckedSourceDiscardDecision(receiver);
-    let iteratedType: GoPtr<Type>;
-    try {
-      iteratedType = Checker_checkRightHandSideOfForOf(receiver, expr!.Parent);
-    } finally {
-      rollbackExtensionCheckedSourceDiscardDecision(receiver, discardDecision);
-    }
+    const iteratedType = Checker_checkRightHandSideOfForOf(receiver, expr!.Parent);
     return Checker_checkDestructuringAssignment(receiver, expr, OrElse(iteratedType, receiver!.errorType), CheckModeNormal, false);
   }
   // If this is from "for" initializer

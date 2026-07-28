@@ -1,15 +1,11 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import {
-  beginExtensionCheckedSourceCandidateDecision,
-  beginExtensionCheckedSourceDiscardDecision,
-  beginExtensionCheckedSourceSignatureDecision,
-  commitExtensionCheckedSourceCandidateDecision,
-  commitExtensionCheckedSourceSignatureDecision,
-  journalExtensionCheckedCallEvidence,
-  rollbackExtensionCheckedSourceDecision,
-  rollbackExtensionCheckedSourceDiscardDecision,
-} from "../../../extensions/checker-integration.js";
+  beginSelectedCallEvidenceFrame,
+  commitSelectedCallEvidenceFrame,
+  journalSelectedCallEvidence,
+  rollbackSelectedCallEvidenceFrame,
+} from "./selected-call-evidence-transaction.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
 import type { Number } from "../../jsnum/jsnum.js";
@@ -2471,7 +2467,9 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
     && candidatesOutArray === undefined) {
     return cached;
   }
-  const signatureDecision = beginExtensionCheckedSourceSignatureDecision(receiver);
+  const signatureDecision = IsCallOrNewExpression(node)
+    ? beginSelectedCallEvidenceFrame(receiver!, "signature-resolution")
+    : undefined;
   let signatureDecisionCompleted = false;
   try {
   const saveResolutionStart = receiver!.resolutionStart;
@@ -2479,7 +2477,7 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
     receiver!.resolutionStart = receiver!.typeResolutions.length;
   }
   if (IsCallOrNewExpression(node)) {
-    journalExtensionCheckedCallEvidence(receiver, links!);
+    journalSelectedCallEvidence(receiver!, links!);
   }
   links!.resolvedSignature = receiver!.resolvingSignature;
   if (IsCallOrNewExpression(node)) {
@@ -2518,9 +2516,9 @@ export function Checker_getResolvedSignature(receiver: GoPtr<Checker>, node: GoP
     return result;
   } finally {
     if (signatureDecisionCompleted) {
-      commitExtensionCheckedSourceSignatureDecision(receiver, signatureDecision);
+      commitSelectedCallEvidenceFrame(receiver!, signatureDecision);
     } else {
-      rollbackExtensionCheckedSourceDecision(receiver, signatureDecision);
+      rollbackSelectedCallEvidenceFrame(receiver!, signatureDecision);
     }
   }
 }
@@ -2549,7 +2547,7 @@ export function Checker_finalizeResolvedCallEvidence(
     return evidence;
   }
   const finalized: ResolvedCallEvidence = Object.freeze({ ...selection, sourceResultType });
-  journalExtensionCheckedCallEvidence(receiver, links);
+  journalSelectedCallEvidence(receiver, links);
   links.resolvedCallEvidence = finalized;
   return finalized;
 }
@@ -3353,7 +3351,7 @@ function Checker_resolveCallWithSelectedArguments(
     }
     return result;
   }
-  const failureDecision = beginExtensionCheckedSourceDiscardDecision(receiver);
+  const failureDecision = beginSelectedCallEvidenceFrame(receiver!, "discard");
   try {
     result = Checker_getCandidateForOverloadFailure(receiver, callState.node, callState.candidates, callState.args, candidatesOutArray !== undefined, checkMode);
     (LinkStore_Get(receiver!.signatureLinks, node) as GoPtr<SignatureLinks>)!.resolvedSignature = result;
@@ -3366,7 +3364,7 @@ function Checker_resolveCallWithSelectedArguments(
     return result;
   } finally {
     if (failureDecision !== undefined) {
-      rollbackExtensionCheckedSourceDiscardDecision(receiver, failureDecision);
+      rollbackSelectedCallEvidenceFrame(receiver!, failureDecision);
     }
   }
 }
@@ -3613,7 +3611,7 @@ function Checker_chooseOverloadWithSelectedArguments(
   s!.candidateForArgumentArityError = undefined;
   s!.candidateForTypeArgumentError = undefined;
   if (s!.isSingleNonGenericCandidate) {
-    const evidenceDecision = beginExtensionCheckedSourceCandidateDecision(receiver);
+    const evidenceDecision = beginSelectedCallEvidenceFrame(receiver!, "overload-candidate");
     let evidenceAccepted = false;
     try {
       const candidate = s!.candidates[0];
@@ -3630,14 +3628,14 @@ function Checker_chooseOverloadWithSelectedArguments(
       return candidate;
     } finally {
       if (evidenceAccepted) {
-        commitExtensionCheckedSourceCandidateDecision(receiver, evidenceDecision);
+        commitSelectedCallEvidenceFrame(receiver!, evidenceDecision);
       } else {
-        rollbackExtensionCheckedSourceDecision(receiver, evidenceDecision);
+        rollbackSelectedCallEvidenceFrame(receiver!, evidenceDecision);
       }
     }
   }
   for (let candidateIndex = 0; candidateIndex < s!.candidates.length; candidateIndex++) {
-    const evidenceDecision = beginExtensionCheckedSourceCandidateDecision(receiver);
+    const evidenceDecision = beginSelectedCallEvidenceFrame(receiver!, "overload-candidate");
     let evidenceAccepted = false;
     try {
       const candidate = s!.candidates[candidateIndex];
@@ -3675,7 +3673,7 @@ function Checker_chooseOverloadWithSelectedArguments(
       }
       let selectedArguments: Array<SelectedEffectiveCallArgument | undefined> | undefined;
       if (s!.argCheckMode !== 0) {
-        const preliminaryDecision = beginExtensionCheckedSourceDiscardDecision(receiver);
+        const preliminaryDecision = beginSelectedCallEvidenceFrame(receiver!, "discard");
         let preliminaryApplicable = false;
         try {
           preliminaryApplicable = Checker_isSignatureApplicableWithSelectedArgumentTypes(
@@ -3690,7 +3688,7 @@ function Checker_chooseOverloadWithSelectedArguments(
             undefined,
           );
         } finally {
-          rollbackExtensionCheckedSourceDiscardDecision(receiver, preliminaryDecision);
+          rollbackSelectedCallEvidenceFrame(receiver!, preliminaryDecision);
         }
         if (!preliminaryApplicable) {
           s!.candidatesForArgumentError.push(checkCandidate);
@@ -3723,9 +3721,9 @@ function Checker_chooseOverloadWithSelectedArguments(
       return checkCandidate;
     } finally {
       if (evidenceAccepted) {
-        commitExtensionCheckedSourceCandidateDecision(receiver, evidenceDecision);
+        commitSelectedCallEvidenceFrame(receiver!, evidenceDecision);
       } else {
-        rollbackExtensionCheckedSourceDecision(receiver, evidenceDecision);
+        rollbackSelectedCallEvidenceFrame(receiver!, evidenceDecision);
       }
     }
   }

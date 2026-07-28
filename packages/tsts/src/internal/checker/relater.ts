@@ -1,7 +1,6 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewGoStructMap } from "../../go/compat.js";
-import { recordExtensionPostCheckAssignabilityObservation } from "../../extensions/checker-integration.js";
 import type { Node } from "../ast/spine.js";
 import { Node_Name } from "../ast/spine.js";
 import { Node_ModifierFlags } from "../ast/ast.js";
@@ -1146,11 +1145,7 @@ export function Checker_reportDiagnostic(receiver: GoPtr<Checker>, diagnostic: G
  * }
  */
 export function Checker_checkTypeAssignableToAndOptionallyElaborate(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>, errorNode: GoPtr<Node>, expr: GoPtr<Node>, headMessage: GoPtr<Message>, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
-  const coreAssignable = Checker_checkTypeRelatedToAndOptionallyElaborate(receiver, source, target, receiver!.assignableRelation, errorNode, expr, headMessage, diagnosticOutput);
-  if (coreAssignable) {
-    recordExtensionPostCheckAssignabilityObservation(receiver, source, target, errorNode, expr, "assignment");
-  }
-  return coreAssignable;
+  return Checker_checkTypeRelatedToAndOptionallyElaborate(receiver, source, target, receiver!.assignableRelation, errorNode, expr, headMessage, diagnosticOutput);
 }
 
 /**
