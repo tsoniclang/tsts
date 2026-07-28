@@ -44,7 +44,10 @@ import type { Relation } from "../relater.js";
 import type { ResolvedCallEvidence, ResolvedCallSelectionEvidence, Signature, Type, TypeFlags } from "../types.js";
 import { SignatureFlagsAbstract, SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../types.js";
 import { Checker_isIteratorResult } from "./support-queries.js";
-import { createExtensionForInIterationSelection } from "../../../extensions/checker-iteration-selection.js";
+import {
+  createExtensionForInIterationSelection,
+  freezeExtensionCheckedIterationSelection,
+} from "../../../extensions/checker-iteration-selection.js";
 import type { ExtensionCheckedIterationSelection } from "../../../extensions/checker-iteration-selection.js";
 import {
   CheckModeInferential, CheckModeIsForSignatureHelp, CheckModeNormal, CheckModeSkipContextSensitive, CheckModeSkipGenericFunctions, InferenceFlagsSkippedGenericFunction, IterationTypeKindReturn, IterationTypeKindYield,
@@ -3842,13 +3845,16 @@ export function Checker_getResolvedSourceIterationInfo(
     return undefined;
   }
   const iterationKind = data?.AwaitModifier === undefined ? "for-of" : "for-await-of";
-  return Checker_checkForOfIterationWithExtensionSelection(
+  const selection = Checker_checkForOfIterationWithExtensionSelection(
     receiver,
     iterationKind,
     sourceIterableType,
     receiver.undefinedType,
     data?.Expression,
   ).selection;
+  return selection === undefined
+    ? undefined
+    : freezeExtensionCheckedIterationSelection(selection);
 }
 
 /**

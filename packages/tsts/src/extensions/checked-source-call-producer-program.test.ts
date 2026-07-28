@@ -476,6 +476,7 @@ test("provider-selected source producers preserve exact fluent-call evidence wit
 
   assert.deepEqual(registrationResults, new Array(registrations.length).fill(true));
   assertCleanProgram(setup.program);
+  assert.equal(finalizeExtensionSemantics(setup.programOptions), setup.extensionHost);
   assert.equal(mismatchedProducerCalls, 0);
   assert.equal(
     invocations.length,
@@ -1153,7 +1154,7 @@ test("provider constructors enter source producers through their exact selected 
   assert.equal(setup.extensionHost.diagnostics.all().length, 0);
 });
 
-test("registered source producers retain selected evidence only for exact provider declaration candidates", () => {
+test("checked calls retain exact evidence while source producers activate only for exact provider declaration candidates", () => {
   const invocations: ProducerInvocation[] = [];
   const setup = createProgram({
     sourceFiles: {
@@ -1185,9 +1186,9 @@ test("registered source producers retain selected evidence only for exact provid
       const call = getVariableInitializer(sourceFile, name);
       assert.equal(call.Kind, KindCallExpression);
       const links = LinkStore_Get(checker!.signatureLinks, call) as SignatureLinks;
-      assert.equal(links.checkedCallSelectionSeed, undefined, `${name}: no unrelated source-producer seed`);
-      assert.equal(links.resolvedCallSelectionEvidence, undefined, `${name}: no unrelated selected-call evidence`);
-      assert.equal(links.resolvedCallEvidence, undefined, `${name}: no unrelated resolved-call evidence`);
+      assert.ok(links.checkedCallSelectionSeed !== undefined, `${name}: exact checker selection seed`);
+      assert.ok(links.resolvedCallSelectionEvidence !== undefined, `${name}: exact selected-call evidence`);
+      assert.ok(links.resolvedCallEvidence !== undefined, `${name}: exact resolved-call evidence`);
       assert.equal(setup.extensionHost[extensionHostGetCheckedOperationReference](call), undefined);
     }
   } finally {

@@ -215,6 +215,8 @@ test("iteration info preserves declaration and assignment element selection", ()
   assert.equal(assignment?.iterationKind, "for-of");
   assert.equal((declaration?.sourceElementType.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
   assert.equal(assignment?.sourceElementType, declaration?.sourceElementType);
+  assert.equal(Object.isFrozen(declaration), true);
+  assert.equal(Object.isFrozen(declaration?.mechanism), true);
   assertCleanSemanticDiagnostics(program, index);
   assert.equal(queries.getResolvedIterationInfo(statements[0]), declaration);
   assert.equal(queries.getResolvedIterationInfo(statements[1]), assignment);

@@ -37,7 +37,7 @@ test("source analysis consumes the fully checked program once through direct sou
       assert.equal(selected?.outcome, "applicable");
       assert.equal(selected?.call, call);
       assert.equal(selected?.sourceSelectedMethodTypeArguments?.length, 1);
-      assert.equal(context.facts.set(call, selectedCallFactKey, "identity<int32>"), "inserted");
+      assert.equal(context.facts.set(call, selectedCallFactKey, "identity<number>"), "inserted");
       selectedCall = call;
     },
   };
@@ -57,7 +57,7 @@ test("source analysis consumes the fully checked program once through direct sou
   assert.equal(analysisCount, 0);
   assert.equal(session.finalizeExtensions(), session.extensionHost);
   assert.equal(analysisCount, 1);
-  assert.equal(session.extensionHost?.facts.get(selectedCall, selectedCallFactKey), "identity<int32>");
+  assert.equal(session.extensionHost?.facts.get(selectedCall, selectedCallFactKey), "identity<number>");
   assert.equal(session.finalizeExtensions(), session.extensionHost);
   assert.equal(analysisCount, 1);
 });
