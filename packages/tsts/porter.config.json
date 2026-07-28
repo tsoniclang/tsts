@@ -214,6 +214,26 @@
       "reason": "Additive compiler extension host public API; target-neutral infrastructure with no upstream Go unit."
     },
     {
+      "match": "packages/tsts/src/internal/checker/checker/call-evidence.ts",
+      "category": "extension-internal",
+      "reason": "Additive target-neutral selected-call evidence companion for the TS-Go checker; it owns no upstream Go unit."
+    },
+    {
+      "match": "packages/tsts/src/internal/checker/checker/iteration-evidence.ts",
+      "category": "extension-internal",
+      "reason": "Additive target-neutral selected-iteration evidence companion for the TS-Go checker; it owns no upstream Go unit."
+    },
+    {
+      "match": "packages/tsts/src/internal/checker/checker/selected-call-evidence-transaction.ts",
+      "category": "extension-internal",
+      "reason": "Additive transactional journal for exact TS-Go overload-selection evidence; it owns no upstream Go unit."
+    },
+    {
+      "match": "packages/tsts/src/internal/checker/checker/source-type-identity.ts",
+      "category": "extension-internal",
+      "reason": "Additive target-neutral identity helper for compiler-owned source types; it owns no upstream Go unit."
+    },
+    {
       "match": "packages/tsts/src/internal/ast/generated/**",
       "category": "ast-generated",
       "reason": "Generated AST infrastructure emitted by porter:ast from packages/tsts/schema/tsgo/*; carries @tsgo-generated metadata, not @tsgo-unit."
