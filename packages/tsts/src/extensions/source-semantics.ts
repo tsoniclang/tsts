@@ -69,36 +69,23 @@ import type {
   SourcePrimitiveKind,
   StructFact,
 } from "./facts.js";
-import {
-  extensionHostRegisterFactResolver,
-  extensionHostSetFact,
-} from "./host.js";
 import type {
   CompilerExtension,
-  CompilerExtensionIdentity,
   ExtensionDiagnosticStore,
   ExtensionEvidence,
   ExtensionFactKey,
   ExtensionFactResolverContext,
   ExtensionFactSubject,
   ExtensionFactStore,
-  ExtensionHost,
 } from "./host.js";
 
 type SourceSemanticsFactAccess = Pick<ExtensionFactStore, "get" | "set">;
 
-function createSourceSemanticsFactAccess(host: ExtensionHost): SourceSemanticsFactAccess {
-  return {
-    get: <T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>): T | undefined => host.facts.get(subject, key),
-    set: <T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>, value: T, evidence: readonly ExtensionEvidence[] = []) =>
-      host[extensionHostSetFact](subject, key, value, evidence),
-  };
-}
-
 export interface SourceSemanticsExtensionOptions {
-  readonly identity: CompilerExtensionIdentity;
   readonly modules: readonly SourceSemanticsModule[];
 }
+
+export const sourceSemanticsExtensionId = "tsts.source-semantics";
 
 export type SourceSemanticsModuleCapability = "primitive" | "call-marker" | "type-marker";
 
@@ -216,9 +203,12 @@ function createSourceSemanticsModules(modules: readonly SourceSemanticsModule[])
 
 export function createSourceSemanticsExtension(options: SourceSemanticsExtensionOptions): CompilerExtension {
   const modules = createSourceSemanticsModules(options.modules);
-  let facts: SourceSemanticsFactAccess | undefined;
   return {
-    identity: options.identity,
+    identity: {
+      id: sourceSemanticsExtensionId,
+      version: "1.0.0",
+      capabilityNamespace: sourceSemanticsExtensionId,
+    },
     composition: {
       kind: "source",
     },
@@ -234,16 +224,18 @@ export function createSourceSemanticsExtension(options: SourceSemanticsExtension
       ],
     },
     initialize(context): void {
-      facts = createSourceSemanticsFactAccess(context.host);
-      context.host[extensionHostRegisterFactResolver](sourcePrimitiveFactKey, (subject, resolverContext) =>
+      context.registerFactResolver(sourcePrimitiveFactKey, (subject, resolverContext) =>
         resolveSourcePrimitiveFact(subject, resolverContext, modules));
     },
     analyzeSource(context): void {
-      if (facts === undefined) {
-        throw new Error("Source-semantics analysis cannot run before extension initialization.");
-      }
-      for (const sourceFile of context.sourceFiles) {
-        recordSourceSemanticsFacts(sourceFile, facts, context.diagnostics, options.identity.id, modules);
+      for (const sourceFile of context.source.getSourceFiles()) {
+        recordSourceSemanticsFacts(
+          sourceFile,
+          context.facts,
+          context.diagnostics,
+          sourceSemanticsExtensionId,
+          modules,
+        );
       }
     },
   };

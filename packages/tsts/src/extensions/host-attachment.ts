@@ -1,8 +1,5 @@
 import type { ExtensionHost } from "./host.js";
 
-export const extensionHostAllowsSemanticQueryPreflight: unique symbol = Symbol("tsts.extensionHost.allowsSemanticQueryPreflight");
-export const extensionHostAllowsCompilerQuery: unique symbol = Symbol("tsts.extensionHost.allowsCompilerQuery");
-
 const attachedExtensionHosts = new WeakMap<object, ExtensionHost>();
 
 export function registerAttachedExtensionHost(owner: object, host: ExtensionHost): void {

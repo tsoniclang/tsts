@@ -5,7 +5,7 @@ import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
-import { Program_GetSemanticDiagnostics, Program_GetTypeCheckerForFile } from "../internal/compiler/program.js";
+import { Program_GetTypeCheckerForFile } from "../internal/compiler/program.js";
 import type { Program } from "../internal/compiler/program.js";
 import {
   Checker_GetPropertyOfType,
@@ -48,16 +48,6 @@ import type {
   Type,
 } from "../internal/checker/types.js";
 import { ContextFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../internal/checker/types.js";
-import {
-  extensionHostAllowsCompilerQuery,
-  extensionHostAllowsSemanticQueryPreflight,
-  lookupAttachedExtensionHost,
-} from "../extensions/host-attachment.js";
-
-const semanticPreflightedSourceFilesByProgram = new WeakMap<object, WeakSet<object>>();
-const resolvedPropertyAccessInfoByProgram = new WeakMap<object, WeakMap<object, CheckerResolvedSourcePropertyAccessInfo>>();
-const resolvedElementAccessInfoByProgram = new WeakMap<object, WeakMap<object, CheckerResolvedSourceElementAccessInfo>>();
-const resolvedIterationInfoByProgram = new WeakMap<object, WeakMap<object, ExtensionCheckedIterationSelection>>();
 
 export interface TypeCheckerQueryOptions {
   readonly context?: Context;
@@ -138,13 +128,13 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
       }),
     getResolvedPropertyAccessInfo: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) =>
-        getMemoizedResolvedPropertyAccessInfo(program, checker, node)),
+        Checker_getResolvedSourcePropertyAccessInfo(checker, node)),
     getResolvedElementAccessInfo: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) =>
-        getMemoizedResolvedElementAccessInfo(program, checker, node)),
+        Checker_getResolvedSourceElementAccessInfo(checker, node)),
     getResolvedIterationInfo: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) =>
-        getMemoizedResolvedIterationInfo(program, checker, node)),
+        Checker_getResolvedSourceIterationInfo(checker, node)),
     getReturnTypeOfSignature: (signature, options = {}) =>
       withCheckerForSubject(program, signature, defaultOptions, options, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
     getCallSignaturesOfType: (type, options = {}) =>
@@ -238,103 +228,12 @@ function withChecker<T>(
     return undefined;
   }
   const context = options.context ?? defaultOptions.context ?? Background();
-  const extensionHost = lookupAttachedExtensionHost(program);
-  if (extensionHost !== undefined && !extensionHost[extensionHostAllowsCompilerQuery]()) {
-    throw new Error("Compiler queries are unavailable inside checked source-call producers.");
-  }
-  const preflightedSourceFiles = semanticPreflightedSourceFiles(program);
-  if (!preflightedSourceFiles.has(sourceFile)
-    && (extensionHost === undefined || extensionHost[extensionHostAllowsSemanticQueryPreflight]())) {
-    Program_GetSemanticDiagnostics(program, context, sourceFile);
-    preflightedSourceFiles.add(sourceFile);
-  }
   const [checker, done] = Program_GetTypeCheckerForFile(program, context, sourceFile);
   try {
     return callback(checker);
   } finally {
     done();
   }
-}
-
-function semanticPreflightedSourceFiles(program: object): WeakSet<object> {
-  let sourceFiles = semanticPreflightedSourceFilesByProgram.get(program);
-  if (sourceFiles === undefined) {
-    sourceFiles = new WeakSet();
-    semanticPreflightedSourceFilesByProgram.set(program, sourceFiles);
-  }
-  return sourceFiles;
-}
-
-function getMemoizedResolvedElementAccessInfo(
-  program: GoPtr<Program>,
-  checker: GoPtr<Checker>,
-  node: GoPtr<Node>,
-): GoPtr<ResolvedSourceElementAccessInfo> {
-  if (program === undefined || checker === undefined || node === undefined) {
-    return undefined;
-  }
-  let entries = resolvedElementAccessInfoByProgram.get(program);
-  if (entries === undefined) {
-    entries = new WeakMap();
-    resolvedElementAccessInfoByProgram.set(program, entries);
-  }
-  const existing = entries.get(node);
-  if (existing !== undefined) {
-    return existing;
-  }
-  const resolved = Checker_getResolvedSourceElementAccessInfo(checker, node);
-  if (resolved !== undefined) {
-    entries.set(node, resolved);
-  }
-  return resolved;
-}
-
-function getMemoizedResolvedPropertyAccessInfo(
-  program: GoPtr<Program>,
-  checker: GoPtr<Checker>,
-  node: GoPtr<Node>,
-): GoPtr<ResolvedSourcePropertyAccessInfo> {
-  if (program === undefined || checker === undefined || node === undefined) {
-    return undefined;
-  }
-  let entries = resolvedPropertyAccessInfoByProgram.get(program);
-  if (entries === undefined) {
-    entries = new WeakMap();
-    resolvedPropertyAccessInfoByProgram.set(program, entries);
-  }
-  const existing = entries.get(node);
-  if (existing !== undefined) {
-    return existing;
-  }
-  const resolved = Checker_getResolvedSourcePropertyAccessInfo(checker, node);
-  if (resolved !== undefined) {
-    entries.set(node, resolved);
-  }
-  return resolved;
-}
-
-function getMemoizedResolvedIterationInfo(
-  program: GoPtr<Program>,
-  checker: GoPtr<Checker>,
-  node: GoPtr<Node>,
-): GoPtr<ResolvedSourceIterationInfo> {
-  if (program === undefined || checker === undefined || node === undefined) {
-    return undefined;
-  }
-  let entries = resolvedIterationInfoByProgram.get(program);
-  if (entries === undefined) {
-    entries = new WeakMap();
-    resolvedIterationInfoByProgram.set(program, entries);
-  }
-  const existing = entries.get(node);
-  if (existing !== undefined) {
-    return existing;
-  }
-  const resolved = Checker_getResolvedSourceIterationInfo(checker, node);
-  if (resolved !== undefined) {
-    entries.set(node, resolved);
-  }
-  return resolved;
 }
 
 function getSymbolSourceFile(symbol: GoPtr<Symbol>): GoPtr<SourceFile> {

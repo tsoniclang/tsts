@@ -163,10 +163,8 @@ test("provider model graph preserves shared array identity without treating a DA
 
 test("provider model physical scalar accounting distinguishes identity from equality", () => {
   const sharedType: ProviderTypeExpression = {
-    kind: "target-named",
-    target: "neutral",
-    id: "SharedTargetIdentity",
-    sourceShape: { kind: "string" },
+    kind: "source-global",
+    name: "SharedSourceIdentity",
   };
   const modelWithUses = (count: number): ProviderDeclarationModel => baseModel({
     exports: [{
@@ -182,10 +180,8 @@ test("provider model physical scalar accounting distinguishes identity from equa
   const oneUse = requireValid(validateProviderDeclarationModelGraph(modelWithUses(1)));
   const twoUses = requireValid(validateProviderDeclarationModelGraph(modelWithUses(2)));
   const equalDistinctType: ProviderTypeExpression = {
-    kind: "target-named",
-    target: "neutral",
-    id: "SharedTargetIdentity",
-    sourceShape: { kind: "string" },
+    kind: "source-global",
+    name: "SharedSourceIdentity",
   };
   const equalDistinctUses = requireValid(validateProviderDeclarationModelGraph(baseModel({
     exports: [{
@@ -437,17 +433,15 @@ test("provider declaration expanded scalar budget accepts its exact limit and re
     }],
   });
   const baseline = requireValid(validateProviderDeclarationModelGraph(modelWithTypes([])));
-  const targetNamedType = (idLength: number): ProviderTypeExpression => ({
-    kind: "target-named",
-    target: "n",
-    id: "i".repeat(idLength),
-    sourceShape: { kind: "string" },
+  const sourceGlobalType = (nameLength: number): ProviderTypeExpression => ({
+    kind: "source-global",
+    name: "i".repeat(nameLength),
   });
-  const minimumType = targetNamedType(1);
+  const minimumType = sourceGlobalType(1);
   const minimum = requireValid(validateProviderDeclarationModelGraph(modelWithTypes([minimumType])));
   const minimumContribution = minimum.metrics.expandedSemanticScalarCodeUnitCount
     - baseline.metrics.expandedSemanticScalarCodeUnitCount;
-  const maximumType = targetNamedType(providerDeclarationModelLimits.maxStringCodeUnits);
+  const maximumType = sourceGlobalType(providerDeclarationModelLimits.maxStringCodeUnits);
   const maximum = requireValid(validateProviderDeclarationModelGraph(modelWithTypes([maximumType])));
   const maximumContribution = maximum.metrics.expandedSemanticScalarCodeUnitCount
     - baseline.metrics.expandedSemanticScalarCodeUnitCount;
@@ -460,7 +454,7 @@ test("provider declaration expanded scalar budget accepts its exact limit and re
   assert.ok(finalIdLength >= 1 && finalIdLength <= providerDeclarationModelLimits.maxStringCodeUnits);
   const exactElements = [
     ...Array.from({ length: maximumTypeCount }, () => maximumType),
-    targetNamedType(finalIdLength),
+    sourceGlobalType(finalIdLength),
   ];
   const exact = requireValid(validateProviderDeclarationModelGraph(modelWithTypes(exactElements)));
   assert.equal(
@@ -468,11 +462,11 @@ test("provider declaration expanded scalar budget accepts its exact limit and re
     providerDeclarationModelLimits.maxExpandedSemanticScalarCodeUnits,
   );
   const plusOneElements = finalIdLength < providerDeclarationModelLimits.maxStringCodeUnits
-    ? [...exactElements.slice(0, -1), targetNamedType(finalIdLength + 1)]
+    ? [...exactElements.slice(0, -1), sourceGlobalType(finalIdLength + 1)]
     : [
       ...exactElements.slice(0, -1),
-      targetNamedType(1),
-      targetNamedType(maximumContribution + 1 - 2 * fixedContribution - 1),
+      sourceGlobalType(1),
+      sourceGlobalType(maximumContribution + 1 - 2 * fixedContribution - 1),
     ];
   const failure = requireInvalid(
     validateProviderDeclarationModelGraph(modelWithTypes(plusOneElements)),
@@ -483,11 +477,8 @@ test("provider declaration expanded scalar budget accepts its exact limit and re
 
 test("provider model semantic scalar accounting expands shared declaration DAG uses", () => {
   const sharedType: ProviderTypeExpression = {
-    kind: "target-named",
-    target: "neutral",
-    id: "I".repeat(providerDeclarationModelLimits.maxStringCodeUnits),
-    displayName: "Native",
-    sourceShape: { kind: "string" },
+    kind: "source-global",
+    name: "I".repeat(providerDeclarationModelLimits.maxStringCodeUnits),
   };
   const failure = requireInvalid(validateProviderDeclarationModelGraph(baseModel({
     exports: [{

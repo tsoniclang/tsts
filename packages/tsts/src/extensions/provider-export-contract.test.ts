@@ -13,13 +13,6 @@ function richDeclaration(): ProviderExportDeclaration {
     name: "TokenImplementation",
     exportName: "Token",
     kind: "class",
-    targetIdentity: {
-      target: "demo",
-      id: "Demo.Token",
-      displayName: "Demo.Token<T>",
-      packageName: "@demo/runtime",
-      packageVersion: "1.0.0",
-    },
     typeParameters: [{
       name: "T",
       variance: "out",
@@ -43,12 +36,9 @@ function richDeclaration(): ProviderExportDeclaration {
       readonly: true,
       optional: true,
       type: {
-        kind: "target-named",
-        target: "demo",
-        id: "Demo.Value",
-        displayName: "Demo.Value",
+        kind: "source-global",
+        name: "Value",
         typeArguments: [{ kind: "type-parameter", name: "T" }],
-        sourceShape: { kind: "string" },
       },
     }, {
       id: "Token.map",
@@ -95,11 +85,6 @@ test("provider export contracts include every declaration member signature and p
     ["export kind", { ...base, exportKind: "default" }],
     ["source family", { ...base, sourceTypeFamily: { exportName: "Token", typeArgumentCount: 1 } }],
     ["declaration kind", { ...base, kind: "interface" }],
-    ["target", { ...base, targetIdentity: { ...base.targetIdentity!, target: "other" } }],
-    ["target id", { ...base, targetIdentity: { ...base.targetIdentity!, id: "Demo.Other" } }],
-    ["target display", { ...base, targetIdentity: { ...base.targetIdentity!, displayName: "Other" } }],
-    ["target package", { ...base, targetIdentity: { ...base.targetIdentity!, packageName: "@demo/other" } }],
-    ["target package version", { ...base, targetIdentity: { ...base.targetIdentity!, packageVersion: "2.0.0" } }],
     ["type parameter name", { ...base, typeParameters: [{ ...base.typeParameters![0]!, name: "U" }] }],
     ["type parameter variance", { ...base, typeParameters: [{ ...base.typeParameters![0]!, variance: "in" }] }],
     ["type parameter constraint", { ...base, typeParameters: [{ ...base.typeParameters![0]!, constraints: [{ kind: "number" }] }] }],
@@ -143,11 +128,6 @@ test("provider export contracts include every provider type-expression field", (
     ["source global", { kind: "source-global", name: "ClockInstant" }, { kind: "source-global", name: "CalendarInstant" }],
     ["source global arguments", { kind: "source-global", name: "PromiseLikeValue", typeArguments: [{ kind: "string" }] }, { kind: "source-global", name: "PromiseLikeValue", typeArguments: [{ kind: "number" }] }],
     ["type parameter", { kind: "type-parameter", name: "T" }, { kind: "type-parameter", name: "U" }],
-    ["target", { kind: "target-named", target: "a", id: "A", sourceShape: { kind: "string" } }, { kind: "target-named", target: "b", id: "A", sourceShape: { kind: "string" } }],
-    ["target id", { kind: "target-named", target: "a", id: "A", sourceShape: { kind: "string" } }, { kind: "target-named", target: "a", id: "B", sourceShape: { kind: "string" } }],
-    ["target display", { kind: "target-named", target: "a", id: "A", displayName: "A", sourceShape: { kind: "string" } }, { kind: "target-named", target: "a", id: "A", displayName: "B", sourceShape: { kind: "string" } }],
-    ["target arguments", { kind: "target-named", target: "a", id: "A", typeArguments: [{ kind: "string" }], sourceShape: { kind: "string" } }, { kind: "target-named", target: "a", id: "A", typeArguments: [{ kind: "number" }], sourceShape: { kind: "string" } }],
-    ["target source shape", { kind: "target-named", target: "a", id: "A", sourceShape: { kind: "string" } }, { kind: "target-named", target: "a", id: "A", sourceShape: { kind: "number" } }],
     ["array", { kind: "array", elementType: { kind: "string" } }, { kind: "array", elementType: { kind: "number" } }],
     ["tuple", { kind: "tuple", elementTypes: [{ kind: "string" }] }, { kind: "tuple", elementTypes: [{ kind: "string" }, { kind: "number" }] }],
     ["union", { kind: "union", types: [{ kind: "string" }, { kind: "number" }] }, { kind: "union", types: [{ kind: "string" }, { kind: "boolean" }] }],
@@ -163,9 +143,6 @@ test("provider export contracts include every provider type-expression field", (
     ["provider module", { kind: "provider-ref", moduleSpecifier: "@a/x.js", exportName: "X" }, { kind: "provider-ref", moduleSpecifier: "@b/x.js", exportName: "X" }],
     ["provider export", { kind: "provider-ref", moduleSpecifier: "@a/x.js", exportName: "X" }, { kind: "provider-ref", moduleSpecifier: "@a/x.js", exportName: "Y" }],
     ["provider arguments", { kind: "provider-ref", moduleSpecifier: "@a/x.js", exportName: "X", typeArguments: [{ kind: "string" }] }, { kind: "provider-ref", moduleSpecifier: "@a/x.js", exportName: "X", typeArguments: [{ kind: "number" }] }],
-    ["opaque id", { kind: "opaque", id: "A", sourceShape: { kind: "string" } }, { kind: "opaque", id: "B", sourceShape: { kind: "string" } }],
-    ["opaque display", { kind: "opaque", id: "A", displayName: "A", sourceShape: { kind: "string" } }, { kind: "opaque", id: "A", displayName: "B", sourceShape: { kind: "string" } }],
-    ["opaque source shape", { kind: "opaque", id: "A", sourceShape: { kind: "string" } }, { kind: "opaque", id: "A", sourceShape: { kind: "number" } }],
   ];
   for (const [label, left, right] of pairs) {
     assert.notEqual(typeContract(left), typeContract(right), label);

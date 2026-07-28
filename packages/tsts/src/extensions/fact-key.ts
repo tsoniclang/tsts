@@ -68,7 +68,7 @@ export function getExtensionFactKeyIdentity<T>(key: ExtensionFactKey<T>): object
   return identity;
 }
 
-/** Marks a host-owned invariant/source fact as readable by checked source-operation producers. */
+/** Marks a host-owned invariant/source fact as readable by dependent source analyzers. */
 export function markHostSourceReadableFactKey<T>(key: ExtensionFactKey<T>): ExtensionFactKey<T> {
   hostSourceReadableFactKeyIdentities.add(getExtensionFactKeyIdentity(key));
   return key;

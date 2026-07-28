@@ -29,13 +29,14 @@ test("source analysis consumes the fully checked program once through direct sou
     analyzeSource(context): void {
       analysisCount += 1;
       assert.equal(Object.isFrozen(context), true);
-      assert.equal(Object.isFrozen(context.sourceFiles), true);
-      const sourceFile = context.getSourceFile("/src/index.ts");
-      const call = findFirstCall(context, sourceFile);
+      assert.equal(Object.isFrozen(context.source), true);
+      const sourceFile = context.source.getSourceFile("/src/index.ts");
+      const source = context.source.getSourceFileQueries(sourceFile);
+      const call = findFirstCall(source.ast, sourceFile);
       assert.ok(call !== undefined);
-      const selected = context.checker.getResolvedCallInfo(call);
+      const selected = source.checker.getResolvedCallInfo(call);
       assert.equal(selected?.outcome, "applicable");
-      assert.equal(selected?.call, call);
+      assert.ok(selected?.call === call, "Source analysis must retain the exact checked call node.");
       assert.equal(selected?.sourceSelectedMethodTypeArguments?.length, 1);
       assert.equal(context.facts.set(call, selectedCallFactKey, "identity<number>"), "inserted");
       selectedCall = call;
@@ -55,10 +56,10 @@ test("source analysis consumes the fully checked program once through direct sou
 
   assert.equal(session.ensureChecked().length, 0);
   assert.equal(analysisCount, 0);
-  assert.equal(session.finalizeExtensions(), session.extensionHost);
+  const checked = session.checkSource();
   assert.equal(analysisCount, 1);
-  assert.equal(session.extensionHost?.facts.get(selectedCall, selectedCallFactKey), "identity<number>");
-  assert.equal(session.finalizeExtensions(), session.extensionHost);
+  assert.equal(checked.sourceFacts?.getFact(selectedCall, selectedCallFactKey), "identity<number>");
+  assert.ok(session.checkSource() === checked, "Source checking must retain one exact checked program.");
   assert.equal(analysisCount, 1);
 });
 
@@ -81,7 +82,7 @@ test("source analysis is dependency ordered and globally fail closed", () => {
     composition: { kind: "source" },
     analyzeSource(context): void {
       order.push("first");
-      subject = context.getSourceFile("/src/index.ts");
+      subject = context.source.getSourceFile("/src/index.ts");
       assert.ok(subject !== undefined);
       assert.equal(context.facts.set(subject, firstFactKey, "provisional"), "inserted");
     },
@@ -106,7 +107,7 @@ test("source analysis is dependency ordered and globally fail closed", () => {
     extensionHostOptions: { extensions: [second, first] },
   });
 
-  assert.throws(() => session.finalizeExtensions(), /source analysis failed/);
+  assert.throws(() => session.checkSource(), /source analysis failed/);
   assert.deepEqual(order, ["first", "second"]);
   assert.equal(session.extensionHost?.facts.get(subject, firstFactKey), undefined);
   assert.equal(
@@ -114,18 +115,18 @@ test("source analysis is dependency ordered and globally fail closed", () => {
       diagnostic.extensionCode === "SOURCE_ANALYSIS_FAILED").length,
     1,
   );
-  assert.throws(() => session.finalizeExtensions(), /previously failed/);
+  assert.throws(() => session.checkSource(), /previously failed/);
 });
 
-function findFirstCall(context: SourceAnalysisContext, root: GoPtr<Node>): GoPtr<Node> {
+function findFirstCall(ast: SourceAnalysisContext["source"]["ast"], root: GoPtr<Node>): GoPtr<Node> {
   if (root === undefined) {
     return undefined;
   }
-  if (context.ast.is.IsCallExpression(root)) {
+  if (ast.is.IsCallExpression(root)) {
     return root;
   }
-  for (const child of context.ast.children(root)) {
-    const found = findFirstCall(context, child);
+  for (const child of ast.children(root)) {
+    const found = findFirstCall(ast, child);
     if (found !== undefined) {
       return found;
     }

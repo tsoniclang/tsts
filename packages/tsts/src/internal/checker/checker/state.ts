@@ -1,5 +1,4 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
-import type { ExtensionSourceDecisionState } from "../../../extensions/checker-source-decisions.js";
 import type { SelectedCallEvidenceTransactionState } from "./selected-call-evidence-transaction.js";
 import type { GoComparable, GoConstraint, GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { NewGoStructMap } from "../../../go/compat.js";
@@ -1646,10 +1645,8 @@ export let nextCheckerID: Uint32 = new Uint32();
  * 	mu     sync.Mutex
  * 	tracer *Tracer // Optional tracer for trace events and type recording (for --generateTrace)
  * }
- * @tsgo-override {"category":"extension-host","allow":["signature"],"reason":"Keep extension source-decision transactions on Checker so speculative checker state and SignatureLinks settle atomically.","goSignatureHash":"sha256:f666d9aff0841e40ecb7aa8984e27a1e1836e4505fc625965ee7566e3fbc0ca2","tsSignatureHash":"sha256:78ce33c7502a12c05926de573b839d4efaf43e19236fe5ef25b66bb75cbbf98d"}
  */
 export interface Checker {
-  extensionSourceDecisionState: undefined | false | ExtensionSourceDecisionState;
   selectedCallEvidenceTransactionState: SelectedCallEvidenceTransactionState | undefined;
   id: uint;
   program: Program;

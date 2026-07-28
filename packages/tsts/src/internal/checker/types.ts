@@ -820,8 +820,6 @@ export interface SymbolNodeLinks {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeNodeLinks","kind":"type","status":"implemented","sigHash":"d179da5ea97af8b4e01f810926a7545f82b426592ab5165ddf4d80ecc0cd4e3d","bodyHash":"63f2e3ade12086f877faba2842deb70032ef48351c0a8a14043706ec94966b6a"}
- * @tsgo-override {"category":"extension-host","allow":["signature"],"reason":"Record the exact source file whose authoritative semantic check captured the operation decisions associated with a cached expression type; query-created caches remain explicitly non-authoritative and are recomputed by source checking.","goSignature":"interface{outerTypeParameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;resolvedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}","tsSignature":"interface{extensionSourceDecisionOwner:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;outerTypeParameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;resolvedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}"}
- *
  * Go source:
  * TypeNodeLinks struct {
  * 	resolvedType        *Type   // Resolved type associated with node
@@ -831,7 +829,6 @@ export interface SymbolNodeLinks {
 export interface TypeNodeLinks {
   resolvedType: GoPtr<Type>;
   outerTypeParameters: GoSlice<GoPtr<Type>>;
-  extensionSourceDecisionOwner: GoPtr<SourceFile>;
 }
 
 /**

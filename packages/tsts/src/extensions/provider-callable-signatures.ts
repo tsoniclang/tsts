@@ -15,6 +15,7 @@ export interface ProviderRenderedFunctionSignature {
   readonly exportId: string;
   readonly memberId?: string;
   readonly signatureId: string;
+  readonly parameters: readonly ProviderParameterDeclaration[];
 }
 
 const providerFunctionMarkerPrefix = "/*@tsts-provider-function:";
@@ -32,6 +33,7 @@ export function createProviderRenderedFunctionSignature(
     exportId: declaration.id,
     ...(member === undefined ? {} : { memberId: member.id }),
     signatureId: signature.id,
+    parameters: signature.parameters,
   });
 }
 
@@ -177,11 +179,6 @@ function collectProviderTypeCallableIdentities(
         && collectProviderTypeParameterCallableIdentities(type.typeParameters ?? [], identities)
         && collectProviderParameterCallableIdentities(type.parameters, identities)
         && collectProviderTypeCallableIdentities(type.returnType, identities);
-    case "target-named":
-      return (type.typeArguments ?? []).every((argument) => collectProviderTypeCallableIdentities(argument, identities))
-        && collectProviderTypeCallableIdentities(type.sourceShape, identities);
-    case "opaque":
-      return collectProviderTypeCallableIdentities(type.sourceShape, identities);
     case "source-global":
     case "provider-ref":
       return (type.typeArguments ?? []).every((argument) => collectProviderTypeCallableIdentities(argument, identities));

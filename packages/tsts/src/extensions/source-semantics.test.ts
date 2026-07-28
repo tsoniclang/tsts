@@ -51,11 +51,10 @@ import {
   argumentPassingFactKey,
   attributeFactKey,
   canonicalIdentityFactKey,
-  createExtensionConsumerQueries,
+  createSourceFactQueries,
   createSourceSemanticsExtension,
   defaultValueFactKey,
   fieldFactKey,
-  finalizeExtensionSemantics,
   flowStateFactKey,
   functionPointerFactKey,
   pointerFactKey,
@@ -63,6 +62,7 @@ import {
   sourcePrimitiveFactKey,
   structFactKey,
 } from "./index.js";
+import { finalizeExtensionSemantics } from "./compiler-integration.js";
 import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import type { ExtendedProgram } from "./index.js";
 
@@ -71,11 +71,6 @@ const exampleLangModule = "@example/native/lang.js";
 
 function createExampleSourceSemanticsExtension() {
   return createSourceSemanticsExtension({
-    identity: {
-      id: "example.source-semantics",
-      version: "1.0.0",
-      capabilityNamespace: "example-source-semantics",
-    },
     modules: [{
       moduleSpecifier: exampleTypesModule,
       packageName: "@example/native",
@@ -148,9 +143,9 @@ test("source-semantics records configured primitive facts from canonical named i
   assert.equal(extended.extensionHost.facts.get(longSymbol, sourcePrimitiveFactKey)?.runtimeBase, "bigint");
 
   assert.equal(finalizeExtensionSemantics(extended.program), extended.extensionHost);
-  const consumer = createExtensionConsumerQueries(extended.extensionHost, "test-consumer");
-  assert.equal(consumer.getSourcePrimitiveFact(i32Symbol)?.kind, "int32");
-  assert.equal(consumer.getSourcePrimitiveFact(longSymbol)?.kind, "int64");
+  const consumer = createSourceFactQueries(extended.extensionHost, "test-consumer");
+  assert.equal(consumer.getSourcePrimitive(i32Symbol)?.kind, "int32");
+  assert.equal(consumer.getSourcePrimitive(longSymbol)?.kind, "int64");
 });
 
 test("source-semantics primitive spelling is entirely consumer configured", () => {
@@ -332,8 +327,8 @@ test("source-semantics records out ref inref borrow move call-site facts without
   assert.equal(extended.extensionHost.facts.get(getFirstCallArgument(moveCall), flowStateFactKey)?.state, "moved");
 
   assert.equal(finalizeExtensionSemantics(extended.program), extended.extensionHost);
-  const consumer = createExtensionConsumerQueries(extended.extensionHost, "test-consumer");
-  assert.equal(consumer.getArgumentPassingFact(outCall)?.mode, "byref-writeonly-must-init");
+  const consumer = createSourceFactQueries(extended.extensionHost, "test-consumer");
+  assert.equal(consumer.getArgumentPassing(outCall)?.mode, "byref-writeonly-must-init");
   assert.equal(consumer.getFact(moveCall, flowStateFactKey)?.state, "moved");
 });
 
@@ -445,9 +440,9 @@ test("source-semantics records ptr and fnptr type facts from canonical type mark
   assert.equal(extended.extensionHost.facts.get(localPointerReference, pointerFactKey), undefined);
 
   assert.equal(finalizeExtensionSemantics(extended.program), extended.extensionHost);
-  const consumer = createExtensionConsumerQueries(extended.extensionHost, "test-consumer");
-  assert.equal(consumer.getPointerFact(pointerReference)?.unsafeRequired, true);
-  assert.equal(consumer.getFunctionPointerFact(functionPointerReference)?.parameters.length, 1);
+  const consumer = createSourceFactQueries(extended.extensionHost, "test-consumer");
+  assert.equal(consumer.getPointer(pointerReference)?.unsafeRequired, true);
+  assert.equal(consumer.getFunctionPointer(functionPointerReference)?.parameters.length, 1);
 });
 
 test("source-semantics records struct field attribute and default facts from canonical imports only", () => {
@@ -517,11 +512,11 @@ test("source-semantics records struct field attribute and default facts from can
   assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "localDefaultof", 0), defaultValueFactKey), undefined);
 
   assert.equal(finalizeExtensionSemantics(extended.program), extended.extensionHost);
-  const consumer = createExtensionConsumerQueries(extended.extensionHost, "test-consumer");
-  assert.equal(consumer.getStructFact(pointSymbol)?.fields?.length, 2);
-  assert.equal(consumer.getFieldFact(xFieldCall)?.name, "x");
-  assert.equal(consumer.getAttributeFact(routeSymbol)?.attributeName, "RouteAttribute");
-  assert.equal(consumer.getDefaultValueFact(zeroSymbol)?.type, defaultValueFact?.type);
+  const consumer = createSourceFactQueries(extended.extensionHost, "test-consumer");
+  assert.equal(consumer.getStruct(pointSymbol)?.fields?.length, 2);
+  assert.equal(consumer.getField(xFieldCall)?.name, "x");
+  assert.equal(consumer.getAttribute(routeSymbol)?.attributeName, "RouteAttribute");
+  assert.equal(consumer.getDefaultValue(zeroSymbol)?.type, defaultValueFact?.type);
 });
 
 test("source-semantics records field markers only for exact class and object field owners", () => {

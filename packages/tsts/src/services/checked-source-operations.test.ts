@@ -1,0 +1,169 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import {
+  createCompilerSessionFromFiles,
+  type SourceFileQueries,
+} from "../index.js";
+import {
+  findNodes,
+  testCoreDeclarations,
+  testNoLibCompilerOptions,
+} from "../extensions/source-provider-test-support.js";
+
+test("checked source exposes exact constructor selection through the direct call query", () => {
+  const source = checkedQueries(`
+    class Box {
+      constructor(readonly value: number) {}
+    }
+
+    export const box = new Box(1);
+  `);
+  const constructions = findNodes(
+    source.sourceFile,
+    source.ast.children,
+    source.ast.is.IsNewExpression,
+  );
+  assert.equal(constructions.length, 1);
+  const construction = constructions[0];
+  const syntax = source.ast.as.AsNewExpression(construction);
+  const selected = source.checker.getResolvedCallInfo(construction);
+
+  assert.equal(selected?.outcome, "applicable");
+  assert.equal(selected?.sourceSelectedSignatureKind, "resolved");
+  assert.ok(
+    selected?.sourceCallee.expression === syntax?.Expression,
+    "Constructor evidence must retain the exact authored callee expression.",
+  );
+  assert.equal(selected?.sourceSelectedSignatureParameters.length, 1);
+  assert.equal(selected?.sourceSelectedSignatureParameters[0]?.parameterName, "value");
+  assert.equal(
+    source.checker.typeToString(selected?.sourceSelectedSignatureParameters[0]?.selectedType),
+    "number",
+  );
+  assert.equal(selected?.sourceArguments.length, 1);
+  assert.equal(source.checker.typeToString(selected?.sourceResultType), "Box");
+  assert.equal(selected?.sourceReceiver, undefined);
+  const repeated = source.checker.getResolvedCallInfo(construction);
+  assert.ok(
+    repeated?.selectedSignature === selected?.selectedSignature,
+    "Repeated constructor queries must retain the exact selected signature.",
+  );
+  assert.ok(
+    repeated?.sourceResultType === selected?.sourceResultType,
+    "Repeated constructor queries must retain the exact result type.",
+  );
+});
+
+test("checked source exposes operator syntax and checker-owned operand and result types directly", () => {
+  const source = checkedQueries(`
+    declare let count: number;
+    declare const flag: boolean;
+
+    export const sum = count + 1;
+    export const inverted = !flag;
+    count++;
+  `);
+  const binaries = findNodes(
+    source.sourceFile,
+    source.ast.children,
+    source.ast.is.IsBinaryExpression,
+  );
+  const prefixes = findNodes(
+    source.sourceFile,
+    source.ast.children,
+    source.ast.is.IsPrefixUnaryExpression,
+  );
+  const postfixes = findNodes(
+    source.sourceFile,
+    source.ast.children,
+    source.ast.is.IsPostfixUnaryExpression,
+  );
+  assert.equal(binaries.length, 1);
+  assert.equal(prefixes.length, 1);
+  assert.equal(postfixes.length, 1);
+
+  const binary = source.ast.as.AsBinaryExpression(binaries[0]);
+  assert.equal(source.checker.typeToString(source.checker.getTypeAtLocation(binary?.Left)), "number");
+  assert.equal(source.checker.typeToString(source.checker.getTypeAtLocation(binary?.Right)), "1");
+  assert.equal(source.checker.typeToString(source.checker.getTypeAtLocation(binaries[0])), "number");
+
+  const prefix = source.ast.as.AsPrefixUnaryExpression(prefixes[0]);
+  assert.equal(source.checker.typeToString(source.checker.getTypeAtLocation(prefix?.Operand)), "boolean");
+  assert.equal(source.checker.typeToString(source.checker.getTypeAtLocation(prefixes[0])), "boolean");
+
+  const postfix = source.ast.as.AsPostfixUnaryExpression(postfixes[0]);
+  assert.equal(source.checker.typeToString(source.checker.getTypeAtLocation(postfix?.Operand)), "number");
+  assert.equal(source.checker.typeToString(source.checker.getTypeAtLocation(postfixes[0])), "number");
+});
+
+test("checked source exposes authored assertion syntax and semantic source and target types", () => {
+  const source = checkedQueries(`
+    class Animal {}
+    class Dog extends Animal {
+      bark(): void {}
+    }
+
+    declare const animal: Animal;
+    export const dog = animal as Dog;
+  `);
+  const assertions = findNodes(
+    source.sourceFile,
+    source.ast.children,
+    source.ast.is.IsAsExpression,
+  );
+  assert.equal(assertions.length, 1);
+  const assertion = source.ast.as.AsAsExpression(assertions[0]);
+
+  assert.equal(
+    source.checker.typeToString(source.checker.getTypeAtLocation(assertion?.Expression)),
+    "Animal",
+  );
+  assert.equal(
+    source.checker.typeToString(source.checker.getTypeFromTypeNode(assertion?.Type)),
+    "Dog",
+  );
+  assert.equal(source.checker.typeToString(source.checker.getTypeAtLocation(assertions[0])), "Dog");
+  assert.ok(
+    source.checker.getTypeFromTypeNode(assertion?.Type)
+      === source.checker.getTypeAtLocation(assertions[0]),
+    "Assertion target syntax and checked result must retain the same target type.",
+  );
+});
+
+test("invalid assertions remain ordinary source diagnostics and create no extension recovery path", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+    files: {
+      "/src/core.d.ts": testCoreDeclarations,
+      "/src/index.ts": "export const invalid = 1 as string;",
+    },
+    compilerOptions: testNoLibCompilerOptions,
+  });
+  const checked = session.checkSource();
+
+  assert.equal(checked.extensionDiagnostics.length, 0);
+  assert.deepEqual(
+    checked.diagnostics.map((diagnostic) => diagnostic?.code),
+    [2352],
+  );
+  assert.equal(checked.sourceFacts, undefined);
+});
+
+function checkedQueries(sourceText: string): SourceFileQueries {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+    files: {
+      "/src/core.d.ts": testCoreDeclarations,
+      "/src/index.ts": sourceText,
+    },
+    compilerOptions: testNoLibCompilerOptions,
+  });
+  const checked = session.checkSource();
+  assert.equal(checked.diagnostics.length, 0);
+  assert.equal(checked.extensionDiagnostics.length, 0);
+  const sourceFile = checked.getSourceFile("/src/index.ts");
+  assert.ok(sourceFile !== undefined, "Expected checked source file /src/index.ts.");
+  return checked.getSourceFileQueries(sourceFile);
+}

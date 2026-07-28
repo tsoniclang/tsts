@@ -5558,7 +5558,24 @@ interface SelectedIndexAccessSelection {
   readonly indexInfo: GoPtr<IndexInfo>;
 }
 
-export interface ResolvedSourceElementAccessInfo {
+type ResolvedSourceAccessTypes =
+  | {
+      readonly accessMode: "read" | "delete";
+      readonly sourceReadType: Type;
+      readonly sourceWriteType?: never;
+    }
+  | {
+      readonly accessMode: "write";
+      readonly sourceReadType?: never;
+      readonly sourceWriteType: Type;
+    }
+  | {
+      readonly accessMode: "read-write";
+      readonly sourceReadType: Type;
+      readonly sourceWriteType: Type;
+    };
+
+interface ResolvedSourceElementAccessInfoBase {
   readonly expression: Node;
   readonly receiver: {
     readonly expression: Node;
@@ -5572,12 +5589,13 @@ export interface ResolvedSourceElementAccessInfo {
   readonly sourceDeclaration?: Node;
   readonly selectedSymbol?: Symbol;
   readonly selectedDeclaration?: Node;
-  readonly sourceResultType: Type;
   readonly selectedElementIndex?: number;
-  readonly accessMode: "read" | "write" | "read-write" | "delete";
   readonly optionalChain: boolean;
   readonly callCallee: boolean;
 }
+
+export type ResolvedSourceElementAccessInfo =
+  ResolvedSourceElementAccessInfoBase & ResolvedSourceAccessTypes;
 
 export function Checker_getResolvedSourceElementAccessInfo(
   receiver: GoPtr<Checker>,
@@ -5606,6 +5624,7 @@ export function Checker_getResolvedSourceElementAccessInfo(
     || sourceResultType === receiver.silentNeverType) {
     return undefined;
   }
+  const accessMode = checkedAccessMode(node);
   return Object.freeze({
     expression: node,
     receiver: Object.freeze({
@@ -5620,9 +5639,16 @@ export function Checker_getResolvedSourceElementAccessInfo(
     ...(selected.sourceDeclaration === undefined ? {} : { sourceDeclaration: selected.sourceDeclaration }),
     ...(selected.selectedSymbol === undefined ? {} : { selectedSymbol: selected.selectedSymbol }),
     ...(selected.selectedDeclaration === undefined ? {} : { selectedDeclaration: selected.selectedDeclaration }),
-    sourceResultType,
     ...(selected.selectedElementIndex === undefined ? {} : { selectedElementIndex: selected.selectedElementIndex }),
-    accessMode: checkedAccessMode(node),
+    ...resolvedSourceAccessTypes(
+      accessMode,
+      accessMode === "read" || accessMode === "delete" || accessMode === "read-write"
+        ? sourceResultType
+        : undefined,
+      accessMode === "write" || accessMode === "read-write"
+        ? sourceResultType
+        : undefined,
+    ),
     optionalChain: IsOptionalChain(node),
     callCallee: Checker_isMethodAccessForCall(receiver, node),
   });
@@ -6812,7 +6838,7 @@ interface SelectedPropertyAccessCheck {
   selectedDeclaration: GoPtr<Node>;
 }
 
-export interface ResolvedSourcePropertyAccessInfo {
+interface ResolvedSourcePropertyAccessInfoBase {
   readonly expression: Node;
   readonly receiver: {
     readonly expression: Node;
@@ -6824,12 +6850,12 @@ export interface ResolvedSourcePropertyAccessInfo {
   readonly sourceDeclaration?: Node;
   readonly selectedSymbol?: Symbol;
   readonly selectedDeclaration?: Node;
-  readonly sourceReadType?: Type;
-  readonly sourceWriteType?: Type;
-  readonly accessMode: "read" | "write" | "read-write" | "delete";
   readonly optionalChain: boolean;
   readonly callCallee: boolean;
 }
+
+export type ResolvedSourcePropertyAccessInfo =
+  ResolvedSourcePropertyAccessInfoBase & ResolvedSourceAccessTypes;
 
 export function Checker_getResolvedSourcePropertyAccessInfo(
   receiver: GoPtr<Checker>,
@@ -6905,12 +6931,6 @@ export function Checker_getResolvedSourcePropertyAccessInfo(
     : accessMode === "read-write"
       ? selected.writeType
       : undefined;
-  if ((accessMode === "read" || accessMode === "delete" || accessMode === "read-write")
-      !== (sourceReadType !== undefined)
-    || (accessMode === "write" || accessMode === "read-write")
-      !== (sourceWriteType !== undefined)) {
-    throw new Error("Resolved property access lost exact read or write type evidence.");
-  }
   return Object.freeze({
     expression: node,
     receiver: Object.freeze({
@@ -6923,12 +6943,35 @@ export function Checker_getResolvedSourcePropertyAccessInfo(
     ...(selected.sourceDeclaration === undefined ? {} : { sourceDeclaration: selected.sourceDeclaration }),
     ...(selected.selectedSymbol === undefined ? {} : { selectedSymbol: selected.selectedSymbol }),
     ...(selected.selectedDeclaration === undefined ? {} : { selectedDeclaration: selected.selectedDeclaration }),
-    ...(sourceReadType === undefined ? {} : { sourceReadType }),
-    ...(sourceWriteType === undefined ? {} : { sourceWriteType }),
-    accessMode,
+    ...resolvedSourceAccessTypes(accessMode, sourceReadType, sourceWriteType),
     optionalChain: IsOptionalChain(node),
     callCallee: Checker_isMethodAccessForCall(receiver, node),
   });
+}
+
+function resolvedSourceAccessTypes(
+  accessMode: "read" | "write" | "read-write" | "delete",
+  sourceReadType: GoPtr<Type>,
+  sourceWriteType: GoPtr<Type>,
+): ResolvedSourceAccessTypes {
+  switch (accessMode) {
+    case "read":
+    case "delete":
+      if (sourceReadType === undefined || sourceWriteType !== undefined) {
+        throw new Error(`Resolved '${accessMode}' access lost its exact read-only type evidence.`);
+      }
+      return { accessMode, sourceReadType };
+    case "write":
+      if (sourceReadType !== undefined || sourceWriteType === undefined) {
+        throw new Error("Resolved 'write' access lost its exact write-only type evidence.");
+      }
+      return { accessMode, sourceWriteType };
+    case "read-write":
+      if (sourceReadType === undefined || sourceWriteType === undefined) {
+        throw new Error("Resolved 'read-write' access lost its exact read and write type evidence.");
+      }
+      return { accessMode, sourceReadType, sourceWriteType };
+  }
 }
 
 function recordSelectedPropertyAccessEvidence(
