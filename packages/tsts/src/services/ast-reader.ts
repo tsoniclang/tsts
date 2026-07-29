@@ -77,6 +77,8 @@ export interface AstReader {
   readonly properties: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   /** Returns the exact `?` token owned by nodes whose schema permits one. */
   readonly questionToken: (node: GoPtr<Node>) => GoPtr<Node>;
+  /** Returns the exact operator kind name for binary and update expressions. */
+  readonly operatorKindName: (node: GoPtr<Node>) => string | undefined;
   readonly modifiers: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly modifierFlags: (node: GoPtr<Node>) => number;
   readonly hasModifier: (node: GoPtr<Node>, flags: number) => boolean;
@@ -126,6 +128,7 @@ export function createAstReader(): AstReader {
     elements: (node) => Node_Elements(node) ?? [],
     properties: (node) => Node_Properties(node) ?? [],
     questionToken: (node) => node === undefined ? undefined : Node_QuestionToken(node),
+    operatorKindName,
     modifiers: (node) => Node_ModifierNodes(node) ?? [],
     modifierFlags: (node) => node === undefined ? 0 : Node_ModifierFlags(node),
     hasModifier: (node, flags) => node !== undefined && HasModifier(node, flags) === true,
@@ -157,6 +160,25 @@ export function createAstReader(): AstReader {
     is: predicates,
     as: casts,
   };
+}
+
+function operatorKindName(node: GoPtr<Node>): string | undefined {
+  if (node === undefined) {
+    return undefined;
+  }
+  if (predicates.IsBinaryExpression(node)) {
+    const operator = casts.AsBinaryExpression(node)?.OperatorToken;
+    return operator === undefined ? undefined : KindString(operator.Kind);
+  }
+  if (predicates.IsPrefixUnaryExpression(node)) {
+    const operator = casts.AsPrefixUnaryExpression(node)?.Operator;
+    return operator === undefined ? undefined : KindString(operator);
+  }
+  if (predicates.IsPostfixUnaryExpression(node)) {
+    const operator = casts.AsPostfixUnaryExpression(node)?.Operator;
+    return operator === undefined ? undefined : KindString(operator);
+  }
+  return undefined;
 }
 
 function variableDeclarationKind(node: GoPtr<Node>): AstVariableDeclarationKind | undefined {

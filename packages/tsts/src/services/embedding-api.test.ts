@@ -186,6 +186,36 @@ test("public AST reader exposes exact optional-parameter question tokens", () =>
   assert.equal(session.ast.questionToken(sourceFile), undefined);
 });
 
+test("public AST reader exposes exact binary and update operator kinds", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+    files: {
+      "/src/core.d.ts": core,
+      "/src/index.ts": [
+        "let left = 1;",
+        "let right = 2;",
+        "left + right;",
+        "++left;",
+        "right--;",
+      ].join("\n"),
+    },
+    compilerOptions: {
+      noLib: true,
+      module: "esnext",
+      moduleResolution: "bundler",
+    },
+  });
+  const sourceFile = session.getSourceFile("/src/index.ts");
+  const binary = findNode(sourceFile, session.ast, (node) => session.ast.is.IsBinaryExpression(node));
+  const prefix = findNode(sourceFile, session.ast, (node) => session.ast.is.IsPrefixUnaryExpression(node));
+  const postfix = findNode(sourceFile, session.ast, (node) => session.ast.is.IsPostfixUnaryExpression(node));
+  assert.equal(session.ast.operatorKindName(binary), "KindPlusToken");
+  assert.equal(session.ast.operatorKindName(prefix), "KindPlusPlusToken");
+  assert.equal(session.ast.operatorKindName(postfix), "KindMinusMinusToken");
+  assert.equal(session.ast.operatorKindName(sourceFile), undefined);
+});
+
 test("public provider contract keeps package subpaths as independent source modules", () => {
   const left: ProviderDeclarationModel = {
     moduleSpecifier: "@test/package/left.js",
