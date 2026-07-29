@@ -62,7 +62,10 @@ export function retainIdentifierCallCalleeEvidence(
   const sourceDeclaration = aliasDeclaration(canonicalSourceSymbol)
     ?? canonicalSourceSymbol?.ValueDeclaration;
   const selectedDeclaration = canonicalSelectedSymbol?.ValueDeclaration;
-  const authoredTypeNode = Node_Type(selectedDeclaration ?? sourceDeclaration);
+  const declaration = selectedDeclaration ?? sourceDeclaration;
+  const authoredTypeNode = declaration === undefined
+    ? undefined
+    : Node_Type(declaration);
   retainCallSelectionSeed(checker, callExpression, {
     calleeProvenance: Object.freeze({
       ...(canonicalSourceSymbol === undefined ? {} : { symbol: canonicalSourceSymbol }),
@@ -322,7 +325,10 @@ function selectionProvenance(
   selectedSymbol: GoPtr<Symbol>,
   selectedDeclaration: GoPtr<Node>,
 ): CheckedCallSourceSelectionProvenance {
-  const authoredTypeNode = Node_Type(selectedDeclaration ?? sourceDeclaration);
+  const declaration = selectedDeclaration ?? sourceDeclaration;
+  const authoredTypeNode = declaration === undefined
+    ? undefined
+    : Node_Type(declaration);
   return Object.freeze({
     ...(sourceSymbol === undefined ? {} : { symbol: sourceSymbol }),
     ...(sourceDeclaration === undefined ? {} : { declaration: sourceDeclaration }),

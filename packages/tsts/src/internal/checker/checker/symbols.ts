@@ -7229,6 +7229,14 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
         if (Checker_isErrorType(receiver, apparentType)) {
           return receiver!.errorType;
         }
+        retainAnyLikePropertyAccessSelection(
+          selected,
+          node,
+          apparentType,
+          parentSymbol,
+          lexicallyScopedSymbol,
+          writeOnly,
+        );
         return apparentType;
       }
       if (getContainingClassExcludingClassDecorators(right) === undefined) {
@@ -7261,6 +7269,14 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
       if (Checker_isErrorType(receiver, apparentType)) {
         return receiver!.errorType;
       }
+      retainAnyLikePropertyAccessSelection(
+        selected,
+        node,
+        apparentType,
+        parentSymbol,
+        undefined,
+        writeOnly,
+      );
       return apparentType;
     }
     prop = Checker_getPropertyOfTypeEx(receiver, apparentType, Node_Text(right), isConstEnumObjectType(apparentType), node!.Kind === KindQualifiedName);
@@ -7368,6 +7384,38 @@ function checkPropertyAccessExpressionOrQualifiedNameWithEvidence(
     selected.selectedDeclaration ??= selected.selectedSymbol?.ValueDeclaration ?? selectedDeclaration;
   }
   return resultType;
+}
+
+function retainAnyLikePropertyAccessSelection(
+  selected: SelectedPropertyAccessCheck | undefined,
+  node: GoPtr<Node>,
+  resultType: GoPtr<Type>,
+  receiverSymbol: GoPtr<Symbol>,
+  selectedSymbol: GoPtr<Symbol>,
+  writeOnly: bool,
+): void {
+  if (selected === undefined || resultType === undefined) {
+    return;
+  }
+  const selectionMode = writeOnly || IsWriteOnlyAccess(node)
+    ? "write"
+    : "read";
+  const accessMode = checkedAccessMode(node);
+  selected.selected = true;
+  selected.selectionMode = selectionMode;
+  selected.readType = accessMode === "read-write"
+    ? resultType
+    : undefined;
+  selected.writeType = accessMode === "read-write"
+    ? resultType
+    : undefined;
+  selected.receiverType = resultType;
+  selected.receiverSymbol = receiverSymbol;
+  selected.receiverDeclaration = receiverSymbol?.ValueDeclaration;
+  selected.sourceSymbol = selectedSymbol;
+  selected.sourceDeclaration = selectedSymbol?.ValueDeclaration;
+  selected.selectedSymbol = selectedSymbol;
+  selected.selectedDeclaration = selectedSymbol?.ValueDeclaration;
 }
 
 /**

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Node_Expression } from "../internal/ast/ast.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { KindArrowFunction, KindCallExpression, KindExpressionStatement } from "../internal/ast/generated/kinds.js";
-import { TypeFlagsNumber, TypeFlagsString } from "../internal/checker/types.js";
+import { TypeFlagsAny, TypeFlagsNumber, TypeFlagsString } from "../internal/checker/types.js";
 import { createTypeCheckerQueries } from "./type-checker.js";
 import {
   assertCleanSemanticDiagnostics,
@@ -139,6 +139,59 @@ test("resolved call info exposes one canonical checker-owned selected decision",
     repeated?.sourceResultType === queryFirst?.sourceResultType,
     "Repeated call queries must retain exact result-type identity.",
   );
+});
+
+test("resolved call info retains exact dynamic property and element callee access", () => {
+  const { program, index } = createProgram(`
+    declare const value: any;
+    declare const key: string;
+
+    value.create(1);
+    value[key](2);
+  `);
+  assertCleanSemanticDiagnostics(program, index);
+  const queries = createTypeCheckerQueries(program);
+  const calls = findNodesByKind(index, KindCallExpression);
+  assert.equal(calls.length, 2);
+
+  const propertyCall = queries.getResolvedCallInfo(calls[0]);
+  assert.equal(propertyCall?.outcome, "untyped");
+  assert.equal(propertyCall?.sourceCalleeAccess?.kind, "property");
+  assert.equal(propertyCall?.sourceCalleeAccess?.selectedSymbol, undefined);
+  assert.equal(propertyCall?.sourceCalleeAccess?.selectedDeclaration, undefined);
+  assert.equal(
+    (propertyCall?.sourceCalleeAccess?.receiver.type.flags ?? 0) & TypeFlagsAny,
+    TypeFlagsAny,
+  );
+  assert.equal(
+    (propertyCall?.sourceCalleeAccess?.resultType.flags ?? 0) & TypeFlagsAny,
+    TypeFlagsAny,
+  );
+
+  const elementCall = queries.getResolvedCallInfo(calls[1]);
+  assert.equal(elementCall?.outcome, "untyped");
+  assert.equal(elementCall?.sourceCalleeAccess?.kind, "element");
+  assert.equal(elementCall?.sourceCalleeAccess?.selectedSymbol, undefined);
+  assert.equal(elementCall?.sourceCalleeAccess?.selectedDeclaration, undefined);
+  assert.equal(
+    (elementCall?.sourceCalleeAccess?.receiver.type.flags ?? 0) & TypeFlagsAny,
+    TypeFlagsAny,
+  );
+  assert.equal(
+    (elementCall?.sourceCalleeAccess?.resultType.flags ?? 0) & TypeFlagsAny,
+    TypeFlagsAny,
+  );
+  assert.equal(
+    queries.typeToString(
+      elementCall?.sourceCalleeAccess?.kind === "element"
+        ? elementCall.sourceCalleeAccess.argument.type
+        : undefined,
+    ),
+    "string",
+  );
+  assert.ok(queries.getResolvedCallInfo(calls[0]) === propertyCall);
+  assert.ok(queries.getResolvedCallInfo(calls[1]) === elementCall);
+  assertCleanSemanticDiagnostics(program, index);
 });
 
 test("resolved call info retains only the winning overload candidate", () => {
