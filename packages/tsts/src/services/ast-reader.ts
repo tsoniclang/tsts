@@ -40,7 +40,7 @@ import {
   ModifierFlagsReadonly,
   ModifierFlagsStatic,
 } from "../internal/ast/modifierflags.js";
-import { GetCombinedNodeFlags, GetHeritageElements, GetSourceFileOfNode, HasModifier, IsTypeOnlyImportDeclaration, IsTypeOnlyImportOrExportDeclaration, IsVarAwaitUsing, IsVarConst, IsVarLet, IsVarUsing } from "../internal/ast/utilities.js";
+import { GetCombinedNodeFlags, GetHeritageElements, GetSourceFileOfNode, HasModifier, IsConstAssertion, IsTypeOnlyImportDeclaration, IsTypeOnlyImportOrExportDeclaration, IsVarAwaitUsing, IsVarConst, IsVarLet, IsVarUsing } from "../internal/ast/utilities.js";
 import { KindExtendsKeyword, KindImplementsKeyword } from "../internal/ast/generated/kinds.js";
 
 export type AstModifierKind =
@@ -87,6 +87,8 @@ export interface AstReader {
   readonly hasModifierKind: (node: GoPtr<Node>, kind: AstModifierKind) => boolean;
   /** Classifies a variable statement, declaration list, or direct variable declaration. */
   readonly variableDeclarationKind: (node: GoPtr<Node>) => AstVariableDeclarationKind | undefined;
+  /** Uses TS-Go's canonical grammar predicate for `as const` and `<const>` assertions. */
+  readonly isConstAssertion: (node: GoPtr<Node>) => boolean;
   readonly heritageElements: (node: GoPtr<Node>, kind: "extends" | "implements") => readonly GoPtr<Node>[];
   readonly extendsHeritageElements: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly implementsHeritageElements: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
@@ -136,6 +138,7 @@ export function createAstReader(): AstReader {
     hasModifier: (node, flags) => node !== undefined && HasModifier(node, flags) === true,
     hasModifierKind: (node, kind) => node !== undefined && HasModifier(node, modifierFlagForKind(kind)) === true,
     variableDeclarationKind,
+    isConstAssertion: (node) => node !== undefined && IsConstAssertion(node) === true,
     heritageElements: (node, kind) => GetHeritageElements(node, kind === "extends" ? KindExtendsKeyword : KindImplementsKeyword) ?? [],
     extendsHeritageElements: (node) => GetHeritageElements(node, KindExtendsKeyword) ?? [],
     implementsHeritageElements: (node) => GetHeritageElements(node, KindImplementsKeyword) ?? [],

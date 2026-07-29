@@ -195,6 +195,42 @@ test("public AST reader exposes exact optional-parameter question tokens", () =>
   assert.equal(checked.ast.questionToken(sourceFile), undefined);
 });
 
+test("public AST reader exposes TS-Go's exact const-assertion classification", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+    files: {
+      "/src/core.d.ts": core,
+      "/src/index.ts": [
+        "const asConst = 1 as const;",
+        "const angleConst = <const>2;",
+        "const ordinary = 3 as number;",
+      ].join("\n"),
+    },
+    compilerOptions: {
+      noLib: true,
+      module: "esnext",
+      moduleResolution: "bundler",
+    },
+  });
+  const checked = session.checkSource();
+  const sourceFile = checked.getSourceFile("/src/index.ts");
+  const assertions = collectNodes(
+    sourceFile,
+    checked.ast,
+    (node) =>
+      checked.ast.is.IsAsExpression(node) ||
+      checked.ast.is.IsTypeAssertion(node),
+  );
+  assert.equal(assertions.length, 3);
+  assert.deepEqual(assertions.map(checked.ast.isConstAssertion), [
+    true,
+    true,
+    false,
+  ]);
+  assert.equal(checked.ast.isConstAssertion(sourceFile), false);
+});
+
 test("public AST reader exposes exact binary and update operator kinds", () => {
   const session = createCompilerSessionFromFiles({
     currentDirectory: "/src",
