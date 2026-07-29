@@ -578,7 +578,7 @@ function recordAttributeMarker(
   const fact = {
     target,
     attributeName: getTypeReferenceNameText(target),
-    arguments: definedFactSubjects(Node_Arguments(callExpression) ?? []),
+    arguments: definedNodes(Node_Arguments(callExpression) ?? []),
   } satisfies AttributeFact;
   facts.set(callExpression, attributeFactKey, fact, evidence);
   recordInitializerOwnerFact(facts, callExpression, attributeFactKey, fact, evidence);
@@ -738,12 +738,12 @@ function recordSourceSemanticsTypeMarker(
   facts.set(typeName, functionPointerFactKey, fact, evidence);
 }
 
-function getFunctionPointerParameters(parameterList: GoPtr<Node>): readonly ExtensionFactSubject[] {
+function getFunctionPointerParameters(parameterList: GoPtr<Node>): readonly Node[] {
   if (parameterList === undefined) {
     return [];
   }
   if (parameterList.Kind === KindTupleType) {
-    return definedFactSubjects(Node_Elements(parameterList) ?? []);
+    return definedNodes(Node_Elements(parameterList) ?? []);
   }
   return [parameterList];
 }
@@ -1110,8 +1110,8 @@ function visitSourceSemanticsNodePost(node: GoPtr<Node>, visit: (node: GoPtr<Nod
   visit(node);
 }
 
-function definedFactSubjects<T extends object>(subjects: readonly (T | undefined)[]): readonly ExtensionFactSubject[] {
-  return subjects.filter((subject): subject is T => subject !== undefined);
+function definedNodes(subjects: readonly GoPtr<Node>[]): readonly Node[] {
+  return subjects.filter((subject): subject is Node => subject !== undefined);
 }
 
 function recordNamespaceImportIdentity(

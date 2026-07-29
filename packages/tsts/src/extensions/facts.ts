@@ -6,6 +6,9 @@ import type {
   ExtensionFactSubject,
   ProviderWellKnownSymbolName,
 } from "./host.js";
+import type {
+  Node,
+} from "../internal/ast/ast.js";
 import {
   isArgumentPassingMode,
   type ArgumentPassingMode,
@@ -67,17 +70,17 @@ export interface SourcePrimitiveFact {
 
 export interface ArgumentPassingFact {
   readonly mode: ArgumentPassingMode;
-  readonly targetExpression?: ExtensionFactSubject;
+  readonly targetExpression?: Node;
 }
 
 export interface FunctionPointerFact {
-  readonly parameters: readonly ExtensionFactSubject[];
-  readonly result: ExtensionFactSubject;
+  readonly parameters: readonly Node[];
+  readonly result: Node;
   readonly abi: readonly string[];
 }
 
 export interface PointerFact {
-  readonly pointee: ExtensionFactSubject;
+  readonly pointee: Node;
   readonly mutability: SourcePointerMutability;
   readonly unsafeRequired: boolean;
 }
@@ -89,18 +92,18 @@ export interface StructFact {
 
 export interface FieldFact {
   readonly name: string;
-  readonly type: ExtensionFactSubject;
+  readonly type: Node;
   readonly readonly?: boolean;
 }
 
 export interface AttributeFact {
-  readonly target: ExtensionFactSubject;
+  readonly target: Node;
   readonly attributeName: string;
-  readonly arguments?: readonly ExtensionFactSubject[];
+  readonly arguments?: readonly Node[];
 }
 
 export interface DefaultValueFact {
-  readonly type: ExtensionFactSubject;
+  readonly type: Node;
 }
 
 export interface FlowStateFact {
@@ -336,7 +339,7 @@ function snapshotArgumentPassingFact(value: ArgumentPassingFact): ArgumentPassin
   if (!isArgumentPassingMode(mode)) {
     throw new Error(`ArgumentPassingFact.mode '${mode}' is invalid.`);
   }
-  const targetExpression = optionalSubject(record, "targetExpression", "ArgumentPassingFact");
+  const targetExpression = optionalNode(record, "targetExpression", "ArgumentPassingFact");
   return Object.freeze({
     mode,
     ...(targetExpression === undefined ? {} : { targetExpression }),
@@ -346,8 +349,8 @@ function snapshotArgumentPassingFact(value: ArgumentPassingFact): ArgumentPassin
 function snapshotFunctionPointerFact(value: FunctionPointerFact): FunctionPointerFact {
   const record = exactRecord(value, "FunctionPointerFact", ["parameters", "result", "abi"]);
   return Object.freeze({
-    parameters: subjectArray(record.parameters, "FunctionPointerFact.parameters"),
-    result: requiredSubject(record, "result", "FunctionPointerFact"),
+    parameters: nodeArray(record.parameters, "FunctionPointerFact.parameters"),
+    result: requiredNode(record, "result", "FunctionPointerFact"),
     abi: stringArray(record.abi, "FunctionPointerFact.abi"),
   });
 }
@@ -359,7 +362,7 @@ function snapshotPointerFact(value: PointerFact): PointerFact {
     throw new Error(`PointerFact.mutability '${mutability}' is invalid.`);
   }
   return Object.freeze({
-    pointee: requiredSubject(record, "pointee", "PointerFact"),
+    pointee: requiredNode(record, "pointee", "PointerFact"),
     mutability,
     unsafeRequired: requiredBoolean(record, "unsafeRequired", "PointerFact"),
   });
@@ -379,16 +382,16 @@ function snapshotFieldFact(value: FieldFact): FieldFact {
   const readonly = optionalBoolean(record, "readonly", "FieldFact");
   return Object.freeze({
     name: requiredString(record, "name", "FieldFact"),
-    type: requiredSubject(record, "type", "FieldFact"),
+    type: requiredNode(record, "type", "FieldFact"),
     ...(readonly === undefined ? {} : { readonly }),
   });
 }
 
 function snapshotAttributeFact(value: AttributeFact): AttributeFact {
   const record = exactRecord(value, "AttributeFact", ["target", "attributeName", "arguments"]);
-  const args = optionalSubjectArray(record.arguments, "AttributeFact.arguments");
+  const args = optionalNodeArray(record.arguments, "AttributeFact.arguments");
   return Object.freeze({
-    target: requiredSubject(record, "target", "AttributeFact"),
+    target: requiredNode(record, "target", "AttributeFact"),
     attributeName: requiredString(record, "attributeName", "AttributeFact"),
     ...(args === undefined ? {} : { arguments: args }),
   });
@@ -397,7 +400,7 @@ function snapshotAttributeFact(value: AttributeFact): AttributeFact {
 function snapshotDefaultValueFact(value: DefaultValueFact): DefaultValueFact {
   const record = exactRecord(value, "DefaultValueFact", ["type"]);
   return Object.freeze({
-    type: requiredSubject(record, "type", "DefaultValueFact"),
+    type: requiredNode(record, "type", "DefaultValueFact"),
   });
 }
 
@@ -717,6 +720,26 @@ function optionalSubject(
   return value;
 }
 
+function requiredNode(
+  record: Readonly<Record<string, unknown>>,
+  field: string,
+  name: string,
+): Node {
+  const value = requiredSubject(record, field, name);
+  if (!("Kind" in value) || typeof value.Kind !== "number") {
+    throw new Error(`${name}.${field} must be a compiler source node.`);
+  }
+  return value as Node;
+}
+
+function optionalNode(
+  record: Readonly<Record<string, unknown>>,
+  field: string,
+  name: string,
+): Node | undefined {
+  return record[field] === undefined ? undefined : requiredNode(record, field, name);
+}
+
 function requiredArray<T>(
   value: unknown,
   name: string,
@@ -748,8 +771,29 @@ function subjectArray(value: unknown, name: string): readonly ExtensionFactSubje
   }));
 }
 
+function nodeArray(value: unknown, name: string): readonly Node[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${name} must be an array.`);
+  }
+  return Object.freeze(value.map((node, index) => {
+    if (
+      typeof node !== "object" ||
+      node === null ||
+      !("Kind" in node) ||
+      typeof node.Kind !== "number"
+    ) {
+      throw new Error(`${name}[${index}] must be a compiler source node.`);
+    }
+    return node as Node;
+  }));
+}
+
 function optionalSubjectArray(value: unknown, name: string): readonly ExtensionFactSubject[] | undefined {
   return value === undefined ? undefined : subjectArray(value, name);
+}
+
+function optionalNodeArray(value: unknown, name: string): readonly Node[] | undefined {
+  return value === undefined ? undefined : nodeArray(value, name);
 }
 
 function stringArray(value: unknown, name: string): readonly string[] {
