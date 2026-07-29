@@ -179,6 +179,8 @@ test("public AST reader exposes exact optional-parameter question tokens", () =>
     },
   });
   const sourceFile = session.getSourceFile("/src/index.ts");
+  assert.equal(session.ast.isDeclarationFile(session.getSourceFile("/src/core.d.ts")), true);
+  assert.equal(session.ast.isDeclarationFile(sourceFile), false);
   const parameters = collectNodes(sourceFile, session.ast, (node) => session.ast.is.IsParameterDeclaration(node));
   assert.equal(parameters.length, 2);
   assert.equal(session.ast.questionToken(parameters[0]), undefined);
