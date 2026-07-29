@@ -10,6 +10,7 @@ import {
   createProgram,
   findFirstNodeByKind,
   findIdentifierByText,
+  findNodesByKind,
   findPropertyAccessByName,
 } from "./type-checker-test-support.js";
 
@@ -170,6 +171,53 @@ test("resolved call info retains only the winning overload candidate", () => {
     queries.getResolvedCallInfo(call) === selected,
     "Repeated overload selection must retain the exact winning evidence.",
   );
+});
+
+test("resolved call info preserves omission semantics without inventing effective arguments", () => {
+  const { program, index } = createProgram(`
+    declare function consume(value: number, state?: object): void;
+    consume(1);
+  `);
+  const queries = createTypeCheckerQueries(program);
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  queries.getTypeAtLocation(call);
+  const selected = queries.getResolvedCallInfo(call);
+
+  assert.equal(selected?.outcome, "applicable");
+  assert.deepEqual(
+    selected?.sourceSelectedSignatureParameters.map((parameter) => [
+      parameter.parameterIndex,
+      parameter.parameterName,
+      parameter.acceptsOmission,
+      parameter.rest,
+    ]),
+    [
+      [0, "value", false, false],
+      [1, "state", true, false],
+    ],
+  );
+  assert.equal(selected?.sourceArguments.length, 1);
+  assert.equal(selected?.sourceArgumentBindings.length, 1);
+  assert.equal(selected?.sourceArgumentBindings[0]?.sourceParameterIndex, 0);
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+test("resolved call info preserves an applicable zero-argument decision", () => {
+  const { program, index } = createProgram(`
+    declare function clear(): void;
+    clear();
+  `);
+  const queries = createTypeCheckerQueries(program);
+  const calls = findNodesByKind(index, KindCallExpression);
+  assert.equal(calls.length, 1);
+  assert.equal(queries.getResolvedCallInfo(index), undefined);
+
+  const selected = queries.getResolvedCallInfo(calls[0]);
+  assert.equal(selected?.outcome, "applicable");
+  assert.deepEqual(selected?.sourceSelectedSignatureParameters, []);
+  assert.deepEqual(selected?.sourceArguments, []);
+  assert.deepEqual(selected?.sourceArgumentBindings, []);
+  assertCleanSemanticDiagnostics(program, index);
 });
 
 test("public type-checker queries expose instantiated generic member types", () => {

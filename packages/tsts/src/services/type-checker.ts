@@ -4,7 +4,7 @@ import type { Context } from "../go/context.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
-import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
+import { GetSourceFileOfNode, IsCallOrNewExpression } from "../internal/ast/utilities.js";
 import { Program_GetTypeCheckerForFile } from "../internal/compiler/program.js";
 import type { Program } from "../internal/compiler/program.js";
 import {
@@ -127,6 +127,10 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
     getResolvedCallInfo: (node) =>
       memoizeResolvedNodeQuery(callInfos, node, () =>
         withCheckerForNode(program, node, defaultOptions, (checker) => {
+          if (!IsCallOrNewExpression(node)) {
+            return undefined;
+          }
+          Checker_getResolvedSignature(checker, node, undefined, CheckModeNormal);
           const sourceResultType = Checker_GetTypeAtLocation(checker, node);
           return Checker_finalizeResolvedCallEvidence(checker, node, sourceResultType);
         })),

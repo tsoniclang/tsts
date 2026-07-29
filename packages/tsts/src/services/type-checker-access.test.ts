@@ -163,6 +163,33 @@ test("element access info preserves mapped declarations and proven tuple ordinal
   assert.equal(repeatedTuple?.selectedElementIndex, tuple?.selectedElementIndex);
 });
 
+test("element access exposes no fixed tuple ordinal without one exact checker proof", () => {
+  const { program, index } = createProgram(`
+    declare const pair: readonly [string, number];
+    declare const general: number;
+    pair[general];
+
+    declare const ambiguous: 0 | 1;
+    pair[ambiguous];
+
+    declare const mixed: readonly [string, number] | readonly string[];
+    mixed[general];
+
+    declare const rest: readonly [string, ...number[]];
+    rest[2];
+  `, { noLib: false });
+  const queries = createTypeCheckerQueries(program);
+  const accesses = findNodesByKind(index, KindElementAccessExpression);
+  assert.equal(accesses.length, 4);
+
+  for (const access of accesses) {
+    const selected = queries.getResolvedElementAccessInfo(access);
+    assert.equal(selected?.accessMode, "read");
+    assert.equal(selected?.selectedElementIndex, undefined);
+  }
+  assertCleanSemanticDiagnostics(program, index);
+});
+
 test("element access info distinguishes read, write, and read-write index operations", () => {
   const { program, index } = createProgram(`
     interface Values {
@@ -196,6 +223,28 @@ test("element access info distinguishes read, write, and read-write index operat
       && write?.selectedDeclaration === readWrite?.selectedDeclaration,
     "Every access mode must retain the exact selected index-signature declaration.",
   );
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+test("element access info preserves optional-chain source selection", () => {
+  const { program, index } = createProgram(`
+    interface Values {
+      [key: string]: number;
+    }
+
+    declare const values: Values | undefined;
+    declare const key: string;
+    values?.[key];
+  `);
+  const queries = createTypeCheckerQueries(program);
+  const access = findNodesByKind(index, KindElementAccessExpression)[0];
+  const selected = queries.getResolvedElementAccessInfo(access);
+
+  assert.equal(selected?.accessMode, "read");
+  assert.equal(selected?.optionalChain, true);
+  assert.equal(selected?.selectedSymbol, undefined);
+  assert.ok(selected?.selectedDeclaration !== undefined);
+  assert.equal(queries.typeToString(selected?.sourceReadType), "number | undefined");
   assertCleanSemanticDiagnostics(program, index);
 });
 
