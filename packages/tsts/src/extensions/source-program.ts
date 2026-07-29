@@ -30,8 +30,9 @@ export interface SourceProgramQueries {
 }
 
 export interface CheckedSourceProgram extends SourceProgramQueries {
+  readonly program: Program;
   readonly sourceFiles: readonly GoPtr<SourceFile>[];
-  readonly sourceFacts?: ReadonlySourceFactResolver;
+  readonly sourceFacts: ReadonlySourceFactResolver;
   readonly diagnostics: readonly GoPtr<Diagnostic>[];
   readonly extensionDiagnostics: readonly ExtensionDiagnostic[];
 }

@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   ExtensionHostDiagnosticCode,
   attachExtensionHost,
+  createSourceFactQueries,
   defineExtensionFactKey,
   getExtensionHost,
   hasExtensionHost,
@@ -25,9 +26,7 @@ function extension(
     identity: {
       id,
       version: "1.0.0",
-      capabilityNamespace: id,
     },
-    composition: { kind: "source" },
     ...options,
   };
 }
@@ -103,13 +102,15 @@ test("source analyzers write only owner facts and consumers read only finalized 
     extensionHostOptions: { extensions: [analyzer] },
   });
 
-  assert.equal(session.extensionHost?.getFactForConsumer("early", subject, factKey), undefined);
-  const checked = session.checkSource();
-  assert.equal(checked.sourceFacts?.getFact(subject, factKey), "first");
-  assert.deepEqual(
-    checked.extensionDiagnostics.map((diagnostic) => diagnostic.extensionCode),
-    ["CONSUMER_BEFORE_FINALIZATION"],
+  const host = getExtensionHost(session.program!);
+  assert.ok(host !== undefined);
+  assert.throws(
+    () => createSourceFactQueries(host),
+    /require finalized source-extension semantics/,
   );
+  const checked = session.checkSource();
+  assert.equal(checked.sourceFacts.getFact(subject, factKey), "first");
+  assert.deepEqual(checked.extensionDiagnostics, []);
 });
 
 test("source analyzer conflicts and foreign writes roll back the complete transaction", () => {
@@ -143,15 +144,17 @@ test("source analyzer conflicts and foreign writes roll back the complete transa
     extensionHostOptions: { extensions: [analyzer] },
   });
 
+  const host = getExtensionHost(session.program!);
+  assert.ok(host !== undefined);
   assert.throws(() => session.checkSource(), /Cannot commit an extension fact transaction/);
-  assert.equal(session.extensionHost?.facts.get(subject, factKey), undefined);
-  assert.equal(session.extensionHost?.facts.get(subject, foreignKey), undefined);
+  assert.equal(host.facts.get(subject, factKey), undefined);
+  assert.equal(host.facts.get(subject, foreignKey), undefined);
   assert.equal(
-    session.extensionHost?.diagnostics.all().filter((item) => item.extensionCode === "FACT_CONFLICT").length,
+    host.diagnostics.all().filter((item) => item.extensionCode === "FACT_CONFLICT").length,
     1,
   );
   assert.equal(
-    session.extensionHost?.diagnostics.all().filter((item) =>
+    host.diagnostics.all().filter((item) =>
       item.extensionCode === "FACT_WRITER_OWNERSHIP_VIOLATION").length,
     1,
   );
@@ -191,8 +194,8 @@ test("source fact resolvers are owner-scoped, lazy, cached, and sealed before co
 
   const checked = session.checkSource();
   assert.equal(calls, 1);
-  assert.equal(checked.sourceFacts?.getFact(subject, factKey), 42);
-  assert.equal(session.extensionHost?.facts.sealed, true);
+  assert.equal(checked.sourceFacts.getFact(subject, factKey), 42);
+  assert.equal(getExtensionHost(session.program!)?.facts.sealed, true);
 });
 
 test("source extensions receive frozen least-authority capability views", () => {
@@ -254,7 +257,7 @@ test("source extensions receive frozen least-authority capability views", () => 
   });
 
   const checked = session.checkSource();
-  assert.equal(checked.sourceFacts?.getFact(subject, factKey), 42);
+  assert.equal(checked.sourceFacts.getFact(subject, factKey), 42);
   assert.throws(
     () => capturedWrite?.(),
     /cannot be used outside their host-owned callback/,
@@ -263,11 +266,53 @@ test("source extensions receive frozen least-authority capability views", () => 
     () => capturedDiagnostic?.(),
     /cannot be used outside their host-owned callback/,
   );
-  assert.equal(checked.sourceFacts?.getFact(subject, factKey), 42);
+  assert.equal(checked.sourceFacts.getFact(subject, factKey), 42);
   assert.equal(
-    session.extensionHost?.diagnostics.all().length,
+    getExtensionHost(session.program!)?.diagnostics.all().length,
     checked.extensionDiagnostics.length,
   );
+});
+
+test("extension registration is an immutable program-revision snapshot", () => {
+  const extensionId = "immutable-registration";
+  const factKey = defineExtensionFactKey<string>({
+    extensionId,
+    name: "value",
+    snapshot: (value) => value,
+  });
+  const subject = {};
+  let originalCalls = 0;
+  let replacementCalls = 0;
+  const registered = extension(extensionId, {
+    analyzeSource(context): void {
+      originalCalls += 1;
+      assert.equal(context.facts.set(subject, factKey, "original"), "inserted");
+    },
+  });
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+    files: {
+      "/src/core.d.ts": testCoreDeclarations,
+      "/src/index.ts": "export const value = 1;",
+    },
+    compilerOptions: testNoLibCompilerOptions,
+    extensionHostOptions: { extensions: [registered] },
+  });
+
+  const mutable = registered as {
+    identity: { id: string };
+    analyzeSource?: CompilerExtension["analyzeSource"];
+  };
+  mutable.identity.id = "mutated-registration";
+  mutable.analyzeSource = () => {
+    replacementCalls += 1;
+  };
+
+  const checked = session.checkSource();
+  assert.equal(originalCalls, 1);
+  assert.equal(replacementCalls, 0);
+  assert.equal(checked.sourceFacts.getFact(subject, factKey), "original");
 });
 
 test("failed extension initialization rolls back provider and resolver registrations atomically", () => {

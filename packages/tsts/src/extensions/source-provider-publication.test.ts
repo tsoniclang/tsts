@@ -4,6 +4,7 @@ import { createCompilerSessionFromFiles } from "../index.js";
 import { SourceFile_FileName } from "../internal/ast/ast.js";
 import {
   ExtensionHost,
+  getExtensionHost,
   type ProviderDeclarationModel,
   type ProviderExportDeclaration,
   type ProviderModuleContext,
@@ -362,7 +363,7 @@ test("canonical provider owner files remain hidden from public source traversal"
 
   assert.equal(checked.diagnostics.length, 0);
   assert.equal(checked.extensionDiagnostics.length, 0);
-  const publicDocuments = session.extensionHost?.providers
+  const publicDocuments = getExtensionHost(session.program!)?.providers
     .getVirtualDeclarationDocuments() ?? [];
   assert.equal(publicDocuments.length, 1);
   assert.deepEqual(

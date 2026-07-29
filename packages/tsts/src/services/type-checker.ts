@@ -144,19 +144,19 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
         withCheckerForNode(program, node, defaultOptions, options, (checker) =>
           Checker_getResolvedSourceIterationInfo(checker, node))),
     getReturnTypeOfSignature: (signature, options = {}) =>
-      withCheckerForSubject(program, signature, defaultOptions, options, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
+      withCheckerForSignature(program, signature, defaultOptions, options, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
     getCallSignaturesOfType: (type, options = {}) =>
-      withCheckerForSubject(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindCall)) ?? [],
+      withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindCall)) ?? [],
     getConstructSignaturesOfType: (type, options = {}) =>
-      withCheckerForSubject(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindConstruct)) ?? [],
+      withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindConstruct)) ?? [],
     getPropertyOfType: (type, name, options = {}) =>
-      withCheckerForSubject(program, type, defaultOptions, options, (checker) => Checker_GetPropertyOfType(checker, type, name)),
+      withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetPropertyOfType(checker, type, name)),
     getTypeOfPropertyOfType: (type, name, options = {}) =>
-      withCheckerForSubject(program, type, defaultOptions, options, (checker) => Checker_GetTypeOfPropertyOfType(checker, type, name)),
+      withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetTypeOfPropertyOfType(checker, type, name)),
     getConstantValue: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_GetConstantValue(checker, node)),
     typeToString: (type, options = {}) =>
-      withCheckerForSubject(program, type, defaultOptions, options, (checker) => Checker_TypeToString(checker, type)) ?? "",
+      withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_TypeToString(checker, type)) ?? "",
     getModuleSymbolFromSpecifier: (moduleSpecifier, options = {}) =>
       withCheckerForNode(program, moduleSpecifier, defaultOptions, options, (checker) => Checker_resolveExternalModuleName(checker, moduleSpecifier, moduleSpecifier, true as bool)),
     getResolvedExternalModuleSymbol: (moduleSymbol, dontResolveAlias = false, options = {}) =>
@@ -229,23 +229,43 @@ function withCheckerForSymbol<T>(
   return withChecker(program, options.sourceFile ?? defaultOptions.sourceFile ?? getSymbolSourceFile(symbol), defaultOptions, options, callback);
 }
 
-function withCheckerForSubject<T>(
+function withCheckerForType<T>(
   program: GoPtr<Program>,
-  subject: object | undefined,
+  type: GoPtr<Type>,
   defaultOptions: TypeCheckerQueryOptions,
   options: TypeCheckerQueryOptions,
   callback: (checker: GoPtr<Checker>) => GoPtr<T>,
 ): GoPtr<T> {
-  if (subject === undefined) {
+  if (type === undefined) {
     return undefined;
   }
-  const ownedChecker = getSemanticSubjectChecker(subject);
+  if (type.checker !== undefined) {
+    return callback(type.checker);
+  }
+  const sourceFile = options.sourceFile
+    ?? defaultOptions.sourceFile
+    ?? getSymbolSourceFile(type.symbol ?? type.alias?.symbol);
+  return withChecker(program, sourceFile, defaultOptions, options, callback);
+}
+
+function withCheckerForSignature<T>(
+  program: GoPtr<Program>,
+  signature: GoPtr<Signature>,
+  defaultOptions: TypeCheckerQueryOptions,
+  options: TypeCheckerQueryOptions,
+  callback: (checker: GoPtr<Checker>) => GoPtr<T>,
+): GoPtr<T> {
+  if (signature === undefined) {
+    return undefined;
+  }
+  const ownedChecker = signature.resolvedReturnType?.checker
+    ?? signature.typeParameters.find((type) => type?.checker !== undefined)?.checker;
   if (ownedChecker !== undefined) {
     return callback(ownedChecker);
   }
   const sourceFile = options.sourceFile
     ?? defaultOptions.sourceFile
-    ?? getSemanticSubjectSourceFile(subject);
+    ?? GetSourceFileOfNode(signature.declaration);
   return withChecker(program, sourceFile, defaultOptions, options, callback);
 }
 
@@ -275,42 +295,4 @@ function getSymbolSourceFile(symbol: GoPtr<Symbol>): GoPtr<SourceFile> {
 
 function getPrimarySymbolDeclaration(symbol: GoPtr<Symbol>): GoPtr<Node> {
   return symbol?.ValueDeclaration ?? symbol?.Declarations?.find((candidate) => candidate !== undefined);
-}
-
-function isNode(subject: object | undefined): subject is Node {
-  return subject !== undefined && "Kind" in subject && "Loc" in subject;
-}
-
-function isType(subject: object): subject is Type {
-  return "checker" in subject && "flags" in subject && "data" in subject;
-}
-
-function isSignature(subject: object): subject is Signature {
-  return "declaration" in subject
-    && "parameters" in subject
-    && "resolvedReturnType" in subject;
-}
-
-function getSemanticSubjectChecker(subject: object): GoPtr<Checker> {
-  if (isType(subject)) {
-    return subject.checker;
-  }
-  if (isSignature(subject)) {
-    return subject.resolvedReturnType?.checker
-      ?? subject.typeParameters.find((type) => type?.checker !== undefined)?.checker;
-  }
-  return undefined;
-}
-
-function getSemanticSubjectSourceFile(subject: object): GoPtr<SourceFile> {
-  if (isNode(subject)) {
-    return GetSourceFileOfNode(subject);
-  }
-  if (isSignature(subject)) {
-    return GetSourceFileOfNode(subject.declaration);
-  }
-  if (isType(subject)) {
-    return getSymbolSourceFile(subject.symbol ?? subject.alias?.symbol);
-  }
-  return undefined;
 }

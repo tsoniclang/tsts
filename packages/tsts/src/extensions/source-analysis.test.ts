@@ -8,6 +8,7 @@ import {
   type CompilerExtension,
   type SourceAnalysisContext,
 } from "../index.js";
+import { getExtensionHost } from "./host.js";
 
 const sourceAnalysisExtensionId = "test.source-analysis";
 const selectedCallFactKey = defineExtensionFactKey<string>({
@@ -19,15 +20,15 @@ const selectedCallFactKey = defineExtensionFactKey<string>({
 test("source analysis consumes the fully checked program once through direct source queries", () => {
   let analysisCount = 0;
   let selectedCall: GoPtr<Node>;
+  let analyzedSource: SourceAnalysisContext["source"] | undefined;
   const extension: CompilerExtension = {
     identity: {
       id: sourceAnalysisExtensionId,
       version: "1.0.0",
-      capabilityNamespace: sourceAnalysisExtensionId,
     },
-    composition: { kind: "source" },
     analyzeSource(context): void {
       analysisCount += 1;
+      analyzedSource = context.source;
       assert.equal(Object.isFrozen(context), true);
       assert.equal(Object.isFrozen(context.source), true);
       const sourceFile = context.source.getSourceFile("/src/index.ts");
@@ -58,6 +59,9 @@ test("source analysis consumes the fully checked program once through direct sou
   assert.equal(analysisCount, 0);
   const checked = session.checkSource();
   assert.equal(analysisCount, 1);
+  assert.ok(analyzedSource?.ast === checked.ast);
+  assert.ok(analyzedSource?.checker === checked.checker);
+  assert.ok(analyzedSource?.typeShape === checked.typeShape);
   assert.equal(checked.sourceFacts?.getFact(selectedCall, selectedCallFactKey), "identity<number>");
   assert.ok(session.checkSource() === checked, "Source checking must retain one exact checked program.");
   assert.equal(analysisCount, 1);
@@ -77,9 +81,7 @@ test("source analysis is dependency ordered and globally fail closed", () => {
     identity: {
       id: firstExtensionId,
       version: "1.0.0",
-      capabilityNamespace: firstExtensionId,
     },
-    composition: { kind: "source" },
     analyzeSource(context): void {
       order.push("first");
       subject = context.source.getSourceFile("/src/index.ts");
@@ -91,10 +93,8 @@ test("source analysis is dependency ordered and globally fail closed", () => {
     identity: {
       id: secondExtensionId,
       version: "1.0.0",
-      capabilityNamespace: secondExtensionId,
     },
     dependencies: { dependsOn: [firstExtensionId] },
-    composition: { kind: "source" },
     analyzeSource(): void {
       order.push("second");
       throw new Error("source analysis failed");
@@ -109,9 +109,11 @@ test("source analysis is dependency ordered and globally fail closed", () => {
 
   assert.throws(() => session.checkSource(), /source analysis failed/);
   assert.deepEqual(order, ["first", "second"]);
-  assert.equal(session.extensionHost?.facts.get(subject, firstFactKey), undefined);
+  const host = getExtensionHost(session.program!);
+  assert.ok(host !== undefined);
+  assert.equal(host.facts.get(subject, firstFactKey), undefined);
   assert.equal(
-    session.extensionHost?.diagnostics.all().filter((diagnostic) =>
+    host.diagnostics.all().filter((diagnostic) =>
       diagnostic.extensionCode === "SOURCE_ANALYSIS_FAILED").length,
     1,
   );
@@ -136,9 +138,7 @@ test("independent source analyzers produce one deterministic fact manifest under
       identity: {
         id: extensionId,
         version: "1.0.0",
-        capabilityNamespace: extensionId,
       },
-      composition: { kind: "source" },
       analyzeSource(context): void {
         analysisOrder.push(extensionId);
         const sourceFile = context.source.getSourceFile("/src/index.ts");
@@ -200,9 +200,7 @@ test("source analyzer ordering does not grant undeclared fact-read authority", (
     identity: {
       id: producerId,
       version: "1.0.0",
-      capabilityNamespace: producerId,
     },
-    composition: { kind: "source" },
     analyzeSource(context): void {
       subject = context.source.getSourceFile("/src/index.ts");
       assert.ok(subject !== undefined);
@@ -213,10 +211,8 @@ test("source analyzer ordering does not grant undeclared fact-read authority", (
     identity: {
       id: consumerId,
       version: "1.0.0",
-      capabilityNamespace: consumerId,
     },
     dependencies: { runsAfter: [producerId] },
-    composition: { kind: "source" },
     analyzeSource(context): void {
       context.facts.get(subject, producerFactKey);
     },
@@ -232,7 +228,7 @@ test("source analyzer ordering does not grant undeclared fact-read authority", (
     () => session.checkSource(),
     /facts from explicitly declared source dependencies/,
   );
-  assert.equal(session.extensionHost?.facts.get(subject, producerFactKey), undefined);
+  assert.equal(getExtensionHost(session.program!)?.facts.get(subject, producerFactKey), undefined);
 });
 
 function findFirstCall(ast: SourceAnalysisContext["source"]["ast"], root: GoPtr<Node>): GoPtr<Node> {

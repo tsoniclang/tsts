@@ -209,21 +209,6 @@ export function createSourceSemanticsExtension(options: SourceSemanticsExtension
     identity: {
       id: sourceSemanticsExtensionId,
       version: "1.0.0",
-      capabilityNamespace: sourceSemanticsExtensionId,
-    },
-    composition: {
-      kind: "source",
-    },
-    capabilities: {
-      provides: [
-        "source-semantics.primitives",
-        "source-semantics.argument-passing",
-        "source-semantics.pointer-types",
-        "source-semantics.flow-markers",
-        "source-semantics.structs",
-        "source-semantics.attributes",
-        "source-semantics.defaults",
-      ],
     },
     initialize(context): void {
       context.registerFactResolver(sourcePrimitiveFactKey, (subject, resolverContext) =>

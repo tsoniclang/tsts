@@ -3,6 +3,7 @@ export type ExtensionDiagnosticCategory = "error" | "warning" | "suggestion";
 export type ExtensionFactSubject = object;
 
 import type { GoPtr } from "../go/compat.js";
+import type { Context } from "../go/context.js";
 import { SourceFile_FileName, type SourceFile } from "../internal/ast/ast.js";
 import type { Program } from "../internal/compiler/program.js";
 import {
@@ -105,13 +106,11 @@ export const ExtensionHostDiagnosticCode = {
   dependencyCycle: 9000004,
   initializationFailed: 9000007,
   factStoreSealed: 9000008,
-  consumerBeforeFinalization: 9000009,
   invalidProvider: 9000010,
   duplicateProvider: 9000015,
   providerOwnershipConflict: 9000016,
   providerResolutionFailed: 9000017,
   invalidProviderDeclaration: 9000018,
-  requiredFactMissing: 9000020,
   providerContractMismatch: 9000021,
   providerMissing: 9000022,
   providerOwnershipFailed: 9000023,
@@ -125,7 +124,6 @@ export const ExtensionHostDiagnosticCode = {
   invalidDiagnosticSnapshot: 9000032,
   factOwnershipViolation: 9000033,
   invalidFactSnapshot: 9000034,
-  invalidDependencyDirection: 9000037,
   sourceAnalysisFailed: 9000038,
 } as const;
 
@@ -270,7 +268,6 @@ class HostTransactionSettlementError extends AggregateError {
 export interface CompilerExtensionIdentity {
   readonly id: string;
   readonly version: string;
-  readonly capabilityNamespace: string;
   readonly diagnosticRange?: ExtensionDiagnosticRange;
 }
 
@@ -279,22 +276,9 @@ export interface ExtensionDependencySpec {
   readonly runsAfter?: readonly string[];
 }
 
-export interface ExtensionCapabilitySpec {
-  readonly provides?: readonly string[];
-  readonly requires?: readonly string[];
-}
-
-export type CompilerExtensionKind = "source" | "tooling";
-
-export interface ExtensionCompositionSpec {
-  readonly kind: CompilerExtensionKind;
-}
-
 export interface CompilerExtension {
   readonly identity: CompilerExtensionIdentity;
   readonly dependencies?: ExtensionDependencySpec;
-  readonly capabilities?: ExtensionCapabilitySpec;
-  readonly composition?: ExtensionCompositionSpec;
   readonly initialize?: (context: ExtensionInitializeContext) => void;
   readonly analyzeSource?: (context: SourceAnalysisContext) => void;
 }
@@ -3584,7 +3568,6 @@ export class ExtensionHost {
   readonly providers: ProviderRegistry;
   readonly #extensions: CompilerExtension[] = [];
   readonly #extensionsById = new Map<string, CompilerExtension>();
-  readonly #consumerSubjectIds = new WeakMap<object, number>();
   readonly #mutationAttemptStates = new WeakMap<HostMutationAttempt, HostMutationAttemptState>();
   readonly #mutationAttemptStack: HostMutationAttempt[] = [];
   readonly #ownerAuthority: ExtensionOwnerAuthority;
@@ -3592,7 +3575,6 @@ export class ExtensionHost {
   #compilerContext: SourceProgramQueries | undefined;
   #sourceAnalysisState: "pending" | "running" | "completed" | "failed" = "pending";
   #semanticFinalizationState: "open" | "finalized" | "failed" = "open";
-  #nextConsumerSubjectId = 1;
 
   [extensionHostSetFact]<T>(
     subject: ExtensionFactSubject,
@@ -3610,7 +3592,10 @@ export class ExtensionHost {
     this.facts = new ExtensionFactStore(this.diagnostics);
     this.factResolver = new ExtensionFactResolver(this.facts, this.diagnostics);
     this.providers = new ProviderRegistry(this.diagnostics, options.requiredProviderModules ?? []);
-    const orderedExtensions = orderExtensions(options.extensions ?? [], this.diagnostics);
+    const orderedExtensions = orderExtensions(
+      (options.extensions ?? []).map(snapshotCompilerExtension),
+      this.diagnostics,
+    );
     for (const extension of orderedExtensions) {
       const unavailableDependency = extension.dependencies?.dependsOn?.find(
         (dependencyId) => !this.#extensionsById.has(dependencyId),
@@ -4029,108 +4014,18 @@ export class ExtensionHost {
     return this.#semanticFinalizationState === "finalized";
   }
 
-  getCompilerQueryContext(): SourceProgramQueries {
+  getCompilerQueryContext(context?: Context): SourceProgramQueries {
     if (this.#compilerContext !== undefined) {
       return this.#compilerContext;
     }
     const program = this.#program as GoPtr<Program>;
     this.#compilerContext = createSourceProgramQueries(program, {
+      ...(context === undefined ? {} : { context }),
       includeSourceFile: (sourceFile) =>
         getProviderVirtualArtifactForCompiler(this.providers, SourceFile_FileName(sourceFile))?.kind
         !== "canonical-export-owner",
     });
     return this.#compilerContext;
-  }
-
-  assertFinalizedForConsumer(consumer: string): boolean {
-    if (this.#semanticFinalizationState === "finalized") {
-      return true;
-    }
-    this.diagnostics.append(createHostDiagnostic({
-      extensionCode: "CONSUMER_BEFORE_FINALIZATION",
-      numericCode: ExtensionHostDiagnosticCode.consumerBeforeFinalization,
-      message: `Consumer '${consumer}' attempted to read extension facts before semantic finalization.`,
-      identity: encodeIdentityTuple(["consumer-before-finalization", consumer]),
-    }));
-    return false;
-  }
-
-  getFactForConsumer<T>(consumer: string, subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): T | undefined {
-    if (!this.assertFinalizedForConsumer(consumer)) {
-      return undefined;
-    }
-    if (subject === undefined) {
-      return undefined;
-    }
-    return this.facts.get(subject, key);
-  }
-
-  requireFactForConsumer<T>(consumer: string, subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>, purpose?: string): T | undefined {
-    if (!this.assertFinalizedForConsumer(consumer)) {
-      return undefined;
-    }
-    const value = subject === undefined ? undefined : this.facts.get(subject, key);
-    if (value !== undefined) {
-      return value;
-    }
-    this.diagnostics.append(createHostDiagnostic({
-      extensionCode: "REQUIRED_FACT_MISSING",
-      numericCode: ExtensionHostDiagnosticCode.requiredFactMissing,
-      message: purpose === undefined
-        ? `Consumer '${consumer}' requires extension fact '${formatExtensionFactKeyForDisplay(key)}', but no finalized fact exists for the subject.`
-        : `Consumer '${consumer}' requires extension fact '${formatExtensionFactKeyForDisplay(key)}' for ${purpose}, but no finalized fact exists for the subject.`,
-      evidence: [
-        { message: "Consumer", details: consumer },
-        { message: "Fact key", details: formatExtensionFactKeyForDisplay(key) },
-        { message: "Subject", details: this.#getConsumerSubjectIdentity(subject) },
-      ],
-      identity: encodeIdentityTuple([
-        "required-fact-missing",
-        consumer,
-        key.id,
-        this.#getConsumerSubjectIdentity(subject),
-        purpose,
-      ]),
-    }));
-    return undefined;
-  }
-
-  mustFactForConsumer<T>(consumer: string, subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>, purpose?: string): T {
-    const value = this.requireFactForConsumer(consumer, subject, key, purpose);
-    if (value !== undefined) {
-      return value;
-    }
-    throw new Error(purpose === undefined
-      ? `Consumer '${consumer}' requires extension fact '${formatExtensionFactKeyForDisplay(key)}'.`
-      : `Consumer '${consumer}' requires extension fact '${formatExtensionFactKeyForDisplay(key)}' for ${purpose}.`);
-  }
-
-  getFactsForConsumer(consumer: string, subject: ExtensionFactSubject | undefined): readonly ExtensionFactEntry<unknown>[] {
-    if (!this.assertFinalizedForConsumer(consumer)) {
-      return Object.freeze([]);
-    }
-    return this.facts.entries(subject);
-  }
-
-  getVirtualDeclarationDocumentForConsumer(consumer: string, uriOrFileName: string): ProviderVirtualDeclarationDocument | undefined {
-    if (!this.assertFinalizedForConsumer(consumer)) {
-      return undefined;
-    }
-    return this.providers.getVirtualDeclarationDocument(uriOrFileName);
-  }
-
-  #getConsumerSubjectIdentity(subject: ExtensionFactSubject | undefined): string {
-    if (subject === undefined) {
-      return encodeIdentityTuple(["consumer-subject", undefined]);
-    }
-    const existing = this.#consumerSubjectIds.get(subject);
-    if (existing !== undefined) {
-      return encodeIdentityTuple(["consumer-subject", existing]);
-    }
-    const created = this.#nextConsumerSubjectId;
-    this.#nextConsumerSubjectId += 1;
-    this.#consumerSubjectIds.set(subject, created);
-    return encodeIdentityTuple(["consumer-subject", created]);
   }
 
   #getOwnerCapabilities(extensionId: string): {
@@ -4150,10 +4045,9 @@ export class ExtensionHost {
       return;
     }
     const producer = this.#extensionsById.get(extensionId);
-    const factOwner = this.#extensionsById.get(key.extensionId);
     const ownsKey = key.extensionId === extensionId;
     const declaresSourceDependency = producer?.dependencies?.dependsOn?.includes(key.extensionId) === true
-      && factOwner?.composition?.kind === "source";
+      && this.#extensionsById.has(key.extensionId);
     if (ownsKey || declaresSourceDependency) {
       return;
     }
@@ -4357,21 +4251,6 @@ function orderExtensions(extensions: readonly CompilerExtension[], diagnostics: 
         invalidExtensionIds.add(extensionId);
         continue;
       }
-      if (extension.composition?.kind === "source" && dependency.composition?.kind !== "source") {
-        diagnostics.append(createHostDiagnostic({
-          extensionCode: "INVALID_EXTENSION_DEPENDENCY_DIRECTION",
-          numericCode: ExtensionHostDiagnosticCode.invalidDependencyDirection,
-          message: `Source extension '${extensionId}' can depend only on another source extension; '${dependencyId}' is '${dependency.composition?.kind ?? "unclassified"}'.`,
-          identity: encodeIdentityTuple([
-            "invalid-extension-dependency-direction",
-            extensionId,
-            dependencyId,
-            dependency.composition?.kind,
-          ]),
-        }));
-        invalidExtensionIds.add(extensionId);
-        continue;
-      }
       addOrderingEdge(outgoingEdges, incomingCounts, dependencyId, extensionId);
     }
     for (const predecessorId of extension.dependencies?.runsAfter ?? []) {
@@ -4421,6 +4300,37 @@ function orderExtensions(extensions: readonly CompilerExtension[], diagnostics: 
   propagateInvalidDependencies(extensionsById, invalidExtensionIds);
 
   return ordered.filter((extension) => !invalidExtensionIds.has(extension.identity.id));
+}
+
+function snapshotCompilerExtension(extension: CompilerExtension): CompilerExtension {
+  const identity = Object.freeze({
+    id: extension.identity.id,
+    version: extension.identity.version,
+    ...(extension.identity.diagnosticRange === undefined
+      ? {}
+      : {
+          diagnosticRange: Object.freeze({
+            start: extension.identity.diagnosticRange.start,
+            end: extension.identity.diagnosticRange.end,
+          }),
+        }),
+  });
+  const dependencies = extension.dependencies === undefined
+    ? undefined
+    : Object.freeze({
+        ...(extension.dependencies.dependsOn === undefined
+          ? {}
+          : { dependsOn: Object.freeze([...extension.dependencies.dependsOn]) }),
+        ...(extension.dependencies.runsAfter === undefined
+          ? {}
+          : { runsAfter: Object.freeze([...extension.dependencies.runsAfter]) }),
+      });
+  return Object.freeze({
+    identity,
+    ...(dependencies === undefined ? {} : { dependencies }),
+    ...(extension.initialize === undefined ? {} : { initialize: extension.initialize }),
+    ...(extension.analyzeSource === undefined ? {} : { analyzeSource: extension.analyzeSource }),
+  });
 }
 
 function addOrderingEdge(outgoingEdges: Map<string, Set<string>>, incomingCounts: Map<string, number>, from: string, to: string): void {

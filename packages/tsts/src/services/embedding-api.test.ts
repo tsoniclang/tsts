@@ -3,6 +3,7 @@ import { test } from "node:test";
 import type { GoPtr } from "../go/compat.js";
 import type { Node } from "../internal/ast/ast.js";
 import type { AstReader } from "./ast-reader.js";
+import { getExtensionHost } from "../extensions/host.js";
 import {
   TstsSourceProviderContractVersion,
   argumentPassingFactKey,
@@ -114,6 +115,7 @@ test("public embedding API checks a provider-backed program through direct sourc
   assert.equal(Object.isFrozen(session.ast), true);
   assert.equal(Object.isFrozen(session.checker), true);
   assert.equal(Object.isFrozen(session.types), true);
+  assert.equal("extensionHost" in session, false);
   const sourceFile = checked.getSourceFile("/src/index.ts");
   assert.ok(sourceFile !== undefined);
   const source = checked.getSourceFileQueries(sourceFile);
@@ -326,7 +328,7 @@ test("public provider contract keeps package subpaths as independent source modu
 
   const checked = session.checkSource();
   assert.equal(checked.diagnostics.length, 0);
-  const documents = session.extensionHost?.providers.getVirtualDeclarationDocuments() ?? [];
+  const documents = getExtensionHost(session.program!)?.providers.getVirtualDeclarationDocuments() ?? [];
   assert.equal(documents.some((document) => document.moduleSpecifier === left.moduleSpecifier), true);
   assert.equal(documents.some((document) => document.moduleSpecifier === right.moduleSpecifier), true);
   assert.notEqual(
@@ -343,9 +345,7 @@ function providerExtension(
     identity: {
       id: "test.public-provider-extension",
       version: "1.0.0",
-      capabilityNamespace: "test.public-provider-extension",
     },
-    composition: { kind: "source" },
     initialize(context): void {
       context.registerSourceDeclarationProvider({
         identity: {

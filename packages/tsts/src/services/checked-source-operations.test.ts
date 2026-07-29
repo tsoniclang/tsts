@@ -151,7 +151,7 @@ test("invalid assertions remain ordinary source diagnostics and create no extens
     checked.diagnostics.map((diagnostic) => diagnostic?.code),
     [2352],
   );
-  assert.equal(checked.sourceFacts, undefined);
+  assert.deepEqual(checked.sourceFacts.getFacts(checked.getSourceFile("/src/index.ts")), []);
 });
 
 test("type-shape tuple queries are total for primitive and tuple source types", () => {

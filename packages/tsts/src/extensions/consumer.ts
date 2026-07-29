@@ -40,39 +40,30 @@ import type {
 
 export interface ReadonlySourceFactResolver {
   getFact<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): T | undefined;
-  requireFact<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>, purpose?: string): T | undefined;
-  mustFact<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>, purpose?: string): T;
   getFacts(subject: ExtensionFactSubject | undefined): readonly ExtensionFactEntry<unknown>[];
   getVirtualDeclarationDocument(uriOrFileName: string): ProviderVirtualDeclarationDocument | undefined;
 }
 
 export class SourceFactQueries implements ReadonlySourceFactResolver {
   readonly #host: ExtensionHost;
-  readonly #consumer: string;
 
-  constructor(host: ExtensionHost, consumer: string) {
+  constructor(host: ExtensionHost) {
+    if (!host.finalized) {
+      throw new Error("Source fact queries require finalized source-extension semantics.");
+    }
     this.#host = host;
-    this.#consumer = consumer;
   }
 
   getFact<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): T | undefined {
-    return this.#host.getFactForConsumer(this.#consumer, subject, key);
-  }
-
-  requireFact<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>, purpose?: string): T | undefined {
-    return this.#host.requireFactForConsumer(this.#consumer, subject, key, purpose);
-  }
-
-  mustFact<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>, purpose?: string): T {
-    return this.#host.mustFactForConsumer(this.#consumer, subject, key, purpose);
+    return this.#host.facts.get(subject, key);
   }
 
   getFacts(subject: ExtensionFactSubject | undefined): readonly ExtensionFactEntry<unknown>[] {
-    return this.#host.getFactsForConsumer(this.#consumer, subject);
+    return this.#host.facts.entries(subject);
   }
 
   getVirtualDeclarationDocument(uriOrFileName: string): ProviderVirtualDeclarationDocument | undefined {
-    return this.#host.getVirtualDeclarationDocumentForConsumer(this.#consumer, uriOrFileName);
+    return this.#host.providers.getVirtualDeclarationDocument(uriOrFileName);
   }
 
   getCanonicalIdentity(subject: ExtensionFactSubject | undefined): ExtensionCanonicalIdentity | undefined {
@@ -132,6 +123,8 @@ export class SourceFactQueries implements ReadonlySourceFactResolver {
   }
 }
 
-export function createSourceFactQueries(host: ExtensionHost, consumer: string): SourceFactQueries {
-  return new SourceFactQueries(host, consumer);
+export function createSourceFactQueries(host: ExtensionHost): SourceFactQueries {
+  const queries = new SourceFactQueries(host);
+  Object.freeze(queries);
+  return queries;
 }

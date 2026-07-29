@@ -36,6 +36,23 @@ const targetProviderShapeNames = [
   "sourceShape",
 ];
 
+const mutableHostPublicNames = [
+  "ExtensionDiagnosticStore",
+  "ExtensionFactResolver",
+  "ExtensionFactStore",
+  "ExtensionHost",
+  "CompilerExtensionKind",
+  "ExtensionCapabilitySpec",
+  "ExtensionCompositionSpec",
+  "ProviderRegistry",
+  "SourceFactQueries",
+  "attachExtensionHost",
+  "attachExtensionHostToProgram",
+  "createSourceFactQueries",
+  "getExtensionHost",
+  "hasExtensionHost",
+];
+
 test("product source contains no retired target semantic lifecycle", async () => {
   const violations = await findTokens(
     await productTypeScriptFiles(sourceRoot),
@@ -50,6 +67,13 @@ test("source provider contracts contain no target type projection", async () => 
     await productTypeScriptFiles(extensionRoot),
     targetProviderShapeNames,
   );
+  assert.deepEqual(violations, []);
+});
+
+test("public API exposes checked-source capabilities instead of mutable host internals", async () => {
+  const publicSource = await readFile(`${sourceRoot}index.ts`, "utf8");
+  const violations = mutableHostPublicNames.filter((name) =>
+    new RegExp(`\\b${name}\\b`, "u").test(publicSource));
   assert.deepEqual(violations, []);
 });
 

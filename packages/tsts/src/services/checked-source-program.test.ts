@@ -39,6 +39,8 @@ test("checked source program exposes one exact AST and direct checker decision s
   assert.equal(checked.extensionDiagnostics.length, 0);
   assert.equal(Object.isFrozen(checked), true);
   assert.equal(Object.isFrozen(checked.sourceFiles), true);
+  assert.equal(Object.isFrozen(checked.sourceFacts), true);
+  assert.ok(checked.program === session.program);
   assert.ok(session.checkSource() === checked, "Checked source program must be retained exactly per session.");
   assert.ok(checked.ast === session.ast);
   assert.ok(checked.checker === session.checker);
@@ -127,9 +129,7 @@ test("checked source facts are immutable consumer capabilities over exact source
     identity: {
       id: extensionId,
       version: "1.0.0",
-      capabilityNamespace: extensionId,
     },
-    composition: { kind: "source" },
     analyzeSource(context): void {
       const sourceFile = context.source.getSourceFile("/src/index.ts");
       const source = context.source.getSourceFileQueries(sourceFile);
