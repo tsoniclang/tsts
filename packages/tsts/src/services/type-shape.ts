@@ -19,13 +19,13 @@ import {
   Checker_GetWidenedType,
   Checker_IsArrayLikeType,
   Checker_RemoveMissingOrUndefinedType,
+  IsTupleType,
 } from "../internal/checker/exports.js";
 import { Checker_GetConstantValue } from "../internal/checker/services.js";
 import { Checker_TypeToString } from "../internal/checker/printer.js";
 import type { Checker } from "../internal/checker/checker/state.js";
 import {
   ObjectFlagsReference,
-  ObjectFlagsTuple,
   SignatureKindCall,
   SignatureKindConstruct,
   TypeFlagsAny,
@@ -95,7 +95,7 @@ export interface TypeShapeQueries {
 }
 
 export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: TypeShapeQueryOptions = {}): TypeShapeQueries {
-  return {
+  const queries: TypeShapeQueries = {
     typeToString: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_TypeToString(checker, type)) ?? "",
     getTypeFromTypeNode: (node, options = {}) => withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_GetTypeFromTypeNode(checker, node)),
     getConstantValue: (node, options = {}) => withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_GetConstantValue(checker, node)),
@@ -141,6 +141,7 @@ export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: 
     getWidenedType: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_GetWidenedType(checker, type)),
     removeMissingOrUndefined: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_RemoveMissingOrUndefinedType(checker, type)),
   };
+  return Object.freeze(queries);
 }
 
 function hasFlags(type: GoPtr<Type>, flags: number): boolean {
@@ -148,14 +149,7 @@ function hasFlags(type: GoPtr<Type>, flags: number): boolean {
 }
 
 function isTupleType(type: GoPtr<Type>): boolean {
-  if (type === undefined) {
-    return false;
-  }
-  if ((type.objectFlags & ObjectFlagsTuple) !== 0) {
-    return true;
-  }
-  const target = Type_Target(type);
-  return target !== undefined && (target.objectFlags & ObjectFlagsTuple) !== 0;
+  return type !== undefined && IsTupleType(type);
 }
 
 function withCheckerForNode<T>(
@@ -181,9 +175,13 @@ function withChecker<T>(
   if (program === undefined || subject === undefined) {
     return undefined;
   }
+  const ownedChecker = getSemanticSubjectChecker(subject);
+  if (ownedChecker !== undefined) {
+    return callback(ownedChecker);
+  }
   const sourceFile = options.sourceFile
     ?? defaultOptions.sourceFile
-    ?? (isNode(subject) ? GetSourceFileOfNode(subject) : undefined);
+    ?? getSemanticSubjectSourceFile(subject);
   if (sourceFile === undefined) {
     return undefined;
   }
@@ -197,4 +195,42 @@ function withChecker<T>(
 
 function isNode(subject: object | undefined): subject is Node {
   return subject !== undefined && "Kind" in subject && "Loc" in subject;
+}
+
+function isType(subject: object): subject is Type {
+  return "checker" in subject && "flags" in subject && "data" in subject;
+}
+
+function isSignature(subject: object): subject is Signature {
+  return "declaration" in subject
+    && "parameters" in subject
+    && "resolvedReturnType" in subject;
+}
+
+function getSemanticSubjectChecker(subject: object): GoPtr<Checker> {
+  if (isType(subject)) {
+    return subject.checker;
+  }
+  if (isSignature(subject)) {
+    return subject.resolvedReturnType?.checker
+      ?? subject.typeParameters.find((type) => type?.checker !== undefined)?.checker;
+  }
+  return undefined;
+}
+
+function getSemanticSubjectSourceFile(subject: object): GoPtr<SourceFile> {
+  if (isNode(subject)) {
+    return GetSourceFileOfNode(subject);
+  }
+  if (isSignature(subject)) {
+    return GetSourceFileOfNode(subject.declaration);
+  }
+  if (isType(subject)) {
+    const declaration = subject.symbol?.ValueDeclaration
+      ?? subject.symbol?.Declarations?.find((candidate) => candidate !== undefined)
+      ?? subject.alias?.symbol?.ValueDeclaration
+      ?? subject.alias?.symbol?.Declarations?.find((candidate) => candidate !== undefined);
+    return GetSourceFileOfNode(declaration);
+  }
+  return undefined;
 }

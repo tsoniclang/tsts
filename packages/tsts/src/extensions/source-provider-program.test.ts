@@ -248,6 +248,7 @@ test("provider index signatures expose exact declaration evidence without fabric
         id: "Dictionary::index",
         name: "index",
         kind: "indexer",
+        readonly: true,
         signatures: [{
           id: "Dictionary::index(string)",
           parameters: [{ name: "key", type: { kind: "string" } }],
@@ -277,6 +278,17 @@ test("provider index signatures expose exact declaration evidence without fabric
     checked.sourceFacts?.getFact(info?.selectedDeclaration, providerVirtualDeclarationFactKey)?.memberId,
     "Dictionary::index",
   );
+
+  const invalidWrite = providerSession(model, [
+    `import type { Dictionary } from "${moduleSpecifier}";`,
+    "declare const values: Dictionary;",
+    "values['key'] = 1;",
+  ].join("\n")).checkSource();
+  assert.deepEqual(
+    invalidWrite.diagnostics.map((diagnostic) => Diagnostic_Code(diagnostic)),
+    [2542],
+  );
+  assert.deepEqual(invalidWrite.extensionDiagnostics, []);
 });
 
 test("provider import slices compose one public export identity independent of dependency order", () => {

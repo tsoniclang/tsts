@@ -103,6 +103,9 @@ export function createCompilerSessionFromProgram(program: GoPtr<Program>, host: 
   let checkedSourceProgram: CheckedSourceProgram | undefined;
   const source = createSourceProgramQueries(program, {
     context,
+    ast,
+    checker,
+    typeShape: types,
     includeSourceFile: (sourceFile) =>
       extensionHost === undefined
       || getProviderVirtualArtifactForCompiler(extensionHost.providers, SourceFile_FileName(sourceFile))?.kind

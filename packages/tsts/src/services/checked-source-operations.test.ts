@@ -45,6 +45,10 @@ test("checked source exposes exact constructor selection through the direct call
   assert.equal(selected?.sourceReceiver, undefined);
   const repeated = source.checker.getResolvedCallInfo(construction);
   assert.ok(
+    repeated === selected,
+    "Repeated constructor queries must retain the exact resolved call result.",
+  );
+  assert.ok(
     repeated?.selectedSignature === selected?.selectedSignature,
     "Repeated constructor queries must retain the exact selected signature.",
   );
@@ -148,6 +152,32 @@ test("invalid assertions remain ordinary source diagnostics and create no extens
     [2352],
   );
   assert.equal(checked.sourceFacts, undefined);
+});
+
+test("type-shape tuple queries are total for primitive and tuple source types", () => {
+  const source = checkedQueries(`
+    export const primitive = 1;
+    export const tuple = [1, "one"] as const;
+  `);
+  const identifiers = findNodes(
+    source.sourceFile,
+    source.ast.children,
+    source.ast.is.IsIdentifier,
+  );
+  const primitive = identifiers.find((node) => source.ast.text(node) === "primitive");
+  const tuple = identifiers.find((node) => source.ast.text(node) === "tuple");
+  assert.ok(primitive !== undefined);
+  assert.ok(tuple !== undefined);
+
+  const primitiveType = source.checker.getTypeAtLocation(primitive);
+  const tupleType = source.checker.getTypeAtLocation(tuple);
+  assert.equal(source.typeShape.isTuple(primitiveType), false);
+  assert.deepEqual(source.typeShape.getTupleElementTypes(primitiveType), []);
+  assert.equal(source.typeShape.isTuple(tupleType), true);
+  assert.deepEqual(
+    source.typeShape.getTupleElementTypes(tupleType).map((type) => source.checker.typeToString(type)),
+    ["1", "\"one\""],
+  );
 });
 
 function checkedQueries(sourceText: string): SourceFileQueries {

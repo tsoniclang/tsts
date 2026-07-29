@@ -195,6 +195,81 @@ test("source fact resolvers are owner-scoped, lazy, cached, and sealed before co
   assert.equal(session.extensionHost?.facts.sealed, true);
 });
 
+test("source extensions receive frozen least-authority capability views", () => {
+  const extensionId = "least-authority";
+  const factKey = defineExtensionFactKey<number>({
+    extensionId,
+    name: "answer",
+    snapshot: (value) => value,
+  });
+  const subject = {};
+  let capturedWrite: (() => unknown) | undefined;
+  let capturedDiagnostic: (() => unknown) | undefined;
+  const analyzer = extension(extensionId, {
+    initialize(context): void {
+      assert.equal(Object.isFrozen(context), true);
+      assert.deepEqual(
+        Object.keys(context).sort(),
+        ["diagnostics", "registerFactResolver", "registerSourceDeclarationProvider"],
+      );
+      assert.equal(Object.isFrozen(context.diagnostics), true);
+      assert.deepEqual(Object.keys(context.diagnostics), ["append"]);
+      capturedDiagnostic = () => context.diagnostics.append({
+        extensionId,
+        extensionCode: "LATE_DIAGNOSTIC",
+        numericCode: 9900001,
+        category: "error",
+        message: "late",
+      });
+      context.registerFactResolver(factKey, (candidate, resolverContext) => {
+        assert.equal(Object.isFrozen(resolverContext), true);
+        assert.equal(Object.isFrozen(resolverContext.facts), true);
+        assert.equal(Object.isFrozen(resolverContext.diagnostics), true);
+        assert.deepEqual(Object.keys(resolverContext.facts).sort(), ["get", "getEntry", "has"]);
+        assert.deepEqual(Object.keys(resolverContext.diagnostics), ["append"]);
+        return candidate === subject ? { value: 42 } : undefined;
+      });
+    },
+    analyzeSource(context): void {
+      assert.equal(Object.isFrozen(context), true);
+      assert.equal(Object.isFrozen(context.facts), true);
+      assert.equal(Object.isFrozen(context.factResolver), true);
+      assert.equal(Object.isFrozen(context.diagnostics), true);
+      assert.deepEqual(Object.keys(context.facts).sort(), ["get", "getEntry", "has", "set"]);
+      assert.deepEqual(Object.keys(context.factResolver), ["resolve"]);
+      assert.deepEqual(Object.keys(context.diagnostics), ["append"]);
+      assert.equal(context.factResolver.resolve(subject, factKey), 42);
+      capturedWrite = () => context.facts.set(subject, factKey, 42);
+    },
+  });
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+    files: {
+      "/src/core.d.ts": testCoreDeclarations,
+      "/src/index.ts": "export const value = 1;",
+    },
+    compilerOptions: testNoLibCompilerOptions,
+    extensionHostOptions: { extensions: [analyzer] },
+  });
+
+  const checked = session.checkSource();
+  assert.equal(checked.sourceFacts?.getFact(subject, factKey), 42);
+  assert.throws(
+    () => capturedWrite?.(),
+    /cannot be used outside their host-owned callback/,
+  );
+  assert.throws(
+    () => capturedDiagnostic?.(),
+    /cannot be used outside their host-owned callback/,
+  );
+  assert.equal(checked.sourceFacts?.getFact(subject, factKey), 42);
+  assert.equal(
+    session.extensionHost?.diagnostics.all().length,
+    checked.extensionDiagnostics.length,
+  );
+});
+
 test("failed extension initialization rolls back provider and resolver registrations atomically", () => {
   const model: ProviderDeclarationModel = {
     moduleSpecifier: "@test/atomic.js",

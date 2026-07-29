@@ -71,15 +71,17 @@ import type {
 } from "./facts.js";
 import type {
   CompilerExtension,
-  ExtensionDiagnosticStore,
+  ExtensionDiagnosticWriter,
   ExtensionEvidence,
   ExtensionFactKey,
+  ExtensionFactReader,
   ExtensionFactResolverContext,
   ExtensionFactSubject,
-  ExtensionFactStore,
+  SourceAnalysisFactAccess,
 } from "./host.js";
 
-type SourceSemanticsFactAccess = Pick<ExtensionFactStore, "get" | "set">;
+type SourceSemanticsFactReader = Pick<ExtensionFactReader, "get">;
+type SourceSemanticsFactAccess = Pick<SourceAnalysisFactAccess, "get" | "set">;
 
 export interface SourceSemanticsExtensionOptions {
   readonly modules: readonly SourceSemanticsModule[];
@@ -244,7 +246,7 @@ export function createSourceSemanticsExtension(options: SourceSemanticsExtension
 function recordSourceSemanticsFacts(
   sourceFile: GoPtr<SourceFile>,
   facts: SourceSemanticsFactAccess,
-  diagnostics: ExtensionDiagnosticStore,
+  diagnostics: ExtensionDiagnosticWriter,
   extensionId: string,
   modules: readonly SourceSemanticsModuleRuntime[],
 ): void {
@@ -355,7 +357,7 @@ function recordSourceSemanticsExportClause(
 
 function recordSourceSemanticsCallMarkers(
   facts: SourceSemanticsFactAccess,
-  diagnostics: ExtensionDiagnosticStore,
+  diagnostics: ExtensionDiagnosticWriter,
   extensionId: string,
   sourceFile: GoPtr<SourceFile>,
   modules: readonly SourceSemanticsModuleRuntime[],
@@ -375,7 +377,7 @@ function recordSourceSemanticsCallMarkers(
 
 function recordSourceSemanticsCallMarker(
   facts: SourceSemanticsFactAccess,
-  diagnostics: ExtensionDiagnosticStore,
+  diagnostics: ExtensionDiagnosticWriter,
   extensionId: string,
   callExpression: Node,
   marker: SourceCallMarkerDeclaration,
@@ -465,7 +467,7 @@ function hasMarkerTypeArgumentCount(callExpression: Node, count: number): boolea
 
 function recordArgumentPassingMarker(
   facts: SourceSemanticsFactAccess,
-  diagnostics: ExtensionDiagnosticStore,
+  diagnostics: ExtensionDiagnosticWriter,
   extensionId: string,
   callExpression: Node,
   target: Node,
@@ -925,7 +927,7 @@ function createSourceSemanticsMarkerImportIndex(
 }
 
 function resolvePrimitiveTypeReference(
-  facts: SourceSemanticsFactAccess,
+  facts: SourceSemanticsFactReader,
   typeName: GoPtr<Node>,
   modules: readonly SourceSemanticsModuleRuntime[],
   importIndex?: SourceSemanticsMarkerImportIndex,
@@ -1060,7 +1062,7 @@ function getStaticSourceSemanticsNameText(node: GoPtr<Node>): string | undefined
 }
 
 function resolveQualifiedPrimitiveReference(
-  facts: SourceSemanticsFactAccess,
+  facts: SourceSemanticsFactReader,
   typeName: GoPtr<Node>,
   modules: readonly SourceSemanticsModuleRuntime[],
 ): { readonly moduleIdentity: SourceSemanticsModuleRuntime; readonly exportName: string; readonly primitiveFact: SourcePrimitiveDeclaration; readonly identity: ExtensionCanonicalIdentity } | undefined {

@@ -5,6 +5,7 @@ import {
   Node_Arguments,
   Node_Body,
   Node_Elements,
+  Node_ImportClause,
   Node_Members,
   Node_ModifierFlags,
   Node_ModifierNodes,
@@ -103,7 +104,7 @@ export interface AstReader {
 }
 
 export function createAstReader(): AstReader {
-  return {
+  const reader: AstReader = {
     kind: (node) => node?.Kind,
     kindName: (node) => node === undefined ? "Undefined" : KindString(node.Kind),
     text: (node) => node === undefined ? "" : Node_Text(node),
@@ -142,15 +143,23 @@ export function createAstReader(): AstReader {
       if (node === undefined) {
         return false;
       }
-      const importClause = casts.AsImportDeclaration(node)?.ImportClause;
-      return IsTypeOnlyImportDeclaration(importClause ?? node) === true;
+      if (predicates.IsImportDeclaration(node)) {
+        const importClause = Node_ImportClause(node);
+        return importClause !== undefined
+          && IsTypeOnlyImportDeclaration(importClause) === true;
+      }
+      return IsTypeOnlyImportDeclaration(node) === true;
     },
     isTypeOnlyImportOrExportDeclaration: (node) => {
       if (node === undefined) {
         return false;
       }
-      const importClause = casts.AsImportDeclaration(node)?.ImportClause;
-      return IsTypeOnlyImportOrExportDeclaration(importClause ?? node) === true;
+      if (predicates.IsImportDeclaration(node)) {
+        const importClause = Node_ImportClause(node);
+        return importClause !== undefined
+          && IsTypeOnlyImportOrExportDeclaration(importClause) === true;
+      }
+      return IsTypeOnlyImportOrExportDeclaration(node) === true;
     },
     pos: (node) => node === undefined ? -1 : Node_Pos(node),
     end: (node) => node === undefined ? -1 : Node_End(node),
@@ -162,6 +171,7 @@ export function createAstReader(): AstReader {
     is: predicates,
     as: casts,
   };
+  return Object.freeze(reader);
 }
 
 function operatorKindName(node: GoPtr<Node>): string | undefined {

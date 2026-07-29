@@ -118,6 +118,123 @@ test("source analysis is dependency ordered and globally fail closed", () => {
   assert.throws(() => session.checkSource(), /previously failed/);
 });
 
+test("independent source analyzers produce one deterministic fact manifest under registration permutation", () => {
+  const extensionIds = [
+    "test.source-analysis.alpha",
+    "test.source-analysis.zeta",
+  ] as const;
+  const factKeys = extensionIds.map((extensionId) =>
+    defineExtensionFactKey<string>({
+      extensionId,
+      name: "value",
+      snapshot: (value) => value,
+    }));
+
+  const run = (reverse: boolean) => {
+    const analysisOrder: string[] = [];
+    const extensions = extensionIds.map((extensionId, index): CompilerExtension => ({
+      identity: {
+        id: extensionId,
+        version: "1.0.0",
+        capabilityNamespace: extensionId,
+      },
+      composition: { kind: "source" },
+      analyzeSource(context): void {
+        analysisOrder.push(extensionId);
+        const sourceFile = context.source.getSourceFile("/src/index.ts");
+        assert.ok(sourceFile !== undefined);
+        assert.equal(
+          context.facts.set(sourceFile, factKeys[index]!, extensionId),
+          "inserted",
+        );
+      },
+    }));
+    const session = createCompilerSessionFromFiles({
+      currentDirectory: "/src",
+      rootFiles: ["/src/index.ts"],
+      files: { "/src/index.ts": "export const value = 1;" },
+      extensionHostOptions: {
+        extensions: reverse ? [...extensions].reverse() : extensions,
+      },
+    });
+    const checked = session.checkSource();
+    const sourceFile = checked.getSourceFile("/src/index.ts");
+    assert.ok(sourceFile !== undefined);
+    return {
+      analysisOrder,
+      diagnostics: checked.extensionDiagnostics.map((diagnostic) => [
+        diagnostic.extensionId,
+        diagnostic.extensionCode,
+        diagnostic.numericCode,
+        diagnostic.message,
+      ]),
+      facts: checked.sourceFacts?.getFacts(sourceFile).map((entry) => [
+        entry.key.id,
+        entry.value,
+        entry.evidence,
+      ]),
+    };
+  };
+
+  const forward = run(false);
+  const reverse = run(true);
+  assert.deepEqual(forward, reverse);
+  assert.deepEqual(forward.analysisOrder, [...extensionIds]);
+  assert.deepEqual(forward.diagnostics, []);
+  assert.deepEqual(
+    forward.facts?.map(([keyId, value]) => [keyId, value]),
+    extensionIds.map((extensionId, index) => [factKeys[index]!.id, extensionId]),
+  );
+});
+
+test("source analyzer ordering does not grant undeclared fact-read authority", () => {
+  const producerId = "test.source-analysis.producer";
+  const consumerId = "test.source-analysis.consumer";
+  const producerFactKey = defineExtensionFactKey<string>({
+    extensionId: producerId,
+    name: "value",
+    snapshot: (value) => value,
+  });
+  let subject: GoPtr<Node>;
+  const producer: CompilerExtension = {
+    identity: {
+      id: producerId,
+      version: "1.0.0",
+      capabilityNamespace: producerId,
+    },
+    composition: { kind: "source" },
+    analyzeSource(context): void {
+      subject = context.source.getSourceFile("/src/index.ts");
+      assert.ok(subject !== undefined);
+      assert.equal(context.facts.set(subject, producerFactKey, "producer"), "inserted");
+    },
+  };
+  const consumer: CompilerExtension = {
+    identity: {
+      id: consumerId,
+      version: "1.0.0",
+      capabilityNamespace: consumerId,
+    },
+    dependencies: { runsAfter: [producerId] },
+    composition: { kind: "source" },
+    analyzeSource(context): void {
+      context.facts.get(subject, producerFactKey);
+    },
+  };
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/index.ts"],
+    files: { "/src/index.ts": "export const value = 1;" },
+    extensionHostOptions: { extensions: [consumer, producer] },
+  });
+
+  assert.throws(
+    () => session.checkSource(),
+    /facts from explicitly declared source dependencies/,
+  );
+  assert.equal(session.extensionHost?.facts.get(subject, producerFactKey), undefined);
+});
+
 function findFirstCall(ast: SourceAnalysisContext["source"]["ast"], root: GoPtr<Node>): GoPtr<Node> {
   if (root === undefined) {
     return undefined;

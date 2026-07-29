@@ -111,6 +111,9 @@ test("public embedding API checks a provider-backed program through direct sourc
   const checked = session.checkSource();
   assert.equal(checked.diagnostics.length, 0);
   assert.equal(checked.extensionDiagnostics.length, 0);
+  assert.equal(Object.isFrozen(session.ast), true);
+  assert.equal(Object.isFrozen(session.checker), true);
+  assert.equal(Object.isFrozen(session.types), true);
   const sourceFile = checked.getSourceFile("/src/index.ts");
   assert.ok(sourceFile !== undefined);
   const source = checked.getSourceFileQueries(sourceFile);
@@ -216,6 +219,73 @@ test("public AST reader exposes exact binary and update operator kinds", () => {
   assert.equal(session.ast.operatorKindName(prefix), "KindPlusPlusToken");
   assert.equal(session.ast.operatorKindName(postfix), "KindMinusMinusToken");
   assert.equal(session.ast.operatorKindName(sourceFile), undefined);
+});
+
+test("public AST reader classifies import and export type-only syntax without speculative casts", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+    files: {
+      "/src/core.d.ts": core,
+      "/src/index.ts": [
+        'import "./setup.js";',
+        'import type { Shape as FullType } from "./types.js";',
+        'import { type Shape as InlineType } from "./types.js";',
+        'import { type Shape as MixedType, value } from "./types.js";',
+        'import DefaultValue, { type Shape as DefaultType } from "./types.js";',
+        'import DefaultOnly from "./types.js";',
+        'import * as namespaceValue from "./types.js";',
+        'import type * as namespaceType from "./types.js";',
+        'import {} from "./types.js";',
+        'export type { Shape as ExportType } from "./types.js";',
+        'export { type Shape as InlineExportType } from "./types.js";',
+        'export { type Shape as MixedExportType, value as exportedValue } from "./types.js";',
+      ].join("\n"),
+      "/src/setup.ts": "export {};",
+      "/src/types.ts": [
+        "export interface Shape {}",
+        "export const value = 1;",
+        "export default value;",
+      ].join("\n"),
+    },
+    compilerOptions: {
+      noLib: true,
+      module: "esnext",
+      moduleResolution: "bundler",
+    },
+  });
+  const sourceFile = session.getSourceFile("/src/index.ts");
+  const imports = collectNodes(
+    sourceFile,
+    session.ast,
+    (node) => session.ast.is.IsImportDeclaration(node),
+  );
+  assert.deepEqual(
+    imports.map(session.ast.isTypeOnlyImportDeclaration),
+    [false, true, false, false, false, false, false, true, false],
+  );
+
+  const importSpecifiers = collectNodes(
+    sourceFile,
+    session.ast,
+    (node) => session.ast.is.IsImportSpecifier(node),
+  );
+  assert.deepEqual(
+    importSpecifiers.map(session.ast.isTypeOnlyImportOrExportDeclaration),
+    [true, true, true, false, true],
+  );
+
+  const exportSpecifiers = collectNodes(
+    sourceFile,
+    session.ast,
+    (node) => session.ast.is.IsExportSpecifier(node),
+  );
+  assert.deepEqual(
+    exportSpecifiers.map(session.ast.isTypeOnlyImportOrExportDeclaration),
+    [true, true, true, false],
+  );
+  assert.equal(session.ast.isTypeOnlyImportDeclaration(sourceFile), false);
+  assert.equal(session.ast.isTypeOnlyImportOrExportDeclaration(sourceFile), false);
 });
 
 test("public provider contract keeps package subpaths as independent source modules", () => {

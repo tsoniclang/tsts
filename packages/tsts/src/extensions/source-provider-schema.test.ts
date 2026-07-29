@@ -89,6 +89,7 @@ test("the complete legal provider declaration matrix binds through ordinary sour
         id: "Derived::index",
         name: "index",
         kind: "indexer",
+        readonly: true,
         signatures: [{
           id: "Derived::index(number)",
           parameters: [{ name: "index", type: { kind: "number" } }],

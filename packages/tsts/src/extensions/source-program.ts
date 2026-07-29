@@ -22,6 +22,8 @@ export interface SourceFileQueries {
 
 export interface SourceProgramQueries {
   readonly ast: AstReader;
+  readonly checker: TypeCheckerQueries;
+  readonly typeShape: TypeShapeQueries;
   readonly getSourceFiles: () => readonly GoPtr<SourceFile>[];
   readonly getSourceFile: (fileName: string) => GoPtr<SourceFile>;
   readonly getSourceFileQueries: (sourceFile: GoPtr<SourceFile>) => SourceFileQueries;
@@ -37,6 +39,9 @@ export interface CheckedSourceProgram extends SourceProgramQueries {
 export interface CreateSourceProgramQueriesOptions {
   readonly context?: Context;
   readonly includeSourceFile?: (sourceFile: SourceFile) => boolean;
+  readonly ast?: AstReader;
+  readonly checker?: TypeCheckerQueries;
+  readonly typeShape?: TypeShapeQueries;
 }
 
 export function createSourceProgramQueries(
@@ -46,7 +51,13 @@ export function createSourceProgramQueries(
   if (program === undefined) {
     throw new Error("Source program queries require a compiler program.");
   }
-  const ast = createAstReader();
+  const ast = options.ast ?? createAstReader();
+  const checker = options.checker ?? createTypeCheckerQueries(program, {
+    ...(options.context === undefined ? {} : { context: options.context }),
+  });
+  const typeShape = options.typeShape ?? createTypeShapeQueries(program, {
+    ...(options.context === undefined ? {} : { context: options.context }),
+  });
   const sourceFileQueries = new WeakMap<SourceFile, SourceFileQueries>();
   const included = (sourceFile: SourceFile): boolean => options.includeSourceFile?.(sourceFile) !== false;
   const getSourceFiles = (): readonly GoPtr<SourceFile>[] =>
@@ -69,20 +80,16 @@ export function createSourceProgramQueries(
     const created = Object.freeze({
       sourceFile,
       ast,
-      checker: createTypeCheckerQueries(program, {
-        sourceFile,
-        ...(options.context === undefined ? {} : { context: options.context }),
-      }),
-      typeShape: createTypeShapeQueries(program, {
-        sourceFile,
-        ...(options.context === undefined ? {} : { context: options.context }),
-      }),
+      checker,
+      typeShape,
     });
     sourceFileQueries.set(sourceFile, created);
     return created;
   };
   return Object.freeze({
     ast,
+    checker,
+    typeShape,
     getSourceFiles,
     getSourceFile,
     getSourceFileQueries,

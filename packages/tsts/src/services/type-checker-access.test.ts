@@ -54,6 +54,10 @@ test("property selection uses the selected symbol with distinct read and write t
     "Read and write access must retain the exact selected property symbol.",
   );
   const repeatedRead = queries.getResolvedPropertyAccessInfo(readAccess);
+  assert.ok(
+    repeatedRead === readInfo,
+    "Repeated property queries must retain the exact resolved access result.",
+  );
   assert.equal(repeatedRead?.accessMode, readInfo?.accessMode);
   assert.ok(
     repeatedRead?.selectedSymbol === readInfo?.selectedSymbol,
@@ -130,6 +134,10 @@ test("element access info preserves mapped declarations and proven tuple ordinal
   assertCleanSemanticDiagnostics(program, index);
   const repeatedMapped = queries.getResolvedElementAccessInfo(accesses[0]);
   assert.ok(
+    repeatedMapped === mapped,
+    "Repeated mapped-element queries must retain the exact resolved access result.",
+  );
+  assert.ok(
     repeatedMapped?.selectedDeclaration === mapped?.selectedDeclaration,
     "Repeated mapped-element queries must retain exact selected-declaration identity.",
   );
@@ -140,6 +148,10 @@ test("element access info preserves mapped declarations and proven tuple ordinal
   assert.equal(repeatedMapped?.selectedElementIndex, mapped?.selectedElementIndex);
 
   const repeatedTuple = queries.getResolvedElementAccessInfo(accesses[1]);
+  assert.ok(
+    repeatedTuple === tuple,
+    "Repeated tuple-element queries must retain the exact resolved access result.",
+  );
   assert.ok(
     repeatedTuple?.selectedDeclaration === tuple?.selectedDeclaration,
     "Repeated tuple-element queries must retain exact selected-declaration identity.",
@@ -217,6 +229,10 @@ test("iteration info preserves declaration and assignment element selection", ()
   assert.equal(Object.isFrozen(declaration?.mechanism), true);
   assertCleanSemanticDiagnostics(program, index);
   const repeatedDeclaration = queries.getResolvedIterationInfo(statements[0]);
+  assert.ok(
+    repeatedDeclaration === declaration,
+    "Repeated declaration iteration queries must retain the exact resolved iteration result.",
+  );
   assert.equal(repeatedDeclaration?.iterationKind, declaration?.iterationKind);
   assert.ok(
     repeatedDeclaration?.sourceIterableType === declaration?.sourceIterableType,
@@ -229,6 +245,10 @@ test("iteration info preserves declaration and assignment element selection", ()
   assert.equal(repeatedDeclaration?.mechanism.kind, declaration?.mechanism.kind);
 
   const repeatedAssignment = queries.getResolvedIterationInfo(statements[1]);
+  assert.ok(
+    repeatedAssignment === assignment,
+    "Repeated assignment iteration queries must retain the exact resolved iteration result.",
+  );
   assert.equal(repeatedAssignment?.iterationKind, assignment?.iterationKind);
   assert.ok(
     repeatedAssignment?.sourceIterableType === assignment?.sourceIterableType,

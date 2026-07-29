@@ -40,10 +40,16 @@ test("checked source program exposes one exact AST and direct checker decision s
   assert.equal(Object.isFrozen(checked), true);
   assert.equal(Object.isFrozen(checked.sourceFiles), true);
   assert.ok(session.checkSource() === checked, "Checked source program must be retained exactly per session.");
+  assert.ok(checked.ast === session.ast);
+  assert.ok(checked.checker === session.checker);
+  assert.ok(checked.typeShape === session.types);
 
   const sourceFile = checked.getSourceFile("/src/index.ts");
   assert.ok(sourceFile !== undefined);
   const source = checked.getSourceFileQueries(sourceFile);
+  assert.ok(source.ast === checked.ast);
+  assert.ok(source.checker === checked.checker);
+  assert.ok(source.typeShape === checked.typeShape);
   const calls = findNodes(sourceFile, source.ast.children, source.ast.is.IsCallExpression);
   const properties = findNodes(sourceFile, source.ast.children, source.ast.is.IsPropertyAccessExpression);
   const elements = findNodes(sourceFile, source.ast.children, source.ast.is.IsElementAccessExpression);
@@ -69,8 +75,8 @@ test("checked source program exposes one exact AST and direct checker decision s
   assert.equal(call?.sourceArgumentBindings.length, 1);
   assert.equal(call?.sourceSelectedSignatureParameters.length, 1);
   assert.ok(
-    source.checker.getResolvedCallInfo(explicitCall)?.selectedSignature === call?.selectedSignature,
-    "Repeated direct call queries must retain the checker-selected signature identity.",
+    source.checker.getResolvedCallInfo(explicitCall) === call,
+    "Repeated direct call queries must retain the exact resolved call result.",
   );
 
   const propertyInfos = properties.map((property) => ({

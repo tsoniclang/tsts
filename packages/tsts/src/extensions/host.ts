@@ -299,15 +299,50 @@ export interface CompilerExtension {
   readonly analyzeSource?: (context: SourceAnalysisContext) => void;
 }
 
+export interface ExtensionDiagnosticWriter {
+  readonly append: (diagnostic: ExtensionDiagnostic) => boolean;
+}
+
+export interface ExtensionFactReader {
+  readonly get: <T>(
+    subject: ExtensionFactSubject | undefined,
+    key: ExtensionFactKey<T>,
+  ) => T | undefined;
+  readonly getEntry: <T>(
+    subject: ExtensionFactSubject | undefined,
+    key: ExtensionFactKey<T>,
+  ) => ExtensionFactEntry<T> | undefined;
+  readonly has: <T>(
+    subject: ExtensionFactSubject | undefined,
+    key: ExtensionFactKey<T>,
+  ) => boolean;
+}
+
+export interface SourceAnalysisFactAccess extends ExtensionFactReader {
+  readonly set: <T>(
+    subject: ExtensionFactSubject,
+    key: ExtensionFactKey<T>,
+    value: T,
+    evidence?: readonly ExtensionEvidence[],
+  ) => ExtensionFactWriteResult;
+}
+
+export interface SourceAnalysisFactResolver {
+  readonly resolve: <T>(
+    subject: ExtensionFactSubject,
+    key: ExtensionFactKey<T>,
+  ) => T | undefined;
+}
+
 export interface SourceAnalysisContext {
   readonly source: SourceProgramQueries;
-  readonly facts: ExtensionFactStore;
-  readonly factResolver: ExtensionFactResolver;
-  readonly diagnostics: ExtensionDiagnosticStore;
+  readonly facts: SourceAnalysisFactAccess;
+  readonly factResolver: SourceAnalysisFactResolver;
+  readonly diagnostics: ExtensionDiagnosticWriter;
 }
 
 export interface ExtensionInitializeContext {
-  readonly diagnostics: ExtensionDiagnosticStore;
+  readonly diagnostics: ExtensionDiagnosticWriter;
   readonly registerFactResolver: <T>(
     key: ExtensionFactKey<T>,
     resolver: ExtensionFactResolverCallback<T>,
@@ -335,8 +370,8 @@ export interface ExtensionFactResolution<T> {
 export type ExtensionFactResolverCallback<T> = (subject: ExtensionFactSubject, context: ExtensionFactResolverContext) => ExtensionFactResolution<T> | undefined;
 
 export interface ExtensionFactResolverContext {
-  readonly facts: ExtensionFactStore;
-  readonly diagnostics: ExtensionDiagnosticStore;
+  readonly facts: ExtensionFactReader;
+  readonly diagnostics: ExtensionDiagnosticWriter;
 }
 
 export interface ProviderIdentity {
@@ -1654,7 +1689,16 @@ export class ExtensionFactResolver {
         this.#state.ownerAuthority,
         registration.ownerId,
         () => {
-          const resolution = registration.callback(subject, { facts, diagnostics });
+          const scope = createExtensionCapabilityScope();
+          let resolution: ExtensionFactResolution<unknown> | undefined;
+          try {
+            resolution = registration.callback(subject, Object.freeze({
+              facts: createExtensionFactReader(facts, scope),
+              diagnostics: createExtensionDiagnosticWriter(diagnostics, scope),
+            }));
+          } finally {
+            revokeExtensionCapabilityScope(scope);
+          }
           if (resolution !== undefined) {
             writeResult = facts.set(subject, registration.key, resolution.value, resolution.evidence ?? []);
           }
@@ -3596,12 +3640,25 @@ export class ExtensionHost {
           if (!rangeRegistered) {
             return;
           }
-          extension.initialize?.({
-            diagnostics: capabilities.diagnostics,
-            registerFactResolver: (key, resolver) => capabilities.factResolver.register(key, resolver),
-            registerSourceDeclarationProvider: (provider) =>
-              this.#registerSourceDeclarationProviderForExtension(extension.identity.id, provider),
-          });
+          const scope = createExtensionCapabilityScope();
+          try {
+            extension.initialize?.(Object.freeze({
+              diagnostics: createExtensionDiagnosticWriter(capabilities.diagnostics, scope),
+              registerFactResolver: <T>(
+                key: ExtensionFactKey<T>,
+                resolver: ExtensionFactResolverCallback<T>,
+              ): void => {
+                assertExtensionCapabilityActive(scope);
+                capabilities.factResolver.register(key, resolver);
+              },
+              registerSourceDeclarationProvider: (provider: SourceDeclarationProvider): boolean => {
+                assertExtensionCapabilityActive(scope);
+                return this.#registerSourceDeclarationProviderForExtension(extension.identity.id, provider);
+              },
+            }));
+          } finally {
+            revokeExtensionCapabilityScope(scope);
+          }
         });
         if (!rangeRegistered) {
           this.#discardFactAttemptPreservingDiagnostics(attempt);
@@ -3901,12 +3958,17 @@ export class ExtensionHost {
           );
           try {
             runWithExtensionOwnerAuthority(this.#ownerAuthority, extension.identity.id, () => {
-              analyzeSource(Object.freeze({
-                source: compiler,
-                facts: capabilities.facts,
-                factResolver: capabilities.factResolver,
-                diagnostics: capabilities.diagnostics,
-              }));
+              const scope = createExtensionCapabilityScope();
+              try {
+                analyzeSource(Object.freeze({
+                  source: compiler,
+                  facts: createSourceAnalysisFactAccess(capabilities.facts, scope),
+                  factResolver: createSourceAnalysisFactResolver(capabilities.factResolver, scope),
+                  diagnostics: createExtensionDiagnosticWriter(capabilities.diagnostics, scope),
+                }));
+              } finally {
+                revokeExtensionCapabilityScope(scope);
+              }
             });
           } finally {
             this.facts[factStoreSetSourceAnalyzerAccessGuard](undefined, undefined);
@@ -4109,6 +4171,122 @@ export class ExtensionHost {
     }
   }
 
+}
+
+interface ExtensionCapabilityScope {
+  active: boolean;
+}
+
+function createExtensionCapabilityScope(): ExtensionCapabilityScope {
+  return { active: true };
+}
+
+function revokeExtensionCapabilityScope(scope: ExtensionCapabilityScope): void {
+  scope.active = false;
+}
+
+function assertExtensionCapabilityActive(scope: ExtensionCapabilityScope): void {
+  if (!scope.active) {
+    throw new Error("Extension callback capabilities cannot be used outside their host-owned callback.");
+  }
+}
+
+function createExtensionDiagnosticWriter(
+  diagnostics: ExtensionDiagnosticStore,
+  scope: ExtensionCapabilityScope,
+): ExtensionDiagnosticWriter {
+  const writer: ExtensionDiagnosticWriter = {
+    append: (diagnostic: ExtensionDiagnostic): boolean => {
+      assertExtensionCapabilityActive(scope);
+      return diagnostics.append(diagnostic);
+    },
+  };
+  return Object.freeze(writer);
+}
+
+function createExtensionFactReader(
+  facts: ExtensionFactStore,
+  scope: ExtensionCapabilityScope,
+): ExtensionFactReader {
+  const reader: ExtensionFactReader = {
+    get<T>(
+      subject: ExtensionFactSubject | undefined,
+      key: ExtensionFactKey<T>,
+    ): T | undefined {
+      assertExtensionCapabilityActive(scope);
+      return facts.get(subject, key);
+    },
+    getEntry<T>(
+      subject: ExtensionFactSubject | undefined,
+      key: ExtensionFactKey<T>,
+    ): ExtensionFactEntry<T> | undefined {
+      assertExtensionCapabilityActive(scope);
+      return facts.getEntry(subject, key);
+    },
+    has<T>(
+      subject: ExtensionFactSubject | undefined,
+      key: ExtensionFactKey<T>,
+    ): boolean {
+      assertExtensionCapabilityActive(scope);
+      return facts.has(subject, key);
+    },
+  };
+  return Object.freeze(reader);
+}
+
+function createSourceAnalysisFactAccess(
+  facts: ExtensionFactStore,
+  scope: ExtensionCapabilityScope,
+): SourceAnalysisFactAccess {
+  const access: SourceAnalysisFactAccess = {
+    get<T>(
+      subject: ExtensionFactSubject | undefined,
+      key: ExtensionFactKey<T>,
+    ): T | undefined {
+      assertExtensionCapabilityActive(scope);
+      return facts.get(subject, key);
+    },
+    getEntry<T>(
+      subject: ExtensionFactSubject | undefined,
+      key: ExtensionFactKey<T>,
+    ): ExtensionFactEntry<T> | undefined {
+      assertExtensionCapabilityActive(scope);
+      return facts.getEntry(subject, key);
+    },
+    has<T>(
+      subject: ExtensionFactSubject | undefined,
+      key: ExtensionFactKey<T>,
+    ): boolean {
+      assertExtensionCapabilityActive(scope);
+      return facts.has(subject, key);
+    },
+    set<T>(
+      subject: ExtensionFactSubject,
+      key: ExtensionFactKey<T>,
+      value: T,
+      evidence: readonly ExtensionEvidence[] = [],
+    ): ExtensionFactWriteResult {
+      assertExtensionCapabilityActive(scope);
+      return facts.set(subject, key, value, evidence);
+    },
+  };
+  return Object.freeze(access);
+}
+
+function createSourceAnalysisFactResolver(
+  factResolver: ExtensionFactResolver,
+  scope: ExtensionCapabilityScope,
+): SourceAnalysisFactResolver {
+  const resolver: SourceAnalysisFactResolver = {
+    resolve<T>(
+      subject: ExtensionFactSubject,
+      key: ExtensionFactKey<T>,
+    ): T | undefined {
+      assertExtensionCapabilityActive(scope);
+      return factResolver.resolve(subject, key);
+    },
+  };
+  return Object.freeze(resolver);
 }
 
 export function attachExtensionHost<TProgram extends object>(program: TProgram, options: ExtensionHostOptions = {}): ExtendedProgram<TProgram> {
@@ -6195,7 +6373,7 @@ function renderProviderMember(member: ProviderMemberDeclaration, context: Provid
     case "indexer": {
       return member.signatures!.map((signature) => {
         const parameter = signature.parameters[0]!;
-        return `[${renderProviderParameter(parameter, memberContext)}]: ${renderProviderTypeExpression(signature.returnType!, memberContext)};`;
+        return `${readonlyPrefix}[${renderProviderParameter(parameter, memberContext)}]: ${renderProviderTypeExpression(signature.returnType!, memberContext)};`;
       }).join("\n  ");
     }
   }
@@ -7173,7 +7351,6 @@ function hasNoUnrenderedProviderMemberShape(value: ProviderMemberDeclaration): b
       return (value.signatures?.length ?? 0) === 0;
     case "indexer":
       return value.static !== true
-        && value.readonly !== true
         && value.optional !== true
         && value.type === undefined;
   }

@@ -98,7 +98,11 @@ export interface TypeCheckerQueries {
 }
 
 export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions: TypeCheckerQueryOptions = {}): TypeCheckerQueries {
-  return {
+  const callInfos = new WeakMap<Node, ResolvedSourceCallInfo>();
+  const propertyAccessInfos = new WeakMap<Node, ResolvedSourcePropertyAccessInfo>();
+  const elementAccessInfos = new WeakMap<Node, ResolvedSourceElementAccessInfo>();
+  const iterationInfos = new WeakMap<Node, ResolvedSourceIterationInfo>();
+  const queries: TypeCheckerQueries = {
     getTypeAtLocation: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_GetTypeAtLocation(checker, node)),
     getTypeFromTypeNode: (node, options = {}) =>
@@ -122,19 +126,23 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
     getResolvedSignature: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_getResolvedSignature(checker, node, undefined, CheckModeNormal)),
     getResolvedCallInfo: (node, options = {}) =>
-      withCheckerForNode(program, node, defaultOptions, options, (checker) => {
-        const sourceResultType = Checker_GetTypeAtLocation(checker, node);
-        return Checker_finalizeResolvedCallEvidence(checker, node, sourceResultType);
-      }),
+      memoizeResolvedNodeQuery(callInfos, node, () =>
+        withCheckerForNode(program, node, defaultOptions, options, (checker) => {
+          const sourceResultType = Checker_GetTypeAtLocation(checker, node);
+          return Checker_finalizeResolvedCallEvidence(checker, node, sourceResultType);
+        })),
     getResolvedPropertyAccessInfo: (node, options = {}) =>
-      withCheckerForNode(program, node, defaultOptions, options, (checker) =>
-        Checker_getResolvedSourcePropertyAccessInfo(checker, node)),
+      memoizeResolvedNodeQuery(propertyAccessInfos, node, () =>
+        withCheckerForNode(program, node, defaultOptions, options, (checker) =>
+          Checker_getResolvedSourcePropertyAccessInfo(checker, node))),
     getResolvedElementAccessInfo: (node, options = {}) =>
-      withCheckerForNode(program, node, defaultOptions, options, (checker) =>
-        Checker_getResolvedSourceElementAccessInfo(checker, node)),
+      memoizeResolvedNodeQuery(elementAccessInfos, node, () =>
+        withCheckerForNode(program, node, defaultOptions, options, (checker) =>
+          Checker_getResolvedSourceElementAccessInfo(checker, node))),
     getResolvedIterationInfo: (node, options = {}) =>
-      withCheckerForNode(program, node, defaultOptions, options, (checker) =>
-        Checker_getResolvedSourceIterationInfo(checker, node)),
+      memoizeResolvedNodeQuery(iterationInfos, node, () =>
+        withCheckerForNode(program, node, defaultOptions, options, (checker) =>
+          Checker_getResolvedSourceIterationInfo(checker, node))),
     getReturnTypeOfSignature: (signature, options = {}) =>
       withCheckerForSubject(program, signature, defaultOptions, options, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
     getCallSignaturesOfType: (type, options = {}) =>
@@ -166,6 +174,26 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
     getSignatureParameters: (signature) => signature?.parameters ?? [],
     getSignatureThisParameter: (signature) => signature?.thisParameter,
   };
+  return Object.freeze(queries);
+}
+
+function memoizeResolvedNodeQuery<T extends object>(
+  cache: WeakMap<Node, T>,
+  node: GoPtr<Node>,
+  query: () => GoPtr<T>,
+): GoPtr<T> {
+  if (node === undefined) {
+    return undefined;
+  }
+  const cached = cache.get(node);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const resolved = query();
+  if (resolved !== undefined) {
+    cache.set(node, resolved);
+  }
+  return resolved;
 }
 
 function getDiagnosticFreeResolvedSymbol(checker: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Symbol> {
@@ -211,9 +239,13 @@ function withCheckerForSubject<T>(
   if (subject === undefined) {
     return undefined;
   }
+  const ownedChecker = getSemanticSubjectChecker(subject);
+  if (ownedChecker !== undefined) {
+    return callback(ownedChecker);
+  }
   const sourceFile = options.sourceFile
     ?? defaultOptions.sourceFile
-    ?? (isNode(subject) ? GetSourceFileOfNode(subject) : undefined);
+    ?? getSemanticSubjectSourceFile(subject);
   return withChecker(program, sourceFile, defaultOptions, options, callback);
 }
 
@@ -247,4 +279,38 @@ function getPrimarySymbolDeclaration(symbol: GoPtr<Symbol>): GoPtr<Node> {
 
 function isNode(subject: object | undefined): subject is Node {
   return subject !== undefined && "Kind" in subject && "Loc" in subject;
+}
+
+function isType(subject: object): subject is Type {
+  return "checker" in subject && "flags" in subject && "data" in subject;
+}
+
+function isSignature(subject: object): subject is Signature {
+  return "declaration" in subject
+    && "parameters" in subject
+    && "resolvedReturnType" in subject;
+}
+
+function getSemanticSubjectChecker(subject: object): GoPtr<Checker> {
+  if (isType(subject)) {
+    return subject.checker;
+  }
+  if (isSignature(subject)) {
+    return subject.resolvedReturnType?.checker
+      ?? subject.typeParameters.find((type) => type?.checker !== undefined)?.checker;
+  }
+  return undefined;
+}
+
+function getSemanticSubjectSourceFile(subject: object): GoPtr<SourceFile> {
+  if (isNode(subject)) {
+    return GetSourceFileOfNode(subject);
+  }
+  if (isSignature(subject)) {
+    return GetSourceFileOfNode(subject.declaration);
+  }
+  if (isType(subject)) {
+    return getSymbolSourceFile(subject.symbol ?? subject.alias?.symbol);
+  }
+  return undefined;
 }

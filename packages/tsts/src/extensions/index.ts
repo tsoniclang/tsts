@@ -51,10 +51,12 @@ export type {
   ExtensionDiagnosticCategory,
   ExtensionDiagnosticRange,
   ExtensionDiagnosticSourceSpan,
+  ExtensionDiagnosticWriter,
   ExtensionEvidence,
   ExtensionFactEntry,
   ExtensionFactKey,
   ExtensionFactKeyOptions,
+  ExtensionFactReader,
   ExtensionFactResolution,
   ExtensionFactResolverCallback,
   ExtensionFactResolverContext,
@@ -91,6 +93,8 @@ export type {
   ProviderWellKnownSymbolName,
   RequiredProviderModuleSpec,
   SourceAnalysisContext,
+  SourceAnalysisFactAccess,
+  SourceAnalysisFactResolver,
   SourceDeclarationProvider,
 } from "./host.js";
 export type {
