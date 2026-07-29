@@ -55,15 +55,14 @@ export interface TypeIndexInfo {
   readonly components: readonly GoPtr<Node>[];
 }
 
-export interface TypeShapeQueryOptions {
+export interface CreateTypeShapeQueriesOptions {
   readonly context?: Context;
-  readonly sourceFile?: GoPtr<SourceFile>;
 }
 
 export interface TypeShapeQueries {
-  readonly typeToString: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => string;
-  readonly getTypeFromTypeNode: (node: GoPtr<Node>, options?: TypeShapeQueryOptions) => GoPtr<Type>;
-  readonly getConstantValue: (node: GoPtr<Node>, options?: TypeShapeQueryOptions) => unknown;
+  readonly typeToString: (type: GoPtr<Type>) => string;
+  readonly getTypeFromTypeNode: (node: GoPtr<Node>) => GoPtr<Type>;
+  readonly getConstantValue: (node: GoPtr<Node>) => unknown;
   readonly isAny: (type: GoPtr<Type>) => boolean;
   readonly isUnknown: (type: GoPtr<Type>) => boolean;
   readonly isNever: (type: GoPtr<Type>) => boolean;
@@ -77,28 +76,28 @@ export interface TypeShapeQueries {
   readonly isIntersection: (type: GoPtr<Type>) => boolean;
   readonly isTypeReference: (type: GoPtr<Type>) => boolean;
   readonly isTuple: (type: GoPtr<Type>) => boolean;
-  readonly isArrayLike: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => boolean;
+  readonly isArrayLike: (type: GoPtr<Type>) => boolean;
   readonly getUnionOrIntersectionTypes: (type: GoPtr<Type>) => readonly GoPtr<Type>[];
   readonly getTypeReferenceTarget: (type: GoPtr<Type>) => GoPtr<Type>;
-  readonly getTypeArguments: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly GoPtr<Type>[];
-  readonly getTupleElementTypes: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly GoPtr<Type>[];
-  readonly getProperties: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly GoPtr<Symbol>[];
-  readonly getProperty: (type: GoPtr<Type>, name: string, options?: TypeShapeQueryOptions) => GoPtr<Symbol>;
-  readonly getPropertyType: (type: GoPtr<Type>, name: string, options?: TypeShapeQueryOptions) => GoPtr<Type>;
-  readonly getCallSignatures: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly GoPtr<Signature>[];
-  readonly getConstructSignatures: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly GoPtr<Signature>[];
-  readonly getReturnTypeOfSignature: (signature: GoPtr<Signature>, options?: TypeShapeQueryOptions) => GoPtr<Type>;
-  readonly getIndexInfos: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly TypeIndexInfo[];
-  readonly getApparentType: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => GoPtr<Type>;
-  readonly getWidenedType: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => GoPtr<Type>;
-  readonly removeMissingOrUndefined: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => GoPtr<Type>;
+  readonly getTypeArguments: (type: GoPtr<Type>) => readonly GoPtr<Type>[];
+  readonly getTupleElementTypes: (type: GoPtr<Type>) => readonly GoPtr<Type>[];
+  readonly getProperties: (type: GoPtr<Type>) => readonly GoPtr<Symbol>[];
+  readonly getProperty: (type: GoPtr<Type>, name: string) => GoPtr<Symbol>;
+  readonly getPropertyType: (type: GoPtr<Type>, name: string) => GoPtr<Type>;
+  readonly getCallSignatures: (type: GoPtr<Type>) => readonly GoPtr<Signature>[];
+  readonly getConstructSignatures: (type: GoPtr<Type>) => readonly GoPtr<Signature>[];
+  readonly getReturnTypeOfSignature: (signature: GoPtr<Signature>) => GoPtr<Type>;
+  readonly getIndexInfos: (type: GoPtr<Type>) => readonly TypeIndexInfo[];
+  readonly getApparentType: (type: GoPtr<Type>) => GoPtr<Type>;
+  readonly getWidenedType: (type: GoPtr<Type>) => GoPtr<Type>;
+  readonly removeMissingOrUndefined: (type: GoPtr<Type>) => GoPtr<Type>;
 }
 
-export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: TypeShapeQueryOptions = {}): TypeShapeQueries {
+export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: CreateTypeShapeQueriesOptions = {}): TypeShapeQueries {
   const queries: TypeShapeQueries = {
-    typeToString: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_TypeToString(checker, type)) ?? "",
-    getTypeFromTypeNode: (node, options = {}) => withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_GetTypeFromTypeNode(checker, node)),
-    getConstantValue: (node, options = {}) => withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_GetConstantValue(checker, node)),
+    typeToString: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_TypeToString(checker, type)) ?? "",
+    getTypeFromTypeNode: (node) => withCheckerForNode(program, node, defaultOptions, (checker) => Checker_GetTypeFromTypeNode(checker, node)),
+    getConstantValue: (node) => withCheckerForNode(program, node, defaultOptions, (checker) => Checker_GetConstantValue(checker, node)),
     isAny: (type) => hasFlags(type, TypeFlagsAny),
     isUnknown: (type) => hasFlags(type, TypeFlagsUnknown),
     isNever: (type) => hasFlags(type, TypeFlagsNever),
@@ -112,23 +111,23 @@ export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: 
     isIntersection: (type) => hasFlags(type, TypeFlagsIntersection),
     isTypeReference: (type) => type !== undefined && (type.objectFlags & ObjectFlagsReference) !== 0,
     isTuple: isTupleType,
-    isArrayLike: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_IsArrayLikeType(checker, type)) === true,
+    isArrayLike: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_IsArrayLikeType(checker, type)) === true,
     getUnionOrIntersectionTypes: (type) => Type_Types(type) ?? [],
     getTypeReferenceTarget: (type) => Type_Target(type),
-    getTypeArguments: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetTypeArguments(checker, type)) ?? [],
-    getTupleElementTypes: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => {
+    getTypeArguments: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetTypeArguments(checker, type)) ?? [],
+    getTupleElementTypes: (type) => withCheckerForType(program, type, defaultOptions, (checker) => {
       if (!isTupleType(type)) {
         return [];
       }
       return Checker_GetTypeArguments(checker, type);
     }) ?? [],
-    getProperties: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetPropertiesOfType(checker, type)) ?? [],
-    getProperty: (type, name, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetPropertyOfType(checker, type, name)),
-    getPropertyType: (type, name, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetTypeOfPropertyOfType(checker, type, name)),
-    getCallSignatures: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindCall)) ?? [],
-    getConstructSignatures: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindConstruct)) ?? [],
-    getReturnTypeOfSignature: (signature, options = {}) => withCheckerForSignature(program, signature, defaultOptions, options, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
-    getIndexInfos: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) =>
+    getProperties: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetPropertiesOfType(checker, type)) ?? [],
+    getProperty: (type, name) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetPropertyOfType(checker, type, name)),
+    getPropertyType: (type, name) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetTypeOfPropertyOfType(checker, type, name)),
+    getCallSignatures: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindCall)) ?? [],
+    getConstructSignatures: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindConstruct)) ?? [],
+    getReturnTypeOfSignature: (signature) => withCheckerForSignature(program, signature, defaultOptions, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
+    getIndexInfos: (type) => withCheckerForType(program, type, defaultOptions, (checker) =>
       (Checker_GetIndexInfosOfType(checker, type) ?? []).map((info) => ({
         keyType: info?.keyType,
         valueType: info?.valueType,
@@ -137,9 +136,9 @@ export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: 
         symbol: info?.indexSymbol,
         components: info?.components ?? [],
       } satisfies TypeIndexInfo))) ?? [],
-    getApparentType: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetApparentType(checker, type)),
-    getWidenedType: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_GetWidenedType(checker, type)),
-    removeMissingOrUndefined: (type, options = {}) => withCheckerForType(program, type, defaultOptions, options, (checker) => Checker_RemoveMissingOrUndefinedType(checker, type)),
+    getApparentType: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetApparentType(checker, type)),
+    getWidenedType: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetWidenedType(checker, type)),
+    removeMissingOrUndefined: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_RemoveMissingOrUndefinedType(checker, type)),
   };
   return Object.freeze(queries);
 }
@@ -155,24 +154,24 @@ function isTupleType(type: GoPtr<Type>): boolean {
 function withCheckerForNode<T>(
   program: GoPtr<Program>,
   node: GoPtr<Node>,
-  defaultOptions: TypeShapeQueryOptions,
-  options: TypeShapeQueryOptions,
+  defaultOptions: CreateTypeShapeQueriesOptions,
   callback: (checker: GoPtr<Checker>) => T,
 ): T | undefined {
   if (node === undefined) {
     return undefined;
   }
-  const sourceFile = options.sourceFile
-    ?? defaultOptions.sourceFile
-    ?? GetSourceFileOfNode(node);
-  return withCheckerForSourceFile(program, sourceFile, defaultOptions, options, callback);
+  return withCheckerForSourceFile(
+    program,
+    GetSourceFileOfNode(node),
+    defaultOptions,
+    callback,
+  );
 }
 
 function withCheckerForType<T>(
   program: GoPtr<Program>,
   type: GoPtr<Type>,
-  defaultOptions: TypeShapeQueryOptions,
-  options: TypeShapeQueryOptions,
+  defaultOptions: CreateTypeShapeQueriesOptions,
   callback: (checker: GoPtr<Checker>) => T,
 ): T | undefined {
   if (program === undefined || type === undefined) {
@@ -181,17 +180,13 @@ function withCheckerForType<T>(
   if (type.checker !== undefined) {
     return callback(type.checker);
   }
-  const sourceFile = options.sourceFile
-    ?? defaultOptions.sourceFile
-    ?? getTypeSourceFile(type);
-  return withCheckerForSourceFile(program, sourceFile, defaultOptions, options, callback);
+  return withCheckerForSourceFile(program, getTypeSourceFile(type), defaultOptions, callback);
 }
 
 function withCheckerForSignature<T>(
   program: GoPtr<Program>,
   signature: GoPtr<Signature>,
-  defaultOptions: TypeShapeQueryOptions,
-  options: TypeShapeQueryOptions,
+  defaultOptions: CreateTypeShapeQueriesOptions,
   callback: (checker: GoPtr<Checker>) => T,
 ): T | undefined {
   if (program === undefined || signature === undefined) {
@@ -202,23 +197,28 @@ function withCheckerForSignature<T>(
   if (ownedChecker !== undefined) {
     return callback(ownedChecker);
   }
-  const sourceFile = options.sourceFile
-    ?? defaultOptions.sourceFile
-    ?? GetSourceFileOfNode(signature.declaration);
-  return withCheckerForSourceFile(program, sourceFile, defaultOptions, options, callback);
+  return withCheckerForSourceFile(
+    program,
+    GetSourceFileOfNode(signature.declaration),
+    defaultOptions,
+    callback,
+  );
 }
 
 function withCheckerForSourceFile<T>(
   program: GoPtr<Program>,
   sourceFile: GoPtr<SourceFile>,
-  defaultOptions: TypeShapeQueryOptions,
-  options: TypeShapeQueryOptions,
+  defaultOptions: CreateTypeShapeQueriesOptions,
   callback: (checker: GoPtr<Checker>) => T,
 ): T | undefined {
   if (sourceFile === undefined) {
     return undefined;
   }
-  const [checker, done] = Program_GetTypeCheckerForFile(program, options.context ?? defaultOptions.context ?? Background(), sourceFile);
+  const [checker, done] = Program_GetTypeCheckerForFile(
+    program,
+    defaultOptions.context ?? Background(),
+    sourceFile,
+  );
   try {
     return callback(checker);
   } finally {

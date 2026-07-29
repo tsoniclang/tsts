@@ -280,6 +280,60 @@ test("provider registration seals at first resolution and required modules fail 
   assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "EXTENSION_REGISTRATION_CLOSED");
 });
 
+test("required provider module policy is immutable and selects the most specific prefix", () => {
+  const broad = {
+    specifierPrefix: "@required/",
+    providerId: "broad.provider",
+  };
+  const specific = {
+    specifierPrefix: "@required/specific/",
+    providerId: "specific.provider",
+  };
+  const host = new ExtensionHost({}, {
+    requiredProviderModules: [broad, specific],
+  });
+
+  broad.specifierPrefix = "@mutated/";
+  broad.providerId = "mutated.provider";
+  specific.providerId = "mutated.specific.provider";
+
+  assert.deepEqual(
+    host.providers.requiresProviderForModule("@required/general.js"),
+    {
+      specifierPrefix: "@required/",
+      providerId: "broad.provider",
+    },
+  );
+  assert.deepEqual(
+    host.providers.requiresProviderForModule("@required/specific/value.js"),
+    {
+      specifierPrefix: "@required/specific/",
+      providerId: "specific.provider",
+    },
+  );
+});
+
+test("contradictory required provider module policy fails before program construction", () => {
+  assert.throws(
+    () => new ExtensionHost({}, {
+      requiredProviderModules: [{
+        specifierPrefix: "@required/",
+        providerId: "first.provider",
+      }, {
+        specifierPrefix: "@required/",
+        providerId: "second.provider",
+      }],
+    }),
+    /contradictory contracts/,
+  );
+  assert.throws(
+    () => new ExtensionHost({}, {
+      requiredProviderModules: [{ specifierPrefix: "" }],
+    }),
+    /non-empty strings/,
+  );
+});
+
 test("host-owned provider identities cannot be requested or claimed", () => {
   const reserved = `${providerVirtualInternalRoot}owned`;
   const sourceProvider = provider(

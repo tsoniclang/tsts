@@ -118,23 +118,19 @@ export type { ParsedBuildCommandLine } from "./internal/tsoptions/parsedbuildcom
 export type { ParsedCommandLine } from "./internal/tsoptions/parsedcommandline.js";
 export { barebonesLibContent, formatDiagnostics, transpile, transpileDeclaration, transpileModule } from "./services/transpile.js";
 export type { TranspileCompilerOptions, TranspileCompilerOptionValue, TranspileOptions, TranspileOutput } from "./services/transpile.js";
-export { createTypeCheckerQueries } from "./services/type-checker.js";
 export type {
   ResolvedSourceCallInfo,
   ResolvedSourceElementAccessInfo,
   ResolvedSourceIterationInfo,
   ResolvedSourcePropertyAccessInfo,
   TypeCheckerQueries,
-  TypeCheckerQueryOptions,
 } from "./services/type-checker.js";
 export { createCompilerHost, createInMemoryFileSystem, getBundledLibraryPath, withBundledLibraries } from "./services/embedding-host.js";
 export type { CompilerFileSystem, CompilerHostOptions, CompilerTraceCallback, InMemoryFileSystemOptions } from "./services/embedding-host.js";
-export { createAstReader } from "./services/ast-reader.js";
 export type { AstModifierKind, AstReader, AstVariableDeclarationKind } from "./services/ast-reader.js";
 export { createCompilerSession, createCompilerSessionFromFiles, createCompilerSessionFromProgram } from "./services/compiler-session.js";
 export type { CompilerDiagnosticKind, CompilerSession, CompilerSessionOptions, InMemoryCompilerSessionOptions } from "./services/compiler-session.js";
-export { createTypeShapeQueries } from "./services/type-shape.js";
-export type { TypeIndexInfo, TypeShapeQueries, TypeShapeQueryOptions } from "./services/type-shape.js";
+export type { TypeIndexInfo, TypeShapeQueries } from "./services/type-shape.js";
 export type { Node, SourceFile } from "./internal/ast/ast.js";
 export type { Symbol } from "./internal/ast/symbol.js";
 export type { ContextFlags, Signature, Type } from "./internal/checker/types.js";

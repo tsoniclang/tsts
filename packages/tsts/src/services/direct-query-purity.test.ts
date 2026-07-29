@@ -121,11 +121,11 @@ test("direct source queries are canonical and side-effect free across query orde
 
   const host = getExtensionHost(session.program!);
   assert.ok(host !== undefined);
-  const diagnosticsBefore = session.getDiagnostics("all");
+  const diagnosticsBefore = checked.diagnostics;
   const extensionDiagnosticsBefore = host.diagnostics.all();
   const factsBefore = checked.sourceFacts?.getFacts(sourceFile);
   const documentsBefore = host.providers.getVirtualDeclarationDocuments();
-  const sourceFilesBefore = session.getSourceFiles();
+  const sourceFilesBefore = checked.sourceFiles;
   const queries = [
     () => source.checker.getResolvedCallInfo(construction),
     () => source.checker.getResolvedCallInfo(call),
@@ -147,10 +147,10 @@ test("direct source queries are canonical and side-effect free across query orde
     assert.ok(query() === first[index]);
   }
 
-  assert.deepEqual(session.getDiagnostics("all"), diagnosticsBefore);
+  assert.deepEqual(session.checkSource().diagnostics, diagnosticsBefore);
   assert.deepEqual(host.diagnostics.all(), extensionDiagnosticsBefore);
   assert.deepEqual(checked.sourceFacts?.getFacts(sourceFile), factsBefore);
   assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), documentsBefore);
-  assert.deepEqual(session.getSourceFiles(), sourceFilesBefore);
+  assert.deepEqual(session.checkSource().sourceFiles, sourceFilesBefore);
   assert.equal(checked.sourceFacts?.getFact(sourceFile, analyzedFactKey), "complete");
 });

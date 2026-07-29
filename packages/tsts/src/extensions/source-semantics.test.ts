@@ -431,7 +431,7 @@ test("source-semantics records ptr and fnptr type facts from canonical type mark
 
   assert.equal(pointerReference?.Kind, KindTypeReference);
   assert.equal(functionPointerReference?.Kind, KindTypeReference);
-  assert.equal(extended.extensionHost.facts.get(pointerReference, pointerFactKey)?.mutability, "target-defined");
+  assert.equal(extended.extensionHost.facts.get(pointerReference, pointerFactKey)?.mutability, "unspecified");
   assert.equal(extended.extensionHost.facts.get(pointerReference, pointerFactKey)?.unsafeRequired, true);
   assert.equal((extended.extensionHost.facts.get(pointerReference, pointerFactKey)?.pointee as GoPtr<Node>)?.Kind, KindTypeReference);
   assert.equal(extended.extensionHost.facts.get(functionPointerReference, functionPointerFactKey)?.parameters.length, 1);

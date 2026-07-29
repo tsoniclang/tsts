@@ -112,9 +112,9 @@ test("public embedding API checks a provider-backed program through direct sourc
   const checked = session.checkSource();
   assert.equal(checked.diagnostics.length, 0);
   assert.equal(checked.extensionDiagnostics.length, 0);
-  assert.equal(Object.isFrozen(session.ast), true);
-  assert.equal(Object.isFrozen(session.checker), true);
-  assert.equal(Object.isFrozen(session.types), true);
+  assert.equal(Object.isFrozen(checked.ast), true);
+  assert.equal(Object.isFrozen(checked.checker), true);
+  assert.equal(Object.isFrozen(checked.typeShape), true);
   assert.equal("extensionHost" in session, false);
   const sourceFile = checked.getSourceFile("/src/index.ts");
   assert.ok(sourceFile !== undefined);
@@ -155,18 +155,19 @@ test("public AST reader distinguishes declaration-list kinds from const enum mod
       moduleResolution: "bundler",
     },
   });
-  const sourceFile = session.getSourceFile("/src/index.ts");
-  const lists = collectNodes(sourceFile, session.ast, (node) => session.ast.is.IsVariableDeclarationList(node));
-  assert.deepEqual(lists.slice(0, 5).map(session.ast.variableDeclarationKind), [
+  const checked = session.checkSource();
+  const sourceFile = checked.getSourceFile("/src/index.ts");
+  const lists = collectNodes(sourceFile, checked.ast, (node) => checked.ast.is.IsVariableDeclarationList(node));
+  assert.deepEqual(lists.slice(0, 5).map(checked.ast.variableDeclarationKind), [
     "var",
     "let",
     "const",
     "using",
     "await using",
   ]);
-  const enumDeclaration = findNode(sourceFile, session.ast, (node) => session.ast.is.IsEnumDeclaration(node));
-  assert.equal(session.ast.hasModifierKind(enumDeclaration, "const"), true);
-  assert.equal(session.ast.variableDeclarationKind(enumDeclaration), undefined);
+  const enumDeclaration = findNode(sourceFile, checked.ast, (node) => checked.ast.is.IsEnumDeclaration(node));
+  assert.equal(checked.ast.hasModifierKind(enumDeclaration, "const"), true);
+  assert.equal(checked.ast.variableDeclarationKind(enumDeclaration), undefined);
 });
 
 test("public AST reader exposes exact optional-parameter question tokens", () => {
@@ -183,14 +184,15 @@ test("public AST reader exposes exact optional-parameter question tokens", () =>
       moduleResolution: "bundler",
     },
   });
-  const sourceFile = session.getSourceFile("/src/index.ts");
-  assert.equal(session.ast.isDeclarationFile(session.getSourceFile("/src/core.d.ts")), true);
-  assert.equal(session.ast.isDeclarationFile(sourceFile), false);
-  const parameters = collectNodes(sourceFile, session.ast, (node) => session.ast.is.IsParameterDeclaration(node));
+  const checked = session.checkSource();
+  const sourceFile = checked.getSourceFile("/src/index.ts");
+  assert.equal(checked.ast.isDeclarationFile(checked.getSourceFile("/src/core.d.ts")), true);
+  assert.equal(checked.ast.isDeclarationFile(sourceFile), false);
+  const parameters = collectNodes(sourceFile, checked.ast, (node) => checked.ast.is.IsParameterDeclaration(node));
   assert.equal(parameters.length, 2);
-  assert.equal(session.ast.questionToken(parameters[0]), undefined);
-  assert.equal(session.ast.kindName(session.ast.questionToken(parameters[1])), "KindQuestionToken");
-  assert.equal(session.ast.questionToken(sourceFile), undefined);
+  assert.equal(checked.ast.questionToken(parameters[0]), undefined);
+  assert.equal(checked.ast.kindName(checked.ast.questionToken(parameters[1])), "KindQuestionToken");
+  assert.equal(checked.ast.questionToken(sourceFile), undefined);
 });
 
 test("public AST reader exposes exact binary and update operator kinds", () => {
@@ -213,14 +215,15 @@ test("public AST reader exposes exact binary and update operator kinds", () => {
       moduleResolution: "bundler",
     },
   });
-  const sourceFile = session.getSourceFile("/src/index.ts");
-  const binary = findNode(sourceFile, session.ast, (node) => session.ast.is.IsBinaryExpression(node));
-  const prefix = findNode(sourceFile, session.ast, (node) => session.ast.is.IsPrefixUnaryExpression(node));
-  const postfix = findNode(sourceFile, session.ast, (node) => session.ast.is.IsPostfixUnaryExpression(node));
-  assert.equal(session.ast.operatorKindName(binary), "KindPlusToken");
-  assert.equal(session.ast.operatorKindName(prefix), "KindPlusPlusToken");
-  assert.equal(session.ast.operatorKindName(postfix), "KindMinusMinusToken");
-  assert.equal(session.ast.operatorKindName(sourceFile), undefined);
+  const checked = session.checkSource();
+  const sourceFile = checked.getSourceFile("/src/index.ts");
+  const binary = findNode(sourceFile, checked.ast, (node) => checked.ast.is.IsBinaryExpression(node));
+  const prefix = findNode(sourceFile, checked.ast, (node) => checked.ast.is.IsPrefixUnaryExpression(node));
+  const postfix = findNode(sourceFile, checked.ast, (node) => checked.ast.is.IsPostfixUnaryExpression(node));
+  assert.equal(checked.ast.operatorKindName(binary), "KindPlusToken");
+  assert.equal(checked.ast.operatorKindName(prefix), "KindPlusPlusToken");
+  assert.equal(checked.ast.operatorKindName(postfix), "KindMinusMinusToken");
+  assert.equal(checked.ast.operatorKindName(sourceFile), undefined);
 });
 
 test("public AST reader classifies import and export type-only syntax without speculative casts", () => {
@@ -256,38 +259,39 @@ test("public AST reader classifies import and export type-only syntax without sp
       moduleResolution: "bundler",
     },
   });
-  const sourceFile = session.getSourceFile("/src/index.ts");
+  const checked = session.checkSource();
+  const sourceFile = checked.getSourceFile("/src/index.ts");
   const imports = collectNodes(
     sourceFile,
-    session.ast,
-    (node) => session.ast.is.IsImportDeclaration(node),
+    checked.ast,
+    (node) => checked.ast.is.IsImportDeclaration(node),
   );
   assert.deepEqual(
-    imports.map(session.ast.isTypeOnlyImportDeclaration),
+    imports.map(checked.ast.isTypeOnlyImportDeclaration),
     [false, true, false, false, false, false, false, true, false],
   );
 
   const importSpecifiers = collectNodes(
     sourceFile,
-    session.ast,
-    (node) => session.ast.is.IsImportSpecifier(node),
+    checked.ast,
+    (node) => checked.ast.is.IsImportSpecifier(node),
   );
   assert.deepEqual(
-    importSpecifiers.map(session.ast.isTypeOnlyImportOrExportDeclaration),
+    importSpecifiers.map(checked.ast.isTypeOnlyImportOrExportDeclaration),
     [true, true, true, false, true],
   );
 
   const exportSpecifiers = collectNodes(
     sourceFile,
-    session.ast,
-    (node) => session.ast.is.IsExportSpecifier(node),
+    checked.ast,
+    (node) => checked.ast.is.IsExportSpecifier(node),
   );
   assert.deepEqual(
-    exportSpecifiers.map(session.ast.isTypeOnlyImportOrExportDeclaration),
+    exportSpecifiers.map(checked.ast.isTypeOnlyImportOrExportDeclaration),
     [true, true, true, false],
   );
-  assert.equal(session.ast.isTypeOnlyImportDeclaration(sourceFile), false);
-  assert.equal(session.ast.isTypeOnlyImportOrExportDeclaration(sourceFile), false);
+  assert.equal(checked.ast.isTypeOnlyImportDeclaration(sourceFile), false);
+  assert.equal(checked.ast.isTypeOnlyImportOrExportDeclaration(sourceFile), false);
 });
 
 test("public provider contract keeps package subpaths as independent source modules", () => {

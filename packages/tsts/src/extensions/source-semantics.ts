@@ -461,7 +461,7 @@ function recordArgumentPassingMarker(
 ): void {
   const fact = {
     mode: getArgumentPassingMode(marker.marker as ArgumentPassingMarkerKind),
-    targetExpression: target,
+    storageExpression: target,
   } satisfies ArgumentPassingFact;
   facts.set(callExpression, argumentPassingFactKey, fact, evidence);
   if (IsLeftHandSideExpression(target)) {
@@ -701,7 +701,7 @@ function recordSourceSemanticsTypeMarker(
     }
     const fact = {
       pointee,
-      mutability: "target-defined",
+      mutability: "unspecified",
       unsafeRequired: true,
     } satisfies PointerFact;
     facts.set(typeReference, pointerFactKey, fact, evidence);

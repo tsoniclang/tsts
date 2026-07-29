@@ -1,7 +1,7 @@
 import type { GoPtr, GoSlice } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Context } from "../go/context.js";
-import type { Node, SourceFile } from "../internal/ast/ast.js";
+import type { SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName } from "../internal/ast/ast.js";
 import type { Diagnostic } from "../internal/ast/diagnostic.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
@@ -31,10 +31,6 @@ import type { CheckedSourceProgram } from "../extensions/source-program.js";
 import { getProviderVirtualArtifactForCompiler } from "../extensions/provider-virtual-internal.js";
 import { createCompilerHost, createInMemoryFileSystem } from "./embedding-host.js";
 import type { CompilerHostOptions } from "./embedding-host.js";
-import type { TypeCheckerQueries } from "./type-checker.js";
-import type { TypeShapeQueries } from "./type-shape.js";
-import type { AstReader } from "./ast-reader.js";
-
 export type CompilerDiagnosticKind =
   | "config"
   | "program"
@@ -67,11 +63,6 @@ export interface CompilerSession {
   readonly program: GoPtr<Program>;
   readonly host: CompilerHost;
   readonly config: GoPtr<ParsedCommandLine>;
-  readonly ast: AstReader;
-  readonly checker: TypeCheckerQueries;
-  readonly types: TypeShapeQueries;
-  readonly getSourceFiles: () => readonly GoPtr<SourceFile>[];
-  readonly getSourceFile: (fileName: string) => GoPtr<SourceFile>;
   readonly getSourceFilesToEmit: (targetSourceFile?: GoPtr<SourceFile>, forceDtsEmit?: boolean) => readonly GoPtr<SourceFile>[];
   readonly ensureBound: () => void;
   readonly ensureChecked: (sourceFile?: GoPtr<SourceFile>) => readonly GoPtr<Diagnostic>[];
@@ -99,18 +90,10 @@ export function createCompilerSessionFromProgram(
     ?? attachExtensionHost(program).extensionHost;
   let checkedSourceProgram: CheckedSourceProgram | undefined;
   const source = extensionHost.getCompilerQueryContext(context);
-  const ast = source.ast;
-  const checker = source.checker;
-  const types = source.typeShape;
   return {
     program,
     host,
     config,
-    ast,
-    checker,
-    types,
-    getSourceFiles: source.getSourceFiles,
-    getSourceFile: source.getSourceFile,
     getSourceFilesToEmit: (targetSourceFile, forceDtsEmit = false) => (Program_getSourceFilesToEmit(program, targetSourceFile, forceDtsEmit) ?? [])
       .filter((file) =>
         getProviderVirtualArtifactForCompiler(extensionHost.providers, SourceFile_FileName(file))?.kind

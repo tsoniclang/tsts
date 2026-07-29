@@ -367,7 +367,7 @@ test("canonical provider owner files remain hidden from public source traversal"
     .getVirtualDeclarationDocuments() ?? [];
   assert.equal(publicDocuments.length, 1);
   assert.deepEqual(
-    session.getSourceFiles().map(SourceFile_FileName).sort(),
+    checked.sourceFiles.map(SourceFile_FileName).sort(),
     ["/src/core.d.ts", "/src/index.ts", publicDocuments[0]!.fileName].sort(),
   );
 });

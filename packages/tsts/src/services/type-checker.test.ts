@@ -4,7 +4,7 @@ import { Node_Expression } from "../internal/ast/ast.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { KindArrowFunction, KindCallExpression, KindExpressionStatement } from "../internal/ast/generated/kinds.js";
 import { TypeFlagsNumber, TypeFlagsString } from "../internal/checker/types.js";
-import { createTypeCheckerQueries } from "../index.js";
+import { createTypeCheckerQueries } from "./type-checker.js";
 import {
   assertCleanSemanticDiagnostics,
   createProgram,
@@ -28,7 +28,7 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const narrowedValue = findIdentifierByText(
     index,
     "value",
@@ -91,7 +91,7 @@ test("resolved call info exposes one canonical checker-owned selected decision",
     declare const box: Box<string>;
     box.run<number>(1, 2);
   `);
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const call = findFirstNodeByKind(index, KindCallExpression);
 
   const queryFirst = queries.getResolvedCallInfo(call);
@@ -153,7 +153,7 @@ test("resolved call info retains only the winning overload candidate", () => {
     declare const box: Box;
     box.run(1);
   `);
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const call = findFirstNodeByKind(index, KindCallExpression);
 
   const selected = queries.getResolvedCallInfo(call);
@@ -182,7 +182,7 @@ test("public type-checker queries expose instantiated generic member types", () 
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const finalValueAccess = findPropertyAccessByName(
     index,
     "value",

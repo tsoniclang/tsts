@@ -454,7 +454,7 @@ export interface ProviderTypeParameterDeclaration {
   readonly name: string;
   readonly constraints?: readonly ProviderTypeExpression[];
   readonly defaultType?: ProviderTypeExpression;
-  readonly variance?: "in" | "out" | "invariant" | "target-defined";
+  readonly variance?: "in" | "out" | "invariant";
 }
 
 export type ProviderTypeExpression =
@@ -1804,7 +1804,7 @@ export class ProviderRegistry {
   #activeResolutionTransaction: ProviderResolutionTransaction | undefined;
   constructor(diagnostics: ExtensionDiagnosticStore, requiredProviderModules: readonly RequiredProviderModuleSpec[] = []) {
     this.#diagnostics = diagnostics;
-    this.#requiredProviderModules = requiredProviderModules;
+    this.#requiredProviderModules = snapshotRequiredProviderModules(requiredProviderModules);
   }
 
   registerSourceDeclarationProvider(provider: SourceDeclarationProvider): boolean {
@@ -4331,6 +4331,48 @@ function snapshotCompilerExtension(extension: CompilerExtension): CompilerExtens
     ...(extension.initialize === undefined ? {} : { initialize: extension.initialize }),
     ...(extension.analyzeSource === undefined ? {} : { analyzeSource: extension.analyzeSource }),
   });
+}
+
+function snapshotRequiredProviderModules(
+  requiredProviderModules: readonly RequiredProviderModuleSpec[],
+): readonly RequiredProviderModuleSpec[] {
+  const byPrefix = new Map<string, RequiredProviderModuleSpec>();
+  for (const required of requiredProviderModules) {
+    if (typeof required.specifierPrefix !== "string" || required.specifierPrefix.length === 0) {
+      throw new Error("Required provider module prefixes must be non-empty strings.");
+    }
+    if (required.providerId !== undefined
+      && (typeof required.providerId !== "string" || required.providerId.length === 0)) {
+      throw new Error(
+        `Required provider module '${required.specifierPrefix}' has an invalid provider id.`,
+      );
+    }
+    if (required.message !== undefined && typeof required.message !== "string") {
+      throw new Error(
+        `Required provider module '${required.specifierPrefix}' has an invalid message.`,
+      );
+    }
+    const snapshot = Object.freeze({
+      specifierPrefix: required.specifierPrefix,
+      ...(required.providerId === undefined ? {} : { providerId: required.providerId }),
+      ...(required.message === undefined ? {} : { message: required.message }),
+    });
+    const previous = byPrefix.get(snapshot.specifierPrefix);
+    if (previous !== undefined) {
+      if (previous.providerId !== snapshot.providerId || previous.message !== snapshot.message) {
+        throw new Error(
+          `Required provider module prefix '${snapshot.specifierPrefix}' has contradictory contracts.`,
+        );
+      }
+      continue;
+    }
+    byPrefix.set(snapshot.specifierPrefix, snapshot);
+  }
+  return Object.freeze(
+    [...byPrefix.values()].sort((left, right) =>
+      right.specifierPrefix.length - left.specifierPrefix.length
+      || left.specifierPrefix.localeCompare(right.specifierPrefix)),
+  );
 }
 
 function addOrderingEdge(outgoingEdges: Map<string, Set<string>>, incomingCounts: Map<string, number>, from: string, to: string): void {

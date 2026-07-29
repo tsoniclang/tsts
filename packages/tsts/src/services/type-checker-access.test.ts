@@ -8,7 +8,7 @@ import {
   KindPropertyAccessExpression,
 } from "../internal/ast/generated/kinds.js";
 import { TypeFlagsNumber, TypeFlagsString } from "../internal/checker/types.js";
-import { createTypeCheckerQueries } from "../index.js";
+import { createTypeCheckerQueries } from "./type-checker.js";
 import {
   assertCleanSemanticDiagnostics,
   createProgram,
@@ -30,7 +30,7 @@ test("property selection uses the selected symbol with distinct read and write t
     const read = model.value;
     model.value = 1;
   `);
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const valueAccesses = findNodesByKind(index, KindPropertyAccessExpression)
     .filter((node) => Node_Text(Node_Name(node)) === "value");
   assert.equal(valueAccesses.length, 2);
@@ -86,7 +86,7 @@ test("property access info preserves compound read-write and optional-chain role
     counter.value += 1;
     optionalCounter?.advance();
   `);
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const valueAccess = findPropertyAccessByName(index, "value", () => true);
   const advanceAccess = findPropertyAccessByName(index, "advance", () => true);
   const valueInfo = queries.getResolvedPropertyAccessInfo(valueAccess);
@@ -115,7 +115,7 @@ test("element access info preserves mapped declarations and proven tuple ordinal
     const one = 1 as const;
     pair[one];
   `, { noLib: false });
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const accesses = findNodesByKind(index, KindElementAccessExpression);
   assert.equal(accesses.length, 2);
 
@@ -175,7 +175,7 @@ test("element access info distinguishes read, write, and read-write index operat
     values[key] = 1;
     values[key] += 2;
   `);
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const accesses = findNodesByKind(index, KindElementAccessExpression);
   assert.equal(accesses.length, 3);
 
@@ -212,7 +212,7 @@ test("iteration info preserves declaration and assignment element selection", ()
       existing;
     }
   `, { noLib: false });
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const statements = findNodesByKind(index, KindForOfStatement);
   assert.equal(statements.length, 2);
 
@@ -269,7 +269,7 @@ test("iteration info preserves for-await-of element and protocol evidence", () =
       }
     }
   `, { noLib: false });
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const statements = findNodesByKind(index, KindForOfStatement);
   assert.equal(statements.length, 1);
 

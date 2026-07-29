@@ -1,19 +1,27 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from "node:child_process";
-import { cpSync, rmSync } from "node:fs";
+import { cpSync } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const repoRoot = join(dirname(scriptPath), "../../../..");
-const testRoot = join(repoRoot, ".temp/source-tests/dist/src");
+const runId = `${new Date().toISOString().replaceAll(/[:.]/gu, "-")}-${process.pid}`;
+const runRoot = join(repoRoot, ".temp/source-tests", runId);
+const testRoot = join(runRoot, "dist/src");
 const testConfig = "packages/tsts/tsconfig.source-tests.json";
 const tscPath = join(repoRoot, "node_modules/typescript/bin/tsc");
 
-rmSync(join(repoRoot, ".temp/source-tests"), { recursive: true, force: true });
-
-const build = spawnSync(process.execPath, [tscPath, "-p", testConfig, "--pretty", "false"], {
+const build = spawnSync(process.execPath, [
+  tscPath,
+  "-p",
+  testConfig,
+  "--outDir",
+  join(runRoot, "dist"),
+  "--pretty",
+  "false",
+], {
   cwd: repoRoot,
   stdio: "inherit",
 });
@@ -65,8 +73,8 @@ if (tests.length === 0) {
   process.exit(1);
 }
 
-console.log(`Running ${tests.length} built source tests.`);
-const child = spawn(process.execPath, ["--test", ...tests], {
+console.log(`Running ${tests.length} built source tests sequentially from ${relative(repoRoot, runRoot)}.`);
+const child = spawn(process.execPath, ["--test", "--test-concurrency=1", ...tests], {
   cwd: repoRoot,
   stdio: "inherit",
 });

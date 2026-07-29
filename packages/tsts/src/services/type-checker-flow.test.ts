@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Node_Name } from "../internal/ast/spine.js";
 import { KindExpressionStatement } from "../internal/ast/generated/kinds.js";
 import { TypeFlagsString } from "../internal/checker/types.js";
-import { createTypeCheckerQueries } from "../index.js";
+import { createTypeCheckerQueries } from "./type-checker.js";
 import {
   assertCleanSemanticDiagnostics,
   createProgram,
@@ -23,7 +23,7 @@ test("public type-checker queries expose flow-narrowed receiver member access", 
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const queries = createTypeCheckerQueries(program);
   const narrowedCurrent = findIdentifierByText(
     index,
     "current",

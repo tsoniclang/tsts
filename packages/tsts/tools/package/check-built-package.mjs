@@ -161,12 +161,12 @@ const session = createCompilerSessionFromFiles({
     strict: true,
   },
 });
-session.ensureBound();
-const diagnostics = session.getDiagnostics("all").filter((diagnostic) => diagnostic !== undefined);
+const checked = session.checkSource();
+const diagnostics = checked.diagnostics.filter((diagnostic) => diagnostic !== undefined);
 if (diagnostics.length !== 0) {
   throw new Error(formatDiagnostics(diagnostics, "/project"));
 }
-if (!session.getSourceFiles().some((sourceFile) => session.ast.getFileName(sourceFile) === "bundled:///libs/lib.es5.d.ts")) {
+if (!checked.sourceFiles.some((sourceFile) => checked.ast.getFileName(sourceFile) === "bundled:///libs/lib.es5.d.ts")) {
   throw new Error("The isolated packed compiler did not load its bundled default library.");
 }
 console.log("isolated packed default-library proof passed");

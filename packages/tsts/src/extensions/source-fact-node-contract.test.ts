@@ -15,7 +15,7 @@ test("authored source fact payloads reject arbitrary identity objects", () => {
   const cases: readonly (() => unknown)[] = [
     () => argumentPassingFactKey.snapshot({
       mode: "by-value",
-      targetExpression: invalidNode,
+      storageExpression: invalidNode,
     }),
     () => attributeFactKey.snapshot({
       target: invalidNode,
@@ -31,7 +31,7 @@ test("authored source fact payloads reject arbitrary identity objects", () => {
     }),
     () => pointerFactKey.snapshot({
       pointee: invalidNode,
-      mutability: "target-defined",
+      mutability: "unspecified",
       unsafeRequired: true,
     }),
   ];

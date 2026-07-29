@@ -59,7 +59,7 @@ export interface ExtensionCanonicalIdentity {
   readonly canonicalSymbolId?: string;
 }
 
-export type SourcePointerMutability = "readonly" | "readwrite" | "target-defined";
+export type SourcePointerMutability = "readonly" | "readwrite" | "unspecified";
 
 export interface SourcePrimitiveFact {
   readonly kind: SourcePrimitiveKind;
@@ -70,7 +70,7 @@ export interface SourcePrimitiveFact {
 
 export interface ArgumentPassingFact {
   readonly mode: ArgumentPassingMode;
-  readonly targetExpression?: Node;
+  readonly storageExpression?: Node;
 }
 
 export interface FunctionPointerFact {
@@ -179,7 +179,7 @@ export const argumentPassingFactKey = markHostSourceReadableFactKey(defineExtens
   snapshot: snapshotArgumentPassingFact,
   equals: (left, right) =>
     left.mode === right.mode
-    && left.targetExpression === right.targetExpression,
+    && left.storageExpression === right.storageExpression,
 }));
 
 export const functionPointerFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<FunctionPointerFact>({
@@ -334,15 +334,15 @@ function snapshotSourcePrimitiveFact(value: SourcePrimitiveFact): SourcePrimitiv
 }
 
 function snapshotArgumentPassingFact(value: ArgumentPassingFact): ArgumentPassingFact {
-  const record = exactRecord(value, "ArgumentPassingFact", ["mode", "targetExpression"]);
+  const record = exactRecord(value, "ArgumentPassingFact", ["mode", "storageExpression"]);
   const mode = requiredString(record, "mode", "ArgumentPassingFact");
   if (!isArgumentPassingMode(mode)) {
     throw new Error(`ArgumentPassingFact.mode '${mode}' is invalid.`);
   }
-  const targetExpression = optionalNode(record, "targetExpression", "ArgumentPassingFact");
+  const storageExpression = optionalNode(record, "storageExpression", "ArgumentPassingFact");
   return Object.freeze({
     mode,
-    ...(targetExpression === undefined ? {} : { targetExpression }),
+    ...(storageExpression === undefined ? {} : { storageExpression }),
   });
 }
 
@@ -846,7 +846,7 @@ const sourceRuntimeBases = new Set<SourcePrimitiveFact["runtimeBase"]>([
   "string",
   "object",
 ]);
-const pointerMutabilities = new Set<SourcePointerMutability>(["readonly", "readwrite", "target-defined"]);
+const pointerMutabilities = new Set<SourcePointerMutability>(["readonly", "readwrite", "unspecified"]);
 const flowStates = new Set<FlowStateFact["state"]>(["moved", "borrowed-shared", "borrowed-mut"]);
 const providerWellKnownSymbolNames = new Set<ProviderWellKnownSymbolName>([
   "asyncIterator",

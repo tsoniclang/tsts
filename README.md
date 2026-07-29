@@ -18,10 +18,67 @@ npm run verify
 
 Do not hand-maintain AST kind ids, node fields, aliases, or list aliases. They are generated from `schema/tsgo/ast.json` and checked against `schema/tsgo/VERSION.md`.
 
-## Provider Contract 3
+## Checked Source Contract
 
-`TstsProviderContractVersion` is a single strict contract. TSTS does not accept a legacy declaration-model shape.
+The public semantic boundary is `CompilerSession.checkSource()`. It returns one
+immutable `CheckedSourceProgram` for the program revision:
 
-- Every `ProviderTypeExpression` with `kind: "function"` has a stable, non-empty semantic `id`. The id identifies that exact callable shape within its export or member owner; it is not a display name or source spelling.
-- Every `target-named` and `opaque` type has an explicit `sourceShape`. Target identity alone is insufficient for TypeScript checking, and TSTS never guesses a source type from a target name.
-- Provider modules and source-operation producers select declarations, members, and signatures by their provider identities. Imports, aliases, namespace access, and authored spellings do not change those identities.
+```ts
+const checked = session.checkSource();
+const sourceFile = checked.getSourceFile("/src/index.ts");
+const call = findCall(sourceFile, checked.ast);
+const selected = checked.checker.getResolvedCallInfo(call);
+```
+
+`CheckedSourceProgram` owns the one shared AST, checker-query, type-shape, and
+source-fact capabilities. Targets do not construct query facades or select a
+checker/source-file pair. Every query derives checker ownership from its exact
+node, symbol, type, or signature subject. The complete source diagnostic gate
+runs before this capability is published.
+
+Direct queries return TS-Go semantic subjects and target-neutral selected
+source evidence. They do not publish target operations, target types, runtime
+carriers, or target diagnostics.
+
+## Source Extensions
+
+A compiler extension has two optional phases:
+
+```ts
+const extension = {
+  identity: { id: "example.source", version: "1.0.0" },
+  initialize(context) {
+    context.registerSourceDeclarationProvider(provider);
+  },
+  analyzeSource(context) {
+    // Read the checked source through context.source.
+    // Write only source facts owned by this extension.
+  },
+};
+```
+
+Initialization registers immutable source capabilities. Source analysis runs
+once after normal checking, in dependency order and inside one owner
+transaction. Success commits source facts and diagnostics; failure rolls back
+the analyzer and invalidates the complete source-fact result. There is no
+target callback, deferred target observation, replay API, or compatibility
+lifecycle.
+
+## Source Provider Contract
+
+`TstsSourceProviderContractVersion` is one strict source-only contract. TSTS
+does not accept legacy declaration models.
+
+- Provider models describe legal TypeScript declaration syntax only.
+- `string`, `array`, `source-global`, `provider-ref`, and the other
+  `ProviderTypeExpression` variants contain source meaning, never target
+  wrappers.
+- Every function type has a stable, non-empty semantic `id`.
+- Provider refs are explicitly bound and validated against declared imports or
+  same-module exports.
+- Source type families preserve one public source name while keeping every
+  arity variant distinct.
+- Provider registration, models, callback results, and closure artifacts are
+  immutable deterministic snapshots.
+- Imports, aliases, namespace access, slice order, and provider virtual
+  filenames do not redefine semantic identity.

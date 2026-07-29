@@ -53,6 +53,14 @@ const mutableHostPublicNames = [
   "hasExtensionHost",
 ];
 
+const publicSemanticConstructionNames = [
+  "createAstReader",
+  "createTypeCheckerQueries",
+  "createTypeShapeQueries",
+  "TypeCheckerQueryOptions",
+  "TypeShapeQueryOptions",
+];
+
 test("product source contains no retired target semantic lifecycle", async () => {
   const violations = await findTokens(
     await productTypeScriptFiles(sourceRoot),
@@ -72,8 +80,49 @@ test("source provider contracts contain no target type projection", async () => 
 
 test("public API exposes checked-source capabilities instead of mutable host internals", async () => {
   const publicSource = await readFile(`${sourceRoot}index.ts`, "utf8");
-  const violations = mutableHostPublicNames.filter((name) =>
+  const violations = [
+    ...mutableHostPublicNames,
+    ...publicSemanticConstructionNames,
+  ].filter((name) =>
     new RegExp(`\\b${name}\\b`, "u").test(publicSource));
+  assert.deepEqual(violations, []);
+});
+
+test("compiler sessions expose semantic queries only through CheckedSourceProgram", async () => {
+  const sessionSource = await readFile(`${sourceRoot}services/compiler-session.ts`, "utf8");
+  const forbiddenFields = [
+    "ast",
+    "checker",
+    "types",
+    "getSourceFile",
+    "getSourceFiles",
+  ];
+  const violations = forbiddenFields.filter((name) =>
+    new RegExp(`readonly\\s+${name}\\s*:`, "u").test(sessionSource));
+  assert.deepEqual(violations, []);
+});
+
+test("direct query facades derive checker ownership from exact semantic subjects", async () => {
+  const files = [
+    `${sourceRoot}services/type-checker.ts`,
+    `${sourceRoot}services/type-shape.ts`,
+  ];
+  const violations = [];
+  for (const file of files) {
+    const source = await readFile(file, "utf8");
+    for (const pattern of [
+      /\boptions\.sourceFile\b/gu,
+      /\bdefaultOptions\.sourceFile\b/gu,
+      /\bsourceFile\?\s*:/gu,
+    ]) {
+      if (pattern.test(source)) {
+        violations.push({
+          file: file.slice(sourceRoot.length),
+          pattern: pattern.source,
+        });
+      }
+    }
+  }
   assert.deepEqual(violations, []);
 });
 

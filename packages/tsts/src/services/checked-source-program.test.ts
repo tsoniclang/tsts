@@ -42,9 +42,6 @@ test("checked source program exposes one exact AST and direct checker decision s
   assert.equal(Object.isFrozen(checked.sourceFacts), true);
   assert.ok(checked.program === session.program);
   assert.ok(session.checkSource() === checked, "Checked source program must be retained exactly per session.");
-  assert.ok(checked.ast === session.ast);
-  assert.ok(checked.checker === session.checker);
-  assert.ok(checked.typeShape === session.types);
 
   const sourceFile = checked.getSourceFile("/src/index.ts");
   assert.ok(sourceFile !== undefined);
@@ -158,4 +155,43 @@ test("checked source facts are immutable consumer capabilities over exact source
   assert.equal(checked.extensionDiagnostics.length, 0);
   assert.equal(checked.sourceFacts?.getFact(selectedCall, factKey), "identity(1)");
   assert.deepEqual(checked.sourceFacts?.getFacts(selectedCall).map((entry) => entry.key.id), [factKey.id]);
+});
+
+test("one checked query facade derives checker ownership independently for every source file", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/left.ts", "/src/right.ts"],
+    files: {
+      "/src/core.d.ts": testCoreDeclarations,
+      "/src/left.ts": 'export const value = "left";',
+      "/src/right.ts": "export const value = 1;",
+    },
+    compilerOptions: testNoLibCompilerOptions,
+  });
+
+  const checked = session.checkSource();
+  assert.equal(checked.diagnostics.length, 0);
+  const leftFile = checked.getSourceFile("/src/left.ts");
+  const rightFile = checked.getSourceFile("/src/right.ts");
+  assert.ok(leftFile !== undefined);
+  assert.ok(rightFile !== undefined);
+  const leftDeclaration = findNodes(
+    leftFile,
+    checked.ast.children,
+    checked.ast.is.IsVariableDeclaration,
+  )[0];
+  const rightDeclaration = findNodes(
+    rightFile,
+    checked.ast.children,
+    checked.ast.is.IsVariableDeclaration,
+  )[0];
+  const leftName = checked.ast.name(leftDeclaration);
+  const rightName = checked.ast.name(rightDeclaration);
+  const leftSymbol = checked.checker.getSymbolAtLocation(leftName);
+  const rightSymbol = checked.checker.getSymbolAtLocation(rightName);
+
+  assert.ok(checked.checker.getSymbolSourceFile(leftSymbol) === leftFile);
+  assert.ok(checked.checker.getSymbolSourceFile(rightSymbol) === rightFile);
+  assert.equal(checked.checker.typeToString(checked.checker.getTypeAtLocation(leftName)), '"left"');
+  assert.equal(checked.checker.typeToString(checked.checker.getTypeAtLocation(rightName)), "1");
 });
