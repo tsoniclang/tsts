@@ -10,6 +10,7 @@ import {
   Node_ModifierNodes,
   Node_Parameters,
   Node_Properties,
+  Node_QuestionToken,
   Node_Statements,
   Node_Text,
   Node_TypeArguments,
@@ -74,6 +75,8 @@ export interface AstReader {
   readonly arguments: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly elements: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly properties: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
+  /** Returns the exact `?` token owned by nodes whose schema permits one. */
+  readonly questionToken: (node: GoPtr<Node>) => GoPtr<Node>;
   readonly modifiers: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly modifierFlags: (node: GoPtr<Node>) => number;
   readonly hasModifier: (node: GoPtr<Node>, flags: number) => boolean;
@@ -122,6 +125,7 @@ export function createAstReader(): AstReader {
     arguments: (node) => Node_Arguments(node) ?? [],
     elements: (node) => Node_Elements(node) ?? [],
     properties: (node) => Node_Properties(node) ?? [],
+    questionToken: (node) => node === undefined ? undefined : Node_QuestionToken(node),
     modifiers: (node) => Node_ModifierNodes(node) ?? [],
     modifierFlags: (node) => node === undefined ? 0 : Node_ModifierFlags(node),
     hasModifier: (node, flags) => node !== undefined && HasModifier(node, flags) === true,

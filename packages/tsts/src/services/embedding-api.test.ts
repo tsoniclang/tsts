@@ -164,6 +164,28 @@ test("public AST reader distinguishes declaration-list kinds from const enum mod
   assert.equal(session.ast.variableDeclarationKind(enumDeclaration), undefined);
 });
 
+test("public AST reader exposes exact optional-parameter question tokens", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+    files: {
+      "/src/core.d.ts": core,
+      "/src/index.ts": "export function run(required: string, optional?: number): void {}",
+    },
+    compilerOptions: {
+      noLib: true,
+      module: "esnext",
+      moduleResolution: "bundler",
+    },
+  });
+  const sourceFile = session.getSourceFile("/src/index.ts");
+  const parameters = collectNodes(sourceFile, session.ast, (node) => session.ast.is.IsParameterDeclaration(node));
+  assert.equal(parameters.length, 2);
+  assert.equal(session.ast.questionToken(parameters[0]), undefined);
+  assert.equal(session.ast.kindName(session.ast.questionToken(parameters[1])), "KindQuestionToken");
+  assert.equal(session.ast.questionToken(sourceFile), undefined);
+});
+
 test("public provider contract keeps package subpaths as independent source modules", () => {
   const left: ProviderDeclarationModel = {
     moduleSpecifier: "@test/package/left.js",
