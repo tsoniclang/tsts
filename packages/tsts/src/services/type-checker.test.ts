@@ -29,7 +29,7 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const narrowedValue = findIdentifierByText(
     index,
     "value",
@@ -92,7 +92,7 @@ test("resolved call info exposes one canonical checker-owned selected decision",
     declare const box: Box<string>;
     box.run<number>(1, 2);
   `);
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const call = findFirstNodeByKind(index, KindCallExpression);
 
   const queryFirst = queries.getResolvedCallInfo(call);
@@ -150,7 +150,7 @@ test("resolved call info retains exact dynamic property and element callee acces
     value[key](2);
   `);
   assertCleanSemanticDiagnostics(program, index);
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const calls = findNodesByKind(index, KindCallExpression);
   assert.equal(calls.length, 2);
 
@@ -207,7 +207,7 @@ test("resolved call info retains only the winning overload candidate", () => {
     declare const box: Box;
     box.run(1);
   `);
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const call = findFirstNodeByKind(index, KindCallExpression);
 
   const selected = queries.getResolvedCallInfo(call);
@@ -231,7 +231,7 @@ test("resolved call info preserves omission semantics without inventing effectiv
     declare function consume(value: number, state?: object): void;
     consume(1);
   `);
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const call = findFirstNodeByKind(index, KindCallExpression);
   queries.getTypeAtLocation(call);
   const selected = queries.getResolvedCallInfo(call);
@@ -260,7 +260,7 @@ test("resolved call info preserves an applicable zero-argument decision", () => 
     declare function clear(): void;
     clear();
   `);
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const calls = findNodesByKind(index, KindCallExpression);
   assert.equal(calls.length, 1);
   assert.equal(queries.getResolvedCallInfo(index), undefined);
@@ -283,7 +283,7 @@ test("public type-checker queries expose instantiated generic member types", () 
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const finalValueAccess = findPropertyAccessByName(
     index,
     "value",

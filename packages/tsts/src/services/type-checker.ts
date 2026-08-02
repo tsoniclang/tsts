@@ -50,6 +50,7 @@ import type {
 import { ContextFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../internal/checker/types.js";
 
 export interface CreateTypeCheckerQueriesOptions {
+  readonly sourceFile: GoPtr<SourceFile>;
   readonly context?: Context;
 }
 
@@ -96,7 +97,10 @@ export interface TypeCheckerQueries {
   readonly getSignatureThisParameter: (signature: GoPtr<Signature>) => GoPtr<Symbol>;
 }
 
-export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions: CreateTypeCheckerQueriesOptions = {}): TypeCheckerQueries {
+export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions: CreateTypeCheckerQueriesOptions): TypeCheckerQueries {
+  if (program === undefined || defaultOptions.sourceFile === undefined) {
+    throw new Error("Type-checker queries require one source file from the compiler program.");
+  }
   const callInfos = new WeakMap<Node, ResolvedSourceCallInfo>();
   const propertyAccessInfos = new WeakMap<Node, ResolvedSourcePropertyAccessInfo>();
   const elementAccessInfos = new WeakMap<Node, ResolvedSourceElementAccessInfo>();
@@ -215,7 +219,12 @@ function withCheckerForNode<T>(
   if (node === undefined) {
     return undefined;
   }
-  return withChecker(program, GetSourceFileOfNode(node), defaultOptions, callback);
+  return withChecker(
+    program,
+    defaultOptions.sourceFile,
+    defaultOptions,
+    callback,
+  );
 }
 
 function withCheckerForSymbol<T>(
@@ -227,7 +236,12 @@ function withCheckerForSymbol<T>(
   if (symbol === undefined) {
     return undefined;
   }
-  return withChecker(program, getSymbolSourceFile(symbol), defaultOptions, callback);
+  return withChecker(
+    program,
+    defaultOptions.sourceFile,
+    defaultOptions,
+    callback,
+  );
 }
 
 function withCheckerForType<T>(
@@ -244,7 +258,7 @@ function withCheckerForType<T>(
   }
   return withChecker(
     program,
-    getSymbolSourceFile(type.symbol ?? type.alias?.symbol),
+    defaultOptions.sourceFile,
     defaultOptions,
     callback,
   );
@@ -259,17 +273,7 @@ function withCheckerForSignature<T>(
   if (signature === undefined) {
     return undefined;
   }
-  const ownedChecker = signature.resolvedReturnType?.checker
-    ?? signature.typeParameters.find((type) => type?.checker !== undefined)?.checker;
-  if (ownedChecker !== undefined) {
-    return callback(ownedChecker);
-  }
-  return withChecker(
-    program,
-    GetSourceFileOfNode(signature.declaration),
-    defaultOptions,
-    callback,
-  );
+  return withChecker(program, defaultOptions.sourceFile, defaultOptions, callback);
 }
 
 function withChecker<T>(

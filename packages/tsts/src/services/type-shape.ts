@@ -3,7 +3,6 @@ import type { Node, SourceFile } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import type { Program } from "../internal/compiler/program.js";
 import { Program_GetTypeCheckerForFile } from "../internal/compiler/program.js";
-import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import type { Context } from "../go/context.js";
 import { Background } from "../go/context.js";
 import {
@@ -56,6 +55,7 @@ export interface TypeIndexInfo {
 }
 
 export interface CreateTypeShapeQueriesOptions {
+  readonly sourceFile: GoPtr<SourceFile>;
   readonly context?: Context;
 }
 
@@ -93,7 +93,10 @@ export interface TypeShapeQueries {
   readonly removeMissingOrUndefined: (type: GoPtr<Type>) => GoPtr<Type>;
 }
 
-export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: CreateTypeShapeQueriesOptions = {}): TypeShapeQueries {
+export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: CreateTypeShapeQueriesOptions): TypeShapeQueries {
+  if (program === undefined || defaultOptions.sourceFile === undefined) {
+    throw new Error("Type-shape queries require one source file from the compiler program.");
+  }
   const queries: TypeShapeQueries = {
     typeToString: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_TypeToString(checker, type)) ?? "",
     getTypeFromTypeNode: (node) => withCheckerForNode(program, node, defaultOptions, (checker) => Checker_GetTypeFromTypeNode(checker, node)),
@@ -162,7 +165,7 @@ function withCheckerForNode<T>(
   }
   return withCheckerForSourceFile(
     program,
-    GetSourceFileOfNode(node),
+    defaultOptions.sourceFile,
     defaultOptions,
     callback,
   );
@@ -180,7 +183,12 @@ function withCheckerForType<T>(
   if (type.checker !== undefined) {
     return callback(type.checker);
   }
-  return withCheckerForSourceFile(program, getTypeSourceFile(type), defaultOptions, callback);
+  return withCheckerForSourceFile(
+    program,
+    defaultOptions.sourceFile,
+    defaultOptions,
+    callback,
+  );
 }
 
 function withCheckerForSignature<T>(
@@ -192,14 +200,9 @@ function withCheckerForSignature<T>(
   if (program === undefined || signature === undefined) {
     return undefined;
   }
-  const ownedChecker = signature.resolvedReturnType?.checker
-    ?? signature.typeParameters.find((type) => type?.checker !== undefined)?.checker;
-  if (ownedChecker !== undefined) {
-    return callback(ownedChecker);
-  }
   return withCheckerForSourceFile(
     program,
-    GetSourceFileOfNode(signature.declaration),
+    defaultOptions.sourceFile,
     defaultOptions,
     callback,
   );
@@ -224,12 +227,4 @@ function withCheckerForSourceFile<T>(
   } finally {
     done();
   }
-}
-
-function getTypeSourceFile(type: Type): GoPtr<SourceFile> {
-  const declaration = type.symbol?.ValueDeclaration
-    ?? type.symbol?.Declarations?.find((candidate) => candidate !== undefined)
-    ?? type.alias?.symbol?.ValueDeclaration
-    ?? type.alias?.symbol?.Declarations?.find((candidate) => candidate !== undefined);
-  return GetSourceFileOfNode(declaration);
 }

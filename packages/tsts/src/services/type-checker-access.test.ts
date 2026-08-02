@@ -30,7 +30,7 @@ test("property selection uses the selected symbol with distinct read and write t
     const read = model.value;
     model.value = 1;
   `);
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const valueAccesses = findNodesByKind(index, KindPropertyAccessExpression)
     .filter((node) => Node_Text(Node_Name(node)) === "value");
   assert.equal(valueAccesses.length, 2);
@@ -86,7 +86,7 @@ test("property access info preserves compound read-write and optional-chain role
     counter.value += 1;
     optionalCounter?.advance();
   `);
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const valueAccess = findPropertyAccessByName(index, "value", () => true);
   const advanceAccess = findPropertyAccessByName(index, "advance", () => true);
   const valueInfo = queries.getResolvedPropertyAccessInfo(valueAccess);
@@ -115,7 +115,7 @@ test("element access info preserves mapped declarations and proven tuple ordinal
     const one = 1 as const;
     pair[one];
   `, { noLib: false });
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const accesses = findNodesByKind(index, KindElementAccessExpression);
   assert.equal(accesses.length, 2);
 
@@ -178,7 +178,7 @@ test("element access exposes no fixed tuple ordinal without one exact checker pr
     declare const rest: readonly [string, ...number[]];
     rest[2];
   `, { noLib: false });
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const accesses = findNodesByKind(index, KindElementAccessExpression);
   assert.equal(accesses.length, 4);
 
@@ -202,7 +202,7 @@ test("element access info distinguishes read, write, and read-write index operat
     values[key] = 1;
     values[key] += 2;
   `);
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const accesses = findNodesByKind(index, KindElementAccessExpression);
   assert.equal(accesses.length, 3);
 
@@ -236,7 +236,7 @@ test("element access info preserves optional-chain source selection", () => {
     declare const key: string;
     values?.[key];
   `);
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const access = findNodesByKind(index, KindElementAccessExpression)[0];
   const selected = queries.getResolvedElementAccessInfo(access);
 
@@ -261,7 +261,7 @@ test("iteration info preserves declaration and assignment element selection", ()
       existing;
     }
   `, { noLib: false });
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const statements = findNodesByKind(index, KindForOfStatement);
   assert.equal(statements.length, 2);
 
@@ -318,7 +318,7 @@ test("iteration info preserves for-await-of element and protocol evidence", () =
       }
     }
   `, { noLib: false });
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const statements = findNodesByKind(index, KindForOfStatement);
   assert.equal(statements.length, 1);
 

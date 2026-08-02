@@ -47,8 +47,9 @@ test("checked source program exposes one exact AST and direct checker decision s
   assert.ok(sourceFile !== undefined);
   const source = checked.getSourceFileQueries(sourceFile);
   assert.ok(source.ast === checked.ast);
-  assert.ok(source.checker === checked.checker);
-  assert.ok(source.typeShape === checked.typeShape);
+  assert.ok(checked.getSourceFileQueries(sourceFile) === source);
+  assert.equal(Object.isFrozen(source.checker), true);
+  assert.equal(Object.isFrozen(source.typeShape), true);
   const calls = findNodes(sourceFile, source.ast.children, source.ast.is.IsCallExpression);
   const properties = findNodes(sourceFile, source.ast.children, source.ast.is.IsPropertyAccessExpression);
   const elements = findNodes(sourceFile, source.ast.children, source.ast.is.IsElementAccessExpression);
@@ -157,7 +158,7 @@ test("checked source facts are immutable consumer capabilities over exact source
   assert.deepEqual(checked.sourceFacts?.getFacts(selectedCall).map((entry) => entry.key.id), [factKey.id]);
 });
 
-test("one checked query facade derives checker ownership independently for every source file", () => {
+test("checked query capabilities preserve checker ownership independently for every source file", () => {
   const session = createCompilerSessionFromFiles({
     currentDirectory: "/src",
     rootFiles: ["/src/core.d.ts", "/src/left.ts", "/src/right.ts"],
@@ -187,11 +188,15 @@ test("one checked query facade derives checker ownership independently for every
   )[0];
   const leftName = checked.ast.name(leftDeclaration);
   const rightName = checked.ast.name(rightDeclaration);
-  const leftSymbol = checked.checker.getSymbolAtLocation(leftName);
-  const rightSymbol = checked.checker.getSymbolAtLocation(rightName);
+  const leftQueries = checked.getSourceFileQueries(leftFile);
+  const rightQueries = checked.getSourceFileQueries(rightFile);
+  const leftSymbol = leftQueries.checker.getSymbolAtLocation(leftName);
+  const rightSymbol = rightQueries.checker.getSymbolAtLocation(rightName);
 
-  assert.ok(checked.checker.getSymbolSourceFile(leftSymbol) === leftFile);
-  assert.ok(checked.checker.getSymbolSourceFile(rightSymbol) === rightFile);
-  assert.equal(checked.checker.typeToString(checked.checker.getTypeAtLocation(leftName)), '"left"');
-  assert.equal(checked.checker.typeToString(checked.checker.getTypeAtLocation(rightName)), "1");
+  assert.notEqual(leftQueries.checker, rightQueries.checker);
+  assert.notEqual(leftQueries.typeShape, rightQueries.typeShape);
+  assert.ok(leftQueries.checker.getSymbolSourceFile(leftSymbol) === leftFile);
+  assert.ok(rightQueries.checker.getSymbolSourceFile(rightSymbol) === rightFile);
+  assert.equal(leftQueries.checker.typeToString(leftQueries.checker.getTypeAtLocation(leftName)), '"left"');
+  assert.equal(rightQueries.checker.typeToString(rightQueries.checker.getTypeAtLocation(rightName)), "1");
 });

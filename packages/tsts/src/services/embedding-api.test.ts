@@ -113,12 +113,12 @@ test("public embedding API checks a provider-backed program through direct sourc
   assert.equal(checked.diagnostics.length, 0);
   assert.equal(checked.extensionDiagnostics.length, 0);
   assert.equal(Object.isFrozen(checked.ast), true);
-  assert.equal(Object.isFrozen(checked.checker), true);
-  assert.equal(Object.isFrozen(checked.typeShape), true);
   assert.equal("extensionHost" in session, false);
   const sourceFile = checked.getSourceFile("/src/index.ts");
   assert.ok(sourceFile !== undefined);
   const source = checked.getSourceFileQueries(sourceFile);
+  assert.equal(Object.isFrozen(source.checker), true);
+  assert.equal(Object.isFrozen(source.typeShape), true);
   const call = findNode(sourceFile, checked.ast, (node) => checked.ast.is.IsCallExpression(node));
   const selected = source.checker.getResolvedCallInfo(call);
   assert.equal(selected?.outcome, "applicable");

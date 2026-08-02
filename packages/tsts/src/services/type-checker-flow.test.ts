@@ -23,7 +23,7 @@ test("public type-checker queries expose flow-narrowed receiver member access", 
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
   const narrowedCurrent = findIdentifierByText(
     index,
     "current",

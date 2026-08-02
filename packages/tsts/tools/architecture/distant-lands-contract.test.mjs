@@ -102,28 +102,25 @@ test("compiler sessions expose semantic queries only through CheckedSourceProgra
   assert.deepEqual(violations, []);
 });
 
-test("direct query facades derive checker ownership from exact semantic subjects", async () => {
-  const files = [
-    `${sourceRoot}services/type-checker.ts`,
-    `${sourceRoot}services/type-shape.ts`,
-  ];
-  const violations = [];
-  for (const file of files) {
-    const source = await readFile(file, "utf8");
-    for (const pattern of [
-      /\boptions\.sourceFile\b/gu,
-      /\bdefaultOptions\.sourceFile\b/gu,
-      /\bsourceFile\?\s*:/gu,
-    ]) {
-      if (pattern.test(source)) {
-        violations.push({
-          file: file.slice(sourceRoot.length),
-          pattern: pattern.source,
-        });
-      }
-    }
+test("direct query capabilities are bound to one exact source-file checker", async () => {
+  const checkerSource = await readFile(`${sourceRoot}services/type-checker.ts`, "utf8");
+  const shapeSource = await readFile(`${sourceRoot}services/type-shape.ts`, "utf8");
+  const sourceProgram = await readFile(`${sourceRoot}extensions/source-program.ts`, "utf8");
+
+  for (const source of [checkerSource, shapeSource]) {
+    assert.match(source, /readonly sourceFile: GoPtr<SourceFile>;/u);
+    assert.match(source, /defaultOptions\.sourceFile/u);
+    assert.doesNotMatch(source, /sourceFile\?\s*:/u);
+    assert.doesNotMatch(source, /Program_GetSourceFiles/u);
   }
-  assert.deepEqual(violations, []);
+  assert.match(sourceProgram, /createTypeCheckerQueries\(program, \{[\s\S]*?sourceFile,/u);
+  assert.match(sourceProgram, /createTypeShapeQueries\(program, \{[\s\S]*?sourceFile,/u);
+  const programQueriesContract = sourceProgram.match(
+    /export interface SourceProgramQueries \{(?<body>[\s\S]*?)\n\}/u,
+  )?.groups?.body;
+  assert.ok(programQueriesContract !== undefined);
+  assert.doesNotMatch(programQueriesContract, /readonly checker\s*:/u);
+  assert.doesNotMatch(programQueriesContract, /readonly typeShape\s*:/u);
 });
 
 async function productTypeScriptFiles(directory) {

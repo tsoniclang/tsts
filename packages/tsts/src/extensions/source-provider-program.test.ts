@@ -409,6 +409,57 @@ test("provider parameter modes remain declaration facts keyed by exact signature
   );
 });
 
+test("source-file queries retain checker ownership for instantiated provider signature parameters", () => {
+  const moduleSpecifier = "@test/native/sequence.js";
+  const model: ProviderDeclarationModel = {
+    moduleSpecifier,
+    providerModuleId: "Test.Native.Sequence",
+    exports: [{
+      id: "Sequence<T>",
+      name: "Sequence",
+      kind: "class",
+      typeParameters: [{ name: "T" }],
+      members: [{
+        id: "Sequence<T>::push",
+        name: "push",
+        kind: "method",
+        signatures: [{
+          id: "Sequence<T>::push(T[])",
+          parameters: [{
+            name: "items",
+            rest: true,
+            type: {
+              kind: "array",
+              elementType: { kind: "type-parameter", name: "T" },
+            },
+          }],
+          returnType: { kind: "number" },
+        }],
+      }],
+    }],
+  };
+  const checked = providerSession(model, [
+    `import type { Sequence } from "${moduleSpecifier}";`,
+    "declare const values: Sequence<number>;",
+    "values.push(1);",
+  ].join("\n")).checkSource();
+
+  assertNoDiagnostics(checked);
+  const sourceFile = checked.getSourceFile("/src/index.ts");
+  const source = checked.getSourceFileQueries(sourceFile);
+  const call = findNodes(
+    sourceFile,
+    checked.ast.children,
+    checked.ast.is.IsCallExpression,
+  )[0];
+  const calleeType = source.checker.getResolvedCallInfo(call)?.sourceCallee.type;
+  const signature = source.checker.getCallSignaturesOfType(calleeType)[0];
+  const parameter = source.checker.getSignatureParameters(signature)[0];
+
+  assert.equal(source.checker.typeToString(source.checker.getTypeOfSymbol(parameter)), "number[]");
+  assert.equal(source.checker.typeToString(source.checker.getReturnTypeOfSignature(signature)), "number");
+});
+
 function providerSession(model: ProviderDeclarationModel, source: string) {
   return createCompilerSessionFromFiles({
     currentDirectory: "/src",

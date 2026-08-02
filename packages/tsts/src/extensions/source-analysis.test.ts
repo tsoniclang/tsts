@@ -60,8 +60,11 @@ test("source analysis consumes the fully checked program once through direct sou
   const checked = session.checkSource();
   assert.equal(analysisCount, 1);
   assert.ok(analyzedSource?.ast === checked.ast);
-  assert.ok(analyzedSource?.checker === checked.checker);
-  assert.ok(analyzedSource?.typeShape === checked.typeShape);
+  const analyzedSourceFile = analyzedSource?.getSourceFile("/src/index.ts");
+  assert.ok(
+    analyzedSource?.getSourceFileQueries(analyzedSourceFile)
+      === checked.getSourceFileQueries(checked.getSourceFile("/src/index.ts")),
+  );
   assert.equal(checked.sourceFacts?.getFact(selectedCall, selectedCallFactKey), "identity<number>");
   assert.ok(session.checkSource() === checked, "Source checking must retain one exact checked program.");
   assert.equal(analysisCount, 1);
