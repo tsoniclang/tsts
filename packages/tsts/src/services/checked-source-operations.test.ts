@@ -180,6 +180,55 @@ test("type-shape tuple queries are total for primitive and tuple source types", 
   );
 });
 
+test("type-shape property information preserves effective mapped modifiers", () => {
+  const source = checkedQueries(`
+    type Source = { readonly id?: number; name: string };
+    type Normalized<T> = { -readonly [K in keyof T]-?: T[K] };
+    declare const sourceValue: Source;
+    declare const normalizedValue: Normalized<Source>;
+  `);
+  const identifiers = findNodes(
+    source.sourceFile,
+    source.ast.children,
+    source.ast.is.IsIdentifier,
+  );
+  const sourceValue = identifiers.find((node) => source.ast.text(node) === "sourceValue");
+  const normalizedValue = identifiers.find((node) => source.ast.text(node) === "normalizedValue");
+  assert.ok(sourceValue !== undefined);
+  assert.ok(normalizedValue !== undefined);
+
+  const sourceProperties = source.typeShape.getPropertyInfos(
+    source.checker.getTypeAtLocation(sourceValue),
+  );
+  const normalizedProperties = source.typeShape.getPropertyInfos(
+    source.checker.getTypeAtLocation(normalizedValue),
+  );
+  assert.deepEqual(
+    sourceProperties.map(({ name, optional, readonly, type }) => ({
+      name,
+      optional,
+      readonly,
+      type: source.checker.typeToString(type),
+    })),
+    [
+      { name: "id", optional: true, readonly: true, type: "number | undefined" },
+      { name: "name", optional: false, readonly: false, type: "string" },
+    ],
+  );
+  assert.deepEqual(
+    normalizedProperties.map(({ name, optional, readonly, type }) => ({
+      name,
+      optional,
+      readonly,
+      type: source.checker.typeToString(type),
+    })),
+    [
+      { name: "id", optional: false, readonly: false, type: "number" },
+      { name: "name", optional: false, readonly: false, type: "string" },
+    ],
+  );
+});
+
 function checkedQueries(sourceText: string): SourceFileQueries {
   const session = createCompilerSessionFromFiles({
     currentDirectory: "/src",

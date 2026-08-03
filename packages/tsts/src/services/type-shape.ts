@@ -1,6 +1,8 @@
 import type { GoPtr } from "../go/compat.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
+import { SymbolName } from "../internal/ast/symbol.js";
+import { SymbolFlagsOptional } from "../internal/ast/symbolflags.js";
 import type { Program } from "../internal/compiler/program.js";
 import { Program_GetTypeCheckerForFile } from "../internal/compiler/program.js";
 import type { Context } from "../go/context.js";
@@ -9,7 +11,6 @@ import {
   Checker_GetApparentType,
   Checker_GetIndexInfosOfType,
   Checker_GetPropertiesOfType,
-  Checker_GetPropertyOfType,
   Checker_GetReturnTypeOfSignature,
   Checker_GetSignaturesOfType,
   Checker_GetTypeArguments,
@@ -20,6 +21,7 @@ import {
   Checker_RemoveMissingOrUndefinedType,
   IsTupleType,
 } from "../internal/checker/exports.js";
+import { Checker_isReadonlySymbol } from "../internal/checker/checker/symbols.js";
 import { Checker_GetConstantValue } from "../internal/checker/services.js";
 import { Checker_TypeToString } from "../internal/checker/printer.js";
 import type { Checker } from "../internal/checker/checker/state.js";
@@ -54,6 +56,14 @@ export interface TypeIndexInfo {
   readonly components: readonly GoPtr<Node>[];
 }
 
+export interface TypePropertyInfo {
+  readonly symbol: Symbol;
+  readonly name: string;
+  readonly type: Type;
+  readonly optional: boolean;
+  readonly readonly: boolean;
+}
+
 export interface CreateTypeShapeQueriesOptions {
   readonly sourceFile: GoPtr<SourceFile>;
   readonly context?: Context;
@@ -81,9 +91,7 @@ export interface TypeShapeQueries {
   readonly getTypeReferenceTarget: (type: GoPtr<Type>) => GoPtr<Type>;
   readonly getTypeArguments: (type: GoPtr<Type>) => readonly GoPtr<Type>[];
   readonly getTupleElementTypes: (type: GoPtr<Type>) => readonly GoPtr<Type>[];
-  readonly getProperties: (type: GoPtr<Type>) => readonly GoPtr<Symbol>[];
-  readonly getProperty: (type: GoPtr<Type>, name: string) => GoPtr<Symbol>;
-  readonly getPropertyType: (type: GoPtr<Type>, name: string) => GoPtr<Type>;
+  readonly getPropertyInfos: (type: GoPtr<Type>) => readonly TypePropertyInfo[];
   readonly getCallSignatures: (type: GoPtr<Type>) => readonly GoPtr<Signature>[];
   readonly getConstructSignatures: (type: GoPtr<Type>) => readonly GoPtr<Signature>[];
   readonly getReturnTypeOfSignature: (signature: GoPtr<Signature>) => GoPtr<Type>;
@@ -124,9 +132,12 @@ export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: 
       }
       return Checker_GetTypeArguments(checker, type);
     }) ?? [],
-    getProperties: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetPropertiesOfType(checker, type)) ?? [],
-    getProperty: (type, name) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetPropertyOfType(checker, type, name)),
-    getPropertyType: (type, name) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetTypeOfPropertyOfType(checker, type, name)),
+    getPropertyInfos: (type) => withCheckerForType(
+      program,
+      type,
+      defaultOptions,
+      (checker) => getTypePropertyInfos(checker, type),
+    ) ?? [],
     getCallSignatures: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindCall)) ?? [],
     getConstructSignatures: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindConstruct)) ?? [],
     getReturnTypeOfSignature: (signature) => withCheckerForSignature(program, signature, defaultOptions, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
@@ -148,6 +159,35 @@ export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: 
 
 function hasFlags(type: GoPtr<Type>, flags: number): boolean {
   return type !== undefined && (type.flags & flags) !== 0;
+}
+
+function getTypePropertyInfos(
+  checker: GoPtr<Checker>,
+  type: GoPtr<Type>,
+): readonly TypePropertyInfo[] {
+  if (checker === undefined) {
+    throw new Error("The source type has no owning checker for property analysis.");
+  }
+  const properties = Checker_GetPropertiesOfType(checker, type) ?? [];
+  return properties.map((symbol) => {
+    if (symbol === undefined) {
+      throw new Error("The checker returned an absent property symbol for a source type.");
+    }
+    const name = SymbolName(symbol);
+    const propertyType = Checker_GetTypeOfPropertyOfType(checker, type, name);
+    if (propertyType === undefined) {
+      throw new Error(
+        `The checker returned property '${name}' without its effective source type.`,
+      );
+    }
+    return {
+      symbol,
+      name,
+      type: propertyType,
+      optional: (symbol.Flags & SymbolFlagsOptional) !== 0,
+      readonly: Checker_isReadonlySymbol(checker, symbol) === true,
+    } satisfies TypePropertyInfo;
+  });
 }
 
 function isTupleType(type: GoPtr<Type>): boolean {
