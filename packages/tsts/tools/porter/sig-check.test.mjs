@@ -6,7 +6,7 @@ import { typesEqual, canonicalKey } from "./ts-extractor/ast-signatures.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
-import { compareSignatures, resolveOverride, unitSignatureSnapshot } from "./sig-check.mjs";
+import { compareSignatures, resolveOverride, unitSignatureHash, unitSignatureSnapshot } from "./sig-check.mjs";
 
 const ref = (id, ...args) => ({ t: "ref", id, args });
 const kw = (k) => ({ t: "kw", kw: k });
@@ -125,6 +125,47 @@ test("local signature override captures go and ts snapshots", () => {
   );
   assert.equal(stale.ignore.size, 0);
   assert.equal(staleIssues.length, 1);
+});
+
+test("large local signature overrides use exact bounded hash snapshots", () => {
+  const members = Array.from({ length: 600 }, (_, index) => ({ name: `member${index}`, type: ref(`m::Type${index}`) }));
+  const exp = { kind: "interface", typeParams: [], members };
+  const actual = { kind: "interface", typeParams: [], members: [...members, { name: "targetState", type: kw("string") }] };
+  const goSnapshot = unitSignatureSnapshot(exp);
+  const tsSnapshot = unitSignatureSnapshot(actual);
+  assert.ok(goSnapshot.length >= 4_096);
+  assert.ok(tsSnapshot.length >= 4_096);
+  const issues = [];
+  const override = resolveOverride({
+    category: "extension-host",
+    allow: ["signature"],
+    reason: "Attach target-owned compiler session state centrally.",
+    goSignatureHash: unitSignatureHash(goSnapshot),
+    tsSignatureHash: unitSignatureHash(tsSnapshot),
+  }, "large-interface", exp, actual, (value) => value, issues);
+  assert.equal(issues.length, 0);
+  assert.equal(compareSignatures(exp, actual, override).length, 0);
+
+  const staleIssues = [];
+  const stale = resolveOverride({
+    category: "extension-host",
+    allow: ["signature"],
+    reason: "Attach target-owned compiler session state centrally.",
+    goSignatureHash: unitSignatureHash(`${goSnapshot}:stale`),
+    tsSignatureHash: unitSignatureHash(tsSnapshot),
+  }, "large-interface", exp, actual, (value) => value, staleIssues);
+  assert.equal(stale.ignore.size, 0);
+  assert.match(staleIssues[0]?.reason ?? "", /goSignatureHash drifted/);
+
+  const smallIssues = [];
+  resolveOverride({
+    category: "extension-host",
+    allow: ["signature"],
+    reason: "Small signatures must remain human-readable.",
+    goSignatureHash: unitSignatureHash(unitSignatureSnapshot({ kind: "interface", typeParams: [], members: [] })),
+    tsSignatureHash: unitSignatureHash(unitSignatureSnapshot({ kind: "interface", typeParams: [], members: [] })),
+  }, "small-interface", { kind: "interface", typeParams: [], members: [] }, { kind: "interface", typeParams: [], members: [] }, (value) => value, smallIssues);
+  assert.match(smallIssues[0]?.reason ?? "", /reserved for normalized snapshots/);
 });
 
 test("conventions: acceptNullable strips | undefined", () => {

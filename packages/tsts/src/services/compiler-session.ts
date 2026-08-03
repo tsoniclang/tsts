@@ -1,7 +1,8 @@
 import type { GoPtr, GoSlice } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Context } from "../go/context.js";
-import type { Node, SourceFile } from "../internal/ast/ast.js";
+import type { SourceFile } from "../internal/ast/ast.js";
+import { SourceFile_FileName } from "../internal/ast/ast.js";
 import type { Diagnostic } from "../internal/ast/diagnostic.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import type { CompilerHost } from "../internal/compiler/host.js";
@@ -14,8 +15,6 @@ import {
   Program_GetGlobalDiagnostics,
   Program_GetProgramDiagnostics,
   Program_GetSemanticDiagnostics,
-  Program_GetSourceFile,
-  Program_GetSourceFiles,
   Program_GetSuggestionDiagnostics,
   Program_GetSyntacticDiagnostics,
   Program_getSourceFilesToEmit,
@@ -24,17 +23,14 @@ import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import type { ParsedCommandLine } from "../internal/tsoptions/parsedcommandline.js";
-import type { ExtensionHost, ExtensionHostOptions } from "../extensions/host.js";
-import { attachExtensionHost, finalizeExtensionSemantics, getExtensionHost } from "../extensions/index.js";
+import type { ExtensionHostOptions } from "../extensions/host.js";
+import { attachExtensionHost, getExtensionHost } from "../extensions/index.js";
+import { finalizeExtensionSemantics } from "../extensions/compiler-integration.js";
+import { createSourceFactQueries } from "../extensions/consumer.js";
+import type { CheckedSourceProgram } from "../extensions/source-program.js";
+import { getProviderVirtualArtifactForCompiler } from "../extensions/provider-virtual-internal.js";
 import { createCompilerHost, createInMemoryFileSystem } from "./embedding-host.js";
 import type { CompilerHostOptions } from "./embedding-host.js";
-import { createTypeCheckerQueries } from "./type-checker.js";
-import type { TypeCheckerQueries } from "./type-checker.js";
-import { createTypeShapeQueries } from "./type-shape.js";
-import type { TypeShapeQueries } from "./type-shape.js";
-import { createAstReader } from "./ast-reader.js";
-import type { AstReader } from "./ast-reader.js";
-
 export type CompilerDiagnosticKind =
   | "config"
   | "program"
@@ -67,50 +63,63 @@ export interface CompilerSession {
   readonly program: GoPtr<Program>;
   readonly host: CompilerHost;
   readonly config: GoPtr<ParsedCommandLine>;
-  readonly extensionHost: ExtensionHost | undefined;
-  readonly ast: AstReader;
-  readonly checker: TypeCheckerQueries;
-  readonly types: TypeShapeQueries;
-  readonly getSourceFiles: () => readonly GoPtr<SourceFile>[];
-  readonly getSourceFile: (fileName: string) => GoPtr<SourceFile>;
   readonly getSourceFilesToEmit: (targetSourceFile?: GoPtr<SourceFile>, forceDtsEmit?: boolean) => readonly GoPtr<SourceFile>[];
   readonly ensureBound: () => void;
   readonly ensureChecked: (sourceFile?: GoPtr<SourceFile>) => readonly GoPtr<Diagnostic>[];
   readonly getDiagnostics: (kind?: CompilerDiagnosticKind, sourceFile?: GoPtr<SourceFile>) => readonly GoPtr<Diagnostic>[];
-  readonly finalizeExtensions: () => ExtensionHost | undefined;
-  readonly isFinalized: () => boolean;
+  readonly checkSource: () => CheckedSourceProgram;
 }
 
 export function createCompilerSession(options: CompilerSessionOptions): CompilerSession {
-  if (options.extensionHostOptions !== undefined) {
-    attachExtensionHost(options.programOptions, options.extensionHostOptions);
-  }
+  attachExtensionHost(options.programOptions, options.extensionHostOptions ?? {});
   const program = NewProgram(options.programOptions);
-  const extensionHost = getExtensionHost(program!);
   const context = options.context ?? Background();
-  return createCompilerSessionFromProgram(program, options.programOptions.Host, options.programOptions.Config, extensionHost, context);
+  return createCompilerSessionFromProgram(program, options.programOptions.Host, options.programOptions.Config, context);
 }
 
-export function createCompilerSessionFromProgram(program: GoPtr<Program>, host: CompilerHost, config: GoPtr<ParsedCommandLine>, extensionHost = getExtensionHost(program!), context: Context = Background()): CompilerSession {
-  const ast = createAstReader();
-  const checker = createTypeCheckerQueries(program, { context });
-  const types = createTypeShapeQueries(program, { context });
+export function createCompilerSessionFromProgram(
+  program: GoPtr<Program>,
+  host: CompilerHost,
+  config: GoPtr<ParsedCommandLine>,
+  context: Context = Background(),
+): CompilerSession {
+  if (program === undefined) {
+    throw new Error("Compiler sessions require a compiler program.");
+  }
+  const extensionHost = getExtensionHost(program)
+    ?? attachExtensionHost(program).extensionHost;
+  let checkedSourceProgram: CheckedSourceProgram | undefined;
+  const source = extensionHost.getCompilerQueryContext(context);
   return {
     program,
     host,
     config,
-    extensionHost,
-    ast,
-    checker,
-    types,
-    getSourceFiles: () => Program_GetSourceFiles(program) ?? [],
-    getSourceFile: (fileName) => Program_GetSourceFile(program, fileName),
-    getSourceFilesToEmit: (targetSourceFile, forceDtsEmit = false) => Program_getSourceFilesToEmit(program, targetSourceFile, forceDtsEmit) ?? [],
+    getSourceFilesToEmit: (targetSourceFile, forceDtsEmit = false) => (Program_getSourceFilesToEmit(program, targetSourceFile, forceDtsEmit) ?? [])
+      .filter((file) =>
+        getProviderVirtualArtifactForCompiler(extensionHost.providers, SourceFile_FileName(file))?.kind
+        !== "canonical-export-owner"),
     ensureBound: () => Program_BindSourceFiles(program),
     ensureChecked: (sourceFile) => Program_GetSemanticDiagnostics(program, context, sourceFile),
     getDiagnostics: (kind = "all", sourceFile) => getDiagnostics(program, context, kind, sourceFile),
-    finalizeExtensions: () => finalizeExtensionSemantics(program!),
-    isFinalized: () => getExtensionHost(program!)?.finalized === true,
+    checkSource: () => {
+      if (checkedSourceProgram !== undefined) {
+        return checkedSourceProgram;
+      }
+      const diagnostics = Object.freeze([...getDiagnostics(program, context, "all", undefined)]);
+      const finalizedHost = finalizeExtensionSemantics(program!);
+      if (finalizedHost === undefined) {
+        throw new Error("Checked source requires an attached source-extension host.");
+      }
+      checkedSourceProgram = Object.freeze({
+        ...source,
+        program,
+        sourceFiles: Object.freeze([...source.getSourceFiles()]),
+        sourceFacts: createSourceFactQueries(finalizedHost),
+        diagnostics,
+        extensionDiagnostics: finalizedHost.diagnostics.all(),
+      });
+      return checkedSourceProgram;
+    },
   };
 }
 

@@ -66,6 +66,7 @@ import {
   ModuleResolutionKindNode16,
   ModuleResolutionKindNodeNext,
   ResolutionModeCommonJS,
+  ResolutionModeESM,
   ResolutionModeNone,
 } from "../core/compileroptions.js";
 import type { CompilerOptions, ResolutionMode } from "../core/compileroptions.js";
@@ -156,7 +157,8 @@ import type { projectReferenceParser } from "./projectreferenceparser.js";
 import { PhaseParse, PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
 import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
 import { getExtensionHost } from "../../extensions/host.js";
-import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderImportSliceKind, ProviderModuleResolution, ProviderRequestedExport, ProviderResolvedModule } from "../../extensions/host.js";
+import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderImportSliceKind, ProviderModuleContext, ProviderRequestedExport, ProviderVirtualModuleArtifact } from "../../extensions/host.js";
+import { getProviderVirtualArtifactForCompiler, isHostOwnedProviderVirtualFileName } from "../../extensions/provider-virtual-internal.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"9c4a426b0d3e59256e9a7dad7aff7add3d3d2f12512bed81cac56f4e53bc747b","bodyHash":"e4d76c1ba9ccfb10d7454bc6476b0b4aba5b90252da267c2a9e78887e7354047"}
@@ -255,29 +257,36 @@ function fileLoader_getExtensionHost(receiver: GoPtr<fileLoader>): ExtensionHost
   return getExtensionHost(receiver!.opts);
 }
 
-function fileLoader_getProviderVirtualModule(receiver: GoPtr<fileLoader>, fileName: string): ProviderResolvedModule | undefined {
-  return fileLoader_getExtensionHost(receiver)?.providers.getVirtualModuleByFileName(fileName);
+function fileLoader_getProviderVirtualArtifact(receiver: GoPtr<fileLoader>, fileName: string): ProviderVirtualModuleArtifact | undefined {
+  const registry = fileLoader_getExtensionHost(receiver)?.providers;
+  return registry === undefined ? undefined : getProviderVirtualArtifactForCompiler(registry, fileName);
 }
 
 function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, extensionHost: ExtensionHost | undefined, moduleName: string, containingFile: string, mode: ResolutionMode, importSite: GoPtr<Node>): GoPtr<ResolvedModule> | undefined {
   if (extensionHost === undefined) {
     return undefined;
   }
-  const containingVirtualModule = extensionHost.providers.getVirtualModuleByFileName(containingFile);
-  const directVirtualModule = containingVirtualModule === undefined
+  const containingVirtualArtifact = getProviderVirtualArtifactForCompiler(extensionHost.providers, containingFile);
+  const directVirtualArtifact = containingVirtualArtifact === undefined
     ? undefined
-    : extensionHost.providers.getVirtualModuleByFileName(moduleName);
-  if (directVirtualModule !== undefined) {
-    return fileLoader_createProviderVirtualResolvedModule(directVirtualModule);
+    : getProviderVirtualArtifactForCompiler(extensionHost.providers, moduleName);
+  if (directVirtualArtifact !== undefined) {
+    return fileLoader_createProviderVirtualResolvedArtifact(directVirtualArtifact);
+  }
+  if (isHostOwnedProviderVirtualFileName(moduleName)) {
+    return fileLoader_createUnresolvedProviderVirtualModule();
   }
   const context = {
     containingFile,
-    resolutionMode: mode,
-    ...(extensionHost.activeTarget !== undefined ? { activeTarget: extensionHost.activeTarget } : {}),
-    ...(extensionHost.activeSurface !== undefined ? { activeSurface: extensionHost.activeSurface } : {}),
+    resolutionMode: mode === ResolutionModeESM
+      ? "import"
+      : mode === ResolutionModeCommonJS
+        ? "require"
+        : "none",
     importSlice: fileLoader_getProviderImportSlice(moduleName, importSite),
-  };
-  if (extensionHost.providers.bindingProviders.length === 0 && extensionHost.providers.requiresProviderForModule(moduleName, context) === undefined) {
+  } satisfies ProviderModuleContext;
+  if (!extensionHost.providers.hasSourceDeclarationProviders
+    && extensionHost.providers.requiresProviderForModule(moduleName) === undefined) {
     return undefined;
   }
   const result = extensionHost.providers.resolveVirtualModule(moduleName, context);
@@ -285,71 +294,62 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
     return undefined;
   }
   if (result.kind !== "resolved") {
-    return {
-      ResolutionDiagnostics: [],
-      ResolvedFileName: "",
-      OriginalPath: "",
-      Extension: "",
-      ResolvedUsingTsExtension: false,
-      PackageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
-      IsExternalLibraryImport: false,
-      AlternateResult: "",
-    };
+    return fileLoader_createUnresolvedProviderVirtualModule();
   }
-  return fileLoader_createProviderVirtualResolvedModule(result.module);
+  return fileLoader_createProviderVirtualResolvedArtifact(result.module.artifact);
 }
 
-function fileLoader_createProviderVirtualResolvedModule(module: ProviderResolvedModule): GoPtr<ResolvedModule> {
+function fileLoader_createUnresolvedProviderVirtualModule(): GoPtr<ResolvedModule> {
   return {
     ResolutionDiagnostics: [],
-    ResolvedFileName: module.resolution.virtualFileName,
+    ResolvedFileName: "",
+    OriginalPath: "",
+    Extension: "",
+    ResolvedUsingTsExtension: false,
+    PackageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
+    IsExternalLibraryImport: false,
+    AlternateResult: "",
+  };
+}
+
+function fileLoader_createProviderVirtualResolvedArtifact(artifact: ProviderVirtualModuleArtifact): GoPtr<ResolvedModule> {
+  return {
+    ResolutionDiagnostics: [],
+    ResolvedFileName: artifact.fileName,
     OriginalPath: "",
     Extension: ResolvedModuleExtensionProviderVirtual,
     ResolvedUsingTsExtension: false,
-    PackageId: fileLoader_getProviderVirtualPackageId(module.resolution),
+    PackageId: fileLoader_getProviderVirtualPackageId(artifact),
     IsExternalLibraryImport: true,
     AlternateResult: "",
     ProviderVirtual: {
-      ProviderId: module.provider.identity.id,
-      ProviderTarget: module.provider.identity.target,
-      ProviderModuleId: module.resolution.providerModuleId,
-      ModuleSpecifier: module.resolution.moduleSpecifier,
+      ProviderId: artifact.provider.id,
+      ProviderModuleId: artifact.providerModuleId,
+      ModuleSpecifier: artifact.moduleSpecifier,
     },
   };
 }
 
-function fileLoader_getProviderVirtualPackageId(resolution: ProviderModuleResolution): PackageId {
-  const packageName = resolution.packageName ?? "";
+function fileLoader_getProviderVirtualPackageId(artifact: ProviderVirtualModuleArtifact): PackageId {
+  const packageName = artifact.packageName ?? "";
   if (packageName === "") {
     return { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" };
   }
   return {
     Name: packageName,
-    SubModuleName: fileLoader_getProviderVirtualSubModuleName(packageName, resolution.moduleSpecifier, resolution.virtualFileName),
-    Version: resolution.packageVersion ?? "",
+    SubModuleName: fileLoader_getProviderVirtualSubModuleName(packageName, artifact.moduleSpecifier, artifact.id),
+    Version: artifact.packageVersion ?? "",
     PeerDependencies: "",
   };
 }
 
-function fileLoader_getProviderVirtualSubModuleName(packageName: string, moduleSpecifier: string, virtualFileName: string): string {
+function fileLoader_getProviderVirtualSubModuleName(packageName: string, moduleSpecifier: string, artifactId: string): string {
   const publicSubModuleName = moduleSpecifier === packageName
     ? ""
     : strings.HasPrefix(moduleSpecifier, `${packageName}/`)
       ? moduleSpecifier.slice(`${packageName}/`.length)
       : moduleSpecifier;
-  const sliceMarker = getProviderVirtualPackageSliceMarker(virtualFileName);
-  if (sliceMarker !== "") {
-    return `${publicSubModuleName}#${sliceMarker}`;
-  }
-  return publicSubModuleName;
-}
-
-function getProviderVirtualPackageSliceMarker(virtualFileName: string): string {
-  const markerIndex = virtualFileName.indexOf("#tsts-slice-");
-  if (markerIndex < 0) {
-    return "";
-  }
-  return virtualFileName.slice(markerIndex + 1);
+  return `${publicSubModuleName}#${artifactId}`;
 }
 
 function fileLoader_getProviderImportSlice(moduleSpecifier: string, importSite: GoPtr<Node>): ProviderImportSlice {
@@ -1317,7 +1317,7 @@ export function fileLoader_getDefaultLibFilePriority(receiver: GoPtr<fileLoader>
  * }
  */
 export function fileLoader_loadSourceFileMetaData(receiver: GoPtr<fileLoader>, fileName: string): SourceFileMetaData {
-  if (fileLoader_getProviderVirtualModule(receiver, fileName) !== undefined) {
+  if (fileLoader_getProviderVirtualArtifact(receiver, fileName) !== undefined) {
     return {
       PackageJsonType: "",
       PackageJsonDirectory: "",
@@ -1375,13 +1375,13 @@ export function fileLoader_parseSourceFile(receiver: GoPtr<fileLoader>, t: GoPtr
   try {
     const path = fileLoader_toPath(receiver, t!.normalizedFilePath);
     const options = projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.projectReferenceFileMapper, NewHasFileName(t!.normalizedFilePath, path));
-    const providerVirtualModule = fileLoader_getProviderVirtualModule(receiver, t!.normalizedFilePath);
-    if (providerVirtualModule !== undefined) {
+    const providerVirtualArtifact = fileLoader_getProviderVirtualArtifact(receiver, t!.normalizedFilePath);
+    if (providerVirtualArtifact !== undefined) {
       return ParseSourceFile({
         FileName: t!.normalizedFilePath,
         Path: path,
         ExternalModuleIndicatorOptions: GetExternalModuleIndicatorOptions(t!.normalizedFilePath, options, t!.metadata),
-      }, providerVirtualModule.virtualSourceText, ScriptKindTS);
+      }, providerVirtualArtifact.sourceText, ScriptKindTS);
     }
     const sourceFile = receiver!.opts.Host.GetSourceFile({
       FileName: t!.normalizedFilePath,
@@ -1715,7 +1715,7 @@ export const externalHelpersModuleNameText: string = "tslib";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveImportsAndModuleAugmentations","kind":"method","status":"implemented","sigHash":"30cd1cfb29885870bb53f7e50b9173e5bd146206f9dd8a020faf33710e3f44dc","bodyHash":"4171ca82fab8e6403e0310bc745bd8eb0680c1c25558125fe9ff409afeaecafd"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Provider-owned module specifiers resolve through TargetBindingProvider before physical module resolution; unowned modules and no-extension programs remain on the exact TS-Go path, and owned rejection does not fall back to files."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Provider-owned module specifiers resolve through SourceDeclarationProvider before physical module resolution; unowned modules and no-extension programs remain on the exact TS-Go path, and owned rejection does not fall back to files."}
  *
  * Go source:
  * func (p *fileLoader) resolveImportsAndModuleAugmentations(t *parseTask) {
@@ -1904,7 +1904,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
 
         const resolvedFileName = resolvedModule!.ResolvedFileName;
         const isFromNodeModulesSearch = resolvedModule!.IsExternalLibraryImport;
-        const isProviderVirtualFile = fileLoader_getProviderVirtualModule(receiver, resolvedFileName) !== undefined;
+        const isProviderVirtualFile = fileLoader_getProviderVirtualArtifact(receiver, resolvedFileName) !== undefined;
         // Don't treat redirected files as JS files.
         const isJsFile = !isProviderVirtualFile && !FileExtensionIsOneOf(resolvedFileName, SupportedTSExtensionsWithJsonFlat as GoSlice<string>) && projectReferenceFileMapper_getRedirectParsedCommandLineForResolution(receiver!.projectReferenceFileMapper, NewHasFileName(resolvedFileName, fileLoader_toPath(receiver, resolvedFileName))) === undefined;
         const isJsFileFromNodeModules = isFromNodeModulesSearch && isJsFile && strings.Contains(resolvedFileName, "/node_modules/");

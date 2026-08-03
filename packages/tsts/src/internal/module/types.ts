@@ -145,7 +145,6 @@ export const ResolvedModuleExtensionProviderVirtual = "provider-virtual";
 
 export interface ResolvedModuleProviderVirtual {
   ProviderId: string;
-  ProviderTarget: string;
   ProviderModuleId: string;
   ModuleSpecifier: string;
 }

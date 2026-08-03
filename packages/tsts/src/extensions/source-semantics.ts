@@ -21,6 +21,7 @@ import {
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import { AsExportDeclaration, AsExportSpecifier, AsImportClause, AsNamespaceImport, AsPropertyAccessExpression, AsQualifiedName, AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import {
+  KindArrayBindingPattern,
   KindCallExpression,
   KindExportDeclaration,
   KindIdentifier,
@@ -30,6 +31,7 @@ import {
   KindNamespaceImport,
   KindNumericLiteral,
   KindObjectLiteralExpression,
+  KindObjectBindingPattern,
   KindPropertyAccessExpression,
   KindPropertyAssignment,
   KindPropertyDeclaration,
@@ -67,23 +69,25 @@ import type {
   SourcePrimitiveKind,
   StructFact,
 } from "./facts.js";
-import { ExtensionLifecycleEvent } from "./host.js";
 import type {
   CompilerExtension,
-  CompilerExtensionIdentity,
-  ExtensionDiagnosticStore,
+  ExtensionDiagnosticWriter,
   ExtensionEvidence,
   ExtensionFactKey,
+  ExtensionFactReader,
   ExtensionFactResolverContext,
   ExtensionFactSubject,
-  ExtensionFactStore,
-  SourceFileBoundLifecycleRequest,
+  SourceAnalysisFactAccess,
 } from "./host.js";
 
+type SourceSemanticsFactReader = Pick<ExtensionFactReader, "get">;
+type SourceSemanticsFactAccess = Pick<SourceAnalysisFactAccess, "get" | "set">;
+
 export interface SourceSemanticsExtensionOptions {
-  readonly identity: CompilerExtensionIdentity;
   readonly modules: readonly SourceSemanticsModule[];
 }
+
+export const sourceSemanticsExtensionId = "tsts.source-semantics";
 
 export type SourceSemanticsModuleCapability = "primitive" | "call-marker" | "type-marker";
 
@@ -202,39 +206,35 @@ function createSourceSemanticsModules(modules: readonly SourceSemanticsModule[])
 export function createSourceSemanticsExtension(options: SourceSemanticsExtensionOptions): CompilerExtension {
   const modules = createSourceSemanticsModules(options.modules);
   return {
-    identity: options.identity,
-    composition: {
-      kind: "source",
-    },
-    capabilities: {
-      provides: [
-        "source-semantics.primitives",
-        "source-semantics.argument-passing",
-        "source-semantics.pointer-types",
-        "source-semantics.flow-markers",
-        "source-semantics.structs",
-        "source-semantics.attributes",
-        "source-semantics.defaults",
-      ],
+    identity: {
+      id: sourceSemanticsExtensionId,
+      version: "1.0.0",
     },
     initialize(context): void {
-      context.factResolver.register(sourcePrimitiveFactKey, (subject, resolverContext) =>
+      context.registerFactResolver(sourcePrimitiveFactKey, (subject, resolverContext) =>
         resolveSourcePrimitiveFact(subject, resolverContext, modules));
-      context.registerLifecycleHook<SourceFileBoundLifecycleRequest>(ExtensionLifecycleEvent.afterSourceFileBound, (request) => {
-        recordSourceSemanticsFacts(request, context.facts, context.diagnostics, options.identity.id, modules);
-      });
+    },
+    analyzeSource(context): void {
+      for (const sourceFile of context.source.getSourceFiles()) {
+        recordSourceSemanticsFacts(
+          sourceFile,
+          context.facts,
+          context.diagnostics,
+          sourceSemanticsExtensionId,
+          modules,
+        );
+      }
     },
   };
 }
 
 function recordSourceSemanticsFacts(
-  request: SourceFileBoundLifecycleRequest,
-  facts: ExtensionFactStore,
-  diagnostics: ExtensionDiagnosticStore,
+  sourceFile: GoPtr<SourceFile>,
+  facts: SourceSemanticsFactAccess,
+  diagnostics: ExtensionDiagnosticWriter,
   extensionId: string,
   modules: readonly SourceSemanticsModuleRuntime[],
 ): void {
-  const sourceFile = getLifecycleSourceFile(request);
   if (sourceFile === undefined) {
     return;
   }
@@ -260,7 +260,7 @@ function recordSourceSemanticsFacts(
 }
 
 function recordSourceSemanticsImportClause(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   importDeclaration: GoPtr<Node>,
   moduleIdentity: SourceSemanticsModuleRuntime,
 ): void {
@@ -305,7 +305,7 @@ function recordSourceSemanticsImportClause(
 }
 
 function recordSourceSemanticsExportClause(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   exportDeclaration: GoPtr<Node>,
   moduleIdentity: SourceSemanticsModuleRuntime,
 ): void {
@@ -341,8 +341,8 @@ function recordSourceSemanticsExportClause(
 }
 
 function recordSourceSemanticsCallMarkers(
-  facts: ExtensionFactStore,
-  diagnostics: ExtensionDiagnosticStore,
+  facts: SourceSemanticsFactAccess,
+  diagnostics: ExtensionDiagnosticWriter,
   extensionId: string,
   sourceFile: GoPtr<SourceFile>,
   modules: readonly SourceSemanticsModuleRuntime[],
@@ -361,8 +361,8 @@ function recordSourceSemanticsCallMarkers(
 }
 
 function recordSourceSemanticsCallMarker(
-  facts: ExtensionFactStore,
-  diagnostics: ExtensionDiagnosticStore,
+  facts: SourceSemanticsFactAccess,
+  diagnostics: ExtensionDiagnosticWriter,
   extensionId: string,
   callExpression: Node,
   marker: SourceCallMarkerDeclaration,
@@ -451,8 +451,8 @@ function hasMarkerTypeArgumentCount(callExpression: Node, count: number): boolea
 }
 
 function recordArgumentPassingMarker(
-  facts: ExtensionFactStore,
-  diagnostics: ExtensionDiagnosticStore,
+  facts: SourceSemanticsFactAccess,
+  diagnostics: ExtensionDiagnosticWriter,
   extensionId: string,
   callExpression: Node,
   target: Node,
@@ -461,7 +461,7 @@ function recordArgumentPassingMarker(
 ): void {
   const fact = {
     mode: getArgumentPassingMode(marker.marker as ArgumentPassingMarkerKind),
-    targetExpression: target,
+    storageExpression: target,
   } satisfies ArgumentPassingFact;
   facts.set(callExpression, argumentPassingFactKey, fact, evidence);
   if (IsLeftHandSideExpression(target)) {
@@ -493,7 +493,7 @@ function getArgumentPassingMode(kind: ArgumentPassingMarkerKind): ArgumentPassin
 }
 
 function recordFieldMarker(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
@@ -501,11 +501,16 @@ function recordFieldMarker(
   if (fieldType === undefined) {
     return;
   }
-  const propertyAssignment = callExpression?.Parent?.Kind === KindPropertyAssignment ? callExpression.Parent : undefined;
-  if (propertyAssignment === undefined) {
+  const fieldOwner = callExpression?.Parent;
+  if (
+    fieldOwner === undefined ||
+    (fieldOwner.Kind !== KindPropertyAssignment &&
+      fieldOwner.Kind !== KindPropertyDeclaration) ||
+    Node_Initializer(fieldOwner) !== callExpression
+  ) {
     return;
   }
-  const nameNode = Node_Name(propertyAssignment) ?? Node_PropertyName(propertyAssignment);
+  const nameNode = Node_Name(fieldOwner) ?? Node_PropertyName(fieldOwner);
   const name = getStaticSourceSemanticsNameText(nameNode);
   if (name === undefined) {
     return;
@@ -515,14 +520,14 @@ function recordFieldMarker(
     type: fieldType,
   } satisfies FieldFact;
   facts.set(callExpression, fieldFactKey, fact, evidence);
-  facts.set(propertyAssignment, fieldFactKey, fact, evidence);
+  facts.set(fieldOwner, fieldFactKey, fact, evidence);
   if (nameNode !== undefined) {
     facts.set(nameNode, fieldFactKey, fact, evidence);
   }
 }
 
 function recordStructMarker(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
@@ -549,7 +554,7 @@ function recordStructMarker(
 }
 
 function recordAttributeMarker(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
@@ -560,14 +565,14 @@ function recordAttributeMarker(
   const fact = {
     target,
     attributeName: getTypeReferenceNameText(target),
-    arguments: definedFactSubjects(Node_Arguments(callExpression) ?? []),
+    arguments: definedNodes(Node_Arguments(callExpression) ?? []),
   } satisfies AttributeFact;
   facts.set(callExpression, attributeFactKey, fact, evidence);
   recordInitializerOwnerFact(facts, callExpression, attributeFactKey, fact, evidence);
 }
 
 function recordDefaultValueMarker(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
@@ -581,7 +586,7 @@ function recordDefaultValueMarker(
 }
 
 function recordInitializerOwnerFact<TFact>(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   callExpression: Node,
   key: ExtensionFactKey<TFact>,
   fact: TFact,
@@ -603,7 +608,7 @@ function isInitializerOwner(node: GoPtr<Node>): boolean {
 }
 
 function recordFlowMarker(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   callExpression: Node,
   target: Node,
   fact: FlowStateFact,
@@ -641,7 +646,7 @@ function resolveSourcePrimitiveFact(
 }
 
 function recordSourceSemanticsTypeReferences(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   sourceFile: GoPtr<SourceFile>,
   modules: readonly SourceSemanticsModuleRuntime[],
   markerImportIndex: SourceSemanticsMarkerImportIndex,
@@ -679,7 +684,7 @@ function recordSourceSemanticsTypeReferences(
 }
 
 function recordSourceSemanticsTypeMarker(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   typeReference: Node,
   typeName: Node,
   marker: SourceTypeMarkerDeclaration,
@@ -696,7 +701,7 @@ function recordSourceSemanticsTypeMarker(
     }
     const fact = {
       pointee,
-      mutability: "target-defined",
+      mutability: "unspecified",
       unsafeRequired: true,
     } satisfies PointerFact;
     facts.set(typeReference, pointerFactKey, fact, evidence);
@@ -720,18 +725,18 @@ function recordSourceSemanticsTypeMarker(
   facts.set(typeName, functionPointerFactKey, fact, evidence);
 }
 
-function getFunctionPointerParameters(parameterList: GoPtr<Node>): readonly ExtensionFactSubject[] {
+function getFunctionPointerParameters(parameterList: GoPtr<Node>): readonly Node[] {
   if (parameterList === undefined) {
     return [];
   }
   if (parameterList.Kind === KindTupleType) {
-    return definedFactSubjects(Node_Elements(parameterList) ?? []);
+    return definedNodes(Node_Elements(parameterList) ?? []);
   }
   return [parameterList];
 }
 
 function resolveSourceSemanticsCallMarkerReference(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   node: GoPtr<Node>,
   modules: readonly SourceSemanticsModuleRuntime[],
   markerImportIndex: SourceSemanticsMarkerImportIndex,
@@ -741,7 +746,7 @@ function resolveSourceSemanticsCallMarkerReference(
 }
 
 function resolveSourceSemanticsTypeMarkerReference(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   node: GoPtr<Node>,
   modules: readonly SourceSemanticsModuleRuntime[],
   markerImportIndex: SourceSemanticsMarkerImportIndex,
@@ -802,7 +807,7 @@ function resolveSourceSemanticsMarkerFromImportIndex<TMarker extends { readonly 
 }
 
 function resolveSourceSemanticsMarkerReference<TMarker extends { readonly exportName: string }>(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   node: GoPtr<Node>,
   modules: readonly SourceSemanticsModuleRuntime[],
   capability: SourceSemanticsModuleCapability,
@@ -907,7 +912,7 @@ function createSourceSemanticsMarkerImportIndex(
 }
 
 function resolvePrimitiveTypeReference(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactReader,
   typeName: GoPtr<Node>,
   modules: readonly SourceSemanticsModuleRuntime[],
   importIndex?: SourceSemanticsMarkerImportIndex,
@@ -1008,7 +1013,22 @@ function isImportBindingShadowed(node: GoPtr<Node>, localName: string): boolean 
 }
 
 function declarationListContainsName(declarations: readonly GoPtr<Node>[], localName: string): boolean {
-  return declarations.some((declaration) => Node_Text(Node_Name(declaration)) === localName);
+  return declarations.some((declaration) =>
+    bindingNameContainsName(Node_Name(declaration), localName));
+}
+
+function bindingNameContainsName(name: GoPtr<Node>, localName: string): boolean {
+  if (name === undefined) {
+    return false;
+  }
+  if (name.Kind === KindIdentifier) {
+    return Node_Text(name) === localName;
+  }
+  if (name.Kind !== KindArrayBindingPattern && name.Kind !== KindObjectBindingPattern) {
+    return false;
+  }
+  return (Node_Elements(name) ?? []).some((element) =>
+    bindingNameContainsName(Node_Name(element), localName));
 }
 
 function getIdentifierText(node: GoPtr<Node>): string | undefined {
@@ -1027,7 +1047,7 @@ function getStaticSourceSemanticsNameText(node: GoPtr<Node>): string | undefined
 }
 
 function resolveQualifiedPrimitiveReference(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactReader,
   typeName: GoPtr<Node>,
   modules: readonly SourceSemanticsModuleRuntime[],
 ): { readonly moduleIdentity: SourceSemanticsModuleRuntime; readonly exportName: string; readonly primitiveFact: SourcePrimitiveDeclaration; readonly identity: ExtensionCanonicalIdentity } | undefined {
@@ -1077,12 +1097,12 @@ function visitSourceSemanticsNodePost(node: GoPtr<Node>, visit: (node: GoPtr<Nod
   visit(node);
 }
 
-function definedFactSubjects<T extends object>(subjects: readonly (T | undefined)[]): readonly ExtensionFactSubject[] {
-  return subjects.filter((subject): subject is T => subject !== undefined);
+function definedNodes(subjects: readonly GoPtr<Node>[]): readonly Node[] {
+  return subjects.filter((subject): subject is Node => subject !== undefined);
 }
 
 function recordNamespaceImportIdentity(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   namespaceImport: Node,
   moduleIdentity: SourceSemanticsModuleIdentity,
   typedImport: boolean,
@@ -1103,7 +1123,7 @@ function getSourceSemanticsModuleIdentity(node: GoPtr<Node>, modules: readonly S
 }
 
 function recordSourcePrimitiveImport(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   importSpecifier: Node,
   moduleIdentity: SourceSemanticsModuleIdentity,
   exportName: string,
@@ -1123,7 +1143,7 @@ function recordSourcePrimitiveImport(
 }
 
 function recordSourceSemanticsSymbolImport(
-  facts: ExtensionFactStore,
+  facts: SourceSemanticsFactAccess,
   importSpecifier: Node,
   moduleIdentity: SourceSemanticsModuleIdentity,
   exportName: string,
@@ -1244,11 +1264,4 @@ export function sourcePrimitive(
 
 function getSymbolFactId(symbol: Symbol): string {
   return `${symbol.Name}:${String(GetSymbolId(symbol))}`;
-}
-
-function getLifecycleSourceFile(request: SourceFileBoundLifecycleRequest): GoPtr<SourceFile> {
-  if (typeof request.sourceFile !== "object" || request.sourceFile === null) {
-    return undefined;
-  }
-  return request.sourceFile as SourceFile;
 }

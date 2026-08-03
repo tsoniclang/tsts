@@ -9,6 +9,7 @@
 // conformance baselines all stay green.
 
 import { readFileSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { loadParser, canonicalKey, typesEqual, parseSource, resolveModuleId, isSoftId } from "./ts-extractor/ast-signatures.mjs";
 import { extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
@@ -36,6 +37,7 @@ const SIGNATURE_MISMATCH_KINDS = new Set([
   "value-type",
   "unresolved-ref",
 ]);
+const HASHED_SIGNATURE_OVERRIDE_MIN_LENGTH = 4_096;
 
 // --- override resolution ------------------------------------------------------
 
@@ -52,11 +54,26 @@ function resolveOverride(localOverride, id, expected, actual, canon, overrideIss
   const expectedSnapshot = unitSignatureSnapshot(expected, canon);
   const actualSnapshot = unitSignatureSnapshot(actual, canon);
   const issues = [];
-  if (localOverride.goSignature !== expectedSnapshot) {
-    issues.push(`goSignature snapshot drifted: metadata=${localOverride.goSignature ?? "<missing>"} current=${expectedSnapshot}`);
-  }
-  if (localOverride.tsSignature !== actualSnapshot) {
-    issues.push(`tsSignature snapshot drifted: metadata=${localOverride.tsSignature ?? "<missing>"} current=${actualSnapshot}`);
+  const usesHashSnapshots = localOverride.goSignatureHash !== undefined || localOverride.tsSignatureHash !== undefined;
+  if (usesHashSnapshots) {
+    if (expectedSnapshot.length < HASHED_SIGNATURE_OVERRIDE_MIN_LENGTH || actualSnapshot.length < HASHED_SIGNATURE_OVERRIDE_MIN_LENGTH) {
+      issues.push(`signature hashes are reserved for normalized snapshots of at least ${HASHED_SIGNATURE_OVERRIDE_MIN_LENGTH} characters`);
+    }
+    const expectedHash = unitSignatureHash(expectedSnapshot);
+    const actualHash = unitSignatureHash(actualSnapshot);
+    if (localOverride.goSignatureHash !== expectedHash) {
+      issues.push(`goSignatureHash drifted: metadata=${localOverride.goSignatureHash ?? "<missing>"} current=${expectedHash}`);
+    }
+    if (localOverride.tsSignatureHash !== actualHash) {
+      issues.push(`tsSignatureHash drifted: metadata=${localOverride.tsSignatureHash ?? "<missing>"} current=${actualHash}`);
+    }
+  } else {
+    if (localOverride.goSignature !== expectedSnapshot) {
+      issues.push(`goSignature snapshot drifted: metadata=${localOverride.goSignature ?? "<missing>"} current=${expectedSnapshot}`);
+    }
+    if (localOverride.tsSignature !== actualSnapshot) {
+      issues.push(`tsSignature snapshot drifted: metadata=${localOverride.tsSignature ?? "<missing>"} current=${actualSnapshot}`);
+    }
   }
   if (issues.length > 0) {
     overrideIssues.push({ id, reason: issues.join("; ") });
@@ -126,6 +143,10 @@ export function unitSignatureSnapshot(desc, canon = (x) => x) {
     return `value{${(desc.decls ?? []).map((d) => `${d.name}:${d.missing ? "<missing>" : typeSnapshot(d.type, canon)}`).join(";")}}`;
   }
   return `${desc.kind ?? "unknown"}:${JSON.stringify(desc)}`;
+}
+
+export function unitSignatureHash(snapshot) {
+  return `sha256:${createHash("sha256").update(snapshot).digest("hex")}`;
 }
 
 // --- comparison ---------------------------------------------------------------
@@ -418,7 +439,7 @@ export async function computeSignatureReport(deps, options = {}) {
   if (centralOverrides.length > 0) {
     overrideIssues.push({
       id: "",
-      reason: "signatureCheck.overrides is banned; use local @tsgo-override metadata with goSignature and tsSignature snapshots",
+      reason: "signatureCheck.overrides is banned; use local @tsgo-override metadata with exact goSignature/tsSignature snapshots or bounded goSignatureHash/tsSignatureHash snapshots",
     });
   }
 

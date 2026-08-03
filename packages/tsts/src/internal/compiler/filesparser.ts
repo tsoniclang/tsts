@@ -23,6 +23,7 @@ import { HasExtension, GetCanonicalFileName } from "../tspath/path.js";
 import { HasJSFileExtension } from "../tspath/extension.js";
 import { ParsedCommandLine_CompilerOptions, ParsedCommandLine_ResolvedProjectReferencePaths } from "../tsoptions/parsedcommandline.js";
 import { SourceFile_FileName, SourceFile_Path, SourceFile_ParseOptions } from "../ast/ast.js";
+import { getProviderVirtualArtifactForCompiler } from "../../extensions/provider-virtual-internal.js";
 import { GetLibFileName } from "../tsoptions/enummaps.js";
 import { fileIncludeKindLibReferenceDirective } from "./fileInclude.js";
 import type { FileIncludeReason } from "./fileInclude.js";
@@ -272,8 +273,11 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
     return;
   }
 
-  const providerVirtualModule = getExtensionHost(loader!.opts)?.providers.getVirtualModuleByFileName(receiver!.normalizedFilePath);
-  if (providerVirtualModule === undefined && HasExtension(receiver!.normalizedFilePath)) {
+  const providerRegistry = getExtensionHost(loader!.opts)?.providers;
+  const providerVirtualArtifact = providerRegistry === undefined
+    ? undefined
+    : getProviderVirtualArtifactForCompiler(providerRegistry, receiver!.normalizedFilePath);
+  if (providerVirtualArtifact === undefined && HasExtension(receiver!.normalizedFilePath)) {
     const compilerOptions = ParsedCommandLine_CompilerOptions(loader!.opts.Config);
     const allowNonTsExtensions = Tristate_IsTrue(compilerOptions!.AllowNonTsExtensions);
     if (!allowNonTsExtensions) {
@@ -308,7 +312,7 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
     loader!.libFileCount.Add(1);
     // Default lib files are all scripts; skip looking up their package.json
     receiver!.metadata = { ImpliedNodeFormat: ResolutionModeCommonJS, PackageJsonType: "", PackageJsonDirectory: "" };
-  } else if (providerVirtualModule !== undefined) {
+  } else if (providerVirtualArtifact !== undefined) {
     receiver!.metadata = { ImpliedNodeFormat: ResolutionModeCommonJS, PackageJsonType: "", PackageJsonDirectory: "" };
   } else {
     receiver!.metadata = fileLoader_loadSourceFileMetaData(loader, receiver!.normalizedFilePath);

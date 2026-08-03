@@ -15,6 +15,23 @@ This directory is the mechanical-port backbone for TSTS. The tooling reads the r
 - `npm run porter:large-files -- --write-draft` writes a draft semantic split plan from the current TS-Go declaration inventory. Existing differing plans are never overwritten unless `-- --force` is also supplied. Treat this as a bootstrap command, not the normal update path for a reviewed plan.
 - `npm run porter:skeleton-check` renders the complete missing-unit skeleton corpus into `.temp/porter/skeleton` and runs `tsc --noEmit` against it.
 
+## Module Ownership
+
+`porter.mjs` is only the stable executable/API barrel. Implementation lives in
+small modules under `porter/`, grouped by one responsibility: common I/O and
+configuration, source scanning/status, policy, large-file plans, scaffold
+generation, unit rendering, external-facade modeling/rendering, generated
+artifact status, and reporting. AST generation is similarly split under
+`ast-generator/`; expected Go signatures separate type/index construction from
+value/member inference under `ts-extractor/`; the Go extractor is a normal
+multi-file package grouped by model, scanning, type inference, AST analysis, and
+source metadata.
+
+Every regular file under `tools/porter` must remain at or below 600 lines. The
+Porter test suite enforces this mechanically. Add a semantically named module
+when a responsibility grows; do not reintroduce a monolith, line-chunk files,
+compatibility barrels with alternate behavior, or duplicate implementations.
+
 ## Embedded Metadata
 
 Each ported unit carries one JSON metadata line:
@@ -80,6 +97,14 @@ Signature overrides must capture both current snapshots locally:
 The signature checker recomputes these snapshots from the pinned Go source and
 the actual TypeScript declaration. Any upstream Go drift or local TS signature
 drift invalidates the override and fails `porter:verify`.
+
+Structurally huge signatures (at least 4,096 normalized characters) may use
+`goSignatureHash` and `tsSignatureHash` instead. Each value is
+`sha256:<64 lowercase hex characters>` over the same normalized snapshot. Hash
+mode remains exact and drift-checked, is rejected for smaller declarations, and
+cannot be mixed with full snapshots. The source-local reason must still explain
+the semantic exception; hashes only prevent enormous generated metadata from
+obscuring the declaration under review.
 
 ## Out-of-Scope Language-Service Surface
 

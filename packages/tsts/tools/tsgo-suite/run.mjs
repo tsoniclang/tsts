@@ -2526,9 +2526,11 @@ function harnessApiDeclarationText(fileName) {
   return undefined;
 }
 
-function harnessApiDeclarationAliasTarget(fileName) {
+export function harnessApiDeclarationAliasTarget(fileName) {
   switch (fileName) {
     case "typescript.internal.d.ts":
+      return "typescript.d.ts";
+    case "tsserverlibrary.d.ts":
       return "typescript.d.ts";
     case "tsserverlibrary.internal.d.ts":
       return "tsserverlibrary.d.ts";
@@ -2602,8 +2604,9 @@ const tsgoRunnerSkippedTestNames = new Set([
 // and reasoned) is the faithful mirror; running them would gate against nothing.
 // Condition order matches SkipUnsupportedCompilerOptions exactly.
 function getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptions) {
-  if (tsgoRunnerSkippedTestNames.has(sourceBaseName)) {
-    return `TS-Go runner skip list: ${sourceBaseName}`;
+  const runnerSkipReason = tsgoRunnerSkipReason(sourceBaseName);
+  if (runnerSkipReason !== "") {
+    return runnerSkipReason;
   }
   const moduleValue = stringCompilerOption(compilerOptions.module);
   if (moduleValue === "amd" || moduleValue === "umd" || moduleValue === "system") {
@@ -2633,6 +2636,12 @@ function getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptions) {
     return "TS-Go runner skips alwaysStrict=false";
   }
   return "";
+}
+
+function tsgoRunnerSkipReason(sourceBaseName) {
+  return tsgoRunnerSkippedTestNames.has(sourceBaseName)
+    ? `TS-Go runner skip list: ${sourceBaseName}`
+    : "";
 }
 
 export function caseExpectedErrors(testCase, compilerOptions) {
@@ -2832,6 +2841,21 @@ async function runTsts(invocation) {
 }
 
 async function runCase(testCase, runRoot, options) {
+  const runnerSkipReason = tsgoRunnerSkipReason(testCase.sourceBaseName);
+  if (runnerSkipReason !== "") {
+    return {
+      ...testCase,
+      caseDir: "",
+      expectedErrors: false,
+      actualErrors: false,
+      exitCode: 0,
+      signal: null,
+      status: "skip",
+      skipReason: runnerSkipReason,
+      stdout: "",
+      stderr: "",
+    };
+  }
   const materialized = await materializeCase(testCase, runRoot);
   if (materialized.skipReason !== "") {
     return {

@@ -1,7 +1,20 @@
-import { defineExtensionFactKey } from "./host.js";
-import type { ExtensionEvidence, ExtensionFactSubject } from "./host.js";
+import {
+  defineExtensionFactKey,
+  markHostSourceReadableFactKey,
+} from "./fact-key.js";
+import type {
+  ExtensionFactSubject,
+  ProviderWellKnownSymbolName,
+} from "./host.js";
+import type {
+  Node,
+} from "../internal/ast/ast.js";
+import {
+  isArgumentPassingMode,
+  type ArgumentPassingMode,
+} from "./argument-passing.js";
+
 export type { ArgumentPassingMode } from "./argument-passing.js";
-import type { ArgumentPassingMode } from "./argument-passing.js";
 
 export type ExtensionCanonicalIdentityKind =
   | "module"
@@ -46,7 +59,7 @@ export interface ExtensionCanonicalIdentity {
   readonly canonicalSymbolId?: string;
 }
 
-export type SourcePointerMutability = "readonly" | "readwrite" | "target-defined";
+export type SourcePointerMutability = "readonly" | "readwrite" | "unspecified";
 
 export interface SourcePrimitiveFact {
   readonly kind: SourcePrimitiveKind;
@@ -57,20 +70,17 @@ export interface SourcePrimitiveFact {
 
 export interface ArgumentPassingFact {
   readonly mode: ArgumentPassingMode;
-  readonly targetExpression?: ExtensionFactSubject;
-  readonly parameterIndex?: number;
-  readonly targetParameter?: TargetParameter;
-  readonly selectedSignature?: ProviderDeclarationIdentity;
+  readonly storageExpression?: Node;
 }
 
 export interface FunctionPointerFact {
-  readonly parameters: readonly ExtensionFactSubject[];
-  readonly result: ExtensionFactSubject;
+  readonly parameters: readonly Node[];
+  readonly result: Node;
   readonly abi: readonly string[];
 }
 
 export interface PointerFact {
-  readonly pointee: ExtensionFactSubject;
+  readonly pointee: Node;
   readonly mutability: SourcePointerMutability;
   readonly unsafeRequired: boolean;
 }
@@ -82,18 +92,22 @@ export interface StructFact {
 
 export interface FieldFact {
   readonly name: string;
-  readonly type: ExtensionFactSubject;
+  readonly type: Node;
   readonly readonly?: boolean;
 }
 
 export interface AttributeFact {
-  readonly target: ExtensionFactSubject;
+  readonly target: Node;
   readonly attributeName: string;
-  readonly arguments?: readonly ExtensionFactSubject[];
+  readonly arguments?: readonly Node[];
 }
 
 export interface DefaultValueFact {
-  readonly type: ExtensionFactSubject;
+  readonly type: Node;
+}
+
+export interface FlowStateFact {
+  readonly state: "moved" | "borrowed-shared" | "borrowed-mut";
 }
 
 export interface ProviderDeclarationIdentity {
@@ -101,175 +115,28 @@ export interface ProviderDeclarationIdentity {
   readonly providerVersion?: string;
   readonly providerModuleId: string;
   readonly moduleSpecifier: string;
-  readonly virtualFileName?: string;
+  readonly artifactFileName?: string;
   readonly exportName?: string;
   readonly exportId?: string;
   readonly memberName?: string;
+  readonly memberKey?: ProviderMemberKey;
   readonly memberId?: string;
   readonly memberStatic?: boolean;
   readonly signatureId?: string;
-  readonly targetIdentity?: TargetTypeRef;
 }
 
-export type TargetTypeRef =
-  | { readonly kind: "source-primitive"; readonly name: SourcePrimitiveKind }
-  | { readonly kind: "target-named"; readonly id: string; readonly typeArguments?: readonly TargetTypeRef[] }
-  | { readonly kind: "type-parameter"; readonly name: string }
-  | { readonly kind: "array"; readonly element: TargetTypeRef; readonly rank?: number }
-  | { readonly kind: "tuple"; readonly elements: readonly TargetTypeRef[] }
-  | { readonly kind: "pointer"; readonly pointee: TargetTypeRef; readonly mutability?: "const" | "mut" | "target-defined" }
-  | { readonly kind: "function-pointer"; readonly args: readonly TargetTypeRef[]; readonly result: TargetTypeRef; readonly abi?: readonly string[] }
-  | { readonly kind: "opaque"; readonly id: string }
-  | { readonly kind: "associated-type"; readonly owner: TargetTypeRef; readonly name: string }
-  | { readonly kind: "lifetime"; readonly name: string }
-  | { readonly kind: "target-specific"; readonly target: string; readonly name: string; readonly value?: unknown };
+export type ProviderMemberKey =
+  | { readonly kind: "property-key"; readonly name: string }
+  | { readonly kind: "well-known-symbol"; readonly name: ProviderWellKnownSymbolName };
 
-export type TargetConstraint =
-  | { readonly kind: "implements"; readonly contract: string; readonly typeArguments?: readonly TargetTypeRef[] }
-  | { readonly kind: "value-type" }
-  | { readonly kind: "reference-type" }
-  | { readonly kind: "constructible" }
-  | { readonly kind: "unmanaged" }
-  | { readonly kind: "copy" }
-  | { readonly kind: "clone" }
-  | { readonly kind: "default" }
-  | { readonly kind: "sized" }
-  | { readonly kind: "lifetime"; readonly name: string }
-  | { readonly kind: "target-specific"; readonly target: string; readonly name: string; readonly value?: unknown };
-
-export interface TargetTypeParameter {
-  readonly name: string;
-  readonly constraints?: readonly TargetConstraint[];
-  readonly variance?: "in" | "out" | "invariant" | "target-defined";
-}
-
-export interface TargetParameter {
-  readonly name: string;
-  readonly type: TargetTypeRef;
-  readonly passingMode: ArgumentPassingMode;
-  readonly optional?: boolean;
-  readonly paramsArray?: boolean;
-}
-
-export interface TargetMember {
-  readonly id: string;
-  readonly sourceName: string;
-  readonly targetName: string;
-  readonly kind: "method" | "constructor" | "property" | "field" | "indexer" | "event" | "operator";
-  readonly static?: boolean;
-  readonly parameters: readonly TargetParameter[];
-  readonly returnType?: TargetTypeRef;
-  readonly typeParameters?: readonly TargetTypeParameter[];
-  readonly overloadGroup?: string;
-  readonly providerDeclaration?: ProviderDeclarationIdentity;
-}
-
-export interface TargetBindingFact {
-  readonly id: string;
-  readonly sourceName: string;
-  readonly targetName: string;
-  readonly target: string;
-  readonly kind: "class" | "struct" | "interface" | "trait" | "enum" | "delegate" | "function" | "opaque";
-  readonly typeParameters?: readonly TargetTypeParameter[];
-  readonly members?: readonly TargetMember[];
-  readonly implementedContracts?: readonly TargetConstraint[];
-}
-
-export interface InstantiatedTargetTypeFact {
-  readonly targetType: TargetBindingFact;
-  readonly typeArguments: readonly ExtensionFactSubject[];
-  readonly resolvedTypeArguments?: readonly TargetTypeRef[];
-}
-
-export interface SourceSelectedMethodTypeArgument {
-  readonly typeParameterName: string;
-  readonly typeParameter?: ExtensionFactSubject;
-  readonly selectedType: ExtensionFactSubject;
-  readonly explicitTypeNode?: ExtensionFactSubject;
-}
-
-export interface SelectedTargetSignatureFact {
-  readonly member: TargetMember;
-  readonly typeArguments?: readonly ExtensionFactSubject[];
-  readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
-  readonly targetTypeArguments?: readonly TargetTypeRef[];
-  readonly argumentConversions?: readonly TargetTypeRef[];
-  readonly sourceSignature?: ExtensionFactSubject;
-  readonly sourceDeclaration?: ExtensionFactSubject;
-  readonly sourceCalleeSymbol?: ExtensionFactSubject;
-  readonly sourceCalleeDeclaration?: ExtensionFactSubject;
-  readonly sourceReturnType?: ExtensionFactSubject;
-  readonly providerDeclaration?: ProviderDeclarationIdentity;
-}
-
-export interface ContextualTargetTypeFact {
-  readonly type: ExtensionFactSubject;
-  readonly targetType?: TargetTypeRef;
-}
-
-export interface TargetOperationFact {
-  readonly operationId: string;
-  readonly operationKind: "property" | "method" | "indexer" | "operator" | "constructor" | "iteration";
-  readonly targetOperation: string;
-  readonly resultType?: ExtensionFactSubject;
-  readonly evidence?: readonly ExtensionEvidence[];
-  readonly provenance?: TargetOperationProvenance;
-}
-
-export interface TargetOperationProvenance {
-  readonly providerDeclaration?: ProviderDeclarationIdentity;
-  readonly sourceExpression?: ExtensionFactSubject;
-  readonly sourceReceiver?: ExtensionFactSubject;
-  readonly sourceCallee?: ExtensionFactSubject;
-  readonly sourceSelectedSymbol?: ExtensionFactSubject;
-  readonly sourceSelectedDeclaration?: ExtensionFactSubject;
-  readonly sourceSelectedSignature?: ExtensionFactSubject;
-  readonly sourceResultType?: ExtensionFactSubject;
-}
-
-export interface FlowStateFact {
-  readonly state: "moved" | "borrowed-shared" | "borrowed-mut" | "initialized" | "uninitialized" | "target-validation-required";
-  readonly targetCompiler?: string;
-  readonly evidence?: readonly ExtensionEvidence[];
-}
-
-export interface RuntimeCarrierFact {
-  readonly carrier: TargetTypeRef;
-  readonly requiresAllocation?: boolean;
-  readonly provenance?: RuntimeCarrierProvenance;
-}
-
-export interface RuntimeCarrierProvenance {
-  readonly sourceType?: ExtensionFactSubject;
-  readonly sourceTypeReference?: ExtensionFactSubject;
-  readonly sourceSymbol?: ExtensionFactSubject;
-  readonly providerDeclaration?: ProviderDeclarationIdentity;
-}
-
-export interface TargetConversionFact {
-  readonly convertedType?: TargetTypeRef;
-  readonly operation?: TargetOperationFact;
-}
-
-export interface ProviderVirtualDeclarationFact {
-  readonly providerId: string;
+export interface ProviderVirtualDeclarationFact extends ProviderDeclarationIdentity {
   readonly providerVersion: string;
-  readonly providerModuleId: string;
-  readonly moduleSpecifier: string;
-  readonly virtualFileName: string;
-  readonly exportName?: string;
-  readonly exportId?: string;
-  readonly memberName?: string;
-  readonly memberId?: string;
-  readonly memberStatic?: boolean;
-  readonly signatureId?: string;
-  readonly targetIdentity?: TargetTypeRef;
+  readonly artifactFileName: string;
 }
 
 export interface ProviderTypeFamilyVariantFact {
   readonly sourceTypeArgumentCount: number;
   readonly declaration: ProviderVirtualDeclarationFact;
-  readonly targetBinding?: TargetBindingFact;
 }
 
 export interface ProviderTypeFamilyFact {
@@ -288,447 +155,711 @@ export interface ConstGenericFact {
   readonly value: string | number | bigint | boolean;
 }
 
-export const canonicalIdentityFactKey = defineExtensionFactKey<ExtensionCanonicalIdentity>({
-  extensionId: "tsts.identity",
+export const canonicalIdentityFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<ExtensionCanonicalIdentity>({
+  extensionId: "tsts.source-semantics",
   name: "canonicalIdentity",
+  snapshot: snapshotCanonicalIdentityFact,
+  equals: canonicalIdentityEquals,
+}));
+
+export const sourcePrimitiveFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<SourcePrimitiveFact>({
+  extensionId: "tsts.source-semantics",
+  name: "sourcePrimitive",
+  snapshot: snapshotSourcePrimitiveFact,
   equals: (left, right) =>
     left.kind === right.kind
+    && left.width === right.width
+    && left.signed === right.signed
+    && left.runtimeBase === right.runtimeBase,
+}));
+
+export const argumentPassingFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<ArgumentPassingFact>({
+  extensionId: "tsts.source-semantics",
+  name: "argumentPassing",
+  snapshot: snapshotArgumentPassingFact,
+  equals: (left, right) =>
+    left.mode === right.mode
+    && left.storageExpression === right.storageExpression,
+}));
+
+export const functionPointerFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<FunctionPointerFact>({
+  extensionId: "tsts.source-semantics",
+  name: "functionPointer",
+  snapshot: snapshotFunctionPointerFact,
+  equals: (left, right) =>
+    left.result === right.result
+    && identityArrayEquals(left.parameters, right.parameters)
+    && stringArrayEquals(left.abi, right.abi),
+}));
+
+export const pointerFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<PointerFact>({
+  extensionId: "tsts.source-semantics",
+  name: "pointer",
+  snapshot: snapshotPointerFact,
+  equals: (left, right) =>
+    left.pointee === right.pointee
+    && left.mutability === right.mutability
+    && left.unsafeRequired === right.unsafeRequired,
+}));
+
+export const structFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<StructFact>({
+  extensionId: "tsts.source-semantics",
+  name: "struct",
+  snapshot: snapshotStructFact,
+  equals: (left, right) =>
+    left.valueType === right.valueType
+    && optionalFieldArrayEquals(left.fields, right.fields),
+}));
+
+export const fieldFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<FieldFact>({
+  extensionId: "tsts.source-semantics",
+  name: "field",
+  snapshot: snapshotFieldFact,
+  equals: fieldFactEquals,
+}));
+
+export const attributeFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<AttributeFact>({
+  extensionId: "tsts.source-semantics",
+  name: "attribute",
+  snapshot: snapshotAttributeFact,
+  equals: (left, right) =>
+    left.target === right.target
+    && left.attributeName === right.attributeName
+    && optionalIdentityArrayEquals(left.arguments, right.arguments),
+}));
+
+export const defaultValueFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<DefaultValueFact>({
+  extensionId: "tsts.source-semantics",
+  name: "defaultValue",
+  snapshot: snapshotDefaultValueFact,
+  equals: (left, right) => left.type === right.type,
+}));
+
+export const flowStateFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<FlowStateFact>({
+  extensionId: "tsts.source-semantics",
+  name: "flowState",
+  snapshot: snapshotFlowStateFact,
+  equals: (left, right) => left.state === right.state,
+}));
+
+export const providerVirtualDeclarationFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<ProviderVirtualDeclarationFact>({
+  extensionId: "tsts.provider",
+  name: "virtualDeclaration",
+  snapshot: snapshotProviderVirtualDeclarationFact,
+  equals: providerDeclarationIdentityEquals,
+}));
+
+export const providerTypeFamilyFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<ProviderTypeFamilyFact>({
+  extensionId: "tsts.provider",
+  name: "typeFamily",
+  snapshot: snapshotProviderTypeFamilyFact,
+  equals: (left, right) =>
+    left.exportName === right.exportName
+    && providerTypeFamilyVariantArrayEquals(left.variants, right.variants),
+}));
+
+export const associatedTypeFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<AssociatedTypeFact>({
+  extensionId: "tsts.source-semantics",
+  name: "associatedType",
+  snapshot: snapshotAssociatedTypeFact,
+  equals: (left, right) =>
+    left.owner === right.owner
+    && left.name === right.name
+    && left.value === right.value,
+}));
+
+export const constGenericFactKey = markHostSourceReadableFactKey(defineExtensionFactKey<ConstGenericFact>({
+  extensionId: "tsts.source-semantics",
+  name: "constGeneric",
+  snapshot: snapshotConstGenericFact,
+  equals: (left, right) =>
+    left.name === right.name
+    && left.value === right.value,
+}));
+
+function snapshotCanonicalIdentityFact(value: ExtensionCanonicalIdentity): ExtensionCanonicalIdentity {
+  const record = exactRecord(value, "ExtensionCanonicalIdentity", [
+    "kind",
+    "id",
+    "packageName",
+    "packageVersion",
+    "subpath",
+    "exportName",
+    "importKind",
+    "canonicalSymbolId",
+  ]);
+  const kind = requiredString(record, "kind", "ExtensionCanonicalIdentity") as ExtensionCanonicalIdentityKind;
+  if (!canonicalIdentityKinds.has(kind)) {
+    throw new Error(`ExtensionCanonicalIdentity.kind '${kind}' is invalid.`);
+  }
+  const importKind = optionalString(record, "importKind", "ExtensionCanonicalIdentity") as ExtensionImportKind | undefined;
+  if (importKind !== undefined && !importKinds.has(importKind)) {
+    throw new Error(`ExtensionCanonicalIdentity.importKind '${importKind}' is invalid.`);
+  }
+  return Object.freeze({
+    kind,
+    id: requiredString(record, "id", "ExtensionCanonicalIdentity"),
+    ...optionalStringFields(record, "ExtensionCanonicalIdentity", [
+      "packageName",
+      "packageVersion",
+      "subpath",
+      "exportName",
+      "canonicalSymbolId",
+    ]),
+    ...(importKind === undefined ? {} : { importKind }),
+  });
+}
+
+function snapshotSourcePrimitiveFact(value: SourcePrimitiveFact): SourcePrimitiveFact {
+  const record = exactRecord(value, "SourcePrimitiveFact", ["kind", "signed", "width", "runtimeBase"]);
+  const kind = requiredString(record, "kind", "SourcePrimitiveFact") as SourcePrimitiveKind;
+  if (!sourcePrimitiveKinds.has(kind)) {
+    throw new Error(`SourcePrimitiveFact.kind '${kind}' is invalid.`);
+  }
+  const runtimeBase = requiredString(record, "runtimeBase", "SourcePrimitiveFact") as SourcePrimitiveFact["runtimeBase"];
+  if (!sourceRuntimeBases.has(runtimeBase)) {
+    throw new Error(`SourcePrimitiveFact.runtimeBase '${runtimeBase}' is invalid.`);
+  }
+  const signed = optionalBoolean(record, "signed", "SourcePrimitiveFact");
+  const width = optionalSafeInteger(record, "width", "SourcePrimitiveFact");
+  if (width !== undefined && width <= 0) {
+    throw new Error("SourcePrimitiveFact.width must be positive.");
+  }
+  return Object.freeze({
+    kind,
+    runtimeBase,
+    ...(signed === undefined ? {} : { signed }),
+    ...(width === undefined ? {} : { width }),
+  });
+}
+
+function snapshotArgumentPassingFact(value: ArgumentPassingFact): ArgumentPassingFact {
+  const record = exactRecord(value, "ArgumentPassingFact", ["mode", "storageExpression"]);
+  const mode = requiredString(record, "mode", "ArgumentPassingFact");
+  if (!isArgumentPassingMode(mode)) {
+    throw new Error(`ArgumentPassingFact.mode '${mode}' is invalid.`);
+  }
+  const storageExpression = optionalNode(record, "storageExpression", "ArgumentPassingFact");
+  return Object.freeze({
+    mode,
+    ...(storageExpression === undefined ? {} : { storageExpression }),
+  });
+}
+
+function snapshotFunctionPointerFact(value: FunctionPointerFact): FunctionPointerFact {
+  const record = exactRecord(value, "FunctionPointerFact", ["parameters", "result", "abi"]);
+  return Object.freeze({
+    parameters: nodeArray(record.parameters, "FunctionPointerFact.parameters"),
+    result: requiredNode(record, "result", "FunctionPointerFact"),
+    abi: stringArray(record.abi, "FunctionPointerFact.abi"),
+  });
+}
+
+function snapshotPointerFact(value: PointerFact): PointerFact {
+  const record = exactRecord(value, "PointerFact", ["pointee", "mutability", "unsafeRequired"]);
+  const mutability = requiredString(record, "mutability", "PointerFact") as SourcePointerMutability;
+  if (!pointerMutabilities.has(mutability)) {
+    throw new Error(`PointerFact.mutability '${mutability}' is invalid.`);
+  }
+  return Object.freeze({
+    pointee: requiredNode(record, "pointee", "PointerFact"),
+    mutability,
+    unsafeRequired: requiredBoolean(record, "unsafeRequired", "PointerFact"),
+  });
+}
+
+function snapshotStructFact(value: StructFact): StructFact {
+  const record = exactRecord(value, "StructFact", ["valueType", "fields"]);
+  const fields = optionalArray(record.fields, "StructFact.fields", snapshotFieldFact);
+  return Object.freeze({
+    valueType: requiredBoolean(record, "valueType", "StructFact"),
+    ...(fields === undefined ? {} : { fields }),
+  });
+}
+
+function snapshotFieldFact(value: FieldFact): FieldFact {
+  const record = exactRecord(value, "FieldFact", ["name", "type", "readonly"]);
+  const readonly = optionalBoolean(record, "readonly", "FieldFact");
+  return Object.freeze({
+    name: requiredString(record, "name", "FieldFact"),
+    type: requiredNode(record, "type", "FieldFact"),
+    ...(readonly === undefined ? {} : { readonly }),
+  });
+}
+
+function snapshotAttributeFact(value: AttributeFact): AttributeFact {
+  const record = exactRecord(value, "AttributeFact", ["target", "attributeName", "arguments"]);
+  const args = optionalNodeArray(record.arguments, "AttributeFact.arguments");
+  return Object.freeze({
+    target: requiredNode(record, "target", "AttributeFact"),
+    attributeName: requiredString(record, "attributeName", "AttributeFact"),
+    ...(args === undefined ? {} : { arguments: args }),
+  });
+}
+
+function snapshotDefaultValueFact(value: DefaultValueFact): DefaultValueFact {
+  const record = exactRecord(value, "DefaultValueFact", ["type"]);
+  return Object.freeze({
+    type: requiredNode(record, "type", "DefaultValueFact"),
+  });
+}
+
+function snapshotFlowStateFact(value: FlowStateFact): FlowStateFact {
+  const record = exactRecord(value, "FlowStateFact", ["state"]);
+  const state = requiredString(record, "state", "FlowStateFact") as FlowStateFact["state"];
+  if (!flowStates.has(state)) {
+    throw new Error(`FlowStateFact.state '${state}' is invalid.`);
+  }
+  return Object.freeze({ state });
+}
+
+function snapshotProviderVirtualDeclarationFact(value: ProviderVirtualDeclarationFact): ProviderVirtualDeclarationFact {
+  const record = exactRecord(value, "ProviderVirtualDeclarationFact", [
+    "providerId",
+    "providerVersion",
+    "providerModuleId",
+    "moduleSpecifier",
+    "artifactFileName",
+    "exportName",
+    "exportId",
+    "memberName",
+    "memberKey",
+    "memberId",
+    "memberStatic",
+    "signatureId",
+  ]);
+  const memberKey = record.memberKey === undefined
+    ? undefined
+    : snapshotProviderMemberKey(record.memberKey);
+  const memberStatic = optionalBoolean(record, "memberStatic", "ProviderVirtualDeclarationFact");
+  return Object.freeze({
+    providerId: requiredString(record, "providerId", "ProviderVirtualDeclarationFact"),
+    providerVersion: requiredString(record, "providerVersion", "ProviderVirtualDeclarationFact"),
+    providerModuleId: requiredString(record, "providerModuleId", "ProviderVirtualDeclarationFact"),
+    moduleSpecifier: requiredString(record, "moduleSpecifier", "ProviderVirtualDeclarationFact"),
+    artifactFileName: requiredString(record, "artifactFileName", "ProviderVirtualDeclarationFact"),
+    ...optionalStringFields(record, "ProviderVirtualDeclarationFact", [
+      "exportName",
+      "exportId",
+      "memberName",
+      "memberId",
+      "signatureId",
+    ]),
+    ...(memberKey === undefined ? {} : { memberKey }),
+    ...(memberStatic === undefined ? {} : { memberStatic }),
+  });
+}
+
+function snapshotProviderMemberKey(value: unknown): ProviderMemberKey {
+  const record = exactRecord(value, "ProviderMemberKey", ["kind", "name"]);
+  const kind = requiredString(record, "kind", "ProviderMemberKey");
+  const name = requiredString(record, "name", "ProviderMemberKey");
+  if (kind === "property-key") {
+    return Object.freeze({ kind, name });
+  }
+  if (kind === "well-known-symbol" && providerWellKnownSymbolNames.has(name as ProviderWellKnownSymbolName)) {
+    return Object.freeze({ kind, name: name as ProviderWellKnownSymbolName });
+  }
+  throw new Error(`ProviderMemberKey kind/name '${kind}:${name}' is invalid.`);
+}
+
+function snapshotProviderTypeFamilyFact(value: ProviderTypeFamilyFact): ProviderTypeFamilyFact {
+  const record = exactRecord(value, "ProviderTypeFamilyFact", ["exportName", "variants"]);
+  return Object.freeze({
+    exportName: requiredString(record, "exportName", "ProviderTypeFamilyFact"),
+    variants: requiredArray(record.variants, "ProviderTypeFamilyFact.variants", snapshotProviderTypeFamilyVariantFact),
+  });
+}
+
+function snapshotProviderTypeFamilyVariantFact(value: ProviderTypeFamilyVariantFact): ProviderTypeFamilyVariantFact {
+  const record = exactRecord(value, "ProviderTypeFamilyVariantFact", ["sourceTypeArgumentCount", "declaration"]);
+  const sourceTypeArgumentCount = requiredSafeInteger(record, "sourceTypeArgumentCount", "ProviderTypeFamilyVariantFact");
+  if (sourceTypeArgumentCount < 0) {
+    throw new Error("ProviderTypeFamilyVariantFact.sourceTypeArgumentCount cannot be negative.");
+  }
+  return Object.freeze({
+    sourceTypeArgumentCount,
+    declaration: snapshotProviderVirtualDeclarationFact(record.declaration as ProviderVirtualDeclarationFact),
+  });
+}
+
+function snapshotAssociatedTypeFact(value: AssociatedTypeFact): AssociatedTypeFact {
+  const record = exactRecord(value, "AssociatedTypeFact", ["owner", "name", "value"]);
+  return Object.freeze({
+    owner: requiredSubject(record, "owner", "AssociatedTypeFact"),
+    name: requiredString(record, "name", "AssociatedTypeFact"),
+    value: requiredSubject(record, "value", "AssociatedTypeFact"),
+  });
+}
+
+function snapshotConstGenericFact(value: ConstGenericFact): ConstGenericFact {
+  const record = exactRecord(value, "ConstGenericFact", ["name", "value"]);
+  const scalar = record.value;
+  if (typeof scalar !== "string"
+    && typeof scalar !== "number"
+    && typeof scalar !== "bigint"
+    && typeof scalar !== "boolean") {
+    throw new Error("ConstGenericFact.value must be a string, number, bigint, or boolean.");
+  }
+  if (typeof scalar === "number" && !Number.isFinite(scalar)) {
+    throw new Error("ConstGenericFact.value must be finite when numeric.");
+  }
+  return Object.freeze({
+    name: requiredString(record, "name", "ConstGenericFact"),
+    value: scalar,
+  });
+}
+
+function canonicalIdentityEquals(left: ExtensionCanonicalIdentity, right: ExtensionCanonicalIdentity): boolean {
+  return left.kind === right.kind
     && left.id === right.id
     && left.packageName === right.packageName
     && left.packageVersion === right.packageVersion
     && left.subpath === right.subpath
     && left.exportName === right.exportName
     && left.importKind === right.importKind
-    && left.canonicalSymbolId === right.canonicalSymbolId,
-});
-
-export const sourcePrimitiveFactKey = defineExtensionFactKey<SourcePrimitiveFact>({
-  extensionId: "tsts.source-semantics",
-  name: "sourcePrimitive",
-  equals: (left, right) => left.kind === right.kind && left.width === right.width && left.signed === right.signed && left.runtimeBase === right.runtimeBase,
-});
-
-export const argumentPassingFactKey = defineExtensionFactKey<ArgumentPassingFact>({
-  extensionId: "tsts.source-semantics",
-  name: "argumentPassing",
-  equals: (left, right) =>
-    left.mode === right.mode
-    && left.targetExpression === right.targetExpression
-    && left.parameterIndex === right.parameterIndex
-    && optionalTargetParameterEquals(left.targetParameter, right.targetParameter)
-    && optionalProviderDeclarationIdentityEquals(left.selectedSignature, right.selectedSignature),
-});
-
-export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact>({
-  extensionId: "tsts.source-semantics",
-  name: "functionPointer",
-  equals: (left, right) =>
-    left.result === right.result
-    && left.parameters.length === right.parameters.length
-    && left.parameters.every((parameter, index) => parameter === right.parameters[index])
-    && left.abi.length === right.abi.length
-    && left.abi.every((abi, index) => abi === right.abi[index]),
-});
-
-export const pointerFactKey = defineExtensionFactKey<PointerFact>({
-  extensionId: "tsts.source-semantics",
-  name: "pointer",
-  equals: (left, right) => left.pointee === right.pointee && left.mutability === right.mutability && left.unsafeRequired === right.unsafeRequired,
-});
-
-export const structFactKey = defineExtensionFactKey<StructFact>({
-  extensionId: "tsts.source-semantics",
-  name: "struct",
-  equals: (left, right) =>
-    left.valueType === right.valueType
-    && fieldFactArrayEquals(left.fields, right.fields),
-});
-
-export const fieldFactKey = defineExtensionFactKey<FieldFact>({
-  extensionId: "tsts.source-semantics",
-  name: "field",
-  equals: (left, right) => left.name === right.name && left.type === right.type && left.readonly === right.readonly,
-});
-
-export const attributeFactKey = defineExtensionFactKey<AttributeFact>({
-  extensionId: "tsts.source-semantics",
-  name: "attribute",
-  equals: (left, right) =>
-    left.target === right.target
-    && left.attributeName === right.attributeName
-    && factSubjectArrayEquals(left.arguments, right.arguments),
-});
-
-export const defaultValueFactKey = defineExtensionFactKey<DefaultValueFact>({
-  extensionId: "tsts.source-semantics",
-  name: "defaultValue",
-  equals: (left, right) => left.type === right.type,
-});
-
-export const targetBindingFactKey = defineExtensionFactKey<TargetBindingFact>({
-  extensionId: "tsts.target-bindings",
-  name: "targetBinding",
-  equals: targetBindingFactEquals,
-});
-
-export const instantiatedTargetTypeFactKey = defineExtensionFactKey<InstantiatedTargetTypeFact>({
-  extensionId: "tsts.target-bindings",
-  name: "instantiatedTargetType",
-  equals: (left, right) =>
-    targetBindingFactEquals(left.targetType, right.targetType)
-    && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
-    && targetTypeRefArrayEquals(left.resolvedTypeArguments, right.resolvedTypeArguments),
-});
-
-export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTargetSignatureFact>({
-  extensionId: "tsts.target-bindings",
-  name: "selectedTargetSignature",
-  equals: (left, right) =>
-    targetMemberEquals(left.member, right.member)
-    && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
-    && sourceSelectedMethodTypeArgumentArrayEquals(left.sourceSelectedMethodTypeArguments, right.sourceSelectedMethodTypeArguments)
-    && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
-    && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions)
-    && left.sourceSignature === right.sourceSignature
-    && left.sourceDeclaration === right.sourceDeclaration
-    && left.sourceCalleeSymbol === right.sourceCalleeSymbol
-    && left.sourceCalleeDeclaration === right.sourceCalleeDeclaration
-    && left.sourceReturnType === right.sourceReturnType
-    && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration),
-});
-
-export const contextualTargetTypeFactKey = defineExtensionFactKey<ContextualTargetTypeFact>({
-  extensionId: "tsts.target-bindings",
-  name: "contextualTargetType",
-  equals: (left, right) => left.type === right.type && optionalTargetTypeRefEquals(left.targetType, right.targetType),
-});
-
-export const targetOperationFactKey = defineExtensionFactKey<TargetOperationFact>({
-  extensionId: "tsts.target-bindings",
-  name: "targetOperation",
-  equals: targetOperationFactEquals,
-});
-
-export const flowStateFactKey = defineExtensionFactKey<FlowStateFact>({
-  extensionId: "tsts.flow",
-  name: "flowState",
-  equals: (left, right) => left.state === right.state && left.targetCompiler === right.targetCompiler,
-});
-
-export const runtimeCarrierFactKey = defineExtensionFactKey<RuntimeCarrierFact>({
-  extensionId: "tsts.target-bindings",
-  name: "runtimeCarrier",
-  equals: (left, right) =>
-    targetTypeRefEquals(left.carrier, right.carrier)
-    && left.requiresAllocation === right.requiresAllocation
-    && optionalRuntimeCarrierProvenanceEquals(left.provenance, right.provenance),
-});
-
-export const targetConversionFactKey = defineExtensionFactKey<TargetConversionFact>({
-  extensionId: "tsts.target-bindings",
-  name: "targetConversion",
-  equals: (left, right) => optionalTargetTypeRefEquals(left.convertedType, right.convertedType) && optionalTargetOperationFactEquals(left.operation, right.operation),
-});
-
-export const providerVirtualDeclarationFactKey = defineExtensionFactKey<ProviderVirtualDeclarationFact>({
-  extensionId: "tsts.provider",
-  name: "virtualDeclaration",
-  equals: (left, right) =>
-    left.providerId === right.providerId
-    && left.providerVersion === right.providerVersion
-    && left.providerModuleId === right.providerModuleId
-    && left.moduleSpecifier === right.moduleSpecifier
-    && left.virtualFileName === right.virtualFileName
-    && left.exportName === right.exportName
-    && left.exportId === right.exportId
-    && left.memberName === right.memberName
-    && left.memberId === right.memberId
-    && left.memberStatic === right.memberStatic
-    && left.signatureId === right.signatureId
-    && optionalTargetTypeRefEquals(left.targetIdentity, right.targetIdentity),
-});
-
-export const providerTypeFamilyFactKey = defineExtensionFactKey<ProviderTypeFamilyFact>({
-  extensionId: "tsts.provider",
-  name: "typeFamily",
-  equals: (left, right) =>
-    left.exportName === right.exportName
-    && providerTypeFamilyVariantArrayEquals(left.variants, right.variants),
-});
-
-export const associatedTypeFactKey = defineExtensionFactKey<AssociatedTypeFact>({
-  extensionId: "tsts.target-bindings",
-  name: "associatedType",
-  equals: (left, right) => left.owner === right.owner && left.name === right.name && left.value === right.value,
-});
-
-export const constGenericFactKey = defineExtensionFactKey<ConstGenericFact>({
-  extensionId: "tsts.target-bindings",
-  name: "constGeneric",
-  equals: (left, right) => left.name === right.name && left.value === right.value,
-});
-
-function optionalTargetTypeRefEquals(left: TargetTypeRef | undefined, right: TargetTypeRef | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return targetTypeRefEquals(left, right);
+    && left.canonicalSymbolId === right.canonicalSymbolId;
 }
 
-function optionalProviderDeclarationIdentityEquals(left: ProviderDeclarationIdentity | undefined, right: ProviderDeclarationIdentity | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return providerDeclarationIdentityEquals(left, right);
-}
-
-function providerTypeFamilyVariantArrayEquals(left: readonly ProviderTypeFamilyVariantFact[], right: readonly ProviderTypeFamilyVariantFact[]): boolean {
-  return left.length === right.length && left.every((variant, index) => providerTypeFamilyVariantEquals(variant, right[index]!));
-}
-
-function providerTypeFamilyVariantEquals(left: ProviderTypeFamilyVariantFact, right: ProviderTypeFamilyVariantFact): boolean {
-  return left.sourceTypeArgumentCount === right.sourceTypeArgumentCount
-    && providerDeclarationIdentityEquals(left.declaration, right.declaration)
-    && optionalTargetBindingFactEquals(left.targetBinding, right.targetBinding);
-}
-
-function optionalTargetBindingFactEquals(left: TargetBindingFact | undefined, right: TargetBindingFact | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return targetBindingFactEquals(left, right);
-}
-
-function providerDeclarationIdentityEquals(left: ProviderDeclarationIdentity, right: ProviderDeclarationIdentity): boolean {
+function providerDeclarationIdentityEquals(
+  left: ProviderDeclarationIdentity,
+  right: ProviderDeclarationIdentity,
+): boolean {
   return left.providerId === right.providerId
     && left.providerVersion === right.providerVersion
     && left.providerModuleId === right.providerModuleId
     && left.moduleSpecifier === right.moduleSpecifier
-    && left.virtualFileName === right.virtualFileName
+    && left.artifactFileName === right.artifactFileName
     && left.exportName === right.exportName
     && left.exportId === right.exportId
     && left.memberName === right.memberName
+    && providerMemberKeyEquals(left.memberKey, right.memberKey)
     && left.memberId === right.memberId
     && left.memberStatic === right.memberStatic
-    && left.signatureId === right.signatureId
-    && optionalTargetTypeRefEquals(left.targetIdentity, right.targetIdentity);
+    && left.signatureId === right.signatureId;
 }
 
-function factSubjectArrayEquals(left: readonly ExtensionFactSubject[] | undefined, right: readonly ExtensionFactSubject[] | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return left.length === right.length && left.every((value, index) => value === right[index]);
+function providerMemberKeyEquals(
+  left: ProviderMemberKey | undefined,
+  right: ProviderMemberKey | undefined,
+): boolean {
+  return left === undefined
+    ? right === undefined
+    : right !== undefined
+      && left.kind === right.kind
+      && left.name === right.name;
 }
 
-function fieldFactArrayEquals(left: readonly FieldFact[] | undefined, right: readonly FieldFact[] | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return left.length === right.length && left.every((value, index) => fieldFactEquals(value, right[index]!));
+function providerTypeFamilyVariantArrayEquals(
+  left: readonly ProviderTypeFamilyVariantFact[],
+  right: readonly ProviderTypeFamilyVariantFact[],
+): boolean {
+  return left.length === right.length
+    && left.every((variant, index) => {
+      const candidate = right[index]!;
+      return variant.sourceTypeArgumentCount === candidate.sourceTypeArgumentCount
+        && providerDeclarationIdentityEquals(variant.declaration, candidate.declaration);
+    });
 }
 
 function fieldFactEquals(left: FieldFact, right: FieldFact): boolean {
-  return left.name === right.name && left.type === right.type && left.readonly === right.readonly;
-}
-
-function targetTypeRefArrayEquals(left: readonly TargetTypeRef[] | undefined, right: readonly TargetTypeRef[] | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return left.length === right.length && left.every((value, index) => targetTypeRefEquals(value, right[index]!));
-}
-
-function targetBindingFactEquals(left: TargetBindingFact, right: TargetBindingFact): boolean {
-  return left.id === right.id
-    && left.sourceName === right.sourceName
-    && left.targetName === right.targetName
-    && left.target === right.target
-    && left.kind === right.kind
-    && targetTypeParameterArrayEquals(left.typeParameters, right.typeParameters)
-    && targetMemberArrayEquals(left.members, right.members)
-    && targetConstraintArrayEquals(left.implementedContracts, right.implementedContracts);
-}
-
-function targetMemberArrayEquals(left: readonly TargetMember[] | undefined, right: readonly TargetMember[] | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return left.length === right.length && left.every((value, index) => targetMemberEquals(value, right[index]!));
-}
-
-function targetMemberEquals(left: TargetMember, right: TargetMember): boolean {
-  return left.id === right.id
-    && left.sourceName === right.sourceName
-    && left.targetName === right.targetName
-    && left.kind === right.kind
-    && left.static === right.static
-    && targetParameterArrayEquals(left.parameters, right.parameters)
-    && optionalTargetTypeRefEquals(left.returnType, right.returnType)
-    && targetTypeParameterArrayEquals(left.typeParameters, right.typeParameters)
-    && left.overloadGroup === right.overloadGroup
-    && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration);
-}
-
-function optionalTargetParameterEquals(left: TargetParameter | undefined, right: TargetParameter | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
-  }
-  return targetParameterEquals(left, right);
-}
-
-function targetParameterArrayEquals(left: readonly TargetParameter[], right: readonly TargetParameter[]): boolean {
-  return left.length === right.length && left.every((value, index) => targetParameterEquals(value, right[index]!));
-}
-
-function targetParameterEquals(left: TargetParameter, right: TargetParameter): boolean {
   return left.name === right.name
-    && targetTypeRefEquals(left.type, right.type)
-    && left.passingMode === right.passingMode
-    && left.optional === right.optional
-    && left.paramsArray === right.paramsArray;
+    && left.type === right.type
+    && left.readonly === right.readonly;
 }
 
-function targetTypeParameterArrayEquals(left: readonly TargetTypeParameter[] | undefined, right: readonly TargetTypeParameter[] | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
+function optionalFieldArrayEquals(
+  left: readonly FieldFact[] | undefined,
+  right: readonly FieldFact[] | undefined,
+): boolean {
+  return left === undefined
+    ? right === undefined
+    : right !== undefined
+      && left.length === right.length
+      && left.every((field, index) => fieldFactEquals(field, right[index]!));
+}
+
+function optionalIdentityArrayEquals(
+  left: readonly ExtensionFactSubject[] | undefined,
+  right: readonly ExtensionFactSubject[] | undefined,
+): boolean {
+  return left === undefined
+    ? right === undefined
+    : right !== undefined && identityArrayEquals(left, right);
+}
+
+function identityArrayEquals(
+  left: readonly ExtensionFactSubject[],
+  right: readonly ExtensionFactSubject[],
+): boolean {
+  return left.length === right.length
+    && left.every((subject, index) => subject === right[index]);
+}
+
+function stringArrayEquals(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length
+    && left.every((value, index) => value === right[index]);
+}
+
+function exactRecord(
+  value: unknown,
+  name: string,
+  allowedFields: readonly string[],
+): Readonly<Record<string, unknown>> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`${name} must be an object.`);
   }
-  return left.length === right.length && left.every((value, index) => targetTypeParameterEquals(value, right[index]!));
-}
-
-function targetTypeParameterEquals(left: TargetTypeParameter, right: TargetTypeParameter): boolean {
-  return left.name === right.name
-    && left.variance === right.variance
-    && targetConstraintArrayEquals(left.constraints, right.constraints);
-}
-
-function targetConstraintArrayEquals(left: readonly TargetConstraint[] | undefined, right: readonly TargetConstraint[] | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
+  const allowed = new Set(allowedFields);
+  const captured: Record<string, unknown> = {};
+  for (const key of Reflect.ownKeys(value)) {
+    if (typeof key !== "string" || !allowed.has(key)) {
+      throw new Error(`${name} contains unsupported field '${String(key)}'.`);
+    }
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (descriptor === undefined || !("value" in descriptor)) {
+      throw new Error(`${name}.${key} must be an own data property.`);
+    }
+    captured[key] = descriptor.value;
   }
-  return left.length === right.length && left.every((value, index) => targetConstraintEquals(value, right[index]!));
+  return captured;
 }
 
-function targetConstraintEquals(left: TargetConstraint, right: TargetConstraint): boolean {
-  if (left.kind !== right.kind) {
-    return false;
+function requiredString(record: Readonly<Record<string, unknown>>, field: string, name: string): string {
+  const value = record[field];
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`${name}.${field} must be a non-empty string.`);
   }
-  switch (left.kind) {
-    case "implements":
-      return right.kind === "implements"
-        && left.contract === right.contract
-        && targetTypeRefArrayEquals(left.typeArguments, right.typeArguments);
-    case "lifetime":
-      return right.kind === "lifetime" && left.name === right.name;
-    case "target-specific":
-      return right.kind === "target-specific" && left.target === right.target && left.name === right.name && Object.is(left.value, right.value);
-    case "value-type":
-    case "reference-type":
-    case "constructible":
-    case "unmanaged":
-    case "copy":
-    case "clone":
-    case "default":
-    case "sized":
-      return true;
+  return value;
+}
+
+function optionalString(record: Readonly<Record<string, unknown>>, field: string, name: string): string | undefined {
+  const value = record[field];
+  if (value === undefined) {
+    return undefined;
   }
-}
-
-function optionalTargetOperationFactEquals(left: TargetOperationFact | undefined, right: TargetOperationFact | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
+  if (typeof value !== "string") {
+    throw new Error(`${name}.${field} must be a string when present.`);
   }
-  return targetOperationFactEquals(left, right);
+  return value;
 }
 
-function targetOperationFactEquals(left: TargetOperationFact, right: TargetOperationFact): boolean {
-  return left.operationId === right.operationId
-    && left.operationKind === right.operationKind
-    && left.targetOperation === right.targetOperation
-    && left.resultType === right.resultType
-    && optionalTargetOperationProvenanceEquals(left.provenance, right.provenance);
-}
-
-function optionalTargetOperationProvenanceEquals(left: TargetOperationProvenance | undefined, right: TargetOperationProvenance | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
+function optionalStringFields(
+  record: Readonly<Record<string, unknown>>,
+  name: string,
+  fields: readonly string[],
+): Readonly<Record<string, string>> {
+  const result: Record<string, string> = {};
+  for (const field of fields) {
+    const value = optionalString(record, field, name);
+    if (value !== undefined) {
+      result[field] = value;
+    }
   }
-  return optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration)
-    && left.sourceExpression === right.sourceExpression
-    && left.sourceReceiver === right.sourceReceiver
-    && left.sourceCallee === right.sourceCallee
-    && left.sourceSelectedSymbol === right.sourceSelectedSymbol
-    && left.sourceSelectedDeclaration === right.sourceSelectedDeclaration
-    && left.sourceSelectedSignature === right.sourceSelectedSignature
-    && left.sourceResultType === right.sourceResultType;
+  return result;
 }
 
-function sourceSelectedMethodTypeArgumentArrayEquals(left: readonly SourceSelectedMethodTypeArgument[] | undefined, right: readonly SourceSelectedMethodTypeArgument[] | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
+function requiredBoolean(record: Readonly<Record<string, unknown>>, field: string, name: string): boolean {
+  const value = record[field];
+  if (typeof value !== "boolean") {
+    throw new Error(`${name}.${field} must be a boolean.`);
   }
-  if (left.length !== right.length) {
-    return false;
+  return value;
+}
+
+function optionalBoolean(record: Readonly<Record<string, unknown>>, field: string, name: string): boolean | undefined {
+  const value = record[field];
+  if (value !== undefined && typeof value !== "boolean") {
+    throw new Error(`${name}.${field} must be a boolean when present.`);
   }
-  return left.every((argument, index) => sourceSelectedMethodTypeArgumentEquals(argument, right[index]!));
+  return value as boolean | undefined;
 }
 
-function sourceSelectedMethodTypeArgumentEquals(left: SourceSelectedMethodTypeArgument, right: SourceSelectedMethodTypeArgument): boolean {
-  return left.typeParameterName === right.typeParameterName
-    && left.typeParameter === right.typeParameter
-    && left.selectedType === right.selectedType
-    && left.explicitTypeNode === right.explicitTypeNode;
-}
-
-function optionalRuntimeCarrierProvenanceEquals(left: RuntimeCarrierProvenance | undefined, right: RuntimeCarrierProvenance | undefined): boolean {
-  if (left === undefined || right === undefined) {
-    return left === right;
+function requiredSafeInteger(record: Readonly<Record<string, unknown>>, field: string, name: string): number {
+  const value = record[field];
+  if (!Number.isSafeInteger(value)) {
+    throw new Error(`${name}.${field} must be a safe integer.`);
   }
-  return left.sourceType === right.sourceType
-    && left.sourceTypeReference === right.sourceTypeReference
-    && left.sourceSymbol === right.sourceSymbol
-    && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration);
+  return value as number;
 }
 
-function targetTypeRefEquals(left: TargetTypeRef, right: TargetTypeRef): boolean {
-  if (left.kind !== right.kind) {
-    return false;
+function optionalSafeInteger(record: Readonly<Record<string, unknown>>, field: string, name: string): number | undefined {
+  const value = record[field];
+  if (value === undefined) {
+    return undefined;
   }
-  switch (left.kind) {
-    case "source-primitive":
-      return right.kind === "source-primitive" && left.name === right.name;
-    case "target-named":
-      return right.kind === "target-named"
-        && left.id === right.id
-        && targetTypeRefListEquals(left.typeArguments ?? [], right.typeArguments ?? []);
-    case "type-parameter":
-      return right.kind === "type-parameter" && left.name === right.name;
-    case "array":
-      return right.kind === "array" && left.rank === right.rank && targetTypeRefEquals(left.element, right.element);
-    case "tuple":
-      return right.kind === "tuple" && targetTypeRefListEquals(left.elements, right.elements);
-    case "pointer":
-      return right.kind === "pointer" && left.mutability === right.mutability && targetTypeRefEquals(left.pointee, right.pointee);
-    case "function-pointer":
-      return right.kind === "function-pointer"
-        && targetTypeRefListEquals(left.args, right.args)
-        && targetTypeRefEquals(left.result, right.result)
-        && stringListEquals(left.abi ?? [], right.abi ?? []);
-    case "opaque":
-      return right.kind === "opaque" && left.id === right.id;
-    case "associated-type":
-      return right.kind === "associated-type" && left.name === right.name && targetTypeRefEquals(left.owner, right.owner);
-    case "lifetime":
-      return right.kind === "lifetime" && left.name === right.name;
-    case "target-specific":
-      return right.kind === "target-specific" && left.target === right.target && left.name === right.name && Object.is(left.value, right.value);
+  if (!Number.isSafeInteger(value)) {
+    throw new Error(`${name}.${field} must be a safe integer when present.`);
   }
+  return value as number;
 }
 
-function targetTypeRefListEquals(left: readonly TargetTypeRef[], right: readonly TargetTypeRef[]): boolean {
-  return left.length === right.length && left.every((item, index) => targetTypeRefEquals(item, right[index]!));
+function requiredSubject(
+  record: Readonly<Record<string, unknown>>,
+  field: string,
+  name: string,
+): ExtensionFactSubject {
+  const value = record[field];
+  if (typeof value !== "object" || value === null) {
+    throw new Error(`${name}.${field} must be an identity-bearing object.`);
+  }
+  return value;
 }
 
-function stringListEquals(left: readonly string[], right: readonly string[]): boolean {
-  return left.length === right.length && left.every((item, index) => item === right[index]);
+function optionalSubject(
+  record: Readonly<Record<string, unknown>>,
+  field: string,
+  name: string,
+): ExtensionFactSubject | undefined {
+  const value = record[field];
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "object" || value === null) {
+    throw new Error(`${name}.${field} must be an identity-bearing object when present.`);
+  }
+  return value;
 }
+
+function requiredNode(
+  record: Readonly<Record<string, unknown>>,
+  field: string,
+  name: string,
+): Node {
+  const value = requiredSubject(record, field, name);
+  if (!("Kind" in value) || typeof value.Kind !== "number") {
+    throw new Error(`${name}.${field} must be a compiler source node.`);
+  }
+  return value as Node;
+}
+
+function optionalNode(
+  record: Readonly<Record<string, unknown>>,
+  field: string,
+  name: string,
+): Node | undefined {
+  return record[field] === undefined ? undefined : requiredNode(record, field, name);
+}
+
+function requiredArray<T>(
+  value: unknown,
+  name: string,
+  snapshot: (element: T) => T,
+): readonly T[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${name} must be an array.`);
+  }
+  return Object.freeze(value.map((element) => snapshot(element as T)));
+}
+
+function optionalArray<T>(
+  value: unknown,
+  name: string,
+  snapshot: (element: T) => T,
+): readonly T[] | undefined {
+  return value === undefined ? undefined : requiredArray(value, name, snapshot);
+}
+
+function subjectArray(value: unknown, name: string): readonly ExtensionFactSubject[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${name} must be an array.`);
+  }
+  return Object.freeze(value.map((subject, index) => {
+    if (typeof subject !== "object" || subject === null) {
+      throw new Error(`${name}[${index}] must be an identity-bearing object.`);
+    }
+    return subject;
+  }));
+}
+
+function nodeArray(value: unknown, name: string): readonly Node[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${name} must be an array.`);
+  }
+  return Object.freeze(value.map((node, index) => {
+    if (
+      typeof node !== "object" ||
+      node === null ||
+      !("Kind" in node) ||
+      typeof node.Kind !== "number"
+    ) {
+      throw new Error(`${name}[${index}] must be a compiler source node.`);
+    }
+    return node as Node;
+  }));
+}
+
+function optionalSubjectArray(value: unknown, name: string): readonly ExtensionFactSubject[] | undefined {
+  return value === undefined ? undefined : subjectArray(value, name);
+}
+
+function optionalNodeArray(value: unknown, name: string): readonly Node[] | undefined {
+  return value === undefined ? undefined : nodeArray(value, name);
+}
+
+function stringArray(value: unknown, name: string): readonly string[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${name} must be an array.`);
+  }
+  return Object.freeze(value.map((element, index) => {
+    if (typeof element !== "string") {
+      throw new Error(`${name}[${index}] must be a string.`);
+    }
+    return element;
+  }));
+}
+
+const canonicalIdentityKinds = new Set<ExtensionCanonicalIdentityKind>([
+  "module",
+  "package",
+  "export",
+  "local-alias",
+  "symbol",
+  "type",
+  "signature",
+  "instantiated-type",
+]);
+const importKinds = new Set<ExtensionImportKind>(["type", "value", "namespace", "unknown"]);
+const sourcePrimitiveKinds = new Set<SourcePrimitiveKind>([
+  "bool",
+  "char",
+  "int8",
+  "uint8",
+  "int16",
+  "uint16",
+  "int32",
+  "uint32",
+  "int64",
+  "uint64",
+  "native-int",
+  "native-uint",
+  "float16",
+  "float32",
+  "float64",
+  "decimal",
+  "int128",
+  "uint128",
+]);
+const sourceRuntimeBases = new Set<SourcePrimitiveFact["runtimeBase"]>([
+  "boolean",
+  "number",
+  "bigint",
+  "string",
+  "object",
+]);
+const pointerMutabilities = new Set<SourcePointerMutability>(["readonly", "readwrite", "unspecified"]);
+const flowStates = new Set<FlowStateFact["state"]>(["moved", "borrowed-shared", "borrowed-mut"]);
+const providerWellKnownSymbolNames = new Set<ProviderWellKnownSymbolName>([
+  "asyncIterator",
+  "hasInstance",
+  "isConcatSpreadable",
+  "iterator",
+  "match",
+  "matchAll",
+  "replace",
+  "search",
+  "species",
+  "split",
+  "toPrimitive",
+  "toStringTag",
+  "unscopables",
+]);

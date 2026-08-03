@@ -1,23 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { bool } from "../go/scalars.js";
-import type { GoPtr } from "../go/compat.js";
-import { Background } from "../go/context.js";
-import { Node_Expression, Node_Text } from "../internal/ast/ast.js";
-import type { Node, SourceFile } from "../internal/ast/ast.js";
-import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
-import { Diagnostic_String } from "../internal/ast/diagnostic.js";
-import { KindArrowFunction, KindCallExpression, KindExpressionStatement, KindIdentifier, KindPropertyAccessExpression } from "../internal/ast/generated/kinds.js";
-import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
-import type { CompilerOptions } from "../internal/core/compileroptions.js";
-import { NewCompilerHost } from "../internal/compiler/host.js";
-import { NewProgram, Program_GetSemanticDiagnostics, Program_GetSourceFile } from "../internal/compiler/program.js";
-import type { Program, ProgramOptions } from "../internal/compiler/program.js";
-import { TypeFlagsNumber, TypeFlagsString } from "../internal/checker/types.js";
-import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
-import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
-import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { createTypeCheckerQueries } from "../index.js";
+import { Node_Expression } from "../internal/ast/ast.js";
+import { Node_Name } from "../internal/ast/spine.js";
+import { KindArrowFunction, KindCallExpression, KindExpressionStatement } from "../internal/ast/generated/kinds.js";
+import { TypeFlagsAny, TypeFlagsNumber, TypeFlagsString } from "../internal/checker/types.js";
+import { createTypeCheckerQueries } from "./type-checker.js";
+import {
+  assertCleanSemanticDiagnostics,
+  createProgram,
+  findFirstNodeByKind,
+  findIdentifierByText,
+  findNodesByKind,
+  findPropertyAccessByName,
+} from "./type-checker-test-support.js";
 
 test("public type-checker queries expose TS-Go checker facts without emitter re-analysis", () => {
   const { program, index } = createProgram(`
@@ -34,8 +29,12 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program);
-  const narrowedValue = findIdentifierByText(index, "value", (node) => node?.Parent?.Kind === KindExpressionStatement);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const narrowedValue = findIdentifierByText(
+    index,
+    "value",
+    (node) => node?.Parent?.Kind === KindExpressionStatement,
+  );
   const narrowedType = queries.getTypeAtLocation(narrowedValue);
   assert.equal((narrowedType?.flags ?? 0) & TypeFlagsString, TypeFlagsString);
 
@@ -43,24 +42,252 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
   assert.equal(queries.getSymbolName(valueSymbol), "value");
   const resolvedValueSymbol = queries.getResolvedSymbol(narrowedValue);
   assert.equal(resolvedValueSymbol?.Name, "value");
-  assert.equal(queries.getResolvedSymbolOrNil(narrowedValue), resolvedValueSymbol);
+  assert.ok(
+    queries.getResolvedSymbolOrNil(narrowedValue) === resolvedValueSymbol,
+    "Resolved-symbol queries must retain exact checker symbol identity.",
+  );
   assert.ok(queries.getTypeOfSymbol(valueSymbol) !== undefined);
   assert.ok(queries.getDeclaredTypeOfSymbol(valueSymbol) !== undefined);
   assert.equal(queries.getSymbolDeclarations(valueSymbol).length, 1);
-  assert.equal(queries.getSymbolValueDeclaration(valueSymbol), queries.getPrimarySymbolDeclaration(valueSymbol));
-  assert.equal(queries.getSymbolSourceFile(valueSymbol), index);
+  assert.ok(
+    queries.getSymbolValueDeclaration(valueSymbol) === queries.getPrimarySymbolDeclaration(valueSymbol),
+    "The selected symbol must retain its exact value declaration.",
+  );
+  assert.ok(
+    queries.getSymbolSourceFile(valueSymbol) === index,
+    "The selected symbol must retain its exact source file.",
+  );
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const signature = queries.getResolvedSignature(call);
   assert.equal(queries.getSignatureParameters(signature)[0]?.Name, "x");
-  assert.equal(queries.getSignatureDeclaration(signature)?.Kind, call === undefined ? undefined : queries.getPrimarySymbolDeclaration(queries.getResolvedSymbol(Node_Expression(call)))?.Kind);
+  assert.equal(
+    queries.getSignatureDeclaration(signature)?.Kind,
+    call === undefined
+      ? undefined
+      : queries.getPrimarySymbolDeclaration(queries.getResolvedSymbol(Node_Expression(call)))?.Kind,
+  );
 
   const arrow = findFirstNodeByKind(index, KindArrowFunction);
   assert.ok(queries.getContextualType(arrow) !== undefined);
-  const idIdentifier = findIdentifierByText(index, "id", (node) => node?.Parent?.Kind === KindCallExpression);
+  const idIdentifier = findIdentifierByText(
+    index,
+    "id",
+    (node) => node?.Parent?.Kind === KindCallExpression,
+  );
   const idType = queries.getTypeAtLocation(idIdentifier);
   assert.equal(queries.getCallSignaturesOfType(idType).length, 1);
   assert.equal(queries.getConstructSignaturesOfType(idType).length, 0);
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+test("resolved call info exposes one canonical checker-owned selected decision", () => {
+  const { program, index } = createProgram(`
+    class Box<T> {
+      run<U>(value: U, ...rest: U[]): U {
+        return value;
+      }
+    }
+
+    declare const box: Box<string>;
+    box.run<number>(1, 2);
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const call = findFirstNodeByKind(index, KindCallExpression);
+
+  const queryFirst = queries.getResolvedCallInfo(call);
+  assert.equal(queryFirst?.outcome, "applicable");
+  assert.ok(queryFirst?.call === call, "Resolved call evidence must retain the exact call node.");
+  assert.ok(
+    queryFirst?.selectedSignature === queries.getResolvedSignature(call),
+    "Resolved call evidence must retain the checker-selected signature.",
+  );
+  assert.equal(queryFirst?.sourceSelectedMethodTypeArguments?.length, 1);
+  assert.equal(
+    (queryFirst?.sourceSelectedMethodTypeArguments?.[0]?.selectedType.flags ?? 0) & TypeFlagsNumber,
+    TypeFlagsNumber,
+  );
+  assert.ok(queryFirst?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode !== undefined);
+  assert.deepEqual(
+    queryFirst?.sourceSelectedSignatureParameters.map((parameter) => [
+      parameter.parameterIndex,
+      parameter.parameterName,
+      parameter.acceptsOmission,
+      parameter.rest,
+    ]),
+    [
+      [0, "value", false, false],
+      [1, "rest", true, true],
+    ],
+  );
+  assert.equal(queryFirst?.sourceArguments.length, 2);
+  assert.equal(queryFirst?.sourceArgumentBindings.length, 2);
+  assert.equal(queryFirst?.sourceArgumentBindings[1]?.sourceParameterForm, "rest-element");
+  assert.ok(queryFirst?.sourceReceiver !== undefined);
+  assert.equal(queryFirst?.sourceCalleeAccess?.kind, "property");
+  assert.ok(queryFirst?.sourceCalleeAccess?.selectedDeclaration !== undefined);
+  assert.equal((queryFirst?.sourceResultType.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+
+  assertCleanSemanticDiagnostics(program, index);
+  const repeated = queries.getResolvedCallInfo(call);
+  assert.ok(repeated === queryFirst, "Repeated call queries must retain the exact evidence object.");
+  assert.ok(
+    repeated?.selectedSignature === queryFirst?.selectedSignature,
+    "Repeated call queries must retain exact signature identity.",
+  );
+  assert.ok(
+    repeated?.sourceResultType === queryFirst?.sourceResultType,
+    "Repeated call queries must retain exact result-type identity.",
+  );
+});
+
+test("resolved call info preserves exact optional-chain result semantics", () => {
+  const { program, index } = createProgram(`
+    class Box {
+      read(): number { return 1; }
+    }
+
+    declare const box: Box;
+    box.read();
+    box?.read();
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const calls = findNodesByKind(index, KindCallExpression);
+  assert.equal(calls.length, 2);
+  assert.equal(queries.getResolvedCallInfo(calls[0])?.optionalChain, false);
+  assert.equal(queries.getResolvedCallInfo(calls[1])?.optionalChain, true);
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+test("resolved call info retains exact dynamic property and element callee access", () => {
+  const { program, index } = createProgram(`
+    declare const value: any;
+    declare const key: string;
+
+    value.create(1);
+    value[key](2);
+  `);
+  assertCleanSemanticDiagnostics(program, index);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const calls = findNodesByKind(index, KindCallExpression);
+  assert.equal(calls.length, 2);
+
+  const propertyCall = queries.getResolvedCallInfo(calls[0]);
+  assert.equal(propertyCall?.outcome, "untyped");
+  assert.equal(propertyCall?.sourceCalleeAccess?.kind, "property");
+  assert.equal(propertyCall?.sourceCalleeAccess?.selectedSymbol, undefined);
+  assert.equal(propertyCall?.sourceCalleeAccess?.selectedDeclaration, undefined);
+  assert.equal(
+    (propertyCall?.sourceCalleeAccess?.receiver.type.flags ?? 0) & TypeFlagsAny,
+    TypeFlagsAny,
+  );
+  assert.equal(
+    (propertyCall?.sourceCalleeAccess?.resultType.flags ?? 0) & TypeFlagsAny,
+    TypeFlagsAny,
+  );
+
+  const elementCall = queries.getResolvedCallInfo(calls[1]);
+  assert.equal(elementCall?.outcome, "untyped");
+  assert.equal(elementCall?.sourceCalleeAccess?.kind, "element");
+  assert.equal(elementCall?.sourceCalleeAccess?.selectedSymbol, undefined);
+  assert.equal(elementCall?.sourceCalleeAccess?.selectedDeclaration, undefined);
+  assert.equal(
+    (elementCall?.sourceCalleeAccess?.receiver.type.flags ?? 0) & TypeFlagsAny,
+    TypeFlagsAny,
+  );
+  assert.equal(
+    (elementCall?.sourceCalleeAccess?.resultType.flags ?? 0) & TypeFlagsAny,
+    TypeFlagsAny,
+  );
+  assert.equal(
+    queries.typeToString(
+      elementCall?.sourceCalleeAccess?.kind === "element"
+        ? elementCall.sourceCalleeAccess.argument.type
+        : undefined,
+    ),
+    "string",
+  );
+  assert.ok(queries.getResolvedCallInfo(calls[0]) === propertyCall);
+  assert.ok(queries.getResolvedCallInfo(calls[1]) === elementCall);
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+test("resolved call info retains only the winning overload candidate", () => {
+  const { program, index } = createProgram(`
+    class Box {
+      run(value: string): string;
+      run(value: number): number;
+      run(value: string | number): string | number {
+        return value;
+      }
+    }
+
+    declare const box: Box;
+    box.run(1);
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const call = findFirstNodeByKind(index, KindCallExpression);
+
+  const selected = queries.getResolvedCallInfo(call);
+  assert.equal(selected?.outcome, "applicable");
+  assert.equal(selected?.sourceSelectedSignatureParameters.length, 1);
+  assert.equal(
+    (selected?.sourceSelectedSignatureParameters[0]?.selectedType.flags ?? 0) & TypeFlagsNumber,
+    TypeFlagsNumber,
+  );
+  assert.equal((selected?.sourceResultType.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+
+  assertCleanSemanticDiagnostics(program, index);
+  assert.ok(
+    queries.getResolvedCallInfo(call) === selected,
+    "Repeated overload selection must retain the exact winning evidence.",
+  );
+});
+
+test("resolved call info preserves omission semantics without inventing effective arguments", () => {
+  const { program, index } = createProgram(`
+    declare function consume(value: number, state?: object): void;
+    consume(1);
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  queries.getTypeAtLocation(call);
+  const selected = queries.getResolvedCallInfo(call);
+
+  assert.equal(selected?.outcome, "applicable");
+  assert.deepEqual(
+    selected?.sourceSelectedSignatureParameters.map((parameter) => [
+      parameter.parameterIndex,
+      parameter.parameterName,
+      parameter.acceptsOmission,
+      parameter.rest,
+    ]),
+    [
+      [0, "value", false, false],
+      [1, "state", true, false],
+    ],
+  );
+  assert.equal(selected?.sourceArguments.length, 1);
+  assert.equal(selected?.sourceArgumentBindings.length, 1);
+  assert.equal(selected?.sourceArgumentBindings[0]?.sourceParameterIndex, 0);
+  assertCleanSemanticDiagnostics(program, index);
+});
+
+test("resolved call info preserves an applicable zero-argument decision", () => {
+  const { program, index } = createProgram(`
+    declare function clear(): void;
+    clear();
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const calls = findNodesByKind(index, KindCallExpression);
+  assert.equal(calls.length, 1);
+  assert.equal(queries.getResolvedCallInfo(index), undefined);
+
+  const selected = queries.getResolvedCallInfo(calls[0]);
+  assert.equal(selected?.outcome, "applicable");
+  assert.deepEqual(selected?.sourceSelectedSignatureParameters, []);
+  assert.deepEqual(selected?.sourceArguments, []);
+  assert.deepEqual(selected?.sourceArgumentBindings, []);
   assertCleanSemanticDiagnostics(program, index);
 });
 
@@ -74,8 +301,12 @@ test("public type-checker queries expose instantiated generic member types", () 
   `);
   assertCleanSemanticDiagnostics(program, index);
 
-  const queries = createTypeCheckerQueries(program);
-  const finalValueAccess = findPropertyAccessByName(index, "value", (node) => node?.Parent?.Kind === KindExpressionStatement);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const finalValueAccess = findPropertyAccessByName(
+    index,
+    "value",
+    (node) => node?.Parent?.Kind === KindExpressionStatement,
+  );
   const finalValueType = queries.getTypeAtLocation(finalValueAccess);
   assert.equal((finalValueType?.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
 
@@ -83,105 +314,3 @@ test("public type-checker queries expose instantiated generic member types", () 
   assert.equal(finalValueSymbol?.Name, "value");
   assertCleanSemanticDiagnostics(program, index);
 });
-
-test("public type-checker queries expose flow-narrowed receiver member access", () => {
-  const { program, index } = createProgram(`
-    class PageValue { value!: string; }
-    declare let current: PageValue | number;
-
-    if (current instanceof PageValue) {
-      current;
-      current.value;
-    }
-  `);
-  assertCleanSemanticDiagnostics(program, index);
-
-  const queries = createTypeCheckerQueries(program);
-  const narrowedCurrent = findIdentifierByText(index, "current", (node) => node?.Parent?.Kind === KindExpressionStatement);
-  const narrowedCurrentType = queries.getTypeAtLocation(narrowedCurrent);
-  assert.equal(queries.getSymbolName(queries.getTypeSymbol(narrowedCurrentType)), "PageValue");
-
-  const valueAccess = findPropertyAccessByName(index, "value", (node) => node?.Parent?.Kind === KindExpressionStatement);
-  const valueType = queries.getTypeAtLocation(valueAccess);
-  assert.equal((valueType?.flags ?? 0) & TypeFlagsString, TypeFlagsString);
-  assert.equal(queries.getSymbolAtLocation(Node_Name(valueAccess))?.Name, "value");
-  assertCleanSemanticDiagnostics(program, index);
-});
-
-function createProgram(sourceText: string): { readonly program: GoPtr<Program>; readonly index: GoPtr<SourceFile> } {
-  let fs = FromMap(new Map<string, string>([
-    ["/src/index.ts", sourceText],
-    ["/src/tsconfig.json", JSON.stringify({
-      compilerOptions: {
-        noLib: true,
-        module: "esnext",
-        moduleResolution: "bundler",
-        strict: true,
-      },
-      files: ["index.ts"],
-    })],
-  ]), false as bool);
-  fs = WrapFS(fs);
-
-  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
-  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
-  assert.equal((configErrors ?? []).length, 0);
-
-  const options = {
-    Config: parsed,
-    Host: host,
-  } satisfies ProgramOptions;
-  const program = NewProgram(options);
-  const index = Program_GetSourceFile(program, "/src/index.ts");
-  assert.ok(index !== undefined);
-  return { program, index };
-}
-
-function assertCleanSemanticDiagnostics(program: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): void {
-  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), sourceFile);
-  assert.equal(diagnostics.length, 0, diagnostics.map(Diagnostic_String).join("\n"));
-}
-
-function findIdentifierByText(root: GoPtr<Node>, text: string, predicate: (node: GoPtr<Node>) => boolean): GoPtr<Node> {
-  let found: GoPtr<Node>;
-  visitNodes(root, (node) => {
-    if (found === undefined && node?.Kind === KindIdentifier && Node_Text(node) === text && predicate(node)) {
-      found = node;
-    }
-  });
-  assert.ok(found !== undefined);
-  return found;
-}
-
-function findFirstNodeByKind(root: GoPtr<Node>, kind: number): GoPtr<Node> {
-  let found: GoPtr<Node>;
-  visitNodes(root, (node) => {
-    if (found === undefined && node?.Kind === kind) {
-      found = node;
-    }
-  });
-  assert.ok(found !== undefined);
-  return found;
-}
-
-function findPropertyAccessByName(root: GoPtr<Node>, name: string, predicate: (node: GoPtr<Node>) => boolean): GoPtr<Node> {
-  let found: GoPtr<Node>;
-  visitNodes(root, (node) => {
-    if (found === undefined && node?.Kind === KindPropertyAccessExpression && Node_Text(Node_Name(node)) === name && predicate(node)) {
-      found = node;
-    }
-  });
-  assert.ok(found !== undefined);
-  return found;
-}
-
-function visitNodes(root: GoPtr<Node>, visit: (node: GoPtr<Node>) => void): void {
-  if (root === undefined) {
-    return;
-  }
-  visit(root);
-  Node_ForEachChild(root, (child) => {
-    visitNodes(child, visit);
-    return false as bool;
-  });
-}

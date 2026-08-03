@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsForTranspileInvocation, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, diagnosticHeadlineText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseBaselineSections, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, sortDiagnosticsForBaseline, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
+import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsForTranspileInvocation, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, diagnosticHeadlineText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationAliasTarget, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseBaselineSections, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, sortDiagnosticsForBaseline, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
 
 test("parseFileBasedTest materializes single-file tests", () => {
   const parsed = parseFileBasedTest("const value: number = 1;", "single.ts");
@@ -76,6 +76,13 @@ test("harnessApiDeclarationFileNames discovers TypeScript API virtual declaratio
 // @filename: index.ts
 import ts = require("typescript");`, "api.ts");
   assert.deepEqual(harnessApiDeclarationFileNames(parsed), ["tsserverlibrary.internal.d.ts", "typescript.d.ts"]);
+});
+
+test("harness API declaration aliases cover the complete TypeScript API family", () => {
+  assert.equal(harnessApiDeclarationAliasTarget("typescript.d.ts"), "");
+  assert.equal(harnessApiDeclarationAliasTarget("typescript.internal.d.ts"), "typescript.d.ts");
+  assert.equal(harnessApiDeclarationAliasTarget("tsserverlibrary.d.ts"), "typescript.d.ts");
+  assert.equal(harnessApiDeclarationAliasTarget("tsserverlibrary.internal.d.ts"), "tsserverlibrary.d.ts");
 });
 
 test("compilerOptionsFromSettings maps supported TS-Go directives", () => {
