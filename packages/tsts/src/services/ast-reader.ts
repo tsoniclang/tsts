@@ -78,7 +78,7 @@ export interface AstReader {
   readonly properties: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   /** Returns the exact `?` token owned by nodes whose schema permits one. */
   readonly questionToken: (node: GoPtr<Node>) => GoPtr<Node>;
-  /** Returns the exact operator kind name for binary and update expressions. */
+  /** Returns the exact operator kind name for binary, update, and type-operator syntax. */
   readonly operatorKindName: (node: GoPtr<Node>) => string | undefined;
   readonly modifiers: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly modifierFlags: (node: GoPtr<Node>) => number;
@@ -191,6 +191,10 @@ function operatorKindName(node: GoPtr<Node>): string | undefined {
   }
   if (predicates.IsPostfixUnaryExpression(node)) {
     const operator = casts.AsPostfixUnaryExpression(node)?.Operator;
+    return operator === undefined ? undefined : KindString(operator);
+  }
+  if (predicates.IsTypeOperatorNode(node)) {
+    const operator = casts.AsTypeOperatorNode(node)?.Operator;
     return operator === undefined ? undefined : KindString(operator);
   }
   return undefined;

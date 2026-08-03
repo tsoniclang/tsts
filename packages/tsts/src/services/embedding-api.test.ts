@@ -231,7 +231,7 @@ test("public AST reader exposes TS-Go's exact const-assertion classification", (
   assert.equal(checked.ast.isConstAssertion(sourceFile), false);
 });
 
-test("public AST reader exposes exact binary and update operator kinds", () => {
+test("public AST reader exposes exact expression and type operator kinds", () => {
   const session = createCompilerSessionFromFiles({
     currentDirectory: "/src",
     rootFiles: ["/src/core.d.ts", "/src/index.ts"],
@@ -243,6 +243,9 @@ test("public AST reader exposes exact binary and update operator kinds", () => {
         "left + right;",
         "++left;",
         "right--;",
+        "type Keys = keyof { value: number };",
+        "type Values = readonly number[];",
+        "declare const identity: unique symbol;",
       ].join("\n"),
     },
     compilerOptions: {
@@ -256,9 +259,19 @@ test("public AST reader exposes exact binary and update operator kinds", () => {
   const binary = findNode(sourceFile, checked.ast, (node) => checked.ast.is.IsBinaryExpression(node));
   const prefix = findNode(sourceFile, checked.ast, (node) => checked.ast.is.IsPrefixUnaryExpression(node));
   const postfix = findNode(sourceFile, checked.ast, (node) => checked.ast.is.IsPostfixUnaryExpression(node));
+  const typeOperators = collectNodes(
+    sourceFile,
+    checked.ast,
+    (node) => checked.ast.is.IsTypeOperatorNode(node),
+  );
   assert.equal(checked.ast.operatorKindName(binary), "KindPlusToken");
   assert.equal(checked.ast.operatorKindName(prefix), "KindPlusPlusToken");
   assert.equal(checked.ast.operatorKindName(postfix), "KindMinusMinusToken");
+  assert.deepEqual(typeOperators.map(checked.ast.operatorKindName), [
+    "KindKeyOfKeyword",
+    "KindReadonlyKeyword",
+    "KindUniqueKeyword",
+  ]);
   assert.equal(checked.ast.operatorKindName(sourceFile), undefined);
 });
 
