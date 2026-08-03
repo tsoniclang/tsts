@@ -14,6 +14,7 @@ import {
   Node_QuestionToken,
   Node_Statements,
   Node_Text,
+  Node_Type,
   Node_TypeArguments,
   Node_TypeParameters,
   SourceFile_FileName,
@@ -71,6 +72,8 @@ export interface AstReader {
   readonly statements: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly members: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly parameters: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
+  /** Returns the exact authored type node owned by syntax whose TS-Go schema permits one. */
+  readonly typeNode: (node: GoPtr<Node>) => GoPtr<Node>;
   readonly typeParameters: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly typeArguments: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly arguments: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
@@ -126,6 +129,7 @@ export function createAstReader(): AstReader {
     statements: (node) => Node_Statements(node) ?? [],
     members: (node) => Node_Members(node) ?? [],
     parameters: (node) => Node_Parameters(node) ?? [],
+    typeNode: (node) => node === undefined ? undefined : Node_Type(node),
     typeParameters: (node) => Node_TypeParameters(node) ?? [],
     typeArguments: (node) => Node_TypeArguments(node) ?? [],
     arguments: (node) => Node_Arguments(node) ?? [],

@@ -195,6 +195,48 @@ test("public AST reader exposes exact optional-parameter question tokens", () =>
   assert.equal(checked.ast.questionToken(sourceFile), undefined);
 });
 
+test("public AST reader exposes exact authored type nodes", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+    files: {
+      "/src/core.d.ts": core,
+      "/src/index.ts": [
+        "type Mapper<T, U> = (value: T) => U;",
+        "function map<T, U>(value: T, mapper: Mapper<T, U>): U {",
+        "  return mapper(value);",
+        "}",
+      ].join("\n"),
+    },
+    compilerOptions: {
+      noLib: true,
+      module: "esnext",
+      moduleResolution: "bundler",
+    },
+  });
+  const checked = session.checkSource();
+  assert.equal(checked.diagnostics.length, 0);
+  const sourceFile = checked.getSourceFile("/src/index.ts");
+  const call = findNode(
+    sourceFile,
+    checked.ast,
+    (node) => checked.ast.is.IsCallExpression(node),
+  );
+  const selected = checked.getSourceFileQueries(sourceFile).checker
+    .getResolvedCallInfo(call);
+  assert.equal(selected?.sourceSelectedSignatureKind, "resolved");
+  const declaration = checked.getSourceFileQueries(sourceFile).checker
+    .getSignatureDeclaration(selected?.selectedSignature);
+  assert.equal(checked.ast.kindName(declaration), "KindFunctionType");
+  const returnType = checked.ast.typeNode(declaration);
+  assert.equal(checked.ast.is.IsTypeReferenceNode(returnType), true);
+  assert.equal(
+    checked.ast.text(checked.ast.as.AsTypeReferenceNode(returnType)?.TypeName),
+    "U",
+  );
+  assert.equal(checked.ast.typeNode(sourceFile), undefined);
+});
+
 test("public AST reader exposes TS-Go's exact const-assertion classification", () => {
   const session = createCompilerSessionFromFiles({
     currentDirectory: "/src",
