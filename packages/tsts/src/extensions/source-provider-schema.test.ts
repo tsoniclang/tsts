@@ -15,6 +15,7 @@ import {
   testCoreDeclarations,
   testNoLibCompilerOptions,
 } from "./source-provider-test-support.js";
+import { getProviderTypeFamilyVariantNominalMemberName } from "./provider-virtual-internal.js";
 
 test("the complete legal provider declaration matrix binds through ordinary source checking", () => {
   const baseSpecifier = "@test/schema-base.js";
@@ -494,6 +495,29 @@ test("type parameters and parameter modes fail closed outside their exact scope"
     name: "Callback",
     kind: "type",
     type: functionType,
+  }]);
+});
+
+test("provider type-family nominal member identity is reserved by the host", () => {
+  const moduleSpecifier = "@test/invalid-model.js";
+  const declaration: ProviderExportDeclaration = {
+    id: "Family",
+    name: "Family",
+    kind: "class",
+    sourceTypeFamily: { exportName: "Family", typeArgumentCount: 0 },
+  };
+  const nominalMemberName = getProviderTypeFamilyVariantNominalMemberName(
+    moduleSpecifier,
+    declaration,
+  );
+  assertInvalidModel("host-owned type-family member collision", [{
+    ...declaration,
+    members: [{
+      id: "Family::collision",
+      name: nominalMemberName,
+      kind: "property",
+      type: { kind: "never" },
+    }],
   }]);
 });
 

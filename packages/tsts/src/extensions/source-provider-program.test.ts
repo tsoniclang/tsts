@@ -235,6 +235,99 @@ test("source type families preserve arity variants and member separation", () =>
   assert.equal(invalid.diagnostics.some((diagnostic) => Diagnostic_Code(diagnostic) === 2339), true);
 });
 
+test("source type family arities remain nominally distinct during overload selection", () => {
+  const moduleSpecifier = "@test/native/builder.js";
+  const model: ProviderDeclarationModel = {
+    moduleSpecifier,
+    providerModuleId: "Test.Native.Builder",
+    exports: [{
+      id: "Builder",
+      name: "Builder",
+      kind: "class",
+      sourceTypeFamily: { exportName: "Builder", typeArgumentCount: 0 },
+      members: [],
+    }, {
+      id: "Builder<TContext>",
+      name: "Builder",
+      kind: "class",
+      sourceTypeFamily: { exportName: "Builder", typeArgumentCount: 1 },
+      typeParameters: [{ name: "TContext" }],
+      heritage: [{
+        kind: "extends",
+        type: { kind: "provider-ref", moduleSpecifier, exportName: "Builder" },
+      }],
+      members: [],
+    }, {
+      id: "configure",
+      name: "configure",
+      kind: "function",
+      signatures: [{
+        id: "configure<TContext>(Builder<TContext>)",
+        typeParameters: [{ name: "TContext" }],
+        parameters: [{
+          name: "builder",
+          type: {
+            kind: "provider-ref",
+            moduleSpecifier,
+            exportName: "Builder",
+            typeArguments: [{ kind: "type-parameter", name: "TContext" }],
+          },
+        }],
+        returnType: { kind: "literal", value: "generic" },
+      }, {
+        id: "configure(Builder)",
+        parameters: [{
+          name: "builder",
+          type: { kind: "provider-ref", moduleSpecifier, exportName: "Builder" },
+        }],
+        returnType: { kind: "literal", value: "plain" },
+      }],
+    }],
+  };
+  const checked = providerSession(model, [
+    `import { configure, type Builder } from "${moduleSpecifier}";`,
+    "declare const plain: Builder;",
+    "declare const generic: Builder<string>;",
+    "export const selectedPlain: \"plain\" = configure(plain);",
+    "export const selectedGeneric: \"generic\" = configure(generic);",
+    "export const genericAsPlain: Builder = generic;",
+  ].join("\n")).checkSource();
+
+  assertNoDiagnostics(checked);
+  const sourceFile = checked.getSourceFile("/src/index.ts");
+  const source = checked.getSourceFileQueries(sourceFile);
+  const calls = findNodes(
+    sourceFile,
+    checked.ast.children,
+    checked.ast.is.IsCallExpression,
+  );
+  assert.deepEqual(
+    calls.map((call) => {
+      const callInfo = source.checker.getResolvedCallInfo(call);
+      assert.equal(callInfo?.outcome, "applicable");
+      return checked.sourceFacts?.getFact(
+        source.checker.getSignatureDeclaration(callInfo.selectedSignature),
+        providerVirtualDeclarationFactKey,
+      )?.signatureId;
+    }),
+    [
+      "configure(Builder)",
+      "configure<TContext>(Builder<TContext>)",
+    ],
+  );
+
+  const invalid = providerSession(model, [
+    `import type { Builder } from "${moduleSpecifier}";`,
+    "declare const plain: Builder;",
+    "export const invalid: Builder<string> = plain;",
+  ].join("\n")).checkSource();
+  assert.equal(
+    invalid.diagnostics.some((diagnostic) => Diagnostic_Code(diagnostic) === 2741),
+    true,
+    invalid.diagnostics.map((diagnostic) => Diagnostic_String(diagnostic)).join("\n"),
+  );
+});
+
 test("provider index signatures expose exact declaration evidence without fabricated symbols", () => {
   const moduleSpecifier = "@test/native/dictionary.js";
   const model: ProviderDeclarationModel = {

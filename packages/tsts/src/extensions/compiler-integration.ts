@@ -1,10 +1,10 @@
 import type { GoPtr } from "../go/compat.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
-import { Node_Body, Node_Expression, Node_Locals, Node_Members, Node_ModifierFlags, Node_Parameters, Node_Symbol, Node_Text, SourceFile_FileName, SourceFile_Text } from "../internal/ast/ast.js";
+import { Node_Body, Node_Expression, Node_Locals, Node_Members, Node_ModifierFlags, Node_Parameters, Node_Symbol, Node_Text, Node_Type, SourceFile_FileName, SourceFile_Text } from "../internal/ast/ast.js";
 import { Node_ForEachChild, Node_Name, Node_Pos } from "../internal/ast/spine.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import type { Program } from "../internal/compiler/program.js";
-import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
+import { ModifierFlagsPrivate, ModifierFlagsReadonly, ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSymbolId } from "../internal/ast/utilities.js";
 import * as utf8 from "../go/unicode/utf8.js";
 import {
@@ -21,6 +21,7 @@ import {
   KindMethodDeclaration,
   KindMethodSignature,
   KindModuleDeclaration,
+  KindNeverKeyword,
   KindPropertyDeclaration,
   KindPropertyAccessExpression,
   KindPropertySignature,
@@ -56,6 +57,7 @@ import type {
 import {
   getProviderVirtualArtifactForCompiler,
   getProviderVirtualCompilerMetadata,
+  getProviderTypeFamilyVariantNominalMemberName,
   type ProviderVirtualCompilerArtifact,
 } from "./provider-virtual-internal.js";
 import { parseProviderFunctionSignatureMarker, providerFunctionSignatureMarkerMaximumLength } from "./provider-callable-signatures.js";
@@ -184,7 +186,10 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
       );
     }
 
-    if (declaration.members !== undefined) {
+    if (
+      declaration.members !== undefined
+      || (declaration.kind === "class" && declaration.sourceTypeFamily !== undefined)
+    ) {
       recordProviderVirtualMemberFacts(extensionHost, symbol, virtualModule, declaration, evidence);
     }
   }
@@ -310,7 +315,26 @@ function recordProviderVirtualMemberFacts(
   if (directExportDeclarations.length === 0) {
     throw new Error(`Provider virtual artifact '${virtualModule.fileName}' has no direct declaration for member-owning export identity '${declaration.id}'.`);
   }
-  const memberNodes = directExportDeclarations.flatMap(getProviderMemberCandidateNodes);
+  const allMemberNodes = directExportDeclarations.flatMap(getProviderMemberCandidateNodes);
+  const nominalMemberName = declaration.kind === "class" && declaration.sourceTypeFamily !== undefined
+    ? getProviderTypeFamilyVariantNominalMemberName(virtualModule.moduleSpecifier, declaration)
+    : undefined;
+  const nominalMemberNodes = nominalMemberName === undefined
+    ? []
+    : allMemberNodes.filter((node) =>
+      providerTypeFamilyNominalMemberMatchesNode(node, nominalMemberName)
+    );
+  if (
+    nominalMemberName !== undefined
+    && nominalMemberNodes.length !== directExportDeclarations.length
+  ) {
+    throw new Error(
+      `Provider virtual artifact '${virtualModule.fileName}' bound ${nominalMemberNodes.length} host-owned nominal declarations for type-family export identity '${declaration.id}', expected ${directExportDeclarations.length}.`,
+    );
+  }
+  const memberNodes = nominalMemberNodes.length === 0
+    ? allMemberNodes
+    : allMemberNodes.filter((node) => !nominalMemberNodes.includes(node));
   const usedMemberNodes = new Set<Node>();
   for (const member of declaration.members ?? []) {
     const matchingMemberNodes = memberNodes.filter((node) =>
@@ -370,6 +394,20 @@ function recordProviderVirtualMemberFacts(
       `Provider virtual artifact '${virtualModule.fileName}' contains ${memberNodes.length - usedMemberNodes.size} unclaimed member declarations for export identity '${declaration.id}'.`,
     );
   }
+}
+
+function providerTypeFamilyNominalMemberMatchesNode(
+  node: GoPtr<Node>,
+  expectedName: string,
+): boolean {
+  if (node === undefined || node.Kind !== KindPropertyDeclaration) {
+    return false;
+  }
+  const flags = Node_ModifierFlags(node);
+  return (flags & ModifierFlagsPrivate) !== 0
+    && (flags & ModifierFlagsReadonly) !== 0
+    && Node_Text(Node_Name(node)) === expectedName
+    && Node_Type(node)?.Kind === KindNeverKeyword;
 }
 
 function providerExportDeclarationMatchesNode(declaration: ProviderExportDeclaration, node: Node): boolean {

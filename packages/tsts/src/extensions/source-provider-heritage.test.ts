@@ -111,6 +111,45 @@ test("provider family heritage selects the exact class-backed arity variant", ()
   );
 });
 
+test("same-arity provider families retain distinct nominal identity across class heritage", () => {
+  const baseSpecifier = "@test/family-nominal/base.js";
+  const derivedSpecifier = "@test/family-nominal/derived.js";
+  const models = new Map<string, ProviderDeclarationModel>([
+    [baseSpecifier, {
+      moduleSpecifier: baseSpecifier,
+      providerModuleId: "Test.FamilyNominal.Base",
+      exports: [{
+        id: "Base",
+        name: "Base",
+        kind: "class",
+        sourceTypeFamily: { exportName: "Base", typeArgumentCount: 0 },
+      }],
+    }],
+    [derivedSpecifier, {
+      moduleSpecifier: derivedSpecifier,
+      providerModuleId: "Test.FamilyNominal.Derived",
+      imports: [valueImport(baseSpecifier, "Base")],
+      exports: [{
+        id: "Derived",
+        name: "Derived",
+        kind: "class",
+        sourceTypeFamily: { exportName: "Derived", typeArgumentCount: 0 },
+        heritage: [{
+          kind: "extends",
+          type: providerRef(baseSpecifier, "Base"),
+        }],
+      }],
+    }],
+  ]);
+
+  assertProgramAccepts(
+    models,
+    derivedSpecifier,
+    ["Derived"],
+    ["export class UseDerived extends Derived {}"],
+  );
+});
+
 test("recursive provider module closure accepts a shared DAG without inventing a heritage cycle", () => {
   const objectSpecifier = "@test/recursive/object.js";
   const memberSpecifier = "@test/recursive/member.js";

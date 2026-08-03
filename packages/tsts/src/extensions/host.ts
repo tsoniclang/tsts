@@ -31,6 +31,8 @@ import { isHostOwnedExtensionDiagnostic, markHostOwnedExtensionDiagnostic } from
 import { getProviderExportContractKeyMap, getProviderTypeParameterContractKey } from "./provider-export-contract.js";
 import {
   getProviderVirtualArtifactForCompiler,
+  getProviderTypeFamilyVariantNominalMemberName,
+  getStableProviderVirtualSliceSuffix,
   isHostOwnedProviderVirtualFileName,
   providerCanonicalExportOwnerMarker,
   providerCanonicalModuleDependencyContextMarker,
@@ -5291,17 +5293,6 @@ function getProviderPublicVirtualArtifactId(moduleIdentity: string, sourceText: 
   ]));
 }
 
-function getStableProviderVirtualSliceSuffix(value: string): string {
-  const hashes = [0x811c9dc5, 0x9e3779b9, 0x85ebca6b, 0xc2b2ae35];
-  for (let index = 0; index < value.length; index++) {
-    const code = value.charCodeAt(index);
-    for (let hashIndex = 0; hashIndex < hashes.length; hashIndex++) {
-      hashes[hashIndex] = Math.imul((hashes[hashIndex]! ^ code ^ hashIndex), 0x01000193);
-    }
-  }
-  return hashes.map((hash) => (hash >>> 0).toString(36).padStart(7, "0")).join("");
-}
-
 function orderStablePair(left: string, right: string): readonly [string, string] {
   return left <= right ? [left, right] : [right, left];
 }
@@ -6160,7 +6151,7 @@ function renderProviderExportDeclaration(declaration: ProviderExportDeclaration,
   switch (declaration.kind) {
     case "class": {
       const typeParameters = renderProviderTypeParameters(declaration.typeParameters ?? [], declarationContext);
-      rendered = `${declarationPrefix}class ${declarationName}${typeParameters}${renderProviderHeritage(declaration.heritage ?? [], "class", declarationContext)} {\n${renderProviderMembers(declaration.members ?? [], declarationContext)}\n}`;
+      rendered = `${declarationPrefix}class ${declarationName}${typeParameters}${renderProviderHeritage(declaration.heritage ?? [], "class", declarationContext)} {\n${renderProviderClassMembers(declaration, declarationContext)}\n}`;
       break;
     }
     case "interface": {
@@ -6302,6 +6293,28 @@ function renderProviderHeritage(heritage: readonly ProviderHeritageDeclaration[]
 
 function renderProviderMembers(members: readonly ProviderMemberDeclaration[], context: ProviderRenderContext): string {
   return members.map((member) => `  ${renderProviderMember(member, context)}`).join("\n");
+}
+
+function renderProviderClassMembers(
+  declaration: ProviderExportDeclaration,
+  context: ProviderRenderContext,
+): string {
+  const members = renderProviderMembers(declaration.members ?? [], context);
+  if (declaration.sourceTypeFamily === undefined) {
+    return members;
+  }
+  const nominalMemberName = getProviderTypeFamilyVariantNominalMemberName(context.moduleSpecifier, declaration);
+  if (
+    (declaration.members ?? []).some((member) =>
+      getProviderPropertyNameText(member.name) === nominalMemberName
+    )
+  ) {
+    throw new Error(
+      `Provider declaration identity '${declaration.id}' collides with host-owned type-family nominal member '${nominalMemberName}'.`,
+    );
+  }
+  const nominalMember = `  private readonly ${nominalMemberName}: never;`;
+  return members === "" ? nominalMember : `${nominalMember}\n${members}`;
 }
 
 function renderProviderNamespaceMembers(members: readonly ProviderMemberDeclaration[], context: ProviderRenderContext): string {
@@ -6987,7 +7000,7 @@ function isValidProviderDeclarationModel(value: ProviderDeclarationModel, resolu
     && value.exports.every(hasValidProviderExportTypeParameterScope)
     && value.exports.every((declaration) => hasValidProviderReferenceBindingsForExport(declaration, context))
     && value.exports.every((declaration) => hasValidProviderValueHeritageReferences(declaration, context))
-    && isValidProviderTypeFamilyDeclarations(value.exports, value.imports ?? [])
+    && isValidProviderTypeFamilyDeclarations(value.moduleSpecifier, value.exports, value.imports ?? [])
     && hasUniqueProviderCallableIdentities(value);
 }
 
@@ -7117,7 +7130,11 @@ function isValidProviderTypeFamilyDeclaration(value: ProviderExportDeclaration):
     && (value.kind === "class" || value.kind === "interface" || value.kind === "type");
 }
 
-function isValidProviderTypeFamilyDeclarations(exports: readonly ProviderExportDeclaration[], imports: readonly ProviderImportDeclaration[]): boolean {
+function isValidProviderTypeFamilyDeclarations(
+  moduleSpecifier: string,
+  exports: readonly ProviderExportDeclaration[],
+  imports: readonly ProviderImportDeclaration[],
+): boolean {
   const reservedLocalNames = new Set([
     providerTypeFamilyDefaultValueName,
     providerTypeFamilyDefaultTypeName,
@@ -7180,6 +7197,20 @@ function isValidProviderTypeFamilyDeclarations(exports: readonly ProviderExportD
     }
     publicExports.add(familyName);
     if (variants.some((variant) => variant.kind === "class") && !variants.every((variant) => variant.kind === "class")) {
+      return false;
+    }
+    if (variants.some((variant) => {
+      if (variant.kind !== "class") {
+        return false;
+      }
+      const nominalMemberName = getProviderTypeFamilyVariantNominalMemberName(
+        moduleSpecifier,
+        variant,
+      );
+      return (variant.members ?? []).some((member) =>
+        getProviderPropertyNameText(member.name) === nominalMemberName
+      );
+    })) {
       return false;
     }
     const arities = variants.map((variant) => variant.sourceTypeFamily!.typeArgumentCount).sort((left, right) => left - right);
