@@ -87,6 +87,7 @@ export interface TypeShapeQueries {
   readonly isTypeReference: (type: GoPtr<Type>) => boolean;
   readonly isTuple: (type: GoPtr<Type>) => boolean;
   readonly isArrayLike: (type: GoPtr<Type>) => boolean;
+  readonly couldContainTypeVariables: (type: GoPtr<Type>) => boolean;
   readonly getUnionOrIntersectionTypes: (type: GoPtr<Type>) => readonly GoPtr<Type>[];
   readonly getTypeReferenceTarget: (type: GoPtr<Type>) => GoPtr<Type>;
   readonly getTypeArguments: (type: GoPtr<Type>) => readonly GoPtr<Type>[];
@@ -123,6 +124,17 @@ export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: 
     isTypeReference: (type) => type !== undefined && (type.objectFlags & ObjectFlagsReference) !== 0,
     isTuple: isTupleType,
     isArrayLike: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_IsArrayLikeType(checker, type)) === true,
+    couldContainTypeVariables: (type) => withCheckerForType(
+      program,
+      type,
+      defaultOptions,
+      (checker) => {
+        if (checker === undefined) {
+          throw new Error("The source type has no owning checker for genericity analysis.");
+        }
+        return checker.couldContainTypeVariables(type);
+      },
+    ) === true,
     getUnionOrIntersectionTypes: (type) => Type_Types(type) ?? [],
     getTypeReferenceTarget: (type) => Type_Target(type),
     getTypeArguments: (type) => withCheckerForType(program, type, defaultOptions, (checker) => Checker_GetTypeArguments(checker, type)) ?? [],

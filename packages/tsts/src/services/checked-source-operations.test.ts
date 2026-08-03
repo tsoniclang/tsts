@@ -184,6 +184,7 @@ test("type-shape property information preserves effective mapped modifiers", () 
   const source = checkedQueries(`
     type Source = { readonly id?: number; name: string };
     type Normalized<T> = { -readonly [K in keyof T]-?: T[K] };
+    declare function acceptOpen<T>(openValue: Normalized<T>): void;
     declare const sourceValue: Source;
     declare const normalizedValue: Normalized<Source>;
   `);
@@ -193,8 +194,10 @@ test("type-shape property information preserves effective mapped modifiers", () 
     source.ast.is.IsIdentifier,
   );
   const sourceValue = identifiers.find((node) => source.ast.text(node) === "sourceValue");
+  const openValue = identifiers.find((node) => source.ast.text(node) === "openValue");
   const normalizedValue = identifiers.find((node) => source.ast.text(node) === "normalizedValue");
   assert.ok(sourceValue !== undefined);
+  assert.ok(openValue !== undefined);
   assert.ok(normalizedValue !== undefined);
 
   const sourceProperties = source.typeShape.getPropertyInfos(
@@ -202,6 +205,18 @@ test("type-shape property information preserves effective mapped modifiers", () 
   );
   const normalizedProperties = source.typeShape.getPropertyInfos(
     source.checker.getTypeAtLocation(normalizedValue),
+  );
+  assert.equal(
+    source.typeShape.couldContainTypeVariables(
+      source.checker.getTypeAtLocation(openValue),
+    ),
+    true,
+  );
+  assert.equal(
+    source.typeShape.couldContainTypeVariables(
+      source.checker.getTypeAtLocation(normalizedValue),
+    ),
+    false,
   );
   assert.deepEqual(
     sourceProperties.map(({ name, optional, readonly, type }) => ({
