@@ -141,6 +141,24 @@ test("resolved call info exposes one canonical checker-owned selected decision",
   );
 });
 
+test("resolved call info preserves exact optional-chain result semantics", () => {
+  const { program, index } = createProgram(`
+    class Box {
+      read(): number { return 1; }
+    }
+
+    declare const box: Box;
+    box.read();
+    box?.read();
+  `);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const calls = findNodesByKind(index, KindCallExpression);
+  assert.equal(calls.length, 2);
+  assert.equal(queries.getResolvedCallInfo(calls[0])?.optionalChain, false);
+  assert.equal(queries.getResolvedCallInfo(calls[1])?.optionalChain, true);
+  assertCleanSemanticDiagnostics(program, index);
+});
+
 test("resolved call info retains exact dynamic property and element callee access", () => {
   const { program, index } = createProgram(`
     declare const value: any;
