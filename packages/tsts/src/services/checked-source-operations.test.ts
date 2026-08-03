@@ -244,6 +244,37 @@ test("type-shape property information preserves effective mapped modifiers", () 
   );
 });
 
+test("type-shape property information preserves private display names and instantiated types", () => {
+  const source = checkedQueries(`
+    class Box<T> {
+      #value!: T;
+      value!: T;
+    }
+    declare const box: Box<string>;
+  `);
+  const identifiers = findNodes(
+    source.sourceFile,
+    source.ast.children,
+    source.ast.is.IsIdentifier,
+  );
+  const box = identifiers.find((node) => source.ast.text(node) === "box");
+  assert.ok(box !== undefined);
+
+  const properties = source.typeShape.getPropertyInfos(
+    source.checker.getTypeAtLocation(box),
+  );
+  assert.deepEqual(
+    properties.map(({ name, type }) => ({
+      name,
+      type: source.checker.typeToString(type),
+    })),
+    [
+      { name: "#value", type: "string" },
+      { name: "value", type: "string" },
+    ],
+  );
+});
+
 function checkedQueries(sourceText: string): SourceFileQueries {
   const session = createCompilerSessionFromFiles({
     currentDirectory: "/src",

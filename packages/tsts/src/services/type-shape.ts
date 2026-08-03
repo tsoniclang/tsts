@@ -186,7 +186,11 @@ function getTypePropertyInfos(
       throw new Error("The checker returned an absent property symbol for a source type.");
     }
     const name = SymbolName(symbol);
-    const propertyType = Checker_GetTypeOfPropertyOfType(checker, type, name);
+    const propertyType = Checker_GetTypeOfPropertyOfType(
+      checker,
+      type,
+      symbol.Name,
+    );
     if (propertyType === undefined) {
       throw new Error(
         `The checker returned property '${name}' without its effective source type.`,
