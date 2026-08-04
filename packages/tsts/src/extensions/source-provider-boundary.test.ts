@@ -254,6 +254,7 @@ test("provider registration captures identity and callback methods exactly once"
   let ownershipCalls = 0;
   const sourceProvider: SourceDeclarationProvider = {
     identity,
+    declarationMaterialization: "complete",
     ownsModule: (candidate) => {
       ownershipCalls += 1;
       return candidate === specifier ? { kind: "owned" } : { kind: "unowned" };
@@ -304,6 +305,26 @@ test("throwing provider registration accessors reject atomically", () => {
   assert.deepEqual(host.providers.getVirtualDeclarationDocuments(), []);
 });
 
+test("provider declaration materialization mode is explicit and fail-closed", () => {
+  const sourceProvider = validProvider(
+    "test.invalid-materialization-mode",
+    "@test/invalid-materialization-mode.js",
+    testProviderModel(
+      "@test/invalid-materialization-mode.js",
+      "Test.InvalidMaterializationMode",
+    ),
+  );
+  Reflect.set(sourceProvider, "declarationMaterialization", "eager");
+
+  const host = hostFor(sourceProvider);
+
+  assert.equal(host.providers.hasSourceDeclarationProviders, false);
+  assert.deepEqual(
+    host.diagnostics.all().map((diagnostic) => diagnostic.extensionCode),
+    ["INVALID_SOURCE_DECLARATION_PROVIDER"],
+  );
+});
+
 function hostFor(sourceProvider: SourceDeclarationProvider): ExtensionHost {
   return new ExtensionHost({}, {
     extensions: [sourceProviderCompilerExtension(sourceProvider)],
@@ -321,6 +342,7 @@ function validProvider(
 ): SourceDeclarationProvider {
   return {
     identity: testProviderIdentity(id),
+    declarationMaterialization: "complete",
     ownsModule: (candidate) => candidate === specifier
       ? { kind: "owned" }
       : { kind: "unowned" },

@@ -82,3 +82,43 @@ does not accept legacy declaration models.
   immutable deterministic snapshots.
 - Imports, aliases, namespace access, slice order, and provider virtual
   filenames do not redefine semantic identity.
+
+Large providers may declare `declarationMaterialization: "incremental"`.
+Their first model contains stable export identities and type headers. When
+normal source checking needs the structure of an exact provider type, TSTS
+requests that exact public export and, for a type family, its exact export id:
+
+```ts
+import type { List } from "@example/System.Collections.Generic.js";
+
+declare const values: List<number>;
+export const count = values.Count;
+```
+
+For this source, an incremental provider first receives:
+
+```ts
+{
+  context: namedImportContext,
+  materialization: { kind: "incremental", completeExports: [] },
+}
+```
+
+After the checker requires `List<number>` members, the next immutable program
+revision receives:
+
+```ts
+{
+  context: namedImportContext,
+  materialization: {
+    kind: "incremental",
+    completeExports: [{ exportName: "List", exportId: listProviderExportId }],
+  },
+}
+```
+
+Demand grows monotonically. TSTS discards the provisional program, constructs
+a fresh program from the enlarged provider snapshot, and publishes only the
+stable checked revision. Providers do not infer demand from member names or
+source text, and targets do not replay checking. Providers declaring
+`declarationMaterialization: "complete"` retain the one-model contract.

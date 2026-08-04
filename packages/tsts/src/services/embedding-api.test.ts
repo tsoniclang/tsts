@@ -448,6 +448,7 @@ function providerExtension(
           version: "1.0.0",
           extensionContractVersion: TstsSourceProviderContractVersion,
         },
+        declarationMaterialization: "complete",
         ownsModule: (specifier) => suppliedModels.has(specifier)
           ? { kind: "owned" }
           : { kind: "unowned" },

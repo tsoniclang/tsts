@@ -80,6 +80,7 @@ function rejectedChainFixture(prefixes: readonly string[]): {
   };
   const provider: SourceDeclarationProvider = {
     identity: testProviderIdentity("test.provider-closure-resources"),
+    declarationMaterialization: "complete",
     ownsModule(specifier) {
       return parseSpecifier(specifier) === undefined
         ? { kind: "unowned" }

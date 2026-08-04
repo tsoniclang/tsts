@@ -82,6 +82,7 @@ test("source provider callback failures reject at their exact stage and never fa
       expectedCode: "PROVIDER_OWNERSHIP_FAILED",
       provider: {
         identity: testProviderIdentity("test.failure.ownership"),
+        declarationMaterialization: "complete",
         ownsModule(): never {
           throw new Error("ownership failed");
         },
@@ -98,6 +99,7 @@ test("source provider callback failures reject at their exact stage and never fa
       expectedCode: "PROVIDER_RESOLVE_FAILED",
       provider: {
         identity: testProviderIdentity("test.failure.resolution"),
+        declarationMaterialization: "complete",
         ownsModule: () => ({ kind: "owned" as const }),
         resolveModule(): never {
           throw new Error("resolution failed");
@@ -112,6 +114,7 @@ test("source provider callback failures reject at their exact stage and never fa
       expectedCode: "PROVIDER_DECLARATION_FAILED",
       provider: {
         identity: testProviderIdentity("test.failure.declaration"),
+        declarationMaterialization: "complete",
         ownsModule: () => ({ kind: "owned" as const }),
         resolveModule: () => resolution(specifier, "test.failure.declaration"),
         getDeclarationModel(): never {
@@ -146,6 +149,7 @@ test("source provider callback re-entry rejects and rolls back the complete tran
   let reenter = true;
   const sourceProvider: SourceDeclarationProvider = {
     identity: testProviderIdentity("test.reentrant"),
+    declarationMaterialization: "complete",
     ownsModule: (candidate) => candidate === specifier
       ? { kind: "owned" }
       : { kind: "unowned" },
@@ -192,6 +196,7 @@ test("source provider registrations and request contexts are immutable snapshots
   };
   const sourceProvider: SourceDeclarationProvider = {
     identity,
+    declarationMaterialization: "complete",
     ownsModule(candidate, context) {
       ownershipCalls += 1;
       observedContext = context;
@@ -229,6 +234,7 @@ test("source provider exact unowned and rejected outcomes are terminally cached"
       ...testProviderIdentity("test.terminal"),
       diagnosticRange: { start: 9_900_000, end: 9_900_099 },
     },
+    declarationMaterialization: "complete",
     ownsModule() {
       ownershipCalls += 1;
       return outcome === "unowned"
@@ -362,6 +368,7 @@ function provider(
 ): SourceDeclarationProvider {
   return {
     identity: testProviderIdentity(id),
+    declarationMaterialization: "complete",
     ownsModule: (candidate) => candidate === specifier
       ? { kind: "owned" }
       : { kind: "unowned" },
