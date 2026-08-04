@@ -82,7 +82,7 @@ test("provider closure resource accounting accepts the complete measured framewo
   });
 });
 
-test("provider closure resource accounting accepts the complete measured framework plus provider profile", () => {
+test("provider closure resource accounting rejects the formerly measured eager framework plus provider profile", () => {
   const measuredInputEntries = 4_250_864;
   const measuredInputScalarCodeUnits = 257_012_856;
   const measuredExpandedEntries = 2_618_237;
@@ -95,13 +95,11 @@ test("provider closure resource accounting accepts the complete measured framewo
     expandedSemanticScalarCodeUnitCount: measuredExpandedScalarCodeUnits,
     declarationSourceCodeUnitCount: measuredDeclarationSourceCodeUnits,
   });
-  assert.equal(reservation.kind, "reserved");
-  assert.deepEqual(reservation.kind === "reserved" ? reservation.usage : undefined, {
-    snapshottedInputNodeAndCollectionEntryCount: measuredInputEntries,
-    snapshottedInputScalarCodeUnitCount: measuredInputScalarCodeUnits,
-    expandedSemanticNodeAndArrayEntryCount: measuredExpandedEntries,
-    expandedSemanticScalarCodeUnitCount: measuredExpandedScalarCodeUnits,
-    declarationSourceCodeUnitCount: measuredDeclarationSourceCodeUnits,
+  assert.deepEqual(reservation, {
+    kind: "exceeded",
+    dimension: "snapshotted provider input nodes and collection entries",
+    actual: measuredInputEntries,
+    limit: providerDeclarationClosureLimits.maxSnapshottedInputNodeAndCollectionEntries,
   });
 });
 
