@@ -82,6 +82,29 @@ test("provider closure resource accounting accepts the complete measured framewo
   });
 });
 
+test("provider closure resource accounting accepts the complete measured framework plus provider profile", () => {
+  const measuredInputEntries = 4_250_864;
+  const measuredInputScalarCodeUnits = 257_012_856;
+  const measuredExpandedEntries = 2_618_237;
+  const measuredExpandedScalarCodeUnits = 256_389_076;
+  const measuredDeclarationSourceCodeUnits = 3_560_216;
+  const reservation = reserveProviderClosureResources(emptyProviderClosureResourceUsage(), {
+    snapshottedInputNodeAndCollectionEntryCount: measuredInputEntries,
+    snapshottedInputScalarCodeUnitCount: measuredInputScalarCodeUnits,
+    expandedSemanticNodeAndArrayEntryCount: measuredExpandedEntries,
+    expandedSemanticScalarCodeUnitCount: measuredExpandedScalarCodeUnits,
+    declarationSourceCodeUnitCount: measuredDeclarationSourceCodeUnits,
+  });
+  assert.equal(reservation.kind, "reserved");
+  assert.deepEqual(reservation.kind === "reserved" ? reservation.usage : undefined, {
+    snapshottedInputNodeAndCollectionEntryCount: measuredInputEntries,
+    snapshottedInputScalarCodeUnitCount: measuredInputScalarCodeUnits,
+    expandedSemanticNodeAndArrayEntryCount: measuredExpandedEntries,
+    expandedSemanticScalarCodeUnitCount: measuredExpandedScalarCodeUnits,
+    declarationSourceCodeUnitCount: measuredDeclarationSourceCodeUnits,
+  });
+});
+
 test("provider closure resource accounting rejects invalid internal contributions", () => {
   const fields = Object.keys(zeroContribution) as readonly (keyof ProviderClosureResourceContribution)[];
   const invalidValues = [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1];

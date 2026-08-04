@@ -1783,6 +1783,10 @@ export class ProviderRegistry {
   >();
   readonly #virtualModules = new Map<string, ProviderResolvedModule>();
   readonly #virtualModuleResultsByRequestKey = new Map<string, ProviderModuleResolveResult>();
+  readonly #providerPlanningBudgetRejectionsByIdentity = new Map<
+    string,
+    Extract<ProviderModuleResolveResult, { readonly kind: "rejected" }>
+  >();
   readonly #declarationLoadOutcomesByRequestKey = new Map<string, ProviderDeclarationLoadOutcome>();
   readonly #declarationCandidatesByCacheKey = new Map<string, ProviderDeclarationCandidate>();
   readonly #virtualArtifactsByFileName = new Map<string, ProviderVirtualCompilerArtifact>();
@@ -2433,11 +2437,11 @@ export class ProviderRegistry {
       return { kind: "registered", candidateRequestKey };
     }
     if (state.candidateCount >= providerDeclarationClosureLimits.maxCandidates) {
-      return this.#rejectProviderPlanningBudget(candidate, "candidate modules", state.candidateCount + 1, providerDeclarationClosureLimits.maxCandidates);
+      return this.#rejectProviderPlanningBudget(candidate, "candidate modules", providerDeclarationClosureLimits.maxCandidates);
     }
     const nextExportCount = state.exportCount + candidate.canonicalDeclarationModelsBySourceExportName.size;
     if (!Number.isSafeInteger(nextExportCount) || nextExportCount > providerDeclarationClosureLimits.maxExports) {
-      return this.#rejectProviderPlanningBudget(candidate, "canonical exports", nextExportCount, providerDeclarationClosureLimits.maxExports);
+      return this.#rejectProviderPlanningBudget(candidate, "canonical exports", providerDeclarationClosureLimits.maxExports);
     }
     const resourceReservation = reserveProviderClosureResources(state.resources, {
       snapshottedInputNodeAndCollectionEntryCount: candidate.graphMetrics.physicalNodeAndArrayEntryCount
@@ -2452,7 +2456,6 @@ export class ProviderRegistry {
       return this.#rejectProviderPlanningBudget(
         candidate,
         resourceReservation.dimension,
-        resourceReservation.actual,
         resourceReservation.limit,
       );
     }
@@ -2799,7 +2802,6 @@ export class ProviderRegistry {
         return this.#rejectProviderPlanningBudget(
           candidate,
           "canonical owner visits",
-          state.ownerVisitsByKey.size + 1,
           providerDeclarationClosureLimits.maxOwnerVisits,
         );
       }
@@ -2823,7 +2825,6 @@ export class ProviderRegistry {
       return this.#rejectProviderPlanningBudget(
         visit.candidate,
         "provider references",
-        nextReferenceCount,
         providerDeclarationClosureLimits.maxReferences,
       );
     }
@@ -2998,23 +2999,35 @@ export class ProviderRegistry {
   #rejectProviderPlanningBudget(
     candidate: ProviderDeclarationCandidate,
     dimension: string,
-    actual: number,
     limit: number,
   ): { readonly kind: "rejected"; readonly diagnostic: ExtensionDiagnostic } {
-    const diagnostic = createInvalidProviderDeclarationDiagnostic(
-      candidate.providerIdentity,
-      candidate.declarationModel,
-      `Provider declaration closure exceeds the transaction limit for ${dimension}.`,
-      encodeIdentityTuple([
-        "provider-declaration-closure-budget",
-        candidate.providerIdentity.id,
-        dimension,
-        limit,
-      ]),
-      [{ message: "Provider declaration closure budget", details: { dimension, actual, limit } }],
-    );
+    const identity = encodeIdentityTuple([
+      "provider-declaration-closure-budget",
+      candidate.providerIdentity.id,
+      dimension,
+      limit,
+    ]);
+    const cached = this.#providerPlanningBudgetRejectionsByIdentity.get(identity);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const diagnostic = createHostDiagnostic({
+      extensionCode: "INVALID_PROVIDER_DECLARATION_MODEL",
+      numericCode: ExtensionHostDiagnosticCode.invalidProviderDeclaration,
+      message: `Provider declaration closure exceeds the transaction limit for ${dimension}.`,
+      evidence: [{
+        message: "Provider",
+        details: candidate.providerIdentity,
+      }, {
+        message: "Provider declaration closure budget",
+        details: { dimension, limit },
+      }],
+      identity,
+    });
     this.#diagnostics.append(diagnostic);
-    return { kind: "rejected", diagnostic };
+    const rejection = Object.freeze({ kind: "rejected" as const, diagnostic });
+    this.#providerPlanningBudgetRejectionsByIdentity.set(identity, rejection);
+    return rejection;
   }
 
   #reserveProviderDeclarationSource(
@@ -3033,7 +3046,6 @@ export class ProviderRegistry {
       return this.#rejectProviderPlanningBudget(
         candidate,
         reservation.dimension,
-        reservation.actual,
         reservation.limit,
       );
     }
