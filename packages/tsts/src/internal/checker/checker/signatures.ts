@@ -2731,11 +2731,7 @@ function Checker_resolveCallExpressionWithEvidence(
 ): GoPtr<Signature> {
   if (Node_Expression(node)!.Kind === KindSuperKeyword) {
     const superType = Checker_checkSuperExpression(receiver, Node_Expression(node));
-    const selectedOutput = output;
     if (IsTypeAny(superType)) {
-      if (selectedOutput !== undefined) {
-        return Checker_resolveUntypedCallWithEvidence(receiver, node, superType, selectedOutput);
-      }
       for (const arg of Node_Arguments(node) ?? []) {
         Checker_checkExpression(receiver, arg);
       }
@@ -2746,7 +2742,7 @@ function Checker_resolveCallExpressionWithEvidence(
       const baseTypeNode = containingClass !== undefined ? GetExtendsHeritageClauseElement(containingClass) : undefined;
       if (baseTypeNode !== undefined) {
         const baseConstructors = Checker_getInstantiatedConstructorsForTypeArguments(receiver, superType, Node_TypeArguments(baseTypeNode) ?? [], baseTypeNode);
-        if (selectedOutput === undefined) {
+        if (output === undefined) {
           return Checker_resolveCall(receiver, node, baseConstructors, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
         }
         const resolved = Checker_resolveCallWithEvidence(
@@ -2760,7 +2756,7 @@ function Checker_resolveCallExpressionWithEvidence(
           superType,
         );
         if (resolved.evidence !== undefined) {
-          selectedOutput.evidence = resolved.evidence;
+          output.evidence = resolved.evidence;
         }
         return resolved.signature;
       }
@@ -4227,6 +4223,7 @@ function Checker_isSignatureApplicableWithSelectedArgumentTypes(
       undefined,
       checkMode,
       selectedArguments,
+      restParameterIndex,
     );
     const restArgCount = args.length - argCount;
     let errorNode: GoPtr<Node>;
@@ -10614,6 +10611,7 @@ export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: Go
     context,
     checkMode,
     undefined,
+    undefined,
   );
 }
 
@@ -10626,7 +10624,11 @@ function Checker_getSpreadArgumentTypeWithSelectedArgumentTypes(
   context: GoPtr<InferenceContext>,
   checkMode: CheckMode,
   selectedArguments: Array<SelectedEffectiveCallArgument | undefined> | undefined,
+  selectedSourceParameterIndex: int | undefined,
 ): GoPtr<Type> {
+  if (selectedArguments !== undefined && (selectedSourceParameterIndex === undefined || selectedSourceParameterIndex < 0)) {
+    throw new Error("Selected spread-call evidence requires the exact declared rest parameter index.");
+  }
   const inConstContext = Checker_isConstTypeVariable(receiver, restType, 0);
   if (argCount > 0 && index >= argCount - 1) {
     let arg = args[argCount - 1];
@@ -10639,7 +10641,7 @@ function Checker_getSpreadArgumentTypeWithSelectedArgumentTypes(
       }
       if (selectedArguments !== undefined) {
         selectedArguments[argCount - 1] = Object.freeze({
-          sourceParameterIndex: index,
+          sourceParameterIndex: selectedSourceParameterIndex!,
           selectedArgumentType: spreadType!,
           selectedParameterType: restType!,
         });
@@ -10668,7 +10670,7 @@ function Checker_getSpreadArgumentTypeWithSelectedArgumentTypes(
       }
       if (selectedArguments !== undefined) {
         selectedArguments[argIndex] = Object.freeze({
-          sourceParameterIndex: index,
+          sourceParameterIndex: selectedSourceParameterIndex!,
           selectedArgumentType: spreadType!,
           selectedParameterType: restType!,
         });
@@ -10694,7 +10696,7 @@ function Checker_getSpreadArgumentTypeWithSelectedArgumentTypes(
       const argType = Checker_checkExpressionWithContextualType(receiver, arg, contextualType, context, checkMode);
       if (selectedArguments !== undefined) {
         selectedArguments[argIndex] = Object.freeze({
-          sourceParameterIndex: index,
+          sourceParameterIndex: selectedSourceParameterIndex!,
           selectedArgumentType: argType!,
           selectedParameterType: contextualType!,
         });

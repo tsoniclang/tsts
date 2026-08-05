@@ -1,9 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { Background } from "../go/context.js";
 import { Node_Expression } from "../internal/ast/ast.js";
+import { Diagnostic_Code } from "../internal/ast/diagnostic.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { KindArrowFunction, KindCallExpression, KindExpressionStatement } from "../internal/ast/generated/kinds.js";
 import { TypeFlagsAny, TypeFlagsNumber, TypeFlagsString } from "../internal/checker/types.js";
+import { Program_GetSemanticDiagnostics } from "../internal/compiler/program.js";
 import { createTypeCheckerQueries } from "./type-checker.js";
 import {
   assertCleanSemanticDiagnostics,
@@ -139,6 +142,71 @@ test("resolved call info exposes one canonical checker-owned selected decision",
     repeated?.sourceResultType === queryFirst?.sourceResultType,
     "Repeated call queries must retain exact result-type identity.",
   );
+});
+
+test("resolved call info retains the final contextual callee observation", () => {
+  const { program, index } = createProgram(`
+    interface Array<T> {
+      concat(items: T[]): T[];
+    }
+    interface ValidationError {
+      message: string;
+    }
+    function append(result: ValidationError[] | null, inner: ValidationError[]): ValidationError[] {
+      return (result || []).concat(inner);
+    }
+  `);
+  assertCleanSemanticDiagnostics(program, index);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const call = findFirstNodeByKind(index, KindCallExpression);
+
+  const selected = queries.getResolvedCallInfo(call);
+  assert.equal(selected?.outcome, "applicable");
+  assert.ok(selected?.sourceReceiver !== undefined);
+  assert.equal(queries.typeToString(selected.sourceReceiver.type), "ValidationError[]");
+  assert.ok(
+    queries.getResolvedCallInfo(call) === selected,
+    "The finalized call must retain one immutable contextual selection.",
+  );
+});
+
+test("resolved tuple-rest arguments retain their declared rest parameter identity", () => {
+  const { program, index } = createProgram(`
+    declare function consume(...values: [number, string, boolean]): void;
+    declare const values: [number, string, boolean];
+    consume(...values);
+  `);
+  assertCleanSemanticDiagnostics(program, index);
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const call = findFirstNodeByKind(index, KindCallExpression);
+
+  const selected = queries.getResolvedCallInfo(call);
+  assert.equal(selected?.outcome, "applicable");
+  assert.deepEqual(
+    selected?.sourceSelectedSignatureParameters.map((parameter) => [parameter.parameterIndex, parameter.rest]),
+    [[0, true]],
+  );
+  assert.equal(selected?.sourceArgumentBindings.length, 3);
+  assert.deepEqual(
+    selected?.sourceArgumentBindings.map((binding) => binding.sourceParameterIndex),
+    [0, 0, 0],
+  );
+});
+
+test("invalid super calls preserve TS-Go diagnostics without selected call evidence", () => {
+  const { program, index } = createProgram(`
+    class C {
+      method(): void {
+        super<Missing>(0);
+      }
+    }
+  `);
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.deepEqual(diagnostics.map(Diagnostic_Code), [2337]);
+
+  const queries = createTypeCheckerQueries(program, { sourceFile: index });
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(queries.getResolvedCallInfo(call), undefined);
 });
 
 test("resolved call info preserves exact optional-chain result semantics", () => {
