@@ -5,6 +5,7 @@ import {
   type CompilerExtension,
   type ExtensionDiagnostic,
   type ProviderDeclarationModel,
+  type ProviderDeclarationRequest,
   type ProviderModuleContext,
   type ProviderModuleResolution,
   type SourceDeclarationProvider,
@@ -34,10 +35,12 @@ export function sourceProviderExtension(
   options: {
     readonly extensionId?: string;
     readonly providerId?: string;
+    readonly declarationMaterialization?: SourceDeclarationProvider["declarationMaterialization"];
     readonly onContext?: (specifier: string, context: ProviderModuleContext) => void;
     readonly getDeclarationModel?: (
       resolution: ProviderModuleResolution,
       model: ProviderDeclarationModel,
+      request: ProviderDeclarationRequest,
     ) => ProviderDeclarationModel | ExtensionDiagnostic;
   } = {},
 ): CompilerExtension {
@@ -50,6 +53,7 @@ export function sourceProviderExtension(
       extensionContractVersion: TstsSourceProviderContractVersion,
       diagnosticRange: { start: 9_900_000, end: 9_900_099 },
     },
+    declarationMaterialization: options.declarationMaterialization ?? "complete",
     ownsModule(specifier, context) {
       options.onContext?.(specifier, context);
       return models.has(specifier)
@@ -68,7 +72,7 @@ export function sourceProviderExtension(
         providerModuleId: model.providerModuleId,
       };
     },
-    getDeclarationModel(resolution) {
+    getDeclarationModel(resolution, request) {
       const model = models.get(resolution.moduleSpecifier);
       if (model === undefined) {
         return providerDiagnostic(
@@ -77,7 +81,7 @@ export function sourceProviderExtension(
           `No declaration model exists for '${resolution.moduleSpecifier}'.`,
         );
       }
-      return options.getDeclarationModel?.(resolution, model) ?? model;
+      return options.getDeclarationModel?.(resolution, model, request) ?? model;
     },
   };
   return {

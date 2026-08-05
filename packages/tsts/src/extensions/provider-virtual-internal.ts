@@ -1,3 +1,4 @@
+import type { ProviderVirtualDeclarationFact } from "./facts.js";
 import type { ProviderVirtualModuleArtifact } from "./host.js";
 import type { ProviderRenderedFunctionSignature } from "./provider-callable-signatures.js";
 import { encodeIdentityTuple } from "./identity-tuple.js";
@@ -10,6 +11,7 @@ export const providerPublicVirtualSliceMarker = ".tsts-slice-";
 
 export const providerVirtualCompilerArtifactLookup: unique symbol = Symbol("tsts.provider.virtualCompilerArtifactLookup");
 export const providerVirtualCompilerMetadataLookup: unique symbol = Symbol("tsts.provider.virtualCompilerMetadataLookup");
+export const providerVirtualStructuredTypeDemand: unique symbol = Symbol("tsts.provider.structuredTypeDemand");
 
 export interface ProviderVirtualCompilerMetadata {
   readonly directDeclarationIds: readonly string[];
@@ -58,6 +60,7 @@ export type ProviderVirtualCompilerArtifact = ProviderVirtualModuleArtifact;
 export interface ProviderVirtualCompilerRegistryAccess {
   [providerVirtualCompilerArtifactLookup](fileName: string): ProviderVirtualCompilerArtifact | undefined;
   [providerVirtualCompilerMetadataLookup](fileName: string): ProviderVirtualCompilerMetadata | undefined;
+  [providerVirtualStructuredTypeDemand](fact: ProviderVirtualDeclarationFact): boolean;
 }
 
 export function getProviderVirtualCompilerMetadata(

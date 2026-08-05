@@ -100,6 +100,7 @@ test("provider request caches preserve every callback-visible context distinctio
   const observed: ProviderModuleContext[] = [];
   const sourceProvider: SourceDeclarationProvider = {
     identity: testProviderIdentity("test.context-cache"),
+    declarationMaterialization: "complete",
     ownsModule: (candidate) => candidate === specifier
       ? { kind: "owned" }
       : { kind: "unowned" },
@@ -157,6 +158,7 @@ test("provider resolution outputs are captured once before immutable publication
   }];
   const sourceProvider: SourceDeclarationProvider = {
     identity: testProviderIdentity("test.resolution-capture"),
+    declarationMaterialization: "complete",
     ownsModule: (candidate) => candidate === specifier
       ? { kind: "owned" }
       : { kind: "unowned" },
@@ -201,6 +203,7 @@ test("failed provider slices publish no file ownership or partial documents", ()
   let conflict = false;
   const sourceProvider: SourceDeclarationProvider = {
     identity: testProviderIdentity("test.transactional-publication"),
+    declarationMaterialization: "complete",
     ownsModule: (candidate) =>
       candidate === firstSpecifier || candidate === laterSpecifier
         ? { kind: "owned" }
@@ -266,6 +269,7 @@ test("successful provider closure reserves transitive public file identities", (
   const sharedFileName = "/provider/closure-shared.d.ts";
   const sourceProvider: SourceDeclarationProvider = {
     identity: testProviderIdentity("test.closure-publication"),
+    declarationMaterialization: "complete",
     ownsModule: (candidate) =>
       [rootSpecifier, dependencySpecifier, collidingSpecifier].includes(candidate)
         ? { kind: "owned" }
@@ -383,6 +387,7 @@ function modelProvider(
 ): SourceDeclarationProvider {
   return {
     identity: testProviderIdentity("test.publication"),
+    declarationMaterialization: "complete",
     ownsModule: (specifier) => models.has(specifier)
       ? { kind: "owned" }
       : { kind: "unowned" },

@@ -12,7 +12,7 @@ import {
 } from "./source-program.js";
 import type { ArgumentPassingMode } from "./argument-passing.js";
 import { isArgumentPassingMode } from "./argument-passing.js";
-import type { SourcePrimitiveKind } from "./facts.js";
+import type { ProviderVirtualDeclarationFact, SourcePrimitiveKind } from "./facts.js";
 import {
   defineExtensionFactKey,
   formatExtensionFactKeyForDisplay,
@@ -39,6 +39,7 @@ import {
   providerPublicVirtualSliceMarker,
   providerVirtualCompilerArtifactLookup,
   providerVirtualCompilerMetadataLookup,
+  providerVirtualStructuredTypeDemand,
   providerVirtualInternalRoot,
   providerVirtualPublicRoot,
   type ProviderVirtualCompilerArtifact,
@@ -67,6 +68,10 @@ import {
   type ProviderClosureResourceUsage,
 } from "./provider-closure-resources.js";
 import { providerAncillaryDataLimits, providerDeclarationClosureLimits, providerDeclarationModelLimits } from "./provider-resource-limits.js";
+import {
+  getProviderMaterializationRound,
+  type ProviderMaterializationRound,
+} from "./provider-materialization.js";
 import {
   hasAttachedExtensionHost,
   lookupAttachedExtensionHost,
@@ -129,7 +134,7 @@ export const ExtensionHostDiagnosticCode = {
   sourceAnalysisFailed: 9000038,
 } as const;
 
-export const TstsSourceProviderContractVersion = "tsts.source-provider.1";
+export const TstsSourceProviderContractVersion = "tsts.source-provider.2";
 
 const factStoreBeginTransaction: unique symbol = Symbol("tsts.extensionFactStore.beginTransaction");
 const factStoreAssertCanCommitTransaction: unique symbol = Symbol("tsts.extensionFactStore.assertCanCommitTransaction");
@@ -386,6 +391,25 @@ export interface ProviderModuleContext {
   readonly importSlice?: ProviderImportSlice | undefined;
 }
 
+export type SourceDeclarationMaterializationMode = "complete" | "incremental";
+
+export interface ProviderCompleteExportRequest {
+  readonly exportName: string;
+  readonly exportId?: string;
+}
+
+export type ProviderDeclarationMaterialization =
+  | { readonly kind: "complete" }
+  | {
+      readonly kind: "incremental";
+      readonly completeExports: readonly ProviderCompleteExportRequest[];
+    };
+
+export interface ProviderDeclarationRequest {
+  readonly context: ProviderModuleContext;
+  readonly materialization: ProviderDeclarationMaterialization;
+}
+
 export type ProviderResolutionMode = "none" | "require" | "import";
 
 export type ProviderImportSliceKind = "bare" | "default" | "named" | "namespace" | "mixed" | "reexport" | "dynamic" | "synthetic" | "unknown";
@@ -596,13 +620,15 @@ export type ProviderModuleResolveResult =
 
 export interface SourceDeclarationProvider {
   readonly identity: ProviderIdentity;
+  readonly declarationMaterialization: SourceDeclarationMaterializationMode;
   ownsModule(specifier: string, context: ProviderModuleContext): ProviderOwnership;
   resolveModule(specifier: string, context: ProviderModuleContext): ProviderModuleResolution | ExtensionDiagnostic;
-  getDeclarationModel(module: ProviderModuleResolution): ProviderDeclarationModel | ExtensionDiagnostic;
+  getDeclarationModel(module: ProviderModuleResolution, request: ProviderDeclarationRequest): ProviderDeclarationModel | ExtensionDiagnostic;
 }
 
 interface RegisteredSourceDeclarationProvider {
   readonly identity: ProviderIdentity;
+  readonly declarationMaterialization: SourceDeclarationMaterializationMode;
   readonly ownsModule: SourceDeclarationProvider["ownsModule"];
   readonly resolveModule: SourceDeclarationProvider["resolveModule"];
   readonly getDeclarationModel: SourceDeclarationProvider["getDeclarationModel"];
@@ -1776,6 +1802,7 @@ export class ExtensionFactResolver {
 export class ProviderRegistry {
   readonly #diagnostics: ExtensionDiagnosticStore;
   readonly #requiredProviderModules: readonly RequiredProviderModuleSpec[];
+  readonly #materializationRound: ProviderMaterializationRound | undefined;
   readonly #sourceDeclarationProviders = new Map<string, RegisteredSourceDeclarationProvider>();
   readonly #sourceDeclarationProviderRegistrations = new WeakMap<
     SourceDeclarationProvider,
@@ -1783,9 +1810,14 @@ export class ProviderRegistry {
   >();
   readonly #virtualModules = new Map<string, ProviderResolvedModule>();
   readonly #virtualModuleResultsByRequestKey = new Map<string, ProviderModuleResolveResult>();
+  readonly #providerPlanningBudgetRejectionsByIdentity = new Map<
+    string,
+    Extract<ProviderModuleResolveResult, { readonly kind: "rejected" }>
+  >();
   readonly #declarationLoadOutcomesByRequestKey = new Map<string, ProviderDeclarationLoadOutcome>();
   readonly #declarationCandidatesByCacheKey = new Map<string, ProviderDeclarationCandidate>();
   readonly #virtualArtifactsByFileName = new Map<string, ProviderVirtualCompilerArtifact>();
+  readonly #materializationByArtifact = new WeakMap<ProviderVirtualCompilerArtifact, ProviderDeclarationMaterialization>();
   readonly #virtualCompilerMetadataByArtifact = new WeakMap<ProviderVirtualCompilerArtifact, ProviderVirtualCompilerMetadata>();
   readonly #virtualDocumentsByUri = new Map<string, ProviderVirtualDeclarationDocument>();
   readonly #publicVirtualDocumentsByUri = new Map<string, ProviderVirtualDeclarationDocument>();
@@ -1804,9 +1836,14 @@ export class ProviderRegistry {
   readonly #registrationSavepointStates = new WeakMap<ProviderRegistrationSavepoint, ProviderRegistrationSavepointState>();
   #providerRegistrationsSealed = false;
   #activeResolutionTransaction: ProviderResolutionTransaction | undefined;
-  constructor(diagnostics: ExtensionDiagnosticStore, requiredProviderModules: readonly RequiredProviderModuleSpec[] = []) {
+  constructor(
+    diagnostics: ExtensionDiagnosticStore,
+    requiredProviderModules: readonly RequiredProviderModuleSpec[] = [],
+    materializationRound?: ProviderMaterializationRound,
+  ) {
     this.#diagnostics = diagnostics;
     this.#requiredProviderModules = snapshotRequiredProviderModules(requiredProviderModules);
+    this.#materializationRound = materializationRound;
   }
 
   registerSourceDeclarationProvider(provider: SourceDeclarationProvider): boolean {
@@ -2237,13 +2274,22 @@ export class ProviderRegistry {
       return this.#cacheDeclarationLoadOutcome(requestKey, { kind: "rejected", diagnostic });
     }
     const resolution = resolutionSnapshot.resolution;
+    const declarationRequest = this.#materializationRound?.createRequest(
+      owner.provider.identity,
+      resolution,
+      exactContext,
+      owner.provider.declarationMaterialization,
+    ) ?? Object.freeze({
+      context: exactContext,
+      materialization: Object.freeze({ kind: "complete" as const }),
+    });
 
     const declarationCall = callProvider<ProviderDeclarationModel | ExtensionDiagnostic>(
       this.#diagnostics,
       owner.provider.identity,
       "getDeclarationModel",
       specifier,
-      () => owner.provider.getDeclarationModel(resolution),
+      () => owner.provider.getDeclarationModel(resolution, declarationRequest),
     );
     if (declarationCall.kind === "threw") {
       return this.#cacheDeclarationLoadOutcome(requestKey, { kind: "rejected", diagnostic: declarationCall.diagnostic });
@@ -2298,6 +2344,30 @@ export class ProviderRegistry {
       this.#diagnostics.append(diagnostic);
       return this.#cacheDeclarationLoadOutcome(requestKey, { kind: "rejected", diagnostic });
     }
+    const materializationConflict = this.#materializationRound?.recordDeclarationModel(
+      owner.provider.identity,
+      resolution,
+      owner.provider.declarationMaterialization,
+      declarationModel,
+    );
+    if (materializationConflict !== undefined) {
+      const diagnostic = createHostDiagnostic({
+        extensionCode: "INVALID_PROVIDER_DECLARATION_MODEL",
+        numericCode: ExtensionHostDiagnosticCode.invalidProviderDeclaration,
+        message: `Provider '${owner.provider.identity.id}' changed its incremental declaration contract for '${specifier}'.`,
+        evidence: [{ message: "Incremental declaration contract conflict", details: materializationConflict }],
+        identity: encodeIdentityTuple([
+          "incremental-provider-contract-conflict",
+          owner.provider.identity.id,
+          specifier,
+          materializationConflict.sourceExportName,
+          materializationConflict.typeArgumentCount ?? -1,
+          materializationConflict.reason,
+        ]),
+      });
+      this.#diagnostics.append(diagnostic);
+      return this.#cacheDeclarationLoadOutcome(requestKey, { kind: "rejected", diagnostic });
+    }
     const virtualModuleIdentity = getProviderVirtualModuleIdentity(owner.provider.identity, resolution, declarationModel);
     const virtualFileDiagnostic = this.#validateVirtualFileIdentity(resolution.virtualFileName, virtualModuleIdentity);
     if (virtualFileDiagnostic !== undefined) {
@@ -2313,6 +2383,7 @@ export class ProviderRegistry {
     const candidate = Object.freeze({
       providerIdentity: owner.provider.identity,
       resolution,
+      materialization: declarationRequest.materialization,
       declarationModel,
       artifactDeclarationModel,
       graphMetrics: graphValidation.metrics,
@@ -2433,11 +2504,11 @@ export class ProviderRegistry {
       return { kind: "registered", candidateRequestKey };
     }
     if (state.candidateCount >= providerDeclarationClosureLimits.maxCandidates) {
-      return this.#rejectProviderPlanningBudget(candidate, "candidate modules", state.candidateCount + 1, providerDeclarationClosureLimits.maxCandidates);
+      return this.#rejectProviderPlanningBudget(candidate, "candidate modules", providerDeclarationClosureLimits.maxCandidates);
     }
     const nextExportCount = state.exportCount + candidate.canonicalDeclarationModelsBySourceExportName.size;
     if (!Number.isSafeInteger(nextExportCount) || nextExportCount > providerDeclarationClosureLimits.maxExports) {
-      return this.#rejectProviderPlanningBudget(candidate, "canonical exports", nextExportCount, providerDeclarationClosureLimits.maxExports);
+      return this.#rejectProviderPlanningBudget(candidate, "canonical exports", providerDeclarationClosureLimits.maxExports);
     }
     const resourceReservation = reserveProviderClosureResources(state.resources, {
       snapshottedInputNodeAndCollectionEntryCount: candidate.graphMetrics.physicalNodeAndArrayEntryCount
@@ -2452,7 +2523,6 @@ export class ProviderRegistry {
       return this.#rejectProviderPlanningBudget(
         candidate,
         resourceReservation.dimension,
-        resourceReservation.actual,
         resourceReservation.limit,
       );
     }
@@ -2799,7 +2869,6 @@ export class ProviderRegistry {
         return this.#rejectProviderPlanningBudget(
           candidate,
           "canonical owner visits",
-          state.ownerVisitsByKey.size + 1,
           providerDeclarationClosureLimits.maxOwnerVisits,
         );
       }
@@ -2823,7 +2892,6 @@ export class ProviderRegistry {
       return this.#rejectProviderPlanningBudget(
         visit.candidate,
         "provider references",
-        nextReferenceCount,
         providerDeclarationClosureLimits.maxReferences,
       );
     }
@@ -2998,23 +3066,35 @@ export class ProviderRegistry {
   #rejectProviderPlanningBudget(
     candidate: ProviderDeclarationCandidate,
     dimension: string,
-    actual: number,
     limit: number,
   ): { readonly kind: "rejected"; readonly diagnostic: ExtensionDiagnostic } {
-    const diagnostic = createInvalidProviderDeclarationDiagnostic(
-      candidate.providerIdentity,
-      candidate.declarationModel,
-      `Provider declaration closure exceeds the transaction limit for ${dimension}.`,
-      encodeIdentityTuple([
-        "provider-declaration-closure-budget",
-        candidate.providerIdentity.id,
-        dimension,
-        limit,
-      ]),
-      [{ message: "Provider declaration closure budget", details: { dimension, actual, limit } }],
-    );
+    const identity = encodeIdentityTuple([
+      "provider-declaration-closure-budget",
+      candidate.providerIdentity.id,
+      dimension,
+      limit,
+    ]);
+    const cached = this.#providerPlanningBudgetRejectionsByIdentity.get(identity);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const diagnostic = createHostDiagnostic({
+      extensionCode: "INVALID_PROVIDER_DECLARATION_MODEL",
+      numericCode: ExtensionHostDiagnosticCode.invalidProviderDeclaration,
+      message: `Provider declaration closure exceeds the transaction limit for ${dimension}.`,
+      evidence: [{
+        message: "Provider",
+        details: candidate.providerIdentity,
+      }, {
+        message: "Provider declaration closure budget",
+        details: { dimension, limit },
+      }],
+      identity,
+    });
     this.#diagnostics.append(diagnostic);
-    return { kind: "rejected", diagnostic };
+    const rejection = Object.freeze({ kind: "rejected" as const, diagnostic });
+    this.#providerPlanningBudgetRejectionsByIdentity.set(identity, rejection);
+    return rejection;
   }
 
   #reserveProviderDeclarationSource(
@@ -3033,7 +3113,6 @@ export class ProviderRegistry {
       return this.#rejectProviderPlanningBudget(
         candidate,
         reservation.dimension,
-        reservation.actual,
         reservation.limit,
       );
     }
@@ -3189,6 +3268,7 @@ export class ProviderRegistry {
         document,
       });
       this.#virtualCompilerMetadataByArtifact.set(artifact, rendering.compilerMetadata);
+      this.#materializationByArtifact.set(artifact, plan.candidate.materialization);
       const typeOnly = getProviderExportTypeOnlyMap(plan.declarationModel.exports).get(plan.sourceExportName);
       if (typeOnly === undefined) {
         const diagnostic = createInvalidProviderDeclarationDiagnostic(
@@ -3309,6 +3389,10 @@ export class ProviderRegistry {
         && existing.packageVersion === candidate.resolution.packageVersion
         && existing.sourceText === sourceText
         && JSON.stringify(existing.declarationModel) === JSON.stringify(declarationModel)
+        && providerDeclarationMaterializationEquals(
+          this.#materializationByArtifact.get(existing),
+          candidate.materialization,
+        )
         && providerVirtualCompilerMetadataEqual(
           this.#requireVirtualCompilerMetadata(existing),
           compilerMetadata,
@@ -3350,6 +3434,7 @@ export class ProviderRegistry {
       document,
     });
     this.#virtualCompilerMetadataByArtifact.set(artifact, compilerMetadata);
+    this.#materializationByArtifact.set(artifact, candidate.materialization);
     return {
       kind: "prepared",
       artifact,
@@ -3481,6 +3566,28 @@ export class ProviderRegistry {
     return artifact === undefined ? undefined : this.#virtualCompilerMetadataByArtifact.get(artifact);
   }
 
+  [providerVirtualStructuredTypeDemand](fact: ProviderVirtualDeclarationFact): boolean {
+    const artifact = this.#virtualArtifactsByFileName.get(fact.artifactFileName);
+    if (artifact === undefined) {
+      throw new Error(`Provider declaration evidence refers to unknown artifact '${fact.artifactFileName}'.`);
+    }
+    if (artifact.providerModuleId !== fact.providerModuleId
+      || artifact.moduleSpecifier !== fact.moduleSpecifier
+      || artifact.provider.id !== fact.providerId
+      || artifact.provider.version !== fact.providerVersion) {
+      throw new Error("Provider declaration evidence does not match its immutable virtual artifact.");
+    }
+    const materialization = this.#materializationByArtifact.get(artifact);
+    if (materialization === undefined) {
+      throw new Error(`Provider artifact '${artifact.fileName}' lost its materialization contract.`);
+    }
+    return this.#materializationRound?.recordCompleteExportDemand(
+      artifact.provider,
+      fact,
+      materialization,
+    ) ?? false;
+  }
+
   #requireVirtualCompilerMetadata(artifact: ProviderVirtualCompilerArtifact): ProviderVirtualCompilerMetadata {
     const metadata = this.#virtualCompilerMetadataByArtifact.get(artifact);
     if (metadata === undefined) {
@@ -3593,7 +3700,11 @@ export class ExtensionHost {
     this.#ownerAuthority = getDiagnosticStoreOwnerAuthority(this.diagnostics);
     this.facts = new ExtensionFactStore(this.diagnostics);
     this.factResolver = new ExtensionFactResolver(this.facts, this.diagnostics);
-    this.providers = new ProviderRegistry(this.diagnostics, options.requiredProviderModules ?? []);
+    this.providers = new ProviderRegistry(
+      this.diagnostics,
+      options.requiredProviderModules ?? [],
+      getProviderMaterializationRound(options),
+    );
     const orderedExtensions = orderExtensions(
       (options.extensions ?? []).map(snapshotCompilerExtension),
       this.diagnostics,
@@ -4189,6 +4300,19 @@ export function attachExtensionHost<TProgram extends object>(program: TProgram, 
   const host = new ExtensionHost(program, options);
   registerAttachedExtensionHost(program, host);
   return Object.freeze({ program, extensionHost: host });
+}
+
+export function snapshotExtensionHostOptionsForCompilerSession(
+  options: ExtensionHostOptions,
+): ExtensionHostOptions {
+  return Object.freeze({
+    ...(options.extensions === undefined
+      ? {}
+      : { extensions: Object.freeze(options.extensions.map(snapshotCompilerExtension)) }),
+    ...(options.requiredProviderModules === undefined
+      ? {}
+      : { requiredProviderModules: snapshotRequiredProviderModules(options.requiredProviderModules) }),
+  });
 }
 
 export function attachExtensionHostToProgram<TProgram extends object>(hostOwner: object, program: TProgram, options: AttachExtensionHostToProgramOptions = {}): ExtendedProgram<TProgram> | undefined {
@@ -5243,11 +5367,15 @@ function snapshotSourceDeclarationProviderRegistration(
 ): SourceDeclarationProviderRegistrationSnapshot {
   try {
     const identity = snapshotProviderIdentity(provider.identity);
+    const declarationMaterialization = provider.declarationMaterialization;
     const ownsModule = provider.ownsModule;
     const resolveModule = provider.resolveModule;
     const getDeclarationModel = provider.getDeclarationModel;
     if (typeof ownsModule !== "function") {
       return { kind: "invalid", reason: "ownsModule must be a function" };
+    }
+    if (declarationMaterialization !== "complete" && declarationMaterialization !== "incremental") {
+      return { kind: "invalid", reason: "declarationMaterialization must be 'complete' or 'incremental'" };
     }
     if (typeof resolveModule !== "function") {
       return { kind: "invalid", reason: "resolveModule must be a function" };
@@ -5259,9 +5387,11 @@ function snapshotSourceDeclarationProviderRegistration(
       kind: "valid",
       provider: Object.freeze({
         identity,
+        declarationMaterialization,
         ownsModule: (specifier: string, context: ProviderModuleContext) => ownsModule.call(provider, specifier, context),
         resolveModule: (specifier: string, context: ProviderModuleContext) => resolveModule.call(provider, specifier, context),
-        getDeclarationModel: (module: ProviderModuleResolution) => getDeclarationModel.call(provider, module),
+        getDeclarationModel: (module: ProviderModuleResolution, request: ProviderDeclarationRequest) =>
+          getDeclarationModel.call(provider, module, request),
       }),
     };
   } catch (error) {
@@ -5335,6 +5465,7 @@ type ProviderDeclarationLoadOutcome = Exclude<ProviderDeclarationLoadResult, { r
 interface ProviderDeclarationCandidate {
   readonly providerIdentity: ProviderIdentity;
   readonly resolution: ProviderModuleResolution;
+  readonly materialization: ProviderDeclarationMaterialization;
   readonly declarationModel: ProviderDeclarationModel;
   readonly artifactDeclarationModel: ProviderDeclarationModel;
   readonly graphMetrics: ProviderDeclarationModelGraphMetrics;
@@ -5934,6 +6065,24 @@ function providerVirtualCompilerMetadataEqual(
   return left.directDeclarationIds.length === right.directDeclarationIds.length
     && left.directDeclarationIds.every((id, index) => id === right.directDeclarationIds[index])
     && providerRenderedFunctionSignaturesEqual(left.renderedFunctionSignatures, right.renderedFunctionSignatures);
+}
+
+function providerDeclarationMaterializationEquals(
+  left: ProviderDeclarationMaterialization | undefined,
+  right: ProviderDeclarationMaterialization,
+): boolean {
+  if (left === undefined || left.kind !== right.kind) {
+    return false;
+  }
+  return left.kind === "complete"
+    || right.kind === "incremental"
+      && left.completeExports.length === right.completeExports.length
+      && left.completeExports.every((request, index) => {
+        const candidate = right.completeExports[index];
+        return candidate !== undefined
+          && request.exportName === candidate.exportName
+          && request.exportId === candidate.exportId;
+      });
 }
 
 function renderProviderDeclarationModel(model: ProviderDeclarationModel, options: ProviderDeclarationRenderOptions = {}): ProviderDeclarationRendering {

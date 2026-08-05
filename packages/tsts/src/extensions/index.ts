@@ -62,7 +62,10 @@ export type {
   ExtensionHostOptions,
   ExtensionInitializeContext,
   ProviderDeclarationKind,
+  ProviderDeclarationMaterialization,
   ProviderDeclarationModel,
+  ProviderDeclarationRequest,
+  ProviderCompleteExportRequest,
   ProviderExportDeclaration,
   ProviderExportKind,
   ProviderHeritageDeclaration,
@@ -93,6 +96,7 @@ export type {
   SourceAnalysisFactAccess,
   SourceAnalysisFactResolver,
   SourceDeclarationProvider,
+  SourceDeclarationMaterializationMode,
 } from "./host.js";
 export type {
   ReadonlySourceFactResolver,

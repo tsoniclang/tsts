@@ -298,6 +298,7 @@ function multiModuleSliceProvider(
   const modelsByFile = new Map<string, ProviderDeclarationModel>();
   return {
     identity: testProviderIdentity("test.slices"),
+    declarationMaterialization: "complete",
     ownsModule: (specifier) => declarationsByModule.has(specifier)
       ? { kind: "owned" }
       : { kind: "unowned" },
