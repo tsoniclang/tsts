@@ -1,6 +1,7 @@
 import type {
   ExtensionHostOptions,
   ProviderDeclarationMaterialization,
+  ProviderDeclarationModel,
   ProviderDeclarationRequest,
   ProviderIdentity,
   ProviderModuleContext,
@@ -9,12 +10,17 @@ import type {
   SourceDeclarationMaterializationMode,
 } from "./index.js";
 import { encodeIdentityTuple } from "./identity-tuple.js";
+import {
+  getProviderIncrementalExportContractMap,
+  type ProviderIncrementalExportContract,
+} from "./provider-export-contract.js";
 import { providerDeclarationClosureLimits } from "./provider-resource-limits.js";
 
 const providerMaterializationRounds = new WeakMap<ExtensionHostOptions, ProviderMaterializationRound>();
 
 export class ProviderMaterializationCoordinator {
   readonly #completeExportsByModule = new Map<string, Map<string, ProviderCompleteExportDemand>>();
+  readonly #exportContractsByModule = new Map<string, Map<string, ProviderIncrementalExportContract>>();
   #activeRound: ProviderMaterializationRound | undefined;
   #roundCount = 0;
   #sealed = false;
@@ -32,7 +38,10 @@ export class ProviderMaterializationCoordinator {
         `Provider materialization did not converge within ${providerDeclarationClosureLimits.maxCandidates + 1} rounds.`,
       );
     }
-    const round = new ProviderMaterializationRound(snapshotCompleteExports(this.#completeExportsByModule));
+    const round = new ProviderMaterializationRound(
+      snapshotCompleteExports(this.#completeExportsByModule),
+      snapshotExportContracts(this.#exportContractsByModule),
+    );
     this.#activeRound = round;
     providerMaterializationRounds.set(options, round);
     return round;
@@ -56,6 +65,7 @@ export class ProviderMaterializationCoordinator {
       }
       this.#completeExportsByModule.set(moduleKey, completeExports);
     }
+    replaceExportContracts(this.#exportContractsByModule, round.exportContracts());
     return changed;
   }
 
@@ -68,18 +78,24 @@ export class ProviderMaterializationCoordinator {
     }
     this.#activeRound = undefined;
     round.seal();
+    replaceExportContracts(this.#exportContractsByModule, round.exportContracts());
     this.#sealed = true;
   }
 }
 
 export class ProviderMaterializationRound {
   readonly #completeExportsByModule: ReadonlyMap<string, readonly ProviderCompleteExportDemand[]>;
+  readonly #exportContractsByModule: Map<string, Map<string, ProviderIncrementalExportContract>>;
   readonly #pendingDemandsByModule = new Map<string, Map<string, ProviderCompleteExportDemand>>();
   #incrementalProviderLoaded = false;
   #state: "active" | "finished" | "sealed" = "active";
 
-  constructor(completeExportsByModule: ReadonlyMap<string, readonly ProviderCompleteExportDemand[]>) {
+  constructor(
+    completeExportsByModule: ReadonlyMap<string, readonly ProviderCompleteExportDemand[]>,
+    exportContractsByModule: Map<string, Map<string, ProviderIncrementalExportContract>>,
+  ) {
     this.#completeExportsByModule = completeExportsByModule;
+    this.#exportContractsByModule = exportContractsByModule;
   }
 
   createRequest(
@@ -145,6 +161,50 @@ export class ProviderMaterializationRound {
     return true;
   }
 
+  recordDeclarationModel(
+    provider: ProviderIdentity,
+    resolution: ProviderModuleResolution,
+    mode: SourceDeclarationMaterializationMode,
+    model: ProviderDeclarationModel,
+  ): ProviderIncrementalContractConflict | undefined {
+    if (mode !== "incremental") {
+      return undefined;
+    }
+    if (this.#state !== "active") {
+      throw new Error(`Provider declaration model arrived after its materialization round was ${this.#state}.`);
+    }
+    const moduleKey = getProviderMaterializationModuleKey(provider, resolution);
+    const existing = this.#exportContractsByModule.get(moduleKey) ?? new Map();
+    const next = new Map(existing);
+    for (const [variantKey, contract] of getProviderIncrementalExportContractMap(
+      model.moduleSpecifier,
+      model.exports,
+    )) {
+      const previous = existing.get(variantKey);
+      if (previous?.headerKey !== undefined && previous.headerKey !== contract.headerKey) {
+        return Object.freeze({
+          sourceExportName: contract.sourceExportName,
+          ...(contract.typeArgumentCount === undefined ? {} : { typeArgumentCount: contract.typeArgumentCount }),
+          reason: "stable export header changed between materialization rounds",
+        });
+      }
+      if (previous?.bodyKey !== undefined && previous.bodyKey !== contract.bodyKey) {
+        return Object.freeze({
+          sourceExportName: contract.sourceExportName,
+          ...(contract.typeArgumentCount === undefined ? {} : { typeArgumentCount: contract.typeArgumentCount }),
+          reason: contract.bodyKey === undefined
+            ? "completed export body disappeared in a later materialization round"
+            : "completed export body changed between materialization rounds",
+        });
+      }
+      next.set(variantKey, previous?.bodyKey === undefined && contract.bodyKey !== undefined
+        ? contract
+        : previous ?? contract);
+    }
+    this.#exportContractsByModule.set(moduleKey, next);
+    return undefined;
+  }
+
   hasIncrementalProvider(): boolean {
     return this.#incrementalProviderLoaded;
   }
@@ -160,6 +220,10 @@ export class ProviderMaterializationRound {
         moduleKey,
         Object.freeze([...demands.values()].sort(compareCompleteExportDemands)),
       ] as const)));
+  }
+
+  exportContracts(): ReadonlyMap<string, ReadonlyMap<string, ProviderIncrementalExportContract>> {
+    return this.#exportContractsByModule;
   }
 
   finish(): void {
@@ -182,6 +246,12 @@ interface ProviderCompleteExportDemand {
   readonly exportId?: string;
 }
 
+export interface ProviderIncrementalContractConflict {
+  readonly sourceExportName: string;
+  readonly typeArgumentCount?: number;
+  readonly reason: string;
+}
+
 const completeProviderDeclarationMaterialization = Object.freeze({
   kind: "complete",
 } satisfies ProviderDeclarationMaterialization);
@@ -202,6 +272,22 @@ function snapshotCompleteExports(
       moduleKey,
       Object.freeze([...demands.values()].sort(compareCompleteExportDemands)),
     ]));
+}
+
+function snapshotExportContracts(
+  source: ReadonlyMap<string, ReadonlyMap<string, ProviderIncrementalExportContract>>,
+): Map<string, Map<string, ProviderIncrementalExportContract>> {
+  return new Map([...source].map(([moduleKey, contracts]) => [moduleKey, new Map(contracts)]));
+}
+
+function replaceExportContracts(
+  destination: Map<string, Map<string, ProviderIncrementalExportContract>>,
+  source: ReadonlyMap<string, ReadonlyMap<string, ProviderIncrementalExportContract>>,
+): void {
+  destination.clear();
+  for (const [moduleKey, contracts] of source) {
+    destination.set(moduleKey, new Map(contracts));
+  }
 }
 
 function getProviderMaterializationModuleKey(

@@ -5,6 +5,7 @@ import {
   createCompilerSessionFromFiles,
   TstsSourceProviderContractVersion,
   type CheckedSourceProgram,
+  type CompilerSession,
   type ProviderDeclarationModel,
   type ProviderDeclarationRequest,
 } from "../index.js";
@@ -186,6 +187,155 @@ test("direct provider registry use requests one complete immutable declaration m
   });
   assertFrozenRequest(observed!);
 });
+
+test("complete providers retain one compiler program and one complete declaration request", () => {
+  const fixture = createLazyRootSession("complete");
+  const initialProgram = fixture.session.program;
+
+  assert.deepEqual(fixture.session.getDiagnostics("semantic"), []);
+  const checked = fixture.session.checkSource();
+
+  assert.equal(checked.program, initialProgram);
+  assert.equal(fixture.session.program, initialProgram);
+  assert.equal(fixture.session.checkSource(), checked);
+  assert.equal(fixture.requests.length, 1);
+  assert.deepEqual(distinctMaterializations(fixture.requests), [["*"]]);
+  assertFrozenRequest(fixture.requests[0]!);
+});
+
+test("every semantic compiler-session entrypoint converges exact provider demand", () => {
+  const entrypoints: readonly (readonly [string, (session: CompilerSession) => unknown])[] = [
+    ["ensureChecked", (session) => session.ensureChecked()],
+    ["semantic diagnostics", (session) => session.getDiagnostics("semantic")],
+    ["source files to emit", (session) => session.getSourceFilesToEmit()],
+  ];
+
+  for (const [name, invoke] of entrypoints) {
+    const fixture = createLazyRootSession("incremental");
+    const initialProgram = fixture.session.program;
+
+    invoke(fixture.session);
+
+    assert.notEqual(fixture.session.program, initialProgram, name);
+    assert.deepEqual(distinctMaterializations(fixture.requests), [
+      [],
+      ["Root#Test.Root"],
+      ["Leaf#Test.Leaf", "Root#Test.Root"],
+    ], name);
+    const checked = fixture.session.checkSource();
+    assert.equal(checked.program, fixture.session.program, name);
+    assert.equal(checked.diagnostics.length, 0, name);
+    assert.deepEqual(checked.extensionDiagnostics, [], name);
+  }
+});
+
+test("duplicate alias namespace and re-export uses produce one ordered demand set", () => {
+  const moduleSpecifier = "@test/lazy/multiple.js";
+  const observedByOrder: (readonly (readonly string[])[])[] = [];
+  for (const expression of [
+    "aliased.value + namespaced.value + other.value",
+    "other.value + namespaced.value + aliased.value",
+  ]) {
+    const requests: ProviderDeclarationRequest[] = [];
+    const baseModel = multipleModel(moduleSpecifier, completeRequest());
+    const extension = sourceProviderExtension(new Map([[moduleSpecifier, baseModel]]), {
+      declarationMaterialization: "incremental",
+      getDeclarationModel(_resolution, _model, request) {
+        requests.push(request);
+        assertFrozenRequest(request);
+        return multipleModel(moduleSpecifier, request);
+      },
+    });
+    const checked = createCompilerSessionFromFiles({
+      currentDirectory: "/src",
+      rootFiles: ["/src/core.d.ts", "/src/bridge.ts", "/src/index.ts"],
+      files: {
+        "/src/core.d.ts": testCoreDeclarations,
+        "/src/bridge.ts": `export type { A as AliasA } from "${moduleSpecifier}";`,
+        "/src/index.ts": [
+          'import type { AliasA } from "./bridge.js";',
+          `import type * as provider from "${moduleSpecifier}";`,
+          "declare const aliased: AliasA;",
+          "declare const namespaced: provider.A;",
+          "declare const other: provider.B;",
+          `export const total = ${expression};`,
+        ].join("\n"),
+      },
+      compilerOptions: testNoLibCompilerOptions,
+      extensionHostOptions: { extensions: [extension] },
+    }).checkSource();
+
+    assert.equal(
+      checked.diagnostics.length,
+      0,
+      checked.diagnostics.map((diagnostic) => Diagnostic_String(diagnostic)).join("\n"),
+    );
+    assert.deepEqual(checked.extensionDiagnostics, []);
+    observedByOrder.push(distinctMaterializations(requests));
+  }
+
+  const expected = [[], ["A#Test.A", "B#Test.B"]];
+  assert.deepEqual(observedByOrder, [expected, expected]);
+  assert.equal(observedByOrder.flat(2).some((entry) => entry.includes("Unused")), false);
+});
+
+function createLazyRootSession(
+  declarationMaterialization: SourceDeclarationProvider["declarationMaterialization"],
+): { readonly session: CompilerSession; readonly requests: ProviderDeclarationRequest[] } {
+  const moduleSpecifier = "@test/lazy/session.js";
+  const requests: ProviderDeclarationRequest[] = [];
+  const baseModel = lazyModel(moduleSpecifier, completeRequest());
+  const extension = sourceProviderExtension(new Map([[moduleSpecifier, baseModel]]), {
+    declarationMaterialization,
+    getDeclarationModel(_resolution, _model, request) {
+      requests.push(request);
+      return lazyModel(moduleSpecifier, request);
+    },
+  });
+  return {
+    session: createCompilerSessionFromFiles({
+      currentDirectory: "/src",
+      rootFiles: ["/src/core.d.ts", "/src/index.ts"],
+      files: {
+        "/src/core.d.ts": testCoreDeclarations,
+        "/src/index.ts": [
+          `import type { Root } from "${moduleSpecifier}";`,
+          "declare const root: Root;",
+          "export const value = root.next.value;",
+        ].join("\n"),
+      },
+      compilerOptions: testNoLibCompilerOptions,
+      extensionHostOptions: { extensions: [extension] },
+    }),
+    requests,
+  };
+}
+
+function multipleModel(
+  moduleSpecifier: string,
+  request: ProviderDeclarationRequest,
+): ProviderDeclarationModel {
+  return {
+    moduleSpecifier,
+    providerModuleId: "Test.Lazy.Multiple",
+    exports: ["A", "B", "Unused"].map((name) => ({
+      id: `Test.${name}`,
+      name,
+      kind: "class" as const,
+      ...(isComplete(request, name, `Test.${name}`)
+        ? {
+          members: [{
+            id: `Test.${name}.value`,
+            name: "value",
+            kind: "property" as const,
+            readonly: true,
+            type: { kind: "number" as const },
+          }],
+        }
+        : {}),
+    })),
+  };
+}
 
 function lazyModel(
   moduleSpecifier: string,

@@ -28,6 +28,41 @@ export function getProviderExportContractKeyMap(moduleSpecifier: string, exports
     ]));
 }
 
+export interface ProviderIncrementalExportContract {
+  readonly sourceExportName: string;
+  readonly typeArgumentCount?: number;
+  readonly headerKey: string;
+  readonly bodyKey?: string;
+}
+
+export function getProviderIncrementalExportContractMap(
+  moduleSpecifier: string,
+  exports: readonly ProviderExportDeclaration[],
+): ReadonlyMap<string, ProviderIncrementalExportContract> {
+  const canonicalExports = canonicalizeProviderAbiModel({
+    moduleSpecifier,
+    providerModuleId: "provider-incremental-contract",
+    exports,
+  }).exports;
+  return new Map(canonicalExports.map((declaration) => {
+    const sourceExportName = getProviderSourceExportName(declaration);
+    const typeArgumentCount = declaration.sourceTypeFamily?.typeArgumentCount;
+    const { members, signatures, ...header } = declaration;
+    const contract = Object.freeze({
+      sourceExportName,
+      ...(typeArgumentCount === undefined ? {} : { typeArgumentCount }),
+      headerKey: JSON.stringify(header),
+      ...(members === undefined && signatures === undefined
+        ? {}
+        : { bodyKey: JSON.stringify({ members, signatures }) }),
+    });
+    return [
+      JSON.stringify([sourceExportName, typeArgumentCount ?? null]),
+      contract,
+    ];
+  }));
+}
+
 export function getProviderTypeParameterContractKey(parameter: ProviderTypeParameterDeclaration): string {
   return JSON.stringify(canonicalizeProviderAbiTypeParameter(parameter));
 }
