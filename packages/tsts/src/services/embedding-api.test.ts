@@ -201,6 +201,7 @@ test("public AST reader exposes exact optional-parameter question tokens", () =>
 test("public AST reader exposes trivia-free UTF-16 authored ranges", () => {
   const sourceText = [
     "// 😀 before the call",
+    "const prefix = \"😀\";",
     "declare function value(): number;",
     "export const result = /* leading */ value(); // trailing",
   ].join("\r\n");

@@ -20,7 +20,6 @@ import {
   SourceFile_FileName,
   SourceFile_Path,
   SourceFile_Text,
-  SourceFile_GetPositionMap,
 } from "../internal/ast/ast.js";
 import { Node_End, Node_ForEachChild, Node_Name, Node_Pos } from "../internal/ast/spine.js";
 import type { Kind } from "../internal/ast/generated/kinds.js";
@@ -44,7 +43,10 @@ import {
 } from "../internal/ast/modifierflags.js";
 import { GetCombinedNodeFlags, GetHeritageElements, GetSourceFileOfNode, HasModifier, IsConstAssertion, IsTypeOnlyImportDeclaration, IsTypeOnlyImportOrExportDeclaration, IsVarAwaitUsing, IsVarConst, IsVarLet, IsVarUsing, NodeIsSynthesized } from "../internal/ast/utilities.js";
 import { KindExtendsKeyword, KindImplementsKeyword } from "../internal/ast/generated/kinds.js";
-import { PositionMap_UTF8ToUTF16 } from "../internal/ast/positionmap.js";
+import {
+  ComputePositionMap,
+  PositionMap_UTF8ToUTF16,
+} from "../internal/ast/positionmap.js";
 import { GetTokenPosOfNode } from "../internal/scanner/scanner.js";
 
 export type AstModifierKind =
@@ -203,10 +205,7 @@ function authoredRange(node: GoPtr<Node>): AstAuthoredRange {
   if (sourceFile === undefined) {
     return Object.freeze({ kind: "synthetic" });
   }
-  const positionMap = SourceFile_GetPositionMap(sourceFile);
-  if (positionMap === undefined) {
-    return Object.freeze({ kind: "synthetic" });
-  }
+  const positionMap = authoredPositionMap(sourceFile);
   const start = PositionMap_UTF8ToUTF16(
     positionMap,
     GetTokenPosOfNode(node, sourceFile, false as bool),
@@ -216,6 +215,23 @@ function authoredRange(node: GoPtr<Node>): AstAuthoredRange {
     return Object.freeze({ kind: "synthetic" });
   }
   return Object.freeze({ kind: "authored", start, end });
+}
+
+const authoredPositionMaps = new WeakMap<SourceFile, NonNullable<ReturnType<typeof ComputePositionMap>>>();
+
+function authoredPositionMap(
+  sourceFile: SourceFile,
+): NonNullable<ReturnType<typeof ComputePositionMap>> {
+  const existing = authoredPositionMaps.get(sourceFile);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const created = ComputePositionMap(SourceFile_Text(sourceFile));
+  if (created === undefined) {
+    throw new Error("TS-Go position map construction returned no result.");
+  }
+  authoredPositionMaps.set(sourceFile, created);
+  return created;
 }
 
 function operatorKindName(node: GoPtr<Node>): string | undefined {
