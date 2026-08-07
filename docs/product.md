@@ -12,8 +12,29 @@ The gitlinks are authoritative:
 
 - `vendor/typescript-go`: selected Microsoft TS-Go source;
 - `tools/gotots`: selected GoToTS compiler and provider distribution.
+- `tools/tsonic`: selected semantic host and shared source-core contracts;
+- `tools/tsts-legacy`: bootstrap TSTS checker and exact target-AST contract;
+- `tools/tsonic-typescript`: selected TypeScript target;
+- `tools/typescript-runtime`: selected ordinary TypeScript runtime.
 
 A pin changes only with differential product evidence.
+
+GoToTS canonical output remains sealed. Product assembly copies those exact
+manifest members into an isolated checking workspace before installing local
+provider packages. TSTS checks that immutable byte set, the TypeScript target
+returns transformed AST artifacts, and the product exact-joins target source
+paths to canonical TypeScript paths before publication. Neither product
+assembly nor the printer recognizes marker names or patches source text.
+
+The canonical manifest's TypeScript members are also the exact TSTS root-file
+set. This supports library products whose generated `program.ts` is empty
+without manufacturing imports or dropping unreferenced package modules.
+
+Build tools are assembled from each pinned package's `npm pack` surface into
+one isolated module graph. That graph contains exactly one `@tsonic/tsts`
+package: the target-AST-enabled bootstrap. The semantic host, source-core,
+target API, TypeScript target, and encoder therefore share one AST runtime.
+Nested dependency copies and whole-`dist` test leakage are not assembly paths.
 
 ## Selected Profile
 

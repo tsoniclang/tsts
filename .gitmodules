@@ -4,3 +4,15 @@
 [submodule "tools/gotots"]
 	path = tools/gotots
 	url = git@github.com:tsoniclang/gotots.git
+[submodule "tools/tsonic"]
+	path = tools/tsonic
+	url = git@github.com:tsoniclang/tsonic.git
+[submodule "tools/tsonic-typescript"]
+	path = tools/tsonic-typescript
+	url = git@github.com:tsoniclang/tsonic-typescript.git
+[submodule "tools/typescript-runtime"]
+	path = tools/typescript-runtime
+	url = git@github.com:tsoniclang/typescript-runtime.git
+[submodule "tools/tsts-legacy"]
+	path = tools/tsts-legacy
+	url = git@github.com:tsoniclang/tsts-legacy.git

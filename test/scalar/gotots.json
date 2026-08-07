@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "distribution": {
+    "root": "../../tools/gotots"
+  },
+  "source": {
+    "root": "source",
+    "package": ".",
+    "mode": "exported"
+  },
+  "go": {
+    "goos": "linux",
+    "goarch": "amd64",
+    "cgo": false,
+    "tags": []
+  },
+  "semantics": {
+    "integers": "number",
+    "evaluationOrder": "direct",
+    "concurrency": "disabled"
+  },
+  "providers": {
+    "standardLibrary": false,
+    "externals": false
+  },
+  "implementations": {
+    "bundles": []
+  },
+  "output": {
+    "directory": "../../.temp/scalar/canonical"
+  }
+}

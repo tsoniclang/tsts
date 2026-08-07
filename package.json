@@ -6,6 +6,7 @@
   "scripts": {
     "build": "bash scripts/build.sh",
     "check": "bash scripts/check.sh",
+    "check:scalar": "bash scripts/check-scalar.sh",
     "replay": "bash scripts/replay.sh"
   }
 }
