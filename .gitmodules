@@ -1,0 +1,6 @@
+[submodule "vendor/typescript-go"]
+	path = vendor/typescript-go
+	url = https://github.com/microsoft/typescript-go.git
+[submodule "tools/gotots"]
+	path = tools/gotots
+	url = git@github.com:tsoniclang/gotots.git

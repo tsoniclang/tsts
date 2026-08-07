@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "distribution": {
+    "root": "tools/gotots"
+  },
+  "source": {
+    "root": "vendor/typescript-go",
+    "package": "./cmd/tsgo",
+    "mode": "main"
+  },
+  "go": {
+    "goos": "linux",
+    "goarch": "amd64",
+    "cgo": false,
+    "tags": ["noasm"]
+  },
+  "semantics": {
+    "integers": "number",
+    "evaluationOrder": "direct",
+    "concurrency": "cooperative"
+  },
+  "providers": {
+    "standardLibrary": true,
+    "externals": true
+  },
+  "implementations": {
+    "bundles": [
+      "implementations/xxh3/contract.json"
+    ]
+  },
+  "output": {
+    "directory": ".temp/generated"
+  }
+}

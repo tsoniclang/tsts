@@ -1,0 +1,11 @@
+{
+  "name": "@tsoniclang/tsts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "check": "bash scripts/check.sh",
+    "replay": "bash scripts/replay.sh"
+  }
+}
