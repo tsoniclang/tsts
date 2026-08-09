@@ -10,6 +10,7 @@ if [[ "${TSTS_GUARDED:-0}" != "1" ]]; then
 fi
 
 bash "$root/scripts/build-tools.sh"
+node "$root/scripts/verify-typescript-target.mjs" "$root"
 "$root/.temp/bin/gotots" build -c "$root/gotots.json"
 node "$root/scripts/target.mjs" \
   "$root" \

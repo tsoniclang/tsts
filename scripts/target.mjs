@@ -56,7 +56,6 @@ const project = {
   targets: [{
     id: "typescript",
     options: {
-      typescriptCompatibility: "compat",
       printer: {
         executable: join(repositoryRoot, ".temp", "bin", "tsgo-ast-printer"),
         arguments: [
