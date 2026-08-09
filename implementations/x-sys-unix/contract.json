@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 2,
+  "package": {
+    "importPath": "golang.org/x/sys/unix",
+    "modulePath": "golang.org/x/sys",
+    "moduleVersion": "v0.46.0"
+  },
+  "build": {
+    "goVersion": "go1.26.4",
+    "goos": "linux",
+    "goarch": "amd64",
+    "cgoEnabled": false,
+    "buildTags": [
+      "noasm"
+    ]
+  },
+  "compilation": {
+    "integers": "number",
+    "evaluationOrder": "direct",
+    "concurrency": "cooperative"
+  },
+  "source": "target/packages/1cc40a94cc1de3d49eb4e0c3a16e7b953caa8f415e659545beaf74301f7248aa/unix/package.ts",
+  "tsconfig": "tsconfig.json",
+  "certificationSources": [
+    "runtime-contract.d.ts",
+    "target/support/interfaces/adapters/55.d.ts",
+    "target/support/interfaces/contracts/81.d.ts",
+    "target/support/interfaces/provider-bridges/01.d.ts"
+  ],
+  "equivalenceEnvelope": {
+    "kind": "internal-algorithm",
+    "relaxedBehavior": "The Node product implements file-descriptor operations required by batch compiler realpath resolution through certified gostdlib files; directory-entry, polling, terminal, fanotify, inotify, file-handle, and raw-syscall operations return explicit Unix unsupported errors, and Readlink resolves the final target rather than one link hop.",
+    "preservedObservables": [
+      "Batch compiler file opening closing reading writing stat and proc-descriptor realpath behavior remains available",
+      "Every unsupported platform operation returns an explicit Go-compatible error value instead of fabricated success",
+      "Exported Linux constants and selected struct layouts remain source-compatible with generated consumers",
+      "The complete generated golang.org/x/sys/unix package is replaced atomically"
+    ],
+    "evidence": [
+      "Generated artifact replacement and strict consumer typecheck",
+      "Pinned TS-Go valid syntax-error and semantic-error runtime differential",
+      "Product-owned Unix implementation contract tests"
+    ]
+  },
+  "exports": [
+    "$initialize",
+    "Close",
+    "IoctlGetTermios",
+    "IoctlGetWinsize",
+    "Open",
+    "Readlink",
+    "Stat",
+    "Stat_t",
+    "TIOCGWINSZ$uint",
+    "Termios",
+    "Timespec",
+    "Winsize"
+  ]
+}

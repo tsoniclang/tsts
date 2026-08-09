@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": false,
+    "types": []
+  },
+  "files": [
+    "runtime-contract.d.ts",
+    "target/packages/1cc40a94cc1de3d49eb4e0c3a16e7b953caa8f415e659545beaf74301f7248aa/unix/package.ts",
+    "target/support/interfaces/adapters/55.d.ts",
+    "target/support/interfaces/contracts/81.d.ts",
+    "target/support/interfaces/provider-bridges/01.d.ts"
+  ]
+}

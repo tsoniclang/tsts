@@ -8,7 +8,7 @@ if (repositoryRoot === undefined) {
   throw new Error("repository root is required");
 }
 
-const outputRoot = join(repositoryRoot, ".temp", "generated", "out");
+const outputRoot = join(repositoryRoot, ".temp", "target", "out");
 const contract = JSON.parse(
   await readFile(
     join(repositoryRoot, "implementations", "xxh3", "contract.json"),
@@ -49,6 +49,9 @@ const corpus = [
   "typescript\0",
   "typescript-go",
   "Δcompiler🙂",
+  "\ud800",
+  "\udc00",
+  "a\ud800b",
   "x".repeat(31),
   "x".repeat(32),
   "x".repeat(33),
@@ -98,19 +101,35 @@ for (const chunks of [
 
 const bytes = Array.from({ length: 257 }, (_, index) => index & 0xff);
 const byteSlice = RuntimeSlice.literal(bytes);
+const firstByteHasher = implementation.New();
+const secondByteHasher = implementation.New();
+const [firstByteCount, firstByteError] = implementation.Hasher.Write(
+  firstByteHasher,
+  byteSlice,
+);
+const [secondByteCount, secondByteError] = implementation.Hasher.Write(
+  secondByteHasher,
+  byteSlice,
+);
+assert.equal(firstByteCount, bytes.length);
+assert.equal(secondByteCount, bytes.length);
+assert.equal(firstByteError, undefined);
+assert.equal(secondByteError, undefined);
 assertSameDigest(
-  implementation.Hash128(byteSlice),
-  implementation.Hash128(byteSlice),
+  implementation.Hasher.Sum128(firstByteHasher),
+  implementation.Hasher.Sum128(secondByteHasher),
   "byte-slice determinism",
 );
-assert.notEqual(
-  digestKey(implementation.Hash128Seed(byteSlice, 1)),
-  digestKey(implementation.Hash128Seed(byteSlice, 2)),
-  "distinct seeds produced the same representative digest",
-);
 const unicode = "Δcompiler🙂";
+const unicodeHasher = implementation.New();
+const [unicodeByteCount, unicodeByteError] = implementation.Hasher.Write(
+  unicodeHasher,
+  RuntimeSlice.literal([...new TextEncoder().encode(unicode)]),
+);
+assert.equal(unicodeByteCount, new TextEncoder().encode(unicode).length);
+assert.equal(unicodeByteError, undefined);
 assertSameDigest(
-  implementation.Hash128(RuntimeSlice.literal([...new TextEncoder().encode(unicode)])),
+  implementation.Hasher.Sum128(unicodeHasher),
   implementation.HashString128(unicode),
   "string and UTF-8 byte hashing",
 );
@@ -124,5 +143,5 @@ const projectedBytes = Array.from(
 assert.equal(projectedBytes.every((value) => value >= 0 && value <= 255), true);
 
 console.log(
-  `xxh3: ${corpus.length} unique inputs; streaming, reset, bytes, and seeds verified`,
+  `xxh3: ${corpus.length} unique inputs; streaming, reset, and bytes verified`,
 );

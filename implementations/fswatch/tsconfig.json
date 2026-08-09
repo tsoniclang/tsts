@@ -3,6 +3,7 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "noImplicitOverride": true,
     "strict": true,
     "noEmit": true,
     "skipLibCheck": false,
@@ -10,6 +11,8 @@
   },
   "files": [
     "runtime-contract.d.ts",
-    "target/packages/362a73304aa189eb285aad215c2224dab5f91b7de351f09d6be2997f24c9e933/_root/package.ts"
+    "target/packages/ca721702d568c862444d9d5a5d1dfde0257eed1e0634552ee330f015ea27ba18/internal/fswatch/package.ts",
+    "target/support/interface-methods.d.ts",
+    "target/support/interfaces/contracts/81.d.ts"
   ]
 }

@@ -12,6 +12,11 @@ import { basename, dirname, isAbsolute, join, relative, resolve } from "node:pat
 import { pathToFileURL } from "node:url";
 
 import { copyPublishedPackage } from "./package-artifact.mjs";
+import {
+  canonicalTargetSourcePath,
+  createTargetSourceLayout,
+  targetRunnerPath,
+} from "./target-source-layout.mjs";
 
 const [repositoryArgument, canonicalArgument, targetArgument, runnerArgument] = process.argv.slice(2);
 if (
@@ -38,11 +43,14 @@ const { createTypeScriptTargetPack } = await importPackage("target-typescript");
 
 const canonical = await readCanonicalManifest(canonicalRoot);
 const canonicalSources = canonical.files.filter((path) => path.endsWith(".ts")).sort();
+const sourceLayout = createTargetSourceLayout(canonicalSources);
 await copyCanonicalProject(canonicalRoot, sourceWorkspace, canonical.files);
+await copyFile(runnerSource, join(sourceWorkspace, targetRunnerPath));
 await installGoPackages(repositoryRoot, sourceWorkspace);
 
 const project = {
-  entryPoint: "program.ts",
+  entryPoint: targetRunnerPath,
+  rootFiles: sourceLayout.rootFiles,
   rootDir: ".",
   outDir: targetRoot,
   targets: [{
@@ -77,12 +85,23 @@ if (result.targets.length !== 1) {
   throw new Error(`TypeScript target count ${result.targets.length} is not one`);
 }
 
-const artifacts = result.targets[0].compileResult.artifacts;
+const artifacts = result.targets[0].compileResult.artifacts.map((artifact) =>
+  artifact.kind === "source"
+    ? {
+        ...artifact,
+        path: canonicalTargetSourcePath(artifact.path, sourceLayout.canonicalSet),
+      }
+    : artifact
+);
 const sourceArtifacts = artifacts
   .filter((artifact) => artifact.kind === "source")
   .map((artifact) => artifact.path)
   .sort();
-assertEqualPaths("canonical TypeScript and target source artifacts", canonicalSources, sourceArtifacts);
+assertEqualPaths(
+  "canonical TypeScript and target source artifacts",
+  sourceLayout.expectedArtifacts,
+  sourceArtifacts,
+);
 
 await mkdir(stagedTarget, { recursive: true });
 const installedPaths = new Set();
@@ -105,7 +124,6 @@ for (const path of canonical.files) {
   await copyOwnedFile(canonicalRoot, stagedTarget, path);
 }
 for (const [source, path] of [
-  [runnerSource, "runner.ts"],
   [join(repositoryRoot, "assembly", "tsconfig.json"), "tsconfig.json"],
   [join(repositoryRoot, "assembly", "tsconfig.emit.json"), "tsconfig.emit.json"],
 ]) {

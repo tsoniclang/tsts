@@ -28,7 +28,8 @@ git submodule update --init --recursive
 npm run build
 ```
 
-Generated TypeScript is written to `.temp/generated`.
+Canonical Tsonic-flavored TypeScript is sealed in `.temp/generated`.
+TypeScript-target output is written to `.temp/target`.
 
 Run the smallest Go pointer -> canonical marker -> TSTS fact -> target AST ->
 executable TypeScript proof with:

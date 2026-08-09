@@ -26,9 +26,13 @@ returns transformed AST artifacts, and the product exact-joins target source
 paths to canonical TypeScript paths before publication. Neither product
 assembly nor the printer recognizes marker names or patches source text.
 
-The canonical manifest's TypeScript members are also the exact TSTS root-file
-set. This supports library products whose generated `program.ts` is empty
-without manufacturing imports or dropping unreferenced package modules.
+The canonical manifest's TypeScript members are the exact target source
+artifact set. Every non-package member and the product runner are explicit TSTS
+roots. Canonical Go runtime members are selected exactly once through the
+installed `@gotots/runtime` source package, then their target artifacts are
+rejoined to canonical `runtime/` paths. This supports library products whose
+generated `program.ts` is empty without manufacturing imports, duplicating the
+runtime package, or dropping unreferenced package modules.
 
 Build tools are assembled from each pinned package's `npm pack` surface into
 one isolated module graph. That graph contains exactly one `@tsonic/tsts`
@@ -78,6 +82,6 @@ runtime artifacts therefore remain inspectable without contaminating or
 blocking the next exact assembly.
 
 `npm run replay` resumes from the current certified generated source and runs
-only JavaScript emission, provider assembly, native TS-Go construction, and
-the exact runtime differential. It uses the same guarded execution and output
-preservation policy as the full check.
+only JavaScript emission from `.temp/target`, provider/runtime assembly,
+native TS-Go construction, and the exact runtime differential. It uses the
+same guarded execution and output preservation policy as the full check.

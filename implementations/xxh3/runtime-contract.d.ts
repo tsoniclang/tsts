@@ -18,12 +18,6 @@ declare module "@gotots/runtime/array.js" {
   }
 }
 
-declare module "@gotots/runtime/pointer.js" {
-  export class GoPointer<L, S = L> {
-    static direct<L>(pointer: L | undefined): L;
-  }
-}
-
 declare module "@gotots/runtime/slice.js" {
   export class RuntimeSlice<T> {
     readonly length: number;
@@ -37,6 +31,26 @@ declare module "@gotots/runtime/interface-value.js" {
   }
 }
 
+declare module "@gotots/runtime/panic.js" {
+  export class GoPanic {
+    static raiseRuntime(message: string): never;
+  }
+}
+
 declare module "@gotots/runtime/unsafe-pointer.js" {
   export class GoUnsafePointer {}
+}
+
+declare module "@tsonic/core/types.js" {
+  const pointerBrand: unique symbol;
+  export interface Pointer<T> {
+    readonly [pointerBrand]: (value: T) => T;
+  }
+}
+
+declare module "@tsonic/core/lang.js" {
+  import type { Pointer } from "@tsonic/core/types.js";
+
+  export function allocatePointer<T>(initial: T): Pointer<T>;
+  export function loadPointer<T>(pointer: Pointer<T>): T;
 }

@@ -9,25 +9,25 @@ if [[ "${TSTS_GUARDED:-0}" != "1" ]]; then
     bash "$root/scripts/replay.sh"
 fi
 
-generated="$root/.temp/generated"
-test -f "$generated/program.ts"
-test -f "$generated/gotots-manifest.json"
+canonical="$root/.temp/generated"
+target="$root/.temp/target"
+test -f "$canonical/gotots-manifest.json"
+test -f "$target/program.ts"
+test -f "$target/tsts-target-manifest.json"
 mkdir -p "$root/.temp/bin"
 
-if [[ -e "$generated/out" ]]; then
+if [[ -e "$target/out" ]]; then
   preserved="$root/.temp/preserved"
   mkdir -p "$preserved"
-  mv "$generated/out" \
+  mv "$target/out" \
     "$preserved/out-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 fi
 
-cp "$root/assembly/runner.ts" "$generated/runner.ts"
-cp "$root/assembly/tsconfig.emit.json" "$generated/tsconfig.emit.json"
 (
   cd "$root/tools/gotots"
-  go tool tsgo -p "$generated/tsconfig.emit.json"
+  go tool tsgo -p "$target/tsconfig.emit.json"
 )
-node "$root/scripts/assemble.mjs" "$root"
+node "$root/scripts/assemble.mjs" "$root" "$target"
 node "$root/test/xxh3-contract.mjs" "$root"
 
 (

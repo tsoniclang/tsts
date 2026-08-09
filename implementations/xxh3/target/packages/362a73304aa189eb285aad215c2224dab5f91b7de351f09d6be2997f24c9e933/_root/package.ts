@@ -1,6 +1,6 @@
 import { GoArray } from "@gotots/runtime/array.js";
 import type { GoError } from "@gotots/runtime/interface-value.js";
-import { GoPointer } from "@gotots/runtime/pointer.js";
+import { GoPanic } from "@gotots/runtime/panic.js";
 import type {
   bool,
   gostring,
@@ -9,9 +9,10 @@ import type {
   uint64,
 } from "@gotots/runtime/scalars.js";
 import type { RuntimeSlice } from "@gotots/runtime/slice.js";
+import { allocatePointer, loadPointer } from "@tsonic/core/lang.js";
+import type { Pointer } from "@tsonic/core/types.js";
 
 const laneBase = 67_108_864;
-const utf8Encoder = new TextEncoder();
 
 type HashState = {
   h1: number;
@@ -88,12 +89,47 @@ function hashString(value: gostring, seed: uint64): Uint128 {
   return digest(state);
 }
 
-function mixString(target: HashState, value: gostring): number {
-  const bytes = utf8Encoder.encode(value);
-  for (let index = 0; index < bytes.length; index++) {
-    mixByte(target, bytes[index]!);
+function mixUTF8CodePoint(target: HashState, codePoint: number): number {
+  if (codePoint <= 0x7f) {
+    mixByte(target, codePoint);
+    return 1;
   }
-  return bytes.length;
+  if (codePoint <= 0x7ff) {
+    mixByte(target, 0xc0 | (codePoint >>> 6));
+    mixByte(target, 0x80 | (codePoint & 0x3f));
+    return 2;
+  }
+  if (codePoint <= 0xffff) {
+    mixByte(target, 0xe0 | (codePoint >>> 12));
+    mixByte(target, 0x80 | ((codePoint >>> 6) & 0x3f));
+    mixByte(target, 0x80 | (codePoint & 0x3f));
+    return 3;
+  }
+  mixByte(target, 0xf0 | (codePoint >>> 18));
+  mixByte(target, 0x80 | ((codePoint >>> 12) & 0x3f));
+  mixByte(target, 0x80 | ((codePoint >>> 6) & 0x3f));
+  mixByte(target, 0x80 | (codePoint & 0x3f));
+  return 4;
+}
+
+function mixString(target: HashState, value: gostring): number {
+  let byteLength = 0;
+  for (let index = 0; index < value.length; index++) {
+    let codePoint = value.charCodeAt(index);
+    if (codePoint >= 0xd800 && codePoint <= 0xdbff) {
+      const trailing = value.charCodeAt(index + 1);
+      if (trailing >= 0xdc00 && trailing <= 0xdfff) {
+        codePoint = 0x10000 + ((codePoint - 0xd800) << 10) + trailing - 0xdc00;
+        index++;
+      } else {
+        codePoint = 0xfffd;
+      }
+    } else if (codePoint >= 0xdc00 && codePoint <= 0xdfff) {
+      codePoint = 0xfffd;
+    }
+    byteLength += mixUTF8CodePoint(target, codePoint);
+  }
+  return byteLength;
 }
 
 function encodeWord(value: number): number[] {
@@ -176,12 +212,10 @@ export class Uint128 {
   }
 }
 
-export type Hasher$Storage = HashState;
-
 export class Hasher {
   declare private readonly $goType: void;
 
-  private constructor(private readonly $storage: Hasher$Storage) {}
+  private constructor(private readonly $storage: HashState) {}
 
   public static $make(
     h1: number,
@@ -192,14 +226,6 @@ export class Hasher {
     seed: number,
   ): Hasher {
     return new Hasher({ h1, h2, h3, h4, length, seed });
-  }
-
-  public static $storageOf(source: Hasher): Hasher$Storage {
-    return source.$storage;
-  }
-
-  public static $fromStorage(source: Hasher$Storage): Hasher {
-    return new Hasher(source);
   }
 
   public static $zero(): Hasher {
@@ -230,28 +256,28 @@ export class Hasher {
   }
 
   public static Reset(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
   ): void {
-    resetState(GoPointer.direct(hasher).$storage);
+    resetState(loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage);
   }
 
   public static Sum128(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
   ): Uint128 {
-    return digest(GoPointer.direct(hasher).$storage);
+    return digest(loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage);
   }
 
   public static Sum64(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
   ): uint64 {
     return Hasher.Sum128(hasher).Lo;
   }
 
   public static Write(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
     value: RuntimeSlice<uint8>,
   ): [int64, GoError | undefined] {
-    const state = GoPointer.direct(hasher).$storage;
+    const state = loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage;
     for (let index = 0; index < value.length; index++) {
       mixByte(state, value.get(index));
     }
@@ -259,10 +285,10 @@ export class Hasher {
   }
 
   public static WriteString(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
     value: gostring,
   ): [int64, GoError | undefined] {
-    const state = GoPointer.direct(hasher).$storage;
+    const state = loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage;
     const written = mixString(state, value);
     return [written, undefined];
   }
@@ -270,7 +296,7 @@ export class Hasher {
 
 export function $initialize(): void {}
 
-export function Hash128(value: RuntimeSlice<uint8>): Uint128 {
+function Hash128(value: RuntimeSlice<uint8>): Uint128 {
   return hashSlice(value, 0);
 }
 
@@ -278,24 +304,24 @@ export function HashString128(value: gostring): Uint128 {
   return hashString(value, 0);
 }
 
-export function Hash128Seed(
+function Hash128Seed(
   value: RuntimeSlice<uint8>,
   seed: uint64,
 ): Uint128 {
   return hashSlice(value, seed);
 }
 
-export function Hash(value: RuntimeSlice<uint8>): uint64 {
+function Hash(value: RuntimeSlice<uint8>): uint64 {
   return Hash128(value).Lo;
 }
 
-export function HashSeed(
+function HashSeed(
   value: RuntimeSlice<uint8>,
   seed: uint64,
 ): uint64 {
   return Hash128Seed(value, seed).Lo;
 }
 
-export function New(): Hasher | undefined {
-  return Hasher.$zero();
+export function New(): Pointer<Hasher> | undefined {
+  return allocatePointer(Hasher.$zero());
 }
