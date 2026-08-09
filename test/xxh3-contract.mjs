@@ -75,6 +75,9 @@ for (const chunks of [
   ["type", "script"],
   ["one:", "two:", "three"],
   ["Δ", "compiler", "🙂"],
+  ["\ud83d", "\ude42"],
+  ["\ud83d", "", "\ude42"],
+  ["\ud800", "x"],
   ["x".repeat(2048), "x".repeat(2049)],
 ]) {
   const value = chunks.join("");
