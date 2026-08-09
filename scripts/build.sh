@@ -9,35 +9,14 @@ if [[ "${TSTS_GUARDED:-0}" != "1" ]]; then
     bash "$root/scripts/build.sh"
 fi
 
-verify_submodule() {
-  local path="$1"
-  local expected
-  local actual
-
-  expected="$(git -C "$root" ls-files --stage -- "$path" | awk '{ print $2 }')"
-  actual="$(git -C "$root/$path" rev-parse HEAD)"
-  if [[ -z "$expected" || "$actual" != "$expected" ]]; then
-    echo "$path is not at its recorded gitlink" >&2
-    exit 1
-  fi
-  if [[ -n "$(git -C "$root/$path" status --porcelain)" ]]; then
-    echo "$path contains uncommitted changes" >&2
-    exit 1
-  fi
-}
-
-verify_submodule "tools/gotots"
-verify_submodule "vendor/typescript-go"
-cmp "$root/AGENTS.md" "$root/CLAUDE.md"
-
-mkdir -p "$root/.temp/bin"
-if [[ ! -d "$root/tools/gotots/gostdlib/node_modules/@types/node" ]]; then
-  npm --prefix "$root/tools/gotots/gostdlib" ci
-fi
-npm --prefix "$root/tools/gotots/gostdlib" run build
-npm --prefix "$root/tools/gotots/externals" run build
+bash "$root/scripts/build-tools.sh"
+"$root/.temp/bin/gotots" build -c "$root/gotots.json"
+node "$root/scripts/target.mjs" \
+  "$root" \
+  "$root/.temp/generated" \
+  "$root/.temp/target" \
+  "$root/assembly/runner.ts"
 (
   cd "$root/tools/gotots"
-  go build -o "$root/.temp/bin/gotots" ./cmd/gotots
+  go tool tsgo -p "$root/.temp/target/tsconfig.json"
 )
-"$root/.temp/bin/gotots" build -c "$root/gotots.json"

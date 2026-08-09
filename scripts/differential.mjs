@@ -13,7 +13,7 @@ const nativeCompiler = join(repositoryRoot, ".temp", "bin", "tsgo-native");
 const generatedCompiler = join(
   repositoryRoot,
   ".temp",
-  "generated",
+  "target",
   "out",
   "runner.js",
 );

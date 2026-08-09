@@ -25,6 +25,8 @@
   },
   "implementations": {
     "bundles": [
+      "implementations/fswatch/contract.json",
+      "implementations/x-sys-unix/contract.json",
       "implementations/xxh3/contract.json"
     ]
   },

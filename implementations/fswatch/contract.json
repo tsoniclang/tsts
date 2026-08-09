@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "package": {
+    "importPath": "github.com/microsoft/typescript-go/internal/fswatch",
+    "modulePath": "github.com/microsoft/typescript-go",
+    "moduleVersion": ""
+  },
+  "build": {
+    "goVersion": "go1.26.4",
+    "goos": "linux",
+    "goarch": "amd64",
+    "cgoEnabled": false,
+    "buildTags": [
+      "noasm"
+    ]
+  },
+  "compilation": {
+    "integers": "number",
+    "evaluationOrder": "direct",
+    "concurrency": "cooperative"
+  },
+  "source": "target/packages/ca721702d568c862444d9d5a5d1dfde0257eed1e0634552ee330f015ea27ba18/internal/fswatch/package.ts",
+  "tsconfig": "tsconfig.json",
+  "certificationSources": [
+    "runtime-contract.d.ts",
+    "target/support/interface-methods.d.ts",
+    "target/support/interfaces/contracts/81.d.ts"
+  ],
+  "equivalenceEnvelope": {
+    "kind": "internal-algorithm",
+    "relaxedBehavior": "The Node product uses fs.watch rather than decoding Linux fanotify and inotify memory records; kernel event names are normalized to the same update/delete batches, with Node's host event coalescing replacing Go's kernel-specific coalescing internals.",
+    "preservedObservables": [
+      "Callbacks are serialized and watches close idempotently",
+      "Default selects an available inotify-named backend on Linux",
+      "Directory and file watches report update and delete events using absolute paths",
+      "Recursive and ignore options retain their Go-visible behavior",
+      "Unavailable platform backends return the package ErrUnavailable sentinel"
+    ],
+    "evidence": [
+      "Generated artifact replacement and strict consumer typecheck",
+      "Pinned TS-Go valid syntax-error semantic-error and watch-mode runtime differential",
+      "Product-owned watcher contract tests"
+    ]
+  },
+  "exports": [
+    "$initialize",
+    "$state",
+    "Default",
+    "Event",
+    "Event$Storage",
+    "EventDelete",
+    "EventDelete$constant",
+    "EventKind",
+    "EventUpdate",
+    "EventUpdate$constant",
+    "Watch",
+    "Watch$contract",
+    "Watch$is",
+    "WatchCallback",
+    "WatchOption",
+    "WatchOption$contract",
+    "WatchOption$is",
+    "Watcher",
+    "Watcher$contract",
+    "Watcher$is",
+    "WithIgnore",
+    "WithRecursive"
+  ]
+}

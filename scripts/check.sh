@@ -9,5 +9,6 @@ if [[ "${TSTS_GUARDED:-0}" != "1" ]]; then
     bash "$root/scripts/check.sh"
 fi
 
+npm run test:assembly
 bash "$root/scripts/build.sh"
 bash "$root/scripts/replay.sh"

@@ -6,6 +6,8 @@
   "scripts": {
     "build": "bash scripts/build.sh",
     "check": "bash scripts/check.sh",
-    "replay": "bash scripts/replay.sh"
+    "check:scalar": "bash scripts/check-scalar.sh",
+    "replay": "bash scripts/replay.sh",
+    "test:assembly": "node --test test/target-source-layout.mjs"
   }
 }

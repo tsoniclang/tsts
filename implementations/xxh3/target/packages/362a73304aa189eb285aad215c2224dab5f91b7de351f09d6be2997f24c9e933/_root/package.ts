@@ -1,6 +1,6 @@
 import { GoArray } from "@gotots/runtime/array.js";
 import type { GoError } from "@gotots/runtime/interface-value.js";
-import { GoPointer } from "@gotots/runtime/pointer.js";
+import { GoPanic } from "@gotots/runtime/panic.js";
 import type {
   bool,
   gostring,
@@ -9,9 +9,10 @@ import type {
   uint64,
 } from "@gotots/runtime/scalars.js";
 import type { RuntimeSlice } from "@gotots/runtime/slice.js";
+import { allocatePointer, loadPointer } from "@tsonic/core/lang.js";
+import type { Pointer } from "@tsonic/core/types.js";
 
 const laneBase = 67_108_864;
-const utf8Encoder = new TextEncoder();
 
 type HashState = {
   h1: number;
@@ -20,6 +21,7 @@ type HashState = {
   h4: number;
   length: number;
   seed: number;
+  pendingHighSurrogate: number | undefined;
 };
 
 function makeState(seed: number): HashState {
@@ -32,6 +34,7 @@ function makeState(seed: number): HashState {
     h4: (0x27d4eb2f ^ Math.imul(low, 0x165667b1)) >>> 0,
     length: 0,
     seed,
+    pendingHighSurrogate: undefined,
   };
 }
 
@@ -42,6 +45,7 @@ function resetState(target: HashState): void {
   target.h3 = initial.h3;
   target.h4 = initial.h4;
   target.length = 0;
+  target.pendingHighSurrogate = undefined;
 }
 
 function mixByte(target: HashState, input: number): void {
@@ -64,10 +68,14 @@ function avalanche(input: number): number {
 }
 
 function digest(target: HashState): Uint128 {
-  const h1 = avalanche(target.h1 ^ target.length);
-  const h2 = avalanche(target.h2 ^ Math.imul(target.length, 0x9e3779b1));
-  const h3 = avalanche(target.h3 ^ Math.imul(target.length, 0x85ebca77));
-  const h4 = avalanche(target.h4 ^ Math.imul(target.length, 0xc2b2ae3d));
+  const materialized = target.pendingHighSurrogate === undefined
+    ? target
+    : { ...target };
+  flushPendingHighSurrogate(materialized);
+  const h1 = avalanche(materialized.h1 ^ materialized.length);
+  const h2 = avalanche(materialized.h2 ^ Math.imul(materialized.length, 0x9e3779b1));
+  const h3 = avalanche(materialized.h3 ^ Math.imul(materialized.length, 0x85ebca77));
+  const h4 = avalanche(materialized.h4 ^ Math.imul(materialized.length, 0xc2b2ae3d));
   return Uint128.$make(
     (h1 & 0x03ffffff) * laneBase + (h2 & 0x03ffffff),
     (h3 & 0x03ffffff) * laneBase + (h4 & 0x03ffffff),
@@ -88,12 +96,74 @@ function hashString(value: gostring, seed: uint64): Uint128 {
   return digest(state);
 }
 
-function mixString(target: HashState, value: gostring): number {
-  const bytes = utf8Encoder.encode(value);
-  for (let index = 0; index < bytes.length; index++) {
-    mixByte(target, bytes[index]!);
+function mixUTF8CodePoint(target: HashState, codePoint: number): number {
+  if (codePoint <= 0x7f) {
+    mixByte(target, codePoint);
+    return 1;
   }
-  return bytes.length;
+  if (codePoint <= 0x7ff) {
+    mixByte(target, 0xc0 | (codePoint >>> 6));
+    mixByte(target, 0x80 | (codePoint & 0x3f));
+    return 2;
+  }
+  if (codePoint <= 0xffff) {
+    mixByte(target, 0xe0 | (codePoint >>> 12));
+    mixByte(target, 0x80 | ((codePoint >>> 6) & 0x3f));
+    mixByte(target, 0x80 | (codePoint & 0x3f));
+    return 3;
+  }
+  mixByte(target, 0xf0 | (codePoint >>> 18));
+  mixByte(target, 0x80 | ((codePoint >>> 12) & 0x3f));
+  mixByte(target, 0x80 | ((codePoint >>> 6) & 0x3f));
+  mixByte(target, 0x80 | (codePoint & 0x3f));
+  return 4;
+}
+
+function mixString(target: HashState, value: gostring): number {
+  let byteLength = 0;
+  let index = 0;
+  if (target.pendingHighSurrogate !== undefined) {
+    if (value.length === 0) {
+      return 0;
+    }
+    const pending = target.pendingHighSurrogate;
+    target.pendingHighSurrogate = undefined;
+    const trailing = value.charCodeAt(0);
+    if (trailing >= 0xdc00 && trailing <= 0xdfff) {
+      byteLength += mixUTF8CodePoint(
+        target,
+        0x10000 + ((pending - 0xd800) << 10) + trailing - 0xdc00,
+      ) - 3;
+      index = 1;
+    } else {
+      mixUTF8CodePoint(target, pending);
+    }
+  }
+  for (; index < value.length; index++) {
+    let codePoint = value.charCodeAt(index);
+    if (codePoint >= 0xd800 && codePoint <= 0xdbff) {
+      const trailing = value.charCodeAt(index + 1);
+      if (trailing >= 0xdc00 && trailing <= 0xdfff) {
+        codePoint = 0x10000 + ((codePoint - 0xd800) << 10) + trailing - 0xdc00;
+        index++;
+      } else if (index + 1 === value.length) {
+        target.pendingHighSurrogate = codePoint;
+        byteLength += 3;
+        continue;
+      }
+    }
+    byteLength += mixUTF8CodePoint(target, codePoint);
+  }
+  return byteLength;
+}
+
+function flushPendingHighSurrogate(target: HashState): void {
+  if (target.pendingHighSurrogate === undefined) {
+    return;
+  }
+  const pending = target.pendingHighSurrogate;
+  target.pendingHighSurrogate = undefined;
+  mixUTF8CodePoint(target, pending);
 }
 
 function encodeWord(value: number): number[] {
@@ -176,12 +246,10 @@ export class Uint128 {
   }
 }
 
-export type Hasher$Storage = HashState;
-
 export class Hasher {
   declare private readonly $goType: void;
 
-  private constructor(private readonly $storage: Hasher$Storage) {}
+  private constructor(private readonly $storage: HashState) {}
 
   public static $make(
     h1: number,
@@ -191,15 +259,15 @@ export class Hasher {
     length: number,
     seed: number,
   ): Hasher {
-    return new Hasher({ h1, h2, h3, h4, length, seed });
-  }
-
-  public static $storageOf(source: Hasher): Hasher$Storage {
-    return source.$storage;
-  }
-
-  public static $fromStorage(source: Hasher$Storage): Hasher {
-    return new Hasher(source);
+    return new Hasher({
+      h1,
+      h2,
+      h3,
+      h4,
+      length,
+      seed,
+      pendingHighSurrogate: undefined,
+    });
   }
 
   public static $zero(): Hasher {
@@ -207,15 +275,7 @@ export class Hasher {
   }
 
   public static $copy(source: Hasher): Hasher {
-    const state = source.$storage;
-    return Hasher.$make(
-      state.h1,
-      state.h2,
-      state.h3,
-      state.h4,
-      state.length,
-      state.seed,
-    );
+    return new Hasher({ ...source.$storage });
   }
 
   public static $assign(target: Hasher, source: Hasher): void {
@@ -227,31 +287,33 @@ export class Hasher {
     targetState.h4 = sourceState.h4;
     targetState.length = sourceState.length;
     targetState.seed = sourceState.seed;
+    targetState.pendingHighSurrogate = sourceState.pendingHighSurrogate;
   }
 
   public static Reset(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
   ): void {
-    resetState(GoPointer.direct(hasher).$storage);
+    resetState(loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage);
   }
 
   public static Sum128(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
   ): Uint128 {
-    return digest(GoPointer.direct(hasher).$storage);
+    return digest(loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage);
   }
 
   public static Sum64(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
   ): uint64 {
     return Hasher.Sum128(hasher).Lo;
   }
 
   public static Write(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
     value: RuntimeSlice<uint8>,
   ): [int64, GoError | undefined] {
-    const state = GoPointer.direct(hasher).$storage;
+    const state = loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage;
+    flushPendingHighSurrogate(state);
     for (let index = 0; index < value.length; index++) {
       mixByte(state, value.get(index));
     }
@@ -259,10 +321,10 @@ export class Hasher {
   }
 
   public static WriteString(
-    hasher: Hasher | undefined,
+    hasher: Pointer<Hasher> | undefined,
     value: gostring,
   ): [int64, GoError | undefined] {
-    const state = GoPointer.direct(hasher).$storage;
+    const state = loadPointer(hasher ?? GoPanic.raiseRuntime("invalid memory address or nil pointer dereference")).$storage;
     const written = mixString(state, value);
     return [written, undefined];
   }
@@ -270,7 +332,7 @@ export class Hasher {
 
 export function $initialize(): void {}
 
-export function Hash128(value: RuntimeSlice<uint8>): Uint128 {
+function Hash128(value: RuntimeSlice<uint8>): Uint128 {
   return hashSlice(value, 0);
 }
 
@@ -278,24 +340,24 @@ export function HashString128(value: gostring): Uint128 {
   return hashString(value, 0);
 }
 
-export function Hash128Seed(
+function Hash128Seed(
   value: RuntimeSlice<uint8>,
   seed: uint64,
 ): Uint128 {
   return hashSlice(value, seed);
 }
 
-export function Hash(value: RuntimeSlice<uint8>): uint64 {
+function Hash(value: RuntimeSlice<uint8>): uint64 {
   return Hash128(value).Lo;
 }
 
-export function HashSeed(
+function HashSeed(
   value: RuntimeSlice<uint8>,
   seed: uint64,
 ): uint64 {
   return Hash128Seed(value, seed).Lo;
 }
 
-export function New(): Hasher | undefined {
-  return Hasher.$zero();
+export function New(): Pointer<Hasher> | undefined {
+  return allocatePointer(Hasher.$zero());
 }
