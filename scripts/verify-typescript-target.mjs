@@ -141,7 +141,7 @@ const optimizationArtifact = compiled.artifacts.find((artifact) =>
 );
 assert.ok(optimizationArtifact !== undefined);
 assert.deepEqual(JSON.parse(optimizationArtifact.text), {
-  schemaVersion: 2,
+  schemaVersion: 3,
   pointer: { profile: "location", analyzed: false },
   scalar: {
     profile: "preserve",
