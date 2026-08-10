@@ -49,11 +49,14 @@ Standard-library and external providers are enabled.
 
 `typescript-target.json` independently selects executable TypeScript
 lowering. Pointer flows and scalar projections use the target's exact
-whole-program `closed-direct` plans; cooperative effects remain canonical
-because the measured closed-effect plan does not settle enough of this product
-to justify changing its source shape. The normalized profile digest is sealed
-into `tsts-target-manifest.json`. Replay rejects profile drift and any file not
-owned by that manifest before JavaScript emission.
+whole-program `closed-direct` plans. Cooperative effects also use
+`closed-direct`: only exact closed call components become synchronous, while
+provider, escaping, promise-producing, promise-observed, and unresolved
+components retain canonical `Promise` transport. The target emits an immutable
+optimization artifact containing the selected representations and every typed
+fallback denominator. The normalized profile digest is sealed into
+`tsts-target-manifest.json`. Replay rejects profile drift and any file not owned
+by that manifest before JavaScript emission.
 
 ## Product Implementations
 

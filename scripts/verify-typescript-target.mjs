@@ -131,10 +131,26 @@ assert.deepEqual(
   compiled.artifacts.map((artifact) => [artifact.kind, artifact.path]),
   [
     ["project", "package.json"],
+    ["asset", "tsonic-typescript-optimization.json"],
     ["source", "index.ts"],
     ["source", "markers.ts"],
   ],
 );
+const optimizationArtifact = compiled.artifacts.find((artifact) =>
+  artifact.path === "tsonic-typescript-optimization.json"
+);
+assert.ok(optimizationArtifact !== undefined);
+assert.deepEqual(JSON.parse(optimizationArtifact.text), {
+  schemaVersion: 1,
+  pointer: { profile: "location", analyzed: false },
+  scalar: {
+    profile: "preserve",
+    syntacticProjectionCount: 0,
+    optimizedProjectionCount: 0,
+    retainedProjectionCount: 0,
+  },
+  cooperativeEffects: { profile: "preserve", analyzed: false },
+});
 
 const installed = new Set();
 for (const artifact of compiled.artifacts) {

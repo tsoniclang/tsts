@@ -3,6 +3,6 @@
   "optimizations": {
     "pointerFlows": "closed-direct",
     "scalarProjections": "closed-direct",
-    "cooperativeEffects": "preserve"
+    "cooperativeEffects": "closed-direct"
   }
 }
