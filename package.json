@@ -8,6 +8,6 @@
     "check": "bash scripts/check.sh",
     "check:scalar": "bash scripts/check-scalar.sh",
     "replay": "bash scripts/replay.sh",
-    "test:assembly": "node --test test/target-source-layout.mjs"
+    "test:assembly": "node --test 'test/*.test.mjs'"
   }
 }

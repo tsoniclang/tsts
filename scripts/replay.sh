@@ -23,6 +23,8 @@ if [[ -e "$target/out" ]]; then
     "$preserved/out-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 fi
 
+node "$root/scripts/verify-target-manifest.mjs" "$root" "$canonical" "$target"
+
 (
   cd "$root/tools/gotots"
   go tool tsgo -p "$target/tsconfig.emit.json"

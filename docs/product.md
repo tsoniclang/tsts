@@ -40,12 +40,20 @@ package: the target-AST-enabled bootstrap. The semantic host, source-core,
 target API, TypeScript target, and encoder therefore share one AST runtime.
 Nested dependency copies and whole-`dist` test leakage are not assembly paths.
 
-## Selected Profile
+## Selected Profiles
 
 `gotots.json` selects `./cmd/tsgo` for Linux/amd64 with cgo disabled and the
 `noasm` build tag. Integers use the JavaScript-number profile, evaluation
 order uses the direct profile, and Go concurrency uses cooperative execution.
 Standard-library and external providers are enabled.
+
+`typescript-target.json` independently selects executable TypeScript
+lowering. Pointer flows and scalar projections use the target's exact
+whole-program `closed-direct` plans; cooperative effects remain canonical
+because the measured closed-effect plan does not settle enough of this product
+to justify changing its source shape. The normalized profile digest is sealed
+into `tsts-target-manifest.json`. Replay rejects profile drift and any file not
+owned by that manifest before JavaScript emission.
 
 ## Product Implementations
 

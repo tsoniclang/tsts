@@ -17,6 +17,8 @@ import {
   createTargetSourceLayout,
   targetRunnerPath,
 } from "./target-source-layout.mjs";
+import { sealTargetManifest } from "./target-manifest.mjs";
+import { readTypeScriptTargetProfile } from "./typescript-target-profile.mjs";
 
 const [repositoryArgument, canonicalArgument, targetArgument, runnerArgument] = process.argv.slice(2);
 if (
@@ -40,6 +42,9 @@ const toolPackageRoot = join(repositoryRoot, ".temp", "tool-runtime", "node_modu
 const { compileProject } = await importPackage("host");
 const { createTargetRegistry } = await importPackage("target-api");
 const { createTypeScriptTargetPack } = await importPackage("target-typescript");
+const targetProfile = await readTypeScriptTargetProfile(
+  join(repositoryRoot, "typescript-target.json"),
+);
 
 const canonical = await readCanonicalManifest(canonicalRoot);
 const canonicalSources = canonical.files.filter((path) => path.endsWith(".ts")).sort();
@@ -65,6 +70,7 @@ const project = {
           sourceWorkspace,
         ],
       },
+      optimizations: targetProfile.optimizations,
     },
   }],
 };
@@ -135,23 +141,21 @@ for (const [source, path] of [
 await installGoPackages(repositoryRoot, stagedTarget);
 await installTypeScriptRuntime(repositoryRoot, stagedTarget);
 
-const manifestPath = "tsts-target-manifest.json";
-installedPaths.add(manifestPath);
 const physicalPaths = await listPhysicalFiles(stagedTarget);
-physicalPaths.push(manifestPath);
-physicalPaths.sort();
 const expectedPaths = [...installedPaths, ...physicalPaths.filter((path) =>
   path.startsWith("node_modules/")
 )].sort();
 assertEqualPaths("target source assembly", [...new Set(expectedPaths)], physicalPaths);
-await writeOwnedFile(stagedTarget, manifestPath, `${JSON.stringify({
-  schemaVersion: 1,
-  canonicalSemanticDigest: canonical.semanticDigest,
-  files: physicalPaths,
-}, undefined, 2)}\n`);
+const sealedPaths = await sealTargetManifest(
+  stagedTarget,
+  canonical.semanticDigest,
+  targetProfile.digest,
+);
 await replaceDirectory(targetRoot, stagedTarget, join(repositoryRoot, ".temp", "preserved"));
 
-console.log(`target_files=${physicalPaths.length} output=${targetRoot}`);
+console.log(
+  `target_files=${sealedPaths.length} profile=${targetProfile.digest} output=${targetRoot}`,
+);
 
 async function readCanonicalManifest(root) {
   const document = parseRecord(

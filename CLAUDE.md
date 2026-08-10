@@ -10,7 +10,8 @@ from the pinned Microsoft TS-Go source by the pinned GoToTS compiler.
 
 - `vendor/typescript-go` owns the selected Go source.
 - `tools/gotots` owns generic Go-to-TypeScript translation.
-- `gotots.json` owns the selected product profile.
+- `gotots.json` owns the canonical Go translation profile.
+- `typescript-target.json` owns the executable TypeScript target profile.
 - `implementations/` owns certified TSTS-specific package implementations.
 - Generated TypeScript and JavaScript are build artifacts under `.temp/` and
   are never hand-edited or committed.
@@ -41,8 +42,9 @@ spelling heuristic, source scan, dynamic semantic dispatch, `any` recovery,
 
 ## Product Contract
 
-The selected profile is explicit and versioned in `gotots.json`. It must not
-come from ambient shell state. Every implementation bundle is package-atomic,
+The selected Go and TypeScript target profiles are explicit and versioned in
+`gotots.json` and `typescript-target.json`. They must not come from ambient
+shell state. Every implementation bundle is package-atomic,
 signature-certified, strict-ESM, and selected before output is sealed.
 
 TSTS public behavior is compared against the exact pinned TS-Go revision.
