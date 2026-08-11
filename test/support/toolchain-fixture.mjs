@@ -243,12 +243,30 @@ async function createDistributionInputs(repositoryRoot) {
 
 async function createGoToTsPin(repositoryRoot, vendorGitlink) {
   const root = join(repositoryRoot, "tools", "gotots");
-  const version = `v0.0.0-20260811000000-${vendorGitlink.slice(0, 12)}`;
-  await writeFile(join(root, "go.mod"), `${moduleText("fixture.invalid/gotots")}\nrequire github.com/microsoft/typescript-go ${version}\n`, "utf8");
+  const version = tsgoVersion(vendorGitlink);
+  await writeFile(
+    join(root, "go.mod"),
+    `${moduleText("fixture.invalid/gotots")}\nrequire (\n\tgithub.com/microsoft/typescript-go ${version} // indirect\n)\n\ntool github.com/microsoft/typescript-go/cmd/tsgo\n`,
+    "utf8",
+  );
   await writeFile(join(root, "go.sum"), sumText(), "utf8");
   const protocol = join(root, "internal", "target", "tsgo", "protocol_generated.go");
   await mkdir(dirname(protocol), { recursive: true });
   await writeFile(protocol, `package tsgo\n\nconst pinnedToolVersion = "${version}"\n`, "utf8");
+  const schema = join(root, "schema", "tsgo", "manifest.json");
+  await mkdir(dirname(schema), { recursive: true });
+  await writeFile(schema, `${JSON.stringify({
+    schemaVersion: 1,
+    module: "github.com/microsoft/typescript-go",
+    toolPackage: "github.com/microsoft/typescript-go/cmd/tsgo",
+    toolVersion: version,
+    toolSum: dependencySum,
+    revision: vendorGitlink,
+  })}\n`, "utf8");
+}
+
+function tsgoVersion(vendorGitlink) {
+  return `v0.0.0-20260811000000-${vendorGitlink.slice(0, 12)}`;
 }
 
 async function createGoModuleCache(root) {
@@ -318,6 +336,20 @@ if (args[0] === "mod" && args[1] === "download") {
     Info: join(metadataRoot, version + ".info"), GoMod: join(metadataRoot, version + ".mod"),
     Zip: join(metadataRoot, version + ".zip"), Dir: moduleRoot,
     Sum: downloadedSum, GoModSum: selectedGoModSum }));
+  process.exit(0);
+}
+if (args[0] === "mod" && args[1] === "edit" && args[2] === "-json") {
+  process.stdout.write(JSON.stringify({
+    Module: { Path: "fixture.invalid/gotots" },
+    Go: "1.26.4",
+    Require: [{
+      Path: "github.com/microsoft/typescript-go",
+      Version: ${JSON.stringify(tsgoVersion(vendorGitlink))},
+      Indirect: true,
+    }],
+    Replace: null,
+    Tool: [{ Path: "github.com/microsoft/typescript-go/cmd/tsgo" }],
+  }));
   process.exit(0);
 }
 if (args[0] === "list") {

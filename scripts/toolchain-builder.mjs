@@ -245,7 +245,12 @@ async function buildGoComponents(
   const vendorGitlink = selection.submodules.find((record) =>
     record.path === "vendor/typescript-go"
   ).gitlink;
-  const pinnedVersion = await joinGoToTsTsgoPin(moduleRoot, vendorGitlink);
+  const pinnedVersion = await joinGoToTsTsgoPin(
+    goExecutable,
+    moduleRoot,
+    vendorGitlink,
+    buildEnvironment,
+  );
   const output = join(stagedRoot, componentByKey.get("tsgo").target);
   run(
     goExecutable,
@@ -272,22 +277,42 @@ async function buildGoComponents(
   });
 }
 
-async function joinGoToTsTsgoPin(moduleRoot, vendorGitlink) {
-  const protocol = await readFile(
-    join(moduleRoot, "internal", "target", "tsgo", "protocol_generated.go"),
+async function joinGoToTsTsgoPin(goExecutable, moduleRoot, vendorGitlink, environment) {
+  const schema = JSON.parse(await readFile(
+    join(moduleRoot, "schema", "tsgo", "manifest.json"),
     "utf8",
-  );
-  const protocolMatch = /const pinnedToolVersion = "([^"]+)"/u.exec(protocol);
-  const moduleText = await readFile(join(moduleRoot, "go.mod"), "utf8");
-  const moduleMatch = /^\s*(?:require\s+)?github\.com\/microsoft\/typescript-go\s+(v\S+)\s*$/mu.exec(moduleText);
+  ));
+  const module = JSON.parse(runCapture(
+    goExecutable,
+    ["mod", "edit", "-json"],
+    moduleRoot,
+    environment,
+    "inspect GoToTS module authority",
+  ));
+  const requirements = Array.isArray(module?.Require)
+    ? module.Require.filter((entry) => entry?.Path === "github.com/microsoft/typescript-go")
+    : [];
+  const tools = Array.isArray(module?.Tool)
+    ? module.Tool.filter((entry) =>
+      entry?.Path === "github.com/microsoft/typescript-go/cmd/tsgo"
+    )
+    : [];
   if (
-    protocolMatch === null || moduleMatch === null ||
-    protocolMatch[1] !== moduleMatch[1] ||
-    !protocolMatch[1].endsWith(`-${vendorGitlink.slice(0, 12)}`)
+    schema?.schemaVersion !== 1 ||
+    schema?.module !== "github.com/microsoft/typescript-go" ||
+    schema?.toolPackage !== "github.com/microsoft/typescript-go/cmd/tsgo" ||
+    typeof schema?.toolVersion !== "string" ||
+    typeof schema?.toolSum !== "string" || !/^h1:[A-Za-z0-9+/]{43}=$/u.test(schema.toolSum) ||
+    schema?.revision !== vendorGitlink ||
+    requirements.length !== 1 || requirements[0].Version !== schema.toolVersion ||
+    tools.length !== 1 ||
+    (Array.isArray(module?.Replace) && module.Replace.some((entry) =>
+      entry?.Old?.Path === schema.module
+    ))
   ) {
     throw new Error("GoToTS TS-Go schema pin differs from the committed vendor gitlink");
   }
-  return protocolMatch[1];
+  return schema.toolVersion;
 }
 
 function inspectTsgoBuildInfo(goExecutable, binary, environment) {
