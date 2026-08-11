@@ -4,9 +4,17 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { copyPublishedPackage } from "./package-artifact.mjs";
+import {
+  activateToolchainEnvironment,
+  installToolchainPackage,
+  openToolchainArguments,
+} from "./toolchain.mjs";
 
-const repositoryRoot = resolve(process.argv[2] ?? ".");
+const [repositoryArgument, ...toolchainArguments] = process.argv.slice(2);
+if (repositoryArgument === undefined) {
+  throw new Error("repository root and exact toolchain arguments are required");
+}
+const repositoryRoot = resolve(repositoryArgument);
 const runIdentity = `${new Date().toISOString().replaceAll(/[:.]/gu, "-")}-${process.pid}`;
 const runRoot = join(
   repositoryRoot,
@@ -15,14 +23,9 @@ const runRoot = join(
   runIdentity,
 );
 const sourceRoot = join(runRoot, "source");
-const toolPackageRoot = join(
-  repositoryRoot,
-  ".temp",
-  "tool-runtime",
-  "node_modules",
-  "@tsonic",
-);
 
+const toolchain = await openToolchainArguments(repositoryRoot, toolchainArguments);
+activateToolchainEnvironment(toolchain);
 const {
   createCompilerSessionFromFiles,
   createSourceSemanticsExtension,
@@ -91,7 +94,7 @@ assert.deepEqual(checked.diagnostics, []);
 assert.deepEqual(checked.extensionDiagnostics, []);
 
 await mkdir(sourceRoot, { recursive: true });
-const runtimeRoot = join(repositoryRoot, "tools", "typescript-runtime");
+const runtimeRoot = toolchain.packages.typeScriptRuntime.root;
 const runtimePackage = JSON.parse(
   await readFile(join(runtimeRoot, "package.json"), "utf8"),
 );
@@ -99,10 +102,10 @@ assert.equal(runtimePackage.name, "@tsonic/typescript-runtime");
 assert.equal(typeof runtimePackage.version, "string");
 
 const backend = createTypeScriptBackend(createExternalAstPrinter({
-  executable: join(repositoryRoot, ".temp", "bin", "tsgo-ast-printer"),
+  executable: toolchain.binaries.tsgoAstPrinter,
   arguments: [
     "-module",
-    join(repositoryRoot, "tools", "gotots"),
+    toolchain.distributionRoot,
     "-cwd",
     sourceRoot,
   ],
@@ -160,16 +163,7 @@ for (const artifact of compiled.artifacts) {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, artifact.text, "utf8");
 }
-await copyPublishedPackage({
-  sourceRoot: runtimeRoot,
-  targetRoot: join(
-    sourceRoot,
-    "node_modules",
-    "@tsonic",
-    "typescript-runtime",
-  ),
-  expectedName: "@tsonic/typescript-runtime",
-});
+await installToolchainPackage(toolchain, "typeScriptRuntime", sourceRoot);
 await writeFile(join(sourceRoot, "tsconfig.json"), `${JSON.stringify({
   compilerOptions: {
     exactOptionalPropertyTypes: true,
@@ -197,9 +191,9 @@ assert.doesNotMatch(
 );
 
 run(
-  "go",
-  ["tool", "tsgo", "-p", join(sourceRoot, "tsconfig.json")],
-  join(repositoryRoot, "tools", "gotots"),
+  toolchain.binaries.tsgo,
+  ["-p", join(sourceRoot, "tsconfig.json")],
+  sourceRoot,
   "strict TypeScript target proof typecheck and emit",
 );
 const execution = run(
@@ -222,7 +216,13 @@ console.log(
 );
 
 async function importTool(name, entry) {
-  return import(pathToFileURL(join(toolPackageRoot, name, entry)).href);
+  const key = name === "target-api" ? "targetApi" :
+    name === "target-typescript" ? "targetTypeScript" : name;
+  const packageRoot = toolchain.packages[key]?.root;
+  if (packageRoot === undefined) {
+    throw new Error(`Toolchain package '${name}' is absent`);
+  }
+  return import(pathToFileURL(join(packageRoot, entry)).href);
 }
 
 function run(command, arguments_, cwd, subject) {

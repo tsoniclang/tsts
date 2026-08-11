@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { link, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import test from "node:test";
 
@@ -53,16 +53,68 @@ test("target manifest rejects profile drift and unselected remnants", async () =
   await writeFile(join(root, "program.ts"), "export {};\n", "utf8");
   const canonicalDigest = "1".repeat(64);
   const profileDigest = "2".repeat(64);
-  await sealTargetManifest(root, canonicalDigest, profileDigest);
+  const toolchainDigest = "3".repeat(64);
+  await sealTargetManifest(root, canonicalDigest, profileDigest, toolchainDigest);
   await verifyTargetManifest(root, canonicalDigest, profileDigest);
   await assert.rejects(
-    verifyTargetManifest(root, canonicalDigest, "3".repeat(64)),
+    verifyTargetManifest(root, canonicalDigest, "4".repeat(64)),
     /target profile digest differs/u,
   );
   await writeFile(join(root, "unselected.ts"), "throw new Error();\n", "utf8");
   await assert.rejects(
     verifyTargetManifest(root, canonicalDigest, profileDigest),
-    /manifest membership differs/u,
+    /content, type, or membership differs/u,
+  );
+});
+
+test("target manifest rejects byte mutation and hard links", async () => {
+  const root = await createScratch("target-bytes-");
+  const target = join(root, "target");
+  await mkdir(target);
+  await writeFile(join(target, "program.ts"), "export const value = 1;\n", "utf8");
+  await sealTargetManifest(target, "1".repeat(64), "2".repeat(64), "3".repeat(64));
+  await writeFile(join(target, "program.ts"), "export const value = 2;\n", "utf8");
+  await assert.rejects(
+    verifyTargetManifest(target, "1".repeat(64), "2".repeat(64)),
+    /content, type, or membership differs/u,
+  );
+
+  const hardlinkTarget = join(root, "hardlink-target");
+  await mkdir(hardlinkTarget);
+  const external = join(root, "external.ts");
+  await writeFile(external, "export {};\n", "utf8");
+  await link(external, join(hardlinkTarget, "program.ts"));
+  await assert.rejects(
+    sealTargetManifest(
+      hardlinkTarget,
+      "1".repeat(64),
+      "2".repeat(64),
+      "3".repeat(64),
+    ),
+    /hard link/u,
+  );
+});
+
+test("target manifest ordering is locale independent code-unit order", async () => {
+  const root = await createScratch("target-order-");
+  for (const path of ["z.ts", "ä.ts", "A.ts", "a.ts"]) {
+    await writeFile(join(root, path), "export {};\n", "utf8");
+  }
+  const original = String.prototype.localeCompare;
+  String.prototype.localeCompare = () => {
+    throw new Error("locale ordering is forbidden");
+  };
+  try {
+    await sealTargetManifest(root, "1".repeat(64), "2".repeat(64), "3".repeat(64));
+  } finally {
+    String.prototype.localeCompare = original;
+  }
+  const manifest = JSON.parse(
+    await readFile(join(root, "tsts-target-manifest.json"), "utf8"),
+  );
+  assert.deepEqual(
+    manifest.members.map((member) => member.path),
+    ["A.ts", "a.ts", "z.ts", "ä.ts"],
   );
 });
 

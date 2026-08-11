@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
+import { compareCodeUnits } from "./canonical-order.mjs";
+
 export async function readTypeScriptTargetProfile(path) {
   const text = await readFile(path, "utf8");
   let parsed;
@@ -43,7 +45,7 @@ function normalizeJson(value) {
   }
   return Object.fromEntries(
     Object.keys(value)
-      .sort()
+      .sort(compareCodeUnits)
       .map((key) => [key, normalizeJson(value[key])]),
   );
 }

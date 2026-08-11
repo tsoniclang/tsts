@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bash scripts/build.sh",
-    "check": "bash scripts/check.sh",
-    "check:scalar": "bash scripts/check-scalar.sh",
-    "replay": "bash scripts/replay.sh",
-    "test:assembly": "node --test 'test/*.test.mjs'"
+    "build": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/build.sh",
+    "check": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/check.sh",
+    "check:scalar": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/check-scalar.sh",
+    "replay": "\"$TSTS_HOST_PLATFORM_PATH/bash\" scripts/replay.sh",
+    "test:assembly": "\"$TSTS_NODE_BUILDER\" --test 'test/*.test.mjs'"
   }
 }
