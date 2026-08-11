@@ -18,6 +18,11 @@ const packageQueries = Object.freeze([
     patterns: Object.freeze(["./cmd/gotots", "./cmd/tsgo-ast-printer"]),
   }),
   Object.freeze({
+    key: "typescript-go-tool",
+    root: "tools/gotots",
+    patterns: Object.freeze(["github.com/microsoft/typescript-go/cmd/tsgo"]),
+  }),
+  Object.freeze({
     key: "typescript-go-product",
     root: "vendor/typescript-go",
     patterns: Object.freeze(["./cmd/tsgo"]),

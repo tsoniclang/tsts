@@ -77,7 +77,7 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
   );
   assert.deepEqual(
     first.manifest.goModules.queries.map(({ key }) => key),
-    ["gotots-tools", "typescript-go-product"],
+    ["gotots-tools", "typescript-go-product", "typescript-go-tool"],
   );
   assert.match(
     await readFile(join(first.packages.targetTypeScript.root, "dist", "index.js"), "utf8"),
@@ -389,6 +389,10 @@ test("real external module closure rebuilds and loads offline", async () => {
     stagedEnvironment,
   });
   assert.ok(modules.modules.some((module) => module.path === "github.com/zeebo/xxh3"));
+  assert.ok(modules.modules.some((module) =>
+    module.path === "github.com/microsoft/typescript-go" &&
+    module.uses.includes("typescript-go-tool")
+  ));
   await assembleTypeScriptGoSource({
     repositoryRoot: resolve("."),
     stagedRoot,
