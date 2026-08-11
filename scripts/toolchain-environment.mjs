@@ -18,10 +18,14 @@ export async function prepareToolchainState(root) {
     await mkdir(join(root, path), { recursive: true, mode: 0o700 });
   }
   await writeFile(
-    join(root, "npmrc"),
+    join(root, "npm-user.conf"),
     "audit=false\nfund=false\nregistry=https://registry.npmjs.org/\nupdate-notifier=false\n",
     { encoding: "utf8", mode: 0o600 },
   );
+  await writeFile(join(root, "npm-global.conf"), "", {
+    encoding: "utf8",
+    mode: 0o600,
+  });
   return root;
 }
 
@@ -120,8 +124,8 @@ function closedBase(stateRoot, paths, hostUtilityPath) {
     NODE_PATH: "",
     NO_COLOR: "1",
     NPM_CONFIG_CACHE: join(stateRoot, "npm-cache"),
-    NPM_CONFIG_GLOBALCONFIG: join(stateRoot, "npmrc"),
-    NPM_CONFIG_USERCONFIG: join(stateRoot, "npmrc"),
+    NPM_CONFIG_GLOBALCONFIG: join(stateRoot, "npm-global.conf"),
+    NPM_CONFIG_USERCONFIG: join(stateRoot, "npm-user.conf"),
     PATH: paths.join(":"),
     SHELL: hostUtilityPath === undefined ? "" : join(hostUtilityPath, "sh"),
     SOURCE_DATE_EPOCH: "0",

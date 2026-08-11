@@ -319,6 +319,7 @@ test("product consumers have one immutable path and a closed environment", async
   assert.equal(environment.GOENV, "off");
   assert.equal(environment.HOME, "/state/home");
   assert.equal(environment.NODE_OPTIONS, "");
+  assert.notEqual(environment.NPM_CONFIG_GLOBALCONFIG, environment.NPM_CONFIG_USERCONFIG);
 
   const repositoryRoot = resolve(".");
   for (const script of [

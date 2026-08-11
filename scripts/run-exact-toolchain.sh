@@ -23,8 +23,8 @@ exec "$host/env" -i \
   TEMP="$state_root/tmp" LANG=C LC_ALL=C TZ=UTC NO_COLOR=1 SOURCE_DATE_EPOCH=0 \
   NODE_OPTIONS= NODE_PATH= PATH="$node_root/bin:$go_root/bin" SHELL= \
   NPM_CONFIG_CACHE="$state_root/npm-cache" \
-  NPM_CONFIG_GLOBALCONFIG="$state_root/npmrc" \
-  NPM_CONFIG_USERCONFIG="$state_root/npmrc" \
+  NPM_CONFIG_GLOBALCONFIG="$state_root/npm-global.conf" \
+  NPM_CONFIG_USERCONFIG="$state_root/npm-user.conf" \
   GOROOT="$go_root" GOPATH="${go_module_cache%/pkg/mod}" \
   GOMODCACHE="$go_module_cache" GOCACHE="$state_root/go-build" \
   GO111MODULE=on GOAUTH=off GOENV=off GOFLAGS=-mod=readonly \
