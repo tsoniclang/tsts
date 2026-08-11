@@ -34,14 +34,90 @@ rejoined to canonical `runtime/` paths. This supports library products whose
 generated `program.ts` is empty without manufacturing imports, duplicating the
 runtime package, or dropping unreferenced package modules.
 
-Build tools are assembled from each pinned package's `npm pack` surface into
-one isolated module graph. That graph contains exactly one `@tsonic/tsts`
-package: the target-AST-enabled bootstrap. The semantic host, source-core,
-target API, TypeScript target, and encoder therefore share one AST runtime.
-The sole tool-runtime manifest seals every selected gitlink and packed package
-digest; every importer verifies the selected build and assembled bytes before
-loading them. Nested dependency copies and whole-`dist` test leakage are not
-assembly paths.
+## Immutable Toolchain
+
+`scripts/build-toolchain.mjs` is the only production entry that can publish a
+toolchain. Fresh construction requires explicit `TSTS_GO_BUILDER`,
+`TSTS_GO_MODULE_CACHE`, `TSTS_NODE_BUILDER`, `TSTS_NPM_CLI`, and
+`TSTS_HOST_PLATFORM_PATH` selections. The host Go, module cache, Node/npm, Git,
+shell utilities, dynamic loader, system libraries, kernel, and filesystem are
+bootstrap/platform boundaries only. No host path is part of toolchain identity,
+and no command can seal existing package `dist` directories.
+
+Publication requires a completely clean superproject, including non-ignored
+untracked files, and initialized clean submodules whose checked-out commits
+equal the gitlinks in committed `HEAD`. Index-only gitlinks are not authority.
+Git is used only while constructing a fresh candidate and never during open or
+historical replay. The canonical entry freshly builds every selected JavaScript
+package, `gotots`, `tsgo-ast-printer`, and the selected native `tsgo` before it
+can seal or publish the candidate.
+
+The TypeScript-Go executable and source snapshot come from the committed
+`vendor/typescript-go` checkout. The executable retains Go VCS build
+information and must report that revision with `vcs.modified=false`; the
+GoToTS schema/module pin is joined separately to the same revision. GoToTS and
+TS-Go package selection also define one union of external module identities.
+Each identity binds module path, version, module sum, go.mod sum, selected
+package uses, its complete extracted source directory, and its exact `.info`,
+`.mod`, `.zip`, and `.ziphash` cache metadata.
+
+The canonical component registry owns every destination and dependency. Its
+output is `.temp/toolchains/<digest>`, where `<digest>` is the SHA-256 identity
+of canonical schema 3 `toolchain-manifest.json`. The manifest partitions and
+binds:
+
+- the committed superproject and submodule selection;
+- the normalized Go profile, bootstrap provenance, and complete staged GOROOT,
+  including the exact `bin/go`, tools, standard library source, and assets;
+- the disjoint staged Go module cache containing the complete non-standard
+  source/cache closure required by both GoToTS tool builds and TS-Go package
+  loading;
+- the staged Node executable and exact normalized npm distribution, with the
+  bootstrap and staged npm closures exact-joined member for member;
+- every packed package's exact name, version, dependency identity, published
+  member set, and content digest;
+- `gotots`, `tsgo-ast-printer`, and vendor-built `tsgo` executable bytes,
+  including the TS-Go VCS proof;
+- the compiler-distribution snapshot, freshly built provider output, and closed
+  `@gotots/runtime`, `@types/node`, and `undici-types` certification dependency
+  graph; and
+- the committed main TypeScript-Go source closure consumed for generation,
+  separate from GOROOT and external module sources.
+
+Manifest keys and member registries use locale-independent UTF-16 code-unit
+ordering. Sealed members are regular single-link files with exact modes;
+symlinks, special files, hard links, duplicate owners, nested `node_modules`,
+and unowned members are rejected. Contained Go-root and npm symlinks are
+materialized as regular members with effective byte/mode identity; escaping
+links are rejected. Published roots are never replaced or deleted. Failed and
+duplicate candidates remain under their run identities.
+
+Construction and consumption use a closed environment: artifact Node and Go
+are the only language executables on `PATH`; HOME, temporary storage, npm cache,
+and Go build cache are isolated per toolchain; the selected profile is explicit;
+and `GOENV=off`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`,
+`GOSUMDB=off`, and the artifact `GOMODCACHE` prevent ambient configuration,
+module-cache, network, or tool fallback. npm acquisition occurs only while
+constructing a fresh artifact. After sealing, open and replay need no host Go,
+module cache, Node, npm, network, or Git. A consuming shell supplies and checks
+`TSTS_HOST_PLATFORM_PATH` for named host utilities; that machine-local path is
+not persisted or hashed.
+
+`.temp/toolchain-selector.json` is an atomic schema 1 pointer containing only a
+digest. A consumer reads that selector at most once, verifies the corresponding
+content-addressed root, and receives an opaque handle of exact package,
+executable, distribution, and source paths. Product scripts thread that digest
+and root through child commands; consumers never reopen the selector or use a
+mutable package alias.
+
+The full build passes the immutable source snapshot as GoToTS's project root,
+an exact writable view of the compiler distribution through
+`--distribution-root`, and the resolved `--go` and `--tsgo` selections. Target
+verification, GoToTS, GoToTS printing, target lowering, and strict TS-Go
+checking therefore use one toolchain identity. The scalar check follows the
+same single-resolution rule while retaining its explicit fixture source. These
+explicit GoToTS tool flags are a required submodule interface; TSTS provides no
+`go tool` or ambient-PATH compatibility route.
 
 ## Selected Profiles
 
@@ -57,9 +133,11 @@ whole-program `closed-direct` plans. Cooperative effects also use
 provider, escaping, promise-producing, promise-observed, and unresolved
 components retain canonical `Promise` transport. The target emits an immutable
 optimization artifact containing the selected representations and every typed
-fallback denominator. The normalized profile digest is sealed into
-`tsts-target-manifest.json`. Replay rejects profile drift and any file not owned
-by that manifest before JavaScript emission.
+fallback denominator. Schema 3 `tsts-target-manifest.json` binds the normalized
+profile digest, canonical GoToTS semantic digest, selected historical toolchain
+digest, and every target member's regular-file type, size, and SHA-256 content
+identity. Replay verifies that exact byte set before emission and reopens the
+manifest-selected historical toolchain even when the current selector differs.
 
 ## Product Implementations
 
@@ -95,7 +173,12 @@ to a timestamped `.temp/preserved/` directory before re-emitting. Failed
 runtime artifacts therefore remain inspectable without contaminating or
 blocking the next exact assembly.
 
-`npm run replay` resumes from the current certified generated source and runs
-only JavaScript emission from `.temp/target`, provider/runtime assembly,
-native TS-Go construction, and the exact runtime differential. It uses the
-same guarded execution and output preservation policy as the full check.
+`npm run build` and `npm run check:scalar` require all five explicit bootstrap
+and platform selections named in the immutable-toolchain contract. Replay
+requires only a current `TSTS_HOST_PLATFORM_PATH`: it reads the historical
+digest from the canonical target manifest, opens and verifies that retained
+content-addressed root even when the selector advances, then uses its Node, Go
+module cache, TS-Go executable, packages, and distributions. Replay never reads
+Git authority, selects a current compiler, or depends on bootstrap Go/Node/npm
+installations. It uses the same guarded execution and output-preservation
+policy as the full check.

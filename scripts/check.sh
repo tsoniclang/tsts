@@ -1,14 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+script_dir="${BASH_SOURCE[0]%/*}"
+root="$(cd "$script_dir/.." && pwd)"
+: "${TSTS_GO_BUILDER:?TSTS_GO_BUILDER must select the exact Go builder}"
+: "${TSTS_GO_MODULE_CACHE:?TSTS_GO_MODULE_CACHE must select the exact Go module cache}"
+: "${TSTS_NODE_BUILDER:?TSTS_NODE_BUILDER must select the exact Node bootstrap}"
+: "${TSTS_NPM_CLI:?TSTS_NPM_CLI must select the exact npm CLI}"
+: "${TSTS_HOST_PLATFORM_PATH:?TSTS_HOST_PLATFORM_PATH must select host utilities}"
+host="$TSTS_HOST_PLATFORM_PATH"
+for utility in awk bash date env flock git mkdir mv sh systemd-run time timeout; do
+  [[ "$host" = /* && "$host" != *:* && -x "$host/$utility" ]] || {
+    echo "invalid host-platform utility boundary: $host/$utility" >&2
+    exit 2
+  }
+done
+bootstrap_state="$root/.temp/bootstrap-state"
+"$host/mkdir" -p "$bootstrap_state/home" "$bootstrap_state/tmp" "$bootstrap_state/npm-cache"
 
 if [[ "${TSTS_GUARDED:-0}" != "1" ]]; then
-  exec env TSTS_GUARDED=1 \
-    bash "$root/scripts/run-guarded.sh" \
-    bash "$root/scripts/check.sh"
+  exec "$host/env" TSTS_GUARDED=1 \
+    "$host/bash" "$root/scripts/run-guarded.sh" \
+    "$host/bash" "$root/scripts/check.sh"
 fi
 
-npm run test:assembly
-bash "$root/scripts/build.sh"
-bash "$root/scripts/replay.sh"
+"$host/env" -i \
+  HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
+  TEMP="$bootstrap_state/tmp" PATH="${TSTS_NODE_BUILDER%/*}:$host" LANG=C LC_ALL=C \
+  TZ=UTC NODE_OPTIONS= NODE_PATH= NPM_CONFIG_CACHE="$bootstrap_state/npm-cache" \
+  TSTS_GO_BUILDER="$TSTS_GO_BUILDER" \
+  TSTS_GO_MODULE_CACHE="$TSTS_GO_MODULE_CACHE" \
+  TSTS_HOST_PLATFORM_PATH="$host" \
+  "$TSTS_NODE_BUILDER" --test "$root"/test/*.test.mjs
+"$host/bash" "$root/scripts/build.sh"
+"$host/bash" "$root/scripts/replay.sh"

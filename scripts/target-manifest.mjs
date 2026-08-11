@@ -1,28 +1,35 @@
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { lstat, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 
-const manifestName = "tsts-target-manifest.json";
+import { compareCodeUnits, compareRecordPaths } from "./canonical-order.mjs";
+
+export const targetManifestName = "tsts-target-manifest.json";
 
 export async function sealTargetManifest(
   targetRoot,
   canonicalSemanticDigest,
   targetProfileDigest,
+  toolchainDigest,
 ) {
-  const beforeSeal = await listPhysicalFiles(targetRoot);
-  if (beforeSeal.includes(manifestName)) {
+  try {
+    await lstat(join(targetRoot, targetManifestName));
     throw new Error("Target manifest exists before the target assembly is sealed");
+  } catch (error) {
+    if (error?.code !== "ENOENT") {
+      throw error;
+    }
   }
-  const files = [...beforeSeal, manifestName].sort();
-  await writeFile(join(targetRoot, manifestName), `${JSON.stringify({
-    schemaVersion: 2,
-    canonicalSemanticDigest: requireDigest(
-      canonicalSemanticDigest,
-      "canonical semantic",
-    ),
+  const manifest = {
+    schemaVersion: 3,
+    canonicalSemanticDigest: requireDigest(canonicalSemanticDigest, "canonical semantic"),
     targetProfileDigest: requireDigest(targetProfileDigest, "target profile"),
-    files,
-  }, undefined, 2)}\n`, "utf8");
-  return Object.freeze(files);
+    toolchainDigest: requireDigest(toolchainDigest, "toolchain"),
+    members: await listMembers(targetRoot),
+  };
+  await writeFile(join(targetRoot, targetManifestName), encodeManifest(manifest), "utf8");
+  return freezeResult(manifest);
 }
 
 export async function verifyTargetManifest(
@@ -30,60 +37,114 @@ export async function verifyTargetManifest(
   canonicalSemanticDigest,
   targetProfileDigest,
 ) {
-  const manifest = parseRecord(
-    await readFile(join(targetRoot, manifestName), "utf8"),
-    "TypeScript target manifest",
-  );
+  const text = await readFile(join(targetRoot, targetManifestName), "utf8");
+  if ((await lstat(join(targetRoot, targetManifestName))).nlink !== 1) {
+    throw new Error("TypeScript target manifest is a hard link");
+  }
+  const manifest = parseRecord(text, "TypeScript target manifest");
   rejectUnknownKeys(
     manifest,
     new Set([
       "schemaVersion",
       "canonicalSemanticDigest",
       "targetProfileDigest",
-      "files",
+      "toolchainDigest",
+      "members",
     ]),
     "TypeScript target manifest",
   );
-  if (manifest["schemaVersion"] !== 2) {
-    throw new Error("TypeScript target manifest schemaVersion must be 2");
+  if (manifest.schemaVersion !== 3 || text !== encodeManifest(manifest)) {
+    throw new Error("TypeScript target manifest schema or encoding is not canonical");
   }
   assertEqual(
     "canonical semantic digest",
-    manifest["canonicalSemanticDigest"],
+    manifest.canonicalSemanticDigest,
     requireDigest(canonicalSemanticDigest, "canonical semantic"),
   );
   assertEqual(
     "target profile digest",
-    manifest["targetProfileDigest"],
+    manifest.targetProfileDigest,
     requireDigest(targetProfileDigest, "target profile"),
   );
-  const files = manifest["files"];
-  if (!Array.isArray(files) || !files.every((path) => typeof path === "string")) {
-    throw new Error("TypeScript target manifest files must be strings");
+  requireDigest(manifest.toolchainDigest, "toolchain");
+  validateMembers(manifest.members);
+  const physical = await listMembers(targetRoot);
+  if (!isDeepStrictEqual(physical, manifest.members)) {
+    throw new Error(
+      "TypeScript target content, type, or membership differs from its manifest",
+    );
   }
-  const expected = [...files].sort();
-  if (
-    new Set(files).size !== files.length ||
-    files.some((path, index) => path !== expected[index])
-  ) {
-    throw new Error("TypeScript target manifest files must be unique and sorted");
-  }
-  const physical = await listPhysicalFiles(targetRoot);
-  assertEqualPaths("TypeScript target manifest membership", files, physical);
-  return Object.freeze([...files]);
+  return freezeResult(manifest);
 }
 
-async function listPhysicalFiles(root, directory = "") {
-  const paths = [];
+async function listMembers(root, directory = "") {
+  const records = [];
   for (const entry of await readdir(join(root, directory), { withFileTypes: true })) {
     const path = directory.length === 0 ? entry.name : `${directory}/${entry.name}`;
+    if (path === targetManifestName) {
+      continue;
+    }
     if (entry.isDirectory()) {
-      paths.push(...await listPhysicalFiles(root, path));
+      records.push(...await listMembers(root, path));
+    } else if (entry.isFile()) {
+      const absolute = join(root, path);
+      if ((await lstat(absolute)).nlink !== 1) {
+        throw new Error(`TypeScript target member '${path}' is a hard link`);
+      }
+      const bytes = await readFile(absolute);
+      records.push({
+        path,
+        type: "file",
+        size: bytes.byteLength,
+        digest: createHash("sha256").update(bytes).digest("hex"),
+      });
     } else {
-      paths.push(path);
+      throw new Error(`TypeScript target member '${path}' is not a regular file`);
     }
   }
-  return paths.sort();
+  return records.sort(compareRecordPaths);
+}
+
+function validateMembers(members) {
+  if (!Array.isArray(members)) {
+    throw new Error("TypeScript target manifest members must be an array");
+  }
+  const paths = [];
+  for (const member of members) {
+    if (!isRecord(member)) {
+      throw new Error("TypeScript target manifest member must be an object");
+    }
+    rejectUnknownKeys(member, new Set(["path", "type", "size", "digest"]), "TypeScript target member");
+    if (
+      typeof member.path !== "string" || member.path.length === 0 ||
+      member.type !== "file" || !Number.isSafeInteger(member.size) || member.size < 0
+    ) {
+      throw new Error("TypeScript target manifest member identity is invalid");
+    }
+    requireDigest(member.digest, `target member '${member.path}'`);
+    paths.push(member.path);
+  }
+  if (!isDeepStrictEqual(paths, [...new Set(paths)].sort(compareCodeUnits))) {
+    throw new Error("TypeScript target manifest members must be unique and sorted");
+  }
+}
+
+function freezeResult(manifest) {
+  return Object.freeze({
+    files: Object.freeze(manifest.members.map((member) => member.path)),
+    members: Object.freeze(manifest.members.map((member) => Object.freeze({ ...member }))),
+    toolchainDigest: manifest.toolchainDigest,
+  });
+}
+
+function encodeManifest(manifest) {
+  return `${JSON.stringify({
+    schemaVersion: manifest.schemaVersion,
+    canonicalSemanticDigest: manifest.canonicalSemanticDigest,
+    targetProfileDigest: manifest.targetProfileDigest,
+    toolchainDigest: manifest.toolchainDigest,
+    members: manifest.members,
+  }, undefined, 2)}\n`;
 }
 
 function requireDigest(value, subject) {
@@ -95,7 +156,7 @@ function requireDigest(value, subject) {
 
 function parseRecord(text, subject) {
   const value = JSON.parse(text);
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+  if (!isRecord(value)) {
     throw new Error(`${subject} must be an object`);
   }
   return value;
@@ -103,8 +164,8 @@ function parseRecord(text, subject) {
 
 function rejectUnknownKeys(value, allowed, subject) {
   const unexpected = Object.keys(value).find((key) => !allowed.has(key));
-  if (unexpected !== undefined) {
-    throw new Error(`${subject} has unsupported field '${unexpected}'`);
+  if (unexpected !== undefined || Object.keys(value).length !== allowed.size) {
+    throw new Error(`${subject} fields are invalid`);
   }
 }
 
@@ -114,13 +175,6 @@ function assertEqual(subject, actual, expected) {
   }
 }
 
-function assertEqualPaths(subject, expected, actual) {
-  if (
-    expected.length !== actual.length ||
-    expected.some((path, index) => path !== actual[index])
-  ) {
-    throw new Error(
-      `${subject} differs\nexpected=${JSON.stringify(expected)}\nactual=${JSON.stringify(actual)}`,
-    );
-  }
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

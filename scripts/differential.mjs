@@ -4,12 +4,14 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 
-const [repositoryRoot] = process.argv.slice(2);
-if (repositoryRoot === undefined) {
-  throw new Error("repository root is required");
+import { compareCodeUnits } from "./canonical-order.mjs";
+
+const [repositoryRoot, nativeArgument] = process.argv.slice(2);
+if (repositoryRoot === undefined || nativeArgument === undefined) {
+  throw new Error("repository root and exact native compiler are required");
 }
 
-const nativeCompiler = join(repositoryRoot, ".temp", "bin", "tsgo-native");
+const nativeCompiler = nativeArgument;
 const generatedCompiler = join(
   repositoryRoot,
   ".temp",
@@ -51,7 +53,7 @@ function relativeFiles(root, directory = "") {
       result.push(relative);
     }
   }
-  return result.sort();
+  return result.sort(compareCodeUnits);
 }
 
 function verifyEmit(source) {
