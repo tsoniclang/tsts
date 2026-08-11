@@ -343,6 +343,10 @@ test("product consumers have one immutable path and a closed environment", async
     assert.doesNotMatch(text, /\.temp\/tool-runtime|\.temp\/bin|go tool tsgo|hostPlatform/u, script);
     assert.doesNotMatch(text, /spawnSync\(\s*["'](?:node|npm|go|tsc)["']/u, script);
   }
+  assert.match(
+    await readFile(join(repositoryRoot, "scripts", "run-exact-toolchain.sh"), "utf8"),
+    /NODE_OPTIONS=--max-old-space-size=8192/u,
+  );
 });
 
 const realGo = process.env.TSTS_GO_BUILDER;

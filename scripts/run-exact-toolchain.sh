@@ -21,7 +21,8 @@ fi
 exec "$host/env" -i \
   CI=1 HOME="$state_root/home" TMPDIR="$state_root/tmp" TMP="$state_root/tmp" \
   TEMP="$state_root/tmp" LANG=C LC_ALL=C TZ=UTC NO_COLOR=1 SOURCE_DATE_EPOCH=0 \
-  NODE_OPTIONS= NODE_PATH= PATH="$node_root/bin:$go_root/bin" SHELL= \
+  NODE_OPTIONS=--max-old-space-size=8192 NODE_PATH= \
+  PATH="$node_root/bin:$go_root/bin" SHELL= \
   NPM_CONFIG_CACHE="$state_root/npm-cache" \
   NPM_CONFIG_GLOBALCONFIG="$state_root/npm-global.conf" \
   NPM_CONFIG_USERCONFIG="$state_root/npm-user.conf" \
