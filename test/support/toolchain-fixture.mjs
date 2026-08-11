@@ -315,9 +315,7 @@ const moduleRecord = (sum = selectedSum) => ({
 if (args[0] === "version" && args[1] === "-m") {
   process.stdout.write(args[2] + ": go1.26.4\\n");
   process.stdout.write("\\tpath\\tgithub.com/microsoft/typescript-go/cmd/tsgo\\n");
-  process.stdout.write("\\tbuild\\tvcs=git\\n");
-  process.stdout.write("\\tbuild\\tvcs.revision=${vendorGitlink}\\n");
-  process.stdout.write("\\tbuild\\tvcs.modified=false\\n");
+  process.stdout.write("\\tmod\\tgithub.com/microsoft/typescript-go\\t${tsgoVersion(vendorGitlink)}\\t${dependencySum}\\n");
   process.exit(0);
 }
 if (args[0] === "version") {
@@ -364,6 +362,13 @@ if (args[0] === "build") {
   mkdirSync(dirname(output), { recursive: true });
   const program = target === "./cmd/tsgo" ? ${JSON.stringify(fakeTsgoProgram)} : "process.exit(0);\\n";
   writeFileSync(output, "#!/usr/bin/env node\\n" + program);
+  chmodSync(output, 0o755);
+  process.exit(0);
+}
+if (args[0] === "install") {
+  const output = join(process.env.GOBIN, "tsgo");
+  mkdirSync(dirname(output), { recursive: true });
+  writeFileSync(output, "#!/usr/bin/env node\\n" + ${JSON.stringify(fakeTsgoProgram)});
   chmodSync(output, 0o755);
   process.exit(0);
 }

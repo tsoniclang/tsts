@@ -94,8 +94,13 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
   ]) {
     assert.equal((await lstat(path)).isSymbolicLink(), false, path);
   }
-  assert.equal(first.manifest.tsgoAuthority.revision, first.manifest.tsgoAuthority.vendorGitlink);
-  assert.equal(first.manifest.tsgoAuthority.modified, false);
+  assert.equal(
+    first.manifest.tsgoAuthority.sourceRevision,
+    first.manifest.selection.submodules.find(({ path }) =>
+      path === "vendor/typescript-go"
+    ).gitlink,
+  );
+  assert.equal(first.manifest.tsgoAuthority.module, "github.com/microsoft/typescript-go");
 
   const originalLocaleCompare = String.prototype.localeCompare;
   String.prototype.localeCompare = () => { throw new Error("locale ordering is forbidden"); };

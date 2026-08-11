@@ -549,7 +549,7 @@ function validateTsgoAuthority(authority, selection) {
   assertRecord(authority, "TypeScript-Go executable authority");
   assertFields(
     authority,
-    ["modified", "package", "pinnedVersion", "revision", "vcs", "vendorGitlink"],
+    ["module", "package", "sourceRevision", "sum", "version"],
     "TypeScript-Go executable authority",
   );
   const selected = selection.submodules.find((record) =>
@@ -557,10 +557,11 @@ function validateTsgoAuthority(authority, selection) {
   )?.gitlink;
   if (
     authority.package !== "github.com/microsoft/typescript-go/cmd/tsgo" ||
-    authority.vcs !== "git" || authority.modified !== false ||
-    authority.revision !== selected || authority.vendorGitlink !== selected ||
-    typeof authority.pinnedVersion !== "string" ||
-    !authority.pinnedVersion.endsWith(`-${selected.slice(0, 12)}`)
+    authority.module !== "github.com/microsoft/typescript-go" ||
+    authority.sourceRevision !== selected ||
+    typeof authority.version !== "string" ||
+    !authority.version.endsWith(`-${selected.slice(0, 12)}`) ||
+    typeof authority.sum !== "string" || !/^h1:[A-Za-z0-9+/]{43}=$/u.test(authority.sum)
   ) {
     throw new Error("TypeScript-Go executable authority is invalid");
   }

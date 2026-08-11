@@ -52,11 +52,12 @@ historical replay. The canonical entry freshly builds every selected JavaScript
 package, `gotots`, `tsgo-ast-printer`, and the selected native `tsgo` before it
 can seal or publish the candidate.
 
-The TypeScript-Go executable and source snapshot come from the committed
-`vendor/typescript-go` checkout. The executable retains Go VCS build
-information and must report that revision with `vcs.modified=false`; the
-GoToTS schema/module pin is joined separately to the same revision. GoToTS and
-TS-Go package selection also define one union of external module identities.
+The TypeScript-Go source snapshot comes from the committed
+`vendor/typescript-go` checkout. The executable is built offline from the
+sealed module cache at the exact version and sum in GoToTS's generated schema
+manifest; its Go build information must report that module identity. The
+schema revision exact-joins that module pin to the committed vendor gitlink.
+GoToTS and TS-Go package selection also define one union of external module identities.
 Each identity binds module path, version, module sum, go.mod sum, selected
 package uses, its complete extracted source directory, and its exact `.info`,
 `.mod`, `.zip`, and `.ziphash` cache metadata.

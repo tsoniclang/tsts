@@ -241,11 +241,10 @@ async function buildGoComponents(
       `build ${key}`,
     );
   }
-  const vendorRoot = join(repositoryRoot, "vendor", "typescript-go");
   const vendorGitlink = selection.submodules.find((record) =>
     record.path === "vendor/typescript-go"
   ).gitlink;
-  const pinnedVersion = await joinGoToTsTsgoPin(
+  const pinned = await joinGoToTsTsgoPin(
     goExecutable,
     moduleRoot,
     vendorGitlink,
@@ -254,26 +253,28 @@ async function buildGoComponents(
   const output = join(stagedRoot, componentByKey.get("tsgo").target);
   run(
     goExecutable,
-    ["build", "-trimpath", ...tagArguments(profile), "-o", output, "./cmd/tsgo"],
-    vendorRoot,
-    buildEnvironment,
-    "build vendor TypeScript-Go compiler",
+    [
+      "install", "-trimpath", "-buildvcs=false", ...tagArguments(profile),
+      `github.com/microsoft/typescript-go/cmd/tsgo@${pinned.version}`,
+    ],
+    moduleRoot,
+    { ...buildEnvironment, GOBIN: dirname(output), GOFLAGS: "" },
+    "build pinned TypeScript-Go compiler",
   );
   const buildInfo = inspectTsgoBuildInfo(goExecutable, output, buildEnvironment);
   if (
     buildInfo.package !== "github.com/microsoft/typescript-go/cmd/tsgo" ||
-    buildInfo.vcs !== "git" || buildInfo.revision !== vendorGitlink ||
-    buildInfo.modified !== false
+    buildInfo.module !== "github.com/microsoft/typescript-go" ||
+    buildInfo.version !== pinned.version || buildInfo.sum !== pinned.sum
   ) {
-    throw new Error("TypeScript-Go executable build info differs from vendor authority");
+    throw new Error("TypeScript-Go executable build info differs from its sealed module authority");
   }
   return Object.freeze({
     package: buildInfo.package,
-    pinnedVersion,
-    vendorGitlink,
-    vcs: buildInfo.vcs,
-    revision: buildInfo.revision,
-    modified: buildInfo.modified,
+    module: buildInfo.module,
+    version: buildInfo.version,
+    sum: buildInfo.sum,
+    sourceRevision: pinned.revision,
   });
 }
 
@@ -312,7 +313,11 @@ async function joinGoToTsTsgoPin(goExecutable, moduleRoot, vendorGitlink, enviro
   ) {
     throw new Error("GoToTS TS-Go schema pin differs from the committed vendor gitlink");
   }
-  return schema.toolVersion;
+  return Object.freeze({
+    version: schema.toolVersion,
+    sum: schema.toolSum,
+    revision: schema.revision,
+  });
 }
 
 function inspectTsgoBuildInfo(goExecutable, binary, environment) {
@@ -328,6 +333,10 @@ function inspectTsgoBuildInfo(goExecutable, binary, environment) {
     const fields = line.split("\t");
     if (fields[1] === "path") {
       values.set("package", fields[2]);
+    } else if (fields[1] === "mod") {
+      values.set("module", fields[2]);
+      values.set("version", fields[3]);
+      values.set("sum", fields[4]);
     } else if (fields[1] === "build") {
       const separator = fields[2]?.indexOf("=") ?? -1;
       if (separator !== -1) {
@@ -337,11 +346,9 @@ function inspectTsgoBuildInfo(goExecutable, binary, environment) {
   }
   return {
     package: values.get("package"),
-    vcs: values.get("vcs"),
-    revision: values.get("vcs.revision"),
-    modified: values.get("vcs.modified") === "true"
-      ? true
-      : values.get("vcs.modified") === "false" ? false : undefined,
+    module: values.get("module"),
+    version: values.get("version"),
+    sum: values.get("sum"),
   };
 }
 
