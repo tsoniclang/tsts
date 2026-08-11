@@ -69,7 +69,7 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
     restoreEnvironment(ambient);
   }
   const firstManifest = await readFile(join(first.root, "toolchain-manifest.json"), "utf8");
-  assert.equal(first.manifest.schemaVersion, 3);
+  assert.equal(first.manifest.schemaVersion, 4);
   assert.equal(Object.hasOwn(first.manifest, "hostPlatform"), false);
   assert.deepEqual(
     first.manifest.goModules.modules.map(({ path, version }) => `${path}@${version}`),
@@ -163,7 +163,7 @@ test("historical open needs no bootstrap and rejects every sealed mutation class
   );
   assert.match(run(reopened.binaries.node, ["--version"], toolchainEnvironment(reopened)), /^v/u);
   assert.equal(
-    run(reopened.binaries.node, [reopened.binaries.npm, "--version"], toolchainEnvironment(reopened)).trim(),
+    run(reopened.binaries.npm, ["--version"], toolchainEnvironment(reopened)).trim(),
     "10.0.0",
   );
 

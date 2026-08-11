@@ -68,7 +68,7 @@ package uses, its complete extracted source directory, and its exact `.info`,
 
 The canonical component registry owns every destination and dependency. Its
 output is `.temp/toolchains/<digest>`, where `<digest>` is the SHA-256 identity
-of canonical schema 3 `toolchain-manifest.json`. The manifest partitions and
+of canonical schema 4 `toolchain-manifest.json`. The manifest partitions and
 binds:
 
 - the committed superproject and submodule selection;
@@ -77,8 +77,10 @@ binds:
 - the disjoint staged Go module cache containing the complete non-standard
   source/cache closure required by both GoToTS tool builds and TS-Go package
   loading;
-- the staged Node executable and exact normalized npm distribution, with the
-  bootstrap and staged npm closures exact-joined member for member;
+- the staged Node executable, artifact-owned npm launcher, and exact normalized
+  npm distribution, with bootstrap and staged npm closures exact-joined member
+  for member; nested package scripts resolve that launcher from the closed
+  artifact `PATH` rather than a host npm installation;
 - every packed package's exact name, version, dependency identity, published
   member set, and content digest;
 - `gotots`, `tsgo-ast-printer`, and sealed-module-built `tsgo` executable

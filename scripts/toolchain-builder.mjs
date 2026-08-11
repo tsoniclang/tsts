@@ -415,8 +415,7 @@ async function assemblePackages(repositoryRoot, stagedRoot, node, environment) {
       sourceRoot: join(repositoryRoot, selected.source),
       targetRoot: join(stagedRoot, selected.target),
       expectedName: selected.name,
-      nodeExecutable: node.executable,
-      npmCli: node.npmCli,
+      npmExecutable: node.npmExecutable,
       environment,
     });
     records.push({
@@ -518,13 +517,7 @@ function run(command, arguments_, cwd, environment, subject) {
 }
 
 function runNpm(node, arguments_, cwd, environment, subject) {
-  run(
-    node.executable,
-    [node.npmCli, ...arguments_],
-    cwd,
-    environment,
-    subject,
-  );
+  run(node.npmExecutable, arguments_, cwd, environment, subject);
 }
 
 function runCapture(command, arguments_, cwd, environment, subject) {

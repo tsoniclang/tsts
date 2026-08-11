@@ -50,8 +50,7 @@ export async function assembleCompilerDistribution({
       sourceRoot: join(repositoryRoot, component.source),
       targetRoot: join(stagedRoot, component.target),
       expectedName: component.name,
-      nodeExecutable: node.executable,
-      npmCli: node.npmCli,
+      npmExecutable: node.npmExecutable,
       environment: packageEnvironment,
     });
     dependencies.push({

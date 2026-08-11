@@ -105,7 +105,7 @@ export async function openToolchain(repositoryArgument, options) {
       npm: join(
         root,
         verified.manifest.nodeRuntime.root,
-        verified.manifest.nodeRuntime.npmCli,
+        verified.manifest.nodeRuntime.npmExecutable,
       ),
     }),
     goRoot: join(root, goRootPath),

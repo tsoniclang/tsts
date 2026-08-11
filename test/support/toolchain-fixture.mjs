@@ -465,7 +465,8 @@ while (root !== dirname(root)) {
 process.exit(0);
 `;
 
-const fakeNpmProgram = `import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+const fakeNpmProgram = `import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 const args = process.argv.slice(2);
 const npmRoot = resolve(dirname(new URL(import.meta.url).pathname), "..");
@@ -509,6 +510,8 @@ if (args.includes("ci")) {
   process.exit(0);
 }
 if (!args.includes("build")) process.exit(2);
+const nested = spawnSync("npm", ["--version"], { encoding: "utf8", env: process.env });
+if (nested.status !== 0 || nested.stdout.trim() !== "10.0.0") process.exit(3);
 const roots = prefix.endsWith("/tools/tsts-legacy") ? [join(prefix, "packages/tsts")] : [prefix];
 for (const root of roots) {
   const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));

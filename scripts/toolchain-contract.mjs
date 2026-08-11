@@ -11,7 +11,7 @@ import { compareCodeUnits } from "./canonical-order.mjs";
 import { validateGoModuleCacheRecord } from "./go-module-cache.mjs";
 import { digestExactFiles, validateRelativePath } from "./package-artifact.mjs";
 import { digestNormalizedDistributionRecords } from "./runtime-distribution.mjs";
-import { selectedSubmodules } from "./toolchain-authority.mjs";
+import { nodeNpmExecutablePath, selectedSubmodules } from "./toolchain-authority.mjs";
 import {
   addOwned,
   assertFields,
@@ -36,7 +36,7 @@ import {
 
 export const toolchainManifestName = "toolchain-manifest.json";
 export const toolchainSelectorName = "toolchain-selector.json";
-export const toolchainSchemaVersion = 3;
+export const toolchainSchemaVersion = 4;
 
 export const selectedPackages = packageComponents;
 export const selectedBinaries = Object.freeze(
@@ -483,6 +483,7 @@ function describeNodeRuntime(directories, members, bootstrap) {
     root: nodeRuntimePath,
     executable: "bin/node",
     npmCli: `npm/${bootstrap.npmCli}`,
+    npmExecutable: nodeNpmExecutablePath,
     npmDigest: npm.digest,
     fileCount: selected.length,
     digest: digestCanonical(selected),
@@ -510,7 +511,7 @@ function validateNodeRuntime(runtime, directories, members, bootstrap) {
   assertRecord(runtime, "Toolchain Node/npm runtime");
   assertFields(
     runtime,
-    ["digest", "executable", "fileCount", "npmCli", "npmDigest", "root"],
+    ["digest", "executable", "fileCount", "npmCli", "npmDigest", "npmExecutable", "root"],
     "Toolchain Node/npm runtime",
   );
   const described = describeNodeRuntime(directories, members, bootstrap);
@@ -524,10 +525,11 @@ function validateNodeRuntime(runtime, directories, members, bootstrap) {
   const byPath = new Map(members.map((record) => [record.path, record]));
   const executable = byPath.get(`${runtime.root}/${runtime.executable}`);
   const npmCli = byPath.get(`${runtime.root}/${runtime.npmCli}`);
+  const npmExecutable = byPath.get(`${runtime.root}/${runtime.npmExecutable}`);
   if (
     executable?.mode !== 0o555 ||
     executable.digest !== bootstrap.executableDigest ||
-    npmCli === undefined
+    npmCli === undefined || npmExecutable?.mode !== 0o555
   ) {
     throw new Error("Toolchain Node/npm runtime differs from its bootstrap provenance");
   }

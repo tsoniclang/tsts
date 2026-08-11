@@ -7,6 +7,7 @@ import {
   mkdir,
   readFile,
   realpath,
+  writeFile,
 } from "node:fs/promises";
 import { COPYFILE_FICLONE } from "node:constants";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
@@ -27,6 +28,7 @@ export const selectedSubmodules = Object.freeze([
   "tools/typescript-runtime",
   "vendor/typescript-go",
 ]);
+export const nodeNpmExecutablePath = "bin/npm";
 
 export async function verifyRepositoryAuthority(repositoryArgument, environment) {
   const authorityEnvironment = requireEnvironment(environment, "repository authority");
@@ -244,10 +246,18 @@ export async function stageNodeRuntime(selected, targetRoot, environment) {
   }
   const executableFiles = [
     "bin/node",
+    nodeNpmExecutablePath,
     ...npm.executableFiles.map((path) => `npm/${path}`),
   ].sort(compareCodeUnits);
   const executable = join(targetRoot, "bin", "node");
   const npmCli = join(targetRoot, "npm", selected.fingerprint.npmCli);
+  const npmExecutable = join(targetRoot, nodeNpmExecutablePath);
+  await writeFile(
+    npmExecutable,
+    `#!/usr/bin/env node\nimport ${JSON.stringify(`../npm/${selected.fingerprint.npmCli}`)};\n`,
+    { encoding: "utf8", mode: 0o755 },
+  );
+  await chmod(npmExecutable, 0o755);
   const nodeVersion = runCommand(
     executable,
     ["--version"],
@@ -271,6 +281,7 @@ export async function stageNodeRuntime(selected, targetRoot, environment) {
     root: targetRoot,
     executable,
     npmCli,
+    npmExecutable,
     executableFiles: Object.freeze(executableFiles),
   });
 }

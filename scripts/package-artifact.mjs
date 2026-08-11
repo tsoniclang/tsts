@@ -9,16 +9,14 @@ export async function copyPublishedPackage({
   sourceRoot,
   targetRoot,
   expectedName,
-  nodeExecutable,
-  npmCli,
+  npmExecutable,
   environment,
   mode = 0o444,
 }) {
   const artifact = inspectPublishedPackage(
     sourceRoot,
     expectedName,
-    nodeExecutable,
-    npmCli,
+    npmExecutable,
     environment,
   );
   const digest = await copyExactFiles({
@@ -75,15 +73,13 @@ export async function digestExactFiles(root, files) {
 export function inspectPublishedPackage(
   sourceRoot,
   expectedName,
-  nodeExecutable,
-  npmCli,
+  npmExecutable,
   environment,
 ) {
   if (
-    typeof nodeExecutable !== "string" || nodeExecutable.length === 0 ||
-    typeof npmCli !== "string" || npmCli.length === 0
+    typeof npmExecutable !== "string" || npmExecutable.length === 0
   ) {
-    throw new Error("Exact Node and npm paths are required to inspect a package");
+    throw new Error("An exact npm executable is required to inspect a package");
   }
   if (
     typeof environment !== "object" || environment === null || Array.isArray(environment) ||
@@ -92,8 +88,8 @@ export function inspectPublishedPackage(
     throw new Error("Package inspection requires an explicit closed environment");
   }
   const packed = spawnSync(
-    nodeExecutable,
-    [npmCli, "pack", "--dry-run", "--json", "--ignore-scripts"],
+    npmExecutable,
+    ["pack", "--dry-run", "--json", "--ignore-scripts"],
     {
       cwd: sourceRoot,
       encoding: "utf8",
