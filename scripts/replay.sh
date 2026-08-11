@@ -58,7 +58,7 @@ toolchain_line="$("$host/env" -i \
   "$root" "$canonical" "$target" "$toolchain_digest" "$toolchain_root")"
 IFS=$'\t' read -r \
   toolchain_digest toolchain_root gotots printer tsgo go go_root go_module_cache \
-  node npm node_root state_root immutable_distribution immutable_source \
+  node npm node_root state_root tool_cache_root immutable_distribution immutable_source \
   <<< "$toolchain_line"
 
 run_toolchain() {

@@ -77,6 +77,7 @@ export async function openToolchain(repositoryArgument, options) {
   const verified = await verifyToolchainRoot(root, options.digest);
   const stateRoot = join(repositoryRoot, ".temp", "toolchain-state", options.digest);
   await prepareToolchainState(stateRoot);
+  const toolCacheRoot = join(stateRoot, "go-tool-cache");
   const packages = Object.fromEntries(verified.manifest.packages.map((record) => {
     const selection = componentByKey.get(record.key);
     return [record.key, Object.freeze({
@@ -114,6 +115,7 @@ export async function openToolchain(repositoryArgument, options) {
     distributionRoot: join(root, verified.manifest.distribution.root),
     sourceRoot: join(root, verified.manifest.source.root),
     stateRoot,
+    toolCacheRoot,
     manifest: verified.manifest,
   });
   openedHandles.add(handle);
@@ -217,6 +219,21 @@ export function activateToolchainEnvironment(handle) {
   return environment;
 }
 
+export function typeScriptAstPrinterConfig(handle, workingDirectoryArgument) {
+  assertHandle(handle);
+  const workingDirectory = resolve(workingDirectoryArgument);
+  return Object.freeze({
+    executable: handle.binaries.tsgoAstPrinter,
+    arguments: Object.freeze([
+      "-module", handle.distributionRoot,
+      "-go", handle.binaries.go,
+      "-tsgo", handle.binaries.tsgo,
+      "-tool-cache", handle.toolCacheRoot,
+      "-cwd", workingDirectory,
+    ]),
+  });
+}
+
 export function formatToolchainHandle(handle, distributionWorkspace = "") {
   assertHandle(handle);
   const values = [
@@ -232,6 +249,7 @@ export function formatToolchainHandle(handle, distributionWorkspace = "") {
     handle.binaries.npm,
     handle.nodeRoot,
     handle.stateRoot,
+    handle.toolCacheRoot,
     handle.distributionRoot,
     handle.sourceRoot,
     distributionWorkspace,

@@ -119,12 +119,15 @@ mutable package alias.
 
 The full build passes the immutable source snapshot as GoToTS's project root,
 an exact writable view of the compiler distribution through
-`--distribution-root`, and the resolved `--go` and `--tsgo` selections. Target
-verification, GoToTS, GoToTS printing, target lowering, and strict TS-Go
-checking therefore use one toolchain identity. The scalar check follows the
-same single-resolution rule while retaining its explicit fixture source. These
-explicit GoToTS tool flags are a required submodule interface; TSTS provides no
-`go tool` or ambient-PATH compatibility route.
+`--distribution-root`, and the resolved `--go`, `--tsgo`, and writable
+`--tool-cache` selections. Every target-printer request carries those same
+three explicit selections; it never writes into the immutable distribution or
+rediscovers tools from `PATH`. Target verification, GoToTS, GoToTS printing,
+target lowering, and strict TS-Go checking therefore use one toolchain
+identity. The scalar check follows the same single-resolution rule while
+retaining its explicit fixture source. These explicit GoToTS tool flags are a
+required submodule interface; TSTS provides no `go tool` or ambient-PATH
+compatibility route.
 
 ## Selected Profiles
 

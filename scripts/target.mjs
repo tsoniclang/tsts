@@ -21,6 +21,7 @@ import {
   installToolchainPackage,
   openToolchainArguments,
   activateToolchainEnvironment,
+  typeScriptAstPrinterConfig,
 } from "./toolchain.mjs";
 import { readTypeScriptTargetProfile } from "./typescript-target-profile.mjs";
 
@@ -75,15 +76,7 @@ const project = {
   targets: [{
     id: "typescript",
     options: {
-      printer: {
-        executable: toolchain.binaries.tsgoAstPrinter,
-        arguments: [
-          "-module",
-          toolchain.distributionRoot,
-          "-cwd",
-          sourceWorkspace,
-        ],
-      },
+      printer: typeScriptAstPrinterConfig(toolchain, sourceWorkspace),
       optimizations: targetProfile.optimizations,
     },
   }],

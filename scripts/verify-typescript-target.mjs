@@ -8,6 +8,7 @@ import {
   activateToolchainEnvironment,
   installToolchainPackage,
   openToolchainArguments,
+  typeScriptAstPrinterConfig,
 } from "./toolchain.mjs";
 
 const [repositoryArgument, ...toolchainArguments] = process.argv.slice(2);
@@ -101,15 +102,9 @@ const runtimePackage = JSON.parse(
 assert.equal(runtimePackage.name, "@tsonic/typescript-runtime");
 assert.equal(typeof runtimePackage.version, "string");
 
-const backend = createTypeScriptBackend(createExternalAstPrinter({
-  executable: toolchain.binaries.tsgoAstPrinter,
-  arguments: [
-    "-module",
-    toolchain.distributionRoot,
-    "-cwd",
-    sourceRoot,
-  ],
-}));
+const backend = createTypeScriptBackend(createExternalAstPrinter(
+  typeScriptAstPrinterConfig(toolchain, sourceRoot),
+));
 const compiled = backend.compile({
   source: createTargetSourceProgram(checked),
   project: {

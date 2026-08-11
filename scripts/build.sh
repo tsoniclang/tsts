@@ -32,7 +32,7 @@ toolchain_line="$("$host/env" -i \
   "$TSTS_NODE_BUILDER" "$TSTS_NPM_CLI" "$host")"
 IFS=$'\t' read -r \
   toolchain_digest toolchain_root gotots printer tsgo go go_root go_module_cache \
-  node npm node_root state_root immutable_distribution immutable_source \
+  node npm node_root state_root tool_cache_root immutable_distribution immutable_source \
   distribution_workspace \
   <<< "$toolchain_line"
 
@@ -47,7 +47,8 @@ run_toolchain "$gotots" build -c "$root/gotots.json" \
   --distribution-root "$distribution_workspace" \
   --project-root "$immutable_source" \
   --go "$go" \
-  --tsgo "$tsgo"
+  --tsgo "$tsgo" \
+  --tool-cache "$tool_cache_root"
 run_toolchain "$node" "$root/scripts/target.mjs" \
   "$root" \
   "$root/.temp/generated" \
