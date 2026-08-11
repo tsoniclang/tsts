@@ -14,12 +14,7 @@ export async function copyPublishedPackage({
     const source = join(sourceRoot, path);
     const target = join(targetRoot, path);
     const bytes = await readFile(source);
-    hash.update(String(Buffer.byteLength(path, "utf8")));
-    hash.update(":");
-    hash.update(path);
-    hash.update(String(bytes.byteLength));
-    hash.update(":");
-    hash.update(bytes);
+    updatePackageHash(hash, path, bytes);
     await mkdir(dirname(target), { recursive: true });
     await copyFile(source, target);
   }
@@ -29,6 +24,25 @@ export async function copyPublishedPackage({
     files: artifact.files,
     digest: hash.digest("hex"),
   });
+}
+
+export async function digestPublishedPackage(sourceRoot, expectedName) {
+  const artifact = inspectPublishedPackage(sourceRoot, expectedName);
+  return Object.freeze({
+    name: artifact.name,
+    version: artifact.version,
+    files: artifact.files,
+    digest: await digestPackageFiles(sourceRoot, artifact.files),
+  });
+}
+
+export async function digestPackageFiles(packageRoot, files) {
+  const hash = createHash("sha256");
+  for (const path of files) {
+    const bytes = await readFile(join(packageRoot, path));
+    updatePackageHash(hash, path, bytes);
+  }
+  return hash.digest("hex");
 }
 
 export function inspectPublishedPackage(sourceRoot, expectedName) {
@@ -102,6 +116,15 @@ function validateRelativePath(value, packageName) {
     );
   }
   return value;
+}
+
+function updatePackageHash(hash, path, bytes) {
+  hash.update(String(Buffer.byteLength(path, "utf8")));
+  hash.update(":");
+  hash.update(path);
+  hash.update(String(bytes.byteLength));
+  hash.update(":");
+  hash.update(bytes);
 }
 
 function isRecord(value) {

@@ -19,6 +19,7 @@ import {
 } from "./target-source-layout.mjs";
 import { sealTargetManifest } from "./target-manifest.mjs";
 import { readTypeScriptTargetProfile } from "./typescript-target-profile.mjs";
+import { verifyToolRuntime } from "./tool-runtime-manifest.mjs";
 
 const [repositoryArgument, canonicalArgument, targetArgument, runnerArgument] = process.argv.slice(2);
 if (
@@ -39,6 +40,7 @@ const runRoot = join(repositoryRoot, ".temp", "target-runs", runIdentity);
 const sourceWorkspace = join(runRoot, "source");
 const stagedTarget = join(runRoot, "target");
 const toolPackageRoot = join(repositoryRoot, ".temp", "tool-runtime", "node_modules", "@tsonic");
+await verifyToolRuntime(repositoryRoot);
 const { compileProject } = await importPackage("host");
 const { createTargetRegistry } = await importPackage("target-api");
 const { createTypeScriptTargetPack } = await importPackage("target-typescript");

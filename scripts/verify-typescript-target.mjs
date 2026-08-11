@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { copyPublishedPackage } from "./package-artifact.mjs";
+import { verifyToolRuntime } from "./tool-runtime-manifest.mjs";
 
 const repositoryRoot = resolve(process.argv[2] ?? ".");
 const runIdentity = `${new Date().toISOString().replaceAll(/[:.]/gu, "-")}-${process.pid}`;
@@ -23,6 +24,7 @@ const toolPackageRoot = join(
   "@tsonic",
 );
 
+await verifyToolRuntime(repositoryRoot);
 const {
   createCompilerSessionFromFiles,
   createSourceSemanticsExtension,

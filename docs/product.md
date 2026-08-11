@@ -38,7 +38,10 @@ Build tools are assembled from each pinned package's `npm pack` surface into
 one isolated module graph. That graph contains exactly one `@tsonic/tsts`
 package: the target-AST-enabled bootstrap. The semantic host, source-core,
 target API, TypeScript target, and encoder therefore share one AST runtime.
-Nested dependency copies and whole-`dist` test leakage are not assembly paths.
+The sole tool-runtime manifest seals every selected gitlink and packed package
+digest; every importer verifies the selected build and assembled bytes before
+loading them. Nested dependency copies and whole-`dist` test leakage are not
+assembly paths.
 
 ## Selected Profiles
 
