@@ -73,7 +73,10 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
   assert.equal(Object.hasOwn(first.manifest, "hostPlatform"), false);
   assert.deepEqual(
     first.manifest.goModules.modules.map(({ path, version }) => `${path}@${version}`),
-    ["example.com/dependency@v1.2.3"],
+    [
+      "example.com/dependency@v1.2.3",
+      `github.com/microsoft/typescript-go@${first.manifest.tsgoAuthority.version}`,
+    ],
   );
   assert.deepEqual(
     first.manifest.goModules.queries.map(({ key }) => key),

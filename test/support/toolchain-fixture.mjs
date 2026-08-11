@@ -16,6 +16,10 @@ const dependencyPath = "example.com/dependency";
 const dependencyVersion = "v1.2.3";
 const dependencySum = `h1:${createHash("sha256").update("dependency zip").digest("base64")}`;
 const dependencyGoModSum = `h1:${createHash("sha256").update("dependency go.mod").digest("base64")}`;
+const tsgoPath = "github.com/microsoft/typescript-go";
+const tsgoPackage = `${tsgoPath}/cmd/tsgo`;
+const tsgoSum = `h1:${createHash("sha256").update("typescript-go zip").digest("base64")}`;
+const tsgoGoModSum = `h1:${createHash("sha256").update("typescript-go go.mod").digest("base64")}`;
 
 export const selectedSubmodules = Object.freeze([
   "tools/gotots",
@@ -126,7 +130,7 @@ export async function createToolchainFixture(prefix) {
   await chmod(fakeGo, 0o755);
 
   const goModuleCache = join(repositoryRoot, ".temp", "bootstrap-gopath", "pkg", "mod");
-  await createGoModuleCache(goModuleCache);
+  await createGoModuleCache(goModuleCache, vendorGitlink);
   const poisonPath = join(repositoryRoot, ".temp", "poison-path");
   await mkdir(poisonPath, { recursive: true });
   for (const name of ["go", "node", "npm", "tsc"]) {
@@ -260,7 +264,7 @@ async function createGoToTsPin(repositoryRoot, vendorGitlink) {
     module: "github.com/microsoft/typescript-go",
     toolPackage: "github.com/microsoft/typescript-go/cmd/tsgo",
     toolVersion: version,
-    toolSum: dependencySum,
+    toolSum: tsgoSum,
     revision: vendorGitlink,
   })}\n`, "utf8");
 }
@@ -269,25 +273,61 @@ function tsgoVersion(vendorGitlink) {
   return `v0.0.0-20260811000000-${vendorGitlink.slice(0, 12)}`;
 }
 
-async function createGoModuleCache(root) {
-  const source = join(root, `${dependencyPath}@${dependencyVersion}`);
-  const metadata = join(root, "cache", "download", dependencyPath, "@v");
-  await mkdir(source, { recursive: true });
-  await mkdir(metadata, { recursive: true });
-  await writeFile(join(source, "go.mod"), moduleText(dependencyPath), "utf8");
-  await writeFile(join(source, "dependency.go"), "package dependency\n\nconst Value = 1\n", "utf8");
-  await writeFile(join(metadata, `${dependencyVersion}.info`), "{\"Version\":\"v1.2.3\"}\n", "utf8");
-  await writeFile(join(metadata, `${dependencyVersion}.mod`), moduleText(dependencyPath), "utf8");
-  await writeFile(join(metadata, `${dependencyVersion}.zip`), "fixture zip bytes\n", "utf8");
-  await writeFile(join(metadata, `${dependencyVersion}.ziphash`), `${dependencySum}\n`, "utf8");
+async function createGoModuleCache(root, vendorGitlink) {
+  await createCachedModule(root, {
+    path: dependencyPath,
+    version: dependencyVersion,
+    sum: dependencySum,
+    goMod: moduleText(dependencyPath, false),
+    files: { "dependency.go": "package dependency\n\nconst Value = 1\n" },
+  });
+  await createCachedModule(root, {
+    path: tsgoPath,
+    version: tsgoVersion(vendorGitlink),
+    sum: tsgoSum,
+    goMod: moduleText(tsgoPath),
+    files: { "cmd/tsgo/main.go": "package main\n\nfunc main() {}\n" },
+  });
 }
 
-function moduleText(name) {
-  return `module ${name}\n\ngo 1.26.4\n\nrequire ${dependencyPath} ${dependencyVersion}\n`;
+async function createCachedModule(root, selected) {
+  const source = join(root, `${selected.path}@${selected.version}`);
+  const metadata = join(root, "cache", "download", selected.path, "@v");
+  await mkdir(source, { recursive: true });
+  await mkdir(metadata, { recursive: true });
+  await writeFile(join(source, "go.mod"), selected.goMod, "utf8");
+  for (const [path, content] of Object.entries(selected.files)) {
+    await mkdir(dirname(join(source, path)), { recursive: true });
+    await writeFile(join(source, path), content, "utf8");
+  }
+  await writeFile(
+    join(metadata, `${selected.version}.info`),
+    `${JSON.stringify({ Version: selected.version })}\n`,
+    "utf8",
+  );
+  await writeFile(join(metadata, `${selected.version}.mod`), selected.goMod, "utf8");
+  await writeFile(join(metadata, `${selected.version}.zip`), `${selected.path} fixture zip bytes\n`, "utf8");
+  await writeFile(join(metadata, `${selected.version}.ziphash`), `${selected.sum}\n`, "utf8");
+}
+
+function moduleText(name, requireDependency = true) {
+  const requirement = requireDependency
+    ? `\nrequire ${dependencyPath} ${dependencyVersion}\n`
+    : "";
+  return `module ${name}\n\ngo 1.26.4\n${requirement}`;
 }
 
 function sumText() {
   return `${dependencyPath} ${dependencyVersion} ${dependencySum}\n${dependencyPath} ${dependencyVersion}/go.mod ${dependencyGoModSum}\n`;
+}
+
+function toolBuildSumText(vendorGitlink) {
+  return [
+    `${dependencyPath} ${dependencyVersion} ${dependencySum}`,
+    `${dependencyPath} ${dependencyVersion}/go.mod ${dependencyGoModSum}`,
+    `${tsgoPath} ${tsgoVersion(vendorGitlink)} ${tsgoSum}`,
+    `${tsgoPath} ${tsgoVersion(vendorGitlink)}/go.mod ${tsgoGoModSum}`,
+  ].sort().join("\n") + "\n";
 }
 
 const fakeGoLauncher = `#!/bin/sh
@@ -304,18 +344,29 @@ const modulePath = ${JSON.stringify(dependencyPath)};
 const version = ${JSON.stringify(dependencyVersion)};
 const selectedSum = ${JSON.stringify(dependencySum)};
 const selectedGoModSum = ${JSON.stringify(dependencyGoModSum)};
+const toolModulePath = ${JSON.stringify(tsgoPath)};
+const toolPackage = ${JSON.stringify(tsgoPackage)};
+const toolVersion = ${JSON.stringify(tsgoVersion(vendorGitlink))};
+const toolSum = ${JSON.stringify(tsgoSum)};
+const toolGoModSum = ${JSON.stringify(tsgoGoModSum)};
 const controlPath = join(cache, "fixture-control.json");
 const control = existsSync(controlPath) ? JSON.parse(readFileSync(controlPath, "utf8")) : {};
 const moduleRoot = join(cache, modulePath + "@" + version);
 const metadataRoot = join(cache, "cache", "download", modulePath, "@v");
+const toolModuleRoot = join(cache, toolModulePath + "@" + toolVersion);
+const toolMetadataRoot = join(cache, "cache", "download", toolModulePath, "@v");
 const moduleRecord = (sum = selectedSum) => ({
   Path: modulePath, Version: version, Dir: moduleRoot,
   GoMod: join(metadataRoot, version + ".mod"), Sum: sum, GoModSum: selectedGoModSum,
 });
+const toolModuleRecord = () => ({
+  Path: toolModulePath, Version: toolVersion, Dir: toolModuleRoot,
+  GoMod: join(toolMetadataRoot, toolVersion + ".mod"), Sum: toolSum, GoModSum: toolGoModSum,
+});
 if (args[0] === "version" && args[1] === "-m") {
   process.stdout.write(args[2] + ": go1.26.4\\n");
-  process.stdout.write("\\tpath\\tgithub.com/microsoft/typescript-go/cmd/tsgo\\n");
-  process.stdout.write("\\tmod\\tgithub.com/microsoft/typescript-go\\t${tsgoVersion(vendorGitlink)}\\t${dependencySum}\\n");
+  process.stdout.write("\\tpath\\t" + toolPackage + "\\n");
+  process.stdout.write("\\tmod\\t" + toolModulePath + "\\t" + toolVersion + "\\t" + toolSum + "\\n");
   process.exit(0);
 }
 if (args[0] === "version") {
@@ -329,6 +380,12 @@ if (args[0] === "env" && args[1] === "-json") {
   process.exit(0);
 }
 if (args[0] === "mod" && args[1] === "download") {
+  if (args.at(-1) === toolModulePath + "@" + toolVersion) {
+    process.stdout.write(JSON.stringify({ ...toolModuleRecord(),
+      Info: join(toolMetadataRoot, toolVersion + ".info"),
+      Zip: join(toolMetadataRoot, toolVersion + ".zip") }));
+    process.exit(0);
+  }
   const downloadedSum = control.downloadSum ?? selectedSum;
   process.stdout.write(JSON.stringify({ Path: modulePath, Version: control.downloadVersion ?? version,
     Info: join(metadataRoot, version + ".info"), GoMod: join(metadataRoot, version + ".mod"),
@@ -351,7 +408,11 @@ if (args[0] === "mod" && args[1] === "edit" && args[2] === "-json") {
   process.exit(0);
 }
 if (args[0] === "list") {
-  process.stdout.write(JSON.stringify({ ImportPath: "fixture.invalid/main/cmd/tsgo", Dir: join(process.cwd(), "cmd", "tsgo"), GoFiles: ["main.go"], Module: { Main: true, Dir: process.cwd() } }) + "\\n");
+  if (args.includes(toolPackage)) {
+    process.stdout.write(JSON.stringify({ ImportPath: toolPackage, Dir: join(toolModuleRoot, "cmd", "tsgo"), GoFiles: ["main.go"], Module: toolModuleRecord() }) + "\\n");
+  } else {
+    process.stdout.write(JSON.stringify({ ImportPath: "fixture.invalid/main/cmd/tsgo", Dir: join(process.cwd(), "cmd", "tsgo"), GoFiles: ["main.go"], Module: { Main: true, Dir: process.cwd() } }) + "\\n");
+  }
   process.stdout.write(JSON.stringify({ ImportPath: modulePath, Dir: moduleRoot, GoFiles: ["dependency.go"], Module: moduleRecord() }) + "\\n");
   if (control.collision) process.stdout.write(JSON.stringify({ ImportPath: modulePath + "/collision", Dir: moduleRoot, GoFiles: ["dependency.go"], Module: moduleRecord("h1:BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=") }) + "\\n");
   process.exit(0);
@@ -360,15 +421,18 @@ if (args[0] === "build") {
   const output = args[args.indexOf("-o") + 1];
   const target = args.at(-1);
   mkdirSync(dirname(output), { recursive: true });
-  const program = target === "./cmd/tsgo" ? ${JSON.stringify(fakeTsgoProgram)} : "process.exit(0);\\n";
+  if (target === toolPackage) {
+    const expectedModule = "module tsts.invalid/tool-builder\\n\\ngo 1.26.4\\n\\nrequire " + toolModulePath + " " + toolVersion + "\\n";
+    if (readFileSync(join(process.cwd(), "go.mod"), "utf8") !== expectedModule ||
+        readFileSync(join(process.cwd(), "go.sum"), "utf8") !== ${JSON.stringify(toolBuildSumText(vendorGitlink))} ||
+        args.some((value) => value.includes("@")) || process.env.GOPROXY !== "off" ||
+        process.env.GOSUMDB !== "off" || process.env.GOFLAGS !== "-mod=readonly") {
+      process.stderr.write("unsealed TypeScript-Go build invocation\\n");
+      process.exit(3);
+    }
+  }
+  const program = target === toolPackage ? ${JSON.stringify(fakeTsgoProgram)} : "process.exit(0);\\n";
   writeFileSync(output, "#!/usr/bin/env node\\n" + program);
-  chmodSync(output, 0o755);
-  process.exit(0);
-}
-if (args[0] === "install") {
-  const output = join(process.env.GOBIN, "tsgo");
-  mkdirSync(dirname(output), { recursive: true });
-  writeFileSync(output, "#!/usr/bin/env node\\n" + ${JSON.stringify(fakeTsgoProgram)});
   chmodSync(output, 0o755);
   process.exit(0);
 }

@@ -14,6 +14,7 @@ import { isDeepStrictEqual } from "node:util";
 import { copyPublishedPackage } from "./package-artifact.mjs";
 import { compareCodeUnits } from "./canonical-order.mjs";
 import { stageGoModuleCache } from "./go-module-cache.mjs";
+import { createGoToolBuildModule } from "./go-tool-build.mjs";
 import {
   inspectGoBuilder,
   inspectNodeBootstrap,
@@ -129,10 +130,13 @@ export async function createToolchainCandidate(
   const tsgoAuthority = await buildGoComponents(
     repositoryRoot,
     stagedRoot,
+    stateRoot,
     go.executable,
+    bootstrapGo.fingerprint.goVersion,
     profile,
     buildEnvironment,
     selection,
+    goModules,
   );
   await buildJavaScriptPackages(
     repositoryRoot,
@@ -220,10 +224,13 @@ async function preservePackageOutputs(repositoryRoot, runRoot) {
 async function buildGoComponents(
   repositoryRoot,
   stagedRoot,
+  stateRoot,
   goExecutable,
+  goVersion,
   profile,
   environment,
   selection,
+  goModules,
 ) {
   const moduleRoot = join(repositoryRoot, "tools", "gotots");
   const buildEnvironment = exactGoBuildEnvironment(environment, profile);
@@ -251,14 +258,22 @@ async function buildGoComponents(
     buildEnvironment,
   );
   const output = join(stagedRoot, componentByKey.get("tsgo").target);
+  const buildModuleRoot = await createGoToolBuildModule({
+    root: join(stateRoot, "tsgo-build"),
+    goVersion,
+    modulePath: "github.com/microsoft/typescript-go",
+    moduleVersion: pinned.version,
+    moduleSum: pinned.sum,
+    modules: goModules.modules,
+  });
   run(
     goExecutable,
     [
-      "install", "-trimpath", "-buildvcs=false", ...tagArguments(profile),
-      `github.com/microsoft/typescript-go/cmd/tsgo@${pinned.version}`,
+      "build", "-trimpath", "-buildvcs=false", ...tagArguments(profile),
+      "-o", output, "github.com/microsoft/typescript-go/cmd/tsgo",
     ],
-    moduleRoot,
-    { ...buildEnvironment, GOBIN: dirname(output), GOFLAGS: "" },
+    buildModuleRoot,
+    buildEnvironment,
     "build pinned TypeScript-Go compiler",
   );
   const buildInfo = inspectTsgoBuildInfo(goExecutable, output, buildEnvironment);

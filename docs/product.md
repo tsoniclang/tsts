@@ -55,7 +55,11 @@ can seal or publish the candidate.
 The TypeScript-Go source snapshot comes from the committed
 `vendor/typescript-go` checkout. The executable is built offline from the
 sealed module cache at the exact version and sum in GoToTS's generated schema
-manifest; its Go build information must report that module identity. The
+manifest. Construction writes an ephemeral root module whose only requirement
+is that exact TS-Go module and whose `go.sum` is derived from every sealed
+module record, then builds the ordinary package path under `GOPROXY=off` and
+`-mod=readonly`; version-query installation is not an allowed path. Its Go
+build information must report the sealed module identity. The
 schema revision exact-joins that module pin to the committed vendor gitlink.
 GoToTS and TS-Go package selection also define one union of external module identities.
 Each identity binds module path, version, module sum, go.mod sum, selected
@@ -77,8 +81,8 @@ binds:
   bootstrap and staged npm closures exact-joined member for member;
 - every packed package's exact name, version, dependency identity, published
   member set, and content digest;
-- `gotots`, `tsgo-ast-printer`, and vendor-built `tsgo` executable bytes,
-  including the TS-Go VCS proof;
+- `gotots`, `tsgo-ast-printer`, and sealed-module-built `tsgo` executable
+  bytes, including the TS-Go module/source-revision join;
 - the compiler-distribution snapshot, freshly built provider output, and closed
   `@gotots/runtime`, `@types/node`, and `undici-types` certification dependency
   graph; and
