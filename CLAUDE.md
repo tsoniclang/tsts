@@ -68,6 +68,12 @@ Every product checkpoint must:
 Heavy jobs run serially through `scripts/run-guarded.sh`. Preserve failed
 artifacts and never retry an OOM with the same unbounded command.
 
+Keep agent output bounded. Preserve complete logs and profiles under `.temp/`
+and inspect targeted summaries; never stream generated trees, full manifests,
+whole traces, or profiler payloads into the agent transcript. Do not attach a
+whole-product V8 CPU profiler to the compiler process: use deterministic phase
+counters or bounded phase timing, then profile only the isolated phase.
+
 ## Repository Safety
 
 - Never force-push or delete remote branches or tags.
