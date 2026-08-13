@@ -10,6 +10,7 @@ import {
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 import { compareCodeUnits } from "./canonical-order.mjs";
+import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 import {
   canonicalTargetSourcePath,
   createTargetSourceLayout,
@@ -160,7 +161,15 @@ const sealedTarget = await sealTargetManifest(
   targetProfile.digest,
   toolchain.digest,
 );
-await replaceDirectory(targetRoot, stagedTarget, join(repositoryRoot, ".temp", "preserved"));
+const supersededTarget = await replaceDirectory(
+  targetRoot,
+  stagedTarget,
+  join(repositoryRoot, ".temp", "preserved"),
+);
+if (supersededTarget !== undefined) {
+  await removeSuccessfulScratchTree(repositoryRoot, supersededTarget);
+}
+await removeSuccessfulScratchTree(repositoryRoot, runRoot);
 
 console.log(
   `target_files=${sealedTarget.files.length} profile=${targetProfile.digest} ` +
@@ -255,7 +264,7 @@ async function replaceDirectory(target, staged, preservedRoot) {
     if (error?.code === "ENOENT") {
       await mkdir(dirname(target), { recursive: true });
       await rename(staged, target);
-      return;
+      return undefined;
     }
     throw error;
   }
@@ -268,6 +277,7 @@ async function replaceDirectory(target, staged, preservedRoot) {
     await rename(preserved, target);
     throw error;
   }
+  return preserved;
 }
 
 async function listPhysicalFiles(root, directory = "") {

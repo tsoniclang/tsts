@@ -11,6 +11,8 @@ import {
 } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
+import { removeSuccessfulScratchTree } from "../../scripts/scratch-lifecycle.mjs";
+
 const scratchRoot = resolve(".temp", "toolchain-tests");
 const dependencyPath = "example.com/dependency";
 const dependencyVersion = "v1.2.3";
@@ -160,6 +162,12 @@ export function buildOptions(fixture) {
     npmCli: fixture.npmCli,
     hostUtilityPath: fixture.hostUtilityPath,
   };
+}
+
+export async function removeToolchainFixtures(...fixtures) {
+  for (const fixture of fixtures) {
+    await removeSuccessfulScratchTree(resolve("."), fixture.repositoryRoot);
+  }
 }
 
 export async function advanceSelection(fixture, path, identity, commitSuperproject = true) {

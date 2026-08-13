@@ -67,6 +67,9 @@ Every product checkpoint must:
 
 Heavy jobs run serially through `scripts/run-guarded.sh`. Preserve failed
 artifacts and never retry an OOM with the same unbounded command.
+Remove successful scratch only after its owning transaction commits, through
+the path-confined scratch-lifecycle owner; never retain successful staging
+trees as failure evidence.
 The exact-toolchain environment must retain the guard's committed Go and Node
 process limits; a closed-environment reset may not erase resource policy.
 

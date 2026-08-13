@@ -96,8 +96,10 @@ ordering. Sealed members are regular single-link files with exact modes;
 symlinks, special files, hard links, duplicate owners, nested `node_modules`,
 and unowned members are rejected. Contained Go-root and npm symlinks are
 materialized as regular members with effective byte/mode identity; escaping
-links are rejected. Published roots are never replaced or deleted. Failed and
-duplicate candidates remain under their run identities.
+links are rejected. Published roots are never replaced or deleted. A failed
+candidate remains under its run identity. Once publication succeeds, its
+candidate tree and any byte-identical duplicate are removed by the single
+path-confined scratch-lifecycle owner.
 
 Construction and consumption use a closed environment: artifact Node and Go
 are the only language executables on `PATH`; HOME, temporary storage, npm cache,
@@ -117,6 +119,13 @@ inside the independent 12 GiB guarded-job memory ceiling. These are committed
 execution policies, not ambient `GOMEMLIMIT`, `GOMAXPROCS`, or `NODE_OPTIONS`;
 an out-of-memory failure is preserved and must not be retried with an
 unbounded process.
+
+Failed generation, target, and fixture trees remain inspectable under their
+run identities. Successful candidates, fixture trees, target-publication
+workspaces, superseded targets, and compiler-distribution workspaces are
+removed only after their owning transaction has completed. Cleanup rejects the
+repository root, `.temp` itself, and every path outside the repository's
+`.temp` tree.
 
 `.temp/toolchain-selector.json` is an atomic schema 1 pointer containing only a
 digest. A consumer reads that selector at most once, verifies the corresponding
@@ -194,10 +203,11 @@ fixture's emitted file set and bytes are also exact-joined. Generation,
 typecheck, startup, minimal-compilation time, peak RSS, source size, and output
 size are reported at the exact pins.
 
-The guarded check preserves a previous run's emitted JavaScript by moving it
-to a timestamped `.temp/preserved/` directory before re-emitting. Failed
-runtime artifacts therefore remain inspectable without contaminating or
-blocking the next exact assembly.
+The guarded check holds a previous run's emitted JavaScript in a timestamped
+`.temp/preserved/` directory while replacement emission and differential
+replay execute. It removes that prior output after successful replay and keeps
+it if replay fails. Current failed runtime and differential artifacts therefore
+remain inspectable without accumulating successful staging output.
 
 `npm run build` and `npm run check:scalar` require all five explicit bootstrap
 and platform selections named in the immutable-toolchain contract. Replay

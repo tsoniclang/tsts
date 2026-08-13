@@ -24,11 +24,12 @@ target="$root/.temp/target"
 [[ -f "$target/program.ts" ]]
 [[ -f "$target/tsts-target-manifest.json" ]]
 
+prior_out=""
 if [[ -e "$target/out" ]]; then
   preserved="$root/.temp/preserved"
   "$host/mkdir" -p "$preserved"
-  "$host/mv" "$target/out" \
-    "$preserved/out-$("$host/date" -u +%Y%m%dT%H%M%SZ)-$$"
+  prior_out="$preserved/out-$("$host/date" -u +%Y%m%dT%H%M%SZ)-$$"
+  "$host/mv" "$target/out" "$prior_out"
 fi
 
 digest_pattern='^  "toolchainDigest": "([0-9a-f]{64})",$'
@@ -71,3 +72,7 @@ run_toolchain "$node" "$root/scripts/assemble.mjs" \
   "$root" "$target" "$toolchain_digest" "$toolchain_root"
 run_toolchain "$node" "$root/test/xxh3-contract.mjs" "$root"
 run_toolchain "$node" "$root/scripts/differential.mjs" "$root" "$tsgo"
+if [[ -n "$prior_out" ]]; then
+  run_toolchain "$node" "$root/scripts/remove-successful-scratch.mjs" \
+    "$root" "$prior_out"
+fi

@@ -199,6 +199,7 @@ export async function createToolchainCandidate(
   });
   return Object.freeze({
     digest: manifest.digest,
+    runRoot,
     runIdentity,
     stagedRoot,
   });

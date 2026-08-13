@@ -57,3 +57,5 @@ run_toolchain "$node" "$root/scripts/target.mjs" \
   "$toolchain_digest" \
   "$toolchain_root"
 run_toolchain "$tsgo" -p "$root/.temp/target/tsconfig.json"
+run_toolchain "$node" "$root/scripts/remove-successful-scratch.mjs" \
+  "$root" "${distribution_workspace%/compiler-distribution}"

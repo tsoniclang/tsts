@@ -60,4 +60,6 @@ if [[ "$actual" != "11" ]]; then
   echo "scalar target output = '$actual', want '11'" >&2
   exit 1
 fi
+run_toolchain "$node" "$root/scripts/remove-successful-scratch.mjs" \
+  "$root" "${distribution_workspace%/compiler-distribution}"
 printf 'scalar_target=%s\n' "$actual"

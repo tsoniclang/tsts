@@ -13,6 +13,7 @@ import { isDeepStrictEqual } from "node:util";
 
 import { compareCodeUnits } from "./canonical-order.mjs";
 import { copyExactFiles } from "./package-artifact.mjs";
+import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 import { createToolchainCandidate } from "./toolchain-builder.mjs";
 import {
   goModuleCachePath,
@@ -54,6 +55,7 @@ export async function buildToolchain(repositoryArgument, options = {}) {
   );
   const finalRoot = join(repositoryRoot, ".temp", "toolchains", candidate.digest);
   await publishImmutableRoot(repositoryRoot, candidate, finalRoot);
+  await removeSuccessfulScratchTree(repositoryRoot, candidate.runRoot);
   await writeSelector(repositoryRoot, candidate.digest, candidate.runIdentity);
   return openToolchain(repositoryRoot, {
     digest: candidate.digest,
@@ -277,16 +279,6 @@ async function publishImmutableRoot(repositoryRoot, candidate, finalRoot) {
     digest: candidate.digest,
     root: finalRoot,
   });
-  const preserved = join(
-    repositoryRoot,
-    ".temp",
-    "preserved",
-    `duplicate-toolchain-${candidate.runIdentity}`,
-  );
-  await mkdir(dirname(preserved), { recursive: true });
-  await chmod(candidate.stagedRoot, 0o755);
-  await rename(candidate.stagedRoot, preserved);
-  await chmod(preserved, 0o555);
 }
 
 async function writeSelector(repositoryRoot, digest, runIdentity) {

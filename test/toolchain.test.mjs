@@ -7,6 +7,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   rename,
   symlink,
   writeFile,
@@ -16,6 +17,7 @@ import test from "node:test";
 
 import { compareCodeUnits } from "../scripts/canonical-order.mjs";
 import { stageGoModuleCache } from "../scripts/go-module-cache.mjs";
+import { removeSuccessfulScratchTree } from "../scripts/scratch-lifecycle.mjs";
 import { sealTargetManifest, verifyTargetManifest } from "../scripts/target-manifest.mjs";
 import {
   exactAuthorityEnvironment,
@@ -34,6 +36,7 @@ import {
   advanceSelection,
   buildOptions,
   createToolchainFixture,
+  removeToolchainFixtures,
   runGit,
   selectGitlink,
 } from "./support/toolchain-fixture.mjs";
@@ -136,6 +139,11 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
     /:A/u,
   );
   assert.match(await readFile(join(first.sourceRoot, "cmd", "tsgo", "main.go"), "utf8"), /func main\(\) \{\}/u);
+  assert.deepEqual(
+    await readdir(join(fixture.repositoryRoot, ".temp", "toolchain-builds")),
+    [],
+  );
+  await removeToolchainFixtures(fixture);
 });
 
 test("historical open needs no bootstrap and rejects every sealed mutation class", async () => {
@@ -216,19 +224,24 @@ test("historical open needs no bootstrap and rejects every sealed mutation class
     join(fixture.repositoryRoot, ".temp", "hardlink-evidence"),
     async () => assert.rejects(openExact(fixture, reopened), /hard link/u),
   );
+  await removeToolchainFixtures(fixture);
 });
 
 test("construction rejects incomplete, escaping, colliding, and duplicate inputs", async () => {
+  const fixtures = [];
   const missing = await createToolchainFixture("missing-");
+  fixtures.push(missing);
   await assert.rejects(buildToolchain(missing.repositoryRoot, {}), /Explicit Go, Go module cache, Node, npm/u);
 
   const escapingGo = await createToolchainFixture("escaping-go-");
+  fixtures.push(escapingGo);
   const external = join(escapingGo.repositoryRoot, ".temp", "external-go-bytes");
   await writeFile(external, "external\n", "utf8");
   await symlink(external, join(escapingGo.goRoot, "escaping-link"));
   await assert.rejects(buildToolchain(escapingGo.repositoryRoot, buildOptions(escapingGo)), /symlink .* escapes/u);
 
   const escapingNpm = await createToolchainFixture("escaping-npm-");
+  fixtures.push(escapingNpm);
   const externalNpm = join(escapingNpm.repositoryRoot, ".temp", "external-npm-bytes");
   await writeFile(externalNpm, "external\n", "utf8");
   await symlink(externalNpm, join(escapingNpm.npmRoot, "escaping-link"));
@@ -240,22 +253,29 @@ test("construction rejects incomplete, escaping, colliding, and duplicate inputs
     ["collision-", { collision: true }, /collides/u],
   ]) {
     const fixture = await createToolchainFixture(prefix);
+    fixtures.push(fixture);
     await writeFile(fixture.moduleControl, JSON.stringify(control), "utf8");
     await assert.rejects(buildToolchain(fixture.repositoryRoot, buildOptions(fixture)), pattern);
   }
 
   const nested = await createToolchainFixture("nested-");
+  fixtures.push(nested);
   await writeFile(join(nested.npmRoot, "control.json"), JSON.stringify({ nested: true }), "utf8");
   await assert.rejects(buildToolchain(nested.repositoryRoot, buildOptions(nested)), /nested node_modules/u);
   assert.equal((await lstat(join(nested.repositoryRoot, ".temp", "toolchain-builds"))).isDirectory(), true);
+  assert.ok((await readdir(join(nested.repositoryRoot, ".temp", "toolchain-builds"))).length > 0);
+  await removeToolchainFixtures(...fixtures);
 });
 
 test("selection uses clean committed HEAD and rejects index or untracked authority", async () => {
+  const fixtures = [];
   const stale = await createToolchainFixture("stale-head-");
+  fixtures.push(stale);
   await advanceSelection(stale, "tools/tsonic-typescript", "B", false);
   await assert.rejects(buildToolchain(stale.repositoryRoot, buildOptions(stale)), /superproject authority is not clean/u);
 
   const mismatch = await createToolchainFixture("stale-checkout-");
+  fixtures.push(mismatch);
   const submodule = join(mismatch.repositoryRoot, "tools", "tsonic-typescript");
   await writeFile(join(submodule, "selection.txt"), "B\n", "utf8");
   runGit(submodule, ["add", "selection.txt"]);
@@ -269,12 +289,15 @@ test("selection uses clean committed HEAD and rejects index or untracked authori
   );
 
   const indexOnly = await createToolchainFixture("index-only-");
+  fixtures.push(indexOnly);
   selectGitlink(indexOnly.repositoryRoot, "tools/tsonic-typescript", "1".repeat(40));
   await assert.rejects(buildToolchain(indexOnly.repositoryRoot, buildOptions(indexOnly)), /superproject authority is not clean/u);
 
   const untracked = await createToolchainFixture("untracked-");
+  fixtures.push(untracked);
   await writeFile(join(untracked.repositoryRoot, "untracked-config.json"), "{}\n", "utf8");
   await assert.rejects(buildToolchain(untracked.repositoryRoot, buildOptions(untracked)), /superproject authority is not clean/u);
+  await removeToolchainFixtures(...fixtures);
 });
 
 test("selector replacement cannot change an opened or target-selected historical root", async () => {
@@ -310,6 +333,7 @@ test("selector replacement cannot change an opened or target-selected historical
   await replaceFileWithDirectory(join(targetRoot, "program.ts"), async () => {
     await assert.rejects(verifyTargetManifest(targetRoot, digestA, digestB), /content, type, or membership/u);
   });
+  await removeToolchainFixtures(fixture);
 });
 
 test("product consumers have one immutable path and a closed environment", async () => {
@@ -405,6 +429,27 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
   );
   assert.notEqual(rejected.status, 0);
   assert.match(rejected.stderr, /guarded Go memory limit is absent/u);
+  await removeSuccessfulScratchTree(resolve("."), root);
+});
+
+test("successful scratch cleanup is confined and handles sealed directories", async () => {
+  const repositoryRoot = resolve(".");
+  const root = await mkdtemp(resolve(".temp", "scratch-cleanup-"));
+  const sealed = join(root, "sealed");
+  await mkdir(sealed);
+  await writeFile(join(sealed, "evidence.txt"), "complete\n", "utf8");
+  await chmod(sealed, 0o555);
+
+  await removeSuccessfulScratchTree(repositoryRoot, root);
+  await assert.rejects(lstat(root), { code: "ENOENT" });
+  await assert.rejects(
+    removeSuccessfulScratchTree(repositoryRoot, repositoryRoot),
+    /outside the owned \.temp tree/u,
+  );
+  await assert.rejects(
+    removeSuccessfulScratchTree(repositoryRoot, resolve(".temp")),
+    /outside the owned \.temp tree/u,
+  );
 });
 
 const realGo = process.env.TSTS_GO_BUILDER;
@@ -467,6 +512,7 @@ test("real external module closure rebuilds and loads offline", async () => {
     authorityEnvironment: exactAuthorityEnvironment(resolve(realHostUtilities), stateRoot),
     goModules: modules,
   });
+  await removeSuccessfulScratchTree(resolve("."), root);
 });
 
 function openExact(fixture, handle) {

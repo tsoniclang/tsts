@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import test from "node:test";
 
 import { sealTargetManifest, verifyTargetManifest } from "../scripts/target-manifest.mjs";
+import { removeSuccessfulScratchTree } from "../scripts/scratch-lifecycle.mjs";
 import { readTypeScriptTargetProfile } from "../scripts/typescript-target-profile.mjs";
 
 const scratchRoot = resolve(".temp", "profile-tests");
@@ -32,6 +33,7 @@ test("target profile has one stable semantic identity", async () => {
   assert.equal(left.digest, right.digest);
   assert.deepEqual(left.optimizations, right.optimizations);
   assert.equal(Object.isFrozen(left.optimizations), true);
+  await removeSuccessfulScratchTree(resolve("."), root);
 });
 
 test("target profile rejects unknown product configuration", async () => {
@@ -46,6 +48,7 @@ test("target profile rejects unknown product configuration", async () => {
     readTypeScriptTargetProfile(path),
     /unsupported field 'fallback'/u,
   );
+  await removeSuccessfulScratchTree(resolve("."), root);
 });
 
 test("target manifest rejects profile drift and unselected remnants", async () => {
@@ -65,6 +68,7 @@ test("target manifest rejects profile drift and unselected remnants", async () =
     verifyTargetManifest(root, canonicalDigest, profileDigest),
     /content, type, or membership differs/u,
   );
+  await removeSuccessfulScratchTree(resolve("."), root);
 });
 
 test("target manifest rejects byte mutation and hard links", async () => {
@@ -93,6 +97,7 @@ test("target manifest rejects byte mutation and hard links", async () => {
     ),
     /hard link/u,
   );
+  await removeSuccessfulScratchTree(resolve("."), root);
 });
 
 test("target manifest ordering is locale independent code-unit order", async () => {
@@ -116,6 +121,7 @@ test("target manifest ordering is locale independent code-unit order", async () 
     manifest.members.map((member) => member.path),
     ["A.ts", "a.ts", "z.ts", "ä.ts"],
   );
+  await removeSuccessfulScratchTree(resolve("."), root);
 });
 
 async function createScratch(prefix) {
