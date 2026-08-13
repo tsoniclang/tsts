@@ -19,12 +19,12 @@
     "evaluationOrder": "direct",
     "concurrency": "cooperative"
   },
-  "source": "target/packages/ca721702d568c862444d9d5a5d1dfde0257eed1e0634552ee330f015ea27ba18/internal/fswatch/package.ts",
+  "source": "target/packages/github.com/microsoft/typescript-go/internal/fswatch/package.ts",
   "tsconfig": "tsconfig.json",
   "certificationSources": [
     "runtime-contract.d.ts",
     "target/support/interface-methods.d.ts",
-    "target/support/interfaces/contracts/81.d.ts"
+    "target/support/interface-contracts.d.ts"
   ],
   "equivalenceEnvelope": {
     "kind": "internal-algorithm",

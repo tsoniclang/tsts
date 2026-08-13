@@ -156,6 +156,14 @@ manifest-selected historical toolchain even when the current selector differs.
 
 ## Product Implementations
 
+Each implementation source is stored at the same semantic package path used by
+canonical GoToTS output: the declared module path, optional module version, and
+module-relative import path. Certification support uses the canonical generated
+support modules and semantic symbol names. Content digests identify sealed
+artifacts; they never become maintained source paths, import paths, or symbol
+names. The product gate derives each expected path from the implementation
+contract and rejects stale fingerprint-based identities.
+
 `implementations/xxh3` atomically replaces
 `github.com/zeebo/xxh3@v1.1.0` for this profile. Its bounded internal
 equivalence envelope permits a fast deterministic internal digest because TSTS
