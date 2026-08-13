@@ -139,13 +139,27 @@ const optimizationArtifact = compiled.artifacts.find((artifact) =>
 );
 assert.ok(optimizationArtifact !== undefined);
 assert.deepEqual(JSON.parse(optimizationArtifact.text), {
-  schemaVersion: 4,
+  schemaVersion: 8,
+  profileIdentity:
+    "typescript-optimization-v1/pointer=location/scalar=preserve/effects=preserve",
+  sourceMembership: ["index.ts", "markers.ts"],
+  programIndex: {
+    nodeVisits: 155,
+    childEdges: 153,
+    kindEntries: 155,
+    identifierEntries: 58,
+    bindingCandidates: 0,
+    bindingWrites: 0,
+    heritageEdges: 0,
+    dispatchMembers: 0,
+  },
   pointer: { profile: "location", analyzed: false },
   scalar: {
     profile: "preserve",
     syntacticProjectionCount: 0,
     optimizedProjectionCount: 0,
     retainedProjectionCount: 0,
+    fallbackReasons: [],
   },
   cooperativeEffects: { profile: "preserve", analyzed: false },
 });
