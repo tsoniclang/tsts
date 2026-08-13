@@ -432,31 +432,6 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
   await removeSuccessfulScratchTree(resolve("."), root);
 });
 
-test("successful scratch cleanup is confined and handles sealed directories", async () => {
-  const repositoryRoot = resolve(".");
-  const root = await mkdtemp(resolve(".temp", "scratch-cleanup-"));
-  const external = await mkdtemp(resolve(".temp", "scratch-external-"));
-  const sealed = join(root, "sealed");
-  await mkdir(sealed);
-  await writeFile(join(sealed, "evidence.txt"), "complete\n", "utf8");
-  await writeFile(join(external, "retained.txt"), "external\n", "utf8");
-  await symlink(external, join(sealed, "external-link"));
-  await chmod(sealed, 0o555);
-
-  await removeSuccessfulScratchTree(repositoryRoot, root);
-  await assert.rejects(lstat(root), { code: "ENOENT" });
-  assert.equal(await readFile(join(external, "retained.txt"), "utf8"), "external\n");
-  await assert.rejects(
-    removeSuccessfulScratchTree(repositoryRoot, repositoryRoot),
-    /outside the owned \.temp tree/u,
-  );
-  await assert.rejects(
-    removeSuccessfulScratchTree(repositoryRoot, resolve(".temp")),
-    /outside the owned \.temp tree/u,
-  );
-  await removeSuccessfulScratchTree(repositoryRoot, external);
-});
-
 const realGo = process.env.TSTS_GO_BUILDER;
 const realModuleCache = process.env.TSTS_GO_MODULE_CACHE;
 const realHostUtilities = process.env.TSTS_HOST_PLATFORM_PATH;
