@@ -345,8 +345,66 @@ test("product consumers have one immutable path and a closed environment", async
   }
   assert.match(
     await readFile(join(repositoryRoot, "scripts", "run-exact-toolchain.sh"), "utf8"),
-    /NODE_OPTIONS=--max-old-space-size=8192/u,
+    /GOMEMLIMIT="\$TSTS_GO_MEMORY_LIMIT" GOMAXPROCS="\$TSTS_GO_MAX_PROCS"/u,
   );
+  assert.match(
+    await readFile(join(repositoryRoot, "scripts", "run-guarded.sh"), "utf8"),
+    /go_memory_limit="6GiB"[\s\S]*node_old_space_mib="4096"/u,
+  );
+});
+
+test("exact toolchain retains the guarded process envelope", async () => {
+  const root = await mkdtemp(resolve(".temp", "resource-envelope-"));
+  const nodeRoot = join(root, "node-runtime");
+  const goRoot = join(root, "go-root");
+  const moduleCache = join(root, "go-module-cache", "pkg", "mod");
+  const stateRoot = join(root, "state");
+  await mkdir(join(nodeRoot, "bin"), { recursive: true });
+  await mkdir(join(goRoot, "bin"), { recursive: true });
+  await mkdir(moduleCache, { recursive: true });
+  await mkdir(stateRoot, { recursive: true });
+  const probe = join(root, "probe.sh");
+  await writeFile(probe, `#!/bin/sh
+printf 'GOMEMLIMIT=%s\n' "$GOMEMLIMIT"
+printf 'GOMAXPROCS=%s\n' "$GOMAXPROCS"
+printf 'NODE_OPTIONS=%s\n' "$NODE_OPTIONS"
+printf 'PATH=%s\n' "$PATH"
+printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
+`, "utf8");
+  await chmod(probe, 0o755);
+  const script = resolve("scripts", "run-exact-toolchain.sh");
+  const host = resolve(realHostUtilities);
+  const environment = {
+    ...process.env,
+    TSTS_GO_MEMORY_LIMIT: "6GiB",
+    TSTS_GO_MAX_PROCS: "2",
+    TSTS_NODE_OLD_SPACE_MIB: "4096",
+    AMBIENT_POISON: "must-not-survive",
+  };
+  const result = spawnSync(
+    join(host, "bash"),
+    [script, host, nodeRoot, goRoot, moduleCache, stateRoot, probe],
+    { encoding: "utf8", env: environment },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, [
+    "GOMEMLIMIT=6GiB",
+    "GOMAXPROCS=2",
+    "NODE_OPTIONS=--max-old-space-size=4096",
+    `PATH=${join(nodeRoot, "bin")}:${join(goRoot, "bin")}`,
+    "AMBIENT=",
+    "",
+  ].join("\n"));
+
+  const missing = { ...environment };
+  delete missing.TSTS_GO_MEMORY_LIMIT;
+  const rejected = spawnSync(
+    join(host, "bash"),
+    [script, host, nodeRoot, goRoot, moduleCache, stateRoot, probe],
+    { encoding: "utf8", env: missing },
+  );
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stderr, /guarded Go memory limit is absent/u);
 });
 
 const realGo = process.env.TSTS_GO_BUILDER;

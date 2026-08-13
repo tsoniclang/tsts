@@ -110,10 +110,13 @@ module cache, Node, npm, network, or Git. A consuming shell supplies and checks
 `TSTS_HOST_PLATFORM_PATH` for named host utilities; that machine-local path is
 not persisted or hashed.
 
-Product Node processes run with an explicit 8 GiB V8 old-space ceiling inside
-the independent 12 GiB guarded-job memory ceiling. This is committed execution
-policy, not ambient `NODE_OPTIONS`; an out-of-memory failure is preserved and
-must not be retried with an unbounded process.
+Every exact-toolchain child retains the committed resource envelope after the
+closed-environment reset: Go receives a 6 GiB soft memory limit and two logical
+processors, while Node receives a 4 GiB V8 old-space ceiling. Both remain
+inside the independent 12 GiB guarded-job memory ceiling. These are committed
+execution policies, not ambient `GOMEMLIMIT`, `GOMAXPROCS`, or `NODE_OPTIONS`;
+an out-of-memory failure is preserved and must not be retried with an
+unbounded process.
 
 `.temp/toolchain-selector.json` is an atomic schema 1 pointer containing only a
 digest. A consumer reads that selector at most once, verifies the corresponding

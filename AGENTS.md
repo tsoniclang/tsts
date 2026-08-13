@@ -67,6 +67,8 @@ Every product checkpoint must:
 
 Heavy jobs run serially through `scripts/run-guarded.sh`. Preserve failed
 artifacts and never retry an OOM with the same unbounded command.
+The exact-toolchain environment must retain the guard's committed Go and Node
+process limits; a closed-environment reset may not erase resource policy.
 
 Keep agent output bounded. Preserve complete logs and profiles under `.temp/`
 and inspect targeted summaries; never stream generated trees, full manifests,
