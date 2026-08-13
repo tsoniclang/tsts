@@ -23,8 +23,8 @@
   "tsconfig": "tsconfig.json",
   "certificationSources": [
     "runtime-contract.d.ts",
-    "target/support/interface-methods.d.ts",
-    "target/support/interface-contracts.d.ts"
+    "target/support/interface-contracts.d.ts",
+    "target/support/interface-methods.d.ts"
   ],
   "equivalenceEnvelope": {
     "kind": "internal-algorithm",

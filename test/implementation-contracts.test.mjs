@@ -18,6 +18,11 @@ test("implementation bundles use semantic package and support identities", async
     const contract = await readJson(contractPath);
     const expectedSource = semanticSourcePath(contract.package);
     assert.equal(contract.source, expectedSource, relativeContract);
+    assert.deepEqual(
+      contract.certificationSources,
+      [...new Set(contract.certificationSources)].sort(),
+      relativeContract,
+    );
 
     const tsconfig = await readJson(join(bundleRoot, contract.tsconfig));
     const expectedFiles = new Set([contract.source, ...contract.certificationSources]);

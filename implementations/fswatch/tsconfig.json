@@ -12,7 +12,7 @@
   "files": [
     "runtime-contract.d.ts",
     "target/packages/github.com/microsoft/typescript-go/internal/fswatch/package.ts",
-    "target/support/interface-methods.d.ts",
-    "target/support/interface-contracts.d.ts"
+    "target/support/interface-contracts.d.ts",
+    "target/support/interface-methods.d.ts"
   ]
 }
