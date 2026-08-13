@@ -1,4 +1,4 @@
-import { chmod, lstat, readdir, rm } from "node:fs/promises";
+import { chmod, lstat, readdir, rmdir, unlink } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 export async function removeSuccessfulScratchTree(repositoryArgument, pathArgument) {
@@ -17,15 +17,18 @@ export async function removeSuccessfulScratchTree(repositoryArgument, pathArgume
   if (!(await lstat(target)).isDirectory()) {
     throw new Error("Successful scratch cleanup target is not a directory");
   }
-  await makeDirectoriesWritable(target);
-  await rm(target, { recursive: true, maxRetries: 3, retryDelay: 100 });
+  await removeTree(target);
 }
 
-async function makeDirectoriesWritable(directory) {
+async function removeTree(directory) {
+  await chmod(directory, 0o755);
   for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
     if (entry.isDirectory()) {
-      await makeDirectoriesWritable(join(directory, entry.name));
+      await removeTree(path);
+    } else {
+      await unlink(path);
     }
   }
-  await chmod(directory, 0o755);
+  await rmdir(directory);
 }
