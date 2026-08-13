@@ -349,7 +349,7 @@ test("product consumers have one immutable path and a closed environment", async
   );
   assert.match(
     await readFile(join(repositoryRoot, "scripts", "run-guarded.sh"), "utf8"),
-    /go_memory_limit="6GiB"[\s\S]*node_old_space_mib="4096"/u,
+    /go_memory_limit="6GiB"[\s\S]*node_old_space_mib="8192"/u,
   );
 });
 
@@ -378,7 +378,7 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
     ...process.env,
     TSTS_GO_MEMORY_LIMIT: "6GiB",
     TSTS_GO_MAX_PROCS: "2",
-    TSTS_NODE_OLD_SPACE_MIB: "4096",
+    TSTS_NODE_OLD_SPACE_MIB: "8192",
     AMBIENT_POISON: "must-not-survive",
   };
   const result = spawnSync(
@@ -390,7 +390,7 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
   assert.equal(result.stdout, [
     "GOMEMLIMIT=6GiB",
     "GOMAXPROCS=2",
-    "NODE_OPTIONS=--max-old-space-size=4096",
+    "NODE_OPTIONS=--max-old-space-size=8192",
     `PATH=${join(nodeRoot, "bin")}:${join(goRoot, "bin")}`,
     "AMBIENT=",
     "",

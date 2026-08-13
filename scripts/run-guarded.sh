@@ -12,7 +12,7 @@ memory_max="${TSTS_MEMORY_MAX:-12G}"
 minimum_available_kib="${TSTS_MIN_AVAILABLE_KIB:-16777216}"
 go_memory_limit="6GiB"
 go_max_procs="2"
-node_old_space_mib="4096"
+node_old_space_mib="8192"
 
 exec 9>"$root/.temp/run-guarded.lock"
 if ! "$host/flock" -n 9; then

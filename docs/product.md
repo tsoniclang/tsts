@@ -112,7 +112,7 @@ not persisted or hashed.
 
 Every exact-toolchain child retains the committed resource envelope after the
 closed-environment reset: Go receives a 6 GiB soft memory limit and two logical
-processors, while Node receives a 4 GiB V8 old-space ceiling. Both remain
+processors, while Node receives an 8 GiB V8 old-space ceiling. Both remain
 inside the independent 12 GiB guarded-job memory ceiling. These are committed
 execution policies, not ambient `GOMEMLIMIT`, `GOMAXPROCS`, or `NODE_OPTIONS`;
 an out-of-memory failure is preserved and must not be retried with an
