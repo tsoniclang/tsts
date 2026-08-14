@@ -4,16 +4,18 @@ import type { Awaitable, bool, gostring, int } from "@gotots/runtime/scalars.js"
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 
 import {
-  $goInterfaceMethod_6c84939cdef3a336653e,
-  $goInterfaceMethod_8526db18ad6338f350e9,
-  $goInterfaceMethod_9c33b900291ee689d66d,
-  $goInterfaceMethod_bf0afc64e167745e9062,
-  $goInterfaceMethod_c16a88d448434641d69b,
-  $goInterfaceMethod_c27325219ccd0da4d49f,
-  $goInterfaceMethod_c867a6a5665c5086c247,
-  $goInterfaceMethod_d183b3fc77b77f11eeae,
-} from "../../../../support/interface-methods.js";
-import type { $goInterface_81c2352956c8f96f0b14 } from "../../../../support/interfaces/contracts/81.js";
+  $goInterfaceMethod$Available$void_to_bool,
+  $goInterfaceMethod$Close$void_to_Named_error,
+  $goInterfaceMethod$HasFastRecursiveBackend$void_to_bool,
+  $goInterfaceMethod$Name$void_to_string,
+  $goInterfaceMethod$WatchDirectory$string_Named_fswatch$WatchCallback_Variadic_SliceOf_Named_fswatch$WatchOption_to_Named_fswatch$Watch_Named_error,
+  $goInterfaceMethod$WatchFile$string_Named_fswatch$WatchCallback_to_Named_fswatch$Watch_Named_error,
+  $goInterfaceMethod$fswatch$applyWatchOption$PointerTo_Named_fswatch$watchOptions_to_void,
+  $goInterfaceMethod$fswatch$unexported$void_to_void,
+} from "../../../../../../support/interface-methods.js";
+import type {
+  $goInterface$Interface_Method_Error_void_to_string as GoInterface,
+} from "../../../../../../support/interface-contracts.js";
 
 interface NodeStats {
   isDirectory(): boolean;
@@ -60,19 +62,19 @@ const nodePath = nodeProcess.getBuiltinModule("node:path");
 const nodeTimers = nodeProcess.getBuiltinModule("node:timers");
 
 export const Watcher$contract: readonly object[] = Object.freeze([
-  $goInterfaceMethod_d183b3fc77b77f11eeae,
-  $goInterfaceMethod_bf0afc64e167745e9062,
-  $goInterfaceMethod_c27325219ccd0da4d49f,
-  $goInterfaceMethod_c867a6a5665c5086c247,
-  $goInterfaceMethod_6c84939cdef3a336653e,
-  $goInterfaceMethod_8526db18ad6338f350e9,
+  $goInterfaceMethod$Available$void_to_bool,
+  $goInterfaceMethod$HasFastRecursiveBackend$void_to_bool,
+  $goInterfaceMethod$Name$void_to_string,
+  $goInterfaceMethod$WatchDirectory$string_Named_fswatch$WatchCallback_Variadic_SliceOf_Named_fswatch$WatchOption_to_Named_fswatch$Watch_Named_error,
+  $goInterfaceMethod$WatchFile$string_Named_fswatch$WatchCallback_to_Named_fswatch$Watch_Named_error,
+  $goInterfaceMethod$fswatch$unexported$void_to_void,
 ]);
 export const Watch$contract: readonly object[] = Object.freeze([
-  $goInterfaceMethod_9c33b900291ee689d66d,
-  $goInterfaceMethod_8526db18ad6338f350e9,
+  $goInterfaceMethod$Close$void_to_Named_error,
+  $goInterfaceMethod$fswatch$unexported$void_to_void,
 ]);
 export const WatchOption$contract: readonly object[] = Object.freeze([
-  $goInterfaceMethod_c16a88d448434641d69b,
+  $goInterfaceMethod$fswatch$applyWatchOption$PointerTo_Named_fswatch$watchOptions_to_void,
 ]);
 
 const objectIdentities = new WeakMap<object, number>();
@@ -187,7 +189,7 @@ interface WatchOptions {
 }
 
 export interface WatchOption extends GoInterfaceValue {
-  $go$private_c16a88d448434641d69b(options: WatchOptions): Awaitable<void>;
+  $go$private$fswatch$applyWatchOption(options: WatchOptions): Awaitable<void>;
 }
 
 export function WatchOption$is(
@@ -204,7 +206,7 @@ class IgnoreOption extends ProductInterfaceValue implements WatchOption {
     super();
   }
 
-  $go$private_c16a88d448434641d69b(options: WatchOptions): void {
+  $go$private$fswatch$applyWatchOption(options: WatchOptions): void {
     options.ignore = this.ignore;
   }
 }
@@ -213,7 +215,7 @@ class RecursiveOption extends ProductInterfaceValue implements WatchOption {
   readonly $go$methods = new Set<object>(WatchOption$contract);
   readonly goTypeName = "fswatch.recursiveOption";
 
-  $go$private_c16a88d448434641d69b(options: WatchOptions): void {
+  $go$private$fswatch$applyWatchOption(options: WatchOptions): void {
     options.recursive = true;
   }
 }
@@ -231,14 +233,14 @@ export function WithRecursive(): WatchOption | undefined {
 export class WatchCallback {
   constructor(
     public readonly $value:
-      | ((events: RuntimeSlice<Event$Storage>, failure: $goInterface_81c2352956c8f96f0b14 | undefined) => Awaitable<void>)
+      | ((events: RuntimeSlice<Event$Storage>, failure: GoInterface | undefined) => Awaitable<void>)
       | undefined,
   ) {}
 }
 
 export interface Watch extends GoInterfaceValue {
-  Close(): Awaitable<$goInterface_81c2352956c8f96f0b14 | undefined>;
-  $go$private_8526db18ad6338f350e9(): Awaitable<void>;
+  Close(): Awaitable<GoInterface | undefined>;
+  $go$private$fswatch$unexported(): Awaitable<void>;
 }
 
 export function Watch$is(value: GoInterfaceValue | undefined): value is Watch {
@@ -257,7 +259,7 @@ class WatchHandle extends ProductInterfaceValue implements Watch {
     super();
   }
 
-  Close(): $goInterface_81c2352956c8f96f0b14 | undefined {
+  Close(): GoInterface | undefined {
     if (!this.closed) {
       this.closed = true;
       if (this.timer.current !== undefined) {
@@ -269,7 +271,7 @@ class WatchHandle extends ProductInterfaceValue implements Watch {
     return undefined;
   }
 
-  $go$private_8526db18ad6338f350e9(): void {}
+  $go$private$fswatch$unexported(): void {}
 }
 
 export interface Watcher extends GoInterfaceValue {
@@ -280,12 +282,12 @@ export interface Watcher extends GoInterfaceValue {
     dir: gostring,
     fn: WatchCallback,
     options: RuntimeSlice<WatchOption | undefined>,
-  ): Awaitable<[Watch | undefined, $goInterface_81c2352956c8f96f0b14 | undefined]>;
+  ): Awaitable<[Watch | undefined, GoInterface | undefined]>;
   WatchFile(
     path: gostring,
     fn: WatchCallback,
-  ): Awaitable<[Watch | undefined, $goInterface_81c2352956c8f96f0b14 | undefined]>;
-  $go$private_8526db18ad6338f350e9(): Awaitable<void>;
+  ): Awaitable<[Watch | undefined, GoInterface | undefined]>;
+  $go$private$fswatch$unexported(): Awaitable<void>;
 }
 
 export function Watcher$is(
@@ -322,7 +324,7 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
     dir: gostring,
     fn: WatchCallback,
     selected: RuntimeSlice<WatchOption | undefined>,
-  ): Promise<[Watch | undefined, $goInterface_81c2352956c8f96f0b14 | undefined]> {
+  ): Promise<[Watch | undefined, GoInterface | undefined]> {
     if (!this.available) {
       return [undefined, $state.ErrUnavailable];
     }
@@ -345,7 +347,7 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
 
     const options: WatchOptions = { ignore: undefined, recursive: false };
     for (let index = 0; index < selected.length; index++) {
-      await selected.get(index)?.$go$private_c16a88d448434641d69b(options);
+      await selected.get(index)?.$go$private$fswatch$applyWatchOption(options);
     }
     return this.watchPath(dir, undefined, fn, options);
   }
@@ -353,7 +355,7 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
   async WatchFile(
     path: gostring,
     fn: WatchCallback,
-  ): Promise<[Watch | undefined, $goInterface_81c2352956c8f96f0b14 | undefined]> {
+  ): Promise<[Watch | undefined, GoInterface | undefined]> {
     if (!this.available) {
       return [undefined, $state.ErrUnavailable];
     }
@@ -376,14 +378,14 @@ class NodeWatcher extends ProductInterfaceValue implements Watcher {
     });
   }
 
-  $go$private_8526db18ad6338f350e9(): void {}
+  $go$private$fswatch$unexported(): void {}
 
   private watchPath(
     root: string,
     selectedName: string | undefined,
     fn: WatchCallback,
     options: WatchOptions,
-  ): [Watch | undefined, $goInterface_81c2352956c8f96f0b14 | undefined] {
+  ): [Watch | undefined, GoInterface | undefined] {
     const pending = new Map<string, EventKind>();
     const timer: { current: NodeTimer | undefined } = {
       current: undefined,
@@ -474,9 +476,9 @@ export function Default(): Watcher | undefined {
 }
 
 export const $state: {
-  ErrOverflow: $goInterface_81c2352956c8f96f0b14 | undefined;
-  ErrUnavailable: $goInterface_81c2352956c8f96f0b14 | undefined;
-  ErrWatchTerminated: $goInterface_81c2352956c8f96f0b14 | undefined;
+  ErrOverflow: GoInterface | undefined;
+  ErrUnavailable: GoInterface | undefined;
+  ErrWatchTerminated: GoInterface | undefined;
 } = {
   ErrOverflow: undefined,
   ErrUnavailable: undefined,

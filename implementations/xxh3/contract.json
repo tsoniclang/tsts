@@ -19,7 +19,7 @@
     "evaluationOrder": "direct",
     "concurrency": "cooperative"
   },
-  "source": "target/packages/362a73304aa189eb285aad215c2224dab5f91b7de351f09d6be2997f24c9e933/_root/package.ts",
+  "source": "target/packages/github.com/zeebo/xxh3@v1.1.0/_root/package.ts",
   "tsconfig": "tsconfig.json",
   "certificationSources": [
     "runtime-contract.d.ts"

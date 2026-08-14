@@ -4,12 +4,15 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 
-const [repositoryRoot] = process.argv.slice(2);
-if (repositoryRoot === undefined) {
-  throw new Error("repository root is required");
+import { compareCodeUnits } from "./canonical-order.mjs";
+import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
+
+const [repositoryRoot, nativeArgument] = process.argv.slice(2);
+if (repositoryRoot === undefined || nativeArgument === undefined) {
+  throw new Error("repository root and exact native compiler are required");
 }
 
-const nativeCompiler = join(repositoryRoot, ".temp", "bin", "tsgo-native");
+const nativeCompiler = nativeArgument;
 const generatedCompiler = join(
   repositoryRoot,
   ".temp",
@@ -51,14 +54,17 @@ function relativeFiles(root, directory = "") {
       result.push(relative);
     }
   }
-  return result.sort();
+  return result.sort(compareCodeUnits);
 }
 
-function verifyEmit(source) {
+async function verifyEmit(source) {
   const scratchRoot = join(repositoryRoot, ".temp", "differential");
   mkdirSync(scratchRoot, { recursive: true });
-  const nativeOutput = mkdtempSync(join(scratchRoot, "native-"));
-  const generatedOutput = mkdtempSync(join(scratchRoot, "generated-"));
+  const runRoot = mkdtempSync(join(scratchRoot, "emit-"));
+  const nativeOutput = join(runRoot, "native");
+  const generatedOutput = join(runRoot, "generated");
+  mkdirSync(nativeOutput);
+  mkdirSync(generatedOutput);
   const commonArguments = ["--pretty", "false", source];
   const native = execute(nativeCompiler, [
     ...commonArguments,
@@ -92,6 +98,7 @@ function verifyEmit(source) {
   console.log(
     `emit: ${nativeFiles.length} byte-identical file(s) native=${native.elapsedMilliseconds}ms generated=${generated.elapsedMilliseconds}ms`,
   );
+  await removeSuccessfulScratchTree(repositoryRoot, runRoot);
 }
 
 for (const fixture of ["valid", "syntax", "semantic"]) {
@@ -107,7 +114,7 @@ for (const fixture of ["valid", "syntax", "semantic"]) {
   assert.equal(generated.stderr, native.stderr, `${fixture}: stderr differs`);
   if (fixture === "valid") {
     assert.equal(native.status, 0, "valid fixture did not compile");
-    verifyEmit(source);
+    await verifyEmit(source);
   } else {
     assert.notEqual(native.status, 0, `${fixture}: diagnostic fixture unexpectedly compiled`);
     assert.notEqual(native.stdout + native.stderr, "", `${fixture}: no diagnostic was produced`);

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "optimizations": {
+    "pointerFlows": "closed-direct",
+    "scalarProjections": "closed-direct",
+    "cooperativeEffects": "closed-direct"
+  }
+}

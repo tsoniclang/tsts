@@ -5,20 +5,34 @@ import {
   readFile,
   readdir,
   rename,
-  symlink,
   writeFile,
 } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 
-import { copyPublishedPackage } from "./package-artifact.mjs";
+import { compareCodeUnits } from "./canonical-order.mjs";
+import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 import {
   canonicalTargetSourcePath,
   createTargetSourceLayout,
   targetRunnerPath,
 } from "./target-source-layout.mjs";
+import { sealTargetManifest } from "./target-manifest.mjs";
+import {
+  installGeneratedGoRuntime,
+  installToolchainPackage,
+  openToolchainArguments,
+  activateToolchainEnvironment,
+  typeScriptAstPrinterConfig,
+} from "./toolchain.mjs";
+import { readTypeScriptTargetProfile } from "./typescript-target-profile.mjs";
 
-const [repositoryArgument, canonicalArgument, targetArgument, runnerArgument] = process.argv.slice(2);
+const [
+  repositoryArgument,
+  canonicalArgument,
+  targetArgument,
+  runnerArgument,
+  ...toolchainArguments
+] = process.argv.slice(2);
 if (
   repositoryArgument === undefined ||
   canonicalArgument === undefined ||
@@ -36,17 +50,24 @@ const runIdentity = `${new Date().toISOString().replaceAll(/[:.]/gu, "-")}-${pro
 const runRoot = join(repositoryRoot, ".temp", "target-runs", runIdentity);
 const sourceWorkspace = join(runRoot, "source");
 const stagedTarget = join(runRoot, "target");
-const toolPackageRoot = join(repositoryRoot, ".temp", "tool-runtime", "node_modules", "@tsonic");
+const toolchain = await openToolchainArguments(repositoryRoot, toolchainArguments);
+activateToolchainEnvironment(toolchain);
 const { compileProject } = await importPackage("host");
 const { createTargetRegistry } = await importPackage("target-api");
 const { createTypeScriptTargetPack } = await importPackage("target-typescript");
+const targetProfile = await readTypeScriptTargetProfile(
+  join(repositoryRoot, "typescript-target.json"),
+);
 
 const canonical = await readCanonicalManifest(canonicalRoot);
-const canonicalSources = canonical.files.filter((path) => path.endsWith(".ts")).sort();
+const canonicalSources = canonical.files
+  .filter((path) => path.endsWith(".ts"))
+  .sort(compareCodeUnits);
 const sourceLayout = createTargetSourceLayout(canonicalSources);
 await copyCanonicalProject(canonicalRoot, sourceWorkspace, canonical.files);
 await copyFile(runnerSource, join(sourceWorkspace, targetRunnerPath));
-await installGoPackages(repositoryRoot, sourceWorkspace);
+await installGoPackages(toolchain, sourceWorkspace);
+await installGeneratedGoRuntime(join(sourceWorkspace, "runtime"), sourceWorkspace);
 
 const project = {
   entryPoint: targetRunnerPath,
@@ -56,16 +77,8 @@ const project = {
   targets: [{
     id: "typescript",
     options: {
-      typescriptCompatibility: "compat",
-      printer: {
-        executable: join(repositoryRoot, ".temp", "bin", "tsgo-ast-printer"),
-        arguments: [
-          "-module",
-          join(repositoryRoot, "tools", "gotots"),
-          "-cwd",
-          sourceWorkspace,
-        ],
-      },
+      printer: typeScriptAstPrinterConfig(toolchain, sourceWorkspace),
+      optimizations: targetProfile.optimizations,
     },
   }],
 };
@@ -96,7 +109,7 @@ const artifacts = result.targets[0].compileResult.artifacts.map((artifact) =>
 const sourceArtifacts = artifacts
   .filter((artifact) => artifact.kind === "source")
   .map((artifact) => artifact.path)
-  .sort();
+  .sort(compareCodeUnits);
 assertEqualPaths(
   "canonical TypeScript and target source artifacts",
   sourceLayout.expectedArtifacts,
@@ -133,26 +146,35 @@ for (const [source, path] of [
   installedPaths.add(path);
   await copyFile(source, join(stagedTarget, path));
 }
-await installGoPackages(repositoryRoot, stagedTarget);
-await installTypeScriptRuntime(repositoryRoot, stagedTarget);
+await installGoPackages(toolchain, stagedTarget);
+await installGeneratedGoRuntime(join(stagedTarget, "runtime"), stagedTarget);
+await installTypeScriptRuntime(toolchain, stagedTarget);
 
-const manifestPath = "tsts-target-manifest.json";
-installedPaths.add(manifestPath);
 const physicalPaths = await listPhysicalFiles(stagedTarget);
-physicalPaths.push(manifestPath);
-physicalPaths.sort();
 const expectedPaths = [...installedPaths, ...physicalPaths.filter((path) =>
   path.startsWith("node_modules/")
-)].sort();
+)].sort(compareCodeUnits);
 assertEqualPaths("target source assembly", [...new Set(expectedPaths)], physicalPaths);
-await writeOwnedFile(stagedTarget, manifestPath, `${JSON.stringify({
-  schemaVersion: 1,
-  canonicalSemanticDigest: canonical.semanticDigest,
-  files: physicalPaths,
-}, undefined, 2)}\n`);
-await replaceDirectory(targetRoot, stagedTarget, join(repositoryRoot, ".temp", "preserved"));
+const sealedTarget = await sealTargetManifest(
+  stagedTarget,
+  canonical.semanticDigest,
+  targetProfile.digest,
+  toolchain.digest,
+);
+const supersededTarget = await replaceDirectory(
+  targetRoot,
+  stagedTarget,
+  join(repositoryRoot, ".temp", "preserved"),
+);
+if (supersededTarget !== undefined) {
+  await removeSuccessfulScratchTree(repositoryRoot, supersededTarget);
+}
+await removeSuccessfulScratchTree(repositoryRoot, runRoot);
 
-console.log(`target_files=${physicalPaths.length} output=${targetRoot}`);
+console.log(
+  `target_files=${sealedTarget.files.length} profile=${targetProfile.digest} ` +
+    `toolchain=${toolchain.digest} output=${targetRoot}`,
+);
 
 async function readCanonicalManifest(root) {
   const document = parseRecord(
@@ -167,7 +189,7 @@ async function readCanonicalManifest(root) {
     throw new Error("GoToTS manifest files are invalid");
   }
   const normalized = files.map(validateRelativePath);
-  const sorted = [...normalized].sort();
+  const sorted = [...normalized].sort(compareCodeUnits);
   assertEqualPaths("GoToTS manifest ordering", normalized, sorted);
   if (new Set(normalized).size !== normalized.length) {
     throw new Error("GoToTS manifest files are duplicated");
@@ -187,46 +209,40 @@ async function copyCanonicalProject(source, target, paths) {
   }
 }
 
-async function installGoPackages(root, output) {
-  const packageRoot = join(output, "node_modules", "@gotots");
-  await mkdir(packageRoot, { recursive: true });
-  await copyPublishedPackage({
-    sourceRoot: join(root, "tools", "gotots", "gostdlib"),
-    targetRoot: join(packageRoot, "gostdlib"),
-    expectedName: "@gotots/gostdlib",
-  });
-  await copyPublishedPackage({
-    sourceRoot: join(root, "tools", "gotots", "externals"),
-    targetRoot: join(packageRoot, "externals"),
-    expectedName: "@gotots/externals",
-  });
-  await symlink("../../runtime", join(packageRoot, "runtime"), "dir");
+async function installGoPackages(handle, output) {
+  await installToolchainPackage(handle, "gostdlib", output);
+  await installToolchainPackage(handle, "externals", output);
 }
 
-async function installTypeScriptRuntime(root, output) {
+async function installTypeScriptRuntime(handle, output) {
   const project = parseRecord(await readFile(join(output, "package.json"), "utf8"), "target package");
   const dependencies = project["dependencies"];
   if (!isRecord(dependencies)) {
     throw new Error("Target package dependencies are invalid");
   }
   const selectedVersion = dependencies["@tsonic/typescript-runtime"];
-  const runtimeRoot = join(root, "tools", "typescript-runtime");
-  const runtime = parseRecord(await readFile(join(runtimeRoot, "package.json"), "utf8"), "runtime package");
+  const runtime = parseRecord(
+    await readFile(join(handle.packages.typeScriptRuntime.root, "package.json"), "utf8"),
+    "runtime package",
+  );
   if (selectedVersion !== runtime["version"]) {
     throw new Error(
-      `Selected TypeScript runtime '${String(selectedVersion)}' does not match local package '${String(runtime["version"])}'`,
+      `Selected TypeScript runtime '${String(selectedVersion)}' does not match the sealed package '${String(runtime["version"])}'`,
     );
   }
-  await copyPublishedPackage({
-    sourceRoot: runtimeRoot,
-    targetRoot: join(output, "node_modules", "@tsonic", "typescript-runtime"),
-    expectedName: "@tsonic/typescript-runtime",
-  });
+  await installToolchainPackage(handle, "typeScriptRuntime", output);
 }
 
 async function importPackage(name) {
-  const entry = join(toolPackageRoot, name, "dist", "index.js");
-  return import(pathToFileURL(entry).href);
+  const key = name === "target-typescript" ? "targetTypeScript" : name.replace(
+    /-([a-z])/gu,
+    (_, character) => character.toUpperCase(),
+  );
+  const entry = toolchain.packages[key]?.entry;
+  if (entry === undefined) {
+    throw new Error(`Toolchain package entry '${name}' is absent`);
+  }
+  return import(entry);
 }
 
 async function copyOwnedFile(sourceRoot, targetRoot, path) {
@@ -248,7 +264,7 @@ async function replaceDirectory(target, staged, preservedRoot) {
     if (error?.code === "ENOENT") {
       await mkdir(dirname(target), { recursive: true });
       await rename(staged, target);
-      return;
+      return undefined;
     }
     throw error;
   }
@@ -261,6 +277,7 @@ async function replaceDirectory(target, staged, preservedRoot) {
     await rename(preserved, target);
     throw error;
   }
+  return preserved;
 }
 
 async function listPhysicalFiles(root, directory = "") {
@@ -269,11 +286,13 @@ async function listPhysicalFiles(root, directory = "") {
     const path = directory.length === 0 ? entry.name : `${directory}/${entry.name}`;
     if (entry.isDirectory()) {
       paths.push(...await listPhysicalFiles(root, path));
-    } else {
+    } else if (entry.isFile()) {
       paths.push(path);
+    } else {
+      throw new Error(`Target assembly member '${path}' is not a regular file`);
     }
   }
-  return paths.sort();
+  return paths.sort(compareCodeUnits);
 }
 
 function validateRelativePath(path) {
