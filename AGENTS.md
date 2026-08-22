@@ -1,7 +1,7 @@
 # Agent Notes (TSTS)
 
-`AGENTS.md` and `CLAUDE.md` must remain byte-identical. Apply every change
-to both and verify with `cmp`.
+The canonical workspace policy in `../AGENTS.md` applies. This file contains
+only TSTS product-assembly, submodule, and verification rules.
 
 ## Product Ownership
 
@@ -20,25 +20,6 @@ Do not add TS-Go-specific behavior to GoToTS. Do not patch either submodule in
 this repository. A generic compiler defect is fixed and certified in GoToTS,
 then the submodule pin is advanced. A product-only implementation or
 equivalence envelope remains in TSTS.
-
-## Begin With WCBUBWHB
-
-Before design or edits, establish:
-
-1. the concrete source, generated-artifact, or runtime problem;
-2. the complete semantic class;
-3. whether TS-Go, GoToTS, or TSTS owns the truth;
-4. the highest layer that eliminates the class;
-5. the path that must be deleted rather than wrapped;
-6. the simplest exact final architecture;
-7. source-size, typecheck, memory, runtime, and consumer consequences;
-8. source -> decision -> generated output examples;
-9. independent differential and mutation proof;
-10. broad searches proving no sibling or fallback survives.
-
-One fact has one owner. There is one current path. No compatibility route,
-spelling heuristic, source scan, dynamic semantic dispatch, `any` recovery,
-`unknown` recovery, or post-generation text patch is allowed.
 
 ## Product Contract
 
@@ -79,10 +60,6 @@ whole traces, or profiler payloads into the agent transcript. Do not attach a
 whole-product V8 CPU profiler to the compiler process: use deterministic phase
 counters or bounded phase timing, then profile only the isolated phase.
 
-## Repository Safety
+## Submodule Safety
 
-- Never force-push or delete remote branches or tags.
-- Work on feature branches and merge through pull requests.
 - Never edit or commit files inside either submodule.
-- Never commit `.analysis/`, `.temp/`, generated output, or local logs.
-- Never use `git stash`.
