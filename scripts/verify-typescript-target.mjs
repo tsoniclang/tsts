@@ -33,7 +33,7 @@ const {
 } = await importTool("tsts", "dist/src/index.js");
 const { createTargetSourceProgram } = await importTool(
   "target-api",
-  "dist/index.js",
+  "dist/public/index.js",
 );
 const {
   createExternalAstPrinter,

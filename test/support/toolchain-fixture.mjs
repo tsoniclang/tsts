@@ -216,11 +216,15 @@ async function createSubmodule(repositoryRoot, path) {
 async function createPackage(root, name) {
   await mkdir(root, { recursive: true });
   const provider = name.startsWith("@gotots/");
+  const main = name === "@tsonic/tsts" ? "./dist/src/index.js" :
+    ["@tsonic/source-core", "@tsonic/target-api"].includes(name)
+      ? "./dist/public/index.js"
+      : "./dist/index.js";
   await writeFile(join(root, "package.json"), `${JSON.stringify({
     name,
     version: name === "@tsonic/typescript-runtime" ? "0.0.1" : "0.0.0",
     type: "module",
-    main: name === "@tsonic/tsts" ? "./dist/src/index.js" : "./dist/index.js",
+    main,
     files: provider ? ["dist", "contract", "tsconfig.json", "README.md"] : ["dist"],
     ...(packageDependencies.get(name) ?? {}),
   }, undefined, 2)}\n`, "utf8");
@@ -463,10 +467,10 @@ while (root !== dirname(root)) {
       try { identity = readFileSync(join(selected, "selection.txt"), "utf8").trim(); break; }
       catch { selected = dirname(selected); }
     }
-    const dist = manifest.name === "@tsonic/tsts" ? join(root, "dist", "src") : join(root, "dist");
-    mkdirSync(dist, { recursive: true });
-    writeFileSync(join(dist, "index.js"), "export const identity = " + JSON.stringify(manifest.name + ":" + identity) + ";\\n");
-    writeFileSync(join(dist, "index.d.ts"), "export declare const identity: string;\\n");
+    const entry = resolve(root, manifest.main);
+    mkdirSync(dirname(entry), { recursive: true });
+    writeFileSync(entry, "export const identity = " + JSON.stringify(manifest.name + ":" + identity) + ";\\n");
+    writeFileSync(entry.replace(/\\.js$/u, ".d.ts"), "export declare const identity: string;\\n");
     process.exit(0);
   } catch { root = resolve(root, ".."); }
 }
@@ -527,10 +531,10 @@ for (const root of roots) {
   while (selected !== dirname(selected)) {
     try {
       const identity = readFileSync(join(selected, "selection.txt"), "utf8").trim();
-      const dist = manifest.name === "@tsonic/tsts" ? join(root, "dist", "src") : join(root, "dist");
-      mkdirSync(dist, { recursive: true });
-      writeFileSync(join(dist, "index.js"), "export const identity = " + JSON.stringify(manifest.name + ":" + identity) + ";\\n");
-      writeFileSync(join(dist, "index.d.ts"), "export declare const identity: string;\\n");
+      const entry = resolve(root, manifest.main);
+      mkdirSync(dirname(entry), { recursive: true });
+      writeFileSync(entry, "export const identity = " + JSON.stringify(manifest.name + ":" + identity) + ";\\n");
+      writeFileSync(entry.replace(/\\.js$/u, ".d.ts"), "export declare const identity: string;\\n");
       break;
     } catch { selected = dirname(selected); }
   }
