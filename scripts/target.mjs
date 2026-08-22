@@ -79,6 +79,7 @@ const project = {
     options: {
       printer: typeScriptAstPrinterConfig(toolchain, sourceWorkspace),
       optimizations: targetProfile.optimizations,
+      diagnostics: targetProfile.diagnostics,
     },
   }],
 };

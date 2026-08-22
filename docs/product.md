@@ -120,6 +120,10 @@ execution policies, not ambient `GOMEMLIMIT`, `GOMAXPROCS`, or `NODE_OPTIONS`;
 an out-of-memory failure is preserved and must not be retried with an
 unbounded process.
 
+The selected TypeScript target profile enables bounded planning-phase
+diagnostics. Each row reports only phase identity, elapsed time, heap use, and
+RSS; it neither changes semantic selection nor replaces sealed target evidence.
+
 Failed generation, target, and fixture trees remain inspectable under their
 run identities. Successful candidates, fixture trees, target-publication
 workspaces, superseded targets, and compiler-distribution workspaces are

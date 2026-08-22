@@ -32,7 +32,9 @@ test("target profile has one stable semantic identity", async () => {
   const right = await readTypeScriptTargetProfile(second);
   assert.equal(left.digest, right.digest);
   assert.deepEqual(left.optimizations, right.optimizations);
+  assert.deepEqual(left.diagnostics, { planningPhases: false });
   assert.equal(Object.isFrozen(left.optimizations), true);
+  assert.equal(Object.isFrozen(left.diagnostics), true);
   await removeSuccessfulScratchTree(resolve("."), root);
 });
 
@@ -47,6 +49,29 @@ test("target profile rejects unknown product configuration", async () => {
   await assert.rejects(
     readTypeScriptTargetProfile(path),
     /unsupported field 'fallback'/u,
+  );
+  await removeSuccessfulScratchTree(resolve("."), root);
+});
+
+test("target profile validates bounded planning diagnostics", async () => {
+  const root = await createScratch("diagnostics-");
+  const path = join(root, "profile.json");
+  await writeFile(path, JSON.stringify({
+    schemaVersion: 1,
+    optimizations: {},
+    diagnostics: { planningPhases: true },
+  }), "utf8");
+  const profile = await readTypeScriptTargetProfile(path);
+  assert.deepEqual(profile.diagnostics, { planningPhases: true });
+
+  await writeFile(path, JSON.stringify({
+    schemaVersion: 1,
+    optimizations: {},
+    diagnostics: { planningPhases: "yes" },
+  }), "utf8");
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /'planningPhases' must be boolean/u,
   );
   await removeSuccessfulScratchTree(resolve("."), root);
 });

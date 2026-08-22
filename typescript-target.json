@@ -4,5 +4,8 @@
     "pointerFlows": "closed-direct",
     "scalarProjections": "closed-direct",
     "cooperativeEffects": "closed-direct"
+  },
+  "diagnostics": {
+    "planningPhases": true
   }
 }

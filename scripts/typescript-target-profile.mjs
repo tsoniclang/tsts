@@ -16,7 +16,7 @@ export async function readTypeScriptTargetProfile(path) {
   }
   rejectUnknownKeys(
     parsed,
-    new Set(["schemaVersion", "optimizations"]),
+    new Set(["schemaVersion", "optimizations", "diagnostics"]),
     "TypeScript target profile",
   );
   if (parsed["schemaVersion"] !== 1) {
@@ -26,6 +26,20 @@ export async function readTypeScriptTargetProfile(path) {
   if (!isRecord(optimizations)) {
     throw new Error("TypeScript target profile optimizations must be an object");
   }
+  const diagnostics = parsed["diagnostics"] ?? { planningPhases: false };
+  if (!isRecord(diagnostics)) {
+    throw new Error("TypeScript target profile diagnostics must be an object");
+  }
+  rejectUnknownKeys(
+    diagnostics,
+    new Set(["planningPhases"]),
+    "TypeScript target profile diagnostics",
+  );
+  if (typeof diagnostics["planningPhases"] !== "boolean") {
+    throw new Error(
+      "TypeScript target profile diagnostic 'planningPhases' must be boolean",
+    );
+  }
   const normalized = normalizeJson(parsed);
   const digest = createHash("sha256")
     .update(JSON.stringify(normalized))
@@ -33,6 +47,7 @@ export async function readTypeScriptTargetProfile(path) {
   return Object.freeze({
     digest,
     optimizations: freezeJson(optimizations),
+    diagnostics: freezeJson(diagnostics),
   });
 }
 
