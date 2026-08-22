@@ -97,8 +97,12 @@ if (errors.length !== 0) {
 if (result.targets.length !== 1) {
   throw new Error(`TypeScript target count ${result.targets.length} is not one`);
 }
+const compileResult = result.targets[0].compileResult;
+if (compileResult.kind !== "resolved") {
+  throw new Error("TypeScript target compilation was rejected without a reported error");
+}
 
-const artifacts = result.targets[0].compileResult.artifacts.map((artifact) =>
+const artifacts = compileResult.value.artifacts.map((artifact) =>
   artifact.kind === "source"
     ? {
         ...artifact,
