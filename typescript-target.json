@@ -3,7 +3,8 @@
   "optimizations": {
     "pointerFlows": "closed-direct",
     "scalarProjections": "closed-direct",
-    "cooperativeEffects": "closed-direct"
+    "cooperativeEffects": "closed-program",
+    "interfaceDispatch": "declared-closed"
   },
   "diagnostics": {
     "planningPhases": true
