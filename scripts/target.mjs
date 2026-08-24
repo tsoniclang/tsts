@@ -68,6 +68,10 @@ await copyCanonicalProject(canonicalRoot, sourceWorkspace, canonical.files);
 await copyFile(runnerSource, join(sourceWorkspace, targetRunnerPath));
 await installGoPackages(toolchain, sourceWorkspace);
 await installGeneratedGoRuntime(join(sourceWorkspace, "runtime"), sourceWorkspace);
+await installSourceInvocationManifests(
+  sourceWorkspace,
+  targetProfile.sourceInvocationManifests,
+);
 
 const project = {
   entryPoint: targetRunnerPath,
@@ -79,6 +83,9 @@ const project = {
     options: {
       printer: typeScriptAstPrinterConfig(toolchain, sourceWorkspace),
       optimizations: targetProfile.optimizations,
+      sourceInvocationManifests: targetProfile.sourceInvocationManifests.map(
+        (manifest) => join(sourceWorkspace, manifest.installedPath),
+      ),
       diagnostics: targetProfile.diagnostics,
     },
   }],
@@ -254,6 +261,28 @@ async function copyOwnedFile(sourceRoot, targetRoot, path) {
   const target = join(targetRoot, path);
   await mkdir(dirname(target), { recursive: true });
   await copyFile(join(sourceRoot, path), target);
+}
+
+async function installSourceInvocationManifests(root, manifests) {
+  for (const manifest of manifests) {
+    const source = join(root, manifest.sourcePath);
+    const target = join(root, manifest.installedPath);
+    if (source === target) {
+      continue;
+    }
+    try {
+      await lstat(target);
+      throw new Error(
+        `Source invocation manifest destination '${manifest.installedPath}' already exists`,
+      );
+    } catch (error) {
+      if (error?.code !== "ENOENT") {
+        throw error;
+      }
+    }
+    await mkdir(dirname(target), { recursive: true });
+    await copyFile(source, target);
+  }
 }
 
 async function writeOwnedFile(root, path, text) {

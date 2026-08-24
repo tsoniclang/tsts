@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "optimizations": {
     "pointerFlows": "closed-direct",
     "scalarProjections": "closed-direct",
@@ -8,5 +8,11 @@
   },
   "diagnostics": {
     "planningPhases": true
-  }
+  },
+  "sourceInvocationManifests": [
+    {
+      "sourcePath": "gotots-manifest.json",
+      "installedPath": "node_modules/@gotots/gotots-manifest.json"
+    }
+  ]
 }

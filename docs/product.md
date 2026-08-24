@@ -159,10 +159,18 @@ Standard-library and external providers are enabled.
 
 `typescript-target.json` independently selects executable TypeScript
 lowering. Pointer flows and scalar projections use the target's exact
-whole-program `closed-direct` plans. Cooperative effects also use
-`closed-direct`: only exact closed call components become synchronous, while
-provider, escaping, promise-producing, promise-observed, and unresolved
-components retain canonical `Promise` transport. The target emits an immutable
+`closed-direct` plans. Cooperative effects use
+`closed-program` with `declared-closed` interface dispatch: exact import and
+re-export references are linkage, while actual opaque ingress remains a
+boundary. Only complete exact call components become synchronous; provider,
+escaping, promise-producing, promise-observed, and unresolved components retain
+canonical `Promise` transport. The versioned target profile selects the
+canonical GoToTS manifest and its checked-program installation path as the
+source-invocation contract. Assembly copies the exact immutable manifest bytes
+beside the installed generated runtime, so package-relative source identities
+resolve to the source files actually checked by TSTS. This allows the target to inspect only
+the exact digest-bound runtime source and declarations selected by that
+manifest. The target emits an immutable
 optimization artifact containing the selected representations and every typed
 fallback denominator. Schema 3 `tsts-target-manifest.json` binds the normalized
 profile digest, canonical GoToTS semantic digest, selected historical toolchain

@@ -14,7 +14,7 @@ test("target profile has one stable semantic identity", async () => {
   const first = join(root, "first.json");
   const second = join(root, "second.json");
   await writeFile(first, JSON.stringify({
-    schemaVersion: 1,
+    schemaVersion: 3,
     optimizations: {
       pointerFlows: "closed-direct",
       scalarProjections: "closed-direct",
@@ -25,7 +25,7 @@ test("target profile has one stable semantic identity", async () => {
       scalarProjections: "closed-direct",
       pointerFlows: "closed-direct",
     },
-    schemaVersion: 1,
+    schemaVersion: 3,
   }, undefined, 2), "utf8");
 
   const left = await readTypeScriptTargetProfile(first);
@@ -33,8 +33,55 @@ test("target profile has one stable semantic identity", async () => {
   assert.equal(left.digest, right.digest);
   assert.deepEqual(left.optimizations, right.optimizations);
   assert.deepEqual(left.diagnostics, { planningPhases: false });
+  assert.deepEqual(left.sourceInvocationManifests, []);
   assert.equal(Object.isFrozen(left.optimizations), true);
   assert.equal(Object.isFrozen(left.diagnostics), true);
+  assert.equal(Object.isFrozen(left.sourceInvocationManifests), true);
+  await removeSuccessfulScratchTree(resolve("."), root);
+});
+
+test("target profile owns normalized source invocation manifests", async () => {
+  const root = await createScratch("source-manifests-");
+  const path = join(root, "profile.json");
+  await writeFile(path, JSON.stringify({
+    schemaVersion: 3,
+    optimizations: {},
+    sourceInvocationManifests: [
+      {
+        sourcePath: "contracts/gotots-manifest.json",
+        installedPath: "installed/gotots-manifest.json",
+      },
+      {
+        sourcePath: "contracts/provider-manifest.json",
+        installedPath: "installed/provider-manifest.json",
+      },
+    ],
+  }), "utf8");
+  const profile = await readTypeScriptTargetProfile(path);
+  assert.deepEqual(profile.sourceInvocationManifests, [
+    {
+      sourcePath: "contracts/gotots-manifest.json",
+      installedPath: "installed/gotots-manifest.json",
+    },
+    {
+      sourcePath: "contracts/provider-manifest.json",
+      installedPath: "installed/provider-manifest.json",
+    },
+  ]);
+  assert.equal(Object.isFrozen(profile.sourceInvocationManifests[0]), true);
+
+  await writeFile(path, JSON.stringify({
+    schemaVersion: 3,
+    optimizations: {},
+    sourceInvocationManifests: [{
+      sourcePath: "gotots-manifest.json",
+      installedPath: "../outside.json",
+    }],
+  }), "utf8");
+  await assert.rejects(
+    readTypeScriptTargetProfile(path),
+    /must be a normalized relative path/u,
+  );
   await removeSuccessfulScratchTree(resolve("."), root);
 });
 
@@ -42,7 +89,7 @@ test("target profile rejects unknown product configuration", async () => {
   const root = await createScratch("invalid-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 1,
+    schemaVersion: 3,
     optimizations: {},
     fallback: true,
   }), "utf8");
@@ -57,7 +104,7 @@ test("target profile validates bounded planning diagnostics", async () => {
   const root = await createScratch("diagnostics-");
   const path = join(root, "profile.json");
   await writeFile(path, JSON.stringify({
-    schemaVersion: 1,
+    schemaVersion: 3,
     optimizations: {},
     diagnostics: { planningPhases: true },
   }), "utf8");
@@ -65,7 +112,7 @@ test("target profile validates bounded planning diagnostics", async () => {
   assert.deepEqual(profile.diagnostics, { planningPhases: true });
 
   await writeFile(path, JSON.stringify({
-    schemaVersion: 1,
+    schemaVersion: 3,
     optimizations: {},
     diagnostics: { planningPhases: "yes" },
   }), "utf8");

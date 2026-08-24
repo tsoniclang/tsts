@@ -16,11 +16,16 @@ export async function readTypeScriptTargetProfile(path) {
   }
   rejectUnknownKeys(
     parsed,
-    new Set(["schemaVersion", "optimizations", "diagnostics"]),
+    new Set([
+      "schemaVersion",
+      "optimizations",
+      "diagnostics",
+      "sourceInvocationManifests",
+    ]),
     "TypeScript target profile",
   );
-  if (parsed["schemaVersion"] !== 1) {
-    throw new Error("TypeScript target profile schemaVersion must be 1");
+  if (parsed["schemaVersion"] !== 3) {
+    throw new Error("TypeScript target profile schemaVersion must be 3");
   }
   const optimizations = parsed["optimizations"];
   if (!isRecord(optimizations)) {
@@ -40,6 +45,10 @@ export async function readTypeScriptTargetProfile(path) {
       "TypeScript target profile diagnostic 'planningPhases' must be boolean",
     );
   }
+  const sourceInvocationManifests = readSourceInvocationManifests(
+    parsed["sourceInvocationManifests"],
+    "TypeScript target profile sourceInvocationManifests",
+  );
   const normalized = normalizeJson(parsed);
   const digest = createHash("sha256")
     .update(JSON.stringify(normalized))
@@ -48,7 +57,63 @@ export async function readTypeScriptTargetProfile(path) {
     digest,
     optimizations: freezeJson(optimizations),
     diagnostics: freezeJson(diagnostics),
+    sourceInvocationManifests,
   });
+}
+
+function readSourceInvocationManifests(value, subject) {
+  if (value === undefined) {
+    return Object.freeze([]);
+  }
+  if (!Array.isArray(value)) {
+    throw new Error(`${subject} must be an array`);
+  }
+  const selected = value.map((entry, index) => {
+    if (!isRecord(entry)) {
+      throw new Error(`${subject}[${index}] must be an object`);
+    }
+    rejectUnknownKeys(
+      entry,
+      new Set(["sourcePath", "installedPath"]),
+      `${subject}[${index}]`,
+    );
+    return Object.freeze({
+      sourcePath: relativePath(
+        entry["sourcePath"],
+        `${subject}[${index}].sourcePath`,
+      ),
+      installedPath: relativePath(
+        entry["installedPath"],
+        `${subject}[${index}].installedPath`,
+      ),
+    });
+  });
+  if (
+    selected.some((entry, index) =>
+      index !== 0 && compareCodeUnits(
+        selected[index - 1].installedPath,
+        entry.installedPath,
+      ) >= 0
+    )
+  ) {
+    throw new Error(`${subject} must be strictly ordered by installedPath`);
+  }
+  return Object.freeze(selected);
+}
+
+function relativePath(value, subject) {
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.startsWith("/") ||
+    value.includes("\\") ||
+    value.split("/").some((segment) =>
+      segment.length === 0 || segment === "." || segment === ".."
+    )
+  ) {
+    throw new Error(`${subject} must be a normalized relative path`);
+  }
+  return value;
 }
 
 function normalizeJson(value) {
