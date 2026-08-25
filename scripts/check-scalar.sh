@@ -55,7 +55,8 @@ run_toolchain "$node" "$root/scripts/target.mjs" \
   "$toolchain_root"
 run_toolchain "$tsgo" -p "$root/.temp/scalar/target/tsconfig.json"
 run_toolchain "$tsgo" -p "$root/.temp/scalar/target/tsconfig.emit.json"
-actual="$(run_toolchain "$node" "$root/.temp/scalar/target/out/runner.js")"
+actual="$(run_toolchain "$node" --input-type=module --eval \
+  "const { actual } = await import('./.temp/scalar/target/out/runner.js'); process.stdout.write(String(actual));")"
 if [[ "$actual" != "11" ]]; then
   echo "scalar target output = '$actual', want '11'" >&2
   exit 1
