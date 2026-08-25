@@ -1,6 +1,4 @@
 declare module "@gotots/runtime/interface-value.js" {
-  import type { Awaitable } from "@gotots/runtime/scalars.js";
-
   export abstract class GoInterfaceValue {
     abstract readonly $go$type: { readonly comparable: boolean };
     abstract readonly $go$methods: ReadonlySet<object>;
@@ -16,12 +14,11 @@ declare module "@gotots/runtime/interface-value.js" {
   }
 
   export interface GoError extends GoInterfaceValue {
-    Error(): Awaitable<string>;
+    Error(): string;
   }
 }
 
 declare module "@gotots/runtime/scalars.js" {
-  export type Awaitable<T> = T | Promise<T>;
   export type bool = boolean;
   export type gostring = string;
   export type int = number;

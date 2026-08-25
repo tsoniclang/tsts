@@ -17,7 +17,7 @@
   "compilation": {
     "integers": "number",
     "evaluationOrder": "direct",
-    "concurrency": "cooperative"
+    "concurrency": "disabled"
   },
   "source": "target/packages/github.com/microsoft/typescript-go/internal/fswatch/package.ts",
   "tsconfig": "tsconfig.json",

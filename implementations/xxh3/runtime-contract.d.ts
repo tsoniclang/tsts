@@ -27,7 +27,7 @@ declare module "@gotots/runtime/slice.js" {
 
 declare module "@gotots/runtime/interface-value.js" {
   export interface GoError {
-    Error(): string | Promise<string>;
+    Error(): string;
   }
 }
 
