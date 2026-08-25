@@ -4,9 +4,18 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { copyPublishedPackage } from "./package-artifact.mjs";
+import {
+  activateToolchainEnvironment,
+  installToolchainPackage,
+  openToolchainArguments,
+  typeScriptAstPrinterConfig,
+} from "./toolchain.mjs";
 
-const repositoryRoot = resolve(process.argv[2] ?? ".");
+const [repositoryArgument, ...toolchainArguments] = process.argv.slice(2);
+if (repositoryArgument === undefined) {
+  throw new Error("repository root and exact toolchain arguments are required");
+}
+const repositoryRoot = resolve(repositoryArgument);
 const runIdentity = `${new Date().toISOString().replaceAll(/[:.]/gu, "-")}-${process.pid}`;
 const runRoot = join(
   repositoryRoot,
@@ -15,33 +24,26 @@ const runRoot = join(
   runIdentity,
 );
 const sourceRoot = join(runRoot, "source");
-const toolPackageRoot = join(
-  repositoryRoot,
-  ".temp",
-  "tool-runtime",
-  "node_modules",
-  "@tsonic",
-);
 
-const {
-  createCompilerSessionFromFiles,
-  createSourceSemanticsExtension,
-} = await importTool("tsts", "dist/src/index.js");
-const { createTargetSourceProgram } = await importTool(
+const toolchain = await openToolchainArguments(repositoryRoot, toolchainArguments);
+activateToolchainEnvironment(toolchain);
+const { compileProject } = await importTool("host", "dist/index.js");
+const { createTargetRegistry } = await importTool(
   "target-api",
+  "dist/public/index.js",
+);
+const { createTypeScriptTargetPack } = await importTool(
+  "target-typescript",
   "dist/index.js",
 );
-const {
-  createExternalAstPrinter,
-  createTypeScriptBackend,
-} = await importTool("target-typescript", "dist/index.js");
 
-const markerModule = "./markers.js";
-const session = createCompilerSessionFromFiles({
-  currentDirectory: "/project",
-  files: {
-    "/project/index.ts": `import type { Pointer } from "./markers.js";
-import { addressOf, equalPointer, loadPointer, storePointer } from "./markers.js";
+await mkdir(sourceRoot, { recursive: true });
+await writeFile(join(sourceRoot, "package.json"), `${JSON.stringify({
+  private: true,
+  type: "module",
+}, undefined, 2)}\n`, "utf8");
+await writeFile(join(sourceRoot, "index.ts"), `import type { Pointer } from "@tsonic/core/types.js";
+import { addressOf, equalPointer, loadPointer, storePointer } from "@tsonic/core/lang.js";
 
 let value = 10;
 const pointer: Pointer<number> = addressOf(value);
@@ -55,86 +57,112 @@ export const result = {
   loaded: loadPointer(pointer),
   same: equalPointer(pointer, addressOf(value)),
 };
-`,
-    "/project/markers.ts": `export interface Pointer<T> { readonly marker: T }
-export declare function addressOf<T>(storage: T): Pointer<T>;
-export declare function loadPointer<T>(pointer: Pointer<T>): T;
-export declare function storePointer<T>(pointer: Pointer<T>, value: T): void;
-export declare function equalPointer<T>(left: Pointer<T> | undefined, right: Pointer<T> | undefined): boolean;
-`,
-  },
-  rootFiles: ["/project/index.ts"],
-  compilerOptions: {
-    module: "esnext",
-    moduleResolution: "bundler",
-    strict: true,
-    target: "es2022",
-  },
-  extensionHostOptions: {
-    extensions: [createSourceSemanticsExtension({
-      modules: [{
-        moduleSpecifier: markerModule,
-        capabilities: ["type-marker", "call-marker"],
-        exports: [
-          { kind: "type-marker", exportName: "Pointer", marker: "pointer" },
-          { kind: "call-marker", exportName: "addressOf", marker: "address-of" },
-          { kind: "call-marker", exportName: "loadPointer", marker: "load" },
-          { kind: "call-marker", exportName: "storePointer", marker: "store" },
-          { kind: "call-marker", exportName: "equalPointer", marker: "equal-pointer" },
-        ],
-      }],
-    })],
-  },
-});
-const checked = session.checkSource();
-assert.deepEqual(checked.diagnostics, []);
-assert.deepEqual(checked.extensionDiagnostics, []);
+`, "utf8");
 
-await mkdir(sourceRoot, { recursive: true });
-const runtimeRoot = join(repositoryRoot, "tools", "typescript-runtime");
+const runtimeRoot = toolchain.packages.typeScriptRuntime.root;
 const runtimePackage = JSON.parse(
   await readFile(join(runtimeRoot, "package.json"), "utf8"),
 );
 assert.equal(runtimePackage.name, "@tsonic/typescript-runtime");
 assert.equal(typeof runtimePackage.version, "string");
 
-const backend = createTypeScriptBackend(createExternalAstPrinter({
-  executable: join(repositoryRoot, ".temp", "bin", "tsgo-ast-printer"),
-  arguments: [
-    "-module",
-    join(repositoryRoot, "tools", "gotots"),
-    "-cwd",
-    sourceRoot,
-  ],
-}));
-const compiled = backend.compile({
-  source: createTargetSourceProgram(checked),
-  project: {
-    entryPoint: "/project/index.ts",
-    targets: [{ id: "typescript" }],
-  },
-  target: { id: "typescript" },
-  runtimeReferences: [{
-    kind: "npm-package",
-    include: runtimePackage.name,
-    version: runtimePackage.version,
+const project = {
+  entryPoint: "index.ts",
+  rootFiles: ["index.ts"],
+  rootDir: ".",
+  outDir: "out",
+  targets: [{
+    id: "typescript",
+    options: {
+      printer: typeScriptAstPrinterConfig(toolchain, sourceRoot),
+      execution: "synchronous",
+    },
   }],
-  paths: {
-    projectFilePath: "/project/tsonic.json",
-    projectRoot: "/project",
-    outputRoot: "/project/out",
-    targetOutputRoot: "/project/out/typescript",
-  },
+};
+const result = compileProject({
+  project,
+  projectFilePath: join(sourceRoot, "tsonic.json"),
+  registry: createTargetRegistry([createTypeScriptTargetPack()]),
 });
-assert.deepEqual(compiled.diagnostics, []);
+assert.deepEqual(result.diagnostics.filter((diagnostic) =>
+  diagnostic.category === "error"
+), []);
+assert.equal(result.targets.length, 1);
+const compileResult = result.targets[0].compileResult;
+assert.equal(compileResult.kind, "resolved");
+if (compileResult.kind !== "resolved") {
+  throw new Error("TypeScript target proof was rejected");
+}
+const compiled = compileResult.value;
 assert.deepEqual(
   compiled.artifacts.map((artifact) => [artifact.kind, artifact.path]),
   [
     ["project", "package.json"],
+    ["asset", "tsonic-typescript-optimization.json"],
     ["source", "index.ts"],
-    ["source", "markers.ts"],
   ],
 );
+const optimizationArtifact = compiled.artifacts.find((artifact) =>
+  artifact.path === "tsonic-typescript-optimization.json"
+);
+assert.ok(optimizationArtifact !== undefined);
+assert.deepEqual(JSON.parse(optimizationArtifact.text), {
+  schemaVersion: 23,
+  sourceExecution: "synchronous",
+  profileIdentity:
+    "typescript-optimization-v4/pointer=location/scalar=preserve/representations=preserve",
+  sourceMembership: ["index.ts"],
+  programIndex: {
+    nodeVisits: 75,
+    childEdges: 74,
+    kindEntries: 75,
+    identifierEntries: 27,
+    sourceReferenceIndex: {
+      constructionPasses: 1,
+      sourceFiles: 1,
+      nodesVisited: 75,
+      referenceCandidates: 27,
+      selectedReferences: 27,
+      selectedDeclarations: 11,
+      reverseEdges: 21,
+      indexedSymbols: 8,
+      moduleExportsExamined: 53,
+    },
+    bindingCandidates: 0,
+    bindingWrites: 0,
+  },
+  pointer: { profile: "location", analyzed: false },
+  scalar: {
+    profile: "preserve",
+    syntacticProjectionCount: 0,
+    optimizedProjectionCount: 0,
+    retainedProjectionCount: 0,
+    fallbackReasons: [],
+    scalarClassCandidateCount: 0,
+    loweredScalarClassCount: 0,
+    retainedScalarClassCount: 0,
+    scalarClassFallbackReasons: [],
+  },
+  representationProjections: {
+    profile: "preserve",
+    identityCandidateCount: 0,
+    inverseCandidateCount: 0,
+    optimizedCount: 0,
+    retainedCount: 0,
+    fallbackReasons: [],
+    storedFlows: {
+      flowCount: 0,
+      constructionCount: 0,
+      projectionCount: 0,
+    },
+    identityCallables: {
+      candidateCount: 0,
+      optimizedCount: 0,
+      retainedCount: 0,
+      fallbackReasons: [],
+    },
+  },
+});
 
 const installed = new Set();
 for (const artifact of compiled.artifacts) {
@@ -144,16 +172,7 @@ for (const artifact of compiled.artifacts) {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, artifact.text, "utf8");
 }
-await copyPublishedPackage({
-  sourceRoot: runtimeRoot,
-  targetRoot: join(
-    sourceRoot,
-    "node_modules",
-    "@tsonic",
-    "typescript-runtime",
-  ),
-  expectedName: "@tsonic/typescript-runtime",
-});
+await installToolchainPackage(toolchain, "typeScriptRuntime", sourceRoot);
 await writeFile(join(sourceRoot, "tsconfig.json"), `${JSON.stringify({
   compilerOptions: {
     exactOptionalPropertyTypes: true,
@@ -181,9 +200,9 @@ assert.doesNotMatch(
 );
 
 run(
-  "go",
-  ["tool", "tsgo", "-p", join(sourceRoot, "tsconfig.json")],
-  join(repositoryRoot, "tools", "gotots"),
+  toolchain.binaries.tsgo,
+  ["-p", join(sourceRoot, "tsconfig.json")],
+  sourceRoot,
   "strict TypeScript target proof typecheck and emit",
 );
 const execution = run(
@@ -206,7 +225,13 @@ console.log(
 );
 
 async function importTool(name, entry) {
-  return import(pathToFileURL(join(toolPackageRoot, name, entry)).href);
+  const key = name === "target-api" ? "targetApi" :
+    name === "target-typescript" ? "targetTypeScript" : name;
+  const packageRoot = toolchain.packages[key]?.root;
+  if (packageRoot === undefined) {
+    throw new Error(`Toolchain package '${name}' is absent`);
+  }
+  return import(pathToFileURL(join(packageRoot, entry)).href);
 }
 
 function run(command, arguments_, cwd, subject) {

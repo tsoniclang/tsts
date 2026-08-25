@@ -14,9 +14,11 @@ import type {
   uintptr,
 } from "@gotots/runtime/scalars.js";
 import { RuntimeSlice, goSliceAddress } from "@gotots/runtime/slice.js";
-import type { $goInterface_81c2352956c8f96f0b14 } from "../../../support/interfaces/contracts/81.js";
-import { $goInterfaceAdapter_559a23868120d8a3a788 } from "../../../support/interfaces/adapters/55.js";
-import { $goProviderInterfaceBridge_01e63066cf3f667f5a59 } from "../../../support/interfaces/provider-bridges/01.js";
+import type {
+  $goInterface$Interface_Method_Error_void_to_string as GoInterface,
+} from "../../../../../support/interface-contracts.js";
+import { $goInterfaceAdapter$Named_syscall$Errno } from "../../../../../support/interface-adapters.js";
+import { $goProviderInterfaceBridge$Named_error } from "../../../../../support/provider-interface-bridges.js";
 import * as fs from "@gotots/gostdlib/io/fs.js";
 import * as os from "@gotots/gostdlib/os.js";
 import * as filepath from "@gotots/gostdlib/path/filepath.js";
@@ -24,21 +26,21 @@ import * as syscall from "@gotots/gostdlib/syscall.js";
 import { allocatePointer, loadPointer } from "@tsonic/core/lang.js";
 import type { Pointer } from "@tsonic/core/types.js";
 
-type GoFailure = $goInterface_81c2352956c8f96f0b14 | undefined;
+type GoFailure = GoInterface | undefined;
 
 const openFiles = new Map<number, os.File>();
 
 function providerFailure(
   failure: import("@gotots/runtime/interface-value.js").GoError | undefined,
 ): GoFailure {
-  return $goProviderInterfaceBridge_01e63066cf3f667f5a59.$from(failure);
+  return $goProviderInterfaceBridge$Named_error.$from(failure);
 }
 
-function errnoFailure(value: bigint): $goInterface_81c2352956c8f96f0b14 {
-  return new $goInterfaceAdapter_559a23868120d8a3a788(new syscall.Errno(value));
+function errnoFailure(value: bigint): GoInterface {
+  return new $goInterfaceAdapter$Named_syscall$Errno(new syscall.Errno(value));
 }
 
-function unsupported(): $goInterface_81c2352956c8f96f0b14 {
+function unsupported(): GoInterface {
   return errnoFailure(95n);
 }
 

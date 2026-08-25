@@ -21,6 +21,11 @@ share node and symbol identity.
 
 The compiler source and generated output are not hand-maintained here.
 
+The selected product is synchronous: GoToTS runs with concurrency disabled,
+and the TypeScript target performs pointer, scalar, and representation
+lowering only. It does not run a post-generation effect analysis or remove
+cooperative syntax. Reached suspension semantics fail before publication.
+
 ## Build
 
 ```sh

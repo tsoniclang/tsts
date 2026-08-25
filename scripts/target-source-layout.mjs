@@ -1,3 +1,5 @@
+import { compareCodeUnits } from "./canonical-order.mjs";
+
 const canonicalRuntimePrefix = "runtime/";
 const installedRuntimePrefix = "node_modules/@gotots/runtime/";
 
@@ -16,8 +18,10 @@ export function createTargetSourceLayout(canonicalSources) {
     rootFiles: Object.freeze([
       ...canonicalSources.filter((path) => !path.startsWith(canonicalRuntimePrefix)),
       targetRunnerPath,
-    ].sort()),
-    expectedArtifacts: Object.freeze([...canonicalSources, targetRunnerPath].sort()),
+    ].sort(compareCodeUnits)),
+    expectedArtifacts: Object.freeze(
+      [...canonicalSources, targetRunnerPath].sort(compareCodeUnits),
+    ),
   });
 }
 

@@ -17,7 +17,7 @@
   "semantics": {
     "integers": "number",
     "evaluationOrder": "direct",
-    "concurrency": "cooperative"
+    "concurrency": "disabled"
   },
   "providers": {
     "standardLibrary": true,

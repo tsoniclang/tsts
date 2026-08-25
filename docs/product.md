@@ -44,8 +44,17 @@ Nested dependency copies and whole-`dist` test leakage are not assembly paths.
 
 `gotots.json` selects `./cmd/tsgo` for Linux/amd64 with cgo disabled and the
 `noasm` build tag. Integers use the JavaScript-number profile, evaluation
-order uses the direct profile, and Go concurrency uses cooperative execution.
-Standard-library and external providers are enabled.
+order uses the direct profile, and concurrency is disabled. Standard-library
+and external providers are enabled.
+
+This is one synchronous product. GoToTS owns execution semantics and emits
+ordinary synchronous callable contracts from that selected profile. The
+TypeScript target may change pointer, scalar, and representation shapes, but
+it does not infer callable effects or remove `Promise`, `async`, or `await`
+after generation. A reached channel operation, goroutine, blocking `select`,
+or provider without an exact synchronous implementation fails with its typed
+source identity before output is sealed. Cooperative execution is a distinct
+future product and is not a fallback path in this assembly.
 
 ## Product Implementations
 
@@ -80,6 +89,17 @@ The guarded check preserves a previous run's emitted JavaScript by moving it
 to a timestamped `.temp/preserved/` directory before re-emitting. Failed
 runtime artifacts therefore remain inspectable without contaminating or
 blocking the next exact assembly.
+
+The synchronous product additionally exact-joins its generated callable
+surface against the selected source profile. Generated Go callable
+declarations and calls contain no unexpected `async`, `await`, or
+Promise-bearing ABI. GoToTS owns the callable contract; the TypeScript target
+independently rejects authored suspension nodes from the exact checked tree
+before planning or printing. Its sealed evidence exact-joins
+`sourceExecution: "synchronous"`, the selected optimization identity, and the
+complete source membership. Neither gate decides semantics by marker spelling
+or repairs generated source. Mutating the selected concurrency profile back
+to `cooperative` must fail before publication.
 
 `npm run replay` resumes from the current certified generated source and runs
 only JavaScript emission from `.temp/target`, provider/runtime assembly,
