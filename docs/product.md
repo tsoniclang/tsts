@@ -51,9 +51,11 @@ This is one synchronous product. GoToTS owns execution semantics and emits
 ordinary synchronous callable contracts from that selected profile. The
 TypeScript target may change pointer, scalar, and representation shapes, but
 it does not infer callable effects or remove `Promise`, `async`, or `await`
-after generation. A reached channel operation, goroutine, blocking `select`,
-or provider without an exact synchronous implementation fails with its typed
-source identity before output is sealed. Cooperative execution is a distinct
+after generation. A goroutine invokes inline; an immediately-ready buffered
+channel operation or ready/default `select` completes directly. An operation
+that would suspend, or a provider without an exact synchronous implementation,
+fails loudly at its typed owner. This is a bounded serial product semantics,
+not a claim of Go concurrency parity. Cooperative execution is a distinct
 future product and is not a fallback path in this assembly.
 
 ## Product Implementations
