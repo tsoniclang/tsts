@@ -16,8 +16,7 @@
   },
   "compilation": {
     "integers": "fixed64-bigint",
-    "evaluationOrder": "direct",
-    "concurrency": "disabled"
+    "evaluationOrder": "direct"
   },
   "source": "target/packages/golang.org/x/sys@v0.46.0/unix/package.ts",
   "tsconfig": "tsconfig.json",

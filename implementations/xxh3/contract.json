@@ -16,8 +16,7 @@
   },
   "compilation": {
     "integers": "fixed64-bigint",
-    "evaluationOrder": "direct",
-    "concurrency": "disabled"
+    "evaluationOrder": "direct"
   },
   "source": "target/packages/github.com/zeebo/xxh3@v1.1.0/_root/package.ts",
   "tsconfig": "tsconfig.json",

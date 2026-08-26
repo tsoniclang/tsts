@@ -45,14 +45,14 @@ Nested dependency copies and whole-`dist` test leakage are not assembly paths.
 `gotots.json` selects `./cmd/tsgo` for Linux/amd64 with cgo disabled and the
 `noasm` build tag. Fixed-width `int64` and `uint64` use the exact
 `fixed64-bigint` profile while native `int`, `uint`, `uintptr`, and narrower
-integers remain JavaScript numbers. Evaluation order uses the direct profile,
-and concurrency is disabled. Standard-library and external providers are
-enabled. This profile is required because reached JSON parser state uses the
-high bit of a `uint64` as control data; the number profile cannot distinguish
-that value from its incremented successor.
+integers remain JavaScript numbers. Evaluation order uses the direct profile.
+Standard-library and external providers are enabled. This profile is required
+because reached JSON parser state uses the high bit of a `uint64` as control
+data; the number profile cannot distinguish that value from its incremented
+successor.
 
-This is one synchronous product. GoToTS owns execution semantics and emits
-ordinary synchronous callable contracts from that selected profile. The
+This is one synchronous product. GoToTS owns one fixed serial execution
+semantics and emits ordinary synchronous callable contracts. The
 TypeScript target may change pointer, scalar, and representation shapes, but
 it does not infer callable effects or remove `Promise`, `async`, or `await`
 after generation. The product runner selects TS-Go's own `--singleThreaded`
@@ -60,11 +60,10 @@ compiler path exactly once before entering its generated `main`; native
 differentials select the same path. TS-Go's `singleThreadedWorkGroup` therefore
 queues source work and drains it in `RunAndWait` without requiring JavaScript
 tasks, promises, or a second scheduler model. A reached Go goroutine outside
-that source-owned serial path still follows GoToTS's disabled profile: it runs
+that source-owned serial path still follows GoToTS's fixed contract: it runs
 inline, and a channel or synchronization operation that would suspend fails
 loudly at its typed owner. This is a bounded serial product semantics, not a
-claim of Go concurrency parity. Cooperative execution is a distinct future
-product and is not a fallback path in this assembly.
+claim of Go concurrency parity, and no alternate execution profile exists.
 
 ## Product Implementations
 
@@ -108,9 +107,10 @@ independently rejects authored suspension nodes from the exact checked tree
 before planning or printing. Its sealed evidence exact-joins
 `sourceExecution: "synchronous"`, the selected optimization identity, and the
 complete source membership. Neither gate decides semantics by marker spelling
-or repairs generated source. Mutating the selected concurrency profile back
-to `cooperative`, removing the product runner's source-owned serial selection,
-or supplying that selection more than once must fail before publication.
+or repairs generated source. Adding an obsolete concurrency selector, changing
+the target execution contract away from `synchronous`, removing the product
+runner's source-owned serial selection, or supplying that selection more than
+once must fail before publication.
 
 `npm run replay` resumes from the current certified generated source and runs
 only JavaScript emission from `.temp/target`, provider/runtime assembly,

@@ -21,10 +21,11 @@ share node and symbol identity.
 
 The compiler source and generated output are not hand-maintained here.
 
-The selected product is synchronous: GoToTS runs with concurrency disabled,
-and the TypeScript target performs pointer, scalar, and representation
-lowering only. It does not run a post-generation effect analysis or remove
-cooperative syntax. Reached suspension semantics fail before publication.
+The selected product uses GoToTS's one fixed synchronous serial execution
+contract. The TypeScript target performs pointer, scalar, and representation
+lowering only; it does not run a post-generation effect analysis or repair
+callable execution. Any provider-facing asynchronous contract and any reached
+operation that would require suspension fail before publication.
 
 ## Build
 

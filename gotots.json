@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "distribution": {
     "root": "tools/gotots"
   },
@@ -16,8 +16,7 @@
   },
   "semantics": {
     "integers": "fixed64-bigint",
-    "evaluationOrder": "direct",
-    "concurrency": "disabled"
+    "evaluationOrder": "direct"
   },
   "providers": {
     "standardLibrary": true,
