@@ -1,15 +1,14 @@
 import {
   copyFile,
-  lstat,
   mkdir,
   readFile,
   readdir,
-  rename,
   writeFile,
 } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 import { compareCodeUnits } from "./canonical-order.mjs";
+import { replaceDirectory } from "./directory-transaction.mjs";
 import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 import {
   canonicalTargetSourcePath,
@@ -170,7 +169,7 @@ const sealedTarget = await sealTargetManifest(
 const supersededTarget = await replaceDirectory(
   targetRoot,
   stagedTarget,
-  join(repositoryRoot, ".temp", "preserved"),
+  join(repositoryRoot, ".temp", "preserved", `${basename(targetRoot)}-${runIdentity}`),
 );
 if (supersededTarget !== undefined) {
   await removeSuccessfulScratchTree(repositoryRoot, supersededTarget);
@@ -314,29 +313,6 @@ async function writeOwnedFile(root, path, text) {
   const target = join(root, validateRelativePath(path));
   await mkdir(dirname(target), { recursive: true });
   await writeFile(target, text, "utf8");
-}
-
-async function replaceDirectory(target, staged, preservedRoot) {
-  try {
-    await lstat(target);
-  } catch (error) {
-    if (error?.code === "ENOENT") {
-      await mkdir(dirname(target), { recursive: true });
-      await rename(staged, target);
-      return undefined;
-    }
-    throw error;
-  }
-  await mkdir(preservedRoot, { recursive: true });
-  const preserved = join(preservedRoot, `${basename(target)}-${runIdentity}`);
-  await rename(target, preserved);
-  try {
-    await rename(staged, target);
-  } catch (error) {
-    await rename(preserved, target);
-    throw error;
-  }
-  return preserved;
 }
 
 async function listPhysicalFiles(root, directory = "") {
