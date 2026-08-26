@@ -49,9 +49,12 @@ test("product runner imports the selected semantic package", async () => {
   assert.doesNotMatch(runner, stalePathIdentity);
 });
 
-test("product runner seals the source-owned serial work-group profile", async () => {
+test("product runner seals the fixed serial execution contract", async () => {
   const product = await readJson(join(repositoryRoot, "gotots.json"));
-  assert.equal(product.semantics.concurrency, "disabled");
+  assert.deepEqual(
+    Object.keys(product.semantics).sort(),
+    ["evaluationOrder", "integers"],
+  );
   const runner = await readFile(join(repositoryRoot, "assembly/runner.ts"), "utf8");
   assert.match(
     runner,

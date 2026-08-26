@@ -67,11 +67,11 @@ export async function createToolchainFixture(prefix) {
   await writeFile(join(repositoryRoot, "AGENTS.md"), "fixture authority\n", "utf8");
   await writeFile(join(repositoryRoot, "CLAUDE.md"), "fixture authority\n", "utf8");
   await writeFile(join(repositoryRoot, "gotots.json"), `${JSON.stringify({
-    schemaVersion: 1,
+    schemaVersion: 2,
     distribution: { root: "tools/gotots" },
     source: { root: "vendor/typescript-go", package: "./cmd/tsgo", mode: "main" },
     go: { goos: "linux", goarch: "amd64", cgo: false, tags: ["noasm"] },
-    semantics: { integers: "number", evaluationOrder: "direct", concurrency: "disabled" },
+    semantics: { integers: "number", evaluationOrder: "direct" },
     providers: { standardLibrary: true, externals: true },
     implementations: { bundles: [] },
     output: { directory: ".temp/generated" },
