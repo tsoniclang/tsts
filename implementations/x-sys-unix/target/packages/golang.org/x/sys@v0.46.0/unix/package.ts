@@ -214,7 +214,7 @@ class FanotifyEventMetadata {
   }
 
   static $zero(): FanotifyEventMetadata {
-    return FanotifyEventMetadata.$make(0, 0, 0, 0, 0, 0, 0);
+    return FanotifyEventMetadata.$make(0, 0, 0, 0, 0n, 0, 0);
   }
 
   get Event_len(): uint32 { return this.storage.Event_len; }
@@ -243,7 +243,7 @@ export class Timespec {
   static $make(sec: int64, nsec: int64): Timespec { return new Timespec({ Sec: sec, Nsec: nsec }); }
   static $storageOf(source: Timespec): Timespec$Storage { return source.storage; }
   static $fromStorage(storage: Timespec$Storage): Timespec { return new Timespec(storage); }
-  static $zero(): Timespec { return Timespec.$make(0, 0); }
+  static $zero(): Timespec { return Timespec.$make(0n, 0n); }
   get Sec(): int64 { return this.storage.Sec; }
   set Sec(value: int64) { this.storage.Sec = value; }
   get Nsec(): int64 { return this.storage.Nsec; }
@@ -304,7 +304,7 @@ export class Stat_t {
   static $storageOf(source: Stat_t): Stat_t$Storage { return source.storage; }
   static $fromStorage(storage: Stat_t$Storage): Stat_t { return new Stat_t(storage); }
   static $zero(): Stat_t {
-    return Stat_t.$make(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Timespec.$zero(), Timespec.$zero(), Timespec.$zero());
+    return Stat_t.$make(0n, 0n, 0n, 0, 0, 0, 0n, 0n, 0n, 0n, Timespec.$zero(), Timespec.$zero(), Timespec.$zero());
   }
 
   get Dev(): uint64 { return this.storage.Dev; }
@@ -356,7 +356,7 @@ class Dirent {
   }
   static $storageOf(source: Dirent): Dirent$Storage { return source.storage; }
   static $fromStorage(storage: Dirent$Storage): Dirent { return new Dirent(storage); }
-  static $zero(): Dirent { return Dirent.$make(0, 0, 0, 0, GoArray.zero<int8, 256>(256, 0)); }
+  static $zero(): Dirent { return Dirent.$make(0n, 0n, 0, 0, GoArray.zero<int8, 256>(256, 0)); }
   get Ino(): uint64 { return this.storage.Ino; }
   set Ino(value: uint64) { this.storage.Ino = value; }
   get Off(): int64 { return this.storage.Off; }
@@ -378,7 +378,7 @@ class Sigset_t {
   static $make(value: GoArray<uint64, 16>): Sigset_t { return new Sigset_t({ Val: value }); }
   static $storageOf(source: Sigset_t): Sigset_t$Storage { return source.storage; }
   static $fromStorage(storage: Sigset_t$Storage): Sigset_t { return new Sigset_t(storage); }
-  static $zero(): Sigset_t { return Sigset_t.$make(GoArray.zero<uint64, 16>(16, 0)); }
+  static $zero(): Sigset_t { return Sigset_t.$make(GoArray.zero<uint64, 16>(16, 0n)); }
   get Val(): GoArray<uint64, 16> { return this.storage.Val; }
   set Val(value: GoArray<uint64, 16>) { this.storage.Val = value; }
 }
@@ -487,7 +487,7 @@ class Statfs_t {
   static $storageOf(source: Statfs_t): Statfs_t$Storage { return source.storage; }
   static $fromStorage(storage: Statfs_t$Storage): Statfs_t { return new Statfs_t(storage); }
   static $zero(): Statfs_t {
-    return Statfs_t.$make(0, 0, 0, 0, 0, 0, 0, Fsid.$zero(), 0, 0, 0, GoArray.zero<int64, 4>(4, 0));
+    return Statfs_t.$make(0n, 0n, 0n, 0n, 0n, 0n, 0n, Fsid.$zero(), 0n, 0n, 0n, GoArray.zero<int64, 4>(4, 0n));
   }
   get Type(): int64 { return this.storage.Type; }
   set Type(value: int64) { this.storage.Type = value; }
@@ -550,10 +550,10 @@ const FAN_EVENT_INFO_TYPE_DFID_NAME$uint8: uint8 = 2;
 const FAN_EVENT_INFO_TYPE_NEW_DFID_NAME$uint8: uint8 = 12;
 const FAN_EVENT_INFO_TYPE_OLD_DFID_NAME$uint8: uint8 = 10;
 const FAN_MARK_REMOVE$uint: uint = 2;
-const FAN_MODIFY$uint64: uint64 = 2;
-const FAN_ONDIR$uint64: uint64 = 1_073_741_824;
-const FAN_Q_OVERFLOW$uint64: uint64 = 16_384;
-const FAN_RENAME$uint64: uint64 = 268_435_456;
+const FAN_MODIFY$uint64: uint64 = 2n;
+const FAN_ONDIR$uint64: uint64 = 1_073_741_824n;
+const FAN_Q_OVERFLOW$uint64: uint64 = 16_384n;
+const FAN_RENAME$uint64: uint64 = 268_435_456n;
 const IN_ISDIR$uint32: uint32 = 1_073_741_824;
 const IN_MODIFY$uint32: uint32 = 2;
 const IN_Q_OVERFLOW$uint32: uint32 = 16_384;
@@ -721,9 +721,9 @@ function fillStat(
   }
   const stat = loadPointer(target);
   stat.Mode = information.IsDir() ? S_IFDIR$uint32 : 32_768;
-  stat.Size = Number(information.Size());
-  stat.Blksize = 4_096;
-  stat.Blocks = Math.ceil(stat.Size / 512);
+  stat.Size = information.Size();
+  stat.Blksize = 4_096n;
+  stat.Blocks = (stat.Size + 511n) / 512n;
   return undefined;
 }
 
@@ -758,17 +758,17 @@ function Statfs(path: gostring, target: Pointer<Statfs_t> | undefined): GoFailur
     return errnoFailure(14n);
   }
   const stat = loadPointer(target);
-  stat.Bsize = 4_096;
-  stat.Frsize = 4_096;
-  stat.Namelen = 255;
+  stat.Bsize = 4_096n;
+  stat.Frsize = 4_096n;
+  stat.Namelen = 255n;
   return undefined;
 }
 
 function NsecToTimespec(nanoseconds: int64): Timespec {
-  let seconds = Math.trunc(nanoseconds / 1_000_000_000);
-  let remainder = nanoseconds % 1_000_000_000;
-  if (remainder < 0) {
-    remainder += 1_000_000_000;
+  let seconds = nanoseconds / 1_000_000_000n;
+  let remainder = nanoseconds % 1_000_000_000n;
+  if (remainder < 0n) {
+    remainder += 1_000_000_000n;
     seconds--;
   }
   return Timespec.$make(seconds, remainder);

@@ -15,7 +15,7 @@
     ]
   },
   "compilation": {
-    "integers": "number",
+    "integers": "fixed64-bigint",
     "evaluationOrder": "direct",
     "concurrency": "disabled"
   },

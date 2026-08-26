@@ -15,7 +15,7 @@
     ]
   },
   "compilation": {
-    "integers": "number",
+    "integers": "fixed64-bigint",
     "evaluationOrder": "direct",
     "concurrency": "disabled"
   },
@@ -26,7 +26,7 @@
   ],
   "equivalenceEnvelope": {
     "kind": "internal-algorithm",
-    "relaxedBehavior": "XXH3's exact digest values and nominal 128-bit range are replaced by a deterministic 104-bit internal digest under the number-integer profile; valid scalar values use UTF-8 and unpaired UTF-16 surrogates use distinct WTF-8 sequences so JavaScript string identity is preserved.",
+    "relaxedBehavior": "XXH3's exact digest values are replaced by a deterministic internal digest whose public 128-bit words retain exact uint64 carriers under the fixed64-bigint profile; valid scalar values use UTF-8 and unpaired UTF-16 surrogates use distinct WTF-8 sequences so JavaScript string identity is preserved.",
     "preservedObservables": [
       "Uint128 copy equality storage and canonical byte projection remain coherent",
       "equal byte or string sequences produce equal digests",
