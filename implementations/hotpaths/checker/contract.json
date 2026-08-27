@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "package": {
+    "importPath": "github.com/microsoft/typescript-go/internal/checker",
+    "modulePath": "github.com/microsoft/typescript-go",
+    "moduleVersion": ""
+  },
+  "build": {
+    "goVersion": "go1.26.4",
+    "goos": "linux",
+    "goarch": "amd64",
+    "cgoEnabled": false,
+    "buildTags": [
+      "noasm"
+    ]
+  },
+  "compilation": {
+    "integers": "fixed64-bigint",
+    "evaluationOrder": "direct"
+  },
+  "source": "implementation.ts",
+  "output": "implementations/tsts/checker-hotpaths.ts",
+  "certificationSources": [
+    "runtime-contract.d.ts"
+  ],
+  "equivalenceEnvelope": {
+    "kind": "exact"
+  },
+  "callables": [
+    {
+      "sourceIdentity": "github.com/microsoft/typescript-go/internal/checker|kind=4|receiver=*github.com/microsoft/typescript-go/internal/checker.Checker|name=compareNodes",
+      "sourceSignature": "func(n1 *github.com/microsoft/typescript-go/internal/ast.Node, n2 *github.com/microsoft/typescript-go/internal/ast.Node) int|params=n1,n2|results=",
+      "variant": "source",
+      "export": "compareNodes"
+    },
+    {
+      "sourceIdentity": "github.com/microsoft/typescript-go/internal/checker|kind=4|receiver=*github.com/microsoft/typescript-go/internal/checker.Checker|name=compareSymbolsWorker",
+      "sourceSignature": "func(s1 *github.com/microsoft/typescript-go/internal/ast.Symbol, s2 *github.com/microsoft/typescript-go/internal/ast.Symbol) int|params=s1,s2|results=",
+      "variant": "source",
+      "export": "compareSymbolsWorker"
+    }
+  ]
+}

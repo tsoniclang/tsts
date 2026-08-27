@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "distribution": {
     "root": "tools/gotots"
   },
@@ -23,10 +23,14 @@
     "externals": true
   },
   "implementations": {
-    "bundles": [
+    "packages": [
       "implementations/fswatch/contract.json",
       "implementations/x-sys-unix/contract.json",
       "implementations/xxh3/contract.json"
+    ],
+    "callables": [
+      "implementations/hotpaths/checker/contract.json",
+      "implementations/hotpaths/core/contract.json"
     ]
   },
   "output": {

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "package": {
+    "importPath": "github.com/microsoft/typescript-go/internal/core",
+    "modulePath": "github.com/microsoft/typescript-go",
+    "moduleVersion": ""
+  },
+  "build": {
+    "goVersion": "go1.26.4",
+    "goos": "linux",
+    "goarch": "amd64",
+    "cgoEnabled": false,
+    "buildTags": [
+      "noasm"
+    ]
+  },
+  "compilation": {
+    "integers": "fixed64-bigint",
+    "evaluationOrder": "direct"
+  },
+  "source": "implementation.ts",
+  "output": "implementations/tsts/core-hotpaths.ts",
+  "certificationSources": [
+    "runtime-contract.d.ts"
+  ],
+  "equivalenceEnvelope": {
+    "kind": "exact"
+  },
+  "callables": [
+    {
+      "sourceIdentity": "github.com/microsoft/typescript-go/internal/core|kind=4|receiver=*github.com/microsoft/typescript-go/internal/core.LinkStore[K, V]|name=Get",
+      "sourceSignature": "func(key K) *V|params=key|results=",
+      "variant": "kernel",
+      "export": "linkStoreGet"
+    }
+  ]
+}
