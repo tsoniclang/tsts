@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "canonicalSemanticDigest": "a3a86944267e41877ab54f798340439bd80038e34687c5dedb5dc7dbc857565b",
   "targetProfileDigest": "79a7eab9bcaa6635dc69e7855a10ad6be96a885a38b44c0b0286e8e556363cff",
-  "toolchainDigest": "ac6d68ed020c2ae0ea3203484412a33a38829f137d39f6b4387e78c9befde402",
+  "toolchainDigest": "f6b7bb3ee2aa507d29a39b5e31024e6717db0548b9b9f381bcbd996372327393",
   "members": [
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
@@ -902,7 +902,7 @@
       "path": "modules/github.com/microsoft/typescript-go/internal/core/tristate.ts",
       "type": "file",
       "size": 5465,
-      "digest": "2b6a6068e80a80da5c76d46274d00a63cd3a7a0ed1381d7c254173d6ed7b76b5"
+      "digest": "f09b9fbd8367d78049ce3da1676363908236809a4e5a1e643e28ed1272df9134"
     },
     {
       "path": "modules/github.com/microsoft/typescript-go/internal/core/tristate_stringer_generated.ts",
