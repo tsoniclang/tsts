@@ -512,7 +512,7 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
   const environment = {
     ...process.env,
     TSTS_GO_MEMORY_LIMIT: "3GiB",
-    TSTS_GO_MAX_PROCS: "2",
+    TSTS_GO_MAX_PROCS: "1",
     TSTS_NODE_OLD_SPACE_MIB: "10240",
     AMBIENT_POISON: "must-not-survive",
   };
@@ -524,7 +524,7 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, [
     "GOMEMLIMIT=3GiB",
-    "GOMAXPROCS=2",
+    "GOMAXPROCS=1",
     "NODE_OPTIONS=--max-old-space-size=10240",
     `PATH=${join(nodeRoot, "bin")}:${join(goRoot, "bin")}`,
     "AMBIENT=",

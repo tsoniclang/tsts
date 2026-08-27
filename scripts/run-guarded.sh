@@ -11,7 +11,7 @@ timeout_value="${TSTS_TIMEOUT:-30m}"
 memory_max="${TSTS_MEMORY_MAX:-12G}"
 minimum_available_kib="${TSTS_MIN_AVAILABLE_KIB:-16777216}"
 go_memory_limit="3GiB"
-go_max_procs="2"
+go_max_procs="1"
 node_old_space_mib="10240"
 
 exec 9>"$root/.temp/run-guarded.lock"
