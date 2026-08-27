@@ -19,7 +19,7 @@ bootstrap_state="$root/.temp/bootstrap-state"
 "$host/mkdir" -p "$bootstrap_state/home" "$bootstrap_state/tmp" "$bootstrap_state/npm-cache"
 
 if [[ -n "${TSTS_GUARDED:-}" ]]; then
-  echo "the product check must own fresh test, build, and replay guards" >&2
+  echo "the product check must own fresh assembly, toolchain, product, and replay guards" >&2
   exit 2
 fi
 

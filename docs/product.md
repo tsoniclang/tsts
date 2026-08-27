@@ -94,15 +94,16 @@ fixture's emitted file set and bytes are also exact-joined. Generation,
 typecheck, startup, minimal-compilation time, peak RSS, source size, and output
 size are reported at the exact pins.
 
-The product check owns three serial, resource-disjoint guarded transactions:
-assembly tests, build plus strict typecheck, and runtime replay. Each
-transaction receives a fresh cgroup so process and file-cache charges from an
-earlier phase cannot consume the next phase's memory envelope. Wrapping the
-whole check in one outer guard is forbidden. The replay transaction preserves
-a previous run's emitted JavaScript by moving it to a timestamped
-`.temp/preserved/` directory before re-emitting. Failed runtime artifacts
-therefore remain inspectable without contaminating or blocking the next exact
-assembly.
+The product check owns four serial, resource-disjoint guarded transactions:
+assembly tests, exact toolchain construction, product generation plus strict
+typecheck, and runtime replay. Toolchain construction commits its immutable
+historical root before the generation transaction opens it. Each transaction
+receives a fresh cgroup so process and file-cache charges from an earlier phase
+cannot consume the next phase's memory envelope. Wrapping the whole check in
+one outer guard is forbidden. The replay transaction preserves a previous
+run's emitted JavaScript by moving it to a timestamped `.temp/preserved/`
+directory before re-emitting. Failed runtime artifacts therefore remain
+inspectable without contaminating or blocking the next exact assembly.
 
 The synchronous product additionally exact-joins its generated callable
 surface against the selected source profile. Generated Go callable

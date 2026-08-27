@@ -19,10 +19,22 @@ bootstrap_state="$root/.temp/bootstrap-state"
 "$host/mkdir" -p "$bootstrap_state/home" "$bootstrap_state/tmp"
 
 if [[ "${TSTS_GUARDED:-0}" != "1" ]]; then
-  exec "$host/env" TSTS_GUARDED=1 \
+  "$host/env" TSTS_GUARDED=1 TSTS_BUILD_TRANSACTION=toolchain \
+    "$host/bash" "$root/scripts/run-guarded.sh" \
+    "$host/bash" "$root/scripts/build.sh"
+  exec "$host/env" TSTS_GUARDED=1 TSTS_BUILD_TRANSACTION=product \
     "$host/bash" "$root/scripts/run-guarded.sh" \
     "$host/bash" "$root/scripts/build.sh"
 fi
+
+build_transaction="${TSTS_BUILD_TRANSACTION:-}"
+case "$build_transaction" in
+  toolchain|product) ;;
+  *)
+    echo "guarded build transaction must be toolchain or product" >&2
+    exit 2
+    ;;
+esac
 
 toolchain_line="$("$host/env" -i \
   HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
@@ -35,6 +47,10 @@ IFS=$'\t' read -r \
   node npm node_root state_root tool_cache_root immutable_distribution immutable_source \
   distribution_workspace \
   <<< "$toolchain_line"
+
+if [[ "$build_transaction" = "toolchain" ]]; then
+  exit 0
+fi
 
 run_toolchain() {
   "$host/bash" "$root/scripts/run-exact-toolchain.sh" \

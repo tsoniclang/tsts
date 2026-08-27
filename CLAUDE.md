@@ -76,8 +76,9 @@ Every product checkpoint must:
 
 Heavy jobs run serially through `scripts/run-guarded.sh`. Preserve failed
 artifacts and never retry an OOM with the same unbounded command.
-Assembly tests, product build, and runtime replay each own a fresh guarded
-transaction; never wrap the complete checkpoint in one resource scope.
+Assembly tests, exact toolchain construction, product generation/typecheck,
+and runtime replay each own a fresh guarded transaction; never wrap the
+complete checkpoint in one resource scope.
 Remove successful scratch only after its owning transaction commits, through
 the path-confined scratch-lifecycle owner; never retain successful staging
 trees as failure evidence.

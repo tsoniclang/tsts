@@ -381,7 +381,7 @@ test("product check isolates guarded phase lifetimes", async () => {
   const repositoryRoot = resolve(".");
   const check = await readFile(join(repositoryRoot, "scripts", "check.sh"), "utf8");
   assert.doesNotMatch(check, /TSTS_GUARDED=1/u);
-  assert.match(check, /product check must own fresh test, build, and replay guards/u);
+  assert.match(check, /product check must own fresh assembly, toolchain, product, and replay guards/u);
 
   const testGuard = check.indexOf('"$root/scripts/run-guarded.sh"');
   const testCommand = check.indexOf(' --test "$root"/test/*.test.mjs');
@@ -393,10 +393,24 @@ test("product check isolates guarded phase lifetimes", async () => {
   assert.ok(replay > build, "replay does not follow the build transaction");
   assert.equal(check.match(/run-guarded\.sh/gu)?.length, 1);
 
-  for (const phase of ["build.sh", "replay.sh"]) {
-    const script = await readFile(join(repositoryRoot, "scripts", phase), "utf8");
-    assert.match(script, /TSTS_GUARDED=1[\s\S]*run-guarded\.sh/u, phase);
-  }
+  const buildScript = await readFile(join(repositoryRoot, "scripts", "build.sh"), "utf8");
+  assert.match(
+    buildScript,
+    /TSTS_BUILD_TRANSACTION=toolchain[\s\S]*run-guarded\.sh[\s\S]*TSTS_BUILD_TRANSACTION=product[\s\S]*run-guarded\.sh/u,
+  );
+  assert.equal(buildScript.match(/run-guarded\.sh/gu)?.length, 2);
+  assert.match(
+    buildScript,
+    /build_transaction="\$\{TSTS_BUILD_TRANSACTION:-\}"[\s\S]*toolchain\|product[\s\S]*guarded build transaction must be toolchain or product/u,
+  );
+  assert.match(
+    buildScript,
+    /if \[\[ "\$build_transaction" = "toolchain" \]\]; then\s+exit 0/u,
+  );
+
+  const replayScript = await readFile(join(repositoryRoot, "scripts", "replay.sh"), "utf8");
+  assert.match(replayScript, /TSTS_GUARDED=1[\s\S]*run-guarded\.sh/u);
+  assert.equal(replayScript.match(/run-guarded\.sh/gu)?.length, 1);
 });
 
 test("exact toolchain retains the guarded process envelope", async () => {
