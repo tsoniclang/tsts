@@ -9,7 +9,28 @@ import {
 } from "../../packages/github.com/microsoft/typescript-go/internal/ast/package.js";
 import * as strings from "@gotots/gostdlib/strings.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
+import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { equalPointer, loadPointer } from "@tsonic/core/lang.js";
+
+export function sortSymbols(
+  checkerPointer: Pointer<Checker> | undefined,
+  symbols: RuntimeSlice<Pointer<Symbol> | undefined>,
+): void {
+  const compare = loadPointer(
+    checkerPointer ??
+      GoPanic.raiseRuntime("invalid memory address or nil pointer dereference"),
+  ).compareSymbols;
+  const selectedCompare =
+    compare ?? GoPanic.raiseRuntime("call of nil function");
+  const values = new Array<Pointer<Symbol> | undefined>(symbols.length);
+  for (let index = 0; index < symbols.length; index++) {
+    values[index] = symbols.get(index);
+  }
+  values.sort((left, right) => selectedCompare(left, right));
+  for (let index = 0; index < values.length; index++) {
+    symbols.set(index, values[index]);
+  }
+}
 
 export function compareNodes(
   checkerPointer: Pointer<Checker> | undefined,

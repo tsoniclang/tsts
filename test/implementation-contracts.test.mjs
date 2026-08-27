@@ -7,9 +7,9 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const stalePathIdentity = /(?:^|\/)[0-9a-f]{32,}(?:\/|\.|$)/u;
 const staleSymbolIdentity = /\$(?:goInterface(?:Method|Adapter|Bridge)?|go\$private)_[0-9a-f]{12,}/u;
 
-test("implementation bundles use semantic package and support identities", async () => {
+test("package implementations use semantic package and support identities", async () => {
   const product = await readJson(join(repositoryRoot, "gotots.json"));
-  const contracts = product.implementations.bundles;
+  const contracts = product.implementations.packages;
   assert.ok(Array.isArray(contracts) && contracts.length > 0);
 
   for (const relativeContract of contracts) {
@@ -33,6 +33,56 @@ test("implementation bundles use semantic package and support identities", async
       assert.doesNotMatch(relativeSource, stalePathIdentity, relativeContract);
       const source = await readFile(join(bundleRoot, relativeSource), "utf8");
       assert.doesNotMatch(source, staleSymbolIdentity, relativeSource);
+    }
+  }
+});
+
+test("callable implementations use exact source and body identities", async () => {
+  const product = await readJson(join(repositoryRoot, "gotots.json"));
+  const contracts = product.implementations.callables;
+  assert.ok(Array.isArray(contracts) && contracts.length > 0);
+
+  const identities = new Set();
+  const outputs = new Set();
+  for (const relativeContract of contracts) {
+    const contractPath = join(repositoryRoot, relativeContract);
+    const contractRoot = dirname(contractPath);
+    const contract = await readJson(contractPath);
+    assert.deepEqual(contract.compilation, product.semantics, relativeContract);
+    assert.equal(contract.schemaVersion, 2, relativeContract);
+    assert.match(contract.output, /^implementations\/tsts\/.+\.ts$/u);
+    assert.ok(!outputs.has(contract.output), contract.output);
+    outputs.add(contract.output);
+    assert.deepEqual(
+      contract.certificationSources,
+      [...new Set(contract.certificationSources)].sort(),
+      relativeContract,
+    );
+
+    const sources = [contract.source, ...contract.certificationSources];
+    for (const relativeSource of sources) {
+      assert.doesNotMatch(relativeSource, stalePathIdentity, relativeContract);
+      const source = await readFile(join(contractRoot, relativeSource), "utf8");
+      assert.doesNotMatch(source, staleSymbolIdentity, relativeSource);
+    }
+
+    const sortedCallables = [...contract.callables].sort((left, right) => {
+      if (left.sourceIdentity < right.sourceIdentity) {
+        return -1;
+      }
+      if (left.sourceIdentity > right.sourceIdentity) {
+        return 1;
+      }
+      return 0;
+    });
+    assert.deepEqual(contract.callables, sortedCallables, relativeContract);
+    for (const callable of contract.callables) {
+      assert.ok(!identities.has(callable.sourceIdentity), callable.sourceIdentity);
+      identities.add(callable.sourceIdentity);
+      assert.match(callable.sourceBodyDigest, /^[0-9a-f]{64}$/u);
+      assert.ok(callable.sourceSignature.length > 0);
+      assert.ok(callable.export.length > 0);
+      assert.ok(callable.variant === "source" || callable.variant === "kernel");
     }
   }
 });

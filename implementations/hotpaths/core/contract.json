@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "package": {
     "importPath": "github.com/microsoft/typescript-go/internal/core",
     "modulePath": "github.com/microsoft/typescript-go",
@@ -28,8 +28,16 @@
   },
   "callables": [
     {
+      "sourceIdentity": "github.com/microsoft/typescript-go/internal/core|kind=4|receiver=*github.com/microsoft/typescript-go/internal/core.Arena[T]|name=New",
+      "sourceSignature": "func() *T|params=|results=",
+      "sourceBodyDigest": "e7f0b921ec143edb3e1989745955e59f93535165be2bf08c78c256287b629e78",
+      "variant": "kernel",
+      "export": "arenaNew"
+    },
+    {
       "sourceIdentity": "github.com/microsoft/typescript-go/internal/core|kind=4|receiver=*github.com/microsoft/typescript-go/internal/core.LinkStore[K, V]|name=Get",
       "sourceSignature": "func(key K) *V|params=key|results=",
+      "sourceBodyDigest": "d40d019ea9ca67d5ba966cad2efbbf67e8f93a4c50a1d8a680de5e4fd6aac873",
       "variant": "kernel",
       "export": "linkStoreGet"
     }
