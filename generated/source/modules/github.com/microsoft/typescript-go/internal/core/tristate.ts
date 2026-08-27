@@ -8,13 +8,6 @@ import { goNumberToBigInt } from "@gotots/runtime/conversion.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
-export function Tristate_String(i: Tristate): gostring {
-    let idx = i - 0;
-    if (i < 0 || idx >= 3) {
-        return "Tristate(" + strconv__from_gostdlib.FormatInt(BigInt.asIntN(64, goNumberToBigInt(i)), BigInt.asIntN(64, goNumberToBigInt(10))) + ")";
-    }
-    return goStringSlice(_Tristate_name$string, $state._Tristate_index.get(idx), $state._Tristate_index.get(idx + 1));
-}
 export type Tristate = uint8;
 export function TSUnknown$constant(): Tristate {
     return 0;
@@ -116,4 +109,11 @@ export function BoolToTristate(b: bool): Tristate {
         return TSTrue$constant();
     }
     return TSFalse$constant();
+}
+export function Tristate_String(i: Tristate): gostring {
+    let idx = i - 0;
+    if (i < 0 || idx >= 3) {
+        return "Tristate(" + strconv__from_gostdlib.FormatInt(BigInt.asIntN(64, goNumberToBigInt(i)), BigInt.asIntN(64, goNumberToBigInt(10))) + ")";
+    }
+    return goStringSlice(_Tristate_name$string, $state._Tristate_index.get(idx), $state._Tristate_index.get(idx + 1));
 }

@@ -24,13 +24,6 @@ import { GoPanicNilValue } from "@gotots/runtime/panic-nil.js";
 import { GoPanic } from "@gotots/runtime/panic.js";
 import { RuntimeSlice } from "@gotots/runtime/slice.js";
 import { goStringSlice } from "@gotots/runtime/string.js";
-export function Category_String(i: Category): gostring {
-    let idx = i - 0;
-    if (i < 0 || idx >= 4) {
-        return "Category(" + strconv__from_gostdlib.FormatInt(BigInt.asIntN(64, goNumberToBigInt(i)), BigInt.asIntN(64, goNumberToBigInt(10))) + ")";
-    }
-    return goStringSlice(_Category_name$string, $state._Category_index.get(idx), $state._Category_index.get(idx + 1));
-}
 export type Category = int32;
 export function CategoryWarning$constant(): Category {
     return 0;
@@ -251,4 +244,11 @@ export function StringifyArgs(args: RuntimeSlice<GoInterface | undefined>): Runt
         }
     }
     return result;
+}
+export function Category_String(i: Category): gostring {
+    let idx = i - 0;
+    if (i < 0 || idx >= 4) {
+        return "Category(" + strconv__from_gostdlib.FormatInt(BigInt.asIntN(64, goNumberToBigInt(i)), BigInt.asIntN(64, goNumberToBigInt(10))) + ")";
+    }
+    return goStringSlice(_Category_name$string, $state._Category_index.get(idx), $state._Category_index.get(idx + 1));
 }
