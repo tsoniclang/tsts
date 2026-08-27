@@ -1,0 +1,10 @@
+import type { float64, int, int32, int64, uint64 } from "@gotots/runtime/scalars.js";
+export const MaxFloat64$float64: float64 = 1.7976931348623157e+308;
+export const MaxInt$int: int = 9223372036854776000;
+export const MaxInt32$int32: int32 = 2147483647;
+export const MaxInt64$float64: float64 = 9223372036854776000;
+export const MaxInt64$int64: int64 = 9223372036854775807n;
+export const MaxUint$uint64: uint64 = 18446744073709551615n;
+export const MaxUint64$uint64: uint64 = 18446744073709551615n;
+export const MinInt$int: int = -9223372036854776000;
+export const MinInt64$float64: float64 = -9223372036854776000;

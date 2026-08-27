@@ -1,0 +1,3145 @@
+{
+  "schemaVersion": 23,
+  "sourceExecution": "synchronous",
+  "profileIdentity": "typescript-optimization-v4/pointer=closed-direct/scalar=closed-direct/representations=closed-direct",
+  "sourceMembership": [
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_any.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_methods.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_time.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/doc.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/errors.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fields.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fold.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/intern.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/options.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/exp_jsonformat_off.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/internal.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonflags/flags.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/options.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/decode.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/encode.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/wire.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/decode.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/doc.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/encode.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/errors.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/export.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/options.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/pools.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/quote.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/state.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/token.ts",
+    "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/value.ts",
+    "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/cpuid.ts",
+    "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/detect_ref.ts",
+    "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/featureid_string.ts",
+    "modules/github.com/mackerelio/go-osstat@v0.2.7/memory/memory_linux.ts",
+    "modules/github.com/microsoft/typescript-go/cmd/tsgo/api.ts",
+    "modules/github.com/microsoft/typescript-go/cmd/tsgo/isprocessalive_unix.ts",
+    "modules/github.com/microsoft/typescript-go/cmd/tsgo/lsp.ts",
+    "modules/github.com/microsoft/typescript-go/cmd/tsgo/main.ts",
+    "modules/github.com/microsoft/typescript-go/cmd/tsgo/sys.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/callbackfs.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/conn.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/conn_async.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/conn_sync.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/encoder/encoder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/encoder/encoder_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/encoder/stringtable.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/protocol.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/protocol_jsonrpc.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/protocol_msgpack.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/server.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/session.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/transport.ts",
+    "modules/github.com/microsoft/typescript-go/internal/api/transport_unix.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/ast.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/ast_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/checkflags.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/deepclone.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/diagnostic.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/flow.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/functionflags.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/ids.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/kind_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/kind_stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/modifierflags.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/nodeflags.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/parseoptions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/positionmap.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/precedence.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/subtreefacts.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/symbol.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/symbolflags.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/tokenflags.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ast/visitor.ts",
+    "modules/github.com/microsoft/typescript-go/internal/astnav/tokens.ts",
+    "modules/github.com/microsoft/typescript-go/internal/binder/binder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/binder/nameresolver.ts",
+    "modules/github.com/microsoft/typescript-go/internal/binder/referenceresolver.ts",
+    "modules/github.com/microsoft/typescript-go/internal/bundled/bundled.ts",
+    "modules/github.com/microsoft/typescript-go/internal/bundled/embed.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/emitresolver.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/exports.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/flow.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/grammarchecks.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/inference.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/jsdoc.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/jsx.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/mapper.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilder_hover.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderscopes.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/nodecopy.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/printer.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/pseudotypenodebuilder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/relater.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/services.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/symbolaccessibility.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/symboltracker.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/tracer.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/types.ts",
+    "modules/github.com/microsoft/typescript-go/internal/checker/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/collections/cow.ts",
+    "modules/github.com/microsoft/typescript-go/internal/collections/multimap.ts",
+    "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+    "modules/github.com/microsoft/typescript-go/internal/collections/ordered_set.ts",
+    "modules/github.com/microsoft/typescript-go/internal/collections/set.ts",
+    "modules/github.com/microsoft/typescript-go/internal/collections/syncmap.ts",
+    "modules/github.com/microsoft/typescript-go/internal/collections/syncset.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/checkerpool.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/emitHost.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/emitter.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/fileInclude.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/fileloader.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/filesparser.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/host.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/includeprocessor.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/processingDiagnostic.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/program.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/projectreferencedtsfakinghost.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/projectreferencefilemapper.ts",
+    "modules/github.com/microsoft/typescript-go/internal/compiler/projectreferenceparser.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/arena.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/bfs.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/binarysearch.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/buildoptions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/compileroptions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/context.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/languagevariant.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/languagevariant_stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/linkstore.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/modulekind_stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/nodemodules.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/parsedoptions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/pattern.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/projectreference.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/scriptkind.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/scriptkind_stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/scripttarget_stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/semaphore.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/stack.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/text.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/textchange.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/tristate.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/tristate_stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/typeacquisition.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/version.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/watchoptions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/core/workgroup.ts",
+    "modules/github.com/microsoft/typescript-go/internal/debug/debug.ts",
+    "modules/github.com/microsoft/typescript-go/internal/diagnostics/diagnostics.ts",
+    "modules/github.com/microsoft/typescript-go/internal/diagnostics/diagnostics_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/diagnostics/loc_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/diagnostics/stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/diagnosticwriter/diagnosticwriter.ts",
+    "modules/github.com/microsoft/typescript-go/internal/evaluator/evaluator.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/build/buildtask.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/build/compilerHost.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/build/host.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/build/orchestrator.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/build/parseCache.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/build/uptodatestatus.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/affectedfileshandler.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/buildInfo.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/buildinfotosnapshot.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/emitfileshandler.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/host.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/incremental.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/program.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/programtosnapshot.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/referencemap.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/snapshot.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/incremental/snapshottobuildinfo.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/tsc.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/tsc/compile.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/tsc/diagnostics.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/tsc/emit.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/tsc/extendedconfigcache.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/tsc/help.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/tsc/init.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/tsc/statistics.ts",
+    "modules/github.com/microsoft/typescript-go/internal/execute/watcher.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/api.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/context.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/indent.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/rule.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/rulecontext.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/rules.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/rulesmap.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/scanner.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/span.ts",
+    "modules/github.com/microsoft/typescript-go/internal/format/util.ts",
+    "modules/github.com/microsoft/typescript-go/internal/glob/glob.ts",
+    "modules/github.com/microsoft/typescript-go/internal/jsnum/jsnum.ts",
+    "modules/github.com/microsoft/typescript-go/internal/jsnum/pseudobigint.ts",
+    "modules/github.com/microsoft/typescript-go/internal/jsnum/string.ts",
+    "modules/github.com/microsoft/typescript-go/internal/json/json.ts",
+    "modules/github.com/microsoft/typescript-go/internal/jsonrpc/baseproto.ts",
+    "modules/github.com/microsoft/typescript-go/internal/jsonrpc/jsonrpc.ts",
+    "modules/github.com/microsoft/typescript-go/internal/locale/locale.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/aliasresolver.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/export.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/export_stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/extract.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/fix.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/import_adder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/index.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/registry.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/util.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoimport/view.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/autoinsert.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/callhierarchy.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/change/delete.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/change/tracker.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/change/trackerimpl.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/codeactions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/codeactions_fixclassincorrectlyimplementsinterface.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/codeactions_fixmissingtypeannotation.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/codeactions_importfixes.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/codeactions_missingmemberfixer.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/codelens.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/completions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/crossproject.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/definition.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/diagnostics.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/displaypartswriter.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/documenthighlights.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/file_rename.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/findallreferences.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/folding.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/format.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/host.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/hover.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/importTracker.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/inlay_hints.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/languageservice.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsconv/converters.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsconv/linemap.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/asi.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/children.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/completednode.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/formatcodeoptions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/organizeimports.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/symbol_display.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/userpreferences.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/lsutil/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/organizeimports.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/rename.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/selectionranges.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/semantictokens.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/signaturehelp.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/source_map.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/sourcedefinition.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/string_completions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/symbols.ts",
+    "modules/github.com/microsoft/typescript-go/internal/ls/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/dynamic_queue.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/logger.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/lsproto/baseproto.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/lsproto/jsonrpc.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/lsproto/lsp.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/lsproto/lsp_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/lsproto/util.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/lspwatcher/lspwatcher.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/progress.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/server.ts",
+    "modules/github.com/microsoft/typescript-go/internal/lsp/stack_sanitizer.ts",
+    "modules/github.com/microsoft/typescript-go/internal/module/cache.ts",
+    "modules/github.com/microsoft/typescript-go/internal/module/resolver.ts",
+    "modules/github.com/microsoft/typescript-go/internal/module/types.ts",
+    "modules/github.com/microsoft/typescript-go/internal/module/util.ts",
+    "modules/github.com/microsoft/typescript-go/internal/modulespecifiers/compare.ts",
+    "modules/github.com/microsoft/typescript-go/internal/modulespecifiers/preferences.ts",
+    "modules/github.com/microsoft/typescript-go/internal/modulespecifiers/specifiers.ts",
+    "modules/github.com/microsoft/typescript-go/internal/modulespecifiers/types.ts",
+    "modules/github.com/microsoft/typescript-go/internal/modulespecifiers/util.ts",
+    "modules/github.com/microsoft/typescript-go/internal/nodebuilder/types.ts",
+    "modules/github.com/microsoft/typescript-go/internal/outputpaths/commonsourcedirectory.ts",
+    "modules/github.com/microsoft/typescript-go/internal/outputpaths/outputpaths.ts",
+    "modules/github.com/microsoft/typescript-go/internal/packagejson/cache.ts",
+    "modules/github.com/microsoft/typescript-go/internal/packagejson/expected.ts",
+    "modules/github.com/microsoft/typescript-go/internal/packagejson/exportsorimports.ts",
+    "modules/github.com/microsoft/typescript-go/internal/packagejson/jsonvalue.ts",
+    "modules/github.com/microsoft/typescript-go/internal/packagejson/packagejson.ts",
+    "modules/github.com/microsoft/typescript-go/internal/packagejson/validated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/parser/jsdoc.ts",
+    "modules/github.com/microsoft/typescript-go/internal/parser/parser.ts",
+    "modules/github.com/microsoft/typescript-go/internal/parser/references.ts",
+    "modules/github.com/microsoft/typescript-go/internal/parser/reparser.ts",
+    "modules/github.com/microsoft/typescript-go/internal/parser/types.ts",
+    "modules/github.com/microsoft/typescript-go/internal/parser/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/pprof/pprof.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/changetrackerwriter.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/emitcontext.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/emitflags.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/emithost.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/emitresolver.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/emittextwriter.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/factory.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/generatedidentifierflags.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/helpers.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/namegenerator.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/printer.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/singlelinestringwriter.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/textwriter.ts",
+    "modules/github.com/microsoft/typescript-go/internal/printer/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/ata/ata.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/ata/discovertypings.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/ata/validatepackagename.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/autoimport.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/background/queue.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/checkerpool.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/client.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/compilerhost.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/configfileregistry.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/configfileregistrybuilder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/dirty/box.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/dirty/cloneablemap.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/dirty/entry.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/dirty/interfaces.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/dirty/map.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/dirty/mapbuilder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/dirty/syncmap.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/extendedconfigcache.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/filechange.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/logging/logger.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/logging/logtree.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/overlayfs.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/ownercache.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/parsecache.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/programcounter.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/project.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/project_stringer_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/projectcollection.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/projectcollectionbuilder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/refcountcache.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/session.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/snapshot.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/snapshotfs.ts",
+    "modules/github.com/microsoft/typescript-go/internal/project/watch.ts",
+    "modules/github.com/microsoft/typescript-go/internal/pseudochecker/checker.ts",
+    "modules/github.com/microsoft/typescript-go/internal/pseudochecker/lookup.ts",
+    "modules/github.com/microsoft/typescript-go/internal/pseudochecker/type.ts",
+    "modules/github.com/microsoft/typescript-go/internal/scanner/regexp.ts",
+    "modules/github.com/microsoft/typescript-go/internal/scanner/scanner.ts",
+    "modules/github.com/microsoft/typescript-go/internal/scanner/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/semver/version.ts",
+    "modules/github.com/microsoft/typescript-go/internal/semver/version_range.ts",
+    "modules/github.com/microsoft/typescript-go/internal/sourcemap/decoder.ts",
+    "modules/github.com/microsoft/typescript-go/internal/sourcemap/generator.ts",
+    "modules/github.com/microsoft/typescript-go/internal/sourcemap/lineinfo.ts",
+    "modules/github.com/microsoft/typescript-go/internal/sourcemap/source.ts",
+    "modules/github.com/microsoft/typescript-go/internal/sourcemap/source_mapper.ts",
+    "modules/github.com/microsoft/typescript-go/internal/sourcemap/util.ts",
+    "modules/github.com/microsoft/typescript-go/internal/stringutil/compare.ts",
+    "modules/github.com/microsoft/typescript-go/internal/stringutil/identifier.ts",
+    "modules/github.com/microsoft/typescript-go/internal/stringutil/js_case.ts",
+    "modules/github.com/microsoft/typescript-go/internal/stringutil/js_case_generated.ts",
+    "modules/github.com/microsoft/typescript-go/internal/stringutil/util.ts",
+    "modules/github.com/microsoft/typescript-go/internal/symlinks/knownsymlinks.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tracing/tracing.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/chain.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/declarations/diagnostics.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/declarations/tracker.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/declarations/transform.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/declarations/util.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/destructuring.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/async.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/classfields.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/classthis.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/definitions.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/esdecorator.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/exponentiation.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/forawait.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/logicalassignment.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/namedevaluation.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/nullishcoalescing.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/objectrestspread.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/optionalcatch.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/optionalchain.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/taggedtemplate.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/usestrict.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/using.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/estransforms/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/inliners/constenum.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/jsxtransforms/jsx.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/modifiervisitor.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/commonjsmodule.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/esmodule.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/externalmoduleinfo.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/impliedmodule.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/transformer.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/importelision.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/legacydecorators.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/metadata.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/runtimesyntax.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/typeeraser.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/typeserializer.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/tstransforms/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/transformers/utilities.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/commandlineoption.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/commandlineparser.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/declscompiler.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/diagnostics.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/enummaps.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/errors.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/namemap.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/parsedbuildcommandline.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/parsedcommandline.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/parsinghelpers.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/showconfig.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/tsconfigparsing.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tsoptions/wildcarddirectories.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tspath/extension.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tspath/ignoredpaths.ts",
+    "modules/github.com/microsoft/typescript-go/internal/tspath/path.ts",
+    "modules/github.com/microsoft/typescript-go/internal/vfs/cachedvfs/cachedvfs.ts",
+    "modules/github.com/microsoft/typescript-go/internal/vfs/internal/internal.ts",
+    "modules/github.com/microsoft/typescript-go/internal/vfs/osvfs/eintr_unix.ts",
+    "modules/github.com/microsoft/typescript-go/internal/vfs/osvfs/os.ts",
+    "modules/github.com/microsoft/typescript-go/internal/vfs/osvfs/realpath_linux.ts",
+    "modules/github.com/microsoft/typescript-go/internal/vfs/trackingvfs/trackingvfs.ts",
+    "modules/github.com/microsoft/typescript-go/internal/vfs/vfs.ts",
+    "modules/github.com/microsoft/typescript-go/internal/vfs/vfsmatch/vfsmatch.ts",
+    "modules/github.com/microsoft/typescript-go/internal/vfs/wrapvfs/wrapvfs.ts",
+    "modules/golang.org/x/sync@v0.21.0/errgroup/errgroup.ts",
+    "modules/golang.org/x/term@v0.44.0/_root/term.ts",
+    "modules/golang.org/x/term@v0.44.0/_root/term_unix.ts",
+    "modules/golang.org/x/term@v0.44.0/_root/term_unix_other.ts",
+    "modules/golang.org/x/term@v0.44.0/_root/terminal.ts",
+    "modules/golang.org/x/text@v0.38.0/collate/collate.ts",
+    "modules/golang.org/x/text@v0.38.0/collate/index.ts",
+    "modules/golang.org/x/text@v0.38.0/collate/option.ts",
+    "modules/golang.org/x/text@v0.38.0/collate/sort.ts",
+    "modules/golang.org/x/text@v0.38.0/collate/tables.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/colltab/collelem.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/colltab/colltab.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/colltab/contract.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/colltab/iter.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/colltab/numeric.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/colltab/table.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/colltab/trie.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/colltab/weighter.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/common.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/compact.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/compact/compact.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/compact/language.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/compact/tables.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/compose.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/coverage.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/language.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/lookup.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/match.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/parse.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/tables.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/language/tags.ts",
+    "modules/golang.org/x/text@v0.38.0/internal/tag/tag.ts",
+    "modules/golang.org/x/text@v0.38.0/language/coverage.ts",
+    "modules/golang.org/x/text@v0.38.0/language/language.ts",
+    "modules/golang.org/x/text@v0.38.0/language/match.ts",
+    "modules/golang.org/x/text@v0.38.0/language/parse.ts",
+    "modules/golang.org/x/text@v0.38.0/language/tables.ts",
+    "modules/golang.org/x/text@v0.38.0/language/tags.ts",
+    "modules/golang.org/x/text@v0.38.0/transform/transform.ts",
+    "modules/golang.org/x/text@v0.38.0/unicode/norm/composition.ts",
+    "modules/golang.org/x/text@v0.38.0/unicode/norm/forminfo.ts",
+    "modules/golang.org/x/text@v0.38.0/unicode/norm/input.ts",
+    "modules/golang.org/x/text@v0.38.0/unicode/norm/iter.ts",
+    "modules/golang.org/x/text@v0.38.0/unicode/norm/normalize.ts",
+    "modules/golang.org/x/text@v0.38.0/unicode/norm/tables15.0.0.ts",
+    "modules/golang.org/x/text@v0.38.0/unicode/norm/trie.ts",
+    "node_modules/@gotots/runtime/array.ts",
+    "node_modules/@gotots/runtime/channel.ts",
+    "node_modules/@gotots/runtime/complex.ts",
+    "node_modules/@gotots/runtime/conversion.ts",
+    "node_modules/@gotots/runtime/deferred-registry.ts",
+    "node_modules/@gotots/runtime/float.ts",
+    "node_modules/@gotots/runtime/integer.ts",
+    "node_modules/@gotots/runtime/interface-value.ts",
+    "node_modules/@gotots/runtime/interface.ts",
+    "node_modules/@gotots/runtime/map.ts",
+    "node_modules/@gotots/runtime/panic-nil.ts",
+    "node_modules/@gotots/runtime/panic.ts",
+    "node_modules/@gotots/runtime/scalars.ts",
+    "node_modules/@gotots/runtime/slice.ts",
+    "node_modules/@gotots/runtime/storage.ts",
+    "node_modules/@gotots/runtime/string.ts",
+    "node_modules/@gotots/runtime/struct.ts",
+    "node_modules/@gotots/runtime/unsafe.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/package.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/state.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonflags/package.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/package.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/state.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/package.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/state.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/package.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/state.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/package.ts",
+    "packages/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/state.ts",
+    "packages/github.com/klauspost/cpuid/v2@v2.2.10/_root/package.ts",
+    "packages/github.com/klauspost/cpuid/v2@v2.2.10/_root/state.ts",
+    "packages/github.com/mackerelio/go-osstat@v0.2.7/memory/package.ts",
+    "packages/github.com/microsoft/typescript-go/cmd/tsgo/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/api/encoder/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/api/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/api/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ast/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ast/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/astnav/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/binder/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/binder/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/bundled/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/bundled/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/checker/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/checker/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/collections/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/compiler/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/compiler/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/core/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/core/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/debug/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/diagnostics/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/diagnostics/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/diagnosticwriter/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/diagnosticwriter/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/evaluator/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/execute/build/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/execute/incremental/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/execute/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/execute/tsc/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/format/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/format/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/fswatch/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/glob/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/glob/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/jsnum/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/jsnum/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/json/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/json/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/jsonrpc/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/jsonrpc/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/locale/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/locale/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ls/autoimport/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ls/autoimport/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ls/change/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ls/lsconv/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ls/lsconv/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ls/lsutil/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ls/lsutil/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ls/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/ls/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/lsp/lsproto/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/lsp/lsproto/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/lsp/lspwatcher/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/lsp/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/lsp/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/module/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/module/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/modulespecifiers/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/modulespecifiers/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/nodebuilder/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/outputpaths/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/packagejson/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/packagejson/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/parser/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/parser/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/pprof/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/printer/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/printer/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/project/ata/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/project/ata/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/project/background/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/project/dirty/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/project/logging/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/project/logging/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/project/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/project/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/pseudochecker/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/pseudochecker/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/scanner/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/scanner/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/semver/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/semver/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/sourcemap/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/stringutil/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/stringutil/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/symlinks/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/tracing/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/tracing/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/transformers/declarations/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/transformers/estransforms/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/transformers/estransforms/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/transformers/inliners/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/transformers/jsxtransforms/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/transformers/jsxtransforms/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/transformers/moduletransforms/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/transformers/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/transformers/tstransforms/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/tsoptions/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/tsoptions/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/tspath/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/tspath/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/cachedvfs/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/internal/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/osvfs/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/osvfs/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/trackingvfs/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/vfsmatch/package.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/vfsmatch/state.ts",
+    "packages/github.com/microsoft/typescript-go/internal/vfs/wrapvfs/package.ts",
+    "packages/github.com/zeebo/xxh3@v1.1.0/_root/package.ts",
+    "packages/golang.org/x/sync@v0.21.0/errgroup/package.ts",
+    "packages/golang.org/x/sys@v0.46.0/unix/package.ts",
+    "packages/golang.org/x/term@v0.44.0/_root/package.ts",
+    "packages/golang.org/x/term@v0.44.0/_root/state.ts",
+    "packages/golang.org/x/text@v0.38.0/collate/package.ts",
+    "packages/golang.org/x/text@v0.38.0/collate/state.ts",
+    "packages/golang.org/x/text@v0.38.0/internal/colltab/package.ts",
+    "packages/golang.org/x/text@v0.38.0/internal/language/compact/package.ts",
+    "packages/golang.org/x/text@v0.38.0/internal/language/compact/state.ts",
+    "packages/golang.org/x/text@v0.38.0/internal/language/package.ts",
+    "packages/golang.org/x/text@v0.38.0/internal/language/state.ts",
+    "packages/golang.org/x/text@v0.38.0/internal/tag/package.ts",
+    "packages/golang.org/x/text@v0.38.0/language/package.ts",
+    "packages/golang.org/x/text@v0.38.0/language/state.ts",
+    "packages/golang.org/x/text@v0.38.0/transform/package.ts",
+    "packages/golang.org/x/text@v0.38.0/transform/state.ts",
+    "packages/golang.org/x/text@v0.38.0/unicode/norm/package.ts",
+    "packages/golang.org/x/text@v0.38.0/unicode/norm/state.ts",
+    "program.ts",
+    "runner.ts",
+    "support/anonymous-structs.ts",
+    "support/constant-projections/e198f9173c5331b90e99bf65378418357500552220caa240d191aede8854dde4/math/index.ts",
+    "support/constant-projections/e198f9173c5331b90e99bf65378418357500552220caa240d191aede8854dde4/time/index.ts",
+    "support/constant-projections/e198f9173c5331b90e99bf65378418357500552220caa240d191aede8854dde4/unicode/index.ts",
+    "support/constant-projections/e198f9173c5331b90e99bf65378418357500552220caa240d191aede8854dde4/unicode/utf8/index.ts",
+    "support/deferred-callables.ts",
+    "support/generics/capabilities/constraint_method.ts",
+    "support/generics/concretizations/cmp/Compare.ts",
+    "support/generics/concretizations/cmp/Or.ts",
+    "support/generics/concretizations/errors/AsType.ts",
+    "support/generics/concretizations/github_u2e_com/go_u2d_json_u2d_experiment/json/internal/jsonwire/NewInvalidCharacterError.ts",
+    "support/generics/concretizations/github_u2e_com/go_u2d_json_u2d_experiment/json/internal/jsonwire/NewInvalidEscapeSequenceError.ts",
+    "support/generics/concretizations/github_u2e_com/go_u2d_json_u2d_experiment/json/jsontext/AppendQuote.ts",
+    "support/generics/concretizations/github_u2e_com/go_u2d_json_u2d_experiment/json/jsontext/AppendUnquote.ts",
+    "support/generics/concretizations/github_u2e_com/go_u2d_json_u2d_experiment/json/len64.ts",
+    "support/generics/concretizations/github_u2e_com/go_u2d_json_u2d_experiment/json/typedArshalers$lookup.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/api/unmarshallerFor.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ast/getCombinedFlags.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/asRecursionId.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/findInMap.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/hashWrite32.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/hashWrite64.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/instantiateList.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/minAndMax.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/orderedSet$add.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/orderedSet$contains.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/runWithInferenceBlockedFromSourceNode.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/checker/runWithoutResolvedSignatureCaching.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/CopyOnWriteMap$Get.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/CopyOnWriteMap$Set.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/CopyOnWriteSet$Add.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/CopyOnWriteSet$Has.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/DiffOrderedMaps.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/GroupBy.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/MultiMap$Add.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/MultiMap$Len.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/NewMultiMapWithSizeHint.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/NewOrderedMapFromList.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/NewOrderedMapWithSizeHint.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/NewSetFromItems.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/NewSetWithSizeHint.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$Clear.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$Clone.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$Delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$Entries.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$Get.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$GetOrZero.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$Keys.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$MarshalJSONTo.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$Set.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$Size.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$UnmarshalJSONFrom.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedMap$Values.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedSet$Add.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedSet$Clear.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedSet$Size.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/OrderedSet$Values.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$Add.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$AddIfAbsent.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$Clear.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$Clone.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$Equals.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$Intersects.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$IsSubsetOf.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$Keys.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$Len.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/Set$UnionedWith.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncMap$Delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncMap$Keys.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncMap$Load.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncMap$LoadOrStore.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncMap$Range.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncMap$Store.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncSet$Add.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncSet$AddIfAbsent.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncSet$Delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncSet$Has.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncSet$IsEmpty.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncSet$Keys.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncSet$Range.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncSet$Size.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/collections/SyncSet$ToSlice.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/compiler/forEachResolution.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/AppendIfUnique.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Arena$Clone.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Arena$New.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Arena$NewSlice.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Arena$NewSlice1.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/BinarySearchUniqueFunc.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/BreadthFirstSearchLevel$Delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/BreadthFirstSearchLevel$Has.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/BreadthFirstSearchLevel$Range.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/BreadthFirstSearchParallelEx.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Coalesce.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Concatenate.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/ConcatenateSeq.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/CopyMapInto.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/CountWhere.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Deduplicate.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/DeduplicateSorted.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/DiffMaps.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/DiffMapsFunc.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/ElementOrNil.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Enumerate.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Every.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Filter.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FilterSeq.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Find.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FindBestPatternMatch.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FindIndex.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FindLast.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FindLastIndex.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FirstNonNil.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FirstNonZero.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FirstOrNil.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FirstOrNilSeq.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FirstResult.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/FlatMap.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Flatten.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/GetSpellingSuggestion.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Identity.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/IfElse.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/InsertSorted.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/LastOrNil.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/LinkStore$Get.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Map.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/MapFiltered.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/MapIndex.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/MapNonNil.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Memoize.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/MinAllFunc.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Must.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Or.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/OrElse.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/ReplaceElement.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Same.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/SameMap.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/SameMapIndex.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Some.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Splice.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Stack$Len.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Stack$Peek.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Stack$Pop.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/Stack$Push.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/core/UnorderedEqual.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/execute/build/parseCache$delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/execute/build/parseCache$loadOrStore.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/execute/build/parseCache$store.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/format/optionEquals.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/autoimport/Index$Clone.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/autoimport/Index$Find.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/autoimport/Index$SearchWordPrefix.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/autoimport/Index$insertAsWords.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/combineLocationArray.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/combineResponseLocations.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/flatMapChildren.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/handleCrossProject.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/lsconv/ptrToSliceIfNonEmpty.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/ls/lsutil/measureSortedness.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/dynamicQueue$Get.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/dynamicQueue$Put.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/lsproto/NotificationInfo$NewNotificationMessage.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/lsproto/derefOr.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/lsproto/unmarshalPtrTo.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/lsproto/unmarshalValue.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/registerLanguageServiceDocumentRequestHandler.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/registerLanguageServiceWithAutoImportsRequestHandler.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/registerMultiProjectReferenceRequestHandler.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/registerNotificationHandler.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/registerRequestHandler.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/sendClientRequest.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/sendClientRequestFireAndForget.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/lsp/sendNotification.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/packagejson/Expected$ExpectedJSONType.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/packagejson/Expected$GetValue.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/packagejson/Expected$UnmarshalJSON.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/packagejson/unmarshalJSONValueV2.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/parser/doInContext.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/printer/findSpanEnd.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/printer/findSpanEndWithEmitContext.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/NewWatchedFiles.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/OwnerCache$AddOwner.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/OwnerCache$LoadAndAcquire.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/OwnerCache$Release.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/RefCountCache$Acquire.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/RefCountCache$Deref.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/RefCountCache$Ref.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/WatchedFiles$Clone.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/WatchedFiles$ID.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/ata/parseNpmConfigOrLock.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Box$Change.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Box$ChangeIf.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Box$Finalize.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Box$Locked.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Box$Original.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Box$Set.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Box$Value.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/CloneableMap$Clone.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Map$Add.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Map$Clear.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Map$Delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Map$Finalize.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Map$Get.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Map$Range.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/Map$TryDelete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/MapBuilder$Build.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/MapBuilder$Clear.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/MapBuilder$Delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/MapEntry$Change.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/MapEntry$ChangeIf.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/MapEntry$Delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/MapEntry$Replace.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/NewBox.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/NewMap.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/NewMapBuilder.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMap$Finalize.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMap$FinalizeWith.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMap$Load.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMap$LoadOrStore.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMap$Range.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMapEntry$Change.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMapEntry$ChangeIf.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMapEntry$Delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMapEntry$DeleteIf.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMapEntry$Locked.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/SyncMapEntry$Value.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/lockedEntry$Change.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/lockedEntry$ChangeIf.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/lockedEntry$Delete.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/lockedEntry$Locked.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/lockedEntry$Original.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/lockedEntry$Value.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/mapEntry$Key.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/mapEntry$Original.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/dirty/mapEntry$Value.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/readDirectoryIntoEntries.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/project/updateWatch.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/scanner/cleared.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/transformers/jsxtransforms/insertStatementAfterPrologue.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/tsoptions/computeFn.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/tsoptions/convertMapToOptions.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/tsoptions/convertOptionsFromJson.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/tsoptions/floatOrInt32ToFlag.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/tspath/ForEachAncestorDirectory.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/tspath/ForEachAncestorDirectoryPath.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/tspath/ForEachAncestorDirectoryStoppingAtGlobalCache.ts",
+    "support/generics/concretizations/github_u2e_com/microsoft/typescript_u2d_go/internal/vfs/osvfs/ignoringEINTR.ts",
+    "support/generics/concretizations/maps/Clone.ts",
+    "support/generics/concretizations/maps/Copy.ts",
+    "support/generics/concretizations/maps/Equal.ts",
+    "support/generics/concretizations/maps/EqualFunc.ts",
+    "support/generics/concretizations/maps/Keys.ts",
+    "support/generics/concretizations/maps/Values.ts",
+    "support/generics/concretizations/slices/AppendSeq.ts",
+    "support/generics/concretizations/slices/BinarySearch.ts",
+    "support/generics/concretizations/slices/BinarySearchFunc.ts",
+    "support/generics/concretizations/slices/Clip.ts",
+    "support/generics/concretizations/slices/Clone.ts",
+    "support/generics/concretizations/slices/Collect.ts",
+    "support/generics/concretizations/slices/Compact.ts",
+    "support/generics/concretizations/slices/CompactFunc.ts",
+    "support/generics/concretizations/slices/Compare.ts",
+    "support/generics/concretizations/slices/CompareFunc.ts",
+    "support/generics/concretizations/slices/Concat.ts",
+    "support/generics/concretizations/slices/Contains.ts",
+    "support/generics/concretizations/slices/ContainsFunc.ts",
+    "support/generics/concretizations/slices/Delete.ts",
+    "support/generics/concretizations/slices/DeleteFunc.ts",
+    "support/generics/concretizations/slices/Equal.ts",
+    "support/generics/concretizations/slices/EqualFunc.ts",
+    "support/generics/concretizations/slices/Grow.ts",
+    "support/generics/concretizations/slices/Index.ts",
+    "support/generics/concretizations/slices/IndexFunc.ts",
+    "support/generics/concretizations/slices/Insert.ts",
+    "support/generics/concretizations/slices/Repeat.ts",
+    "support/generics/concretizations/slices/Replace.ts",
+    "support/generics/concretizations/slices/Reverse.ts",
+    "support/generics/concretizations/slices/Sort.ts",
+    "support/generics/concretizations/slices/SortFunc.ts",
+    "support/generics/concretizations/slices/SortStableFunc.ts",
+    "support/generics/concretizations/slices/Sorted.ts",
+    "support/generics/concretizations/slices/SortedFunc.ts",
+    "support/generics/concretizations/slices/Values.ts",
+    "support/interface-adapters.ts",
+    "support/interface-contracts.ts",
+    "support/interface-methods.ts",
+    "support/interface-types.ts",
+    "support/maps.ts",
+    "support/provider-interface-bridges.ts",
+    "support/provider-stateful-representations.ts",
+    "support/reflection-types.ts"
+  ],
+  "programIndex": {
+    "nodeVisits": 7462390,
+    "childEdges": 7461457,
+    "kindEntries": 7462390,
+    "identifierEntries": 2783334,
+    "sourceReferenceIndex": {
+      "constructionPasses": 1,
+      "sourceFiles": 933,
+      "nodesVisited": 7462390,
+      "referenceCandidates": 2819138,
+      "selectedReferences": 2739795,
+      "selectedDeclarations": 505222,
+      "reverseEdges": 2235552,
+      "indexedSymbols": 304630,
+      "moduleExportsExamined": 34829
+    },
+    "bindingCandidates": 395766,
+    "bindingWrites": 44977
+  },
+  "pointer": {
+    "profile": "closed-direct",
+    "analyzed": true,
+    "componentCount": 147930,
+    "optimizedComponentCount": 34361,
+    "optimizedFamilyCount": 821,
+    "optimizedProjectionReadCount": 5,
+    "optimizedProjectionStoreCount": 2,
+    "representations": [
+      {
+        "value": "direct-object",
+        "count": 4459
+      },
+      {
+        "value": "location",
+        "count": 113569
+      },
+      {
+        "value": "mutable-cell",
+        "count": 29902
+      }
+    ],
+    "fallbackReasons": [
+      {
+        "reason": "addressed-storage-may-change",
+        "count": 5267,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6540,
+            "end": 6562,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 7274,
+            "end": 7297,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11599,
+            "end": 11621,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 12333,
+            "end": 12356,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 15806,
+            "end": 15829,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 18246,
+            "end": 18270,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 19206,
+            "end": 19230,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 24915,
+            "end": 24938,
+            "syntaxKind": "KindPropertyAccessExpression"
+          }
+        ]
+      },
+      {
+        "reason": "captured-parameter",
+        "count": 78,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 15249,
+            "end": 15251,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 33158,
+            "end": 33160,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_any.ts",
+            "start": 18701,
+            "end": 18721,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_any.ts",
+            "start": 34932,
+            "end": 34952,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 104648,
+            "end": 104655,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 104858,
+            "end": 104865,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 108109,
+            "end": 108129,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 114173,
+            "end": 114180,
+            "syntaxKind": "KindIdentifier"
+          }
+        ]
+      },
+      {
+        "reason": "declaration-boundary",
+        "count": 83384,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 23226,
+            "end": 23233,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 23226,
+            "end": 23273,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 41184,
+            "end": 41191,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 41184,
+            "end": 41231,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 49270,
+            "end": 49277,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 49270,
+            "end": 49287,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 50037,
+            "end": 50044,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 50037,
+            "end": 50054,
+            "syntaxKind": "KindTypeReference"
+          }
+        ]
+      },
+      {
+        "reason": "external-boundary",
+        "count": 6,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/BinarySearchFunc.ts",
+            "start": 1527,
+            "end": 2439,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/BinarySearchFunc.ts",
+            "start": 3027,
+            "end": 3879,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/BinarySearchFunc.ts",
+            "start": 4495,
+            "end": 5387,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/BinarySearchFunc.ts",
+            "start": 6010,
+            "end": 6912,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/Contains.ts",
+            "start": 8653,
+            "end": 9436,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/Contains.ts",
+            "start": 9678,
+            "end": 10533,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/Contains.ts",
+            "start": 10759,
+            "end": 11566,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/Contains.ts",
+            "start": 11800,
+            "end": 12631,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "generic-storage",
+        "count": 4,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11954654,
+            "end": 11954658,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11954660,
+            "end": 11954665,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11954996,
+            "end": 11955001,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11956372,
+            "end": 11956376,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11956378,
+            "end": 11956383,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11956714,
+            "end": 11956719,
+            "syntaxKind": "KindIdentifier"
+          }
+        ]
+      },
+      {
+        "reason": "identity-observed",
+        "count": 7232,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/export.ts",
+            "start": 2438,
+            "end": 3011,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/token.ts",
+            "start": 4282,
+            "end": 4386,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/token.ts",
+            "start": 4739,
+            "end": 4844,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/value.ts",
+            "start": 21468,
+            "end": 21605,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/value.ts",
+            "start": 22429,
+            "end": 22566,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/encoder.ts",
+            "start": 17925,
+            "end": 18105,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/encoder.ts",
+            "start": 19415,
+            "end": 19595,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/encoder.ts",
+            "start": 32741,
+            "end": 32921,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "indirect-call",
+        "count": 622,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 5952,
+            "end": 5990,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6107,
+            "end": 6174,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11010,
+            "end": 11049,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11166,
+            "end": 11233,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 14805,
+            "end": 14872,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 23129,
+            "end": 23173,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 24639,
+            "end": 24706,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 26006,
+            "end": 26044,
+            "syntaxKind": "KindPropertyAccessExpression"
+          }
+        ]
+      },
+      {
+        "reason": "nil-capable",
+        "count": 205,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+            "start": 62836,
+            "end": 62842,
+            "syntaxKind": "KindVoidExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+            "start": 81231,
+            "end": 81237,
+            "syntaxKind": "KindVoidExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+            "start": 82823,
+            "end": 82829,
+            "syntaxKind": "KindVoidExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+            "start": 84415,
+            "end": 84421,
+            "syntaxKind": "KindVoidExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+            "start": 89019,
+            "end": 89025,
+            "syntaxKind": "KindVoidExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+            "start": 99427,
+            "end": 99433,
+            "syntaxKind": "KindVoidExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+            "start": 101257,
+            "end": 101263,
+            "syntaxKind": "KindVoidExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+            "start": 187975,
+            "end": 187981,
+            "syntaxKind": "KindVoidExpression"
+          }
+        ]
+      },
+      {
+        "reason": "open-call",
+        "count": 14405,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 5952,
+            "end": 6011,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 5952,
+            "end": 6011,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6107,
+            "end": 6179,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6107,
+            "end": 6179,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11010,
+            "end": 11070,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11010,
+            "end": 11070,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11166,
+            "end": 11238,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11166,
+            "end": 11238,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "pointer-rebinding",
+        "count": 1367,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_any.ts",
+            "start": 12350,
+            "end": 12565,
+            "syntaxKind": "KindBinaryExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 41130,
+            "end": 41345,
+            "syntaxKind": "KindBinaryExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fields.ts",
+            "start": 59906,
+            "end": 60287,
+            "syntaxKind": "KindBinaryExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/decode.ts",
+            "start": 88846,
+            "end": 88985,
+            "syntaxKind": "KindBinaryExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/encode.ts",
+            "start": 73746,
+            "end": 73885,
+            "syntaxKind": "KindBinaryExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/encoder/decoder.ts",
+            "start": 200695,
+            "end": 200826,
+            "syntaxKind": "KindBinaryExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+            "start": 45961,
+            "end": 46110,
+            "syntaxKind": "KindBinaryExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+            "start": 46220,
+            "end": 46374,
+            "syntaxKind": "KindBinaryExpression"
+          }
+        ]
+      },
+      {
+        "reason": "projection-observed",
+        "count": 200,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6430,
+            "end": 6894,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11489,
+            "end": 11953,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 31370,
+            "end": 31818,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 33558,
+            "end": 34006,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 46838,
+            "end": 47351,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 56652,
+            "end": 57165,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 173864,
+            "end": 174268,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 184335,
+            "end": 184816,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "provider-binding",
+        "count": 112,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 121916,
+            "end": 122396,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 129190,
+            "end": 129670,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 141685,
+            "end": 142165,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
+            "start": 19764,
+            "end": 20193,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
+            "start": 23389,
+            "end": 23818,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/mackerelio/go-osstat@v0.2.7/memory/memory_linux.ts",
+            "start": 3098,
+            "end": 3458,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/mackerelio/go-osstat@v0.2.7/memory/memory_linux.ts",
+            "start": 7307,
+            "end": 7572,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/cmd/tsgo/api.ts",
+            "start": 3808,
+            "end": 4175,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "unsupported-flow",
+        "count": 19877,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 5582,
+            "end": 5666,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 5991,
+            "end": 6010,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6107,
+            "end": 6179,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6175,
+            "end": 6178,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 10629,
+            "end": 10724,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11050,
+            "end": 11069,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11166,
+            "end": 11238,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11234,
+            "end": 11237,
+            "syntaxKind": "KindIdentifier"
+          }
+        ]
+      },
+      {
+        "reason": "unsupported-pointee",
+        "count": 1,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/emitfileshandler.ts",
+            "start": 33381,
+            "end": 33385,
+            "syntaxKind": "KindTypeReference"
+          }
+        ]
+      },
+      {
+        "reason": "unsupported-producer",
+        "count": 76,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/session.ts",
+            "start": 158405,
+            "end": 158481,
+            "syntaxKind": "KindVariableDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/ast/utilities.ts",
+            "start": 78864,
+            "end": 78924,
+            "syntaxKind": "KindVariableDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/ast/utilities.ts",
+            "start": 78982,
+            "end": 79088,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/binder/nameresolver.ts",
+            "start": 65704,
+            "end": 65770,
+            "syntaxKind": "KindVariableDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/binder/nameresolver.ts",
+            "start": 65810,
+            "end": 65922,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/binder/nameresolver.ts",
+            "start": 66063,
+            "end": 66175,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+            "start": 233691,
+            "end": 233758,
+            "syntaxKind": "KindVariableDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+            "start": 233877,
+            "end": 233988,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      }
+    ],
+    "familyFallbackReasons": [
+      {
+        "reason": "addressed-storage-may-change",
+        "count": 483,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6540,
+            "end": 6562,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 7274,
+            "end": 7297,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11599,
+            "end": 11621,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 12333,
+            "end": 12356,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 15806,
+            "end": 15829,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 18246,
+            "end": 18270,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 19206,
+            "end": 19230,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 24915,
+            "end": 24938,
+            "syntaxKind": "KindPropertyAccessExpression"
+          }
+        ]
+      },
+      {
+        "reason": "checker-never",
+        "count": 6,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/callbackfs.ts",
+            "start": 12088,
+            "end": 12177,
+            "syntaxKind": "KindParenthesizedExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/callbackfs.ts",
+            "start": 12377,
+            "end": 12466,
+            "syntaxKind": "KindParenthesizedExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/conn_async.ts",
+            "start": 14254,
+            "end": 14337,
+            "syntaxKind": "KindParenthesizedExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/conn_async.ts",
+            "start": 14727,
+            "end": 14810,
+            "syntaxKind": "KindParenthesizedExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/conn_async.ts",
+            "start": 15012,
+            "end": 15095,
+            "syntaxKind": "KindParenthesizedExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/conn_async.ts",
+            "start": 15374,
+            "end": 15457,
+            "syntaxKind": "KindParenthesizedExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+            "start": 740985,
+            "end": 741078,
+            "syntaxKind": "KindParenthesizedExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/execute/incremental/buildInfo.ts",
+            "start": 12166,
+            "end": 12263,
+            "syntaxKind": "KindParenthesizedExpression"
+          }
+        ]
+      },
+      {
+        "reason": "external-boundary",
+        "count": 95,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/BinarySearchFunc.ts",
+            "start": 1527,
+            "end": 2439,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/BinarySearchFunc.ts",
+            "start": 3027,
+            "end": 3879,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/BinarySearchFunc.ts",
+            "start": 4495,
+            "end": 5387,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/BinarySearchFunc.ts",
+            "start": 6010,
+            "end": 6912,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/Contains.ts",
+            "start": 8653,
+            "end": 9436,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/Contains.ts",
+            "start": 9678,
+            "end": 10533,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/Contains.ts",
+            "start": 10759,
+            "end": 11566,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/generics/concretizations/slices/Contains.ts",
+            "start": 11800,
+            "end": 12631,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "generic-call",
+        "count": 278,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
+            "start": 5291,
+            "end": 5430,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
+            "start": 6469,
+            "end": 6588,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
+            "start": 9216,
+            "end": 9346,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
+            "start": 9445,
+            "end": 9574,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+            "start": 260693,
+            "end": 260917,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+            "start": 262325,
+            "end": 262549,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+            "start": 5005404,
+            "end": 5005671,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+            "start": 5005673,
+            "end": 5005955,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "generic-storage",
+        "count": 1,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11954654,
+            "end": 11954658,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11954660,
+            "end": 11954665,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11954996,
+            "end": 11955001,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11956372,
+            "end": 11956376,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11956378,
+            "end": 11956383,
+            "syntaxKind": "KindIdentifier"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "support/interface-adapters.ts",
+            "start": 11956714,
+            "end": 11956719,
+            "syntaxKind": "KindIdentifier"
+          }
+        ]
+      },
+      {
+        "reason": "mixed-pointee",
+        "count": 231,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11568,
+            "end": 11597,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/export.ts",
+            "start": 2583,
+            "end": 2621,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/value.ts",
+            "start": 22442,
+            "end": 22447,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/cpuid.ts",
+            "start": 15079,
+            "end": 15094,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/cpuid.ts",
+            "start": 23876,
+            "end": 23882,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/ast/ast_generated.ts",
+            "start": 753981,
+            "end": 753997,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/ast/ast_generated.ts",
+            "start": 754658,
+            "end": 754682,
+            "syntaxKind": "KindTypeReference"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/ast/ast_generated.ts",
+            "start": 755488,
+            "end": 755515,
+            "syntaxKind": "KindTypeReference"
+          }
+        ]
+      },
+      {
+        "reason": "non-bijective-identity",
+        "count": 386,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 7241,
+            "end": 7298,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 12300,
+            "end": 12357,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 15773,
+            "end": 15830,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 18213,
+            "end": 18271,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 19173,
+            "end": 19231,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 24876,
+            "end": 24939,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 26552,
+            "end": 26609,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 30122,
+            "end": 30180,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "pointee-replacement",
+        "count": 165,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 14443,
+            "end": 14556,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 294824,
+            "end": 295061,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
+            "start": 30915,
+            "end": 31176,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
+            "start": 31215,
+            "end": 31496,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
+            "start": 31691,
+            "end": 31971,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
+            "start": 31989,
+            "end": 32270,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
+            "start": 32635,
+            "end": 32895,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_inlined.ts",
+            "start": 33120,
+            "end": 33406,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "projection-observed",
+        "count": 224,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6430,
+            "end": 6894,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11489,
+            "end": 11953,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 31370,
+            "end": 31818,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 33558,
+            "end": 34006,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 46838,
+            "end": 47351,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 56652,
+            "end": 57165,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 173864,
+            "end": 174268,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 184335,
+            "end": 184816,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "unsupported-flow",
+        "count": 3,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/golang.org/x/text@v0.38.0/collate/collate.ts",
+            "start": 12589,
+            "end": 12797,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "packages/golang.org/x/sys@v0.46.0/unix/package.ts",
+            "start": 7219,
+            "end": 7879,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "packages/golang.org/x/sys@v0.46.0/unix/package.ts",
+            "start": 12226,
+            "end": 12816,
+            "syntaxKind": "KindClassDeclaration"
+          }
+        ]
+      },
+      {
+        "reason": "unsupported-producer",
+        "count": 442,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
+            "start": 2341,
+            "end": 9590,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
+            "start": 9862,
+            "end": 10819,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fields.ts",
+            "start": 9495,
+            "end": 14621,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/options.ts",
+            "start": 2955,
+            "end": 4310,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/options.ts",
+            "start": 4557,
+            "end": 5926,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/internal.ts",
+            "start": 42,
+            "end": 584,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/options.ts",
+            "start": 22970,
+            "end": 25368,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/options.ts",
+            "start": 25515,
+            "end": 27729,
+            "syntaxKind": "KindClassDeclaration"
+          }
+        ]
+      }
+    ]
+  },
+  "scalar": {
+    "profile": "closed-direct",
+    "syntacticProjectionCount": 1218,
+    "optimizedProjectionCount": 858,
+    "retainedProjectionCount": 360,
+    "fallbackReasons": [
+      {
+        "reason": "open-constructor-target",
+        "count": 3,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "node_modules/@gotots/runtime/slice.ts",
+            "start": 895,
+            "end": 930,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "node_modules/@gotots/runtime/slice.ts",
+            "start": 3652,
+            "end": 3683,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "node_modules/@gotots/runtime/slice.ts",
+            "start": 7591,
+            "end": 7622,
+            "syntaxKind": "KindPropertyAccessExpression"
+          }
+        ]
+      },
+      {
+        "reason": "non-scalar-value",
+        "count": 347,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 62593,
+            "end": 62657,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 75073,
+            "end": 75145,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
+            "start": 2962,
+            "end": 3051,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_funcs.ts",
+            "start": 2980,
+            "end": 3036,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/errors.ts",
+            "start": 26321,
+            "end": 26360,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/errors.ts",
+            "start": 27596,
+            "end": 27635,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/errors.ts",
+            "start": 28905,
+            "end": 29056,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/decode.ts",
+            "start": 23282,
+            "end": 23360,
+            "syntaxKind": "KindPropertyAccessExpression"
+          }
+        ]
+      },
+      {
+        "reason": "open-call-or-projection",
+        "count": 10,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 297488,
+            "end": 297638,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/errors.ts",
+            "start": 15270,
+            "end": 15311,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/errors.ts",
+            "start": 16585,
+            "end": 16626,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+            "start": 23393,
+            "end": 23472,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+            "start": 23787,
+            "end": 23866,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/checker.ts",
+            "start": 1888987,
+            "end": 1889019,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/lsp/lspwatcher/lspwatcher.ts",
+            "start": 54576,
+            "end": 54884,
+            "syntaxKind": "KindPropertyAccessExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/lsp/server.ts",
+            "start": 154789,
+            "end": 155585,
+            "syntaxKind": "KindPropertyAccessExpression"
+          }
+        ]
+      }
+    ],
+    "scalarClassCandidateCount": 152,
+    "loweredScalarClassCount": 0,
+    "retainedScalarClassCount": 152,
+    "scalarClassFallbackReasons": [
+      {
+        "reason": "observable-class-member",
+        "count": 21,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 294448,
+            "end": 295327,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonflags/flags.ts",
+            "start": 520,
+            "end": 751,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/options.ts",
+            "start": 28991,
+            "end": 29225,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/options.ts",
+            "start": 29226,
+            "end": 29466,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/decode.ts",
+            "start": 2452,
+            "end": 3223,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/state.ts",
+            "start": 5948,
+            "end": 8417,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/state.ts",
+            "start": 24505,
+            "end": 27639,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/cpuid.ts",
+            "start": 3251,
+            "end": 3862,
+            "syntaxKind": "KindClassDeclaration"
+          }
+        ]
+      },
+      {
+        "reason": "open-construction",
+        "count": 127,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/decode.ts",
+            "start": 31121,
+            "end": 31297,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/cpuid.ts",
+            "start": 1813,
+            "end": 1976,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/klauspost/cpuid/v2@v2.2.10/_root/cpuid.ts",
+            "start": 17754,
+            "end": 17919,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+            "start": 6036,
+            "end": 6204,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+            "start": 6205,
+            "end": 6375,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+            "start": 6376,
+            "end": 6547,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+            "start": 6548,
+            "end": 6716,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/api/proto.ts",
+            "start": 6746,
+            "end": 6917,
+            "syntaxKind": "KindClassDeclaration"
+          }
+        ]
+      },
+      {
+        "reason": "open-projection",
+        "count": 2,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/options.ts",
+            "start": 29467,
+            "end": 29635,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonopts/options.ts",
+            "start": 29636,
+            "end": 29803,
+            "syntaxKind": "KindClassDeclaration"
+          }
+        ]
+      },
+      {
+        "reason": "observable-instance-value",
+        "count": 2,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/execute/tsc/init.ts",
+            "start": 16975,
+            "end": 17154,
+            "syntaxKind": "KindClassDeclaration"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/printer/printer.ts",
+            "start": 774700,
+            "end": 774914,
+            "syntaxKind": "KindClassDeclaration"
+          }
+        ]
+      }
+    ]
+  },
+  "representationProjections": {
+    "profile": "closed-direct",
+    "identityCandidateCount": 1771,
+    "inverseCandidateCount": 54050,
+    "optimizedCount": 71,
+    "retainedCount": 55750,
+    "fallbackReasons": [
+      {
+        "reason": "unstable-binding",
+        "count": 55495,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6222,
+            "end": 6386,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 6831,
+            "end": 6874,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 7479,
+            "end": 7643,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11281,
+            "end": 11445,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 11890,
+            "end": 11933,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 12538,
+            "end": 12702,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 16088,
+            "end": 16134,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
+            "start": 16233,
+            "end": 16397,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      },
+      {
+        "reason": "unpaired-projection",
+        "count": 255,
+        "examples": [
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 139047,
+            "end": 139076,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 139821,
+            "end": 139854,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 149828,
+            "end": 149848,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 149855,
+            "end": 149875,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 150567,
+            "end": 150602,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+            "start": 151251,
+            "end": 151286,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fields.ts",
+            "start": 18169,
+            "end": 18194,
+            "syntaxKind": "KindCallExpression"
+          },
+          {
+            "kind": "authored",
+            "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/fields.ts",
+            "start": 20223,
+            "end": 20248,
+            "syntaxKind": "KindCallExpression"
+          }
+        ]
+      }
+    ],
+    "storedFlows": {
+      "flowCount": 0,
+      "constructionCount": 0,
+      "projectionCount": 0
+    },
+    "identityCallables": {
+      "candidateCount": 412,
+      "optimizedCount": 55,
+      "retainedCount": 357,
+      "fallbackReasons": [
+        {
+          "reason": "nonidentity-contract",
+          "count": 285,
+          "examples": [
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal_default.ts",
+              "start": 15970,
+              "end": 16010,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/wire.ts",
+              "start": 6004,
+              "end": 6053,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/wire.ts",
+              "start": 6055,
+              "end": 6121,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/wire.ts",
+              "start": 6123,
+              "end": 6189,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/wire.ts",
+              "start": 7002,
+              "end": 7051,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/internal/jsonwire/wire.ts",
+              "start": 7053,
+              "end": 7093,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/quote.ts",
+              "start": 1112,
+              "end": 1178,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/jsontext/quote.ts",
+              "start": 1927,
+              "end": 1993,
+              "syntaxKind": "KindParameter"
+            }
+          ]
+        },
+        {
+          "reason": "open-parameter-use",
+          "count": 37,
+          "examples": [
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/services.ts",
+              "start": 4195,
+              "end": 4226,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/multimap.ts",
+              "start": 6211,
+              "end": 6242,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 30429,
+              "end": 30460,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 30462,
+              "end": 30493,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 35344,
+              "end": 35375,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 35377,
+              "end": 35408,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 36139,
+              "end": 36170,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/collections/ordered_map.ts",
+              "start": 36172,
+              "end": 36203,
+              "syntaxKind": "KindParameter"
+            }
+          ]
+        },
+        {
+          "reason": "nonidentity-input",
+          "count": 35,
+          "examples": [
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/nodebuilderimpl.ts",
+              "start": 789352,
+              "end": 789383,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/checker/services.ts",
+              "start": 7547,
+              "end": 7578,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
+              "start": 10567,
+              "end": 10598,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
+              "start": 10600,
+              "end": 10631,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
+              "start": 12497,
+              "end": 12528,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
+              "start": 14587,
+              "end": 14618,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
+              "start": 20445,
+              "end": 20476,
+              "syntaxKind": "KindParameter"
+            },
+            {
+              "kind": "authored",
+              "documentIdentity": "modules/github.com/microsoft/typescript-go/internal/core/core.ts",
+              "start": 24487,
+              "end": 24518,
+              "syntaxKind": "KindParameter"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

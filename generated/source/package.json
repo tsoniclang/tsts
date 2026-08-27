@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@tsonic/typescript-runtime": "0.0.1"
+  }
+}

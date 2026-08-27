@@ -1,0 +1,3 @@
+export { SymbolAccessibilityDiagnostic } from "../../../../../../../modules/github.com/microsoft/typescript-go/internal/transformers/declarations/diagnostics.js";
+export { NewSymbolTracker, SymbolTrackerImpl, SymbolTrackerSharedState } from "../../../../../../../modules/github.com/microsoft/typescript-go/internal/transformers/declarations/tracker.js";
+export { DeclarationEmitHost, DeclarationEmitHost$contract, DeclarationEmitHost$is, DeclarationTransformer, NewDeclarationTransformer, OutputPaths, OutputPaths$contract, OutputPaths$is, ReferencedFilePair, ReferencedFilePair$Storage } from "../../../../../../../modules/github.com/microsoft/typescript-go/internal/transformers/declarations/transform.js";
