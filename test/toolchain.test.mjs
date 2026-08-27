@@ -355,7 +355,8 @@ test("product consumers have one immutable path and a closed environment", async
 
   const repositoryRoot = resolve(".");
   for (const script of [
-    "assemble.mjs", "target.mjs", "verify-target-manifest.mjs", "verify-typescript-target.mjs",
+    "assemble.mjs", "construct-toolchain.mjs", "open-selected-toolchain.mjs", "target.mjs",
+    "verify-target-manifest.mjs", "verify-typescript-target.mjs",
   ]) {
     assert.match(await readFile(join(repositoryRoot, "scripts", script), "utf8"), /\.\/toolchain\.mjs/u, script);
   }
@@ -405,8 +406,37 @@ test("product check isolates guarded phase lifetimes", async () => {
   );
   assert.match(
     buildScript,
-    /if \[\[ "\$build_transaction" = "toolchain" \]\]; then\s+exit 0/u,
+    /if \[\[ "\$build_transaction" = "toolchain" \]\]; then[\s\S]*construct-toolchain\.mjs[\s\S]*exit 0\s+fi[\s\S]*open-selected-toolchain\.mjs/u,
   );
+  const constructor = buildScript.indexOf("construct-toolchain.mjs");
+  const opener = buildScript.indexOf("open-selected-toolchain.mjs");
+  assert.ok(constructor >= 0, "toolchain transaction lacks its constructor");
+  assert.ok(opener > constructor, "product transaction does not follow construction");
+  assert.equal(buildScript.match(/construct-toolchain\.mjs/gu)?.length, 1);
+  assert.equal(buildScript.match(/open-selected-toolchain\.mjs/gu)?.length, 1);
+
+  const constructorScript = await readFile(
+    join(repositoryRoot, "scripts", "construct-toolchain.mjs"),
+    "utf8",
+  );
+  assert.match(constructorScript, /await buildToolchain\(/u);
+  assert.doesNotMatch(constructorScript, /createDistributionWorkspace|openSelectedToolchain/u);
+  const openerScript = await readFile(
+    join(repositoryRoot, "scripts", "open-selected-toolchain.mjs"),
+    "utf8",
+  );
+  assert.match(openerScript, /await openSelectedToolchain\(/u);
+  assert.match(openerScript, /await createDistributionWorkspace\(/u);
+  assert.doesNotMatch(openerScript, /buildToolchain/u);
+
+  const scalarScript = await readFile(join(repositoryRoot, "scripts", "check-scalar.sh"), "utf8");
+  assert.match(
+    scalarScript,
+    /TSTS_SCALAR_TRANSACTION=toolchain[\s\S]*run-guarded\.sh[\s\S]*TSTS_SCALAR_TRANSACTION=product[\s\S]*run-guarded\.sh/u,
+  );
+  assert.equal(scalarScript.match(/run-guarded\.sh/gu)?.length, 2);
+  assert.equal(scalarScript.match(/construct-toolchain\.mjs/gu)?.length, 1);
+  assert.equal(scalarScript.match(/open-selected-toolchain\.mjs/gu)?.length, 1);
 
   const replayScript = await readFile(join(repositoryRoot, "scripts", "replay.sh"), "utf8");
   assert.match(replayScript, /TSTS_GUARDED=1[\s\S]*run-guarded\.sh/u);

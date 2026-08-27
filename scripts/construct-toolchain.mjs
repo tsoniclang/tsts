@@ -1,11 +1,7 @@
 import { realpath } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 
-import {
-  buildToolchain,
-  createDistributionWorkspace,
-  formatToolchainHandle,
-} from "./toolchain.mjs";
+import { buildToolchain } from "./toolchain.mjs";
 
 const repositoryRoot = resolve(process.argv[2] ?? ".");
 const goExecutable = process.argv[3];
@@ -19,7 +15,7 @@ if ([goExecutable, goModuleCache, nodeExecutable, npmCli, hostUtilityPath].inclu
   );
 }
 if (await realpath(process.execPath) !== await realpath(nodeExecutable)) {
-  throw new Error("build-toolchain must run under the explicit Node bootstrap");
+  throw new Error("construct-toolchain must run under the explicit Node bootstrap");
 }
 const handle = await buildToolchain(repositoryRoot, {
   goExecutable: resolve(goExecutable),
@@ -28,9 +24,4 @@ const handle = await buildToolchain(repositoryRoot, {
   npmCli: resolve(npmCli),
   hostUtilityPath: resolve(hostUtilityPath),
 });
-const identity = `${new Date().toISOString().replaceAll(/[:.]/gu, "-")}-${process.pid}`;
-const distribution = await createDistributionWorkspace(
-  handle,
-  join(repositoryRoot, ".temp", "toolchain-runs", identity, "compiler-distribution"),
-);
-process.stdout.write(`${formatToolchainHandle(handle, distribution)}\n`);
+process.stdout.write(`${JSON.stringify({ digest: handle.digest, root: handle.root })}\n`);

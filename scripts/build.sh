@@ -36,21 +36,26 @@ case "$build_transaction" in
     ;;
 esac
 
+if [[ "$build_transaction" = "toolchain" ]]; then
+  "$host/env" -i \
+    HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
+    TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
+    "$TSTS_NODE_BUILDER" "$root/scripts/construct-toolchain.mjs" \
+    "$root" "$TSTS_GO_BUILDER" "$TSTS_GO_MODULE_CACHE" \
+    "$TSTS_NODE_BUILDER" "$TSTS_NPM_CLI" "$host"
+  exit 0
+fi
+
 toolchain_line="$("$host/env" -i \
   HOME="$bootstrap_state/home" TMPDIR="$bootstrap_state/tmp" TMP="$bootstrap_state/tmp" \
   TEMP="$bootstrap_state/tmp" PATH="$host" LANG=C LC_ALL=C TZ=UTC \
-  "$TSTS_NODE_BUILDER" "$root/scripts/build-toolchain.mjs" \
-  "$root" "$TSTS_GO_BUILDER" "$TSTS_GO_MODULE_CACHE" \
-  "$TSTS_NODE_BUILDER" "$TSTS_NPM_CLI" "$host")"
+  "$TSTS_NODE_BUILDER" "$root/scripts/open-selected-toolchain.mjs" \
+  "$root" "$TSTS_NODE_BUILDER")"
 IFS=$'\t' read -r \
   toolchain_digest toolchain_root gotots printer tsgo go go_root go_module_cache \
   node npm node_root state_root tool_cache_root immutable_distribution immutable_source \
   distribution_workspace \
   <<< "$toolchain_line"
-
-if [[ "$build_transaction" = "toolchain" ]]; then
-  exit 0
-fi
 
 run_toolchain() {
   "$host/bash" "$root/scripts/run-exact-toolchain.sh" \

@@ -105,6 +105,10 @@ run's emitted JavaScript by moving it to a timestamped `.temp/preserved/`
 directory before re-emitting. Failed runtime artifacts therefore remain
 inspectable without contaminating or blocking the next exact assembly.
 
+The bounded scalar check uses the same constructor/opener split: its first
+guard may construct and select the immutable toolchain, while its second guard
+may only open that selection and execute the scalar product.
+
 The synchronous product additionally exact-joins its generated callable
 surface against the selected source profile. Generated Go callable
 declarations and calls contain no unexpected `async`, `await`, or
