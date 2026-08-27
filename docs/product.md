@@ -12,6 +12,13 @@ evidence, not an editing surface. `npm run generate` is its sole writer and
 seals it with `generated/manifest.json`; emitted JavaScript and all other
 transient or failed generation state remain under `.temp/`.
 
+The toolchain identity hashes every committed superproject entry except
+`generated/`, then joins the selected submodule gitlinks. This prevents the
+derived snapshot from recursively changing the identity of the tool that
+produced it. The exclusion is not an unverified hole: the repository must be
+clean before construction, while the generated manifest and regeneration gate
+independently own every committed product byte.
+
 ## Pinned Inputs
 
 The gitlinks are authoritative:

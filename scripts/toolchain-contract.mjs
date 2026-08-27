@@ -36,7 +36,7 @@ import {
 
 export const toolchainManifestName = "toolchain-manifest.json";
 export const toolchainSelectorName = "toolchain-selector.json";
-export const toolchainSchemaVersion = 4;
+export const toolchainSchemaVersion = 5;
 
 export const selectedPackages = packageComponents;
 export const selectedBinaries = Object.freeze(
@@ -379,8 +379,12 @@ function validatePackageDependencies(packages, selection, record) {
 
 function validateSelection(selection) {
   assertRecord(selection, "Toolchain selection");
-  assertFields(selection, ["submodules", "superprojectCommit"], "Toolchain selection");
-  if (!isCommit(selection.superprojectCommit) || !Array.isArray(selection.submodules)) {
+  assertFields(
+    selection,
+    ["submodules", "superprojectAuthorityDigest"],
+    "Toolchain selection",
+  );
+  if (!isDigest(selection.superprojectAuthorityDigest) || !Array.isArray(selection.submodules)) {
     throw new Error("Toolchain committed selection is invalid");
   }
   if (selection.submodules.length !== selectedSubmodules.length) {

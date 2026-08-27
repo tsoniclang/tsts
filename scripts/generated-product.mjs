@@ -12,6 +12,7 @@ import { isDeepStrictEqual } from "node:util";
 import { replaceDirectory } from "./directory-transaction.mjs";
 import { describeNormalizedTree } from "./normalized-tree.mjs";
 import { validateRelativePath } from "./package-artifact.mjs";
+import { generatedProductDirectory } from "./product-layout.mjs";
 import { removeSuccessfulScratchTree } from "./scratch-lifecycle.mjs";
 import {
   targetManifestName,
@@ -19,7 +20,6 @@ import {
   verifyTargetSourceManifest,
 } from "./target-manifest.mjs";
 
-export const generatedProductDirectory = "generated";
 export const generatedProductManifest = "manifest.json";
 
 const generatedProductReadme = `# Generated TSTS Compiler

@@ -15,6 +15,7 @@ import { isDeepStrictEqual } from "node:util";
 
 import { compareCodeUnits } from "./canonical-order.mjs";
 import { copyNormalizedTree, describeNormalizedTree } from "./normalized-tree.mjs";
+import { generatedProductDirectory } from "./product-layout.mjs";
 import {
   copyNormalizedDistribution,
   describeNormalizedDistribution,
@@ -42,12 +43,27 @@ export async function verifyRepositoryAuthority(repositoryArgument, environment)
   if (status.length !== 0) {
     throw new Error(`The superproject authority is not clean\n${status}`);
   }
-  const superprojectCommit = runGit(
-    repositoryRoot,
-    ["rev-parse", "--verify", "HEAD^{commit}"],
-    "read committed superproject authority",
+  const committedTree = runCommand(
+    "git",
+    ["-C", repositoryRoot, "ls-tree", "-r", "-z", "--full-tree", "HEAD"],
     authorityEnvironment,
+    "Failed to read committed superproject tree",
   );
+  const authorityEntries = committedTree
+    .split("\0")
+    .filter((entry) => entry.length !== 0)
+    .filter((entry) => {
+      const separator = entry.indexOf("\t");
+      if (separator < 0) {
+        throw new Error(`Committed superproject tree entry '${entry}' is invalid`);
+      }
+      const path = entry.slice(separator + 1);
+      return path !== generatedProductDirectory &&
+        !path.startsWith(`${generatedProductDirectory}/`);
+    });
+  const superprojectAuthorityDigest = createHash("sha256")
+    .update(authorityEntries.map((entry) => `${entry}\0`).join(""))
+    .digest("hex");
   const output = runGit(
     repositoryRoot,
     ["ls-tree", "-z", "HEAD", "--", ...selectedSubmodules],
@@ -104,7 +120,7 @@ export async function verifyRepositoryAuthority(repositoryArgument, environment)
     submodules.push(Object.freeze({ path, gitlink: expected }));
   }
   return Object.freeze({
-    superprojectCommit,
+    superprojectAuthorityDigest,
     submodules: Object.freeze(submodules),
   });
 }

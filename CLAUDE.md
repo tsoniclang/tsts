@@ -18,6 +18,12 @@ from the pinned Microsoft TS-Go source by the pinned GoToTS compiler.
   hand-edited. Emitted JavaScript remains transient runtime evidence.
 - `.temp/` owns uncommitted generation, verification, and failure evidence.
 
+The exact toolchain identity is the digest of every committed non-generated
+superproject entry plus the selected submodule gitlinks. `generated/` is
+excluded from that input identity because it is the output being certified;
+its own manifest and exact regeneration join are its authority. The repository
+must still be clean before toolchain construction.
+
 Do not add TS-Go-specific behavior to GoToTS. Do not patch either submodule in
 this repository. A generic compiler defect is fixed and certified in GoToTS,
 then the submodule pin is advanced. A product-only implementation or

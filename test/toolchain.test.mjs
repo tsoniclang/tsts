@@ -19,6 +19,7 @@ import { compareCodeUnits } from "../scripts/canonical-order.mjs";
 import { stageGoModuleCache } from "../scripts/go-module-cache.mjs";
 import { removeSuccessfulScratchTree } from "../scripts/scratch-lifecycle.mjs";
 import { sealTargetManifest, verifyTargetManifest } from "../scripts/target-manifest.mjs";
+import { verifyRepositoryAuthority } from "../scripts/toolchain-authority.mjs";
 import {
   exactAuthorityEnvironment,
   exactToolchainEnvironment,
@@ -72,7 +73,7 @@ test("canonical build is deterministic, fresh, closed, and fully owned", async (
     restoreEnvironment(ambient);
   }
   const firstManifest = await readFile(join(first.root, "toolchain-manifest.json"), "utf8");
-  assert.equal(first.manifest.schemaVersion, 4);
+  assert.equal(first.manifest.schemaVersion, 5);
   assert.equal(Object.hasOwn(first.manifest, "hostPlatform"), false);
   assert.deepEqual(
     first.manifest.goModules.modules.map(({ path, version }) => `${path}@${version}`),
@@ -267,7 +268,7 @@ test("construction rejects incomplete, escaping, colliding, and duplicate inputs
   await removeToolchainFixtures(...fixtures);
 });
 
-test("selection uses clean committed HEAD and rejects index or untracked authority", async () => {
+test("selection uses clean committed authority and rejects index or untracked state", async () => {
   const fixtures = [];
   const stale = await createToolchainFixture("stale-head-");
   fixtures.push(stale);
@@ -298,6 +299,50 @@ test("selection uses clean committed HEAD and rejects index or untracked authori
   await writeFile(join(untracked.repositoryRoot, "untracked-config.json"), "{}\n", "utf8");
   await assert.rejects(buildToolchain(untracked.repositoryRoot, buildOptions(untracked)), /superproject authority is not clean/u);
   await removeToolchainFixtures(...fixtures);
+});
+
+test("committed generated output does not perturb toolchain authority", async () => {
+  const fixture = await createToolchainFixture("derived-output-");
+  const stateRoot = join(fixture.repositoryRoot, ".temp", "authority-state");
+  await prepareToolchainState(stateRoot);
+  const environment = exactAuthorityEnvironment(fixture.hostUtilityPath, stateRoot);
+  const before = await verifyRepositoryAuthority(fixture.repositoryRoot, environment);
+
+  await mkdir(join(fixture.repositoryRoot, "generated", "source"), { recursive: true });
+  await writeFile(
+    join(fixture.repositoryRoot, "generated", "source", "program.ts"),
+    "export {};\n",
+    "utf8",
+  );
+  runGit(fixture.repositoryRoot, ["add", "generated"]);
+  runGit(fixture.repositoryRoot, [
+    "-c", "user.name=TSTS Tests", "-c", "user.email=tsts-tests@example.invalid",
+    "commit", "--quiet", "-m", "commit derived product",
+  ]);
+  const afterDerivedCommit = await verifyRepositoryAuthority(
+    fixture.repositoryRoot,
+    environment,
+  );
+  assert.equal(
+    afterDerivedCommit.superprojectAuthorityDigest,
+    before.superprojectAuthorityDigest,
+  );
+
+  await writeFile(join(fixture.repositoryRoot, "selection.txt"), "B\n", "utf8");
+  runGit(fixture.repositoryRoot, ["add", "selection.txt"]);
+  runGit(fixture.repositoryRoot, [
+    "-c", "user.name=TSTS Tests", "-c", "user.email=tsts-tests@example.invalid",
+    "commit", "--quiet", "-m", "change product authority",
+  ]);
+  const afterAuthorityCommit = await verifyRepositoryAuthority(
+    fixture.repositoryRoot,
+    environment,
+  );
+  assert.notEqual(
+    afterAuthorityCommit.superprojectAuthorityDigest,
+    before.superprojectAuthorityDigest,
+  );
+  await removeToolchainFixtures(fixture);
 });
 
 test("selector replacement cannot change an opened or target-selected historical root", async () => {
@@ -374,7 +419,7 @@ test("product consumers have one immutable path and a closed environment", async
   );
   assert.match(
     await readFile(join(repositoryRoot, "scripts", "run-guarded.sh"), "utf8"),
-    /go_memory_limit="5GiB"[\s\S]*node_old_space_mib="10240"/u,
+    /go_memory_limit="4GiB"[\s\S]*node_old_space_mib="10240"/u,
   );
 });
 
@@ -466,7 +511,7 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
   const host = resolve(realHostUtilities);
   const environment = {
     ...process.env,
-    TSTS_GO_MEMORY_LIMIT: "5GiB",
+    TSTS_GO_MEMORY_LIMIT: "4GiB",
     TSTS_GO_MAX_PROCS: "2",
     TSTS_NODE_OLD_SPACE_MIB: "10240",
     AMBIENT_POISON: "must-not-survive",
@@ -478,7 +523,7 @@ printf 'AMBIENT=%s\n' "\${AMBIENT_POISON-}"
   );
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, [
-    "GOMEMLIMIT=5GiB",
+    "GOMEMLIMIT=4GiB",
     "GOMAXPROCS=2",
     "NODE_OPTIONS=--max-old-space-size=10240",
     `PATH=${join(nodeRoot, "bin")}:${join(goRoot, "bin")}`,
