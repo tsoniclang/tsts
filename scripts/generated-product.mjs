@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import {
   lstat,
   mkdir,
@@ -6,7 +7,7 @@ import {
   readdir,
   writeFile,
 } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
 import { replaceDirectory } from "./directory-transaction.mjs";
@@ -149,6 +150,50 @@ export async function verifyGeneratedProductMatches(
     throw new Error("Current target manifest differs from the committed product");
   }
   return published;
+}
+
+export function verifyGeneratedProductGitVisibility(
+  repositoryArgument,
+  publishedArgument,
+  source,
+) {
+  const repositoryRoot = resolve(repositoryArgument);
+  const publishedRoot = resolve(publishedArgument);
+  const publishedPath = relative(repositoryRoot, publishedRoot);
+  if (
+    publishedPath.length === 0 || isAbsolute(publishedPath) || publishedPath === ".." ||
+    publishedPath.startsWith(`..${sep}`)
+  ) {
+    throw new Error("Published generated product must be inside its repository");
+  }
+  const paths = [
+    join(publishedPath, "README.md"),
+    join(publishedPath, generatedProductManifest),
+    ...source.members.map((member) => join(publishedPath, "source", member.path)),
+  ];
+  const result = spawnSync(
+    "git",
+    ["-C", repositoryRoot, "check-ignore", "--no-index", "--stdin", "-z"],
+    {
+      encoding: "utf8",
+      input: `${paths.join("\0")}\0`,
+      maxBuffer: 16 * 1024 * 1024,
+    },
+  );
+  if (result.error !== undefined) {
+    throw result.error;
+  }
+  if (result.status === 0) {
+    const ignored = result.stdout.split("\0").filter((path) => path.length !== 0);
+    throw new Error(
+      `Generated product contains Git-ignored members:\n${ignored.join("\n")}`,
+    );
+  }
+  if (result.status !== 1) {
+    throw new Error(
+      `Failed to verify generated-product Git visibility\n${result.stderr.trim()}`,
+    );
+  }
 }
 
 async function copyManifestMembers(sourceRoot, targetRoot, members) {

@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import test from "node:test";
 
 import {
   publishGeneratedProduct,
+  verifyGeneratedProductGitVisibility,
   verifyGeneratedProductMatches,
   verifyPublishedProduct,
 } from "../scripts/generated-product.mjs";
@@ -50,12 +52,43 @@ test("generated product rejects committed and regenerated source drift", async (
   });
 });
 
-async function createTarget(targetRoot) {
+test("generated product rejects Git-ignored manifest members", async () => {
+  await withFixture(async ({ repositoryRoot, targetRoot, publishedRoot }) => {
+    runGit(repositoryRoot, ["init", "--quiet"]);
+    await writeFile(join(repositoryRoot, ".gitignore"), "node_modules/\n");
+    await createTarget(targetRoot, { withIgnoredMember: true });
+    await publishGeneratedProduct(repositoryRoot, targetRoot, publishedRoot);
+    const verified = await verifyPublishedProduct(publishedRoot);
+    assert.throws(
+      () => verifyGeneratedProductGitVisibility(
+        repositoryRoot,
+        publishedRoot,
+        verified.source,
+      ),
+      /Git-ignored members/u,
+    );
+
+    await writeFile(
+      join(repositoryRoot, ".gitignore"),
+      "node_modules/\n!generated/**\n",
+    );
+    verifyGeneratedProductGitVisibility(repositoryRoot, publishedRoot, verified.source);
+  });
+});
+
+async function createTarget(targetRoot, { withIgnoredMember = false } = {}) {
   await mkdir(join(targetRoot, "runtime"), { recursive: true });
   await writeFile(join(targetRoot, "package.json"), "{\"private\":true,\"type\":\"module\"}\n");
   await writeFile(join(targetRoot, "program.ts"), "export const value = 1;\n");
   await writeFile(join(targetRoot, "runner.ts"), "import './program.js';\n");
   await writeFile(join(targetRoot, "runtime", "value.ts"), "export const runtime = true;\n");
+  if (withIgnoredMember) {
+    await mkdir(join(targetRoot, "node_modules", "runtime"), { recursive: true });
+    await writeFile(
+      join(targetRoot, "node_modules", "runtime", "index.js"),
+      "export const runtime = true;\n",
+    );
+  }
   await sealTargetManifest(
     targetRoot,
     "a".repeat(64),
@@ -74,4 +107,11 @@ async function withFixture(callback) {
   } finally {
     await removeSuccessfulScratchTree(resolve("."), repositoryRoot);
   }
+}
+
+function runGit(root, arguments_) {
+  const result = spawnSync("git", ["-C", root, ...arguments_], {
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
 }
