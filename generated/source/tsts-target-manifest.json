@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "canonicalSemanticDigest": "a3a86944267e41877ab54f798340439bd80038e34687c5dedb5dc7dbc857565b",
   "targetProfileDigest": "79a7eab9bcaa6635dc69e7855a10ad6be96a885a38b44c0b0286e8e556363cff",
-  "toolchainDigest": "aa6a7f1615a8fc49ce179cdea01c450aec7c10c8a15f360e8555b7d2468287b7",
+  "toolchainDigest": "3fc8c3384b1e882296e949b574d4ce904c33ba4b57556123d592893504a1a12f",
   "members": [
     {
       "path": "modules/github.com/go-json-experiment/json@v0.0.0-20260601182631-00ed12fed2a6/_root/arshal.ts",
