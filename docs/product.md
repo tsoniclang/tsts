@@ -6,6 +6,12 @@ TSTS assembles one generated compiler. TS-Go defines the source behavior,
 GoToTS defines generic translation, and this repository defines product
 selection. No product decision is encoded in GoToTS.
 
+The final executable TypeScript is committed under `generated/source/` so the
+product can be reviewed without running the assembly. This tree is derived
+evidence, not an editing surface. `npm run generate` is its sole writer and
+seals it with `generated/manifest.json`; emitted JavaScript and all other
+transient or failed generation state remain under `.temp/`.
+
 ## Pinned Inputs
 
 The gitlinks are authoritative:
@@ -78,6 +84,13 @@ The generated package implementation and every generated package body are
 absent when the bundle is selected. Consumers retain ordinary generated
 imports and source-facing signatures.
 
+Performance substitutions for product-only hot paths are package-atomic,
+signature-certified implementations under `implementations/`. A generic
+translation or representation optimization remains owned by the selected
+GoToTS or TypeScript-target profile. Neither class may patch the committed
+generated tree: its result becomes visible only by regenerating the complete
+product and passing the differential gates.
+
 The product check executes the selected implementation itself over a fixed
 10,012-input collision corpus and verifies deterministic hashing, incremental
 and one-shot agreement, reset behavior, byte projection, and seeded hashing.
@@ -93,6 +106,13 @@ stdout, and stderr are compared exactly for the certified fixtures; the valid
 fixture's emitted file set and bytes are also exact-joined. Generation,
 typecheck, startup, minimal-compilation time, peak RSS, source size, and output
 size are reported at the exact pins.
+
+The same checkpoint exact-joins the freshly generated final TypeScript against
+`generated/`. The committed manifest carries the
+canonical semantic, target-profile, and historical toolchain digests plus
+the normalized tree digest, file count, byte count, and fixed entrypoint.
+Source drift, missing files, extra files, stale toolchain selection, and hand
+edits all fail the checkpoint.
 
 The product check owns four serial, resource-disjoint guarded transactions:
 assembly tests, exact toolchain construction, product generation plus strict
@@ -126,3 +146,8 @@ once must fail before publication.
 only JavaScript emission from `.temp/target`, provider/runtime assembly,
 native TS-Go construction, and the exact runtime differential. It uses the
 same guarded execution and output preservation policy as the full check.
+
+`npm run generate` executes that complete checkpoint in publication mode and
+atomically replaces `generated/` only after the staged source and manifest
+verify. `npm run check` runs the same pipeline in verification mode and
+requires byte-identical committed TypeScript.

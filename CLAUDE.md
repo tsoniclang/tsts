@@ -13,8 +13,10 @@ from the pinned Microsoft TS-Go source by the pinned GoToTS compiler.
 - `gotots.json` owns the canonical Go translation profile.
 - `typescript-target.json` owns the executable TypeScript target profile.
 - `implementations/` owns certified TSTS-specific package implementations.
-- Generated TypeScript and JavaScript are build artifacts under `.temp/` and
-  are never hand-edited or committed.
+- `generated/source/` owns the committed, derived final TypeScript product
+  snapshot. It is refreshed only by `npm run generate` and is never
+  hand-edited. Emitted JavaScript remains transient runtime evidence.
+- `.temp/` owns uncommitted generation, verification, and failure evidence.
 
 Do not add TS-Go-specific behavior to GoToTS. Do not patch either submodule in
 this repository. A generic compiler defect is fixed and certified in GoToTS,
@@ -72,7 +74,8 @@ Every product checkpoint must:
 5. compare exit status, stdout, and stderr with pinned native TS-Go;
 6. inspect generated artifacts and implementation replacement;
 7. report generation/typecheck/runtime time, peak RSS, and output size;
-8. fail on stale implementation contracts or unselected generated remnants.
+8. exact-join the regenerated final TypeScript with `generated/`;
+9. fail on stale implementation contracts or unselected generated remnants.
 
 Heavy jobs run serially through `scripts/run-guarded.sh`. Preserve failed
 artifacts and never retry an OOM with the same unbounded command.
@@ -96,5 +99,6 @@ counters or bounded phase timing, then profile only the isolated phase.
 - Never force-push or delete remote branches or tags.
 - Work on feature branches and merge through pull requests.
 - Never edit or commit files inside either submodule.
-- Never commit `.analysis/`, `.temp/`, generated output, or local logs.
+- Never commit `.analysis/`, `.temp/`, or local logs.
+- Never hand-edit `generated/`; commit its complete `npm run generate` result.
 - Never use `git stash`.

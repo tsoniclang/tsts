@@ -37,6 +37,27 @@ export async function verifyTargetManifest(
   canonicalSemanticDigest,
   targetProfileDigest,
 ) {
+  const manifest = await readTargetManifest(targetRoot);
+  assertEqual(
+    "canonical semantic digest",
+    manifest.canonicalSemanticDigest,
+    requireDigest(canonicalSemanticDigest, "canonical semantic"),
+  );
+  assertEqual(
+    "target profile digest",
+    manifest.targetProfileDigest,
+    requireDigest(targetProfileDigest, "target profile"),
+  );
+  const physical = await listMembers(targetRoot);
+  if (!isDeepStrictEqual(physical, manifest.members)) {
+    throw new Error(
+      "TypeScript target content, type, or membership differs from its manifest",
+    );
+  }
+  return manifest;
+}
+
+export async function readTargetManifest(targetRoot) {
   const text = await readFile(join(targetRoot, targetManifestName), "utf8");
   if ((await lstat(join(targetRoot, targetManifestName))).nlink !== 1) {
     throw new Error("TypeScript target manifest is a hard link");
@@ -56,36 +77,35 @@ export async function verifyTargetManifest(
   if (manifest.schemaVersion !== 3 || text !== encodeManifest(manifest)) {
     throw new Error("TypeScript target manifest schema or encoding is not canonical");
   }
-  assertEqual(
-    "canonical semantic digest",
-    manifest.canonicalSemanticDigest,
-    requireDigest(canonicalSemanticDigest, "canonical semantic"),
-  );
-  assertEqual(
-    "target profile digest",
-    manifest.targetProfileDigest,
-    requireDigest(targetProfileDigest, "target profile"),
-  );
+  requireDigest(manifest.canonicalSemanticDigest, "canonical semantic");
+  requireDigest(manifest.targetProfileDigest, "target profile");
   requireDigest(manifest.toolchainDigest, "toolchain");
   validateMembers(manifest.members);
-  const physical = await listMembers(targetRoot);
-  if (!isDeepStrictEqual(physical, manifest.members)) {
-    throw new Error(
-      "TypeScript target content, type, or membership differs from its manifest",
-    );
-  }
   return freezeResult(manifest);
 }
 
-async function listMembers(root, directory = "") {
+export async function verifyTargetSourceManifest(targetRoot) {
+  const manifest = await readTargetManifest(targetRoot);
+  if (manifest.members.some((member) => member.path === "out" || member.path.startsWith("out/"))) {
+    throw new Error("TypeScript target source manifest includes emitted output");
+  }
+  const physical = await listMembers(targetRoot, "", new Set(["out"]));
+  assertManifestMembers("TypeScript target source", physical, manifest.members);
+  return manifest;
+}
+
+async function listMembers(root, directory = "", excludedRootDirectories = new Set()) {
   const records = [];
   for (const entry of await readdir(join(root, directory), { withFileTypes: true })) {
     const path = directory.length === 0 ? entry.name : `${directory}/${entry.name}`;
+    if (directory.length === 0 && entry.isDirectory() && excludedRootDirectories.has(entry.name)) {
+      continue;
+    }
     if (path === targetManifestName) {
       continue;
     }
     if (entry.isDirectory()) {
-      records.push(...await listMembers(root, path));
+      records.push(...await listMembers(root, path, excludedRootDirectories));
     } else if (entry.isFile()) {
       const absolute = join(root, path);
       if ((await lstat(absolute)).nlink !== 1) {
@@ -129,8 +149,29 @@ function validateMembers(members) {
   }
 }
 
+function assertManifestMembers(subject, actual, expected) {
+  const actualByPath = new Map(actual.map((member) => [member.path, member]));
+  const expectedByPath = new Map(expected.map((member) => [member.path, member]));
+  const missing = expected.find((member) => !actualByPath.has(member.path));
+  if (missing !== undefined) {
+    throw new Error(`${subject} member '${missing.path}' is missing`);
+  }
+  const extra = actual.find((member) => !expectedByPath.has(member.path));
+  if (extra !== undefined) {
+    throw new Error(`${subject} has unmanifested member '${extra.path}'`);
+  }
+  const changed = expected.find((member) =>
+    !isDeepStrictEqual(actualByPath.get(member.path), member)
+  );
+  if (changed !== undefined) {
+    throw new Error(`${subject} member '${changed.path}' differs from its manifest`);
+  }
+}
+
 function freezeResult(manifest) {
   return Object.freeze({
+    canonicalSemanticDigest: manifest.canonicalSemanticDigest,
+    targetProfileDigest: manifest.targetProfileDigest,
     files: Object.freeze(manifest.members.map((member) => member.path)),
     members: Object.freeze(manifest.members.map((member) => Object.freeze({ ...member }))),
     toolchainDigest: manifest.toolchainDigest,
