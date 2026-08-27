@@ -377,6 +377,28 @@ test("product consumers have one immutable path and a closed environment", async
   );
 });
 
+test("product check isolates guarded phase lifetimes", async () => {
+  const repositoryRoot = resolve(".");
+  const check = await readFile(join(repositoryRoot, "scripts", "check.sh"), "utf8");
+  assert.doesNotMatch(check, /TSTS_GUARDED=1/u);
+  assert.match(check, /product check must own fresh test, build, and replay guards/u);
+
+  const testGuard = check.indexOf('"$root/scripts/run-guarded.sh"');
+  const testCommand = check.indexOf(' --test "$root"/test/*.test.mjs');
+  const build = check.indexOf('"$root/scripts/build.sh"');
+  const replay = check.indexOf('"$root/scripts/replay.sh"');
+  assert.ok(testGuard >= 0, "assembly tests lack their guard");
+  assert.ok(testCommand > testGuard, "assembly tests escape their guard");
+  assert.ok(build > testCommand, "build does not follow the assembly-test transaction");
+  assert.ok(replay > build, "replay does not follow the build transaction");
+  assert.equal(check.match(/run-guarded\.sh/gu)?.length, 1);
+
+  for (const phase of ["build.sh", "replay.sh"]) {
+    const script = await readFile(join(repositoryRoot, "scripts", phase), "utf8");
+    assert.match(script, /TSTS_GUARDED=1[\s\S]*run-guarded\.sh/u, phase);
+  }
+});
+
 test("exact toolchain retains the guarded process envelope", async () => {
   const root = await mkdtemp(resolve(".temp", "resource-envelope-"));
   const nodeRoot = join(root, "node-runtime");
