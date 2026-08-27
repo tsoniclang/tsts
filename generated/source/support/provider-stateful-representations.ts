@@ -1,0 +1,17 @@
+import type { $goProviderProfileBridge$Named_flate$Reader$Using$compress_u2f_flate_Reader$Direct$And$Error$Direct$ProviderContract, $goProviderProfileBridge$Named_io$ReadCloser$Using$Error$Direct$And$io_ReadCloser$Direct$ProviderContract, $goProviderProfileBridge$Named_io$Reader$Using$Error$Direct$And$io_Reader$Direct$ProviderContract, $goProviderProfileBridge$Named_io$Writer$Using$Error$Direct$And$io_Writer$Direct$ProviderContract, $goProviderProfileBridge$Named_error$Using$Error$Direct$ProviderContract as GoProviderProfileBridge$ProviderContract } from "./provider-interface-bridges.js";
+import { $goProviderProfileBridge$Named_flate$Reader$Using$compress_u2f_flate_Reader$Direct$And$Error$Direct, $goProviderProfileBridge$Named_io$ReadCloser$Using$Error$Direct$And$io_ReadCloser$Direct, $goProviderProfileBridge$Named_io$Reader$Using$Error$Direct$And$io_Reader$Direct, $goProviderProfileBridge$Named_io$Writer$Using$Error$Direct$And$io_Writer$Direct, $goProviderProfileBridge$Named_error$Using$Error$Direct as GoProviderProfileBridge } from "./provider-interface-bridges.js";
+import * as provider_bufio_reader from "@gotots/gostdlib/internal/facets/provider-bufio-reader.js";
+import * as provider_bufio_scanner from "@gotots/gostdlib/internal/facets/provider-bufio-scanner.js";
+import * as provider_bufio_writer from "@gotots/gostdlib/internal/facets/provider-bufio-writer.js";
+import * as provider_compress_gzip_direct from "@gotots/gostdlib/internal/facets/provider-compress-gzip-direct.js";
+import * as fs from "@gotots/gostdlib/io/fs.js";
+export type $goProviderState$Named_bufio$Reader = provider_bufio_reader.DirectBufioReader<GoProviderProfileBridge$ProviderContract, $goProviderProfileBridge$Named_io$Reader$Using$Error$Direct$And$io_Reader$Direct$ProviderContract>;
+export const $goProviderState$Named_bufio$Reader: typeof provider_bufio_reader.DirectBufioReader = provider_bufio_reader.DirectBufioReader;
+export type $goProviderState$Named_bufio$Scanner = provider_bufio_scanner.DirectBufioScanner<GoProviderProfileBridge$ProviderContract, $goProviderProfileBridge$Named_io$Reader$Using$Error$Direct$And$io_Reader$Direct$ProviderContract>;
+export const $goProviderState$Named_bufio$Scanner: typeof provider_bufio_scanner.DirectBufioScanner = provider_bufio_scanner.DirectBufioScanner;
+export type $goProviderState$Named_bufio$Writer = provider_bufio_writer.DirectBufioWriter<GoProviderProfileBridge$ProviderContract, $goProviderProfileBridge$Named_io$Writer$Using$Error$Direct$And$io_Writer$Direct$ProviderContract>;
+export const $goProviderState$Named_bufio$Writer: typeof provider_bufio_writer.DirectBufioWriter = provider_bufio_writer.DirectBufioWriter;
+export type $goProviderState$Named_fs$PathError = fs.PathError;
+export const $goProviderState$Named_fs$PathError: typeof fs.PathError = fs.PathError;
+export type $goProviderState$Named_gzip$Reader = provider_compress_gzip_direct.DirectGzipReader<$goProviderProfileBridge$Named_flate$Reader$Using$compress_u2f_flate_Reader$Direct$And$Error$Direct$ProviderContract, GoProviderProfileBridge$ProviderContract, $goProviderProfileBridge$Named_io$ReadCloser$Using$Error$Direct$And$io_ReadCloser$Direct$ProviderContract>;
+export const $goProviderState$Named_gzip$Reader: typeof provider_compress_gzip_direct.DirectGzipReader = provider_compress_gzip_direct.DirectGzipReader;

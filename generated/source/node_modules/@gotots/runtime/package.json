@@ -1,0 +1,30 @@
+{
+  "name": "@gotots/runtime",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "gotots": {
+    "integerRepresentation": "fixed64-bigint",
+    "nativeIntegerBits": 64
+  },
+  "exports": {
+    "./array.js": "./array.js",
+    "./channel.js": "./channel.js",
+    "./complex.js": "./complex.js",
+    "./conversion.js": "./conversion.js",
+    "./deferred-registry.js": "./deferred-registry.js",
+    "./float.js": "./float.js",
+    "./integer.js": "./integer.js",
+    "./interface-value.js": "./interface-value.js",
+    "./interface.js": "./interface.js",
+    "./map.js": "./map.js",
+    "./panic-nil.js": "./panic-nil.js",
+    "./panic.js": "./panic.js",
+    "./scalars.js": "./scalars.js",
+    "./slice.js": "./slice.js",
+    "./storage.js": "./storage.js",
+    "./string.js": "./string.js",
+    "./struct.js": "./struct.js",
+    "./unsafe.js": "./unsafe.js"
+  }
+}

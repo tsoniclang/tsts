@@ -10,7 +10,7 @@ host="$TSTS_HOST_PLATFORM_PATH"
 timeout_value="${TSTS_TIMEOUT:-30m}"
 memory_max="${TSTS_MEMORY_MAX:-12G}"
 minimum_available_kib="${TSTS_MIN_AVAILABLE_KIB:-16777216}"
-go_memory_limit="6GiB"
+go_memory_limit="4GiB"
 go_max_procs="2"
 node_old_space_mib="10240"
 

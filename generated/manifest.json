@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "product": "@tsoniclang/tsts",
+  "canonicalSemanticDigest": "a3a86944267e41877ab54f798340439bd80038e34687c5dedb5dc7dbc857565b",
+  "targetProfileDigest": "79a7eab9bcaa6635dc69e7855a10ad6be96a885a38b44c0b0286e8e556363cff",
+  "toolchainDigest": "3fc8c3384b1e882296e949b574d4ce904c33ba4b57556123d592893504a1a12f",
+  "source": {
+    "digest": "8a95f98ee24559d3a6ed0222ca4eb860aaeb5969a345559815b2e22822359106",
+    "files": 1413,
+    "bytes": 90205216
+  },
+  "entrypoint": "source/runner.ts"
+}

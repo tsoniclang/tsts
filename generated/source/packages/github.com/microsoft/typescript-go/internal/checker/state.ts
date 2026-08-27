@@ -1,0 +1,33 @@
+import type * as tsonicTypeScriptRuntime from "@tsonic/typescript-runtime";
+import type { CacheHashKey$Storage as CacheHashKey__from_checker$Storage, IntrinsicTypeKind, TypeFacts } from "../../../../../../modules/github.com/microsoft/typescript-go/internal/checker/checker.js";
+import type { LanguageFeatureMinimumTargetMap$Storage as LanguageFeatureMinimumTargetMap__from_checker$Storage } from "../../../../../../modules/github.com/microsoft/typescript-go/internal/checker/types.js";
+import type { FeatureMapEntry$Storage as FeatureMapEntry__from_checker$Storage } from "../../../../../../modules/github.com/microsoft/typescript-go/internal/checker/utilities.js";
+import type { $goStruct$Struct_Field_Fragment_string_Tag__empty_$Storage, $goStruct$Struct_Field_JSX_string_Tag__empty__Field_IntrinsicElements_string_Tag__empty__Field_ElementClass_string_Tag__empty__Field_ElementAttributesPropertyNameContainer_string_Tag__empty__Field_ElementChildrenAttributeNameContainer_string_Tag__empty__Field_Element_string_Tag__empty__Field_ElementType_string_Tag__empty__Field_IntrinsicAttributes_string_Tag__empty__Field_IntrinsicClassAttributes_string_Tag__empty__Field_LibraryManagedAttributes_string_Tag__empty_$Storage, $goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_$Storage } from "../../../../../../support/anonymous-structs.js";
+import type { Symbol as Symbol__from_ast } from "../ast/package.js";
+import type * as atomic__from_gostdlib from "@gotots/gostdlib/sync/atomic.js";
+import type { GoArray } from "@gotots/runtime/array.js";
+import type { GoMapValue } from "@gotots/runtime/map.js";
+import type { gostring, uint8 } from "@gotots/runtime/scalars.js";
+import type { RuntimeSlice } from "@gotots/runtime/slice.js";
+import type { GoEmptyStruct } from "@gotots/runtime/struct.js";
+export class $PackageState {
+    declare JsxNames: $goStruct$Struct_Field_JSX_string_Tag__empty__Field_IntrinsicElements_string_Tag__empty__Field_ElementClass_string_Tag__empty__Field_ElementAttributesPropertyNameContainer_string_Tag__empty__Field_ElementChildrenAttributeNameContainer_string_Tag__empty__Field_Element_string_Tag__empty__Field_ElementType_string_Tag__empty__Field_IntrinsicAttributes_string_Tag__empty__Field_IntrinsicClassAttributes_string_Tag__empty__Field_LibraryManagedAttributes_string_Tag__empty_$Storage;
+    declare LanguageFeatureMinimumTarget: LanguageFeatureMinimumTargetMap__from_checker$Storage;
+    declare ReactNames: $goStruct$Struct_Field_Fragment_string_Tag__empty_$Storage;
+    declare SignatureKeyBase: CacheHashKey__from_checker$Storage;
+    declare SignatureKeyCanonical: CacheHashKey__from_checker$Storage;
+    declare SignatureKeyErased: CacheHashKey__from_checker$Storage;
+    declare SignatureKeyInner: CacheHashKey__from_checker$Storage;
+    declare SignatureKeyOuter: CacheHashKey__from_checker$Storage;
+    declare _SignatureKind_index: GoArray<uint8, 3>;
+    declare getFeatureMap: (() => GoMapValue<gostring, RuntimeSlice<FeatureMapEntry__from_checker$Storage>>) | undefined;
+    declare intrinsicTypeKinds: GoMapValue<gostring, IntrinsicTypeKind>;
+    declare knownGenericTypeNames: GoMapValue<gostring, GoEmptyStruct>;
+    declare nextCheckerID: atomic__from_gostdlib.Uint32;
+    declare nonDottedNameCacheKey: CacheHashKey__from_checker$Storage;
+    declare primitiveTypeAliasSuggestions: (() => GoMapValue<gostring, tsonicTypeScriptRuntime.Location<Symbol__from_ast> | undefined>) | undefined;
+    declare typeFlagNames: GoArray<$goStruct$Struct_Field_checker_u24_flag_Named_checker$TypeFlags_Tag__empty__Field_checker_u24_name_string_Tag__empty_$Storage, 29>;
+    declare typeofNEFacts: GoMapValue<gostring, TypeFacts>;
+    declare private readonly then?: never;
+}
+export const $state = new $PackageState();
